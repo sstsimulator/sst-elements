@@ -51,8 +51,10 @@ public:
         {"eventSent_GetS",          "Number of GetS requests sent", "events", 2},
         {"eventSent_GetX",          "Number of GetX requests sent", "events", 2},
         {"eventSent_GetSX",         "Number of GetSX requests sent", "events", 2},
+        {"eventSent_Write",         "Number of Write requests sent", "events", 2},
         {"eventSent_GetSResp",      "Number of GetSResp responses sent", "events", 2},
         {"eventSent_GetXResp",      "Number of GetXResp responses sent", "events", 2},
+        {"eventSent_WriteResp",     "Number of WriteResp responses sent", "events", 2},
         {"eventSent_PutS",          "Number of PutS requests sent", "events", 2},
         {"eventSent_PutE",          "Number of PutE requests sent", "events", 2},
         {"eventSent_PutM",          "Number of PutM requests sent", "events", 2},
@@ -400,6 +402,7 @@ public:
         stat_eventSent[(int)Command::GetS]            = registerStatistic<uint64_t>("eventSent_GetS");
         stat_eventSent[(int)Command::GetX]            = registerStatistic<uint64_t>("eventSent_GetX");
         stat_eventSent[(int)Command::GetSX]           = registerStatistic<uint64_t>("eventSent_GetSX");
+        stat_eventSent[(int)Command::Write]           = registerStatistic<uint64_t>("eventSent_Write");
         stat_eventSent[(int)Command::PutS]            = registerStatistic<uint64_t>("eventSent_PutS");
         stat_eventSent[(int)Command::PutM]            = registerStatistic<uint64_t>("eventSent_PutM");
         stat_eventSent[(int)Command::FlushLine]       = registerStatistic<uint64_t>("eventSent_FlushLine");
@@ -410,6 +413,7 @@ public:
         stat_eventSent[(int)Command::NACK]            = registerStatistic<uint64_t>("eventSent_NACK");
         stat_eventSent[(int)Command::GetSResp]        = registerStatistic<uint64_t>("eventSent_GetSResp");
         stat_eventSent[(int)Command::GetXResp]        = registerStatistic<uint64_t>("eventSent_GetXResp");
+        stat_eventSent[(int)Command::WriteResp]       = registerStatistic<uint64_t>("eventSent_WriteResp");
         stat_eventSent[(int)Command::FlushLineResp]   = registerStatistic<uint64_t>("eventSent_FlushLineResp");
         stat_eventSent[(int)Command::Inv]             = registerStatistic<uint64_t>("eventSent_Inv");
         stat_eventSent[(int)Command::Fetch]           = registerStatistic<uint64_t>("eventSent_Fetch");
@@ -593,7 +597,7 @@ private:
     uint64_t forwardFlush(MemEvent* event, bool evict, std::vector<uint8_t>* data, bool dirty, uint64_t time);
 
     /** Send response up (to processor) */
-    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t baseTime, Command cmd = Command::NULLCMD, bool success = false);
+    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t baseTime, Command cmd = Command::NULLCMD, bool success = true);
 
     /** Send response down (towards memory) */
     void sendResponseDown(MemEvent* event, std::vector<uint8_t>* data, bool dirty, bool evict);
@@ -606,9 +610,8 @@ private:
     uint64_t sendFetch(Command cmd, MemEvent * event, std::string dst, bool inMSHR, uint64_t ts);
 
     /** Call through to coherenceController with statistic recording */
-    void addToOutgoingQueue(Response& resp);
-    void addToOutgoingQueueUp(Response& resp);
-
+    void forwardByAddress(MemEventBase* ev, Cycle_t timestamp);
+    void forwardByDestination(MemEventBase* ev, Cycle_t timestamp);
 
     /** Helpers */
     void removeSharerViaInv(MemEvent* event, DirectoryLine * tag, DataLine * data, bool remove);
@@ -617,7 +620,6 @@ private:
     bool applyPendingReplacement(Addr addr);
 
 /* Miscellaneous */
-    void printData(vector<uint8_t> * data, bool set);
     void printLine(Addr addr);
 
 /* Statistics */

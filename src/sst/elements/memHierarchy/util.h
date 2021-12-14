@@ -37,16 +37,17 @@ namespace MemHierarchy {
 #endif
 
 #define _INFO_ CALL_INFO,1,0
-#define _L2_ CALL_INFO,2,0     //Important messages:  incoming requests, state changes, etc
-#define _L3_ CALL_INFO,3,0     //Important messages:  incoming requests, state changes, etc
-#define _L4_ CALL_INFO,4,0     //Important messages:  send request, forward request, send response
-#define _L5_ CALL_INFO,5,0     //
-#define _L6_ CALL_INFO,6,0     //BottomCC messages
-#define _L7_ CALL_INFO,7,0     //TopCC messages
-#define _L8_ CALL_INFO,8,0     //Atomics
-#define _L9_ CALL_INFO,9,0     //MSHR messages
-#define _L10_ CALL_INFO,10,0   //Directory controller, Bus, Memory Controller
-#define _L20_ CALL_INFO,20,0   //Debug at function call granularity
+#define _L2_ CALL_INFO,2,0      //Debug notes, potential error warnings, etc.
+#define _L3_ CALL_INFO,3,0      //External events in
+#define _L4_ CALL_INFO,4,0      //External events out
+#define _L5_ CALL_INFO,5,0      //Internal state transitions (e.g., coherence)
+#define _L6_ CALL_INFO,6,0      //Additional detail
+#define _L7_ CALL_INFO,7,0      //Additional detail
+#define _L8_ CALL_INFO,8,0      //Additional detail
+#define _L9_ CALL_INFO,9,0      //Additional detail
+#define _L10_ CALL_INFO,10,0    //Initialization phase
+#define _L11_ CALL_INFO,11,0    //Data values
+#define _L20_ CALL_INFO,20,0    //Debug at function call granularity
 
 // Type conversions - TODO are these used anywhere?
 const unsigned int kibi = 1024;
@@ -131,7 +132,7 @@ typedef enum {IGNORE, DONE, STALL, BLOCK, REJECT} CacheAction;
 
 enum class CoherenceProtocol {MSI, MESI, NONE};
 
-enum class Endpoint { CPU, Cache, Memory, Directory, Scratchpad };
+enum class Endpoint { CPU, Cache, Memory, Directory, Scratchpad, MMIO };
 
 }}
 #endif	/* UTIL_H */

@@ -163,7 +163,10 @@ for x in range(memories):
     memctrl.addParams({
         "clock" : "500MHz",
         "backing" : "none",
-        "addr_range_end" : 512*1024*1024-1,
+        "interleave_size" : "64B",    # Interleave at line granularity between memories
+        "interleave_step" : str(memories * 64) + "B",
+        "addr_range_start" : x*64,
+        "addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
         "verbose" : verbose,
         "debug" : DEBUG_MEM,
         "debug_level" : DEBUG_LEVEL

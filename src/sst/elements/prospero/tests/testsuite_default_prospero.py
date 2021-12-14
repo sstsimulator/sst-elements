@@ -62,6 +62,7 @@ class testcase_prospero(SSTTestCase):
         self.prospero_test_template("compressed", NO_DRAMSIM, USE_TAR_TRACES)
 
     @unittest.skipIf(libz_missing, "test_prospero_compressed_withdramsim_using_TAR_traces test: Requires LIBZ, but LIBZ is not found in build configuration.")
+    @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
     def test_prospero_compressed_withdramsim_using_TAR_traces(self):
         self.prospero_test_template("compressed", WITH_DRAMSIM, USE_TAR_TRACES)
 
@@ -71,9 +72,11 @@ class testcase_prospero(SSTTestCase):
     def test_prospero_binary_using_TAR_traces(self):
         self.prospero_test_template("binary", NO_DRAMSIM, USE_TAR_TRACES)
 
+    @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
     def test_prospero_text_withdramsim_using_TAR_traces(self):
         self.prospero_test_template("text", WITH_DRAMSIM, USE_TAR_TRACES)
 
+    @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
     def test_prospero_binary_withdramsim_using_TAR_traces(self):
         self.prospero_test_template("binary", WITH_DRAMSIM, USE_TAR_TRACES)
 
@@ -98,10 +101,12 @@ class testcase_prospero(SSTTestCase):
         self.prospero_test_template("binary", NO_DRAMSIM, USE_PIN_TRACES)
 
     @unittest.skipIf(not pin_loaded, "test_prospero_text_withdramsim_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
+    @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
     def test_prospero_text_withdramsim_using_PIN_traces(self):
         self.prospero_test_template("text", WITH_DRAMSIM, USE_PIN_TRACES)
 
     @unittest.skipIf(not pin_loaded, "test_prospero_binary_withdramsim_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
+    @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
     def test_prospero_binary_withdramsim_using_PIN_traces(self):
         self.prospero_test_template("binary", WITH_DRAMSIM, USE_PIN_TRACES)
 

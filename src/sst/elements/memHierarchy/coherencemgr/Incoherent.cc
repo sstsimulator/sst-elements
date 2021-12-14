@@ -693,13 +693,12 @@ SimTime_t Incoherent::sendResponseUp(MemEvent * event, vector<uint8_t> * data, b
         responseEvent->setSize(data->size());
     }
 
-    if (success)
-        responseEvent->setSuccess(true);
+    if (!success)
+        responseEvent->setFail();
 
     if (time < timestamp_) time = timestamp_;
     SimTime_t deliveryTime = time + (inMSHR ? mshrLatency_ : accessLatency_);
-    Response resp = {responseEvent, deliveryTime, packetHeaderBytes + responseEvent->getPayloadSize()};
-    addToOutgoingQueueUp(resp);
+    forwardByDestination(responseEvent, deliveryTime);
 
     if (is_debug_event(event))
         eventDI.action = "Respond";
@@ -710,7 +709,6 @@ SimTime_t Incoherent::sendResponseUp(MemEvent * event, vector<uint8_t> * data, b
 
 void Incoherent::sendWriteback(Command cmd, PrivateCacheLine * line, bool dirty) {
     MemEvent * writeback = new MemEvent(cachename_, line->getAddr(), line->getAddr(), cmd);
-    writeback->setDst(getDestination(line->getAddr()));
     writeback->setSize(lineSize_);
 
     uint64_t latency = tagLatency_;
@@ -726,16 +724,13 @@ void Incoherent::sendWriteback(Command cmd, PrivateCacheLine * line, bool dirty)
 
     uint64_t time = (timestamp_ > line->getTimestamp()) ? timestamp_ : line->getTimestamp();
     time += latency;
-    Response resp = {writeback, time, packetHeaderBytes + writeback->getPayloadSize()};
-    addToOutgoingQueue(resp);
+    forwardByAddress(writeback, time);
     line->setTimestamp(time-1);
 }
 
 
 void Incoherent::forwardFlush(MemEvent * event, bool evict, std::vector<uint8_t>* data, bool dirty, uint64_t time) {
     MemEvent * flush = new MemEvent(*event);
-    flush->setSrc(cachename_);
-    flush->setDst(getDestination(event->getBaseAddr()));
 
     uint64_t latency = tagLatency_;
     if (evict) {
@@ -748,8 +743,7 @@ void Incoherent::forwardFlush(MemEvent * event, bool evict, std::vector<uint8_t>
     }
 
     uint64_t sendTime = timestamp_ + latency;
-    Response resp = {flush, sendTime, packetHeaderBytes + flush->getPayloadSize()};
-    addToOutgoingQueue(resp);
+    forwardByAddress(flush, sendTime);
 
     if (is_debug_addr(event->getBaseAddr()))
         eventDI.action = "Forward";
@@ -758,15 +752,10 @@ void Incoherent::forwardFlush(MemEvent * event, bool evict, std::vector<uint8_t>
 
 void Incoherent::sendWritebackAck(MemEvent * event) {
     MemEvent * ack = event->makeResponse();
-    ack->setDst(event->getSrc());
-    ack->setRqstr(event->getSrc());
-    ack->setSize(event->getSize());
 
     uint64_t time = timestamp_ + tagLatency_;
-
-    Response resp = { ack, time, packetHeaderBytes };
-    addToOutgoingQueueUp(resp);
-
+    forwardByDestination(ack, time);
+    
     if (is_debug_event(event))
         eventDI.action = "Ack";
 }
@@ -774,14 +763,14 @@ void Incoherent::sendWritebackAck(MemEvent * event) {
 /*----------------------------------------------------------------------------------------------------------------------
  *  Override message send functions with versions that record statistics & call parent class
  *---------------------------------------------------------------------------------------------------------------------*/
-void Incoherent::addToOutgoingQueue(Response& resp) {
-    stat_eventSent[(int)resp.event->getCmd()]->addData(1);
-    CoherenceController::addToOutgoingQueue(resp);
+void Incoherent::forwardByAddress(MemEventBase* ev, Cycle_t timestamp) {
+    stat_eventSent[(int)ev->getCmd()]->addData(1);
+    CoherenceController::forwardByAddress(ev, timestamp);
 }
 
-void Incoherent::addToOutgoingQueueUp(Response& resp) {
-    stat_eventSent[(int)resp.event->getCmd()]->addData(1);
-    CoherenceController::addToOutgoingQueueUp(resp);
+void Incoherent::forwardByDestination(MemEventBase* ev, Cycle_t timestamp) {
+    stat_eventSent[(int)ev->getCmd()]->addData(1);
+    CoherenceController::forwardByDestination(ev, timestamp);
 }
 
 

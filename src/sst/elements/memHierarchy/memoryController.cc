@@ -96,6 +96,16 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         out.output("%s, ** Found deprecated parameter: direct_link ** The value of this parameter is now auto-detected by the link configuration in your input deck. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
     }
 
+    /* Clock Handler */
+    std::string clockfreq = params.find<std::string>("clock");
+    UnitAlgebra clock_ua(clockfreq);
+    if (!(clock_ua.hasUnits("Hz") || clock_ua.hasUnits("s")) || clock_ua.getRoundedValue() <= 0) {
+        out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: clock. Must have units of Hz or s and be > 0. (SI prefixes ok). You specified '%s'\n", getName().c_str(), clockfreq.c_str());
+    }
+    clockHandler_ = new Clock::Handler<MemController>(this, &MemController::clock);
+    clockTimeBase_ = registerClock(clockfreq, clockHandler_);
+    clockOn_ = true;
+
 
     string link_lat         = params.find<std::string>("direct_link_latency", "10 ns");
 
@@ -179,6 +189,14 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     gotRegion |= found;
     string ilStep = params.find<std::string>("interleave_step", "0B", found);
     gotRegion |= found;
+    
+    /* TODO remove this warning in SST 13 */
+    if (!gotRegion) {
+        out.output("%s, WARNING: Memories no longer inherit address regions from directories and no region parameters "
+                "(addr_range_start, addr_range_end, interleave_size, interleave_step) were detected. All addresses will map to "
+                "this memory: if this is intended, you may ignore this warning or set addr_range_start to 0 in your input deck "
+                "to eliminate this warning.\n", getName().c_str());
+    }
 
     // Ensure SI units are power-2 not power-10 - for backward compability
     fixByteUnits(ilSize);
@@ -199,14 +217,13 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     region_.interleaveSize = UnitAlgebra(ilSize).getRoundedValue();
     region_.interleaveStep = UnitAlgebra(ilStep).getRoundedValue();
 
-    link_ = loadUserSubComponent<MemLinkBase>("cpulink");
+    link_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, clockTimeBase_);
 
     if (!link_ && isPortConnected("direct_link")) {
         Params linkParams = params.get_scoped_params("cpulink");
         linkParams.insert("port", "direct_link");
         linkParams.insert("latency", link_lat, false);
-        linkParams.insert("accept_region", "1", false);
-        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams);
+        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams, clockTimeBase_);
     } else if (!link_) {
 
         if (!isPortConnected("network")) {
@@ -215,27 +232,23 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
         Params nicParams = params.get_scoped_params("memNIC");
         nicParams.insert("group", "4", false);
-        nicParams.insert("accept_region", "1", false);
 
         if (isPortConnected("network_ack") && isPortConnected("network_fwd") && isPortConnected("network_data")) {
             nicParams.insert("req.port", "network");
             nicParams.insert("ack.port", "network_ack");
             nicParams.insert("fwd.port", "network_fwd");
             nicParams.insert("data.port", "network_data");
-            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
+            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, clockTimeBase_);
         } else {
             nicParams.insert("port", "network");
-            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
+            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, clockTimeBase_);
         }
     }
 
     clockLink_ = link_->isClocked();
     link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent));
 
-    if (gotRegion) {
-        link_->setRegion(region_);
-    } else
-        region_ = link_->getRegion();
+    link_->setRegion(region_);
 
     adjustRegionToMemSize();
 
@@ -285,24 +298,18 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
             if (e == 1)
                 out.fatal(CALL_INFO, -1, "%s, Error - unable to open memory_file. You specified '%s'.\n", getName().c_str(), memoryFile.c_str());
             else if (e == 2) {
-                out.verbose(CALL_INFO, 1, 0, "%s, Could not MMAP backing store (likely, simulated memory exceeds real memory). Creating malloc based store instead.\n", getName().c_str());
-                backing_ = new Backend::BackingMalloc(sizeBytes);
+                if (memoryFile == "") {
+                    out.verbose(CALL_INFO, 1, 0, "%s, Could not MMAP backing store (likely, simulated memory exceeds real memory). Creating malloc based store instead.\n", getName().c_str());
+                    backing_ = new Backend::BackingMalloc(sizeBytes);
+                } else {
+                    out.fatal(CALL_INFO, -1, "%s, Error - Could not MMAP backing store from file %s\n", getName().c_str(), memoryFile.c_str());
+                }
             } else
                 out.fatal(CALL_INFO, -1, "%s, Error - unable to create backing store. Exception thrown is %d.\n", getName().c_str(), e);
         }
     } else if (backingType == "malloc") {
         backing_ = new Backend::BackingMalloc(sizeBytes);
     }
-
-    /* Clock Handler */
-    std::string clockfreq = params.find<std::string>("clock");
-    UnitAlgebra clock_ua(clockfreq);
-    if (!(clock_ua.hasUnits("Hz") || clock_ua.hasUnits("s")) || clock_ua.getRoundedValue() <= 0) {
-        out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: clock. Must have units of Hz or s and be > 0. (SI prefixes ok). You specified '%s'\n", getName().c_str(), clockfreq.c_str());
-    }
-    clockHandler_ = new Clock::Handler<MemController>(this, &MemController::clock);
-    clockTimeBase_ = registerClock(clockfreq, clockHandler_);
-    clockOn_ = true;
 
     /* Custom command handler */
     using std::placeholders::_3;
@@ -328,7 +335,8 @@ void MemController::handleEvent(SST::Event* event) {
     MemEventBase *meb = static_cast<MemEventBase*>(event);
 
     if (is_debug_event(meb)) {
-        Debug(_L3_, "\n%" PRIu64 " (%s) Received: %s\n", getCurrentSimTimeNano(), getName().c_str(), meb->getVerboseString().c_str());
+        Debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
+                    Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), meb->getVerboseString().c_str());
     }
 
     Command cmd = meb->getCmd();
@@ -387,6 +395,7 @@ void MemController::handleEvent(SST::Event* event) {
         case Command::GetS:
         case Command::GetX:
         case Command::GetSX:
+        case Command::Write:
             outstandingEvents_.insert(std::make_pair(ev->getID(), ev));
             memBackendConvertor_->handleMemEvent( ev );
             break;
@@ -468,7 +477,8 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
     outstandingEvents_.erase(it);
 
     if (is_debug_event(evb)) {
-        Debug(_L3_, "Memory Controller: %s - Response received to (%s)\n", getName().c_str(), evb->getVerboseString().c_str());
+        Debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Resp    (%s)\n",
+                    Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), evb->getVerboseString().c_str());
     }
 
     /* Handle custom events */
@@ -486,7 +496,7 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
     bool noncacheable  = ev->queryFlag(MemEvent::F_NONCACHEABLE);
 
     /* Write data. Here instead of receive to try to match backing access order to backend execute order */
-    if (backing_ && (ev->getCmd() == Command::PutM || (ev->getCmd() == Command::GetX && noncacheable)))
+    if (backing_ && (ev->getCmd() == Command::PutM || (ev->getCmd() == Command::Write)))
         writeData(ev);
 
     if (ev->queryFlag(MemEvent::F_NORESPONSE)) {
@@ -497,9 +507,9 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
     MemEvent * resp = ev->makeResponse();
 
     /* Read order matches execute order so that mis-ordering at backend can result in bad data */
-    if (resp->getCmd() == Command::GetSResp || (resp->getCmd() == Command::GetXResp && !noncacheable)) {
+    if (resp->getCmd() == Command::GetSResp || resp->getCmd() == Command::GetXResp) {
         readData(resp);
-        if (!noncacheable) resp->setCmd(Command::GetXResp);
+        if (!resp->queryFlag(MemEvent::F_NONCACHEABLE)) resp->setCmd(Command::GetXResp);
     }
 
     resp->setFlags(flags);
@@ -520,10 +530,10 @@ void MemController::init(unsigned int phase) {
 
     adjustRegionToMemSize();
 
-    /* Inherit region from our source(s) */
     if (!phase) {
         /* Announce our presence on link */
         link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), false));
+        link_->sendInitData(new MemEventInitEndpoint(getName().c_str(), Endpoint::Memory, region_, true));
     }
 
     while (MemEventInit *ev = link_->recvInitData()) {
@@ -534,7 +544,6 @@ void MemController::init(unsigned int phase) {
 void MemController::setup(void) {
     memBackendConvertor_->setup();
     link_->setup();
-
 }
 
 
@@ -553,16 +562,22 @@ void MemController::writeData(MemEvent* event) {
     Addr addr = noncacheable ? event->getAddr() : event->getBaseAddr();
 
     if (event->getCmd() == Command::PutM) { /* Write request to memory */
-        if (is_debug_event(event)) { Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); }
+        if (is_debug_event(event)) { 
+            Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
+            printDataValue(addr, &(event->getPayload()), true);
+        }
 
         backing_->set(addr, event->getSize(), event->getPayload());
 
         return;
     }
 
-    if (noncacheable && event->getCmd() == Command::GetX) {
-        if (is_debug_event(event)) { Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); }
-
+    if (event->getCmd() == Command::Write) {
+        if (is_debug_event(event)) { 
+            Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
+            printDataValue(addr, &(event->getPayload()), true);
+        }
+        
         backing_->set(addr, event->getSize(), event->getPayload());
 
         return;
@@ -578,8 +593,11 @@ void MemController::readData(MemEvent* event) {
     vector<uint8_t> payload;
     payload.resize(event->getSize(), 0);
 
-    if (backing_)
+    if (backing_) {
         backing_->get(localAddr, event->getSize(), payload);
+        if (is_debug_addr(localAddr))
+            printDataValue(localAddr, &(payload), false);
+    }
 
     event->setPayload(payload);
 }
@@ -589,8 +607,12 @@ void MemController::readData(MemEvent* event) {
 void MemController::writeData(Addr addr, std::vector<uint8_t> * data) {
     if (!backing_) return;
 
-    for (size_t i = 0; i < data->size(); i++)
+    for (size_t i = 0; i < data->size(); i++) {
         backing_->set(addr + i, data->at(i));
+    }
+
+    if (is_debug_addr(addr))
+        printDataValue(addr, data, true);
 }
 
 
@@ -601,6 +623,9 @@ void MemController::readData(Addr addr, size_t bytes, std::vector<uint8_t> &data
 
     for (size_t i = 0; i < bytes; i++)
         data[i] = backing_->get(addr + i);
+    
+    if (is_debug_addr(addr))
+        printDataValue(addr, &data, false);
 }
 
 
@@ -615,7 +640,10 @@ Addr MemController::translateToLocal(Addr addr) {
         Addr offset = shift % region_.interleaveStep;
         rAddr = (step * region_.interleaveSize) + offset + privateMemOffset_;
     }
-    if (is_debug_addr(addr)) { Debug(_L10_,"\tConverting global address 0x%" PRIx64 " to local address 0x%" PRIx64 "\n", addr, rAddr); }
+    if (is_debug_addr(addr) && addr != rAddr) { 
+        Debug(_L10_, "C: %-40" PRIu64 "  %-20s ConvertAddr   Local, 0x%" PRIx64 ", 0x%" PRIx64"\n",
+                    Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), addr, rAddr);
+    }
     return rAddr;
 }
 
@@ -630,17 +658,20 @@ Addr MemController::translateToGlobal(Addr addr) {
         rAddr = rAddr / region_.interleaveSize;
         rAddr = rAddr * region_.interleaveStep + offset + region_.start;
     }
-    if (is_debug_addr(rAddr)) { Debug(_L10_,"\tConverting local address 0x%" PRIx64 " to global address 0x%" PRIx64 "\n", addr, rAddr); }
+    if (is_debug_addr(rAddr) && addr != rAddr) { 
+        Debug(_L10_, "C: %-40" PRIu64 "  %-20s ConvertAddr   Global, 0x%" PRIx64 ", 0x%" PRIx64"\n",
+                    Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), addr, rAddr);
+    }
     return rAddr;
 }
 
 
 void MemController::processInitEvent( MemEventInit* me ) {
     /* Push data to memory */
-    if (Command::GetX == me->getCmd()) {
+    if (Command::Write == me->getCmd()) {
         me->setAddr(translateToLocal(me->getAddr()));
         Addr addr = me->getAddr();
-        if (is_debug_event(me)) { Debug(_L9_,"Memory init %s - Received GetX for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size()); }
+        if (is_debug_event(me)) { Debug(_L9_,"Memory init %s - Received Write for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size()); }
         if ( isRequestAddressValid(addr) && backing_ ) {
             backing_->set(addr, me->getPayload().size(), me->getPayload());
         }
@@ -661,8 +692,8 @@ void MemController::adjustRegionToMemSize() {
     // So, a mismatch is likely not an error, but alert the user in debug mode just in case
     // TODO deprecate mem_size & just use region? 
     uint64_t regSize = region_.end - region_.start;
-    if (regSize != ((uint64_t) - 1)) {  // The default is for region_.end = uint64_t -1, but then if we add one we wrap to 0...
-        regSize--;
+    if (regSize != region_.REGION_MAX) {  // The default is for region_.end = uint64_t -1, but then if we add one we wrap...
+        regSize++; // Since region_.end and region_.start are inclusive
     }
     if (region_.interleaveStep != 0) {
         uint64_t steps = regSize / region_.interleaveStep;
@@ -718,4 +749,19 @@ void MemController::emergencyShutdown() {
             link_->emergencyShutdownDebug(out);
         }
     }
+}
+
+void MemController::printDataValue(Addr addr, std::vector<uint8_t>* data, bool set) {
+    if (dbg.getVerboseLevel() < 11) return;
+
+    std::string action = set ? "WRITE" : "READ";
+    std::stringstream value;
+    value << std::hex << std::setfill('0');
+    for (unsigned int i = 0; i < data->size(); i++) {
+        value << std::hex << std::setw(2) << (int)data->at(i);
+    }
+    
+    dbg.debug(_L11_, "V: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 " B: %-3zu %s\n",
+            Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), action.c_str(), 
+            addr, data->size(), value.str().c_str());
 }

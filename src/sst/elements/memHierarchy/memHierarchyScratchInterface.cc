@@ -58,6 +58,12 @@ MemHierarchyScratchInterface::MemHierarchyScratchInterface(SST::ComponentId_t id
 
 void MemHierarchyScratchInterface::init(unsigned int phase) {
     if (!phase) {
+        MemRegion region;
+        region.start = 0;
+        region.end = (uint64_t) - 1;
+        region.interleaveStep = 0;
+        region.interleaveSize = 0;
+        link_->sendInitData(new MemEventInitRegion(getName(), region, false));
         // Name, NULLCMD, Endpoint type, inclusive of all upper levels, will send writeback acks, line size
         link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::CPU, false, false, 0, false));
     }
@@ -123,7 +129,7 @@ MemEvent * MemHierarchyScratchInterface::createMemEvent(SimpleMem::Request * req
 
     switch (req->cmd) {
         case SimpleMem::Request::Read :         cmd = Command::GetS;            break;
-        case SimpleMem::Request::Write :        cmd = Command::GetX;            break;
+        case SimpleMem::Request::Write :        cmd = Command::Write;           break;
         case SimpleMem::Request::FlushLine:     cmd = Command::FlushLine;       break;
         case SimpleMem::Request::FlushLineInv:  cmd = Command::FlushLineInv;    break;
         default: output.fatal(CALL_INFO, -1, "MemHierarchyScratchInterface received unknown command in createMemEvent\n");
@@ -140,7 +146,6 @@ MemEvent * MemHierarchyScratchInterface::createMemEvent(SimpleMem::Request * req
 
     me->setSize(req->size);
     me->setRqstr(rqstr_);
-    me->setSrc(rqstr_);
     me->setDst(rqstr_);
 
     if (SimpleMem::Request::Write == req->cmd) {
@@ -171,7 +176,6 @@ MoveEvent* MemHierarchyScratchInterface::createMoveEvent(SimpleMem::Request *req
     }
 
     me->setRqstr(rqstr_);
-    me->setSrc(rqstr_);
     me->setDst(rqstr_);
     me->setSize(req->size);
 
@@ -220,7 +224,7 @@ void MemHierarchyScratchInterface::updateRequest(SimpleMem::Request* req, MemEve
             req->data = static_cast<MemEvent*>(me)->getPayload();
             req->size  = req->data.size();
             break;
-        case Command::GetXResp:
+        case Command::WriteResp:
             req->cmd   = SimpleMem::Request::WriteResp;
             break;
         default:

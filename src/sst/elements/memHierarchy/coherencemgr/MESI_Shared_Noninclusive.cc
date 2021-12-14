@@ -653,6 +653,8 @@ bool MESISharNoninclusive::handlePutS(MemEvent * event, bool inMSHR) {
                 }
                 data = dataArray_->lookup(addr, true);
                 data->setData(event->getPayload(), 0);
+                if (is_debug_addr(addr))
+                    printDataValue(addr, &(event->getPayload()), true);
                 inMSHR = true;
             }
             if (!inMSHR || !mshr_->getProfiled(addr)) {
@@ -780,6 +782,8 @@ bool MESISharNoninclusive::handlePutE(MemEvent * event, bool inMSHR) {
                 }
                 data = dataArray_->lookup(addr, true);
                 data->setData(event->getPayload(), 0);
+                if (is_debug_addr(addr))
+                    printDataValue(addr, &(event->getPayload()), true);
                 inMSHR = true;
             }
             tag->removeOwner();
@@ -884,6 +888,8 @@ bool MESISharNoninclusive::handlePutM(MemEvent * event, bool inMSHR) {
                 }
                 data = dataArray_->lookup(addr, true);
                 data->setData(event->getPayload(), 0);
+                if (is_debug_addr(addr))
+                    printDataValue(addr, &(event->getPayload()), true);
                 inMSHR = true;
             } else if (!inMSHR || !mshr_->getProfiled(addr)) {
                 stat_eventState[(int)Command::PutM][state]->addData(1);
@@ -911,6 +917,8 @@ bool MESISharNoninclusive::handlePutM(MemEvent * event, bool inMSHR) {
                     stat_eventState[(int)Command::PutM][state]->addData(1);
                 }
                 data->setData(event->getPayload(), 0);
+                if (is_debug_addr(addr))
+                    printDataValue(addr, &(event->getPayload()), true);
                 sendWritebackAck(event);
                 cleanUpEvent(event, inMSHR);
             } else {
@@ -990,9 +998,11 @@ bool MESISharNoninclusive::handlePutX(MemEvent * event, bool inMSHR) {
             if (event->getDirty())
                 tag->setState(M);
 
-            if (data)
+            if (data) {
                 data->setData(event->getPayload(), 0);
-
+                if (is_debug_addr(addr))
+                    printDataValue(addr, &(event->getPayload()), true);
+            }
             cleanUpAfterRequest(event, inMSHR);
             break;
         case E_InvX:
@@ -1006,6 +1016,9 @@ bool MESISharNoninclusive::handlePutX(MemEvent * event, bool inMSHR) {
                 data->setData(event->getPayload(), 0);
             else
                 mshr_->setData(addr, event->getPayload());
+            
+            if (is_debug_addr(addr))
+                printDataValue(addr, &(event->getPayload()), true);
 
             mshr_->decrementAcksNeeded(addr);
 
@@ -1020,6 +1033,9 @@ bool MESISharNoninclusive::handlePutX(MemEvent * event, bool inMSHR) {
                 data->setData(event->getPayload(), 0);
             else
                 mshr_->setData(addr, event->getPayload());
+            
+            if (is_debug_addr(addr))
+                printDataValue(addr, &(event->getPayload()), true);
 
             cleanUpEvent(event, inMSHR);
             break;
@@ -1833,8 +1849,11 @@ bool MESISharNoninclusive::handleGetSResp(MemEvent * event, bool inMSHR) {
     stat_eventState[(int)Command::GetSResp][state]->addData(1);
 
     tag->setState(S);
-    if (data)
+    if (data) {
         data->setData(event->getPayload(), 0);
+        if (is_debug_addr(addr))
+            printDataValue(addr, &(event->getPayload()), true);
+    }
 
     if (localPrefetch) {
         tag->setPrefetch(true);
@@ -1875,8 +1894,11 @@ bool MESISharNoninclusive::handleGetXResp(MemEvent * event, bool inMSHR) {
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::GetXResp, localPrefetch, addr, state);
 
-    if (data)
+    if (data) {
         data->setData(event->getPayload(), 0);
+        if (is_debug_addr(addr))
+            printDataValue(addr, &(event->getPayload()), true);
+    }
 
     stat_eventState[(int)Command::GetXResp][state]->addData(1);
 
@@ -2024,6 +2046,9 @@ bool MESISharNoninclusive::handleFetchResp(MemEvent * event, bool inMSHR) {
         data->setData(event->getPayload(), 0);
     else
         mshr_->setData(addr, event->getPayload());
+    
+    if (is_debug_addr(addr))
+        printDataValue(addr, &(event->getPayload()), true);
 
     stat_eventState[(int)Command::FetchResp][state]->addData(1);
 
@@ -2125,6 +2150,9 @@ bool MESISharNoninclusive::handleFetchXResp(MemEvent * event, bool inMSHR) {
         data->setData(event->getPayload(), 0);
     else
         mshr_->setData(addr, event->getPayload());
+    
+    if (is_debug_addr(addr))
+        printDataValue(addr, &(event->getPayload()), true);
 
     // Clean up and retry
     retry(addr);
@@ -2765,18 +2793,17 @@ uint64_t MESISharNoninclusive::sendResponseUp(MemEvent * event, vector<uint8_t> 
         responseEvent->setPayload(*data);
         responseEvent->setSize(data->size()); // Return size that was written
         if (is_debug_event(event)) {
-            printData(data, false);
+            printDataValue(event->getBaseAddr(), data, false);
         }
     }
 
-    if (success)
-        responseEvent->setSuccess(true);
+    if (!success)
+        responseEvent->setFail();
 
     // Compute latency, accounting for serialization of requests to the address
     if (time < timestamp_) time = timestamp_;
     uint64_t deliveryTime = time + (inMSHR ? mshrLatency_ : accessLatency_);
-    Response resp = {responseEvent, deliveryTime, packetHeaderBytes + responseEvent->getPayloadSize()};
-    addToOutgoingQueueUp(resp);
+    forwardByDestination(responseEvent, deliveryTime);
 
     if (is_debug_event(event))
         eventDI.action = "Respond";
@@ -2797,8 +2824,7 @@ void MESISharNoninclusive::sendResponseDown(MemEvent * event, std::vector<uint8_
     responseEvent->setSize(lineSize_);
 
     uint64_t deliverTime = timestamp_ + (data ? accessLatency_ : tagLatency_);
-    Response resp = {responseEvent, deliverTime, packetHeaderBytes + responseEvent->getPayloadSize() };
-    addToOutgoingQueue(resp);
+    forwardByDestination(responseEvent, deliverTime);
 
     if (is_debug_event(event))
         eventDI.action = "Respond";
@@ -2807,9 +2833,6 @@ void MESISharNoninclusive::sendResponseDown(MemEvent * event, std::vector<uint8_
 
 uint64_t MESISharNoninclusive::forwardFlush(MemEvent * event, bool evict, std::vector<uint8_t>* data, bool dirty, uint64_t time) {
     MemEvent * flush = new MemEvent(*event);
-
-    flush->setSrc(cachename_);
-    flush->setDst(getDestination(event->getBaseAddr()));
 
     uint64_t latency = tagLatency_;
     if (evict) {
@@ -2824,8 +2847,7 @@ uint64_t MESISharNoninclusive::forwardFlush(MemEvent * event, bool evict, std::v
 
     uint64_t baseTime = (time > timestamp_) ? time : timestamp_;
     uint64_t deliveryTime = baseTime + latency;
-    Response resp = {flush, deliveryTime, packetHeaderBytes + flush->getPayloadSize()};
-    addToOutgoingQueue(resp);
+    forwardByAddress(flush, deliveryTime);
 
     if (is_debug_event(event))
         eventDI.action = "Forward";
@@ -2847,7 +2869,6 @@ uint64_t MESISharNoninclusive::forwardFlush(MemEvent * event, bool evict, std::v
  */
 void MESISharNoninclusive::sendWritebackFromCache(Command cmd, DirectoryLine* tag, DataLine* data, bool dirty) {
     MemEvent* writeback = new MemEvent(cachename_, tag->getAddr(), tag->getAddr(), cmd);
-    writeback->setDst(getDestination(tag->getAddr()));
     writeback->setSize(lineSize_);
 
     uint64_t latency = tagLatency_;
@@ -2858,7 +2879,7 @@ void MESISharNoninclusive::sendWritebackFromCache(Command cmd, DirectoryLine* ta
         writeback->setDirty(dirty);
 
         if (is_debug_addr(tag->getAddr())) {
-            printData(data->getData(), false);
+            printDataValue(tag->getAddr(), data->getData(), false);
         }
 
         latency = accessLatency_;
@@ -2868,15 +2889,13 @@ void MESISharNoninclusive::sendWritebackFromCache(Command cmd, DirectoryLine* ta
 
     uint64_t baseTime = (timestamp_ > tag->getTimestamp()) ? timestamp_ : tag->getTimestamp();
     uint64_t deliveryTime = baseTime + latency;
-    Response resp = {writeback, deliveryTime, packetHeaderBytes + writeback->getPayloadSize()};
-    addToOutgoingQueue(resp);
+    forwardByAddress(writeback, deliveryTime);
     tag->setTimestamp(deliveryTime-1);
 
 }
 
 void MESISharNoninclusive::sendWritebackFromMSHR(Command cmd, DirectoryLine* tag, bool dirty) {
     MemEvent* writeback = new MemEvent(cachename_, tag->getAddr(), tag->getAddr(), cmd);
-    writeback->setDst(getDestination(tag->getAddr()));
     writeback->setSize(lineSize_);
 
     uint64_t latency = tagLatency_;
@@ -2887,7 +2906,7 @@ void MESISharNoninclusive::sendWritebackFromMSHR(Command cmd, DirectoryLine* tag
         writeback->setDirty(dirty);
 
         if (is_debug_addr(tag->getAddr())) {
-            printData(&(mshr_->getData(tag->getAddr())), false);
+            printDataValue(tag->getAddr(), &(mshr_->getData(tag->getAddr())), false);
         }
 
         latency = accessLatency_;
@@ -2897,8 +2916,7 @@ void MESISharNoninclusive::sendWritebackFromMSHR(Command cmd, DirectoryLine* tag
 
     uint64_t baseTime = (timestamp_ > tag->getTimestamp()) ? timestamp_ : tag->getTimestamp();
     uint64_t deliveryTime = baseTime + latency;
-    Response resp = {writeback, deliveryTime, packetHeaderBytes + writeback->getPayloadSize()};
-    addToOutgoingQueue(resp);
+    forwardByAddress(writeback, deliveryTime);
     tag->setTimestamp(deliveryTime-1);
 
 }
@@ -2906,14 +2924,9 @@ void MESISharNoninclusive::sendWritebackFromMSHR(Command cmd, DirectoryLine* tag
 
 void MESISharNoninclusive::sendWritebackAck(MemEvent * event) {
     MemEvent * ack = event->makeResponse();
-    ack->setDst(event->getSrc());
-    ack->setRqstr(event->getSrc());
-    ack->setSize(event->getSize());
 
     uint64_t deliveryTime = timestamp_ + tagLatency_;
-
-    Response resp = {ack, deliveryTime, packetHeaderBytes};
-    addToOutgoingQueueUp(resp);
+    forwardByDestination(ack, deliveryTime);
 
     if (is_debug_event(event))
         eventDI.action = "Ack";
@@ -2938,8 +2951,7 @@ uint64_t MESISharNoninclusive::sendFetch(Command cmd, MemEvent * event, std::str
 
     uint64_t baseTime = timestamp_ > ts ? timestamp_ : ts;
     uint64_t deliveryTime = (inMSHR) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
-    Response resp = {fetch, deliveryTime, packetHeaderBytes};
-    addToOutgoingQueueUp(resp);
+    forwardByDestination(fetch, deliveryTime);
 
     if (is_debug_addr(event->getBaseAddr())) {
         eventDI.action = "Stall";
@@ -3033,8 +3045,7 @@ uint64_t MESISharNoninclusive::invalidateSharer(std::string shr, MemEvent * even
 
         uint64_t baseTime = timestamp_ > tag->getTimestamp() ? timestamp_ : tag->getTimestamp();
         uint64_t deliveryTime = (inMSHR) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
-        Response resp = {inv, deliveryTime, packetHeaderBytes};
-        addToOutgoingQueueUp(resp);
+        forwardByDestination(inv, deliveryTime);
 
         mshr_->incrementAcksNeeded(addr);
 
@@ -3077,8 +3088,7 @@ bool MESISharNoninclusive::invalidateOwner(MemEvent * metaEvent, DirectoryLine *
 
     uint64_t baseTime = timestamp_ > tag->getTimestamp() ? timestamp_ : tag->getTimestamp();
     uint64_t deliveryTime = (inMSHR) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
-    Response resp = {inv, deliveryTime, packetHeaderBytes};
-    addToOutgoingQueueUp(resp);
+    forwardByDestination(inv, deliveryTime);
     tag->setTimestamp(deliveryTime);
 
     return true;
@@ -3110,14 +3120,14 @@ bool MESISharNoninclusive::applyPendingReplacement(Addr addr) {
 /*----------------------------------------------------------------------------------------------------------------------
  *  Override message send functions with versions that record statistics & call parent class
  *---------------------------------------------------------------------------------------------------------------------*/
-void MESISharNoninclusive::addToOutgoingQueue(Response& resp) {
-    stat_eventSent[(int)resp.event->getCmd()]->addData(1);
-    CoherenceController::addToOutgoingQueue(resp);
+void MESISharNoninclusive::forwardByAddress(MemEventBase* ev, Cycle_t timestamp) {
+    stat_eventSent[(int)ev->getCmd()]->addData(1);
+    CoherenceController::forwardByAddress(ev, timestamp);
 }
 
-void MESISharNoninclusive::addToOutgoingQueueUp(Response& resp) {
-    stat_eventSent[(int)resp.event->getCmd()]->addData(1);
-    CoherenceController::addToOutgoingQueueUp(resp);
+void MESISharNoninclusive::forwardByDestination(MemEventBase* ev, Cycle_t timestamp) {
+    stat_eventSent[(int)ev->getCmd()]->addData(1);
+    CoherenceController::forwardByDestination(ev, timestamp);
 }
 
 /********************
@@ -3141,10 +3151,13 @@ void MESISharNoninclusive::removeSharerViaInv(MemEvent * event, DirectoryLine * 
 void MESISharNoninclusive::removeOwnerViaInv(MemEvent * event, DirectoryLine * tag, DataLine * data, bool remove) {
     Addr addr = event->getBaseAddr();
     tag->removeOwner();
-    if (data)
+    if (data) 
         data->setData(event->getPayload(), 0);
     else
         mshr_->setData(addr, event->getPayload());
+    
+    if (is_debug_addr(addr))
+        printDataValue(addr, &(event->getPayload()), true);
 
     if (event->getDirty()) {
         if (tag->getState() == E)
@@ -3187,16 +3200,6 @@ void MESISharNoninclusive::printLine(Addr addr) {
                     addr, data->getIndex(), data->getAddr(), tag->getIndex(), tag->getAddr());
         }
     }
-}
-
-void MESISharNoninclusive::printData(vector<uint8_t> * data, bool set) {
-/*    if (set)    printf("Setting data (%zu): 0x", data->size());
-    else        printf("Getting data (%zu): 0x", data->size());
-
-    for (unsigned int i = 0; i < data->size(); i++) {
-        printf("%02x", data->at(i));
-    }
-    printf("\n");*/
 }
 
 

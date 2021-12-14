@@ -22,10 +22,6 @@
 #include <sst/core/params.h>
 #include <sst/elements/VaultSimC/memReqEvent.h>
 
-#if HAVE_LIBPHX == 1
-#include "Globals.h"
-#endif
-
 #include <vaultGlobals.h>
 
 //typedef  VaultCompleteFn;
@@ -63,24 +59,6 @@ VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
         vaultID = vid;
     }
 
-
-#if HAVE_LIBPHX == 1
-    registerClock( frequency,
-                   new Clock::Handler<VaultSimC>(this, &VaultSimC::clock_phx) );
-
-    // Phx Library configuratoin
-    m_memorySystem = new Vault(vaultID);
-    if ( ! m_memorySystem ) {
-        dbg.fatal(CALL_INFO, -1,"MemorySystem() failed\n");
-    }
-
-    PHXSim::VaultCompleteCB* readDataCB = new PHXSim::Callback< VaultSimC, void, BusPacket, unsigned > (this, &VaultSimC::readData);
-    PHXSim::VaultCompleteCB* writeDataCB = new PHXSim::Callback< VaultSimC, void, BusPacket, unsigned > (this, &VaultSimC::writeData);
-
-    //printf("made vault %u\n", vaultID);
-
-    m_memorySystem->RegisterCallback(readDataCB, writeDataCB);
-#else
     // Configuration if we're not using Phx Library
 
     registerClock( frequency,
@@ -89,7 +67,6 @@ VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
     std::string delay = "40ns";
     delay = params.find<std::string>("delay", "40ns");
     delayLine = configureSelfLink( "delayLine", delay);
-#endif /* HAVE_LIBPHX */
 
     // setup backing store
     size_t memSize = MEMSIZE;
@@ -136,122 +113,6 @@ void VaultSimC::init(unsigned int phase)
     }
 }
 
-#if HAVE_LIBPHX == 1
-void VaultSimC::readData(BusPacket bp, unsigned clockcycle)
-{
-    //printf(" readData() id=%d addr=%#lx clock=%lu\n",bp.transactionID,bp.physicalAddress,clockcycle);
-
-#ifdef STUPID_DEBUG
-    static unsigned long reads_returned=0;
-    reads_returned++;
-    printf("read %lu: id=%d addr=%#lx clock=%lu\n",reads_returned,bp.transactionID,bp.physicalAddress,clockcycle);
-#endif
-
-    t2MEMap_t::iterator mi = transactionToMemEventMap.find(bp.transactionID);
-    if (mi == transactionToMemEventMap.end()) {
-        dbg.fatal(CALL_INFO, -1, "can't find transaction\n");
-    }
-    MemEvent *parentEvent = mi->second;
-    MemEvent *event = parentEvent->makeResponse(this);
-    //printf("Burst length is %d. is that 64?: %s %d\n",bp.burstLength, __FILE__, __LINE__);
-    //assert(bp.burstLength == parentEvent->getSize());
-
-    // copy data from backing store to event
-    //event->setSize(bp.burstLength);
-    for ( size_t i = 0 ; i < event->getSize() ; i++ ) {
-        //event->getPayload()[i] = memBuffer[getInternalAddress(bp.physicalAddress + i)];
-    }
-    m_memChan->send(event);
-    delete parentEvent;
-    transactionToMemEventMap.erase(mi);
-}
-
-void VaultSimC::writeData(BusPacket bp, unsigned clockcycle)
-{
-    dbg.output(CALL_INFO, "id=%d addr=%p clock=%u\n", bp.transactionID,
-               (void*)bp.physicalAddress, clockcycle);
-#ifdef STUPID_DEBUG
-    static unsigned long writes_returned=0;
-    writes_returned++;
-    dbg.output(CALL_INFO, "write %lu: id=%d addr=%#lx clock=%lu\n",
-               writes_returned, bp.transactionID, bp.physicalAddress, clockcycle);
-#endif
-
-
-    // create response
-    t2MEMap_t::iterator mi = transactionToMemEventMap.find(bp.transactionID);
-    if (mi == transactionToMemEventMap.end()) {
-        dbg.fatal(CALL_INFO, -1, "can't find transaction\n");
-    }
-    MemEvent *parentEvent = mi->second;
-    MemEvent *event = parentEvent->makeResponse(this);
-    //printf("Burst length is %d. is that 64?: %s %d\n",bp.burstLength, __FILE__, __LINE__);
-    //assert(bp.burstLength == parentEvent->getSize());
-
-    // write the data to the backing store
-    for ( size_t i = 0 ; i < bp.burstLength ; i++ ) {
-        //memBuffer[getInternalAddress(bp.physicalAddress + i)] = parentEvent->getPayload()[i];
-    }
-
-    // send event
-    m_memChan->send(event);
-    // delete old event
-    delete parentEvent;
-    transactionToMemEventMap.erase(mi);
-}
-
-bool VaultSimC::clock_phx( Cycle_t current ) {
-
-    m_memorySystem->Update();
-
-    SST::Event *e = 0;
-    while ((e = m_memChan->recv())) {
-        // process incoming events
-        MemEvent *event  = dynamic_cast<MemEvent*>(e);
-        if (event == NULL) {
-            dbg.fatal(CALL_INFO, -1, "vault got bad event\n");
-        }
-
-        dbg.output(CALL_INFO, " Vault %d got a req for %p (%lld %d)\n",
-                   vaultID, (void*)event->getAddr(), event->getID().first,
-                   event->getID().second);
-
-        TransactionType transType = convertType( event->getCmd() );
-        dbg.output(CALL_INFO, "transType=%d addr=%p\n", transType,
-                   (void*)event->getAddr() );
-        static unsigned id=0;
-        unsigned thisTransactionID = id++;
-
-        // save the memEvent eventID so we can respond to it correctly
-        transactionToMemEventMap[thisTransactionID] = event;
-
-        // add to the Q
-        m_transQ.push_back( Transaction( transType, 64, event->getAddr(),
-                                         thisTransactionID));
-    }
-
-    int ret = 1;
-    while ( ! m_transQ.empty() && ret ) {
-        // send events off for processing
-        if (  ( ret = m_memorySystem->AddTransaction( m_transQ.front() ) ) ) {
-            dbg.output(CALL_INFO, " addTransaction succeeded %p\n",
-                       (void*)m_transQ.front().address);
-            m_transQ.pop_front();
-        } else {
-            //dbg.fatal(CALL_INFO, -1, "addTransaction failed\n");
-            dbg.output(CALL_INFO, " addTransaction failed\n");
-            ret = 0;
-        }
-    }
-
-
-    memOutStat->addData(transactionToMemEventMap.size());
-    return false;
-}
-#else
-
-// without PHX library ...
-
 bool VaultSimC::clock( Cycle_t current ) {
     SST::Event *e = 0;
     while (NULL != (e = m_memChan->recv())) {
@@ -284,7 +145,5 @@ bool VaultSimC::clock( Cycle_t current ) {
     memOutStat->addData(numOutstanding);
     return false;
 }
-
-#endif /* HAVE_LIBPHX */
 
 

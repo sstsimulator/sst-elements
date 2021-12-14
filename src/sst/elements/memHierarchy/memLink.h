@@ -48,7 +48,7 @@ public:
 
     /* Define params, inherit from base class */
 #define MEMLINK_ELI_PARAMS MEMLINKBASE_ELI_PARAMS, \
-    { "latency",            "(string) Link latency. Prefix 'cpulink' for up-link towards CPU or 'memlink' for down-link towards memory", "50ps"},\
+    { "latency",            "(string) Additional link latency.", "0ps"},\
     { "port",               "(string) Set by parent component. Name of port this memLink sits on.", "port"}
 
     SST_ELI_DOCUMENT_PARAMS( { MEMLINK_ELI_PARAMS }  )
@@ -87,13 +87,14 @@ public:
     };
 
     /* Constructor */
-    MemLink(ComponentId_t id, Params &params);
+    MemLink(ComponentId_t id, Params &params, TimeConverter* tc);
 
     /* Destructor */
     virtual ~MemLink() { }
 
     /* Initialization functions for parent */
     virtual void init(unsigned int phase);
+    virtual void setup();
 
     /* Remote endpoint info management */
     virtual std::set<EndpointInfo>* getSources();
@@ -101,9 +102,11 @@ public:
     virtual bool isDest(std::string UNUSED(str));
     virtual bool isSource(std::string UNUSED(str));
     virtual std::string findTargetDestination(Addr addr);
+    virtual std::string getTargetDestination(Addr addr);
+    virtual bool isReachable(std::string dst);
 
     /* Send and receive functions for MemLink */
-    virtual void sendInitData(MemEventInit * ev);
+    virtual void sendInitData(MemEventInit * ev, bool broadcast = true);
     virtual MemEventInit* recvInitData();
     virtual void send(MemEventBase * ev);
     virtual MemEventBase * recv();
@@ -112,15 +115,22 @@ public:
     virtual void printStatus(Output &out) {
         out.output("  MemHierarchy::MemLink: No status given\n");
     }
+    virtual std::string getAvailableDestinationsAsString();
 
 protected:
     void addRemote(EndpointInfo info);
+    void addEndpoint(EndpointInfo info);
 
     // Link
     SST::Link* link;
 
     // Data structures
-    std::set<EndpointInfo> remotes;
+    std::set<EndpointInfo> remotes;             // Tracks remotes immediately accessible on the other side of our link
+    std::set<EndpointInfo> endpoints;           // Tracks endpoints in the system with info on how to get there
+    std::set<std::string> remoteNames;          // Tracks remote names for faster lookup than iteratinv via remotes
+    
+    // For events that require destination names during init
+    std::set<MemEventInit*> initSendQ;
 
 private:
 

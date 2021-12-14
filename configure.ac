@@ -3,7 +3,7 @@
 #
 
 # Set Version of SST Elements Library
-AC_INIT([SST Elements Library], [-dev], [sst@sandia.gov])
+AC_INIT([SST Elements Library],[-dev],[sst@sandia.gov])
 
 AC_PREREQ([2.59])
 AC_COPYRIGHT([Copyright Sandia National Laboratories, 2004-2021])
@@ -15,13 +15,13 @@ AM_INIT_AUTOMAKE([1.9.6 foreign dist-bzip2 subdir-objects no-define tar-pax])
 # If Automake supports silent rules, enable them.
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
-AC_CONFIG_HEADER([src/sst_element_config.h])
+AC_CONFIG_HEADERS([src/sst_element_config.h])
 
 m4_include([config/sst_elements_include.m4])
 
 AC_PROG_CC
 AM_PROG_CC_C_O
-AC_PROG_CC_C99
+m4_if(m4_defn([AC_AUTOCONF_VERSION]), 2.71,, m4_defn([AC_AUTOCONF_VERSION]), 2.70,, [AC_PROG_CC_C99])
 AC_C_INLINE
 AC_PROG_MAKE_SET
 
@@ -32,13 +32,11 @@ AC_PROG_CPP
 AC_CANONICAL_HOST
 
 AC_CACHE_SAVE
-AC_HEADER_TIME
 
 LT_CONFIG_LTDL_DIR([src/libltdl])
 LT_INIT([shared disable-static dlopen])
 LTDL_INIT([recursive])
 
-AC_HEADER_TIME
 AC_CACHE_SAVE
 
 SST_CORE_CHECK_INSTALL()

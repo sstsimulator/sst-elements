@@ -56,6 +56,7 @@ public:
      *********************************************************************************/
     virtual bool handleNULLCMD(MemEvent * event, bool inMSHR);
     virtual bool handleGetS(MemEvent * event, bool inMSHR);
+    virtual bool handleWrite(MemEvent * event, bool inMSHR);
     virtual bool handleGetX(MemEvent * event, bool inMSHR);
     virtual bool handleGetSX(MemEvent * event, bool inMSHR);
     virtual bool handlePutS(MemEvent * event, bool inMSHR);
@@ -71,6 +72,7 @@ public:
     virtual bool handleForceInv(MemEvent * event, bool inMSHR);
     virtual bool handleGetSResp(MemEvent * event, bool inMSHR);
     virtual bool handleGetXResp(MemEvent * event, bool inMSHR);
+    virtual bool handleWriteResp(MemEvent * event, bool inMSHR);
     virtual bool handleFlushLineResp(MemEvent * event, bool inMSHR);
     virtual bool handleAckPut(MemEvent * event, bool inMSHR);
     virtual bool handleAckInv(MemEvent * event, bool inMSHR);
@@ -86,12 +88,14 @@ public:
     /* Send commands when their timestamp expires. Return whether queue is empty or not */
     virtual bool sendOutgoingEvents();
 
-    /* Forward an event towards memory. Return expected send time */
-    uint64_t forwardTowardsMem(MemEventBase * event);
+    /* Forward an event using memory address to locate a destination. */
+    virtual void forwardByAddress(MemEventBase * event);                // Send time will be 1 + timestamp_
+    virtual void forwardByAddress(MemEventBase * event, Cycle_t ts);    // ts specifies the send time
 
-    /* Forward an event towards processor. Return expected send time */
-    uint64_t forwardTowardsCPU(MemEventBase * event, std::string dst);
-
+    /* Forward an event towards a specific destination. */
+    virtual void forwardByDestination(MemEventBase * event);             // Send time will be 1 + timestamp_
+    virtual void forwardByDestination(MemEventBase * event, Cycle_t ts); // ts specifies the send time
+    
     /* Send a NACK event */
     void sendNACK(MemEvent * event);
 
@@ -188,7 +192,7 @@ protected:
     virtual void notifyListenerOfEvict(Addr addr, uint32_t size, uint64_t ip);
 
     /* Forward a message to a lower memory level (towards memory) */
-    uint64_t forwardMessage(MemEvent * event, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data);
+    uint64_t forwardMessage(MemEvent * event, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data, Command fwdCmd = Command::LAST_CMD);
 
     /* Insert event into MSHR */
     MemEventStatus allocateMSHR(MemEvent * event, bool fwdReq, int pos = -1, bool stallEvict = false);
@@ -231,6 +235,7 @@ protected:
 
     virtual void printDebugInfo(dbgin * diStruct);
     virtual void printDebugAlloc(bool alloc, Addr addr, std::string note);
+    virtual void printDataValue(Addr addr, vector<uint8_t> * data, bool set);
 
     /* Initialization */
     ReplacementPolicy * createReplacementPolicy(uint64_t lines, uint64_t assoc, Params& params, bool L1, int slotnum = 0);
@@ -303,17 +308,17 @@ protected:
     /* Add a new event to the outgoing command queue towards the CPU */
     virtual void addToOutgoingQueueUp(Response& resp);
 
-    virtual uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic = false);
-    virtual uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic = false);
-    virtual uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool dirty, bool replay, uint64_t baseTime, bool atomic = false);
-
-    std::string getDestination(Addr addr) { return linkDown_->findTargetDestination(addr); }
+    virtual uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool success = true);
+    virtual uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool success = true);
+    virtual uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool dirty, bool replay, uint64_t baseTime, bool success = true);
 
     std::string getSrc();
 
+    std::set<std::string> cpus; // If connected to CPUs or other endpoints (e.g., accelerator), list of CPU names in case we need to broadcast something
+
 private:
     /* Outgoing event queues - events are stalled here to account for access latencies */
-    list<Response> outgoingEventQueue_;
+    list<Response> outgoingEventQueueDown_;
     list<Response> outgoingEventQueueUp_;
 
     MemLinkBase * linkUp_;

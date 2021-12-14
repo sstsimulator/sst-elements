@@ -4,16 +4,17 @@
 0:cpu:RequestGenCPU[RequestGenCPU:55]: CPU clock configured for 2GHz
 0:cpu:RequestGenCPU[RequestGenCPU:60]: Memory interface to be loaded is: memHierarchy.memInterface
 0:cpu:RequestGenCPU[RequestGenCPU:73]: Loaded memory interface successfully.
-0:cpu:RequestGenCPU[RequestGenCPU:107]: Generator loaded successfully.
-0:cpu:RequestGenCPU[RequestGenCPU:163]: Miranda CPU Configuration:
-0:cpu:RequestGenCPU[RequestGenCPU:164]: - Max requests per cycle:         2
-0:cpu:RequestGenCPU[RequestGenCPU:165]: - Max reorder lookups             16
-0:cpu:RequestGenCPU[RequestGenCPU:166]: - Clock:                          2GHz
-0:cpu:RequestGenCPU[RequestGenCPU:167]: - Cache line size:                64 bytes
-0:cpu:RequestGenCPU[RequestGenCPU:168]: - Max Load requests pending:      16
-0:cpu:RequestGenCPU[RequestGenCPU:169]: - Max Store requests pending:     16
-0:cpu:RequestGenCPU[RequestGenCPU:170]: - Max Custom requests pending:     16
-0:cpu:RequestGenCPU[RequestGenCPU:171]: Configuration completed.
+0:cpu:RequestGenCPU[RequestGenCPU:101]: Generator loaded successfully.
+0:cpu:RequestGenCPU[RequestGenCPU:157]: Miranda CPU Configuration:
+0:cpu:RequestGenCPU[RequestGenCPU:158]: - Max requests per cycle:         2
+0:cpu:RequestGenCPU[RequestGenCPU:159]: - Max reorder lookups             16
+0:cpu:RequestGenCPU[RequestGenCPU:160]: - Clock:                          2GHz
+0:cpu:RequestGenCPU[RequestGenCPU:161]: - Cache line size:                64 bytes
+0:cpu:RequestGenCPU[RequestGenCPU:162]: - Max Load requests pending:      16
+0:cpu:RequestGenCPU[RequestGenCPU:163]: - Max Store requests pending:     16
+0:cpu:RequestGenCPU[RequestGenCPU:164]: - Max Custom requests pending:     16
+0:cpu:RequestGenCPU[RequestGenCPU:165]: Configuration completed.
+memory, WARNING: Memories no longer inherit address regions from directories and no region parameters (addr_range_start, addr_range_end, interleave_size, interleave_step) were detected. All addresses will map to this memory: if this is intended, you may ignore this warning or set addr_range_start to 0 in your input deck to eliminate this warning.
 Initialized with 1 cores
 Before initialization 
 Assigning the PTW correctly
@@ -102,6 +103,7 @@ After initialization
  l1cache.eventSent_GetS : Accumulator : Sum.u64 = 14891; SumSQ.u64 = 14891; Count.u64 = 14891; Min.u64 = 1; Max.u64 = 1; 
  l1cache.eventSent_GetX : Accumulator : Sum.u64 = 62; SumSQ.u64 = 62; Count.u64 = 62; Min.u64 = 1; Max.u64 = 1; 
  l1cache.eventSent_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.eventSent_Write : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_PutM : Accumulator : Sum.u64 = 9909; SumSQ.u64 = 9909; Count.u64 = 9909; Min.u64 = 1; Max.u64 = 1; 
  l1cache.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_FlushLine : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -110,7 +112,8 @@ After initialization
  l1cache.eventSent_FetchXResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_AckInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_GetSResp : Accumulator : Sum.u64 = 10000; SumSQ.u64 = 10000; Count.u64 = 10000; Min.u64 = 1; Max.u64 = 1; 
- l1cache.eventSent_GetXResp : Accumulator : Sum.u64 = 10000; SumSQ.u64 = 10000; Count.u64 = 10000; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.eventSent_GetXResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.eventSent_WriteResp : Accumulator : Sum.u64 = 10000; SumSQ.u64 = 10000; Count.u64 = 10000; Min.u64 = 1; Max.u64 = 1; 
  l1cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_Put : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_Get : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -126,8 +129,8 @@ After initialization
  l1cache.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.latency_GetS_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.latency_GetS_miss : Accumulator : Sum.u64 = 1096062; SumSQ.u64 = 120159004; Count.u64 = 10000; Min.u64 = 107; Max.u64 = 116; 
+ l1cache.latency_GetS_hit : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.latency_GetS_miss : Accumulator : Sum.u64 = 1620526; SumSQ.u64 = 176433938; Count.u64 = 14889; Min.u64 = 105; Max.u64 = 116; 
  l1cache.latency_GetX_hit : Accumulator : Sum.u64 = 29814; SumSQ.u64 = 89442; Count.u64 = 9938; Min.u64 = 3; Max.u64 = 3; 
  l1cache.latency_GetX_miss : Accumulator : Sum.u64 = 6749; SumSQ.u64 = 735297; Count.u64 = 62; Min.u64 = 107; Max.u64 = 132; 
  l1cache.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -172,17 +175,18 @@ After initialization
  l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 34951; SumSQ.u64 = 34951; Count.u64 = 34951; Min.u64 = 1; Max.u64 = 1; 
  l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; Min.u64 = 1; Max.u64 = 1; 
  l1cache.GetS_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.GetX_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.Write_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.GetSX_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.GetSResp_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.GetXResp_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.WriteResp_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.CustomReq_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.CustomResp_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.CustomAck_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.NULLCMD_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.GetS_recv : Accumulator : Sum.u64 = 14893; SumSQ.u64 = 14893; Count.u64 = 14893; Min.u64 = 1; Max.u64 = 1; 
- l1cache.GetX_recv : Accumulator : Sum.u64 = 10000; SumSQ.u64 = 10000; Count.u64 = 10000; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.GetX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.GetSX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.Write_recv : Accumulator : Sum.u64 = 10000; SumSQ.u64 = 10000; Count.u64 = 10000; Min.u64 = 1; Max.u64 = 1; 
  l1cache.FlushLine_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.FlushLineInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.GetSResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

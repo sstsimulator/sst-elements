@@ -51,7 +51,12 @@ void Cache::handleEvent(SST::Event * ev) {
     } else {
         statCacheRecv[(int)event->getCmd()]->addData(1);
     }
-
+    if (is_debug_event((event))) {
+        dbg_->debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Recv    (%s)\n",
+                Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, getName().c_str(), event->getVerboseString().c_str());
+        fflush(stdout);
+    }
+    
     eventBuffer_.push_back(event);
 }
 
@@ -75,6 +80,9 @@ void Cache::processPrefetchEvent(SST::Event * ev) {
     if (!clockIsOn_) {
         turnClockOn();
     }
+
+    // Record the time at which requests arrive for latency statistics
+    coherenceMgr_->recordIncomingRequest(event);
 
     // Record received prefetch
     statPrefetchRequest->addData(1);
@@ -168,6 +176,7 @@ bool Cache::clockTick(Cycle_t time) {
             // Accepted prefetches are profiled in the coherence manager
         } else {
             statPrefetchDrop->addData(1);
+            coherenceMgr_->removeRequestRecord(prefetchBuffer_.front()->getID());
         }
         prefetchBuffer_.pop();
     }
@@ -197,11 +206,12 @@ void Cache::turnClockOn() {
     for (int64_t i = 0; i < cyclesOff; i++) {           // TODO more efficient way to do this? Don't want to add in one-shot or we get weird averages/sum sq.
         statMSHROccupancy->addData(mshr_->getSize());
     }
-    //d_->debug(_L3_, "%s turning clock ON at cycle %" PRIu64 ", timestamp %" PRIu64 ", ns %" PRIu64 "\n", this->getName().c_str(), time, timestamp_, getCurrentSimTimeNano());
+    //dbg_->debug(_L3_, "%s turning clock ON at cycle %" PRIu64 ", timestamp %" PRIu64 ", ns %" PRIu64 "\n", this->getName().c_str(), getCurrentSimCycle(), timestamp_, getCurrentSimTimeNano());
     clockIsOn_ = true;
 }
 
 void Cache::turnClockOff() {
+    //dbg_->debug(_L3_, "%s turning clock OFF at cycle %" PRIu64 ", timestamp %" PRIu64 ", ns %" PRIu64 "\n", this->getName().c_str(), getCurrentSimCycle(), timestamp_, getCurrentSimTimeNano());
     clockIsOn_ = false;
     lastActiveClockCycle_ = timestamp_;
 }
@@ -257,6 +267,9 @@ bool Cache::processEvent(MemEventBase* ev, bool inMSHR) {
         case Command::GetX:
             accepted = coherenceMgr_->handleGetX(event, inMSHR);
             break;
+        case Command::Write:
+            accepted = coherenceMgr_->handleWrite(event, inMSHR);
+            break;
         case Command::GetSX:
             accepted = coherenceMgr_->handleGetSX(event, inMSHR);
             break;
@@ -268,6 +281,9 @@ bool Cache::processEvent(MemEventBase* ev, bool inMSHR) {
             break;
         case Command::GetSResp:
             accepted = coherenceMgr_->handleGetSResp(event, inMSHR);
+            break;
+        case Command::WriteResp:
+            accepted = coherenceMgr_->handleWriteResp(event, inMSHR);
             break;
         case Command::GetXResp:
             accepted = coherenceMgr_->handleGetXResp(event, inMSHR);
@@ -364,19 +380,20 @@ void Cache::updateAccessStatus(Addr addr) {
 
 /* For handling non-cache commands (including NONCACHEABLE data requests) */
 void Cache::processNoncacheable(MemEventBase* event) {
-
-    if (CommandCPUSide[(int)event->getCmd()]) {
+    
+    if (CommandRouteByAddress[(int)event->getCmd()]) { /* These events don't have a destination already */
         if (!(event->queryFlag(MemEvent::F_NORESPONSE))) {
             noncacheableResponseDst_.insert(std::make_pair(event->getID(), event->getSrc()));
         }
-        coherenceMgr_->forwardTowardsMem(event);
+        coherenceMgr_->forwardByAddress(event);
     } else {
         std::map<SST::Event::id_type,std::string>::iterator it = noncacheableResponseDst_.find(event->getResponseToID());
         if (it == noncacheableResponseDst_.end()) {
             out_->fatal(CALL_INFO, 01, "%s, Error: noncacheable response received does not match a request. Event: (%s). Time: %" PRIu64 "\n",
                     getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
         }
-        coherenceMgr_->forwardTowardsCPU(event, it->second);
+        event->setDst(it->second);
+        coherenceMgr_->forwardByDestination(event);
         noncacheableResponseDst_.erase(it);
     }
 }
@@ -436,6 +453,10 @@ void Cache::init(unsigned int phase) {
             if (event->getInitCmd() == MemEventInit::InitCommand::Coherence) {
                 MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(event);
                 processInitCoherenceEvent(eventC, linkDown_->isSource(eventC->getSrc()));
+            } else if (event->getInitCmd() == MemEventInit::InitCommand::Endpoint) {
+                MemEventInit * mEv = event->clone();
+                mEv->setSrc(getName());
+                linkDown_->sendInitData(mEv);
             }
             delete event;
         }
@@ -455,18 +476,21 @@ void Cache::init(unsigned int phase) {
         if (memEvent->getCmd() == Command::NULLCMD) {
             dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
                     getName().c_str(), memEvent->getVerboseString().c_str());
-            coherenceMgr_->hasUpperLevelCacheName(memEvent->getSrc());
             if (memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
+                coherenceMgr_->hasUpperLevelCacheName(memEvent->getSrc());
                 MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(memEvent);
                 processInitCoherenceEvent(eventC, true);
+            } else if (memEvent->getInitCmd() == MemEventInit::InitCommand::Endpoint ) {
+                MemEventInit * mEv = memEvent->clone();
+                mEv->setSrc(getName());
+                linkDown_->sendInitData(mEv);
             }
         } else {
             dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
                     getName().c_str(), memEvent->getVerboseString().c_str());
             MemEventInit * mEv = memEvent->clone();
             mEv->setSrc(getName());
-            mEv->setDst(linkDown_->findTargetDestination(mEv->getRoutingAddress()));
-            linkDown_->sendInitData(mEv);
+            linkDown_->sendInitData(mEv, false);
         }
         delete memEvent;
     }
@@ -479,6 +503,10 @@ void Cache::init(unsigned int phase) {
             if (linkDown_->isDest(memEvent->getSrc()) && memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
                 MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(memEvent);
                 processInitCoherenceEvent(eventC, false);
+            } else if (memEvent->getInitCmd() == MemEventInitEndpoint::InitCommand::Endpoint) {
+                MemEventInit * mEv = memEvent->clone();
+                mEv->setSrc(getName());
+                linkUp_->sendInitData(mEv);
             }
         }
         delete memEvent;
@@ -492,9 +520,9 @@ void Cache::processInitCoherenceEvent(MemEventInitCoherence* event, bool src) {
 
 void Cache::setup() {
     // Check that our sources and destinations exist or configure if needed
-
     linkUp_->setup();
-    if (linkUp_ != linkDown_) linkDown_->setup();
+    if (linkUp_ != linkDown_) 
+        linkDown_->setup();
 
     // Enqueue the first wakeup event to check for deadlock
     if (timeout_ != 0)

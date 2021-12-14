@@ -35,9 +35,13 @@ using namespace SST::Interfaces;
 
 /* Constructor */
 
-MemNICFour::MemNICFour(ComponentId_t id, Params &params) : MemNICBase(id, params) {
+MemNICFour::MemNICFour(ComponentId_t id, Params &params, TimeConverter* tc) : MemNICBase(id, params, tc) {
     bool found;
     std::array<std::string,4> pref = {"req", "ack", "fwd", "data"};
+
+    clockOn = true;
+    clockHandler = new Clock::Handler<MemNICFour>(this, &MemNICFour::clock);
+    clockTC = registerClock(tc, clockHandler);
 
     for (int i = 0; i < 4; i++) {
         link_control[i] = loadUserSubComponent<SST::Interfaces::SimpleNetwork>(pref[i], ComponentInfo::SHARE_NONE, 1);
@@ -74,8 +78,9 @@ MemNICFour::MemNICFour(ComponentId_t id, Params &params) : MemNICBase(id, params
     totalOOO = 0;
 
     // TimeBase for statistics
-    std::string timebase = params.find<std::string>("clock", "1GHz");
-    setDefaultTimeBase(getTimeConverter(timebase));
+    std::string timebase = params.find<std::string>("clock", "1GHz", found);
+    if (found)
+        setDefaultTimeBase(getTimeConverter(timebase));
 }
 
 void MemNICFour::init(unsigned int phase) {
@@ -106,24 +111,25 @@ void MemNICFour::setup() {
     }
 }
 
-/*
- * Called by parent on a clock
- * Returns whether anything sent this cycle
- */
-bool MemNICFour::clock() {
-    if (sendQueue[REQ].empty() && sendQueue[ACK].empty() && sendQueue[FWD].empty() && sendQueue[DATA].empty() && recvQueue.empty()) return true;
 
-    // Attempt send on the control network
+bool MemNICFour::clock(Cycle_t cycle) {
+    // Attempt send on each network
     for (int i = 0; i < 4; i++)
         drainQueue(&sendQueue[i], link_control[i]);
 
+    // Handle receives
     if (!recvQueue.empty()) {
         recvNotify(recvQueue.front());
         recvQueue.pop();
     }
+    if (sendQueue[REQ].empty() && sendQueue[ACK].empty() && sendQueue[FWD].empty() && sendQueue[DATA].empty() && recvQueue.empty()) {
+        clockOn = false;
+        return true; /* Turn off clock */
+    }
 
     return false;
 }
+
 
 /* Send event to memNIC */
 void MemNICFour::send(MemEventBase *ev) {
@@ -156,6 +162,13 @@ void MemNICFour::send(MemEventBase *ev) {
                 getName().c_str(), netstr.c_str(), req->dest, req->size_in_bits, CommandString[(int)ev->getCmd()]);
     }
     sendQueue[net].push(req);
+    if (sendQueue[net].size() == 1) { /* Send this cycle if we're not already stalled */
+        drainQueue(&sendQueue[net], link_control[net]);
+    }
+    if (sendQueue[net].size() == 1 && !clockOn) {
+        clockOn = true;
+        reregisterClock(clockTC, clockHandler);
+    }
 }
 
 
@@ -219,6 +232,10 @@ void MemNICFour::doRecv(SimpleNetwork::Request * req, NetType net) {
             stat_oooEvent[net]->addData(1); // Count number of out of order events received
             orderBuffer[src][mre->tag] = std::make_pair(mre,getCurrentSimTime());
         }
+        if (!clockOn && !recvQueue.empty()) {
+            clockOn = true;
+            reregisterClock(clockTC, clockHandler);
+        }
     }
 }
 
@@ -258,7 +275,8 @@ MemNICFour::OrderedMemRtrEvent* MemNICFour::processRecv(SimpleNetwork::Request *
             }
             if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
                 sourceEndpointInfo.insert(imre->info);
-            } else if (destIDs.find(imre->info.id) != destIDs.end()) {
+            } 
+            if (destIDs.find(imre->info.id) != destIDs.end()) {
                 destEndpointInfo.insert(imre->info);
             }
             delete imre;

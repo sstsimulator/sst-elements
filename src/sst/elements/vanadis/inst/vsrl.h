@@ -22,93 +22,82 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisShiftRightLogicalInstruction : public VanadisInstruction {
+template <VanadisRegisterFormat register_format>
+class VanadisShiftRightLogicalInstruction : public VanadisInstruction
+{
 public:
-	VanadisShiftRightLogicalInstruction(
-		const uint64_t addr,
-		const uint32_t hw_thr,
-		const VanadisDecoderOptions* isa_opts,
-		const uint16_t dest,
-		const uint16_t src_1,
-		const uint16_t src_2,
-		VanadisRegisterFormat fmt) :
-		VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
-			reg_format(fmt) {
+    VanadisShiftRightLogicalInstruction(
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
+        const uint16_t src_1, const uint16_t src_2) :
+        VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0)
+    {
 
-		isa_int_regs_in[0]  = src_1;
-		isa_int_regs_in[1]  = src_2;
-		isa_int_regs_out[0] = dest;
-	}
+        isa_int_regs_in[0]  = src_1;
+        isa_int_regs_in[1]  = src_2;
+        isa_int_regs_out[0] = dest;
+    }
 
-	virtual VanadisShiftRightLogicalInstruction* clone() {
-		return new VanadisShiftRightLogicalInstruction( *this );
-	}
+    VanadisShiftRightLogicalInstruction* clone() override { return new VanadisShiftRightLogicalInstruction(*this); }
+    VanadisFunctionalUnitType            getInstFuncType() const override { return INST_INT_ARITH; }
+    const char*                          getInstCode() const override { return "SRL"; }
 
-	virtual VanadisFunctionalUnitType getInstFuncType() const {
-		return INST_INT_ARITH;
-	}
+    void printToBuffer(char* buffer, size_t buffer_size) override
+    {
+        snprintf(
+            buffer, buffer_size,
+            "SRL     %5" PRIu16 " <- %5" PRIu16 " >> %5" PRIu16 " (phys: %5" PRIu16 " <- %5" PRIu16 " >> %5" PRIu16 ")",
+            isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1], phys_int_regs_out[0], phys_int_regs_in[0],
+            phys_int_regs_in[1]);
+    }
 
-	virtual const char* getInstCode() const {
-		return "SRL";
-	}
+    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+#ifdef VANADIS_BUILD_DEBUG
+        output->verbose(
+            CALL_INFO, 16, 0,
+            "Execute: (addr=%p) SRL phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
+            " / in=%" PRIu16 ", %" PRIu16 "\n",
+            (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1],
+            isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);
+#endif
+        switch ( register_format ) {
+        case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
+        {
+            const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
+            const uint64_t src_2 = regFile->getIntReg<uint64_t>(phys_int_regs_in[1]);
 
-	virtual void printToBuffer(char* buffer, size_t buffer_size) {
-                snprintf(buffer, buffer_size, "SRL     %5" PRIu16 " <- %5" PRIu16 " >> %5" PRIu16 " (phys: %5" PRIu16 " <- %5" PRIu16 " >> %5" PRIu16 ")",
-			isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1], 
-			phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1] );
+            if ( 0 == src_2 ) {
+                const uint32_t src_1_32 = regFile->getIntReg<uint32_t>(phys_int_regs_in[0]);
+                regFile->setIntReg<uint32_t>(phys_int_regs_out[0], src_1_32);
+            }
+            else {
+                regFile->setIntReg<uint64_t>(phys_int_regs_out[0], src_1 >> src_2);
+            }
+        } break;
+        case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
+        {
+            const uint32_t src_1 = regFile->getIntReg<uint32_t>(phys_int_regs_in[0]);
+            const uint32_t src_2 = regFile->getIntReg<uint32_t>(phys_int_regs_in[1]) & 0x1F;
+            //                                const uint32_t src_2 =
+            //                                regFile->getIntReg<uint32_t>(
+            //                                phys_int_regs_in[1] );
+
+            if ( 0 == src_2 ) { regFile->setIntReg<uint32_t>(phys_int_regs_out[0], src_1); }
+            else {
+                regFile->setIntReg<uint32_t>(phys_int_regs_out[0], src_1 >> src_2);
+            }
+        } break;
+        default:
+        {
+            flagError();
+        } break;
         }
 
-	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
-#ifdef VANADIS_BUILD_DEBUG
-		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=%p) SRL phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16 " / in=%" PRIu16 ", %" PRIu16 "\n",
-			(void*) getInstructionAddress(), phys_int_regs_out[0],
-			phys_int_regs_in[0], phys_int_regs_in[1],
-			isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1] );
-#endif
-		switch( reg_format ) {
-		case VANADIS_FORMAT_INT64:
-			{
-				const uint64_t src_1 = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
-				const uint64_t src_2 = regFile->getIntReg<uint64_t>( phys_int_regs_in[1] );
-
-				if( 0 == src_2 ) {
-					const uint32_t src_1_32 = regFile->getIntReg<uint32_t>( phys_int_regs_in[0] );
-					regFile->setIntReg<uint32_t>( phys_int_regs_out[0], src_1_32 );
-				} else {
-					regFile->setIntReg<uint64_t>( phys_int_regs_out[0], src_1 >> src_2 );
-				}
-			}
-			break;
-		case VANADIS_FORMAT_INT32:
-			{
-				const uint32_t src_1 = regFile->getIntReg<uint32_t>( phys_int_regs_in[0] );
-                                const uint32_t src_2 = regFile->getIntReg<uint32_t>( phys_int_regs_in[1] ) & 0x1F;
-//                                const uint32_t src_2 = regFile->getIntReg<uint32_t>( phys_int_regs_in[1] );
-
-				if( 0 == src_2 ) {
-					regFile->setIntReg<uint32_t>( phys_int_regs_out[0], src_1 );
-				} else {
-                                	regFile->setIntReg<uint32_t>( phys_int_regs_out[0], src_1 >> src_2 );
-				}
-			}
-			break;
-		case VANADIS_FORMAT_FP32:
-		case VANADIS_FORMAT_FP64:
-			{
-				flagError();
-			}
-			break;
-		}
-
-		markExecuted();
-	}
-
-protected:
-	VanadisRegisterFormat reg_format;
-
+        markExecuted();
+    }
 };
 
-}
-}
+} // namespace Vanadis
+} // namespace SST
 
 #endif

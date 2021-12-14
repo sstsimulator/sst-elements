@@ -15,7 +15,8 @@ EXTRA_DIST = \
     README \
     tests/test_simpleCarWash.py \
     tests/test_simpleSimulationCarWash.py \
-    tests/testsuite_default_simpleSimulation.py
+    tests/testsuite_default_simpleSimulation.py \
+    tests/refFiles/test_simpleSimulationCarWash.out
 
 libsimpleSimulation_la_LDFLAGS = -module -avoid-version
 
@@ -26,5 +27,3 @@ install-exec-hook:
 ##########################################################################
 ##########################################################################
 ##########################################################################
-
-

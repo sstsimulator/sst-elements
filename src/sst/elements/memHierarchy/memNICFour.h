@@ -57,7 +57,7 @@ public:
         { "fwd.network_output_buffer_size", "(string) Fwd network. Size of output buffer", "1KiB"},\
         { "fwd.min_packet_size",            "(string) Fwd network. Size of a packet without a payload (e.g., control message size)", "8B"},\
         { "fwd.port",                       "(string) Fwd network. Set by parent component. Name of port this NIC sits on.", ""},\
-        { "clock",                          "(string) Units for latency statistics", "1GHz"}
+        { "clock",                          "(string) Units for latency statistics. If not specified, units provided by parent component will be used.", "1GHz"}
 
 
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MemNICFour, "memHierarchy", "MemNICFour", SST_ELI_ELEMENT_VERSION(1,0,0),
@@ -88,13 +88,13 @@ public:
 
     enum NetType { REQ, ACK, FWD, DATA };
     /* Constructor */
-    MemNICFour(ComponentId_t id, Params &params);
+    MemNICFour(ComponentId_t id, Params &params, TimeConverter* tc);
 
     /* Destructor */
     ~MemNICFour() { }
 
     /* Functions called by parent for handling events */
-    bool clock();
+    bool isClocked() { return false; }
     void send(MemEventBase * ev);
     bool recvNotifyReq(int);
     bool recvNotifyAck(int);
@@ -112,6 +112,9 @@ public:
             link_control[i]->finish();
     }
     void setup();
+
+    /* Internal clock function to handle buffered events */
+    bool clock(Cycle_t cycle);
 
     // Router events
     class OrderedMemRtrEvent : public MemNICBase::MemRtrEvent {
@@ -153,6 +156,11 @@ private:
 
     // Handlers and network
     std::array<SST::Interfaces::SimpleNetwork*, 4> link_control;
+
+    // Clocks
+    Clock::Handler<MemNICFour>* clockHandler;
+    TimeConverter* clockTC;
+    bool clockOn;
 
     // Event queues
     std::queue<SST::Interfaces::SimpleNetwork::Request*> sendQueue[4];

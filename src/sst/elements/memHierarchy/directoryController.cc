@@ -44,8 +44,6 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     lineSize = cacheLineSize;
 
     dbg.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
-    if (debugLevel < 0 || debugLevel > 10)     dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
-
 
     // Detect deprecated parameters and warn/fatal
     // Currently deprecated - network_num_vc
@@ -67,16 +65,15 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 
     std::string net_bw = params.find<std::string>("network_bw", "80GiB/s");
 
-    MemRegion region;
     bool gotRegion = false;
-    region.start = params.find<uint64_t>("addr_range_start", 0, found);
-    if (!found) region.start = params.find<uint64_t>("memNIC.addr_range_start", 0, found);
-    if (!found) region.start = params.find<uint64_t>("memlink.addr_range_start", 0, found);
+    region.start = params.find<Addr>("addr_range_start", 0, found);
+    if (!found) region.start = params.find<Addr>("memNIC.addr_range_start", 0, found);
+    if (!found) region.start = params.find<Addr>("memlink.addr_range_start", 0, found);
     gotRegion |= found;
 
-    region.end = params.find<uint64_t>("addr_range_end", (uint64_t) - 1, found);
-    if (!found) region.end = params.find<uint64_t>("memNIC.addr_range_end", (uint64_t) - 1, found);
-    if (!found) region.end = params.find<uint64_t>("memlink.addr_range_end", (uint64_t) - 1, found);
+    region.end = params.find<Addr>("addr_range_end", region.REGION_MAX, found);
+    if (!found) region.end = params.find<Addr>("memNIC.addr_range_end", region.REGION_MAX, found);
+    if (!found) region.end = params.find<Addr>("memlink.addr_range_end", region.REGION_MAX, found);
     gotRegion |= found;
 
     string ilSize   = params.find<std::string>("interleave_size", "0B", found);
@@ -89,9 +86,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     if (!found) ilStep = params.find<std::string>("memlink.interleave_step", "0B", found);
     gotRegion |= found;
 
-    if(0 == region.end) region.end = (uint64_t)-1;
-
-
+    if(0 == region.end) region.end = region.REGION_MAX;
+    
     memOffset = params.find<uint64_t>("mem_addr_start", 0);
 
     UnitAlgebra packetSize = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
@@ -114,6 +110,10 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
                 getName().c_str(), ilStep.c_str());
     }
 
+    clockHandler = new Clock::Handler<DirectoryController>(this, &DirectoryController::clock);
+    defaultTimeBase = registerClock(params.find<std::string>("clock", "1GHz"), clockHandler);
+    clockOn = true;
+
     /*
      *  *****************************
      *  Regions & memory name
@@ -130,8 +130,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
      *  the MCs their own region. We cannot error check from the parameters...
      */
 
-    cpuLink = loadUserSubComponent<MemLinkBase>("cpulink");
-    memLink = loadUserSubComponent<MemLinkBase>("memlink");
+    cpuLink = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, defaultTimeBase);
+    memLink = loadUserSubComponent<MemLinkBase>("memlink", ComponentInfo::SHARE_NONE, defaultTimeBase);
     if (cpuLink || memLink) {
         if (!cpuLink) {
             cpuLink = memLink;
@@ -151,13 +151,9 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             memLink->setRegion(region);
 
         cpuLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
-        memoryName = "";
         if (!memLink) {
-            memoryName  = params.find<std::string>("net_memory_name", "");
-            if (memoryName != "")
-                dbg.output(CALL_INFO,"%s, Warning: parameter 'net_memory_name' is deprecated in order to support many<->many communication between DCs and MCs.\n"
-                        "Instead of using net_memory_name, ensure that the directory and memory controllers all specify their own address regions (address_range_start/end, interleave_step/size).\n"
-                        "In the future, the directory controller will NOT automatically force its region parameters on its named memory controller\n", getName().c_str());
+            if (params.find<std::string>("net_memory_name", "") != "")
+                dbg.fatal(CALL_INFO, -1, "%s, Error: parameter 'net_memory_name' is no longer supported. Memory and directory components should specify their own address regions (address_range_start/end, interleave_step/size) and mapping will be inferred from that. Remove this parameter from your input deck to eliminate this error.\n", getName().c_str());
         } else {
             memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
         }
@@ -189,10 +185,10 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             nicParams.insert("ack.port", "network_ack");
             nicParams.insert("fwd.port", "network_fwd");
             nicParams.insert("data.port", "network_data");
-            cpuLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
+            cpuLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, defaultTimeBase);
         } else {
             nicParams.insert("port", "network");
-            cpuLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
+            cpuLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, defaultTimeBase);
         }
 
         cpuLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
@@ -205,25 +201,19 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             memParams.insert("addr_range_end", std::to_string(region.end), false);
             memParams.insert("interleave_size", ilSize, false);
             memParams.insert("interleave_step", ilStep, false);
-            memLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memParams);
+            memLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memParams, defaultTimeBase);
             memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
             if (!memLink) {
                 dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
             }
-            memoryName = "";
         } else {
-            memoryName  = params.find<std::string>("net_memory_name", "");
-            if (memoryName != "")
-                dbg.output(CALL_INFO,"%s, Warning: parameter 'net_memory_name' is deprecated in order to support many<->many communication between DCs and MCs.\n"
-                        "Instead of using net_memory_name, ensure that the directory and memory controllers all specify their own address regions (address_range_start/end, interleave_step/size).\n"
-                        "In the future, the directory controller will NOT automatically force its region parameters on its named memory controller\n", getName().c_str());
+            if (params.find<std::string>("net_memory_name", "") != "")
+                dbg.fatal(CALL_INFO, -1, "%s, Error: parameter 'net_memory_name' is no longer supported. Memory and directory components should specify their own address regions (address_range_start/end, interleave_step/size) and mapping will be inferred from that. Remove this parameter from your input deck to eliminate this error.\n", getName().c_str());
+
             memLink = nullptr;
         }
     }
 
-    clockHandler = new Clock::Handler<DirectoryController>(this, &DirectoryController::clock);
-    defaultTimeBase = registerClock(params.find<std::string>("clock", "1GHz"), clockHandler);
-    clockOn = true;
     if (memLink)
         clockMemLink = memLink->isClocked();
     else
@@ -255,6 +245,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_eventRecv[(int)Command::GetX] = registerStatistic<uint64_t>("GetX_recv");
     stat_eventRecv[(int)Command::GetS] = registerStatistic<uint64_t>("GetS_recv");
     stat_eventRecv[(int)Command::GetSX] = registerStatistic<uint64_t>("GetSX_recv");
+    stat_eventRecv[(int)Command::Write] = registerStatistic<uint64_t>("Write_recv");
     stat_eventRecv[(int)Command::PutM]  = registerStatistic<uint64_t>("PutM_recv");
     stat_eventRecv[(int)Command::PutX]  = registerStatistic<uint64_t>("PutX_recv");
     stat_eventRecv[(int)Command::PutE]  = registerStatistic<uint64_t>("PutE_recv");
@@ -264,6 +255,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_eventRecv[(int)Command::FetchXResp]    = registerStatistic<uint64_t>("FetchXResp_recv");
     stat_eventRecv[(int)Command::GetSResp]      = registerStatistic<uint64_t>("GetSResp_recv");
     stat_eventRecv[(int)Command::GetXResp]      = registerStatistic<uint64_t>("GetXResp_recv");
+    stat_eventRecv[(int)Command::WriteResp]     = registerStatistic<uint64_t>("WriteResp_recv");
     stat_eventRecv[(int)Command::ForceInv]      = registerStatistic<uint64_t>("ForceInv_recv");
     stat_eventRecv[(int)Command::FetchInv]      = registerStatistic<uint64_t>("FetchInv_recv");
     stat_eventRecv[(int)Command::AckInv]        = registerStatistic<uint64_t>("AckInv_recv");
@@ -271,10 +263,10 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_eventRecv[(int)Command::FlushLineInv]  = registerStatistic<uint64_t>("FlushLineInv_recv");
     stat_eventRecv[(int)Command::FlushLineResp] = registerStatistic<uint64_t>("FlushLineResp_recv");
     stat_noncacheRecv[(int)Command::GetS]       = registerStatistic<uint64_t>("GetS_uncache_recv");
-    stat_noncacheRecv[(int)Command::GetX]       = registerStatistic<uint64_t>("GetX_uncache_recv");
+    stat_noncacheRecv[(int)Command::Write]      = registerStatistic<uint64_t>("Write_uncache_recv");
     stat_noncacheRecv[(int)Command::GetSX]      = registerStatistic<uint64_t>("GetSX_uncache_recv");
     stat_noncacheRecv[(int)Command::GetSResp]   = registerStatistic<uint64_t>("GetSResp_uncache_recv");
-    stat_noncacheRecv[(int)Command::GetXResp]   = registerStatistic<uint64_t>("GetXResp_uncache_recv");
+    stat_noncacheRecv[(int)Command::WriteResp]  = registerStatistic<uint64_t>("WriteResp_uncache_recv");
     stat_noncacheRecv[(int)Command::CustomReq]  = registerStatistic<uint64_t>("CustomReq_uncache_recv");
     stat_noncacheRecv[(int)Command::CustomResp] = registerStatistic<uint64_t>("CustomResp_uncache_recv");
     stat_noncacheRecv[(int)Command::CustomAck]  = registerStatistic<uint64_t>("CustomAck_uncache_recv");
@@ -282,6 +274,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_eventSent[(int)Command::GetS]          = registerStatistic<uint64_t>("eventSent_GetS");
     stat_eventSent[(int)Command::GetX]          = registerStatistic<uint64_t>("eventSent_GetX");
     stat_eventSent[(int)Command::GetSX]         = registerStatistic<uint64_t>("eventSent_GetSX");
+    stat_eventSent[(int)Command::Write]         = registerStatistic<uint64_t>("eventSent_Write");
     stat_eventSent[(int)Command::PutM]          = registerStatistic<uint64_t>("eventSent_PutM");
     stat_eventSent[(int)Command::Inv]           = registerStatistic<uint64_t>("eventSent_Inv");
     stat_eventSent[(int)Command::FetchInv]      = registerStatistic<uint64_t>("eventSent_FetchInv");
@@ -290,6 +283,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_eventSent[(int)Command::NACK]          = registerStatistic<uint64_t>("eventSent_NACK");
     stat_eventSent[(int)Command::GetSResp]      = registerStatistic<uint64_t>("eventSent_GetSResp");
     stat_eventSent[(int)Command::GetXResp]      = registerStatistic<uint64_t>("eventSent_GetXResp");
+    stat_eventSent[(int)Command::WriteResp]     = registerStatistic<uint64_t>("eventSent_WriteResp");
     stat_eventSent[(int)Command::FetchResp]     = registerStatistic<uint64_t>("eventSent_FetchResp");
     stat_eventSent[(int)Command::AckInv]        = registerStatistic<uint64_t>("eventSent_AckInv");
     stat_eventSent[(int)Command::AckPut]        = registerStatistic<uint64_t>("eventSent_AckPut");
@@ -438,8 +432,8 @@ bool DirectoryController::processPacket(MemEvent * ev, bool replay) {
     }
 
     if(! isRequestAddressValid(ev->getAddr()) ) {
-	dbg.fatal(CALL_INFO, -1, "%s, Error: Request address is not valid. Event: %s. Time = %" PRIu64 "ns\n",
-                getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano());
+	dbg.fatal(CALL_INFO, -1, "%s, Error: Request address is not valid. Event: %s. Time = %" PRIu64 "ns.\nRegion is %s\n",
+                getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano(), cpuLink->getRegion().toString().c_str());
     }
 
     Addr addr = ev->getBaseAddr();
@@ -473,6 +467,9 @@ bool DirectoryController::processPacket(MemEvent * ev, bool replay) {
         case Command::GetX:
             retval = handleGetX(ev, replay);
             break;
+        case Command::Write:
+            retval = handleWrite(ev, replay);
+            break;
         case Command::PutS:
             retval = handlePutS(ev, replay);
             break;
@@ -502,6 +499,9 @@ bool DirectoryController::processPacket(MemEvent * ev, bool replay) {
             break;
         case Command::GetSResp:
             retval = handleGetSResp(ev, replay);
+            break;
+        case Command::WriteResp:
+            retval = handleWriteResp(ev, replay);
             break;
         case Command::FlushLineResp:
             retval = handleFlushLineResp(ev, replay);
@@ -548,12 +548,7 @@ void DirectoryController::handleNoncacheableRequest(MemEventBase * ev) {
     stat_noncacheRecv[(int)ev->getCmd()]->addData(1);
 
     ev->setSrc(getName());
-    if (memoryName == "")
-        ev->setDst(memLink->findTargetDestination(ev->getRoutingAddress()));
-    else
-        ev->setDst(memoryName);
-
-    forwardTowardsMem(ev);
+    forwardByAddress(ev, timestamp + 1);
 }
 
 
@@ -569,7 +564,7 @@ void DirectoryController::handleNoncacheableResponse(MemEventBase * ev) {
 
     noncacheMemReqs.erase(ev->getID());
 
-    forwardTowardsCPU(ev);
+    forwardByDestination(ev, timestamp + 1);
 }
 
 void DirectoryController::printStatus(Output &statusOut) {
@@ -616,19 +611,6 @@ void DirectoryController::emergencyShutdown() {
 
 bool DirectoryController::isRequestAddressValid(Addr addr){
     return cpuLink->isRequestAddressValid(addr);
-
-    if(0 == region.interleaveSize) {
-        return (addr >= region.start && addr < region.end);
-    } else {
-        if (addr < region.start) return false;
-        if (addr >= region.end) return false;
-
-        addr        = addr - region.start;
-        Addr offset = addr % region.interleaveStep;
-
-        if (offset >= region.interleaveSize) return false;
-        return true;
-    }
 }
 
 
@@ -652,21 +634,13 @@ void DirectoryController::init(unsigned int phase) {
     // Must happen after network init or merlin croaks
     // InitData: Name, NULLCMD, Endpoint type, inclusive of all upper levels, will send writeback acks, line size
     if (!phase) {
-        // Push our region to memory (backward compatibility)
-        // Only push if we got a memory name (old config script)
-        // or we are directly linked to a memory (always safe to push)
-        if (memoryName != "" || cpuLink != memLink) {
-            MemEventInitRegion * reg = new MemEventInitRegion(getName(), memLink->getRegion(), true);
-            reg->setDst(memoryName);
-            memLink->sendInitData(reg);
-        }
         if (cpuLink != memLink)
             cpuLink->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Directory, true, true, false, cacheLineSize, true));
         memLink->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Directory, true, true, false, cacheLineSize, true));
     }
 
     /* Pass data on to memory */
-    while(MemEventInit *ev = cpuLink->recvInitData()){
+    while(MemEventInit *ev = cpuLink->recvInitData()) {
         if (ev->getCmd() == Command::NULLCMD) {
             dbg.debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
                 getName().c_str(), ev->getVerboseString().c_str());
@@ -674,25 +648,22 @@ void DirectoryController::init(unsigned int phase) {
                 MemEventInitCoherence * mEv = static_cast<MemEventInitCoherence*>(ev);
                 if (mEv->getType() == Endpoint::Scratchpad)
                     waitWBAck = true;
+                if (!(mEv->getTracksPresence()) && cpuLink->isSource(mEv->getSrc())) {
+                    incoherentSrc.insert(mEv->getSrc());
+                }
+            } else if (ev->getInitCmd() == MemEventInit::InitCommand::Endpoint) {
+                MemEventInit * mEv = ev->clone();
+                mEv->setSrc(getName());
+                memLink->sendInitData(mEv);
             }
             delete ev;
         } else {
-
-            /* Check that memory name is valid - really only need to do this once, but since it's init, whatever */
-            if (cpuLink == memLink && memoryName != "" && !cpuLink->isDest(memoryName)) {
-                dbg.fatal(CALL_INFO,-1,"%s, Invalid param: net_memory_name - must name a valid memory component in the system. You specified: %s.\nNOTE this parameter is deprecated anyways in favor of giving memory and directory controllers their own region parameters\n",getName().c_str(), memoryName.c_str());
-            }
-
             dbg.debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
                     getName().c_str(), ev->getVerboseString().c_str());
             if (isRequestAddressValid(ev->getAddr())){
                 dbg.debug(_L10_, "I: %-20s   Event:SendInitData    %" PRIx64 "\n",
                         getName().c_str(), ev->getAddr());
-                if (memoryName == "")
-                    ev->setDst(memLink->findTargetDestination(ev->getRoutingAddress()));
-                else
-                    ev->setDst(memoryName);
-                    memLink->sendInitData(ev);
+                memLink->sendInitData(ev, false);
             } else
                 delete ev;
 
@@ -712,6 +683,10 @@ void DirectoryController::init(unsigned int phase) {
                     MemEventInitCoherence * mEv = static_cast<MemEventInitCoherence*>(initEv);
                     if (mEv->getSendWBAck())
                         waitWBAck = true;
+                } else if (initEv->getInitCmd() == MemEventInit::InitCommand::Endpoint) {
+                    MemEventInit * mEv = initEv->clone();
+                    mEv->setSrc(getName());
+                    cpuLink->sendInitData(mEv);
                 }
             }
             delete ev;
@@ -729,8 +704,9 @@ void DirectoryController::finish(void){
 
 void DirectoryController::setup(void){
     cpuLink->setup();
+    if (cpuLink != memLink)
+        memLink->setup();
     //MemLinkBase * mem = memLink ? memLink : network;
-    // dircc->configure(getName(), memoryName, sendWBAck, recvWBAck, network, mem);
 }
 
 
@@ -761,7 +737,9 @@ bool DirectoryController::handleGetS(MemEvent * event, bool inMSHR) {
                 if (!inMSHR)
                     out.output("ALERT (%s): mshr should NOT have data for 0x%" PRIx64 " but it does...\n", getName().c_str(), addr);
                 else {
-                    if (protocol == CoherenceProtocol::MESI) {
+                    if (incoherentSrc.find(event->getSrc()) != incoherentSrc.end()) {
+                        sendDataResponse(event, entry, mshr->getData(addr), Command::GetSResp);
+                    } else if (protocol == CoherenceProtocol::MESI) {
                         entry->setState(M);
                         entry->setOwner(event->getSrc());
                         sendDataResponse(event, entry, mshr->getData(addr), Command::GetXResp);
@@ -790,7 +768,9 @@ bool DirectoryController::handleGetS(MemEvent * event, bool inMSHR) {
             break;
         case S:
             if (mshr->hasData(addr)) { // saved from earlier request
-                entry->addSharer(event->getSrc());
+                if (incoherentSrc.find(event->getSrc()) == incoherentSrc.end()) {
+                    entry->addSharer(event->getSrc());
+                }
                 sendDataResponse(event, entry, mshr->getData(addr), Command::GetSResp);
                 if (is_debug_event(event)) {
                     eventDI.reason = "hit";
@@ -860,11 +840,13 @@ bool DirectoryController::handleGetX(MemEvent * event, bool inMSHR) {
     switch (state) {
         case I:
             if (mshr->hasData(addr)) {
-                if (!inMSHR)
+                if (!inMSHR) {
                     out.output("ALERT (%s): mshr should NOT have data for 0x%" PRIx64 " but it does...\n", getName().c_str(), addr);
-                else {
-                    entry->setState(M);
-                    entry->setOwner(event->getSrc());
+                } else {
+                    if (incoherentSrc.find(event->getSrc()) == incoherentSrc.end()) {
+                        entry->setState(M);
+                        entry->setOwner(event->getSrc());
+                    }
                     sendDataResponse(event, entry, mshr->getData(addr), Command::GetXResp);
                     mshr->clearData(addr);
                     if (is_debug_event(event)) {
@@ -930,6 +912,90 @@ bool DirectoryController::handleGetX(MemEvent * event, bool inMSHR) {
             }
             break;
         case M:
+            status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
+            if (status == MemEventStatus::OK) {
+                entry->setState(M_Inv);
+                issueFetch(event, entry, Command::FetchInv);
+                if (is_debug_event(event)) {
+                    eventDI.reason = "miss";
+                }
+            }
+            break;
+        default:
+            if (!inMSHR)
+                status = allocateMSHR(event, false);
+            break;
+    }
+
+    if (is_debug_addr(addr)) {
+        eventDI.newst = entry->getState();
+        eventDI.verboseline = entry->getString();
+    }
+
+    if (status == MemEventStatus::Reject)
+        sendNACK(event);
+
+    return true;
+}
+
+/* If the dir receives a Write that is not flagged NONCACHEABLE, it is a request
+ * to write coherently by a non-caching device */
+bool DirectoryController::handleWrite(MemEvent * event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    DirEntry * entry = getDirEntry(addr);
+    State state = entry->getState();
+    bool cached = entry->isCached();
+    MemEventStatus status = MemEventStatus::OK;
+
+    if (is_debug_addr(addr))
+        eventDI.prefill(event->getID(), event->getCmd(), false, addr, state);
+
+    if (!cached)
+        return retrieveDirEntry(entry, event, inMSHR);
+
+    if (!inMSHR)
+        stat_cacheHits->addData(1);
+
+    switch (state) {
+        case I:
+            if (mshr->hasData(addr)) {
+                if (mshr->getDataDirty(addr)) // Data was temporarily buffered here due to racing accesses
+                    writebackDataFromMSHR(addr);
+                mshr->clearData(addr);
+            }
+
+            status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
+            
+            if (status == MemEventStatus::OK) {
+                entry->setState(IM);
+                issueMemoryRequest(event, entry);
+            }
+            break;
+        case S:
+            if (mshr->hasData(addr)) {
+                if (mshr->getDataDirty(addr)) // Data was temporarily buffered here due to racing accesses
+                    writebackDataFromMSHR(addr);
+                mshr->clearData(addr);
+            }
+
+            // Invalidate sharers, forward Write to memory
+            status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
+            if (status == MemEventStatus::OK) {
+                entry->setState(S_Inv);
+                issueInvalidations(event, entry, Command::Inv);
+                if (is_debug_event(event)) {
+                    eventDI.reason = "inv";
+                }
+            }
+            break;
+        case M:
+            if (mshr->hasData(addr)) {
+                if (mshr->getDataDirty(addr)) { // Data was temporarily buffered here due to racing accesses
+                    writebackDataFromMSHR(addr);
+                }
+                mshr->clearData(addr);
+            }
+
             status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
             if (status == MemEventStatus::OK) {
                 entry->setState(M_Inv);
@@ -1642,9 +1708,14 @@ bool DirectoryController::handleGetSResp(MemEvent * event, bool inMSHR) {
         out.fatal(CALL_INFO, -1, "%s, Error: Received GetSResp in unhandled state '%s'. Event: %s. Time: %" PRIu64 "ns\n",
                 getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
-
-    entry->setState(S);
-    entry->addSharer(reqEv->getSrc());
+    if (incoherentSrc.find(reqEv->getSrc()) == incoherentSrc.end()) {
+        entry->setState(S);
+        entry->addSharer(reqEv->getSrc());
+    } else if (state == IS) {
+        entry->setState(I);
+    } else {
+        entry->setState(S);
+    }
 
     sendDataResponse(reqEv, entry, event->getPayload(), Command::GetSResp);
     mshr->setData(addr, event->getPayload(), false); // Save data for a subsequent GetS
@@ -1670,7 +1741,11 @@ bool DirectoryController::handleGetXResp(MemEvent * event, bool inMSHR) {
 
     switch (state) {
         case IS:
-            if (protocol == CoherenceProtocol::MESI) {
+            if (incoherentSrc.find(reqEv->getSrc()) != incoherentSrc.end()) {
+                entry->setState(I);
+                sendDataResponse(reqEv, entry, event->getPayload(), Command::GetSResp);
+                break;
+            } else if (protocol == CoherenceProtocol::MESI) {
                 entry->setState(M);
                 entry->setOwner(reqEv->getSrc());
                 sendDataResponse(reqEv, entry, event->getPayload(), Command::GetXResp);
@@ -1678,13 +1753,19 @@ bool DirectoryController::handleGetXResp(MemEvent * event, bool inMSHR) {
             }
         case S_D:
             entry->setState(S);
-            entry->addSharer(reqEv->getSrc());
+            if (incoherentSrc.find(reqEv->getSrc()) == incoherentSrc.end()) {
+                entry->addSharer(reqEv->getSrc());
+            }
             sendDataResponse(reqEv, entry, event->getPayload(), Command::GetSResp);
             mshr->setData(addr, event->getPayload(), false); // So subsequent GetS can get data
             break;
         case IM:
-            entry->setState(M);
-            entry->setOwner(reqEv->getSrc());
+            if (incoherentSrc.find(reqEv->getSrc()) == incoherentSrc.end()) {
+                entry->setState(M);
+                entry->setOwner(reqEv->getSrc());
+            } else {
+                entry->setState(I);
+            }
             sendDataResponse(reqEv, entry, event->getPayload(), Command::GetXResp);
             break;
         case SM_Inv:
@@ -1702,6 +1783,34 @@ bool DirectoryController::handleGetXResp(MemEvent * event, bool inMSHR) {
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     cleanUpAfterResponse(event, inMSHR);
+    if (is_debug_addr(addr)) {
+        eventDI.newst = entry->getState();
+        eventDI.verboseline = entry->getString();
+    }
+
+    return true;
+}
+
+bool DirectoryController::handleWriteResp(MemEvent * event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    DirEntry* entry = getDirEntry(addr);
+    State state = entry ? entry->getState() : NP;
+
+    if (is_debug_addr(addr))
+        eventDI.prefill(event->getID(), Command::WriteResp, false, addr, state);
+
+    MemEvent * reqEv = static_cast<MemEvent*>(mshr->getFrontEvent(addr));
+
+    if (state != IM) {
+        out.fatal(CALL_INFO, -1, "%s, Error: Received WriteResp in unhandled state '%s'. Event: %s. Time: %" PRIu64 "ns\n",
+                getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+
+    }
+
+    entry->setState(I);
+    forwardByDestination(reqEv->makeResponse(), timestamp + mshrLatency);
+    cleanUpAfterResponse(event, inMSHR);
+
     if (is_debug_addr(addr)) {
         eventDI.newst = entry->getState();
         eventDI.verboseline = entry->getString();
@@ -1786,7 +1895,7 @@ bool DirectoryController::handleAckInv(MemEvent* event, bool inMSHR) {
     }
 
     switch (state) {
-        case M_Inv: // ForceInv or GetX
+        case M_Inv: // ForceInv or GetX/Write
             entry->setState(I);
             retryBuffer.push_back(static_cast<MemEvent*>(mshr->getFrontEvent(addr)));
             break;
@@ -1925,7 +2034,7 @@ bool DirectoryController::handleNACK(MemEvent* event, bool inMSHR) {
                     getName().c_str(), StateString[state], nackedEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     // Resend nack'd event
-    cpuMsgQueue.insert(std::make_pair(timestamp + mshrLatency, nackedEvent)); // Resend after MSHR lookup (assuming we store info about responses there)
+    forwardByDestination(nackedEvent, timestamp + mshrLatency);
 
     if (is_debug_addr(addr)) {
         eventDI.newst = entry->getState();
@@ -1984,6 +2093,7 @@ bool DirectoryController::retrieveDirEntry(DirEntry* entry, MemEvent* event, boo
 
     uint64_t deliveryTime = timestamp + accessLatency;
 
+    // Bypass destination lookup 
     memMsgQueue.insert(std::make_pair(deliveryTime, MemMsg(me, true)));
 
     return true;
@@ -2086,10 +2196,7 @@ void DirectoryController::sendEntryToMemory(DirEntry *entry) {
     me->setSize(entrySize);
 
     uint64_t deliveryTime = timestamp + accessLatency;
-    if (memoryName == "")
-        me->setDst(memLink->findTargetDestination(0));
-    else
-        me->setDst(memoryName);
+    me->setDst(memLink->getTargetDestination(0));
     memMsgQueue.insert(std::make_pair(deliveryTime, MemMsg(me, true)));
 }
 
@@ -2100,14 +2207,10 @@ void DirectoryController::sendEntryToMemory(DirEntry *entry) {
 void DirectoryController::issueMemoryRequest(MemEvent* event, DirEntry* entry) {
     MemEvent* reqEvent = new MemEvent(*event);
     reqEvent->setSrc(getName());
-    if (memoryName == "")
-        reqEvent->setDst(memLink->findTargetDestination(reqEvent->getRoutingAddress()));
-    else
-        reqEvent->setDst(memoryName);
     memReqs[reqEvent->getID()] = event->getBaseAddr();
     uint64_t deliveryTime = timestamp + accessLatency;
 
-    memMsgQueue.insert(std::make_pair(deliveryTime, MemMsg(reqEvent, false)));
+    forwardByAddress(reqEvent, deliveryTime);
 
     mshr->setInProgress(entry->getBaseAddr());
 }
@@ -2116,10 +2219,6 @@ void DirectoryController::issueFlush(MemEvent* event) {
     Addr addr = event->getBaseAddr();
     MemEvent * flush = new MemEvent(*event);
     flush->setSrc(getName());
-    if (memoryName == "")
-        flush->setDst(memLink->findTargetDestination(event->getRoutingAddress()));
-    else
-        flush->setDst(memoryName);
     memReqs[flush->getID()] = addr;
 
     if (mshr->hasData(addr) && mshr->getDataDirty(addr)) { // also writeback dirty data
@@ -2134,7 +2233,7 @@ void DirectoryController::issueFlush(MemEvent* event) {
     mshr->setInProgress(addr);
 
     uint64_t deliveryTime = timestamp + accessLatency;
-    memMsgQueue.insert(std::make_pair(deliveryTime, MemMsg(flush, false)));
+    forwardByAddress(flush, deliveryTime);
 }
 
 void DirectoryController::issueFetch(MemEvent* event, DirEntry* entry, Command cmd) {
@@ -2152,7 +2251,7 @@ void DirectoryController::issueFetch(MemEvent* event, DirEntry* entry, Command c
 
     mshr->incrementAcksNeeded(addr);
 
-    cpuMsgQueue.insert(std::make_pair(timestamp+accessLatency, fetch));
+    forwardByDestination(fetch, timestamp+accessLatency);
 }
 
 void DirectoryController::issueInvalidations(MemEvent* event, DirEntry* entry, Command cmd) {
@@ -2186,7 +2285,7 @@ void DirectoryController::issueInvalidation(std::string dst, MemEvent* event, Di
     }
 
     uint64_t deliveryTime = timestamp + accessLatency;
-    cpuMsgQueue.insert(std::make_pair(deliveryTime, inv));
+    forwardByDestination(inv, deliveryTime);
 }
 
 void DirectoryController::sendDataResponse(MemEvent* event, DirEntry* entry, std::vector<uint8_t>& data, Command cmd, uint32_t flags) {
@@ -2194,7 +2293,7 @@ void DirectoryController::sendDataResponse(MemEvent* event, DirEntry* entry, std
     respEv->setSize(lineSize);
     respEv->setPayload(data);
     respEv->setMemFlags(flags);
-    cpuMsgQueue.insert(std::make_pair(timestamp+mshrLatency, respEv));
+    forwardByDestination(respEv, timestamp + mshrLatency);
 }
 
 void DirectoryController::sendResponse(MemEvent* event, uint32_t flags, uint32_t memflags) {
@@ -2202,31 +2301,23 @@ void DirectoryController::sendResponse(MemEvent* event, uint32_t flags, uint32_t
     respEv->setSize(lineSize);
     respEv->setMemFlags(memflags);
     respEv->setFlags(flags);
-    cpuMsgQueue.insert(std::make_pair(timestamp + mshrLatency, respEv));
+    forwardByDestination(respEv, timestamp + mshrLatency);
 }
 
 void DirectoryController::writebackData(MemEvent* event) {
     MemEvent * wb = new MemEvent(getName(), event->getBaseAddr(), event->getBaseAddr(), Command::PutM, lineSize);
     wb->copyMetadata(event);
     wb->setRqstr(event->getRqstr());
-    if (memoryName == "")
-        wb->setDst(memLink->findTargetDestination(wb->getRoutingAddress()));
-    else
-        wb->setDst(memoryName);
 
     if (waitWBAck)
         mshr->insertWriteback(event->getBaseAddr(), false);
 
     uint64_t deliveryTime = timestamp + accessLatency;
-    memMsgQueue.insert(std::make_pair(deliveryTime, MemMsg(wb, false)));
+    forwardByAddress(wb, deliveryTime);
 }
 
 void DirectoryController::writebackDataFromMSHR(Addr addr) {
     MemEvent * wb = new MemEvent(getName(), addr, addr, Command::PutM, lineSize);
-    if (memoryName == "")
-        wb->setDst(memLink->findTargetDestination(wb->getRoutingAddress()));
-    else
-        wb->setDst(memoryName);
 
     mshr->setDataDirty(addr, false);
 
@@ -2234,44 +2325,36 @@ void DirectoryController::writebackDataFromMSHR(Addr addr) {
         mshr->insertWriteback(addr, false);
 
     uint64_t deliveryTime = timestamp + mshrLatency;
-    memMsgQueue.insert(std::make_pair(deliveryTime, MemMsg(wb, false)));
+    forwardByAddress(wb, deliveryTime);
 }
 
 void DirectoryController::sendFetchResponse(MemEvent * event) {
     Addr addr = event->getBaseAddr();
     MemEvent * ack = event->makeResponse();
-    if (memoryName == "")
-        ack->setDst(memLink->findTargetDestination(ack->getRoutingAddress()));
-    else
-        ack->setDst(memoryName);
 
     ack->setPayload(mshr->getData(addr));
     ack->setDirty(mshr->getDataDirty(addr));
 
     mshr->clearData(addr);
 
-    memMsgQueue.insert(std::make_pair(timestamp + accessLatency, MemMsg(ack, false)));
+    forwardByDestination(ack, timestamp + accessLatency);
 }
 
 void DirectoryController::sendAckInv(MemEvent * event) {
     Addr addr = event->getBaseAddr();
     MemEvent * ack = event->makeResponse(Command::AckInv);
-    if (memoryName == "")
-        ack->setDst(memLink->findTargetDestination(ack->getRoutingAddress()));
-    else
-        ack->setDst(memoryName);
-
+    
     if (mshr->hasData(addr))
         mshr->clearData(addr);
 
-    memMsgQueue.insert(std::make_pair(timestamp + accessLatency, MemMsg(ack, false)));
+    forwardByDestination(ack, timestamp + accessLatency);
 }
 
 void DirectoryController::sendAckPut(MemEvent * event) {
     Addr addr = event->getBaseAddr();
     MemEvent * ack = event->makeResponse(Command::AckPut);
-
-    cpuMsgQueue.insert(std::make_pair(timestamp + accessLatency, ack));
+    
+    forwardByDestination(ack, timestamp + accessLatency);
 }
 
 void DirectoryController::sendNACK(MemEvent * event) {
@@ -2279,7 +2362,7 @@ void DirectoryController::sendNACK(MemEvent * event) {
 
     uint64_t deliveryTime = timestamp + accessLatency;
 
-    cpuMsgQueue.insert(std::make_pair(deliveryTime, nack));
+    forwardByDestination(nack, deliveryTime);
 }
 
 
@@ -2328,12 +2411,40 @@ void DirectoryController::sendOutgoingEvents() {
 
 }
 
-void DirectoryController::forwardTowardsMem(MemEventBase* ev) {
-    memMsgQueue.insert(std::make_pair(timestamp+1, MemMsg(ev, false)));
+/* Forward an event to another component by routing address
+ * dirAccess has default value of false
+ */
+void DirectoryController::forwardByAddress(MemEventBase * ev, Cycle_t ts, bool dirAccess) {
+    std::string dst = memLink->findTargetDestination(ev->getRoutingAddress());
+    if (dst != "") { /* Common case */
+        ev->setDst(dst);
+        memMsgQueue.insert(std::make_pair(ts, MemMsg(ev, dirAccess)));
+    } else {
+        dst = cpuLink->findTargetDestination(ev->getRoutingAddress());
+        if (dst != "") {
+            ev->setDst(dst);
+            cpuMsgQueue.insert(std::make_pair(ts, ev));
+        } else {
+            std::string availableDests = "cpulink:\n" + cpuLink->getAvailableDestinationsAsString();
+            if (cpuLink != memLink) availableDests = availableDests + "memlink:\n" + memLink->getAvailableDestinationsAsString();
+            out.fatal(CALL_INFO, -1, "%s, Error: Unable to find destination for address 0x%" PRIx64 ". Event: %s\nKnown Destinations: %s\n",
+                    getName().c_str(), ev->getRoutingAddress(), ev->getVerboseString().c_str(), availableDests.c_str());
+        }
+    }
 }
 
-void DirectoryController::forwardTowardsCPU(MemEventBase* ev) {
-    cpuMsgQueue.insert(std::make_pair(timestamp+1, ev));
+/* Forward an event to a specific destination 
+ * dirAccess has default value of false
+ */
+void DirectoryController::forwardByDestination(MemEventBase* ev, Cycle_t ts, bool dirAccess) {
+    if (cpuLink->isReachable(ev->getDst())) {
+        cpuMsgQueue.insert(std::make_pair(ts, ev));
+    } else if (memLink->isReachable(ev->getDst())) {
+        memMsgQueue.insert(std::make_pair(ts, MemMsg(ev, dirAccess)));
+    } else {
+        out.fatal(CALL_INFO, -1, "%s, Error: Destination %s appears unreachable on both links. Event: %s\n",
+                getName().c_str(), ev->getDst().c_str(), ev->getVerboseString().c_str());
+    }
 }
 
 void DirectoryController::recordStartLatency(MemEventBase* ev) {

@@ -137,12 +137,10 @@ public:
         prefetch_           = false;
         NACKedEvent_        = nullptr;
         retries_            = 0;
-        blocked_            = false;
         payload_.clear();
         dirty_              = false;
 	instPtr_	    = 0;
 	vAddr_		    = 0;
-        inProgress_         = false;
         isEvict_            = false;
     }
 
@@ -183,23 +181,15 @@ public:
     void incrementRetries() { retries_++; }
     int getRetries() { return retries_; }
 
-    bool blocked() { return blocked_; }
-    void setBlocked(bool value) { blocked_ = value; }
-
-    bool inProgress() { return inProgress_; }
-    void setInProgress(bool value) { inProgress_ = value; }
-
     void setLoadLink() { setFlag(MemEventBase::F_LLSC); }
     bool isLoadLink() { return cmd_ == Command::GetS && queryFlag(MemEventBase::F_LLSC); }
 
     void setStoreConditional() { setFlag(MemEventBase::F_LLSC); }
     bool isStoreConditional() { return cmd_ == Command::GetX && queryFlag(MemEventBase::F_LLSC); }
 
-    void setSuccess(bool b) { b ? setFlag(MemEventBase::F_SUCCESS) : clearFlag(MemEventBase::F_SUCCESS); }
-    bool success() { return queryFlag(MemEventBase::F_SUCCESS); }
-
-    bool fromHighNetNACK()  { return !CommandCPUSide[(int)cmd_];}
-    bool fromLowNetNACK()   { return CommandCPUSide[(int)cmd_];}
+    void setFail() { setFlag(MemEventBase::F_FAIL); }
+    void setSuccess(bool b) { b ? clearFlag(MemEventBase::F_FAIL) : setFlag(MemEventBase::F_FAIL); }
+    bool success() { return !queryFlag(MemEventBase::F_FAIL); }
 
     /** @return  the data payload. */
     dataVec& getPayload(void) {
@@ -251,8 +241,8 @@ public:
     bool isResponse(void) const { return BasicCommandClassArr[(int)cmd_] == BasicCommandClass::Response; }
     /** Returns true if this is a writeback */
     bool isWriteback(void) const { return CommandWriteback[(int)cmd_]; }
-    /** Returns true if this is a CPU-side event (i.e., sent from CPU side of hierarchy) */
-    bool isCPUSideEvent(void) const { return CommandCPUSide[(int)cmd_]; }
+    /** Returns true if this request type should be routed by address (versus destination) */
+    bool isRoutedByAddress(void) const { return CommandRouteByAddress[(int)cmd_]; }
 
     void setEvict(bool status) { isEvict_ = status; }
     bool getEvict() { return isEvict_; }
@@ -307,12 +297,10 @@ private:
     int             retries_;           // For NACKed events, how many times a retry has been sent
     dataVec         payload_;           // Data
     bool            prefetch_;          // Whether this request came from a prefetcher
-    bool            blocked_;           // Whether this request blocked for another pending request (for profiling) TODO move to mshrs
     bool            dirty_;             // For a replacement, whether the data is dirty or not
     bool            isEvict_;           // Whether an event is an eviction
     Addr	    instPtr_;           // Instruction pointer associated with the request
     Addr 	    vAddr_;             // Virtual address associated with the request
-    bool            inProgress_;        // Whether this request is currently being handled, if in MSHR TODO move to mshrs
 
     MemEvent() : MemEventBase() {} // For serialization only
 
@@ -327,12 +315,10 @@ public:
         ser & retries_;
         ser & payload_;
         ser & prefetch_;
-        ser & blocked_;
         ser & dirty_;
         ser & isEvict_;
         ser & instPtr_;
         ser & vAddr_;
-        ser & inProgress_;
     }
 
     ImplementSerializable(SST::MemHierarchy::MemEvent);

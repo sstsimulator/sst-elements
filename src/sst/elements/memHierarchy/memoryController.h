@@ -96,7 +96,10 @@ public:
 
 protected:
     MemController();  // for serialization only
-    ~MemController() {}
+    virtual ~MemController() {
+        if (backing_)
+            delete backing_;
+    }
 
     void notifyListeners( MemEvent* ev ) {
         if (  ! listeners_.empty()) {
@@ -153,6 +156,8 @@ protected:
     /* Debug -triggered by output.fatal() and/or SIGUSR2 */
     virtual void printStatus(Output &out);
     virtual void emergencyShutdown();
+    
+    void printDataValue(Addr addr, std::vector<uint8_t>* data, bool set);
 
 private:
 

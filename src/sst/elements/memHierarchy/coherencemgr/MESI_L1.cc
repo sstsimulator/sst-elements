@@ -129,8 +129,16 @@ bool MESIL1::handleGetS(MemEvent * event, bool inMSHR) {
 
 
 /*
- * Handle GetX (store/write) requests
- * GetX may also be a store-conditional or write-unlock
+ * Handle cacheable Write requests
+ * May also be a store-conditional or write-unlock
+ */
+bool MESIL1::handleWrite(MemEvent* event, bool inMSHR) {
+    return handleGetX(event, inMSHR);
+}
+
+/*
+ * Handle cacheable GetX/Write requests
+ * May also be store-conditional or write-unlock
  */
 bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
@@ -151,7 +159,7 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
     }
 
     MemEventStatus status = MemEventStatus::OK;
-    bool atomic = true;
+    bool success = true;
     uint64_t sendTime = 0;
 
     switch (state) {
@@ -169,7 +177,7 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
                     mshr_->setProfiled(addr);
                 }
 
-                sendTime = forwardMessage(event, lineSize_, 0, nullptr);
+                sendTime = forwardMessage(event, lineSize_, 0, nullptr, Command::GetX);
                 line->setState(IM);
                 line->setTimestamp(sendTime);
                 mshr_->setInProgress(addr);
@@ -192,7 +200,7 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
                 }
                 recordPrefetchResult(line, statPrefetchUpgradeMiss);
 
-                sendTime = forwardMessage(event, lineSize_, 0, nullptr);
+                sendTime = forwardMessage(event, lineSize_, 0, nullptr, Command::GetX);
                 line->setState(SM);
                 line->setTimestamp(sendTime);
                 mshr_->setInProgress(addr);
@@ -214,14 +222,15 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
 
             if (!event->isStoreConditional() || line->isAtomic()) { // Don't write on a non-atomic SC
                 line->setData(event->getPayload(), event->getAddr() - event->getBaseAddr());
-                atomic = line->isAtomic();
                 line->atomicEnd();
+            } else {
+                success = false;
             }
             if (event->queryFlag(MemEvent::F_LOCKED)) {
                 line->decLock();
             }
 
-            sendTime = sendResponseUp(event, nullptr, inMSHR, line->getTimestamp(), atomic);
+            sendTime = sendResponseUp(event, nullptr, inMSHR, line->getTimestamp(), success);
             line->setTimestamp(sendTime-1);
             if (is_debug_addr(addr))
                 eventDI.reason = "hit";
@@ -267,7 +276,7 @@ bool MESIL1::handleGetSX(MemEvent* event, bool inMSHR) {
     }
 
     MemEventStatus status = MemEventStatus::OK;
-    bool atomic = true;
+    bool success = true;
     uint64_t sendTime = 0;
     vector<uint8_t> data;
 
@@ -376,7 +385,7 @@ bool MESIL1::handleFlushLine(MemEvent* event, bool inMSHR) {
             stat_eventState[(int)Command::FlushLine][state]->addData(1);
             recordLatencyType(event->getID(), LatType::MISS);
         }
-        sendResponseUp(event, nullptr, inMSHR, line->getTimestamp());
+        sendResponseUp(event, nullptr, inMSHR, line->getTimestamp(), false);
         cleanUpAfterRequest(event, inMSHR);
 
         if (is_debug_addr(addr)) {
@@ -441,7 +450,7 @@ bool MESIL1::handleFlushLineInv(MemEvent* event, bool inMSHR) {
             stat_eventState[(int)Command::FlushLineInv][state]->addData(1);
             recordLatencyType(event->getID(), LatType::MISS);
         }
-        sendResponseUp(event, nullptr, inMSHR, line->getTimestamp());
+        sendResponseUp(event, nullptr, inMSHR, line->getTimestamp(), false);
         cleanUpAfterRequest(event, inMSHR);
 
         if (is_debug_addr(addr)) {
@@ -785,7 +794,7 @@ bool MESIL1::handleGetSResp(MemEvent* event, bool inMSHR) {
         line->atomicStart();
 
     if (is_debug_addr(addr))
-        printData(line->getData(), true);
+        printDataValue(addr, line->getData(), true);
 
     if (localPrefetch) {
         line->setPrefetch(true);
@@ -827,13 +836,14 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
 
     std::vector<uint8_t> data;
     Addr offset = req->getAddr() - addr;
+    bool success = true;
 
     switch (state) {
         case IS:
             {
                 line->setData(event->getPayload(), 0);
                 if (is_debug_addr(addr))
-                    printData(line->getData(), true);
+                    printDataValue(addr, line->getData(), true);
 
                 if (event->getDirty()) {
                     line->setState(M); // Sometimes get dirty data from a noninclusive cache
@@ -857,19 +867,20 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
         case IM:
             line->setData(event->getPayload(), 0);
             if (is_debug_addr(addr))
-                printData(line->getData(), true);
+                printDataValue(addr, line->getData(), true);
         case SM:
             {
                 line->setState(M);
 
-                if (req->getCmd() == Command::GetX) {
+                if (req->getCmd() == Command::Write || req->getCmd() == Command::GetX) {
                     if (!req->isStoreConditional() || line->isAtomic()) { // Normal or successful store-conditional
                         line->setData(req->getPayload(), offset);
 
                         if (is_debug_addr(addr))
-                            printData(line->getData(), true);
-
+                            printDataValue(addr, line->getData(), true);
                         line->atomicEnd(); // Any write causes a future SC to fail 
+                    } else {
+                        success = false;
                     }
 
                     if (req->queryFlag(MemEventBase::F_LOCKED)) {
@@ -879,7 +890,7 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
                     line->incLock();
                 }
                 data.assign(line->getData()->begin() + offset, line->getData()->begin() + offset + req->getSize());
-                uint64_t sendTime = sendResponseUp(req, &data, true, line->getTimestamp(), false);
+                uint64_t sendTime = sendResponseUp(req, &data, true, line->getTimestamp(), success);
                 line->setTimestamp(sendTime-1);
                 break;
             }
@@ -1261,27 +1272,26 @@ void MESIL1::retry(Addr addr) {
 uint64_t MESIL1::sendResponseUp(MemEvent* event, vector<uint8_t>* data, bool inMSHR, uint64_t time, bool success) {
     Command cmd = event->getCmd();
     MemEvent * responseEvent = event->makeResponse();
-
+    
     uint64_t latency = inMSHR ? mshrLatency_ : tagLatency_;
     if (data) {
         responseEvent->setPayload(*data);
         responseEvent->setSize(data->size());
         if (is_debug_event(event)) {
-            printData(data, false);
+            printDataValue(event->getAddr(), data, false);
         }
         latency = accessLatency_;
     }
 
-    if (success)
-        responseEvent->setSuccess(true);
+    if (!success)
+        responseEvent->setFail();
 
     // Compute latency, accounting for serialization of requests to the address
     uint64_t deliveryTime = latency;
     if (time < timestamp_)
         deliveryTime += timestamp_;
     else deliveryTime += time;
-    Response resp = {responseEvent, deliveryTime, packetHeaderBytes + responseEvent->getPayloadSize()};
-    addToOutgoingQueueUp(resp);
+    forwardByDestination(responseEvent, deliveryTime);
 
     // Debugging
     if (is_debug_event(responseEvent))
@@ -1307,8 +1317,7 @@ void MESIL1::sendResponseDown(MemEvent * event, L1CacheLine * line, bool data) {
     responseEvent->setSize(lineSize_);
 
     uint64_t deliverTime = timestamp_ + (data ? accessLatency_ : tagLatency_);
-    Response resp  = {responseEvent, deliverTime, packetHeaderBytes + responseEvent->getPayloadSize() };
-    addToOutgoingQueue(resp);
+    forwardByDestination(responseEvent, deliverTime);
 
     if (is_debug_event(responseEvent)) {
         eventDI.action = "Respond";
@@ -1319,9 +1328,6 @@ void MESIL1::sendResponseDown(MemEvent * event, L1CacheLine * line, bool data) {
 /* Forward a flush to the next cache/directory/memory */
 void MESIL1::forwardFlush(MemEvent* event, L1CacheLine* line, bool evict) {
     MemEvent* flush = new MemEvent(*event);
-
-    flush->setSrc(cachename_);
-    flush->setDst(getDestination(event->getBaseAddr()));
 
     uint64_t latency = tagLatency_; // Check coherence state/hitVmiss
     if (evict) {
@@ -1337,8 +1343,7 @@ void MESIL1::forwardFlush(MemEvent* event, L1CacheLine* line, bool evict) {
     uint64_t baseTime = timestamp_;
     if (line && line->getTimestamp() > baseTime) baseTime = line->getTimestamp();
     uint64_t deliveryTime = baseTime + latency;
-    Response resp = {flush, deliveryTime, packetHeaderBytes + flush->getPayloadSize()};
-    addToOutgoingQueue(resp);
+    forwardByAddress(flush, deliveryTime);
     if (line)
         line->setTimestamp(deliveryTime-1);
 
@@ -1353,7 +1358,6 @@ void MESIL1::forwardFlush(MemEvent* event, L1CacheLine* line, bool evict) {
  */
 void MESIL1::sendWriteback(Command cmd, L1CacheLine * line, bool dirty) {
     MemEvent* writeback = new MemEvent(cachename_, line->getAddr(), line->getAddr(), cmd);
-    writeback->setDst(getDestination(line->getAddr()));
     writeback->setSize(lineSize_);
 
     uint64_t latency = tagLatency_;
@@ -1363,7 +1367,7 @@ void MESIL1::sendWriteback(Command cmd, L1CacheLine * line, bool dirty) {
         writeback->setDirty(dirty);
 
         if (is_debug_addr(line->getAddr())) {
-            printData(line->getData(), false);
+            printDataValue(line->getAddr(), line->getData(), false);
         }
 
         latency = accessLatency_;
@@ -1373,8 +1377,7 @@ void MESIL1::sendWriteback(Command cmd, L1CacheLine * line, bool dirty) {
 
     uint64_t baseTime = (timestamp_ > line->getTimestamp()) ? timestamp_ : line->getTimestamp();
     uint64_t deliveryTime = baseTime + latency;
-    Response resp = {writeback, deliveryTime, packetHeaderBytes + writeback->getPayloadSize()};
-    addToOutgoingQueue(resp);
+    forwardByAddress(writeback, deliveryTime);
     line->setTimestamp(deliveryTime-1);
 }
 
@@ -1382,11 +1385,13 @@ void MESIL1::sendWriteback(Command cmd, L1CacheLine * line, bool dirty) {
 /* Send notification to the core that a line we have might have been lost */
 void MESIL1::snoopInvalidation(MemEvent * event, L1CacheLine * line) {
     if (snoopL1Invs_ && line) {
-        MemEvent * snoop = new MemEvent(cachename_, event->getAddr(), event->getBaseAddr(), Command::Inv);
-        uint64_t baseTime = timestamp_ > line->getTimestamp() ? timestamp_ : line->getTimestamp();
-        uint64_t deliveryTime = baseTime + tagLatency_;
-        Response resp = {snoop, deliveryTime, packetHeaderBytes};
-        addToOutgoingQueueUp(resp);
+        for (auto it = cpus.begin(); it != cpus.end(); it++) {
+            MemEvent * snoop = new MemEvent(cachename_, event->getAddr(), event->getBaseAddr(), Command::Inv);
+            uint64_t baseTime = timestamp_ > line->getTimestamp() ? timestamp_ : line->getTimestamp();
+            uint64_t deliveryTime = baseTime + tagLatency_;
+            snoop->setDst(*it);
+            forwardByDestination(snoop, deliveryTime);
+        }
     }
 }
 
@@ -1394,15 +1399,16 @@ void MESIL1::snoopInvalidation(MemEvent * event, L1CacheLine * line) {
 /*----------------------------------------------------------------------------------------------------------------------
  *  Override message send functions with versions that record statistics & call parent class
  *---------------------------------------------------------------------------------------------------------------------*/
-void MESIL1::addToOutgoingQueue(Response& resp) {
-    stat_eventSent[(int)resp.event->getCmd()]->addData(1);
-    CoherenceController::addToOutgoingQueue(resp);
+void MESIL1::forwardByAddress(MemEventBase* ev, Cycle_t ts) {
+    stat_eventSent[(int)ev->getCmd()]->addData(1);
+    CoherenceController::forwardByAddress(ev, ts);
 }
 
-void MESIL1::addToOutgoingQueueUp(Response& resp) {
-    stat_eventSent[(int)resp.event->getCmd()]->addData(1);
-    CoherenceController::addToOutgoingQueueUp(resp);
+void MESIL1::forwardByDestination(MemEventBase* ev, Cycle_t ts) {
+    stat_eventSent[(int)ev->getCmd()]->addData(1);
+    CoherenceController::forwardByDestination(ev, ts);
 }
+
 
 
 /***********************************************************************************************************
@@ -1425,6 +1431,7 @@ void MESIL1::recordLatency(Command cmd, int type, uint64_t latency) {
         case Command::GetS:
             stat_latencyGetS[type]->addData(latency);
             break;
+        case Command::Write:
         case Command::GetX:
             stat_latencyGetX[type]->addData(latency);
             break;
@@ -1464,6 +1471,7 @@ std::set<Command> MESIL1::getValidReceiveEvents() {
     std::set<Command> cmds;
     cmds.insert(Command::GetS);
     cmds.insert(Command::GetX);
+    cmds.insert(Command::Write);
     cmds.insert(Command::GetSX);
     cmds.insert(Command::FlushLine);
     cmds.insert(Command::FlushLineInv);
@@ -1491,8 +1499,6 @@ Addr MESIL1::getBank(Addr addr) {
 }
 
 void MESIL1::printLine(Addr addr) { }
-void MESIL1::printData(Addr addr) { }
-void MESIL1::printData(vector<uint8_t>* data, bool set) { }
 
 void MESIL1::printStatus(Output &out) {
     cacheArray_->printCacheArray(out);

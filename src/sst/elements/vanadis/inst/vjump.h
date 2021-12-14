@@ -16,53 +16,40 @@
 #ifndef _H_VANADIS_JUMP
 #define _H_VANADIS_JUMP
 
-#include <cstdio>
-
 #include "inst/vinst.h"
 #include "inst/vspeculate.h"
+
+#include <cstdio>
 
 namespace SST {
 namespace Vanadis {
 
-class VanadisJumpInstruction : public VanadisSpeculatedInstruction {
+class VanadisJumpInstruction : public VanadisSpeculatedInstruction
+{
 
 public:
-	VanadisJumpInstruction(
-                const uint64_t addr,
-                const uint32_t hw_thr,
-                const VanadisDecoderOptions* isa_opts,
-		const uint64_t pc,
-		const VanadisDelaySlotRequirement delayT
-		) :
-		VanadisSpeculatedInstruction(addr, hw_thr, isa_opts,
-			0,0,0,0,0,0,0,0, delayT ) {
+    VanadisJumpInstruction(
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint64_t ins_width,
+        const uint64_t pc, const VanadisDelaySlotRequirement delayT) :
+        VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 0, 0, 0, 0, 0, 0, 0, 0, delayT)
+    {
 
-		takenAddress = pc;
-	}
+        takenAddress = pc;
+    }
 
-	virtual VanadisJumpInstruction* clone() {
-		return new VanadisJumpInstruction( *this );
-	}
+    VanadisJumpInstruction* clone() override { return new VanadisJumpInstruction(*this); }
 
-	virtual const char* getInstCode() const {
-               	return "JMP";
-       	}
+    const char* getInstCode() const override { return "JMP"; }
 
-	virtual void printToBuffer(char* buffer, size_t buffer_size) {
-		snprintf(buffer, buffer_size, "JUMP    %" PRIu64 "", takenAddress);
-	}
+    void printToBuffer(char* buffer, size_t buffer_size) override
+    {
+        snprintf(buffer, buffer_size, "JUMP    %" PRIu64 " / 0x%llx", takenAddress, takenAddress);
+    }
 
-	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
-		if( (takenAddress & 0x3) != 0 ) {
-			flagError();
-		}
-
-		markExecuted();
-	}
-
+    void execute(SST::Output* output, VanadisRegisterFile* regFile) override { markExecuted(); }
 };
 
-}
-}
+} // namespace Vanadis
+} // namespace SST
 
 #endif

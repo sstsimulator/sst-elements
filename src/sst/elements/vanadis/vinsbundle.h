@@ -16,9 +16,9 @@
 #ifndef _H_VANADIS_INST_BUNDLE
 #define _H_VANADIS_INST_BUNDLE
 
-#include <vector>
-#include <cstdint>
 #include <cinttypes>
+#include <cstdint>
+#include <vector>
 
 #include "inst/vinst.h"
 
@@ -28,46 +28,39 @@ namespace Vanadis {
 class VanadisInstructionBundle {
 
 public:
-	VanadisInstructionBundle( const uint64_t addr ) : ins_addr(addr) {
-		inst_bundle.reserve(1);
-	}
+    VanadisInstructionBundle(const uint64_t addr) : ins_addr(addr), pc_inc(4) { inst_bundle.reserve(1); }
 
-	~VanadisInstructionBundle() {
-		clear();
-	}
+    ~VanadisInstructionBundle() { clear(); }
 
-	void clear() {
-		for( VanadisInstruction* next_ins : inst_bundle ) {
-			delete next_ins;
-		}
+    void clear() {
+        for (VanadisInstruction* next_ins : inst_bundle) {
+            delete next_ins;
+        }
 
-		inst_bundle.clear();
-	}
+        inst_bundle.clear();
+    }
 
-	uint32_t getInstructionCount() const {
-		return inst_bundle.size();
-	}
+    uint32_t getInstructionCount() const { return inst_bundle.size(); }
 
-	void addInstruction( VanadisInstruction* newIns ) {
-//		inst_bundle.push_back(newIns->clone() );
-		inst_bundle.push_back(newIns->clone() );
-	}
+    void addInstruction(VanadisInstruction* newIns) {
+        inst_bundle.push_back(newIns->clone());
+    }
 
-	VanadisInstruction* getInstructionByIndex( const uint32_t index ) {
-//		return inst_bundle[index]->clone();
-		return inst_bundle[index];
-	}
+    VanadisInstruction* getInstructionByIndex(const uint32_t index) {
+        return inst_bundle[index];
+    }
 
-	uint64_t getInstructionAddress() const {
-		return ins_addr;
-	}
+    uint64_t getInstructionAddress() const { return ins_addr; }
+	 uint64_t pcIncrement() const { return pc_inc; }
+	 void setPCIncrement(uint64_t newPCInc) { pc_inc = newPCInc; }
 
 private:
-	const uint64_t ins_addr;
-	std::vector<VanadisInstruction*> inst_bundle;
+    const uint64_t ins_addr;
+	 uint64_t pc_inc;
+    std::vector<VanadisInstruction*> inst_bundle;
 };
 
-}
-}
+} // namespace Vanadis
+} // namespace SST
 
 #endif

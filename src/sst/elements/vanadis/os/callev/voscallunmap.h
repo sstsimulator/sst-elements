@@ -26,26 +26,22 @@ namespace Vanadis {
 
 class VanadisSyscallMemoryUnMapEvent : public VanadisSyscallEvent {
 public:
-	VanadisSyscallMemoryUnMapEvent() : VanadisSyscallEvent() {}
+    VanadisSyscallMemoryUnMapEvent() : VanadisSyscallEvent() {}
 
-	VanadisSyscallMemoryUnMapEvent( uint32_t core, uint32_t thr,
-		uint64_t addr, uint64_t len) :
-		address(addr), length(len) {}
+    VanadisSyscallMemoryUnMapEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t addr, uint64_t len)
+		  : VanadisSyscallEvent(core, thr, bittype), address(addr), length(len) {}
 
-	VanadisSyscallOp getOperation() {
-		return SYSCALL_OP_UNMAP;
-	}
+    VanadisSyscallOp getOperation() { return SYSCALL_OP_UNMAP; }
 
-	uint64_t getDeallocationAddress() const { return address; }
-	uint64_t getDeallocationLength() const { return length; }
+    uint64_t getDeallocationAddress() const { return address; }
+    uint64_t getDeallocationLength() const { return length; }
 
 private:
-	uint64_t address;
-	uint64_t length;
-
+    uint64_t address;
+    uint64_t length;
 };
 
-}
-}
+} // namespace Vanadis
+} // namespace SST
 
 #endif

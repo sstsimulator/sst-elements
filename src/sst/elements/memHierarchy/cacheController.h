@@ -122,9 +122,11 @@ public:
             /*Event receives */
             {"GetS_recv",               "Event received: GetS", "count", 2},
             {"GetX_recv",               "Event received: GetX", "count", 2},
+            {"Write_recv",              "Event received: Write", "count", 2},
             {"GetSX_recv",              "Event received: GetSX", "count", 2},
             {"GetSResp_recv",           "Event received: GetSResp", "count", 2},
             {"GetXResp_recv",           "Event received: GetXResp", "count", 2},
+            {"WriteResp_recv",          "Event received: WriteResp", "count", 2},
             {"PutM_recv",               "Event received: PutM", "count", 2},
             {"PutX_recv",               "Event received: PutX", "count", 2},
             {"PutS_recv",               "Event received: PutS", "count", 2},
@@ -150,10 +152,10 @@ public:
             {"CustomResp_uncache_recv", "Noncacheable Event: CustomResp received", "count", 4},
             {"CustomAck_uncache_recv",  "Noncacheable Event: CustomAck received", "count", 4},
             {"GetS_uncache_recv",       "Noncacheable Event: GetS received", "count", 4},
-            {"GetX_uncache_recv",       "Noncacheable Event: GetX received", "count", 4},
+            {"Write_uncache_recv",      "Noncacheable Event: Write received", "count", 4},
             {"GetSX_uncache_recv",      "Noncacheable Event: GetSX received", "count", 4},
             {"GetSResp_uncache_recv",   "Noncacheable Event: GetSResp received", "count", 4},
-            {"GetXResp_uncache_recv",   "Noncacheable Event: GetXResp received", "count", 4},
+            {"WriteResp_uncache_recv",  "Noncacheable Event: WriteResp received", "count", 4},
             {"default_stat",            "Default statistic used for unexpected events/cases/etc. Should be 0, if not, check for missing statistic registrations.", "none", 7})
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
@@ -170,6 +172,7 @@ public:
 
     /** Constructor for Cache Component */
     Cache(ComponentId_t id, Params &params);
+    ~Cache() { }
 
     /** Component API - pre- and post-simulation */
     virtual void init(unsigned int);
@@ -205,7 +208,7 @@ private:
     void createCoherenceManager(Params &params);
 
     // Configure links
-    void configureLinks(Params &params);
+    void configureLinks(Params &params, TimeConverter* tc);
 
     /** Cache operation ********************************************************/
 
