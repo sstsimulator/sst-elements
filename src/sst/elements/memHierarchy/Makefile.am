@@ -9,19 +9,6 @@ AM_CPPFLAGS = \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmemHierarchy.la
 libmemHierarchy_la_SOURCES = \
-    rdmaNic/rdmaNic.cc \
-    rdmaNic/rdmaNic.h \
-    rdmaNic/rdmaNicCmds.h \
-    rdmaNic/rdmaNicNetworkEvent.h \
-    rdmaNic/rdmaNicRecvEngine.h \
-    rdmaNic/rdmaNicRecvEngine.cc \
-    rdmaNic/rdmaNicNetworkQueue.cc \
-    rdmaNic/rdmaNicNetworkQueue.h \
-    rdmaNic/rdmaNicSendEntry.h \
-    rdmaNic/rdmaNicSendEngine.h \
-    rdmaNic/rdmaNicSendEngine.cc \
-    rdmaNic/rdmaNicMemRequest.h \
-    rdmaNic/rdmaNicMemRequestQ.h \
 	hash.h \
 	cacheListener.h \
 	cacheController.h \
@@ -143,7 +130,21 @@ libmemHierarchy_la_SOURCES = \
 	memNetBridge.h \
 	memNetBridge.cc \
 	testcpu/standardMMIO.h \
-	testcpu/standardMMIO.cc
+	testcpu/standardMMIO.cc \
+    rdmaNic/rdmaNic.cc \
+    rdmaNic/rdmaNic.h \
+    rdmaNic/rdmaNicCmds.h \
+    rdmaNic/rdmaNicNetworkEvent.h \
+    rdmaNic/rdmaNicRecvEngine.h \
+    rdmaNic/rdmaNicRecvEngine.cc \
+    rdmaNic/rdmaNicNetworkQueue.cc \
+    rdmaNic/rdmaNicNetworkQueue.h \
+    rdmaNic/rdmaNicSendEntry.h \
+    rdmaNic/rdmaNicSendEngine.h \
+    rdmaNic/rdmaNicSendEngine.cc \
+    rdmaNic/rdmaNicMemRequest.h \
+    rdmaNic/rdmaNicMemRequestQ.h
+
 
 EXTRA_DIST = \
 	tests/testsuite_default_memHierarchy_hybridsim.py \
