@@ -585,7 +585,6 @@ private:
     /* Record latency */
     void recordLatency(Command cmd, int type, uint64_t latency);
 
-    void printData(vector<uint8_t> * data, bool set);
     void printLine(Addr addr);
 
 /* Variables */

@@ -620,7 +620,6 @@ private:
     bool applyPendingReplacement(Addr addr);
 
 /* Miscellaneous */
-    void printData(vector<uint8_t> * data, bool set);
     void printLine(Addr addr);
 
 /* Statistics */
