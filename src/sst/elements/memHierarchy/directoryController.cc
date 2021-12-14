@@ -44,8 +44,6 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     lineSize = cacheLineSize;
 
     dbg.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
-    if (debugLevel < 0 || debugLevel > 10)     dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
-
 
     // Detect deprecated parameters and warn/fatal
     // Currently deprecated - network_num_vc

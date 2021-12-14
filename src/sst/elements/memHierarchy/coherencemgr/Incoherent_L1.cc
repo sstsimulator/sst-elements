@@ -329,7 +329,7 @@ bool IncoherentL1::handleGetSResp(MemEvent * event, bool inMSHR) {
     line->setData(event->getPayload(), 0);
     line->setState(E);
     if (is_debug_addr(line->getAddr()))
-        printData(line->getData(), true);
+        printDataValue(line->getAddr(), line->getData(), true);
     if (req->isLoadLink())
         line->atomicStart();
 
@@ -369,7 +369,7 @@ bool IncoherentL1::handleGetXResp(MemEvent * event, bool inMSHR) {
     // Set line data
     line->setData(event->getPayload(), 0);
     if (is_debug_addr(line->getAddr()))
-        printData(line->getData(), true);
+        printDataValue(line->getAddr(), line->getData(), true);
 
 
     line->setState(M);
@@ -382,7 +382,7 @@ bool IncoherentL1::handleGetXResp(MemEvent * event, bool inMSHR) {
         if (!req->isStoreConditional() || line->isAtomic()) {
             line->setData(req->getPayload(), offset);
             if (is_debug_addr(line->getAddr()))
-                printData(line->getData(), true);
+                printDataValue(line->getAddr(), line->getData(), true);
             line->atomicEnd();
         } else {
             success = false;
@@ -679,7 +679,7 @@ uint64_t IncoherentL1::sendResponseUp(MemEvent * event, vector<uint8_t> * data, 
         responseEvent->setPayload(*data);
         responseEvent->setSize(data->size()); // Return size that was written
         if (is_debug_event(event)) {
-            printData(data, false);
+            printDataValue(event->getAddr(), data, false);
         }
     }
 
@@ -772,7 +772,7 @@ void IncoherentL1::sendWriteback(Command cmd, L1CacheLine* line, bool dirty) {
         writeback->setDirty(dirty);
 
         if (is_debug_addr(line->getAddr())) {
-            printData(line->getData(), false);
+            printDataValue(line->getAddr(), line->getData(), false);
         }
 
         latency = accessLatency_;
@@ -816,16 +816,6 @@ void IncoherentL1::printLine(Addr addr) {
     L1CacheLine * line = cacheArray_->lookup(addr, false);
     std::string state = (line == nullptr) ? "NP" : line->getString();
     debug->debug(_L8_, "  Line 0x%" PRIx64 ": %s\n", addr, state.c_str());
-}
-
-void IncoherentL1::printData(vector<uint8_t> * data, bool set) {
-/*    if (set)    printf("Setting data (%zu): 0x", data->size());
-    else        printf("Getting data (%zu): 0x", data->size());
-
-    for (unsigned int i = 0; i < data->size(); i++) {
-        printf("%02x", data->at(i));
-    }
-    printf("\n");*/
 }
 
 /* Record the result of a prefetch. important: assumes line is not null */

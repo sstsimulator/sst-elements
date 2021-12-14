@@ -410,8 +410,6 @@ private:
 
     /** Miscellaneous */
     void printLine(Addr addr);
-    void printData(Addr addr);
-    void printData(vector<uint8_t> * data, bool set);
 
     bool snoopL1Invs_;
     State protocolState_; // E for MESI, S for MSI

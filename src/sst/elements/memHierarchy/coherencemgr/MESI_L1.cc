@@ -1499,8 +1499,6 @@ Addr MESIL1::getBank(Addr addr) {
 }
 
 void MESIL1::printLine(Addr addr) { }
-void MESIL1::printData(Addr addr) { }
-void MESIL1::printData(vector<uint8_t>* data, bool set) { }
 
 void MESIL1::printStatus(Output &out) {
     cacheArray_->printCacheArray(out);
