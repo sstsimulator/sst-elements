@@ -9,6 +9,19 @@ AM_CPPFLAGS = \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmemHierarchy.la
 libmemHierarchy_la_SOURCES = \
+    rdmaNic/rdmaNic.cc \
+    rdmaNic/rdmaNic.h \
+    rdmaNic/rdmaNicCmds.h \
+    rdmaNic/rdmaNicNetworkEvent.h \
+    rdmaNic/rdmaNicRecvEngine.h \
+    rdmaNic/rdmaNicRecvEngine.cc \
+    rdmaNic/rdmaNicNetworkQueue.cc \
+    rdmaNic/rdmaNicNetworkQueue.h \
+    rdmaNic/rdmaNicSendEntry.h \
+    rdmaNic/rdmaNicSendEngine.h \
+    rdmaNic/rdmaNicSendEngine.cc \
+    rdmaNic/rdmaNicMemRequest.h \
+    rdmaNic/rdmaNicMemRequestQ.h \
 	hash.h \
 	cacheListener.h \
 	cacheController.h \
@@ -84,6 +97,8 @@ libmemHierarchy_la_SOURCES = \
 	memHierarchyInterface.h \
 	memHierarchyScratchInterface.cc \
 	memHierarchyScratchInterface.h \
+	standardInterface.cc \
+	standardInterface.h \
 	coherencemgr/MESI_L1.h \
 	coherencemgr/MESI_L1.cc \
 	coherencemgr/MESI_Inclusive.h \
@@ -108,6 +123,8 @@ libmemHierarchy_la_SOURCES = \
 	testcpu/streamCPU.cc \
 	testcpu/scratchCPU.h \
 	testcpu/scratchCPU.cc \
+	testcpu/standardCPU.h \
+	testcpu/standardCPU.cc \
 	util.h \
 	memTypes.h \
 	dmaEngine.h \
@@ -124,7 +141,9 @@ libmemHierarchy_la_SOURCES = \
 	Sieve/memmgr_sieve.cc \
 	Sieve/memmgr_sieve.h \
 	memNetBridge.h \
-	memNetBridge.cc
+	memNetBridge.cc \
+	testcpu/standardMMIO.h \
+	testcpu/standardMMIO.cc
 
 EXTRA_DIST = \
 	tests/testsuite_default_memHierarchy_hybridsim.py \
@@ -146,6 +165,7 @@ EXTRA_DIST = \
     Sieve/tests/Makefile \
     Sieve/tests/ompsievetest.c \
     Sieve/tests/sieve-test.py \
+    Sieve/tests/refFiles/test_memHSieve.out \
 	tests/miranda.cfg \
 	tests/sdl-1.py \
 	tests/sdl2-1.py \
@@ -195,11 +215,22 @@ EXTRA_DIST = \
 	tests/testNoninclusive-2.py \
 	tests/testPrefetchParams.py \
 	tests/testThroughputThrottling.py \
+	tests/testScratchCache-1.py \
+	tests/testScratchCache-2.py \
+	tests/testScratchCache-3.py \
+	tests/testScratchCache-4.py \
 	tests/testScratchDirect.py \
 	tests/testScratchNetwork.py \
+	tests/testStdMem.py \
+	tests/testStdMem-noninclusive.py \
+	tests/testStdMem-nic.py \
+	tests/testStdMem-flush.py \
+	tests/testStdMem-mmio.py \
+	tests/testStdMem-mmio2.py \
+	tests/testStdMem-mmio3.py \
 	tests/DDR3_micron_32M_8B_x4_sg125.ini \
 	tests/system.ini \
-    	tests/DDR4_8Gb_x16_3200.ini \
+    tests/DDR4_8Gb_x16_3200.ini \
 	tests/ramulator-ddr3.cfg \
 	tests/ddr_device.ini \
 	tests/ddr_system.ini \
@@ -209,69 +240,49 @@ EXTRA_DIST = \
 	tests/mhlib.py \
     tests/refFiles/test_hybridsim.out \
     tests/refFiles/test_memHA_BackendChaining.out \
-    tests/refFiles/test_memHA_BackendChaining_MC.out \
     tests/refFiles/test_memHA_BackendDelayBuffer.out \
-    tests/refFiles/test_memHA_BackendDelayBuffer_MC.out \
     tests/refFiles/test_memHA_BackendDramsim3.out \
     tests/refFiles/test_memHA_BackendGoblinHMC.out \
-    tests/refFiles/test_memHA_BackendGoblinHMC_MC.out \
     tests/refFiles/test_memHA_BackendHBMDramsim.out \
-    tests/refFiles/test_memHA_BackendHBMDramsim_MC.out \
-    tests/refFiles/test_memHA_BackendHBMDramsim_MR.out \
     tests/refFiles/test_memHA_BackendHBMPagedMulti.out \
     tests/refFiles/test_memHA_BackendPagedMulti.out \
-    tests/refFiles/test_memHA_BackendPagedMulti_MC.out \
     tests/refFiles/test_memHA_BackendReorderRow.out \
-    tests/refFiles/test_memHA_BackendReorderRow_MC.out \
     tests/refFiles/test_memHA_BackendReorderSimple.out \
-    tests/refFiles/test_memHA_BackendReorderSimple_MC.out \
     tests/refFiles/test_memHA_BackendSimpleDRAM_1.out \
-    tests/refFiles/test_memHA_BackendSimpleDRAM_1_MC.out \
     tests/refFiles/test_memHA_BackendSimpleDRAM_2.out \
-    tests/refFiles/test_memHA_BackendSimpleDRAM_2_MC.out \
     tests/refFiles/test_memHA_BackendTimingDRAM_1.out \
-    tests/refFiles/test_memHA_BackendTimingDRAM_1_MC.out \
     tests/refFiles/test_memHA_BackendTimingDRAM_2.out \
-    tests/refFiles/test_memHA_BackendTimingDRAM_2_MC.out \
     tests/refFiles/test_memHA_BackendTimingDRAM_3.out \
-    tests/refFiles/test_memHA_BackendTimingDRAM_3_MC.out \
     tests/refFiles/test_memHA_BackendTimingDRAM_4.out \
-    tests/refFiles/test_memHA_BackendTimingDRAM_4_MC.out \
     tests/refFiles/test_memHA_BackendVaultSim.out \
-    tests/refFiles/test_memHA_BackendVaultSim_MC.out \
     tests/refFiles/test_memHA_CustomCmdGoblin_1.out \
-    tests/refFiles/test_memHA_CustomCmdGoblin_1_MC.out \
     tests/refFiles/test_memHA_CustomCmdGoblin_2.out \
-    tests/refFiles/test_memHA_CustomCmdGoblin_2_MC.out \
     tests/refFiles/test_memHA_CustomCmdGoblin_3.out \
-    tests/refFiles/test_memHA_CustomCmdGoblin_3_MC.out \
     tests/refFiles/test_memHA_DistributedCaches.out \
-    tests/refFiles/test_memHA_DistributedCaches_MC.out \
     tests/refFiles/test_memHA_Flushes.out \
     tests/refFiles/test_memHA_Flushes_2.out \
-    tests/refFiles/test_memHA_Flushes_2_MC.out \
-    tests/refFiles/test_memHA_Flushes_MC.out \
     tests/refFiles/test_memHA_HashXor.out \
-    tests/refFiles/test_memHA_HashXor_MC.out \
     tests/refFiles/test_memHA_Incoherent.out \
     tests/refFiles/test_memHA_Incoherent_2.out \
-    tests/refFiles/test_memHA_Incoherent_MC.out \
     tests/refFiles/test_memHA_Kingsley.out \
     tests/refFiles/test_memHA_MemoryCache.out \
-    tests/refFiles/test_memHA_MemoryCache_MC.out \
     tests/refFiles/test_memHA_Noninclusive_1.out \
-    tests/refFiles/test_memHA_Noninclusive_1_MC.out \
     tests/refFiles/test_memHA_Noninclusive_2.out \
-    tests/refFiles/test_memHA_Noninclusive_2_MC.out \
     tests/refFiles/test_memHA_PrefetchParams.out \
-    tests/refFiles/test_memHA_PrefetchParams_MC.out \
     tests/refFiles/test_memHA_ScratchCache_1.out \
     tests/refFiles/test_memHA_ScratchCache_2.out \
     tests/refFiles/test_memHA_ScratchCache_3.out \
+    tests/refFiles/test_memHA_ScratchCache_4.out \
     tests/refFiles/test_memHA_ScratchDirect.out \
     tests/refFiles/test_memHA_ScratchNetwork.out \
-    tests/refFiles/test_memHA_ThroughputThrottling.out \
-    tests/refFiles/test_memHA_ThroughputThrottling_MC.out \
+    tests/refFiles/test_memHA_StdMem_flush.out \
+    tests/refFiles/test_memHA_StdMem_mmio3.out \
+    tests/refFiles/test_memHA_StdMem_nic.out \
+    tests/refFiles/test_memHA_StdMem.out \
+	tests/refFiles/test_memHA_StdMem_mmio2.out \
+	tests/refFiles/test_memHA_StdMem_mmio.out \
+	tests/refFiles/test_memHA_StdMem_noninclusive.out \
+	tests/refFiles/test_memHA_ThroughputThrottling.out \
     tests/refFiles/test_memHierarchy_sdl2_1.out \
     tests/refFiles/test_memHierarchy_sdl3_1.out \
     tests/refFiles/test_memHierarchy_sdl3_2.out \
@@ -287,7 +298,6 @@ EXTRA_DIST = \
     tests/refFiles/test_memHierarchy_sdl8_3.out \
     tests/refFiles/test_memHierarchy_sdl8_4.out \
     tests/refFiles/test_memHierarchy_sdl9_1.out \
-    tests/refFiles/test_memHierarchy_sdl9_1_MC.out \
     tests/refFiles/test_memHierarchy_sdl9_2.out \
     tests/refFiles/test_memHierarchy_sdl_1.out \
     tests/refFiles/test_memHierarchy_sdl_2.out \
