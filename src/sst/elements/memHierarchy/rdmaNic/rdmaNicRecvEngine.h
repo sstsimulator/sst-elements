@@ -28,9 +28,9 @@ class MsgRecvEntry : public RecvEntry {
 class MemRgnEntry : public RecvEntry  {
   public:
 	MemRgnEntry( NicCmd* cmd, int thread ) :RecvEntry( thread, cmd ) { }
-	int getKey() { return m_cmd->data.memRgn.key; }
-	size_t getPayloadLength() { return m_cmd->data.memRgn.len; }		
-	Addr_t getAddr() { return m_cmd->data.memRgn.addr; }
+	int getKey() { return m_cmd->data.memRgnReg.key; }
+	size_t getPayloadLength() { return m_cmd->data.memRgnReg.len; }
+	Addr_t getAddr() { return m_cmd->data.memRgnReg.addr; }
 	Addr_t getContext() { return 0; }
 };
 
@@ -61,9 +61,11 @@ class RecvStream {
   public:
 	// we don't need destAddr and lenght, we can get them from entry
 	RecvStream( RdmaNic& nic, Addr_t destAddr, size_t length, RecvEntry* entry = NULL ) : 
-			nic(nic), destAddr(destAddr), length(length), offset(0), recvEntry(entry), bytesWritten(0) {
-		callback = new MemRequest::Callback;
-		*callback = std::bind( &RdmaNic::RecvStream::writeResp, this, recvEntry->getThread(), std::placeholders::_1 );
+			nic(nic), destAddr(destAddr), length(length), offset(0), recvEntry(entry), bytesWritten(0), callback(NULL) {
+		if ( entry ) {
+			callback = new MemRequest::Callback;
+			*callback = std::bind( &RdmaNic::RecvStream::writeResp, this, recvEntry->getThread(), std::placeholders::_1 );
+		}
 	}
 	~RecvStream( ); 
 	void addPkt(RdmaNicNetworkEvent* pkt) { pktQ.push(pkt); } 
@@ -96,9 +98,21 @@ class RecvEngine {
         queues.resize(numVC);   
     }
     void process();
-	void addMemRgn( MemRgnEntry* entry ) {
+	int removeMemRgn( int key ) {
+		if ( m_memRegionMap.find( key ) == m_memRegionMap.end() ) {
+			assert(0);
+		}
+		m_memRegionMap.erase(key);
+		return 0;
+	}
+	int addMemRgn( MemRgnEntry* entry ) {
 		// need to check this slot is empty
-		m_memRegionMap[ entry->getKey() ] = entry;	
+		if ( m_memRegionMap.find( entry->getKey() ) == m_memRegionMap.end() ) {
+			m_memRegionMap[ entry->getKey() ] = entry;
+			return 0;
+		}else{
+			return -1;
+		}
 	}
     void postRecv( int rqId, MsgRecvEntry* entry ) { 
         m_recvQueueMap[rqId]->push( entry );
