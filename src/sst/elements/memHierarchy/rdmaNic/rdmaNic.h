@@ -288,8 +288,10 @@ class RdmaNic : public SST::Component {
 			return new RdmaCreateRQ_Cmd( nic, thread, cmd );
 	  	case RdmaCreateCQ:
 			return new RdmaCreateCQ_Cmd( nic, thread, cmd );
-	  	case RdmaMemRgn:
-			return new RdmaMemRgnCmd( nic, thread, cmd );
+		case RdmaMemRgnReg:
+			return new RdmaMemRgnRegCmd( nic, thread, cmd );
+		case RdmaMemRgnUnreg:
+			return new RdmaMemRgnUnregCmd( nic, thread, cmd );
 	  	case RdmaMemWrite:
 			return new RdmaMemWriteCmd( nic, thread, cmd );
 	  	case RdmaMemRead:
