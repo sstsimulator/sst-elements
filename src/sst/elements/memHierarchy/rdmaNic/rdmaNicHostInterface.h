@@ -3,7 +3,7 @@ typedef uint32_t Addr_t;
 
 typedef Addr_t Context;
 typedef int QueueIndex;
-typedef enum { RdmaDone=0, RdmaSend=1, RdmaRecv, RdmaFini, RdmaCreateCQ, RdmaCreateRQ, RdmaMemRgn, RdmaMemWrite, RdmaMemRead, RdmaBarrier } RdmaCmd;
+typedef enum { RdmaDone=0, RdmaSend=1, RdmaRecv, RdmaFini, RdmaCreateCQ, RdmaCreateRQ, RdmaMemRgnReg, RdmaMemRgnUnreg, RdmaMemWrite, RdmaMemRead, RdmaBarrier } RdmaCmd;
 
 typedef int MemRgnKey;
 typedef int RecvQueueKey;
@@ -19,7 +19,10 @@ typedef struct {
 			MemRgnKey key;
             Addr_t addr;
             uint32_t len;
-		} memRgn;
+		} memRgnReg;
+        struct {
+			MemRgnKey key;
+		} memRgnUnreg;
         struct {
 			MemRgnKey key;
 			uint32_t offset;
