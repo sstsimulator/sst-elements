@@ -300,6 +300,7 @@ void RdmaNic::writeCompletionToHost(int thread, int cqId, RdmaCompletion& comp )
     int tailIndex = readCompQueueTailIndex(thread,cqId);
     dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cqId=%d headIndex=%d tailIndex=%d queueSize=%d headPtr=%x dataPtr=%x\n", 
 		cqId, q.headIndex(), tailIndex, q.cmd().data.createCQ.num, q.cmd().data.createCQ.headPtr, q.cmd().data.createCQ.dataPtr );
+    dbg.debug( CALL_INFO_LONG,2,DBG_X_FLAG,"ctx=%x\n", comp.context);
 
 	// if we move the head index and it's equal to the tail index we are full
 	// Note that with this logic the max number of items in the circular queue is N - 1
