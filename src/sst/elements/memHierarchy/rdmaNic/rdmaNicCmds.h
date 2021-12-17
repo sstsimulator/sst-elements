@@ -89,8 +89,8 @@ class RdmaSendCmd : public NicCmdEntry {
   public:
 	RdmaSendCmd( RdmaNic& nic, int thread, NicCmd* x ) : NicCmdEntry(nic,thread,x)
 	{
-    	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"pe=%d node=%d addr=%" PRIx32 " len=%d\n",
-            m_cmd->data.send.pe, m_cmd->data.send.node, m_cmd->data.send.addr, m_cmd->data.send.len );
+		m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"pe=%d node=%d addr=%" PRIx32 " len=%d ctx=%#x\n",
+            m_cmd->data.send.pe, m_cmd->data.send.node, m_cmd->data.send.addr, m_cmd->data.send.len, m_cmd->data.send.context );
 
     	m_nic.m_sendEngine->add( 0, new MsgSendEntry( m_cmd, m_thread ) );
     	// passed the cmd to the SendEntry
@@ -103,8 +103,8 @@ class RdmaRecvCmd : public NicCmdEntry {
   public:
 	RdmaRecvCmd( RdmaNic& nic, int thread, NicCmd* x ) : NicCmdEntry(nic,thread,x)
 	{
-    	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"addr=%" PRIx32 " len=%d rqId=%x\n",
-            m_cmd->data.recv.addr, m_cmd->data.recv.len, m_cmd->data.recv.rqId );
+		m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"addr=%" PRIx32 " len=%d rqId=%x ctx=%#x\n",
+            m_cmd->data.recv.addr, m_cmd->data.recv.len, m_cmd->data.recv.rqId, m_cmd->data.recv.context );
 
     	m_nic.m_recvEngine->postRecv( m_cmd->data.recv.rqId, new MsgRecvEntry( m_cmd, m_thread ) );
     	// passed the cmd to the RecvEntry
@@ -115,18 +115,28 @@ class RdmaRecvCmd : public NicCmdEntry {
     bool isRecv() { return true; }
 }; 
 
-class RdmaMemRgnCmd : public NicCmdEntry {
+class RdmaMemRgnRegCmd : public NicCmdEntry {
   public:
-    RdmaMemRgnCmd( RdmaNic& nic, int thread, NicCmd* cmd ): NicCmdEntry(nic,thread,cmd)
+    RdmaMemRgnRegCmd( RdmaNic& nic, int thread, NicCmd* cmd ): NicCmdEntry(nic,thread,cmd)
 	{
     	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"key=%x addr=%" PRIx32 " length=%d\n", 
-					m_cmd->data.memRgn.key, m_cmd->data.memRgn.addr,m_cmd->data.memRgn.len);
-    	m_nic.m_recvEngine->addMemRgn( new MemRgnEntry( m_cmd, m_thread ) );
+					m_cmd->data.memRgnReg.key, m_cmd->data.memRgnReg.addr,m_cmd->data.memRgnReg.len);
+		m_resp.retval = m_nic.m_recvEngine->addMemRgn( new MemRgnEntry( m_cmd, m_thread ) );
     	// passed the cmd to the CompletionQueue 
 		m_cmd = NULL;
 	}
     virtual std::string name() { return "MemRgn"; }
 }; 
+
+class RdmaMemRgnUnregCmd : public NicCmdEntry {
+  public:
+    RdmaMemRgnUnregCmd( RdmaNic& nic, int thread, NicCmd* cmd ): NicCmdEntry(nic,thread,cmd)
+	{
+		m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"key=%x\n", m_cmd->data.memRgnUnreg.key);
+		m_resp.retval = m_nic.m_recvEngine->removeMemRgn( m_cmd->data.memRgnUnreg.key );
+	}
+    virtual std::string name() { return "MemRgn"; }
+};
 
 class RdmaMemWriteCmd : public NicCmdEntry {
   public:
