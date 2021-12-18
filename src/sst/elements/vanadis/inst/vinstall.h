@@ -20,8 +20,9 @@
 #include "inst/vadd.h"
 #include "inst/vaddi.h"
 #include "inst/vaddiu.h"
-#include "inst/vdivmod.h"
 #include "inst/vdiv.h"
+#include "inst/vdivmod.h"
+#include "inst/vmod.h"
 #include "inst/vmul.h"
 #include "inst/vmuli.h"
 #include "inst/vmulsplit.h"
@@ -74,9 +75,9 @@
 #include "inst/vfence.h"
 
 // Special instructions
-#include "inst/vfault.h"
-#include "inst/vdecodefaultinst.h"
 #include "inst/vdecodealignfault.h"
+#include "inst/vdecodefaultinst.h"
+#include "inst/vfault.h"
 #include "inst/vnop.h"
 #include "inst/vsetreg.h"
 #include "inst/vsyscall.h"
@@ -95,7 +96,9 @@
 #include "inst/vfpdiv.h"
 #include "inst/vfpmul.h"
 #include "inst/vfpscmp.h"
+#include "inst/vfpsignlogic.h"
 #include "inst/vfpsub.h"
+#include "inst/vmipsfpscmp.h"
 
 // Truncate
 #include "inst/vtrunc.h"

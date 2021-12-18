@@ -24,8 +24,8 @@ namespace Vanadis {
 class VanadisSyscallInitBRKEvent : public VanadisSyscallEvent {
 public:
     VanadisSyscallInitBRKEvent() : VanadisSyscallEvent() {}
-    VanadisSyscallInitBRKEvent(uint32_t core, uint32_t thr, uint64_t newBrkAddr)
-        : VanadisSyscallEvent(core, thr), newBrk(newBrkAddr) {}
+    VanadisSyscallInitBRKEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t newBrkAddr)
+        : VanadisSyscallEvent(core, thr, bittype), newBrk(newBrkAddr) {}
 
     VanadisSyscallOp getOperation() { return SYSCALL_OP_INIT_BRK; }
 

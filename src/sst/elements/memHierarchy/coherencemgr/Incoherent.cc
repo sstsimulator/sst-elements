@@ -693,8 +693,8 @@ SimTime_t Incoherent::sendResponseUp(MemEvent * event, vector<uint8_t> * data, b
         responseEvent->setSize(data->size());
     }
 
-    if (success)
-        responseEvent->setSuccess(true);
+    if (!success)
+        responseEvent->setFail();
 
     if (time < timestamp_) time = timestamp_;
     SimTime_t deliveryTime = time + (inMSHR ? mshrLatency_ : accessLatency_);

@@ -35,8 +35,9 @@ enum VanadisFunctionalUnitType {
 };
 
 const char*
-funcTypeToString(VanadisFunctionalUnitType unit_type) {
-    switch (unit_type) {
+funcTypeToString(VanadisFunctionalUnitType unit_type)
+{
+    switch ( unit_type ) {
     case INST_INT_ARITH:
         return "INT_ARITH";
     case INST_INT_DIV:

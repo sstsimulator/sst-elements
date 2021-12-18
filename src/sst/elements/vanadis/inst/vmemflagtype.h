@@ -27,8 +27,9 @@ enum VanadisMemoryTransaction {
 };
 
 const char*
-getTransactionTypeString(VanadisMemoryTransaction transT) {
-    switch (transT) {
+getTransactionTypeString(VanadisMemoryTransaction transT)
+{
+    switch ( transT ) {
     case MEM_TRANSACTION_NONE:
         return "STD";
     case MEM_TRANSACTION_LLSC_LOAD:

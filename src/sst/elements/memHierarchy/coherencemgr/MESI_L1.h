@@ -53,8 +53,10 @@ public:
         {"eventSent_GetS",          "Number of GetS requests sent", "events", 2},
         {"eventSent_GetX",          "Number of GetX requests sent", "events", 2},
         {"eventSent_GetSX",         "Number of GetSX requests sent", "events", 2},
+        {"eventSent_Write",         "Number of Write requests sent", "events", 2},
         {"eventSent_GetSResp",      "Number of GetSResp responses sent", "events", 2},
         {"eventSent_GetXResp",      "Number of GetXResp responses sent", "events", 2},
+        {"eventSent_WriteResp",     "Number of WriteResp responses sent", "events", 2},
         {"eventSent_PutS",          "Number of PutS requests sent", "events", 2},
         {"eventSent_PutE",          "Number of PutE requests sent", "events", 2},
         {"eventSent_PutM",          "Number of PutM requests sent", "events", 2},
@@ -263,6 +265,7 @@ public:
         stat_eventSent[(int)Command::GetS] =            registerStatistic<uint64_t>("eventSent_GetS");
         stat_eventSent[(int)Command::GetX] =            registerStatistic<uint64_t>("eventSent_GetX");
         stat_eventSent[(int)Command::GetSX] =           registerStatistic<uint64_t>("eventSent_GetSX");
+        stat_eventSent[(int)Command::Write] =           registerStatistic<uint64_t>("eventSent_Write");
         stat_eventSent[(int)Command::PutM] =            registerStatistic<uint64_t>("eventSent_PutM");
         stat_eventSent[(int)Command::NACK] =            registerStatistic<uint64_t>("eventSent_NACK");
         stat_eventSent[(int)Command::FlushLine] =       registerStatistic<uint64_t>("eventSent_FlushLine");
@@ -272,6 +275,7 @@ public:
         stat_eventSent[(int)Command::AckInv] =          registerStatistic<uint64_t>("eventSent_AckInv");
         stat_eventSent[(int)Command::GetSResp] =        registerStatistic<uint64_t>("eventSent_GetSResp");
         stat_eventSent[(int)Command::GetXResp] =        registerStatistic<uint64_t>("eventSent_GetXResp");
+        stat_eventSent[(int)Command::WriteResp] =       registerStatistic<uint64_t>("eventSent_WriteResp");
         stat_eventSent[(int)Command::FlushLineResp] =   registerStatistic<uint64_t>("eventSent_FlushLineResp");
         stat_eventSent[(int)Command::Put]           = registerStatistic<uint64_t>("eventSent_Put");
         stat_eventSent[(int)Command::Get]           = registerStatistic<uint64_t>("eventSent_Get");
@@ -354,6 +358,7 @@ public:
 
     /** Event handlers - called by controller */
     bool handleGetS(MemEvent * event, bool inMSHR);
+    bool handleWrite(MemEvent * event, bool inMSHR);
     bool handleGetX(MemEvent * event, bool inMSHR);
     bool handleGetSX(MemEvent * event, bool inMSHR);
     bool handleFlushLine(MemEvent * event, bool inMSHR);
@@ -390,7 +395,7 @@ private:
     void retry(Addr addr);
 
     /** Event send */
-    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t time, bool success = false);
+    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t time, bool success = true);
     void sendResponseDown(MemEvent * event, L1CacheLine * line, bool data);
     void forwardFlush(MemEvent * event, L1CacheLine * line, bool evict);
     void sendWriteback(Command cmd, L1CacheLine * line, bool dirty);
@@ -405,8 +410,6 @@ private:
 
     /** Miscellaneous */
     void printLine(Addr addr);
-    void printData(Addr addr);
-    void printData(vector<uint8_t> * data, bool set);
 
     bool snoopL1Invs_;
     State protocolState_; // E for MESI, S for MSI

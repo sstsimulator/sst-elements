@@ -50,6 +50,7 @@ inst/vfpconv.h \
 inst/vfpdiv.h \
 inst/vfpmul.h \
 inst/vfpscmp.h \
+inst/vfpsignlogic.h \
 inst/vfpsub.h \
 inst/vgpr2fp.h \
 inst/vinstall.h \
@@ -61,6 +62,8 @@ inst/vjr.h \
 inst/vjump.h \
 inst/vload.h \
 inst/vmemflagtype.h \
+inst/vmipsfpscmp.h \
+inst/vmod.h \
 inst/vmovci.h \
 inst/vmul.h \
 inst/vmuli.h \
@@ -94,6 +97,7 @@ lsq/vlsq.h \
 lsq/vlsqseq.h \
 lsq/vlsqstd.h \
 lsq/vmemwriterec.h \
+os/vosbittype.h \
 os/vcpuos.h \
 os/vmipscpuos.h \
 os/vriscvcpuos.h \

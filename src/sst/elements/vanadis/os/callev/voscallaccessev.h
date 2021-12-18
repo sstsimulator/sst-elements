@@ -17,6 +17,7 @@
 #define _H_VANADIS_SYSCALL_ACCESS
 
 #include "os/voscallev.h"
+#include "os/vosbittype.h"
 
 namespace SST {
 namespace Vanadis {
@@ -24,8 +25,8 @@ namespace Vanadis {
 class VanadisSyscallAccessEvent : public VanadisSyscallEvent {
 public:
     VanadisSyscallAccessEvent() : VanadisSyscallEvent() {}
-    VanadisSyscallAccessEvent(uint32_t core, uint32_t thr, const uint64_t path, const uint64_t mode)
-        : VanadisSyscallEvent(core, thr), path_ptr(path), access_mode(mode) {}
+    VanadisSyscallAccessEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, const uint64_t path, const uint64_t mode)
+        : VanadisSyscallEvent(core, thr, bittype), path_ptr(path), access_mode(mode) {}
 
     VanadisSyscallOp getOperation() { return SYSCALL_OP_ACCESS; }
 

@@ -85,7 +85,8 @@ namespace SST {
                     {"parallel_mode_L%(levels)d", "this is for the corner case of having a one cycle overlap with accessing cache","0"},
                     {"page_walk_latency", "Each page table walk latency in nanoseconds", "50"},
                     {"self_connected", "Determines if the page walkers are acutally connected to memory hierarchy or just add fixed latency (self-connected)", "0"},
-                    {"emulate_faults", "This indicates if the page faults should be emulated through requesting pages from page fault handler", "0"}
+                    {"emulate_faults", "This indicates if the page faults should be emulated through requesting pages from page fault handler", "0"},
+                    {"verbose", "(uint) Output verbosity for warnings/errors. 0[fatal error only], 1[warnings], 2[full state dump on fatal error]","0"},
                 )
 
                 SST_ELI_DOCUMENT_PORTS(

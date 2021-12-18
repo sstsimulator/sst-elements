@@ -335,7 +335,8 @@ void MemController::handleEvent(SST::Event* event) {
     MemEventBase *meb = static_cast<MemEventBase*>(event);
 
     if (is_debug_event(meb)) {
-        Debug(_L3_, "\n%" PRIu64 " (%s) Received: %s\n", getCurrentSimTimeNano(), getName().c_str(), meb->getVerboseString().c_str());
+        Debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
+                    Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), meb->getVerboseString().c_str());
     }
 
     Command cmd = meb->getCmd();
@@ -394,6 +395,7 @@ void MemController::handleEvent(SST::Event* event) {
         case Command::GetS:
         case Command::GetX:
         case Command::GetSX:
+        case Command::Write:
             outstandingEvents_.insert(std::make_pair(ev->getID(), ev));
             memBackendConvertor_->handleMemEvent( ev );
             break;
@@ -475,7 +477,8 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
     outstandingEvents_.erase(it);
 
     if (is_debug_event(evb)) {
-        Debug(_L3_, "Memory Controller: %s - Response received to (%s)\n", getName().c_str(), evb->getVerboseString().c_str());
+        Debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Resp    (%s)\n",
+                    Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), evb->getVerboseString().c_str());
     }
 
     /* Handle custom events */
@@ -493,7 +496,7 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
     bool noncacheable  = ev->queryFlag(MemEvent::F_NONCACHEABLE);
 
     /* Write data. Here instead of receive to try to match backing access order to backend execute order */
-    if (backing_ && (ev->getCmd() == Command::PutM || (ev->getCmd() == Command::GetX && noncacheable)))
+    if (backing_ && (ev->getCmd() == Command::PutM || (ev->getCmd() == Command::Write)))
         writeData(ev);
 
     if (ev->queryFlag(MemEvent::F_NORESPONSE)) {
@@ -504,9 +507,9 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
     MemEvent * resp = ev->makeResponse();
 
     /* Read order matches execute order so that mis-ordering at backend can result in bad data */
-    if (resp->getCmd() == Command::GetSResp || (resp->getCmd() == Command::GetXResp && !noncacheable)) {
+    if (resp->getCmd() == Command::GetSResp || resp->getCmd() == Command::GetXResp) {
         readData(resp);
-        if (!noncacheable) resp->setCmd(Command::GetXResp);
+        if (!resp->queryFlag(MemEvent::F_NONCACHEABLE)) resp->setCmd(Command::GetXResp);
     }
 
     resp->setFlags(flags);
@@ -559,16 +562,22 @@ void MemController::writeData(MemEvent* event) {
     Addr addr = noncacheable ? event->getAddr() : event->getBaseAddr();
 
     if (event->getCmd() == Command::PutM) { /* Write request to memory */
-        if (is_debug_event(event)) { Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); }
+        if (is_debug_event(event)) { 
+            Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
+            printDataValue(addr, &(event->getPayload()), true);
+        }
 
         backing_->set(addr, event->getSize(), event->getPayload());
 
         return;
     }
 
-    if (noncacheable && event->getCmd() == Command::GetX) {
-        if (is_debug_event(event)) { Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); }
-
+    if (event->getCmd() == Command::Write) {
+        if (is_debug_event(event)) { 
+            Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
+            printDataValue(addr, &(event->getPayload()), true);
+        }
+        
         backing_->set(addr, event->getSize(), event->getPayload());
 
         return;
@@ -584,8 +593,11 @@ void MemController::readData(MemEvent* event) {
     vector<uint8_t> payload;
     payload.resize(event->getSize(), 0);
 
-    if (backing_)
+    if (backing_) {
         backing_->get(localAddr, event->getSize(), payload);
+        if (is_debug_addr(localAddr))
+            printDataValue(localAddr, &(payload), false);
+    }
 
     event->setPayload(payload);
 }
@@ -595,8 +607,12 @@ void MemController::readData(MemEvent* event) {
 void MemController::writeData(Addr addr, std::vector<uint8_t> * data) {
     if (!backing_) return;
 
-    for (size_t i = 0; i < data->size(); i++)
+    for (size_t i = 0; i < data->size(); i++) {
         backing_->set(addr + i, data->at(i));
+    }
+
+    if (is_debug_addr(addr))
+        printDataValue(addr, data, true);
 }
 
 
@@ -607,6 +623,9 @@ void MemController::readData(Addr addr, size_t bytes, std::vector<uint8_t> &data
 
     for (size_t i = 0; i < bytes; i++)
         data[i] = backing_->get(addr + i);
+    
+    if (is_debug_addr(addr))
+        printDataValue(addr, &data, false);
 }
 
 
@@ -621,7 +640,10 @@ Addr MemController::translateToLocal(Addr addr) {
         Addr offset = shift % region_.interleaveStep;
         rAddr = (step * region_.interleaveSize) + offset + privateMemOffset_;
     }
-    if (is_debug_addr(addr)) { Debug(_L10_,"\tConverting global address 0x%" PRIx64 " to local address 0x%" PRIx64 "\n", addr, rAddr); }
+    if (is_debug_addr(addr) && addr != rAddr) { 
+        Debug(_L10_, "C: %-40" PRIu64 "  %-20s ConvertAddr   Local, 0x%" PRIx64 ", 0x%" PRIx64"\n",
+                    Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), addr, rAddr);
+    }
     return rAddr;
 }
 
@@ -636,17 +658,20 @@ Addr MemController::translateToGlobal(Addr addr) {
         rAddr = rAddr / region_.interleaveSize;
         rAddr = rAddr * region_.interleaveStep + offset + region_.start;
     }
-    if (is_debug_addr(rAddr)) { Debug(_L10_,"\tConverting local address 0x%" PRIx64 " to global address 0x%" PRIx64 "\n", addr, rAddr); }
+    if (is_debug_addr(rAddr) && addr != rAddr) { 
+        Debug(_L10_, "C: %-40" PRIu64 "  %-20s ConvertAddr   Global, 0x%" PRIx64 ", 0x%" PRIx64"\n",
+                    Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), addr, rAddr);
+    }
     return rAddr;
 }
 
 
 void MemController::processInitEvent( MemEventInit* me ) {
     /* Push data to memory */
-    if (Command::GetX == me->getCmd()) {
+    if (Command::Write == me->getCmd()) {
         me->setAddr(translateToLocal(me->getAddr()));
         Addr addr = me->getAddr();
-        if (is_debug_event(me)) { Debug(_L9_,"Memory init %s - Received GetX for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size()); }
+        if (is_debug_event(me)) { Debug(_L9_,"Memory init %s - Received Write for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size()); }
         if ( isRequestAddressValid(addr) && backing_ ) {
             backing_->set(addr, me->getPayload().size(), me->getPayload());
         }
@@ -724,4 +749,19 @@ void MemController::emergencyShutdown() {
             link_->emergencyShutdownDebug(out);
         }
     }
+}
+
+void MemController::printDataValue(Addr addr, std::vector<uint8_t>* data, bool set) {
+    if (dbg.getVerboseLevel() < 11) return;
+
+    std::string action = set ? "WRITE" : "READ";
+    std::stringstream value;
+    value << std::hex << std::setfill('0');
+    for (unsigned int i = 0; i < data->size(); i++) {
+        value << std::hex << std::setw(2) << (int)data->at(i);
+    }
+    
+    dbg.debug(_L11_, "V: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 " B: %-3zu %s\n",
+            Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), action.c_str(), 
+            addr, data->size(), value.str().c_str());
 }

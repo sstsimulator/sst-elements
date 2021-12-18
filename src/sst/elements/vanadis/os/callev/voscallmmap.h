@@ -24,16 +24,13 @@
 namespace SST {
 namespace Vanadis {
 
-// void *mmap(void *addr, size_t length, int prot, int flags,
-//                  int fd, off_t offset);
-
 class VanadisSyscallMemoryMapEvent : public VanadisSyscallEvent {
 public:
     VanadisSyscallMemoryMapEvent() : VanadisSyscallEvent() {}
 
-    VanadisSyscallMemoryMapEvent(uint32_t core, uint32_t thr, uint64_t addr, uint64_t len, int64_t prot, int64_t flags,
+    VanadisSyscallMemoryMapEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t addr, uint64_t len, int64_t prot, int64_t flags,
                                  uint64_t stack_p, uint64_t offset_multiplier)
-        : VanadisSyscallEvent(core, thr), address(addr), length(len), page_prot(prot), alloc_flags(flags),
+        : VanadisSyscallEvent(core, thr, bittype), address(addr), length(len), page_prot(prot), alloc_flags(flags),
           stack_pointer(stack_p), offset_units(offset_multiplier) {}
 
     VanadisSyscallOp getOperation() { return SYSCALL_OP_MMAP; }

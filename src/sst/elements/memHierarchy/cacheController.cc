@@ -82,9 +82,7 @@ void Cache::processPrefetchEvent(SST::Event * ev) {
     }
 
     // Record the time at which requests arrive for latency statistics
-    if (CommandClassArr[(int)event->getCmd()] == CommandClass::Request &&
-        !CommandWriteback[(int)event->getCmd()])
-        coherenceMgr_->recordIncomingRequest(static_cast<MemEventBase*>(event));
+    coherenceMgr_->recordIncomingRequest(event);
 
     // Record received prefetch
     statPrefetchRequest->addData(1);
@@ -178,6 +176,7 @@ bool Cache::clockTick(Cycle_t time) {
             // Accepted prefetches are profiled in the coherence manager
         } else {
             statPrefetchDrop->addData(1);
+            coherenceMgr_->removeRequestRecord(prefetchBuffer_.front()->getID());
         }
         prefetchBuffer_.pop();
     }
@@ -268,6 +267,9 @@ bool Cache::processEvent(MemEventBase* ev, bool inMSHR) {
         case Command::GetX:
             accepted = coherenceMgr_->handleGetX(event, inMSHR);
             break;
+        case Command::Write:
+            accepted = coherenceMgr_->handleWrite(event, inMSHR);
+            break;
         case Command::GetSX:
             accepted = coherenceMgr_->handleGetSX(event, inMSHR);
             break;
@@ -279,6 +281,9 @@ bool Cache::processEvent(MemEventBase* ev, bool inMSHR) {
             break;
         case Command::GetSResp:
             accepted = coherenceMgr_->handleGetSResp(event, inMSHR);
+            break;
+        case Command::WriteResp:
+            accepted = coherenceMgr_->handleWriteResp(event, inMSHR);
             break;
         case Command::GetXResp:
             accepted = coherenceMgr_->handleGetXResp(event, inMSHR);
@@ -485,8 +490,7 @@ void Cache::init(unsigned int phase) {
                     getName().c_str(), memEvent->getVerboseString().c_str());
             MemEventInit * mEv = memEvent->clone();
             mEv->setSrc(getName());
-            mEv->setDst(linkDown_->getTargetDestination(mEv->getRoutingAddress()));
-            linkDown_->sendInitData(mEv);
+            linkDown_->sendInitData(mEv, false);
         }
         delete memEvent;
     }

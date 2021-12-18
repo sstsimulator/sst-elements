@@ -106,8 +106,6 @@ public:
     virtual void finish();
 
 private:
-    DMAEngine() {}; // For serialization
-
     bool clock(Cycle_t cycle);
 
     bool isIssuable(DMACommand *cmd) const;

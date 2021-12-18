@@ -21,12 +21,14 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisJumpRegInstruction : public VanadisSpeculatedInstruction {
+class VanadisJumpRegInstruction : public VanadisSpeculatedInstruction
+{
 public:
-    VanadisJumpRegInstruction(const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
-										const uint64_t ins_width,
-                              const uint16_t jump_to_reg, const VanadisDelaySlotRequirement delayT)
-        : VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 1, 0, 1, 0, 0, 0, 0, 0, delayT) {
+    VanadisJumpRegInstruction(
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint64_t ins_width,
+        const uint16_t jump_to_reg, const VanadisDelaySlotRequirement delayT) :
+        VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 1, 0, 1, 0, 0, 0, 0, 0, delayT)
+    {
 
         isa_int_regs_in[0] = jump_to_reg;
     }
@@ -35,21 +37,25 @@ public:
 
     virtual const char* getInstCode() const { return "JR"; }
 
-    virtual void printToBuffer(char* buffer, size_t buffer_size) {
-        snprintf(buffer, buffer_size, "JR   isa-in: %" PRIu16 " / phys-in: %" PRIu16 "\n", isa_int_regs_in[0],
-                 phys_int_regs_in[0]);
+    virtual void printToBuffer(char* buffer, size_t buffer_size)
+    {
+        snprintf(
+            buffer, buffer_size, "JR   isa-in: %" PRIu16 " / phys-in: %" PRIu16 "\n", isa_int_regs_in[0],
+            phys_int_regs_in[0]);
     }
 
-    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile) {
+    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile)
+    {
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) JR   isa-in: %" PRIu16 " / phys-in: %" PRIu16 "\n",
-                        getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0]);
+        output->verbose(
+            CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) JR   isa-in: %" PRIu16 " / phys-in: %" PRIu16 "\n",
+            getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0]);
 #endif
         takenAddress = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
 
-//        if ((takenAddress & 0x3) != 0) {
-//            flagError();
-//        }
+        //        if ((takenAddress & 0x3) != 0) {
+        //            flagError();
+        //        }
 
         markExecuted();
     }
