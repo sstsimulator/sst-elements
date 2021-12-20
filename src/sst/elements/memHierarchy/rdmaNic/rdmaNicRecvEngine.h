@@ -126,6 +126,7 @@ class RecvEngine {
 	int addReadResp( int thread, Addr_t destAddr, uint32_t len, CompQueueId cqId, Context context ) {
 		int key = m_nextReadRespKey++;
 		m_readRespMap[key] = new ReadRespRecvEntry( thread, destAddr, len, cqId, context ); 
+		return key;
 	}
   private:
     void processStreamHdr( RdmaNicNetworkEvent* );
