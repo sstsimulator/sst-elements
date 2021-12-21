@@ -94,6 +94,46 @@ for file in `ls $BASE_DIR/src/sst/elements`; do
 	fi
 done
 
+for file in `ls $BASE_DIR/src/sst/elements/osseous/examples/`; do
+	if [ -d "$BASE_DIR/src/sst/elements/osseous/examples/$file" ]; then
+	    
+        # Testing for .ignore and its associated .unignore settings
+        if test -f "$BASE_DIR/src/sst/elements/osseous/examples/$file/.ignore" -a ! -f "$BASE_DIR/src/sst/elements/osseous/examples/$file/.unignore" ; then
+            ignored_list="$ignored_list $file"
+        elif test -f "$BASE_DIR/src/sst/elements/osseous/examples/$file/.ignore" && \
+             test -s $BASE_DIR/src/sst/elements/osseous/examples/$file/.unignore && \
+             test -z "`grep $USER $$BASE_DIR/src/sst/elements/osseous/examples/$file/.unignore`" ; then
+          ignored_list="$ignored_list $elemlib"
+        else
+            
+            # See if we have a config.m4 in the element directory
+            if [ -r "$BASE_DIR/src/sst/elements/osseous/examples/$file/configure.m4" ]; then
+                echo "   SST_${file}_CONFIG([config_${file}=1],[config_${file}=0])" >> config/sst_elements_config_output.m4
+                echo "   AS_IF([test \$config_${file} -eq 1], [active_element_libraries=\"\$active_element_libraries $file\"])" >> config/sst_elements_config_output.m4
+                echo "m4_include([src/sst/elements/osseous/examples/$file/configure.m4])" >> config/sst_elements_include.m4
+                added_m4_list="$added_m4_list $file"
+            else
+                if [ -r "$BASE_DIR/src/sst/elements/osseous/examples/$file/Makefile.am" ]; then
+                    echo "   active_element_libraries=\"\$active_element_libraries osseous/examples/$file\"" >> config/sst_elements_config_output.m4
+                    added_make_list="$added_make_list $file"
+                fi
+            fi
+            
+            if [ -r "$BASE_DIR/src/sst/elements/osseous/examples/$file/Makefile.am" ]; then
+                echo "   AC_CONFIG_FILES([src/sst/elements/osseous/examples/$file/Makefile])" >> config/sst_elements_config_output.m4
+                if [ ! -f "$BASE_DIR/src/sst/elements/osseous/examples/$file/.nodist" ]; then
+                    echo "   dist_element_libraries=\"\$dist_element_libraries osseous/examples/$file\"" >> config/sst_elements_config_output.m4
+                else
+                    echo "   AC_MSG_WARN([Element library ]$file[ will build, but will not be distributed.])"  >> config/sst_elements_config_output.m4
+                    echo 
+                    echo "***WARNING: Element library $file will build, but will not be distributed via make dist due to .nodist file in directory."
+                fi
+            fi
+            echo "   " >> config/sst_elements_config_output.m4
+	    fi
+	fi
+done
+
 echo '   SST_ACTIVE_ELEMENT_LIBRARIES="$active_element_libraries"' >> config/sst_elements_config_output.m4
 echo '   SST_DIST_ELEMENT_LIBRARIES="$dist_element_libraries"' >> config/sst_elements_config_output.m4
 echo "   AC_SUBST(SST_ACTIVE_ELEMENT_LIBRARIES)" >> config/sst_elements_config_output.m4

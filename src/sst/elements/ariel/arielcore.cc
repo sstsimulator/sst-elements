@@ -15,6 +15,10 @@
 
 #include <sst_config.h>
 #include "arielcore.h"
+#include "tb_header.h"
+#include <iostream>
+#include <exception>
+#include <stdexcept>
 
 #ifdef HAVE_CUDA
 #include <../balar/balar_event.h>
@@ -144,6 +148,11 @@ void ArielCore::setGpuLink(Link* gpulink) {
 }
 #endif
 
+void ArielCore::setRtlLink(Link* rtllink) {
+    
+    RtlLink = rtllink;
+}
+
 void ArielCore::printTraceEntry(const bool isRead,
             const uint64_t address, const uint32_t length) {
 
@@ -189,7 +198,7 @@ void ArielCore::commitWriteEvent(const uint64_t address,
         req->setVirtualAddress(virtAddress);
 
         if( writePayloads ) {
-            if(verbosity >= 16) {
+            //if(verbosity >= 16) {  //Verbosity is different than expected
                 char* buffer = new char[64];
                 std::string payloadString = "";
                 for(int i = 0; i < length; ++i) {
@@ -201,7 +210,7 @@ void ArielCore::commitWriteEvent(const uint64_t address,
 
                 output->verbose(CALL_INFO, 16, 0, "Write-Payload: Len=%" PRIu32 ", Data={ %s } %" PRIx64 "\n",
                         length, payloadString.c_str(), virtAddress);
-            }
+            //}
             req->setPayload( (uint8_t*) payload, length );
         }
 #ifdef HAVE_CUDA
@@ -479,6 +488,7 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
 #endif
         ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Correctly identified event in pending transactions, removing from list, before there are: %" PRIu32 " transactions pending.\n",
                             (uint32_t) pendingTransactions->size()));
+
         pendingTransactions->erase(find_entry);
         pending_transaction_count--;
         if(isCoreFenced() && pending_transaction_count == 0)
@@ -703,6 +713,19 @@ bool ArielCore::isCoreStalled() const {
     return isStalled;
 }
 
+void ArielCore::createRtlEvent(void* inp_ptr, void* ctrl_ptr, void* updated_params, size_t inp_size, size_t ctrl_size, size_t updated_rtl_params_size) {
+    ArielRtlEvent* Ev = new ArielRtlEvent();
+    Ev->set_rtl_inp_ptr(inp_ptr);
+    Ev->set_rtl_ctrl_ptr(ctrl_ptr);
+    Ev->set_updated_rtl_params(updated_params);
+    Ev->set_rtl_inp_size(inp_size);
+    Ev->set_rtl_ctrl_size(ctrl_size);
+    Ev->set_updated_rtl_params_size(updated_rtl_params_size);
+    coreQ->push(Ev);
+
+    ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Generated a RTL event.\n"));
+}
+
 #ifdef HAVE_CUDA
 void ArielCore::createGpuEvent(GpuApi_t API, CudaArguments CA) {
     ArielGpuEvent* gEv = new ArielGpuEvent(API, CA);
@@ -893,6 +916,11 @@ bool ArielCore::refillQueue() {
                 createGpuEvent(ac.API.name, ac.API.CA);
                 break;
 #endif
+
+            case ARIEL_ISSUE_RTL: 
+                createRtlEvent(ac.shmem.inp_ptr, ac.shmem.ctrl_ptr, ac.shmem.updated_rtl_params, ac.shmem.inp_size, ac.shmem.ctrl_size, ac.shmem.updated_rtl_params_size); 
+                break;
+
             default:
                 // Not sure what this is
                 output->fatal(CALL_INFO, -1, "Error: Ariel did not understand command (%d) provided during instruction queue refill.\n", (int)(ac.command));
@@ -1104,6 +1132,16 @@ void ArielCore::handleFenceEvent(ArielFenceEvent *fEv) {
     statFenceRequests->addData(1);
 }
 
+void ArielCore::handleRtlEvent(ArielRtlEvent* RtlEv) {
+    
+    RtlEv->set_cachelinesize(cacheLineSize);
+    memmgr->get_page_info(RtlEv->RtlData.pageTable, RtlEv->RtlData.freePages, RtlEv->RtlData.pageSize);
+    memmgr->get_tlb_info(RtlEv->RtlData.translationCache, RtlEv->RtlData.translationCacheEntries, RtlEv->RtlData.translationEnabled);
+    RtlLink->send(RtlEv);
+    return;
+}
+
+
 #ifdef HAVE_CUDA
 // Create an event to send to the GPU Component
 void ArielCore::handleGpuEvent(ArielGpuEvent* gEv){
@@ -1307,6 +1345,37 @@ void ArielCore::handleGpuAckEvent(SST::Event* e){
 }
 #endif
 
+void ArielCore::handleRtlAckEvent(SST::Event* e) {
+    
+    output->verbose(CALL_INFO, 16, 0, "\nAriel received Event from RTL\n");
+    ArielRtlEvent* ev = dynamic_cast<ArielRtlEvent*>(e);
+    if(ev->getEventRecvAck() == true) {
+        output->verbose(CALL_INFO, 16, 0, "\nACK Received from RTL. Inp/Ctrl data signal update successful\n");
+        ev->setEventRecvAck(false);
+    }
+
+    if(ev->getEndSim() == true) {
+        output->verbose(CALL_INFO, 16, 0, "\nRTL simulation Complete\n");
+        //==========================Calculate Simulation time===================================//
+        //                                  xx.xx ns
+        //======================================================================================//
+        
+        //===================Print Outputs and other stats stored in Shmem======================//
+        //                   get the pointers and print the Output: XXXX
+        //======================================================================================//
+    }
+    if(ev->RtlData.rtl_inp_ptr != nullptr) {
+        rtl_inp_ptr = ev->RtlData.rtl_inp_ptr;
+        ArielReadEvent *are = new ArielReadEvent((uint64_t)ev->RtlData.rtl_inp_ptr, (uint64_t)ev->RtlData.rtl_inp_size);
+        output->verbose(CALL_INFO, 1, 0, "\nAriel received Event from RTL. Generating Read Request\n");
+        handleReadRequest(are);
+    }
+    //delete ev;
+
+    return;    
+}
+
+
 void ArielCore::printCoreStatistics() {
 }
 
@@ -1435,6 +1504,14 @@ bool ArielCore::processNextEvent() {
                 }
                 removeEvent = true;
                 break;
+
+        case RTL:
+            ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 "next event is RTL (RTLEvent call)\n", coreID));
+            output->verbose(CALL_INFO, 1, 0, "\nArielRTLEvent is being issued");
+            removeEvent = true;
+            handleRtlEvent(dynamic_cast<ArielRtlEvent*>(nextEvent));
+            break;
+
 #ifdef HAVE_CUDA
         case GPU:
             ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 "next event is GPU (CUDA call)\n", coreID));

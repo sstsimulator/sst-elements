@@ -1,8 +1,8 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -14,42 +14,26 @@
 // distribution.
 
 #include <sst_config.h>
+#include <inttypes.h>
 #include <stdio.h>
 
-#include "arielmemmgr_simple.h"
+#include "rtlmemmgr_simple.h"
 
-using namespace SST::ArielComponent;
+using namespace SST::RtlComponent;
 
-ArielMemoryManagerSimple::ArielMemoryManagerSimple(ComponentId_t id, Params& params) :
-            ArielMemoryManagerCache(id, params) {
+RtlMemoryManagerSimple::RtlMemoryManagerSimple(ComponentId_t id, Params& params) :
+            RtlMemoryManagerCache(id, params) { }
 
-    pageSize = (uint64_t) params.find<uint64_t>("pagesize0", 4096);
-    output->verbose(CALL_INFO, 2, 0, "Page size is %" PRIu64 "\n", pageSize);
+RtlMemoryManagerSimple::~RtlMemoryManagerSimple() { /*free((void*)(&freePages));*/ }
 
-    uint64_t pageCount = (uint64_t) params.find<uint64_t>("pagecount0", 131072);
-    output->verbose(CALL_INFO, 2, 0, "Page count is %" PRIu64 "\n", pageCount);
-
-    if (mapPolicy == ArielPageMappingPolicy::LINEAR) {
-        mapPagesLinear(pageCount, pageSize, 0, &freePages);
-    } else {
-        mapPagesRandom(pageCount, pageSize, 0, &freePages);
-    }
-
-    output->verbose(CALL_INFO, 2, 0, "Usable (free) page queue contains %" PRIu32 " entries\n", (uint32_t) freePages.size());
-
-    std::string popFilePath = params.find<std::string>("page_populate_0", "");
-    if (popFilePath != "") {
-        output->verbose(CALL_INFO, 1, 0, "Populating page table from %s...\n", popFilePath.c_str());
-        populatePageTable(popFilePath, &pageTable, &freePages, pageSize);
-    }
-
+void RtlMemoryManagerSimple::AssignRtlMemoryManagerSimple(std::unordered_map<uint64_t, uint64_t> pagetable, std::deque<uint64_t>* freepages, uint64_t pagesize) {
+    pageTable = pagetable; 
+    freePages = freepages;
+    pageSize = pagesize;
+    return; 
 }
 
-ArielMemoryManagerSimple::~ArielMemoryManagerSimple() {
-}
-
-
-void ArielMemoryManagerSimple::allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress) {
+void RtlMemoryManagerSimple::allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress) {
         // Simple manager ignores 'level' parameter
 
     output->verbose(CALL_INFO, 4, 0, "Requesting a memory allocation of %" PRIu64 " bytes, Virtual mapping=%" PRIu64 "\n",
@@ -69,13 +53,14 @@ void ArielMemoryManagerSimple::allocate(const uint64_t size, const uint32_t leve
 
     uint64_t nextVirtPage = virtualAddress;
     for(uint64_t bytesLeft = 0; bytesLeft < roundedSize; bytesLeft += pageSize) {
-        if(freePages.empty()) {
+        if(freePages->empty()) {
                 output->fatal(CALL_INFO, -1, "Requested a memory allocation of size: %" PRIu64 " which failed due to not having enough free pages\n",
                     size);
         }
 
-        const uint64_t nextPhysPage = freePages.front();
-        freePages.pop_front();
+        fprintf(stderr, "\nAllocation, Popping freepages");
+        const uint64_t nextPhysPage = freePages->front();
+        freePages->pop_front();
 
         pageTable.insert( std::pair<uint64_t, uint64_t>(nextVirtPage, nextPhysPage) );
 
@@ -86,11 +71,11 @@ void ArielMemoryManagerSimple::allocate(const uint64_t size, const uint32_t leve
     }
 
     output->verbose(CALL_INFO, 4, 0, "Request leaves: %" PRIu32 " free pages\n",
-        (uint32_t) freePages.size());
+        (uint32_t) freePages->size());
 
 }
 
-uint64_t ArielMemoryManagerSimple::translateAddress(uint64_t virtAddr) {
+uint64_t RtlMemoryManagerSimple::translateAddress(uint64_t virtAddr) {
     // If translation is disabled, then just return address
     if( ! translationEnabled ) {
         return virtAddr;
@@ -106,9 +91,10 @@ uint64_t ArielMemoryManagerSimple::translateAddress(uint64_t virtAddr) {
     output->verbose(CALL_INFO, 4, 0, "Page Table: translate virtual address %" PRIu64 "\n", virtAddr);
 
     // Check the translation cache otherwise carry on
-    auto checkCache = translationCache->find(virtAddr);
-    if(checkCache != translationCache->end()) {
+    auto checkCache = translationCache.find(virtAddr);
+    if(checkCache != translationCache.end()) {
         statTranslationCacheHits->addData(1);
+        output->verbose(CALL_INFO, 1, 0, "\nCacheTranslation successful");
         return checkCache->second;
     }
 
@@ -125,6 +111,7 @@ uint64_t ArielMemoryManagerSimple::translateAddress(uint64_t virtAddr) {
         output->verbose(CALL_INFO, 4, 0, "Page table hit: virtual address=%" PRIu64 " hit, virtual page start=%" PRIu64 ", virtual end=%" PRIu64 ", translates to phys page start=%" PRIu64 " translates to: phys address: %" PRIu64 " (offset added to phys start=%" PRIu64 ")\n",
                 virtAddr, page_itr->first, page_itr->first + pageSize, page_itr->second, physAddr, page_offset);
 
+        output->verbose(CALL_INFO, 1, 0, "\nPage table hit successful");
         cacheTranslation(virtAddr, physAddr);
         return physAddr;
 
@@ -137,6 +124,7 @@ uint64_t ArielMemoryManagerSimple::translateAddress(uint64_t virtAddr) {
         output->verbose(CALL_INFO, 4, 0, "Page offset calculation (generating a new page allocation request) for address %" PRIu64 ", offset=%" PRIu64 ", requesting virtual map to address: %" PRIu64 "\n",
                 virtAddr, offset, (virtAddr - offset));
 
+        output->verbose(CALL_INFO, 1, 0, "\nPage table miss. Allocation");
         // Perform an allocation so we can then re-find the address
         allocate(8, 0, virtAddr - offset);
 
@@ -149,9 +137,9 @@ uint64_t ArielMemoryManagerSimple::translateAddress(uint64_t virtAddr) {
     }
 }
 
-void ArielMemoryManagerSimple::printStats() {
+void RtlMemoryManagerSimple::printStats() {
     output->output("\n");
-    output->output("Ariel Memory Management Statistics:\n");
+    output->output("Rtl Memory Management Statistics:\n");
     output->output("---------------------------------------------------------------------\n");
     output->output("Page Table Sizes:\n");
 
@@ -164,7 +152,7 @@ void ArielMemoryManagerSimple::printStats() {
         ((uint64_t) pageTable.size()) * ((uint64_t) pageSize));
 }
 
-void ArielMemoryManagerSimple::printTable() {
+void RtlMemoryManagerSimple::printTable() {
 
     	output->output("---------------------------------------------------------------------\n");
 	output->verbose(CALL_INFO, 16, 0, "Page Table Map:\n");
@@ -176,12 +164,4 @@ void ArielMemoryManagerSimple::printTable() {
 
     	output->output("---------------------------------------------------------------------\n");
 
-}
-
-void ArielMemoryManagerSimple::get_page_info(std::unordered_map<uint64_t, uint64_t>* pagetable, std::deque<uint64_t>* freepages, uint64_t& pagesize) {
-    memcpy((void*)pagetable, (void*)(&pageTable), sizeof(pageTable));
-    memcpy((void*)freepages, (void*)(&freePages), sizeof(freePages)); 
-    pagesize = pageSize;
-
-    return;
 }

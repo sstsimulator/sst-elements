@@ -47,6 +47,8 @@
 #include "arielflushev.h"
 #include "arielfenceev.h"
 #include "arielswitchpool.h"
+#include "arielrtlev.h"
+#include "tb_header.h"
 
 #include "ariel_shmem.h"
 #include "arieltracegen.h"
@@ -136,6 +138,8 @@ class ArielCore : public ComponentExtension {
       }
 
         void setCacheLink(SimpleMem* newCacheLink);
+        void createRtlEvent(void*, void*, void*, size_t, size_t, size_t);
+        void setRtlLink(Link* rtllink);
 
 #ifdef HAVE_CUDA
         void createGpuEvent(GpuApi_t API, CudaArguments CA);
@@ -152,6 +156,8 @@ class ArielCore : public ComponentExtension {
         void handleSwitchPoolEvent(ArielSwitchPoolEvent* aSPE);
         void handleFlushEvent(ArielFlushEvent *flEv);
         void handleFenceEvent(ArielFenceEvent *fEv);
+        void handleRtlEvent(ArielRtlEvent* RtlEv);
+        void handleRtlAckEvent(SST::Event* e);
 
 #ifdef HAVE_CUDA
         void handleGpuEvent(ArielGpuEvent* gEv);
@@ -175,7 +181,6 @@ class ArielCore : public ComponentExtension {
     private:
         bool processNextEvent();
         bool refillQueue();
-
         bool writePayloads;
         uint32_t coreID;
         uint32_t maxPendingTransactions;
@@ -206,6 +211,7 @@ class ArielCore : public ComponentExtension {
 
         SimpleMem* cacheLink;
         ArielTunnel *tunnel;
+        Link* RtlLink;
 
 #ifdef HAVE_CUDA
         Link* GpuLink;
@@ -218,6 +224,7 @@ class ArielCore : public ComponentExtension {
         uint32_t maxIssuePerCycle;
         uint32_t maxQLength;
         uint64_t cacheLineSize;
+        void* rtl_inp_ptr = nullptr;
         ArielMemoryManager* memmgr;
         const uint32_t verbosity;
         const uint32_t perform_checks;
