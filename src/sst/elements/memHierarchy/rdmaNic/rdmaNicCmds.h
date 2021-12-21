@@ -12,7 +12,7 @@ class NicCmdEntry {
         }
     }
     virtual bool process( ) {
-        m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"%s retval=%x\n", name().c_str(), m_resp.retval );
+        m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"%s respAddr=%#" PRIx64 " retval=%x\n", m_respAddr, name().c_str(), m_resp.retval );
         m_nic.sendRespToHost( m_respAddr, m_resp, m_thread );
         return true;
     }
