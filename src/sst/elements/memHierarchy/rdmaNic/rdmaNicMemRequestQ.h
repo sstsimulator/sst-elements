@@ -62,9 +62,9 @@
                                     req->addr,req->data,req->dataSize);
                     for ( int i = 0; i < req->dataSize; i++ ) {
                         payload.push_back( (req->data >> i*8) & 0xff );
-						printf("%x ", (req->data >> i*8) & 0xff  );
+						//printf("%x ", (req->data >> i*8) & 0xff  );
                     }
-					printf("\n");
+					//printf("\n");
 					stdMemReq = new StandardMem::Write(req->addr, req->dataSize, payload);
                 } else {
                     Nic().dbg.debug(CALL_INFO,1,DBG_MEMEVENT_FLAG,"write addr=%#" PRIx64 " dataSize=%d\n",req->addr,req->dataSize);
