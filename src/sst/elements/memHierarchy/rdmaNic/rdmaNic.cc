@@ -69,6 +69,7 @@ RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
     assert( m_pesPerNode );
     assert( m_ioBaseAddr != -1 );
 
+    m_cmdBytesWritten.resize( m_perPeReqQueueMemSize * m_pesPerNode, 0 );
     m_reqQueueBacking.resize( m_perPeReqQueueMemSize * m_pesPerNode );
 	m_compQueuesBacking.resize( m_pesPerNode, std::vector<int>( NUM_COMP_Q, 0 ) );
 
@@ -224,14 +225,18 @@ void RdmaNic::mmioWrite(StandardMem::Write* req) {
 
 	} else { 
 
+		int index = offset / sizeof(NicCmd);
+		m_cmdBytesWritten[index] += req->data.size();
+		dbg.debug( CALL_INFO_LONG,2,DBG_X_FLAG,"index=%d bytesWriten=%d\n",index,m_cmdBytesWritten[index]);
 		memcpy( m_reqQueueBacking.data() + offset, req->data.data(), req->data.size() );
-    	if ( 0 == offset % sizeof(NicCmd) ) {
-
-			NicCmd* cmd = reinterpret_cast<NicCmd*>(m_reqQueueBacking.data() + offset);
+        if ( m_cmdBytesWritten[index] == sizeof(NicCmd) ) {
+			NicCmd* cmd = reinterpret_cast<NicCmd*>(m_reqQueueBacking.data() + index * sizeof(NicCmd) );
 
 			NicCmdEntry* entry = createNewCmd( *this, thread, cmd ); 
 		//	dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"new command %p from thread %d op=%s respAddr=%#x\n",cmd, thread, entry->name().c_str(), cmd->respAddr );
 			m_nicCmdQ.push( entry );
+
+			m_cmdBytesWritten[index] = 0;
 		}
 	}
 	if ( ! req->posted ) {
@@ -284,9 +289,10 @@ void RdmaNic::processThreadCmdQs( ) {
 	}	
 }
 
+
 void RdmaNic::sendRespToHost( Addr_t addr, NicResp& resp, int thread )
 {
-	dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"resp=%p retval=%p\n", &resp, &resp.retval );
+	dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"resp=%p retval=%p\n", &resp, &resp.retval);
 	Addr_t offset = ((uint64_t) &resp.retval - (uint64_t) &resp);
 	m_memReqQ->write( m_respQueueMemChannel, addr, sizeof(resp.data), reinterpret_cast<uint8_t*>(&resp) );
     m_memReqQ->fence( m_respQueueMemChannel );

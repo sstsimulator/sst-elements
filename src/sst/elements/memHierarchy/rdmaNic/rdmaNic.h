@@ -145,6 +145,7 @@ class RdmaNic : public SST::Component {
     int m_pesPerNode;
     size_t m_perPeReqQueueMemSize;
 	size_t m_perPeTotalMemSize;
+	std::vector<int> m_cmdBytesWritten;
     std::vector<uint8_t> m_reqQueueBacking;
 	std::vector< std::vector<QueueIndex> > m_compQueuesBacking;
 #if 0 
@@ -276,7 +277,23 @@ class RdmaNic : public SST::Component {
 		return m_streamId++;
 	}
 
+	std::string getCmdStr( int type ) {
+		switch ( type ) {
+		case RdmaSend: return "RdmaSend";
+		case RdmaRecv: return "RdmaRecv";
+		case RdmaFini: return "RdmaFini";
+		case RdmaCreateRQ: return "RdmaCreateRQ";
+		case RdmaCreateCQ: return "RdmaCreateCQ";
+		case RdmaMemRgnReg: return "RdmaMemRgnReg";
+		case RdmaMemRgnUnreg: return "RdmaMemRgnUnreg";
+		case RdmaMemWrite: return "RdmaMemWrite";
+		case RdmaMemRead: return "RdmaMemRead";
+		case RdmaBarrier: return "RdmaBarrier";
+		default: return "Unknown RDMA command";
+		}
+	}
 	NicCmdEntry* createNewCmd( RdmaNic& nic, int thread, NicCmd* cmd ) {
+		dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"%s\n",getCmdStr(cmd->type).c_str());
 		switch ( cmd->type ) {
 	  	case RdmaSend:
 			return new RdmaSendCmd( nic, thread, cmd );
