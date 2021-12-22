@@ -34,8 +34,8 @@ public:
                           ProcessingElement(op_binding, processor_id, llyr_config)
     {
         cycles_ = cycles;
-        input_queues_= new std::vector< std::queue< LlyrData >* >;
-        output_queues_ = new std::vector< std::queue< LlyrData >* >;
+        input_queues_= new std::vector< LlyrQueue* >;
+        output_queues_ = new std::vector< LlyrQueue* >;
     }
 
     LoadProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
@@ -43,8 +43,8 @@ public:
                           ProcessingElement(op_binding, processor_id, llyr_config), input_queues_init_(input_queues_init)
     {
         cycles_ = cycles;
-        input_queues_= new std::vector< std::queue< LlyrData >* >;
-        output_queues_ = new std::vector< std::queue< LlyrData >* >;
+        input_queues_= new std::vector< LlyrQueue* >;
+        output_queues_ = new std::vector< LlyrQueue* >;
     }
 
     virtual bool doSend()
@@ -57,12 +57,12 @@ public:
             queueId = it->first;
             dstPe = it->second;
 
-            if( output_queues_->at(queueId)->size() > 0 ) {
+            if( output_queues_->at(queueId)->data_queue_->size() > 0 ) {
                 output_->verbose(CALL_INFO, 8, 0, ">> Sending...%" PRIu32 "-%" PRIu32 " to %" PRIu32 "\n",
                                 processor_id_, queueId, dstPe->getProcessorId());
 
-                sendVal = output_queues_->at(queueId)->front();
-                output_queues_->at(queueId)->pop();
+                sendVal = output_queues_->at(queueId)->data_queue_->front();
+                output_queues_->at(queueId)->data_queue_->pop();
 
                 dstPe->pushInputQueue(dstPe->getInputQueueId(this->getProcessorId()), sendVal);
             }
@@ -77,7 +77,7 @@ public:
 
         //for now push the result to all output queues
         for( uint32_t i = 0; i < output_queues_->size(); ++i) {
-            output_queues_->at(i)->push(data);
+            output_queues_->at(i)->data_queue_->push(data);
         }
 
         return true;
@@ -98,7 +98,7 @@ public:
 
         //check to see if all of the input queues have data
         for( uint32_t i = 0; i < num_inputs; ++i) {
-            if( input_queues_->at(i)->size() > 0 ) {
+            if( input_queues_->at(i)->data_queue_->size() > 0 ) {
                 num_ready = num_ready + 1;
             }
         }
@@ -117,8 +117,8 @@ public:
         } else {
             output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
             for( uint32_t i = 0; i < num_inputs; ++i) {
-                argList.push_back(input_queues_->at(i)->front());
-                input_queues_->at(i)->pop();
+                argList.push_back(input_queues_->at(i)->data_queue_->front());
+                input_queues_->at(i)->data_queue_->pop();
             }
         }
 
@@ -153,7 +153,7 @@ public:
         //TODO Need a more elegant way to initialize these queues
         if( input_queues_init_.size() > 0 ) {
             std::queue< LlyrData >* tempQueue(&input_queues_init_);
-            input_queues_->at(0) = tempQueue;
+            input_queues_->at(0)->data_queue_ = tempQueue;
 
         } else {
             //for now assume that the address queue is on in-0
@@ -161,7 +161,7 @@ public:
             if( input_queues_->size() > 0 ) {
                 LlyrData temp = LlyrData(addr);
                 output_->verbose(CALL_INFO, 8, 0, "Init(%" PRIu32 ")::%" PRIx64 "::%" PRIu64 "\n", 0, addr, temp.to_ulong());
-                input_queues_->at(0)->push(temp);
+                input_queues_->at(0)->data_queue_->push(temp);
 
                 addr = addr + (Bit_Length / 8);
             }

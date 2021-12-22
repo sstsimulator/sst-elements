@@ -36,6 +36,11 @@
 namespace SST {
 namespace Llyr {
 
+typedef struct alignas(uint64_t) {
+    bool forward_;
+    std::queue< LlyrData >* data_queue_;
+} LlyrQueue;
+
 class ProcessingElement
 {
 public:
@@ -68,7 +73,11 @@ public:
         }
 
         //if insert succeeded need to create the queue
-        std::queue< LlyrData >* tempQueue = new std::queue< LlyrData >;
+//         std::queue< LlyrData >* tempQueue = new std::queue< LlyrData >;
+//         input_queues_->push_back(tempQueue);
+
+        LlyrQueue* tempQueue = new LlyrQueue;
+        tempQueue->data_queue_ = new std::queue< LlyrData >;
         input_queues_->push_back(tempQueue);
 
         return queueId;
@@ -87,7 +96,11 @@ public:
         }
 
         //if insert succeeded need to create the queue
-        std::queue< LlyrData >* tempQueue = new std::queue< LlyrData >;
+//         std::queue< LlyrData >* tempQueue = new std::queue< LlyrData >;
+//         output_queues_->push_back(tempQueue);
+
+        LlyrQueue* tempQueue = new LlyrQueue;
+        tempQueue->data_queue_ = new std::queue< LlyrData >;
         output_queues_->push_back(tempQueue);
 
         return queueId;
@@ -96,12 +109,12 @@ public:
     void pushInputQueue(uint32_t id, uint64_t &inVal )
     {
         LlyrData newValue = LlyrData(inVal);
-        input_queues_->at(id)->push(newValue);
+        input_queues_->at(id)->data_queue_->push(newValue);
     }
 
     void pushInputQueue(uint32_t id, LlyrData &inVal )
     {
-        input_queues_->at(id)->push(inVal);
+        input_queues_->at(id)->data_queue_->push(inVal);
     }
 
     int32_t getInputQueueId(uint32_t id) const
@@ -146,12 +159,6 @@ public:
     void     setOpBinding(opType binding) { op_binding_ = binding; }
     opType   getOpBinding() const { return op_binding_; }
 
-//     void     setLeftArg(Arg arg) { left_arg_ = arg; }
-//     Arg      getLeftArg() const { return left_arg_; }
-//
-//     void     setRightArg(Arg arg) { right_arg_ = arg; }
-//     Arg      getRightArg() const { return right_arg_; }
-
     void     setProcessorId(uint32_t id) { processor_id_ = id; }
     uint32_t getProcessorId() const { return processor_id_; }
 
@@ -160,9 +167,9 @@ public:
     void printInputQueue()
     {
         for( uint32_t i = 0; i < input_queues_->size(); ++i ) {
-            std::cout << "i:" << i << ": " << input_queues_->at(i)->size();
-            if( input_queues_->at(i)->size() > 0 ) {
-                std::cout << ":" << input_queues_->at(i)->front().to_ullong() << ":" << input_queues_->at(i)->front() << "\n";
+            std::cout << "i:" << i << ": " << input_queues_->at(i)->data_queue_->size();
+            if( input_queues_->at(i)->data_queue_->size() > 0 ) {
+                std::cout << ":" << input_queues_->at(i)->data_queue_->front().to_ullong() << ":" << input_queues_->at(i)->data_queue_->front() << "\n";
             } else {
                 std::cout << ":x" << ":x" << "\n";
             }
@@ -172,9 +179,9 @@ public:
     void printOutputQueue()
     {
         for( uint32_t i = 0; i < output_queues_->size(); ++i ) {
-            std::cout << "o:" << i << ": " << output_queues_->at(i)->size();
-            if( output_queues_->at(i)->size() > 0 ) {
-                std::cout << ":" << output_queues_->at(i)->back().to_ullong() << ":" << output_queues_->at(i)->front() << "\n";
+            std::cout << "o:" << i << ": " << output_queues_->at(i)->data_queue_->size();
+            if( output_queues_->at(i)->data_queue_->size() > 0 ) {
+                std::cout << ":" << output_queues_->at(i)->data_queue_->back().to_ullong() << ":" << output_queues_->at(i)->data_queue_->front() << "\n";
             } else {
                 std::cout << ":x" << ":x" << "\n";
             }
@@ -190,16 +197,17 @@ public:
 
 protected:
     opType op_binding_;
-//     Arg    left_arg_;
-//     Arg    right_arg_;
 
     uint32_t cycles_;
     uint32_t processor_id_;
 
     // input and output queues per PE
     uint32_t queue_depth_;
-    std::vector< std::queue< LlyrData >* >* input_queues_;
-    std::vector< std::queue< LlyrData >* >* output_queues_;
+    std::vector< LlyrQueue* >* input_queues_;
+    std::vector< LlyrQueue* >* output_queues_;
+
+/*    std::vector< std::queue< LlyrData >* >* input_queues_;
+    std::vector< std::queue< LlyrData >* >* output_queues_;*/
 
     // need to connect PEs to queues -- queue_id, src/dst
     std::map< uint32_t, ProcessingElement* > input_queue_map_;
