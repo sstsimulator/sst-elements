@@ -125,25 +125,25 @@ public:
         double fpResult;
         std::stringstream dataOut;
         switch( op_binding_ ) {
-            case FPADD :
+            case FADD :
                 fpResult = convList[0] + convList[1];
                 dataOut << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << fpResult << " = ";
                 dataOut << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << convList[0] << " + " << convList[1];
                 dataOut << std::endl;
                 break;
-            case FPSUB :
+            case FSUB :
                 fpResult = convList[0] - convList[1];
                 dataOut << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << fpResult << " = ";
                 dataOut << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << convList[0] << " - " << convList[1];
                 dataOut << std::endl;
                 break;
-            case FPMUL :
+            case FMUL :
                 fpResult = convList[0] * convList[1];
                 dataOut << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << fpResult << " = ";
                 dataOut << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << convList[0] << " * " << convList[1];
                 dataOut << std::endl;
                 break;
-            case FPDIV :
+            case FDIV :
                 fpResult = convList[0] / convList[1];
                 dataOut << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << fpResult << " = ";
                 dataOut << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << convList[0] << " / " << convList[1];

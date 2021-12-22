@@ -18,7 +18,6 @@
 
 #include <sst/core/sst_config.h>
 #include <sst/core/module.h>
-#include <sst/core/interfaces/simpleMem.h>
 
 #include "../graph/graph.h"
 #include "../lsQueue.h"
@@ -54,6 +53,11 @@ void LlyrMapper::addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< Process
                   LlyrConfig* llyr_config)
 {
     ProcessingElement* tempPE;
+
+    //setup up i/o for messages
+    char prefix[256];
+    sprintf(prefix, "[t=@t][llyrMapper]: ");
+    SST::Output* output_ = new SST::Output(prefix, llyr_config->verbosity_, 0, Output::STDOUT);
 
     if( op_binding == LD ) {
         tempPE = new LoadProcessingElement( LD, nodeNum, llyr_config );
@@ -107,16 +111,16 @@ void LlyrMapper::addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< Process
         tempPE = new IntProcessingElement( DIV, nodeNum, llyr_config );
     } else if( op_binding == REM ) {
         tempPE = new IntProcessingElement( REM, nodeNum, llyr_config );
-    } else if( op_binding == FPADD ) {
-        tempPE = new FPProcessingElement( FPADD, nodeNum, llyr_config );
-    } else if( op_binding == FPSUB ) {
-        tempPE = new FPProcessingElement( FPSUB, nodeNum, llyr_config );
-    } else if( op_binding == FPMUL ) {
-        tempPE = new FPProcessingElement( FPMUL, nodeNum, llyr_config );
-    } else if( op_binding == FPDIV ) {
-        tempPE = new FPProcessingElement( FPDIV, nodeNum, llyr_config );
-    } else if( op_binding == FPMATMUL ) {
-        tempPE = new FPProcessingElement( FPMATMUL, nodeNum, llyr_config );
+    } else if( op_binding == FADD ) {
+        tempPE = new FPProcessingElement( FADD, nodeNum, llyr_config );
+    } else if( op_binding == FSUB ) {
+        tempPE = new FPProcessingElement( FSUB, nodeNum, llyr_config );
+    } else if( op_binding == FMUL ) {
+        tempPE = new FPProcessingElement( FMUL, nodeNum, llyr_config );
+    } else if( op_binding == FDIV ) {
+        tempPE = new FPProcessingElement( FDIV, nodeNum, llyr_config );
+    } else if( op_binding == FMatMul ) {
+        tempPE = new FPProcessingElement( FMatMul, nodeNum, llyr_config );
     } else if( op_binding == TSIN ) {
         tempPE = new ComplexProcessingElement( TSIN, nodeNum, llyr_config );
     } else if( op_binding == TCOS ) {
@@ -127,7 +131,12 @@ void LlyrMapper::addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< Process
         tempPE = new ControlProcessingElement( BUFFER, nodeNum, llyr_config );
     } else if( op_binding == SEL ) {
         tempPE = new ControlProcessingElement( SEL, nodeNum, llyr_config );
+    } else if( op_binding == RTR ) {
+        tempPE = new ControlProcessingElement( RTR, nodeNum, llyr_config );
+    } else if( op_binding == RET ) {
+        tempPE = new ControlProcessingElement( RET, nodeNum, llyr_config );
     } else {
+        output_->fatal(CALL_INFO, -1, "Error: Unable to find specified operation\n");
         exit(0);
     }
 
@@ -139,6 +148,11 @@ void LlyrMapper::addNode(opType op_binding, int64_t intConst, uint32_t nodeNum, 
                          LlyrConfig* llyr_config)
 {
     ProcessingElement* tempPE;
+
+    //setup up i/o for messages
+    char prefix[256];
+    sprintf(prefix, "[t=@t][llyrMapper]: ");
+    SST::Output* output_ = new SST::Output(prefix, llyr_config->verbosity_, 0, Output::STDOUT);
 
     if( op_binding == LDADDR ) {
         std::queue< LlyrData > tempData;
@@ -159,6 +173,7 @@ void LlyrMapper::addNode(opType op_binding, int64_t intConst, uint32_t nodeNum, 
     } else if( op_binding == REMCONST ) {
         tempPE = new IntConstProcessingElement( REMCONST, nodeNum, llyr_config, intConst );
     } else {
+        output_->fatal(CALL_INFO, -1, "Error: Unable to find specified operation\n");
         exit(0);
     }
 

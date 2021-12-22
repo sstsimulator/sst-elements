@@ -7,13 +7,13 @@ debug = 0
 data_type = 0   #0 int, 1 fp64
 
 ## mxn * nxk
-m = 1
-n = 3
-k = 2
-
-#m = 3
+#m = 1
 #n = 3
 #k = 2
+
+m = 3
+n = 3
+k = 2
 
 #m = 3
 #n = 3
@@ -28,17 +28,17 @@ k = 2
 #k = 16
 
 ## init non-zeroes
-non_zeroes = [1]
-#non_zeroes = [1,2,3,4,5]
+#non_zeroes = [1]
+non_zeroes = [1,2,3,4,5]
 
 ## init row_ptr
-row_ptr = [0,1]
-#row_ptr = [0,1,3,5]
+#row_ptr = [0,1]
+row_ptr = [0,1,3,5]
 #row_ptr = [0,1,4,5]
 
 ## init col_ptr
-col_ptr = [0,1]
-#col_ptr = [0,0,1,1,2]
+#col_ptr = [0,1]
+col_ptr = [0,0,1,1,2]
 #col_ptr = [0,0,1,2,2]
 
 ## init dense mat

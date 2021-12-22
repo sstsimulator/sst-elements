@@ -116,6 +116,12 @@ public:
             case SEL :
                 retVal = helperFunction(op_binding_, argList[0], argList[1], argList[2]);
                 break;
+            case RTR :
+                retVal = LlyrData(0x00);
+                break;
+            case RET :
+                retVal = LlyrData(0x00);
+                break;
              default :
                 output_->verbose(CALL_INFO, 0, 0, "Error: could not find corresponding op-%" PRIu32 ".\n", op_binding_);
                 exit(-1);

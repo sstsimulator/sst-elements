@@ -24,9 +24,10 @@
 #include <queue>
 #include <vector>
 #include <bitset>
+#include <string>
 #include <cstdint>
 #include <sstream>
-#include <cstring>
+
 
 #include "../graph/graph.h"
 #include "../lsQueue.h"
@@ -145,6 +146,12 @@ public:
     void     setOpBinding(opType binding) { op_binding_ = binding; }
     opType   getOpBinding() const { return op_binding_; }
 
+//     void     setLeftArg(Arg arg) { left_arg_ = arg; }
+//     Arg      getLeftArg() const { return left_arg_; }
+//
+//     void     setRightArg(Arg arg) { right_arg_ = arg; }
+//     Arg      getRightArg() const { return right_arg_; }
+
     void     setProcessorId(uint32_t id) { processor_id_ = id; }
     uint32_t getProcessorId() const { return processor_id_; }
 
@@ -182,29 +189,32 @@ public:
     virtual void queueInit() = 0;
 
 protected:
+    opType op_binding_;
+//     Arg    left_arg_;
+//     Arg    right_arg_;
 
-    opType   op_binding_;
     uint32_t cycles_;
     uint32_t processor_id_;
 
-    //input and output queues per PE
+    // input and output queues per PE
     uint32_t queue_depth_;
     std::vector< std::queue< LlyrData >* >* input_queues_;
     std::vector< std::queue< LlyrData >* >* output_queues_;
 
-    //need to connect PEs to queues -- queue_id, src/dst
+    // need to connect PEs to queues -- queue_id, src/dst
     std::map< uint32_t, ProcessingElement* > input_queue_map_;
     std::map< uint32_t, ProcessingElement* > output_queue_map_;
 
-    //track outstanding L/S requests (passed from top-level)
+    // track outstanding L/S requests (passed from top-level)
     LSQueue* lsqueue_;
 
     Interfaces::StandardMem*  mem_interface_;
     SST::Output* output_;
 
-    //used to stall execution - waiting on mem/queues full
+    // used to stall execution - waiting on mem/queues full
     bool pending_op_;
 
+    // bundle of configuration parameters
     LlyrConfig* llyr_config_;
 
 private:

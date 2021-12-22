@@ -34,31 +34,34 @@
 namespace SST {
 namespace Llyr {
 
-struct alignas(double) ParserEdgeProperties : EdgeProperties
+struct alignas(int64_t) ParserEdgeProperties : EdgeProperties
 {
    llvm::Value*  value_;
-   int64_t const_;
+   int64_t       const_;
 };
 
-struct alignas(double) CDFGVertex
+struct alignas(int64_t) CDFGVertex
 {
    llvm::Instruction*  instruction_;
    std::string         valueName_;
+
+   bool                haveConst_;
    int64_t             intConst_;
    float               floatConst_;
    double              doubleConst_;
+
    std::string         instructionName_;
    std::string         sizeType_;
 };
 
-typedef LlyrGraph< llvm::BasicBlock* > BBGraph;
 typedef LlyrGraph< CDFGVertex* > CDFG;
+typedef LlyrGraph< llvm::BasicBlock* > BBGraph;
 
 class Parser
 {
 public:
     Parser(const std::string& offloadString, SST::Output* output) :
-                    output_(output), offloadString_(offloadString)
+    output_(output), offloadString_(offloadString)
     {
         vertexList_ = new std::map< llvm::BasicBlock*, std::vector< CDFGVertex* > >;
 
@@ -71,8 +74,7 @@ public:
 
     ~Parser() {};
 
-    void generateAppGraph(std::string functionName);
-    LlyrGraph< opType > getApplicationGraph() const { return applicationGraph_; } ;
+    void generateAppGraph( std::string functionName );
 
 protected:
 
@@ -81,12 +83,12 @@ private:
     std::string  offloadString_;
     std::string  offloadTarget_;
 
-    LlyrGraph< opType > applicationGraph_;
     BBGraph* bbGraph_;
-    CDFG* functionGraph_;
-    CDFG* completeGraph_;
-    std::map< llvm::BasicBlock*, CDFG* >* flowGraph_;
+    CDFG*    functionGraph_;
 
+    llvm::Module* mod_;
+
+    std::map< llvm::BasicBlock*, CDFG* >* flowGraph_;
     std::map< llvm::BasicBlock*, std::vector< CDFGVertex* > >* vertexList_;
 
     std::map< llvm::BasicBlock*, std::map< CDFGVertex*, std::vector< llvm::Instruction* >* >* >* defNode_;
@@ -97,8 +99,10 @@ private:
     void assembleGraph();
     void mergeGraphs();
 
+    void printVertex ( const CDFGVertex* ) const;
     void printCDFG( const std::string fileName ) const;
-    void printPyomo( const std::string fileName, llvm::Module* mod ) const;
+    void printPyMapper( const std::string fileName ) const;
+
 };
 
 } // namespace LLyr

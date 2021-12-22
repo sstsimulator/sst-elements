@@ -135,11 +135,21 @@ LlyrComponent::~LlyrComponent()
 //         hardwareGraph_.printDot("llyr_hdwr.dot");
 //     }
 
-//     output_->verbose(CALL_INFO, 10, 0, "Dumping application graph...\n");
-//     if( output_->getVerboseLevel() >= 10 ) {
-//         applicationGraph_.printGraph();
+    output_->verbose(CALL_INFO, 10, 0, "Dumping application graph...\n");
+    if( output_->getVerboseLevel() >= 10 ) {
+        applicationGraph_.printGraph();
 //         applicationGraph_.printDot("llyr_app.dot");
-//     }
+
+//         auto app_vertex_map_ = applicationGraph_.getVertexMap();
+//         for(auto appIterator = app_vertex_map_->begin(); appIterator != app_vertex_map_->end(); ++appIterator) {
+//             std::cout << appIterator->first << ": ";
+//             std::cout << appIterator->second.getValue().optype_ << " - ";
+//             std::cout << appIterator->second.getValue().constant_val_ << " - ";
+//             std::cout << appIterator->second.getValue().left_arg_ << " - ";
+//             std::cout << appIterator->second.getValue().right_arg_ << std::endl;
+//
+//         }
+    }
 
 //     output_->verbose(CALL_INFO, 10, 0, "Dumping mapping...\n");
 //     if( output_->getVerboseLevel() >= 10 ) {
@@ -388,7 +398,7 @@ void LlyrComponent::constructHardwareGraph(std::string fileName)
                 //If all nodes read, must mean we're at edge list
                 position = thisLine.find_first_of( "[" );
                 if( position !=  std::string::npos ) {
-                    uint32_t vertex = std::stoi( thisLine.substr( 0, position ) );
+                    uint32_t vertex = std::stoul( thisLine.substr( 0, position ) );
 
                     std::uint64_t posA = thisLine.find_first_of( "=" ) + 1;
                     std::uint64_t posB = thisLine.find_last_of( "]" );
@@ -410,7 +420,7 @@ void LlyrComponent::constructHardwareGraph(std::string fileName)
 
                     output_->verbose(CALL_INFO, 10, 0, "Edges %s--%s\n", edges[0].c_str(), edges[1].c_str());
 
-                    hardwareGraph_.addEdge( std::stoi(edges[0]), std::stoi(edges[1]) );
+                    hardwareGraph_.addEdge( std::stoul(edges[0]), std::stoul(edges[1]) );
                 }
             }
         }
@@ -450,6 +460,19 @@ void LlyrComponent::constructSoftwareGraph(std::string fileName)
     }
 }
 
+void LlyrComponent::constructSoftwareGraphIR(std::ifstream& inputStream)
+{
+    std::string thisLine;
+
+    output_->verbose(CALL_INFO, 16, 0, "Sending to LLVM parser\n");
+
+    inputStream.seekg (0, inputStream.beg);
+    std::string irString( (std::istreambuf_iterator< char >( inputStream )),
+                          (std::istreambuf_iterator< char >() ));
+    Parser parser(irString, output_);
+    parser.generateAppGraph("offload_");
+}
+
 void LlyrComponent::constructSoftwareGraphApp(std::ifstream& inputStream)
 {
     std::string thisLine;
@@ -466,14 +489,14 @@ void LlyrComponent::constructSoftwareGraphApp(std::ifstream& inputStream)
             position = thisLine.find_first_of( "[" );
             if( position !=  std::string::npos ) {
                 AppNode tempNode;
-                uint32_t vertex = std::stoi( thisLine.substr( 0, position ) );
+                uint32_t vertex = std::stoul( thisLine.substr( 0, position ) );
 
                 std::uint64_t posA = thisLine.find_first_of( "=" ) + 1;
                 std::uint64_t posB = thisLine.find_last_of( "," );
                 if( posB !=  std::string::npos ) {
                     std::uint64_t posC = thisLine.find_last_of( "]" );
                     tempNode.constant_val_ = thisLine.substr( posB + 1, posC - posB - 1 );
-//                     std::cout << "CONSTANT " << tempNode.constant_val_ << std::endl;
+                    //                     std::cout << "CONSTANT " << tempNode.constant_val_ << std::endl;
                 } else {
                     posB = thisLine.find_last_of( "]" );
                 }
@@ -497,24 +520,10 @@ void LlyrComponent::constructSoftwareGraphApp(std::ifstream& inputStream)
 
                 output_->verbose(CALL_INFO, 10, 0, "Edges %s--%s\n", edges[0].c_str(), edges[1].c_str());
 
-                applicationGraph_.addEdge( std::stoi(edges[0]), std::stoi(edges[1]) );
+                applicationGraph_.addEdge( std::stoul(edges[0]), std::stoul(edges[1]) );
             }
         }
     }
-}
-
-void LlyrComponent::constructSoftwareGraphIR(std::ifstream& inputStream)
-{
-    std::string thisLine;
-
-    output_->verbose(CALL_INFO, 16, 0, "Sending to LLVM parser\n");
-
-    inputStream.seekg (0, inputStream.beg);
-    std::string irString( (std::istreambuf_iterator< char >( inputStream )),
-                          (std::istreambuf_iterator< char >() ));
-    Parser parser(irString, output_);
-    parser.generateAppGraph("offload_");
-
 }
 
 std::vector< uint64_t >* LlyrComponent::constructMemory(std::string fileName)

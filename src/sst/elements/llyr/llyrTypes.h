@@ -24,6 +24,7 @@
 
 #define Bit_Length 64
 typedef std::bitset< Bit_Length > LlyrData;
+typedef std::string Arg;
 typedef uint64_t Addr;
 
 using namespace SST::Interfaces;
@@ -35,7 +36,7 @@ namespace Llyr {
 class LSQueue;
 
 // data type to pass between Llyr, mapper, and PEs
-typedef struct alignas(64) {
+typedef struct alignas(uint64_t) {
     LSQueue*        lsqueue_;
     StandardMem*    mem_interface_;
     Addr            starting_addr_;
@@ -50,6 +51,7 @@ typedef struct alignas(64) {
 } LlyrConfig;
 
 typedef enum {
+    RTR = 0x00,
     ANY,
     ANY_MEM,
     LD,
@@ -89,11 +91,11 @@ typedef enum {
     DIVCONST,
     REMCONST,
     ANY_FP = 0xC0,
-    FPADD,
-    FPSUB,
-    FPMUL,
-    FPDIV,
-    FPMATMUL,
+    FADD,
+    FSUB,
+    FMUL,
+    FDIV,
+    FMatMul,
     ANY_CP = 0xF0,
     TSIN,
     TCOS,
@@ -101,6 +103,7 @@ typedef enum {
     DUMMY = 0xFF,
     BUFFER,
     SEL,
+    RET,
     OTHER
 } opType;
 
@@ -113,7 +116,9 @@ inline opType getOptype(std::string &opString)
                    [](unsigned char c){ return std::toupper(c); }
     );
 
-    if( opString == "ANY" )
+    if( opString == "RTR" )
+        operation = RTR;
+    else if( opString == "ANY" )
         operation = ANY;
     else if( opString == "ANY_MEM" )
         operation = ANY_MEM;
@@ -189,16 +194,16 @@ inline opType getOptype(std::string &opString)
         operation = REMCONST;
     else if( opString == "ANY_FP" )
         operation = ANY_FP;
-    else if( opString == "FPADD" )
-        operation = FPADD;
-    else if( opString == "FPSUB" )
-        operation = FPSUB;
-    else if( opString == "FPMUL" )
-        operation = FPMUL;
-    else if( opString == "FPDIV" )
-        operation = FPDIV;
-    else if( opString == "FPMATMUL" )
-        operation = FPMATMUL;
+    else if( opString == "FADD" )
+        operation = FADD;
+    else if( opString == "FSUB" )
+        operation = FSUB;
+    else if( opString == "FMUL" )
+        operation = FMUL;
+    else if( opString == "FDIV" )
+        operation = FDIV;
+    else if( opString == "FMatMul" )
+        operation = FMatMul;
     else if( opString == "ANY_CP" )
         operation = ANY_CP;
     else if( opString == "TSIN" )
@@ -213,6 +218,8 @@ inline opType getOptype(std::string &opString)
         operation = BUFFER;
     else if( opString == "SEL" )
         operation = SEL;
+    else if( opString == "RET" )
+        operation = RET;
     else
         operation = OTHER;
 
@@ -223,7 +230,9 @@ inline std::string getOpString(opType &op)
 {
     std::string operation;
 
-    if( op == ANY )
+    if( op == RTR )
+        operation = "RTR";
+    else if( op == ANY )
         operation = "ANY";
     else if( op == ANY_MEM )
         operation = "ANY_MEM";
@@ -299,16 +308,16 @@ inline std::string getOpString(opType &op)
         operation = "REMCONST";
     else if( op == ANY_FP )
         operation = "ANY_FP";
-    else if( op == FPADD )
-        operation = "FPADD";
-    else if( op == FPSUB )
-        operation = "FPSUB";
-    else if( op == FPMUL )
-        operation = "FPMUL";
-    else if( op == FPDIV )
-        operation = "FPDIV";
-    else if( op == FPMATMUL )
-        operation = "FPMATMUL";
+    else if( op == FADD )
+        operation = "FADD";
+    else if( op == FSUB )
+        operation = "FSUB";
+    else if( op == FMUL )
+        operation = "FMUL";
+    else if( op == FDIV )
+        operation = "FDIV";
+    else if( op == FMatMul )
+        operation = "FMatMul";
     else if( op == ANY_CP )
         operation = "ANY_CP";
     else if( op == TSIN )
@@ -323,6 +332,8 @@ inline std::string getOpString(opType &op)
         operation = "BUFFER";
     else if( op == SEL )
         operation = "SEL";
+    else if( op == RET )
+        operation = "RET";
     else
         operation = "OTHER";
 
@@ -330,9 +341,11 @@ inline std::string getOpString(opType &op)
 }
 
 // application graph node
-typedef struct alignas(64) {
-    opType      optype_;
-    std::string constant_val_;
+typedef struct alignas(uint64_t) {
+    opType optype_;
+    Arg    left_arg_;
+    Arg    right_arg_;
+    Arg    constant_val_;
 } AppNode;
 
 }//Llyr

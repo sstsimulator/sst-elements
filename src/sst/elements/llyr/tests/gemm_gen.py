@@ -87,7 +87,7 @@ for counter in range( 0, num_load ):
 mul_start = pe_num
 for counter in range( 0, num_mul ):
     if( data_type == 1 ):
-        write_pe( "IntProcessingElement", "FPMUL", pe_num )
+        write_pe( "IntProcessingElement", "FMUL", pe_num )
     else:
         write_pe( "IntProcessingElement", "MUL", pe_num )
     pe_num = pe_num + 1
@@ -96,7 +96,7 @@ for counter in range( 0, num_mul ):
 add_start = pe_num
 for counter in range( 0, num_add ):
     if( data_type == 1 ):
-        write_pe( "IntProcessingElement", "FPADD", pe_num )
+        write_pe( "IntProcessingElement", "FADD", pe_num )
     else:
         write_pe( "IntProcessingElement", "ADD", pe_num )
     pe_num = pe_num + 1
