@@ -1740,6 +1740,9 @@ void Parser::printPyMapper( const std::string fileName ) const
         llvm::Instruction* tempInstruction = vertexIterator->second.getValue()->instruction_;
         if( tempInstruction != NULL ) {
             std::cout << "vertex: " << vertexIterator->first << "\n";
+
+            //temp const vector
+            std::map< uint32_t, std::string > constVector;
             //write node ID
             outputFile << vertexIterator->first << ":  ";
             outputFile << std::flush;
@@ -1765,15 +1768,17 @@ void Parser::printPyMapper( const std::string fileName ) const
 
                     if( llvm::isa<llvm::ConstantInt>(operandIter) ) {
                         llvm::ConstantInt* tempConst = llvm::cast<llvm::ConstantInt>(operandIter);
-                        outputFile << "_c_" << tempConst->getNameOrAsOperand();
+//                         outputFile << "_c_" << tempConst->getNameOrAsOperand();
 //                             outputFile << "c_" << tempConst->getSExtValue() << " ";
 
+                        constVector.emplace( operandIter->getOperandNo(), tempConst->getNameOrAsOperand() );
                         std::cout << tempConst->getNameOrAsOperand() << " -- inboop" << std::endl;
 
                     } else if( llvm::isa<llvm::ConstantFP>(operandIter) ) {
                         llvm::ConstantFP* tempConst = llvm::cast<llvm::ConstantFP>(operandIter);
-                        outputFile << "_c_" << tempConst->getNameOrAsOperand();
+//                         outputFile << "_c_" << tempConst->getNameOrAsOperand();
 
+                        constVector.emplace( operandIter->getOperandNo(), tempConst->getNameOrAsOperand() );
                         std::cout << tempConst->getNameOrAsOperand() << " -- fpboop" << std::endl;
 //                             if(operandIter->get()->getType()->isFloatTy()) {
 //                                 outputFile << "c_" << tempConst->getNameOrAsOperand() << " ";
@@ -1797,6 +1802,13 @@ void Parser::printPyMapper( const std::string fileName ) const
                 }
 
             }//end for
+            outputFile << " ]";
+
+            //write constants
+            outputFile << " consts[ ";
+            for( auto it = constVector.begin(); it != constVector.end(); it++ ) {
+                outputFile << it->second << ", " << it->first;
+            }
             outputFile << " ]";
 
             //write outputs

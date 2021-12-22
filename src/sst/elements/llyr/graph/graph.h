@@ -42,7 +42,7 @@ class LlyrGraph
 
 private:
     uint32_t vertices_;
-    std::map< uint32_t, Vertex<T> >* vertex_map_;
+    std::map< uint32_t, Vertex< T > >* vertex_map_;
 
 protected:
 
@@ -50,9 +50,9 @@ public:
     LlyrGraph();
     ~LlyrGraph();
 
-    uint32_t operator []( const Vertex<T>& value ) const;
+    uint32_t operator []( const Vertex< T >& value ) const;
 
-    static void copyGraph( const LlyrGraph<T> &graphIn, LlyrGraph<T> &graphOut );
+    static void copyGraph( const LlyrGraph< T > &graphIn, LlyrGraph< T > &graphOut );
 
     void printGraph();
     void printDot( std::string fileName );

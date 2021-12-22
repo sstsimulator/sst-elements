@@ -41,13 +41,13 @@ typedef struct alignas(uint64_t) {
     StandardMem*    mem_interface_;
     Addr            starting_addr_;
 
-    uint32_t    verbosity_;
-    uint16_t    queueDepth_;
-    uint16_t    arith_latency_;
-    uint16_t    int_latency_;
-    uint16_t    fp_latency_;
-    uint16_t    fp_mul_Latency_;
-    uint16_t    fp_div_Latency_;
+    uint32_t        verbosity_;
+    uint16_t        queueDepth_;
+    uint16_t        arith_latency_;
+    uint16_t        int_latency_;
+    uint16_t        fp_latency_;
+    uint16_t        fp_mul_Latency_;
+    uint16_t        fp_div_Latency_;
 } LlyrConfig;
 
 typedef enum {
