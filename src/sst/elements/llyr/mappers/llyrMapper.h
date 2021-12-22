@@ -125,6 +125,8 @@ void LlyrMapper::addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< Process
         tempPE = new ComplexProcessingElement( TSIN, nodeNum, llyr_config );
     } else if( op_binding == TCOS ) {
         tempPE = new ComplexProcessingElement( TCOS, nodeNum, llyr_config );
+    } else if( op_binding == TTAN ) {
+        tempPE = new ComplexProcessingElement( TTAN, nodeNum, llyr_config );
     } else if( op_binding == DUMMY ) {
         tempPE = new DummyProcessingElement( DUMMY, nodeNum, llyr_config );
     } else if( op_binding == BUFFER ) {

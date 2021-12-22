@@ -211,7 +211,7 @@ inline opType getOptype(std::string &opString)
     else if( opString == "TCOS" )
         operation = TCOS;
     else if( opString == "TTAN" )
-        operation = TCOS;
+        operation = TTAN;
     else if( opString == "DUMMY" )
         operation = DUMMY;
     else if( opString == "BUFFER" )

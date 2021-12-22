@@ -68,16 +68,11 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
     std::ifstream inputStream(fileName, std::ios::in);
     if( inputStream.is_open() ) {
         std::string thisLine;
+        std::vector< uint32_t > routingList;
 
-        bool routing = 0;
         std::map< uint32_t, std::vector< uint32_t >* > adjList;
         while( std::getline( inputStream, thisLine ) ) {
             output_->verbose(CALL_INFO, 16, 0, "Parsing:  %s\n", thisLine.c_str());
-
-            // need to seperate the compute from the routing
-            if( thisLine.find( "-1" ) != std::string::npos ) {
-                routing = 1;
-            }
 
             // first read mapped graph
             // with delimiter ':'
@@ -118,19 +113,14 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
             output_->verbose(CALL_INFO, 15, 0, "Operation:  %u -- %s\n", op, getOpString(op).c_str());
 
             // encode node in hardware graph
-            if( op != RTR ) {
-                std::map< uint32_t, Vertex< AppNode > >* app_vertex_map_ = appGraph.getVertexMap();
-                if( op == ADDCONST || op == SUBCONST || op == MULCONST || op == DIVCONST || op == REMCONST) {
-                    int64_t intConst = std::stoll(app_vertex_map_->at(applicationVertex).getValue().constant_val_);
-                    addNode( op, intConst, hardwareVertex, graphOut, llyr_config );
-                } else if( op == LDADDR || op == STADDR ) {
-                    int64_t intConst = std::stoll(app_vertex_map_->at(applicationVertex).getValue().constant_val_);
-                    addNode( op, intConst, hardwareVertex, graphOut, llyr_config );
-                } else {
-                    addNode( op, hardwareVertex, graphOut, llyr_config );
-                }
+            std::map< uint32_t, Vertex< AppNode > >* app_vertex_map_ = appGraph.getVertexMap();
+            if( op == ADDCONST || op == SUBCONST || op == MULCONST || op == DIVCONST || op == REMCONST) {
+                int64_t intConst = std::stoll(app_vertex_map_->at(applicationVertex).getValue().constant_val_);
+                addNode( op, intConst, hardwareVertex, graphOut, llyr_config );
+            } else if( op == LDADDR || op == STADDR ) {
+                int64_t intConst = std::stoll(app_vertex_map_->at(applicationVertex).getValue().constant_val_);
+                addNode( op, intConst, hardwareVertex, graphOut, llyr_config );
             } else {
-                routing = 1;
                 addNode( op, hardwareVertex, graphOut, llyr_config );
             }
 
@@ -142,6 +132,9 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
             // if the node has already been added then it must also be a routing node
             if( newValue.second == false ) {
                 std::cout << "FAILED on " << hardwareVertex << std::endl;
+                for( auto it = tempVector->begin(); it != tempVector->end(); it++ ) {
+                    adjList[hardwareVertex]->push_back(*it);
+                }
             }
 
             std::cout << "vecIn(" << tempVector->size() << "): ";
@@ -149,9 +142,7 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
                 std::cout << *it << ", ";
             }
             std::cout << std::endl;
-
         }
-
 
         std::map< uint32_t, Vertex< ProcessingElement* > >* vertex_map_ = graphOut.getVertexMap();
         for( auto it = adjList.begin(); it != adjList.end(); it++ ) {
