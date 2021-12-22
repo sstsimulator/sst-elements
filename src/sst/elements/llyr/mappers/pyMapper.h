@@ -130,6 +130,7 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
             auto newValue = adjList.emplace(hardwareVertex, tempVector);
 
             // if the node has already been added then it must also be a routing node
+            // still need to add the neighbors but add to current adj list
             if( newValue.second == false ) {
                 std::cout << "FAILED on " << hardwareVertex << std::endl;
                 for( auto it = tempVector->begin(); it != tempVector->end(); it++ ) {
@@ -144,6 +145,7 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
             std::cout << std::endl;
         }
 
+        // add the edges and bind data queues
         std::map< uint32_t, Vertex< ProcessingElement* > >* vertex_map_ = graphOut.getVertexMap();
         for( auto it = adjList.begin(); it != adjList.end(); it++ ) {
             ProcessingElement* srcNode = vertex_map_->at(it->first).getValue();
