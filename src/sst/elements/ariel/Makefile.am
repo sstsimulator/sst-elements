@@ -1,8 +1,7 @@
 # -*- Makefile -*-
 #
 #
-
-AM_CPPFLAGS += \
+AM_CPPFLAGS = \
         $(MPI_CPPFLAGS) \
 	-I$(top_srcdir)/src
 
@@ -50,7 +49,8 @@ libariel_la_SOURCES = \
 	arieltexttracegen.cc \
 	arielfrontend.h \
 	gpu_enum.h \
-	arielgpuev.h
+	arielgpuev.h \
+	arielrtlev.h
 
 EXTRA_DIST = \
 	api/arielapi.c \
@@ -196,6 +196,7 @@ fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
 	    -I$(PINTOOL_DIR)/extras/xed-intel64/include/xed \
 	    -I$(PINTOOL_DIR)/source/tools/Utils \
 	    -I$(PINTOOL_DIR)/source/tools/InstLib \
+		-I$(INCLUDE_TB) \
 	    -O3 -fomit-frame-pointer -fno-strict-aliasing -c $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
 
 install-exec-hook:
