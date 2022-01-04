@@ -47,87 +47,76 @@ namespace SST { namespace SambaComponent{
 	class TLBhierarchy : public ComponentExtension
 	{
 
-		// This keeps track of which core the TLB belongs to, here we assume typical private TLBs as in current x86 processor
-		int coreID;
-
-		// Which level, this can be any value starting from 0 for L1 and up to N, in an N+1 levels TLB system
-		int levels;
-
 		Output * output;
 
-		// If faults are emulated
-	    int emulate_faults;
+        // ==== Params
 
-	    // Enable page migration if Opal is used
-		int page_placement;
-
-	    int max_shootdown_width;
-
-		SST::Link * to_cache;
+		int coreID;  // This keeps track of which core the TLBhierarchy belongs to, 
+                     //     we assume typical private TLBs as in current x86 processor
+		int levels;  // number of TLB levels, 2 will make an L1 and L2
+		int latency; // The access latency in ns
 
 
-		SST::Link * to_cpu;
-
-		std::map<int, TLB *> TLB_CACHE;
-
-		// Here is the defintion of the page table walker of the TLB hierarchy
-		PageTableWalker * PTW;
-
-
-		std::string clock_frequency_str;
-
-		// Holds the current time
-		SST::Cycle_t curr_time;
-
-		// This vector holds the current requests to be translated
-		std::vector<SST::MemHierarchy::MemEventBase *> mem_reqs;
-
-		// This tells TLB hierarchy to stall due to emulated page fault
-		int hold;
-
-		// This tells TLB hierarchy to invalidate all TLB entries due to TLB Shootdown from other cores
-		int shootdown;
-
+        //=== Params that only apply if emulate_faults is true
+	    int emulate_faults; // whether page faults are emulated
+        
+		int page_placement; // Enable page migration if Opal is used
 		int shootdown_delay;
-
 		int page_swapping_delay;
-
-		int hasInvalidAddrs;
-
-		// This vector holds the invalidation requests
-		std::vector<std::pair<Address_t, int> > invalid_addrs;
-
-		// This vector holds the current requests to be translated
-		std::map<SST::MemHierarchy::MemEventBase *, long long int, MemEventPtrCompare> mem_reqs_sizes;
-
-
-		// This mapping is used to track the time spent of translating each request
-		std::map<SST::Event *, uint64_t> time_tracker;
-		// The access latency in ns
-		int latency;
-
-		// This represents the maximum number of outstanding requests for this structure
-		int max_outstanding;
-
-		uint64_t timeStamp;
-
+	    int max_shootdown_width;
+		uint64_t memory_size;
 		uint32_t ptw_confined;
 
-		// Holds CR3 value of current context
+
+        // === Objects (links and child classes)
+		SST::Link * to_cache;
+		SST::Link * to_cpu;
+
+		std::map<int, TLB *> TLB_CACHE; // TLB objects for each level: 1-indexed, (i.e. TLB_CACHE[1] is L1 TLB)
+		PageTableWalker * PTW;          // page table walker of the TLB hierarchy
+
+
+		SST::Cycle_t curr_time; // Holds the current time
+
+
+        //==== Signals 
+        //- these will be set to 1 or 0 to change our behavior
+        //- pointers are passed to our children so they can set these
+        
+		int hold;       // tells TLB hierarchy to stall due to emulated page fault
+		int shootdown;  // tells TLB hierarchy to invalidate all TLB entries due to TLB Shootdown from other cores
+
+        // Referenced by pageTableWalker using pointer passing?
+		int hasInvalidAddrs;
+
+        //passed to pagetablewalker?? not used???
+		uint64_t timeStamp;
+
+
+        //======== Event buffers?
+
+		std::vector<SST::MemHierarchy::MemEventBase *> mem_reqs; // holds the current requests to be translated
+
+		std::vector<std::pair<Address_t, int> > invalid_addrs;  // holds the invalidation requests
+		std::map<SST::MemHierarchy::MemEventBase *, long long int, MemEventPtrCompare> mem_reqs_sizes;
+                                                        // holds the current requests to be translated
+		std::map<SST::Event *, uint64_t> time_tracker;   // used to track time spent on translating each request
+		
+		// This represents the maximum number of outstanding requests for this structure
+		//int max_outstanding; //TODO: TEMP JVOROBY 2021.11: i think this is unused? will try to rebuild without it
+
+
+        //======= Page table stuff:
+
+		// Holds CR3 value of current context (i.e. base of page table)
 		Address_t *CR3;
-		//
-		// Holds the PGD physical pointers, the key is the 9 bits 39-47, i.e., VA/(4096*512*512*512)
-		std::map<Address_t, Address_t> * PGD;
 
-		// Holds the PUD physical pointers, the key is the 9 bits 30-38, i.e., VA/(4096*512*512)
-		std::map<Address_t, Address_t> * PUD;
-
-		// Holds the PMD physical pointers, the key is the 9 bits 21-29, i.e., VA/(4096*512)
-		std::map<Address_t, Address_t> * PMD;
-
-		// Holds the PTE physical pointers, the key is the 9 bits 12-20, i.e., VA/(4096)
-		std::map<Address_t, Address_t> * PTE; // This should give you the exact physical address of the page
-
+		// Holds the PGD, PUD, PMT, PTE physical pointers
+		std::map<Address_t, Address_t> * PGD; // key is 9 bits 39-47, i.e., VA/(4096*512*512*512)
+		std::map<Address_t, Address_t> * PUD; // key is 9 bits 30-38, i.e., VA/(4096*512*512)
+		std::map<Address_t, Address_t> * PMD; // key is 9 bits 21-29, i.e., VA/(4096*512)
+		std::map<Address_t, Address_t> * PTE; // key is 9 bits 12-20, i.e., VA/(4096)         
+                                              // PTE should give you the exact physical address of the page
 
 		// The structures below are used to quickly check if the page is mapped or not
 		std::map<Address_t,int> * MAPPED_PAGE_SIZE4KB;
@@ -141,7 +130,6 @@ namespace SST { namespace SambaComponent{
 		std::map<Address_t,int> *PENDING_PAGE_FAULTS_PTE;
 		std::map<Address_t,int> *PENDING_SHOOTDOWN_EVENTS;
 
-		uint64_t memory_size;
 
 		public:
 
@@ -154,11 +142,22 @@ namespace SST { namespace SambaComponent{
 		void handleEvent_CPU(SST::Event * event);
 
 
-		void setPageTablePointers( Address_t * cr3, std::map<Address_t, Address_t> * pgd,  std::map<Address_t, Address_t> * pud,  std::map<Address_t, Address_t> * pmd, std::map<Address_t, Address_t> * pte,
-				std::map<Address_t,int> * gb,  std::map<Address_t,int> * mb,  std::map<Address_t,int> * kb, std::map<Address_t,int> * pr, int *cr3I, std::map<Address_t,int> *pf_pgd,
-				std::map<Address_t,int> *pf_pud,  std::map<Address_t,int> *pf_pmd, std::map<Address_t,int> * pf_pte)
+		void setPageTablePointers(  Address_t * cr3, 
+                                    std::map<Address_t, Address_t> * pgd,  
+                                    std::map<Address_t, Address_t> * pud,  
+                                    std::map<Address_t, Address_t> * pmd, 
+                                    std::map<Address_t, Address_t> * pte,
+                                    std::map<Address_t,int> * gb,  
+                                    std::map<Address_t,int> * mb,  
+                                    std::map<Address_t,int> * kb, 
+                                    std::map<Address_t,int> * pr, 
+                                    int *cr3I, 
+                                    std::map<Address_t,int> *pf_pgd,
+                                    std::map<Address_t,int> *pf_pud,  
+                                    std::map<Address_t,int> *pf_pmd, 
+                                    std::map<Address_t,int> * pf_pte)
 		{
-	                CR3 = cr3;
+                        CR3 = cr3;
                         PGD = pgd;
                         PUD = pud;
                         PMD = pmd;

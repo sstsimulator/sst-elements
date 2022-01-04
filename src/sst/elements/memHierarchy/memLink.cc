@@ -88,6 +88,20 @@ void MemLink::init(unsigned int phase) {
         } else
             delete ev;
     }
+    
+    // Attempt to drain send Q
+    for (auto it = initSendQ.begin(); it != initSendQ.end(); ) {
+        std::string dst = findTargetDestination((*it)->getRoutingAddress());
+        if (dst != "") {
+            dbg.debug(_L10_, "%s sending init message: %s\n", getName().c_str(), (*it)->getVerboseString().c_str());
+            (*it)->setDst(dst);
+            link->sendInitData(*it);
+            it = initSendQ.erase(it);
+        } else {
+            it++;
+        }
+    }
+
 }
 
 
@@ -99,13 +113,27 @@ void MemLink::setup() {
     for (auto it = endpoints.begin(); it != endpoints.end(); it++) {
         dbg.debug(_L10_, "    Endpoint: %s\n", it->toString().c_str()); 
     }
+
+    if (!initSendQ.empty()) {
+        dbg.fatal(CALL_INFO, -1, "%s, Error: Unable to find destination for init event %s\n",
+                getName().c_str(), (*initSendQ.begin())->getVerboseString().c_str());
+    }
 }
 
 
 /**
  * send init data
  */
-void MemLink::sendInitData(MemEventInit * event) {
+void MemLink::sendInitData(MemEventInit * event, bool broadcast) {
+    if (!broadcast) {
+        std::string dst = findTargetDestination(event->getRoutingAddress());
+        if (dst == "") {
+            /* Stall this until address is known */
+            initSendQ.insert(event);
+            return;
+        }
+        event->setDst(dst);
+    }
     dbg.debug(_L10_, "%s sending init message: %s\n", getName().c_str(), event->getVerboseString().c_str());
     link->sendInitData(event);
 }

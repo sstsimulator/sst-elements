@@ -44,12 +44,6 @@ class Router : public Component {
 private:
     bool requestNotifyOnEvent;
 
-    Router() :
-    	Component(),
-    	requestNotifyOnEvent(false),
-    	vcs_with_data(0)
-    {}
-
 protected:
     inline void setRequestNotifyOnEvent(bool state)
     { requestNotifyOnEvent = state; }

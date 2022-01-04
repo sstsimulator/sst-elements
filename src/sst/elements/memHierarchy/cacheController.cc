@@ -51,7 +51,12 @@ void Cache::handleEvent(SST::Event * ev) {
     } else {
         statCacheRecv[(int)event->getCmd()]->addData(1);
     }
-
+    if (is_debug_event((event))) {
+        dbg_->debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Recv    (%s)\n",
+                Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, getName().c_str(), event->getVerboseString().c_str());
+        fflush(stdout);
+    }
+    
     eventBuffer_.push_back(event);
 }
 
@@ -77,9 +82,7 @@ void Cache::processPrefetchEvent(SST::Event * ev) {
     }
 
     // Record the time at which requests arrive for latency statistics
-    if (CommandClassArr[(int)event->getCmd()] == CommandClass::Request &&
-        !CommandWriteback[(int)event->getCmd()])
-        coherenceMgr_->recordIncomingRequest(static_cast<MemEventBase*>(event));
+    coherenceMgr_->recordIncomingRequest(event);
 
     // Record received prefetch
     statPrefetchRequest->addData(1);
@@ -173,6 +176,7 @@ bool Cache::clockTick(Cycle_t time) {
             // Accepted prefetches are profiled in the coherence manager
         } else {
             statPrefetchDrop->addData(1);
+            coherenceMgr_->removeRequestRecord(prefetchBuffer_.front()->getID());
         }
         prefetchBuffer_.pop();
     }
@@ -202,11 +206,12 @@ void Cache::turnClockOn() {
     for (int64_t i = 0; i < cyclesOff; i++) {           // TODO more efficient way to do this? Don't want to add in one-shot or we get weird averages/sum sq.
         statMSHROccupancy->addData(mshr_->getSize());
     }
-    //d_->debug(_L3_, "%s turning clock ON at cycle %" PRIu64 ", timestamp %" PRIu64 ", ns %" PRIu64 "\n", this->getName().c_str(), time, timestamp_, getCurrentSimTimeNano());
+    //dbg_->debug(_L3_, "%s turning clock ON at cycle %" PRIu64 ", timestamp %" PRIu64 ", ns %" PRIu64 "\n", this->getName().c_str(), getCurrentSimCycle(), timestamp_, getCurrentSimTimeNano());
     clockIsOn_ = true;
 }
 
 void Cache::turnClockOff() {
+    //dbg_->debug(_L3_, "%s turning clock OFF at cycle %" PRIu64 ", timestamp %" PRIu64 ", ns %" PRIu64 "\n", this->getName().c_str(), getCurrentSimCycle(), timestamp_, getCurrentSimTimeNano());
     clockIsOn_ = false;
     lastActiveClockCycle_ = timestamp_;
 }
@@ -262,6 +267,9 @@ bool Cache::processEvent(MemEventBase* ev, bool inMSHR) {
         case Command::GetX:
             accepted = coherenceMgr_->handleGetX(event, inMSHR);
             break;
+        case Command::Write:
+            accepted = coherenceMgr_->handleWrite(event, inMSHR);
+            break;
         case Command::GetSX:
             accepted = coherenceMgr_->handleGetSX(event, inMSHR);
             break;
@@ -273,6 +281,9 @@ bool Cache::processEvent(MemEventBase* ev, bool inMSHR) {
             break;
         case Command::GetSResp:
             accepted = coherenceMgr_->handleGetSResp(event, inMSHR);
+            break;
+        case Command::WriteResp:
+            accepted = coherenceMgr_->handleWriteResp(event, inMSHR);
             break;
         case Command::GetXResp:
             accepted = coherenceMgr_->handleGetXResp(event, inMSHR);
@@ -479,8 +490,7 @@ void Cache::init(unsigned int phase) {
                     getName().c_str(), memEvent->getVerboseString().c_str());
             MemEventInit * mEv = memEvent->clone();
             mEv->setSrc(getName());
-            mEv->setDst(linkDown_->getTargetDestination(mEv->getRoutingAddress()));
-            linkDown_->sendInitData(mEv);
+            linkDown_->sendInitData(mEv, false);
         }
         delete memEvent;
     }

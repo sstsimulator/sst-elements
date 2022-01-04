@@ -56,6 +56,7 @@ public:
      *********************************************************************************/
     virtual bool handleNULLCMD(MemEvent * event, bool inMSHR);
     virtual bool handleGetS(MemEvent * event, bool inMSHR);
+    virtual bool handleWrite(MemEvent * event, bool inMSHR);
     virtual bool handleGetX(MemEvent * event, bool inMSHR);
     virtual bool handleGetSX(MemEvent * event, bool inMSHR);
     virtual bool handlePutS(MemEvent * event, bool inMSHR);
@@ -71,6 +72,7 @@ public:
     virtual bool handleForceInv(MemEvent * event, bool inMSHR);
     virtual bool handleGetSResp(MemEvent * event, bool inMSHR);
     virtual bool handleGetXResp(MemEvent * event, bool inMSHR);
+    virtual bool handleWriteResp(MemEvent * event, bool inMSHR);
     virtual bool handleFlushLineResp(MemEvent * event, bool inMSHR);
     virtual bool handleAckPut(MemEvent * event, bool inMSHR);
     virtual bool handleAckInv(MemEvent * event, bool inMSHR);
@@ -190,7 +192,7 @@ protected:
     virtual void notifyListenerOfEvict(Addr addr, uint32_t size, uint64_t ip);
 
     /* Forward a message to a lower memory level (towards memory) */
-    uint64_t forwardMessage(MemEvent * event, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data);
+    uint64_t forwardMessage(MemEvent * event, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data, Command fwdCmd = Command::LAST_CMD);
 
     /* Insert event into MSHR */
     MemEventStatus allocateMSHR(MemEvent * event, bool fwdReq, int pos = -1, bool stallEvict = false);
@@ -233,6 +235,7 @@ protected:
 
     virtual void printDebugInfo(dbgin * diStruct);
     virtual void printDebugAlloc(bool alloc, Addr addr, std::string note);
+    virtual void printDataValue(Addr addr, vector<uint8_t> * data, bool set);
 
     /* Initialization */
     ReplacementPolicy * createReplacementPolicy(uint64_t lines, uint64_t assoc, Params& params, bool L1, int slotnum = 0);
@@ -305,9 +308,9 @@ protected:
     /* Add a new event to the outgoing command queue towards the CPU */
     virtual void addToOutgoingQueueUp(Response& resp);
 
-    virtual uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic = false);
-    virtual uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic = false);
-    virtual uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool dirty, bool replay, uint64_t baseTime, bool atomic = false);
+    virtual uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool success = true);
+    virtual uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool success = true);
+    virtual uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool dirty, bool replay, uint64_t baseTime, bool success = true);
 
     std::string getSrc();
 

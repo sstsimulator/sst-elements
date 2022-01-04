@@ -94,8 +94,8 @@ void StandardMMIO::setup() {
 bool StandardMMIO::clockTic(Cycle_t cycle) {
     // Decide whether to send a request
     if (mem_access > 0) {
-        uint32_t req = rng.generateNextUInt32() % 10;
-        if (req < 2) {
+        uint32_t reqnum = rng.generateNextUInt32() % 10;
+        if (reqnum < 2) {
             // Issue read
             Addr addr = ((rng.generateNextUInt64() % max_addr)>>2) << 2;
             StandardMem::Request* req = new Interfaces::StandardMem::Read(addr, 4);
@@ -105,7 +105,7 @@ bool StandardMMIO::clockTic(Cycle_t cycle) {
             iface->send(req);
             mem_access--;
 
-        } else if (req < 4) {
+        } else if (reqnum < 4) {
             // Issue write
             Addr addr = (rng.generateNextUInt64() % max_addr);
             addr = (addr / iface->getLineSize()) * iface->getLineSize();
@@ -113,6 +113,9 @@ bool StandardMMIO::clockTic(Cycle_t cycle) {
             payload.resize(iface->getLineSize(), 0);
             StandardMem::Request* req = new Interfaces::StandardMem::Write(addr, iface->getLineSize(), payload);
             out.verbose(CALL_INFO, 2, 0, "%s: %d Issued Write for address 0x%" PRIx64 "\n", getName().c_str(), mem_access, addr);
+            
+            requests.insert(std::make_pair(req->getID(), std::make_pair(getCurrentSimTime(), "Read")));
+            iface->send(req);
             mem_access--;
         }
     }
@@ -124,6 +127,7 @@ bool StandardMMIO::clockTic(Cycle_t cycle) {
 
 void StandardMMIO::handleEvent(StandardMem::Request* req) {
     req->handle(handlers);
+    delete req;
 }
 
 /* Handler for incoming Write requests */
@@ -139,7 +143,6 @@ void StandardMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* wri
     if (!(write->posted)) {
         mmio->iface->send(write->makeResponse());
     }
-    delete write;
 }
 
 /* Handler for incoming Read requests */
@@ -156,7 +159,6 @@ void StandardMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Read* read
     StandardMem::ReadResp* resp = static_cast<StandardMem::ReadResp*>(read->makeResponse());
     resp->data = payload;
     mmio->iface->send(resp);
-    delete read;
 }
 
 /* Handler for incoming Read responses - should be a response to a Read we issued */
@@ -169,7 +171,7 @@ void StandardMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* 
         mmio->statReadLatency->addData(et);
         mmio->requests.erase(i);
     }
-    delete resp;
+    
     if (mmio->mem_access == 0 && mmio->requests.empty())
         mmio->primaryComponentOKToEndSim();
 }
@@ -184,7 +186,7 @@ void StandardMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::WriteResp*
         mmio->statWriteLatency->addData(et);
         mmio->requests.erase(i);
     }
-    delete resp;
+    
     if (mmio->mem_access == 0 && mmio->requests.empty())
         mmio->primaryComponentOKToEndSim();
 }

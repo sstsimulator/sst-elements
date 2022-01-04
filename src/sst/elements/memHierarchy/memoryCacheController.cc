@@ -176,8 +176,12 @@ MemCacheController::MemCacheController(ComponentId_t id, Params &params) : Compo
             if (e == 1)
                 out.fatal(CALL_INFO, -1, "%s, Error - unable to open memory_file. You specified '%s'.\n", getName().c_str(), memoryFile.c_str());
             else if (e == 2) {
-                out.verbose(CALL_INFO, 1, 0, "%s, Could not MMAP backing store (likely, simulated memory exceeds real memory). Creating malloc based store instead.\n", getName().c_str());
-                backing_ = new Backend::BackingMalloc(sizeBytes);
+                if (memoryFile == "") {
+                    out.verbose(CALL_INFO, 1, 0, "%s, Could not MMAP backing store (likely, simulated memory exceeds real memory). Creating malloc based store instead.\n", getName().c_str());
+                    backing_ = new Backend::BackingMalloc(sizeBytes);
+                } else {
+                    out.fatal(CALL_INFO, -1, "%s, Error - Could not MMAP backing store from file %s\n", getName().c_str(), memoryFile.c_str());
+                }
             } else
                 out.fatal(CALL_INFO, -1, "%s, Error - unable to create backing store. Exception thrown is %d.\n", getName().c_str(), e);
         }
@@ -227,13 +231,11 @@ void MemCacheController::handleEvent(SST::Event* event) {
     switch (cmd) {
         case Command::GetS:
         case Command::GetSX:
+        case Command::GetX:
             handleRead(ev, false);
             break;
-        case Command::GetX:
-            if (ev->queryFlag(MemEvent::F_NONCACHEABLE))
-                handleWrite(ev, false);
-            else
-                handleRead(ev, false);
+        case Command::Write:
+            handleWrite(ev, false);
             break;
         case Command::PutM:
             ev->setFlag(MemEvent::F_NORESPONSE);
@@ -385,7 +387,7 @@ void MemCacheController::handleDataResponse(MemEvent* event) {
     memBackendConvertor_->handleMemEvent(it->second.reqev);
 
     // Update backing store from the request that missed if it was a write
-    if (it->second.event->getCmd() == Command::PutM || (it->second.event->getCmd() == Command::GetX && it->second.event->queryFlag(MemEvent::F_NONCACHEABLE))) {
+    if (it->second.event->getCmd() == Command::PutM || it->second.event->getCmd() == Command::Write) {
         cache_[cacheIndex].state = M;
         if (backing_)
             writeData(it->second.event);
@@ -470,7 +472,7 @@ void MemCacheController::handleLocalMemResponse( Event::id_type id, uint32_t fla
             break;
         case AccessStatus::HIT:
             /* Write data. Here instead of receive to try to match backing access order to backend execute order */
-            if (backing_ && (ev->getCmd() == Command::PutM || (ev->getCmd() == Command::GetX && noncacheable)))
+            if (backing_ && (ev->getCmd() == Command::PutM || ev->getCmd() == Command::Write))
                 writeData(ev);
 
             if (!ev->queryFlag(MemEvent::F_NORESPONSE)) {
@@ -502,17 +504,11 @@ void MemCacheController::retry(uint64_t cacheIndex) {
     switch (ev->getCmd()) {
         case Command::GetS:
         case Command::GetSX:
+        case Command::GetX:
             handleRead(ev, true);
             break;
-        case Command::GetX:
-            if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
-                handleWrite(ev, true);
-            } else {
-                handleRead(ev, true);
-            }
-            break;
+        case Command::Write:
         case Command::PutM:
-
             handleWrite(ev, true);
             break;
         default:
@@ -525,9 +521,9 @@ void MemCacheController::sendResponse(MemEvent* ev, uint32_t flags) {
 
     bool noncacheable = ev->queryFlag(MemEvent::F_NONCACHEABLE);
     /* Read order matches execute order so that mis-ordering at backend can result in bad data */
-    if (resp->getCmd() == Command::GetSResp || (resp->getCmd() == Command::GetXResp && !noncacheable)) {
+    if (resp->getCmd() == Command::GetSResp || resp->getCmd() == Command::GetXResp) {
         readData(resp);
-        if (!noncacheable) resp->setCmd(Command::GetXResp);
+        resp->setCmd(Command::GetXResp);
     }
 
     resp->setFlags(flags);
@@ -610,7 +606,7 @@ void MemCacheController::writeData(MemEvent* event) {
         return;
     }
 
-    if (noncacheable && event->getCmd() == Command::GetX) {
+    if (event->getCmd() == Command::Write) {
         if (is_debug_event(event)) { Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); }
 
         backing_->set(addr, event->getSize(), event->getPayload());
@@ -676,7 +672,7 @@ void MemCacheController::processInitEvent( MemEventInit* me ) {
     if (Command::NULLCMD == me->getCmd()) {
         if (is_debug_event(me)) { Debug(_L9_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString().c_str()); }
     } else {
-        if (is_debug_event(me)) { Debug(_L9_,"Memory init %s - Received GetX for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size()); }
+        if (is_debug_event(me)) { Debug(_L9_,"Memory init %s - Received Write for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size()); }
         MemEventInit * mEv = me->clone();
         mEv->setSrc(getName());
         mEv->setDst(link_->getTargetDestination(mEv->getRoutingAddress()));

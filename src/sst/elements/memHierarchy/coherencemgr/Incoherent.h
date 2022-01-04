@@ -293,7 +293,7 @@ private:
 
     void doEvict(MemEvent * event, PrivateCacheLine * line);
 
-    SimTime_t sendResponseUp(MemEvent * event, vector<uint8_t> * data, bool inMSHR, SimTime_t time, Command cmd = Command::NULLCMD, bool success = false);
+    SimTime_t sendResponseUp(MemEvent * event, vector<uint8_t> * data, bool inMSHR, SimTime_t time, Command cmd = Command::NULLCMD, bool success = true);
 
     void sendWriteback(Command cmd, PrivateCacheLine * line, bool dirty);
 

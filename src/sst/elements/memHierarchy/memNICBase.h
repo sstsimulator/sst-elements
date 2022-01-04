@@ -112,7 +112,16 @@ class MemNICBase : public MemLinkBase {
         };
 
         // Init functions
-        virtual void sendInitData(MemEventInit * ev) {
+        virtual void sendInitData(MemEventInit * ev, bool broadcast = true) {
+            if (!broadcast) {
+                std::string dst = findTargetDestination(ev->getRoutingAddress());
+                if (dst == "") {
+                    // Hold this request until we know the right address
+                    initWaitForDst.insert(ev);
+                    return;
+                }
+                ev->setDst(dst);
+            }
             MemRtrEvent * mre = new MemRtrEvent(ev);
             SST::Interfaces::SimpleNetwork::Request* req = new SST::Interfaces::SimpleNetwork::Request();
             req->dest = SST::Interfaces::SimpleNetwork::INIT_BROADCAST_ADDR;
@@ -209,7 +218,8 @@ class MemNICBase : public MemLinkBase {
             if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
                 addSource(imre->info);
                 dbg.debug(_L10_, "\tAdding to sourceEndpointInfo. %zu sources found\n", sourceEndpointInfo.size());
-            } else if (destIDs.find(imre->info.id) != destIDs.end()) {
+            }
+            if (destIDs.find(imre->info.id) != destIDs.end()) {
                 addDest(imre->info);
                 dbg.debug(_L10_, "\tAdding to destEndpointInfo. %zu destinations found\n", destEndpointInfo.size());
             }
@@ -224,6 +234,21 @@ class MemNICBase : public MemLinkBase {
                 while (!initSendQueue.empty()) {
                     linkcontrol->sendInitData(initSendQueue.front());
                     initSendQueue.pop();
+                }
+
+                for (auto it = initWaitForDst.begin(); it != initWaitForDst.end();) {
+                    std::string dst = findTargetDestination((*it)->getRoutingAddress());
+                    if (dst != "") {
+                        (*it)->setDst(dst);
+                        MemRtrEvent * mre = new MemRtrEvent(*it);
+                        SST::Interfaces::SimpleNetwork::Request* req = new SST::Interfaces::SimpleNetwork::Request();
+                        req->dest = SST::Interfaces::SimpleNetwork::INIT_BROADCAST_ADDR;
+                        req->givePayload(mre);
+                        linkcontrol->sendInitData(req);
+                        it = initWaitForDst.erase(it);
+                    } else {
+                        it++;
+                    }
                 }
             }
 
@@ -298,8 +323,8 @@ class MemNICBase : public MemLinkBase {
             }
         }
         
-        // Setup step
-        // Just debug info for now
+        // Setup
+        // Clean up state generated during init() and perform some sanity checks
         virtual void setup() {
             /* Limit destinations to the memory regions reported by endpoint messages that came through them */
             
@@ -331,6 +356,30 @@ class MemNICBase : public MemLinkBase {
                 }
             }
             destEndpointInfo = newDests;
+            
+            int stopAfter = 20; // This is error checking, if it takes too long, stop
+            for (auto et = destEndpointInfo.begin(); et != destEndpointInfo.end(); et++) {
+                for (auto it = std::next(et,1); it != destEndpointInfo.end(); it++) {
+                    if (it->name == et->name) continue; // Not a problem
+                    if ((it->region).doesIntersect(et->region)) {
+                        dbg.fatal(CALL_INFO, -1, "%s, Error: Found destinations on the network with overlapping address regions. Cannot generate routing table."
+                                "\n  Destination 1: %s\n  Destination 2: %s\n", 
+                                getName().c_str(), it->toString().c_str(), et->toString().c_str());
+                    }
+                    stopAfter--;
+                    if (stopAfter == 0) {
+                        stopAfter = -1;
+                        break;
+                    }
+                }
+                if (stopAfter <= 0) {
+                    stopAfter = -1;
+                    break;
+                }
+            }
+            if (stopAfter == -1)
+                dbg.debug(_L2_, "%s, Notice: Too many regions to complete error check for overlapping destination regions. Checked first 20 pairs.\n",
+                        getName().c_str());
 
             for (auto it = networkAddressMap.begin(); it != networkAddressMap.end(); it++) {
                 dbg.debug(_L10_, "    Address: %s -> %" PRIu64 "\n", it->first.c_str(), it->second);
@@ -343,6 +392,11 @@ class MemNICBase : public MemLinkBase {
             }
             for (auto it = endpointInfo.begin(); it != endpointInfo.end(); it++) {
                 dbg.debug(_L10_, "    Endpoint: %s\n", it->toString().c_str()); 
+            }
+
+            if (!initWaitForDst.empty()) {
+                dbg.fatal(CALL_INFO, -1, "%s, Error: Unable to find destination for init event %s\n",
+                        getName().c_str(), (*initWaitForDst.begin())->getVerboseString().c_str());
             }
         }
 
@@ -409,7 +463,8 @@ class MemNICBase : public MemLinkBase {
                     }
                     if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
                         addSource(imre->info);
-                    } else if (destIDs.find(imre->info.id) != destIDs.end()) {
+                    } 
+                    if (destIDs.find(imre->info.id) != destIDs.end()) {
                         addDest(imre->info);
                     }
                     delete imre;
@@ -431,6 +486,7 @@ class MemNICBase : public MemLinkBase {
         // Init queues
         std::queue<MemRtrEvent*> initQueue; // Queue for received init events
         std::queue<SST::Interfaces::SimpleNetwork::Request*> initSendQueue; // Queue of events waiting to be sent after network (linkcontrol) initializes
+        std::set<MemEventInit*> initWaitForDst; // Set of events with unknown destinations    
 
         // Other parameters
         std::unordered_set<uint32_t> sourceIDs, destIDs; // IDs which this endpoint cares about

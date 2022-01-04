@@ -109,22 +109,14 @@ void Bus::sendSingleEvent(SST::Event* ev) {
     MemEventBase *event = static_cast<MemEventBase*>(ev);
 #ifdef __SST_DEBUG_OUTPUT__
     if (is_debug_event(event)) {
-        dbg_.debug(_L3_,"\n\n");
-        dbg_.debug(_L3_,"----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
-        dbg_.debug(_L3_,"Incoming Event. Name: %s, Event: %s\n",
-                   this->getName().c_str(), event->getBriefString().c_str());
+        dbg_.debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
+                Simulation::getSimulation()->getCurrentSimCycle(), 0, getName().c_str(), event->getVerboseString().c_str());
+        fflush(stdout);
     }
 #endif
     LinkId_t dstLinkId = lookupNode(event->getDst());
     SST::Link* dstLink = linkIdMap_[dstLinkId];
     MemEventBase* forwardEvent = event->clone();
-#ifdef __SST_DEBUG_OUTPUT__
-    if (is_debug_event(forwardEvent)) {
-        dbg_.debug(_L3_,"BCmd = %s \n", CommandString[(int)forwardEvent->getCmd()]);
-        dbg_.debug(_L3_,"BDst = %s \n", forwardEvent->getDst().c_str());
-        dbg_.debug(_L3_,"BSrc = %s \n", forwardEvent->getSrc().c_str());
-    }
-#endif
     dstLink->send(forwardEvent);
 
     delete event;
@@ -187,7 +179,7 @@ void Bus::configureLinks() {
 void Bus::configureParameters(SST::Params& params) {
     int debugLevel = params.find<int>("debug_level", 0);
 
-    dbg_.init("--->  ", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
+    dbg_.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
     if (debugLevel < 0 || debugLevel > 10)     dbg_.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
 
     std::vector<Addr> addrArr;
