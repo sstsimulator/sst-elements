@@ -48,6 +48,7 @@ inst/vfp2gpr.h \
 inst/vfpadd.h \
 inst/vfpconv.h \
 inst/vfpdiv.h \
+inst/vfpinst.h \
 inst/vfpmul.h \
 inst/vfpscmp.h \
 inst/vfpsignlogic.h \
@@ -111,6 +112,7 @@ util/vdatacopy.h \
 util/vfpreghandler.h \
 util/vlinesplit.h \
 util/vsignx.h \
+util/vtypename.h \
 vbranch/vbranchbasic.h \
 vbranch/vbranchunit.h \
 velf/velfinfo.h \
