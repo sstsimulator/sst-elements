@@ -121,12 +121,21 @@ public:
 
     void printToBuffer(char* buffer, size_t buffer_size) override
     {
+			if(VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) {
         snprintf(
             buffer, buffer_size,
-            "FPCMPST (op: %s, %s) isa-out: %" PRIu16 " isa-in: %" PRIu16 ", %" PRIu16 " / phys-out: %" PRIu16
+            "FPCMPST-MO32 (op: %s, %s) isa-out: %" PRIu16 " isa-in: (%" PRIu16 ", %" PRIu16 "), (%" PRIu16 ", %" PRIu16 ") / phys-out: %" PRIu16
+            " phys-in: %" PRIu16 ", %" PRIu16 "\n",
+            convertCompareTypeToString(compare_type), registerFormatToString(register_format), isa_fp_regs_out[0],
+            isa_fp_regs_in[0], isa_fp_regs_in[1], isa_fp_regs_in[2], isa_fp_regs_in[3], phys_fp_regs_out[0], phys_fp_regs_in[0], phys_fp_regs_in[1]);
+			} else {
+        snprintf(
+            buffer, buffer_size,
+            "FPCMPST-MO32 (op: %s, %s) isa-out: %" PRIu16 " isa-in: %" PRIu16 ", %" PRIu16 " / phys-out: %" PRIu16
             " phys-in: %" PRIu16 ", %" PRIu16 "\n",
             convertCompareTypeToString(compare_type), registerFormatToString(register_format), isa_fp_regs_out[0],
             isa_fp_regs_in[0], isa_fp_regs_in[1], phys_fp_regs_out[0], phys_fp_regs_in[0], phys_fp_regs_in[1]);
+			}
     }
 
     template <typename T>
@@ -138,6 +147,10 @@ public:
         const T right_value = ((8 == sizeof(T)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))
                                   ? combineFromRegisters<T>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3])
                                   : regFile->getFPReg<T>(phys_fp_regs_in[1]);
+
+		  if(output->getVerboseLevel() >= 16) {
+				output->verbose(CALL_INFO, 16, 0, "---> fp-values: left: %f / right: %f\n", left_value, right_value);
+		  }
 
         switch ( compare_type ) {
         case REG_COMPARE_EQ:
