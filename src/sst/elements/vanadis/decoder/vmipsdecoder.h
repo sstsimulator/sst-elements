@@ -2054,25 +2054,25 @@ protected:
                         switch ( fr ) {
                         case 16:
                             bundle->addInstruction(
-                                new VanadisFPSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
+                                new VanadisFPSubInstruction<float>(
                                     ins_addr, hw_thr, options, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 17:
                             bundle->addInstruction(
-                                new VanadisFPSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
+                                new VanadisFPSubInstruction<double>(
                                     ins_addr, hw_thr, options, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 20:
                             bundle->addInstruction(
-                                new VanadisFPSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                                new VanadisFPSubInstruction<int32_t>(
                                     ins_addr, hw_thr, options, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 21:
                             bundle->addInstruction(
-                                new VanadisFPSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                                new VanadisFPSubInstruction<int64_t>(
                                     ins_addr, hw_thr, options, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
