@@ -62,6 +62,14 @@ public:
 				return "FP64MUL";
 			} else if(std::is_same<fp_format, float>::value) {
 				return "FP32MUL";
+			} else if(std::is_same<fp_format, int32_t>::value) {
+				return "FPI32MUL";
+			} else if(std::is_same<fp_format, uint32_t>::value) {
+				return "FPU32MUL";
+			} else if(std::is_same<fp_format, int64_t>::value) {
+				return "FPI64MUL";
+			} else if(std::is_same<fp_format, uint64_t>::value) {
+				return "FPU64MUL";
 			} else {
 				return "FPMULUNK";
 			}
