@@ -1985,25 +1985,25 @@ protected:
                         switch ( fr ) {
                         case 16:
                             bundle->addInstruction(
-                                new VanadisFPMultiplyInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
+                                new VanadisFPMultiplyInstruction<float>(
                                     ins_addr, hw_thr, options, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 17:
                             bundle->addInstruction(
-                                new VanadisFPMultiplyInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
+                                new VanadisFPMultiplyInstruction<double>(
                                     ins_addr, hw_thr, options, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 20:
                             bundle->addInstruction(
-                                new VanadisFPMultiplyInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                                new VanadisFPMultiplyInstruction<int32_t>(
                                     ins_addr, hw_thr, options, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 21:
                             bundle->addInstruction(
-                                new VanadisFPMultiplyInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                                new VanadisFPMultiplyInstruction<int64_t>(
                                     ins_addr, hw_thr, options, fd, fs, ft));
                             insertDecodeFault = false;
                             break;

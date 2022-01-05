@@ -1514,7 +1514,7 @@ protected:
                     // FMUL.D
                     output->verbose(
                         CALL_INFO, 16, 0, "-----> FMUL.D %" PRIu16 " <- %" PRIu16 " * %" PRIu16 "\n", rd, rs1, rs2);
-                    bundle->addInstruction(new VanadisFPMultiplyInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
+                    bundle->addInstruction(new VanadisFPMultiplyInstruction<double>(
                         ins_address, hw_thr, options, rd, rs1, rs2));
                     decode_fault = false;
                 } break;
