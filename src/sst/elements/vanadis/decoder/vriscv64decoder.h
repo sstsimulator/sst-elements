@@ -1496,7 +1496,7 @@ protected:
                     // FADD.D
                     output->verbose(
                         CALL_INFO, 16, 0, "-----> FADD.D %" PRIu16 " <- %" PRIu16 " + %" PRIu16 "\n", rd, rs1, rs2);
-                    bundle->addInstruction(new VanadisFPAddInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
+                    bundle->addInstruction(new VanadisFPAddInstruction<double>(
                         ins_address, hw_thr, options, rd, rs1, rs2));
                     decode_fault = false;
                 } break;
@@ -1579,8 +1579,7 @@ protected:
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.D.W %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
                             new VanadisGPR2FPInstruction<
-                                VanadisRegisterFormat::VANADIS_FORMAT_INT32,
-                                VanadisRegisterFormat::VANADIS_FORMAT_FP64>(ins_address, hw_thr, options, rd, rs1));
+										  int32_t, double>(ins_address, hw_thr, options, rd, rs1));
                         decode_fault = false;
                     } break;
                     case 1:
@@ -1650,8 +1649,7 @@ protected:
 							if(0 == func_code3) {
 								output->verbose(CALL_INFO, 16, 0, "-----> FMV.D.X %" PRIu16 " <- %" PRIu16 "\n",
 									rd, rs1);
-								bundle->addInstruction(new VanadisGPR2FPInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64,
-									VanadisRegisterFormat::VANADIS_FORMAT_FP64>(ins_address, hw_thr, options, rd, rs1));
+								bundle->addInstruction(new VanadisGPR2FPInstruction<int64_t, double>(ins_address, hw_thr, options, rd, rs1));
 								decode_fault = false;
 							}
 						}
