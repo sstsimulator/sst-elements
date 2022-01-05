@@ -257,7 +257,10 @@ public:
             case VanadisRegisterFormat::VANADIS_FORMAT_FP64:
             {
                 if ( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) {
-                    const double fp_v = (double)(regFile->getFPReg<int32_t>(phys_fp_regs_in[0]));
+							const int32_t in_value = regFile->getFPReg<int32_t>(phys_fp_regs_in[0]);
+							const double fp_v = static_cast<double>(in_value);
+
+							output->verbose(CALL_INFO, 16, 0, "---> convert: I32: %" PRId32 " -> FP64: %f\n", in_value, fp_v);
                     fractureToRegisters<double>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], fp_v);
                 }
                 else {
