@@ -18,7 +18,7 @@
 
 #include "inst/vinst.h"
 #include "inst/vregfmt.h"
-#include "util/vtypename.h"
+//#include "util/vtypename.h"
 
 #include <vector>
 
