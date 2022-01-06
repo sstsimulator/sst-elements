@@ -34,11 +34,11 @@ public:
 	void clearInexact() { f_inexact = false; }
 	void clearRoundingMode() { round_mode = VanadisFPRoundingMode::ROUND_NEAREST; }
 
-	bool invalidOpSet() const { return f_invalidop; }
-	bool divZeroSet() const { return f_divzero; }
-	bool overflowSet() const { return f_overflow; }
-	bool underflowSet() const { return f_underflow; }
-	bool inexactSet() const { return f_inexact; }
+	bool invalidOp() const { return f_invalidop; }
+	bool divZero() const { return f_divzero; }
+	bool overflow() const { return f_overflow; }
+	bool underflow() const { return f_underflow; }
+	bool inexact() const { return f_inexact; }
 	VanadisFPRoundingMode getRoundingMode() const { return round_mode; }
 
 protected:
