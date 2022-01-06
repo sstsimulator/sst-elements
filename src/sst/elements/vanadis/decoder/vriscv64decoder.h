@@ -1635,7 +1635,7 @@ protected:
 						if(0 == rs2) {
 							if(0 == func_code3) {
 								output->verbose(CALL_INFO, 16, 0, "-----> FMV.X.D %" PRIu16 " <- %" PRIu16 "\n", rd, rs1);
-								bundle->addInstruction(new VanadisFP2GPRInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(ins_address,
+								bundle->addInstruction(new VanadisFP2GPRInstruction<int64_t, int64_t>(ins_address,
 									hw_thr, options, rd, rs1));
 								decode_fault = false;
 							}
@@ -1649,7 +1649,7 @@ protected:
 							if(0 == func_code3) {
 								output->verbose(CALL_INFO, 16, 0, "-----> FMV.D.X %" PRIu16 " <- %" PRIu16 "\n",
 									rd, rs1);
-								bundle->addInstruction(new VanadisGPR2FPInstruction<int64_t, double>(ins_address, hw_thr, options, rd, rs1));
+								bundle->addInstruction(new VanadisGPR2FPInstruction<int64_t, int64_t>(ins_address, hw_thr, options, rd, rs1));
 								decode_fault = false;
 							}
 						}
