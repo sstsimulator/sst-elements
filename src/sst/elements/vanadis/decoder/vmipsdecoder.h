@@ -2088,30 +2088,22 @@ protected:
                         switch ( fr ) {
                         case 16:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP32,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP32>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<float, float>(ins_addr, hw_thr, options, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 17:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP64,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP32>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<double, float>(ins_addr, hw_thr, options, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 20:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_INT32,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP32>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<int32_t, float>(ins_addr, hw_thr, options, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 21:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_INT64,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP32>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<int64_t, float>(ins_addr, hw_thr, options, fd, fs));
                             insertDecodeFault = false;
                             break;
                         default:
@@ -2126,30 +2118,22 @@ protected:
                         switch ( fr ) {
                         case 16:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP32,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP64>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<float, double>(ins_addr, hw_thr, options, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 17:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP64,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP64>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<double, double>(ins_addr, hw_thr, options, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 20:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_INT32,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP64>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<int32_t, double>(ins_addr, hw_thr, options, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 21:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_INT64,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP64>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<int64_t, double>(ins_addr, hw_thr, options, fd, fs));
                             insertDecodeFault = false;
                             break;
                         default:
@@ -2166,30 +2150,22 @@ protected:
                         switch ( fr ) {
                         case 16:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP32,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_INT32>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<float, int32_t>(ins_addr, hw_thr, options, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 17:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP64,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_INT32>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<double, int32_t>(ins_addr, hw_thr, options, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 20:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_INT32,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_INT32>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<int32_t, int32_t>(ins_addr, hw_thr, options, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 21:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_INT64,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_INT32>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<int64_t, int32_t>(ins_addr, hw_thr, options, fd, fs));
                             insertDecodeFault = false;
                             break;
                         default:
