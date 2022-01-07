@@ -13,6 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <sst_config.h>
 #include "vanadis.h"
 
 #include "decoder/vmipsdecoder.h"
@@ -22,7 +23,6 @@
 
 #include <cstdio>
 #include <sst/core/output.h>
-#include <sst_config.h>
 #include <vector>
 
 using namespace SST::Vanadis;

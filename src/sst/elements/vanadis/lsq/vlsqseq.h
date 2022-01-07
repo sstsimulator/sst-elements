@@ -28,6 +28,8 @@
 #include "inst/vinst.h"
 #include "inst/vstore.h"
 
+using namespace SST::Interfaces;
+
 namespace SST {
 namespace Vanadis {
 
