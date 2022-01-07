@@ -23,7 +23,7 @@
 namespace SST {
 namespace Vanadis {
 
-template<typename fp_format, typename gpr_format>
+template <typename fp_format, typename gpr_format>
 class VanadisFP2GPRInstruction : public VanadisInstruction
 {
 public:
@@ -32,15 +32,13 @@ public:
         const uint16_t fp_src) :
         VanadisInstruction(
             addr, hw_thr, isa_opts, 0, 1, 0, 1,
-				((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1,
-            0,
-				((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1,
-            0)
+            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1, 0,
+            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1, 0)
     {
 
         isa_int_regs_out[0] = int_dest;
 
-		  if((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) {
+        if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode()) ) {
             isa_fp_regs_in[0] = fp_src;
             isa_fp_regs_in[1] = fp_src + 1;
         }
@@ -54,18 +52,18 @@ public:
 
     const char* getInstCode() const override
     {
-/*
-        switch ( register_format ) {
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
-        case VanadisRegisterFormat::VANADIS_FORMAT_FP32:
-            return "FP2GPR32";
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
-        case VanadisRegisterFormat::VANADIS_FORMAT_FP64:
-            return "FP2GPR64";
-        }
-*/
-//        return "FPGPRUNK";
-		return "FP2GPR";
+        /*
+                switch ( register_format ) {
+                case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
+                case VanadisRegisterFormat::VANADIS_FORMAT_FP32:
+                    return "FP2GPR32";
+                case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
+                case VanadisRegisterFormat::VANADIS_FORMAT_FP64:
+                    return "FP2GPR64";
+                }
+        */
+        //        return "FPGPRUNK";
+        return "FP2GPR";
     }
 
     void printToBuffer(char* buffer, size_t buffer_size) override
@@ -81,18 +79,19 @@ public:
 #ifdef VANADIS_BUILD_DEBUG
         output->verbose(
             CALL_INFO, 16, 0,
-            "Execute: 0x%llx %s int-dest isa: %" PRIu16 " phys: %" PRIu16 " <- fp-src: isa: %" PRIu16
-            " phys: %" PRIu16 "\n",
+            "Execute: 0x%llx %s int-dest isa: %" PRIu16 " phys: %" PRIu16 " <- fp-src: isa: %" PRIu16 " phys: %" PRIu16
+            "\n",
             getInstructionAddress(), getInstCode(), isa_int_regs_out[0], phys_int_regs_out[0], isa_fp_regs_in[0],
             phys_fp_regs_in[0]);
 #endif
-		  if((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode())) {
-                const fp_format fp_v = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
-                regFile->setIntReg<gpr_format>(phys_int_regs_out[0], static_cast<gpr_format>(fp_v));
-		  } else {
-				const fp_format fp_v = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
-				regFile->setIntReg<gpr_format>(phys_int_regs_out[0], static_cast<gpr_format>(fp_v));
-		  }
+        if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
+            const fp_format fp_v = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
+            regFile->setIntReg<gpr_format>(phys_int_regs_out[0], static_cast<gpr_format>(fp_v));
+        }
+        else {
+            const fp_format fp_v = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
+            regFile->setIntReg<gpr_format>(phys_int_regs_out[0], static_cast<gpr_format>(fp_v));
+        }
 
         markExecuted();
     }

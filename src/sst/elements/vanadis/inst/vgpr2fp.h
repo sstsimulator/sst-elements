@@ -54,11 +54,11 @@ public:
 
     const char* getInstCode() const override
     {
-//		constexpr v_constexpr_str<3> gp_type_name = vanadis_type_name<gpr_format>();
-//		constexpr v_constexpr_str<3> fp_type_name = vanadis_type_name<fp_format>();
+        //		constexpr v_constexpr_str<3> gp_type_name = vanadis_type_name<gpr_format>();
+        //		constexpr v_constexpr_str<3> fp_type_name = vanadis_type_name<fp_format>();
 
-//		return (gp_type_name + fp_type_name).data();
-		return "GPR2FP";
+        //		return (gp_type_name + fp_type_name).data();
+        return "GPR2FP";
     }
 
     void printToBuffer(char* buffer, size_t buffer_size) override
@@ -74,32 +74,34 @@ public:
 #ifdef VANADIS_BUILD_DEBUG
         output->verbose(
             CALL_INFO, 16, 0,
-            "Execute: 0x%llx %s fp-dest isa: %" PRIu16 " phys: %" PRIu16 " <- int-src: isa: %" PRIu16
-            " phys: %" PRIu16 "\n",
+            "Execute: 0x%llx %s fp-dest isa: %" PRIu16 " phys: %" PRIu16 " <- int-src: isa: %" PRIu16 " phys: %" PRIu16
+            "\n",
             getInstructionAddress(), getInstCode(), isa_fp_regs_out[0], phys_fp_regs_out[0], isa_int_regs_in[0],
             phys_int_regs_in[0]);
 #endif
 
-        const gpr_format v = regFile->getIntReg<gpr_format>(phys_int_regs_in[0]);
-		  const fp_format  v_fp = static_cast<fp_format>(v);
+        const gpr_format v    = regFile->getIntReg<gpr_format>(phys_int_regs_in[0]);
+        const fp_format  v_fp = static_cast<fp_format>(v);
 
-		  if(output->getVerboseLevel() >= 16 ) {
-				output->verbose(CALL_INFO, 16, 0, "----> convert: ");
+        if ( output->getVerboseLevel() >= 16 ) {
+            output->verbose(CALL_INFO, 16, 0, "----> convert: ");
 
-				if(std::is_same<gpr_format, int32_t>::value) {
-					output->verbose(CALL_INFO, 16, 0, "%" PRId32 " -> %f\n", v, v_fp);
-				} else if(std::is_same<gpr_format, uint32_t>::value) {
-               output->verbose(CALL_INFO, 16, 0, "%" PRIu32 " -> %f\n", v, v_fp);
-            } else if(std::is_same<gpr_format, int64_t>::value) {
-               output->verbose(CALL_INFO, 16, 0, "%" PRId64 " -> %f\n", v, v_fp);
-            } else if(std::is_same<gpr_format, uint64_t>::value) {
-               output->verbose(CALL_INFO, 16, 0, "%" PRIu64 " -> %f\n", v, v_fp);
+            if ( std::is_same<gpr_format, int32_t>::value ) {
+                output->verbose(CALL_INFO, 16, 0, "%" PRId32 " -> %f\n", v, v_fp);
             }
-		  }
+            else if ( std::is_same<gpr_format, uint32_t>::value ) {
+                output->verbose(CALL_INFO, 16, 0, "%" PRIu32 " -> %f\n", v, v_fp);
+            }
+            else if ( std::is_same<gpr_format, int64_t>::value ) {
+                output->verbose(CALL_INFO, 16, 0, "%" PRId64 " -> %f\n", v, v_fp);
+            }
+            else if ( std::is_same<gpr_format, uint64_t>::value ) {
+                output->verbose(CALL_INFO, 16, 0, "%" PRIu64 " -> %f\n", v, v_fp);
+            }
+        }
 
         if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
-            fractureToRegisters<fp_format>(
-                regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], v_fp);
+            fractureToRegisters<fp_format>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], v_fp);
         }
         else {
             regFile->setFPReg<fp_format>(phys_fp_regs_out[0], v_fp);

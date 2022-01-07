@@ -36,14 +36,11 @@ public:
         const uint16_t src_1, const uint16_t src_2) :
         VanadisInstruction(
             addr, hw_thr, isa_opts, 0, 0, 0, 0,
-				((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 5 : 3,
-            1,
-				((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 5 : 3,
-            1)
+            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 5 : 3, 1,
+            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 5 : 3, 1)
     {
 
-		  if( (sizeof(fp_format) == 8) &&
-             (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode()) ) {
+        if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode()) ) {
             isa_fp_regs_in[0]  = src_1;
             isa_fp_regs_in[1]  = src_1 + 1;
             isa_fp_regs_in[2]  = src_2;
@@ -65,88 +62,93 @@ public:
 
     virtual const char* getInstCode() const override
     {
-/*
-        switch ( register_format ) {
-        case VanadisRegisterFormat::VANADIS_FORMAT_FP64:
-        {
-            switch ( compare_type ) {
-            case REG_COMPARE_EQ:
-                return "FP64CMPEQ";
-            case REG_COMPARE_NEQ:
-                return "FP64CMPNEQ";
-            case REG_COMPARE_LT:
-                return "FP64CMPLT";
-            case REG_COMPARE_LTE:
-                return "FP64CMPLTE";
-            case REG_COMPARE_GT:
-                return "FP64CMPGT";
-            case REG_COMPARE_GTE:
-                return "FP64CMPGTE";
-            default:
-                return "FP64CMPUKN";
-            }
-        } break;
-        case VanadisRegisterFormat::VANADIS_FORMAT_FP32:
-        {
-            switch ( compare_type ) {
-            case REG_COMPARE_EQ:
-                return "FP32CMPEQ";
-            case REG_COMPARE_NEQ:
-                return "FP32CMPNEQ";
-            case REG_COMPARE_LT:
-                return "FP32CMPLT";
-            case REG_COMPARE_LTE:
-                return "FP32CMPLTE";
-            case REG_COMPARE_GT:
-                return "FP32CMPGT";
-            case REG_COMPARE_GTE:
-                return "FP32CMPGTE";
-            default:
-                return "FP32CMPUKN";
-            }
-        } break;
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
-            return "FPINT64ACMP";
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
-            return "FPINT32CMP";
-        default:
-            return "FPCNVUNK";
-        }
-*/
-		return "FPCMP-MO32";
+        /*
+                switch ( register_format ) {
+                case VanadisRegisterFormat::VANADIS_FORMAT_FP64:
+                {
+                    switch ( compare_type ) {
+                    case REG_COMPARE_EQ:
+                        return "FP64CMPEQ";
+                    case REG_COMPARE_NEQ:
+                        return "FP64CMPNEQ";
+                    case REG_COMPARE_LT:
+                        return "FP64CMPLT";
+                    case REG_COMPARE_LTE:
+                        return "FP64CMPLTE";
+                    case REG_COMPARE_GT:
+                        return "FP64CMPGT";
+                    case REG_COMPARE_GTE:
+                        return "FP64CMPGTE";
+                    default:
+                        return "FP64CMPUKN";
+                    }
+                } break;
+                case VanadisRegisterFormat::VANADIS_FORMAT_FP32:
+                {
+                    switch ( compare_type ) {
+                    case REG_COMPARE_EQ:
+                        return "FP32CMPEQ";
+                    case REG_COMPARE_NEQ:
+                        return "FP32CMPNEQ";
+                    case REG_COMPARE_LT:
+                        return "FP32CMPLT";
+                    case REG_COMPARE_LTE:
+                        return "FP32CMPLTE";
+                    case REG_COMPARE_GT:
+                        return "FP32CMPGT";
+                    case REG_COMPARE_GTE:
+                        return "FP32CMPGTE";
+                    default:
+                        return "FP32CMPUKN";
+                    }
+                } break;
+                case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
+                    return "FPINT64ACMP";
+                case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
+                    return "FPINT32CMP";
+                default:
+                    return "FPCNVUNK";
+                }
+        */
+        return "FPCMP-MO32";
     }
 
     void printToBuffer(char* buffer, size_t buffer_size) override
     {
-			if(VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) {
-        snprintf(
-            buffer, buffer_size,
-            "%s (op: %s, %s) isa-out: %" PRIu16 " isa-in: (%" PRIu16 ", %" PRIu16 "), (%" PRIu16 ", %" PRIu16 ") / phys-out: %" PRIu16
-            " phys-in: %" PRIu16 ", %" PRIu16 "\n",
-            getInstCode(), convertCompareTypeToString(compare_type), "", /*registerFormatToString(register_format),*/ isa_fp_regs_out[0],
-            isa_fp_regs_in[0], isa_fp_regs_in[1], isa_fp_regs_in[2], isa_fp_regs_in[3], phys_fp_regs_out[0], phys_fp_regs_in[0], phys_fp_regs_in[1]);
-			} else {
-        snprintf(
-            buffer, buffer_size,
-            "%s (op: %s, %s) isa-out: %" PRIu16 " isa-in: %" PRIu16 ", %" PRIu16 " / phys-out: %" PRIu16
-            " phys-in: %" PRIu16 ", %" PRIu16 "\n",
-            getInstCode(), convertCompareTypeToString(compare_type), "", /*registerFormatToString(register_format),*/ isa_fp_regs_out[0],
-            isa_fp_regs_in[0], isa_fp_regs_in[1], phys_fp_regs_out[0], phys_fp_regs_in[0], phys_fp_regs_in[1]);
-			}
+        if ( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) {
+            snprintf(
+                buffer, buffer_size,
+                "%s (op: %s, %s) isa-out: %" PRIu16 " isa-in: (%" PRIu16 ", %" PRIu16 "), (%" PRIu16 ", %" PRIu16
+                ") / phys-out: %" PRIu16 " phys-in: %" PRIu16 ", %" PRIu16 "\n",
+                getInstCode(), convertCompareTypeToString(compare_type), "",
+                /*registerFormatToString(register_format),*/ isa_fp_regs_out[0], isa_fp_regs_in[0], isa_fp_regs_in[1],
+                isa_fp_regs_in[2], isa_fp_regs_in[3], phys_fp_regs_out[0], phys_fp_regs_in[0], phys_fp_regs_in[1]);
+        }
+        else {
+            snprintf(
+                buffer, buffer_size,
+                "%s (op: %s, %s) isa-out: %" PRIu16 " isa-in: %" PRIu16 ", %" PRIu16 " / phys-out: %" PRIu16
+                " phys-in: %" PRIu16 ", %" PRIu16 "\n",
+                getInstCode(), convertCompareTypeToString(compare_type), "",
+                /*registerFormatToString(register_format),*/ isa_fp_regs_out[0], isa_fp_regs_in[0], isa_fp_regs_in[1],
+                phys_fp_regs_out[0], phys_fp_regs_in[0], phys_fp_regs_in[1]);
+        }
     }
 
     bool performCompare(SST::Output* output, VanadisRegisterFile* regFile)
     {
-        const fp_format left_value  = ((8 == sizeof(fp_format)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))
-                                  ? combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1])
-                                  : regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
-        const fp_format right_value = ((8 == sizeof(fp_format)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))
-                                  ? combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3])
-                                  : regFile->getFPReg<fp_format>(phys_fp_regs_in[1]);
+        const fp_format left_value =
+            ((8 == sizeof(fp_format)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))
+                ? combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1])
+                : regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
+        const fp_format right_value =
+            ((8 == sizeof(fp_format)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))
+                ? combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3])
+                : regFile->getFPReg<fp_format>(phys_fp_regs_in[1]);
 
-		  if(output->getVerboseLevel() >= 16) {
-				output->verbose(CALL_INFO, 16, 0, "---> fp-values: left: %f / right: %f\n", left_value, right_value);
-		  }
+        if ( output->getVerboseLevel() >= 16 ) {
+            output->verbose(CALL_INFO, 16, 0, "---> fp-values: left: %f / right: %f\n", left_value, right_value);
+        }
 
         switch ( compare_type ) {
         case REG_COMPARE_EQ:
@@ -177,19 +179,23 @@ public:
         writeFPRegs(fp_register_buffer, 256);
 
         output->verbose(
-            CALL_INFO, 16, 0, "Execute: 0x%llx %s (%s, %s) int: %s / fp: %s\n", getInstructionAddress(),
-            getInstCode(), convertCompareTypeToString(compare_type), (sizeof(fp_format)==8) ? "64b" : "32b" , int_register_buffer, fp_register_buffer);
+            CALL_INFO, 16, 0, "Execute: 0x%llx %s (%s, %s) int: %s / fp: %s\n", getInstructionAddress(), getInstCode(),
+            convertCompareTypeToString(compare_type), (sizeof(fp_format) == 8) ? "64b" : "32b", int_register_buffer,
+            fp_register_buffer);
 
         delete[] int_register_buffer;
         delete[] fp_register_buffer;
 #endif
         const bool compare_result = performCompare(output, regFile);
 
-        const uint16_t cond_reg_in  = ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))
-				? phys_fp_regs_in[4] : phys_fp_regs_in[2];
+        const uint16_t cond_reg_in =
+            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))
+                ? phys_fp_regs_in[4]
+                : phys_fp_regs_in[2];
         const uint16_t cond_reg_out = phys_fp_regs_out[0];
 
-		  output->verbose(CALL_INFO, 16, 0, "---> condition register in: %" PRIu16 " out: %" PRIu16 "\n", cond_reg_in, cond_reg_out);
+        output->verbose(
+            CALL_INFO, 16, 0, "---> condition register in: %" PRIu16 " out: %" PRIu16 "\n", cond_reg_in, cond_reg_out);
 
         uint32_t cond_val = (regFile->getFPReg<uint32_t>(cond_reg_in) & VANADIS_MIPS_FP_COMPARE_BIT_INVERSE);
 
