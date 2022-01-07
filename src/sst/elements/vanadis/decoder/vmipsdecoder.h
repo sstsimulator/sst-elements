@@ -1867,14 +1867,12 @@ protected:
                     {
                         if ( (0 == fd) && (MIPS_SPEC_COP_MASK_MTC == fr) ) {
                             bundle->addInstruction(
-                                new VanadisGPR2FPInstruction<int32_t, int32_t>(
-                                    ins_addr, hw_thr, options, fs, rt));
+                                new VanadisGPR2FPInstruction<int32_t, int32_t>(ins_addr, hw_thr, options, fs, rt));
                             insertDecodeFault = false;
                         }
                         else if ( (0 == fd) && (MIPS_SPEC_COP_MASK_MFC == fr) ) {
                             bundle->addInstruction(
-                                new VanadisFP2GPRInstruction<int32_t, int32_t>(
-                                    ins_addr, hw_thr, options, rt, fs));
+                                new VanadisFP2GPRInstruction<int32_t, int32_t>(ins_addr, hw_thr, options, rt, fs));
                             insertDecodeFault = false;
                         }
                         else if ( (0 == fd) && (MIPS_SPEC_COP_MASK_CF == fr) ) {
@@ -1895,9 +1893,8 @@ protected:
                             }
 
                             if ( fp_matched ) {
-                                bundle->addInstruction(
-                                    new VanadisFP2GPRInstruction<int32_t, int32_t>(
-                                        ins_addr, hw_thr, options, rt, fp_ctrl_reg));
+                                bundle->addInstruction(new VanadisFP2GPRInstruction<int32_t, int32_t>(
+                                    ins_addr, hw_thr, options, rt, fp_ctrl_reg));
                                 insertDecodeFault = false;
                             }
                         }
@@ -1919,9 +1916,8 @@ protected:
                             }
 
                             if ( fp_matched ) {
-                                bundle->addInstruction(
-                                    new VanadisGPR2FPInstruction<int32_t, int32_t>(
-                                        ins_addr, hw_thr, options, fp_ctrl_reg, rt));
+                                bundle->addInstruction(new VanadisGPR2FPInstruction<int32_t, int32_t>(
+                                    ins_addr, hw_thr, options, fp_ctrl_reg, rt));
                                 insertDecodeFault = false;
                             }
                         }
@@ -1929,26 +1925,22 @@ protected:
                             switch ( fr ) {
                             case 16:
                                 bundle->addInstruction(
-                                    new VanadisFPAddInstruction<float>(
-                                        ins_addr, hw_thr, options, fd, fs, ft));
+                                    new VanadisFPAddInstruction<float>(ins_addr, hw_thr, options, fd, fs, ft));
                                 insertDecodeFault = false;
                                 break;
                             case 17:
                                 bundle->addInstruction(
-                                    new VanadisFPAddInstruction<double>(
-                                        ins_addr, hw_thr, options, fd, fs, ft));
+                                    new VanadisFPAddInstruction<double>(ins_addr, hw_thr, options, fd, fs, ft));
                                 insertDecodeFault = false;
                                 break;
                             case 20:
                                 bundle->addInstruction(
-                                    new VanadisFPAddInstruction<int32_t>(
-                                        ins_addr, hw_thr, options, fd, fs, ft));
+                                    new VanadisFPAddInstruction<int32_t>(ins_addr, hw_thr, options, fd, fs, ft));
                                 insertDecodeFault = false;
                                 break;
                             case 21:
                                 bundle->addInstruction(
-                                    new VanadisFPAddInstruction<int64_t>(
-                                        ins_addr, hw_thr, options, fd, fs, ft));
+                                    new VanadisFPAddInstruction<int64_t>(ins_addr, hw_thr, options, fd, fs, ft));
                                 insertDecodeFault = false;
                                 break;
                             default:
@@ -1985,26 +1977,22 @@ protected:
                         switch ( fr ) {
                         case 16:
                             bundle->addInstruction(
-                                new VanadisFPMultiplyInstruction<float>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPMultiplyInstruction<float>(ins_addr, hw_thr, options, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 17:
                             bundle->addInstruction(
-                                new VanadisFPMultiplyInstruction<double>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPMultiplyInstruction<double>(ins_addr, hw_thr, options, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 20:
                             bundle->addInstruction(
-                                new VanadisFPMultiplyInstruction<int32_t>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPMultiplyInstruction<int32_t>(ins_addr, hw_thr, options, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 21:
                             bundle->addInstruction(
-                                new VanadisFPMultiplyInstruction<int64_t>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPMultiplyInstruction<int64_t>(ins_addr, hw_thr, options, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         default:
@@ -2054,26 +2042,22 @@ protected:
                         switch ( fr ) {
                         case 16:
                             bundle->addInstruction(
-                                new VanadisFPSubInstruction<float>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPSubInstruction<float>(ins_addr, hw_thr, options, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 17:
                             bundle->addInstruction(
-                                new VanadisFPSubInstruction<double>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPSubInstruction<double>(ins_addr, hw_thr, options, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 20:
                             bundle->addInstruction(
-                                new VanadisFPSubInstruction<int32_t>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPSubInstruction<int32_t>(ins_addr, hw_thr, options, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 21:
                             bundle->addInstruction(
-                                new VanadisFPSubInstruction<int64_t>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPSubInstruction<int64_t>(ins_addr, hw_thr, options, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         default:
@@ -2192,8 +2176,7 @@ protected:
                             case 0x2:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_eq);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-																		REG_COMPARE_EQ, float>(
+                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_EQ, float>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
@@ -2201,8 +2184,7 @@ protected:
                             case 0xC:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lt);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-																		REG_COMPARE_LT, float>(
+                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_LT, float>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
@@ -2210,9 +2192,9 @@ protected:
                             case 0xE:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lte);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-																		REG_COMPARE_LTE, float>(
-                                    ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_LTE, float>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
                                 break;
@@ -2226,27 +2208,27 @@ protected:
                             case 0x2:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_eq);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-																		REG_COMPARE_EQ, double>(
-                                    ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_EQ, double>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
                                 break;
                             case 0xC:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lt);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-																		REG_COMPARE_LT, double>(
-                                    ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_LT, double>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
                                 break;
                             case 0xE:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lte);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-																		REG_COMPARE_LTE, double>(
-                                    ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_LTE, double>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
                                 break;
@@ -2260,27 +2242,27 @@ protected:
                             case 0x2:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_eq);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-																		REG_COMPARE_EQ, int32_t>(
-                                    ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_EQ, int32_t>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
                                 break;
                             case 0xC:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lt);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-																		REG_COMPARE_LT, int32_t>(
-                                    ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_LT, int32_t>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
                                 break;
                             case 0xE:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lte);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-																		REG_COMPARE_LTE, int32_t>(
-                                    ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_LTE, int32_t>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
                                 break;
@@ -2294,27 +2276,27 @@ protected:
                             case 0x2:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_eq);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-																		REG_COMPARE_EQ, int64_t>(
-                                    ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_EQ, int64_t>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
                                 break;
                             case 0xC:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lt);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-																		REG_COMPARE_EQ, int64_t>(
-                                    ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_EQ, int64_t>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
                                 break;
                             case 0xE:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lte);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-																		REG_COMPARE_LTE, int64_t>(
-                                    ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_LTE, int64_t>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
                                 break;
