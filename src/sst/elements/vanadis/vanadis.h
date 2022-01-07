@@ -38,6 +38,7 @@
 #include "lsq/vlsqseq.h"
 #include "lsq/vlsqstd.h"
 #include "vfuncunit.h"
+#include "vfpflags.h"
 
 namespace SST {
 namespace Vanadis {
@@ -287,6 +288,8 @@ private:
     uint32_t ins_decoded_this_cycle;
 
     uint64_t pause_on_retire_address;
+
+	 VanadisFloatingPointFlags* fpflags;
 };
 
 } // namespace Vanadis

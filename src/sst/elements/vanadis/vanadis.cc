@@ -32,6 +32,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     instPrintBuffer = new char[1024];
     pipelineTrace = nullptr;
+	 fpflags = new VanadisFloatingPointFlags();
 
     max_cycle = params.find<uint64_t>("max_cycle", std::numeric_limits<uint64_t>::max());
 
@@ -469,6 +470,8 @@ VANADIS_COMPONENT::~VANADIS_COMPONENT() {
     if (pipelineTrace != nullptr) {
         fclose(pipelineTrace);
     }
+
+	 delete fpflags;
 }
 
 void
