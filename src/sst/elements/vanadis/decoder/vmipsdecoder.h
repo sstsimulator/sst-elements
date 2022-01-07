@@ -2193,7 +2193,7 @@ protected:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_eq);
 
                                 bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_EQ, VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
+																		REG_COMPARE_EQ, float>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
@@ -2202,7 +2202,7 @@ protected:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lt);
 
                                 bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
+																		REG_COMPARE_LT, float>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
@@ -2211,7 +2211,7 @@ protected:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lte);
 
                                 bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_LTE, VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
+																		REG_COMPARE_LTE, float>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
@@ -2227,7 +2227,7 @@ protected:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_eq);
 
                                 bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_EQ, VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
+																		REG_COMPARE_EQ, double>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
@@ -2236,7 +2236,7 @@ protected:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lt);
 
                                 bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
+																		REG_COMPARE_LT, double>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
@@ -2245,7 +2245,7 @@ protected:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lte);
 
                                 bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_LTE, VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
+																		REG_COMPARE_LTE, double>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
@@ -2261,7 +2261,7 @@ protected:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_eq);
 
                                 bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_EQ, VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+																		REG_COMPARE_EQ, int32_t>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
@@ -2270,7 +2270,7 @@ protected:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lt);
 
                                 bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+																		REG_COMPARE_LT, int32_t>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
@@ -2279,7 +2279,7 @@ protected:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lte);
 
                                 bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_LTE, VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+																		REG_COMPARE_LTE, int32_t>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
@@ -2295,7 +2295,7 @@ protected:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_eq);
 
                                 bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_EQ, VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+																		REG_COMPARE_EQ, int64_t>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
@@ -2304,7 +2304,7 @@ protected:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lt);
 
                                 bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+																		REG_COMPARE_EQ, int64_t>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
@@ -2313,7 +2313,7 @@ protected:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lte);
 
                                 bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_LTE, VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+																		REG_COMPARE_LTE, int64_t>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 

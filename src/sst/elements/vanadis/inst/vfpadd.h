@@ -33,12 +33,12 @@ public:
         const uint16_t src_1, const uint16_t src_2) :
         VanadisFloatingPointInstruction(
             addr, hw_thr, isa_opts, 0, 0, 0, 0,
-				(sizeof(fp_format) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 4 : 2,
-				(sizeof(fp_format) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1,
-				(sizeof(fp_format) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 4 : 2,
-            (sizeof(fp_format) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1)
+				((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 4 : 2,
+				((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1,
+				((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 4 : 2,
+            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1)
     {
-        if ( sizeof(fp_format) &&
+        if ( (sizeof(fp_format) == 8) &&
              (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode()) ) {
             isa_fp_regs_in[0]  = src_1;
             isa_fp_regs_in[1]  = src_1 + 1;

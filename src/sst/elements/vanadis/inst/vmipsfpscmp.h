@@ -27,7 +27,7 @@
 namespace SST {
 namespace Vanadis {
 
-template <VanadisRegisterCompareType compare_type, VanadisRegisterFormat register_format>
+template <VanadisRegisterCompareType compare_type, typename fp_format>
 class VanadisMIPSFPSetRegCompareInstruction : public VanadisInstruction
 {
 public:
@@ -36,19 +36,13 @@ public:
         const uint16_t src_1, const uint16_t src_2) :
         VanadisInstruction(
             addr, hw_thr, isa_opts, 0, 0, 0, 0,
-            ((register_format == VanadisRegisterFormat::VANADIS_FORMAT_FP64) &&
-             (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode()))
-                ? 5
-                : 3,
+				((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 5 : 3,
             1,
-            ((register_format == VanadisRegisterFormat::VANADIS_FORMAT_FP64) &&
-             (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode()))
-                ? 5
-                : 3,
+				((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 5 : 3,
             1)
     {
 
-        if ( (register_format == VanadisRegisterFormat::VANADIS_FORMAT_FP64) &&
+		  if( (sizeof(fp_format) == 8) &&
              (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode()) ) {
             isa_fp_regs_in[0]  = src_1;
             isa_fp_regs_in[1]  = src_1 + 1;
@@ -71,6 +65,7 @@ public:
 
     virtual const char* getInstCode() const override
     {
+/*
         switch ( register_format ) {
         case VanadisRegisterFormat::VANADIS_FORMAT_FP64:
         {
@@ -117,6 +112,8 @@ public:
         default:
             return "FPCNVUNK";
         }
+*/
+		return "FPCMP-MO32";
     }
 
     void printToBuffer(char* buffer, size_t buffer_size) override
@@ -124,29 +121,28 @@ public:
 			if(VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) {
         snprintf(
             buffer, buffer_size,
-            "FPCMPST-MO32 (op: %s, %s) isa-out: %" PRIu16 " isa-in: (%" PRIu16 ", %" PRIu16 "), (%" PRIu16 ", %" PRIu16 ") / phys-out: %" PRIu16
+            "%s (op: %s, %s) isa-out: %" PRIu16 " isa-in: (%" PRIu16 ", %" PRIu16 "), (%" PRIu16 ", %" PRIu16 ") / phys-out: %" PRIu16
             " phys-in: %" PRIu16 ", %" PRIu16 "\n",
-            convertCompareTypeToString(compare_type), registerFormatToString(register_format), isa_fp_regs_out[0],
+            getInstCode(), convertCompareTypeToString(compare_type), "", /*registerFormatToString(register_format),*/ isa_fp_regs_out[0],
             isa_fp_regs_in[0], isa_fp_regs_in[1], isa_fp_regs_in[2], isa_fp_regs_in[3], phys_fp_regs_out[0], phys_fp_regs_in[0], phys_fp_regs_in[1]);
 			} else {
         snprintf(
             buffer, buffer_size,
-            "FPCMPST-MO32 (op: %s, %s) isa-out: %" PRIu16 " isa-in: %" PRIu16 ", %" PRIu16 " / phys-out: %" PRIu16
+            "%s (op: %s, %s) isa-out: %" PRIu16 " isa-in: %" PRIu16 ", %" PRIu16 " / phys-out: %" PRIu16
             " phys-in: %" PRIu16 ", %" PRIu16 "\n",
-            convertCompareTypeToString(compare_type), registerFormatToString(register_format), isa_fp_regs_out[0],
+            getInstCode(), convertCompareTypeToString(compare_type), "", /*registerFormatToString(register_format),*/ isa_fp_regs_out[0],
             isa_fp_regs_in[0], isa_fp_regs_in[1], phys_fp_regs_out[0], phys_fp_regs_in[0], phys_fp_regs_in[1]);
 			}
     }
 
-    template <typename T>
     bool performCompare(SST::Output* output, VanadisRegisterFile* regFile)
     {
-        const T left_value  = ((8 == sizeof(T)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))
-                                  ? combineFromRegisters<T>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1])
-                                  : regFile->getFPReg<T>(phys_fp_regs_in[0]);
-        const T right_value = ((8 == sizeof(T)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))
-                                  ? combineFromRegisters<T>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3])
-                                  : regFile->getFPReg<T>(phys_fp_regs_in[1]);
+        const fp_format left_value  = ((8 == sizeof(fp_format)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))
+                                  ? combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1])
+                                  : regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
+        const fp_format right_value = ((8 == sizeof(fp_format)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))
+                                  ? combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3])
+                                  : regFile->getFPReg<fp_format>(phys_fp_regs_in[1]);
 
 		  if(output->getVerboseLevel() >= 16) {
 				output->verbose(CALL_INFO, 16, 0, "---> fp-values: left: %f / right: %f\n", left_value, right_value);
@@ -181,36 +177,19 @@ public:
         writeFPRegs(fp_register_buffer, 256);
 
         output->verbose(
-            CALL_INFO, 16, 0, "Execute: (addr=0x%llx) %s (%s) int: %s / fp: %s\n", getInstructionAddress(),
-            getInstCode(), convertCompareTypeToString(compare_type), int_register_buffer, fp_register_buffer);
+            CALL_INFO, 16, 0, "Execute: 0x%llx %s (%s, %s) int: %s / fp: %s\n", getInstructionAddress(),
+            getInstCode(), convertCompareTypeToString(compare_type), (sizeof(fp_format)==8) ? "64b" : "32b" , int_register_buffer, fp_register_buffer);
 
         delete[] int_register_buffer;
         delete[] fp_register_buffer;
 #endif
-        bool compare_result = false;
-        bool byte8_type     = false;
+        const bool compare_result = performCompare(output, regFile);
 
-        switch ( register_format ) {
-        case VanadisRegisterFormat::VANADIS_FORMAT_FP32:
-            compare_result = performCompare<float>(output, regFile);
-            break;
-        case VanadisRegisterFormat::VANADIS_FORMAT_FP64:
-            compare_result = performCompare<double>(output, regFile);
-            byte8_type     = true;
-            break;
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
-            compare_result = performCompare<int32_t>(output, regFile);
-            break;
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
-            compare_result = performCompare<int64_t>(output, regFile);
-            byte8_type     = true;
-            break;
-        default:
-            output->fatal(CALL_INFO, -1, "Unknown data format type.\n");
-        }
-
-        const uint16_t cond_reg_in  = byte8_type ? phys_fp_regs_in[4] : phys_fp_regs_in[2];
+        const uint16_t cond_reg_in  = ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))
+				? phys_fp_regs_in[4] : phys_fp_regs_in[2];
         const uint16_t cond_reg_out = phys_fp_regs_out[0];
+
+		  output->verbose(CALL_INFO, 16, 0, "---> condition register in: %" PRIu16 " out: %" PRIu16 "\n", cond_reg_in, cond_reg_out);
 
         uint32_t cond_val = (regFile->getFPReg<uint32_t>(cond_reg_in) & VANADIS_MIPS_FP_COMPARE_BIT_INVERSE);
 
