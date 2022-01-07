@@ -12,6 +12,7 @@ comp_LTLIBRARIES = libvanadis.la
 VANADIS_SRC_FILES = \
 os/vnodeos.cc \
 vanadis.h \
+vfpflags.h \
 vfuncunit.h \
 vinsbundle.h \
 vinsloader.h \
