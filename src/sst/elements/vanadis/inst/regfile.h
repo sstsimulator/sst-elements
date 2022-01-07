@@ -16,11 +16,13 @@
 #ifndef _H_VANADIS_REG_FILE
 #define _H_VANADIS_REG_FILE
 
+
 #include "decoder/visaopts.h"
 #include "inst/fpregmode.h"
 
 #include <cstring>
 #include <sst/core/output.h>
+#include <sst/core/sst_types.h>
 
 namespace SST {
 namespace Vanadis {

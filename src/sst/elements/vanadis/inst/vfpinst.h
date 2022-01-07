@@ -16,9 +16,9 @@
 #ifndef _H_VANADIS_FP_INSTRUCTION
 #define _H_VANADIS_FP_INSTRUCTION
 
-#include "inst/vinst.h"
 #include "decoder/visaopts.h"
 #include "inst/regfile.h"
+#include "inst/vinst.h"
 #include "inst/vinsttype.h"
 #include "inst/vregfmt.h"
 
@@ -36,11 +36,10 @@ public:
         const uint16_t c_phys_int_reg_in, const uint16_t c_phys_int_reg_out, const uint16_t c_isa_int_reg_in,
         const uint16_t c_isa_int_reg_out, const uint16_t c_phys_fp_reg_in, const uint16_t c_phys_fp_reg_out,
         const uint16_t c_isa_fp_reg_in, const uint16_t c_isa_fp_reg_out) :
-			VanadisInstruction(
+        VanadisInstruction(
             address, hw_thr, isa_opts, c_phys_int_reg_in, c_phys_int_reg_out, c_isa_int_reg_in, c_isa_int_reg_out,
             c_phys_fp_reg_in, c_phys_fp_reg_out, c_isa_fp_reg_in, c_isa_fp_reg_out)
     {}
-
 };
 
 } // namespace Vanadis

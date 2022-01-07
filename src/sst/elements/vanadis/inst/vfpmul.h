@@ -23,7 +23,7 @@
 namespace SST {
 namespace Vanadis {
 
-template<typename fp_format>
+template <typename fp_format>
 class VanadisFPMultiplyInstruction : public VanadisInstruction
 {
 public:
@@ -32,13 +32,13 @@ public:
         const uint16_t src_1, const uint16_t src_2) :
         VanadisInstruction(
             addr, hw_thr, isa_opts, 0, 0, 0, 0,
-				((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 4 : 2,
-				((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1,
-				((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 4 : 2,
-				((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1)
+            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 4 : 2,
+            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1,
+            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 4 : 2,
+            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1)
     {
 
-		  if( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode()) ) {
+        if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode()) ) {
             isa_fp_regs_in[0]  = src_1;
             isa_fp_regs_in[1]  = src_1 + 1;
             isa_fp_regs_in[2]  = src_2;
@@ -58,21 +58,25 @@ public:
 
     const char* getInstCode() const override
     {
-			if(std::is_same<fp_format, double>::value) {
-				return "FP64MUL";
-			} else if(std::is_same<fp_format, float>::value) {
-				return "FP32MUL";
-			} else if(std::is_same<fp_format, int32_t>::value) {
-				return "FPI32MUL";
-			} else if(std::is_same<fp_format, uint32_t>::value) {
-				return "FPU32MUL";
-			} else if(std::is_same<fp_format, int64_t>::value) {
-				return "FPI64MUL";
-			} else if(std::is_same<fp_format, uint64_t>::value) {
-				return "FPU64MUL";
-			} else {
-				return "FPMULUNK";
-			}
+        if ( std::is_same<fp_format, double>::value ) { return "FP64MUL"; }
+        else if ( std::is_same<fp_format, float>::value ) {
+            return "FP32MUL";
+        }
+        else if ( std::is_same<fp_format, int32_t>::value ) {
+            return "FPI32MUL";
+        }
+        else if ( std::is_same<fp_format, uint32_t>::value ) {
+            return "FPU32MUL";
+        }
+        else if ( std::is_same<fp_format, int64_t>::value ) {
+            return "FPI64MUL";
+        }
+        else if ( std::is_same<fp_format, uint64_t>::value ) {
+            return "FPU64MUL";
+        }
+        else {
+            return "FPMULUNK";
+        }
     }
 
     void printToBuffer(char* buffer, size_t buffer_size) override
@@ -80,8 +84,8 @@ public:
         snprintf(
             buffer, buffer_size,
             "%6s  %5" PRIu16 " <- %5" PRIu16 " * %5" PRIu16 " (phys: %5" PRIu16 " <- %5" PRIu16 " * %5" PRIu16 ")",
-            getInstCode(), isa_fp_regs_out[0], isa_fp_regs_in[0], isa_fp_regs_in[1], phys_fp_regs_out[0], phys_fp_regs_in[0],
-            phys_fp_regs_in[1]);
+            getInstCode(), isa_fp_regs_out[0], isa_fp_regs_in[0], isa_fp_regs_in[1], phys_fp_regs_out[0],
+            phys_fp_regs_in[0], phys_fp_regs_in[1]);
     }
 
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
@@ -101,21 +105,22 @@ public:
         delete[] fp_register_buffer;
 #endif
 
-		  if((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
-                const fp_format src_1 = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
-                const fp_format src_2 = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3]);
+        if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
+            const fp_format src_1 = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
+            const fp_format src_2 = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3]);
 
-                output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, (src_1 * src_2));
+            output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, (src_1 * src_2));
 
-                fractureToRegisters<fp_format>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], src_1 * src_2);
-		  } else {
+            fractureToRegisters<fp_format>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], src_1 * src_2);
+        }
+        else {
             const fp_format src_1 = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
             const fp_format src_2 = regFile->getFPReg<fp_format>(phys_fp_regs_in[1]);
 
             output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, (src_1 * src_2));
 
             regFile->setFPReg<fp_format>(phys_fp_regs_out[0], (src_1) * (src_2));
-		  }
+        }
 
         markExecuted();
     }
