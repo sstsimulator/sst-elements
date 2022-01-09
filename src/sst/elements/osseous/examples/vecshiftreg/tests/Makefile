@@ -20,5 +20,5 @@ libtb_header.a: tb_header.o
 all: libtb_header.so libtb_header.a testbench 
 
 clean:
-	rm testbench testbench.o libtb_header.so tb_header.o
+	rm testbench testbench.o libtb_header.so tb_header.o libtb_header.a
 

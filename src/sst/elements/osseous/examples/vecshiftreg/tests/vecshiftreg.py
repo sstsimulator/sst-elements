@@ -5,10 +5,10 @@ clock = "1GHz"
 sst.setProgramOption("timebase", "1ps")
 
 sst_workdir = os.getenv( "SST_WORKDIR" )
-app = sst_workdir + "src/sst/elements/osseous/examples/vecshiftreg/tests/testbench" 
+app = sst_workdir + "/src/sst/elements/osseous/examples/vecshiftreg/tests/testbench" 
 
 if not os.path.exists(app):
-    printf("OS PATH DOESN'T EXIST")
+    print("OS PATH DOESN'T EXIST")
 ariel = sst.Component("A0", "ariel.ariel")
 ariel.addParams({
         "verbose" : "1",

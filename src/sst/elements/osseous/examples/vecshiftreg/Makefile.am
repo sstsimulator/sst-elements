@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 #
 #
-INCLUDE = -I$(SST_WORKDIR)/src/sst/elements/osseous/eras_datatypes/ -I$(SST_WORKDIR)/src/sst/elements/osseous/examples/vecshiftreg/tests/ -I$(SST_WORKDIR)/src/sst/elements/ariel/
+INCLUDE = -I$(SST_WORKDIR)/src/sst/elements/osseous/eras_datatypes/ -I$(SST_WORKDIR)/src/sst/elements/ariel/
 FLAGS = -fpermissive -std=c++11
 
 AM_CPPFLAGS = \

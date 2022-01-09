@@ -18,7 +18,6 @@
 
 #include "uint.h"
 #include "VecShiftRegister_O1.h"
-#include "tb_header.h"
 #include <string>
 #include <sst/core/event.h>
 
