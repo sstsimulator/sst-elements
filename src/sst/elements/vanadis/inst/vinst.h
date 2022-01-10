@@ -347,6 +347,9 @@ public:
 
     virtual bool performFPRegisterRecovery() const { return true; }
 
+	 virtual bool updatesFPFlags() const { return false; }
+    virtual void performFPFlagsUpdate() const {}
+
 protected:
     const uint64_t ins_address;
     const uint32_t hw_thread;

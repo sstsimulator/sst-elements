@@ -297,7 +297,7 @@ private:
 
     uint64_t pause_on_retire_address;
 
-    VanadisFloatingPointFlags* fpflags;
+    std::vector<VanadisFloatingPointFlags*> fp_flags;
 };
 
 } // namespace Vanadis

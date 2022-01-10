@@ -1867,12 +1867,12 @@ protected:
                     {
                         if ( (0 == fd) && (MIPS_SPEC_COP_MASK_MTC == fr) ) {
                             bundle->addInstruction(
-                                new VanadisGPR2FPInstruction<int32_t, int32_t>(ins_addr, hw_thr, options, fs, rt));
+                                new VanadisGPR2FPInstruction<int32_t, int32_t>(ins_addr, hw_thr, options, fpflags, fs, rt));
                             insertDecodeFault = false;
                         }
                         else if ( (0 == fd) && (MIPS_SPEC_COP_MASK_MFC == fr) ) {
                             bundle->addInstruction(
-                                new VanadisFP2GPRInstruction<int32_t, int32_t>(ins_addr, hw_thr, options, rt, fs));
+                                new VanadisFP2GPRInstruction<int32_t, int32_t>(ins_addr, hw_thr, options, fpflags, rt, fs));
                             insertDecodeFault = false;
                         }
                         else if ( (0 == fd) && (MIPS_SPEC_COP_MASK_CF == fr) ) {
@@ -1894,7 +1894,7 @@ protected:
 
                             if ( fp_matched ) {
                                 bundle->addInstruction(new VanadisFP2GPRInstruction<int32_t, int32_t>(
-                                    ins_addr, hw_thr, options, rt, fp_ctrl_reg));
+                                    ins_addr, hw_thr, options, fpflags, rt, fp_ctrl_reg));
                                 insertDecodeFault = false;
                             }
                         }
@@ -1917,7 +1917,7 @@ protected:
 
                             if ( fp_matched ) {
                                 bundle->addInstruction(new VanadisGPR2FPInstruction<int32_t, int32_t>(
-                                    ins_addr, hw_thr, options, fp_ctrl_reg, rt));
+                                    ins_addr, hw_thr, options, fpflags, fp_ctrl_reg, rt));
                                 insertDecodeFault = false;
                             }
                         }
@@ -1925,22 +1925,22 @@ protected:
                             switch ( fr ) {
                             case 16:
                                 bundle->addInstruction(
-                                    new VanadisFPAddInstruction<float>(ins_addr, hw_thr, options, fd, fs, ft));
+                                    new VanadisFPAddInstruction<float>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                                 insertDecodeFault = false;
                                 break;
                             case 17:
                                 bundle->addInstruction(
-                                    new VanadisFPAddInstruction<double>(ins_addr, hw_thr, options, fd, fs, ft));
+                                    new VanadisFPAddInstruction<double>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                                 insertDecodeFault = false;
                                 break;
                             case 20:
                                 bundle->addInstruction(
-                                    new VanadisFPAddInstruction<int32_t>(ins_addr, hw_thr, options, fd, fs, ft));
+                                    new VanadisFPAddInstruction<int32_t>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                                 insertDecodeFault = false;
                                 break;
                             case 21:
                                 bundle->addInstruction(
-                                    new VanadisFPAddInstruction<int64_t>(ins_addr, hw_thr, options, fd, fs, ft));
+                                    new VanadisFPAddInstruction<int64_t>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                                 insertDecodeFault = false;
                                 break;
                             default:
@@ -1957,14 +1957,14 @@ protected:
                         {
                             bundle->addInstruction(
                                 new VanadisFP2FPInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
-                                    ins_addr, hw_thr, options, fd, fs));
+                                    ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                         } break;
                         case 17:
                         {
                             bundle->addInstruction(
                                 new VanadisFP2FPInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
-                                    ins_addr, hw_thr, options, fd, fs));
+                                    ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                         } break;
                         }
@@ -1977,22 +1977,22 @@ protected:
                         switch ( fr ) {
                         case 16:
                             bundle->addInstruction(
-                                new VanadisFPMultiplyInstruction<float>(ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPMultiplyInstruction<float>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 17:
                             bundle->addInstruction(
-                                new VanadisFPMultiplyInstruction<double>(ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPMultiplyInstruction<double>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 20:
                             bundle->addInstruction(
-                                new VanadisFPMultiplyInstruction<int32_t>(ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPMultiplyInstruction<int32_t>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 21:
                             bundle->addInstruction(
-                                new VanadisFPMultiplyInstruction<int64_t>(ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPMultiplyInstruction<int64_t>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         default:
@@ -2007,26 +2007,26 @@ protected:
                         switch ( fr ) {
                         case 16:
                             bundle->addInstruction(
-                                new VanadisFPDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPDivideInstruction<float>(
+                                    ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 17:
                             bundle->addInstruction(
-                                new VanadisFPDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPDivideInstruction<double>(
+                                    ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 20:
                             bundle->addInstruction(
-                                new VanadisFPDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPDivideInstruction<int32_t>(
+                                    ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 21:
                             bundle->addInstruction(
-                                new VanadisFPDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPDivideInstruction<int64_t>(
+                                    ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
 
                             break;
@@ -2042,22 +2042,22 @@ protected:
                         switch ( fr ) {
                         case 16:
                             bundle->addInstruction(
-                                new VanadisFPSubInstruction<float>(ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPSubInstruction<float>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 17:
                             bundle->addInstruction(
-                                new VanadisFPSubInstruction<double>(ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPSubInstruction<double>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 20:
                             bundle->addInstruction(
-                                new VanadisFPSubInstruction<int32_t>(ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPSubInstruction<int32_t>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 21:
                             bundle->addInstruction(
-                                new VanadisFPSubInstruction<int64_t>(ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPSubInstruction<int64_t>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         default:
@@ -2072,22 +2072,22 @@ protected:
                         switch ( fr ) {
                         case 16:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<float, float>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<float, float>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 17:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<double, float>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<double, float>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 20:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<int32_t, float>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<int32_t, float>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 21:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<int64_t, float>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<int64_t, float>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         default:
@@ -2102,22 +2102,22 @@ protected:
                         switch ( fr ) {
                         case 16:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<float, double>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<float, double>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 17:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<double, double>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<double, double>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 20:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<int32_t, double>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<int32_t, double>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 21:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<int64_t, double>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<int64_t, double>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         default:
@@ -2134,22 +2134,22 @@ protected:
                         switch ( fr ) {
                         case 16:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<float, int32_t>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<float, int32_t>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 17:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<double, int32_t>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<double, int32_t>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 20:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<int32_t, int32_t>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<int32_t, int32_t>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 21:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<int64_t, int32_t>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<int64_t, int32_t>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         default:

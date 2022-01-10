@@ -17,7 +17,7 @@
 #define _H_VANADIS_FP_SET_REG_COMPARE
 
 #include "inst/vcmptype.h"
-#include "inst/vinst.h"
+#include "inst/vfpinst.h"
 #include "inst/vregfmt.h"
 #include "util/vfpreghandler.h"
 
@@ -25,14 +25,14 @@ namespace SST {
 namespace Vanadis {
 
 template <VanadisRegisterCompareType compare_type, typename fp_format>
-class VanadisFPSetRegCompareInstruction : public VanadisInstruction
+class VanadisFPSetRegCompareInstruction : public VanadisFloatingPointInstruction
 {
 public:
     VanadisFPSetRegCompareInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, VanadisFloatingPointFlags* fpflags, const uint16_t dest,
         const uint16_t src_1, const uint16_t src_2) :
-        VanadisInstruction(
-            addr, hw_thr, isa_opts, 0, 1, 0, 1,
+        VanadisFloatingPointInstruction(
+            addr, hw_thr, isa_opts, fpflags, 0, 1, 0, 1,
             ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 4 : 2, 0,
             ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 4 : 2, 0)
     {
