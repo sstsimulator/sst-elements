@@ -1956,14 +1956,14 @@ protected:
                         case 16:
                         {
                             bundle->addInstruction(
-                                new VanadisFP2FPInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
+                                new VanadisFP2FPInstruction<int32_t>(
                                     ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                         } break;
                         case 17:
                         {
                             bundle->addInstruction(
-                                new VanadisFP2FPInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
+                                new VanadisFP2FPInstruction<int64_t>(
                                     ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                         } break;
