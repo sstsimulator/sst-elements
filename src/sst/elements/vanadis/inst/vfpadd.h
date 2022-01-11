@@ -29,8 +29,8 @@ class VanadisFPAddInstruction : public VanadisFloatingPointInstruction
 {
 public:
     VanadisFPAddInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, VanadisFloatingPointFlags* fpflags, const uint16_t dest,
-        const uint16_t src_1, const uint16_t src_2) :
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
+        VanadisFloatingPointFlags* fpflags, const uint16_t dest, const uint16_t src_1, const uint16_t src_2) :
         VanadisFloatingPointInstruction(
             addr, hw_thr, isa_opts, fpflags, 0, 0, 0, 0,
             ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 4 : 2,
@@ -58,7 +58,9 @@ public:
 
     const char* getInstCode() const override
     {
-        if ( std::is_same<fp_format, double>::value ) { return "FP64ADD"; }
+        if ( std::is_same<fp_format, double>::value ) {
+			return "FP64ADD";
+		  }
         else if ( std::is_same<fp_format, float>::value ) {
             return "FP32ADD";
         }
@@ -71,7 +73,7 @@ public:
     {
         snprintf(
             buffer, buffer_size,
-            "%8s  %5" PRIu16 " <- %5" PRIu16 " + %5" PRIu16 " (phys: %5" PRIu16 " <- %5" PRIu16 " + %5" PRIu16 ")",
+            "%s  %5" PRIu16 " <- %5" PRIu16 " + %5" PRIu16 " (phys: %5" PRIu16 " <- %5" PRIu16 " + %5" PRIu16 ")",
             getInstCode(), isa_fp_regs_out[0], isa_fp_regs_in[0], isa_fp_regs_in[1], phys_fp_regs_out[0],
             phys_fp_regs_in[0], phys_fp_regs_in[1]);
     }
@@ -79,44 +81,44 @@ public:
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
-		if(output->getVerboseLevel() >= 16) {
-        char* int_register_buffer = new char[256];
-        char* fp_register_buffer  = new char[256];
+        if ( output->getVerboseLevel() >= 16 ) {
+            char* int_register_buffer = new char[256];
+            char* fp_register_buffer  = new char[256];
 
-        writeIntRegs(int_register_buffer, 256);
-        writeFPRegs(fp_register_buffer, 256);
+            writeIntRegs(int_register_buffer, 256);
+            writeFPRegs(fp_register_buffer, 256);
 
-        output->verbose(
-            CALL_INFO, 16, 0, "Execute: 0x%llx %s int: %s / fp: %s\n", getInstructionAddress(), getInstCode(),
-            int_register_buffer, fp_register_buffer);
+            output->verbose(
+                CALL_INFO, 16, 0, "Execute: 0x%llx %s int: %s / fp: %s\n", getInstructionAddress(), getInstCode(),
+                int_register_buffer, fp_register_buffer);
 
-        delete[] int_register_buffer;
-        delete[] fp_register_buffer;
-		}
+            delete[] int_register_buffer;
+            delete[] fp_register_buffer;
+        }
 #endif
 
         if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
-            const fp_format src_1 = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
-            const fp_format src_2 = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3]);
-				const fp_format result = src_1 + src_2;
+            const fp_format src_1  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
+            const fp_format src_2  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3]);
+            const fp_format result = src_1 + src_2;
 
-				performFlagChecks<fp_format>(result);
+            performFlagChecks<fp_format>(result);
 
-		if(output->getVerboseLevel() >= 16) {
-            output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, result);
-		}
+            if ( output->getVerboseLevel() >= 16 ) {
+                output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, result);
+            }
             fractureToRegisters<fp_format>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], result);
         }
         else {
-            const fp_format src_1 = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
-            const fp_format src_2 = regFile->getFPReg<fp_format>(phys_fp_regs_in[1]);
-				const fp_format result = src_1 + src_2;
+            const fp_format src_1  = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
+            const fp_format src_2  = regFile->getFPReg<fp_format>(phys_fp_regs_in[1]);
+            const fp_format result = src_1 + src_2;
 
-				performFlagChecks<fp_format>(result);
+            performFlagChecks<fp_format>(result);
 
-		if(output->getVerboseLevel() >= 16) {
-            output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, result);
-		}
+            if ( output->getVerboseLevel() >= 16 ) {
+                output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, result);
+            }
 
             regFile->setFPReg<fp_format>(phys_fp_regs_out[0], result);
         }

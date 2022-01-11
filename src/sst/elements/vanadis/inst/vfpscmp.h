@@ -29,8 +29,8 @@ class VanadisFPSetRegCompareInstruction : public VanadisFloatingPointInstruction
 {
 public:
     VanadisFPSetRegCompareInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, VanadisFloatingPointFlags* fpflags, const uint16_t dest,
-        const uint16_t src_1, const uint16_t src_2) :
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
+        VanadisFloatingPointFlags* fpflags, const uint16_t dest, const uint16_t src_1, const uint16_t src_2) :
         VanadisFloatingPointInstruction(
             addr, hw_thr, isa_opts, fpflags, 0, 1, 0, 1,
             ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 4 : 2, 0,
@@ -152,18 +152,20 @@ public:
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
-        char* int_register_buffer = new char[256];
-        char* fp_register_buffer  = new char[256];
+        if ( output->getVerboseLevel() >= 16 ) {
+            char* int_register_buffer = new char[256];
+            char* fp_register_buffer  = new char[256];
 
-        writeIntRegs(int_register_buffer, 256);
-        writeFPRegs(fp_register_buffer, 256);
+            writeIntRegs(int_register_buffer, 256);
+            writeFPRegs(fp_register_buffer, 256);
 
-        output->verbose(
-            CALL_INFO, 16, 0, "Execute: (addr=0x%llx) %s (%s) int: %s / fp: %s\n", getInstructionAddress(),
-            getInstCode(), convertCompareTypeToString(compare_type), int_register_buffer, fp_register_buffer);
+            output->verbose(
+                CALL_INFO, 16, 0, "Execute: (addr=0x%llx) %s (%s) int: %s / fp: %s\n", getInstructionAddress(),
+                getInstCode(), convertCompareTypeToString(compare_type), int_register_buffer, fp_register_buffer);
 
-        delete[] int_register_buffer;
-        delete[] fp_register_buffer;
+            delete[] int_register_buffer;
+            delete[] fp_register_buffer;
+        }
 #endif
         const bool compare_result = performCompare(output, regFile);
         regFile->setIntReg<uint64_t>(phys_int_regs_out[0], compare_result ? 1 : 0);
