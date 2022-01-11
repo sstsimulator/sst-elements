@@ -944,6 +944,11 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                 rob_front, int_register_stacks[rob_front->getHWThread()], fp_register_stacks[rob_front->getHWThread()],
                 issue_isa_tables[rob_front->getHWThread()], retire_isa_tables[rob_front->getHWThread()]);
 
+				if(output->getVerboseLevel() >= 16) {
+					fp_flags.at(rob_front->getHWThread())->print(output);
+			   }
+
+
             ins_retired_this_cycle++;
 
             if ( perform_delay_cleanup ) {
@@ -967,6 +972,11 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                     delay_ins, int_register_stacks[delay_ins->getHWThread()],
                     fp_register_stacks[delay_ins->getHWThread()], issue_isa_tables[delay_ins->getHWThread()],
                     retire_isa_tables[delay_ins->getHWThread()]);
+
+				if(output->getVerboseLevel() >= 16) {
+					fp_flags.at(rob_front->getHWThread())->print(output);
+			   }
+
 
                 //					if( delay_ins->endsMicroOpGroup() )
                 //{ 						stat_ins_retired->addData(1);

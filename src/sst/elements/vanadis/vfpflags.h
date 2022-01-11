@@ -41,6 +41,15 @@ public:
     bool                  inexact() const { return f_inexact; }
     VanadisFPRoundingMode getRoundingMode() const { return round_mode; }
 
+	 void print(SST::Output* output) {
+		output->verbose(CALL_INFO, 16, 0, "-> FP Status: IVLD: %c / DIV0: %c / OF: %c / UF: %c / INXCT: %c\n",
+			f_invalidop ? 'y' : 'n',
+			f_divzero ? 'y' : 'n',
+			f_overflow ? 'y' : 'n',
+			f_underflow ? 'y' : 'n',
+			f_inexact ? 'y' : 'n');
+	 }
+
 protected:
     bool f_invalidop;
     bool f_divzero;
