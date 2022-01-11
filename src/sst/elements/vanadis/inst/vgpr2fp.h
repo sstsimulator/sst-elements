@@ -16,7 +16,7 @@
 #ifndef _H_VANADIS_GPR_2_FP
 #define _H_VANADIS_GPR_2_FP
 
-#include "inst/vinst.h"
+#include "inst/vfpinst.h"
 #include "inst/vregfmt.h"
 //#include "util/vtypename.h"
 
@@ -27,14 +27,14 @@ namespace Vanadis {
 
 // template <VanadisRegisterFormat int_register_format, VanadisRegisterFormat fp_register_format>
 template <typename gpr_format, typename fp_format>
-class VanadisGPR2FPInstruction : public VanadisInstruction
+class VanadisGPR2FPInstruction : public VanadisFloatingPointInstruction
 {
 public:
     VanadisGPR2FPInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t fp_dest,
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, VanadisFloatingPointFlags* fpflags, const uint16_t fp_dest,
         const uint16_t int_src) :
-        VanadisInstruction(
-            addr, hw_thr, isa_opts, 1, 0, 1, 0, 0,
+        VanadisFloatingPointInstruction(
+            addr, hw_thr, isa_opts, fpflags, 1, 0, 1, 0, 0,
             ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1, 0,
             ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1)
     {

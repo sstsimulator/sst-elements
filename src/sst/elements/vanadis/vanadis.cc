@@ -32,7 +32,6 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     instPrintBuffer = new char[1024];
     pipelineTrace   = nullptr;
-    fpflags         = new VanadisFloatingPointFlags();
 
     max_cycle = params.find<uint64_t>("max_cycle", std::numeric_limits<uint64_t>::max());
 
@@ -108,6 +107,10 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
         sprintf(decoder_name, "decoder%" PRIu32 "", i);
         VanadisDecoder* thr_decoder = loadUserSubComponent<SST::Vanadis::VanadisDecoder>(decoder_name);
+
+		  fp_flags.push_back(new VanadisFloatingPointFlags());
+		  thr_decoder->setFPFlags(fp_flags[i]);
+
         //		thr_decoder->setHardwareThread( i );
 
         output->verbose(
@@ -488,7 +491,9 @@ VANADIS_COMPONENT::~VANADIS_COMPONENT()
 
     if ( pipelineTrace != nullptr ) { fclose(pipelineTrace); }
 
-    delete fpflags;
+	 for( VanadisFloatingPointFlags* next_fp_flags : fp_flags ) {
+		delete next_fp_flags;
+	 }
 }
 
 void
@@ -930,9 +935,19 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
             if ( pipelineTrace != nullptr ) {
                 fprintf(pipelineTrace, "0x%08llx %s\n", rob_front->getInstructionAddress(), rob_front->getInstCode());
             }
+
+				if(UNLIKELY(rob_front->updatesFPFlags())) {
+					rob_front->performFPFlagsUpdate();
+				}
+
             recoverRetiredRegisters(
                 rob_front, int_register_stacks[rob_front->getHWThread()], fp_register_stacks[rob_front->getHWThread()],
                 issue_isa_tables[rob_front->getHWThread()], retire_isa_tables[rob_front->getHWThread()]);
+
+				if(output->getVerboseLevel() >= 16) {
+					fp_flags.at(rob_front->getHWThread())->print(output);
+			   }
+
 
             ins_retired_this_cycle++;
 
@@ -949,10 +964,19 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                         pipelineTrace, "0x%08llx %s\n", delay_ins->getInstructionAddress(), delay_ins->getInstCode());
                 }
 
+					if(UNLIKELY(rob_front->updatesFPFlags())) {
+						rob_front->performFPFlagsUpdate();
+					}
+
                 recoverRetiredRegisters(
                     delay_ins, int_register_stacks[delay_ins->getHWThread()],
                     fp_register_stacks[delay_ins->getHWThread()], issue_isa_tables[delay_ins->getHWThread()],
                     retire_isa_tables[delay_ins->getHWThread()]);
+
+				if(output->getVerboseLevel() >= 16) {
+					fp_flags.at(rob_front->getHWThread())->print(output);
+			   }
+
 
                 //					if( delay_ins->endsMicroOpGroup() )
                 //{ 						stat_ins_retired->addData(1);
