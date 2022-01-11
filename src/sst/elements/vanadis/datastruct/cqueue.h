@@ -17,12 +17,15 @@
 #define _H_VANADIS_CIRC_Q
 
 #include <cassert>
+#include <cstddef>
 #include <deque>
 
 namespace SST {
 namespace Vanadis {
 
-template <typename T> class VanadisCircularQueue {
+template <typename T>
+class VanadisCircularQueue
+{
 public:
     VanadisCircularQueue(const size_t size) : max_capacity(size) {}
 
@@ -38,7 +41,8 @@ public:
 
     T peekAt(const size_t index) { return data.at(index); }
 
-    T pop() {
+    T pop()
+    {
         T tmp = data.front();
         data.pop_front();
         return tmp;
@@ -50,17 +54,17 @@ public:
 
     void clear() { data.clear(); }
 
-    void removeAt(const size_t index) {
+    void removeAt(const size_t index)
+    {
         auto remove_itr = data.begin();
 
-        for (size_t i = 0; i < index; ++i, remove_itr++) {
-        }
+        for ( size_t i = 0; i < index; ++i, remove_itr++ ) {}
 
         data.erase(remove_itr);
     }
 
 private:
-    const size_t max_capacity;
+    const size_t  max_capacity;
     std::deque<T> data;
 };
 

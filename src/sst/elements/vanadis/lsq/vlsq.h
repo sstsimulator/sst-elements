@@ -28,8 +28,6 @@
 #include <cstdint>
 #include <vector>
 
-using namespace SST::Interfaces;
-
 namespace SST {
 namespace Vanadis {
 

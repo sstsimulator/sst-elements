@@ -25,6 +25,7 @@
 #include "os/vcpuos.h"
 #include "vbranch/vbranchbasic.h"
 #include "vbranch/vbranchunit.h"
+#include "velf/velfinfo.h"
 #include "vinsloader.h"
 
 #include <cinttypes>
