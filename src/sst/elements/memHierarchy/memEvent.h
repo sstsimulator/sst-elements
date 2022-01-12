@@ -254,18 +254,26 @@ public:
         return new MemEvent(*this);
     }
 
-    virtual std::string getVerboseString() override {
+    virtual std::string getVerboseString(int level = 1) override {
         std::ostringstream str;
         if (addr_ != baseAddr_)
             str << std::hex << " Addr: 0x" << baseAddr_ << "/0x" << addr_;
         else
             str << std::hex << " Addr: 0x" << baseAddr_;
         str << (addrGlobal_ ? " (G)" : " (L)");
-        str << " Data: " << (payload_.empty() ? "F" : "T");
+        if (payload_.empty() || level < 11)
+            str << " Data: " << (payload_.empty() ? "F" : "T");
+        else {
+            std::stringstream value;
+            value << std::hex << std::setfill('0');
+            for (unsigned int i = 0; i < payload_.size(); i++)
+                value << std::hex << std::setw(2) << (int)payload_[i];
+            str << " Data: 0x" << value.str();
+        }
         str << " VA: 0x" << vAddr_ << " IP: 0x" << instPtr_;
         str << std::dec << " Size: " << size_;
         str << " Prf: " << (prefetch_ ? "T" : "F");
-        return MemEventBase::getVerboseString() + str.str();
+        return MemEventBase::getVerboseString(level) + str.str();
     }
 
     virtual std::string getBriefString() override {

@@ -150,6 +150,7 @@ protected:
     Output out;
     Output dbg;
     std::set<Addr> DEBUG_ADDR;
+    int dlevel;
 
     MemBackendConvertor*    memBackendConvertor_;
     Backend::Backing*       backing_;

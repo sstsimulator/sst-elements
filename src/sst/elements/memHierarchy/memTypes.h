@@ -367,26 +367,11 @@ public:
 
         // Check interval from max(start, o.start) to lcm + max(start, o.start)
         // for overlap
-        // If overlap, add a region with (start_overlap, min(end, o.end), 1, lcm)
-        //  Consecutive regions can be merged
         uint64_t check_start = std::max(start, o.start);
         uint64_t check_end = check_start + lcm;
-        uint64_t region_start = check_start;
-        uint64_t region_size = 0;
         for (uint64_t i = check_start; i < check_end; i++) {
-            bool in_region = false;
-            in_region = (*this).contains(i) && o.contains(i);
-            if (in_region) {
-                if (region_size == 0)
-                    region_start = i;
-                region_size++;
-            } else if (region_size != 0) {
+            if ( (*this).contains(i) && o.contains(i) )
                 return true;
-            }
-        }
-
-        if (region_size != 0) {
-            return true;
         }
         return false;
     }

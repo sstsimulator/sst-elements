@@ -56,14 +56,12 @@ using namespace SST::MemHierarchy;
 /*************************** Memory Controller ********************/
 MemCacheController::MemCacheController(ComponentId_t id, Params &params) : Component(id), backing_(NULL) {
 
-    int debugLevel = params.find<int>("debug_level", 0);
+    dlevel = params.find<int>("debug_level", 0);
 
     lineSize_ = params.find<uint64_t>("cache_line_size", 64);
 
     // Output for debug
-    dbg.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
-    if (debugLevel < 0 || debugLevel > 10)
-        out.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
+    dbg.init("", dlevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
 
     // Debug address
     std::vector<Addr> addrArr;
@@ -213,7 +211,7 @@ void MemCacheController::handleEvent(SST::Event* event) {
     MemEventBase *meb = static_cast<MemEventBase*>(event);
 
     if (is_debug_event(meb)) {
-        Debug(_L3_, "\n%" PRIu64 " (%s) Received: %s\n", getCurrentSimTimeNano(), getName().c_str(), meb->getVerboseString().c_str());
+        Debug(_L3_, "\n%" PRIu64 " (%s) Received: %s\n", getCurrentSimTimeNano(), getName().c_str(), meb->getVerboseString(dlevel).c_str());
     }
 
     Command cmd = meb->getCmd();
@@ -355,7 +353,7 @@ void MemCacheController::handleWrite(MemEvent* event, bool replay) {
 
 void MemCacheController::handleFlush(MemEvent* event) {
     out.fatal(CALL_INFO, -1, "%s, MemoryCache encountered unhandled event: %s\n",
-            getName().c_str(), event->getVerboseString().c_str());
+            getName().c_str(), event->getVerboseString(dlevel).c_str());
 }
 
 /* Response from remote memory */
@@ -412,7 +410,7 @@ void MemCacheController::handleLocalMemResponse( Event::id_type id, uint32_t fla
     MemEventBase * evb = it->second.event;
 
     if (is_debug_event(evb)) {
-        Debug(_L3_, "MemoryCache: %s - Response received to (%s)\n", getName().c_str(), evb->getVerboseString().c_str());
+        Debug(_L3_, "MemoryCache: %s - Response received to (%s)\n", getName().c_str(), evb->getVerboseString(dlevel).c_str());
     }
 
     /* Handle custom events */
@@ -491,7 +489,7 @@ void MemCacheController::handleLocalMemResponse( Event::id_type id, uint32_t fla
             break;
         default:
             out.fatal(CALL_INFO, -1, "%s, MemoryCache encountered unhandled record status. Event is %s\n",
-                getName().c_str(), ev->getVerboseString().c_str());
+                getName().c_str(), ev->getVerboseString(dlevel).c_str());
     }
 }
 
@@ -499,7 +497,7 @@ void MemCacheController::retry(uint64_t cacheIndex) {
     MemEvent* ev = outstandingEvents_.find(mshr_[cacheIndex].front())->second.event;
 
     if (is_debug_event(ev)) {
-        Debug(_L3_, "\n%" PRIu64 " (%s) Retrying: %s\n", getCurrentSimTimeNano(), getName().c_str(), ev->getVerboseString().c_str());
+        Debug(_L3_, "\n%" PRIu64 " (%s) Retrying: %s\n", getCurrentSimTimeNano(), getName().c_str(), ev->getVerboseString(dlevel).c_str());
     }
     switch (ev->getCmd()) {
         case Command::GetS:
@@ -557,7 +555,7 @@ Cycle_t MemCacheController::turnClockOn() {
 
 void MemCacheController::handleCustomEvent(MemEventBase * ev) {
     out.fatal(CALL_INFO, -1, "%s, MemoryCache encountered unhandled event: %s\n",
-            getName().c_str(), ev->getVerboseString().c_str());
+            getName().c_str(), ev->getVerboseString(dlevel).c_str());
 }
 
 
@@ -670,7 +668,7 @@ Addr MemCacheController::toLocalAddr(Addr addr) {
 void MemCacheController::processInitEvent( MemEventInit* me ) {
     /* Forward data to remote memory */
     if (Command::NULLCMD == me->getCmd()) {
-        if (is_debug_event(me)) { Debug(_L9_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString().c_str()); }
+        if (is_debug_event(me)) { Debug(_L9_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString(dlevel).c_str()); }
     } else {
         if (is_debug_event(me)) { Debug(_L9_,"Memory init %s - Received Write for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size()); }
         MemEventInit * mEv = me->clone();
@@ -686,7 +684,7 @@ void MemCacheController::printStatus(Output &statusOut) {
 
     statusOut.output("  Outstanding events: %zu\n", outstandingEvents_.size());
 /*    for (std::map<SST::Event::id_type, MemEventBase*>::iterator it = outstandingEvents_.begin(); it != outstandingEvents_.end(); it++) {
-        statusOut.output("    %s\n", it->second->getVerboseString().c_str());
+        statusOut.output("    %s\n", it->second->getVerboseString(dlevel).c_str());
     }
     */
 

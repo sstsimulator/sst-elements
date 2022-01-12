@@ -167,8 +167,8 @@ public:
     /** Return size of the event - for calculating bandwidth used */
     virtual uint32_t getEventSize() { return 0; }
 
-    /** Get verbose print of the event */
-    virtual std::string getVerboseString() {
+    /** Get verbose print of the event */ 
+    virtual std::string getVerboseString(int level = 1) {
         std::ostringstream idstring;
         idstring << "<" << eventID_.first << "," << eventID_.second << "> ";
         std::string cmdStr(CommandString[(int)cmd_]);
@@ -261,7 +261,7 @@ public:
         return new MemEventInit(*this);
     }
 
-    virtual std::string getVerboseString() override {
+    virtual std::string getVerboseString(int level = 1) override {
         std::string str;
         if (initCmd_ == InitCommand::Region) str = " InitCmd: Region";
         else if (initCmd_ == InitCommand::Data) str = " InitCmd: Data";
@@ -269,7 +269,7 @@ public:
         else if (initCmd_ == InitCommand::Endpoint) str = " InitCmd: Endpoint";
         else str = " InitCmd: Unknown command";
 
-        return MemEventBase::getVerboseString() + str;
+        return MemEventBase::getVerboseString(level) + str;
     }
 
     virtual std::string getBriefString() override {
@@ -333,11 +333,11 @@ public:
         return new MemEventInitCoherence(*this);
     }
 
-    virtual std::string getVerboseString() override {
+    virtual std::string getVerboseString(int level = 1) override {
         std::ostringstream str;
         str << " Type: " << (int) type_ << " Inclusive: " << (inclusive_ ? "true" : "false");
         str << " LineSize: " << lineSize_ << " Tracks presence: " << (tracksPresence_ ? "true" : "false");
-        return MemEventInit::getVerboseString() + str.str();
+        return MemEventInit::getVerboseString(level) + str.str();
     }
 
 private:
@@ -397,7 +397,7 @@ public:
         return MemEventInit::getBriefString() + str.str();
     }
 
-    virtual std::string getVerboseString() override {
+    virtual std::string getVerboseString(int level = 1) override {
         std::ostringstream str;
         str << " Type: " << (int) type_ << " Name: " << name_;
         str << " Regions:";
@@ -437,8 +437,8 @@ public:
         return new MemEventInitRegion(*this);
     }
 
-    virtual std::string getVerboseString() override {
-        return MemEventInit::getVerboseString() + region_.toString() + " SetRegion: " + (setRegion_ ? "T" : "F");
+    virtual std::string getVerboseString(int level = 1) override {
+        return MemEventInit::getVerboseString(level) + region_.toString() + " SetRegion: " + (setRegion_ ? "T" : "F");
     }
 
 private:
