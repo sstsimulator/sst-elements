@@ -1,5 +1,9 @@
 l2_0: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
 l2_1: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
+memory0, Notice: memory controller's region is larger than the backend's mem_size, controller is limiting accessible memory to mem_size
+Region: start=0, end=18446744073709551615, interleaveStep=256, interleaveSize=128. MemSize: 536870912B
+memory1, Notice: memory controller's region is larger than the backend's mem_size, controller is limiting accessible memory to mem_size
+Region: start=128, end=18446744073709551615, interleaveStep=256, interleaveSize=128. MemSize: 536870912B
 ScratchCPU cpu0 Finished after 1000 issued memory events, 1000 returned, 29372 cycles
 ScratchCPU cpu1 Finished after 1000 issued memory events, 1000 returned, 29326 cycles
 ScratchCPU cpu2 Finished after 1000 issued memory events, 1000 returned, 29263 cycles
@@ -1111,7 +1115,7 @@ ScratchCPU cpu3 Finished after 1000 issued memory events, 1000 returned, 28980 c
  l2_1.MSHR_occupancy : Accumulator : Sum.u64 = 188119; SumSQ.u64 = 1379317; Count.u64 = 29372; Min.u64 = 0; Max.u64 = 15; 
  l2_1.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dir:cpulink.packet_latency : Accumulator : Sum.u64 = 139061; SumSQ.u64 = 3654081; Count.u64 = 8894; Min.u64 = 0; Max.u64 = 62; 
- dir:cpulink.send_bit_count : Accumulator : Sum.u64 = 1667136; SumSQ.u64 = 807152256; Count.u64 = 8894; Min.u64 = 64; Max.u64 = 1088; 
+ dir:cpulink.send_bit_count : Accumulator : Sum.u64 = 1808448; SumSQ.u64 = 897591936; Count.u64 = 8894; Min.u64 = 64; Max.u64 = 1088; 
  dir:cpulink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dir:cpulink.idle_time : Accumulator : Sum.u64 = 412280; SumSQ.u64 = 843557600; Count.u64 = 808; Min.u64 = 0; Max.u64 = 13820; 
  dir.default_stat : Accumulator : Sum.u64 = 5632; SumSQ.u64 = 5632; Count.u64 = 5632; Min.u64 = 1; Max.u64 = 1; 
@@ -1169,27 +1173,27 @@ ScratchCPU cpu3 Finished after 1000 issued memory events, 1000 returned, 28980 c
  dir.eventSent_read_directory_entry : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dir.eventSent_write_directory_entry : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dir.MSHR_occupancy : Accumulator : Sum.u64 = 165210; SumSQ.u64 = 2030616; Count.u64 = 14680; Min.u64 = 0; Max.u64 = 22; 
- scratch:backendConvertor.cycles_with_issue : Accumulator : Sum.u64 = 2453; SumSQ.u64 = 2453; Count.u64 = 2453; Min.u64 = 1; Max.u64 = 1; 
+ scratch:backendConvertor.cycles_with_issue : Accumulator : Sum.u64 = 2726; SumSQ.u64 = 2726; Count.u64 = 2726; Min.u64 = 1; Max.u64 = 1; 
  scratch:backendConvertor.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  scratch:backendConvertor.total_cycles : Accumulator : Sum.u64 = 29372; SumSQ.u64 = 29372; Count.u64 = 29372; Min.u64 = 1; Max.u64 = 1; 
  scratch:backendConvertor.requests_received_GetS : Accumulator : Sum.u64 = 1712; SumSQ.u64 = 1712; Count.u64 = 1712; Min.u64 = 1; Max.u64 = 1; 
  scratch:backendConvertor.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  scratch:backendConvertor.requests_received_GetX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- scratch:backendConvertor.requests_received_PutM : Accumulator : Sum.u64 = 741; SumSQ.u64 = 741; Count.u64 = 741; Min.u64 = 1; Max.u64 = 1; 
+ scratch:backendConvertor.requests_received_PutM : Accumulator : Sum.u64 = 1014; SumSQ.u64 = 1014; Count.u64 = 1014; Min.u64 = 1; Max.u64 = 1; 
  scratch:backendConvertor.latency_GetS : Accumulator : Sum.u64 = 36034; SumSQ.u64 = 758530; Count.u64 = 1712; Min.u64 = 21; Max.u64 = 23; 
  scratch:backendConvertor.latency_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  scratch:backendConvertor.latency_GetX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- scratch:backendConvertor.latency_PutM : Accumulator : Sum.u64 = 15667; SumSQ.u64 = 331347; Count.u64 = 741; Min.u64 = 21; Max.u64 = 23; 
+ scratch:backendConvertor.latency_PutM : Accumulator : Sum.u64 = 21400; SumSQ.u64 = 451740; Count.u64 = 1014; Min.u64 = 21; Max.u64 = 23; 
  scratch.request_received_scratch_read : Accumulator : Sum.u64 = 937; SumSQ.u64 = 937; Count.u64 = 937; Min.u64 = 1; Max.u64 = 1; 
- scratch.request_received_scratch_write : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ scratch.request_received_scratch_write : Accumulator : Sum.u64 = 273; SumSQ.u64 = 273; Count.u64 = 273; Min.u64 = 1; Max.u64 = 1; 
  scratch.request_received_remote_read : Accumulator : Sum.u64 = 670; SumSQ.u64 = 670; Count.u64 = 670; Min.u64 = 1; Max.u64 = 1; 
  scratch.request_received_remote_write : Accumulator : Sum.u64 = 639; SumSQ.u64 = 639; Count.u64 = 639; Min.u64 = 1; Max.u64 = 1; 
  scratch.request_received_scratch_get : Accumulator : Sum.u64 = 639; SumSQ.u64 = 639; Count.u64 = 639; Min.u64 = 1; Max.u64 = 1; 
  scratch.request_received_scratch_put : Accumulator : Sum.u64 = 700; SumSQ.u64 = 700; Count.u64 = 700; Min.u64 = 1; Max.u64 = 1; 
  scratch.request_issued_scratch_read : Accumulator : Sum.u64 = 1712; SumSQ.u64 = 1712; Count.u64 = 1712; Min.u64 = 1; Max.u64 = 1; 
- scratch.request_issued_scratch_write : Accumulator : Sum.u64 = 741; SumSQ.u64 = 741; Count.u64 = 741; Min.u64 = 1; Max.u64 = 1; 
+ scratch.request_issued_scratch_write : Accumulator : Sum.u64 = 1014; SumSQ.u64 = 1014; Count.u64 = 1014; Min.u64 = 1; Max.u64 = 1; 
  scratch:cpulink.packet_latency : Accumulator : Sum.u64 = 28844; SumSQ.u64 = 223332; Count.u64 = 5609; Min.u64 = 0; Max.u64 = 19; 
- scratch:cpulink.send_bit_count : Accumulator : Sum.u64 = 1565576; SumSQ.u64 = 837494464; Count.u64 = 6948; Min.u64 = 64; Max.u64 = 1088; 
+ scratch:cpulink.send_bit_count : Accumulator : Sum.u64 = 1706888; SumSQ.u64 = 927934144; Count.u64 = 6948; Min.u64 = 64; Max.u64 = 1088; 
  scratch:cpulink.output_port_stalls : Accumulator : Sum.u64 = 998900; SumSQ.u64 = 1652294800; Count.u64 = 2220; Min.u64 = 0; Max.u64 = 4320; 
  scratch:cpulink.idle_time : Accumulator : Sum.u64 = 52320; SumSQ.u64 = 670357600; Count.u64 = 9; Min.u64 = 0; Max.u64 = 18720; 
  memory0.requests_received_GetS : Accumulator : Sum.u64 = 661; SumSQ.u64 = 661; Count.u64 = 661; Min.u64 = 1; Max.u64 = 1; 

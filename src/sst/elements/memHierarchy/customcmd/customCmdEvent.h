@@ -81,7 +81,7 @@ public:
     /*** Virtual functions from memEventBase ***/
     virtual uint32_t getEventSize() override { return 0; }
 
-    virtual std::string getVerboseString() override {
+    virtual std::string getVerboseString(int level = 1) override {
         std::ostringstream str;
         str << std::hex << " Addr: 0x" << addr_;
         str << std::hex << " BaseAddr: 0x" << baseAddr_;
@@ -89,7 +89,7 @@ public:
         str << " Size: " << std::dec << size_;
         str << " VA: 0x" << std::hex << vAddr_ << " IP: 0x" << instPtr_;
         str << " OpCode: 0x" << opCode_;
-        return MemEventBase::getVerboseString() + str.str();
+        return MemEventBase::getVerboseString(level) + str.str();
     }
 
     virtual std::string getBriefString() {

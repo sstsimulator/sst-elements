@@ -33,9 +33,10 @@ StandardInterface::StandardInterface(SST::ComponentId_t id, Params &params, Time
 {
     setDefaultTimeBase(time); // Links are required to have a timebase
 
+    dlevel = params.find<int>("debug_level", 0);
     // Output object for warnings/debug/etc.
     output.init("", params.find<int>("verbose", 1), 0, Output::STDOUT);
-    debug.init("", params.find<int>("debug_level", 0), 0, (Output::output_location_t)params.find<int>("debug", 0));
+    debug.init("", dlevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
 
     rqstr_ = "";
     initDone_ = false;
@@ -114,7 +115,7 @@ void StandardInterface::init(unsigned int phase) {
                     initDone_ = true;
                 } else if (memEvent->getInitCmd() == MemEventInit::InitCommand::Endpoint) {
                     MemEventInitEndpoint * memEventE = static_cast<MemEventInitEndpoint*>(memEvent);
-                    debug.debug(_L10_, "%s, Received initEndpoint message: %s\n", getName().c_str(), memEventE->getVerboseString().c_str());
+                    debug.debug(_L10_, "%s, Received initEndpoint message: %s\n", getName().c_str(), memEventE->getVerboseString(dlevel).c_str());
                     std::vector<std::pair<MemRegion,bool>> regions = memEventE->getRegions();
                     for (auto it = regions.begin(); it != regions.end(); it++) {
                         if (!it->second) {
@@ -212,7 +213,7 @@ void StandardInterface::receive(SST::Event* ev) {
         std::map<MemEventBase::id_type,std::pair<StandardMem::Request*,Command>>::iterator reqit = requests_.find(origID);
         if (reqit == requests_.end()) {
             output.fatal(CALL_INFO, -1, "%s, Error: Received response but cannot locate matching request. Response: %s\n",
-                getName().c_str(), me->getVerboseString().c_str());
+                getName().c_str(), me->getVerboseString(dlevel).c_str());
         }
         StandardMem::Request* origReq = reqit->second.first;
         Command origCmd = reqit->second.second;
@@ -236,7 +237,7 @@ void StandardInterface::receive(SST::Event* ev) {
                 return;
             default:
                 output.fatal(CALL_INFO, -1, "%s, Error: Received response with unhandled command type '%s'. Event: %s\n",
-                    getName().c_str(), CommandString[(int)cmd], me->getVerboseString().c_str());
+                    getName().c_str(), CommandString[(int)cmd], me->getVerboseString(dlevel).c_str());
         };
         delete me;
         delete origReq;
@@ -279,7 +280,7 @@ void StandardInterface::receive(SST::Event* ev) {
                 break;
             default:
                 output.fatal(CALL_INFO, -1, "%s, Error: Received request with unhandled command type '%s'. Event: %s\n",
-                    getName().c_str(), CommandString[(int)cmd], me->getVerboseString().c_str());
+                    getName().c_str(), CommandString[(int)cmd], me->getVerboseString(dlevel).c_str());
         };
         if (deliverReq->needsResponse()) /* Endpoint will need to send a response to this */
             responses_[deliverReq->getID()] = me;
@@ -655,7 +656,7 @@ void StandardInterface::MemEventConverter::debugChecks(MemEvent* me) {
         lastAddr &= iface->baseAddrMask_;
         if (lastAddr != me->getBaseAddr()) {
             output.fatal(CALL_INFO, -1, "Error: In memHierarchy Interface (%s), Request cannot span multiple cache lines! Line mask = 0x%" PRIx64 ". Event is: %s\n", 
-                    iface->getName().c_str(), iface->baseAddrMask_, me->getVerboseString().c_str());
+                    iface->getName().c_str(), iface->baseAddrMask_, me->getVerboseString(output.getVerboseLevel()).c_str());
         }
     }
 }

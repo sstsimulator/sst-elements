@@ -68,10 +68,8 @@ using namespace SST::MemHierarchy;
 
 Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     // Output
-    int debugLevel = params.find<int>("debug_level", 0);
-    dbg.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
-    if (debugLevel < 0 || debugLevel > 10)
-        dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10\n");
+    dlevel = params.find<int>("debug_level", 0);
+    dbg.init("", dlevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
 
     out.init("", 1, 0, Output::STDOUT);
 
@@ -307,7 +305,7 @@ void Scratchpad::init(unsigned int phase) {
         if (initEv->getCmd() == Command::NULLCMD) {
 #ifdef __SST_DEBUG_OUTPUT__
             dbg.debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
-                    getName().c_str(), initEv->getVerboseString().c_str());
+                    getName().c_str(), initEv->getVerboseString(dlevel).c_str());
 #endif
             if (initEv->getInitCmd() == MemEventInit::InitCommand::Coherence) {
                 MemEventInitCoherence * initEvC = static_cast<MemEventInitCoherence*>(initEv);
@@ -331,7 +329,7 @@ void Scratchpad::init(unsigned int phase) {
     while (MemEventInit *initEv = linkDown_->recvInitData()) {
         if (initEv->getCmd() == Command::NULLCMD) {
             dbg.debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
-                    getName().c_str(), initEv->getVerboseString().c_str());
+                    getName().c_str(), initEv->getVerboseString(dlevel).c_str());
         }
         delete initEv;
     }
@@ -369,7 +367,7 @@ void Scratchpad::processIncomingCPUEvent(SST::Event* event) {
 
     if (is_debug_event(ev))
         dbg.debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
-                Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, getName().c_str(), ev->getVerboseString().c_str());
+                Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, getName().c_str(), ev->getVerboseString(dlevel).c_str());
 
     Command cmd = ev->getCmd();
 
@@ -416,7 +414,7 @@ void Scratchpad::processIncomingRemoteEvent(SST::Event * event) {
 
     if (is_debug_event(ev))
         dbg.debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
-                Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, getName().c_str(), ev->getVerboseString().c_str());
+                Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, getName().c_str(), ev->getVerboseString(dlevel).c_str());
 
     // Determine what kind of event spawned this and pass off to handler
     std::map<SST::Event::id_type,SST::Event::id_type>::iterator it = responseIDMap_.find(ev->getResponseToID());
@@ -606,6 +604,15 @@ void Scratchpad::handleScratchWrite(MemEvent * ev) {
             }
             return;
         }
+    } else if (directory_ && ev->isWriteback() && mshr_.find(ev->getBaseAddr()) != mshr_.end()) {
+        /* Drop writeback if we're stalled waiting for a ForceInv response */
+        MSHREntry * entry = &(mshr_.find(ev->getBaseAddr())->second.front());
+        if (outstandingEventList_.find(entry->id)->second.request->getCmd() == Command::Get) {
+            MemEvent * response = ev->makeResponse();
+            sendResponse(response);
+            delete ev;
+            return;
+        }
     }
 
     /* Drop clean writebacks after sending AckPut */
@@ -618,7 +625,7 @@ void Scratchpad::handleScratchWrite(MemEvent * ev) {
         delete ev;
         return;
     }
-
+    
     stat_ScratchWriteReceived->addData(1);
 
     MemEvent * response = nullptr;
@@ -887,7 +894,7 @@ void Scratchpad::handleAckInv(MemEventBase * event) {
         outstandingEventList_.find(requestID)->second.remoteWrite->setPayload(payload);
     } else {
         dbg.fatal(CALL_INFO, -1, "%s, Error: unhandled case in handleAckInv. Time = %" PRIu64 ", Event = (%s).\n",
-                getName().c_str(), timestamp_, event->getVerboseString().c_str());
+                getName().c_str(), timestamp_, event->getVerboseString(dlevel).c_str());
     }
     delete event;
 }
