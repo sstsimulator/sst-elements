@@ -90,6 +90,7 @@ protected:
 
     Output      output;
     Output      debug;
+    int         dlevel;
 
     Addr        baseAddrMask_;
     Addr        lineSize_;

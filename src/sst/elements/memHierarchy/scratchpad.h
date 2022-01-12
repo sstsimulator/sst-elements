@@ -82,6 +82,7 @@ public:
     // Output for debug info
     Output dbg;
     std::set<Addr> DEBUG_ADDR;
+    int dlevel;
 
     // Output for warnings, etc.
     Output out;

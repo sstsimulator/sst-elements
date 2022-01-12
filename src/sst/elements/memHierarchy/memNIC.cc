@@ -139,7 +139,7 @@ void MemNIC::printStatus(Output &out) {
     std::queue<SST::Interfaces::SimpleNetwork::Request*> tmpQ;
     while (!sendQueue.empty()) {
         MemEventBase * ev = static_cast<MemRtrEvent*>(sendQueue.front()->inspectPayload())->event;
-        out.output("      %s\n", ev->getVerboseString().c_str());
+        out.output("      %s\n", ev->getVerboseString(out.getVerboseLevel()).c_str());
         tmpQ.push(sendQueue.front());
         sendQueue.pop();
     }
@@ -156,7 +156,7 @@ void MemNIC::emergencyShutdownDebug(Output &out) {
         MemEventBase * ev = mre->event;
         delete mre;
         if (ev) {
-            out.output("      Undelivered message: %s\n", ev->getVerboseString().c_str());
+            out.output("      Undelivered message: %s\n", ev->getVerboseString(out.getVerboseLevel()).c_str());
         }
         mre = doRecv(link_control);
     }
