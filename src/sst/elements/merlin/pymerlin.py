@@ -76,7 +76,7 @@ class Topo(object):
     def build(self):
         pass
     def getRouterNameForId(self,rtr_id):
-        return "rtr.%d"%rtr_id
+        return "rtr_%d"%rtr_id
     def findRouterById(self,rtr_id):
         return sst.findComponentByName(self.getRouterNameForId(rtr_id))
     def _instanceRouter(self,rtr_id,rtr_type):
@@ -110,7 +110,7 @@ class topoSimple(Topo):
         for l in range(_params["num_ports"]):
             ep = self._getEndPoint(l).build(l, {})
             if ep:
-                link = sst.Link("link:%d"%l)
+                link = sst.Link("link_%d"%l)
                 if self.bundleEndpoints:
                     link.setNoCut()
                 link.connect(ep, (rtr, "port%d"%l, _params["link_lat"]) )
@@ -187,7 +187,7 @@ class topoTorus(Topo):
         return self.getRouterNameForLocation(self._idToLoc(rtr_id))
 
     def getRouterNameForLocation(self,location):
-        return "rtr.%s"%(self._formatShape(location))
+        return "rtr_%s"%(self._formatShape(location))
     
     def findRouterByLocation(self,location):
         return sst.findComponentByName(self.getRouterNameForLocation(location));
@@ -198,7 +198,7 @@ class topoTorus(Topo):
         num_routers = _params["num_peers"] // _params["torus:local_ports"]
         links = dict()
         def getLink(leftName, rightName, num):
-            name = "link.%s:%s:%d"%(leftName, rightName, num)
+            name = "link_%s_%s_%d"%(leftName, rightName, num)
             if name not in links:
                 links[name] = sst.Link(name)
             return links[name]
@@ -241,7 +241,7 @@ class topoTorus(Topo):
                 nodeID = int(_params["torus:local_ports"]) * i + n
                 ep = self._getEndPoint(nodeID).build(nodeID, {})
                 if ep:
-                    nicLink = sst.Link("nic.%d:%d"%(i, n))
+                    nicLink = sst.Link("nic_%d_%d"%(i, n))
                     if self.bundleEndpoints:
                        nicLink.setNoCut()
                     nicLink.connect(ep, (rtr, "port%d"%port, _params["link_lat"]))
@@ -317,7 +317,7 @@ class topoMesh(Topo):
         return self.getRouterNameForLocation(self._idToLoc(rtr_id))
 
     def getRouterNameForLocation(self,location):
-        return "rtr.%s"%(self._formatShape(location))
+        return "rtr_%s"%(self._formatShape(location))
     
     def findRouterByLocation(self,location):
         return sst.findComponentByName(self.getRouterNameForLocation(location));
@@ -328,7 +328,7 @@ class topoMesh(Topo):
         num_routers = _params["num_peers"] // _params["mesh:local_ports"]
         links = dict()
         def getLink(leftName, rightName, num):
-            name = "link.%s:%s:%d"%(leftName, rightName, num)
+            name = "link_%s_%s_%d"%(leftName, rightName, num)
             if name not in links:
                 links[name] = sst.Link(name)
             return links[name]
@@ -377,7 +377,7 @@ class topoMesh(Topo):
                 nodeID = int(_params["mesh:local_ports"]) * i + n
                 ep = self._getEndPoint(nodeID).build(nodeID, {})
                 if ep:
-                    nicLink = sst.Link("nic.%d:%d"%(i, n))
+                    nicLink = sst.Link("nic_%d_%d"%(i, n))
                     if self.bundleEndpoints:
                        nicLink.setNoCut()
                     nicLink.connect(ep, (rtr, "port%d"%port, _params["link_lat"]))
@@ -453,7 +453,7 @@ class topoHyperX(Topo):
         return self.getRouterNameForLocation(self._idToLoc(rtr_id))
 
     def getRouterNameForLocation(self,location):
-        return "rtr.%s"%(self._formatShape(location))
+        return "rtr_%s"%(self._formatShape(location))
     
     def findRouterByLocation(self,location):
         return sst.findComponentByName(self.getRouterNameForLocation(location));
@@ -465,9 +465,9 @@ class topoHyperX(Topo):
         def getLink(name1, name2, num):
             # Sort name1 and name2 so order doesn't matter
             if str(name1) < str(name2):
-                name = "link.%s:%s:%d"%(name1, name2, num)
+                name = "link_%s_%s_%d"%(name1, name2, num)
             else:
-                name = "link.%s:%s:%d"%(name2, name1, num)
+                name = "link_%s_%s_%d"%(name2, name1, num)
             if name not in links:
                 links[name] = sst.Link(name)
             #print("Getting link with name: %s"%name)
@@ -513,7 +513,7 @@ class topoHyperX(Topo):
                 nodeID = int(_params["hyperx:local_ports"]) * i + n
                 ep = self._getEndPoint(nodeID).build(nodeID, {})
                 if ep:
-                    nicLink = sst.Link("nic.%d:%d"%(i, n))
+                    nicLink = sst.Link("nic_%d_%d"%(i, n))
                     if self.bundleEndpoints:
                        nicLink.setNoCut()
                     nicLink.connect(ep, (rtr, "port%d"%port, _params["link_lat"]))
@@ -988,7 +988,7 @@ class TestEndPoint(EndPoint):
                 self.group_array[i] = self.group_array[i] + 1
 
 
-        nic = sst.Component("testNic.%d"%nID, "merlin.test_nic")
+        nic = sst.Component("testNic_%d"%nID, "merlin.test_nic")
         linkif = nic.setSubComponent("networkIF","merlin.linkcontrol")
         if ( "link_bw" in _params):
             linkif.addParam("link_bw",_params["link_bw"])
@@ -1035,7 +1035,7 @@ class BisectionEndPoint(EndPoint):
         pass
 
     def build(self, nID, extraKeys):
-        nic = sst.Component("bisectionNic.%d"%nID, "merlin.bisection_test")
+        nic = sst.Component("bisectionNic_%d"%nID, "merlin.bisection_test")
         linkif = nic.setSubComponent("networkIF","merlin.linkcontrol")
         if ( "link_bw" in _params):
             linkif.addParam("link_bw",_params["link_bw"])
@@ -1071,7 +1071,7 @@ class Pt2ptEndPoint(EndPoint):
         pass
 
     def build(self, nID, extraKeys):
-        nic = sst.Component("pt2ptNic.%d"%nID, "merlin.pt2pt_test")
+        nic = sst.Component("pt2ptNic_%d"%nID, "merlin.pt2pt_test")
         nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
         nic.addParams(_params.subset(extraKeys))
         nic.addParam("id", nID)
@@ -1100,7 +1100,7 @@ class OfferedLoadEndPoint(EndPoint):
         pass
 
     def build(self, nID, extraKeys):
-        nic = sst.Component("offered_load.%d"%nID, "merlin.offered_load")
+        nic = sst.Component("offered_load_%d"%nID, "merlin.offered_load")
         nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
         nic.addParams(_params.subset(extraKeys))
         nic.addParam("id", nID)
@@ -1135,7 +1135,7 @@ class ShiftEndPoint(EndPoint):
         pass
 
     def build(self, nID, extraKeys):
-        nic = sst.Component("shiftNic.%d"%nID, "merlin.shift_nic")
+        nic = sst.Component("shiftNic_%d"%nID, "merlin.shift_nic")
         nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
         nic.addParams(_params.subset(extraKeys))
         nic.addParam("id", nID)
@@ -1192,7 +1192,7 @@ class TrafficGenEndPoint(EndPoint):
             sys.exit(1)
 
     def build(self, nID, extraKeys):
-        nic = sst.Component("TrafficGen.%d"%nID, "merlin.trafficgen")
+        nic = sst.Component("TrafficGen_%d"%nID, "merlin.trafficgen")
         linkif = nic.setSubComponent("networkIF","merlin.linkcontrol")
         if ( "link_bw" in _params):
             linkif.addParam("link_bw",_params["link_bw"])

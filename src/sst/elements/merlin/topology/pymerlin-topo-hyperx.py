@@ -101,7 +101,7 @@ class topoHyperX(Topology):
         return self.getRouterNameForLocation(self._idToLoc(rtr_id))
         
     def getRouterNameForLocation(self,location):
-        return "%srtr.%s"%(self._prefix,self._formatShape(location))
+        return "%srtr_%s"%(self._prefix,self._formatShape(location))
     
     def findRouterByLocation(self,location):
         return sst.findComponentByName(self.getRouterNameForLocation(location))
@@ -131,9 +131,9 @@ class topoHyperX(Topology):
         def getLink(name1, name2, num):
             # Sort name1 and name2 so order doesn't matter
             if str(name1) < str(name2):
-                name = "link.%s:%s:%d"%(name1, name2, num)
+                name = "link_%s_%s_%d"%(name1, name2, num)
             else:
-                name = "link.%s:%s:%d"%(name2, name1, num)
+                name = "link_%s_%s_%d"%(name2, name1, num)
             if name not in links:
                 links[name] = sst.Link(name)
             #print("Getting link with name: %s"%name)
@@ -174,7 +174,7 @@ class topoHyperX(Topology):
                 nodeID = local_ports * i + n
                 (ep, port_name) = endpoint.build(nodeID, {})
                 if ep:
-                    nicLink = sst.Link("nic.%d:%d"%(i, n))
+                    nicLink = sst.Link("nic_%d_%d"%(i, n))
                     if self.bundleEndpoints:
                        nicLink.setNoCut()
                     nicLink.connect( (ep, port_name, self.host_link_latency), (rtr, "port%d"%port, self.host_link_latency) )
