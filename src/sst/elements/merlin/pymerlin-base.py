@@ -766,7 +766,7 @@ class EmptyJob(Job):
         return "Empty Job"
 
     def build(self, nID, extraKeys):
-        nic = sst.Component("empty_node.%d"%nID, "merlin.simple_patterns.empty")
+        nic = sst.Component("empty_node_%d"%nID, "merlin.simple_patterns.empty")
         id = self._nid_map[nID]
 
         #  Add the linkcontrol

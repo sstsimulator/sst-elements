@@ -56,7 +56,7 @@ class topoDragonFly(Topology):
         return self.getRouterNameForLocation(rtr_id // self.routers_per_group, rtr_id % self.routers_per_group)
 
     def getRouterNameForLocation(self,group,rtr):
-        return "%srtr.G%dR%d"%(self._prefix,group,rtr)
+        return "%srtr_G%dR%d"%(self._prefix,group,rtr)
 
     def findRouterByLocation(self,group,rtr):
         return sst.findComponentByName(self.getRouterNameForLocation(group,rtr))
