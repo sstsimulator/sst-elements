@@ -1649,7 +1649,7 @@ protected:
                 //				output->verbose(CALL_INFO, 16, 0,
                 //"[decoder/LUI] -> reg: %" PRIu16 " / imm=%" PRId64 "\n", 					rt,
                 // imm_value_64);
-                bundle->addInstruction(new VanadisSetRegisterInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                bundle->addInstruction(new VanadisSetRegisterInstruction<int32_t>(
                     ins_addr, hw_thr, options, rt, imm_value_64));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_lui);
@@ -2331,8 +2331,8 @@ protected:
                     switch ( rd ) {
                     case 29:
                         bundle->addInstruction(
-                            new VanadisSetRegisterInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                                ins_addr, hw_thr, options, target_reg, (int64_t)getThreadLocalStoragePointer()));
+                            new VanadisSetRegisterInstruction<int32_t>(
+                                ins_addr, hw_thr, options, target_reg, static_cast<int32_t>(getThreadLocalStoragePointer())));
                         insertDecodeFault = false;
                         break;
                     }
