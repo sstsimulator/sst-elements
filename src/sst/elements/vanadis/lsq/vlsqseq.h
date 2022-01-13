@@ -211,16 +211,22 @@ public:
     }
 
     void printLSQ() {
-        output->verbose(CALL_INFO, 16, 0, "-- LSQ Seq / Size: %" PRIu64 " ----------------\n", (uint64_t)op_q.size());
+		  if( op_q.size() > 0 ) {
+        		output->verbose(CALL_INFO, 16, 0, "-- LSQ Seq / Size: %" PRIu64 " ----------------\n", (uint64_t)op_q.size());
 
-        for (auto op_q_itr = op_q.begin(); op_q_itr != op_q.end(); op_q_itr++) {
-            (*op_q_itr)->print(output);
-        }
+      	  for (auto op_q_itr = op_q.begin(); op_q_itr != op_q.end(); op_q_itr++) {
+   	         (*op_q_itr)->print(output);
+	        }
+		  }
     }
 
     virtual void tick(uint64_t cycle) {
-        output->verbose(CALL_INFO, 16, 0, "ticking load/store queue at cycle %" PRIu64 " lsq size: %" PRIu64 "\n",
-                        (uint64_t)cycle, (uint64_t)op_q.size());
+		  if( op_q.size() > 0 ) {
+	        output->verbose(CALL_INFO, 16, 0, "ticking load/store queue at cycle %" PRIu64 " lsq size: %" PRIu64 "\n",
+   	                     (uint64_t)cycle, (uint64_t)op_q.size());
+		  } else {
+				return;
+		  }
 
         if (output->getVerboseLevel() >= 16) {
             printLSQ();
@@ -259,8 +265,8 @@ public:
 
                     load_ins->computeLoadAddress(output, reg_file, &load_addr, &load_width);
 
-                    output->verbose(CALL_INFO, 8, 0, "--> issue load for 0x%llx width: %" PRIu16 " bytes.\n", load_addr,
-                                    load_width);
+                    output->verbose(CALL_INFO, 8, 0, "--> issue load for 0x%llx width: %" PRIu16 " bytes / ins: 0x%llx\n", load_addr,
+                                    load_width, load_ins->getInstructionAddress());
                     load_addr = load_addr & address_mask;
 
                     StandardMem::Request* load_req;
@@ -355,9 +361,9 @@ public:
 
                     output->verbose(CALL_INFO, 8, 0,
                                     "--> issue store at 0x%llx width: %" PRIu16 " bytes, value-reg: %" PRIu16
-                                    " / partial: %s / offset: %" PRIu16 "\n",
+                                    " / partial: %s / offset: %" PRIu16 " / ins: 0x%llx\n",
                                     store_addr, store_width, value_reg, store_ins->isPartialStore() ? "yes" : "no",
-                                    reg_offset);
+                                    reg_offset, store_ins->getInstructionAddress());
 
                     if (store_addr < 4096) {
                         output->verbose(CALL_INFO, 16, 0,

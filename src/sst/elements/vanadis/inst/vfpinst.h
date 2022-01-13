@@ -67,6 +67,13 @@ protected:
 		} else {
 			fpflags->clearOverflow();
 		}
+
+		if(std::fpclassify(value) == FP_SUBNORMAL) {
+			fpflags->setUnderflow();
+			update_fp_flags = true;
+		} else {
+			fpflags->clearUnderflow();
+		}
 	 }
 };
 
