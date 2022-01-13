@@ -1057,10 +1057,13 @@ protected:
             case 0x37:
             {
                 // LUI
-                processU<int64_t>(ins, op_code, rd, simm64);
+					 int32_t uimm32 = 0;
+                processU<int32_t>(ins, op_code, rd, uimm32);;
 
-                bundle->addInstruction(new VanadisSetRegisterInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                    ins_address, hw_thr, options, rd, simm64));
+					 output->verbose(CALL_INFO, 16, 0, "----> LUI %" PRIu16 " <- 0x%lx\n", rd, uimm32);
+
+                bundle->addInstruction(new VanadisSetRegisterInstruction<int32_t>(
+                    ins_address, hw_thr, options, rd, uimm32));
                 decode_fault = false;
             } break;
             case 0x17:
@@ -2063,7 +2066,7 @@ protected:
                         CALL_INFO, 16, 0, "-----> RVC load imediate (LI) reg: %" PRIu16 ", imm=%" PRId64 "\n", rd, imm);
 
                     bundle->addInstruction(
-                        new VanadisSetRegisterInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                        new VanadisSetRegisterInstruction<int64_t>(
                             ins_address, hw_thr, options, rd, imm));
                     decode_fault = false;
                 } break;
@@ -2074,18 +2077,22 @@ protected:
 
                     if ( rd != 2 ) {
                         // LUI
-                        uint32_t imm_1612 = (ins & 0x7C) << 9;
-                        uint32_t imm_17   = (ins & 0x1000) << 4;
+                        uint32_t imm_1612 = (ins & 0x7C) << 10;
+                        uint32_t imm_17   = (ins & 0x1000) << 5;
 
-                        int64_t imm = (imm_17 | imm_1612);
+                        int32_t imm = (imm_17 | imm_1612);
+
+								if(imm_17 != 0) {
+									imm = imm | 0xFFFC0000;
+								}
 
                         output->verbose(
                             CALL_INFO, 16, 0,
-                            "-----> RVC load imediate (LUI) reg: %" PRIu16 ", imm=%" PRId64 " (0x%llx)\n", rd, imm,
+                            "-----> RVC load imediate (LUI) reg: %" PRIu16 ", imm=%" PRId32 " (0x%lx)\n", rd, imm,
                             imm);
 
                         bundle->addInstruction(
-                            new VanadisSetRegisterInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                            new VanadisSetRegisterInstruction<int32_t>(
                                 ins_address, hw_thr, options, rd, imm));
                         decode_fault = false;
                     }
