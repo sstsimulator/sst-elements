@@ -1616,7 +1616,7 @@ protected:
                 case MIPS_SPEC_OP_MASK_BLTZ:
                 {
                     bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<
-                                           VanadisRegisterFormat::VANADIS_FORMAT_INT32, REG_COMPARE_LT>(
+                                           int32_t, REG_COMPARE_LT>(
                         ins_addr, hw_thr, options, 4, rs, 0, offset_value_64 + 4, VANADIS_SINGLE_DELAY_SLOT));
                     insertDecodeFault = false;
                     MIPS_INC_DECODE_STAT(stat_decode_bltz);
@@ -1633,7 +1633,7 @@ protected:
                 case MIPS_SPEC_OP_MASK_BGEZ:
                 {
                     bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<
-                                           VanadisRegisterFormat::VANADIS_FORMAT_INT32, REG_COMPARE_GTE>(
+                                           int32_t, REG_COMPARE_GTE>(
                         ins_addr, hw_thr, options, 4, rs, 0, offset_value_64 + 4, VANADIS_SINGLE_DELAY_SLOT));
                     insertDecodeFault = false;
                     MIPS_INC_DECODE_STAT(stat_decode_bgez);
@@ -1690,7 +1690,7 @@ protected:
                 //"[decoder/BGTZ]: -> r1: %" PRIu16 " offset: %" PRId64 "\n",
                 //                                        rs, imm_value_64);
                 bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<
-                                       VanadisRegisterFormat::VANADIS_FORMAT_INT32, REG_COMPARE_GT>(
+                                       int32_t, REG_COMPARE_GT>(
                     ins_addr, hw_thr, options, 4, rs, 0, imm_value_64 + 4, VANADIS_SINGLE_DELAY_SLOT));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_bgtz);
@@ -1704,7 +1704,7 @@ protected:
                 //"[decoder/BLEZ]: -> r1: %" PRIu16 " offset: %" PRId64 "\n",
                 //                                        rs, imm_value_64);
                 bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<
-                                       VanadisRegisterFormat::VANADIS_FORMAT_INT32, REG_COMPARE_LTE>(
+                                       int32_t, REG_COMPARE_LTE>(
                     ins_addr, hw_thr, options, 4, rs, 0, imm_value_64 + 4, VANADIS_SINGLE_DELAY_SLOT));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_blez);
