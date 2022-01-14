@@ -143,11 +143,8 @@ public:
     void performDivFlagChecks(const T value)
     {
         if ( std::fpclassify(value) == FP_ZERO ) {
-            fpflags->setDivZero();
+            fpflags.setDivZero();
             update_fp_flags = true;
-        }
-        else {
-            fpflags->clearDivZero();
         }
     }
 };

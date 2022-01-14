@@ -103,4 +103,9 @@
 // Truncate
 #include "inst/vtrunc.h"
 
+// FP Flags
+#include "inst/vfpflagssetimm.h"
+#include "inst/vfpflagsset.h"
+#include "inst/vfpflagsread.h"
+
 #endif

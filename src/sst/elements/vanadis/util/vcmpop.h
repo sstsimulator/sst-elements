@@ -191,7 +191,6 @@ template <VanadisRegisterCompareType compareType, typename T>
 bool
 registerCompareImm(VanadisRegisterFile* regFile, VanadisInstruction* ins,
                    SST::Output* output, uint16_t left, T right_value) {
-
     const T left_value = regFile->getIntReg<T>(left);
 
     return registerCompareValues<compareType, T>(regFile, ins, output, left_value, right_value);
