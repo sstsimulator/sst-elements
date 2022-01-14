@@ -21,7 +21,7 @@
 namespace SST {
 namespace Vanadis {
 
-template <VanadisRegisterFormat register_format>
+template<typename gpr_format>
 class VanadisMultiplyInstruction : public VanadisInstruction
 {
 public:
@@ -39,14 +39,21 @@ public:
     VanadisMultiplyInstruction* clone() override { return new VanadisMultiplyInstruction(*this); }
 
     VanadisFunctionalUnitType getInstFuncType() const override { return INST_INT_ARITH; }
-    const char*               getInstCode() const override { return "MUL"; }
+    const char*               getInstCode() const override
+	 {
+			if(sizeof(gpr_format) == 8) {
+				return "MUL64";
+			} else {
+				return "MUL32";
+			}
+    }
 
     void printToBuffer(char* buffer, size_t buffer_size) override
     {
         snprintf(
             buffer, buffer_size,
-            "MUL     %5" PRIu16 " <- %5" PRIu16 " * %5" PRIu16 " (phys: %5" PRIu16 " <- %5" PRIu16 " * %5" PRIu16 ")",
-            isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1], phys_int_regs_out[0], phys_int_regs_in[0],
+            "%s   %5" PRIu16 " <- %5" PRIu16 " * %5" PRIu16 " (phys: %5" PRIu16 " <- %5" PRIu16 " * %5" PRIu16 ")",
+            getInstCode(), isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1], phys_int_regs_out[0], phys_int_regs_in[0],
             phys_int_regs_in[1]);
     }
 
@@ -55,31 +62,16 @@ public:
 #ifdef VANADIS_BUILD_DEBUG
         output->verbose(
             CALL_INFO, 16, 0,
-            "Execute: (addr=%p) MUL phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
+            "Execute: 0x%llx %s phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
             " / in=%" PRIu16 ", %" PRIu16 "\n",
-            (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1],
+            getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1],
             isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);
 #endif
-        switch ( register_format ) {
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
-        {
-            const int64_t src_1 = regFile->getIntReg<int64_t>(phys_int_regs_in[0]);
-            const int64_t src_2 = regFile->getIntReg<int64_t>(phys_int_regs_in[1]);
 
-            regFile->setIntReg<int64_t>(phys_int_regs_out[0], (src_1) * (src_2));
-        } break;
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
-        {
-            const int32_t src_1 = regFile->getIntReg<int32_t>(phys_int_regs_in[0]);
-            const int32_t src_2 = regFile->getIntReg<int32_t>(phys_int_regs_in[1]);
+		  const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in[0]);
+		  const gpr_format src_2 = regFile->getIntReg<gpr_format>(phys_int_regs_in[1]);
 
-            regFile->setIntReg<int32_t>(phys_int_regs_out[0], (src_1) * (src_2));
-        } break;
-        default:
-        {
-            flagError();
-        } break;
-        }
+		  regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1 * src_2);
 
         markExecuted();
     }
