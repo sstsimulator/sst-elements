@@ -1135,8 +1135,7 @@ protected:
 
                         case MIPS_SPEC_OP_MASK_DIV:
                         {
-                            bundle->addInstruction(new VanadisDivideRemainderInstruction<
-                                                   VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
+                            bundle->addInstruction(new VanadisDivideRemainderInstruction<int32_t>(
                                 ins_addr, hw_thr, options, MIPS_REG_LO, MIPS_REG_HI, rs, rt));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_div);
@@ -1144,8 +1143,7 @@ protected:
 
                         case MIPS_SPEC_OP_MASK_DIVU:
                         {
-                            bundle->addInstruction(new VanadisDivideRemainderInstruction<
-                                                   VanadisRegisterFormat::VANADIS_FORMAT_INT32, false>(
+                            bundle->addInstruction(new VanadisDivideRemainderInstruction<uint32_t>(
                                 ins_addr, hw_thr, options, MIPS_REG_LO, MIPS_REG_HI, rs, rt));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_divu);
