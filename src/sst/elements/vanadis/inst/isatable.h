@@ -105,9 +105,9 @@ public:
 
     void setFPPhysReg(const uint16_t fp_reg, const uint16_t phys_reg) { fp_reg_ptr[fp_reg] = phys_reg; }
 
-    uint16_t getIntPhysReg(const uint16_t int_reg) { return int_reg_ptr[int_reg]; }
+    uint16_t getIntPhysReg(const uint16_t int_reg) { assert(int_reg < count_int_reg); return int_reg_ptr[int_reg]; }
 
-    uint16_t getFPPhysReg(const uint16_t fp_reg) { return fp_reg_ptr[fp_reg]; }
+    uint16_t getFPPhysReg(const uint16_t fp_reg) { assert(fp_reg < count_fp_reg); return fp_reg_ptr[fp_reg]; }
 
     void reset(VanadisISATable* tbl)
     {
