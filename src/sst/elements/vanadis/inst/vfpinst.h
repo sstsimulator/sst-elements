@@ -42,37 +42,37 @@ public:
         VanadisInstruction(
             address, hw_thr, isa_opts, c_phys_int_reg_in, c_phys_int_reg_out, c_isa_int_reg_in, c_isa_int_reg_out,
             c_phys_fp_reg_in, c_phys_fp_reg_out, c_isa_fp_reg_in, c_isa_fp_reg_out),
-        fpflags(fp_flags),
+        pipeline_fpflags(fp_flags),
         update_fp_flags(false)
     {}
 
     VanadisFloatingPointInstruction(const VanadisFloatingPointInstruction& copy_me) :
         VanadisInstruction(copy_me),
         update_fp_flags(copy_me.update_fp_flags),
-        fpflags(copy_me.fpflags)
+        fpflags(copy_me.fpflags),
+		  pipeline_fpflags(copy_me.pipeline_fpflags)
     {}
 
     virtual bool updatesFPFlags() const { return update_fp_flags; }
-    virtual void performFPFlagsUpdate() const {}
+    virtual void performFPFlagsUpdate() const {
+		pipeline_fpflags->copy(fpflags);
+	 }
 
 protected:
     bool                       update_fp_flags;
-    VanadisFloatingPointFlags* fpflags;
+	 VanadisFloatingPointFlags* pipeline_fpflags;
+    VanadisFloatingPointFlags  fpflags;
 
 	 template<typename T>
     void performFlagChecks(const T value) {
 		if(std::fpclassify(value) == FP_INFINITE) {
-			fpflags->setOverflow();
+			fpflags.setOverflow();
 			update_fp_flags = true;
-		} else {
-			fpflags->clearOverflow();
 		}
 
 		if(std::fpclassify(value) == FP_SUBNORMAL) {
-			fpflags->setUnderflow();
+			fpflags.setUnderflow();
 			update_fp_flags = true;
-		} else {
-			fpflags->clearUnderflow();
 		}
 	 }
 };

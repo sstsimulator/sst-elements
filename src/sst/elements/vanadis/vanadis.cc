@@ -2032,8 +2032,10 @@ void
 VANADIS_COMPONENT::handleIncomingInstCacheEvent(StandardMem::Request* ev)
 {
 #ifdef VANADIS_BUILD_DEBUG
+    StandardMem::ReadResp* read_resp = static_cast<StandardMem::ReadResp*>(ev);
+
     output->verbose(
-        CALL_INFO, 16, 0, "-> Incoming i-cache event (addr=%p)...\n", static_cast<StandardMem::ReadResp*>(ev)->pAddr);
+        CALL_INFO, 16, 0, "-> Incoming i-cache event (addr=%p)...\n", read_resp->pAddr);
 #endif
     // Needs to get attached to the decoder
     bool hit = false;

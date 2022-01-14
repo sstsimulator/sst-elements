@@ -7,6 +7,23 @@ namespace Vanadis {
 
 enum class VanadisFPRoundingMode { ROUND_NEAREST, ROUND_TO_ZERO, ROUND_DOWN, ROUND_UP, ROUND_NEAREST_TO_MAX };
 
+uint64_t convertRoundingToInteger(VanadisFPRoundingMode mode) {
+	switch(mode) {
+	case VanadisFPRoundingMode::ROUND_NEAREST:
+		return 0;
+	case VanadisFPRoundingMode::ROUND_TO_ZERO:
+		return 1;
+	case VanadisFPRoundingMode::ROUND_DOWN:
+		return 2;
+	case VanadisFPRoundingMode::ROUND_UP:
+		return 3;
+	case VanadisFPRoundingMode::ROUND_NEAREST_TO_MAX:
+		return 4;
+	default:
+		return 0;
+	}
+};
+
 class VanadisFloatingPointFlags
 {
 
@@ -19,6 +36,15 @@ public:
         f_inexact(false),
         round_mode(VanadisFPRoundingMode::ROUND_NEAREST)
     {}
+
+    void copy(const VanadisFloatingPointFlags& new_flags) {
+		f_invalidop = new_flags.f_invalidop;
+		f_divzero = new_flags.f_divzero;
+		f_overflow = new_flags.f_overflow;
+		f_underflow = new_flags.f_underflow;
+		f_inexact = new_flags.f_inexact;
+		round_mode = new_flags.round_mode;
+    }
 
     void setInvalidOp() { f_invalidop = true; }
     void setDivZero() { f_divzero = true; }

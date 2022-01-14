@@ -1277,7 +1277,7 @@ protected:
                     {
                         // CSRRS
                         output->verbose(
-                            CALL_INFO, 16, 0, "-----> CSRRS CSR: %" PRIu64 " / reg: %" PRIu16 "\n", uimm64, rd);
+                            CALL_INFO, 16, 0, "-----> CSRRS CSR: ins: 0x%llx / %" PRIu64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", ins_address, uimm64, rd, rs1);
                         // ignore for now?
 
                         // Switch based on the CSR being read
@@ -1290,24 +1290,20 @@ protected:
                                 "-----> CSRRS CSR: %" PRIu64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", uimm64, rd,
                                 rs1);
 
-                            if ( 0 == rd ) {
-                                bundle->addInstruction(
-                                    new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                                        ins_address, hw_thr, options, rd, rs1, 0));
-                                decode_fault = false;
-                            }
+										bundle->addInstruction(new VanadisFPFlagsReadInstruction<true, true, true>(ins_address, hw_thr, options, fpflags, rd));
+										bundle->addInstruction(new VanadisFPFlagsSetInstruction(ins_address, hw_thr, options, fpflags, rs1));
+
+                              decode_fault = false;
                         } break;
                         case 0x2:
                         {
-                            // Floating point rounding mode is being read
+                            // Floating point rounding mode is being read (frrm instruction)
                             output->verbose(
                                 CALL_INFO, 16, 0,
-                                "-------> Mapping read rounding-mode register, set this to 000 (round-to-nearest)\n");
-                            // TODO: we will set rounding mode to 000 (Round to nearest) always
-                            bundle->addInstruction(
-                                new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                                    ins_address, hw_thr, options, rd, 0, 0));
-                            decode_fault = false;
+                                "-------> Mapping read rounding-mode register.\n");
+
+										bundle->addInstruction(new VanadisFPFlagsReadInstruction<true, false, false>(ins_address, hw_thr, options, fpflags, rd));
+                              decode_fault = false;
                         } break;
                         }
                     } break;
@@ -1316,14 +1312,16 @@ protected:
                         // CSRRSI
                         output->verbose(
                             CALL_INFO, 16, 0,
-                            "-----> CSRRS CSRI: %" PRIu64 " / reg: %" PRIu16 " / UIMMM: %" PRIu16 "\n", uimm64, rd,
-                            rs1);
+                            "-----> CSRRS CSRRSI: ins: 0x%llx / %" PRIu64 " / reg: %" PRIu16 " / UIMMM: %" PRIu16 "\n", ins_address, uimm64, rd, rs1);
 
                         if ( 0 == rd ) {
-                            bundle->addInstruction(
-                                new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                                    ins_address, hw_thr, options, rd, 0, 0));
-                            decode_fault = false;
+										switch(uimm64) {
+									   case 1: {
+											// CSR register 1 maps to floating point flags
+											bundle->addInstruction(new VanadisFPFlagsSetImmInstruction(ins_address, hw_thr, options, fpflags, static_cast<uint64_t>(rs1)));
+      	                        decode_fault = false;
+											} break;
+										}
                         }
                     } break;
                     }
@@ -2336,7 +2334,7 @@ protected:
                         rvc_rs1, ins_address, imm_final, ins_address + imm_final);
 
                     bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<
-                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_EQ>(
+                                           int64_t, REG_COMPARE_EQ>(
                         ins_address, hw_thr, options, 2, rvc_rs1, 0, imm_final, VANADIS_NO_DELAY_SLOT));
                     decode_fault = false;
                 } break;
@@ -2360,7 +2358,7 @@ protected:
                         rvc_rs1, ins_address, imm_final, ins_address + imm_final);
 
                     bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<
-                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_NEQ>(
+                                           int64_t, REG_COMPARE_NEQ>(
                         ins_address, hw_thr, options, 2, rvc_rs1, 0, imm_final, VANADIS_NO_DELAY_SLOT));
                     decode_fault = false;
                 } break;
