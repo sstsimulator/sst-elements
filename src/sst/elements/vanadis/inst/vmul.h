@@ -42,10 +42,18 @@ public:
     const char*               getInstCode() const override
 	 {
 			if(sizeof(gpr_format) == 8) {
-				return "MUL64";
-			} else {
-				return "MUL32";
-			}
+            if(std::is_signed<gpr_format>::value) {
+               return "MUL64";
+            } else {
+               return "MULU64";
+            }
+       	} else {
+            if(std::is_signed<gpr_format>::value) {
+               return "MUL32";
+            } else {
+               return "MULU32";
+            }
+       	}
     }
 
     void printToBuffer(char* buffer, size_t buffer_size) override

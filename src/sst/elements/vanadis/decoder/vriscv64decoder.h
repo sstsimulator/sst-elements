@@ -971,7 +971,7 @@ protected:
                         output->verbose(
                             CALL_INFO, 16, 0, "-------> DIV %" PRIu16 " <-  %" PRIu16 " / %" PRIu16 "\n", rd, rs1, rs2);
                         bundle->addInstruction(
-                            new VanadisDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, true>(
+                            new VanadisDivideInstruction<int64_t>(
                                 ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
@@ -998,7 +998,7 @@ protected:
                             CALL_INFO, 16, 0, "-------> DIVU %" PRIu16 " <-  %" PRIu16 " / %" PRIu16 "\n", rd, rs1,
                             rs2);
                         bundle->addInstruction(
-                            new VanadisDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, false>(
+                            new VanadisDivideInstruction<uint64_t>(
                                 ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
@@ -1385,7 +1385,7 @@ protected:
                     {
                         // DIVW
                         bundle->addInstruction(
-                            new VanadisDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
+                            new VanadisDivideInstruction<int32_t>(
                                 ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
@@ -1407,7 +1407,7 @@ protected:
                     {
                         // DIVUW
                         bundle->addInstruction(
-                            new VanadisDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, false>(
+                            new VanadisDivideInstruction<uint32_t>(
                                 ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
