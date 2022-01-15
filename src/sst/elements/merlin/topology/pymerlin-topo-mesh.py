@@ -101,7 +101,7 @@ class _topoMeshBase(Topology):
         return self.getRouterNameForLocation(self._idToLoc(rtr_id))
         
     def getRouterNameForLocation(self,location):
-        return "%srtr.%s"%(self._prefix,self._formatShape(location))
+        return "%srtr_%s"%(self._prefix,self._formatShape(location))
     
     def findRouterByLocation(self,location):
         return sst.findComponentByName(self.getRouterNameForLocation(location))
@@ -130,7 +130,7 @@ class _topoMeshBase(Topology):
         
         links = dict()
         def getLink(leftName, rightName, num):
-            name = "link.%s:%s:%d"%(leftName, rightName, num)
+            name = "link_%s_%s_%d"%(leftName, rightName, num)
             if name not in links:
                 links[name] = sst.Link(name)
             return links[name]

@@ -234,7 +234,7 @@ class testcase_memHierarchy_memHA(SSTTestCase):
                       "total_cycles" : [20, 'X', 20, 20, 20],    # This stat is set once at the end of sim. May vary in all fields
                       "MSHR_occupancy" : [0, 0, 20, 0, 0] }      # Only diffs in number of cycles
 
-        filesAreTheSame, statDiffs, othDiffs = self._diffStatFiles(reffile, outfile, ignore_lines, tol_stats, True)
+        filesAreTheSame, statDiffs, othDiffs = testing_stat_output_diff(outfile, reffile, ignore_lines, tol_stats, True)
 
         # Perform the tests
         if ignore_err_file is False:

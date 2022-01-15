@@ -49,6 +49,9 @@ inst/vfp2gpr.h \
 inst/vfpadd.h \
 inst/vfpconv.h \
 inst/vfpdiv.h \
+inst/vfpflagsread.h \
+inst/vfpflagsset.h \
+inst/vfpflagssetimm.h \
 inst/vfpinst.h \
 inst/vfpmul.h \
 inst/vfpscmp.h \
@@ -159,6 +162,9 @@ EXTRA_DIST = \
 	tests/small/basic-io/hello-world.c \
 	tests/small/basic-io/hello-world.stderr.gold \
 	tests/small/basic-io/hello-world.stdout.gold \
+	tests/small/basic-io/hello-world.cc \
+	tests/small/basic-io/hello-world-CC.stderr.gold \
+	tests/small/basic-io/hello-world-CC.stdout.gold \
 	tests/small/basic-math/Makefile \
 	tests/small/basic-math/sqrt-double.c \
 	tests/small/basic-math/sqrt-double.stderr.gold \

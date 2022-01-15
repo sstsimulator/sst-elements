@@ -1445,7 +1445,7 @@ StandardCPU: Test Completed Successfuly
  mmio_l1.MSHR_occupancy : Accumulator : Sum.u64 = 10768; SumSQ.u64 = 38570; Count.u64 = 26647; Min.u64 = 0; Max.u64 = 4; 
  mmio_l1.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory:cpulink.packet_latency : Accumulator : Sum.u64 = 13006; SumSQ.u64 = 4189248; Count.u64 = 54; Min.u64 = 65; Max.u64 = 648; 
- directory:cpulink.send_bit_count : Accumulator : Sum.u64 = 16960; SumSQ.u64 = 8753152; Count.u64 = 57; Min.u64 = 64; Max.u64 = 576; 
+ directory:cpulink.send_bit_count : Accumulator : Sum.u64 = 18496; SumSQ.u64 = 9736192; Count.u64 = 57; Min.u64 = 64; Max.u64 = 576; 
  directory:cpulink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory:cpulink.idle_time : Accumulator : Sum.u64 = 8784000; SumSQ.u64 = 65168500000000; Count.u64 = 7; Min.u64 = 0; Max.u64 = 8065000; 
  directory.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

@@ -1349,7 +1349,7 @@ TrivialCPU cpu3 Finished after 2000 issued reads, 2000 returned (1599330 clocks)
  l3cache.MSHR_occupancy : Accumulator : Sum.u64 = 124705097; SumSQ.u64 = 4838477943; Count.u64 = 3221700; Min.u64 = 0; Max.u64 = 40; 
  l3cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dirctrl:cpulink.packet_latency : Accumulator : Sum.u64 = 11095188; SumSQ.u64 = 23964077074; Count.u64 = 21635; Min.u64 = 13; Max.u64 = 4064; 
- dirctrl:cpulink.send_bit_count : Accumulator : Sum.u64 = 5672832; SumSQ.u64 = 2806112256; Count.u64 = 22366; Min.u64 = 64; Max.u64 = 576; 
+ dirctrl:cpulink.send_bit_count : Accumulator : Sum.u64 = 6047104; SumSQ.u64 = 3045646336; Count.u64 = 22366; Min.u64 = 64; Max.u64 = 576; 
  dirctrl:cpulink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dirctrl:cpulink.idle_time : Accumulator : Sum.u64 = 424000; SumSQ.u64 = 102056000000; Count.u64 = 2; Min.u64 = 134000; Max.u64 = 290000; 
  dirctrl.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

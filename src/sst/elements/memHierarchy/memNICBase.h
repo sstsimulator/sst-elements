@@ -281,7 +281,7 @@ class MemNICBase : public MemLinkBase {
                 } else {
                     MemRtrEvent * mre = static_cast<MemRtrEvent*>(payload);
                     MemEventInit *ev = static_cast<MemEventInit*>(mre->event);
-                    dbg.debug(_L10_, "%s (memNICBase) received mre during init. %s\n", getName().c_str(), mre->event->getVerboseString().c_str());
+                    dbg.debug(_L10_, "%s (memNICBase) received mre during init. %s\n", getName().c_str(), mre->event->getVerboseString(dlevel).c_str());
 
                     /*
                      * Event is for us if:
@@ -302,7 +302,7 @@ class MemNICBase : public MemLinkBase {
                             delete ev;
                             delete mre;
                         } else {
-                            dbg.debug(_L10_, "%s received init message: %s\n", getName().c_str(), mEvEndPt->getVerboseString().c_str());
+                            dbg.debug(_L10_, "%s received init message: %s\n", getName().c_str(), mEvEndPt->getVerboseString(dlevel).c_str());
                             std::vector<std::pair<MemRegion,bool>> regions = mEvEndPt->getRegions();
                             for (auto it = regions.begin(); it != regions.end(); it++) {
                                 EndpointInfo epInfo;
@@ -396,7 +396,7 @@ class MemNICBase : public MemLinkBase {
 
             if (!initWaitForDst.empty()) {
                 dbg.fatal(CALL_INFO, -1, "%s, Error: Unable to find destination for init event %s\n",
-                        getName().c_str(), (*initWaitForDst.begin())->getVerboseString().c_str());
+                        getName().c_str(), (*initWaitForDst.begin())->getVerboseString(dlevel).c_str());
             }
         }
 

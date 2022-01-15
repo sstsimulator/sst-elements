@@ -56,7 +56,7 @@ using namespace SST::MemHierarchy;
 /*************************** Memory Controller ********************/
 MemController::MemController(ComponentId_t id, Params &params) : Component(id), backing_(NULL) {
 
-    int debugLevel = params.find<int>("debug_level", 0);
+    dlevel = params.find<int>("debug_level", 0);
 
     fixupParam( params, "backend", "backendConvertor.backend" );
     fixupParams( params, "backend.", "backendConvertor.backend." );
@@ -64,9 +64,9 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     fixupParams( params, "max_requests_per_cycle", "backendConvertor.backend.max_requests_per_cycle" );
 
     uint32_t requestWidth = params.find<uint32_t>("backendConvertor.request_width", 64);
-
+    
     // Output for debug
-    dbg.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
+    dbg.init("", dlevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
 
     // Debug address
     std::vector<Addr> addrArr;
@@ -336,7 +336,7 @@ void MemController::handleEvent(SST::Event* event) {
 
     if (is_debug_event(meb)) {
         Debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
-                    Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), meb->getVerboseString().c_str());
+                    Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), meb->getVerboseString(dlevel).c_str());
     }
 
     Command cmd = meb->getCmd();
@@ -352,10 +352,10 @@ void MemController::handleEvent(SST::Event* event) {
     // Check that the request address(es) belong to this memory
     // Disabled except in debug mode
     if (!region_.contains(ev->getBaseAddr())) {
-        out.fatal(CALL_INFO, -1, "%s, Error: Received an event with a base address that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString().c_str());
+        out.fatal(CALL_INFO, -1, "%s, Error: Received an event with a base address that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString(dlevel).c_str());
     }
     if (!region_.contains(ev->getAddr())) {
-        out.fatal(CALL_INFO, -1, "%s, Error: Received an event with an address that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString().c_str());
+        out.fatal(CALL_INFO, -1, "%s, Error: Received an event with an address that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString(dlevel).c_str());
     }
     
     bool noncacheable = ev->queryFlag(MemEvent::F_NONCACHEABLE);
@@ -371,12 +371,12 @@ void MemController::handleEvent(SST::Event* event) {
         // then the only way for it to completely fall in our region is if our interleaving is contiguous (e.g., not reall interleaving)
         if (b0 < (chkAddr + ev->getSize() - 1)) {
             if ((b0 + 1) != a1) {
-                out.fatal(CALL_INFO, -1, "%s: Error: Received an event for an address range that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString().c_str());
+                out.fatal(CALL_INFO, -1, "%s: Error: Received an event for an address range that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString(dlevel).c_str());
             }
         }
     } else if (ev->getSize() > 0) { // Contiguous address region, make sure last address of request falls in region
         if (!region_.contains(chkAddr + ev->getSize() - 1))
-        out.fatal(CALL_INFO, -1, "%s, Error: Received an event for an address range that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString().c_str());
+        out.fatal(CALL_INFO, -1, "%s, Error: Received an event for an address range that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString(dlevel).c_str());
     }
 #endif
 
@@ -454,11 +454,11 @@ Cycle_t MemController::turnClockOn() {
 void MemController::handleCustomEvent(MemEventBase * ev) {
     if (!customCommandHandler_)
         out.fatal(CALL_INFO, -1, "%s, Error: Received custom event but no handler loaded. Ev = %s. Time = %" PRIu64 "ns\n",
-                getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano());
+                getName().c_str(), ev->getVerboseString(dlevel).c_str(), getCurrentSimTimeNano());
 
     CustomCmdMemHandler::MemEventInfo evInfo = customCommandHandler_->receive(ev);
     if (evInfo.shootdown) {
-        out.verbose(CALL_INFO, 1, 0, "%s, WARNING: Custom event expects a shootdown but this memory controller does not support shootdowns. Ev = %s\n", getName().c_str(), ev->getVerboseString().c_str());
+        out.verbose(CALL_INFO, 1, 0, "%s, WARNING: Custom event expects a shootdown but this memory controller does not support shootdowns. Ev = %s\n", getName().c_str(), ev->getVerboseString(dlevel).c_str());
     }
 
     CustomCmdInfo * info = customCommandHandler_->ready(ev);
@@ -478,7 +478,7 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
 
     if (is_debug_event(evb)) {
         Debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Resp    (%s)\n",
-                    Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), evb->getVerboseString().c_str());
+                    Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), evb->getVerboseString(dlevel).c_str());
     }
 
     /* Handle custom events */
@@ -676,7 +676,7 @@ void MemController::processInitEvent( MemEventInit* me ) {
             backing_->set(addr, me->getPayload().size(), me->getPayload());
         }
     } else if (Command::NULLCMD == me->getCmd()) {
-        if (is_debug_event(me)) { Debug(_L9_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString().c_str()); }
+        if (is_debug_event(me)) { Debug(_L9_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString(dlevel).c_str()); }
     } else {
         out.debug(_L10_,"Memory received unexpected Init Command: %d\n", (int)me->getCmd());
     }
@@ -727,7 +727,7 @@ void MemController::printStatus(Output &statusOut) {
 
     statusOut.output("  Outstanding events: %zu\n", outstandingEvents_.size());
     for (std::map<SST::Event::id_type, MemEventBase*>::iterator it = outstandingEvents_.begin(); it != outstandingEvents_.end(); it++) {
-        statusOut.output("    %s\n", it->second->getVerboseString().c_str());
+        statusOut.output("    %s\n", it->second->getVerboseString(dlevel).c_str());
     }
 
     statusOut.output("  Link Status: ");
@@ -752,7 +752,7 @@ void MemController::emergencyShutdown() {
 }
 
 void MemController::printDataValue(Addr addr, std::vector<uint8_t>* data, bool set) {
-    if (dbg.getVerboseLevel() < 11) return;
+    if (dlevel < 11) return;
 
     std::string action = set ? "WRITE" : "READ";
     std::stringstream value;
