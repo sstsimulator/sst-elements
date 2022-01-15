@@ -21,7 +21,7 @@
 namespace SST {
 namespace Vanadis {
 
-template <VanadisRegisterFormat register_format, bool perform_signed>
+template<typename gpr_format>
 class VanadisModuloInstruction : public VanadisInstruction
 {
 public:
@@ -41,10 +41,19 @@ public:
 
     const char* getInstCode() const override
     {
-        if ( perform_signed ) { return "MOD"; }
-        else {
-            return "MODU";
-        }
+			if(sizeof(gpr_format) == 8) {
+				if(std::is_signed<gpr_format>::value) {
+					return "MOD64";
+				} else {
+					return "MODU64";
+				}
+			} else {
+				if(std::is_signed<gpr_format>::value) {
+					return "MOD32";
+				} else {
+					return "MODU32";
+				}
+			}
     }
 
     void printToBuffer(char* buffer, size_t buffer_size) override
@@ -61,57 +70,30 @@ public:
 #ifdef VANADIS_BUILD_DEBUG
         output->verbose(
             CALL_INFO, 16, 0,
-            "Execute: (addr=%p) %s phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
+            "Execute: 0x%llx %s phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
             " / in=%" PRIu16 ", %" PRIu16 "\n",
             (void*)getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0],
             phys_int_regs_in[1], isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);
 #endif
 
-        if ( VanadisRegisterFormat::VANADIS_FORMAT_INT64 == register_format ) {
-            if ( perform_signed ) {
-                const int64_t src_1 = regFile->getIntReg<int64_t>(phys_int_regs_in[0]);
-                const int64_t src_2 = regFile->getIntReg<int64_t>(phys_int_regs_in[1]);
+		const gpr_format src_1 = regFile->getIntReg<int64_t>(phys_int_regs_in[0]);
+		const gpr_format src_2 = regFile->getIntReg<int64_t>(phys_int_regs_in[1]);
 
-                if ( 0 == src_2 ) { regFile->setIntReg<int64_t>(phys_int_regs_out[0], src_1); }
-                else {
-                    regFile->setIntReg<int64_t>(phys_int_regs_out[0], ((src_1) % (src_2)));
-                }
-            }
-            else {
-                const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
-                const uint64_t src_2 = regFile->getIntReg<uint64_t>(phys_int_regs_in[1]);
+		if( 0 == src_2 ) {
+			if(std::is_signed<gpr_format>::value) {
+				regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1, true);
+			} else {
+				regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1, false);
+			}
+		} else {
+			if(std::is_signed<gpr_format>::value) {
+				regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1 % src_2, true);
+			} else {
+				regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1 % src_2, false);
+			}
+		}
 
-                if ( 0 == src_2 ) { regFile->setIntReg<uint64_t>(phys_int_regs_out[0], src_1); }
-                else {
-                    regFile->setIntReg<uint64_t>(phys_int_regs_out[0], ((src_1) % (src_2)));
-                }
-            }
-        }
-        else if ( VanadisRegisterFormat::VANADIS_FORMAT_INT32 == register_format ) {
-            if ( perform_signed ) {
-                const int32_t src_1 = regFile->getIntReg<int32_t>(phys_int_regs_in[0]);
-                const int32_t src_2 = regFile->getIntReg<int32_t>(phys_int_regs_in[1]);
-
-                if ( 0 == src_2 ) { regFile->setIntReg<int32_t>(phys_int_regs_out[0], src_1); }
-                else {
-                    regFile->setIntReg<int32_t>(phys_int_regs_out[0], ((src_1) % (src_2)));
-                }
-            }
-            else {
-                const uint32_t src_1 = regFile->getIntReg<uint32_t>(phys_int_regs_in[0]);
-                const uint32_t src_2 = regFile->getIntReg<uint32_t>(phys_int_regs_in[1]);
-
-                if ( 0 == src_2 ) { regFile->setIntReg<uint32_t>(phys_int_regs_out[0], src_1); }
-                else {
-                    regFile->setIntReg<uint32_t>(phys_int_regs_out[0], ((src_1) % (src_2)));
-                }
-            }
-        }
-        else {
-            flagError();
-        }
-
-        markExecuted();
+      markExecuted();
     }
 };
 

@@ -1046,7 +1046,7 @@ protected:
                         output->verbose(
                             CALL_INFO, 16, 0, "-----> REMU %" PRIu16 " <- %" PRIu16 " %% %" PRIu16 "\n", rd, rs1, rs2);
                         bundle->addInstruction(
-                            new VanadisModuloInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, false>(
+                            new VanadisModuloInstruction<uint64_t>(
                                 ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
@@ -1431,7 +1431,7 @@ protected:
                         output->verbose(
                             CALL_INFO, 16, 0, "----> REMW %" PRIu16 " <- %" PRIu16 " %% %" PRIu16 "\n", rd, rs1, rs2);
                         bundle->addInstruction(
-                            new VanadisModuloInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
+                            new VanadisModuloInstruction<int32_t>(
                                 ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
@@ -1446,7 +1446,7 @@ protected:
                         output->verbose(
                             CALL_INFO, 16, 0, "----> REMUW %" PRIu16 " <- %" PRIu16 " %% %" PRIu16 "\n", rd, rs1, rs2);
                         bundle->addInstruction(
-                            new VanadisModuloInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, false>(
+                            new VanadisModuloInstruction<uint32_t>(
                                 ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
