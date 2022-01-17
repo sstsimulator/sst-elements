@@ -9,5 +9,9 @@ hello-world: hello-world.c
 hello-world-CC: hello-world.cc
 	$(CXX) -o hello-world-CC -O3 -static hello-world.cc
 
+printf-check: printf-check.c
+	$(CC) -o printf-check -O3 printf-check.c
+
 clean:
-	rm hello-world hello-world-CC
+	rm hello-world hello-world-CC printf-check
+
