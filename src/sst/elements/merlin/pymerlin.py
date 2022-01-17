@@ -805,7 +805,7 @@ class topoDragonFly(Topo):
         return ret
         
     def getRouterNameForLocation(self,group,rtr):
-        return "rtr:G%dR%d"%(group,rtr)
+        return "rtr_G%dR%d"%(group,rtr)
     
     def findRouterByLocation(self,group,rtr):
         return sst.findComponentByName(self.getRouterNameForLocation(group,rtr))
@@ -881,7 +881,7 @@ class topoDragonFly(Topo):
             dest = max(dest_grp, g)
 
             #getLink("link:g%dg%dr%d"%(g, src, dst)), "port%d"%port, _params["link_lat"])
-            return getLink("link:g%dg%dr%d"%(src,dest,link_num))
+            return getLink("link_g%dg%dr%d"%(src,dest,link_num))
 
         #########################
 
@@ -913,7 +913,7 @@ class topoDragonFly(Topo):
                 for p in range(_params["dragonfly:hosts_per_router"]):
                     ep = self._getEndPoint(nic_num).build(nic_num, {})
                     if ep:
-                        link = sst.Link("link:g%dr%dh%d"%(g, r, p))
+                        link = sst.Link("link_g%dr%dh%d"%(g, r, p))
                         if self.bundleEndpoints:
                             link.setNoCut()
                         link.connect(ep, (rtr, "port%d"%port, _params["link_lat"]) )
@@ -924,7 +924,7 @@ class topoDragonFly(Topo):
                     if p != r:
                         src = min(p,r)
                         dst = max(p,r)
-                        rtr.addLink(getLink("link:g%dr%dr%d"%(g, src, dst)), "port%d"%port, _params["link_lat"])
+                        rtr.addLink(getLink("link_g%dr%dr%d"%(g, src, dst)), "port%d"%port, _params["link_lat"])
                         port = port + 1
 
                 for p in range(_params["dragonfly:intergroup_per_router"]):

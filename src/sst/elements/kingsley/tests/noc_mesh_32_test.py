@@ -11,7 +11,7 @@ y_size = 4
 
 links = dict()
 def getLink(name1, name2):
-    name = "link.%s:%s"%(name1, name2)
+    name = "link.%s_%s"%(name1, name2)
     if name not in links:
         links[name] = sst.Link(name)
     return links[name]
