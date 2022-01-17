@@ -148,7 +148,7 @@ class topoDragonFly(Topology):
             dest = max(dest_grp, g)
 
             #getLink("link:g%dg%dr%d"%(g, src, dst)), "port%d"%port, self.params["link_lat"])
-            return getLink("%sglobal_link:g%dg%dr%d"%(self._prefix,src,dest,link_num))
+            return getLink("%sglobal_link_g%dg%dr%d"%(self._prefix,src,dest,link_num))
 
         #########################
 
@@ -177,7 +177,7 @@ class topoDragonFly(Topology):
                     #(nic, port_name) = endpoint.build(nic_num, {"num_peers":num_peers})
                     (nic, port_name) = endpoint.build(nic_num, {})
                     if nic:
-                        link = sst.Link("link:g%dr%dh%d"%(g, r, p))
+                        link = sst.Link("link_g%dr%dh%d"%(g, r, p))
                         #network_interface.build(nic,slot,0,link,self.host_link_latency)
                         link.connect( (nic, port_name, self.host_link_latency), (rtr, "port%d"%port, self.host_link_latency) )
                         #link.setNoCut()
@@ -189,7 +189,7 @@ class topoDragonFly(Topology):
                     if p != r:
                         src = min(p,r)
                         dst = max(p,r)
-                        rtr.addLink(getLink("link:g%dr%dr%d"%(g, src, dst)), "port%d"%port, self.link_latency)
+                        rtr.addLink(getLink("link_g%dr%dr%d"%(g, src, dst)), "port%d"%port, self.link_latency)
                         port = port + 1
 
                 for p in range(igpr):
