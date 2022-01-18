@@ -169,7 +169,7 @@ class topoDragonFly(Topology):
                 if router_num == 0:
                     # Need to send in the global_port_map
                     #map_str = str(self.global_link_map).strip('[]')
-                    #rtr.addParam("dragonfly:global_link_map",map_str)
+                    #rtr.addParam("dragonfly.global_link_map",map_str)
                     sub.addParam("global_link_map",self.global_link_map)
 
                 port = 0

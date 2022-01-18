@@ -20,13 +20,13 @@ if __name__ == "__main__":
     endPoint = TestEndPoint()
 
 
-    sst.merlin._params["dragonfly:hosts_per_router"] = "2"
-    sst.merlin._params["dragonfly:routers_per_group"] = "4"
-    sst.merlin._params["dragonfly:intergroup_links"] = "1"
-    sst.merlin._params["dragonfly:num_groups"] = "9"
-    sst.merlin._params["dragonfly:algorithm"] = "minimal"
-    #sst.merlin._params["dragonfly:algorithm"] = "adaptive-local"
-    #sst.merlin._params["dragonfly:adaptive_threshold"] = "2.0"
+    sst.merlin._params["dragonfly.hosts_per_router"] = "2"
+    sst.merlin._params["dragonfly.routers_per_group"] = "4"
+    sst.merlin._params["dragonfly.intergroup_links"] = "1"
+    sst.merlin._params["dragonfly.num_groups"] = "9"
+    sst.merlin._params["dragonfly.algorithm"] = "minimal"
+    #sst.merlin._params["dragonfly.algorithm"] = "adaptive-local"
+    #sst.merlin._params["dragonfly.adaptive_threshold"] = "2.0"
 
     #glm = [0, 15, 1, 14, 2, 13, 3, 12, 4, 11, 5, 10, 6, 9, 7, 8]
     #topo.setGlobalLinkMap(glm)
@@ -34,9 +34,9 @@ if __name__ == "__main__":
 
 
     sst.merlin._params["link_bw"] = "4GB/s"
-    #sst.merlin._params["link_bw:host"] = "2GB/s"
-    #sst.merlin._params["link_bw:group"] = "1GB/s"
-    #sst.merlin._params["link_bw:global"] = "1GB/s"
+    #sst.merlin._params["link_bw.host"] = "2GB/s"
+    #sst.merlin._params["link_bw.group"] = "1GB/s"
+    #sst.merlin._params["link_bw.global"] = "1GB/s"
     sst.merlin._params["link_lat"] = "20ns"
     sst.merlin._params["flit_size"] = "8B"
     sst.merlin._params["xbar_bw"] = "4GB/s"

@@ -41,9 +41,10 @@ public:
         SST::Merlin::Topology)
 
     SST_ELI_DOCUMENT_PARAMS(
-        {"fattree:shape",               "Shape of the fattree"},
-        {"fattree:routing_alg",         "Routing algorithm to use. [deterministic | adaptive]","deterministic"},
-        {"fattree:adaptive_threshold",  "Threshold used to determine if a packet will adaptively route."},
+        // Parameters needed for use with old merlin python module
+        {"fattree.shape",               "Shape of the fattree"},
+        {"fattree.routing_alg",         "Routing algorithm to use. [deterministic | adaptive]","deterministic"},
+        {"fattree.adaptive_threshold",  "Threshold used to determine if a packet will adaptively route."},
 
         {"shape",               "Shape of the fattree"},
         {"routing_alg",         "Routing algorithm to use. [deterministic | adaptive]","deterministic"},

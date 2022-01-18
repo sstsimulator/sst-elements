@@ -75,9 +75,9 @@ routerParams = {"topology": "merlin.torus",
                 "input_buf_size" : "4KiB",
                 "output_buf_size" : "4KiB",
                 "flit_size" : flit_size,
-                "torus:shape" : PIMs+1,
-                "torus:width" : 1,
-                "torus:local_ports": localPorts ,
+                "torus.shape" : PIMs+1,
+                "torus.width" : 1,
+                "torus.local_ports": localPorts ,
                 "num_ports" : localPorts + 2}
 
 def makeAriel():
