@@ -49,11 +49,11 @@ memory = comp_memctrl.setSubComponent("backend", "memHierarchy.goblinHMCSim")
 memory.addParams({
       "access_time" : "1000 ns",
       "mem_size" : "512MiB",
-      "trace-banks" : "1",
-      "trace-queue" : "1",
-      "trace-cmds" : "1",
-      "trace-latency" : "1",
-      "trace-stalls" : "1"
+      "trace_banks" : "1",
+      "trace_queue" : "1",
+      "trace_cmds" : "1",
+      "trace_latency" : "1",
+      "trace_stalls" : "1"
 })
 
 
