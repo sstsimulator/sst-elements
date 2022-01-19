@@ -209,28 +209,28 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(ComponentId_t id, Params& params) : Ext
 
 	hmc_trace_level  = 0;
 
-	if (params.find<bool>("trace-banks", false)) {
+	if (params.find<bool>("trace_banks", false)) {
 		hmc_trace_level = hmc_trace_level | HMC_TRACE_BANK;
 	}
 
-	if (params.find<bool>("trace-queue", false)) {
+	if (params.find<bool>("trace_queue", false)) {
 		hmc_trace_level = hmc_trace_level | HMC_TRACE_QUEUE;
 	}
 
-	if (params.find<bool>("trace-cmds", false)) {
+	if (params.find<bool>("trace_cmds", false)) {
 		hmc_trace_level = hmc_trace_level | HMC_TRACE_CMD;
 	}
 
-	if(params.find<bool>("trace-latency", false)) {
+	if(params.find<bool>("trace_latency", false)) {
 		hmc_trace_level = hmc_trace_level | HMC_TRACE_LATENCY;
 	}
 
-	if(params.find<bool>("trace-stalls", false)) {
+	if(params.find<bool>("trace_stalls", false)) {
 		hmc_trace_level = hmc_trace_level | HMC_TRACE_STALL;
 	}
 
 #if defined( HMC_TRACE_POWER )
-        if(params.find<bool>("trace-power", false)) {
+        if(params.find<bool>("trace_power", false)) {
           hmc_trace_level = hmc_trace_level | HMC_TRACE_POWER;
         }
 #endif
@@ -245,7 +245,7 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(ComponentId_t id, Params& params) : Ext
         // These are in the form:
         //    /PATH/TO/LIB.SO:CMD:RQST_FLITS:RSP_FLITS
         // CMD = command designator; one of "hmc_rqst_t"
-        params.find_array<std::string>("cmd-config", cmcconfigs);
+        params.find_array<std::string>("cmd_config", cmcconfigs);
 
         // These are the new CMC command mappings.  We can
         // map all the existing commands as well as any custom
@@ -256,7 +256,7 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(ComponentId_t id, Params& params) : Ext
         //        using custom commands (CUSTOM), this is ignored
         // SIZE = integer size of the request (ignored for CUSTOM)
         // CMD = target command to execute; one of "hmc_rqst_t"
-        params.find_array<std::string>("cmd-map", cmdmaps);
+        params.find_array<std::string>("cmd_map", cmdmaps);
 
         // register the SST statistics
         if( (hmc_trace_level & HMC_TRACE_CMD) > 0 ){

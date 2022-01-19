@@ -50,13 +50,13 @@ comp_memory.addParams({
       "backendConvertor" : "memHierarchy.extMemBackendConvertor",
       "backend" : "memHierarchy.goblinHMCSim",
       "backend.verbose" : "0",
-      "backend.trace-banks" : "1",
-      "backend.trace-queue" : "1",
-      "backend.trace-cmds" : "1",
-      "backend.trace-latency" : "1",
-      "backend.trace-stalls" : "1",
+      "backend.trace_banks" : "1",
+      "backend.trace_queue" : "1",
+      "backend.trace_cmds" : "1",
+      "backend.trace_latency" : "1",
+      "backend.trace_stalls" : "1",
 
-      "backend.cmd-map" : "[CUSTOM:20:64:RD64]"
+      "backend.cmd_map" : "[CUSTOM:20:64:RD64]"
 })
 
 
