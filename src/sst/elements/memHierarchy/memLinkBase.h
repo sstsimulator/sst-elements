@@ -76,9 +76,9 @@ public:
     /* Constructor */
     MemLinkBase(ComponentId_t id, Params &params, TimeConverter* tc) : SubComponent(id) {
         /* Create debug output */
-        int debugLevel = params.find<int>("debug_level", 0);
+        dlevel = params.find<int>("debug_level", 0);
         int debugLoc = params.find<int>("debug", 0);
-        dbg.init("", debugLevel, 0, (Output::output_location_t)debugLoc);
+        dbg.init("", dlevel, 0, (Output::output_location_t)debugLoc);
 
         // Filter debug by address
         std::vector<uint64_t> addrArray;
@@ -192,6 +192,7 @@ protected:
     // Debug stuff
     Output dbg;
     std::set<Addr> DEBUG_ADDR;
+    int dlevel;
 
     // Local EndpointInfo
     EndpointInfo info;

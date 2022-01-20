@@ -256,6 +256,8 @@ public:
     bool handleFetchResp(MemEvent* event, bool inMSHR);
     bool handleFetchXResp(MemEvent* event, bool inMSHR);
     bool handleNACK(MemEvent* event, bool inMSHR);
+    
+    bool handleDirEntryResponse(MemEvent* event);
 
     void sendOutgoingEvents();
 
@@ -418,9 +420,10 @@ private:
     uint64_t accessLatency;
     uint64_t mshrLatency;
 
-    std::map<MemEvent::id_type, Addr> memReqs;
     std::map<Addr, std::map<std::string, MemEvent::id_type> > responses;
-
+    
+    std::map<MemEvent::id_type, Addr> dirMemAccesses;
+    
     CoherenceProtocol protocol;
     bool waitWBAck;
     bool sendWBAck;

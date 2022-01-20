@@ -16,11 +16,13 @@
 #ifndef _H_VANADIS_REG_FILE
 #define _H_VANADIS_REG_FILE
 
+
 #include "decoder/visaopts.h"
 #include "inst/fpregmode.h"
 
 #include <cstring>
 #include <sst/core/output.h>
+#include <sst/core/sst_types.h>
 
 namespace SST {
 namespace Vanadis {
@@ -36,26 +38,13 @@ public:
         count_int_regs(int_regs),
         count_fp_regs(fp_regs),
         decoder_opts(decoder_ots),
-        fp_reg_mode(fp_rmode)
+        fp_reg_mode(fp_rmode),
+		  int_reg_width(8),
+		  fp_reg_width( (fp_rmode == VANADIS_REGISTER_MODE_FP32) ? 4 : 8 )
     {
-
-        int_reg_width = 8;
-
         // Registers are always 64-bits
         int_reg_storage = new char[int_reg_width * count_int_regs];
-std:
-        memset(int_reg_storage, 0, (int_reg_width * count_int_regs));
-
-        switch ( fp_reg_mode ) {
-        case VANADIS_REGISTER_MODE_FP32:
-        {
-            fp_reg_width = 4;
-        } break;
-        case VANADIS_REGISTER_MODE_FP64:
-        {
-            fp_reg_width = 8;
-        } break;
-        }
+		  std::memset(int_reg_storage, 0, (int_reg_width * count_int_regs));
 
         fp_reg_storage = new char[fp_reg_width * count_fp_regs];
         std::memset(fp_reg_storage, 0, (fp_reg_width * count_fp_regs));
@@ -186,8 +175,8 @@ private:
     char* fp_reg_storage;
 
     VanadisFPRegisterMode fp_reg_mode;
-    uint32_t              fp_reg_width;
-    uint32_t              int_reg_width;
+    const uint32_t              fp_reg_width;
+    const uint32_t              int_reg_width;
 };
 
 } // namespace Vanadis

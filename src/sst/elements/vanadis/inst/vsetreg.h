@@ -21,13 +21,13 @@
 namespace SST {
 namespace Vanadis {
 
-template <VanadisRegisterFormat register_format>
+template<typename reg_format>
 class VanadisSetRegisterInstruction : public VanadisInstruction
 {
 public:
     VanadisSetRegisterInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
-        const int64_t immediate) :
+        const reg_format immediate) :
         VanadisInstruction(addr, hw_thr, isa_opts, 0, 1, 0, 1, 0, 0, 0, 0)
     {
 
@@ -54,28 +54,18 @@ public:
             "Execute: (addr=0x%0llx) SETREG phys: out=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16 "\n",
             getInstructionAddress(), phys_int_regs_out[0], imm_value, isa_int_regs_out[0]);
 #endif
-        switch ( register_format ) {
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
-        {
-            regFile->setIntReg<int64_t>(phys_int_regs_out[0], imm_value);
-        } break;
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
-        {
-            regFile->setIntReg<int32_t>(phys_int_regs_out[0], static_cast<int32_t>(imm_value));
-        } break;
-        default:
-        {
-            flagError();
-        } break;
-        }
+
+		regFile->setIntReg<reg_format>(phys_int_regs_out[0], imm_value);
+
 #ifdef VANADIS_BUILD_DEBUG
         output->verbose(CALL_INFO, 16, 0, "Result-reg %" PRIu16 ": %" PRId64 "\n", phys_int_regs_out[0], imm_value);
 #endif
+
         markExecuted();
     }
 
 private:
-    int64_t imm_value;
+    reg_format imm_value;
 };
 
 } // namespace Vanadis

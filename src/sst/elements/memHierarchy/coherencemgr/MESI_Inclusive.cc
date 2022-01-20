@@ -1304,12 +1304,13 @@ bool MESIInclusive::handleGetSResp(MemEvent * event, bool inMSHR) {
                 getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
-    if (is_debug_addr(line->getAddr()))
-        printData(line->getData(), true);
-
     // Update line
     line->setData(event->getPayload(), 0);
     line->setState(S);
+
+    if (is_debug_addr(addr))
+        printDataValue(addr, line->getData(), true);
+
     if (localPrefetch) {
         line->setPrefetch(true);
     } else {
@@ -1319,9 +1320,6 @@ bool MESIInclusive::handleGetSResp(MemEvent * event, bool inMSHR) {
         line->setTimestamp(sendTime-1);
 
     }
-
-    if (is_debug_addr(line->getAddr()))
-        printData(line->getData(), true);
 
     cleanUpAfterResponse(event, inMSHR);
 
@@ -1356,14 +1354,15 @@ bool MESIInclusive::handleGetXResp(MemEvent * event, bool inMSHR) {
         case IS:
         {
             line->setData(event->getPayload(), 0);
-            if (is_debug_addr(line->getAddr()))
-                printData(line->getData(), true);
 
             if (event->getDirty())  {
                 line->setState(M); // Sometimes get dirty data from a noninclusive cache
             } else {
                 line->setState(protocolState_);
             }
+
+            if (is_debug_addr(addr))
+                printDataValue(addr, line->getData(), true);
 
             if (localPrefetch) {
                 line->setPrefetch(true);
@@ -1386,7 +1385,7 @@ bool MESIInclusive::handleGetXResp(MemEvent * event, bool inMSHR) {
         case IM:
             line->setData(event->getPayload(), 0);
             if (is_debug_addr(line->getAddr()))
-                printData(line->getData(), true);
+                printDataValue(addr, line->getData(), true);
         case SM:
         {
             line->setState(M);
@@ -1942,6 +1941,10 @@ State MESIInclusive::doEviction(MemEvent * event, SharedCacheLine * line, State 
 
     if (event->getDirty()) {
         line->setData(event->getPayload(), 0);
+        if (is_debug_addr(event->getBaseAddr())) {
+                printDataValue(event->getBaseAddr(), line->getData(), true);
+        }
+
         switch (state) {
             case E:
                 nState = M;
@@ -1981,7 +1984,7 @@ SimTime_t MESIInclusive::sendResponseUp(MemEvent * event, vector<uint8_t>* data,
         responseEvent->setPayload(*data);
         responseEvent->setSize(data->size()); // Return size that was written
         if (is_debug_event(event)) {
-            printData(data, false);
+            printDataValue(event->getBaseAddr(), data, false);
         }
     }
 
@@ -2068,7 +2071,7 @@ void MESIInclusive::sendWriteback(Command cmd, SharedCacheLine* line, bool dirty
         writeback->setDirty(dirty);
 
         if (is_debug_addr(line->getAddr())) {
-            printData(line->getData(), false);
+            printDataValue(line->getAddr(), line->getData(), false);
         }
 
         latency = accessLatency_;
@@ -2301,18 +2304,6 @@ void MESIInclusive::recordLatency(Command cmd, int type, uint64_t latency) {
 
 MemEventInitCoherence * MESIInclusive::getInitCoherenceEvent() {
     return new MemEventInitCoherence(cachename_, Endpoint::Cache, true /* inclusive */, false /* sends WBAck */, false /* expects WBAck */, lineSize_, true /* tracks block presence */);
-}
-
-
-void MESIInclusive::printData(vector<uint8_t> * data, bool set) {
-/*    if (set)    printf("Setting data (%zu): 0x", data->size());
-    else        printf("Getting data (%zu): 0x", data->size());
-
-    for (unsigned int i = 0; i < data->size(); i++) {
-        printf("%02x", data->at(i));
-    }
-    printf("\n");
-    */
 }
 
 

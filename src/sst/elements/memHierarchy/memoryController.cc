@@ -56,7 +56,7 @@ using namespace SST::MemHierarchy;
 /*************************** Memory Controller ********************/
 MemController::MemController(ComponentId_t id, Params &params) : Component(id), backing_(NULL) {
 
-    int debugLevel = params.find<int>("debug_level", 0);
+    dlevel = params.find<int>("debug_level", 0);
 
     fixupParam( params, "backend", "backendConvertor.backend" );
     fixupParams( params, "backend.", "backendConvertor.backend." );
@@ -64,9 +64,9 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     fixupParams( params, "max_requests_per_cycle", "backendConvertor.backend.max_requests_per_cycle" );
 
     uint32_t requestWidth = params.find<uint32_t>("backendConvertor.request_width", 64);
-
+    
     // Output for debug
-    dbg.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
+    dbg.init("", dlevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
 
     // Debug address
     std::vector<Addr> addrArr;
@@ -335,7 +335,8 @@ void MemController::handleEvent(SST::Event* event) {
     MemEventBase *meb = static_cast<MemEventBase*>(event);
 
     if (is_debug_event(meb)) {
-        Debug(_L3_, "\n%" PRIu64 " (%s) Received: %s\n", getCurrentSimTimeNano(), getName().c_str(), meb->getVerboseString().c_str());
+        Debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
+                    Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), meb->getVerboseString(dlevel).c_str());
     }
 
     Command cmd = meb->getCmd();
@@ -351,10 +352,10 @@ void MemController::handleEvent(SST::Event* event) {
     // Check that the request address(es) belong to this memory
     // Disabled except in debug mode
     if (!region_.contains(ev->getBaseAddr())) {
-        out.fatal(CALL_INFO, -1, "%s, Error: Received an event with a base address that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString().c_str());
+        out.fatal(CALL_INFO, -1, "%s, Error: Received an event with a base address that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString(dlevel).c_str());
     }
     if (!region_.contains(ev->getAddr())) {
-        out.fatal(CALL_INFO, -1, "%s, Error: Received an event with an address that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString().c_str());
+        out.fatal(CALL_INFO, -1, "%s, Error: Received an event with an address that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString(dlevel).c_str());
     }
     
     bool noncacheable = ev->queryFlag(MemEvent::F_NONCACHEABLE);
@@ -370,12 +371,12 @@ void MemController::handleEvent(SST::Event* event) {
         // then the only way for it to completely fall in our region is if our interleaving is contiguous (e.g., not reall interleaving)
         if (b0 < (chkAddr + ev->getSize() - 1)) {
             if ((b0 + 1) != a1) {
-                out.fatal(CALL_INFO, -1, "%s: Error: Received an event for an address range that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString().c_str());
+                out.fatal(CALL_INFO, -1, "%s: Error: Received an event for an address range that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString(dlevel).c_str());
             }
         }
     } else if (ev->getSize() > 0) { // Contiguous address region, make sure last address of request falls in region
         if (!region_.contains(chkAddr + ev->getSize() - 1))
-        out.fatal(CALL_INFO, -1, "%s, Error: Received an event for an address range that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString().c_str());
+        out.fatal(CALL_INFO, -1, "%s, Error: Received an event for an address range that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString(dlevel).c_str());
     }
 #endif
 
@@ -453,11 +454,11 @@ Cycle_t MemController::turnClockOn() {
 void MemController::handleCustomEvent(MemEventBase * ev) {
     if (!customCommandHandler_)
         out.fatal(CALL_INFO, -1, "%s, Error: Received custom event but no handler loaded. Ev = %s. Time = %" PRIu64 "ns\n",
-                getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano());
+                getName().c_str(), ev->getVerboseString(dlevel).c_str(), getCurrentSimTimeNano());
 
     CustomCmdMemHandler::MemEventInfo evInfo = customCommandHandler_->receive(ev);
     if (evInfo.shootdown) {
-        out.verbose(CALL_INFO, 1, 0, "%s, WARNING: Custom event expects a shootdown but this memory controller does not support shootdowns. Ev = %s\n", getName().c_str(), ev->getVerboseString().c_str());
+        out.verbose(CALL_INFO, 1, 0, "%s, WARNING: Custom event expects a shootdown but this memory controller does not support shootdowns. Ev = %s\n", getName().c_str(), ev->getVerboseString(dlevel).c_str());
     }
 
     CustomCmdInfo * info = customCommandHandler_->ready(ev);
@@ -476,7 +477,8 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
     outstandingEvents_.erase(it);
 
     if (is_debug_event(evb)) {
-        Debug(_L3_, "Memory Controller: %s - Response received to (%s)\n", getName().c_str(), evb->getVerboseString().c_str());
+        Debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Resp    (%s)\n",
+                    Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), evb->getVerboseString(dlevel).c_str());
     }
 
     /* Handle custom events */
@@ -563,7 +565,10 @@ void MemController::writeData(MemEvent* event) {
     Addr addr = noncacheable ? event->getAddr() : event->getBaseAddr();
 
     if (event->getCmd() == Command::PutM) { /* Write request to memory */
-        if (is_debug_event(event)) { Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); }
+        if (is_debug_event(event)) { 
+            Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
+            printDataValue(addr, &(event->getPayload()), true);
+        }
 
         backing_->set(addr, event->getSize(), event->getPayload());
         if (is_debug_event(event)) {
@@ -577,8 +582,11 @@ void MemController::writeData(MemEvent* event) {
     }
 
     if (event->getCmd() == Command::Write) {
-        if (is_debug_event(event)) { Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); }
-
+        if (is_debug_event(event)) { 
+            Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
+            printDataValue(addr, &(event->getPayload()), true);
+        }
+        
         backing_->set(addr, event->getSize(), event->getPayload());
         if (is_debug_event(event)) {
             Debug(_L4_, "\tContents ");
@@ -600,8 +608,11 @@ void MemController::readData(MemEvent* event) {
     vector<uint8_t> payload;
     payload.resize(event->getSize(), 0);
 
-    if (backing_)
+    if (backing_) {
         backing_->get(localAddr, event->getSize(), payload);
+        if (is_debug_addr(localAddr))
+            printDataValue(localAddr, &(payload), false);
+    }
 
     event->setPayload(payload);
 }
@@ -611,8 +622,12 @@ void MemController::readData(MemEvent* event) {
 void MemController::writeData(Addr addr, std::vector<uint8_t> * data) {
     if (!backing_) return;
 
-    for (size_t i = 0; i < data->size(); i++)
+    for (size_t i = 0; i < data->size(); i++) {
         backing_->set(addr + i, data->at(i));
+    }
+
+    if (is_debug_addr(addr))
+        printDataValue(addr, data, true);
 }
 
 
@@ -623,6 +638,9 @@ void MemController::readData(Addr addr, size_t bytes, std::vector<uint8_t> &data
 
     for (size_t i = 0; i < bytes; i++)
         data[i] = backing_->get(addr + i);
+    
+    if (is_debug_addr(addr))
+        printDataValue(addr, &data, false);
 }
 
 
@@ -637,7 +655,10 @@ Addr MemController::translateToLocal(Addr addr) {
         Addr offset = shift % region_.interleaveStep;
         rAddr = (step * region_.interleaveSize) + offset + privateMemOffset_;
     }
-    if (is_debug_addr(addr)) { Debug(_L10_,"\tConverting global address 0x%" PRIx64 " to local address 0x%" PRIx64 "\n", addr, rAddr); }
+    if (is_debug_addr(addr) && addr != rAddr) { 
+        Debug(_L10_, "C: %-40" PRIu64 "  %-20s ConvertAddr   Local, 0x%" PRIx64 ", 0x%" PRIx64"\n",
+                    Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), addr, rAddr);
+    }
     return rAddr;
 }
 
@@ -652,7 +673,10 @@ Addr MemController::translateToGlobal(Addr addr) {
         rAddr = rAddr / region_.interleaveSize;
         rAddr = rAddr * region_.interleaveStep + offset + region_.start;
     }
-    if (is_debug_addr(rAddr)) { Debug(_L10_,"\tConverting local address 0x%" PRIx64 " to global address 0x%" PRIx64 "\n", addr, rAddr); }
+    if (is_debug_addr(rAddr) && addr != rAddr) { 
+        Debug(_L10_, "C: %-40" PRIu64 "  %-20s ConvertAddr   Global, 0x%" PRIx64 ", 0x%" PRIx64"\n",
+                    Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), addr, rAddr);
+    }
     return rAddr;
 }
 
@@ -673,7 +697,7 @@ void MemController::processInitEvent( MemEventInit* me ) {
             }
         }
     } else if (Command::NULLCMD == me->getCmd()) {
-        if (is_debug_event(me)) { Debug(_L9_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString().c_str()); }
+        if (is_debug_event(me)) { Debug(_L9_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString(dlevel).c_str()); }
     } else {
         out.debug(_L10_,"Memory received unexpected Init Command: %d\n", (int)me->getCmd());
     }
@@ -724,7 +748,7 @@ void MemController::printStatus(Output &statusOut) {
 
     statusOut.output("  Outstanding events: %zu\n", outstandingEvents_.size());
     for (std::map<SST::Event::id_type, MemEventBase*>::iterator it = outstandingEvents_.begin(); it != outstandingEvents_.end(); it++) {
-        statusOut.output("    %s\n", it->second->getVerboseString().c_str());
+        statusOut.output("    %s\n", it->second->getVerboseString(dlevel).c_str());
     }
 
     statusOut.output("  Link Status: ");
@@ -746,4 +770,19 @@ void MemController::emergencyShutdown() {
             link_->emergencyShutdownDebug(out);
         }
     }
+}
+
+void MemController::printDataValue(Addr addr, std::vector<uint8_t>* data, bool set) {
+    if (dlevel < 11) return;
+
+    std::string action = set ? "WRITE" : "READ";
+    std::stringstream value;
+    value << std::hex << std::setfill('0');
+    for (unsigned int i = 0; i < data->size(); i++) {
+        value << std::hex << std::setw(2) << (int)data->at(i);
+    }
+    
+    dbg.debug(_L11_, "V: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 " B: %-3zu %s\n",
+            Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), action.c_str(), 
+            addr, data->size(), value.str().c_str());
 }

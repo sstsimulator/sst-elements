@@ -111,7 +111,7 @@ TLBhierarchy::TLBhierarchy(ComponentId_t id, int tlb_id, int Levels, Params& par
 	{
 		// Initiating all levels of this hierarcy
 		TLB_CACHE[levels] = loadComponentExtension<TLB>(coreID, nullptr, levels, params);
-	        TLB_CACHE[levels]->setPTW(PTW);
+	    TLB_CACHE[levels]->setPTW(PTW);
 		TLB * prev=TLB_CACHE[levels];
 		for(int level=levels-1; level >= 1; level--)
 		{

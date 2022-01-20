@@ -292,7 +292,6 @@ private:
     void eventProfileAndNotify(MemEvent * event, State state, NotifyAccessType type, NotifyResultType result, bool inMSHR, bool stalled);
 
     /* Debug output */
-    void printData(vector<uint8_t> * data, bool set);
     void printLine(Addr addr);
 
     CacheArray<L1CacheLine>* cacheArray_;

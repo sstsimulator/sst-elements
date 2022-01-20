@@ -123,6 +123,7 @@ protected:
     Output out;
     Output dbg;
     std::set<Addr> DEBUG_ADDR;
+    int dlevel;
 
     MemBackendConvertor*    memBackendConvertor_;
     Backend::Backing*       backing_;
@@ -156,6 +157,8 @@ protected:
     /* Debug -triggered by output.fatal() and/or SIGUSR2 */
     virtual void printStatus(Output &out);
     virtual void emergencyShutdown();
+    
+    void printDataValue(Addr addr, std::vector<uint8_t>* data, bool set);
 
 private:
 

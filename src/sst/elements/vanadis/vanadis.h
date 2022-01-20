@@ -16,18 +16,6 @@
 #ifndef _VANADIS_COMPONENT_H
 #define _VANADIS_COMPONENT_H
 
-#include <sst/core/component.h>
-#include <sst/core/link.h>
-#include <sst/core/output.h>
-#include <sst/core/params.h>
-#include <sst/core/interfaces/stdMem.h>
-
-#include <array>
-#include <limits>
-#include <set>
-
-#include "velf/velfinfo.h"
-
 #include "datastruct/cqueue.h"
 #include "decoder/vdecoder.h"
 #include "inst/isatable.h"
@@ -37,7 +25,18 @@
 #include "lsq/vlsq.h"
 #include "lsq/vlsqseq.h"
 #include "lsq/vlsqstd.h"
+#include "velf/velfinfo.h"
+#include "vfpflags.h"
 #include "vfuncunit.h"
+
+#include <array>
+#include <limits>
+#include <set>
+#include <sst/core/component.h>
+#include <sst/core/interfaces/stdMem.h>
+#include <sst/core/link.h>
+#include <sst/core/output.h>
+#include <sst/core/params.h>
 
 namespace SST {
 namespace Vanadis {
@@ -48,14 +47,19 @@ namespace Vanadis {
 #define VANADIS_COMPONENT VanadisComponent
 #endif
 
-class VanadisInsCacheLoadRecord {
+class VanadisInsCacheLoadRecord
+{
 public:
-    VanadisInsCacheLoadRecord(const uint32_t thr, const uint64_t addrStart, const uint16_t len)
-        : hw_thr(thr), addr(addrStart), width(len), hasPayload(false) {
+    VanadisInsCacheLoadRecord(const uint32_t thr, const uint64_t addrStart, const uint16_t len) :
+        hw_thr(thr),
+        addr(addrStart),
+        width(len),
+        hasPayload(false)
+    {
 
         data = new uint8_t[len];
 
-        for (uint16_t i = 0; i < width; ++i) {
+        for ( uint16_t i = 0; i < width; ++i ) {
             data[i] = 0;
         }
     }
@@ -63,29 +67,32 @@ public:
     uint64_t getAddress() const { return addr; }
     uint32_t getHWThread() const { return hw_thr; }
     uint16_t getWidth() const { return width; }
-    bool hasData() const { return hasPayload; }
+    bool     hasData() const { return hasPayload; }
     uint8_t* getPayload() { return data; }
 
-    void setPayload(uint8_t* ptr) {
+    void setPayload(uint8_t* ptr)
+    {
         hasPayload = true;
 
-        for (uint16_t i = 0; i < width; ++i) {
+        for ( uint16_t i = 0; i < width; ++i ) {
             data[i] = ptr[i];
         }
     }
 
 private:
-    bool hasPayload;
-    uint8_t* data;
+    bool           hasPayload;
+    uint8_t*       data;
     const uint64_t addr;
     const uint16_t width;
     const uint32_t hw_thr;
 };
 
 #ifdef VANADIS_BUILD_DEBUG
-class VanadisDebugComponent : public SST::Component {
+class VanadisDebugComponent : public SST::Component
+{
 #else
-class VanadisComponent : public SST::Component {
+class VanadisComponent : public SST::Component
+{
 #endif
 
 public:
@@ -195,22 +202,24 @@ private:
 
     void resetRegisterUseTemps(const uint16_t i_reg, const uint16_t f_reg);
 
-    int assignRegistersToInstruction(const uint16_t int_reg_count, const uint16_t fp_reg_count, VanadisInstruction* ins,
-                                     VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs,
-                                     VanadisISATable* isa_table);
+    int assignRegistersToInstruction(
+        const uint16_t int_reg_count, const uint16_t fp_reg_count, VanadisInstruction* ins,
+        VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs, VanadisISATable* isa_table);
 
-    int checkInstructionResources(VanadisInstruction* ins, VanadisRegisterStack* int_regs,
-                                  VanadisRegisterStack* fp_regs, VanadisISATable* isa_table);
+    int checkInstructionResources(
+        VanadisInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs,
+        VanadisISATable* isa_table);
 
-    int recoverRetiredRegisters(VanadisInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs,
-                                VanadisISATable* issue_isa_table, VanadisISATable* retire_isa_table);
+    int recoverRetiredRegisters(
+        VanadisInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs,
+        VanadisISATable* issue_isa_table, VanadisISATable* retire_isa_table);
 
-    int performFetch(const uint64_t cycle);
-    int performDecode(const uint64_t cycle);
-    int performIssue(const uint64_t cycle, uint32_t& rob_start, bool& found_store, bool& found_load);
-    int performExecute(const uint64_t cycle);
-    int performRetire(VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle);
-    int allocateFunctionalUnit(VanadisInstruction* ins);
+    int  performFetch(const uint64_t cycle);
+    int  performDecode(const uint64_t cycle);
+    int  performIssue(const uint64_t cycle, uint32_t& rob_start, bool& found_store, bool& found_load);
+    int  performExecute(const uint64_t cycle);
+    int  performRetire(VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle);
+    int  allocateFunctionalUnit(VanadisInstruction* ins);
     bool mapInstructiontoFunctionalUnit(VanadisInstruction* ins, std::vector<VanadisFunctionalUnit*>& functional_units);
 
     SST::Output* output;
@@ -226,8 +235,8 @@ private:
     uint32_t retires_per_cycle;
 
     std::vector<VanadisCircularQueue<VanadisInstruction*>*> rob;
-    std::vector<VanadisDecoder*> thread_decoders;
-    std::vector<const VanadisDecoderOptions*> isa_options;
+    std::vector<VanadisDecoder*>                            thread_decoders;
+    std::vector<const VanadisDecoderOptions*>               isa_options;
 
     std::vector<VanadisFunctionalUnit*> fu_int_arith;
     std::vector<VanadisFunctionalUnit*> fu_int_div;
@@ -235,7 +244,7 @@ private:
     std::vector<VanadisFunctionalUnit*> fu_fp_arith;
     std::vector<VanadisFunctionalUnit*> fu_fp_div;
 
-    std::vector<VanadisRegisterFile*> register_files;
+    std::vector<VanadisRegisterFile*>  register_files;
     std::vector<VanadisRegisterStack*> int_register_stacks;
     std::vector<VanadisRegisterStack*> fp_register_stacks;
 
@@ -250,23 +259,23 @@ private:
     std::list<VanadisInsCacheLoadRecord*>* icache_load_records;
 
     VanadisLoadStoreQueue* lsq;
-    StandardMem* memInstInterface;
+    StandardMem*           memInstInterface;
 
     bool* halted_masks;
-    bool print_int_reg;
-    bool print_fp_reg;
+    bool  print_int_reg;
+    bool  print_fp_reg;
 
-    char* instPrintBuffer;
+    char*    instPrintBuffer;
     uint64_t nextInsID;
     uint64_t dCacheLineWidth;
     uint64_t iCacheLineWidth;
 
-    TimeConverter* cpuClockTC;
+    TimeConverter*                     cpuClockTC;
     Clock::Handler<VANADIS_COMPONENT>* cpuClockHandler;
 
-    FILE* pipelineTrace;
+    FILE*           pipelineTrace;
     VanadisELFInfo* binary_elf_info;
-    bool handlingSysCall;
+    bool            handlingSysCall;
 
     Statistic<uint64_t>* stat_ins_retired;
     Statistic<uint64_t>* stat_ins_decoded;
@@ -287,6 +296,8 @@ private:
     uint32_t ins_decoded_this_cycle;
 
     uint64_t pause_on_retire_address;
+
+    std::vector<VanadisFloatingPointFlags*> fp_flags;
 };
 
 } // namespace Vanadis

@@ -124,7 +124,7 @@ class Nic : public SST::Component  {
         { "dmaBW_GBs", "set the one way DMA bandwidth", "100"},
         { "dmaContentionMult", "set the DMA contention mult", "100"},
 
-        {" useDetailed", "Use detailed compute model", "false"},
+        { "useDetailed", "Use detailed compute model", "false"},
     )
 
 	/* PARAMS

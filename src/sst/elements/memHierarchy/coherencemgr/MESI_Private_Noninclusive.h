@@ -516,7 +516,6 @@ private:
     void forwardByDestination(MemEventBase* ev, Cycle_t timestamp);
 
 /* Miscellaneous */
-    void printData(vector<uint8_t> * data, bool set);
     void printLine(Addr addr);
 
 /* Statistics */

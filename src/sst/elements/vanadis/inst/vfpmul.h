@@ -16,42 +16,29 @@
 #ifndef _H_VANADIS_FP_MUL
 #define _H_VANADIS_FP_MUL
 
-#include "inst/vinst.h"
+#include "inst/vfpinst.h"
 #include "inst/vregfmt.h"
 #include "util/vfpreghandler.h"
 
 namespace SST {
 namespace Vanadis {
 
-template <VanadisRegisterFormat register_format>
-class VanadisFPMultiplyInstruction : public VanadisInstruction
+template <typename fp_format>
+class VanadisFPMultiplyInstruction : public VanadisFloatingPointInstruction
 {
 public:
     VanadisFPMultiplyInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
-        const uint16_t src_1, const uint16_t src_2) :
-        VanadisInstruction(
-            addr, hw_thr, isa_opts, 0, 0, 0, 0,
-            ((register_format == VanadisRegisterFormat::VANADIS_FORMAT_FP64) &&
-             (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode()))
-                ? 4
-                : 2,
-            ((register_format == VanadisRegisterFormat::VANADIS_FORMAT_FP64) &&
-             (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode()))
-                ? 2
-                : 1,
-            ((register_format == VanadisRegisterFormat::VANADIS_FORMAT_FP64) &&
-             (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode()))
-                ? 4
-                : 2,
-            ((register_format == VanadisRegisterFormat::VANADIS_FORMAT_FP64) &&
-             (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode()))
-                ? 2
-                : 1)
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
+        VanadisFloatingPointFlags* fpflags, const uint16_t dest, const uint16_t src_1, const uint16_t src_2) :
+        VanadisFloatingPointInstruction(
+            addr, hw_thr, isa_opts, fpflags, 0, 0, 0, 0,
+            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 4 : 2,
+            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1,
+            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 4 : 2,
+            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1)
     {
 
-        if ( (register_format == VanadisRegisterFormat::VANADIS_FORMAT_FP64) &&
-             (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode()) ) {
+        if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode()) ) {
             isa_fp_regs_in[0]  = src_1;
             isa_fp_regs_in[1]  = src_1 + 1;
             isa_fp_regs_in[2]  = src_2;
@@ -71,79 +58,76 @@ public:
 
     const char* getInstCode() const override
     {
-        switch ( register_format ) {
-        case VanadisRegisterFormat::VANADIS_FORMAT_FP64:
-            return "FP64MUL";
-        case VanadisRegisterFormat::VANADIS_FORMAT_FP32:
+        if ( std::is_same<fp_format, double>::value ) { return "FP64MUL"; }
+        else if ( std::is_same<fp_format, float>::value ) {
             return "FP32MUL";
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
-            return "FPINT32ADD";
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
-            return "FPINT64ADD";
         }
-
-        return "FPUNK";
+        else if ( std::is_same<fp_format, int32_t>::value ) {
+            return "FPI32MUL";
+        }
+        else if ( std::is_same<fp_format, uint32_t>::value ) {
+            return "FPU32MUL";
+        }
+        else if ( std::is_same<fp_format, int64_t>::value ) {
+            return "FPI64MUL";
+        }
+        else if ( std::is_same<fp_format, uint64_t>::value ) {
+            return "FPU64MUL";
+        }
+        else {
+            return "FPMULUNK";
+        }
     }
 
     void printToBuffer(char* buffer, size_t buffer_size) override
     {
         snprintf(
             buffer, buffer_size,
-            "MUL     %5" PRIu16 " <- %5" PRIu16 " * %5" PRIu16 " (phys: %5" PRIu16 " <- %5" PRIu16 " * %5" PRIu16 ")",
-            isa_fp_regs_out[0], isa_fp_regs_in[0], isa_fp_regs_in[1], phys_fp_regs_out[0], phys_fp_regs_in[0],
-            phys_fp_regs_in[1]);
+            "%6s  %5" PRIu16 " <- %5" PRIu16 " * %5" PRIu16 " (phys: %5" PRIu16 " <- %5" PRIu16 " * %5" PRIu16 ")",
+            getInstCode(), isa_fp_regs_out[0], isa_fp_regs_in[0], isa_fp_regs_in[1], phys_fp_regs_out[0],
+            phys_fp_regs_in[0], phys_fp_regs_in[1]);
     }
 
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
-        char* int_register_buffer = new char[256];
-        char* fp_register_buffer  = new char[256];
+        if ( output->getVerboseLevel() >= 16 ) {
+            char* int_register_buffer = new char[256];
+            char* fp_register_buffer  = new char[256];
 
-        writeIntRegs(int_register_buffer, 256);
-        writeFPRegs(fp_register_buffer, 256);
+            writeIntRegs(int_register_buffer, 256);
+            writeFPRegs(fp_register_buffer, 256);
 
-        output->verbose(
-            CALL_INFO, 16, 0, "Execute: (addr=0x%llx) %s int: %s / fp: %s\n", getInstructionAddress(), getInstCode(),
-            int_register_buffer, fp_register_buffer);
+            output->verbose(
+                CALL_INFO, 16, 0, "Execute: (addr=0x%llx) %s int: %s / fp: %s\n", getInstructionAddress(),
+                getInstCode(), int_register_buffer, fp_register_buffer);
 
-        delete[] int_register_buffer;
-        delete[] fp_register_buffer;
+            delete[] int_register_buffer;
+            delete[] fp_register_buffer;
+        }
 #endif
-        switch ( register_format ) {
-        case VanadisRegisterFormat::VANADIS_FORMAT_FP32:
-        {
-            const float src_1 = regFile->getFPReg<float>(phys_fp_regs_in[0]);
-            const float src_2 = regFile->getFPReg<float>(phys_fp_regs_in[1]);
 
-            output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, (src_1 * src_2));
+        if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
+            const fp_format src_1  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
+            const fp_format src_2  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3]);
+            const fp_format result = src_1 * src_2;
 
-            regFile->setFPReg<float>(phys_fp_regs_out[0], (src_1) * (src_2));
-        } break;
-        case VanadisRegisterFormat::VANADIS_FORMAT_FP64:
-        {
-            if ( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) {
-                const double src_1 = combineFromRegisters<double>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
-                const double src_2 = combineFromRegisters<double>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3]);
+            performFlagChecks<fp_format>(result);
 
-                output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, (src_1 * src_2));
+            output->verbose(CALL_INFO, 16, 0, "---> %f * %f = %f\n", src_1, src_2, result);
 
-                fractureToRegisters<double>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], src_1 * src_2);
-            }
-            else {
-                const double src_1 = regFile->getFPReg<double>(phys_fp_regs_in[0]);
-                const double src_2 = regFile->getFPReg<double>(phys_fp_regs_in[1]);
+            fractureToRegisters<fp_format>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], result);
+        }
+        else {
+            const fp_format src_1  = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
+            const fp_format src_2  = regFile->getFPReg<fp_format>(phys_fp_regs_in[1]);
+            const fp_format result = src_1 * src_2;
 
-                output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, (src_1 * src_2));
+            performFlagChecks<fp_format>(result);
 
-                regFile->setFPReg<double>(phys_fp_regs_out[0], src_1 * src_2);
-            }
-        } break;
-        default:
-        {
-            output->verbose(CALL_INFO, 16, 0, "Unknown floating point type.\n");
-            flagError();
-        } break;
+            output->verbose(CALL_INFO, 16, 0, "---> %f * %f = %f\n", src_1, src_2, result);
+
+            regFile->setFPReg<fp_format>(phys_fp_regs_out[0], result);
         }
 
         markExecuted();

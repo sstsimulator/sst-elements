@@ -1097,7 +1097,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_ADD:
                         {
                             bundle->addInstruction(
-                                new VanadisAddInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
+                                new VanadisAddInstruction<int32_t>(
                                     ins_addr, hw_thr, options, rd, rs, rt));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_add);
@@ -1106,7 +1106,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_ADDU:
                         {
                             bundle->addInstruction(
-                                new VanadisAddInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
+                                new VanadisAddInstruction<int32_t>(
                                     ins_addr, hw_thr, options, rd, rs, rt));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_addu);
@@ -1135,8 +1135,7 @@ protected:
 
                         case MIPS_SPEC_OP_MASK_DIV:
                         {
-                            bundle->addInstruction(new VanadisDivideRemainderInstruction<
-                                                   VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
+                            bundle->addInstruction(new VanadisDivideRemainderInstruction<int32_t>(
                                 ins_addr, hw_thr, options, MIPS_REG_LO, MIPS_REG_HI, rs, rt));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_div);
@@ -1144,8 +1143,7 @@ protected:
 
                         case MIPS_SPEC_OP_MASK_DIVU:
                         {
-                            bundle->addInstruction(new VanadisDivideRemainderInstruction<
-                                                   VanadisRegisterFormat::VANADIS_FORMAT_INT32, false>(
+                            bundle->addInstruction(new VanadisDivideRemainderInstruction<uint32_t>(
                                 ins_addr, hw_thr, options, MIPS_REG_LO, MIPS_REG_HI, rs, rt));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_divu);
@@ -1616,7 +1614,7 @@ protected:
                 case MIPS_SPEC_OP_MASK_BLTZ:
                 {
                     bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<
-                                           VanadisRegisterFormat::VANADIS_FORMAT_INT32, REG_COMPARE_LT>(
+                                           int32_t, REG_COMPARE_LT>(
                         ins_addr, hw_thr, options, 4, rs, 0, offset_value_64 + 4, VANADIS_SINGLE_DELAY_SLOT));
                     insertDecodeFault = false;
                     MIPS_INC_DECODE_STAT(stat_decode_bltz);
@@ -1633,7 +1631,7 @@ protected:
                 case MIPS_SPEC_OP_MASK_BGEZ:
                 {
                     bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<
-                                           VanadisRegisterFormat::VANADIS_FORMAT_INT32, REG_COMPARE_GTE>(
+                                           int32_t, REG_COMPARE_GTE>(
                         ins_addr, hw_thr, options, 4, rs, 0, offset_value_64 + 4, VANADIS_SINGLE_DELAY_SLOT));
                     insertDecodeFault = false;
                     MIPS_INC_DECODE_STAT(stat_decode_bgez);
@@ -1649,7 +1647,7 @@ protected:
                 //				output->verbose(CALL_INFO, 16, 0,
                 //"[decoder/LUI] -> reg: %" PRIu16 " / imm=%" PRId64 "\n", 					rt,
                 // imm_value_64);
-                bundle->addInstruction(new VanadisSetRegisterInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                bundle->addInstruction(new VanadisSetRegisterInstruction<int32_t>(
                     ins_addr, hw_thr, options, rt, imm_value_64));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_lui);
@@ -1690,7 +1688,7 @@ protected:
                 //"[decoder/BGTZ]: -> r1: %" PRIu16 " offset: %" PRId64 "\n",
                 //                                        rs, imm_value_64);
                 bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<
-                                       VanadisRegisterFormat::VANADIS_FORMAT_INT32, REG_COMPARE_GT>(
+                                       int32_t, REG_COMPARE_GT>(
                     ins_addr, hw_thr, options, 4, rs, 0, imm_value_64 + 4, VANADIS_SINGLE_DELAY_SLOT));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_bgtz);
@@ -1704,7 +1702,7 @@ protected:
                 //"[decoder/BLEZ]: -> r1: %" PRIu16 " offset: %" PRId64 "\n",
                 //                                        rs, imm_value_64);
                 bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<
-                                       VanadisRegisterFormat::VANADIS_FORMAT_INT32, REG_COMPARE_LTE>(
+                                       int32_t, REG_COMPARE_LTE>(
                     ins_addr, hw_thr, options, 4, rs, 0, imm_value_64 + 4, VANADIS_SINGLE_DELAY_SLOT));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_blez);
@@ -1867,14 +1865,12 @@ protected:
                     {
                         if ( (0 == fd) && (MIPS_SPEC_COP_MASK_MTC == fr) ) {
                             bundle->addInstruction(
-                                new VanadisGPR2FPInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
-                                    ins_addr, hw_thr, options, fs, rt));
+                                new VanadisGPR2FPInstruction<int32_t, int32_t>(ins_addr, hw_thr, options, fpflags, fs, rt));
                             insertDecodeFault = false;
                         }
                         else if ( (0 == fd) && (MIPS_SPEC_COP_MASK_MFC == fr) ) {
                             bundle->addInstruction(
-                                new VanadisFP2GPRInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
-                                    ins_addr, hw_thr, options, rt, fs));
+                                new VanadisFP2GPRInstruction<int32_t, int32_t>(ins_addr, hw_thr, options, fpflags, rt, fs));
                             insertDecodeFault = false;
                         }
                         else if ( (0 == fd) && (MIPS_SPEC_COP_MASK_CF == fr) ) {
@@ -1895,9 +1891,8 @@ protected:
                             }
 
                             if ( fp_matched ) {
-                                bundle->addInstruction(
-                                    new VanadisFP2GPRInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
-                                        ins_addr, hw_thr, options, rt, fp_ctrl_reg));
+                                bundle->addInstruction(new VanadisFP2GPRInstruction<int32_t, int32_t>(
+                                    ins_addr, hw_thr, options, fpflags, rt, fp_ctrl_reg));
                                 insertDecodeFault = false;
                             }
                         }
@@ -1919,9 +1914,8 @@ protected:
                             }
 
                             if ( fp_matched ) {
-                                bundle->addInstruction(
-                                    new VanadisGPR2FPInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
-                                        ins_addr, hw_thr, options, fp_ctrl_reg, rt));
+                                bundle->addInstruction(new VanadisGPR2FPInstruction<int32_t, int32_t>(
+                                    ins_addr, hw_thr, options, fpflags, fp_ctrl_reg, rt));
                                 insertDecodeFault = false;
                             }
                         }
@@ -1929,26 +1923,22 @@ protected:
                             switch ( fr ) {
                             case 16:
                                 bundle->addInstruction(
-                                    new VanadisFPAddInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
-                                        ins_addr, hw_thr, options, fd, fs, ft));
+                                    new VanadisFPAddInstruction<float>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                                 insertDecodeFault = false;
                                 break;
                             case 17:
                                 bundle->addInstruction(
-                                    new VanadisFPAddInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
-                                        ins_addr, hw_thr, options, fd, fs, ft));
+                                    new VanadisFPAddInstruction<double>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                                 insertDecodeFault = false;
                                 break;
                             case 20:
                                 bundle->addInstruction(
-                                    new VanadisFPAddInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                                        ins_addr, hw_thr, options, fd, fs, ft));
+                                    new VanadisFPAddInstruction<int32_t>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                                 insertDecodeFault = false;
                                 break;
                             case 21:
                                 bundle->addInstruction(
-                                    new VanadisFPAddInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                                        ins_addr, hw_thr, options, fd, fs, ft));
+                                    new VanadisFPAddInstruction<int64_t>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                                 insertDecodeFault = false;
                                 break;
                             default:
@@ -1964,15 +1954,15 @@ protected:
                         case 16:
                         {
                             bundle->addInstruction(
-                                new VanadisFP2FPInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
-                                    ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFP2FPInstruction<int32_t>(
+                                    ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                         } break;
                         case 17:
                         {
                             bundle->addInstruction(
-                                new VanadisFP2FPInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
-                                    ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFP2FPInstruction<int64_t>(
+                                    ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                         } break;
                         }
@@ -1985,26 +1975,22 @@ protected:
                         switch ( fr ) {
                         case 16:
                             bundle->addInstruction(
-                                new VanadisFPMultiplyInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPMultiplyInstruction<float>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 17:
                             bundle->addInstruction(
-                                new VanadisFPMultiplyInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPMultiplyInstruction<double>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 20:
                             bundle->addInstruction(
-                                new VanadisFPMultiplyInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPMultiplyInstruction<int32_t>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 21:
                             bundle->addInstruction(
-                                new VanadisFPMultiplyInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPMultiplyInstruction<int64_t>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         default:
@@ -2019,26 +2005,26 @@ protected:
                         switch ( fr ) {
                         case 16:
                             bundle->addInstruction(
-                                new VanadisFPDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPDivideInstruction<float>(
+                                    ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 17:
                             bundle->addInstruction(
-                                new VanadisFPDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPDivideInstruction<double>(
+                                    ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 20:
                             bundle->addInstruction(
-                                new VanadisFPDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPDivideInstruction<int32_t>(
+                                    ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 21:
                             bundle->addInstruction(
-                                new VanadisFPDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPDivideInstruction<int64_t>(
+                                    ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
 
                             break;
@@ -2054,26 +2040,22 @@ protected:
                         switch ( fr ) {
                         case 16:
                             bundle->addInstruction(
-                                new VanadisFPSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPSubInstruction<float>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 17:
                             bundle->addInstruction(
-                                new VanadisFPSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPSubInstruction<double>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 20:
                             bundle->addInstruction(
-                                new VanadisFPSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPSubInstruction<int32_t>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         case 21:
                             bundle->addInstruction(
-                                new VanadisFPSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                                    ins_addr, hw_thr, options, fd, fs, ft));
+                                new VanadisFPSubInstruction<int64_t>(ins_addr, hw_thr, options, fpflags, fd, fs, ft));
                             insertDecodeFault = false;
                             break;
                         default:
@@ -2088,30 +2070,22 @@ protected:
                         switch ( fr ) {
                         case 16:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP32,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP32>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<float, float>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 17:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP64,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP32>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<double, float>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 20:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_INT32,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP32>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<int32_t, float>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 21:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_INT64,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP32>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<int64_t, float>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         default:
@@ -2126,30 +2100,22 @@ protected:
                         switch ( fr ) {
                         case 16:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP32,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP64>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<float, double>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 17:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP64,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP64>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<double, double>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 20:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_INT32,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP64>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<int32_t, double>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 21:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_INT64,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP64>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<int64_t, double>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         default:
@@ -2166,30 +2132,22 @@ protected:
                         switch ( fr ) {
                         case 16:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP32,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_INT32>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<float, int32_t>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 17:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_FP64,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_INT32>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<double, int32_t>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 20:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_INT32,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_INT32>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<int32_t, int32_t>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         case 21:
                             bundle->addInstruction(
-                                new VanadisFPConvertInstruction<
-                                    VanadisRegisterFormat::VANADIS_FORMAT_INT64,
-                                    VanadisRegisterFormat::VANADIS_FORMAT_INT32>(ins_addr, hw_thr, options, fd, fs));
+                                new VanadisFPConvertInstruction<int64_t, int32_t>(ins_addr, hw_thr, options, fpflags, fd, fs));
                             insertDecodeFault = false;
                             break;
                         default:
@@ -2216,8 +2174,7 @@ protected:
                             case 0x2:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_eq);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_EQ, VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
+                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_EQ, float>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
@@ -2225,8 +2182,7 @@ protected:
                             case 0xC:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lt);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
+                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_LT, float>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
@@ -2234,9 +2190,9 @@ protected:
                             case 0xE:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lte);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_LTE, VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
-                                    ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_LTE, float>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
                                 break;
@@ -2250,27 +2206,27 @@ protected:
                             case 0x2:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_eq);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_EQ, VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
-                                    ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_EQ, double>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
                                 break;
                             case 0xC:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lt);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
-                                    ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_LT, double>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
                                 break;
                             case 0xE:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lte);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_LTE, VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
-                                    ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_LTE, double>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
                                 break;
@@ -2284,27 +2240,27 @@ protected:
                             case 0x2:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_eq);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_EQ, VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                                    ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_EQ, int32_t>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
                                 break;
                             case 0xC:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lt);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                                    ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_LT, int32_t>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
                                 break;
                             case 0xE:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lte);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_LTE, VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                                    ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_LTE, int32_t>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
                                 break;
@@ -2318,27 +2274,27 @@ protected:
                             case 0x2:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_eq);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_EQ, VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                                    ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_EQ, int64_t>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
                                 break;
                             case 0xC:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lt);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                                    ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_EQ, int64_t>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
                                 break;
                             case 0xE:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lte);
 
-                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
-                                                       REG_COMPARE_LTE, VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                                    ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_LTE, int64_t>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
                                 break;
@@ -2373,8 +2329,8 @@ protected:
                     switch ( rd ) {
                     case 29:
                         bundle->addInstruction(
-                            new VanadisSetRegisterInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                                ins_addr, hw_thr, options, target_reg, (int64_t)getThreadLocalStoragePointer()));
+                            new VanadisSetRegisterInstruction<int32_t>(
+                                ins_addr, hw_thr, options, target_reg, static_cast<int32_t>(getThreadLocalStoragePointer())));
                         insertDecodeFault = false;
                         break;
                     }

@@ -25,7 +25,9 @@
 #include "os/vcpuos.h"
 #include "vbranch/vbranchbasic.h"
 #include "vbranch/vbranchunit.h"
+#include "velf/velfinfo.h"
 #include "vinsloader.h"
+#include "vfpflags.h"
 
 #include <cinttypes>
 #include <cstdint>
@@ -87,6 +89,7 @@ public:
         tls_ptr = 0;
 
         thread_rob = nullptr;
+		  fpflags = nullptr;
 
         icache_line_width = params.find<uint64_t>("icache_line_width", 64);
 
@@ -144,6 +147,10 @@ public:
         icache_line_width = ic_width;
         ins_loader->setCacheLineWidth(ic_width);
     }
+
+    void setFPFlags(VanadisFloatingPointFlags* new_fpflags) {
+		fpflags = new_fpflags;
+	 }
 
     bool acceptCacheResponse(SST::Output* output, SST::Interfaces::StandardMem::Request* req)
     {
@@ -219,6 +226,7 @@ protected:
     VanadisInstructionLoader* ins_loader;
     VanadisBranchUnit*        branch_predictor;
     VanadisCPUOSHandler*      os_handler;
+	 VanadisFloatingPointFlags* fpflags;
 
     bool canIssueStores;
     bool canIssueLoads;
