@@ -20,7 +20,7 @@ if __name__ == "__main__":
     endPoint = TestEndPoint()
 
 
-    sst.merlin._params["fattree:shape"] = "4,4:4,4:8"
+    sst.merlin._params["fattree.shape"] = "4,4:4,4:8"
 
 
     sst.merlin._params["link_bw"] = "4GB/s"

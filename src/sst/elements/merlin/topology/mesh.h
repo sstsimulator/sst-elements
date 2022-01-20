@@ -108,12 +108,18 @@ public:
         SST::Merlin::Topology)
 
     SST_ELI_DOCUMENT_PARAMS(
-        {"mesh:shape",        "Shape of the mesh specified as the number of routers in each dimension, where each dimension is separated by a colon.  For example, 4x4x2x2.  Any number of dimensions is supported."},
-        {"mesh:width",        "Number of links between routers in each dimension, specified in same manner as for shape.  For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
-        {"mesh:local_ports",  "Number of endpoints attached to each router."},
+        // Parameters needed for use with old merlin python module
+        {"mesh.shape", "Shape of the mesh specified as the number of routers in each dimension, where each dimension "
+                       "is separated by a colon.  For example, 4x4x2x2.  Any number of dimensions is supported."},
+        {"mesh.width", "Number of links between routers in each dimension, specified in same manner as for shape.  For "
+                       "example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
+        {"mesh.local_ports", "Number of endpoints attached to each router."},
 
-        {"shape",        "Shape of the mesh specified as the number of routers in each dimension, where each dimension is separated by a colon.  For example, 4x4x2x2.  Any number of dimensions is supported."},
-        {"width",        "Number of links between routers in each dimension, specified in same manner as for shape.  For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
+
+        {"shape", "Shape of the mesh specified as the number of routers in each dimension, where each dimension is "
+                  "separated by a colon.  For example, 4x4x2x2.  Any number of dimensions is supported."},
+        {"width", "Number of links between routers in each dimension, specified in same manner as for shape.  "
+                  "For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
         {"local_ports",  "Number of endpoints attached to each router."}
     )
 

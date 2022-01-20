@@ -59,11 +59,11 @@ memory.addParams({
       "capacity_per_device" : "8",
       "xbar_depth" : "128",
       "max_req_size" : "128",
-      "trace-banks" : "1",
-      "trace-queue" : "1",
-      "trace-cmds" : "1",
-      "trace-latency" : "1",
-      "trace-stalls" : "1"
+      "trace_banks" : "1",
+      "trace_queue" : "1",
+      "trace_cmds" : "1",
+      "trace_latency" : "1",
+      "trace_stalls" : "1"
 })
 
 

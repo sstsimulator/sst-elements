@@ -123,7 +123,7 @@ public:
         SST::Interfaces::SimpleNetwork)
 
     SST_ELI_DOCUMENT_PARAMS(
-        {"rlc:networkIF","SimpleNetwork subcomponent to be used for connecting to network", "merlin.linkcontrol"},
+        {"rlc.networkIF","SimpleNetwork subcomponent to be used for connecting to network", "merlin.linkcontrol"},
         {"networkIF","SimpleNetwork subcomponent to be used for connecting to network", "merlin.linkcontrol"}
     )
 

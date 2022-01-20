@@ -186,15 +186,16 @@ public:
         SST::Merlin::Topology)
 
     SST_ELI_DOCUMENT_PARAMS(
-        {"dragonfly:hosts_per_router",      "Number of hosts connected to each router."},
-        {"dragonfly:routers_per_group",     "Number of links used to connect to routers in same group."},
-        {"dragonfly:intergroup_per_router", "Number of links per router connected to other groups."},
-        {"dragonfly:intergroup_links",      "Number of links between each pair of groups."},
-        {"dragonfly:num_groups",            "Number of groups in network."},
-        {"dragonfly:algorithm",             "Routing algorithm to use [minmal (default) | valiant].", "minimal"},
-        {"dragonfly:adaptive_threshold",    "Threshold to use when make adaptive routing decisions.", "2.0"},
-        {"dragonfly:global_link_map",       "Array specifying connectivity of global links in each dragonfly group."},
-        {"dragonfly:global_route_mode",     "Mode for intepreting global link map [absolute (default) | relative].","absolute"},
+        // Parameters needed for use with old merlin python module
+        {"dragonfly.hosts_per_router",      "Number of hosts connected to each router."},
+        {"dragonfly.routers_per_group",     "Number of links used to connect to routers in same group."},
+        {"dragonfly.intergroup_per_router", "Number of links per router connected to other groups."},
+        {"dragonfly.intergroup_links",      "Number of links between each pair of groups."},
+        {"dragonfly.num_groups",            "Number of groups in network."},
+        {"dragonfly.algorithm",             "Routing algorithm to use [minmal (default) | valiant].", "minimal"},
+        {"dragonfly.adaptive_threshold",    "Threshold to use when make adaptive routing decisions.", "2.0"},
+        {"dragonfly.global_link_map",       "Array specifying connectivity of global links in each dragonfly group."},
+        {"dragonfly.global_route_mode",     "Mode for intepreting global link map [absolute (default) | relative].","absolute"},
 
         {"hosts_per_router",      "Number of hosts connected to each router."},
         {"routers_per_group",     "Number of links used to connect to routers in same group."},

@@ -20,9 +20,9 @@ if __name__ == "__main__":
     endPoint = TestEndPoint()
 
 
-    sst.merlin._params["torus:shape"] = "4x4x4"
-    sst.merlin._params["torus:width"] = "1x1x1"
-    sst.merlin._params["torus:local_ports"] = "1"
+    sst.merlin._params["torus.shape"] = "4x4x4"
+    sst.merlin._params["torus.width"] = "1x1x1"
+    sst.merlin._params["torus.local_ports"] = "1"
     sst.merlin._params["num_dims"] = "3"
 
 

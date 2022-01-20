@@ -146,34 +146,34 @@ TrafficGen::~TrafficGen()
 TrafficGen::Generator* TrafficGen::buildGenerator(const std::string &prefix, Params &params)
 {
     Generator* gen = NULL;
-    std::string pattern = params.find<std::string>(prefix + ":pattern");
+    std::string pattern = params.find<std::string>(prefix + ".pattern");
     std::pair<int, int> range = std::make_pair(
-        params.find<int>(prefix + ":RangeMin", 0),
-        params.find<int>(prefix + ":RangeMax", INT_MAX));
+        params.find<int>(prefix + ".RangeMin", 0),
+        params.find<int>(prefix + ".RangeMax", INT_MAX));
 
-    uint32_t rng_seed = params.find<uint32_t>(prefix + ":Seed", 1010101);
+    uint32_t rng_seed = params.find<uint32_t>(prefix + ".Seed", 1010101);
 
     if ( !pattern.compare("NearestNeighbor") ) {
-        std::string shape = params.find<std::string>(prefix + ":NearestNeighbor:3DSize");
+        std::string shape = params.find<std::string>(prefix + ".NearestNeighbor.Size");
         int maxX, maxY, maxZ;
         assert (sscanf(shape.c_str(), "%d %d %d", &maxX, &maxY, &maxZ) == 3);
         gen = new NearestNeighbor(new UniformDist(0, 5), id, maxX, maxY, maxZ, 6);
     } else if ( !pattern.compare("Uniform") ) {
         gen = new UniformDist(range.first, range.second-1);
     } else if ( !pattern.compare("HotSpot") ) {
-        int target = params.find<int>(prefix + ":HotSpot:target");
-        float targetProb = params.find<float>(prefix + ":HotSpot:targetProbability");
+        int target = params.find<int>(prefix + ".HotSpot.target");
+        float targetProb = params.find<float>(prefix + ".HotSpot.targetProbability");
         gen = new DiscreteDist(range.first, range.second, target, targetProb);
     } else if ( !pattern.compare("Normal") ) {
-        float mean = params.find<float>(prefix + ":Normal:Mean", range.second/2.0f);
-        float sigma = params.find<float>(prefix + ":Normal:Sigma", 1.0f);
+        float mean = params.find<float>(prefix + ".Normal.Mean", range.second/2.0f);
+        float sigma = params.find<float>(prefix + ".Normal.Sigma", 1.0f);
         gen = new NormalDist(range.first, range.second, mean, sigma);
     } else if ( !pattern.compare("Exponential") ) {
-        float lambda = params.find<float>(prefix + ":Exponential:Lambda", range.first);
+        float lambda = params.find<float>(prefix + ".Exponential.Lambda", range.first);
         gen = new ExponentialDist(lambda);
     } else if ( !pattern.compare("Binomial") ) {
-        int trials = params.find<int>(prefix + ":Binomial:Mean", range.second);
-        float probability = params.find<float>(prefix + ":Binomial:Sigma", 0.5f);
+        int trials = params.find<int>(prefix + ".Binomial.Mean", range.second);
+        float probability = params.find<float>(prefix + ".Binomial.Sigma", 0.5f);
         gen = new BinomialDist(range.first, range.second, trials, probability);
     } else if ( pattern.compare("") ) { // Allow none - non-pattern
         out.fatal(CALL_INFO, -1, "Unknown pattern '%s'\n", pattern.c_str());
