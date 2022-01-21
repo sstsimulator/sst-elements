@@ -53,7 +53,7 @@ memory = comp_memctrl.setSubComponent("backend", "memHierarchy.goblinHMCSim")
 memory.addParams({
       "access_time" : "100 ns",
       "mem_size" : "4096MiB",
-      "cmd-map" : "[CUSTOM:20:64:RD64,CUSTOM:10:64:WR64]",
+      "cmd_map" : "[CUSTOM:20:64:RD64,CUSTOM:10:64:WR64]",
       "verbose" : 1
 })
 

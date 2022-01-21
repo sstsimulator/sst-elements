@@ -77,17 +77,17 @@ l2_prefetch_params = {
 
 rtr_params = {
         "debug" : "0",
-        "torus:shape" : str(num_routers),
+        "torus.shape" : str(num_routers),
         "output_latency" : "25ps",
         "xbar_bw" : ring_bandwidth,
         "input_buf_size" : "2KB",
         "input_latency" : "25ps",
         "num_ports" : "3",
-        "torus:local_ports" : "1",
+        "torus.local_ports" : "1",
         "flit_size" : ring_flit_size,
         "output_buf_size" : "2KB",
         "link_bw" : ring_bandwidth,
-        "torus:width" : "1",
+        "torus.width" : "1",
         "topology" : "merlin.torus"
 }
 

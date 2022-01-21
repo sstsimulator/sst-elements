@@ -59,12 +59,12 @@ memorybackend.addParams({
       "access_time" : "1000 ns",
       "mem_size" : "512MiB",
       "verbose" : "0",
-      "trace-banks" : "1",
-      "trace-queue" : "1",
-      "trace-cmds" : "1",
-      "trace-latency" : "1",
-      "trace-stalls" : "1",
-      "cmd-map" : "[CUSTOM:10:64:WR64,CUSTOM:20:64:RD64]"
+      "trace_banks" : "1",
+      "trace_queue" : "1",
+      "trace_cmds" : "1",
+      "trace_latency" : "1",
+      "trace_stalls" : "1",
+      "cmd_map" : "[CUSTOM:10:64:WR64,CUSTOM:20:64:RD64]"
 })
 
 
