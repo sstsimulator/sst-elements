@@ -1721,7 +1721,7 @@ StandardCPU: Test Completed Successfuly
  directory.eventSent_GetX : Accumulator : Sum.u64 = 42; SumSQ.u64 = 42; Count.u64 = 42; Min.u64 = 1; Max.u64 = 1; 
  directory.eventSent_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory.eventSent_Write : Accumulator : Sum.u64 = 189; SumSQ.u64 = 189; Count.u64 = 189; Min.u64 = 1; Max.u64 = 1; 
- directory.eventSent_PutM : Accumulator : Sum.u64 = 20; SumSQ.u64 = 20; Count.u64 = 20; Min.u64 = 1; Max.u64 = 1; 
+ directory.eventSent_PutM : Accumulator : Sum.u64 = 33; SumSQ.u64 = 33; Count.u64 = 33; Min.u64 = 1; Max.u64 = 1; 
  directory.eventSent_Inv : Accumulator : Sum.u64 = 22; SumSQ.u64 = 22; Count.u64 = 22; Min.u64 = 1; Max.u64 = 1; 
  directory.eventSent_FetchInv : Accumulator : Sum.u64 = 17; SumSQ.u64 = 17; Count.u64 = 17; Min.u64 = 1; Max.u64 = 1; 
  directory.eventSent_FetchInvX : Accumulator : Sum.u64 = 16; SumSQ.u64 = 16; Count.u64 = 16; Min.u64 = 1; Max.u64 = 1; 
@@ -1743,14 +1743,14 @@ StandardCPU: Test Completed Successfuly
  memory.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory.requests_received_GetX : Accumulator : Sum.u64 = 42; SumSQ.u64 = 42; Count.u64 = 42; Min.u64 = 1; Max.u64 = 1; 
  memory.requests_received_Write : Accumulator : Sum.u64 = 189; SumSQ.u64 = 189; Count.u64 = 189; Min.u64 = 1; Max.u64 = 1; 
- memory.requests_received_PutM : Accumulator : Sum.u64 = 20; SumSQ.u64 = 20; Count.u64 = 20; Min.u64 = 1; Max.u64 = 1; 
- memory.outstanding_requests : Accumulator : Sum.u64 = 45871; SumSQ.u64 = 74521; Count.u64 = 45579; Min.u64 = 0; Max.u64 = 4; 
+ memory.requests_received_PutM : Accumulator : Sum.u64 = 33; SumSQ.u64 = 33; Count.u64 = 33; Min.u64 = 1; Max.u64 = 1; 
+ memory.outstanding_requests : Accumulator : Sum.u64 = 47184; SumSQ.u64 = 77050; Count.u64 = 45579; Min.u64 = 0; Max.u64 = 4; 
  memory.latency_GetS : Accumulator : Sum.u64 = 20503; SumSQ.u64 = 2070803; Count.u64 = 203; Min.u64 = 101; Max.u64 = 101; 
  memory.latency_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory.latency_GetX : Accumulator : Sum.u64 = 4242; SumSQ.u64 = 428442; Count.u64 = 42; Min.u64 = 101; Max.u64 = 101; 
  memory.latency_Write : Accumulator : Sum.u64 = 19106; SumSQ.u64 = 1931440; Count.u64 = 189; Min.u64 = 101; Max.u64 = 102; 
- memory.latency_PutM : Accumulator : Sum.u64 = 2020; SumSQ.u64 = 204020; Count.u64 = 20; Min.u64 = 101; Max.u64 = 101; 
- memory.cycles_with_issue : Accumulator : Sum.u64 = 454; SumSQ.u64 = 454; Count.u64 = 454; Min.u64 = 1; Max.u64 = 1; 
+ memory.latency_PutM : Accumulator : Sum.u64 = 3333; SumSQ.u64 = 336633; Count.u64 = 33; Min.u64 = 101; Max.u64 = 101; 
+ memory.cycles_with_issue : Accumulator : Sum.u64 = 467; SumSQ.u64 = 467; Count.u64 = 467; Min.u64 = 1; Max.u64 = 1; 
  memory.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory.total_cycles : Accumulator : Sum.u64 = 45579; SumSQ.u64 = 2077445241; Count.u64 = 1; Min.u64 = 45579; Max.u64 = 45579; 
 Simulation is complete, simulated time: 45.5795 us
