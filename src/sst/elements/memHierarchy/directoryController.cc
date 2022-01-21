@@ -742,6 +742,9 @@ bool DirectoryController::handleGetS(MemEvent * event, bool inMSHR) {
 
     if (!inMSHR)
         stat_cacheHits->addData(1);
+    
+    if (mshr->hasData(addr) && mshr->getDataDirty(addr)) // Data was temporarily buffered here due to racing accesses
+        writebackDataFromMSHR(addr);
 
     switch (state) {
         case I:
