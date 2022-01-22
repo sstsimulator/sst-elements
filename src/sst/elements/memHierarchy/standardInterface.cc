@@ -539,7 +539,7 @@ StandardMem::Request* StandardInterface::convertResponseGetSResp(StandardMem::Re
     } else { // Need to extract just the relevant bit of the payload
         Addr offset = me->getAddr() - me->getBaseAddr();
         auto payload = me->getPayload();
-        resp->data.assign(payload.begin() + offset, payload.begin() + offset + resp->size - 1);
+        resp->data.assign(payload.begin() + offset, payload.begin() + offset + resp->size);
     }
     if (!me->success()) {
         resp->setFail();
