@@ -3,7 +3,7 @@ from sst.merlin import *
 
 #import shmemMultiNode 
 #import latestV3 as node
-import oneRtrV4 as node
+import oneRtrV3 as node
 
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
