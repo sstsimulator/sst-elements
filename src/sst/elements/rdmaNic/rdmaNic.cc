@@ -95,7 +95,7 @@ RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
     m_mmioLink = loadUserSubComponent<StandardMem>("mmio", ComponentInfo::SHARE_NONE, m_clockTC, new StandardMem::Handler<RdmaNic>(this, &RdmaNic::handleEvent));
 
     if (!m_mmioLink) {
-        out.fatal(CALL_INFO_LONG, -1, "Unable to load memHierarchy.standardInterface subcomponent; check that 'mmio' slot is filled in input.\n");
+        out.fatal(CALL_INFO_LONG, -1, "Unable to load StandardMem subcomponent; check that 'mmio' slot is filled in input.\n");
     }
 	m_mmioLink->setMemoryMappedAddressRegion(m_ioBaseAddr, 1024*1024 * m_pesPerNode);
 
@@ -104,7 +104,7 @@ RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
     	m_dmaLink = loadUserSubComponent<StandardMem>("dma", ComponentInfo::SHARE_NONE, m_clockTC, new StandardMem::Handler<RdmaNic>(this, &RdmaNic::handleEvent));
 
     	if (!m_dmaLink) {
-        	out.fatal(CALL_INFO_LONG, -1, "Unable to load memHierarchy.standardInterface subcomponent; check that 'mmio' slot is filled in input.\n");
+            out.fatal(CALL_INFO_LONG, -1, "Unable to load StandardMem subcomponent; check that 'mmio' slot is filled in input.\n");
     	}
 	} else {
 		m_dmaLink = m_mmioLink;
