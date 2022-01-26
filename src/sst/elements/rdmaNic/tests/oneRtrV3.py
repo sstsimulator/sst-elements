@@ -137,7 +137,7 @@ class Nic_Builder:
 		print("nodeId {}".format(nodeId ))
 		prefix = 'node' + str(nodeId)
 		print(prefix)
-		nic = sst.Component( prefix + ".nic", "memHierarchy.RdmaNic")
+		nic = sst.Component( prefix + ".nic", "rdmaNic.nic")
 		nic.addParams({
 		#		"clock" : "8GHz",
 				"clock" : "1GHz",
