@@ -16,15 +16,13 @@
 #ifndef MEMHIERARCHY_SHMEM_NIC_H
 #define MEMHIERARCHY_SHMEM_NIC_H
 
+#include <queue>
 #include <sst/core/sst_types.h>
 
 #include <sst/core/component.h>
 #include <sst/core/event.h>
 
 #include <sst/core/interfaces/stdMem.h>
-
-#include "sst/elements/memHierarchy/memEvent.h"
-#include "sst/elements/memHierarchy/memLinkBase.h"
 
 #include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/interfaces/simpleNetwork.h>
@@ -45,16 +43,8 @@ namespace MemHierarchy {
 class RdmaNic : public SST::Component {
   public:
 
-    SST_ELI_REGISTER_COMPONENT(RdmaNic, "memHierarchy", "RdmaNic", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_COMPONENT(RdmaNic, "rdmaNic", "nic", SST_ELI_ELEMENT_VERSION(1,0,0),
         "RDMA NIC, interfaces to a main memory model as memory and CPU", COMPONENT_CATEGORY_MEMORY)
-
-#define MEMCONTROLLER_ELI_PORTS \
-            {"direct_link", "Direct connection to a cache/directory controller", {"memHierarchy.MemEventBase"} },\
-            {"network",     "Network connection to a cache/directory controller; also request network for split networks", {"memHierarchy.MemRtrEvent"} },\
-            {"network_ack", "For split networks, ack/response network connection to a cache/directory controller", {"memHierarchy.MemRtrEvent"} },\
-            {"network_fwd", "For split networks, forward request network connection to a cache/directory controller", {"memHierarchy.MemRtrEvent"} },\
-            {"network_data","For split networks, data network connection to a cache/directory controller", {"memHierarchy.MemRtrEvent"} },\
-            {"cache_link",  "Link to Memory Controller", { "memHierarchy.memEvent" , "" } }, \
 
     SST_ELI_DOCUMENT_STATISTICS(
         { "cyclePerIncOpRead",    "latency of inc op",     "ns", 1 },
@@ -72,7 +62,10 @@ class RdmaNic : public SST::Component {
         { "hostToNicLatency",  "",   "request", 1 }
     )
 
-    SST_ELI_DOCUMENT_PORTS( MEMCONTROLLER_ELI_PORTS )
+    SST_ELI_DOCUMENT_PORTS({ "dma", "Connects the NIC to a cache for DMA", {} },
+                           { "mmio", "Connects the NIC to MH", {} },
+                           { "rtrLink", "Connects the NIC to the network", {} })
+
 
     RdmaNic(ComponentId_t id, Params &params);
 
@@ -139,8 +132,8 @@ class RdmaNic : public SST::Component {
     Output dbg;
     Output out;
 
-    StandardMem* m_mmioLink; // mmioLink to memHierarchy
-    StandardMem* m_dmaLink; // dmaLink to memHierarchy
+    StandardMem* m_mmioLink;
+    StandardMem* m_dmaLink;
     uint64_t m_ioBaseAddr;
     int m_pesPerNode;
     size_t m_perPeReqQueueMemSize;
