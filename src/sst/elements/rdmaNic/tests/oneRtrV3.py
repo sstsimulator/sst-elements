@@ -9,9 +9,9 @@ debug_addr=0x7ffffb80
 
 #debug_addr=0x4001c0
 
-l2_debug = 1 
-dc_debug = 1 
-mc_debug = 1 
+l2_debug = 0 
+dc_debug = 0 
+mc_debug = 0 
 
 nicCache_debug = 0 
 stdMem_debug = 0 
