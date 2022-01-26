@@ -7,7 +7,7 @@
 
 #include "rdma.h"
 
-#define DEBUG 1
+#define DEBUG 0
 #define dbgPrint(fmt, ARGS...) \
         do { if (DEBUG) fprintf(stdout, "%s():%d: " fmt, __func__,__LINE__, ##ARGS); } while (0) 
 
