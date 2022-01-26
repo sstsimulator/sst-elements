@@ -14,7 +14,7 @@
 
 #include "base.h"
 
-#define DEBUG 0 
+#define DEBUG 1
 #define dbgPrint(fmt, ARGS...) \
         do { if (DEBUG) fprintf(stdout, "%s():%d: " fmt, __func__,__LINE__, ##ARGS); } while (0) 
 
@@ -83,6 +83,7 @@ void writeCmd( NicCmd* cmd ) {
 	
 	++s_reqQueueHeadIndex;
 	s_reqQueueHeadIndex %= s_nicQueueInfo.reqQueueSize;
+	dbgPrint("done\n");
 }
 
 static void readNicQueueInfo( volatile NicQueueInfo* info ) 

@@ -7,7 +7,7 @@
 
 #include "rdma.h"
 
-#define DEBUG 0
+#define DEBUG 1
 #define dbgPrint(fmt, ARGS...) \
         do { if (DEBUG) fprintf(stdout, "%s():%d: " fmt, __func__,__LINE__, ##ARGS); } while (0) 
 
@@ -356,7 +356,7 @@ int rdma_memory_read( MemRgnKey key, Node node, Pid pid, size_t offset, void* de
 }
 
 static int waitResp( NicResp* resp ) {
-	//dbgPrint("wait for response from NIC, addr %p\n",resp);
+	dbgPrint("wait for response from NIC, addr %p\n",&resp->retval);
 
 	while ( -1 == resp->retval );
 	return 0;
