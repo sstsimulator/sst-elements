@@ -6,8 +6,8 @@ map = "0x0:0x80000000:0x80000000"
 coherence_protocol="MESI"
 #coherence_protocol="MSI"
 
-cache_debug = 1 
-stdMem_debug = 0 
+cache_debug = 0
+stdMem_debug = 0
 
 debug_addr=0x7ffffb80
 debug_start_time = 26760650595 
