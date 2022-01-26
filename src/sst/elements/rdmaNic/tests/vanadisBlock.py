@@ -55,7 +55,6 @@ class Vanadis_Builder:
 		v_cpu_0.addParams({
 			   "clock" : cpu_clock,
 			  "executable" : os.getenv("VANADIS_EXE", "./app/rdma/msg"),
-
 			   "app.argc" : 4,
 				"app.arg0" : "IMB",
 				"app.arg1" : "PingPong",
