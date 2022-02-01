@@ -1156,11 +1156,11 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
         output->verbose(
             CALL_INFO, 16, 0,
             "[fence]: processing ins: 0x%0llx functional unit "
-            "allocation for fencing (lsq-load size: %" PRIu32 " / lsq-store size: %" PRIu32 ")\n",
-            ins->getInstructionAddress(), (uint32_t)lsq->loadSize(), (uint32_t)lsq->storeSize());
+            "allocation for fencing (lsq-load size: %" PRIu32 " / lsq-store-buffer size: %" PRIu32 ")\n",
+            ins->getInstructionAddress(), (uint32_t)lsq->loadSize(), (uint32_t)lsq->storeBufferSize());
 
         if ( fence_ins->createsStoreFence() ) {
-            if ( lsq->storeSize() == 0 ) { allocated_fu = true; }
+            if ( lsq->storeBufferSize() == 0 ) { allocated_fu = true; }
             else {
                 allocated_fu = false;
             }
