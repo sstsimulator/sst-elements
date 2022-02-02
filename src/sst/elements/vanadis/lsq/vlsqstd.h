@@ -131,6 +131,7 @@ public:
 
     virtual size_t storeSize() { return store_q->size(); }
     virtual size_t loadSize() { return pending_queued_loads; }
+    virtual size_t storeBufferSize() { return pending_mem_issued_stores; }
 
     virtual void push(VanadisStoreInstruction* store_me) {
         assert(!(store_q->full()));

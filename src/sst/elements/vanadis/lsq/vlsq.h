@@ -73,6 +73,7 @@ public:
 
     virtual size_t storeSize() = 0;
     virtual size_t loadSize() = 0;
+    virtual size_t storeBufferSize() = 0;
 
     virtual void push(VanadisStoreInstruction* store_me) = 0;
     virtual void push(VanadisLoadInstruction* load_me) = 0;
