@@ -6,6 +6,18 @@ TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
+TrivialCPU cpu7 Finished after 1000 issued reads, 1000 returned (104578 clocks)
+	49 Noncacheable Reads
+	5 Noncacheable Writes
+TrivialCPU cpu6 Finished after 1000 issued reads, 1000 returned (104275 clocks)
+	50 Noncacheable Reads
+	5 Noncacheable Writes
+TrivialCPU cpu5 Finished after 1000 issued reads, 1000 returned (104272 clocks)
+	50 Noncacheable Reads
+	5 Noncacheable Writes
+TrivialCPU cpu4 Finished after 1000 issued reads, 1000 returned (104270 clocks)
+	50 Noncacheable Reads
+	5 Noncacheable Writes
 TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (104384 clocks)
 	50 Noncacheable Reads
 	5 Noncacheable Writes
@@ -17,18 +29,6 @@ TrivialCPU cpu1 Finished after 1000 issued reads, 1000 returned (104380 clocks)
 	5 Noncacheable Writes
 TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (104378 clocks)
 	50 Noncacheable Reads
-	5 Noncacheable Writes
-TrivialCPU cpu4 Finished after 1000 issued reads, 1000 returned (104270 clocks)
-	50 Noncacheable Reads
-	5 Noncacheable Writes
-TrivialCPU cpu5 Finished after 1000 issued reads, 1000 returned (104272 clocks)
-	50 Noncacheable Reads
-	5 Noncacheable Writes
-TrivialCPU cpu6 Finished after 1000 issued reads, 1000 returned (104275 clocks)
-	50 Noncacheable Reads
-	5 Noncacheable Writes
-TrivialCPU cpu7 Finished after 1000 issued reads, 1000 returned (104578 clocks)
-	49 Noncacheable Reads
 	5 Noncacheable Writes
  cpu0.pendCycle : Accumulator : Sum.u64 = 143447; SumSQ.u64 = 440813; Count.u64 = 104378; Min.u64 = 0; Max.u64 = 10; 
  c0.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1629,7 +1629,7 @@ TrivialCPU cpu7 Finished after 1000 issued reads, 1000 returned (104578 clocks)
  l3cache:memlink.packet_latency : Accumulator : Sum.u64 = 47250; SumSQ.u64 = 4496886; Count.u64 = 540; Min.u64 = 19; Max.u64 = 142; 
  l3cache:memlink.send_bit_count : Accumulator : Sum.u64 = 35840; SumSQ.u64 = 2416640; Count.u64 = 540; Min.u64 = 64; Max.u64 = 96; 
  l3cache:memlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache:memlink.idle_time : Accumulator : Sum.u64 = 10570000; SumSQ.u64 = 2318962500000; Count.u64 = 90; Min.u64 = 0; Max.u64 = 364000; 
+ l3cache:memlink.idle_time : Accumulator : Sum.u64 = 11146000; SumSQ.u64 = 2360434500000; Count.u64 = 88; Min.u64 = 2000; Max.u64 = 364000; 
  l3cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.evict_I : Accumulator : Sum.u64 = 60; SumSQ.u64 = 60; Count.u64 = 60; Min.u64 = 1; Max.u64 = 1; 
  l3cache.evict_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

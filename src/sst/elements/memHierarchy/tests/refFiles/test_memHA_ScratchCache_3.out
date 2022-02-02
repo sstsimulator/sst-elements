@@ -2,8 +2,8 @@ l2_0: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 
 l3_0: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
 l2_1: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
 l3_1: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-ScratchCPU cpu0 Finished after 1000 issued memory events, 1000 returned, 65358 cycles
 ScratchCPU cpu1 Finished after 1000 issued memory events, 1000 returned, 67763 cycles
+ScratchCPU cpu0 Finished after 1000 issued memory events, 1000 returned, 65358 cycles
  l1_0.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.stateEvent_GetS_I : Accumulator : Sum.u64 = 162; SumSQ.u64 = 162; Count.u64 = 162; Min.u64 = 1; Max.u64 = 1; 
  l1_0.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -626,7 +626,7 @@ ScratchCPU cpu1 Finished after 1000 issued memory events, 1000 returned, 67763 c
  scratch0:memlink.packet_latency : Accumulator : Sum.u64 = 885; SumSQ.u64 = 2549; Count.u64 = 340; Min.u64 = 0; Max.u64 = 7; 
  scratch0:memlink.send_bit_count : Accumulator : Sum.u64 = 124360; SumSQ.u64 = 67159360; Count.u64 = 673; Min.u64 = 64; Max.u64 = 1088; 
  scratch0:memlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- scratch0:memlink.idle_time : Accumulator : Sum.u64 = 25941060; SumSQ.u64 = 4304733806800; Count.u64 = 597; Min.u64 = 0; Max.u64 = 805980; 
+ scratch0:memlink.idle_time : Accumulator : Sum.u64 = 25944980; SumSQ.u64 = 4304673026000; Count.u64 = 597; Min.u64 = 200; Max.u64 = 805980; 
  l1_1.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.stateEvent_GetS_I : Accumulator : Sum.u64 = 161; SumSQ.u64 = 161; Count.u64 = 161; Min.u64 = 1; Max.u64 = 1; 
  l1_1.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1263,7 +1263,7 @@ ScratchCPU cpu1 Finished after 1000 issued memory events, 1000 returned, 67763 c
  scratch1:memlink.packet_latency : Accumulator : Sum.u64 = 855; SumSQ.u64 = 2351; Count.u64 = 336; Min.u64 = 0; Max.u64 = 6; 
  scratch1:memlink.send_bit_count : Accumulator : Sum.u64 = 121224; SumSQ.u64 = 64215744; Count.u64 = 654; Min.u64 = 64; Max.u64 = 1088; 
  scratch1:memlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- scratch1:memlink.idle_time : Accumulator : Sum.u64 = 27469760; SumSQ.u64 = 4717569448000; Count.u64 = 598; Min.u64 = 540; Max.u64 = 865380; 
+ scratch1:memlink.idle_time : Accumulator : Sum.u64 = 27471200; SumSQ.u64 = 4717533934400; Count.u64 = 599; Min.u64 = 540; Max.u64 = 865380; 
  memory0:backend.row_already_open : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory0:backend.no_row_open : Accumulator : Sum.u64 = 729; SumSQ.u64 = 729; Count.u64 = 729; Min.u64 = 1; Max.u64 = 1; 
  memory0:backend.wrong_row_open : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1281,7 +1281,7 @@ ScratchCPU cpu1 Finished after 1000 issued memory events, 1000 returned, 67763 c
  memory0.cycles_with_issue : Accumulator : Sum.u64 = 26; SumSQ.u64 = 26; Count.u64 = 26; Min.u64 = 1; Max.u64 = 1; 
  memory0.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 31110; SumSQ.u64 = 31110; Count.u64 = 31110; Min.u64 = 1; Max.u64 = 1; 
  memory0.total_cycles : Accumulator : Sum.u64 = 33881; SumSQ.u64 = 1147922161; Count.u64 = 1; Min.u64 = 33881; Max.u64 = 33881; 
- memory0:cpulink.packet_latency : Accumulator : Sum.u64 = 1691; SumSQ.u64 = 4729; Count.u64 = 645; Min.u64 = 0; Max.u64 = 7; 
+ memory0:cpulink.packet_latency : Accumulator : Sum.u64 = 1689; SumSQ.u64 = 4721; Count.u64 = 645; Min.u64 = 0; Max.u64 = 7; 
  memory0:cpulink.send_bit_count : Accumulator : Sum.u64 = 109248; SumSQ.u64 = 77028864; Count.u64 = 339; Min.u64 = 72; Max.u64 = 1088; 
  memory0:cpulink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory0:cpulink.idle_time : Accumulator : Sum.u64 = 9442300; SumSQ.u64 = 1692110310000; Count.u64 = 225; Min.u64 = 540; Max.u64 = 974620; 
@@ -1302,7 +1302,7 @@ ScratchCPU cpu1 Finished after 1000 issued memory events, 1000 returned, 67763 c
  memory1.cycles_with_issue : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; Min.u64 = 1; Max.u64 = 1; 
  memory1.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 33788; SumSQ.u64 = 33788; Count.u64 = 33788; Min.u64 = 1; Max.u64 = 1; 
  memory1.total_cycles : Accumulator : Sum.u64 = 33881; SumSQ.u64 = 1147922161; Count.u64 = 1; Min.u64 = 33881; Max.u64 = 33881; 
- memory1:cpulink.packet_latency : Accumulator : Sum.u64 = 1834; SumSQ.u64 = 5366; Count.u64 = 682; Min.u64 = 0; Max.u64 = 8; 
+ memory1:cpulink.packet_latency : Accumulator : Sum.u64 = 1833; SumSQ.u64 = 5363; Count.u64 = 682; Min.u64 = 0; Max.u64 = 8; 
  memory1:cpulink.send_bit_count : Accumulator : Sum.u64 = 113840; SumSQ.u64 = 77270656; Count.u64 = 337; Min.u64 = 72; Max.u64 = 1088; 
  memory1:cpulink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory1:cpulink.idle_time : Accumulator : Sum.u64 = 8943560; SumSQ.u64 = 893352493600; Count.u64 = 234; Min.u64 = 740; Max.u64 = 325560; 
