@@ -1181,8 +1181,12 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
     case INST_NOOP:
     case INST_FAULT:
         ins->markExecuted();
-    case INST_SYSCALL:
         allocated_fu = true;
+        break;
+    case INST_SYSCALL:
+        if ( lsq->storeBufferSize() == 0 &&  lsq->loadSize() == 0 ) { 
+            allocated_fu = true;
+        }
         break;
     default:
         output->fatal(CALL_INFO, -1, "Error - no processing for instruction class (%s)\n", ins->getInstCode());
