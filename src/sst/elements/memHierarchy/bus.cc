@@ -87,8 +87,7 @@ bool Bus::clockTick(Cycle_t time) {
 
 void Bus::broadcastEvent(SST::Event* ev) {
     MemEventBase* memEvent = static_cast<MemEventBase*>(ev);
-    LinkId_t srcLinkId = lookupNode(memEvent->getSrc());
-    SST::Link* srcLink = linkIdMap_[srcLinkId];
+    SST::Link* srcLink = lookupNode(memEvent->getSrc());
 
     for (int i = 0; i < numHighNetPorts_; i++) {
         if (highNetPorts_[i] == srcLink) continue;
@@ -114,8 +113,7 @@ void Bus::sendSingleEvent(SST::Event* ev) {
         fflush(stdout);
     }
 #endif
-    LinkId_t dstLinkId = lookupNode(event->getDst());
-    SST::Link* dstLink = linkIdMap_[dstLinkId];
+    SST::Link* dstLink = lookupNode(event->getDst());
     MemEventBase* forwardEvent = event->clone();
     dstLink->send(forwardEvent);
 
@@ -126,18 +124,18 @@ void Bus::sendSingleEvent(SST::Event* ev) {
  * Helper functions
  *---------------------------------------*/
 
-void Bus::mapNodeEntry(const std::string& name, LinkId_t id) {
-	std::map<std::string, LinkId_t>::iterator it = nameMap_.find(name);
-	if (it != nameMap_.end() ) {
-            if (it->second != id)
-                dbg_.fatal(CALL_INFO, -1, "%s, Error: Bus attempting to map node that has already been mapped\n", getName().c_str());
-            return;
-        }
-    nameMap_[name] = id;
+void Bus::mapNodeEntry(const std::string& name, SST::Link* link) {
+    std::map<std::string, SST::Link*>::iterator it = nameMap_.find(name);
+    if (it != nameMap_.end() ) {
+        if (it->second != link)
+            dbg_.fatal(CALL_INFO, -1, "%s, Error: Bus attempting to map node that has already been mapped\n", getName().c_str());
+        return;
+    }
+    nameMap_[name] = link;
 }
 
-LinkId_t Bus::lookupNode(const std::string& name) {
-	std::map<std::string, LinkId_t>::iterator it = nameMap_.find(name);
+SST::Link* Bus::lookupNode(const std::string& name) {
+    std::map<std::string, SST::Link*>::iterator it = nameMap_.find(name);
     if (nameMap_.end() == it) {
         dbg_.fatal(CALL_INFO, -1, "%s, Error: Bus lookup of node %s returned no mapping\n", getName().c_str(), name.c_str());
     }
@@ -153,8 +151,6 @@ void Bus::configureLinks() {
         if (!link)
             dbg_.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), linkname.c_str());
         highNetPorts_.push_back(link);
-        linkIdMap_[highNetPorts_[numHighNetPorts_]->getId()] = highNetPorts_[numHighNetPorts_];
-        dbg_.output(CALL_INFO, "Port %d = Link %d\n", numHighNetPorts_, highNetPorts_[numHighNetPorts_]->getId());
         numHighNetPorts_++;
         linkname = linkprefix + std::to_string(numHighNetPorts_);
     }
@@ -166,8 +162,6 @@ void Bus::configureLinks() {
         if (!link)
             dbg_.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), linkname.c_str());
         lowNetPorts_.push_back(link);
-        linkIdMap_[lowNetPorts_[numLowNetPorts_]->getId()] = lowNetPorts_[numLowNetPorts_];
-        dbg_.output(CALL_INFO, "Port %d = Link %d\n", numLowNetPorts_, lowNetPorts_[numLowNetPorts_]->getId());
         numLowNetPorts_++;
         linkname = linkprefix + std::to_string(numLowNetPorts_);
     }
@@ -221,7 +215,7 @@ void Bus::init(unsigned int phase) {
 
             if (memEvent && memEvent->getCmd() == Command::NULLCMD) {
                 dbg_.debug(_L10_, "bus %s broadcasting upper event to lower ports (%d): %s\n", getName().c_str(), numLowNetPorts_, memEvent->getVerboseString().c_str());
-                mapNodeEntry(memEvent->getSrc(), highNetPorts_[i]->getId());
+                mapNodeEntry(memEvent->getSrc(), highNetPorts_[i]);
                 for (int k = 0; k < numLowNetPorts_; k++)
                     lowNetPorts_[k]->sendInitData(memEvent->clone());
             } else if (memEvent) {
@@ -239,7 +233,7 @@ void Bus::init(unsigned int phase) {
             if (!memEvent) delete memEvent;
             else if (memEvent->getCmd() == Command::NULLCMD) {
                 dbg_.debug(_L10_, "bus %s broadcasting lower event to upper ports (%d): %s\n", getName().c_str(), numHighNetPorts_, memEvent->getVerboseString().c_str());
-                mapNodeEntry(memEvent->getSrc(), lowNetPorts_[i]->getId());
+                mapNodeEntry(memEvent->getSrc(), lowNetPorts_[i]);
                 for (int i = 0; i < numHighNetPorts_; i++) {
                     highNetPorts_[i]->sendInitData(memEvent->clone());
                 }

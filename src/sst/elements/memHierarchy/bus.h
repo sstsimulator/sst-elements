@@ -90,8 +90,8 @@ private:
     void configureParameters(SST::Params&);
     void configureLinks();
 
-    void mapNodeEntry(const std::string&, LinkId_t);
-    LinkId_t lookupNode(const std::string&);
+    void mapNodeEntry(const std::string&, SST::Link*);
+    SST::Link* lookupNode(const std::string&);
 
 
     Output                          dbg_;
@@ -112,8 +112,7 @@ private:
     std::string                     bus_latency_cycles_;
     std::vector<SST::Link*>         highNetPorts_;
     std::vector<SST::Link*>         lowNetPorts_;
-    std::map<string, LinkId_t>      nameMap_;
-    std::map<LinkId_t, SST::Link*>  linkIdMap_;
+    std::map<string,SST::Link*>     nameMap_;
     std::queue<SST::Event*>         eventQueue_;
 
 };
