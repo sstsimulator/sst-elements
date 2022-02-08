@@ -113,8 +113,8 @@ class testcase_rdmaNic(SSTTestCase):
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
         ref_outfile = "{0}/{1}/{2}.stdout.gold".format(test_path, elftestdir, elffile)
         ref_errfile = "{0}/{1}/{2}.stderr.gold".format(test_path, elftestdir, elffile)
-        os_outfile = "{0}/stdout-os".format(outdir)
-        os_errfile = "{0}/stderr-os".format(outdir)
+        os_outfile = "{0}/stdout-node0.cpu0.os".format(outdir)
+        os_errfile = "{0}/stderr-node1.cpu0.os".format(outdir)
 
         # Set the RdmaNic EXE path
         testfilepath = "{0}/{1}/{2}".format(test_path, elftestdir, elffile)
