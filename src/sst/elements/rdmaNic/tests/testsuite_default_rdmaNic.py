@@ -39,7 +39,7 @@ def build_rdmaNic_test_matrix():
 
 ################################################################################
 
-# At startup, build the ESshmem test matrix
+# At startup, build the RDMA test matrix
 build_rdmaNic_test_matrix()
 
 def gen_custom_name(testcase_func, param_num, param):
@@ -63,7 +63,7 @@ def initializeTestModule_SingleInstance(class_inst):
     if module_init != 1:
         try:
             # Put your single instance Init Code Here
-            class_inst._setupESshmemSmallTestFiles()
+            class_inst._setupRdmaNicTestFiles()
         except:
             pass
         module_init = 1
@@ -174,8 +174,8 @@ class testcase_rdmaNic(SSTTestCase):
 
 ###
 
-    def _setupESshmemSmallTestFiles(self):
-        log_debug("_setupRdmaNicSmallTestFiles() Running")
+    def _setupRdmaNicTestFiles(self):
+        log_debug("_setupRdmaNicTestFiles() Running")
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
