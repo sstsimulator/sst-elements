@@ -26,7 +26,12 @@ librdmaNic_la_SOURCES = \
 	rdmaNicNetworkEvent.h \
 	rdmaNicTree.h
 
-EXTRA_DIST = 
+EXTRA_DIST = \
+	tests/testsuite_default_rdmaNic.py \
+	tests/runVanadis.py \
+	tests/oneRtrV3.py \
+	tests/oneRtrV4.py \
+	tests/vanadisBlock.py 
 
 sstdir = $(includedir)/sst/elements/rdmaNic
 nobase_sst_HEADERS = \
