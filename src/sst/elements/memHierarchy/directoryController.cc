@@ -775,7 +775,7 @@ bool DirectoryController::handleGetS(MemEvent * event, bool inMSHR) {
             // Miss, get data from memory
             status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
             if (status == MemEventStatus::OK) {
-                issueMemoryRequest(event, entry);
+                issueMemoryRequest(event, entry, true);
                 entry->setState(IS);
                 if (is_debug_event(event))
                     eventDI.reason = "miss";
@@ -796,7 +796,7 @@ bool DirectoryController::handleGetS(MemEvent * event, bool inMSHR) {
             }
             status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
             if (status == MemEventStatus::OK) {
-                issueMemoryRequest(event, entry);
+                issueMemoryRequest(event, entry, true);
                 entry->setState(S_D);
             }
             if (is_debug_event(event))
@@ -881,7 +881,7 @@ bool DirectoryController::handleGetX(MemEvent * event, bool inMSHR) {
             status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
             if (status == MemEventStatus::OK) {
                 entry->setState(IM);
-                issueMemoryRequest(event, entry);
+                issueMemoryRequest(event, entry, true);
                 if (is_debug_event(event))
                     eventDI.reason = "miss";
             }
@@ -923,7 +923,7 @@ bool DirectoryController::handleGetX(MemEvent * event, bool inMSHR) {
                         entry->setState(S_Inv);
                     } else {
                         entry->setState(SM_Inv);
-                        issueMemoryRequest(event, entry);
+                        issueMemoryRequest(event, entry, true);
                     }
                     issueInvalidations(event, entry, Command::Inv);
                     if (is_debug_event(event)) {
@@ -995,7 +995,7 @@ bool DirectoryController::handleWrite(MemEvent * event, bool inMSHR) {
             
             if (status == MemEventStatus::OK) {
                 entry->setState(IM);
-                issueMemoryRequest(event, entry);
+                issueMemoryRequest(event, entry, false);
             }
             break;
         case S:
@@ -2320,9 +2320,11 @@ void DirectoryController::sendEntryToMemory(DirEntry *entry) {
  * Send events
  ****************************/
 
-void DirectoryController::issueMemoryRequest(MemEvent* event, DirEntry* entry) {
+void DirectoryController::issueMemoryRequest(MemEvent* event, DirEntry* entry, bool lineGranularity) {
     MemEvent* reqEvent = new MemEvent(*event);
     reqEvent->setSrc(getName());
+    if (lineGranularity)
+        reqEvent->setSize(lineSize);
     uint64_t deliveryTime = timestamp + accessLatency;
 
     forwardByAddress(reqEvent, deliveryTime);

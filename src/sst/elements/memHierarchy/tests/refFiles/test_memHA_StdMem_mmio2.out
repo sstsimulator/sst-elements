@@ -1669,7 +1669,7 @@ StandardCPU: Test Completed Successfuly
  mmio:iface:memlink.output_port_stalls : Accumulator : Sum.u64 = 3023000; SumSQ.u64 = 217585000000; Count.u64 = 42; Min.u64 = 71000; Max.u64 = 72000; 
  mmio:iface:memlink.idle_time : Accumulator : Sum.u64 = 1513500; SumSQ.u64 = 140186250000; Count.u64 = 19; Min.u64 = 72000; Max.u64 = 216000; 
  directory:cpulink.packet_latency : Accumulator : Sum.u64 = 518010; SumSQ.u64 = 636018966; Count.u64 = 517; Min.u64 = 70; Max.u64 = 2089; 
- directory:cpulink.send_bit_count : Accumulator : Sum.u64 = 174848; SumSQ.u64 = 89925632; Count.u64 = 517; Min.u64 = 64; Max.u64 = 576; 
+ directory:cpulink.send_bit_count : Accumulator : Sum.u64 = 266048; SumSQ.u64 = 151212032; Count.u64 = 517; Min.u64 = 64; Max.u64 = 576; 
  directory:cpulink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory:cpulink.idle_time : Accumulator : Sum.u64 = 6852500; SumSQ.u64 = 36310363250000; Count.u64 = 11; Min.u64 = 38000; Max.u64 = 6017500; 
  directory.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
