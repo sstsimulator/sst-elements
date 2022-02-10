@@ -105,6 +105,8 @@ class testcase_rdmaNic(SSTTestCase):
         tmpdir = self.get_test_output_tmp_dir()
         os.makedirs(outdir)
 
+		os.environ['PYTHONPATH'] = test_path
+
         # Set the various file paths
         testDataFileName="test_rdmaNic_{0}".format(testname)
         sdlfile = "{0}/{1}".format(test_path, sdlfile)
