@@ -105,8 +105,6 @@ class testcase_rdmaNic(SSTTestCase):
         tmpdir = self.get_test_output_tmp_dir()
         os.makedirs(outdir)
 
-        os.environ['PYTHONPATH'] = test_path
-
         # Set the various file paths
         testDataFileName="test_rdmaNic_{0}".format(testname)
         sdlfile = "{0}/{1}".format(test_path, sdlfile)
@@ -118,13 +116,13 @@ class testcase_rdmaNic(SSTTestCase):
 
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
 
-        node0_os_outfile = "{0}/stdout-node0.cpu0.os".format(outdir)
-        node0_os_errfile = "{0}/stderr-node0.cpu0.os".format(outdir)
+        node0_os_outfile = "{0}/stdout-node0.cpu0.os".format(test_path)
+        node0_os_errfile = "{0}/stderr-node0.cpu0.os".format(test_path)
         ref_node0_os_outfile = "{0}/{1}/{2}.stdout-node0.cpu0.os.gold".format(test_path, elftestdir, elffile)
         ref_node0_os_errfile = "{0}/{1}/{2}.stderr-node0.cpu0.os.gold".format(test_path, elftestdir, elffile)
 
-        node1_os_outfile = "{0}/stdout-node1.cpu0.os".format(outdir)
-        node1_os_errfile = "{0}/stderr-node1.cpu0.os".format(outdir)
+        node1_os_outfile = "{0}/stdout-node1.cpu0.os".format(test_path)
+        node1_os_errfile = "{0}/stderr-node1.cpu0.os".format(test_path)
         ref_node1_os_outfile = "{0}/{1}/{2}.stdout-node1.cpu0.os.gold".format(test_path, elftestdir, elffile)
         ref_node1_os_errfile = "{0}/{1}/{2}.stderr-node1.cpu0.os.gold".format(test_path, elftestdir, elffile)
 
@@ -132,7 +130,7 @@ class testcase_rdmaNic(SSTTestCase):
         testfilepath = "{0}/{1}/{2}".format(test_path, elftestdir, elffile)
         os.environ['VANADIS_EXE'] = testfilepath
 
-        oscmd = self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, set_cwd=outdir, timeout_sec=testtimeout)
+        oscmd = self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, set_cwd=test_path, timeout_sec=testtimeout)
 
         # Perform the tests
         # Verify that the errfile from SST is empty
