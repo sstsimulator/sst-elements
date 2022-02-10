@@ -4,19 +4,20 @@ import os
 import sys,getopt
 
 Tracetype = "Type Error"
-traceFile = "File Error" 
+traceFile = "File Error"
+traceDir = "Dir Error"
 memSize = "4096"
-useDramSim="no"
+useTimingDram="no"
 
 def main():
     global Tracetype
     global traceFile
+    global traceDir
     global memSize
-    global useDramSim
- 
+    global useTimingDram
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "", ["TraceType=","UseDramSim="])
+        opts, args = getopt.getopt(sys.argv[1:], "", ["TraceType=","UseTimingDram=","TraceDir="])
     except getopt.GetopError as err:
         print(str(err))
         sys.exit(2)
@@ -37,13 +38,15 @@ def main():
             else:
                 print("no match a= ", a)
                 print("Found nothing for o", o)
-        elif o in ("--UseDramSim"):
+        elif o in ("--UseTimingDram"):
             if a == "yes":
-                useDramSim = 'yes'
-                memSize = "512"
+                useTimingDram = 'yes'
+        elif o in ("--TraceDir"):
+            traceDir=a
         else:
             print("no match for o", o)
             assert False, "Unknown Options !"
+
 
 main()
 
@@ -56,7 +59,7 @@ comp_cpu = sst.Component("cpu", "prospero.prosperoCPU")
 comp_cpu.addParams({
        "verbose" : "0",
        "reader" : "prospero.Prospero" + Tracetype + "TraceReader",
-       "readerParams.file" : traceFile
+       "readerParams.file" : traceDir + "/" + traceFile
 })
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 comp_l1cache.addParams({
@@ -74,12 +77,31 @@ comp_memctrl.addParams({
       "clock" : "1GHz",
       "addr_range_start" : 0,
 })
-if useDramSim == "yes":
-    memory = comp_memctrl.setSubComponent("backend", "memHierarchy.dramsim")
+if useTimingDram == "yes":
+    memory = comp_memctrl.setSubComponent("backend", "memHierarchy.timingDRAM")
     memory.addParams({
-        "system_ini" : "system.ini",
-        "device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
+        "id" : 0,
+        "addrMapper" : "memHierarchy.roundRobinAddrMapper",
+        "addrMapper.interleave_size" : "64B",
+        "addrMapper.row_size" : "1KiB",
+        "clock" : "800MHz",
         "mem_size" : str(memSize) + "MiB",
+        "channels" : 2,
+        "channel.numRanks" : 2,
+        "channel.rank.numBanks" : 2,
+        "channel.transaction_Q_size" : 32,
+        "channel.rank.bank.CL" : 14,
+        "channel.rank.bank.CL_WR" : 12,
+        "channel.rank.bank.RCD" : 14,
+        "channel.rank.bank.TRP" : 14,
+        "channel.rank.bank.dataCycles" : 2,
+        "channel.rank.bank.pagePolicy" : "memHierarchy.simplePagePolicy",
+        "channel.rank.bank.transactionQ" : "memHierarchy.reorderTransactionQ",
+        "channel.rank.bank.pagePolicy.close" : 0,
+        "printconfig" : 0,
+        "channel.printconfig" : 0,
+        "channel.rank.printconfig" : 0,
+        "channel.rank.bank.printconfig" : 0,
     })
 else:
     memory = comp_memctrl.setSubComponent("backend", "memHierarchy.simpleMem")

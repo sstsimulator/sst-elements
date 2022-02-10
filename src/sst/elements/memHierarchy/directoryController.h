@@ -376,7 +376,7 @@ private:
     void updateCache(DirEntry * entry);
     void sendEntryToMemory(DirEntry* entry);
 
-    void issueMemoryRequest(MemEvent* event, DirEntry* entry);
+    void issueMemoryRequest(MemEvent* event, DirEntry* entry, bool lineGranularity);
     void issueFlush(MemEvent* event);
     void issueFetch(MemEvent* event, DirEntry* entry, Command cmd);
     void issueInvalidations(MemEvent* event, DirEntry* entry, Command cmd);
