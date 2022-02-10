@@ -28,6 +28,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
 
+
 StandardInterface::StandardInterface(SST::ComponentId_t id, Params &params, TimeConverter * time, HandlerBase* handler) :
     StandardMem(id, params, time, handler)
 {
@@ -51,7 +52,7 @@ StandardInterface::StandardInterface(SST::ComponentId_t id, Params &params, Time
     if (!link_) {
         // Default is a regular non-network link on port 'port'
         Params lparams;
-        lparams.insert("port", "port");
+        lparams.insert("port", params.find<std::string>("port", "port"));
         link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "link", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, lparams, getDefaultTimeBase());
     }
 
@@ -164,7 +165,7 @@ void StandardInterface::sendUntimedData(StandardMem::Request *req) {
 #else
     StandardMem::Write* wr = static_cast<StandardMem::Write*>(req);
 #endif
-
+    
     MemEventInit *me = new MemEventInit(getName(), Command::Write, wr->pAddr, wr->data);
     if (initDone_)
         link_->sendInitData(me, false);
@@ -334,7 +335,6 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Read* req
 
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Write* req) {
     bool noncacheable = false;
-    
     
     if (req->getNoncacheable()) {
         noncacheable = true;
@@ -518,7 +518,8 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::FlushResp
     return nullptr; 
 }
 
-SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::CustomResp* req) { 
+SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::CustomResp* req) {
+
     output.fatal(CALL_INFO, -1, "%s, Error: CustomResp converter not implemented\n", iface->getName().c_str());
     return nullptr; 
 }

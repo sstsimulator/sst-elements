@@ -1,3 +1,5 @@
+memory, Notice: memory controller's region is larger than the backend's mem_size, controller is limiting accessible memory to mem_size
+Region: start=0, end=18446744073709551615, interleaveStep=0, interleaveSize=0. MemSize: 4294967296B
 
 Prospero Component Statistics:
 ------------------------------------------------------------------------
