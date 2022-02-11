@@ -1,9 +1,11 @@
+memory, Notice: memory controller's region is larger than the backend's mem_size, controller is limiting accessible memory to mem_size
+Region: start=0, end=18446744073709551615, interleaveStep=0, interleaveSize=0. MemSize: 4294967296B
 
 Prospero Component Statistics:
 ------------------------------------------------------------------------
-- Completed at:                          13160357 ns
-- Cycles with ops issued:                239155 cycles
-- Cycles with no ops issued (LS full):   26079556 cycles
+- Completed at:                          546388 ns
+- Cycles with ops issued:                248831 cycles
+- Cycles with no ops issued (LS full):   843927 cycles
 ------------------------------------------------------------------------
 - Reads issued:                          173833
 - Writes issued:                         78410
@@ -12,11 +14,11 @@ Prospero Component Statistics:
 - Bytes read:                            1269669
 - Bytes written:                         1142526
 ------------------------------------------------------------------------
-- Bandwidth (read):                      96.4768 MB/s
-- Bandwidth (written):                   86.8157 MB/s
-- Bandwidth (combined):                  183.293 MB/s
+- Bandwidth (read):                      2.32375 GB/s
+- Bandwidth (written):                   2.09105 GB/s
+- Bandwidth (combined):                  4.4148 GB/s
 - Avr. Read request size:                                7.30 bytes
 - Avr. Write request size:                              14.57 bytes
 - Avr. Request size:                                     9.56 bytes
 
-Simulation is complete, simulated time: 13.1604 ms
+Simulation is complete, simulated time: 546.388 us

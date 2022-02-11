@@ -164,6 +164,8 @@ public:
     virtual size_t storeSize() { return op_q.size(); }
 
     virtual size_t loadSize() { return op_q.size(); }
+    
+    virtual size_t storeBufferSize() { return op_q.size(); }
 
     virtual void printStatus(SST::Output& output) {
         int next_index = 0;
@@ -274,19 +276,19 @@ public:
                     switch (load_ins->getTransactionType()) {
                     case MEM_TRANSACTION_LLSC_LOAD: {
                         load_req = new StandardMem::LoadLink(load_addr, load_width, 0, load_addr,
-                            load_ins->getInstructionAddress());
+                            load_ins->getInstructionAddress(), load_ins->getHWThread());
                         load_type = "LLSC";
                         output->verbose(CALL_INFO, 16, 0, "----> generated as LoadLink\n");
                     } break;
                     case MEM_TRANSACTION_LOCK: {
                         load_req = new StandardMem::ReadLock(load_addr, load_width, 0, load_addr,
-                            load_ins->getInstructionAddress());
+                            load_ins->getInstructionAddress(), load_ins->getHWThread());
                         load_type = "LOCK";
                         output->verbose(CALL_INFO, 16, 0, "----> generated as ReadLock\n");
                     } break;
                     case MEM_TRANSACTION_NONE: {
                         load_req = new StandardMem::Read(load_addr, load_width, 0, load_addr,
-                            load_ins->getInstructionAddress());
+                            load_ins->getInstructionAddress(), load_ins->getHWThread());
                     } break;
                     case MEM_TRANSACTION_LLSC_STORE: {
                         output->fatal(CALL_INFO, -1,
@@ -378,21 +380,21 @@ public:
                         switch (store_ins->getTransactionType()) {
                         case MEM_TRANSACTION_LLSC_STORE: {
                             store_req = new StandardMem::StoreConditional(store_addr, store_width, payload, 0,
-                                store_addr, store_ins->getInstructionAddress());
+                                store_addr, store_ins->getInstructionAddress(), store_ins->getHWThread());
                             sc_inflight.insert(new VanadisSequentialLoadStoreSCRecord(store_ins, store_req->getID()));
                             store_type = "LLSC";
                             output->verbose(CALL_INFO, 16, 0, "----> generated as StoreConditional\n");
                         } break;
                         case MEM_TRANSACTION_LOCK: {
                             store_req = new StandardMem::WriteUnlock(store_addr, store_width, payload, 0,
-                                store_addr, store_ins->getInstructionAddress());
+                                store_addr, store_ins->getInstructionAddress(), store_ins->getHWThread());
                             store_type = "LOCK";
                             output->verbose(CALL_INFO, 16, 0, "----> generated as WriteUnlock\n");
                             store_ins->markExecuted();
                         } break;
                         case MEM_TRANSACTION_NONE: {
                             store_req = new StandardMem::Write(store_addr, store_width, payload, false, 0,
-                                store_addr, store_ins->getInstructionAddress());
+                                store_addr, store_ins->getInstructionAddress(), store_ins->getHWThread());
                             store_ins->markExecuted();
                         } break;
                         case MEM_TRANSACTION_LLSC_LOAD: {
@@ -413,9 +415,12 @@ public:
                                 memory_check_table->markByte(i);
                             }
                         }
+                        next_item->setRequestID(store_req->getID());
+                        next_item->setOperationAddress(store_addr);
                     }
+                    next_item->markOperationIssued();
 
-                    op_q.erase(op_q_itr);
+                    //op_q.erase(op_q_itr);
                 }
             } else {
                 output->fatal(CALL_INFO, 8, 0, "Unknown type of item in LSQ, neither load nor store?\n");
@@ -446,21 +451,21 @@ public:
 
                     if (out->getVerboseLevel() >= 16) {
                         char* payload_print = new char[256];
-								char* payload_print_inner = new char[256];
+			char* payload_print_inner = new char[256];
 
-								payload_print[0] = '\0';
-								payload_print_inner[0] = '\0';
+			payload_print[0] = '\0';
+			payload_print_inner[0] = '\0';
 
-								for( int s = 0; s < std::min((int)ev->data.size(), 8); ++s) {
-									std::strncpy(payload_print_inner, payload_print, 256);
-	                        snprintf(payload_print, 256, "%s 0x%02x", payload_print_inner, ev->data[s]);
-								}
+			for( int s = 0; s < std::min((int)ev->data.size(), 8); ++s) {
+			    std::strncpy(payload_print_inner, payload_print, 256);
+	                    snprintf(payload_print, 256, "%s 0x%02x", payload_print_inner, ev->data[s]);
+			}
 
                         out->verbose(CALL_INFO, 16, 0, "-> payload (first %d bytes): %s\n",
 									std::min((int)ev->data.size(), 8), payload_print);
 
                         delete[] payload_print;
-								delete[] payload_print_inner;
+			delete[] payload_print_inner;
                     }
 
                     if ((*op_q_itr)->isLoad()) { // TODO it better be since this is a ReadResp
@@ -653,7 +658,7 @@ public:
                 // is the operation issued to the memory system and do we match ID
                 if ((*op_q_itr)->isOperationIssued() && (ev->getID() == (*op_q_itr)->getRequestID())) {
 
-                    out->verbose(CALL_INFO, 8, 0, "matched a load record (addr: 0x%llx)\n",
+                    out->verbose(CALL_INFO, 8, 0, "matched a store record (addr: 0x%llx)\n",
                                     (*op_q_itr)->getInstruction()->getInstructionAddress());
 
                     // TODO assert (!(*op_q_itr)->isLoad()) ?
@@ -733,7 +738,7 @@ public:
             delete ev;
         }
 
-            VanadisSequentialLoadStoreQueue* lsq;
+        VanadisSequentialLoadStoreQueue* lsq;
     };
 
     void processIncomingDataCacheEvent(StandardMem::Request* ev) {

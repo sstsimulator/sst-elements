@@ -1139,17 +1139,17 @@ cpu: 1 Issued MMIO Write for address 0x400 with payload -31081
 Handle Read. Returning 816130624
 Handle Write. Squared is 966028561
 StandardCPU: Test Completed Successfuly
- cpu:memory:memlink.packet_latency : Accumulator : Sum.u64 = 141939; SumSQ.u64 = 23720997; Count.u64 = 956; Min.u64 = 71; Max.u64 = 288; 
+ cpu:memory:memlink.packet_latency : Accumulator : Sum.u64 = 142568; SumSQ.u64 = 24100456; Count.u64 = 956; Min.u64 = 71; Max.u64 = 359; 
  cpu:memory:memlink.send_bit_count : Accumulator : Sum.u64 = 87168; SumSQ.u64 = 7802880; Count.u64 = 1000; Min.u64 = 64; Max.u64 = 96; 
  cpu:memory:memlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- cpu:memory:memlink.idle_time : Accumulator : Sum.u64 = 574000; SumSQ.u64 = 61497500000; Count.u64 = 11; Min.u64 = 0; Max.u64 = 144000; 
+ cpu:memory:memlink.idle_time : Accumulator : Sum.u64 = 789000; SumSQ.u64 = 76906500000; Count.u64 = 9; Min.u64 = 71000; Max.u64 = 144000; 
  cpu.pendCycle : Accumulator : Sum.u64 = 1454681; SumSQ.u64 = 14480683; Count.u64 = 146739; Min.u64 = 0; Max.u64 = 10; 
  cpu.reads : Accumulator : Sum.u64 = 208; SumSQ.u64 = 208; Count.u64 = 208; Min.u64 = 1; Max.u64 = 1; 
  cpu.writes : Accumulator : Sum.u64 = 652; SumSQ.u64 = 652; Count.u64 = 652; Min.u64 = 1; Max.u64 = 1; 
- l1cache:cpulink.packet_latency : Accumulator : Sum.u64 = 341589; SumSQ.u64 = 136005573; Count.u64 = 876; Min.u64 = 43; Max.u64 = 573; 
+ l1cache:cpulink.packet_latency : Accumulator : Sum.u64 = 340763; SumSQ.u64 = 135350911; Count.u64 = 876; Min.u64 = 43; Max.u64 = 573; 
  l1cache:cpulink.send_bit_count : Accumulator : Sum.u64 = 83584; SumSQ.u64 = 7991296; Count.u64 = 876; Min.u64 = 64; Max.u64 = 96; 
  l1cache:cpulink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache:cpulink.idle_time : Accumulator : Sum.u64 = 5503500; SumSQ.u64 = 548198750000; Count.u64 = 67; Min.u64 = 0; Max.u64 = 217000; 
+ l1cache:cpulink.idle_time : Accumulator : Sum.u64 = 5860500; SumSQ.u64 = 583843250000; Count.u64 = 69; Min.u64 = 70500; Max.u64 = 217000; 
  l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
@@ -1299,10 +1299,10 @@ StandardCPU: Test Completed Successfuly
  l1cache.AckPut_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 17714; SumSQ.u64 = 49976; Count.u64 = 146739; Min.u64 = 0; Max.u64 = 5; 
  l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- mmio:iface:memlink.packet_latency : Accumulator : Sum.u64 = 57462; SumSQ.u64 = 24091926; Count.u64 = 140; Min.u64 = 144; Max.u64 = 644; 
+ mmio:iface:memlink.packet_latency : Accumulator : Sum.u64 = 57331; SumSQ.u64 = 23982447; Count.u64 = 140; Min.u64 = 144; Max.u64 = 644; 
  mmio:iface:memlink.send_bit_count : Accumulator : Sum.u64 = 9216; SumSQ.u64 = 884736; Count.u64 = 96; Min.u64 = 96; Max.u64 = 96; 
  mmio:iface:memlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- mmio:iface:memlink.idle_time : Accumulator : Sum.u64 = 41616500; SumSQ.u64 = 38175264250000; Count.u64 = 87; Min.u64 = 0; Max.u64 = 2160000; 
+ mmio:iface:memlink.idle_time : Accumulator : Sum.u64 = 41904500; SumSQ.u64 = 38341152250000; Count.u64 = 83; Min.u64 = 72000; Max.u64 = 2160000; 
  memory.requests_received_GetS : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
  memory.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory.requests_received_GetX : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
@@ -1317,8 +1317,8 @@ StandardCPU: Test Completed Successfuly
  memory.cycles_with_issue : Accumulator : Sum.u64 = 16; SumSQ.u64 = 16; Count.u64 = 16; Min.u64 = 1; Max.u64 = 1; 
  memory.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory.total_cycles : Accumulator : Sum.u64 = 73369; SumSQ.u64 = 5383010161; Count.u64 = 1; Min.u64 = 73369; Max.u64 = 73369; 
- memory:cpulink.packet_latency : Accumulator : Sum.u64 = 2650; SumSQ.u64 = 498254; Count.u64 = 16; Min.u64 = 71; Max.u64 = 287; 
+ memory:cpulink.packet_latency : Accumulator : Sum.u64 = 2649; SumSQ.u64 = 497967; Count.u64 = 16; Min.u64 = 71; Max.u64 = 287; 
  memory:cpulink.send_bit_count : Accumulator : Sum.u64 = 9216; SumSQ.u64 = 5308416; Count.u64 = 16; Min.u64 = 576; Max.u64 = 576; 
  memory:cpulink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- memory:cpulink.idle_time : Accumulator : Sum.u64 = 70718500; SumSQ.u64 = 4569797259250000; Count.u64 = 11; Min.u64 = 43000; Max.u64 = 67579500; 
+ memory:cpulink.idle_time : Accumulator : Sum.u64 = 70891500; SumSQ.u64 = 4569827188250000; Count.u64 = 12; Min.u64 = 43000; Max.u64 = 67579500; 
 Simulation is complete, simulated time: 73.3695 us

@@ -64,7 +64,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     fixupParams( params, "max_requests_per_cycle", "backendConvertor.backend.max_requests_per_cycle" );
 
     uint32_t requestWidth = params.find<uint32_t>("backendConvertor.request_width", 64);
-    
+
     // Output for debug
     dbg.init("", dlevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
 
@@ -560,11 +560,8 @@ void MemController::finish(void) {
 }
 
 void MemController::writeData(MemEvent* event) {
-    /* Noncacheable events occur on byte addresses, others on line addresses */
-    bool noncacheable = event->queryFlag(MemEvent::F_NONCACHEABLE);
-    Addr addr = noncacheable ? event->getAddr() : event->getBaseAddr();
-
     if (event->getCmd() == Command::PutM) { /* Write request to memory */
+        Addr addr = event->queryFlag(MemEvent::F_NONCACHEABLE) ? event->getAddr() : event->getBaseAddr();
         if (is_debug_event(event)) { 
             Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
             printDataValue(addr, &(event->getPayload()), true);
@@ -582,6 +579,7 @@ void MemController::writeData(MemEvent* event) {
     }
 
     if (event->getCmd() == Command::Write) {
+        Addr addr = event->getAddr();
         if (is_debug_event(event)) { 
             Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
             printDataValue(addr, &(event->getPayload()), true);
