@@ -33,5 +33,3 @@ barrier: barrier.c librdma.a
 
 clean:
 	rm -f librdma.a ${OBJS} msg write incast incast-v2 barrier
-
-
