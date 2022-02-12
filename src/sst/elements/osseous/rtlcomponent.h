@@ -39,6 +39,7 @@ public:
     ~Rtlmodel();
 
 	void setup();
+	void init(unsigned);
 	void finish();
 
 	bool clockTick( SST::Cycle_t currentCycle );

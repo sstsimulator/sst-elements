@@ -7,13 +7,14 @@ sst.setProgramOption("timebase", "0.5ps")
 sst_root = os.getenv( "SST_ROOT" )
 #app = "/home/shubham/ECE633_Independent_Project/shubham/sst-tools/tools/ariel/femlm/examples/stream/mlmstream" 
 #sst.setProgramOption("timebase", "1ps")
-sst_workdir = os.getenv( "SST_WORKDIR" )
-#app = sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream"
-app = sst_workdir+"/sst-tools/tools/ariel/femlm/examples/stream/mlmstream" 
+#sst_workdir = os.getenv( "SST_WORKDIR" )
+sst_workdir = os.getcwd();
+app = sst_workdir + "/../examples/vecshiftreg/tests/testbench"
+#app = sst_workdir+"/sst-tools/tools/ariel/femlm/examples/stream/mlmstream" 
 
 if not os.path.exists(app):
     app = os.getenv( "OMP_EXE" )
-    printf("OS PATH DOESN'T EXIST")
+    print("OS PATH DOESN'T EXIST")
 ariel = sst.Component("A0", "ariel.ariel")
 ariel.addParams({
         "verbose" : "1",

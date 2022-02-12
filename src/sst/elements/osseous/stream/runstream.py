@@ -7,7 +7,7 @@ sst.setProgramOption("timebase", "0.5ps")
 sst_root = os.getenv( "SST_ROOT" )
 #app = "/home/shubham/ECE633_Independent_Project/shubham/sst-tools/tools/ariel/femlm/examples/stream/mlmstream" 
 #sst.setProgramOption("timebase", "1ps")
-sst_workdir = os.getenv( "SST_WORKDIR" )
+sst_workdir = os.getenv( "top_srcdir" )
 #app = sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream"
 app = sst_workdir+"/sst-tools/tools/ariel/femlm/examples/stream/mlmstream" 
 

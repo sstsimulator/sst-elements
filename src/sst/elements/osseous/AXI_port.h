@@ -1,5 +1,5 @@
-#ifndef DMATOP_H_
-#define DMATOP_H_
+#ifndef AXITOP_H_
+#define AXITOP_H_
 
 //not originally included in the headerfile 
 enum DEBUG_FLAGS{d_control, d_data, d_addr, d_reg};  
@@ -983,4 +983,4 @@ void print_registers(){
   }
 } AXITop;
 
-#endif  // DMATOP_H_
+#endif  // AXITOP_H_

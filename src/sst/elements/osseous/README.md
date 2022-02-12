@@ -13,9 +13,8 @@ To build and register _osseous_ & _vecshiftreg_ and run the shift register examp
 ```
 clone the repository containing osseous
 
-export SST_WORKDIR=/path/to/sst-elements/
 Update other Env variables as part of standard sst-elements build process(SST_ELEMENTS_HOME, SST_CORE_HOME)
-cd $SST_WORKDIR
+cd path/to/sst-elements/
 ./autogen.sh
 ./configure --prefix=$SST_ELEMENTS_HOME --with-sst-core=$SST_CORE_HOME --with-pin=$PINHOME
 make all

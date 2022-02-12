@@ -1,4 +1,4 @@
-// Copyright 2009-2015 Sandia Corporation. Under the terms
+    // Copyright 2009-2015 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
@@ -63,9 +63,9 @@ int main(int argc, char *argv[]) {
   mlm_waitComplete(copy_tag);
 
   io_shift = UInt<1>(1);
-  io_ins_0 = UInt<4>(9);
-  io_ins_1 = UInt<4>(4);
-  io_ins_2 = UInt<4>(2);
+  io_ins_0 = UInt<4>(2);
+  io_ins_1 = UInt<4>(5);
+  io_ins_2 = UInt<4>(6);
   io_ins_3 = UInt<4>(7);
   io_load = UInt<1>(0);
 

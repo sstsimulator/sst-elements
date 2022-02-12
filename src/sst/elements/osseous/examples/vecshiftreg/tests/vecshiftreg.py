@@ -4,8 +4,11 @@ import os
 clock = "1GHz"
 sst.setProgramOption("timebase", "1ps")
 
-sst_workdir = os.getenv( "SST_WORKDIR" )
-app = sst_workdir + "/src/sst/elements/osseous/examples/vecshiftreg/tests/testbench" 
+#sst_workdir = os.getenv( "$top_srcdir" )
+sst_workdir = os.getcwd()
+app = sst_workdir + "/testbench"
+#app = sst_workdir + "/src/sst/elements/osseous/examples/vecshiftreg/tests/testbench" 
+
 
 if not os.path.exists(app):
     print("OS PATH DOESN'T EXIST")

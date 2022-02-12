@@ -130,6 +130,11 @@ void Rtlmodel::setup() {
     axiport->reset = UInt<1>(0);
 }
 
+void Rtlmodel::init(unsigned int phase) {
+	output.verbose(CALL_INFO, 1, 0, "Component Init Phase Called %d\n", phase);
+    cacheLink->init(phase);
+}
+
 //Nothing to add in finish as of now. Need to see what could be added.
 void Rtlmodel::finish() {
 	output.verbose(CALL_INFO, 1, 0, "Component is being finished.\n");

@@ -1,6 +1,6 @@
 CXX=g++
 APIDIR=./
-INCLUDE=$(SST_WORKDIR)/src/sst/elements/osseous/eras_datatypes/
+INCLUDE=./../../../eras_datatypes/
 
 testbench: testbench.o
 	$(CXX) -g -O3 -o testbench testbench.o -I$(INCLUDE) -L$(APIDIR) -Wl,-rpath=$(APIDIR) -ltb_header 
