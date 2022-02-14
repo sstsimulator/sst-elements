@@ -24,4 +24,20 @@ RdmaNic() sizeof(NicCmd) 64
 [node-os-core-     0]: [syscall-brk] old brk: 0x425000 -> new brk: 0x427000 (diff: 8192)
 [node-os-core-     0]: [syscall-brk] - zeroing memory requested, producing a zero payload for write
 [node-os-core-     0]: [syscall-brk] old brk: 0x425000 -> new brk: 0x427000 (diff: 8192)
+[os-memgmr] requested allocation size: 4096
+[os-memgmr] -> page-size:            4096
+[os-memgmr] -> requested page count: 1
+[os-memgmr] -> free-pages:           393215
+[os-memgmr] -> used-pages:           0
+[os-memgmr] alloc matched: size: 4096 / page-count: 1 / alloc-start: 536870912
+[os-memgmr] requested allocation size: 4096
+[os-memgmr] -> page-size:            4096
+[os-memgmr] -> requested page count: 1
+[os-memgmr] -> free-pages:           393215
+[os-memgmr] -> used-pages:           0
+[os-memgmr] alloc matched: size: 4096 / page-count: 1 / alloc-start: 536870912
+[os-memgmr] requested deallocation from address 0x20000000 for 4096 bytes.
+[os-memgmr] aligned allocation-address (0x20000000) to page boundary at 0x20000000
+[os-memgmr] requested deallocation from address 0x20000000 for 4096 bytes.
+[os-memgmr] aligned allocation-address (0x20000000) to page boundary at 0x20000000
 Simulation is complete, simulated time: 40.2788 us
