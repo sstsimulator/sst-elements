@@ -21,6 +21,7 @@
 #include <sst/core/subcomponent.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
+#include <sst/core/interfaces/stdMem.h>
 
 #include <queue>
 
@@ -194,19 +195,17 @@ protected:
 	ReqOperation op;
 };
 
-class CustomOpRequest : public MemoryOpRequest {
+class CustomOpRequest : public GeneratorRequest {
 public:
-    CustomOpRequest(const uint64_t cAddr,
-            const uint64_t cLength,
-            const uint32_t cOpcode) :
-        MemoryOpRequest(cAddr, cLength, CUSTOM) {
-            opcode = cOpcode;
-        }
+    CustomOpRequest(Interfaces::StandardMem::CustomData* cData) : 
+        GeneratorRequest(), data(cData) {}
     ~CustomOpRequest() {}
-    uint32_t getOpcode() const { return opcode; }
+    
+    ReqOperation getOperation() const { return CUSTOM; }
+    Interfaces::StandardMem::CustomData* getPayload() { return data; }
 
 protected:
-    uint32_t opcode;
+    Interfaces::StandardMem::CustomData* data;
 };
 
 class FenceOpRequest : public GeneratorRequest {

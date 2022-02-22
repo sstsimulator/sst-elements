@@ -17,7 +17,7 @@
 #define _H_SST_MEM_H_REQ_GEN_CPU
 
 #include <sst/core/component.h>
-#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/interfaces/stdMem.h>
 #include <sst/core/statapi/stataccumulator.h>
 
 #include "mirandaGenerator.h"
@@ -54,6 +54,19 @@ public:
 	RequestGenCPU(SST::ComponentId_t id, SST::Params& params);
 	void finish();
 	void init(unsigned int phase);
+
+        /* Handler class for StandardMem responses */
+        class StdMemHandler : public SST::Interfaces::StandardMem::RequestHandler {
+        public:
+            friend class RequestGenCPU;
+            StdMemHandler(RequestGenCPU* cpuInst, SST::Output* out) : SST::Interfaces::StandardMem::RequestHandler(out), cpu(cpuInst) {}
+            virtual ~StdMemHandler() {}
+            virtual void handle(SST::Interfaces::StandardMem::ReadResp* rsp) override;
+            virtual void handle(SST::Interfaces::StandardMem::WriteResp* rsp) override;
+            virtual void handle(SST::Interfaces::StandardMem::CustomResp* rsp) override;
+
+            RequestGenCPU* cpu;
+        };
 
 	SST_ELI_REGISTER_COMPONENT(
         	RequestGenCPU,
@@ -106,7 +119,7 @@ public:
 
 	SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
 		{ "generator", "What address generator to load", "SST::Miranda::RequestGenerator" },
-                { "memory",     "The memory interface to use (e.g., interface to caches)", "SST::Interfaces::SimpleMem" }
+                { "memory",     "The memory interface to use (e.g., interface to caches)", "SST::Interfaces::StandardMem" }
     	)
 
 private:
@@ -117,9 +130,10 @@ private:
 
 	void loadGenerator( MirandaReqEvent* );
 	void loadGenerator( const std::string& name, SST::Params& params);
-	void handleEvent( SimpleMem::Request* ev );
+	void handleEvent( StandardMem::Request* ev );
 	bool clockTick( SST::Cycle_t );
 	void issueRequest(MemoryOpRequest* req);
+	void issueCustomRequest(CustomOpRequest* req);
 	void handleSrcEvent( SST::Event* );
 
  	Output* out;
@@ -127,10 +141,11 @@ private:
 	TimeConverter* timeConverter;
 	Clock::HandlerBase* clockHandler;
 	RequestGenerator* reqGen;
-	std::map<SimpleMem::Request::id_t, CPURequest*> requestsInFlight;
-	SimpleMem* cache_link;
+	std::map<StandardMem::Request::id_t, CPURequest*> requestsInFlight;
+	StandardMem* cache_link;
 	Link* srcLink;
 	MirandaReqEvent* srcReqEvent;
+        StdMemHandler* stdMemHandlers;
 
 	MirandaRequestQueue<GeneratorRequest*> pendingRequests;
 	MirandaMemoryManager* memMgr;

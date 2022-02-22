@@ -90,15 +90,24 @@ class MemBackendConvertor : public SubComponent {
 
     class CustomReq : public BaseReq {
     public:
-        CustomReq(CustomCmdInfo * info, uint32_t reqId) : BaseReq(reqId, BaseReq::ReqType::CUSTOM),
-            m_info(info) { }
+        CustomReq(Interfaces::StandardMem::CustomData * info, Event::id_type evId, std::string rqstr, uint32_t reqId) : BaseReq(reqId, BaseReq::ReqType::CUSTOM),
+            m_info(info), m_evId(evId), m_rqstr(rqstr) { }
         ~CustomReq() { }
 
-        CustomCmdInfo* getInfo() { return m_info; }
-        const std::string getRqstr() override { return m_info->getRqstr(); }
+        Interfaces::StandardMem::CustomData * getInfo() { return m_info; }
+        const std::string getRqstr() override { return m_rqstr; }
+        Event::id_type getEvId() { return m_evId; }
+        std::string getString() override {
+            std::ostringstream str;
+            str << " EvID: " << m_evId.first << "," << m_evId.second;
+            str << " Rqstr: " << m_rqstr;
+            str << " Data: " << m_info->getString();
+            return BaseReq::getString() + str.str();
+        }
     private:
-        CustomCmdInfo * m_info;
-        uint32_t m_CustCmd;
+        Interfaces::StandardMem::CustomData * m_info;
+        std::string m_rqstr;
+        Event::id_type m_evId;
 
     };
 
@@ -153,7 +162,7 @@ class MemBackendConvertor : public SubComponent {
     virtual void turnClockOff();
     virtual void turnClockOn(Cycle_t cycle);
     virtual void handleMemEvent(  MemEvent* );
-    virtual void handleCustomEvent( CustomCmdInfo* );
+    virtual void handleCustomEvent(Interfaces::StandardMem::CustomData*, Event::id_type, std::string);
     virtual uint32_t getRequestWidth();
     virtual bool isBackendClocked() { return m_clockBackend; }
 

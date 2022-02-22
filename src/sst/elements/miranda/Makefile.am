@@ -29,6 +29,7 @@ libmiranda_la_SOURCES = \
 	generators/nullgen.h \
 	generators/spmvgen.h \
 	generators/copygen.h \
+	generators/customcmd_opcode.h \
 	generators/streambench_customcmd.h \
 	generators/streambench_customcmd.cc
 

@@ -23,6 +23,8 @@
 
 #include "sst/elements/memHierarchy/memEventBase.h"
 #include "sst/elements/memHierarchy/memEvent.h"
+#include "sst/elements/memHierarchy/moveEvent.h"
+#include "sst/elements/memHierarchy/memEventCustom.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -69,6 +71,9 @@ StandardInterface::StandardInterface(SST::ComponentId_t id, Params &params, Time
     region.interleaveSize = 0;
     epType = Endpoint::CPU;
     link_->setRegion(region);
+
+    baseAddrMask_ = 0;
+    lineSize_ = 0;
 }
 
 void StandardInterface::setMemoryMappedAddressRegion(Addr start, Addr size) {
@@ -105,9 +110,10 @@ void StandardInterface::init(unsigned int phase) {
             if (memEvent->getCmd() == Command::NULLCMD) {
                 if (memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
                     MemEventInitCoherence * memEventC = static_cast<MemEventInitCoherence*>(memEvent);
+                    debug.debug(_L10_, "%s, Received initCoherence message: %s\n", getName().c_str(), memEventC->getVerboseString(dlevel).c_str());
                     if (memEventC->getType() == Endpoint::Cache) {
                         cacheDst_ = true; // Cache takes care of figuring out whether WriteResp is read or write response and other address-related issues
-                    } 
+                    }
                     if (memEventC->getType() == Endpoint::Cache || memEventC->getType() == Endpoint::Directory) {
                         baseAddrMask_ = ~(memEventC->getLineSize() - 1);
                         lineSize_ = memEventC->getLineSize();
@@ -232,6 +238,12 @@ void StandardInterface::receive(SST::Event* ev) {
             case Command::FlushLineResp:
                 deliverReq = convertResponseFlushResp(origReq, me);
                 break;
+            case Command::AckMove:
+                deliverReq = convertResponseAckMove(origReq, me);
+                break;
+            case Command::CustomResp:
+                deliverReq = convertResponseCustomResp(origReq, me);
+                break;
             case Command::NACK:
                 handleNACK(me);
                 delete me;
@@ -289,10 +301,12 @@ void StandardInterface::receive(SST::Event* ev) {
             delete me;
     }
 
+    if (deliverReq) {
 #ifdef __SST_DEBUG_OUTPUT__
-    debug.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Deliver   (%s)\n", Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), deliverReq->getString().c_str());
+        debug.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Deliver   (%s)\n", Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), deliverReq->getString().c_str());
 #endif
-    (*recvHandler_)(deliverReq);
+        (*recvHandler_)(deliverReq);
+    }
 }
 
 /********************************************************************************************
@@ -472,19 +486,31 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::StoreCond
 
 
 Event* StandardInterface::MemEventConverter::convert(StandardMem::MoveData* req) {
-    MemEvent* move = nullptr;
-    output.fatal(CALL_INFO, -1, "%s, Error: MoveData converter not implemented\n", iface->getName().c_str());
-#ifdef __SST_DEBUG_OUTPUT__
-    //debugChecks(move);
-#endif
+    Addr bAddrSrc = (iface->lineSize_ == 0) ? req-> pSrc : req->pSrc & iface->baseAddrMask_;
+    Addr bAddrDst = (iface->lineSize_ == 0) ? req-> pDst : req->pDst & iface->baseAddrMask_;
+    // The memHierarchy scratchpad implementation has its local addresses lower than the memory addresses
+    // This would need to change if that invariant is removed
+    // TODO May work to replace both Get/Put with generic Move and let scratchpad/other component decide
+    // how to treat it based on the addresses
+    Command cmd = (req->pDst > req->pSrc) ? Command::Put : Command::Get;
+    MoveEvent* move = new MoveEvent(iface->getName(), req->pSrc, bAddrSrc, req->pDst, bAddrDst, cmd);
+        
+    if (req->posted) {
+        move->setFlag(MemEventBase::F_NORESPONSE);
+    }
+    move->setSize(req->size);
+    move->setSrcVirtualAddress(req->vSrc);
+    move->setDstVirtualAddress(req->vDst);
+    move->setInstructionPointer(req->iPtr);
+
+    // No debugChecks() as this request is OK to span cachelines
     return move;
 }
 Event* StandardInterface::MemEventConverter::convert(StandardMem::CustomReq* req) {
-    MemEvent* creq = nullptr;
-    output.fatal(CALL_INFO, -1, "%s, Error: CustomReq converter not implemented\n", iface->getName().c_str());
-#ifdef __SST_DEBUG_OUTPUT__
-    //debugChecks(creq);
-#endif
+    CustomMemEvent* creq = new CustomMemEvent(iface->getName(), Command::CustomReq, req->data);
+    if (!req->needsResponse())
+        creq->setFlag(MemEventBase::F_NORESPONSE);
+
     return creq;
 }
 
@@ -566,6 +592,21 @@ StandardMem::Request* StandardInterface::convertResponseFlushResp(StandardMem::R
     }
     return resp;
 }
+
+StandardMem::Request* StandardInterface::convertResponseAckMove(StandardMem::Request* req, UNUSED(MemEventBase* meb)) {
+    StandardMem::Request* resp = req->needsResponse()? req->makeResponse() : nullptr;
+    return resp;
+}
+
+StandardMem::Request* StandardInterface::convertResponseCustomResp(StandardMem::Request* req, MemEventBase* meb) {
+    StandardMem::Request* resp = req->needsResponse() ? req->makeResponse() : nullptr;
+    StandardMem::CustomResp* cresp = static_cast<StandardMem::CustomResp*>(resp);
+    if (cresp) { 
+        cresp->data = static_cast<CustomMemEvent*>(meb)->getCustomData(); 
+    }
+    return cresp;
+}
+
 
 StandardMem::Request* StandardInterface::convertRequestInv(MemEventBase* ev) {
     MemEvent* event = static_cast<MemEvent*>(ev);

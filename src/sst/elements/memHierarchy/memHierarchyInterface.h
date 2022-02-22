@@ -30,7 +30,7 @@
 
 #include "sst/elements/memHierarchy/memEventBase.h"
 #include "sst/elements/memHierarchy/memEvent.h"
-#include "sst/elements/memHierarchy/customcmd/customCmdEvent.h"
+#include "sst/elements/memHierarchy/memEventCustom.h"
 
 namespace SST {
 
