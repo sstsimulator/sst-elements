@@ -15,8 +15,11 @@
 
 
 #include <sst_config.h>
+#include "sst/elements/miranda/generators/streambench_customcmd.h"
+
 #include <sst/core/params.h>
-#include <sst/elements/miranda/generators/streambench_customcmd.h>
+
+#include "sst/elements/miranda/generators/customcmd_opcode.h"
 
 using namespace SST::Miranda;
 
@@ -80,9 +83,9 @@ void STREAMBenchGenerator_CustomCmd::generate(MirandaRequestQueue<GeneratorReque
 			break;
 		}
 
-                MemoryOpRequest* read_b;
-                MemoryOpRequest* read_c;
-                MemoryOpRequest* write_a;
+                GeneratorRequest* read_b;
+                GeneratorRequest* read_c;
+                GeneratorRequest* write_a;
 
                 if( custom_read_opcode == 0xFFFF ){
                   // issue standard read
@@ -94,24 +97,27 @@ void STREAMBenchGenerator_CustomCmd::generate(MirandaRequestQueue<GeneratorReque
                                                 READ);
                 }else{
                   // issue custom read
-		  read_b  = new CustomOpRequest(start_b + (i * reqLength),
-                                                reqLength,
-                                                custom_read_opcode);
-		  read_c  = new CustomOpRequest(start_c + (i * reqLength),
-                                                reqLength,
-                                                custom_read_opcode);
+                  OpCodeStdMem* opc_b = new OpCodeStdMem(start_b + (i * reqLength), 
+                                                         reqLength, 
+                                                         custom_read_opcode);
+                  OpCodeStdMem* opc_c = new OpCodeStdMem(start_c + (i * reqLength), 
+                                                         reqLength, 
+                                                         custom_read_opcode);
+                  read_b = new CustomOpRequest(opc_b);
+                  read_c = new CustomOpRequest(opc_c);
                 }
 
                 if( custom_write_opcode == 0xFFFF ){
-                  // issue standard write
-		  write_a = new MemoryOpRequest(start_a + (i * reqLength),
-                                                reqLength,
-                                                WRITE);
+                    // issue standard write
+		    write_a = new MemoryOpRequest(start_a + (i * reqLength),
+                                                  reqLength,
+                                                  WRITE);
                 }else{
-                  // issue custom write
-		  write_a = new CustomOpRequest(start_a + (i * reqLength),
-                                                reqLength,
-                                                custom_write_opcode);
+                    // issue custom write
+                    OpCodeStdMem* opc_a = new OpCodeStdMem(start_a + (i * reqLength),
+                                                           reqLength,
+                                                           custom_write_opcode);
+		    write_a = new CustomOpRequest(opc_a);
                 }
 
 		write_a->addDependency(read_b->getRequestID());

@@ -21,54 +21,12 @@
 #include <sst/core/event.h>
 #include <sst/core/output.h>
 #include <sst/core/subcomponent.h>
+#include <sst/core/interfaces/stdMem.h>
+
 #include "sst/elements/memHierarchy/memEventBase.h"
 
 namespace SST {
 namespace MemHierarchy {
-
-/* Class defining the information sent to the MemBackendConvertor */
-class CustomCmdInfo {
-public:
-
-    /* Constructors */
-    CustomCmdInfo() { }
-
-    CustomCmdInfo(SST::Event::id_type id, std::string rqstr, uint32_t flags = 0 ) :
-      id_(id), flags_(flags), rqstr_(rqstr) { }
-
-    virtual ~CustomCmdInfo() = default;
-
-    /* String-ify info for debug */
-    virtual std::string getString() {
-        std::ostringstream idstring;
-        idstring << "ID: <" << id_.first << "," << id_.second << ">";
-        std::ostringstream flagstring;
-        flagstring << " Flags: 0x" << std::hex << flags_;
-        return idstring.str() + flagstring.str();
-    }
-
-    SST::Event::id_type getID() { return id_; }
-    void setID(SST::Event::id_type id) { id_ = id; }
-
-    /* Flag getters/setters - same as MemEventBase */
-    // Whole flag field operations
-    uint32_t getFlags(void) const { return flags_; }
-    void clearFlags(void) { flags_ = 0; }
-    void setFlags(uint32_t flags) { flags_ = flags; }
-    // Single flag operations
-    void setFlag(uint32_t flag) { flags_ = flags_ | flag; }
-    void clearFlag(uint32_t flag) { flags_ = flags_ & (~flag); }
-    bool queryFlag(uint32_t flag) const { return flags_ & flag; }
-
-    /* Requestor getters/setters */
-    std::string getRqstr() { return rqstr_; }
-    void setRqstr(std::string rq) { rqstr_ = rq; }
-
-protected:
-    SST::Event::id_type id_;    /* ID of matching MemEventBase */
-    uint32_t flags_;            /* Flags to be sent */
-    std::string rqstr_;         /* Requestor */
-};
 
 /*
  * Base class handler for custom commands
@@ -128,11 +86,11 @@ public:
     /* The memController will call ready when the event is ready to issue.
      * Events are ready immediately (back-to-back receive() and ready()) unless
      * the event needs to stall for some coherence action.
-     * The handler should return a CustomCmdInfo* which will be sent to the memBackendConvertor.
+     * The handler should return a CustomData* which will be sent to the memBackendConvertor.
      * The memBackendConvertor will then issue the unmodified CustomCmdReq* to the backend.
      * CustomCmdReq is intended as a base class for custom commands to define as needed.
      */
-    virtual CustomCmdInfo* ready(MemEventBase* ev) =0;
+    virtual Interfaces::StandardMem::CustomData* ready(MemEventBase* ev) =0;
 
     /* When the memBackendConvertor returns a response, the memController will call this function, including
      * the return flags. This function should return a response event or null if none needed.
