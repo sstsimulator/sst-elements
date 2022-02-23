@@ -46,7 +46,7 @@ comp_memory.addParams({
       "backend.access_time" : "1000 ns",
       "backend.mem_size" : "512MiB",
       "clock" : "1GHz",
-      "customCmdHandler" : "memHierarchy.amoCustomCmdHandler",
+      "customCmdHandler" : "memHierarchy.defCustomCmdHandler",
       "backendConvertor" : "memHierarchy.extMemBackendConvertor",
       "backend" : "memHierarchy.goblinHMCSim",
       "backend.verbose" : "0",

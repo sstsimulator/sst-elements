@@ -159,7 +159,7 @@ class Config:
             "debug" : "0",
             "clock" : "1GHz",
             #"clock" : self.memory_clock,
-            "customCmdHandler" : "memHierarchy.amoCustomCmdHandler",
+            "customCmdHandler" : "memHierarchy.defCustomCmdHandler",
             "addr_range_end" : (int(''.join(filter(str.isdigit, self.memory_capacity))) * 1024 * 1024) - 1,
             })
     def getMemParams(self):
@@ -183,7 +183,7 @@ class Config:
             "trace_cmds" : "1",
             "trace_latency" : "1",
             "trace_stalls" : "1",
-            "cmd_map" : "[CUSTOM:10:64:WR64]"
+            "cmd_map" : "[CUSTOM:10:32:WR32,CUSTOM:10:16:WR16]"
             })
 
     def getDCParams(self, dc_id):

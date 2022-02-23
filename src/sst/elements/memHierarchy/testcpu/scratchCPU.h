@@ -16,7 +16,7 @@
 #ifndef _SCRATCHCPU_H
 #define _SCRATCHCPU_H
 
-#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/interfaces/stdMem.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
@@ -49,7 +49,7 @@ public:
 
     SST_ELI_DOCUMENT_PORTS( {"mem_link", "Connection to cache", { "memHierarchy.MemEventBase" } } )
 
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"memory", "Interface to memory (e.g., caches)", "SST::Interfaces::SimpleMem"} )
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"memory", "Interface to memory (e.g., caches)", "SST::Interfaces::StandardMem"} )
 
 /* Begin class definition */
     ScratchCPU(ComponentId_t id, Params& params);
@@ -59,7 +59,7 @@ public:
     virtual void setup() {}
 
 private:
-    void handleEvent( Interfaces::SimpleMem::Request *ev );
+    void handleEvent( Interfaces::StandardMem::Request *ev );
     virtual bool tick( Cycle_t );
 
     Output out;
@@ -77,7 +77,7 @@ private:
     uint64_t reqsToIssue;   // Number of requests to issue before ending simulation
 
     // Local variables
-    Interfaces::SimpleMem * memory;         // scratch interface
+    Interfaces::StandardMem * memory;         // scratch interface
     std::unordered_map<uint64_t, SimTime_t> requests; // Request queue (outstanding requests)
     TimeConverter *clockTC;                 // Clock object
     Clock::HandlerBase *clockHandler;       // Clock handler

@@ -170,6 +170,8 @@ private:
     StandardMem::Request* convertResponseGetSResp(StandardMem::Request* req, MemEventBase* meb);
     StandardMem::Request* convertResponseWriteResp(StandardMem::Request* req, MemEventBase* meb);
     StandardMem::Request* convertResponseFlushResp(StandardMem::Request* req, MemEventBase* meb);
+    StandardMem::Request* convertResponseAckMove(StandardMem::Request* req, MemEventBase* meb);
+    StandardMem::Request* convertResponseCustomResp(StandardMem::Request* req, MemEventBase* meb);
     StandardMem::Request* convertRequestInv(MemEventBase* req);
     StandardMem::Request* convertRequestGetS(MemEventBase* req);
     StandardMem::Request* convertRequestWrite(MemEventBase* req);

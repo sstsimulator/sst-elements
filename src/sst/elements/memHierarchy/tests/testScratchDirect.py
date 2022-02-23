@@ -18,8 +18,7 @@ comp_cpu.addParams({
     "reqsToIssue" : 500,
     "verbose" : 1
 })
-iface = comp_cpu.setSubComponent("memory", "memHierarchy.scratchInterface")
-iface.addParams({ "scratchpad_size" : "1KiB" })
+iface = comp_cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 comp_scratch = sst.Component("scratch", "memHierarchy.Scratchpad")
 comp_scratch.addParams({
     "debug" : DEBUG_SCRATCH,
@@ -45,6 +44,7 @@ memctrl.addParams({
       "debug" : DEBUG_MEM,
       "debug_level" : 10,
       "clock" : "1GHz",
+      "addr_range_start" : 0,
 })
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
 memory.addParams({

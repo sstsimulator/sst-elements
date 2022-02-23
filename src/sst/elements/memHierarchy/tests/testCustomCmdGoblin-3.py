@@ -38,7 +38,7 @@ for next_core_id in range(config.total_cores):
 
     cpu = sst.Component("cpu%d"%(next_core_id), "miranda.BaseCPU")
     cpu.addParams(config.getCoreConfig(next_core_id))
-    iface = cpu.setSubComponent("memory", "memHierarchy.memInterface")
+    iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 
     l1 = sst.Component("l1cache_%d"%(next_core_id), "memHierarchy.Cache")
     l1.addParams(config.getL1Params())
