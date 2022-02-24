@@ -22,6 +22,7 @@ int main(int argc, char* argv[]) {
 	printf("value (lli) is %lld\n", value_lli);
 	printf("value (usi) is %u\n", value_ui);
    printf("value (uli) is %llu\n", value_uli);
+	printf("value is (int) is %d in the middle of a string\n", value);
 
    return 0;
 }

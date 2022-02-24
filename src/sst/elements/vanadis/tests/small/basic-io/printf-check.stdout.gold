@@ -4,3 +4,4 @@ value (flt) is 1234567.000000
 value (lli) is 1234567
 value (usi) is 1234567
 value (uli) is 1234567
+value is (int) is 1234567 in the middle of a string
