@@ -13,13 +13,10 @@ comp_cpu.addParams({
 	"verbose" : 0,
 	"printStats" : 1,
 })
-iface = comp_cpu.setSubComponent("memory", "memHierarchy.memInterface")
+iface = comp_cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 gen = comp_cpu.setSubComponent("generator", "miranda.STREAMBenchGeneratorCustomCmd")
 gen.addParams({
 	"verbose" : 0,
-	"startat" : 3,
-	"count" : 500000,
-	"max_address" : 512000,
         "write_cmd" : 10,
         "read_cmd" : 20,
 })
@@ -51,7 +48,7 @@ comp_l1cache.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 comp_memory = sst.Component("memory", "memHierarchy.CoherentMemController")
 comp_memory.addParams({
       "clock" : "1GHz",
-      "customCmdHandler" : "memHierarchy.amoCustomCmdHandler",
+      "customCmdHandler" : "memHierarchy.defCustomCmdHandler",
       "addr_range_end" : 512*1024*1024-1,
 })
 memorybackend = comp_memory.setSubComponent("backend", "memHierarchy.goblinHMCSim")
@@ -64,7 +61,7 @@ memorybackend.addParams({
       "trace_cmds" : "1",
       "trace_latency" : "1",
       "trace_stalls" : "1",
-      "cmd_map" : "[CUSTOM:10:64:WR64,CUSTOM:20:64:RD64]"
+      "cmd_map" : "[CUSTOM:10:64:WR64,CUSTOM:10:8:WR16,CUSTOM:20:64:RD64,CUSTOM:20:8:RD16]"
 })
 
 

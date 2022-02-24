@@ -23,7 +23,7 @@
 #include "sst/core/sst_types.h"
 #include "sst/core/component.h"
 #include "sst/core/link.h"
-#include "sst/core/interfaces/simpleMem.h"
+#include "sst/core/interfaces/stdMem.h"
 
 #include "prosreader.h"
 #include "prosmemmgr.h"
@@ -72,7 +72,7 @@ public:
    )
 
    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-           {"memory", "Interface to the memory hierarchy (e.g., cache)", "SST::Interfaces::SimpleMem" }
+           {"memory", "Interface to the memory hierarchy (e.g., cache)", "SST::Interfaces::StandardMem" }
     )
 
 private:
@@ -80,7 +80,7 @@ private:
   ProsperoComponent(const ProsperoComponent&); // Do not impl.
   void operator=(const ProsperoComponent&);    // Do not impl.
 
-  void handleResponse( SimpleMem::Request* ev );
+  void handleResponse( StandardMem::Request* ev );
   bool tick( Cycle_t );
   void issueRequest(const ProsperoTraceEntry* entry);
 
@@ -88,7 +88,7 @@ private:
   ProsperoTraceReader* reader;
   ProsperoTraceEntry* currentEntry;
   ProsperoMemoryManager* memMgr;
-  SimpleMem* cache_link;
+  StandardMem* cache_link;
   FILE* traceFile;
   bool traceEnded;
 #ifdef HAVE_LIBZ

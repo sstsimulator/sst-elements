@@ -23,6 +23,8 @@
 #include <sst/core/component.h>
 #include <sst/core/params.h>
 #include <sst/core/output.h>
+#include <sst/core/interfaces/stdMem.h>
+
 #include "sst/elements/memHierarchy/membackend/memBackend.h"
 
 #include <list>
@@ -232,9 +234,7 @@ public:
 	bool issueRequest(ReqId, Addr, bool,
                           std::vector<uint64_t>,
                           uint32_t, unsigned);
-	bool issueCustomRequest(ReqId, Addr, uint32_t,
-                                std::vector<uint64_t>,
-                                uint32_t, unsigned);
+	bool issueCustomRequest(ReqId, Interfaces::StandardMem::CustomData*);
 	void setup();
 	void finish();
 	virtual bool clock(Cycle_t cycle);

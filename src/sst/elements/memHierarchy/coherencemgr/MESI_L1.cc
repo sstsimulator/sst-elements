@@ -223,6 +223,8 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
             if (!event->isStoreConditional() || line->isAtomic()) { // Don't write on a non-atomic SC
                 line->setData(event->getPayload(), event->getAddr() - event->getBaseAddr());
                 line->atomicEnd();
+                if (is_debug_addr(addr))
+                    printDataValue(addr, line->getData(), true);
             } else {
                 success = false;
             }
@@ -789,6 +791,8 @@ bool MESIL1::handleGetSResp(MemEvent* event, bool inMSHR) {
     // Update line
     line->setData(event->getPayload(), 0);
     line->setState(S);
+    if (is_debug_addr(addr))
+        printDataValue(addr, line->getData(), false);
 
     if (req->isLoadLink())
         line->atomicStart();

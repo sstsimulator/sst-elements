@@ -74,13 +74,13 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	output->verbose(CALL_INFO, 1, 0, "Configuring Prospero cache connection...\n");
 
         // Check for interface in the input config; if not, load an anonymous interface (must use our port instead of its own)
-        cache_link = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, time,
-                new SimpleMem::Handler<ProsperoComponent>(this, &ProsperoComponent::handleResponse));
+        cache_link = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, time,
+                new StandardMem::Handler<ProsperoComponent>(this, &ProsperoComponent::handleResponse));
         if (!cache_link) {
             Params par;
             par.insert("port", "cache_link");
-            cache_link = loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "memory", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, par,
-                    time, new SimpleMem::Handler<ProsperoComponent>(this, &ProsperoComponent::handleResponse));
+            cache_link = loadAnonymousSubComponent<Interfaces::StandardMem>("memHierarchy.standardInterface", "memory", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, par,
+                    time, new StandardMem::Handler<ProsperoComponent>(this, &ProsperoComponent::handleResponse));
         }
 	output->verbose(CALL_INFO, 1, 0, "Configuration of memory interface completed.\n");
 
@@ -181,7 +181,7 @@ void ProsperoComponent::finish() {
 	output->output("\n");
 }
 
-void ProsperoComponent::handleResponse(SimpleMem::Request *ev) {
+void ProsperoComponent::handleResponse(StandardMem::Request *ev) {
 	output->verbose(CALL_INFO, 4, 0, "Handle response from memory subsystem.\n");
 
 	currentOutstanding--;
@@ -285,43 +285,44 @@ void ProsperoComponent::issueRequest(const ProsperoTraceEntry* entry) {
 		// also the the next cache line along
 		const uint64_t lowerAddress = memMgr->translate(entryAddress);
 		const uint64_t upperAddress = memMgr->translate((lowerAddress - (lowerAddress % cacheLineSize)) + cacheLineSize);
+                const uint64_t upperVirtualAddress = entryAddress - (entryAddress % cacheLineSize) + cacheLineSize;
 
-		SimpleMem::Request* reqLower = new SimpleMem::Request(
-			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
-			lowerAddress, lowerLength);
-        reqLower->setVirtualAddress(entryAddress);
-
-		SimpleMem::Request* reqUpper = new SimpleMem::Request(
-			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
-			upperAddress, upperLength);
-        reqUpper->setVirtualAddress((entryAddress - (entryAddress % cacheLineSize)) + cacheLineSize);
-
-		cache_link->sendRequest(reqLower);
-		cache_link->sendRequest(reqUpper);
-
-		if(isRead) {
-			readsIssued += 2;
-			splitReadsIssued++;
-		} else {
-			writesIssued += 2;
-			splitWritesIssued++;
-		}
+                if (isRead) {
+                    StandardMem::Read* readLower = new StandardMem::Read(lowerAddress, lowerLength, 0 /* flags */, entryAddress /* virtual address */,
+                            0 /* instPtr */, 0 /* threadID */);
+                    StandardMem::Read* readUpper = new StandardMem::Read(upperAddress, upperLength, 0 /* flags */, upperVirtualAddress,
+                            0 /* instPtr */, 0 /* threadID */);
+                    cache_link->send(readLower);
+                    cache_link->send(readUpper);
+                    readsIssued += 2;
+                    splitReadsIssued++;
+                } else {
+                    std::vector<uint8_t> payload(lowerLength, 0);
+                    StandardMem::Write* writeLower = new StandardMem::Write(lowerAddress, lowerLength, payload, false /* posted */,
+                            0 /* flags */, entryAddress /* virtual address */, 0 /* instPtr */, 0 /* threadID */);
+                    payload.resize(upperLength, 0);
+                    StandardMem::Write* writeUpper = new StandardMem::Write(upperAddress, upperLength, payload, false /* posted */,
+                            0 /* flags */, upperVirtualAddress /* virtual address */, 0 /* instPtr */, 0 /* threadID */);
+                    cache_link->send(writeLower);
+                    cache_link->send(writeUpper);
+                    writesIssued += 2;
+                    splitWritesIssued++;
+                }
 
 		currentOutstanding++;
 		currentOutstanding++;
 	} else {
 		// Perform a single load
-		SimpleMem::Request* request = new SimpleMem::Request(
-			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
-			memMgr->translate(entryAddress), entryLength);
-        request->setVirtualAddress(entryAddress);
-		cache_link->sendRequest(request);
-
-		if(isRead) {
-			readsIssued++;
-		} else {
-			writesIssued++;
-		}
+                StandardMem::Request* request;
+                if (isRead) {
+                    request = new StandardMem::Read(memMgr->translate(entryAddress), entryLength, 0, entryAddress, 0, 0);
+		    readsIssued++;
+                } else {
+                    std::vector<uint8_t> payload(entryLength, 0);
+                    request = new StandardMem::Write(memMgr->translate(entryAddress), entryLength, payload, false, 0, entryAddress, 0, 0);
+		    writesIssued++;
+                }
+                cache_link->send(request);
 
 		currentOutstanding++;
 	}

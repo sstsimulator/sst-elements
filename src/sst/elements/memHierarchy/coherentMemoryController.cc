@@ -110,11 +110,9 @@ bool CoherentMemController::clock(Cycle_t cycle) {
         MemEventBase * sendEv = msgQueue_.begin()->second;
 
         if (is_debug_event(sendEv)) {
-            if (!debug) dbg.debug(_L4_, "\n");
-            debug = true;
-            dbg.debug(_L4_, "%" PRIu64 " (%s) Sending event to processor: %s\n", timestamp_, getName().c_str(), sendEv->getBriefString().c_str());
+            Debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
+                    Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), sendEv->getVerboseString(dlevel).c_str());
         }
-
         link_->send(sendEv);
         msgQueue_.erase(msgQueue_.begin());
     }
@@ -147,7 +145,9 @@ void CoherentMemController::handleEvent(SST::Event* event) {
     MemEventBase * ev = static_cast<MemEventBase*>(event);
 
     if (is_debug_event(ev)) {
-        Debug(_L3_, "\n%" PRIu64 " (%s) Received: %s\n", getCurrentSimTimeNano(), getName().c_str(), ev->getVerboseString().c_str());
+        Debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
+                Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                ev->getVerboseString(dlevel).c_str());
     }
 
     Command cmd = ev->getCmd();
@@ -202,6 +202,11 @@ void CoherentMemController::handleRequest(MemEvent * ev) {
         if (!ev->queryFlag(MemEventBase::F_NONCACHEABLE)) {
             cacheStatus_.at(ev->getBaseAddr()/lineSize_) = true;
         }
+        if (is_debug_event(ev)) {
+            Debug(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
+                    Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                    ev->getVerboseString().c_str());
+        }
         memBackendConvertor_->handleMemEvent(ev);
     } else {
         mshr_.find(ev->getBaseAddr())->second.push_back(MSHREntry(ev->getID(), ev->getCmd()));
@@ -245,6 +250,11 @@ void CoherentMemController::handleReplacement(MemEvent * ev) {
     if (mshr_.find(ev->getBaseAddr()) == mshr_.end()) {
         mshr_.insert(std::make_pair(ev->getBaseAddr(), std::list<MSHREntry>(1, MSHREntry(ev->getID(), ev->getCmd()))));
         cacheStatus_.at(ev->getBaseAddr()/lineSize_) = directory_;
+        if (is_debug_event(ev)) {
+            Debug(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
+                    Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                    ev->getVerboseString().c_str());
+        }
         memBackendConvertor_->handleMemEvent(ev);
     } else {
         /* Search for race with a shootdown where we might receive an Ack but not data */
@@ -253,6 +263,11 @@ void CoherentMemController::handleReplacement(MemEvent * ev) {
             if (it->cmd == Command::CustomReq && it->shootdown) {
                 if (it == entryList->begin()) { /* Shootdown in progress, we will receive an Ack but possibly no data with it */
                     it->writebacks.insert(ev->getID());
+                    if (is_debug_event(ev)) {
+                        Debug(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
+                                Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                                ev->getVerboseString().c_str());
+                    }
                     memBackendConvertor_->handleMemEvent(ev);
                 } else {
                     it = entryList->insert(it, MSHREntry(ev->getID(), ev->getCmd())); /* Process replacement before next shootdown */
@@ -320,6 +335,11 @@ void CoherentMemController::handleFlush(MemEvent * ev) {
 
         if (mshr_.find(put->getBaseAddr()) == mshr_.end()) {
             mshr_.insert(std::make_pair(put->getBaseAddr(), std::list<MSHREntry>(1, MSHREntry(put->getID(), put->getCmd()))));
+            if (is_debug_event(put)) {
+                Debug(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
+                        Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                        put->getVerboseString().c_str());
+            }
             memBackendConvertor_->handleMemEvent(put);
         } else {
             mshr_.find(put->getBaseAddr())->second.push_back(MSHREntry(put->getID(), put->getCmd()));
@@ -332,6 +352,11 @@ void CoherentMemController::handleFlush(MemEvent * ev) {
         if (ev->getCmd() == Command::FlushLineInv) {
             cacheStatus_.at(ev->getBaseAddr()/lineSize_) = false;
             ev->setCmd(Command::FlushLine);
+        }
+        if (is_debug_event(put)) {
+            Debug(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
+                    Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                    put->getVerboseString().c_str());
         }
         memBackendConvertor_->handleMemEvent(ev);
     } else { // TODO resolve potential race with a not-yet-started shootdown sitting in the MSHR?
@@ -363,8 +388,8 @@ void CoherentMemController::handleAckInv(MemEvent * ev) {
 
     if (entry->writebacks.empty()) {
         if (outEv->decrementCount() == 0) { /* All shootdowns for this event are done */
-            CustomCmdInfo * info = customCommandHandler_->ready(outEv->request);
-            memBackendConvertor_->handleCustomEvent(info);
+            Interfaces::StandardMem::CustomData * info = customCommandHandler_->ready(outEv->request);
+            memBackendConvertor_->handleCustomEvent(info, outEv->request->getID(), outEv->request->getRqstr());
         }
     }
 }
@@ -394,6 +419,11 @@ void CoherentMemController::handleFetchResp(MemEvent * ev) {
 
         entry->writebacks.insert(write->getID());
         outstandingEventList_.insert(std::make_pair(write->getID(), OutstandingEvent(write, baseAddr)));
+        if (is_debug_event(write)) {
+            Debug(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
+                    Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                    write->getVerboseString().c_str());
+        }
         memBackendConvertor_->handleMemEvent(write);
     }
 
@@ -401,8 +431,8 @@ void CoherentMemController::handleFetchResp(MemEvent * ev) {
 
     entry->shootdown = false; // Complete
     if (entry->writebacks.empty() && outEv->decrementCount() == 0) {
-        CustomCmdInfo * info = customCommandHandler_->ready(outEv->request);
-        memBackendConvertor_->handleCustomEvent(info);
+        Interfaces::StandardMem::CustomData * info = customCommandHandler_->ready(outEv->request);
+        memBackendConvertor_->handleCustomEvent(info, outEv->request->getID(), outEv->request->getRqstr());
     }
 }
 
@@ -468,8 +498,8 @@ void CoherentMemController::handleCustomCmd(MemEventBase * evb) {
 
     /* If ready to issue, issue */
     if (outEv->getCount() == 0) {
-        CustomCmdInfo * info = customCommandHandler_->ready(evb);
-        memBackendConvertor_->handleCustomEvent(info);
+        Interfaces::StandardMem::CustomData * info = customCommandHandler_->ready(evb);
+        memBackendConvertor_->handleCustomEvent(info, evb->getID(), evb->getRqstr());
     }
 }
 
@@ -537,8 +567,9 @@ void CoherentMemController::finishMemReq(SST::Event::id_type id, uint32_t flags)
         delete ev;
         if (entry->writebacks.empty() && !entry->shootdown) { /* Request now ready to issue */
             if (outstandingEventList_.find(entry->id)->second.decrementCount() == 0) {
-                CustomCmdInfo * info = customCommandHandler_->ready(outstandingEventList_.find(entry->id)->second.request);
-                memBackendConvertor_->handleCustomEvent(info);
+                MemEventBase* req = static_cast<MemEventBase*>(outstandingEventList_.find(entry->id)->second.request);
+                Interfaces::StandardMem::CustomData * info = customCommandHandler_->ready(req);
+                memBackendConvertor_->handleCustomEvent(info, req->getID(), req->getRqstr());
             }
         }
         return;
@@ -565,7 +596,12 @@ void CoherentMemController::finishMemReq(SST::Event::id_type id, uint32_t flags)
         resp->setBaseAddr(translateToGlobal(ev->getBaseAddr()));
         resp->setAddr(translateToGlobal(ev->getAddr()));
     }
-
+    
+    if (is_debug_event(resp)) {
+        Debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
+                Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, 
+                getName().c_str(), resp->getVerboseString(dlevel).c_str());
+    }
     link_->send(resp);
     delete ev;
     updateMSHR(baseAddr);
@@ -585,8 +621,14 @@ void CoherentMemController::finishCustomReq(SST::Event::id_type id, uint32_t fla
     MemEventBase * ev = outEv->request;
 
     MemEventBase * resp = customCommandHandler_->finish(ev, flags);
-    if (resp != nullptr)
+    if (resp != nullptr) {
+        if (is_debug_event(resp)) {
+            Debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
+                    Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, 
+                    getName().c_str(), resp->getVerboseString(dlevel).c_str());
+        }
         link_->send(resp);
+    }
 
     delete ev;
 
@@ -623,8 +665,8 @@ void CoherentMemController::updateMSHR(Addr baseAddr) {
             } else {
                 entry->shootdown = false;
                 if (entry->writebacks.empty() && outEv->decrementCount() == 0) { /* Command ready to issue */
-                    CustomCmdInfo * info = customCommandHandler_->ready(outEv->request);
-                    memBackendConvertor_->handleCustomEvent(info);
+                    Interfaces::StandardMem::CustomData * info = customCommandHandler_->ready(outEv->request);
+                    memBackendConvertor_->handleCustomEvent(info, outEv->request->getID(), outEv->request->getRqstr());
                 }
             }
         } else { /* MemEvent */
@@ -635,6 +677,12 @@ void CoherentMemController::updateMSHR(Addr baseAddr) {
 
 
 void CoherentMemController::replayMemEvent(MemEvent * ev) {
+    if (is_debug_event(ev)) {
+        Debug(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
+                Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                ev->getVerboseString().c_str());
+    }
+
     switch (ev->getCmd()) {
         case Command::GetS:
         case Command::GetX:

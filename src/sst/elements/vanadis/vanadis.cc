@@ -1156,11 +1156,11 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
         output->verbose(
             CALL_INFO, 16, 0,
             "[fence]: processing ins: 0x%0llx functional unit "
-            "allocation for fencing (lsq-load size: %" PRIu32 " / lsq-store size: %" PRIu32 ")\n",
-            ins->getInstructionAddress(), (uint32_t)lsq->loadSize(), (uint32_t)lsq->storeSize());
+            "allocation for fencing (lsq-load size: %" PRIu32 " / lsq-store-buffer size: %" PRIu32 ")\n",
+            ins->getInstructionAddress(), (uint32_t)lsq->loadSize(), (uint32_t)lsq->storeBufferSize());
 
         if ( fence_ins->createsStoreFence() ) {
-            if ( lsq->storeSize() == 0 ) { allocated_fu = true; }
+            if ( lsq->storeBufferSize() == 0 ) { allocated_fu = true; }
             else {
                 allocated_fu = false;
             }
@@ -1181,8 +1181,12 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
     case INST_NOOP:
     case INST_FAULT:
         ins->markExecuted();
-    case INST_SYSCALL:
         allocated_fu = true;
+        break;
+    case INST_SYSCALL:
+        if ( lsq->storeBufferSize() == 0 &&  lsq->loadSize() == 0 ) { 
+            allocated_fu = true;
+        }
         break;
     default:
         output->fatal(CALL_INFO, -1, "Error - no processing for instruction class (%s)\n", ins->getInstCode());
