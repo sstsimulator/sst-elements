@@ -63,11 +63,11 @@ Balar::Balar(SST::ComponentId_t id, SST::Params& params): Component(id)
     char* link_cache_buffer = (char*) malloc(sizeof(char) * 256);
 
     // Buffer to keep track of pending transactions
-    pendingTransactions = new std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>();
-    gpuCachePendingTransactions = new std::unordered_map<SimpleMem::Request::id_t, cache_req_params>();
+    pendingTransactions = new std::unordered_map<StandardMem::Request::id_t, StandardMem::Request*>();
+    gpuCachePendingTransactions = new std::unordered_map<StandardMem::Request::id_t, cache_req_params>();
 
     // CPU link allocation
-    gpu_to_cpu_cache_links = (SimpleMem**) malloc( sizeof(SimpleMem*) * cpu_core_count );
+    gpu_to_cpu_cache_links = (StandardMem**) malloc( sizeof(StandardMem*) * cpu_core_count );
     gpu_to_core_links = (Link**) malloc( sizeof(Link*) * cpu_core_count );
 
     SubComponentSlotInfo* gpu_to_cpu_cache = getSubComponentSlotInfo("cpu_cache");
@@ -91,18 +91,18 @@ Balar::Balar(SST::ComponentId_t id, SST::Params& params): Component(id)
         // Create a link back to ArielCore
         gpu_to_core_links[i] = configureLink(link_buffer, "1ns", new Event::Handler<Balar>(this, &Balar::cpuHandler));
 
-        // Create and initialize CPU memHierarchy links (SimpleMem)
+        // Create and initialize CPU memHierarchy links (StandardMem)
         if (gpu_to_cpu_cache) {
-            gpu_to_cpu_cache_links[i] = gpu_to_cpu_cache->create<Interfaces::SimpleMem>(i, ComponentInfo::INSERT_STATS, timecvt, new SimpleMem::Handler<Balar>(this, &Balar::memoryHandler));
+            gpu_to_cpu_cache_links[i] = gpu_to_cpu_cache->create<Interfaces::StandardMem>(i, ComponentInfo::INSERT_STATS, timecvt, new StandardMem::Handler<Balar>(this, &Balar::memoryHandler));
         } else {
             Params par;
             par.insert("port", link_buffer_mem);
-            gpu_to_cpu_cache_links[i] = loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "cpu_cache", i,
-                    ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, par, timecvt, new SimpleMem::Handler<Balar>(this, &Balar::memoryHandler));
+            gpu_to_cpu_cache_links[i] = loadAnonymousSubComponent<Interfaces::StandardMem>("memHierarchy.standardInterface", "cpu_cache", i,
+                    ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, par, timecvt, new StandardMem::Handler<Balar>(this, &Balar::memoryHandler));
         }
     }
 
-    gpu_to_cache_links = (SimpleMem**) malloc( sizeof(SimpleMem*) * gpu_core_count );
+    gpu_to_cache_links = (StandardMem**) malloc( sizeof(StandardMem*) * gpu_core_count );
     numPendingCacheTransPerCore = new uint32_t[gpu_core_count];
 
     //// GPU's Cache link allocation
@@ -120,17 +120,17 @@ Balar::Balar(SST::ComponentId_t id, SST::Params& params): Component(id)
                     getName().c_str(), gpu_core_count, subCompCount);
     }
 
-    // Create and initialize GPU memHierarchy links (SimpleMem)
+    // Create and initialize GPU memHierarchy links (StandardMem)
     for(uint32_t i = 0; i < gpu_core_count; i++) {
         if (gpu_to_cache) {
-            gpu_to_cache_links[i] = gpu_to_cache->create<Interfaces::SimpleMem>(i, ComponentInfo::INSERT_STATS, timecvt, new SimpleMem::Handler<Balar>(this, &Balar::gpuCacheHandler));
+            gpu_to_cache_links[i] = gpu_to_cache->create<Interfaces::StandardMem>(i, ComponentInfo::INSERT_STATS, timecvt, new StandardMem::Handler<Balar>(this, &Balar::gpuCacheHandler));
         } else {
     	    // Create a unique name for all links
     	    sprintf(link_cache_buffer, "requestGPUCacheLink%" PRIu32, i);
             Params par;
             par.insert("port", link_cache_buffer);
-            gpu_to_cache_links[i] = loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "gpu_cache", i,
-                    ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, par, timecvt, new SimpleMem::Handler<Balar>(this, &Balar::gpuCacheHandler));
+            gpu_to_cache_links[i] = loadAnonymousSubComponent<Interfaces::StandardMem>("memHierarchy.standardInterface", "gpu_cache", i,
+                    ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, par, timecvt, new StandardMem::Handler<Balar>(this, &Balar::gpuCacheHandler));
         }
 
         numPendingCacheTransPerCore[i] = 0;
@@ -138,6 +138,8 @@ Balar::Balar(SST::ComponentId_t id, SST::Params& params): Component(id)
     }
 
     my_gpu_component = this;
+    
+    stdMemHandlers = new StdMemHandler(this, output);
 }
 
 Balar::Balar() : Component(-1)
@@ -162,14 +164,14 @@ bool Balar::tick(SST::Cycle_t x)
 void Balar::handleCPUReadRequest(uint64_t txSize, uint64_t pAddr)
 {
     uint64_t addrOffset = physicalAddresses[0] % 64;
-    SimpleMem::Request *req;
+    StandardMem::Request *req;
 
     if(txSize + addrOffset <= 64) {
         physicalAddresses[0] += txSize;
     }else {
         uint64_t leftAddr = currentAddress;
 
-        req = new SimpleMem::Request(SimpleMem::Request::Read, leftAddr, txSize);
+        req = new StandardMem::Read(leftAddr, txSize);
     }
 }
 
@@ -222,11 +224,11 @@ void Balar::cpuHandler( SST::Event* e )
                   while((pending_transactions_count < maxPendingTransCore) && (remainingTransfer > 0)) {
                      current_transfer = (remainingTransfer > 64) ? 64 : remainingTransfer;
                      addr_offset = physicalAddresses[0] % 64;
-                     SimpleMem::Request *req;
+                     StandardMem::Request *req;
 
                      if((addr_offset + current_transfer <= 64)){
                            output->verbose(CALL_INFO, 4, 0, "CUDA GPU non-split read physical address %" PRIu64 " of size %" PRIu64 "\n", physicalAddresses[0], current_transfer);
-                           req = new SimpleMem::Request(SimpleMem::Request::Read, physicalAddresses[0], current_transfer);
+                           req = new StandardMem::Read(physicalAddresses[0], current_transfer, 0, currentAddress);
                            physicalAddresses[0] += current_transfer;
                      } else{
                            uint64_t leftSize = 64 - addr_offset;
@@ -236,10 +238,9 @@ void Balar::cpuHandler( SST::Event* e )
                            output->verbose(CALL_INFO, 4, 0, "CUDA GPU split read physical address %" PRIu64 " of size %" PRIu64 "\n", physLeftAddr, current_transfer);
                            // Send one request, second request right address will be done next
                            physicalAddresses[0] = physRightAddr;
-                           req = new SimpleMem::Request(SimpleMem::Request::Read, physLeftAddr, current_transfer);
+                           req = new StandardMem::Read(physLeftAddr, current_transfer, 0, currentAddress);
                      }
 
-                     req->setVirtualAddress(currentAddress);
                      remainingTransfer -= current_transfer;
                      currentAddress += current_transfer;
                      transferNumber += 1;
@@ -247,8 +248,8 @@ void Balar::cpuHandler( SST::Event* e )
                      output->verbose(CALL_INFO, 4, 0, "CUDA GPU remaining data transfer bytes %" PRIu64 "\n", remainingTransfer);
 
                      pending_transactions_count++;
-                     pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
-                     gpu_to_cpu_cache_links[0]->sendRequest(req);
+                     pendingTransactions->insert( std::pair<StandardMem::Request::id_t, StandardMem::Request*>(req->getID(), req) );
+                     gpu_to_cpu_cache_links[0]->send(req);
                   }
                } else if(kind == cudaMemcpyDeviceToHost) {
                   output->verbose(CALL_INFO, 4, 0, "Within Device To Host\n");
@@ -341,9 +342,9 @@ void Balar::cpuHandler( SST::Event* e )
    }
 }
 
-void Balar::gpuCacheHandler(SimpleMem::Request* event)
+void Balar::gpuCacheHandler(StandardMem::Request* event)
 {
-   SimpleMem::Request::id_t mev_id = event->id;
+   StandardMem::Request::id_t mev_id = event->getID();
    auto find_entry = gpuCachePendingTransactions->find(mev_id);
 
    if(find_entry != gpuCachePendingTransactions->end()) {
@@ -358,13 +359,14 @@ void Balar::gpuCacheHandler(SimpleMem::Request* event)
    }
 }
 
-void Balar::memoryHandler(SimpleMem::Request* event)
+void Balar::memoryHandler(StandardMem::Request* event)
 {
-   SimpleMem::Request::id_t mev_id = event->id;
+   StandardMem::Request::id_t mev_id = event->getID();
    auto find_entry = pendingTransactions->find(mev_id);
    if(find_entry != pendingTransactions->end()) {
-      int size = event->data.size();
-      int index = event->getVirtualAddress() - baseAddress;
+      event->handle(stdMemHandlers); // extract the fields we need out of the response
+      int size = stdMemHandlers->data.size();
+      int index = stdMemHandlers->vAddr - baseAddress;
       ackTransfer += size;
 
       output->verbose(CALL_INFO, 4, 0, "CUDA total GPU ACK %" PRIu64 " of total %" PRIu64 "\n", ackTransfer, totalTransfer);
@@ -375,8 +377,8 @@ void Balar::memoryHandler(SimpleMem::Request* event)
 
          if(memcpyKind == cudaMemcpyHostToDevice){
             output->verbose(CALL_INFO, 4, 0, "Memcpy host to device\n");
-            for(uint32_t i = 0; i < event->data.size(); i++){
-               dataAddress[index+i] = event->data[i];
+            for(uint32_t i = 0; i < stdMemHandlers->data.size(); i++){
+               dataAddress[index+i] = stdMemHandlers->data[i];
             }
 
             output->verbose(CALL_INFO, 8, 0, "CUDA calling cudaMemcpySST on data: ");
@@ -388,7 +390,7 @@ void Balar::memoryHandler(SimpleMem::Request* event)
             }
 
             // Done with memcpy, call GPGPU-Sim
-            cudaMemcpySST(baseAddress, event->addr, totalTransfer, memcpyKind, &dataAddress[0]);
+            cudaMemcpySST(baseAddress, stdMemHandlers->pAddr, totalTransfer, memcpyKind, &dataAddress[0]);
             pending_transactions_count--;
             pendingTransactions->erase(pendingTransactions->find(mev_id));
          } else if(memcpyKind == cudaMemcpyDeviceToHost) {
@@ -396,7 +398,7 @@ void Balar::memoryHandler(SimpleMem::Request* event)
                tse->CA.cuda_memcpy.src = baseAddress;
                tse->CA.cuda_memcpy.count = totalTransfer;
                tse->CA.cuda_memcpy.kind = memcpyKind;
-               tse->CA.cuda_memcpy.dst = event->addr;
+               tse->CA.cuda_memcpy.dst = stdMemHandlers->pAddr;
                // Free the GPU and send an ACK
                pending_transactions_count--;
                pendingTransactions->erase(pendingTransactions->find(mev_id));
@@ -408,8 +410,8 @@ void Balar::memoryHandler(SimpleMem::Request* event)
       } else {
          if(memcpyKind == cudaMemcpyHostToDevice) {
             // Copy data into local vector until we've received it all
-            for(uint32_t i = 0; i < event->data.size(); i++) {
-               dataAddress[index+i] = event->data[i];
+            for(uint32_t i = 0; i < stdMemHandlers->data.size(); i++) {
+               dataAddress[index+i] = stdMemHandlers->data[i];
             }
          } else if(memcpyKind == cudaMemcpyDeviceToHost) {
                // Continue on waiting for more writes to come back
@@ -429,11 +431,11 @@ void Balar::memoryHandler(SimpleMem::Request* event)
             while((pending_transactions_count < maxPendingTransCore) && (remainingTransfer != 0)){
                current_transfer = (remainingTransfer > 64) ? 64 : remainingTransfer;
                addr_offset = physicalAddresses[0] % 64;
-               SimpleMem::Request *req;
+               StandardMem::Read *req;
 
                if((addr_offset + current_transfer <= 64)){
                   output->verbose(CALL_INFO, 4, 0, "CUDA GPU non-split read physical address %" PRIu64 " of size %" PRIu64 "\n", physicalAddresses[0], current_transfer);
-                  req = new SimpleMem::Request(SimpleMem::Request::Read, physicalAddresses[0], current_transfer);
+                  req = new StandardMem::Read(physicalAddresses[0], current_transfer);
                   physicalAddresses[0] += current_transfer;
                } else{
                   uint64_t leftSize = 64 - addr_offset;
@@ -444,19 +446,19 @@ void Balar::memoryHandler(SimpleMem::Request* event)
                   output->verbose(CALL_INFO, 4, 0, "CUDA GPU split read physical address %" PRIu64 " of size %" PRIu64 "\n", physLeftAddr, current_transfer);
                   // Send one request, second request right address will be done next
                   physicalAddresses[0] = physRightAddr;
-                  req = new SimpleMem::Request(SimpleMem::Request::Read, physLeftAddr, current_transfer);
+                  req = new StandardMem::Read(physLeftAddr, current_transfer);
                }
 
                // Update current transfer status
-               req->setVirtualAddress(currentAddress);
+               req->vAddr = currentAddress;
                remainingTransfer -= current_transfer;
                currentAddress += current_transfer;
                output->verbose(CALL_INFO, 4, 0, "CUDA GPU remaining data transfer bytes %" PRIu64 "\n", remainingTransfer);
 
                // Send to memHierarchy
                pending_transactions_count++;
-               pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
-               gpu_to_cpu_cache_links[0]->sendRequest(req);
+               pendingTransactions->insert( std::pair<StandardMem::Request::id_t, StandardMem::Request*>(req->getID(), req) );
+               gpu_to_cpu_cache_links[0]->send(req);
             }
          } else if(memcpyKind == cudaMemcpyDeviceToHost) {
             // Send as many writes as we can
@@ -464,10 +466,11 @@ void Balar::memoryHandler(SimpleMem::Request* event)
                index = currentAddress - baseAddress;
                current_transfer = (remainingTransfer > 64) ? 64 : remainingTransfer;
                addr_offset = physicalAddresses[0] % 64;
-               SimpleMem::Request *req;
+               StandardMem::Request *req;
 
                if((addr_offset + current_transfer <= 64)){
-                  req = new SimpleMem::Request(SimpleMem::Request::Write, physicalAddresses[0], current_transfer);
+                  std::vector<uint8_t> payload(&(dataAddress[index]), &(dataAddress[index])+current_transfer); 
+                  req = new StandardMem::Write(physicalAddresses[0], current_transfer, payload, false, 0, currentAddress);
                   physicalAddresses[0] += current_transfer;
                } else{
                   uint64_t leftSize = 64 - addr_offset;
@@ -475,7 +478,7 @@ void Balar::memoryHandler(SimpleMem::Request* event)
                   uint64_t physRightAddr = physLeftAddr += leftSize;
                   current_transfer = leftSize;
                   physicalAddresses[0] = physRightAddr;
-                  req = new SimpleMem::Request(SimpleMem::Request::Read, physLeftAddr, current_transfer);
+                  req = new StandardMem::Read(physLeftAddr, current_transfer, 0, currentAddress);
                }
 
                // Update current transfer status
@@ -484,11 +487,9 @@ void Balar::memoryHandler(SimpleMem::Request* event)
                transferNumber += 1;
 
                // Send to memHierarchy
-               req->setVirtualAddress(currentAddress);
-               req->setPayload(&dataAddress[index], current_transfer);
                pending_transactions_count++;
-               pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
-               gpu_to_cpu_cache_links[0]->sendRequest(req);
+               pendingTransactions->insert( std::pair<StandardMem::Request::id_t, StandardMem::Request*>(req->getID(), req) );
+               gpu_to_cpu_cache_links[0]->send(req);
             }
          }
          // Do nothing, just waiting on more events return from memHierarchy
@@ -500,6 +501,17 @@ void Balar::memoryHandler(SimpleMem::Request* event)
    }
 }
 
+void Balar::StdMemHandler::handle(StandardMem::ReadResp* resp) {
+    data = resp->data;
+    vAddr = resp->vAddr;
+    pAddr = resp->pAddr;
+}
+
+void Balar::StdMemHandler::handle(StandardMem::WriteResp* resp) {
+    vAddr = resp->vAddr;
+    pAddr = resp->pAddr;
+}
+
 bool Balar::is_SST_buffer_full(unsigned core_id)
 {
    return (numPendingCacheTransPerCore[core_id] == maxPendingCacheTrans);
@@ -508,22 +520,23 @@ bool Balar::is_SST_buffer_full(unsigned core_id)
 void Balar::send_read_request_SST(unsigned core_id, uint64_t address, uint64_t size, void* mem_req)
 {
    assert(numPendingCacheTransPerCore[core_id] < maxPendingCacheTrans);
-   SimpleMem::Request* req = new SimpleMem::Request(SimpleMem::Request::Read, address, size);
-   req->setVirtualAddress(address);
+   StandardMem::Read* req = new StandardMem::Read(address, size);
+   req->vAddr = address;
    cache_req_params crp(core_id, mem_req, req);
-   gpuCachePendingTransactions->insert( std::pair<SimpleMem::Request::id_t, cache_req_params>(req->id, crp) );
+   gpuCachePendingTransactions->insert( std::pair<StandardMem::Request::id_t, cache_req_params>(req->getID(), crp) );
    numPendingCacheTransPerCore[core_id]++;
-   gpu_to_cache_links[core_id]->sendRequest(req);
+   gpu_to_cache_links[core_id]->send(req);
 }
 
 void Balar::send_write_request_SST(unsigned core_id, uint64_t address, uint64_t size, void* mem_req)
 {
    assert(numPendingCacheTransPerCore[core_id] < maxPendingCacheTrans);
-   SimpleMem::Request* req = new SimpleMem::Request(SimpleMem::Request::Write, address, size);
-   req->setVirtualAddress(address);
-   gpuCachePendingTransactions->insert( std::pair<SimpleMem::Request::id_t, cache_req_params>(req->id, cache_req_params(core_id, mem_req, req)) );
+   std::vector<uint8_t> payload(size, 0);
+   StandardMem::Write* req = new StandardMem::Write(address, size, payload);
+   req->vAddr = address;
+   gpuCachePendingTransactions->insert( std::pair<StandardMem::Request::id_t, cache_req_params>(req->getID(), cache_req_params(core_id, mem_req, req)) );
    numPendingCacheTransPerCore[core_id]++;
-   gpu_to_cache_links[core_id]->sendRequest(req);
+   gpu_to_cache_links[core_id]->send(req);
 }
 
 void Balar::SST_callback_memcpy_H2D_done()
@@ -554,12 +567,12 @@ void Balar::SST_callback_memcpy_D2H_done()
       index = currentAddress - baseAddress;
       current_transfer = (remainingTransfer > 64) ? 64 : remainingTransfer;
       addr_offset = physicalAddresses[0] % 64;
-      SimpleMem::Request *req;
+      StandardMem::Write *req;
       if( (addr_offset + current_transfer <= 64) ) {
             output->verbose(CALL_INFO, 8, 0, "CUDA GPU non-split write physical address %" PRIu64 "\n", physicalAddresses[0]);
-            req = new SimpleMem::Request(SimpleMem::Request::Write, physicalAddresses[0], current_transfer);
-            req->setVirtualAddress(currentAddress);
-            req->setPayload(&(dataAddress[index]), current_transfer);
+            std::vector<uint8_t> payload(&(dataAddress[index]), &(dataAddress[index])+current_transfer);
+            req = new StandardMem::Write(physicalAddresses[0], current_transfer, payload);
+            req->vAddr = currentAddress;
             physicalAddresses[0] += current_transfer;
       } else {
             uint64_t leftSize = 64 - addr_offset;
@@ -569,17 +582,17 @@ void Balar::SST_callback_memcpy_D2H_done()
             output->verbose(CALL_INFO, 8, 0, "CUDA GPU split write physical address %" PRIu64 " %" PRIu64 "\n", physLeftAddr, physRightAddr);
             // Send one request, second request will be done next loop iteration
             physicalAddresses[0] = physRightAddr;
-            req = new SimpleMem::Request(SimpleMem::Request::Write, physLeftAddr, current_transfer);
-            req->setVirtualAddress(currentAddress);
-            req->setPayload(&(dataAddress[index]), current_transfer);
+            std::vector<uint8_t> payload(&(dataAddress[index]), &(dataAddress[index])+current_transfer);
+            req = new StandardMem::Write(physLeftAddr, current_transfer, payload);
+            req->vAddr = currentAddress;
       }
 
       remainingTransfer -= current_transfer;
       currentAddress += current_transfer;
       transferNumber += 1;
       pending_transactions_count++;
-      pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
-      gpu_to_cpu_cache_links[0]->sendRequest(req);
+      pendingTransactions->insert( std::pair<StandardMem::Request::id_t, StandardMem::Request*>(req->getID(), req) );
+      gpu_to_cpu_cache_links[0]->send(req);
    }
 
 }

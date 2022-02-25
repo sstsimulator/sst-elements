@@ -28,7 +28,7 @@
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
 
-#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/interfaces/stdMem.h>
 #include <sst/core/rng/marsaglia.h>
 #include "memEvent.h"
 
@@ -74,7 +74,7 @@ private:
     void operator=(const streamCPU&); // do not implement
     void init(unsigned int phase);
 
-    void handleEvent( SST::Interfaces::SimpleMem::Request * req );
+    void handleEvent( SST::Interfaces::StandardMem::Request * req );
     virtual bool clockTic( SST::Cycle_t );
 
     Output out;
@@ -90,7 +90,7 @@ private:
 
     std::map<uint64_t, SimTime_t> requests;
 
-    Interfaces::SimpleMem * memory;
+    Interfaces::StandardMem * memory;
 
     SST::RNG::MarsagliaRNG rng;
 
