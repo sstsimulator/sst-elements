@@ -181,8 +181,10 @@ void Sieve::processEvent(SST::Event* ev, int link) {
 
 void Sieve::init(unsigned int phase) {
     if (!phase) {
+        MemRegion region;
+        region.setDefault();
         for (int i = 0; i < cpuLinkCount_; i++) {
-            cpuLinks_[i]->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
+            cpuLinks_[i]->sendInitData(new MemEventInitRegion(getName(), region ,false));
         }
     }
 

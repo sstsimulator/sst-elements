@@ -56,7 +56,7 @@ ArielCore::ArielCore(ComponentId_t id, ArielTunnel *tunnel,
 
     writePayloads = params.find<int>("writepayloadtrace") == 0 ? false : true;
     coreQ = new std::queue<ArielEvent*>();
-    pendingTransactions = new std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>();
+    pendingTransactions = new std::unordered_map<StandardMem::Request::id_t, StandardMem::Request*>();
     pending_transaction_count = 0;
 
 #ifdef HAVE_CUDA
@@ -68,7 +68,7 @@ ArielCore::ArielCore(ComponentId_t id, ArielTunnel *tunnel,
     pageAckTransfer = 0;
     totalTransfer = 0;
 
-    pendingGpuTransactions = new std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>();
+    pendingGpuTransactions = new std::unordered_map<StandardMem::Request::id_t, StandardMem::Request*>();
     pending_gpu_transaction_count = 0;
 #endif
 
@@ -103,6 +103,7 @@ ArielCore::ArielCore(ComponentId_t id, ArielTunnel *tunnel,
     free(subID);
 
     memmgr->registerInterruptHandler(coreID, new ArielMemoryManager::InterruptHandler<ArielCore>(this, &ArielCore::handleInterrupt));
+    stdMemHandlers = new StdMemHandler(this, output);
 
     std::string traceGenName = params.find<std::string>("tracegen", "");
     enableTracing = ("" != traceGenName);
@@ -131,9 +132,11 @@ ArielCore::~ArielCore() {
     if(enableTracing && traceGen) {
         delete traceGen;
     }
+
+    delete stdMemHandlers;
 }
 
-void ArielCore::setCacheLink(SimpleMem* newLink) {
+void ArielCore::setCacheLink(StandardMem* newLink) {
     cacheLink = newLink;
 }
 
@@ -159,25 +162,24 @@ void ArielCore::printTraceEntry(const bool isRead,
 void ArielCore::commitReadEvent(const uint64_t address,
             const uint64_t virtAddress, const uint32_t length) {
     if(length > 0) {
-        SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Read, address, length);
-        req->setVirtualAddress(virtAddress);
+        StandardMem::Read *req = new StandardMem::Read(address, length, 0, virtAddress);
 #ifdef HAVE_CUDA
         if(isGpuEx()){
             pending_transaction_count++;
-            pendingGpuTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
+            pendingGpuTransactions->insert( std::pair<StandardMem::Request::id_t, StandardMem::Request*>(req->getID(), req) );
         }else {
 #endif
             pending_transaction_count++;
-            pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
+            pendingTransactions->insert( std::pair<StandardMem::Request::id_t, StandardMem::Request*>(req->getID(), req) );
 #ifdef HAVE_CUDA
         }
 #endif
         if(enableTracing) {
-                printTraceEntry(true, (const uint64_t) req->addrs[0], (const uint32_t) length);
+            printTraceEntry(true, (const uint64_t) req->pAddr, (const uint32_t) length);
         }
 
         // Actually send the event to the cache
-        cacheLink->sendRequest(req);
+        cacheLink->send(req);
     }
 }
 
@@ -185,10 +187,11 @@ void ArielCore::commitWriteEvent(const uint64_t address,
         const uint64_t virtAddress, const uint32_t length, const uint8_t* payload) {
 
     if(length > 0) {
-        SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Write, address, length);
-        req->setVirtualAddress(virtAddress);
-
+        std::vector<uint8_t> data;
+        
         if( writePayloads ) {
+            data.insert(data.end(), &payload[0], &payload[length]);
+            
             if(verbosity >= 16) {
                 char* buffer = new char[64];
                 std::string payloadString = "";
@@ -202,25 +205,29 @@ void ArielCore::commitWriteEvent(const uint64_t address,
                 output->verbose(CALL_INFO, 16, 0, "Write-Payload: Len=%" PRIu32 ", Data={ %s } %" PRIx64 "\n",
                         length, payloadString.c_str(), virtAddress);
             }
-            req->setPayload( (uint8_t*) payload, length );
+        } else {
+            data.resize(length, 0);
         }
+        
+        StandardMem::Write *req = new StandardMem::Write(address, length, data, false, 0, virtAddress);
+
 #ifdef HAVE_CUDA
         if(isGpuEx()){
             pending_transaction_count++;
-            pendingGpuTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
+            pendingGpuTransactions->insert( std::pair<StandardMem::Request::id_t, StandardMem::Request*>(req->getID(), req) );
         } else{
 #endif
             pending_transaction_count++;
-            pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
+            pendingTransactions->insert( std::pair<StandardMem::Request::id_t, StandardMem::Request*>(req->getID(), req) );
 #ifdef HAVE_CUDA
         }
 #endif
         if(enableTracing) {
-            printTraceEntry(false, (const uint64_t) req->addrs[0], (const uint32_t) length);
+            printTraceEntry(false, (const uint64_t) req->pAddr, (const uint32_t) length);
         }
 
         // Actually send the event to the cache
-        cacheLink->sendRequest(req);
+        cacheLink->send(req);
     }
 }
 
@@ -233,28 +240,23 @@ void ArielCore::commitFlushEvent(const uint64_t address,
 
     if(length > 0) {
         /*  Todo: should the request specify the physical address, or the virtual address? */
-        SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::FlushLineInv, address, length);
-        req->addAddress(address);
+        StandardMem::Request *req = new StandardMem::FlushAddr( address, length, true, std::numeric_limits<uint32_t>::max());
         pending_transaction_count++;
-        pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
+        pendingTransactions->insert( std::pair<StandardMem::Request::id_t, StandardMem::Request*>(req->getID(), req) );
 
-        cacheLink->sendRequest(req);
+        cacheLink->send(req);
         statFlushRequests->addData(1);
     }
 }
 
-void ArielCore::handleEvent(SimpleMem::Request* event) {
+void ArielCore::handleEvent(StandardMem::Request* event) {
     ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " handling a memory event.\n", coreID));
-    SimpleMem::Request::id_t mev_id = event->id;
+    StandardMem::Request::id_t mev_id = event->getID();
     auto find_entry = pendingTransactions->find(mev_id);
 
 #ifdef HAVE_CUDA
     if(pendingGpuTransactions->find(mev_id) != pendingGpuTransactions->end()){
-        // Update total ACK and Page ACK
-        setAckTransfer(getAckTransfer() + event->data.size());
-        setPageAckTransfer(getPageAckTransfer() + event->data.size());
-        output->verbose(CALL_INFO, 16, 0, "CUDA: Total ACK %" PRIu32 ", Page ACK %" PRIu32"\n",
-                        getAckTransfer(), getPageAckTransfer());
+        event->handle(stdMemHandlers);
         if(getKind() == cudaMemcpyHostToDevice){
             if((getPageAckTransfer() == getPageTransfer())){
                 if(getAckTransfer() == getTotalTransfer()){
@@ -266,7 +268,7 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
                     tse->API = GPU_MEMCPY;
                     tse->payload = physicalAddresses;
                     tse->CA.cuda_memcpy.dst = getBaseAddress();
-                    tse->CA.cuda_memcpy.src = event->addr;
+                    tse->CA.cuda_memcpy.src = stdMemHandlers->last_phys_addr;
                     tse->CA.cuda_memcpy.count = getTotalTransfer();
                     tse->CA.cuda_memcpy.kind = getKind();
 
@@ -361,19 +363,14 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
             }else{
                 // Nothing to send, still need more ACKs
             }
-        } else if(getKind() == cudaMemcpyDeviceToHost){
-            int index = event->getVirtualAddress() - getBaseAddress();
+        } else if (getKind() == cudaMemcpyDeviceToHost){
             if((getAckTransfer() == getTotalTransfer())) {
                 output->verbose(CALL_INFO, 16, 0, "CUDA: Progress to fesimple (D2H)\n");
-                // Add the data at the correct address
-                for(int i = 0; i < event->data.size(); i++)
-                    getDataAddress()[index+i] = event->data[i];
-
                 output->verbose(CALL_INFO, 16, 0, "CUDA: Data returned to fesimple of size %" PRIu32 ":", getTotalTransfer());
                 if( verbosity >= 16) {
                     for(int i = 0; i < getTotalTransfer(); i++)
                         output->verbose(CALL_INFO, 16, 0, "%" PRIu32 ", ",
-                            getDataAddress()[i]);
+                                getDataAddress()[i]);
                     output->verbose(CALL_INFO, 16, 0, "\n");
                 }
 
@@ -452,11 +449,8 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
                 isGpu = false;
                 pendingGpuTransactions->erase(pendingGpuTransactions->find(mev_id));
                 pending_transaction_count--;
-            }else {
+            } else {
                 // Still data left to read
-                for(int i = 0; i < event->data.size(); i++){
-                    getDataAddress()[index+i] = event->data[i];
-                }
                 pendingGpuTransactions->erase(pendingGpuTransactions->find(mev_id));
                 pending_transaction_count--;
                 ArielReadEvent *are;
@@ -483,11 +477,47 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
         pending_transaction_count--;
         if(isCoreFenced() && pending_transaction_count == 0)
             unfence();
-        } else {
-                output->fatal(CALL_INFO, -4, "Memory event response to core: %" PRIu32 " was not found in pending list.\n", coreID);
-        }
+    } else {
+            output->fatal(CALL_INFO, -4, "Memory event response to core: %" PRIu32 " was not found in pending list.\n", coreID);
+    }
     delete event;
 }
+
+void ArielCore::StdMemHandler::handle(StandardMem::ReadResp* resp) {
+#ifdef HAVE_CUDA
+    // Update total ACK and Page ACK
+    core->setAckTransfer(core->getAckTransfer() + resp->size);
+    core->setPageAckTransfer(core->getPageAckTransfer() + resp->size);
+    out->verbose(CALL_INFO, 16, 0, "CUDA: Total ACK %" PRIu32 ", Page ACK %" PRIu32"\n",
+                core->getAckTransfer(), core->getPageAckTransfer());
+    if(core->getKind() == cudaMemcpyHostToDevice){
+        // Only write requests are sent during cudaMemcpyHostToDevice
+        out->fatal(CALL_INFO, -1, "Error: received ReadResp during cudaMemcpyHostToDevice\n");
+    } else if(core->getKind() == cudaMemcpyDeviceToHost){
+        int index = resp->vAddr - core->getBaseAddress();
+        // Add the data at the correct address
+        for(int i = 0; i < resp->data.size(); i++)
+            core->getDataAddress()[index+i] = resp->data[i];
+    }
+#endif
+}
+
+void ArielCore::StdMemHandler::handle(StandardMem::WriteResp* resp) {
+#ifdef HAVE_CUDA
+    // Update total ACK and Page ACK
+    core->setAckTransfer(core->getAckTransfer() + resp->size);
+    core->setPageAckTransfer(core->getPageAckTransfer() + resp->size);
+    out->verbose(CALL_INFO, 16, 0, "CUDA: Total ACK %" PRIu32 ", Page ACK %" PRIu32"\n",
+                core->getAckTransfer(), core->getPageAckTransfer());
+    if(core->getKind() == cudaMemcpyHostToDevice){
+        last_phys_addr = resp->pAddr;
+    } else if(core->getKind() == cudaMemcpyDeviceToHost){
+        // Only ArielReadEvents are sent during cudaMemcpyDeviceToHost
+        out->fatal(CALL_INFO, -1, "Error: Received WriteResp during cudaMemcpyDeviceToHost\n");
+    }
+#endif
+}
+
 
 bool ArielCore::handleInterrupt(ArielMemoryManager::InterruptAction action) {
 

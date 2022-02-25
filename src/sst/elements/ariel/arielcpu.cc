@@ -202,7 +202,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
                     getName().c_str(), core_count, mem->getMaxPopulatedSlotNumber());
 
         for (int i = 0; i < core_count; i++) {
-            cpu_to_cache_links.push_back(mem->create<Interfaces::SimpleMem>(i, ComponentInfo::INSERT_STATS, timeconverter, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
+            cpu_to_cache_links.push_back(mem->create<Interfaces::StandardMem>(i, ComponentInfo::INSERT_STATS, timeconverter, new StandardMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
             cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
         }
     } else {
@@ -211,8 +211,8 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
         for (int i = 0; i < core_count; i++) {
             Params par;
             par.insert("port", "cache_link_" + std::to_string(i));
-            cpu_to_cache_links.push_back(loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "memory", i,
-                        ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, par, timeconverter, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
+            cpu_to_cache_links.push_back(loadAnonymousSubComponent<Interfaces::StandardMem>("memHierarchy.standardInterface", "memory", i,
+                        ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, par, timeconverter, new StandardMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
             cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
 
 #ifdef HAVE_CUDA
