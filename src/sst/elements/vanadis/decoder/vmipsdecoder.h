@@ -1191,7 +1191,7 @@ protected:
                         {
                             // Special instruction_, 32 is LO, 33 is HI
                             bundle->addInstruction(
-                                new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                                new VanadisAddImmInstruction<int32_t>(
                                     ins_addr, hw_thr, options, rd, MIPS_REG_HI, 0));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_mfhi);
@@ -1201,7 +1201,7 @@ protected:
                         {
                             // Special instruction, 32 is LO, 33 is HI
                             bundle->addInstruction(
-                                new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                                new VanadisAddImmInstruction<int32_t>(
                                     ins_addr, hw_thr, options, rd, MIPS_REG_LO, 0));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_mflo);
@@ -1659,7 +1659,7 @@ protected:
                 //				output->verbose(CALL_INFO, 16, 0,
                 //"[decoder/ADDIU]: -> reg: %" PRIu16 " rs=%" PRIu16 " / imm=%" PRId64
                 //"\n", 					rt, rs, imm_value_64);
-                bundle->addInstruction(new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                bundle->addInstruction(new VanadisAddImmInstruction<int32_t>(
                     ins_addr, hw_thr, options, rt, rs, imm_value_64));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_addiu);

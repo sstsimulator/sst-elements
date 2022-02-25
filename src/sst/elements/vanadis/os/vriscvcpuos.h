@@ -28,10 +28,10 @@
 #define VANADIS_SYSCALL_RISCV_CLOSE 4006
 #define VANADIS_SYSCALL_RISCV_WRITE 4004
 #define VANADIS_SYSCALL_RISCV_ACCESS 4033
-#define VANADIS_SYSCALL_RISCV_BRK 4045
+#define VANADIS_SYSCALL_RISCV_BRK 214
 #define VANADIS_SYSCALL_RISCV_IOCTL 29
 #define VANADIS_SYSCALL_RISCV_READLINK 4085
-#define VANADIS_SYSCALL_RISCV_MMAP 4090
+#define VANADIS_SYSCALL_RISCV_MMAP 222
 #define VANADIS_SYSCALL_RISCV_UNMAP 4091
 #define VANADIS_SYSCALL_RISCV_UNAME 4122
 #define VANADIS_SYSCALL_RISCV_WRITEV 66
@@ -140,11 +140,11 @@ public:
         } break;
 
         case VANADIS_SYSCALL_RISCV_BRK: {
-            const uint64_t phys_reg_4 = isaTable->getIntPhysReg(4);
-            uint64_t newBrk = regFile->getIntReg<uint64_t>(phys_reg_4);
+            const uint64_t phys_reg_10 = isaTable->getIntPhysReg(10);
+            uint64_t newBrk = regFile->getIntReg<uint64_t>(phys_reg_10);
 
-            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to brk( value: %" PRIu64 " ), zero: %s\n",
-                            newBrk, brk_zero_memory ? "yes" : "no");
+            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to brk( value: %" PRIu64 " / 0x%llx ), zero: %s\n",
+                            newBrk, newBrk, brk_zero_memory ? "yes" : "no");
             call_ev = new VanadisSyscallBRKEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, newBrk, brk_zero_memory);
         } break;
 
@@ -364,30 +364,34 @@ public:
         } break;
 
         case VANADIS_SYSCALL_RISCV_MMAP: {
-            const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
-            uint64_t map_addr = regFile->getIntReg<uint64_t>(phys_reg_4);
+            const uint16_t phys_reg_10 = isaTable->getIntPhysReg(10);
+            uint64_t map_addr = regFile->getIntReg<uint64_t>(phys_reg_10);
 
-            const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
-            uint64_t map_len = regFile->getIntReg<uint64_t>(phys_reg_5);
+            const uint16_t phys_reg_11 = isaTable->getIntPhysReg(11);
+            uint64_t map_len = regFile->getIntReg<uint64_t>(phys_reg_11);
 
-            const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
-            int32_t map_prot = regFile->getIntReg<int32_t>(phys_reg_6);
+            const uint16_t phys_reg_12 = isaTable->getIntPhysReg(12);
+            int32_t map_prot = regFile->getIntReg<int32_t>(phys_reg_12);
 
-            const uint16_t phys_reg_7 = isaTable->getIntPhysReg(7);
-            int32_t map_flags = regFile->getIntReg<int32_t>(phys_reg_7);
+            const uint16_t phys_reg_13 = isaTable->getIntPhysReg(13);
+            int32_t map_flags = regFile->getIntReg<int32_t>(phys_reg_13);
 
-            const uint16_t phys_reg_sp = isaTable->getIntPhysReg(29);
-            uint64_t stack_ptr = regFile->getIntReg<uint64_t>(phys_reg_sp);
+            const uint16_t phys_reg_14 = isaTable->getIntPhysReg(14);
+            int32_t map_fd = regFile->getIntReg<int32_t>(phys_reg_14);
+
+            const uint16_t phys_reg_15 = isaTable->getIntPhysReg(15);
+            int64_t map_offset = regFile->getIntReg<int64_t>(phys_reg_15);
 
             output->verbose(CALL_INFO, 8, 0,
                             "[syscall-handler] found a call to mmap( 0x%llx, %" PRIu64 ", %" PRId32 ", %" PRId32
-                            ", sp: 0x%llx (> 4 arguments) )\n",
-                            map_addr, map_len, map_prot, map_flags, stack_ptr);
+                            ", %" PRId32 ", %" PRId64 " )\n",
+                            map_addr, map_len, map_prot, map_flags, map_fd, map_offset);
+
+            output->fatal(CALL_INFO, -1, "STOP\n");
 
             if ((0 == map_addr) && (0 == map_len)) {
                 recvOSEvent(new VanadisSyscallResponse(-22));
             } else {
-                output->fatal(CALL_INFO, -1, "STOP\n");
             }
         } break;
 

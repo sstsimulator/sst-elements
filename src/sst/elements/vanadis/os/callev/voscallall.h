@@ -24,6 +24,7 @@
 #include "os/callev/voscallgettime64.h"
 #include "os/callev/voscallioctl.h"
 #include "os/callev/voscallmmap.h"
+#include "os/callev/voscallmmapx.h"
 #include "os/callev/voscallopen.h"
 #include "os/callev/voscallopenat.h"
 #include "os/callev/voscallread.h"
