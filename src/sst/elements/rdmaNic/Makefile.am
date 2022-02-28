@@ -37,7 +37,7 @@ EXTRA_DIST = \
 	tests/app/rdma/incast.c \
 	tests/app/rdma/incast-v2.c \
 	tests/app/rdma/include/base.h \
-	tests/app/rdma/include/rdms.h \
+	tests/app/rdma/include/rdma.h \
 	tests/app/rdma/msg.c \
 	tests/app/rdma/msg.err.gold \
 	tests/app/rdma/msg.out.gold \
