@@ -18,12 +18,6 @@ node0.l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapola
 RdmaNic() sizeof(NicCmd) 64
 node1.l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 3 cycles.
 RdmaNic() sizeof(NicCmd) 64
-[node-os-core-     0]: [syscall-brl]: brk provided (0x0) is less than existing brk point (0x425000), so returning current brk point
-[node-os-core-     0]: [syscall-brl]: brk provided (0x0) is less than existing brk point (0x425000), so returning current brk point
-[node-os-core-     0]: [syscall-brk] - zeroing memory requested, producing a zero payload for write
-[node-os-core-     0]: [syscall-brk] old brk: 0x425000 -> new brk: 0x427000 (diff: 8192)
-[node-os-core-     0]: [syscall-brk] - zeroing memory requested, producing a zero payload for write
-[node-os-core-     0]: [syscall-brk] old brk: 0x425000 -> new brk: 0x427000 (diff: 8192)
 [os-memgmr] requested allocation size: 4096
 [os-memgmr] -> page-size:            4096
 [os-memgmr] -> requested page count: 1
