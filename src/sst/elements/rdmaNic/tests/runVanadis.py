@@ -50,7 +50,6 @@ topo.prepParams()
 ep = node.Endpoint( 2 )
 
 def setNode( nodeId ):
-    print( 'setNode', nodeId )
     return ep;
 
 print( 'call topo.setEndPointFunc()' )
