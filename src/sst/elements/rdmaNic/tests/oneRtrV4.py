@@ -160,7 +160,6 @@ class Endpoint():
         pass
 
     def build(self, nodeId, extraKeys ):
-        print( "Endpoint.build", nodeId )
 
         prefix = 'node' + str(nodeId);
 
