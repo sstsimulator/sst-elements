@@ -243,5 +243,3 @@ class testcase_rdmaNic(SSTTestCase):
                 rtn = OSCommand(cmd, set_cwd=sourcedirpath).run()
                 log_debug("RdmaNic tests source - Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
                 self.assertTrue(rtn.result() == 0, "{0} failed to build properly".format(makefilepath))
-
-
