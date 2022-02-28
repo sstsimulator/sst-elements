@@ -31,7 +31,23 @@ EXTRA_DIST = \
 	tests/runVanadis.py \
 	tests/oneRtrV3.py \
 	tests/oneRtrV4.py \
-	tests/vanadisBlock.py 
+	tests/vanadisBlock.py \
+	tests/app/rdma/Makefile \
+	tests/app/rdma/barrier.c \
+	tests/app/rdma/incast.c \
+	tests/app/rdma/incast-v2.c \
+	tests/app/rdma/include/base.h \
+	tests/app/rdma/include/rdms.h \
+	tests/app/rdma/msg.c \
+	tests/app/rdma/msg.err.gold \
+	tests/app/rdma/msg.out.gold \
+	tests/app/rdma/msg.stderr-node0.cpu0.os.gold \
+	tests/app/rdma/msg.stderr-node1.cpu0.os.gold \
+	tests/app/rdma/msg.stdout-node0.cpu0.os.gold \
+	tests/app/rdma/msg.stdout-node1.cpu0.os.gold \
+	tests/app/rdma/write.c \
+	tests/app/rdma/src/base.c \
+	tests/app/rdma/src/rdma.c
 
 sstdir = $(includedir)/sst/elements/rdmaNic
 nobase_sst_HEADERS = \
