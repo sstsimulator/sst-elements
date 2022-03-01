@@ -67,10 +67,10 @@ class ArielRtlEvent : public ArielEvent, public SST::Event {
       typedef std::vector<char> dataVec;
       dataVec payload;
       
-      void serialize_order(SST::Core::Serialization::serializer &ser)  override {
+      /*void serialize_order(SST::Core::Serialization::serializer &ser)  override {
           Event::serialize_order(ser);
           ser & payload;
-      }
+      }*/
       
       ArielEventType getEventType() const {
          return RTL;

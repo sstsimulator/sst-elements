@@ -1619,7 +1619,9 @@ void ariel_start_RTL_sim(RTL_shmem_info* rtl_shmem) {
     THREADID thr = PIN_ThreadId();
     const uint32_t thrID = (uint32_t) thr;
     tunnel->writeMessage(thrID, acRtl);
+    #ifdef ARIEL_DEBUG
     fprintf(stderr, "\nMessage to add RTL Event into Ariel Event Queue successfully delivered via ArielTunnel");
+    #endif
     
     return;
 }
@@ -1638,7 +1640,9 @@ void ariel_update_RTL_signals(RTL_shmem_info* rtl_shmem) {
     THREADID thr = PIN_ThreadId();
     const uint32_t thrID = (uint32_t) thr;
     tunnel->writeMessage(thrID, acRtl);
+    #ifdef ARIEL_DEBUG
     fprintf(stderr, "\nMessage to add RTL Event into Ariel Event Queue to update RTL signals successfully delivered via ArielTunnel");
+    #endif
     
     return;
 }

@@ -26,8 +26,6 @@
 
 #include "rtlmemmgr_cache.h"
 
-using namespace SST;
-
 namespace SST {
 namespace RtlComponent {
 

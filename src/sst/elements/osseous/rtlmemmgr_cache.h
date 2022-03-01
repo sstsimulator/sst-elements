@@ -28,9 +28,6 @@
 
 #include "rtlmemmgr.h"
 
-using namespace SST;
-using namespace SST::RNG;
-
 namespace SST {
 
 namespace RtlComponent {

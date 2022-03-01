@@ -1400,7 +1400,6 @@ void ArielCore::handleRtlAckEvent(SST::Event* e) {
         output->verbose(CALL_INFO, 1, 0, "\nAriel received Event from RTL. Generating Read Request\n");
         handleReadRequest(are);
     }
-    //delete ev;
 
     return;    
 }

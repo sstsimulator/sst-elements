@@ -72,7 +72,7 @@ void start_RTL_sim(RTL_shmem_info* shmem) {
     return;
 }
 
-void update_RTL_signals(RTL_shmem_info* shmem) {     
+void update_RTL_sig(RTL_shmem_info* shmem) {     
     printf("\nStatic defination of update_RTL_signals in being called\n");
     return; 
 }

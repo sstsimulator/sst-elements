@@ -13,7 +13,7 @@
 #define _SIMPLE_VECTORSHIFTREG_H
 
 #include <sst/core/component.h>
-#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/interfaces/stdMem.h>
 #include <sst/core/timeConverter.h>
 #include <queue>
 
@@ -67,7 +67,7 @@ public:
 	SST_ELI_DOCUMENT_PARAMS(
 		{ "ExecFreq", "Clock frequency of RTL design in GHz", "1GHz" },
 		{ "maxCycles", "Number of Clock ticks the simulation must atleast execute before halting", "1000" },
-        {"memoryinterface", "Interface to memory", "memHierarchy.memInterface"}
+        {"memoryinterface", "Interface to memory", "memHierarchy.standardInterface"}
 	)
 
     //Default will be single port for communicating with Ariel CPU. Need to see the requirement/use-case of multi-port design and how to incorporate it in our parser tool.  
@@ -78,7 +78,7 @@ public:
     
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"memmgr", "Memory manager to translate virtual addresses to physical, handle malloc/free, etc.", "SST::RtlComponent::RtlMemoryManager"},
-            {"memory", "Interface to the memoryHierarchy (e.g., caches)", "SST::Interfaces::SimpleMem" }
+            {"memory", "Interface to the memoryHierarchy (e.g., caches)", "SST::Interfaces::StandardMem" }
     )
 
     void generateReadRequest(RtlReadEvent* rEv);
@@ -97,12 +97,11 @@ private:
 
     //SST Links
     SST::Link* ArielRtlLink;
-    Interfaces::SimpleMem* cacheLink;
+    Interfaces::StandardMem* cacheLink;
 
     void handleArielEvent(SST::Event *ev);
-    void handleMemEvent(Interfaces::SimpleMem::Request* event);
+    void handleMemEvent(Interfaces::StandardMem::Request* event);
     void handleAXISignals(uint8_t);
-    //void handleAXIEvent(uint64_t*);
     void commitReadEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
     void commitWriteEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length, const uint8_t* payload);
     void sendArielEvent();
@@ -134,7 +133,7 @@ private:
     uint64_t fifo_enq_$old = 0, fifo_enq_$next = 0;
     uint64_t fifo_deq_$old = 0, fifo_deq_$next = 0;
 
-    std::unordered_map<Interfaces::SimpleMem::Request::id_t, Interfaces::SimpleMem::Request*>* pendingTransactions;
+    std::unordered_map<Interfaces::StandardMem::Request::id_t, Interfaces::StandardMem::Request*>* pendingTransactions;
     std::unordered_map<uint64_t, uint64_t> VA_VA_map;
     uint32_t pending_transaction_count;
 

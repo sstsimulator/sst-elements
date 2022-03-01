@@ -60,15 +60,15 @@ Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
 
     // Find all the components loaded into the "memory" slot
     // Make sure all cores have a loaded subcomponent in their slot
-    cacheLink = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, timeConverter, new SimpleMem::Handler<Rtlmodel>(this, &Rtlmodel::handleMemEvent));
+    cacheLink = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, timeConverter, new StandardMem::Handler<Rtlmodel>(this, &Rtlmodel::handleMemEvent));
     if(!cacheLink) {
-       std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.memInterface");
+       std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.standardInterface");
        output.verbose(CALL_INFO, 1, 0, "Memory interface to be loaded is: %s\n", interfaceName.c_str());
        
        Params interfaceParams = params.find_prefix_params("memoryinterfaceparams.");
        interfaceParams.insert("port", "RtlCacheLink");
-       cacheLink = loadAnonymousSubComponent<Interfaces::SimpleMem>(interfaceName, "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
-               interfaceParams, timeConverter, new SimpleMem::Handler<Rtlmodel>(this, &Rtlmodel::handleMemEvent));
+       cacheLink = loadAnonymousSubComponent<Interfaces::StandardMem>(interfaceName, "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
+               interfaceParams, timeConverter, new StandardMem::Handler<Rtlmodel>(this, &Rtlmodel::handleMemEvent));
        
        if (!cacheLink)
            output.fatal(CALL_INFO, -1, "%s, Error loading memory interface\n", getName().c_str());
@@ -85,14 +85,14 @@ Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
         }
 
         output.verbose(CALL_INFO, 1, 0, "Loading memory manager: %s\n", memorymanager.c_str());
-        Params mmParams = params.find_prefix_params("memmgr.");
+        Params mmParams = params.find_prefix_params("memmgr");
         memmgr = loadAnonymousSubComponent<RtlMemoryManager>(memorymanager, "memmgr", 0, ComponentInfo::SHARE_NONE | ComponentInfo::INSERT_STATS, mmParams);
         if (NULL == memmgr) output.fatal(CALL_INFO, -1, "Failed to load memory manager: %s\n", memorymanager.c_str());
     }
 
     output.verbose(CALL_INFO, 1, 0, "RTL Memory manager construction is completed.\n");
 
-   pendingTransactions = new std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>();
+   pendingTransactions = new std::unordered_map<StandardMem::Request::id_t, StandardMem::Request*>();
    pending_transaction_count = 0;
    unregisterClock(timeConverter, clock_handler);
    isStalled = true;
@@ -342,35 +342,30 @@ void Rtlmodel::handleAXISignals(uint8_t tready) {
     //axiport->cmd_queue.push('r');
 }
 
-void Rtlmodel::handleMemEvent(SimpleMem::Request* event) {
+void Rtlmodel::handleMemEvent(StandardMem::Request* event) {
+    StandardMem::ReadResp* read = (StandardMem::ReadResp*)event;
     output.verbose(CALL_INFO, 4, 0, " handling a memory event in RtlModel.\n");
-    SimpleMem::Request::id_t mev_id = event->id;
+    StandardMem::Request::id_t mev_id = read->getID();
     auto find_entry = pendingTransactions->find(mev_id);
     if(find_entry != pendingTransactions->end()) {
         output.verbose(CALL_INFO, 4, 0, "Correctly identified event in pending transactions, removing from list, before there are: %" PRIu32 " transactions pending.\n", (uint32_t) pendingTransactions->size());
        
         int i;
-        auto DataAddress = VA_VA_map.find(event->virtualAddr);
+        auto DataAddress = VA_VA_map.find(read->vAddr);
         if(DataAddress != VA_VA_map.end())
             setDataAddress((uint8_t*)DataAddress->second);
         else
-            output.fatal(CALL_INFO, -1, "Error: DataAddress corresponding to VA: %" PRIu64, event->virtualAddr);
+            output.fatal(CALL_INFO, -1, "Error: DataAddress corresponding to VA: %" PRIu64, read->vAddr);
 
         //Actual reading of data from memEvent and storing it to getDataAddress
         output.verbose(CALL_INFO, 1, 0, "\nAddress is: %" PRIu64, (uint64_t)getDataAddress());
-        for(i = 0; i < event->data.size(); i++)
-            getDataAddress()[i] = event->data[i]; 
+        for(i = 0; i < read->data.size(); i++)
+            getDataAddress()[i] = read->data[i]; 
 
-        if(event->getVirtualAddress() == (uint64_t)updated_rtl_params) {
+        if(read->vAddr == (uint64_t)updated_rtl_params) {
             bool* ptr = (bool*)getBaseDataAddress();
             output.verbose(CALL_INFO, 1, 0, "Updated Rtl Params is: %d\n",*ptr);
         }
-        
-        /*if(pending_transaction_count != 0 && event->id = axi_id) {
-            for(i = 0; i < event->data.size(); i++)
-                getDataAddress()[i] = event->data[i]; 
-            handleAXIEvent(getAXIDataAddress());
-        }*/
 
         pendingTransactions->erase(find_entry);
         pending_transaction_count--;
@@ -393,14 +388,13 @@ void Rtlmodel::handleMemEvent(SimpleMem::Request* event) {
 void Rtlmodel::commitReadEvent(const uint64_t address,
             const uint64_t virtAddress, const uint32_t length) {
     if(length > 0) {
-        SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Read, address, length);
-        req->setVirtualAddress(virtAddress);
+        StandardMem::Read *req = new StandardMem::Read(address, length, 0, virtAddress);
         
         pending_transaction_count++;
-        pendingTransactions->insert(std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req));
+        pendingTransactions->insert(std::pair<StandardMem::Request::id_t, StandardMem::Request*>(req->getID(), req));
 
         // Actually send the event to the cache
-        cacheLink->sendRequest(req);
+        cacheLink->send(req);
     }
 }
 
@@ -408,10 +402,11 @@ void Rtlmodel::commitWriteEvent(const uint64_t address,
         const uint64_t virtAddress, const uint32_t length, const uint8_t* payload) {
 
     if(length > 0) {
-        SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Write, address, length);
-        req->setVirtualAddress(virtAddress);
+
+        std::vector<uint8_t> data;
 
         if( writePayloads ) {
+                data.insert(data.end(), &payload[0], &payload[length]);
                 char* buffer = new char[64];
                 std::string payloadString = "";
                 for(int i = 0; i < length; ++i) {
@@ -423,14 +418,16 @@ void Rtlmodel::commitWriteEvent(const uint64_t address,
 
                 output.verbose(CALL_INFO, 16, 0, "Write-Payload: Len=%" PRIu32 ", Data={ %s } %p\n",
                         length, payloadString.c_str(), (void*)virtAddress);
-            req->setPayload( (uint8_t*) payload, length );
+        } else {
+            data.resize(length, 0);
         }
         
+        StandardMem::Write *req = new StandardMem::Write(address, length, data, false, 0, virtAddress);
         pending_transaction_count++;
-        pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
+        pendingTransactions->insert( std::pair<StandardMem::Request::id_t, StandardMem::Request*>(req->getID(), req) );
 
         // Actually send the event to the cache
-        cacheLink->sendRequest(req);
+        cacheLink->send(req);
     }
 }
 

@@ -31,7 +31,7 @@ public:
          update_eval_args, sim_done;
     uint64_t sim_cycles;
     RTLEvent() : SST::Event() { }
-    dataVec payload;
+    //dataVec payload;
 
     void input_sigs(Rtlheader*);
     void control_sigs(Rtlheader*);
@@ -40,7 +40,13 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         SST::Event::serialize_order(ser);
-        ser & payload;
+        ser & update_inp;
+        ser & update_ctrl;
+        ser & update_registers;
+        ser & verbose;
+        ser & done_reset;
+        ser & update_eval_args;
+        ser & sim_done;
     }
 
     /*std::string serialization_name() const {

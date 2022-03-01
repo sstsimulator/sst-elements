@@ -9,8 +9,6 @@
 #include <uint.h>
 #include <sint.h>
 //#define UNLIKELY(condition) __builtin_expect(static_cast<bool>(condition), 0)
-using namespace std;
-
 typedef struct Rtlheader {
   UInt<4> delays_0;
   UInt<4> delays_1;
@@ -53,7 +51,7 @@ typedef struct Rtlheader {
     if (update_registers) delays_1 = io_load ? io_ins_1 : _GEN_1;
     if (update_registers) delays_2 = io_load ? io_ins_2 : _GEN_2;
     if (update_registers) delays_3 = io_load ? io_ins_3 : _GEN_3;
-    if(verbose) cout<<" "<<delays_3<<" "<<delays_2<<" "<<delays_1<<" "<<delays_0<<'\n';
+    if(verbose) std::cout<<" "<<delays_3<<" "<<delays_2<<" "<<delays_1<<" "<<delays_0<<'\n';
   }
 } Rtlheader;
 

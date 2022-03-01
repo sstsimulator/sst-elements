@@ -24,7 +24,6 @@
 extern "C" {
 #endif
 
-using namespace std;
 typedef int mlm_Tag;
 
 
@@ -158,7 +157,7 @@ class Update_RTL_Params {
 void start_RTL_sim(RTL_shmem_info* shmem);
 
 //Empty function as PIN tool's dynamic instrumentation will replace it with Ariel Equivalent API in PIN frontend - fesimple.cc (sst-elements/src/sst/elements/ariel/frontend/pin3/)
-void update_RTL_signals(RTL_shmem_info* shmem); 
+void update_RTL_sig(RTL_shmem_info* shmem); 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

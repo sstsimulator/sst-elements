@@ -25,8 +25,6 @@
 #include <unordered_map>
 #include <deque>
 
-using namespace SST;
-
 namespace SST {
 
 namespace RtlComponent {
