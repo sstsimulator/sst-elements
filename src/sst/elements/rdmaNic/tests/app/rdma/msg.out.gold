@@ -1,0 +1,33 @@
+Verbosity: 0 -> loading Vanadis CPU type: vanadisdbg.VanadisCPU
+call topo.setEndPointFunc()
+call topo.build()
+nodeId 0 cpuID=0
+No application arguments found, continuing with argc=0
+nodeId 0
+node0
+nodeId 1 cpuID=0
+No application arguments found, continuing with argc=0
+nodeId 1
+node1
+WARNING: Element vanadisdbg.VanadisCPU has slot with an invalid name: decoder%(hardware_threads)d
+node0.l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 3 cycles.
+RdmaNic() sizeof(NicCmd) 64
+node1.l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 3 cycles.
+RdmaNic() sizeof(NicCmd) 64
+[os-memgmr] requested allocation size: 4096
+[os-memgmr] -> page-size:            4096
+[os-memgmr] -> requested page count: 1
+[os-memgmr] -> free-pages:           393215
+[os-memgmr] -> used-pages:           0
+[os-memgmr] alloc matched: size: 4096 / page-count: 1 / alloc-start: 536870912
+[os-memgmr] requested allocation size: 4096
+[os-memgmr] -> page-size:            4096
+[os-memgmr] -> requested page count: 1
+[os-memgmr] -> free-pages:           393215
+[os-memgmr] -> used-pages:           0
+[os-memgmr] alloc matched: size: 4096 / page-count: 1 / alloc-start: 536870912
+[os-memgmr] requested deallocation from address 0x20000000 for 4096 bytes.
+[os-memgmr] aligned allocation-address (0x20000000) to page boundary at 0x20000000
+[os-memgmr] requested deallocation from address 0x20000000 for 4096 bytes.
+[os-memgmr] aligned allocation-address (0x20000000) to page boundary at 0x20000000
+Simulation is complete, simulated time: 40.2788 us

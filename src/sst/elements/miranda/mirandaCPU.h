@@ -85,7 +85,7 @@ public:
      		{ "verbose",               "Sets the verbosity of output produced by the CPU",     "0" },
      		{ "generator",        "The generator to be loaded for address creation", "miranda.SingleStreamGenerator" },
      		{ "clock",            "Clock for the base CPU", "2GHz" },
-     		{ "memoryinterface",  "Sets the memory interface module to use", "memHierarchy.memInterface" },
+     		{ "memoryinterface",  "Sets the memory interface module to use", "memHierarchy.standardInterface" },
      		{ "pagecount", "Sets the number of pages the system can allocate", "4194304" },
      		{ "pagesize", "Sets the size of the page in the system, MUST be a multiple of cache_line_size", "4096" },
      		{ "pagemap", "Mapping scheme, string set to LINEAR or RANDOMIZED, default is LINEAR (virtual==physical), RANDOMIZED randomly shuffles virtual to physical map.", "LINEAR" },

@@ -22,7 +22,7 @@
 #include <sst/core/componentExtension.h>
 #include <sst/core/link.h>
 #include <sst/core/output.h>
-#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/interfaces/stdMem.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/timeConverter.h>
@@ -135,7 +135,7 @@ class ArielCore : public ComponentExtension {
           }
       }
 
-        void setCacheLink(SimpleMem* newCacheLink);
+        void setCacheLink(StandardMem* newCacheLink);
 
 #ifdef HAVE_CUDA
         void createGpuEvent(GpuApi_t API, CudaArguments CA);
@@ -143,7 +143,7 @@ class ArielCore : public ComponentExtension {
         void setGpuLink(Link* gpulink);
 #endif
 
-        void handleEvent(SimpleMem::Request* event);
+        void handleEvent(StandardMem::Request* event);
         void handleReadRequest(ArielReadEvent* wEv);
         void handleWriteRequest(ArielWriteEvent* wEv);
         void handleAllocationEvent(ArielAllocateEvent* aEv);
@@ -158,6 +158,20 @@ class ArielCore : public ComponentExtension {
         void handleGpuAckEvent(SST::Event* e);
         void handleGpuMemcpy(ArielGpuEvent* gEv);
 #endif
+        
+        /* Handler class for StandardMem responses */
+        class StdMemHandler : public StandardMem::RequestHandler {
+        public:
+            friend class ArielCore;
+            StdMemHandler(ArielCore* coreInst, SST::Output* out) : StandardMem::RequestHandler(out), core(coreInst) {}
+            virtual ~StdMemHandler() {}
+            virtual void handle(StandardMem::ReadResp* rsp) override;
+            virtual void handle(StandardMem::WriteResp* rsp) override;
+
+            ArielCore* core;
+            uint64_t last_phys_addr; // Needed to pass some info back to ariel core during GPU even handling
+        };
+
 
         // interrupt handlers
         bool handleInterrupt(ArielMemoryManager::InterruptAction action);
@@ -204,17 +218,18 @@ class ArielCore : public ComponentExtension {
         bool isHalted;
         bool isFenced;
 
-        SimpleMem* cacheLink;
+        StandardMem* cacheLink;
         ArielTunnel *tunnel;
+        StdMemHandler* stdMemHandlers;
 
 #ifdef HAVE_CUDA
         Link* GpuLink;
         GpuReturnTunnel *tunnelR;
         GpuDataTunnel *tunnelD;
-        std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>* pendingGpuTransactions;
+        std::unordered_map<StandardMem::Request::id_t, StandardMem::Request*>* pendingGpuTransactions;
 #endif
 
-        std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>* pendingTransactions;
+        std::unordered_map<StandardMem::Request::id_t, StandardMem::Request*>* pendingTransactions;
         uint32_t maxIssuePerCycle;
         uint32_t maxQLength;
         uint64_t cacheLineSize;

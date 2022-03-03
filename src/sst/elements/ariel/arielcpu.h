@@ -17,7 +17,7 @@
 #define _H_ARIEL_CPU
 
 #include <sst/core/sst_config.h>
-#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/interfaces/stdMem.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
@@ -105,7 +105,7 @@ class ArielCPU : public SST::Component {
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"memmgr", "Memory manager to translate virtual addresses to physical, handle malloc/free, etc.", "SST::ArielComponent::ArielMemoryManager"},
-            {"memory", "Interface to the memoryHierarchy (e.g., caches)", "SST::Interfaces::SimpleMem" }
+            {"memory", "Interface to the memoryHierarchy (e.g., caches)", "SST::Interfaces::StandardMem" }
     )
 
         /* Ariel class */
@@ -122,7 +122,7 @@ class ArielCPU : public SST::Component {
         ArielMemoryManager* memmgr;
 
         std::vector<ArielCore*> cpu_cores;
-        std::vector<Interfaces::SimpleMem*> cpu_to_cache_links;
+        std::vector<Interfaces::StandardMem*> cpu_to_cache_links;
         std::vector<SST::Link*> cpu_to_gpu_links;
 
         uint32_t core_count;
