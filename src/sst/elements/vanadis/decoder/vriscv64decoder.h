@@ -1455,10 +1455,16 @@ protected:
                 }; break;
                 };
             } break;
-            case 0xF:
-            {
-                // Fences (FENCE.I Zifencei)
-            }
+				case 0xF:
+			   {
+					// Fence operations
+					// For now, we conduct a heavy fence
+				   // could optimize this to be more efficient
+					output->verbose(CALL_INFO, 16, 0, "----> FENCE\n");
+					bundle->addInstruction(
+	                             	new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
+               decode_fault = false;
+				} break;
             case 0x2F:
             {
                 // Atomic operations (A extension)
