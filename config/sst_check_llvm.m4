@@ -40,6 +40,7 @@ AC_DEFUN([SST_CHECK_LLVM_CONFIG],
 
    AC_MSG_NOTICE([Value of sst_check_llvm_happy = $sst_check_llvm_happy])
 
+   AS_IF([test "x$sst_check_llvm_happy" = "xno" -a ! -z "$with_llvm" -a "$with_llvm" != "no"], [$3])
    AS_IF([test "x$sst_check_llvm_happy" = "xyes"], [$1], [$2])
 ])
 
