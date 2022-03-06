@@ -129,6 +129,7 @@ os/callev/voscallfstat.h \
 os/callev/voscallgettime64.h \
 os/callev/voscallioctl.h \
 os/callev/voscallmmap.h \
+os/callev/voscallmmapx.h \
 os/callev/voscallopenat.h \
 os/callev/voscallopen.h \
 os/callev/voscallread.h \
@@ -165,6 +166,9 @@ EXTRA_DIST = \
 	tests/small/basic-io/hello-world.cc \
 	tests/small/basic-io/hello-world-CC.stderr.gold \
 	tests/small/basic-io/hello-world-CC.stdout.gold \
+   tests/small/basic-io/printf-check.c \
+	tests/small/basic-io/printf-check.stdout.gold \
+   tests/small/basic-io/printf-check.stderr.gold \
 	tests/small/basic-math/Makefile \
 	tests/small/basic-math/sqrt-double.c \
 	tests/small/basic-math/sqrt-double.stderr.gold \

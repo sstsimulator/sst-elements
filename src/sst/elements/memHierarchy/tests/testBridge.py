@@ -52,7 +52,7 @@ def buildCPU(num, network):
         "memSize": mem_size - 1,
         "num_loadstore": niter,
         })
-    iface = cpu.setSubComponent("memory", "memHierarchy.memInterface")
+    iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 
     l1 = sst.Component("l1_%d"%num, "memHierarchy.Cache")
     l1.addParams({

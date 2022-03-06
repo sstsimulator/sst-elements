@@ -1,0 +1,5 @@
+main() myNode=1 numNodes=2
+buffer=0x20000040
+main() validate
+main() validate complete
+main() returning

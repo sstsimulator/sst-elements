@@ -752,7 +752,7 @@ protected:
                     output->verbose(
                         CALL_INFO, 16, 0, "------> ADDI %" PRIu16 " <- %" PRIu16 " + %" PRId64 "\n", rd, rs1, simm64);
 
-                    bundle->addInstruction(new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                    bundle->addInstruction(new VanadisAddImmInstruction<int64_t>(
                         ins_address, hw_thr, options, rd, rs1, simm64));
                     decode_fault = false;
                 } break;
@@ -1071,7 +1071,7 @@ protected:
                 // AUIPC
                 processU<int64_t>(ins, op_code, rd, simm64);
 
-                bundle->addInstruction(new VanadisPCAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                bundle->addInstruction(new VanadisPCAddImmInstruction<int64_t>(
                     ins_address, hw_thr, options, rd, simm64));
                 decode_fault = false;
             } break;
@@ -1095,8 +1095,8 @@ protected:
                         CALL_INFO, 16, 0, "-------> ADDIW %" PRIu16 " <- %" PRIu16 " + %" PRId64 "\n", rd, rs1,
                         addiw_imm);
 
-                    bundle->addInstruction(new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                        ins_address, hw_thr, options, rd, rs1, addiw_imm));
+                    bundle->addInstruction(new VanadisAddImmInstruction<int32_t>(
+                        ins_address, hw_thr, options, rd, rs1, static_cast<int32_t>(addiw_imm)));
                     decode_fault = false;
                 } break;
                 case 0x1:
@@ -1262,6 +1262,7 @@ protected:
                     case 0x0:
                     {
                         output->verbose(CALL_INFO, 16, 0, "------> ECALL/SYSCALL\n");
+								bundle->addInstruction(new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
                         bundle->addInstruction(new VanadisSysCallInstruction(ins_address, hw_thr, options));
                         decode_fault = false;
                     } break;
@@ -1454,10 +1455,16 @@ protected:
                 }; break;
                 };
             } break;
-            case 0xF:
-            {
-                // Fences (FENCE.I Zifencei)
-            }
+				case 0xF:
+			   {
+					// Fence operations
+					// For now, we conduct a heavy fence
+				   // could optimize this to be more efficient
+					output->verbose(CALL_INFO, 16, 0, "----> FENCE\n");
+					bundle->addInstruction(
+	                             	new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
+               decode_fault = false;
+				} break;
             case 0x2F:
             {
                 // Atomic operations (A extension)
@@ -1506,6 +1513,27 @@ protected:
             case 0x27:
             {
                 // Floating point store
+					 processS<int64_t>(ins, op_code, rs1, rs2, func_code3, simm64);
+
+					 output->verbose(CALL_INFO, 16, 0, "---> STORE-FP func_code3=%" PRIu32 " imm=%" PRId64 " / rs1: %" PRIu16 " / rs2: %" PRIu16 "\n",
+						func_code3, simm64, rs1, rs2);
+
+					switch(func_code3) {
+					case 0x2:
+						{
+							output->verbose(CALL_INFO, 16, 0, "-------> FSW imm=%" PRId64 " / rs1: %" PRIu16 " / rs2: %" PRIu16 "\n", simm64, rs1, rs2);
+							bundle->addInstruction(new VanadisStoreInstruction(
+                        ins_address, hw_thr, options, rs1, simm64, rs2, 4, MEM_TRANSACTION_NONE, STORE_FP_REGISTER));
+                    	decode_fault = false;
+						} break;
+					case 0x3:
+						{
+							output->verbose(CALL_INFO, 16, 0, "-------> FSD imm=%" PRId64 " / rs1: %" PRIu16 " / rs2: %" PRIu16 "\n", simm64, rs1, rs2);
+							bundle->addInstruction(new VanadisStoreInstruction(
+                        ins_address, hw_thr, options, rs1, simm64, rs2, 8, MEM_TRANSACTION_NONE, STORE_FP_REGISTER));
+                    	decode_fault = false;
+						} break;
+					}
             } break;
             case 0x53:
             {
@@ -1882,7 +1910,7 @@ protected:
                             rvc_rd, imm);
 
                         bundle->addInstruction(
-                            new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                            new VanadisAddImmInstruction<int64_t>(
                                 ins_address, hw_thr, options, rvc_rd, 2, imm));
                         decode_fault = false;
                     }
@@ -2005,7 +2033,7 @@ protected:
                         // This is a no-op?
                         output->verbose(CALL_INFO, 16, 0, "-----> creates a no-op.\n");
                         bundle->addInstruction(
-                            new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                            new VanadisAddImmInstruction<int64_t>(
                                 ins_address, hw_thr, options, 0, 0, 0));
                         decode_fault = false;
                     }
@@ -2026,7 +2054,7 @@ protected:
                             rvc_rs1, imm);
 
                         bundle->addInstruction(
-                            new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                            new VanadisAddImmInstruction<int64_t>(
                                 ins_address, hw_thr, options, rvc_rs1, rvc_rs1, imm));
                         decode_fault = false;
                     }
@@ -2045,8 +2073,8 @@ protected:
                     output->verbose(CALL_INFO, 16, 0, "-----> RVC ADDIW  reg: %" PRIu16 ", imm=%" PRId64 "\n", rd, imm);
 
                     // This really is a W-clipping instruction, so make INT32
-                    bundle->addInstruction(new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                        ins_address, hw_thr, options, rd, rd, imm));
+                    bundle->addInstruction(new VanadisAddImmInstruction<int32_t>(
+                        ins_address, hw_thr, options, rd, rd, static_cast<int32_t>(imm)));
                     decode_fault = false;
                 } break;
                 case 0x4000:
@@ -2111,7 +2139,7 @@ protected:
                         output->verbose(CALL_INFO, 16, 0, "-----> RVC ADDI16SP r2 <- %" PRId64 "\n", imm);
 
                         bundle->addInstruction(
-                            new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                            new VanadisAddImmInstruction<int64_t>(
                                 ins_address, hw_thr, options, 2, 2, imm));
                         decode_fault = false;
                     }

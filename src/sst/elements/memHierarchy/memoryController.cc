@@ -24,7 +24,7 @@
 #include "membackend/memBackend.h"
 #include "memEventBase.h"
 #include "memEvent.h"
-#include "bus.h"
+#include "memEventCustom.h"
 #include "cacheListener.h"
 #include "memNIC.h"
 #include "memLink.h"
@@ -397,6 +397,11 @@ void MemController::handleEvent(SST::Event* event) {
         case Command::GetSX:
         case Command::Write:
             outstandingEvents_.insert(std::make_pair(ev->getID(), ev));
+            if (is_debug_event(ev)) {
+                Debug(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
+                        Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                        ev->getVerboseString().c_str());
+            }
             memBackendConvertor_->handleMemEvent( ev );
             break;
 
@@ -408,11 +413,21 @@ void MemController::handleEvent(SST::Event* event) {
                     put = new MemEvent(getName(), ev->getBaseAddr(), ev->getBaseAddr(), Command::PutM, ev->getPayload());
                     put->setFlag(MemEvent::F_NORESPONSE);
                     outstandingEvents_.insert(std::make_pair(put->getID(), put));
+                    if (is_debug_event(put)) {
+                        Debug(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
+                                Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                                put->getVerboseString().c_str());
+                    }
                     memBackendConvertor_->handleMemEvent( put );
                 }
 
                 outstandingEvents_.insert(std::make_pair(ev->getID(), ev));
                 ev->setCmd(Command::FlushLine);
+                if (is_debug_event(ev)) {
+                    Debug(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
+                            Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                            ev->getVerboseString().c_str());
+                }
                 memBackendConvertor_->handleMemEvent( ev );
 
             }
@@ -461,9 +476,14 @@ void MemController::handleCustomEvent(MemEventBase * ev) {
         out.verbose(CALL_INFO, 1, 0, "%s, WARNING: Custom event expects a shootdown but this memory controller does not support shootdowns. Ev = %s\n", getName().c_str(), ev->getVerboseString(dlevel).c_str());
     }
 
-    CustomCmdInfo * info = customCommandHandler_->ready(ev);
+    Interfaces::StandardMem::CustomData* info = customCommandHandler_->ready(ev);
     outstandingEvents_.insert(std::make_pair(ev->getID(), ev));
-    memBackendConvertor_->handleCustomEvent(info);
+    if (is_debug_event(ev)) {
+        Debug(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
+                Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                ev->getVerboseString().c_str());
+    }
+    memBackendConvertor_->handleCustomEvent(info, ev->getID(), ev->getRqstr());
 }
 
 
@@ -477,8 +497,8 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
     outstandingEvents_.erase(it);
 
     if (is_debug_event(evb)) {
-        Debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Resp    (%s)\n",
-                    Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), evb->getVerboseString(dlevel).c_str());
+        Debug(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Recv    (<%" PRIu64 ",%" PRIu32 ">)\n",
+                    Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), id.first, id.second);
     }
 
     /* Handle custom events */
@@ -517,6 +537,11 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
     if (ev->isAddrGlobal()) {
         resp->setBaseAddr(translateToGlobal(ev->getBaseAddr()));
         resp->setAddr(translateToGlobal(ev->getAddr()));
+    }
+    
+    if (is_debug_event(resp)) {
+        Debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Resp    (%s)\n",
+                Simulation::getSimulation()->getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), resp->getVerboseString(dlevel).c_str());
     }
 
     link_->send( resp );
@@ -563,7 +588,7 @@ void MemController::writeData(MemEvent* event) {
     if (event->getCmd() == Command::PutM) { /* Write request to memory */
         Addr addr = event->queryFlag(MemEvent::F_NONCACHEABLE) ? event->getAddr() : event->getBaseAddr();
         if (is_debug_event(event)) { 
-            Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
+            Debug(_L8_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
             printDataValue(addr, &(event->getPayload()), true);
         }
 
@@ -581,7 +606,7 @@ void MemController::writeData(MemEvent* event) {
     if (event->getCmd() == Command::Write) {
         Addr addr = event->getAddr();
         if (is_debug_event(event)) { 
-            Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
+            Debug(_L8_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
             printDataValue(addr, &(event->getPayload()), true);
         }
         

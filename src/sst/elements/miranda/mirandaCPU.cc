@@ -54,19 +54,22 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 
 	out->verbose(CALL_INFO, 1, 0, "CPU clock configured for %s\n", cpuClock.c_str());
 
-        cache_link = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, timeConverter, new SimpleMem::Handler<RequestGenCPU>(this, &RequestGenCPU::handleEvent) );
+        cache_link = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, 
+                timeConverter, new Interfaces::StandardMem::Handler<RequestGenCPU>(this, &RequestGenCPU::handleEvent) );
         if (!cache_link) {
-	    std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.memInterface");
+	    std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.standardInterface");
 	    out->verbose(CALL_INFO, 1, 0, "Memory interface to be loaded is: %s\n", interfaceName.c_str());
 
 	    Params interfaceParams = params.get_scoped_params("memoryinterfaceparams");
             interfaceParams.insert("port", "cache_link");
-	    cache_link = loadAnonymousSubComponent<Interfaces::SimpleMem>(interfaceName, "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
-                    interfaceParams, timeConverter, new SimpleMem::Handler<RequestGenCPU>(this, &RequestGenCPU::handleEvent));
+	    cache_link = loadAnonymousSubComponent<Interfaces::StandardMem>(interfaceName, "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
+                    interfaceParams, timeConverter, new Interfaces::StandardMem::Handler<RequestGenCPU>(this, &RequestGenCPU::handleEvent));
 
             if (!cache_link)
                 out->fatal(CALL_INFO, -1, "%s, Error loading memory interface\n", getName().c_str());
         }
+
+        stdMemHandlers = new StdMemHandler(this, out);
 
 	maxOpLookup = params.find<uint64_t>("max_reorder_lookups", 16);
 
@@ -210,11 +213,11 @@ void RequestGenCPU::loadGenerator( const std::string& name, SST::Params& params)
 }
 
 
-void RequestGenCPU::handleEvent( Interfaces::SimpleMem::Request* ev) {
+void RequestGenCPU::handleEvent( Interfaces::StandardMem::Request* ev) {
 	out->verbose(CALL_INFO, 2, 0, "Recv event for processing from interface\n");
 
-	SimpleMem::Request::id_t reqID = ev->id;
-	std::map<SimpleMem::Request::id_t, CPURequest*>::iterator reqFind = requestsInFlight.find(reqID);
+        Interfaces::StandardMem::Request::id_t reqID = ev->getID();
+	std::map<Interfaces::StandardMem::Request::id_t, CPURequest*>::iterator reqFind = requestsInFlight.find(reqID);
 
 	if(reqFind == requestsInFlight.end()) {
 		out->fatal(CALL_INFO, -1, "Unable to find request %" PRIu64 " in request map.\n", reqID);
@@ -231,14 +234,7 @@ void RequestGenCPU::handleEvent( Interfaces::SimpleMem::Request* ev) {
 		cpuReq->decPartCount();
 
 		// Decrement pending requests, we have recv'd a response
-
-		if ( ev->cmd == Interfaces::SimpleMem::Request::Command::ReadResp ) {
-			requestsPending[READ]--;
-		} else if ( ev->cmd == Interfaces::SimpleMem::Request::Command::WriteResp ) {
-			requestsPending[WRITE]--;
-		} else if( ev->cmd == Interfaces::SimpleMem::Request::Command::CustomCmd ){
-                        requestsPending[CUSTOM]--;
-                }
+                ev->handle(stdMemHandlers);
 
 		// If all the parts of this request are now completed then we will mark it for
 		// deletion and update any pending requests which are depending on us
@@ -258,21 +254,54 @@ void RequestGenCPU::handleEvent( Interfaces::SimpleMem::Request* ev) {
 	}
 }
 
+void RequestGenCPU::StdMemHandler::handle(Interfaces::StandardMem::ReadResp* rsp) {
+    cpu->requestsPending[READ]--;
+}
+
+void RequestGenCPU::StdMemHandler::handle(Interfaces::StandardMem::WriteResp* rsp) {
+    cpu->requestsPending[WRITE]--;
+}
+
+void RequestGenCPU::StdMemHandler::handle(Interfaces::StandardMem::CustomResp* rsp) {
+    cpu->requestsPending[CUSTOM]--;
+    // The CustomResp destructor does not delete the data
+    // Do not need to delete the cpuReq data as the memory system should take care of that
+    delete rsp->data;
+}
+
+void RequestGenCPU::issueCustomRequest(CustomOpRequest* req) {
+    const uint64_t reqAddress = req->getPayload()->getRoutingAddress();
+    const uint64_t reqLength  = req->getPayload()->getSize();
+    out->verbose(CALL_INFO, 4, 0, "Issue request: address=0x%" PRIx64 ", size=%" PRIu64 ", operation=%s\n",
+            reqAddress, reqLength, "CUSTOM");
+    
+    if (statBytes[CUSTOM] != nullptr)
+        statBytes[CUSTOM]->addData(reqLength);
+    
+    Interfaces::StandardMem::CustomReq* request = new Interfaces::StandardMem::CustomReq(req->getPayload());
+        
+    CPURequest* newCPUReq = new CPURequest(req->getRequestID());
+    newCPUReq->incPartCount();
+    newCPUReq->setIssueTime(getCurrentSimTimeNano());
+
+    requestsInFlight.insert( std::pair<Interfaces::StandardMem::Request::id_t, CPURequest*>(request->getID(), newCPUReq) );
+    cache_link->send(request);
+        
+    requestsPending[CUSTOM]++;
+
+    if (statReqs[CUSTOM] != nullptr)
+        statReqs[CUSTOM]->addData(1);
+}
+
 void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
     const uint64_t reqAddress = req->getAddress();
     const uint64_t reqLength  = req->getLength();
     bool isRead               = req->isRead();
-    bool isCustom             = req->isCustom();
     ReqOperation operation    = req->getOperation();
     const uint64_t lineOffset = reqAddress % cacheLine;
 
-    if( !isCustom ){
-        out->verbose(CALL_INFO, 4, 0, "Issue request: address=0x%" PRIx64 ", length=%" PRIu64 ", operation=%s, cache line offset=%" PRIu64 "\n",
-                reqAddress, reqLength, (isRead ? "READ" : "WRITE"), lineOffset);
-    }else{
-        out->verbose(CALL_INFO, 4, 0, "Issue request: address=0x%" PRIx64 ", length=%" PRIu64 ", operation=%s, cache line offset=%" PRIu64 "\n",
-                reqAddress, reqLength, "CUSTOM", lineOffset);
-    }
+    out->verbose(CALL_INFO, 4, 0, "Issue request: address=0x%" PRIx64 ", length=%" PRIu64 ", operation=%s, cache line offset=%" PRIu64 "\n",
+            reqAddress, reqLength, (isRead ? "READ" : "WRITE"), lineOffset);
 
     if (statBytes[operation] != nullptr)
         statBytes[operation]->addData(reqLength);
@@ -294,28 +323,19 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
 	out->verbose(CALL_INFO, 4, 0, "U -> Address: %" PRIu64 ", Length=%" PRIu64 "\n",
                 upperAddress, upperLength);
 
-        SimpleMem::Request *reqLower;
-        SimpleMem::Request *reqUpper;
+        Interfaces::StandardMem::Request *reqLower;
+        Interfaces::StandardMem::Request *reqUpper;
 
-        if( isCustom ){
-            CustomOpRequest * creq = static_cast<CustomOpRequest*>(req);
-            // build a custom request event
-            reqLower = new SimpleMem::Request(
-                    SimpleMem::Request::CustomCmd,
-                    lowerAddress, lowerLength, creq->getOpcode(),0,0);
-
-	    reqUpper = new SimpleMem::Request(
-                    SimpleMem::Request::CustomCmd,
-                    upperAddress, upperLength, creq->getOpcode(),0,0);
-        }else{
+        if (isRead) {
             // build a normal event
-            reqLower = new SimpleMem::Request(
-                    isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
-                    lowerAddress, lowerLength);
-
-	    reqUpper = new SimpleMem::Request(
-                    isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
-                    upperAddress, upperLength);
+            reqLower = new Interfaces::StandardMem::Read(lowerAddress, lowerLength);
+            reqUpper = new Interfaces::StandardMem::Read(upperAddress, upperLength);
+        }else {
+            // build a normal event
+            std::vector<uint8_t> data(lowerLength, 0); 
+            reqLower = new Interfaces::StandardMem::Write(lowerAddress, lowerLength, data);
+            data.resize(upperLength, 0);
+            reqUpper = new Interfaces::StandardMem::Write(upperAddress, upperLength, data);
         }
 
         CPURequest* newCPUReq = new CPURequest(req->getRequestID());
@@ -323,12 +343,12 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
         newCPUReq->incPartCount();
     	newCPUReq->setIssueTime(getCurrentSimTimeNano());
 
-    	requestsInFlight.insert( std::pair<SimpleMem::Request::id_t, CPURequest*>(reqLower->id, newCPUReq) );
-        requestsInFlight.insert( std::pair<SimpleMem::Request::id_t, CPURequest*>(reqUpper->id, newCPUReq) );
+    	requestsInFlight.insert( std::pair<Interfaces::StandardMem::Request::id_t, CPURequest*>(reqLower->getID(), newCPUReq) );
+        requestsInFlight.insert( std::pair<Interfaces::StandardMem::Request::id_t, CPURequest*>(reqUpper->getID(), newCPUReq) );
 
     	out->verbose(CALL_INFO, 4, 0, "Issuing requesting into cache link...\n");
-        cache_link->sendRequest(reqLower);
-    	cache_link->sendRequest(reqUpper);
+        cache_link->send(reqLower);
+    	cache_link->send(reqUpper);
         out->verbose(CALL_INFO, 4, 0, "Completed issue.\n");
 
         requestsPending[operation] += 2;
@@ -339,29 +359,22 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
 
     } else {
         // This is not a split load, i.e. issue in a single transaction
-        SimpleMem::Request *request;
-        if( isCustom ){
-            CustomOpRequest* creq = static_cast<CustomOpRequest*>(req);
-            // issue custom request
-            request = new SimpleMem::Request(
-                    SimpleMem::Request::CustomCmd,
-                    memMgr->mapAddress(reqAddress), reqLength,
-                    creq->getOpcode(),0,0);
-        }else{
-            // issue standard request
-	    request = new SimpleMem::Request(
-                    isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
-    		    memMgr->mapAddress(reqAddress), reqLength);
+        Interfaces::StandardMem::Request *request;
+        if (isRead) {
+            uint64_t addr = memMgr->mapAddress(reqAddress);
+            request = new Interfaces::StandardMem::Read(addr, reqLength, 0, addr);
+        } else {
+            uint64_t addr = memMgr->mapAddress(reqAddress);
+            std::vector<uint8_t> data(reqLength, 0);
+            request = new Interfaces::StandardMem::Write(addr, reqLength, data, false, 0, addr);
         }
-
-        request->setVirtualAddress(memMgr->mapAddress(reqAddress));
 
         CPURequest* newCPUReq = new CPURequest(req->getRequestID());
         newCPUReq->incPartCount();
         newCPUReq->setIssueTime(getCurrentSimTimeNano());
 
-        requestsInFlight.insert( std::pair<SimpleMem::Request::id_t, CPURequest*>(request->id, newCPUReq) );
-        cache_link->sendRequest(request);
+        requestsInFlight.insert( std::pair<Interfaces::StandardMem::Request::id_t, CPURequest*>(request->getID(), newCPUReq) );
+        cache_link->send(request);
 
         requestsPending[operation]++;
 
@@ -471,7 +484,24 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 
             // Fence operations do now allow anything else to complete in this cycle
             break;
+        } else if (nxtRq->getOperation() == CUSTOM) {
+            if (requestsPending[CUSTOM] < maxRequestsPending[CUSTOM]) {
+                out->verbose(CALL_INFO, 4, 0, "Will attempt to issue as free slots in the load/store unit.\n");
 
+		if(nxtRq->canIssue()) {
+                    issued = true;
+                    reqsIssuedThisCycle++;
+                    out->verbose(CALL_INFO, 4, 0, "Request %" PRIu64 " encountered, cleared to be issued, %" PRIu32 " issued this cycle.\n",
+                            nxtRq->getRequestID(), reqsIssuedThisCycle);
+
+    		    // Keep record we will delete at index i
+                    delReqs.push_back(i);
+
+                    issueCustomRequest(static_cast<CustomOpRequest*>(nxtRq));
+
+                    delete nxtRq;
+                }
+            }
         } else if ( ( memOpReq = dynamic_cast<MemoryOpRequest*>(nxtRq) ) ) {
 
             if( requestsPending[memOpReq->getOperation()] < maxRequestsPending[memOpReq->getOperation()] ) {
@@ -488,7 +518,6 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
     		    // Keep record we will delete at index i
                     delReqs.push_back(i);
 
-                    //MemoryOpRequest* memOpReq = dynamic_cast<MemoryOpRequest*>(nxtRq);
                     issueRequest(memOpReq);
 
                     delete nxtRq;

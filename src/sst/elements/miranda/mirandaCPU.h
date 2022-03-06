@@ -17,7 +17,7 @@
 #define _H_SST_MEM_H_REQ_GEN_CPU
 
 #include <sst/core/component.h>
-#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/interfaces/stdMem.h>
 #include <sst/core/statapi/stataccumulator.h>
 
 #include "mirandaGenerator.h"
@@ -55,6 +55,19 @@ public:
 	void finish();
 	void init(unsigned int phase);
 
+        /* Handler class for StandardMem responses */
+        class StdMemHandler : public SST::Interfaces::StandardMem::RequestHandler {
+        public:
+            friend class RequestGenCPU;
+            StdMemHandler(RequestGenCPU* cpuInst, SST::Output* out) : SST::Interfaces::StandardMem::RequestHandler(out), cpu(cpuInst) {}
+            virtual ~StdMemHandler() {}
+            virtual void handle(SST::Interfaces::StandardMem::ReadResp* rsp) override;
+            virtual void handle(SST::Interfaces::StandardMem::WriteResp* rsp) override;
+            virtual void handle(SST::Interfaces::StandardMem::CustomResp* rsp) override;
+
+            RequestGenCPU* cpu;
+        };
+
 	SST_ELI_REGISTER_COMPONENT(
         	RequestGenCPU,
         	"miranda",
@@ -72,7 +85,7 @@ public:
      		{ "verbose",               "Sets the verbosity of output produced by the CPU",     "0" },
      		{ "generator",        "The generator to be loaded for address creation", "miranda.SingleStreamGenerator" },
      		{ "clock",            "Clock for the base CPU", "2GHz" },
-     		{ "memoryinterface",  "Sets the memory interface module to use", "memHierarchy.memInterface" },
+     		{ "memoryinterface",  "Sets the memory interface module to use", "memHierarchy.standardInterface" },
      		{ "pagecount", "Sets the number of pages the system can allocate", "4194304" },
      		{ "pagesize", "Sets the size of the page in the system, MUST be a multiple of cache_line_size", "4096" },
      		{ "pagemap", "Mapping scheme, string set to LINEAR or RANDOMIZED, default is LINEAR (virtual==physical), RANDOMIZED randomly shuffles virtual to physical map.", "LINEAR" },
@@ -106,7 +119,7 @@ public:
 
 	SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
 		{ "generator", "What address generator to load", "SST::Miranda::RequestGenerator" },
-                { "memory",     "The memory interface to use (e.g., interface to caches)", "SST::Interfaces::SimpleMem" }
+                { "memory",     "The memory interface to use (e.g., interface to caches)", "SST::Interfaces::StandardMem" }
     	)
 
 private:
@@ -117,9 +130,10 @@ private:
 
 	void loadGenerator( MirandaReqEvent* );
 	void loadGenerator( const std::string& name, SST::Params& params);
-	void handleEvent( SimpleMem::Request* ev );
+	void handleEvent( StandardMem::Request* ev );
 	bool clockTick( SST::Cycle_t );
 	void issueRequest(MemoryOpRequest* req);
+	void issueCustomRequest(CustomOpRequest* req);
 	void handleSrcEvent( SST::Event* );
 
  	Output* out;
@@ -127,10 +141,11 @@ private:
 	TimeConverter* timeConverter;
 	Clock::HandlerBase* clockHandler;
 	RequestGenerator* reqGen;
-	std::map<SimpleMem::Request::id_t, CPURequest*> requestsInFlight;
-	SimpleMem* cache_link;
+	std::map<StandardMem::Request::id_t, CPURequest*> requestsInFlight;
+	StandardMem* cache_link;
 	Link* srcLink;
 	MirandaReqEvent* srcReqEvent;
+        StdMemHandler* stdMemHandlers;
 
 	MirandaRequestQueue<GeneratorRequest*> pendingRequests;
 	MirandaMemoryManager* memMgr;

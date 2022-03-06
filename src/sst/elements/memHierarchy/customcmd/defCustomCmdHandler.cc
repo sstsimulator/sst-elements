@@ -15,32 +15,34 @@
 
 #include <sst_config.h>
 
-#include "customcmd/amoCustomCmdHandler.h"
-#include "customcmd/customOpCodeCmd.h"
-#include "customcmd/customCmdEvent.h"
+#include "customcmd/defCustomCmdHandler.h"
+#include "memEventCustom.h"
 
 using namespace std;
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-CustomCmdMemHandler::MemEventInfo AMOCustomCmdMemHandler::receive(MemEventBase* ev){
+CustomCmdMemHandler::MemEventInfo DefCustomCmdMemHandler::receive(MemEventBase* ev){
     CustomCmdMemHandler::MemEventInfo MEI(ev->getRoutingAddress(),true);
     return MEI;
 }
 
-CustomCmdInfo* AMOCustomCmdMemHandler::ready(MemEventBase* ev){
-    CustomCmdEvent * cme = static_cast<CustomCmdEvent*>(ev);
-    CustomOpCodeCmdInfo *CI = new CustomOpCodeCmdInfo(cme->getID(),
-                                        cme->getRqstr(),
-                                        cme->getAddr(),
-                                        cme->getOpCode(), 0);
-    return CI;
+Interfaces::StandardMem::CustomData* DefCustomCmdMemHandler::ready(MemEventBase* ev){
+    CustomMemEvent * cme = static_cast<CustomMemEvent*>(ev);
+    // We don't need to modify the data structure sent by the CPU, so just 
+    // pass it on to the backend
+    return cme->getCustomData();
 }
 
-MemEventBase* AMOCustomCmdMemHandler::finish(MemEventBase *ev, uint32_t flags){
+MemEventBase* DefCustomCmdMemHandler::finish(MemEventBase *ev, uint32_t flags){
     if(ev->queryFlag(MemEventBase::F_NORESPONSE)||
          ((flags & MemEventBase::F_NORESPONSE)>0)){
         // posted request
+        // We need to delete the CustomData structure
+        CustomMemEvent * cme = static_cast<CustomMemEvent*>(ev);
+        if (cme->getCustomData() != nullptr)
+            delete cme->getCustomData();
+        cme->setCustomData(nullptr); // Just in case someone attempts to access it...
         return nullptr;
     }
 

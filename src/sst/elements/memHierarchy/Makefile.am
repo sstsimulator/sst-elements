@@ -60,6 +60,7 @@ libmemHierarchy_la_SOURCES = \
 	membackend/cramSimBackend.cc \
 	memEventBase.h \
 	memEvent.h \
+	memEventCustom.h \
 	moveEvent.h \
 	memLinkBase.h \
 	memNICBase.h \
@@ -69,11 +70,9 @@ libmemHierarchy_la_SOURCES = \
 	memNIC.cc \
 	memNICFour.h \
 	memNICFour.cc \
-	customcmd/customCmdEvent.h \
 	customcmd/customCmdMemory.h \
-	customcmd/customOpCodeCmd.h \
-	customcmd/amoCustomCmdHandler.cc \
-	customcmd/amoCustomCmdHandler.h \
+	customcmd/defCustomCmdHandler.cc \
+	customcmd/defCustomCmdHandler.h \
 	directoryController.h \
 	directoryController.cc \
 	scratchpad.h \
@@ -337,10 +336,7 @@ nobase_sst_HEADERS = \
 	memLinkBase.h \
 	memHierarchyInterface.h \
 	memHierarchyScratchInterface.h \
-	customcmd/customCmdEvent.h \
 	customcmd/customCmdMemory.h \
-	customcmd/customOpCodeCmd.h \
-	customcmd/amoCustomCmdHandler.h \
 	membackend/backing.h \
 	membackend/memBackend.h \
 	membackend/vaultSimBackend.h \

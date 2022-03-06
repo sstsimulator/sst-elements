@@ -30,11 +30,8 @@ comp_cpu0.addParams({
     "rngseed" : 11
 })
 
-# CPU0 uses the scratchInterface to interface to the memory hierarchy
-iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.scratchInterface")
-iface0.addParams({
-    "scratchpad_size" : "64KB"
-})
+# CPU0 uses the standardInterface to interface to the memory hierarchy
+iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.standardInterface")
 #######################################################################################################################
 
 
@@ -107,11 +104,8 @@ comp_cpu1.addParams({
     "rngseed" : 1
 })
 
-# CPU1 uses the scratchInterface to interface to the memory hierarchy
-iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.scratchInterface")
-iface1.addParams({
-    "scratchpad_size" : "64KB"
-})
+# CPU1 uses the standardInterface to interface to the memory hierarchy
+iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.standardInterface")
 #######################################################################################################################
 
 

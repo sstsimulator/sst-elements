@@ -87,9 +87,9 @@ void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
     }
 }
 
-void MemBackendConvertor::handleCustomEvent( CustomCmdInfo * info) {
+void MemBackendConvertor::handleCustomEvent( Interfaces::StandardMem::CustomData * info, Event::id_type evId, std::string rqstr) {
     uint32_t id = genReqId();
-    CustomReq* req = new CustomReq( info, id );
+    CustomReq* req = new CustomReq( info, evId, rqstr, id );
     m_requestQueue.push_back( req );
     m_pendingRequests[id] = req;
 }
@@ -184,11 +184,8 @@ void MemBackendConvertor::doResponse( ReqId reqId, uint32_t flags ) {
         m_pendingRequests.erase(id);
 
         if (!req->isMemEv()) {
-            CustomCmdInfo * info = static_cast<CustomReq*>(req)->getInfo();
-            if (!flags) flags = info->getFlags();
-            sendResponse(info->getID(), flags);
-            delete info; // NOTE move this if needed, currently memController doesn't need it
-
+            CustomReq* creq = static_cast<CustomReq*>(req);
+            sendResponse(creq->getEvId(), flags);
         } else {
 
             MemEvent* event = static_cast<MemReq*>(req)->getMemEvent();

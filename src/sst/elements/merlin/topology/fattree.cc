@@ -76,7 +76,7 @@ topo_fattree::topo_fattree(ComponentId_t cid, Params& params, int num_ports, int
         }
     }
     else {
-        std::string route_algo = params.find<std::string>("algorithm", "deterministic");
+        std::string route_algo = params.find<std::string>("routing_alg", "deterministic");
         for ( int i = 0; i < num_vns; ++i ) vn_route_algos.push_back(route_algo);
     }
 

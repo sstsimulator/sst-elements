@@ -21,7 +21,6 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 
-
 using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
@@ -195,24 +194,9 @@ MemEventBase* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) con
 
 
 MemEventBase* MemHierarchyInterface::createCustomEvent(SimpleMem::Request * req) const {
-    Addr baseAddr = (req->addrs[0]) & baseAddrMask_;
-    CustomCmdEvent * cme = new CustomCmdEvent(getName().c_str(), req->addrs[0], baseAddr, Command::CustomReq, req->getCustomOpc(), req->size);
-    cme->setRqstr(rqstr_);
-    cme->setDst(rqstr_);
-
-    if(req->flags & SimpleMem::Request::F_NONCACHEABLE)
-        cme->setFlag(MemEvent::F_NONCACHEABLE);
-
-    if (req->data.size() != 0) {
-        cme->setPayload(req->data); // Note this updates cme->size to payload.size()...
-        cme->setSize(req->size);    // Assume this is what we want, not the copied payload size
-    }
-    cme->setVirtualAddress(req->getVirtualAddress());
-    cme->setInstructionPointer(req->getInstructionPointer());
-
-    cme->setMemFlags(req->memFlags);
-
-    return cme;
+    output.fatal(CALL_INFO, -1, "%s, Error: SimpleMem is deprecated in favor of StandardMem and no longer supports custom operations. Please switch to StandardMem instead.\n",
+            getName().c_str());
+    return nullptr;
 }
 
 /* Handle (response) events from memHierarchy
@@ -279,10 +263,8 @@ void MemHierarchyInterface::updateRequest(SimpleMem::Request* req, MemEvent *me)
 
 
 void MemHierarchyInterface::updateCustomRequest(SimpleMem::Request* req, MemEventBase *ev) const{
-    CustomCmdEvent* cev = static_cast<CustomCmdEvent*>(ev);
+    CustomMemEvent* cev = static_cast<CustomMemEvent*>(ev);
     req->cmd = SimpleMem::Request::CustomCmd;
-    req->memFlags = cev->getMemFlags();
-    req->data = cev->getPayload();
 }
 
 bool MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase *handler){
