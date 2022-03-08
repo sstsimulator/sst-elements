@@ -331,7 +331,7 @@ public:
 
             if (nullptr == readlink_ev) {
                 output->fatal(CALL_INFO, -1,
-                              "[syscall-readlink] -> error unable ot cast system call "
+                              "[syscall-readlink] -> error unable to cast system call "
                               "to a readlink event.\n");
             }
 
@@ -643,6 +643,11 @@ public:
         case SYSCALL_OP_SET_THREAD_AREA: {
             VanadisSyscallResponse* resp = new VanadisSyscallResponse();
             core_link->send(resp);
+        } break;
+
+        case SYSCALL_OP_EXIT: {
+            VanadisExitResponse* exit_resp = new VanadisExitResponse();
+            core_link->send(exit_resp);
         } break;
 
         case SYSCALL_OP_EXIT_GROUP: {

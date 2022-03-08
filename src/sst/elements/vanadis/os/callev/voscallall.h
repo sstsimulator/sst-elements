@@ -19,6 +19,7 @@
 #include "os/callev/voscallaccessev.h"
 #include "os/callev/voscallbrk.h"
 #include "os/callev/voscallclose.h"
+#include "os/callev/voscallexit.h"
 #include "os/callev/voscallexitgrp.h"
 #include "os/callev/voscallfstat.h"
 #include "os/callev/voscallgettime64.h"
