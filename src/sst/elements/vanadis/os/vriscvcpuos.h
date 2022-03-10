@@ -41,6 +41,7 @@
 #define VANADIS_SYSCALL_RISCV_MADVISE 4218
 #define VANADIS_SYSCALL_RISCV_FUTEX 4238
 #define VANADIS_SYSCALL_RISCV_SET_TID 96
+#define VANADIS_SYSCALL_RISCV_EXIT 93
 #define VANADIS_SYSCALL_RISCV_EXIT_GROUP 94
 #define VANADIS_SYSCALL_RISCV_SET_THREAD_AREA 4283
 #define VANADIS_SYSCALL_RISCV_RM_INOTIFY 4286
@@ -251,6 +252,15 @@ public:
                             "[syscall-handler] found a call to writev( %" PRId64 ", 0x%llx, %" PRId64 " )\n", writev_fd,
                             writev_iovec_ptr, writev_iovec_count);
             call_ev = new VanadisSyscallWritevEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, writev_fd, writev_iovec_ptr, writev_iovec_count);
+        } break;
+
+        case VANADIS_SYSCALL_RISCV_EXIT: {
+            const uint16_t phys_reg_10 = isaTable->getIntPhysReg(10);
+            int64_t exit_code = regFile->getIntReg<int64_t>(phys_reg_10);
+
+            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to exit( %" PRId64 " )\n",
+                            exit_code);
+            call_ev = new VanadisSyscallExitEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, exit_code);
         } break;
 
         case VANADIS_SYSCALL_RISCV_EXIT_GROUP: {

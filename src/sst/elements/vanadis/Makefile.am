@@ -124,8 +124,9 @@ os/callev/voscallaccessev.h \
 os/callev/voscallall.h \
 os/callev/voscallbrk.h \
 os/callev/voscallclose.h \
-os/callev/voscallexitgrp.h \
 os/callev/voscallfstat.h \
+os/callev/voscallexit.h \
+os/callev/voscallexitgrp.h \
 os/callev/voscallgettime64.h \
 os/callev/voscallioctl.h \
 os/callev/voscallmmap.h \
