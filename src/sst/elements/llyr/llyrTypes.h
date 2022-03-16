@@ -40,6 +40,7 @@ typedef struct alignas(uint64_t) {
     LSQueue*        lsqueue_;
     StandardMem*    mem_interface_;
     Addr            starting_addr_;
+    std::string     mapping_tool_;
 
     uint32_t        verbosity_;
     uint16_t        queueDepth_;

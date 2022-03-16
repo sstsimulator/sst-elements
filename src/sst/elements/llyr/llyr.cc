@@ -94,8 +94,9 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     uint16_t fp_latency = params.find< uint16_t >("fp_latency", 1);
     uint16_t fp_mul_latency = params.find< uint16_t >("fp_mul_latency", 1);
     uint16_t fp_div_latency = params.find< uint16_t >("fp_div_latency", 1);
+    std::string mapping_tool_ = params.find< std::string >("mapping_tool", "");
 
-    configData_ = new LlyrConfig { ls_queue_, mem_interface_, starting_addr_, verbosity, queue_depth,
+    configData_ = new LlyrConfig { ls_queue_, mem_interface_, starting_addr_, mapping_tool_, verbosity, queue_depth,
                                    arith_latency, int_latency, fp_latency, fp_mul_latency, fp_div_latency };
 
     memFileName_ = params.find<std::string>("mem_init", "");
@@ -428,7 +429,7 @@ void LlyrComponent::constructHardwareGraph(std::string fileName)
         inputStream.close();
     }
     else {
-        output_->fatal(CALL_INFO, -1, "Error: Unable to open file\n");
+        output_->fatal(CALL_INFO, -1, "Error: Unable to open %s\n", fileName.c_str() );
         exit(0);
     }
 
@@ -455,7 +456,7 @@ void LlyrComponent::constructSoftwareGraph(std::string fileName)
 
         inputStream.close();
     } else {
-        output_->fatal(CALL_INFO, -1, "Error: Unable to open file\n");
+        output_->fatal(CALL_INFO, -1, "Error: Unable to open %s\n", fileName.c_str() );
         exit(0);
     }
 }
@@ -552,7 +553,7 @@ std::vector< uint64_t >* LlyrComponent::constructMemory(std::string fileName)
 
         inputStream.close();
     } else {
-        output_->fatal(CALL_INFO, -1, "Error: Unable to open file\n");
+        output_->fatal(CALL_INFO, -1, "Error: Unable to open %s\n", fileName.c_str() );
         exit(0);
     }
 
