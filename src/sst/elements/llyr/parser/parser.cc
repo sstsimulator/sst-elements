@@ -52,11 +52,14 @@ void Parser::generateAppGraph(std::string functionName)
     mod_ = mod.get();
 
     //get names for anonymous instructions
-    llvm::legacy::PassManager pm;
-    pm.add(llvm::createInstructionNamerPass());
-    pm.run(*mod_);
+    auto pm = std::make_unique<llvm::legacy::FunctionPassManager>(mod_);
+//     llvm::legacy::PassManager pm;
+    pm->add(llvm::createPromoteMemoryToRegisterPass());
+    pm->add(llvm::createInstructionNamerPass());
+    pm->doInitialization();
+//     pm->run(*mod_);
 
-    for( auto functionIter = mod_->getFunctionList().begin(), functionEnd = mod_->getFunctionList().end(); functionIter != functionEnd; functionIter++ ) {
+    for( auto functionIter = mod_->getFunctionList().begin(), functionEnd = mod_->getFunctionList().end(); functionIter != functionEnd; ++functionIter ) {
         if( output_->getVerboseLevel() > 64 ) {
             llvm::errs() << "Function Name: ";
             llvm::errs().write_escaped(functionIter->getName()) << "     ";
@@ -65,6 +68,8 @@ void Parser::generateAppGraph(std::string functionName)
 
         //check each located function to see if it's the offload target
         if( functionIter->getName().find(functionName) != std::string::npos ) {
+            pm->run(*functionIter);
+
             generatebBasicBlockGraph(&*functionIter);
             expandBBGraph(&*functionIter);
             assembleGraph();
@@ -80,7 +85,7 @@ void Parser::generateAppGraph(std::string functionName)
     output_->verbose(CALL_INFO, 1, 0, "Finished parsing...\n");
 
     printCDFG( "00_func-ins.dot" );
-    printPyMapper( "00_pyomo.out" );
+    printPyMapper( "00_amapper.out" );
 
 }// generateAppGraph
 
@@ -1465,14 +1470,14 @@ void Parser::assembleGraph(void)
         for( auto revIt = (*vertexList_)[basicBlock].rbegin(); revIt != (*vertexList_)[basicBlock].rend(); ++revIt) {
 
             if( output_->getVerboseLevel() > 64 ) {
-                llvm::errs() << "\n\t" << (*revIt)->instruction_  << "\n";
+                llvm::errs() << "\n\tInstruction:  " << (*revIt)->instruction_  << "\n";
             }
 
             // For each vertex, iterate through the instruction's use list -- insert an edge between the uses and the next def.
             // Defs may be origin node, previous store, etc.
             for( auto nodeUseEntry = (*useNode_)[basicBlock]->at(*revIt)->begin(); nodeUseEntry != (*useNode_)[basicBlock]->at(*revIt)->end(); ++nodeUseEntry ) {
                 if( output_->getVerboseLevel() > 64 ) {
-                    llvm::errs() << "\t\t" << *nodeUseEntry << "\n";
+                    llvm::errs() << "\t\tNode Use Entry:  " << *nodeUseEntry << "\n";
                 }
 
                 bool found = 0;
@@ -1482,7 +1487,7 @@ void Parser::assembleGraph(void)
                     llvm::Instruction* innerInst = (*innerRevIt)->instruction_;
 
                     if( output_->getVerboseLevel() > 64 ) {
-                        llvm::errs() << "\t\t\t" << innerInst << "\n";
+                        llvm::errs() << "\t\t\tinner:  " << innerInst << "\n";
                     }
 
                     if( innerRevIt == revIt || innerInst == 0x00 ) {
@@ -1493,7 +1498,7 @@ void Parser::assembleGraph(void)
                         found = 1;
 
                         if( output_->getVerboseLevel() > 64 ) {
-                            llvm::errs() << "\t\t\t\tinstruction " << innerInst << "\n";
+                            llvm::errs() << "\t\t\t\tfound:  " << innerInst << "\n";
                         }
 
                         ParserEdgeProperties* edgeProp = new ParserEdgeProperties;
@@ -1518,7 +1523,7 @@ void Parser::assembleGraph(void)
                                 found = 1;
 
                                 if( output_->getVerboseLevel() > 64 ) {
-                                    llvm::errs() << "\t\t\t\t(" << innerInst << ") operand " << *operandIter << "\n";
+                                    llvm::errs() << "\t\t\t\t(" << (*innerRevIt)->instruction_ << ") operand " << *operandIter << "\n";
                                 }
 
                                 ParserEdgeProperties* edgeProp = new ParserEdgeProperties;
@@ -1530,6 +1535,7 @@ void Parser::assembleGraph(void)
                         }
                     }
 
+                    //Need to break when there is a RAW dep otherwise there will be duplicate edges
                     if( found == 1 ) {
                         break;
                     }
@@ -1768,23 +1774,16 @@ void Parser::printPyMapper( const std::string fileName ) const
 
                     if( llvm::isa<llvm::ConstantInt>(operandIter) ) {
                         llvm::ConstantInt* tempConst = llvm::cast<llvm::ConstantInt>(operandIter);
-//                         outputFile << "_c_" << tempConst->getNameOrAsOperand();
-//                             outputFile << "c_" << tempConst->getSExtValue() << " ";
 
                         constVector.emplace( operandIter->getOperandNo(), tempConst->getNameOrAsOperand() );
                         std::cout << tempConst->getNameOrAsOperand() << " -- inboop" << std::endl;
 
                     } else if( llvm::isa<llvm::ConstantFP>(operandIter) ) {
                         llvm::ConstantFP* tempConst = llvm::cast<llvm::ConstantFP>(operandIter);
-//                         outputFile << "_c_" << tempConst->getNameOrAsOperand();
 
                         constVector.emplace( operandIter->getOperandNo(), tempConst->getNameOrAsOperand() );
                         std::cout << tempConst->getNameOrAsOperand() << " -- fpboop" << std::endl;
-//                             if(operandIter->get()->getType()->isFloatTy()) {
-//                                 outputFile << "c_" << tempConst->getNameOrAsOperand() << " ";
-//                             } else {
-//                                 outputFile << "c_" << std::hexfloat << tempConst->getValueAPF().convertToDouble() << " ";
-//                             }
+
                     } else if( llvm::isa<llvm::ConstantExpr>(operandIter) ) {
                         outputFile << operandIter->get()->getNameOrAsOperand();
                         std::cout << operandIter->get()->getNameOrAsOperand() << " -- boopB" << std::endl;
