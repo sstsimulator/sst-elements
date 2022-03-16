@@ -51,8 +51,8 @@ SST_CHECK_PICKY
 AS_IF([test "x$use_picky" = "xyes"],
       [WARNFLAGS="-Wall -Wextra"],
       [WARNFLAGS=""])
-CFLAGS="$CFLAGS $WARNFLAGS"
-CXXFLAGS="$CXXFLAGS $WARNFLAGS"
+AM_CFLAGS="$AM_CFLAGS $WARNFLAGS"
+AM_CXXFLAGS="$AM_CXXFLAGS $WARNFLAGS"
 
 AC_MSG_CHECKING([for SST-Elements Git Branch, Head SHA and Commit Count])
 if test -d ".git" ; then
@@ -120,9 +120,9 @@ printf "%38s : %s\n" "C++ Compiler" "$CXX"
 printf "%38s : %s\n" "C Compiler" "$CC"
 printf "%38s : %s\n" "Compiler Version" "$CC_VERSION"
 printf "%38s : %s\n" "Linker" "$LD"
-printf "%38s : %s\n" "Preprocessor Options" "$CPPFLAGS"
-printf "%38s : %s\n" "C Compiler Options" "$CFLAGS"
-printf "%38s : %s\n" "C++ Compiler Options" "$CXXFLAGS"
+printf "%38s : %s\n" "Preprocessor Options" "$AM_CPPFLAGS $CPPFLAGS"
+printf "%38s : %s\n" "C Compiler Options" "$AM_CFLAGS $CFLAGS"
+printf "%38s : %s\n" "C++ Compiler Options" "$AM_CXXFLAGS $CXXFLAGS"
 
 if test "x$found_cxx1y" = "xyes"; then
 printf "%38s : %s\n" "C++ Standard Compliance" "C++1Y/14"
@@ -130,7 +130,7 @@ else
 printf "%38s : %s\n" "C++ Standard Compliance" "C++11"
 fi
 
-printf "%38s : %s\n" "Linker Options" "$LDFLAGS"
+printf "%38s : %s\n" "Linker Options" "$AM_LDFLAGS $LDFLAGS"
 printf "%38s : %s\n" "Boost Library Preprocessor" "$BOOST_CPPFLAGS"
 printf "%38s : %s\n" "Boost Library Linker Options" "$BOOST_LDFLAGS"
 echo ""
