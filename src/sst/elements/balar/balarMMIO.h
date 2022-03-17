@@ -24,8 +24,32 @@
 
 #include "sst/elements/memHierarchy/memTypes.h"
 
+// Other Includes, from original balar file
+#include "mempool.h"
+#include "host_defines.h"
+#include "builtin_types.h"
+#include "driver_types.h"
+#include "cuda_runtime_api.h"
+#include "balar_event.h"
+
+
+#include <cstring>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <map>
+
+#include <stdio.h>
+#include <stdint.h>
+#include <poll.h>
+
+using namespace std;
+using namespace SST;
+using namespace SST::Interfaces;
+using namespace SST::BalarComponent;
+
 namespace SST {
-namespace MemHierarchy {
+namespace BalarComponent {
 
 /* 
  * Interface to GPGPU-Sim via MMIO
@@ -33,14 +57,19 @@ namespace MemHierarchy {
 
 class BalarMMIO : public SST::Component {
 public:
-    SST_ELI_REGISTER_COMPONENT(BalarMMIO, "memHierarchy", "mmioBalar", SST_ELI_ELEMENT_VERSION(1,0,0),
-        "Balar via MMIO interface", COMPONENT_CATEGORY_MEMORY)
+    SST_ELI_REGISTER_COMPONENT(BalarMMIO, "balar", "balar", SST_ELI_ELEMENT_VERSION(1,0,0),
+        "GPGPU simulator based on GPGPU-Sim via MMIO interface", COMPONENT_CATEGORY_PROCESSOR)
     SST_ELI_DOCUMENT_PARAMS( 
         {"verbose",                 "(uint) Determine how verbose the output from the device is", "0"},
         {"clock",                   "(UnitAlgebra/string) Clock frequency", "1GHz"},
         {"base_addr",               "(uint) Starting addr mapped to the device", "0"},
         {"mem_accesses",            "(uint) Number of memory accesses to do", "0"},
-        {"max_addr",                "(uint64) Max memory address for requests issued by this device. Required if mem_accesses > 0.", "0"}
+        {"max_addr",                "(uint64) Max memory address for requests issued by this device. Required if mem_accesses > 0.", "0"},
+        {"latency", "The time to be spent to service a memory request", "1000"},
+        {"num_nodes", "number of disaggregated nodes in the system", "1"},
+        {"num_cores", "Number of GPUs", "1"},
+        {"maxtranscore", "Maximum number of pending transactions", "16"},
+        {"maxcachetrans", "Maximum number of pending cache transactions", "512"},
     )
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( 
         {"iface", "Interface into memory subsystem", "SST::Interfaces::StandardMem"}
@@ -49,29 +78,56 @@ public:
         {"read_latency", "Latency of reads issued by this device to memory", "simulation time units", 1},
         {"write_latency", "Latency of writes issued by this device to memory", "simulation time units", 1},
     )
+    SST_ELI_DOCUMENT_PORTS(
+        {"requestLink%(num_cores)d", "Handle CUDA API calls", { "BalarComponent.BalarEvent", "" } },
+        {"requestMemLink%(num_cores)d", "Link to CPU memH (cache)", {} },
+        {"requestGPUCacheLink%(num_cores)d", "Link to GPU memH (cache)", {} }
+    )
 
     BalarMMIO(ComponentId_t id, Params &params);
 
     virtual void init(unsigned int);
     virtual void setup();
+    void finish() {};
+
+    // Copy from original balar
+    bool is_SST_buffer_full(unsigned core_id);
+    void send_read_request_SST(unsigned core_id, uint64_t address, uint64_t size, void* mem_req);
+    void send_write_request_SST(unsigned core_id, uint64_t address, uint64_t size, void* mem_req);
+    void SST_callback_memcpy_H2D_done();
+    void SST_callback_memcpy_D2H_done();
+
+    bool tick(SST::Cycle_t x);
+    cudaMemcpyKind memcpyKind;
+    bool is_stalled = false;
+    unsigned int transferNumber;
+    std::vector< uint64_t > physicalAddresses;
+    uint64_t totalTransfer;
+    uint64_t ackTransfer;
+    uint64_t remainingTransfer;
+    uint64_t baseAddress;
+    uint64_t currentAddress;
+    std::vector< uint8_t > dataAddress;
+    uint32_t pending_transactions_count = 0;
+    uint32_t maxPendingTransCore;
 
 protected:
     ~BalarMMIO() {}
 
     /* Handle event from MMIO interface */
-    void handleEvent(Interfaces::StandardMem::Request* req);
+    void handleEvent(StandardMem::Request* req);
     
     /* Handlers for StandardMem::Request types we handle */
-    class mmioHandlers : public Interfaces::StandardMem::RequestHandler {
+    class mmioHandlers : public StandardMem::RequestHandler {
     public:
         friend class BalarMMIO;
 
-        mmioHandlers(BalarMMIO* mmio, SST::Output* out) : Interfaces::StandardMem::RequestHandler(out), mmio(mmio) {}
+        mmioHandlers(BalarMMIO* mmio, SST::Output* out) : StandardMem::RequestHandler(out), mmio(mmio) {}
         virtual ~mmioHandlers() {}
-        virtual void handle(Interfaces::StandardMem::Read* read) override;
-        virtual void handle(Interfaces::StandardMem::Write* write) override;
-        virtual void handle(Interfaces::StandardMem::ReadResp* resp) override;
-        virtual void handle(Interfaces::StandardMem::WriteResp* resp) override;
+        virtual void handle(StandardMem::Read* read) override;
+        virtual void handle(StandardMem::Write* write) override;
+        virtual void handle(StandardMem::ReadResp* resp) override;
+        virtual void handle(StandardMem::WriteResp* resp) override;
 
         void intToData(int32_t num, std::vector<uint8_t>* data);
         int32_t dataToInt(std::vector<uint8_t>* data);
@@ -101,16 +157,34 @@ private:
     // If this device also is testing memory accesses, these are used
     uint32_t mem_access;
     SST::RNG::MarsagliaRNG rng;
-    Interfaces::StandardMem::Request* createWrite(uint64_t addr);
-    Interfaces::StandardMem::Request* createRead(Addr addr);
-    std::map<Interfaces::StandardMem::Request::id_t, std::pair<SimTime_t, std::string>> requests;
+    StandardMem::Request* createWrite(uint64_t addr);
+    StandardMem::Request* createRead(Addr addr);
+    std::map<StandardMem::Request::id_t, std::pair<SimTime_t, std::string>> requests;
     virtual bool clockTic( SST::Cycle_t );
     Statistic<uint64_t>* statReadLatency;
     Statistic<uint64_t>* statWriteLatency;
     Addr max_addr;
 
     // The memH interface into the memory system
-    Interfaces::StandardMem* iface;
+    StandardMem* iface;
+
+    // Copy from original balar
+    BalarMMIO(const BalarMMIO&); // do not implement
+    void operator=(const BalarMMIO&); // do not implement
+    uint32_t cpu_core_count;
+    uint32_t gpu_core_count;
+    uint32_t pending_transaction_count = 0;
+    std::unordered_map<StandardMem::Request::id_t, StandardMem::Request*>* pendingTransactions;
+    StandardMem** gpu_to_cpu_cache_links;
+    Link** gpu_to_core_links;
+    uint32_t latency; // The page fault latency/ the time spent by Balar to service a memory allocation request
+
+    StandardMem** gpu_to_cache_links;
+    uint32_t maxPendingCacheTrans;
+    std::unordered_map<StandardMem::Request::id_t, struct cache_req_params>* gpuCachePendingTransactions;
+    uint32_t* numPendingCacheTransPerCore;
+
+    Output* output;
 
 }; // end BalarMMIO
         
