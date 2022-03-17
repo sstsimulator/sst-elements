@@ -2,6 +2,10 @@
 #
 #
 
+AM_CPPFLAGS += \
+	$(MPI_CPPFLAGS) \
+	-I$(top_srcdir)/src
+
 EXTRA_DIST = \
 	tests/testsuite_default_VaultSim.py \
 	tests/sdl1.ref \
@@ -27,10 +31,6 @@ libVaultSimC_la_SOURCES = \
 	VaultSimC.h \
 	memReqEvent.h \
 	vaultGlobals.h
-
-libVaultSimC_la_CPPFLAGS = \
-	$(MPI_CPPFLAGS) \
-	-I$(top_srcdir)/src
 
 libVaultSimC_la_LDFLAGS = -module -avoid-version
 

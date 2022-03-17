@@ -2,7 +2,7 @@
 #
 #
 
-CPPFLAGS += \
+AM_CPPFLAGS += \
 	$(MPI_CPPFLAGS) \
 	-I$(top_srcdir)/src
 
@@ -63,7 +63,7 @@ libmiranda_la_SOURCES += \
 	generators/stake.cc \
 	generators/stake.h
 libmiranda_la_LDFLAGS += $(STAKE_LDFLAGS) $(STAKE_LIB)
-CPPFLAGS += $(STAKE_CPPFLAGS) -DHAVE_STAKE
+AM_CPPFLAGS += $(STAKE_CPPFLAGS) -DHAVE_STAKE
 endif
 
 install-exec-hook:

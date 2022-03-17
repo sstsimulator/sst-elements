@@ -2,6 +2,10 @@
 #
 #
 
+AM_CPPFLAGS += \
+	$(MPI_CPPFLAGS) \
+	-I$(top_srcdir)/src
+
 libzodiac_la_CPPFLAGS = \
 	$(MPI_CPPFLAGS) \
 	$(DUMPI_CPPFLAGS) \
@@ -77,7 +81,6 @@ libzodiac_la_SOURCES += \
 
 libzodiac_la_CPPFLAGS +=
 	$(DUMPI_CPPFLAGS)
-
 libzodiac_la_LDFLAGS +=
 	$(DUMPI_LDFLAGS)
 endif

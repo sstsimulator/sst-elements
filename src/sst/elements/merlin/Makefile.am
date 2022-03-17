@@ -2,7 +2,7 @@
 #
 #
 
-CPPFLAGS += \
+AM_CPPFLAGS += \
 	-I$(top_srcdir)/src \
 	$(MPI_CPPFLAGS) \
 	$(PYTHON_CPPFLAGS)

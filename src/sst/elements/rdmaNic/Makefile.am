@@ -2,7 +2,7 @@
 #
 #
 
-CPPFLAGS += \
+AM_CPPFLAGS += \
 	$(MPI_CPPFLAGS) \
 	-I$(top_srcdir)/src
 
@@ -65,8 +65,9 @@ nobase_sst_HEADERS = \
 	rdmaNicTree.h
 
 librdmaNic_la_LDFLAGS = -module -avoid-version
+librdmaNic_la_LIBADD =
 
-CPPFLAGS += $(HMC_FLAG)
+AM_CPPFLAGS += $(HMC_FLAG)
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     rdmaNic=$(abs_srcdir)
