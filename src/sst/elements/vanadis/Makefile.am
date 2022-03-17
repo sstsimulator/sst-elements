@@ -2,7 +2,7 @@
 #
 #
 
-CPPFLAGS += \
+AM_CPPFLAGS += \
 	$(MPI_CPPFLAGS) \
 	-DVANADIS_BUILD_DEBUG
 

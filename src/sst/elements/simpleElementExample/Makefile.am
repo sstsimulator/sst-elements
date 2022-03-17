@@ -2,7 +2,7 @@
 #
 #
 
-CPPFLAGS += \
+AM_CPPFLAGS += \
 	$(MPI_CPPFLAGS)
 
 compdir = $(pkglibdir)
@@ -54,12 +54,12 @@ if !SST_ENABLE_PREVIEW_BUILD
 EXTRA_DIST += $(deprecated_EXTRA_DIST)
 endif
 
-
 libsimpleElementExample_la_LDFLAGS = -module -avoid-version
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     simpleElementExample=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      simpleElementExample=$(abs_srcdir)/tests
+
 
 
 

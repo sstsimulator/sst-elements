@@ -2,7 +2,7 @@
 #
 #
 
-CPPFLAGS = \
+AM_CPPFLAGS += \
 	$(MPI_CPPFLAGS) \
 	-I$(top_srcdir)/src
 
@@ -368,7 +368,7 @@ libmemHierarchy_la_LIBADD += $(RAMULATOR_LIB)
 libmemHierarchy_la_SOURCES += membackend/ramulatorBackend.cc \
 	membackend/ramulatorBackend.h
 nobase_sst_HEADERS += membackend/ramulatorBackend.h
-CPPFLAGS += $(RAMULATOR_CPPFLAGS) -DHAVE_LIBRAMULATOR
+AM_CPPFLAGS += $(RAMULATOR_CPPFLAGS) -DHAVE_LIBRAMULATOR
 endif
 
 if HAVE_DRAMSIM
@@ -377,7 +377,7 @@ libmemHierarchy_la_LIBADD += $(DRAMSIM_LIB)
 libmemHierarchy_la_SOURCES += membackend/dramSimBackend.cc \
 	membackend/dramSimBackend.h
 nobase_sst_HEADERS += membackend/dramSimBackend.h
-CPPFLAGS += $(DRAMSIM_CPPFLAGS) -DHAVE_LIBDRAMSIM
+AM_CPPFLAGS += $(DRAMSIM_CPPFLAGS) -DHAVE_LIBDRAMSIM
 
 libmemHierarchy_la_SOURCES += membackend/pagedMultiBackend.cc \
 	membackend/pagedMultiBackend.h
@@ -391,7 +391,7 @@ libmemHierarchy_la_LIBADD += $(DRAMSIM3_LIB)
 libmemHierarchy_la_SOURCES += membackend/dramSim3Backend.cc \
 	membackend/dramSim3Backend.h
 nobase_sst_HEADERS += membackend/dramSim3Backend.h
-CPPFLAGS += $(DRAMSIM3_CPPFLAGS) -DHAVE_LIBDRAMSIM3
+AM_CPPFLAGS += $(DRAMSIM3_CPPFLAGS) -DHAVE_LIBDRAMSIM3
 
 endif
 
@@ -401,7 +401,7 @@ libmemHierarchy_la_LIBADD += $(HBMDRAMSIM_LIB)
 libmemHierarchy_la_SOURCES += membackend/HBMdramSimBackend.cc \
 	membackend/HBMdramSimBackend.h
 nobase_sst_HEADERS += membackend/HBMdramSimBackend.h
-CPPFLAGS += $(HBMDRAMSIM_CPPFLAGS) -DHAVE_LIBHBMDRAMSIM
+AM_CPPFLAGS += $(HBMDRAMSIM_CPPFLAGS) -DHAVE_LIBHBMDRAMSIM
 
 libmemHierarchy_la_SOURCES += membackend/HBMpagedMultiBackend.cc \
 	membackend/HBMpagedMultiBackend.h
@@ -415,13 +415,13 @@ libmemHierarchy_la_LIBADD += $(HYBRIDSIM_LIB)
 libmemHierarchy_la_SOURCES += membackend/hybridSimBackend.cc \
 	membackend/hybridSimBackend.h
 nobase_sst_HEADERS += membackend/hybridSimBackend.h
-CPPFLAGS += $(HYBRIDSIM_CPPFLAGS) -DHAVE_LIBHYBRIDSIM
+AM_CPPFLAGS += $(HYBRIDSIM_CPPFLAGS) -DHAVE_LIBHYBRIDSIM
 endif
 
 if USE_LIBZ
 libmemHierarchy_la_LDFLAGS += $(LIBZ_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(LIBZ_LIB)
-CPPFLAGS += $(LIBZ_CPPFLAGS)
+AM_CPPFLAGS += $(LIBZ_CPPFLAGS)
 endif
 
 if USE_GOBLIN_HMCSIM
@@ -431,7 +431,7 @@ libmemHierarchy_la_SOURCES += \
 nobase_sst_HEADERS += membackend/goblinHMCBackend.h
 libmemHierarchy_la_LDFLAGS += $(GOBLIN_HMCSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(GOBLIN_HMCSIM_LIB)
-CPPFLAGS += $(GOBLIN_HMCSIM_CPPFLAGS) -DHAVE_GOBLIN_HMCSIM
+AM_CPPFLAGS += $(GOBLIN_HMCSIM_CPPFLAGS) -DHAVE_GOBLIN_HMCSIM
 endif
 
 
@@ -442,10 +442,10 @@ libmemHierarchy_la_SOURCES += \
 	membackend/flashSimBackend.h
 libmemHierarchy_la_LDFLAGS += $(FDSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(FDSIM_LIB)
-CPPFLAGS += $(FDSIM_CPPFLAGS) $(FDSIM_CXXFLAGS) -DHAVE_LIBFDSIM
+AM_CPPFLAGS += $(FDSIM_CPPFLAGS) $(FDSIM_CXXFLAGS) -DHAVE_LIBFDSIM
 endif
 
-CPPFLAGS += $(HMC_FLAG)
+AM_CPPFLAGS += $(HMC_FLAG)
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) DRAMSIM LIBDIR=$(DRAMSIM_LIBDIR)

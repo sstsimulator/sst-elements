@@ -2,7 +2,7 @@
 #
 #
 
-CPPFLAGS += \
+AM_CPPFLAGS += \
 	$(MPI_CPPFLAGS) \
 	-I$(top_srcdir)/src/sst/elements/ember/sirius/include \
 	-I$(top_srcdir)/src \

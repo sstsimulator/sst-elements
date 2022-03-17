@@ -2,6 +2,11 @@
 #
 #
 
+AM_CPPFLAGS += \
+	$(MPI_CPPFLAGS) \
+	-I$(top_srcdir)/src \
+	$(CUDA_CPPFLAGS)
+
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libbalar.la
 
@@ -23,11 +28,6 @@ EXTRA_DIST = \
 	tests/vectorAdd/Makefile \
 	tests/refFiles/test_gpgpu_vectorAdd.out
 
-libbalar_la_CPPFLAGS = \
-	-I$(top_srcdir)/src \
-	$(SST_CXX0X_FLAGS) -fPIC -Wall \
-	$(MPI_CPPFLAGS) \
-	$(CUDA_CPPFLAGS)
 
 libbalar_la_LDFLAGS = \
 	-lm \

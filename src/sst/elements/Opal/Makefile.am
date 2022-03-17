@@ -2,6 +2,11 @@
 #
 #
 
+AM_CPPFLAGS += \
+	$(MPI_CPPFLAGS) \
+	-I$(top_srcdir)/src
+
+AM_LDFLAGS = -lm
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libOpal.la
 
@@ -18,14 +23,7 @@ libOpal_la_SOURCES = \
 	PageFaultHandler.cc \
 	PageFaultHandler.h
 
-
-libOpal_la_CPPFLAGS = \
-	$(MPI_CPPFLAGS) \
-	-I$(top_srcdir)/src \
-	-fPIC -Wall
-
 libOpal_la_LDFLAGS = \
-	-lm \
 	-avoid-version
 
 libOpal_la_LIBADD = \

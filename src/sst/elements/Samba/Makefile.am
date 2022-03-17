@@ -2,6 +2,10 @@
 #
 #
 
+AM_CPPFLAGS += \
+	$(MPI_CPPFLAGS) \
+	-I$(top_srcdir)/src
+
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libSamba.la
 
@@ -21,12 +25,6 @@ libSamba_la_SOURCES = \
 	PageFaultHandler.h \
 	SimpleTLB.cc \
 	SimpleTLB.h 
-
-
-libSamba_la_CPPFLAGS = \
-	-I$(top_srcdir)/src \
-	$(SST_CXX0X_FLAGS) -fPIC -Wall \
-	$(MPI_CPPFLAGS)
 
 libSamba_la_LDFLAGS = \
 	-lm \
