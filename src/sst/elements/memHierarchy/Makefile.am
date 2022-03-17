@@ -2,7 +2,7 @@
 #
 #
 
-AM_CPPFLAGS = \
+CPPFLAGS = \
 	$(MPI_CPPFLAGS) \
 	-I$(top_srcdir)/src
 
@@ -146,12 +146,12 @@ EXTRA_DIST = \
 	tests/testsuite_openMP_memHierarchy_diropenMP.py \
 	tests/testsuite_openMP_memHierarchy_openMP.py \
 	Sieve/tests/StatisticOutput.csv.gold \
-    Sieve/tests/sieveprospero-0.trace \
-    Sieve/tests/trace-text.py \
-    Sieve/tests/Makefile \
-    Sieve/tests/ompsievetest.c \
-    Sieve/tests/sieve-test.py \
-    Sieve/tests/refFiles/test_memHSieve.out \
+	Sieve/tests/sieveprospero-0.trace \
+	Sieve/tests/trace-text.py \
+	Sieve/tests/Makefile \
+	Sieve/tests/ompsievetest.c \
+	Sieve/tests/sieve-test.py \
+	Sieve/tests/refFiles/test_memHSieve.out \
 	tests/miranda.cfg \
 	tests/sdl-1.py \
 	tests/sdl2-1.py \
@@ -216,7 +216,7 @@ EXTRA_DIST = \
 	tests/testStdMem-mmio3.py \
 	tests/DDR3_micron_32M_8B_x4_sg125.ini \
 	tests/system.ini \
-    tests/DDR4_8Gb_x16_3200.ini \
+	tests/DDR4_8Gb_x16_3200.ini \
 	tests/ramulator-ddr3.cfg \
 	tests/ddr_device.ini \
 	tests/ddr_system.ini \
@@ -224,106 +224,106 @@ EXTRA_DIST = \
 	tests/hbm_system.ini \
 	tests/utils.py \
 	tests/mhlib.py \
-    tests/refFiles/test_hybridsim.out \
-    tests/refFiles/test_memHA_BackendChaining.out \
-    tests/refFiles/test_memHA_BackendDelayBuffer.out \
-    tests/refFiles/test_memHA_BackendDramsim3.out \
-    tests/refFiles/test_memHA_BackendGoblinHMC.out \
-    tests/refFiles/test_memHA_BackendHBMDramsim.out \
-    tests/refFiles/test_memHA_BackendHBMPagedMulti.out \
-    tests/refFiles/test_memHA_BackendPagedMulti.out \
-    tests/refFiles/test_memHA_BackendReorderRow.out \
-    tests/refFiles/test_memHA_BackendReorderSimple.out \
-    tests/refFiles/test_memHA_BackendSimpleDRAM_1.out \
-    tests/refFiles/test_memHA_BackendSimpleDRAM_2.out \
-    tests/refFiles/test_memHA_BackendTimingDRAM_1.out \
-    tests/refFiles/test_memHA_BackendTimingDRAM_2.out \
-    tests/refFiles/test_memHA_BackendTimingDRAM_3.out \
-    tests/refFiles/test_memHA_BackendTimingDRAM_4.out \
-    tests/refFiles/test_memHA_BackendVaultSim.out \
-    tests/refFiles/test_memHA_CustomCmdGoblin_1.out \
-    tests/refFiles/test_memHA_CustomCmdGoblin_2.out \
-    tests/refFiles/test_memHA_CustomCmdGoblin_3.out \
-    tests/refFiles/test_memHA_DistributedCaches.out \
-    tests/refFiles/test_memHA_Flushes.out \
-    tests/refFiles/test_memHA_Flushes_2.out \
-    tests/refFiles/test_memHA_HashXor.out \
-    tests/refFiles/test_memHA_Incoherent.out \
-    tests/refFiles/test_memHA_Incoherent_2.out \
-    tests/refFiles/test_memHA_Kingsley.out \
-    tests/refFiles/test_memHA_MemoryCache.out \
-    tests/refFiles/test_memHA_Noninclusive_1.out \
-    tests/refFiles/test_memHA_Noninclusive_2.out \
-    tests/refFiles/test_memHA_PrefetchParams.out \
-    tests/refFiles/test_memHA_ScratchCache_1.out \
-    tests/refFiles/test_memHA_ScratchCache_2.out \
-    tests/refFiles/test_memHA_ScratchCache_3.out \
-    tests/refFiles/test_memHA_ScratchCache_4.out \
-    tests/refFiles/test_memHA_ScratchDirect.out \
-    tests/refFiles/test_memHA_ScratchNetwork.out \
-    tests/refFiles/test_memHA_StdMem_flush.out \
-    tests/refFiles/test_memHA_StdMem_mmio3.out \
-    tests/refFiles/test_memHA_StdMem_nic.out \
-    tests/refFiles/test_memHA_StdMem.out \
+	tests/refFiles/test_hybridsim.out \
+	tests/refFiles/test_memHA_BackendChaining.out \
+	tests/refFiles/test_memHA_BackendDelayBuffer.out \
+	tests/refFiles/test_memHA_BackendDramsim3.out \
+	tests/refFiles/test_memHA_BackendGoblinHMC.out \
+	tests/refFiles/test_memHA_BackendHBMDramsim.out \
+	tests/refFiles/test_memHA_BackendHBMPagedMulti.out \
+	tests/refFiles/test_memHA_BackendPagedMulti.out \
+	tests/refFiles/test_memHA_BackendReorderRow.out \
+	tests/refFiles/test_memHA_BackendReorderSimple.out \
+	tests/refFiles/test_memHA_BackendSimpleDRAM_1.out \
+	tests/refFiles/test_memHA_BackendSimpleDRAM_2.out \
+	tests/refFiles/test_memHA_BackendTimingDRAM_1.out \
+	tests/refFiles/test_memHA_BackendTimingDRAM_2.out \
+	tests/refFiles/test_memHA_BackendTimingDRAM_3.out \
+	tests/refFiles/test_memHA_BackendTimingDRAM_4.out \
+	tests/refFiles/test_memHA_BackendVaultSim.out \
+	tests/refFiles/test_memHA_CustomCmdGoblin_1.out \
+	tests/refFiles/test_memHA_CustomCmdGoblin_2.out \
+	tests/refFiles/test_memHA_CustomCmdGoblin_3.out \
+	tests/refFiles/test_memHA_DistributedCaches.out \
+	tests/refFiles/test_memHA_Flushes.out \
+	tests/refFiles/test_memHA_Flushes_2.out \
+	tests/refFiles/test_memHA_HashXor.out \
+	tests/refFiles/test_memHA_Incoherent.out \
+	tests/refFiles/test_memHA_Incoherent_2.out \
+	tests/refFiles/test_memHA_Kingsley.out \
+	tests/refFiles/test_memHA_MemoryCache.out \
+	tests/refFiles/test_memHA_Noninclusive_1.out \
+	tests/refFiles/test_memHA_Noninclusive_2.out \
+	tests/refFiles/test_memHA_PrefetchParams.out \
+	tests/refFiles/test_memHA_ScratchCache_1.out \
+	tests/refFiles/test_memHA_ScratchCache_2.out \
+	tests/refFiles/test_memHA_ScratchCache_3.out \
+	tests/refFiles/test_memHA_ScratchCache_4.out \
+	tests/refFiles/test_memHA_ScratchDirect.out \
+	tests/refFiles/test_memHA_ScratchNetwork.out \
+	tests/refFiles/test_memHA_StdMem_flush.out \
+	tests/refFiles/test_memHA_StdMem_mmio3.out \
+	tests/refFiles/test_memHA_StdMem_nic.out \
+	tests/refFiles/test_memHA_StdMem.out \
 	tests/refFiles/test_memHA_StdMem_mmio2.out \
 	tests/refFiles/test_memHA_StdMem_mmio.out \
 	tests/refFiles/test_memHA_StdMem_noninclusive.out \
 	tests/refFiles/test_memHA_ThroughputThrottling.out \
-    tests/refFiles/test_memHierarchy_sdl2_1.out \
-    tests/refFiles/test_memHierarchy_sdl3_1.out \
-    tests/refFiles/test_memHierarchy_sdl3_2.out \
-    tests/refFiles/test_memHierarchy_sdl3_3.out \
-    tests/refFiles/test_memHierarchy_sdl4_1.out \
-    tests/refFiles/test_memHierarchy_sdl4_2.out \
-    tests/refFiles/test_memHierarchy_sdl4_2_ramulator.out \
-    tests/refFiles/test_memHierarchy_sdl5_1.out \
-    tests/refFiles/test_memHierarchy_sdl5_1_MC.out \
-    tests/refFiles/test_memHierarchy_sdl5_1_ramulator.out \
-    tests/refFiles/test_memHierarchy_sdl5_1_ramulator_MC.out \
-    tests/refFiles/test_memHierarchy_sdl8_1.out \
-    tests/refFiles/test_memHierarchy_sdl8_3.out \
-    tests/refFiles/test_memHierarchy_sdl8_4.out \
-    tests/refFiles/test_memHierarchy_sdl9_1.out \
-    tests/refFiles/test_memHierarchy_sdl9_2.out \
-    tests/refFiles/test_memHierarchy_sdl_1.out \
-    tests/refFiles/test_memHierarchy_sdl_2.out \
-    tests/refFiles/test_memHierarchy_sdl_3.out \
-    tests/refFiles/test_OMP_noncacheable_ompapi.out \
-    tests/refFiles/test_OMP_noncacheable_ompatomic.out \
-    tests/refFiles/test_OMP_noncacheable_ompbarrier.out \
-    tests/refFiles/test_OMP_noncacheable_ompcritical.out \
-    tests/refFiles/test_OMP_noncacheable_ompdynamic.out \
-    tests/refFiles/test_OMP_noncacheable_ompreduce.out \
-    tests/refFiles/test_OMP_noncacheable_ompthrcount.out \
-    tests/refFiles/test_OMP_noncacheable_omptriangle.out \
-    tests/refFiles/test_OMP_ompapi.out \
-    tests/refFiles/test_OMP_ompatomic.out \
-    tests/refFiles/test_OMP_ompatomicShort.out \
-    tests/refFiles/test_OMP_ompbarrier.out \
-    tests/refFiles/test_OMP_ompcritical.out \
-    tests/refFiles/test_OMP_ompdynamic.out \
-    tests/refFiles/test_OMP_ompmybarrier.out \
-    tests/refFiles/test_OMP_ompreduce.out \
-    tests/refFiles/test_OMP_ompthrcount.out \
-    tests/refFiles/test_OMP_omptriangle.out \
-    tests/openMP/ompapi/ompapi \
-    tests/openMP/ompatomic/ompatomic \
-    tests/openMP/ompatomicShort/ompatomicShort \
-    tests/openMP/ompbarrier/ompbarrier \
-    tests/openMP/ompcritical/ompcritical \
-    tests/openMP/ompdynamic/ompdynamic \
-    tests/openMP/ompmybarrier/ompmybarrier \
-    tests/openMP/ompreduce/ompreduce \
-    tests/openMP/ompthrcount/ompthrcount \
-    tests/openMP/omptriangle/omptriangle \
-    tests/openMP/dir-non-cacheable-8cores-2nodes.py \
-    tests/openMP/directory-8cores-2nodes.py \
-    tests/openMP/noncacheable-openmp.py \
-    tests/openMP/openmp.py \
-    tests/openMP/sweepdirectory-8cores-2nodes.py \
-    tests/openMP/sweepdirectory-exclusive.py \
-    tests/openMP/sweepopenmp.py \
-    tests/openMP/test-distributed-caches.py
+	tests/refFiles/test_memHierarchy_sdl2_1.out \
+	tests/refFiles/test_memHierarchy_sdl3_1.out \
+	tests/refFiles/test_memHierarchy_sdl3_2.out \
+	tests/refFiles/test_memHierarchy_sdl3_3.out \
+	tests/refFiles/test_memHierarchy_sdl4_1.out \
+	tests/refFiles/test_memHierarchy_sdl4_2.out \
+	tests/refFiles/test_memHierarchy_sdl4_2_ramulator.out \
+	tests/refFiles/test_memHierarchy_sdl5_1.out \
+	tests/refFiles/test_memHierarchy_sdl5_1_MC.out \
+	tests/refFiles/test_memHierarchy_sdl5_1_ramulator.out \
+	tests/refFiles/test_memHierarchy_sdl5_1_ramulator_MC.out \
+	tests/refFiles/test_memHierarchy_sdl8_1.out \
+	tests/refFiles/test_memHierarchy_sdl8_3.out \
+	tests/refFiles/test_memHierarchy_sdl8_4.out \
+	tests/refFiles/test_memHierarchy_sdl9_1.out \
+	tests/refFiles/test_memHierarchy_sdl9_2.out \
+	tests/refFiles/test_memHierarchy_sdl_1.out \
+	tests/refFiles/test_memHierarchy_sdl_2.out \
+	tests/refFiles/test_memHierarchy_sdl_3.out \
+	tests/refFiles/test_OMP_noncacheable_ompapi.out \
+	tests/refFiles/test_OMP_noncacheable_ompatomic.out \
+	tests/refFiles/test_OMP_noncacheable_ompbarrier.out \
+	tests/refFiles/test_OMP_noncacheable_ompcritical.out \
+	tests/refFiles/test_OMP_noncacheable_ompdynamic.out \
+	tests/refFiles/test_OMP_noncacheable_ompreduce.out \
+	tests/refFiles/test_OMP_noncacheable_ompthrcount.out \
+	tests/refFiles/test_OMP_noncacheable_omptriangle.out \
+	tests/refFiles/test_OMP_ompapi.out \
+	tests/refFiles/test_OMP_ompatomic.out \
+	tests/refFiles/test_OMP_ompatomicShort.out \
+	tests/refFiles/test_OMP_ompbarrier.out \
+	tests/refFiles/test_OMP_ompcritical.out \
+	tests/refFiles/test_OMP_ompdynamic.out \
+	tests/refFiles/test_OMP_ompmybarrier.out \
+	tests/refFiles/test_OMP_ompreduce.out \
+	tests/refFiles/test_OMP_ompthrcount.out \
+	tests/refFiles/test_OMP_omptriangle.out \
+	tests/openMP/ompapi/ompapi \
+	tests/openMP/ompatomic/ompatomic \
+	tests/openMP/ompatomicShort/ompatomicShort \
+	tests/openMP/ompbarrier/ompbarrier \
+	tests/openMP/ompcritical/ompcritical \
+	tests/openMP/ompdynamic/ompdynamic \
+	tests/openMP/ompmybarrier/ompmybarrier \
+	tests/openMP/ompreduce/ompreduce \
+	tests/openMP/ompthrcount/ompthrcount \
+	tests/openMP/omptriangle/omptriangle \
+	tests/openMP/dir-non-cacheable-8cores-2nodes.py \
+	tests/openMP/directory-8cores-2nodes.py \
+	tests/openMP/noncacheable-openmp.py \
+	tests/openMP/openmp.py \
+	tests/openMP/sweepdirectory-8cores-2nodes.py \
+	tests/openMP/sweepdirectory-exclusive.py \
+	tests/openMP/sweepopenmp.py \
+	tests/openMP/test-distributed-caches.py
 
 sstdir = $(includedir)/sst/elements/memHierarchy
 nobase_sst_HEADERS = \
@@ -368,7 +368,7 @@ libmemHierarchy_la_LIBADD += $(RAMULATOR_LIB)
 libmemHierarchy_la_SOURCES += membackend/ramulatorBackend.cc \
 	membackend/ramulatorBackend.h
 nobase_sst_HEADERS += membackend/ramulatorBackend.h
-AM_CPPFLAGS += $(RAMULATOR_CPPFLAGS) -DHAVE_LIBRAMULATOR
+CPPFLAGS += $(RAMULATOR_CPPFLAGS) -DHAVE_LIBRAMULATOR
 endif
 
 if HAVE_DRAMSIM
@@ -377,7 +377,7 @@ libmemHierarchy_la_LIBADD += $(DRAMSIM_LIB)
 libmemHierarchy_la_SOURCES += membackend/dramSimBackend.cc \
 	membackend/dramSimBackend.h
 nobase_sst_HEADERS += membackend/dramSimBackend.h
-AM_CPPFLAGS += $(DRAMSIM_CPPFLAGS) -DHAVE_LIBDRAMSIM
+CPPFLAGS += $(DRAMSIM_CPPFLAGS) -DHAVE_LIBDRAMSIM
 
 libmemHierarchy_la_SOURCES += membackend/pagedMultiBackend.cc \
 	membackend/pagedMultiBackend.h
@@ -391,7 +391,7 @@ libmemHierarchy_la_LIBADD += $(DRAMSIM3_LIB)
 libmemHierarchy_la_SOURCES += membackend/dramSim3Backend.cc \
 	membackend/dramSim3Backend.h
 nobase_sst_HEADERS += membackend/dramSim3Backend.h
-AM_CPPFLAGS += $(DRAMSIM3_CPPFLAGS) -DHAVE_LIBDRAMSIM3
+CPPFLAGS += $(DRAMSIM3_CPPFLAGS) -DHAVE_LIBDRAMSIM3
 
 endif
 
@@ -401,7 +401,7 @@ libmemHierarchy_la_LIBADD += $(HBMDRAMSIM_LIB)
 libmemHierarchy_la_SOURCES += membackend/HBMdramSimBackend.cc \
 	membackend/HBMdramSimBackend.h
 nobase_sst_HEADERS += membackend/HBMdramSimBackend.h
-AM_CPPFLAGS += $(HBMDRAMSIM_CPPFLAGS) -DHAVE_LIBHBMDRAMSIM
+CPPFLAGS += $(HBMDRAMSIM_CPPFLAGS) -DHAVE_LIBHBMDRAMSIM
 
 libmemHierarchy_la_SOURCES += membackend/HBMpagedMultiBackend.cc \
 	membackend/HBMpagedMultiBackend.h
@@ -415,13 +415,13 @@ libmemHierarchy_la_LIBADD += $(HYBRIDSIM_LIB)
 libmemHierarchy_la_SOURCES += membackend/hybridSimBackend.cc \
 	membackend/hybridSimBackend.h
 nobase_sst_HEADERS += membackend/hybridSimBackend.h
-AM_CPPFLAGS += $(HYBRIDSIM_CPPFLAGS) -DHAVE_LIBHYBRIDSIM
+CPPFLAGS += $(HYBRIDSIM_CPPFLAGS) -DHAVE_LIBHYBRIDSIM
 endif
 
 if USE_LIBZ
 libmemHierarchy_la_LDFLAGS += $(LIBZ_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(LIBZ_LIB)
-AM_CPPFLAGS += $(LIBZ_CPPFLAGS)
+CPPFLAGS += $(LIBZ_CPPFLAGS)
 endif
 
 if USE_GOBLIN_HMCSIM
@@ -431,7 +431,7 @@ libmemHierarchy_la_SOURCES += \
 nobase_sst_HEADERS += membackend/goblinHMCBackend.h
 libmemHierarchy_la_LDFLAGS += $(GOBLIN_HMCSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(GOBLIN_HMCSIM_LIB)
-AM_CPPFLAGS += $(GOBLIN_HMCSIM_CPPFLAGS) -DHAVE_GOBLIN_HMCSIM
+CPPFLAGS += $(GOBLIN_HMCSIM_CPPFLAGS) -DHAVE_GOBLIN_HMCSIM
 endif
 
 
@@ -442,10 +442,10 @@ libmemHierarchy_la_SOURCES += \
 	membackend/flashSimBackend.h
 libmemHierarchy_la_LDFLAGS += $(FDSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(FDSIM_LIB)
-AM_CPPFLAGS += $(FDSIM_CPPFLAGS) $(FDSIM_CXXFLAGS) -DHAVE_LIBFDSIM
+CPPFLAGS += $(FDSIM_CPPFLAGS) $(FDSIM_CXXFLAGS) -DHAVE_LIBFDSIM
 endif
 
-AM_CPPFLAGS += $(HMC_FLAG)
+CPPFLAGS += $(HMC_FLAG)
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) DRAMSIM LIBDIR=$(DRAMSIM_LIBDIR)

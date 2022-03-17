@@ -2,7 +2,7 @@
 #
 #
 
-AM_CPPFLAGS = \
+CPPFLAGS += \
 	$(MPI_CPPFLAGS) \
 	-I$(top_srcdir)/src
 
@@ -25,8 +25,4 @@ libcacheTracer_la_LDFLAGS = -module -avoid-version
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     cacheTracer=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      cacheTracer=$(abs_srcdir)/tests
-
-##########################################################################
-##########################################################################
-##########################################################################
 

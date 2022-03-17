@@ -1,5 +1,8 @@
+# -*- Makefile -*-
+#
+#
 
-AM_CPPFLAGS = \
+CPPFLAGS += \
 	-I$(top_srcdir)/src \
 	$(MPI_CPPFLAGS)
 

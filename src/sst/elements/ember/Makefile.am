@@ -1,5 +1,8 @@
+# -*- Makefile -*-
+#
+#
 
-AM_CPPFLAGS = \
+CPPFLAGS += \
 	$(MPI_CPPFLAGS) \
 	-I$(top_srcdir)/src/sst/elements/ember/sirius/include \
 	-I$(top_srcdir)/src \
@@ -297,12 +300,12 @@ EXTRA_DIST = \
 	tests/qos-fattree.sh \
 	tests/qos-hyperx.sh \
 	tests/qos.load \
-    tests/refFiles/ESshmem_cumulative.out \
-    tests/refFiles/test_EmberSweep.out \
-    tests/refFiles/test_embernightly.out \
-    tests/refFiles/test_qos-dragonfly.out \
-    tests/refFiles/test_qos-fattree.out \
-    tests/refFiles/test_qos-hyperx.out
+	tests/refFiles/ESshmem_cumulative.out \
+	tests/refFiles/test_EmberSweep.out \
+	tests/refFiles/test_embernightly.out \
+	tests/refFiles/test_qos-dragonfly.out \
+	tests/refFiles/test_qos-fattree.out \
+	tests/refFiles/test_qos-hyperx.out
 
 if USE_EMBER_CONTEXTS
 libember_la_SOURCES += \

@@ -2,7 +2,8 @@
 #
 #
 
-AM_CPPFLAGS = $(MPI_CPPFLAGS) \
+CPPFLAGS += \
+	$(MPI_CPPFLAGS) \
 	-I$(top_srcdir)/src
 
 
@@ -19,7 +20,7 @@ libthornhill_la_SOURCES = \
 	singleThread.cc
 
 nobase_sst_HEADERS = \
-    detailedCompute.h \
+	detailedCompute.h \
 	memoryHeapEvent.h\
 	memoryHeapLink.h \
 	types.h
