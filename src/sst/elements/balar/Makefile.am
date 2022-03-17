@@ -1,7 +1,7 @@
-AM_CPPFLAGS = \
-	$(MPIT_CPPFLAGS)
+# -*- Makefile -*-
+#
+#
 
-AM_LDFLAGS = -lm
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libbalar.la
 
@@ -30,6 +30,7 @@ libbalar_la_CPPFLAGS = \
 	$(CUDA_CPPFLAGS)
 
 libbalar_la_LDFLAGS = \
+	-lm \
 	-avoid-version
 
 libbalar_la_LIBADD = \

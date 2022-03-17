@@ -1,18 +1,21 @@
+# -*- Makefile -*-
+#
+#
 
-AM_CPPFLAGS = \
-        $(MPI_CPPFLAGS) \
+CPPFLAGS += \
+	$(MPI_CPPFLAGS) \
 	-I$(top_srcdir)/src
 
 if HAVE_SET_PTRACER
-AM_CPPFLAGS += "-DHAVE_SET_PTRACER=1"
+CPPFLAGS += "-DHAVE_SET_PTRACER=1"
 endif
 
 if HAVE_PIN3
-AM_CPPFLAGS += $(PINTOOL_CPPFLAGS)
-AM_CPPFLAGS += "-DHAVE_PINCRT=1 "
+CPPFLAGS += $(PINTOOL_CPPFLAGS)
+CPPFLAGS += "-DHAVE_PINCRT=1 "
 else
 if HAVE_PINTOOL
-AM_CPPFLAGS += $(PINTOOL_CPPFLAGS)
+CPPFLAGS += $(PINTOOL_CPPFLAGS)
 endif
 endif
 
@@ -80,7 +83,7 @@ libariel_la_LIBADD = $(SHM_LIB)
 if USE_LIBZ
 libariel_la_LDFLAGS += $(LIBZ_LDFLAGS)
 libariel_la_LIBADD += $(LIBZ_LIB)
-AM_CPPFLAGS += $(LIBZ_CPPFLAGS)
+CPPFLAGS += $(LIBZ_CPPFLAGS)
 libariel_la_SOURCES += arielgzbintracegen.h arielgzbintracegen.cc
 endif
 
@@ -95,14 +98,13 @@ endif
 endif
 
 if USE_CUDA
-AM_CPPFLAGS += $(CUDA_CPPFLAGS)
+CPPFLAGS += $(CUDA_CPPFLAGS)
 endif
 
 libariel_la_CPPFLAGS = \
 	-DARIEL_TRACE_LIB=$(libdir)/sst \
         -DARIEL_TOOL_DIR="$(libexecdir)" \
-	-DPINTOOL_EXECUTABLE="$(PINTOOL_RUNTIME)" \
-	$(CPPFLAGS) $(AM_CPPFLAGS)
+	-DPINTOOL_EXECUTABLE="$(PINTOOL_RUNTIME)"
 
 sstdir = $(includedir)/sst/elements/ariel
 nobase_sst_HEADERS = \
@@ -175,7 +177,7 @@ fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
 	$(CXX) -g -Wall -Werror -Wno-unknown-pragmas -D__PIN__=1 -DPIN_CRT=1 \
 	    -fno-stack-protector -fno-exceptions -funwind-tables -fasynchronous-unwind-tables -fno-rtti \
 	    -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX -fabi-version=2 \
-	    $(CPPFLAGS) \
+	    $(AM_CPPFLAGS) $(CPPFLAGS) \
 	    -I$(top_srcdir)/src/sst/elements/ariel \
 	    -I$(PINTOOL_DIR)/source/include/pin \
 	    -I$(PINTOOL_DIR)/source/include/pin/gen \
@@ -215,7 +217,7 @@ fesimple.so : fesimple.o
 	    -ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB) $(CUDA_LDFLAGS)
 
 fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) \
+	$(CXX) $(CXXFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) \
 	    $(LIBZ_CPPFLAGS) \
 	    $(CUDA_CPPFLAGS) \
 	    -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX \

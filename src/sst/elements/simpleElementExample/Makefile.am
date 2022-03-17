@@ -2,7 +2,7 @@
 #
 #
 
-AM_CPPFLAGS = \
+CPPFLAGS += \
 	$(MPI_CPPFLAGS)
 
 compdir = $(pkglibdir)
@@ -61,8 +61,5 @@ install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     simpleElementExample=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      simpleElementExample=$(abs_srcdir)/tests
 
-##########################################################################
-##########################################################################
-##########################################################################
 
 

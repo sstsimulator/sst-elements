@@ -2,7 +2,7 @@
 #
 #
 
-AM_CPPFLAGS = \
+CPPFLAGS += \
 	$(MPI_CPPFLAGS) \
 	-I$(top_srcdir)/src
 
@@ -27,12 +27,12 @@ EXTRA_DIST = \
 	tests/streamcpu-nbp.py \
 	tests/streamcpu-nopf.py \
 	tests/streamcpu-sp.py \
-    tests/refFiles/test_cassini_prefetch.out \
-    tests/refFiles/test_cassini_prefetch_nbp.out \
-    tests/refFiles/test_cassini_prefetch_nopf.out \
-    tests/refFiles/test_cassini_prefetch_pp.out \
-    tests/refFiles/test_cassini_prefetch_sp.out \
-    tests/refFiles/test_cassini_stride_prefetch.out
+	tests/refFiles/test_cassini_prefetch.out \
+	tests/refFiles/test_cassini_prefetch_nbp.out \
+	tests/refFiles/test_cassini_prefetch_nopf.out \
+	tests/refFiles/test_cassini_prefetch_pp.out \
+	tests/refFiles/test_cassini_prefetch_sp.out \
+	tests/refFiles/test_cassini_stride_prefetch.out
 
 libcassini_la_LDFLAGS = -module -avoid-version
 

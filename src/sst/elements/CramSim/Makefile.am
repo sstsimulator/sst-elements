@@ -2,7 +2,7 @@
 #
 #
 
-AM_CPPFLAGS = \
+CPPFLAGS += \
 	$(MPI_CPPFLAGS)
 
 compdir = $(pkglibdir)
@@ -93,17 +93,17 @@ EXTRA_DIST = \
 	tests/VeriMem/test_verimem1.py \
 	tests/test_txngen.py \
 	tests/test_txntrace.py \
-    tests/refFiles/test_CramSim_1_R.out \
-    tests/refFiles/test_CramSim_1_RW.out \
-    tests/refFiles/test_CramSim_1_W.out \
-    tests/refFiles/test_CramSim_2_R.out \
-    tests/refFiles/test_CramSim_2_W.out \
-    tests/refFiles/test_CramSim_4_R.out \
-    tests/refFiles/test_CramSim_4_W.out \
-    tests/refFiles/test_CramSim_5_R.out \
-    tests/refFiles/test_CramSim_5_W.out \
-    tests/refFiles/test_CramSim_6_R.out \
-    tests/refFiles/test_CramSim_6_W.out
+	tests/refFiles/test_CramSim_1_R.out \
+	tests/refFiles/test_CramSim_1_RW.out \
+	tests/refFiles/test_CramSim_1_W.out \
+	tests/refFiles/test_CramSim_2_R.out \
+	tests/refFiles/test_CramSim_2_W.out \
+	tests/refFiles/test_CramSim_4_R.out \
+	tests/refFiles/test_CramSim_4_W.out \
+	tests/refFiles/test_CramSim_5_R.out \
+	tests/refFiles/test_CramSim_5_W.out \
+	tests/refFiles/test_CramSim_6_R.out \
+	tests/refFiles/test_CramSim_6_W.out
 
 
 libCramSim_la_LDFLAGS = -module -avoid-version
@@ -112,6 +112,4 @@ install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     CramSim=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      CramSim=$(abs_srcdir)/tests
 
-##########################################################################
-##########################################################################
-##########################################################################
+
