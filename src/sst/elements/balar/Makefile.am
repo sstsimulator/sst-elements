@@ -16,7 +16,9 @@ libbalar_la_SOURCES = \
 	balar_event.h \
 	cuda_runtime_api.h \
 	balar.cc \
-	balar.h
+	balar.h \
+	balarMMIO.cc \
+	balarMMIO.h
 
 EXTRA_DIST = \
 	tests/ariel-gpu-v100.cfg \
@@ -28,6 +30,12 @@ EXTRA_DIST = \
 	tests/vectorAdd/Makefile \
 	tests/refFiles/test_gpgpu_vectorAdd.out
 
+libbalar_la_CPPFLAGS = \
+	-I$(top_srcdir)/src \
+	$(SST_CXX0X_FLAGS) -fPIC -Wall \
+	$(MPI_CPPFLAGS) \
+	$(CUDA_CPPFLAGS) \
+	-fdiagnostics-color=always
 
 libbalar_la_LDFLAGS = \
 	-lm \
