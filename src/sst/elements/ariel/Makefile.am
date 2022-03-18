@@ -178,7 +178,7 @@ fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
 	$(CXX) -g -Wall -Werror -Wno-unknown-pragmas -D__PIN__=1 -DPIN_CRT=1 \
 	    -fno-stack-protector -fno-exceptions -funwind-tables -fasynchronous-unwind-tables -fno-rtti \
 	    -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX -fabi-version=2 \
-	    $(CPPFLAGS) \
+	    $(AM_CPPFLAGS) $(CPPFLAGS) \
 	    -I$(top_srcdir)/src/sst/elements/ariel \
 	    -I$(PINTOOL_DIR)/source/include/pin \
 	    -I$(PINTOOL_DIR)/source/include/pin/gen \
