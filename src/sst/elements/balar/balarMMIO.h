@@ -22,6 +22,7 @@
 #include <sst/core/interfaces/stdMem.h>
 #include <sst/core/rng/marsaglia.h>
 
+#include "sst/elements/memHierarchy/util.h"
 #include "sst/elements/memHierarchy/memTypes.h"
 
 // Other Includes, from original balar file
@@ -47,6 +48,7 @@ using namespace std;
 using namespace SST;
 using namespace SST::Interfaces;
 using namespace SST::BalarComponent;
+using namespace SST::MemHierarchy;
 
 namespace SST {
 namespace BalarComponent {
@@ -131,6 +133,7 @@ protected:
 
         void intToData(int32_t num, std::vector<uint8_t>* data);
         int32_t dataToInt(std::vector<uint8_t>* data);
+        uint64_t dataToUInt64(std::vector<uint8_t>* data);
 
         uint32_t tx_buffer;
         BalarMMIO* mmio;
@@ -153,6 +156,20 @@ private:
 
     // The squared value
     int32_t squared;
+    // Return value from cuda function call
+    cudaError_t cuda_ret;
+
+    struct cache_req_params {
+        cache_req_params( unsigned m_core_id,  void* mem_fetch, StandardMem::Request* req) {
+                core_id = m_core_id;
+                mem_fetch_pointer = mem_fetch;
+                original_sst_req = req;
+        }
+
+        void* mem_fetch_pointer;
+        unsigned core_id;
+        StandardMem::Request* original_sst_req;
+    };
 
     // If this device also is testing memory accesses, these are used
     uint32_t mem_access;

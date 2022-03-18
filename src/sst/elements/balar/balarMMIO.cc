@@ -15,7 +15,6 @@
 
 #include <sst_config.h>
 #include "balarMMIO.h"
-#include "util.h"
 
 
 using namespace SST;
@@ -23,10 +22,25 @@ using namespace SST::Interfaces;
 using namespace SST::MemHierarchy;
  
 /* Example MMIO device */
-StandardMMIO::StandardMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
+BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
 
     // Output for warnings
-    out.init("", params.find<int>("verbose", 1), 0, Output::STDOUT);
+    out.init("BalarMMIOComponent[@f:@l:@p] ", params.find<int>("verbose", 1), 0, Output::STDOUT);
+
+    // Configurations for GPU
+    cpu_core_count = (uint32_t) params.find<uint32_t>("cpu_cores", 1);
+    gpu_core_count = (uint32_t) params.find<uint32_t>("gpu_cores", 1);
+    latency = (uint32_t) params.find<uint32_t>("latency", 1);
+    maxPendingTransCore = (uint32_t) params.find<uint32_t>("maxtranscore", 16);
+    maxPendingCacheTrans = (uint32_t) params.find<uint32_t>("maxcachetrans", 512);
+
+    // Ensure that GPGP-sim has the same as SST gpu cores
+    SST_gpgpusim_numcores_equal_check(gpu_core_count);
+    pending_transactions_count = 0;
+    remainingTransfer = 0;
+    totalTransfer = 0;
+    ackTransfer = 0;
+    transferNumber = 0;
 
     bool found = false;
 
@@ -44,8 +58,21 @@ StandardMMIO::StandardMMIO(ComponentId_t id, Params &params) : SST::Component(id
     }
     TimeConverter* tc = getTimeConverter(clockfreq);
 
+    // Bind tick function
+    registerClock(tc, new Clock::Handler<BalarMMIO>(this, &BalarMMIO::clockTic));
+
+    // Link names
+    char* link_buffer = (char*) malloc(sizeof(char) * 256);
+    char* link_buffer_mem = (char*) malloc(sizeof(char) * 256);
+    char* link_cache_buffer = (char*) malloc(sizeof(char) * 256);
+
+    // Buffer to keep track of pending transactions
+    pendingTransactions = new std::unordered_map<StandardMem::Request::id_t, StandardMem::Request*>();
+    gpuCachePendingTransactions = new std::unordered_map<StandardMem::Request::id_t, cache_req_params>();
+
+    // Interface to CPU
     iface = loadUserSubComponent<SST::Interfaces::StandardMem>("iface", ComponentInfo::SHARE_NONE, tc, 
-            new StandardMem::Handler<StandardMMIO>(this, &StandardMMIO::handleEvent));
+            new StandardMem::Handler<BalarMMIO>(this, &BalarMMIO::handleEvent));
     
     if (!iface) {
         out.fatal(CALL_INFO, -1, "%s, Error: No interface found loaded into 'iface' subcomponent slot. Please check input file\n", getName().c_str());
@@ -53,87 +80,38 @@ StandardMMIO::StandardMMIO(ComponentId_t id, Params &params) : SST::Component(id
 
     iface->setMemoryMappedAddressRegion(mmio_addr, 1);
 
+    // TODO GPU Cache interface?
+
     handlers = new mmioHandlers(this, &out);
-
-    // Configure access types
-    // Default is just accepting reads/writes
-    // But this component can also issue memory accesses
-    mem_access = params.find<uint32_t>("mem_accesses", false);
-    if (mem_access > 0) {
-        // Need an RNG so we can generate memory addresses
-        rng = *(new SST::RNG::MarsagliaRNG(21, 101));
-
-        // Need a clock so that we can decide whether to issue requests on each clock
-        registerClock(tc, new Clock::Handler<StandardMMIO>(this, &StandardMMIO::clockTic));
-
-        // Don't end simulation until we've finished sending requests & receiving responses
-        primaryComponentDoNotEndSim();
-
-        // Figure out max address we can give a memory access
-        bool found;
-        max_addr = params.find<Addr>("max_addr", 0, found);
-        if (!found) {
-            out.fatal(CALL_INFO, -1, "%s, Error: Invalid param, 'max_addr' must be specified if mem_accesses > 0\n", 
-                    getName().c_str());
-        }
-
-        // Register related statistics
-        statReadLatency = registerStatistic<uint64_t>("read_latency");
-        statWriteLatency = registerStatistic<uint64_t>("write_latency");
-    }
 }
 
-void StandardMMIO::init(unsigned int phase) {
+void BalarMMIO::init(unsigned int phase) {
     iface->init(phase);
 }
 
-void StandardMMIO::setup() {
+void BalarMMIO::setup() {
     iface->setup();
 }
 
-bool StandardMMIO::clockTic(Cycle_t cycle) {
-    // Decide whether to send a request
-    if (mem_access > 0) {
-        uint32_t req = rng.generateNextUInt32() % 10;
-        if (req < 2) {
-            // Issue read
-            Addr addr = ((rng.generateNextUInt64() % max_addr)>>2) << 2;
-            StandardMem::Request* req = new Interfaces::StandardMem::Read(addr, 4);
-            out.verbose(CALL_INFO, 2, 0, "%s: %d Issued Read for address 0x%" PRIx64 "\n", getName().c_str(), mem_access, addr);
-        
-            requests.insert(std::make_pair(req->getID(), std::make_pair(getCurrentSimTime(), "Read")));
-            iface->send(req);
-            mem_access--;
-
-        } else if (req < 4) {
-            // Issue write
-            Addr addr = (rng.generateNextUInt64() % max_addr);
-            addr = (addr / iface->getLineSize()) * iface->getLineSize();
-            std::vector<uint8_t> payload;
-            payload.resize(iface->getLineSize(), 0);
-            StandardMem::Request* req = new Interfaces::StandardMem::Write(addr, iface->getLineSize(), payload);
-            out.verbose(CALL_INFO, 2, 0, "%s: %d Issued Write for address 0x%" PRIx64 "\n", getName().c_str(), mem_access, addr);
-            mem_access--;
-        }
-    }
-    if (mem_access == 0) { 
-        return true; // Stop clock
-    }
-    return false; // Do not stop clock
+bool BalarMMIO::clockTic(Cycle_t cycle) {
+    bool done = SST_gpu_core_cycle();
+    return done;
 }
 
-void StandardMMIO::handleEvent(StandardMem::Request* req) {
+void BalarMMIO::handleEvent(StandardMem::Request* req) {
+    // incoming CPU request, handle using mmioHandlers
     req->handle(handlers);
 }
 
-/* Handler for incoming Write requests */
-void StandardMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write) {
+/* Handler for incoming Write requests, passing the function arguments */
+void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write) {
 
     // Convert 8 bytes of the payload into an int
     std::vector<uint8_t> buff = write->data;
-    int32_t value = dataToInt(&buff);
-    mmio->squared = value*value;
-    out->verbose(_INFO_, "Handle Write. Squared is %d\n", mmio->squared);
+    uint64_t value = dataToUInt64(&buff);
+    // TODO Write converter for all function calls?
+    mmio->cuda_ret = (cudaError_t) value; // For testing purpose
+    out->verbose(_INFO_, "Handle Write. Enum is %d\n", mmio->cuda_ret);
 
     /* Send response (ack) if needed */
     if (!(write->posted)) {
@@ -143,11 +121,11 @@ void StandardMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* wri
 }
 
 /* Handler for incoming Read requests */
-void StandardMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Read* read) {
-    out->verbose(_INFO_, "Handle Read. Returning %d\n", mmio->squared);
+void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Read* read) {
+    out->verbose(_INFO_, "Handle Read. Returning %d\n", mmio->cuda_ret);
 
     vector<uint8_t> payload;
-    int32_t value = mmio->squared;
+    cudaError_t value = mmio->cuda_ret;
     intToData(value, &payload);
 
     payload.resize(read->size, 0); // A bit silly if size != sizeof(int) but that's the CPU's problem
@@ -160,36 +138,38 @@ void StandardMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Read* read
 }
 
 /* Handler for incoming Read responses - should be a response to a Read we issued */
-void StandardMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* resp) {
-    std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = mmio->requests.find(resp->getID());
-    if ( mmio->requests.end() == i ) {
-        out->fatal(CALL_INFO, -1, "Event (%" PRIx64 ") not found!\n", resp->getID());
-    } else {
-        SimTime_t et = mmio->getCurrentSimTime() - i->second.first;
-        mmio->statReadLatency->addData(et);
-        mmio->requests.erase(i);
-    }
-    delete resp;
-    if (mmio->mem_access == 0 && mmio->requests.empty())
-        mmio->primaryComponentOKToEndSim();
+void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* resp) {
+    // TODO Do nothing rn
+    // std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = mmio->requests.find(resp->getID());
+    // if ( mmio->requests.end() == i ) {
+    //     out->fatal(CALL_INFO, -1, "Event (%" PRIx64 ") not found!\n", resp->getID());
+    // } else {
+    //     SimTime_t et = mmio->getCurrentSimTime() - i->second.first;
+    //     mmio->statReadLatency->addData(et);
+    //     mmio->requests.erase(i);
+    // }
+    // delete resp;
+    // if (mmio->mem_access == 0 && mmio->requests.empty())
+    //     mmio->primaryComponentOKToEndSim();
 }
 
 /* Handler for incoming Write responses - should be a response to a Write we issued */
-void StandardMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::WriteResp* resp) {
-    std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = mmio->requests.find(resp->getID());
-    if (mmio->requests.end() == i) {
-        out->fatal(CALL_INFO, -1, "Event (%" PRIx64 ") not found!\n", resp->getID());
-    } else {
-        SimTime_t et = mmio->getCurrentSimTime() - i->second.first;
-        mmio->statWriteLatency->addData(et);
-        mmio->requests.erase(i);
-    }
-    delete resp;
-    if (mmio->mem_access == 0 && mmio->requests.empty())
-        mmio->primaryComponentOKToEndSim();
+void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::WriteResp* resp) {
+    // TODO Do nothing rn
+    // std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = mmio->requests.find(resp->getID());
+    // if (mmio->requests.end() == i) {
+    //     out->fatal(CALL_INFO, -1, "Event (%" PRIx64 ") not found!\n", resp->getID());
+    // } else {
+    //     SimTime_t et = mmio->getCurrentSimTime() - i->second.first;
+    //     mmio->statWriteLatency->addData(et);
+    //     mmio->requests.erase(i);
+    // }
+    // delete resp;
+    // if (mmio->mem_access == 0 && mmio->requests.empty())
+    //     mmio->primaryComponentOKToEndSim();
 }
 
-void StandardMMIO::mmioHandlers::intToData(int32_t num, vector<uint8_t>* data) {
+void BalarMMIO::mmioHandlers::intToData(int32_t num, vector<uint8_t>* data) {
     data->clear();
     for (int i = 0; i < sizeof(int); i++) {
         data->push_back(num & 0xFF);
@@ -197,7 +177,7 @@ void StandardMMIO::mmioHandlers::intToData(int32_t num, vector<uint8_t>* data) {
     }
 }
 
-int32_t StandardMMIO::mmioHandlers::dataToInt(vector<uint8_t>* data) {
+int32_t BalarMMIO::mmioHandlers::dataToInt(vector<uint8_t>* data) {
     int32_t retval = 0;
     for (int i = data->size(); i > 0; i--) {
         retval <<= 8;
@@ -206,9 +186,18 @@ int32_t StandardMMIO::mmioHandlers::dataToInt(vector<uint8_t>* data) {
     return retval;
 }
 
-void StandardMMIO::printStatus(Output &statusOut) {
-    statusOut.output("MemHierarchy::StandardMMIO %s\n", getName().c_str());
+uint64_t BalarMMIO::mmioHandlers::dataToUInt64(vector<uint8_t>* data) {
+    uint64_t retval = 0;
+    for (int i = data->size(); i > 0; i--) {
+        retval <<= 8;
+        retval |= (*data)[i-1];
+    }
+    return retval;
+}
+
+void BalarMMIO::printStatus(Output &statusOut) {
+    statusOut.output("Balar::BalarMMIO %s\n", getName().c_str());
     statusOut.output("    Register: %d\n", squared);
     iface->printStatus(statusOut);
-    statusOut.output("End MemHierarchy::StandardMMIO\n\n");
+    statusOut.output("End Balar::BalarMMIO\n\n");
 }
