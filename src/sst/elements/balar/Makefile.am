@@ -13,7 +13,10 @@ libbalar_la_SOURCES = \
 	balar.cc \
 	balar.h \
 	balarMMIO.cc \
-	balarMMIO.h
+	balarMMIO.h \
+	testcpu/gpu_enum.h \
+	testcpu/balarTestCPU.h \
+	testcpu/balarTestCPU.cc
 
 EXTRA_DIST = \
 	tests/ariel-gpu-v100.cfg \
