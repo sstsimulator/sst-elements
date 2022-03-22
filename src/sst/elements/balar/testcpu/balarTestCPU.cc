@@ -67,6 +67,7 @@ balarTestCPU::balarTestCPU(ComponentId_t id, Params& params) :
         sst_assert(mmioAddr > maxAddr, CALL_INFO, -1, "incompatible parameters: mmio_addr must be >= memSize (mmio above physical memory addresses).\n");
     }
 
+    // TODO: Start and end range for gpu
     gpuAddr = params.find<uint64_t>("gpu_addr", "0", found);  // range for gpu address space
     if (found) {
         sst_assert(gpuAddr > mmioAddr, CALL_INFO, -1, "incompatible parameters: gpu_addr must be >= mmio_addr (gpu_addr above mmio).\n");
@@ -81,6 +82,7 @@ balarTestCPU::balarTestCPU(ComponentId_t id, Params& params) :
     sst_assert(found, CALL_INFO, -1, "%s, Error: parameter 'opCount' was not provided\n", getName().c_str());
 
     /* Frequency of different ops */
+    // TODO Change to CUDA calls?
     unsigned readf = params.find<unsigned>("read_freq", 25);
     unsigned writef = params.find<unsigned>("write_freq", 75);
     unsigned flushf = params.find<unsigned>("flush_freq", 0);
@@ -405,4 +407,5 @@ Interfaces::StandardMem::Request* balarTestCPU::createGPUReq() {
     num_gpu_issued->addData(1);
     out.output("GPU request sent %s\n", getName().c_str());
     out.output("Function %d\n", funcType);
+    return req;
 }

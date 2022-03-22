@@ -108,7 +108,7 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
 
     // Convert 8 bytes of the payload into an int
     std::vector<uint8_t> buff = write->data;
-    uint64_t value = dataToUInt64(&buff);
+    int32_t value = dataToInt(&buff);
     // TODO Write converter for all function calls?
     mmio->cuda_ret = (cudaError_t) value; // For testing purpose
     out->verbose(_INFO_, "Handle Write. Enum is %d\n", mmio->cuda_ret);

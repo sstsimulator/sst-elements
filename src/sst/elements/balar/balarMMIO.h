@@ -59,7 +59,7 @@ namespace BalarComponent {
 
 class BalarMMIO : public SST::Component {
 public:
-    SST_ELI_REGISTER_COMPONENT(BalarMMIO, "balar", "balar", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_COMPONENT(BalarMMIO, "balar", "balarMMIO", SST_ELI_ELEMENT_VERSION(1,0,0),
         "GPGPU simulator based on GPGPU-Sim via MMIO interface", COMPONENT_CATEGORY_PROCESSOR)
     SST_ELI_DOCUMENT_PARAMS( 
         {"verbose",                 "(uint) Determine how verbose the output from the device is", "0"},

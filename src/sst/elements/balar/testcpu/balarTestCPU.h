@@ -94,66 +94,6 @@ public:
     void finish() override;
     void emergencyShutdown() override;
 
-    typedef struct _gpuCall {
-        uint8_t func;
-        // TODO: union for gpu call's parameters
-        // union {
-        //     struct {
-        //         char filename[256];
-        //     } register_fatbin;
-        //     struct {
-        //         uint64_t fat_cubin_handle;
-        //         uint64_t host_fun;
-        //         char device_fun[256];
-        //     } register_function;
-        //     struct {
-        //         void** dev_ptr;
-        //         size_t size;
-        //     } cuda_malloc;
-        //     struct {
-        //         uint64_t dst;
-        //         uint64_t src;
-        //         size_t count;
-        //         uint8_t kind;
-        //     } cuda_memcpy;
-        //     struct {
-        //         unsigned int gdx;
-        //         unsigned int gdy;
-        //         unsigned int gdz;
-        //         unsigned int bdx;
-        //         unsigned int bdy;
-        //         unsigned int bdz;
-        //         size_t sharedMem;
-        //         cudaStream_t stream;
-        //     } cfg_call;
-        //     struct {
-        //         uint64_t address;
-        //         uint8_t value[200];
-        //         size_t size;
-        //         size_t offset;
-        //     } set_arg;
-        //     struct {
-        //         uint64_t func;
-        //     } cuda_launch;
-        //     struct {
-        //         uint64_t fatCubinHandle;
-        //         uint64_t hostVar; //pointer to...something
-        //         char deviceName[256]; //name of variable
-        //         int ext;
-        //         int size;
-        //         int constant;
-        //         int global;
-        //     } register_var;
-        //     struct {
-        //         int numBlock;
-        //         uint64_t hostFunc;
-        //         int blockSize;
-        //         size_t dynamicSMemSize;
-        //         int flags;
-        //     } max_active_block;
-        // };
-    } gpuCall;
-
 private:
     void handleEvent( Interfaces::StandardMem::Request *ev );
     virtual bool clockTic( SST::Cycle_t );
@@ -212,6 +152,19 @@ private:
     Interfaces::StandardMem::Request* createMMIOWrite();
     Interfaces::StandardMem::Request* createMMIORead();
     Interfaces::StandardMem::Request* createGPUReq();
+
+    // TODO: CUDA Calls request generator functions
+    Interfaces::StandardMem::Request* createCudaMalloc();
+    Interfaces::StandardMem::Request* createCudaRegisterFatBinary();
+    Interfaces::StandardMem::Request* createCudaRegisterFunction();
+    Interfaces::StandardMem::Request* createCudaMemcpy();
+    Interfaces::StandardMem::Request* createCudaConfigureCall();
+    Interfaces::StandardMem::Request* createCudaSetupArgument();
+    Interfaces::StandardMem::Request* createCudaLaunch();
+    Interfaces::StandardMem::Request* createCudaFree();
+    Interfaces::StandardMem::Request* createCudaGetLastError();
+    Interfaces::StandardMem::Request* createCudaRegisterVar();
+    Interfaces::StandardMem::Request* createCudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags();
 };
 
 }
