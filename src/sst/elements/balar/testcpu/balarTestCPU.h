@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef MEMHIERARCHY_BALAR_TEST_CPU_H
-#define MEMHIERARCHY_BALAR_TEST_CPU_H
+#ifndef BALAR_BALAR_TEST_CPU_H
+#define BALAR_BALAR_TEST_CPU_H
 
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
@@ -34,19 +34,19 @@
 #include "builtin_types.h"
 #include "driver_types.h"
 
-#include "sst/elements/memHierarchy/util.h"
+#include <sst/elements/memHierarchy/util.h>
 
 using namespace SST::Statistics;
-
+using namespace SST::MemHierarchy;
 namespace SST {
-namespace MemHierarchy {
+namespace BalarComponent {
 using Req = SST::Interfaces::StandardMem::Request;
 
 class balarTestCPU : public SST::Component {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_COMPONENT(balarTestCPU, "memHierarchy", "balarTestCPU", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Simple demo CPU for testing", COMPONENT_CATEGORY_PROCESSOR)
+    SST_ELI_REGISTER_COMPONENT(balarTestCPU, "balar", "balarTestCPU", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Simple demo CPU for testing balar", COMPONENT_CATEGORY_PROCESSOR)
 
     SST_ELI_DOCUMENT_PARAMS(
         {"memFreq",                 "(int) Average cycles between memory operations."},
@@ -216,4 +216,4 @@ private:
 
 }
 }
-#endif /* _BALAR_TEST_CPU_H */
+#endif /* BALAR_BALAR_TEST_CPU_H */

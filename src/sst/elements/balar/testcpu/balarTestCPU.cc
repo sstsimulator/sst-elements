@@ -21,11 +21,12 @@
 #include <sst/core/interfaces/stringEvent.h>
 #include "testcpu/gpu_enum.h"
 
-#include "sst/elements/memHierarchy/util.h"
+#include <sst/elements/memHierarchy/util.h>
 
 using namespace SST;
 using namespace SST::Interfaces;
 using namespace SST::MemHierarchy;
+using namespace SST::BalarComponent;
 using namespace SST::Statistics;
 
 /* Constructor */
