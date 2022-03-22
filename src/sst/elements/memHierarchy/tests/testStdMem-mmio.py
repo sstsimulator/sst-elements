@@ -37,8 +37,6 @@ cpu.addParams({
       "opCount" : "1000",
       "memFreq" : "4",
       "memSize" : "1KiB",
-      "mmio_freq" : 15,
-      "mmio_addr" : mmio_addr, # Just above memory addresses
       "clock" : clock,
       "verbose" : 3,
 })
