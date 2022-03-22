@@ -8,16 +8,19 @@ AC_DEFUN([SST_CHECK_OTF],
 
   AS_IF([test "$with_otf" = "no"], [sst_check_otf_happy="no"])
 
+  CXXFLAGS_saved=$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
+  LIBS_saved="$LIBS"
 
   AS_IF([test "$sst_check_otf_happy" = "yes"], [
     AS_IF([test ! -z "$with_otf" -a "$with_otf" != "yes"],
       [OTF_PATH="$with_otf/bin/:$PATH"
        OTF_CPPFLAGS="-I$with_otf/include"
-       CPPFLAGS="$OTF_CPPFLAGS $CPPFLAGS"
+       CPPFLAGS="$OTF_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
+       CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
        OTF_LDFLAGS="-L$with_otf/lib"
-       LDFLAGS="$OTF_LDFLAGS $LDFLAGS"],
+       LDFLAGS="$OTF_LDFLAGS $AM_LDFLAGS $LDFLAGS"],
       [OTF_CPPFLAGS=
        OTF_LDFLAGS=])])
   
@@ -26,8 +29,10 @@ AC_DEFUN([SST_CHECK_OTF],
   AS_IF([test "x$OTF_CONFIG_TOOL" = "x"],
 		[sst_check_otf_happy="no"])
 
+  CXXFLAGS="$CXXFLAGS_saved"
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
+  LIBS="$LIBS_saved"
 
   AC_SUBST([OTF_CPPFLAGS])
   AC_SUBST([OTF_LDFLAGS])

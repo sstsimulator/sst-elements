@@ -8,16 +8,18 @@ AC_DEFUN([SST_CHECK_DUMPI],
 
   AS_IF([test "$with_dumpi" = "no"], [sst_check_dumpi_happy="no"])
 
+  CXXFLAGS_saved=$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
 
   AS_IF([test "$sst_check_dumpi_happy" = "yes"], [
     AS_IF([test ! -z "$with_dumpi" -a "$with_dumpi" != "yes"],
       [DUMPI_CPPFLAGS="-I$with_dumpi/include"
-       CPPFLAGS="$DUMPI_CPPFLAGS $CPPFLAGS"
+       CPPFLAGS="$DUMPI_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
+       CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
        DUMPI_LDFLAGS="-L$with_dumpi/lib"
        DUMPI_LIB="-lundumpi",
-       LDFLAGS="$DUMPI_LDFLAGS $LDFLAGS"],
+       LDFLAGS="$DUMPI_LDFLAGS $AM_LDFLAGS $LDFLAGS"],
       [DUMPI_CPPFLAGS=
        DUMPI_LDFLAGS=
        DUMPI_LIB=])])
@@ -29,6 +31,7 @@ AC_DEFUN([SST_CHECK_DUMPI],
   AC_CHECK_LIB([undumpi], [undumpi_open],
     [DUMPI_LIB="-lundumpi"], [sst_check_dumpi_happy="no"])
 
+  CXXFLAGS="$CXXFLAGS_saved"
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
 
