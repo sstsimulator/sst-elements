@@ -7,16 +7,18 @@ AC_DEFUN([SST_CHECK_RAMULATOR], [
   sst_check_ramulator_happy="yes"
   AS_IF([test "$with_ramulator" = "no"], [sst_check_ramulator_happy="no"])
 
+  CXXFLAGS_saved=$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"
 
   AS_IF([test ! -z "$with_ramulator" -a "$with_ramulator" != "yes"],
     [RAMULATOR_CPPFLAGS="-I$with_ramulator/src -DRAMULATOR -DHAVE_RAMULATOR"
-     CPPFLAGS="$RAMULATOR_CPPFLAGS $CPPFLAGS"
+     CPPFLAGS="$RAMULATOR_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
+     CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
      RAMULATOR_LDFLAGS="-L$with_ramulator"
      RAMULATOR_LIBDIR="$with_ramulator"
-     LDFLAGS="$RAMULATOR_LDFLAGS $LDFLAGS"],
+     LDFLAGS="$RAMULATOR_LDFLAGS $AM_LDFLAGS $LDFLAGS"],
     [RAMULATOR_CPPFLAGS=
      RAMULATOR_LDFLAGS=
      RAMULATOR_LIBDIR=])
@@ -27,6 +29,7 @@ AC_DEFUN([SST_CHECK_RAMULATOR], [
     [RAMULATOR_LIB="-lramulator"], [sst_check_ramulator_happy="no"])
   AC_LANG_POP(C++)
 
+  CXXFLAGS="$CXXFLAGS_saved"
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
   LIBS="$LIBS_saved"
