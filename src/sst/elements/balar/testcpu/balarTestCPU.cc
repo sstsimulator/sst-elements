@@ -14,14 +14,15 @@
 // distribution.
 
 #include <sst_config.h>
-#include "testcpu/balarTestCPU.h"
 
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
-#include "testcpu/gpu_enum.h"
 
 #include <sst/elements/memHierarchy/util.h>
+
+#include "testcpu/balarTestCPU.h"
+#include "util.h"
 
 using namespace SST;
 using namespace SST::Interfaces;
@@ -38,7 +39,7 @@ balarTestCPU::balarTestCPU(ComponentId_t id, Params& params) :
     uint32_t z_seed = params.find<uint32_t>("rngseed", 7);
     rng.restart(z_seed, 13);
 
-    out.init("", params.find<unsigned int>("verbose", 1), 0, Output::STDOUT);
+    out.init("BalarTestCPU[@f:@l:@p] ", params.find<unsigned int>("verbose", 1), 0, Output::STDOUT);
     
     bool found;
 
@@ -69,9 +70,9 @@ balarTestCPU::balarTestCPU(ComponentId_t id, Params& params) :
 
     // TODO: Start and end range for gpu
     gpuAddr = params.find<uint64_t>("gpu_addr", "0", found);  // range for gpu address space
-    if (found) {
-        sst_assert(gpuAddr > mmioAddr, CALL_INFO, -1, "incompatible parameters: gpu_addr must be >= mmio_addr (gpu_addr above mmio).\n");
-    }
+    // if (found) {
+    //     sst_assert(gpuAddr > mmioAddr, CALL_INFO, -1, "incompatible parameters: gpu_addr must be >= mmio_addr (gpu_addr above mmio).\n");
+    // }
 
     
 
@@ -397,15 +398,18 @@ void balarTestCPU::emergencyShutdown() {
     }
 }
 
+// TODO: Test requester by generating cuda call id
+// TODO: Need a function to convert struct to vector uint8_t and vice versa
 Interfaces::StandardMem::Request* balarTestCPU::createGPUReq() {
-    std::vector<uint8_t> data;
+    balarCudaCallPacket_t *pack_ptr = new balarCudaCallPacket_t();
     uint8_t funcType = rng.generateNextUInt32() % 11 + 1;
-    funcType = funcType * 2 - 1;
-    data.push_back(funcType);
-    StandardMem::Request* req = new Interfaces::StandardMem::Write(gpuAddr, 1, data, false);
+    enum GpuApi_t cuda_call_id = (enum GpuApi_t)(funcType * 2 - 1);
+    pack_ptr->cuda_call_id = cuda_call_id; 
+    vector<uint8_t> *buffer = encode_balar_packet(pack_ptr);
+
+    StandardMem::Request* req = new Interfaces::StandardMem::Write(gpuAddr, buffer->size(), *buffer, false);
     // TODO: Write Request for parameters to gpu address
     num_gpu_issued->addData(1);
-    out.output("GPU request sent %s\n", getName().c_str());
-    out.output("Function %d\n", funcType);
+    out.verbose(_INFO_, "GPU request sent %s Function enum %s\n", getName().c_str(), gpu_api_to_string(cuda_call_id)->c_str());
     return req;
 }

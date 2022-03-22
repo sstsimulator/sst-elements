@@ -15,6 +15,7 @@
 
 #include <sst_config.h>
 #include "balarMMIO.h"
+#include "util.h"
 
 
 using namespace SST;
@@ -108,12 +109,13 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
 
     // Convert 8 bytes of the payload into an int
     std::vector<uint8_t> buff = write->data;
-    int32_t value = dataToInt(&buff);
+    balarCudaCallPacket_t *pack_ptr = decode_balar_packet(&buff);
     // TODO Write converter for all function calls?
-    mmio->cuda_ret = (cudaError_t) value; // For testing purpose
-    out->verbose(_INFO_, "Handle Write. Enum is %d\n", mmio->cuda_ret);
+    mmio->cuda_ret = (cudaError_t) pack_ptr->cuda_call_id; // For testing purpose
+    out->verbose(_INFO_, "Handle Write. Enum is %s\n", gpu_api_to_string(pack_ptr->cuda_call_id)->c_str());
 
     /* Send response (ack) if needed */
+    // TODO Use this to send cuda call ret val?
     if (!(write->posted)) {
         mmio->iface->send(write->makeResponse());
     }

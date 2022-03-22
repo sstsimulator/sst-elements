@@ -12,15 +12,17 @@ libbalar_la_SOURCES = \
 	cuda_runtime_api.h \
 	balar.cc \
 	balar.h \
+	util.cc \
+	util.h \
 	balarMMIO.cc \
 	balarMMIO.h \
-	testcpu/gpu_enum.h \
 	testcpu/balarTestCPU.h \
 	testcpu/balarTestCPU.cc
 
 EXTRA_DIST = \
 	tests/ariel-gpu-v100.cfg \
 	tests/cuda-test.py \
+	tests/testBalar-simple.py \
 	tests/gpgpusim.config \
 	tests/testsuite_default_balar.py \
 	tests/utils.py \

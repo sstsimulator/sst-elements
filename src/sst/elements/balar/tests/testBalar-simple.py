@@ -65,11 +65,19 @@ cpu.addParams({
       "opCount" : "1000",
       "memFreq" : "4",
       "memSize" : "1KiB",
-      "mmio_freq" : 15,
-      "mmio_addr" : mmio_addr, # Just above memory addresses
       "clock" : clock,
       "verbose" : 3,
-      "gpuAddr": mmio_addr,
+      "mmio_addr" : mmio_addr, # Just above memory addresses
+      "gpu_addr": mmio_addr,
+      
+      "read_freq" : 0,
+      "write_freq" : 0,
+      "flush_freq" : 0,
+      "flushinv_freq" : 0,
+      "custom_freq" : 0,
+      "llsc_freq" : 0,
+      "mmio_freq" : 0,
+      "gpu_freq" : 100,
 })
 iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 iface.addParams(debug_params)
