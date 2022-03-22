@@ -6,17 +6,19 @@ AC_DEFUN([SST_CHECK_CUDA],
     [AS_HELP_STRING([--with-cuda@<:@=DIR@:>@],
       [Specify the root directory for CUDA])])
 
+  CXXFLAGS_saved=$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"
 
   AS_IF([test ! -z "$with_cuda" -a "$with_cuda" != "yes"],
          [CUDA_CPPFLAGS="-I$with_cuda/include -DHAVE_CUDA=1"
-            CPPFLAGS="$CUDA_CPPFLAGS $CPPFLAGS"
+            CPPFLAGS="$CUDA_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
+            CXXFLAGS="$CUDA_CXXFLAGS $AM_CXXFLAGS $CXXFLAGS"
             CUDA_LDFLAGS=""
             CUDA_LIBDIR="$with_cuda/lib64"
             CUDA_LIBS="-L$CUDA_LIBDIR"
-            LDFLAGS="$CUDA_LDFLAGS $LDFLAGS"],
+            LDFLAGS="$CUDA_LDFLAGS $AM_LDFLAGS $LDFLAGS"],
          [CUDA_CPPFLAGS=
             CUDA_LDFLAGS=
             CUDA_LIBDIR=
@@ -46,6 +48,7 @@ AC_DEFUN([SST_CHECK_CUDA],
   LIBS="$LIBS_saved"
   AC_LANG_POP(C++)
 
+  CXXFLAGS="$CXXFLAGS_saved"
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
   LIBS="$LIBS_saved"

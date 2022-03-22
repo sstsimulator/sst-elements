@@ -8,15 +8,17 @@ AC_DEFUN([SST_CHECK_QSIM],[
 
   AS_IF([test "$with_qsim" = "no"], [sst_check_qsim_happy="no"])
 
+  CXXFLAGS_saved=$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"
 
   AS_IF([test ! -z "$with_qsim" -a "$with_qsim" != "yes"],
     [QSIM_CPPFLAGS="-I$with_qsim/include"
-     CPPFLAGS="$QSIM_CPPFLAGS $CPPFLAGS"
+     CPPFLAGS="$QSIM_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
+     CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
      QSIM_LDFLAGS="-L$with_qsim/lib"
-     LDFLAGS="$QSIM_LDFLAGS $LDFLAGS"
+     LDFLAGS="$QSIM_LDFLAGS $AM_LDFLAGS $LDFLAGS"
      QSIM_LIBDIR="$with_qsim/lib"],
     [QSIM_CPPFLAGS=
      QSIM_LDFLAGS=
@@ -28,6 +30,7 @@ AC_DEFUN([SST_CHECK_QSIM],[
     [QSIM_LIBS="-lqsim"], [sst_check_qsim_happy="no"])
   AC_LANG_POP(C++)
 
+  CXXFLAGS="$CXXFLAGS_saved"
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
   LIBS="$LIBS_saved"

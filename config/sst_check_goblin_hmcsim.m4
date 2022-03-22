@@ -8,16 +8,18 @@ AC_DEFUN([SST_CHECK_GOBLIN_HMCSIM],
 
   AS_IF([test "$with_goblin_hmcsim" = "no"], [sst_check_goblin_hmcsim_happy="no"])
 
+  CXXFLAGS_saved=$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
 
   AS_IF([test "$sst_check_goblin_hmcsim_happy" = "yes"], [
     AS_IF([test ! -z "$with_goblin_hmcsim" -a "$with_goblin_hmcsim" != "yes"],
       [GOBLIN_HMCSIM_CPPFLAGS="-I$with_goblin_hmcsim/include"
-       CPPFLAGS="$GOBLIN_HMCSIM_CPPFLAGS $CPPFLAGS"
+       CPPFLAGS="$GOBLIN_HMCSIM_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
+       CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
        GOBLIN_HMCSIM_LDFLAGS="-L$with_goblin_hmcsim/lib -L$with_goblin_hmcsim"
        GOBLIN_HMCSIM_LIB="-lhmcsim",
-       LDFLAGS="$GOBLIN_HMCSIM_LDFLAGS $LDFLAGS"
+       LDFLAGS="$GOBLIN_HMCSIM_LDFLAGS $AM_LDFLAGS $LDFLAGS"
        GOBLIN_HMCSIM_LIBDIR="$with_goblin_hmcsim"],
       [GOBLIN_HMCSIM_CPPFLAGS=
        GOBLIN_HMCSIM_LDFLAGS=
@@ -31,6 +33,7 @@ AC_DEFUN([SST_CHECK_GOBLIN_HMCSIM],
   AC_CHECK_LIB([hmcsim], [hmcsim_clock],
     [GOBLIN_HMCSIM_LIB="-lhmcsim"], [sst_check_goblin_hmcsim_happy="no"])
 
+  CXXFLAGS="$CXXFLAGS_saved"
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
 

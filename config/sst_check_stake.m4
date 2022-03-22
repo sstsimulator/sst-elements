@@ -8,16 +8,19 @@ AC_DEFUN([SST_CHECK_STAKE],
 
   AS_IF([test "$with_stake" = "no"], [sst_check_stake_happy="no"])
 
+  CXXFLAGS_saved=$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
+  LIBS_saved="$LIBS"
 
   AS_IF([test "$sst_check_stake_happy" = "yes"], [
     AS_IF([test ! -z "$with_stake" -a "$with_stake" != "yes"],
       [STAKE_CPPFLAGS="-I$with_stake/include -I$with_stake/include/spike -I$with_stake/include/fesvr -I$with_stake/riscv64-unknown-elf/include/riscv-pk"
-       CPPFLAGS="$STAKE_CPPFLAGS $CPPFLAGS"
+       CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
+       CPPFLAGS="$STAKE_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
        STAKE_LDFLAGS="-L$with_stake/lib -L$with_stake"
        STAKE_LIB="-lriscv -lpthread -lfesvr -ldl",
-       LDFLAGS="$STAKE_LDFLAGS $LDFLAGS"
+       LDFLAGS="$STAKE_LDFLAGS $AM_LDFLAGS $LDFLAGS"
        STAKE_LIBDIR="$with_stake/lib"],
       [STAKE_CPPFLAGS=
        STAKE_LDFLAGS=
@@ -31,8 +34,10 @@ AC_DEFUN([SST_CHECK_STAKE],
   AC_CHECK_LIB([riscv], [_ZN5sim_t3runEv],
       [STAKE_LIB="-lriscv -lfesvr -lsoftfloat"], [sst_check_stake_happy="no"], [-lfesvr -lsoftfloat])
 
+  CXXFLAGS="$CXXFLAGS_saved"
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
+  LIBS="$LIBS_saved"
 
   AC_SUBST([STAKE_CPPFLAGS])
   AC_SUBST([STAKE_LDFLAGS])

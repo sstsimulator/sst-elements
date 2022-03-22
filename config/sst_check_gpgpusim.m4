@@ -6,9 +6,10 @@ AC_DEFUN([SST_CHECK_GPGPUSIM],
       [AS_HELP_STRING([--with-gpgpusim@<:@=DIR@:>@],
          [Specify the root directory for GPGPU-Sim])])
 
-   CPPFLAGS_saved="$CPPFLAGS"
-   LDFLAGS_saved="$LDFLAGS"
-   LIBS_saved="$LIBS"
+  CXXFLAGS_saved=$CXXFLAGS"
+  CPPFLAGS_saved="$CPPFLAGS"
+  LDFLAGS_saved="$LDFLAGS"
+  LIBS_saved="$LIBS"
 
    #Need Cuda
    AS_IF([test "$sst_check_gpgpusim_happy" = "no"],
@@ -28,10 +29,11 @@ AC_DEFUN([SST_CHECK_GPGPUSIM],
 
    AS_IF([test ! -z "$with_gpgpusim" -a "$with_gpgpusim" != "yes"],
          [GPGPUSIM_CPPFLAGS=""
-            CPPFLAGS="$GPGPUSIM_CPPFLAGS $CPPFLAGS"
+            CPPFLAGS="$GPGPUSIM_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
+            CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
             GPGPUSIM_LIBDIR="$with_gpgpusim/$GPGPUSIM_LIB_DIR"
             GPGPUSIM_LDFLAGS="-L$GPGPUSIM_LIBDIR"
-            LDFLAGS="$GPGPUSIM_LDFLAGS $LDFLAGS"],
+            LDFLAGS="$GPGPUSIM_LDFLAGS $AM_LDFLAGS $LDFLAGS"],
          [GPGPUSIM_CPPFLAGS=
             GPGPUSIM_LDFLAGS=
             GPGPUSIM_LIBDIR=
@@ -55,9 +57,10 @@ AC_DEFUN([SST_CHECK_GPGPUSIM],
    #)
    #AC_LANG_POP(C++)
 
-   CPPFLAGS="$CPPFLAGS_saved"
-   LDFLAGS="$LDFLAGS_saved"
-   LIBS="$LIBS_saved"
+  CXXFLAGS="$CXXFLAGS_saved"
+  CPPFLAGS="$CPPFLAGS_saved"
+  LDFLAGS="$LDFLAGS_saved"
+  LIBS="$LIBS_saved"
 
    AC_SUBST([GPGPUSIM_CPPFLAGS])
    AC_SUBST([GPGPUSIM_LDFLAGS])
