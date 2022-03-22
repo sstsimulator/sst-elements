@@ -1,0 +1,4 @@
+*.out
+*.tmp
+*.log
+sst_test_outputs/
