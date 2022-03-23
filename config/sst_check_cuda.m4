@@ -6,7 +6,7 @@ AC_DEFUN([SST_CHECK_CUDA],
     [AS_HELP_STRING([--with-cuda@<:@=DIR@:>@],
       [Specify the root directory for CUDA])])
 
-  CXXFLAGS_saved=$CXXFLAGS"
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"

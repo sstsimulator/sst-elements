@@ -7,7 +7,7 @@ AC_DEFUN([SST_CHECK_RAMULATOR], [
   sst_check_ramulator_happy="yes"
   AS_IF([test "$with_ramulator" = "no"], [sst_check_ramulator_happy="no"])
 
-  CXXFLAGS_saved=$CXXFLAGS"
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"

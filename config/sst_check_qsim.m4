@@ -8,7 +8,7 @@ AC_DEFUN([SST_CHECK_QSIM],[
 
   AS_IF([test "$with_qsim" = "no"], [sst_check_qsim_happy="no"])
 
-  CXXFLAGS_saved=$CXXFLAGS"
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"

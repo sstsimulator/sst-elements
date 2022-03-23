@@ -8,7 +8,7 @@ AC_DEFUN([SST_CHECK_GOBLIN_HMCSIM],
 
   AS_IF([test "$with_goblin_hmcsim" = "no"], [sst_check_goblin_hmcsim_happy="no"])
 
-  CXXFLAGS_saved=$CXXFLAGS"
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
 

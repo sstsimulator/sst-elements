@@ -7,7 +7,7 @@ AC_DEFUN([SST_CHECK_CHDL],[
   sst_check_chdl_happy="yes"
   AS_IF([test "$with_chdl" = "no"], [sst_check_chdl_happy="no"])
 
-  CXXFLAGS_saved=$CXXFLAGS"
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"

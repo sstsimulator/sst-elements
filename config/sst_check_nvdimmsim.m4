@@ -7,7 +7,7 @@ AC_DEFUN([SST_CHECK_NVDIMMSIM], [
   sst_check_nvdimmsim_happy="yes"
   AS_IF([test "$with_nvdimmsim" = "no"], [sst_check_nvdimmsim_happy="no"])
 
-  CXXFLAGS_saved=$CXXFLAGS"
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"
