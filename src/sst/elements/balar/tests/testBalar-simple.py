@@ -60,7 +60,7 @@ mmio_addr = 1024
 
 
 # Define the simulation components
-cpu = sst.Component("cpu", "balar.balarTestCPU")
+cpu = sst.Component("cpu", "balar.BalarTestCPU")
 cpu.addParams({
       "opCount" : "1000",
       "memFreq" : "4",

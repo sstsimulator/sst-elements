@@ -32,6 +32,7 @@
 #include "driver_types.h"
 #include "cuda_runtime_api.h"
 #include "balar_event.h"
+#include "util.h"
 
 
 #include <cstring>
@@ -131,11 +132,15 @@ protected:
         virtual void handle(StandardMem::ReadResp* resp) override;
         virtual void handle(StandardMem::WriteResp* resp) override;
 
+        // Converter for testing purpose
         void intToData(int32_t num, std::vector<uint8_t>* data);
         int32_t dataToInt(std::vector<uint8_t>* data);
         uint64_t dataToUInt64(std::vector<uint8_t>* data);
 
-        uint32_t tx_buffer;
+        // TODO
+        // void cudaErrorToData(cudaError_t err, std::vector<uint8_t>* data);
+        
+        // TODO Change to a more descriptive name?
         BalarMMIO* mmio;
     };
 
@@ -154,10 +159,13 @@ protected:
 
 private:
 
-    // The squared value
-    int32_t squared;
-    // Return value from cuda function call
+    // Last cuda call info
+    // Return value from last cuda function call
     cudaError_t cuda_ret;
+
+    // Last cuda function call packet
+    BalarCudaCallPacket_t *last_packet;
+
 
     struct cache_req_params {
         cache_req_params( unsigned m_core_id,  void* mem_fetch, StandardMem::Request* req) {

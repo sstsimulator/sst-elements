@@ -35,17 +35,18 @@
 #include "driver_types.h"
 
 #include <sst/elements/memHierarchy/util.h>
+#include "util.h"
 
 using namespace SST::Statistics;
 using namespace SST::MemHierarchy;
 namespace SST {
-namespace BalarComponent {
+namespace BalarComponent { 
 using Req = SST::Interfaces::StandardMem::Request;
 
-class balarTestCPU : public SST::Component {
+class BalarTestCPU : public SST::Component {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_COMPONENT(balarTestCPU, "balar", "balarTestCPU", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_COMPONENT(BalarTestCPU, "balar", "BalarTestCPU", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Simple demo CPU for testing balar", COMPONENT_CATEGORY_PROCESSOR)
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -88,7 +89,7 @@ public:
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( { "memory", "Interface to memory hierarchy", "SST::Interfaces::StandardMem" } )
 
 /* Begin class definition */
-    balarTestCPU(SST::ComponentId_t id, SST::Params& params);
+    BalarTestCPU(SST::ComponentId_t id, SST::Params& params);
     void init(unsigned int phase) override;
     void setup() override;
     void finish() override;
@@ -154,6 +155,7 @@ private:
     Interfaces::StandardMem::Request* createGPUReq();
 
     // TODO: CUDA Calls request generator functions
+    Interfaces::StandardMem::Request* checkCudaReturn();
     Interfaces::StandardMem::Request* createCudaMalloc();
     Interfaces::StandardMem::Request* createCudaRegisterFatBinary();
     Interfaces::StandardMem::Request* createCudaRegisterFunction();
@@ -165,6 +167,24 @@ private:
     Interfaces::StandardMem::Request* createCudaGetLastError();
     Interfaces::StandardMem::Request* createCudaRegisterVar();
     Interfaces::StandardMem::Request* createCudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags();
+
+    // TODO: Create a handler class here to handle incoming requests?
+    // TODO: Like the one for the balarMMIO
+    class mmioHandlers : public Interfaces::StandardMem::RequestHandler {
+        public:
+            friend class BalarTestCPU;
+            mmioHandlers(BalarTestCPU* cpu, SST::Output* out) : Interfaces::StandardMem::RequestHandler(out), cpu(cpu) {}
+
+            virtual ~mmioHandlers() {}
+            // Only need to handle read and write response
+            // virtual void handle(StandardMem::Read* read) override;
+            // virtual void handle(StandardMem::Write* write) override;
+            virtual void handle(Interfaces::StandardMem::ReadResp* resp) override;
+            virtual void handle(Interfaces::StandardMem::WriteResp* resp) override;
+
+            BalarTestCPU* cpu;
+    };
+    mmioHandlers* handlers;
 };
 
 }

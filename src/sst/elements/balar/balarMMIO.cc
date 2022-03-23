@@ -46,7 +46,8 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
     bool found = false;
 
     // Initialize registers
-    squared = 0;
+    cuda_ret = cudaSuccess;
+    last_packet = nullptr;
 
     // Memory address
     mmio_addr = params.find<uint64_t>("base_addr", 0);
@@ -104,44 +105,57 @@ void BalarMMIO::handleEvent(StandardMem::Request* req) {
     req->handle(handlers);
 }
 
-/* Handler for incoming Write requests, passing the function arguments */
+/**
+ * @brief Handler for incoming Write requests, passing
+ *        the cuda function call arguments.
+ *        GPGPUSIM will be called and the corresponding
+ *        return value will be stored.
+ * 
+ * @param write 
+ */
 void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write) {
-
     // Convert 8 bytes of the payload into an int
     std::vector<uint8_t> buff = write->data;
-    balarCudaCallPacket_t *pack_ptr = decode_balar_packet(&buff);
-    // TODO Write converter for all function calls?
-    mmio->cuda_ret = (cudaError_t) pack_ptr->cuda_call_id; // For testing purpose
-    out->verbose(_INFO_, "Handle Write. Enum is %s\n", gpu_api_to_string(pack_ptr->cuda_call_id)->c_str());
+
+    // Get cuda call arguments
+    mmio->last_packet = decode_balar_packet(&buff);
+
+    out->verbose(_INFO_, "Handling Write. Enum is %s\n", gpu_api_to_string(mmio->last_packet->cuda_call_id)->c_str());
+
+    // TODO: actually passed argument to and call gpgpusim
+    // mmio->cuda_ret = (cudaError_t) pack_ptr->cuda_call_id; // For testing purpose
 
     /* Send response (ack) if needed */
-    // TODO Use this to send cuda call ret val?
     if (!(write->posted)) {
         mmio->iface->send(write->makeResponse());
     }
     delete write;
 }
 
-/* Handler for incoming Read requests */
+/**
+ * @brief Handler for return value query
+ * 
+ * @param read 
+ */
 void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Read* read) {
-    out->verbose(_INFO_, "Handle Read. Returning %d\n", mmio->cuda_ret);
+    out->verbose(_INFO_, "Handle Read for return value. Returning %d\n", mmio->cuda_ret);
 
-    vector<uint8_t> payload;
-    cudaError_t value = mmio->cuda_ret;
-    intToData(value, &payload);
+    vector<uint8_t> *payload = encode_balar_packet(mmio->last_packet);
+    // cudaErrorToData(mmio->cuda_ret, &payload);
 
-    payload.resize(read->size, 0); // A bit silly if size != sizeof(int) but that's the CPU's problem
+    payload->resize(read->size, 0); // A bit silly if size != sizeof(int) but that's the CPU's problem
 
     // Make a response. Must fill in payload.
     StandardMem::ReadResp* resp = static_cast<StandardMem::ReadResp*>(read->makeResponse());
-    resp->data = payload;
+    resp->data = *payload;
     mmio->iface->send(resp);
     delete read;
 }
 
 /* Handler for incoming Read responses - should be a response to a Read we issued */
 void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* resp) {
-    // TODO Do nothing rn
+    // TODO Do nothing rn since we do not issue read
+    // TODO But might need this in future to handle read from gpu cache?
     // std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = mmio->requests.find(resp->getID());
     // if ( mmio->requests.end() == i ) {
     //     out->fatal(CALL_INFO, -1, "Event (%" PRIx64 ") not found!\n", resp->getID());
@@ -157,7 +171,8 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* res
 
 /* Handler for incoming Write responses - should be a response to a Write we issued */
 void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::WriteResp* resp) {
-    // TODO Do nothing rn
+    // TODO Do nothing rn since we do not issue write
+    // TODO But might need this in future to handle write to gpu cache?
     // std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = mmio->requests.find(resp->getID());
     // if (mmio->requests.end() == i) {
     //     out->fatal(CALL_INFO, -1, "Event (%" PRIx64 ") not found!\n", resp->getID());
@@ -199,7 +214,7 @@ uint64_t BalarMMIO::mmioHandlers::dataToUInt64(vector<uint8_t>* data) {
 
 void BalarMMIO::printStatus(Output &statusOut) {
     statusOut.output("Balar::BalarMMIO %s\n", getName().c_str());
-    statusOut.output("    Register: %d\n", squared);
-    iface->printStatus(statusOut);
+    // statusOut.output("    Register: %d\n", squared);
+    // iface->printStatus(statusOut);
     statusOut.output("End Balar::BalarMMIO\n\n");
 }
