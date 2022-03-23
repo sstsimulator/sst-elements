@@ -54,7 +54,8 @@ namespace BalarComponent {
 
     
     // TODO: Make this into a class with additional serialization methods?
-    typedef struct balarCudaCallPacket {
+    // TODO: Make this into subclass of standardmem::request? and override the makeResponse function?
+    typedef struct BalarCudaCallPacket {
         enum GpuApi_t cuda_call_id;
         union {
             struct {
@@ -125,10 +126,10 @@ namespace BalarComponent {
                 unsigned int flags;
             } max_active_block;
         };
-    } balarCudaCallPacket_t;
+    } BalarCudaCallPacket_t;
 
-    vector<uint8_t>* encode_balar_packet(balarCudaCallPacket_t *pack_ptr);
-    balarCudaCallPacket_t* decode_balar_packet(vector<uint8_t> *buffer);
+    vector<uint8_t>* encode_balar_packet(BalarCudaCallPacket_t *pack_ptr);
+    BalarCudaCallPacket_t* decode_balar_packet(vector<uint8_t> *buffer);
     string* gpu_api_to_string(enum GpuApi_t api);
 }
 }

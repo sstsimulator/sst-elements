@@ -22,7 +22,7 @@ namespace SST {
 namespace BalarComponent {
     // TODO: Need a function to convert struct to vector uint8_t and vice versa
     
-    vector<uint8_t>* encode_balar_packet(balarCudaCallPacket_t *pack_ptr) {
+    vector<uint8_t>* encode_balar_packet(BalarCudaCallPacket_t *pack_ptr) {
         vector<uint8_t> *buffer = new vector<uint8_t>();
 
         // Treat pack ptr as uint8_t ptr
@@ -39,8 +39,8 @@ namespace BalarComponent {
         return buffer;
     }
 
-    balarCudaCallPacket_t* decode_balar_packet(vector<uint8_t> *buffer) {
-        balarCudaCallPacket_t* pack_ptr = new balarCudaCallPacket_t();
+    BalarCudaCallPacket_t* decode_balar_packet(vector<uint8_t> *buffer) {
+        BalarCudaCallPacket_t* pack_ptr = new BalarCudaCallPacket_t();
         size_t len = sizeof(*pack_ptr);
 
         // Match with type of buffer
