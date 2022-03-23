@@ -8,7 +8,7 @@ AC_DEFUN([SST_CHECK_PINTOOL],
 
   AS_IF([test "$with_pin" = "no"], [sst_check_pintool_happy="no"])
 
-  CXXFLAGS_saved=$CXXFLAGS"
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   PATH_saved="$PATH"

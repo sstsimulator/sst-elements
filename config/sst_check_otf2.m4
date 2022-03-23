@@ -8,7 +8,7 @@ AC_DEFUN([SST_CHECK_OTF2],
 
   AS_IF([test "$with_otf2" = "no"], [sst_check_otf2_happy="no"])
 
-  CXXFLAGS_saved=$CXXFLAGS"
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"

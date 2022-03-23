@@ -19,7 +19,7 @@ AC_DEFUN([SST_CHECK_METIS],
 
   AS_IF([test "$with_metis" = "no"], [sst_check_metis_happy="no"])
 
-  CXXFLAGS_saved=$CXXFLAGS"
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"

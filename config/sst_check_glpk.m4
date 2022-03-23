@@ -7,7 +7,7 @@ AC_DEFUN([SST_CHECK_GLPK], [
   sst_check_glpk_happy="yes"
   AS_IF([test "$with_glpk" = "no"], [sst_check_glpk_happy="no"])
 
-  CXXFLAGS_saved=$CXXFLAGS"
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"

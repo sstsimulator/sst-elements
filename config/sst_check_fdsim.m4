@@ -7,7 +7,7 @@ AC_DEFUN([SST_CHECK_FDSIM], [
   sst_check_fdsim_happy="yes"
   AS_IF([test "$with_fdsim" = "no"], [sst_check_fdsim_happy="no"])
 
-  CXXFLAGS_saved=$CXXFLAGS"
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"
