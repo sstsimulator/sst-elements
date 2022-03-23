@@ -7,7 +7,7 @@ AC_DEFUN([SST_CHECK_DRAMSIM], [
   sst_check_dramsim_happy="yes"
   AS_IF([test "$with_dramsim" = "no"], [sst_check_dramsim_happy="no"])
 
-  CXXFLAGS_saved=$CXXFLAGS"
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"

@@ -6,14 +6,14 @@ AC_DEFUN([SST_CHECK_BOOST], [
 
 	sst_check_boost_happy="no"
 
-	CXXFLAGS_saved=$CXXFLAGS"
+	CXXFLAGS_saved="$CXXFLAGS"
 	CPPFLAGS_saved="$CPPFLAGS"
   	LDFLAGS_saved="$LDFLAGS"
   	LIBS_saved="$LIBS"
 
 	AS_IF([test ! -z "$with_boost" -a "$with_boost" != "yes"],
 		[BOOST_CPPFLAGS="-I$with_boost/include"
-		 CXXFLAGS=$AM_CXXFLAGS $CXXFLAGS"
+		 CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
 		 CPPFLAGS="$BOOST_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
 		 BOOST_LDFLAGS="-L$with_boost/lib"
 		 BOOST_LIBDIR="$with_boost/lib"

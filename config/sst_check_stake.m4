@@ -8,7 +8,7 @@ AC_DEFUN([SST_CHECK_STAKE],
 
   AS_IF([test "$with_stake" = "no"], [sst_check_stake_happy="no"])
 
-  CXXFLAGS_saved=$CXXFLAGS"
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"

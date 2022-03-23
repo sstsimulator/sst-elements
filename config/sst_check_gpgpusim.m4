@@ -6,7 +6,7 @@ AC_DEFUN([SST_CHECK_GPGPUSIM],
       [AS_HELP_STRING([--with-gpgpusim@<:@=DIR@:>@],
          [Specify the root directory for GPGPU-Sim])])
 
-  CXXFLAGS_saved=$CXXFLAGS"
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"

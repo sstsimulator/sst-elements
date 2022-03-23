@@ -7,7 +7,7 @@ AC_DEFUN([SST_CHECK_HYBRIDSIM], [
   sst_check_hybridsim_happy="yes"
   AS_IF([test "$with_hybridsim" = "no"], [sst_check_hybridsim_happy="no"])
 
-  CXXFLAGS_saved=$CXXFLAGS"
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"
