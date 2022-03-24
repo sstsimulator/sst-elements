@@ -20,9 +20,10 @@ AC_DEFUN([SST_CHECK_LLVM_CONFIG],
             llvm_test=$($LLVM_CFG_PATH --version 2> /dev/null || echo no)
             AS_IF([test x"$llvm_test" != "xno"],
                   [AC_MSG_RESULT([yes])
-                  LLVM_CFLAGS="`$LLVM_CFG_PATH --cflags` $CFLAGS"
-                  LLVM_CPPFLAGS="`$LLVM_CFG_PATH --cxxflags` $CPPFLAGS"
-                  LLVM_LDFLAGS="`$LLVM_CFG_PATH --ldflags --libs` $LDFLAGS"],
+                  LLVM_CFLAGS="`$LLVM_CFG_PATH --cflags`"
+                  LLVM_CXXFLAGS="`$LLVM_CFG_PATH --cxxflags`"
+                  LLVM_CPPFLAGS="`$LLVM_CFG_PATH --cppflags`"
+                  LLVM_LDFLAGS="`$LLVM_CFG_PATH --ldflags --libs`"],
                   [sst_check_llvm_happy="no"
                   AC_MSG_RESULT([no])
                   LLVM_CFLAGS=
@@ -35,6 +36,7 @@ AC_DEFUN([SST_CHECK_LLVM_CONFIG],
    LLVM_LDFLAGS="`echo ${LLVM_LDFLAGS} | sed 's/-lgtest_main -lgtest//g'`"
 
    AC_SUBST(LLVM_CFLAGS)
+   AC_SUBST(LLVM_CXXFLAGS)
    AC_SUBST(LLVM_CPPFLAGS)
    AC_SUBST(LLVM_LDFLAGS)
 
