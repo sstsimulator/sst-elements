@@ -19,14 +19,17 @@ AC_DEFUN([SST_CHECK_METIS],
 
   AS_IF([test "$with_metis" = "no"], [sst_check_metis_happy="no"])
 
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
+  LIBS_saved="$LIBS"
 
   AS_IF([test ! -z "$with_metis" -a "$with_metis" != "yes"],
     [METIS_CPPFLAGS="-I$with_metis/include -DHAVE_METIS=1"
-     CPPFLAGS="$METIS_CPPFLAGS $CPPFLAGS"
+     CPPFLAGS="$METIS_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
+     CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
      METIS_LDFLAGS="-L$with_metis/lib"
-     LDFLAGS="$METIS_LDFLAGS $LDFLAGS"
+     LDFLAGS="$METIS_LDFLAGS $AM_LDFLAGS $LDFLAGS"
      METIS_LIBDIR="$with_metis/lib"],
     [METIS_CPPFLAGS=
      METIS_LDFLAGS=
@@ -36,8 +39,10 @@ AC_DEFUN([SST_CHECK_METIS],
   AC_CHECK_LIB([metis], [METIS_NodeNDP], 
     [METIS_LIB="-lmetis -lm"], [sst_check_metis_happy="no"], [-lmetis -lm])
 
+  CXXFLAGS="$CXXFLAGS_saved"
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
+  LIBS="$LIBS_saved"
 
   AC_SUBST([METIS_CPPFLAGS])
   AC_SUBST([METIS_LDFLAGS])

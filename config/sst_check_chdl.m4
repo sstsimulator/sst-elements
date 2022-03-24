@@ -7,18 +7,18 @@ AC_DEFUN([SST_CHECK_CHDL],[
   sst_check_chdl_happy="yes"
   AS_IF([test "$with_chdl" = "no"], [sst_check_chdl_happy="no"])
 
-  CPPFLAGS_saved="$CPPFLAGS"
   CXXFLAGS_saved="$CXXFLAGS"
+  CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"
 
   AS_IF([test ! -z "$with_chdl" -a "$with_chdl" != "yes"],
     [CHDL_CPPFLAGS="-I$with_chdl/include -std=c++11"
-     CPPFLAGS="$CHDL_CPPFLAGS $CPPFLAGS"
+     CPPFLAGS="$CHDL_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
      CHDL_CXXFLAGS="-std=c++11"
      CXXFLAGS="$CHDL_CXXFLAGS $CXXFLAGS"
      CHDL_LDFLAGS="-L$with_chdl/lib"
-     LDFLAGS="$CHDL_LDFLAGS $LDFLAGS"
+     LDFLAGS="$CHDL_LDFLAGS $AM_LDFLAGS $LDFLAGS"
      CHDL_LIBDIR="$with_chdl/lib"],
     [CHDL_CPPFLAGS=
      CHDL_CXXFLAGS=
@@ -30,8 +30,8 @@ AC_DEFUN([SST_CHECK_CHDL],[
     [CHDL_LIBS="-lchdl"], [sst_check_chdl_happy="no"])
   AC_LANG_POP(C++)
 
-  CPPFLAGS="$CPPFLAGS_saved"
   CXXFLAGS="$CXXFLAGS_saved"
+  CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
   LIBS="$LIBS_saved"
 

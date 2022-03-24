@@ -1,7 +1,10 @@
+# -*- Makefile -*-
+#
+#
 
-AM_CPPFLAGS = \
-        $(MPI_CPPFLAGS) \
-        -DPROSPERO_TOOL_DIR="$(libexecdir)"
+AM_CPPFLAGS += \
+	$(MPI_CPPFLAGS) \
+	-DPROSPERO_TOOL_DIR="$(libexecdir)"
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libprospero.la
@@ -63,12 +66,13 @@ if HAVE_PINTOOL
 
 bin_PROGRAMS = sst-prospero-trace
 sst_prospero_trace_SOURCES = runprosperotrace.cc
-AM_CPPFLAGS +=  $(PINTOOL_CPPFLAGS)
+AM_CPPFLAGS += $(PINTOOL_CPPFLAGS)
 
 if SST_COMPILE_OSX
 
 all-local: tracetool/sstmemtrace.cc
 	$(CXX) -O3 -shared \
+	$(AM_CPPFLAGS) \
 	$(CPPFLAGS) \
 	$(LIBZ_CPPFLAGS) \
 	-DBIGARRAY_MULTIPLIER=1 \
@@ -114,6 +118,7 @@ prosperotrace.o : $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.
 	$(CXX) -Wall -Werror -Wno-unknown-pragmas -D__PIN__=1 -DPIN_CRT=1 -DHAVE_PIN3=1\
 	    -fno-stack-protector -fno-exceptions -funwind-tables -fasynchronous-unwind-tables -fno-rtti \
 	    -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX -fabi-version=2 \
+	    $(AM_CPPFLAGS) \
 	    $(CPPFLAGS) \
 	    -I$(top_srcdir)/src/sst/elements/ariel \
 	    -I$(PINTOOL_DIR)/source/include/pin \
@@ -144,7 +149,7 @@ prosperotrace.so : prosperotrace.o
 	    -ldl -lpin -lxed -lpindwarf -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB)
 
 prosperotrace.o : $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.cc
-	$(CXX) $(CPPFLAGS) \
+	$(CXX) $(AM_CPPFLAGS) $(CPPFLAGS) \
 	    $(LIBZ_CPPFLAGS) \
 	    -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX \
 	    -I$(PINTOOL_DIR)/ \

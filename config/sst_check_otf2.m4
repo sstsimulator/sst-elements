@@ -8,16 +8,19 @@ AC_DEFUN([SST_CHECK_OTF2],
 
   AS_IF([test "$with_otf2" = "no"], [sst_check_otf2_happy="no"])
 
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
+  LIBS_saved="$LIBS"
 
   AS_IF([test "$sst_check_otf2_happy" = "yes"], [
     AS_IF([test ! -z "$with_otf2" -a "$with_otf2" != "yes"],
       [OTF2_PATH="$with_otf2/bin/:$PATH"
        OTF2_CPPFLAGS="-I$with_otf2/include"
-       CPPFLAGS="$OTF2_CPPFLAGS $CPPFLAGS"
+       CPPFLAGS="$OTF2_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
+       CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
        OTF2_LDFLAGS="-L$with_otf2/lib"
-       LDFLAGS="$OTF2_LDFLAGS $LDFLAGS"],
+       LDFLAGS="$OTF2_LDFLAGS $AM_LDFLAGS $LDFLAGS"],
       [OTF2_CPPFLAGS=
        OTF2_LDFLAGS=])])
   
@@ -26,8 +29,10 @@ AC_DEFUN([SST_CHECK_OTF2],
   AS_IF([test "x$OTF2_CONFIG_TOOL" = "x"],
 		[sst_check_otf2_happy="no"])
 
+  CXXFLAGS="$CXXFLAGS_saved"
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
+  LIBS="$LIBS_saved"
 
   AC_SUBST([OTF2_CPPFLAGS])
   AC_SUBST([OTF2_LDFLAGS])
