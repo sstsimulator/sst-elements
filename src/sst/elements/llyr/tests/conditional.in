@@ -1,0 +1,27 @@
+1 [pe_type=LDADDR,8]
+
+2 [pe_type=REMCONST,2]
+
+3 [pe_type=LDADDR,24]
+4 [pe_type=LDADDR,128]
+
+5 [pe_type=LDADDR,0]
+6 [pe_type=EQ]
+
+7 [pe_type=SEL]
+
+8 [pe_type=STADDR,256]
+
+1 -- 2
+
+2 -- 6
+5 -- 6
+
+3 -- 7
+4 -- 7
+6 -- 7
+
+7 -- 8
+
+
+

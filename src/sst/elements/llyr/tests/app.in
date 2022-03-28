@@ -1,0 +1,98 @@
+1 [pe_type=LD]
+2 [pe_type=LD]
+3 [pe_type=LD]
+4 [pe_type=LD]
+5 [pe_type=LD]
+6 [pe_type=LD]
+7 [pe_type=LD]
+8 [pe_type=LD]
+9 [pe_type=LD]
+10 [pe_type=LD]
+11 [pe_type=LD]
+12 [pe_type=LD]
+13 [pe_type=MUL]
+14 [pe_type=MUL]
+15 [pe_type=MUL]
+16 [pe_type=MUL]
+17 [pe_type=MUL]
+18 [pe_type=MUL]
+19 [pe_type=MUL]
+20 [pe_type=MUL]
+21 [pe_type=MUL]
+22 [pe_type=MUL]
+23 [pe_type=MUL]
+24 [pe_type=MUL]
+25 [pe_type=ADD]
+26 [pe_type=ADD]
+27 [pe_type=ADD]
+28 [pe_type=ADD]
+29 [pe_type=ADD]
+30 [pe_type=ADD]
+31 [pe_type=ADD]
+32 [pe_type=ADD]
+33 [pe_type=ST]
+34 [pe_type=ST]
+35 [pe_type=ST]
+36 [pe_type=ST]
+
+1 -- 13
+1 -- 16
+
+7 -- 13
+7 -- 19
+
+2 -- 14
+2 -- 17
+
+9 -- 14
+9 -- 20
+
+3 -- 15
+3 -- 18
+
+11 -- 15
+11 -- 21
+
+8 -- 16
+8 -- 22
+
+10 -- 17
+10 -- 23
+
+12 -- 18
+12 -- 24
+
+4 -- 19
+4 -- 22
+
+5 -- 20
+5 -- 23
+
+6 -- 21
+6 -- 24
+
+13 -- 25
+14 -- 25
+25 -- 26
+15 -- 26
+
+16 -- 27
+17 -- 27
+27 -- 28
+18 -- 28
+
+19 -- 29
+20 -- 29
+29 -- 30
+21 -- 30
+
+22 -- 31
+23 -- 31
+31 -- 32
+24 -- 32
+
+26 -- 33
+28 -- 34
+30 -- 35
+32 -- 36
+

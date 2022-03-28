@@ -1,0 +1,19 @@
+1 [pe_type=LDADDR,0]
+2 [pe_type=MULCONST,8]
+
+3 [pe_type=LDADDR,8]
+4 [pe_type=LDADDR,48]
+5 [pe_type=MUL]
+6 [pe_type=ADDCONST,88]
+7 [pe_type=MUL]
+8 [pe_type=LD]
+
+9 [pe_type=MUL]
+10 [pe_type=ADDCONST,96]
+11 [pe_type=MUL]
+12 [pe_type=LD]
+
+13 [pe_type=STADDR,256]
+14 [pe_type=STADDR,264]
+15 [pe_type=LDADDR,16]
+16 [pe_type=LDADDR,56]
