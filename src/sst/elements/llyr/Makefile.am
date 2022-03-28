@@ -2,9 +2,6 @@
 #
 #
 
-AM_CPPFLAGS = \
-	$(MPI_CPPFLAGS)
-
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libllyr.la
 libllyr_la_SOURCES = \
@@ -33,17 +30,23 @@ libllyr_la_SOURCES = \
 deprecated_libllyr_sources =
 
 libllyr_la_CFLAGS = \
+	$(AM_CLFAGS) \
 	$(LLVM_CFLAGS)
+
+libllyr_la_CXXFLAGS = \
+	$(AM_CXXFLAGS) \
+	$(LLVM_CXXFLAGS) -fexceptions
 
 libllyr_la_CPPFLAGS = \
 	-I$(top_srcdir)/src \
-	$(CPPFLAGS) -fPIC -Wall \
+	$(AM_CPPFLAGS) -fPIC -Wall \
 	$(MPI_CPPFLAGS) \
-	$(LLVM_CPPFLAGS) -fexceptions
+	$(LLVM_CPPFLAGS)
 
 libllyr_la_LDFLAGS = \
 	-module \
 	-avoid-version \
+	$(AM_LDFLAGS) \
 	$(LLVM_LDFLAGS)
 
 if !SST_ENABLE_PREVIEW_BUILD
@@ -62,9 +65,5 @@ endif
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     llyr=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      llyr=$(abs_srcdir)/tests
-
-##########################################################################
-##########################################################################
-##########################################################################
 
 
