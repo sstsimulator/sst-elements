@@ -1,5 +1,8 @@
+# -*- Makefile -*-
+#
+#
 
-AM_CPPFLAGS = \
+AM_CPPFLAGS += \
 	$(MPI_CPPFLAGS) \
 	-I$(top_srcdir)/src
 
@@ -43,15 +46,15 @@ EXTRA_DIST = \
 	tests/inorderstream.py \
 	tests/copybench.py \
 	tests/gupsgen.py \
-    tests/refFiles/test_miranda_copybench.out \
-    tests/refFiles/test_miranda_gupsgen.out \
-    tests/refFiles/test_miranda_inorderstream.out \
-    tests/refFiles/test_miranda_randomgen.out \
-    tests/refFiles/test_miranda_revsinglestream.out \
-    tests/refFiles/test_miranda_singlestream.out \
-    tests/refFiles/test_miranda_spmvgen.out \
-    tests/refFiles/test_miranda_stencil3dbench.out \
-    tests/refFiles/test_miranda_streambench.out
+	tests/refFiles/test_miranda_copybench.out \
+	tests/refFiles/test_miranda_gupsgen.out \
+	tests/refFiles/test_miranda_inorderstream.out \
+	tests/refFiles/test_miranda_randomgen.out \
+	tests/refFiles/test_miranda_revsinglestream.out \
+	tests/refFiles/test_miranda_singlestream.out \
+	tests/refFiles/test_miranda_spmvgen.out \
+	tests/refFiles/test_miranda_stencil3dbench.out \
+	tests/refFiles/test_miranda_streambench.out
 
 libmiranda_la_LDFLAGS = -module -avoid-version
 

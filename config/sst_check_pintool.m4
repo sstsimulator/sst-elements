@@ -8,6 +8,7 @@ AC_DEFUN([SST_CHECK_PINTOOL],
 
   AS_IF([test "$with_pin" = "no"], [sst_check_pintool_happy="no"])
 
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   PATH_saved="$PATH"
@@ -17,9 +18,10 @@ AC_DEFUN([SST_CHECK_PINTOOL],
       [PINTOOL_PATH="$with_pin:$PATH"
        PINTOOL_DIR="$with_pin"
        PINTOOL_CPPFLAGS="-I$with_pin/source/include -DHAVE_PIN=1"
-       CPPFLAGS="$PINTOOL_CPPFLAGS $CPPFLAGS"
+       CPPFLAGS="$PINTOOL_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
+       CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
        PINTOOL_LDFLAGS="-L$with_pin/intel64/runtime -L$with_pin/intel64/lib -L$with_pin/intel/lib-ext"
-       LDFLAGS="$PINTOOL_LDFLAGS $PINTOOL_LDFLAGS $LDFLAGS -lm"],
+       LDFLAGS="$PINTOOL_LDFLAGS $PINTOOL_LDFLAGS $AM_LDFLAGS $LDFLAGS -lm"],
       [PINTOOL_CPPFLAGS=
        PINTOOL_LDFLAGS=
 	PINTOOL_PATH="$PATH"
@@ -31,6 +33,7 @@ dnl pin.sh is present in pin 2.14, but not in 3.0+
   
   AS_IF([test "x$PINTOOL2_RUNTIME" = "x" -a "x$PINTOOL3_RUNTIME" = "x"], [sst_check_pintool_happy="no"])
 
+  CXXFLAGS="$CXXFLAGS_saved"
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
   PATH="$PATH_saved"

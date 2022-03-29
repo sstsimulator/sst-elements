@@ -7,16 +7,18 @@ AC_DEFUN([SST_CHECK_GLPK], [
   sst_check_glpk_happy="yes"
   AS_IF([test "$with_glpk" = "no"], [sst_check_glpk_happy="no"])
 
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"
 
   AS_IF([test ! -z "$with_glpk" -a "$with_glpk" != "yes"],
     [GLPK_CPPFLAGS="-I$with_glpk/include -DHAVE_GLPK=1"
-     CPPFLAGS="$GLPK_CPPFLAGS $CPPFLAGS"
+     CPPFLAGS="$GLPK_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
+     CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
      GLPK_LDFLAGS="-L$with_glpk/lib"
      GLPK_LIBDIR="$with_glpk/lib"
-     LDFLAGS="$GLPK_LDFLAGS $LDFLAGS"],
+     LDFLAGS="$GLPK_LDFLAGS $AM_LDFLAGS $LDFLAGS"],
     [GLPK_CPPFLAGS=
      GLPK_LDFLAGS=
      GLPK_LIBDIR=])
@@ -27,6 +29,7 @@ AC_DEFUN([SST_CHECK_GLPK], [
     [GLPK_LIB="-lglpk"], [sst_check_glpk_happy="no"])
   AC_LANG_POP(C++)
 
+  CXXFLAGS="$CXXFLAGS_saved"
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
   LIBS="$LIBS_saved"
