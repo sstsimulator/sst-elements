@@ -36,6 +36,14 @@ namespace ArielComponent {
 
 #define STRINGIZE(input) #input
 
+struct redirect_info_t {
+    std::string stdin_file;
+    std::string stdout_file;
+    std::string stderr_file;
+    int stdoutappend = 0;
+    int stderrappend = 0;
+} redirect_info;
+
 class Pin3Frontend : public ArielFrontend {
     public:
 
@@ -50,6 +58,11 @@ class Pin3Frontend : public ArielFrontend {
         {"arieltool", "Path to the Ariel PIN-tool shared library", ""},
         {"launcher", "Specify the launcher to be used for instrumentation, default is path to PIN", STRINGIZE(PINTOOL_EXECUTABLE)},
         {"executable", "Executable to trace", ""},
+        {"appstdin", "Specify a file to use for the program's stdin", ""},
+        {"appstdout", "Specify a file to use for the program's stdout", ""},
+        {"appstdoutappend", "If appstdout is set, set this to 1 to append the file intead of overwriting", "0"},
+        {"appstderr", "Specify a file to use for the program's stderr", ""},
+        {"appstderrappend", "If appstderr is set, set this to 1 to append the file intead of overwriting", "0"},
         {"launchparamcount", "Number of parameters supplied for the launch tool", "0" },
         {"launchparam%(launchparamcount)", "Set the parameter to the launcher", "" },
         {"envparamcount", "Number of environment parameters to supply to the Ariel executable, default=-1 (use SST environment)", "-1"},
@@ -81,7 +94,7 @@ class Pin3Frontend : public ArielFrontend {
 
     private:
 
-        int forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env);
+        int forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env, redirect_info_t redirect_info);
 
         SST::Output* output;
 
@@ -101,6 +114,8 @@ class Pin3Frontend : public ArielFrontend {
 #endif
 
         std::string appLauncher;
+        redirect_info_t redirect_info;
+
 
         char **execute_args;
         std::map<std::string, std::string> execute_env;

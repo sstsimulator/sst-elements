@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <fcntl.h>
 
 #include <time.h>
 
@@ -70,6 +71,12 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
     if("" == executable) {
         output->fatal(CALL_INFO, -1, "The input deck did not specify an executable to be run against PIN\n");
     }
+
+    redirect_info.stdin_file = params.find<std::string>("appstdin", "");
+    redirect_info.stdout_file = params.find<std::string>("appstdout", "");
+    redirect_info.stderr_file = params.find<std::string>("appstderr", "");
+    redirect_info.stdoutappend = params.find<std::uint32_t>("appstdoutappend", "0");
+    redirect_info.stderrappend = params.find<std::uint32_t>("appstderrappend", "0");
 
     uint32_t app_argc = (uint32_t) params.find<uint32_t>("appargcount", 0);
     output->verbose(CALL_INFO, 1, 0, "Model specifies that there are %" PRIu32 " application arguments\n", app_argc);
@@ -271,7 +278,7 @@ void Pin3Frontend::init(unsigned int phase)
         // Init the child_pid = 0, this prevents problems in emergencyShutdown()
         // if forkPINChild() calls fatal (i.e. the child_pid would not be set)
         child_pid = 0;
-        child_pid = forkPINChild(appLauncher.c_str(), execute_args, execute_env);
+        child_pid = forkPINChild(appLauncher.c_str(), execute_args, execute_env, redirect_info);
         output->verbose(CALL_INFO, 1, 0, "Returned from launching PIN.  Waiting for child to attach.\n");
 
         tunnel->waitForChild();
@@ -295,7 +302,7 @@ GpuDataTunnel* Pin3Frontend::getDataTunnel() {
 }
 #endif
 
-int Pin3Frontend::forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env) {
+int Pin3Frontend::forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env, redirect_info_t redirect_info) {
     // If user only wants to init the simulation then we do NOT fork the binary
     if(Simulation::getSimulation()->getSimulationMode() == Simulation::INIT)
         return 0;
@@ -379,6 +386,33 @@ int Pin3Frontend::forkPINChild(const char* app, char** args, std::map<std::strin
     }
         return (int) the_child;
     } else {
+        //Do I/O redirection before exec
+        if ("" != redirect_info.stdin_file){
+            output->verbose(CALL_INFO, 1, 0, "Redirecting child stdin from file %s\n", redirect_info.stdin_file);
+            if (!freopen(redirect_info.stdin_file.c_str(), "r", stdin)) {
+                output->fatal(CALL_INFO, 1, 0, "Failed to redirect stdin\n");
+            }
+        }
+        if ("" != redirect_info.stdout_file){
+            output->verbose(CALL_INFO, 1, 0, "Redirecting child stdout to file %s\n", redirect_info.stdout_file);
+            std::string mode = "w+";
+            if (redirect_info.stdoutappend) {
+                mode = "a+";
+            }
+            if (!freopen(redirect_info.stdout_file.c_str(), mode.c_str(), stdout)) {
+                output->fatal(CALL_INFO, 1, 0, "Failed to redirect stdout\n");
+            }
+        }
+        if ("" != redirect_info.stderr_file){
+            output->verbose(CALL_INFO, 1, 0, "Redirecting child stderr from file %s\n", redirect_info.stderr_file);
+            std::string mode = "w+";
+            if (redirect_info.stderrappend) {
+                mode = "a+";
+            }
+            if (!freopen(redirect_info.stderr_file.c_str(), mode.c_str(), stderr)) {
+                output->fatal(CALL_INFO, 1, 0, "Failed to redirect stderr\n");
+            }
+        }
         output->verbose(CALL_INFO, 1, 0, "Launching executable: %s...\n", app);
 
         if(0 == app_env.size()) {
