@@ -231,8 +231,7 @@ public:
                 output->getVerboseLevel(), openat_ev->getDirectoryFileDescriptor(), openat_ev->getPathPointer(),
                 openat_ev->getFlags(), &file_descriptors, handlerSendMemCallback);
 
-            const uint64_t start_read_len
-                = (openat_ev->getPathPointer() % 64) == 0 ? 64 : openat_ev->getPathPointer() % 64;
+            const uint64_t start_read_len = vanadis_line_remainder( openat_ev->getPathPointer(), 64 );
 
             StandardMem::Read* openat_start_req
                 = new StandardMem::Read(openat_ev->getPathPointer(), start_read_len);
@@ -290,7 +289,7 @@ public:
                 = new VanadisOpenHandlerState(output->getVerboseLevel(), open_ev->getPathPointer(), open_ev->getFlags(),
                                               open_ev->getMode(), &file_descriptors, handlerSendMemCallback);
 
-            const uint64_t start_read_len = (open_ev->getPathPointer() % 64) == 0 ? 64 : open_ev->getPathPointer() % 64;
+            const uint64_t start_read_len = vanadis_line_remainder( open_ev->getPathPointer(), 64 );
 
             StandardMem::Read* open_start_req
                 = new StandardMem::Read(open_ev->getPathPointer(), start_read_len);

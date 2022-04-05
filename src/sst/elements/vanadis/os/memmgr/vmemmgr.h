@@ -34,7 +34,7 @@ public:
         assert((region_end % region_page_size) == 0);
         assert(region_start < region_end);
 
-        output = new SST::Output("[os-memgmr] ", 16, 0, Output::STDOUT);
+        output = new SST::Output("[os-memgmr] ", verbosity, 0, Output::STDOUT);
 
         for (uint64_t page_start = region_start; page_start < region_end; page_start += region_page_size) {
             free_pages.insert(page_start);
