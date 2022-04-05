@@ -23,6 +23,36 @@
 #include "os/voscallev.h"
 #include <functional>
 
+#include <fcntl.h>
+
+#define CONVERT( x ) \
+    if ( flags & MIPS_O_##x ) {\
+        flags &= ~MIPS_O_##x;\
+        out |= O_##x;\
+    }
+
+#define MIPS_O_RDONLY    (0)
+#define MIPS_O_WRONLY    (0x1)
+#define MIPS_O_RDWR      (0x2)
+#define MIPS_O_APPEND    (0x8)
+#define MIPS_O_ASYNC     (0x1000)
+#define MIPS_O_CLOEXEC   (0x80000)
+#define MIPS_O_CREAT     (0x100)
+#define MIPS_O_DIRECT    (0x8000)
+#define MIPS_O_DIRECTORY (0x10000)
+#define MIPS_O_DSYNC     (0x10)
+#define MIPS_O_EXCL      (0x400)
+#define MIPS_O_LARGEFILE (0x2000)
+#define MIPS_O_NOATIME   (0x40000)
+#define MIPS_O_NOCTTY    (0x800)
+#define MIPS_O_NOFOLLOW  (0x20000)
+#define MIPS_O_PATH      (0x200000)
+#define MIPS_O_SYNC      (0x4010)
+#define MIPS_O_TMPFILE   (0x410000)
+#define MIPS_O_TRUNC     (0x200)
+#define MIPS_O_NONBLOCK  (0x80)
+#define MIPS_O_NDELAY    (0x80)
+
 #define VANADIS_SYSCALL_MIPS_READ 4003
 #define VANADIS_SYSCALL_MIPS_OPEN 4005
 #define VANADIS_SYSCALL_MIPS_CLOSE 4006
@@ -220,7 +250,7 @@ public:
                             "[syscall-handler] found a call to open( 0x%llx, %" PRIu64 ", %" PRIu64 " )\n",
                             open_path_ptr, open_flags, open_mode);
 
-            call_ev = new VanadisSyscallOpenEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, open_path_ptr, open_flags, open_mode);
+            call_ev = new VanadisSyscallOpenEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, open_path_ptr, convertFlags(open_flags), open_mode);
         } break;
 
         case VANADIS_SYSCALL_MIPS_OPENAT: {
@@ -233,8 +263,11 @@ public:
             const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
             uint64_t openat_flags = regFile->getIntReg<uint64_t>(phys_reg_6);
 
+            const uint16_t phys_reg_7 = isaTable->getIntPhysReg(7);
+            uint64_t openat_mode = regFile->getIntReg<uint64_t>(phys_reg_7);
+
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to openat()\n");
-            call_ev = new VanadisSyscallOpenAtEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, openat_dirfd, openat_path_ptr, openat_flags);
+            call_ev = new VanadisSyscallOpenAtEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, openat_dirfd, openat_path_ptr, convertFlags(openat_flags), openat_mode);
         } break;
 
         case VANADIS_SYSCALL_MIPS_WRITEV: {
@@ -549,6 +582,36 @@ protected:
 
         delete ev;
     }
+
+	uint64_t convertFlags( uint64_t flags ) {
+		uint64_t out = 0;
+
+		CONVERT( RDONLY );
+		CONVERT( WRONLY );
+		CONVERT( RDWR );
+		CONVERT( APPEND );
+		CONVERT( ASYNC );
+		CONVERT( CLOEXEC );
+		CONVERT( CREAT );
+		CONVERT( DIRECT );
+		CONVERT( DIRECTORY );
+		CONVERT( DSYNC );
+		CONVERT( EXCL );
+		CONVERT( LARGEFILE );
+		CONVERT( NOATIME );
+		CONVERT( NOCTTY );
+		CONVERT( NOFOLLOW );
+		CONVERT( PATH );
+		CONVERT( SYNC );
+		CONVERT( TMPFILE );
+		CONVERT( TRUNC );
+		CONVERT( NONBLOCK );
+		CONVERT( NDELAY );
+
+		assert( ! flags );
+
+		return out;
+	}
 
     SST::Link* os_link;
     bool brk_zero_memory;
