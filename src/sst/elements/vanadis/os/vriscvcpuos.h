@@ -23,6 +23,35 @@
 #include "os/voscallev.h"
 #include <functional>
 
+#include <fcntl.h>
+
+#define CONVERT( x ) \
+    if ( flags & MIPS_O_##x ) {\
+        flags &= ~MIPS_O_##x;\
+        out |= O_##x;\
+    }
+
+// This was generated on Ubuntu compiled with GCC.
+// Does this need to generated with the cross compiler?
+#define RISCV_O_RDONLY    (0)
+#define RISCV_O_WRONLY    (0x1)
+#define RISCV_O_RDWR      (0x2)
+#define RISCV_O_APPEND    (0x400)
+#define RISCV_O_ASYNC     (0x2000)
+#define RISCV_O_CLOEXEC   (0x80000)
+#define RISCV_O_CREAT     (0x40)
+#define RISCV_O_DIRECTORY (0x10000)
+#define RISCV_O_DSYNC     (0x1000)
+#define RISCV_O_EXCL      (0x80)
+#define RISCV_O_NOCTTY    (0x100)
+#define RISCV_O_NOFOLLOW  (0x20000)
+#define RISCV_O_SYNC      (0x101000)
+#define RISCV_O_TRUNC     (0x200)
+#define RISCV_O_NONBLOCK  (0x800)
+#define RISCV_O_NDELAY    (0x800)
+#define RISCV_O_CLOEXEC   (0x80000)
+
+
 #define VANADIS_SYSCALL_RISCV_READ 63
 #define VANADIS_SYSCALL_RISCV_OPEN 257
 #define VANADIS_SYSCALL_RISCV_CLOSE 57
@@ -224,7 +253,7 @@ public:
                             "[syscall-handler] found a call to open( 0x%llx, %" PRIu64 ", %" PRIu64 " )\n",
                             open_path_ptr, open_flags, open_mode);
 
-            call_ev = new VanadisSyscallOpenEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, open_path_ptr, open_flags, open_mode);
+            call_ev = new VanadisSyscallOpenEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, open_path_ptr, convertFlags(open_flags), open_mode);
         } break;
 
         case VANADIS_SYSCALL_RISCV_OPENAT: {
@@ -237,8 +266,11 @@ public:
             const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
             uint64_t openat_flags = regFile->getIntReg<uint64_t>(phys_reg_6);
 
+            const uint16_t phys_reg_7 = isaTable->getIntPhysReg(7);
+            uint64_t openat_mode = regFile->getIntReg<uint64_t>(phys_reg_7);
+
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to openat()\n");
-            call_ev = new VanadisSyscallOpenAtEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, openat_dirfd, openat_path_ptr, openat_flags);
+            call_ev = new VanadisSyscallOpenAtEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, openat_dirfd, openat_path_ptr, convertFlags(openat_flags), openat_mode);
         } break;
 
         case VANADIS_SYSCALL_RISCV_WRITEV: {
@@ -567,6 +599,33 @@ protected:
 
         delete ev;
     }
+
+   uint64_t convertFlags( uint64_t flags ) {
+        uint64_t out = 0;
+
+        CONVERT( RDONLY );
+        CONVERT( WRONLY );
+        CONVERT( RDWR );
+        CONVERT( APPEND );
+        CONVERT( ASYNC );
+        CONVERT( CLOEXEC );
+        CONVERT( CREAT );
+        CONVERT( DIRECTORY );
+        CONVERT( DSYNC );
+        CONVERT( EXCL );
+        CONVERT( NOATIME );
+        CONVERT( NOCTTY );
+        CONVERT( NOFOLLOW );
+        CONVERT( SYNC );
+        CONVERT( TRUNC );
+        CONVERT( NONBLOCK );
+        CONVERT( NDELAY );
+
+        assert( ! flags );
+
+        return out;
+    }
+
 
     SST::Link* os_link;
     bool brk_zero_memory;
