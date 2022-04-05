@@ -59,8 +59,8 @@ public:
 	void print();
 
 	void finish() {
-            Output out = Simulation::getSimulation()->getSimulationOutput();
-            out.output("Bank %u\n", m_bankNum);
+        Output out = Output::getDefaultObject();
+        out.output("Bank %u\n", m_bankNum);
 	    out.output("\tTotal ACT-Cmd received: %" PRIu32 "\n", m_ACTCmdsReceived);
 	    out.output("\tTotal READ-Cmd received: %" PRIu32 "\n", m_READCmdsReceived);
 	    out.output("\tTotal WRITE-Cmd received: %" PRIu32 "\n", m_WRITECmdsReceived);

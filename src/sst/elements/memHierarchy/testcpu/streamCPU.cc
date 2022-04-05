@@ -17,7 +17,6 @@
 #include "testcpu/streamCPU.h"
 
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
 #include "memEvent.h"
 
@@ -104,8 +103,8 @@ void streamCPU::handleEvent(Interfaces::StandardMem::Request * req)
         SimTime_t et = getCurrentSimTime() - i->second;
         requests.erase(i);
 
-	out.verbose(CALL_INFO, 1, 0, "Received Response (%s), Took: %7" PRIu64 "ns, %6zu pending requests.\n",
-                req->getID(), req->getString().c_str(), et, requests.size());
+        out.verbose(CALL_INFO, 1, 0, "Received Response (%s), Took: %7" PRIu64 "ns, %6zu pending requests.\n",
+                    req->getString().c_str(), et, requests.size());
         num_reads_returned++;
     }
     delete req;

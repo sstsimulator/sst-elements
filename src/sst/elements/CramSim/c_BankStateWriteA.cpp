@@ -110,8 +110,7 @@ void c_BankStateWriteA::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 			m_timerEnter = std::max(m_bankParams->at("nCCD_L"),m_bankParams->at("nBL"))-1;
 			break;
 		default:
-                        Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO,
-                                -1, "%s: Unrecognized command\n", __PRETTY_FUNCTION__);
+            Output::getDefaultObject().fatal(CALL_INFO, -1, "%s: Unrecognized command\n", __PRETTY_FUNCTION__);
 			break;
 		}
 		m_prevCommandPtr = nullptr;

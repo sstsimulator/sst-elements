@@ -16,7 +16,7 @@
 #include "noc_mesh.h"
 
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
+#include <sst/core/output.h>
 #include <sst/core/timeLord.h>
 #include <sst/core/unitAlgebra.h>
 
@@ -47,7 +47,7 @@ noc_mesh::noc_mesh(ComponentId_t cid, Params& params) :
     edge_status(0),
     endpoint_locations(0),
     use_dense_map(false),
-    output(Simulation::getSimulation()->getSimulationOutput())
+    output(getSimulationOutput())
 {
     // Get the options for the router
     local_ports = params.find<int>("local_ports",1);

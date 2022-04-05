@@ -23,8 +23,8 @@
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
+#include <sst/core/componentExtension.h>
 #include <sst/core/output.h>
-#include <sst/core/simulation.h>
 
 #include "sst/elements/memHierarchy/memEvent.h"
 #include "sst/elements/memHierarchy/util.h"
@@ -46,11 +46,11 @@ enum class MSHREntryType { Event, Evict, Writeback };
 class MSHREntry {
     public:
         // Event entry
-        MSHREntry(MemEventBase* ev, bool stallEvict) {
+    MSHREntry(MemEventBase* ev, bool stallEvict, SimTime_t curr_time) {
             type = MSHREntryType::Event;
             evictPtrs = nullptr;
             event = ev;
-            time = Simulation::getSimulation()->getCurrentSimCycle();
+            time = curr_time;
             inProgress = false;
             needEvict = stallEvict;
             profiled = false;
@@ -58,11 +58,11 @@ class MSHREntry {
         }
 
         // Writeback entry
-        MSHREntry(bool downgr) {
+    MSHREntry(bool downgr, SimTime_t curr_time) {
             type = MSHREntryType::Writeback;
             evictPtrs = nullptr;
             event = nullptr;
-            time = Simulation::getSimulation()->getCurrentSimCycle();
+            time = curr_time;
             inProgress = false;
             needEvict = false;
             profiled = false;
@@ -71,12 +71,12 @@ class MSHREntry {
         }
 
         // Evict entry
-        MSHREntry(Addr addr) {
+    MSHREntry(Addr addr, SimTime_t curr_time) {
             type = MSHREntryType::Evict;
             event = nullptr;
             evictPtrs = new std::list<Addr>;
             evictPtrs->push_back(addr);
-            time = Simulation::getSimulation()->getCurrentSimCycle();
+            time = curr_time;
             inProgress = false;
             needEvict = false;
             profiled = false;
@@ -121,9 +121,9 @@ class MSHREntry {
         }
 
         /* Remove event at head of queue and swap with a new one (leaving entry in place) */
-        MemEventBase * swapEvent(MemEventBase* newEvent) {
+    MemEventBase * swapEvent(MemEventBase* newEvent, SimTime_t curr_time) {
             if (type != MSHREntryType::Event) return nullptr;
-            time = Simulation::getSimulation()->getCurrentSimCycle();
+            time = curr_time;
             MemEventBase* oldEvent = event;
             event = newEvent;
             return oldEvent;
@@ -181,11 +181,11 @@ typedef map<Addr, MSHRRegister> MSHRBlock;
 /**
  *  Implements an MSHR with entries of type mshrEntry
  */
-class MSHR {
+class MSHR : public ComponentExtension {
 public:
 
     // used externally
-    MSHR(Output* dbg, int maxSize, string cacheName, std::set<Addr> debugAddr);
+    MSHR(ComponentId_t cid, Output* dbg, int maxSize, string cacheName, std::set<Addr> debugAddr);
 
     int getMaxSize();
     int getSize();

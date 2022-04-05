@@ -28,7 +28,7 @@
 // limitations under the License.
 #include <sst_config.h>
 
-#include <sst/core/simulation.h>
+#include <sst/core/output.h>
 
 #include "c_HashedAddress.hpp"
 
@@ -42,7 +42,7 @@ using namespace std;
 //}
 
 void c_HashedAddress::print() const {
-    SST::Simulation::getSimulation()->getSimulationOutput().output(
+    SST::Output::getDefaultObject().output(
         "Channel: %u PseudoChannel: %u Rank: %u BankGroup: %u Bank: %u Row: %u Col: %u Cacheline: %u\tBankId: %u\n",
         m_channel, m_pchannel, m_rank, m_bankgroup, m_bank, m_row, m_col, m_cacheline, m_bankId);
 }

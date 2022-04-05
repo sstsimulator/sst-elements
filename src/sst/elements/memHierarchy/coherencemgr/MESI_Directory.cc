@@ -18,7 +18,6 @@
 
 
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 
 #include "memNIC.h"
 

@@ -16,7 +16,6 @@
 
 #include <sst_config.h>
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 
 #include "coherentMemoryController.h"
 #include "util.h"

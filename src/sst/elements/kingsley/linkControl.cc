@@ -17,8 +17,7 @@
 #include <sst_config.h>
 
 #include "linkControl.h"
-
-#include <sst/core/simulation.h>
+#include <sst/core/output.h>
 
 namespace SST {
 using namespace Interfaces;
@@ -36,7 +35,7 @@ LinkControl::LinkControl(ComponentId_t id, Params &params, int vns) :
     waiting(true), have_packets(false),
     receiveFunctor(NULL), sendFunctor(NULL),
     network_initialized(false),
-    output(Simulation::getSimulation()->getSimulationOutput())
+    output(getSimulationOutput())
 {
     link_bw = params.find<UnitAlgebra>("link_bw");
     if ( link_bw.hasUnits("B/s") ) {

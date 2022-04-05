@@ -158,7 +158,7 @@ void Nic::SendMachine::InQ::processPending( )
 
 void Nic::SendMachine::OutQ::enque( FireflyNetworkEvent* ev, int vn, int dest, Callback callback )
 {
-	SimTime_t now = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t now = m_nic.getCurrentSimCycle();
 	if ( now > m_lastEnq ) {
 		m_lastEnq = now;
 		m_enqCnt = 0;

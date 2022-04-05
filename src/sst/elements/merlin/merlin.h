@@ -21,7 +21,6 @@
 
 #include <cctype>
 #include <string>
-#include <sst/core/simulation.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
 

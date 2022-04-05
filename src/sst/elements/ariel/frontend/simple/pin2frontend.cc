@@ -15,7 +15,6 @@
 
 
 #include <sst_config.h>
-#include <sst/core/simulation.h>
 
 #include "pin2frontend.h"
 

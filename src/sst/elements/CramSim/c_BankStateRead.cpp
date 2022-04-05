@@ -91,7 +91,7 @@ void c_BankStateRead::handleCommand(c_BankInfo* x_bank,
 			x_bank->setLastCommandCycle(e_BankCommandType::PRE, l_time);
 			break;
 		default:
-                        Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "Unrecognized state\n");
+            Output::getDefaultObject().fatal(CALL_INFO, -1, "Unrecognized state\n");
 			break;
 		}
 
@@ -150,8 +150,7 @@ void c_BankStateRead::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 					}
 					break;
 				default:
-                                        Simulation::getSimulation()->getSimulationOutput().fatal(
-                                                CALL_INFO, -1, "Unrecognized state\n");
+                    Output::getDefaultObject().fatal(CALL_INFO, -1, "Unrecognized state\n");
 					break;
 				}
 			}
@@ -191,8 +190,7 @@ void c_BankStateRead::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 			m_timer = 0;
 			break;
 		default:
-                        Simulation::getSimulation()->getSimulationOutput().fatal(
-                                CALL_INFO, -1, "Unrecognized state\n");
+            Output::getDefaultObject().fatal(CALL_INFO, -1, "Unrecognized state\n");
 			break;
 		}
 

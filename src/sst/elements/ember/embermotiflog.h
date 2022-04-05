@@ -17,7 +17,7 @@
 #define _H_SST_EMBER_MOTIF_LOG
 
 #include <stdio.h>
-#include <sst/core/simulation.h>
+#include <sst/core/componentExtension.h>
 
 namespace SST {
 namespace Ember {
@@ -67,12 +67,12 @@ class EmberMotifLogRecord {
 		uint32_t motifCount;
 };
 
-class EmberMotifLog {
+class EmberMotifLog : public ComponentExtension {
 	public:
-		EmberMotifLog(const std::string logPathPrefix, const uint32_t jobID);
-		~EmberMotifLog();
-		void logMotifStart(int motifNum);
-        void logMotifEnd(const std::string& name, const int motifNum);
+    EmberMotifLog(SST::ComponentId_t cid, const std::string logPathPrefix, const uint32_t jobID);
+    ~EmberMotifLog();
+    void logMotifStart(int motifNum);
+    void logMotifEnd(const std::string& name, const int motifNum);
     void setRank(int r) { rank = r; }
 	protected:
 		EmberMotifLogRecord* logRecord;

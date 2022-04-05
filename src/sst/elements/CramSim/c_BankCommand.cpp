@@ -29,7 +29,7 @@
 #include <sst_config.h>
 
 #include <assert.h>
-#include "sst/core/simulation.h"
+#include "sst/core/output.h"
 #include "c_BankCommand.hpp"
 //#include "c_Transaction.hpp"
 
@@ -124,7 +124,7 @@ void c_BankCommand::print(SimTime_t x_cycle) const {
 			<< ", Col: " << std::dec << this->getHashedAddress()->getCol()
 		  	<< ", Cacheline: " << std::dec << this->getHashedAddress()->getCacheline() << "]"
 			<< std::endl;
-    Simulation::getSimulation()->getSimulationOutput().output("%s", str.str().c_str());
+    Output::getDefaultObject().output("%s", str.str().c_str());
 
 }
 

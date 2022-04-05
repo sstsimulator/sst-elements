@@ -17,7 +17,6 @@
 #include "testcpu/standardCPU.h"
 
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
 
 #include "util.h"

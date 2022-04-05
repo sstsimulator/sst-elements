@@ -17,8 +17,6 @@
 #include "background_traffic/background_traffic.h"
 
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
-#include <sst/core/timeLord.h>
 
 using namespace SST::Merlin;
 using namespace SST::Interfaces;
@@ -31,12 +29,12 @@ BackgroundTraffic::BackgroundTraffic(ComponentId_t cid, Params& params) :
     bool found = false;
     offered_load = params.find<double>("offered_load",found);
     if ( !found ) {
-        Simulation::getSimulationOutput().fatal(CALL_INFO, -1, "BackgroundTraffic: offered_load must be set!\n");
+        getSimulationOutput().fatal(CALL_INFO, -1, "BackgroundTraffic: offered_load must be set!\n");
     }
 
     num_peers = params.find<int>("num_peers",-1);
     if ( num_peers == -1 ) {
-        Simulation::getSimulationOutput().fatal(CALL_INFO, -1, "BackgroundTraffic: num_peers must be set!\n");
+        getSimulationOutput().fatal(CALL_INFO, -1, "BackgroundTraffic: num_peers must be set!\n");
     }
 
     UnitAlgebra pkt_size = params.find<UnitAlgebra>("message_size","64b");
@@ -78,7 +76,7 @@ BackgroundTraffic::BackgroundTraffic(ComponentId_t cid, Params& params) :
     // Set up the communication pattern generator
     std::string pattern = params.find<std::string>("pattern",found);
     if ( !found ) {
-        Simulation::getSimulationOutput().fatal(CALL_INFO, -1, "BackgroundTraffic: pattern must be set!\n");
+        getSimulationOutput().fatal(CALL_INFO, -1, "BackgroundTraffic: pattern must be set!\n");
     }
 
     pattern_params = new Params();

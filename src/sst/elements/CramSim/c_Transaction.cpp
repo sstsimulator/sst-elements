@@ -120,7 +120,7 @@ void c_Transaction::print() const {
 	    << std::dec << m_numWaitingCommands << ", isProcessed = "
 	    << std::boolalpha << m_processed << ", isResponseReady = "
 	    << std::boolalpha << m_isResponseReady <<std::endl;
-    Simulation::getSimulation()->getSimulationOutput().output("%s", str.str().c_str());
+    Output::getDefaultObject().output("%s", str.str().c_str());
 }
 
 

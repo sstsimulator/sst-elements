@@ -21,7 +21,9 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-MSHR::MSHR(Output* debug, int maxSize, string cacheName, std::set<Addr> debugAddr) {
+MSHR::MSHR(ComponentId_t cid, Output* debug, int maxSize, string cacheName, std::set<Addr> debugAddr) :
+    ComponentExtension(cid)
+{
     d_ = debug;
     maxSize_ = maxSize;
     size_ = 0;
@@ -99,7 +101,7 @@ void MSHR::removeEntry(Addr addr, size_t index) {
         if (is_debug_addr(addr))
             printDebug(10, "Erase", addr, "");
             //d_->debug(_L10_, "M: %-41" PRIu64 " %-20s Erase        0x%-16" PRIx64 " %-10d\n",
-            //        Simulation::getSimulation()->getCurrentSimCycle(), ownerName_.c_str(), addr, size_);
+            //        getCurrentSimCycle(), ownerName_.c_str(), addr, size_);
             //d_->debug(_L10_, "    MSHR: erasing 0x%" PRIx64 " from MSHR\n", addr);
         mshr_.erase(addr);
     }
@@ -260,7 +262,7 @@ int MSHR::insertEvent(Addr addr, MemEventBase* event, int pos, bool fwdRequest, 
 
     if (mshr_.find(addr) == mshr_.end()) {
         MSHRRegister reg;
-        reg.entries.push_back(MSHREntry(event, stallEvict));
+        reg.entries.push_back(MSHREntry(event, stallEvict, getCurrentSimCycle()));
 
         mshr_.insert(std::make_pair(addr, reg));
         if (is_debug_addr(addr)) {
@@ -273,7 +275,7 @@ int MSHR::insertEvent(Addr addr, MemEventBase* event, int pos, bool fwdRequest, 
         return 0;
     } else {
         if (pos == -1 || pos > mshr_.find(addr)->second.entries.size()) {
-            mshr_.find(addr)->second.entries.push_back(MSHREntry(event, stallEvict));
+            mshr_.find(addr)->second.entries.push_back(MSHREntry(event, stallEvict, getCurrentSimCycle()));
             if (is_debug_addr(addr)) {
                 stringstream reason;
                 reason << "<" << event->getID().first << "," << event->getID().second << ">, pos=" << (mshr_.find(addr)->second.entries.size() - 1);
@@ -283,7 +285,7 @@ int MSHR::insertEvent(Addr addr, MemEventBase* event, int pos, bool fwdRequest, 
         } else {
             std::list<MSHREntry>::iterator it = mshr_.find(addr)->second.entries.begin();
             std::advance(it, pos);
-            mshr_.find(addr)->second.entries.insert(it, MSHREntry(event, stallEvict));
+            mshr_.find(addr)->second.entries.insert(it, MSHREntry(event, stallEvict, getCurrentSimCycle()));
             if (is_debug_addr(addr)) {
                 stringstream reason;
                 reason << "<" << event->getID().first << "," << event->getID().second << ">, pos=" << pos;
@@ -301,7 +303,7 @@ MemEventBase* MSHR::swapFrontEvent(Addr addr, MemEventBase* event) {
     if (mshr_.find(addr)->second.entries.empty())
         return nullptr;
 
-    return  mshr_.find(addr)->second.entries.front().swapEvent(event);
+    return  mshr_.find(addr)->second.entries.front().swapEvent(event, getCurrentSimCycle());
 }
 
 void MSHR::moveEntryToFront(Addr addr, unsigned int index) {
@@ -336,10 +338,10 @@ bool MSHR::insertWriteback(Addr addr, bool downgrade) {
 
     if (mshr_.find(addr) == mshr_.end()) {
         MSHRRegister reg;
-        reg.entries.push_back(MSHREntry(downgrade));
+        reg.entries.push_back(MSHREntry(downgrade, getCurrentSimCycle()));
         mshr_.insert(std::make_pair(addr, reg));
     } else {
-        mshr_.find(addr)->second.entries.push_front(MSHREntry(downgrade));
+        mshr_.find(addr)->second.entries.push_front(MSHREntry(downgrade, getCurrentSimCycle()));
     }
 
     return true;
@@ -358,14 +360,14 @@ bool MSHR::insertEviction(Addr oldAddr, Addr newAddr) {
 
     if (mshr_.find(oldAddr) == mshr_.end()) {  // No MSHR entry for oldAddr
         MSHRRegister reg;
-        reg.entries.push_back(MSHREntry(newAddr));
+        reg.entries.push_back(MSHREntry(newAddr, getCurrentSimCycle()));
         mshr_.insert(std::make_pair(oldAddr, reg));
     } else {
         list<MSHREntry>* entries = &(mshr_.find(oldAddr)->second.entries);
         if (!entries->empty() && entries->back().getType() == MSHREntryType::Evict) { // MSHR entry for oldAddr is an Evict
             entries->back().getPointers()->push_back(newAddr);
         } else { // MSHR entry for oldAddr is not an Evict (or no entry exists)
-            entries->push_back(MSHREntry(newAddr));
+            entries->push_back(MSHREntry(newAddr, getCurrentSimCycle()));
         }
     }
     return true;
@@ -641,17 +643,17 @@ void MSHR::printDebug(uint32_t lev, std::string action, Addr addr, std::string r
     if (lev == 10) {
         if (reason.empty())
             d_->debug(_L10_, "M: %-41" PRIu64 " %-20s MSHR:%-8s 0x%-16" PRIx64 " Sz: %-6d\n",
-                    Simulation::getSimulation()->getCurrentSimCycle(), ownerName_.c_str(), action.c_str(), addr, size_);
+                    getCurrentSimCycle(), ownerName_.c_str(), action.c_str(), addr, size_);
         else
             d_->debug(_L10_, "M: %-41" PRIu64 " %-20s MSHR:%-8s 0x%-16" PRIx64 " Sz: %-6d (%s)\n",
-                    Simulation::getSimulation()->getCurrentSimCycle(), ownerName_.c_str(), action.c_str(), addr, size_, reason.c_str());
+                    getCurrentSimCycle(), ownerName_.c_str(), action.c_str(), addr, size_, reason.c_str());
     } else {
         if (reason.empty())
             d_->debug(_L20_, "M: %-41" PRIu64 " %-20s MSHR:%-8s 0x%-16" PRIx64 " Sz: %-6d\n",
-                    Simulation::getSimulation()->getCurrentSimCycle(), ownerName_.c_str(), action.c_str(), addr, size_);
+                    getCurrentSimCycle(), ownerName_.c_str(), action.c_str(), addr, size_);
         else
             d_->debug(_L20_, "M: %-41" PRIu64 " %-20s MSHR:%-8s 0x%-16" PRIx64 " Sz: %-6d (%s)\n",
-                    Simulation::getSimulation()->getCurrentSimCycle(), ownerName_.c_str(), action.c_str(), addr, size_, reason.c_str());
+                    getCurrentSimCycle(), ownerName_.c_str(), action.c_str(), addr, size_, reason.c_str());
     }
 }
 

@@ -19,7 +19,7 @@
 
 #include <sst/core/event.h>
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
+#include <sst/core/output.h>
 #include <sst/core/timeLord.h>
 #include <sst/core/unitAlgebra.h>
 
@@ -38,7 +38,7 @@ incast_nic::incast_nic(ComponentId_t cid, Params& params) :
     curr_packets(0),
     start_time(0),
     end_time(0),
-    output(Simulation::getSimulation()->getSimulationOutput())
+    output(getSimulationOutput())
 {
     num_peers = params.find<int>("num_peers",-1);
     if ( num_peers == -1 ) {
@@ -137,7 +137,7 @@ void incast_nic::finish()
     if ( !target ) return;
 
     if ( end_time == 0 ) {
-        UnitAlgebra final_time = getFinalSimTime();
+        UnitAlgebra final_time = getEndSimTime();
         final_time /= UnitAlgebra("1ns");
         end_time = final_time.getRoundedValue();
     }

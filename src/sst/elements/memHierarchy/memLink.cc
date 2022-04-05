@@ -16,8 +16,6 @@
 #include <sst_config.h>
 #include "memLink.h"
 
-#include <sst/core/simulation.h>
-
 using namespace SST;
 using namespace SST::MemHierarchy;
 

@@ -640,7 +640,7 @@ uint64_t Cache::createMSHR(Params &params, uint64_t accessLatency, bool L1) {
     if (mshrSize == 1 || mshrSize == 0)
         out_->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - MSHR requires at least 2 entries to avoid deadlock. You specified %d\n", mshrSize);
 
-    mshr_ = new MSHR(dbg_, mshrSize, getName(), DEBUG_ADDR);
+    mshr_ = loadComponentExtension<MSHR>(dbg_, mshrSize, getName(), DEBUG_ADDR);
 
     if (mshrLatency > 0 && found)
         return mshrLatency;

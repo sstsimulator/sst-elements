@@ -57,7 +57,7 @@ namespace Firefly {
 
 class Nic : public SST::Component  {
 
-  public:
+public:
     SST_ELI_REGISTER_COMPONENT(
         Nic,
         "firefly",
@@ -159,12 +159,12 @@ class Nic : public SST::Component  {
         {"detailed", "Port connected to the detailed model", {"memHierarchy.memEvent" , ""}},
     )
 
-  private:
+private:
     typedef unsigned RespKey_t;
 	class LinkControlWidget {
 
         typedef std::function<void()> Callback;
-	  public:
+    public:
 		LinkControlWidget( Output& output, Callback callback, int numVN ) : m_dbg(output), m_notifiers(numVN,NULL), m_num(numVN,0), m_callback(callback) {
 		}
 
@@ -197,14 +197,14 @@ class Nic : public SST::Component  {
 		std::vector< std::function<void()> > m_notifiers;
 	};
 
-  public:
+public:
 
     typedef uint32_t NodeId;
     static const NodeId AnyId = -1;
 
 	typedef MemoryModel::MemOp MemOp;
 
-  private:
+private:
 
     struct __attribute__ ((packed)) MsgHdr {
         enum Op : unsigned char { Msg, Rdma, Shmem } op;
@@ -248,6 +248,7 @@ class Nic : public SST::Component  {
             }
         }
     };
+
     struct RdmaMsgHdr {
         enum { Put, Get, GetResp } op;
         uint16_t    rgnNum;
@@ -257,7 +258,7 @@ class Nic : public SST::Component  {
 
     class EntryBase;
     class SelfEvent : public SST::Event {
-      public:
+    public:
 
 		enum { Callback, Event } type;
         typedef std::function<void()> Callback_t;

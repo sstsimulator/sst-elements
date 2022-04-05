@@ -18,8 +18,6 @@
 
 #include "reorderLinkControl.h"
 
-#include <sst/core/simulation.h>
-
 #include "merlin.h"
 
 namespace SST {

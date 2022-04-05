@@ -19,7 +19,6 @@
 
 
 #include <sst_config.h>
-//#include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
 
 #include "sieveController.h"

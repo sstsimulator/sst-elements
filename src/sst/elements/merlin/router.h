@@ -485,7 +485,7 @@ public:
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::Topology, int, int, int)
 
     enum PortState {R2R, R2N, UNCONNECTED, FAILED};
-    Topology(ComponentId_t cid) : SubComponent(cid), output(Simulation::getSimulation()->getSimulationOutput()) {}
+    Topology(ComponentId_t cid) : SubComponent(cid), output(getSimulationOutput()) {}
     virtual ~Topology() {}
 
     virtual void route(int port, int vc, internal_router_event* ev) __attribute__ ((deprecated("route() is deprecated and will be removed in SST 11. Please use route_packet(), which is now called when a packet reaches the head of the input queue."))) { }

@@ -87,8 +87,8 @@ cacheTracer::cacheTracer( ComponentId_t id, Params& params ): Component( id ) {
     northBus = configureLink("northBus");
     southBus = configureLink("southBus");
 
-    picoTimeConv = SST::Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ps");
-    nanoTimeConv = SST::Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ns");
+    picoTimeConv = getTimeConverter("1ps");
+    nanoTimeConv = getTimeConverter("1ns");
 
     out->debug(CALL_INFO, 1, 0, "cacheTracer initialization complete\n");
     nbCount = 0;
@@ -117,8 +117,8 @@ bool cacheTracer::clock(Cycle_t current){
     unsigned int accessLatency = 0;
     SST::Event *ev = NULL;
     SST::MemHierarchy::Addr addr =0;
-    //uint64_t picoseconds = (uint64_t) picoTimeConv->convertFromCoreTime(Simulation::getSimulation()->getCurrentSimCycle());
-    uint64_t nanoseconds = (uint64_t) nanoTimeConv->convertFromCoreTime(Simulation::getSimulation()->getCurrentSimCycle());
+    //uint64_t picoseconds = (uint64_t) picoTimeConv->convertFromCoreTime(getCurrentSimCycle());
+    uint64_t nanoseconds = (uint64_t) nanoTimeConv->convertFromCoreTime(getCurrentSimCycle());
 
     // process Memevents from north-side to south-side
     while((ev = northBus->recv())){

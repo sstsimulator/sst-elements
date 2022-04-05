@@ -86,20 +86,20 @@ SimpleTLB::SimpleTLB(SST::ComponentId_t id, SST::Params& params): Component(id) 
     // if len == 0, mapping is disabled. Else: enable and sanity-check
 	if (fixed_mapping_len != 0) {
         if(PAGE_OFFSET_4K(fixed_mapping_va_start) != 0)
-            { out->fatal(CALL_INFO, -1, "Error! 'fixed_mapping_va_start' not 4k aligned in %s. Got value '0x%lx'\n", 
+            { out->fatal(CALL_INFO, -1, "Error! 'fixed_mapping_va_start' not 4k aligned in %s. Got value '0x%" PRIx64 "'\n", 
                     getName().c_str(), fixed_mapping_va_start); }
         if(PAGE_OFFSET_4K(fixed_mapping_pa_start) != 0)
-            { out->fatal(CALL_INFO, -1, "Error! 'fixed_mapping_pa_start' not 4k aligned in %s. Got value '0x%lx'\n", 
+            { out->fatal(CALL_INFO, -1, "Error! 'fixed_mapping_pa_start' not 4k aligned in %s. Got value '0x%" PRIx64 "'\n", 
                     getName().c_str(), fixed_mapping_pa_start); }
         if(PAGE_OFFSET_4K(fixed_mapping_len) != 0)
-            { out->fatal(CALL_INFO, -1, "Error! 'fixed_mapping_len' not 4k aligned in %s. Got value: '0x%lx'\n", 
+            { out->fatal(CALL_INFO, -1, "Error! 'fixed_mapping_len' not 4k aligned in %s. Got value: '0x%" PRIx64 "'\n", 
                     getName().c_str(), fixed_mapping_len); }
 
         if(fixed_mapping_len < 0) {
             out->fatal(CALL_INFO, -1, "Error! 'fixed_mapping_len' must not be negative in %s\n", getName().c_str());
         }
 
-        out->verbose(_L1_, "Setting SimpleTLB with fixed mapping: %ldKB region at VA:0x%lx-0x%lx maps to PA:0x%lx\n",
+        out->verbose(_L1_, "Setting SimpleTLB with fixed mapping: %" PRId64 "KB region at VA:0x%" PRIx64 "-0x%" PRIx64 " maps to PA:0x%" PRIx64 "\n",
                         fixed_mapping_len / 1024, fixed_mapping_va_start, 
                         fixed_mapping_va_start+fixed_mapping_len-1, fixed_mapping_pa_start);
     }
@@ -220,7 +220,7 @@ bool SimpleTLB::clockTick(SST::Cycle_t x)
     //debug output first few times
     static int debug_print_i = 0;
     if (debug_print_i < 20) {
-        out->verbose(_L10_, "Calling SimpleTLB tick on cycle %ld...\n", x);
+        out->verbose(_L10_, "Calling SimpleTLB tick on cycle %" PRId64 "...\n", x);
         debug_print_i++;
     }
 
