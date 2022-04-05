@@ -68,12 +68,12 @@ void c_CmdScheduler::build(Params &x_params) {
     bool l_found = false;
     k_numCmdQEntries = (uint32_t) x_params.find<uint32_t>("numCmdQEntries", 32, l_found);
     if (!l_found) {
-        Simulation::getSimulation()->getSimulationOutput().output("numCmdQEntries value is missing... it will be 32 (default)\n");
+        Output::getDefaultObject().output("numCmdQEntries value is missing... it will be 32 (default)\n");
     }
 
     std::string l_cmdSchedulingPolicy = (std::string) x_params.find<std::string>("cmdSchedulingPolicy", "BANK", l_found);
     if (!l_found) {
-        Simulation::getSimulation()->getSimulationOutput().output(
+        Output::getDefaultObject().output(
                 "cmdScheduligPolicy is missing... it will be \"bank round robin\" (default)\n");
     }
     if(l_cmdSchedulingPolicy=="BANK")
@@ -82,7 +82,7 @@ void c_CmdScheduler::build(Params &x_params) {
         m_schedulingPolicy = e_SchedulingPolicy::RANK;  //Rank Round Robin
     else
     {
-        Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "CmdScheduler: scheduling policy error!\n");
+        Output::getDefaultObject().fatal(CALL_INFO, -1, "CmdScheduler: scheduling policy error!\n");
     }
 }
 

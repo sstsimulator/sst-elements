@@ -16,8 +16,6 @@
 #include <array>
 #include <sst_config.h>
 
-#include <sst/core/simulation.h>
-
 #include "sst/elements/memHierarchy/memNICFour.h"
 
 using namespace SST;

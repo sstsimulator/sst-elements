@@ -347,7 +347,7 @@ bool CoherenceController::sendOutgoingEvents() {
 
         if (is_debug_event(outgoingEvent)) {
             debug->debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
-                    Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, cachename_.c_str(), outgoingEvent->getBriefString().c_str());
+                    getCurrentSimCycle(), timestamp_, cachename_.c_str(), outgoingEvent->getBriefString().c_str());
         }
 
         linkDown_->send(outgoingEvent);
@@ -371,7 +371,7 @@ bool CoherenceController::sendOutgoingEvents() {
 
         if (is_debug_event(outgoingEvent)) {
             debug->debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
-                    Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, cachename_.c_str(), outgoingEvent->getBriefString().c_str());
+                    getCurrentSimCycle(), timestamp_, cachename_.c_str(), outgoingEvent->getBriefString().c_str());
         }
 
         if (startTimes_.find(outgoingEvent->getResponseToID()) != startTimes_.end()) {
@@ -677,7 +677,7 @@ void CoherenceController::printDebugInfo(dbgin * diStruct) {
     reas << "(" << diStruct->reason << ")";
 
     debug->debug(_L5_, "C: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 " %-15s %-6s %-6s %-10s %-15s",
-            Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, cachename_.c_str(), cmd.c_str(), diStruct->addr,
+            getCurrentSimCycle(), timestamp_, cachename_.c_str(), cmd.c_str(), diStruct->addr,
             id.str().c_str(), StateString[diStruct->oldst], StateString[diStruct->newst], diStruct->action.c_str(), reas.str().c_str());
 
     debug->debug(_L6_, " %s", diStruct->verboseline.c_str());
@@ -691,7 +691,7 @@ void CoherenceController::printDebugAlloc(bool alloc, Addr addr, std::string not
     std::string action = alloc ? "Alloc" : "Dealloc";
 
     debug->debug(_L5_, "C: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 "",
-            Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, cachename_.c_str(), action.c_str(), addr);
+            getCurrentSimCycle(), timestamp_, cachename_.c_str(), action.c_str(), addr);
 
     if (note != "")
         debug->debug(_L5_, " %s\n", note.c_str());
@@ -711,7 +711,7 @@ void CoherenceController::printDataValue(Addr addr, vector<uint8_t> * data, bool
     }
     
     debug->debug(_L11_, "V: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 " B: %-3zu %s\n",
-            Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, cachename_.c_str(), action.c_str(), 
+            getCurrentSimCycle(), timestamp_, cachename_.c_str(), action.c_str(), 
             addr, data->size(), value.str().c_str());
 /*
     for (unsigned int i = 0; i < data->size(); i++) {

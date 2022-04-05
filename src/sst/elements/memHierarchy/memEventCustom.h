@@ -62,7 +62,7 @@ public:
     }
     
     /** Returns address that determines where this event is sent to */
-    virtual Addr getRoutingAddress() {
+    virtual Addr getRoutingAddress() override {
         return data_->getRoutingAddress();
     }
 

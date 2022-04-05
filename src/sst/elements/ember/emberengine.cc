@@ -58,9 +58,9 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 
     std::string motifLogFile = params.find<std::string>("motifLog", "");
     if("" != motifLogFile) {
-        m_motifLogger = new EmberMotifLog(motifLogFile, m_jobId);
+        m_motifLogger = loadComponentExtension<EmberMotifLog>(motifLogFile, m_jobId);
     } else {
-        m_motifLogger = NULL;
+        m_motifLogger = nullptr;
     }
 	output.verbose(CALL_INFO, 2, ENGINE_MASK, "\n");
 
@@ -99,8 +99,7 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     assert(selfEventLink);
 
 	// Create a time converter for our compute events
-	nanoTimeConverter =
-        Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ns");
+	nanoTimeConverter = getTimeConverter("1ns");
 }
 
 EmberEngine::~EmberEngine() {

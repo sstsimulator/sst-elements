@@ -75,7 +75,7 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
     selfLink = configureSelfLink("Self", "1ns",
 	new Event::Handler<ZodiacSiriusTraceReader>(this, &ZodiacSiriusTraceReader::handleSelfEvent));
 
-    tConv = Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ns");
+    tConv = getTimeConverter("1ns");
 
     emptyBufferSize = (uint32_t) params.find("buffer", 4096);
     emptyBuffer = (char*) malloc(sizeof(char) * emptyBufferSize);

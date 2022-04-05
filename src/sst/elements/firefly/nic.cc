@@ -584,7 +584,7 @@ void Nic::feedTheNetwork( int vn )
             schedCallback(
                 [=](){
                     m_linkSendWidget->setNotify( [=]() {
-						SimTime_t curTime = Simulation::getSimulation()->getCurrentSimCycle();
+						SimTime_t curTime = getCurrentSimCycle();
 						if ( curTime > m_predNetIdleTime ) {
 							m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"network stalled latency=%lld\n",
 								curTime -  m_predNetIdleTime);
@@ -597,7 +597,7 @@ void Nic::feedTheNetwork( int vn )
 			return;
 		} else {
 
-			SimTime_t curTime = Simulation::getSimulation()->getCurrentSimCycle();
+			SimTime_t curTime = getCurrentSimCycle();
 			SimTime_t latPS = ( (double) x.pkt->payloadSize() / (double) m_linkBytesPerSec ) * 1000000000000;
 
 			if ( curTime > m_predNetIdleTime ) {

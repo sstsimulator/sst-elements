@@ -60,7 +60,7 @@ PortControl::sendCtrlEvent(CtrlRtrEvent* ev)
         // If we were stalled waiting for credits and we had
         // packets, we need to add stall time
         if ( have_packets) {
-            output_port_stalls->addData(Simulation::getSimulation()->getCurrentSimCycle() - start_block);
+            output_port_stalls->addData(getCurrentSimCycle() - start_block);
         }
     }
 }
@@ -70,7 +70,7 @@ PortControl::send(internal_router_event* ev, int vc)
 {
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+        printStatus(getSimulationOutput(),0,0);
     }
 #endif
 
@@ -93,7 +93,7 @@ PortControl::send(internal_router_event* ev, int vc)
 	}
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+        printStatus(getSimulationOutput(),0,0);
     }
 #endif
 }
@@ -110,7 +110,7 @@ PortControl::recv(int vc)
 {
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+        printStatus(getSimulationOutput(),0,0);
     }
 #endif
 	if ( input_buf[vc].empty() ) return NULL;
@@ -141,7 +141,7 @@ PortControl::recv(int vc)
 
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+        printStatus(getSimulationOutput(),0,0);
     }
 #endif
     return event;
@@ -247,7 +247,7 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
     have_packets(false),
     start_block(0),
     parent(rif),
-    output(Simulation::getSimulation()->getSimulationOutput()),
+    output(getSimulationOutput()),
     cm_activated(false),
     current_incast(0),
     total_flits_incoming(0),
@@ -536,7 +536,7 @@ PortControl::initVCs(int vns, int* vcs_per_vn, internal_router_event** vc_heads_
 
 
     // Need to start the timer for links that never send data
-    idle_start = Simulation::getSimulation()->getCurrentSimCycle();
+    idle_start = getCurrentSimCycle();
     is_idle = true;
 
     output_arb->setVCs(num_vns, vcs_per_vn);
@@ -574,7 +574,7 @@ PortControl::finish() {
 
     // Any links that ended in an idle state need to add stats
     if (is_idle && connected) {
-        idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
+        idle_time->addData(getCurrentSimCycle() - idle_start);
         is_idle = false;
     }
 
@@ -844,7 +844,7 @@ PortControl::dumpState(std::ostream& stream)
 	stream << "Router id: " << rtr_id << ", port " << port_number << ":" << std::endl;
 	stream << "  Waiting = " << waiting << std::endl;
     if (is_idle)
-        stream << "Time since last active = " << (Simulation::getSimulation()->getCurrentSimCycle() - idle_start) << std::endl;
+        stream << "Time since last active = " << (getCurrentSimCycle() - idle_start) << std::endl;
     stream << "  have_packets = " << have_packets << std::endl;
     stream << "  start_block = " << start_block << std::endl;
 	for ( int i = 0; i < num_vcs; i++ ) {
@@ -947,7 +947,7 @@ PortControl::handle_input_n2r(Event* ev)
             // If we were stalled waiting for credits and we had
             // packets, we need to add stall time
             if ( have_packets) {
-                output_port_stalls->addData(Simulation::getSimulation()->getCurrentSimCycle() - start_block);
+                output_port_stalls->addData(getCurrentSimCycle() - start_block);
             }
 	    }
 	}
@@ -1007,8 +1007,8 @@ PortControl::handle_input_r2r(Event* ev)
 {
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        ev->print("  ", Simulation::getSimulation()->getSimulationOutput());
-        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+        ev->print("  ", getSimulationOutput());
+        printStatus(getSimulationOutput(),0,0);
     }
 #endif
 	// Check to see if this is a credit or data packet
@@ -1030,7 +1030,7 @@ PortControl::handle_input_r2r(Event* ev)
             // If we were stalled waiting for credits and we had
             // packets, we need to add stall time
             if ( have_packets) {
-                output_port_stalls->addData(Simulation::getSimulation()->getCurrentSimCycle() - start_block);
+                output_port_stalls->addData(getCurrentSimCycle() - start_block);
             }
 	    }
 	}
@@ -1082,7 +1082,7 @@ PortControl::handle_input_r2r(Event* ev)
 	}
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+        printStatus(getSimulationOutput(),0,0);
     }
 #endif
 }
@@ -1091,7 +1091,7 @@ void
 PortControl::handle_output(Event* ev) {
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+        printStatus(getSimulationOutput(),0,0);
     }
 #endif
 	// The event is an empty event used just for timing.
@@ -1144,7 +1144,7 @@ PortControl::handle_output(Event* ev) {
 	    output_buf_count[vc_to_send]++;
 
         if (is_idle) {
-            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
+            idle_time->addData(getCurrentSimCycle() - idle_start);
             is_idle = false;
         }
 
@@ -1188,18 +1188,18 @@ PortControl::handle_output(Event* ev) {
 	    // we either get something new in the output buffers or
 	    // receive credits back from the router.  However, we need
 	    // to know that we got to this state.
-        start_block = Simulation::getSimulation()->getCurrentSimCycle();
+        start_block = getCurrentSimCycle();
 	    waiting = true;
         // Begin counting the amount of time this port was idle
         if (!have_packets && !is_idle) {
-            idle_start = Simulation::getSimulation()->getCurrentSimCycle();
+            idle_start = getCurrentSimCycle();
             is_idle = true;
         }
 		// Should be in a stalled state rather than idle
 		// This should also be triggered when a link is temporarily disabled due to
 		// adjusting the link width
 		if (have_packets && is_idle){
-            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
+            idle_time->addData(getCurrentSimCycle() - idle_start);
             is_idle = false;
         }
 		if (sai_port_disabled){
@@ -1208,7 +1208,7 @@ PortControl::handle_output(Event* ev) {
 	}
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+        printStatus(getSimulationOutput(),0,0);
     }
 #endif
 }
@@ -1231,7 +1231,7 @@ PortControl::reenablePort(Event* ev) {
 // This resets SAI metrics and calls increase/decreaseLinkWidth
 void
 PortControl::handleSAIWindow(Event* ev) {
-	SimTime_t cur_time = Simulation::getSimulation()->getCurrentSimCycle();
+	SimTime_t cur_time = getCurrentSimCycle();
 	// If we are in the middle of an active state.
 
 	// If we are in the middle of an idle state.

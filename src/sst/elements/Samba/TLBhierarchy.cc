@@ -13,6 +13,8 @@
 
 #include <sst_config.h>
 
+#include "TLBhierarchy.h"
+
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
@@ -21,9 +23,7 @@
 #include <sst/core/output.h>
 #include <sst/core/interfaces/stringEvent.h>
 #include <sst/elements/memHierarchy/memEvent.h>
-#include <sst/core/simulation.h>
 
-#include "TLBhierarchy.h"
 
 using namespace SST::Interfaces;
 using namespace SST::MemHierarchy;

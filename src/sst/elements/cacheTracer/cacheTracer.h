@@ -20,7 +20,6 @@
 #include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
 #include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/sst_types.h>

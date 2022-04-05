@@ -128,7 +128,7 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
 			default:
                                 std::stringstream str;
                                 str << "ERR @ " << __PRETTY_FUNCTION__ << std::endl;
-                                Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "%s", str.str().c_str());
+                                Output::getDefaultObject().fatal(CALL_INFO, -1, "%s", str.str().c_str());
 		}
 	}
 }
@@ -169,8 +169,8 @@ c_BankCommand* c_Bank::clockTic() {
 					m_cmd = nullptr;
 					return m_cmd;
 				default:
-                                        Simulation::getSimulation()->getSimulationOutput().fatal(
-                                                CALL_INFO, -1, "Invalid command type... exiting\n");
+                    Output::getDefaultObject().fatal(
+                        CALL_INFO, -1, "Invalid command type... exiting\n");
 			}
 
 			// If allocation knob allows sending the response down the pipe,

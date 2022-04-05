@@ -16,7 +16,7 @@
 #include "hr_router/hr_router.h"
 
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
+#include <sst/core/output.h>
 #include <sst/core/timeLord.h>
 #include <sst/core/unitAlgebra.h>
 
@@ -121,7 +121,7 @@ hr_router::~hr_router()
 hr_router::hr_router(ComponentId_t cid, Params& params) :
     Router(cid),
     num_vcs(-1),
-    output(Simulation::getSimulation()->getSimulationOutput())
+    output(getSimulationOutput())
 {
 
     // Get the options for the router

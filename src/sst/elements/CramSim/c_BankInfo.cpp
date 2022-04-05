@@ -103,7 +103,7 @@ void c_BankInfo::print() {
 		str << m_cmdToString[l_mapEntry.first] << ":" << std::dec
 				<< l_mapEntry.second << std::endl;
 	}
-        Simulation::getSimulation()->getSimulationOutput().output("%s", str.str().c_str());
+    Output::getDefaultObject().output("%s", str.str().c_str());
 }
 
 void c_BankInfo::reset() {

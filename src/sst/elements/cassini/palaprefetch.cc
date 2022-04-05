@@ -233,7 +233,7 @@ void PalaPrefetcher::DispatchRequest(Addr targetAddress)
 
 PalaPrefetcher::PalaPrefetcher(ComponentId_t id, Params& params) : CacheListener(id, params)
 {
-    Simulation::getSimulation()->requireEvent("memHierarchy.MemEvent");
+    requireLibrary("memHierarchy");
 
     verbosity = params.find<int>("verbose", 0);
 

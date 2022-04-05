@@ -59,7 +59,7 @@ c_BankStateActivating::~c_BankStateActivating() {
 // handle automatic state changes in function update( ... )
 
 void c_BankStateActivating::handleCommand(c_BankInfo* x_bank, c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle) {
-        Simulation::getSimulation()->getSimulationOutput().output(
+        Output::getDefaultObject().output(
                 "%s ERROR: should not receive a command in this state. This is a transitory state.\n", __PRETTY_FUNCTION__);
 }
 

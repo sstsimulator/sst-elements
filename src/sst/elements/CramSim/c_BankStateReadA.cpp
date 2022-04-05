@@ -32,7 +32,7 @@
 #include <memory>
 #include <assert.h>
 
-#include <sst/core/simulation.h>
+#include <sst/core/output.h>
 
 #include "c_BankState.hpp"
 #include "c_BankInfo.hpp"
@@ -119,8 +119,7 @@ void c_BankStateReadA::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 					m_bankParams->at("nBL")) - 1;
 			break;
 		default:
-                        Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,
-                                "%s: Unrecognized state\n", __PRETTY_FUNCTION__);
+            Output::getDefaultObject().fatal(CALL_INFO, -1, "%s: Unrecognized state\n", __PRETTY_FUNCTION__);
 			break;
 		}
 

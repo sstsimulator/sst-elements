@@ -146,8 +146,7 @@ private:
                 break;
             }
             default:
-                Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,
-                    "Unsure how to deal with %d neighbors\n", numNeighbors);
+                Output::getDefaultObject().fatal(CALL_INFO, -1, "Unsure how to deal with %d neighbors\n", numNeighbors);
             }
         }
 

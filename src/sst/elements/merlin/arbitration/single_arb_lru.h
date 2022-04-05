@@ -19,8 +19,6 @@
 #ifndef COMPONENTS_MERLIN_ARBITRATION_SINGLE_ARB_LRU_H
 #define COMPONENTS_MERLIN_ARBITRATION_SINGLE_ARB_LRU_H
 
-#include <sst/core/simulation.h>
-
 #include "sst/elements/merlin/arbitration/single_arb.h"
 
 namespace SST {
@@ -50,12 +48,6 @@ private:
 
 
 public:
-
-    single_arb_lru(Params& params) :
-        SingleArbitration()
-    {
-        Simulation::getSimulationOutput().fatal(CALL_INFO_LONG,1,"single_arb_rr: module is only loadable with new API\n");
-    }
 
     single_arb_lru(Params& params, int16_t size) :
         SingleArbitration()

@@ -15,7 +15,6 @@
 #include <sst_config.h>
 
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
 #include <sst/core/unitAlgebra.h>
 
@@ -138,19 +137,19 @@ void pt2pt_test::finish()
     for ( auto& x : my_recvs ) {
         if ( x.second.end_arrival == 0 ) {
             // Ended early, compute using current sim time
-            x.second.end_arrival = Simulation::getSimulation()->getEndSimCycle();
+            x.second.end_arrival = getEndSimCycle();
         }
         // Compute bandwidth in bits/core time quantum
         // UnitAlgebra bits_sent = UnitAlgebra("1b") * packets_to_send * packet_size;
         UnitAlgebra bits_sent = UnitAlgebra("1b") * x.second.packets_recd * packet_size;
-        UnitAlgebra start_time = Simulation::getSimulation()->getTimeLord()->getTimeBase() * x.second.first_arrival;
-        UnitAlgebra end_time = Simulation::getSimulation()->getTimeLord()->getTimeBase() * x.second.end_arrival;
+        UnitAlgebra start_time = getCoreTimeBase() * x.second.first_arrival;
+        UnitAlgebra end_time = getCoreTimeBase() * x.second.end_arrival;
         // TODO: Still need to tweak to account for serialization latency of the last packet
-        UnitAlgebra total_time = Simulation::getSimulation()->getTimeLord()->getTimeBase() * (x.second.end_arrival - x.second.first_arrival);
+        UnitAlgebra total_time = getCoreTimeBase() * (x.second.end_arrival - x.second.first_arrival);
 
         UnitAlgebra bw = bits_sent / total_time;
 
-        Simulation::getSimulationOutput().output(
+        getSimulationOutput().output(
             "For src = %d and dest = %d:\n"
             "  First packet received at: %s\n"
             "  Last packet received at: %s\n"
@@ -206,7 +205,7 @@ void pt2pt_test::setup()
         pkt_size *= packet_size;
 
         UnitAlgebra ser_time = pkt_size / bw;
-        pkt_ser_cycles = (ser_time / Simulation::getSimulation()->getTimeLord()->getTimeBase()).getRoundedValue();
+        pkt_ser_cycles = (ser_time / getCoreTimeBase()).getRoundedValue();
 
         // Create a number that when multiplied by the number of
         // packets received in the interval, will give the bandwidth
@@ -312,17 +311,17 @@ pt2pt_test::recv_handler(int vn) {
 
     recv_data& data = data_it->second;
     if ( data.packets_recd == 0 ) {
-        data.first_arrival = Simulation::getSimulation()->getCurrentSimCycle();
+        data.first_arrival = getCurrentSimCycle();
     }
 
     data.packets_recd++;
     packets_recd++;
 
     pkts_in_interval++;
-    last_pkt_recd = Simulation::getSimulation()->getCurrentSimCycle();
+    last_pkt_recd = getCurrentSimCycle();
 
     if ( data.packets_recd == packets_to_send ) {
-        data.end_arrival = Simulation::getSimulation()->getCurrentSimCycle();
+        data.end_arrival = getCurrentSimCycle();
     }
 
     if ( packets_recd == ( my_recvs.size() * packets_to_send ) ) {
@@ -338,7 +337,7 @@ pt2pt_test::recv_handler(int vn) {
 void pt2pt_test::report_bw(Event* ev) {
 
     // Figure out if we have a partial packet at the end of the window
-    SimTime_t curr_cycle = Simulation::getSimulation()->getCurrentSimCycle();
+    SimTime_t curr_cycle = getCurrentSimCycle();
     UnitAlgebra bw = interval_start_bw;
     if ( last_pkt_recd + pkt_ser_cycles > curr_cycle ) {
         // Partial packet

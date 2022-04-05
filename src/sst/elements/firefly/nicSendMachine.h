@@ -133,7 +133,7 @@ class SendMachine {
 
       public:
 
-        SendMachine( Nic& nic, int nodeId, int verboseLevel, int verboseMask, int myId,
+    SendMachine( Nic& nic, int nodeId, int verboseLevel, int verboseMask, int myId,
               int packetSizeInBytes, int pktOverhead, int maxQsize, int unit, bool flag = false ) :
             m_nic(nic), m_id(myId), m_packetSizeInBytes( packetSizeInBytes - pktOverhead ),
             m_unit(unit), m_pktOverhead(pktOverhead), m_activeEntry(NULL), m_I_manage( flag ), m_numSent(0)

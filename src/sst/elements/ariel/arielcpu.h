@@ -20,7 +20,6 @@
 #include <sst/core/interfaces/stdMem.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 
 #include <stdint.h>
 #include <unistd.h>

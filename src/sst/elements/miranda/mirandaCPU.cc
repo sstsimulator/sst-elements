@@ -15,7 +15,6 @@
 
 #include <sst_config.h>
 #include <sstream>
-#include <sst/core/simulation.h>
 #include <sst/core/unitAlgebra.h>
 #include <sst/core/timeConverter.h>
 
@@ -186,7 +185,7 @@ void RequestGenCPU::handleSrcEvent( Event* ev ) {
 	out->verbose(CALL_INFO, 2, 0, "got %lu generators\n", event->generators.size() );
 	loadGenerator( event );
 
-	if ( 0 != timeConverter->convertFromCoreTime( Simulation::getSimulation()->getCurrentSimCycle()) ) {
+	if ( 0 != timeConverter->convertFromCoreTime( getCurrentSimCycle()) ) {
 		clockTick( reregisterClock( timeConverter, clockHandler ) );
 	}
 

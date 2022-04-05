@@ -97,7 +97,7 @@ void c_BankStateActive::handleCommand(c_BankInfo* x_bank,
 			x_bank->setLastCommandCycle(e_BankCommandType::PRE, l_time);
 			break;
 		default:
-                        Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, 
+            Output::getDefaultObject().fatal(CALL_INFO, -1, 
                                 "%s: Unrecognized state\n", __PRETTY_FUNCTION__);
 			break;
 		}

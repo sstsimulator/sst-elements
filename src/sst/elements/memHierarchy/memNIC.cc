@@ -16,8 +16,6 @@
 #include <sst_config.h>
 #include "sst/elements/memHierarchy/memNIC.h"
 
-#include <sst/core/simulation.h>
-
 using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
@@ -90,7 +88,7 @@ bool MemNIC::recvNotify(int) {
         if (ev) {
             if (is_debug_event(ev)) {
                 dbg.debug(_L5_, "E: %-40" PRIu64 "  %-20s NIC:Recv      (%s)\n", 
-                    Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), ev->getBriefString().c_str());
+                    getCurrentSimCycle(), getName().c_str(), ev->getBriefString().c_str());
             }
             (*recvHandler)(ev);
         }
@@ -110,7 +108,7 @@ void MemNIC::send(MemEventBase *ev) {
 
     if (is_debug_event(ev)) {
         dbg.debug(_L5_, "N: %-40" PRIu64 "  %-20s Enqueue       Dst: %lld, bits: %zu, (%s)\n", 
-            Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), req->dest, req->size_in_bits, ev->getBriefString().c_str());
+            getCurrentSimCycle(), getName().c_str(), req->dest, req->size_in_bits, ev->getBriefString().c_str());
     }
 
     req->givePayload(mre);
