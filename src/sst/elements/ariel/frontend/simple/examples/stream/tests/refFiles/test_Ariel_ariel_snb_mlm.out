@@ -1,0 +1,121 @@
+Configuring Ariel processor model (8 cores)...
+Configuring ring network...
+Configuring core and memory controller group 0...
+Creating active core 0 in group 0
+Creating active core 1 in group 0
+Creating L3 cache block: 0 in group: 0
+Creating L3 cache block: 1 in group: 0
+Creating L3 cache block: 2 in group: 0
+Creating L3 cache block: 3 in group: 0
+Creating L3 cache block: 4 in group: 0
+Configuring core and memory controller group 1...
+Creating active core 0 in group 1
+Creating active core 1 in group 1
+Creating L3 cache block: 0 in group: 1
+Creating L3 cache block: 1 in group: 1
+Creating L3 cache block: 2 in group: 1
+Creating L3 cache block: 3 in group: 1
+Creating L3 cache block: 4 in group: 1
+Configuring core and memory controller group 2...
+Creating active core 0 in group 2
+Creating active core 1 in group 2
+Creating L3 cache block: 0 in group: 2
+Creating L3 cache block: 1 in group: 2
+Creating L3 cache block: 2 in group: 2
+Creating L3 cache block: 3 in group: 2
+Creating L3 cache block: 4 in group: 2
+Configuring core and memory controller group 3...
+Creating active core 0 in group 3
+Creating active core 1 in group 3
+Creating L3 cache block: 0 in group: 3
+Creating L3 cache block: 1 in group: 3
+Creating L3 cache block: 2 in group: 3
+Creating L3 cache block: 3 in group: 3
+Creating L3 cache block: 4 in group: 3
+Completed configuring the SST Sandy Bridge model
+ArielComponent[arielcpu.cc:38:ArielCPU] Creating Ariel component...
+ArielComponent[arielcpu.cc:44:ArielCPU] Configuring for 8 cores...
+ArielComponent[arielcpu.cc:47:ArielCPU] Configuring for check addresses = no
+ArielComponent[arielcpu.cc:120:ArielCPU] Loaded memory manager: A0:memmgr
+ArielComponent[arielcpu.cc:134:ArielCPU] Memory manager construction is completed.
+Pin3Frontend[frontend/pin3/pin3frontend.cc:75:Pin3Frontend] Model specifies that there are 0 application arguments
+Pin3Frontend[frontend/pin3/pin3frontend.cc:85:Pin3Frontend] Interception and instrumentation of multi-level memory and malloc/free calls is ENABLED.
+Pin3Frontend[frontend/pin3/pin3frontend.cc:90:Pin3Frontend] Tracking the stack and dumping on malloc calls is DISABLED.
+Pin3Frontend[frontend/pin3/pin3frontend.cc:97:Pin3Frontend] Malloc map file is ENABLED, using file 'malloc.txt'
+Pin3Frontend[frontend/pin3/pin3frontend.cc:104:Pin3Frontend] Base pipe name: /tmp/sst_shmem_32898-0-1804289383
+Pin3Frontend[frontend/pin3/pin3frontend.cc:128:Pin3Frontend] Processing application arguments...
+Pin3Frontend[frontend/pin3/pin3frontend.cc:258:Pin3Frontend] Completed processing application arguments.
+Pin3Frontend[frontend/pin3/pin3frontend.cc:263:Pin3Frontend] Completed initialization of the Ariel CPU.
+ArielComponent[arielcpu.cc:170:ArielCPU] Registering ArielCPU clock at 2660MHz
+ArielComponent[arielcpu.cc:174:ArielCPU] Clocks registered.
+ArielComponent[arielcpu.cc:176:ArielCPU] Creating core to cache links...
+ArielComponent[arielcpu.cc:178:ArielCPU] Creating processor cores and cache links...
+ArielComponent[arielcpu.cc:180:ArielCPU] Configuring cores and cache links...
+ArielComponent[arielcore.cc:45:ArielCore] Creating core with ID 0, maximum queue length=256, max issue is: 2
+ArielComponent[arielcore.cc:45:ArielCore] Creating core with ID 1, maximum queue length=256, max issue is: 2
+ArielComponent[arielcore.cc:45:ArielCore] Creating core with ID 2, maximum queue length=256, max issue is: 2
+ArielComponent[arielcore.cc:45:ArielCore] Creating core with ID 3, maximum queue length=256, max issue is: 2
+ArielComponent[arielcore.cc:45:ArielCore] Creating core with ID 4, maximum queue length=256, max issue is: 2
+ArielComponent[arielcore.cc:45:ArielCore] Creating core with ID 5, maximum queue length=256, max issue is: 2
+ArielComponent[arielcore.cc:45:ArielCore] Creating core with ID 6, maximum queue length=256, max issue is: 2
+ArielComponent[arielcore.cc:45:ArielCore] Creating core with ID 7, maximum queue length=256, max issue is: 2
+ArielComponent[arielcpu.cc:239:ArielCPU] Completed initialization of the Ariel CPU.
+SSTARIEL: Loading Ariel Tool to connect to SST on pipe: /tmp/sst_shmem_32898-0-1804289383 max core count: 8
+SSTARIEL: Function profiling is disabled.
+ARIEL-SST: Did not find ARIEL_OVERRIDE_POOL in the environment, no override applies.
+ARIEL-SST PIN tool activating with 8 threads
+ARIEL: Default memory pool set to 0
+ARIEL: Tool is configured to begin with profiling immediately.
+ARIEL: Starting program.
+Identified routine: malloc/_malloc, replacing with Ariel equivalent...
+Identified routine: malloc/_malloc, replacing with Ariel equivalent...
+Identified routine: free/_free, replacing with Ariel equivalent...
+Identified routine: clock_gettime, replacing with Ariel equivalent...
+Replacement complete.
+Pin3Frontend[frontend/pin3/pin3frontend.cc:270:init] Launching PIN...
+Pin3Frontend[frontend/pin3/pin3frontend.cc:326:forkPINChild] Executing PIN command: /usr/local/module-pkgs/pin/pin-3.22-98547-g7a303a835-gcc-linux/pin -follow_execv -ifeellucky -t /ascldap/users/grvosku/dev/build/sst-elements/libexec/fesimple.so -w 0 -E 1 -p /tmp/sst_shmem_32898-0-1804289383 -v 2 -t 0 -c 8 -s 1 -m 1 -k 0 -u malloc.txt -d 0 -- ./stream
+Pin3Frontend[frontend/pin3/pin3frontend.cc:275:init] Returned from launching PIN.  Waiting for child to attach.
+Pin3Frontend[frontend/pin3/pin3frontend.cc:278:init] Child has attached!
+ArielComponent[arielcore.cc:697:createFreeEvent] Generated a free event for virtual address=139646270301896
+ArielComponent[arielcore.cc:697:createFreeEvent] Generated a free event for virtual address=139646270302096
+ArielComponent[arielcore.cc:697:createFreeEvent] Generated a free event for virtual address=0
+ArielComponent[arielcore.cc:697:createFreeEvent] Generated a free event for virtual address=0
+ArielComponent[arielcore.cc:697:createFreeEvent] Generated a free event for virtual address=0
+ArielComponent[arielcore.cc:697:createFreeEvent] Generated a free event for virtual address=0
+ArielComponent[arielcore.cc:697:createFreeEvent] Generated a free event for virtual address=0
+ArielComponent[arielcore.cc:697:createFreeEvent] Generated a free event for virtual address=0
+ArielComponent[arielcore.cc:697:createFreeEvent] Generated a free event for virtual address=0
+ArielComponent[arielcore.cc:697:createFreeEvent] Generated a free event for virtual address=0
+ArielComponent[arielcore.cc:697:createFreeEvent] Generated a free event for virtual address=139646270302328
+ArielComponent[arielcore.cc:697:createFreeEvent] Generated a free event for virtual address=139646270302544
+ArielComponent[arielcore.cc:697:createFreeEvent] Generated a free event for virtual address=139646270302712
+ArielComponent[arielcore.cc:697:createFreeEvent] Generated a free event for virtual address=139646270302880
+ArielComponent[arielcore.cc:697:createFreeEvent] Generated a free event for virtual address=139646270303032
+ArielComponent[arielcore.cc:697:createFreeEvent] Generated a free event for virtual address=139646270303216
+ArielComponent[arielcore.cc:697:createFreeEvent] Generated a free event for virtual address=139646268240656
+ArielComponent[arielcore.cc:697:createFreeEvent] Generated a free event for virtual address=139646268241648
+Identified routine: malloc/_malloc, replacing with Ariel equivalent...
+Identified routine: clock_gettime, replacing with Ariel equivalent...
+Replacement complete.
+Allocating arrays of size 2000 elements.
+Done allocating arrays.
+Perfoming the fast_c compute loop...
+Sum of arrays is: 6999500.000000
+Freeing arrays...
+Done.
+SSTARIEL: Execution completed, shutting down.
+CORE ID: 0 PROCESSED AN EXIT EVENT
+ArielComponent[arielcore.cc:1445:processNextEvent] Core 0 has called exit.
+ArielComponent[arielcpu.cc:257:finish] Ariel Processor Information:
+ArielComponent[arielcpu.cc:258:finish] Completed at: 1633947 nanoseconds.
+ArielComponent[arielcpu.cc:259:finish] Ariel Component Statistics (By Core)
+
+Ariel Memory Management Statistics:
+---------------------------------------------------------------------
+Page Table Sizes:
+- Demand map entries at level 0         254
+- Demand map entries at level 1         0
+Page Table Coverages:
+- Demand bytes at level 0              1040384
+- Demand bytes at level 1              0
+Simulation is complete, simulated time: 1.63395 ms
