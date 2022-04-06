@@ -14,4 +14,4 @@ node0.l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapola
 RdmaNic() sizeof(NicCmd) 64
 node1.l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 3 cycles.
 RdmaNic() sizeof(NicCmd) 64
-Simulation is complete, simulated time: 40.2788 us
+Simulation is complete, simulated time: 48.5477 us
