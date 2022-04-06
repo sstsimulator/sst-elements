@@ -128,7 +128,7 @@ print("Configuring Ariel processor model (" + str(groups * cores_per_group) + " 
 
 ariel = sst.Component("A0", "ariel.ariel")
 ariel.addParams({
-    "verbose"             : "2",
+    "verbose"             : "1",
     "maxcorequeue"        : "256",
     "maxtranscore"        : "16",
     "maxissuepercycle"    : "2",
