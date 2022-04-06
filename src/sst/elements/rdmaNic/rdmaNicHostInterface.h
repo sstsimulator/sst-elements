@@ -3,7 +3,8 @@ typedef uint32_t Addr_t;
 
 typedef Addr_t Context;
 typedef int QueueIndex;
-typedef enum { RdmaDone=0, RdmaSend=1, RdmaRecv, RdmaFini, RdmaCreateCQ, RdmaCreateRQ, RdmaMemRgnReg, RdmaMemRgnUnreg, RdmaMemWrite, RdmaMemRead, RdmaBarrier } RdmaCmd;
+typedef enum { RdmaDone=0, RdmaSend=1, RdmaRecv, RdmaFini, RdmaCreateCQ, RdmaDestroyCQ, RdmaCreateRQ, 
+                    RdmaDestroyRQ, RdmaMemRgnReg, RdmaMemRgnUnreg, RdmaMemWrite, RdmaMemRead, RdmaBarrier } RdmaCmd;
 
 typedef int MemRgnKey;
 typedef int RecvQueueKey;
@@ -63,10 +64,16 @@ typedef struct __attribute__((aligned(64))) {
 			CompQueueId cqId;
 		} createRQ;
         struct {
+			RecvQueueId rqId;
+		} destroyRQ;
+        struct {
 			Addr_t headPtr;
 			Addr_t dataPtr;
 			int	   num;
 		} createCQ;
+        struct {
+			CompQueueId cqId;
+		} destroyCQ;
     } data;
 } NicCmd;
 
