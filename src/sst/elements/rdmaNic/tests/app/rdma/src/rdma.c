@@ -22,7 +22,6 @@ typedef struct {
 	int num;
 } CompletionQ;
 
-#define NUM_COMP_Q 16
 static CompletionQ s_compQ[NUM_COMP_Q];
 static int s_curCompIndex = 0;
 
