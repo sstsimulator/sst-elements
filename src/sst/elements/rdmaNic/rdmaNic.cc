@@ -192,6 +192,7 @@ void RdmaNic::mmioWriteSetup( StandardMem::Write* req) {
 	if ( ! req->posted ) {
 		m_mmioLink->send( req->makeResponse() );
 	}
+    // if all of the HostQueueInfo struct has been written we are done with setup, switch to normal processing of write to MMIO space
 	if ( info.offset == sizeof(HostQueueInfo) ) {
 		m_mmioWriteFunc = std::bind( &RdmaNic::mmioWrite, this, std::placeholders::_1 );
 	}
@@ -301,7 +302,7 @@ void RdmaNic::writeCompletionToHost(int thread, int cqId, RdmaCompletion& comp )
 	// if we move the head index and it's equal to the tail index we are full
 	// Note that with this logic the max number of items in the circular queue is N - 1
 	// where N is the total number of slots
-    if ( ( q.headIndex()  + 1 ) % q.cmd().data.createCQ.num == q.headIndex() ) {
+    if ( ( q.headIndex()  + 1 ) % q.cmd().data.createCQ.num == tailIndex ) {
         assert(0);
     }
 	Addr_t data = q.cmd().data.createCQ.dataPtr + q.headIndex() * sizeof(comp);

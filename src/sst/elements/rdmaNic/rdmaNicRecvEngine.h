@@ -63,12 +63,14 @@ class ReadRespRecvEntry : public RecvEntry  {
 
 class RecvQueue {
   public:
-    RecvQueue( CompQueueId cqId ) : cqId(cqId) {}
+    RecvQueue( CompQueueId cqId, int key  ) : cqId(cqId), key(key) {}
     void push( MsgRecvEntry* entry ) { entry->setCqId(cqId); recvQ.push(entry); }
     std::queue<MsgRecvEntry*>& getQ() { return recvQ; }
+    int getKey() { return key; };
   private:
     std::queue<MsgRecvEntry*> recvQ;
     CompQueueId cqId;
+    int key;
 };
 
 class RecvStream {
@@ -133,9 +135,20 @@ class RecvEngine {
     }   
     int createRQ( int cqId, int rqKey ) { 
         int rqId = m_nextRqId++;
-        m_recvQueueMap[ rqId ] = new RecvQueue( cqId );
+        m_recvQueueMap[ rqId ] = new RecvQueue( cqId, rqKey );
         m_recvQueueKeyMap[ rqKey ] = rqId;
         return rqId;
+    }
+
+    int destroyRQ( int rqId ) { 
+        auto iter = m_recvQueueMap.find( rqId );
+        if ( iter == m_recvQueueMap.end() ) {
+            return -1;
+        } 
+        assert( m_recvQueueKeyMap.find( iter->second->getKey() ) != m_recvQueueKeyMap.end() );
+        delete iter->second;
+        m_recvQueueMap.erase(rqId);
+        return 0;
     }
 	int addReadResp( int thread, Addr_t destAddr, uint32_t len, CompQueueId cqId, Context context ) {
 		int key = m_nextReadRespKey++;

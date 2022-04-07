@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "rdma.h"
 
@@ -36,7 +37,6 @@ typedef struct {
 	int num;
 } CompletionQ;
 
-#define NUM_COMP_Q 16
 static CompletionQ s_compQ[NUM_COMP_Q];
 static int s_curCompIndex = 0;
 
@@ -92,7 +92,7 @@ NicCmd* allocCmd() {
 
 	dbgPrint("cmdbuf=%p resp=%p\n",cmd,resp);
 	// set retval to all ones as it is the flag will will watch for a change to none -1
-	resp->retval = -1;
+	resp->retval = -INT_MAX;
 	cmd->respAddr = (Addr_t) resp;
 	
 	return cmd;
@@ -176,6 +176,26 @@ int rdma_create_cq( ) {
 	return retval;
 }
 
+int rdma_destroy_cq( CompQueueId id ) {
+    NicCmd* cmd = allocCmd();
+	
+    dbgPrint("cmdbuf=%p\n", cmd);
+
+    cmd->type = RdmaDestroyCQ;
+    cmd->data.destroyCQ.cqId = id; 
+
+    writeCmd( cmd );
+
+    NicResp* resp = getResp(cmd);
+
+    waitResp( resp );
+    int retval = resp->retval;
+    dbgPrint("retval=%d\n",retval);
+
+    freeCmd(cmd);
+    return retval;
+}
+
 int rdma_create_rq( RecvQueueKey rqKey, CompQueueId cqId ) {
 	NicCmd* cmd = allocCmd();
 	
@@ -195,6 +215,26 @@ int rdma_create_rq( RecvQueueKey rqKey, CompQueueId cqId ) {
 
 	freeCmd(cmd);
 	return retval;
+}
+
+int rdma_destroy_rq( RecvQueueId id ) {
+    NicCmd* cmd = allocCmd();
+	
+    dbgPrint("cmdbuf=%p\n", cmd);
+
+    cmd->type = RdmaDestroyRQ;
+    cmd->data.destroyRQ.rqId = id; 
+
+    writeCmd( cmd );
+
+    NicResp* resp = getResp(cmd);
+
+    waitResp( resp );
+    int retval = resp->retval;
+    dbgPrint("retval=%d\n",retval);
+
+    freeCmd(cmd);
+    return retval;
 }
 
 
@@ -373,7 +413,7 @@ int rdma_memory_read( MemRgnKey key, Node node, Pid pid, size_t offset, void* de
 static int waitResp( NicResp* resp ) {
 	dbgPrint("wait for response from NIC, addr %p\n",&resp->retval);
 
-	while ( -1 == resp->retval );
+	while ( -INT_MAX == resp->retval );
 	return 0;
 }
 
