@@ -50,7 +50,7 @@ public:
         if (found_null) {
             const char* open_path_cstr = (const char*)&open_path[0];
 
-            output->verbose(CALL_INFO, 16, 0, "[syscall-open] path: \"%s\", open_flags: %#x, open_mode: %#x\n", open_path_cstr,open_flags,open_mode);
+            output->verbose(CALL_INFO, 16, 0, "[syscall-open] path: \"%s\", open_flags: %#" PRIx64 ", open_mode: %#" PRIx64 "\n", open_path_cstr,open_flags,open_mode);
 
             while (file_descriptors->find(opened_fd_handle) != file_descriptors->end()) {
                 opened_fd_handle++;
@@ -64,7 +64,8 @@ public:
             } catch ( int error ) {
                 opened_fd_handle = -errno;
                 char buf[100];
-                output->verbose(CALL_INFO, 16, 0, "[syscall-open] open of %s failed, `%s`\n", open_path_cstr, strerror_r(errno,buf,100) );
+                strerror_r(errno,buf,100);
+                output->verbose(CALL_INFO, 16, 0, "[syscall-open] open of %s failed, `%s`\n", open_path_cstr, buf );
            }
 
             markComplete();

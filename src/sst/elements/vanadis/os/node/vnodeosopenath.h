@@ -60,7 +60,8 @@ public:
             } catch ( int error ) {
                 opened_fd_handle = -errno;
                 char buf[100];
-                output->verbose(CALL_INFO, 16, 0, "[syscall-openat] open of %s failed, `%s`\n", (const char*)&openat_path[0], strerror_r(errno,buf,100));
+                strerror_r(errno,buf,100);
+                output->verbose(CALL_INFO, 16, 0, "[syscall-openat] open of %s failed, `%s`\n", (const char*)&openat_path[0], buf );
             }
 
             markComplete();
