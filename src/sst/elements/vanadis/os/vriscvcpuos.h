@@ -43,20 +43,23 @@
 #define RISCV_O_ASYNC       020000 
 #define RISCV_O_CLOEXEC     02000000 
 #define RISCV_O_CREAT       0100 
-#define RISCV_O_DIRECT      040000
 #define RISCV_O_DIRECTORY   0200000
 #define RISCV_O_DSYNC       010000 
 #define RISCV_O_EXCL        0200  
 #define RISCV_O_NOCTTY      0400  
-#define RISCV_O_LARGEFILE   0100000 
-#define RISCV_O_NOATIME     01000000  
 #define RISCV_O_NOFOLLOW    0400000
-#define RISCV_O_PATH        010000000 
 #define RISCV_O_SYNC        04010000
-#define RISCV_O_TMPFILE     020200000 
 #define RISCV_O_TRUNC       01000
 #define RISCV_O_NONBLOCK    04000 
 #define RISCV_O_NDELAY      RISCV_O_NONBLOCK 
+
+#ifndef SST_COMPILE_MACOSX
+#define RISCV_O_DIRECT      040000
+#define RISCV_O_LARGEFILE   0100000 
+#define RISCV_O_NOATIME     01000000  
+#define RISCV_O_PATH        010000000 
+#define RISCV_O_TMPFILE     020200000 
+#endif
 
 
 #define VANADIS_SYSCALL_RISCV_READ 63
@@ -596,20 +599,23 @@ protected:
         RISC_CONVERT( ASYNC );
         RISC_CONVERT( CLOEXEC );
         RISC_CONVERT( CREAT );
-        RISC_CONVERT( DIRECT );
         RISC_CONVERT( DIRECTORY );
         RISC_CONVERT( DSYNC );
         RISC_CONVERT( EXCL );
-        RISC_CONVERT( LARGEFILE );
-        RISC_CONVERT( NOATIME );
         RISC_CONVERT( NOCTTY );
         RISC_CONVERT( NOFOLLOW );
-        RISC_CONVERT( PATH );
         RISC_CONVERT( SYNC );
-        RISC_CONVERT( TMPFILE );
         RISC_CONVERT( TRUNC );
         RISC_CONVERT( NONBLOCK );
         RISC_CONVERT( NDELAY );
+
+#ifndef SST_COMPILE_MACOSX
+        RISC_CONVERT( DIRECT );
+        RISC_CONVERT( LARGEFILE );
+        RISC_CONVERT( NOATIME );
+        RISC_CONVERT( PATH );
+        RISC_CONVERT( TMPFILE );
+#endif
 
         assert( 0 == flags );
 
