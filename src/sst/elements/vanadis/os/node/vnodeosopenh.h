@@ -18,6 +18,7 @@
 
 #include <cinttypes>
 #include <cstdint>
+#include <fcntl.h>
 
 #include "os/node/vnodeoshstate.h"
 
@@ -49,46 +50,23 @@ public:
         if (found_null) {
             const char* open_path_cstr = (const char*)&open_path[0];
 
-            output->verbose(CALL_INFO, 16, 0, "[syscall-open] path at: \"%s\"\n", open_path_cstr);
+            output->verbose(CALL_INFO, 16, 0, "[syscall-open] path: \"%s\", open_flags: %#" PRIx64 ", open_mode: %#" PRIx64 "\n", open_path_cstr,open_flags,open_mode);
 
             while (file_descriptors->find(opened_fd_handle) != file_descriptors->end()) {
                 opened_fd_handle++;
             }
 
-            FILE* file_ptr = nullptr;
-
-            switch (open_mode) {
-            case 0: {
-                file_ptr = fopen(open_path_cstr, "r");
-            } break;
-            case 1: {
-                file_ptr = fopen(open_path_cstr, "w");
-            } break;
-            case 2: {
-                file_ptr = fopen(open_path_cstr, "rw");
-            } break;
-            default: {
-                // set return code to invalid flags (EINVAL)
-                opened_fd_handle = -22;
-            }
-            }
-
-            if (nullptr == file_ptr) {
-                output->verbose(CALL_INFO, 16, 0,
-                                "[syscall-open] file open at %s failed, did not find "
-                                "an appropriate access mode or file operation for that "
-                                "mode failed (handle: %" PRId32 ")\n",
-                                open_path_cstr, opened_fd_handle);
-                if (opened_fd_handle > 0) {
-                    // set return code to invalid access (EACCES)
-                    opened_fd_handle = -13;
-                }
-            } else {
-                output->verbose(CALL_INFO, 16, 0, "[syscall-open] new descriptor at %" PRIu32 "\n", opened_fd_handle);
-
-                file_descriptors->insert(std::pair<uint32_t, VanadisOSFileDescriptor*>(
-                    opened_fd_handle, new VanadisOSFileDescriptor(opened_fd_handle, open_path_cstr, file_ptr)));
-            }
+            try {
+                VanadisOSFileDescriptor* desp = new VanadisOSFileDescriptor(open_path_cstr, open_flags, open_mode);
+                file_descriptors->insert(std::pair<uint32_t, VanadisOSFileDescriptor*>( opened_fd_handle, desp ));
+                output->verbose(CALL_INFO, 16, 0, "[syscall-open] new Vanadis file descriptor %" PRIu32 ", SST file descriptor %d\n",
+                        opened_fd_handle, desp->getFileDescriptor() );
+            } catch ( int error ) {
+                opened_fd_handle = -errno;
+                char buf[100];
+                strerror_r(errno,buf,100);
+                output->verbose(CALL_INFO, 16, 0, "[syscall-open] open of %s failed, `%s`\n", open_path_cstr, buf );
+           }
 
             markComplete();
         } else {

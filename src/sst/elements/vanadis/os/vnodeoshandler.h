@@ -72,13 +72,13 @@ public:
 
         if (stdin_path != nullptr)
             file_descriptors.insert(
-                std::pair<uint32_t, VanadisOSFileDescriptor*>(0, new VanadisOSFileDescriptor(0, stdin_path)));
+                std::pair<uint32_t, VanadisOSFileDescriptor*>(0, new VanadisOSFileDescriptor(stdin_path)));
         if (stdout_path != nullptr)
             file_descriptors.insert(
-                std::pair<uint32_t, VanadisOSFileDescriptor*>(1, new VanadisOSFileDescriptor(1, stdout_path)));
+                std::pair<uint32_t, VanadisOSFileDescriptor*>(1, new VanadisOSFileDescriptor(stdout_path)));
         if (stderr_path != nullptr)
             file_descriptors.insert(
-                std::pair<uint32_t, VanadisOSFileDescriptor*>(2, new VanadisOSFileDescriptor(2, stderr_path)));
+                std::pair<uint32_t, VanadisOSFileDescriptor*>(2, new VanadisOSFileDescriptor(stderr_path)));
 
         current_brk_point = 0;
 
@@ -154,7 +154,7 @@ public:
                 output->fatal(CALL_INFO, -1, "-> error: unable to case syscall to a fstat event.\n");
             }
 
-            output->verbose(CALL_INFO, 16, 0, "[syscall-fstat] ---> file-handle: %" PRId32 "\n",
+            output->verbose(CALL_INFO, 16, 0, "[syscall-fstat] ---> file-descriptor: %" PRId32 "\n",
                             fstat_ev->getFileHandle());
             output->verbose(CALL_INFO, 16, 0, "[syscall-fstat] ---> stat-struct-addr: %" PRIu64 " / 0x%llx\n",
                             fstat_ev->getStructAddress(), fstat_ev->getStructAddress());
@@ -180,7 +180,7 @@ public:
                 } else {
                     VanadisOSFileDescriptor* vos_descriptor = vos_descriptor_itr->second;
 
-                    if (0 == fstat(fileno(vos_descriptor->getFileHandle()), &stat_output)) {
+                    if (0 == fstat(vos_descriptor->getFileDescriptor(), &stat_output)) {
                         vanadis_copy_native_stat(&stat_output, &v32_stat_output);
                         success = true;
                     } else {
@@ -223,13 +223,31 @@ public:
                               "openat event.\n");
             }
 
+            int dirFd  = openat_ev->getDirectoryFileDescriptor();
+            // if the directory fd passed by the syscall is positive it should point to a entry in the file_descriptor table
+            // if the directory fd is negative pass that to to the openat handler ( AT_FDCWD is negative )
+            if ( dirFd > -1 ) {
+                auto file_des = file_descriptors.find(dirFd);
+
+                if ( file_des == file_descriptors.end()) {
+                    output->verbose(CALL_INFO, 16, 0, "can't find dirFd=%d in open file descriptor table\n", dirFd);
+                    VanadisSyscallResponse* resp = new VanadisSyscallResponse(-EBADF);
+                    resp->markFailed();
+                    core_link->send(resp);
+                    break;
+                }
+                // get the FD that SST will use
+                dirFd = file_des->second->getFileDescriptor();
+                output->verbose(CALL_INFO, 16, 0, "sst fd=%d pathname=%s\n", dirFd, file_des->second->getPath());
+            }
+
             output->verbose(
                 CALL_INFO, 16, 0, "[syscall-openat] -> call is openat( %" PRId64 ", 0x%0llx, %" PRId64 " )\n",
                 openat_ev->getDirectoryFileDescriptor(), openat_ev->getPathPointer(), openat_ev->getFlags());
 
             handler_state = new VanadisOpenAtHandlerState(
-                output->getVerboseLevel(), openat_ev->getDirectoryFileDescriptor(), openat_ev->getPathPointer(),
-                openat_ev->getFlags(), &file_descriptors, handlerSendMemCallback);
+                output->getVerboseLevel(), dirFd, openat_ev->getPathPointer(),
+                openat_ev->getFlags(), openat_ev->getMode(), &file_descriptors, handlerSendMemCallback);
 
             const uint64_t start_read_len = vanadis_line_remainder( openat_ev->getPathPointer(), 64 );
 
@@ -394,8 +412,8 @@ public:
                         = std::bind(&VanadisNodeOSCoreHandler::sendMemRequest, this, std::placeholders::_1);
 
                     handler_state = new VanadisWritevHandlerState(
-                        output->getVerboseLevel(), writev_ev->getOSBitType(), writev_ev->getFileDescriptor(), writev_ev->getIOVecAddress(),
-                        writev_ev->getIOVecCount(), file_des->second->getFileHandle(), send_req_func);
+                        output->getVerboseLevel(), writev_ev->getOSBitType(), writev_ev->getIOVecAddress(),
+                        writev_ev->getIOVecCount(), file_des->second->getFileDescriptor(), send_req_func);
 
                     // Launch read of the initial iovec info
 						  switch(writev_ev->getOSBitType()) {
@@ -453,7 +471,7 @@ public:
                         = std::bind(&VanadisNodeOSCoreHandler::sendMemRequest, this, std::placeholders::_1);
 
                     handler_state = new VanadisWriteHandlerState(
-                        output->getVerboseLevel(), file_des->second->getFileHandle(), write_ev->getFileDescriptor(),
+                        output->getVerboseLevel(), file_des->second->getFileDescriptor(),
                         write_ev->getBufferAddress(), write_ev->getBufferCount(), send_req_func);
 
                     sendMemRequest(
