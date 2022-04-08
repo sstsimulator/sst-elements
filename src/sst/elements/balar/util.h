@@ -128,8 +128,49 @@ namespace BalarComponent {
         };
     } BalarCudaCallPacket_t;
 
-    vector<uint8_t>* encode_balar_packet(BalarCudaCallPacket_t *pack_ptr);
-    BalarCudaCallPacket_t* decode_balar_packet(vector<uint8_t> *buffer);
+    typedef struct BalarCudaCallReturnPacket {
+        enum GpuApi_t cuda_call_id;
+        union {
+            cudaError_t cuda_error;
+            uint64_t    malloc_addr;
+            uint64_t    fat_cubin_handle;
+        };
+    } BalarCudaCallReturnPacket_t;
+
+    // TODO: Need a function to convert struct to vector uint8_t and vice versa
+    // TODO: Move the encode and decode to balar mmio handler?
+    // Need to move the template instantiation to header file
+    // See: https://stackoverflow.com/questions/495021/why-can-templates-only-be-implemented-in-the-header-file
+    template <typename T> 
+    vector<uint8_t>* encode_balar_packet(T *pack_ptr) {
+        vector<uint8_t> *buffer = new vector<uint8_t>();
+
+        // Treat pack ptr as uint8_t ptr
+        uint8_t* ptr = reinterpret_cast<uint8_t*>(pack_ptr);
+
+        // Get buffer initial size
+        size_t len = buffer->size();
+
+        // Allocate enough space
+        buffer->resize(len + sizeof(*pack_ptr));
+
+        // Copy the packet to buffer end
+        std::copy(ptr, ptr + sizeof(*pack_ptr), buffer->data() + len);
+        return buffer;
+    }
+
+    template <typename T>
+    T* decode_balar_packet(vector<uint8_t> *buffer) {
+        T* pack_ptr = new T();
+        size_t len = sizeof(*pack_ptr);
+
+        // Match with type of buffer
+        uint8_t* ptr = reinterpret_cast<uint8_t*>(pack_ptr);
+        std::copy(buffer->data(), buffer->data() + len, ptr);
+        
+        return pack_ptr;
+    }
+
     string* gpu_api_to_string(enum GpuApi_t api);
 }
 }

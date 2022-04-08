@@ -162,7 +162,8 @@ private:
 
     // Last cuda call info
     // Return value from last cuda function call
-    cudaError_t cuda_ret;
+    // TODO Make this a union for different return values
+    BalarCudaCallReturnPacket_t cuda_ret;
 
     // Last cuda function call packet
     BalarCudaCallPacket_t *last_packet;
