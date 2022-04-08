@@ -393,7 +393,7 @@ Interfaces::StandardMem::Request* BalarTestCPU::createGPUReq() {
     uint8_t funcType = rng.generateNextUInt32() % 11 + 1;
     enum GpuApi_t cuda_call_id = (enum GpuApi_t)(funcType * 2 - 1);
     pack_ptr->cuda_call_id = cuda_call_id; 
-    vector<uint8_t> *buffer = encode_balar_packet(pack_ptr);
+    vector<uint8_t> *buffer = encode_balar_packet<BalarCudaCallPacket_t>(pack_ptr);
 
     StandardMem::Request* req = new Interfaces::StandardMem::Write(gpuAddr, buffer->size(), *buffer, false);
     // TODO: Write Request for parameters to gpu address
@@ -404,10 +404,8 @@ Interfaces::StandardMem::Request* BalarTestCPU::createGPUReq() {
 }
 
 Interfaces::StandardMem::Request* BalarTestCPU::checkCudaReturn() {
-    // StandardMem::Request* req = new Interfaces::StandardMem::Read(mmioAddr, sizeof(cudaError_t));
-
     // TODO Check last packet send now
-    StandardMem::Request* req = new Interfaces::StandardMem::Read(mmioAddr, sizeof(BalarCudaCallPacket_t));
+    StandardMem::Request* req = new Interfaces::StandardMem::Read(mmioAddr, sizeof(BalarCudaCallReturnPacket_t));
     out.verbose(_INFO_,  "%s: %" PRIu64 " Issued Cuda return value Read for address 0x%" PRIx64 "\n", getName().c_str(), ops, mmioAddr);
     return req;
 }
@@ -426,8 +424,8 @@ void BalarTestCPU::mmioHandlers::handle(Interfaces::StandardMem::ReadResp* resp)
         out->fatal(_INFO_, "Event (%" PRIx64 ") not found!\n", resp->getID());
     } else {
         vector<uint8_t> *data_ptr = &(resp->data);
-        BalarCudaCallPacket_t *pack_ptr = decode_balar_packet(data_ptr);
-        out->verbose(_INFO_, "%s: get response from read request (%d) with enum: \"%s\"\n", cpu->getName().c_str(), resp->getID(), gpu_api_to_string(pack_ptr->cuda_call_id)->c_str());
+        BalarCudaCallReturnPacket_t *ret_pack_ptr = decode_balar_packet<BalarCudaCallReturnPacket_t>(data_ptr);
+        out->verbose(_INFO_, "%s: get response from read request (%d) with enum: \"%s\"\n", cpu->getName().c_str(), resp->getID(), gpu_api_to_string(ret_pack_ptr->cuda_call_id)->c_str());
         
         // TODO Extract data
         vector<uint8_t> *data = &resp->data;

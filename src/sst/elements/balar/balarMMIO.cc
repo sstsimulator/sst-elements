@@ -46,7 +46,6 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
     bool found = false;
 
     // Initialize registers
-    cuda_ret = cudaSuccess;
     last_packet = nullptr;
 
     // Memory address
@@ -118,16 +117,18 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
     std::vector<uint8_t> buff = write->data;
 
     // Get cuda call arguments
-    mmio->last_packet = decode_balar_packet(&buff);
+    mmio->last_packet = decode_balar_packet<BalarCudaCallPacket_t>(&buff);
     BalarCudaCallPacket_t * packet = mmio->last_packet;
 
     out->verbose(_INFO_, "Handling Write. Enum is %s\n", gpu_api_to_string(packet->cuda_call_id)->c_str());
 
     // mmio->cuda_ret = (cudaError_t) pack_ptr->cuda_call_id; // For testing purpose
+
+    // Save the call type for return packet
+    mmio->cuda_ret.cuda_call_id = packet->cuda_call_id;
     switch (packet->cuda_call_id) {
         case GPU_REG_FAT_BINARY: 
-            // TODO Need to store the handle? returned by this function
-            __cudaRegisterFatBinarySST(packet->register_fatbin.file_name);
+            mmio->cuda_ret.fat_cubin_handle = (uint64_t) __cudaRegisterFatBinarySST(packet->register_fatbin.file_name);
             break;
         case GPU_REG_FUNCTION: 
             __cudaRegisterFunctionSST(packet->register_function.fatCubinHandle, 
@@ -135,7 +136,7 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
                                       packet->register_function.deviceFun);
             break;
         case GPU_MEMCPY: 
-            mmio->cuda_ret = cudaMemcpySST(packet->cuda_memcpy.dst,
+            mmio->cuda_ret.cuda_error = cudaMemcpySST(packet->cuda_memcpy.dst,
                           packet->cuda_memcpy.src,
                           packet->cuda_memcpy.count,
                           packet->cuda_memcpy.kind,
@@ -153,7 +154,7 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
                 blockDim.x = packet->configure_call.bdx;
                 blockDim.y = packet->configure_call.bdy;
                 blockDim.z = packet->configure_call.bdz;
-                mmio->cuda_ret = cudaConfigureCallSST(
+                mmio->cuda_ret.cuda_error = cudaConfigureCallSST(
                     gridDim, 
                     blockDim, 
                     packet->configure_call.sharedMem, 
@@ -162,7 +163,7 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
             }
             break;
         case GPU_SET_ARG: 
-            mmio->cuda_ret = cudaSetupArgumentSST(
+            mmio->cuda_ret.cuda_error = cudaSetupArgumentSST(
                 packet->setup_argument.arg,
                 packet->setup_argument.value,
                 packet->setup_argument.size,
@@ -170,17 +171,16 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
             );
             break;
         case GPU_LAUNCH: 
-            mmio->cuda_ret = cudaLaunchSST(packet->cuda_launch.func);
+            mmio->cuda_ret.cuda_error = cudaLaunchSST(packet->cuda_launch.func);
             break;
         case GPU_FREE: 
-            mmio->cuda_ret = cudaFree(packet->cuda_free.devPtr);
+            mmio->cuda_ret.cuda_error = cudaFree(packet->cuda_free.devPtr);
             break;
         case GPU_GET_LAST_ERROR: 
-            mmio->cuda_ret = cudaGetLastError();
+            mmio->cuda_ret.cuda_error = cudaGetLastError();
             break;
         case GPU_MALLOC: 
-            // TODO Save the returned malloc address
-            cudaMallocSST(
+            mmio->cuda_ret.malloc_addr = cudaMallocSST(
                 packet->cuda_malloc.devPtr,
                 packet->cuda_malloc.size
             );
@@ -198,7 +198,7 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
             );
             break;
         case GPU_MAX_BLOCK: 
-            mmio->cuda_ret = cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(
+            mmio->cuda_ret.cuda_error = cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(
                 packet->max_active_block.numBlock,
                 packet->max_active_block.hostFunc,
                 packet->max_active_block.blockSize,
@@ -224,10 +224,9 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
  * @param read 
  */
 void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Read* read) {
-    out->verbose(_INFO_, "Handle Read for return value. Returning %d\n", mmio->cuda_ret);
+    out->verbose(_INFO_, "Handle Read for return value for a %s request\n", gpu_api_to_string(mmio->cuda_ret.cuda_call_id)->c_str());
 
-    vector<uint8_t> *payload = encode_balar_packet(mmio->last_packet);
-    // cudaErrorToData(mmio->cuda_ret, &payload);
+    vector<uint8_t> *payload = encode_balar_packet<BalarCudaCallReturnPacket_t>(&mmio->cuda_ret);
 
     payload->resize(read->size, 0); // A bit silly if size != sizeof(int) but that's the CPU's problem
 

@@ -35,7 +35,8 @@ libbalar_la_CPPFLAGS = \
 	$(SST_CXX0X_FLAGS) -fPIC -Wall \
 	$(MPI_CPPFLAGS) \
 	$(CUDA_CPPFLAGS) \
-	-fdiagnostics-color=always
+	-fdiagnostics-color=always\
+	-Wl,--no-undefined
 
 libbalar_la_LDFLAGS = \
 	-avoid-version

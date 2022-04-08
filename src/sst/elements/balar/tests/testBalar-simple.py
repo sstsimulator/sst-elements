@@ -1,4 +1,5 @@
 # Automatically generated SST Python input
+# Run script: sst testBalar-simple.py --model-options="-c ariel-gpu-v100.cfg -v" > tmp.out 2>&1
 import sst
 try:
     import ConfigParser
