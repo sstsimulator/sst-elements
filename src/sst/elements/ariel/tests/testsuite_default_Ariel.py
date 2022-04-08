@@ -143,10 +143,12 @@ class testcase_Ariel(SSTTestCase):
 
         num_out_lines  = int(os_wc(outfile, [0]))
         log_debug("{0} : num_out_lines = {1}".format(outfile, num_out_lines))
+        num_err_lines  = int(os_wc(errfile, [0]))
+        log_debug("{0} : num_err_lines = {1}".format(errfile, num_err_lines))
         num_ref_lines = int(os_wc(reffile, [0]))
         log_debug("{0} : num_ref_lines = {1}".format(reffile, num_ref_lines))
 
-        line_count_diff = abs(num_ref_lines - num_out_lines)
+        line_count_diff = abs(num_ref_lines - num_out_lines - num_err_lines)
         log_debug("Line Count diff = {0}".format(line_count_diff))
 
         if line_count_diff > 15:
