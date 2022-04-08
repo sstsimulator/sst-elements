@@ -134,6 +134,7 @@ private:
     bool ll_issued;
     Interfaces::StandardMem::Addr ll_addr;
 
+    // Pending requests
     std::map<Interfaces::StandardMem::Request::id_t, std::pair<SimTime_t, std::string>> requests;
 
     Interfaces::StandardMem *memory;

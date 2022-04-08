@@ -30,6 +30,7 @@
 #include "host_defines.h"
 #include "builtin_types.h"
 #include "driver_types.h"
+#include "vector_types.h"
 #include "cuda_runtime_api.h"
 #include "balar_event.h"
 #include "util.h"

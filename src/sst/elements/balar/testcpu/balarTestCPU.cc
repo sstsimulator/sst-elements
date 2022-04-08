@@ -399,7 +399,7 @@ Interfaces::StandardMem::Request* BalarTestCPU::createGPUReq() {
     // TODO: Write Request for parameters to gpu address
     num_gpu_issued->addData(1);
 
-    out.verbose(_INFO_, "GPU request sent %s Function enum %s\n", getName().c_str(), gpu_api_to_string(cuda_call_id)->c_str());
+    out.verbose(_INFO_, "GPU request sent %s, CUDA Function enum %s\n", getName().c_str(), gpu_api_to_string(cuda_call_id)->c_str());
     return req;
 }
 
@@ -426,17 +426,12 @@ void BalarTestCPU::mmioHandlers::handle(Interfaces::StandardMem::ReadResp* resp)
         out->fatal(_INFO_, "Event (%" PRIx64 ") not found!\n", resp->getID());
     } else {
         vector<uint8_t> *data_ptr = &(resp->data);
-        if (!data_ptr) {
-            out->verbose(_INFO_, "%s: get response from read request (%d) but no pack ptr\n", cpu->getName().c_str(), resp->getID());
-        } else {
-            BalarCudaCallPacket_t *pack_ptr = decode_balar_packet(data_ptr);
-            out->verbose(_INFO_, "%s: get response from read request (%d) with enum: \"%s\"\n", cpu->getName().c_str(), resp->getID(), gpu_api_to_string(pack_ptr->cuda_call_id)->c_str());
-            // out->verbose(_INFO_, "%s: get response from read request (%d) with enum: \"\"\n", cpu->getName().c_str(), resp->getID());
+        BalarCudaCallPacket_t *pack_ptr = decode_balar_packet(data_ptr);
+        out->verbose(_INFO_, "%s: get response from read request (%d) with enum: \"%s\"\n", cpu->getName().c_str(), resp->getID(), gpu_api_to_string(pack_ptr->cuda_call_id)->c_str());
+        
+        // TODO Extract data
+        vector<uint8_t> *data = &resp->data;
 
-            
-            // TODO Extract data
-            vector<uint8_t> *data = &resp->data;
-        }
         
         cpu->requests.erase(i);
     }
