@@ -119,11 +119,97 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
 
     // Get cuda call arguments
     mmio->last_packet = decode_balar_packet(&buff);
+    BalarCudaCallPacket_t * packet = mmio->last_packet;
 
-    out->verbose(_INFO_, "Handling Write. Enum is %s\n", gpu_api_to_string(mmio->last_packet->cuda_call_id)->c_str());
+    out->verbose(_INFO_, "Handling Write. Enum is %s\n", gpu_api_to_string(packet->cuda_call_id)->c_str());
 
-    // TODO: actually passed argument to and call gpgpusim
     // mmio->cuda_ret = (cudaError_t) pack_ptr->cuda_call_id; // For testing purpose
+    switch (packet->cuda_call_id) {
+        case GPU_REG_FAT_BINARY: 
+            // TODO Need to store the handle? returned by this function
+            __cudaRegisterFatBinarySST(packet->register_fatbin.file_name);
+            break;
+        case GPU_REG_FUNCTION: 
+            __cudaRegisterFunctionSST(packet->register_function.fatCubinHandle, 
+                                      packet->register_function.hostFun,
+                                      packet->register_function.deviceFun);
+            break;
+        case GPU_MEMCPY: 
+            mmio->cuda_ret = cudaMemcpySST(packet->cuda_memcpy.dst,
+                          packet->cuda_memcpy.src,
+                          packet->cuda_memcpy.count,
+                          packet->cuda_memcpy.kind,
+                          packet->cuda_memcpy.payload);
+            break;
+        case GPU_CONFIG_CALL: 
+            {
+                // Brackets for var visibity issue, see 
+                // https://stackoverflow.com/questions/5685471/error-jump-to-case-label-in-switch-statement
+                dim3 gridDim;
+                dim3 blockDim;
+                gridDim.x = packet->configure_call.gdx;
+                gridDim.y = packet->configure_call.gdy;
+                gridDim.z = packet->configure_call.gdz;
+                blockDim.x = packet->configure_call.bdx;
+                blockDim.y = packet->configure_call.bdy;
+                blockDim.z = packet->configure_call.bdz;
+                mmio->cuda_ret = cudaConfigureCallSST(
+                    gridDim, 
+                    blockDim, 
+                    packet->configure_call.sharedMem, 
+                    packet->configure_call.stream
+                );
+            }
+            break;
+        case GPU_SET_ARG: 
+            mmio->cuda_ret = cudaSetupArgumentSST(
+                packet->setup_argument.arg,
+                packet->setup_argument.value,
+                packet->setup_argument.size,
+                packet->setup_argument.offset
+            );
+            break;
+        case GPU_LAUNCH: 
+            mmio->cuda_ret = cudaLaunchSST(packet->cuda_launch.func);
+            break;
+        case GPU_FREE: 
+            mmio->cuda_ret = cudaFree(packet->cuda_free.devPtr);
+            break;
+        case GPU_GET_LAST_ERROR: 
+            mmio->cuda_ret = cudaGetLastError();
+            break;
+        case GPU_MALLOC: 
+            // TODO Save the returned malloc address
+            cudaMallocSST(
+                packet->cuda_malloc.devPtr,
+                packet->cuda_malloc.size
+            );
+            break;
+        case GPU_REG_VAR: 
+            __cudaRegisterVar(
+                packet->register_var.fatCubinHandle,
+                packet->register_var.hostVar,
+                packet->register_var.deviceAddress,
+                packet->register_var.deviceName,
+                packet->register_var.ext,
+                packet->register_var.size,
+                packet->register_var.constant,
+                packet->register_var.global
+            );
+            break;
+        case GPU_MAX_BLOCK: 
+            mmio->cuda_ret = cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(
+                packet->max_active_block.numBlock,
+                packet->max_active_block.hostFunc,
+                packet->max_active_block.blockSize,
+                packet->max_active_block.dynamicSMemSize,
+                packet->max_active_block.flags
+            );
+            break;
+        default:
+            out->fatal(CALL_INFO, -1, "Received unknown GPU enum API: %d\n", packet->cuda_call_id);
+            break;
+    }
 
     /* Send response (ack) if needed */
     if (!(write->posted)) {
