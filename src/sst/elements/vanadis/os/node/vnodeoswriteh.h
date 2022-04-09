@@ -29,9 +29,9 @@ namespace Vanadis {
 
 class VanadisWriteHandlerState : public VanadisHandlerState {
 public:
-    VanadisWriteHandlerState(uint32_t verbosity, FILE* handle, int64_t fd, uint64_t buffer_addr, uint64_t buffer_count,
+    VanadisWriteHandlerState(uint32_t verbosity, int file_descriptor, uint64_t buffer_addr, uint64_t buffer_count,
                              std::function<void(StandardMem::Request*)> send_r)
-        : VanadisHandlerState(verbosity), file_handle(handle), write_fd(fd), write_buff(buffer_addr),
+        : VanadisHandlerState(verbosity), file_descriptor(file_descriptor), write_buff(buffer_addr),
           write_count(buffer_count) {
 
         send_mem_req = send_r;
@@ -50,8 +50,6 @@ public:
 
             send_mem_req(new StandardMem::Read(write_buff + total_written, read_len));
         } else {
-            // call flush so data becomes visible
-            fflush(file_handle);
             markComplete();
         }
     }
@@ -72,7 +70,7 @@ public:
                             req->pAddr, (uint64_t)req->size);
 
             if (req->size > 0) {
-                fwrite(&req->data[0], 1, req->size, state_handler->file_handle);
+                write( state_handler->file_descriptor, &req->data[0], req->size);
                 state_handler->total_written += req->size;
             }
         }
@@ -84,13 +82,12 @@ public:
     virtual VanadisSyscallResponse* generateResponse() { return new VanadisSyscallResponse(total_written); }
 
 protected:
-    const int64_t write_fd;
     const uint64_t write_buff;
     const uint64_t write_count;
 
     uint64_t total_written;
 
-    FILE* file_handle;
+    int file_descriptor;
     std::function<void(StandardMem::Request*)> send_mem_req;
 
     StandardMemHandlers* std_mem_handlers;

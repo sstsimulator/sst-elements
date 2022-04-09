@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -414,11 +414,11 @@ bool EmberLQCDGenerator::generate( std::queue<EmberEvent*>& evQ )
         // Compute Matrix Vector Multiply Sum in 4 directions
         // C <- A[0]*B[0]+A[1]*B[1]+A[2]*B[2]+A[3]*B[3]
         // This is done for both positive "fat" and "long" links
-        comp_start = Simulation::getSimulation()->getCurrentSimCycle();
+        comp_start = getCurrentSimCycle();
         //output("Rank %" PRIu32 ", Compute start: %" PRIu64 "\n", rank(), comp_start);
         if (nsCompute) enQ_compute(evQ, nsCompute);
         else enQ_compute(evQ, compute_nseconds_mmvs4d);
-        comp_time += Simulation::getSimulation()->getCurrentSimCycle() - comp_start;
+        comp_time += getCurrentSimCycle() - comp_start;
         //output("Rank %" PRIu32 ", Compute end: %" PRIu64 "\n", rank(), Simulation::getSimulation()->getCurrentSimCycle());
 
         //Wait on negative gathers (8 total)
@@ -440,9 +440,9 @@ bool EmberLQCDGenerator::generate( std::queue<EmberEvent*>& evQ )
     } // END even-odd preconditioning loop
 
     // Allreduce MPI_DOUBLE
-    coll_start = Simulation::getSimulation()->getCurrentSimCycle();
+    coll_start = getCurrentSimCycle();
     enQ_allreduce( evQ, NULL, NULL, 1, DOUBLE, MP::SUM, GroupWorld);
-    coll_time += Simulation::getSimulation()->getCurrentSimCycle() - coll_start;
+    coll_time += getCurrentSimCycle() - coll_start;
     // Compute ResidSq
     // Our profiling shows this is ~ 1/4th the FLOPS of the
     // compute segments above, but is more memory intensive (and takes longer).
@@ -451,10 +451,10 @@ bool EmberLQCDGenerator::generate( std::queue<EmberEvent*>& evQ )
     if (nsCompute) enQ_compute(evQ, nsCompute);
     else enQ_compute(evQ, compute_nseconds_resid);
     // Allreduce MPI_DOUBLE
-    coll_start = Simulation::getSimulation()->getCurrentSimCycle();
+    coll_start = getCurrentSimCycle();
     //output("Rank %" PRIu32 ", Collective start: %" PRIu64 "\n", rank(), coll_start);
     enQ_allreduce( evQ, NULL, NULL, 1, DOUBLE, MP::SUM, GroupWorld);
-    coll_time += Simulation::getSimulation()->getCurrentSimCycle() - coll_start;
+    coll_time += getCurrentSimCycle() - coll_start;
     //output("Rank %" PRIu32 ", Collective end: %" PRIu64 "\n", rank(), Simulation::getSimulation()->getCurrentSimCycle());
 
     if ( ++m_loopIndex == iterations ) {

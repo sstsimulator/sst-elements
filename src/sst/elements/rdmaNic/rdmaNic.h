@@ -1,13 +1,13 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -212,6 +212,8 @@ class RdmaNic : public SST::Component {
 	class CompletionQueue {
 	  public:
 		CompletionQueue( NicCmd * cmd) : m_cmd(cmd), m_headIndex(0) {}
+        ~CompletionQueue() { delete m_cmd; }
+
 		NicCmd& cmd() { return *m_cmd; }	
 		int headIndex() { return m_headIndex; }
 		void incHeadIndex() { 
@@ -296,8 +298,12 @@ class RdmaNic : public SST::Component {
 			return new RdmaFiniCmd( nic, thread, cmd );
 	  	case RdmaCreateRQ:
 			return new RdmaCreateRQ_Cmd( nic, thread, cmd );
+	  	case RdmaDestroyRQ:
+			return new RdmaDestroyRQ_Cmd( nic, thread, cmd );
 	  	case RdmaCreateCQ:
 			return new RdmaCreateCQ_Cmd( nic, thread, cmd );
+	  	case RdmaDestroyCQ:
+			return new RdmaDestroyCQ_Cmd( nic, thread, cmd );
 		case RdmaMemRgnReg:
 			return new RdmaMemRgnRegCmd( nic, thread, cmd );
 		case RdmaMemRgnUnreg:
