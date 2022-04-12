@@ -23,6 +23,39 @@
 #include "os/voscallev.h"
 #include <functional>
 
+#include <fcntl.h>
+
+#define MIPS_CONVERT( x ) \
+    if ( flags & MIPS_O_##x ) {\
+        flags &= ~MIPS_O_##x;\
+        out |= O_##x;\
+    }
+
+#define MIPS_O_RDONLY    0
+#define MIPS_O_WRONLY    0x1
+#define MIPS_O_RDWR      0x2
+#define MIPS_O_APPEND    0x8
+#define MIPS_O_ASYNC     0x1000
+#define MIPS_O_CLOEXEC   0x80000
+#define MIPS_O_CREAT     0x100
+#define MIPS_O_DIRECTORY 0x10000
+#define MIPS_O_DSYNC     0x10
+#define MIPS_O_EXCL      0x400
+#define MIPS_O_NOCTTY    0x800
+#define MIPS_O_NOFOLLOW  0x20000
+#define MIPS_O_SYNC      0x4010
+#define MIPS_O_TRUNC     0x200
+#define MIPS_O_NONBLOCK  0x80
+#define MIPS_O_NDELAY    0x80
+
+#ifndef SST_COMPILE_MACOSX
+#define MIPS_O_DIRECT    0x8000
+#define MIPS_O_LARGEFILE 0x2000
+#define MIPS_O_NOATIME   0x40000
+#define MIPS_O_PATH      0x200000
+#define MIPS_O_TMPFILE   0x410000
+#endif
+
 #define VANADIS_SYSCALL_MIPS_READ 4003
 #define VANADIS_SYSCALL_MIPS_OPEN 4005
 #define VANADIS_SYSCALL_MIPS_CLOSE 4006
@@ -220,7 +253,7 @@ public:
                             "[syscall-handler] found a call to open( 0x%llx, %" PRIu64 ", %" PRIu64 " )\n",
                             open_path_ptr, open_flags, open_mode);
 
-            call_ev = new VanadisSyscallOpenEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, open_path_ptr, open_flags, open_mode);
+            call_ev = new VanadisSyscallOpenEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, open_path_ptr, convertFlags(open_flags), open_mode);
         } break;
 
         case VANADIS_SYSCALL_MIPS_OPENAT: {
@@ -233,8 +266,11 @@ public:
             const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
             uint64_t openat_flags = regFile->getIntReg<uint64_t>(phys_reg_6);
 
+            const uint16_t phys_reg_7 = isaTable->getIntPhysReg(7);
+            uint64_t openat_mode = regFile->getIntReg<uint64_t>(phys_reg_7);
+
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to openat()\n");
-            call_ev = new VanadisSyscallOpenAtEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, openat_dirfd, openat_path_ptr, openat_flags);
+            call_ev = new VanadisSyscallOpenAtEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, openat_dirfd, openat_path_ptr, convertFlags(openat_flags), openat_mode);
         } break;
 
         case VANADIS_SYSCALL_MIPS_WRITEV: {
@@ -549,6 +585,39 @@ protected:
 
         delete ev;
     }
+
+	uint64_t convertFlags( uint64_t flags ) {
+		uint64_t out = 0;
+
+		MIPS_CONVERT( RDONLY );
+		MIPS_CONVERT( WRONLY );
+		MIPS_CONVERT( RDWR );
+		MIPS_CONVERT( APPEND );
+		MIPS_CONVERT( ASYNC );
+		MIPS_CONVERT( CLOEXEC );
+		MIPS_CONVERT( CREAT );
+		MIPS_CONVERT( DIRECTORY );
+		MIPS_CONVERT( DSYNC );
+		MIPS_CONVERT( EXCL );
+		MIPS_CONVERT( NOCTTY );
+		MIPS_CONVERT( NOFOLLOW );
+		MIPS_CONVERT( SYNC );
+		MIPS_CONVERT( TRUNC );
+		MIPS_CONVERT( NONBLOCK );
+		MIPS_CONVERT( NDELAY );
+
+#ifndef SST_COMPILE_MACOSX
+		MIPS_CONVERT( DIRECT );
+		MIPS_CONVERT( LARGEFILE );
+		MIPS_CONVERT( NOATIME );
+		MIPS_CONVERT( PATH );
+		MIPS_CONVERT( TMPFILE );
+#endif
+
+        assert( 0 == flags );
+
+		return out;
+	}
 
     SST::Link* os_link;
     bool brk_zero_memory;

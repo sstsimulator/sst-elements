@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -30,7 +30,8 @@ static std::unordered_map<std::string, EmberMotifLogRecord*>* logHandles = NULL;
 static std::mutex mapLock;
 #endif
 
-EmberMotifLog::EmberMotifLog(const std::string logPathPrefix, const uint32_t jobID) :
+EmberMotifLog::EmberMotifLog(SST::ComponentId_t cid, const std::string logPathPrefix, const uint32_t jobID) :
+    ComponentExtension(cid),
     jobID(jobID),
     rank(-1),
     start_time("0 ns"),
@@ -54,8 +55,8 @@ EmberMotifLog::EmberMotifLog(const std::string logPathPrefix, const uint32_t job
         std::ostringstream logFile;
         logFile << logPathPrefix;
 
-        if ( Simulation::getSimulation()->getNumRanks().rank > 1 ) {
-            logFile << "-" << Simulation::getSimulation()->getRank().rank;
+        if ( getNumRanks().rank > 1 ) {
+            logFile << "-" << getRank().rank;
         }
         logFile << ".log";
 
@@ -85,7 +86,7 @@ EmberMotifLog::~EmberMotifLog() {
 }
 
 void EmberMotifLog::logMotifStart(int motifNum) {
-    start_time = Simulation::getSimulation()->getElapsedSimTime().toStringBestSI();
+    start_time = getElapsedSimTime().toStringBestSI();
     currentMotifNum = motifNum;
 }
 
@@ -99,7 +100,7 @@ void EmberMotifLog::logMotifEnd(const std::string& name, const int motifNum) {
 		FILE* logFile = logRecord->getFile();
 
 		const char* nameChar = name.c_str();
-        std::string endTime = Simulation::getSimulation()->getElapsedSimTime().toStringBestSI();
+        std::string endTime = getElapsedSimTime().toStringBestSI();
         const char* startTimeChar = start_time.c_str();
 
         // File format:  job rank motifnum motif_name start_time end_time

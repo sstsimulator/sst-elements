@@ -1,13 +1,13 @@
-// Copyright 2013-2021 NTESS. Under the terms
+// Copyright 2013-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright(c) 2013-2021, NTESS
+// Copyright (c) 2013-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -18,7 +18,6 @@
 
 
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 
 #include "memNIC.h"
 
@@ -312,7 +311,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 
     int mshrSize    = params.find<int>("mshr_num_entries",-1);
     if (mshrSize == 0) dbg.fatal(CALL_INFO, -1, "Invalid param(%s): mshr_num_entries - must be at least 1 or else negative to indicate an unlimited size MSHR\n", getName().c_str());
-    mshr                = new MSHR(&dbg, mshrSize, getName(), DEBUG_ADDR);
+    mshr                = loadComponentExtension<MSHR>(&dbg, mshrSize, getName(), DEBUG_ADDR);
 
     /* Get latencies */
     accessLatency   = params.find<uint64_t>("access_latency_cycles", 0);
@@ -342,7 +341,7 @@ void DirectoryController::handlePacket(SST::Event *event){
 
         if (is_debug_event(evb)) {
             dbg.debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
-                    Simulation::getSimulation()->getCurrentSimCycle(), timestamp, getName().c_str(), evb->getVerboseString(dlevel).c_str());
+                    getCurrentSimCycle(), timestamp, getName().c_str(), evb->getVerboseString(dlevel).c_str());
         }
 
         if (BasicCommandClassArr[(int)evb->getCmd()] == BasicCommandClass::Request)
@@ -386,7 +385,7 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
             break;
         }
         dbg.debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Retry   (%s)\n",
-                Simulation::getSimulation()->getCurrentSimCycle(), timestamp, getName().c_str(), (*it)->getVerboseString(dlevel).c_str());
+                getCurrentSimCycle(), timestamp, getName().c_str(), (*it)->getVerboseString(dlevel).c_str());
         
         if (processPacket(*it, true)) {
             requestsThisCycle++;
@@ -402,7 +401,7 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
             break;
 
         dbg.debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
-                Simulation::getSimulation()->getCurrentSimCycle(), timestamp, getName().c_str(), (*it)->getVerboseString(dlevel).c_str());
+                getCurrentSimCycle(), timestamp, getName().c_str(), (*it)->getVerboseString(dlevel).c_str());
 
         if (processPacket(*it, false)) {
             requestsThisCycle++;
@@ -444,7 +443,7 @@ bool DirectoryController::processPacket(MemEvent * ev, bool replay) {
             std::stringstream id;
             id << "<" << ev->getID().first << "," << ev->getID().second << ">";
             dbg.debug(_L5_, "A: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 " %-15s %-6s %-6s %-10s %-15s\n",
-                    Simulation::getSimulation()->getCurrentSimCycle(), timestamp, getName().c_str(), CommandString[(int)ev->getCmd()],
+                    getCurrentSimCycle(), timestamp, getName().c_str(), CommandString[(int)ev->getCmd()],
                     addr, id.str().c_str(), "", "", "Stall", "(line conflict)");
         }
         return false;
@@ -2494,7 +2493,7 @@ void DirectoryController::sendOutgoingEvents() {
 
         if (is_debug_event(ev)) {
             dbg.debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
-                    Simulation::getSimulation()->getCurrentSimCycle(), timestamp, getName().c_str(), ev->getBriefString().c_str());
+                    getCurrentSimCycle(), timestamp, getName().c_str(), ev->getBriefString().c_str());
         }
         if (startTimes.find(ev->getResponseToID()) != startTimes.end()) {
             if (CommandClassArr[(int)ev->getCmd()] == CommandClass::Data)
@@ -2513,7 +2512,7 @@ void DirectoryController::sendOutgoingEvents() {
 
         if (is_debug_event(ev)) {
             dbg.debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
-                    Simulation::getSimulation()->getCurrentSimCycle(), timestamp, getName().c_str(), ev->getBriefString().c_str());
+                    getCurrentSimCycle(), timestamp, getName().c_str(), ev->getBriefString().c_str());
         }
 
         if (memMsgQueue.begin()->second.dirAccess) {
@@ -2585,7 +2584,7 @@ void DirectoryController::printDebugInfo() {
     reas << "(" << eventDI.reason << ")";
 
     dbg.debug(_L5_, "C: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 " %-15s %-6s %-6s %-10s %-15s",
-            Simulation::getSimulation()->getCurrentSimCycle(), timestamp, getName().c_str(), cmd.c_str(), eventDI.addr,
+            getCurrentSimCycle(), timestamp, getName().c_str(), cmd.c_str(), eventDI.addr,
             id.str().c_str(), StateString[eventDI.oldst], StateString[eventDI.newst], eventDI.action.c_str(), reas.str().c_str());
 
     dbg.debug(_L6_, " %s", eventDI.verboseline.c_str());

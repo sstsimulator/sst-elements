@@ -1,13 +1,13 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -15,7 +15,6 @@
 
 #include <sst_config.h>
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 
 #include "rdmaNic.h"
 
@@ -193,6 +192,7 @@ void RdmaNic::mmioWriteSetup( StandardMem::Write* req) {
 	if ( ! req->posted ) {
 		m_mmioLink->send( req->makeResponse() );
 	}
+    // if all of the HostQueueInfo struct has been written we are done with setup, switch to normal processing of write to MMIO space
 	if ( info.offset == sizeof(HostQueueInfo) ) {
 		m_mmioWriteFunc = std::bind( &RdmaNic::mmioWrite, this, std::placeholders::_1 );
 	}
@@ -302,7 +302,7 @@ void RdmaNic::writeCompletionToHost(int thread, int cqId, RdmaCompletion& comp )
 	// if we move the head index and it's equal to the tail index we are full
 	// Note that with this logic the max number of items in the circular queue is N - 1
 	// where N is the total number of slots
-    if ( ( q.headIndex()  + 1 ) % q.cmd().data.createCQ.num == q.headIndex() ) {
+    if ( ( q.headIndex()  + 1 ) % q.cmd().data.createCQ.num == tailIndex ) {
         assert(0);
     }
 	Addr_t data = q.cmd().data.createCQ.dataPtr + q.headIndex() * sizeof(comp);

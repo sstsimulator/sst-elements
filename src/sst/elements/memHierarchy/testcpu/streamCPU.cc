@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -17,7 +17,6 @@
 #include "testcpu/streamCPU.h"
 
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
 #include "memEvent.h"
 
@@ -104,8 +103,8 @@ void streamCPU::handleEvent(Interfaces::StandardMem::Request * req)
         SimTime_t et = getCurrentSimTime() - i->second;
         requests.erase(i);
 
-	out.verbose(CALL_INFO, 1, 0, "Received Response (%s), Took: %7" PRIu64 "ns, %6zu pending requests.\n",
-                req->getID(), req->getString().c_str(), et, requests.size());
+        out.verbose(CALL_INFO, 1, 0, "Received Response (%s), Took: %7" PRIu64 "ns, %6zu pending requests.\n",
+                    req->getString().c_str(), et, requests.size());
         num_reads_returned++;
     }
     delete req;

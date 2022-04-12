@@ -218,7 +218,7 @@ fesimple.so : fesimple.o
 	    -ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB) $(CUDA_LDFLAGS)
 
 fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc
-	$(CXX) $(CXXFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(CXX) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) \
 	    $(LIBZ_CPPFLAGS) \
 	    $(CUDA_CPPFLAGS) \
 	    -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX \

@@ -24,7 +24,6 @@
 #include <sst/core/output.h>
 #include <sst/core/interfaces/stdMem.h>
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/timeLord.h>
 
