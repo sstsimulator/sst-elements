@@ -5,50 +5,62 @@ import sst
 sst.setProgramOption("timebase", "1 ps")
 sst.setProgramOption("stopAtCycle", "10000s")
 
-statLevel = 16
-max_addr_gb = 1
+# Constants shared across components
 tile_clk_mhz = 1
+backing_size = 16384
+l1_size = 512
+verboseLevel = 100
+statLevel = 16
+mainDebug = 100
+otherDebug = 100
 
 # Define the simulation components
 df_0 = sst.Component("df_0", "llyr.LlyrDataflow")
 df_0.addParams({
-    "verbose": 20,
-    "clock" : str(tile_clk_mhz) + "GHz",
-    "mem_init"      : "spmm-mem.in",
-    "application"   : "spmm.in",
-    "hardware_graph": "hardware.cfg",
-    "mapper"        : "llyr.mapper.simple"
+   "verbose" : str(verboseLevel),
+   "clock" : str(tile_clk_mhz) + "GHz",
+   "mem_init"      : "int-1.mem",
+   #"application"   : "conditional.in",
+   #"application"   : "gemm.in",
+   #"application"   : "llvm_in/cdfg_memory-01.ll",
+   "application"   : "llvm_in/cdfg_loop-01.ll",
+   #"application"   : "llvm_in/cdfg_example-02.ll",
+   "hardware_graph": "graph_mesh_25.hdw",
+   "mapping_tool"  : "/home/hughes/tools/sst/src/sst-elements/src/sst/elements/llyr/tools/pyMapper.py",
+   "mapper"        : "llyr.mapper.py"
+   #"mapper"        : "llyr.mapper.simple"
 })
+iface = df_0.setSubComponent("iface", "memHierarchy.standardInterface")
 
-df_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
+df_l1cache = sst.Component("df_l1", "memHierarchy.Cache")
 df_l1cache.addParams({
-    "access_latency_cycles" : "2",
-    "cache_frequency" : str(tile_clk_mhz) + "GHz",
-    "replacement_policy" : "lru",
-    "coherence_protocol" : "MESI",
-    "associativity" : "1",
-    "cache_line_size" : "16",
-    "verbose" : 10,
-    "debug" : 1,
-    "debug_level" : 100,
-    "L1" : "1",
-    "cache_size" : "512B"
+   "access_latency_cycles" : "2",
+   "cache_frequency" : str(tile_clk_mhz) + "GHz",
+   "replacement_policy" : "lru",
+   "coherence_protocol" : "MESI",
+   "cache_size" : str(l1_size) + "B",
+   "associativity" : "1",
+   "cache_line_size" : "16",
+   "verbose" : str(verboseLevel),
+   "debug" : str(otherDebug),
+   "debug_level" : str(statLevel),
+   "L1" : "1"
 })
 
 df_memory = sst.Component("memory", "memHierarchy.MemController")
 df_memory.addParams({
-    "backing" : "mmap",
-    "verbose" : 10,
-    "debug" : 1,
-    "debug_level" : 100,
-    "clock" : str(tile_clk_mhz) + "GHz",
+   "backing" : "mmap",
+   #"verbose" : str(verboseLevel),
+   #"debug" : str(otherDebug),
+   "debug_level" : str(statLevel),
+   "addr_range_start" : "0",
+   "clock" : str(tile_clk_mhz) + "GHz",
 })
 
 backend = df_memory.setSubComponent("backend", "memHierarchy.simpleMem")
 backend.addParams({
-    "access_time" : "4 ns",
-    #"mem_size" : str(max_addr_gb) + "GiB",
-    "mem_size" : str(16384) + "B",
+   "access_time" : "100 ns",
+   "mem_size" : str(backing_size) + "B",
 })
 
 # Enable SST Statistics Outputs for this simulation
@@ -58,7 +70,7 @@ sst.setStatisticOutput("sst.statOutputTXT", { "filepath" : "output.csv" })
 
 # Define the simulation links
 link_df_cache_link = sst.Link("link_cpu_cache_link")
-link_df_cache_link.connect( (df_0, "cache_link", "1ps"), (df_l1cache, "high_network_0", "1ps") )
+link_df_cache_link.connect( (iface, "port", "1ps"), (df_l1cache, "high_network_0", "1ps") )
 link_df_cache_link.setNoCut()
 
 link_mem_bus_link = sst.Link("link_mem_bus_link")

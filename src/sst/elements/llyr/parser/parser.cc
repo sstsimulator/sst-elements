@@ -35,7 +35,7 @@
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Transforms/Utils.h>
-#include <llvm/Transforms/Utils/InstructionNamer.h>
+#include <llvm/Transforms/Scalar.h>
 
 #include "parser.h"
 
@@ -56,6 +56,8 @@ void Parser::generateAppGraph(std::string functionName)
 //     llvm::legacy::PassManager pm;
     pm->add(llvm::createPromoteMemoryToRegisterPass());
     pm->add(llvm::createInstructionNamerPass());
+    pm->add(llvm::createIndVarSimplifyPass());
+//     pm->add(llvm::createLoopUnrollAndJamPass());
     pm->doInitialization();
 //     pm->run(*mod_);
 
@@ -74,6 +76,7 @@ void Parser::generateAppGraph(std::string functionName)
             expandBBGraph(&*functionIter);
             assembleGraph();
             mergeGraphs();
+//             collapseInductionVars();
 
             break;
         } else {
@@ -1473,14 +1476,13 @@ void Parser::assembleGraph(void)
                 llvm::errs() << "\n\tInstruction:  " << (*revIt)->instruction_  << "\n";
             }
 
-            // For each vertex, iterate through the instruction's use list -- insert an edge between the uses and the next def.
-            // Defs may be origin node, previous store, etc.
+            // For each vertex, iterate through the instruction's use list
+            // Insert an edge between the uses and the next def
+            // Defs may be origin node, previous store, etc
             for( auto nodeUseEntry = (*useNode_)[basicBlock]->at(*revIt)->begin(); nodeUseEntry != (*useNode_)[basicBlock]->at(*revIt)->end(); ++nodeUseEntry ) {
                 if( output_->getVerboseLevel() > 64 ) {
                     llvm::errs() << "\t\tNode Use Entry:  " << *nodeUseEntry << "\n";
                 }
-
-                bool found = 0;
 
                 // Check for actual instructions used in this vertex
                 for( auto innerRevIt = revIt; innerRevIt != (*vertexList_)[basicBlock].rend(); ++innerRevIt ) {
@@ -1494,9 +1496,12 @@ void Parser::assembleGraph(void)
                         continue;
                     }
 
-                    if( innerInst == *nodeUseEntry ) {
-                        found = 1;
+                    // FIXME Assume Allocate -> Store -> Load chain and skip edge between allocate and load
+                    if( (*revIt)->instruction_->getOpcode() == llvm::Instruction::Load && innerInst->getOpcode() == llvm::Instruction::Alloca ) {
+                        continue;
+                    }
 
+                    if( innerInst == *nodeUseEntry ) {
                         if( output_->getVerboseLevel() > 64 ) {
                             llvm::errs() << "\t\t\t\tfound:  " << innerInst << "\n";
                         }
@@ -1506,38 +1511,23 @@ void Parser::assembleGraph(void)
                         g.addEdge(g[*innerRevIt], g[*revIt], edgeProp);
                     }
 
-                    // Check for operands in preceeding instructions used in this vertex
-                    for( auto operandIter = innerInst->op_begin(), operandEnd = innerInst->op_end(); operandIter != operandEnd; ++operandIter ) {
-                        if( llvm::isa<llvm::Instruction>(*operandIter) ) {
-                            // Don't care about RAR
-                            if( (*revIt)->instruction_->getOpcode() == llvm::Instruction::Load && innerInst->getOpcode() == llvm::Instruction::Load ) {
-                                break;
-                            }
+                    // Check for RAW and WAW deps
+                    uint32_t opccode = (*revIt)->instruction_->getOpcode();
+                    if( opccode == llvm::Instruction::Load || opccode == llvm::Instruction::Store ) {
+                        for( auto operandIter = innerInst->op_begin(), operandEnd = innerInst->op_end(); operandIter != operandEnd; ++operandIter ) {
+                            if( innerInst->getOpcode() == llvm::Instruction::Store ) {
+                                if( *operandIter == *nodeUseEntry ) {
 
-                            // Don't want to look at PHI instructions
-                            if( llvm::isa<llvm::PHINode>(*operandIter) ) {
-                                break;
-                            }
+                                    if( output_->getVerboseLevel() > 64 ) {
+                                        llvm::errs() << "\t\t\t\t(" << (*innerRevIt)->instruction_ << ") operand " << *operandIter << "\n";
+                                    }
 
-                            if( *operandIter == *nodeUseEntry ) {
-                                found = 1;
-
-                                if( output_->getVerboseLevel() > 64 ) {
-                                    llvm::errs() << "\t\t\t\t(" << (*innerRevIt)->instruction_ << ") operand " << *operandIter << "\n";
+                                    ParserEdgeProperties* edgeProp = new ParserEdgeProperties;
+                                    edgeProp->value_ = 0x00;
+                                    g.addEdge(g[*innerRevIt], g[*revIt], edgeProp);
                                 }
-
-                                ParserEdgeProperties* edgeProp = new ParserEdgeProperties;
-                                edgeProp->value_ = 0x00;
-                                g.addEdge(g[*innerRevIt], g[*revIt], edgeProp);
-
-                                break;
                             }
                         }
-                    }
-
-                    //Need to break when there is a RAW dep otherwise there will be duplicate edges
-                    if( found == 1 ) {
-                        break;
                     }
                 }
             }
@@ -1685,9 +1675,14 @@ void Parser::mergeGraphs()
 
 void Parser::printCDFG( const std::string fileName ) const
 {
-    std::ofstream outputFile(fileName.c_str(), std::ios::trunc);         //open a file for writing (truncate the current contents)
-    if ( !outputFile )                                                   //check to be sure file is open
-        std::cerr << "Error opening file.";
+    //open a file for writing (truncate the current contents)
+    std::ofstream outputFile(fileName.c_str(), std::ios::trunc);
+
+    //check to be sure file is open
+    if ( !outputFile ) {
+        output_->fatal(CALL_INFO, -1, "Error: Cannot open file %s\n", fileName.c_str());
+        exit(0);
+    }
 
     outputFile << "digraph G {" << "\n";
 
@@ -1851,6 +1846,61 @@ void Parser::printPyMapper( const std::string fileName ) const
     outputFile.close();
 
 }//END printPyMapper
+
+void Parser::collapseInductionVars()
+{
+    std::cout << "\n\n   ---Collapse Testing---\n" << std::flush;
+
+    auto funcVertexMap = functionGraph_->getVertexMap();
+    for( auto vertexIterator = funcVertexMap->begin(); vertexIterator != funcVertexMap ->end(); ++vertexIterator ) {
+
+        llvm::Instruction* tempInstruction = vertexIterator->second.getValue()->instruction_;
+        if( tempInstruction != NULL ) {
+            std::cout << "vertex: " << vertexIterator->first << "\n";
+
+            //write operands
+            bool first = 0;
+            for( auto operandIter = tempInstruction->op_begin(), operandEnd = tempInstruction->op_end(); operandIter != operandEnd; ++operandIter ) {
+                std::cout << operandIter->get()->getNameOrAsOperand() << " -- boopA" << std::endl;
+
+                if( llvm::isa<llvm::Constant>(operandIter) ) {
+                    std::cout << operandIter->getOperandNo() << ": ";
+                    std::cout << vertexIterator->second.getValue()->intConst_ << " ";
+                    std::cout << vertexIterator->second.getValue()->floatConst_ << " ";
+                    std::cout << vertexIterator->second.getValue()->doubleConst_ << " ";
+                    std::cout << std::endl;
+
+                    if( llvm::isa<llvm::ConstantInt>(operandIter) ) {
+                        llvm::ConstantInt* tempConst = llvm::cast<llvm::ConstantInt>(operandIter);
+
+                        std::cout << tempConst->getNameOrAsOperand() << " -- inboop" << std::endl;
+
+                    } else if( llvm::isa<llvm::ConstantFP>(operandIter) ) {
+                        llvm::ConstantFP* tempConst = llvm::cast<llvm::ConstantFP>(operandIter);
+
+                        std::cout << tempConst->getNameOrAsOperand() << " -- fpboop" << std::endl;
+
+                    } else if( llvm::isa<llvm::ConstantExpr>(operandIter) ) {
+
+                        std::cout << operandIter->get()->getNameOrAsOperand() << " -- boopB" << std::endl;
+
+                    } else if( llvm::isa<llvm::GlobalValue>(operandIter) ) {
+
+                        std::cout << operandIter->get()->getNameOrAsOperand() << " -- boopG" << std::endl;
+                    } else {
+                        output_->fatal(CALL_INFO, -1, "Error: No valid operand\n");
+                        exit(0);
+                    }
+                } else {
+
+                    std::cout << operandIter->get()->getNameOrAsOperand() << " -- boopC" << std::endl;
+                }
+
+            }//end for
+        }
+    }
+
+}//END collapseInductionVars
 
 } // namespace llyr
 } // namespace SST

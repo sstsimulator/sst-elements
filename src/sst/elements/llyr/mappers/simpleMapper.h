@@ -62,6 +62,7 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNod
 
     std::queue< uint32_t > nodeQueue;
 
+    output_->verbose(CALL_INFO, 32, 0, "Starting mapping\n");
     //Mark all nodes in the PE graph un-visited
     std::map< uint32_t, Vertex< AppNode > >* app_vertex_map_ = appGraph.getVertexMap();
     typename std::map< uint32_t, Vertex< AppNode > >::iterator appIterator;

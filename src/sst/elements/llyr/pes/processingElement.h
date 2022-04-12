@@ -38,6 +38,7 @@ namespace Llyr {
 
 typedef struct alignas(uint64_t) {
     bool forward_;
+    uint32_t target_queue_;
     std::queue< LlyrData >* data_queue_;
 } LlyrQueue;
 

@@ -99,6 +99,8 @@ private:
     void assembleGraph();
     void mergeGraphs();
 
+    void collapseInductionVars();
+
     void printVertex ( const CDFGVertex* ) const;
     void printCDFG( const std::string fileName ) const;
     void printPyMapper( const std::string fileName ) const;

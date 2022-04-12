@@ -60,8 +60,8 @@ public:
     uint32_t outEdges( uint32_t vertexId );
     uint32_t numVertices() const;
 
-    void addEdge( uint32_t beginVertex, uint32_t endVertex );
-    void addEdge( uint32_t beginVertex, uint32_t endVertex, EdgeProperties* properties );
+    bool addEdge( uint32_t beginVertex, uint32_t endVertex );
+    bool addEdge( uint32_t beginVertex, uint32_t endVertex, EdgeProperties* properties );
 
     uint32_t addVertex( T type );
     uint32_t addVertex( uint32_t vertexNum, T type );
@@ -197,31 +197,38 @@ uint32_t LlyrGraph<T>::numVertices(void) const
 }
 
 template<class T>
-void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex )
+bool LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex )
 {
-#ifdef GRAPH_DEBUG
-    std::cout << "add edge:  " << beginVertex << " --> " << endVertex << "\n" << std::endl;
-#endif
-
     Edge* edge = new Edge( endVertex );
 
-    vertex_map_->at(beginVertex).addEdge(edge);
-    vertex_map_->at(beginVertex).addOutDegree();
-    vertex_map_->at(endVertex).addInDegree();
+    if( vertex_map_->at(beginVertex).addEdge(edge) ) {
+        #ifdef GRAPH_DEBUG
+        std::cout << "add edge:  " << beginVertex << " --> " << endVertex << "\n" << std::endl;
+        #endif
+        vertex_map_->at(beginVertex).addOutDegree();
+        vertex_map_->at(endVertex).addInDegree();
+
+        return 1;
+    }
+
+    return 0;
 }
 
 template<class T>
-void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex, EdgeProperties* properties )
+bool LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex, EdgeProperties* properties )
 {
-#ifdef GRAPH_DEBUG
-    std::cout << "add edge:  " << beginVertex << " --> " << endVertex << "\n" << std::endl;
-#endif
-
     Edge* edge = new Edge( properties, endVertex );
 
-    vertex_map_->at(beginVertex).addEdge(edge);
-    vertex_map_->at(beginVertex).addOutDegree();
-    vertex_map_->at(endVertex).addInDegree();
+    if( vertex_map_->at(beginVertex).addEdge(edge) ) {
+        #ifdef GRAPH_DEBUG
+        std::cout << "add edge:  " << beginVertex << " --> " << endVertex << "\n" << std::endl;
+        #endif
+        vertex_map_->at(beginVertex).addOutDegree();
+        vertex_map_->at(endVertex).addInDegree();
+        return 1;
+    }
+
+    return 0;
 }
 
 template<class T>

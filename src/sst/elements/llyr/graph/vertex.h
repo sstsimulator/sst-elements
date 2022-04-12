@@ -102,9 +102,23 @@ public:
         return adjacencyList_;
     }
 
-    void addEdge( Edge* edgeIn )
+    bool addEdge( Edge* edgeIn )
     {
-        adjacencyList_->push_back(edgeIn);
+        bool found = 0;
+        std::vector< Edge* >* adjacencyList = getAdjacencyList();
+        for( auto it = adjacencyList->begin(); it != adjacencyList->end(); ++it ) {
+            if( edgeIn->getDestination() == (*it)->getDestination() ) {
+                found = 1;
+                break;
+            }
+        }
+
+        if(found == 1) {
+            return 0;
+        } else {
+            adjacencyList_->push_back(edgeIn);
+            return 1;
+        }
     }
 
     void addInDegree()

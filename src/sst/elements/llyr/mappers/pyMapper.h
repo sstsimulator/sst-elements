@@ -18,12 +18,21 @@
 
 #include <map>
 #include <vector>
+#include <string>
+#include <utility>
 #include <iostream>
+#include <Python.h>
 
 #include "mappers/llyrMapper.h"
 
 namespace SST {
 namespace Llyr {
+
+typedef struct alignas(uint64_t) {
+    std::vector< uint32_t >* adjacency_list_;
+    std::vector< std::string >* state_list_;
+    std::vector< std::pair< uint32_t, uint32_t >* >* forward_list_;
+} NodeAttributes;
 
 class PyMapper : public LlyrMapper
 {
@@ -48,10 +57,24 @@ public:
 
 private:
 
-    void findAdjacencyList( std::string opList, std::vector< uint32_t >* );
-    void printDot( std::string fileName, LlyrGraph< ProcessingElement* >* ) const;
+    void runMappingTool( std::string );
+    void getAdjacencyList( std::string, std::vector< uint32_t >* );
+    void getStateList( std::string, std::vector< std::string >* );
+    void printDot( std::string, LlyrGraph< ProcessingElement* >* ) const;
 
 };
+
+void PyMapper::runMappingTool(std::string mapping_tool)
+{
+    FILE* fp;
+
+    Py_Initialize();
+
+    fp = _Py_fopen(mapping_tool.c_str(), "r");
+    PyRun_SimpleFile(fp, mapping_tool.c_str());
+
+    Py_Finalize();
+}
 
 void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > appGraph,
                             LlyrGraph< ProcessingElement* > &graphOut,
@@ -62,6 +85,16 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
     sprintf(prefix, "[t=@t][pyMapper]: ");
     SST::Output* output_ = new SST::Output(prefix, llyr_config->verbosity_, 0, Output::STDOUT);
 
+    if( llyr_config->mapping_tool_ == "" ) {
+        output_->fatal( CALL_INFO, -1, "This mapper requires a pre-processor, defined as mapper_tool in the configuration.\n" );
+        exit(0);
+    }
+
+    char tmp[256];
+    getcwd(tmp, 256);
+    std::cout << "Current working directory: " << tmp << std::endl;
+    runMappingTool(llyr_config->mapping_tool_);
+
     std::string fileName = "00_sst.in";
     output_->verbose(CALL_INFO, 1, 0, "Mapping Application Using: %s\n", fileName.c_str());
 
@@ -70,7 +103,10 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
         std::string thisLine;
         std::vector< uint32_t > routingList;
 
-        std::map< uint32_t, std::vector< uint32_t >* > adjList;
+//         std::map< uint32_t, std::vector< uint32_t >* > adjList;
+//         std::map< uint32_t, std::vector< std::string >* > inputStateList;
+        std::map< uint32_t, NodeAttributes* > nodeAttributes;
+
         while( std::getline( inputStream, thisLine ) ) {
             output_->verbose(CALL_INFO, 16, 0, "Parsing:  %s\n", thisLine.c_str());
 
@@ -124,22 +160,30 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
                 addNode( op, hardwareVertex, graphOut, llyr_config );
             }
 
-            std::vector< uint32_t >* tempVector = new std::vector< uint32_t >;
-            findAdjacencyList( tokenizedSring[3], tempVector);
+            std::vector< uint32_t >* adjVector = new std::vector< uint32_t >;
+            std::vector< std::string >* stateVector = new std::vector< std::string >;
+
+            getAdjacencyList( tokenizedSring[3], adjVector );
+            getStateList( tokenizedSring[2], stateVector );
+
             std::cout << "Hardware Vertex " << hardwareVertex << std::endl;
-            auto newValue = adjList.emplace(hardwareVertex, tempVector);
+            auto attributes = new NodeAttributes;
+            attributes->adjacency_list_ = adjVector;
+            attributes->state_list_ = stateVector;
+
+            auto newValue = nodeAttributes.emplace(hardwareVertex, attributes);
 
             // if the node has already been added then it must also be a routing node
             // still need to add the neighbors but add to current adj list
             if( newValue.second == false ) {
                 std::cout << "FAILED on " << hardwareVertex << std::endl;
-                for( auto it = tempVector->begin(); it != tempVector->end(); it++ ) {
-                    adjList[hardwareVertex]->push_back(*it);
+                for( auto it = adjVector->begin(); it != adjVector->end(); it++ ) {
+                    nodeAttributes[hardwareVertex]->adjacency_list_->push_back(*it);
                 }
             }
 
-            std::cout << "vecIn(" << tempVector->size() << "): ";
-            for( auto it = tempVector->begin(); it != tempVector->end(); it++ ) {
+            std::cout << "vecIn(" << adjVector->size() << "): ";
+            for( auto it = adjVector->begin(); it != adjVector->end(); it++ ) {
                 std::cout << *it << ", ";
             }
             std::cout << std::endl;
@@ -147,13 +191,13 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
 
         // add the edges and bind data queues
         std::map< uint32_t, Vertex< ProcessingElement* > >* vertex_map_ = graphOut.getVertexMap();
-        for( auto it = adjList.begin(); it != adjList.end(); it++ ) {
+        for( auto it = nodeAttributes.begin(); it != nodeAttributes.end(); it++ ) {
             ProcessingElement* srcNode = vertex_map_->at(it->first).getValue();
 
             std::cout << "nodeNum: " << it->first;
-            std::cout << " -- numNeighbors: " << it->second->size();
+            std::cout << " -- numNeighbors: " << it->second->adjacency_list_->size();
             std::cout << std::endl;
-            for( auto innerIt = it->second->begin(); innerIt != it->second->end(); innerIt++ ) {
+            for( auto innerIt = it->second->adjacency_list_->begin(); innerIt != it->second->adjacency_list_->end(); innerIt++ ) {
                 ProcessingElement* dstNode = vertex_map_->at(*innerIt).getValue();
 
                 graphOut.addEdge( it->first, *innerIt );
@@ -164,9 +208,8 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
         }
 
         inputStream.close();
-    }
-    else {
-        output_->fatal( CALL_INFO, -1, "Error: Unable to open file\n" );
+    } else {
+        output_->fatal(CALL_INFO, -1, "Error: Unable to open %s\n", fileName.c_str() );
         exit(0);
     }
 
@@ -177,13 +220,18 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
 
 }// mapGraph
 
-void PyMapper::findAdjacencyList( std::string opList, std::vector< uint32_t >* vecIn )
+void PyMapper::getAdjacencyList( std::string opList, std::vector< uint32_t >* vecIn )
 {
-    opList.erase(remove(opList.begin(),opList.end(), '('), opList.end());
-    opList.erase(remove(opList.begin(),opList.end(), ')'), opList.end());
-    opList.erase(remove(opList.begin(),opList.end(), '['), opList.end());
-    opList.erase(remove(opList.begin(),opList.end(), ']'), opList.end());
+    std::cout << "--- Getting Adjacency List --- " << std::endl;
+
+    // clean the input string
+    opList.erase(remove(opList.begin(), opList.end(), '('), opList.end());
+    opList.erase(remove(opList.begin(), opList.end(), ')'), opList.end());
+    opList.erase(remove(opList.begin(), opList.end(), '['), opList.end());
+    opList.erase(remove(opList.begin(), opList.end(), ']'), opList.end());
     opList.erase(opList.find("operation"), std::string("operation").length());
+
+    // split into tokens
     std::regex delimiter( "," );
     std::sregex_token_iterator iterA(opList.begin(), opList.end(), delimiter, -1);
     std::sregex_token_iterator iterB;
@@ -197,6 +245,36 @@ void PyMapper::findAdjacencyList( std::string opList, std::vector< uint32_t >* v
             if( i % 2 == 1 ) {
                 std::cout << "-- " << tokenizedSring[i] << std::endl;
                 vecIn->push_back(std::stoul(tokenizedSring[i]));
+            }
+        }
+    }
+}
+
+void PyMapper::getStateList( std::string states, std::vector< std::string >* vecIn )
+{
+    std::cout << "--- Getting State List --- " << std::endl;
+std::cout << states << std::endl;
+
+    // clean the input string
+    states.erase(remove(states.begin(), states.end(), '['), states.end());
+    states.erase(remove(states.begin(), states.end(), ']'), states.end());
+    states.erase(states.find("output"), std::string("output").length());
+std::cout << states << std::endl;
+
+    // split into tokens
+    std::regex delimiter( "," );
+    std::sregex_token_iterator iterA(states.begin(), states.end(), delimiter, -1);
+    std::sregex_token_iterator iterB;
+    std::vector<std::string> tokenizedSring( iterA, iterB );
+
+    std::cout << "***Len of vector " << tokenizedSring.size() << std::endl;
+
+    if( tokenizedSring.size() > 1 ) {
+        for( uint32_t i = 0; i < tokenizedSring.size(); i++ ) {
+            std::cout << "+++ " << tokenizedSring[i] << std::endl;
+            if( i % 2 == 1 ) {
+                std::cout << "-- " << tokenizedSring[i] << std::endl;
+                vecIn->push_back(tokenizedSring[i]);
             }
         }
     }
