@@ -11,8 +11,8 @@ backing_size = 16384
 l1_size = 512
 verboseLevel = 100
 statLevel = 16
-mainDebug = 100
-otherDebug = 100
+mainDebug = 0
+otherDebug = 0
 
 # Define the simulation components
 df_0 = sst.Component("df_0", "llyr.LlyrDataflow")
@@ -20,15 +20,9 @@ df_0.addParams({
    "verbose" : str(verboseLevel),
    "clock" : str(tile_clk_mhz) + "GHz",
    "mem_init"      : "int-1.mem",
-   #"application"   : "conditional.in",
-   #"application"   : "gemm.in",
-   #"application"   : "llvm_in/cdfg_memory-01.ll",
-   "application"   : "llvm_in/cdfg_loop-01.ll",
-   #"application"   : "llvm_in/cdfg_example-02.ll",
+   "application"   : "gemm.in",
    "hardware_graph": "graph_mesh_25.hdw",
-   "mapping_tool"  : "/home/hughes/tools/sst/src/sst-elements/src/sst/elements/llyr/tools/pyMapper.py",
-   "mapper"        : "llyr.mapper.py"
-   #"mapper"        : "llyr.mapper.simple"
+   "mapper"        : "llyr.mapper.simple"
 })
 iface = df_0.setSubComponent("iface", "memHierarchy.standardInterface")
 
@@ -50,8 +44,8 @@ df_l1cache.addParams({
 df_memory = sst.Component("memory", "memHierarchy.MemController")
 df_memory.addParams({
    "backing" : "mmap",
-   #"verbose" : str(verboseLevel),
-   #"debug" : str(otherDebug),
+   "verbose" : str(verboseLevel),
+   "debug" : str(otherDebug),
    "debug_level" : str(statLevel),
    "addr_range_start" : "0",
    "clock" : str(tile_clk_mhz) + "GHz",
