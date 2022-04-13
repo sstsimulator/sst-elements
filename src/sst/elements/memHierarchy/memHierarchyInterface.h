@@ -44,7 +44,7 @@ class MemHierarchyInterface : public Interfaces::SimpleMem {
 
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MemHierarchyInterface, "memHierarchy", "mem_interface_", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MemHierarchyInterface, "memHierarchy", "memInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Interface to memory hierarchy. Converts SimpleMem requests into MemEventBases.", SST::Interfaces::SimpleMem)
 
     SST_ELI_DOCUMENT_PARAMS( {"port", "Optional, specify the owning component's port to used (not needed if this subcomponent is loaded in the input config)", ""} )

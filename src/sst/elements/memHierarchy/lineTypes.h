@@ -283,9 +283,6 @@ class L1CacheLine : public CacheLine {
             std::ostringstream str;
             str << "LLSC: " << (LLSCAtomic_ ? "Y" : "N");
             str << " Lock: (" << userLock_ << "," << eventsWaitingForLock_ << ")";
-            str << " Data: ";
-            for( auto i : data_ )
-                str << uint32_t(i) << " ";
             return str.str();
         }
 };
