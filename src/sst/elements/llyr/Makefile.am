@@ -17,7 +17,7 @@ libllyr_la_SOURCES = \
 	mappers/simpleMapper.h \
 	mappers/pyMapper.h \
 	mappers/gemmMapper.h \
-	processingElement.h \
+	pes/processingElement.h \
 	pes/dummyPE.h \
 	pes/fpPE.h \
 	pes/intPE.h \
