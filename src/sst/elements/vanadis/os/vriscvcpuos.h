@@ -116,16 +116,6 @@ public:
 
     virtual ~VanadisRISCV64OSHandler() {}
 
-    virtual void registerInitParameter(VanadisCPUOSInitParameter paramType, void* param_val) {
-        switch (paramType) {
-        case SYSCALL_INIT_PARAM_INIT_BRK: {
-            uint64_t* param_val_64 = (uint64_t*)param_val;
-            output->verbose(CALL_INFO, 8, 0, "set initial brk point (init) event (0x%llx)\n", (*param_val_64));
-            os_link->sendInitData(new VanadisSyscallInitBRKEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, (*param_val_64)));
-        } break;
-        }
-    }
-
     virtual void handleSysCall(VanadisSysCallInstruction* syscallIns) {
         const uint16_t call_link_reg = isaTable->getIntPhysReg(31);
         uint64_t call_link_value = regFile->getIntReg<uint64_t>(call_link_reg);
@@ -576,14 +566,27 @@ protected:
                 returnCallbacks[i](hw_thr);
             }
         } else {
-            VanadisExitResponse* os_exit = dynamic_cast<VanadisExitResponse*>(ev);
+            VanadisStartThreadReq* os_req = dynamic_cast<VanadisStartThreadReq*>(ev);
+ 
+            if ( nullptr != os_req ) {
+                output->verbose(CALL_INFO, 8, 0,
+                            "received start thread %d command from the operating system \n",os_req->getThread());
+                startThrCallBack(os_req->getThread(), os_req->getStackStart(), os_req->getInstructionPointer());
+            } else {
 
-            output->verbose(CALL_INFO, 8, 0,
-                            "received an exit command from the operating system "
-                            "(return-code: %" PRId64 " )\n",
-                            os_exit->getReturnCode());
+                VanadisExitResponse* os_exit = dynamic_cast<VanadisExitResponse*>(ev);
 
-            haltThrCallBack(hw_thr, os_exit->getReturnCode());
+                if ( nullptr != os_exit ) {
+                    output->verbose(CALL_INFO, 8, 0,
+                             "received an exit command from the operating system "
+                             "(return-code: %" PRId64 " )\n",
+                             os_exit->getReturnCode());
+ 
+                    haltThrCallBack(hw_thr, os_exit->getReturnCode());
+                } else { 
+                    assert(0);
+                }
+            } 
         }
 
         delete ev;

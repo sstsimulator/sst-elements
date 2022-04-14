@@ -58,14 +58,13 @@ public:
     void setRegisterFile(VanadisRegisterFile* newFile) { regFile = newFile; }
     void setISATable(VanadisISATable* newTable) { isaTable = newTable; }
     void setHaltThreadCallback(std::function<void(uint32_t, int64_t)> cb) { haltThrCallBack = cb; }
+    void setStartThreadCallback(std::function<void(int, uint64_t, uint64_t)> cb) { startThrCallBack = cb; }
 
     virtual void handleSysCall(VanadisSysCallInstruction* syscallIns) = 0;
 
     virtual void registerReturnCallback(std::function<void(uint32_t)>& new_call_back) {
         returnCallbacks.push_back(new_call_back);
     }
-
-    virtual void registerInitParameter(VanadisCPUOSInitParameter paramType, void* param_val) = 0;
 
     void setThreadID(int64_t new_tid) { tid = new_tid; }
     int64_t getThreadID() const { return tid; }
@@ -77,6 +76,7 @@ protected:
     uint32_t hw_thr;
 
     std::function<void(uint32_t, int64_t)> haltThrCallBack;
+    std::function<void(int, uint64_t, uint64_t)> startThrCallBack;
 
     VanadisRegisterFile* regFile;
     VanadisISATable* isaTable;
