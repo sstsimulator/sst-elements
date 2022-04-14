@@ -9,10 +9,11 @@ sst.setProgramOption("stopAtCycle", "10000s")
 tile_clk_mhz = 1
 backing_size = 16384
 l1_size = 512
-verboseLevel = 100
+verboseLevel = 0
 statLevel = 16
 mainDebug = 0
 otherDebug = 0
+debugLevel = 0
 
 # Define the simulation components
 df_0 = sst.Component("df_0", "llyr.LlyrDataflow")
@@ -37,7 +38,7 @@ df_l1cache.addParams({
    "cache_line_size" : "16",
    "verbose" : str(verboseLevel),
    "debug" : str(otherDebug),
-   "debug_level" : str(statLevel),
+   "debug_level" : str(debugLevel),
    "L1" : "1"
 })
 
@@ -46,7 +47,7 @@ df_memory.addParams({
    "backing" : "mmap",
    "verbose" : str(verboseLevel),
    "debug" : str(otherDebug),
-   "debug_level" : str(statLevel),
+   "debug_level" : str(debugLevel),
    "addr_range_start" : "0",
    "clock" : str(tile_clk_mhz) + "GHz",
 })
@@ -60,7 +61,7 @@ backend.addParams({
 # Enable SST Statistics Outputs for this simulation
 sst.setStatisticLoadLevel(statLevel)
 sst.enableAllStatisticsForAllComponents({"type":"sst.AccumulatorStatistic"})
-sst.setStatisticOutput("sst.statOutputTXT", { "filepath" : "output.csv" })
+#sst.setStatisticOutput("sst.statOutputTXT", { "filepath" : "output.csv" })
 
 # Define the simulation links
 link_df_cache_link = sst.Link("link_cpu_cache_link")

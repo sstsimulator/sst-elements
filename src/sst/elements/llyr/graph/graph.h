@@ -18,7 +18,7 @@
 #define _LLYR_GRAPH_H
 
 // enable debugging in the graph lib
-#define GRAPH_DEBUG
+// #define GRAPH_DEBUG
 
 #include <sst/core/sst_config.h>
 #include <sst/core/output.h>
