@@ -25,6 +25,8 @@
 #include "os/vnodeoshandler.h"
 
 #include "os/memmgr/vmemmgr.h"
+#include "os/vstartthreadreq.h"
+#include "os/vAppRuntimeMemory.h"
 
 using namespace SST::Interfaces;
 
@@ -50,6 +52,7 @@ public:
     VanadisNodeOSComponent(SST::ComponentId_t id, SST::Params& params);
     ~VanadisNodeOSComponent();
 
+    virtual void setup();
     virtual void init(unsigned int phase);
     void handleIncomingSysCall(SST::Event* ev);
 
@@ -84,6 +87,10 @@ private:
 
     StandardMem* mem_if;
     VanadisMemoryManager* memory_mgr;
+
+    VanadisELFInfo* elf_info;
+    VanadisStartThreadReq* startThreadReq;
+    AppRuntimeMemoryMod* appRuntimeMemory;
 
     SST::Output* output;
 };

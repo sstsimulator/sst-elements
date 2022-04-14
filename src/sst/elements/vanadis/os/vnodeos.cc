@@ -22,15 +22,43 @@
 #include "os/resp/vosexitresp.h"
 #include "os/vnodeos.h"
 #include "os/voscallev.h"
+#include "os/velfloader.h"
+#include "os/vstartthreadreq.h"
 
 using namespace SST::Vanadis;
 
-VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Params& params) : SST::Component(id) {
+VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Params& params) : SST::Component(id), startThreadReq(NULL) {
 
     const uint32_t verbosity = params.find<uint32_t>("verbose", 0);
     output = new SST::Output("[node-os]: ", verbosity, 0, SST::Output::STDOUT);
 
     const uint32_t core_count = params.find<uint32_t>("cores", 0);
+
+    std::string binary_img = params.find<std::string>("executable", "");
+
+    if ( "" == binary_img ) {
+        output->fatal(CALL_INFO, -1, "No executable specified, will not perform any binary load.\n");
+        elf_info = nullptr;
+    } else {
+        output->verbose(CALL_INFO, 2, 0, "Executable: %s\n", binary_img.c_str());
+        elf_info = readBinaryELFInfo(output, binary_img.c_str());
+        elf_info->print(output);
+
+        if ( elf_info->isDynamicExecutable() ) {
+            output->fatal(
+                CALL_INFO, -1,
+                "--> error - executable is dynamically linked. Only static "
+                "executables are currently supported for simulation.\n");
+        }
+        else {
+            output->verbose(CALL_INFO, 2, 0, "--> executable is identified as static linked\n");
+        }
+    }
+    elf_info->print(output);
+
+    Params tmpParams = params.get_scoped_params("app");
+    std::string modName = params.find<std::string>("appRuntimeMemoryMod","");
+    appRuntimeMemory = loadModule<AppRuntimeMemoryMod>(modName, tmpParams );
 
     output->verbose(CALL_INFO, 1, 0, "Configuring the memory interface...\n");
     mem_if = loadUserSubComponent<Interfaces::StandardMem>("mem_interface", ComponentInfo::SHARE_NONE,
@@ -110,6 +138,23 @@ VanadisNodeOSComponent::init(unsigned int phase) {
     // Trigger each core handler for initialization phase
     for (VanadisNodeOSCoreHandler* next_handler : core_handlers) {
         next_handler->init(phase);
+    }
+
+    if ( 0 == phase ) {
+
+        uint64_t stack_start = appRuntimeMemory->configure(output,mem_if,elf_info);
+        uint64_t brk = Vanadis::loadElfFile( output, mem_if, elf_info );
+        // we are starting the thread 0 on core 0 
+        core_handlers[0]->setBrk( brk );
+        uint64_t entry = elf_info->getEntryPoint();
+        output->verbose(CALL_INFO, 1, 0, "stack_start=%#" PRIx64 " entry=%#" PRIx64 " brk=%#" PRIx64 "\n",stack_start, entry, brk );
+        startThreadReq = new VanadisStartThreadReq( 0, stack_start, entry );
+    }
+}
+
+void VanadisNodeOSComponent::setup() {
+    if ( startThreadReq ) {
+        core_links[0]->send(startThreadReq);
     }
 }
 
