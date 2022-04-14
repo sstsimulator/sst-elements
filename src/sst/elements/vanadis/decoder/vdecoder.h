@@ -176,6 +176,8 @@ public:
         // Do we need to clear here or not?
     }
 
+    virtual void setStackPointer( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t stack_start_address ) {assert(0);}
+
     void setInstructionPointerAfterMisspeculate(SST::Output* output, const uint64_t newIP)
     {
         ip = newIP;
@@ -202,10 +204,6 @@ public:
 
     VanadisInstructionLoader* getInstructionLoader() { return ins_loader; }
     VanadisBranchUnit*        getBranchPredictor() { return branch_predictor; }
-
-    virtual void configureApplicationLaunch(
-        SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, VanadisLoadStoreQueue* lsq,
-        VanadisELFInfo* elf_info, SST::Params& app_params) = 0;
 
     virtual VanadisCPUOSHandler* getOSHandler() { return os_handler; }
 
