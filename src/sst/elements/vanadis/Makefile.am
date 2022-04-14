@@ -11,6 +11,10 @@ comp_LTLIBRARIES = libvanadis.la
 
 VANADIS_SRC_FILES = \
 os/vnodeos.cc \
+os/velfloader.h \
+os/velfloader.cc \
+os/vAppRuntimeMemory.h \
+os/vstartthreadreq.h \
 vanadis.h \
 vfpflags.h \
 vfuncunit.h \
@@ -140,7 +144,6 @@ os/callev/voscalluname.h \
 os/callev/voscallunmap.h \
 os/callev/voscallwrite.h \
 os/callev/voscallwritev.h \
-os/callev/vosinitbrk.h \
 os/memmgr/vmemmgr.h \
 os/node/vnodemmaph.h \
 os/node/vnodenoactionh.h \
