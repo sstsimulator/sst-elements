@@ -35,6 +35,5 @@
 #include "os/callev/voscallunmap.h"
 #include "os/callev/voscallwrite.h"
 #include "os/callev/voscallwritev.h"
-#include "os/callev/vosinitbrk.h"
 
 #endif
