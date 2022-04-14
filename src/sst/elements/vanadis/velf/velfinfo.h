@@ -60,7 +60,7 @@ enum VanadisELFSectionHeaderType {
     SECTION_HEADER_DEFINED_TYPES
 };
 
-const char*
+static const char*
 getELFSectionHeaderTypeString(VanadisELFSectionHeaderType sec_type) {
     switch (sec_type) {
     case SECTION_HEADER_NOT_USED:
@@ -102,7 +102,7 @@ getELFSectionHeaderTypeString(VanadisELFSectionHeaderType sec_type) {
     }
 };
 
-const char*
+static const char*
 getELFProgramHeaderTypeString(VanadisELFProgramHeaderType hdr) {
     switch (hdr) {
     case PROG_HEADER_NOT_USED:
@@ -124,7 +124,7 @@ getELFProgramHeaderTypeString(VanadisELFProgramHeaderType hdr) {
     }
 };
 
-const char*
+static const char*
 getELFObjectTypeString(VanadisELFObjectType obj) {
     switch (obj) {
     case OBJ_TYPE_NONE:
@@ -141,7 +141,7 @@ getELFObjectTypeString(VanadisELFObjectType obj) {
     }
 };
 
-const char*
+static const char*
 getELFISAString(VanadisELFISA isa) {
     switch (isa) {
     case ISA_X86:
@@ -157,7 +157,7 @@ getELFISAString(VanadisELFISA isa) {
     }
 };
 
-const char*
+static const char*
 getELFOSABIString(VanadisELFOSABI abi) {
     switch (abi) {
     case OS_ABI_LINUX:
@@ -173,7 +173,7 @@ enum VanadisSymbolType { SYMBOL_NO_TYPE, SYMBOL_OBJECT, SYMBOL_FUNCTION, SYMBOL_
 
 enum VanadisSymbolBindType { SYMBOL_BIND_LOCAL, SYMBOL_BIND_GLOBAL, SYMBOL_BIND_WEAK, SYMBOL_BIND_UNKNOWN };
 
-const char*
+static const char*
 getSymbolBindTypeString(VanadisSymbolBindType bindT) {
     switch (bindT) {
     case SYMBOL_BIND_LOCAL:
@@ -187,7 +187,7 @@ getSymbolBindTypeString(VanadisSymbolBindType bindT) {
     }
 };
 
-const char*
+static const char*
 getSymbolTypeString(VanadisSymbolType symT) {
     switch (symT) {
     case SYMBOL_NO_TYPE:
@@ -652,7 +652,7 @@ protected:
     std::vector<VanadisELFRelocationEntry*> progRelDyn;
 };
 
-void
+static void
 readString(FILE* bin_file, uint64_t stringTableStart, uint64_t stringTableOffset, std::vector<char>& nameBuffer) {
     uint64_t current_file_pos = (uint64_t)ftell(bin_file);
 
@@ -678,7 +678,7 @@ readString(FILE* bin_file, uint64_t stringTableStart, uint64_t stringTableOffset
     fseek(bin_file, current_file_pos, SEEK_SET);
 }
 
-void
+static void
 readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf_info,
                       const VanadisELFProgramSectionEntry* symbolSection,
                       const VanadisELFProgramSectionEntry* stringTableEntry) {
@@ -859,7 +859,7 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
     fclose(bin_file);
 }
 
-void
+static void
 readELFRelocationInformation(SST::Output* output, const char* path, VanadisELFInfo* elf_info,
                              const VanadisELFProgramSectionEntry* relocationEntry) {
 
@@ -910,7 +910,7 @@ readELFRelocationInformation(SST::Output* output, const char* path, VanadisELFIn
     fclose(bin_file);
 }
 
-VanadisELFInfo*
+static VanadisELFInfo*
 readBinaryELFInfo(SST::Output* output, const char* path) {
 
     FILE* bin_file = fopen(path, "rb");
