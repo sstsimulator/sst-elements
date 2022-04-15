@@ -471,6 +471,7 @@ VANADIS_COMPONENT::startThread(int thr, uint64_t stackStart, uint64_t instructio
             thread_decoders[thr]->getInstructionPointer());
     }
 }
+
 void
 VANADIS_COMPONENT::setHalt(uint32_t thr, int64_t halt_code)
 {
