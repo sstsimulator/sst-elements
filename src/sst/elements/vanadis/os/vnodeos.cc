@@ -143,7 +143,8 @@ VanadisNodeOSComponent::init(unsigned int phase) {
     if ( 0 == phase ) {
 
         uint64_t stack_start = appRuntimeMemory->configure(output,mem_if,elf_info);
-        uint64_t brk = Vanadis::loadElfFile( output, mem_if, elf_info );
+        uint64_t brk = loadElfFile( output, mem_if, elf_info );
+
         // we are starting the thread 0 on core 0 
         core_handlers[0]->setBrk( brk );
         uint64_t entry = elf_info->getEntryPoint();
