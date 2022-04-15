@@ -399,8 +399,8 @@ uint64_t AppRuntimeMemory<Type>::configure( Output* output, Interfaces::Standard
     output->verbose(
         CALL_INFO, 16, 0,
             "-> Sending inital write of auxillary vector to memory, "
-            "forms basis of stack start (addr: 0x%llx)\n",
-            start_stack_address);
+            "forms basis of stack start (addr: 0x%llx) len %zu\n",
+            start_stack_address,stack_data.size());
 
     mem_if->sendUntimedData(new SST::Interfaces::StandardMem::Write( start_stack_address, stack_data.size(), stack_data) ); 
   
