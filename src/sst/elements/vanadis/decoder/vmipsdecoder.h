@@ -178,8 +178,7 @@ public:
                                                    "corresponds to ISA-level instruction counts." },
                             { "predecode_cache_entries",
                               "Number of cache lines that a cached prior to decoding (these support "
-                              "loading from cache prior to decode)" },
-                            { "stack_start_address", "Sets the start of the stack and dynamic program segments" })
+                              "loading from cache prior to decode)" })
 
     SST_ELI_DOCUMENT_STATISTICS(
 				VANADIS_DECODER_ELI_STATISTICS,
@@ -277,9 +276,6 @@ public:
         options               = new VanadisDecoderOptions((uint16_t)0, 34, 34, 2, VANADIS_REGISTER_MODE_FP32);
         max_decodes_per_cycle = params.find<uint16_t>("decode_max_ins_per_cycle", 2);
 
-        // MIPS default is 0x7fffffff according to SYS-V manual
-        start_stack_address = params.find<uint64_t>("stack_start_address", 0x7ffffff0);
-
         // See if we get an entry point the sub-component says we have to use
         // if not, we will fall back to ELF reading at the core level to work this
         // out
@@ -298,10 +294,10 @@ public:
 
     virtual VanadisFPRegisterMode getFPRegisterMode() const { return VANADIS_REGISTER_MODE_FP32; }
 
-    void setStackPointer( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t stack_start_address ) {
+    void setStackPointer( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t start_stack_address ) {
         output->verbose(
-            CALL_INFO, 16, 0, "-> Setting SP to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", stack_start_address,
-            stack_start_address);
+            CALL_INFO, 16, 0, "-> Setting SP to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", start_stack_address,
+            start_stack_address);
         const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(29);
         output->verbose(CALL_INFO, 16, 0, "-> Stack Pointer (r29) maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
         // Set up the stack pointer
@@ -2043,8 +2039,6 @@ protected:
     }
 
     const VanadisDecoderOptions* options;
-
-    uint64_t start_stack_address;
 
     bool haltOnDecodeZero;
 

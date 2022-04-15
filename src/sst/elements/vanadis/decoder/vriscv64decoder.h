@@ -44,16 +44,12 @@ public:
        "Number of cache lines that a cached prior to decoding (these support "
        "loading from cache prior to decode)"},
       {"halt_on_decode_fault",
-		"Fatal error if a decode fault occurs, used for debugging and not recommmended default is 0 (false)", "0"},
-      {"stack_start_address",
-       "Sets the start of the stack and dynamic program segments"})
+		"Fatal error if a decode fault occurs, used for debugging and not recommmended default is 0 (false)", "0"})
 
     VanadisRISCV64Decoder(ComponentId_t id, Params& params) : VanadisDecoder(id, params)
     {
         options = new VanadisDecoderOptions(static_cast<uint16_t>(0), 32, 32, 2, VANADIS_REGISTER_MODE_FP64);
         max_decodes_per_cycle = params.find<uint16_t>("decode_max_ins_per_cycle", 2);
-
-        start_stack_address = params.find<uint64_t>("stack_start_address", 0x7ffffff0);
 
         // See if we get an entry point the sub-component says we have to use
         // if not, we will fall back to ELF reading at the core level to work this
@@ -229,7 +225,6 @@ public:
 protected:
     const VanadisDecoderOptions* options;
     bool                         fatal_decode_fault;
-    uint64_t                     start_stack_address;
     uint16_t                     icache_max_bytes_per_cycle;
     uint16_t                     max_decodes_per_cycle;
     uint16_t                     decode_buffer_max_entries;
