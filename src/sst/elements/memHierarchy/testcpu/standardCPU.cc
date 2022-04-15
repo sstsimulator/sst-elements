@@ -209,33 +209,41 @@ bool standardCPU::clockTic( Cycle_t )
                 
                 if (ll_issued) {
                     req = createSC();
+                    cmdString = "StoreConditional";
                 }else if (instNum < write_mark) {
                     req = createWrite(addr);
+                    cmdString = "Write";
                 } else if (instNum < flush_mark) {
                     req = createFlush(addr);
+                    cmdString = "Flush";
                 } else if (instNum < flushinv_mark) {
                     req = createFlushInv(addr);
+                    cmdString = "FlushInv";
                 } else if (instNum < custom_mark) {
                 } else if (instNum < llsc_mark) {
                     req = createLL(addr);
+                    cmdString = "LoadLink";
                 } else if (instNum < mmio_mark) {
                     bool opType = rng.generateNextUInt32() % 2;
                     if (opType) {
                         req = createMMIORead();
+                        cmdString = "ReadMMIO";
                     } else {
                         req = createMMIOWrite();
+                        cmdString = "WriteMMIO";
                     }
                 } else {
                     req = createRead(addr);
                 }
 
                 if (req->needsResponse()) {
-		            requests[req->getID()] =  std::make_pair(getCurrentSimTime(), cmdString);
+		    requests[req->getID()] =  std::make_pair(getCurrentSimTime(), cmdString);
                 }
-		        memory->send(req);
+            
+                memory->send(req);
 
                 ops--;
-	        }
+	    }
         }
     }
 
