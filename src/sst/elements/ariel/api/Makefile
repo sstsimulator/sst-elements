@@ -8,3 +8,6 @@ arielapi.o: arielapi.c arielapi.h
 
 libarielapi.a: arielapi.o
 	ar rcs $@ $^
+
+clean:
+	rm *.o *.a *.so

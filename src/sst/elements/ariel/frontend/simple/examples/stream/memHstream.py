@@ -11,7 +11,7 @@ L2_0     L2_1     L2_2     L2_3     L2_4     L2_5     L2_6     L2_7
                                 BUS
                              Shared L3
                            MemoryController
-                         Main Memory (DRAMSIM)
+                         Main Memory (TimingDRAM)
 """
 
 import sst
@@ -24,7 +24,6 @@ coherenceProtocol = "MESI"
 rplPolicy = "lru"
 busLat = "50 ps"
 cacheFrequency = "2 Ghz"
-defaultLevel = 0
 cacheLineSize = 64
 
 corecount = 8
@@ -70,7 +69,6 @@ ariel.addParams({
    "launchparam0"        : "-ifeellucky",
    "arielmode"           : "1",
    "corecount"           : corecount,
-   "defaultlevel"        : defaultLevel,
 })
 
 ariel.setSubComponent("memmgr", "ariel.MemoryManagerSimple")

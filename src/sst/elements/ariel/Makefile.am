@@ -53,6 +53,9 @@ libariel_la_SOURCES = \
 	arielgpuev.h
 
 EXTRA_DIST = \
+	api/arielapi.c \
+	api/arielapi.h \
+	api/Makefile \
 	frontend/pin3/fesimple.cc \
 	frontend/simple/fesimple.cc \
 	frontend/simple/examples/multicore.py \
@@ -69,6 +72,7 @@ EXTRA_DIST = \
 	frontend/simple/examples/stream/stream_malloc.c \
 	frontend/simple/examples/stream/tests/refFiles/test_Ariel_ariel_ivb.out \
 	frontend/simple/examples/stream/tests/refFiles/test_Ariel_ariel_snb.out \
+	frontend/simple/examples/stream/tests/refFiles/test_Ariel_ariel_snb_mlm.out \
 	frontend/simple/examples/stream/tests/refFiles/test_Ariel_memHstream.out \
 	frontend/simple/examples/stream/tests/refFiles/test_Ariel_runstream.out \
 	frontend/simple/examples/stream/tests/refFiles/test_Ariel_runstreamNB.out \
