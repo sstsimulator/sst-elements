@@ -40,26 +40,6 @@ print("Auto-clock syscalls: " + str(auto_clock_sys))
 v_cpu_0 = sst.Component("v0", vanadis_cpu_type)
 v_cpu_0.addParams({
        "clock" : cpu_clock,
-#       "executable" : "./tests/hello-mips",
-#       "executable" : "./tests/hello-musl",
-#       "executable" : "./tests/core-perf-musl",
-#       "executable" : "./tests/stream-musl",
-#       "executable" : "./tests/stream-mini-musl",
-#       "executable" : "./tests/test-printf",
-#       "executable" : "./tests/test-env",
-#       "executable" : "./tests/lulesh2.0",
-#       "executable" : "./tests/luxtxt",
-#       "executable" : "./tests/stream-fortran",
-#       "executable" : "./tests/test-fp",
-#       "executable" : os.getenv("VANADIS_EXE", "./tests/stream-mini-musl"),
-       "executable" : os.getenv("VANADIS_EXE", "./tests/small/basic-io/hello-world"),
-       "app.env_count" : 2,
-       "app.env0" : "HOME=/home/sdhammo",
-       "app.env1" : "NEWHOME=/home/sdhammo2",
-#       "app.argc" : 4,
-#       "app.arg1" : "16",
-#       "app.arg2" : "8",
-#       "app.arg3" : "8",
 #       "max_cycle" : 100000000,
        "verbose" : verbosity,
        "physical_fp_registers" : 168,
@@ -147,7 +127,15 @@ node_os.addParams({
 	"heap_start" : 512 * 1024 * 1024,
 	"heap_end"   : (2 * 1024 * 1024 * 1024) - 4096,
 	"page_size"  : 4096,
-	"heap_verbose" : 0 #verbosity
+	"heap_verbose" : verbosity,
+    "executable" : os.getenv("VANADIS_EXE", "./tests/small/basic-io/hello-world"),
+    "app.env_count" : 2,
+    "app.env0" : "HOME=/home/sdhammo",
+    "app.env1" : "NEWHOME=/home/sdhammo2",
+#    "app.argc" : 4,
+#    "app.arg1" : "16",
+#    "app.arg2" : "8",
+#    "app.arg3" : "8",
 })
 
 node_os_mem_if = node_os.setSubComponent( "mem_interface", "memHierarchy.standardInterface" )
