@@ -7,7 +7,7 @@ DEBUG_L3 = 0
 DEBUG_MEM = 0
 
 # Define the simulation components
-cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
+cpu = sst.Component("core", "memHierarchy.trivialCPU")
 cpu.addParams({
       "num_loadstore" : "10000",
       "commFreq" : "100",
@@ -18,7 +18,7 @@ cpu.addParams({
 })
 iface = cpu.setSubComponent("memory", "memHierarchy.memInterface")
 
-l1cache = sst.Component("l1cache", "memHierarchy.Cache")
+l1cache = sst.Component("l1cache.msi", "memHierarchy.Cache")
 l1cache.addParams({
       "access_latency_cycles" : "5",
       "cache_frequency" : "2 Ghz",
@@ -31,7 +31,7 @@ l1cache.addParams({
       "debug" : DEBUG_L1,
       "cache_size" : "4 KB"
 })
-l2cache = sst.Component("l2cache", "memHierarchy.Cache")
+l2cache = sst.Component("l2cache.msi.inclus", "memHierarchy.Cache")
 l2cache.addParams({
       "access_latency_cycles" : "20",
       "cache_frequency" : "2 Ghz",
@@ -43,7 +43,7 @@ l2cache.addParams({
       "debug" : DEBUG_L2,
       "cache_size" : "32 KB"
 })
-l3cache = sst.Component("l3cache", "memHierarchy.Cache")
+l3cache = sst.Component("l3cache.msi.inclus", "memHierarchy.Cache")
 l3cache.addParams({
       "access_latency_cycles" : "100",
       "cache_frequency" : "2 Ghz",
@@ -55,7 +55,7 @@ l3cache.addParams({
       "debug" : DEBUG_L3,
       "cache_size" : "64 KB"
 })
-memctrl = sst.Component("memctrl", "memHierarchy.MemController")
+memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
     "debug" : DEBUG_MEM,
     "clock" : "1GHz",

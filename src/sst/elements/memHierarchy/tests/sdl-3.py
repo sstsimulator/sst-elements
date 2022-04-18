@@ -6,19 +6,26 @@ DEBUG_MEM = 0
 DEBUG_LEVEL = 10
 
 # Define the simulation components
-comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
+comp_cpu = sst.Component("core", "memHierarchy.standardCPU")
 comp_cpu.addParams({
-      "do_write" : "1",
-      "num_loadstore" : "1000",
-      "commFreq" : "100",
-      "memSize" : "0x1000"
+    "memFreq" : 4,
+    "memSize" : "2KiB",
+    "verbose" : 0,
+    "clock" : "2.7GHz",
+    "rngseed" : 48,
+    "maxOutstanding" : 16,
+    "opCount" : 2500,
+    "reqsPerIssue" : 3,
+    "write_freq" : 36, # 36% writes
+    "read_freq" : 60,  # 60% reads
+    "llsc_freq" : 4,   # 4% LLSC
 })
-iface = comp_cpu.setSubComponent("memory", "memHierarchy.memInterface")
+iface = comp_cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 
-l1cache = sst.Component("l1cache", "memHierarchy.Cache")
+l1cache = sst.Component("l1cache.msi", "memHierarchy.Cache")
 l1cache.addParams({
       "access_latency_cycles" : "4",
-      "cache_frequency" : "2 Ghz",
+      "cache_frequency" : "2.7Ghz",
       "coherence_protocol" : "MSI",
       "associativity" : "4",
       "cache_line_size" : "64",
@@ -28,7 +35,7 @@ l1cache.addParams({
       "cache_size" : "4KiB"
 })
 # Replacement policy - can declare here or as a parameter (only if part of memHierarchy's core set of policies and using default parameters)
-l1cache.setSubComponent("replacement", "memHierarchy.replacement.lru")
+l1cache.setSubComponent("replacement", "memHierarchy.replacement.mru")
 
 # Links to core & mem
 l1toC = l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")

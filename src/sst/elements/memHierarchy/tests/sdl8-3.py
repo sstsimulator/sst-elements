@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 from mhlib import componentlist
 
@@ -15,7 +14,7 @@ DEBUG_NODE0 = 0
 DEBUG_NODE1 = 0
 
 # Core 0
-cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
+cpu0 = sst.Component("core0", "memHierarchy.trivialCPU")
 cpu0.addParams({
       "commFreq" : "100",
       "rngseed" : "101",
@@ -26,7 +25,7 @@ cpu0.addParams({
 iface0 = cpu0.setSubComponent("memory", "memHierarchy.memInterface")
 
 # L1 0
-c0_l1cache = sst.Component("c0.l1cache", "memHierarchy.Cache")
+c0_l1cache = sst.Component("l1cache0.msi", "memHierarchy.Cache")
 c0_l1cache.addParams({
       "access_latency_cycles" : "5",
       "cache_frequency" : "2 Ghz",
@@ -43,7 +42,7 @@ l1ToC_0 = c0_l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l1Tol2_0 = c0_l1cache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 # Core 1
-cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
+cpu1 = sst.Component("core1", "memHierarchy.trivialCPU")
 cpu1.addParams({
       "commFreq" : "100",
       "rngseed" : "301",
@@ -54,7 +53,7 @@ cpu1.addParams({
 iface1 = cpu1.setSubComponent("memory", "memHierarchy.memInterface")
 
 # L1 1
-c1_l1cache = sst.Component("c1.l1cache", "memHierarchy.Cache")
+c1_l1cache = sst.Component("l1cache1.msi", "memHierarchy.Cache")
 c1_l1cache.addParams({
       "access_latency_cycles" : "5",
       "cache_frequency" : "2 Ghz",
@@ -71,13 +70,13 @@ l1ToC_1 = c1_l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l1Tol2_1 = c1_l1cache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 # L1/L2 bus 0
-n0_bus = sst.Component("n0.bus", "memHierarchy.Bus")
+n0_bus = sst.Component("bus0", "memHierarchy.Bus")
 n0_bus.addParams({
       "bus_frequency" : "2 Ghz"
 })
 
 # L2 0
-n0_l2cache = sst.Component("n0.l2cache", "memHierarchy.Cache")
+n0_l2cache = sst.Component("l2cache0.msi.inclus", "memHierarchy.Cache")
 n0_l2cache.addParams({
       "access_latency_cycles" : "20",
       "cache_frequency" : "2 Ghz",
@@ -93,7 +92,7 @@ l2Tol1_0 = n0_l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l2Tol3_0 = n0_l2cache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 # Core 2
-cpu2 = sst.Component("cpu2", "memHierarchy.trivialCPU")
+cpu2 = sst.Component("core2", "memHierarchy.trivialCPU")
 cpu2.addParams({
       "commFreq" : "100",
       "rngseed" : "501",
@@ -104,7 +103,7 @@ cpu2.addParams({
 iface2 = cpu2.setSubComponent("memory", "memHierarchy.memInterface")
 
 # L1 2
-c2_l1cache = sst.Component("c2.l1cache", "memHierarchy.Cache")
+c2_l1cache = sst.Component("l1cache2.msi", "memHierarchy.Cache")
 c2_l1cache.addParams({
       "access_latency_cycles" : "5",
       "cache_frequency" : "2 Ghz",
@@ -121,7 +120,7 @@ l1ToC_2 = c2_l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l1Tol2_2 = c2_l1cache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 # Core 3
-cpu3 = sst.Component("cpu3", "memHierarchy.trivialCPU")
+cpu3 = sst.Component("core3", "memHierarchy.trivialCPU")
 cpu3.addParams({
       "commFreq" : "100",
       "rngseed" : "701",
@@ -132,7 +131,7 @@ cpu3.addParams({
 iface3 = cpu3.setSubComponent("memory", "memHierarchy.memInterface")
 
 # L1 3
-c3_l1cache = sst.Component("c3.l1cache", "memHierarchy.Cache")
+c3_l1cache = sst.Component("l1cache3.msi", "memHierarchy.Cache")
 c3_l1cache.addParams({
       "access_latency_cycles" : "5",
       "cache_frequency" : "2 Ghz",
@@ -149,13 +148,13 @@ l1ToC_3 = c3_l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l1Tol2_3 = c3_l1cache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 # L1/L2 bus 1
-n1_bus = sst.Component("n1.bus", "memHierarchy.Bus")
+n1_bus = sst.Component("bus1", "memHierarchy.Bus")
 n1_bus.addParams({
       "bus_frequency" : "2 Ghz"
 })
 
 # L2 1
-n1_l2cache = sst.Component("n1.l2cache", "memHierarchy.Cache")
+n1_l2cache = sst.Component("l2cache1.msi.inclus", "memHierarchy.Cache")
 n1_l2cache.addParams({
       "access_latency_cycles" : "20",
       "cache_frequency" : "2 Ghz",
@@ -177,7 +176,7 @@ n2_bus.addParams({
 })
 
 # L3
-l3cache = sst.Component("l3cache", "memHierarchy.Cache")
+l3cache = sst.Component("l3cache.msi.inclus", "memHierarchy.Cache")
 l3cache.addParams({
       "access_latency_cycles" : "100",
       "cache_frequency" : "2 Ghz",
@@ -211,7 +210,7 @@ chiprtr.addParams({
 chiprtr.setSubComponent("topology","merlin.singlerouter")
 
 # Directory
-dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
+dirctrl = sst.Component("directory.msi", "memHierarchy.DirectoryController")
 dirctrl.addParams({
       "coherence_protocol" : "MSI",
       "debug" : DEBUG_DIR,
