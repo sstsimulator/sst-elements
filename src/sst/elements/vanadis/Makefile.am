@@ -141,6 +141,9 @@ os/callev/voscallunmap.h \
 os/callev/voscallwrite.h \
 os/callev/voscallwritev.h \
 os/callev/vosinitbrk.h \
+os/callev/voscallreadv.h \
+os/callev/voscallunlink.h \
+os/callev/voscallunlinkat.h \
 os/memmgr/vmemmgr.h \
 os/node/vnodemmaph.h \
 os/node/vnodenoactionh.h \
@@ -157,7 +160,11 @@ os/node/vnodeosunameh.h \
 os/node/vnodeoswriteh.h \
 os/node/vnodeoswritevh.h \
 os/resp/voscallresp.h \
-os/resp/vosexitresp.h
+os/resp/vosexitresp.h \
+os/resp/vnodeosreadh.h \
+os/resp/vnodeosreadh.h \
+os/resp/vnodeosunlinkath.h \
+os/resp/vnodeosunlinkh.h
 
 EXTRA_DIST = \
 	tests/small/basic-io/Makefile \
