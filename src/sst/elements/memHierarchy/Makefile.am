@@ -277,9 +277,7 @@ EXTRA_DIST = \
 	tests/refFiles/test_memHierarchy_sdl4_2.out \
 	tests/refFiles/test_memHierarchy_sdl4_2_ramulator.out \
 	tests/refFiles/test_memHierarchy_sdl5_1.out \
-	tests/refFiles/test_memHierarchy_sdl5_1_MC.out \
 	tests/refFiles/test_memHierarchy_sdl5_1_ramulator.out \
-	tests/refFiles/test_memHierarchy_sdl5_1_ramulator_MC.out \
 	tests/refFiles/test_memHierarchy_sdl8_1.out \
 	tests/refFiles/test_memHierarchy_sdl8_3.out \
 	tests/refFiles/test_memHierarchy_sdl8_4.out \

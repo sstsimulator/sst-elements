@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 from mhlib import componentlist
 
@@ -9,19 +8,28 @@ DEBUG_L1 = 0
 DEBUG_MEM = 0
 DEBUG_LEVEL = 10
 
-cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
-cpu.addParams({
-      "do_write" : "1",
-      "num_loadstore" : "1000",
-      "commFreq" : "100",
-      "memSize" : "0x1000"
-})
-iface = cpu.setSubComponent("memory", "memHierarchy.memInterface")
+# Simple test: Single core, L1, Memory
 
-l1cache = sst.Component("l1cache", "memHierarchy.Cache")
+cpu = sst.Component("core", "memHierarchy.standardCPU")
+cpu.addParams({
+    "memFreq" : 2,
+    "memSize" : "4KiB",
+    "verbose" : 0,
+    "clock" : "3.5GHz",
+    "rngseed" : 111,
+    "maxOutstanding" : 16,
+    "opCount" : 2500,
+    "reqsPerIssue" : 3,
+    "write_freq" : 36, # 36% writes
+    "read_freq" : 60,  # 60% reads
+    "llsc_freq" : 4,   # 4% LLSC
+})
+iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
+
+l1cache = sst.Component("l1cache.msi", "memHierarchy.Cache")
 l1cache.addParams({
-    "access_latency_cycles" : "4",
-    "cache_frequency" : "2 Ghz",
+    "access_latency_cycles" : "3",
+    "cache_frequency" : "3.5Ghz",
     "replacement_policy" : "lru",
     "coherence_protocol" : "MSI",
     "associativity" : "4",
@@ -60,4 +68,3 @@ link_cpu_cache_link = sst.Link("link_cpu_cache_link")
 link_cpu_cache_link.connect( (iface, "port", "1000ps"), (l1cache, "high_network_0", "1000ps") )
 link_mem_bus_link = sst.Link("link_mem_bus_link")
 link_mem_bus_link.connect( (l1cache, "low_network_0", "50ps"), (memctrl, "direct_link", "50ps") )
-# End of generated output.
