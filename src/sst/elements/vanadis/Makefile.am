@@ -164,7 +164,7 @@ os/node/vnodeosunlinkh.h
 os/node/vnodeoswriteh.h \
 os/node/vnodeoswritevh.h \
 os/resp/voscallresp.h \
-os/resp/vosexitresp.h \
+os/resp/vosexitresp.h
 
 EXTRA_DIST = \
 	tests/small/basic-io/Makefile \
