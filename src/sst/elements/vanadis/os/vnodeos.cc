@@ -59,7 +59,8 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
     Params tmpParams = params.get_scoped_params("app");
     std::string modName = "vanadis.AppRuntimeMemory"; 
     modName += elf_info->isELF32() ? "32" : "64";
-    output->verbose(CALL_INFO, 1, 0, "load app runtime memory mode: %s\n",modName.c_str());
+
+    output->verbose(CALL_INFO, 1, 0, "load app runtime memory module: %s\n",modName.c_str());
     appRuntimeMemory = loadModule<AppRuntimeMemoryMod>(modName, tmpParams );
 
     output->verbose(CALL_INFO, 1, 0, "Configuring the memory interface...\n");
