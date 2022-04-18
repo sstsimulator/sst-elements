@@ -124,9 +124,9 @@ os/callev/voscallaccessev.h \
 os/callev/voscallall.h \
 os/callev/voscallbrk.h \
 os/callev/voscallclose.h \
-os/callev/voscallfstat.h \
-os/callev/voscallexit.h \
 os/callev/voscallexitgrp.h \
+os/callev/voscallexit.h \
+os/callev/voscallfstat.h \
 os/callev/voscallgettime64.h \
 os/callev/voscallioctl.h \
 os/callev/voscallmmap.h \
@@ -135,15 +135,15 @@ os/callev/voscallopenat.h \
 os/callev/voscallopen.h \
 os/callev/voscallread.h \
 os/callev/voscallreadlink.h \
+os/callev/voscallreadv.h \
 os/callev/voscallsta.h \
 os/callev/voscalluname.h \
+os/callev/voscallunlinkat.h \
+os/callev/voscallunlink.h \
 os/callev/voscallunmap.h \
 os/callev/voscallwrite.h \
 os/callev/voscallwritev.h \
 os/callev/vosinitbrk.h \
-os/callev/voscallreadv.h \
-os/callev/voscallunlink.h \
-os/callev/voscallunlinkat.h \
 os/memmgr/vmemmgr.h \
 os/node/vnodemmaph.h \
 os/node/vnodenoactionh.h \
@@ -154,17 +154,17 @@ os/node/vnodeosfstath.h \
 os/node/vnodeoshstate.h \
 os/node/vnodeosopenath.h \
 os/node/vnodeosopenh.h \
+os/node/vnodeosreadh.h \
 os/node/vnodeosreadlink.h \
+os/node/vnodeosreadvh.h \
 os/node/vnodeosstattype.h \
 os/node/vnodeosunameh.h \
+os/node/vnodeosunlinkath.h \
+os/node/vnodeosunlinkh.h
 os/node/vnodeoswriteh.h \
 os/node/vnodeoswritevh.h \
 os/resp/voscallresp.h \
 os/resp/vosexitresp.h \
-os/resp/vnodeosreadh.h \
-os/resp/vnodeosreadh.h \
-os/resp/vnodeosunlinkath.h \
-os/resp/vnodeosunlinkh.h
 
 EXTRA_DIST = \
 	tests/small/basic-io/Makefile \
