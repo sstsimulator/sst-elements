@@ -43,10 +43,14 @@
 #include "os/node/vnodeoshstate.h"
 #include "os/node/vnodeosopenath.h"
 #include "os/node/vnodeosopenh.h"
+#include "os/node/vnodeosunlinkh.h"
+#include "os/node/vnodeosunlinkath.h"
 #include "os/node/vnodeosreadlink.h"
 #include "os/node/vnodeosunameh.h"
 #include "os/node/vnodeoswriteh.h"
 #include "os/node/vnodeoswritevh.h"
+#include "os/node/vnodeosreadh.h"
+#include "os/node/vnodeosreadvh.h"
 
 #include "os/node/vnodeosstattype.h"
 #include "util/vlinesplit.h"
@@ -213,6 +217,62 @@ public:
             }
         } break;
 
+        case SYSCALL_OP_UNLINK: {
+            output->verbose(CALL_INFO, 16, 0, "-> call is unlink()\n");
+            VanadisSyscallUnlinkEvent* event = dynamic_cast<VanadisSyscallUnlinkEvent*>(sys_ev);
+
+            if (nullptr == event) {
+                output->fatal(CALL_INFO, -1,
+                              "[syscall-unlink] -> error unable ot cast syscall to an unlink event.\n");
+            }
+
+            output->verbose( CALL_INFO, 16, 0, "[syscall-unlink] -> call is unlink( %" PRId64 " )\n", event->getPathPointer());
+
+            handler_state = new VanadisUnlinkHandlerState( output->getVerboseLevel(), event->getPathPointer(), handlerSendMemCallback);
+
+            const uint64_t first_read_len = vanadis_line_remainder( event->getPathPointer(), 64 );
+
+            sendMemRequest( new StandardMem::Read(event->getPathPointer(), first_read_len) );
+        } break;
+
+        case SYSCALL_OP_UNLINKAT: {
+            output->verbose(CALL_INFO, 16, 0, "-> call is unlinkat()\n");
+            VanadisSyscallUnlinkatEvent* event = dynamic_cast<VanadisSyscallUnlinkatEvent*>(sys_ev);
+
+            if (nullptr == event) {
+                output->fatal(CALL_INFO, -1,
+                              "[syscall-unlinkat] -> error unable ot cast syscall to an unlinkat event.\n");
+            }
+    
+            int dirFd  = event->getDirectoryFileDescriptor();
+            // if the directory fd passed by the syscall is positive it should point to a entry in the file_descriptor table
+            // if the directory fd is negative pass that to to the unlinkat handler ( AT_FDCWD is negative )
+            if ( dirFd > -1 ) {
+                auto file_des = file_descriptors.find(dirFd);
+
+                if ( file_des == file_descriptors.end()) {
+                    output->verbose(CALL_INFO, 16, 0, "can't find dirFd=%d in unlink file descriptor table\n", dirFd);
+                    VanadisSyscallResponse* resp = new VanadisSyscallResponse(-EBADF);
+                    resp->markFailed();
+                    core_link->send(resp);
+                    break;
+                }
+                // get the FD that SST will use
+                dirFd = file_des->second->getFileDescriptor();
+                output->verbose(CALL_INFO, 16, 0, "sst fd=%d pathname=%s\n", dirFd, file_des->second->getPath());
+            }
+
+            output->verbose( CALL_INFO, 16, 0, "[syscall-unlinkat] -> call is unlinkat( %" PRId64 ", 0x%0llx, %" PRId64 " )\n",
+                event->getDirectoryFileDescriptor(), event->getPathPointer(), event->getFlags());
+
+            handler_state = new VanadisUnlinkatHandlerState( output->getVerboseLevel(), dirFd, event->getPathPointer(), event->getFlags(),handlerSendMemCallback);
+
+            const uint64_t first_read_len = vanadis_line_remainder( event->getPathPointer(), 64 );
+
+            sendMemRequest( new StandardMem::Read(event->getPathPointer(), first_read_len) );
+
+        } break;
+
         case SYSCALL_OP_OPENAT: {
             output->verbose(CALL_INFO, 16, 0, "-> call is openat()\n");
             VanadisSyscallOpenAtEvent* openat_ev = dynamic_cast<VanadisSyscallOpenAtEvent*>(sys_ev);
@@ -315,6 +375,51 @@ public:
             sendMemRequest(open_start_req);
         } break;
 
+        case SYSCALL_OP_READV: {
+            output->verbose(CALL_INFO, 16, 0, "-> call is readv()\n");
+            VanadisSyscallReadvEvent* readv_ev = dynamic_cast<VanadisSyscallReadvEvent*>(sys_ev);
+
+            if (nullptr == readv_ev) {
+                output->fatal(CALL_INFO, -1, "-> error unable to cast syscall to a readv event.\n");
+            }
+
+            output->verbose(CALL_INFO, 16, 0,
+                            "[syscall-readv] -> call is readv( %" PRId64 ", 0x%0llx, %" PRId64 " )\n",
+                            readv_ev->getFileDescriptor(), readv_ev->getIOVecAddress(), readv_ev->getIOVecCount());
+
+            auto file_des = file_descriptors.find(readv_ev->getFileDescriptor());
+
+            if (file_des == file_descriptors.end()) {
+
+                output->verbose(CALL_INFO, 16, 0,
+                                "[syscall-readv] -> file handle %" PRId64
+                                " is not currently open, return an error code.\n",
+                                readv_ev->getFileDescriptor());
+
+                // EINVAL = 22
+                VanadisSyscallResponse* resp = new VanadisSyscallResponse(-22);
+                core_link->send(resp);
+            } else {
+
+                if (readv_ev->getIOVecCount() > 0) {
+                    std::function<void(StandardMem::Request*)> send_req_func
+                        = std::bind(&VanadisNodeOSCoreHandler::sendMemRequest, this, std::placeholders::_1);
+
+                    handler_state = new VanadisReadvHandlerState(
+                        output->getVerboseLevel(), readv_ev->getOSBitType(), readv_ev->getIOVecAddress(),
+                        readv_ev->getIOVecCount(), file_des->second->getFileDescriptor(), send_req_func);
+
+                } else if (readv_ev->getIOVecCount() == 0) {
+                    VanadisSyscallResponse* resp = new VanadisSyscallResponse(0);
+                    core_link->send(resp);
+                } else {
+                    // EINVAL = 22
+                    VanadisSyscallResponse* resp = new VanadisSyscallResponse(-22);
+                    core_link->send(resp);
+                }
+            }
+        } break;
+
         case SYSCALL_OP_READ: {
             output->verbose(CALL_INFO, 16, 0, "-> call is read()\n");
             VanadisSyscallReadEvent* read_ev = dynamic_cast<VanadisSyscallReadEvent*>(sys_ev);
@@ -324,21 +429,33 @@ public:
             }
 
             output->verbose(CALL_INFO, 16, 0, "-> call is read( %" PRId64 ", 0x%0llx, %" PRId64 " )\n",
-                            read_ev->getFileDescriptor(), read_ev->getBufferAddress(), read_ev->getCount());
+                            read_ev->getFileDescriptor(), read_ev->getBufferAddress(), read_ev->getBufferCount());
 
-            for (auto next_file = file_descriptors.begin(); next_file != file_descriptors.end(); next_file++) {
+            auto file_des = file_descriptors.find(read_ev->getFileDescriptor());
 
-                output->verbose(CALL_INFO, 16, 0, "---> file: %" PRIu32 " (path: %s)\n", next_file->first,
-                                next_file->second->getPath());
-            }
+            if (file_des == file_descriptors.end()) {
+                output->verbose(CALL_INFO, 16, 0,
+                                "[syscall-read] -> file handle %" PRId64
+                                " is not currently open, return an error code.\n",
+                                read_ev->getFileDescriptor());
 
-            output->fatal(CALL_INFO, -1, "NOT IMPLEMENTED\n");
-
-            if (0 == read_ev->getCount()) {
-                VanadisSyscallResponse* resp = new VanadisSyscallResponse(0);
+                // EINVAL = 22
+                VanadisSyscallResponse* resp = new VanadisSyscallResponse(-22);
                 core_link->send(resp);
             } else {
-                output->fatal(CALL_INFO, -1, "Non-zeros not implemented.\n");
+                if (read_ev->getBufferCount() > 0) {
+
+                    std::function<void(StandardMem::Request*)> send_req_func
+                        = std::bind(&VanadisNodeOSCoreHandler::sendMemRequest, this, std::placeholders::_1);
+
+                    handler_state = new VanadisReadHandlerState(
+                        output->getVerboseLevel(), file_des->second->getFileDescriptor(),
+                        read_ev->getBufferAddress(), read_ev->getBufferCount(), send_req_func);
+
+                } else {
+                    VanadisSyscallResponse* resp = new VanadisSyscallResponse(0);
+                    core_link->send(resp);
+                }
             }
         } break;
 
