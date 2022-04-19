@@ -111,7 +111,7 @@ ArielCore::ArielCore(ComponentId_t id, ArielTunnel *tunnel,
     // If we enabled tracing then open up the correct file.
     if(enableTracing) {
         Params interfaceParams = params.get_scoped_params("tracer");
-        traceGen = dynamic_cast<ArielTraceGenerator*>( loadModule(traceGenName, interfaceParams) );
+        traceGen = loadModule<ArielTraceGenerator>(traceGenName, interfaceParams);
 
         if(NULL == traceGen) {
             output->fatal(CALL_INFO, -1, "Unable to load tracing module: \"%s\"\n",

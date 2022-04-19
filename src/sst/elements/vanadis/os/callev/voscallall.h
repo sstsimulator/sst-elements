@@ -29,11 +29,15 @@
 #include "os/callev/voscallopen.h"
 #include "os/callev/voscallopenat.h"
 #include "os/callev/voscallread.h"
+#include "os/callev/voscallreadv.h"
 #include "os/callev/voscallreadlink.h"
 #include "os/callev/voscallsta.h"
 #include "os/callev/voscalluname.h"
 #include "os/callev/voscallunmap.h"
 #include "os/callev/voscallwrite.h"
 #include "os/callev/voscallwritev.h"
+#include "os/callev/voscallunlink.h"
+#include "os/callev/voscallunlinkat.h"
+#include "os/callev/vosinitbrk.h"
 
 #endif

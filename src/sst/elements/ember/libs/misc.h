@@ -32,13 +32,13 @@ class EmberMiscLib : public EmberLib {
 
   public:
 
-    SST_ELI_REGISTER_MODULE(
+    SST_ELI_REGISTER_MODULE_DERIVED(
         EmberMiscLib,
         "ember",
         "miscLib",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        "SST::Ember::EmberMiscLib"
+        SST::Ember::EmberLib
     )
     SST_ELI_DOCUMENT_PARAMS(
 	)

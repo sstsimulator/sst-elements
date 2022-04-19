@@ -26,6 +26,8 @@ namespace Ember {
 class EmberRankMap : public Module {
 
 public:
+    SST_ELI_REGISTER_MODULE_API(SST::Ember::EmberRankMap)
+
 	EmberRankMap(Params& params) {}
 	~EmberRankMap() {}
 	virtual void setEnvironment(const uint32_t rank, const uint32_t worldSize) = 0;

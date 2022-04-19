@@ -128,9 +128,9 @@ os/callev/voscallaccessev.h \
 os/callev/voscallall.h \
 os/callev/voscallbrk.h \
 os/callev/voscallclose.h \
-os/callev/voscallfstat.h \
-os/callev/voscallexit.h \
 os/callev/voscallexitgrp.h \
+os/callev/voscallexit.h \
+os/callev/voscallfstat.h \
 os/callev/voscallgettime64.h \
 os/callev/voscallioctl.h \
 os/callev/voscallmmap.h \
@@ -139,8 +139,11 @@ os/callev/voscallopenat.h \
 os/callev/voscallopen.h \
 os/callev/voscallread.h \
 os/callev/voscallreadlink.h \
+os/callev/voscallreadv.h \
 os/callev/voscallsta.h \
 os/callev/voscalluname.h \
+os/callev/voscallunlinkat.h \
+os/callev/voscallunlink.h \
 os/callev/voscallunmap.h \
 os/callev/voscallwrite.h \
 os/callev/voscallwritev.h \
@@ -154,9 +157,13 @@ os/node/vnodeosfstath.h \
 os/node/vnodeoshstate.h \
 os/node/vnodeosopenath.h \
 os/node/vnodeosopenh.h \
+os/node/vnodeosreadh.h \
 os/node/vnodeosreadlink.h \
+os/node/vnodeosreadvh.h \
 os/node/vnodeosstattype.h \
 os/node/vnodeosunameh.h \
+os/node/vnodeosunlinkath.h \
+os/node/vnodeosunlinkh.h \
 os/node/vnodeoswriteh.h \
 os/node/vnodeoswritevh.h \
 os/resp/voscallresp.h \
@@ -170,9 +177,19 @@ EXTRA_DIST = \
 	tests/small/basic-io/hello-world.cc \
 	tests/small/basic-io/hello-world-CC.stderr.gold \
 	tests/small/basic-io/hello-world-CC.stdout.gold \
-   tests/small/basic-io/printf-check.c \
+    tests/small/basic-io/printf-check.c \
 	tests/small/basic-io/printf-check.stdout.gold \
-   tests/small/basic-io/printf-check.stderr.gold \
+    tests/small/basic-io/printf-check.stderr.gold \
+    tests/small/basic-io/unlinkat.c \
+    tests/small/basic-io/unlinkat.stderr.gold \
+    tests/small/basic-io/unlinkat.stdout.gold \
+    tests/small/basic-io/unlink.c \
+    tests/small/basic-io/unlink.stderr.gold \
+    tests/small/basic-io/unlink.stdout.gold \
+    tests/small/basic-io/openat.c \
+    tests/small/basic-io/openat.stderr.gold \
+    tests/small/basic-io/openat.stdout.gold \
+    tests/small/basic-io/read-write.c \
 	tests/small/basic-math/Makefile \
 	tests/small/basic-math/sqrt-double.c \
 	tests/small/basic-math/sqrt-double.stderr.gold \

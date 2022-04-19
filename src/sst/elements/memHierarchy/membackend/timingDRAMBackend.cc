@@ -37,7 +37,7 @@ TimingDRAM::TimingDRAM(ComponentId_t id, Params &params) : SimpleMemBackend(id, 
     std::string addrMapper = params.find<std::string>("addrMapper","memHierarchy.simpleAddrMapper");
 
     Params tmpParams = params.get_scoped_params("addrMapper" );
-    m_mapper = dynamic_cast<AddrMapper*>(loadModule( addrMapper, tmpParams ) );
+    m_mapper = loadModule<AddrMapper>( addrMapper, tmpParams );
 
     if ( ! m_mapper ) {
         output->fatal(CALL_INFO, -1, "Invalid param(%s): addrMapper,  '%s'.\n",

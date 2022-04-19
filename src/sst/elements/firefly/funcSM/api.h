@@ -33,6 +33,8 @@ class ProtocolAPI;
 class FunctionSMInterface : public Module {
 
   public:
+    SST_ELI_REGISTER_MODULE_API(SST::Firefly::FunctionSMInterface)
+
     class Retval {
       public:
         Retval() : m_type( None ) {}

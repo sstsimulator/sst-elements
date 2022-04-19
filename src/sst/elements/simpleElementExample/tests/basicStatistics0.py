@@ -58,8 +58,8 @@ sst.setStatisticLoadLevel(4)
 ## Determine where statistics should be sent. By default this script uses CSV, other options are
 # commented out below. Output locations are case-insensitive (e.g., statOutputCSV = statoutputcsv).
 
-# Default: Output to CSV. Filename and seperator can be specified
-sst.setStatisticOutput("sst.statOutputCSV", { "filepath" : "./basicStatistics0.csv", "seperator" : "," } ) 
+# Default: Output to CSV. Filename and separator can be specified
+sst.setStatisticOutput("sst.statOutputCSV", { "filepath" : "./basicStatistics0.csv", "separator" : "," } ) 
 
 # Option: Output to the terminal
 #sst.setStatisticOutput("sst.statoutputconsole") 
