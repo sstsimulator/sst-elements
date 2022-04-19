@@ -38,6 +38,5 @@
 #include "os/callev/voscallwritev.h"
 #include "os/callev/voscallunlink.h"
 #include "os/callev/voscallunlinkat.h"
-#include "os/callev/vosinitbrk.h"
 
 #endif
