@@ -150,8 +150,7 @@ void FunctionSM::initFunction( Info* info,
 
     params.insert( "nodeId", defaultParams.find<std::string>( "nodeId" ), true );
 
-    m_smV[ num ] = (FunctionSMInterface*)loadModule( module + "." + name,
-                             params );
+    m_smV[ num ] = loadModule<FunctionSMInterface>( module + "." + name, params );
 
     assert( m_smV[ Init ] );
     m_smV[ num ]->setInfo( info );

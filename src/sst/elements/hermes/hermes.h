@@ -364,6 +364,8 @@ class MemAddr {
 
 class NodePerf : public Module {
   public:
+    SST_ELI_REGISTER_MODULE_API(SST::Hermes::NodePerf)
+
     virtual double getFlops() { assert(0); }
     virtual double getBandwidth() { assert(0); }
     virtual double calcTimeNS_flops( int instructions ) { assert(0); }

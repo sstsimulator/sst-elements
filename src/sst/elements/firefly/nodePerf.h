@@ -24,13 +24,13 @@ namespace Firefly {
 class SimpleNodePerf : public NodePerf {
 
   public:
-    SST_ELI_REGISTER_MODULE(
+    SST_ELI_REGISTER_MODULE_DERIVED(
         SimpleNodePerf,
         "firefly",
         "SimpleNodePerf",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        "SST::Firefly::SimpleNodePerf"
+        SST::Hermes::NodePerf
     )
 	SST_ELI_DOCUMENT_PARAMS(
 		{"flops","Sets the FLOPS for the node","0"},

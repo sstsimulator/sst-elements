@@ -72,8 +72,7 @@ Hades::Hades( ComponentId_t id, Params& params ) :
     moduleName = params.find<std::string>("nodePerf", "firefly.SimpleNodePerf");
 
     tmpParams = params.get_scoped_params("nodePerf" );
-    m_nodePerf = dynamic_cast<NodePerf*>(loadModule(
-                                        moduleName, tmpParams ) );
+    m_nodePerf = loadModule<NodePerf>( moduleName, tmpParams );
     if ( !m_nodePerf ) {
         m_dbg.fatal(CALL_INFO,0," Unable to find nodePerf module'%s'\n",
                                         moduleName.c_str());

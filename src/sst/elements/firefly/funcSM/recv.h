@@ -26,13 +26,13 @@ namespace Firefly {
 class RecvFuncSM :  public FunctionSMInterface
 {
   public:
-    SST_ELI_REGISTER_MODULE(
+    SST_ELI_REGISTER_MODULE_DERIVED(
         RecvFuncSM,
         "firefly",
         "Recv",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        ""
+        SST::Firefly::FunctionSMInterface
     )
 
   public:

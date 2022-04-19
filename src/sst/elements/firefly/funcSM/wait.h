@@ -26,13 +26,13 @@ namespace Firefly {
 class WaitFuncSM :  public FunctionSMInterface
 {
   public:
-    SST_ELI_REGISTER_MODULE(
+    SST_ELI_REGISTER_MODULE_DERIVED(
         WaitFuncSM,
         "firefly",
         "Wait",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        ""
+        SST::Firefly::FunctionSMInterface
     )
   public:
     WaitFuncSM( SST::Params& params );
