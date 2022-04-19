@@ -26,7 +26,7 @@ Channel 6 statistics
 Channel 7 statistics
  Total Return Transactions: 1696 (54272 bytes) aggregate average bandwidth 0.549GB/s
  Rank 0 -  Reads: 1532 (49024 bytes) Writes: 66627860 (2132091520 bytes)
- cpu0.pendCycle : Accumulator : Sum.u64 = 14917877; SumSQ.u64 = 134971223; Count.u64 = 1692084; Min.u64 = 0; Max.u64 = 10; 
+ core0.pendCycle : Accumulator : Sum.u64 = 14917877; SumSQ.u64 = 134971223; Count.u64 = 1692084; Min.u64 = 0; Max.u64 = 10; 
  c0.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 8956; SumSQ.u64 = 8956; Count.u64 = 8956; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -185,7 +185,7 @@ Channel 7 statistics
  c0.l1cache.AckPut_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 29796030; SumSQ.u64 = 269268994; Count.u64 = 3384168; Min.u64 = 0; Max.u64 = 10; 
  c0.l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- cpu1.pendCycle : Accumulator : Sum.u64 = 4506011; SumSQ.u64 = 43817527; Count.u64 = 467724; Min.u64 = 0; Max.u64 = 10; 
+ core1.pendCycle : Accumulator : Sum.u64 = 4506011; SumSQ.u64 = 43817527; Count.u64 = 467724; Min.u64 = 0; Max.u64 = 10; 
  c1.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 904; SumSQ.u64 = 904; Count.u64 = 904; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -577,7 +577,7 @@ Channel 7 statistics
  n0.l2cache.AckPut_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n0.l2cache.MSHR_occupancy : Accumulator : Sum.u64 = 29839789; SumSQ.u64 = 319107059; Count.u64 = 3384168; Min.u64 = 0; Max.u64 = 20; 
  n0.l2cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- cpu2.pendCycle : Accumulator : Sum.u64 = 4568654; SumSQ.u64 = 44480282; Count.u64 = 473340; Min.u64 = 0; Max.u64 = 10; 
+ core2.pendCycle : Accumulator : Sum.u64 = 4568654; SumSQ.u64 = 44480282; Count.u64 = 473340; Min.u64 = 0; Max.u64 = 10; 
  c2.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 897; SumSQ.u64 = 897; Count.u64 = 897; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -736,7 +736,7 @@ Channel 7 statistics
  c2.l1cache.AckPut_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 9133284; SumSQ.u64 = 88887274; Count.u64 = 3384168; Min.u64 = 0; Max.u64 = 10; 
  c2.l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- cpu3.pendCycle : Accumulator : Sum.u64 = 4620107; SumSQ.u64 = 44983407; Count.u64 = 478236; Min.u64 = 0; Max.u64 = 10; 
+ core3.pendCycle : Accumulator : Sum.u64 = 4620107; SumSQ.u64 = 44983407; Count.u64 = 478236; Min.u64 = 0; Max.u64 = 10; 
  c3.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 897; SumSQ.u64 = 897; Count.u64 = 897; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

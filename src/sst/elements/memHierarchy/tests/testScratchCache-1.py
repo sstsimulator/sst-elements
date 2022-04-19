@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 from mhlib import componentlist
 
@@ -16,7 +15,7 @@ core_clock = "2GHz"
 #######################################################################################################################
 # CPU0 
 # ---------------------------------------------------------------------------------------------------------------------
-comp_cpu0 = sst.Component("cpu0", "memHierarchy.ScratchCPU")
+comp_cpu0 = sst.Component("core0", "memHierarchy.ScratchCPU")
 comp_cpu0.addParams({
     "scratchSize" : 65536,   # 64K scratch
     "maxAddr" : 2097152,       # 2M mem
@@ -90,7 +89,7 @@ scratch0_link_mem.addParam("debug_level", 10)
 #######################################################################################################################
 # CPU1
 # ---------------------------------------------------------------------------------------------------------------------
-comp_cpu1 = sst.Component("cpu1", "memHierarchy.ScratchCPU")
+comp_cpu1 = sst.Component("core1", "memHierarchy.ScratchCPU")
 comp_cpu1.addParams({
     "scratchSize" : 65536,   # 64K scratch
     "maxAddr" : 2097152,       # 2M mem

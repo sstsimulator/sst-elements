@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 
 # Define the simulation components
@@ -32,7 +31,7 @@ comp_network.addParams({
 comp_network.setSubComponent("topology","merlin.singlerouter")
 
 for x in range(cores):
-    comp_cpu = sst.Component("cpu" + str(x), "memHierarchy.standardCPU")
+    comp_cpu = sst.Component("core" + str(x), "memHierarchy.standardCPU")
     comp_cpu.addParams({
         "memFreq" : 4,
         "memSize" : "1GiB",

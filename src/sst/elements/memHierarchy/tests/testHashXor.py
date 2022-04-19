@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 from mhlib import componentlist
 
@@ -41,7 +40,7 @@ l2_params = {
 }
 # Define the simulation components
 # Core 0
-comp_cpu0 = sst.Component("cpu0", "memHierarchy.standardCPU")
+comp_cpu0 = sst.Component("core0", "memHierarchy.standardCPU")
 iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.standardInterface")
 comp_cpu0.addParams(cpu_params)
 comp_cpu0.addParams({ "rngseed" : 101 })
@@ -51,7 +50,7 @@ comp_c0_l1cache.addParams(l1_params)
 comp_c0_l1cache.setSubComponent("hash", "memHierarchy.hash.xor")
 
 # Core 1
-comp_cpu1 = sst.Component("cpu1", "memHierarchy.standardCPU")
+comp_cpu1 = sst.Component("core1", "memHierarchy.standardCPU")
 iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.standardInterface")
 comp_cpu1.addParams(cpu_params)
 comp_cpu1.addParams({ "rngseed" : 301 })
@@ -70,7 +69,7 @@ comp_n0_l2cache.addParams(l2_params)
 comp_n0_l2cache.setSubComponent("hash", "memHierarchy.hash.xor")
 
 # Core 2
-comp_cpu2 = sst.Component("cpu2", "memHierarchy.standardCPU")
+comp_cpu2 = sst.Component("core2", "memHierarchy.standardCPU")
 iface2 = comp_cpu2.setSubComponent("memory", "memHierarchy.standardInterface")
 comp_cpu2.addParams(cpu_params)
 comp_cpu2.addParams({ "rngseed" : 501 })
@@ -80,7 +79,7 @@ comp_c2_l1cache.addParams(l1_params)
 comp_c2_l1cache.setSubComponent("hash", "memHierarchy.hash.xor")
 
 # Core 3
-comp_cpu3 = sst.Component("cpu3", "memHierarchy.standardCPU")
+comp_cpu3 = sst.Component("core3", "memHierarchy.standardCPU")
 iface3 = comp_cpu3.setSubComponent("memory", "memHierarchy.standardInterface")
 comp_cpu3.addParams(cpu_params)
 comp_cpu3.addParams({ "rngseed" : 701 })
@@ -210,4 +209,3 @@ link_dir_net_0 = sst.Link("link_dir_net_0")
 link_dir_net_0.connect( (comp_chiprtr, "port0", "100ps"), (dirNIC, "port", "100ps") )
 link_dir_mem_link = sst.Link("link_dir_mem_link")
 link_dir_mem_link.connect( (dirtoM, "port", "1000ps"), (memctrl, "direct_link", "1000ps") )
-# End of generated output.

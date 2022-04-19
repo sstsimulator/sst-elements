@@ -17,7 +17,7 @@ cpu_params = {
     "read_freq" : 60,   # 60% reads
 }
 
-comp_cpu0 = sst.Component("cpu0", "memHierarchy.standardCPU")
+comp_cpu0 = sst.Component("core0", "memHierarchy.standardCPU")
 comp_cpu0.addParams(cpu_params)
 comp_cpu0.addParams({
     "rngseed" : 0
@@ -34,7 +34,7 @@ comp_c0_l1cache.addParams({
       "L1" : "1",
       "debug" : "0"
 })
-comp_cpu1 = sst.Component("cpu1", "memHierarchy.standardCPU")
+comp_cpu1 = sst.Component("core1", "memHierarchy.standardCPU")
 comp_cpu1.addParams(cpu_params)
 comp_cpu1.addParams({
     "rngseed" : 0
@@ -96,4 +96,3 @@ link_bus_l2cache = sst.Link("link_bus_l2cache")
 link_bus_l2cache.connect( (comp_bus, "low_network_0", "10000ps"), (comp_l2cache, "high_network_0", "10000ps") )
 link_mem_bus_link = sst.Link("link_mem_bus_link")
 link_mem_bus_link.connect( (comp_l2cache, "low_network_0", "10000ps"), (comp_memory, "direct_link", "10000ps") )
-# End of generated output.

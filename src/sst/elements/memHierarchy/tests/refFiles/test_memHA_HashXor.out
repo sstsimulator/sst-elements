@@ -1,9 +1,9 @@
 n0.l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
 n1.l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
 l3cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 3 cycles.
- cpu0.pendCycle : Accumulator : Sum.u64 = 362649849; SumSQ.u64 = 11593354727; Count.u64 = 11354564; Min.u64 = 0; Max.u64 = 32; 
- cpu0.reads : Accumulator : Sum.u64 = 5908; SumSQ.u64 = 5908; Count.u64 = 5908; Min.u64 = 1; Max.u64 = 1; 
- cpu0.writes : Accumulator : Sum.u64 = 4092; SumSQ.u64 = 4092; Count.u64 = 4092; Min.u64 = 1; Max.u64 = 1; 
+ core0.pendCycle : Accumulator : Sum.u64 = 362649849; SumSQ.u64 = 11593354727; Count.u64 = 11354564; Min.u64 = 0; Max.u64 = 32; 
+ core0.reads : Accumulator : Sum.u64 = 5908; SumSQ.u64 = 5908; Count.u64 = 5908; Min.u64 = 1; Max.u64 = 1; 
+ core0.writes : Accumulator : Sum.u64 = 4092; SumSQ.u64 = 4092; Count.u64 = 4092; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 5908; SumSQ.u64 = 5908; Count.u64 = 5908; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -162,9 +162,9 @@ l3cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to
  c0.l1cache.AckPut_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 362589849; SumSQ.u64 = 11589580679; Count.u64 = 11372708; Min.u64 = 0; Max.u64 = 32; 
  c0.l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- cpu1.pendCycle : Accumulator : Sum.u64 = 362888046; SumSQ.u64 = 11606362862; Count.u64 = 11369252; Min.u64 = 0; Max.u64 = 32; 
- cpu1.reads : Accumulator : Sum.u64 = 5989; SumSQ.u64 = 5989; Count.u64 = 5989; Min.u64 = 1; Max.u64 = 1; 
- cpu1.writes : Accumulator : Sum.u64 = 4011; SumSQ.u64 = 4011; Count.u64 = 4011; Min.u64 = 1; Max.u64 = 1; 
+ core1.pendCycle : Accumulator : Sum.u64 = 362888046; SumSQ.u64 = 11606362862; Count.u64 = 11369252; Min.u64 = 0; Max.u64 = 32; 
+ core1.reads : Accumulator : Sum.u64 = 5989; SumSQ.u64 = 5989; Count.u64 = 5989; Min.u64 = 1; Max.u64 = 1; 
+ core1.writes : Accumulator : Sum.u64 = 4011; SumSQ.u64 = 4011; Count.u64 = 4011; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 5989; SumSQ.u64 = 5989; Count.u64 = 5989; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -556,9 +556,9 @@ l3cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to
  n0.l2cache.AckPut_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n0.l2cache.MSHR_occupancy : Accumulator : Sum.u64 = 701775186; SumSQ.u64 = 43430863994; Count.u64 = 11372708; Min.u64 = 0; Max.u64 = 64; 
  n0.l2cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- cpu2.pendCycle : Accumulator : Sum.u64 = 363394113; SumSQ.u64 = 11620502971; Count.u64 = 11369828; Min.u64 = 0; Max.u64 = 32; 
- cpu2.reads : Accumulator : Sum.u64 = 6002; SumSQ.u64 = 6002; Count.u64 = 6002; Min.u64 = 1; Max.u64 = 1; 
- cpu2.writes : Accumulator : Sum.u64 = 3998; SumSQ.u64 = 3998; Count.u64 = 3998; Min.u64 = 1; Max.u64 = 1; 
+ core2.pendCycle : Accumulator : Sum.u64 = 363394113; SumSQ.u64 = 11620502971; Count.u64 = 11369828; Min.u64 = 0; Max.u64 = 32; 
+ core2.reads : Accumulator : Sum.u64 = 6002; SumSQ.u64 = 6002; Count.u64 = 6002; Min.u64 = 1; Max.u64 = 1; 
+ core2.writes : Accumulator : Sum.u64 = 3998; SumSQ.u64 = 3998; Count.u64 = 3998; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 6002; SumSQ.u64 = 6002; Count.u64 = 6002; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -717,9 +717,9 @@ l3cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to
  c2.l1cache.AckPut_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 363334113; SumSQ.u64 = 11616728923; Count.u64 = 11372708; Min.u64 = 0; Max.u64 = 32; 
  c2.l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- cpu3.pendCycle : Accumulator : Sum.u64 = 363544832; SumSQ.u64 = 11627364176; Count.u64 = 11372708; Min.u64 = 0; Max.u64 = 32; 
- cpu3.reads : Accumulator : Sum.u64 = 5924; SumSQ.u64 = 5924; Count.u64 = 5924; Min.u64 = 1; Max.u64 = 1; 
- cpu3.writes : Accumulator : Sum.u64 = 4076; SumSQ.u64 = 4076; Count.u64 = 4076; Min.u64 = 1; Max.u64 = 1; 
+ core3.pendCycle : Accumulator : Sum.u64 = 363544832; SumSQ.u64 = 11627364176; Count.u64 = 11372708; Min.u64 = 0; Max.u64 = 32; 
+ core3.reads : Accumulator : Sum.u64 = 5924; SumSQ.u64 = 5924; Count.u64 = 5924; Min.u64 = 1; Max.u64 = 1; 
+ core3.writes : Accumulator : Sum.u64 = 4076; SumSQ.u64 = 4076; Count.u64 = 4076; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 5924; SumSQ.u64 = 5924; Count.u64 = 5924; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

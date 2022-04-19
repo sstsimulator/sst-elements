@@ -6,11 +6,11 @@ TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 fast_t_pages: 1024
-TrivialCPU cpu0 Finished after 10000 issued reads, 10000 returned (1691940 clocks)
-TrivialCPU cpu1 Finished after 1000 issued reads, 1000 returned (466356 clocks)
-TrivialCPU cpu2 Finished after 1000 issued reads, 1000 returned (478956 clocks)
-TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (457212 clocks)
- cpu0.pendCycle : Accumulator : Sum.u64 = 14985004; SumSQ.u64 = 135859846; Count.u64 = 1691940; Min.u64 = 0; Max.u64 = 10; 
+TrivialCPU core0 Finished after 10000 issued reads, 10000 returned (1691940 clocks)
+TrivialCPU core1 Finished after 1000 issued reads, 1000 returned (466356 clocks)
+TrivialCPU core2 Finished after 1000 issued reads, 1000 returned (478956 clocks)
+TrivialCPU core3 Finished after 1000 issued reads, 1000 returned (457212 clocks)
+ core0.pendCycle : Accumulator : Sum.u64 = 14985004; SumSQ.u64 = 135859846; Count.u64 = 1691940; Min.u64 = 0; Max.u64 = 10; 
  c0.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 8973; SumSQ.u64 = 8973; Count.u64 = 8973; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -169,7 +169,7 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (457212 clocks)
  c0.l1cache.AckPut_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 29930307; SumSQ.u64 = 271041497; Count.u64 = 3383880; Min.u64 = 0; Max.u64 = 10; 
  c0.l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- cpu1.pendCycle : Accumulator : Sum.u64 = 4514339; SumSQ.u64 = 43968253; Count.u64 = 466356; Min.u64 = 0; Max.u64 = 10; 
+ core1.pendCycle : Accumulator : Sum.u64 = 4514339; SumSQ.u64 = 43968253; Count.u64 = 466356; Min.u64 = 0; Max.u64 = 10; 
  c1.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 890; SumSQ.u64 = 890; Count.u64 = 890; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
@@ -561,7 +561,7 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (457212 clocks)
  n0.l2cache.AckPut_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n0.l2cache.MSHR_occupancy : Accumulator : Sum.u64 = 30069010; SumSQ.u64 = 325032196; Count.u64 = 3383880; Min.u64 = 0; Max.u64 = 20; 
  n0.l2cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- cpu2.pendCycle : Accumulator : Sum.u64 = 4651509; SumSQ.u64 = 45458437; Count.u64 = 478956; Min.u64 = 0; Max.u64 = 10; 
+ core2.pendCycle : Accumulator : Sum.u64 = 4651509; SumSQ.u64 = 45458437; Count.u64 = 478956; Min.u64 = 0; Max.u64 = 10; 
  c2.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 903; SumSQ.u64 = 903; Count.u64 = 903; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -720,7 +720,7 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (457212 clocks)
  c2.l1cache.AckPut_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 9298996; SumSQ.u64 = 90843330; Count.u64 = 3383880; Min.u64 = 0; Max.u64 = 10; 
  c2.l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- cpu3.pendCycle : Accumulator : Sum.u64 = 4411631; SumSQ.u64 = 42921895; Count.u64 = 457212; Min.u64 = 0; Max.u64 = 10; 
+ core3.pendCycle : Accumulator : Sum.u64 = 4411631; SumSQ.u64 = 42921895; Count.u64 = 457212; Min.u64 = 0; Max.u64 = 10; 
  c3.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 902; SumSQ.u64 = 902; Count.u64 = 902; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
