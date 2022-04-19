@@ -10,11 +10,6 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libvanadis.la
 
 VANADIS_SRC_FILES = \
-os/vnodeos.cc \
-os/velfloader.h \
-os/velfloader.cc \
-os/vAppRuntimeMemory.h \
-os/vstartthreadreq.h \
 vanadis.h \
 vfpflags.h \
 vfuncunit.h \
@@ -106,15 +101,6 @@ lsq/vlsq.h \
 lsq/vlsqseq.h \
 lsq/vlsqstd.h \
 lsq/vmemwriterec.h \
-os/vosbittype.h \
-os/vcpuos.h \
-os/vmipscpuos.h \
-os/vriscvcpuos.h \
-os/vnodeos.h \
-os/vnodeoshandler.h \
-os/voscallev.h \
-os/voscallfunc.h \
-os/voscallresp.h \
 util/vcmpop.h \
 util/vdatacopy.h \
 util/vfpreghandler.h \
@@ -124,6 +110,20 @@ util/vtypename.h \
 vbranch/vbranchbasic.h \
 vbranch/vbranchunit.h \
 velf/velfinfo.h \
+os/vAppRuntimeMemory.h \
+os/vcpuos.h \
+os/velfloader.cc \
+os/velfloader.h \
+os/vmipscpuos.h \
+os/vnodeos.cc \
+os/vnodeos.h \
+os/vnodeoshandler.h \
+os/vosbittype.h \
+os/voscallev.h \
+os/voscallfunc.h \
+os/vriscvcpuos.h \
+os/voscallresp.h \
+os/vstartthreadreq.h \
 os/callev/voscallaccessev.h \
 os/callev/voscallall.h \
 os/callev/voscallbrk.h \
