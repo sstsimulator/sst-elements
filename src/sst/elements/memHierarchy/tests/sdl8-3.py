@@ -14,15 +14,21 @@ DEBUG_NODE0 = 0
 DEBUG_NODE1 = 0
 
 # Core 0
-cpu0 = sst.Component("core0", "memHierarchy.trivialCPU")
+cpu0 = sst.Component("core0", "memHierarchy.standardCPU")
 cpu0.addParams({
-      "commFreq" : "100",
-      "rngseed" : "101",
-      "do_write" : "1",
-      "num_loadstore" : "1000",
-      "memSize" : "0x100000",
+    "memFreq" : 1,
+    "memSize" : "100KiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "rngseed" : 5,
+    "maxOutstanding" : 16,
+    "opCount" : 5000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 38, # 38% writes
+    "read_freq" : 59,  # 59% reads
+    "llsc_freq" : 3,   # 3% llsc
 })
-iface0 = cpu0.setSubComponent("memory", "memHierarchy.memInterface")
+iface0 = cpu0.setSubComponent("memory", "memHierarchy.standardInterface")
 
 # L1 0
 c0_l1cache = sst.Component("l1cache0.msi", "memHierarchy.Cache")
@@ -42,15 +48,21 @@ l1ToC_0 = c0_l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l1Tol2_0 = c0_l1cache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 # Core 1
-cpu1 = sst.Component("core1", "memHierarchy.trivialCPU")
+cpu1 = sst.Component("core1", "memHierarchy.standardCPU")
 cpu1.addParams({
-      "commFreq" : "100",
-      "rngseed" : "301",
-      "do_write" : "1",
-      "num_loadstore" : "1000",
-      "memSize" : "0x100000",
+    "memFreq" : 1,
+    "memSize" : "100KiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "rngseed" : 10,
+    "maxOutstanding" : 16,
+    "opCount" : 5000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 38, # 38% writes
+    "read_freq" : 59,  # 59% reads
+    "llsc_freq" : 3,   # 3% llsc
 })
-iface1 = cpu1.setSubComponent("memory", "memHierarchy.memInterface")
+iface1 = cpu1.setSubComponent("memory", "memHierarchy.standardInterface")
 
 # L1 1
 c1_l1cache = sst.Component("l1cache1.msi", "memHierarchy.Cache")
@@ -92,15 +104,21 @@ l2Tol1_0 = n0_l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l2Tol3_0 = n0_l2cache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 # Core 2
-cpu2 = sst.Component("core2", "memHierarchy.trivialCPU")
+cpu2 = sst.Component("core2", "memHierarchy.standardCPU")
 cpu2.addParams({
-      "commFreq" : "100",
-      "rngseed" : "501",
-      "do_write" : "1",
-      "num_loadstore" : "1000",
-      "memSize" : "0x100000",
+    "memFreq" : 1,
+    "memSize" : "100KiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "rngseed" : 15,
+    "maxOutstanding" : 16,
+    "opCount" : 5000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 38, # 38% writes
+    "read_freq" : 59,  # 59% reads
+    "llsc_freq" : 3,   # 3% llsc
 })
-iface2 = cpu2.setSubComponent("memory", "memHierarchy.memInterface")
+iface2 = cpu2.setSubComponent("memory", "memHierarchy.standardInterface")
 
 # L1 2
 c2_l1cache = sst.Component("l1cache2.msi", "memHierarchy.Cache")
@@ -120,15 +138,21 @@ l1ToC_2 = c2_l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l1Tol2_2 = c2_l1cache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 # Core 3
-cpu3 = sst.Component("core3", "memHierarchy.trivialCPU")
+cpu3 = sst.Component("core3", "memHierarchy.standardCPU")
 cpu3.addParams({
-      "commFreq" : "100",
-      "rngseed" : "701",
-      "do_write" : "1",
-      "num_loadstore" : "1000",
-      "memSize" : "0x100000",
+    "memFreq" : 1,
+    "memSize" : "100KiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "rngseed" : 20,
+    "maxOutstanding" : 16,
+    "opCount" : 5000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 38, # 38% writes
+    "read_freq" : 59,  # 59% reads
+    "llsc_freq" : 3,   # 3% llsc
 })
-iface3 = cpu3.setSubComponent("memory", "memHierarchy.memInterface")
+iface3 = cpu3.setSubComponent("memory", "memHierarchy.standardInterface")
 
 # L1 3
 c3_l1cache = sst.Component("l1cache3.msi", "memHierarchy.Cache")

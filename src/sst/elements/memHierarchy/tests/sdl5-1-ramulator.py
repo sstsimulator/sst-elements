@@ -2,14 +2,20 @@ import sst
 from mhlib import componentlist
 
 # Define the simulation components
-cpu0 = sst.Component("core0", "memHierarchy.trivialCPU")
+cpu0 = sst.Component("core0", "memHierarchy.standardCPU")
 cpu0.addParams({
-      "memSize" : "0x1000",
-      "num_loadstore" : "1000",
-      "commFreq" : "100",
-      "do_write" : "1"
+    "memFreq" : 1,
+    "memSize" : "1KiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "rngseed" : 498,
+    "maxOutstanding" : 16,
+    "opCount" : 3000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 38, # 38% writes
+    "read_freq" : 59,  # 59% reads
 })
-iface0 = cpu0.setSubComponent("memory", "memHierarchy.memInterface")
+iface0 = cpu0.setSubComponent("memory", "memHierarchy.standardInterface")
 c0_l1cache = sst.Component("c0.l1cache", "memHierarchy.Cache")
 c0_l1cache.addParams({
       "access_latency_cycles" : "5",
@@ -23,14 +29,20 @@ c0_l1cache.addParams({
       "debug" : "0",
       "cache_size" : "4 KB"
 })
-cpu1 = sst.Component("core1", "memHierarchy.trivialCPU")
+cpu1 = sst.Component("core1", "memHierarchy.standardCPU")
 cpu1.addParams({
-      "memSize" : "0x1000",
-      "num_loadstore" : "1000",
-      "commFreq" : "100",
-      "do_write" : "1"
+    "memFreq" : 1,
+    "memSize" : "1KiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "rngseed" : 498,
+    "maxOutstanding" : 16,
+    "opCount" : 3000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 38, # 38% writes
+    "read_freq" : 59,  # 59% reads
 })
-iface1 = cpu1.setSubComponent("memory", "memHierarchy.memInterface")
+iface1 = cpu1.setSubComponent("memory", "memHierarchy.standardInterface")
 c1_l1cache = sst.Component("c1.l1cache", "memHierarchy.Cache")
 c1_l1cache.addParams({
       "access_latency_cycles" : "5",
@@ -60,14 +72,14 @@ n0_l2cache.addParams({
       "debug" : "0",
       "cache_size" : "32 KB"
 })
-cpu2 = sst.Component("core2", "memHierarchy.trivialCPU")
+cpu2 = sst.Component("core2", "memHierarchy.standardCPU")
 cpu2.addParams({
       "memSize" : "0x1000",
       "num_loadstore" : "1000",
       "commFreq" : "100",
       "do_write" : "1"
 })
-iface2 = cpu2.setSubComponent("memory", "memHierarchy.memInterface")
+iface2 = cpu2.setSubComponent("memory", "memHierarchy.standardInterface")
 c2_l1cache = sst.Component("c2.l1cache", "memHierarchy.Cache")
 c2_l1cache.addParams({
       "access_latency_cycles" : "5",
@@ -81,14 +93,20 @@ c2_l1cache.addParams({
       "debug" : "0",
       "cache_size" : "4 KB"
 })
-cpu3 = sst.Component("core3", "memHierarchy.trivialCPU")
+cpu3 = sst.Component("core3", "memHierarchy.standardCPU")
 cpu3.addParams({
-      "memSize" : "0x1000",
-      "num_loadstore" : "1000",
-      "commFreq" : "100",
-      "do_write" : "1"
+    "memFreq" : 1,
+    "memSize" : "1KiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "rngseed" : 498,
+    "maxOutstanding" : 16,
+    "opCount" : 3000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 38, # 38% writes
+    "read_freq" : 59,  # 59% reads
 })
-iface3 = cpu3.setSubComponent("memory", "memHierarchy.memInterface")
+iface3 = cpu3.setSubComponent("memory", "memHierarchy.standardInterface")
 c3_l1cache = sst.Component("c3.l1cache", "memHierarchy.Cache")
 c3_l1cache.addParams({
       "access_latency_cycles" : "5",
