@@ -26,7 +26,7 @@
 
 #include "os/memmgr/vmemmgr.h"
 #include "os/vstartthreadreq.h"
-#include "os/vAppRuntimeMemory.h"
+#include "os/vappruntimememory.h"
 
 using namespace SST::Interfaces;
 

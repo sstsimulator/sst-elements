@@ -110,7 +110,7 @@ util/vtypename.h \
 vbranch/vbranchbasic.h \
 vbranch/vbranchunit.h \
 velf/velfinfo.h \
-os/vAppRuntimeMemory.h \
+os/vappruntimememory.h \
 os/vcpuos.h \
 os/velfloader.cc \
 os/velfloader.h \
