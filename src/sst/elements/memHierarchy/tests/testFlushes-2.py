@@ -36,22 +36,25 @@ comp_network.addParams({
 comp_network.setSubComponent("topology","merlin.singlerouter")
 
 for x in range(cores):
-    comp_cpu = sst.Component("cpu" + str(x), "memHierarchy.trivialCPU")
+    comp_cpu = sst.Component("cpu" + str(x), "memHierarchy.standardCPU")
     comp_cpu.addParams({
-        "clock" : coreclock,
-        "commFreq" : 4, # issue request every 4th cycle
-        "reqsPerIssue" : 2,
         "rngseed" : 687+x,
-        "do_write" : 1,
-        "num_loadstore" : 1500,
-        "memSize" : 1024*4,
-        "lineSize" : 64,
-        "do_flush" : 1,
-        "maxOutstanding" : 16,
         "noncacheableRangeStart" : 0,
         "noncacheableRangeEnd" : "0x100",
+        "memFreq" : 4,
+        "memSize" : "4KiB",
+        "verbose" : 0,
+        "clock" : coreclock,
+        "maxOutstanding" : 16,
+        "opCount" : 3000,
+        "reqsPerIssue" : 2,
+        "write_freq" : 32,      # 32% writes
+        "read_freq" : 50,       # 50% reads
+        "llsc_freq" : 2,        # 2% LLSC
+        "flush_freq" : 8,       # 8% flushes
+        "flushinv_freq" : 8,    # 8% flush-inv
     })
-    iface = comp_cpu.setSubComponent("memory", "memHierarchy.memInterface")
+    iface = comp_cpu.setSubComponent("memory", "memHierarchy.standardInterface")
     
     comp_l1cache = sst.Component("l1cache" + str(x), "memHierarchy.Cache")
     comp_l1cache.addParams({

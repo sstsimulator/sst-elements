@@ -1,72 +1,78 @@
-# Automatically generated SST Python input
 import sst
 import os
 
 # Define SST core options
-sst.setProgramOption("timebase", "1ps")
 sst.setProgramOption("stopAtCycle", "100000ns")
 
 # Define the simulation components
-comp_cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
+cpu_params = {
+    "memFreq" : 10,
+    "memSize" : "1MiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "maxOutstanding" : 16,
+    "opCount" : 1000,
+    "reqsPerIssue" : 2,
+    "write_freq" : 40,  # 40% writes
+    "read_freq" : 60,   # 60% reads
+}
+
+comp_cpu0 = sst.Component("cpu0", "memHierarchy.standardCPU")
+comp_cpu0.addParams(cpu_params)
 comp_cpu0.addParams({
-      "workPerCycle" : """1000""",
-      "do_write" : """1""",
-      "commFreq" : """100""",
-      "memSize" : """0x1000"""
+    "rngseed" : 0
 })
 comp_c0_l1cache = sst.Component("c0.l1cache", "memHierarchy.Cache")
 comp_c0_l1cache.addParams({
-      "access_latency_cycles" : """2""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """4""",
-      "cache_line_size" : """64""",
-      "cache_size" : """4 KB""",
-      "L1" : """1""",
-      "debug" : """0"""
+      "access_latency_cycles" : 2,
+      "cache_frequency" : "2GHz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "4",
+      "cache_line_size" : "64",
+      "cache_size" : "4 KB",
+      "L1" : "1",
+      "debug" : "0"
 })
-comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
+comp_cpu1 = sst.Component("cpu1", "memHierarchy.standardCPU")
+comp_cpu1.addParams(cpu_params)
 comp_cpu1.addParams({
-      "workPerCycle" : """1000""",
-      "do_write" : """1""",
-      "commFreq" : """100""",
-      "memSize" : """0x1000"""
+    "rngseed" : 0
 })
 comp_c1_l1cache = sst.Component("c1.l1cache", "memHierarchy.Cache")
 comp_c1_l1cache.addParams({
-      "access_latency_cycles" : """2""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """4""",
-      "cache_line_size" : """64""",
-      "cache_size" : """4 KB""",
-      "L1" : """1""",
-      "debug" : """0"""
+      "access_latency_cycles" : "2",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "4",
+      "cache_line_size" : "64",
+      "cache_size" : "4 KB",
+      "L1" : "1",
+      "debug" : "0"
 })
 comp_bus = sst.Component("bus", "memHierarchy.Bus")
 comp_bus.addParams({
-      "bus_frequency" : """2 Ghz"""
+      "bus_frequency" : "2 Ghz"
 })
 comp_l2cache = sst.Component("l2cache", "memHierarchy.Cache")
 comp_l2cache.addParams({
-      "access_latency_cycles" : """8""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """4""",
-      "cache_line_size" : """64""",
-      "cache_size" : """32 KB""",
-      "L1" : """0""",
-      "debug" : """0""",
-      "mshr_num_entries" : """4096"""
+      "access_latency_cycles" : "8",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "4",
+      "cache_line_size" : "64",
+      "cache_size" : "32 KB",
+      "L1" : "0",
+      "debug" : "0",
+      "mshr_num_entries" : "4096"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
-      "debug" : """0""",
-      "clock" : """1GHz""",
-      "access_time" : """1000 ns""",
+      "debug" : "0",
+      "clock" : "1GHz",
+      "access_time" : "1000 ns",
       "addr_range_start" : 0,
 })
 comp_hybridsim = comp_memory.setSubComponent("backend", "memHierarchy.hybridsim")

@@ -2,20 +2,27 @@
 import sst
 from mhlib import componentlist
 
-DEBUG_L1 = 0
+DEBUG_L1 = 1
 DEBUG_L2 = 0
 DEBUG_MEM = 0
 DEBUG_LEV = 10
 
 # Define the simulation components
-comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
+comp_cpu = sst.Component("cpu", "memHierarchy.standardCPU")
 comp_cpu.addParams({
-      "memSize" : "0x1000",
-      "num_loadstore" : "1000",
-      "commFreq" : "100",
-      "do_write" : "1"
+    "clock" : "2GHz",
+    "memFreq" : "4",
+    "rngseed" : "101",
+    "memSize" : "1MiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "maxOutstanding" : 16,
+    "opCount" : 5000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 40, # 40% writes
+    "read_freq" : 60,  # 60% reads
 })
-iface = comp_cpu.setSubComponent("memory", "memHierarchy.memInterface")
+iface = comp_cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 comp_l1cache.addParams({
       "access_latency_cycles" : "4",

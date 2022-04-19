@@ -4,10 +4,15 @@ from mhlib import componentlist
 
 # Define shared parameters
 cpu_params = {
-    "commFreq" : "10",
-    "do_write" : "1",
-    "num_loadstore" : "10000",
-    "memSize" : "0x40000000",
+    "memFreq" : 10,
+    "memSize" : "1GiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "maxOutstanding" : 32,
+    "opCount" : 10000,
+    "reqsPerIssue" : 2,
+    "write_freq" : 40,  # 40% writes
+    "read_freq" : 60,   # 60% reads
 }
 
 l1_params = {
@@ -20,6 +25,7 @@ l1_params = {
     "cache_size" : "4 KB",
     "L1" : "1",
     "debug" : "0",
+    "debug_level" : "8",
 }
 
 l2_params = {
@@ -31,11 +37,12 @@ l2_params = {
     "cache_line_size" : "64",
     "cache_size" : "32 KB",
     "debug" : "0",
+    "debug_level" : "8",
 }
 # Define the simulation components
 # Core 0
-comp_cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
-iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.memInterface")
+comp_cpu0 = sst.Component("cpu0", "memHierarchy.standardCPU")
+iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.standardInterface")
 comp_cpu0.addParams(cpu_params)
 comp_cpu0.addParams({ "rngseed" : 101 })
 
@@ -44,8 +51,8 @@ comp_c0_l1cache.addParams(l1_params)
 comp_c0_l1cache.setSubComponent("hash", "memHierarchy.hash.xor")
 
 # Core 1
-comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
-iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.memInterface")
+comp_cpu1 = sst.Component("cpu1", "memHierarchy.standardCPU")
+iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.standardInterface")
 comp_cpu1.addParams(cpu_params)
 comp_cpu1.addParams({ "rngseed" : 301 })
 
@@ -63,8 +70,8 @@ comp_n0_l2cache.addParams(l2_params)
 comp_n0_l2cache.setSubComponent("hash", "memHierarchy.hash.xor")
 
 # Core 2
-comp_cpu2 = sst.Component("cpu2", "memHierarchy.trivialCPU")
-iface2 = comp_cpu2.setSubComponent("memory", "memHierarchy.memInterface")
+comp_cpu2 = sst.Component("cpu2", "memHierarchy.standardCPU")
+iface2 = comp_cpu2.setSubComponent("memory", "memHierarchy.standardInterface")
 comp_cpu2.addParams(cpu_params)
 comp_cpu2.addParams({ "rngseed" : 501 })
 
@@ -73,8 +80,8 @@ comp_c2_l1cache.addParams(l1_params)
 comp_c2_l1cache.setSubComponent("hash", "memHierarchy.hash.xor")
 
 # Core 3
-comp_cpu3 = sst.Component("cpu3", "memHierarchy.trivialCPU")
-iface3 = comp_cpu3.setSubComponent("memory", "memHierarchy.memInterface")
+comp_cpu3 = sst.Component("cpu3", "memHierarchy.standardCPU")
+iface3 = comp_cpu3.setSubComponent("memory", "memHierarchy.standardInterface")
 comp_cpu3.addParams(cpu_params)
 comp_cpu3.addParams({ "rngseed" : 701 })
 
@@ -107,14 +114,17 @@ l3cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "64 KB",
       "debug" : "0",
-      "memNIC.network_bw" : "25GB/s",
+      "debug_level" : 10
 })
 l3cache.setSubComponent("hash", "memHierarchy.hash.xor")
 l3tol2 = l3cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l3NIC = l3cache.setSubComponent("memlink", "memHierarchy.MemNIC")
 l3NIC.addParams({
     "group" : 1,
-    "network_bw" : " 25GB/s"
+    "network_bw" : " 25GB/s",
+    "debug" : "0",
+    "debug_level" : "10",
+
 })
 
 comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
@@ -133,6 +143,7 @@ dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 dirctrl.addParams({
     "coherence_protocol" : "MESI",
     "debug" : "0",
+    "debug_level" : "10",
     "entry_cache_size" : "32768",
     "addr_range_end" : "0x40000000",
     "addr_range_start" : "0x0"
@@ -142,10 +153,13 @@ dirNIC = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
 dirNIC.addParams({
     "group" : 2,
     "network_bw" : "25GB/s",
+    "debug" : "0",
+    "debug_level" : "10",
 })
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
     "debug" : "0",
+    "debug_level" : "10",
     "clock" : "1GHz",
     "request_width" : "64",
     "addr_range_end" : 1024*1024*1024-1,
