@@ -37,13 +37,13 @@ namespace Firefly {
 class AlltoallvFuncSM :  public FunctionSMInterface
 {
   public:
-    SST_ELI_REGISTER_MODULE(
+    SST_ELI_REGISTER_MODULE_DERIVED(
         AlltoallvFuncSM,
         "firefly",
         "Alltoallv",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        ""
+        SST::Firefly::FunctionSMInterface
     )
 
 	SST_ELI_DOCUMENT_PARAMS(

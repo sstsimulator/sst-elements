@@ -63,13 +63,13 @@ class EmberShmemLib : public EmberLib {
 
   public:
 
-    SST_ELI_REGISTER_MODULE(
+    SST_ELI_REGISTER_MODULE_DERIVED(
         EmberShmemLib,
         "ember",
         "shmemLib",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        "SST::Ember::EmberShmemLib"
+        SST::Ember::EmberLib
     )
 
     SST_ELI_DOCUMENT_PARAMS(

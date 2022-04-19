@@ -118,13 +118,13 @@ class EmberMpiLib : public EmberLib {
 
   public:
 
-    SST_ELI_REGISTER_MODULE(
+    SST_ELI_REGISTER_MODULE_DERIVED(
         EmberMpiLib,
         "ember",
         "mpiLib",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        "SST::Ember::EmberMpiLib"
+        SST::Ember::EmberLib
     )
 
     SST_ELI_DOCUMENT_PARAMS(

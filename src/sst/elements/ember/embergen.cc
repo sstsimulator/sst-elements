@@ -40,7 +40,7 @@ EmberGenerator::EmberGenerator( ComponentId_t id, Params& params, std::string na
     Params distribParams = params.get_scoped_params("distribParams");
     std::string distribModule = params.find<std::string>("distribModule", "ember.ConstDistrib");
 
-	m_computeDistrib = dynamic_cast<EmberComputeDistribution*>( loadModule(distribModule, distribParams) );
+	m_computeDistrib = loadModule<EmberComputeDistribution>(distribModule, distribParams);
 
     if(NULL == m_computeDistrib) {
         std::cerr << "Error: Unable to load compute distribution: \'"

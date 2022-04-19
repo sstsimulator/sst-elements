@@ -105,6 +105,11 @@ class YYY {
 
 class CollectiveTreeFuncSM :  public FunctionSMInterface
 {
+
+public:
+    SST_ELI_REGISTER_MODULE_DERIVED_API(SST::Firefly::CollectiveTreeFuncSM, SST::Firefly::FunctionSMInterface)
+
+private:
     enum StateEnum {
         FOREACH_ENUM(GENERATE_ENUM)
     } m_state;

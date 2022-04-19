@@ -23,7 +23,9 @@ namespace Firefly {
 
 class FamAddrMapper : public SST::Module {
   public:
-	virtual void getAddr( uint64_t globalOffset, int& node, uint64_t& localOffset ) = 0;
+    SST_ELI_REGISTER_MODULE_API(SST::Firefly::FamAddrMapper)
+
+    virtual void getAddr( uint64_t globalOffset, int& node, uint64_t& localOffset ) = 0;
 	void setDbg( Output* output ) {
 		m_dbg = output;
 		m_dbg->debug(CALL_INFO,3,0,"numNodes=%d bytesPerNode=%" PRIu64 " blockSize=%" PRIu64 "\n",
@@ -41,13 +43,13 @@ class FamAddrMapper : public SST::Module {
 
 class RR_FamAddrMapper : public FamAddrMapper {
   public:
-    SST_ELI_REGISTER_MODULE(
+    SST_ELI_REGISTER_MODULE_DERIVED(
         RR_FamAddrMapper,
         "firefly",
         "RR_FamAddrMapper",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        "SST::Firefly::RR_FamAddrMapper"
+        SST::Firefly::FamAddrMapper
     )
 
 	SST_ELI_DOCUMENT_PARAMS(

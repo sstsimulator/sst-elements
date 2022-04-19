@@ -33,13 +33,13 @@ namespace Firefly {
 
 class RangeLatMod : public LatencyMod {
   public:
-    SST_ELI_REGISTER_MODULE(
+    SST_ELI_REGISTER_MODULE_DERIVED(
         RangeLatMod,
         "firefly",
         "LatencyMod",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        "SST::Firefly::RangeLatMod"
+        SST::Firefly::LatencyMod
     )
 
     SST_ELI_DOCUMENT_PARAMS(

@@ -44,13 +44,13 @@ HadesSHMEM::HadesSHMEM(ComponentId_t id, Params& params) :
 
 	Params famMapperParams = params.get_scoped_params( "famNodeMapper" );
 	if ( famMapperParams.size() ) {
-		m_famNodeMapper = dynamic_cast<FamNodeMapper*>( loadModule( famMapperParams.find<std::string>("name"), famMapperParams ) );
+		m_famNodeMapper = loadModule<FamNodeMapper>( famMapperParams.find<std::string>("name"), famMapperParams );
 		m_famNodeMapper->setDbg( &m_dbg );
 	}
 
 	famMapperParams = params.get_scoped_params( "famAddrMapper" );
 	if ( famMapperParams.size() ) {
-		m_famAddrMapper = dynamic_cast<FamAddrMapper*>( loadModule( famMapperParams.find<std::string>("name"), famMapperParams ) );
+		m_famAddrMapper = loadModule<FamAddrMapper>( famMapperParams.find<std::string>("name"), famMapperParams );
 		m_famAddrMapper->setDbg( &m_dbg );
 	}
 }

@@ -24,13 +24,13 @@ namespace Firefly {
 class AllreduceFuncSM :  public CollectiveTreeFuncSM
 {
   public:
-    SST_ELI_REGISTER_MODULE(
+    SST_ELI_REGISTER_MODULE_DERIVED(
         AllreduceFuncSM,
         "firefly",
         "Allreduce",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        ""
+        SST::Firefly::CollectiveTreeFuncSM
     )
 
   public:

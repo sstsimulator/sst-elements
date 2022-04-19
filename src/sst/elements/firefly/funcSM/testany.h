@@ -26,13 +26,13 @@ namespace Firefly {
 class TestanyFuncSM :  public FunctionSMInterface
 {
   public:
-    SST_ELI_REGISTER_MODULE(
+    SST_ELI_REGISTER_MODULE_DERIVED(
         TestanyFuncSM,
         "firefly",
         "Testany",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        ""
+        SST::Firefly::FunctionSMInterface
     )
   public:
     TestanyFuncSM( SST::Params& params );

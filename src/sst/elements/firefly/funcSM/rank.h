@@ -25,13 +25,13 @@ namespace Firefly {
 class RankFuncSM :  public FunctionSMInterface
 {
   public:
-    SST_ELI_REGISTER_MODULE(
+    SST_ELI_REGISTER_MODULE_DERIVED(
         RankFuncSM,
         "firefly",
         "Rank",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        ""
+        SST::Firefly::FunctionSMInterface
     )
   public:
     RankFuncSM( SST::Params& params ) : FunctionSMInterface( params ) {}

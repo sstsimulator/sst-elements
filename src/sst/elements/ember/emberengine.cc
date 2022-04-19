@@ -152,7 +152,7 @@ EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
             std::string emberLib = "ember." + type + "Lib";
             output.verbose(CALL_INFO, 2, ENGINE_MASK, "lib=%s\n",emberLib.c_str() );
             SST::Params x;
-            lib = dynamic_cast<EmberLib*>( loadModule( emberLib, x ) );
+            lib = loadModule<EmberLib>( emberLib, x );
             assert(lib);
 
             lib->initApi( api );

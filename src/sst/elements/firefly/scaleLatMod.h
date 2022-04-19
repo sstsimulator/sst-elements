@@ -30,13 +30,13 @@ namespace Firefly {
 class ScaleLatMod : public LatencyMod {
 
   public:
-    SST_ELI_REGISTER_MODULE(
+    SST_ELI_REGISTER_MODULE_DERIVED(
         ScaleLatMod,
         "firefly",
         "ScaleLatMod",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        "SST::Firefly::ScaleLatMod"
+        SST::Firefly::LatencyMod
     )
 
 	SST_ELI_DOCUMENT_PARAMS()

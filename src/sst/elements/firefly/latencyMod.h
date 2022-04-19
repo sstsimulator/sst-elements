@@ -24,6 +24,8 @@ namespace Firefly {
 
 class LatencyMod : public SST::Module {
   public:
+    SST_ELI_REGISTER_MODULE_API(SST::Firefly::LatencyMod)
+
     virtual size_t getLatency( size_t value ) = 0;
 };
 
