@@ -76,24 +76,19 @@ class testcase_memHierarchy_sdl(SSTTestCase):
     def test_memHierarchy_sdl4_1(self):
         self.memHierarchy_Template("sdl4-1")
 
-    @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
-    def test_memHierarchy_sdl4_2_dramsim(self):
+    def test_memHierarchy_sdl4_2(self):
         self.memHierarchy_Template("sdl4-2", ignore_err_file=True)
 
     @skip_on_sstsimulator_conf_empty_str("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
     def test_memHierarchy_sdl4_2_ramulator(self):
         self.memHierarchy_Template("sdl4-2-ramulator")
 
-    @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
-    def test_memHierarchy_sdl5_1_dramsim(self):
+    def test_memHierarchy_sdl5_1(self):
         self.memHierarchy_Template("sdl5-1", ignore_err_file=True)
 
     @skip_on_sstsimulator_conf_empty_str("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
     def test_memHierarchy_sdl5_1_ramulator(self):
-        if testing_check_get_num_ranks() > 1 or testing_check_get_num_threads() > 1:
-            self.memHierarchy_Template("sdl5-1-ramulator_MC")
-        else:
-            self.memHierarchy_Template("sdl5-1-ramulator")
+        self.memHierarchy_Template("sdl5-1-ramulator")
 
     def test_memHierarchy_sdl8_1(self):
         self.memHierarchy_Template("sdl8-1")

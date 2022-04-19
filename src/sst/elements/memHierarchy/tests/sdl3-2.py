@@ -10,16 +10,23 @@ DEBUG_CORE0 = 0
 DEBUG_CORE1 = 0
 
 # Core 0 + L1
-cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
+cpu0 = sst.Component("core0", "memHierarchy.standardCPU")
 cpu0.addParams({
-      "memSize" : "0x1000",
-      "num_loadstore" : "1000",
-      "commFreq" : "100",
-      "do_write" : "1"
+    "memFreq" : 1,
+    "memSize" : "3KiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "rngseed" : 9067,
+    "maxOutstanding" : 16,
+    "opCount" : 3000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 40, # 40% writes
+    "read_freq" : 58,  # 58% reads
+    "llsc_freq" : 2,   # 2% LLSC
 })
-iface0 = cpu0.setSubComponent("memory", "memHierarchy.memInterface")
+iface0 = cpu0.setSubComponent("memory", "memHierarchy.standardInterface")
 
-c0_l1cache = sst.Component("c0.l1cache", "memHierarchy.Cache")
+c0_l1cache = sst.Component("l1cache0.msi", "memHierarchy.Cache")
 c0_l1cache.addParams({
       "access_latency_cycles" : "3",
       "cache_frequency" : "2 Ghz",
@@ -36,15 +43,22 @@ l1toC0 = c0_l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l1tol2_0 = c0_l1cache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 # Core 1 + L1
-cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
+cpu1 = sst.Component("core1", "memHierarchy.standardCPU")
 cpu1.addParams({
-      "memSize" : "0x1000",
-      "num_loadstore" : "1000",
-      "commFreq" : "100",
-      "do_write" : "1"
+    "memFreq" : 1,
+    "memSize" : "3KiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "rngseed" : 935,
+    "maxOutstanding" : 16,
+    "opCount" : 3000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 35, # 35% writes
+    "read_freq" : 63,  # 63% reads
+    "llsc_freq" : 2,   # 2% LLSC
 })
-iface1 = cpu1.setSubComponent("memory", "memHierarchy.memInterface")
-c1_l1cache = sst.Component("c1.l1cache", "memHierarchy.Cache")
+iface1 = cpu1.setSubComponent("memory", "memHierarchy.standardInterface")
+c1_l1cache = sst.Component("l1cache.msi", "memHierarchy.Cache")
 c1_l1cache.addParams({
       "access_latency_cycles" : "3",
       "cache_frequency" : "2 Ghz",
@@ -67,7 +81,7 @@ bus.addParams({
 })
 
 # L2
-l2cache = sst.Component("l2cache", "memHierarchy.Cache")
+l2cache = sst.Component("l2cache.msi.inclus", "memHierarchy.Cache")
 l2cache.addParams({
       "access_latency_cycles" : "20",
       "cache_frequency" : "2 Ghz",
@@ -83,7 +97,7 @@ l2tol1 = l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l2tol3 = l2cache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 # L3
-l3cache = sst.Component("l3cache", "memHierarchy.Cache")
+l3cache = sst.Component("l3cache.msi.inclus", "memHierarchy.Cache")
 l3cache.addParams({
     "access_latency_cycles" : 12,
     "cache_frequency" : "8GHz",
@@ -96,7 +110,7 @@ l3cache.addParams({
 l3tol2 = l3cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l3tol4 = l3cache.setSubComponent("memlink", "memHierarchy.MemLink")
 
-l4cache = sst.Component("l4cache", "memHierarchy.Cache")
+l4cache = sst.Component("l4cache.msi.inclus", "memHierarchy.Cache")
 l4cache.addParams({
     "access_latency_cycles" : 18,
     "cache_frequency" : "3GHz",

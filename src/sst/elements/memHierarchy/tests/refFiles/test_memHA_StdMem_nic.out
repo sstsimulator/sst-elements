@@ -7,7 +7,7 @@ StandardCPU: Test Completed Successfuly
  cpu.reads : Accumulator : Sum.u64 = 211; SumSQ.u64 = 211; Count.u64 = 211; Min.u64 = 1; Max.u64 = 1; 
  cpu.writes : Accumulator : Sum.u64 = 601; SumSQ.u64 = 601; Count.u64 = 601; Min.u64 = 1; Max.u64 = 1; 
  cpu.llsc : Accumulator : Sum.u64 = 94; SumSQ.u64 = 94; Count.u64 = 94; Min.u64 = 1; Max.u64 = 1; 
- cpu.llsc_success : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ cpu.llsc_success : Accumulator : Sum.u64 = 94; SumSQ.u64 = 94; Count.u64 = 94; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache:cpulink.packet_latency : Accumulator : Sum.u64 = 295622; SumSQ.u64 = 87493070; Count.u64 = 1016; Min.u64 = 115; Max.u64 = 720; 
  c0.l1cache:cpulink.send_bit_count : Accumulator : Sum.u64 = 97024; SumSQ.u64 = 9281536; Count.u64 = 1016; Min.u64 = 64; Max.u64 = 96; 
  c0.l1cache:cpulink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
