@@ -160,7 +160,7 @@ os/node/vnodeosreadvh.h \
 os/node/vnodeosstattype.h \
 os/node/vnodeosunameh.h \
 os/node/vnodeosunlinkath.h \
-os/node/vnodeosunlinkh.h
+os/node/vnodeosunlinkh.h \
 os/node/vnodeoswriteh.h \
 os/node/vnodeoswritevh.h \
 os/resp/voscallresp.h \
