@@ -174,9 +174,19 @@ EXTRA_DIST = \
 	tests/small/basic-io/hello-world.cc \
 	tests/small/basic-io/hello-world-CC.stderr.gold \
 	tests/small/basic-io/hello-world-CC.stdout.gold \
-   tests/small/basic-io/printf-check.c \
+    tests/small/basic-io/printf-check.c \
 	tests/small/basic-io/printf-check.stdout.gold \
-   tests/small/basic-io/printf-check.stderr.gold \
+    tests/small/basic-io/printf-check.stderr.gold \
+    tests/small/basic-io/unlinkat.c \
+    tests/small/basic-io/unlinkat.stderr.gold \
+    tests/small/basic-io/unlinkat.stdout.gold \
+    tests/small/basic-io/unlink.c \
+    tests/small/basic-io/unlink.stderr.gold \
+    tests/small/basic-io/unlink.stdout.gold \
+    tests/small/basic-io/openat.c \
+    tests/small/basic-io/openat.stderr.gold \
+    tests/small/basic-io/openat.stdout.gold \
+    tests/small/basic-io/read-write.c \
 	tests/small/basic-math/Makefile \
 	tests/small/basic-math/sqrt-double.c \
 	tests/small/basic-math/sqrt-double.stderr.gold \
