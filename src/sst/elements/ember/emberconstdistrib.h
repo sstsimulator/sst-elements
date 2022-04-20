@@ -24,13 +24,13 @@ namespace Ember {
 
 class EmberConstDistribution : public EmberComputeDistribution {
 public:
-   SST_ELI_REGISTER_MODULE(
+   SST_ELI_REGISTER_MODULE_DERIVED(
         EmberConstDistribution,
         "ember",
         "ConstDistrib",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Constant compute distribution model",
-        "SST::Ember::EmberComputeDistribution"
+        SST::Ember::EmberComputeDistribution
     )
 
     SST_ELI_DOCUMENT_PARAMS(

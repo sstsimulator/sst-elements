@@ -58,6 +58,8 @@
 
 #define VANADIS_SYSCALL_MIPS_READ 4003
 #define VANADIS_SYSCALL_MIPS_OPEN 4005
+#define VANADIS_SYSCALL_MIPS_UNLINK 4010
+#define VANADIS_SYSCALL_MIPS_UNLINKAT 4294
 #define VANADIS_SYSCALL_MIPS_CLOSE 4006
 #define VANADIS_SYSCALL_MIPS_WRITE 4004
 #define VANADIS_SYSCALL_MIPS_ACCESS 4033
@@ -67,6 +69,7 @@
 #define VANADIS_SYSCALL_MIPS_MMAP 4090
 #define VANADIS_SYSCALL_MIPS_UNMAP 4091
 #define VANADIS_SYSCALL_MIPS_UNAME 4122
+#define VANADIS_SYSCALL_MIPS_READV 4145
 #define VANADIS_SYSCALL_MIPS_WRITEV 4146
 #define VANADIS_SYSCALL_MIPS_RT_SETSIGMASK 4195
 #define VANADIS_SYSCALL_MIPS_MMAP2 4210
@@ -230,6 +233,24 @@ public:
             call_ev = new VanadisSyscallFstatEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, file_handle, fstat_addr);
         } break;
 
+        case VANADIS_SYSCALL_MIPS_UNLINK: {
+            int32_t path_addr = getRegister( 4 );
+
+            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to unlink( %" PRIu64 " )\n",path_addr);
+
+            call_ev = new VanadisSyscallUnlinkEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, path_addr);
+        } break;
+
+        case VANADIS_SYSCALL_MIPS_UNLINKAT: {
+            int32_t dirFd = getRegister( 4 );
+            int32_t path_addr = getRegister( 5 );
+            int32_t flags = getRegister( 6 );
+
+            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to unlinkat( %d, %" PRIu32 ", %#" PRIx32" )\n",dirFd,path_addr,flags);
+
+            call_ev = new VanadisSyscallUnlinkatEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, dirFd,path_addr,flags);
+        } break;
+
         case VANADIS_SYSCALL_MIPS_CLOSE: {
             const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
             uint32_t close_file = regFile->getIntReg<uint32_t>(phys_reg_4);
@@ -272,6 +293,23 @@ public:
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to openat()\n");
             call_ev = new VanadisSyscallOpenAtEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, openat_dirfd, openat_path_ptr, convertFlags(openat_flags), openat_mode);
         } break;
+
+        case VANADIS_SYSCALL_MIPS_READV: {
+            const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+            int64_t readv_fd = regFile->getIntReg<int64_t>(phys_reg_4);
+
+            const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
+            uint64_t readv_iovec_ptr = regFile->getIntReg<uint64_t>(phys_reg_5);
+
+            const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
+            int64_t readv_iovec_count = regFile->getIntReg<int64_t>(phys_reg_6);
+
+            output->verbose(CALL_INFO, 8, 0,
+                            "[syscall-handler] found a call to readv( %" PRId64 ", 0x%llx, %" PRId64 " )\n", readv_fd,
+                            readv_iovec_ptr, readv_iovec_count);
+            call_ev = new VanadisSyscallReadvEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, readv_fd, readv_iovec_ptr, readv_iovec_count);
+        } break;
+
 
         case VANADIS_SYSCALL_MIPS_WRITEV: {
             const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -618,6 +656,10 @@ protected:
 
 		return out;
 	}
+    uint32_t getRegister( int reg ) {
+        return regFile->getIntReg<uint32_t>( isaTable->getIntPhysReg( reg ) );
+    }
+
 
     SST::Link* os_link;
     bool brk_zero_memory;

@@ -25,7 +25,9 @@ namespace Ember {
 
 class EmberLib : public SST::Module {
   public:
-	EmberLib() : m_output(NULL), m_api(NULL) {}
+    SST_ELI_REGISTER_MODULE_API(SST::Ember::EmberLib)
+
+    EmberLib() : m_output(NULL), m_api(NULL) {}
 
 	void initApi( Hermes::Interface* api ) { m_api = api; }
 	void initOutput( SST::Output* output ) { m_output = output; }

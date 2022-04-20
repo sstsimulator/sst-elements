@@ -31,7 +31,7 @@ public:
 
     int64_t getFileDescriptor() const { return read_fd; }
     uint64_t getBufferAddress() const { return read_buff_addr; }
-    int64_t getCount() const { return read_count; }
+    int64_t getBufferCount() const { return read_count; }
 
 private:
     int64_t read_fd;

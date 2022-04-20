@@ -24,13 +24,15 @@ namespace Firefly {
 class BarrierFuncSM :  public CollectiveTreeFuncSM
 {
   public:
-    SST_ELI_REGISTER_MODULE(
+    SST_ELI_REGISTER_MODULE_DERIVED_API(SST::Firefly::BarrierFuncSM, SST::Firefly::CollectiveTreeFuncSM)
+
+    SST_ELI_REGISTER_MODULE_DERIVED(
         BarrierFuncSM,
         "firefly",
         "Barrier",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        ""
+        SST::Firefly::BarrierFuncSM
     )
 
   public:

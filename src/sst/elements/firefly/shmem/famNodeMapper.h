@@ -23,7 +23,9 @@ namespace Firefly {
 
 class FamNodeMapper : public Module {
   public:
-	virtual int calcNode( int node ) = 0;
+    SST_ELI_REGISTER_MODULE_API(SST::Firefly::FamNodeMapper)
+
+    virtual int calcNode( int node ) = 0;
 	virtual void setDbg( Output* output ) { assert(9); }
   protected:
 	Output* m_dbg;
@@ -33,13 +35,13 @@ class FamNodeMapper : public Module {
 class Group_FamNodeMapper : public FamNodeMapper {
   public:
 
-    SST_ELI_REGISTER_MODULE(
+    SST_ELI_REGISTER_MODULE_DERIVED(
         Group_FamNodeMapper,
         "firefly",
         "Group_FamNodeMapper",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        "SST::Firefly::Group_FamNodeMapper"
+        SST::Firefly::FamNodeMapper
     )
 
 	SST_ELI_DOCUMENT_PARAMS(

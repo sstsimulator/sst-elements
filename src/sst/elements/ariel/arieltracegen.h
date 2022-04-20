@@ -30,6 +30,8 @@ typedef enum {
 class ArielTraceGenerator : public Module {
 
     public:
+    SST_ELI_REGISTER_MODULE_API(SST::ArielComponent::ArielTraceGenerator)
+
         ArielTraceGenerator() {}
         ~ArielTraceGenerator() {}
 
