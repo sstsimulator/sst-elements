@@ -3,7 +3,7 @@ from mhlib import componentlist
 
 # Define the simulation components
 cpu0 = sst.Component("core0", "memHierarchy.standardCPU")
-iface0 = cpu0.setSubComponent("memory", "memHierarchy.")
+iface0 = cpu0.setSubComponent("memory", "memHierarchy.standardInterface")
 cpu0.addParams({
     "memFreq" : "100",
     "rngseed" : "101",
@@ -30,7 +30,7 @@ c0_l1cache.addParams({
       "debug" : "0"
 })
 cpu1 = sst.Component("core1", "memHierarchy.standardCPU")
-iface1 = cpu1.setSubComponent("memory", "memHierarchy.")
+iface1 = cpu1.setSubComponent("memory", "memHierarchy.standardInterface")
 cpu1.addParams({
     "memFreq" : "100",
     "rngseed" : "301",
@@ -74,7 +74,7 @@ n0_l2cache.addParams({
       "debug" : "0"
 })
 cpu2 = sst.Component("core2", "memHierarchy.standardCPU")
-iface2 = cpu2.setSubComponent("memory", "memHierarchy.")
+iface2 = cpu2.setSubComponent("memory", "memHierarchy.standardInterface")
 cpu2.addParams({
     "memFreq" : "100",
     "rngseed" : "501",
@@ -101,7 +101,7 @@ c2_l1cache.addParams({
       "debug" : "0"
 })
 cpu3 = sst.Component("core3", "memHierarchy.standardCPU")
-iface3 = cpu3.setSubComponent("memory", "memHierarchy.")
+iface3 = cpu3.setSubComponent("memory", "memHierarchy.standardInterface")
 cpu3.addParams({
     "memFreq" : "100",
     "rngseed" : "701",

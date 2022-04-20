@@ -83,13 +83,16 @@ comp_hybridsim.addParams({
       "mem_size" : "512MiB",
 })
 
+subcomp_iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.standardInterface")
+subcomp_iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.standardInterface")
+
 # Define the simulation links
 link_cpu0_l1cache_link = sst.Link("link_cpu0_l1cache_link")
-link_cpu0_l1cache_link.connect( (comp_cpu0, "mem_link", "1000ps"), (comp_c0_l1cache, "high_network_0", "1000ps") )
+link_cpu0_l1cache_link.connect( (subcomp_iface0, "port", "1000ps"), (comp_c0_l1cache, "high_network_0", "1000ps") )
 link_c0_l1cache_bus_link = sst.Link("link_c0_l1cache_bus_link")
 link_c0_l1cache_bus_link.connect( (comp_c0_l1cache, "low_network_0", "10000ps"), (comp_bus, "high_network_0", "10000ps") )
 link_cpu1_l1cache_link = sst.Link("link_cpu1_l1cache_link")
-link_cpu1_l1cache_link.connect( (comp_cpu1, "mem_link", "1000ps"), (comp_c1_l1cache, "high_network_0", "1000ps") )
+link_cpu1_l1cache_link.connect( (subcomp_iface1, "port", "1000ps"), (comp_c1_l1cache, "high_network_0", "1000ps") )
 link_c1_l1cache_bus_link = sst.Link("link_c1_l1cache_bus_link")
 link_c1_l1cache_bus_link.connect( (comp_c1_l1cache, "low_network_0", "10000ps"), (comp_bus, "high_network_1", "10000ps") )
 link_bus_l2cache = sst.Link("link_bus_l2cache")

@@ -74,10 +74,16 @@ n0_l2cache.addParams({
 })
 cpu2 = sst.Component("core2", "memHierarchy.standardCPU")
 cpu2.addParams({
-      "memSize" : "0x1000",
-      "num_loadstore" : "1000",
-      "commFreq" : "100",
-      "do_write" : "1"
+    "memFreq" : 1,
+    "memSize" : "1KiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "rngseed" : 490,
+    "maxOutstanding" : 16,
+    "opCount" : 3000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 38, # 38% writes
+    "read_freq" : 59,  # 59% reads
 })
 iface2 = cpu2.setSubComponent("memory", "memHierarchy.standardInterface")
 c2_l1cache = sst.Component("c2.l1cache", "memHierarchy.Cache")
