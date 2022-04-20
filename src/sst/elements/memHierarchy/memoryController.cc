@@ -577,7 +577,9 @@ void MemController::finish(void) {
         memBackendConvertor_->turnClockOn(cycle);
     }
 
-    backing_->printContents(dbg);
+    if( dbg.getVerboseLevel() >= 4 ) {
+        backing_->printContents(dbg);
+    }
 
     memBackendConvertor_->finish();
     link_->finish();
@@ -593,7 +595,7 @@ void MemController::writeData(MemEvent* event) {
 
         backing_->set(addr, event->getSize(), event->getPayload());
         if (is_debug_event(event)) {
-            Debug(_L4_, "\tContents ");
+            Debug(_L10_, "\tContents ");
             for( auto i : event->getPayload() )
                 std::cerr << uint32_t(i) << " ";
             std::cerr << "\n";
@@ -611,7 +613,7 @@ void MemController::writeData(MemEvent* event) {
         
         backing_->set(addr, event->getSize(), event->getPayload());
         if (is_debug_event(event)) {
-            Debug(_L4_, "\tContents ");
+            Debug(_L10_, "\tContents ");
             for( auto i : event->getPayload() )
                 std::cerr << uint32_t(i) << " ";
             std::cerr << "\n";
@@ -712,7 +714,7 @@ void MemController::processInitEvent( MemEventInit* me ) {
         if ( isRequestAddressValid(addr) && backing_ ) {
             backing_->set(addr, me->getPayload().size(), me->getPayload());
             if (is_debug_event(me)) {
-                Debug(_L4_, "\tContents ");
+                Debug(_L10_, "\tContents ");
                 for( auto i : me->getPayload() )
                     std::cerr << uint32_t(i) << " ";
                 std::cerr << "\n";

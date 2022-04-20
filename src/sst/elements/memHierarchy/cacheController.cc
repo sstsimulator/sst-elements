@@ -534,7 +534,9 @@ void Cache::finish() {
         turnClockOn();
     }
 
-    printStatus(*out_);
+    if (out_->getVerboseLevel() > 8) {
+        printStatus(*out_);
+    }
 
     for (int i = 0; i < listeners_.size(); i++)
         listeners_[i]->printStats(*out_);

@@ -174,7 +174,6 @@ public:
         for (auto const& x : m_buffer) {
             const uint8_t* tempBuffer = x.second;
 
-//             for( uint32_t i = 0; i < m_allocUnit; ) {
             for( uint32_t i = 0; i < 30; ) {
                 for( uint32_t j = i; j < i + width; ++j ) {
                     std::cout << "i " << i << " j " << j << ":  ";
