@@ -292,6 +292,7 @@ public:
     SimTime_t transferDelay;
     SimTime_t minAccTime;
     bool collectStats;
+    TimeConverter* nanoConv;
 
     void handleSelfEvent(SST::Event *event);
     bool quantaClock(SST::Cycle_t _cycle);
