@@ -430,7 +430,6 @@ bool HBMpagedMultiMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsign
             fastHits->addData(1);
             if (extraDelay > 0) {
                 self_link->send(extraDelay,
-                                Simulation::getSimulation()->getTimeLord()->getNano(),
                                 nanoConv,
                                 new MemCtrlEvent(req));
             } else {
