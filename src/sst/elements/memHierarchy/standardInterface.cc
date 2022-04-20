@@ -186,7 +186,7 @@ StandardMem::Request* StandardInterface::recvUntimedData() {
 /* This could be a request or a response. */
 void StandardInterface::send(StandardMem::Request* req) {
 #ifdef __SST_DEBUG_OUTPUT__
-      debug.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Convert   (%s)\n", Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), req->getString().c_str());
+      debug.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Convert   (%s)\n", getCurrentSimCycle(), getName().c_str(), req->getString().c_str());
     fflush(stdout);
 #endif
     MemEventBase *me = static_cast<MemEventBase*>(req->convert(converter_));
@@ -196,7 +196,7 @@ void StandardInterface::send(StandardMem::Request* req) {
         delete req;
 #ifdef __SST_DEBUG_OUTPUT__
     debug.debug(_L4_, "E: %-40" PRIu64 "  %-20s Event:Send    (%s)\n", 
-        Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), me->getBriefString().c_str());
+        getCurrentSimCycle(), getName().c_str(), me->getBriefString().c_str());
 #endif
     link_->send(me);
 }
@@ -212,7 +212,7 @@ void StandardInterface::receive(SST::Event* ev) {
     Command cmd = me->getCmd();
     bool isResponse = (BasicCommandClassArr[(int)cmd] == BasicCommandClass::Response);
 #ifdef __SST_DEBUG_OUTPUT__ 
-    //debug.debug(_L4_, "E: %-40" PRIu64 "  %-20s Event:Recv    (%s)\n", Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), me->getBriefString().c_str());
+    //debug.debug(_L4_, "E: %-40" PRIu64 "  %-20s Event:Recv    (%s)\n", getCurrentSimCycle(), getName().c_str(), me->getBriefString().c_str());
 #endif
     /* Handle responses to requests we sent */
     if (isResponse) {
@@ -303,7 +303,7 @@ void StandardInterface::receive(SST::Event* ev) {
 
     if (deliverReq) {
 #ifdef __SST_DEBUG_OUTPUT__
-        debug.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Deliver   (%s)\n", Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), deliverReq->getString().c_str());
+        debug.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Deliver   (%s)\n", getCurrentSimCycle(), getName().c_str(), deliverReq->getString().c_str());
 #endif
         (*recvHandler_)(deliverReq);
     }
@@ -673,7 +673,7 @@ void StandardInterface::handleNACK(MemEventBase* ev) {
 
 #ifdef __SST_DEBUG_OUTPUT__
     debug.debug(_L4_, "E: %-40" PRIu64 "  %-20s Event:Resend  (%s)\n", 
-        Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), nackedEvent->getBriefString().c_str());
+        getCurrentSimCycle(), getName().c_str(), nackedEvent->getBriefString().c_str());
 #endif
 
     link_->send(nackedEvent);

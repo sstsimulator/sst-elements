@@ -2,6 +2,4 @@ l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to
 got to save state in nvdimm 
 save file was state/nvdimm_restore.txt
 NVDIMM is saving the used table, dirty table and address map 
-TrivialCPU core1 Finished after 966 issued reads, 966 returned (99999 clocks)
-TrivialCPU cpu0 Finished after 966 issued reads, 965 returned (99999 clocks)
-Simulation is complete, simulated time: 100 us
+Simulation is complete, simulated time: 11.8955 us

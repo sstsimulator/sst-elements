@@ -161,7 +161,7 @@ class testcase_memHierarchy_memHA(SSTTestCase):
         self.memHA_Template("ScratchDirect")
     
     def test_memHA_ScratchNetwork(self):
-        self.memHA_Template("ScratchDirect")
+        self.memHA_Template("ScratchNetwork")
     
     def test_memHA_StdMem(self):
         self.memHA_Template("StdMem")

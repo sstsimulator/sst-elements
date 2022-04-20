@@ -1,9 +1,9 @@
 l2_0: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
 l2_1: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-ScratchCPU cpu3 Finished after 1000 issued memory events, 1000 returned, 28969 cycles
-ScratchCPU cpu2 Finished after 1000 issued memory events, 1000 returned, 29375 cycles
-ScratchCPU cpu1 Finished after 1000 issued memory events, 1000 returned, 29430 cycles
-ScratchCPU cpu0 Finished after 1000 issued memory events, 1000 returned, 29453 cycles
+ScratchCPU core0 Finished after 1000 issued memory events, 1000 returned, 29453 cycles
+ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 29430 cycles
+ScratchCPU core2 Finished after 1000 issued memory events, 1000 returned, 29375 cycles
+ScratchCPU core3 Finished after 1000 issued memory events, 1000 returned, 28969 cycles
  l1_0.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.stateEvent_GetS_I : Accumulator : Sum.u64 = 158; SumSQ.u64 = 158; Count.u64 = 158; Min.u64 = 1; Max.u64 = 1; 
  l1_0.stateEvent_GetS_S : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 

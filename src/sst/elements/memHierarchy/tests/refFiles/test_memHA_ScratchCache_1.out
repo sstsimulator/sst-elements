@@ -1,5 +1,5 @@
-ScratchCPU cpu1 Finished after 1000 issued memory events, 1000 returned, 3935 cycles
-ScratchCPU cpu0 Finished after 1000 issued memory events, 1000 returned, 3837 cycles
+ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3935 cycles
+ScratchCPU core0 Finished after 1000 issued memory events, 1000 returned, 3837 cycles
  l1_0.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.stateEvent_GetS_I : Accumulator : Sum.u64 = 147; SumSQ.u64 = 147; Count.u64 = 147; Min.u64 = 1; Max.u64 = 1; 
  l1_0.stateEvent_GetS_S : Accumulator : Sum.u64 = 5; SumSQ.u64 = 5; Count.u64 = 5; Min.u64 = 1; Max.u64 = 1; 
