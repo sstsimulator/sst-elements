@@ -1793,6 +1793,10 @@ VANADIS_COMPONENT::init(unsigned int phase)
     //	memDataInterface->init( phase );
     memInstInterface->init(phase);
 
+    for ( VanadisDecoder* next_decoder : thread_decoders ) {
+        next_decoder->init( phase );
+    }
+
     output->verbose(CALL_INFO, 2, 0, "End: init-phase: %" PRIu32 "...\n", (uint32_t)phase);
 }
 
