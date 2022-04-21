@@ -27,7 +27,7 @@
 
 using namespace SST::Vanadis;
 
-VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Params& params) : SST::Component(id), startThreadReq(NULL) {
+VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Params& params) : SST::Component(id) {
 
     const uint32_t verbosity = params.find<uint32_t>("verbose", 0);
     output = new SST::Output("[node-os]: ", verbosity, 0, SST::Output::STDOUT);
@@ -152,13 +152,7 @@ VanadisNodeOSComponent::init(unsigned int phase) {
         core_handlers[0]->setBrk( brk );
         uint64_t entry = elf_info->getEntryPoint();
         output->verbose(CALL_INFO, 1, 0, "stack_start=%#" PRIx64 " entry=%#" PRIx64 " brk=%#" PRIx64 "\n",stack_start, entry, brk );
-        startThreadReq = new VanadisStartThreadReq( 0, stack_start, entry );
-    }
-}
-
-void VanadisNodeOSComponent::setup() {
-    if ( startThreadReq ) {
-        core_links[0]->send(startThreadReq);
+        core_links[0]->sendInitData( new VanadisStartThreadReq( 0, stack_start, entry ) );
     }
 }
 
