@@ -17,6 +17,7 @@
 #define _H_VANADIS_OP_SYS
 
 #include <sst/core/output.h>
+#include <sst/core/link.h>
 #include <sst/core/subcomponent.h>
 
 #include <functional>
@@ -25,6 +26,7 @@
 #include "inst/regfile.h"
 #include "inst/vsyscall.h"
 #include "os/callev/voscallall.h"
+#include "os/vstartthreadreq.h"
 
 namespace SST {
 namespace Vanadis {
@@ -68,6 +70,20 @@ public:
 
     void setThreadID(int64_t new_tid) { tid = new_tid; }
     int64_t getThreadID() const { return tid; }
+    void init( int phase ) {
+        while (SST::Event* ev = os_link->recvInitData()) {
+
+            VanadisStartThreadReq * req = dynamic_cast<VanadisStartThreadReq*>(ev);
+            if (nullptr == req) {
+                 output->fatal(CALL_INFO, -1, "Error - event cannot be converted to syscall\n");
+            }
+
+            output->verbose(CALL_INFO, 8, 0,
+                            "received start thread %d command from the operating system \n",req->getThread());
+            startThrCallBack(req->getThread(), req->getStackStart(), req->getInstructionPointer());
+            delete ev;
+        }
+    }
 
 protected:
     SST::Output* output;
@@ -80,6 +96,8 @@ protected:
 
     VanadisRegisterFile* regFile;
     VanadisISATable* isaTable;
+
+    SST::Link* os_link;
 
     uint64_t* tls_address;
     int64_t tid;

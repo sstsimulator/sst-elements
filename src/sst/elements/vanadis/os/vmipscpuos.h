@@ -664,8 +664,6 @@ protected:
         return regFile->getIntReg<uint32_t>( isaTable->getIntPhysReg( reg ) );
     }
 
-
-    SST::Link* os_link;
     bool brk_zero_memory;
 };
 
