@@ -19,7 +19,7 @@
 
 #include <sst/core/component.h>
 #include <sst/elements/VaultSimC/memReqEvent.h>
-#include <sst/core/rng/sstrng.h>
+#include <sst/core/rng/rng.h>
 #include <sst/core/output.h>
 
 
@@ -73,7 +73,7 @@ private:
   cpu( const cpu& c );
   bool clock( Cycle_t );
 
-  SST::RNG::SSTRandom* rng;
+  SST::RNG::Random* rng;
   memChan_t *toMem;
   unsigned int outstanding;
   unsigned long long memOps;

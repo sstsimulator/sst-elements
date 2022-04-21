@@ -15,7 +15,6 @@
 
 
 #include "sst_config.h"
-#include "sst/core/stringize.h"
 #include <sst/core/timeLord.h>
 
 
@@ -186,10 +185,10 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 		output.fatal(CALL_INFO, -1, "Error: You did not specify a generator"
                 "or Ember to use\n");
 	} else {
-		params.insert("_jobId", SST::to_string( jobId ), true);
-		params.insert("_motifNum", SST::to_string( motifNum ), true);
+		params.insert("_jobId", std::to_string( jobId ), true);
+		params.insert("_motifNum", std::to_string( motifNum ), true);
 		assert( sizeof(this) == sizeof(uint64_t) );
-		params.insert("_enginePtr", SST::to_string( reinterpret_cast<uint64_t>( this ) ), true);
+		params.insert("_enginePtr", std::to_string( reinterpret_cast<uint64_t>( this ) ), true);
 
 		gen = loadAnonymousSubComponent<EmberGenerator>( gentype, "", 0, ComponentInfo::SHARE_NONE, params );
 		gen->setup();

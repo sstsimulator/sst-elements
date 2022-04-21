@@ -19,7 +19,7 @@
 
 #include <queue>
 #include "sst/elements/memHierarchy/membackend/dramSimBackend.h"
-#include <sst/core/rng/sstrng.h>
+#include <sst/core/rng/rng.h>
 
 #ifdef DEBUG
 #define OLD_DEBUG DEBUG
@@ -185,7 +185,7 @@ public:
 private:
     void buld(Params& params);
     Output dbg;
-    RNG::SSTRandom*  rng;
+    RNG::Random*  rng;
 
     struct Req : public SST::Core::Serialization::serializable {
         Req( ReqId id, Addr addr, bool isWrite, unsigned numBytes ) :

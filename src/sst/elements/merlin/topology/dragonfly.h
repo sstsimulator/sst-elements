@@ -24,7 +24,7 @@
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
-#include <sst/core/rng/sstrng.h>
+#include <sst/core/rng/rng.h>
 
 #include "sst/elements/merlin/router.h"
 
@@ -152,7 +152,7 @@ public:
     // const RouterPortPair& getRouterPortPair(int src_group, int dest_group, int route_number);
     // void setRouterPortPair(int group, int route_number, const RouterPortPair& pair);
 
-    int getValiantGroup(int dest_group, RNG::SSTRandom* rng) const;
+    int getValiantGroup(int dest_group, RNG::Random* rng) const;
 
     inline uint8_t getLinkCount(int src_group, int dest_group) const {
         return link_counts[src_group * groups + dest_group];
@@ -230,7 +230,7 @@ public:
     // Actual id of router
     uint32_t rtr_id;
 
-    RNG::SSTRandom* rng;
+    RNG::Random* rng;
 
     int const* output_credits;
     int const* output_queue_lengths;
