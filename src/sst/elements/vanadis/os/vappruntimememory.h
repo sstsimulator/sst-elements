@@ -364,7 +364,7 @@ uint64_t AppRuntimeMemory<Type>::configure( Output* output, Interfaces::Standard
                 stack_data, (Type)(arg_env_data_start + arg_data_block.size() + env_start_offsets[i]));
     }
 
-    vanadis_vec_copy_in<uint32_t>(stack_data, 0);
+    vanadis_vec_copy_in<Type>(stack_data, 0);
 
     for ( size_t i = 0; i < aux_data_block.size(); ++i ) {
         stack_data.push_back(aux_data_block[i]);
