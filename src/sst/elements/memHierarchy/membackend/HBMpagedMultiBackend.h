@@ -20,7 +20,7 @@
 #define _H_SST_MEMH_HBM_PAGEDMULTI_BACKEND
 
 #include <queue>
-#include <sst/core/rng/sstrng.h>
+#include <sst/core/rng/rng.h>
 #include "sst/elements/memHierarchy/membackend/HBMdramSimBackend.h"
 
 #ifdef DEBUG
@@ -185,7 +185,7 @@ public:
 
 private:
     Output dbg;
-    RNG::SSTRandom*  rng;
+    RNG::Random*  rng;
 
 	struct Req : public SST::Core::Serialization::serializable {
         Req( ReqId id, Addr addr, bool isWrite, unsigned numBytes ) :

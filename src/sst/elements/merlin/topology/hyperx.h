@@ -22,7 +22,7 @@
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
-#include <sst/core/rng/sstrng.h>
+#include <sst/core/rng/rng.h>
 
 #include <string.h>
 #include <vector>
@@ -132,10 +132,10 @@ private:
 
 
 class RNGFunc {
-    RNG::SSTRandom* rng;
+    RNG::Random* rng;
 
 public:
-    RNGFunc(RNG::SSTRandom* rng) : rng(rng) {}
+    RNGFunc(RNG::Random* rng) : rng(rng) {}
 
     int operator() (int i) {
         return rng->generateNextUInt32() % i;
@@ -200,7 +200,7 @@ private:
     int num_vcs;
     int num_vns;
 
-    RNG::SSTRandom* rng;
+    RNG::Random* rng;
     RNGFunc* rng_func;
 
     struct vn_info {

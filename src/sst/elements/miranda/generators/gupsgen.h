@@ -19,7 +19,7 @@
 
 #include <sst/elements/miranda/mirandaGenerator.h>
 #include <sst/core/output.h>
-#include <sst/core/rng/sstrng.h>
+#include <sst/core/rng/rng.h>
 
 #include <queue>
 
@@ -67,7 +67,7 @@ private:
 	uint64_t iterations;
 	uint64_t seed_a;
 	uint64_t seed_b;
-	SSTRandom* rng;
+	Random* rng;
 	Output*  out;
 	bool issueOpFences;
 
