@@ -183,7 +183,6 @@ public:
 
     MESIL1(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
-        debug->debug(_INFO_,"--------------------------- Initializing [L1Controller] ... \n\n");
 
         snoopL1Invs_ = params.find<bool>("snoop_l1_invalidations", false);
         bool MESI = params.find<bool>("protocol", true);

@@ -105,8 +105,11 @@ HBMpagedMultiMemory::HBMpagedMultiMemory(ComponentId_t id, Params &params)
     scanThreshold = params.find<unsigned int>("scan_threshold", 6);
 
     transferDelay = params.find<unsigned int>("transfer_delay", 250);
+    
+    nanoConv = getTimeConverter("1ns");
+    
     minAccTime = self_link->getDefaultTimeBase()->getFactor() /
-        Simulation::getSimulation()->getTimeLord()->getNano()->getFactor();
+        nanoConv->getFactor();
 
     const uint32_t seed = params.find<uint32_t>("seed", 1447);
 
@@ -427,7 +430,7 @@ bool HBMpagedMultiMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsign
             fastHits->addData(1);
             if (extraDelay > 0) {
                 self_link->send(extraDelay,
-                                Simulation::getSimulation()->getTimeLord()->getNano(),
+                                nanoConv,
                                 new MemCtrlEvent(req));
             } else {
                 self_link->send(1, new MemCtrlEvent(req));

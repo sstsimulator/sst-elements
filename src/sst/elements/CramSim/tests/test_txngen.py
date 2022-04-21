@@ -83,7 +83,8 @@ comp_txnGen.addParams({
     "maxTxns" : maxTxns,
     "numTxnPerCycle" : numTxnPerCycle,
     "maxOutstandingReqs" : maxOutstandingReqs,
-    "readWriteRatio" : 0.5
+    "readWriteRatio" : 0.5,
+    "mode" : "seq",
     })
 comp_txnGen.enableAllStatistics()
 

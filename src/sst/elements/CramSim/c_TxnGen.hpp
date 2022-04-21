@@ -103,9 +103,15 @@ namespace SST {
             )
 
             SST_ELI_DOCUMENT_PARAMS(
-                {"maxOutstandingReqs", "Maximum number of the outstanding requests", NULL},
-                {"numTxnPerCycle", "The number of transactions generated per cycle", NULL},
-                {"readWriteRatio", "Ratio of read txn's to generate : write txn's to generate", NULL},
+                {"verbose", "Verbosity level", "0"},
+                {"maxOutstandingReqs", "Maximum number of the outstanding requests. Unspecified means no limit.", NULL},
+                {"numTxnPerCycle", "The number of transactions generated per cycle. Unspecified means no limit.", NULL},
+                {"readWriteRatio", "Ratio of read txn's to generate : write txn's to generate", "0.5"},
+                {"mode", "How to generate requests. 'rand' (random) or 'seq' (sequential)", NULL},
+                {"randomSeed", "Seed for RNG. '0' will use current time.", "0"},
+                {"strControllerClockFrequency", "Clock frequency", "1GHz"},
+                {"maxTxns", "Maximum number of transactions to generate. Unspecified means no limit.", NULL},
+                {"numBytesPerTransaction", "Number of bytes per transaction", "32"},
             )
 
             SST_ELI_DOCUMENT_PORTS(

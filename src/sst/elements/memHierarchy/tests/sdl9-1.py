@@ -7,16 +7,23 @@ DEBUG_L3 = 0
 DEBUG_MEM = 0
 
 # Define the simulation components
-cpu = sst.Component("core", "memHierarchy.trivialCPU")
+cpu = sst.Component("core", "memHierarchy.standardCPU")
 cpu.addParams({
-      "num_loadstore" : "10000",
-      "commFreq" : "100",
-      "memSize" : "0x100000",
-      "noncacheableRangeStart" : "0",
-      "do_write" : "1",
-      "noncacheableRangeEnd" : "0x100"
+    "memFreq" : 1,
+    "memSize" : "100KiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "rngseed" : 6,
+    "maxOutstanding" : 32,
+    "opCount" : 10000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 38, # 38% writes
+    "read_freq" : 59,  # 59% reads
+    "llsc_freq" : 3,   # 3% llsc
+    "noncacheableRangeStart" : "0x0",
+    "noncacheableRangeEnd" : "0x1024",
 })
-iface = cpu.setSubComponent("memory", "memHierarchy.memInterface")
+iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 
 l1cache = sst.Component("l1cache.msi", "memHierarchy.Cache")
 l1cache.addParams({

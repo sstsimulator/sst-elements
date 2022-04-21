@@ -3,12 +3,8 @@ from mhlib import componentlist
 
 debug = 0
 
-# Define SST core options
-sst.setProgramOption("timebase", "1ps")
-sst.setProgramOption("stopAtCycle", "0 ns")
-
 # Define the simulation components
-comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
+comp_cpu = sst.Component("core", "miranda.BaseCPU")
 comp_cpu.addParams({
 	"verbose" : 0,
 	"printStats" : 1,

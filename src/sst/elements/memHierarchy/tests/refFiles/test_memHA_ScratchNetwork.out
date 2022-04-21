@@ -1,5 +1,9 @@
-ScratchCPU cpu1 Finished after 500 issued memory events, 500 returned, 1282 cycles
-ScratchCPU cpu0 Finished after 500 issued memory events, 500 returned, 1268 cycles
+memory0, Notice: memory controller's region is larger than the backend's mem_size, controller is limiting accessible memory to mem_size
+Region: start=0, end=18446744073709551615, interleaveStep=256, interleaveSize=128. MemSize: 536870912B
+memory1, Notice: memory controller's region is larger than the backend's mem_size, controller is limiting accessible memory to mem_size
+Region: start=128, end=18446744073709551615, interleaveStep=256, interleaveSize=128. MemSize: 536870912B
+ScratchCPU core1 Finished after 500 issued memory events, 500 returned, 1282 cycles
+ScratchCPU core0 Finished after 500 issued memory events, 500 returned, 1268 cycles
  scratch0:backendConvertor.cycles_with_issue : Accumulator : Sum.u64 = 354; SumSQ.u64 = 354; Count.u64 = 354; Min.u64 = 1; Max.u64 = 1; 
  scratch0:backendConvertor.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  scratch0:backendConvertor.total_cycles : Accumulator : Sum.u64 = 2564; SumSQ.u64 = 2564; Count.u64 = 2564; Min.u64 = 1; Max.u64 = 1; 

@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 from mhlib import componentlist
 
@@ -13,56 +12,56 @@ def setup_config_params():
         l_params = {
             "clockCycle": "1ns",
             "stopAtCycle": "10us",
-            "numChannels":"""1""",
-            "numRanksPerChannel":"""2""",
-            "numBankGroupsPerRank":"""2""",
-            "numBanksPerBankGroup":"""2""",
-            "numRowsPerBank":"""32768""",
-            "numColsPerBank":"""2048""",
-            "numBytesPerTransaction":"""32""",
-            "relCommandWidth":"""1""",
-            "readWriteRatio":"""1""",
-            "boolUseReadA":"""0""",
-            "boolUseWriteA":"""0""",
-            "boolUseRefresh":"""0""",
-            "boolAllocateCmdResACT":"""0""",
-            "boolAllocateCmdResREAD":"""1""",
-            "boolAllocateCmdResREADA":"""1""",
-            "boolAllocateCmdResWRITE":"""1""",
-            "boolAllocateCmdResWRITEA":"""1""",
-            "boolAllocateCmdResPRE":"""0""",
-            "boolCmdQueueFindAnyIssuable":"""1""",
-            "boolPrintCmdTrace":"""0""",
-            "strAddressMapStr":"""_r_l_R_B_b_h_""",
+            "numChannels":"1",
+            "numRanksPerChannel":"2",
+            "numBankGroupsPerRank":"2",
+            "numBanksPerBankGroup":"2",
+            "numRowsPerBank":"32768",
+            "numColsPerBank":"2048",
+            "numBytesPerTransaction":"32",
+            "relCommandWidth":"1",
+            "readWriteRatio":"1",
+            "boolUseReadA":"0",
+            "boolUseWriteA":"0",
+            "boolUseRefresh":"0",
+            "boolAllocateCmdResACT":"0",
+            "boolAllocateCmdResREAD":"1",
+            "boolAllocateCmdResREADA":"1",
+            "boolAllocateCmdResWRITE":"1",
+            "boolAllocateCmdResWRITEA":"1",
+            "boolAllocateCmdResPRE":"0",
+            "boolCmdQueueFindAnyIssuable":"1",
+            "boolPrintCmdTrace":"0",
+            "strAddressMapStr":"_r_l_R_B_b_h_",
             "bankPolicy":"CLOSE",
-            "nRC":"""55""",
-            "nRRD":"""4""",
-            "nRRD_L":"""6""",
-            "nRRD_S":"""4""",
-            "nRCD":"""16""",
-            "nCCD":"""4""",
-            "nCCD_L":"""6""",
-            "nCCD_L_WR":"""1""",
-            "nCCD_S":"""4""",
-            "nAL":"""15""",
-            "nCL":"""16""",
-            "nCWL":"""12""",
-            "nWR":"""18""",
-            "nWTR":"""3""",
-            "nWTR_L":"""9""",
-            "nWTR_S":"""3""",
-            "nRTW":"""4""",
-            "nEWTR":"""6""",
-            "nERTW":"""6""",
-            "nEWTW":"""6""",
-            "nERTR":"""6""",
-            "nRAS":"""39""",
-            "nRTP":"""9""",
-            "nRP":"""16""",
-            "nRFC":"""420""",
-            "nREFI":"""9360""",
-            "nFAW":"""16""",
-            "nBL":"""4"""
+            "nRC":"55",
+            "nRRD":"4",
+            "nRRD_L":"6",
+            "nRRD_S":"4",
+            "nRCD":"16",
+            "nCCD":"4",
+            "nCCD_L":"6",
+            "nCCD_L_WR":"1",
+            "nCCD_S":"4",
+            "nAL":"15",
+            "nCL":"16",
+            "nCWL":"12",
+            "nWR":"18",
+            "nWTR":"3",
+            "nWTR_L":"9",
+            "nWTR_S":"3",
+            "nRTW":"4",
+            "nEWTR":"6",
+            "nERTW":"6",
+            "nEWTW":"6",
+            "nERTR":"6",
+            "nRAS":"39",
+            "nRTP":"9",
+            "nRP":"16",
+            "nRFC":"420",
+            "nREFI":"9360",
+            "nFAW":"16",
+            "nBL":"4"
         }
     else:
         l_configFile = open(g_config_file, 'r')
@@ -82,22 +81,22 @@ g_boolUseDefaultConfig = True
 g_params = setup_config_params()
 
 
-# Define SST core options
-sst.setProgramOption("timebase", "1ps")
-#sst.setProgramOption("stopAtCycle", "11000us")
-
-
 # Define the simulation components
-comp_cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
+comp_cpu0 = sst.Component("core0", "memHierarchy.standardCPU")
 comp_cpu0.addParams({
-      "commFreq" : "100",
-      "rngseed" : "101",
-      "do_write" : "1",
-      "num_loadstore" : "1000",
-      "memSize" : "0x100000",
+    "memFreq" : "100",
+    "rngseed" : "101",
+    "clock" : "2GHz",
+    "memSize" : "1MiB",
+    "verbose" : 0,
+    "maxOutstanding" : 16,
+    "opCount" : 5000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 40, # 40% writes
+    "read_freq" : 60,  # 60% reads
 })
-iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.memInterface")
-comp_c0_l1cache = sst.Component("c0.l1cache", "memHierarchy.Cache")
+iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.standardInterface")
+comp_c0_l1cache = sst.Component("l1cache0.msi", "memHierarchy.Cache")
 comp_c0_l1cache.addParams({
       "access_latency_cycles" : "5",
       "cache_frequency" : "2 Ghz",
@@ -109,16 +108,21 @@ comp_c0_l1cache.addParams({
       "L1" : "1",
       "debug" : "0"
 })
-comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
+comp_cpu1 = sst.Component("core1", "memHierarchy.standardCPU")
 comp_cpu1.addParams({
-      "commFreq" : "100",
-      "rngseed" : "301",
-      "do_write" : "1",
-      "num_loadstore" : "1000",
-      "memSize" : "0x100000",
+    "memFreq" : "100",
+    "rngseed" : "301",
+    "clock" : "2GHz",
+    "memSize" : "1MiB",
+    "verbose" : 0,
+    "maxOutstanding" : 16,
+    "opCount" : 5000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 40, # 40% writes
+    "read_freq" : 60,  # 60% reads
 })
-iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.memInterface")
-comp_c1_l1cache = sst.Component("c1.l1cache", "memHierarchy.Cache")
+iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.standardInterface")
+comp_c1_l1cache = sst.Component("l1cache1.msi", "memHierarchy.Cache")
 comp_c1_l1cache.addParams({
       "access_latency_cycles" : "5",
       "cache_frequency" : "2 Ghz",
@@ -134,7 +138,7 @@ comp_n0_bus = sst.Component("n0.bus", "memHierarchy.Bus")
 comp_n0_bus.addParams({
       "bus_frequency" : "2 Ghz"
 })
-comp_n0_l2cache = sst.Component("n0.l2cache", "memHierarchy.Cache")
+comp_n0_l2cache = sst.Component("l2cache0.msi.inclus", "memHierarchy.Cache")
 comp_n0_l2cache.addParams({
       "access_latency_cycles" : "20",
       "cache_frequency" : "2 Ghz",
@@ -145,16 +149,21 @@ comp_n0_l2cache.addParams({
       "cache_size" : "32 KB",
       "debug" : "0"
 })
-comp_cpu2 = sst.Component("cpu2", "memHierarchy.trivialCPU")
-iface2 = comp_cpu2.setSubComponent("memory", "memHierarchy.memInterface")
+comp_cpu2 = sst.Component("core2", "memHierarchy.standardCPU")
+iface2 = comp_cpu2.setSubComponent("memory", "memHierarchy.standardInterface")
 comp_cpu2.addParams({
-      "commFreq" : "100",
-      "rngseed" : "501",
-      "do_write" : "1",
-      "num_loadstore" : "1000",
-      "memSize" : "0x100000",
+    "memFreq" : "100",
+    "rngseed" : "501",
+    "clock" : "2GHz",
+    "memSize" : "1MiB",
+    "verbose" : 0,
+    "maxOutstanding" : 16,
+    "opCount" : 5000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 40, # 40% writes
+    "read_freq" : 60,  # 60% reads
 })
-comp_c2_l1cache = sst.Component("c2.l1cache", "memHierarchy.Cache")
+comp_c2_l1cache = sst.Component("l1cache2.msi", "memHierarchy.Cache")
 comp_c2_l1cache.addParams({
       "access_latency_cycles" : "5",
       "cache_frequency" : "2 Ghz",
@@ -166,16 +175,21 @@ comp_c2_l1cache.addParams({
       "L1" : "1",
       "debug" : "0"
 })
-comp_cpu3 = sst.Component("cpu3", "memHierarchy.trivialCPU")
-iface3 = comp_cpu3.setSubComponent("memory", "memHierarchy.memInterface")
+comp_cpu3 = sst.Component("core3", "memHierarchy.standardCPU")
+iface3 = comp_cpu3.setSubComponent("memory", "memHierarchy.standardInterface")
 comp_cpu3.addParams({
-      "commFreq" : "100",
-      "rngseed" : "701",
-      "do_write" : "1",
-      "num_loadstore" : "1000",
-      "memSize" : "0x100000",
+    "memFreq" : "100",
+    "rngseed" : "701",
+    "clock" : "2GHz",
+    "memSize" : "1MiB",
+    "verbose" : 0,
+    "maxOutstanding" : 16,
+    "opCount" : 5000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 40, # 40% writes
+    "read_freq" : 60,  # 60% reads
 })
-comp_c3_l1cache = sst.Component("c3.l1cache", "memHierarchy.Cache")
+comp_c3_l1cache = sst.Component("l1cache3.msi", "memHierarchy.Cache")
 comp_c3_l1cache.addParams({
       "access_latency_cycles" : "5",
       "cache_frequency" : "2 Ghz",
@@ -191,7 +205,7 @@ comp_n1_bus = sst.Component("n1.bus", "memHierarchy.Bus")
 comp_n1_bus.addParams({
       "bus_frequency" : "2 Ghz"
 })
-comp_n1_l2cache = sst.Component("n1.l2cache", "memHierarchy.Cache")
+comp_n1_l2cache = sst.Component("l2cache1.msi.inclus", "memHierarchy.Cache")
 comp_n1_l2cache.addParams({
       "access_latency_cycles" : "20",
       "cache_frequency" : "2 Ghz",
@@ -206,7 +220,7 @@ comp_n2_bus = sst.Component("n2.bus", "memHierarchy.Bus")
 comp_n2_bus.addParams({
       "bus_frequency" : "2 Ghz"
 })
-l3cache = sst.Component("l3cache", "memHierarchy.Cache")
+l3cache = sst.Component("l3cache.msi", "memHierarchy.Cache")
 l3cache.addParams({
       "access_latency_cycles" : "100",
       "cache_frequency" : "2 Ghz",
@@ -230,7 +244,7 @@ comp_chiprtr.addParams({
       "topology" : "merlin.singlerouter"
 })
 comp_chiprtr.setSubComponent("topology","merlin.singlerouter")
-comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
+comp_dirctrl = sst.Component("directory.msi", "memHierarchy.DirectoryController")
 comp_dirctrl.addParams({
       "coherence_protocol" : "MSI",
       "debug" : "0",
@@ -332,4 +346,3 @@ memHLink.connect( (comp_memhBridge, "memLink", g_params["clockCycle"]), (comp_co
 cmdLink = sst.Link("cmdLink_1")
 cmdLink.connect( (comp_controller0, "memLink", g_params["clockCycle"]), (comp_dimm0, "ctrlLink", g_params["clockCycle"]) )
 
-# End of generated output.

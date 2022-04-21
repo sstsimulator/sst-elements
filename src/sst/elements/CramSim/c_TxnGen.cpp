@@ -314,7 +314,7 @@ c_TxnGen::c_TxnGen(ComponentId_t x_id, Params& x_params) :
     //set mode (random or sequential)
     std::string l_mode = x_params.find<std::string>("mode", "rand", l_found);
     if (!l_found) {
-        output->fatal(CALL_INFO, -1, "TxnGen:: mode is missing... exiting");
+        output->fatal(CALL_INFO, -1, "TxnGen:: mode is missing from parameters, it should be 'rand' or 'seq'... exiting");
     } else {
         if (l_mode == "rand")
             m_mode = e_TxnMode::RAND;

@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 from mhlib import componentlist
 
@@ -34,7 +33,7 @@ mmio_addr = 1024
 
 
 # Define the simulation components
-cpu = sst.Component("cpu", "memHierarchy.standardCPU")
+cpu = sst.Component("core", "memHierarchy.standardCPU")
 cpu.addParams({
       "opCount" : "1000",
       "memFreq" : "4",

@@ -130,7 +130,6 @@ public:
     /** Constructor for IncoherentL1 */
     IncoherentL1(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
-        debug->debug(_INFO_,"--------------------------- Initializing [L1Controller] ... \n\n");
 
         // Cache Array
         uint64_t lines = params.find<uint64_t>("lines");

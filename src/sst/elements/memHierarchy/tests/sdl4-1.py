@@ -8,14 +8,20 @@ DEBUG_CORE0 = 0
 DEBUG_CORE1 = 0
 
 # Define the simulation components
-comp_cpu0 = sst.Component("core0", "memHierarchy.trivialCPU")
+comp_cpu0 = sst.Component("core0", "memHierarchy.standardCPU")
 comp_cpu0.addParams({
-      "memSize" : "0x1000",
-      "num_loadstore" : "1000",
-      "commFreq" : "100",
-      "do_write" : "1"
+    "memFreq" : 1,
+    "memSize" : "1KiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "rngseed" : 442,
+    "maxOutstanding" : 16,
+    "opCount" : 2000,
+    "reqsPerIssue" : 3,
+    "write_freq" : 35, # 35% writes
+    "read_freq" : 65,  # 65% reads
 })
-iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.memInterface")
+iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.standardInterface")
 comp_c0_l1cache = sst.Component("l1cache0.msi", "memHierarchy.Cache")
 comp_c0_l1cache.addParams({
       "access_latency_cycles" : "5",
@@ -29,14 +35,20 @@ comp_c0_l1cache.addParams({
       "debug" : DEBUG_L1 | DEBUG_CORE0,
       "debug_level" : 10
 })
-comp_cpu1 = sst.Component("core1", "memHierarchy.trivialCPU")
+comp_cpu1 = sst.Component("core1", "memHierarchy.standardCPU")
 comp_cpu1.addParams({
-      "memSize" : "0x1000",
-      "num_loadstore" : "1000",
-      "commFreq" : "100",
-      "do_write" : "1"
+    "memFreq" : 1,
+    "memSize" : "1KiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "rngseed" : 441,
+    "maxOutstanding" : 16,
+    "opCount" : 2000,
+    "reqsPerIssue" : 3,
+    "write_freq" : 35, # 35% writes
+    "read_freq" : 65,  # 65% reads
 })
-iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.memInterface")
+iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.standardInterface")
 comp_c1_l1cache = sst.Component("l1cache1.msi", "memHierarchy.Cache")
 comp_c1_l1cache.addParams({
       "access_latency_cycles" : "5",
