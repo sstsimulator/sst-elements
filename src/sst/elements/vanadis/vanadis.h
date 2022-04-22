@@ -186,6 +186,7 @@ public:
 
     void syscallReturnCallback(uint32_t thr);
     void setHalt(uint32_t thr, int64_t halt_code);
+    void startThread(int thr, uint64_t stackStart, uint64_t instructionPointer );
 
 private:
 #ifdef VANADIS_BUILD_DEBUG
@@ -274,7 +275,6 @@ private:
     Clock::Handler<VANADIS_COMPONENT>* cpuClockHandler;
 
     FILE*           pipelineTrace;
-    VanadisELFInfo* binary_elf_info;
     bool            handlingSysCall;
 
     Statistic<uint64_t>* stat_ins_retired;

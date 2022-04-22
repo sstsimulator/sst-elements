@@ -17,6 +17,7 @@
 #define _H_VANADIS_OP_SYS
 
 #include <sst/core/output.h>
+#include <sst/core/link.h>
 #include <sst/core/subcomponent.h>
 
 #include <functional>
@@ -25,6 +26,7 @@
 #include "inst/regfile.h"
 #include "inst/vsyscall.h"
 #include "os/callev/voscallall.h"
+#include "os/vstartthreadreq.h"
 
 namespace SST {
 namespace Vanadis {
@@ -58,6 +60,7 @@ public:
     void setRegisterFile(VanadisRegisterFile* newFile) { regFile = newFile; }
     void setISATable(VanadisISATable* newTable) { isaTable = newTable; }
     void setHaltThreadCallback(std::function<void(uint32_t, int64_t)> cb) { haltThrCallBack = cb; }
+    void setStartThreadCallback(std::function<void(int, uint64_t, uint64_t)> cb) { startThrCallBack = cb; }
 
     virtual void handleSysCall(VanadisSysCallInstruction* syscallIns) = 0;
 
@@ -65,10 +68,22 @@ public:
         returnCallbacks.push_back(new_call_back);
     }
 
-    virtual void registerInitParameter(VanadisCPUOSInitParameter paramType, void* param_val) = 0;
-
     void setThreadID(int64_t new_tid) { tid = new_tid; }
     int64_t getThreadID() const { return tid; }
+    void init( int phase ) {
+        while (SST::Event* ev = os_link->recvInitData()) {
+
+            VanadisStartThreadReq * req = dynamic_cast<VanadisStartThreadReq*>(ev);
+            if (nullptr == req) {
+                 output->fatal(CALL_INFO, -1, "Error - event cannot be converted to syscall\n");
+            }
+
+            output->verbose(CALL_INFO, 8, 0,
+                            "received start thread %d command from the operating system \n",req->getThread());
+            startThrCallBack(req->getThread(), req->getStackStart(), req->getInstructionPointer());
+            delete ev;
+        }
+    }
 
 protected:
     SST::Output* output;
@@ -77,9 +92,12 @@ protected:
     uint32_t hw_thr;
 
     std::function<void(uint32_t, int64_t)> haltThrCallBack;
+    std::function<void(int, uint64_t, uint64_t)> startThrCallBack;
 
     VanadisRegisterFile* regFile;
     VanadisISATable* isaTable;
+
+    SST::Link* os_link;
 
     uint64_t* tls_address;
     int64_t tid;
