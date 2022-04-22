@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 from mhlib import componentlist
 
@@ -38,18 +37,21 @@ network.addParams({
 network.setSubComponent("topology","merlin.singlerouter")
 
 for x in range(cores):
-    cpu = sst.Component("cpu" + str(x), "memHierarchy.trivialCPU")
+    cpu = sst.Component("core" + str(x), "memHierarchy.standardCPU")
     cpu.addParams({
         "clock" : coreclock,
+        "memFreq" : "4",
+        "memSize" : "4KiB",
+        "verbose" : 0,
+        "clock" : "2GHz",
+        "maxOutstanding" : 16,
+        "opCount" : 5000,
+        "reqsPerIssue" : 3,
+        "write_freq" : 40, # 40% writes
+        "read_freq" : 60,  # 60% reads
         "reqsPerIssue" : 3, # issue up to 3 requests at a time
-        "commFreq" : 4, # issue request every 4th cycle on average
-        "rngseed" : 4734+x,
-        "do_write" : 1,
-        "num_loadstore" : 1500,
-        "addressoffset" : 0, # Generate random addresses between 0 and 4096
-        "memSize" : 1024*4
     })
-    iface = cpu.setSubComponent("memory", "memHierarchy.memInterface")
+    iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
     
     l1cache = sst.Component("l1cache" + str(x), "memHierarchy.Cache")
     l1cache.addParams({

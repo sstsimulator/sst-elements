@@ -1,7 +1,7 @@
 StandardCPU: Test Completed Successfuly
- cpu.pendCycle : Accumulator : Sum.u64 = 1009050; SumSQ.u64 = 8223816; Count.u64 = 131313; Min.u64 = 0; Max.u64 = 10; 
- cpu.reads : Accumulator : Sum.u64 = 739; SumSQ.u64 = 739; Count.u64 = 739; Min.u64 = 1; Max.u64 = 1; 
- cpu.writes : Accumulator : Sum.u64 = 261; SumSQ.u64 = 261; Count.u64 = 261; Min.u64 = 1; Max.u64 = 1; 
+ core.pendCycle : Accumulator : Sum.u64 = 1009050; SumSQ.u64 = 8223816; Count.u64 = 131313; Min.u64 = 0; Max.u64 = 10; 
+ core.reads : Accumulator : Sum.u64 = 739; SumSQ.u64 = 739; Count.u64 = 739; Min.u64 = 1; Max.u64 = 1; 
+ core.writes : Accumulator : Sum.u64 = 261; SumSQ.u64 = 261; Count.u64 = 261; Min.u64 = 1; Max.u64 = 1; 
  l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 739; SumSQ.u64 = 739; Count.u64 = 739; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

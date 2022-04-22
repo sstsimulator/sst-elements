@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 from mhlib import componentlist
 
@@ -35,7 +34,7 @@ network.addParams({
 network.setSubComponent("topology","merlin.singlerouter")
 
 for x in range(cores):
-    cpu = sst.Component("cpu" + str(x), "memHierarchy.streamCPU")
+    cpu = sst.Component("core" + str(x), "memHierarchy.streamCPU")
     cpu.addParams({
         "clock" : coreclock,
         "commFreq" : 4, # issue request every 4th cycle

@@ -1,4 +1,4 @@
-ScratchCPU cpu Finished after 500 issued memory events, 500 returned, 10441 cycles
+ScratchCPU core Finished after 500 issued memory events, 500 returned, 10441 cycles
  scratch:backendConvertor.cycles_with_issue : Accumulator : Sum.u64 = 325; SumSQ.u64 = 325; Count.u64 = 325; Min.u64 = 1; Max.u64 = 1; 
  scratch:backendConvertor.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  scratch:backendConvertor.total_cycles : Accumulator : Sum.u64 = 20882; SumSQ.u64 = 20882; Count.u64 = 20882; Min.u64 = 1; Max.u64 = 1; 

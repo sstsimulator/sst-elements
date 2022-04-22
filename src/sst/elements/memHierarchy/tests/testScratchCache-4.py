@@ -14,7 +14,7 @@ DEBUG_CORE1 = 0
 core_clock = "2GHz"
 
 # Define the simulation components
-comp_cpu0 = sst.Component("cpu0", "memHierarchy.ScratchCPU")
+comp_cpu0 = sst.Component("core0", "memHierarchy.ScratchCPU")
 iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.standardInterface")
 comp_cpu0.addParams({
     "scratchSize" : 65536,   # 64K scratch
@@ -44,7 +44,7 @@ comp_l1_0.addParams({
 })
 
 
-comp_cpu1 = sst.Component("cpu1", "memHierarchy.ScratchCPU")
+comp_cpu1 = sst.Component("core1", "memHierarchy.ScratchCPU")
 iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.standardInterface")
 comp_cpu1.addParams({
     "scratchSize" : 65536,   # 64K scratch
@@ -93,7 +93,7 @@ l2_nic_0.addParams({
     "group" : 1,
 })
 
-comp_cpu2 = sst.Component("cpu2", "memHierarchy.ScratchCPU")
+comp_cpu2 = sst.Component("core2", "memHierarchy.ScratchCPU")
 iface2 = comp_cpu2.setSubComponent("memory", "memHierarchy.standardInterface")
 comp_cpu2.addParams({
     "scratchSize" : 65536,   # 64K scratch
@@ -121,7 +121,7 @@ comp_l1_2.addParams({
     "associativity" : 4,
     "replacement_policy" : "lru",
 })
-comp_cpu3 = sst.Component("cpu3", "memHierarchy.ScratchCPU")
+comp_cpu3 = sst.Component("core3", "memHierarchy.ScratchCPU")
 iface3 = comp_cpu3.setSubComponent("memory", "memHierarchy.standardInterface")
 comp_cpu3.addParams({
     "scratchSize" : 65536,   # 64K scratch
@@ -331,4 +331,3 @@ link_mem0_net.connect( (memnic0, "port", "100ps"), (comp_net, "port4", "100ps") 
 
 link_mem1_net = sst.Link("link_mem1_net")
 link_mem1_net.connect( (memnic1, "port", "100ps"), (comp_net, "port5", "100ps") )
-# End of generated output.

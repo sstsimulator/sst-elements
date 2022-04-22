@@ -324,7 +324,7 @@ bool MESIL1::handleGetSX(MemEvent* event, bool inMSHR) {
                 line->setTimestamp(sendTime);
                 mshr_->setInProgress(addr);
                 if (is_debug_addr(addr))
-                    eventDI.reason = true;
+                    eventDI.reason = "miss";
             }
             break;
         case E:
@@ -370,8 +370,6 @@ bool MESIL1::handleFlushLine(MemEvent* event, bool inMSHR) {
 
     if (is_debug_addr(addr))
         eventDI.prefill(event->getID(), Command::FlushLine, false, addr, state);
-
-    printLine(addr);
 
     if (!inMSHR && mshr_->exists(addr)) {
         return (allocateMSHR(event, false) == MemEventStatus::Reject) ? false : true;
@@ -432,8 +430,6 @@ bool MESIL1::handleFlushLineInv(MemEvent* event, bool inMSHR) {
 
     if (is_debug_addr(addr))
         eventDI.prefill(event->getID(), Command::FlushLineInv, false, addr, state);
-
-    printLine(addr);
 
     if (!inMSHR && mshr_->exists(addr)) {
         return (allocateMSHR(event, false) != MemEventStatus::Reject);
@@ -1146,7 +1142,6 @@ bool MESIL1::handleEviction(Addr addr, L1CacheLine*& line) {
                 } else if (is_debug_addr(line->getAddr())) {
                         printDebugAlloc(false, line->getAddr(), "Drop");
                 }
-                line->setState(I);
                 line->setState(I);
                 break;
             }

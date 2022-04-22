@@ -2,15 +2,20 @@ import sst
 from mhlib import componentlist
 
 # Define the simulation components
-cpu0 = sst.Component("core0", "memHierarchy.trivialCPU")
+cpu0 = sst.Component("core0", "memHierarchy.standardCPU")
 cpu0.addParams({
-      "memSize" : "0x100000",
-      "num_loadstore" : "1000",
-      "maxOutstanding" : "64",
-      "commFreq" : "1",
-      "do_write" : "1"
+    "memFreq" : 1,
+    "memSize" : "100KiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "rngseed" : 989,
+    "maxOutstanding" : 64,
+    "opCount" : 3000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 25, # 25% writes
+    "read_freq" : 75,  # 75% reads
 })
-iface0 = cpu0.setSubComponent("memory", "memHierarchy.memInterface")
+iface0 = cpu0.setSubComponent("memory", "memHierarchy.standardInterface")
 c0_l1cache = sst.Component("l1cache0.msi", "memHierarchy.Cache")
 c0_l1cache.addParams({
       "access_latency_cycles" : "5",
@@ -23,15 +28,20 @@ c0_l1cache.addParams({
       "L1" : "1",
       "debug" : "0"
 })
-cpu1 = sst.Component("core1", "memHierarchy.trivialCPU")
+cpu1 = sst.Component("core1", "memHierarchy.standardCPU")
 cpu1.addParams({
-      "memSize" : "0x100000",
-      "num_loadstore" : "1000",
-      "maxOutstanding" : "64",
-      "commFreq" : "1",
-      "do_write" : "1"
+    "memFreq" : 1,
+    "memSize" : "100KiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "rngseed" : 987,
+    "maxOutstanding" : 64,
+    "opCount" : 3000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 25, # 25% writes
+    "read_freq" : 75,  # 75% reads
 })
-iface1 = cpu1.setSubComponent("memory", "memHierarchy.memInterface")
+iface1 = cpu1.setSubComponent("memory", "memHierarchy.standardInterface")
 c1_l1cache = sst.Component("l1cache1.msi", "memHierarchy.Cache")
 c1_l1cache.addParams({
       "access_latency_cycles" : "5",

@@ -178,7 +178,7 @@ RouteToGroup::getRouterPortPairForGroup(uint32_t src_group, uint32_t dest_group,
 }
 
 int
-RouteToGroup::getValiantGroup(int dest_group, RNG::SSTRandom* rng) const
+RouteToGroup::getValiantGroup(int dest_group, RNG::Random* rng) const
 {
     if ( !consider_failed_links )  {
         int group;

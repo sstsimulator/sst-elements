@@ -108,7 +108,7 @@ void Bus::sendSingleEvent(SST::Event* ev) {
 #ifdef __SST_DEBUG_OUTPUT__
     if (is_debug_event(event)) {
         dbg_.debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
-                Simulation::getSimulation()->getCurrentSimCycle(), 0, getName().c_str(), event->getVerboseString().c_str());
+                getCurrentSimCycle(), 0, getName().c_str(), event->getVerboseString().c_str());
         fflush(stdout);
     }
 #endif

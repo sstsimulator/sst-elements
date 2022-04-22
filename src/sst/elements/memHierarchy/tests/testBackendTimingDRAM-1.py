@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 from mhlib import componentlist
 
@@ -6,17 +5,21 @@ from mhlib import componentlist
 
 # Define the simulation components
 cpu_params = {
+    "memSize" : "1MiB",
+    "verbose" : 0,
     "clock" : "3GHz",
-    "do_write" : 1,
-    "num_loadstore" : "5000",
-    "memSize" : "0x100000"
+    "maxOutstanding" : 32,
+    "opCount" : 5000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 40, # 40% writes
+    "read_freq" : 60,  # 60% reads
         }
 
 bus = sst.Component("bus", "memHierarchy.Bus")
 bus.addParams({ "bus_frequency" : "2Ghz" })
 
 
-l3cache = sst.Component("l3cache", "memHierarchy.Cache")
+l3cache = sst.Component("l3cache.mesi.inclus", "memHierarchy.Cache")
 l3cache.addParams({
       "access_latency_cycles" : "30",
       "mshr_latency_cycles" : 3,
@@ -37,16 +40,16 @@ l3NIC.addParams({
 })
 
 for i in range(0,8):
-    cpu = sst.Component("cpu" + str(i), "memHierarchy.trivialCPU")
+    cpu = sst.Component("core" + str(i), "memHierarchy.standardCPU")
     cpu.addParams(cpu_params)
     rngseed = i * 12
     cpu.addParams({
         "rngseed" : rngseed,
-        "commFreq" : (rngseed % 7) + 1 })
+        "memFreq" : (rngseed % 7) + 1 })
 
-    iface = cpu.setSubComponent("memory", "memHierarchy.memInterface")
+    iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 
-    l1cache = sst.Component("c" + str(i) + ".l1cache", "memHierarchy.Cache")
+    l1cache = sst.Component("l1cache" + str(i) + ".mesi", "memHierarchy.Cache")
     l1cache.addParams({
         "access_latency_cycles" : "4",
         "cache_frequency" : "2Ghz",
@@ -60,7 +63,7 @@ for i in range(0,8):
         "debug" : "0"
         })
 
-    l2cache = sst.Component("c" + str(i) + ".l2cache", "memHierarchy.Cache")
+    l2cache = sst.Component("l2cache" + str(i) + ".mesi.inclus", "memHierarchy.Cache")
     l2cache.addParams({
       "access_latency_cycles" : "9",
       "mshr_latency_cycles" : 2,
@@ -85,8 +88,8 @@ for i in range(0,8):
     link_l2_bus.connect( (l2cache, "low_network_0", "1000ps"), (bus, "high_network_" + str(i), "1000ps") )
 
 
-comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
-comp_chiprtr.addParams({
+network = sst.Component("network", "merlin.hr_router")
+network.addParams({
       "xbar_bw" : "1GB/s",
       "link_bw" : "1GB/s",
       "input_buf_size" : "1KB",
@@ -96,8 +99,8 @@ comp_chiprtr.addParams({
       "id" : "0",
       "topology" : "merlin.singlerouter"
 })
-comp_chiprtr.setSubComponent("topology","merlin.singlerouter")
-dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
+network.setSubComponent("topology","merlin.singlerouter")
+dirctrl = sst.Component("directory.mesi", "memHierarchy.DirectoryController")
 dirctrl.addParams({
     "coherence_protocol" : "MESI",
     "debug" : "0",
@@ -153,9 +156,9 @@ link_bus_l3 = sst.Link("link_bus_l3")
 link_bus_l3.connect( (bus, "low_network_0", "500ps"), (l3tol2, "port", "500ps") )
 
 link_l3_net = sst.Link("link_l3_net")
-link_l3_net.connect( (l3NIC, "port", "10000ps"), (comp_chiprtr, "port1", "2000ps") )
+link_l3_net.connect( (l3NIC, "port", "10000ps"), (network, "port1", "2000ps") )
 link_dir_net = sst.Link("link_dir_net")
-link_dir_net.connect( (comp_chiprtr, "port0", "2000ps"), (dirNIC, "port", "2000ps") )
+link_dir_net.connect( (network, "port0", "2000ps"), (dirNIC, "port", "2000ps") )
 link_dir_mem = sst.Link("link_dir_mem")
 link_dir_mem.connect( (dirtoM, "port", "10000ps"), (memctrl, "direct_link", "10000ps") )
 
