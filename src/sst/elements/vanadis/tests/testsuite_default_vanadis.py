@@ -21,16 +21,17 @@ def build_vanadis_test_matrix():
     testlist = []
 
     # Add the SDL file, test dir compiled elf file, and test run timeout to create the testlist
-    testlist.append(["basic_vanadis.py", "small/basic-io", "hello-world", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-io", "hello-world-CC", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-io", "printf-check", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-io", "openat", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-io", "unlink", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-io", "unlinkat", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-math", "sqrt-double", 300])
-    testlist.append(["basic_vanadis.py", "small/basic-math", "sqrt-float", 300])
-    testlist.append(["basic_vanadis.py", "small/basic-ops", "test-branch", 300])
-    testlist.append(["basic_vanadis.py", "small/basic-ops", "test-shift", 300])
+    testlist.append(["basic_vanadis.py", "small/basic-io", "hello-world",     "mipsel", 120])
+    testlist.append(["basic_vanadis.py", "small/basic-io", "hello-world",     "riscv64", 120])
+    testlist.append(["basic_vanadis.py", "small/basic-io", "hello-world-cpp", "mipsel", 120])
+    testlist.append(["basic_vanadis.py", "small/basic-io", "printf-check",    "mipsel", 120])
+    testlist.append(["basic_vanadis.py", "small/basic-io", "openat",          "mipsel", 120])
+    testlist.append(["basic_vanadis.py", "small/basic-io", "unlink",          "mipsel", 120])
+    testlist.append(["basic_vanadis.py", "small/basic-io", "unlinkat",        "mipsel", 120])
+    testlist.append(["basic_vanadis.py", "small/basic-math", "sqrt-double",   "mipsel", 300])
+    testlist.append(["basic_vanadis.py", "small/basic-math", "sqrt-float",    "mipsel", 300])
+    testlist.append(["basic_vanadis.py", "small/basic-ops", "test-branch",    "mipsel", 300])
+    testlist.append(["basic_vanadis.py", "small/basic-ops", "test-shift",     "mipsel",300])
 
     # Process each line and crack up into an index, hash, options and sdl file
     for testnum, test_info in enumerate(testlist):
@@ -39,11 +40,12 @@ def build_vanadis_test_matrix():
         sdlfile = test_info[0]
         elftestdir = test_info[1]
         elffile = test_info[2]
-        timeout_sec = test_info[3]
-        testname = "{0}_{1}".format(elftestdir.replace("/", "_"), elffile)
+        isa = test_info[3]
+        timeout_sec = test_info[4]
+        testname = "{0}_{1}_{2}".format(elftestdir.replace("/", "_"), elffile,isa)
 
         # Build the test_data structure
-        test_data = (testnum, testname, sdlfile, elftestdir, elffile, timeout_sec)
+        test_data = (testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec)
         vanadis_test_matrix.append(test_data)
 
 ################################################################################
@@ -99,42 +101,48 @@ class testcase_vanadis(SSTTestCase):
 #####
 
     @parameterized.expand(vanadis_test_matrix, name_func=gen_custom_name)
-    def test_vanadis_short_tests(self, testnum, testname, sdlfile, elftestdir, elffile, timeout_sec):
+    def test_vanadis_short_tests(self, testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec):
         self._checkSkipConditions()
 
-        log_debug("Running Vanadis test #{0} ({1}): elffile={4} in dir {3}; using sdl={2}".format(testnum, testname, sdlfile, elftestdir, elffile, timeout_sec))
-        self.vanadis_test_template(testnum, testname, sdlfile, elftestdir, elffile, timeout_sec)
+        log_debug("Running Vanadis test #{0} ({1}): elffile={4} in dir {3}, isa {5}; using sdl={2}".format(testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec))
+        self.vanadis_test_template(testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec)
 
 #####
 
-    def vanadis_test_template(self, testnum, testname, sdlfile, elftestdir, elffile, testtimeout=120):
+    def vanadis_test_template(self, testnum, testname, sdlfile, elftestdir, elffile, isa, testtimeout=120):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
-        outdir = "{0}/vanadis_tests/{1}/{2}".format(self.get_test_output_run_dir(), elftestdir,elffile)
+        outdir = "{0}/vanadis_tests/{1}/{2}/{3}".format(self.get_test_output_run_dir(), elftestdir,elffile,isa)
         tmpdir = self.get_test_output_tmp_dir()
         os.makedirs(outdir)
 
         # Set the various file paths
         testDataFileName="test_vanadis_{0}".format(testname)
         sdlfile = "{0}/{1}".format(test_path, sdlfile)
-        outfile = "{0}/{1}.out".format(outdir, testDataFileName)
-        errfile = "{0}/{1}.err".format(outdir, testDataFileName)
+        sst_outfile = "{0}/{1}.out".format(outdir, testDataFileName)
+        sst_errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
-        ref_outfile = "{0}/{1}/{2}.stdout.gold".format(test_path, elftestdir, elffile)
-        ref_errfile = "{0}/{1}/{2}.stderr.gold".format(test_path, elftestdir, elffile)
+        ref_sst_outfile = "{0}/{1}/{2}/{3}/sst.stdout.gold".format(test_path, elftestdir, elffile, isa)
+        ref_sst_errfile = "{0}/{1}/{2}/{3}/sst.stderr.gold".format(test_path, elftestdir, elffile, isa)
+        ref_os_outfile = "{0}/{1}/{2}/{3}/vanadis.stdout.gold".format(test_path, elftestdir, elffile, isa)
+        ref_os_errfile = "{0}/{1}/{2}/{3}/vanadis.stderr.gold".format(test_path, elftestdir, elffile, isa)
         os_outfile = "{0}/stdout-os".format(outdir)
         os_errfile = "{0}/stderr-os".format(outdir)
 
         # Set the Vanadis EXE path
-        testfilepath = "{0}/{1}/{2}".format(test_path, elftestdir, elffile)
+        testfilepath = "{0}/{1}/{2}/{3}/{2}".format(test_path, elftestdir, elffile, isa )
         os.environ['VANADIS_EXE'] = testfilepath
+        if isa == "mipsel":
+            os.environ['VANADIS_ISA'] = "MIPS"
+        else:
+            os.environ['VANADIS_ISA'] = "RISCV64"
 
-        oscmd = self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, set_cwd=outdir, timeout_sec=testtimeout)
+        oscmd = self.run_sst(sdlfile, sst_outfile, sst_errfile, mpi_out_files=mpioutfiles, set_cwd=outdir, timeout_sec=testtimeout)
 
         # Perform the tests
         # Verify that the errfile from SST is empty
-        if os_test_file(errfile, "-s"):
-            log_testing_note("vanadis test {0} has a Non-Empty Error File {1}".format(testDataFileName, errfile))
+        if os_test_file(sst_errfile, "-s"):
+            log_testing_note("vanadis test {0} has a Non-Empty Error File {1}".format(testDataFileName, sst_errfile))
 
         # Verify that a stdout-os and stderr-os files were generated by the Vanadis run
         os_outfileexists = os.path.exists(os_outfile) and os.path.isfile(os_outfile)
@@ -142,19 +150,36 @@ class testcase_vanadis(SSTTestCase):
         self.assertTrue(os_outfileexists, "Vanadis test outfile-os not found in directory {0}".format(outdir))
         self.assertTrue(os_errfileexists, "Vanadis test errfile-os not found in directory {0}".format(outdir))
 
-        cmp_result = testing_compare_diff(testname, os_outfile, ref_outfile)
-        if (cmp_result == False):
-            diffdata = testing_get_diff_data(testname)
-            log_failure(oscmd)
-            log_failure(diffdata)
-        self.assertTrue(cmp_result, "Vanadis os output file {0} does not match reference output file {1}".format(os_outfile, ref_outfile))
+        
+        if ( os.path.exists( ref_sst_outfile ) ):
+            cmp_result = testing_compare_filtered_diff(testname, sst_outfile, ref_sst_outfile ,filters=[StartsWithFilter(" v0.instructions_issued.1")])
+            if (cmp_result == False):
+                diffdata = testing_get_diff_data(testname)
+                log_failure(oscmd)
+                log_failure(diffdata)
+            self.assertTrue(cmp_result, "Vanadis output file {0} does not match reference output file {1}".format(sst_outfile, ref_sst_outfile))
 
-        cmp_result = testing_compare_diff(testname, os_errfile, ref_errfile)
+        if ( os.path.exists( ref_sst_errfile ) ):
+            cmp_result = testing_compare_diff(testname, sst_errfile, ref_sst_errfile)
+            if (cmp_result == False):
+                diffdata = testing_get_diff_data(testname)
+                log_failure(oscmd)
+                log_failure(diffdata)
+            self.assertTrue(cmp_result, "Vanadis error file {0} does not match reference error file {1}".format(sst_errfile, ref_sst_errfile))
+
+        cmp_result = testing_compare_diff(testname, os_outfile, ref_os_outfile)
         if (cmp_result == False):
             diffdata = testing_get_diff_data(testname)
             log_failure(oscmd)
             log_failure(diffdata)
-        self.assertTrue(cmp_result, "Vanadis os error file {0} does not match reference error file {1}".format(os_outfile, ref_outfile))
+        self.assertTrue(cmp_result, "Vanadis os output file {0} does not match reference output file {1}".format(os_outfile, ref_os_outfile))
+
+        cmp_result = testing_compare_diff(testname, os_errfile, ref_os_errfile)
+        if (cmp_result == False):
+            diffdata = testing_get_diff_data(testname)
+            log_failure(oscmd)
+            log_failure(diffdata)
+        self.assertTrue(cmp_result, "Vanadis os error file {0} does not match reference error file {1}".format(os_outfile, ref_os_outfile))
 
         # DEVELOPER NOTE: In the future, we may want to compare the SST output (statisics) vs some reference file
 
