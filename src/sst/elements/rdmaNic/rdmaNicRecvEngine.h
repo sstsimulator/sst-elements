@@ -16,7 +16,7 @@
 class RecvEntry {
   public:
     RecvEntry( int thread, NicCmd* cmd = NULL ) : m_cmd(cmd), m_thread(thread), m_cqId(-1) {}
-	~RecvEntry() { if ( m_cmd) delete m_cmd; }
+	virtual ~RecvEntry() { if ( m_cmd) delete m_cmd; }
 	virtual size_t getPayloadLength() = 0;
 	virtual Addr_t getAddr() = 0;
 	virtual Addr_t getContext() = 0; 

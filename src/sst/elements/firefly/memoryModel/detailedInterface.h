@@ -17,7 +17,7 @@
 #define COMPONENTS_FIREFLY_MEMORY_MODEL_DETAILED_INTERFACE_H
 
 #include <sst/core/subcomponent.h>
-#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/interfaces/stdMem.h>
 #include "memoryModel/memReq.h"
 #include "memoryModel/memoryModel.h"
 
@@ -89,8 +89,8 @@ private:
 		m_clock_handler = new Clock::Handler<DetailedInterface>(this,&DetailedInterface::clock_handler);
 		m_clock = registerClock( freq, m_clock_handler);
 
-		m_mem_link = loadUserSubComponent<Interfaces::SimpleMem>("memInterface", ComponentInfo::SHARE_NONE,
-			m_clock , new Interfaces::SimpleMem::Handler<DetailedInterface>(this, &DetailedInterface::handleEvent) );
+		m_mem_link = loadUserSubComponent<Interfaces::StandardMem>("standardInterface", ComponentInfo::SHARE_NONE,
+			m_clock , new Interfaces::StandardMem::Handler<DetailedInterface>(this, &DetailedInterface::handleEvent) );
 
 	    if( m_mem_link ) {
 			m_dbg.verbose(CALL_INFO, 1, MY_MASK, "Loaded memory interface successfully.\n");
@@ -158,10 +158,10 @@ private:
 
   private:
 
-	void handleEvent( Interfaces::SimpleMem::Request* ev ) {
+	void handleEvent( Interfaces::StandardMem::Request* ev ) {
 
-		Interfaces::SimpleMem::Request::id_t reqID = ev->id;
-    	std::map<Interfaces::SimpleMem::Request::id_t, Entry*>::iterator reqFind = m_inflight.find(reqID);
+		Interfaces::StandardMem::Request::id_t reqID = ev->getID();
+    	        std::map<Interfaces::StandardMem::Request::id_t, Entry*>::iterator reqFind = m_inflight.find(reqID);
 
 		if(reqFind == m_inflight.end()) {
         	m_dbg.fatal(CALL_INFO, -1, "Unable to find request %" PRIu64 " in request map.\n", reqID);
@@ -174,7 +174,7 @@ private:
 			if ( entry->callback ) {
 				m_callback(entry->callback);
 			}
-			m_inflight.erase( ev->id );
+			m_inflight.erase( ev->getID() );
             if ( m_blockedSrc[entry->op] ) {
                 m_dbg.verbose(CALL_INFO,2,MY_MASK,"resume\n" );
 				m_resume(m_blockedSrc[entry->op] );
@@ -229,16 +229,19 @@ private:
 			popEntry();
 
 			if ( m_inFlightCnt[entry->op] < m_maxRequestsPending[entry->op] ) {
-				SST::Interfaces::SimpleMem::Request* req = NULL;
+				SST::Interfaces::StandardMem::Request* req = NULL;
 				++m_inFlightCnt[entry->op];
-				req = new Interfaces::SimpleMem::Request(
-                    entry->op == Read ? Interfaces::SimpleMem::Request::Read : Interfaces::SimpleMem::Request::Write,
-                    entry->memReq->addr, entry->memReq->length);
-				m_inflight[req->id] = entry;
-				m_dbg.verbose(CALL_INFO,1,MY_MASK,"id=%" PRIu64 ", addr=%" PRIx64 ", %s inFlightCnt=%d\n",
-                                    req->id, req->addr, entry->op == Write ? "Write":"Read", m_inFlightCnt[entry->op]);
+                                if (entry->op == Read) {
+                                    req = new Interfaces::StandardMem::Read(entry->memReq->addr, entry->memReq->length);
+                                } else {
+                                    std::vector<uint8_t> data(entry->memReq->length, 0);
+                                    req = new Interfaces::StandardMem::Write(entry->memReq->addr, data.size(), data);
+                                }
+                                m_inflight[req->getID()] = entry;
+				m_dbg.verbose(CALL_INFO,1,MY_MASK,"req='%s', inFlightCnt=%d\n",
+                                    req->getString().c_str(), m_inFlightCnt[entry->op]);
 				entry->issueTime = getCurrentSimTimeNano();
-				m_mem_link->sendRequest( req );
+				m_mem_link->send( req );
 				m_inFlightAddr.insert( entry->memReq->addr );
 			} else {
 				assert(0);
@@ -248,10 +251,10 @@ private:
 	}
 
 	Clock::Handler<DetailedInterface>* 	m_clock_handler;
-	TimeConverter* 					m_clock;
-	Interfaces::SimpleMem* 			m_mem_link;
+	TimeConverter* 				m_clock;
+	Interfaces::StandardMem* 		m_mem_link;
 
-	std::map< Interfaces::SimpleMem::Request::id_t, Entry* > m_inflight;
+	std::map< Interfaces::StandardMem::Request::id_t, Entry* > m_inflight;
 	std::set< uint64_t > m_inFlightAddr;
 	Output m_dbg;
 	std::vector< Statistic<uint64_t>* > m_reqCnt;
