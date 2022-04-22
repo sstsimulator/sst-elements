@@ -383,7 +383,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Write* re
     }
 #ifdef __SST_DEBUG_OUTPUT__
     else if (req->data.size() != req->size) {
-        output.verbose(CALL_INFO, 1, 0, "Warning (%s): Write request size is %zu and payload size is %zu. MemEvent will use payload size.\n",
+        output.verbose(CALL_INFO, 1, 0, "Warning (%s): Write request size is %" PRIu64 " and payload size is %zu. MemEvent will use payload size.\n",
             iface->getName().c_str(), req->size, req->data.size());
     } 
     debugChecks(write);
