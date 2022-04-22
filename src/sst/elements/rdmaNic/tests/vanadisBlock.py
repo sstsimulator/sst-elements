@@ -13,6 +13,7 @@ debug_addr=0x7ffffb80
 debug_start_time = 26760650595 
 #debug_start_time = 0
 
+executable="./app/rdma/msg"
 
 verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
 os_verbosity = os.getenv("VANADIS_OS_VERBOSE", 0)
@@ -54,15 +55,6 @@ class Vanadis_Builder:
 		v_cpu_0 = sst.Component(prefix, vanadis_cpu_type)
 		v_cpu_0.addParams({
 			   "clock" : cpu_clock,
-			  "executable" : os.getenv("VANADIS_EXE", "./app/rdma/msg"),
-			   "app.argc" : 4,
-				"app.arg0" : "IMB",
-				"app.arg1" : "PingPong",
-				"app.arg2" : "-iter",
-				"app.arg3" : "3",
-			   "app.env_count" : 1,
-               "app.env0" : "HOME=/home/sdhammo",
-			   "app.env1" : "VANADIS_THREAD_NUM=0",
 			   "verbose" : verbosity,
 			   "physical_fp_registers" : 168,
 			   "physical_int_registers" : 180,
@@ -148,7 +140,16 @@ class Vanadis_Builder:
 			"heap_start" : 512 * 1024 * 1024,
 			"heap_end"   : (2 * 1024 * 1024 * 1024) - 4096,
 			"page_size"  : 4096,
-			"heap_verbose" : 0 #verbosity
+			"heap_verbose" : 0, #verbosity
+	        "executable" : os.getenv("VANADIS_EXE", executable),
+		    "app.argc" : 4,
+            "app.arg0" : "IMB",
+            "app.arg1" : "PingPong",
+            "app.arg2" : "-iter",
+            "app.arg3" : "3",
+            "app.env_count" : 1,
+            "app.env0" : "HOME=/home/sdhammo",
+            "app.env1" : "VANADIS_THREAD_NUM=0",
 		})
 
 		node_os_mem_if = node_os.setSubComponent( "mem_interface", "memHierarchy.standardInterface" )
