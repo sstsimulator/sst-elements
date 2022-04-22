@@ -147,7 +147,7 @@
         std::queue< std::pair< StandardMem::Request*, MemRequest*> > m_retryQ;
 
         void handleResponse( Interfaces::StandardMem::Request* resp ) {
-			Nic().dbg.debug(CALL_INFO,1,DBG_X_FLAG," Resp id=%d\n", resp->getID()  );
+			Nic().dbg.debug(CALL_INFO,1,DBG_X_FLAG," Resp id=%" PRIu64 "\n", resp->getID()  );
             try {
                 MemRequest* req = m_pendingReq.at( resp->getID() );
 

@@ -314,9 +314,11 @@ class RdmaNic : public SST::Component {
 			return new RdmaMemReadCmd( nic, thread, cmd );
 	  	case RdmaBarrier:
 			return new RdmaBarrierCmd( nic, thread, cmd );
+                default:
+		    dbg.output(CALL_INFO_LONG,"Error: thread=%d %d\n",thread,cmd->type);
+		    assert(0);
 		}
-		dbg.output(CALL_INFO_LONG,"Error: thread=%d %d\n",thread,cmd->type);
-		assert(0);
+                return nullptr;
 	}
 
 };

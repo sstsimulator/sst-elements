@@ -21,13 +21,13 @@ class NicCmdEntry {
         m_resp.retval = 0; 
 		*m_cmd = *tmp;
     } 
-    ~NicCmdEntry() {
+    virtual ~NicCmdEntry() {
         if ( m_cmd ) {
             delete m_cmd;
         }
     }
     virtual bool process( ) {
-        m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"%s respAddr=%#" PRIx64 " retval=%x\n", m_respAddr, name().c_str(), m_resp.retval );
+        m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"%s respAddr=%#" PRIx32 " retval=%x\n", name().c_str(), m_respAddr, m_resp.retval );
         m_nic.sendRespToHost( m_respAddr, m_resp, m_thread );
         return true;
     }
@@ -51,9 +51,9 @@ class RdmaCreateCQ_Cmd : public NicCmdEntry {
     	m_nic.m_compQueueMap[ cqId ] = new CompletionQueue( m_cmd );    
     	m_resp.retval = cqId;
     	m_resp.data.createCQ.tailIndexAddr = m_nic.calcCompQueueTailAddress( m_thread, cqId ); 
-    	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cqId=%d headPtr=%p datPtr=%p num=%d\n",
+    	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cqId=%d headPtr=%" PRIx32 " datPtr=%" PRIx32 " num=%d\n",
                     cqId, m_cmd->data.createCQ.headPtr, m_cmd->data.createCQ.dataPtr, m_cmd->data.createCQ.num);
-    	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cqId=%d headPtr=%p datPtr=%p num=%d tailIndexAddr=%p\n",
+    	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cqId=%d headPtr=%" PRIx32 " datPtr=%" PRIx32 " num=%d tailIndexAddr=%" PRIx32 "\n",
                     cqId, m_cmd->data.createCQ.headPtr, m_cmd->data.createCQ.dataPtr, m_cmd->data.createCQ.num, m_resp.data.createCQ.tailIndexAddr);
     
     	// passed the cmd to the CompletionQueue 
