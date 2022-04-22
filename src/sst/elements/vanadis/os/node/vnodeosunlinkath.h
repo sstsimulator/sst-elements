@@ -48,7 +48,7 @@ public:
 
             output->verbose(CALL_INFO, 16, 0, "[syscall-unlinkat] path: \"%s\"\n", path_cstr);
 
-printf("%d %s %x\n",dirFd,path_cstr,flags);
+printf("%d %s %" PRIx64 "\n",dirFd,path_cstr,flags);
             if ( unlinkat( dirFd, path_cstr,flags ) ) {
                 retval = -errno;
                 char buf[100];
