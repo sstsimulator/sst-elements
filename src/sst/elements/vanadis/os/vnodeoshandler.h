@@ -100,6 +100,9 @@ public:
     void setLink(SST::Link* new_link) { core_link = new_link; }
 
     uint32_t getCoreID() const { return core_id; }
+    int setBrk( uint64_t brk ) {
+        current_brk_point = brk;
+    }
 
     void handleIncomingSyscall(VanadisSyscallEvent* sys_ev) {
 
@@ -920,13 +923,6 @@ public:
             }
 
             switch (sys_ev->getOperation()) {
-            case SYSCALL_OP_INIT_BRK: {
-                VanadisSyscallInitBRKEvent* init_brk_ev = dynamic_cast<VanadisSyscallInitBRKEvent*>(sys_ev);
-                output->verbose(CALL_INFO, 8, 0, "setting initial brk to 0x%llx\n", init_brk_ev->getUpdatedBRK());
-
-                current_brk_point = init_brk_ev->getUpdatedBRK();
-            } break;
-
             default:
                 output->fatal(CALL_INFO, -1, "Error - not implemented an an init event.\n");
             }

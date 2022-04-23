@@ -296,7 +296,7 @@ GpuDataTunnel* Pin3Frontend::getDataTunnel() {
 
 int Pin3Frontend::forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env) {
     // If user only wants to init the simulation then we do NOT fork the binary
-    if(Simulation::getSimulation()->getSimulationMode() == Simulation::INIT)
+    if(isSimulationRunModeInit())
         return 0;
 
     int next_arg_index = 0;

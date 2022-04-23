@@ -19,7 +19,7 @@ class SendStream {
     ~SendStream( );
     bool process();
   private:
-    void readResp( int thread, StandardMem::Request* resp );
+    void readResp( int thread, Interfaces::StandardMem::Request* resp );
 
 	bool isReadyQfull() {
 		return m_readyPktQ.size() == m_maxQueueSize;
@@ -56,7 +56,7 @@ class SendStream {
 	int m_maxQueueSize;
     std::queue< RdmaNicNetworkEvent* > m_readyPktQ;
     RdmaNicNetworkEvent* m_pkt;
-    std::map<int,StandardMem::ReadResp*> m_respMap;
+    std::map<int,Interfaces::StandardMem::ReadResp*> m_respMap;
     int m_numReadsPending;
     MemRequest::Callback* m_callback;
     size_t m_offset;

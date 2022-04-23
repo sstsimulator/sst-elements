@@ -263,7 +263,7 @@ bool c_TxnGenBase::sendRequest()
 
         c_Transaction *l_txn=l_txnReqEvPtr->m_payload;
     #ifdef __SST_DEBUG_OUTPUT__
-        debug->verbose(CALL_INFO,1,0,"[cycle:%lld] addr: 0x%x isRead:%d seqNum:%lld\n",l_cycle,l_txn->getAddress(),l_txn->isRead(),l_txn->getSeqNum());
+        debug->verbose(CALL_INFO,1,0,"[cycle:%lld] addr: 0x%lx isRead:%d seqNum:%lu\n",l_cycle,l_txn->getAddress(),l_txn->isRead(),l_txn->getSeqNum());
     #endif
 
         m_outstandingReqs.insert(std::pair<uint64_t, uint64_t>(l_txn->getSeqNum(),l_cycle));

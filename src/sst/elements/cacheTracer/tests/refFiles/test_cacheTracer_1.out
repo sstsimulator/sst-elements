@@ -1,6 +1,5 @@
 l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 5 cycles.
 memory, WARNING: Memories no longer inherit address regions from directories and no region parameters (addr_range_start, addr_range_end, interleave_size, interleave_step) were detected. All addresses will map to this memory: if this is intended, you may ignore this warning or set addr_range_start to 0 in your input deck to eliminate this warning.
-TrivialCPU: Test Completed Successfuly
 FINAL STATS:
 -----------------------------------------------------------------
 - Events at NorthBus                 : 1000
@@ -11,44 +10,52 @@ FINAL STATS:
 Address Histogram:
 -----------------------------------------------------------------
 Address_Range: Count
-- [0-4095]: 70
-- [4096-8191]: 62
-- [8192-12287]: 66
-- [12288-16383]: 60
-- [16384-20479]: 64
-- [20480-24575]: 60
-- [24576-28671]: 58
-- [28672-32767]: 73
-- [32768-36863]: 66
-- [36864-40959]: 57
-- [40960-45055]: 74
-- [45056-49151]: 60
-- [49152-53247]: 59
-- [53248-57343]: 59
-- [57344-61439]: 55
-- [61440-65535]: 57
+- [0-4095]: 45
+- [4096-8191]: 44
+- [8192-12287]: 43
+- [12288-16383]: 36
+- [16384-20479]: 39
+- [20480-24575]: 43
+- [24576-28671]: 40
+- [28672-32767]: 43
+- [32768-36863]: 37
+- [36864-40959]: 34
+- [40960-45055]: 35
+- [45056-49151]: 45
+- [49152-53247]: 31
+- [53248-57343]: 44
+- [57344-61439]: 46
+- [61440-65535]: 38
+- [65536-69631]: 36
+- [69632-73727]: 41
+- [73728-77823]: 37
+- [77824-81919]: 41
+- [81920-86015]: 41
+- [86016-90111]: 34
+- [90112-94207]: 48
+- [94208-98303]: 44
+- [98304-102399]: 35
 -----------------------------------------------------------------
 - Total_Events_Address: 1000
 -----------------------------------------------------------------
 
 Access Latency Distribution (ns):
 -----------------------------------------------------------------
-Min-Latency(ns): 4  Max-Latency(ns): 131  #Bins: 10
+Min-Latency(ns): 3  Max-Latency(ns): 195  #Bins: 10
 -----------------------------------------------------------------
 Latency Range(ns): Count
-- [0-13]: 63
-- [14-27]: 320
-- [28-41]: 0
-- [42-55]: 0
-- [56-69]: 0
-- [70-83]: 0
-- [84-97]: 0
-- [98-111]: 0
-- [112-125]: 616
-- [126-139]: 1
+- [0-19]: 238
+- [20-39]: 3
+- [40-59]: 3
+- [60-79]: 0
+- [80-99]: 2
+- [100-119]: 2
+- [120-139]: 742
+- [140-159]: 4
+- [160-179]: 5
+- [180-199]: 1
 -----------------------------------------------------------------
 - Total_Events_Latency: 1000
 -----------------------------------------------------------------
 
-TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (104054 clocks)
-Simulation is complete, simulated time: 104.054 us
+Simulation is complete, simulated time: 6.2635 us

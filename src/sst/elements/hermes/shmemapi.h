@@ -45,6 +45,7 @@ static std::string WaitOpName( WaitOp op ) {
 		case GTE:
 			return "GTE";
 	}
+        return "";
 }
 
 typedef enum { MOVE, AND, MAX, MIN, SUM, PROD, OR, XOR } ReduOp;

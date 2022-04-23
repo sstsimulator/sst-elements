@@ -8,20 +8,24 @@
 import sst
 
 # Define SST core options
-sst.setProgramOption("timebase", "1ps")
 sst.setProgramOption("stopAtCycle", "1ms")
 
 #define simulation components
-comp_cpu = sst.Component("cpu0", "memHierarchy.trivialCPU")
+comp_cpu = sst.Component("cpu0", "memHierarchy.standardCPU")
 comp_cpu.addParams({
-    "num_loadstore"  : "1000",
-    "commFreq"       : "100",
-    "memSize"        : "0x10000",
-    "do_write"       : "1",
-    "workPerCycle"   : "1000",
+    "memFreq" : 5,
+    "memSize" : "100KiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "rngseed" : 111,
+    "maxOutstanding" : 16,
+    "opCount" : 1000,
+    "reqsPerIssue" : 2,
+    "write_freq" : 35, # 35% writes
+    "read_freq" : 65,  # 65% reads
 })
 
-iface = comp_cpu.setSubComponent("memory", "memHierarchy.memInterface")
+iface = comp_cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 comp_l1cache.addParams({

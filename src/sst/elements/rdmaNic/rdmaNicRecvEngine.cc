@@ -124,8 +124,8 @@ void RdmaNic::RecvEngine::processMsgHdr( RdmaNicNetworkEvent* pkt )
 	auto entry = queue->getQ().front();
 	queue->getQ().pop();
 	if ( entry->getPayloadLength() < hdr->payloadLength ) {
-		nic.out.fatal(CALL_INFO_LONG, -1, "%s, Error: incoming message (%zu) is too big for receive buffer (%zu)\n", 
-					nic.getName().c_str(), rqId,hdr->payloadLength, entry->getPayloadLength() );
+		nic.out.fatal(CALL_INFO_LONG, -1, "%s, Error: incoming message rqId=%d (%d) is too big for receive buffer (%zu)\n", 
+					nic.getName().c_str(), rqId, hdr->payloadLength, entry->getPayloadLength() );
 	}
 	Addr_t destAddr = entry->getAddr();
 	nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"key=%#x rqId=%d destAddr=%#x\n", hdr->data.msgKey, rqId, destAddr );
@@ -137,7 +137,7 @@ void RdmaNic::RecvEngine::processWriteHdr( RdmaNicNetworkEvent* pkt )
 {
     StreamHdr* hdr = (StreamHdr*) pkt->getData().data();
 	int rqId;
-    nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"memRgnKey=%#x offset=%zu\n", hdr->data.rdma.memRgnKey, hdr->data.rdma.offset );
+    nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"memRgnKey=%#x offset=%d\n", hdr->data.rdma.memRgnKey, hdr->data.rdma.offset );
 	MemRgnEntry* entry;
 	try {
 		entry = m_memRegionMap.at( hdr->data.rdma.memRgnKey );
@@ -155,7 +155,7 @@ void RdmaNic::RecvEngine::processWriteHdr( RdmaNicNetworkEvent* pkt )
 void RdmaNic::RecvEngine::processReadReqHdr( RdmaNicNetworkEvent* pkt ) 
 {
     StreamHdr* hdr = (StreamHdr*) pkt->getData().data();
-    nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"memRgnKey=%#x offset=%zu readLength=%zu\n", hdr->data.rdma.memRgnKey, hdr->data.rdma.offset, hdr->data.rdma.readLength );
+    nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"memRgnKey=%#x offset=%d readLength=%d\n", hdr->data.rdma.memRgnKey, hdr->data.rdma.offset, hdr->data.rdma.readLength );
 	
 	MemRgnEntry* memRgnEntry;
 	try {
@@ -176,7 +176,7 @@ void RdmaNic::RecvEngine::processReadReqHdr( RdmaNicNetworkEvent* pkt )
 void RdmaNic::RecvEngine::processReadRespHdr( RdmaNicNetworkEvent* pkt ) 
 {
     StreamHdr* hdr = (StreamHdr*) pkt->getData().data();
-    nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"readRespKey=%#x payloadLength=%zu\n", hdr->data.rdma.readRespKey, hdr->payloadLength );
+    nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"readRespKey=%#x payloadLength=%d\n", hdr->data.rdma.readRespKey, hdr->payloadLength );
 	ReadRespRecvEntry* entry;
 	try {
 		entry = m_readRespMap.at( hdr->data.rdma.readRespKey );
@@ -206,7 +206,7 @@ void RdmaNic::RecvEngine::processPayloadPkt( RdmaNicNetworkEvent* pkt )
 void RdmaNic::RecvStream::writeResp( int thread, StandardMem::Request* req ) {
 	StandardMem::WriteResp* resp = dynamic_cast<StandardMem::WriteResp*>(req);
 	bytesWritten += resp->size; 
-    nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"thread=%d btyes=%" PRIu64 " bytesWritten=%d\n",thread,resp->size,bytesWritten);
+        nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"thread=%d btyes=%" PRIu64 " bytesWritten=%zu\n",thread,resp->size,bytesWritten);
 	if ( ! resp->getSuccess() ) {
         nic.out.fatal(CALL_INFO_LONG, -1, " Error: write to address %#" PRIx64 " failed\n",resp->pAddr );
     }

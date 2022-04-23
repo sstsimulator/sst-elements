@@ -107,7 +107,7 @@ void Bus::sendSingleEvent(SST::Event* ev) {
     MemEventBase *event = static_cast<MemEventBase*>(ev);
 #ifdef __SST_DEBUG_OUTPUT__
     if (is_debug_event(event)) {
-        dbg_.debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
+        dbg_.debug(_L3_, "E: %-20" PRIu64 " %-20" PRId32 " %-20s Event:New     (%s)\n",
                 getCurrentSimCycle(), 0, getName().c_str(), event->getVerboseString().c_str());
         fflush(stdout);
     }

@@ -137,7 +137,9 @@
             case BusDmaFromHost: return "BusDmaFromHost";
             case HostBusWrite: return "HostBusWrite";
             case HostBusRead: return "HostBusRead";
+            default: return "";
             }
+            return "";
         }
      private:
         Op type;

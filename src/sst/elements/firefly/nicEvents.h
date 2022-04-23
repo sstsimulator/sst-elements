@@ -89,6 +89,7 @@ class NicShmemCmdEvent : public NicCmdBaseEvent {
             case Cswap:
             return "Cswap";
         }
+        return "";
     }
 
     NicShmemCmdEvent( Type type ) :

@@ -212,7 +212,7 @@ void RdmaNic::mmioWrite(StandardMem::Write* req) {
 		
 		offset -= m_perPeReqQueueMemSize;
 		memcpy( &m_compQueuesBacking[thread][ offset/sizeof(QueueIndex) ], req->data.data(), req->data.size() );
-		dbg.debug( CALL_INFO_LONG,2,DBG_X_FLAG,"Write of Comp Queue tail %d %x\n", offset/sizeof(QueueIndex), m_compQueuesBacking[thread][ offset/sizeof(QueueIndex) ]);
+		dbg.debug( CALL_INFO_LONG,2,DBG_X_FLAG,"Write of Comp Queue tail %llu %x\n", offset/sizeof(QueueIndex), m_compQueuesBacking[thread][ offset/sizeof(QueueIndex) ]);
 
 	} else { 
 

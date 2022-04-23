@@ -25,6 +25,8 @@
 #include "os/vnodeoshandler.h"
 
 #include "os/memmgr/vmemmgr.h"
+#include "os/vstartthreadreq.h"
+#include "os/vappruntimememory.h"
 
 using namespace SST::Interfaces;
 
@@ -84,6 +86,9 @@ private:
 
     StandardMem* mem_if;
     VanadisMemoryManager* memory_mgr;
+
+    VanadisELFInfo* elf_info;
+    AppRuntimeMemoryMod* appRuntimeMemory;
 
     SST::Output* output;
 };

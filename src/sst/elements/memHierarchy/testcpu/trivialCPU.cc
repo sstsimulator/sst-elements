@@ -18,7 +18,6 @@
 
 #include <sst/core/params.h>
 #include <sst/core/interfaces/stringEvent.h>
-#include <sst/core/interfaces/simpleMem.h>
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -75,14 +74,14 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     clockTC = registerClock( clockFreq, clockHandler );
 
 
-    memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::SimpleMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent));
+    memory = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::StandardMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent));
 
     if (!memory) {
         Params interfaceParams;
         interfaceParams.insert("port", "mem_link");
-        memory = loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
-                interfaceParams, clockTC, new Interfaces::SimpleMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent));
-        //out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.memInterface subcomponent\n");
+        memory = loadAnonymousSubComponent<Interfaces::StandardMem>("memHierarchy.standardInterface", "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
+                interfaceParams, clockTC, new Interfaces::StandardMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent));
+        //out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.standardInterface subcomponent\n");
     }
 
     clock_ticks = 0;
@@ -103,16 +102,16 @@ void trivialCPU::init(unsigned int phase)
 }
 
 // incoming events are scanned and deleted
-void trivialCPU::handleEvent(Interfaces::SimpleMem::Request *req)
+void trivialCPU::handleEvent(Interfaces::StandardMem::Request *req)
 {
-    std::map<uint64_t, SimTime_t>::iterator i = requests.find(req->id);
+    std::map<uint64_t, SimTime_t>::iterator i = requests.find(req->getID());
     if ( requests.end() == i ) {
-        out.fatal(CALL_INFO, -1, "Event (%" PRIx64 ") not found!\n", req->id);
+        out.fatal(CALL_INFO, -1, "Event (%" PRIx64 ") not found!\n", req->getID());
     } else {
         SimTime_t et = getCurrentSimTime() - i->second;
         requests.erase(i);
-        out.verbose(CALL_INFO, 2, 0, "%s: Received Request with command %d (addr 0x%" PRIx64 ") [Time: %" PRIu64 "] [%zu outstanding requests]\n",
-                    getName().c_str(), req->cmd, req->addr, et, requests.size());
+        out.verbose(CALL_INFO, 2, 0, "%s: Received Request: %s [Time: %" PRIu64 "] [%zu outstanding requests]\n",
+                    getName().c_str(), req->getString().c_str(), et, requests.size());
         num_reads_returned++;
     }
 
@@ -137,59 +136,59 @@ bool trivialCPU::clockTic( Cycle_t )
             if (maxReqsPerIssue > 1) reqsToSend += rng.generateNextUInt32() % maxReqsPerIssue;
             if (reqsToSend > (maxOutstanding - requests.size())) reqsToSend = maxOutstanding - requests.size();
             if (reqsToSend > numLS) reqsToSend = numLS;
+            	    
 
             for (int i = 0; i < reqsToSend; i++) {
 
-                Interfaces::SimpleMem::Addr addr = rng.generateNextUInt64();
-
-                Interfaces::SimpleMem::Request::Command cmd = Interfaces::SimpleMem::Request::Read;
+                Interfaces::StandardMem::Addr addr = rng.generateNextUInt64();
 
                 uint32_t instNum = rng.generateNextUInt32() % 20;
                 uint64_t size = 4;
                 std::string cmdString = "Read";
+                Interfaces::StandardMem::Request* req;
+
                 if (do_write && instNum < 2) {
-                    cmd = Interfaces::SimpleMem::Request::Write;
                     cmdString = "Write";
                     addr = ((addr % maxAddr)>>2) << 2;
+                    std::vector<uint8_t> data = { 
+                        static_cast<uint8_t>((addr >> 24) & 0xff), 
+                        static_cast<uint8_t>((addr >> 16) & 0xff), 
+                        static_cast<uint8_t>((addr >> 8) & 0xff), 
+                        static_cast<uint8_t>(addr & 0xff)
+                    };
+                    req = new Interfaces::StandardMem::Write(addr, 4 /* 4 bytes */, data);
                 } else if (do_flush && 2 == instNum) {
-                    cmd = Interfaces::SimpleMem::Request::FlushLine;
                     size = lineSize;
                     addr = ((addr % (maxAddr - noncacheableSize)>>2) << 2);
                     if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd)
                         addr += noncacheableRangeEnd;
                     addr = addr - (addr % lineSize);
+                    req = new Interfaces::StandardMem::FlushAddr(addr, size, false, 10);
                     cmdString = "FlushLine";
                 } else if (do_flush && 3 == instNum) {
-                    cmd = Interfaces::SimpleMem::Request::FlushLineInv;
                     size = lineSize;
                     addr = ((addr % (maxAddr - noncacheableRangeEnd)>>2) << 2) + noncacheableRangeEnd;
                     addr = ((addr % (maxAddr - noncacheableSize)>>2) << 2);
                     if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd)
                         addr += noncacheableRangeEnd;
                     addr = addr - (addr % lineSize);
+                    req = new Interfaces::StandardMem::FlushAddr(addr, size, true, 10);
                     cmdString = "FlushLineInv";
                 } else {
                     addr = ((addr % maxAddr)>>2) << 2;
+                    req = new Interfaces::StandardMem::Read(addr, 4);
+                    cmdString = "Read";
                 }
-
-                Interfaces::SimpleMem::Request *req = new Interfaces::SimpleMem::Request(cmd, addr, 4 /*4 bytes*/);
-		if ( cmd == Interfaces::SimpleMem::Request::Write ) {
-		    req->data.resize(4);
-                    req->data[0] = (addr >> 24) & 0xff;
-                    req->data[1] = (addr >> 16) & 0xff;
-                    req->data[2] = (addr >>  8) & 0xff;
-                    req->data[3] = (addr >>  0) & 0xff;
-	        }
 
                 bool noncacheable = ( addr >= noncacheableRangeStart && addr < noncacheableRangeEnd );
                 if ( noncacheable ) {
-                    req->flags |= Interfaces::SimpleMem::Request::F_NONCACHEABLE;
-                    if ( cmd == Interfaces::SimpleMem::Request::Write ) { ++noncacheableWrites; }
-                    else if (cmd == Interfaces::SimpleMem::Request::Read ) { ++noncacheableReads; }
+                    req->setNoncacheable();
+                    if ( cmdString == "Write" ) { ++noncacheableWrites; }
+                    else if (cmdString == "Read") { ++noncacheableReads; }
                 }
 
-		memory->sendRequest(req);
-		requests[req->id] =  getCurrentSimTime();
+		memory->send(req);
+		requests[req->getID()] =  getCurrentSimTime();
 
 		out.verbose(CALL_INFO, 2, 0, "%s: %d Issued %s%s for address 0x%" PRIx64 "\n",
                             getName().c_str(), numLS, noncacheable ? "Noncacheable " : "" , cmdString.c_str(), addr);
