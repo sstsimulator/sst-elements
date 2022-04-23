@@ -1,12 +1,9 @@
-CXX=mipsel-linux-musl-gcc
+PROGS=sqrt-double sqrt-float
 
-all: sqrt-double sqrt-float
-
-sqrt-double: sqrt-double.c
-	$(CXX) -o sqrt-double -O3 -static sqrt-double.c
-
-sqrt-float: sqrt-float.c
-	$(CXX) -o sqrt-float -O3 -static sqrt-float.c
+all:
+	@for prog in $(PROGS) ; do make -C $${prog} ARCH=mipsel ; done
+	@for prog in $(PROGS) ; do make -C $${prog} ARCH=riscv64 ; done
 
 clean:
-	rm sqrt-double sqrt-float
+	@for prog in $(PROGS) ; do make -C $${prog} ARCH=mipsel clean ; done
+	@for prog in $(PROGS) ; do make -C $${prog} ARCH=riscv64 clean ; done

@@ -1,35 +1,9 @@
-CC=mipsel-linux-musl-gcc
-CXX=mipsel-linux-musl-g++
+PROGS=hello-world hello-world-cpp openat printf-check read-write unlink unlinkat
 
-CFLAGS=-O3
-CXXFLAGS=-O3
-LDFLAGS=-static
-
-APPS=hello-world hello-world-CC printf-check read-write unlink unlinkat openat
-
-all: $(APPS)
-
-hello-world: hello-world.c
-	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $< 
-
-read-write: read-write.c
-	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $< 
-
-unlink: unlink.c
-	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $< 
-
-unlinkat: unlinkat.c
-	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $< 
-
-openat: openat.c
-	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $< 
-
-hello-world-CC: hello-world.cc
-	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $< 
-
-printf-check: printf-check.c
-	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $<
+all:
+	@for prog in $(PROGS) ; do make -C $${prog} ARCH=mipsel ; done
+	@for prog in $(PROGS) ; do make -C $${prog} ARCH=riscv64 ; done
 
 clean:
-	rm $(APPS)
-
+	@for prog in $(PROGS) ; do make -C $${prog} ARCH=mipsel clean ; done
+	@for prog in $(PROGS) ; do make -C $${prog} ARCH=riscv64 clean ; done

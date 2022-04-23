@@ -1,12 +1,9 @@
-CXX=mipsel-linux-musl-gcc
+PROGS=test-branch test-shift 
 
-all: test-branch test-shift
-
-test-branch: test-branch.c
-	$(CXX) -o test-branch -static test-branch.c
-
-test-shift: test-shift.c
-	$(CXX) -o test-shift -static test-shift.c
+all:
+	@for prog in $(PROGS) ; do make -C $${prog} ARCH=mipsel ; done
+	@for prog in $(PROGS) ; do make -C $${prog} ARCH=riscv64 ; done
 
 clean:
-	rm test-branch test-shift
+	@for prog in $(PROGS) ; do make -C $${prog} ARCH=mipsel clean ; done
+	@for prog in $(PROGS) ; do make -C $${prog} ARCH=riscv64 clean ; done
