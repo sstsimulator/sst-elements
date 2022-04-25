@@ -173,46 +173,38 @@ EXTRA_DIST = \
 	tests/small/basic-io/Makefile \
 	tests/small/basic-io/hello-world/Makefile \
 	tests/small/basic-io/hello-world/hello-world.c \
-	tests/small/basic-io/hello-world/mipsel/sst.stderr.gold \
 	tests/small/basic-io/hello-world/mipsel/sst.stdout.gold \
 	tests/small/basic-io/hello-world/mipsel/vanadis.stderr.gold \
 	tests/small/basic-io/hello-world/mipsel/vanadis.stdout.gold \
-	tests/small/basic-io/hello-world/riscv64/sst.stderr.gold \
 	tests/small/basic-io/hello-world/riscv64/sst.stdout.gold \
 	tests/small/basic-io/hello-world/riscv64/vanadis.stderr.gold \
 	tests/small/basic-io/hello-world/riscv64/vanadis.stdout.gold \
 \
 	tests/small/basic-io/hello-world-cpp/Makefile \
 	tests/small/basic-io/hello-world-cpp/hello-world-cpp.cc \
-	tests/small/basic-io/hello-world-cpp/mipsel/sst.stderr.gold \
-	tests/small/basic-io/hello-world-cpp/mipsel/sst.stdout.gold \
 	tests/small/basic-io/hello-world-cpp/mipsel/vanadis.stderr.gold \
 	tests/small/basic-io/hello-world-cpp/mipsel/vanadis.stdout.gold \
 \
     tests/small/basic-io/printf-check/Makefile \
     tests/small/basic-io/printf-check/printf-check.c \
 	tests/small/basic-io/printf-check/mipsel/sst.stdout.gold \
-    tests/small/basic-io/printf-check/mipsel/sst.stderr.gold \
 	tests/small/basic-io/printf-check/mipsel/vanadis.stdout.gold \
     tests/small/basic-io/printf-check/mipsel/vanadis.stderr.gold \
 \ 
     tests/small/basic-io/unlinkat/Makefile \
     tests/small/basic-io/unlinkat/unlinkat.c \
-    tests/small/basic-io/unlinkat/mipsel/sst.stderr.gold \
     tests/small/basic-io/unlinkat/mipsel/sst.stdout.gold \
     tests/small/basic-io/unlinkat/mipsel/vanadis.stderr.gold \
     tests/small/basic-io/unlinkat/mipsel/vanadis.stdout.gold \
 \
     tests/small/basic-io/unlink/Makefile \
     tests/small/basic-io/unlink/unlink.c \
-    tests/small/basic-io/unlink/mipsel/sst.stderr.gold \
     tests/small/basic-io/unlink/mipsel/sst.stdout.gold \
     tests/small/basic-io/unlink/mipsel/vanadis.stderr.gold \
     tests/small/basic-io/unlink/mipsel/vanadis.stdout.gold \
 \
     tests/small/basic-io/openat/Makefile \
     tests/small/basic-io/openat/openat.c \
-    tests/small/basic-io/openat/mipsel/sst.stderr.gold \
     tests/small/basic-io/openat/mipsel/sst.stdout.gold \
     tests/small/basic-io/openat/mipsel/vanadis.stderr.gold \
     tests/small/basic-io/openat/mipsel/vanadis.stdout.gold \
@@ -223,14 +215,12 @@ EXTRA_DIST = \
 	tests/small/basic-math/Makefile \
 	tests/small/basic-math/sqrt-double/Makefile \
 	tests/small/basic-math/sqrt-double/sqrt-double.c \
-	tests/small/basic-math/sqrt-double/mipsel/sst.stderr.gold \
 	tests/small/basic-math/sqrt-double/mipsel/sst.stdout.gold \
 	tests/small/basic-math/sqrt-double/mipsel/vanadis.stderr.gold \
 	tests/small/basic-math/sqrt-double/mipsel/vanadis.stdout.gold \
 \
 	tests/small/basic-math/sqrt-float/Makefile \
 	tests/small/basic-math/sqrt-float/sqrt-float.c \
-	tests/small/basic-math/sqrt-float/mipsel/sst.stderr.gold \
 	tests/small/basic-math/sqrt-float/mipsel/sst.stdout.gold \
 	tests/small/basic-math/sqrt-float/mipsel/vanadis.stderr.gold \
 	tests/small/basic-math/sqrt-float/mipsel/vanadis.stdout.gold \
@@ -238,14 +228,12 @@ EXTRA_DIST = \
 	tests/small/basic-ops/Makefile \
 	tests/small/basic-ops/test-branch/Makefile \
 	tests/small/basic-ops/test-branch/test-branch.c \
-	tests/small/basic-ops/test-branch/mipsel/sst.stderr.gold \
 	tests/small/basic-ops/test-branch/mipsel/sst.stdout.gold \
 	tests/small/basic-ops/test-branch/mipsel/vanadis.stderr.gold \
 	tests/small/basic-ops/test-branch/mipsel/vanadis.stdout.gold \
 \
 	tests/small/basic-ops/test-shift/Makefile \
 	tests/small/basic-ops/test-shift/test-shift.c \
-	tests/small/basic-ops/test-shift/mipsel/sst.stderr.gold \
 	tests/small/basic-ops/test-shift/mipsel/sst.stdout.gold \
 	tests/small/basic-ops/test-shift/mipsel/vanadis.stderr.gold \
 	tests/small/basic-ops/test-shift/mipsel/vanadis.stdout.gold \
