@@ -183,8 +183,6 @@ EXTRA_DIST = \
 	tests/small/basic-io/hello-world/riscv64/vanadis.stdout.gold \
 	tests/small/basic-io/hello-world-cpp/Makefile \
 	tests/small/basic-io/hello-world-cpp/hello-world-cpp.cc \
-	tests/small/basic-io/hello-world-cpp/mipsel/sst.stderr.gold \
-	tests/small/basic-io/hello-world-cpp/mipsel/sst.stdout.gold \
 	tests/small/basic-io/hello-world-cpp/mipsel/vanadis.stderr.gold \
 	tests/small/basic-io/hello-world-cpp/mipsel/vanadis.stdout.gold \
     tests/small/basic-io/printf-check/Makefile \
