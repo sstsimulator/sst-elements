@@ -190,7 +190,7 @@ EXTRA_DIST = \
 	tests/small/basic-io/printf-check/mipsel/sst.stdout.gold \
 	tests/small/basic-io/printf-check/mipsel/vanadis.stdout.gold \
     tests/small/basic-io/printf-check/mipsel/vanadis.stderr.gold \
-\ 
+\
     tests/small/basic-io/unlinkat/Makefile \
     tests/small/basic-io/unlinkat/unlinkat.c \
     tests/small/basic-io/unlinkat/mipsel/sst.stdout.gold \
