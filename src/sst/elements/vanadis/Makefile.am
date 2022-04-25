@@ -214,8 +214,6 @@ EXTRA_DIST = \
 	tests/small/basic-math/Makefile \
 	tests/small/basic-math/sqrt-double/Makefile \
 	tests/small/basic-math/sqrt-double/sqrt-double.c \
-	tests/small/basic-math/sqrt-double/mipsel/sst.stderr.gold \
-	tests/small/basic-math/sqrt-double/mipsel/sst.stdout.gold \
 	tests/small/basic-math/sqrt-double/mipsel/vanadis.stderr.gold \
 	tests/small/basic-math/sqrt-double/mipsel/vanadis.stdout.gold \
 	tests/small/basic-math/sqrt-float/Makefile \
