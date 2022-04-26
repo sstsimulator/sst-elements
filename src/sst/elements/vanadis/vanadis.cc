@@ -21,6 +21,8 @@
 #include "inst/vinstall.h"
 #include "velf/velfinfo.h"
 
+#include "os/resp/vosexitresp.h"
+
 #include <cstdio>
 #include <sst/core/output.h>
 #include <vector>
@@ -77,6 +79,11 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     halted_masks = new bool[hw_threads];
 
+    os_link = configureLink("os_link", "0ns", new Event::Handler<VANADIS_COMPONENT>(this, &VANADIS_COMPONENT::recvOSEvent));
+    if ( nullptr == os_link ) {
+        output->fatal(CALL_INFO, -1, "Error: was unable to configureLink %s \n", "os_link");
+    }
+
     //////////////////////////////////////////////////////////////////////////////////////
 
     char* decoder_name = new char[64];
@@ -89,7 +96,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 		  fp_flags.push_back(new VanadisFloatingPointFlags());
 		  thr_decoder->setFPFlags(fp_flags[i]);
 
-        //		thr_decoder->setHardwareThread( i );
+        //     thr_decoder->setHardwareThread( i );
 
         output->verbose(
             CALL_INFO, 8, 0, "Loading decoder%" PRIu32 ": %s.\n", i,
@@ -105,10 +112,8 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
         thr_decoder->setHardwareThread(i);
         thread_decoders.push_back(thr_decoder);
 
-        output->verbose(CALL_INFO, 8, 0, "Registering SYSCALL return interface...\n");
-        std::function<void(uint32_t)> sys_callback =
-            std::bind(&VANADIS_COMPONENT::syscallReturnCallback, this, std::placeholders::_1);
-        thread_decoders[i]->getOSHandler()->registerReturnCallback(sys_callback);
+
+        thread_decoders[i]->getOSHandler()->setOS_link(os_link);
 
         if ( 0 == thread_decoders[i]->getInsCacheLineWidth() ) {
             output->verbose(
@@ -354,19 +359,11 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     }
 
     //////////////////////////////////////////////////////////////////////////////////////
-
-    std::function<void(uint32_t, int64_t)> haltThreadCB =
-        std::bind(&VANADIS_COMPONENT::setHalt, this, std::placeholders::_1, std::placeholders::_2);
-    std::function<void(int, uint64_t, uint64_t)> startThreadCB =
-        std::bind(&VANADIS_COMPONENT::startThread, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-
     for ( uint32_t i = 0; i < hw_threads; ++i ) {
         thread_decoders[i]->getOSHandler()->setCoreID(core_id);
         thread_decoders[i]->getOSHandler()->setHWThread(i);
         thread_decoders[i]->getOSHandler()->setRegisterFile(register_files[i]);
         thread_decoders[i]->getOSHandler()->setISATable(retire_isa_tables[i]);
-        thread_decoders[i]->getOSHandler()->setHaltThreadCallback(haltThreadCB);
-        thread_decoders[i]->getOSHandler()->setStartThreadCallback(startThreadCB);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////
@@ -381,7 +378,6 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     //	// otherwise leave the mask fully open.
     //	lsq->setMaxAddressMask( max_addr_mask );
 
-    handlingSysCall   = false;
     fetches_per_cycle = params.find<uint32_t>("fetches_per_cycle", 2);
     decodes_per_cycle = params.find<uint32_t>("decodes_per_cycle", 2);
     issues_per_cycle  = params.find<uint32_t>("issues_per_cycle", 2);
@@ -1022,10 +1018,14 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                         "(ins-addr: 0x%0llx)...\n",
                         the_syscall_ins->getInstructionAddress());
 #endif
-                    thread_decoders[rob_front->getHWThread()]->getOSHandler()->handleSysCall(the_syscall_ins);
+                    bool ret = thread_decoders[rob_front->getHWThread()]->getOSHandler()->handleSysCall(the_syscall_ins);
 
                     // mark as front of ROB now we can proceed
                     rob_front->markFrontOfROB();
+
+                    if ( ret ) {
+                        syscallReturn( 0 );
+                    }
                 }
 
                 // We spent this cycle waiting on an issued SYSCALL, it has not resolved
@@ -1793,8 +1793,17 @@ VANADIS_COMPONENT::init(unsigned int phase)
     //	memDataInterface->init( phase );
     memInstInterface->init(phase);
 
-    for ( VanadisDecoder* next_decoder : thread_decoders ) {
-        next_decoder->init( phase );
+    while (SST::Event* ev = os_link->recvInitData()) {
+
+        VanadisStartThreadReq * req = dynamic_cast<VanadisStartThreadReq*>(ev);
+        if (nullptr == req) {
+             output->fatal(CALL_INFO, -1, "Error - event cannot be converted to syscall\n");
+        }
+
+        output->verbose(CALL_INFO, 8, 0,
+                            "received start thread %d command from the operating system \n",req->getThread());
+        startThread(req->getThread(), req->getStackStart(), req->getInstructionPointer());
+        delete ev;
     }
 
     output->verbose(CALL_INFO, 2, 0, "End: init-phase: %" PRIu32 "...\n", (uint32_t)phase);
@@ -1928,7 +1937,7 @@ VANADIS_COMPONENT::clearROBMisspeculate(const uint32_t hw_thr)
 }
 
 void
-VANADIS_COMPONENT::syscallReturnCallback(uint32_t thr)
+VANADIS_COMPONENT::syscallReturn(uint32_t thr)
 {
     if ( rob[thr]->empty() ) {
         output->fatal(CALL_INFO, -1, "Error - syscall return called on thread: %" PRIu32 " but ROB is empty.\n", thr);
@@ -1953,9 +1962,53 @@ VANADIS_COMPONENT::syscallReturnCallback(uint32_t thr)
 #endif
     syscall_ins->markExecuted();
 
-    // Set back to false ready for the next SYSCALL
-    handlingSysCall = false;
-
     // re-register the CPU clock, it will fire on the next cycle
     reregisterClock(cpuClockTC, cpuClockHandler);
 }
+
+void VANADIS_COMPONENT::recvOSEvent(SST::Event* ev) {
+    output->verbose(CALL_INFO, 8, 0, "-> recv os response\n");
+
+    VanadisSyscallResponse* os_resp = dynamic_cast<VanadisSyscallResponse*>(ev);
+
+    if (nullptr != os_resp) {
+        int hw_thr = os_resp->getHWThread();
+
+        output->verbose(CALL_INFO, 8, 0, "hw_thread %d: syscall return-code: %" PRId64 " (success: %3s)\n",
+                        hw_thr, os_resp->getReturnCode(), os_resp->isSuccessful() ? "yes" : "no");
+        output->verbose(CALL_INFO, 8, 0, "-> issuing call-backs to clear syscall ROB stops...\n");
+        
+        thread_decoders[hw_thr]->getOSHandler()->recvSyscallResp ( os_resp ); 
+        syscallReturn( hw_thr );
+#if 0
+        for (int i = 0; i < returnCallbacks.size(); ++i) {
+            returnCallbacks[i](hw_thr);
+        }
+#endif
+    } else {
+        VanadisStartThreadReq* os_req = dynamic_cast<VanadisStartThreadReq*>(ev);
+
+        if ( nullptr != os_req ) {
+            output->verbose(CALL_INFO, 8, 0,
+                            "received start thread %d command from the operating system \n",os_req->getThread());
+            startThread(os_req->getThread(), os_req->getStackStart(), os_req->getInstructionPointer());
+        } else {
+
+            VanadisExitResponse* os_exit = dynamic_cast<VanadisExitResponse*>(ev);
+
+            if ( nullptr != os_exit ) {
+                output->verbose(CALL_INFO, 8, 0,
+                            "received an exit command from the operating system for hw_thr %d "
+                            "(return-code: %" PRId64 " )\n",
+                            os_exit->getHWThread(),
+                            os_exit->getReturnCode());
+
+                setHalt(os_exit->getHWThread(), os_exit->getReturnCode());
+            } else { 
+                assert(0);
+            }
+        } 
+        delete ev;
+    }
+}
+
