@@ -25,7 +25,7 @@ namespace Vanadis {
 
 class VanadisHandlerState {
 public:
-    VanadisHandlerState(uint32_t verb) {
+    VanadisHandlerState(uint32_t verb) : hw_thr(-1) {
         output = new SST::Output("[os-func-handler]: ", verb, 0, SST::Output::STDOUT);
         completed = false;
     }
@@ -36,10 +36,13 @@ public:
     virtual VanadisSyscallResponse* generateResponse() = 0;
     virtual bool isComplete() const { return completed; }
     virtual void markComplete() { completed = true; }
+    void setHWThread( int thr ) { hw_thr = thr; }
+    int getHWThread() { assert( hw_thr > -1 ); return hw_thr; } 
 
 protected:
     SST::Output* output;
     bool completed;
+    int hw_thr;
 };
 
 } // namespace Vanadis
