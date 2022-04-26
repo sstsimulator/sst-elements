@@ -18,8 +18,6 @@
 
 #include <functional>
 
-#include "os/resp/voscallresp.h"
-#include "os/resp/vosexitresp.h"
 #include "os/vnodeos.h"
 #include "os/voscallev.h"
 #include "os/velfloader.h"
