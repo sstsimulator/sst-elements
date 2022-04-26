@@ -17,8 +17,6 @@
 #define _H_VANADIS_RISCV_CPU_OS
 
 #include "os/callev/voscallall.h"
-#include "os/resp/voscallresp.h"
-#include "os/resp/vosexitresp.h"
 #include "os/vcpuos.h"
 #include "os/voscallev.h"
 #include <functional>
@@ -101,21 +99,16 @@ public:
                                           "Provides SYSCALL handling for a RISCV-based decoding core",
                                           SST::Vanadis::VanadisCPUOSHandler)
 
-    SST_ELI_DOCUMENT_PORTS({ "os_link", "Connects this handler to the main operating system of the node", {} })
-
     SST_ELI_DOCUMENT_PARAMS({ "brk_zero_memory", "Zero memory during OS calls to brk", "0" })
 
     VanadisRISCV64OSHandler(ComponentId_t id, Params& params) : VanadisCPUOSHandler(id, params) {
-
-        os_link = configureLink("os_link", "0ns",
-                                new Event::Handler<VanadisRISCV64OSHandler>(this, &VanadisRISCV64OSHandler::recvOSEvent));
 
         brk_zero_memory = params.find<bool>("brk_zero_memory", false);
     }
 
     virtual ~VanadisRISCV64OSHandler() {}
 
-    virtual void handleSysCall(VanadisSysCallInstruction* syscallIns) {
+    virtual bool handleSysCall(VanadisSysCallInstruction* syscallIns) {
         const uint16_t call_link_reg = isaTable->getIntPhysReg(31);
         uint64_t call_link_value = regFile->getIntReg<uint64_t>(call_link_reg);
         output->verbose(CALL_INFO, 8, 0, "System Call (syscall-ins: 0x%0llx, link-reg: 0x%llx)\n",
@@ -204,9 +197,11 @@ public:
             const uint16_t rc_reg = isaTable->getIntPhysReg(VANADIS_SYSCALL_RISCV_RET_REG);
             regFile->setIntReg(rc_reg, (uint64_t)0);
 
+#if 0
             for (int i = 0; i < returnCallbacks.size(); ++i) {
                 returnCallbacks[i](hw_thr);
             }
+#endif
         } break;
 
         case VANADIS_SYSCALL_RISCV_UNAME: {
@@ -321,7 +316,7 @@ public:
             setThreadID(new_tid);
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found call to set_tid( %" PRId64 " / 0x%llx )\n", new_tid, new_tid);
 
-            recvOSEvent(new VanadisSyscallResponse(new_tid));
+            recvSyscallResp(new VanadisSyscallResponse(new_tid));
         } break;
 
         case VANADIS_SYSCALL_RISCV_MADVISE: {
@@ -340,7 +335,7 @@ public:
                             advise_addr, advise_len, advise_advice);
 
             // output->fatal(CALL_INFO, -1, "STOP\n");
-            recvOSEvent(new VanadisSyscallResponse(0));
+            recvSyscallResp(new VanadisSyscallResponse(0));
         } break;
 
         case VANADIS_SYSCALL_RISCV_FUTEX: {
@@ -365,7 +360,7 @@ public:
                             ", sp: 0x%llx (arg-count is greater than 4))\n",
                             futex_addr, futex_op, futex_val, futex_timeout_addr, stack_ptr);
 
-            recvOSEvent(new VanadisSyscallResponse(0));
+            recvSyscallResp(new VanadisSyscallResponse(0));
         } break;
 
         case VANADIS_SYSCALL_RISCV_IOCTL: {
@@ -428,7 +423,7 @@ public:
             output->fatal(CALL_INFO, -1, "STOP\n");
 
             if ((0 == map_addr) && (0 == map_len)) {
-                recvOSEvent(new VanadisSyscallResponse(-22));
+                recvSyscallResp(new VanadisSyscallResponse(-22));
             } else {
             }
         } break;
@@ -445,7 +440,7 @@ public:
                             unmap_addr, unmap_len);
 
             if ((0 == unmap_addr)) {
-                recvOSEvent(new VanadisSyscallResponse(-22));
+                recvSyscallResp(new VanadisSyscallResponse(-22));
             } else {
                 call_ev = new VanadisSyscallMemoryUnMapEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, unmap_addr, unmap_len);
             }
@@ -511,7 +506,7 @@ public:
                             ")\n",
                             how, signal_set_in, signal_set_out, signal_set_size);
 
-            recvOSEvent(new VanadisSyscallResponse(0));
+            recvSyscallResp(new VanadisSyscallResponse(0));
         } break;
 
         default: {
@@ -526,9 +521,35 @@ public:
 
         if (nullptr != call_ev) {
             output->verbose(CALL_INFO, 8, 0, "Sending event to operating system...\n");
-            os_link->send(call_ev);
+            sendSyscallEvent(call_ev);
+            return false;
+        } else {
+            return true;
         }
     }
+
+    void recvSyscallResp( VanadisSyscallResponse* os_resp ) {
+        output->verbose(CALL_INFO, 8, 0, "syscall return-code: %" PRId64 " (success: %3s)\n",
+                            os_resp->getReturnCode(), os_resp->isSuccessful() ? "yes" : "no");
+        output->verbose(CALL_INFO, 8, 0, "-> issuing call-backs to clear syscall ROB stops...\n");
+
+        // Set up the return code (according to ABI, this goes in r2)
+        const uint16_t rc_reg = isaTable->getIntPhysReg(VANADIS_SYSCALL_RISCV_RET_REG);
+        const int64_t rc_val = (int64_t)os_resp->getReturnCode();
+        regFile->setIntReg(rc_reg, rc_val);
+
+//            if (os_resp->isSuccessful()) {
+//                if (rc_val < 0) {
+//                    writeSyscallResult(false);
+//                } else {
+//                    // Generate correct markers for OS return code checks
+//                    writeSyscallResult(os_resp->isSuccessful());
+//                }
+//            } else {
+//                writeSyscallResult(false);
+//            }
+    }
+
 
 protected:
 /*
@@ -554,61 +575,6 @@ protected:
         }
     }
 */
-    void recvOSEvent(SST::Event* ev) {
-        output->verbose(CALL_INFO, 8, 0, "-> recv os response\n");
-
-        VanadisSyscallResponse* os_resp = dynamic_cast<VanadisSyscallResponse*>(ev);
-
-        if (nullptr != os_resp) {
-            output->verbose(CALL_INFO, 8, 0, "syscall return-code: %" PRId64 " (success: %3s)\n",
-                            os_resp->getReturnCode(), os_resp->isSuccessful() ? "yes" : "no");
-            output->verbose(CALL_INFO, 8, 0, "-> issuing call-backs to clear syscall ROB stops...\n");
-
-            // Set up the return code (according to ABI, this goes in r2)
-            const uint16_t rc_reg = isaTable->getIntPhysReg(VANADIS_SYSCALL_RISCV_RET_REG);
-            const int64_t rc_val = (int64_t)os_resp->getReturnCode();
-            regFile->setIntReg(rc_reg, rc_val);
-
-//            if (os_resp->isSuccessful()) {
-//                if (rc_val < 0) {
-//                    writeSyscallResult(false);
-//                } else {
-//                    // Generate correct markers for OS return code checks
-//                    writeSyscallResult(os_resp->isSuccessful());
-//                }
-//            } else {
-//                writeSyscallResult(false);
-//            }
-
-            for (int i = 0; i < returnCallbacks.size(); ++i) {
-                returnCallbacks[i](hw_thr);
-            }
-        } else {
-            VanadisStartThreadReq* os_req = dynamic_cast<VanadisStartThreadReq*>(ev);
- 
-            if ( nullptr != os_req ) {
-                output->verbose(CALL_INFO, 8, 0,
-                            "received start thread %d command from the operating system \n",os_req->getThread());
-                startThrCallBack(os_req->getThread(), os_req->getStackStart(), os_req->getInstructionPointer());
-            } else {
-
-                VanadisExitResponse* os_exit = dynamic_cast<VanadisExitResponse*>(ev);
-
-                if ( nullptr != os_exit ) {
-                    output->verbose(CALL_INFO, 8, 0,
-                             "received an exit command from the operating system "
-                             "(return-code: %" PRId64 " )\n",
-                             os_exit->getReturnCode());
- 
-                    haltThrCallBack(hw_thr, os_exit->getReturnCode());
-                } else { 
-                    assert(0);
-                }
-            } 
-        }
-
-        delete ev;
-    }
 
    uint64_t convertFlags( uint64_t flags ) {
         uint64_t out = 0;
