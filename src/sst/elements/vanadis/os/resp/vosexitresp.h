@@ -24,21 +24,25 @@ namespace Vanadis {
 class VanadisExitResponse : public SST::Event {
 
 public:
-    VanadisExitResponse() : SST::Event(), return_code(0) {}
-    VanadisExitResponse(int64_t rc) : SST::Event(), return_code(rc) {}
+    VanadisExitResponse() : SST::Event(), hw_thr(-1), return_code(0) {}
+    VanadisExitResponse(int64_t rc) : SST::Event(), hw_thr(-1), return_code(rc) {}
     ~VanadisExitResponse() {}
 
     int64_t getReturnCode() const { return return_code; }
+    void setHWThread( int thr ) { hw_thr = thr; }
+    int getHWThread() const { assert(hw_thr>-1); return hw_thr; }
 
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
         ser& return_code;
+        ser& hw_thr;
     }
 
     ImplementSerializable(SST::Vanadis::VanadisExitResponse);
 
     int64_t return_code;
+    int hw_thr;
 };
 
 } // namespace Vanadis
