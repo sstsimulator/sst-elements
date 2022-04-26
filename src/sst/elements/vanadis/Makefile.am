@@ -122,7 +122,6 @@ os/vosbittype.h \
 os/voscallev.h \
 os/voscallfunc.h \
 os/vriscvcpuos.h \
-os/voscallresp.h \
 os/vstartthreadreq.h \
 os/callev/voscallaccessev.h \
 os/callev/voscallall.h \
