@@ -1024,7 +1024,7 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                     rob_front->markFrontOfROB();
 
                     if ( ret ) {
-                        syscallReturn( 0 );
+                        syscallReturn( rob_front->getHWThread() );
                     }
                 }
 
