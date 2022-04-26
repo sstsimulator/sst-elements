@@ -1797,7 +1797,7 @@ VANADIS_COMPONENT::init(unsigned int phase)
 
         VanadisStartThreadReq * req = dynamic_cast<VanadisStartThreadReq*>(ev);
         if (nullptr == req) {
-             output->fatal(CALL_INFO, -1, "Error - event cannot be converted to syscall\n");
+             output->fatal(CALL_INFO, -1, "Error - event cannot be StartThreadReq\n");
         }
 
         output->verbose(CALL_INFO, 8, 0,
