@@ -151,6 +151,7 @@ public:
             sendBlockToMemory(uname_ev->getUnameInfoAddress(), uname_payload);
 
             handler_state = new VanadisUnameHandlerState(output->getVerboseLevel());
+            handler_state->setHWThread( sys_ev->getThreadID() );
         } break;
 
         case SYSCALL_OP_FSTAT: {
@@ -209,12 +210,14 @@ public:
 
                 handler_state = new VanadisFstatHandlerState(output->getVerboseLevel(), fstat_ev->getFileHandle(),
                                                              fstat_ev->getStructAddress());
+                handler_state->setHWThread( sys_ev->getThreadID() );
             } else {
                 output->verbose(CALL_INFO, 16, 0, "[syscall-fstat] - response is operation failed code: %" PRId32 "\n",
                                 fstat_return_code);
 
                 VanadisSyscallResponse* resp = new VanadisSyscallResponse(fstat_return_code);
                 resp->markFailed();
+                resp->setHWThread( sys_ev->getThreadID() );
 
                 core_link->send(resp);
             }
@@ -232,6 +235,7 @@ public:
             output->verbose( CALL_INFO, 16, 0, "[syscall-unlink] -> call is unlink( %" PRId64 " )\n", event->getPathPointer());
 
             handler_state = new VanadisUnlinkHandlerState( output->getVerboseLevel(), event->getPathPointer(), handlerSendMemCallback);
+            handler_state->setHWThread( sys_ev->getThreadID() );
 
             const uint64_t first_read_len = vanadis_line_remainder( event->getPathPointer(), 64 );
 
@@ -257,6 +261,7 @@ public:
                     output->verbose(CALL_INFO, 16, 0, "can't find dirFd=%d in unlink file descriptor table\n", dirFd);
                     VanadisSyscallResponse* resp = new VanadisSyscallResponse(-EBADF);
                     resp->markFailed();
+                    resp->setHWThread( sys_ev->getThreadID() );
                     core_link->send(resp);
                     break;
                 }
@@ -269,6 +274,7 @@ public:
                 event->getDirectoryFileDescriptor(), event->getPathPointer(), event->getFlags());
 
             handler_state = new VanadisUnlinkatHandlerState( output->getVerboseLevel(), dirFd, event->getPathPointer(), event->getFlags(),handlerSendMemCallback);
+            handler_state->setHWThread( sys_ev->getThreadID() );
 
             const uint64_t first_read_len = vanadis_line_remainder( event->getPathPointer(), 64 );
 
@@ -296,6 +302,7 @@ public:
                     output->verbose(CALL_INFO, 16, 0, "can't find dirFd=%d in open file descriptor table\n", dirFd);
                     VanadisSyscallResponse* resp = new VanadisSyscallResponse(-EBADF);
                     resp->markFailed();
+                    resp->setHWThread( sys_ev->getThreadID() );
                     core_link->send(resp);
                     break;
                 }
@@ -311,6 +318,7 @@ public:
             handler_state = new VanadisOpenAtHandlerState(
                 output->getVerboseLevel(), dirFd, openat_ev->getPathPointer(),
                 openat_ev->getFlags(), openat_ev->getMode(), &file_descriptors, handlerSendMemCallback);
+            handler_state->setHWThread( sys_ev->getThreadID() );
 
             const uint64_t start_read_len = vanadis_line_remainder( openat_ev->getPathPointer(), 64 );
 
@@ -339,6 +347,7 @@ public:
             if (close_file_itr == file_descriptors.end()) {
                 // return failure of a EBADF (bad file descriptor)
                 resp = new VanadisSyscallResponse(-9);
+                resp->setHWThread( sys_ev->getThreadID() );
                 resp->markFailed();
             } else {
                 // this will automatically close any open file handles
@@ -348,6 +357,7 @@ public:
                 file_descriptors.erase(close_file_itr);
 
                 resp = new VanadisSyscallResponse(0);
+                resp->setHWThread( sys_ev->getThreadID() );
             }
 
             core_link->send(resp);
@@ -369,6 +379,7 @@ public:
             handler_state
                 = new VanadisOpenHandlerState(output->getVerboseLevel(), open_ev->getPathPointer(), open_ev->getFlags(),
                                               open_ev->getMode(), &file_descriptors, handlerSendMemCallback);
+            handler_state->setHWThread( sys_ev->getThreadID() );
 
             const uint64_t start_read_len = vanadis_line_remainder( open_ev->getPathPointer(), 64 );
 
@@ -401,6 +412,7 @@ public:
 
                 // EINVAL = 22
                 VanadisSyscallResponse* resp = new VanadisSyscallResponse(-22);
+                resp->setHWThread( sys_ev->getThreadID() );
                 core_link->send(resp);
             } else {
 
@@ -411,13 +423,16 @@ public:
                     handler_state = new VanadisReadvHandlerState(
                         output->getVerboseLevel(), readv_ev->getOSBitType(), readv_ev->getIOVecAddress(),
                         readv_ev->getIOVecCount(), file_des->second->getFileDescriptor(), send_req_func);
+                    handler_state->setHWThread( sys_ev->getThreadID() );
 
                 } else if (readv_ev->getIOVecCount() == 0) {
                     VanadisSyscallResponse* resp = new VanadisSyscallResponse(0);
+                    resp->setHWThread( sys_ev->getThreadID() );
                     core_link->send(resp);
                 } else {
                     // EINVAL = 22
                     VanadisSyscallResponse* resp = new VanadisSyscallResponse(-22);
+                    resp->setHWThread( sys_ev->getThreadID() );
                     core_link->send(resp);
                 }
             }
@@ -444,6 +459,7 @@ public:
 
                 // EINVAL = 22
                 VanadisSyscallResponse* resp = new VanadisSyscallResponse(-22);
+                resp->setHWThread( sys_ev->getThreadID() );
                 core_link->send(resp);
             } else {
                 if (read_ev->getBufferCount() > 0) {
@@ -454,9 +470,11 @@ public:
                     handler_state = new VanadisReadHandlerState(
                         output->getVerboseLevel(), file_des->second->getFileDescriptor(),
                         read_ev->getBufferAddress(), read_ev->getBufferCount(), send_req_func);
+                    handler_state->setHWThread( sys_ev->getThreadID() );
 
                 } else {
                     VanadisSyscallResponse* resp = new VanadisSyscallResponse(0);
+                    resp->setHWThread( sys_ev->getThreadID() );
                     core_link->send(resp);
                 }
             }
@@ -485,6 +503,7 @@ public:
                 handler_state = new VanadisReadLinkHandlerState(
                     output->getVerboseLevel(), readlink_ev->getPathPointer(), readlink_ev->getBufferPointer(),
                     readlink_ev->getBufferSize(), send_req_func, send_block_func);
+                handler_state->setHWThread( sys_ev->getThreadID() );
 
                 uint64_t line_remain = vanadis_line_remainder(readlink_ev->getPathPointer(), 64);
 
@@ -493,9 +512,11 @@ public:
 
             } else if (readlink_ev->getBufferSize() == 0) {
                 VanadisSyscallResponse* resp = new VanadisSyscallResponse(0);
+                resp->setHWThread( sys_ev->getThreadID() );
                 core_link->send(resp);
             } else {
                 VanadisSyscallResponse* resp = new VanadisSyscallResponse(-22);
+                resp->setHWThread( sys_ev->getThreadID() );
                 core_link->send(resp);
             }
 
@@ -524,6 +545,7 @@ public:
 
                 // EINVAL = 22
                 VanadisSyscallResponse* resp = new VanadisSyscallResponse(-22);
+                resp->setHWThread( sys_ev->getThreadID() );
                 core_link->send(resp);
             } else {
 
@@ -534,6 +556,7 @@ public:
                     handler_state = new VanadisWritevHandlerState(
                         output->getVerboseLevel(), writev_ev->getOSBitType(), writev_ev->getIOVecAddress(),
                         writev_ev->getIOVecCount(), file_des->second->getFileDescriptor(), send_req_func);
+                    handler_state->setHWThread( sys_ev->getThreadID() );
 
                     // Launch read of the initial iovec info
 						  switch(writev_ev->getOSBitType()) {
@@ -549,10 +572,12 @@ public:
 						  }
                 } else if (writev_ev->getIOVecCount() == 0) {
                     VanadisSyscallResponse* resp = new VanadisSyscallResponse(0);
+                    resp->setHWThread( sys_ev->getThreadID() );
                     core_link->send(resp);
                 } else {
                     // EINVAL = 22
                     VanadisSyscallResponse* resp = new VanadisSyscallResponse(-22);
+                    resp->setHWThread( sys_ev->getThreadID() );
                     core_link->send(resp);
                 }
             }
@@ -579,6 +604,7 @@ public:
 
                 // EINVAL = 22
                 VanadisSyscallResponse* resp = new VanadisSyscallResponse(-22);
+                resp->setHWThread( sys_ev->getThreadID() );
                 core_link->send(resp);
             } else {
                 if (write_ev->getBufferCount() > 0) {
@@ -593,11 +619,13 @@ public:
                     handler_state = new VanadisWriteHandlerState(
                         output->getVerboseLevel(), file_des->second->getFileDescriptor(),
                         write_ev->getBufferAddress(), write_ev->getBufferCount(), send_req_func);
+                    handler_state->setHWThread( sys_ev->getThreadID() );
 
                     sendMemRequest(
                         new StandardMem::Read(write_ev->getBufferAddress(), start_read_len));
                 } else {
                     VanadisSyscallResponse* resp = new VanadisSyscallResponse(0);
+                    resp->setHWThread( sys_ev->getThreadID() );
                     core_link->send(resp);
                 }
             }
@@ -615,6 +643,7 @@ public:
 
                 // Linux syscall for brk returns the BRK point on success
                 VanadisSyscallResponse* resp = new VanadisSyscallResponse(current_brk_point);
+                resp->setHWThread( sys_ev->getThreadID() );
                 core_link->send(resp);
             } else {
                 uint64_t old_brk = current_brk_point;
@@ -631,9 +660,11 @@ public:
                     sendBlockToMemory(old_brk, payload);
 
                     handler_state = new VanadisBRKHandlerState(output->getVerboseLevel(), current_brk_point);
+                    handler_state->setHWThread( sys_ev->getThreadID() );
                 } else {
                     output->verbose(CALL_INFO, 16, 0, "[syscall-brk] - zeroing is not requested, immediate return.\n");
                     VanadisSyscallResponse* resp = new VanadisSyscallResponse(current_brk_point);
+                    resp->setHWThread( sys_ev->getThreadID() );
                     core_link->send(resp);
                 }
 
@@ -664,6 +695,7 @@ public:
             // }
 
             VanadisSyscallResponse* resp = new VanadisSyscallResponse(-25);
+            resp->setHWThread( sys_ev->getThreadID() );
             resp->markFailed();
 
             core_link->send(resp);
@@ -679,6 +711,7 @@ public:
 
             handler_state = new VanadisAccessHandlerState(output->getVerboseLevel(), access_ev->getPathPointer(),
                                                           access_ev->getAccessMode(), send_req_func);
+            handler_state->setHWThread( sys_ev->getThreadID() );
 
             uint64_t line_remain = vanadis_line_remainder(access_ev->getPathPointer(), 64);
             sendMemRequest(new StandardMem::Read(access_ev->getPathPointer(), line_remain));
@@ -692,6 +725,7 @@ public:
             // Need to do a handler state to force memory writes to complete before we
             // return
             handler_state = new VanadisNoActionHandlerState(output->getVerboseLevel(), 0);
+            handler_state->setHWThread( sys_ev->getThreadID() );
 
             uint64_t sim_time_ns = getSimTimeNano();
             uint64_t sim_seconds = (uint64_t)(sim_time_ns / 1000000000ULL);
@@ -739,12 +773,14 @@ public:
             case 0: {
                 output->verbose(CALL_INFO, 16, 0, "[syscall-unmap] --> success, returning response.\n");
                 VanadisSyscallResponse* resp = new VanadisSyscallResponse();
+                resp->setHWThread( sys_ev->getThreadID() );
                 core_link->send(resp);
             } break;
             default: {
                 output->verbose(CALL_INFO, 16, 0, "[syscall-unmap] --> call failed, returning -22 as EINVAL\n");
                 VanadisSyscallResponse* resp = new VanadisSyscallResponse(-22);
                 resp->markFailed();
+                resp->setHWThread( sys_ev->getThreadID() );
                 core_link->send(resp);
             } break;
             }
@@ -771,6 +807,7 @@ public:
             handler_state = new VanadisMemoryMapHandlerState(output->getVerboseLevel(), map_address, map_length,
                                                              map_protect, map_flags, call_stack, map_offset_units,
                                                              send_req_func, send_block_func, memory_mgr);
+            handler_state->setHWThread( sys_ev->getThreadID() );
 
             // need to read in the file descriptor so get a memory read in place
             // file descriptor is the 5th argument (each is 4 bytes, so 5 * 4)
@@ -779,16 +816,19 @@ public:
 
         case SYSCALL_OP_SET_THREAD_AREA: {
             VanadisSyscallResponse* resp = new VanadisSyscallResponse();
+            resp->setHWThread( sys_ev->getThreadID() );
             core_link->send(resp);
         } break;
 
         case SYSCALL_OP_EXIT: {
             VanadisExitResponse* exit_resp = new VanadisExitResponse();
+            exit_resp->setHWThread( sys_ev->getThreadID() );
             core_link->send(exit_resp);
         } break;
 
         case SYSCALL_OP_EXIT_GROUP: {
             VanadisExitResponse* exit_resp = new VanadisExitResponse();
+            exit_resp->setHWThread( sys_ev->getThreadID() );
             core_link->send(exit_resp);
         } break;
 
@@ -884,6 +924,7 @@ public:
                                 resp->getReturnCode(), resp->getReturnCode(),
                                 resp->isSuccessful() ? "success" : "failed");
 
+                resp->setHWThread( handler_state->getHWThread() );
                 core_link->send(resp);
 
                 delete handler_state;
