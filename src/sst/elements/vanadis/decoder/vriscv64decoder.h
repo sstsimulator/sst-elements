@@ -443,7 +443,7 @@ protected:
                     uint32_t shift_by   = (ins & 0x3F00000) >> 20;
 
                     output->verbose(
-                        CALL_INFO, 16, 0, "------> func_code6 = %" PRIu32 " / shift = %" PRIu32 " (0x%lx)\n",
+                        CALL_INFO, 16, 0, "------> func_code6 = %" PRIu32 " / shift = %" PRIu32 " (0x%" PRIx32 ")\n",
                         func_code6, shift_by, shift_by);
 
                     switch ( func_code6 ) {
@@ -491,7 +491,7 @@ protected:
                     uint32_t shift_by   = (ins & 0x3F00000) >> 20;
 
                     output->verbose(
-                        CALL_INFO, 16, 0, "------> func_code6 = %" PRIu32 " / shift = %" PRIu32 " (0x%lx)\n",
+                        CALL_INFO, 16, 0, "------> func_code6 = %" PRIu32 " / shift = %" PRIu32 " (0x%" PRIx32 ")\n",
                         func_code6, shift_by, shift_by);
 
                     switch ( func_code6 ) {
@@ -2074,7 +2074,7 @@ protected:
                 const uint32_t c_func_code = ins & 0xE000;
 
                 output->verbose(
-                    CALL_INFO, 16, 0, "---> RVC function code = %" PRIu32 " / 0x%lx\n", c_func_code, c_func_code);
+                    CALL_INFO, 16, 0, "---> RVC function code = %" PRIu32 " / 0x%" PRIx32 "\n", c_func_code, c_func_code);
 
                 switch ( c_func_code ) {
                 case 0x0:
@@ -2088,7 +2088,7 @@ protected:
                     uint16_t rvc_rs1 = (ins & 0xF80) >> 7;
 
                     output->verbose(
-                        CALL_INFO, 16, 0, "--------> RVC SLLI %" PRIu16 " = %" PRIu16 " >> %" PRIu64 " (0x%llx)\n",
+                        CALL_INFO, 16, 0, "--------> RVC SLLI %" PRIu16 " = %" PRIu16 " >> %" PRIu64 " (0x%" PRIx64 ")\n",
                         rvc_rs1, rvc_rs1, shift_by, shift_by);
                     bundle->addInstruction(
                         new VanadisShiftLeftLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
@@ -2276,7 +2276,7 @@ protected:
                     uint32_t offset = offset_76 | offset_52;
 
                     output->verbose(
-                        CALL_INFO, 16, 0, "-----> RVC SWSP %" PRIu16 " -> %" PRIu16 " + %" PRIu64 "\n", rvc_src, 2,
+                        CALL_INFO, 16, 0, "-----> RVC SWSP %" PRIu16 " -> %" PRIu16 " + %" PRIu64 "\n", rvc_src, (uint16_t)2,
                         offset);
 
                     bundle->addInstruction(new VanadisStoreInstruction(
@@ -2295,7 +2295,7 @@ protected:
                     uint32_t offset = offset_86 | offset_53;
 
                     output->verbose(
-                        CALL_INFO, 16, 0, "-----> RVC SDSP %" PRIu16 " -> %" PRIu16 " + %" PRIu64 "\n", rvc_src, 2,
+                        CALL_INFO, 16, 0, "-----> RVC SDSP %" PRIu16 " -> %" PRIu16 " + %" PRIu64 "\n", rvc_src, (uint16_t)2,
                         offset);
 
                     bundle->addInstruction(new VanadisStoreInstruction(
