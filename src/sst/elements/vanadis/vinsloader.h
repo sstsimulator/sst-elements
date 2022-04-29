@@ -219,7 +219,7 @@ public:
             output->verbose(CALL_INFO, 8, 0,
                             "[ins-loader] ---> issue ins-load line-start: 0x%llx, line-len: %" PRIu64
                             " read-len=%" PRIu64 " \n",
-                            line_start, line_start_offset, cache_line_width, cache_line_width);
+                            line_start, line_start_offset, cache_line_width);
 
 				if(predecode_cache->contains(line_start)) {
 					// line is already in the cache, touch to make sure it is kept in LRU

@@ -54,7 +54,7 @@ public:
         iovBuffer.resize( len );
 
         // read first chunk of iovec (could be all if fits in cache line)
-        output->verbose(CALL_INFO, 16, 0, "[syscall-readv]  read %zu bytes of iovec addr=%#" PRIx64 "\n", memReadLen, iovec_addr );
+        output->verbose(CALL_INFO, 16, 0, "[syscall-readv]  read %" PRIu64 " bytes of iovec addr=%#" PRIx64 "\n", memReadLen, iovec_addr );
         send_mem_req(new StandardMem::Read(iovec_addr, memReadLen ) );
 
         // set up the handler for this read
@@ -101,7 +101,7 @@ public:
     void firstWriteOfBuffer() {
 
         while ( 0 == getIovecLen( iovBuffer, current_iovec, bittype ) && current_iovec  < iovec_count ) {
-            output->verbose(CALL_INFO, 16, 0, "[syscall-readv] iovec[%d] addr=%#" PRIx64 " has len 0\n",
+            output->verbose(CALL_INFO, 16, 0, "[syscall-readv] iovec[%" PRId64 "] addr=%#" PRIx64 " has len 0\n",
                     current_iovec, getIovecBase( iovBuffer, current_iovec, bittype ) );
             ++current_iovec;
         }
@@ -109,7 +109,7 @@ public:
         currentIovecStruct.iov_base = getIovecBase( iovBuffer, current_iovec, bittype ); 
         currentIovecStruct.iov_len = getIovecLen( iovBuffer, current_iovec, bittype ); 
 
-        output->verbose(CALL_INFO, 16, 0, "[syscall-readv] iovec[%d] addr=%#" PRIx64 " len=%zu\n", 
+        output->verbose(CALL_INFO, 16, 0, "[syscall-readv] iovec[%" PRId64 "] addr=%#" PRIx64 " len=%zu\n", 
                     current_iovec, currentIovecStruct.iov_base, currentIovecStruct.iov_len );
 
         bufferOffset = 0;
@@ -127,7 +127,7 @@ public:
         memWriteLen = memWriteLen > currentIovecStruct.iov_len ? currentIovecStruct.iov_len : memWriteLen;
 
         // write first chunk of the buffer (could be all if fits in cache line)
-        output->verbose(CALL_INFO, 16, 0, "[syscall-readv] write %zu bytes to buffer addr=%#" PRIx64 "\n", memWriteLen, currentIovecStruct.iov_base );
+        output->verbose(CALL_INFO, 16, 0, "[syscall-readv] write %" PRIu64 " bytes to buffer addr=%#" PRIx64 "\n", memWriteLen, currentIovecStruct.iov_base );
 
         std::vector<uint8_t> payload = { buffer.begin(), buffer.begin() + memWriteLen };
         send_mem_req(new StandardMem::Write( currentIovecStruct.iov_base, memWriteLen, payload ) );
@@ -138,7 +138,7 @@ public:
     void handleBufferWriteMemResp() {
         bufferOffset += resp_size;
 
-        output->verbose(CALL_INFO, 16, 0, "[syscall-readv] resp_size=%d\n", resp_size );
+        output->verbose(CALL_INFO, 16, 0, "[syscall-readv] resp_size=%zu\n", resp_size );
 
         total_bytes_read += resp_size;
 
@@ -148,12 +148,12 @@ public:
             std::vector<uint8_t> payload = { buffer.begin() + bufferOffset, buffer.begin() + bufferOffset + memWriteLen };
             send_mem_req(new StandardMem::Write( currentIovecStruct.iov_base + bufferOffset, memWriteLen, payload ) );
         } else {
-            output->verbose(CALL_INFO, 16, 0, "[syscall-readv] buffer %d is done\n", current_iovec );
+            output->verbose(CALL_INFO, 16, 0, "[syscall-readv] buffer %" PRId64 " is done\n", current_iovec );
             ++current_iovec;
             if ( current_iovec  < iovec_count ) {
                 firstWriteOfBuffer();     
             } else {
-                output->verbose(CALL_INFO, 16, 0, "[syscall-readv] is done total_bytes_read %zu\n", total_bytes_read );
+                output->verbose(CALL_INFO, 16, 0, "[syscall-readv] is done total_bytes_read %" PRId64 "\n", total_bytes_read );
                 markComplete();
             }
         }
@@ -189,6 +189,7 @@ public:
           default:
             output->fatal(CALL_INFO, -1, "OS event is neither 32b or 64b, unsupported OS bit type.\n");
         }
+        return 0; // Eliminate compile warning
     }
 
     size_t getIovecLen( std::vector<uint8_t>& data, int pos, VanadisOSBitType bit_type ) {
@@ -201,6 +202,7 @@ public:
           default:
             output->fatal(CALL_INFO, -1, "OS event is neither 32b or 64b, unsupported OS bit type.\n");
         }
+        return 0; // Eliminate compile warning
     }
 
 
@@ -213,6 +215,7 @@ public:
           default:
             output->fatal(CALL_INFO, -1, "OS event is neither 32b or 64b, unsupported OS bit type.\n");
         }
+        return 0; // Eliminate compile warning
     }
 
 protected:
