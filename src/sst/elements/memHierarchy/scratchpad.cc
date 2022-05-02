@@ -535,9 +535,7 @@ void Scratchpad::handleScratchRead(MemEvent * ev) {
         response->setCmd(Command::GetXResp);
 
     MemEvent * read = new MemEvent(getName(), ev->getAddr(), ev->getBaseAddr(), Command::GetS, ev->getSize());
-    read->setRqstr(ev->getRqstr());
-    read->setVirtualAddress(ev->getVirtualAddress());
-    read->setInstructionPointer(ev->getInstructionPointer());
+    read->copyMetadata(ev);
 
     responseIDMap_.insert(std::make_pair(read->getID(),ev->getID()));
     responseIDAddrMap_.insert(std::make_pair(read->getID(),ev->getBaseAddr()));
@@ -631,9 +629,7 @@ void Scratchpad::handleScratchWrite(MemEvent * ev) {
     response = ev->makeResponse();
 
     MemEvent * write = new MemEvent(getName(), ev->getAddr(), ev->getBaseAddr(), Command::PutM, ev->getPayload());
-    write->setRqstr(ev->getRqstr());
-    write->setVirtualAddress(ev->getVirtualAddress());
-    write->setInstructionPointer(ev->getInstructionPointer());
+    write->copyMetadata(ev);
     write->setFlag(MemEvent::F_NORESPONSE);
 
     if (directory_ && ev->isWriteback() && mshr_.find(ev->getBaseAddr()) != mshr_.end()) {
@@ -706,8 +702,8 @@ void Scratchpad::handleScratchGet(MemEventBase * event) {
     // Issue remote read
     ev->setSrcBaseAddr((ev->getSrcAddr() - remoteAddrOffset_) & ~(remoteLineSize_ - 1));
     MemEvent * remoteRead = new MemEvent(getName(), ev->getSrcAddr() - remoteAddrOffset_, ev->getSrcBaseAddr(), Command::GetS, ev->getSize());
+    remoteRead->MemEventBase::copyMetadata(ev);
     remoteRead->setFlag(MemEvent::F_NONCACHEABLE);
-    remoteRead->setRqstr(ev->getRqstr());
     remoteRead->setVirtualAddress(ev->getSrcVirtualAddress());
     remoteRead->setInstructionPointer(ev->getInstructionPointer());
     responseIDMap_.insert(std::make_pair(remoteRead->getID(), ev->getID()));
@@ -878,7 +874,7 @@ void Scratchpad::handleAckInv(MemEventBase * event) {
         uint32_t size = deriveSize(addr, baseAddr, request->getSrcAddr(), request->getSize());
 
         MemEvent * read = new MemEvent(getName(), addr, baseAddr, Command::GetS, size);
-        read->setRqstr(request->getRqstr());
+        read->MemEventBase::copyMetadata(request);
         read->setVirtualAddress(request->getSrcVirtualAddress());
         read->setInstructionPointer(request->getInstructionPointer());
         responseIDMap_.insert(std::make_pair(read->getID(),requestID));
@@ -923,7 +919,7 @@ void Scratchpad::handleFetchResp(MemEventBase * event) {
     // Send a write to scratch if the line was dirty since we forcefully invalidated
     if (response->getDirty()) {
         MemEvent * write = new MemEvent(getName(), response->getAddr(), baseAddr, Command::PutM, response->getPayload());
-        write->setRqstr(put->getRqstr());
+        write->MemEventBase::copyMetadata(put);
         write->setVirtualAddress(put->getSrcVirtualAddress());
         write->setInstructionPointer(put->getInstructionPointer());
         write->setFlag(MemEvent::F_NORESPONSE);
@@ -1001,10 +997,8 @@ void Scratchpad::handleRemoteRead(MemEvent * event) {
 
     event->setBaseAddr((event->getAddr() - remoteAddrOffset_) & ~(remoteLineSize_ - 1));
     MemEvent * request = new MemEvent(getName(), event->getAddr() - remoteAddrOffset_, event->getBaseAddr(), Command::GetS, event->getSize());
+    request->copyMetadata(event);
     request->setFlag(MemEvent::F_NONCACHEABLE); // Use byte not line address
-    request->setRqstr(event->getRqstr());
-    request->setVirtualAddress(event->getVirtualAddress());
-    request->setInstructionPointer(event->getInstructionPointer());
 
     MemEvent * response = event->makeResponse();
     outstandingEventList_.insert(std::make_pair(event->getID(), OutstandingEvent(event, response)));
@@ -1025,11 +1019,9 @@ void Scratchpad::handleRemoteWrite(MemEvent * event) {
 
     event->setBaseAddr((event->getAddr() - remoteAddrOffset_) & ~(remoteLineSize_ - 1));
     MemEvent * request = new MemEvent(getName(), event->getAddr() - remoteAddrOffset_, event->getBaseAddr(), Command::Write, event->getPayload());
+    request->copyMetadata(event);
     request->setFlag(MemEvent::F_NORESPONSE);
     request->setFlag(MemEvent::F_NONCACHEABLE);
-    request->setRqstr(event->getRqstr());
-    request->setVirtualAddress(event->getVirtualAddress());
-    request->setInstructionPointer(event->getInstructionPointer());
 
     memMsgQueue_.insert(std::make_pair(timestamp_, request));
 
@@ -1061,7 +1053,7 @@ void Scratchpad::handleRemoteGetResponse(MemEvent * response, SST::Event::id_typ
         if (size > bytesLeft) size = bytesLeft;
         std::vector<uint8_t> data((response->getPayload()).begin() + payloadOffset, (response->getPayload()).begin() + payloadOffset + size);
         MemEvent * write = new MemEvent(getName(), addr, baseAddr, Command::PutM, data);
-        write->setRqstr(request->getRqstr());
+        write->MemEventBase::copyMetadata(request);
         write->setVirtualAddress(request->getDstVirtualAddress());
         write->setInstructionPointer(request->getInstructionPointer());
         write->setFlag(MemEvent::F_NORESPONSE);
@@ -1224,7 +1216,7 @@ void Scratchpad::sendResponse(MemEventBase * event) {
 bool Scratchpad::startGet(Addr baseAddr, MoveEvent * get) {
     if (caching_ && cacheStatus_.at(baseAddr/scratchLineSize_) == true) {
         MemEvent * inv = new MemEvent(getName(), baseAddr, baseAddr, Command::ForceInv, scratchLineSize_);
-        inv->setRqstr(get->getRqstr());
+        inv->MemEventBase::copyMetadata(get);
         inv->setDst(linkUp_->getSources()->begin()->name);
         inv->setVirtualAddress(get->getDstVirtualAddress());
         inv->setInstructionPointer(get->getInstructionPointer());
@@ -1244,7 +1236,7 @@ bool Scratchpad::startGet(Addr baseAddr, MoveEvent * get) {
 bool Scratchpad::startPut(Addr baseAddr, MoveEvent * put) {
     if (caching_ && cacheStatus_.at(baseAddr/scratchLineSize_) == true) {
         MemEvent * inv = new MemEvent(getName(), baseAddr, baseAddr, Command::FetchInv, scratchLineSize_);
-        inv->setRqstr(put->getRqstr());
+        inv->MemEventBase::copyMetadata(put);
         inv->setDst(put->getSrc());
         inv->setVirtualAddress(put->getSrcVirtualAddress());
         inv->setInstructionPointer(put->getInstructionPointer());
@@ -1260,7 +1252,7 @@ bool Scratchpad::startPut(Addr baseAddr, MoveEvent * put) {
         uint32_t size = deriveSize(addr, baseAddr, put->getSrcAddr(), put->getSize());
 
         MemEvent * read = new MemEvent(getName(), addr, baseAddr, Command::GetS, size);
-        read->setRqstr(put->getRqstr());
+        read->MemEventBase::copyMetadata(put);
         read->setVirtualAddress(put->getSrcVirtualAddress());
         read->setInstructionPointer(put->getInstructionPointer());
         responseIDMap_.insert(std::make_pair(read->getID(), put->getID()));
