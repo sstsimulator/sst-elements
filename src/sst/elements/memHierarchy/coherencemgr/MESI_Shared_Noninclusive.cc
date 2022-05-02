@@ -3024,7 +3024,6 @@ uint64_t MESISharNoninclusive::invalidateSharer(std::string shr, MemEvent * even
         MemEvent * inv = new MemEvent(cachename_, addr, addr, cmd);
         if (event) {
             inv->copyMetadata(event);
-            inv->setRqstr(event->getRqstr());
         } else {
             inv->setRqstr(cachename_);
         }
@@ -3068,7 +3067,6 @@ bool MESISharNoninclusive::invalidateOwner(MemEvent * metaEvent, DirectoryLine *
     MemEvent * inv = new MemEvent(cachename_, addr, addr, cmd);
     if (metaEvent) {
         inv->copyMetadata(metaEvent);
-        inv->setRqstr(metaEvent->getRqstr());
     } else {
         inv->setRqstr(cachename_);
     }

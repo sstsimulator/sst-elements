@@ -413,7 +413,7 @@ void CoherentMemController::handleFetchResp(MemEvent * ev) {
     // Write dirty data if needed
     if (ev->getDirty()) {
         MemEvent * write = new MemEvent(getName(), ev->getAddr(), baseAddr, Command::PutM, ev->getPayload());
-        write->setRqstr(ev->getRqstr());
+        write->copyMetadata(ev);
         ev->setFlag(MemEvent::F_NORESPONSE);
 
         entry->writebacks.insert(write->getID());
@@ -511,7 +511,7 @@ bool CoherentMemController::doShootdown(Addr addr, MemEventBase * ev) {
     if (cacheStatus_.at(addr/lineSize_) == true) {
         Addr globalAddr = translateToGlobal(addr);
         MemEvent * inv = new MemEvent(getName(), globalAddr, globalAddr, Command::FetchInv, lineSize_);
-        inv->setRqstr(ev->getRqstr());
+        inv->copyMetadata(ev);
         inv->setDst(ev->getSrc());
 
         msgQueue_.insert(std::make_pair(timestamp_, inv)); /* Send on next clock. TODO timing needed? */

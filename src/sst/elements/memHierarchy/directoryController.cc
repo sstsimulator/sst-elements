@@ -2383,7 +2383,6 @@ void DirectoryController::issueInvalidation(std::string dst, MemEvent* event, Di
     MemEvent* inv = new MemEvent(getName(), addr, addr, cmd, lineSize);
     if (event) {
         inv->copyMetadata(event);
-        inv->setRqstr(event->getRqstr());
     } else {
         inv->setRqstr(getName());
     }
@@ -2422,7 +2421,6 @@ void DirectoryController::sendResponse(MemEvent* event, uint32_t flags, uint32_t
 void DirectoryController::writebackData(MemEvent* event) {
     MemEvent * wb = new MemEvent(getName(), event->getBaseAddr(), event->getBaseAddr(), Command::PutM, lineSize);
     wb->copyMetadata(event);
-    wb->setRqstr(event->getRqstr());
     wb->setPayload(event->getPayload());
     wb->setDirty(event->getDirty());
 
