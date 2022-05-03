@@ -17,4 +17,4 @@ Visit [sst-simulator.org](http://sst-simulator.org) to learn more about SST.
 
 See [Contributing](https://github.com/sstsimulator/sst-elements/blob/devel/CONTRIBUTING.md) to learn how to contribute to SST.
 
-##### [LICENSE](https://github.com/sstsimulator/sst-elements/blob/devel/LICENSE)
+##### [LICENSE](https://github.com/sstsimulator/sst-elements/blob/devel/LICENSE.md)
