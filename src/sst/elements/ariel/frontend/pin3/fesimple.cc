@@ -1013,9 +1013,9 @@ VOID ariel_premalloc_instrument(ADDRINT allocSize, ADDRINT ip)
 
 VOID ariel_postmalloc_instrument(ADDRINT allocLocation)
 {
-    if(lastMallocSize >= 0) {
-        THREADID currentThread = PIN_ThreadId();
-        UINT32 thr = (UINT32) currentThread;
+    THREADID currentThread = PIN_ThreadId();
+    UINT32 thr = (UINT32) currentThread;
+    if(lastMallocSize[thr] >= 0) {
 
         const uint64_t virtualAddress = (uint64_t) allocLocation;
         const uint64_t allocationLength = (uint64_t) lastMallocSize[thr];

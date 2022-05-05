@@ -724,7 +724,7 @@ void MemController::adjustRegionToMemSize() {
         if (regSize > memSize_) { /* Reduce the end point so that regSize is no larger than memSize */
 #ifdef __SST_DEBUG_OUTPUT__
             out.output("%s, Notice: memory controller's region is larger than the backend's mem_size, controller is limiting accessible memory to mem_size\n"
-                    "Region: start=%" PRIu64 ", end=%" PRIu64 ", interleaveStep=%" PRIu64 ", interleaveSize=%" PRIu64 ". MemSize: %" PRIu64 "B\n",
+                    "Region: start=%" PRIu64 ", end=%" PRIu64 ", interleaveStep=%" PRIu64 ", interleaveSize=%" PRIu64 ". MemSize: %zuB\n",
                     getName().c_str(), region_.start, region_.end, region_.interleaveStep, region_.interleaveSize, memSize_);
 #endif
             steps = memSize_ / region_.interleaveSize;
@@ -734,7 +734,7 @@ void MemController::adjustRegionToMemSize() {
     } else if (regSize > memSize_) {
 #ifdef __SST_DEBUG_OUTPUT__
         out.output("%s, Notice: memory controller's region is larger than the backend's mem_size, controller is limiting accessible memory to mem_size\n"
-                "Region: start=%" PRIu64 ", end=%" PRIu64 ", interleaveStep=%" PRIu64 ", interleaveSize=%" PRIu64 ". MemSize: %" PRIu64 "B\n",
+                "Region: start=%" PRIu64 ", end=%" PRIu64 ", interleaveStep=%" PRIu64 ", interleaveSize=%" PRIu64 ". MemSize: %zuB\n",
                 getName().c_str(), region_.start, region_.end, region_.interleaveStep, region_.interleaveSize, memSize_);
 #endif
         region_.end = region_.start + memSize_ - 1;

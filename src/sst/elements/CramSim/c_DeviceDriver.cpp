@@ -851,7 +851,7 @@ bool c_DeviceDriver::sendCommand(c_BankCommand* x_bankCommandPtr,
 	  }
 
 		#ifdef __SST_DEBUG_OUTPUT__
-				debug->verbose(CALL_INFO,1,0,"Cycle:%lld Cmd:%s CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d CmdSeq:%lld\n",
+				debug->verbose(CALL_INFO,1,0,"Cycle:%lld Cmd:%s CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d CmdSeq:%u\n",
 				    m_simCycle,
 				     x_bankCommandPtr->getCommandString().c_str(),
 				     x_bankCommandPtr->getHashedAddress()->getChannel(),
