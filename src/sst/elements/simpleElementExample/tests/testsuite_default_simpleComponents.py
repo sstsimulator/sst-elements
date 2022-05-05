@@ -17,19 +17,24 @@ class testcase_simpleComponents(SSTTestCase):
         super(type(self), self).tearDown()
 
 #####
-
     def test_example_0(self):
         self.simple_components_template("example0")
 
     def test_example_1(self):
         self.simple_components_template("example1")
 
+    # Only has one component, skip if parallelism is > 1
+    @unittest.skipIf(testing_check_get_num_ranks() > 1, "SimpleElementExample: basicClocks skipped if ranks > 1 - single component in config.")
+    @unittest.skipIf(testing_check_get_num_threads() > 1, "SimpleElementExample: basicClocks skipped if threads > 1 - single component in config.")
     def test_basic_clocks(self):
         self.simple_components_template("basicClocks")
 
     def test_basic_links(self):
         self.simple_components_template("basicLinks")
 
+    # Only has one component, skip if parallelism is > 1
+    @unittest.skipIf(testing_check_get_num_ranks() > 1, "SimpleElementExample: basicParams skipped if ranks > 1 - single component in config.")
+    @unittest.skipIf(testing_check_get_num_threads() > 1, "SimpleElementExample: basicParams skipped if threads > 1 - single component in config.")
     def test_basic_params(self):
         self.simple_components_template("basicParams")
 

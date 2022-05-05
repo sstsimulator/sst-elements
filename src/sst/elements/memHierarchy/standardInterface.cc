@@ -333,10 +333,10 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Read* req
     Addr bAddr = (iface->lineSize_ == 0 || noncacheable) ? req->pAddr : req->pAddr & iface->baseAddrMask_; // Line address
     MemEvent* read = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetS, req->size);
     read->setRqstr(iface->getName());
+    read->setThreadID(req->tid);
     read->setDst(iface->link_->getTargetDestination(bAddr));
     read->setVirtualAddress(req->vAddr);
     read->setInstructionPointer(req->iPtr);
-    
     if (noncacheable)
         read->setFlag(MemEvent::F_NONCACHEABLE);
 
@@ -368,6 +368,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Write* re
     MemEvent* write = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::Write, req->data);
     
     write->setRqstr(iface->getName());
+    write->setThreadID(req->tid);
     write->setDst(iface->link_->getTargetDestination(bAddr));
     write->setVirtualAddress(req->vAddr);
     write->setInstructionPointer(req->iPtr);
@@ -398,6 +399,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::FlushAddr
 
     MemEvent* flush = new MemEvent(iface->getName(), req->pAddr, bAddr, cmd, req->size);
     flush->setRqstr(iface->getName());
+    flush->setThreadID(req->tid);
     flush->setDst(iface->link_->getTargetDestination(bAddr));
     flush->setVirtualAddress(req->vAddr);
     flush->setInstructionPointer(req->iPtr);
@@ -414,6 +416,7 @@ Event* StandardInterface::MemEventConverter::convert(StandardMem::ReadLock* req)
     Addr bAddr = (iface->lineSize_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->baseAddrMask_;
     MemEvent* read = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetSX, req->size);
     read->setRqstr(iface->getName());
+    read->setThreadID(req->tid);
     read->setDst(iface->link_->getTargetDestination(bAddr));
     read->setVirtualAddress(req->vAddr);
     read->setInstructionPointer(req->iPtr);
@@ -430,6 +433,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::WriteUnlo
     Addr bAddr = (iface->lineSize_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->baseAddrMask_;
     MemEvent* write = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::Write, req->data);
     write->setRqstr(iface->getName());
+    write->setThreadID(req->tid);
     write->setDst(iface->link_->getTargetDestination(bAddr));
     write->setVirtualAddress(req->vAddr);
     write->setInstructionPointer(req->iPtr);
@@ -451,6 +455,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::LoadLink*
     MemEvent* load = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetS, req->size);
     load->setFlag(MemEvent::F_LLSC);
     load->setRqstr(iface->getName());
+    load->setThreadID(req->tid);
     load->setDst(iface->link_->getTargetDestination(bAddr));
     load->setVirtualAddress(req->vAddr);
     load->setInstructionPointer(req->iPtr);
@@ -468,6 +473,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::StoreCond
     MemEvent* store = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::Write, req->data);
     store->setFlag(MemEvent::F_LLSC);
     store->setRqstr(iface->getName());
+    store->setThreadID(req->tid);
     store->setDst(iface->link_->getTargetDestination(bAddr));
     store->setVirtualAddress(req->vAddr);
     store->setInstructionPointer(req->iPtr);
