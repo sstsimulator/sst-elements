@@ -150,15 +150,16 @@ class testcase_vanadis(SSTTestCase):
         self.assertTrue(os_outfileexists, "Vanadis test outfile-os not found in directory {0}".format(outdir))
         self.assertTrue(os_errfileexists, "Vanadis test errfile-os not found in directory {0}".format(outdir))
 
-        if ( os.path.exists( ref_sst_outfile ) ):
-            cmp_result = testing_compare_filtered_diff(testname, sst_outfile, ref_sst_outfile ,filters=[StartsWithFilter(" v0.instructions_issued.1")])
-            if (cmp_result == False):
-                diffdata = testing_get_diff_data(testname)
-                log_failure(oscmd)
-                log_failure(diffdata)
-            self.assertTrue(cmp_result, "Vanadis output file {0} does not match reference output file {1}".format(sst_outfile, ref_sst_outfile))
-        else:
-            log_testing_note("vanadis test {0} SST gold file does not exist, did not compare".format(testDataFileName))
+        #print( "diff", sst_outfile, ref_sst_outfile )
+        #if ( os.path.exists( ref_sst_outfile ) ):
+        #    cmp_result = testing_compare_filtered_diff(testname, sst_outfile, ref_sst_outfile ,filters=[StartsWithFilter(" v0.instructions_issued.1")])
+        #    if (cmp_result == False):
+        #        diffdata = testing_get_diff_data(testname)
+        #        log_failure(oscmd)
+        #        log_failure(diffdata)
+        #    self.assertTrue(cmp_result, "Vanadis output file {0} does not match reference output file {1}".format(sst_outfile, ref_sst_outfile))
+        #else:
+        #    log_testing_note("vanadis test {0} SST gold file does not exist, did not compare".format(testDataFileName))
 
         cmp_result = testing_compare_diff(testname, os_outfile, ref_os_outfile)
         if (cmp_result == False):
