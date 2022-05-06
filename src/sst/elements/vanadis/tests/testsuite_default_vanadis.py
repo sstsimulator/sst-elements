@@ -218,11 +218,14 @@ class testcase_vanadis(SSTTestCase):
 
         # Walk the directory of source files and try to compile each of them
         mainsourcedir = "{0}/small".format(test_path)
+        print( "mainsourcedir", mainsourcedir, os.listdir(mainsourcedir) )
 
         # For each subdir under the main source dir call the makefile
         for f in os.listdir(mainsourcedir):
             sourcedirpath = "{0}/{1}".format(mainsourcedir, f)
+            print( "sourcedirpath", sourcedirpath, os.path.isdir(sourcedirpath) )
             makefilepath = "{0}/Makefile".format(sourcedirpath, f)
+            print( "makefilepath", makefilepath, os.path.isfile(makefilepath) )
             if os.path.isdir(sourcedirpath) and os.path.isfile(makefilepath):
                 log_debug("Vanadis calling make on makefile {0}".format(makefilepath))
 
