@@ -22,7 +22,7 @@ def build_vanadis_test_matrix():
 
     # Add the SDL file, test dir compiled elf file, and test run timeout to create the testlist
     testlist.append(["basic_vanadis.py", "small/basic-io", "hello-world",     "mipsel", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-io", "hello-world",     "riscv64", 120])
+    #testlist.append(["basic_vanadis.py", "small/basic-io", "hello-world",     "riscv64", 120])
     testlist.append(["basic_vanadis.py", "small/basic-io", "hello-world-cpp", "mipsel", 120])
     testlist.append(["basic_vanadis.py", "small/basic-io", "printf-check",    "mipsel", 120])
     testlist.append(["basic_vanadis.py", "small/basic-io", "openat",          "mipsel", 120])
