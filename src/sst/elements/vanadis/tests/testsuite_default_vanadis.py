@@ -137,6 +137,9 @@ class testcase_vanadis(SSTTestCase):
         else:
             os.environ['VANADIS_ISA'] = "RISCV64"
 
+        testfile_exists = os.path.exists(testfilepath) and os.path.isfile(testfilepath)
+        self.assertTrue(testfile_exists, "Vanadis test {0} does not exist".format(testfilepath))
+
         oscmd = self.run_sst(sdlfile, sst_outfile, sst_errfile, mpi_out_files=mpioutfiles, set_cwd=outdir, timeout_sec=testtimeout)
 
         # Perform the tests
@@ -225,6 +228,7 @@ class testcase_vanadis(SSTTestCase):
 
                 # Now build the array application
                 cmd = "make"
+                print(  cmd, sourcedirpath )
                 rtn = OSCommand(cmd, set_cwd=sourcedirpath).run()
                 log_debug("Vanadis tests source - Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
                 self.assertTrue(rtn.result() == 0, "{0} failed to build properly".format(makefilepath))
