@@ -534,7 +534,8 @@ void Cache::finish() {
         turnClockOn();
     }
 
-    if (out_->getVerboseLevel() > 8) {
+    // Print final contents
+    if (out_->getVerboseLevel() > 10) {
         printStatus(*out_);
     }
 

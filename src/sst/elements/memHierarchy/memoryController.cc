@@ -577,7 +577,8 @@ void MemController::finish(void) {
         memBackendConvertor_->turnClockOn(cycle);
     }
 
-    if( dbg.getVerboseLevel() >= 4 ) {
+    // Print backing store contents
+    if( dbg.getVerboseLevel() > 10 ) {
         backing_->printContents(dbg);
     }
 
@@ -594,12 +595,6 @@ void MemController::writeData(MemEvent* event) {
         }
 
         backing_->set(addr, event->getSize(), event->getPayload());
-        if (is_debug_event(event)) {
-            Debug(_L10_, "\tContents ");
-            for( auto i : event->getPayload() )
-                std::cerr << uint32_t(i) << " ";
-            std::cerr << "\n";
-        }
 
         return;
     }
@@ -612,12 +607,6 @@ void MemController::writeData(MemEvent* event) {
         }
         
         backing_->set(addr, event->getSize(), event->getPayload());
-        if (is_debug_event(event)) {
-            Debug(_L10_, "\tContents ");
-            for( auto i : event->getPayload() )
-                std::cerr << uint32_t(i) << " ";
-            std::cerr << "\n";
-        }
 
         return;
     }
@@ -713,12 +702,6 @@ void MemController::processInitEvent( MemEventInit* me ) {
         if (is_debug_event(me)) { Debug(_L9_,"Memory init %s - Received Write for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size()); }
         if ( isRequestAddressValid(addr) && backing_ ) {
             backing_->set(addr, me->getPayload().size(), me->getPayload());
-            if (is_debug_event(me)) {
-                Debug(_L10_, "\tContents ");
-                for( auto i : me->getPayload() )
-                    std::cerr << uint32_t(i) << " ";
-                std::cerr << "\n";
-            }
         }
     } else if (Command::NULLCMD == me->getCmd()) {
         if (is_debug_event(me)) { Debug(_L9_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString(dlevel).c_str()); }
