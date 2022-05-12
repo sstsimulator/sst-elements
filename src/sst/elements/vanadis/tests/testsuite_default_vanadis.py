@@ -22,7 +22,7 @@ def build_vanadis_test_matrix():
 
     # Add the SDL file, test dir compiled elf file, and test run timeout to create the testlist
     testlist.append(["basic_vanadis.py", "small/basic-io", "hello-world",     "mipsel", 120])
-    #testlist.append(["basic_vanadis.py", "small/basic-io", "hello-world",     "riscv64", 120])
+    testlist.append(["basic_vanadis.py", "small/basic-io", "hello-world",     "riscv64", 120])
     testlist.append(["basic_vanadis.py", "small/basic-io", "hello-world-cpp", "mipsel", 120])
     testlist.append(["basic_vanadis.py", "small/basic-io", "printf-check",    "mipsel", 120])
     testlist.append(["basic_vanadis.py", "small/basic-io", "openat",          "mipsel", 120])
@@ -50,7 +50,7 @@ def build_vanadis_test_matrix():
 
 ################################################################################
 
-# At startup, build the ESshmem test matrix
+# At startup, build the test matrix
 build_vanadis_test_matrix()
 
 def gen_custom_name(testcase_func, param_num, param):
@@ -74,7 +74,7 @@ def initializeTestModule_SingleInstance(class_inst):
     if module_init != 1:
         try:
             # Put your single instance Init Code Here
-            class_inst._setupESshmemSmallTestFiles()
+            class_inst._setupTests()
         except:
             pass
         module_init = 1
@@ -102,8 +102,9 @@ class testcase_vanadis(SSTTestCase):
 
     @parameterized.expand(vanadis_test_matrix, name_func=gen_custom_name)
     def test_vanadis_short_tests(self, testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec):
-        self._checkSkipConditions()
+        self._checkSkipConditions( isa )
 
+        self.makeTest( testname, isa, elftestdir, elffile )
         log_debug("Running Vanadis test #{0} ({1}): elffile={4} in dir {3}, isa {5}; using sdl={2}".format(testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec))
         self.vanadis_test_template(testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec)
 
@@ -183,9 +184,9 @@ class testcase_vanadis(SSTTestCase):
 
 ###############################################
 
-    def _checkSkipConditions(self):
+    def _checkSkipConditions(self,isa):
         # Check to see if the musl compiler is missing
-        if self._is_musl_compiler_available() == False:
+        if self._is_musl_compiler_available(isa) == False:
             self.skipTest("Vanadis Skipping Test - musl compiler not available")
 
         if testing_check_get_num_ranks() > 1:
@@ -195,45 +196,27 @@ class testcase_vanadis(SSTTestCase):
             self.skipTest("Vanadis Skipping Test - threads > 1 not supported")
 
 ###
-    def _is_musl_compiler_available(self):
+    def _is_musl_compiler_available(self,isa):
 
         # Now build the array application
-        cmd = "which mipsel-linux-musl-gcc"
+        cmd = "which " + isa + "-linux-musl-gcc"
         rtn = OSCommand(cmd).run()
         log_debug("Vanadis detecting musl compiler [mipsel-linux-musl-gcc] - result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
         return rtn.result() == 0
 
 ###
 
-    def _setupESshmemSmallTestFiles(self):
-        log_debug("_setupVanadisSmallTestFiles() Running")
+    def makeTest(self,testname,isa,elftestdir, elffile):
+
         test_path = self.get_testsuite_dir()
-        outdir = self.get_test_output_run_dir()
-        tmpdir = self.get_test_output_tmp_dir()
 
-        # Detect if the musl compiler is available
-        if self._is_musl_compiler_available() == False:
-            log_debug("NOTICE: Vanadis Testing - musl compiler not found")
-            return
+        sourcedirpath = "{0}/{1}/{2}".format( test_path, elftestdir, elffile ) 
+        makefilepath = "{0}/Makefile".format(sourcedirpath)
 
-        # Walk the directory of source files and try to compile each of them
-        mainsourcedir = "{0}/small".format(test_path)
-        print( "mainsourcedir", mainsourcedir, os.listdir(mainsourcedir) )
+        cmd = "make ARCH=" + isa 
+        rtn = OSCommand(cmd, set_cwd=sourcedirpath).run()
+        log_debug("Vanadis tests source - Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
+        self.assertTrue(rtn.result() == 0, "{0} failed to build properly".format(makefilepath))
 
-        # For each subdir under the main source dir call the makefile
-        for f in os.listdir(mainsourcedir):
-            sourcedirpath = "{0}/{1}".format(mainsourcedir, f)
-            print( "sourcedirpath", sourcedirpath, os.path.isdir(sourcedirpath) )
-            makefilepath = "{0}/Makefile".format(sourcedirpath, f)
-            print( "makefilepath", makefilepath, os.path.isfile(makefilepath) )
-            if os.path.isdir(sourcedirpath) and os.path.isfile(makefilepath):
-                log_debug("Vanadis calling make on makefile {0}".format(makefilepath))
-
-                # Now build the array application
-                cmd = "make"
-                print(  cmd, sourcedirpath )
-                rtn = OSCommand(cmd, set_cwd=sourcedirpath).run()
-                log_debug("Vanadis tests source - Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
-                self.assertTrue(rtn.result() == 0, "{0} failed to build properly".format(makefilepath))
-
-
+    def _setupTests(self):
+        return
