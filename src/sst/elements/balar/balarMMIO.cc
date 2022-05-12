@@ -163,6 +163,7 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
             }
             break;
         case GPU_SET_ARG: 
+            // TODO: Arguments are setup individually?
             mmio->cuda_ret.cuda_error = cudaSetupArgumentSST(
                 packet->setup_argument.arg,
                 packet->setup_argument.value,

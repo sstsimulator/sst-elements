@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include <vector>
 #include <string>
+#include <map>
 #include "host_defines.h"
 #include "builtin_types.h"
 #include "driver_types.h"
@@ -172,6 +173,10 @@ namespace BalarComponent {
     }
 
     string* gpu_api_to_string(enum GpuApi_t api);
+    std::string& trim(std::string& s);
+    std::vector<std::string> split(std::string& s, const std::string& delim);
+    std::map<std::string, std::string> map_from_vec(std::vector<std::string> vec, const std::string& delim);
+
 }
 }
 
