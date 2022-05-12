@@ -585,33 +585,34 @@ void Balar::SST_callback_memcpy_D2H_done()
 }
 
 //Global Wrappers
-extern bool is_SST_buffer_full(unsigned core_id)
-{
-   assert(my_gpu_component);
-   return my_gpu_component->is_SST_buffer_full(core_id);
-}
+// Commented out due to conflict with balarMMIO
+// extern bool is_SST_buffer_full(unsigned core_id)
+// {
+//    assert(my_gpu_component);
+//    return my_gpu_component->is_SST_buffer_full(core_id);
+// }
 
-extern void send_read_request_SST(unsigned core_id, uint64_t address, uint64_t size, void* mem_req)
-{
-   assert(my_gpu_component);
-   my_gpu_component->send_read_request_SST(core_id, address, size, mem_req);
+// extern void send_read_request_SST(unsigned core_id, uint64_t address, uint64_t size, void* mem_req)
+// {
+//    assert(my_gpu_component);
+//    my_gpu_component->send_read_request_SST(core_id, address, size, mem_req);
 
-}
+// }
 
-extern void send_write_request_SST(unsigned core_id, uint64_t address, uint64_t size, void* mem_req)
-{
-   assert(my_gpu_component);
-   my_gpu_component->send_write_request_SST(core_id, address, size, mem_req);
-}
+// extern void send_write_request_SST(unsigned core_id, uint64_t address, uint64_t size, void* mem_req)
+// {
+//    assert(my_gpu_component);
+//    my_gpu_component->send_write_request_SST(core_id, address, size, mem_req);
+// }
 
-extern void SST_callback_memcpy_H2D_done()
-{
-   assert(my_gpu_component);
-   my_gpu_component->SST_callback_memcpy_H2D_done();
-}
+// extern void SST_callback_memcpy_H2D_done()
+// {
+//    assert(my_gpu_component);
+//    my_gpu_component->SST_callback_memcpy_H2D_done();
+// }
 
-extern void SST_callback_memcpy_D2H_done()
-{
-   assert(my_gpu_component);
-   my_gpu_component->SST_callback_memcpy_D2H_done();
-}
+// extern void SST_callback_memcpy_D2H_done()
+// {
+//    assert(my_gpu_component);
+//    my_gpu_component->SST_callback_memcpy_D2H_done();
+// }

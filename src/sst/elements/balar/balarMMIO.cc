@@ -136,6 +136,8 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
                                       packet->register_function.deviceFun);
             break;
         case GPU_MEMCPY: 
+            // TODO Might want to optimize here with the payload and src
+            // TODO that are essentially the same thing?
             mmio->cuda_ret.cuda_error = cudaMemcpySST(packet->cuda_memcpy.dst,
                           packet->cuda_memcpy.src,
                           packet->cuda_memcpy.count,
@@ -225,7 +227,7 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
  * @param read 
  */
 void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Read* read) {
-    out->verbose(_INFO_, "Handle Read for return value for a %s request\n", gpu_api_to_string(mmio->cuda_ret.cuda_call_id)->c_str());
+    out->verbose(_INFO_, "Handling Read for return value for a %s request\n", gpu_api_to_string(mmio->cuda_ret.cuda_call_id)->c_str());
 
     vector<uint8_t> *payload = encode_balar_packet<BalarCudaCallReturnPacket_t>(&mmio->cuda_ret);
 
@@ -303,4 +305,39 @@ void BalarMMIO::printStatus(Output &statusOut) {
     // statusOut.output("    Register: %d\n", squared);
     // iface->printStatus(statusOut);
     statusOut.output("End Balar::BalarMMIO\n\n");
+}
+
+// TODO Global Wrappers
+// TODO Finish for mmiohere
+// TODO Handle cache timing simulation?
+extern bool is_SST_buffer_full(unsigned core_id)
+{
+//    assert(my_gpu_component);
+//    return my_gpu_component->is_SST_buffer_full(core_id);
+    return false;
+}
+
+extern void send_read_request_SST(unsigned core_id, uint64_t address, uint64_t size, void* mem_req)
+{
+//    assert(my_gpu_component);
+//    my_gpu_component->send_read_request_SST(core_id, address, size, mem_req);
+
+}
+
+extern void send_write_request_SST(unsigned core_id, uint64_t address, uint64_t size, void* mem_req)
+{
+//    assert(my_gpu_component);
+//    my_gpu_component->send_write_request_SST(core_id, address, size, mem_req);
+}
+
+extern void SST_callback_memcpy_H2D_done()
+{
+//    assert(my_gpu_component);
+//    my_gpu_component->SST_callback_memcpy_H2D_done();
+}
+
+extern void SST_callback_memcpy_D2H_done()
+{
+//    assert(my_gpu_component);
+//    my_gpu_component->SST_callback_memcpy_D2H_done();
 }

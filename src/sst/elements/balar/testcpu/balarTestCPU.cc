@@ -221,8 +221,6 @@ bool BalarTestCPU::clockTic( Cycle_t ) {
     ++clock_ticks;
 
     Interfaces::StandardMem::Request* req = trace_parser->getNextCall();
-
-    // Still have calls left
     if (!(req == nullptr)) {
         // Send gpu cuda call request
         memory->send(req);
@@ -454,7 +452,7 @@ Interfaces::StandardMem::Request*
     StandardMem::Request* req = new Interfaces::StandardMem::Write(gpuAddr, buffer->size(), *buffer, false);
     num_gpu_issued->addData(1);
 
-    out.verbose(_INFO_, "GPU request sent %s, CUDA Function enum %s\n", getName().c_str(), gpu_api_to_string(pack.cuda_call_id)->c_str());
+    out.verbose(_INFO_, "creating GPU request %s, CUDA Function enum %s\n", getName().c_str(), gpu_api_to_string(pack.cuda_call_id)->c_str());
     return req;
 }
 
@@ -462,7 +460,7 @@ Interfaces::StandardMem::Request*
 Interfaces::StandardMem::Request* BalarTestCPU::checkCudaReturn() {
     // TODO Check last packet send now
     StandardMem::Request* req = new Interfaces::StandardMem::Read(mmioAddr, sizeof(BalarCudaCallReturnPacket_t));
-    out.verbose(_INFO_,  "%s: %" PRIu64 " Issued Cuda return value Read for address 0x%" PRIx64 "\n", getName().c_str(), ops, mmioAddr);
+    out.verbose(_INFO_,  "%s: %" PRIu64 " creating Cuda return value Read for address 0x%" PRIx64 "\n", getName().c_str(), ops, mmioAddr);
     return req;
 }
 
@@ -487,6 +485,8 @@ void BalarTestCPU::mmioHandlers::handle(Interfaces::StandardMem::ReadResp* resp)
         if (api_type == GPU_REG_FAT_BINARY) {
             out->verbose(_INFO_, "Fatbin handle: %d\n", ret_pack_ptr->fat_cubin_handle);
         }
+
+        // TODO Handle return values from API
 
         cpu->requests.erase(i);
     }
@@ -520,6 +520,15 @@ BalarTestCPU::CudaAPITraceParser::CudaAPITraceParser(BalarTestCPU* cpu, SST::Out
     traceStream.open(traceFile, std::ifstream::in);
     if (!traceStream.is_open()) {
         out->fatal(CALL_INFO, -1,"Error: trace file: '%s' not exist\n", traceFile.c_str());
+    }
+
+    // Extract base path
+    size_t sep = traceFile.rfind("/");
+    if (sep == std::string::npos) {
+        // Local
+        traceFileBasePath = std::string("./");
+    } else {
+        traceFileBasePath = traceFile.substr(0, sep + 1);  // include the slash
     }
 
     // Init class data structure
@@ -608,11 +617,54 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
                     pack.cuda_malloc.size = size;
                 }
 
+                out->verbose(CALL_INFO, 2, 0, "Malloc Device pointer (%s) addr: %p val: %p\n", dptr_name.c_str(), pack.cuda_malloc.devPtr, *(pack.cuda_malloc.devPtr));
+
+
                 // Create request
                 req = cpu->createGPUReqFromPacket(pack);                
             } else if (cudaCallType.find("memcpyH2D") != std::string::npos) {
-                
+                // TODO Need to wait for malloc to be finished
+                pack.cuda_call_id = GPU_MEMCPY;
+                pack.cuda_memcpy.kind = cudaMemcpyHostToDevice;
+
+                // Params
+                std::string dptr_name = trim(params_map.find(std::string("device_ptr"))->second);
+                size_t size;
+                std::stringstream tmp(params_map.find(std::string("size"))->second);
+                tmp >> size;
+                std::string data_file = trim(params_map.find(std::string("data_file"))->second);
+                std::string data_file_path = traceFileBasePath + data_file;
+
+                // Open data file and prepare data to be copy
+                std::ifstream dataStream(data_file_path, std::fstream::in | std::fstream::binary);
+                if (!dataStream.is_open()) {
+                    out->fatal(CALL_INFO, -1,"Error: data file: '%s' not exist\n", data_file_path.c_str());
+                }
+                uint8_t *host_data = (uint8_t *) malloc(sizeof(uint8_t) * size);
+                dataStream.read((char *)host_data, size);
+
+                // Get device pointer value
+                CUdeviceptr* dptr = nullptr;
+                auto pair = dptr_map->find(dptr_name);
+                if (pair == dptr_map->end()) {
+                    out->fatal(CALL_INFO, -1,"Error: device pointer: '%s' not exist in hashmap\n", dptr_name.c_str());
+                } else {
+                    dptr = pair->second;
+                }
+
+                // Prepare pack
+                out->verbose(CALL_INFO, 2, 0, "MemcpyH2D Device pointer (%s) addr: %p val: %p\n", dptr_name.c_str(), dptr, *dptr);
+
+                pack.cuda_memcpy.dst = *dptr;
+                pack.cuda_memcpy.src = (uint64_t) host_data;
+                pack.cuda_memcpy.count = size;
+                pack.cuda_memcpy.payload = host_data;
+
+                // Create request
+                req = cpu->createGPUReqFromPacket(pack);   
             } else if (cudaCallType.find("memcpyD2H") != std::string::npos || cudaCallType.find("memalloc") != std::string::npos) {
+                pack.cuda_call_id = GPU_MEMCPY;
+                pack.cuda_memcpy.kind = cudaMemcpyDeviceToHost;
                 
             } else if (cudaCallType.find("kernel launch") != std::string::npos) {
                 

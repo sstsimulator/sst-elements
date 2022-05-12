@@ -206,6 +206,7 @@ private:
             BalarTestCPU* cpu;
             SST::Output* out;
             std::string cudaExecutable;
+            std::string traceFileBasePath;
             std::ifstream traceStream;
             std::queue<Interfaces::StandardMem::Request*>* initReqs;
             std::map<std::string, CUdeviceptr*>* dptr_map;
