@@ -22,6 +22,9 @@
 #include <sst/elements/memHierarchy/util.h>
 
 #include "testcpu/balarTestCPU.h"
+#include <string>
+#include <iostream>
+#include <map>
 #include "util.h"
 
 using namespace SST;
@@ -167,8 +170,17 @@ BalarTestCPU::BalarTestCPU(ComponentId_t id, Params& params) :
     }
     ll_issued = false;
 
+    // Trace parser initialization
+    std::string traceFile = params.find<std::string>("trace_file", "cuda_calls.trace");
+    std::string cudaExecutable = params.find<std::string>("cuda_executable", found);
+    sst_assert(found, CALL_INFO, -1, "%s, Error: parameter 'cuda_executable' was not provided\n", getName().c_str());
+    out.verbose(CALL_INFO, 2, 0, "Trace file: %s, cuda_executable: %s\n", traceFile.c_str(), cudaExecutable.c_str());
+
     // Bind response handler to cpu
     handlers = new mmioHandlers(this, &out);
+
+    // Bind trace parser
+    trace_parser = new CudaAPITraceParser(this, &out, traceFile, cudaExecutable);
 }
 
 void BalarTestCPU::init(unsigned int phase)
@@ -205,7 +217,38 @@ void BalarTestCPU::handleEvent(StandardMem::Request *req)
     // delete req;
 }
 
+bool BalarTestCPU::clockTic( Cycle_t ) {
+    ++clock_ticks;
 
+    Interfaces::StandardMem::Request* req = trace_parser->getNextCall();
+
+    // Still have calls left
+    if (!(req == nullptr)) {
+        // Send gpu cuda call request
+        memory->send(req);
+
+        // Add cuda call requests to pending map
+        std::string cmdString = "Read";
+        requests[req->getID()] = std::make_pair(getCurrentSimTime(), cmdString);
+
+        // Check cudal call retval
+        req = checkCudaReturn();
+        memory->send(req);
+        requests[req->getID()] = std::make_pair(getCurrentSimTime(), cmdString);
+    }
+
+    // Check whether to end the simulation
+    if ( req == nullptr && requests.empty() ) {
+        out.verbose(CALL_INFO, 1, 0, "BalarTestCPU: Test Completed Successfuly\n");
+        primaryComponentOKToEndSim();
+        return true;    // Turn our clock off while we wait for any other CPUs to end
+    }
+
+    // return false so we keep going
+    return false;
+}
+
+/** Original clockTic
 bool BalarTestCPU::clockTic( Cycle_t )
 {
     ++clock_ticks;
@@ -214,6 +257,7 @@ bool BalarTestCPU::clockTic( Cycle_t )
     requestsPendingCycle->addData((uint64_t) requests.size());
 
     // communicate?
+    // TODO: Need to manually create a call sequence to cuda functions
     if ((0 != ops) && (0 == (rng.generateNextUInt32() % memFreq))) {
         if ( requests.size() < maxOutstanding ) {
             // yes, communicate
@@ -266,7 +310,7 @@ bool BalarTestCPU::clockTic( Cycle_t )
 
     // return false so we keep going
     return false;
-}
+}*/
 
 /* Methods for sending different kinds of requests */
 StandardMem::Request* BalarTestCPU::createWrite(Addr addr) {
@@ -403,6 +447,18 @@ Interfaces::StandardMem::Request* BalarTestCPU::createGPUReq() {
     return req;
 }
 
+Interfaces::StandardMem::Request* 
+    BalarTestCPU::createGPUReqFromPacket(BalarCudaCallPacket_t pack) {
+    vector<uint8_t> *buffer = encode_balar_packet<BalarCudaCallPacket_t>(&pack);
+
+    StandardMem::Request* req = new Interfaces::StandardMem::Write(gpuAddr, buffer->size(), *buffer, false);
+    num_gpu_issued->addData(1);
+
+    out.verbose(_INFO_, "GPU request sent %s, CUDA Function enum %s\n", getName().c_str(), gpu_api_to_string(pack.cuda_call_id)->c_str());
+    return req;
+}
+
+
 Interfaces::StandardMem::Request* BalarTestCPU::checkCudaReturn() {
     // TODO Check last packet send now
     StandardMem::Request* req = new Interfaces::StandardMem::Read(mmioAddr, sizeof(BalarCudaCallReturnPacket_t));
@@ -426,11 +482,12 @@ void BalarTestCPU::mmioHandlers::handle(Interfaces::StandardMem::ReadResp* resp)
         vector<uint8_t> *data_ptr = &(resp->data);
         BalarCudaCallReturnPacket_t *ret_pack_ptr = decode_balar_packet<BalarCudaCallReturnPacket_t>(data_ptr);
         out->verbose(_INFO_, "%s: get response from read request (%d) with enum: \"%s\"\n", cpu->getName().c_str(), resp->getID(), gpu_api_to_string(ret_pack_ptr->cuda_call_id)->c_str());
-        
-        // TODO Extract data
-        vector<uint8_t> *data = &resp->data;
 
-        
+        enum GpuApi_t api_type = ret_pack_ptr->cuda_call_id;
+        if (api_type == GPU_REG_FAT_BINARY) {
+            out->verbose(_INFO_, "Fatbin handle: %d\n", ret_pack_ptr->fat_cubin_handle);
+        }
+
         cpu->requests.erase(i);
     }
 
@@ -454,4 +511,115 @@ void BalarTestCPU::mmioHandlers::handle(Interfaces::StandardMem::WriteResp* resp
         cpu->requests.erase(i);
     }
     delete resp;
+}
+
+BalarTestCPU::CudaAPITraceParser::CudaAPITraceParser(BalarTestCPU* cpu, SST::Output* out, std::string& traceFile, std::string& cudaExecutable) {
+    this->cpu = cpu;
+    this->out = out;
+    this->cudaExecutable = cudaExecutable;
+    traceStream.open(traceFile, std::ifstream::in);
+    if (!traceStream.is_open()) {
+        out->fatal(CALL_INFO, -1,"Error: trace file: '%s' not exist\n", traceFile.c_str());
+    }
+
+    // Init class data structure
+    initReqs = new std::queue<Interfaces::StandardMem::Request*>();
+    dptr_map = new std::map<std::string, CUdeviceptr*>();
+
+    // TODO Inserting initialization request like register fatbinary to initReqs
+    Interfaces::StandardMem::Request* req;
+    BalarCudaCallPacket_t fatbin_pack;
+    fatbin_pack.cuda_call_id = GPU_REG_FAT_BINARY;
+    strcpy(fatbin_pack.register_fatbin.file_name, cudaExecutable.c_str());
+    req = cpu->createGPUReqFromPacket(fatbin_pack);
+    initReqs->push(req);
+}
+
+Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall() {
+    Interfaces::StandardMem::Request* req;
+    if (!initReqs->empty()) {   // Finish initialization first
+        req = initReqs->front();
+        // Pop call to destructor to pointer, which is empty
+        initReqs->pop();
+        return req;
+    } else {
+        // Iterate through lines of trace file
+        req = nullptr;
+        if (!traceStream.eof()) {
+            BalarCudaCallPacket_t pack;
+            std::string line;
+            std::getline(traceStream, line);
+            out->verbose(CALL_INFO, 2, 0, "Trace info: %s\n", line.c_str());
+
+            // TODO Parse the trace
+            // Before first colon: api type
+            // Search every colon for individual argument
+            // TODO Need to maintain a hashmap for device pointer
+            // TODO Need to load host data for cpy
+            size_t firstColIdx = line.find(":");
+            std::string cudaCallType = line.substr(0, firstColIdx);
+            line = line.substr(firstColIdx + 1);
+            line = trim(line);
+
+            // Extract parameters as a map
+            std::vector<std::string> params = split(line, std::string(","));
+
+            // Trim whitespaces
+            for (auto it = params.begin(); it < params.end(); it++)
+                *it = trim(*it);
+
+            // Params map
+            std::map<std::string, std::string> params_map = map_from_vec(params, std::string(":"));
+
+            // Branch to different api calls
+            if (cudaCallType.find("memalloc") != std::string::npos) {
+                pack.cuda_call_id = GPU_MALLOC;
+                
+                // Params
+                auto tmp = params_map.find(std::string("dptr"));
+                std::string dptr_name = trim(tmp->second);
+                std::string dptr_size = trim(params_map.find(std::string("size"))->second);
+
+                // Extract size
+                size_t size;
+                std::stringstream sstream(dptr_size);
+                sstream >> size;
+
+                // look up name first and use the ptr
+                auto res = dptr_map->find(dptr_name);
+                if (res == dptr_map->end()) {
+                    // New pointer
+                    CUdeviceptr* dptr = (CUdeviceptr*) malloc(sizeof(CUdeviceptr));
+                    
+                    // Save ptr val in hashmap 
+                    dptr_map->insert({dptr_name, dptr});
+
+                    // Prepare call pack
+                    pack.cuda_malloc.devPtr = (void**) dptr;
+                    pack.cuda_malloc.size = size;
+                } else {
+                    // Old pointer
+                    // Impossible as current trace implementation
+                    // Every malloc will get a new pointer
+                    CUdeviceptr* dptr = res->second;
+
+                    // Prepare call pack
+                    pack.cuda_malloc.devPtr = (void**) dptr;
+                    pack.cuda_malloc.size = size;
+                }
+
+                // Create request
+                req = cpu->createGPUReqFromPacket(pack);                
+            } else if (cudaCallType.find("memcpyH2D") != std::string::npos) {
+                
+            } else if (cudaCallType.find("memcpyD2H") != std::string::npos || cudaCallType.find("memalloc") != std::string::npos) {
+                
+            } else if (cudaCallType.find("kernel launch") != std::string::npos) {
+                
+            } else if (cudaCallType.find("free") != std::string::npos) {
+                
+            }
+        }
+        return req;
+    }
 }

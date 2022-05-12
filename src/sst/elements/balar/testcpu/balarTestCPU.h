@@ -33,9 +33,13 @@
 #include "host_defines.h"
 #include "builtin_types.h"
 #include "driver_types.h"
+#include "cuda.h"
 
 #include <sst/elements/memHierarchy/util.h>
 #include "util.h"
+#include <iostream>
+#include <fstream>
+#include <queue>
 
 using namespace SST::Statistics;
 using namespace SST::MemHierarchy;
@@ -68,7 +72,9 @@ public:
         {"mmio_addr",               "(uint) Base address of the test MMIO component. 0 means not present.", "0"},
         {"noncacheableRangeStart",  "(uint) Beginning of range of addresses that are noncacheable.", "0x0"},
         {"noncacheableRangeEnd",    "(uint) End of range of addresses that are noncacheable.", "0x0"},
-        {"addressoffset",           "(uint) Apply an offset to a calculated address to check for non-alignment issues", "0"} )
+        {"addressoffset",           "(uint) Apply an offset to a calculated address to check for non-alignment issues", "0"},
+        {"trace_file",              "(string) CUDA API calls trace file path"},
+        {"cuda_executable",         "(string) CUDA executable file path to extract PTX info"} )
 
     SST_ELI_DOCUMENT_STATISTICS( 
         {"pendCycle", "Number of pending requests per cycle", "count", 1},
@@ -154,6 +160,7 @@ private:
     Interfaces::StandardMem::Request* createMMIOWrite();
     Interfaces::StandardMem::Request* createMMIORead();
     Interfaces::StandardMem::Request* createGPUReq();
+    Interfaces::StandardMem::Request* createGPUReqFromPacket(BalarCudaCallPacket_t pack);
 
     // TODO: CUDA Calls request generator functions
     Interfaces::StandardMem::Request* checkCudaReturn();
@@ -169,8 +176,8 @@ private:
     Interfaces::StandardMem::Request* createCudaRegisterVar();
     Interfaces::StandardMem::Request* createCudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags();
 
-    // TODO: Create a handler class here to handle incoming requests?
-    // TODO: Like the one for the balarMMIO
+    // Create a handler class here to handle incoming requests
+    // Like the one for the balarMMIO
     class mmioHandlers : public Interfaces::StandardMem::RequestHandler {
         public:
             friend class BalarTestCPU;
@@ -186,6 +193,24 @@ private:
             BalarTestCPU* cpu;
     };
     mmioHandlers* handlers;
+
+    // Trace parser
+    class CudaAPITraceParser {
+        public:
+            friend class BalarTestCPU;
+            CudaAPITraceParser(BalarTestCPU* cpu, SST::Output* out, std::string& traceFile, std::string& cudaExecutable);
+            virtual ~CudaAPITraceParser() {}
+
+            Interfaces::StandardMem::Request* getNextCall();
+
+            BalarTestCPU* cpu;
+            SST::Output* out;
+            std::string cudaExecutable;
+            std::ifstream traceStream;
+            std::queue<Interfaces::StandardMem::Request*>* initReqs;
+            std::map<std::string, CUdeviceptr*>* dptr_map;
+    };
+    CudaAPITraceParser* trace_parser;
 };
 
 }

@@ -15,8 +15,10 @@ parser.add_argument("-c", "--config", help="specify configuration file", require
 parser.add_argument("-v", "--verbose", help="increase verbosity of output", action="store_true")
 parser.add_argument("-s", "--statfile", help="statistics file", default="./stats.out")
 parser.add_argument("-l", "--statlevel", help="statistics level", type=int, default=16)
-parser.add_argument("-x", "--binary", help="specify input binary", default="")
+parser.add_argument("-t", "--trace", help="CUDA api calls trace file path", default="cuda_calls.trace")
+parser.add_argument("-x", "--binary", help="specify input cuda binary", default="")
 parser.add_argument("-a", "--arguments", help="colon sep binary arguments", default="")
+
 
 args = parser.parse_args()
 
@@ -24,6 +26,7 @@ verbose = args.verbose
 cfgFile = args.config
 statFile = args.statfile
 statLevel = args.statlevel
+traceFile = args.trace
 binaryFile = args.binary
 binaryArgs = args.arguments
 
@@ -79,6 +82,10 @@ cpu.addParams({
       "llsc_freq" : 0,
       "mmio_freq" : 0,
       "gpu_freq" : 100,
+
+      # Trace and executable info
+      "trace_file": traceFile,
+      "cuda_executable": binaryFile,
 })
 iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 iface.addParams(debug_params)

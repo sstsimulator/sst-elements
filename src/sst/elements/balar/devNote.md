@@ -5,6 +5,12 @@
 1. [x] Link the custom cuda lib with nvcc executable
 2. [x] Create an interface in Balar using MMIO to accept arguments and send results
     1. [x] Test if can receive and send data properly with standardCPU
+    1. Need to source the gpgpusim and cuda script
+        1. `source ../env-setup/sst_env_setup.sh `
+        1. `source ../sst-gpgpusim-external/setup_environment`
+    1. Need to make and install the sst
+        1. `make -j`
+        1. `make install`
     1. Run script: `sst testBalar-simple.py --model-options="-c ariel-gpu-v100.cfg -v" > tmp.out 2>&1`
 3. [ ] Real test
     1. [ ] How to generate test stimulus?
