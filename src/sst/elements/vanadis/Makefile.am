@@ -170,7 +170,6 @@ os/resp/voscallresp.h \
 os/resp/vosexitresp.h
 
 EXTRA_DIST = \
-	tests/small/basic-io/Makefile \
 	tests/small/basic-io/hello-world/Makefile \
 	tests/small/basic-io/hello-world/hello-world.c \
 	tests/small/basic-io/hello-world/mipsel/sst.stdout.gold \
@@ -212,7 +211,6 @@ EXTRA_DIST = \
     tests/small/basic-io/read-write/Makefile \
     tests/small/basic-io/read-write/read-write.c \
 \
-	tests/small/basic-math/Makefile \
 	tests/small/basic-math/sqrt-double/Makefile \
 	tests/small/basic-math/sqrt-double/sqrt-double.c \
 	tests/small/basic-math/sqrt-double/mipsel/sst.stdout.gold \
@@ -225,7 +223,6 @@ EXTRA_DIST = \
 	tests/small/basic-math/sqrt-float/mipsel/vanadis.stderr.gold \
 	tests/small/basic-math/sqrt-float/mipsel/vanadis.stdout.gold \
 \
-	tests/small/basic-ops/Makefile \
 	tests/small/basic-ops/test-branch/Makefile \
 	tests/small/basic-ops/test-branch/test-branch.c \
 	tests/small/basic-ops/test-branch/mipsel/sst.stdout.gold \
