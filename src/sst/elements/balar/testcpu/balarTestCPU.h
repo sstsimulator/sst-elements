@@ -209,7 +209,23 @@ private:
             std::string traceFileBasePath;
             std::ifstream traceStream;
             std::queue<Interfaces::StandardMem::Request*>* initReqs;
+
+            /**
+             * @brief A map of pointers to device pointer
+             * 
+             */
             std::map<std::string, CUdeviceptr*>* dptr_map;
+
+            /**
+             * @brief A map of kernel function name and pointer
+             *        used for registering functions in GPGPUSIM
+             * 
+             */
+            std::map<std::string, uint64_t>* func_map;
+
+
+            // TODO Only on cubin here?
+            unsigned fatCubinHandle;
     };
     CudaAPITraceParser* trace_parser;
 };

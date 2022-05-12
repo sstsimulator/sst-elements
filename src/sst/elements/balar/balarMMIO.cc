@@ -128,9 +128,11 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
     mmio->cuda_ret.cuda_call_id = packet->cuda_call_id;
     switch (packet->cuda_call_id) {
         case GPU_REG_FAT_BINARY: 
+            mmio->cuda_ret.cuda_error = cudaSuccess;
             mmio->cuda_ret.fat_cubin_handle = (uint64_t) __cudaRegisterFatBinarySST(packet->register_fatbin.file_name);
             break;
         case GPU_REG_FUNCTION: 
+            // hostFun should be a fixed pointer value to each kernel function 
             __cudaRegisterFunctionSST(packet->register_function.fatCubinHandle, 
                                       packet->register_function.hostFun,
                                       packet->register_function.deviceFun);
@@ -183,12 +185,15 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
             mmio->cuda_ret.cuda_error = cudaGetLastError();
             break;
         case GPU_MALLOC: 
-            mmio->cuda_ret.malloc_addr = cudaMallocSST(
+            mmio->cuda_ret.cudamalloc.devptr_addr = (uint64_t) packet->cuda_malloc.devPtr;
+            mmio->cuda_ret.cuda_error = cudaSuccess;
+            mmio->cuda_ret.cudamalloc.malloc_addr = cudaMallocSST(
                 packet->cuda_malloc.devPtr,
                 packet->cuda_malloc.size
             );
             break;
         case GPU_REG_VAR: 
+            mmio->cuda_ret.cuda_error = cudaSuccess;
             __cudaRegisterVar(
                 packet->register_var.fatCubinHandle,
                 packet->register_var.hostVar,

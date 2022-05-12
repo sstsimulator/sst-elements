@@ -220,30 +220,33 @@ void BalarTestCPU::handleEvent(StandardMem::Request *req)
 bool BalarTestCPU::clockTic( Cycle_t ) {
     ++clock_ticks;
 
-    Interfaces::StandardMem::Request* req = trace_parser->getNextCall();
-    if (!(req == nullptr)) {
-        // Send gpu cuda call request
-        memory->send(req);
+    // Wait for previous call to finish
+    // Issue a new API call if none is pending
+    if (requests.empty()) {
+        Interfaces::StandardMem::Request* req = trace_parser->getNextCall();
+        if (!(req == nullptr)) {
+            // Send gpu cuda call request
+            memory->send(req);
 
-        // Add cuda call requests to pending map
-        std::string cmdString = "Read";
-        requests[req->getID()] = std::make_pair(getCurrentSimTime(), cmdString);
+            // Add cuda call requests to pending map
+            std::string cmdString = "Read";
+            requests[req->getID()] = std::make_pair(getCurrentSimTime(), cmdString);
 
-        // Check cudal call retval
-        req = checkCudaReturn();
-        memory->send(req);
-        requests[req->getID()] = std::make_pair(getCurrentSimTime(), cmdString);
+            // Check cudal call retval
+            req = checkCudaReturn();
+            memory->send(req);
+            requests[req->getID()] = std::make_pair(getCurrentSimTime(), cmdString);
+            return false;
+        } else {
+            // No more request
+            out.verbose(CALL_INFO, 1, 0, "BalarTestCPU: Test Completed Successfuly\n");
+            primaryComponentOKToEndSim();
+            return true;    // Turn our clock off while we wait for any other CPUs to end
+        }
+    } else {
+        // Wait for pending request
+        return false;
     }
-
-    // Check whether to end the simulation
-    if ( req == nullptr && requests.empty() ) {
-        out.verbose(CALL_INFO, 1, 0, "BalarTestCPU: Test Completed Successfuly\n");
-        primaryComponentOKToEndSim();
-        return true;    // Turn our clock off while we wait for any other CPUs to end
-    }
-
-    // return false so we keep going
-    return false;
 }
 
 /** Original clockTic
@@ -479,11 +482,17 @@ void BalarTestCPU::mmioHandlers::handle(Interfaces::StandardMem::ReadResp* resp)
     } else {
         vector<uint8_t> *data_ptr = &(resp->data);
         BalarCudaCallReturnPacket_t *ret_pack_ptr = decode_balar_packet<BalarCudaCallReturnPacket_t>(data_ptr);
-        out->verbose(_INFO_, "%s: get response from read request (%d) with enum: \"%s\"\n", cpu->getName().c_str(), resp->getID(), gpu_api_to_string(ret_pack_ptr->cuda_call_id)->c_str());
+        out->verbose(_INFO_, "%s: get response from read request (%d) with enum: \"%s\" and error: %d\n", cpu->getName().c_str(), resp->getID(), gpu_api_to_string(ret_pack_ptr->cuda_call_id)->c_str(), ret_pack_ptr->cuda_error);
 
         enum GpuApi_t api_type = ret_pack_ptr->cuda_call_id;
         if (api_type == GPU_REG_FAT_BINARY) {
             out->verbose(_INFO_, "Fatbin handle: %d\n", ret_pack_ptr->fat_cubin_handle);
+            cpu->trace_parser->fatCubinHandle = ret_pack_ptr->fat_cubin_handle;
+        } else if (api_type == GPU_MALLOC) {
+            out->verbose(_INFO_, "GPU Malloc addr: %p\n", ret_pack_ptr->cudamalloc.malloc_addr);
+
+            // Set device pointer value
+            *(CUdeviceptr *)(ret_pack_ptr->cudamalloc.devptr_addr) = ret_pack_ptr->cudamalloc.malloc_addr;
         }
 
         // TODO Handle return values from API
@@ -534,6 +543,7 @@ BalarTestCPU::CudaAPITraceParser::CudaAPITraceParser(BalarTestCPU* cpu, SST::Out
     // Init class data structure
     initReqs = new std::queue<Interfaces::StandardMem::Request*>();
     dptr_map = new std::map<std::string, CUdeviceptr*>();
+    func_map = new std::map<std::string, uint64_t>();
 
     // TODO Inserting initialization request like register fatbinary to initReqs
     Interfaces::StandardMem::Request* req;
@@ -623,7 +633,6 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
                 // Create request
                 req = cpu->createGPUReqFromPacket(pack);                
             } else if (cudaCallType.find("memcpyH2D") != std::string::npos) {
-                // TODO Need to wait for malloc to be finished
                 pack.cuda_call_id = GPU_MEMCPY;
                 pack.cuda_memcpy.kind = cudaMemcpyHostToDevice;
 
@@ -665,9 +674,146 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
             } else if (cudaCallType.find("memcpyD2H") != std::string::npos || cudaCallType.find("memalloc") != std::string::npos) {
                 pack.cuda_call_id = GPU_MEMCPY;
                 pack.cuda_memcpy.kind = cudaMemcpyDeviceToHost;
+
+                // TODO
                 
             } else if (cudaCallType.find("kernel launch") != std::string::npos) {
-                
+                // Params
+                std::stringstream ss;
+                std::string func_name = trim(params_map.find(std::string("name"))->second);
+                std::string ptx_name = trim(params_map.find(std::string("ptx_name"))->second);
+                unsigned int gdx, gdy, gdz, bdx, bdy, bdz;
+                size_t sharedMem;
+                gdx = std::stoul(params_map.find(std::string("gdx"))->second);
+                gdy = std::stoul(params_map.find(std::string("gdy"))->second);
+                gdz = std::stoul(params_map.find(std::string("gdz"))->second);
+                bdx = std::stoul(params_map.find(std::string("bdx"))->second);
+                bdy = std::stoul(params_map.find(std::string("bdy"))->second);
+                bdz = std::stoul(params_map.find(std::string("bdz"))->second);
+                sharedMem = std::stoul(params_map.find(std::string("sharedBytes"))->second);
+                cudaStream_t stream = nullptr;
+                std::string arguments = trim(params_map.find(std::string("args"))->second);
+
+
+                // Configure call, register function, set args, and then launch kernel
+
+                // Other request in sequence pack into the queue
+                BalarCudaCallPacket_t config_call_pack;
+                BalarCudaCallPacket_t set_arg_pack;
+                BalarCudaCallPacket_t launch_pack;
+                config_call_pack.cuda_call_id = GPU_CONFIG_CALL;
+                set_arg_pack.cuda_call_id = GPU_SET_ARG;
+                launch_pack.cuda_call_id = GPU_LAUNCH;
+
+                // Configure call
+                out->verbose(CALL_INFO, 2, 0, "Create pack with configurations: gdx: %d gdy: %d gdz: %d bdx: %d bdy: %d bdz: %d\n", gdx, gdy, gdz, bdx, bdy, bdz);
+
+                config_call_pack.configure_call.gdx = gdx;
+                config_call_pack.configure_call.gdy = gdy;
+                config_call_pack.configure_call.gdz = gdz;
+                config_call_pack.configure_call.bdx = bdx;
+                config_call_pack.configure_call.bdy = bdy;
+                config_call_pack.configure_call.bdz = bdz;
+                config_call_pack.configure_call.sharedMem = sharedMem;
+                config_call_pack.configure_call.stream = stream;
+                Interfaces::StandardMem::Request* config_call_req = cpu->createGPUReqFromPacket(config_call_pack);
+
+
+                // If not register function, register first
+                // else use the config call as a req
+                if(func_map->find(func_name) == func_map->end()) {
+                    // New function, register first
+                    // This map will growing thus will not have repeated
+                    // id
+                    uint64_t func_id = func_map->size();
+                    func_map->insert({func_name, func_id});
+                    out->verbose(CALL_INFO, 2, 0, "Create pack to register function '%s' to device function '%s' with fatbinhandle: %d\n", func_name.c_str(), ptx_name.c_str(), fatCubinHandle);
+                    pack.cuda_call_id = GPU_REG_FUNCTION;
+                    pack.register_function.fatCubinHandle = fatCubinHandle;
+                    pack.register_function.hostFun = func_id;
+                    strcpy(pack.register_function.deviceFun, ptx_name.c_str());
+
+                    // Create request and set to active one
+                    req = cpu->createGPUReqFromPacket(pack);  
+
+                    // Put the config call request after the function
+                    // registration
+                    initReqs->push(config_call_req);
+                } else {
+                    // Return config call request as the active one
+                    req = config_call_req;
+                }
+
+                // Arguments setup
+                size_t offset = 0;
+                while (!arguments.empty()) {
+                    // Get argument value and size
+                    size_t pos;
+                    pos = arguments.find("/");
+                    std::string arg_val = arguments.substr(0, pos);
+                    arguments = arguments.substr(pos + 1);
+
+                    pos = arguments.find("/");
+                    std::string arg_size_str = arguments.substr(0, pos);
+                    arguments = arguments.substr(pos + 1);
+
+                    // Get argument size
+                    size_t arg_size;
+                    std::stringstream scanner;
+                    scanner << arg_size_str;
+                    scanner >> arg_size;
+
+                    // Set argument size and offset, update offset as well
+                    set_arg_pack.setup_argument.size = arg_size;
+                    set_arg_pack.setup_argument.offset = offset;
+                    offset += arg_size;
+
+                    // Get argument value
+                    // Check if a device pointer first
+                    // if not, convert as value
+                    if (arg_val.find("dptr") != std::string::npos) {
+                        // A device pointer
+                        auto it = dptr_map->find(arg_val);
+                        if (it == dptr_map->end()) {
+                            // Invalid device pointer
+                            out->fatal(CALL_INFO, -1, "Invalid device pointer name: '%s'\n", arg_val.c_str());
+                        } else {
+                            CUdeviceptr dptr = *(it->second);
+                            set_arg_pack.setup_argument.arg = (uint64_t) dptr;
+                        }
+                    } else if (arg_val.find(".") != std::string::npos) {
+                        // A float/double value
+                        double val = std::stod(arg_val);
+                        if (arg_size == 8) {
+                            // double
+                            set_arg_pack.setup_argument.arg = 0;
+                            memcpy(set_arg_pack.setup_argument.value, &val, arg_size);
+                        } else if (arg_size == 4) {
+                            // float
+                            float val_f = (float) val;
+                            set_arg_pack.setup_argument.arg = 0;
+                            memcpy(set_arg_pack.setup_argument.value, &val_f, arg_size);
+                        } else {
+                            out->fatal(CALL_INFO, -1, "Unknown floating point format for '%s' with size: %d\n", arg_val.c_str(), arg_size);
+                        }
+                    } else {
+                        // Treated as an integer value
+                        int val = std::stoi(arg_val);
+                        set_arg_pack.setup_argument.arg = 0;
+                        memcpy(set_arg_pack.setup_argument.value, &val, arg_size);
+                    }
+
+                    // Insert request to queue
+                    Interfaces::StandardMem::Request* setup_arg_req = cpu->createGPUReqFromPacket(set_arg_pack);
+                    initReqs->push(setup_arg_req);
+                }
+
+                // Launch kernel
+                uint64_t launch_kernel_id = func_map->find(func_name)->second;
+                out->verbose(CALL_INFO, 2, 0, "Create pack to launch function '%s' with id %d\n", func_name.c_str(), launch_kernel_id);
+                launch_pack.cuda_launch.func = launch_kernel_id;
+                Interfaces::StandardMem::Request* launch_req = cpu->createGPUReqFromPacket(launch_pack);
+                initReqs->push(launch_req);
             } else if (cudaCallType.find("free") != std::string::npos) {
                 
             }
