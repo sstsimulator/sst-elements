@@ -112,7 +112,7 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     //do the mapping
     Params mapperParams;    //empty but needed for loadModule API
     std::string mapperName = params.find<std::string>("mapper", "llyr.mapper.simple");
-    llyr_mapper_ = dynamic_cast<LlyrMapper*>( loadModule(mapperName, mapperParams) );
+    llyr_mapper_ = loadModule<LlyrMapper>(mapperName, mapperParams);
     output_->verbose(CALL_INFO, 1, 0, "Mapping application to hardware with %s\n", mapperName.c_str());
     llyr_mapper_->mapGraph(hardwareGraph_, applicationGraph_, mappedGraph_, configData_);
     mappedGraph_.printDot("llyr_mapped.dot");

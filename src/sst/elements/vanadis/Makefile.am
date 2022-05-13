@@ -169,40 +169,71 @@ os/resp/voscallresp.h \
 os/resp/vosexitresp.h
 
 EXTRA_DIST = \
-	tests/small/basic-io/Makefile \
-	tests/small/basic-io/hello-world.c \
-	tests/small/basic-io/hello-world.stderr.gold \
-	tests/small/basic-io/hello-world.stdout.gold \
-	tests/small/basic-io/hello-world.cc \
-	tests/small/basic-io/hello-world-CC.stderr.gold \
-	tests/small/basic-io/hello-world-CC.stdout.gold \
-    tests/small/basic-io/printf-check.c \
-	tests/small/basic-io/printf-check.stdout.gold \
-    tests/small/basic-io/printf-check.stderr.gold \
-    tests/small/basic-io/unlinkat.c \
-    tests/small/basic-io/unlinkat.stderr.gold \
-    tests/small/basic-io/unlinkat.stdout.gold \
-    tests/small/basic-io/unlink.c \
-    tests/small/basic-io/unlink.stderr.gold \
-    tests/small/basic-io/unlink.stdout.gold \
-    tests/small/basic-io/openat.c \
-    tests/small/basic-io/openat.stderr.gold \
-    tests/small/basic-io/openat.stdout.gold \
-    tests/small/basic-io/read-write.c \
-	tests/small/basic-math/Makefile \
-	tests/small/basic-math/sqrt-double.c \
-	tests/small/basic-math/sqrt-double.stderr.gold \
-	tests/small/basic-math/sqrt-double.stdout.gold \
-	tests/small/basic-math/sqrt-float.c \
-	tests/small/basic-math/sqrt-float.stderr.gold \
-	tests/small/basic-math/sqrt-float.stdout.gold \
-	tests/small/basic-ops/Makefile \
-	tests/small/basic-ops/test-branch.c \
-	tests/small/basic-ops/test-branch.stderr.gold \
-	tests/small/basic-ops/test-branch.stdout.gold \
-	tests/small/basic-ops/test-shift.c \
-	tests/small/basic-ops/test-shift.stderr.gold \
-	tests/small/basic-ops/test-shift.stdout.gold \
+	tests/small/basic-io/hello-world/Makefile \
+	tests/small/basic-io/hello-world/hello-world.c \
+	tests/small/basic-io/hello-world/mipsel/sst.stdout.gold \
+	tests/small/basic-io/hello-world/mipsel/vanadis.stderr.gold \
+	tests/small/basic-io/hello-world/mipsel/vanadis.stdout.gold \
+	tests/small/basic-io/hello-world/riscv64/sst.stdout.gold \
+	tests/small/basic-io/hello-world/riscv64/vanadis.stderr.gold \
+	tests/small/basic-io/hello-world/riscv64/vanadis.stdout.gold \
+\
+	tests/small/basic-io/hello-world-cpp/Makefile \
+	tests/small/basic-io/hello-world-cpp/hello-world-cpp.cc \
+	tests/small/basic-io/hello-world-cpp/mipsel/vanadis.stderr.gold \
+	tests/small/basic-io/hello-world-cpp/mipsel/vanadis.stdout.gold \
+\
+    tests/small/basic-io/printf-check/Makefile \
+    tests/small/basic-io/printf-check/printf-check.c \
+	tests/small/basic-io/printf-check/mipsel/sst.stdout.gold \
+	tests/small/basic-io/printf-check/mipsel/vanadis.stdout.gold \
+    tests/small/basic-io/printf-check/mipsel/vanadis.stderr.gold \
+\
+    tests/small/basic-io/unlinkat/Makefile \
+    tests/small/basic-io/unlinkat/unlinkat.c \
+    tests/small/basic-io/unlinkat/mipsel/sst.stdout.gold \
+    tests/small/basic-io/unlinkat/mipsel/vanadis.stderr.gold \
+    tests/small/basic-io/unlinkat/mipsel/vanadis.stdout.gold \
+\
+    tests/small/basic-io/unlink/Makefile \
+    tests/small/basic-io/unlink/unlink.c \
+    tests/small/basic-io/unlink/mipsel/sst.stdout.gold \
+    tests/small/basic-io/unlink/mipsel/vanadis.stderr.gold \
+    tests/small/basic-io/unlink/mipsel/vanadis.stdout.gold \
+\
+    tests/small/basic-io/openat/Makefile \
+    tests/small/basic-io/openat/openat.c \
+    tests/small/basic-io/openat/mipsel/sst.stdout.gold \
+    tests/small/basic-io/openat/mipsel/vanadis.stderr.gold \
+    tests/small/basic-io/openat/mipsel/vanadis.stdout.gold \
+\
+    tests/small/basic-io/read-write/Makefile \
+    tests/small/basic-io/read-write/read-write.c \
+\
+	tests/small/basic-math/sqrt-double/Makefile \
+	tests/small/basic-math/sqrt-double/sqrt-double.c \
+	tests/small/basic-math/sqrt-double/mipsel/sst.stdout.gold \
+	tests/small/basic-math/sqrt-double/mipsel/vanadis.stderr.gold \
+	tests/small/basic-math/sqrt-double/mipsel/vanadis.stdout.gold \
+\
+	tests/small/basic-math/sqrt-float/Makefile \
+	tests/small/basic-math/sqrt-float/sqrt-float.c \
+	tests/small/basic-math/sqrt-float/mipsel/sst.stdout.gold \
+	tests/small/basic-math/sqrt-float/mipsel/vanadis.stderr.gold \
+	tests/small/basic-math/sqrt-float/mipsel/vanadis.stdout.gold \
+\
+	tests/small/basic-ops/test-branch/Makefile \
+	tests/small/basic-ops/test-branch/test-branch.c \
+	tests/small/basic-ops/test-branch/mipsel/sst.stdout.gold \
+	tests/small/basic-ops/test-branch/mipsel/vanadis.stderr.gold \
+	tests/small/basic-ops/test-branch/mipsel/vanadis.stdout.gold \
+\
+	tests/small/basic-ops/test-shift/Makefile \
+	tests/small/basic-ops/test-shift/test-shift.c \
+	tests/small/basic-ops/test-shift/mipsel/sst.stdout.gold \
+	tests/small/basic-ops/test-shift/mipsel/vanadis.stderr.gold \
+	tests/small/basic-ops/test-shift/mipsel/vanadis.stdout.gold \
+\
 	tests/basic_vanadis.py \
 	tests/testsuite_default_vanadis.py
 

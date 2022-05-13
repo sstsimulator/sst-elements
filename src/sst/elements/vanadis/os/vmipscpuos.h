@@ -222,7 +222,7 @@ public:
         case VANADIS_SYSCALL_MIPS_UNLINK: {
             int32_t path_addr = getRegister( 4 );
 
-            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to unlink( %" PRIu64 " )\n",path_addr);
+            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to unlink( %" PRId32 " )\n",path_addr);
 
             call_ev = new VanadisSyscallUnlinkEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, path_addr);
         } break;
@@ -232,7 +232,7 @@ public:
             int32_t path_addr = getRegister( 5 );
             int32_t flags = getRegister( 6 );
 
-            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to unlinkat( %d, %" PRIu32 ", %#" PRIx32" )\n",dirFd,path_addr,flags);
+            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to unlinkat( %d, %" PRId32 ", %#" PRIx32" )\n",dirFd,path_addr,flags);
 
             call_ev = new VanadisSyscallUnlinkatEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, dirFd,path_addr,flags);
         } break;

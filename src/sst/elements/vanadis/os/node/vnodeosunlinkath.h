@@ -48,12 +48,10 @@ public:
 
             output->verbose(CALL_INFO, 16, 0, "[syscall-unlinkat] path: \"%s\"\n", path_cstr);
 
-printf("%d %s %x\n",dirFd,path_cstr,flags);
             if ( unlinkat( dirFd, path_cstr,flags ) ) {
                 retval = -errno;
                 char buf[100];
                 strerror_r(errno,buf,100);
-printf("%s\n",strerror_r(errno,buf,100));
                 output->verbose(CALL_INFO, 16, 0, "[syscall-unlinkat] unlink of %s failed, `%s`\n", path_cstr, buf );
             }
             markComplete();

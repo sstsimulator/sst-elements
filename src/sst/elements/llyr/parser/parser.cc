@@ -1859,7 +1859,6 @@ void Parser::collapseInductionVars()
             std::cout << "vertex: " << vertexIterator->first << "\n";
 
             //write operands
-            bool first = 0;
             for( auto operandIter = tempInstruction->op_begin(), operandEnd = tempInstruction->op_end(); operandIter != operandEnd; ++operandIter ) {
                 std::cout << operandIter->get()->getNameOrAsOperand() << " -- boopA" << std::endl;
 

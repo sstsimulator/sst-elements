@@ -2092,7 +2092,7 @@ void MESIInclusive::sendWriteback(Command cmd, SharedCacheLine* line, bool dirty
 
 void MESIInclusive::sendAckPut(MemEvent * event) {
     MemEvent * ack = event->makeResponse();
-    ack->setRqstr(event->getSrc());
+    ack->copyMetadata(event);
     ack->setSize(event->getSize());
 
     uint64_t deliveryTime = timestamp_ + tagLatency_;
@@ -2177,7 +2177,6 @@ uint64_t MESIInclusive::invalidateSharer(std::string shr, MemEvent * event, Shar
         MemEvent * inv = new MemEvent(cachename_, addr, addr, cmd);
         if (event) {
             inv->copyMetadata(event);
-            inv->setRqstr(event->getRqstr());
         } else {
             inv->setRqstr(cachename_);
         }
@@ -2215,7 +2214,6 @@ bool MESIInclusive::invalidateOwner(MemEvent * event, SharedCacheLine * line, bo
     MemEvent * inv = new MemEvent(cachename_, addr, addr, cmd);
     if (event) {
         inv->copyMetadata(event);
-        inv->setRqstr(event->getRqstr());
     } else {
         inv->setRqstr(cachename_);
     }
