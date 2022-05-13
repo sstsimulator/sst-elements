@@ -140,11 +140,18 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
         case GPU_MEMCPY: 
             // TODO Might want to optimize here with the payload and src
             // TODO that are essentially the same thing?
-            mmio->cuda_ret.cuda_error = cudaMemcpySST(packet->cuda_memcpy.dst,
-                          packet->cuda_memcpy.src,
+            mmio->cuda_ret.cuda_error = cudaMemcpy(
+                          (void *) packet->cuda_memcpy.dst,
+                          (const void*) packet->cuda_memcpy.src,
                           packet->cuda_memcpy.count,
-                          packet->cuda_memcpy.kind,
-                          packet->cuda_memcpy.payload);
+                          packet->cuda_memcpy.kind);
+            
+            // Payload contains the pointer actual data from hw trace run
+            // dst is the pointer to the simulation cpy
+            mmio->cuda_ret.cudamemcpy.sim_data = (volatile uint8_t*) packet->cuda_memcpy.dst;
+            mmio->cuda_ret.cudamemcpy.real_data = (volatile uint8_t*) packet->cuda_memcpy.payload;
+            mmio->cuda_ret.cudamemcpy.size = packet->cuda_memcpy.count;
+            mmio->cuda_ret.cudamemcpy.kind = packet->cuda_memcpy.kind;
             break;
         case GPU_CONFIG_CALL: 
             {

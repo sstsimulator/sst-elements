@@ -493,6 +493,45 @@ void BalarTestCPU::mmioHandlers::handle(Interfaces::StandardMem::ReadResp* resp)
 
             // Set device pointer value
             *(CUdeviceptr *)(ret_pack_ptr->cudamalloc.devptr_addr) = ret_pack_ptr->cudamalloc.malloc_addr;
+        } else if (api_type == GPU_MEMCPY && ret_pack_ptr->cudamemcpy.kind == cudaMemcpyDeviceToHost) {
+            // Verify D2H result by counting bytes differences
+            // Also dump the device result
+            size_t tot = ret_pack_ptr->cudamemcpy.size;
+            size_t correct = 0;
+            volatile uint8_t *sim_ptr    = ret_pack_ptr->cudamemcpy.sim_data;
+            volatile uint8_t *real_ptr   = ret_pack_ptr->cudamemcpy.real_data;
+            for (size_t i = 0; i < tot; i++) {
+                if ((*real_ptr) == (*sim_ptr))
+                    correct++;
+                sim_ptr++;
+                real_ptr++;
+            }
+
+            // Reset ptr for dumping
+            sim_ptr    = ret_pack_ptr->cudamemcpy.sim_data;
+            real_ptr     = ret_pack_ptr->cudamemcpy.real_data;
+
+            out->verbose(_INFO_, "GPU memcpyD2H correct bytes: %d total bytes: %d ratio: %f\n", correct, tot, (double) correct / (double) tot);
+
+            // Dump data to file
+            char buf[200];
+            sprintf(buf, "cudamemcpyD2H-sim-%p-%p-size-%d.data", sim_ptr, real_ptr, tot);
+            std::ofstream dumpStream;
+            dumpStream.open(buf, std::ios::out | std::ios::binary);
+            if (!dumpStream.is_open()) {
+                out->fatal(_INFO_, "Cannot open '%s' for dumping D2H memcpy data\n", buf);
+            }
+            dumpStream.write((const char *) sim_ptr, tot);
+            dumpStream.close();
+
+            sprintf(buf, "cudamemcpyD2H-real-%p-%p-size-%d.data", sim_ptr, real_ptr, tot);
+            std::ofstream dumpRealStream;
+            dumpRealStream.open(buf, std::ios::out | std::ios::binary);
+            if (!dumpRealStream.is_open()) {
+                out->fatal(_INFO_, "Cannot open '%s' for dumping D2H memcpy data\n", buf);
+            }
+            dumpRealStream.write((const char *) real_ptr, tot);
+            dumpRealStream.close();
         }
 
         // TODO Handle return values from API
@@ -632,9 +671,9 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
 
                 // Create request
                 req = cpu->createGPUReqFromPacket(pack);                
-            } else if (cudaCallType.find("memcpyH2D") != std::string::npos) {
+            } else if (cudaCallType.find("memcpyH2D") != std::string::npos || 
+                       cudaCallType.find("memcpyD2H") != std::string::npos) {
                 pack.cuda_call_id = GPU_MEMCPY;
-                pack.cuda_memcpy.kind = cudaMemcpyHostToDevice;
 
                 // Params
                 std::string dptr_name = trim(params_map.find(std::string("device_ptr"))->second);
@@ -649,8 +688,9 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
                 if (!dataStream.is_open()) {
                     out->fatal(CALL_INFO, -1,"Error: data file: '%s' not exist\n", data_file_path.c_str());
                 }
-                uint8_t *host_data = (uint8_t *) malloc(sizeof(uint8_t) * size);
-                dataStream.read((char *)host_data, size);
+                out->verbose(CALL_INFO, 2, 0, "Reading data file: '%s'\n", data_file_path.c_str());
+                uint8_t *real_data = (uint8_t *) malloc(sizeof(uint8_t) * size);
+                dataStream.read((char *)real_data, size);
 
                 // Get device pointer value
                 CUdeviceptr* dptr = nullptr;
@@ -661,22 +701,33 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
                     dptr = pair->second;
                 }
 
-                // Prepare pack
-                out->verbose(CALL_INFO, 2, 0, "MemcpyH2D Device pointer (%s) addr: %p val: %p\n", dptr_name.c_str(), dptr, *dptr);
+                if (cudaCallType.find("memcpyH2D") != std::string::npos) {
+                    // Prepare pack for host to device
+                    out->verbose(CALL_INFO, 2, 0, "MemcpyH2D Device pointer (%s) addr: %p val: %p\n", dptr_name.c_str(), dptr, *dptr);
 
-                pack.cuda_memcpy.dst = *dptr;
-                pack.cuda_memcpy.src = (uint64_t) host_data;
-                pack.cuda_memcpy.count = size;
-                pack.cuda_memcpy.payload = host_data;
+                    pack.cuda_memcpy.kind = cudaMemcpyHostToDevice;
+                    pack.cuda_memcpy.dst = *dptr;
+                    pack.cuda_memcpy.src = (uint64_t) real_data;
+                    pack.cuda_memcpy.count = size;
+                    pack.cuda_memcpy.payload = real_data;
 
-                // Create request
-                req = cpu->createGPUReqFromPacket(pack);   
-            } else if (cudaCallType.find("memcpyD2H") != std::string::npos || cudaCallType.find("memalloc") != std::string::npos) {
-                pack.cuda_call_id = GPU_MEMCPY;
-                pack.cuda_memcpy.kind = cudaMemcpyDeviceToHost;
+                    // Create request
+                    req = cpu->createGPUReqFromPacket(pack);   
+                } else if (cudaCallType.find("memcpyD2H") != std::string::npos) {
+                    // Prepare for device to host
+                    out->verbose(CALL_INFO, 2, 0, "MemcpyD2H Device pointer (%s) addr: %p val: %p\n", dptr_name.c_str(), dptr, *dptr);
 
-                // TODO
-                
+                    // Prepare enough host space
+                    uint8_t *buf = (uint8_t *) malloc(sizeof(uint8_t) * size);
+                    pack.cuda_memcpy.kind = cudaMemcpyDeviceToHost;
+                    pack.cuda_memcpy.dst = (uint64_t) buf;
+                    pack.cuda_memcpy.src = (uint64_t) *dptr;
+                    pack.cuda_memcpy.count = size;
+                    pack.cuda_memcpy.payload = real_data;
+
+                    // Create request
+                    req = cpu->createGPUReqFromPacket(pack);   
+                }
             } else if (cudaCallType.find("kernel launch") != std::string::npos) {
                 // Params
                 std::stringstream ss;
@@ -815,7 +866,7 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
                 Interfaces::StandardMem::Request* launch_req = cpu->createGPUReqFromPacket(launch_pack);
                 initReqs->push(launch_req);
             } else if (cudaCallType.find("free") != std::string::npos) {
-                
+                // TODO Remove device pointer from hashmap? 
             }
         }
         return req;
