@@ -17,10 +17,11 @@
 #include "balarMMIO.h"
 #include "util.h"
 
-
 using namespace SST;
 using namespace SST::Interfaces;
 using namespace SST::MemHierarchy;
+
+SST::BalarComponent::BalarMMIO* g_balarmmio_component = NULL;
  
 /* Example MMIO device */
 BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
@@ -84,6 +85,7 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
     // TODO GPU Cache interface?
 
     handlers = new mmioHandlers(this, &out);
+    g_balarmmio_component = this;
 }
 
 void BalarMMIO::init(unsigned int phase) {
@@ -92,6 +94,16 @@ void BalarMMIO::init(unsigned int phase) {
 
 void BalarMMIO::setup() {
     iface->setup();
+}
+
+void BalarMMIO::SST_callback_memcpy_H2D_done() {
+    // Send blocked response
+    iface->send(blocked_response);
+}
+
+void BalarMMIO::SST_callback_memcpy_D2H_done() {
+    // Send blocked response
+    iface->send(blocked_response);
 }
 
 bool BalarMMIO::clockTic(Cycle_t cycle) {
@@ -113,6 +125,8 @@ void BalarMMIO::handleEvent(StandardMem::Request* req) {
  * @param write 
  */
 void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write) {
+    // Whether the request is blocking or not
+    bool is_blocked = false;
     // Convert 8 bytes of the payload into an int
     std::vector<uint8_t> buff = write->data;
 
@@ -138,6 +152,7 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
                                       packet->register_function.deviceFun);
             break;
         case GPU_MEMCPY: 
+            is_blocked = true;
             // TODO Might want to optimize here with the payload and src
             // TODO that are essentially the same thing?
             mmio->cuda_ret.cuda_error = cudaMemcpy(
@@ -228,7 +243,12 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
 
     /* Send response (ack) if needed */
     if (!(write->posted)) {
-        mmio->iface->send(write->makeResponse());
+        if (is_blocked) {
+            // Save blocked req's response and send later
+            mmio->blocked_response = write->makeResponse();
+        } else {
+            mmio->iface->send(write->makeResponse());
+        }
     }
     delete write;
 }
@@ -344,12 +364,12 @@ extern void send_write_request_SST(unsigned core_id, uint64_t address, uint64_t 
 
 extern void SST_callback_memcpy_H2D_done()
 {
-//    assert(my_gpu_component);
-//    my_gpu_component->SST_callback_memcpy_H2D_done();
+   assert(g_balarmmio_component);
+   g_balarmmio_component->SST_callback_memcpy_H2D_done();
 }
 
 extern void SST_callback_memcpy_D2H_done()
 {
-//    assert(my_gpu_component);
-//    my_gpu_component->SST_callback_memcpy_D2H_done();
+   assert(g_balarmmio_component);
+   g_balarmmio_component->SST_callback_memcpy_D2H_done();
 }

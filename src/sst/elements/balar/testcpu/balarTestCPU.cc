@@ -232,10 +232,6 @@ bool BalarTestCPU::clockTic( Cycle_t ) {
             std::string cmdString = "Read";
             requests[req->getID()] = std::make_pair(getCurrentSimTime(), cmdString);
 
-            // Check cudal call retval
-            req = checkCudaReturn();
-            memory->send(req);
-            requests[req->getID()] = std::make_pair(getCurrentSimTime(), cmdString);
             return false;
         } else {
             // No more request
@@ -559,6 +555,13 @@ void BalarTestCPU::mmioHandlers::handle(Interfaces::StandardMem::WriteResp* resp
         cpu->requests.erase(i);
     }
     delete resp;
+
+    // Send a check cuda return value after finish a call to api
+    // Check cuda call retval
+    std::string cmdString = "Read";
+    Interfaces::StandardMem::Request* req = cpu->checkCudaReturn();
+    cpu->memory->send(req);
+    cpu->requests[req->getID()] = std::make_pair(cpu->getCurrentSimTime(), cmdString);
 }
 
 BalarTestCPU::CudaAPITraceParser::CudaAPITraceParser(BalarTestCPU* cpu, SST::Output* out, std::string& traceFile, std::string& cudaExecutable) {

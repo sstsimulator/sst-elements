@@ -168,6 +168,8 @@ private:
     // Last cuda function call packet
     BalarCudaCallPacket_t *last_packet;
 
+    // Response to a blocked API request (like cudaMemcpy)
+    StandardMem::Request* blocked_response;
 
     struct cache_req_params {
         cache_req_params( unsigned m_core_id,  void* mem_fetch, StandardMem::Request* req) {

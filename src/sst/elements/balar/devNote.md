@@ -26,4 +26,12 @@
 
 ## Issues
 
-1. [ ] Need to wait for kernel launch to be completed before issuing D2H copies
+1. [ ] Need to wait for kernel launch to be completed before issuing D2H copies?
+    1. [ ] Need to understand the stream operation
+    1. [ ] Never execute `stream_operation::do_operation` when a kernel exists ahead, should be blocking though?
+    1. [ ] Probable cause in `void stream_manager::push( stream_operation op )` not waiting for stream 0 to be empty? Thus D2H copy is skipped
+        1. Disable it will not change the result
+    1. [ ] Right now the design is to fit a call in one memory handle
+        1. However, we need to delay the response send to testcpu
+        2. Send the response when the api call finishes in `tick` function
+
