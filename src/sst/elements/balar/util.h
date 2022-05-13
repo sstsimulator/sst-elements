@@ -79,7 +79,7 @@ namespace BalarComponent {
                 uint64_t src;
                 size_t count;
                 enum cudaMemcpyKind kind;
-                uint8_t *payload;
+                volatile uint8_t *payload;
             } cuda_memcpy;
 
             struct {
@@ -138,6 +138,12 @@ namespace BalarComponent {
                 uint64_t    malloc_addr;
                 uint64_t    devptr_addr;
             } cudamalloc;
+            struct {
+                volatile uint8_t*    sim_data;
+                volatile uint8_t*    real_data;
+                size_t      size;
+                enum cudaMemcpyKind kind;
+            } cudamemcpy;
         };
     } BalarCudaCallReturnPacket_t;
 
