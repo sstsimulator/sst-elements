@@ -98,7 +98,8 @@ class VanadisComponent : public SST::Component
 public:
     SST_ELI_REGISTER_COMPONENT(
 #ifdef VANADIS_BUILD_DEBUG
-        VanadisDebugComponent, "vanadisdbg", "VanadisCPU", SST_ELI_ELEMENT_VERSION(1, 0, 0),
+
+        VanadisDebugComponent, "vanadis", "dbg_VanadisCPU", SST_ELI_ELEMENT_VERSION(1, 0, 0),
         "Vanadis Debug Processor Component",
 #else
         VanadisComponent, "vanadis", "VanadisCPU", SST_ELI_ELEMENT_VERSION(1, 0, 0), "Vanadis Processor Component",
@@ -153,7 +154,8 @@ public:
           1 })
 
     SST_ELI_DOCUMENT_PORTS({ "icache_link", "Connects the CPU to the instruction cache", {} },
-                           { "dcache_link", "Connects the CPU to the data cache", {} })
+                           { "dcache_link", "Connects the CPU to the data cache", {} },
+                           { "os_link", "Connects this handler to the main operating system of the node", {}} )
 
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
@@ -178,13 +180,14 @@ public:
 
     //    void handleIncomingDataCacheEvent( StandardMem::Request* ev );
     void handleIncomingInstCacheEvent(StandardMem::Request* ev);
+    void recvOSEvent(SST::Event* ev);
 
     void handleMisspeculate(const uint32_t hw_thr, const uint64_t new_ip);
     void clearROBMisspeculate(const uint32_t hw_thr);
     void resetRegisterStacks(const uint32_t hw_thr);
     void clearFuncUnit(const uint32_t hw_thr, std::vector<VanadisFunctionalUnit*>& unit);
 
-    void syscallReturnCallback(uint32_t thr);
+    void syscallReturn(uint32_t thr);
     void setHalt(uint32_t thr, int64_t halt_code);
     void startThread(int thr, uint64_t stackStart, uint64_t instructionPointer );
 
@@ -275,7 +278,6 @@ private:
     Clock::Handler<VANADIS_COMPONENT>* cpuClockHandler;
 
     FILE*           pipelineTrace;
-    bool            handlingSysCall;
 
     Statistic<uint64_t>* stat_ins_retired;
     Statistic<uint64_t>* stat_ins_decoded;
@@ -298,6 +300,8 @@ private:
     uint64_t pause_on_retire_address;
 
     std::vector<VanadisFloatingPointFlags*> fp_flags;
+
+    SST::Link* os_link;
 };
 
 } // namespace Vanadis

@@ -33,7 +33,7 @@ branch_arith_cycles = int(os.getenv("VANADIS_BRANCH_ARITH_CYCLES", 2))
 
 cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "2.3GHz")
 
-vanadis_cpu_type = "vanadisdbg.VanadisCPU"
+vanadis_cpu_type = "vanadis.dbg_VanadisCPU"
 #vanadis_cpu_type = "vanadis.VanadisCPU"
 
 if (verbosity > 0):
@@ -243,6 +243,6 @@ class Vanadis_Builder:
 		link_os_l1dcache_l2cache_link.connect( (os_l1dcache, "low_network_0", "1ns"), (cache_bus, "high_network_2", "1ns") )
 
 		link_core0_os_link = sst.Link(prefix + ".link_core0_os")
-		link_core0_os_link.connect( (os_hdlr, "os_link", "5ns"), (node_os, "core0", "5ns") )
+		link_core0_os_link.connect( (v_cpu_0, "os_link", "5ns"), (node_os, "core0", "5ns") )
 
 		return (cache_bus, "low_network_0", "1ns")

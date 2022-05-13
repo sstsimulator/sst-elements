@@ -116,10 +116,6 @@ public:
         stat_ins_bytes_loaded = registerStatistic<uint64_t>("ins_bytes_loaded", "1");
     }
 
-    void init( int phase ) {
-        os_handler->init(phase);
-    }
-
     virtual ~VanadisDecoder()
     {
         delete os_handler;
