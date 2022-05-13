@@ -1,4 +1,4 @@
-Verbosity: 0 -> loading Vanadis CPU type: vanadisdbg.VanadisCPU
+Verbosity: 0 -> loading Vanadis CPU type: vanadis.dbg_VanadisCPU
 call topo.setEndPointFunc()
 call topo.build()
 nodeId 0 cpuID=0
@@ -9,7 +9,7 @@ nodeId 1 cpuID=0
 No application arguments found, continuing with argc=0
 nodeId 1
 node1
-WARNING: Element vanadisdbg.VanadisCPU has slot with an invalid name: decoder%(hardware_threads)d
+WARNING: Element vanadis.dbg_VanadisCPU has slot with an invalid name: decoder%(hardware_threads)d
 node0.l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 3 cycles.
 RdmaNic() sizeof(NicCmd) 64
 node1.l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 3 cycles.
