@@ -70,7 +70,7 @@ void PyMapper::runMappingTool(std::string mapping_tool)
 
     Py_Initialize();
 
-    fp = _Py_fopen(mapping_tool.c_str(), "r");
+    fp = fopen(mapping_tool.c_str(), "r");
     PyRun_SimpleFile(fp, mapping_tool.c_str());
 
     Py_Finalize();
