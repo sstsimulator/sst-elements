@@ -28,7 +28,7 @@ auto_clock_sys = os.getenv("VANADIS_AUTO_CLOCK_SYSCALLS", "no")
 
 cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "2.3GHz")
 
-vanadis_cpu_type = "vanadisdbg.VanadisCPU"
+vanadis_cpu_type = "vanadis.dbg_VanadisCPU"
 
 #if (verbosity > 0):
 #	print("Verbosity (" + str(verbosity) + ") is non-zero, using debug version of Vanadis.")
@@ -289,6 +289,6 @@ link_dir_2_mem = sst.Link("link_dir_2_mem")
 link_dir_2_mem.connect( (dirtoM, "port", "1ns"), (memToDir, "port", "1ns") )
 
 link_core0_os_link = sst.Link("link_core0_os_link")
-link_core0_os_link.connect( (os_hdlr, "os_link", "5ns"), (node_os, "core0", "5ns") )
+link_core0_os_link.connect( (v_cpu_0, "os_link", "5ns"), (node_os, "core0", "5ns") )
 
 
