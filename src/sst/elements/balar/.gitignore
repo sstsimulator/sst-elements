@@ -2,3 +2,11 @@
 *.tmp
 *.log
 sst_test_outputs/
+*.ptx
+*.ptxas
+_cuobjdump_list_ptx_*
+_app_cuda_version_*
+.gdbinit
+*.trace
+*.data
+gpgpu_inst_stats.txt
