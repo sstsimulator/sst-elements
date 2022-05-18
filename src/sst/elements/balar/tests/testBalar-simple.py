@@ -120,7 +120,7 @@ l1_nic.addParams({ "group" : l1_group,
 mmio = sst.Component("balar", "balar.balarMMIO")
 mmio.addParams({
       "verbose" : 3,
-      # "clock" : clock,
+      "clock" : clock,
       "base_addr" : mmio_addr,
 })
 mmio.addParams(config.getGPUConfig())

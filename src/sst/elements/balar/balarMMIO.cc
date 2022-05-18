@@ -156,10 +156,10 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
             // TODO Might want to optimize here with the payload and src
             // TODO that are essentially the same thing?
             mmio->cuda_ret.cuda_error = cudaMemcpy(
-                          (void *) packet->cuda_memcpy.dst,
-                          (const void*) packet->cuda_memcpy.src,
-                          packet->cuda_memcpy.count,
-                          packet->cuda_memcpy.kind);
+                    (void *) packet->cuda_memcpy.dst,
+                    (const void*) packet->cuda_memcpy.src,
+                    packet->cuda_memcpy.count,
+                    packet->cuda_memcpy.kind);
             
             // Payload contains the pointer actual data from hw trace run
             // dst is the pointer to the simulation cpy
@@ -189,7 +189,6 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
             }
             break;
         case GPU_SET_ARG: 
-            // TODO: Arguments are setup individually?
             mmio->cuda_ret.cuda_error = cudaSetupArgumentSST(
                 packet->setup_argument.arg,
                 packet->setup_argument.value,
@@ -246,8 +245,11 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
         if (is_blocked) {
             // Save blocked req's response and send later
             mmio->blocked_response = write->makeResponse();
+            out->verbose(CALL_INFO, 1, 0, "Handling a blocking request: %s", gpu_api_to_string(packet->cuda_call_id)->c_str());
+
         } else {
             mmio->iface->send(write->makeResponse());
+            out->verbose(CALL_INFO, 1, 0, "Handling a non-blocking request: %s", gpu_api_to_string(packet->cuda_call_id)->c_str());
         }
     }
     delete write;
@@ -308,7 +310,7 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::WriteResp* re
 
 void BalarMMIO::mmioHandlers::intToData(int32_t num, vector<uint8_t>* data) {
     data->clear();
-    for (int i = 0; i < sizeof(int); i++) {
+    for (size_t i = 0; i < sizeof(int); i++) {
         data->push_back(num & 0xFF);
         num >>=8;
     }
