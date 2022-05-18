@@ -1800,8 +1800,12 @@ void Parser::printPyMapper( const std::string fileName ) const
 
             //write constants
             outputFile << " consts[ ";
-            for( auto it = constVector.begin(); it != constVector.end(); it++ ) {
-                outputFile << it->second << ", " << it->first;
+            for( auto it = constVector.begin(); it != constVector.end();  ) {
+                outputFile << it->second << ":" << it->first;
+		++it;
+		if( it != constVector.end() ) {
+		   outputFile << ", ";
+		}
             }
             outputFile << " ]";
 

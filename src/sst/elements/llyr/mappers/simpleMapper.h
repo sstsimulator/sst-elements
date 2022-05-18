@@ -87,11 +87,9 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNod
         app_vertex_map_->at(currentAppNode).setVisited(1);
         opType tempOp = app_vertex_map_->at(currentAppNode).getValue().optype_;
         if( tempOp == ADDCONST || tempOp == SUBCONST || tempOp == MULCONST || tempOp == DIVCONST || tempOp == REMCONST) {
-            int64_t intConst = std::stoll(app_vertex_map_->at(currentAppNode).getValue().constant_val_);
-            addNode( tempOp, intConst, newNodeNum, graphOut, llyr_config );
-        } else if( tempOp == LDADDR || tempOp == STADDR ) {
-            int64_t intConst = std::stoll(app_vertex_map_->at(currentAppNode).getValue().constant_val_);
-            addNode( tempOp, intConst, newNodeNum, graphOut, llyr_config );
+            addNode( tempOp, app_vertex_map_->at(currentAppNode).getValue().argument_, newNodeNum, graphOut, llyr_config );
+        } else if( tempOp == LDADDR || tempOp == STREAM_LD || tempOp == STADDR || tempOp == STREAM_ST ) {
+            addNode( tempOp, app_vertex_map_->at(currentAppNode).getValue().argument_, newNodeNum, graphOut, llyr_config );
         } else {
             addNode( tempOp, newNodeNum, graphOut, llyr_config );
         }
@@ -210,6 +208,8 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNod
         if( tempOp == ST ) {
             vertex_map_->at(currentNode).getValue()->queueInit();
         } else if( tempOp == LDADDR || tempOp == STADDR ) {
+            vertex_map_->at(currentNode).getValue()->queueInit();
+        } else if( tempOp == STREAM_LD || tempOp == STREAM_ST ) {
             vertex_map_->at(currentNode).getValue()->queueInit();
         }
     }

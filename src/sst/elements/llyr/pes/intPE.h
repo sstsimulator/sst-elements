@@ -158,9 +158,10 @@ class IntConstProcessingElement : public IntProcessingElement
 {
 public:
     IntConstProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
-                              int64_t int_const)  :
-                              IntProcessingElement(op_binding, processor_id, llyr_config), int_const_(int_const)
+                              std::string *arguments)  :
+                              IntProcessingElement(op_binding, processor_id, llyr_config)
     {
+        int_const_ = std::stoll(arguments[0]);
         input_queues_= new std::vector< LlyrQueue* >;
         output_queues_ = new std::vector< LlyrQueue* >;
     }

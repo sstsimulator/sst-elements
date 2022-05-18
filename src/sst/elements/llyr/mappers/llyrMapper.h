@@ -42,11 +42,8 @@ public:
 
     void addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< ProcessingElement* > &graphOut,
                   LlyrConfig* llyr_config);
-    void addNode(opType op_binding, int64_t intConst, uint32_t nodeNum, LlyrGraph< ProcessingElement* > &graphOut,
+    void addNode(opType op_binding, std::string *arguments, uint32_t nodeNum, LlyrGraph< ProcessingElement* > &graphOut,
                  LlyrConfig* llyr_config);
-    void addNode(opType op_binding, double dblConst, uint32_t nodeNum, LlyrGraph< ProcessingElement* > &graphOut,
-                 LlyrConfig* llyr_config);
-
 };
 
 void LlyrMapper::addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< ProcessingElement* > &graphOut,
@@ -61,8 +58,6 @@ void LlyrMapper::addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< Process
 
     if( op_binding == LD ) {
         tempPE = new LoadProcessingElement( LD, nodeNum, llyr_config );
-    } else if( op_binding == LD_ST ) {
-        tempPE = new LoadProcessingElement( LD_ST, nodeNum, llyr_config );
     } else if( op_binding == ST ) {
         tempPE = new StoreProcessingElement( ST, nodeNum, llyr_config );
     } else if( op_binding == AND ) {
@@ -146,7 +141,7 @@ void LlyrMapper::addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< Process
 
 }// addNode
 
-void LlyrMapper::addNode(opType op_binding, int64_t intConst, uint32_t nodeNum, LlyrGraph< ProcessingElement* > &graphOut,
+void LlyrMapper::addNode(opType op_binding, std::string *arguments, uint32_t nodeNum, LlyrGraph< ProcessingElement* > &graphOut,
                          LlyrConfig* llyr_config)
 {
     ProcessingElement* tempPE;
@@ -157,23 +152,23 @@ void LlyrMapper::addNode(opType op_binding, int64_t intConst, uint32_t nodeNum, 
     SST::Output* output_ = new SST::Output(prefix, llyr_config->verbosity_, 0, Output::STDOUT);
 
     if( op_binding == LDADDR ) {
-        std::queue< LlyrData > tempData;
-        tempData.push(LlyrData(intConst));
-        tempPE = new LoadProcessingElement( LD, nodeNum, llyr_config, tempData );
+        tempPE = new AdvLoadProcessingElement( LDADDR, nodeNum, llyr_config, arguments );
+    } else if( op_binding == STREAM_LD ) {
+        tempPE = new AdvLoadProcessingElement( STREAM_LD, nodeNum, llyr_config, arguments );
     } else if( op_binding == STADDR ) {
-        std::queue< LlyrData > tempData;
-        tempData.push(LlyrData(intConst));
-        tempPE = new StoreProcessingElement( ST, nodeNum, llyr_config, tempData );
+        tempPE = new AdvStoreProcessingElement( STADDR, nodeNum, llyr_config, arguments );
+    } else if( op_binding == STREAM_ST ) {
+        tempPE = new AdvStoreProcessingElement( STREAM_ST, nodeNum, llyr_config, arguments );
     } else if( op_binding == ADDCONST ) {
-        tempPE = new IntConstProcessingElement( ADDCONST, nodeNum, llyr_config, intConst );
+        tempPE = new IntConstProcessingElement( ADDCONST, nodeNum, llyr_config, arguments );
     } else if( op_binding == SUBCONST ) {
-        tempPE = new IntConstProcessingElement( SUBCONST, nodeNum, llyr_config, intConst );
+        tempPE = new IntConstProcessingElement( SUBCONST, nodeNum, llyr_config, arguments );
     } else if( op_binding == MULCONST ) {
-        tempPE = new IntConstProcessingElement( MULCONST, nodeNum, llyr_config, intConst );
+        tempPE = new IntConstProcessingElement( MULCONST, nodeNum, llyr_config, arguments );
     } else if( op_binding == DIVCONST ) {
-        tempPE = new IntConstProcessingElement( DIVCONST, nodeNum, llyr_config, intConst );
+        tempPE = new IntConstProcessingElement( DIVCONST, nodeNum, llyr_config, arguments );
     } else if( op_binding == REMCONST ) {
-        tempPE = new IntConstProcessingElement( REMCONST, nodeNum, llyr_config, intConst );
+        tempPE = new IntConstProcessingElement( REMCONST, nodeNum, llyr_config, arguments );
     } else {
         output_->fatal(CALL_INFO, -1, "Error: Unable to find specified operation\n");
         exit(0);

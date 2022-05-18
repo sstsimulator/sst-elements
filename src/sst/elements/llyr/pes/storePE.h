@@ -45,20 +45,6 @@ public:
         input_queues_->push_back(tempQueue);
     }
 
-    StoreProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
-                           std::queue< LlyrData > input_queues_init, uint32_t cycles = 1)  :
-                           ProcessingElement(op_binding, processor_id, llyr_config), input_queues_init_(input_queues_init)
-    {
-        cycles_ = cycles;
-        output_queues_ = new std::vector< LlyrQueue* >;
-
-        //stores need two input queues -- address and data
-        input_queues_= new std::vector< LlyrQueue* >;
-        LlyrQueue* tempQueue = new LlyrQueue;
-        tempQueue->data_queue_ = new std::queue< LlyrData >;
-        input_queues_->push_back(tempQueue);
-    }
-
     virtual bool doSend()
     {
         uint32_t queueId;
@@ -153,7 +139,6 @@ public:
         if( input_queues_init_.size() > 0 ) {
             std::queue< LlyrData >* tempQueue(&input_queues_init_);
             input_queues_->at(0)->data_queue_ = tempQueue;
-
         } else {
             //for now assume that the address queue is on in-0
             uint64_t addr = llyr_config_->starting_addr_ + ( (processor_id_ - 1) * (Bit_Length / 8) );
@@ -167,7 +152,7 @@ public:
         }
     }
 
-private:
+protected:
     std::queue< LlyrData > input_queues_init_;
 
     bool doStore(uint64_t addr, LlyrData data)
@@ -213,7 +198,104 @@ private:
         return 1;
     }
 
-};
+private:
+
+};// END StoreProcessingElement
+
+class AdvStoreProcessingElement : public StoreProcessingElement
+{
+public:
+    AdvStoreProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
+                          std::string *arguments, uint32_t cycles = 1)  :
+                          StoreProcessingElement(op_binding, processor_id, llyr_config)
+    {
+        cycles_ = cycles;
+
+        if( arguments[0] != "" ) {
+            int64_t init_value = std::stoll(arguments[0]);
+            input_queues_init_.push(LlyrData(init_value));
+        }
+
+        if( arguments[1] != "" ) {
+            termination_ = std::stoll(arguments[1]);
+        } else {
+            termination_ = 0;
+        }
+
+        output_queues_ = new std::vector< LlyrQueue* >;
+
+        //stores need two input queues -- address and data
+        input_queues_= new std::vector< LlyrQueue* >;
+        LlyrQueue* tempQueue = new LlyrQueue;
+        tempQueue->data_queue_ = new std::queue< LlyrData >;
+        input_queues_->push_back(tempQueue);
+    }
+
+    virtual bool doCompute()
+    {
+        output_->verbose(CALL_INFO, 4, 0, ">> Compute 0x%" PRIx32 "\n", op_binding_);
+
+        if( output_->getVerboseLevel() >= 64 ) {
+            printInputQueue();
+            printOutputQueue();
+        }
+
+        std::vector< LlyrData > argList;
+        uint32_t num_ready = 0;
+        uint32_t num_inputs  = input_queues_->size();
+
+        //check to see if all of the input queues have data
+        for( uint32_t i = 0; i < num_inputs; ++i) {
+            if( input_queues_->at(i)->data_queue_->size() > 0 ) {
+                num_ready = num_ready + 1;
+            }
+        }
+
+        //if there are values waiting on any of the inputs, this PE could still fire
+        if( num_ready < num_inputs && num_ready > 0) {
+            pending_op_ = 1;
+        } else {
+            pending_op_ = 0;
+        }
+
+        //if all inputs are available pull from queue and add to arg list
+        if( num_ready < num_inputs ) {
+            output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
+            return false;
+        } else {
+            output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
+            for( uint32_t i = 0; i < num_inputs; ++i) {
+                argList.push_back(input_queues_->at(i)->data_queue_->front());
+                input_queues_->at(i)->data_queue_->pop();
+            }
+        }
+
+        //create the memory request
+        if( op_binding_ == STADDR ) {
+            doStore(argList[0].to_ullong(), argList[1].to_ullong());
+        } else if( op_binding_ == STREAM_ST ) {
+            doStore(argList[0].to_ullong(), argList[1].to_ullong());
+            if( termination_ > 0 ) {
+                termination_ = termination_ - 1;
+                input_queues_->at(0)->data_queue_->push(LlyrData(argList[0].to_ullong() + (Bit_Length / 8)));
+            }
+        } else {
+            output_->fatal(CALL_INFO, -1, "Error: could not find corresponding op-%" PRIu32 ".\n", op_binding_);
+            exit(-1);
+        }
+
+        if( output_->getVerboseLevel() >= 10 ) {
+            printInputQueue();
+            printOutputQueue();
+        }
+
+        return true;
+    }
+
+private:
+    uint64_t termination_;
+
+};// AdvStoreProcessingElement
 
 }//SST
 }//Llyr
