@@ -16,6 +16,17 @@ sst testBalar-vanadis.py --model-options='-c ariel-gpu-v100.cfg'
 
 Can also set `PTX_SIM_DEBUG=3` to enable debug output in GPGPU-Sim, check its manual for more details.
 
+## Usage
+
+After successful compilation and installation of SST core and SST elements, run:
+
+```bash
+cd tests/
+sst testBalar-simple.py --model-options='-c ariel-gpu-v100.cfg -v -x vectorAdd/vectorAdd'
+```
+
+Can also set `PTX_SIM_DEBUG=3` to enable debug output in GPGPU-Sim, check its manual for more details.
+
 ## TODO
 
 1. [x] Link the custom cuda lib with nvcc executable
