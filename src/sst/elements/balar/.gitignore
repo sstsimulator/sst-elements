@@ -10,3 +10,5 @@ _app_cuda_version_*
 *.trace
 *.data
 gpgpu_inst_stats.txt
+*.dot
+*.png

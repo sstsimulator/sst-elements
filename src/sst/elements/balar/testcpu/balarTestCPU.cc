@@ -515,7 +515,7 @@ void BalarTestCPU::mmioHandlers::handle(Interfaces::StandardMem::ReadResp* resp)
             std::ofstream dumpStream;
             dumpStream.open(buf, std::ios::out | std::ios::binary);
             if (!dumpStream.is_open()) {
-                out->fatal(_INFO_, "Cannot open '%s' for dumping D2H memcpy data\n", buf);
+                out->fatal(CALL_INFO, -1, "Cannot open '%s' for dumping D2H memcpy data\n", buf);
             }
             dumpStream.write((const char *) sim_ptr, tot);
             dumpStream.close();
@@ -524,7 +524,7 @@ void BalarTestCPU::mmioHandlers::handle(Interfaces::StandardMem::ReadResp* resp)
             std::ofstream dumpRealStream;
             dumpRealStream.open(buf, std::ios::out | std::ios::binary);
             if (!dumpRealStream.is_open()) {
-                out->fatal(_INFO_, "Cannot open '%s' for dumping D2H memcpy data\n", buf);
+                out->fatal(CALL_INFO, -1, "Cannot open '%s' for dumping D2H memcpy data\n", buf);
             }
             dumpRealStream.write((const char *) real_ptr, tot);
             dumpRealStream.close();
@@ -549,7 +549,7 @@ void BalarTestCPU::mmioHandlers::handle(Interfaces::StandardMem::WriteResp* resp
     // Find the request from pending requests map
     std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = cpu->requests.find(resp->getID());
     if ( cpu->requests.end() == i ) {
-        out->fatal(_INFO_, "Event (%" PRIx64 ") not found!\n", resp->getID());
+        out->fatal(CALL_INFO, -1, "Event (%" PRIx64 ") not found!\n", resp->getID());
     } else {
         out->verbose(_INFO_, "%s: get response from write request (%d)\n", cpu->getName().c_str(), resp->getID());
         cpu->requests.erase(i);
