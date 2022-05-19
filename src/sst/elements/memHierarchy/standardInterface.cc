@@ -50,7 +50,8 @@ StandardInterface::StandardInterface(SST::ComponentId_t id, Params &params, Time
     if (!link_) {
         // Default is a regular non-network link on port 'port'
         Params lparams;
-        lparams.insert("port", "port");
+        // lparams.insert("port", "port");
+        lparams.insert("port", params.find<std::string>("port", "port"));
         link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "link", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, lparams, getDefaultTimeBase());
     }
 
