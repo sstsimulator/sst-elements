@@ -57,9 +57,10 @@ typedef enum {
     ANY_MEM,
     LD,
     LDADDR,
-    LD_ST,
+    STREAM_LD,
     ST,
     STADDR,
+    STREAM_ST,
     ANY_LOGIC = 0x20,
     AND,
     OR,
@@ -127,12 +128,14 @@ inline opType getOptype(std::string &opString)
         operation = LD;
     else if( opString == "LDADDR" )
         operation = LDADDR;
-    else if( opString == "LD_ST" )
-        operation = LD_ST;
+    else if( opString == "STREAM_LD" )
+        operation = STREAM_LD;
     else if( opString == "ST" )
         operation = ST;
     else if( opString == "STADDR" )
         operation = STADDR;
+    else if( opString == "STREAM_ST" )
+        operation = STREAM_ST;
     else if( opString == "ANY_LOGIC" )
         operation = ANY_LOGIC;
     else if( opString == "AND" )
@@ -241,12 +244,14 @@ inline std::string getOpString(opType &op)
         operation = "LD";
     else if( op == LDADDR )
         operation = "LDADDR";
-    else if( op == LD_ST )
-        operation = "LD_ST";
+    else if( op == STREAM_LD )
+        operation = "STREAM_LD";
     else if( op == ST )
         operation = "ST";
     else if( op == STADDR )
         operation = "STADDR";
+    else if( op == STREAM_ST )
+        operation = "STREAM_ST";
     else if( op == ANY_LOGIC )
         operation = "ANY_LOGIC";
     else if( op == AND )
@@ -344,9 +349,7 @@ inline std::string getOpString(opType &op)
 // application graph node
 typedef struct alignas(uint64_t) {
     opType optype_;
-    Arg    left_arg_;
-    Arg    right_arg_;
-    Arg    constant_val_;
+    Arg    argument_[2];
 } AppNode;
 
 }//Llyr

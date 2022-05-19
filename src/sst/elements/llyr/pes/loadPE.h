@@ -38,15 +38,6 @@ public:
         output_queues_ = new std::vector< LlyrQueue* >;
     }
 
-    LoadProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
-                          std::queue< LlyrData > input_queues_init, uint32_t cycles = 1)  :
-                          ProcessingElement(op_binding, processor_id, llyr_config), input_queues_init_(input_queues_init)
-    {
-        cycles_ = cycles;
-        input_queues_= new std::vector< LlyrQueue* >;
-        output_queues_ = new std::vector< LlyrQueue* >;
-    }
-
     virtual bool doSend()
     {
         uint32_t queueId;
@@ -126,11 +117,6 @@ public:
         switch( op_binding_ ) {
             case LD :
                 doLoad(argList[0].to_ullong());
-                return true;
-                break;
-            case LD_ST :
-                doLoad(argList[0].to_ullong());
-                return true;
                 break;
             default :
                 output_->fatal(CALL_INFO, -1, "Error: could not find corresponding op-%" PRIu32 ".\n", op_binding_);
@@ -168,7 +154,7 @@ public:
         }
     }
 
-private:
+protected:
     std::queue< LlyrData > input_queues_init_;
 
     bool doLoad(uint64_t addr)
@@ -202,7 +188,99 @@ private:
 
     }
 
-};
+private:
+
+};//END LoadProcessingElement
+
+class AdvLoadProcessingElement : public LoadProcessingElement
+{
+public:
+    AdvLoadProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
+                          std::string *arguments, uint32_t cycles = 1)  :
+                          LoadProcessingElement(op_binding, processor_id, llyr_config)
+    {
+        cycles_ = cycles;
+
+        if( arguments[0] != "" ) {
+            int64_t init_value = std::stoll(arguments[0]);
+            input_queues_init_.push(LlyrData(init_value));
+        }
+
+        if( arguments[1] != "" ) {
+            termination_ = std::stoll(arguments[1]);
+        } else {
+            termination_ = 0;
+        }
+
+        input_queues_= new std::vector< LlyrQueue* >;
+        output_queues_ = new std::vector< LlyrQueue* >;
+    }
+
+    virtual bool doCompute()
+    {
+        output_->verbose(CALL_INFO, 4, 0, ">> Compute 0x%" PRIx32 "\n", op_binding_);
+
+        if( output_->getVerboseLevel() >= 10 ) {
+            printInputQueue();
+            printOutputQueue();
+        }
+
+        std::vector< LlyrData > argList;
+        uint32_t num_ready = 0;
+        uint32_t num_inputs  = input_queues_->size();
+
+        //check to see if all of the input queues have data
+        for( uint32_t i = 0; i < num_inputs; ++i) {
+            if( input_queues_->at(i)->data_queue_->size() > 0 ) {
+                num_ready = num_ready + 1;
+            }
+        }
+
+        //if there are values waiting on any of the inputs, this PE could still fire
+        if( num_ready < num_inputs && num_ready > 0) {
+            pending_op_ = 1;
+        } else {
+            pending_op_ = 0;
+        }
+
+        //if all inputs are available pull from queue and add to arg list
+        if( num_ready < num_inputs ) {
+            output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
+            return false;
+        } else {
+            output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
+            for( uint32_t i = 0; i < num_inputs; ++i) {
+                argList.push_back(input_queues_->at(i)->data_queue_->front());
+                input_queues_->at(i)->data_queue_->pop();
+            }
+        }
+
+        //create the memory request
+        if( op_binding_ == LDADDR ) {
+            doLoad(argList[0].to_ullong());
+        } else if( op_binding_ == STREAM_LD ) {
+            doLoad(argList[0].to_ullong());
+            if( termination_ > 0 ) {
+                termination_ = termination_ - 1;
+                input_queues_->at(0)->data_queue_->push(LlyrData(argList[0].to_ullong() + (Bit_Length / 8)));
+            }
+        } else {
+            output_->fatal(CALL_INFO, -1, "Error: could not find corresponding op-%" PRIu32 ".\n", op_binding_);
+            exit(-1);
+        }
+
+        if( output_->getVerboseLevel() >= 10 ) {
+            printInputQueue();
+            printOutputQueue();
+        }
+
+        return true;
+    }
+
+private:
+    uint64_t termination_;
+
+};// AdvLoadProcessingElement
 
 }//SST
 }//Llyr
