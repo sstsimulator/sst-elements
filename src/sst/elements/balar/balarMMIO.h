@@ -83,12 +83,13 @@ public:
         {"write_latency", "Latency of writes issued by this device to memory", "simulation time units", 1},
     )
     SST_ELI_DOCUMENT_PORTS(
-        {"requestLink%(num_cores)d", "Handle CUDA API calls", { "BalarComponent.BalarEvent", "" } },
+        {"requestLink%(num_cores)d", "Handle CUDA API calls", {} },
         {"requestMemLink%(num_cores)d", "Link to CPU memH (cache)", {} },
         {"requestGPUCacheLink%(num_cores)d", "Link to GPU memH (cache)", {} }
     )
 
     BalarMMIO(ComponentId_t id, Params &params);
+    ~BalarMMIO() {}
 
     virtual void init(unsigned int);
     virtual void setup();
@@ -116,10 +117,11 @@ public:
     uint32_t maxPendingTransCore;
 
 protected:
-    ~BalarMMIO() {}
-
     /* Handle event from MMIO interface */
     void handleEvent(StandardMem::Request* req);
+
+    /* Handle event from gpu cache */
+    void handleGPUCache(StandardMem::Request* req);
     
     /* Handlers for StandardMem::Request types we handle */
     class mmioHandlers : public StandardMem::RequestHandler {

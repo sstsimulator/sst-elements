@@ -82,18 +82,112 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
 
     iface->setMemoryMappedAddressRegion(mmio_addr, 1);
 
-    // TODO GPU Cache interface?
-
+    // Handlers for cpu interactions
     handlers = new mmioHandlers(this, &out);
+    
+    // GPU Cache interface configuration
+    gpu_to_cache_links = (StandardMem**) malloc( sizeof(StandardMem*) * gpu_core_count );
+    numPendingCacheTransPerCore = new uint32_t[gpu_core_count];
+
+    SubComponentSlotInfo* gpu_to_cache = getSubComponentSlotInfo("gpu_cache");
+    if (gpu_to_cache) {
+        if (!gpu_to_cache->isAllPopulated())
+            out.fatal(CALL_INFO, -1, "%s, Error: loading 'gpu_cache' subcomponents. All subcomponent slots from 0 to gpu core count must be populated. "
+                    "Check your input config for non-populated slots\n", getName().c_str());
+
+        uint32_t subCompCount = gpu_to_cache->getMaxPopulatedSlotNumber() == -1 ? 0 : gpu_to_cache->getMaxPopulatedSlotNumber() + 1;
+        if (subCompCount != gpu_core_count)
+            out.fatal(CALL_INFO, -1, "%s, Error: loading 'gpu_cache' subcomponents and the number of subcomponents does not match the number of GPU cores. "
+                    "Cores: %" PRIu32 ", SubComps: %" PRIu32 ". Check your input config.\n",
+                    getName().c_str(), gpu_core_count, subCompCount);
+    }
+
+    // Create and initialize GPU memHierarchy links (StandardMem)
+    for (uint32_t i = 0; i < gpu_core_count; i++) {
+        if (gpu_to_cache) {
+            gpu_to_cache_links[i] = gpu_to_cache->create<Interfaces::StandardMem>(i, ComponentInfo::INSERT_STATS, tc, new StandardMem::Handler<BalarMMIO>(this, &BalarMMIO::handleGPUCache));
+        } else {
+    	    // Create a unique name for all links, the configure file links need to match this
+    	    sprintf(link_cache_buffer, "requestGPUCacheLink%" PRIu32, i);
+            out.verbose(CALL_INFO, 1, 0, "Starts to configure cache link (%s) for core %d\n", link_cache_buffer, i);
+            Params param;
+            param.insert("port", link_cache_buffer);
+
+            // Debug
+            param.insert("debug", "1");
+            param.insert("debug_level", "10");
+            // Debug end
+
+            gpu_to_cache_links[i] = loadAnonymousSubComponent<SST::Interfaces::StandardMem>("memHierarchy.standardInterface", 
+                    "gpu_cache", i, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, 
+                    param, tc, new StandardMem::Handler<BalarMMIO>(this, &BalarMMIO::handleGPUCache));
+            out.verbose(CALL_INFO, 1, 0, "Finish configure cache link for core %d\n", i);
+        }
+
+        numPendingCacheTransPerCore[i] = 0;
+    }
+
+
     g_balarmmio_component = this;
 }
 
 void BalarMMIO::init(unsigned int phase) {
     iface->init(phase);
+    for (uint32_t i = 0; i < gpu_core_count; i++)
+        gpu_to_cache_links[i]->init(phase);
 }
 
 void BalarMMIO::setup() {
     iface->setup();
+    for (uint32_t i = 0; i < gpu_core_count; i++)
+        gpu_to_cache_links[i]->setup();
+}
+
+bool BalarMMIO::is_SST_buffer_full(unsigned core_id) {
+    return (numPendingCacheTransPerCore[core_id] == maxPendingCacheTrans);
+}
+
+/**
+ * @brief Callback in sst-gpgpusim to send memory read request to balarMMIO/SST
+ *        and use the SST backend for timing simulation?
+ *        Check shader.cc:void simt_core_cluster::icnt_inject_request_packet_to_SST
+ * 
+ * @param core_id:  GPU core id
+ * @param address:  memory request addr
+ * @param size   :  request size
+ * @param mem_req:  pointer to memory fetch object in GPGPUSim
+ */
+void BalarMMIO::send_read_request_SST(unsigned core_id, uint64_t address, uint64_t size, void* mem_req) {
+    assert(numPendingCacheTransPerCore[core_id] < maxPendingCacheTrans);
+    StandardMem::Read* req = new Interfaces::StandardMem::Read(address, size);
+    req->vAddr = address;
+    cache_req_params crp(core_id, mem_req, req);
+    gpuCachePendingTransactions->insert(std::pair<StandardMem::Request::id_t, cache_req_params>(req->getID(), crp));
+    numPendingCacheTransPerCore[core_id]++;
+    gpu_to_cache_links[core_id]->send(req);
+
+    out.verbose(CALL_INFO, 1, 0, "Sent a read request with id (%d)\n", req->getID());
+}
+
+/**
+ * @brief Callback in sst-gpgpusim to send memory write request to balarMMIO/SST
+ *        and use the SST backend for timing simulation?
+ *        Check shader.cc:void simt_core_cluster::icnt_inject_request_packet_to_SST
+ * 
+ * @param core_id:  GPU core id
+ * @param address:  memory request addr
+ * @param size   :  request size
+ * @param mem_req:  pointer to memory fetch object in GPGPUSim
+ */
+void BalarMMIO::send_write_request_SST(unsigned core_id, uint64_t address, uint64_t size, void* mem_req) {
+    assert(numPendingCacheTransPerCore[core_id] < maxPendingCacheTrans);
+    std::vector<uint8_t> mock_data(size);
+    StandardMem::Write* req = new Interfaces::StandardMem::Write(address, size, mock_data, false);
+    req->vAddr = address;
+    gpuCachePendingTransactions->insert(std::pair<StandardMem::Request::id_t, cache_req_params>(req->getID(), cache_req_params(core_id, mem_req, req)));
+    numPendingCacheTransPerCore[core_id]++;
+    gpu_to_cache_links[core_id]->send(req);
+    out.verbose(CALL_INFO, 1, 0, "Sent a write request with id (%d)\n", req->getID());
 }
 
 void BalarMMIO::SST_callback_memcpy_H2D_done() {
@@ -114,6 +208,31 @@ bool BalarMMIO::clockTic(Cycle_t cycle) {
 void BalarMMIO::handleEvent(StandardMem::Request* req) {
     // incoming CPU request, handle using mmioHandlers
     req->handle(handlers);
+}
+
+/**
+ * @brief Handle a request we send to cache backend
+ *        return the memory fetch object back to GPGPUSim
+ *        after the request return from cache backend
+ * 
+ * @param req
+ */
+void BalarMMIO::handleGPUCache(SST::Interfaces::StandardMem::Request* req) {
+    // Handle cache request/response?
+    SST::Interfaces::StandardMem::Request::id_t req_id = req->getID();
+    auto find_entry = gpuCachePendingTransactions->find(req_id);
+
+    if(find_entry != gpuCachePendingTransactions->end()) {
+        cache_req_params req_params = find_entry->second;
+        gpuCachePendingTransactions->erase(find_entry);
+        assert(numPendingCacheTransPerCore[req_params.core_id] > 0);
+        numPendingCacheTransPerCore[req_params.core_id]--;
+        SST_receive_mem_reply(req_params.core_id,  req_params.mem_fetch_pointer);
+        delete req;
+    } else {
+        assert("\n Cannot find the request\n" &&  0);
+    }
+    // req->handle(gpuCacheHandlers);
 }
 
 /**
@@ -344,34 +463,28 @@ void BalarMMIO::printStatus(Output &statusOut) {
 // TODO Global Wrappers
 // TODO Finish for mmiohere
 // TODO Handle cache timing simulation?
-extern bool is_SST_buffer_full(unsigned core_id)
-{
-//    assert(my_gpu_component);
-//    return my_gpu_component->is_SST_buffer_full(core_id);
+extern bool is_SST_buffer_full(unsigned core_id) {
+    assert(g_balarmmio_component);
+    return g_balarmmio_component->is_SST_buffer_full(core_id);
     return false;
 }
 
-extern void send_read_request_SST(unsigned core_id, uint64_t address, uint64_t size, void* mem_req)
-{
-//    assert(my_gpu_component);
-//    my_gpu_component->send_read_request_SST(core_id, address, size, mem_req);
-
+extern void send_read_request_SST(unsigned core_id, uint64_t address, uint64_t size, void* mem_req) {
+    assert(g_balarmmio_component);
+    g_balarmmio_component->send_read_request_SST(core_id, address, size, mem_req);
 }
 
-extern void send_write_request_SST(unsigned core_id, uint64_t address, uint64_t size, void* mem_req)
-{
-//    assert(my_gpu_component);
-//    my_gpu_component->send_write_request_SST(core_id, address, size, mem_req);
+extern void send_write_request_SST(unsigned core_id, uint64_t address, uint64_t size, void* mem_req) {
+    assert(g_balarmmio_component);
+    g_balarmmio_component->send_write_request_SST(core_id, address, size, mem_req);
 }
 
-extern void SST_callback_memcpy_H2D_done()
-{
-   assert(g_balarmmio_component);
-   g_balarmmio_component->SST_callback_memcpy_H2D_done();
+extern void SST_callback_memcpy_H2D_done() {
+    assert(g_balarmmio_component);
+    g_balarmmio_component->SST_callback_memcpy_H2D_done();
 }
 
-extern void SST_callback_memcpy_D2H_done()
-{
-   assert(g_balarmmio_component);
-   g_balarmmio_component->SST_callback_memcpy_D2H_done();
+extern void SST_callback_memcpy_D2H_done() {
+    assert(g_balarmmio_component);
+    g_balarmmio_component->SST_callback_memcpy_D2H_done();
 }
