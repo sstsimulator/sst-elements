@@ -68,6 +68,18 @@ Can also set `PTX_SIM_DEBUG=3` to enable debug output in GPGPU-Sim, check its ma
             4. `linkDown_` in `coherenceController.cc:CoherenceController::forwardByAddress()` could not find the target destination?
             5. Need to configure cache range?
             6. NVM, copied the old balar python launch script, which did not configure the memory range properly, causing cuda mem access to be out of range and thus redirected to higher layer in mem system (balar in this case).
+3. [ ] Stat matching with original balar
+    1. Most differences due to simulation time
+    1. Filter out this cause, we have
+        1. L1gcache/L2gcache
+            1. Due to latency on read miss of S and X state
+            1. Due to MSHR occupancy
+            1. Probably not configure properly for link latency?
+        2. SimpleHbm
+            1. Outstanding request
+            1. Due to latency on read miss of S and X state
+            1. Cycles with issue
+            1. Total cycles
 
 ## Caveats
 
@@ -83,3 +95,7 @@ Can also set `PTX_SIM_DEBUG=3` to enable debug output in GPGPU-Sim, check its ma
     1. sst-core: `./configure --prefix=$SST_CORE_HOME --disable-mpi --disable-mem-pools`
     1. sst-elements: `./configure --prefix=$SST_ELEMENTS_HOME --with-sst-core=$SST_CORE_HOME --with-pin=$PIN_HOME --with-cuda=$CUDA_ROOT --with-gpgpusim=$GPGPUSIM_ROOT`
 1. Can build sst-core with `--enable-debug` to enable memHierarchy debug output, useful for debugging
+1. Filter memory subsystem stats from SST run
+    1. `grep -E -e '(l1gcache_.*)|(l2gcache_.*)|(Simplehbm_.*)' stats.out > mmio_mem.out`
+    1. `grep -E -e '(l1gcache_.*)|(l2gcache_.*)|(Simplehbm_.*)' refFiles/test_gpgpu_vectorAdd.out > prev_mem.out`
+    1. Compare with `git diff --word-diff=color --no-index mmio_mem.out prev_mem.out`
