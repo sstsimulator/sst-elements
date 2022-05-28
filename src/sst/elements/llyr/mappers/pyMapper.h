@@ -151,11 +151,9 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
             // encode node in hardware graph
             std::map< uint32_t, Vertex< AppNode > >* app_vertex_map_ = appGraph.getVertexMap();
             if( op == ADDCONST || op == SUBCONST || op == MULCONST || op == DIVCONST || op == REMCONST) {
-                int64_t intConst = std::stoll(app_vertex_map_->at(applicationVertex).getValue().constant_val_);
-                addNode( op, intConst, hardwareVertex, graphOut, llyr_config );
-            } else if( op == LDADDR || op == STADDR ) {
-                int64_t intConst = std::stoll(app_vertex_map_->at(applicationVertex).getValue().constant_val_);
-                addNode( op, intConst, hardwareVertex, graphOut, llyr_config );
+                addNode( op, app_vertex_map_->at(applicationVertex).getValue().argument_, hardwareVertex, graphOut, llyr_config );
+            } else if( op == LDADDR || op == STREAM_LD || op == STADDR || op == STREAM_ST ) {
+                addNode( op, app_vertex_map_->at(applicationVertex).getValue().argument_, hardwareVertex, graphOut, llyr_config );
             } else {
                 addNode( op, hardwareVertex, graphOut, llyr_config );
             }

@@ -145,10 +145,7 @@ LlyrComponent::~LlyrComponent()
 //         for(auto appIterator = app_vertex_map_->begin(); appIterator != app_vertex_map_->end(); ++appIterator) {
 //             std::cout << appIterator->first << ": ";
 //             std::cout << appIterator->second.getValue().optype_ << " - ";
-//             std::cout << appIterator->second.getValue().constant_val_ << " - ";
-//             std::cout << appIterator->second.getValue().left_arg_ << " - ";
-//             std::cout << appIterator->second.getValue().right_arg_ << std::endl;
-//
+//             std::cout << appIterator->second.getValue().argument_ << " - ";
 //         }
     }
 
@@ -164,7 +161,6 @@ void LlyrComponent::init( uint32_t phase )
     output_->verbose(CALL_INFO, 2, 0, "Initializing...\n");
 
     mem_interface_->init( phase );
-
     if( 0 == phase ) {
         std::vector< uint64_t >* initVector;
 
@@ -277,7 +273,7 @@ void LlyrComponent::handleEvent(StandardMem::Request* req) {
     req->handle(mem_handlers_);
 }
 
-/* Handler for incoming Read requests */
+// Handler for incoming Read requests
 void LlyrComponent::LlyrMemHandlers::handle(StandardMem::Read* read) {
     out->verbose(CALL_INFO, 8, 0, "Handle Read for Address p-0x%" PRIx64 " -- v-0x%" PRIx64 ".\n", read->pAddr, read->vAddr);
 
@@ -286,7 +282,7 @@ void LlyrComponent::LlyrMemHandlers::handle(StandardMem::Read* read) {
     llyr_->mem_interface_->send(resp);
 }
 
-/* Handler for incoming Write requests */
+// Handler for incoming Write requests
 void LlyrComponent::LlyrMemHandlers::handle(StandardMem::Write* write) {
     out->verbose(CALL_INFO, 8, 0, "Handle Write for Address p-0x%" PRIx64 " -- v-0x%" PRIx64 ".\n", write->pAddr, write->vAddr);
 
@@ -299,7 +295,8 @@ void LlyrComponent::LlyrMemHandlers::handle(StandardMem::Write* write) {
     delete write;
 }
 
-/* Handler for incoming Read responses - should be a response to a Read we issued */
+// Handler for incoming Read responses
+// - should be a response to a Read we issued
 void LlyrComponent::LlyrMemHandlers::handle(StandardMem::ReadResp* resp) {
 
     std::stringstream dataOut;
@@ -336,7 +333,8 @@ void LlyrComponent::LlyrMemHandlers::handle(StandardMem::ReadResp* resp) {
     out->verbose(CALL_INFO, 4, 0, "Complete cache response handling.\n");
 }
 
-/* Handler for incoming Write responses - should be a response to a Write we issued */
+// Handler for incoming Write responses
+// should be a response to a Write we issued
 void LlyrComponent::LlyrMemHandlers::handle(StandardMem::WriteResp* resp) {
 
     out->verbose(CALL_INFO, 8, 0, "Response to a write for addr: %" PRIu64 " to PE %" PRIu32 "\n",
@@ -485,33 +483,43 @@ void LlyrComponent::constructSoftwareGraphApp(std::ifstream& inputStream)
 
         //Ignore blank lines
         if( std::all_of(thisLine.begin(), thisLine.end(), isspace) == 0 ) {
-            //First read all nodes
-            //If all nodes read, must mean we're at edge list
-            position = thisLine.find_first_of( "[" );
+            //First read all nodes, if all nodes read, must mean we're at edge list
+            position = thisLine.find_first_of( "pe_type" );
             if( position !=  std::string::npos ) {
                 AppNode tempNode;
-                uint32_t vertex = std::stoul( thisLine.substr( 0, position ) );
+                uint32_t vertex = std::stoul( thisLine.substr( 0, position - 2 ) );
 
-                std::uint64_t posA = thisLine.find_first_of( "=" ) + 1;
-                std::uint64_t posB = thisLine.find_last_of( "," );
-                if( posB !=  std::string::npos ) {
-                    std::uint64_t posC = thisLine.find_last_of( "]" );
-                    tempNode.constant_val_ = thisLine.substr( posB + 1, posC - posB - 1 );
-                    //                     std::cout << "CONSTANT " << tempNode.constant_val_ << std::endl;
-                } else {
-                    posB = thisLine.find_last_of( "]" );
+                std::regex delimiter( ",| " );
+                std::sregex_token_iterator iterA(thisLine.begin(), thisLine.end(), delimiter, -1);
+                std::sregex_token_iterator iterB;
+                std::vector< std::string > edges( iterA, iterB );
+
+                //clean up the strings a bit
+                for( auto testIter = edges.begin(); testIter != edges.end(); ++testIter ) {
+                    testIter->erase(remove_if(testIter->begin(), testIter->end(), isspace), testIter->end());
+                    testIter->erase(remove(testIter->begin(), testIter->end(), '['), testIter->end());
+                    testIter->erase(remove(testIter->begin(), testIter->end(), ']'), testIter->end());
+                    output_->verbose(CALL_INFO, 10, 0, "Hiho %s\n", testIter->c_str());
                 }
 
-                std::string op = thisLine.substr( posA, posB-posA );
+                //pe_type= - 8chars
+                std::string op = edges[1].substr(8);
                 opType operation = getOptype(op);
                 tempNode.optype_ = operation;
                 output_->verbose(CALL_INFO, 10, 0, "OpString:  %s\t\t%" PRIu32 "\n", op.c_str(), tempNode.optype_);
 
+                //Check to see if this PE has any arguments
+                for( uint32_t i = 2; i < edges.size(); ++i ) {
+                    tempNode.argument_[i - 2] = edges[i];
+
+                    std::cout << i << " - " << edges[i] << " ";
+                    std::cout << i - 2 << " : " <<tempNode.argument_[i - 2] << " ";
+                }
+                std::cout << std::endl;
+
                 applicationGraph_.addVertex( vertex, tempNode );
             } else {
-
                 std::regex delimiter( "\\--" );
-
                 std::sregex_token_iterator iterA(thisLine.begin(), thisLine.end(), delimiter, -1);
                 std::sregex_token_iterator iterB;
                 std::vector< std::string > edges( iterA, iterB );

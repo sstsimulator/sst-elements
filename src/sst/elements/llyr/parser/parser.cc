@@ -88,7 +88,7 @@ void Parser::generateAppGraph(std::string functionName)
     output_->verbose(CALL_INFO, 1, 0, "Finished parsing...\n");
 
     printCDFG( "00_func-ins.dot" );
-    printPyMapper( "00_amapper.out" );
+    printPyMapper( "00_amapper.dot" );
 
 }// generateAppGraph
 
@@ -1730,7 +1730,8 @@ void Parser::printPyMapper( const std::string fileName ) const
     if ( !outputFile )                                                   //check to be sure file is open
         std::cerr << "Error opening file.";
 
-    outputFile << "## model intput" << "\n";
+    outputFile << "// model intput" << "\n";
+    outputFile << "strict digraph  {" << "\n";
 
     //need this for type size but there should be a better way
     llvm::DataLayout* dataLayout = new llvm::DataLayout(mod_);
@@ -1738,6 +1739,7 @@ void Parser::printPyMapper( const std::string fileName ) const
     auto funcVertexMap = functionGraph_->getVertexMap();
     for( auto vertexIterator = funcVertexMap->begin(); vertexIterator != funcVertexMap ->end(); ++vertexIterator ) {
 
+        bool swapped = 0;
         llvm::Instruction* tempInstruction = vertexIterator->second.getValue()->instruction_;
         if( tempInstruction != NULL ) {
             std::cout << "vertex: " << vertexIterator->first << "\n";
@@ -1745,15 +1747,15 @@ void Parser::printPyMapper( const std::string fileName ) const
             //temp const vector
             std::map< uint32_t, std::string > constVector;
             //write node ID
-            outputFile << vertexIterator->first << ":  ";
+            outputFile << vertexIterator->first << " [";
             outputFile << std::flush;
 
             //write operands
             bool first = 0;
-            outputFile << "input[ ";
+            outputFile << "input=" << "\"";
             for( auto operandIter = tempInstruction->op_begin(), operandEnd = tempInstruction->op_end(); operandIter != operandEnd; ++operandIter ) {
                 if( first != 0 ) {
-                    outputFile << ", ";
+                    outputFile << ":";
                 } else {
                     first = 1;
                 }
@@ -1761,7 +1763,7 @@ void Parser::printPyMapper( const std::string fileName ) const
                 std::cout << operandIter->get()->getNameOrAsOperand() << " -- boopA" << std::endl;
 
                 if( llvm::isa<llvm::Constant>(operandIter) ) {
-                    std::cout << operandIter->getOperandNo() << ": ";
+                    std::cout << operandIter->getOperandNo() << "\":";
                     std::cout << vertexIterator->second.getValue()->intConst_ << " ";
                     std::cout << vertexIterator->second.getValue()->floatConst_ << " ";
                     std::cout << vertexIterator->second.getValue()->doubleConst_ << " ";
@@ -1796,34 +1798,38 @@ void Parser::printPyMapper( const std::string fileName ) const
                 }
 
             }//end for
-            outputFile << " ]";
+            outputFile << "\"" << ", ";
 
             //write constants
-            outputFile << " consts[ ";
-            for( auto it = constVector.begin(); it != constVector.end(); it++ ) {
-                outputFile << it->second << ", " << it->first;
+            outputFile << "consts=" << "\"";
+            for( auto it = constVector.begin(); it != constVector.end();  ) {
+                outputFile << it->second << ":" << it->first;
+                ++it;
+                if( it != constVector.end() ) {
+                    outputFile << "\":";
+                }
             }
-            outputFile << " ]";
+            outputFile << "\"" << ", ";
 
             //write outputs
             llvm::Value* returnval = llvm::cast<llvm::Value>(tempInstruction);
-            outputFile << " output[ ";
+            outputFile << "output=" << "\"";
             if( returnval->hasName() == 1 ) {
                 outputFile << returnval->getName().str();
             }
-            outputFile << " ]";
+            outputFile << "\"" << ", ";
 
             //write op
-            outputFile << " op[ ";
+            outputFile << "op=" << "\"";
             outputFile << tempInstruction->getOpcodeName();
-            outputFile << " ]";
+            outputFile << "\"" << ", ";
 
             //write type
-            outputFile << " type[ ";
+            outputFile << "type=" << "\"";
             if( tempInstruction->getType()->isSized() ) {
                 outputFile << dataLayout->getTypeStoreSize(tempInstruction->getType());
             }
-            outputFile << " ]";
+            outputFile << "\"" << "];";
 
             //finish
             outputFile << "\n";
