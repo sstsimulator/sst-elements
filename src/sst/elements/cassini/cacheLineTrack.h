@@ -84,9 +84,9 @@ private:
                 //  heap and the stack.
     Statistic<Addr>* rdHisto;
     Statistic<Addr>* wrHisto;
-    Statistic<uint>* useHisto;
+    Statistic<unsigned int>* useHisto;
     Statistic<SimTime_t>* ageHisto;
-    Statistic<uint>* evicts;
+    Statistic<unsigned int>* evicts;
 };
 
 }
