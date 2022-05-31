@@ -818,6 +818,8 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
                     scanner >> arg_size;
 
                     // Set argument size and offset, update offset as well
+                    size_t align_amount = arg_size;
+                    offset = (offset + align_amount - 1) / align_amount * align_amount;
                     set_arg_pack.setup_argument.size = arg_size;
                     set_arg_pack.setup_argument.offset = offset;
                     offset += arg_size;
