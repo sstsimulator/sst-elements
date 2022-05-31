@@ -72,7 +72,10 @@ router.addParams({
 
 # Add GPGPU-sim Component
 gpu = sst.Component("gpu0", "balar.balar")
-gpu.addParams(config.getGPUConfig())
+params_gpu = config.getGPUConfig()
+params_gpu["verbose"] = 20
+gpu.addParams(params_gpu)
+# gpu.addParams(config.getGPUConfig())
 
 # Configure CPU mem hirerchy
 # Connect Cores & caches

@@ -70,14 +70,12 @@ Can also set `PTX_SIM_DEBUG=3` to enable debug output in GPGPU-Sim, check its ma
             6. NVM, copied the old balar python launch script, which did not configure the memory range properly, causing cuda mem access to be out of range and thus redirected to higher layer in mem system (balar in this case).
 3. [ ] Stat matching with original balar
     1. Most differences due to simulation time
+    1. Latency for l1gcache and l2gcache looks fairly close
     1. Filter out this cause, we have
         1. L1gcache/L2gcache
-            1. Due to latency on read miss of S and X state
-            1. Due to MSHR occupancy
-            1. Probably not configure properly for link latency?
+            1. Due to `GetX_recv`, `GetXResp_recv` count?
         2. SimpleHbm
             1. Outstanding request
-            1. Due to latency on read miss of S and X state
             1. Cycles with issue
             1. Total cycles
 
