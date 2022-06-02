@@ -60,7 +60,7 @@ memory_src = [l1_group,mmio_group]
 # Constans shared across components
 network_bw = "25GB/s"
 clock = "2GHz"
-mmio_addr = 1024
+mmio_addr = 0x200000000
 
 
 # Test CPU components and mem hierachy
@@ -243,9 +243,16 @@ cpu0_l1dcache.addParams({
       "cache_size" : "32 KB",
       "L1" : "1",
       "debug" : 0,
-      "debug_level" : 11
+      "debug_level" : 11,
+      "addr_range_start" : 0,
+      "addr_range_end" : mmio_addr - 1,
 })
-l1dcache_2_cpu     = cpu0_l1dcache.setSubComponent("cpulink", "memHierarchy.MemLink")
+
+l1d_nic = cpu0_l1dcache.setSubComponent("cpulink", "memHierarchy.MemNIC")
+l1d_nic.addParams({ "group" : l1_group, 
+                   "sources" : l1_src,
+                   "destinations" : l1_dst,
+                   "network_bw" : network_bw})
 l1dcache_2_l2cache = cpu0_l1dcache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 cpu0_l1icache = sst.Component("cpu0.l1icache", "memHierarchy.Cache")
@@ -336,93 +343,9 @@ decode0.enableAllStatistics()
 v_cpu_0_lsq.enableAllStatistics()
 branch_pred.enableAllStatistics()
 
-link_cpu0_l1dcache_link = sst.Link("link_cpu0_l1dcache_link")
-link_cpu0_l1dcache_link.connect( (dcache_if, "port", "1ns"), (l1dcache_2_cpu, "port", "1ns") )
+# Router bew
 
-link_cpu0_l1icache_link = sst.Link("link_cpu0_l1icache_link")
-link_cpu0_l1icache_link.connect( (icache_if, "port", "1ns"), (l1icache_2_cpu, "port", "1ns") )
-
-link_os_l1dcache_link = sst.Link("link_os_l1dcache_link")
-link_os_l1dcache_link.connect( (node_os_mem_if, "port", "1ns"), (os_l1dcache, "high_network_0", "1ns") )
-
-link_l1dcache_l2cache_link = sst.Link("link_l1dcache_l2cache_link")
-link_l1dcache_l2cache_link.connect( (l1dcache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_0", "1ns") )
-
-link_l1icache_l2cache_link = sst.Link("link_l1icache_l2cache_link")
-link_l1icache_l2cache_link.connect( (l1icache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_1", "1ns") )
-
-link_os_l1dcache_l2cache_link = sst.Link("link_os_l1dcache_l2cache_link")
-link_os_l1dcache_l2cache_link.connect( (os_l1dcache, "low_network_0", "1ns"), (cache_bus, "high_network_2", "1ns") )
-
-link_bus_l2cache_link = sst.Link("link_bus_l2cache_link")
-link_bus_l2cache_link.connect( (cache_bus, "low_network_0", "1ns"), (l2cache_2_l1caches, "port", "1ns") )
-
-link_l2cache_2_rtr = sst.Link("link_l2cache_2_rtr")
-link_l2cache_2_rtr.connect( (l2cache_2_mem, "port", "1ns"), (comp_chiprtr, "port0", "1ns") )
-
-link_dir_2_rtr = sst.Link("link_dir_2_rtr")
-link_dir_2_rtr.connect( (comp_chiprtr, "port1", "1ns"), (dirNIC, "port", "1ns") )
-
-link_dir_2_mem = sst.Link("link_dir_2_mem")
-link_dir_2_mem.connect( (dirtoM, "port", "1ns"), (memToDir, "port", "1ns") )
-
-link_core0_os_link = sst.Link("link_core0_os_link")
-link_core0_os_link.connect( (os_hdlr, "os_link", "5ns"), (node_os, "core0", "5ns") )
-
-# TESTCPU
-cpu = sst.Component("cpu", "balar.BalarTestCPU")
-cpu.addParams({
-      "opCount" : "1000",
-      "memFreq" : "4",
-      "memSize" : "1KiB",
-      "clock" : clock,
-      "verbose" : 3,
-      "mmio_addr" : mmio_addr, # Just above memory addresses
-      "gpu_addr": mmio_addr,
-      
-      "read_freq" : 0,
-      "write_freq" : 0,
-      "flush_freq" : 0,
-      "flushinv_freq" : 0,
-      "custom_freq" : 0,
-      "llsc_freq" : 0,
-      "mmio_freq" : 0,
-      "gpu_freq" : 100,
-
-      # Trace and executable info
-      "trace_file": traceFile,
-      "cuda_executable": binaryFile,
-})
-iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
-iface.addParams(debug_params)
-cpu_nic = iface.setSubComponent("memlink", "memHierarchy.MemNIC")
-cpu_nic.addParams({"group" : core_group, 
-                   "destinations" : core_dst,
-                   "network_bw" : network_bw})
-#cpu_nic.addParams(debug_params)
-
-l1cache = sst.Component("l1cache", "memHierarchy.Cache")
-l1cache.addParams({
-      "access_latency_cycles" : "2",
-      "cache_frequency" : clock,
-      "replacement_policy" : "lru",
-      "coherence_protocol" : "MSI",
-      "associativity" : "4",
-      "cache_line_size" : "64",
-      "cache_size" : "2 KB",
-      "L1" : "1",
-      "addr_range_start" : 0,
-      "addr_range_end" : mmio_addr - 1,
-      "debug" : DEBUG_L1,
-      "debug_level" : DEBUG_LEVEL
-})
-l1_nic = l1cache.setSubComponent("cpulink", "memHierarchy.MemNIC")
-l1_nic.addParams({ "group" : l1_group, 
-                   "sources" : l1_src,
-                   "destinations" : l1_dst,
-                   "network_bw" : network_bw})
-#l1_nic.addParams(debug_params)
-
+# GPU
 mmio = sst.Component("balar", "balar.balarMMIO")
 mmio.addParams({
       "verbose" : 3,
@@ -472,11 +395,46 @@ memory.addParams({
       "mem_size" : "512MiB"
 })
 
-# Define the simulation links for CPU
+# Define the simulation links for CPU with GPU
 #          cpu/cpu_nic
 #                 |
 #  l1/l1_nic - chiprtr - mem_nic/mem/mmio
 #
+
+link_cpu0_l1dcache_link = sst.Link("link_cpu0_l1dcache_link")
+link_cpu0_l1dcache_link.connect( (dcache_if, "port", "1ns"), (l1dcache_2_cpu, "port", "1ns") )
+
+link_cpu0_l1icache_link = sst.Link("link_cpu0_l1icache_link")
+link_cpu0_l1icache_link.connect( (icache_if, "port", "1ns"), (l1icache_2_cpu, "port", "1ns") )
+
+link_os_l1dcache_link = sst.Link("link_os_l1dcache_link")
+link_os_l1dcache_link.connect( (node_os_mem_if, "port", "1ns"), (os_l1dcache, "high_network_0", "1ns") )
+
+link_l1dcache_l2cache_link = sst.Link("link_l1dcache_l2cache_link")
+link_l1dcache_l2cache_link.connect( (l1dcache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_0", "1ns") )
+
+link_l1icache_l2cache_link = sst.Link("link_l1icache_l2cache_link")
+link_l1icache_l2cache_link.connect( (l1icache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_1", "1ns") )
+
+link_os_l1dcache_l2cache_link = sst.Link("link_os_l1dcache_l2cache_link")
+link_os_l1dcache_l2cache_link.connect( (os_l1dcache, "low_network_0", "1ns"), (cache_bus, "high_network_2", "1ns") )
+
+link_bus_l2cache_link = sst.Link("link_bus_l2cache_link")
+link_bus_l2cache_link.connect( (cache_bus, "low_network_0", "1ns"), (l2cache_2_l1caches, "port", "1ns") )
+
+link_l2cache_2_rtr = sst.Link("link_l2cache_2_rtr")
+link_l2cache_2_rtr.connect( (l2cache_2_mem, "port", "1ns"), (comp_chiprtr, "port0", "1ns") )
+
+link_dir_2_rtr = sst.Link("link_dir_2_rtr")
+link_dir_2_rtr.connect( (comp_chiprtr, "port1", "1ns"), (dirNIC, "port", "1ns") )
+
+link_dir_2_mem = sst.Link("link_dir_2_mem")
+link_dir_2_mem.connect( (dirtoM, "port", "1ns"), (memToDir, "port", "1ns") )
+
+link_core0_os_link = sst.Link("link_core0_os_link")
+link_core0_os_link.connect( (os_hdlr, "os_link", "5ns"), (node_os, "core0", "5ns") )
+
+# From original test balar
 link_cpu_rtr = sst.Link("link_cpu")
 link_cpu_rtr.connect( (cpu_nic, "port", "1000ps"), (chiprtr, "port0", "1000ps") )
 

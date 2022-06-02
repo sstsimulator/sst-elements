@@ -16,7 +16,6 @@ parser.add_argument("-c", "--config", help="specify configuration file", require
 parser.add_argument("-v", "--verbose", help="increase verbosity of output", action="store_true")
 parser.add_argument("-s", "--statfile", help="statistics file", default="./stats.out")
 parser.add_argument("-l", "--statlevel", help="statistics level", type=int, default=16)
-parser.add_argument("-t", "--trace", help="CUDA api calls trace file path", default="cuda_calls.trace")
 parser.add_argument("-x", "--binary", help="specify input cuda binary", default="")
 parser.add_argument("-a", "--arguments", help="colon sep binary arguments", default="")
 
@@ -27,7 +26,6 @@ verbose = args.verbose
 cfgFile = args.config
 statFile = args.statfile
 statLevel = args.statlevel
-traceFile = args.trace
 binaryFile = args.binary
 binaryArgs = args.arguments
 
@@ -392,8 +390,8 @@ os_l1dcache.addParams({
       "L1" : "1",
       "debug" : 0,
       "debug_level" : 11,
-      "addr_range_start" : 0,
-      "addr_range_end" : mmio_addr - 1,
+      # "addr_range_start" : 0,
+      # "addr_range_end" : mmio_addr - 1,
 })
 
 cpu0_l1dcache = sst.Component("cpu0.l1dcache", "memHierarchy.Cache")
@@ -408,8 +406,8 @@ cpu0_l1dcache.addParams({
       "L1" : "1",
       "debug" : 0,
       "debug_level" : 11,
-      "addr_range_start" : 0,
-      "addr_range_end" : mmio_addr - 1,
+      # "addr_range_start" : 0,
+      # "addr_range_end" : mmio_addr - 1,
 })
 l1dcache_2_cpu     = cpu0_l1dcache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l1dcache_2_l2cache = cpu0_l1dcache.setSubComponent("memlink", "memHierarchy.MemLink")
@@ -426,8 +424,8 @@ cpu0_l1icache.addParams({
       "prefetcher" : "cassini.NextBlockPrefetcher",
       "prefetcher.reach" : 1,
       "L1" : "1",
-      "addr_range_start" : 0,
-      "addr_range_end" : mmio_addr - 1,
+      # "addr_range_start" : 0,
+      # "addr_range_end" : mmio_addr - 1,
 })
 l1icache_2_cpu     = cpu0_l1icache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l1icache_2_l2cache = cpu0_l1icache.setSubComponent("memlink", "memHierarchy.MemLink")
@@ -441,8 +439,8 @@ cpu0_l2cache.addParams({
       "associativity" : "16",
       "cache_line_size" : "64",
       "cache_size" : "1MB",
-      "addr_range_start" : 0,
-      "addr_range_end" : mmio_addr - 1,
+      # "addr_range_start" : 0,
+      # "addr_range_end" : mmio_addr - 1,
 })
 l2cache_2_l1caches = cpu0_l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l2cache_2_mem = cpu0_l2cache.setSubComponent("memlink", "memHierarchy.MemNIC")
@@ -491,8 +489,8 @@ memctrl.addParams({
       "clock" : cpu_clock,
       "backend.mem_size" : "4GiB",
       "backing" : "malloc",
-      "addr_range_start" : 0,
-      "addr_range_end" : mmio_addr - 1,
+      # "addr_range_start" : 0,
+      # "addr_range_end" : mmio_addr - 1,
 })
 memToDir = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
 
