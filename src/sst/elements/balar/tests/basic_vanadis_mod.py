@@ -61,7 +61,7 @@ memory_src = [l1_group,mmio_group]
 # Constans shared across components
 network_bw = "25GB/s"
 clock = "2GHz"
-mmio_addr = 1024
+mmio_addr = 0xFFFF1000
 
 mmio = sst.Component("balar", "balar.balarMMIO")
 mmio.addParams({
@@ -74,9 +74,7 @@ mmio.addParams(config.getGPUConfig())
 mmio_iface = mmio.setSubComponent("iface", "memHierarchy.standardInterface")
 #mmio_iface.addParams(debug_params)
 mmio_nic = mmio_iface.setSubComponent("memlink", "memHierarchy.MemNIC")
-mmio_nic.addParams({"group" : mmio_group, 
-                    "sources" : mmio_src,
-                    "destinations" : mmio_dst,
+mmio_nic.addParams({"group" : 3, 
                     "network_bw" : network_bw })
 
 # GPU Memory hierarchy
@@ -393,7 +391,9 @@ os_l1dcache.addParams({
       "cache_size" : "32 KB",
       "L1" : "1",
       "debug" : 0,
-      "debug_level" : 11
+      "debug_level" : 11,
+      "addr_range_start" : 0,
+      "addr_range_end" : mmio_addr - 1,
 })
 
 cpu0_l1dcache = sst.Component("cpu0.l1dcache", "memHierarchy.Cache")
@@ -407,7 +407,9 @@ cpu0_l1dcache.addParams({
       "cache_size" : "32 KB",
       "L1" : "1",
       "debug" : 0,
-      "debug_level" : 11
+      "debug_level" : 11,
+      "addr_range_start" : 0,
+      "addr_range_end" : mmio_addr - 1,
 })
 l1dcache_2_cpu     = cpu0_l1dcache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l1dcache_2_l2cache = cpu0_l1dcache.setSubComponent("memlink", "memHierarchy.MemLink")
@@ -424,6 +426,8 @@ cpu0_l1icache.addParams({
       "prefetcher" : "cassini.NextBlockPrefetcher",
       "prefetcher.reach" : 1,
       "L1" : "1",
+      "addr_range_start" : 0,
+      "addr_range_end" : mmio_addr - 1,
 })
 l1icache_2_cpu     = cpu0_l1icache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l1icache_2_l2cache = cpu0_l1icache.setSubComponent("memlink", "memHierarchy.MemLink")
@@ -437,6 +441,8 @@ cpu0_l2cache.addParams({
       "associativity" : "16",
       "cache_line_size" : "64",
       "cache_size" : "1MB",
+      "addr_range_start" : 0,
+      "addr_range_end" : mmio_addr - 1,
 })
 l2cache_2_l1caches = cpu0_l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l2cache_2_mem = cpu0_l2cache.setSubComponent("memlink", "memHierarchy.MemNIC")
@@ -484,7 +490,9 @@ memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
       "clock" : cpu_clock,
       "backend.mem_size" : "4GiB",
-      "backing" : "malloc"
+      "backing" : "malloc",
+      "addr_range_start" : 0,
+      "addr_range_end" : mmio_addr - 1,
 })
 memToDir = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
 
@@ -526,6 +534,9 @@ link_l2cache_2_rtr.connect( (l2cache_2_mem, "port", "1ns"), (comp_chiprtr, "port
 
 link_dir_2_rtr = sst.Link("link_dir_2_rtr")
 link_dir_2_rtr.connect( (comp_chiprtr, "port1", "1ns"), (dirNIC, "port", "1ns") )
+
+link_mmio_2_rtr = sst.Link("link_mmio_2_rtr")
+link_mmio_2_rtr.connect( (mmio_nic, "port", "1ns"), (comp_chiprtr, "port2", "1ns") )
 
 link_dir_2_mem = sst.Link("link_dir_2_mem")
 link_dir_2_mem.connect( (dirtoM, "port", "1ns"), (memToDir, "port", "1ns") )
