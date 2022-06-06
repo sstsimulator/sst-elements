@@ -142,32 +142,10 @@ BalarTestCPU::BalarTestCPU(ComponentId_t id, Params& params) :
     }
 
     clock_ticks = 0;
-    requestsPendingCycle = registerStatistic<uint64_t>("pendCycle");
-    num_reads_issued = registerStatistic<uint64_t>("reads");
-    num_writes_issued = registerStatistic<uint64_t>("writes");
-    if (noncacheableSize != 0) {
-        noncacheableReads = registerStatistic<uint64_t>("readNoncache");
-        noncacheableWrites = registerStatistic<uint64_t>("writeNoncache");
-    }
-    if (flushf != 0 ) {
-        num_flushes_issued = registerStatistic<uint64_t>("flushes");
-    }
-    if (flushinvf != 0) {
-        num_flushinvs_issued = registerStatistic<uint64_t>("flushinvs");
-    }
-    if (customf != 0) {
-        num_custom_issued = registerStatistic<uint64_t>("customReqs");
-    }
-
-    if (llscf != 0) {
-        num_llsc_issued = registerStatistic<uint64_t>("llsc");
-        num_llsc_success = registerStatistic<uint64_t>("llsc_success");
-    }
-
-    if (gpuf != 0) {
-        num_gpu_issued = registerStatistic<uint64_t>("gpu");
-        num_llsc_success = registerStatistic<uint64_t>("gpu_success");
-    }
+    // requestsPendingCycle = registerStatistic<uint64_t>("pendCycle");
+    total_memD2H_bytes = registerStatistic<uint64_t>("total_memD2H_bytes");
+    correct_memD2H_bytes = registerStatistic<uint64_t>("correct_memD2H_bytes");
+    correct_memD2H_ratio = registerStatistic<double>("correct_memD2H_ratio");
     ll_issued = false;
 
     // Trace parser initialization
@@ -175,6 +153,9 @@ BalarTestCPU::BalarTestCPU(ComponentId_t id, Params& params) :
     std::string cudaExecutable = params.find<std::string>("cuda_executable", found);
     sst_assert(found, CALL_INFO, -1, "%s, Error: parameter 'cuda_executable' was not provided\n", getName().c_str());
     out.verbose(CALL_INFO, 2, 0, "Trace file: %s, cuda_executable: %s\n", traceFile.c_str(), cudaExecutable.c_str());
+
+    // Whether to dump memcpy files
+    enable_memcpy_dump = params.find<bool>("enable_memcpy_dump", false);
 
     // Bind response handler to cpu
     handlers = new mmioHandlers(this, &out);
@@ -321,10 +302,8 @@ StandardMem::Request* BalarTestCPU::createWrite(Addr addr) {
     data[3] = (addr >>  0) & 0xff;
 
     StandardMem::Request* req = new Interfaces::StandardMem::Write(addr, data.size(), data);
-    num_writes_issued->addData(1);
     if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd) {
         req->setNoncacheable();
-        noncacheableWrites->addData(1);
     }
     out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued %sWrite for address 0x%" PRIx64 "\n", getName().c_str(), ops, req->getNoncacheable() ? "Noncacheable " : "", addr);
     return req;
@@ -333,10 +312,8 @@ StandardMem::Request* BalarTestCPU::createWrite(Addr addr) {
 StandardMem::Request* BalarTestCPU::createRead(Addr addr) {
     addr = ((addr % maxAddr)>>2) << 2;
     StandardMem::Request* req = new Interfaces::StandardMem::Read(addr, 4);
-    num_reads_issued->addData(1);
     if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd) {
         req->setNoncacheable();
-        noncacheableReads->addData(1);
     }
     out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued %sRead for address 0x%" PRIx64 "\n", getName().c_str(), ops, req->getNoncacheable() ? "Noncacheable " : "", addr);
     return req;
@@ -348,7 +325,6 @@ StandardMem::Request* BalarTestCPU::createFlush(Addr addr) {
         addr += noncacheableRangeEnd;
     addr = addr - (addr % lineSize);
     StandardMem::Request* req = new Interfaces::StandardMem::FlushAddr(addr, lineSize, false, 10);
-    num_flushes_issued->addData(1);
     out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued FlushAddr for address 0x%" PRIx64 "\n", getName().c_str(), ops,  addr);
     return req;
 }
@@ -359,7 +335,6 @@ StandardMem::Request* BalarTestCPU::createFlushInv(Addr addr) {
         addr += noncacheableRangeEnd;
     addr = addr - (addr % lineSize);
     StandardMem::Request* req = new Interfaces::StandardMem::FlushAddr(addr, lineSize, true, 10);
-    num_flushinvs_issued->addData(1);
     out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued FlushAddrInv for address 0x%" PRIx64 "\n", getName().c_str(), ops,  addr);
     return req;
 }
@@ -391,7 +366,6 @@ StandardMem::Request* BalarTestCPU::createSC() {
     data[2] = (ll_addr >>  8) & 0xff;
     data[3] = (ll_addr >>  0) & 0xff;
     StandardMem::Request* req = new Interfaces::StandardMem::StoreConditional(ll_addr, data.size(), data);
-    num_llsc_issued->addData(1);
     ll_issued = false;
     out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued StoreConditional for address 0x%" PRIx64 "\n", getName().c_str(), ops, ll_addr);
     return req;
@@ -438,7 +412,7 @@ Interfaces::StandardMem::Request* BalarTestCPU::createGPUReq() {
 
     StandardMem::Request* req = new Interfaces::StandardMem::Write(gpuAddr, buffer->size(), *buffer, false);
     // TODO: Write Request for parameters to gpu address
-    num_gpu_issued->addData(1);
+    // num_gpu_issued->addData(1);
 
     out.verbose(_INFO_, "GPU request sent %s, CUDA Function enum %s\n", getName().c_str(), gpu_api_to_string(cuda_call_id)->c_str());
     return req;
@@ -449,7 +423,7 @@ Interfaces::StandardMem::Request*
     vector<uint8_t> *buffer = encode_balar_packet<BalarCudaCallPacket_t>(&pack);
 
     StandardMem::Request* req = new Interfaces::StandardMem::Write(gpuAddr, buffer->size(), *buffer, false);
-    num_gpu_issued->addData(1);
+    // num_gpu_issued->addData(1);
 
     out.verbose(_INFO_, "creating GPU request %s, CUDA Function enum %s\n", getName().c_str(), gpu_api_to_string(pack.cuda_call_id)->c_str());
     return req;
@@ -507,27 +481,36 @@ void BalarTestCPU::mmioHandlers::handle(Interfaces::StandardMem::ReadResp* resp)
             sim_ptr    = ret_pack_ptr->cudamemcpy.sim_data;
             real_ptr     = ret_pack_ptr->cudamemcpy.real_data;
 
-            out->verbose(_INFO_, "GPU memcpyD2H correct bytes: %d total bytes: %d ratio: %f\n", correct, tot, (double) correct / (double) tot);
+            // Print out stats
+            double ratio = (double) correct / (double) tot;
+            out->verbose(_INFO_, "GPU memcpyD2H correct bytes: %d total bytes: %d ratio: %f\n", correct, tot, ratio);
+
+            // Record stats
+            cpu->total_memD2H_bytes->addData(tot);
+            cpu->correct_memD2H_bytes->addData(correct);
+            cpu->correct_memD2H_ratio->addData(ratio);
 
             // Dump data to file
-            char buf[200];
-            sprintf(buf, "cudamemcpyD2H-sim-%p-%p-size-%d.data", sim_ptr, real_ptr, tot);
-            std::ofstream dumpStream;
-            dumpStream.open(buf, std::ios::out | std::ios::binary);
-            if (!dumpStream.is_open()) {
-                out->fatal(CALL_INFO, -1, "Cannot open '%s' for dumping D2H memcpy data\n", buf);
-            }
-            dumpStream.write((const char *) sim_ptr, tot);
-            dumpStream.close();
+            if (cpu->enable_memcpy_dump) {
+                char buf[200];
+                sprintf(buf, "cudamemcpyD2H-sim-%p-%p-size-%d.data", sim_ptr, real_ptr, tot);
+                std::ofstream dumpStream;
+                dumpStream.open(buf, std::ios::out | std::ios::binary);
+                if (!dumpStream.is_open()) {
+                    out->fatal(CALL_INFO, -1, "Cannot open '%s' for dumping D2H memcpy data\n", buf);
+                }
+                dumpStream.write((const char *) sim_ptr, tot);
+                dumpStream.close();
 
-            sprintf(buf, "cudamemcpyD2H-real-%p-%p-size-%d.data", sim_ptr, real_ptr, tot);
-            std::ofstream dumpRealStream;
-            dumpRealStream.open(buf, std::ios::out | std::ios::binary);
-            if (!dumpRealStream.is_open()) {
-                out->fatal(CALL_INFO, -1, "Cannot open '%s' for dumping D2H memcpy data\n", buf);
+                sprintf(buf, "cudamemcpyD2H-real-%p-%p-size-%d.data", sim_ptr, real_ptr, tot);
+                std::ofstream dumpRealStream;
+                dumpRealStream.open(buf, std::ios::out | std::ios::binary);
+                if (!dumpRealStream.is_open()) {
+                    out->fatal(CALL_INFO, -1, "Cannot open '%s' for dumping D2H memcpy data\n", buf);
+                }
+                dumpRealStream.write((const char *) real_ptr, tot);
+                dumpRealStream.close();
             }
-            dumpRealStream.write((const char *) real_ptr, tot);
-            dumpRealStream.close();
         }
 
         // TODO Handle return values from API

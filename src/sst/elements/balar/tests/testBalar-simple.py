@@ -86,6 +86,7 @@ cpu.addParams({
       # Trace and executable info
       "trace_file": traceFile,
       "cuda_executable": binaryFile,
+      "enable_memcpy_dump": False
 })
 iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 iface.addParams(debug_params)

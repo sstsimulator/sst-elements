@@ -74,21 +74,13 @@ public:
         {"noncacheableRangeEnd",    "(uint) End of range of addresses that are noncacheable.", "0x0"},
         {"addressoffset",           "(uint) Apply an offset to a calculated address to check for non-alignment issues", "0"},
         {"trace_file",              "(string) CUDA API calls trace file path"},
-        {"cuda_executable",         "(string) CUDA executable file path to extract PTX info"} )
+        {"cuda_executable",         "(string) CUDA executable file path to extract PTX info"},
+        {"enable_memcpy_dump",      "(bool) Enable memD2Hcpy dump or not", "false"} )
 
     SST_ELI_DOCUMENT_STATISTICS( 
-        {"pendCycle", "Number of pending requests per cycle", "count", 1},
-        {"reads", "Number of reads issued (including noncacheable)", "count", 1},
-        {"writes", "Number of writes issued (including noncacheable)", "count", 1},
-        {"flushes", "Number of flushes issued", "count", 1},
-        {"flushinvs", "Number of flush-invs issued", "count", 1},
-        {"customReqs", "Number of custom requests issued", "count", 1},
-        {"llsc", "Number of LL-SC pairs issued", "count", 1},
-        {"llsc_success", "Number of successful LLSC pairs issued", "count", 1},
-        {"gpu", "Number of gpu request issued", "count", 1},
-        {"gpu_success", "Number of gpu request success", "count", 1},
-        {"readNoncache", "Number of noncacheable reads issued", "count", 1},
-        {"writeNoncache", "Number of noncacheable writes issued", "count", 1}
+        {"total_memD2H_bytes", "Number of total memD2Hcpy bytes", "count", 1},
+        {"correct_memD2H_bytes", "Number of total correct memD2Hcpy bytes", "count", 1},
+        {"correct_memD2H_ratio", "Ratio of correct/total memD2Hcpy bytes for each individual memD2Hcpy call", "count", 1},
     )
 
     /* Slot for a memory interface. This must be user defined (aka defined in Python config) */
@@ -124,18 +116,10 @@ private:
     uint32_t maxReqsPerIssue;
     uint64_t noncacheableRangeStart, noncacheableRangeEnd, noncacheableSize;
     uint64_t clock_ticks;
-    Statistic<uint64_t>* requestsPendingCycle;
-    Statistic<uint64_t>* num_reads_issued;
-    Statistic<uint64_t>* num_writes_issued;
-    Statistic<uint64_t>* num_flushes_issued;
-    Statistic<uint64_t>* num_flushinvs_issued;
-    Statistic<uint64_t>* num_custom_issued;
-    Statistic<uint64_t>* num_llsc_issued;
-    Statistic<uint64_t>* num_llsc_success;
-    Statistic<uint64_t>* num_gpu_issued;
-    Statistic<uint64_t>* num_gpu_success;
-    Statistic<uint64_t>* noncacheableReads;
-    Statistic<uint64_t>* noncacheableWrites;
+    bool enable_memcpy_dump;
+    Statistic<uint64_t>* total_memD2H_bytes;
+    Statistic<uint64_t>* correct_memD2H_bytes;
+    Statistic<double>* correct_memD2H_ratio;
 
     bool ll_issued;
     Interfaces::StandardMem::Addr ll_addr;
