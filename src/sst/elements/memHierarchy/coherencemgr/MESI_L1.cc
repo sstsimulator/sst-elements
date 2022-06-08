@@ -1189,9 +1189,10 @@ void MESIL1::cleanUpAfterRequest(MemEvent * event, bool inMSHR) {
     /* Replay any waiting events */
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
-            if (!mshr_->getInProgress(addr))
+            if (!mshr_->getInProgress(addr)) {
                 retryBuffer_.push_back(mshr_->getFrontEvent(addr));
                 mshr_->addPendingRetry(addr);
+            }
         } else { // Pointer -> either we're waiting for a writeback ACK or another address is waiting to evict this one
             if (mshr_->getFrontType(addr) == MSHREntryType::Evict) {
                 std::list<Addr>* evictPointers = mshr_->getEvictPointers(addr);
