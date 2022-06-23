@@ -8,6 +8,9 @@
 #include <cstdlib>
 #include <uint.h>
 #include <sint.h>
+#include <sst/core/sst_config.h>
+#include "sst_config.h"
+namespace SST {
 //#define UNLIKELY(condition) __builtin_expect(static_cast<bool>(condition), 0)
 typedef struct Rtlheader {
   UInt<4> delays_0;
@@ -23,6 +26,7 @@ typedef struct Rtlheader {
   UInt<1> io_load;
   UInt<1> io_shift;
   UInt<4> io_out;
+
 
   Rtlheader() {
     delays_0.rand_init();
@@ -40,8 +44,6 @@ typedef struct Rtlheader {
   }
 
   void eval(bool update_registers, bool verbose, bool done_reset) {
-    fprintf(stderr, "\nInputs are: % % % % % %" PRIu8 PRIu8 PRIu8 PRIu8 PRIu8 PRIu8, io_ins_0, io_ins_1, io_ins_2, io_ins_3, io_shift, io_load); 
-    fprintf(stderr, "\nCtrls are: %d %d", io_shift, io_load); 
     UInt<4> _GEN_0 = io_shift ? io_ins_0 : delays_0;
     UInt<4> _GEN_1 = io_shift ? delays_0 : delays_1;
     UInt<4> _GEN_2 = io_shift ? delays_1 : delays_2;
@@ -51,8 +53,7 @@ typedef struct Rtlheader {
     if (update_registers) delays_1 = io_load ? io_ins_1 : _GEN_1;
     if (update_registers) delays_2 = io_load ? io_ins_2 : _GEN_2;
     if (update_registers) delays_3 = io_load ? io_ins_3 : _GEN_3;
-    if(verbose) std::cout<<" "<<delays_3<<" "<<delays_2<<" "<<delays_1<<" "<<delays_0<<'\n';
   }
 } Rtlheader;
-
+} //namespace SST
 #endif  // VECSHIFTREGISTER_H_

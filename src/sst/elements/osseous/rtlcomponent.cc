@@ -65,7 +65,7 @@ Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
        std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.standardInterface");
        output.verbose(CALL_INFO, 1, 0, "Memory interface to be loaded is: %s\n", interfaceName.c_str());
        
-       Params interfaceParams = params.find_prefix_params("memoryinterfaceparams.");
+       Params interfaceParams = params.get_scoped_params("memoryinterfaceparams");
        interfaceParams.insert("port", "RtlCacheLink");
        cacheLink = loadAnonymousSubComponent<Interfaces::StandardMem>(interfaceName, "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
                interfaceParams, timeConverter, new StandardMem::Handler<Rtlmodel>(this, &Rtlmodel::handleMemEvent));
@@ -85,7 +85,7 @@ Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
         }
 
         output.verbose(CALL_INFO, 1, 0, "Loading memory manager: %s\n", memorymanager.c_str());
-        Params mmParams = params.find_prefix_params("memmgr");
+        Params mmParams = params.get_scoped_params("memmgr");
         memmgr = loadAnonymousSubComponent<RtlMemoryManager>(memorymanager, "memmgr", 0, ComponentInfo::SHARE_NONE | ComponentInfo::INSERT_STATS, mmParams);
         if (NULL == memmgr) output.fatal(CALL_INFO, -1, "Failed to load memory manager: %s\n", memorymanager.c_str());
     }
@@ -111,7 +111,7 @@ Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
    registerAsPrimaryComponent();
    primaryComponentDoNotEndSim();
 
-   assert(ArielRtlLink);
+   sst_assert(ArielRtlLink, CALL_INFO, -1, "ArielRtlLink is null");
 }
 
 Rtlmodel::~Rtlmodel() {
@@ -144,22 +144,13 @@ void Rtlmodel::finish() {
 //clockTick will actually execute the RTL design at every cycle based on the input and control signals updated by CPU CPU or Event Handler.
 bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
 
-    /*uint64_t DUTclk; 
-    char* endPtr;
-    DUTclk = strtoull(RTLClk.c_str(), &endPtr, 10);
-    DUTcycles = 10^9/DUTclk;
-	unitAlgebra clock_ua(RTLClk);
-    if( currentCycle %  == 0 ) {
-		output.verbose(CALL_INFO, 1, 0, "Hello World!\n");
-	}*/
-
     if(!isStalled) {
         dut->eval(ev.update_registers, ev.verbose, ev.done_reset);
         if(tickCount == 4) {
             output.verbose(CALL_INFO, 1, 0, "AXI signals changed"); 
             axi_tvalid_$next = 1;
             axi_tdata_$next = 34;
-            cout<<"\n Sending data at tickCount 4";
+            output.verbose(CALL_INFO, 1, 0, "\n Sending data at tickCount 4");
         }
      tickCount++;
     }
@@ -182,8 +173,8 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
             axiport->eval(true, true, true);
             fifo_enq_$next = axiport->queue.value.as_single_word();
             if(fifo_enq_$old ^ fifo_enq_$next) {
-                cout<<"\nQueue_value is: "<<axiport->queue.value<<fifo_enq_$next;
-                cout<<"\nData enqueued in the queue: "<< axiport->queue.ram[fifo_enq_$next];
+                output.verbose(CALL_INFO, 1, 0, "\nQueue_value is: % %" PRIu64 PRIu64, axiport->queue.value, fifo_enq_$next); 
+                output.verbose(CALL_INFO, 1, 0, "\nData enqueued in the queue: %" PRIu64, axiport->queue.ram[fifo_enq_$next]);
             }
             fifo_enq_$old = fifo_enq_$next;
         }
@@ -195,16 +186,10 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
 
     uint64_t read_addr = (axiport->queue.ram[fifo_enq_$next].as_single_word());// << 32) | (axiport->queue.ram[fifo_enq_$next+1].as_single_word());
     uint64_t size = (axiport->queue.ram[fifo_enq_$next+2].as_single_word());// << 32) | (axiport->queue.ram[fifo_enq_$next+3].as_single_word());
-    cout << "\nread_addr is: "<<read_addr;
-    cout << "\nsize is: "<<size;
 
-    //RtlReadEvent* axi_readev = new RtlReadEvent(read_addr, size); 
-    //generateReadRequest(axi_readev);
+    //output.verbose(CALL_INFO, 1, 0, "\nSim Done is: %d", ev.sim_done);
 
-    cout<<"Sim Done is: "<<ev.sim_done;
-
-	if( tickCount >= sim_cycle /*|| tickCount >= maxCycles*/ ) {
-        //output.verbose(CALL_INFO, 1, 0, "sim_cycle ending is: %" PRIu64, sim_cycle);
+	if( tickCount >= sim_cycle) {
         if(ev.sim_done) {
             output.verbose(CALL_INFO, 1, 0, "OKToEndSim, TickCount %" PRIu64, tickCount);
             RtlAckEv->setEndSim(true);
@@ -238,6 +223,7 @@ void Rtlmodel::handleArielEvent(SST::Event *event) {
 
     output.verbose(CALL_INFO, 1, 0, "\nVecshiftReg RTL Event handle called \n");
 
+ 
     memmgr->AssignRtlMemoryManagerSimple(*ariel_ev->RtlData.pageTable, ariel_ev->RtlData.freePages, ariel_ev->RtlData.pageSize);
     memmgr->AssignRtlMemoryManagerCache(*ariel_ev->RtlData.translationCache, ariel_ev->RtlData.translationCacheEntries, ariel_ev->RtlData.translationEnabled);
 
@@ -276,52 +262,6 @@ void Rtlmodel::handleArielEvent(SST::Event *event) {
     sendArielEvent();
 }
 
-/*void Rtlmodel::handleAXIEvent(uint64_t* data) {
-    //axi4 Writer configuration, writes data to the destination address
-    axiport->io_write_aw_awid = 0;
-    axiport->writerFrontend.enable      = 0;    
-    axiport->writerFrontend.length      = 64;
-    axiport->writerFrontend.awaddr      = (uint64_t)destination_address;
-    axiport->writerFrontend.awlen       = 64;
-    axiport->writerFrontend.awvalid     = 1;
-    axiport->writerFrontend.bready      = 0;
-    axiport->writerFrontend.done        = 0;
-    axiport->writerFrontend.addrState   = axi_w_addr_state; //use globally visible state in the FSM
-    axiport->writerFrontend.dataState   = axi_w_data_state; //use globally visible state in the FSM
-    cout<<"axiport->io_read_tdata -->:"<<axiport->io_read_tdata<<endl;
-    
-    cmd_queue.push('r');
-
-    for(int j = 0; j<2 ;j++)
-    {
-        //mem_print(source_address, 8);
-        //mem_print(destination_address, 8);
-        //source_address++;
-        //destination_address++;
-        //logic for sending 2 32-bit addresses here
-        axiport->io_write_aw_awid = 0;        
-
-
-
-        //this is a 32 bit dma request
-        for(int i=0; i<2; i++)
-        {
-            req_result = dma_write_req(data[0], data[i]);
-            axiport->eval(true, true, true);
-            //current logic considers 
-            destination_address = (uint64_t*)&axiport->io_write_w_wdata;
-            trace_count++;
-        }
-            
-            *source_address = *source_address>>16;
-            axiport->io_write_aw_awid = 1 ;//tells the ID of the packet
-            cout<<"Request result!     "<< ((req_result == 1)? ("passed"): ("failed"))<<endl;
-            cout<<"data from the chisel design : "<<sizeof(axiport->io_write_w_wdata)<<endl;
-            
-    }
-    
-}*/
-
 void Rtlmodel::sendArielEvent() {
      
     RtlAckEv = new ArielComponent::ArielRtlEvent();
@@ -346,6 +286,7 @@ void Rtlmodel::handleMemEvent(StandardMem::Request* event) {
     StandardMem::ReadResp* read = (StandardMem::ReadResp*)event;
     output.verbose(CALL_INFO, 4, 0, " handling a memory event in RtlModel.\n");
     StandardMem::Request::id_t mev_id = read->getID();
+
     auto find_entry = pendingTransactions->find(mev_id);
     if(find_entry != pendingTransactions->end()) {
         output.verbose(CALL_INFO, 4, 0, "Correctly identified event in pending transactions, removing from list, before there are: %" PRIu32 " transactions pending.\n", (uint32_t) pendingTransactions->size());
@@ -392,6 +333,7 @@ void Rtlmodel::commitReadEvent(const uint64_t address,
         
         pending_transaction_count++;
         pendingTransactions->insert(std::pair<StandardMem::Request::id_t, StandardMem::Request*>(req->getID(), req));
+        //memmgr_transactions->insert(std::pair<StandardMem::Request::id_t, int>(req->getID(), flag));
 
         // Actually send the event to the cache
         cacheLink->send(req);
@@ -440,6 +382,13 @@ void Rtlmodel::generateReadRequest(RtlReadEvent* rEv) {
     // There is a chance that the non-alignment causes an undetected bug if an access spans multiple malloc regions that are contiguous in VA space but non-contiguous in PA space.
     // However, a single access spanning multiple malloc'd regions shouldn't happen...
     // Addresses mapped via first touch are always line/page aligned
+    /*if(rEv->physaddr == 0) { 
+        physaddr = memmgr->translateAddress(readAddress);
+    }
+    else 
+        physaddr = memmgr->translateAddress(readAddress);
+
+    const uint64_t physAddr = physaddr;*/
     const uint64_t physAddr = memmgr->translateAddress(readAddress);
     const uint64_t addr_offset  = physAddr % ((uint64_t) cacheLineSize);
 

@@ -1,4 +1,4 @@
-// Copyright 2009-2020 NTESS. Under the terms
+    // Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -18,20 +18,27 @@
 
 #include "uint.h"
 #include "rtl_header.h"
+#include <sst/core/simulation.h>
 #include <string>
 #include <sst/core/event.h>
+using namespace SST;
+using namespace std;
 
 namespace SST {
     namespace RtlComponent { 
 
 class RTLEvent : public SST::Event {
 public:
-    typedef std::vector<char> dataVec;
+
     bool update_inp, update_ctrl, update_registers, verbose, done_reset,
          update_eval_args, sim_done;
     uint64_t sim_cycles;
-    RTLEvent() : SST::Event() { }
-    //dataVec payload;
+    RTLEvent() : SST::Event() {
+        //output = SST::Simulation::getSimulation()->getSimulationOutput(); 
+        //output.init("RtlEvent-" + getName() + "-> ", 1, 0, SST::Output::STDOUT); 
+        output.init("Rtlmodel->", 1, 0, SST::Output::STDOUT);
+        output = SST::Simulation::getSimulation()->getSimulationOutput();
+    }
 
     void input_sigs(Rtlheader*);
     void control_sigs(Rtlheader*);
@@ -49,28 +56,11 @@ public:
         ser & sim_done;
     }
 
-    /*std::string serialization_name() const {
-        
-        std::string s("defining virtual function!");
-        return s;
-    }
-
-    const char* cls_name() const { 
-        char a = 'A';
-        const char* c = &a;
-        return c; 
-    }
-
-    uint32_t cls_id() const {
-        const uint32_t a = 10;
-        return a;
-    }*/
-
     ImplementSerializable(SST::RtlComponent::RTLEvent);
+private:
+    SST::Output output;
 
-    //Cast all the variables to 4 byte integer types for uniform storage for now. Later, we either will remove UInt and SInt and use native types. Even then we would need to cast the every variables based on type, width and order while storing in shmem and accordinly access it at runtime from shmem. Looks dificult task as of now.    
-    /*void* input_ctrl_registers;
-    UInt<4>* inp_ctrl_reg;*/
+
 };
 
 } //namespace RtlComponent

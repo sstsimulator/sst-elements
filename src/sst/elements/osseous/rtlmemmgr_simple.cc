@@ -58,7 +58,7 @@ void RtlMemoryManagerSimple::allocate(const uint64_t size, const uint32_t level,
                     size);
         }
 
-        fprintf(stderr, "\nAllocation, Popping freepages");
+        output->verbose(CALL_INFO, 1, 0, "\nAllocation, Popping freepages");
         const uint64_t nextPhysPage = freePages->front();
         freePages->pop_front();
 

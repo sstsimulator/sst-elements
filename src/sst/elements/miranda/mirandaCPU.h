@@ -151,22 +151,22 @@ private:
     MirandaMemoryManager* memMgr;
 
     uint32_t maxRequestsPending[OPCOUNT];
-    uint32_t requestsPending[OPCOUNT];
-    uint32_t reqMaxPerCycle;
-    uint64_t cacheLine;
-    uint32_t maxOpLookup;
+	uint32_t requestsPending[OPCOUNT];
+	uint32_t reqMaxPerCycle;
+	uint64_t cacheLine;
+	uint32_t maxOpLookup;
 
     Statistic<uint64_t>* statReqs[OPCOUNT];
-    Statistic<uint64_t>* statSplitReqs[OPCOUNT];
-    Statistic<uint64_t>* statCyclesWithIssue;
-    Statistic<uint64_t>* statMaxIssuePerCycle;
-    Statistic<uint64_t>* statCyclesWithoutIssue;
-    Statistic<uint64_t>* statBytes[OPCOUNT];
-    Statistic<uint64_t>* statReqLatency;
-    Statistic<uint64_t>* statTime;
-    Statistic<uint64_t>* statCyclesHitFence;
-    Statistic<uint64_t>* statCyclesHitReorderLimit;
-    Statistic<uint64_t>* statCycles;
+	Statistic<uint64_t>* statSplitReqs[OPCOUNT];
+	Statistic<uint64_t>* statCyclesWithIssue;
+	Statistic<uint64_t>* statMaxIssuePerCycle;
+	Statistic<uint64_t>* statCyclesWithoutIssue;
+	Statistic<uint64_t>* statBytes[OPCOUNT];
+	Statistic<uint64_t>* statReqLatency;
+	Statistic<uint64_t>* statTime;
+	Statistic<uint64_t>* statCyclesHitFence;
+	Statistic<uint64_t>* statCyclesHitReorderLimit;
+	Statistic<uint64_t>* statCycles;
 };
 
 }

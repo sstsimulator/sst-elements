@@ -35,9 +35,9 @@ void RTLEvent::UpdateRtlSignals(void *update_data, Rtlheader* cmodel, uint64_t& 
     cycles = sim_cycles;
     cycles_ptr++;
 
-    fprintf(stderr, "sim_cycles: %" PRIu64, sim_cycles);
-    fprintf(stderr, "update_inp: %d", update_inp);
-    fprintf(stderr, "update_ctrl: %d", update_ctrl);
+    output.verbose(CALL_INFO, 1, 0, "sim_cycles: %\n" PRIu64, sim_cycles);
+    output.verbose(CALL_INFO, 1, 0, "update_inp: %d\n", update_inp);
+    output.verbose(CALL_INFO, 1, 0, "update_ctrl: %d\n", update_ctrl);
     if(update_inp) {
         inp_ptr =  (void*)cycles_ptr; 
         input_sigs(cmodel);
@@ -53,29 +53,30 @@ void RTLEvent::UpdateRtlSignals(void *update_data, Rtlheader* cmodel, uint64_t& 
 void RTLEvent::input_sigs(Rtlheader* cmodel) {
 
     cmodel->reset = UInt<1>(1);
+    //Cast all the variables to 4 byte UInt types for uniform storage for now. Later, we either will remove UInt and SInt and use native types. Even then we would need to cast the every variables based on type, width and order while storing in shmem and accordinly access it at runtime from shmem.   
     UInt<4>* rtl_inp_ptr = (UInt<4>*)inp_ptr;
     cmodel->io_ins_0 = rtl_inp_ptr[0];
     cmodel->io_ins_1 = rtl_inp_ptr[1];
     cmodel->io_ins_2 = rtl_inp_ptr[2];
     cmodel->io_ins_3 = rtl_inp_ptr[3];
     cmodel->reset = UInt<1>(0);
-    fprintf(stderr, "\ninput_sigs: %" PRIu8, cmodel->io_ins_0);
-    fprintf(stderr, "\ninput_sigs: %" PRIu8, cmodel->io_ins_1);
-    fprintf(stderr, "\ninput_sigs: %" PRIu8, cmodel->io_ins_2);
-    fprintf(stderr, "\ninput_sigs: %" PRIu8, cmodel->io_ins_3);
+    output.verbose(CALL_INFO, 1, 0, "input_sigs: %lu", cmodel->io_ins_0);
+    output.verbose(CALL_INFO, 1, 0, "input_sigs: %lu", cmodel->io_ins_1);
+    output.verbose(CALL_INFO, 1, 0, "input_sigs: %lu", cmodel->io_ins_2);
+    output.verbose(CALL_INFO, 1, 0, "input_sigs: %lu", cmodel->io_ins_3);
     return;
 }
 
 void RTLEvent::control_sigs(Rtlheader* cmodel) {
 
-    fprintf(stderr, "\nctrl_sigs called"); 
+    output.verbose(CALL_INFO, 1, 0, "\nctrl_sigs called"); 
     cmodel->reset = UInt<1>(1);
     UInt<1>* rtl_ctrl_ptr = (UInt<1>*)ctrl_ptr;
     cmodel->io_shift = rtl_ctrl_ptr[0];
     cmodel->io_load = rtl_ctrl_ptr[1];
     cmodel->reset = UInt<1>(0);
-    fprintf(stderr, "\nctrl_sigs %" PRIu8, cmodel->io_shift); 
-    fprintf(stderr, "\nctrl_sigs %" PRIu8, cmodel->io_load); 
+    output.verbose(CALL_INFO, 1, 0, "ctrl_sigs: %lu", cmodel->io_shift);
+    output.verbose(CALL_INFO, 1, 0, "ctrl_sigs: %lu", cmodel->io_load);
     return;
 }
 
