@@ -56,9 +56,9 @@ cacheLineTrack::cacheLineTrack(ComponentId_t id, Params& params) : CacheListener
 
     rdHisto = registerStatistic<Addr>("hist_reads_log2");
     wrHisto = registerStatistic<Addr>("hist_writes_log2");
-    useHisto = registerStatistic<uint>("hist_word_accesses");
+    useHisto = registerStatistic<unsigned int>("hist_word_accesses");
     ageHisto = registerStatistic<SimTime_t>("hist_age_log2");
-    evicts = registerStatistic<uint>("evicts");
+    evicts = registerStatistic<unsigned int>("evicts");
 
 }
 
@@ -107,7 +107,7 @@ void cacheLineTrack::notifyAccess(const CacheListenerNotification& notify) {
                 wrHisto->addData(log2_64(iter->second.writes));
                 SimTime_t now = getSimulation()->getCurrentSimCycle();
                 ageHisto->addData(log2_64(now - iter->second.entered));
-                uint touched = iter->second.touched.count();
+                unsigned int touched = iter->second.touched.count();
                 useHisto->addData(touched);
 		evicts->addData(1);
                 //delete it
