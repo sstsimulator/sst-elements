@@ -100,15 +100,15 @@ void GNA::init(unsigned int phase) {
 
     SST::RNG::MarsagliaRNG rng(1,13);
 
+    // Neurons
     // <should read these in>
-    // neurons
     for (int nrn_num=0;nrn_num<numNeurons;nrn_num++) {
         uint16_t trig = rng.generateNextUInt32() % 100 + 350;
-        neurons[nrn_num].configure(float(trig),0.0,float(trig/10.));
+        neurons[nrn_num].configure(float(trig), 0, 0.9, 1);
     }
 
+    // Synapses
     // <Should read these in>
-    // White matter list
     uint64_t startAddr = 0x10000;
     int countLinks = 0;
     for (int n = 0; n < numNeurons; ++n) {
