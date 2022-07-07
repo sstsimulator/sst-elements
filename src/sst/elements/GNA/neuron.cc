@@ -20,10 +20,13 @@
 using namespace SST::GNAComponent;
 using namespace std;
 
-void Neuron::configure(float threshold, float minimum, float leak) {
-    this->threshold = threshold;
-    this->minimum   = minimum;
-    this->leak      = leak;
+SST::RNG::MarsagliaRNG Neuron::rng(1,13);
+
+void Neuron::configure(float Vthreshold, float Vreset, float leak, float p) {
+    this->Vthreshold = Vthreshold;
+    this->Vreset     = Vreset;
+    this->leak       = leak;
+    this->p          = p;
 }
 
 void Neuron::deliverSpike(float str, uint when) {
@@ -32,9 +35,7 @@ void Neuron::deliverSpike(float str, uint when) {
 }
 
 bool Neuron::lif(const uint now) {
-    V -= leak;
-    if (V < minimum) V = minimum;
-
+    // Add inputs
     temporalBuffer_t::iterator i = temporalBuffer.find(now);
     if (i != temporalBuffer.end()) {
         V += i->second;
@@ -42,11 +43,16 @@ bool Neuron::lif(const uint now) {
         //printf(" got current spike %f @ %d\n", val, now);
     }
 
-    if (V > threshold) {
-        V = minimum;
-        return true;
-    } else {
-        return false;
+    // Check for spike
+    if (V > Vthreshold) {
+        if (p >= 1  ||  p > 0  &&  rng.nextUniform() <= p) {
+            V = Vreset;
+            return true;
+        }
     }
+
+    // Decay
+    V *= leak;
+    return false;
 }
 

@@ -1,29 +1,29 @@
 Constructed 500 neurons with 1246 links
 Input weight 2001.0 to neuron 398
 Input weight 2001.0 to neuron 193
-28 neurons fired @ 64
-78 neurons fired @ 128
+29 neurons fired @ 64
+79 neurons fired @ 128
 99 neurons fired @ 192
 117 neurons fired @ 256
 146 neurons fired @ 320
-170 neurons fired @ 384
-154 neurons fired @ 448
-145 neurons fired @ 512
-134 neurons fired @ 576
-121 neurons fired @ 640
-105 neurons fired @ 704
-95 neurons fired @ 768
-85 neurons fired @ 832
-66 neurons fired @ 896
-45 neurons fired @ 960
-27 neurons fired @ 1024
-11 neurons fired @ 1088
+172 neurons fired @ 384
+155 neurons fired @ 448
+147 neurons fired @ 512
+138 neurons fired @ 576
+123 neurons fired @ 640
+107 neurons fired @ 704
+96 neurons fired @ 768
+86 neurons fired @ 832
+70 neurons fired @ 896
+49 neurons fired @ 960
+28 neurons fired @ 1024
+14 neurons fired @ 1088
 1 neurons fired @ 1152
-Completed 105728 neuron firings
-Completed 245698 spike deliveries
+Completed 106490 neuron firings
+Completed 247492 spike deliveries
  l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 29143; SumSQ.u64 = 29143; Count.u64 = 29143; Min.u64 = 1; Max.u64 = 1; 
- l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 216553; SumSQ.u64 = 216553; Count.u64 = 216553; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 29419; SumSQ.u64 = 29419; Count.u64 = 29419; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 218071; SumSQ.u64 = 218071; Count.u64 = 218071; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_GetS_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_GetX_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_GetX_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -32,7 +32,7 @@ Completed 245698 spike deliveries
  l1cache.stateEvent_GetSX_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.stateEvent_GetXResp_IS : Accumulator : Sum.u64 = 29143; SumSQ.u64 = 29143; Count.u64 = 29143; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.stateEvent_GetXResp_IS : Accumulator : Sum.u64 = 29419; SumSQ.u64 = 29419; Count.u64 = 29419; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_GetXResp_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_GetXResp_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_Inv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -80,7 +80,7 @@ Completed 245698 spike deliveries
  l1cache.stateEvent_FlushLineResp_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_FlushLineResp_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_FlushLineResp_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.eventSent_GetS : Accumulator : Sum.u64 = 29143; SumSQ.u64 = 29143; Count.u64 = 29143; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.eventSent_GetS : Accumulator : Sum.u64 = 29419; SumSQ.u64 = 29419; Count.u64 = 29419; Min.u64 = 1; Max.u64 = 1; 
  l1cache.eventSent_GetX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_Write : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -91,7 +91,7 @@ Completed 245698 spike deliveries
  l1cache.eventSent_FetchResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_FetchXResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_AckInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.eventSent_GetSResp : Accumulator : Sum.u64 = 245696; SumSQ.u64 = 245696; Count.u64 = 245696; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.eventSent_GetSResp : Accumulator : Sum.u64 = 247490; SumSQ.u64 = 247490; Count.u64 = 247490; Min.u64 = 1; Max.u64 = 1; 
  l1cache.eventSent_GetXResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_WriteResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -103,14 +103,14 @@ Completed 245698 spike deliveries
  l1cache.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.evict_I : Accumulator : Sum.u64 = 33; SumSQ.u64 = 33; Count.u64 = 33; Min.u64 = 1; Max.u64 = 1; 
- l1cache.evict_S : Accumulator : Sum.u64 = 29111; SumSQ.u64 = 29111; Count.u64 = 29111; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.evict_S : Accumulator : Sum.u64 = 29387; SumSQ.u64 = 29387; Count.u64 = 29387; Min.u64 = 1; Max.u64 = 1; 
  l1cache.evict_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.evict_IS : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
  l1cache.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.latency_GetS_hit : Accumulator : Sum.u64 = 22708101; SumSQ.u64 = 4579029603; Count.u64 = 216553; Min.u64 = 2; Max.u64 = 233; 
- l1cache.latency_GetS_miss : Accumulator : Sum.u64 = 5980641; SumSQ.u64 = 1227342571; Count.u64 = 29143; Min.u64 = 205; Max.u64 = 235; 
+ l1cache.latency_GetS_hit : Accumulator : Sum.u64 = 22917784; SumSQ.u64 = 4622145574; Count.u64 = 218071; Min.u64 = 2; Max.u64 = 233; 
+ l1cache.latency_GetS_miss : Accumulator : Sum.u64 = 6037261; SumSQ.u64 = 1238957995; Count.u64 = 29419; Min.u64 = 205; Max.u64 = 235; 
  l1cache.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.latency_GetX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -121,25 +121,25 @@ Completed 245698 spike deliveries
  l1cache.latency_FlushLine_fail : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.latency_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.latency_FlushLineInv_fail : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.GetSHit_Arrival : Accumulator : Sum.u64 = 98766; SumSQ.u64 = 98766; Count.u64 = 98766; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.GetSHit_Arrival : Accumulator : Sum.u64 = 99197; SumSQ.u64 = 99197; Count.u64 = 99197; Min.u64 = 1; Max.u64 = 1; 
  l1cache.GetXHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.GetSXHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.GetSHit_Blocked : Accumulator : Sum.u64 = 117787; SumSQ.u64 = 117787; Count.u64 = 117787; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.GetSHit_Blocked : Accumulator : Sum.u64 = 118874; SumSQ.u64 = 118874; Count.u64 = 118874; Min.u64 = 1; Max.u64 = 1; 
  l1cache.GetXHit_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.GetSXHit_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.GetSMiss_Arrival : Accumulator : Sum.u64 = 29142; SumSQ.u64 = 29142; Count.u64 = 29142; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.GetSMiss_Arrival : Accumulator : Sum.u64 = 29418; SumSQ.u64 = 29418; Count.u64 = 29418; Min.u64 = 1; Max.u64 = 1; 
  l1cache.GetXMiss_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.GetSXMiss_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
  l1cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.CacheHits : Accumulator : Sum.u64 = 216553; SumSQ.u64 = 216553; Count.u64 = 216553; Min.u64 = 1; Max.u64 = 1; 
- l1cache.CacheMisses : Accumulator : Sum.u64 = 29143; SumSQ.u64 = 29143; Count.u64 = 29143; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.CacheHits : Accumulator : Sum.u64 = 218071; SumSQ.u64 = 218071; Count.u64 = 218071; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.CacheMisses : Accumulator : Sum.u64 = 29419; SumSQ.u64 = 29419; Count.u64 = 29419; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.eventSent_PutS : Accumulator : Sum.u64 = 29111; SumSQ.u64 = 29111; Count.u64 = 29111; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.eventSent_PutS : Accumulator : Sum.u64 = 29387; SumSQ.u64 = 29387; Count.u64 = 29387; Min.u64 = 1; Max.u64 = 1; 
  l1cache.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 274839; SumSQ.u64 = 274839; Count.u64 = 274839; Min.u64 = 1; Max.u64 = 1; 
- l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 117789; SumSQ.u64 = 117789; Count.u64 = 117789; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 276909; SumSQ.u64 = 276909; Count.u64 = 276909; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 118876; SumSQ.u64 = 118876; Count.u64 = 118876; Min.u64 = 1; Max.u64 = 1; 
  l1cache.Put_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.Get_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.AckMove_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -152,14 +152,14 @@ Completed 245698 spike deliveries
  l1cache.CustomResp_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.CustomAck_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.NULLCMD_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.GetS_recv : Accumulator : Sum.u64 = 245696; SumSQ.u64 = 245696; Count.u64 = 245696; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.GetS_recv : Accumulator : Sum.u64 = 247490; SumSQ.u64 = 247490; Count.u64 = 247490; Min.u64 = 1; Max.u64 = 1; 
  l1cache.GetX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.GetSX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.Write_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.FlushLine_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.FlushLineInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.GetSResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.GetXResp_recv : Accumulator : Sum.u64 = 29143; SumSQ.u64 = 29143; Count.u64 = 29143; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.GetXResp_recv : Accumulator : Sum.u64 = 29419; SumSQ.u64 = 29419; Count.u64 = 29419; Min.u64 = 1; Max.u64 = 1; 
  l1cache.FlushLineResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.ForceInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -168,6 +168,6 @@ Completed 245698 spike deliveries
  l1cache.FetchInvX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.AckPut_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 27888529; SumSQ.u64 = 265664125; Count.u64 = 3261543; Min.u64 = 0; Max.u64 = 16; 
+ l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 28149123; SumSQ.u64 = 268078843; Count.u64 = 3291965; Min.u64 = 0; Max.u64 = 16; 
  l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
-Simulation is complete, simulated time: 3.26154 ms
+Simulation is complete, simulated time: 3.29196 ms
