@@ -1,6 +1,6 @@
 Constructed 500 neurons with 1246 links
-BWP st2001.0 to 398
-BWP st2001.0 to 193
+Input weight 2001.0 to neuron 398
+Input weight 2001.0 to neuron 193
 28 neurons fired @ 64
 78 neurons fired @ 128
 99 neurons fired @ 192

@@ -9,12 +9,12 @@ AM_CPPFLAGS += \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libGNA.la
 libGNA_la_SOURCES = \
-	gna_lib.h \
 	neuron.h \
+	neuron.cc \
 	sts.h \
 	sts.cc \
-	GNA.cc \
-	GNA.h
+	GNA.h \
+	GNA.cc
 
 EXTRA_DIST = \
 	tests/testsuite_default_GNA.py \
