@@ -21,19 +21,16 @@ using namespace SST;
 using namespace SST::GNAComponent;
 
 void STS::assign(int neuronNum) {
-    const neuron *spiker = myGNA->getNeuron(neuronNum);
-    numSpikes = spiker->getWMLLen();
-    uint64_t listAddr = spiker->getWMLAddr();
+    const Neuron & neuron = myGNA->getNeuron(neuronNum);
+    numSpikes = neuron.synapseCount;
+    uint64_t listAddr = neuron.synapseBase;
 
-    // for each link, request the WML structure
-    for (int i = 0; i < numSpikes; ++i) {
+    for (int i = 0; i < numSpikes; i++) {
         // AFR: should throttle
         using namespace Interfaces;
-        using namespace White_Matter_Types;
-        StandardMem::Read *req =
-            new StandardMem::Read(listAddr, sizeof(T_Wme));
+        StandardMem::Read *req = new StandardMem::Read(listAddr, sizeof(Synapse));
         myGNA->readMem(req, this);
-        listAddr += sizeof(T_Wme);
+        listAddr += sizeof(Synapse);
     }
 }
 
@@ -43,20 +40,15 @@ bool STS::isFree() {
 
 void STS::advance(uint now) {
     // AFR: should throttle
-    while (incomingReqs.empty() == false) {
+    while (! incomingReqs.empty()) {
         // get the request
-        SST::Interfaces::StandardMem::Request *req = incomingReqs.front();
-
-        SST::Interfaces::StandardMem::ReadResp* resp = dynamic_cast<SST::Interfaces::StandardMem::ReadResp*>(req);
+        SST::Interfaces::StandardMem::Request *  req  = incomingReqs.front();
+        SST::Interfaces::StandardMem::ReadResp * resp = dynamic_cast<SST::Interfaces::StandardMem::ReadResp*>(req);
         assert(resp);
 
         // deliver the spike
-        auto &data = resp->data;
-        uint16_t strength = (resp->data[0]<<8) + resp->data[1];
-        uint16_t tempOffset = (data[2]<<8) + data[3];
-        uint16_t target = (data[4]<<8) + data[5];
-        //printf("  gna deliver str%u to %u @ %u\n", strength, target, tempOffset+now);
-        myGNA->deliver(strength, target, tempOffset+now);
+        Synapse * s = (Synapse *) &resp->data[0];
+        myGNA->deliver(s->weight, s->target, s->delay+now);
         numSpikes--;
 
         incomingReqs.pop();

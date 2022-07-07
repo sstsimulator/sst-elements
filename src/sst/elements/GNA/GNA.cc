@@ -24,31 +24,35 @@ using namespace SST;
 //using namespace SST::MemHierarchy;
 using namespace SST::GNAComponent;
 
-GNA::GNA(ComponentId_t id, Params& params) :
-    Component(id), state(IDLE), now(0), numFirings(0), numDeliveries(0)
+GNA::GNA(ComponentId_t id, Params& params)
+:   Component(id),
+    state(IDLE),
+    now(0),
+    numFirings(0),
+    numDeliveries(0)
 {
     uint32_t outputLevel = params.find<uint32_t>("verbose", 0);
     out.init("GNA:@p:@l: ", outputLevel, 0, Output::STDOUT);
 
     // get parameters
     numNeurons = params.find<int>("neurons", 32);
-    if (numNeurons <= 0) {
+    if (numNeurons < 1) {
         out.fatal(CALL_INFO, -1,"number of neurons invalid\n");
     }
-    BWPpTic = params.find<int>("BWPperTic", 2);
-    if (BWPpTic <= 0) {
-        out.fatal(CALL_INFO, -1,"BWPperTic invalid\n");
+    InputsPerTic = params.find<int>("InputsPerTic", 2);
+    if (InputsPerTic < 1) {
+        out.fatal(CALL_INFO, -1,"InputsPerTic invalid\n");
     }
     STSDispatch = params.find<int>("STSDispatch", 2);
-    if (BWPpTic <= 0) {
+    if (STSDispatch < 1) {
         out.fatal(CALL_INFO, -1,"STSDispatch invalid\n");
     }
     STSParallelism = params.find<int>("STSParallelism", 2);
-    if (BWPpTic <= 0) {
+    if (STSParallelism < 1) {
         out.fatal(CALL_INFO, -1,"STSParallelism invalid\n");
     }
     maxOutMem = params.find<int>("MaxOutMem", STSParallelism);
-    if (BWPpTic <= 0) {
+    if (maxOutMem < 1) {
         out.fatal(CALL_INFO, -1,"MaxOutMem invalid\n");
     }
 
@@ -72,23 +76,19 @@ GNA::GNA(ComponentId_t id, Params& params) :
         out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.standardInterface subcomponent\n");
 }
 
-GNA::GNA() : Component(-1)
+GNA::GNA()
+:   Component(-1)
 {
-	// for serialization only
+    // for serialization only
 }
 
 
 void GNA::init(unsigned int phase) {
-    using namespace Neuron_Loader_Types;
-    using namespace White_Matter_Types;
-
     // init memory
     memory->init(phase);
 
     // Everything below we only do once
-    if (phase != 0) {
-        return;
-    }
+    if (phase != 0) return;
 
     // create STS units
     for(int i = 0; i < STSParallelism; ++i) {
@@ -96,31 +96,16 @@ void GNA::init(unsigned int phase) {
     }
 
     // initialize neurons
-    neurons = new neuron[numNeurons];
+    neurons = new Neuron[numNeurons];
 
     SST::RNG::MarsagliaRNG rng(1,13);
 
     // <should read these in>
     // neurons
-#if 0
-    for (int nrn_num=0;nrn_num<=8;nrn_num++)
-        neurons[nrn_num].configure((T_NctFl){1000,-2.0,0.0});
-    for (int nrn_num=9;nrn_num<=11;nrn_num++)
-        neurons[nrn_num].configure((T_NctFl){ 750,-2.0,0.0});
-    for (int nrn_num=12;nrn_num<=12;nrn_num++)
-        neurons[nrn_num].configure((T_NctFl){1000,-2.0,0.0});
-    for (int nrn_num=13;nrn_num<=15;nrn_num++)
-        neurons[nrn_num].configure((T_NctFl){ 750,-2.0,0.0});
-    for (int nrn_num=16;nrn_num<=23;nrn_num++)
-        neurons[nrn_num].configure((T_NctFl){ 500,-2.0,0.0});
-    for (int nrn_num=24;nrn_num<=31;nrn_num++)
-        neurons[nrn_num].configure((T_NctFl){1500,-2.0,0.0});
-#else
     for (int nrn_num=0;nrn_num<numNeurons;nrn_num++) {
         uint16_t trig = rng.generateNextUInt32() % 100 + 350;
-        neurons[nrn_num].configure((T_NctFl){float(trig),0.0,float(trig/10.)});
+        neurons[nrn_num].configure(float(trig),0.0,float(trig/10.));
     }
-#endif
 
     // <Should read these in>
     // White matter list
@@ -141,7 +126,9 @@ void GNA::init(unsigned int phase) {
         }
 
         countLinks += numCon;
-        neurons[n].setWML(startAddr,numCon);
+        Neuron & neuron = neurons[n];
+        neuron.synapseBase  = startAddr;
+        neuron.synapseCount = numCon;
         for (int nn=0; nn<numCon; ++nn) {
 
             uint16_t targ;
@@ -159,63 +146,43 @@ void GNA::init(unsigned int phase) {
             if (targ >= numNeurons)
                 targ = 0;
 
-            uint64_t reqAddr = startAddr+nn*sizeof(T_Wme);
-            std::vector<uint8_t> data(sizeof(T_Wme), 0);
-            StandardMem::Write *req = new StandardMem::Write(reqAddr, sizeof(T_Wme), data);
+            uint64_t reqAddr = startAddr+nn*sizeof(Synapse);
+            std::vector<uint8_t> data(sizeof(Synapse), 0);
+            StandardMem::Write *req = new StandardMem::Write(reqAddr, sizeof(Synapse), data);
             uint32_t str = 300+(rng.generateNextUInt32() % 700);
             if (targ == 0) str = 1;
             uint32_t tmpOff = 2 + (rng.generateNextUInt32() % 12);
             if (!local) {
                 tmpOff /= 2;
             }
-            req->data[0] = (str>>8) & 0xff; // Synaptic Str upper
-            req->data[1] = (str) & 0xff; // Synaptic Str lower
-            req->data[2] = (tmpOff>>8) & 0xff; // temp offset upper
-            req->data[3] = (tmpOff) & 0xff; // temp offset lower
-            req->data[4] = (targ>>8) & 0xff; // address upper
-            req->data[5] = (targ) & 0xff; // address lower
-            req->data[6] = 0; // valid
-            req->data[7] = 0; // valid
+            Synapse * synapse = (Synapse *) &req->data[0];
+            synapse->weight = str;
+            synapse->delay  = tmpOff;
+            synapse->target = targ;
             //printf("Writing n%d to targ%d at %p\n", n, targ, (void*)reqAddr);
             memory->sendUntimedData(req);
         }
-        assert(sizeof(T_Wme) == 8);
-        startAddr += numCon * sizeof(T_Wme);
+        assert(sizeof(Synapse) == 8);
+        startAddr += numCon * sizeof(Synapse);
     }
 
     printf("Constructed %d neurons with %d links\n", numNeurons, countLinks);
 
-    // brain wave pulses
-#if 0
-    int bwpl_len = 16;
-    Ctrl_And_Stat_Types::T_BwpFl* bwpl = (Ctrl_And_Stat_Types::T_BwpFl*)calloc(bwpl_len,sizeof(Ctrl_And_Stat_Types::T_BwpFl));
-    bwpl[0]  = (Ctrl_And_Stat_Types::T_BwpFl){1001,0,0};
-    bwpl[1]  = (Ctrl_And_Stat_Types::T_BwpFl){1001,0,1};
-    bwpl[2]  = (Ctrl_And_Stat_Types::T_BwpFl){1001,0,2};
-    bwpl[3]  = (Ctrl_And_Stat_Types::T_BwpFl){1001,0,3};
-    bwpl[4]  = (Ctrl_And_Stat_Types::T_BwpFl){1001,4,0};
-    bwpl[5]  = (Ctrl_And_Stat_Types::T_BwpFl){1001,4,1};
-    bwpl[6]  = (Ctrl_And_Stat_Types::T_BwpFl){1001,4,2};
-    bwpl[7]  = (Ctrl_And_Stat_Types::T_BwpFl){1,4,3};
-    bwpl[8]  = (Ctrl_And_Stat_Types::T_BwpFl){1,0,4};
-    bwpl[9]  = (Ctrl_And_Stat_Types::T_BwpFl){1,0,5};
-    bwpl[10] = (Ctrl_And_Stat_Types::T_BwpFl){1,0,6};
-    bwpl[11] = (Ctrl_And_Stat_Types::T_BwpFl){1,0,7};
-    bwpl[12] = (Ctrl_And_Stat_Types::T_BwpFl){1,4,4};
-    bwpl[13] = (Ctrl_And_Stat_Types::T_BwpFl){1,4,5};
-    bwpl[14] = (Ctrl_And_Stat_Types::T_BwpFl){1,4,6};
-    bwpl[15] = (Ctrl_And_Stat_Types::T_BwpFl){1,4,7};
-#else
-    int bwpl_len = 2;
-    Ctrl_And_Stat_Types::T_BwpFl* bwpl = (Ctrl_And_Stat_Types::T_BwpFl*)calloc(bwpl_len,sizeof(Ctrl_And_Stat_Types::T_BwpFl));
-    for (int i = 0; i < bwpl_len; ++i) {
-        int targ = rng.generateNextUInt32() % numNeurons;
-        bwpl[i]  = (Ctrl_And_Stat_Types::T_BwpFl){2001,targ,i*61};
+    // input pulses
+    int inputCount = 2;
+    Synapse * inputs = (Synapse *) calloc(inputCount, sizeof(Synapse));
+    for (int i = 0; i < inputCount; ++i) {
+        Synapse & input = inputs[i];
+        input.weight = 2001;
+        input.target = rng.generateNextUInt32() % numNeurons;
+        input.delay  = i * 61;
+        inputBuffer.insert(make_pair(input.delay, input));
     }
-#endif
-    for (int i = 0; i < bwpl_len; ++i) {
-        BWPs.insert(std::pair<uint,Ctrl_And_Stat_Types::T_BwpFl>(bwpl[i].TmpSft, bwpl[i]));
-    }
+}
+
+void GNA::finish() {
+	printf("Completed %d neuron firings\n", numFirings);
+    printf("Completed %d spike deliveries\n", numDeliveries);
 }
 
 // handle incoming memory
@@ -244,25 +211,34 @@ void GNA::deliver(float val, int targetN, int time) {
     }
 }
 
+Neuron & GNA::getNeuron(int n) {
+    return neurons[n];
+}
+
+void GNA::readMem(Interfaces::StandardMem::Request *req, STS *requestor) {
+    outgoingReqs.push(req);  // queue the request to send later
+    requests.insert(std::make_pair(req->getID(), requestor));  // record who it came from
+}
+
 // returns true if no more to deliver
-bool GNA::deliverBWPs() {
-    int tries = BWPpTic;
+bool GNA::deliverInputs() {
+    int tries = InputsPerTic;
 
     while (tries > 0) {
-        BWPBuf_t::iterator i = BWPs.find(now);
-        if (i != BWPs.end()) {
+        inputBuffer_t::iterator i = inputBuffer.find(now);
+        if (i != inputBuffer.end()) {
             // deliver it
-            const Ctrl_And_Stat_Types::T_BwpFl &pulse = i->second;
-            printf("BWP st%.1f to %d\n", pulse.InpValFl, pulse.InpNrn);
-            deliver(pulse.InpValFl, pulse.InpNrn, pulse.TmpSft);
-            BWPs.erase(i);
+            const Synapse & pulse = i->second;
+            printf("Input weight %.1f to neuron %d\n", pulse.weight, pulse.target);
+            deliver(pulse.weight, pulse.target, pulse.delay);
+            inputBuffer.erase(i);
         } else {
             return true;
         }
         tries--;
     }
 
-    if (BWPs.find(now) == BWPs.end()) {
+    if (inputBuffer.find(now) == inputBuffer.end()) {
         return true;
     } else {
         return false;
@@ -291,10 +267,10 @@ void GNA::processFire() {
     // neuron firings into activations
 
     // brain wave pulses: Deliver all before moving on
-    bool BWPDone = deliverBWPs();
+    bool inputsDone = deliverInputs();
 
     bool allSpikesDelivered = true;
-    if (BWPDone) {
+    if (inputsDone) {
         // assign firings to STSs
         assignSTS();
 
@@ -307,7 +283,7 @@ void GNA::processFire() {
     }
 
     // do we move on?
-    if (BWPDone && allSpikesDelivered & firedNeurons.empty()) {
+    if (inputsDone && allSpikesDelivered & firedNeurons.empty()) {
         state = LIF;
     }
 }

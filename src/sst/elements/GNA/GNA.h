@@ -30,7 +30,6 @@
 #include <sst/core/output.h>
 
 #include <sst/core/interfaces/stdMem.h>
-#include "gna_lib.h"
 #include "neuron.h"
 #include "sts.h"
 
@@ -42,17 +41,17 @@ class GNA : public SST::Component {
 public:
 /* Element Library Info */
     SST_ELI_REGISTER_COMPONENT(GNA, "GNA", "GNA", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Spiking Temportal Processing Unit", COMPONENT_CATEGORY_PROCESSOR)
+        "Spiking Temportal Processing Unit", COMPONENT_CATEGORY_PROCESSOR)
 
     SST_ELI_DOCUMENT_PARAMS(
-            {"verbose",                 "(uint) Determine how verbose the output from the CPU is", "0"},
-            {"clock",                   "(string) Clock frequency", "1GHz"},
-            {"BWPperTic",               "Max # of Brain Wave Pulses which can be delivered each clock cycle","2"},
-            {"STSDispatch",               "Max # spikes that can be dispatched to the STS in a clock cycle","2"},
-            {"STSParallelism",               "Max # spikes the STS can process in parallelism ","2"},
-            {"MaxOutMem", "Maximum # of outgoing memory requests per cycle","STSParallelism"},
-            {"neurons",                  "(uint) number of neurons", "32"}
-                            )
+        {"verbose",        "(uint) Determine how verbose the output from the CPU is",            "0"},
+        {"clock",          "(string) Clock frequency",                                           "1GHz"},
+        {"InputsPerTic",   "Max # of input spikes which can be delivered each clock cycle",      "2"},
+        {"STSDispatch",    "Max # spikes that can be dispatched to the STS in a clock cycle",    "2"},
+        {"STSParallelism", "Max # spikes the STS can process in parallel",                       "2"},
+        {"MaxOutMem",      "Maximum # of outgoing memory requests per cycle",                    "STSParallelism"},
+        {"neurons",        "(uint) number of neurons",                                           "32"}
+    )
 
     SST_ELI_DOCUMENT_PORTS( {"mem_link", "Connection to memory", { "memHierarchy.MemEventBase" } } )
 
@@ -60,22 +59,13 @@ public:
 
     /* Begin class definiton */
     GNA(SST::ComponentId_t id, SST::Params& params);
-    void finish() {
-        printf("Completed %d neuron firings\n", numFirings);
-        printf("Completed %d spike deliveries\n", numDeliveries);
-    }
+    void finish();
 
-public:
     void deliver(float val, int targetN, int time);
-    neuron* getNeuron(int n) {return &neurons[n];}
-    void readMem(Interfaces::StandardMem::Request *req, STS *requestor) {
-        // queue the request to send later
-        outgoingReqs.push(req);
-        // record who it came from
-        requests.insert(std::make_pair(req->getID(), requestor));
-    }
+    Neuron & getNeuron(int n);
+    void readMem(Interfaces::StandardMem::Request *req, STS *requestor);
 
-private:
+protected:
     GNA();  // for serialization only
     GNA(const GNA&); // do not implement
     void operator=(const GNA&); // do not implement
@@ -83,7 +73,7 @@ private:
 
     void handleEvent( SST::Interfaces::StandardMem::Request * req );
     virtual bool clockTic( SST::Cycle_t );
-    bool deliverBWPs();
+    bool deliverInputs();
     void assignSTS();
     void processFire();
     void lifAll();
@@ -94,21 +84,20 @@ private:
     Output out;
     Interfaces::StandardMem * memory;
     uint numNeurons;
-    uint BWPpTic;
+    uint InputsPerTic;
     uint STSDispatch;
     uint STSParallelism;
     uint maxOutMem;
     uint now;
     uint numFirings;
     uint numDeliveries;
-    queue<SST::Interfaces::StandardMem::Request *> outgoingReqs;
+    std::queue<SST::Interfaces::StandardMem::Request *> outgoingReqs;
 
-    neuron *neurons;
-    vector<STS> STSUnits;
+    Neuron *neurons;
+    std::vector<STS> STSUnits;
 
-    typedef multimap<const uint, Ctrl_And_Stat_Types::T_BwpFl> BWPBuf_t;
-    // brain wave pulse buffer
-    BWPBuf_t BWPs;
+    typedef std::multimap<const uint, Synapse> inputBuffer_t;
+    inputBuffer_t inputBuffer;
 
     std::deque<uint> firedNeurons;
     std::map<uint64_t, STS*> requests;

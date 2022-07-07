@@ -19,7 +19,7 @@ comp_gna.addParams({
     "verbose" : 1,
     "neurons" : options.neurons,
     "clock" : "1GHz",
-    "BWPperTic" : 1,
+    "InputsPerTic" : 1,
     "STSDispatch" : options.sts,
     "STSParallelism" : options.sts,
     "MaxOutMem" : options.memOut 
