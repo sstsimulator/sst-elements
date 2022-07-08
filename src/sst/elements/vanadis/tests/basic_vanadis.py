@@ -105,7 +105,7 @@ branch_pred.addParams({
 icache_if = v_cpu_0.setSubComponent( "mem_interface_inst", "memHierarchy.standardInterface" )
 
 #v_cpu_0_lsq = v_cpu_0.setSubComponent( "lsq", "vanadis.VanadisStandardLoadStoreQueue" )
-v_cpu_0_lsq = v_cpu_0.setSubComponent( "lsq", "vanadis.VanadisSequentialLoadStoreQueue" )
+v_cpu_0_lsq = v_cpu_0.setSubComponent( "lsq", "vanadis.VanadisBasicLoadStoreQueue" )
 v_cpu_0_lsq.addParams({
 	"verbose" : verbosity,
 	"address_mask" : 0xFFFFFFFF,
