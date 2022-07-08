@@ -154,6 +154,9 @@ public:
     }
 
     void tick(uint64_t cycle) override {
+        output->verbose(CALL_INFO, 16, 0, "-> tick LSQ at cycle: %" PRIu64 " / lsq-size: %" PRIu64 " / loads-pending: %" PRIu64 " / store-buffer: %" PRIu64 " / store-ops-in-flight: %" PRIu64 "\n",
+            cycle, op_q.size(), loads_pending.size(), stores_pending.size(), std_stores_in_flight.size());
+
         // this can be called multiple times per cycle if needed but lets just do once for now
         for(uint32_t attempt = 0; attempt < max_issue_attempts_per_cycle; ++attempt) {
             const bool attempt_result = attempt_to_issue(cycle, attempt);
@@ -180,6 +183,8 @@ protected:
         virtual ~StandardMemHandlers() {}
 
         virtual void handle(StandardMem::ReadResp* ev) {
+            out->verbose(CALL_INFO, 16, 0, "-> handle read-response (virt-addr: 0x%llx)\n", ev->vAddr);
+
             auto load_itr = lsq->loads_pending.begin();
             VanadisBasicLoadPendingEntry* load_entry = nullptr;
 
@@ -355,6 +360,8 @@ protected:
         } 
         
         virtual void handle(StandardMem::WriteResp* ev) {
+            out->verbose(CALL_INFO, 16, 0, "-> handle write-response (virt-addr: 0x%llx)\n", ev->vAddr);
+
             bool std_store_found = false;
 
             for(auto std_store_itr = lsq->std_stores_in_flight.begin(); std_store_itr != lsq->std_stores_in_flight.end();
@@ -602,7 +609,7 @@ protected:
                     assert(load_width_right > 0);
                     
                     const uint64_t load_width_left = load_width - load_width_right;
-                    assert(load_width_left>= 0);
+                    assert(load_width_left > 0);
 
                     const uint64_t load_right_start = load_address + load_width_left;
                     assert((load_right_start % cache_line_width) == 0);
@@ -611,18 +618,18 @@ protected:
                         load_address, load_width_left, load_address + load_width_left, load_width_right);
 
                     load_req = new StandardMem::Read(load_address, load_width_left, 0, 
-                        load_address, load_ins->getInstructionAddress());
+                        load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
                     
                     load_entry->addRequest(load_req->getID());
                     memInterface->send(load_req);
 
                     load_req = new StandardMem::Read(load_address + load_width_left, load_width_right, 0, 
-                        load_address + load_width_left, load_ins->getInstructionAddress());
+                        load_address + load_width_left, load_ins->getInstructionAddress(), load_ins->getHWThread());
                 } else {
                     output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: standard load (not split) load-at: 0x%llx width: %" PRIu64 "\n",
                         load_address, load_width);
                     load_req = new StandardMem::Read(load_address, load_width, 0, 
-                        load_address, load_ins->getInstructionAddress());
+                        load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
                 }
             } break;
             case MEM_TRANSACTION_LLSC_LOAD:
@@ -634,7 +641,7 @@ protected:
                     output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: LLSC-load (not split) load-at: 0x%llx width: %" PRIu64 "\n",
                         load_address, load_width);
                     load_req = new StandardMem::LoadLink(load_address, load_width, 0, 
-                                        load_address, load_ins->getInstructionAddress());
+                                        load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
                 }
             } break;
             case MEM_TRANSACTION_LLSC_STORE:
@@ -652,14 +659,17 @@ protected:
                     output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: LOCK-load (not split) load-at: 0x%llx width: %" PRIu64 "\n",
                         load_address, load_width);
                     load_req = new StandardMem::ReadLock(load_address, load_width, 0,
-                                        load_address, load_ins->getInstructionAddress());
+                                        load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
                 }
             } break;
         }
 
         // if the instruction does not trap an error we will continue to process it
         if(LIKELY(! load_ins->trapsError())) {
-            output->verbose(CALL_INFO, 16, 0, "-----> ins: 0x%llx / thr: %" PRIu32 " processed and requests sent to memory system.\n");
+            output->verbose(CALL_INFO, 16, 0, "-----> ins: 0x%llx / thr: %" PRIu32 " processed and requests sent to memory system.\n",
+                load_ins->getInstructionAddress(), load_ins->getHWThread());
+
+            assert(load_req != nullptr);
 
             load_entry->addRequest(load_req->getID());
             memInterface->send(load_req);
@@ -695,7 +705,7 @@ protected:
                 }
 
                 if(load_ins->completedIssue()) {
-                    output->verbose(CALL_INFO, 16, 0, "-> queue front is load: ins: 0xllx / thr: %" PRIu32 " has issued so will process...\n", 
+                    output->verbose(CALL_INFO, 16, 0, "-> queue front is load: ins: 0x%llx / thr: %" PRIu32 " has issued so will process...\n", 
                         load_ins->getInstructionAddress(), load_ins->getHWThread());
                     VanadisRegisterFile* hw_thr_reg = registerFiles->at(load_ins->getHWThread());
 
@@ -823,7 +833,15 @@ protected:
     }
 
     bool operationStraddlesCacheLine(uint64_t address, uint64_t width) const {
-        return (address / cache_line_width) != ((address + width) / cache_line_width);
+        const uint64_t cache_line_left  = (address / cache_line_width);
+        const uint64_t cache_line_right = ((address + width - 1) / cache_line_width);
+
+        const bool splits_line = cache_line_left != cache_line_right;
+
+        output->verbose(CALL_INFO, 16, 0, "---> check split addr: %" PRIu64 " (0x%llx) / width: %" PRIu64 " / cache-line: %" PRIu64 " / line-left: %" PRIu64 " / line-right: %" PRIu64 " / split: %3s\n",
+            address, address, width, cache_line_width, cache_line_left, cache_line_right, splits_line ? "yes" : "no");
+
+        return splits_line;
     }
 
     void copyPayload(std::vector<uint8_t>& buffer, uint8_t* reg, uint16_t offset, uint16_t length) const {
