@@ -23,8 +23,7 @@
 #include "inst/regstack.h"
 #include "inst/vinst.h"
 #include "lsq/vlsq.h"
-#include "lsq/vlsqseq.h"
-#include "lsq/vlsqstd.h"
+#include "lsq/vbasiclsq.h"
 #include "velf/velfinfo.h"
 #include "vfpflags.h"
 #include "vfuncunit.h"
@@ -220,7 +219,7 @@ private:
 
     int  performFetch(const uint64_t cycle);
     int  performDecode(const uint64_t cycle);
-    int  performIssue(const uint64_t cycle, uint32_t& rob_start, bool& found_store, bool& found_load);
+    int  performIssue(const uint64_t cycle, uint32_t& rob_start);
     int  performExecute(const uint64_t cycle);
     int  performRetire(VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle);
     int  allocateFunctionalUnit(VanadisInstruction* ins);
