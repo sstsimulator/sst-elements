@@ -81,7 +81,8 @@ public:
     const VanadisDecoderOptions* getDecoderOptions() const override { return options; }
     VanadisFPRegisterMode        getFPRegisterMode() const override { return VANADIS_REGISTER_MODE_FP64; }
 
-    void setStackPointer( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t start_stack_address ) {
+    void setStackPointer( SST::Output* output, VanadisISATable* isa_tbl,
+	VanadisRegisterFile* regFile, const uint64_t start_stack_address ) override {
 
         output->verbose(
             CALL_INFO, 16, 0, "-> Setting SP to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", start_stack_address,
