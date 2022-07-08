@@ -532,29 +532,15 @@ VANADIS_COMPONENT::performDecode(const uint64_t cycle)
 void
 VANADIS_COMPONENT::resetRegisterUseTemps(const uint16_t int_reg_count, const uint16_t fp_reg_count)
 {
-
     std::fill_n(tmp_not_issued_int_reg_read.begin(), int_reg_count, false);
     std::fill_n(tmp_int_reg_write.begin(), int_reg_count, false);
 
     std::fill_n(tmp_not_issued_fp_reg_read.begin(), fp_reg_count, false);
     std::fill_n(tmp_fp_reg_write.begin(), fp_reg_count, false);
-
-    /*
-        for (uint16_t i = 0; i < int_reg_count; ++i) {
-            tmp_not_issued_int_reg_read[i] = false;
-            tmp_int_reg_write[i] = false;
-        }
-
-        for (uint16_t i = 0; i < fp_reg_count; ++i) {
-            tmp_not_issued_fp_reg_read[i] = false;
-            tmp_fp_reg_write[i] = false;
-        }
-    */
 }
 
-// TODO - rob_start found_store and found_load should be arrays per thread for this call I think?
 int
-VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool& found_store, bool& found_load)
+VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start)
 {
     const int output_verbosity = output->getVerboseLevel();
     bool      issued_an_ins    = false;
@@ -594,44 +580,32 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
 #endif
 
                     if ( 0 == resource_check ) {
-                        if ( ((INST_STORE == ins->getInstFuncType()) || (INST_LOAD == ins->getInstFuncType())) &&
-                             (found_load || found_store) ) {
-                            // We cannot issue
-                        }
-                        else {
-                            //							if(
-                            //(INST_LOAD == ins->getInstFuncType()) && (found_load ||
-                            // found_store) ) {
-                            //									//
-                            // We cannot issue 							} else {
-                            const int allocate_fu = allocateFunctionalUnit(ins);
+                        const int allocate_fu = allocateFunctionalUnit(ins);
 
+#ifdef VANADIS_BUILD_DEBUG
+                        if ( output_verbosity >= 8 ) {
+                            output->verbose(
+                                CALL_INFO, 8, 0, "----> allocated functional unit: %s\n",
+                                (0 == allocate_fu) ? "yes" : "no");
+                        }
+#endif
+
+                        if ( 0 == allocate_fu ) {
+                            const int status = assignRegistersToInstruction(
+                                thread_decoders[i]->countISAIntReg(), thread_decoders[i]->countISAFPReg(), ins,
+                                int_register_stacks[i], fp_register_stacks[i], issue_isa_tables[i]);
 #ifdef VANADIS_BUILD_DEBUG
                             if ( output_verbosity >= 8 ) {
+                                ins->printToBuffer(instPrintBuffer, 1024);
                                 output->verbose(
-                                    CALL_INFO, 8, 0, "----> allocated functional unit: %s\n",
-                                    (0 == allocate_fu) ? "yes" : "no");
+                                    CALL_INFO, 8, 0, "----> Issued for: %s / 0x%llx / status: %d\n",
+                                    instPrintBuffer, ins->getInstructionAddress(), status);
                             }
 #endif
-
-                            if ( 0 == allocate_fu ) {
-                                const int status = assignRegistersToInstruction(
-                                    thread_decoders[i]->countISAIntReg(), thread_decoders[i]->countISAFPReg(), ins,
-                                    int_register_stacks[i], fp_register_stacks[i], issue_isa_tables[i]);
-#ifdef VANADIS_BUILD_DEBUG
-                                if ( output_verbosity >= 8 ) {
-                                    ins->printToBuffer(instPrintBuffer, 1024);
-                                    output->verbose(
-                                        CALL_INFO, 8, 0, "----> Issued for: %s / 0x%llx / status: %d\n",
-                                        instPrintBuffer, ins->getInstructionAddress(), status);
-                                }
-#endif
-                                ins->markIssued();
-                                ins_issued_this_cycle++;
-                                //									stat_ins_issued->addData(1);
-                                issued_an_ins = true;
-                            }
-                            //							}
+                            ins->markIssued();
+                            ins_issued_this_cycle++;
+                            //									stat_ins_issued->addData(1);
+                            issued_an_ins = true;
                         }
                     }
 
@@ -654,19 +628,6 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
                 // Collect up all fp registers we write to
                 for ( uint16_t k = 0; k < ins->countISAFPRegOut(); ++k ) {
                     tmp_fp_reg_write[ins->getISAFPRegOut(k)] = true;
-                }
-
-                // Keep track of whether we have seen a load or a store ahead of us
-                // that hasn't been issued, because that means the LSQ hasn't seen it
-                // yet and so we could get an ordering violation in the memory system
-                found_store |= (INST_STORE == ins->getInstFuncType()) && (!ins->completedIssue());
-                found_load |= (INST_LOAD == ins->getInstFuncType()) && (!ins->completedIssue());
-
-                // Keep track of whether we have seen any fences, we just ensure we
-                // cannot issue load/stores until fences complete
-                if ( UNLIKELY(INST_FENCE == ins->getInstFuncType()) ) {
-                    found_store = true;
-                    found_load  = true;
                 }
 
                 // We issued an instruction this cycle, so exit
@@ -1122,36 +1083,13 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
         if ( nullptr == fence_ins ) {
             output->fatal(
                 CALL_INFO, -1,
-                "Error: instruction (0x%0llu) is a fence but not "
+                "Error: instruction (0x%0llx /thr: %" PRIu32 ") is a fence but not "
                 "convertable to a fence instruction.\n",
-                ins->getInstructionAddress());
+                ins->getInstructionAddress(), ins->getHWThread());
         }
 
+        lsq->push(fence_ins);
         allocated_fu = true;
-
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "[fence]: processing ins: 0x%0llx functional unit "
-            "allocation for fencing (lsq-load size: %" PRIu32 " / lsq-store-buffer size: %" PRIu32 ")\n",
-            ins->getInstructionAddress(), (uint32_t)lsq->loadSize(), (uint32_t)lsq->storeBufferSize());
-
-        if ( fence_ins->createsStoreFence() ) {
-            if ( lsq->storeBufferSize() == 0 ) { allocated_fu = true; }
-            else {
-                allocated_fu = false;
-            }
-        }
-
-        if ( fence_ins->createsLoadFence() ) {
-            if ( lsq->loadSize() == 0 ) { allocated_fu = allocated_fu & true; }
-            else {
-                allocated_fu = false;
-            }
-        }
-
-        output->verbose(CALL_INFO, 16, 0, "[fence]: can proceed? %s\n", allocated_fu ? "yes" : "no");
-
-        if ( allocated_fu ) { ins->markExecuted(); }
     } break;
 
     case INST_NOOP:
@@ -1262,13 +1200,11 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     }
 
     uint32_t rob_start   = 0;
-    bool     found_store = false;
-    bool     found_load  = false;
 
     // Attempt to perform issues, cranking through the entire ROB call by call or until we
     // reach the max issues this cycle
     for ( uint32_t i = 0; i < issues_per_cycle; ++i ) {
-        if ( performIssue(cycle, rob_start, found_store, found_load) != 0 ) { break; }
+        if ( performIssue(cycle, rob_start) != 0 ) { break; }
     }
 
     // Record how many instructions we issued this cycle

@@ -98,8 +98,7 @@ inst/vtrunc.h \
 inst/vxor.h \
 inst/vxori.h \
 lsq/vlsq.h \
-lsq/vlsqseq.h \
-lsq/vlsqstd.h \
+lsq/vbasiclsq.h \
 lsq/vmemwriterec.h \
 util/vcmpop.h \
 util/vdatacopy.h \
