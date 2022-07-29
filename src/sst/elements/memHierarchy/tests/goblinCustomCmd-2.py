@@ -1,11 +1,7 @@
 import sst
 
-# Define SST core options
-sst.setProgramOption("timebase", "1ps")
-sst.setProgramOption("stopAtCycle", "0 ns")
-
 # Define the simulation components
-comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
+comp_cpu = sst.Component("core", "miranda.BaseCPU")
 comp_cpu.addParams({
 	"verbose" : 0,
 	"generator" : "miranda.STREAMBenchGeneratorCustomCmd",
@@ -46,17 +42,17 @@ comp_memory.addParams({
       "backend.access_time" : "1000 ns",
       "backend.mem_size" : "512MiB",
       "clock" : "1GHz",
-      "customCmdHandler" : "memHierarchy.amoCustomCmdHandler",
+      "customCmdHandler" : "memHierarchy.defCustomCmdHandler",
       "backendConvertor" : "memHierarchy.extMemBackendConvertor",
       "backend" : "memHierarchy.goblinHMCSim",
       "backend.verbose" : "0",
-      "backend.trace-banks" : "1",
-      "backend.trace-queue" : "1",
-      "backend.trace-cmds" : "1",
-      "backend.trace-latency" : "1",
-      "backend.trace-stalls" : "1",
+      "backend.trace_banks" : "1",
+      "backend.trace_queue" : "1",
+      "backend.trace_cmds" : "1",
+      "backend.trace_latency" : "1",
+      "backend.trace_stalls" : "1",
 
-      "backend.cmd-map" : "[CUSTOM:20:64:RD64]"
+      "backend.cmd_map" : "[CUSTOM:20:64:RD64]"
 })
 
 

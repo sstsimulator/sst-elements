@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -50,12 +50,14 @@ enum class MemEventType { Cache, Move, Custom };                    // For parsi
     X(GetX,             GetXResp,       Request,    Request,        1, 0,   Cache)   /* Write: Request to get cache line in M state */\
     X(GetSX,            GetSResp,       Request,    Request,        1, 0,   Cache)   /* Read:  Request to get cache line in M state with a LOCK flag. Invalidates will block until LOCK flag is lifted */\
                                                                         /*        GetSX sets the LOCK, GetX removes the LOCK  */\
+    X(Write,            WriteResp,      Request,    Request,        1, 0,   Cache)   /* Write: Request to write a cache line (does not return the line) */\
     X(FlushLine,        FlushLineResp,  Request,    Request,        1, 0,   Cache)   /* Request to flush a cache line */\
     X(FlushLineInv,     FlushLineResp,  Request,    Request,        1, 0,   Cache)   /* Request to flush and invalidate a cache line */\
     X(FlushAll,         FlushAllResp,   Request,    Request,        1, 0,   Cache)   /* Request to flush entire cache - similar to wbinvd */\
     /* Request Responses */\
     X(GetSResp,         NULLCMD,        Response,   Data,           0, 0,   Cache)   /* Response to a GetS request */\
     X(GetXResp,         NULLCMD,        Response,   Data,           0, 0,   Cache)   /* Response to a GetX request */\
+    X(WriteResp,        NULLCMD,        Response,   Ack,            0, 0,   Cache)   /* Response to a Write request*/\
     X(FlushLineResp,    NULLCMD,        Response,   Ack,            0, 0,   Cache)   /* Response to FlushLine request */\
     X(FlushAllResp,     NULLCMD,        Response,   Ack,            0, 0,   Cache)   /* Response to FlushAll request */\
     /* Writebacks, these commands also serve as invalidation acknowledgments */\
@@ -336,6 +338,42 @@ public:
             regions.insert(reg);
         }
         return regions;
+    }
+
+    bool doesIntersect(const MemRegion &o) const {
+        // Easy case, regions don't overlap
+        if (o.end < start || end < o.start)
+            return false;
+
+        // Easy case, they're equal
+        if (*this == o) {
+            return true;
+        }
+
+        // Easy case, no interleaving
+        if (interleaveSize == 0 && o.interleaveStep == 0) {
+            return true;
+        }
+       
+        // Otherwise, compute LCM of interleaveStep & o.interleaveStep
+        uint64_t lcm; 
+        if (interleaveStep == o.interleaveStep) {
+            lcm = interleaveStep;
+        } else if (interleaveStep > o.interleaveStep) {
+            lcm = (interleaveStep / gcd(interleaveStep, o.interleaveStep)) * o.interleaveStep;
+        } else {
+            lcm = (interleaveStep / gcd(o.interleaveStep, interleaveStep)) * o.interleaveStep;
+        }
+
+        // Check interval from max(start, o.start) to lcm + max(start, o.start)
+        // for overlap
+        uint64_t check_start = std::max(start, o.start);
+        uint64_t check_end = check_start + lcm;
+        for (uint64_t i = check_start; i < check_end; i++) {
+            if ( (*this).contains(i) && o.contains(i) )
+                return true;
+        }
+        return false;
     }
 
     /* The one whose range is < the other is <; otherwise the one that has few addresses is < */

@@ -1,14 +1,14 @@
 
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -103,9 +103,15 @@ namespace SST {
             )
 
             SST_ELI_DOCUMENT_PARAMS(
-                {"maxOutstandingReqs", "Maximum number of the outstanding requests", NULL},
-                {"numTxnPerCycle", "The number of transactions generated per cycle", NULL},
-                {"readWriteRatio", "Ratio of read txn's to generate : write txn's to generate", NULL},
+                {"verbose", "Verbosity level", "0"},
+                {"maxOutstandingReqs", "Maximum number of the outstanding requests. Unspecified means no limit.", NULL},
+                {"numTxnPerCycle", "The number of transactions generated per cycle. Unspecified means no limit.", NULL},
+                {"readWriteRatio", "Ratio of read txn's to generate : write txn's to generate", "0.5"},
+                {"mode", "How to generate requests. 'rand' (random) or 'seq' (sequential)", NULL},
+                {"randomSeed", "Seed for RNG. '0' will use current time.", "0"},
+                {"strControllerClockFrequency", "Clock frequency", "1GHz"},
+                {"maxTxns", "Maximum number of transactions to generate. Unspecified means no limit.", NULL},
+                {"numBytesPerTransaction", "Number of bytes per transaction", "32"},
             )
 
             SST_ELI_DOCUMENT_PORTS(

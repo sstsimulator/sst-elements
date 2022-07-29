@@ -2,7 +2,7 @@
 
 # Structural Simulation Toolkit (SST)
 
-#### Copyright (c) 2009-2021, National Technology and Engineering Solutions of Sandia, LLC (NTESS)
+#### Copyright (c) 2009-2022, National Technology and Engineering Solutions of Sandia, LLC (NTESS)
 Portions are copyright of other developers:
 See the file CONTRIBUTORS.TXT in the top level directory
 of this repository for more information.
@@ -17,4 +17,4 @@ Visit [sst-simulator.org](http://sst-simulator.org) to learn more about SST.
 
 See [Contributing](https://github.com/sstsimulator/sst-elements/blob/devel/CONTRIBUTING.md) to learn how to contribute to SST.
 
-##### [LICENSE](https://github.com/sstsimulator/sst-elements/blob/devel/LICENSE)
+##### [LICENSE](https://github.com/sstsimulator/sst-elements/blob/devel/LICENSE.md)

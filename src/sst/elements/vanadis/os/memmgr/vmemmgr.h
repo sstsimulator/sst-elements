@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -34,7 +34,7 @@ public:
         assert((region_end % region_page_size) == 0);
         assert(region_start < region_end);
 
-        output = new SST::Output("[os-memgmr] ", 16, 0, Output::STDOUT);
+        output = new SST::Output("[os-memgmr] ", verbosity, 0, Output::STDOUT);
 
         for (uint64_t page_start = region_start; page_start < region_end; page_start += region_page_size) {
             free_pages.insert(page_start);

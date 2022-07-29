@@ -1,13 +1,13 @@
-// Copyright 2013-2021 NTESS. Under the terms
+// Copyright 2013-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2021, NTESS
+// Copyright (c) 2013-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -76,9 +76,9 @@ public:
     /* Constructor */
     MemLinkBase(ComponentId_t id, Params &params, TimeConverter* tc) : SubComponent(id) {
         /* Create debug output */
-        int debugLevel = params.find<int>("debug_level", 0);
+        dlevel = params.find<int>("debug_level", 0);
         int debugLoc = params.find<int>("debug", 0);
-        dbg.init("", debugLevel, 0, (Output::output_location_t)debugLoc);
+        dbg.init("", dlevel, 0, (Output::output_location_t)debugLoc);
 
         // Filter debug by address
         std::vector<uint64_t> addrArray;
@@ -146,7 +146,7 @@ public:
     virtual void emergencyShutdownDebug(Output &out) { }
 
     /* Send and receive functions for MemLink */
-    virtual void sendInitData(MemEventInit * ev) =0;
+    virtual void sendInitData(MemEventInit * ev, bool broadcast = true) =0;
     virtual MemEventInit* recvInitData() =0;
     virtual void send(MemEventBase * ev) =0;
 
@@ -192,6 +192,7 @@ protected:
     // Debug stuff
     Output dbg;
     std::set<Addr> DEBUG_ADDR;
+    int dlevel;
 
     // Local EndpointInfo
     EndpointInfo info;

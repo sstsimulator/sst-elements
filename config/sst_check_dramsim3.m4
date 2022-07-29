@@ -7,16 +7,19 @@ AC_DEFUN([SST_CHECK_DRAMSIM3], [
   sst_check_dramsim3_happy="yes"
   AS_IF([test "$with_dramsim3" = "no"], [sst_check_dramsim3_happy="no"])
 
+  CXXFLAGS_saved="$CXXFLAGS"
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"
 
   AS_IF([test ! -z "$with_dramsim3" -a "$with_dramsim3" != "yes"],
     [DRAMSIM3_CPPFLAGS="-I$with_dramsim3/src -DHAVE_DRAMSIM3"
-     CPPFLAGS="$DRAMSIM3_CPPFLAGS $CPPFLAGS"
+     CPPFLAGS="$DRAMSIM3_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
+     DRAMSIM3_CXXFLAGS="-std=c++11"
+     CXXFLAGS="$DRAMSIM3_CXXFLAGS $CXXFLAGS"
      DRAMSIM3_LDFLAGS="-L$with_dramsim3"
      DRAMSIM3_LIBDIR="$with_dramsim3"
-     LDFLAGS="$DRAMSIM3_LDFLAGS $LDFLAGS"],
+     LDFLAGS="$DRAMSIM3_LDFLAGS $AM_LDFLAGS $LDFLAGS"],
     [DRAMSIM3_CPPFLAGS=
      DRAMSIM3_LDFLAGS=
      DRAMSIM3_LIBDIR=])
@@ -27,6 +30,7 @@ AC_DEFUN([SST_CHECK_DRAMSIM3], [
     [DRAMSIM3_LIB="-ldramsim3"], [sst_check_dramsim3_happy="no"])
   AC_LANG_POP(C++)
 
+  CXXFLAGS="$CXXFLAGS_saved"
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
   LIBS="$LIBS_saved"

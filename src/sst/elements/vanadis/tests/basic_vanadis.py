@@ -28,7 +28,7 @@ auto_clock_sys = os.getenv("VANADIS_AUTO_CLOCK_SYSCALLS", "no")
 
 cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "2.3GHz")
 
-vanadis_cpu_type = "vanadisdbg.VanadisCPU"
+vanadis_cpu_type = "vanadis.dbg_VanadisCPU"
 
 #if (verbosity > 0):
 #	print("Verbosity (" + str(verbosity) + ") is non-zero, using debug version of Vanadis.")
@@ -40,26 +40,6 @@ print("Auto-clock syscalls: " + str(auto_clock_sys))
 v_cpu_0 = sst.Component("v0", vanadis_cpu_type)
 v_cpu_0.addParams({
        "clock" : cpu_clock,
-#       "executable" : "./tests/hello-mips",
-#       "executable" : "./tests/hello-musl",
-#       "executable" : "./tests/core-perf-musl",
-#       "executable" : "./tests/stream-musl",
-#       "executable" : "./tests/stream-mini-musl",
-#       "executable" : "./tests/test-printf",
-#       "executable" : "./tests/test-env",
-#       "executable" : "./tests/lulesh2.0",
-#       "executable" : "./tests/luxtxt",
-#       "executable" : "./tests/stream-fortran",
-#       "executable" : "./tests/test-fp",
-#       "executable" : os.getenv("VANADIS_EXE", "./tests/stream-mini-musl"),
-       "executable" : os.getenv("VANADIS_EXE", "./tests/small/basic-io/hello-world"),
-       "app.env_count" : 2,
-       "app.env0" : "HOME=/home/sdhammo",
-       "app.env1" : "NEWHOME=/home/sdhammo2",
-#       "app.argc" : 4,
-#       "app.arg1" : "16",
-#       "app.arg2" : "8",
-#       "app.arg3" : "8",
 #       "max_cycle" : 100000000,
        "verbose" : verbosity,
        "physical_fp_registers" : 168,
@@ -99,9 +79,14 @@ if app_args != "":
 else:
 	print("No application arguments found, continuing with argc=0")
 
-decode0     = v_cpu_0.setSubComponent( "decoder0", "vanadis.VanadisMIPSDecoder" )
-os_hdlr     = decode0.setSubComponent( "os_handler", "vanadis.VanadisMIPSOSHandler" )
-branch_pred = decode0.setSubComponent( "branch_unit", "vanadis.VanadisBasicBranchUnit")
+vanadis_isa = os.getenv("VANADIS_ISA", "MIPS")
+vanadis_decoder = "vanadis.Vanadis" + vanadis_isa + "Decoder"
+vanadis_os_hdlr = "vanadis.Vanadis" + vanadis_isa + "OSHandler"
+
+decode0     = v_cpu_0.setSubComponent( "decoder0", vanadis_decoder )
+os_hdlr     = decode0.setSubComponent( "os_handler", vanadis_os_hdlr )
+#os_hdlr     = decode0.setSubComponent( "os_handler", "vanadis.VanadisMIPSOSHandler" )
+branch_pred = decode0.setSubComponent( "branch_unit", "vanadis.VanadisBasicBranchUnit" )
 
 decode0.addParams({
 	"uop_cache_entries" : 1536,
@@ -142,7 +127,15 @@ node_os.addParams({
 	"heap_start" : 512 * 1024 * 1024,
 	"heap_end"   : (2 * 1024 * 1024 * 1024) - 4096,
 	"page_size"  : 4096,
-	"heap_verbose" : 0 #verbosity
+	"heap_verbose" : verbosity,
+    "executable" : os.getenv("VANADIS_EXE", "./tests/small/basic-io/hello-world"),
+    "app.env_count" : 2,
+    "app.env0" : "HOME=/home/sdhammo",
+    "app.env1" : "NEWHOME=/home/sdhammo2",
+#    "app.argc" : 4,
+#    "app.arg1" : "16",
+#    "app.arg2" : "8",
+#    "app.arg3" : "8",
 })
 
 node_os_mem_if = node_os.setSubComponent( "mem_interface", "memHierarchy.standardInterface" )
@@ -296,6 +289,6 @@ link_dir_2_mem = sst.Link("link_dir_2_mem")
 link_dir_2_mem.connect( (dirtoM, "port", "1ns"), (memToDir, "port", "1ns") )
 
 link_core0_os_link = sst.Link("link_core0_os_link")
-link_core0_os_link.connect( (os_hdlr, "os_link", "5ns"), (node_os, "core0", "5ns") )
+link_core0_os_link.connect( (v_cpu_0, "os_link", "5ns"), (node_os, "core0", "5ns") )
 
 

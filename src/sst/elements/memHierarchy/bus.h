@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -90,8 +90,8 @@ private:
     void configureParameters(SST::Params&);
     void configureLinks();
 
-    void mapNodeEntry(const std::string&, LinkId_t);
-    LinkId_t lookupNode(const std::string&);
+    void mapNodeEntry(const std::string&, SST::Link*);
+    SST::Link* lookupNode(const std::string&);
 
 
     Output                          dbg_;
@@ -112,8 +112,7 @@ private:
     std::string                     bus_latency_cycles_;
     std::vector<SST::Link*>         highNetPorts_;
     std::vector<SST::Link*>         lowNetPorts_;
-    std::map<string, LinkId_t>      nameMap_;
-    std::map<LinkId_t, SST::Link*>  linkIdMap_;
+    std::map<string,SST::Link*>     nameMap_;
     std::queue<SST::Event*>         eventQueue_;
 
 };

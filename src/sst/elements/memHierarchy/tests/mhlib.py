@@ -24,7 +24,7 @@ componentlist = (
     "memHierarchy.MemNetBridge",
     "memHierarchy.MemoryManagerSieve",
     "memHierarchy.Messier",
-    "memHierarchy.amoCustomCmdHandler",
+    "memHierarchy.defCustomCmdHandler",
     "memHierarchy.cramsim",
     "memHierarchy.emptyCacheListener",
     "memHierarchy.extMemBackendConvertor",
@@ -50,6 +50,7 @@ componentlist = (
     "memHierarchy.simpleMemBackendConvertor",
     "memHierarchy.simpleMemScratchBackendConvertor",
     "memHierarchy.simplePagePolicy",
+    "memHierarchy.standardInterface",
     "memHierarchy.timeoutPagePolicy",
     "memHierarchy.timingDRAM",
     "memHierarchy.vaultsim"

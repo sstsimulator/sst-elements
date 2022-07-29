@@ -1,15 +1,15 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -22,7 +22,7 @@
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
-#include <sst/core/rng/sstrng.h>
+#include <sst/core/rng/rng.h>
 
 #include <string.h>
 #include <vector>
@@ -132,10 +132,10 @@ private:
 
 
 class RNGFunc {
-    RNG::SSTRandom* rng;
+    RNG::Random* rng;
 
 public:
-    RNGFunc(RNG::SSTRandom* rng) : rng(rng) {}
+    RNGFunc(RNG::Random* rng) : rng(rng) {}
 
     int operator() (int i) {
         return rng->generateNextUInt32() % i;
@@ -155,15 +155,21 @@ public:
         SST::Merlin::Topology)
 
     SST_ELI_DOCUMENT_PARAMS(
-        {"hyperx:shape",        "Shape of the mesh specified as the number of routers in each dimension, where each dimension is separated by a colon.  For example, 4x4x2x2.  Any number of dimensions is supported."},
-        {"hyperx:width",        "Number of links between routers in each dimension, specified in same manner as for shape.  For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
-        {"hyperx:local_ports",  "Number of endpoints attached to each router."},
-        {"hyperx:algorithm",    "Routing algorithm to use.", "DOR"},
+        // Parameters needed for use with old merlin python module
+        {"hyperx.shape", "Shape of the mesh specified as the number of routers in each dimension, where each dimension "
+                         "is separated by a colon.  For example, 4x4x2x2.  Any number of dimensions is supported."},
+        {"hyperx.width", "Number of links between routers in each dimension, specified in same manner as for shape.  "
+                         "For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
+        {"hyperx.local_ports",  "Number of endpoints attached to each router."},
+        {"hyperx.algorithm",    "Routing algorithm to use.", "DOR"},
 
-        {"shape",        "Shape of the mesh specified as the number of routers in each dimension, where each dimension is separated by a colon.  For example, 4x4x2x2.  Any number of dimensions is supported."},
-        {"width",        "Number of links between routers in each dimension, specified in same manner as for shape.  For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
-        {"local_ports",  "Number of endpoints attached to each router."},
-        {"algorithm",    "Routing algorithm to use.", "DOR"}
+
+        {"shape", "Shape of the mesh specified as the number of routers in each dimension, where each dimension "
+                  "is separated by a colon.  For example, 4x4x2x2.  Any number of dimensions is supported."},
+        {"width", "Number of links between routers in each dimension, specified in same manner as for shape.  "
+                  "For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
+        {"local_ports", "Number of endpoints attached to each router."},
+        {"algorithm", "Routing algorithm to use.", "DOR"}
     )
 
     enum RouteAlgo {
@@ -194,7 +200,7 @@ private:
     int num_vcs;
     int num_vns;
 
-    RNG::SSTRandom* rng;
+    RNG::Random* rng;
     RNGFunc* rng_func;
 
     struct vn_info {

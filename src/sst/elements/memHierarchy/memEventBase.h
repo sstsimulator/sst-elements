@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -40,7 +40,7 @@ public:
     static const uint32_t F_LOCKED          = 0x00000001;
     static const uint32_t F_NONCACHEABLE    = 0x00000010;
     static const uint32_t F_LLSC            = 0x00000100;
-    static const uint32_t F_SUCCESS         = 0x00001000;
+    static const uint32_t F_FAIL            = 0x00001000;
     static const uint32_t F_NORESPONSE      = 0x00010000;
 
 
@@ -57,6 +57,7 @@ public:
         dst_            = NONE;
         src_            = NONE;
         rqstr_          = NONE;
+        tid_            = 0;
         cmd_            = Command::NULLCMD;
         flags_          = 0;
         memFlags_       = 0;
@@ -74,12 +75,14 @@ public:
         dst_ = event->src_;
         src_ = event->dst_;
         rqstr_ = event->rqstr_;
+        tid_ = event->tid_;
         flags_ = event->flags_;
         memFlags_ = event->memFlags_;
     }
 
     virtual void copyMetadata(MemEventBase* ev) {
         rqstr_ = ev->rqstr_;
+        tid_ = ev->tid_;
         flags_ = ev->flags_;
         memFlags_ = ev->memFlags_;
     }
@@ -110,6 +113,10 @@ public:
     /** Sets the requestor string - whose original request caused this MemEvent */
     void setRqstr(const std::string& rqstr) { rqstr_ = rqstr; }
 
+    /** @return the thread ID that originated the original request */
+    const uint32_t getThreadId(void) const { return tid_; }
+    /** Sets the thread ID that originated the original request */
+    void setThreadID(const uint32_t tid) { tid_ = tid; }
     /** @returns the state of all flags */
     uint32_t getFlags(void) const { return flags_; }
     /** Sets the specified flag.
@@ -150,9 +157,9 @@ public:
             str += "F_LLSC";
             addComma = true;
         }
-        if (flags_ & F_SUCCESS) {
+        if (flags_ & F_FAIL) {
             if (addComma) str += ", ";
-            str += "F_SUCCESS";
+            str += "F_FAIL";
             addComma = true;
         }
         if (flags_ & F_NORESPONSE) {
@@ -167,14 +174,14 @@ public:
     /** Return size of the event - for calculating bandwidth used */
     virtual uint32_t getEventSize() { return 0; }
 
-    /** Get verbose print of the event */
-    virtual std::string getVerboseString() {
+    /** Get verbose print of the event */ 
+    virtual std::string getVerboseString(int level = 1) {
         std::ostringstream idstring;
         idstring << "<" << eventID_.first << "," << eventID_.second << "> ";
         std::string cmdStr(CommandString[(int)cmd_]);
         std::ostringstream str;
         str << " Flags: " << getFlagString();
-        return idstring.str() + cmdStr + " Src: " + src_ + " Dst: " + dst_ + " Rq: " + rqstr_ + str.str();
+        return idstring.str() + cmdStr + " Src: " + src_ + " Dst: " + dst_ + " Rq: " + rqstr_ + "Tid: " + std::to_string(tid_) + str.str();
     }
 
     /** Get brief print of the event */
@@ -207,6 +214,7 @@ protected:
     string          src_;               // Source ID
     string          dst_;               // Destination ID
     string          rqstr_;             // Cache that originated this request
+    uint32_t        tid_;               // Thread ID that originated this request
     Command         cmd_;               // Command
     uint32_t        flags_;
     uint32_t        memFlags_;
@@ -221,6 +229,7 @@ public:
         ser & src_;
         ser & dst_;
         ser & rqstr_;
+        ser & tid_;
         ser & cmd_;
         ser & flags_;
         ser & memFlags_;
@@ -261,7 +270,7 @@ public:
         return new MemEventInit(*this);
     }
 
-    virtual std::string getVerboseString() override {
+    virtual std::string getVerboseString(int level = 1) override {
         std::string str;
         if (initCmd_ == InitCommand::Region) str = " InitCmd: Region";
         else if (initCmd_ == InitCommand::Data) str = " InitCmd: Data";
@@ -269,7 +278,7 @@ public:
         else if (initCmd_ == InitCommand::Endpoint) str = " InitCmd: Endpoint";
         else str = " InitCmd: Unknown command";
 
-        return MemEventBase::getVerboseString() + str;
+        return MemEventBase::getVerboseString(level) + str;
     }
 
     virtual std::string getBriefString() override {
@@ -333,11 +342,11 @@ public:
         return new MemEventInitCoherence(*this);
     }
 
-    virtual std::string getVerboseString() override {
+    virtual std::string getVerboseString(int level = 1) override {
         std::ostringstream str;
         str << " Type: " << (int) type_ << " Inclusive: " << (inclusive_ ? "true" : "false");
         str << " LineSize: " << lineSize_ << " Tracks presence: " << (tracksPresence_ ? "true" : "false");
-        return MemEventInit::getVerboseString() + str.str();
+        return MemEventInit::getVerboseString(level) + str.str();
     }
 
 private:
@@ -397,7 +406,7 @@ public:
         return MemEventInit::getBriefString() + str.str();
     }
 
-    virtual std::string getVerboseString() override {
+    virtual std::string getVerboseString(int level = 1) override {
         std::ostringstream str;
         str << " Type: " << (int) type_ << " Name: " << name_;
         str << " Regions:";
@@ -437,8 +446,8 @@ public:
         return new MemEventInitRegion(*this);
     }
 
-    virtual std::string getVerboseString() override {
-        return MemEventInit::getVerboseString() + region_.toString() + " SetRegion: " + (setRegion_ ? "T" : "F");
+    virtual std::string getVerboseString(int level = 1) override {
+        return MemEventInit::getVerboseString(level) + region_.toString() + " SetRegion: " + (setRegion_ ? "T" : "F");
     }
 
 private:

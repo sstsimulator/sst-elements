@@ -1,15 +1,15 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -58,8 +58,8 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
         { "port_name",      "Port name to connect to. Only used when loaded anonymously", ""},
         { "link_bw",        "Bandwidth of the links specified in either b/s or B/s (can include SI prefix)."},
-        { "in_buf_size"     "Size of input buffers specified in b or B (can include SI prefix).", "1kB"},
-        { "out_buf_size"    "Size of output buffers specified in b or B (can include SI prefix).", "1kB"}
+        { "in_buf_size",    "Size of input buffers specified in b or B (can include SI prefix).", "1kB"},
+        { "out_buf_size",   "Size of output buffers specified in b or B (can include SI prefix).", "1kB"}
     )
 
     SST_ELI_DOCUMENT_PORTS( { "rtr_port", "Port that connects to router", {"kinglsey.BaseNocEvent"} } )

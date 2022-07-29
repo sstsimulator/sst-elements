@@ -17,3 +17,5 @@ configure
 libtool
 tags
 .DS_Store
+*.pdf
+*.dot

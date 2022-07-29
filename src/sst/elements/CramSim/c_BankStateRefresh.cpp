@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -60,7 +60,7 @@ c_BankStateRefresh::~c_BankStateRefresh() {
 // this function is called by the c_Bank that contains this state
 void c_BankStateRefresh::handleCommand(c_BankInfo* x_bank,
 		c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle) {
-        Simulation::getSimulation()->getSimulationOutput().output(
+        Output::getDefaultObject().output(
 			"%s ERROR: should not receive a command in this state. This is a transitory state.\n",
                         __PRETTY_FUNCTION__);
 }

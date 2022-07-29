@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -24,16 +24,13 @@
 namespace SST {
 namespace Vanadis {
 
-// void *mmap(void *addr, size_t length, int prot, int flags,
-//                  int fd, off_t offset);
-
 class VanadisSyscallMemoryMapEvent : public VanadisSyscallEvent {
 public:
     VanadisSyscallMemoryMapEvent() : VanadisSyscallEvent() {}
 
-    VanadisSyscallMemoryMapEvent(uint32_t core, uint32_t thr, uint64_t addr, uint64_t len, int64_t prot, int64_t flags,
+    VanadisSyscallMemoryMapEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t addr, uint64_t len, int64_t prot, int64_t flags,
                                  uint64_t stack_p, uint64_t offset_multiplier)
-        : VanadisSyscallEvent(core, thr), address(addr), length(len), page_prot(prot), alloc_flags(flags),
+        : VanadisSyscallEvent(core, thr, bittype), address(addr), length(len), page_prot(prot), alloc_flags(flags),
           stack_pointer(stack_p), offset_units(offset_multiplier) {}
 
     VanadisSyscallOp getOperation() { return SYSCALL_OP_MMAP; }

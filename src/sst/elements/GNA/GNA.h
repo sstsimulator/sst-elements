@@ -1,13 +1,13 @@
-// Copyright 2018-2021 NTESS. Under the terms
+// Copyright 2018-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2018-2021, NTESS
+// Copyright (c) 2018-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -29,8 +29,7 @@
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
 
-#include <sst/core/interfaces/simpleMem.h>
-#include <sst/elements/memHierarchy/memEvent.h>
+#include <sst/core/interfaces/stdMem.h>
 #include "gna_lib.h"
 #include "neuron.h"
 #include "sts.h"
@@ -57,7 +56,7 @@ public:
 
     SST_ELI_DOCUMENT_PORTS( {"mem_link", "Connection to memory", { "memHierarchy.MemEventBase" } } )
 
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"memory", "Interface to memory (e.g., caches)", "SST::Interfaces::SimpleMem"} )
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"memory", "Interface to memory (e.g., caches)", "SST::Interfaces::StandardMem"} )
 
     /* Begin class definiton */
     GNA(SST::ComponentId_t id, SST::Params& params);
@@ -69,11 +68,11 @@ public:
 public:
     void deliver(float val, int targetN, int time);
     neuron* getNeuron(int n) {return &neurons[n];}
-    void readMem(Interfaces::SimpleMem::Request *req, STS *requestor) {
+    void readMem(Interfaces::StandardMem::Request *req, STS *requestor) {
         // queue the request to send later
         outgoingReqs.push(req);
         // record who it came from
-        requests.insert(std::make_pair(req->id, requestor));
+        requests.insert(std::make_pair(req->getID(), requestor));
     }
 
 private:
@@ -82,7 +81,7 @@ private:
     void operator=(const GNA&); // do not implement
     void init(unsigned int phase);
 
-    void handleEvent( SST::Interfaces::SimpleMem::Request * req );
+    void handleEvent( SST::Interfaces::StandardMem::Request * req );
     virtual bool clockTic( SST::Cycle_t );
     bool deliverBWPs();
     void assignSTS();
@@ -93,7 +92,7 @@ private:
     gnaState_t state;
 
     Output out;
-    Interfaces::SimpleMem * memory;
+    Interfaces::StandardMem * memory;
     uint numNeurons;
     uint BWPpTic;
     uint STSDispatch;
@@ -102,7 +101,7 @@ private:
     uint now;
     uint numFirings;
     uint numDeliveries;
-    queue<SST::Interfaces::SimpleMem::Request *> outgoingReqs;
+    queue<SST::Interfaces::StandardMem::Request *> outgoingReqs;
 
     neuron *neurons;
     vector<STS> STSUnits;

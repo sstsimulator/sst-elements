@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -51,8 +51,10 @@ public:
         {"eventSent_GetS",          "Number of GetS requests sent", "events", 2},
         {"eventSent_GetX",          "Number of GetX requests sent", "events", 2},
         {"eventSent_GetSX",         "Number of GetSX requests sent", "events", 2},
+        {"eventSent_Write",         "Number of Write requests sent", "events", 2},
         {"eventSent_GetSResp",      "Number of GetSResp responses sent", "events", 2},
         {"eventSent_GetXResp",      "Number of GetXResp responses sent", "events", 2},
+        {"eventSent_WriteResp",     "Number of WriteResp responses sent", "events", 2},
         {"eventSent_PutE",          "Number of PutE requests sent", "events", 2},
         {"eventSent_PutM",          "Number of PutM requests sent", "events", 2},
         {"eventSent_FlushLine",     "Number of FlushLine requests sent", "events", 2},
@@ -128,7 +130,6 @@ public:
     /** Constructor for IncoherentL1 */
     IncoherentL1(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
-        debug->debug(_INFO_,"--------------------------- Initializing [L1Controller] ... \n\n");
 
         // Cache Array
         uint64_t lines = params.find<uint64_t>("lines");
@@ -169,13 +170,15 @@ public:
         stat_eventState[(int)Command::FlushLineResp][S_B] = registerStatistic<uint64_t>("stateEvent_FlushLineResp_SB");
         stat_eventSent[(int)Command::GetS] =           registerStatistic<uint64_t>("eventSent_GetS");
         stat_eventSent[(int)Command::GetX] =           registerStatistic<uint64_t>("eventSent_GetX");
-        stat_eventSent[(int)Command::GetSX] =         registerStatistic<uint64_t>("eventSent_GetSX");
+        stat_eventSent[(int)Command::GetSX] =          registerStatistic<uint64_t>("eventSent_GetSX");
+        stat_eventSent[(int)Command::Write] =          registerStatistic<uint64_t>("eventSent_Write");
         stat_eventSent[(int)Command::PutM] =           registerStatistic<uint64_t>("eventSent_PutM");
-        stat_eventSent[(int)Command::NACK] =      registerStatistic<uint64_t>("eventSent_NACK");
+        stat_eventSent[(int)Command::NACK] =           registerStatistic<uint64_t>("eventSent_NACK");
         stat_eventSent[(int)Command::FlushLine] =      registerStatistic<uint64_t>("eventSent_FlushLine");
         stat_eventSent[(int)Command::FlushLineInv] =   registerStatistic<uint64_t>("eventSent_FlushLineInv");
         stat_eventSent[(int)Command::GetSResp] =       registerStatistic<uint64_t>("eventSent_GetSResp");
         stat_eventSent[(int)Command::GetXResp] =       registerStatistic<uint64_t>("eventSent_GetXResp");
+        stat_eventSent[(int)Command::WriteResp] =      registerStatistic<uint64_t>("eventSent_WriteResp");
         stat_eventSent[(int)Command::FlushLineResp] =  registerStatistic<uint64_t>("eventSent_FlushLineResp");
         stat_eventSent[(int)Command::Put]           = registerStatistic<uint64_t>("eventSent_Put");
         stat_eventSent[(int)Command::Get]           = registerStatistic<uint64_t>("eventSent_Get");
@@ -224,6 +227,7 @@ public:
     bool handleGetS(MemEvent * event, bool inMSHR);
     bool handleGetX(MemEvent * event, bool inMSHR);
     bool handleGetSX(MemEvent * event, bool inMSHR);
+    bool handleWrite(MemEvent * event, bool inMSHR);
     bool handleFlushLine(MemEvent * event, bool inMSHR);
     bool handleFlushLineInv(MemEvent * event, bool inMSHR);
     bool handleNULLCMD(MemEvent * event, bool inMSHR);
@@ -241,11 +245,13 @@ public:
         std::set<Command> cmds = { Command::GetS,
             Command::GetX,
             Command::GetSX,
+            Command::Write,
             Command::FlushLine,
             Command::FlushLineInv,
             Command::NULLCMD,
             Command::GetSResp,
             Command::GetXResp,
+            Command::WriteResp,
             Command::FlushLineResp,
             Command::NACK };
         return cmds;
@@ -265,7 +271,7 @@ private:
     void forwardFlush(MemEvent * event, L1CacheLine * line, bool data);
 
     /** Send response up (to processor) */
-    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t baseTime, bool success = false);
+    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t baseTime, bool success = true);
 
     /** Send response down (towards memory) */
     void sendResponseDown(MemEvent * event, L1CacheLine * line, bool data);
@@ -285,7 +291,6 @@ private:
     void eventProfileAndNotify(MemEvent * event, State state, NotifyAccessType type, NotifyResultType result, bool inMSHR, bool stalled);
 
     /* Debug output */
-    void printData(vector<uint8_t> * data, bool set);
     void printLine(Addr addr);
 
     CacheArray<L1CacheLine>* cacheArray_;

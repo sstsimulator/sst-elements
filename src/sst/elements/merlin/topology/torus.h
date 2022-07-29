@@ -1,15 +1,15 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -81,13 +81,19 @@ public:
         SST::Merlin::Topology)
 
     SST_ELI_DOCUMENT_PARAMS(
-        {"torus:shape",        "Shape of the torus specified as the number of routers in each dimension, where each dimension is separated by an x.  For example, 4x4x2x2.  Any number of dimensions is supported."},
-        {"torus:width",        "Number of links between routers in each dimension, specified in same manner as for shape.  For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
-        {"torus:local_ports",  "Number of endpoints attached to each router."},
+        // Parameters needed for use with old merlin python module
+        {"torus.shape", "Shape of the torus specified as the number of routers in each dimension, where each "
+                        "dimension is separated by an x.  For example, 4x4x2x2.  Any number of dimensions is supported."},
+        {"torus.width", "Number of links between routers in each dimension, specified in same manner as for shape.  "
+                        "For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
+        {"torus.local_ports", "Number of endpoints attached to each router."},
 
-        {"shape",        "Shape of the torus specified as the number of routers in each dimension, where each dimension is separated by an x.  For example, 4x4x2x2.  Any number of dimensions is supported."},
-        {"width",        "Number of links between routers in each dimension, specified in same manner as for shape.  For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
-        {"local_ports",  "Number of endpoints attached to each router."},
+
+        {"shape", "Shape of the torus specified as the number of routers in each dimension, where each dimension is "
+                  "separated by an x.  For example, 4x4x2x2.  Any number of dimensions is supported."},
+        {"width", "Number of links between routers in each dimension, specified in same manner as for shape.  For "
+                  "example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
+        {"local_ports", "Number of endpoints attached to each router."},
     )
 
 

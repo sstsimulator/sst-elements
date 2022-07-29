@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -653,6 +653,8 @@ bool MESISharNoninclusive::handlePutS(MemEvent * event, bool inMSHR) {
                 }
                 data = dataArray_->lookup(addr, true);
                 data->setData(event->getPayload(), 0);
+                if (is_debug_addr(addr))
+                    printDataValue(addr, &(event->getPayload()), true);
                 inMSHR = true;
             }
             if (!inMSHR || !mshr_->getProfiled(addr)) {
@@ -780,6 +782,8 @@ bool MESISharNoninclusive::handlePutE(MemEvent * event, bool inMSHR) {
                 }
                 data = dataArray_->lookup(addr, true);
                 data->setData(event->getPayload(), 0);
+                if (is_debug_addr(addr))
+                    printDataValue(addr, &(event->getPayload()), true);
                 inMSHR = true;
             }
             tag->removeOwner();
@@ -884,6 +888,8 @@ bool MESISharNoninclusive::handlePutM(MemEvent * event, bool inMSHR) {
                 }
                 data = dataArray_->lookup(addr, true);
                 data->setData(event->getPayload(), 0);
+                if (is_debug_addr(addr))
+                    printDataValue(addr, &(event->getPayload()), true);
                 inMSHR = true;
             } else if (!inMSHR || !mshr_->getProfiled(addr)) {
                 stat_eventState[(int)Command::PutM][state]->addData(1);
@@ -911,6 +917,8 @@ bool MESISharNoninclusive::handlePutM(MemEvent * event, bool inMSHR) {
                     stat_eventState[(int)Command::PutM][state]->addData(1);
                 }
                 data->setData(event->getPayload(), 0);
+                if (is_debug_addr(addr))
+                    printDataValue(addr, &(event->getPayload()), true);
                 sendWritebackAck(event);
                 cleanUpEvent(event, inMSHR);
             } else {
@@ -990,9 +998,11 @@ bool MESISharNoninclusive::handlePutX(MemEvent * event, bool inMSHR) {
             if (event->getDirty())
                 tag->setState(M);
 
-            if (data)
+            if (data) {
                 data->setData(event->getPayload(), 0);
-
+                if (is_debug_addr(addr))
+                    printDataValue(addr, &(event->getPayload()), true);
+            }
             cleanUpAfterRequest(event, inMSHR);
             break;
         case E_InvX:
@@ -1006,6 +1016,9 @@ bool MESISharNoninclusive::handlePutX(MemEvent * event, bool inMSHR) {
                 data->setData(event->getPayload(), 0);
             else
                 mshr_->setData(addr, event->getPayload());
+            
+            if (is_debug_addr(addr))
+                printDataValue(addr, &(event->getPayload()), true);
 
             mshr_->decrementAcksNeeded(addr);
 
@@ -1020,6 +1033,9 @@ bool MESISharNoninclusive::handlePutX(MemEvent * event, bool inMSHR) {
                 data->setData(event->getPayload(), 0);
             else
                 mshr_->setData(addr, event->getPayload());
+            
+            if (is_debug_addr(addr))
+                printDataValue(addr, &(event->getPayload()), true);
 
             cleanUpEvent(event, inMSHR);
             break;
@@ -1833,8 +1849,11 @@ bool MESISharNoninclusive::handleGetSResp(MemEvent * event, bool inMSHR) {
     stat_eventState[(int)Command::GetSResp][state]->addData(1);
 
     tag->setState(S);
-    if (data)
+    if (data) {
         data->setData(event->getPayload(), 0);
+        if (is_debug_addr(addr))
+            printDataValue(addr, &(event->getPayload()), true);
+    }
 
     if (localPrefetch) {
         tag->setPrefetch(true);
@@ -1875,8 +1894,11 @@ bool MESISharNoninclusive::handleGetXResp(MemEvent * event, bool inMSHR) {
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::GetXResp, localPrefetch, addr, state);
 
-    if (data)
+    if (data) {
         data->setData(event->getPayload(), 0);
+        if (is_debug_addr(addr))
+            printDataValue(addr, &(event->getPayload()), true);
+    }
 
     stat_eventState[(int)Command::GetXResp][state]->addData(1);
 
@@ -2024,6 +2046,9 @@ bool MESISharNoninclusive::handleFetchResp(MemEvent * event, bool inMSHR) {
         data->setData(event->getPayload(), 0);
     else
         mshr_->setData(addr, event->getPayload());
+    
+    if (is_debug_addr(addr))
+        printDataValue(addr, &(event->getPayload()), true);
 
     stat_eventState[(int)Command::FetchResp][state]->addData(1);
 
@@ -2125,6 +2150,9 @@ bool MESISharNoninclusive::handleFetchXResp(MemEvent * event, bool inMSHR) {
         data->setData(event->getPayload(), 0);
     else
         mshr_->setData(addr, event->getPayload());
+    
+    if (is_debug_addr(addr))
+        printDataValue(addr, &(event->getPayload()), true);
 
     // Clean up and retry
     retry(addr);
@@ -2765,12 +2793,12 @@ uint64_t MESISharNoninclusive::sendResponseUp(MemEvent * event, vector<uint8_t> 
         responseEvent->setPayload(*data);
         responseEvent->setSize(data->size()); // Return size that was written
         if (is_debug_event(event)) {
-            printDataValue(event->getAddr(), data, false);
+            printDataValue(event->getBaseAddr(), data, false);
         }
     }
 
-    if (success)
-        responseEvent->setSuccess(true);
+    if (!success)
+        responseEvent->setFail();
 
     // Compute latency, accounting for serialization of requests to the address
     if (time < timestamp_) time = timestamp_;
@@ -2996,7 +3024,6 @@ uint64_t MESISharNoninclusive::invalidateSharer(std::string shr, MemEvent * even
         MemEvent * inv = new MemEvent(cachename_, addr, addr, cmd);
         if (event) {
             inv->copyMetadata(event);
-            inv->setRqstr(event->getRqstr());
         } else {
             inv->setRqstr(cachename_);
         }
@@ -3040,7 +3067,6 @@ bool MESISharNoninclusive::invalidateOwner(MemEvent * metaEvent, DirectoryLine *
     MemEvent * inv = new MemEvent(cachename_, addr, addr, cmd);
     if (metaEvent) {
         inv->copyMetadata(metaEvent);
-        inv->setRqstr(metaEvent->getRqstr());
     } else {
         inv->setRqstr(cachename_);
     }
@@ -3123,10 +3149,13 @@ void MESISharNoninclusive::removeSharerViaInv(MemEvent * event, DirectoryLine * 
 void MESISharNoninclusive::removeOwnerViaInv(MemEvent * event, DirectoryLine * tag, DataLine * data, bool remove) {
     Addr addr = event->getBaseAddr();
     tag->removeOwner();
-    if (data)
+    if (data) 
         data->setData(event->getPayload(), 0);
     else
         mshr_->setData(addr, event->getPayload());
+    
+    if (is_debug_addr(addr))
+        printDataValue(addr, &(event->getPayload()), true);
 
     if (event->getDirty()) {
         if (tag->getState() == E)
@@ -3169,16 +3198,6 @@ void MESISharNoninclusive::printLine(Addr addr) {
                     addr, data->getIndex(), data->getAddr(), tag->getIndex(), tag->getAddr());
         }
     }
-}
-
-void MESISharNoninclusive::printData(vector<uint8_t> * data, bool set) {
-/*    if (set)    printf("Setting data (%zu): 0x", data->size());
-    else        printf("Getting data (%zu): 0x", data->size());
-
-    for (unsigned int i = 0; i < data->size(); i++) {
-        printf("%02x", data->at(i));
-    }
-    printf("\n");*/
 }
 
 

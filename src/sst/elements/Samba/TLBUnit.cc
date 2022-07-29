@@ -1,8 +1,8 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -55,9 +55,10 @@ TLB::TLB(ComponentId_t id, int tlb_id, TLB * Next_level, int Level, SST::Params&
 
 	std::string LEVEL = std::to_string(level);
 
+
+    // === Init params
+
 	std::string cpu_clock = params.find<std::string>("clock", "1GHz");
-
-
 
 	page_walk_latency = ((uint32_t) params.find<uint32_t>("page_walk_latency", 50));
 
@@ -67,83 +68,89 @@ TLB::TLB(ComponentId_t id, int tlb_id, TLB * Next_level, int Level, SST::Params&
 
 	latency = ((uint32_t) params.find<uint32_t>("latency_L"+LEVEL, 1));
 
-	// This indicates the number of page sizes supported for this level
+	// number of page sizes supported for this level (i.e. 4kb, or also 2MB & 1GB)
 	sizes = ((uint32_t) params.find<uint32_t>("sizes_L"+LEVEL, 1));
 
 	parallel_mode = ((uint32_t) params.find<uint32_t>("parallel_mode_L"+LEVEL, 0));
 
 	upper_link_latency = ((uint32_t) params.find<uint32_t>("upper_link_L"+LEVEL, 0));
 
-
-	char* subID = (char*) malloc(sizeof(char) * 32);
-	sprintf(subID, "Core%d_L%d", tlb_id,level);
-
-
-	// The stats that will appear, not that these stats are going to be part of the Samba unit
-	statTLBHits = registerStatistic<uint64_t>( "tlb_hits", subID);
-	statTLBMisses = registerStatistic<uint64_t>( "tlb_misses", subID );
-	statTLBShootdowns = registerStatistic<uint64_t>( "tlb_shootdown", subID );
-
 	max_width = ((uint32_t) params.find<uint32_t>("max_width_L"+LEVEL, 4));
-
 
 	perfect = ((uint32_t) params.find<uint32_t>("perfect", 0));
 
 	os_page_size = ((uint32_t) params.find<uint32_t>("os_page_size", 4));
 
+
+    // === Init statistics
+
+	char* subID = (char*) malloc(sizeof(char) * 32);
+	sprintf(subID, "Core%d_L%d", tlb_id,level);
+
+	// The stats that will appear, not that these stats are going to be part of the Samba unit
+	statTLBHits =       registerStatistic<uint64_t>( "tlb_hits",      subID);
+	statTLBMisses =     registerStatistic<uint64_t>( "tlb_misses",    subID );
+	statTLBShootdowns = registerStatistic<uint64_t>( "tlb_shootdown", subID );
+
+    free(subID);
+
+
+    // === Init Counters
+    
+	hits=misses=0;
+
+
+    // === Per page-size params =======================================
+    
+    
+    // params
 	size = new int[sizes];
 	assoc = new int[sizes];
 	page_size = new uint64_t[sizes];
 	sets = new int[sizes];
-	tags = new Address_t**[sizes];
+
+    // data arrays `foo[page_sizes][set][way]`
+	tags  = new Address_t**[sizes];
 	valid = new bool**[sizes];
-	lru = new int **[sizes];
+	lru   = new int **[sizes];
 
-
+    //Loop over each supported page size, getting params
 	for(int i=0; i < sizes; i++)
 	{
 
 		size[i] =  ((uint32_t) params.find<uint32_t>("size"+std::to_string(i+1) + "_L"+LEVEL, 1));
-
-
 		assoc[i] =  ((uint32_t) params.find<uint32_t>("assoc"+std::to_string(i+1) +  "_L"+LEVEL, 1));
-
-
 		page_size[i] = 1024 * ((uint64_t) params.find<uint64_t>("page_size"+ std::to_string(i+1) + "_L" + LEVEL, 4));
 
 
 		// Here we add the supported page size and the structure index
 		SIZE_LOOKUP[page_size[i]/1024]=i;
 
-
 		// We define the number of sets for that structure of page size number i
 		sets[i] = size[i]/assoc[i];
 
 	}
 
-	hits=misses=0;
 
-
-
+    //Loop over each supported page size, initializing subarrays for tags/valid/lru
 	for(int id=0; id< sizes; id++)
 	{
 
-		tags[id] = new Address_t*[sets[id]];
-
+		tags[id]  = new Address_t*[sets[id]];
 		valid[id] = new bool*[sets[id]];
-
-		lru[id] = new int*[sets[id]];
+		lru[id]   = new int*[sets[id]];
 
 		for(int i=0; i < sets[id]; i++)
 		{
-			tags[id][i]=new Address_t[assoc[id]];
-			valid[id][i]=new bool[assoc[id]];
-			lru[id][i]=new int[assoc[id]];
+			tags[id][i]  = new Address_t[assoc[id]];
+			valid[id][i] = new bool[assoc[id]];
+			lru[id][i]   = new int[assoc[id]];
+
 			for(int j=0; j<assoc[id];j++)
 			{
-				tags[id][i][j]=-1;
-				valid[id][i][j]=true;
-				lru[id][i][j]=j;
+				tags [id][i][j] = -1;
+				valid[id][i][j] = true;
+				lru  [id][i][j] = j;
 			}
 		}
 
@@ -161,7 +168,8 @@ void TLB::setPTW(PageTableWalker * Next_level) {
     PTW=Next_level;
 }
 
-// This is the most important function, which works like the heart of the TLBUnit, called on every cycle to check if any completed requests or new requests at this cycle.
+// This is the most important function, which works like the heart of the TLBUnit, 
+// called on every cycle to check if any completed requests or new requests at this cycle.
 bool TLB::tick(SST::Cycle_t x)
 {
 
@@ -171,13 +179,14 @@ bool TLB::tick(SST::Cycle_t x)
 	{
 
 
-            MemHierarchy::MemEventBase * ev = pushed_back.back();
+        MemHierarchy::MemEventBase * ev = pushed_back.back();
 
 		Address_t addr = ((MemEvent*) ev)->getVirtualAddress();
 
 
 		// Double checking that we actually still don't have it inserted
-		// Insert the translation into all structures with same or smaller size page support. Note that smaller page sizes will still have the same translation with offset derived from address
+		// Insert the translation into all structures with same or smaller size page support. 
+        // Note that smaller page sizes will still have the same translation with offset derived from address
 		std::map<long long int, int>::iterator lu_st, lu_en;
 		lu_st=SIZE_LOOKUP.begin();
 		lu_en=SIZE_LOOKUP.end();
@@ -212,7 +221,8 @@ bool TLB::tick(SST::Cycle_t x)
 			st++;
 		}
 
-		// Note that here we are sustitiuing for latency of checking the tag before proceeing to the next level, we also add the upper link latency for the round trip
+		// Note that here we are substituting for latency of checking the tag before proceeding 
+        // to the next level, we also add the upper link latency for the round trip
 		ready_by[ev]= x + latency + 2*upper_link_latency;
 
 		// We also track the size of tthe ready request
@@ -244,14 +254,15 @@ bool TLB::tick(SST::Cycle_t x)
 
 
 
-	// The actual dipatching process... here we take a request and place it in the right queue based on being miss or hit and the number of pending misses
+	// The actual dispatching process... here we take a request and place it 
+    // in the right queue based on being miss or hit and the number of pending misses
 	std::vector<MemHierarchy::MemEventBase*>::iterator st_1,en_1;
 	st_1 = not_serviced.begin();
 	en_1 = not_serviced.end();
 
 	int dispatched=0;
 
-	// Iteravte over the requests passed from higher levels
+	// Iterate over the requests passed from higher levels
 	for(;st_1!=not_serviced.end(); st_1++)
 	{
 		dispatched++;
@@ -260,7 +271,7 @@ bool TLB::tick(SST::Cycle_t x)
 		if(dispatched > max_width)
 			break;
 
-                MemHierarchy::MemEventBase * ev = *st_1;
+        MemHierarchy::MemEventBase * ev = *st_1;
 		Address_t addr = ((MemEvent*) ev)->getVirtualAddress();
 
 
@@ -277,7 +288,7 @@ bool TLB::tick(SST::Cycle_t x)
 				break;
 			}
 
-		// If it hist in any page size structure, we update the lru position of the translation and update statistics
+		// If it hits in any page size structure, we update the lru position of the translation and update statistics
 		if(hit)
 		{
 
@@ -330,7 +341,7 @@ bool TLB::tick(SST::Cycle_t x)
 						next_level->push_request(ev);
 						st_1 = not_serviced.erase(st_1);
 					}
-					else // Passs it to the page table walker
+					else // Pass it to the page table walker
 					{
 						PTW->push_request(ev);
 						st_1 = not_serviced.erase(st_1);

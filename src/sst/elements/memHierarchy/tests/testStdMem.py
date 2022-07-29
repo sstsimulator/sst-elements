@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 from mhlib import componentlist
 
@@ -9,7 +8,7 @@ DEBUG_L1 = 0
 DEBUG_MEM = 0
 DEBUG_LEVEL = 10
 
-cpu = sst.Component("cpu", "memHierarchy.standardCPU")
+cpu = sst.Component("core", "memHierarchy.standardCPU")
 cpu.addParams({
     "memFreq" : 100,
     "memSize" : "512MiB",
@@ -63,4 +62,3 @@ link_cpu_cache_link = sst.Link("link_cpu_cache_link")
 link_cpu_cache_link.connect( (iface, "port", "1000ps"), (l1cache, "high_network_0", "1000ps") )
 link_mem_bus_link = sst.Link("link_mem_bus_link")
 link_mem_bus_link.connect( (l1cache, "low_network_0", "50ps"), (memctrl, "direct_link", "50ps") )
-# End of generated output.

@@ -1,8 +1,8 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -37,7 +37,7 @@ TimingDRAM::TimingDRAM(ComponentId_t id, Params &params) : SimpleMemBackend(id, 
     std::string addrMapper = params.find<std::string>("addrMapper","memHierarchy.simpleAddrMapper");
 
     Params tmpParams = params.get_scoped_params("addrMapper" );
-    m_mapper = dynamic_cast<AddrMapper*>(loadModule( addrMapper, tmpParams ) );
+    m_mapper = loadModule<AddrMapper>( addrMapper, tmpParams );
 
     if ( ! m_mapper ) {
         output->fatal(CALL_INFO, -1, "Invalid param(%s): addrMapper,  '%s'.\n",

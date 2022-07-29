@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -122,9 +122,11 @@ public:
             /*Event receives */
             {"GetS_recv",               "Event received: GetS", "count", 2},
             {"GetX_recv",               "Event received: GetX", "count", 2},
+            {"Write_recv",              "Event received: Write", "count", 2},
             {"GetSX_recv",              "Event received: GetSX", "count", 2},
             {"GetSResp_recv",           "Event received: GetSResp", "count", 2},
             {"GetXResp_recv",           "Event received: GetXResp", "count", 2},
+            {"WriteResp_recv",          "Event received: WriteResp", "count", 2},
             {"PutM_recv",               "Event received: PutM", "count", 2},
             {"PutX_recv",               "Event received: PutX", "count", 2},
             {"PutS_recv",               "Event received: PutS", "count", 2},
@@ -150,10 +152,10 @@ public:
             {"CustomResp_uncache_recv", "Noncacheable Event: CustomResp received", "count", 4},
             {"CustomAck_uncache_recv",  "Noncacheable Event: CustomAck received", "count", 4},
             {"GetS_uncache_recv",       "Noncacheable Event: GetS received", "count", 4},
-            {"GetX_uncache_recv",       "Noncacheable Event: GetX received", "count", 4},
+            {"Write_uncache_recv",      "Noncacheable Event: Write received", "count", 4},
             {"GetSX_uncache_recv",      "Noncacheable Event: GetSX received", "count", 4},
             {"GetSResp_uncache_recv",   "Noncacheable Event: GetSResp received", "count", 4},
-            {"GetXResp_uncache_recv",   "Noncacheable Event: GetXResp received", "count", 4},
+            {"WriteResp_uncache_recv",  "Noncacheable Event: WriteResp received", "count", 4},
             {"default_stat",            "Default statistic used for unexpected events/cases/etc. Should be 0, if not, check for missing statistic registrations.", "none", 7})
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(

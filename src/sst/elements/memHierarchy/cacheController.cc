@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -15,7 +15,6 @@
 
 #include <sst_config.h>
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
 #include <sst/core/timeLord.h>
 
@@ -53,7 +52,7 @@ void Cache::handleEvent(SST::Event * ev) {
     }
     if (is_debug_event((event))) {
         dbg_->debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Recv    (%s)\n",
-                Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, getName().c_str(), event->getVerboseString().c_str());
+                getCurrentSimCycle(), timestamp_, getName().c_str(), event->getVerboseString().c_str());
         fflush(stdout);
     }
     
@@ -82,9 +81,7 @@ void Cache::processPrefetchEvent(SST::Event * ev) {
     }
 
     // Record the time at which requests arrive for latency statistics
-    if (CommandClassArr[(int)event->getCmd()] == CommandClass::Request &&
-        !CommandWriteback[(int)event->getCmd()])
-        coherenceMgr_->recordIncomingRequest(static_cast<MemEventBase*>(event));
+    coherenceMgr_->recordIncomingRequest(event);
 
     // Record received prefetch
     statPrefetchRequest->addData(1);
@@ -133,7 +130,7 @@ bool Cache::clockTick(Cycle_t time) {
             break;
         if (is_debug_event((*it))) {
             dbg_->debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Retry   (%s)\n",
-                    Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, getName().c_str(), (*it)->getVerboseString().c_str());
+                    getCurrentSimCycle(), timestamp_, getName().c_str(), (*it)->getVerboseString().c_str());
             fflush(stdout);
         }
         if (processEvent(*it, true)) {
@@ -156,7 +153,7 @@ bool Cache::clockTick(Cycle_t time) {
         Command cmd = (*it)->getCmd();
         if (is_debug_event((*it))) {
             dbg_->debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
-                    Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, getName().c_str(), (*it)->getVerboseString().c_str());
+                    getCurrentSimCycle(), timestamp_, getName().c_str(), (*it)->getVerboseString().c_str());
             fflush(stdout);
         }
         if (processEvent(*it, false)) {
@@ -170,7 +167,7 @@ bool Cache::clockTick(Cycle_t time) {
     while (!prefetchBuffer_.empty()) {
         if (is_debug_event(prefetchBuffer_.front())) {
             dbg_->debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Pref    (%s)\n",
-                    Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, getName().c_str(), prefetchBuffer_.front()->getVerboseString().c_str());
+                    getCurrentSimCycle(), timestamp_, getName().c_str(), prefetchBuffer_.front()->getVerboseString().c_str());
             fflush(stdout);
         }
         if (accepted != maxRequestsPerCycle_ && processEvent(prefetchBuffer_.front(), false)) {
@@ -178,6 +175,7 @@ bool Cache::clockTick(Cycle_t time) {
             // Accepted prefetches are profiled in the coherence manager
         } else {
             statPrefetchDrop->addData(1);
+            coherenceMgr_->removeRequestRecord(prefetchBuffer_.front()->getID());
         }
         prefetchBuffer_.pop();
     }
@@ -252,7 +250,7 @@ bool Cache::processEvent(MemEventBase* ev, bool inMSHR) {
             std::stringstream id;
             id << "<" << event->getID().first << "," << event->getID().second << ">";
             dbg_->debug(_L5_, "A: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 " %-15s %-6s %-6s %-10s %-15s\n",
-                    Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, getName().c_str(), CommandString[(int)event->getCmd()],
+                    getCurrentSimCycle(), timestamp_, getName().c_str(), CommandString[(int)event->getCmd()],
                     addr, id.str().c_str(), "", "", "Stall", "(bank busy)");
         }
         return false;
@@ -268,6 +266,9 @@ bool Cache::processEvent(MemEventBase* ev, bool inMSHR) {
         case Command::GetX:
             accepted = coherenceMgr_->handleGetX(event, inMSHR);
             break;
+        case Command::Write:
+            accepted = coherenceMgr_->handleWrite(event, inMSHR);
+            break;
         case Command::GetSX:
             accepted = coherenceMgr_->handleGetSX(event, inMSHR);
             break;
@@ -279,6 +280,9 @@ bool Cache::processEvent(MemEventBase* ev, bool inMSHR) {
             break;
         case Command::GetSResp:
             accepted = coherenceMgr_->handleGetSResp(event, inMSHR);
+            break;
+        case Command::WriteResp:
+            accepted = coherenceMgr_->handleWriteResp(event, inMSHR);
             break;
         case Command::GetXResp:
             accepted = coherenceMgr_->handleGetXResp(event, inMSHR);
@@ -411,7 +415,7 @@ void Cache::checkTimeout() {
 
     if (entry) {
         SimTime_t curTime = getCurrentSimTimeNano();
-        SimTime_t startTime = (getSimulation()->getTimeLord()->getNano())->convertFromCoreTime(entry->getStartTime());
+        SimTime_t startTime = getTimeConverter("1ns")->convertFromCoreTime(entry->getStartTime());
         SimTime_t waitTime = curTime - startTime;
         if (waitTime > timeout_) {
             out_->fatal(CALL_INFO, -1, "%s, Error: Maximum cache timeout reached - potential deadlock or other error. Event: %s. Current time: %" PRIu64 "ns. Event start time: %" PRIu64 "ns.\n",
@@ -485,8 +489,7 @@ void Cache::init(unsigned int phase) {
                     getName().c_str(), memEvent->getVerboseString().c_str());
             MemEventInit * mEv = memEvent->clone();
             mEv->setSrc(getName());
-            mEv->setDst(linkDown_->getTargetDestination(mEv->getRoutingAddress()));
-            linkDown_->sendInitData(mEv);
+            linkDown_->sendInitData(mEv, false);
         }
         delete memEvent;
     }

@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 from mhlib import componentlist
 
@@ -23,14 +22,14 @@ mmio_src = [l1_group]
 mmio_dst = [dir_group]
 dir_src = [l1_group,mmio_group]
 
-# Constans shared across components
+# Constants shared across components
 network_bw = "25GB/s"
 clock = "2GHz"
 mmio_addr = 1024
 
 
 # Define the simulation components
-cpu = sst.Component("cpu", "memHierarchy.standardCPU")
+cpu = sst.Component("core", "memHierarchy.standardCPU")
 cpu.addParams({
       "opCount" : "1000",
       "memFreq" : "4",
@@ -68,7 +67,7 @@ mmio.addParams({
     "verbose" : 3,
     "clock" : clock,
     "base_addr" : mmio_addr,
-    "mem_accesses" : 4,
+    "mem_accesses" : 400,
     "max_addr" : "1023"
 })
 mmio_iface = mmio.setSubComponent("iface", "memHierarchy.standardInterface")
@@ -78,20 +77,21 @@ mmio_nic.addParams({"group" : mmio_group,
                     "sources" : mmio_src,
                     "destinations" : mmio_dst,
                     "network_bw" : network_bw })
-#mmio_nic.addParams(debug_params)
+mmio_nic.addParams(debug_params)
 
-dir = sst.Component("directory", "memHierarchy.DirectoryController")
-dir.addParams({
+dirctrl = sst.Component("directory", "memHierarchy.DirectoryController")
+dirctrl.addParams({
       "clock" : clock,
       "entry_cache_size" : 16384,
       "mshr_num_entries" : 16,
+      "coherence_protocol" : "MSI",
       "addr_range_end" : mmio_addr - 1,
       "debug" : DEBUG_DIR,
       "debug_level" : 10,
 })
 
-dir_link = dir.setSubComponent("memlink", "memHierarchy.MemLink")
-dir_nic = dir.setSubComponent("cpulink", "memHierarchy.MemNIC")
+dir_link = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
+dir_nic = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
 dir_nic.addParams({
       "group" : dir_group,
       "sources" : dir_src,

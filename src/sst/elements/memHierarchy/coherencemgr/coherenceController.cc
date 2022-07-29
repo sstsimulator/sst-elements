@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -188,6 +188,12 @@ bool CoherenceController::handleGetSX(MemEvent* event, bool inMSHR) {
     return false;
 }
 
+bool CoherenceController::handleWrite(MemEvent* event, bool inMSHR) {
+    debug->fatal(CALL_INFO, -1, "%s, Error: Write events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+            getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+    return false;
+}
+
 bool CoherenceController::handleFlushLine(MemEvent* event, bool inMSHR) {
     debug->fatal(CALL_INFO, -1, "%s, Error: FlushLine events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
@@ -232,6 +238,12 @@ bool CoherenceController::handleGetSResp(MemEvent* event, bool inMSHR) {
 
 bool CoherenceController::handleGetXResp(MemEvent* event, bool inMSHR) {
     debug->fatal(CALL_INFO, -1, "%s, Error: GetXResp events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
+            getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+    return false;
+}
+
+bool CoherenceController::handleWriteResp(MemEvent* event, bool inMSHR) {
+    debug->fatal(CALL_INFO, -1, "%s, Error: WriteResp events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     return false;
 }
@@ -335,7 +347,7 @@ bool CoherenceController::sendOutgoingEvents() {
 
         if (is_debug_event(outgoingEvent)) {
             debug->debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
-                    Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, cachename_.c_str(), outgoingEvent->getBriefString().c_str());
+                    getCurrentSimCycle(), timestamp_, cachename_.c_str(), outgoingEvent->getBriefString().c_str());
         }
 
         linkDown_->send(outgoingEvent);
@@ -359,7 +371,7 @@ bool CoherenceController::sendOutgoingEvents() {
 
         if (is_debug_event(outgoingEvent)) {
             debug->debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
-                    Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, cachename_.c_str(), outgoingEvent->getBriefString().c_str());
+                    getCurrentSimCycle(), timestamp_, cachename_.c_str(), outgoingEvent->getBriefString().c_str());
         }
 
         if (startTimes_.find(outgoingEvent->getResponseToID()) != startTimes_.end()) {
@@ -501,10 +513,14 @@ void CoherenceController::notifyListenerOfEvict(Addr addr, uint32_t size, Addr i
 
 
 /* Forward a message to a lower level (towards memory) in the hierarchy */
-uint64_t CoherenceController::forwardMessage(MemEvent * event, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data) {
+uint64_t CoherenceController::forwardMessage(MemEvent * event, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data, Command fwdCmd) {
     /* Create event to be forwarded */
     MemEvent* forwardEvent;
     forwardEvent = new MemEvent(*event);
+    
+    if (fwdCmd != Command::LAST_CMD) {
+        forwardEvent->setCmd(fwdCmd);
+    }
 
     if (data == nullptr) forwardEvent->setPayload(0, nullptr);
 
@@ -559,23 +575,26 @@ void CoherenceController::resendEvent(MemEvent * event, bool towardsCPU) {
 
 
 /* Send response up (towards CPU). L1s need to implement their own to split out the requested block */
-uint64_t CoherenceController::sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic) {
-    return sendResponseUp(event, CommandResponse[(int)event->getCmd()], data, false, replay, baseTime, atomic);
+uint64_t CoherenceController::sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool success) {
+    return sendResponseUp(event, CommandResponse[(int)event->getCmd()], data, false, replay, baseTime, success);
 }
 
 
 /* Send response up (towards CPU). L1s need to implement their own to split out the requested block */
-uint64_t CoherenceController::sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic) {
-    return sendResponseUp(event, cmd, data, false, replay, baseTime, atomic);
+uint64_t CoherenceController::sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool success) {
+    return sendResponseUp(event, cmd, data, false, replay, baseTime, success);
 }
 
 
 /* Send response towards the CPU. L1s need to implement their own to split out the requested block */
-uint64_t CoherenceController::sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool dirty, bool replay, uint64_t baseTime, bool atomic) {
+uint64_t CoherenceController::sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool dirty, bool replay, uint64_t baseTime, bool success) {
     MemEvent * responseEvent = event->makeResponse(cmd);
     responseEvent->setSize(event->getSize());
     if (data != nullptr) responseEvent->setPayload(*data);
     responseEvent->setDirty(dirty);
+
+    if (!success)
+        responseEvent->setFail();
 
     if (baseTime < timestamp_) baseTime = timestamp_;
     uint64_t deliveryTime = baseTime + (replay ? mshrLatency_ : accessLatency_);
@@ -658,7 +677,7 @@ void CoherenceController::printDebugInfo(dbgin * diStruct) {
     reas << "(" << diStruct->reason << ")";
 
     debug->debug(_L5_, "C: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 " %-15s %-6s %-6s %-10s %-15s",
-            Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, cachename_.c_str(), cmd.c_str(), diStruct->addr,
+            getCurrentSimCycle(), timestamp_, cachename_.c_str(), cmd.c_str(), diStruct->addr,
             id.str().c_str(), StateString[diStruct->oldst], StateString[diStruct->newst], diStruct->action.c_str(), reas.str().c_str());
 
     debug->debug(_L6_, " %s", diStruct->verboseline.c_str());
@@ -672,7 +691,7 @@ void CoherenceController::printDebugAlloc(bool alloc, Addr addr, std::string not
     std::string action = alloc ? "Alloc" : "Dealloc";
 
     debug->debug(_L5_, "C: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 "",
-            Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, cachename_.c_str(), action.c_str(), addr);
+            getCurrentSimCycle(), timestamp_, cachename_.c_str(), action.c_str(), addr);
 
     if (note != "")
         debug->debug(_L5_, " %s\n", note.c_str());
@@ -692,7 +711,7 @@ void CoherenceController::printDataValue(Addr addr, vector<uint8_t> * data, bool
     }
     
     debug->debug(_L11_, "V: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 " B: %-3zu %s\n",
-            Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, cachename_.c_str(), action.c_str(), 
+            getCurrentSimCycle(), timestamp_, cachename_.c_str(), action.c_str(), 
             addr, data->size(), value.str().c_str());
 /*
     for (unsigned int i = 0; i < data->size(); i++) {

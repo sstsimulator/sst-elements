@@ -1,13 +1,13 @@
-// Copyright 2013-2021 NTESS. Under the terms
+// Copyright 2013-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2021, NTESS
+// Copyright (c) 2013-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -67,11 +67,11 @@ public:
                 return new MemEventLinkInit(*this);
             }
 
-            virtual std::string getVerboseString() override {
+            virtual std::string getVerboseString(int level = 1) override {
                 std::ostringstream str;
                 str << "Start: " << region.start << " End: " << region.end;
                 str << " Step: " << region.interleaveStep << " Size: " << region.interleaveSize;
-                return MemEventBase::getVerboseString() + str.str();
+                return MemEventBase::getVerboseString(level) + str.str();
             }
 
             virtual std::string getBriefString() override {
@@ -106,7 +106,7 @@ public:
     virtual bool isReachable(std::string dst);
 
     /* Send and receive functions for MemLink */
-    virtual void sendInitData(MemEventInit * ev);
+    virtual void sendInitData(MemEventInit * ev, bool broadcast = true);
     virtual MemEventInit* recvInitData();
     virtual void send(MemEventBase * ev);
     virtual MemEventBase * recv();
@@ -128,6 +128,9 @@ protected:
     std::set<EndpointInfo> remotes;             // Tracks remotes immediately accessible on the other side of our link
     std::set<EndpointInfo> endpoints;           // Tracks endpoints in the system with info on how to get there
     std::set<std::string> remoteNames;          // Tracks remote names for faster lookup than iteratinv via remotes
+    
+    // For events that require destination names during init
+    std::set<MemEventInit*> initSendQ;
 
 private:
 

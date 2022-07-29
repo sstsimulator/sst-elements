@@ -1,15 +1,15 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -24,7 +24,7 @@
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
-#include <sst/core/rng/sstrng.h>
+#include <sst/core/rng/rng.h>
 
 #include "sst/elements/merlin/router.h"
 
@@ -152,7 +152,7 @@ public:
     // const RouterPortPair& getRouterPortPair(int src_group, int dest_group, int route_number);
     // void setRouterPortPair(int group, int route_number, const RouterPortPair& pair);
 
-    int getValiantGroup(int dest_group, RNG::SSTRandom* rng) const;
+    int getValiantGroup(int dest_group, RNG::Random* rng) const;
 
     inline uint8_t getLinkCount(int src_group, int dest_group) const {
         return link_counts[src_group * groups + dest_group];
@@ -186,15 +186,16 @@ public:
         SST::Merlin::Topology)
 
     SST_ELI_DOCUMENT_PARAMS(
-        {"dragonfly:hosts_per_router",      "Number of hosts connected to each router."},
-        {"dragonfly:routers_per_group",     "Number of links used to connect to routers in same group."},
-        {"dragonfly:intergroup_per_router", "Number of links per router connected to other groups."},
-        {"dragonfly:intergroup_links",      "Number of links between each pair of groups."},
-        {"dragonfly:num_groups",            "Number of groups in network."},
-        {"dragonfly:algorithm",             "Routing algorithm to use [minmal (default) | valiant].", "minimal"},
-        {"dragonfly:adaptive_threshold",    "Threshold to use when make adaptive routing decisions.", "2.0"},
-        {"dragonfly:global_link_map",       "Array specifying connectivity of global links in each dragonfly group."},
-        {"dragonfly:global_route_mode",     "Mode for intepreting global link map [absolute (default) | relative].","absolute"},
+        // Parameters needed for use with old merlin python module
+        {"dragonfly.hosts_per_router",      "Number of hosts connected to each router."},
+        {"dragonfly.routers_per_group",     "Number of links used to connect to routers in same group."},
+        {"dragonfly.intergroup_per_router", "Number of links per router connected to other groups."},
+        {"dragonfly.intergroup_links",      "Number of links between each pair of groups."},
+        {"dragonfly.num_groups",            "Number of groups in network."},
+        {"dragonfly.algorithm",             "Routing algorithm to use [minmal (default) | valiant].", "minimal"},
+        {"dragonfly.adaptive_threshold",    "Threshold to use when make adaptive routing decisions.", "2.0"},
+        {"dragonfly.global_link_map",       "Array specifying connectivity of global links in each dragonfly group."},
+        {"dragonfly.global_route_mode",     "Mode for intepreting global link map [absolute (default) | relative].","absolute"},
 
         {"hosts_per_router",      "Number of hosts connected to each router."},
         {"routers_per_group",     "Number of links used to connect to routers in same group."},
@@ -229,7 +230,7 @@ public:
     // Actual id of router
     uint32_t rtr_id;
 
-    RNG::SSTRandom* rng;
+    RNG::Random* rng;
 
     int const* output_credits;
     int const* output_queue_lengths;

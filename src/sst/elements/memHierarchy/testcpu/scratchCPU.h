@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -16,10 +16,9 @@
 #ifndef _SCRATCHCPU_H
 #define _SCRATCHCPU_H
 
-#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/interfaces/stdMem.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 #include <sst/core/rng/marsaglia.h>
 
 #include <unordered_map>
@@ -49,7 +48,7 @@ public:
 
     SST_ELI_DOCUMENT_PORTS( {"mem_link", "Connection to cache", { "memHierarchy.MemEventBase" } } )
 
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"memory", "Interface to memory (e.g., caches)", "SST::Interfaces::SimpleMem"} )
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"memory", "Interface to memory (e.g., caches)", "SST::Interfaces::StandardMem"} )
 
 /* Begin class definition */
     ScratchCPU(ComponentId_t id, Params& params);
@@ -59,7 +58,7 @@ public:
     virtual void setup() {}
 
 private:
-    void handleEvent( Interfaces::SimpleMem::Request *ev );
+    void handleEvent( Interfaces::StandardMem::Request *ev );
     virtual bool tick( Cycle_t );
 
     Output out;
@@ -77,7 +76,7 @@ private:
     uint64_t reqsToIssue;   // Number of requests to issue before ending simulation
 
     // Local variables
-    Interfaces::SimpleMem * memory;         // scratch interface
+    Interfaces::StandardMem * memory;         // scratch interface
     std::unordered_map<uint64_t, SimTime_t> requests; // Request queue (outstanding requests)
     TimeConverter *clockTC;                 // Clock object
     Clock::HandlerBase *clockHandler;       // Clock handler

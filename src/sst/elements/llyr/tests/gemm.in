@@ -1,0 +1,56 @@
+1 [pe_type=LD]
+2 [pe_type=LD]
+3 [pe_type=LD]
+4 [pe_type=LD]
+5 [pe_type=LD]
+6 [pe_type=LD]
+7 [pe_type=LD]
+8 [pe_type=LD]
+9 [pe_type=LD]
+10 [pe_type=MUL]
+11 [pe_type=MUL]
+12 [pe_type=MUL]
+13 [pe_type=MUL]
+14 [pe_type=MUL]
+15 [pe_type=MUL]
+16 [pe_type=ADD]
+17 [pe_type=ADD]
+18 [pe_type=ADD]
+19 [pe_type=ADD]
+20 [pe_type=ST]
+21 [pe_type=ST]
+
+1 -- 10
+1 -- 13
+
+4 -- 10
+
+2 -- 11
+2 -- 14
+
+6 -- 11
+
+3 -- 12
+3 -- 15
+
+8 -- 12
+
+5 -- 13
+
+7 -- 14
+
+9 -- 15
+
+10 -- 16
+11 -- 16
+16 -- 17
+12 -- 17
+
+13 -- 18
+14 -- 18
+18 -- 19
+15 -- 19
+
+17 -- 20
+19 -- 21
+

@@ -1,13 +1,13 @@
-// Copyright 2018-2021 NTESS. Under the terms
+// Copyright 2018-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2018-2021, NTESS
+// Copyright (c) 2018-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -17,7 +17,6 @@
 #include "GNA.h"
 
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 #include <sst/core/rng/marsaglia.h>
 #include <sst/elements/memHierarchy/memEvent.h>
 
@@ -63,14 +62,14 @@ GNA::GNA(ComponentId_t id, Params& params) :
     primaryComponentDoNotEndSim();
 
     // init memory
-    memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::SimpleMem::Handler<GNA>(this, &GNA::handleEvent));
+    memory = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::StandardMem::Handler<GNA>(this, &GNA::handleEvent));
     if (!memory) {
         params.insert("port", "mem_link");
-        memory = loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "memory", 0,
-                ComponentInfo::SHARE_PORTS, params, clockTC, new Interfaces::SimpleMem::Handler<GNA>(this, &GNA::handleEvent));
+        memory = loadAnonymousSubComponent<Interfaces::StandardMem>("memHierarchy.standardInterface", "memory", 0,
+                ComponentInfo::SHARE_PORTS, params, clockTC, new Interfaces::StandardMem::Handler<GNA>(this, &GNA::handleEvent));
     }
     if (!memory)
-        out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.memInterface subcomponent\n");
+        out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.standardInterface subcomponent\n");
 }
 
 GNA::GNA() : Component(-1)
@@ -161,10 +160,8 @@ void GNA::init(unsigned int phase) {
                 targ = 0;
 
             uint64_t reqAddr = startAddr+nn*sizeof(T_Wme);
-            SimpleMem::Request *req =
-                new SimpleMem::Request(SimpleMem::Request::Write, reqAddr,
-                                       sizeof(T_Wme));
-            req->data.resize(sizeof(T_Wme));
+            std::vector<uint8_t> data(sizeof(T_Wme), 0);
+            StandardMem::Write *req = new StandardMem::Write(reqAddr, sizeof(T_Wme), data);
             uint32_t str = 300+(rng.generateNextUInt32() % 700);
             if (targ == 0) str = 1;
             uint32_t tmpOff = 2 + (rng.generateNextUInt32() % 12);
@@ -180,7 +177,7 @@ void GNA::init(unsigned int phase) {
             req->data[6] = 0; // valid
             req->data[7] = 0; // valid
             //printf("Writing n%d to targ%d at %p\n", n, targ, (void*)reqAddr);
-            memory->sendInitData(req);
+            memory->sendUntimedData(req);
         }
         assert(sizeof(T_Wme) == 8);
         startAddr += numCon * sizeof(T_Wme);
@@ -222,11 +219,11 @@ void GNA::init(unsigned int phase) {
 }
 
 // handle incoming memory
-void GNA::handleEvent(Interfaces::SimpleMem::Request * req)
+void GNA::handleEvent(Interfaces::StandardMem::Request * req)
 {
-    std::map<uint64_t, STS*>::iterator i = requests.find(req->id);
+    std::map<uint64_t, STS*>::iterator i = requests.find(req->getID());
     if (i == requests.end()) {
-	out.fatal(CALL_INFO, -1, "Request ID (%" PRIx64 ") not found in outstanding requests!\n", req->id);
+	out.fatal(CALL_INFO, -1, "Request ID (%" PRIx64 ") not found in outstanding requests!\n", req->getID());
     } else {
         // handle event
         STS* requestor = i->second;
@@ -334,7 +331,7 @@ bool GNA::clockTic( Cycle_t )
     //    printf(" outRqst Q %d\n", outgoingReqs.size());
     //}
     while(!outgoingReqs.empty() && maxOut > 0) {
-        memory->sendRequest(outgoingReqs.front());
+        memory->send(outgoingReqs.front());
         outgoingReqs.pop();
         maxOut--;
     }

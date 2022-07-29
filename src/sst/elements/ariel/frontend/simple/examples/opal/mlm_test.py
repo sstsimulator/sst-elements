@@ -64,17 +64,17 @@ l2_prefetch_params = {
 }
 
 ringstop_params = {
-        "torus:shape" : groups * (cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group),
+        "torus.shape" : groups * (cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group),
         "output_latency" : "25ps",
         "xbar_bw" : ring_bandwidth,
         "input_buf_size" : "2KiB",
         "input_latency" : "25ps",
         "num_ports" : "3",
-        "torus:local_ports" : "1",
+        "torus.local_ports" : "1",
         "flit_size" : ring_flit_size,
        	"output_buf_size" : "2KiB",
        	"link_bw" : ring_bandwidth,
-       	"torus:width" : "1",
+       	"torus.width" : "1",
         "topology" : "merlin.torus"
 }
 

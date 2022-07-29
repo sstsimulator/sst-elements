@@ -11,7 +11,7 @@ debugCore1 = 0
 core_clock = "2GHz"
 
 # Define the simulation components
-comp_cpu0 = sst.Component("cpu0", "memHierarchy.ScratchCPU")
+comp_cpu0 = sst.Component("core0", "memHierarchy.ScratchCPU")
 comp_cpu0.addParams({
     "scratchSize" : 65536,   # 64K scratch
     "maxAddr" : 2097152,       # 2M mem
@@ -24,8 +24,7 @@ comp_cpu0.addParams({
     "verbose" : 1,
     "rngseed" : 8
 })
-iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.scratchInterface")
-iface0.addParams({ "scratchpad_size" : "64KiB" })
+iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.standardInterface")
 
 comp_l1_0 = sst.Component("l1_0", "memHierarchy.Cache")
 comp_l1_0.addParams({
@@ -86,9 +85,8 @@ scratchnic0.addParams({
 })
 
 
-comp_cpu1 = sst.Component("cpu1", "memHierarchy.ScratchCPU")
-iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.scratchInterface")
-iface1.addParams({ "scratchpad_size" : "64KiB" })
+comp_cpu1 = sst.Component("core1", "memHierarchy.ScratchCPU")
+iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.standardInterface")
 comp_cpu1.addParams({
     "scratchSize" : 65536,   # 64K scratch
     "maxAddr" : 2097152,       # 2M mem
@@ -246,4 +244,3 @@ link_mem0_net = sst.Link("link_mem0_net")
 link_mem0_net.connect( (memnic0, "port", "100ps"), (comp_net, "port2", "100ps") )
 link_mem1_net = sst.Link("link_mem1_net")
 link_mem1_net.connect( (memnic1, "port", "100ps"), (comp_net, "port3", "100ps") )
-# End of generated output.

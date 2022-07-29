@@ -1,13 +1,13 @@
-// Copyright 2013-2021 NTESS. Under the terms
+// Copyright 2013-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2021, NTESS
+// Copyright (c) 2013-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -15,8 +15,6 @@
 
 #include <sst_config.h>
 #include "memLink.h"
-
-#include <sst/core/simulation.h>
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -88,6 +86,20 @@ void MemLink::init(unsigned int phase) {
         } else
             delete ev;
     }
+    
+    // Attempt to drain send Q
+    for (auto it = initSendQ.begin(); it != initSendQ.end(); ) {
+        std::string dst = findTargetDestination((*it)->getRoutingAddress());
+        if (dst != "") {
+            dbg.debug(_L10_, "%s sending init message: %s\n", getName().c_str(), (*it)->getVerboseString().c_str());
+            (*it)->setDst(dst);
+            link->sendInitData(*it);
+            it = initSendQ.erase(it);
+        } else {
+            it++;
+        }
+    }
+
 }
 
 
@@ -99,13 +111,27 @@ void MemLink::setup() {
     for (auto it = endpoints.begin(); it != endpoints.end(); it++) {
         dbg.debug(_L10_, "    Endpoint: %s\n", it->toString().c_str()); 
     }
+
+    if (!initSendQ.empty()) {
+        dbg.fatal(CALL_INFO, -1, "%s, Error: Unable to find destination for init event %s\n",
+                getName().c_str(), (*initSendQ.begin())->getVerboseString().c_str());
+    }
 }
 
 
 /**
  * send init data
  */
-void MemLink::sendInitData(MemEventInit * event) {
+void MemLink::sendInitData(MemEventInit * event, bool broadcast) {
+    if (!broadcast) {
+        std::string dst = findTargetDestination(event->getRoutingAddress());
+        if (dst == "") {
+            /* Stall this until address is known */
+            initSendQ.insert(event);
+            return;
+        }
+        event->setDst(dst);
+    }
     dbg.debug(_L10_, "%s sending init message: %s\n", getName().c_str(), event->getVerboseString().c_str());
     link->sendInitData(event);
 }

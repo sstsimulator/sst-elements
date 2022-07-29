@@ -2,9 +2,10 @@
 #
 #
 
-AM_CPPFLAGS = 	-I$(top_srcdir)/src \
+AM_CPPFLAGS += \
+	-I$(top_srcdir)/src \
 	$(MPI_CPPFLAGS) \
-	$(PYTHON_CPPFLAGS) $(CPPFLAGS)
+	$(PYTHON_CPPFLAGS)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmerlin.la
@@ -14,7 +15,6 @@ libmerlin_la_SOURCES = \
 	merlin.cc \
 	router.h \
 	bridge.h \
-	bridge.cc \
 	background_traffic/background_traffic.h \
 	background_traffic/background_traffic.cc \
 	offeredload/offered_load.h \

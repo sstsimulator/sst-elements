@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 from mhlib import componentlist
 
@@ -11,7 +10,7 @@ DEBUG_LEVEL = 10
 debug_params = { "debug" : 1, "debug_level" : 10 }
 
 # Define the simulation components
-cpu = sst.Component("cpu", "memHierarchy.standardCPU")
+cpu = sst.Component("core", "memHierarchy.standardCPU")
 cpu.addParams({
       "opCount" : "1000",
       "memFreq" : "8",

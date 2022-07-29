@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2021 NTESS. Under the terms
+# Copyright 2009-2022 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2021, NTESS
+# Copyright (c) 2009-2022, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
 # See the file CONTRIBUTORS.TXT in the top level directory
-# the distribution for more information.
+# of the distribution for more information.
 #
 # This file is part of the SST software package. For license
 # information, see the LICENSE file in the top level directory of the
@@ -76,7 +76,7 @@ class Topo(object):
     def build(self):
         pass
     def getRouterNameForId(self,rtr_id):
-        return "rtr.%d"%rtr_id
+        return "rtr_%d"%rtr_id
     def findRouterById(self,rtr_id):
         return sst.findComponentByName(self.getRouterNameForId(rtr_id))
     def _instanceRouter(self,rtr_id,rtr_type):
@@ -87,7 +87,7 @@ class topoSimple(Topo):
     def __init__(self):
         Topo.__init__(self)
         self.topoKeys.extend(["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size"])
-        self.topoOptKeys.extend(["xbar_arb","num_vns","vn_remap","vn_remap_shm","portcontrol:output_arb","portcontrol:arbitration:qos_settings","portcontrol:arbitration:arb_vns","portcontrol:arbitration:arb_vcs"])
+        self.topoOptKeys.extend(["xbar_arb","num_vns","vn_remap","vn_remap_shm","portcontrol.output_arb","portcontrol.arbitration.qos_settings","portcontrol.arbitration.arb_vns","portcontrol.arbitration.arb_vcs"])
     def getName(self):
         return "Simple"
     def prepParams(self):
@@ -110,7 +110,7 @@ class topoSimple(Topo):
         for l in range(_params["num_ports"]):
             ep = self._getEndPoint(l).build(l, {})
             if ep:
-                link = sst.Link("link:%d"%l)
+                link = sst.Link("link_%d"%l)
                 if self.bundleEndpoints:
                     link.setNoCut()
                 link.connect(ep, (rtr, "port%d"%l, _params["link_lat"]) )
@@ -122,8 +122,8 @@ class topoSimple(Topo):
 class topoTorus(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.topoKeys.extend(["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "torus:shape", "torus:width", "torus:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"])
-        self.topoOptKeys.extend(["xbar_arb","num_vns","vn_remap","vn_remap_shm","portcontrol:output_arb","portcontrol:arbitration:qos_settings","portcontrol:arbitration:arb_vns","portcontrol:arbitration:arb_vcs"])
+        self.topoKeys.extend(["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "torus.shape", "torus.width", "torus.local_ports","input_latency","output_latency","input_buf_size","output_buf_size"])
+        self.topoOptKeys.extend(["xbar_arb","num_vns","vn_remap","vn_remap_shm","portcontrol.output_arb","portcontrol.arbitration.qos_settings","portcontrol.arbitration.arb_vns","portcontrol.arbitration.arb_vcs"])
     def getName(self):
         return "Torus"
     def prepParams(self):
@@ -133,26 +133,26 @@ class topoTorus(Topo):
         radix = 0
         self.dims = []
         self.dimwidths = []
-        if not "torus:shape" in _params:
+        if not "torus.shape" in _params:
             self.nd = int(_params["num_dims"])
             for x in range(self.nd):
                 print("Dim %d size:"%x)
                 ds = int(input())
                 self.dims.append(ds);
-            _params["torus:shape"] = self._formatShape(self.dims)
+            _params["torus.shape"] = self._formatShape(self.dims)
         else:
-            self.dims = [int(x) for x in _params["torus:shape"].split('x')]
+            self.dims = [int(x) for x in _params["torus.shape"].split('x')]
             self.nd = len(self.dims)
-        if not "torus:width" in _params:
+        if not "torus.width" in _params:
             for x in range(self.nd):
                 print("Dim %d width (# of links in this dimension):" % x)
                 dw = int(input())
                 self.dimwidths.append(dw)
-            _params["torus:width"] = self._formatShape(self.dimwidths)
+            _params["torus.width"] = self._formatShape(self.dimwidths)
         else:
-            self.dimwidths = [int(x) for x in _params["torus:width"].split('x')]
+            self.dimwidths = [int(x) for x in _params["torus.width"].split('x')]
 
-        local_ports = int(_params["torus:local_ports"])
+        local_ports = int(_params["torus.local_ports"])
         radix = local_ports + 2 * sum(self.dimwidths)
 
         for x in self.dims:
@@ -164,7 +164,7 @@ class topoTorus(Topo):
         _params["topology"] = _params["topology"] = "merlin.torus"
         _params["debug"] = debug
         _params["num_ports"] = _params["router_radix"] = radix
-        _params["torus:local_ports"] = local_ports
+        _params["torus.local_ports"] = local_ports
 
     def _formatShape(self, arr):
         return 'x'.join([str(x) for x in arr])
@@ -187,7 +187,7 @@ class topoTorus(Topo):
         return self.getRouterNameForLocation(self._idToLoc(rtr_id))
 
     def getRouterNameForLocation(self,location):
-        return "rtr.%s"%(self._formatShape(location))
+        return "rtr_%s"%(self._formatShape(location))
     
     def findRouterByLocation(self,location):
         return sst.findComponentByName(self.getRouterNameForLocation(location));
@@ -195,15 +195,15 @@ class topoTorus(Topo):
 
     def build(self):
 
-        num_routers = _params["num_peers"] // _params["torus:local_ports"]
+        num_routers = _params["num_peers"] // _params["torus.local_ports"]
         links = dict()
         def getLink(leftName, rightName, num):
-            name = "link.%s:%s:%d"%(leftName, rightName, num)
+            name = "link_%s_%s_%d"%(leftName, rightName, num)
             if name not in links:
                 links[name] = sst.Link(name)
             return links[name]
 
-        swap_keys = [("torus:shape","shape"),("torus:width","width"),("torus:local_ports","local_ports")]
+        swap_keys = [("torus.shape","shape"),("torus.width","width"),("torus.local_ports","local_ports")]
 
         _topo_params = _params.subsetWithRename(swap_keys);
 
@@ -237,11 +237,11 @@ class topoTorus(Topo):
                     rtr.addLink(getLink(theirlocstr, mylocstr, num), "port%d"%port, _params["link_lat"])
                     port = port+1
 
-            for n in range(_params["torus:local_ports"]):
-                nodeID = int(_params["torus:local_ports"]) * i + n
+            for n in range(_params["torus.local_ports"]):
+                nodeID = int(_params["torus.local_ports"]) * i + n
                 ep = self._getEndPoint(nodeID).build(nodeID, {})
                 if ep:
-                    nicLink = sst.Link("nic.%d:%d"%(i, n))
+                    nicLink = sst.Link("nic_%d_%d"%(i, n))
                     if self.bundleEndpoints:
                        nicLink.setNoCut()
                     nicLink.connect(ep, (rtr, "port%d"%port, _params["link_lat"]))
@@ -252,8 +252,8 @@ class topoTorus(Topo):
 class topoMesh(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.topoKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "mesh:shape", "mesh:width", "mesh:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
-        self.topoOptKeys = ["xbar_arb","num_vns","vn_remap","vn_remap_shm","portcontrol:output_arb","portcontrol:arbitration:qos_settings","portcontrol:arbitration:arb_vns","portcontrol:arbitration:arb_vcs"]
+        self.topoKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "mesh.shape", "mesh.width", "mesh.local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.topoOptKeys = ["xbar_arb","num_vns","vn_remap","vn_remap_shm","portcontrol.output_arb","portcontrol.arbitration.qos_settings","portcontrol.arbitration.arb_vns","portcontrol.arbitration.arb_vcs"]
     def getName(self):
         return "Mesh"
     def prepParams(self):
@@ -263,26 +263,26 @@ class topoMesh(Topo):
         radix = 0
         self.dims = []
         self.dimwidths = []
-        if not "mesh:shape" in _params:
+        if not "mesh.shape" in _params:
             self.nd = int(_params["num_dims"])
             for x in range(self.nd):
                 print("Dim %d size:"%x)
                 ds = int(input())
                 self.dims.append(ds);
-            _params["mesh:shape"] = self._formatShape(self.dims)
+            _params["mesh.shape"] = self._formatShape(self.dims)
         else:
-            self.dims = [int(x) for x in _params["mesh:shape"].split('x')]
+            self.dims = [int(x) for x in _params["mesh.shape"].split('x')]
             self.nd = len(self.dims)
-        if not "mesh:width" in _params:
+        if not "mesh.width" in _params:
             for x in range(self.nd):
                 print("Dim %d width (# of links in this dimension):" % x)
                 dw = int(input())
                 self.dimwidths.append(dw)
-            _params["mesh:width"] = self._formatShape(self.dimwidths)
+            _params["mesh.width"] = self._formatShape(self.dimwidths)
         else:
-            self.dimwidths = [int(x) for x in _params["mesh:width"].split('x')]
+            self.dimwidths = [int(x) for x in _params["mesh.width"].split('x')]
 
-        local_ports = int(_params["mesh:local_ports"])
+        local_ports = int(_params["mesh.local_ports"])
         radix = local_ports + 2 * sum(self.dimwidths)
 
         for x in self.dims:
@@ -294,7 +294,7 @@ class topoMesh(Topo):
         _params["topology"] = _params["topology"] = "merlin.mesh"
         _params["debug"] = debug
         _params["num_ports"] = _params["router_radix"] = radix
-        _params["mesh:local_ports"] = local_ports
+        _params["mesh.local_ports"] = local_ports
 
     def _formatShape(self, arr):
         return 'x'.join([str(x) for x in arr])
@@ -317,7 +317,7 @@ class topoMesh(Topo):
         return self.getRouterNameForLocation(self._idToLoc(rtr_id))
 
     def getRouterNameForLocation(self,location):
-        return "rtr.%s"%(self._formatShape(location))
+        return "rtr_%s"%(self._formatShape(location))
     
     def findRouterByLocation(self,location):
         return sst.findComponentByName(self.getRouterNameForLocation(location));
@@ -325,15 +325,15 @@ class topoMesh(Topo):
     
     def build(self):
 
-        num_routers = _params["num_peers"] // _params["mesh:local_ports"]
+        num_routers = _params["num_peers"] // _params["mesh.local_ports"]
         links = dict()
         def getLink(leftName, rightName, num):
-            name = "link.%s:%s:%d"%(leftName, rightName, num)
+            name = "link_%s_%s_%d"%(leftName, rightName, num)
             if name not in links:
                 links[name] = sst.Link(name)
             return links[name]
 
-        swap_keys = [("mesh:shape","shape"),("mesh:width","width"),("mesh:local_ports","local_ports")]
+        swap_keys = [("mesh.shape","shape"),("mesh.width","width"),("mesh.local_ports","local_ports")]
 
         _topo_params = _params.subsetWithRename(swap_keys);
 
@@ -373,11 +373,11 @@ class topoMesh(Topo):
                 else:
                     port += self.dimwidths[dim]
 
-            for n in range(_params["mesh:local_ports"]):
-                nodeID = int(_params["mesh:local_ports"]) * i + n
+            for n in range(_params["mesh.local_ports"]):
+                nodeID = int(_params["mesh.local_ports"]) * i + n
                 ep = self._getEndPoint(nodeID).build(nodeID, {})
                 if ep:
-                    nicLink = sst.Link("nic.%d:%d"%(i, n))
+                    nicLink = sst.Link("nic_%d_%d"%(i, n))
                     if self.bundleEndpoints:
                        nicLink.setNoCut()
                     nicLink.connect(ep, (rtr, "port%d"%port, _params["link_lat"]))
@@ -387,8 +387,8 @@ class topoMesh(Topo):
 class topoHyperX(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.topoKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "hyperx:shape", "hyperx:width", "hyperx:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
-        self.topoOptKeys = ["xbar_arb","num_vns","vn_remap","vn_remap_shm","portcontrol:output_arb","portcontrol:arbitration:qos_settings","portcontrol:arbitration:arb_vns","portcontrol:arbitration:arb_vcs"]
+        self.topoKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "hyperx.shape", "hyperx.width", "hyperx.local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.topoOptKeys = ["xbar_arb","num_vns","vn_remap","vn_remap_shm","portcontrol.output_arb","portcontrol.arbitration.qos_settings","portcontrol.arbitration.arb_vns","portcontrol.arbitration.arb_vcs"]
     def getName(self):
         return "HyperX"
     def prepParams(self):
@@ -398,26 +398,26 @@ class topoHyperX(Topo):
         radix = 0
         self.dims = []
         self.dimwidths = []
-        if not "hyperx:shape" in _params:
+        if not "hyperx.shape" in _params:
             self.nd = int(_params["num_dims"])
             for x in range(self.nd):
                 print("Dim %d size:"%x)
                 ds = int(input())
                 self.dims.append(ds);
-            _params["hyperx:shape"] = self._formatShape(self.dims)
+            _params["hyperx.shape"] = self._formatShape(self.dims)
         else:
-            self.dims = [int(x) for x in _params["hyperx:shape"].split('x')]
+            self.dims = [int(x) for x in _params["hyperx.shape"].split('x')]
             self.nd = len(self.dims)
-        if not "hyperx:width" in _params:
+        if not "hyperx.width" in _params:
             for x in range(self.nd):
                 print("Dim %d width (# of links in this dimension):" % x)
                 dw = int(input())
                 self.dimwidths.append(dw)
-            _params["hyperx:width"] = self._formatShape(self.dimwidths)
+            _params["hyperx.width"] = self._formatShape(self.dimwidths)
         else:
-            self.dimwidths = [int(x) for x in _params["hyperx:width"].split('x')]
+            self.dimwidths = [int(x) for x in _params["hyperx.width"].split('x')]
 
-        local_ports = int(_params["hyperx:local_ports"])
+        local_ports = int(_params["hyperx.local_ports"])
         radix = local_ports
         for x in range(self.nd):
             radix += (self.dimwidths[x] * (self.dims[x]-1))
@@ -431,7 +431,7 @@ class topoHyperX(Topo):
         _params["topology"] = _params["topology"] = "merlin.hyperx"
         _params["debug"] = debug
         _params["num_ports"] = _params["router_radix"] = radix
-        _params["hyperx:local_ports"] = local_ports
+        _params["hyperx.local_ports"] = local_ports
 
     def _formatShape(self, arr):
         return 'x'.join([str(x) for x in arr])
@@ -453,27 +453,27 @@ class topoHyperX(Topo):
         return self.getRouterNameForLocation(self._idToLoc(rtr_id))
 
     def getRouterNameForLocation(self,location):
-        return "rtr.%s"%(self._formatShape(location))
+        return "rtr_%s"%(self._formatShape(location))
     
     def findRouterByLocation(self,location):
         return sst.findComponentByName(self.getRouterNameForLocation(location));
     
     
     def build(self):
-        num_routers = _params["num_peers"] // _params["hyperx:local_ports"]
+        num_routers = _params["num_peers"] // _params["hyperx.local_ports"]
         links = dict()
         def getLink(name1, name2, num):
             # Sort name1 and name2 so order doesn't matter
             if str(name1) < str(name2):
-                name = "link.%s:%s:%d"%(name1, name2, num)
+                name = "link_%s_%s_%d"%(name1, name2, num)
             else:
-                name = "link.%s:%s:%d"%(name2, name1, num)
+                name = "link_%s_%s_%d"%(name2, name1, num)
             if name not in links:
                 links[name] = sst.Link(name)
             #print("Getting link with name: %s"%name)
             return links[name]
 
-        swap_keys = [("hyperx:shape","shape"),("hyperx:width","width"),("hyperx:local_ports","local_ports"),("hyperx:algorithm","algorithm")]
+        swap_keys = [("hyperx.shape","shape"),("hyperx.width","width"),("hyperx.local_ports","local_ports"),("hyperx.algorithm","algorithm")]
 
         _topo_params = _params.subsetWithRename(swap_keys);
 
@@ -509,11 +509,11 @@ class topoHyperX(Topo):
                             port = port + 1
 
 
-            for n in range(_params["hyperx:local_ports"]):
-                nodeID = int(_params["hyperx:local_ports"]) * i + n
+            for n in range(_params["hyperx.local_ports"]):
+                nodeID = int(_params["hyperx.local_ports"]) * i + n
                 ep = self._getEndPoint(nodeID).build(nodeID, {})
                 if ep:
-                    nicLink = sst.Link("nic.%d:%d"%(i, n))
+                    nicLink = sst.Link("nic_%d_%d"%(i, n))
                     if self.bundleEndpoints:
                        nicLink.setNoCut()
                     nicLink.connect(ep, (rtr, "port%d"%port, _params["link_lat"]))
@@ -526,8 +526,8 @@ class topoHyperX(Topo):
 class topoFatTree(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.topoKeys = ["topology", "debug", "flit_size", "link_bw", "xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size", "fattree:shape"]
-        self.topoOptKeys = ["xbar_arb", "fattree:routing_alg", "fattree:adaptive_threshold","num_vns","vn_remap","vn_remap_shm","portcontrol:output_arb","portcontrol:arbitration:qos_settings","portcontrol:arbitration:arb_vns","portcontrol:arbitration:arb_vcs"]
+        self.topoKeys = ["topology", "debug", "flit_size", "link_bw", "xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size", "fattree.shape"]
+        self.topoOptKeys = ["xbar_arb", "fattree.routing_alg", "fattree.adaptive_threshold","num_vns","vn_remap","vn_remap_shm","portcontrol.output_arb","portcontrol.arbitration.qos_settings","portcontrol.arbitration.arb_vns","portcontrol.arbitration.arb_vcs"]
         self.nicKeys = ["link_bw"]
         self.ups = []
         self.downs = []
@@ -543,12 +543,12 @@ class topoFatTree(Topo):
 #        if "xbar_arb" in _params:
 #            self.rtrKeys.append("xbar_arb")
             #            _params["xbar_arb"] = "merlin.xbar_arb_lru"
-#        if "fattree:routing_alg" in _params:
-#            self.rtrKeys.append("fattree:routing_alg")
-#        if "fattree:adaptive_threshold" in _params:
-#            self.rtrKeys.append("fattree:adaptive_threshold")
+#        if "fattree.routing_alg" in _params:
+#            self.rtrKeys.append("fattree.routing_alg")
+#        if "fattree.adaptive_threshold" in _params:
+#            self.rtrKeys.append("fattree.adaptive_threshold")
 
-        self.shape = _params["fattree:shape"]
+        self.shape = _params["fattree.shape"]
 
         levels = self.shape.split(":")
 
@@ -696,7 +696,7 @@ class topoFatTree(Topo):
     def build(self):
 #        print("build()")
 
-        swap_keys = [("fattree:shape","shape"),("fattree:algorithm","algorithm"),("fattree:adaptive_threshold","adaptive_threshold")]
+        swap_keys = [("fattree.shape","shape"),("fattree.algorithm","algorithm"),("fattree.adaptive_threshold","adaptive_threshold")]
 
         self._topo_params = _params.subsetWithRename(swap_keys);
 
@@ -756,8 +756,8 @@ class topoFatTree(Topo):
 class topoDragonFly(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.topoKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "dragonfly:hosts_per_router", "dragonfly:routers_per_group", "dragonfly:intergroup_per_router", "dragonfly:num_groups","dragonfly:intergroup_links","input_latency","output_latency","input_buf_size","output_buf_size","dragonfly:global_route_mode"]
-        self.topoOptKeys = ["xbar_arb","link_bw:host","link_bw:group","link_bw:global","input_latency:host","input_latency:group","input_latency:global","output_latency:host","output_latency:group","output_latency:global","input_buf_size:host","input_buf_size:group","input_buf_size:global","output_buf_size:host","output_buf_size:group","output_buf_size:global","num_vns","vn_remap","vn_remap_shm","portcontrol:output_arb","portcontrol:arbitration:qos_settings","portcontrol:arbitration:arb_vns","portcontrol:arbitration:arb_vcs"]
+        self.topoKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "dragonfly.hosts_per_router", "dragonfly.routers_per_group", "dragonfly.intergroup_per_router", "dragonfly.num_groups","dragonfly.intergroup_links","input_latency","output_latency","input_buf_size","output_buf_size","dragonfly.global_route_mode"]
+        self.topoOptKeys = ["xbar_arb","link_bw.host","link_bw.group","link_bw.global","input_latency.host","input_latency.group","input_latency.global","output_latency.host","output_latency.group","output_latency.global","input_buf_size.host","input_buf_size.group","input_buf_size.global","output_buf_size.host","output_buf_size.group","output_buf_size.global","num_vns","vn_remap","vn_remap_shm","portcontrol.output_arb","portcontrol.arbitration.qos_settings","portcontrol.arbitration.arb_vns","portcontrol.arbitration.arb_vcs"]
         self.global_link_map = None
         self.global_routes = "absolute"
 
@@ -770,24 +770,24 @@ class topoDragonFly(Topo):
         _params["topology"] = "merlin.dragonfly"
         _params["debug"] = debug
 #        _params["router_radix"] = int(_params["router_radix"])
-        _params["dragonfly:hosts_per_router"] = int(_params["dragonfly:hosts_per_router"])
-        _params["dragonfly:routers_per_group"] = int(_params["dragonfly:routers_per_group"])
-        _params["dragonfly:intergroup_links"] = int(_params["dragonfly:intergroup_links"])
-        _params["dragonfly:num_groups"] = int(_params["dragonfly:num_groups"])
-        _params["num_peers"] = _params["dragonfly:hosts_per_router"] * _params["dragonfly:routers_per_group"] * _params["dragonfly:num_groups"]
-        _params["dragonfly:global_route_mode"] = self.global_routes
+        _params["dragonfly.hosts_per_router"] = int(_params["dragonfly.hosts_per_router"])
+        _params["dragonfly.routers_per_group"] = int(_params["dragonfly.routers_per_group"])
+        _params["dragonfly.intergroup_links"] = int(_params["dragonfly.intergroup_links"])
+        _params["dragonfly.num_groups"] = int(_params["dragonfly.num_groups"])
+        _params["num_peers"] = _params["dragonfly.hosts_per_router"] * _params["dragonfly.routers_per_group"] * _params["dragonfly.num_groups"]
+        _params["dragonfly.global_route_mode"] = self.global_routes
 
 
-        self.total_intergroup_links = (_params["dragonfly:num_groups"] - 1) * _params["dragonfly:intergroup_links"]
-        _params["dragonfly:intergroup_per_router"] = int((self.total_intergroup_links + _params["dragonfly:routers_per_group"] - 1 ) // _params["dragonfly:routers_per_group"])
-        self.empty_ports = _params["dragonfly:intergroup_per_router"] * _params["dragonfly:routers_per_group"] - self.total_intergroup_links
+        self.total_intergroup_links = (_params["dragonfly.num_groups"] - 1) * _params["dragonfly.intergroup_links"]
+        _params["dragonfly.intergroup_per_router"] = int((self.total_intergroup_links + _params["dragonfly.routers_per_group"] - 1 ) // _params["dragonfly.routers_per_group"])
+        self.empty_ports = _params["dragonfly.intergroup_per_router"] * _params["dragonfly.routers_per_group"] - self.total_intergroup_links
 
-        _params["router_radix"] = _params["dragonfly:routers_per_group"]-1 + _params["dragonfly:hosts_per_router"] + _params["dragonfly:intergroup_per_router"]
+        _params["router_radix"] = _params["dragonfly.routers_per_group"]-1 + _params["dragonfly.hosts_per_router"] + _params["dragonfly.intergroup_per_router"]
         _params["num_ports"] = int(_params["router_radix"])
 
-        if _params["dragonfly:num_groups"] > 2:
-            foo = _params["dragonfly:algorithm"]
-            self.topoKeys.append("dragonfly:algorithm")
+        if _params["dragonfly.num_groups"] > 2:
+            foo = _params["dragonfly.algorithm"]
+            self.topoKeys.append("dragonfly.algorithm")
 
     def setGlobalLinkMap(self, glm):
         self.global_link_map = glm
@@ -800,12 +800,12 @@ class topoDragonFly(Topo):
 
 
     def getRouterNameForId(self,rtr_id):
-        rpg = _params["dragonfly:routers_per_group"]
+        rpg = _params["dragonfly.routers_per_group"]
         ret = self.getRouterNameForLocation(rtr_id // rpg, rtr_id % rpg)
         return ret
         
     def getRouterNameForLocation(self,group,rtr):
-        return "rtr:G%dR%d"%(group,rtr)
+        return "rtr_G%dR%d"%(group,rtr)
     
     def findRouterByLocation(self,group,rtr):
         return sst.findComponentByName(self.getRouterNameForLocation(group,rtr))
@@ -820,9 +820,9 @@ class topoDragonFly(Topo):
             return links[name]
         #####################
 
-        rpg = _params["dragonfly:routers_per_group"]
-        ng = _params["dragonfly:num_groups"] - 1 # don't count my group
-        igpr = _params["dragonfly:intergroup_per_router"]
+        rpg = _params["dragonfly.routers_per_group"]
+        ng = _params["dragonfly.num_groups"] - 1 # don't count my group
+        igpr = _params["dragonfly.intergroup_per_router"]
 
         if self.global_link_map is None:
             # Need to define global link map
@@ -881,21 +881,21 @@ class topoDragonFly(Topo):
             dest = max(dest_grp, g)
 
             #getLink("link:g%dg%dr%d"%(g, src, dst)), "port%d"%port, _params["link_lat"])
-            return getLink("link:g%dg%dr%d"%(src,dest,link_num))
+            return getLink("link_g%dg%dr%d"%(src,dest,link_num))
 
         #########################
 
-        swap_keys = [("dragonfly:hosts_per_router","hosts_per_router"),("dragonfly:routers_per_group","routers_per_group"),("dragonfly:intergroup_links","intergroup_links"),("dragonfly:num_groups","num_groups"),("dragonfly:intergroup_per_router","intergroup_per_router"),("dragonfly:algorithm","algorithm"),("dragonfly:global_route_mode","global_route_mode"),("dragonfly:adaptive_threshold","adaptive_threshold")]
+        swap_keys = [("dragonfly.hosts_per_router","hosts_per_router"),("dragonfly.routers_per_group","routers_per_group"),("dragonfly.intergroup_links","intergroup_links"),("dragonfly.num_groups","num_groups"),("dragonfly.intergroup_per_router","intergroup_per_router"),("dragonfly.algorithm","algorithm"),("dragonfly.global_route_mode","global_route_mode"),("dragonfly.adaptive_threshold","adaptive_threshold")]
 
         _topo_params = _params.subsetWithRename(swap_keys);
 
         router_num = 0
         nic_num = 0
         # GROUPS
-        for g in range(_params["dragonfly:num_groups"]):
+        for g in range(_params["dragonfly.num_groups"]):
 
             # GROUP ROUTERS
-            for r in range(_params["dragonfly:routers_per_group"]):
+            for r in range(_params["dragonfly.routers_per_group"]):
                 rtr = self._instanceRouter(router_num,"merlin.hr_router")
                 #rtr = sst.Component("rtr:G%dR%d"%(g, r), "merlin.hr_router")
                 rtr.addParams(_params.subset(self.topoKeys, self.topoOptKeys))
@@ -905,29 +905,29 @@ class topoDragonFly(Topo):
                 if router_num == 0:
                     # Need to send in the global_port_map
                     #map_str = str(self.global_link_map).strip('[]')
-                    #rtr.addParam("dragonfly:global_link_map",map_str)
-                    rtr.addParam("dragonfly:global_link_map",self.global_link_map)
+                    #rtr.addParam("dragonfly.global_link_map",map_str)
+                    rtr.addParam("dragonfly.global_link_map",self.global_link_map)
                     topology.addParam("global_link_map",self.global_link_map)
 
                 port = 0
-                for p in range(_params["dragonfly:hosts_per_router"]):
+                for p in range(_params["dragonfly.hosts_per_router"]):
                     ep = self._getEndPoint(nic_num).build(nic_num, {})
                     if ep:
-                        link = sst.Link("link:g%dr%dh%d"%(g, r, p))
+                        link = sst.Link("link_g%dr%dh%d"%(g, r, p))
                         if self.bundleEndpoints:
                             link.setNoCut()
                         link.connect(ep, (rtr, "port%d"%port, _params["link_lat"]) )
                     nic_num = nic_num + 1
                     port = port + 1
 
-                for p in range(_params["dragonfly:routers_per_group"]):
+                for p in range(_params["dragonfly.routers_per_group"]):
                     if p != r:
                         src = min(p,r)
                         dst = max(p,r)
-                        rtr.addLink(getLink("link:g%dr%dr%d"%(g, src, dst)), "port%d"%port, _params["link_lat"])
+                        rtr.addLink(getLink("link_g%dr%dr%d"%(g, src, dst)), "port%d"%port, _params["link_lat"])
                         port = port + 1
 
-                for p in range(_params["dragonfly:intergroup_per_router"]):
+                for p in range(_params["dragonfly.intergroup_per_router"]):
                     link = getGlobalLink(g,r,p)
                     if link is not None:
                         rtr.addLink(link,"port%d"%port, _params["link_lat"])
@@ -988,7 +988,7 @@ class TestEndPoint(EndPoint):
                 self.group_array[i] = self.group_array[i] + 1
 
 
-        nic = sst.Component("testNic.%d"%nID, "merlin.test_nic")
+        nic = sst.Component("testNic_%d"%nID, "merlin.test_nic")
         linkif = nic.setSubComponent("networkIF","merlin.linkcontrol")
         if ( "link_bw" in _params):
             linkif.addParam("link_bw",_params["link_bw"])
@@ -1024,7 +1024,7 @@ class BisectionEndPoint(EndPoint):
         #self.enableAllStats = False;
         #self.statInterval = "0"
         self.epKeys.extend(["num_peers", "link_bw", "packet_size", "packets_to_send", "buffer_size"])
-        self.epOptKeys.extend(["checkerboard", "rlc:networkIF"])
+        self.epOptKeys.extend(["checkerboard", "rlc.networkIF"])
 
     def getName(self):
         return "Bisection Test End Point"
@@ -1035,7 +1035,7 @@ class BisectionEndPoint(EndPoint):
         pass
 
     def build(self, nID, extraKeys):
-        nic = sst.Component("bisectionNic.%d"%nID, "merlin.bisection_test")
+        nic = sst.Component("bisectionNic_%d"%nID, "merlin.bisection_test")
         linkif = nic.setSubComponent("networkIF","merlin.linkcontrol")
         if ( "link_bw" in _params):
             linkif.addParam("link_bw",_params["link_bw"])
@@ -1071,7 +1071,7 @@ class Pt2ptEndPoint(EndPoint):
         pass
 
     def build(self, nID, extraKeys):
-        nic = sst.Component("pt2ptNic.%d"%nID, "merlin.pt2pt_test")
+        nic = sst.Component("pt2ptNic_%d"%nID, "merlin.pt2pt_test")
         nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
         nic.addParams(_params.subset(extraKeys))
         nic.addParam("id", nID)
@@ -1100,7 +1100,7 @@ class OfferedLoadEndPoint(EndPoint):
         pass
 
     def build(self, nID, extraKeys):
-        nic = sst.Component("offered_load.%d"%nID, "merlin.offered_load")
+        nic = sst.Component("offered_load_%d"%nID, "merlin.offered_load")
         nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
         nic.addParams(_params.subset(extraKeys))
         nic.addParam("id", nID)
@@ -1135,7 +1135,7 @@ class ShiftEndPoint(EndPoint):
         pass
 
     def build(self, nID, extraKeys):
-        nic = sst.Component("shiftNic.%d"%nID, "merlin.shift_nic")
+        nic = sst.Component("shiftNic_%d"%nID, "merlin.shift_nic")
         nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
         nic.addParams(_params.subset(extraKeys))
         nic.addParam("id", nID)
@@ -1156,9 +1156,9 @@ class TrafficGenEndPoint(EndPoint):
         #self.statInterval = "0"
         self.optionalKeys = ["delay_between_packets"]
         for genType in ["PacketDest", "PacketSize", "PacketDelay"]:
-            for tag in ["pattern", "RangeMin", "RangeMax", "HotSpot:target", "HotSpot:targetProbability", "Normal:Mean", "Normal:Sigma", "Binomial:Mean", "Binomial:Sigma"]:
-                self.optionalKeys.append("%s:%s"%(genType, tag))
-        self.epKeys.extend(["topology", "num_peers", "link_bw", "packets_to_send", "packet_size", "message_rate", "PacketDest:pattern", "PacketDest:RangeMin", "PacketDest:RangeMax"])
+            for tag in ["pattern", "RangeMin", "RangeMax", "HotSpot.target", "HotSpot.targetProbability", "Normal.Mean", "Normal.Sigma", "Binomial.Mean", "Binomial.Sigma"]:
+                self.optionalKeys.append("%s.%s"%(genType, tag))
+        self.epKeys.extend(["topology", "num_peers", "link_bw", "packets_to_send", "packet_size", "message_rate", "PacketDest.pattern", "PacketDest.RangeMin", "PacketDest.RangeMax"])
         self.epOptKeys.extend("checkerboard")
         self.epOptKeys.extend(self.optionalKeys)
         self.nicKeys = []
@@ -1167,32 +1167,32 @@ class TrafficGenEndPoint(EndPoint):
     def prepParams(self):
         #if "checkerboard" not in _params:
         #    _params["checkerboard"] = "1"
-        _params["PacketDest:RangeMin"] = 0
-        _params["PacketDest:RangeMax"] = int(_params["num_peers"])
+        _params["PacketDest.RangeMin"] = 0
+        _params["PacketDest.RangeMax"] = int(_params["num_peers"])
 
-        if _params["PacketDest:pattern"] == "NearestNeighbor":
-            self.nicKeys.append("PacketDest:NearestNeighbor:3DSize")
-            if not "PacketDest:NearestNeighbor:3DSize" in _params:
-                _params["PacketDest:NearestNeighbor:3DSize"] = "%s %s %s"%(_params["PacketDest:3D shape X"], _params["PacketDest:3D shape Y"], _params["PacketDest:3D shape Z"])
-        elif _params["PacketDest:pattern"] == "HotSpot":
-            self.nicKeys.append("PacketDest:HotSpot:target")
-            self.nicKeys.append("PacketDest:HotSpot:targetProbability")
-        elif _params["PacketDest:pattern"] == "Normal":
-            self.nicKeys.append("PacketDest:Normal:Mean")
-            self.nicKeys.append("PacketDest:Normal:Sigma")
-        elif _params["PacketDest:pattern"] == "Binomial":
-            self.nicKeys.append("PacketDest:Binomial:Mean")
-            self.nicKeys.append("PacketDest:Binomial:Sigma")
-        elif _params["PacketDest:pattern"] == "Exponential":
-            self.nicKeys.append("PacketDest:Exponential:Lambda")
-        elif _params["PacketDest:pattern"] == "Uniform":
+        if _params["PacketDest.pattern"] == "NearestNeighbor":
+            self.nicKeys.append("PacketDest.NearestNeighbor.Size")
+            if not "PacketDest.NearestNeighbor.Size" in _params:
+                _params["PacketDest.NearestNeighbor.Size"] = "%s %s %s"%(_params["PacketDest.3D shape X"], _params["PacketDest.3D shape Y"], _params["PacketDest.3D shape Z"])
+        elif _params["PacketDest.pattern"] == "HotSpot":
+            self.nicKeys.append("PacketDest:HotSpot.target")
+            self.nicKeys.append("PacketDest:HotSpot.targetProbability")
+        elif _params["PacketDest.pattern"] == "Normal":
+            self.nicKeys.append("PacketDest.Normal.Mean")
+            self.nicKeys.append("PacketDest.Normal.Sigma")
+        elif _params["PacketDest.pattern"] == "Binomial":
+            self.nicKeys.append("PacketDest.Binomial.Mean")
+            self.nicKeys.append("PacketDest.Binomial.Sigma")
+        elif _params["PacketDest.pattern"] == "Exponential":
+            self.nicKeys.append("PacketDest.Exponential.Lambda")
+        elif _params["PacketDest.pattern"] == "Uniform":
             pass
         else:
-            print("Unknown pattern" + _params["PacketDest:pattern"])
+            print("Unknown pattern" + _params["PacketDest.pattern"])
             sys.exit(1)
 
     def build(self, nID, extraKeys):
-        nic = sst.Component("TrafficGen.%d"%nID, "merlin.trafficgen")
+        nic = sst.Component("TrafficGen_%d"%nID, "merlin.trafficgen")
         linkif = nic.setSubComponent("networkIF","merlin.linkcontrol")
         if ( "link_bw" in _params):
             linkif.addParam("link_bw",_params["link_bw"])

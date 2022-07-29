@@ -1,13 +1,13 @@
-// Copyright 2013-2021 NTESS. Under the terms
+// Copyright 2013-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2021, NTESS
+// Copyright (c) 2013-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -112,7 +112,16 @@ class MemNICBase : public MemLinkBase {
         };
 
         // Init functions
-        virtual void sendInitData(MemEventInit * ev) {
+        virtual void sendInitData(MemEventInit * ev, bool broadcast = true) {
+            if (!broadcast) {
+                std::string dst = findTargetDestination(ev->getRoutingAddress());
+                if (dst == "") {
+                    // Hold this request until we know the right address
+                    initWaitForDst.insert(ev);
+                    return;
+                }
+                ev->setDst(dst);
+            }
             MemRtrEvent * mre = new MemRtrEvent(ev);
             SST::Interfaces::SimpleNetwork::Request* req = new SST::Interfaces::SimpleNetwork::Request();
             req->dest = SST::Interfaces::SimpleNetwork::INIT_BROADCAST_ADDR;
@@ -226,6 +235,21 @@ class MemNICBase : public MemLinkBase {
                     linkcontrol->sendInitData(initSendQueue.front());
                     initSendQueue.pop();
                 }
+
+                for (auto it = initWaitForDst.begin(); it != initWaitForDst.end();) {
+                    std::string dst = findTargetDestination((*it)->getRoutingAddress());
+                    if (dst != "") {
+                        (*it)->setDst(dst);
+                        MemRtrEvent * mre = new MemRtrEvent(*it);
+                        SST::Interfaces::SimpleNetwork::Request* req = new SST::Interfaces::SimpleNetwork::Request();
+                        req->dest = SST::Interfaces::SimpleNetwork::INIT_BROADCAST_ADDR;
+                        req->givePayload(mre);
+                        linkcontrol->sendInitData(req);
+                        it = initWaitForDst.erase(it);
+                    } else {
+                        it++;
+                    }
+                }
             }
 
             // On first init round, send our region out to all others
@@ -257,7 +281,7 @@ class MemNICBase : public MemLinkBase {
                 } else {
                     MemRtrEvent * mre = static_cast<MemRtrEvent*>(payload);
                     MemEventInit *ev = static_cast<MemEventInit*>(mre->event);
-                    dbg.debug(_L10_, "%s (memNICBase) received mre during init. %s\n", getName().c_str(), mre->event->getVerboseString().c_str());
+                    dbg.debug(_L10_, "%s (memNICBase) received mre during init. %s\n", getName().c_str(), mre->event->getVerboseString(dlevel).c_str());
 
                     /*
                      * Event is for us if:
@@ -278,7 +302,7 @@ class MemNICBase : public MemLinkBase {
                             delete ev;
                             delete mre;
                         } else {
-                            dbg.debug(_L10_, "%s received init message: %s\n", getName().c_str(), mEvEndPt->getVerboseString().c_str());
+                            dbg.debug(_L10_, "%s received init message: %s\n", getName().c_str(), mEvEndPt->getVerboseString(dlevel).c_str());
                             std::vector<std::pair<MemRegion,bool>> regions = mEvEndPt->getRegions();
                             for (auto it = regions.begin(); it != regions.end(); it++) {
                                 EndpointInfo epInfo;
@@ -299,8 +323,8 @@ class MemNICBase : public MemLinkBase {
             }
         }
         
-        // Setup step
-        // Just debug info for now
+        // Setup
+        // Clean up state generated during init() and perform some sanity checks
         virtual void setup() {
             /* Limit destinations to the memory regions reported by endpoint messages that came through them */
             
@@ -332,6 +356,30 @@ class MemNICBase : public MemLinkBase {
                 }
             }
             destEndpointInfo = newDests;
+            
+            int stopAfter = 20; // This is error checking, if it takes too long, stop
+            for (auto et = destEndpointInfo.begin(); et != destEndpointInfo.end(); et++) {
+                for (auto it = std::next(et,1); it != destEndpointInfo.end(); it++) {
+                    if (it->name == et->name) continue; // Not a problem
+                    if ((it->region).doesIntersect(et->region)) {
+                        dbg.fatal(CALL_INFO, -1, "%s, Error: Found destinations on the network with overlapping address regions. Cannot generate routing table."
+                                "\n  Destination 1: %s\n  Destination 2: %s\n", 
+                                getName().c_str(), it->toString().c_str(), et->toString().c_str());
+                    }
+                    stopAfter--;
+                    if (stopAfter == 0) {
+                        stopAfter = -1;
+                        break;
+                    }
+                }
+                if (stopAfter <= 0) {
+                    stopAfter = -1;
+                    break;
+                }
+            }
+            if (stopAfter == -1)
+                dbg.debug(_L2_, "%s, Notice: Too many regions to complete error check for overlapping destination regions. Checked first 20 pairs.\n",
+                        getName().c_str());
 
             for (auto it = networkAddressMap.begin(); it != networkAddressMap.end(); it++) {
                 dbg.debug(_L10_, "    Address: %s -> %" PRIu64 "\n", it->first.c_str(), it->second);
@@ -344,6 +392,11 @@ class MemNICBase : public MemLinkBase {
             }
             for (auto it = endpointInfo.begin(); it != endpointInfo.end(); it++) {
                 dbg.debug(_L10_, "    Endpoint: %s\n", it->toString().c_str()); 
+            }
+
+            if (!initWaitForDst.empty()) {
+                dbg.fatal(CALL_INFO, -1, "%s, Error: Unable to find destination for init event %s\n",
+                        getName().c_str(), (*initWaitForDst.begin())->getVerboseString(dlevel).c_str());
             }
         }
 
@@ -433,6 +486,7 @@ class MemNICBase : public MemLinkBase {
         // Init queues
         std::queue<MemRtrEvent*> initQueue; // Queue for received init events
         std::queue<SST::Interfaces::SimpleNetwork::Request*> initSendQueue; // Queue of events waiting to be sent after network (linkcontrol) initializes
+        std::set<MemEventInit*> initWaitForDst; // Set of events with unknown destinations    
 
         // Other parameters
         std::unordered_set<uint32_t> sourceIDs, destIDs; // IDs which this endpoint cares about

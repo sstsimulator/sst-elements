@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 from mhlib import componentlist
 
@@ -27,14 +26,14 @@ dir_src = [core_group,mmio_group]
 dir_dst = [mem_group]
 mem_src = [dir_group]
 
-# Constans shared across components
+# Constants shared across components
 network_bw = "25GB/s"
 clock = "2GHz"
 mmio_addr = 1024
 
 
 # Define the simulation components
-cpu = sst.Component("cpu", "memHierarchy.standardCPU")
+cpu = sst.Component("core", "memHierarchy.standardCPU")
 cpu.addParams({
       "opCount" : "1000",
       "memFreq" : "4",

@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -15,7 +15,6 @@
 
 
 #include <sst_config.h>
-#include <sst/core/simulation.h>
 
 #include "arielcpu.h"
 
@@ -202,7 +201,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
                     getName().c_str(), core_count, mem->getMaxPopulatedSlotNumber());
 
         for (int i = 0; i < core_count; i++) {
-            cpu_to_cache_links.push_back(mem->create<Interfaces::SimpleMem>(i, ComponentInfo::INSERT_STATS, timeconverter, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
+            cpu_to_cache_links.push_back(mem->create<Interfaces::StandardMem>(i, ComponentInfo::INSERT_STATS, timeconverter, new StandardMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
             cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
         }
     } else {
@@ -211,8 +210,8 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
         for (int i = 0; i < core_count; i++) {
             Params par;
             par.insert("port", "cache_link_" + std::to_string(i));
-            cpu_to_cache_links.push_back(loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "memory", i,
-                        ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, par, timeconverter, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
+            cpu_to_cache_links.push_back(loadAnonymousSubComponent<Interfaces::StandardMem>("memHierarchy.standardInterface", "memory", i,
+                        ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, par, timeconverter, new StandardMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
             cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
 
 #ifdef HAVE_CUDA

@@ -117,8 +117,8 @@ def _finalize_qos_config(total_nodes) :
     sst.merlin._params["vn_remap_shm"] = "ember_vn_remap"
     sst.merlin._params["vn_remap"] = mylist
 
-    #sst.merlin._params["portcontrol:output_arb"] = "merlin.arb.output.qos.multi"
-    #sst.merlin._params["portcontrol:arbitration:qos_settings"] = qos_settings
+    #sst.merlin._params["portcontrol.output_arb"] = "merlin.arb.output.qos.multi"
+    #sst.merlin._params["portcontrol.arbitration.qos_settings"] = qos_settings
     
 
 def generate( args ):

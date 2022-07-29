@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 
 # Define the simulation components
@@ -32,16 +31,23 @@ comp_network.addParams({
 comp_network.setSubComponent("topology","merlin.singlerouter")
 
 for x in range(cores):
-    comp_cpu = sst.Component("cpu" + str(x), "memHierarchy.trivialCPU")
+    comp_cpu = sst.Component("core" + str(x), "memHierarchy.standardCPU")
     comp_cpu.addParams({
+        "memFreq" : 4,
+        "memSize" : "1GiB",
+        "verbose" : 0,
         "clock" : coreclock,
-        "commFreq" : 4, # issue request every 4th cycle
         "rngseed" : 20+x,
-        "do_write" : 1,
-        "num_loadstore" : 1200,
-        "memSize" : 1024*1024*1024
+        "maxOutstanding" : 32,
+        "opCount" : 3000,
+        "reqsPerIssue" : 2,
+        "write_freq" : 36,      # 36% writes
+        "read_freq" : 55,       # 55% reads
+        "llsc_freq" : 2,        # 2% LLSC
+        "flush_freq" : 4,       # 4% flushes
+        "flushinv_freq" : 3,    # 3% flush-inv
     })
-    iface = comp_cpu.setSubComponent("memory", "memHierarchy.memInterface")
+    iface = comp_cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 
     l1cache = sst.Component("l1cache" + str(x), "memHierarchy.Cache")
     l1cache.addParams({

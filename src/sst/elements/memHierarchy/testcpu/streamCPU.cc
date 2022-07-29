@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -17,7 +17,6 @@
 #include "testcpu/streamCPU.h"
 
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
 #include "memEvent.h"
 
@@ -64,13 +63,13 @@ streamCPU::streamCPU(ComponentId_t id, Params& params) :
     clockTC = registerClock(clockFreq, clockHandler);
     num_reads_issued = num_reads_returned = 0;
 
-    memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::SimpleMem::Handler<streamCPU>(this, &streamCPU::handleEvent));
+    memory = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::StandardMem::Handler<streamCPU>(this, &streamCPU::handleEvent));
 
     if (!memory) {
         Params interfaceParams;
         interfaceParams.insert("port", "mem_link");
-        memory = loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
-                interfaceParams, clockTC, new Interfaces::SimpleMem::Handler<streamCPU>(this, &streamCPU::handleEvent));
+        memory = loadAnonymousSubComponent<Interfaces::StandardMem>("memHierarchy.standardInterface", "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
+                interfaceParams, clockTC, new Interfaces::StandardMem::Handler<streamCPU>(this, &streamCPU::handleEvent));
         //out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.memInterface subcomponent\n");
     }
 
@@ -94,18 +93,18 @@ void streamCPU::init(unsigned int phase)
 }
 
 // incoming events are scanned and deleted
-void streamCPU::handleEvent(Interfaces::SimpleMem::Request * req)
+void streamCPU::handleEvent(Interfaces::StandardMem::Request * req)
 {
 	//out.output("recv\n");
-    std::map<uint64_t, SimTime_t>::iterator i = requests.find(req->id);
+    std::map<uint64_t, SimTime_t>::iterator i = requests.find(req->getID());
     if (i == requests.end()) {
-	out.fatal(CALL_INFO, -1, "Request ID (%" PRIx64 ") not found in outstanding requests!\n", req->id);
+	out.fatal(CALL_INFO, -1, "Request ID (%" PRIx64 ") not found in outstanding requests!\n", req->getID());
     } else {
         SimTime_t et = getCurrentSimTime() - i->second;
         requests.erase(i);
 
-	out.verbose(CALL_INFO, 1, 0, "Received MemEvent (response to: %10" PRIu64 ", Addr=%15" PRIu64 ", Took: %7" PRIu64 "ns, %6zu pending requests).\n",
-                req->id, req->addr, et, requests.size());
+        out.verbose(CALL_INFO, 1, 0, "Received Response (%s), Took: %7" PRIu64 "ns, %6zu pending requests.\n",
+                    req->getString().c_str(), et, requests.size());
         num_reads_returned++;
     }
     delete req;
@@ -126,20 +125,22 @@ bool streamCPU::clockTic( Cycle_t )
         for (int i = 0; i < reqsToSend; i++) {
 
     	    bool doWrite = do_write && (((rng.generateNextUInt32() % 10) == 0));
-            Interfaces::SimpleMem::Request::Command cmd = doWrite ? Interfaces::SimpleMem::Request::Write : Interfaces::SimpleMem::Request::Read;
 
-            Interfaces::SimpleMem::Request *req = new Interfaces::SimpleMem::Request(cmd, nextAddr, 4/* 4 bytes*/);
+            Interfaces::StandardMem::Request* req;
 
 	    if ( doWrite ) {
-	        req->data.resize(4);
-                req->data[0] = (nextAddr >> 24) & 0xff;
-                req->data[1] = (nextAddr >> 16) & 0xff;
-                req->data[2] = (nextAddr >>  8) & 0xff;
-                req->data[3] = (nextAddr >>  0) & 0xff;
-	    }
+                std::vector<uint8_t> data;
+                data.push_back((nextAddr >> 24) & 0xff);
+                data.push_back((nextAddr >> 16) & 0xff);
+                data.push_back((nextAddr >>  8) & 0xff);
+                data.push_back((nextAddr >>  0) & 0xff);
+	        req = new Interfaces::StandardMem::Write(nextAddr, 4, data);
+            } else {
+                req = new Interfaces::StandardMem::Read(nextAddr, 4);
+            }
 
-            memory->sendRequest(req);
-            requests.insert(std::make_pair(req->id, getCurrentSimTime()));
+            memory->send(req);
+            requests.insert(std::make_pair(req->getID(), getCurrentSimTime()));
 
 	    out.verbose(CALL_INFO, 1, 0, "Issued request %10d: %5s for address %20d.\n", numLS, (doWrite ? "write" : "read"), nextAddr);
 

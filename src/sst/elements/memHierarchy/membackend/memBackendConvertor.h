@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -49,10 +49,12 @@ class MemBackendConvertor : public SubComponent {
             { "requests_received_GetSX",            "Number of GetSX (read) requests received",         "requests", 1 },\
             { "requests_received_GetX",             "Number of GetX (read) requests received",          "requests", 1 },\
             { "requests_received_PutM",             "Number of PutM (write) requests received",         "requests", 1 },\
+            { "requests_received_Write",            "Number of Write (write) requests received",         "requests", 1 },\
             { "outstanding_requests",               "Total number of outstanding requests each cycle",  "requests", 1 },\
             { "latency_GetS",                       "Total latency of handled GetS requests",           "cycles",   1 },\
             { "latency_GetSX",                      "Total latency of handled GetSX requests",          "cycles",   1 },\
             { "latency_GetX",                       "Total latency of handled GetX requests",           "cycles",   1 },\
+            { "latency_Write",                      "Total latency of handled Write requests",           "cycles",   1 },\
             { "latency_PutM",                       "Total latency of handled PutM requests",           "cycles",   1 }
 
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::MemBackendConvertor, MemBackend*, uint32_t)
@@ -88,15 +90,24 @@ class MemBackendConvertor : public SubComponent {
 
     class CustomReq : public BaseReq {
     public:
-        CustomReq(CustomCmdInfo * info, uint32_t reqId) : BaseReq(reqId, BaseReq::ReqType::CUSTOM),
-            m_info(info) { }
+        CustomReq(Interfaces::StandardMem::CustomData * info, Event::id_type evId, std::string rqstr, uint32_t reqId) : BaseReq(reqId, BaseReq::ReqType::CUSTOM),
+            m_info(info), m_evId(evId), m_rqstr(rqstr) { }
         ~CustomReq() { }
 
-        CustomCmdInfo* getInfo() { return m_info; }
-        const std::string getRqstr() override { return m_info->getRqstr(); }
+        Interfaces::StandardMem::CustomData * getInfo() { return m_info; }
+        const std::string getRqstr() override { return m_rqstr; }
+        Event::id_type getEvId() { return m_evId; }
+        std::string getString() override {
+            std::ostringstream str;
+            str << " EvID: " << m_evId.first << "," << m_evId.second;
+            str << " Rqstr: " << m_rqstr;
+            str << " Data: " << m_info->getString();
+            return BaseReq::getString() + str.str();
+        }
     private:
-        CustomCmdInfo * m_info;
-        uint32_t m_CustCmd;
+        Interfaces::StandardMem::CustomData * m_info;
+        std::string m_rqstr;
+        Event::id_type m_evId;
 
     };
 
@@ -113,7 +124,7 @@ class MemBackendConvertor : public SubComponent {
         uint32_t processed()    { return m_offset; }
         uint64_t id()           { return ((uint64_t)m_reqId << 32) | m_offset; }
         MemEvent* getMemEvent() { return m_event; }
-        bool isWrite()          { return (m_event->getCmd() == Command::PutM || (m_event->queryFlag(MemEvent::F_NONCACHEABLE) && m_event->getCmd() == Command::GetX)) ? true : false; }
+        bool isWrite()          { return (m_event->getCmd() == Command::PutM || m_event->getCmd() == Command::Write); }
         uint32_t size()         { return m_event->getSize(); }
         const std::string getRqstr() override { return m_event->getRqstr(); }
 
@@ -151,7 +162,7 @@ class MemBackendConvertor : public SubComponent {
     virtual void turnClockOff();
     virtual void turnClockOn(Cycle_t cycle);
     virtual void handleMemEvent(  MemEvent* );
-    virtual void handleCustomEvent( CustomCmdInfo* );
+    virtual void handleCustomEvent(Interfaces::StandardMem::CustomData*, Event::id_type, std::string);
     virtual uint32_t getRequestWidth();
     virtual bool isBackendClocked() { return m_clockBackend; }
 
@@ -239,6 +250,9 @@ class MemBackendConvertor : public SubComponent {
             case Command::GetSX:
                 stat_GetSXReqReceived->addData(1);
                 break;
+            case Command::Write:
+                stat_WriteReqReceived->addData(1);
+                break;
             case Command::PutM:
                 stat_PutMReqReceived->addData(1);
                 break;
@@ -257,6 +271,9 @@ class MemBackendConvertor : public SubComponent {
                 break;
             case Command::GetX:
                 stat_GetXLatency->addData(latency);
+                break;
+            case Command::Write:
+                stat_WriteLatency->addData(latency);
                 break;
             case Command::PutM:
                 stat_PutMLatency->addData(latency);
@@ -292,10 +309,12 @@ class MemBackendConvertor : public SubComponent {
     Statistic<uint64_t>* stat_GetSLatency;
     Statistic<uint64_t>* stat_GetSXLatency;
     Statistic<uint64_t>* stat_GetXLatency;
+    Statistic<uint64_t>* stat_WriteLatency;
     Statistic<uint64_t>* stat_PutMLatency;
 
     Statistic<uint64_t>* stat_GetSReqReceived;
     Statistic<uint64_t>* stat_GetXReqReceived;
+    Statistic<uint64_t>* stat_WriteReqReceived;
     Statistic<uint64_t>* stat_PutMReqReceived;
     Statistic<uint64_t>* stat_GetSXReqReceived;
 

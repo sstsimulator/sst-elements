@@ -1,13 +1,13 @@
-// Copyright 2013-2021 NTESS. Under the terms
+// Copyright 2013-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2021, NTESS
+// Copyright (c) 2013-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -15,8 +15,6 @@
 
 #include <sst_config.h>
 #include "sst/elements/memHierarchy/memNIC.h"
-
-#include <sst/core/simulation.h>
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -90,7 +88,7 @@ bool MemNIC::recvNotify(int) {
         if (ev) {
             if (is_debug_event(ev)) {
                 dbg.debug(_L5_, "E: %-40" PRIu64 "  %-20s NIC:Recv      (%s)\n", 
-                    Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), ev->getBriefString().c_str());
+                    getCurrentSimCycle(), getName().c_str(), ev->getBriefString().c_str());
             }
             (*recvHandler)(ev);
         }
@@ -110,7 +108,7 @@ void MemNIC::send(MemEventBase *ev) {
 
     if (is_debug_event(ev)) {
         dbg.debug(_L5_, "N: %-40" PRIu64 "  %-20s Enqueue       Dst: %lld, bits: %zu, (%s)\n", 
-            Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), req->dest, req->size_in_bits, ev->getBriefString().c_str());
+            getCurrentSimCycle(), getName().c_str(), req->dest, req->size_in_bits, ev->getBriefString().c_str());
     }
 
     req->givePayload(mre);
@@ -139,7 +137,7 @@ void MemNIC::printStatus(Output &out) {
     std::queue<SST::Interfaces::SimpleNetwork::Request*> tmpQ;
     while (!sendQueue.empty()) {
         MemEventBase * ev = static_cast<MemRtrEvent*>(sendQueue.front()->inspectPayload())->event;
-        out.output("      %s\n", ev->getVerboseString().c_str());
+        out.output("      %s\n", ev->getVerboseString(out.getVerboseLevel()).c_str());
         tmpQ.push(sendQueue.front());
         sendQueue.pop();
     }
@@ -156,7 +154,7 @@ void MemNIC::emergencyShutdownDebug(Output &out) {
         MemEventBase * ev = mre->event;
         delete mre;
         if (ev) {
-            out.output("      Undelivered message: %s\n", ev->getVerboseString().c_str());
+            out.output("      Undelivered message: %s\n", ev->getVerboseString(out.getVerboseLevel()).c_str());
         }
         mre = doRecv(link_control);
     }

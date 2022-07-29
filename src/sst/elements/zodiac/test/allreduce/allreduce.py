@@ -74,9 +74,9 @@ sst.merlin._params["output_buf_size"] = "1KB"
 sst.merlin._params["flit_size"] = netFlitSize
 
 sst.merlin._params["num_dims"] = numDim 
-sst.merlin._params["torus:shape"] = shape 
-sst.merlin._params["torus:width"] = width 
-sst.merlin._params["torus:local_ports"] = 1
+sst.merlin._params["torus.shape"] = shape
+sst.merlin._params["torus.width"] = width
+sst.merlin._params["torus.local_ports"] = 1
 
 nicParams = ({ 
 		"debug" : 0,

@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -263,7 +263,7 @@ bool c_TxnGenBase::sendRequest()
 
         c_Transaction *l_txn=l_txnReqEvPtr->m_payload;
     #ifdef __SST_DEBUG_OUTPUT__
-        debug->verbose(CALL_INFO,1,0,"[cycle:%lld] addr: 0x%x isRead:%d seqNum:%lld\n",l_cycle,l_txn->getAddress(),l_txn->isRead(),l_txn->getSeqNum());
+        debug->verbose(CALL_INFO,1,0,"[cycle:%lld] addr: 0x%lx isRead:%d seqNum:%lu\n",l_cycle,l_txn->getAddress(),l_txn->isRead(),l_txn->getSeqNum());
     #endif
 
         m_outstandingReqs.insert(std::pair<uint64_t, uint64_t>(l_txn->getSeqNum(),l_cycle));
@@ -314,7 +314,7 @@ c_TxnGen::c_TxnGen(ComponentId_t x_id, Params& x_params) :
     //set mode (random or sequential)
     std::string l_mode = x_params.find<std::string>("mode", "rand", l_found);
     if (!l_found) {
-        output->fatal(CALL_INFO, -1, "TxnGen:: mode is missing... exiting");
+        output->fatal(CALL_INFO, -1, "TxnGen:: mode is missing from parameters, it should be 'rand' or 'seq'... exiting");
     } else {
         if (l_mode == "rand")
             m_mode = e_TxnMode::RAND;

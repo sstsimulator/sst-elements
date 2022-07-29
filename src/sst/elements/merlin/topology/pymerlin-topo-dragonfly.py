@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2021 NTESS. Under the terms
+# Copyright 2009-2022 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2021, NTESS
+# Copyright (c) 2009-2022, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
 # See the file CONTRIBUTORS.TXT in the top level directory
-# the distribution for more information.
+# of the distribution for more information.
 #
 # This file is part of the SST software package. For license
 # information, see the LICENSE file in the top level directory of the
@@ -56,7 +56,7 @@ class topoDragonFly(Topology):
         return self.getRouterNameForLocation(rtr_id // self.routers_per_group, rtr_id % self.routers_per_group)
 
     def getRouterNameForLocation(self,group,rtr):
-        return "%srtr.G%dR%d"%(self._prefix,group,rtr)
+        return "%srtr_G%dR%d"%(self._prefix,group,rtr)
 
     def findRouterByLocation(self,group,rtr):
         return sst.findComponentByName(self.getRouterNameForLocation(group,rtr))
@@ -148,7 +148,7 @@ class topoDragonFly(Topology):
             dest = max(dest_grp, g)
 
             #getLink("link:g%dg%dr%d"%(g, src, dst)), "port%d"%port, self.params["link_lat"])
-            return getLink("%sglobal_link:g%dg%dr%d"%(self._prefix,src,dest,link_num))
+            return getLink("%sglobal_link_g%dg%dr%d"%(self._prefix,src,dest,link_num))
 
         #########################
 
@@ -169,7 +169,7 @@ class topoDragonFly(Topology):
                 if router_num == 0:
                     # Need to send in the global_port_map
                     #map_str = str(self.global_link_map).strip('[]')
-                    #rtr.addParam("dragonfly:global_link_map",map_str)
+                    #rtr.addParam("dragonfly.global_link_map",map_str)
                     sub.addParam("global_link_map",self.global_link_map)
 
                 port = 0
@@ -177,7 +177,7 @@ class topoDragonFly(Topology):
                     #(nic, port_name) = endpoint.build(nic_num, {"num_peers":num_peers})
                     (nic, port_name) = endpoint.build(nic_num, {})
                     if nic:
-                        link = sst.Link("link:g%dr%dh%d"%(g, r, p))
+                        link = sst.Link("link_g%dr%dh%d"%(g, r, p))
                         #network_interface.build(nic,slot,0,link,self.host_link_latency)
                         link.connect( (nic, port_name, self.host_link_latency), (rtr, "port%d"%port, self.host_link_latency) )
                         #link.setNoCut()
@@ -189,7 +189,7 @@ class topoDragonFly(Topology):
                     if p != r:
                         src = min(p,r)
                         dst = max(p,r)
-                        rtr.addLink(getLink("link:g%dr%dr%d"%(g, src, dst)), "port%d"%port, self.link_latency)
+                        rtr.addLink(getLink("link_g%dr%dr%d"%(g, src, dst)), "port%d"%port, self.link_latency)
                         port = port + 1
 
                 for p in range(igpr):

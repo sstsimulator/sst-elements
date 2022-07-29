@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -19,7 +19,7 @@
 #include <sst/core/event.h>
 #include <sst/core/output.h>
 #include <sst/core/timeConverter.h>
-#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/interfaces/stdMem.h>
 #include <sst/core/component.h>
 #include <../ariel/ariel_shmem.h>
 
@@ -59,12 +59,26 @@ public:
 
    // NEW HANDLERS
    void cpuHandler( SST::Event* e );
-   void memoryHandler(SimpleMem::Request* event);
+   void memoryHandler(StandardMem::Request* event);
 
-   void gpuCacheHandler(SimpleMem::Request* event);
+   void gpuCacheHandler(StandardMem::Request* event);
 
    void handleCPUWriteRequest(uint64_t txSize, uint64_t pAddr);
    void handleCPUReadRequest(uint64_t txSize, uint64_t pAddr);
+
+   class StdMemHandler : public StandardMem::RequestHandler {
+      public:
+        friend class Balar;
+        StdMemHandler(Balar* coreInst, SST::Output* out) : StandardMem::RequestHandler(out), core(coreInst) {}
+        virtual ~StdMemHandler() {}
+        virtual void handle(StandardMem::ReadResp* rsp) override;
+        virtual void handle(StandardMem::WriteResp* rsp) override;
+
+        Balar* core;
+        uint64_t pAddr;
+        uint64_t vAddr;
+        std::vector<uint8_t> data;
+   };
 
    // TODO Need separate GPU memHierarchy first
    void handleReadRequest();
@@ -130,7 +144,7 @@ public:
 
 private:
    struct cache_req_params {
-      cache_req_params( unsigned m_core_id,  void* mem_fetch, SimpleMem::Request* req) {
+      cache_req_params( unsigned m_core_id,  void* mem_fetch, StandardMem::Request* req) {
             core_id = m_core_id;
             mem_fetch_pointer = mem_fetch;
             original_sst_req = req;
@@ -138,7 +152,7 @@ private:
 
       void* mem_fetch_pointer;
       unsigned core_id;
-      SimpleMem::Request* original_sst_req;
+      StandardMem::Request* original_sst_req;
    };
 
    Balar();  // for serialization only
@@ -147,15 +161,16 @@ private:
    uint32_t cpu_core_count;
    uint32_t gpu_core_count;
    uint32_t pending_transaction_count = 0;
-   std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>* pendingTransactions;
-   SimpleMem** gpu_to_cpu_cache_links;
+   std::unordered_map<StandardMem::Request::id_t, StandardMem::Request*>* pendingTransactions;
+   StandardMem** gpu_to_cpu_cache_links;
    Link** gpu_to_core_links;
    uint32_t latency; // The page fault latency/ the time spent by Balar to service a memory allocation request
 
-   SimpleMem** gpu_to_cache_links;
+   StandardMem** gpu_to_cache_links;
    uint32_t maxPendingCacheTrans;
-   std::unordered_map<SimpleMem::Request::id_t, struct cache_req_params>* gpuCachePendingTransactions;
+   std::unordered_map<StandardMem::Request::id_t, struct cache_req_params>* gpuCachePendingTransactions;
    uint32_t* numPendingCacheTransPerCore;
+   StdMemHandler* stdMemHandlers;
 
    Output* output;
 }; //END class Balar

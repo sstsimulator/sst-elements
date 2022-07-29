@@ -3,7 +3,6 @@
 2312:  2 Finished sending packets (total of 10)
 2312:  5 Finished sending packets (total of 10)
 2312:  6 Finished sending packets (total of 10)
-2312:  7 Finished sending packets (total of 10)
 2312:  9 Finished sending packets (total of 10)
 2312:  10 Finished sending packets (total of 10)
 2312:  11 Finished sending packets (total of 10)
@@ -28,6 +27,7 @@
 2312:  32 Finished sending packets (total of 10)
 2312:  33 Finished sending packets (total of 10)
 2312:  34 Finished sending packets (total of 10)
+2312:  36 Finished sending packets (total of 10)
 2312:  37 Finished sending packets (total of 10)
 2312:  38 Finished sending packets (total of 10)
 2312:  39 Finished sending packets (total of 10)
@@ -82,9 +82,9 @@
 2312:  96 Finished sending packets (total of 10)
 2312:  97 Finished sending packets (total of 10)
 2312:  98 Finished sending packets (total of 10)
-2312:  99 Finished sending packets (total of 10)
 2312:  101 Finished sending packets (total of 10)
 2312:  102 Finished sending packets (total of 10)
+2312:  103 Finished sending packets (total of 10)
 2312:  105 Finished sending packets (total of 10)
 2312:  106 Finished sending packets (total of 10)
 2312:  107 Finished sending packets (total of 10)
@@ -100,170 +100,170 @@
 2312:  119 Finished sending packets (total of 10)
 2312:  120 Finished sending packets (total of 10)
 2312:  121 Finished sending packets (total of 10)
+2312:  122 Finished sending packets (total of 10)
 2312:  123 Finished sending packets (total of 10)
 2312:  124 Finished sending packets (total of 10)
 2312:  125 Finished sending packets (total of 10)
 2312:  127 Finished sending packets (total of 10)
-2401:  100 Finished sending packets (total of 10)
-2421:  35 Finished sending packets (total of 10)
-2433:  4 Finished sending packets (total of 10)
-2581:  122 Finished sending packets (total of 10)
-2661:  103 Finished sending packets (total of 10)
-2765:  36 Finished sending packets (total of 10)
-2805:  71 Finished sending packets (total of 10)
-2887:  40 Finished sending packets (total of 10)
-2921:  3 Finished sending packets (total of 10)
-3137:  67 Finished sending packets (total of 10)
-3151:  13 Finished sending packets (total of 10)
-3171:  8 Finished sending packets (total of 10)
-3211:  126 Finished sending packets (total of 10)
-3259:  45 Finished sending packets (total of 10)
-3275:  72 Finished sending packets (total of 10)
-3323:  104 Finished sending packets (total of 10)
-3339:  62 Finished sending packets (total of 10)
-3481:  118 Finished sending packets (total of 10)
-3531:  86 Finished sending packets (total of 10)
-3577:  22 Finished sending packets (total of 10)
-3607:  77 Finished sending packets (total of 10)
-3633:  109 Finished sending packets (total of 10)
-7090: NIC 13 received all packets (total of 1280)!
-7092: NIC 14 received all packets (total of 1280)!
-7094: NIC 15 received all packets (total of 1280)!
-7096: NIC 12 received all packets (total of 1280)!
-7100: NIC 4 received all packets (total of 1280)!
-7102: NIC 5 received all packets (total of 1280)!
-7104: NIC 6 received all packets (total of 1280)!
-7106: NIC 7 received all packets (total of 1280)!
-7106: NIC 8 received all packets (total of 1280)!
-7108: NIC 9 received all packets (total of 1280)!
-7122: NIC 16 received all packets (total of 1280)!
-7124: NIC 17 received all packets (total of 1280)!
-7126: NIC 18 received all packets (total of 1280)!
-7128: NIC 19 received all packets (total of 1280)!
-7136: NIC 0 received all packets (total of 1280)!
-7136: NIC 22 received all packets (total of 1280)!
-7138: NIC 1 received all packets (total of 1280)!
-7142: NIC 23 received all packets (total of 1280)!
-7144: NIC 2 received all packets (total of 1280)!
-7146: NIC 3 received all packets (total of 1280)!
-7146: NIC 24 received all packets (total of 1280)!
-7148: NIC 25 received all packets (total of 1280)!
-7152: NIC 10 received all packets (total of 1280)!
-7154: NIC 11 received all packets (total of 1280)!
-7162: NIC 28 received all packets (total of 1280)!
-7164: NIC 20 received all packets (total of 1280)!
-7164: NIC 29 received all packets (total of 1280)!
-7166: NIC 21 received all packets (total of 1280)!
-7170: NIC 30 received all packets (total of 1280)!
-7172: NIC 26 received all packets (total of 1280)!
-7172: NIC 31 received all packets (total of 1280)!
-7174: NIC 27 received all packets (total of 1280)!
-7346: NIC 38 received all packets (total of 1280)!
-7360: NIC 32 received all packets (total of 1280)!
-7360: NIC 41 received all packets (total of 1280)!
-7362: NIC 33 received all packets (total of 1280)!
-7366: NIC 44 received all packets (total of 1280)!
-7368: NIC 36 received all packets (total of 1280)!
-7368: NIC 45 received all packets (total of 1280)!
-7370: NIC 37 received all packets (total of 1280)!
-7372: NIC 39 received all packets (total of 1280)!
-7372: NIC 40 received all packets (total of 1280)!
-7374: NIC 72 received all packets (total of 1280)!
-7375: NIC 73 received all packets (total of 1280)!
-7378: NIC 74 received all packets (total of 1280)!
-7380: NIC 75 received all packets (total of 1280)!
-7380: NIC 100 received all packets (total of 1280)!
-7382: NIC 101 received all packets (total of 1280)!
-7384: NIC 102 received all packets (total of 1280)!
-7386: NIC 48 received all packets (total of 1280)!
-7386: NIC 103 received all packets (total of 1280)!
-7388: NIC 49 received all packets (total of 1280)!
-7390: NIC 50 received all packets (total of 1280)!
-7392: NIC 51 received all packets (total of 1280)!
-7394: NIC 52 received all packets (total of 1280)!
-7396: NIC 53 received all packets (total of 1280)!
-7398: NIC 54 received all packets (total of 1280)!
-7400: NIC 55 received all packets (total of 1280)!
-7402: NIC 56 received all packets (total of 1280)!
-7404: NIC 57 received all packets (total of 1280)!
-7404: NIC 63 received all packets (total of 1280)!
-7406: NIC 34 received all packets (total of 1280)!
-7406: NIC 58 received all packets (total of 1280)!
-7408: NIC 35 received all packets (total of 1280)!
-7408: NIC 59 received all packets (total of 1280)!
-7410: NIC 60 received all packets (total of 1280)!
-7412: NIC 61 received all packets (total of 1280)!
-7414: NIC 42 received all packets (total of 1280)!
-7414: NIC 62 received all packets (total of 1280)!
-7416: NIC 43 received all packets (total of 1280)!
-7418: NIC 46 received all packets (total of 1280)!
-7420: NIC 47 received all packets (total of 1280)!
-7422: NIC 64 received all packets (total of 1280)!
-7424: NIC 65 received all packets (total of 1280)!
-7425: NIC 66 received all packets (total of 1280)!
-7428: NIC 67 received all packets (total of 1280)!
-7428: NIC 68 received all packets (total of 1280)!
-7429: NIC 69 received all packets (total of 1280)!
-7432: NIC 70 received all packets (total of 1280)!
-7434: NIC 71 received all packets (total of 1280)!
-7436: NIC 96 received all packets (total of 1280)!
-7438: NIC 97 received all packets (total of 1280)!
-7440: NIC 98 received all packets (total of 1280)!
-7442: NIC 99 received all packets (total of 1280)!
-7446: NIC 76 received all packets (total of 1280)!
-7448: NIC 77 received all packets (total of 1280)!
-7450: NIC 78 received all packets (total of 1280)!
-7452: NIC 79 received all packets (total of 1280)!
-7452: NIC 104 received all packets (total of 1280)!
-7454: NIC 80 received all packets (total of 1280)!
-7454: NIC 105 received all packets (total of 1280)!
-7456: NIC 81 received all packets (total of 1280)!
-7456: NIC 106 received all packets (total of 1280)!
-7458: NIC 82 received all packets (total of 1280)!
-7458: NIC 107 received all packets (total of 1280)!
-7460: NIC 83 received all packets (total of 1280)!
-7460: NIC 108 received all packets (total of 1280)!
-7462: NIC 84 received all packets (total of 1280)!
-7462: NIC 109 received all packets (total of 1280)!
-7464: NIC 85 received all packets (total of 1280)!
-7464: NIC 110 received all packets (total of 1280)!
-7466: NIC 86 received all packets (total of 1280)!
-7466: NIC 111 received all packets (total of 1280)!
-7468: NIC 87 received all packets (total of 1280)!
-7468: NIC 112 received all packets (total of 1280)!
-7470: NIC 88 received all packets (total of 1280)!
-7470: NIC 113 received all packets (total of 1280)!
-7472: NIC 89 received all packets (total of 1280)!
-7472: NIC 114 received all packets (total of 1280)!
-7474: NIC 90 received all packets (total of 1280)!
-7474: NIC 115 received all packets (total of 1280)!
-7476: NIC 91 received all packets (total of 1280)!
-7476: NIC 116 received all packets (total of 1280)!
-7478: NIC 92 received all packets (total of 1280)!
-7478: NIC 117 received all packets (total of 1280)!
-7480: NIC 93 received all packets (total of 1280)!
-7480: NIC 118 received all packets (total of 1280)!
-7482: NIC 94 received all packets (total of 1280)!
-7482: NIC 119 received all packets (total of 1280)!
-7484: NIC 95 received all packets (total of 1280)!
-7484: NIC 120 received all packets (total of 1280)!
-7486: NIC 121 received all packets (total of 1280)!
-7488: NIC 122 received all packets (total of 1280)!
-7490: NIC 123 received all packets (total of 1280)!
-7492: NIC 124 received all packets (total of 1280)!
-7494: NIC 125 received all packets (total of 1280)!
-7496: NIC 126 received all packets (total of 1280)!
-7498: NIC 127 received all packets (total of 1280)!
+2455:  77 Finished sending packets (total of 10)
+2473:  7 Finished sending packets (total of 10)
+2589:  99 Finished sending packets (total of 10)
+2609:  4 Finished sending packets (total of 10)
+2777:  100 Finished sending packets (total of 10)
+2897:  45 Finished sending packets (total of 10)
+2915:  3 Finished sending packets (total of 10)
+2949:  71 Finished sending packets (total of 10)
+2957:  35 Finished sending packets (total of 10)
+3029:  104 Finished sending packets (total of 10)
+3055:  40 Finished sending packets (total of 10)
+3155:  72 Finished sending packets (total of 10)
+3219:  62 Finished sending packets (total of 10)
+3245:  8 Finished sending packets (total of 10)
+3253:  109 Finished sending packets (total of 10)
+3281:  67 Finished sending packets (total of 10)
+3281:  126 Finished sending packets (total of 10)
+3283:  13 Finished sending packets (total of 10)
+3543:  86 Finished sending packets (total of 10)
+3543:  118 Finished sending packets (total of 10)
+3589:  22 Finished sending packets (total of 10)
+7290: NIC 4 received all packets (total of 1280)!
+7292: NIC 5 received all packets (total of 1280)!
+7296: NIC 6 received all packets (total of 1280)!
+7300: NIC 7 received all packets (total of 1280)!
+7338: NIC 0 received all packets (total of 1280)!
+7340: NIC 1 received all packets (total of 1280)!
+7346: NIC 2 received all packets (total of 1280)!
+7348: NIC 3 received all packets (total of 1280)!
+7368: NIC 8 received all packets (total of 1280)!
+7370: NIC 9 received all packets (total of 1280)!
+7376: NIC 10 received all packets (total of 1280)!
+7378: NIC 11 received all packets (total of 1280)!
+7384: NIC 12 received all packets (total of 1280)!
+7390: NIC 13 received all packets (total of 1280)!
+7396: NIC 14 received all packets (total of 1280)!
+7398: NIC 15 received all packets (total of 1280)!
+7404: NIC 16 received all packets (total of 1280)!
+7406: NIC 17 received all packets (total of 1280)!
+7412: NIC 18 received all packets (total of 1280)!
+7414: NIC 19 received all packets (total of 1280)!
+7418: NIC 20 received all packets (total of 1280)!
+7420: NIC 21 received all packets (total of 1280)!
+7422: NIC 22 received all packets (total of 1280)!
+7424: NIC 23 received all packets (total of 1280)!
+7426: NIC 24 received all packets (total of 1280)!
+7428: NIC 25 received all packets (total of 1280)!
+7430: NIC 26 received all packets (total of 1280)!
+7432: NIC 27 received all packets (total of 1280)!
+7434: NIC 28 received all packets (total of 1280)!
+7436: NIC 29 received all packets (total of 1280)!
+7438: NIC 30 received all packets (total of 1280)!
+7440: NIC 31 received all packets (total of 1280)!
+7479: NIC 95 received all packets (total of 1280)!
+7527: NIC 76 received all packets (total of 1280)!
+7530: NIC 77 received all packets (total of 1280)!
+7532: NIC 78 received all packets (total of 1280)!
+7534: NIC 79 received all packets (total of 1280)!
+7568: NIC 64 received all packets (total of 1280)!
+7570: NIC 65 received all packets (total of 1280)!
+7572: NIC 66 received all packets (total of 1280)!
+7574: NIC 67 received all packets (total of 1280)!
+7576: NIC 68 received all packets (total of 1280)!
+7578: NIC 69 received all packets (total of 1280)!
+7580: NIC 70 received all packets (total of 1280)!
+7582: NIC 71 received all packets (total of 1280)!
+7582: NIC 72 received all packets (total of 1280)!
+7584: NIC 37 received all packets (total of 1280)!
+7584: NIC 73 received all packets (total of 1280)!
+7586: NIC 74 received all packets (total of 1280)!
+7588: NIC 34 received all packets (total of 1280)!
+7588: NIC 75 received all packets (total of 1280)!
+7596: NIC 36 received all packets (total of 1280)!
+7598: NIC 38 received all packets (total of 1280)!
+7599: NIC 80 received all packets (total of 1280)!
+7600: NIC 39 received all packets (total of 1280)!
+7601: NIC 81 received all packets (total of 1280)!
+7604: NIC 82 received all packets (total of 1280)!
+7606: NIC 83 received all packets (total of 1280)!
+7608: NIC 84 received all packets (total of 1280)!
+7610: NIC 85 received all packets (total of 1280)!
+7612: NIC 86 received all packets (total of 1280)!
+7614: NIC 87 received all packets (total of 1280)!
+7616: NIC 88 received all packets (total of 1280)!
+7618: NIC 89 received all packets (total of 1280)!
+7620: NIC 90 received all packets (total of 1280)!
+7622: NIC 91 received all packets (total of 1280)!
+7624: NIC 92 received all packets (total of 1280)!
+7626: NIC 93 received all packets (total of 1280)!
+7628: NIC 94 received all packets (total of 1280)!
+7654: NIC 32 received all packets (total of 1280)!
+7656: NIC 33 received all packets (total of 1280)!
+7658: NIC 35 received all packets (total of 1280)!
+7666: NIC 40 received all packets (total of 1280)!
+7668: NIC 41 received all packets (total of 1280)!
+7670: NIC 42 received all packets (total of 1280)!
+7672: NIC 43 received all packets (total of 1280)!
+7674: NIC 44 received all packets (total of 1280)!
+7676: NIC 45 received all packets (total of 1280)!
+7678: NIC 46 received all packets (total of 1280)!
+7680: NIC 47 received all packets (total of 1280)!
+7682: NIC 48 received all packets (total of 1280)!
+7684: NIC 49 received all packets (total of 1280)!
+7686: NIC 50 received all packets (total of 1280)!
+7688: NIC 51 received all packets (total of 1280)!
+7689: NIC 52 received all packets (total of 1280)!
+7691: NIC 53 received all packets (total of 1280)!
+7693: NIC 54 received all packets (total of 1280)!
+7695: NIC 55 received all packets (total of 1280)!
+7698: NIC 56 received all packets (total of 1280)!
+7700: NIC 57 received all packets (total of 1280)!
+7702: NIC 58 received all packets (total of 1280)!
+7704: NIC 59 received all packets (total of 1280)!
+7706: NIC 60 received all packets (total of 1280)!
+7708: NIC 61 received all packets (total of 1280)!
+7710: NIC 62 received all packets (total of 1280)!
+7712: NIC 63 received all packets (total of 1280)!
+7740: NIC 100 received all packets (total of 1280)!
+7742: NIC 101 received all packets (total of 1280)!
+7744: NIC 102 received all packets (total of 1280)!
+7746: NIC 103 received all packets (total of 1280)!
+7796: NIC 96 received all packets (total of 1280)!
+7798: NIC 97 received all packets (total of 1280)!
+7800: NIC 98 received all packets (total of 1280)!
+7802: NIC 99 received all packets (total of 1280)!
+7812: NIC 104 received all packets (total of 1280)!
+7814: NIC 105 received all packets (total of 1280)!
+7816: NIC 106 received all packets (total of 1280)!
+7818: NIC 107 received all packets (total of 1280)!
+7820: NIC 108 received all packets (total of 1280)!
+7822: NIC 109 received all packets (total of 1280)!
+7824: NIC 110 received all packets (total of 1280)!
+7826: NIC 111 received all packets (total of 1280)!
+7828: NIC 112 received all packets (total of 1280)!
+7830: NIC 113 received all packets (total of 1280)!
+7832: NIC 114 received all packets (total of 1280)!
+7834: NIC 115 received all packets (total of 1280)!
+7836: NIC 116 received all packets (total of 1280)!
+7838: NIC 117 received all packets (total of 1280)!
+7840: NIC 118 received all packets (total of 1280)!
+7842: NIC 119 received all packets (total of 1280)!
+7844: NIC 120 received all packets (total of 1280)!
+7846: NIC 121 received all packets (total of 1280)!
+7848: NIC 122 received all packets (total of 1280)!
+7850: NIC 123 received all packets (total of 1280)!
+7852: NIC 124 received all packets (total of 1280)!
+7854: NIC 125 received all packets (total of 1280)!
+7856: NIC 126 received all packets (total of 1280)!
+7858: NIC 127 received all packets (total of 1280)!
 Nic 127 had 1032 stalled cycles.
-Nic 126 had 1931 stalled cycles.
+Nic 126 had 2001 stalled cycles.
 Nic 125 had 1032 stalled cycles.
 Nic 124 had 1032 stalled cycles.
 Nic 123 had 1032 stalled cycles.
-Nic 122 had 1301 stalled cycles.
+Nic 122 had 1032 stalled cycles.
 Nic 121 had 1032 stalled cycles.
 Nic 120 had 1032 stalled cycles.
 Nic 119 had 1032 stalled cycles.
-Nic 118 had 2201 stalled cycles.
+Nic 118 had 2263 stalled cycles.
 Nic 117 had 1032 stalled cycles.
 Nic 116 had 1032 stalled cycles.
 Nic 115 had 1032 stalled cycles.
@@ -272,17 +272,17 @@ Nic 113 had 1032 stalled cycles.
 Nic 112 had 1032 stalled cycles.
 Nic 111 had 1032 stalled cycles.
 Nic 110 had 1032 stalled cycles.
-Nic 109 had 2353 stalled cycles.
+Nic 109 had 1973 stalled cycles.
 Nic 108 had 1032 stalled cycles.
 Nic 107 had 1032 stalled cycles.
 Nic 106 had 1032 stalled cycles.
 Nic 105 had 1032 stalled cycles.
-Nic 104 had 2043 stalled cycles.
-Nic 103 had 1381 stalled cycles.
+Nic 104 had 1749 stalled cycles.
+Nic 103 had 1032 stalled cycles.
 Nic 102 had 1032 stalled cycles.
 Nic 101 had 1032 stalled cycles.
-Nic 100 had 1121 stalled cycles.
-Nic 99 had 1032 stalled cycles.
+Nic 100 had 1497 stalled cycles.
+Nic 99 had 1309 stalled cycles.
 Nic 98 had 1032 stalled cycles.
 Nic 97 had 1032 stalled cycles.
 Nic 96 had 1032 stalled cycles.
@@ -295,7 +295,7 @@ Nic 90 had 1032 stalled cycles.
 Nic 89 had 1032 stalled cycles.
 Nic 88 had 1032 stalled cycles.
 Nic 87 had 1032 stalled cycles.
-Nic 86 had 2251 stalled cycles.
+Nic 86 had 2263 stalled cycles.
 Nic 85 had 1032 stalled cycles.
 Nic 84 had 1032 stalled cycles.
 Nic 83 had 1032 stalled cycles.
@@ -304,22 +304,22 @@ Nic 81 had 1032 stalled cycles.
 Nic 80 had 1032 stalled cycles.
 Nic 79 had 1032 stalled cycles.
 Nic 78 had 1032 stalled cycles.
-Nic 77 had 2327 stalled cycles.
+Nic 77 had 1175 stalled cycles.
 Nic 76 had 1032 stalled cycles.
 Nic 75 had 1032 stalled cycles.
 Nic 74 had 1032 stalled cycles.
 Nic 73 had 1032 stalled cycles.
-Nic 72 had 1995 stalled cycles.
-Nic 71 had 1525 stalled cycles.
+Nic 72 had 1875 stalled cycles.
+Nic 71 had 1669 stalled cycles.
 Nic 70 had 1032 stalled cycles.
 Nic 69 had 1032 stalled cycles.
 Nic 68 had 1032 stalled cycles.
-Nic 67 had 1857 stalled cycles.
+Nic 67 had 2001 stalled cycles.
 Nic 66 had 1032 stalled cycles.
 Nic 65 had 1032 stalled cycles.
 Nic 64 had 1032 stalled cycles.
 Nic 63 had 1032 stalled cycles.
-Nic 62 had 2059 stalled cycles.
+Nic 62 had 1939 stalled cycles.
 Nic 61 had 1032 stalled cycles.
 Nic 60 had 1032 stalled cycles.
 Nic 59 had 1032 stalled cycles.
@@ -336,17 +336,17 @@ Nic 49 had 1032 stalled cycles.
 Nic 48 had 1032 stalled cycles.
 Nic 47 had 1032 stalled cycles.
 Nic 46 had 1032 stalled cycles.
-Nic 45 had 1979 stalled cycles.
+Nic 45 had 1617 stalled cycles.
 Nic 44 had 1032 stalled cycles.
 Nic 43 had 1032 stalled cycles.
 Nic 42 had 1032 stalled cycles.
 Nic 41 had 1032 stalled cycles.
-Nic 40 had 1607 stalled cycles.
+Nic 40 had 1775 stalled cycles.
 Nic 39 had 1032 stalled cycles.
 Nic 38 had 1032 stalled cycles.
 Nic 37 had 1032 stalled cycles.
-Nic 36 had 1485 stalled cycles.
-Nic 35 had 1141 stalled cycles.
+Nic 36 had 1032 stalled cycles.
+Nic 35 had 1677 stalled cycles.
 Nic 34 had 1032 stalled cycles.
 Nic 33 had 1032 stalled cycles.
 Nic 32 had 1032 stalled cycles.
@@ -359,7 +359,7 @@ Nic 26 had 1032 stalled cycles.
 Nic 25 had 1032 stalled cycles.
 Nic 24 had 1032 stalled cycles.
 Nic 23 had 1032 stalled cycles.
-Nic 22 had 2297 stalled cycles.
+Nic 22 had 2309 stalled cycles.
 Nic 21 had 1032 stalled cycles.
 Nic 20 had 1032 stalled cycles.
 Nic 19 had 1032 stalled cycles.
@@ -368,18 +368,18 @@ Nic 17 had 1032 stalled cycles.
 Nic 16 had 1032 stalled cycles.
 Nic 15 had 1032 stalled cycles.
 Nic 14 had 1032 stalled cycles.
-Nic 13 had 1871 stalled cycles.
+Nic 13 had 2003 stalled cycles.
 Nic 12 had 1032 stalled cycles.
 Nic 11 had 1032 stalled cycles.
 Nic 10 had 1032 stalled cycles.
 Nic 9 had 1032 stalled cycles.
-Nic 8 had 1891 stalled cycles.
-Nic 7 had 1032 stalled cycles.
+Nic 8 had 1965 stalled cycles.
+Nic 7 had 1193 stalled cycles.
 Nic 6 had 1032 stalled cycles.
 Nic 5 had 1032 stalled cycles.
-Nic 4 had 1153 stalled cycles.
-Nic 3 had 1641 stalled cycles.
+Nic 4 had 1329 stalled cycles.
+Nic 3 had 1635 stalled cycles.
 Nic 2 had 1032 stalled cycles.
 Nic 1 had 1032 stalled cycles.
 Nic 0 had 1032 stalled cycles.
-Simulation is complete, simulated time: 7.498 us
+Simulation is complete, simulated time: 7.858 us

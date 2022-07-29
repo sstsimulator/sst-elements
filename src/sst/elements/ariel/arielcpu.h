@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -17,10 +17,9 @@
 #define _H_ARIEL_CPU
 
 #include <sst/core/sst_config.h>
-#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/interfaces/stdMem.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 
 #include <stdint.h>
 #include <unistd.h>
@@ -58,10 +57,10 @@ class ArielCPU : public SST::Component {
         {"launcher", "Specify the launcher to be used for instrumentation, default is path to PIN", STRINGIZE(PINTOOL_EXECUTABLE)},
         {"executable", "Executable to trace", ""},
         {"launchparamcount", "Number of parameters supplied for the launch tool", "0" },
-        {"launchparam%(launchparamcount)", "Set the parameter to the launcher", "" },
+        {"launchparam%(launchparamcount)d", "Set the parameter to the launcher", "" },
         {"envparamcount", "Number of environment parameters to supply to the Ariel executable, default=-1 (use SST environment)", "-1"},
-        {"envparamname%(envparamcount)", "Sets the environment parameter name", ""},
-        {"envparamval%(envparamcount)", "Sets the environment parameter value", ""},
+        {"envparamname%(envparamcount)d", "Sets the environment parameter name", ""},
+        {"envparamval%(envparamcount)d", "Sets the environment parameter value", ""},
         {"appargcount", "Number of arguments to the traced executable", "0"},
         {"apparg%(appargcount)d", "Arguments for the traced executable", ""},
         {"arielmode", "Tool interception mode, set to 1 to trace entire program (default), set to 0 to delay tracing until ariel_enable() call., set to 2 to attempt auto-detect", "2"},
@@ -105,7 +104,7 @@ class ArielCPU : public SST::Component {
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"memmgr", "Memory manager to translate virtual addresses to physical, handle malloc/free, etc.", "SST::ArielComponent::ArielMemoryManager"},
-            {"memory", "Interface to the memoryHierarchy (e.g., caches)", "SST::Interfaces::SimpleMem" }
+            {"memory", "Interface to the memoryHierarchy (e.g., caches)", "SST::Interfaces::StandardMem" }
     )
 
         /* Ariel class */
@@ -122,7 +121,7 @@ class ArielCPU : public SST::Component {
         ArielMemoryManager* memmgr;
 
         std::vector<ArielCore*> cpu_cores;
-        std::vector<Interfaces::SimpleMem*> cpu_to_cache_links;
+        std::vector<Interfaces::StandardMem*> cpu_to_cache_links;
         std::vector<SST::Link*> cpu_to_gpu_links;
 
         uint32_t core_count;

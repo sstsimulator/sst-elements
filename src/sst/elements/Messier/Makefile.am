@@ -1,5 +1,10 @@
-AM_CPPFLAGS = \
-	$(MPIT_CPPFLAGS)
+# -*- Makefile -*-
+#
+#
+
+AM_CPPFLAGS += \
+	$(MPI_CPPFLAGS) \
+	-I$(top_srcdir)/src
 
 AM_LDFLAGS = -lm
 compdir = $(pkglibdir)
@@ -21,19 +26,11 @@ libMessier_la_SOURCES = \
 	NVM_DIMM.cc \
 	NVM_Params.h
 
-
-
-libMessier_la_CPPFLAGS = \
-	-I$(top_srcdir)/src \
-	$(SST_CXX0X_FLAGS) -fPIC -Wall \
-	$(MPI_CPPFLAGS)
-
 libMessier_la_LDFLAGS = \
 	-avoid-version
 
 libMessier_la_LIBADD = \
 	$(SST_SYSTEMC_LIB)
-
 
 EXTRA_DIST = \
 	tests/testsuite_default_Messier.py \
@@ -42,11 +39,11 @@ EXTRA_DIST = \
 	tests/gupsgen.py \
 	tests/stencil3dbench_messier.py \
 	tests/streambench_messier.py \
-    tests/refFiles/test_Messier_gupsgen.out \
-    tests/refFiles/test_Messier_gupsgen_2RANKS.out \
-    tests/refFiles/test_Messier_gupsgen_fastNVM.out \
-    tests/refFiles/test_Messier_stencil3dbench_messier.out \
-    tests/refFiles/test_Messier_streambench_messier.out
+	tests/refFiles/test_Messier_gupsgen.out \
+	tests/refFiles/test_Messier_gupsgen_2RANKS.out \
+	tests/refFiles/test_Messier_gupsgen_fastNVM.out \
+	tests/refFiles/test_Messier_stencil3dbench_messier.out \
+	tests/refFiles/test_Messier_streambench_messier.out
 
 #noinst_PROGRAMS = infogather
 #infogather_SOURCES = infogather.cc

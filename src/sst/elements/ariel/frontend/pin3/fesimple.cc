@@ -1,8 +1,8 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -432,14 +432,16 @@ VOID WriteInstructionReadWrite(THREADID thr, ADDRINT* readAddr, UINT32 readSize,
 }
 
 VOID WriteInstructionReadOnly(THREADID thr, ADDRINT* readAddr, UINT32 readSize, ADDRINT ip,
-            UINT32 instClass, UINT32 simdOpWidth)
+            UINT32 instClass, UINT32 simdOpWidth, BOOL first, BOOL last)
 {
 
     if(enable_output) {
         if(thr < core_count) {
-            WriteStartInstructionMarker(thr, ip);
+            if (first)
+                WriteStartInstructionMarker(thr, ip);
             WriteInstructionRead(  readAddr,  readSize,  thr, ip, instClass, simdOpWidth );
-            WriteEndInstructionMarker(thr, ip);
+            if (last)
+                WriteEndInstructionMarker(thr, ip);
         }
     }
 
@@ -458,14 +460,16 @@ VOID WriteNoOp(THREADID thr, ADDRINT ip)
 }
 
 VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSize, ADDRINT ip,
-            UINT32 instClass, UINT32 simdOpWidth)
+            UINT32 instClass, UINT32 simdOpWidth, BOOL first, BOOL last)
 {
 
     if(enable_output) {
         if(thr < core_count) {
-            WriteStartInstructionMarker(thr, ip);
+            if (first)
+                WriteStartInstructionMarker(thr, ip);
             WriteInstructionWrite(writeAddr, writeSize,  thr, ip, instClass, simdOpWidth);
-            WriteEndInstructionMarker(thr, ip);
+            if (last)
+                WriteEndInstructionMarker(thr, ip);
         }
     }
 
@@ -541,13 +545,52 @@ VOID InstrumentInstruction(INS ins, VOID *v)
             }
         }
     }
+   
+    UINT32 operands = INS_MemoryOperandCount(ins);
+    for (UINT32 op = 0; op < operands; op++) {
+        BOOL first = (op == 0);
+        BOOL last = (op == (operands - 1));
+        
+        if (INS_MemoryOperandIsRead(ins, op)) {
+            INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
+                    WriteInstructionReadOnly,
+                    IARG_THREAD_ID,
+                    IARG_MEMORYREAD_EA, IARG_UINT32, INS_MemoryOperandSize(ins, op),
+                    IARG_INST_PTR,
+                    IARG_UINT32, instClass,
+                    IARG_UINT32, simdOpWidth,
+                    IARG_BOOL, first,
+                    IARG_BOOL, last,
+                    IARG_END);
+        } else {
+            INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
+                    WriteInstructionWriteOnly,
+                    IARG_THREAD_ID,
+                    IARG_MEMORYWRITE_EA, IARG_UINT32, INS_MemoryOperandSize(ins, op),
+                    IARG_INST_PTR,
+                    IARG_UINT32, instClass,
+                    IARG_UINT32, simdOpWidth,
+                    IARG_BOOL, first,
+                    IARG_BOOL, last,
+                    IARG_END);
 
-    if( INS_IsMemoryRead(ins) && INS_IsMemoryWrite(ins) ) {
+        }
+    }
+
+    if (operands == 0) {
+        INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
+                WriteNoOp,
+                IARG_THREAD_ID,
+                IARG_INST_PTR,
+                IARG_END);
+    }
+
+/*    if( INS_IsMemoryRead(ins) && INS_IsMemoryWrite(ins) ) {
         INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
                 WriteInstructionReadWrite,
                 IARG_THREAD_ID,
-                IARG_MEMORYREAD_EA, IARG_UINT32, INS_MemoryReadSize(ins),
-                IARG_MEMORYWRITE_EA, IARG_UINT32, INS_MemoryWriteSize(ins),
+                IARG_MEMORYREAD_EA, IARG_UINT32, INS_MemoryOperandSize(ins),
+                IARG_MEMORYWRITE_EA, IARG_UINT32, INS_MemoryOperandSize(ins),
                 IARG_INST_PTR,
                 IARG_UINT32, instClass,
                 IARG_UINT32, simdOpWidth,
@@ -556,7 +599,7 @@ VOID InstrumentInstruction(INS ins, VOID *v)
         INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
                 WriteInstructionReadOnly,
                 IARG_THREAD_ID,
-                IARG_MEMORYREAD_EA, IARG_UINT32, INS_MemoryReadSize(ins),
+                IARG_MEMORYREAD_EA, IARG_UINT32, INS_MemoryOperandSize(ins),
                 IARG_INST_PTR,
                 IARG_UINT32, instClass,
                 IARG_UINT32, simdOpWidth,
@@ -565,19 +608,14 @@ VOID InstrumentInstruction(INS ins, VOID *v)
         INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
                 WriteInstructionWriteOnly,
                 IARG_THREAD_ID,
-                IARG_MEMORYWRITE_EA, IARG_UINT32, INS_MemoryWriteSize(ins),
+                IARG_MEMORYWRITE_EA, IARG_UINT32, INS_MemoryOperandSize(ins),
                 IARG_INST_PTR,
                 IARG_UINT32, instClass,
                 IARG_UINT32, simdOpWidth,
                 IARG_END);
     } else {
-        INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
-                WriteNoOp,
-                IARG_THREAD_ID,
-                IARG_INST_PTR,
-                IARG_END);
     }
-
+*/
     if(funcProfileLevel > 0) {
         RTN rtn = INS_Rtn(ins);
         std::string rtn_name = "Unknown Function";
@@ -975,9 +1013,9 @@ VOID ariel_premalloc_instrument(ADDRINT allocSize, ADDRINT ip)
 
 VOID ariel_postmalloc_instrument(ADDRINT allocLocation)
 {
-    if(lastMallocSize >= 0) {
-        THREADID currentThread = PIN_ThreadId();
-        UINT32 thr = (UINT32) currentThread;
+    THREADID currentThread = PIN_ThreadId();
+    UINT32 thr = (UINT32) currentThread;
+    if(lastMallocSize[thr] >= 0) {
 
         const uint64_t virtualAddress = (uint64_t) allocLocation;
         const uint64_t allocationLength = (uint64_t) lastMallocSize[thr];

@@ -38,7 +38,7 @@ comp_ll0.enableStatistics([
         "type":"sst.AccumulatorStatistic",
         "rate":"0 ns"})
 
-comp_c0_0 = sst.Component("c0.0", "VaultSimC.VaultSimC")
+comp_c0_0 = sst.Component("c0_0", "VaultSimC.VaultSimC")
 comp_c0_0.addParams({
       "clock" : """750Mhz""",
       "VaultID" : """0""",
@@ -49,7 +49,7 @@ comp_c0_0.enableStatistics([
         "type":"sst.AccumulatorStatistic",
         "rate":"0 ns"})
 
-comp_c0_1 = sst.Component("c0.1", "VaultSimC.VaultSimC")
+comp_c0_1 = sst.Component("c0_1", "VaultSimC.VaultSimC")
 comp_c0_1.addParams({
       "clock" : """750Mhz""",
       "VaultID" : """1""",
@@ -60,37 +60,37 @@ comp_c0_1.enableStatistics([
         "type":"sst.AccumulatorStatistic",
         "rate":"0 ns"})
 
-comp_c0_2 = sst.Component("c0.2", "VaultSimC.VaultSimC")
+comp_c0_2 = sst.Component("c0_2", "VaultSimC.VaultSimC")
 comp_c0_2.addParams({
       "clock" : """750Mhz""",
       "VaultID" : """2""",
       "numVaults2" : """3"""
 })
-comp_c0_3 = sst.Component("c0.3", "VaultSimC.VaultSimC")
+comp_c0_3 = sst.Component("c0_3", "VaultSimC.VaultSimC")
 comp_c0_3.addParams({
       "clock" : """750Mhz""",
       "VaultID" : """3""",
       "numVaults2" : """3"""
 })
-comp_c0_4 = sst.Component("c0.4", "VaultSimC.VaultSimC")
+comp_c0_4 = sst.Component("c0_4", "VaultSimC.VaultSimC")
 comp_c0_4.addParams({
       "clock" : """750Mhz""",
       "VaultID" : """4""",
       "numVaults2" : """3"""
 })
-comp_c0_5 = sst.Component("c0.5", "VaultSimC.VaultSimC")
+comp_c0_5 = sst.Component("c0_5", "VaultSimC.VaultSimC")
 comp_c0_5.addParams({
       "clock" : """750Mhz""",
       "VaultID" : """5""",
       "numVaults2" : """3"""
 })
-comp_c0_6 = sst.Component("c0.6", "VaultSimC.VaultSimC")
+comp_c0_6 = sst.Component("c0_6", "VaultSimC.VaultSimC")
 comp_c0_6.addParams({
       "clock" : """750Mhz""",
       "VaultID" : """6""",
       "numVaults2" : """3"""
 })
-comp_c0_7 = sst.Component("c0.7", "VaultSimC.VaultSimC")
+comp_c0_7 = sst.Component("c0_7", "VaultSimC.VaultSimC")
 comp_c0_7.addParams({
       "clock" : """750Mhz""",
       "VaultID" : """7""",

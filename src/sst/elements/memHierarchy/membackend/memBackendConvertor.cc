@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -52,11 +52,13 @@ MemBackendConvertor::MemBackendConvertor(ComponentId_t id, Params& params, MemBa
     stat_GetSReqReceived    = registerStatistic<uint64_t>("requests_received_GetS");
     stat_GetSXReqReceived   = registerStatistic<uint64_t>("requests_received_GetSX");
     stat_GetXReqReceived    = registerStatistic<uint64_t>("requests_received_GetX");
+    stat_WriteReqReceived    = registerStatistic<uint64_t>("requests_received_Write");
     stat_PutMReqReceived    = registerStatistic<uint64_t>("requests_received_PutM");
     stat_outstandingReqs    = registerStatistic<uint64_t>("outstanding_requests");
     stat_GetSLatency        = registerStatistic<uint64_t>("latency_GetS");
     stat_GetSXLatency       = registerStatistic<uint64_t>("latency_GetSX");
     stat_GetXLatency        = registerStatistic<uint64_t>("latency_GetX");
+    stat_WriteLatency        = registerStatistic<uint64_t>("latency_Write");
     stat_PutMLatency        = registerStatistic<uint64_t>("latency_PutM");
 
     stat_cyclesWithIssue = registerStatistic<uint64_t>( "cycles_with_issue" );
@@ -85,9 +87,9 @@ void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
     }
 }
 
-void MemBackendConvertor::handleCustomEvent( CustomCmdInfo * info) {
+void MemBackendConvertor::handleCustomEvent( Interfaces::StandardMem::CustomData * info, Event::id_type evId, std::string rqstr) {
     uint32_t id = genReqId();
-    CustomReq* req = new CustomReq( info, id );
+    CustomReq* req = new CustomReq( info, evId, rqstr, id );
     m_requestQueue.push_back( req );
     m_pendingRequests[id] = req;
 }
@@ -182,11 +184,8 @@ void MemBackendConvertor::doResponse( ReqId reqId, uint32_t flags ) {
         m_pendingRequests.erase(id);
 
         if (!req->isMemEv()) {
-            CustomCmdInfo * info = static_cast<CustomReq*>(req)->getInfo();
-            if (!flags) flags = info->getFlags();
-            sendResponse(info->getID(), flags);
-            delete info; // NOTE move this if needed, currently memController doesn't need it
-
+            CustomReq* creq = static_cast<CustomReq*>(req);
+            sendResponse(creq->getEvId(), flags);
         } else {
 
             MemEvent* event = static_cast<MemReq*>(req)->getMemEvent();
@@ -210,7 +209,7 @@ void MemBackendConvertor::doResponse( ReqId reqId, uint32_t flags ) {
                     (m_waitingFlushes.find(*it)->second).erase(evID);
                     if ((m_waitingFlushes.find(*it)->second).empty()) {
                         MemEvent * flush = *it;
-                        sendResponse(flush->getID(), (flush->getFlags() | MemEvent::F_SUCCESS));
+                        sendResponse(flush->getID(), flush->getFlags());
                         m_waitingFlushes.erase(flush);
                     }
                 }

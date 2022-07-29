@@ -1,14 +1,14 @@
 // -*- mode: c++ -*-
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -27,13 +27,15 @@ using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
 
 
-
+DISABLE_WARN_DEPRECATED_DECLARATION
 MemHierarchyScratchInterface::MemHierarchyScratchInterface(SST::ComponentId_t id, Params &params, TimeConverter* time, HandlerBase* handler) :
     SimpleMem(id, params)
 {
     setDefaultTimeBase(time);
 
     output.init("", 1, 0, Output::STDOUT);
+
+    output.output("DEPRECATION NOTICE: memHierarchy.scratchInterface uses the deprecated SST-Core SimpleMem Interface. This subcomponent is deprecated in favor of memHierarchy.standardMem which uses the SST-Core StandardMem Interface. memHierarchy.memInterface will be removed in SST 13\n");
 
     bool found;
     UnitAlgebra size = UnitAlgebra(params.find<std::string>("scratchpad_size", "0B", found));
@@ -111,7 +113,6 @@ void MemHierarchyScratchInterface::sendRequest(SimpleMem::Request *req){
     link_->send(event);
 }
 
-
 SimpleMem::Request* MemHierarchyScratchInterface::recvResponse(void){
     SST::Event *ev = link_->recv();
     if (NULL != ev) {
@@ -123,13 +124,12 @@ SimpleMem::Request* MemHierarchyScratchInterface::recvResponse(void){
     return NULL;
 }
 
-
 MemEvent * MemHierarchyScratchInterface::createMemEvent(SimpleMem::Request * req) const {
     Command cmd = Command::NULLCMD;
 
     switch (req->cmd) {
         case SimpleMem::Request::Read :         cmd = Command::GetS;            break;
-        case SimpleMem::Request::Write :        cmd = Command::GetX;            break;
+        case SimpleMem::Request::Write :        cmd = Command::Write;           break;
         case SimpleMem::Request::FlushLine:     cmd = Command::FlushLine;       break;
         case SimpleMem::Request::FlushLineInv:  cmd = Command::FlushLineInv;    break;
         default: output.fatal(CALL_INFO, -1, "MemHierarchyScratchInterface received unknown command in createMemEvent\n");
@@ -195,7 +195,6 @@ void MemHierarchyScratchInterface::handleIncoming(SST::Event *ev){
     delete me;
 }
 
-
 SimpleMem::Request* MemHierarchyScratchInterface::processIncoming(MemEventBase *ev){
     SimpleMem::Request *req = NULL;
     Command cmd = ev->getCmd();
@@ -213,7 +212,6 @@ SimpleMem::Request* MemHierarchyScratchInterface::processIncoming(MemEventBase *
     return req;
 }
 
-
 void MemHierarchyScratchInterface::updateRequest(SimpleMem::Request* req, MemEventBase *me) const{
     switch (me->getCmd()) {
         case Command::AckMove:
@@ -224,7 +222,7 @@ void MemHierarchyScratchInterface::updateRequest(SimpleMem::Request* req, MemEve
             req->data = static_cast<MemEvent*>(me)->getPayload();
             req->size  = req->data.size();
             break;
-        case Command::GetXResp:
+        case Command::WriteResp:
             req->cmd   = SimpleMem::Request::WriteResp;
             break;
         default:
@@ -242,3 +240,4 @@ bool MemHierarchyScratchInterface::initialize(const std::string &linkName, Handl
 
     return (link_ != NULL);
 }
+REENABLE_WARNING

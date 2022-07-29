@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2021 NTESS. Under the terms
+# Copyright 2009-2022 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2021, NTESS
+# Copyright (c) 2009-2022, NTESS
 # All rights reserved.
 #
 # This file is part of the SST software package. For license
@@ -20,9 +20,9 @@ if __name__ == "__main__":
     endPoint = TestEndPoint()
 
 
-    sst.merlin._params["torus:shape"] = "4x4x4"
-    sst.merlin._params["torus:width"] = "1x1x1"
-    sst.merlin._params["torus:local_ports"] = "2"
+    sst.merlin._params["torus.shape"] = "4x4x4"
+    sst.merlin._params["torus.width"] = "1x1x1"
+    sst.merlin._params["torus.local_ports"] = "2"
     sst.merlin._params["num_dims"] = "3"
 
 

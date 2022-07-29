@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -51,8 +51,10 @@ public:
         {"eventSent_GetS",          "Number of GetS requests sent", "events", 2},
         {"eventSent_GetX",          "Number of GetX requests sent", "events", 2},
         {"eventSent_GetSX",         "Number of GetSX requests sent", "events", 2},
+        {"eventSent_Write",         "Number of Write requests sent", "events", 2},
         {"eventSent_GetSResp",      "Number of GetSResp responses sent", "events", 2},
         {"eventSent_GetXResp",      "Number of GetXResp responses sent", "events", 2},
+        {"eventSent_WriteResp",     "Number of WriteResp responses sent", "events", 2},
         {"eventSent_PutS",          "Number of PutS requests sent", "events", 2},
         {"eventSent_PutE",          "Number of PutE requests sent", "events", 2},
         {"eventSent_PutM",          "Number of PutM requests sent", "events", 2},
@@ -244,7 +246,6 @@ public:
     /** Constructor for MESIInclusive. Note that MESIInclusive handles both MESI & MSI protocols */
     MESIInclusive(SST::ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
-        debug->debug(_INFO_,"--------------------------- Initializing [MESI Controller] ... \n\n");
 
         protocol_ = params.find<bool>("protocol", 1);
         if (protocol_)
@@ -367,6 +368,7 @@ public:
         stat_eventSent[(int)Command::GetS]          = registerStatistic<uint64_t>("eventSent_GetS");
         stat_eventSent[(int)Command::GetX]          = registerStatistic<uint64_t>("eventSent_GetX");
         stat_eventSent[(int)Command::GetSX]         = registerStatistic<uint64_t>("eventSent_GetSX");
+        stat_eventSent[(int)Command::Write]         = registerStatistic<uint64_t>("eventSent_Write");
         stat_eventSent[(int)Command::PutS]          = registerStatistic<uint64_t>("eventSent_PutS");
         stat_eventSent[(int)Command::PutM]          = registerStatistic<uint64_t>("eventSent_PutM");
         stat_eventSent[(int)Command::FlushLine]     = registerStatistic<uint64_t>("eventSent_FlushLine");
@@ -377,6 +379,7 @@ public:
         stat_eventSent[(int)Command::NACK]          = registerStatistic<uint64_t>("eventSent_NACK");
         stat_eventSent[(int)Command::GetSResp]      = registerStatistic<uint64_t>("eventSent_GetSResp");
         stat_eventSent[(int)Command::GetXResp]      = registerStatistic<uint64_t>("eventSent_GetXResp");
+        stat_eventSent[(int)Command::WriteResp]     = registerStatistic<uint64_t>("eventSent_WriteResp");
         stat_eventSent[(int)Command::FlushLineResp] = registerStatistic<uint64_t>("eventSent_FlushLineResp");
         stat_eventSent[(int)Command::Fetch]         = registerStatistic<uint64_t>("eventSent_Fetch");
         stat_eventSent[(int)Command::FetchInv]      = registerStatistic<uint64_t>("eventSent_FetchInv");
@@ -506,6 +509,7 @@ public:
         std::set<Command> cmds = { Command::GetS,
             Command::GetX,
             Command::GetSX,
+            Command::Write,
             Command::FlushLine,
             Command::FlushLineInv,
             Command::PutS,
@@ -520,6 +524,7 @@ public:
             Command::NULLCMD,
             Command::GetSResp,
             Command::GetXResp,
+            Command::WriteResp,
             Command::FlushLineResp,
             Command::FetchResp,
             Command::FetchXResp,
@@ -551,7 +556,7 @@ private:
     void forwardFlush(MemEvent * event, SharedCacheLine * line, bool data);
 
     /** Send response up (towards processor) */
-    SimTime_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t time, Command cmd = Command::NULLCMD, bool success = false);
+    SimTime_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t time, Command cmd = Command::NULLCMD, bool success = true);
 
     /** Send response down (towards memory) */
     void sendResponseDown(MemEvent * event, SharedCacheLine * line, bool data, bool evict);
@@ -579,7 +584,6 @@ private:
     /* Record latency */
     void recordLatency(Command cmd, int type, uint64_t latency);
 
-    void printData(vector<uint8_t> * data, bool set);
     void printLine(Addr addr);
 
 /* Variables */

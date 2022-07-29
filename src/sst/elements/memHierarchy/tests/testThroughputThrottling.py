@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 from mhlib import componentlist
 
@@ -7,7 +6,6 @@ from mhlib import componentlist
 # Shared distributed LLCs
 # All caches have prefetchers and limit prefetching
 
-
 cores = 6
 caches = 3  # Number of LLCs on the network
 memories = 2
@@ -15,6 +13,14 @@ coreclock = "2.4GHz"
 uncoreclock = "1.4GHz"
 coherence = "MESI"
 network_bw = "60GB/s"
+
+# Debug parameters
+DEBUG_L1 = 0
+DEBUG_L2 = 0
+DEBUG_L3 = 0
+DEBUG_DIR = 0
+DEBUG_MEMC = 0
+DEBUG_LEVEL = 10
 
 # Create merlin network - this is just simple single router
 network = sst.Component("network", "merlin.hr_router")
@@ -31,18 +37,21 @@ network.addParams({
 network.setSubComponent("topology","merlin.singlerouter")
 
 for x in range(cores):
-    cpu = sst.Component("cpu" + str(x), "memHierarchy.trivialCPU")
+    cpu = sst.Component("core" + str(x), "memHierarchy.standardCPU")
     cpu.addParams({
         "clock" : coreclock,
+        "memFreq" : "4",
+        "memSize" : "4KiB",
+        "verbose" : 0,
+        "clock" : "2GHz",
+        "maxOutstanding" : 16,
+        "opCount" : 5000,
+        "reqsPerIssue" : 3,
+        "write_freq" : 40, # 40% writes
+        "read_freq" : 60,  # 60% reads
         "reqsPerIssue" : 3, # issue up to 3 requests at a time
-        "commFreq" : 4, # issue request every 4th cycle on average
-        "rngseed" : 4734+x,
-        "do_write" : 1,
-        "num_loadstore" : 1500,
-        "addressoffset" : 0, # Generate random addresses between 0 and 4096
-        "memSize" : 1024*4
     })
-    iface = cpu.setSubComponent("memory", "memHierarchy.memInterface")
+    iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
     
     l1cache = sst.Component("l1cache" + str(x), "memHierarchy.Cache")
     l1cache.addParams({
@@ -58,6 +67,8 @@ for x in range(cores):
         "max_requests_per_cycle" : 2,
         "max_outstanding_prefetch" : 2, # No more than 2 outstanding prefetches at a time; only set since L1 mshr is unlimited in size (otherwise defaults to 1/2 mshr size)
         "request_link_width" : "192B",
+        "debug" : DEBUG_L1,
+        "debug_level" : DEBUG_LEVEL,
     })
     l1cache.setSubComponent("prefetcher", "cassini.NextBlockPrefetcher")
 
@@ -78,6 +89,8 @@ for x in range(cores):
         # Prefetch parameters
         "drop_prefetch_mshr_level" : 5, # Drop prefetch when total misses > 5
         # MemNIC parameters
+        "debug" : DEBUG_L2,
+        "debug_level" : DEBUG_LEVEL,
     })
     l2cache.setSubComponent("prefetcher", "cassini.NextBlockPrefetcher")
     l2tol1 = l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
@@ -117,6 +130,8 @@ for x in range(caches):
         "num_cache_slices" : caches,
         "slice_allocation_policy" : "rr", # Round-robin
         "slice_id" : x,
+        "debug" : DEBUG_L3,
+        "debug_level" : DEBUG_LEVEL,
     })
     l3nic = l3cache.setSubComponent("cpulink", "memHierarchy.MemNIC")
     l3nic.addParams({
@@ -142,6 +157,8 @@ for x in range(memories):
         "interleave_step" : str(memories * 64) + "B",
         "addr_range_start" : x*64,
         "addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
+        "debug" : DEBUG_DIR,
+        "debug_level" : DEBUG_LEVEL,
     })
     dirtoM = directory.setSubComponent("memlink", "memHierarchy.MemLink")
     dirnic = directory.setSubComponent("cpulink", "memHierarchy.MemNIC")
@@ -160,6 +177,8 @@ for x in range(memories):
         "interleave_step" : str(memories * 64) + "B",
         "addr_range_start" : x*64,
         "addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
+        "debug" : DEBUG_MEMC,
+        "debug_level" : DEBUG_LEVEL,
     })
     memory = memctrl.setSubComponent("backend", "memHierarchy.simpleDRAM")
     memory.addParams({

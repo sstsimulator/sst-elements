@@ -49,34 +49,37 @@ class testcase_Ariel(SSTTestCase):
 
     @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_Ariel_runstream(self):
-        self.ariel_Template("runstream", use_openmp_bin=False, use_memh=False)
+        self.ariel_Template("runstream")
 
     @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_Ariel_testSt(self):
-        self.ariel_Template("runstreamSt", use_openmp_bin=False, use_memh=False)
+        self.ariel_Template("runstreamSt")
 
     @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_Ariel_testNB(self):
-        self.ariel_Template("runstreamNB", use_openmp_bin=False, use_memh=False)
+        self.ariel_Template("runstreamNB")
 
     @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_Ariel_memH_test(self):
-        self.ariel_Template("memHstream", use_openmp_bin=False, use_memh=True)
+        self.ariel_Template("memHstream")
 
     @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     @unittest.skipIf(host_os_is_osx(), "Ariel: Open MP is not supported on OSX.")
     def test_Ariel_test_ivb(self):
-        self.ariel_Template("ariel_ivb", use_openmp_bin=True, use_memh=False)
+        self.ariel_Template("ariel_ivb")
 
     @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     @unittest.skipIf(host_os_is_osx(), "Ariel: Open MP is not supported on OSX.")
     @unittest.skipIf(testing_check_get_num_ranks() > 1, "Ariel: test_Ariel_test_snb skipped if ranks > 1 - Sandy Bridge test is incompatible with Multi-Rank.")
     def test_Ariel_test_snb(self):
-        self.ariel_Template("ariel_snb", use_openmp_bin=True, use_memh=False)
-
+        self.ariel_Template("ariel_snb")
+    
+    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
+    def test_Ariel_test_snb_mlm(self):
+        self.ariel_Template("ariel_snb_mlm", app="stream_mlm")
 #####
 
-    def ariel_Template(self, testcase, use_openmp_bin=False, use_memh=False, testtimeout=480):
+    def ariel_Template(self, testcase, app="", testtimeout=480):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
@@ -87,14 +90,29 @@ class testcase_Ariel(SSTTestCase):
         ArielElementFrontendDir = "{0}/frontend/simple".format(ArielElementDir)
         ArielElementStreamDir = "{0}/frontend/simple/examples/stream".format(ArielElementDir)
         ArielElementompmybarrierDir = "{0}/testopenMP/ompmybarrier".format(test_path)
+        ArielElementAPIDir = "{0}/api".format(ArielElementDir)
         Ariel_test_stream_app = "{0}/stream".format(ArielElementStreamDir)
         Ariel_ompmybarrier_app = "{0}/ompmybarrier".format(ArielElementompmybarrierDir)
+        Ariel_test_stream_mlm_app = "{0}/stream_mlm".format(ArielElementStreamDir)
         sst_elements_parent_dir = os.path.abspath("{0}/../../../../../".format(ArielElementDir))
-        memHElementsTestsDir = os.path.abspath("{0}/../memHierarchy/tests".format(ArielElementDir))
 
         # Set the Path to the stream applications
         os.environ["ARIEL_TEST_STREAM_APP"] = Ariel_test_stream_app
-        os.environ["OMP_EXE"] = Ariel_ompmybarrier_app
+        if app == "":
+            os.environ["OMP_EXE"] = Ariel_ompmybarrier_app
+        elif app == "stream_mlm":
+            os.environ["OMP_EXE"] = Ariel_test_stream_mlm_app
+            libpath = os.environ.get("LD_LIBRARY_PATH")
+            if libpath:
+                os.environ["LD_LIBRARY_PATH"] = ArielElementAPIDir + ":" + libpath
+            else:
+                os.environ["LD_LIBRARY_PATH"] = ArielElementAPIDir
+            # Also simlink in malloc.txt
+            filepath = "{0}/malloc.txt".format(ArielElementFrontendDir)
+            if os.path.islink(filepath) == False:
+                os_symlink_file(ArielElementStreamDir, ArielElementFrontendDir, "malloc.txt")
+        else:
+            os.environ["OMP_EXE"] = app # Probably will fail unless this path is correctly set, but will give a useful error message
 
         # Set the various file paths
         testDataFileName=("test_Ariel_{0}".format(testcase))
@@ -110,21 +128,8 @@ class testcase_Ariel(SSTTestCase):
         log_debug("out file = {0}".format(outfile))
         log_debug("err file = {0}".format(errfile))
         log_debug("sst_elements_parent_dir = {0}".format(sst_elements_parent_dir))
-        log_debug("memHElementsTestsDir = {0}".format(memHElementsTestsDir))
         log_debug("Env:ARIEL_TEST_STREAM_APP = {0}".format(Ariel_test_stream_app))
         log_debug("Env:OMP_EXE = {0}".format(Ariel_ompmybarrier_app))
-
-        if use_memh == True:
-          # Create a simlink of the memH ini files files
-            filename = "DDR3_micron_32M_8B_x4_sg125.ini"
-            filepath = "{0}/{1}".format(ArielElementFrontendDir, filename)
-            if os.path.islink(filepath) == False:
-                os_symlink_file(memHElementsTestsDir, ArielElementFrontendDir, filename)
-
-            filename = "system.ini"
-            filepath = "{0}/{1}".format(ArielElementFrontendDir, filename)
-            if os.path.islink(filepath) == False:
-                os_symlink_file(memHElementsTestsDir, ArielElementFrontendDir, filename)
 
         # Run SST in the tests directory
         self.run_sst(sdlfile, outfile, errfile, set_cwd=ArielElementStreamDir,
@@ -144,10 +149,12 @@ class testcase_Ariel(SSTTestCase):
 
         num_out_lines  = int(os_wc(outfile, [0]))
         log_debug("{0} : num_out_lines = {1}".format(outfile, num_out_lines))
+        num_err_lines  = int(os_wc(errfile, [0]))
+        log_debug("{0} : num_err_lines = {1}".format(errfile, num_err_lines))
         num_ref_lines = int(os_wc(reffile, [0]))
         log_debug("{0} : num_ref_lines = {1}".format(reffile, num_ref_lines))
 
-        line_count_diff = abs(num_ref_lines - num_out_lines)
+        line_count_diff = abs(num_ref_lines - num_out_lines - num_err_lines)
         log_debug("Line Count diff = {0}".format(line_count_diff))
 
         if line_count_diff > 15:
@@ -167,16 +174,26 @@ class testcase_Ariel(SSTTestCase):
         self.ArielElementStreamDir = "{0}/frontend/simple/examples/stream".format(self.ArielElementDir)
         self.ArielElementompmybarrierDir = "{0}/testopenMP/ompmybarrier".format(test_path)
 
-        # Now build the Ariel stream example
+        # Build the Ariel API library
+        ArielApiDir = "{0}/api".format(self.ArielElementDir)
         cmd = "make"
-        rtn = OSCommand(cmd, set_cwd=self.ArielElementStreamDir).run()
-        log_debug("Ariel frontend/simple/examples/stream Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
-        self.assertTrue(rtn.result() == 0, "stream.c failed to compile")
+        rtn0 = OSCommand(cmd, set_cwd=ArielApiDir).run()
+        log_debug("Ariel api/libarielapi.so Make result = {0}; output =\n{1}".format(rtn0.result(), rtn0.output()))
+        os.environ["ARIELAPI"] =  ArielApiDir
+
+        # Now build the Ariel stream example
+        cmd = "make all"
+        rtn1 = OSCommand(cmd, set_cwd=self.ArielElementStreamDir).run()
+        log_debug("Ariel frontend/simple/examples/Makefile Make result = {0}; output =\n{1}".format(rtn1.result(), rtn1.output()))
 
         # Now build the ompmybarrier binary
         cmd = "make"
-        rtn = OSCommand(cmd, set_cwd=self.ArielElementompmybarrierDir).run()
-        log_debug("Ariel ompmybarrier Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
-        self.assertTrue(rtn.result() == 0, "ompmybarrier.c failed to compile")
-
+        rtn2 = OSCommand(cmd, set_cwd=self.ArielElementompmybarrierDir).run()
+        log_debug("Ariel ompmybarrier Make result = {0}; output =\n{1}".format(rtn2.result(), rtn2.output()))
+        
+        # Check that everything compiled OK
+        self.assertTrue(rtn0.result() == 0, "libarielapi failed to compile")
+        self.assertTrue(rtn1.result() == 0, "stream apps failed to compile")
+        self.assertTrue(rtn2.result() == 0, "ompmybarrier.c failed to compile")
+    
 

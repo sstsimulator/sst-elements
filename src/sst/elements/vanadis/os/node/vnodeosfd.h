@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -20,31 +20,40 @@
 #include <cstdio>
 #include <string>
 
+#include <fcntl.h>
+
 namespace SST {
 namespace Vanadis {
 
 class VanadisOSFileDescriptor {
 public:
-    VanadisOSFileDescriptor(uint32_t desc_id, const char* file_path) : file_id(desc_id) {
-
-        if (nullptr != file_path) {
-            file_handle = fopen(file_path, "w+");
-        } else {
-            file_handle = nullptr;
+    VanadisOSFileDescriptor(const char* file_path) : path(file_path), fd(-1)
+	{
+        fd = open( file_path, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU );
+        if ( -1 == fd ) {
+            throw errno;
         }
-
-        path = file_path;
     }
 
-    VanadisOSFileDescriptor(uint32_t desc_id, const char* file_path, FILE* f_handle)
-        : file_id(desc_id), file_handle(f_handle) {
-
-        path = file_path;
+    VanadisOSFileDescriptor(const char* file_path, int flags, mode_t mode) : path(file_path) 
+    {
+        fd = open(file_path, flags, mode );
+        if ( -1 == fd ) {
+            throw errno;
+        }		
     }
 
-    ~VanadisOSFileDescriptor() { closeFile(); }
+    VanadisOSFileDescriptor(const char* file_path, int dirfd, int flags, mode_t mode) : path(file_path)
+    {
+        fd = openat(dirfd, file_path, flags, mode );
+        if ( -1 == fd ) {
+            throw errno;
+        }		
+    }
 
-    uint32_t getHandle() const { return file_id; }
+    ~VanadisOSFileDescriptor() { 
+        close(fd);
+    }
 
     const char* getPath() const {
         if (path.size() == 0) {
@@ -54,24 +63,13 @@ public:
         }
     }
 
-    FILE* getFileHandle() {
-        if (nullptr == file_handle) {
-            file_handle = fopen(path.c_str(), "rw");
-        }
-
-        return file_handle;
-    }
-
-    void closeFile() {
-        if (nullptr != file_handle) {
-            fclose(file_handle);
-        }
+    int getFileDescriptor() {
+        return fd;
     }
 
 protected:
-    const uint32_t file_id;
     std::string path;
-    FILE* file_handle;
+    int fd;
 };
 
 } // namespace Vanadis

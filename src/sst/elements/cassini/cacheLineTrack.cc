@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -56,9 +56,9 @@ cacheLineTrack::cacheLineTrack(ComponentId_t id, Params& params) : CacheListener
 
     rdHisto = registerStatistic<Addr>("hist_reads_log2");
     wrHisto = registerStatistic<Addr>("hist_writes_log2");
-    useHisto = registerStatistic<uint>("hist_word_accesses");
+    useHisto = registerStatistic<unsigned int>("hist_word_accesses");
     ageHisto = registerStatistic<SimTime_t>("hist_age_log2");
-    evicts = registerStatistic<uint>("evicts");
+    evicts = registerStatistic<unsigned int>("evicts");
 
 }
 
@@ -107,7 +107,7 @@ void cacheLineTrack::notifyAccess(const CacheListenerNotification& notify) {
                 wrHisto->addData(log2_64(iter->second.writes));
                 SimTime_t now = getSimulation()->getCurrentSimCycle();
                 ageHisto->addData(log2_64(now - iter->second.entered));
-                uint touched = iter->second.touched.count();
+                unsigned int touched = iter->second.touched.count();
                 useHisto->addData(touched);
 		evicts->addData(1);
                 //delete it

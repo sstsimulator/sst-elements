@@ -1,0 +1,5 @@
+myNode=1 numNodes=2
+buffer=0x20000040
+validate
+validate complete
+returning

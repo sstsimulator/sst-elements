@@ -1,1174 +1,1543 @@
-cpu: 1000 Issued Write for address 0x284
-mmio: 4 Issued Write for address 0x280
-mmio: 3 Issued Write for address 0x300
-cpu: 999 Issued MMIO Read for address 0x400
-cpu: 998 Issued MMIO Write for address 0x400 with payload 24575
-mmio: 2 Issued Read for address 0x2f0
-cpu: 997 Issued MMIO Write for address 0x400 with payload 15862
-mmio: 1 Issued Write for address 0x140
-cpu: 996 Issued MMIO Read for address 0x400
-cpu: 995 Issued Read for address 0x78
-cpu: 994 Issued Read for address 0x268
-cpu: 993 Issued Read for address 0x3dc
-cpu: 992 Issued Read for address 0x394
-cpu: 991 Issued Write for address 0xf0
-cpu: 990 Issued MMIO Read for address 0x400
-cpu: 989 Issued Write for address 0x130
+core: 1000 Issued Write for address 0x284
+mmio: 400 Issued Write for address 0x280
+mmio: 399 Issued Write for address 0x300
+core: 999 Issued MMIO Read for address 0x400
+core: 998 Issued MMIO Write for address 0x400 with payload 24575
+mmio: 398 Issued Read for address 0x2f0
+core: 997 Issued MMIO Write for address 0x400 with payload 15862
+mmio: 397 Issued Write for address 0x140
+mmio: 396 Issued Read for address 0x254
+mmio: 395 Issued Write for address 0x100
+core: 996 Issued MMIO Read for address 0x400
+mmio: 394 Issued Write for address 0x280
+mmio: 393 Issued Read for address 0x2c4
+core: 995 Issued Read for address 0x78
+mmio: 392 Issued Write for address 0x140
+mmio: 391 Issued Write for address 0x80
+mmio: 390 Issued Read for address 0x188
+core: 994 Issued Read for address 0x268
+core: 993 Issued Read for address 0x3dc
+mmio: 389 Issued Read for address 0x220
+core: 992 Issued Read for address 0x394
+mmio: 388 Issued Write for address 0x200
+core: 991 Issued Write for address 0xf0
+core: 990 Issued MMIO Read for address 0x400
+core: 989 Issued Write for address 0x130
+mmio: 387 Issued Write for address 0x40
+mmio: 386 Issued Read for address 0x290
+mmio: 385 Issued Read for address 0x28c
+mmio: 384 Issued Write for address 0x100
+mmio: 383 Issued Write for address 0x200
+mmio: 382 Issued Write for address 0x3c0
+mmio: 381 Issued Write for address 0x140
+mmio: 380 Issued Write for address 0x380
+mmio: 379 Issued Read for address 0x220
+mmio: 378 Issued Write for address 0x140
+mmio: 377 Issued Write for address 0x380
+mmio: 376 Issued Read for address 0x270
+mmio: 375 Issued Read for address 0x314
+mmio: 374 Issued Read for address 0x388
+mmio: 373 Issued Write for address 0x280
+mmio: 372 Issued Write for address 0x80
+mmio: 371 Issued Read for address 0x20c
+mmio: 370 Issued Write for address 0x80
+mmio: 369 Issued Write for address 0xc0
+mmio: 368 Issued Write for address 0x100
+mmio: 367 Issued Read for address 0x2c
+mmio: 366 Issued Write for address 0x300
+mmio: 365 Issued Write for address 0x140
+mmio: 364 Issued Read for address 0x228
+mmio: 363 Issued Read for address 0x324
+mmio: 362 Issued Read for address 0x260
+mmio: 361 Issued Read for address 0x188
+mmio: 360 Issued Write for address 0x1c0
+mmio: 359 Issued Write for address 0x0
+mmio: 358 Issued Read for address 0x15c
+mmio: 357 Issued Read for address 0x1b8
+mmio: 356 Issued Read for address 0x168
+mmio: 355 Issued Read for address 0x39c
+mmio: 354 Issued Read for address 0xac
+mmio: 353 Issued Read for address 0x124
+mmio: 352 Issued Read for address 0x160
+mmio: 351 Issued Read for address 0xc4
+mmio: 350 Issued Read for address 0x3e0
+mmio: 349 Issued Read for address 0x324
+mmio: 348 Issued Read for address 0x258
+mmio: 347 Issued Write for address 0x280
+mmio: 346 Issued Write for address 0x380
+mmio: 345 Issued Write for address 0x0
+mmio: 344 Issued Read for address 0xc4
+mmio: 343 Issued Read for address 0x28
+mmio: 342 Issued Read for address 0x24
+mmio: 341 Issued Write for address 0x100
+mmio: 340 Issued Read for address 0xf8
+mmio: 339 Issued Read for address 0x2f4
+mmio: 338 Issued Read for address 0xf0
+mmio: 337 Issued Write for address 0x240
+mmio: 336 Issued Read for address 0x2a0
+mmio: 335 Issued Write for address 0x340
+mmio: 334 Issued Write for address 0x180
+mmio: 333 Issued Read for address 0x3c0
+mmio: 332 Issued Write for address 0x200
+mmio: 331 Issued Write for address 0x200
+mmio: 330 Issued Read for address 0x114
+mmio: 329 Issued Write for address 0x3c0
+mmio: 328 Issued Read for address 0x350
+mmio: 327 Issued Read for address 0x298
+mmio: 326 Issued Read for address 0xf8
+mmio: 325 Issued Write for address 0x200
+mmio: 324 Issued Write for address 0x200
+mmio: 323 Issued Read for address 0x114
+mmio: 322 Issued Read for address 0x24
+mmio: 321 Issued Write for address 0xc0
+mmio: 320 Issued Read for address 0x1d0
+mmio: 319 Issued Write for address 0x2c0
+mmio: 318 Issued Write for address 0x180
+mmio: 317 Issued Read for address 0x1c8
+mmio: 316 Issued Write for address 0x280
+mmio: 315 Issued Read for address 0x1d0
+mmio: 314 Issued Write for address 0x280
+mmio: 313 Issued Read for address 0x30c
+mmio: 312 Issued Read for address 0xf4
+mmio: 311 Issued Read for address 0x28
+mmio: 310 Issued Read for address 0x36c
+mmio: 309 Issued Read for address 0x3f0
+mmio: 308 Issued Read for address 0x10c
+mmio: 307 Issued Write for address 0x300
+mmio: 306 Issued Write for address 0x200
+mmio: 305 Issued Read for address 0x3e4
+mmio: 304 Issued Write for address 0x240
+mmio: 303 Issued Read for address 0x1e4
+mmio: 302 Issued Write for address 0x240
+mmio: 301 Issued Read for address 0x30c
+mmio: 300 Issued Write for address 0x0
+mmio: 299 Issued Read for address 0x4
+mmio: 298 Issued Write for address 0x280
+mmio: 297 Issued Read for address 0x288
+mmio: 296 Issued Write for address 0x80
+mmio: 295 Issued Read for address 0x218
+mmio: 294 Issued Read for address 0x3ac
+mmio: 293 Issued Read for address 0x3dc
+mmio: 292 Issued Read for address 0x350
+mmio: 291 Issued Read for address 0x0
+mmio: 290 Issued Write for address 0x3c0
+mmio: 289 Issued Read for address 0x3bc
+mmio: 288 Issued Write for address 0x40
+mmio: 287 Issued Read for address 0xb8
+mmio: 286 Issued Write for address 0x0
+mmio: 285 Issued Read for address 0xe0
+mmio: 284 Issued Read for address 0x1b8
+mmio: 283 Issued Read for address 0x9c
+mmio: 282 Issued Read for address 0xec
+mmio: 281 Issued Write for address 0x200
+mmio: 280 Issued Read for address 0x318
+mmio: 279 Issued Read for address 0xd8
+mmio: 278 Issued Read for address 0x2a8
+mmio: 277 Issued Write for address 0x280
+mmio: 276 Issued Read for address 0x9c
+mmio: 275 Issued Read for address 0x1f4
+mmio: 274 Issued Write for address 0x280
+mmio: 273 Issued Write for address 0x240
+mmio: 272 Issued Read for address 0x1d4
+mmio: 271 Issued Read for address 0x23c
+mmio: 270 Issued Write for address 0xc0
+mmio: 269 Issued Write for address 0x3c0
+mmio: 268 Issued Write for address 0x140
+mmio: 267 Issued Read for address 0xec
+mmio: 266 Issued Read for address 0x1b0
+mmio: 265 Issued Write for address 0x1c0
+mmio: 264 Issued Write for address 0x300
+mmio: 263 Issued Read for address 0x50
+mmio: 262 Issued Read for address 0x310
+mmio: 261 Issued Read for address 0x124
+mmio: 260 Issued Write for address 0x240
+mmio: 259 Issued Write for address 0x180
+mmio: 258 Issued Write for address 0x1c0
+mmio: 257 Issued Write for address 0x1c0
+mmio: 256 Issued Write for address 0x100
+mmio: 255 Issued Write for address 0xc0
+mmio: 254 Issued Write for address 0x340
+mmio: 253 Issued Read for address 0x10
+mmio: 252 Issued Read for address 0x170
+mmio: 251 Issued Write for address 0x200
+mmio: 250 Issued Read for address 0x94
+mmio: 249 Issued Read for address 0x3bc
+mmio: 248 Issued Write for address 0xc0
+mmio: 247 Issued Read for address 0x7c
+mmio: 246 Issued Read for address 0xf8
+mmio: 245 Issued Read for address 0x160
+mmio: 244 Issued Write for address 0x200
+mmio: 243 Issued Read for address 0x114
+mmio: 242 Issued Write for address 0x2c0
+mmio: 241 Issued Write for address 0x380
+mmio: 240 Issued Write for address 0x80
+mmio: 239 Issued Read for address 0x2d0
+mmio: 238 Issued Read for address 0x22c
+mmio: 237 Issued Write for address 0x100
+mmio: 236 Issued Read for address 0x14c
+mmio: 235 Issued Read for address 0x360
+mmio: 234 Issued Read for address 0x368
+mmio: 233 Issued Write for address 0x0
+mmio: 232 Issued Write for address 0x0
+mmio: 231 Issued Write for address 0x280
+mmio: 230 Issued Write for address 0x40
+mmio: 229 Issued Read for address 0x6c
+mmio: 228 Issued Write for address 0x2c0
+mmio: 227 Issued Write for address 0x2c0
+mmio: 226 Issued Write for address 0x0
+mmio: 225 Issued Read for address 0xd4
+mmio: 224 Issued Write for address 0x180
+mmio: 223 Issued Read for address 0x2c4
+mmio: 222 Issued Read for address 0x274
+mmio: 221 Issued Write for address 0x40
+mmio: 220 Issued Read for address 0x188
+mmio: 219 Issued Write for address 0x100
+mmio: 218 Issued Write for address 0x100
+mmio: 217 Issued Read for address 0x3c8
+mmio: 216 Issued Read for address 0x1c
+mmio: 215 Issued Read for address 0x2f8
+mmio: 214 Issued Read for address 0x288
+mmio: 213 Issued Write for address 0x200
+mmio: 212 Issued Read for address 0x64
+mmio: 211 Issued Read for address 0x3c0
+mmio: 210 Issued Read for address 0x268
+mmio: 209 Issued Write for address 0xc0
+mmio: 208 Issued Write for address 0x280
+mmio: 207 Issued Read for address 0x60
+mmio: 206 Issued Write for address 0x1c0
+mmio: 205 Issued Write for address 0x140
+mmio: 204 Issued Read for address 0x208
+mmio: 203 Issued Read for address 0x78
+mmio: 202 Issued Read for address 0x228
+mmio: 201 Issued Read for address 0x35c
+mmio: 200 Issued Read for address 0x3f0
+mmio: 199 Issued Write for address 0x40
+mmio: 198 Issued Read for address 0x11c
+mmio: 197 Issued Read for address 0x88
+mmio: 196 Issued Read for address 0x30c
+mmio: 195 Issued Write for address 0x380
+mmio: 194 Issued Write for address 0x140
+mmio: 193 Issued Read for address 0x388
+mmio: 192 Issued Read for address 0x60
+mmio: 191 Issued Read for address 0x1e8
+mmio: 190 Issued Write for address 0x1c0
+mmio: 189 Issued Write for address 0x240
+mmio: 188 Issued Read for address 0x390
+mmio: 187 Issued Write for address 0x280
+mmio: 186 Issued Read for address 0x264
+mmio: 185 Issued Write for address 0x2c0
+mmio: 184 Issued Write for address 0x380
+mmio: 183 Issued Write for address 0x300
+mmio: 182 Issued Read for address 0x3c
+mmio: 181 Issued Write for address 0x280
+mmio: 180 Issued Write for address 0x1c0
+mmio: 179 Issued Write for address 0x2c0
+mmio: 178 Issued Write for address 0x200
+mmio: 177 Issued Write for address 0xc0
+mmio: 176 Issued Read for address 0x1d4
+mmio: 175 Issued Read for address 0x1f4
+mmio: 174 Issued Read for address 0x120
 Handle Read. Returning 0
+mmio: 173 Issued Read for address 0x28
+mmio: 172 Issued Write for address 0x0
+mmio: 171 Issued Write for address 0x380
+mmio: 170 Issued Write for address 0x40
+mmio: 169 Issued Read for address 0xb0
+mmio: 168 Issued Write for address 0x200
+mmio: 167 Issued Write for address 0x80
+mmio: 166 Issued Read for address 0x134
+mmio: 165 Issued Write for address 0x3c0
+mmio: 164 Issued Read for address 0x35c
+mmio: 163 Issued Write for address 0x280
+mmio: 162 Issued Read for address 0x128
+mmio: 161 Issued Read for address 0x198
+mmio: 160 Issued Read for address 0x3a8
+mmio: 159 Issued Read for address 0xac
+mmio: 158 Issued Read for address 0xa4
+mmio: 157 Issued Read for address 0x34
+mmio: 156 Issued Read for address 0x204
+mmio: 155 Issued Read for address 0x1c4
+mmio: 154 Issued Write for address 0x380
+mmio: 153 Issued Write for address 0x280
+mmio: 152 Issued Read for address 0x314
+mmio: 151 Issued Read for address 0x1a8
+mmio: 150 Issued Write for address 0x240
+mmio: 149 Issued Read for address 0x244
+mmio: 148 Issued Write for address 0x140
+mmio: 147 Issued Read for address 0x70
+mmio: 146 Issued Write for address 0x300
+mmio: 145 Issued Write for address 0x300
+mmio: 144 Issued Write for address 0x100
+mmio: 143 Issued Write for address 0x2c0
+mmio: 142 Issued Read for address 0xcc
+mmio: 141 Issued Read for address 0x1bc
+mmio: 140 Issued Write for address 0x100
+mmio: 139 Issued Write for address 0x200
+mmio: 138 Issued Read for address 0x370
+mmio: 137 Issued Write for address 0xc0
+mmio: 136 Issued Write for address 0x100
+mmio: 135 Issued Read for address 0xb0
+mmio: 134 Issued Write for address 0x280
+mmio: 133 Issued Write for address 0xc0
+mmio: 132 Issued Read for address 0x2a4
+mmio: 131 Issued Write for address 0x140
+mmio: 130 Issued Write for address 0x380
+mmio: 129 Issued Read for address 0x3e4
+mmio: 128 Issued Read for address 0x2c8
+mmio: 127 Issued Read for address 0x2dc
+mmio: 126 Issued Read for address 0x180
+mmio: 125 Issued Read for address 0x0
+mmio: 124 Issued Read for address 0x150
+mmio: 123 Issued Read for address 0xe0
+mmio: 122 Issued Read for address 0x178
 Handle Write. Squared is 603930625
+mmio: 121 Issued Write for address 0x180
+mmio: 120 Issued Read for address 0x2e8
+mmio: 119 Issued Write for address 0x300
+mmio: 118 Issued Read for address 0x6c
+mmio: 117 Issued Write for address 0x340
+mmio: 116 Issued Write for address 0x2c0
+mmio: 115 Issued Write for address 0x300
+mmio: 114 Issued Write for address 0x2c0
+mmio: 113 Issued Read for address 0x374
+mmio: 112 Issued Write for address 0x2c0
+mmio: 111 Issued Read for address 0x3e0
+mmio: 110 Issued Write for address 0x2c0
+mmio: 109 Issued Read for address 0x74
+mmio: 108 Issued Write for address 0x300
+mmio: 107 Issued Write for address 0x140
+mmio: 106 Issued Read for address 0x168
+mmio: 105 Issued Read for address 0x1a0
+mmio: 104 Issued Write for address 0x200
+mmio: 103 Issued Write for address 0x3c0
+mmio: 102 Issued Write for address 0x180
+mmio: 101 Issued Write for address 0x80
+mmio: 100 Issued Write for address 0x240
+mmio: 99 Issued Write for address 0x340
+mmio: 98 Issued Read for address 0x3a8
+mmio: 97 Issued Read for address 0xa8
+mmio: 96 Issued Read for address 0xe0
+mmio: 95 Issued Read for address 0x2b4
+mmio: 94 Issued Write for address 0x200
+mmio: 93 Issued Write for address 0x0
+mmio: 92 Issued Read for address 0x32c
+mmio: 91 Issued Read for address 0x25c
+mmio: 90 Issued Read for address 0xa4
+mmio: 89 Issued Read for address 0x378
+mmio: 88 Issued Read for address 0x364
+mmio: 87 Issued Read for address 0x1c
+mmio: 86 Issued Read for address 0xb0
+mmio: 85 Issued Read for address 0x224
+mmio: 84 Issued Write for address 0x3c0
+mmio: 83 Issued Read for address 0x174
+mmio: 82 Issued Read for address 0x34c
+mmio: 81 Issued Write for address 0x1c0
+mmio: 80 Issued Write for address 0x1c0
+mmio: 79 Issued Write for address 0x80
+mmio: 78 Issued Write for address 0x1c0
+mmio: 77 Issued Write for address 0x340
+mmio: 76 Issued Read for address 0x5c
+mmio: 75 Issued Read for address 0x314
+mmio: 74 Issued Write for address 0x200
+mmio: 73 Issued Read for address 0x1b4
+mmio: 72 Issued Write for address 0x1c0
+mmio: 71 Issued Write for address 0x300
+mmio: 70 Issued Read for address 0x90
+mmio: 69 Issued Read for address 0xe4
+mmio: 68 Issued Read for address 0x26c
+mmio: 67 Issued Write for address 0x200
 Handle Write. Squared is 251603044
+mmio: 66 Issued Write for address 0x2c0
+mmio: 65 Issued Write for address 0x1c0
+mmio: 64 Issued Write for address 0x340
+mmio: 63 Issued Write for address 0x200
+mmio: 62 Issued Write for address 0x100
+mmio: 61 Issued Read for address 0x164
+mmio: 60 Issued Read for address 0x1d4
+mmio: 59 Issued Write for address 0x1c0
+mmio: 58 Issued Write for address 0x40
+mmio: 57 Issued Write for address 0x200
+mmio: 56 Issued Write for address 0x100
+mmio: 55 Issued Read for address 0x2c8
+mmio: 54 Issued Read for address 0xc
+mmio: 53 Issued Write for address 0x2c0
+mmio: 52 Issued Read for address 0x3cc
+mmio: 51 Issued Write for address 0x180
+mmio: 50 Issued Read for address 0x1fc
+mmio: 49 Issued Write for address 0xc0
+mmio: 48 Issued Write for address 0x380
+mmio: 47 Issued Write for address 0x200
+mmio: 46 Issued Write for address 0x280
+mmio: 45 Issued Read for address 0x324
+mmio: 44 Issued Write for address 0x300
+mmio: 43 Issued Read for address 0xc4
+mmio: 42 Issued Read for address 0x330
+mmio: 41 Issued Write for address 0x40
+mmio: 40 Issued Read for address 0x20
+mmio: 39 Issued Read for address 0xe0
+mmio: 38 Issued Read for address 0x8
+mmio: 37 Issued Write for address 0x380
+mmio: 36 Issued Write for address 0x40
+mmio: 35 Issued Read for address 0xe8
+mmio: 34 Issued Write for address 0x380
+mmio: 33 Issued Read for address 0x10
+mmio: 32 Issued Read for address 0x248
+mmio: 31 Issued Read for address 0x2d0
+mmio: 30 Issued Read for address 0x16c
+mmio: 29 Issued Read for address 0xbc
+mmio: 28 Issued Read for address 0x144
+mmio: 27 Issued Read for address 0x1d0
+mmio: 26 Issued Read for address 0x1dc
+mmio: 25 Issued Write for address 0x300
+mmio: 24 Issued Read for address 0x3a0
+mmio: 23 Issued Write for address 0x300
+mmio: 22 Issued Write for address 0x0
+mmio: 21 Issued Read for address 0xec
+mmio: 20 Issued Write for address 0x340
+mmio: 19 Issued Write for address 0xc0
+mmio: 18 Issued Write for address 0x140
+mmio: 17 Issued Write for address 0x180
+mmio: 16 Issued Read for address 0x30c
+mmio: 15 Issued Read for address 0x318
+mmio: 14 Issued Read for address 0x39c
+mmio: 13 Issued Write for address 0x240
+mmio: 12 Issued Read for address 0x268
+mmio: 11 Issued Read for address 0x1dc
+mmio: 10 Issued Write for address 0x380
+mmio: 9 Issued Read for address 0x114
+mmio: 8 Issued Read for address 0x29c
+mmio: 7 Issued Read for address 0x13c
+mmio: 6 Issued Read for address 0x24c
 Handle Read. Returning 251603044
-cpu: 988 Issued Write for address 0x204
-cpu: 987 Issued MMIO Read for address 0x400
-cpu: 986 Issued Write for address 0x1a4
-cpu: 985 Issued Write for address 0x264
+mmio: 5 Issued Write for address 0x140
+mmio: 4 Issued Write for address 0x240
+mmio: 3 Issued Write for address 0x0
+mmio: 2 Issued Write for address 0xc0
+mmio: 1 Issued Read for address 0x98
+core: 988 Issued Write for address 0x204
+core: 987 Issued Write for address 0x3a0
+core: 986 Issued Write for address 0x2c8
+core: 985 Issued Write for address 0x3bc
 Handle Read. Returning 251603044
-cpu: 984 Issued Write for address 0x18c
-cpu: 983 Issued Write for address 0x300
-cpu: 982 Issued Write for address 0x210
+core: 984 Issued Write for address 0x340
+core: 983 Issued Write for address 0x2f8
+core: 982 Issued Read for address 0x8c
+core: 981 Issued Write for address 0x300
+core: 980 Issued Write for address 0x304
+core: 979 Issued Write for address 0x1fc
+core: 978 Issued MMIO Read for address 0x400
+core: 977 Issued Write for address 0x308
+core: 976 Issued MMIO Read for address 0x400
+core: 975 Issued Write for address 0x12c
+core: 974 Issued MMIO Read for address 0x400
+core: 973 Issued Write for address 0x29c
+core: 972 Issued MMIO Read for address 0x400
 Handle Read. Returning 251603044
-cpu: 981 Issued Read for address 0x64
-cpu: 980 Issued Read for address 0x3f4
-cpu: 979 Issued Write for address 0x298
-cpu: 978 Issued Write for address 0x1dc
-cpu: 977 Issued Write for address 0x294
-cpu: 976 Issued MMIO Read for address 0x400
-cpu: 975 Issued Write for address 0x210
-cpu: 974 Issued Read for address 0x368
-cpu: 973 Issued Write for address 0x258
-cpu: 972 Issued Write for address 0x39c
-cpu: 971 Issued Write for address 0x84
 Handle Read. Returning 251603044
-cpu: 970 Issued Read for address 0x33c
-cpu: 969 Issued Read for address 0x35c
-cpu: 968 Issued MMIO Write for address 0x400 with payload -27978
-cpu: 967 Issued MMIO Write for address 0x400 with payload -10206
-cpu: 966 Issued Write for address 0x378
-cpu: 965 Issued Write for address 0x138
-cpu: 964 Issued Write for address 0x3e8
-cpu: 963 Issued Write for address 0x90
-Handle Write. Squared is 782768484
-Handle Write. Squared is 104162436
-cpu: 962 Issued Write for address 0x8c
-cpu: 961 Issued Write for address 0x2dc
-cpu: 960 Issued Write for address 0x170
-cpu: 959 Issued Write for address 0x17c
-cpu: 958 Issued Write for address 0x2c
-cpu: 957 Issued Write for address 0x168
-cpu: 956 Issued MMIO Read for address 0x400
-cpu: 955 Issued Write for address 0x354
-cpu: 954 Issued MMIO Read for address 0x400
-Handle Read. Returning 104162436
-cpu: 953 Issued Read for address 0x230
-cpu: 952 Issued Write for address 0x12c
-cpu: 951 Issued Read for address 0x0
-Handle Read. Returning 104162436
-cpu: 950 Issued Read for address 0xe0
-cpu: 949 Issued MMIO Read for address 0x400
-cpu: 948 Issued Read for address 0x2a8
-cpu: 947 Issued Read for address 0x344
-cpu: 946 Issued Read for address 0x194
-cpu: 945 Issued Write for address 0x3e8
-cpu: 944 Issued MMIO Write for address 0x400 with payload -28938
-cpu: 943 Issued Write for address 0x2b4
-cpu: 942 Issued Write for address 0xb0
-cpu: 941 Issued Write for address 0xa8
-cpu: 940 Issued MMIO Read for address 0x400
-cpu: 939 Issued Write for address 0x3d4
-cpu: 938 Issued Write for address 0x3cc
-cpu: 937 Issued Write for address 0x2b0
-cpu: 936 Issued Write for address 0x2e8
-cpu: 935 Issued Write for address 0x160
-cpu: 934 Issued MMIO Write for address 0x400 with payload -30905
-cpu: 933 Issued Write for address 0x314
-cpu: 932 Issued Write for address 0x3c8
-cpu: 931 Issued Write for address 0x198
-cpu: 930 Issued Write for address 0x28c
-cpu: 929 Issued Write for address 0x2f0
-cpu: 928 Issued MMIO Read for address 0x400
-cpu: 927 Issued Read for address 0x2a0
-cpu: 926 Issued Read for address 0x3e4
-cpu: 925 Issued Write for address 0x300
-cpu: 924 Issued Read for address 0x21c
-cpu: 923 Issued Read for address 0x2d0
-cpu: 922 Issued Write for address 0xf0
-cpu: 921 Issued Write for address 0x214
-cpu: 920 Issued MMIO Write for address 0x400 with payload -31849
-Handle Read. Returning 104162436
-cpu: 919 Issued Read for address 0x348
-Handle Write. Squared is 837407844
-cpu: 918 Issued Write for address 0x3d4
-cpu: 917 Issued Read for address 0x10
-cpu: 916 Issued Write for address 0x160
-cpu: 915 Issued Write for address 0x210
-cpu: 914 Issued Write for address 0x1ec
-cpu: 913 Issued Write for address 0x290
-cpu: 912 Issued Write for address 0x134
-cpu: 911 Issued Write for address 0xf4
-cpu: 910 Issued Write for address 0x1c
-cpu: 909 Issued Write for address 0x2a4
-cpu: 908 Issued Write for address 0x70
-cpu: 907 Issued MMIO Read for address 0x400
-Handle Read. Returning 837407844
-cpu: 906 Issued Write for address 0x238
-cpu: 905 Issued MMIO Write for address 0x400 with payload -29936
-cpu: 904 Issued MMIO Write for address 0x400 with payload -2725
-Handle Write. Squared is 955119025
-cpu: 903 Issued Write for address 0x1b4
-cpu: 902 Issued Write for address 0x80
-cpu: 901 Issued MMIO Write for address 0x400 with payload 3217
-cpu: 900 Issued MMIO Write for address 0x400 with payload -17000
-cpu: 899 Issued Write for address 0x100
-cpu: 898 Issued Write for address 0x2e4
-cpu: 897 Issued MMIO Read for address 0x400
-cpu: 896 Issued Write for address 0x2dc
-cpu: 895 Issued Write for address 0x1b4
-cpu: 894 Issued Write for address 0x39c
-cpu: 893 Issued Write for address 0xc8
-cpu: 892 Issued Write for address 0xf4
-cpu: 891 Issued Write for address 0x1a0
-cpu: 890 Issued Write for address 0x1d4
-cpu: 889 Issued MMIO Read for address 0x400
-cpu: 888 Issued Write for address 0x338
-cpu: 887 Issued Write for address 0xf8
-cpu: 886 Issued Write for address 0x1e0
-cpu: 885 Issued Write for address 0x270
-cpu: 884 Issued Write for address 0x1d0
-cpu: 883 Issued MMIO Read for address 0x400
-Handle Read. Returning 955119025
-cpu: 882 Issued MMIO Write for address 0x400 with payload -23352
-cpu: 881 Issued MMIO Read for address 0x400
-Handle Write. Squared is 1014358801
-Handle Read. Returning 1014358801
-Handle Write. Squared is 896164096
-cpu: 880 Issued Write for address 0x240
-cpu: 879 Issued Write for address 0x104
-cpu: 878 Issued Write for address 0x368
-cpu: 877 Issued Write for address 0x33c
-cpu: 876 Issued Write for address 0x19c
-cpu: 875 Issued Write for address 0xdc
-cpu: 874 Issued Write for address 0x210
-cpu: 873 Issued Write for address 0x128
-cpu: 872 Issued Write for address 0x37c
-cpu: 871 Issued Write for address 0x204
-cpu: 870 Issued Write for address 0x2bc
-Handle Write. Squared is 7425625
-cpu: 869 Issued Write for address 0x3f0
-cpu: 868 Issued Write for address 0x110
-cpu: 867 Issued Write for address 0x120
-cpu: 866 Issued MMIO Read for address 0x400
-cpu: 865 Issued Write for address 0x1f8
-cpu: 864 Issued Write for address 0x58
-Handle Write. Squared is 10349089
-Handle Write. Squared is 289000000
-cpu: 863 Issued Write for address 0x78
-Handle Read. Returning 289000000
-cpu: 862 Issued Read for address 0x30c
-cpu: 861 Issued Write for address 0x284
-cpu: 860 Issued Write for address 0x28c
-cpu: 859 Issued Write for address 0x204
-cpu: 858 Issued Write for address 0x1ec
-cpu: 857 Issued Write for address 0x94
-cpu: 856 Issued Write for address 0x30c
-cpu: 855 Issued Write for address 0x134
-cpu: 854 Issued Write for address 0x1b4
-cpu: 853 Issued Write for address 0x10c
-cpu: 852 Issued Write for address 0x370
-cpu: 851 Issued Write for address 0xc0
-cpu: 850 Issued Write for address 0x394
-cpu: 849 Issued Write for address 0x32c
-cpu: 848 Issued Write for address 0x90
-Handle Read. Returning 289000000
-cpu: 847 Issued Write for address 0x174
-cpu: 846 Issued Write for address 0x24
-cpu: 845 Issued Read for address 0x218
-cpu: 844 Issued Write for address 0x98
-cpu: 843 Issued Read for address 0x2c
-cpu: 842 Issued Write for address 0x214
-cpu: 841 Issued Read for address 0x260
-cpu: 840 Issued Write for address 0x18
-cpu: 839 Issued Read for address 0x1c0
-cpu: 838 Issued Read for address 0x198
-cpu: 837 Issued Read for address 0x378
-cpu: 836 Issued Read for address 0x2c4
-cpu: 835 Issued Write for address 0x3d8
-cpu: 834 Issued MMIO Write for address 0x400 with payload -25189
-cpu: 833 Issued Read for address 0x2c4
-cpu: 832 Issued Write for address 0x150
-cpu: 831 Issued Write for address 0xd8
-cpu: 830 Issued Write for address 0x34c
-cpu: 829 Issued Write for address 0x190
-Handle Read. Returning 289000000
-cpu: 828 Issued Write for address 0x2f8
-cpu: 827 Issued Write for address 0x144
-cpu: 826 Issued Write for address 0x290
-cpu: 825 Issued Write for address 0xe0
-cpu: 824 Issued Read for address 0x178
-cpu: 823 Issued Read for address 0x3e8
-cpu: 822 Issued Write for address 0x34c
-cpu: 821 Issued Write for address 0xbc
-cpu: 820 Issued MMIO Write for address 0x400 with payload 19686
-cpu: 819 Issued MMIO Read for address 0x400
-cpu: 818 Issued Write for address 0x178
-cpu: 817 Issued Write for address 0x158
-cpu: 816 Issued Write for address 0x198
-cpu: 815 Issued Write for address 0x64
-Handle Write. Squared is 545315904
-cpu: 814 Issued Read for address 0x27c
-cpu: 813 Issued Write for address 0x3fc
-cpu: 812 Issued Write for address 0x50
-Handle Read. Returning 545315904
-cpu: 811 Issued Read for address 0x258
-cpu: 810 Issued Read for address 0x228
-cpu: 809 Issued Write for address 0x160
-cpu: 808 Issued Write for address 0x17c
-cpu: 807 Issued Write for address 0x13c
-cpu: 806 Issued Write for address 0x390
-cpu: 805 Issued Read for address 0x2dc
-cpu: 804 Issued Write for address 0x398
-cpu: 803 Issued Write for address 0x18
-cpu: 802 Issued Write for address 0x150
-cpu: 801 Issued MMIO Read for address 0x400
-Handle Read. Returning 545315904
-cpu: 800 Issued Write for address 0x22c
-cpu: 799 Issued Write for address 0xa4
-cpu: 798 Issued Write for address 0x34c
-cpu: 797 Issued Read for address 0x1dc
-cpu: 796 Issued Write for address 0x2f0
-cpu: 795 Issued Write for address 0x260
-cpu: 794 Issued Write for address 0x288
-cpu: 793 Issued Write for address 0x384
-cpu: 792 Issued Write for address 0x384
-cpu: 791 Issued Write for address 0x1f0
-cpu: 790 Issued Read for address 0x330
-cpu: 789 Issued Write for address 0x1c0
-Handle Write. Squared is 634485721
-cpu: 788 Issued Write for address 0x228
-cpu: 787 Issued Read for address 0x150
-cpu: 786 Issued Write for address 0x3f4
-cpu: 785 Issued MMIO Read for address 0x400
-cpu: 784 Issued Write for address 0x358
-cpu: 783 Issued Write for address 0x350
-cpu: 782 Issued Write for address 0xe0
-cpu: 781 Issued Write for address 0x200
-cpu: 780 Issued Write for address 0x120
-cpu: 779 Issued Write for address 0x1a4
-cpu: 778 Issued Write for address 0x318
-cpu: 777 Issued Write for address 0x130
-cpu: 776 Issued MMIO Write for address 0x400 with payload 4128
-Handle Write. Squared is 387538596
-cpu: 775 Issued Write for address 0x44
-cpu: 774 Issued Write for address 0x3ac
-cpu: 773 Issued Write for address 0x84
-cpu: 772 Issued Write for address 0x3d4
-cpu: 771 Issued Write for address 0x3b8
-cpu: 770 Issued Write for address 0x10c
-cpu: 769 Issued Write for address 0x34c
-cpu: 768 Issued Write for address 0x18c
-cpu: 767 Issued Write for address 0x310
-cpu: 766 Issued Write for address 0x260
-cpu: 765 Issued Write for address 0x358
-cpu: 764 Issued Write for address 0x2a4
-cpu: 763 Issued Write for address 0x34c
-cpu: 762 Issued MMIO Read for address 0x400
-cpu: 761 Issued Write for address 0x110
-cpu: 760 Issued Write for address 0x1fc
-cpu: 759 Issued Write for address 0x394
-cpu: 758 Issued Write for address 0x29c
-cpu: 757 Issued Write for address 0x32c
-cpu: 756 Issued Write for address 0x2e0
-cpu: 755 Issued Read for address 0x198
-cpu: 754 Issued MMIO Read for address 0x400
-cpu: 753 Issued Read for address 0x11c
-cpu: 752 Issued Write for address 0x1b4
-cpu: 751 Issued Read for address 0x2a0
-cpu: 750 Issued Write for address 0x368
-cpu: 749 Issued Write for address 0x204
-cpu: 748 Issued Read for address 0x3e8
-cpu: 747 Issued Read for address 0x308
-cpu: 746 Issued Write for address 0x1f8
-cpu: 745 Issued Write for address 0x204
-cpu: 744 Issued Write for address 0x84
-cpu: 743 Issued Write for address 0x314
-cpu: 742 Issued Write for address 0x344
-cpu: 741 Issued Write for address 0x280
-Handle Read. Returning 387538596
-cpu: 740 Issued Write for address 0x3cc
-cpu: 739 Issued MMIO Write for address 0x400 with payload -1658
-cpu: 738 Issued Write for address 0x10
-cpu: 737 Issued Write for address 0x11c
-cpu: 736 Issued Write for address 0x168
-cpu: 735 Issued Write for address 0x40
-cpu: 734 Issued Write for address 0x168
-cpu: 733 Issued MMIO Write for address 0x400 with payload -21150
-cpu: 732 Issued Write for address 0x3e8
-cpu: 731 Issued Read for address 0x1ac
-cpu: 730 Issued Read for address 0x28c
-cpu: 729 Issued Write for address 0x174
-cpu: 728 Issued Write for address 0x2a0
-cpu: 727 Issued Read for address 0x1d0
-cpu: 726 Issued Write for address 0xec
-cpu: 725 Issued Write for address 0xa8
-cpu: 724 Issued Write for address 0x2b0
-cpu: 723 Issued Write for address 0x7c
-cpu: 722 Issued Write for address 0x3c0
-cpu: 721 Issued Read for address 0x74
-cpu: 720 Issued Write for address 0x3d8
-cpu: 719 Issued Write for address 0x2a0
-cpu: 718 Issued Write for address 0x150
-cpu: 717 Issued Write for address 0x2a4
-cpu: 716 Issued Read for address 0x12c
-cpu: 715 Issued Write for address 0x1e4
-cpu: 714 Issued MMIO Read for address 0x400
-cpu: 713 Issued Write for address 0x1c4
-cpu: 712 Issued MMIO Write for address 0x400 with payload 24718
-cpu: 711 Issued MMIO Write for address 0x400 with payload 18596
-cpu: 710 Issued Write for address 0x3a8
-cpu: 709 Issued Write for address 0x98
-cpu: 708 Issued MMIO Write for address 0x400 with payload 31077
-cpu: 707 Issued Write for address 0x204
-Handle Read. Returning 387538596
-cpu: 706 Issued Write for address 0x98
-cpu: 705 Issued Write for address 0x1bc
-cpu: 704 Issued Write for address 0x40
-cpu: 703 Issued Read for address 0x298
-cpu: 702 Issued Write for address 0x1f4
-cpu: 701 Issued MMIO Write for address 0x400 with payload 6113
-Handle Read. Returning 387538596
-Handle Write. Squared is 17040384
-cpu: 700 Issued Write for address 0x20c
-cpu: 699 Issued MMIO Write for address 0x400 with payload -7769
-cpu: 698 Issued Write for address 0x204
-cpu: 697 Issued Write for address 0xa8
-cpu: 696 Issued Read for address 0x184
-cpu: 695 Issued Write for address 0x180
-cpu: 694 Issued Write for address 0x3dc
-cpu: 693 Issued Read for address 0x7c
-cpu: 692 Issued Read for address 0xb4
-cpu: 691 Issued Write for address 0x2b8
-cpu: 690 Issued Write for address 0x334
-cpu: 689 Issued Write for address 0x154
-Handle Read. Returning 17040384
-cpu: 688 Issued Write for address 0x2c8
-cpu: 687 Issued MMIO Read for address 0x400
-cpu: 686 Issued Write for address 0x3a8
-cpu: 685 Issued Write for address 0x320
-cpu: 684 Issued Write for address 0x288
-cpu: 683 Issued Write for address 0x364
-cpu: 682 Issued Read for address 0x20
-cpu: 681 Issued MMIO Write for address 0x400 with payload 32444
-Handle Read. Returning 17040384
-cpu: 680 Issued Write for address 0x54
-cpu: 679 Issued MMIO Write for address 0x400 with payload -15017
-cpu: 678 Issued Write for address 0x248
-cpu: 677 Issued MMIO Write for address 0x400 with payload -2159
-cpu: 676 Issued Read for address 0xb8
-cpu: 675 Issued Read for address 0x37c
-cpu: 674 Issued Write for address 0x384
-cpu: 673 Issued Write for address 0x284
-cpu: 672 Issued Write for address 0x380
-cpu: 671 Issued Write for address 0x154
-cpu: 670 Issued Write for address 0x2e0
-cpu: 669 Issued Write for address 0x398
-cpu: 668 Issued Write for address 0x36c
-cpu: 667 Issued Write for address 0x190
-cpu: 666 Issued Write for address 0x200
-cpu: 665 Issued MMIO Read for address 0x400
-Handle Write. Squared is 2748964
-cpu: 664 Issued Write for address 0x84
-cpu: 663 Issued Write for address 0x34
-cpu: 662 Issued Write for address 0x58
-cpu: 661 Issued Read for address 0x1d0
-cpu: 660 Issued MMIO Write for address 0x400 with payload -5768
-cpu: 659 Issued Read for address 0x2ac
-cpu: 658 Issued Read for address 0x184
-cpu: 657 Issued Write for address 0x124
-cpu: 656 Issued Write for address 0x1f0
-cpu: 655 Issued Write for address 0x1d4
-cpu: 654 Issued Write for address 0x35c
-cpu: 653 Issued Write for address 0x178
-cpu: 652 Issued Write for address 0x17c
-Handle Write. Squared is 447322500
-cpu: 651 Issued Write for address 0x1bc
-cpu: 650 Issued Write for address 0x190
-cpu: 649 Issued Read for address 0xe0
-cpu: 648 Issued Read for address 0x138
-cpu: 647 Issued Write for address 0xac
-cpu: 646 Issued Write for address 0x314
-cpu: 645 Issued Write for address 0x18c
-cpu: 644 Issued MMIO Read for address 0x400
-cpu: 643 Issued Write for address 0x1f4
-cpu: 642 Issued Write for address 0x138
-cpu: 641 Issued Write for address 0x3f4
-cpu: 640 Issued Write for address 0x1f8
-cpu: 639 Issued Write for address 0x224
-cpu: 638 Issued Write for address 0xcc
-cpu: 637 Issued Write for address 0x1b8
-Handle Read. Returning 447322500
-cpu: 636 Issued Read for address 0x364
-cpu: 635 Issued Write for address 0x140
-cpu: 634 Issued MMIO Read for address 0x400
-cpu: 633 Issued Read for address 0x340
-cpu: 632 Issued MMIO Write for address 0x400 with payload 12111
-Handle Write. Squared is 610979524
-cpu: 631 Issued Write for address 0x1a8
-cpu: 630 Issued Write for address 0x224
-cpu: 629 Issued MMIO Read for address 0x400
-Handle Write. Squared is 345811216
-cpu: 628 Issued Write for address 0x0
-cpu: 627 Issued Write for address 0x254
-cpu: 626 Issued Read for address 0x3c0
-cpu: 625 Issued Read for address 0x378
-cpu: 624 Issued Write for address 0x3bc
-cpu: 623 Issued Read for address 0x2dc
-cpu: 622 Issued Write for address 0x208
-cpu: 621 Issued Read for address 0xdc
-cpu: 620 Issued Read for address 0x14c
-cpu: 619 Issued Write for address 0x2a0
-cpu: 618 Issued Write for address 0x78
-cpu: 617 Issued MMIO Read for address 0x400
-Handle Write. Squared is 965779929
-Handle Write. Squared is 37368769
-Handle Write. Squared is 60357361
-Handle Read. Returning 60357361
-cpu: 616 Issued Write for address 0x244
-cpu: 615 Issued Read for address 0x3ec
-cpu: 614 Issued Write for address 0x148
-cpu: 613 Issued Write for address 0x3e8
-cpu: 612 Issued Write for address 0x260
-cpu: 611 Issued Write for address 0xd4
-cpu: 610 Issued Write for address 0x70
-cpu: 609 Issued Write for address 0x118
-cpu: 608 Issued Write for address 0x21c
-cpu: 607 Issued Write for address 0x37c
-cpu: 606 Issued Write for address 0x78
-cpu: 605 Issued Write for address 0x130
-cpu: 604 Issued Read for address 0x6c
-cpu: 603 Issued Write for address 0x350
-Handle Write. Squared is 1052613136
-cpu: 602 Issued Read for address 0x170
-cpu: 601 Issued MMIO Read for address 0x400
-cpu: 600 Issued Write for address 0x31c
-cpu: 599 Issued Write for address 0x24c
-cpu: 598 Issued MMIO Write for address 0x400 with payload -5784
-Handle Write. Squared is 225510289
-cpu: 597 Issued Write for address 0x200
-cpu: 596 Issued Write for address 0x170
-cpu: 595 Issued Write for address 0x2b8
-cpu: 594 Issued Read for address 0x2c
-cpu: 593 Issued Write for address 0x3c
-cpu: 592 Issued Read for address 0x9c
-cpu: 591 Issued Read for address 0x3d8
-cpu: 590 Issued Read for address 0x200
-cpu: 589 Issued Write for address 0x1a4
-cpu: 588 Issued MMIO Write for address 0x400 with payload -32665
-Handle Write. Squared is 4661281
-cpu: 587 Issued Read for address 0x80
-cpu: 586 Issued Write for address 0x7c
-cpu: 585 Issued Read for address 0x1dc
-cpu: 584 Issued Write for address 0x25c
-cpu: 583 Issued Write for address 0x154
-cpu: 582 Issued Write for address 0x1e8
-cpu: 581 Issued Write for address 0x24c
-cpu: 580 Issued Write for address 0x1e4
-cpu: 579 Issued Write for address 0xf4
-cpu: 578 Issued Write for address 0x58
-cpu: 577 Issued Write for address 0xb4
-cpu: 576 Issued Write for address 0x2c
-Handle Read. Returning 4661281
-cpu: 575 Issued Write for address 0x32c
-cpu: 574 Issued Write for address 0x308
-cpu: 573 Issued Read for address 0x178
-cpu: 572 Issued Write for address 0x1b4
-cpu: 571 Issued MMIO Read for address 0x400
-Handle Write. Squared is 33269824
-Handle Read. Returning 33269824
-Handle Read. Returning 33269824
-cpu: 570 Issued MMIO Write for address 0x400 with payload 3378
-cpu: 569 Issued Write for address 0x278
-cpu: 568 Issued Read for address 0x94
-cpu: 567 Issued MMIO Write for address 0x400 with payload -13661
-Handle Write. Squared is 146676321
-cpu: 566 Issued Write for address 0x16c
-cpu: 565 Issued Write for address 0x188
-cpu: 564 Issued Write for address 0x1a8
-cpu: 563 Issued Write for address 0x390
-cpu: 562 Issued Read for address 0x1c4
-cpu: 561 Issued Write for address 0x1c8
-cpu: 560 Issued Write for address 0x3c0
-cpu: 559 Issued Write for address 0x1c0
-cpu: 558 Issued Write for address 0x58
-cpu: 557 Issued MMIO Write for address 0x400 with payload 29603
-Handle Read. Returning 146676321
-cpu: 556 Issued Write for address 0xcc
-cpu: 555 Issued Read for address 0x1dc
-cpu: 554 Issued Read for address 0x16c
-cpu: 553 Issued Write for address 0x9c
-cpu: 552 Issued Write for address 0x174
-cpu: 551 Issued MMIO Write for address 0x400 with payload 30959
-Handle Read. Returning 146676321
-cpu: 550 Issued Write for address 0x2c
-cpu: 549 Issued MMIO Write for address 0x400 with payload -3425
-cpu: 548 Issued Write for address 0x374
-cpu: 547 Issued MMIO Read for address 0x400
-Handle Read. Returning 146676321
-cpu: 546 Issued Write for address 0x268
-cpu: 545 Issued MMIO Read for address 0x400
-Handle Write. Squared is 33454656
-cpu: 544 Issued MMIO Read for address 0x400
-Handle Write. Squared is 1067002225
-cpu: 543 Issued Write for address 0x2c0
-cpu: 542 Issued Write for address 0x26c
-cpu: 541 Issued Write for address 0x388
-cpu: 540 Issued Read for address 0x39c
-cpu: 539 Issued Write for address 0x2ac
-cpu: 538 Issued Write for address 0xc0
-cpu: 537 Issued Write for address 0x2e0
-cpu: 536 Issued MMIO Write for address 0x400 with payload -13535
-cpu: 535 Issued MMIO Write for address 0x400 with payload -29505
-cpu: 534 Issued Write for address 0x170
-cpu: 533 Issued Read for address 0x358
-cpu: 532 Issued Read for address 0x224
-cpu: 531 Issued Read for address 0x324
-cpu: 530 Issued Read for address 0x39c
-Handle Read. Returning 1067002225
-cpu: 529 Issued Write for address 0x0
-cpu: 528 Issued Write for address 0x394
-cpu: 527 Issued Write for address 0xfc
-cpu: 526 Issued MMIO Read for address 0x400
-cpu: 525 Issued Read for address 0x31c
-cpu: 524 Issued Write for address 0x290
-cpu: 523 Issued MMIO Read for address 0x400
-Handle Write. Squared is 11410884
-cpu: 522 Issued Read for address 0x1e8
-cpu: 521 Issued Read for address 0xe0
-cpu: 520 Issued Write for address 0x110
-cpu: 519 Issued Write for address 0x7c
-cpu: 518 Issued MMIO Read for address 0x400
-Handle Write. Squared is 186622921
-cpu: 517 Issued Write for address 0x1cc
-cpu: 516 Issued Read for address 0x30
-cpu: 515 Issued MMIO Read for address 0x400
-Handle Write. Squared is 876337609
-Handle Write. Squared is 958459681
-Handle Write. Squared is 11730625
-cpu: 514 Issued Write for address 0x120
-cpu: 513 Issued Write for address 0x120
-cpu: 512 Issued Read for address 0x184
-cpu: 511 Issued Read for address 0x1e8
-cpu: 510 Issued Write for address 0x3dc
-cpu: 509 Issued MMIO Read for address 0x400
-Handle Read. Returning 11730625
-cpu: 508 Issued Read for address 0x2f8
-cpu: 507 Issued Read for address 0x1d4
-cpu: 506 Issued Write for address 0x204
-cpu: 505 Issued Write for address 0x358
-cpu: 504 Issued Write for address 0x84
-cpu: 503 Issued Write for address 0x2e8
-cpu: 502 Issued MMIO Write for address 0x400 with payload 17600
-cpu: 501 Issued Write for address 0x294
-cpu: 500 Issued Write for address 0x2a0
-cpu: 499 Issued MMIO Read for address 0x400
-Handle Read. Returning 11730625
-cpu: 498 Issued Read for address 0xfc
-cpu: 497 Issued MMIO Write for address 0x400 with payload -5791
-Handle Read. Returning 11730625
-cpu: 496 Issued Write for address 0x334
-cpu: 495 Issued Write for address 0x2dc
-cpu: 494 Issued Write for address 0x48
-cpu: 493 Issued Write for address 0x2e0
-cpu: 492 Issued Write for address 0x2b4
-cpu: 491 Issued Read for address 0x164
-cpu: 490 Issued MMIO Read for address 0x400
+core: 971 Issued Read for address 0xa0
+core: 970 Issued Write for address 0x1ec
+core: 969 Issued Write for address 0x134
+Handle Read. Returning 251603044
+Handle Read. Returning 251603044
+core: 968 Issued Write for address 0x1a8
+core: 967 Issued Write for address 0xf8
+core: 966 Issued Read for address 0x10c
+core: 965 Issued Write for address 0x208
+core: 964 Issued Write for address 0x1c8
+core: 963 Issued Write for address 0x374
+core: 962 Issued Read for address 0x1a8
+core: 961 Issued Write for address 0x394
+core: 960 Issued Write for address 0x29c
+core: 959 Issued Read for address 0x12c
+core: 958 Issued Read for address 0x240
+core: 957 Issued Write for address 0x358
+core: 956 Issued MMIO Read for address 0x400
+core: 955 Issued Write for address 0xc8
+Handle Read. Returning 251603044
+core: 954 Issued Write for address 0xc
+core: 953 Issued Write for address 0x20c
+core: 952 Issued MMIO Write for address 0x400 with payload -13535
+core: 951 Issued MMIO Write for address 0x400 with payload -29505
+core: 950 Issued Write for address 0x170
 Handle Write. Squared is 183196225
-cpu: 489 Issued MMIO Write for address 0x400 with payload 23329
 Handle Write. Squared is 870545025
-cpu: 488 Issued Write for address 0xd4
-cpu: 487 Issued Read for address 0x3b8
-cpu: 486 Issued Write for address 0x2c8
-cpu: 485 Issued Write for address 0x364
-cpu: 484 Issued Read for address 0x188
-cpu: 483 Issued Write for address 0x294
-cpu: 482 Issued Write for address 0x1e8
-cpu: 481 Issued Read for address 0x2a8
-cpu: 480 Issued Read for address 0x364
-cpu: 479 Issued Write for address 0x308
-cpu: 478 Issued Write for address 0x3b8
-cpu: 477 Issued Write for address 0x2cc
-cpu: 476 Issued Write for address 0x3f8
-cpu: 475 Issued Write for address 0x1c4
-Handle Read. Returning 870545025
-cpu: 474 Issued MMIO Write for address 0x400 with payload -32009
-cpu: 473 Issued Write for address 0xa4
-cpu: 472 Issued Write for address 0x228
-cpu: 471 Issued Write for address 0x2f0
-cpu: 470 Issued Write for address 0x3ec
-cpu: 469 Issued Write for address 0x7c
-cpu: 468 Issued Read for address 0x1f0
-cpu: 467 Issued Write for address 0xc
-cpu: 466 Issued Write for address 0x29c
-cpu: 465 Issued Write for address 0x110
-cpu: 464 Issued Write for address 0x25c
-cpu: 463 Issued MMIO Read for address 0x400
-Handle Read. Returning 870545025
-Handle Read. Returning 870545025
-Handle Read. Returning 870545025
-cpu: 462 Issued Write for address 0x1d4
-cpu: 461 Issued MMIO Write for address 0x400 with payload -1479
-cpu: 460 Issued Write for address 0x24
-cpu: 459 Issued Write for address 0x214
-cpu: 458 Issued Write for address 0x2c
-cpu: 457 Issued Read for address 0x268
-cpu: 456 Issued Read for address 0x3c4
-cpu: 455 Issued Write for address 0x388
-cpu: 454 Issued Write for address 0x210
-cpu: 453 Issued Write for address 0x2d4
-cpu: 452 Issued Write for address 0x90
-cpu: 451 Issued MMIO Read for address 0x400
-Handle Read. Returning 870545025
-cpu: 450 Issued Write for address 0x33c
-cpu: 449 Issued Write for address 0x3a8
-cpu: 448 Issued Write for address 0x238
-cpu: 447 Issued Write for address 0x21c
-cpu: 446 Issued Write for address 0x2d0
-cpu: 445 Issued Write for address 0x168
-cpu: 444 Issued Write for address 0x6c
-cpu: 443 Issued Read for address 0x20c
-cpu: 442 Issued Write for address 0x1c0
-cpu: 441 Issued Read for address 0x180
-cpu: 440 Issued MMIO Read for address 0x400
-Handle Write. Squared is 309760000
-cpu: 439 Issued Write for address 0xf8
-cpu: 438 Issued Read for address 0x288
-cpu: 437 Issued Write for address 0x2a0
-cpu: 436 Issued Read for address 0x3d0
-cpu: 435 Issued Write for address 0x104
-cpu: 434 Issued Write for address 0x4
-cpu: 433 Issued Write for address 0x138
-cpu: 432 Issued Write for address 0x12c
-cpu: 431 Issued Write for address 0x12c
-cpu: 430 Issued Read for address 0x374
-cpu: 429 Issued Write for address 0x30
-cpu: 428 Issued Read for address 0x164
-cpu: 427 Issued MMIO Write for address 0x400 with payload -23321
-Handle Read. Returning 309760000
-cpu: 426 Issued Read for address 0x194
-cpu: 425 Issued Read for address 0x200
-cpu: 424 Issued Read for address 0x274
-cpu: 423 Issued Write for address 0x370
-cpu: 422 Issued Read for address 0xe4
-cpu: 421 Issued MMIO Write for address 0x400 with payload -20872
-Handle Write. Squared is 33535681
-cpu: 420 Issued Read for address 0x48
-cpu: 419 Issued MMIO Write for address 0x400 with payload 10136
-Handle Read. Returning 33535681
-cpu: 418 Issued Write for address 0x16c
-cpu: 417 Issued Write for address 0x124
-cpu: 416 Issued Write for address 0x3d0
-cpu: 415 Issued MMIO Write for address 0x400 with payload 26658
-cpu: 414 Issued MMIO Read for address 0x400
-Handle Write. Squared is 544242241
-cpu: 413 Issued MMIO Write for address 0x400 with payload 8127
-Handle Write. Squared is 1024576081
-cpu: 412 Issued Write for address 0x20c
-cpu: 411 Issued Write for address 0x1c
-cpu: 410 Issued Write for address 0x308
-cpu: 409 Issued Read for address 0x118
-cpu: 408 Issued Write for address 0x2f0
-cpu: 407 Issued Write for address 0x3d0
-cpu: 406 Issued Write for address 0x254
-cpu: 405 Issued Write for address 0x1b4
-cpu: 404 Issued Write for address 0x160
-cpu: 403 Issued Write for address 0x2fc
-cpu: 402 Issued Read for address 0x254
-Handle Read. Returning 1024576081
-cpu: 401 Issued Write for address 0x20
-cpu: 400 Issued Write for address 0x1a8
-cpu: 399 Issued Write for address 0x20c
-cpu: 398 Issued Read for address 0x140
-cpu: 397 Issued Write for address 0xcc
-cpu: 396 Issued Read for address 0x214
-cpu: 395 Issued MMIO Read for address 0x400
-cpu: 394 Issued Write for address 0x2a8
-cpu: 393 Issued MMIO Read for address 0x400
-Handle Write. Squared is 2187441
-Handle Read. Returning 2187441
-Handle Read. Returning 2187441
-cpu: 392 Issued Write for address 0x100
-cpu: 391 Issued Write for address 0x1e0
-cpu: 390 Issued Read for address 0x3ac
-cpu: 389 Issued Read for address 0xc4
-cpu: 388 Issued Write for address 0x32c
-cpu: 387 Issued Write for address 0x120
-cpu: 386 Issued Write for address 0x68
-cpu: 385 Issued Write for address 0xc
-cpu: 384 Issued Write for address 0x168
-cpu: 383 Issued MMIO Read for address 0x400
-Handle Write. Squared is 543869041
-cpu: 382 Issued Write for address 0x3bc
-cpu: 381 Issued Write for address 0x234
-cpu: 380 Issued Write for address 0x348
-cpu: 379 Issued Read for address 0x3f8
-cpu: 378 Issued Write for address 0x3e8
-cpu: 377 Issued Write for address 0x1cc
-cpu: 376 Issued Write for address 0x35c
-cpu: 375 Issued Write for address 0x168
-cpu: 374 Issued Write for address 0xfc
-cpu: 373 Issued Write for address 0x2a4
-cpu: 372 Issued Write for address 0x1e8
-cpu: 371 Issued Write for address 0x2b8
-cpu: 370 Issued Write for address 0x398
-Handle Write. Squared is 435640384
-cpu: 369 Issued Write for address 0x130
-cpu: 368 Issued MMIO Write for address 0x400 with payload -12762
-cpu: 367 Issued Write for address 0x20c
-cpu: 366 Issued Write for address 0x2c
-cpu: 365 Issued Read for address 0xcc
-cpu: 364 Issued Write for address 0x34c
-cpu: 363 Issued Write for address 0x2ac
-cpu: 362 Issued Write for address 0x39c
-cpu: 361 Issued Write for address 0x1b0
-cpu: 360 Issued MMIO Write for address 0x400 with payload 27102
-cpu: 359 Issued Write for address 0x270
-cpu: 358 Issued Write for address 0x2b0
-cpu: 357 Issued Read for address 0x3c8
-cpu: 356 Issued Write for address 0x30
-cpu: 355 Issued Write for address 0x68
-cpu: 354 Issued Read for address 0x2e4
-cpu: 353 Issued Read for address 0x1f4
-Handle Write. Squared is 102738496
-cpu: 352 Issued Write for address 0x4
-cpu: 351 Issued MMIO Read for address 0x400
-cpu: 350 Issued Write for address 0x3c4
-cpu: 349 Issued Write for address 0x38c
-cpu: 348 Issued Write for address 0x2f4
-cpu: 347 Issued Write for address 0x19c
-cpu: 346 Issued Write for address 0x328
-cpu: 345 Issued Write for address 0xbc
-cpu: 344 Issued MMIO Read for address 0x400
-Handle Write. Squared is 710648964
-cpu: 343 Issued Read for address 0x3dc
-cpu: 342 Issued Read for address 0x34c
-cpu: 341 Issued Write for address 0x230
-cpu: 340 Issued Write for address 0x54
-cpu: 339 Issued Write for address 0xd8
-cpu: 338 Issued Write for address 0x1dc
-cpu: 337 Issued Write for address 0x68
-cpu: 336 Issued MMIO Write for address 0x400 with payload 20372
-Handle Read. Returning 710648964
-cpu: 335 Issued MMIO Write for address 0x400 with payload -25800
-Handle Write. Squared is 66048129
-Handle Read. Returning 66048129
-Handle Read. Returning 66048129
-cpu: 334 Issued Write for address 0x1d8
-cpu: 333 Issued Write for address 0x90
-cpu: 332 Issued Write for address 0x248
-cpu: 331 Issued Write for address 0x50
-cpu: 330 Issued Write for address 0x2e0
-cpu: 329 Issued MMIO Read for address 0x400
-Handle Read. Returning 66048129
-cpu: 328 Issued Write for address 0x24c
-cpu: 327 Issued Write for address 0x198
-cpu: 326 Issued MMIO Read for address 0x400
-Handle Write. Squared is 162868644
-cpu: 325 Issued Write for address 0xb4
-cpu: 324 Issued Read for address 0xf4
-cpu: 323 Issued Read for address 0x8
-cpu: 322 Issued Read for address 0x10
-cpu: 321 Issued Read for address 0x21c
-cpu: 320 Issued Write for address 0x160
-cpu: 319 Issued Read for address 0x354
-cpu: 318 Issued Write for address 0x28
-cpu: 317 Issued Write for address 0x2c8
-cpu: 316 Issued Write for address 0x1b4
-cpu: 315 Issued Write for address 0x198
-cpu: 314 Issued Write for address 0x348
-Handle Write. Squared is 734518404
-cpu: 313 Issued Write for address 0x2e4
-cpu: 312 Issued MMIO Write for address 0x400 with payload -24052
-cpu: 311 Issued Read for address 0x1cc
-cpu: 310 Issued Write for address 0x2c
-cpu: 309 Issued Write for address 0x294
-cpu: 308 Issued Write for address 0x288
-cpu: 307 Issued Read for address 0x3f4
-cpu: 306 Issued Read for address 0x394
-cpu: 305 Issued Write for address 0x384
-cpu: 304 Issued Write for address 0x1b0
-cpu: 303 Issued Read for address 0x3e8
-cpu: 302 Issued Read for address 0x78
-cpu: 301 Issued Read for address 0x1e0
-cpu: 300 Issued Read for address 0x3ac
-cpu: 299 Issued Write for address 0xe4
-cpu: 298 Issued Write for address 0x314
-cpu: 297 Issued Read for address 0x80
-cpu: 296 Issued Write for address 0x36c
-cpu: 295 Issued Write for address 0x2d0
-cpu: 294 Issued Write for address 0x18
-cpu: 293 Issued Write for address 0x1f8
-cpu: 292 Issued Write for address 0x324
-cpu: 291 Issued MMIO Write for address 0x400 with payload 28462
-cpu: 290 Issued Write for address 0x48
-Handle Read. Returning 734518404
-cpu: 289 Issued Write for address 0x24c
-cpu: 288 Issued Read for address 0x298
-cpu: 287 Issued MMIO Write for address 0x400 with payload -8789
-cpu: 286 Issued Write for address 0x208
-cpu: 285 Issued Write for address 0x74
-cpu: 284 Issued Write for address 0x288
-cpu: 283 Issued Write for address 0x394
-cpu: 282 Issued Write for address 0x1f4
-cpu: 281 Issued Write for address 0xe4
-cpu: 280 Issued Write for address 0x224
-cpu: 279 Issued Write for address 0x124
-cpu: 278 Issued Write for address 0x3e0
-cpu: 277 Issued Write for address 0x5c
-cpu: 276 Issued Write for address 0x84
-cpu: 275 Issued Write for address 0x1bc
-cpu: 274 Issued Read for address 0x320
-cpu: 273 Issued Write for address 0x3a8
-cpu: 272 Issued Write for address 0x240
-cpu: 271 Issued Write for address 0x38
-cpu: 270 Issued Read for address 0x2e4
-cpu: 269 Issued Write for address 0x12c
-cpu: 268 Issued Write for address 0x3d4
-cpu: 267 Issued Write for address 0x27c
-cpu: 266 Issued Write for address 0x398
-cpu: 265 Issued Write for address 0x3bc
-cpu: 264 Issued Write for address 0x2e0
-cpu: 263 Issued Write for address 0x2bc
-cpu: 262 Issued Write for address 0x3e0
-cpu: 261 Issued Write for address 0x270
-cpu: 260 Issued MMIO Read for address 0x400
-cpu: 259 Issued MMIO Read for address 0x400
-cpu: 258 Issued Write for address 0x324
-cpu: 257 Issued Read for address 0x38
-Handle Read. Returning 734518404
-cpu: 256 Issued MMIO Write for address 0x400 with payload 7608
-cpu: 255 Issued Read for address 0x220
-cpu: 254 Issued Read for address 0x260
-cpu: 253 Issued Write for address 0x384
-cpu: 252 Issued Write for address 0x284
-cpu: 251 Issued Read for address 0x188
-cpu: 250 Issued Write for address 0x26c
-cpu: 249 Issued Write for address 0x2ec
-cpu: 248 Issued Write for address 0xcc
-cpu: 247 Issued Write for address 0x1ac
-cpu: 246 Issued Write for address 0x170
-cpu: 245 Issued Write for address 0xd0
-cpu: 244 Issued Write for address 0x74
-cpu: 243 Issued Write for address 0x1a0
-cpu: 242 Issued Read for address 0x140
-cpu: 241 Issued Write for address 0x27c
-cpu: 240 Issued Read for address 0x4c
-cpu: 239 Issued Write for address 0x314
-cpu: 238 Issued Write for address 0x8
-cpu: 237 Issued Write for address 0x140
-cpu: 236 Issued MMIO Write for address 0x400 with payload -29666
-cpu: 235 Issued Write for address 0x214
-cpu: 234 Issued Write for address 0x238
-cpu: 233 Issued Read for address 0x2e4
-cpu: 232 Issued Read for address 0x24
-Handle Write. Squared is 415018384
-cpu: 231 Issued Read for address 0x1e0
-cpu: 230 Issued Write for address 0x368
-cpu: 229 Issued Write for address 0x1f8
-cpu: 228 Issued Write for address 0x3a0
-cpu: 227 Issued Write for address 0x2d8
-cpu: 226 Issued Read for address 0x214
-cpu: 225 Issued Read for address 0x268
-cpu: 224 Issued Read for address 0x340
-cpu: 223 Issued Write for address 0x78
-cpu: 222 Issued Read for address 0x1bc
-cpu: 221 Issued Write for address 0x3f0
-cpu: 220 Issued Write for address 0x64
-cpu: 219 Issued MMIO Read for address 0x400
-cpu: 218 Issued Read for address 0x2ac
-cpu: 217 Issued Write for address 0x144
-cpu: 216 Issued MMIO Write for address 0x400 with payload -6742
-cpu: 215 Issued Write for address 0xf0
-cpu: 214 Issued Write for address 0x8
-Handle Write. Squared is 665640000
-cpu: 213 Issued Write for address 0x23c
-cpu: 212 Issued Read for address 0x278
-cpu: 211 Issued MMIO Write for address 0x400 with payload 32610
-cpu: 210 Issued Read for address 0xa4
-cpu: 209 Issued Write for address 0x94
-cpu: 208 Issued Write for address 0x10
-cpu: 207 Issued Write for address 0x328
-cpu: 206 Issued Write for address 0x160
-cpu: 205 Issued Write for address 0x338
-cpu: 204 Issued Write for address 0x288
-cpu: 203 Issued Write for address 0x248
-cpu: 202 Issued Read for address 0xf4
-cpu: 201 Issued Read for address 0x300
-cpu: 200 Issued MMIO Write for address 0x400 with payload -31834
-cpu: 199 Issued MMIO Read for address 0x400
-Handle Read. Returning 665640000
-cpu: 198 Issued Write for address 0x1d4
-cpu: 197 Issued Write for address 0x250
-cpu: 196 Issued Write for address 0x384
-cpu: 195 Issued Write for address 0x2e4
-cpu: 194 Issued Read for address 0x33c
-cpu: 193 Issued Write for address 0x3d8
-cpu: 192 Issued Read for address 0x364
-cpu: 191 Issued Write for address 0x1cc
-cpu: 190 Issued Read for address 0xe4
-cpu: 189 Issued Write for address 0x1f0
-cpu: 188 Issued Write for address 0x64
-cpu: 187 Issued MMIO Read for address 0x400
-Handle Read. Returning 665640000
-cpu: 186 Issued MMIO Write for address 0x400 with payload -553
-cpu: 185 Issued Write for address 0x74
-cpu: 184 Issued MMIO Write for address 0x400 with payload 20753
-Handle Write. Squared is 578498704
-cpu: 183 Issued Write for address 0x3c8
-cpu: 182 Issued Read for address 0x238
-cpu: 181 Issued Write for address 0x12c
-cpu: 180 Issued Write for address 0x168
-cpu: 179 Issued Write for address 0x35c
-cpu: 178 Issued Write for address 0x3e4
-cpu: 177 Issued Write for address 0x24c
-cpu: 176 Issued MMIO Read for address 0x400
-Handle Write. Squared is 810085444
-cpu: 175 Issued Read for address 0x210
-cpu: 174 Issued Write for address 0x10c
-cpu: 173 Issued Write for address 0x48
-cpu: 172 Issued MMIO Write for address 0x400 with payload -25358
-Handle Write. Squared is 77246521
-Handle Read. Returning 77246521
-Handle Read. Returning 77246521
-Handle Write. Squared is 57881664
-Handle Write. Squared is 880071556
-cpu: 171 Issued Write for address 0x10c
-cpu: 170 Issued Write for address 0x3d0
-cpu: 169 Issued Write for address 0x378
-cpu: 168 Issued Write for address 0x80
-cpu: 167 Issued MMIO Write for address 0x400 with payload 19050
-Handle Read. Returning 880071556
-cpu: 166 Issued Read for address 0x3dc
-cpu: 165 Issued Write for address 0x174
-cpu: 164 Issued Write for address 0x3c4
-cpu: 163 Issued MMIO Read for address 0x400
-Handle Write. Squared is 45454564
-cpu: 162 Issued Read for address 0x150
-cpu: 161 Issued Write for address 0x1f8
-cpu: 160 Issued Read for address 0x2e8
-cpu: 159 Issued Write for address 0xb4
-cpu: 158 Issued Write for address 0xdc
-cpu: 157 Issued Write for address 0xec
-cpu: 156 Issued Write for address 0x164
-cpu: 155 Issued Write for address 0x0
-cpu: 154 Issued Write for address 0x398
-cpu: 153 Issued Write for address 0x44
-cpu: 152 Issued Read for address 0x228
-cpu: 151 Issued Write for address 0x1e8
-Handle Write. Squared is 1063412100
-cpu: 150 Issued Write for address 0x298
-cpu: 149 Issued Write for address 0xf0
-cpu: 148 Issued Write for address 0x374
-cpu: 147 Issued Write for address 0x310
-cpu: 146 Issued Write for address 0x12c
-cpu: 145 Issued Read for address 0x2bc
-cpu: 144 Issued Write for address 0x228
-cpu: 143 Issued Read for address 0x28
-cpu: 142 Issued Write for address 0x1cc
-cpu: 141 Issued MMIO Read for address 0x400
-cpu: 140 Issued MMIO Read for address 0x400
-Handle Write. Squared is 1013403556
-Handle Read. Returning 1013403556
-Handle Read. Returning 1013403556
-Handle Write. Squared is 305809
-cpu: 139 Issued Write for address 0x2e0
-cpu: 138 Issued Write for address 0x334
-cpu: 137 Issued Write for address 0x1d4
-cpu: 136 Issued Write for address 0x194
-cpu: 135 Issued Write for address 0x24
-cpu: 134 Issued MMIO Write for address 0x400 with payload 12806
-cpu: 133 Issued Write for address 0x64
-cpu: 132 Issued Write for address 0x320
-cpu: 131 Issued Write for address 0x24
-cpu: 130 Issued Write for address 0x1d4
-cpu: 129 Issued Read for address 0x384
-cpu: 128 Issued Write for address 0x3a4
-cpu: 127 Issued Write for address 0x1e8
-cpu: 126 Issued Write for address 0x128
-Handle Write. Squared is 430687009
-cpu: 125 Issued Write for address 0x240
-cpu: 124 Issued Write for address 0x10
-cpu: 123 Issued MMIO Read for address 0x400
-cpu: 122 Issued Read for address 0x398
-cpu: 121 Issued Write for address 0x100
-cpu: 120 Issued Write for address 0xa8
-cpu: 119 Issued Read for address 0x2b8
-cpu: 118 Issued Read for address 0x260
-cpu: 117 Issued Write for address 0x270
-cpu: 116 Issued Write for address 0x14c
-cpu: 115 Issued Write for address 0x284
-cpu: 114 Issued MMIO Read for address 0x400
-Handle Read. Returning 430687009
-cpu: 113 Issued Write for address 0x2a4
-cpu: 112 Issued MMIO Read for address 0x400
-Handle Write. Squared is 643028164
-cpu: 111 Issued Write for address 0x204
-cpu: 110 Issued Write for address 0x3cc
-cpu: 109 Issued MMIO Write for address 0x400 with payload -4993
-Handle Write. Squared is 362902500
-cpu: 108 Issued Write for address 0x37c
-cpu: 107 Issued Write for address 0x30c
-cpu: 106 Issued Write for address 0x18
-cpu: 105 Issued Write for address 0x110
-cpu: 104 Issued Write for address 0x88
-cpu: 103 Issued Write for address 0xa4
-cpu: 102 Issued Write for address 0x308
-cpu: 101 Issued Read for address 0x9c
-cpu: 100 Issued Write for address 0x0
-cpu: 99 Issued MMIO Read for address 0x400
-Handle Read. Returning 362902500
-cpu: 98 Issued Write for address 0x324
-cpu: 97 Issued Write for address 0x38c
-cpu: 96 Issued Write for address 0x398
-cpu: 95 Issued Read for address 0x33c
-cpu: 94 Issued Write for address 0x17c
-cpu: 93 Issued Write for address 0x23c
-cpu: 92 Issued MMIO Read for address 0x400
-Handle Read. Returning 362902500
-cpu: 91 Issued Read for address 0x3e8
-cpu: 90 Issued Write for address 0x314
-cpu: 89 Issued Read for address 0x234
-cpu: 88 Issued Write for address 0x178
-cpu: 87 Issued Write for address 0x1c8
-cpu: 86 Issued Read for address 0xa4
-cpu: 85 Issued Read for address 0x134
-cpu: 84 Issued Write for address 0x328
-cpu: 83 Issued Write for address 0x2d0
-cpu: 82 Issued MMIO Read for address 0x400
-Handle Read. Returning 362902500
-cpu: 81 Issued Write for address 0x10c
-cpu: 80 Issued Read for address 0x2a4
-cpu: 79 Issued Write for address 0x26c
-cpu: 78 Issued Write for address 0x250
-cpu: 77 Issued MMIO Read for address 0x400
-Handle Write. Squared is 163993636
-cpu: 76 Issued Read for address 0x2d0
-cpu: 75 Issued Write for address 0x1fc
-cpu: 74 Issued Read for address 0x300
-cpu: 73 Issued Read for address 0x2b0
-cpu: 72 Issued Write for address 0x318
-cpu: 71 Issued MMIO Write for address 0x400 with payload -3396
-Handle Read. Returning 163993636
-cpu: 70 Issued MMIO Write for address 0x400 with payload 8735
-cpu: 69 Issued Write for address 0x3a0
-cpu: 68 Issued Read for address 0x228
-cpu: 67 Issued Write for address 0x3f8
-cpu: 66 Issued Write for address 0x2c4
-cpu: 65 Issued Write for address 0x124
-cpu: 64 Issued Write for address 0x40
-cpu: 63 Issued Write for address 0x250
-cpu: 62 Issued Read for address 0x2d4
-cpu: 61 Issued Read for address 0x128
-cpu: 60 Issued MMIO Read for address 0x400
-Handle Read. Returning 163993636
-Handle Read. Returning 163993636
-Handle Write. Squared is 24930049
-cpu: 59 Issued Write for address 0x384
-cpu: 58 Issued Write for address 0x104
-cpu: 57 Issued Write for address 0xf8
-cpu: 56 Issued Write for address 0x1ec
-cpu: 55 Issued Write for address 0x2d8
-cpu: 54 Issued Write for address 0xac
-cpu: 53 Issued Read for address 0x64
-cpu: 52 Issued Write for address 0x7c
-cpu: 51 Issued Read for address 0x1b8
-cpu: 50 Issued Write for address 0x104
-cpu: 49 Issued Read for address 0x104
-cpu: 48 Issued Write for address 0x29c
-cpu: 47 Issued Write for address 0x3d0
-Handle Read. Returning 24930049
-cpu: 46 Issued Write for address 0x25c
-cpu: 45 Issued Write for address 0x170
-cpu: 44 Issued Write for address 0x1c8
-cpu: 43 Issued Write for address 0x358
-cpu: 42 Issued Write for address 0x1c8
-cpu: 41 Issued Read for address 0xc4
-cpu: 40 Issued Read for address 0x254
-cpu: 39 Issued Write for address 0x64
-cpu: 38 Issued Read for address 0x398
-cpu: 37 Issued Write for address 0xe4
-cpu: 36 Issued Write for address 0x278
-cpu: 35 Issued Write for address 0x154
-cpu: 34 Issued MMIO Read for address 0x400
-cpu: 33 Issued MMIO Write for address 0x400 with payload -24646
-cpu: 32 Issued Write for address 0x328
-cpu: 31 Issued Write for address 0x188
-cpu: 30 Issued Write for address 0x134
-cpu: 29 Issued Read for address 0x18c
-cpu: 28 Issued Write for address 0xcc
-Handle Read. Returning 24930049
-cpu: 27 Issued Write for address 0x34
-cpu: 26 Issued Read for address 0x29c
-cpu: 25 Issued Write for address 0x164
-cpu: 24 Issued Read for address 0x2cc
-cpu: 23 Issued Write for address 0x308
-cpu: 22 Issued Write for address 0x3c8
-cpu: 21 Issued Write for address 0xc0
-cpu: 20 Issued Write for address 0x198
-cpu: 19 Issued Write for address 0x318
-cpu: 18 Issued Read for address 0x3c
-cpu: 17 Issued Write for address 0x88
-cpu: 16 Issued Write for address 0x60
-cpu: 15 Issued Read for address 0x1bc
-cpu: 14 Issued Write for address 0x13c
-cpu: 13 Issued Read for address 0x120
-cpu: 12 Issued Write for address 0x5c
-cpu: 11 Issued Write for address 0x1e8
-cpu: 10 Issued Write for address 0x32c
-cpu: 9 Issued Read for address 0x14
-cpu: 8 Issued Write for address 0x230
-cpu: 7 Issued Write for address 0x114
-cpu: 6 Issued Write for address 0x3c0
-Handle Read. Returning 24930049
-cpu: 5 Issued Write for address 0x37c
-cpu: 4 Issued Read for address 0x128
-cpu: 3 Issued Write for address 0xa0
-cpu: 2 Issued Read for address 0x290
-cpu: 1 Issued Read for address 0x3dc
-Handle Read. Returning 24930049
-Handle Write. Squared is 11532816
-Handle Write. Squared is 76300225
-Handle Read. Returning 76300225
-Handle Read. Returning 76300225
-Handle Write. Squared is 607425316
+core: 949 Issued MMIO Write for address 0x400 with payload 29792
+core: 948 Issued Write for address 0x1d8
+Handle Write. Squared is 887563264
+core: 947 Issued Write for address 0x2a0
+core: 946 Issued Write for address 0x1c0
+core: 945 Issued Read for address 0x180
+core: 944 Issued MMIO Read for address 0x400
+Handle Read. Returning 887563264
+core: 943 Issued Write for address 0x1a4
+core: 942 Issued Write for address 0xc8
+core: 941 Issued Write for address 0x338
+core: 940 Issued Write for address 0x84
+core: 939 Issued Write for address 0x298
+core: 938 Issued Write for address 0x370
+core: 937 Issued Write for address 0x2c
+core: 936 Issued Write for address 0x1fc
+core: 935 Issued Write for address 0x1c8
+core: 934 Issued Write for address 0x2dc
+core: 933 Issued Write for address 0xdc
+core: 932 Issued Read for address 0x10c
+core: 931 Issued Write for address 0x360
+core: 930 Issued Write for address 0x50
+core: 929 Issued Read for address 0x260
+core: 928 Issued MMIO Read for address 0x400
+Handle Read. Returning 887563264
+core: 927 Issued MMIO Write for address 0x400 with payload 20518
+Handle Write. Squared is 420988324
+core: 926 Issued Read for address 0x1f4
+core: 925 Issued Write for address 0x64
+core: 924 Issued MMIO Read for address 0x400
+core: 923 Issued Write for address 0xf4
+core: 922 Issued Write for address 0x3bc
+Handle Read. Returning 420988324
+core: 921 Issued Read for address 0xc4
+core: 920 Issued Write for address 0x80
+core: 919 Issued MMIO Write for address 0x400 with payload 27312
+core: 918 Issued Read for address 0x244
+core: 917 Issued Write for address 0x2e0
+core: 916 Issued MMIO Write for address 0x400 with payload -2301
+core: 915 Issued Write for address 0x138
+Handle Write. Squared is 745945344
+core: 914 Issued Read for address 0x1a0
+core: 913 Issued Write for address 0x190
+Handle Write. Squared is 5294601
+core: 912 Issued Write for address 0x258
+core: 911 Issued Read for address 0x208
+core: 910 Issued Write for address 0x114
+core: 909 Issued Write for address 0x328
+core: 908 Issued Write for address 0x248
+core: 907 Issued Write for address 0x8
+core: 906 Issued Write for address 0x120
+core: 905 Issued Write for address 0x318
+core: 904 Issued Write for address 0x218
+core: 903 Issued Write for address 0x394
+core: 902 Issued Write for address 0x7c
+core: 901 Issued Read for address 0x1a8
+core: 900 Issued Write for address 0x138
+core: 899 Issued Read for address 0x1d4
+core: 898 Issued Write for address 0x388
+core: 897 Issued Read for address 0x164
+core: 896 Issued Write for address 0x2f8
+core: 895 Issued Write for address 0xd4
+core: 894 Issued Write for address 0xf0
+core: 893 Issued Write for address 0x188
+core: 892 Issued Read for address 0xf4
+core: 891 Issued Write for address 0x350
+core: 890 Issued Write for address 0x26c
+core: 889 Issued Write for address 0x1f8
+core: 888 Issued MMIO Read for address 0x400
+core: 887 Issued Write for address 0x3d8
+core: 886 Issued Write for address 0x3ac
+core: 885 Issued Write for address 0x3e8
+core: 884 Issued Write for address 0x15c
+core: 883 Issued MMIO Write for address 0x400 with payload -2687
+core: 882 Issued Write for address 0x25c
+core: 881 Issued Write for address 0xe4
+core: 880 Issued Write for address 0x8c
+core: 879 Issued Write for address 0x8
+core: 878 Issued Write for address 0x2c0
+core: 877 Issued Write for address 0x368
+core: 876 Issued Write for address 0x134
+core: 875 Issued Write for address 0xb0
+core: 874 Issued Read for address 0x1a0
+core: 873 Issued MMIO Write for address 0x400 with payload -17673
+core: 872 Issued Write for address 0x1c0
+core: 871 Issued Write for address 0xc4
+core: 870 Issued Write for address 0x110
+core: 869 Issued Read for address 0x19c
+core: 868 Issued Write for address 0x324
+core: 867 Issued Read for address 0x3e4
+core: 866 Issued MMIO Write for address 0x400 with payload -13923
+Handle Read. Returning 5294601
+core: 865 Issued Write for address 0x228
+core: 864 Issued Read for address 0x128
+core: 863 Issued Write for address 0x378
+core: 862 Issued Write for address 0x11c
+core: 861 Issued MMIO Read for address 0x400
+Handle Write. Squared is 7219969
+core: 860 Issued Write for address 0x1c0
+core: 859 Issued Write for address 0x1d4
+core: 858 Issued Read for address 0x274
+core: 857 Issued Write for address 0x58
+core: 856 Issued Write for address 0x2a8
+core: 855 Issued Write for address 0x50
+core: 854 Issued Write for address 0xf8
+core: 853 Issued Write for address 0xa8
+core: 852 Issued Write for address 0x370
+core: 851 Issued MMIO Write for address 0x400 with payload -19118
+core: 850 Issued Read for address 0x228
+core: 849 Issued Write for address 0x30
+core: 848 Issued Write for address 0x38
+core: 847 Issued Write for address 0x17c
+core: 846 Issued MMIO Write for address 0x400 with payload 11307
+core: 845 Issued Write for address 0x3a8
+core: 844 Issued Write for address 0x204
+core: 843 Issued Write for address 0x80
+core: 842 Issued Write for address 0x254
+core: 841 Issued Read for address 0x80
+Handle Write. Squared is 312334929
+core: 840 Issued Write for address 0x3ac
+core: 839 Issued Write for address 0xec
+core: 838 Issued Read for address 0x148
+core: 837 Issued Write for address 0x30
+core: 836 Issued Write for address 0x1a0
+core: 835 Issued Read for address 0x194
+core: 834 Issued MMIO Write for address 0x400 with payload -19059
+core: 833 Issued Read for address 0x39c
+core: 832 Issued Write for address 0x29c
+core: 831 Issued Write for address 0x194
+core: 830 Issued Write for address 0x354
+core: 829 Issued Write for address 0x170
+core: 828 Issued MMIO Write for address 0x400 with payload 23520
+core: 827 Issued Write for address 0x33c
+core: 826 Issued MMIO Read for address 0x400
+Handle Write. Squared is 193849929
+Handle Read. Returning 193849929
+Handle Write. Squared is 365497924
+core: 825 Issued Write for address 0x1fc
+core: 824 Issued Write for address 0x2a4
+core: 823 Issued Write for address 0x50
+core: 822 Issued Read for address 0x118
+core: 821 Issued Write for address 0x8c
+core: 820 Issued Write for address 0x120
+core: 819 Issued Write for address 0x12c
+core: 818 Issued MMIO Read for address 0x400
+core: 817 Issued Read for address 0xc4
+core: 816 Issued Read for address 0x38
+core: 815 Issued Write for address 0x1bc
+core: 814 Issued Read for address 0x23c
+core: 813 Issued Write for address 0x374
+core: 812 Issued Write for address 0x328
+core: 811 Issued Write for address 0x290
+core: 810 Issued Write for address 0x188
+core: 809 Issued Write for address 0x5c
+core: 808 Issued Write for address 0x144
+core: 807 Issued Write for address 0xb0
+core: 806 Issued Write for address 0x22c
+core: 805 Issued Read for address 0x78
+Handle Write. Squared is 127848249
+core: 804 Issued Write for address 0x388
+core: 803 Issued MMIO Read for address 0x400
+core: 802 Issued Write for address 0x100
+core: 801 Issued Read for address 0x140
+core: 800 Issued Write for address 0x190
+core: 799 Issued Read for address 0xb0
+core: 798 Issued Read for address 0x24c
+core: 797 Issued Write for address 0x1d8
+core: 796 Issued Read for address 0x40
+core: 795 Issued MMIO Write for address 0x400 with payload -5490
+Handle Write. Squared is 363245481
+core: 794 Issued Read for address 0x1c8
+core: 793 Issued Write for address 0x14c
+core: 792 Issued Write for address 0x35c
+core: 791 Issued Write for address 0x1cc
+core: 790 Issued Read for address 0x35c
+core: 789 Issued Write for address 0x8
+core: 788 Issued Read for address 0x12c
+core: 787 Issued MMIO Write for address 0x400 with payload -7218
+Handle Write. Squared is 553190400
+core: 786 Issued Write for address 0x264
+core: 785 Issued Write for address 0xb4
+core: 784 Issued Write for address 0x120
+core: 783 Issued MMIO Write for address 0x400 with payload 29948
+core: 782 Issued Write for address 0x364
+core: 781 Issued Write for address 0x378
+core: 780 Issued Write for address 0x218
+core: 779 Issued Write for address 0x3a4
+core: 778 Issued Write for address 0x2d0
+core: 777 Issued Write for address 0x1d4
+core: 776 Issued Write for address 0x118
+core: 775 Issued Write for address 0x190
+core: 774 Issued Write for address 0x10
+core: 773 Issued Write for address 0xa8
+core: 772 Issued Write for address 0x29c
+core: 771 Issued Write for address 0x2ac
+core: 770 Issued MMIO Read for address 0x400
+core: 769 Issued Write for address 0x60
+core: 768 Issued Read for address 0x3a0
+core: 767 Issued Write for address 0x2b8
+core: 766 Issued Write for address 0xb4
+core: 765 Issued Write for address 0x150
+core: 764 Issued Write for address 0x228
+core: 763 Issued Write for address 0x3a0
+core: 762 Issued Write for address 0x3ac
+core: 761 Issued Write for address 0x340
+core: 760 Issued MMIO Read for address 0x400
+core: 759 Issued Write for address 0x310
+core: 758 Issued Write for address 0x340
+core: 757 Issued Write for address 0x16c
+core: 756 Issued Write for address 0x128
+core: 755 Issued Write for address 0x3dc
+Handle Read. Returning 553190400
+core: 754 Issued Write for address 0x28
+core: 753 Issued Read for address 0x390
+core: 752 Issued Write for address 0x3c4
+core: 751 Issued Read for address 0x198
+core: 750 Issued Write for address 0x328
+core: 749 Issued Write for address 0x398
+core: 748 Issued Read for address 0x8
+core: 747 Issued Write for address 0x1f0
+core: 746 Issued Read for address 0x39c
+core: 745 Issued Read for address 0x2f8
+core: 744 Issued Write for address 0x368
+core: 743 Issued Read for address 0x3c0
+core: 742 Issued Write for address 0x120
+core: 741 Issued Write for address 0x3e4
+core: 740 Issued Write for address 0x18
+core: 739 Issued Write for address 0x22c
+core: 738 Issued Read for address 0x28
+core: 737 Issued Write for address 0x88
+core: 736 Issued Write for address 0x1cc
+core: 735 Issued Write for address 0x20
+Handle Read. Returning 553190400
+core: 734 Issued Write for address 0x4c
+core: 733 Issued Read for address 0xf4
+core: 732 Issued Write for address 0x4
+core: 731 Issued Write for address 0x1f8
+core: 730 Issued Read for address 0x2a0
+core: 729 Issued Write for address 0x244
+core: 728 Issued Write for address 0x29c
+core: 727 Issued Write for address 0x220
+core: 726 Issued Read for address 0x234
+core: 725 Issued Write for address 0x324
+core: 724 Issued Write for address 0x258
+core: 723 Issued Read for address 0x2b8
+core: 722 Issued MMIO Write for address 0x400 with payload -13382
+core: 721 Issued Read for address 0x2c4
+core: 720 Issued Write for address 0x2d8
+core: 719 Issued Write for address 0x1b8
+core: 718 Issued Write for address 0x258
+core: 717 Issued MMIO Write for address 0x400 with payload -29866
+Handle Read. Returning 553190400
+core: 716 Issued Write for address 0xd8
+core: 715 Issued Write for address 0x30c
+core: 714 Issued Read for address 0x3d0
+core: 713 Issued Write for address 0x158
+core: 712 Issued Write for address 0x2c8
+core: 711 Issued Write for address 0x19c
+core: 710 Issued MMIO Read for address 0x400
+Handle Write. Squared is 30140100
+core: 709 Issued Write for address 0x134
+core: 708 Issued Write for address 0x4
+core: 707 Issued Write for address 0x350
+core: 706 Issued Write for address 0x11c
+core: 705 Issued Read for address 0x198
+core: 704 Issued Read for address 0x108
+core: 703 Issued MMIO Read for address 0x400
+Handle Write. Squared is 52099524
+core: 702 Issued Read for address 0x1a0
+core: 701 Issued Write for address 0x134
+core: 700 Issued Read for address 0x14c
+core: 699 Issued Read for address 0x3a0
+core: 698 Issued Write for address 0x198
+core: 697 Issued Read for address 0x30c
+core: 696 Issued Write for address 0xc8
+core: 695 Issued Read for address 0x3ec
+core: 694 Issued Write for address 0x29c
+core: 693 Issued Write for address 0x3a8
+core: 692 Issued Read for address 0x284
+core: 691 Issued Write for address 0x88
+core: 690 Issued Write for address 0xfc
+Handle Write. Squared is 896882704
+core: 689 Issued Write for address 0x2e8
+core: 688 Issued Write for address 0x330
+core: 687 Issued Write for address 0x360
+core: 686 Issued MMIO Read for address 0x400
+core: 685 Issued Write for address 0x254
+core: 684 Issued Read for address 0x258
+core: 683 Issued Read for address 0x108
+core: 682 Issued Read for address 0x328
+core: 681 Issued MMIO Write for address 0x400 with payload 5483
+Handle Read. Returning 896882704
+core: 680 Issued Write for address 0x1c
+core: 679 Issued MMIO Read for address 0x400
+Handle Read. Returning 896882704
+core: 678 Issued Write for address 0x30
+core: 677 Issued Write for address 0x340
+core: 676 Issued MMIO Read for address 0x400
+Handle Write. Squared is 179077924
+core: 675 Issued Read for address 0x270
+core: 674 Issued Write for address 0x14
+core: 673 Issued Write for address 0x354
+core: 672 Issued Read for address 0x150
+core: 671 Issued Read for address 0xc
+core: 670 Issued Write for address 0x2a4
+core: 669 Issued Write for address 0x3f8
+core: 668 Issued Write for address 0x38c
+core: 667 Issued Read for address 0x70
+core: 666 Issued Write for address 0x28
+core: 665 Issued Read for address 0x1c0
+core: 664 Issued Read for address 0x1d8
+core: 663 Issued Write for address 0x3a0
+core: 662 Issued Write for address 0x3f4
+core: 661 Issued Write for address 0x2fc
+Handle Write. Squared is 891977956
+core: 660 Issued Write for address 0x190
+core: 659 Issued MMIO Write for address 0x400 with payload -15129
+core: 658 Issued Read for address 0x1fc
+core: 657 Issued Write for address 0x3f4
+core: 656 Issued MMIO Write for address 0x400 with payload -30695
+core: 655 Issued Write for address 0x3c8
+core: 654 Issued Read for address 0x120
+core: 653 Issued Write for address 0x168
+core: 652 Issued Read for address 0x340
+core: 651 Issued Read for address 0x8
+core: 650 Issued Write for address 0x184
+core: 649 Issued Read for address 0x220
+core: 648 Issued Read for address 0x21c
+core: 647 Issued Write for address 0x178
+core: 646 Issued Read for address 0xc0
+core: 645 Issued Write for address 0x2fc
+core: 644 Issued Write for address 0x270
+core: 643 Issued Write for address 0x1b8
+core: 642 Issued Write for address 0x1a8
+core: 641 Issued Write for address 0x2bc
+core: 640 Issued Write for address 0x8c
+core: 639 Issued Write for address 0x31c
+core: 638 Issued Write for address 0x210
+core: 637 Issued Write for address 0x19c
+core: 636 Issued Read for address 0x3ac
+core: 635 Issued Write for address 0x258
+core: 634 Issued Write for address 0x2d8
+Handle Read. Returning 891977956
+core: 633 Issued Write for address 0x3ec
+core: 632 Issued Write for address 0x8
+core: 631 Issued Write for address 0x284
+core: 630 Issued Write for address 0x3d8
+core: 629 Issued Read for address 0x1c0
+core: 628 Issued Write for address 0x344
+core: 627 Issued Write for address 0x3dc
+core: 626 Issued Read for address 0x16c
+core: 625 Issued Write for address 0x7c
+core: 624 Issued Write for address 0x2d4
+core: 623 Issued MMIO Write for address 0x400 with payload -531
+core: 622 Issued MMIO Read for address 0x400
+core: 621 Issued MMIO Read for address 0x400
+core: 620 Issued Write for address 0xdc
+core: 619 Issued Read for address 0x3a4
+core: 618 Issued Write for address 0x3f4
+core: 617 Issued Read for address 0xb4
+core: 616 Issued Read for address 0x358
+core: 615 Issued Write for address 0x7c
+core: 614 Issued Write for address 0x80
+core: 613 Issued Write for address 0x15c
+Handle Read. Returning 891977956
+core: 612 Issued Read for address 0x28
+core: 611 Issued Read for address 0x1f4
+core: 610 Issued Write for address 0x108
+core: 609 Issued Write for address 0x60
+core: 608 Issued Read for address 0x1c0
+core: 607 Issued MMIO Read for address 0x400
+core: 606 Issued Read for address 0x1e4
+core: 605 Issued Write for address 0x98
+core: 604 Issued Read for address 0x164
+core: 603 Issued Write for address 0x1a0
+core: 602 Issued MMIO Write for address 0x400 with payload -26870
+Handle Read. Returning 891977956
+core: 601 Issued Write for address 0x208
+core: 600 Issued Write for address 0x44
+core: 599 Issued Read for address 0x1cc
+core: 598 Issued Read for address 0x334
+core: 597 Issued Write for address 0x3dc
+core: 596 Issued Write for address 0x2c4
+core: 595 Issued Read for address 0x3e0
+core: 594 Issued Write for address 0x2d4
+core: 593 Issued MMIO Read for address 0x400
+Handle Write. Squared is 30063289
+core: 592 Issued Write for address 0x1c0
+core: 591 Issued Read for address 0x398
+core: 590 Issued Read for address 0x25c
+core: 589 Issued Read for address 0x364
+core: 588 Issued Write for address 0xb0
+core: 587 Issued MMIO Read for address 0x400
+Handle Read. Returning 30063289
+core: 586 Issued Write for address 0x44
+core: 585 Issued Write for address 0xbc
+core: 584 Issued Write for address 0x74
+core: 583 Issued Write for address 0x1c8
+core: 582 Issued Write for address 0x384
+core: 581 Issued Write for address 0x30c
+core: 580 Issued Read for address 0x300
+core: 579 Issued Read for address 0x27c
+core: 578 Issued Write for address 0x1b8
+core: 577 Issued Write for address 0x34c
+core: 576 Issued Write for address 0x308
+core: 575 Issued Write for address 0x154
+core: 574 Issued MMIO Read for address 0x400
+Handle Read. Returning 30063289
+core: 573 Issued Write for address 0x12c
+core: 572 Issued Write for address 0x34
+core: 571 Issued Write for address 0x374
+core: 570 Issued Write for address 0xac
+core: 569 Issued Write for address 0x170
+core: 568 Issued Write for address 0x18
+core: 567 Issued Write for address 0x35c
+core: 566 Issued Write for address 0x228
+core: 565 Issued Write for address 0x2a0
+core: 564 Issued Write for address 0x3c8
+core: 563 Issued Read for address 0x15c
+core: 562 Issued MMIO Write for address 0x400 with payload -12028
+core: 561 Issued Write for address 0x128
+core: 560 Issued Write for address 0xac
+Handle Write. Squared is 228886641
+core: 559 Issued MMIO Write for address 0x400 with payload -6039
+core: 558 Issued Write for address 0xf0
+core: 557 Issued Write for address 0x2ac
+core: 556 Issued Write for address 0x218
+core: 555 Issued Read for address 0xc0
+core: 554 Issued Write for address 0x3dc
+core: 553 Issued Write for address 0x370
+core: 552 Issued Write for address 0x1b4
+core: 551 Issued Write for address 0x370
+core: 550 Issued Read for address 0xc4
+core: 549 Issued Read for address 0x330
+core: 548 Issued Write for address 0xc0
+Handle Write. Squared is 942183025
+core: 547 Issued Write for address 0x19c
+core: 546 Issued Write for address 0x220
+core: 545 Issued Read for address 0x108
+core: 544 Issued Write for address 0x39c
+core: 543 Issued Write for address 0x260
+core: 542 Issued Read for address 0x3c
+core: 541 Issued Write for address 0x2e4
+core: 540 Issued Write for address 0x2bc
+core: 539 Issued Write for address 0x390
+core: 538 Issued MMIO Write for address 0x400 with payload 20970
+core: 537 Issued Write for address 0x360
+core: 536 Issued Read for address 0x370
+core: 535 Issued MMIO Read for address 0x400
+Handle Write. Squared is 281961
+Handle Read. Returning 281961
+Handle Read. Returning 281961
+Handle Read. Returning 281961
+Handle Write. Squared is 721996900
+core: 534 Issued Write for address 0x13c
+core: 533 Issued Write for address 0xb0
+core: 532 Issued Write for address 0x2c
+core: 531 Issued Write for address 0x1b8
+core: 530 Issued Read for address 0x384
+core: 529 Issued MMIO Write for address 0x400 with payload -13833
+core: 528 Issued Write for address 0x7c
+core: 527 Issued Write for address 0x1f0
+core: 526 Issued Write for address 0x7c
+core: 525 Issued Write for address 0x3ec
+core: 524 Issued Write for address 0x21c
+core: 523 Issued Read for address 0x2fc
+core: 522 Issued Write for address 0x194
+core: 521 Issued Read for address 0x344
+Handle Read. Returning 721996900
+core: 520 Issued Write for address 0x328
+core: 519 Issued Read for address 0x298
+core: 518 Issued MMIO Write for address 0x400 with payload -32709
+core: 517 Issued Write for address 0x324
+core: 516 Issued Write for address 0x28c
+core: 515 Issued Read for address 0x3ac
+core: 514 Issued Write for address 0x220
+core: 513 Issued Write for address 0x108
+core: 512 Issued Write for address 0x1dc
+core: 511 Issued MMIO Read for address 0x400
+core: 510 Issued MMIO Write for address 0x400 with payload -27975
+Handle Read. Returning 721996900
+core: 509 Issued Write for address 0x78
+core: 508 Issued Write for address 0x280
+core: 507 Issued Write for address 0x3b8
+core: 506 Issued MMIO Write for address 0x400 with payload 28552
+Handle Read. Returning 721996900
+core: 505 Issued Write for address 0x4c
+core: 504 Issued Read for address 0x2e8
+core: 503 Issued Write for address 0x1f4
+core: 502 Issued Write for address 0x3a0
+core: 501 Issued Write for address 0x68
+core: 500 Issued Write for address 0x2e8
+core: 499 Issued Write for address 0x3e0
+core: 498 Issued Read for address 0xb8
+core: 497 Issued Write for address 0x110
+core: 496 Issued MMIO Write for address 0x400 with payload -14543
+core: 495 Issued Write for address 0x3bc
+core: 494 Issued Write for address 0x3b8
+core: 493 Issued Read for address 0x188
+core: 492 Issued Write for address 0x178
+core: 491 Issued Write for address 0x220
+Handle Write. Squared is 144672784
+core: 490 Issued Write for address 0x298
+core: 489 Issued Read for address 0x2ac
+core: 488 Issued Write for address 0xe8
+core: 487 Issued Write for address 0x3d4
+core: 486 Issued Write for address 0x2bc
+core: 485 Issued Write for address 0x29c
+core: 484 Issued MMIO Read for address 0x400
+core: 483 Issued Write for address 0xb0
+core: 482 Issued Write for address 0x40
+core: 481 Issued Read for address 0x308
+core: 480 Issued Read for address 0x274
+core: 479 Issued Read for address 0x148
+core: 478 Issued Write for address 0x3f4
+core: 477 Issued Write for address 0x98
+core: 476 Issued Write for address 0xb0
+core: 475 Issued MMIO Read for address 0x400
+Handle Write. Squared is 36469521
+core: 474 Issued Write for address 0x158
+core: 473 Issued Read for address 0x11c
+core: 472 Issued Write for address 0x23c
+core: 471 Issued Read for address 0x1f4
+core: 470 Issued Read for address 0x3cc
+core: 469 Issued Read for address 0x3c8
+core: 468 Issued Write for address 0x4c
+core: 467 Issued Write for address 0x2f4
+core: 466 Issued Read for address 0x320
+core: 465 Issued Write for address 0x398
+core: 464 Issued Write for address 0x35c
+core: 463 Issued Write for address 0x264
+core: 462 Issued Write for address 0x254
+core: 461 Issued Write for address 0x240
+Handle Write. Squared is 439740900
+core: 460 Issued Write for address 0x33c
+core: 459 Issued Write for address 0x13c
+core: 458 Issued Write for address 0x14c
+core: 457 Issued Read for address 0x2b8
+core: 456 Issued Read for address 0x3c4
+core: 455 Issued Write for address 0xa4
+core: 454 Issued MMIO Read for address 0x400
+core: 453 Issued Write for address 0x1cc
+core: 452 Issued MMIO Write for address 0x400 with payload 30932
+core: 451 Issued Read for address 0x3a8
+core: 450 Issued Read for address 0x84
+core: 449 Issued Write for address 0x1b0
+core: 448 Issued Write for address 0xb8
+core: 447 Issued Write for address 0x3e4
+core: 446 Issued Write for address 0x88
+core: 445 Issued Write for address 0x334
+core: 444 Issued Write for address 0x3bc
+core: 443 Issued Read for address 0x3b4
+Handle Read. Returning 439740900
+core: 442 Issued Write for address 0x94
+core: 441 Issued Write for address 0x340
+core: 440 Issued Write for address 0x314
+core: 439 Issued Write for address 0x3ac
+core: 438 Issued Read for address 0xe0
+core: 437 Issued Read for address 0x39c
+core: 436 Issued Write for address 0x1fc
+core: 435 Issued Write for address 0x104
+core: 434 Issued Write for address 0x318
+core: 433 Issued Write for address 0xf0
+core: 432 Issued Write for address 0x370
+core: 431 Issued Read for address 0x180
+core: 430 Issued Write for address 0x26c
+core: 429 Issued Write for address 0x23c
+core: 428 Issued Read for address 0x214
+core: 427 Issued Read for address 0x214
+core: 426 Issued Write for address 0x264
+core: 425 Issued Write for address 0x26c
+core: 424 Issued Write for address 0x1cc
+core: 423 Issued Read for address 0x4
+Handle Write. Squared is 191351889
+core: 422 Issued Write for address 0x1c
+core: 421 Issued Write for address 0x320
+core: 420 Issued Write for address 0x380
+core: 419 Issued Write for address 0x214
+core: 418 Issued Read for address 0x340
+core: 417 Issued MMIO Read for address 0x400
+core: 416 Issued Write for address 0x1b0
+core: 415 Issued Write for address 0x27c
+core: 414 Issued Read for address 0x0
+core: 413 Issued Write for address 0x1d4
+core: 412 Issued Write for address 0x1b0
+core: 411 Issued Write for address 0x140
+core: 410 Issued Read for address 0xc8
+core: 409 Issued Write for address 0x27c
+core: 408 Issued Write for address 0x1d4
+core: 407 Issued Write for address 0x164
+core: 406 Issued Read for address 0x21c
+core: 405 Issued Write for address 0xc4
+core: 404 Issued Read for address 0x154
+core: 403 Issued Write for address 0x3a0
+core: 402 Issued Write for address 0x160
+core: 401 Issued Write for address 0xc
+core: 400 Issued Write for address 0x244
+core: 399 Issued Read for address 0x194
+core: 398 Issued Write for address 0x16c
+core: 397 Issued Write for address 0x134
+core: 396 Issued Read for address 0x3ec
+Handle Write. Squared is 1069878681
+core: 395 Issued Read for address 0x1b8
+core: 394 Issued Write for address 0x214
+core: 393 Issued Write for address 0xac
+core: 392 Issued Write for address 0x30c
+core: 391 Issued Write for address 0x1c4
+core: 390 Issued Write for address 0x22c
+core: 389 Issued Read for address 0x2b4
+core: 388 Issued Write for address 0x268
+core: 387 Issued Write for address 0x30
+core: 386 Issued Read for address 0x2e0
+core: 385 Issued Write for address 0x134
+core: 384 Issued Write for address 0x2c4
+core: 383 Issued Write for address 0x9c
+core: 382 Issued Write for address 0x2c4
+core: 381 Issued Write for address 0x324
+core: 380 Issued Write for address 0x21c
+core: 379 Issued Read for address 0x300
+core: 378 Issued Read for address 0x348
+core: 377 Issued Write for address 0x1a4
+core: 376 Issued Write for address 0x124
+core: 375 Issued Write for address 0x154
+core: 374 Issued Write for address 0x2d8
+core: 373 Issued Write for address 0x1b8
+core: 372 Issued Write for address 0x12c
+core: 371 Issued Read for address 0x28
+core: 370 Issued Write for address 0x3dc
+core: 369 Issued Read for address 0x37c
+core: 368 Issued MMIO Read for address 0x400
+core: 367 Issued Write for address 0x6c
+core: 366 Issued Read for address 0x258
+core: 365 Issued Write for address 0x178
+core: 364 Issued Read for address 0x238
+Handle Read. Returning 1069878681
+core: 363 Issued Read for address 0x90
+core: 362 Issued Write for address 0x128
+core: 361 Issued Write for address 0x110
+core: 360 Issued Write for address 0x238
+core: 359 Issued Write for address 0xdc
+core: 358 Issued Write for address 0x1c0
+core: 357 Issued Write for address 0x1ac
+core: 356 Issued Read for address 0x60
+core: 355 Issued Read for address 0x35c
+core: 354 Issued Write for address 0x220
+core: 353 Issued Read for address 0x9c
+core: 352 Issued Write for address 0x1f4
+core: 351 Issued Write for address 0x18c
+core: 350 Issued Write for address 0xf4
+core: 349 Issued Write for address 0x358
+core: 348 Issued Write for address 0x1c
+core: 347 Issued Read for address 0x1a8
+core: 346 Issued Write for address 0x2bc
+core: 345 Issued Read for address 0x364
+core: 344 Issued Write for address 0x3f4
+core: 343 Issued Write for address 0x138
+core: 342 Issued Write for address 0x27c
+core: 341 Issued Write for address 0x334
+Handle Write. Squared is 782600625
+core: 340 Issued Write for address 0x1d4
+core: 339 Issued Write for address 0x5c
+core: 338 Issued MMIO Read for address 0x400
+core: 337 Issued Write for address 0x364
+core: 336 Issued Write for address 0x224
+core: 335 Issued Write for address 0x54
+core: 334 Issued MMIO Write for address 0x400 with payload -16432
+core: 333 Issued Read for address 0x26c
+core: 332 Issued Write for address 0x190
+core: 331 Issued Read for address 0x9c
+core: 330 Issued Write for address 0x2e4
+core: 329 Issued Write for address 0x364
+core: 328 Issued Write for address 0x248
+core: 327 Issued Write for address 0x3a4
+Handle Write. Squared is 815216704
+core: 326 Issued MMIO Read for address 0x400
+Handle Write. Squared is 211498849
+core: 325 Issued Read for address 0x174
+core: 324 Issued MMIO Read for address 0x400
+Handle Read. Returning 211498849
+core: 323 Issued Write for address 0x140
+core: 322 Issued Write for address 0x254
+core: 321 Issued Write for address 0x80
+core: 320 Issued Write for address 0xc4
+core: 319 Issued Read for address 0x284
+core: 318 Issued MMIO Read for address 0x400
+Handle Read. Returning 211498849
+core: 317 Issued Write for address 0x178
+core: 316 Issued Read for address 0x1c8
+core: 315 Issued Write for address 0x374
+core: 314 Issued Write for address 0x2d0
+core: 313 Issued Write for address 0x10
+core: 312 Issued Write for address 0x240
+core: 311 Issued Write for address 0x298
+core: 310 Issued Read for address 0x74
+core: 309 Issued Write for address 0x30c
+core: 308 Issued Write for address 0x74
+core: 307 Issued Write for address 0x2d4
+core: 306 Issued Read for address 0x354
+Handle Read. Returning 211498849
+core: 305 Issued Write for address 0x1e8
+core: 304 Issued Read for address 0x270
+core: 303 Issued Write for address 0x4
+core: 302 Issued Read for address 0x3e0
+core: 301 Issued Read for address 0xec
+core: 300 Issued Write for address 0x90
+core: 299 Issued Write for address 0x2d4
+core: 298 Issued Write for address 0x34c
+core: 297 Issued Write for address 0x1a0
+core: 296 Issued MMIO Write for address 0x400 with payload 21068
+core: 295 Issued Write for address 0x1c0
+core: 294 Issued MMIO Read for address 0x400
+Handle Write. Squared is 956788624
+core: 293 Issued Write for address 0x324
+core: 292 Issued MMIO Read for address 0x400
+Handle Read. Returning 956788624
+core: 291 Issued Write for address 0x1f4
+core: 290 Issued Write for address 0x3cc
+core: 289 Issued Write for address 0x13c
+core: 288 Issued MMIO Read for address 0x400
+Handle Read. Returning 956788624
+Handle Read. Returning 956788624
+Handle Write. Squared is 270010624
+core: 287 Issued Write for address 0x394
+core: 286 Issued Write for address 0x284
+core: 285 Issued Read for address 0x2c
+core: 284 Issued Write for address 0x234
+core: 283 Issued MMIO Read for address 0x400
+Handle Read. Returning 270010624
+core: 282 Issued Read for address 0x1f4
+core: 281 Issued Write for address 0x1c0
+core: 280 Issued Write for address 0x308
+core: 279 Issued Write for address 0x24
+core: 278 Issued Write for address 0xbc
+core: 277 Issued Write for address 0xe8
+core: 276 Issued Write for address 0x3a4
+core: 275 Issued Write for address 0x2c4
+core: 274 Issued Write for address 0x120
+core: 273 Issued Write for address 0x48
+core: 272 Issued MMIO Write for address 0x400 with payload -7503
+core: 271 Issued Write for address 0x254
+core: 270 Issued Write for address 0x2b0
+core: 269 Issued Write for address 0x3d8
+Handle Read. Returning 270010624
+core: 268 Issued Write for address 0x214
+core: 267 Issued Write for address 0x2f0
+core: 266 Issued Write for address 0x3a4
+core: 265 Issued Read for address 0x60
+core: 264 Issued Read for address 0x3cc
+core: 263 Issued Write for address 0x50
+core: 262 Issued Read for address 0x184
+core: 261 Issued Read for address 0x32c
+core: 260 Issued Read for address 0x178
+core: 259 Issued Write for address 0x18
+core: 258 Issued Write for address 0x3f8
+core: 257 Issued Write for address 0x1c4
+core: 256 Issued Write for address 0x3f0
+core: 255 Issued Write for address 0x2fc
+core: 254 Issued Read for address 0x168
+core: 253 Issued Write for address 0x16c
+core: 252 Issued Read for address 0x394
+core: 251 Issued Read for address 0x3f8
+core: 250 Issued Write for address 0x60
+core: 249 Issued Read for address 0x268
+core: 248 Issued Write for address 0x2a4
+core: 247 Issued Write for address 0x168
+core: 246 Issued Read for address 0x34
+core: 245 Issued Write for address 0xec
+core: 244 Issued Write for address 0x28
+Handle Read. Returning 270010624
+core: 243 Issued Write for address 0x16c
+core: 242 Issued Write for address 0x3c0
+core: 241 Issued Read for address 0x100
+core: 240 Issued Write for address 0x58
+core: 239 Issued Write for address 0x384
+core: 238 Issued Write for address 0x80
+core: 237 Issued Write for address 0x9c
+core: 236 Issued MMIO Read for address 0x400
+core: 235 Issued Read for address 0x3c8
+core: 234 Issued Write for address 0x384
+core: 233 Issued Read for address 0x28c
+core: 232 Issued Read for address 0x30
+core: 231 Issued Write for address 0x2f4
+core: 230 Issued Write for address 0x35c
+core: 229 Issued Write for address 0x158
+core: 228 Issued Read for address 0x17c
+core: 227 Issued Write for address 0x3e4
+core: 226 Issued Read for address 0xb0
+core: 225 Issued Write for address 0x208
+core: 224 Issued Write for address 0x1cc
+core: 223 Issued Write for address 0x324
+core: 222 Issued Write for address 0x390
+core: 221 Issued Write for address 0x100
+core: 220 Issued Read for address 0x48
+core: 219 Issued Write for address 0x340
+core: 218 Issued Write for address 0x9c
+core: 217 Issued Write for address 0x2dc
+Handle Write. Squared is 443860624
+core: 216 Issued Write for address 0x7c
+core: 215 Issued MMIO Read for address 0x400
+core: 214 Issued Read for address 0x44
+core: 213 Issued Read for address 0x204
+core: 212 Issued Write for address 0x184
+core: 211 Issued Read for address 0x100
+core: 210 Issued MMIO Read for address 0x400
+core: 209 Issued Write for address 0x40
+core: 208 Issued Write for address 0x2a4
+core: 207 Issued Write for address 0x270
+core: 206 Issued Write for address 0x1c
+core: 205 Issued Write for address 0x330
+core: 204 Issued Write for address 0xf8
+core: 203 Issued MMIO Write for address 0x400 with payload -10290
+core: 202 Issued Read for address 0x398
+core: 201 Issued Read for address 0x124
+core: 200 Issued Write for address 0x6c
+Handle Read. Returning 443860624
+core: 199 Issued Write for address 0x2d4
+core: 198 Issued Write for address 0x3ac
+core: 197 Issued MMIO Write for address 0x400 with payload 5286
+core: 196 Issued Write for address 0x190
+core: 195 Issued Write for address 0x9c
+core: 194 Issued Read for address 0xa0
+core: 193 Issued Read for address 0x2e4
+core: 192 Issued MMIO Read for address 0x400
+core: 191 Issued Write for address 0x388
+core: 190 Issued Read for address 0xa4
+core: 189 Issued Write for address 0x1d0
+core: 188 Issued Write for address 0x204
+core: 187 Issued Write for address 0x3c4
+core: 186 Issued Write for address 0x2f0
+core: 185 Issued Write for address 0x21c
+core: 184 Issued MMIO Write for address 0x400 with payload -9680
+core: 183 Issued Write for address 0x4c
+core: 182 Issued Write for address 0x3a8
+Handle Read. Returning 443860624
+core: 181 Issued Write for address 0x16c
+core: 180 Issued Write for address 0xc4
+core: 179 Issued Write for address 0x38c
+core: 178 Issued Read for address 0x2f0
+core: 177 Issued Write for address 0x31c
+core: 176 Issued Write for address 0x284
+core: 175 Issued MMIO Write for address 0x400 with payload -11740
+core: 174 Issued Write for address 0x2a0
+core: 173 Issued MMIO Read for address 0x400
+core: 172 Issued Read for address 0x30
+core: 171 Issued Write for address 0x150
+core: 170 Issued Write for address 0x240
+core: 169 Issued Read for address 0x324
+core: 168 Issued Write for address 0x30c
+core: 167 Issued Write for address 0x380
+core: 166 Issued MMIO Read for address 0x400
+Handle Read. Returning 443860624
+core: 165 Issued Write for address 0x370
+core: 164 Issued MMIO Write for address 0x400 with payload -14389
+Handle Read. Returning 443860624
+core: 163 Issued Write for address 0x120
+core: 162 Issued Write for address 0x21c
+core: 161 Issued Write for address 0xf8
+core: 160 Issued MMIO Write for address 0x400 with payload -27148
+core: 159 Issued Write for address 0x20c
+core: 158 Issued Write for address 0xdc
+core: 157 Issued Write for address 0x22c
+core: 156 Issued MMIO Read for address 0x400
+Handle Write. Squared is 56295009
+core: 155 Issued Read for address 0x2cc
+core: 154 Issued MMIO Write for address 0x400 with payload -18277
+Handle Read. Returning 56295009
+core: 153 Issued Read for address 0x48
+core: 152 Issued Write for address 0x3a0
+core: 151 Issued Read for address 0x0
+core: 150 Issued Write for address 0x300
+core: 149 Issued Read for address 0x128
+core: 148 Issued MMIO Write for address 0x400 with payload -27416
+core: 147 Issued Read for address 0x1fc
+core: 146 Issued Write for address 0x388
+core: 145 Issued Write for address 0x18
+core: 144 Issued Write for address 0x110
+core: 143 Issued Write for address 0x1c0
+core: 142 Issued MMIO Read for address 0x400
+Handle Read. Returning 56295009
+Handle Read. Returning 56295009
+Handle Write. Squared is 105884100
+core: 141 Issued MMIO Read for address 0x400
+Handle Write. Squared is 27941796
+core: 140 Issued Write for address 0x310
+core: 139 Issued Write for address 0xfc
+core: 138 Issued Write for address 0x3d4
+core: 137 Issued Write for address 0x2c4
+core: 136 Issued Write for address 0xf8
+core: 135 Issued Write for address 0x35c
+core: 134 Issued MMIO Read for address 0x400
+Handle Read. Returning 27941796
+core: 133 Issued Write for address 0x284
+core: 132 Issued Read for address 0x2c8
+core: 131 Issued Write for address 0x1b0
+core: 130 Issued Read for address 0x2fc
+core: 129 Issued Write for address 0x2d0
+core: 128 Issued Write for address 0x1e0
+core: 127 Issued Write for address 0x3e4
+core: 126 Issued Write for address 0x270
+core: 125 Issued Write for address 0x1f8
+core: 124 Issued Write for address 0x4c
+core: 123 Issued Write for address 0x268
+core: 122 Issued Write for address 0x108
+core: 121 Issued Write for address 0x19c
+Handle Write. Squared is 93702400
+core: 120 Issued Write for address 0x214
+core: 119 Issued Read for address 0x3bc
+core: 118 Issued Write for address 0x2f8
+core: 117 Issued Read for address 0x1c4
+core: 116 Issued MMIO Read for address 0x400
+Handle Write. Squared is 137827600
+Handle Read. Returning 137827600
+core: 115 Issued Read for address 0xd4
+core: 114 Issued Write for address 0x48
+core: 113 Issued Write for address 0x8c
+core: 112 Issued Write for address 0x360
+core: 111 Issued Write for address 0x320
+core: 110 Issued Write for address 0xf8
+core: 109 Issued Read for address 0x1cc
+core: 108 Issued Read for address 0x3f0
+core: 107 Issued Write for address 0x174
+core: 106 Issued Read for address 0x138
+core: 105 Issued Read for address 0xd8
+core: 104 Issued Write for address 0x8
+core: 103 Issued Read for address 0x2bc
+Handle Read. Returning 137827600
+core: 102 Issued Write for address 0x4
+core: 101 Issued MMIO Write for address 0x400 with payload 19186
+Handle Write. Squared is 207043321
+Handle Write. Squared is 737013904
+core: 100 Issued Write for address 0xe0
+core: 99 Issued Write for address 0xa4
+core: 98 Issued Write for address 0xb4
+core: 97 Issued Write for address 0x6c
+core: 96 Issued Write for address 0x3e4
+core: 95 Issued Write for address 0x3c4
+core: 94 Issued Write for address 0x22c
+core: 93 Issued Write for address 0x3dc
+core: 92 Issued Read for address 0x200
+core: 91 Issued Write for address 0x2b8
+core: 90 Issued MMIO Write for address 0x400 with payload -6708
+Handle Read. Returning 737013904
+core: 89 Issued Write for address 0x1f0
+core: 88 Issued Write for address 0x38c
+core: 87 Issued Write for address 0x200
+core: 86 Issued MMIO Read for address 0x400
+Handle Write. Squared is 334048729
+core: 85 Issued Read for address 0x2fc
+core: 84 Issued Write for address 0x36c
+core: 83 Issued Write for address 0x2b0
+core: 82 Issued Write for address 0x164
+core: 81 Issued Read for address 0x174
+core: 80 Issued Write for address 0x88
+core: 79 Issued Write for address 0x294
+core: 78 Issued Write for address 0x158
+core: 77 Issued Write for address 0xfc
+core: 76 Issued Write for address 0x374
+core: 75 Issued Write for address 0x30
+Handle Write. Squared is 751637056
+core: 74 Issued Write for address 0x250
+core: 73 Issued Write for address 0x398
+core: 72 Issued Write for address 0x4
+core: 71 Issued Write for address 0x3b4
+core: 70 Issued Write for address 0x3a8
+core: 69 Issued Write for address 0x294
+core: 68 Issued Write for address 0x26c
+core: 67 Issued Read for address 0x378
+core: 66 Issued Read for address 0x100
+core: 65 Issued MMIO Read for address 0x400
+core: 64 Issued Read for address 0x218
+core: 63 Issued Write for address 0x2cc
+core: 62 Issued Write for address 0x35c
+core: 61 Issued Write for address 0x1bc
+core: 60 Issued Read for address 0x374
+core: 59 Issued MMIO Write for address 0x400 with payload -3909
+Handle Read. Returning 751637056
+core: 58 Issued Read for address 0x108
+core: 57 Issued Read for address 0x74
+core: 56 Issued Write for address 0x298
+core: 55 Issued Write for address 0x110
+core: 54 Issued Write for address 0x3a4
+core: 53 Issued Read for address 0x2fc
+core: 52 Issued MMIO Write for address 0x400 with payload 27216
+core: 51 Issued Write for address 0xb4
+core: 50 Issued Write for address 0x90
+core: 49 Issued Read for address 0x154
+core: 48 Issued Write for address 0x30
+core: 47 Issued Write for address 0x1f4
+core: 46 Issued Write for address 0x2dc
+core: 45 Issued Write for address 0xe8
+Handle Read. Returning 751637056
+core: 44 Issued Write for address 0x350
+core: 43 Issued Write for address 0x280
+core: 42 Issued Read for address 0x218
+core: 41 Issued MMIO Write for address 0x400 with payload 16110
+core: 40 Issued MMIO Write for address 0x400 with payload -28619
+core: 39 Issued Write for address 0x3c0
+core: 38 Issued Write for address 0x264
+core: 37 Issued Write for address 0x15c
+core: 36 Issued Write for address 0x134
+core: 35 Issued MMIO Read for address 0x400
+Handle Read. Returning 751637056
+Handle Read. Returning 751637056
+core: 34 Issued Write for address 0x368
+core: 33 Issued Write for address 0x384
+core: 32 Issued Write for address 0xa4
+core: 31 Issued Write for address 0x338
+core: 30 Issued Write for address 0x2f4
+core: 29 Issued Read for address 0x134
+core: 28 Issued Write for address 0x2f0
+core: 27 Issued Write for address 0x308
+core: 26 Issued Write for address 0x300
+core: 25 Issued Write for address 0x2c8
+core: 24 Issued Write for address 0x240
+core: 23 Issued Write for address 0x240
+core: 22 Issued Write for address 0x270
+core: 21 Issued Write for address 0x260
+Handle Write. Squared is 368102596
+core: 20 Issued Write for address 0x310
+core: 19 Issued Read for address 0x320
+core: 18 Issued Write for address 0x100
+core: 17 Issued Read for address 0xa0
+core: 16 Issued Write for address 0x90
+core: 15 Issued Read for address 0x148
+core: 14 Issued Write for address 0x310
+core: 13 Issued Write for address 0x128
+core: 12 Issued Write for address 0x29c
+core: 11 Issued Read for address 0x2fc
+core: 10 Issued Write for address 0x39c
+core: 9 Issued Write for address 0x294
+core: 8 Issued Write for address 0x5c
+core: 7 Issued Write for address 0x350
+core: 6 Issued Read for address 0x188
+core: 5 Issued Read for address 0x394
+core: 4 Issued Write for address 0x90
+core: 3 Issued Read for address 0x350
+core: 2 Issued Write for address 0x380
+core: 1 Issued Write for address 0x3bc
+Handle Write. Squared is 44997264
+Handle Read. Returning 44997264
+Handle Read. Returning 44997264
+Handle Write. Squared is 15280281
+Handle Write. Squared is 740710656
+Handle Write. Squared is 259532100
+Handle Write. Squared is 819047161
+Handle Read. Returning 819047161
 StandardCPU: Test Completed Successfuly
- cpu.pendCycle : Accumulator : Sum.u64 = 226784; SumSQ.u64 = 2207348; Count.u64 = 23767; Min.u64 = 0; Max.u64 = 10; 
- cpu.reads : Accumulator : Sum.u64 = 206; SumSQ.u64 = 206; Count.u64 = 206; Min.u64 = 1; Max.u64 = 1; 
- cpu.writes : Accumulator : Sum.u64 = 658; SumSQ.u64 = 658; Count.u64 = 658; Min.u64 = 1; Max.u64 = 1; 
- l1cache:memlink.packet_latency : Accumulator : Sum.u64 = 15211; SumSQ.u64 = 2113791; Count.u64 = 127; Min.u64 = 39; Max.u64 = 287; 
- l1cache:memlink.send_bit_count : Accumulator : Sum.u64 = 15072; SumSQ.u64 = 2644992; Count.u64 = 162; Min.u64 = 64; Max.u64 = 576; 
+ core.pendCycle : Accumulator : Sum.u64 = 880761; SumSQ.u64 = 8741651; Count.u64 = 89575; Min.u64 = 0; Max.u64 = 10; 
+ core.reads : Accumulator : Sum.u64 = 233; SumSQ.u64 = 233; Count.u64 = 233; Min.u64 = 1; Max.u64 = 1; 
+ core.writes : Accumulator : Sum.u64 = 658; SumSQ.u64 = 658; Count.u64 = 658; Min.u64 = 1; Max.u64 = 1; 
+ l1cache:memlink.packet_latency : Accumulator : Sum.u64 = 41688; SumSQ.u64 = 19100008; Count.u64 = 194; Min.u64 = 38; Max.u64 = 1153; 
+ l1cache:memlink.send_bit_count : Accumulator : Sum.u64 = 32992; SumSQ.u64 = 12000256; Count.u64 = 226; Min.u64 = 64; Max.u64 = 576; 
  l1cache:memlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache:memlink.idle_time : Accumulator : Sum.u64 = 145000; SumSQ.u64 = 10525000000; Count.u64 = 2; Min.u64 = 70000; Max.u64 = 75000; 
+ l1cache:memlink.idle_time : Accumulator : Sum.u64 = 25411000; SumSQ.u64 = 80564581500000; Count.u64 = 58; Min.u64 = 59000; Max.u64 = 7342500; 
  l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 5; SumSQ.u64 = 5; Count.u64 = 5; Min.u64 = 1; Max.u64 = 1; 
- l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
- l1cache.stateEvent_GetS_M : Accumulator : Sum.u64 = 198; SumSQ.u64 = 198; Count.u64 = 198; Min.u64 = 1; Max.u64 = 1; 
- l1cache.stateEvent_GetX_I : Accumulator : Sum.u64 = 11; SumSQ.u64 = 11; Count.u64 = 11; Min.u64 = 1; Max.u64 = 1; 
- l1cache.stateEvent_GetX_S : Accumulator : Sum.u64 = 5; SumSQ.u64 = 5; Count.u64 = 5; Min.u64 = 1; Max.u64 = 1; 
- l1cache.stateEvent_GetX_M : Accumulator : Sum.u64 = 642; SumSQ.u64 = 642; Count.u64 = 642; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 13; SumSQ.u64 = 13; Count.u64 = 13; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 4; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.stateEvent_GetS_M : Accumulator : Sum.u64 = 216; SumSQ.u64 = 216; Count.u64 = 216; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.stateEvent_GetX_I : Accumulator : Sum.u64 = 40; SumSQ.u64 = 40; Count.u64 = 40; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.stateEvent_GetX_S : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.stateEvent_GetX_M : Accumulator : Sum.u64 = 609; SumSQ.u64 = 609; Count.u64 = 609; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_GetSX_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_GetSX_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.stateEvent_GetXResp_IS : Accumulator : Sum.u64 = 5; SumSQ.u64 = 5; Count.u64 = 5; Min.u64 = 1; Max.u64 = 1; 
- l1cache.stateEvent_GetXResp_IM : Accumulator : Sum.u64 = 16; SumSQ.u64 = 16; Count.u64 = 16; Min.u64 = 1; Max.u64 = 1; 
- l1cache.stateEvent_GetXResp_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.stateEvent_GetSResp_IS : Accumulator : Sum.u64 = 13; SumSQ.u64 = 13; Count.u64 = 13; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.stateEvent_GetXResp_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.stateEvent_GetXResp_IM : Accumulator : Sum.u64 = 42; SumSQ.u64 = 42; Count.u64 = 42; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.stateEvent_GetXResp_SM : Accumulator : Sum.u64 = 7; SumSQ.u64 = 7; Count.u64 = 7; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_Inv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.stateEvent_Inv_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.stateEvent_Inv_S : Accumulator : Sum.u64 = 20; SumSQ.u64 = 20; Count.u64 = 20; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_Inv_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_Inv_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.stateEvent_Inv_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.stateEvent_Inv_SM : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_Inv_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_Inv_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_FetchInvX_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.stateEvent_FetchInvX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.stateEvent_FetchInvX_M : Accumulator : Sum.u64 = 16; SumSQ.u64 = 16; Count.u64 = 16; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_FetchInvX_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_FetchInvX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_FetchInvX_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1182,10 +1551,10 @@ StandardCPU: Test Completed Successfuly
  l1cache.stateEvent_Fetch_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_FetchInv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_FetchInv_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.stateEvent_FetchInv_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.stateEvent_FetchInv_M : Accumulator : Sum.u64 = 17; SumSQ.u64 = 17; Count.u64 = 17; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_FetchInv_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_FetchInv_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.stateEvent_FetchInv_SM : Accumulator : Sum.u64 = 5; SumSQ.u64 = 5; Count.u64 = 5; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.stateEvent_FetchInv_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_FetchInv_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_FetchInv_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_ForceInv_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1205,18 +1574,20 @@ StandardCPU: Test Completed Successfuly
  l1cache.stateEvent_FlushLineResp_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_FlushLineResp_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_FlushLineResp_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.eventSent_GetS : Accumulator : Sum.u64 = 74; SumSQ.u64 = 74; Count.u64 = 74; Min.u64 = 1; Max.u64 = 1; 
- l1cache.eventSent_GetX : Accumulator : Sum.u64 = 83; SumSQ.u64 = 83; Count.u64 = 83; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.eventSent_GetS : Accumulator : Sum.u64 = 71; SumSQ.u64 = 71; Count.u64 = 71; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.eventSent_GetX : Accumulator : Sum.u64 = 49; SumSQ.u64 = 49; Count.u64 = 49; Min.u64 = 1; Max.u64 = 1; 
  l1cache.eventSent_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.eventSent_Write : Accumulator : Sum.u64 = 51; SumSQ.u64 = 51; Count.u64 = 51; Min.u64 = 1; Max.u64 = 1; 
  l1cache.eventSent_PutM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_FlushLine : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.eventSent_FetchResp : Accumulator : Sum.u64 = 5; SumSQ.u64 = 5; Count.u64 = 5; Min.u64 = 1; Max.u64 = 1; 
- l1cache.eventSent_FetchXResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.eventSent_AckInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.eventSent_GetSResp : Accumulator : Sum.u64 = 275; SumSQ.u64 = 275; Count.u64 = 275; Min.u64 = 1; Max.u64 = 1; 
- l1cache.eventSent_GetXResp : Accumulator : Sum.u64 = 690; SumSQ.u64 = 690; Count.u64 = 690; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.eventSent_FetchResp : Accumulator : Sum.u64 = 17; SumSQ.u64 = 17; Count.u64 = 17; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.eventSent_FetchXResp : Accumulator : Sum.u64 = 16; SumSQ.u64 = 16; Count.u64 = 16; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.eventSent_AckInv : Accumulator : Sum.u64 = 22; SumSQ.u64 = 22; Count.u64 = 22; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.eventSent_GetSResp : Accumulator : Sum.u64 = 291; SumSQ.u64 = 291; Count.u64 = 291; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.eventSent_GetXResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.eventSent_WriteResp : Accumulator : Sum.u64 = 677; SumSQ.u64 = 677; Count.u64 = 677; Min.u64 = 1; Max.u64 = 1; 
  l1cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_Put : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_Get : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1225,18 +1596,18 @@ StandardCPU: Test Completed Successfuly
  l1cache.eventSent_CustomResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.evict_I : Accumulator : Sum.u64 = 15; SumSQ.u64 = 15; Count.u64 = 15; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.evict_I : Accumulator : Sum.u64 = 17; SumSQ.u64 = 17; Count.u64 = 17; Min.u64 = 1; Max.u64 = 1; 
  l1cache.evict_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.evict_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.evict_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.latency_GetS_hit : Accumulator : Sum.u64 = 3398; SumSQ.u64 = 1896670; Count.u64 = 201; Min.u64 = 3; Max.u64 = 846; 
- l1cache.latency_GetS_miss : Accumulator : Sum.u64 = 8819; SumSQ.u64 = 16137807; Count.u64 = 5; Min.u64 = 1141; Max.u64 = 2129; 
- l1cache.latency_GetX_hit : Accumulator : Sum.u64 = 14874; SumSQ.u64 = 14772474; Count.u64 = 642; Min.u64 = 3; Max.u64 = 1688; 
- l1cache.latency_GetX_miss : Accumulator : Sum.u64 = 17118; SumSQ.u64 = 29671134; Count.u64 = 11; Min.u64 = 998; Max.u64 = 2556; 
- l1cache.latency_GetX_upgrade : Accumulator : Sum.u64 = 11120; SumSQ.u64 = 25455832; Count.u64 = 5; Min.u64 = 1718; Max.u64 = 2672; 
+ l1cache.latency_GetS_hit : Accumulator : Sum.u64 = 5707; SumSQ.u64 = 5867005; Count.u64 = 220; Min.u64 = 3; Max.u64 = 1704; 
+ l1cache.latency_GetS_miss : Accumulator : Sum.u64 = 22547; SumSQ.u64 = 41982831; Count.u64 = 13; Min.u64 = 959; Max.u64 = 2561; 
+ l1cache.latency_GetX_hit : Accumulator : Sum.u64 = 16016; SumSQ.u64 = 15433998; Count.u64 = 609; Min.u64 = 3; Max.u64 = 2298; 
+ l1cache.latency_GetX_miss : Accumulator : Sum.u64 = 70840; SumSQ.u64 = 134760116; Count.u64 = 40; Min.u64 = 998; Max.u64 = 3132; 
+ l1cache.latency_GetX_upgrade : Accumulator : Sum.u64 = 14602; SumSQ.u64 = 26186576; Count.u64 = 9; Min.u64 = 835; Max.u64 = 2587; 
  l1cache.latency_GetSX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.latency_GetSX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.latency_GetSX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1244,104 +1615,109 @@ StandardCPU: Test Completed Successfuly
  l1cache.latency_FlushLine_fail : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.latency_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.latency_FlushLineInv_fail : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.GetSHit_Arrival : Accumulator : Sum.u64 = 196; SumSQ.u64 = 196; Count.u64 = 196; Min.u64 = 1; Max.u64 = 1; 
- l1cache.GetXHit_Arrival : Accumulator : Sum.u64 = 628; SumSQ.u64 = 628; Count.u64 = 628; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.GetSHit_Arrival : Accumulator : Sum.u64 = 215; SumSQ.u64 = 215; Count.u64 = 215; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.GetXHit_Arrival : Accumulator : Sum.u64 = 590; SumSQ.u64 = 590; Count.u64 = 590; Min.u64 = 1; Max.u64 = 1; 
  l1cache.GetSXHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.GetSHit_Blocked : Accumulator : Sum.u64 = 5; SumSQ.u64 = 5; Count.u64 = 5; Min.u64 = 1; Max.u64 = 1; 
- l1cache.GetXHit_Blocked : Accumulator : Sum.u64 = 14; SumSQ.u64 = 14; Count.u64 = 14; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.GetXHit_Blocked : Accumulator : Sum.u64 = 19; SumSQ.u64 = 19; Count.u64 = 19; Min.u64 = 1; Max.u64 = 1; 
  l1cache.GetSXHit_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.GetSMiss_Arrival : Accumulator : Sum.u64 = 5; SumSQ.u64 = 5; Count.u64 = 5; Min.u64 = 1; Max.u64 = 1; 
- l1cache.GetXMiss_Arrival : Accumulator : Sum.u64 = 14; SumSQ.u64 = 14; Count.u64 = 14; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.GetSMiss_Arrival : Accumulator : Sum.u64 = 13; SumSQ.u64 = 13; Count.u64 = 13; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.GetXMiss_Arrival : Accumulator : Sum.u64 = 44; SumSQ.u64 = 44; Count.u64 = 44; Min.u64 = 1; Max.u64 = 1; 
  l1cache.GetSXMiss_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 5; SumSQ.u64 = 5; Count.u64 = 5; Min.u64 = 1; Max.u64 = 1; 
  l1cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.CacheHits : Accumulator : Sum.u64 = 843; SumSQ.u64 = 843; Count.u64 = 843; Min.u64 = 1; Max.u64 = 1; 
- l1cache.CacheMisses : Accumulator : Sum.u64 = 21; SumSQ.u64 = 21; Count.u64 = 21; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.CacheHits : Accumulator : Sum.u64 = 829; SumSQ.u64 = 829; Count.u64 = 829; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.CacheMisses : Accumulator : Sum.u64 = 62; SumSQ.u64 = 62; Count.u64 = 62; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 1127; SumSQ.u64 = 1127; Count.u64 = 1127; Min.u64 = 1; Max.u64 = 1; 
- l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 21; SumSQ.u64 = 21; Count.u64 = 21; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 1194; SumSQ.u64 = 1194; Count.u64 = 1194; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 29; SumSQ.u64 = 29; Count.u64 = 29; Min.u64 = 1; Max.u64 = 1; 
  l1cache.Put_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.Get_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.AckMove_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.GetS_uncache_recv : Accumulator : Sum.u64 = 69; SumSQ.u64 = 69; Count.u64 = 69; Min.u64 = 1; Max.u64 = 1; 
- l1cache.GetX_uncache_recv : Accumulator : Sum.u64 = 67; SumSQ.u64 = 67; Count.u64 = 67; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.GetS_uncache_recv : Accumulator : Sum.u64 = 58; SumSQ.u64 = 58; Count.u64 = 58; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.Write_uncache_recv : Accumulator : Sum.u64 = 51; SumSQ.u64 = 51; Count.u64 = 51; Min.u64 = 1; Max.u64 = 1; 
  l1cache.GetSX_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.GetSResp_uncache_recv : Accumulator : Sum.u64 = 69; SumSQ.u64 = 69; Count.u64 = 69; Min.u64 = 1; Max.u64 = 1; 
- l1cache.GetXResp_uncache_recv : Accumulator : Sum.u64 = 32; SumSQ.u64 = 32; Count.u64 = 32; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.GetSResp_uncache_recv : Accumulator : Sum.u64 = 58; SumSQ.u64 = 58; Count.u64 = 58; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.WriteResp_uncache_recv : Accumulator : Sum.u64 = 19; SumSQ.u64 = 19; Count.u64 = 19; Min.u64 = 1; Max.u64 = 1; 
  l1cache.CustomReq_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.CustomResp_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.CustomAck_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.NULLCMD_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.GetS_recv : Accumulator : Sum.u64 = 206; SumSQ.u64 = 206; Count.u64 = 206; Min.u64 = 1; Max.u64 = 1; 
- l1cache.GetX_recv : Accumulator : Sum.u64 = 658; SumSQ.u64 = 658; Count.u64 = 658; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.GetS_recv : Accumulator : Sum.u64 = 233; SumSQ.u64 = 233; Count.u64 = 233; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.GetX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.GetSX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.Write_recv : Accumulator : Sum.u64 = 658; SumSQ.u64 = 658; Count.u64 = 658; Min.u64 = 1; Max.u64 = 1; 
  l1cache.FlushLine_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.FlushLineInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.GetSResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.GetXResp_recv : Accumulator : Sum.u64 = 21; SumSQ.u64 = 21; Count.u64 = 21; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.GetSResp_recv : Accumulator : Sum.u64 = 13; SumSQ.u64 = 13; Count.u64 = 13; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.GetXResp_recv : Accumulator : Sum.u64 = 49; SumSQ.u64 = 49; Count.u64 = 49; Min.u64 = 1; Max.u64 = 1; 
  l1cache.FlushLineResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.Inv_recv : Accumulator : Sum.u64 = 22; SumSQ.u64 = 22; Count.u64 = 22; Min.u64 = 1; Max.u64 = 1; 
  l1cache.ForceInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.Fetch_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.FetchInv_recv : Accumulator : Sum.u64 = 5; SumSQ.u64 = 5; Count.u64 = 5; Min.u64 = 1; Max.u64 = 1; 
- l1cache.FetchInvX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.FetchInv_recv : Accumulator : Sum.u64 = 17; SumSQ.u64 = 17; Count.u64 = 17; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.FetchInvX_recv : Accumulator : Sum.u64 = 16; SumSQ.u64 = 16; Count.u64 = 16; Min.u64 = 1; Max.u64 = 1; 
  l1cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.AckPut_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 52751; SumSQ.u64 = 388027; Count.u64 = 23767; Min.u64 = 0; Max.u64 = 10; 
+ l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 127058; SumSQ.u64 = 632840; Count.u64 = 89575; Min.u64 = 0; Max.u64 = 10; 
  l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- mmio:iface:memlink.packet_latency : Accumulator : Sum.u64 = 18422; SumSQ.u64 = 2534476; Count.u64 = 137; Min.u64 = 69; Max.u64 = 141; 
- mmio:iface:memlink.send_bit_count : Accumulator : Sum.u64 = 9760; SumSQ.u64 = 934912; Count.u64 = 102; Min.u64 = 64; Max.u64 = 96; 
- mmio:iface:memlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- mmio:iface:memlink.idle_time : Accumulator : Sum.u64 = 1584500; SumSQ.u64 = 403698250000; Count.u64 = 40; Min.u64 = 0; Max.u64 = 432000; 
- directory:cpulink.packet_latency : Accumulator : Sum.u64 = 3399; SumSQ.u64 = 461937; Count.u64 = 27; Min.u64 = 70; Max.u64 = 211; 
- directory:cpulink.send_bit_count : Accumulator : Sum.u64 = 12512; SumSQ.u64 = 6996992; Count.u64 = 27; Min.u64 = 64; Max.u64 = 576; 
+ mmio:iface:memlink.packet_latency : Accumulator : Sum.u64 = 118712; SumSQ.u64 = 35013530; Count.u64 = 509; Min.u64 = 37; Max.u64 = 646; 
+ mmio:iface:memlink.send_bit_count : Accumulator : Sum.u64 = 129760; SumSQ.u64 = 64279552; Count.u64 = 477; Min.u64 = 64; Max.u64 = 576; 
+ mmio:iface:memlink.output_port_stalls : Accumulator : Sum.u64 = 3023000; SumSQ.u64 = 217585000000; Count.u64 = 42; Min.u64 = 71000; Max.u64 = 72000; 
+ mmio:iface:memlink.idle_time : Accumulator : Sum.u64 = 1513500; SumSQ.u64 = 140186250000; Count.u64 = 19; Min.u64 = 72000; Max.u64 = 216000; 
+ directory:cpulink.packet_latency : Accumulator : Sum.u64 = 518010; SumSQ.u64 = 636018966; Count.u64 = 517; Min.u64 = 70; Max.u64 = 2089; 
+ directory:cpulink.send_bit_count : Accumulator : Sum.u64 = 266048; SumSQ.u64 = 151212032; Count.u64 = 517; Min.u64 = 64; Max.u64 = 576; 
  directory:cpulink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- directory:cpulink.idle_time : Accumulator : Sum.u64 = 9260000; SumSQ.u64 = 60103400000000; Count.u64 = 8; Min.u64 = 39000; Max.u64 = 7705000; 
+ directory:cpulink.idle_time : Accumulator : Sum.u64 = 6852500; SumSQ.u64 = 36310363250000; Count.u64 = 11; Min.u64 = 38000; Max.u64 = 6017500; 
  directory.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- directory.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- directory.get_request_latency : Accumulator : Sum.u64 = 9057; SumSQ.u64 = 7293681; Count.u64 = 22; Min.u64 = 210; Max.u64 = 1731; 
- directory.directory_cache_hits : Accumulator : Sum.u64 = 22; SumSQ.u64 = 22; Count.u64 = 22; Min.u64 = 1; Max.u64 = 1; 
+ directory.replacement_request_latency : Accumulator : Sum.u64 = 130984; SumSQ.u64 = 220224840; Count.u64 = 189; Min.u64 = 210; Max.u64 = 4098; 
+ directory.get_request_latency : Accumulator : Sum.u64 = 100505; SumSQ.u64 = 90578849; Count.u64 = 273; Min.u64 = 2; Max.u64 = 2212; 
+ directory.directory_cache_hits : Accumulator : Sum.u64 = 462; SumSQ.u64 = 462; Count.u64 = 462; Min.u64 = 1; Max.u64 = 1; 
  directory.mshr_hits : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- directory.GetX_recv : Accumulator : Sum.u64 = 16; SumSQ.u64 = 16; Count.u64 = 16; Min.u64 = 1; Max.u64 = 1; 
- directory.GetS_recv : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; Min.u64 = 1; Max.u64 = 1; 
+ directory.GetX_recv : Accumulator : Sum.u64 = 49; SumSQ.u64 = 49; Count.u64 = 49; Min.u64 = 1; Max.u64 = 1; 
+ directory.GetS_recv : Accumulator : Sum.u64 = 224; SumSQ.u64 = 224; Count.u64 = 224; Min.u64 = 1; Max.u64 = 1; 
  directory.GetSX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ directory.Write_recv : Accumulator : Sum.u64 = 189; SumSQ.u64 = 189; Count.u64 = 189; Min.u64 = 1; Max.u64 = 1; 
  directory.PutM_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory.PutX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory.PutE_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory.PutS_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- directory.FetchResp_recv : Accumulator : Sum.u64 = 5; SumSQ.u64 = 5; Count.u64 = 5; Min.u64 = 1; Max.u64 = 1; 
- directory.FetchXResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ directory.FetchResp_recv : Accumulator : Sum.u64 = 17; SumSQ.u64 = 17; Count.u64 = 17; Min.u64 = 1; Max.u64 = 1; 
+ directory.FetchXResp_recv : Accumulator : Sum.u64 = 16; SumSQ.u64 = 16; Count.u64 = 16; Min.u64 = 1; Max.u64 = 1; 
  directory.GetSResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- directory.GetXResp_recv : Accumulator : Sum.u64 = 17; SumSQ.u64 = 17; Count.u64 = 17; Min.u64 = 1; Max.u64 = 1; 
+ directory.GetXResp_recv : Accumulator : Sum.u64 = 245; SumSQ.u64 = 245; Count.u64 = 245; Min.u64 = 1; Max.u64 = 1; 
+ directory.WriteResp_recv : Accumulator : Sum.u64 = 189; SumSQ.u64 = 189; Count.u64 = 189; Min.u64 = 1; Max.u64 = 1; 
  directory.ForceInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory.FetchInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- directory.AckInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ directory.AckInv_recv : Accumulator : Sum.u64 = 22; SumSQ.u64 = 22; Count.u64 = 22; Min.u64 = 1; Max.u64 = 1; 
  directory.FlushLine_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory.FlushLineInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory.FlushLineResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory.GetS_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- directory.GetX_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ directory.Write_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory.GetSX_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory.GetSResp_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- directory.GetXResp_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ directory.WriteResp_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory.CustomReq_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory.CustomResp_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory.CustomAck_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- directory.eventSent_GetS : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; Min.u64 = 1; Max.u64 = 1; 
- directory.eventSent_GetX : Accumulator : Sum.u64 = 11; SumSQ.u64 = 11; Count.u64 = 11; Min.u64 = 1; Max.u64 = 1; 
+ directory.eventSent_GetS : Accumulator : Sum.u64 = 203; SumSQ.u64 = 203; Count.u64 = 203; Min.u64 = 1; Max.u64 = 1; 
+ directory.eventSent_GetX : Accumulator : Sum.u64 = 42; SumSQ.u64 = 42; Count.u64 = 42; Min.u64 = 1; Max.u64 = 1; 
  directory.eventSent_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- directory.eventSent_PutM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- directory.eventSent_Inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- directory.eventSent_FetchInv : Accumulator : Sum.u64 = 5; SumSQ.u64 = 5; Count.u64 = 5; Min.u64 = 1; Max.u64 = 1; 
- directory.eventSent_FetchInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ directory.eventSent_Write : Accumulator : Sum.u64 = 189; SumSQ.u64 = 189; Count.u64 = 189; Min.u64 = 1; Max.u64 = 1; 
+ directory.eventSent_PutM : Accumulator : Sum.u64 = 33; SumSQ.u64 = 33; Count.u64 = 33; Min.u64 = 1; Max.u64 = 1; 
+ directory.eventSent_Inv : Accumulator : Sum.u64 = 22; SumSQ.u64 = 22; Count.u64 = 22; Min.u64 = 1; Max.u64 = 1; 
+ directory.eventSent_FetchInv : Accumulator : Sum.u64 = 17; SumSQ.u64 = 17; Count.u64 = 17; Min.u64 = 1; Max.u64 = 1; 
+ directory.eventSent_FetchInvX : Accumulator : Sum.u64 = 16; SumSQ.u64 = 16; Count.u64 = 16; Min.u64 = 1; Max.u64 = 1; 
  directory.eventSent_ForceInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- directory.eventSent_GetSResp : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
- directory.eventSent_GetXResp : Accumulator : Sum.u64 = 21; SumSQ.u64 = 21; Count.u64 = 21; Min.u64 = 1; Max.u64 = 1; 
+ directory.eventSent_GetSResp : Accumulator : Sum.u64 = 224; SumSQ.u64 = 224; Count.u64 = 224; Min.u64 = 1; Max.u64 = 1; 
+ directory.eventSent_GetXResp : Accumulator : Sum.u64 = 49; SumSQ.u64 = 49; Count.u64 = 49; Min.u64 = 1; Max.u64 = 1; 
+ directory.eventSent_WriteResp : Accumulator : Sum.u64 = 189; SumSQ.u64 = 189; Count.u64 = 189; Min.u64 = 1; Max.u64 = 1; 
  directory.eventSent_FetchResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory.eventSent_AckInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory.eventSent_AckPut : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1350,17 +1726,19 @@ StandardCPU: Test Completed Successfuly
  directory.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory.eventSent_read_directory_entry : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  directory.eventSent_write_directory_entry : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- directory.MSHR_occupancy : Accumulator : Sum.u64 = 9013; SumSQ.u64 = 17023; Count.u64 = 8069; Min.u64 = 0; Max.u64 = 4; 
- memory.requests_received_GetS : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; Min.u64 = 1; Max.u64 = 1; 
+ directory.MSHR_occupancy : Accumulator : Sum.u64 = 230565; SumSQ.u64 = 997821; Count.u64 = 77252; Min.u64 = 0; Max.u64 = 10; 
+ memory.requests_received_GetS : Accumulator : Sum.u64 = 203; SumSQ.u64 = 203; Count.u64 = 203; Min.u64 = 1; Max.u64 = 1; 
  memory.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- memory.requests_received_GetX : Accumulator : Sum.u64 = 11; SumSQ.u64 = 11; Count.u64 = 11; Min.u64 = 1; Max.u64 = 1; 
- memory.requests_received_PutM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- memory.outstanding_requests : Accumulator : Sum.u64 = 1717; SumSQ.u64 = 2355; Count.u64 = 11883; Min.u64 = 0; Max.u64 = 2; 
- memory.latency_GetS : Accumulator : Sum.u64 = 606; SumSQ.u64 = 61206; Count.u64 = 6; Min.u64 = 101; Max.u64 = 101; 
+ memory.requests_received_GetX : Accumulator : Sum.u64 = 42; SumSQ.u64 = 42; Count.u64 = 42; Min.u64 = 1; Max.u64 = 1; 
+ memory.requests_received_Write : Accumulator : Sum.u64 = 189; SumSQ.u64 = 189; Count.u64 = 189; Min.u64 = 1; Max.u64 = 1; 
+ memory.requests_received_PutM : Accumulator : Sum.u64 = 33; SumSQ.u64 = 33; Count.u64 = 33; Min.u64 = 1; Max.u64 = 1; 
+ memory.outstanding_requests : Accumulator : Sum.u64 = 47184; SumSQ.u64 = 77050; Count.u64 = 44787; Min.u64 = 0; Max.u64 = 4; 
+ memory.latency_GetS : Accumulator : Sum.u64 = 20503; SumSQ.u64 = 2070803; Count.u64 = 203; Min.u64 = 101; Max.u64 = 101; 
  memory.latency_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- memory.latency_GetX : Accumulator : Sum.u64 = 1111; SumSQ.u64 = 112211; Count.u64 = 11; Min.u64 = 101; Max.u64 = 101; 
- memory.latency_PutM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- memory.cycles_with_issue : Accumulator : Sum.u64 = 17; SumSQ.u64 = 17; Count.u64 = 17; Min.u64 = 1; Max.u64 = 1; 
+ memory.latency_GetX : Accumulator : Sum.u64 = 4242; SumSQ.u64 = 428442; Count.u64 = 42; Min.u64 = 101; Max.u64 = 101; 
+ memory.latency_Write : Accumulator : Sum.u64 = 19106; SumSQ.u64 = 1931440; Count.u64 = 189; Min.u64 = 101; Max.u64 = 102; 
+ memory.latency_PutM : Accumulator : Sum.u64 = 3333; SumSQ.u64 = 336633; Count.u64 = 33; Min.u64 = 101; Max.u64 = 101; 
+ memory.cycles_with_issue : Accumulator : Sum.u64 = 467; SumSQ.u64 = 467; Count.u64 = 467; Min.u64 = 1; Max.u64 = 1; 
  memory.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- memory.total_cycles : Accumulator : Sum.u64 = 11883; SumSQ.u64 = 141205689; Count.u64 = 1; Min.u64 = 11883; Max.u64 = 11883; 
-Simulation is complete, simulated time: 11.8835 us
+ memory.total_cycles : Accumulator : Sum.u64 = 44787; SumSQ.u64 = 2005875369; Count.u64 = 1; Min.u64 = 44787; Max.u64 = 44787; 
+Simulation is complete, simulated time: 44.7875 us

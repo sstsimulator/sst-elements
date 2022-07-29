@@ -1,8 +1,8 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -73,19 +73,20 @@ namespace SST {
                     {"levels", "Number of TLB levels per Samba", "1"},
                     {"perfect", "This is set to 1, when modeling an ideal TLB hierachy with 100\% hit rate", "0"},
                     {"os_page_size", "This represents the size of frames the OS allocates in KB", "4"}, // This is a hack, assuming the OS allocated only one page size, this will change later
-                    {"sizes_L%(levels)", "Number of page sizes supported by Samba", "1"},
-                    {"page_size%(sizes)_L%(levels)d", "the page size of the supported page size number x in level y","4"},
+                    {"sizes_L%(levels)d", "Number of page sizes supported by Samba", "1"},
+                    {"page_size%(sizes)d_L%(levels)d", "the page size of the supported page size number x in level y","4"},
                     {"max_outstanding_L%(levels)d", "the number of max outstanding misses","1"},
                     {"max_width_L%(levels)d", "the number of accesses on the same cycle","1"},
-                    {"size%(sizes)_L%(levels)d", "the number of entries of page size number x on level y","1"},
+                    {"size%(sizes)d_L%(levels)d", "the number of entries of page size number x on level y","1"},
                     {"upper_link_L%(levels)d", "the latency of the upper link connects to this structure","0"},
-                    {"assoc%(sizes)_L%(levels)d", "the associativity of size number X in Level Y", "1"},
+                    {"assoc%(sizes)d_L%(levels)d", "the associativity of size number X in Level Y", "1"},
                     {"clock", "the clock frequency", "1GHz"},
                     {"latency_L%(levels)d", "the access latency in cycles for this level of memory","1"},
                     {"parallel_mode_L%(levels)d", "this is for the corner case of having a one cycle overlap with accessing cache","0"},
                     {"page_walk_latency", "Each page table walk latency in nanoseconds", "50"},
                     {"self_connected", "Determines if the page walkers are acutally connected to memory hierarchy or just add fixed latency (self-connected)", "0"},
-                    {"emulate_faults", "This indicates if the page faults should be emulated through requesting pages from page fault handler", "0"}
+                    {"emulate_faults", "This indicates if the page faults should be emulated through requesting pages from page fault handler", "0"},
+                    {"verbose", "(uint) Output verbosity for warnings/errors. 0[fatal error only], 1[warnings], 2[full state dump on fatal error]","0"},
                 )
 
                 SST_ELI_DOCUMENT_PORTS(
