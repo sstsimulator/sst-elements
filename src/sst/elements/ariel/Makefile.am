@@ -47,6 +47,7 @@ libariel_la_SOURCES = \
 	arielfrontend.h \
 	gpu_enum.h \
 	arielgpuev.h \
+	tb_header.h \
 	arielrtlev.h
 
 EXTRA_DIST = \
