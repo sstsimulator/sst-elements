@@ -1,17 +1,30 @@
 #!/bin/bash
 # This script will run clang-format on directories in sst-elements to test/verify format
 
-# Check for running in the root dir of SST-Elements
-if [ ! -f ./scripts/clang-format-test.sh  ]; then
-    echo "ERROR: This script must be run from the top level root directory of SST-Elements..."
-    exit 1
+# Ensure that we're running the script from within an element directory
+SCRIPT_SOURCE=${BASH_SOURCE[0]}
+if [ "${BASH_SOURCE[0]}" == "./scripts/clang-format-test.sh" ]; then
+  echo "ERROR: The script must be run from an element directory [./src/sst/elements/ELEMENT]";
+  exit 1
+elif [ "${BASH_SOURCE[0]}" == "./clang-format-test.sh" ]; then
+  echo "ERROR: The script must be run from an element directory [../src/sst/elements/ELEMENT]";
+  exit 1
+elif [ "${BASH_SOURCE[0]}" == "../scripts/clang-format-test.sh" ]; then
+  echo "ERROR: The script must be run from an element directory [./sst/elements/ELEMENT]";
+  exit 1
+elif [ "${BASH_SOURCE[0]}" == "../../scripts/clang-format-test.sh" ]; then
+  echo "ERROR: The script must be run from an element directory [./elements/ELEMENT]";
+  exit 1
+elif [ "${BASH_SOURCE[0]}" == "../../../scripts/clang-format-test.sh" ]; then
+  echo "ERROR: The script must be run from an element directory [./ELEMENT]";
+  exit 1
 fi
 
 CLANG_FORMAT_EXE="clang-format"
 CLANG_FORMAT_ARG="--dry-run"
 
 while :; do
-  case $1 in 
+  case $1 in
     -h | --help)
       echo "Run as scripts/clang-format-test.sh [--format-exe <path_to_clang-format>]"
       exit
