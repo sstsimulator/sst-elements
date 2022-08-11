@@ -35,6 +35,7 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
     latency = (uint32_t) params.find<uint32_t>("latency", 1);
     maxPendingTransCore = (uint32_t) params.find<uint32_t>("maxtranscore", 16);
     maxPendingCacheTrans = (uint32_t) params.find<uint32_t>("maxcachetrans", 512);
+    mmio_size = (uint32_t) params.find<uint32_t>("mmio_size", 512);
 
     // Ensure that GPGP-sim has the same as SST gpu cores
     SST_gpgpusim_numcores_equal_check(gpu_core_count);
@@ -80,7 +81,7 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
         out.fatal(CALL_INFO, -1, "%s, Error: No interface found loaded into 'iface' subcomponent slot. Please check input file\n", getName().c_str());
     }
 
-    iface->setMemoryMappedAddressRegion(mmio_addr, 1);
+    iface->setMemoryMappedAddressRegion(mmio_addr, mmio_size);
 
     // Handlers for cpu interactions
     handlers = new mmioHandlers(this, &out);

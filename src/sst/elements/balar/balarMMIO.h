@@ -74,6 +74,7 @@ public:
         {"num_cores", "Number of GPUs", "1"},
         {"maxtranscore", "Maximum number of pending transactions", "16"},
         {"maxcachetrans", "Maximum number of pending cache transactions", "512"},
+        {"mmio_size", "Size of the MMIO memory range (Bytes)", "512"},
     )
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( 
         {"iface", "Interface into memory subsystem", "SST::Interfaces::StandardMem"}
@@ -115,6 +116,7 @@ public:
     std::vector< uint8_t > dataAddress;
     uint32_t pending_transactions_count = 0;
     uint32_t maxPendingTransCore;
+    uint32_t mmio_size;
 
 protected:
     /* Handle event from MMIO interface */
