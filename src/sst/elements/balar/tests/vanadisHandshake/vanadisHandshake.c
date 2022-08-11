@@ -199,6 +199,8 @@ int main( int argc, char* argv[] ) {
 	packet.cuda_malloc.devPtr = &devptr;
 	packet.cuda_malloc.size = 200;
 
+	*gpu = packet;
+
 	// Read from GPU
 	BalarCudaCallReturnPacket_t response = *gpu_res;
 	printf("CUDA API ID: %d with error: %d\nMalloc addr: %p Dev addr: %p\n", 

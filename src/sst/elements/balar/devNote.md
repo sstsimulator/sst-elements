@@ -104,3 +104,4 @@ Can also set `PTX_SIM_DEBUG=3` to enable debug output in GPGPU-Sim, check its ma
     1. `grep -E -e '(l1gcache_.*)|(l2gcache_.*)|(Simplehbm_.*)' stats.out > mmio_mem.out`
     1. `grep -E -e '(l1gcache_.*)|(l2gcache_.*)|(Simplehbm_.*)' refFiles/test_gpgpu_vectorAdd.out > prev_mem.out`
     1. Compare with `git diff --word-diff=color --no-index mmio_mem.out prev_mem.out`
+1. Try vanadis handshake binary: `sst basic_vanadis_mod.py --model-options='-c ariel-gpu-v100.cfg'`
