@@ -90,8 +90,15 @@ Can also set `PTX_SIM_DEBUG=3` to enable debug output in GPGPU-Sim, check its ma
 
 1. Use `--output-dot [filename]` to output a dot file describing the graph and use `dot -Tpng [File.dot] > [File.png]` to output to png format
 1. Build configuration
-    1. sst-core: `./configure --prefix=$SST_CORE_HOME --disable-mpi --disable-mem-pools`
-    1. sst-elements: `./configure --prefix=$SST_ELEMENTS_HOME --with-sst-core=$SST_CORE_HOME --with-pin=$PIN_HOME --with-cuda=$CUDA_ROOT --with-gpgpusim=$GPGPUSIM_ROOT`
+    1. With PIN: `source sst_env_setup_10_1.sh`
+        1. CUDA 10.1, gcc 4.9.2 for PIN
+    2. Without Pin: `source 10.1_env_setup.sh`
+        1. CUDA 10.1, gcc 7.5.0
+    3. sst-core: `./configure --prefix=$SST_CORE_HOME --disable-mpi --disable-mem-pools`
+    4. Source setup for CUDA: `source SST_EXTERNAL_PATH/setup_environment`
+        1. Also need to build the gpgpusim beforehand
+    5. sst-elements: `./configure --prefix=$SST_ELEMENTS_HOME --with-sst-core=$SST_CORE_HOME --with-pin=$PIN_HOME --with-cuda=$CUDA_ROOT --with-gpgpusim=$GPGPUSIM_ROOT`
+    6. Without PIN (mmio balar only): `./configure --prefix=$SST_ELEMENTS_HOME --with-sst-core=$SST_CORE_HOME --with-cuda=$CUDA_ROOT --with-gpgpusim=$GPGPUSIM_ROOT`
 1. Can build sst-core with `--enable-debug` to enable memHierarchy debug output, useful for debugging
 1. Filter memory subsystem stats from SST run
     1. `grep -E -e '(l1gcache_.*)|(l2gcache_.*)|(Simplehbm_.*)' stats.out > mmio_mem.out`
