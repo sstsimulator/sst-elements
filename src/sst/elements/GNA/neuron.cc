@@ -22,6 +22,16 @@ using namespace std;
 
 SST::RNG::MarsagliaRNG Neuron::rng(1,13);
 
+Neuron::Neuron(float Vthreshold, float Vreset, float leak, float p)
+:   Vthreshold (Vthreshold),
+    Vreset     (Vreset),
+    leak       (leak),
+    p          (p)
+{
+    synapseBase  = 0;
+    synapseCount = 0;
+}
+
 void Neuron::configure(float Vthreshold, float Vreset, float leak, float p) {
     this->Vthreshold = Vthreshold;
     this->Vreset     = Vreset;

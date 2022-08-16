@@ -48,6 +48,9 @@ public:
     typedef std::map<const uint, float> temporalBuffer_t;
     temporalBuffer_t temporalBuffer;
 
+    Neuron (float Vthreshold = 0, float Vreset = 0, float leak = 0, float p = 1);
+    // Note that the trivial move and copy constructors are sufficient for this class when working with vector<Neuron>.
+
     void     configure   (float Vthreshold, float Vreset, float leak, float p);
     void     deliverSpike(float str, uint when);
     bool     lif         (const uint now);  ///< performs Leaky Integrate and Fire. Returns true if fired.

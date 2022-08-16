@@ -50,7 +50,7 @@ public:
         {"STSDispatch",    "Max # spikes that can be dispatched to the STS in a clock cycle",    "2"},
         {"STSParallelism", "Max # spikes the STS can process in parallel",                       "2"},
         {"MaxOutMem",      "Maximum # of outgoing memory requests per cycle",                    "STSParallelism"},
-        {"neurons",        "(uint) number of neurons",                                           "32"}
+        {"modelPath",      "(string) Path to neuron file",                                       "model"}
     )
 
     SST_ELI_DOCUMENT_PORTS( {"mem_link", "Connection to memory", { "memHierarchy.MemEventBase" } } )
@@ -83,7 +83,7 @@ protected:
 
     Output out;
     Interfaces::StandardMem * memory;
-    uint numNeurons;
+    std::string modelPath;
     uint InputsPerTic;
     uint STSDispatch;
     uint STSParallelism;
@@ -93,7 +93,7 @@ protected:
     uint numDeliveries;
     std::queue<SST::Interfaces::StandardMem::Request *> outgoingReqs;
 
-    Neuron *neurons;
+    std::vector<Neuron> neurons;
     std::vector<STS> STSUnits;
 
     typedef std::multimap<const uint, Synapse> inputBuffer_t;

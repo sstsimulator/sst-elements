@@ -4,7 +4,7 @@ from optparse import OptionParser
 
 # options
 op = OptionParser()
-op.add_option("-n", "--neurons", action="store", type="int", dest="neurons", default=500)
+op.add_option("-n", "--neurons", action="store", type="string", dest="neurons", default="model")
 # cache size in KiB
 op.add_option("-c", "--cacheSz", action="store", type="int", dest="cacheSz", default=2)
 #sts dispatch & parallelism
@@ -17,7 +17,7 @@ op.add_option("-m", "--memOut", action="store", type="int", dest="memOut", defau
 comp_gna = sst.Component("GNA", "GNA.GNA")
 comp_gna.addParams({
     "verbose" : 1,
-    "neurons" : options.neurons,
+    "modelPath" : options.neurons,
     "clock" : "1GHz",
     "InputsPerTic" : 1,
     "STSDispatch" : options.sts,
