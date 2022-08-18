@@ -20,31 +20,68 @@
 using namespace SST::GNAComponent;
 using namespace std;
 
-SST::RNG::MarsagliaRNG Neuron::rng(1,13);
 
-Neuron::Neuron(float Vthreshold, float Vreset, float leak, float p)
+// class Trace ---------------------------------------------------------------
+
+Trace::Trace()
+{
+    mode = 0;
+}
+
+Trace::~Trace()
+{
+    if (mode) free(mode);  // "mode" is created by strdup(), which effectively uses malloc().
+}
+
+
+// class Neuron --------------------------------------------------------------
+
+std::map<std::string,OutputHolder *> Neuron::outputs;
+float                                Neuron::dt;
+
+Neuron::Neuron()
+{
+    synapseBase  = 0;
+    synapseCount = 0;
+    traces       = 0;
+}
+
+Neuron::~Neuron()
+{
+    Trace * t = traces;
+    while (t) {
+        Trace * next = t->next;
+        delete t;
+        t = next;
+    }
+}
+
+void Neuron::deliverSpike(float str, uint when)
+{
+    // Do nothing
+}
+
+
+// NeuronLIF -----------------------------------------------------------------
+
+SST::RNG::MarsagliaRNG NeuronLIF::rng(1,13);
+
+NeuronLIF::NeuronLIF(float Vthreshold, float Vreset, float leak, float p)
 :   Vthreshold (Vthreshold),
     Vreset     (Vreset),
     leak       (leak),
     p          (p)
 {
-    synapseBase  = 0;
-    synapseCount = 0;
 }
 
-void Neuron::configure(float Vthreshold, float Vreset, float leak, float p) {
-    this->Vthreshold = Vthreshold;
-    this->Vreset     = Vreset;
-    this->leak       = leak;
-    this->p          = p;
-}
-
-void Neuron::deliverSpike(float str, uint when) {
+void NeuronLIF::deliverSpike(float str, uint when)
+{
     temporalBuffer[when] += str;
     //printf(" got %f @ %d\n", str, when);
 }
 
-bool Neuron::lif(const uint now) {
+bool NeuronLIF::update(const uint now)
+{
     // Add inputs
     temporalBuffer_t::iterator i = temporalBuffer.find(now);
     if (i != temporalBuffer.end()) {
@@ -54,15 +91,51 @@ bool Neuron::lif(const uint now) {
     }
 
     // Check for spike
+    bool spiked = false;
     if (V > Vthreshold) {
         if (p >= 1  ||  p > 0  &&  rng.nextUniform() <= p) {
             V = Vreset;
-            return true;
+            spiked = true;
         }
+    } else {
+        V *= leak;
     }
 
-    // Decay
-    V *= leak;
-    return false;
+    // Outputs
+    Trace * t = traces;
+    while (t) {
+        if (t->probe == 0) {
+            if (spiked) t->holder->trace (now*dt, t->column, 1, t->mode);
+        } else if (t->probe == 1) {
+            t->holder->trace(now*dt, t->column, V, t->mode);
+        }
+        t = t->next;
+    }
+
+    return spiked;
+}
+
+
+// class NeuronInput ---------------------------------------------------------
+
+NeuronInput::NeuronInput()
+{
+    nextSpike = 0;
+}
+
+bool NeuronInput::update(const uint now)
+{
+    if (nextSpike >= spikes.size()) return false;
+    if (spikes[nextSpike] > now)    return false;
+    nextSpike++;
+
+    // Outputs
+    Trace * t = traces;
+    while (t) {
+        if (t->probe == 0) t->holder->trace(now*dt, t->column, 1, t->mode);
+        t = t->next;
+    }
+
+    return true;
 }
 

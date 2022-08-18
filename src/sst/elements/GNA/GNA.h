@@ -39,7 +39,8 @@ namespace GNAComponent {
 
 class GNA : public SST::Component {
 public:
-/* Element Library Info */
+    // Element Library Info
+
     SST_ELI_REGISTER_COMPONENT(GNA, "GNA", "GNA", SST_ELI_ELEMENT_VERSION(1,0,0),
         "Spiking Temportal Processing Unit", COMPONENT_CATEGORY_PROCESSOR)
 
@@ -50,50 +51,53 @@ public:
         {"STSDispatch",    "Max # spikes that can be dispatched to the STS in a clock cycle",    "2"},
         {"STSParallelism", "Max # spikes the STS can process in parallel",                       "2"},
         {"MaxOutMem",      "Maximum # of outgoing memory requests per cycle",                    "STSParallelism"},
-        {"modelPath",      "(string) Path to neuron file",                                       "model"}
+        {"modelPath",      "(string) Path to neuron file",                                       "model"},
+        {"steps",          "(uint) how many ticks the simulation should last",                   "1000"},
+        {"dt",             "(float) duration of one tick in sim time; used for output",          "1"}
     )
 
     SST_ELI_DOCUMENT_PORTS( {"mem_link", "Connection to memory", { "memHierarchy.MemEventBase" } } )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"memory", "Interface to memory (e.g., caches)", "SST::Interfaces::StandardMem"} )
 
-    /* Begin class definiton */
-    GNA(SST::ComponentId_t id, SST::Params& params);
+    // class definiton
+
+    GNA(SST::ComponentId_t id, SST::Params& params);  // regular constructor
+    GNA();                                            // for serialization only
+    GNA(const GNA&) = delete;
+    ~GNA();
+
+    void operator=(const GNA&) = delete;
+
+    void init(unsigned int phase);
     void finish();
 
+    void handleEvent(SST::Interfaces::StandardMem::Request * req);
     void deliver(float val, int targetN, int time);
-    Neuron & getNeuron(int n);
     void readMem(Interfaces::StandardMem::Request *req, STS *requestor);
-
-protected:
-    GNA();  // for serialization only
-    GNA(const GNA&); // do not implement
-    void operator=(const GNA&); // do not implement
-    void init(unsigned int phase);
-
-    void handleEvent( SST::Interfaces::StandardMem::Request * req );
-    virtual bool clockTic( SST::Cycle_t );
+    virtual bool clockTic(SST::Cycle_t);
     bool deliverInputs();
     void assignSTS();
     void processFire();
-    void lifAll();
+    void update();
 
     typedef enum {IDLE, PROCESS_FIRE, LIF, LAST_STATE} gnaState_t;
     gnaState_t state;
 
-    Output out;
+    Output                    out;
     Interfaces::StandardMem * memory;
-    std::string modelPath;
-    uint InputsPerTic;
-    uint STSDispatch;
-    uint STSParallelism;
-    uint maxOutMem;
-    uint now;
-    uint numFirings;
-    uint numDeliveries;
-    std::queue<SST::Interfaces::StandardMem::Request *> outgoingReqs;
+    std::string               modelPath;
+    uint                      InputsPerTic;
+    uint                      STSDispatch;
+    uint                      STSParallelism;
+    uint                      maxOutMem;
+    uint                      now;
+    uint                      steps;  ///< maximum number of steps the sim should take
+    uint                      numFirings;
+    uint                      numDeliveries;
 
-    std::vector<Neuron> neurons;
+    std::queue<SST::Interfaces::StandardMem::Request *> outgoingReqs;
+    std::vector<Neuron *> neurons;
     std::vector<STS> STSUnits;
 
     typedef std::multimap<const uint, Synapse> inputBuffer_t;
@@ -104,7 +108,6 @@ protected:
 
     TimeConverter *clockTC;
     Clock::HandlerBase *clockHandler;
-
 };
 
 }

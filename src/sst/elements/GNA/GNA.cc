@@ -25,6 +25,7 @@
 using namespace SST;
 //using namespace SST::MemHierarchy;
 using namespace SST::GNAComponent;
+using namespace std;
 
 GNA::GNA(ComponentId_t id, Params& params)
 :   Component(id),
@@ -37,27 +38,20 @@ GNA::GNA(ComponentId_t id, Params& params)
     out.init("GNA:@p:@l: ", outputLevel, 0, Output::STDOUT);
 
     // get parameters
-    modelPath = params.find<std::string>("modelPath", "model");
-    cerr << "modelPath=" << modelPath << endl;
-    InputsPerTic = params.find<int>("InputsPerTic", 2);
-    if (InputsPerTic < 1) {
-        out.fatal(CALL_INFO, -1,"InputsPerTic invalid\n");
-    }
-    STSDispatch = params.find<int>("STSDispatch", 2);
-    if (STSDispatch < 1) {
-        out.fatal(CALL_INFO, -1,"STSDispatch invalid\n");
-    }
-    STSParallelism = params.find<int>("STSParallelism", 2);
-    if (STSParallelism < 1) {
-        out.fatal(CALL_INFO, -1,"STSParallelism invalid\n");
-    }
-    maxOutMem = params.find<int>("MaxOutMem", STSParallelism);
-    if (maxOutMem < 1) {
-        out.fatal(CALL_INFO, -1,"MaxOutMem invalid\n");
-    }
+    modelPath      = params.find<string>("modelPath",      "model");
+    steps          = params.find<int>   ("steps",          1000);
+    Neuron::dt     = params.find<float> ("dt",             1);
+    InputsPerTic   = params.find<int>   ("InputsPerTic",   2);
+    STSDispatch    = params.find<int>   ("STSDispatch",    2);
+    STSParallelism = params.find<int>   ("STSParallelism", 2);
+    maxOutMem      = params.find<int>   ("MaxOutMem",      STSParallelism);
+    if (InputsPerTic   < 1) out.fatal(CALL_INFO, -1, "InputsPerTic invalid\n");
+    if (STSDispatch    < 1) out.fatal(CALL_INFO, -1, "STSDispatch invalid\n");
+    if (STSParallelism < 1) out.fatal(CALL_INFO, -1, "STSParallelism invalid\n");
+    if (maxOutMem      < 1) out.fatal(CALL_INFO, -1, "MaxOutMem invalid\n");
 
     //set our clock
-    std::string clockFreq = params.find<std::string>("clock", "1GHz");
+    string clockFreq = params.find<string>("clock", "1GHz");
     clockHandler = new Clock::Handler<GNA>(this, &GNA::clockTic);
     clockTC = registerClock(clockFreq, clockHandler);
 
@@ -72,8 +66,7 @@ GNA::GNA(ComponentId_t id, Params& params)
         memory = loadAnonymousSubComponent<Interfaces::StandardMem>("memHierarchy.standardInterface", "memory", 0,
                 ComponentInfo::SHARE_PORTS, params, clockTC, new Interfaces::StandardMem::Handler<GNA>(this, &GNA::handleEvent));
     }
-    if (!memory)
-        out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.standardInterface subcomponent\n");
+    if (!memory) out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.standardInterface subcomponent\n");
 }
 
 GNA::GNA()
@@ -82,8 +75,13 @@ GNA::GNA()
     // for serialization only
 }
 
+GNA::~GNA()
+{
+    for (auto n : neurons) delete n;
+}
 
-void GNA::init(unsigned int phase) {
+void GNA::init(unsigned int phase)
+{
     // init memory
     memory->init(phase);
 
@@ -91,104 +89,179 @@ void GNA::init(unsigned int phase) {
     if (phase != 0) return;
 
     // create STS units
-    for(int i = 0; i < STSParallelism; ++i) {
+    for (int i = 0; i < STSParallelism; ++i) {
         STSUnits.push_back(STS(this,i));
     }
 
-    // Neurons
-    // format: index,Vthreshold,Vreset,leak,p
-    ifstream ifs (modelPath.c_str ());
-    if (! ifs.good ()) cerr << "Failed to open file: " << modelPath << endl;
-    string line;
-    while (ifs.good ()) {
-        getline (ifs, line);
-        if (line.empty ()) break;  // blank line indicates transition from neurons to synapses
-        char * piece = strtok (const_cast<char *> (line.c_str ()), ",");
-        int id = atoi (piece);
-        piece = strtok (0, ",");
-        float Vthreshold = atof (piece);
-        piece = strtok (0, ",");
-        float Vreset = atof (piece);
-        piece = strtok (0, ",");
-        float leak = atof (piece);
-        piece = strtok (0, ",");  // Actually, there should only be one piece left, with no ore commas.
-        float p = atof (piece);
+    // Read data
+    // format:
+    // index,Vthreshold,Vreset,leak,p -- neuron info; for input neurons, only specify index
+    //  to,weight,delay -- synapse info
+    //  s<timing list> -- optional spike list for input neurons
+    //  o -- optional output configuration
+    //   p<probe type> -- (V, spike), default is spike
+    //   f<file name> -- default is "out"
+    //   c<column name> -- default is neuron index
+    //   m<mode flags> -- default is blank
 
-        while (neurons.size () <= id) neurons.push_back (Neuron ());
-        neurons[id].configure (Vthreshold, Vreset, leak, p);
-    }
-
-    // Count synapses per neuron
-    std::streampos pos = ifs.tellg ();
+    ifstream ifs (modelPath.c_str());
+    if (! ifs.good()) cerr << "Failed to open file: " << modelPath << endl;
     int countLinks = 0;
-    while (ifs.good ()) {
-        getline (ifs, line);
-        if (line.empty ()) break;
-        char * piece = strtok (const_cast<char *> (line.c_str ()), ",");
-        int from = atoi (piece);
-        neurons[from].synapseCount++;
-        countLinks++;
+    string line;
+    while (ifs.good()) {
+        getline(ifs, line);
+        if (line.empty()) break;
+
+        char * piece = strtok(const_cast<char *>(line.c_str()), ",");
+        int id = atoi(piece);
+        while (neurons.size () <= id) neurons.push_back(nullptr);
+
+        Neuron * n;
+        piece = strtok(0, ",");
+        if (piece) {
+            float Vthreshold = atof(piece);
+            piece = strtok(0, ",");
+            float Vreset = atof(piece);
+            piece = strtok(0, ",");
+            float leak = atof(piece);
+            piece = strtok(0, ",");  // Actually, there should only be one piece left, with no more commas.
+            float p = atof(piece);
+            n = neurons[id] = new NeuronLIF(Vthreshold, Vreset, leak, p);
+        } else {
+            n = neurons[id] = new NeuronInput();
+        }
+
+        // Scan indented lines
+        while (ifs.good()) {
+            streampos pos = ifs.tellg();
+            getline(ifs, line);
+            if (line.empty()  ||  line[0] != ' ') {
+                ifs.seekg(pos);
+                break;
+            }
+
+            char c = line[1];
+            if (c == 'r') {  // spike raster
+                int count = line.size();
+                for (int i = 2; i < count; i++) {
+                    if (line[i] == '1') ((NeuronInput *) n)->spikes.push_back(i - 2);
+                }
+            } else if (c == 't') {  // spike time list
+                char * piece = strtok(const_cast<char *>(line.c_str() + 2), ",");
+                while (piece) {
+                    ((NeuronInput *) n)->spikes.push_back(atoi(piece));
+                    piece = strtok(0, ",");
+                }
+            } else if (c == 'o') {  // output
+                string p = "spike";
+                string f = "out";
+                string col;
+                string m;
+
+                // Scan lines indented under 'o'
+                while (ifs.good()) {
+                    pos = ifs.tellg();
+                    getline(ifs, line);
+                    if (line.empty()  ||  line[0] != ' '  ||  line[1] != ' ') {
+                        ifs.seekg(pos);
+                        break;
+                    }
+                    int last = line.size() - 1;
+                    if (line[last] == '\r') line.resize(last);  // Get rid of extraneous CR
+
+                    c = line[2];
+                    if      (c == 'p') {p   = line.substr(3);}
+                    else if (c == 'f') {f   = line.substr(3);}
+                    else if (c == 'c') {col = line.substr(3);}
+                    else if (c == 'm') {m   = line.substr(3);}
+                }
+
+                if (col.empty()) {
+                    char buffer[16];
+                    sprintf(buffer, "%i", id);
+                    col = buffer;
+                }
+
+                map<string,OutputHolder *>::iterator it = Neuron::outputs.find(f);
+                if (it == Neuron::outputs.end()) {
+                    OutputHolder * h = new OutputHolder(f);
+                    it = Neuron::outputs.insert(make_pair(f, h)).first;
+                }
+                OutputHolder * h = it->second;
+
+                Trace * t = new Trace;
+                t->next = n->traces;
+                n->traces = t;
+                t->holder = h;
+                t->column = col;
+                if (! m.empty()) t->mode = strdup(m.c_str());
+                if (p == "V") t->probe = 1;
+                else          t->probe = 0;
+            } else {  // synapse
+                // In this pass, just determine memory requirements for each neuron.
+                n->synapseCount++;
+                countLinks++;
+            }
+        }
     }
-    ifs.seekg (pos);
 
     // Synapses
-    // format: from,to,weight,delay
+    // This requires a second pass, now that we know the memory size for each neuron.
+    ifs.close ();
+    ifs.open (modelPath.c_str());
     assert(sizeof(Synapse) == 8);
     uint64_t startAddr = 0x10000;
-    while (ifs.good ()) {
-        getline (ifs, line);
-        if (line.empty ()) break;  // blank line indicates transition from synapses to inputs
-        char * piece = strtok (const_cast<char *> (line.c_str ()), ",");
-        int from = atoi (piece);
-        piece = strtok (0, ",");
-        int target = atoi (piece);
-        piece = strtok (0, ",");
-        float weight = atof (piece);
-        piece = strtok (0, ",");
-        int delay = atoi (piece);
+    while (ifs.good()) {
+        getline(ifs, line);
+        if (line.empty()) break;
 
-        Neuron & neuron = neurons[from];
-        if (neuron.synapseBase == 0)
-        {
-            neuron.synapseBase = startAddr;  // This implies that startAddr must begin higher than 0
-            startAddr += sizeof(Synapse) * neuron.synapseCount;
-            neuron.synapseCount = 0;
+        char * piece = strtok (const_cast<char *>(line.c_str()), ",");
+        int id = atoi(piece);
+        Neuron * n = neurons[id];
+
+        // Scan indented lines
+        while (ifs.good()) {
+            streampos pos = ifs.tellg();
+            getline(ifs, line);
+            if (line.empty()  ||  line[0] != ' ') {
+                ifs.seekg(pos);
+                break;
+            }
+
+            char c = line[1];
+            if (c == 'r'  ||  c == 't'  ||  c == 'o'  ||  c == ' ') continue;
+
+            char * piece = strtok(const_cast<char *>(line.c_str()), ",");
+            int target = atoi(piece);
+            piece = strtok(0, ",");
+            float weight = atof(piece);
+            piece = strtok(0, ",");
+            int delay = atoi(piece);
+
+            if (n->synapseBase == 0)
+            {
+                n->synapseBase = startAddr;  // This implies that startAddr must begin higher than 0
+                startAddr += sizeof(Synapse) * n->synapseCount;
+                n->synapseCount = 0;
+            }
+            vector<uint8_t> data(sizeof(Synapse), 0);
+            uint64_t reqAddr = n->synapseBase + sizeof(Synapse) * n->synapseCount++;
+            using namespace Interfaces;
+            StandardMem::Write * req = new StandardMem::Write(reqAddr, sizeof(Synapse), data);
+            Synapse * synapse = (Synapse *) &req->data[0];
+            synapse->target = target;
+            synapse->weight = weight;
+            synapse->delay  = delay;
+            memory->sendUntimedData(req);
         }
-        std::vector<uint8_t> data(sizeof(Synapse), 0);
-        uint64_t reqAddr = neuron.synapseBase + sizeof(Synapse) * neuron.synapseCount++;
-        using namespace Interfaces;
-        StandardMem::Write * req = new StandardMem::Write(reqAddr, sizeof(Synapse), data);
-        Synapse * synapse = (Synapse *) &req->data[0];
-        synapse->weight = weight;
-        synapse->delay  = delay;
-        synapse->target = target;
-        memory->sendUntimedData(req);
     }
 
-    int numNeurons = neurons.size ();
+    int numNeurons = neurons.size();
     printf("Constructed %d neurons with %d links\n", numNeurons, countLinks);
-
-    // Input pulses
-    // format: timestep,target,weight
-    while (ifs.good ()) {
-        getline (ifs, line);
-        if (line.empty ()) break;
-        char * piece = strtok (const_cast<char *> (line.c_str ()), ",");
-        int timestep = atoi (piece);
-        piece = strtok (0, ",");
-        int target = atoi (piece);
-        piece = strtok (0, ",");
-        float weight = atof (piece);
-
-        Synapse input;
-        input.weight = weight;
-        input.target = target;
-        input.delay  = timestep;
-        inputBuffer.insert(make_pair(timestep, input));
-    }
 }
 
-void GNA::finish() {
+void GNA::finish()
+{
 	printf("Completed %d neuron firings\n", numFirings);
     printf("Completed %d spike deliveries\n", numDeliveries);
 }
@@ -196,7 +269,7 @@ void GNA::finish() {
 // handle incoming memory
 void GNA::handleEvent(Interfaces::StandardMem::Request * req)
 {
-    std::map<uint64_t, STS*>::iterator i = requests.find(req->getID());
+    map<uint64_t, STS*>::iterator i = requests.find(req->getID());
     if (i == requests.end()) {
 	out.fatal(CALL_INFO, -1, "Request ID (%" PRIx64 ") not found in outstanding requests!\n", req->getID());
     } else {
@@ -208,28 +281,27 @@ void GNA::handleEvent(Interfaces::StandardMem::Request * req)
     }
 }
 
-void GNA::deliver(float val, int targetN, int time) {
+void GNA::deliver(float val, int targetN, int time)
+{
     // AFR: should really throttle this in some way
     numDeliveries++;
     if(targetN < neurons.size ()) {
-        neurons[targetN].deliverSpike(val, time);
+        neurons[targetN]->deliverSpike(val, time);
         //printf("deliver %f to %d @ %d\n", val, targetN, time);
     } else {
         out.fatal(CALL_INFO, -1,"Invalid Neuron Address\n");
     }
 }
 
-Neuron & GNA::getNeuron(int n) {
-    return neurons[n];
-}
-
-void GNA::readMem(Interfaces::StandardMem::Request *req, STS *requestor) {
+void GNA::readMem(Interfaces::StandardMem::Request *req, STS *requestor)
+{
     outgoingReqs.push(req);  // queue the request to send later
-    requests.insert(std::make_pair(req->getID(), requestor));  // record who it came from
+    requests.insert(make_pair(req->getID(), requestor));  // record who it came from
 }
 
 // returns true if no more to deliver
-bool GNA::deliverInputs() {
+bool GNA::deliverInputs()
+{
     int tries = InputsPerTic;
 
     while (tries > 0) {
@@ -254,7 +326,8 @@ bool GNA::deliverInputs() {
 }
 
 // find a free STS unit to assign the spike to
-void GNA::assignSTS() {
+void GNA::assignSTS()
+{
     int remainDispatches = STSDispatch;
 
     // try to find a free unit
@@ -269,7 +342,8 @@ void GNA::assignSTS() {
     }
 }
 
-void GNA::processFire() {
+void GNA::processFire()
+{
     // has to: deliver incoming brain wave pulses, assign neuron
     // firings to lookup units (spike transfer structures), process
     // neuron firings into activations
@@ -297,9 +371,10 @@ void GNA::processFire() {
 }
 
 // run LIF on all neurons
-void GNA::lifAll() {
+void GNA::update()
+{
     for (uint n = 0; n < neurons.size (); ++n) {
-        bool fired = neurons[n].lif(now);
+        bool fired = neurons[n]->update(now);
         if (fired) {
             //printf(" %d fired\n", n);
             firedNeurons.push_back(n);
@@ -307,7 +382,8 @@ void GNA::lifAll() {
     }
 }
 
-bool GNA::clockTic( Cycle_t ) {
+bool GNA::clockTic(Cycle_t)
+{
     // send some outgoing mem reqs
     int maxOut = maxOutMem;
     //if((!outgoingReqs.empty()) && (now & 0x3f) == 0) {
@@ -328,15 +404,11 @@ bool GNA::clockTic( Cycle_t ) {
         processFire();
         break;
     case LIF:
-        lifAll();
+        update();
         now++;
+        if (now >= steps) primaryComponentOKToEndSim();
         state = PROCESS_FIRE;
         numFirings += firedNeurons.size();
-        if ((now & 0x3f) == 0)
-            printf("%lu neurons fired @ %d\n", firedNeurons.size(), now);
-        if (firedNeurons.size() == 0 && now > 100) {
-            primaryComponentOKToEndSim();
-        }
         break;
     default:
         out.fatal(CALL_INFO, -1,"Invalid GNA state\n");
