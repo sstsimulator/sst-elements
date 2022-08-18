@@ -19,6 +19,7 @@
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
 #endif
+
 #include <inttypes.h>
 #include <vector>
 
@@ -28,14 +29,14 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
-
 #include <sst/core/interfaces/stdMem.h>
+
 #include "neuron.h"
 #include "sts.h"
 
+
 namespace SST {
 namespace GNAComponent {
-
 
 class GNA : public SST::Component {
 public:
@@ -77,7 +78,6 @@ public:
     void readMem(Interfaces::StandardMem::Request *req, STS *requestor);
     void assignSTS();
     void processFire();
-    void update();
     virtual bool clockTic(SST::Cycle_t);
 
     typedef enum {IDLE, PROCESS_FIRE, LIF, LAST_STATE} gnaState_t;
@@ -99,10 +99,7 @@ public:
     std::vector<Neuron *> neurons;
     std::vector<STS> STSUnits;
 
-    typedef std::multimap<const uint, Synapse> inputBuffer_t;
-    inputBuffer_t inputBuffer;
-
-    std::deque<uint32_t> firedNeurons;
+    std::deque<Neuron *> firedNeurons;
     std::map<uint64_t, STS*> requests;
 
     TimeConverter *clockTC;

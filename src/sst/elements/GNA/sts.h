@@ -19,12 +19,15 @@
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
 #endif
+
 #include <inttypes.h>
 #include <vector>
-
 #include <queue>
 
 #include <sst/core/interfaces/stdMem.h>
+
+#include "neuron.h"
+
 
 namespace SST {
 namespace GNAComponent {
@@ -36,18 +39,18 @@ class Request;
 //  A Spike Transfer Structure engine - transforms a given spike by
 //  performing a look up and delivering spikes
 class STS {
-    GNA *myGNA;
-    int stsID;
-    int numSpikes; // number of spikes yet to deliver
-    std::queue<SST::Interfaces::StandardMem::Request *> incomingReqs;
 public:
-    STS(GNA *parent, int n) : myGNA(parent), stsID(n), numSpikes(0) {;}
-    bool isFree();
-    void assign(int);
-    void advance(uint32_t);
-    void returnRequest(SST::Interfaces::StandardMem::Request *req) {
-        incomingReqs.push(req);
-    }
+    GNA * myGNA;
+    int   stsID;
+    int   numSpikes; // number of spikes yet to deliver
+    std::queue<SST::Interfaces::StandardMem::Request *> incomingReqs;
+
+    STS(GNA *parent, int n);
+
+    bool isFree       ();
+    void assign       (const Neuron * n);
+    void advance      (uint);
+    void returnRequest(SST::Interfaces::StandardMem::Request *req);
 };
 
 }

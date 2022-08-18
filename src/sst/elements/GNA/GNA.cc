@@ -16,16 +16,18 @@
 #include <sst_config.h>
 #include "GNA.h"
 
+#include <fstream>
+
 #include <sst/core/params.h>
 #include <sst/core/rng/marsaglia.h>
-#include <sst/elements/memHierarchy/memEvent.h>
 
-#include <fstream>
+#include <sst/elements/memHierarchy/memEvent.h>
 
 using namespace SST;
 //using namespace SST::MemHierarchy;
 using namespace SST::GNAComponent;
 using namespace std;
+
 
 GNA::GNA(ComponentId_t id, Params& params)
 :   Component(id),
@@ -285,7 +287,6 @@ void GNA::deliver(float val, int targetN, int time)
     if (targetN >= neurons.size()) out.fatal(CALL_INFO, -1, "Invalid Neuron Address\n");
     neurons[targetN]->deliverSpike(val, time);
     numDeliveries++;
-    //printf("deliver %f to %d @ %d\n", val, targetN, time);
 }
 
 void GNA::readMem(Interfaces::StandardMem::Request *req, STS *requestor)
@@ -294,49 +295,29 @@ void GNA::readMem(Interfaces::StandardMem::Request *req, STS *requestor)
     requests.insert(make_pair(req->getID(), requestor));  // record who it came from
 }
 
-// find a free STS unit to assign the spike to
-void GNA::assignSTS()
+void GNA::processFire()
 {
+    // assign neuron firings to lookup units (spike transfer structures)
     int remainDispatches = STSDispatch;
-
-    // try to find a free unit
-    for(auto &e: STSUnits) {
-        if (firedNeurons.empty()) return;
+    for (auto & e : STSUnits) {
+        if (firedNeurons.empty()) break;
         if (e.isFree()) {
             e.assign(firedNeurons.front());
             firedNeurons.pop_front();
             remainDispatches--;
         }
-        if (remainDispatches == 0) return;
+        if (remainDispatches == 0) break;
     }
-}
-
-void GNA::processFire()
-{
-    // assign neuron firings to lookup units (spike transfer structures)
-    assignSTS();
 
     // process neuron firings into activations
     bool allSpikesDelivered = true;
-    for (auto & e: STSUnits) {
+    for (auto & e : STSUnits) {
         e.advance(now);
         allSpikesDelivered &= e.isFree();
     }
 
     // do we move on?
     if (allSpikesDelivered & firedNeurons.empty()) state = LIF;
-}
-
-// run LIF on all neurons
-void GNA::update()
-{
-    for (uint n = 0; n < neurons.size (); ++n) {
-        bool fired = neurons[n]->update(now);
-        if (fired) {
-            //printf(" %d fired\n", n);
-            firedNeurons.push_back(n);
-        }
-    }
 }
 
 bool GNA::clockTic(Cycle_t)
@@ -355,7 +336,7 @@ bool GNA::clockTic(Cycle_t)
         processFire();
         break;
     case LIF:
-        update();
+        for (auto n : neurons) if (n->update(now)) firedNeurons.push_back(n);
         now++;
         if (now >= steps) primaryComponentOKToEndSim();
         state = PROCESS_FIRE;

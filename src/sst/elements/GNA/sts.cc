@@ -20,11 +20,18 @@
 using namespace SST;
 using namespace SST::GNAComponent;
 
-void STS::assign(int neuronNum)
+
+STS::STS(GNA * parent, int n)
+:   myGNA(parent),
+    stsID(n),
+    numSpikes(0)
 {
-    const Neuron * neuron = myGNA->neurons[neuronNum];
-    numSpikes = neuron->synapseCount;
-    uint64_t listAddr = neuron->synapseBase;
+}
+
+void STS::assign(const Neuron * n)
+{
+    numSpikes = n->synapseCount;
+    uint64_t listAddr = n->synapseBase;
 
     for (int i = 0; i < numSpikes; i++) {
         // AFR: should throttle
@@ -59,3 +66,7 @@ void STS::advance(uint now)
     }
 }
 
+void STS::returnRequest(SST::Interfaces::StandardMem::Request * req)
+{
+    incomingReqs.push(req);
+}
