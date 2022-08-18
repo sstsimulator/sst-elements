@@ -75,11 +75,10 @@ public:
     void handleEvent(SST::Interfaces::StandardMem::Request * req);
     void deliver(float val, int targetN, int time);
     void readMem(Interfaces::StandardMem::Request *req, STS *requestor);
-    virtual bool clockTic(SST::Cycle_t);
-    bool deliverInputs();
     void assignSTS();
     void processFire();
     void update();
+    virtual bool clockTic(SST::Cycle_t);
 
     typedef enum {IDLE, PROCESS_FIRE, LIF, LAST_STATE} gnaState_t;
     gnaState_t state;

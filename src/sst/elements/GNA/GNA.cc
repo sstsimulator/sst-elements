@@ -270,59 +270,28 @@ void GNA::finish()
 void GNA::handleEvent(Interfaces::StandardMem::Request * req)
 {
     map<uint64_t, STS*>::iterator i = requests.find(req->getID());
-    if (i == requests.end()) {
-	out.fatal(CALL_INFO, -1, "Request ID (%" PRIx64 ") not found in outstanding requests!\n", req->getID());
-    } else {
-        // handle event
-        STS* requestor = i->second;
-        requestor->returnRequest(req);
-        // clean up
-        requests.erase(i);
-    }
+    if (i == requests.end()) out.fatal(CALL_INFO, -1, "Request ID (%" PRIx64 ") not found in outstanding requests!\n", req->getID());
+
+    // handle event
+    STS * requestor = i->second;
+    requestor->returnRequest(req);
+    // clean up
+    requests.erase(i);
 }
 
 void GNA::deliver(float val, int targetN, int time)
 {
     // AFR: should really throttle this in some way
+    if (targetN >= neurons.size()) out.fatal(CALL_INFO, -1, "Invalid Neuron Address\n");
+    neurons[targetN]->deliverSpike(val, time);
     numDeliveries++;
-    if(targetN < neurons.size ()) {
-        neurons[targetN]->deliverSpike(val, time);
-        //printf("deliver %f to %d @ %d\n", val, targetN, time);
-    } else {
-        out.fatal(CALL_INFO, -1,"Invalid Neuron Address\n");
-    }
+    //printf("deliver %f to %d @ %d\n", val, targetN, time);
 }
 
 void GNA::readMem(Interfaces::StandardMem::Request *req, STS *requestor)
 {
     outgoingReqs.push(req);  // queue the request to send later
     requests.insert(make_pair(req->getID(), requestor));  // record who it came from
-}
-
-// returns true if no more to deliver
-bool GNA::deliverInputs()
-{
-    int tries = InputsPerTic;
-
-    while (tries > 0) {
-        inputBuffer_t::iterator i = inputBuffer.find(now);
-        if (i != inputBuffer.end()) {
-            // deliver it
-            const Synapse & pulse = i->second;
-            printf("Input weight %.1f to neuron %d\n", pulse.weight, pulse.target);
-            deliver(pulse.weight, pulse.target, pulse.delay);
-            inputBuffer.erase(i);
-        } else {
-            return true;
-        }
-        tries--;
-    }
-
-    if (inputBuffer.find(now) == inputBuffer.end()) {
-        return true;
-    } else {
-        return false;
-    }
 }
 
 // find a free STS unit to assign the spike to
@@ -344,30 +313,18 @@ void GNA::assignSTS()
 
 void GNA::processFire()
 {
-    // has to: deliver incoming brain wave pulses, assign neuron
-    // firings to lookup units (spike transfer structures), process
-    // neuron firings into activations
+    // assign neuron firings to lookup units (spike transfer structures)
+    assignSTS();
 
-    // brain wave pulses: Deliver all before moving on
-    bool inputsDone = deliverInputs();
-
+    // process neuron firings into activations
     bool allSpikesDelivered = true;
-    if (inputsDone) {
-        // assign firings to STSs
-        assignSTS();
-
-        // process neuron firings into activations
-        for(auto &e: STSUnits) {
-            e.advance(now);
-            bool unitDone = e.isFree();
-            allSpikesDelivered &= unitDone;
-        }
+    for (auto & e: STSUnits) {
+        e.advance(now);
+        allSpikesDelivered &= e.isFree();
     }
 
     // do we move on?
-    if (inputsDone && allSpikesDelivered & firedNeurons.empty()) {
-        state = LIF;
-    }
+    if (allSpikesDelivered & firedNeurons.empty()) state = LIF;
 }
 
 // run LIF on all neurons
@@ -385,16 +342,10 @@ void GNA::update()
 bool GNA::clockTic(Cycle_t)
 {
     // send some outgoing mem reqs
-    int maxOut = maxOutMem;
-    //if((!outgoingReqs.empty()) && (now & 0x3f) == 0) {
-    //    printf(" outRqst Q %d\n", outgoingReqs.size());
-    //}
-    while(!outgoingReqs.empty() && maxOut > 0) {
+    for (int i = 0; i < maxOutMem  &&  ! outgoingReqs.empty(); i++) {
         memory->send(outgoingReqs.front());
         outgoingReqs.pop();
-        maxOut--;
     }
-
 
     switch(state) {
     case IDLE:
@@ -414,7 +365,5 @@ bool GNA::clockTic(Cycle_t)
         out.fatal(CALL_INFO, -1,"Invalid GNA state\n");
     }
 
-    // return false so we keep going
-    return false;
+    return false;  // keep going
 }
-
