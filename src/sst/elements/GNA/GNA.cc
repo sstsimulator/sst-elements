@@ -125,7 +125,7 @@ void GNA::init(unsigned int phase)
             piece = strtok(0, ",");
             float Vreset = atof(piece);
             piece = strtok(0, ",");
-            float leak = atof(piece);
+            float leak = 1 - atof(piece);  // The parameter in the file is the portion of voltage to get rid of each cycle. It's simpler for us to compute with (1-decay).
             piece = strtok(0, ",");  // Actually, there should only be one piece left, with no more commas.
             float p = atof(piece);
             n = neurons[id] = new NeuronLIF(Vthreshold, Vreset, leak, p);
@@ -238,7 +238,7 @@ void GNA::init(unsigned int phase)
             piece = strtok(0, ",");
             float weight = atof(piece);
             piece = strtok(0, ",");
-            int delay = atoi(piece);
+            int delay = atoi(piece) - 1;  // -1 because spike delivery happens right after "now" advances.
 
             if (n->synapseBase == 0)
             {
@@ -264,6 +264,8 @@ void GNA::init(unsigned int phase)
 
 void GNA::finish()
 {
+    for (auto i : Neuron::outputs) delete i.second;  // flushes last row
+
 	printf("Completed %d neuron firings\n", numFirings);
     printf("Completed %d spike deliveries\n", numDeliveries);
 }

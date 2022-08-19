@@ -77,7 +77,6 @@ NeuronLIF::NeuronLIF(float Vthreshold, float Vreset, float leak, float p)
 void NeuronLIF::deliverSpike(float str, uint when)
 {
     temporalBuffer[when] += str;
-    //printf(" got %f @ %d\n", str, when);
 }
 
 bool NeuronLIF::update(const uint now)
@@ -87,7 +86,6 @@ bool NeuronLIF::update(const uint now)
     if (i != temporalBuffer.end()) {
         V += i->second;
         temporalBuffer.erase(i);
-        //printf(" got current spike %f @ %d\n", val, now);
     }
 
     // Check for spike
