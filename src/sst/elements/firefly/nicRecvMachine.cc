@@ -35,7 +35,7 @@ void Nic::RecvMachine::processPkt( FireflyNetworkEvent* ev ) {
 
 void Nic::RecvMachine::processStdPkt( FireflyNetworkEvent* ev ) {
     bool blocked = false;
-    ProcessPairId id = getPPI( ev );
+    StreamKey id = getStreamKey( ev );
 
     StreamBase* stream;
     int pid = ev->getDestPid();
