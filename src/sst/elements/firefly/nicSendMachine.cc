@@ -37,6 +37,7 @@ void Nic::SendMachine::streamInit( SendEntryBase* entry )
     FireflyNetworkEvent* ev = new FireflyNetworkEvent(m_pktOverhead );
     ev->setDestPid( entry->dst_vNic() );
     ev->setSrcPid( entry->local_vNic() );
+    ev->setSrcStream( entry->streamNum() );
     ev->setHdr();
 
     entry->m_start = m_nic.getCurrentSimTimeNano();
@@ -55,6 +56,7 @@ void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev
     int pid = entry->local_vNic();
     ev->setDestPid( entry->dst_vNic() );
     ev->setSrcPid( pid );
+    ev->setSrcStream( entry->streamNum() );
     if ( ! m_inQ->isFull() ) {
 	    std::vector< MemOp >* vec = new std::vector< MemOp >;
         entry->copyOut( m_dbg, m_packetSizeInBytes, *ev, *vec );
