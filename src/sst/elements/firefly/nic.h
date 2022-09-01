@@ -507,6 +507,7 @@ struct X {
     int getSendStreamNum( int pid ) {
         unsigned int val = m_sendStreamNum[pid]++;
 
+        val &= ((1 << NUM_STREAM_ID_BITS)-1);
         m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"pid=%d stream=%d next=%d\n",pid,val, m_sendStreamNum[pid] );
         return val;
     }
