@@ -136,8 +136,8 @@ class RecvMachine {
 			while ( iter != m_pktBuf.end() ) {
 				FireflyNetworkEvent* ev = iter->second.front();
 
-				m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "packet from node=%d pid=%d for pid=%d %s %s PPI=0x%" PRIx64 "\n",
-						ev->getSrcNode(),ev->getSrcPid(),ev->getDestPid(),ev->isHdr() ? "hdr":"",ev->isTail() ? "tail":"",getPPI(ev));
+				m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "packet from node=%d pid=%d for pid=%d %s %s PPI=0x%" PRIx64 " stream=%d\n",
+						ev->getSrcNode(),ev->getSrcPid(),ev->getDestPid(),ev->isHdr() ? "hdr":"",ev->isTail() ? "tail":"",getPPI(ev),ev->getSrcStream());
 
 				if ( ev->isCtrl() ) {
 					++m_numActiveStreams;
