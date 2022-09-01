@@ -52,19 +52,19 @@ class FireflyNetworkEvent : public Event {
     int payloadSize() { return pktOverhead + bufSize(); }
 
     void setSrcNode( int node ) { 
-        assert( node < 1 << NUM_NODE_BITS );
+        assert( node < (1 << NUM_NODE_BITS) );
         srcNode = node; 
     }
     void setSrcPid( int pid ) {
-        assert( pid < 1 << NUM_PID_BITS );
+        assert( pid < (1 << NUM_PID_BITS) );
         srcPid = pid; 
     }
     void setSrcStream( int stream ) { 
-        assert( stream < 1 << NUM_STREAM_ID_BITS );
+        assert( stream < (1 << NUM_STREAM_ID_BITS) );
         srcStream = stream; 
     }
     void setDestPid( int pid ) {
-        assert( pid < 1 << NUM_PID_BITS );
+        assert( pid < (1 << NUM_PID_BITS) );
         destPid = pid; 
     }
 
