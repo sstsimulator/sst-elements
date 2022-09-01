@@ -22,8 +22,8 @@ using namespace SST::Firefly;
 
 void Nic::RecvMachine::processPkt( FireflyNetworkEvent* ev ) {
 
-	m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE," got a network pkt from node=%d pid=%d for pid=%d size=%zu\n",
-                        ev->getSrcNode(),ev->getSrcPid(), ev->getDestPid(), ev->bufSize() );
+	m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE," got a network pkt from node=%d pid=%d for pid=%d stream=%d size=%zu\n",
+                        ev->getSrcNode(),ev->getSrcPid(), ev->getDestPid(), ev->getSrcStream(), ev->bufSize() );
 
     if ( ev->isCtrl() ) {
 		m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"got a control message\n");
