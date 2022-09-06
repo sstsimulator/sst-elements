@@ -175,6 +175,10 @@ private:
     // Response to a blocked API request (like cudaMemcpy)
     StandardMem::Request* blocked_response;
 
+    // A currently pending write as we need readresp from
+    // reading the CUDA packet within SST memory
+    StandardMem::Write* pending_write;
+
     struct cache_req_params {
         cache_req_params( unsigned m_core_id,  void* mem_fetch, StandardMem::Request* req) {
                 core_id = m_core_id;
