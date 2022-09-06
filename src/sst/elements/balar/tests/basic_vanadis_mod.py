@@ -45,16 +45,16 @@ debug_params = { "debug" : 1, "debug_level" : 10 }
 #                        Core->MMIO
 #                        MMIO->memory    
 core_group = 0
-l1_group = 1
-mmio_group = 2
+mmio_group = 1
+cache_group = 2
 memory_group = 3
 
-core_dst = [l1_group, mmio_group]
-l1_src = [core_group]
-l1_dst = [memory_group]
+core_dst = [cache_group, mmio_group]
+cache_src = [core_group, mmio_group]
+cache_dst = [memory_group]
 mmio_src = [core_group]
-mmio_dst = [memory_group]
-memory_src = [l1_group,mmio_group]
+mmio_dst = [cache_group]
+memory_src = [cache_group,mmio_group]
 
 # Constans shared across components
 network_bw = "25GB/s"
@@ -73,8 +73,9 @@ mmio.addParams(config.getGPUConfig())
 mmio_iface = mmio.setSubComponent("iface", "memHierarchy.standardInterface")
 #mmio_iface.addParams(debug_params)
 mmio_nic = mmio_iface.setSubComponent("memlink", "memHierarchy.MemNIC")
-mmio_nic.addParams({"group" : 3,
-                    "network_bw" : network_bw ,})
+mmio_nic.addParams({"group" : mmio_group,
+                    "network_bw" : network_bw ,
+                    })
 
 # GPU Memory hierarchy
 #          mmio/GPU
@@ -360,11 +361,11 @@ dcache_if.addParams({"debug" : 0, "debug_level" : 11 })
 ## nic
 cpu_dcache_nic = dcache_if.setSubComponent("memlink", "memHierarchy.MemNIC")
 cpu_dcache_nic.addParams({
-      "group" : 0, 
+      "group" : core_group, 
       "network_bw" : "25GB/s",
       # TODO: Use named variables for groups
       # Allow cpu dcache to access cache and balarMMIO 
-      "destinations": [1, 3]})
+      "destinations": core_dst})
 ## end nic
 
 node_os = sst.Component("os", "vanadis.VanadisNodeOS")
@@ -422,9 +423,9 @@ cpu0_l1dcache.addParams({
 ## NIC
 l1d_nic = cpu0_l1dcache.setSubComponent("cpulink", "memHierarchy.MemNIC")
 l1d_nic.addParams({
-      "group" : 1, 
+      "group" : cache_group, 
       "network_bw" : "25GB/s",
-      "sources": [0],
+      "sources": cache_src,
       })
 ## end NIC
 
@@ -460,7 +461,7 @@ l2cache_2_l1caches = cpu0_l2cache.setSubComponent("cpulink", "memHierarchy.MemLi
 l2cache_2_mem = cpu0_l2cache.setSubComponent("memlink", "memHierarchy.MemNIC")
 
 l2cache_2_mem.addParams({
-	"group" : 1,
+	"group" : cache_group,
 	"network_bw" : "25GB/s"
 })
 
@@ -495,7 +496,7 @@ dirtoM = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
 dirNIC = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
 dirNIC.addParams({
       "network_bw" : "25GB/s",
-      "group" : 2,
+      "group" : memory_group,
 })
 
 memctrl = sst.Component("memory", "memHierarchy.MemController")

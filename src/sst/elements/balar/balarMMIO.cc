@@ -245,16 +245,60 @@ void BalarMMIO::handleGPUCache(SST::Interfaces::StandardMem::Request* req) {
  * @param write 
  */
 void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write) {
+    // TODO: Treat the data as the address to the passed in packet
+    // Convert 8 bytes of the payload into an int
+    // std::vector<uint8_t> buff = write->data;
+
+    // Save this write instance as we will need it to make response
+    // when finish calling GPGPUSim after getting readresp
+    mmio->pending_write = write;
+
+    // The write data is a memory address to the real cuda call packet
+    // Convert this into an address, assume little endian
+    Addr packet_addr = dataToUInt64(&(write->data));
+
+    // Create a memory request to read the cuda call packet
+    StandardMem::Request* cuda_req = new StandardMem::Read(packet_addr, sizeof(BalarCudaCallPacket_t));
+
+    // Now send the memory request
+    // inside the SST memory space
+    mmio->iface->send(cuda_req);
+}
+
+/**
+ * @brief Handler for return value query
+ * 
+ * @param read 
+ */
+void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Read* read) {
+    out->verbose(_INFO_, "Handling Read for return value for a %s request\n", gpu_api_to_string(mmio->cuda_ret.cuda_call_id)->c_str());
+
+    vector<uint8_t> *payload = encode_balar_packet<BalarCudaCallReturnPacket_t>(&mmio->cuda_ret);
+
+    payload->resize(read->size, 0); // A bit silly if size != sizeof(int) but that's the CPU's problem
+
+    // Make a response. Must fill in payload.
+    StandardMem::ReadResp* resp = static_cast<StandardMem::ReadResp*>(read->makeResponse());
+    resp->data = *payload;
+    mmio->iface->send(resp);
+    delete read;
+}
+
+/* Handler for incoming Read responses - getting response from reading
+ * CUDA packet data
+ */
+void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* resp) {
     // Whether the request is blocking or not
     bool is_blocked = false;
-    // Convert 8 bytes of the payload into an int
-    std::vector<uint8_t> buff = write->data;
 
-    // Get cuda call arguments
-    mmio->last_packet = decode_balar_packet<BalarCudaCallPacket_t>(&buff);
+    // Our write instance from CUDA API Call
+    StandardMem::Write* write = mmio->pending_write;
+
+    // Get cuda call arguments from read response
+    mmio->last_packet = decode_balar_packet<BalarCudaCallPacket_t>(&(resp->data));
     BalarCudaCallPacket_t * packet = mmio->last_packet;
 
-    out->verbose(_INFO_, "Handling Write. Enum is %s\n", gpu_api_to_string(packet->cuda_call_id)->c_str());
+    out->verbose(_INFO_, "Handling CUDA API Call. Enum is %s\n", gpu_api_to_string(packet->cuda_call_id)->c_str());
 
     // mmio->cuda_ret = (cudaError_t) pack_ptr->cuda_call_id; // For testing purpose
 
@@ -360,7 +404,7 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
             break;
     }
 
-    /* Send response (ack) if needed */
+    /* Send response (ack) to the CUDA API Cuda request if needed */
     if (!(write->posted)) {
         if (is_blocked) {
             // Save blocked req's response and send later
@@ -373,42 +417,7 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
         }
     }
     delete write;
-}
-
-/**
- * @brief Handler for return value query
- * 
- * @param read 
- */
-void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Read* read) {
-    out->verbose(_INFO_, "Handling Read for return value for a %s request\n", gpu_api_to_string(mmio->cuda_ret.cuda_call_id)->c_str());
-
-    vector<uint8_t> *payload = encode_balar_packet<BalarCudaCallReturnPacket_t>(&mmio->cuda_ret);
-
-    payload->resize(read->size, 0); // A bit silly if size != sizeof(int) but that's the CPU's problem
-
-    // Make a response. Must fill in payload.
-    StandardMem::ReadResp* resp = static_cast<StandardMem::ReadResp*>(read->makeResponse());
-    resp->data = *payload;
-    mmio->iface->send(resp);
-    delete read;
-}
-
-/* Handler for incoming Read responses - should be a response to a Read we issued */
-void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* resp) {
-    // TODO Do nothing rn since we do not issue read
-    // TODO But might need this in future to handle read from gpu cache?
-    // std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = mmio->requests.find(resp->getID());
-    // if ( mmio->requests.end() == i ) {
-    //     out->fatal(CALL_INFO, -1, "Event (%" PRIx64 ") not found!\n", resp->getID());
-    // } else {
-    //     SimTime_t et = mmio->getCurrentSimTime() - i->second.first;
-    //     mmio->statReadLatency->addData(et);
-    //     mmio->requests.erase(i);
-    // }
-    // delete resp;
-    // if (mmio->mem_access == 0 && mmio->requests.empty())
-    //     mmio->primaryComponentOKToEndSim();
+    delete resp;
 }
 
 /* Handler for incoming Write responses - should be a response to a Write we issued */
