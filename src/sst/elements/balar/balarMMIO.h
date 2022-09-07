@@ -140,6 +140,7 @@ protected:
         // Converter for testing purpose
         void intToData(int32_t num, std::vector<uint8_t>* data);
         int32_t dataToInt(std::vector<uint8_t>* data);
+        void UInt64ToData(uint64_t num, std::vector<uint8_t>* data);
         uint64_t dataToUInt64(std::vector<uint8_t>* data);
 
         // TODO
@@ -171,13 +172,18 @@ private:
 
     // Last cuda function call packet
     BalarCudaCallPacket_t *last_packet;
+    Addr packet_scratch_mem_addr;
 
     // Response to a blocked API request (like cudaMemcpy)
     StandardMem::Request* blocked_response;
 
-    // A currently pending write as we need readresp from
-    // reading the CUDA packet within SST memory
+    // A currently pending write and read 
+    // as we need readresp from reading the CUDA 
+    // packet within SST memory
+    // As well as writeresp when we finish writing
+    // CUDA return packet
     StandardMem::Write* pending_write;
+    StandardMem::Read* pending_read;
 
     struct cache_req_params {
         cache_req_params( unsigned m_core_id,  void* mem_fetch, StandardMem::Request* req) {

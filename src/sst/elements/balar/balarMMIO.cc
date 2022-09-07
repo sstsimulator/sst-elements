@@ -253,12 +253,12 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
     // when finish calling GPGPUSim after getting readresp
     mmio->pending_write = write;
 
-    // The write data is a memory address to the real cuda call packet
+    // The write data is a scratch memory address to the real cuda call packet
     // Convert this into an address, assume little endian
-    Addr packet_addr = dataToUInt64(&(write->data));
+    mmio->packet_scratch_mem_addr = dataToUInt64(&(write->data));
 
     // Create a memory request to read the cuda call packet
-    StandardMem::Request* cuda_req = new StandardMem::Read(packet_addr, sizeof(BalarCudaCallPacket_t));
+    StandardMem::Request* cuda_req = new StandardMem::Read(mmio->packet_scratch_mem_addr, sizeof(BalarCudaCallPacket_t));
 
     // Now send the memory request
     // inside the SST memory space
@@ -273,15 +273,18 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
 void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Read* read) {
     out->verbose(_INFO_, "Handling Read for return value for a %s request\n", gpu_api_to_string(mmio->cuda_ret.cuda_call_id)->c_str());
 
+    // Save this write instance as we will need it to make response
+    // when finish writing return packet to memory
+    mmio->pending_read = read;
+
     vector<uint8_t> *payload = encode_balar_packet<BalarCudaCallReturnPacket_t>(&mmio->cuda_ret);
 
-    payload->resize(read->size, 0); // A bit silly if size != sizeof(int) but that's the CPU's problem
-
-    // Make a response. Must fill in payload.
-    StandardMem::ReadResp* resp = static_cast<StandardMem::ReadResp*>(read->makeResponse());
-    resp->data = *payload;
-    mmio->iface->send(resp);
-    delete read;
+    // Write to the scratch memory region first
+    StandardMem::Request* write_cuda_ret = new StandardMem::Write(mmio->packet_scratch_mem_addr, sizeof(BalarCudaCallReturnPacket_t), *payload);
+    
+    // Now send the memory request to write the cuda return packet
+    // inside the SST memory space
+    mmio->iface->send(write_cuda_ret);
 }
 
 /* Handler for incoming Read responses - getting response from reading
@@ -422,19 +425,18 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* res
 
 /* Handler for incoming Write responses - should be a response to a Write we issued */
 void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::WriteResp* resp) {
-    // TODO Do nothing rn since we do not issue write
-    // TODO But might need this in future to handle write to gpu cache?
-    // std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = mmio->requests.find(resp->getID());
-    // if (mmio->requests.end() == i) {
-    //     out->fatal(CALL_INFO, -1, "Event (%" PRIx64 ") not found!\n", resp->getID());
-    // } else {
-    //     SimTime_t et = mmio->getCurrentSimTime() - i->second.first;
-    //     mmio->statWriteLatency->addData(et);
-    //     mmio->requests.erase(i);
-    // }
-    // delete resp;
-    // if (mmio->mem_access == 0 && mmio->requests.empty())
-    //     mmio->primaryComponentOKToEndSim();
+    // Make a response. Must fill in payload.
+    StandardMem::Read* read = mmio->pending_read;
+    StandardMem::ReadResp* read_resp = static_cast<StandardMem::ReadResp*>(read->makeResponse());
+
+    // Return the scratch memory address as the read result
+    vector<uint8_t> payload;
+    UInt64ToData(mmio->packet_scratch_mem_addr, &payload);
+    payload.resize(read->size, 0);
+    read_resp->data = payload;
+    mmio->iface->send(read_resp);
+    delete read;
+    delete resp;
 }
 
 void BalarMMIO::mmioHandlers::intToData(int32_t num, vector<uint8_t>* data) {
@@ -452,6 +454,14 @@ int32_t BalarMMIO::mmioHandlers::dataToInt(vector<uint8_t>* data) {
         retval |= (*data)[i-1];
     }
     return retval;
+}
+
+void BalarMMIO::mmioHandlers::UInt64ToData(uint64_t num, vector<uint8_t>* data) {
+    data->clear();
+    for (size_t i = 0; i < sizeof(uint64_t); i++) {
+        data->push_back(num & 0xFF);
+        num >>=8;
+    }
 }
 
 uint64_t BalarMMIO::mmioHandlers::dataToUInt64(vector<uint8_t>* data) {

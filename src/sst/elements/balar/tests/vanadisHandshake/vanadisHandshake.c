@@ -9,8 +9,8 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
-
 
 
 enum GpuApi_t {
@@ -99,7 +99,9 @@ typedef struct BalarCudaCallPacket {
 	enum GpuApi_t cuda_call_id;
 	union {
 		struct {
-			void** devPtr;
+			// Use uint64_t to match with the 8 byte ptr width
+			// in balar
+			uint64_t devPtr;
 			size_t size;
 		} cuda_malloc;
 
@@ -129,7 +131,7 @@ typedef struct BalarCudaCallPacket {
 			unsigned int bdy;
 			unsigned int bdz;
 			size_t sharedMem;
-			void** stream;
+			uint64_t stream;
 		} configure_call;
 
 		struct {
@@ -144,14 +146,14 @@ typedef struct BalarCudaCallPacket {
 		} cuda_launch;
 
 		struct {
-			void *devPtr;
+			uint64_t devPtr;
 		} cuda_free;
 
 		struct {
-			void **fatCubinHandle;
-			char *hostVar; //pointer to...something
-			char *deviceAddress; //name of variable
-			const char *deviceName; //name of variable
+			uint64_t fatCubinHandle;
+			uint64_t hostVar; //pointer to...something
+			uint64_t deviceAddress; //name of variable
+			uint64_t deviceName; //name of variable
 			int ext;
 			int size;
 			int constant;
@@ -159,8 +161,8 @@ typedef struct BalarCudaCallPacket {
 		} register_var;
 
 		struct {
-			int *numBlock;
-			const char *hostFunc;
+			uint64_t numBlock;
+			uint64_t hostFunc;
 			int blockSize;
 			size_t dynamicSMemSize;
 			unsigned int flags;
@@ -178,8 +180,8 @@ typedef struct BalarCudaCallReturnPacket {
 			uint64_t    devptr_addr;
 		} cudamalloc;
 		struct {
-			volatile uint8_t*    sim_data;
-			volatile uint8_t*    real_data;
+			volatile uint64_t    sim_data;
+			volatile uint64_t    real_data;
 			size_t      size;
 			enum cudaMemcpyKind kind;
 		} cudamemcpy;
@@ -187,25 +189,33 @@ typedef struct BalarCudaCallReturnPacket {
 } BalarCudaCallReturnPacket_t;
 
 int main( int argc, char* argv[] ) {
-	printf("Hello World from Vanadis and Balar\n");
+	printf("Hello from Vanadis and Balar\n");
 
 	double * devptr;
-	BalarCudaCallPacket_t* gpu = (BalarCudaCallPacket_t*) 0xFFFF1000;
-	BalarCudaCallReturnPacket_t* gpu_res = (BalarCudaCallReturnPacket_t*) 0xFFFF1000;
+	uint32_t* gpu = (uint32_t*) 0xFFFF1000;
 	
+	// TODO Assign a scratch memory via malloc to let the GPU manipulates on
+	uint8_t *scratch_mem = calloc(512, sizeof(uint8_t));
+
 	// Send request to GPU
-	BalarCudaCallPacket_t packet;
-	packet.cuda_call_id = GPU_MALLOC;
-	packet.cuda_malloc.devPtr = &devptr;
-	packet.cuda_malloc.size = 200;
+	BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *)scratch_mem;
+	call_packet_ptr->cuda_call_id = GPU_MALLOC;
+	call_packet_ptr->cuda_malloc.size = 200;
+	call_packet_ptr->cuda_malloc.devPtr = &devptr;
+	printf("Packet address: %p\n", call_packet_ptr);
+	printf("Packet size: %d\n", call_packet_ptr->cuda_malloc.size);
+	printf("Packet devptr: %p\n", call_packet_ptr->cuda_malloc.devPtr);
+	fflush(stdout);
 
-	*gpu = packet;
+	// Vanadis write with 4B chunk, thus use uint32_t to pass
+	// the pointer to the balar packet
+	*gpu = (uint32_t*) call_packet_ptr;
 
-	// Read from GPU
-	BalarCudaCallReturnPacket_t response = *gpu_res;
+	// Read from GPU will return the address to the cuda return packet
+	BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*gpu;
 	printf("CUDA API ID: %d with error: %d\nMalloc addr: %p Dev addr: %p\n", 
-			response.cuda_call_id, response.cuda_error,
-			response.cudamalloc.malloc_addr, response.cudamalloc.devptr_addr);
+			response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error,
+			response_packet_ptr->cudamalloc.malloc_addr, response_packet_ptr->cudamalloc.devptr_addr);
 
 	return 0;
 }
