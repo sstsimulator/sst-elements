@@ -128,7 +128,7 @@ node_os.addParams({
 	"heap_end"   : (2 * 1024 * 1024 * 1024) - 4096,
 	"page_size"  : 4096,
 	"heap_verbose" : verbosity,
-    "executable" : os.getenv("VANADIS_EXE", "./tests/small/basic-io/hello-world"),
+    "executable" : os.getenv("VANADIS_EXE", "./tests/small/basic-io/hello-world/mipsel/hello-world"),
     "app.env_count" : 2,
     "app.env0" : "HOME=/home/sdhammo",
     "app.env1" : "NEWHOME=/home/sdhammo2",
