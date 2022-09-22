@@ -1,5 +1,9 @@
 # Automatically generated SST Python input
 # Run script: sst testBalar-simple.py --model-options="-c ariel-gpu-v100.cfg -v" > tmp.out 2>&1
+# TODO: Balar cannot read the cuda packet in the memory
+# TODO: Some configuration issue with the group, dst, and src setting
+#       Using the same config as vanadis_mod resolve this
+# TODO: Need to figure out the correct way for this
 import sst
 try:
     import ConfigParser
@@ -46,16 +50,16 @@ debug_params = { "debug" : 1, "debug_level" : 10 }
 #                        Core->MMIO
 #                        MMIO->memory    
 core_group = 0
-l1_group = 1
-mmio_group = 2
+mmio_group = 1
+l1_group = 2
 memory_group = 3
 
 core_dst = [l1_group, mmio_group]
-l1_src = [core_group]
+l1_src = [core_group, mmio_group]
 l1_dst = [memory_group]
 mmio_src = [core_group]
 mmio_dst = [memory_group]
-memory_src = [l1_group,mmio_group]
+memory_src = [l1_group, mmio_group]
 
 # Constans shared across components
 network_bw = "25GB/s"
@@ -72,6 +76,7 @@ cpu.addParams({
       "clock" : clock,
       "verbose" : 3,
       "mmio_addr" : mmio_addr, # Just above memory addresses
+      "scratch_mem_addr": 0,
       "gpu_addr": mmio_addr,
       
       "read_freq" : 0,
@@ -114,15 +119,16 @@ l1cache.addParams({
 l1_nic = l1cache.setSubComponent("cpulink", "memHierarchy.MemNIC")
 l1_nic.addParams({ "group" : l1_group, 
                    "sources" : l1_src,
-                   "destinations" : l1_dst,
+                  #  "destinations" : l1_dst,
                    "network_bw" : network_bw})
 #l1_nic.addParams(debug_params)
 
 mmio = sst.Component("balar", "balar.balarMMIO")
 mmio.addParams({
-      "verbose" : 3,
+      "verbose" : 20,
       "clock" : clock,
       "base_addr" : mmio_addr,
+      "mmio_size": 1024,
 })
 mmio.addParams(config.getGPUConfig())
 
@@ -130,8 +136,8 @@ mmio_iface = mmio.setSubComponent("iface", "memHierarchy.standardInterface")
 #mmio_iface.addParams(debug_params)
 mmio_nic = mmio_iface.setSubComponent("memlink", "memHierarchy.MemNIC")
 mmio_nic.addParams({"group" : mmio_group, 
-                    "sources" : mmio_src,
-                    "destinations" : mmio_dst,
+                  #   "sources" : mmio_src,
+                  #   "destinations" : mmio_dst,
                     "network_bw" : network_bw })
 #mmio_nic.addParams(debug_params)
 
@@ -157,7 +163,7 @@ memctrl.addParams({
 })
 mem_nic = memctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
 mem_nic.addParams({"group" : memory_group, 
-                   "sources" : "[1,2]", # Group 1 = L1, Group 2 = MMIO
+                  #  "sources" : memory_src,
                    "network_bw" : network_bw})
 #mem_nic.addParams(debug_params)
 

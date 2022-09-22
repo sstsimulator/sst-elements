@@ -66,6 +66,7 @@ BalarTestCPU::BalarTestCPU(ComponentId_t id, Params& params) :
 
     maxAddr = memsize.getRoundedValue() - 1;
 
+    // TODO: Remove this mmioAddr as we use gpuAddr
     mmioAddr = params.find<uint64_t>("mmio_addr", "0", found);
     if (found) {
         sst_assert(mmioAddr > maxAddr, CALL_INFO, -1, "incompatible parameters: mmio_addr must be >= memSize (mmio above physical memory addresses).\n");
@@ -73,48 +74,14 @@ BalarTestCPU::BalarTestCPU(ComponentId_t id, Params& params) :
 
     // TODO: Start and end range for gpu
     gpuAddr = params.find<uint64_t>("gpu_addr", "0", found);  // range for gpu address space
-    // if (found) {
-    //     sst_assert(gpuAddr > mmioAddr, CALL_INFO, -1, "incompatible parameters: gpu_addr must be >= mmio_addr (gpu_addr above mmio).\n");
-    // }
-
-    
-
-    maxOutstanding = params.find<uint64_t>("maxOutstanding", 10);
-
-    /* Required parameter - opCount */
-    ops = params.find<uint64_t>("opCount", 0, found);
-    sst_assert(found, CALL_INFO, -1, "%s, Error: parameter 'opCount' was not provided\n", getName().c_str());
-
-    /* Frequency of different ops */
-    // TODO Change to CUDA calls?
-    unsigned readf = params.find<unsigned>("read_freq", 25);
-    unsigned writef = params.find<unsigned>("write_freq", 75);
-    unsigned flushf = params.find<unsigned>("flush_freq", 0);
-    unsigned flushinvf = params.find<unsigned>("flushinv_freq", 0);
-    unsigned customf = params.find<unsigned>("custom_freq", 0);
-    unsigned llscf = params.find<unsigned>("llsc_freq", 0);
-    unsigned mmiof = params.find<unsigned>("mmio_freq", 0);
-    unsigned gpuf = params.find<unsigned>("gpu_freq", 0);   // gpu request frequency
-
-    if (gpuf != 0 && gpuAddr == 0) {
-        out.fatal(CALL_INFO, -1, "%s, Error: gpu_freq is > 0 but no gpu address space has been specified via gpu_addr\n", getName().c_str());
+    if (found) {
+        sst_assert(gpuAddr > maxAddr, CALL_INFO, -1, "incompatible parameters: gpu_addr must be >= mmio_addr (gpu_addr above mmio).\n");
     }
 
-    if (mmiof != 0 && mmioAddr == 0) {
-        out.fatal(CALL_INFO, -1, "%s, Error: mmio_freq is > 0 but no mmio device has been specified via mmio_addr\n", getName().c_str());
+    scratchMemAddr = params.find<uint64_t>("scratch_mem_addr", "0", found);  // range for gpu address space
+    if (found) {
+        sst_assert(scratchMemAddr != gpuAddr, CALL_INFO, -1, "incompatible parameters: gpu_addr must be >= mmio_addr (gpu_addr above mmio).\n");
     }
-
-    high_mark = readf + writef + flushf + flushinvf + customf + llscf + mmiof + gpuf; /* Numbers less than this and above other marks indicate read */
-    if (high_mark == 0) {
-        out.fatal(CALL_INFO, -1, "%s, Error: The input doesn't indicate a frequency for any command type.\n", getName().c_str());
-    }
-    write_mark = writef;    /* Numbers less than this indicate write */
-    flush_mark = write_mark + flushf; /* Numbers less than this indicate flush */
-    flushinv_mark = flush_mark + flushinvf; /* Numbers less than this indicate flush-inv */
-    custom_mark = flushinv_mark + customf; /* Numbers less than this indicate flush */
-    llsc_mark = custom_mark + llscf; /* Numbers less than this indicate LL-SC */
-    mmio_mark = llsc_mark + mmiof; /* Numbers less than this indicate MMIO read or write */
-    gpu_mark = mmio_mark + gpuf;  /* Numbers less than this indicate gpu requests */
 
     noncacheableRangeStart = params.find<uint64_t>("noncacheableRangeStart", 0);
     noncacheableRangeEnd = params.find<uint64_t>("noncacheableRangeEnd", 0);
@@ -158,7 +125,7 @@ BalarTestCPU::BalarTestCPU(ComponentId_t id, Params& params) :
     enable_memcpy_dump = params.find<bool>("enable_memcpy_dump", false);
 
     // Bind response handler to cpu
-    handlers = new mmioHandlers(this, &out);
+    gpuHandler = new mmioHandlers(this, &out);
 
     // Bind trace parser
     trace_parser = new CudaAPITraceParser(this, &out, traceFile, cudaExecutable);
@@ -176,26 +143,10 @@ void BalarTestCPU::setup() {
 
 void BalarTestCPU::finish() { }
 
-// incoming events are scanned and deleted
-// TODO: Handle response here?
+// incoming events are handled
 void BalarTestCPU::handleEvent(StandardMem::Request *req)
 {
-    // TODO: Create a handler class here to handle incoming requests response?
-    req->handle(handlers);
-
-    // std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = requests.find(req->getID());
-    // if ( requests.end() == i ) {
-    //     out.fatal(CALL_INFO, -1, "Event (%" PRIx64 ") not found!\n", req->getID());
-    // } else {
-    //     SimTime_t et = getCurrentSimTime() - i->second.first;
-    //     if (i->second.second == "StoreConditional" && req->getSuccess())
-    //         num_llsc_success->addData(1);
-    //     requests.erase(i);
-    // }
-
-    // // TODO: Check if the gpu call's return are correct
-
-    // delete req;
+    req->handle(gpuHandler);
 }
 
 bool BalarTestCPU::clockTic( Cycle_t ) {
@@ -204,14 +155,18 @@ bool BalarTestCPU::clockTic( Cycle_t ) {
     // Wait for previous call to finish
     // Issue a new API call if none is pending
     if (requests.empty()) {
+        // TODO: Prepare cuda packet here and record the 
+        // TODO: request we sent to scratch memory and gpu
         Interfaces::StandardMem::Request* req = trace_parser->getNextCall();
         if (!(req == nullptr)) {
-            // Send gpu cuda call request
-            memory->send(req);
-
             // Add cuda call requests to pending map
-            std::string cmdString = "Read";
+            std::string cmdString = "Prepare_CUDA_packet";
             requests[req->getID()] = std::make_pair(getCurrentSimTime(), cmdString);
+
+            // Write the cuda packet to memory so that balar can access it later
+            out.verbose(_INFO_, "Sending cuda api call packet to memory\n");
+
+            memory->send(req);
 
             return false;
         } else {
@@ -226,172 +181,6 @@ bool BalarTestCPU::clockTic( Cycle_t ) {
     }
 }
 
-/** Original clockTic
-bool BalarTestCPU::clockTic( Cycle_t )
-{
-    ++clock_ticks;
-
-    // Histogram bin the requests pending per cycle
-    requestsPendingCycle->addData((uint64_t) requests.size());
-
-    // communicate?
-    // TODO: Need to manually create a call sequence to cuda functions
-    if ((0 != ops) && (0 == (rng.generateNextUInt32() % memFreq))) {
-        if ( requests.size() < maxOutstanding ) {
-            // yes, communicate
-            // create event
-            // x4 to prevent splitting blocks
-            uint32_t reqsToSend = 1;
-            if (maxReqsPerIssue > 1) reqsToSend += rng.generateNextUInt32() % maxReqsPerIssue;
-            if (reqsToSend > (maxOutstanding - requests.size())) reqsToSend = maxOutstanding - requests.size();
-            if (reqsToSend > ops) reqsToSend = ops;
-
-            for (int i = 0; i < reqsToSend; i++) {
-
-                StandardMem::Addr addr = rng.generateNextUInt64();
-
-                std::vector<uint8_t> data;
-                data.resize(4);
-                data[0] = (addr >> 24) & 0xff;
-                data[1] = (addr >> 16) & 0xff;
-                data[2] = (addr >>  8) & 0xff;
-                data[3] = (addr >>  0) & 0xff;
-                
-                uint32_t instNum = rng.generateNextUInt32() % high_mark;
-                uint64_t size = 4;
-                std::string cmdString = "Read";
-                Interfaces::StandardMem::Request* req;
-
-                // Send gpu cuda call request
-                req = createGPUReq();
-		        memory->send(req);
-
-                // Add cuda call requests to pending map
-                requests[req->getID()] = std::make_pair(getCurrentSimTime(), cmdString);
-
-                // Check cudal call retval
-                req = checkCudaReturn();
-		        memory->send(req);
-                requests[req->getID()] = std::make_pair(getCurrentSimTime(), cmdString);
-
-                ops--;
-	        }
-        }
-    }
-
-    // Check whether to end the simulation
-    if ( 0 == ops && requests.empty() ) {
-        out.verbose(CALL_INFO, 1, 0, "BalarTestCPU: Test Completed Successfuly\n");
-        primaryComponentOKToEndSim();
-        return true;    // Turn our clock off while we wait for any other CPUs to end
-    }
-
-    // return false so we keep going
-    return false;
-}*/
-
-/* Methods for sending different kinds of requests */
-StandardMem::Request* BalarTestCPU::createWrite(Addr addr) {
-    addr = ((addr % maxAddr)>>2) << 2;
-    // Dummy payload
-    std::vector<uint8_t> data;
-    data.resize(4);
-    data[0] = (addr >> 24) & 0xff;
-    data[1] = (addr >> 16) & 0xff;
-    data[2] = (addr >>  8) & 0xff;
-    data[3] = (addr >>  0) & 0xff;
-
-    StandardMem::Request* req = new Interfaces::StandardMem::Write(addr, data.size(), data);
-    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd) {
-        req->setNoncacheable();
-    }
-    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued %sWrite for address 0x%" PRIx64 "\n", getName().c_str(), ops, req->getNoncacheable() ? "Noncacheable " : "", addr);
-    return req;
-}
-
-StandardMem::Request* BalarTestCPU::createRead(Addr addr) {
-    addr = ((addr % maxAddr)>>2) << 2;
-    StandardMem::Request* req = new Interfaces::StandardMem::Read(addr, 4);
-    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd) {
-        req->setNoncacheable();
-    }
-    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued %sRead for address 0x%" PRIx64 "\n", getName().c_str(), ops, req->getNoncacheable() ? "Noncacheable " : "", addr);
-    return req;
-}
-
-StandardMem::Request* BalarTestCPU::createFlush(Addr addr) {
-    addr = ((addr % (maxAddr - noncacheableSize)>>2) << 2);
-    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd)
-        addr += noncacheableRangeEnd;
-    addr = addr - (addr % lineSize);
-    StandardMem::Request* req = new Interfaces::StandardMem::FlushAddr(addr, lineSize, false, 10);
-    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued FlushAddr for address 0x%" PRIx64 "\n", getName().c_str(), ops,  addr);
-    return req;
-}
-
-StandardMem::Request* BalarTestCPU::createFlushInv(Addr addr) {
-    addr = ((addr % (maxAddr - noncacheableSize)>>2) << 2);
-    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd)
-        addr += noncacheableRangeEnd;
-    addr = addr - (addr % lineSize);
-    StandardMem::Request* req = new Interfaces::StandardMem::FlushAddr(addr, lineSize, true, 10);
-    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued FlushAddrInv for address 0x%" PRIx64 "\n", getName().c_str(), ops,  addr);
-    return req;
-}
-
-StandardMem::Request* BalarTestCPU::createLL(Addr addr) {
-    // Addr needs to be a cacheable range
-    Addr cacheableSize = maxAddr + 1 - noncacheableRangeEnd + noncacheableRangeStart;
-    addr = (addr % (cacheableSize >> 2)) << 2;
-    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd) {
-        addr += noncacheableRangeEnd;
-    }
-    // Align addr
-    addr = (addr >> 2) << 2;
-
-    StandardMem::Request* req = new Interfaces::StandardMem::LoadLink(addr, 4);
-    // Set these so we issue a matching sc 
-    ll_addr = addr;
-    ll_issued = true;
-
-    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued LoadLink for address 0x%" PRIx64 "\n", getName().c_str(), ops, addr);
-    return req;
-}
-
-StandardMem::Request* BalarTestCPU::createSC() {
-    std::vector<uint8_t> data;
-    data.resize(4);
-    data[0] = (ll_addr >> 24) & 0xff;
-    data[1] = (ll_addr >> 16) & 0xff;
-    data[2] = (ll_addr >>  8) & 0xff;
-    data[3] = (ll_addr >>  0) & 0xff;
-    StandardMem::Request* req = new Interfaces::StandardMem::StoreConditional(ll_addr, data.size(), data);
-    ll_issued = false;
-    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued StoreConditional for address 0x%" PRIx64 "\n", getName().c_str(), ops, ll_addr);
-    return req;
-}
-
-StandardMem::Request* BalarTestCPU::createMMIOWrite() {
-    bool posted = rng.generateNextUInt32() % 2;
-    int32_t payload = rng.generateNextInt32();
-    payload >>= 16; // Shrink the number a bit
-    int32_t payload_cp = payload;
-    std::vector<uint8_t> data;
-    for (int i = 0; i < sizeof(int32_t); i++) {
-        data.push_back(payload & 0xFF);
-        payload >>=8;
-    }
-    StandardMem::Request* req = new Interfaces::StandardMem::Write(mmioAddr, sizeof(int32_t), data, posted);
-    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued MMIO Write for address 0x%" PRIx64 " with payload %d\n", getName().c_str(), ops, mmioAddr, payload_cp);
-    return req;
-}
-
-StandardMem::Request* BalarTestCPU::createMMIORead() {
-    StandardMem::Request* req = new Interfaces::StandardMem::Read(mmioAddr, sizeof(int32_t));
-    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued MMIO Read for address 0x%" PRIx64 "\n", getName().c_str(), ops, mmioAddr);
-    return req;
-}
-
 void BalarTestCPU::emergencyShutdown() {
     if (out.getVerboseLevel() > 1) {
         if (out.getOutputLocation() == Output::STDOUT)
@@ -403,37 +192,28 @@ void BalarTestCPU::emergencyShutdown() {
     }
 }
 
-Interfaces::StandardMem::Request* BalarTestCPU::createGPUReq() {
-    BalarCudaCallPacket_t *pack_ptr =  new BalarCudaCallPacket_t();
-    uint8_t funcType = rng.generateNextUInt32() % 11 + 1;
-    enum GpuApi_t cuda_call_id = (enum GpuApi_t)(funcType * 2 - 1);
-    pack_ptr->cuda_call_id = cuda_call_id; 
-    vector<uint8_t> *buffer = encode_balar_packet<BalarCudaCallPacket_t>(pack_ptr);
-
-    StandardMem::Request* req = new Interfaces::StandardMem::Write(gpuAddr, buffer->size(), *buffer, false);
-    // TODO: Write Request for parameters to gpu address
-    // num_gpu_issued->addData(1);
-
-    out.verbose(_INFO_, "GPU request sent %s, CUDA Function enum %s\n", getName().c_str(), gpu_api_to_string(cuda_call_id)->c_str());
-    return req;
-}
-
 Interfaces::StandardMem::Request* 
     BalarTestCPU::createGPUReqFromPacket(BalarCudaCallPacket_t pack) {
     vector<uint8_t> *buffer = encode_balar_packet<BalarCudaCallPacket_t>(&pack);
 
-    StandardMem::Request* req = new Interfaces::StandardMem::Write(gpuAddr, buffer->size(), *buffer, false);
+    // Instead of writing to GPU MMIO address
+    // We write to the scratch memory address first
+    StandardMem::Request* req = new Interfaces::StandardMem::Write(scratchMemAddr, buffer->size(), *buffer, false);
     // num_gpu_issued->addData(1);
 
-    out.verbose(_INFO_, "creating GPU request %s, CUDA Function enum %s\n", getName().c_str(), gpu_api_to_string(pack.cuda_call_id)->c_str());
+    out.verbose(_INFO_, "creating GPU request %s, CUDA Function enum %s; packet address: %x\n", getName().c_str(), gpu_api_to_string(pack.cuda_call_id)->c_str(), scratchMemAddr);
     return req;
 }
 
 
 Interfaces::StandardMem::Request* BalarTestCPU::checkCudaReturn() {
-    // TODO Check last packet send now
-    StandardMem::Request* req = new Interfaces::StandardMem::Read(mmioAddr, sizeof(BalarCudaCallReturnPacket_t));
-    out.verbose(_INFO_,  "%s: %" PRIu64 " creating Cuda return value Read for address 0x%" PRIx64 "\n", getName().c_str(), ops, mmioAddr);
+    // Check last packet send now
+    // The BalarMMIO will return this read with
+    // a address to the return packet
+    // BalarTestCPU will then read
+    // this return packet when handling ReadResp
+    StandardMem::Request* req = new Interfaces::StandardMem::Read(gpuAddr, sizeof(BalarCudaCallReturnPacket_t));
+    out.verbose(_INFO_, "%s: %" PRIu64 " creating Cuda return value Read for address 0x%" PRIx64 "\n", getName().c_str(), ops, mmioAddr);
     return req;
 }
 
@@ -450,70 +230,94 @@ void BalarTestCPU::mmioHandlers::handle(Interfaces::StandardMem::ReadResp* resp)
     if ( cpu->requests.end() == i ) {
         out->fatal(_INFO_, "Event (%" PRIx64 ") not found!\n", resp->getID());
     } else {
-        vector<uint8_t> *data_ptr = &(resp->data);
-        BalarCudaCallReturnPacket_t *ret_pack_ptr = decode_balar_packet<BalarCudaCallReturnPacket_t>(data_ptr);
-        out->verbose(_INFO_, "%s: get response from read request (%d) with enum: \"%s\" and error: %d\n", cpu->getName().c_str(), resp->getID(), gpu_api_to_string(ret_pack_ptr->cuda_call_id)->c_str(), ret_pack_ptr->cuda_error);
+        std::string request_type = (i)->second.second;
+        out->verbose(_INFO_, "%s: get response from read request (%d) with type: %s\n", cpu->getName().c_str(), resp->getID(), request_type.c_str());
 
-        enum GpuApi_t api_type = ret_pack_ptr->cuda_call_id;
-        if (api_type == GPU_REG_FAT_BINARY) {
-            out->verbose(_INFO_, "Fatbin handle: %d\n", ret_pack_ptr->fat_cubin_handle);
-            cpu->trace_parser->fatCubinHandle = ret_pack_ptr->fat_cubin_handle;
-        } else if (api_type == GPU_MALLOC) {
-            out->verbose(_INFO_, "GPU Malloc addr: %p\n", ret_pack_ptr->cudamalloc.malloc_addr);
+        // Need to identify whether this response is a 
+        //  write to the MMIO address
+        //  or to the scratch memory where we prepare the cuda packet
+        // Dispatcher here
+        if (request_type.compare("Start_CUDA_ret") == 0) {
+            // Balar has prepared the return packet by writing it to memory
+            // pointed by the read paylod
+            // We now need to issue yet another read to actually read the balar
+            // return packet
 
-            // Set device pointer value
-            *(CUdeviceptr *)(ret_pack_ptr->cudamalloc.devptr_addr) = ret_pack_ptr->cudamalloc.malloc_addr;
-        } else if (api_type == GPU_MEMCPY && ret_pack_ptr->cudamemcpy.kind == cudaMemcpyDeviceToHost) {
-            // Verify D2H result by counting bytes differences
-            // Also dump the device result
-            size_t tot = ret_pack_ptr->cudamemcpy.size;
-            size_t correct = 0;
-            volatile uint8_t *sim_ptr    = ret_pack_ptr->cudamemcpy.sim_data;
-            volatile uint8_t *real_ptr   = ret_pack_ptr->cudamemcpy.real_data;
-            for (size_t i = 0; i < tot; i++) {
-                if ((*real_ptr) == (*sim_ptr))
-                    correct++;
-                sim_ptr++;
-                real_ptr++;
-            }
+            // Prepare packet
+            std::string cmdString = "Read_CUDA_ret_packet";
+            uint64_t ret_pack_addr = dataToUInt64(&(resp->data));
+            Interfaces::StandardMem::Request* req = new Interfaces::StandardMem::Read(ret_pack_addr, sizeof(BalarCudaCallReturnPacket_t));
+            
+            // Add request to pending requests
+            cpu->requests[req->getID()] = std::make_pair(cpu->getCurrentSimTime(), cmdString);
+            
+            // Send the read request to memory
+            cpu->memory->send(req);
+        } else if (request_type.compare("Read_CUDA_ret_packet") == 0) {
+            vector<uint8_t> *data_ptr = &(resp->data);
+            BalarCudaCallReturnPacket_t *ret_pack_ptr = decode_balar_packet<BalarCudaCallReturnPacket_t>(data_ptr);
+            enum GpuApi_t api_type = ret_pack_ptr->cuda_call_id;
+            if (api_type == GPU_REG_FAT_BINARY) {
+                out->verbose(_INFO_, "Fatbin handle: %d\n", ret_pack_ptr->fat_cubin_handle);
+                cpu->trace_parser->fatCubinHandle = ret_pack_ptr->fat_cubin_handle;
+            } else if (api_type == GPU_MALLOC) {
+                out->verbose(_INFO_, "GPU Malloc addr: %p\n", ret_pack_ptr->cudamalloc.malloc_addr);
 
-            // Reset ptr for dumping
-            sim_ptr    = ret_pack_ptr->cudamemcpy.sim_data;
-            real_ptr     = ret_pack_ptr->cudamemcpy.real_data;
-
-            // Print out stats
-            double ratio = (double) correct / (double) tot;
-            out->verbose(_INFO_, "GPU memcpyD2H correct bytes: %d total bytes: %d ratio: %f\n", correct, tot, ratio);
-
-            // Record stats
-            cpu->total_memD2H_bytes->addData(tot);
-            cpu->correct_memD2H_bytes->addData(correct);
-            cpu->correct_memD2H_ratio->addData(ratio);
-
-            // Dump data to file
-            if (cpu->enable_memcpy_dump) {
-                char buf[200];
-                sprintf(buf, "cudamemcpyD2H-sim-%p-%p-size-%d.data", sim_ptr, real_ptr, tot);
-                std::ofstream dumpStream;
-                dumpStream.open(buf, std::ios::out | std::ios::binary);
-                if (!dumpStream.is_open()) {
-                    out->fatal(CALL_INFO, -1, "Cannot open '%s' for dumping D2H memcpy data\n", buf);
+                // Set device pointer value
+                *(CUdeviceptr *)(ret_pack_ptr->cudamalloc.devptr_addr) = ret_pack_ptr->cudamalloc.malloc_addr;
+            } else if (api_type == GPU_MEMCPY && ret_pack_ptr->cudamemcpy.kind == cudaMemcpyDeviceToHost) {
+                // Verify D2H result by counting bytes differences
+                // Also dump the device result
+                size_t tot = ret_pack_ptr->cudamemcpy.size;
+                size_t correct = 0;
+                volatile uint8_t *sim_ptr    = ret_pack_ptr->cudamemcpy.sim_data;
+                volatile uint8_t *real_ptr   = ret_pack_ptr->cudamemcpy.real_data;
+                for (size_t i = 0; i < tot; i++) {
+                    if ((*real_ptr) == (*sim_ptr))
+                        correct++;
+                    sim_ptr++;
+                    real_ptr++;
                 }
-                dumpStream.write((const char *) sim_ptr, tot);
-                dumpStream.close();
 
-                sprintf(buf, "cudamemcpyD2H-real-%p-%p-size-%d.data", sim_ptr, real_ptr, tot);
-                std::ofstream dumpRealStream;
-                dumpRealStream.open(buf, std::ios::out | std::ios::binary);
-                if (!dumpRealStream.is_open()) {
-                    out->fatal(CALL_INFO, -1, "Cannot open '%s' for dumping D2H memcpy data\n", buf);
+                // Reset ptr for dumping
+                sim_ptr    = ret_pack_ptr->cudamemcpy.sim_data;
+                real_ptr     = ret_pack_ptr->cudamemcpy.real_data;
+
+                // Print out stats
+                double ratio = (double) correct / (double) tot;
+                out->verbose(_INFO_, "GPU memcpyD2H correct bytes: %d total bytes: %d ratio: %f\n", correct, tot, ratio);
+
+                // Record stats
+                cpu->total_memD2H_bytes->addData(tot);
+                cpu->correct_memD2H_bytes->addData(correct);
+                cpu->correct_memD2H_ratio->addData(ratio);
+
+                // Dump data to file
+                if (cpu->enable_memcpy_dump) {
+                    char buf[200];
+                    sprintf(buf, "cudamemcpyD2H-sim-%p-%p-size-%d.data", sim_ptr, real_ptr, tot);
+                    std::ofstream dumpStream;
+                    dumpStream.open(buf, std::ios::out | std::ios::binary);
+                    if (!dumpStream.is_open()) {
+                        out->fatal(CALL_INFO, -1, "Cannot open '%s' for dumping D2H memcpy data\n", buf);
+                    }
+                    dumpStream.write((const char *) sim_ptr, tot);
+                    dumpStream.close();
+
+                    sprintf(buf, "cudamemcpyD2H-real-%p-%p-size-%d.data", sim_ptr, real_ptr, tot);
+                    std::ofstream dumpRealStream;
+                    dumpRealStream.open(buf, std::ios::out | std::ios::binary);
+                    if (!dumpRealStream.is_open()) {
+                        out->fatal(CALL_INFO, -1, "Cannot open '%s' for dumping D2H memcpy data\n", buf);
+                    }
+                    dumpRealStream.write((const char *) real_ptr, tot);
+                    dumpRealStream.close();
                 }
-                dumpRealStream.write((const char *) real_ptr, tot);
-                dumpRealStream.close();
             }
+        } else {
+            // Unknown cmdstring, abort
+            out->fatal(CALL_INFO, -1, "%s: Unknown readd request (%" PRIx64 "): %s!\n", cpu->getName().c_str(), resp->getID(), request_type.c_str());
         }
-
-        // TODO Handle return values from API
 
         cpu->requests.erase(i);
     }
@@ -534,17 +338,47 @@ void BalarTestCPU::mmioHandlers::handle(Interfaces::StandardMem::WriteResp* resp
     if ( cpu->requests.end() == i ) {
         out->fatal(CALL_INFO, -1, "Event (%" PRIx64 ") not found!\n", resp->getID());
     } else {
-        out->verbose(_INFO_, "%s: get response from write request (%d)\n", cpu->getName().c_str(), resp->getID());
+        std::string request_type = (i)->second.second;
+        out->verbose(_INFO_, "%s: get response from write request (%d) with type: %s\n", cpu->getName().c_str(), resp->getID(), request_type.c_str());
+
+        // Need to identify whether this response is a 
+        //  write to the MMIO address
+        //  or to the scratch memory where we prepare the cuda packet
+        // Dispatcher here
+        if (request_type.compare("Prepare_CUDA_packet") == 0) {
+            // A response to a write of scratch memory address
+            // where we store the cuda packet
+            // Now we are ready to issue a write to the MMIO
+            // address to notify the balarMMIO packet is ready
+
+            // Create the write request to balar address
+            // Store the scratch memory address to it
+            vector<uint8_t> payload;
+            UInt64ToData(cpu->scratchMemAddr, &payload);
+            StandardMem::Request* req = new Interfaces::StandardMem::Write(cpu->gpuAddr, payload.size(), payload, false);
+
+            // Add request to initiate cuda call and store in requests queue
+            std::string cmdString = "Start_CUDA_call";
+            cpu->requests[req->getID()] = std::make_pair(cpu->getCurrentSimTime(), cmdString);
+
+            // Send the address of packet to GPU
+            cpu->memory->send(req);
+        } else if (request_type.compare("Start_CUDA_call") == 0) {
+            // A response to a write which initiates the balarMMIO
+            // We should now first send a read request to GPU to let it prepare the
+            // return packet.
+            std::string cmdString = "Start_CUDA_ret";
+            Interfaces::StandardMem::Request* req = new Interfaces::StandardMem::Read(cpu->gpuAddr, 8);
+            cpu->requests[req->getID()] = std::make_pair(cpu->getCurrentSimTime(), cmdString);
+            cpu->memory->send(req);
+        } else {
+            // Unknown cmdstring, abort
+            out->fatal(CALL_INFO, -1, "%s: Unknown write request (%" PRIx64 "): %s!\n", cpu->getName().c_str(), resp->getID(), request_type.c_str());
+        }
+
         cpu->requests.erase(i);
     }
     delete resp;
-
-    // Send a check cuda return value after finish a call to api
-    // Check cuda call retval
-    std::string cmdString = "Read";
-    Interfaces::StandardMem::Request* req = cpu->checkCudaReturn();
-    cpu->memory->send(req);
-    cpu->requests[req->getID()] = std::make_pair(cpu->getCurrentSimTime(), cmdString);
 }
 
 BalarTestCPU::CudaAPITraceParser::CudaAPITraceParser(BalarTestCPU* cpu, SST::Output* out, std::string& traceFile, std::string& cudaExecutable) {

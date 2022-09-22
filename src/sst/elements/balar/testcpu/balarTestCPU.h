@@ -47,6 +47,9 @@ namespace SST {
 namespace BalarComponent { 
 using Req = SST::Interfaces::StandardMem::Request;
 
+// TODO: Need to get a scratch memory address from configuration
+// TODO: As we do not have the malloc
+
 class BalarTestCPU : public SST::Component {
 public:
 /* Element Library Info */
@@ -70,6 +73,7 @@ public:
         {"llsc_freq",               "(uint) Relative LLSC frequency", "0"},
         {"gpu_freq",                "(uint) Relative GPU request frequency", "0"},
         {"mmio_addr",               "(uint) Base address of the test MMIO component. 0 means not present.", "0"},
+        {"scratch_mem_addr",        "(uint) Base address of the scratch memory to pass balarMMIO packets", "0"},
         {"noncacheableRangeStart",  "(uint) Beginning of range of addresses that are noncacheable.", "0x0"},
         {"noncacheableRangeEnd",    "(uint) End of range of addresses that are noncacheable.", "0x0"},
         {"addressoffset",           "(uint) Apply an offset to a calculated address to check for non-alignment issues", "0"},
@@ -102,6 +106,7 @@ private:
     uint64_t memFreq;
     uint64_t maxAddr;
     uint64_t mmioAddr;
+    uint64_t scratchMemAddr;
     uint64_t gpuAddr;
     uint64_t lineSize;
     uint64_t maxOutstanding;
@@ -143,7 +148,6 @@ private:
     Interfaces::StandardMem::Request* createSC();
     Interfaces::StandardMem::Request* createMMIOWrite();
     Interfaces::StandardMem::Request* createMMIORead();
-    Interfaces::StandardMem::Request* createGPUReq();
     Interfaces::StandardMem::Request* createGPUReqFromPacket(BalarCudaCallPacket_t pack);
 
     // TODO: CUDA Calls request generator functions
@@ -162,6 +166,7 @@ private:
 
     // Create a handler class here to handle incoming requests
     // Like the one for the balarMMIO
+    // In charge of initiate CUDA api calls
     class mmioHandlers : public Interfaces::StandardMem::RequestHandler {
         public:
             friend class BalarTestCPU;
@@ -173,10 +178,26 @@ private:
             // virtual void handle(StandardMem::Write* write) override;
             virtual void handle(Interfaces::StandardMem::ReadResp* resp) override;
             virtual void handle(Interfaces::StandardMem::WriteResp* resp) override;
+            void UInt64ToData(uint64_t num, vector<uint8_t>* data) {
+                data->clear();
+                for (size_t i = 0; i < sizeof(uint64_t); i++) {
+                    data->push_back(num & 0xFF);
+                    num >>=8;
+                }
+            }
+            uint64_t dataToUInt64(std::vector<uint8_t>* data) {
+                uint64_t retval = 0;
+                for (int i = data->size(); i > 0; i--) {
+                    retval <<= 8;
+                    retval |= (*data)[i-1];
+                }
+                return retval;
+            }
 
             BalarTestCPU* cpu;
     };
-    mmioHandlers* handlers;
+    
+    mmioHandlers* gpuHandler;
 
     // Trace parser
     class CudaAPITraceParser {

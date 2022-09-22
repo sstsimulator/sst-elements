@@ -31,6 +31,8 @@ Can also set `PTX_SIM_DEBUG=3` to enable debug output in GPGPU-Sim, check its ma
         1. [ ] Automated dump cuda call sequences and generate launch/config file to the testcpu to consume
         2. [x] Or NVBit CUDA calls?
 4. [x] Like a unit-test feel use StandardCPU to pass stimulus (CUDA arguments) to balar
+5. [ ] Put the packet at mmio address + 4 location and pass the address to the mmio address
+    1. Also the packet response should be put at the same address as well
 
 ## Issues
 
