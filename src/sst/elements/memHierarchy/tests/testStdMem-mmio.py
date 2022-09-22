@@ -14,16 +14,16 @@ debug_params = { "debug" : 1, "debug_level" : 10 }
 #                        Core->MMIO
 #                        MMIO->memory    
 core_group = 0
-l1_group = 1
-mmio_group = 2
+mmio_group = 1
+l1_group = 2
 memory_group = 3
 
 core_dst = [l1_group, mmio_group]
-l1_src = [core_group]
+l1_src = [core_group, mmio_group]
 l1_dst = [memory_group]
 mmio_src = [core_group]
 mmio_dst = [memory_group]
-memory_src = [l1_group,mmio_group]
+memory_src = [l1_group, mmio_group]
 
 # Constans shared across components
 network_bw = "25GB/s"
@@ -66,22 +66,23 @@ l1cache.addParams({
 l1_nic = l1cache.setSubComponent("cpulink", "memHierarchy.MemNIC")
 l1_nic.addParams({ "group" : l1_group, 
                    "sources" : l1_src,
-                   "destinations" : l1_dst,
+                  #  "destinations" : l1_dst,
                    "network_bw" : network_bw})
 #l1_nic.addParams(debug_params)
 
 mmio = sst.Component("mmio", "memHierarchy.mmioEx")
 mmio.addParams({
-      "verbose" : 3,
+      "verbose" : 20,
       "clock" : clock,
       "base_addr" : mmio_addr,
+      "mmio_size": 1024,
 })
 mmio_iface = mmio.setSubComponent("iface", "memHierarchy.standardInterface")
 #mmio_iface.addParams(debug_params)
 mmio_nic = mmio_iface.setSubComponent("memlink", "memHierarchy.MemNIC")
 mmio_nic.addParams({"group" : mmio_group, 
-                    "sources" : mmio_src,
-                    "destinations" : mmio_dst,
+                  #   "sources" : mmio_src,
+                  #   "destinations" : mmio_dst,
                     "network_bw" : network_bw })
 #mmio_nic.addParams(debug_params)
 
@@ -107,7 +108,7 @@ memctrl.addParams({
 })
 mem_nic = memctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
 mem_nic.addParams({"group" : memory_group, 
-                   "sources" : "[1,2]", # Group 1 = L1, Group 2 = MMIO
+                  #  "sources" : memory_src,
                    "network_bw" : network_bw})
 #mem_nic.addParams(debug_params)
 
@@ -117,7 +118,6 @@ memory.addParams({
       "mem_size" : "512MiB"
 })
 
-<<<<<<< HEAD:src/sst/elements/memHierarchy/tests/testStdMem-mmio.py
 # Enable statistics
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
@@ -126,9 +126,6 @@ for a in componentlist:
 
 
 # Define the simulation links
-=======
-# Define the simulation links for CPU
->>>>>>> balar: copy original script for gpu cache config:src/sst/elements/balar/tests/testBalar-simple.py
 #          cpu/cpu_nic
 #                 |
 #  l1/l1_nic - chiprtr - mem_nic/mem/mmio
