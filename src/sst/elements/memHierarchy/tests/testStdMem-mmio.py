@@ -34,9 +34,6 @@ mmio_addr = 1024
 # Define the simulation components
 cpu = sst.Component("core", "memHierarchy.standardCPU")
 cpu.addParams({
-      "opCount" : "1000",
-      "memFreq" : "4",
-      "memSize" : "1KiB",
       "clock" : clock,
       "verbose" : 3,
 })
