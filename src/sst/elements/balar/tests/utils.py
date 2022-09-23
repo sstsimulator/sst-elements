@@ -102,7 +102,6 @@ class Config:
         params = dict({
                 'clock': self.gpuclock,
                 'verbose': int(self.verbose),
-                'cpu_cores': int(self.cpu_cores),
                 'gpu_cores': int(self.gpu_cores),
                 'maxtranscore': 1,
                 # esnure that maxcachetrans is equal to GPU l1 mshr entries
