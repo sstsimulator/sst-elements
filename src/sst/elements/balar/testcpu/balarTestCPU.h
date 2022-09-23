@@ -47,9 +47,6 @@ namespace SST {
 namespace BalarComponent { 
 using Req = SST::Interfaces::StandardMem::Request;
 
-// TODO: Need to get a scratch memory address from configuration
-// TODO: As we do not have the malloc
-
 class BalarTestCPU : public SST::Component {
 public:
 /* Element Library Info */
@@ -57,26 +54,10 @@ public:
             "Simple demo CPU for testing balar", COMPONENT_CATEGORY_PROCESSOR)
 
     SST_ELI_DOCUMENT_PARAMS(
-        {"memFreq",                 "(int) Average cycles between memory operations."},
-        {"memSize",                 "(UnitAlgebra/string) Size of physical memory with units."},
         {"verbose",                 "(uint) Determine how verbose the output from the CPU is", "1"},
         {"clock",                   "(UnitAlgebra/string) Clock frequency", "1GHz"},
-        {"rngseed",                 "(int) Set a seed for the random generation of addresses", "7"},
-        {"maxOutstanding",          "(uint) Maximum number of outstanding memory requests at a time.", "10"},
-        {"opCount",                 "(uint) Number of operations to issue."},
-        {"reqsPerIssue",            "(uint) Maximum number of requests to issue at a time", "1"},
-        {"write_freq",              "(uint) Relative write frequency", "25"},
-        {"read_freq",               "(uint) Relative read frequency", "75"},
-        {"flush_freq",              "(uint) Relative flush frequency", "0"},
-        {"flushinv_freq",           "(uint) Relative flush-inv frequency", "0"},
-        {"custom_freq",             "(uint) Relative custom op frequency", "0"},
-        {"llsc_freq",               "(uint) Relative LLSC frequency", "0"},
-        {"gpu_freq",                "(uint) Relative GPU request frequency", "0"},
-        {"mmio_addr",               "(uint) Base address of the test MMIO component. 0 means not present.", "0"},
+        {"gpu_addr",                "(uint) Base address of the BalarMMIO component. 0 means not present.", "0"},
         {"scratch_mem_addr",        "(uint) Base address of the scratch memory to pass balarMMIO packets", "0"},
-        {"noncacheableRangeStart",  "(uint) Beginning of range of addresses that are noncacheable.", "0x0"},
-        {"noncacheableRangeEnd",    "(uint) End of range of addresses that are noncacheable.", "0x0"},
-        {"addressoffset",           "(uint) Apply an offset to a calculated address to check for non-alignment issues", "0"},
         {"trace_file",              "(string) CUDA API calls trace file path"},
         {"cuda_executable",         "(string) CUDA executable file path to extract PTX info"},
         {"enable_memcpy_dump",      "(bool) Enable memD2Hcpy dump or not", "false"} )
@@ -102,67 +83,24 @@ private:
     virtual bool clockTic( SST::Cycle_t );
 
     Output out;
-    uint64_t ops;
-    uint64_t memFreq;
-    uint64_t maxAddr;
-    uint64_t mmioAddr;
     uint64_t scratchMemAddr;
     uint64_t gpuAddr;
-    uint64_t lineSize;
-    uint64_t maxOutstanding;
-    unsigned high_mark;
-    unsigned write_mark;
-    unsigned flush_mark;
-    unsigned flushinv_mark;
-    unsigned custom_mark;
-    unsigned llsc_mark;
-    unsigned mmio_mark;
-    unsigned gpu_mark;
-    uint32_t maxReqsPerIssue;
-    uint64_t noncacheableRangeStart, noncacheableRangeEnd, noncacheableSize;
     uint64_t clock_ticks;
     bool enable_memcpy_dump;
     Statistic<uint64_t>* total_memD2H_bytes;
     Statistic<uint64_t>* correct_memD2H_bytes;
     Statistic<double>* correct_memD2H_ratio;
 
-    bool ll_issued;
-    Interfaces::StandardMem::Addr ll_addr;
-
     // Pending requests
     std::map<Interfaces::StandardMem::Request::id_t, std::pair<SimTime_t, std::string>> requests;
 
     Interfaces::StandardMem *memory;
 
-    SST::RNG::MarsagliaRNG rng;
-
     TimeConverter *clockTC;
     Clock::HandlerBase *clockHandler;
 
-    /* Functions for creating the requests tested by this CPU */
-    Interfaces::StandardMem::Request* createWrite(uint64_t addr);
-    Interfaces::StandardMem::Request* createRead(Addr addr);
-    Interfaces::StandardMem::Request* createFlush(Addr addr);
-    Interfaces::StandardMem::Request* createFlushInv(Addr addr);
-    Interfaces::StandardMem::Request* createLL(Addr addr);
-    Interfaces::StandardMem::Request* createSC();
-    Interfaces::StandardMem::Request* createMMIOWrite();
-    Interfaces::StandardMem::Request* createMMIORead();
+    // Create request to call CUDA API
     Interfaces::StandardMem::Request* createGPUReqFromPacket(BalarCudaCallPacket_t pack);
-
-    // TODO: CUDA Calls request generator functions
-    Interfaces::StandardMem::Request* checkCudaReturn();
-    Interfaces::StandardMem::Request* createCudaMalloc();
-    Interfaces::StandardMem::Request* createCudaRegisterFatBinary();
-    Interfaces::StandardMem::Request* createCudaRegisterFunction();
-    Interfaces::StandardMem::Request* createCudaMemcpy();
-    Interfaces::StandardMem::Request* createCudaConfigureCall();
-    Interfaces::StandardMem::Request* createCudaSetupArgument();
-    Interfaces::StandardMem::Request* createCudaLaunch();
-    Interfaces::StandardMem::Request* createCudaFree();
-    Interfaces::StandardMem::Request* createCudaGetLastError();
-    Interfaces::StandardMem::Request* createCudaRegisterVar();
-    Interfaces::StandardMem::Request* createCudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags();
 
     // Create a handler class here to handle incoming requests
     // Like the one for the balarMMIO

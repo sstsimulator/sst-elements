@@ -1,5 +1,5 @@
 # Automatically generated SST Python input
-# Run script: sst testBalar-simple.py --model-options="-c ariel-gpu-v100.cfg -v" > tmp.out 2>&1
+# Run script: sst testBalar-simple.py --model-options="-c ariel-gpu-v100.cfg -v -x ./vectorAdd/vectorAdd -t cuda_calls.trace"
 # TODO: Balar cannot read the cuda packet in the memory
 # TODO: Some configuration issue with the group, dst, and src setting
 #       Using the same config as vanadis_mod resolve this
@@ -70,23 +70,11 @@ mmio_addr = 1024
 # Test CPU components and mem hierachy
 cpu = sst.Component("cpu", "balar.BalarTestCPU")
 cpu.addParams({
-      "opCount" : "1000",
-      "memFreq" : "4",
-      "memSize" : "1KiB",
       "clock" : clock,
       "verbose" : 3,
-      "mmio_addr" : mmio_addr, # Just above memory addresses
+      "mmio_addr" : mmio_addr,
       "scratch_mem_addr": 0,
-      "gpu_addr": mmio_addr,
-      
-      "read_freq" : 0,
-      "write_freq" : 0,
-      "flush_freq" : 0,
-      "flushinv_freq" : 0,
-      "custom_freq" : 0,
-      "llsc_freq" : 0,
-      "mmio_freq" : 0,
-      "gpu_freq" : 100,
+      "gpu_addr": mmio_addr, # Just above memory addresses
 
       # Trace and executable info
       "trace_file": traceFile,
