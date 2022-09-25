@@ -336,11 +336,14 @@ protected:
             }
 
             if (ev->vAddr < 64) {
-                out->fatal(CALL_INFO, -1,
+                /*
+                    out->fatal(CALL_INFO, -1,
                               "Error - load operation at instruction 0x%llx address: "
                               "0x%llx is less than virtual address 64, this would be "
                               "a segmentation fault.\n",
                               load_ins->getInstructionAddress(), ev->vAddr);
+                */
+                load_ins->flagError();
             }
 
             load_entry->removeRequest(ev->getID());
