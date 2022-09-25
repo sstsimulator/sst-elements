@@ -219,7 +219,7 @@ private:
 
     int  performFetch(const uint64_t cycle);
     int  performDecode(const uint64_t cycle);
-    int  performIssue(const uint64_t cycle, uint32_t& rob_start);
+    int  performIssue(const uint64_t cycle, uint32_t& rob_start, bool& unallocated_memory_op_seen);
     int  performExecute(const uint64_t cycle);
     int  performRetire(VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle);
     int  allocateFunctionalUnit(VanadisInstruction* ins);

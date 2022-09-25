@@ -540,7 +540,7 @@ VANADIS_COMPONENT::resetRegisterUseTemps(const uint16_t int_reg_count, const uin
 }
 
 int
-VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start)
+VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool& unallocated_memory_op_seen)
 {
     const int output_verbosity = output->getVerboseLevel();
     bool      issued_an_ins    = false;
@@ -580,7 +580,22 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start)
 #endif
 
                     if ( 0 == resource_check ) {
-                        const int allocate_fu = allocateFunctionalUnit(ins);
+                        int allocate_fu;
+
+                        if( (ins->getInstFuncType() == INST_LOAD || ins->getInstFuncType() == INST_STORE ||
+                            ins->getInstFuncType() == INST_FENCE) ) {
+
+                            if(unallocated_memory_op_seen) {
+                                // the instruction should not be allocated because memory operations
+                                // must be issued to the LSQ in order to maintain memory ordering 
+                                // semantics
+                                allocate_fu = 1;
+                            } else {
+                                allocate_fu = allocateFunctionalUnit(ins);
+                            }
+                        } else {
+                            allocate_fu = allocateFunctionalUnit(ins);
+                        }
 
 #ifdef VANADIS_BUILD_DEBUG
                         if ( output_verbosity >= 8 ) {
@@ -607,6 +622,13 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start)
                             //									stat_ins_issued->addData(1);
                             issued_an_ins = true;
                         }
+                    } else {
+                        if(ins->getInstFuncType() == INST_LOAD || ins->getInstFuncType() == INST_STORE ||
+                            ins->getInstFuncType() == INST_FENCE) {
+                                // we have seen a memory operation which is not issued, downstream operations
+                                // cannot issue yet to maintain ordering
+                                unallocated_memory_op_seen = true;
+                            }
                     }
 
                     // if the instruction is *not* issued yet, we need to keep track
@@ -1200,11 +1222,12 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     }
 
     uint32_t rob_start   = 0;
+    bool unallocated_memory_op_seen = false;
 
     // Attempt to perform issues, cranking through the entire ROB call by call or until we
     // reach the max issues this cycle
     for ( uint32_t i = 0; i < issues_per_cycle; ++i ) {
-        if ( performIssue(cycle, rob_start) != 0 ) { break; }
+        if ( performIssue(cycle, rob_start, unallocated_memory_op_seen) != 0 ) { break; }
     }
 
     // Record how many instructions we issued this cycle
