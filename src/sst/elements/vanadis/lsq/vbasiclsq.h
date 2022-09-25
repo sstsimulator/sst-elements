@@ -65,6 +65,8 @@ public:
         max_loads(params.find<size_t>("max_loads", 16)),
         max_issue_attempts_per_cycle(params.find("issues_per_cycle", 2)) {
 
+        std_mem_handlers = new VanadisBasicLoadStoreQueue::StandardMemHandlers(this, output);
+
         memInterface = loadUserSubComponent<Interfaces::StandardMem>(
             "memory_interface", ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, getTimeConverter("1ps"),
             new StandardMem::Handler<SST::Vanadis::VanadisBasicLoadStoreQueue>(
@@ -78,6 +80,8 @@ public:
             delete (*op_q_itr);
             op_q_itr = op_q.erase(op_q_itr);
         }
+
+        delete std_mem_handlers;
     }
 
     bool storeFull() override { return op_q.size() >= max_stores; }
@@ -374,6 +378,7 @@ protected:
                 }
 
             if(std_store_found) {
+                out->verbose(CALL_INFO, 16, 0, "--> write-response is a standard store is matched and cleared from in-flight operations successfully.\n");
                 delete ev;
                 return;
             }
@@ -436,11 +441,20 @@ protected:
     };
 
     void processIncomingDataCacheEvent(StandardMem::Request* ev) {
+        output->verbose(CALL_INFO, 16, 0, "received incoming data cache request -> processIncomingDataCacheEvent()\n");
+
+        assert(ev != nullptr);
+        assert(std_mem_handlers != nullptr);
+
         ev->handle(std_mem_handlers);
+        output->verbose(CALL_INFO, 16, 0, "completed pass off to incoming handlers\n");
     }
 
     void issueStoreFront() {
+        output->verbose(CALL_INFO, 16, 0, "issue store-front -> check store is front of ROB and attempt to issue\n");
+
         if(stores_pending.empty()) {
+            output->verbose(CALL_INFO, 16, 0, "-> stores-pending is empty, return without processing\n");
             return;
         }
 
@@ -449,11 +463,20 @@ protected:
         VanadisBasicStorePendingEntry* current_store = stores_pending.front();
         VanadisStoreInstruction* store_ins = current_store->getStoreInstruction();
 
+        output->verbose(CALL_INFO, 16, 0, "-> current store queue front is ins addr: 0x%llx\n", store_ins->getInstructionAddress());
+
         // check we have not already dispatched this entry
         if( UNLIKELY(!current_store->isDispatched()) ) {
+            output->verbose(CALL_INFO, 16, 0, "--> store-front is not already dispatched so attempt to put into memory system.\n");
+
             if(store_ins->checkFrontOfROB()) {
+                output->verbose(CALL_INFO, 16, 0, "---> store is at front of ROB so OK to push into memory system.\n");
+
                 // store instruction is current front of ROB so ready to be send to memory system
                 bool issue_result = issueStore(current_store, store_ins);
+
+                output->verbose(CALL_INFO, 16, 0, "---> attempt to issue store result is: %s\n",
+                    issue_result ? "success" : "failed");
 
                 // this was a standard store (not LLSC/LOCK) and we issued into system successfully
                 if(LIKELY(issue_result)) {
@@ -469,6 +492,8 @@ protected:
                     output->verbose(CALL_INFO, 16, 0, "---> issued non-standard store: 0x%llx / thr: %" PRIu32 " (marked dispatch, will stall until response)\n");
                     current_store->markDispatched();
                 }
+            } else {
+                output->verbose(CALL_INFO, 16, 0, "----> store is not at ROB front so need to wait until this is marked\n");
             }
         }
     }
@@ -497,6 +522,9 @@ protected:
         }
 
         const bool needs_split = operationStraddlesCacheLine(store_address, store_width);
+
+        output->verbose(CALL_INFO, 16, 0, "--> issue-store at ins: 0x%llx / store-addr: 0x%llx / width: %" PRIu64 " / partial: %s / split: %s\n",
+            store_ins->getInstructionAddress(), store_address, store_width, store_ins->isPartialStore() ? "yes" : "no", needs_split ? "yes" : "no");
 
         // if the store is not a split operation, then copy payload we are good to go, if it is split
         // handle this case later after we do a load of address and width calculation
@@ -541,8 +569,8 @@ protected:
 
                 return true;
             } else {
-                output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: standard store store-at: 0x%llx width: %" PRIu64 "\n",
-                    store_address, store_width);
+                output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: standard store ins: 0x%llx store-at: 0x%llx width: %" PRIu64 "\n",
+                    store_ins->getInstructionAddress(), store_address, store_width);
 
                 store_req = new StandardMem::Write(store_address, payload.size(), payload, 
                     false, 0, store_address, store_ins->getInstructionAddress());
@@ -583,9 +611,12 @@ protected:
         }
 
         if(nullptr != store_req) {
+            output->verbose(CALL_INFO, 16, 0, "-----> store-request sent to memory interface / entry marked dispatched\n");
             memInterface->send(store_req);
             store_entry->addRequest(store_req->getID());
             store_entry->markDispatched();
+        } else {
+            output->verbose(CALL_INFO, 16, 0, "-----> store-request was not sent to memory interface, record is nullptr\n");
         }
 
         return false;
@@ -739,7 +770,7 @@ protected:
                     op_q.pop_front();
                     return true;
                 } else {
-                    output->verbose(CALL_INFO, 16, 0, "-> queue front is load: ins: 0xllx / thr: %" PRIu32 " has not issued so return and halt processing.\n", 
+                    output->verbose(CALL_INFO, 16, 0, "-> queue front is load: ins: 0x%llx / thr: %" PRIu32 " has not issued so return and halt processing.\n", 
                         load_ins->getInstructionAddress(), load_ins->getHWThread()); 
                     return false;
                 }
@@ -761,7 +792,7 @@ protected:
                 }
 
                 if(store_ins->completedIssue()) {
-                    output->verbose(CALL_INFO, 16, 0, "-> queue front is store: ins: 0xllx / thr: %" PRIu32 " has issued so will process...\n", 
+                    output->verbose(CALL_INFO, 16, 0, "-> queue front is store: ins: 0x%llx / thr: %" PRIu32 " has issued so will process...\n", 
                         store_ins->getInstructionAddress(), store_ins->getHWThread());
                     VanadisRegisterFile* hw_thr_reg = registerFiles->at(store_ins->getHWThread());
 
@@ -789,7 +820,7 @@ protected:
                     op_q.pop_front();
                     return true;
                 } else {
-                    output->verbose(CALL_INFO, 16, 0, "-> queue front is store: ins: 0xllx / has not issued so return and halt processing.\n", store_ins->getInstructionAddress()); 
+                    output->verbose(CALL_INFO, 16, 0, "-> queue front is store: ins: 0x%llx / has not issued so return and halt processing.\n", store_ins->getInstructionAddress()); 
                     return false;
                 }
             } break;
