@@ -1000,6 +1000,7 @@ protected:
 
                         case MIPS_SPEC_OP_MASK_SYSCALL:
                         {
+                            bundle->addInstruction(new VanadisFenceInstruction(ins_addr, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
                             bundle->addInstruction(new VanadisSysCallInstruction(ins_addr, hw_thr, options));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_syscall);
