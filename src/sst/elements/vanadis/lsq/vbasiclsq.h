@@ -230,7 +230,7 @@ protected:
                 if (target_reg != load_ins->getISAOptions()->getRegisterIgnoreWrites()) {
                     uint8_t* reg_ptr = (uint8_t*)lsq->registerFiles->at(hw_thr)->getIntReg(target_reg);
                     
-                    assert(load_address > ev->vAddr);
+                    assert(load_address >= ev->vAddr);
                     uint64_t split_address_diff = ev->vAddr - load_address;
 
                     assert(split_address_diff < load_width);
