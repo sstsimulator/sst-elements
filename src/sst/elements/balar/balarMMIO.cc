@@ -30,20 +30,12 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
     out.init("BalarMMIOComponent[@f:@l:@p] ", params.find<int>("verbose", 1), 0, Output::STDOUT);
 
     // Configurations for GPU
-    cpu_core_count = (uint32_t) params.find<uint32_t>("cpu_cores", 1);
     gpu_core_count = (uint32_t) params.find<uint32_t>("gpu_cores", 1);
-    latency = (uint32_t) params.find<uint32_t>("latency", 1);
-    maxPendingTransCore = (uint32_t) params.find<uint32_t>("maxtranscore", 16);
     maxPendingCacheTrans = (uint32_t) params.find<uint32_t>("maxcachetrans", 512);
     mmio_size = (uint32_t) params.find<uint32_t>("mmio_size", 512);
 
     // Ensure that GPGP-sim has the same as SST gpu cores
     SST_gpgpusim_numcores_equal_check(gpu_core_count);
-    pending_transactions_count = 0;
-    remainingTransfer = 0;
-    totalTransfer = 0;
-    ackTransfer = 0;
-    transferNumber = 0;
 
     bool found = false;
 
@@ -70,7 +62,6 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
     char* link_cache_buffer = (char*) malloc(sizeof(char) * 256);
 
     // Buffer to keep track of pending transactions
-    pendingTransactions = new std::unordered_map<StandardMem::Request::id_t, StandardMem::Request*>();
     gpuCachePendingTransactions = new std::unordered_map<StandardMem::Request::id_t, cache_req_params>();
 
     // Interface to CPU
@@ -237,10 +228,11 @@ void BalarMMIO::handleGPUCache(SST::Interfaces::StandardMem::Request* req) {
 }
 
 /**
- * @brief Handler for incoming Write requests, passing
- *        the cuda function call arguments.
- *        GPGPUSIM will be called and the corresponding
- *        return value will be stored.
+ * @brief Handler for incoming Write requests
+ *        the payload will be an address to the actual cuda call packet
+ *        the function will save the Write object and issue a read
+ *        to memory to fetch the cuda call packet.
+ *        The actual calling to GPGPU-Sim will be done in ReadResp handler
  * 
  * @param write 
  */
@@ -266,7 +258,11 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
 }
 
 /**
- * @brief Handler for return value query
+ * @brief Handler for return value query.
+ *        Will save the read as pending read. Then it will issue a write
+ *        request to save the return packet to the previously passed in
+ *        memory address in Write request.
+ *        Response to CPU will be done in handler for WriteResp
  * 
  * @param read 
  */
@@ -287,10 +283,19 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Read* read) {
     mmio->iface->send(write_cuda_ret);
 }
 
-/* Handler for incoming Read responses - getting response from reading
- * CUDA packet data
+/**
+ * @brief Handler for the previous read request that get the cuda call packet
+ *        It will decode the packet and make call to GPGPU-Sim.
+ *        Then will notify CPU if the call is non-blocking.
+ * 
+ * @param resp 
  */
 void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* resp) {
+    // TODO: Based on the cuda api call type
+    // TODO: issue reads to read the pointer data until all one level pointer value is read in?
+    // TODO: Then proceed to the actual calling part
+    // TODO: Might need to make a mask specifying which pointer has
+    // TODO: been read in?
     // Whether the request is blocking or not
     bool is_blocked = false;
 
@@ -320,8 +325,8 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* res
             break;
         case GPU_MEMCPY: 
             is_blocked = true;
-            // TODO Might want to optimize here with the payload and src
-            // TODO that are essentially the same thing?
+            // TODO if payload is NULL, need to read the src in SST memspace (Vanadis calling, data is in SST mem space)
+            // TODO if payload is not NULL, just use src (testCPU calling, testcpu use malloc to assign the cuda data so balar is in that mem space)
             mmio->cuda_ret.cuda_error = cudaMemcpy(
                     (void *) packet->cuda_memcpy.dst,
                     (const void*) packet->cuda_memcpy.src,
@@ -423,7 +428,14 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* res
     delete resp;
 }
 
-/* Handler for incoming Write responses - should be a response to a Write we issued */
+
+/**
+ * @brief Handler for a write we made, which is a write that store
+ *        cuda return packet in memory. It will then use the pending
+ *        read request to make request telling CPU the return value is ready.
+ * 
+ * @param resp 
+ */
 void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::WriteResp* resp) {
     // Make a response. Must fill in payload.
     StandardMem::Read* read = mmio->pending_read;
