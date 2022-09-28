@@ -58,6 +58,12 @@ namespace BalarComponent {
     // TODO: Make this into subclass of standardmem::request? and override the makeResponse function?
     typedef struct BalarCudaCallPacket {
         enum GpuApi_t cuda_call_id;
+        // Whether the pointer data are in SST memory space
+        // 0: no, same space as the simulator
+        // 1: yes, the data are in SST mem space and we
+        //    need to query and write to them via standard 
+        //    mem interface
+        bool isSSTmem;
         union {
             struct {
                 void** devPtr;

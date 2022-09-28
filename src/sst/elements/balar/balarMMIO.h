@@ -134,6 +134,9 @@ protected:
     Addr mmio_addr;
     mmioHandlers* handlers;
 
+    // Tmp buffer to hold D2H dst data
+    uint8_t* memcpyD2H_dst;
+
     /* Debug -triggered by output.fatal() and/or SIGUSR2 */
     virtual void emergencyShutdown() {};
 
@@ -158,6 +161,10 @@ private:
     StandardMem::Write* pending_write;
     StandardMem::Read* pending_read;
 
+    // Requests sent in this class
+    std::map<Interfaces::StandardMem::Request::id_t, std::pair<SimTime_t, std::string>> requests;
+
+
     struct cache_req_params {
         cache_req_params( unsigned m_core_id,  void* mem_fetch, StandardMem::Request* req) {
                 core_id = m_core_id;
@@ -170,7 +177,6 @@ private:
         StandardMem::Request* original_sst_req;
     };
 
-    std::map<StandardMem::Request::id_t, std::pair<SimTime_t, std::string>> requests;
     virtual bool clockTic( SST::Cycle_t );
 
     // The memH interface into the memory system
