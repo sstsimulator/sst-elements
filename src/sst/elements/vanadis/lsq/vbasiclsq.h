@@ -161,6 +161,17 @@ public:
         output->verbose(CALL_INFO, 16, 0, "-> tick LSQ at cycle: %" PRIu64 " / lsq-size: %" PRIu64 " / loads-pending: %" PRIu64 " / store-buffer: %" PRIu64 " / store-ops-in-flight: %" PRIu64 "\n",
             cycle, op_q.size(), loads_pending.size(), stores_pending.size(), std_stores_in_flight.size());
 
+        if(loads_pending.size() > 0) {
+            for(int i = loads_pending.size() - 1; i >= 0; i--) {
+                VanadisBasicLoadPendingEntry* load_entry = loads_pending.at(i);
+
+                output->verbose(CALL_INFO, 16, 0, "--> load[%5d] ins: 0x%llx / thr: %" PRIu32 " / addr: 0x%llx / width: %" PRIu32 "\n",
+                    i, load_entry->getLoadInstruction()->getInstructionAddress(),
+                    load_entry->getLoadInstruction()->getHWThread(),
+                    load_entry->getLoadAddress(), load_entry->getLoadWidth()); 
+            }
+        }
+
         // this can be called multiple times per cycle if needed but lets just do once for now
         for(uint32_t attempt = 0; attempt < max_issue_attempts_per_cycle; ++attempt) {
             const bool attempt_result = attempt_to_issue(cycle, attempt);
@@ -211,138 +222,84 @@ protected:
 
             VanadisLoadInstruction* load_ins = load_entry->getLoadInstruction();
 
-            const uint16_t target_reg = load_ins->getPhysIntRegOut(0);
             const uint16_t load_width = load_entry->getLoadWidth();
             const uint64_t load_address = load_entry->getLoadAddress();
             const uint32_t hw_thr     = load_ins->getHWThread();
 
-            if (load_ins->isPartialLoad()) {
-                const uint16_t reg_offset = load_ins->getRegisterOffset();
+            uint16_t target_reg = 0;
+            uint16_t target_isa_reg = 0;
+            uint8_t* register_ptr = nullptr;
+            uint64_t reg_offset  = load_ins->getRegisterOffset();
+            uint64_t addr_offset = ev->vAddr - load_address;
+            
+            switch(load_ins->getValueRegisterType()) {
+            case LOAD_INT_REGISTER: {
+                target_isa_reg = load_ins->getISAIntRegOut(0);
+                target_reg = load_ins->getPhysIntRegOut(0);
 
-                out->verbose(CALL_INFO, 16, 0,
-                                "-> LSQ matched an unaligned/partial load, target: %" PRIu16
-                                " / reg-offset: %" PRIu16 " / full-width: %" PRIu16 " / partial-width: %" PRIu16
-                                "\n",
-                                target_reg, reg_offset, load_width, ev->size);
-
-                // check we aren't writing to a zero register, if we are just drop the
-                // update
-                if (target_reg != load_ins->getISAOptions()->getRegisterIgnoreWrites()) {
-                    uint8_t* reg_ptr = (uint8_t*)lsq->registerFiles->at(hw_thr)->getIntReg(target_reg);
-                    
-                    assert(load_address >= ev->vAddr);
-                    uint64_t split_address_diff = ev->vAddr - load_address;
-
-                    assert(split_address_diff < load_width);
-
-                    for (uint16_t i = 0; i < ev->size; ++i) {
-                        reg_ptr[reg_offset + split_address_diff + i] = ev->data[i];
-                    }
-
-                    // if we are not at offset zero then or we are loading the entire
-                    // width, we need to perform an update to the full register
-                    if ((reg_offset > 0) || (ev->size == load_ins->getLoadWidth())) {
-                        // if we are loading less than 8 bytes, because otherwise the full
-                        // data width of the register is set
-                        if (load_ins->getLoadWidth() < 8) {
-                            uint64_t extended_value = 0;
-
-                            switch (load_ins->getLoadWidth()) {
-                            case 2: {
-                                uint16_t* reg_ptr_16 = (uint16_t*)reg_ptr;
-                                extended_value = vanadis_sign_extend((*reg_ptr_16));
-                            } break;
-
-                            case 4: {
-                                uint32_t* reg_ptr_32 = (uint32_t*)reg_ptr;
-                                extended_value = vanadis_sign_extend((*reg_ptr_32));
-                            } break;
-                            }
-
-                            // Put the sign extended value into the register
-                            lsq->registerFiles->at(hw_thr)->setIntReg(target_reg, extended_value);
-                        }
-                    }
+                if(target_reg != load_ins->getISAOptions()->getRegisterIgnoreWrites()) {
+                    register_ptr = (uint8_t*) lsq->registerFiles->at(hw_thr)->getIntReg(target_reg);
                 }
-            } else {
-                out->verbose(CALL_INFO, 16, 0,
-                                "-> LSQ matched to load hw_thr = %" PRIu32 ", target_reg = %" PRIu16
-                                ", width=%" PRIu16 "\n",
-                                hw_thr, target_reg, load_width);
-                int64_t new_value = 0;
+            } break;
+            case LOAD_FP_REGISTER: {
+                target_isa_reg = load_ins->getISAFPRegOut(0);
+                target_reg = load_ins->getPhysFPRegOut(0);
+                register_ptr = (uint8_t*) lsq->registerFiles->at(hw_thr)->getFPReg(target_reg);
+            } break;
+            default:
+                out->fatal(CALL_INFO, -1, "Unknown register type.\n");
+            }
 
-                // the load is satisfied with a single read from memory, this means that we
-                // did not have to fracture the cache line
+            // check we don't load more into the register than the width available
+            assert(ev->size <= load_width);
+            assert((reg_offset + addr_offset + ev->size) <= 8);
+
+            out->verbose(CALL_INFO, 16, 0, "---> LSQ recv load event ins: 0x%llx / hw-thr: %" PRIu32 " / entry-addr: 0x%llx / entry-width: %" PRIu16 " / reg-offset: %" PRIu64 " / ev-addr: 0x%llx / ev-width: %" PRIu16 " / addr-offset %" PRIu64 " / sign-extend: %s / target-isa-reg: %" PRIu16 " / target-phys-reg: %" PRIu16 " / reg-type: %s\n",
+                load_ins->getInstructionAddress(), hw_thr, load_address, load_width, reg_offset, ev->vAddr, ev->size, 
+                addr_offset, (load_ins->performSignExtension() ? "yes" : "no"),
+                target_isa_reg, target_reg,
+                (load_ins->getValueRegisterType() == LOAD_INT_REGISTER) ? "int" : "fp");
+
+            // check we are not attempting to perform a write to "ignore write" register in which case
+            // just skip updating the register value as this is not a legitimately visible load into
+            // the registers
+            if(nullptr != register_ptr) {
+                // copy data into the register
+                for(auto i = 0; i < ev->size; ++i) {
+                    register_ptr[reg_offset + addr_offset + i] = ev->data[i];
+                }
+
+                // this is either the only or the last load in the sequence
+                // so with this we will be complete
                 if(load_entry->countRequests() == 1) {
-                    switch (load_width) {
+                    // check whether we need to perform a sign extension on the result
+                    if(load_ins->performSignExtension()) {
+                        out->verbose(CALL_INFO, 16, 0, "----> perform sign extension: pre-value: 0x%0llx / %" PRIu64 "\n",
+                            *(uint64_t*)(register_ptr), *(uint64_t*)(register_ptr));
 
-                    case 1:
-                        new_value = vanadis_sign_extend(ev->data[0]);
-                        break;
-                    case 2: {
-                        uint16_t* val_16 = (uint16_t*)&ev->data[0];
-                        new_value = vanadis_sign_extend(*val_16);
-                    } break;
-                    case 4: {
-                        uint32_t* val_32 = (uint32_t*)&ev->data[0];
-                        new_value = vanadis_sign_extend(*val_32);
-                    } break;
-                    case 8: {
-                        uint64_t* val_64 = (uint64_t*)&ev->data[0];
-                        new_value = *val_64;
-                    } break;
-
-                    default:
-                        out->fatal(CALL_INFO, -1,
-                                    "Error: load-instruction forces a load which is not "
-                                    "power-of-2: width=%" PRIu16 "\n",
-                                    load_width);
-                        break;
-                    }
-
-                    out->verbose(CALL_INFO, 16, 0,
-                                    "---> LSQ (ins: 0x%0llx) set sign-extended register "
-                                    "value for r: %" PRIu16 ", v: %" PRId64 " / 0x%0llx\n",
-                                    load_ins->getInstructionAddress(), target_reg, new_value, new_value);
-
-                    // Set the register value
-                    lsq->registerFiles->at(hw_thr)->setIntReg(target_reg, new_value);
-                } else {
-                    // we had to fracture a cache line in order to reach this point but we know
-                    // that this is not a partial load so it must hit register offset zero
-                    uint8_t* reg_ptr = (uint8_t*)lsq->registerFiles->at(hw_thr)->getIntReg(target_reg);
-                        
-                    assert(load_address > ev->vAddr);
-                    uint64_t split_address_diff = ev->vAddr - load_address;
-
-                    assert(split_address_diff < load_width);
-
-                    // copy the fractured value into the register
-                    for (uint16_t i = 0; i < ev->size; ++i) {
-                        reg_ptr[split_address_diff + i] = ev->data[i];
-                    }
-
-                    // have we reached the last byte that we need to load from the memory system
-                    // if yes, we need to sign extend
-                    if( (load_address + load_width) == (ev->vAddr + ev->size) ) {
-                        if( ((reg_ptr[load_width - 1]) & 0x70) != 0 ) {
-                            // perform sign extend
-                            for(uint16_t i = load_width; i < 8; ++i) {
-                                reg_ptr[i] = 0xFF;
+                        if((register_ptr[reg_offset + load_width - 1] & 0x80) != 0) {
+                            for(auto i = (reg_offset + load_width); i < 8; ++i) {
+                                register_ptr[i] = 0xFF;
                             }
+                        } else {
+                            for(auto i = (reg_offset + load_width); i < 8; ++i) {
+                                register_ptr[i] = 0x0;
+                            }
+                        }
+
+                        out->verbose(CALL_INFO, 16, 0, "----> perform sign extension: post-value: 0x%0llx / %" PRIu64 "\n",
+                            *(uint64_t*)(register_ptr), *(uint64_t*)(register_ptr));
+                    } else {
+                        for(auto i = (reg_offset + load_width); i < 8; ++i) {
+                            register_ptr[i] = 0x0;
                         }
                     }
                 }
             }
 
+            ///////////////////////////////////////////////////////////////////////////////////
+
             if (ev->vAddr < 64) {
-                /*
-                    out->fatal(CALL_INFO, -1,
-                              "Error - load operation at instruction 0x%llx address: "
-                              "0x%llx is less than virtual address 64, this would be "
-                              "a segmentation fault.\n",
-                              load_ins->getInstructionAddress(), ev->vAddr);
-                */
                 load_ins->flagError();
             }
 
