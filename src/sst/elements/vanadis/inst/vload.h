@@ -81,8 +81,17 @@ public:
         return "LOADUNK";
     }
 
-    uint16_t getMemoryAddressRegister() const { return phys_int_regs_in[1]; }
-    uint16_t getTargetRegister() const { return phys_int_regs_in[0]; }
+    uint16_t getMemoryAddressRegister() const { return phys_int_regs_in[0]; }
+    uint16_t getTargetRegister() const { 
+        switch(regType) {
+            case LOAD_INT_REGISTER:
+                return phys_int_regs_out[0];
+            case LOAD_FP_REGISTER:
+                return phys_fp_regs_out[0];
+            default:
+                assert(0);
+        }
+    }
 
     virtual void execute(SST::Output* output, VanadisRegisterFile* regFile) { markExecuted(); }
 
