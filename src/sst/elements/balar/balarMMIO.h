@@ -67,21 +67,11 @@ public:
         {"verbose",                 "(uint) Determine how verbose the output from the device is", "0"},
         {"clock",                   "(UnitAlgebra/string) Clock frequency", "1GHz"},
         {"base_addr",               "(uint) Starting addr mapped to the device", "0"},
-        {"mem_accesses",            "(uint) Number of memory accesses to do", "0"},
-        {"max_addr",                "(uint64) Max memory address for requests issued by this device. Required if mem_accesses > 0.", "0"},
-        {"latency", "The time to be spent to service a memory request", "1000"},
-        {"num_nodes", "number of disaggregated nodes in the system", "1"},
-        {"num_cores", "Number of GPUs", "1"},
-        {"maxtranscore", "Maximum number of pending transactions", "16"},
-        {"maxcachetrans", "Maximum number of pending cache transactions", "512"},
-        {"mmio_size", "Size of the MMIO memory range (Bytes)", "512"},
+        {"gpu_cores",               "(uint) Number of GPU cores", "1"},
+        {"mmio_size",               "(uint) Size of the MMIO memory range (Bytes)", "512"},
     )
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( 
         {"iface", "Interface into memory subsystem", "SST::Interfaces::StandardMem"}
-    )
-    SST_ELI_DOCUMENT_STATISTICS(
-        {"read_latency", "Latency of reads issued by this device to memory", "simulation time units", 1},
-        {"write_latency", "Latency of writes issued by this device to memory", "simulation time units", 1},
     )
     SST_ELI_DOCUMENT_PORTS(
         {"requestLink%(num_cores)d", "Handle CUDA API calls", {} },
@@ -104,18 +94,6 @@ public:
     void SST_callback_memcpy_D2H_done();
 
     bool tick(SST::Cycle_t x);
-    cudaMemcpyKind memcpyKind;
-    bool is_stalled = false;
-    unsigned int transferNumber;
-    std::vector< uint64_t > physicalAddresses;
-    uint64_t totalTransfer;
-    uint64_t ackTransfer;
-    uint64_t remainingTransfer;
-    uint64_t baseAddress;
-    uint64_t currentAddress;
-    std::vector< uint8_t > dataAddress;
-    uint32_t pending_transactions_count = 0;
-    uint32_t maxPendingTransCore;
     uint32_t mmio_size;
 
 protected:
@@ -143,10 +121,6 @@ protected:
         void UInt64ToData(uint64_t num, std::vector<uint8_t>* data);
         uint64_t dataToUInt64(std::vector<uint8_t>* data);
 
-        // TODO
-        // void cudaErrorToData(cudaError_t err, std::vector<uint8_t>* data);
-        
-        // TODO Change to a more descriptive name?
         BalarMMIO* mmio;
     };
 
@@ -167,7 +141,6 @@ private:
 
     // Last cuda call info
     // Return value from last cuda function call
-    // TODO Make this a union for different return values
     BalarCudaCallReturnPacket_t cuda_ret;
 
     // Last cuda function call packet
@@ -197,16 +170,8 @@ private:
         StandardMem::Request* original_sst_req;
     };
 
-    // If this device also is testing memory accesses, these are used
-    uint32_t mem_access;
-    SST::RNG::MarsagliaRNG rng;
-    StandardMem::Request* createWrite(uint64_t addr);
-    StandardMem::Request* createRead(Addr addr);
     std::map<StandardMem::Request::id_t, std::pair<SimTime_t, std::string>> requests;
     virtual bool clockTic( SST::Cycle_t );
-    Statistic<uint64_t>* statReadLatency;
-    Statistic<uint64_t>* statWriteLatency;
-    Addr max_addr;
 
     // The memH interface into the memory system
     StandardMem* iface;
@@ -214,13 +179,9 @@ private:
     // Copy from original balar
     BalarMMIO(const BalarMMIO&); // do not implement
     void operator=(const BalarMMIO&); // do not implement
-    uint32_t cpu_core_count;
     uint32_t gpu_core_count;
-    uint32_t pending_transaction_count = 0;
-    std::unordered_map<StandardMem::Request::id_t, StandardMem::Request*>* pendingTransactions;
     StandardMem** gpu_to_cpu_cache_links;
     Link** gpu_to_core_links;
-    uint32_t latency; // The page fault latency/ the time spent by Balar to service a memory allocation request
 
     StandardMem** gpu_to_cache_links;
     uint32_t maxPendingCacheTrans;
