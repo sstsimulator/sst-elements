@@ -101,7 +101,7 @@ class Config:
     def getGPUConfig(self):
         params = dict({
                 'clock': self.gpuclock,
-                'verbose': int(self.verbose),
+                # 'verbose': int(self.verbose),
                 'gpu_cores': int(self.gpu_cores),
                 'maxtranscore': 1,
                 # esnure that maxcachetrans is equal to GPU l1 mshr entries

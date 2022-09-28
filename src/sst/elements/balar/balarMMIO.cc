@@ -188,8 +188,30 @@ void BalarMMIO::SST_callback_memcpy_H2D_done() {
 }
 
 void BalarMMIO::SST_callback_memcpy_D2H_done() {
-    // Send blocked response
-    iface->send(blocked_response);
+    // TODO: Not actually done here? The dst data is not correct
+    // Should wait for the memcpy to complete
+    // as memcpy is blocking
+    // Prepare a request to write the dst data to CPU
+    out.verbose(CALL_INFO, 1, 0, "Prepare memcpyD2H writes\n");
+    BalarCudaCallPacket_t * packet = last_packet;
+    Addr dstAddr = packet->cuda_memcpy.dst;
+    std::string cmdString = "Store_memcpy_D2H_dst";
+
+    // Prepare request payload
+    std::vector<uint8_t> payload;
+    for (size_t i = 0; i < packet->cuda_memcpy.count; i++) {
+        payload.push_back(memcpyD2H_dst[i]);
+    }
+    // We are done copying data
+    free(memcpyD2H_dst);
+
+    StandardMem::Request* store_req = new StandardMem::Write(dstAddr, packet->cuda_memcpy.count, payload);
+
+    // Record in hashmap
+    requests[store_req->getID()] = std::make_pair(getCurrentSimTime(), cmdString);
+
+    // Send via mem iface
+    iface->send(store_req);
 }
 
 bool BalarMMIO::clockTic(Cycle_t cycle) {
@@ -237,7 +259,6 @@ void BalarMMIO::handleGPUCache(SST::Interfaces::StandardMem::Request* req) {
  * @param write 
  */
 void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write) {
-    // TODO: Treat the data as the address to the passed in packet
     // Convert 8 bytes of the payload into an int
     // std::vector<uint8_t> buff = write->data;
 
@@ -251,6 +272,9 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
 
     // Create a memory request to read the cuda call packet
     StandardMem::Request* cuda_req = new StandardMem::Read(mmio->packet_scratch_mem_addr, sizeof(BalarCudaCallPacket_t));
+
+    // Record the read request we made
+    mmio->requests[cuda_req->getID()] = std::make_pair(mmio->getCurrentSimTime(), "Read_cuda_packet");
 
     // Now send the memory request
     // inside the SST memory space
@@ -273,10 +297,16 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Read* read) {
     // when finish writing return packet to memory
     mmio->pending_read = read;
 
+    // TODO: Might need to free this? Since the data vector copy on move when
+    // TODO: Creating the request?
     vector<uint8_t> *payload = encode_balar_packet<BalarCudaCallReturnPacket_t>(&mmio->cuda_ret);
 
     // Write to the scratch memory region first
     StandardMem::Request* write_cuda_ret = new StandardMem::Write(mmio->packet_scratch_mem_addr, sizeof(BalarCudaCallReturnPacket_t), *payload);
+
+    // Record this request
+    mmio->requests[write_cuda_ret->getID()] = std::make_pair(mmio->getCurrentSimTime(), "Write_cuda_ret");
+
     
     // Now send the memory request to write the cuda return packet
     // inside the SST memory space
@@ -291,47 +321,232 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Read* read) {
  * @param resp 
  */
 void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* resp) {
-    // TODO: Based on the cuda api call type
-    // TODO: issue reads to read the pointer data until all one level pointer value is read in?
-    // TODO: Then proceed to the actual calling part
-    // TODO: Might need to make a mask specifying which pointer has
-    // TODO: been read in?
-    // Whether the request is blocking or not
-    bool is_blocked = false;
+    // Based on the cuda api call type
+    // issue reads to read the pointer data until all one level pointer value is read in?
+    // Then proceed to the actual calling part
+    // Might need to make a mask specifying which pointer has
+    // been read in?
+    // Also need a place at the end to write for the cuda memcpy?
 
-    // Our write instance from CUDA API Call
-    StandardMem::Write* write = mmio->pending_write;
+    // Classify the read request type
+    std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = mmio->requests.find(resp->getID());
+    if (mmio->requests.end() == i ) {
+        out->fatal(_INFO_, "Event (%" PRIx64 ") not found!\n", resp->getID());
+    } else {
+        std::string request_type = (i)->second.second;
+        out->verbose(_INFO_, "%s: get response from read request (%d) with type: %s\n", mmio->getName().c_str(), resp->getID(), request_type.c_str());
 
-    // Get cuda call arguments from read response
-    mmio->last_packet = decode_balar_packet<BalarCudaCallPacket_t>(&(resp->data));
-    BalarCudaCallPacket_t * packet = mmio->last_packet;
+        // Now dispatch based on read request type
+        // Either: Read CUDA packet
+        //         Finish Query memcpy src
 
-    out->verbose(_INFO_, "Handling CUDA API Call. Enum is %s\n", gpu_api_to_string(packet->cuda_call_id)->c_str());
+        if (request_type.compare("Read_cuda_packet") == 0) {
+            // This is a response to a request we send to cache
+            // to read the cuda packet
+            // Whether the request is blocking or not
+            bool is_blocked = false;
 
-    // mmio->cuda_ret = (cudaError_t) pack_ptr->cuda_call_id; // For testing purpose
+            // Our write instance from CUDA API Call
+            StandardMem::Write* write = mmio->pending_write;
 
-    // Save the call type for return packet
-    mmio->cuda_ret.cuda_call_id = packet->cuda_call_id;
-    switch (packet->cuda_call_id) {
-        case GPU_REG_FAT_BINARY: 
-            mmio->cuda_ret.cuda_error = cudaSuccess;
-            mmio->cuda_ret.fat_cubin_handle = (uint64_t) __cudaRegisterFatBinarySST(packet->register_fatbin.file_name);
-            break;
-        case GPU_REG_FUNCTION: 
-            // hostFun should be a fixed pointer value to each kernel function 
-            __cudaRegisterFunctionSST(packet->register_function.fatCubinHandle, 
-                                      packet->register_function.hostFun,
-                                      packet->register_function.deviceFun);
-            break;
-        case GPU_MEMCPY: 
-            is_blocked = true;
-            // TODO if payload is NULL, need to read the src in SST memspace (Vanadis calling, data is in SST mem space)
-            // TODO if payload is not NULL, just use src (testCPU calling, testcpu use malloc to assign the cuda data so balar is in that mem space)
+            // Get cuda call arguments from read response
+            mmio->last_packet = decode_balar_packet<BalarCudaCallPacket_t>(&(resp->data));
+            BalarCudaCallPacket_t * packet = mmio->last_packet;
+
+            out->verbose(_INFO_, "Handling CUDA API Call. Enum is %s\n", gpu_api_to_string(packet->cuda_call_id)->c_str());
+
+            // Save the call type for return packet
+            mmio->cuda_ret.cuda_call_id = packet->cuda_call_id;
+
+            // The following are for non-SST memspace
+            switch (packet->cuda_call_id) {
+                case GPU_REG_FAT_BINARY: 
+                    mmio->cuda_ret.cuda_error = cudaSuccess;
+                    mmio->cuda_ret.fat_cubin_handle = (uint64_t) __cudaRegisterFatBinarySST(packet->register_fatbin.file_name);
+                    break;
+                case GPU_REG_FUNCTION: 
+                    // hostFun should be a fixed pointer value to each kernel function 
+                    __cudaRegisterFunctionSST(packet->register_function.fatCubinHandle, 
+                                            packet->register_function.hostFun,
+                                            packet->register_function.deviceFun);
+                    break;
+                case GPU_MEMCPY: 
+                    // Handle a special case where we have a memcpy
+                    // within SST memory space
+                    is_blocked = true;
+                    if (packet->isSSTmem) {
+                        if (packet->cuda_memcpy.kind == cudaMemcpyHostToDevice) {
+                            // We will end the handler early as we
+                            // need to read the src data in host mem first
+                            // and then proceed
+                            Addr srcAddr = packet->cuda_memcpy.src;
+                            std::string cmdString = "Fetch_memcpy_H2D_src";
+                            StandardMem::Request* fetch_req = new StandardMem::Read(srcAddr, packet->cuda_memcpy.count);
+
+                            // Record this request for later reference
+                            mmio->requests[fetch_req->getID()] = std::make_pair(mmio->getCurrentSimTime(), cmdString);
+
+                            // Send the read request to read the 
+                            // src data
+                            mmio->iface->send(fetch_req);
+
+                            // Delete the request 
+                            mmio->requests.erase(i);
+
+                            // Delet the resp
+                            delete resp;
+                            return;
+                        } else if (packet->cuda_memcpy.kind == cudaMemcpyDeviceToHost) {
+                            // Create a dst buffer to hold the dst data
+                            // The write to the SST memspace will be created
+                            // once the gpgpusim finish cpy data in the callback
+                            // `SST_callback_memcpy_D2H_done`
+                            // Assign buffer space
+                            mmio->memcpyD2H_dst = (uint8_t *) malloc(sizeof(uint8_t) * packet->cuda_memcpy.count);
+
+                            // Call memcpy
+                            mmio->cuda_ret.cuda_error = cudaMemcpy(
+                                    (void *)  mmio->memcpyD2H_dst,
+                                    (const void*) packet->cuda_memcpy.src,
+                                    packet->cuda_memcpy.count,
+                                    packet->cuda_memcpy.kind);
+
+                            // These two fields are for non SST mem use only
+                            // for comparing the results
+                            mmio->cuda_ret.cudamemcpy.sim_data = NULL;
+                            mmio->cuda_ret.cudamemcpy.real_data = NULL;
+
+                            mmio->cuda_ret.cudamemcpy.size = packet->cuda_memcpy.count;
+                            mmio->cuda_ret.cudamemcpy.kind = packet->cuda_memcpy.kind;
+                        } else {
+                            out->fatal(CALL_INFO, -1, "%s: unsupported memcpy kind!\n", mmio->getName().c_str());
+                        }
+                    } else {
+                        mmio->cuda_ret.cuda_error = cudaMemcpy(
+                                (void *) packet->cuda_memcpy.dst,
+                                (const void*) packet->cuda_memcpy.src,
+                                packet->cuda_memcpy.count,
+                                packet->cuda_memcpy.kind);
+                        
+                        // Payload contains the pointer actual data from hw trace run
+                        // dst is the pointer to the simulation cpy
+                        mmio->cuda_ret.cudamemcpy.sim_data = (volatile uint8_t*) packet->cuda_memcpy.dst;
+                        mmio->cuda_ret.cudamemcpy.real_data = (volatile uint8_t*) packet->cuda_memcpy.payload;
+                        mmio->cuda_ret.cudamemcpy.size = packet->cuda_memcpy.count;
+                        mmio->cuda_ret.cudamemcpy.kind = packet->cuda_memcpy.kind;
+                        break;
+                    }
+                case GPU_CONFIG_CALL: 
+                    {
+                        // Brackets for var visibity issue, see 
+                        // https://stackoverflow.com/questions/5685471/error-jump-to-case-label-in-switch-statement
+                        dim3 gridDim;
+                        dim3 blockDim;
+                        gridDim.x = packet->configure_call.gdx;
+                        gridDim.y = packet->configure_call.gdy;
+                        gridDim.z = packet->configure_call.gdz;
+                        blockDim.x = packet->configure_call.bdx;
+                        blockDim.y = packet->configure_call.bdy;
+                        blockDim.z = packet->configure_call.bdz;
+                        mmio->cuda_ret.cuda_error = cudaConfigureCallSST(
+                            gridDim, 
+                            blockDim, 
+                            packet->configure_call.sharedMem, 
+                            packet->configure_call.stream
+                        );
+                    }
+                    break;
+                case GPU_SET_ARG: 
+                    mmio->cuda_ret.cuda_error = cudaSetupArgumentSST(
+                        packet->setup_argument.arg,
+                        packet->setup_argument.value,
+                        packet->setup_argument.size,
+                        packet->setup_argument.offset
+                    );
+                    break;
+                case GPU_LAUNCH: 
+                    mmio->cuda_ret.cuda_error = cudaLaunchSST(packet->cuda_launch.func);
+                    break;
+                case GPU_FREE: 
+                    mmio->cuda_ret.cuda_error = cudaFree(packet->cuda_free.devPtr);
+                    break;
+                case GPU_GET_LAST_ERROR: 
+                    mmio->cuda_ret.cuda_error = cudaGetLastError();
+                    break;
+                case GPU_MALLOC: 
+                    mmio->cuda_ret.cudamalloc.devptr_addr = (uint64_t) packet->cuda_malloc.devPtr;
+                    mmio->cuda_ret.cuda_error = cudaSuccess;
+                    mmio->cuda_ret.cudamalloc.malloc_addr = cudaMallocSST(
+                        packet->cuda_malloc.devPtr,
+                        packet->cuda_malloc.size
+                    );
+                    break;
+                case GPU_REG_VAR: 
+                    mmio->cuda_ret.cuda_error = cudaSuccess;
+                    __cudaRegisterVar(
+                        packet->register_var.fatCubinHandle,
+                        packet->register_var.hostVar,
+                        packet->register_var.deviceAddress,
+                        packet->register_var.deviceName,
+                        packet->register_var.ext,
+                        packet->register_var.size,
+                        packet->register_var.constant,
+                        packet->register_var.global
+                    );
+                    break;
+                case GPU_MAX_BLOCK: 
+                    mmio->cuda_ret.cuda_error = cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(
+                        packet->max_active_block.numBlock,
+                        packet->max_active_block.hostFunc,
+                        packet->max_active_block.blockSize,
+                        packet->max_active_block.dynamicSMemSize,
+                        packet->max_active_block.flags
+                    );
+                    break;
+                default:
+                    out->fatal(CALL_INFO, -1, "Received unknown GPU enum API: %d\n", packet->cuda_call_id);
+                    break;
+            }
+
+            /* Send response (ack) to the CUDA API Cuda request if needed */
+            if (!(write->posted)) {
+                if (is_blocked) {
+                    // Save blocked req's response and send later
+                    mmio->blocked_response = write->makeResponse();
+                    out->verbose(CALL_INFO, 1, 0, "Handling a blocking request: %s\n", gpu_api_to_string(packet->cuda_call_id)->c_str());
+
+                } else {
+                    mmio->iface->send(write->makeResponse());
+                    out->verbose(CALL_INFO, 1, 0, "Handling a non-blocking request: %s\n", gpu_api_to_string(packet->cuda_call_id)->c_str());
+                }
+            }
+            delete write;
+            delete resp;
+        } else if (request_type.compare("Fetch_memcpy_H2D_src") == 0) {
+            // TODO: Data not correct here!
+            // We continue for the memcpyH2D
+            bool is_blocked = true;
+            BalarCudaCallPacket_t * packet = mmio->last_packet;
+            StandardMem::Write* write = mmio->pending_write;
+
+            // First get the read src data and point the memcpy function to it
+            // Assign source buffer space
+            uint64_t size = packet->cuda_memcpy.count;
+            uint8_t * src_data_ptr = (uint8_t *) malloc(sizeof(uint8_t) * size);
+            std::vector<uint8_t> *buffer = &(resp->data);
+
+            // Copy from resp data to the buffer
+            std::copy(buffer->data(), buffer->data() + size, src_data_ptr);
+
+            // Call with the source data in simulator space
             mmio->cuda_ret.cuda_error = cudaMemcpy(
                     (void *) packet->cuda_memcpy.dst,
-                    (const void*) packet->cuda_memcpy.src,
+                    (const void*) src_data_ptr,
                     packet->cuda_memcpy.count,
                     packet->cuda_memcpy.kind);
+
+            // Free the source data buffer
+            free(src_data_ptr);
             
             // Payload contains the pointer actual data from hw trace run
             // dst is the pointer to the simulation cpy
@@ -339,93 +554,30 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* res
             mmio->cuda_ret.cudamemcpy.real_data = (volatile uint8_t*) packet->cuda_memcpy.payload;
             mmio->cuda_ret.cudamemcpy.size = packet->cuda_memcpy.count;
             mmio->cuda_ret.cudamemcpy.kind = packet->cuda_memcpy.kind;
-            break;
-        case GPU_CONFIG_CALL: 
-            {
-                // Brackets for var visibity issue, see 
-                // https://stackoverflow.com/questions/5685471/error-jump-to-case-label-in-switch-statement
-                dim3 gridDim;
-                dim3 blockDim;
-                gridDim.x = packet->configure_call.gdx;
-                gridDim.y = packet->configure_call.gdy;
-                gridDim.z = packet->configure_call.gdz;
-                blockDim.x = packet->configure_call.bdx;
-                blockDim.y = packet->configure_call.bdy;
-                blockDim.z = packet->configure_call.bdz;
-                mmio->cuda_ret.cuda_error = cudaConfigureCallSST(
-                    gridDim, 
-                    blockDim, 
-                    packet->configure_call.sharedMem, 
-                    packet->configure_call.stream
-                );
-            }
-            break;
-        case GPU_SET_ARG: 
-            mmio->cuda_ret.cuda_error = cudaSetupArgumentSST(
-                packet->setup_argument.arg,
-                packet->setup_argument.value,
-                packet->setup_argument.size,
-                packet->setup_argument.offset
-            );
-            break;
-        case GPU_LAUNCH: 
-            mmio->cuda_ret.cuda_error = cudaLaunchSST(packet->cuda_launch.func);
-            break;
-        case GPU_FREE: 
-            mmio->cuda_ret.cuda_error = cudaFree(packet->cuda_free.devPtr);
-            break;
-        case GPU_GET_LAST_ERROR: 
-            mmio->cuda_ret.cuda_error = cudaGetLastError();
-            break;
-        case GPU_MALLOC: 
-            mmio->cuda_ret.cudamalloc.devptr_addr = (uint64_t) packet->cuda_malloc.devPtr;
-            mmio->cuda_ret.cuda_error = cudaSuccess;
-            mmio->cuda_ret.cudamalloc.malloc_addr = cudaMallocSST(
-                packet->cuda_malloc.devPtr,
-                packet->cuda_malloc.size
-            );
-            break;
-        case GPU_REG_VAR: 
-            mmio->cuda_ret.cuda_error = cudaSuccess;
-            __cudaRegisterVar(
-                packet->register_var.fatCubinHandle,
-                packet->register_var.hostVar,
-                packet->register_var.deviceAddress,
-                packet->register_var.deviceName,
-                packet->register_var.ext,
-                packet->register_var.size,
-                packet->register_var.constant,
-                packet->register_var.global
-            );
-            break;
-        case GPU_MAX_BLOCK: 
-            mmio->cuda_ret.cuda_error = cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(
-                packet->max_active_block.numBlock,
-                packet->max_active_block.hostFunc,
-                packet->max_active_block.blockSize,
-                packet->max_active_block.dynamicSMemSize,
-                packet->max_active_block.flags
-            );
-            break;
-        default:
-            out->fatal(CALL_INFO, -1, "Received unknown GPU enum API: %d\n", packet->cuda_call_id);
-            break;
-    }
 
-    /* Send response (ack) to the CUDA API Cuda request if needed */
-    if (!(write->posted)) {
-        if (is_blocked) {
-            // Save blocked req's response and send later
-            mmio->blocked_response = write->makeResponse();
-            out->verbose(CALL_INFO, 1, 0, "Handling a blocking request: %s", gpu_api_to_string(packet->cuda_call_id)->c_str());
+            /* Send response (ack) to the CUDA API Cuda request if needed */
+            if (!(write->posted)) {
+                if (is_blocked) {
+                    // Save blocked req's response and send later
+                    mmio->blocked_response = write->makeResponse();
+                    out->verbose(CALL_INFO, 1, 0, "Handling a blocking request: %s\n", gpu_api_to_string(packet->cuda_call_id)->c_str());
+
+                } else {
+                    mmio->iface->send(write->makeResponse());
+                    out->verbose(CALL_INFO, 1, 0, "Handling a non-blocking request: %s\n", gpu_api_to_string(packet->cuda_call_id)->c_str());
+                }
+            }
+            delete write;
+            delete resp;
 
         } else {
-            mmio->iface->send(write->makeResponse());
-            out->verbose(CALL_INFO, 1, 0, "Handling a non-blocking request: %s", gpu_api_to_string(packet->cuda_call_id)->c_str());
+            // Unknown cmdstring, abort
+            out->fatal(CALL_INFO, -1, "%s: Unknown read request (%" PRIx64 "): %s!\n", mmio->getName().c_str(), resp->getID(), request_type.c_str());
         }
+
+        // Delete the request 
+        mmio->requests.erase(i);
     }
-    delete write;
-    delete resp;
 }
 
 
@@ -437,18 +589,43 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* res
  * @param resp 
  */
 void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::WriteResp* resp) {
-    // Make a response. Must fill in payload.
-    StandardMem::Read* read = mmio->pending_read;
-    StandardMem::ReadResp* read_resp = static_cast<StandardMem::ReadResp*>(read->makeResponse());
+    std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = mmio->requests.find(resp->getID());
+    if (mmio->requests.end() == i ) {
+        out->fatal(_INFO_, "Event (%" PRIx64 ") not found!\n", resp->getID());
+    } else {
+        std::string request_type = (i)->second.second;
+        out->verbose(_INFO_, "%s: get response from write request (%d) with type: %s\n", mmio->getName().c_str(), resp->getID(), request_type.c_str());
 
-    // Return the scratch memory address as the read result
-    vector<uint8_t> payload;
-    UInt64ToData(mmio->packet_scratch_mem_addr, &payload);
-    payload.resize(read->size, 0);
-    read_resp->data = payload;
-    mmio->iface->send(read_resp);
-    delete read;
-    delete resp;
+        // Dispatch based on request type
+        if (request_type.compare("Write_cuda_ret") == 0) {
+            // To a write we made to write the CUDA return packet
+            // Make a response. Must fill in payload.
+            StandardMem::Read* read = mmio->pending_read;
+            StandardMem::ReadResp* read_resp = static_cast<StandardMem::ReadResp*>(read->makeResponse());
+
+            // Return the scratch memory address as the read result
+            vector<uint8_t> payload;
+            UInt64ToData(mmio->packet_scratch_mem_addr, &payload);
+            payload.resize(read->size, 0);
+            read_resp->data = payload;
+            mmio->iface->send(read_resp);
+            delete read;
+            delete resp;
+        } else if (request_type.compare("Store_memcpy_D2H_dst") == 0) {
+            // To a write we made to store the dst data into SST memory space
+            // Since we only get the data after the memcpy is actually
+            // done in GPGPU-Sim, we should just send the blocked response
+            // saved in the previous request handler for memcpyD2H
+            mmio->iface->send(mmio->blocked_response);
+
+            delete resp;
+        } else {
+            // Unknown cmdstring, abort
+            out->fatal(CALL_INFO, -1, "%s: Unknown write request (%" PRIx64 "): %s!\n", mmio->getName().c_str(), resp->getID(), request_type.c_str());
+        }
+        // Delete the request 
+        mmio->requests.erase(i);
+    }
 }
 
 void BalarMMIO::mmioHandlers::intToData(int32_t num, vector<uint8_t>* data) {

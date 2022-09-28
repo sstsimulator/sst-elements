@@ -426,6 +426,7 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
         req = nullptr;
         if (!traceStream.eof()) {
             BalarCudaCallPacket_t pack;
+            pack.isSSTmem = false;
             std::string line;
             std::getline(traceStream, line);
             out->verbose(CALL_INFO, 2, 0, "Trace info: %s\n", line.c_str());
