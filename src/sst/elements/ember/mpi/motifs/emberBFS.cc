@@ -17,6 +17,8 @@
 #include <sst_config.h>
 #include "emberBFS.h"
 
+#include <cmath>
+
 using namespace SST::Ember;
 
 EmberBFSGenerator::EmberBFSGenerator(SST::ComponentId_t id,
