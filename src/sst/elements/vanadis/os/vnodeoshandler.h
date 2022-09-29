@@ -100,7 +100,7 @@ public:
     void setLink(SST::Link* new_link) { core_link = new_link; }
 
     uint32_t getCoreID() const { return core_id; }
-    int setBrk( uint64_t brk ) {
+    void setBrk( uint64_t brk ) {
         current_brk_point = brk;
     }
 
