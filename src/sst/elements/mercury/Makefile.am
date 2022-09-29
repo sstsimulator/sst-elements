@@ -58,30 +58,84 @@ libsystemapi_la_SOURCES = \
 library_includedir=$(includedir)/sst/elements/hg
 
 nobase_library_include_HEADERS = \
-  common/null_buffer.h \
-  common/skeleton.h \
-  components/operating_system.h \
-  libraries/system/system_api.h \
-  operating_system/process/thread.h \
-  operating_system/libraries/api.h \
+  common/thread_lock.h
+  common/events.h
+  common/hg_printf.h
+  common/errors.h
+  common/thread_safe_new.h
+  common/node_address.h
+  common/serializable.h
+  common/thread_safe_int.h
+  common/output.h
+  common/skeleton.h
+  common/printable.h
+  common/allocator.h
+  common/request_fwd.h
+  common/util.h
+  common/request.h
+  common/component.h
+  common/null_buffer.h
+  common/sim_thread_lock.h
+  common/timestamp.h
+  common/factory.h
+  components/operating_system_fwd.h
+  components/node.h
+  components/operating_system.h
+  components/node_fwd.h
+  external/json.hpp
+  hardware/network/network_id.h
+  hardware/network/network_message.h
+  hardware/network/network_message_fwd.h
+  hardware/common/recv_cq.h
+  hardware/common/flow_fwd.h
+  hardware/common/unique_id.h
+  hardware/common/packet.h
+  hardware/common/flow.h
+  hardware/common/packet_fwd.h
+  libraries/system/system_api.h
+  libraries/system/replacements/unistd.h
+  libraries/compute/lib_compute_time.h
+  libraries/compute/lib_compute_inst.h
+  libraries/compute/lib_compute.h
+  libraries/compute/compute_api.h
+  libraries/compute/lib_compute_fwd.h
+  libraries/compute/lib_hybrid_compute.h
+  libraries/compute/compute_event.h
+  libraries/compute/lib_compute_memmove.h
+  libraries/compute/compute_event_fwd.h
+  operating_system/launch/app_launcher.h
+  operating_system/launch/app_launcher_fwd.h
+  operating_system/launch/app_launch_request.h
+  operating_system/libraries/library_fwd.h
+  operating_system/libraries/service_fwd.h
+  operating_system/libraries/library.h
+  operating_system/libraries/service.h
+  operating_system/libraries/api.h
   operating_system/libraries/api_fwd.h
-#  
-#  process/app.h \
-#  process/app_id.h \
-#  process/mutex.h \
-#  process/process_context.h \
-#  process/software_id.h \
-#  process/task_id.h \
-#  process/thread.h \
-#  process/thread_id.h \
-#  process/thread_info.h \
-#  process/tls.h \
-#  threading/context_util.h \
-#  threading/sim_thread_lock.h \
-#  threading/stack_alloc.h \
-#  threading/stack_alloc_chunk.h \
-#  threading/thread_lock.h \
-#  threading/threading_interface.h
+  operating_system/libraries/unblock_event.h
+  operating_system/threading/context_util.h
+  operating_system/threading/thread_lock.h
+  operating_system/threading/stack_alloc.h
+  operating_system/threading/stack_alloc_chunk.h
+  operating_system/threading/threading_interface.h
+  operating_system/threading/sim_thread_lock.h
+  operating_system/process/tls.h
+  operating_system/process/process_context.h
+  operating_system/process/software_id.h
+  operating_system/process/app.h
+  operating_system/process/compute_scheduler_fwd.h
+  operating_system/process/thread_fwd.h
+  operating_system/process/thread_info.h
+  operating_system/process/compute_scheduler.h
+  operating_system/process/thread.h
+  operating_system/process/simple_compute_scheduler.h
+  operating_system/process/loadlib.h
+  operating_system/process/thread_id.h
+  operating_system/process/app_id.h
+  operating_system/process/task_id.h
+  operating_system/process/mutex.h
+  operating_system/process/app_fwd.h
+  sst_hg_config.h
 
 if !SST_ENABLE_PREVIEW_BUILD
 libhg_la_SOURCES += $(deprecated_libhg_sources)
