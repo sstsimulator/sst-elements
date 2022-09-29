@@ -89,8 +89,7 @@ endif
 
 EXTRA_DIST = \
     tests/testsuite_default_hg.py \
-    tests/node.py \
-    tests/refFiles/node.out
+    tests/node.py
 
 deprecated_EXTRA_DIST =
 
