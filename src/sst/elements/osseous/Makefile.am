@@ -20,7 +20,11 @@ librtlcomponent_la_SOURCES = \
 	rtlmemmgr_cache.h \
 	rtlmemmgr_simple.h \
 	rtlmemmgr_simple.cc \
+	rtl_header.h \
 	rtlreadev.h \
+	sint.h \
+	AXI_port.h \
+	uint.h \ 
 	rtlwriteev.h 
 
 librtlcomponent_la_LDFLAGS = -module -avoid-version
