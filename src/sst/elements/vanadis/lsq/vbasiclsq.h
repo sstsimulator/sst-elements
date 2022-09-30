@@ -172,6 +172,17 @@ public:
             }
         }
 
+        if(stores_pending.size() > 0) {
+            for(int i = stores_pending.size() - 1; i >= 0; i--) {
+                VanadisBasicStorePendingEntry* store_entry = stores_pending.at(i);
+
+                output->verbose(CALL_INFO, 16, 0, "--> stores[%5d] ins: 0x%llx / thr: %" PRIu32 " / addr: 0x%llx / width: %" PRIu32 "\n",
+                    i, store_entry->getStoreInstruction()->getInstructionAddress(),
+                    store_entry->getStoreInstruction()->getHWThread(),
+                    store_entry->getStoreAddress(), store_entry->getStoreWidth());
+            }
+        }
+
         // this can be called multiple times per cycle if needed but lets just do once for now
         for(uint32_t attempt = 0; attempt < max_issue_attempts_per_cycle; ++attempt) {
             const bool attempt_result = attempt_to_issue(cycle, attempt);
@@ -273,9 +284,11 @@ protected:
                 // so with this we will be complete
                 if(load_entry->countRequests() == 1) {
                     // check whether we need to perform a sign extension on the result
-                    if(load_ins->performSignExtension()) {
+                    if((load_ins->getValueRegisterType() != LOAD_FP_REGISTER) && load_ins->performSignExtension()) {
                         out->verbose(CALL_INFO, 16, 0, "----> perform sign extension: pre-value: 0x%0llx / %" PRIu64 "\n",
                             *(uint64_t*)(register_ptr), *(uint64_t*)(register_ptr));
+
+                        assert((reg_offset + load_width - 1) >= 0);
 
                         if((register_ptr[reg_offset + load_width - 1] & 0x80) != 0) {
                             for(auto i = (reg_offset + load_width); i < 8; ++i) {
@@ -429,7 +442,7 @@ protected:
         if( UNLIKELY(!current_store->isDispatched()) ) {
             output->verbose(CALL_INFO, 16, 0, "--> store-front is not already dispatched so attempt to put into memory system.\n");
 
-            if(store_ins->checkFrontOfROB()) {
+            if( UNLIKELY(store_ins->checkFrontOfROB()) && LIKELY(store_ins->completedIssue()) ) {
                 output->verbose(CALL_INFO, 16, 0, "---> store is at front of ROB so OK to push into memory system.\n");
 
                 // store instruction is current front of ROB so ready to be send to memory system
