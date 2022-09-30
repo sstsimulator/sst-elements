@@ -165,7 +165,7 @@ public:
             for(int i = loads_pending.size() - 1; i >= 0; i--) {
                 VanadisBasicLoadPendingEntry* load_entry = loads_pending.at(i);
 
-                output->verbose(CALL_INFO, 16, 0, "--> load[%5d] ins: 0x%llx / thr: %" PRIu32 " / addr: 0x%llx / width: %" PRIu32 "\n",
+                output->verbose(CALL_INFO, 16, 0, "-->   load[%5d] ins: 0x%llx / thr: %" PRIu32 " / addr: 0x%llx / width: %" PRIu32 "\n",
                     i, load_entry->getLoadInstruction()->getInstructionAddress(),
                     load_entry->getLoadInstruction()->getHWThread(),
                     load_entry->getLoadAddress(), load_entry->getLoadWidth()); 
@@ -502,8 +502,7 @@ protected:
         // if the store is not a split operation, then copy payload we are good to go, if it is split
         // handle this case later after we do a load of address and width calculation
         if(LIKELY(! needs_split)) {
-            copyPayload(payload, value_reg_addr, store_ins->isPartialStore() ? store_ins->getRegisterOffset() : 0, 
-                store_width);
+            copyPayload(payload, value_reg_addr, store_ins->getRegisterOffset(), store_width);
         }
 
         switch(store_ins->getTransactionType()) {
@@ -525,7 +524,7 @@ protected:
                 copyPayload(payload, value_reg_addr, store_ins->isPartialStore() ? store_ins->getRegisterOffset() : 
                     0, store_width_left);
                 store_req = new StandardMem::Write(store_address, payload.size(), payload, 
-                    false, 0, store_address, store_ins->getInstructionAddress());
+                    false, 0, store_address, store_ins->getInstructionAddress(), store_ins->getHWThread());
 
                 std_stores_in_flight.insert(store_req->getID());
                 memInterface->send(store_req);
@@ -536,7 +535,7 @@ protected:
                     store_ins->isPartialStore() ? store_ins->getRegisterOffset() + store_width_left : 
                     store_width_left, store_width_right);
                 store_req = new StandardMem::Write(store_address_right, payload.size(), payload, 
-                    false, 0, store_address_right, store_ins->getInstructionAddress());
+                    false, 0, store_address_right, store_ins->getInstructionAddress(), store_ins->getHWThread());
                 memInterface->send(store_req);
                 std_stores_in_flight.insert(store_req->getID());
 
@@ -546,7 +545,7 @@ protected:
                     store_ins->getInstructionAddress(), store_address, store_width);
 
                 store_req = new StandardMem::Write(store_address, payload.size(), payload, 
-                    false, 0, store_address, store_ins->getInstructionAddress());
+                    false, 0, store_address, store_ins->getInstructionAddress(), store_ins->getHWThread());
                 std_stores_in_flight.insert(store_req->getID());
                 memInterface->send(store_req);
 
@@ -584,6 +583,11 @@ protected:
         }
 
         if(nullptr != store_req) {
+            // equivalent to a seg-fault for the store
+            if(store_address < 4096) {
+                store_ins->flagError();
+            }
+
             output->verbose(CALL_INFO, 16, 0, "-----> store-request sent to memory interface / entry marked dispatched\n");
             memInterface->send(store_req);
             store_entry->addRequest(store_req->getID());
@@ -728,8 +732,8 @@ protected:
                         // check to see if loading from this address would conflict with a store which
                         // we have pending, if yes, wait for conflict to clear and then we can proceed
                         if(UNLIKELY(checkStoreConflict(load_ins->getHWThread(), load_address, load_width))) {
-                            output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%llx / thr: %" PRIu32 " conflicts with store entry, will not issue until conflict is resolved.\n",
-                                load_ins->getInstructionAddress(), load_ins->getHWThread());
+                            output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%llx / thr: %" PRIu32 " conflicts with store entry, will not issue until conflict is resolved (load-addr: 0x%llx / width: %" PRIu32 ")\n",
+                                load_ins->getInstructionAddress(), load_ins->getHWThread(), load_address, load_width);
 
                             // tell caller we would not issue
                             return false;
