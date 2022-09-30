@@ -47,7 +47,7 @@ public:
     VanadisLoadStoreQueue(ComponentId_t id, Params& params) : SubComponent(id) {
 
         uint32_t verbosity = params.find<uint32_t>("verbose");
-        output = new SST::Output("[lsq]: ", verbosity, 0, SST::Output::STDOUT);
+        output = new SST::Output("[lsq @t]: ", verbosity, 0, SST::Output::STDOUT);
 
         address_mask = params.find<uint64_t>("address_mask", 0xFFFFFFFFFFFFFFFF);
 
