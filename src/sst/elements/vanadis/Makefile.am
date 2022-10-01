@@ -83,6 +83,7 @@ inst/vregfmt.h \
 inst/vscmp.h \
 inst/vscmpi.h \
 inst/vsetreg.h \
+inst/vsetregcallable.h \
 inst/vsll.h \
 inst/vslli.h \
 inst/vspeculate.h \
