@@ -248,6 +248,8 @@ protected:
                 target_isa_reg = load_ins->getISAIntRegOut(0);
                 target_reg = load_ins->getPhysIntRegOut(0);
 
+                assert(target_isa_reg < load_ins->getISAOptions()->countISAIntRegisters());
+
                 if(target_reg != load_ins->getISAOptions()->getRegisterIgnoreWrites()) {
                     register_ptr = (uint8_t*) lsq->registerFiles->at(hw_thr)->getIntReg(target_reg);
                 }
@@ -255,6 +257,9 @@ protected:
             case LOAD_FP_REGISTER: {
                 target_isa_reg = load_ins->getISAFPRegOut(0);
                 target_reg = load_ins->getPhysFPRegOut(0);
+
+                assert(target_isa_reg < load_ins->getISAOptions()->countISAFPRegisters());
+
                 register_ptr = (uint8_t*) lsq->registerFiles->at(hw_thr)->getFPReg(target_reg);
             } break;
             default:
@@ -277,6 +282,7 @@ protected:
             if(nullptr != register_ptr) {
                 // copy data into the register
                 for(auto i = 0; i < ev->size; ++i) {
+                    assert(i < 8);
                     register_ptr[reg_offset + addr_offset + i] = ev->data[i];
                 }
 
@@ -378,11 +384,11 @@ protected:
                     if (ev->getSuccess()) {
                         out->verbose(CALL_INFO, 16, 0,
                                         "---> LSQ LLSC-STORE rt: %" PRIu16 " <- 1 (success)\n", value_reg);
-                        lsq->registerFiles->at(store_ins->getHWThread())->setIntReg(value_reg, (uint64_t)1);
+                        lsq->registerFiles->at(store_ins->getHWThread())->setIntReg(value_reg, 1ULL);
                     } else {
                         out->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE rt: %" PRIu16 " <- 0 (failed)\n",
                                         value_reg);
-                        lsq->registerFiles->at(store_ins->getHWThread())->setIntReg(value_reg, (uint64_t)0);
+                        lsq->registerFiles->at(store_ins->getHWThread())->setIntReg(value_reg, 0ULL);
                     }
 
                     store_entry->getInstruction()->markExecuted();
