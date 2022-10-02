@@ -44,7 +44,7 @@ public:
     {
         // Registers are always 64-bits
         int_reg_storage = new char[int_reg_width * count_int_regs];
-		  std::memset(int_reg_storage, 0, (int_reg_width * count_int_regs));
+		std::memset(int_reg_storage, 0, (int_reg_width * count_int_regs));
 
         fp_reg_storage = new char[fp_reg_width * count_fp_regs];
         std::memset(fp_reg_storage, 0, (fp_reg_width * count_fp_regs));
@@ -57,6 +57,14 @@ public:
     }
 
     const VanadisDecoderOptions* getDecoderOptions() const { return decoder_opts; }
+
+    uint32_t getIntRegWidth() const {
+        return int_reg_width;
+    }
+
+    uint32_t getFPRegWidth() const {
+        return fp_reg_width;
+    }
 
     char* getIntReg(const uint16_t reg)
     {
