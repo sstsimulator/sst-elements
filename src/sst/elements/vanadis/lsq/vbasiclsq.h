@@ -489,7 +489,7 @@ protected:
         const uint64_t store_address = store_entry->getStoreAddress();
         const uint64_t store_width   = store_entry->getStoreWidth();
         StandardMem::Request* store_req = nullptr;
-        std::vector<uint8_t> payload(8);
+        std::vector<uint8_t> payload;
 
         uint8_t* value_reg_addr = nullptr;
 
@@ -555,6 +555,14 @@ protected:
             } else {
                 output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: standard store ins: 0x%llx store-at: 0x%llx width: %" PRIu64 "\n",
                     store_ins->getInstructionAddress(), store_address, store_width);
+
+                output->verbose(CALL_INFO, 16, 0, "-----> payload = {");
+
+                for(auto i = 0; i < payload.size(); ++i) {
+                    output->verbose(CALL_INFO, 16, 0, " %x", payload[i]);
+                }
+
+                output->verbose(CALL_INFO, 16, 0, "}\n");
 
                 store_req = new StandardMem::Write(store_address, payload.size(), payload, 
                     false, 0, store_address, store_ins->getInstructionAddress(), store_ins->getHWThread());
