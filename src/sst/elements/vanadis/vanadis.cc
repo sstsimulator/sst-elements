@@ -736,6 +736,7 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
 
     VanadisInstruction* rob_front              = rob->peek();
     bool                perform_pipeline_clear = false;
+    const uint32_t      ins_thread             = rob->peekAt(0)->getHWThread();
 
     // Instruction is flagging error, print out and halt
     if ( UNLIKELY(rob_front->trapsError()) ) {
@@ -745,7 +746,7 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
             "register status:\n");
 
         retire_isa_tables[rob_front->getHWThread()]->print(
-            output, register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg, 0);
+            output, register_files[ins_thread], print_int_reg, print_fp_reg, 0);
 
         char* inst_asm_buffer = new char[32768];
         rob_front->printToBuffer(inst_asm_buffer, 32768);
@@ -839,7 +840,7 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                     "(new addr: 0x%llx)\n",
                     pipeline_reset_addr);
 #endif
-                thread_decoders[rob_front->getHWThread()]->getBranchPredictor()->push(
+                thread_decoders[ins_thread]->getBranchPredictor()->push(
                     spec_ins->getInstructionAddress(), pipeline_reset_addr);
 
                 if ( (pause_on_retire_address > 0) &&
@@ -882,8 +883,6 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                     CALL_INFO, 8, 0, "----> Retire: 0x%0llx / %s\n", rob_front->getInstructionAddress(),
                     inst_asm_buffer);
 
-                //                            rob_front->getInstCode());
-
                 delete[] inst_asm_buffer;
             }
 #endif
@@ -891,18 +890,17 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                 fprintf(pipelineTrace, "0x%08llx %s\n", rob_front->getInstructionAddress(), rob_front->getInstCode());
             }
 
-				if(UNLIKELY(rob_front->updatesFPFlags())) {
-					rob_front->performFPFlagsUpdate();
-				}
+			if(UNLIKELY(rob_front->updatesFPFlags())) {
+				rob_front->performFPFlagsUpdate();
+			}
 
             recoverRetiredRegisters(
-                rob_front, int_register_stacks[rob_front->getHWThread()], fp_register_stacks[rob_front->getHWThread()],
-                issue_isa_tables[rob_front->getHWThread()], retire_isa_tables[rob_front->getHWThread()]);
+                rob_front, int_register_stacks[ins_thread], fp_register_stacks[ins_thread],
+                issue_isa_tables[ins_thread], retire_isa_tables[ins_thread]);
 
-				if(output->getVerboseLevel() >= 16) {
-					fp_flags.at(rob_front->getHWThread())->print(output);
-			   }
-
+			if(output->getVerboseLevel() >= 16) {
+				fp_flags.at(ins_thread)->print(output);
+			}
 
             ins_retired_this_cycle++;
 
@@ -919,9 +917,9 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                         pipelineTrace, "0x%08llx %s\n", delay_ins->getInstructionAddress(), delay_ins->getInstCode());
                 }
 
-					if(UNLIKELY(rob_front->updatesFPFlags())) {
-						rob_front->performFPFlagsUpdate();
-					}
+				if(UNLIKELY(rob_front->updatesFPFlags())) {
+					rob_front->performFPFlagsUpdate();
+				}
 
                 recoverRetiredRegisters(
                     delay_ins, int_register_stacks[delay_ins->getHWThread()],
@@ -930,13 +928,9 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
 
 				if(output->getVerboseLevel() >= 16) {
 					fp_flags.at(rob_front->getHWThread())->print(output);
-			   }
+			    }
 
-
-                //					if( delay_ins->endsMicroOpGroup() )
-                //{ 						stat_ins_retired->addData(1);
                 ins_retired_this_cycle++;
-                //					}
 
                 delete delay_ins;
             }
@@ -969,9 +963,9 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
 #ifdef VANADIS_BUILD_DEBUG
                 output->verbose(
                     CALL_INFO, 8, 0, "----> perform a pipeline clear thread %" PRIu32 ", reset to address: 0x%llx\n",
-                    rob_front->getHWThread(), pipeline_reset_addr);
+                    ins_thread, pipeline_reset_addr);
 #endif
-                handleMisspeculate(rob_front->getHWThread(), pipeline_reset_addr);
+                handleMisspeculate(ins_thread, pipeline_reset_addr);
 
                 stat_branch_mispredicts->addData(1);
             }
@@ -1020,8 +1014,9 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
             }
         }
         else {
-            if ( !rob_front->checkFrontOfROB() ) { rob_front->markFrontOfROB(); }
-            else {
+            if ( ! rob_front->checkFrontOfROB() ) { 
+                rob_front->markFrontOfROB(); 
+            } else {
                 // Return 2 because instruction is front of ROB but has not executed and
                 // so we cannot make progress any more this cycle
                 return 2;
