@@ -242,6 +242,7 @@ protected:
             uint8_t* register_ptr = nullptr;
             uint64_t reg_offset  = load_ins->getRegisterOffset();
             uint64_t addr_offset = ev->vAddr - load_address;
+            uint32_t reg_width = 0;
             
             switch(load_ins->getValueRegisterType()) {
             case LOAD_INT_REGISTER: {
@@ -252,6 +253,7 @@ protected:
 
                 if(target_reg != load_ins->getISAOptions()->getRegisterIgnoreWrites()) {
                     register_ptr = (uint8_t*) lsq->registerFiles->at(hw_thr)->getIntReg(target_reg);
+                    reg_width = lsq->registerFiles->at(hw_thr)->getIntRegWidth();
                 }
             } break;
             case LOAD_FP_REGISTER: {
@@ -261,6 +263,7 @@ protected:
                 assert(target_isa_reg < load_ins->getISAOptions()->countISAFPRegisters());
 
                 register_ptr = (uint8_t*) lsq->registerFiles->at(hw_thr)->getFPReg(target_reg);
+                reg_width = lsq->registerFiles->at(hw_thr)->getFPRegWidth();
             } break;
             default:
                 out->fatal(CALL_INFO, -1, "Unknown register type.\n");
@@ -282,7 +285,8 @@ protected:
             if(nullptr != register_ptr) {
                 // copy data into the register
                 for(auto i = 0; i < ev->size; ++i) {
-                    assert(i < 8);
+                    assert(i < reg_width);
+                    assert((reg_offset + addr_offset + i) < reg_width);
                     register_ptr[reg_offset + addr_offset + i] = ev->data[i];
                 }
 
@@ -295,13 +299,14 @@ protected:
                             *(uint64_t*)(register_ptr), *(uint64_t*)(register_ptr));
 
                         assert((reg_offset + load_width - 1) >= 0);
+                        assert((reg_offset + load_width - 1) < reg_width);
 
                         if((register_ptr[reg_offset + load_width - 1] & 0x80) != 0) {
-                            for(auto i = (reg_offset + load_width); i < 8; ++i) {
+                            for(auto i = (reg_offset + load_width); i < reg_width; ++i) {
                                 register_ptr[i] = 0xFF;
                             }
                         } else {
-                            for(auto i = (reg_offset + load_width); i < 8; ++i) {
+                            for(auto i = (reg_offset + load_width); i < reg_width; ++i) {
                                 register_ptr[i] = 0x0;
                             }
                         }
@@ -309,7 +314,7 @@ protected:
                         out->verbose(CALL_INFO, 16, 0, "----> perform sign extension: post-value: 0x%0llx / %" PRIu64 "\n",
                             *(uint64_t*)(register_ptr), *(uint64_t*)(register_ptr));
                     } else {
-                        for(auto i = (reg_offset + load_width); i < 8; ++i) {
+                        for(auto i = (reg_offset + load_width); i < reg_width; ++i) {
                             register_ptr[i] = 0x0;
                         }
                     }
@@ -331,12 +336,12 @@ protected:
                     load_ins->getInstCode(), load_ins->getInstructionAddress(), load_ins->getHWThread());
 
                 load_ins->markExecuted();
-                delete load_entry;
                 lsq->loads_pending.erase(load_itr);
+                delete load_entry;
             } else {
                 out->verbose(CALL_INFO, 16, 0,
                     "---> LSQ Execute: %s (0x%llx / thr:%" PRIu32 ") does not have all requests completed yet %" PRIu32 " left, will not execute until all done.\n",
-                        load_entry->countRequests());
+                        load_ins->getInstCode(), load_ins->getInstructionAddress(), load_ins->getHWThread(), load_entry->countRequests());
             }
 
             delete ev;
@@ -468,7 +473,8 @@ protected:
                     // mark executed
                     store_ins->markExecuted();
                 } else {
-                    output->verbose(CALL_INFO, 16, 0, "---> issued non-standard store: 0x%llx / thr: %" PRIu32 " (marked dispatch, will stall until response)\n");
+                    output->verbose(CALL_INFO, 16, 0, "---> issued non-standard store: 0x%llx / thr: %" PRIu32 " (marked dispatch, will stall until response)\n",
+                        store_ins->getInstructionAddress(), store_ins->getHWThread());
                     current_store->markDispatched();
                 }
             } else {
@@ -483,7 +489,7 @@ protected:
         const uint64_t store_address = store_entry->getStoreAddress();
         const uint64_t store_width   = store_entry->getStoreWidth();
         StandardMem::Request* store_req = nullptr;
-        std::vector<uint8_t> payload;
+        std::vector<uint8_t> payload(8);
 
         uint8_t* value_reg_addr = nullptr;
 
@@ -524,7 +530,7 @@ protected:
 
                 const uint64_t store_address_right = store_address + store_width_left;
 
-                output->verbose(CALL_INFO, 16, 0, "---> store-left-at: 0x%llx left-width: %" PRIu64 ", store-right-at: 0xllx right-width: %" PRIu64 "\n",
+                output->verbose(CALL_INFO, 16, 0, "---> store-left-at: 0x%llx left-width: %" PRIu64 ", store-right-at: 0x%llx right-width: %" PRIu64 "\n",
                     store_address, store_width_left, store_address_right, store_width_right);
 
                 copyPayload(payload, value_reg_addr, store_ins->isPartialStore() ? store_ins->getRegisterOffset() : 
@@ -617,6 +623,7 @@ protected:
             case MEM_TRANSACTION_NONE:
             {
                 if(UNLIKELY(needs_split)) {
+                    assert(0);
                     output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: standard load (line auto-split)\n");
                     // How many bytes are in the left most line?
                     const uint64_t load_width_right = (load_address + load_width) % cache_line_width;
@@ -642,6 +649,8 @@ protected:
                 } else {
                     output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: standard load (not split) load-at: 0x%llx width: %" PRIu64 "\n",
                         load_address, load_width);
+                    assert(load_width < 8);
+                    assert(load_width >= 0);
                     load_req = new StandardMem::Read(load_address, load_width, 0, 
                         load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
                 }
@@ -868,7 +877,7 @@ protected:
         bool matchID = false;
 
         for(auto store_itr = stores_pending.begin(); store_itr != stores_pending.end(); store_itr++) {
-            if((*store_itr)->getHWThread() == thr) {
+            if(thr == (*store_itr)->getHWThread()) {
                 matchID = true;
                 break;
             }
@@ -890,7 +899,7 @@ protected:
         return matchID;
     }
 
-    bool checkStoreConflict(uint32_t thread, uint64_t address, uint64_t width) {
+    bool checkStoreConflict(const uint32_t thread, const uint64_t address, const uint64_t width) {
         bool conflicts = false;
 
         for(auto store_itr = stores_pending.begin(); store_itr != stores_pending.end(); store_itr++) {
