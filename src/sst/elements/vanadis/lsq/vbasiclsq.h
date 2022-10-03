@@ -708,6 +708,12 @@ protected:
 
         VanadisBasicLoadStoreEntry* front_entry = op_q.front();
 
+        if(! front_entry->getInstruction()->completedIssue()) {
+            output->verbose(CALL_INFO, 16, 0, "--> ins: 0x%llx / thr: %" PRIu32 " has not completed issue, will not process this cycle.\n",
+                front_entry->getInstruction()->getInstructionAddress(), front_entry->getInstruction()->getHWThread());
+            return false;
+        }
+
         switch(front_entry->getEntryOp()) {
             case VanadisBasicLoadStoreEntryOp::LOAD:
             {
@@ -724,7 +730,6 @@ protected:
                     return false;
                 }
 
-                if(load_ins->completedIssue()) {
                     output->verbose(CALL_INFO, 16, 0, "-> queue front is load: ins: 0x%llx / thr: %" PRIu32 " has issued so will process...\n", 
                         load_ins->getInstructionAddress(), load_ins->getHWThread());
                     VanadisRegisterFile* hw_thr_reg = registerFiles->at(load_ins->getHWThread());
@@ -758,11 +763,6 @@ protected:
                     // pop front entry and tell the caller we did something (true)
                     op_q.pop_front();
                     return true;
-                } else {
-                    output->verbose(CALL_INFO, 16, 0, "-> queue front is load: ins: 0x%llx / thr: %" PRIu32 " has not issued so return and halt processing.\n", 
-                        load_ins->getInstructionAddress(), load_ins->getHWThread()); 
-                    return false;
-                }
             } break;
             case VanadisBasicLoadStoreEntryOp::STORE:
             {
@@ -780,7 +780,6 @@ protected:
                     return false;
                 }
 
-                if(store_ins->completedIssue()) {
                     output->verbose(CALL_INFO, 16, 0, "-> queue front is store: ins: 0x%llx / thr: %" PRIu32 " has issued so will process...\n", 
                         store_ins->getInstructionAddress(), store_ins->getHWThread());
                     VanadisRegisterFile* hw_thr_reg = registerFiles->at(store_ins->getHWThread());
@@ -808,10 +807,6 @@ protected:
                     // clear the front entry as we have just processed it
                     op_q.pop_front();
                     return true;
-                } else {
-                    output->verbose(CALL_INFO, 16, 0, "-> queue front is store: ins: 0x%llx / has not issued so return and halt processing.\n", store_ins->getInstructionAddress()); 
-                    return false;
-                }
             } break;
             case VanadisBasicLoadStoreEntryOp::FENCE: 
             {
