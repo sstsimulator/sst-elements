@@ -39,8 +39,8 @@ public:
         count_fp_regs(fp_regs),
         decoder_opts(decoder_ots),
         fp_reg_mode(fp_rmode),
-		  int_reg_width(8),
-		  fp_reg_width( (fp_rmode == VANADIS_REGISTER_MODE_FP32) ? 4 : 8 )
+		int_reg_width(8),
+		fp_reg_width( (fp_rmode == VANADIS_REGISTER_MODE_FP32) ? 4 : 8 )
     {
         // Registers are always 64-bits
         int_reg_storage = new char[int_reg_width * count_int_regs];
@@ -213,7 +213,7 @@ public:
 
         output->verbose(CALL_INFO, 8, 0, "Floating Point Registers:\n");
 
-        for ( uint16_t i = 0; i < count_int_regs; ++i ) {
+        for ( uint16_t i = 0; i < count_fp_regs; ++i ) {
             printRegister(output, false, i);
         }
     }
@@ -234,7 +234,7 @@ private:
 
         const long long int v = ((long long int*)ptr)[0];
 
-        for ( unsigned long long int i = 1L << 63L; i > 0; i = i / 2 ) {
+        for ( unsigned long long int i = 1L << (isInt ? ((int_reg_width * 8) - 1) : ((fp_reg_width * 8) - 1); i > 0; i = i / 2 ) {
             val_string[index++] = (v & i) ? '1' : '0';
         }
 
