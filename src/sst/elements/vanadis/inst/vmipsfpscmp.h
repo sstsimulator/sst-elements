@@ -21,7 +21,7 @@
 #include "inst/vregfmt.h"
 #include "util/vfpreghandler.h"
 
-#define VANADIS_MIPS_FP_COMPARE_BIT         0x800000
+#define VANADIS_MIPS_FP_COMPARE_BIT         0x00800000
 #define VANADIS_MIPS_FP_COMPARE_BIT_INVERSE 0xFF7FFFFF
 
 namespace SST {
