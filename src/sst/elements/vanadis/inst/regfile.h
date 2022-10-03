@@ -140,6 +140,7 @@ public:
     T getIntReg(const uint16_t reg)
     {
         assert(reg < count_int_regs);
+        assert(sizeof(T) <= int_reg_width);
 
         if ( reg != decoder_opts->getRegisterIgnoreWrites() ) {
             char* reg_start   = &int_reg_storage[reg * int_reg_width];
@@ -155,6 +156,7 @@ public:
     T getFPReg(const uint16_t reg)
     {
         assert(reg < count_fp_regs);
+        assert(sizeof(T) <= fp_reg_width);
 
         char* reg_start   = &fp_reg_storage[reg * fp_reg_width];
         T*    reg_start_T = (T*)reg_start;
@@ -234,7 +236,7 @@ private:
 
         const long long int v = ((long long int*)ptr)[0];
 
-        for ( unsigned long long int i = 1L << (isInt ? ((int_reg_width * 8) - 1) : ((fp_reg_width * 8) - 1); i > 0; i = i / 2 ) {
+        for ( unsigned long long int i = 1L << (isInt ? ((int_reg_width * 8) - 1) : ((fp_reg_width * 8) - 1)); i > 0; i = i / 2 ) {
             val_string[index++] = (v & i) ? '1' : '0';
         }
 
