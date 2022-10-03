@@ -239,10 +239,15 @@ protected:
 
             uint16_t target_reg = 0;
             uint16_t target_isa_reg = 0;
-            uint8_t* register_ptr = nullptr;
             uint64_t reg_offset  = load_ins->getRegisterOffset();
             uint64_t addr_offset = ev->vAddr - load_address;
             uint32_t reg_width = 0;
+
+            out->verbose(CALL_INFO, 16, 0, "---> LSQ recv load event ins: 0x%llx / hw-thr: %" PRIu32 " / entry-addr: 0x%llx / entry-width: %" PRIu16 " / reg-offset: %" PRIu64 " / ev-addr: 0x%llx / ev-width: %" PRIu16 " / addr-offset %" PRIu64 " / sign-extend: %s / target-isa-reg: %" PRIu16 " / target-phys-reg: %" PRIu16 " / reg-type: %s\n",
+                load_ins->getInstructionAddress(), hw_thr, load_address, load_width, reg_offset, ev->vAddr, ev->size, 
+                addr_offset, (load_ins->performSignExtension() ? "yes" : "no"),
+                target_isa_reg, target_reg,
+                (load_ins->getValueRegisterType() == LOAD_INT_REGISTER) ? "int" : "fp");
             
             switch(load_ins->getValueRegisterType()) {
             case LOAD_INT_REGISTER: {
@@ -252,73 +257,65 @@ protected:
                 assert(target_isa_reg < load_ins->getISAOptions()->countISAIntRegisters());
 
                 if(target_reg != load_ins->getISAOptions()->getRegisterIgnoreWrites()) {
-                    register_ptr = (uint8_t*) lsq->registerFiles->at(hw_thr)->getIntReg(target_reg);
                     reg_width = lsq->registerFiles->at(hw_thr)->getIntRegWidth();
+                    std::vector<uint8_t> register_value(reg_width);
+                    // copy entire register here
+                    lsq->registerFiles->at(hw_thr)->copyFromIntRegister(target_reg, 0, &register_value[0], reg_width);
+
+                    assert((reg_offset + addr_offset + ev->size) <= reg_width);
+
+                    for(auto i = 0; i < ev->size; ++i) {
+                        register_value.at(reg_offset + addr_offset + i) = ev->data[i];
+                    }
+
+                    // if we are the last request to be processed for this load (if any were split)
+                    // and we promised to do sign extension, then perform it now
+                    if(load_entry->countRequests() == 1) {
+                        if(load_ins->performSignExtension()) {
+                            if((register_value.at(reg_offset + addr_offset + load_width - 1) & 0x80) != 0) {
+                                for(auto i = reg_offset + addr_offset + load_width; i < reg_width; ++i) {
+                                    register_value.at(i) = 0xFF;
+                                }
+                            } else {
+                                for(auto i = reg_offset + addr_offset + load_width; i < reg_width; ++i) {
+                                    register_value.at(i) = 0x0;
+                                }
+                            }
+                        }
+                    }
+
+                    lsq->registerFiles->at(hw_thr)->copyToIntRegister(target_reg, 0, &register_value[0], register_value.size());
                 }
             } break;
             case LOAD_FP_REGISTER: {
-                target_isa_reg = load_ins->getISAFPRegOut(0);
-                target_reg = load_ins->getPhysFPRegOut(0);
-
-                assert(target_isa_reg < load_ins->getISAOptions()->countISAFPRegisters());
-
-                register_ptr = (uint8_t*) lsq->registerFiles->at(hw_thr)->getFPReg(target_reg);
                 reg_width = lsq->registerFiles->at(hw_thr)->getFPRegWidth();
+                std::vector<uint8_t> register_value(reg_width);
+                
+                // copy entire register here
+                lsq->registerFiles->at(hw_thr)->copyFromFPRegister(target_reg, 0, &register_value[0], reg_width);
+
+                assert((reg_offset + addr_offset + ev->size) <= reg_width);
+
+                for(auto i = 0; i < ev->size; ++i) {
+                    register_value.at(reg_offset + addr_offset + i) = ev->data[i];
+                }
+
+                /*
+                if((register_value.at(reg_offset + addr_offset + ev->size - 1) & 0x80) != 0) {
+                    for(auto i = reg_offset + addr_offset + ev->size; i < reg_width; ++i) {
+                        register_value.at(i) = 0xFF;
+                    }
+                } else {
+                    for(auto i = reg_offset + addr_offset + ev->size; i < reg_width; ++i) {
+                        register_value.at(i) = 0x0;
+                    }
+                }
+                */
+
+                lsq->registerFiles->at(hw_thr)->copyToFPRegister(target_reg, 0, &register_value[0], reg_width);
             } break;
             default:
                 out->fatal(CALL_INFO, -1, "Unknown register type.\n");
-            }
-
-            // check we don't load more into the register than the width available
-            assert(ev->size <= load_width);
-            assert((reg_offset + addr_offset + ev->size) <= 8);
-
-            out->verbose(CALL_INFO, 16, 0, "---> LSQ recv load event ins: 0x%llx / hw-thr: %" PRIu32 " / entry-addr: 0x%llx / entry-width: %" PRIu16 " / reg-offset: %" PRIu64 " / ev-addr: 0x%llx / ev-width: %" PRIu16 " / addr-offset %" PRIu64 " / sign-extend: %s / target-isa-reg: %" PRIu16 " / target-phys-reg: %" PRIu16 " / reg-type: %s\n",
-                load_ins->getInstructionAddress(), hw_thr, load_address, load_width, reg_offset, ev->vAddr, ev->size, 
-                addr_offset, (load_ins->performSignExtension() ? "yes" : "no"),
-                target_isa_reg, target_reg,
-                (load_ins->getValueRegisterType() == LOAD_INT_REGISTER) ? "int" : "fp");
-
-            // check we are not attempting to perform a write to "ignore write" register in which case
-            // just skip updating the register value as this is not a legitimately visible load into
-            // the registers
-            if(nullptr != register_ptr) {
-                // copy data into the register
-                for(auto i = 0; i < ev->size; ++i) {
-                    assert(i < reg_width);
-                    assert((reg_offset + addr_offset + i) < reg_width);
-                    register_ptr[reg_offset + addr_offset + i] = ev->data[i];
-                }
-
-                // this is either the only or the last load in the sequence
-                // so with this we will be complete
-                if(load_entry->countRequests() == 1) {
-                    // check whether we need to perform a sign extension on the result
-                    if((load_ins->getValueRegisterType() != LOAD_FP_REGISTER) && load_ins->performSignExtension()) {
-                        out->verbose(CALL_INFO, 16, 0, "----> perform sign extension: pre-value: 0x%0llx / %" PRIu64 "\n",
-                            *(uint64_t*)(register_ptr), *(uint64_t*)(register_ptr));
-
-                        assert((reg_offset + load_width - 1) >= 0);
-                        assert((reg_offset + load_width - 1) < reg_width);
-
-                        if((register_ptr[reg_offset + load_width - 1] & 0x80) != 0) {
-                            for(auto i = (reg_offset + load_width); i < reg_width; ++i) {
-                                register_ptr[i] = 0xFF;
-                            }
-                        } else {
-                            for(auto i = (reg_offset + load_width); i < reg_width; ++i) {
-                                register_ptr[i] = 0x0;
-                            }
-                        }
-
-                        out->verbose(CALL_INFO, 16, 0, "----> perform sign extension: post-value: 0x%0llx / %" PRIu64 "\n",
-                            *(uint64_t*)(register_ptr), *(uint64_t*)(register_ptr));
-                    } else {
-                        for(auto i = (reg_offset + load_width); i < reg_width; ++i) {
-                            register_ptr[i] = 0x0;
-                        }
-                    }
-                }
             }
 
             ///////////////////////////////////////////////////////////////////////////////////
@@ -489,32 +486,20 @@ protected:
         const uint64_t store_address = store_entry->getStoreAddress();
         const uint64_t store_width   = store_entry->getStoreWidth();
         StandardMem::Request* store_req = nullptr;
-        std::vector<uint8_t> payload;
-
-        uint8_t* value_reg_addr = nullptr;
-
-        switch (store_ins->getValueRegisterType()) {
-        case STORE_INT_REGISTER:
-            value_reg_addr = (uint8_t*)(registerFiles->at(store_entry->getHWThread())->getIntReg(
-                    store_ins->getPhysIntRegIn(1)));
-            break;
-        case STORE_FP_REGISTER:
-            value_reg_addr = (uint8_t*)(registerFiles->at(store_entry->getHWThread())->getFPReg(
-                    store_ins->getPhysFPRegIn(0)));
-            break;
-        default:
-            output->fatal(CALL_INFO, -1, "Unknown register type.\n");
-        }
+        std::vector<uint8_t> payload(store_width);
 
         const bool needs_split = operationStraddlesCacheLine(store_address, store_width);
 
-        output->verbose(CALL_INFO, 16, 0, "--> issue-store at ins: 0x%llx / store-addr: 0x%llx / width: %" PRIu64 " / partial: %s / split: %s\n",
-            store_ins->getInstructionAddress(), store_address, store_width, store_ins->isPartialStore() ? "yes" : "no", needs_split ? "yes" : "no");
+        output->verbose(CALL_INFO, 16, 0, "--> issue-store at ins: 0x%llx / store-addr: 0x%llx / width: %" PRIu64 " / partial: %s / split: %s / offset: %" PRIu32 "\n",
+            store_ins->getInstructionAddress(), store_address, store_width, store_ins->isPartialStore() ? "yes" : "no", needs_split ? "yes" : "no",
+            store_ins->getRegisterOffset());
 
         // if the store is not a split operation, then copy payload we are good to go, if it is split
         // handle this case later after we do a load of address and width calculation
         if(LIKELY(! needs_split)) {
-            copyPayload(payload, value_reg_addr, store_ins->getRegisterOffset(), store_width);
+            registerFiles->at(store_entry->getHWThread())->copyFromRegister(store_ins->getValueRegisterType() == STORE_FP_REGISTER ?
+                store_ins->getPhysFPRegIn(0) : store_ins->getPhysIntRegIn(1), 0, &payload[0], store_width, 
+                store_ins->getValueRegisterType() == STORE_FP_REGISTER);
         }
 
         switch(store_ins->getTransactionType()) {
@@ -533,8 +518,10 @@ protected:
                 output->verbose(CALL_INFO, 16, 0, "---> store-left-at: 0x%llx left-width: %" PRIu64 ", store-right-at: 0x%llx right-width: %" PRIu64 "\n",
                     store_address, store_width_left, store_address_right, store_width_right);
 
-                copyPayload(payload, value_reg_addr, store_ins->isPartialStore() ? store_ins->getRegisterOffset() : 
-                    0, store_width_left);
+                registerFiles->at(store_entry->getHWThread())->copyFromRegister(store_ins->getValueRegisterType() == STORE_FP_REGISTER ?
+                    store_ins->getPhysFPRegIn(0) : store_ins->getPhysIntRegIn(1), store_ins->getRegisterOffset(), &payload[0], store_width_left, 
+                    store_ins->getValueRegisterType() == STORE_FP_REGISTER);
+
                 store_req = new StandardMem::Write(store_address, payload.size(), payload, 
                     false, 0, store_address, store_ins->getInstructionAddress(), store_ins->getHWThread());
 
@@ -543,9 +530,11 @@ protected:
 
                 payload.clear();
 
-                copyPayload(payload, value_reg_addr,
-                    store_ins->isPartialStore() ? store_ins->getRegisterOffset() + store_width_left : 
-                    store_width_left, store_width_right);
+                registerFiles->at(store_entry->getHWThread())->copyFromRegister(store_ins->getValueRegisterType() == STORE_FP_REGISTER ?
+                    store_ins->getPhysFPRegIn(0) : store_ins->getPhysIntRegIn(1), store_ins->getRegisterOffset() + store_width_left, &payload[0], 
+                    store_width_right, 
+                    store_ins->getValueRegisterType() == STORE_FP_REGISTER);
+
                 store_req = new StandardMem::Write(store_address_right, payload.size(), payload, 
                     false, 0, store_address_right, store_ins->getInstructionAddress(), store_ins->getHWThread());
                 memInterface->send(store_req);
