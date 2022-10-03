@@ -78,6 +78,64 @@ public:
         return fp_reg_storage + (fp_reg_width * reg);
     }
 
+    void copyFromRegister(uint16_t reg, uint32_t offset, uint8_t* values, uint32_t len, bool is_fp) {
+        if(is_fp) {
+            copyFromFPRegister(reg, offset, values, len);
+        } else {
+            copyFromIntRegister(reg, offset, values, len);
+        }
+    }
+
+    void copyFromFPRegister(uint16_t reg, uint32_t offset, uint8_t* values, uint32_t len) {
+        assert(reg < count_fp_regs);
+        assert((offset + len) <= fp_reg_width);
+
+        uint8_t* reg_ptr = (uint8_t*) &fp_reg_storage[reg * fp_reg_width];
+
+        for(auto i = 0; i < len; ++i) {
+            values[i] = reg_ptr[offset + i];
+        }
+    }
+
+    void copyFromIntRegister(uint16_t reg, uint32_t offset, uint8_t* values, uint32_t len) {
+        assert(reg < count_int_regs);
+        assert((offset + len) <= int_reg_width);
+
+        uint8_t* reg_ptr = (uint8_t*) &int_reg_storage[reg * int_reg_width];
+
+        for(auto i = 0; i < len; ++i) {
+            values[i] = reg_ptr[offset + i];
+        }
+    }
+
+    void copyToRegister(uint16_t reg, uint32_t offset, uint8_t* values, uint32_t len, bool is_fp) {
+        if(is_fp) {
+            copyToFPRegister(reg, offset, values, len);
+        } else {
+            copyToIntRegister(reg, offset, values, len);
+        }
+    }
+
+    void copyToIntRegister(uint16_t reg, uint32_t offset, uint8_t* values, uint32_t len) {
+        assert((offset + len) <= int_reg_width);
+        assert(reg < count_int_regs);
+
+        uint8_t* reg_ptr = (uint8_t*) &int_reg_storage[reg * int_reg_width];
+        for(auto i = 0; i < len; ++i) {
+            reg_ptr[offset + i] = values[i];
+        }
+    }
+
+    void copyToFPRegister(uint16_t reg, uint32_t offset, uint8_t* values, uint32_t len) {
+        assert((offset + len) <= fp_reg_width);
+        assert(reg < count_fp_regs);
+
+        uint8_t* reg_ptr = (uint8_t*) &fp_reg_storage[reg * fp_reg_width];
+        for(auto i = 0; i < len; ++i) {
+            reg_ptr[offset + i] = values[i];
+        }
+    }
+
     template <typename T>
     T getIntReg(const uint16_t reg)
     {
@@ -127,8 +185,18 @@ public:
     void setFPReg(const uint16_t reg, const T val)
     {
         assert(reg < count_fp_regs);
+        assert(sizeof(T) <= fp_reg_width);
 
-        *((T*)&fp_reg_storage[fp_reg_width * reg]) = val;
+        uint8_t* val_ptr = (uint8_t*) &val;
+
+        for(auto i = 0; i < sizeof(T); ++i) {
+            fp_reg_storage[fp_reg_width * reg + i] = val_ptr[i];
+        }
+
+        // Pad with extra zeros if needed
+        for(auto i = sizeof(T); i < fp_reg_width; ++i) {
+            fp_reg_storage[fp_reg_width * reg + i] = 0;
+        }
     }
 
     uint32_t getHWThread() const { return hw_thread; }
