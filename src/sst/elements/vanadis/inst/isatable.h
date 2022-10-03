@@ -205,7 +205,6 @@ public:
     }
 
     bool physIntRegInUse(const uint16_t reg) { return findInRegSet(reg, int_reg_ptr, count_int_reg); }
-
     bool physFPRegInUse(const uint16_t reg) { return findInRegSet(reg, fp_reg_ptr, count_fp_reg); }
 
 protected:
