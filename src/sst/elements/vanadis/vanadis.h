@@ -129,6 +129,8 @@ public:
         { "fetches_per_cycle", "Number of instruction fetches per cycle" },
         { "retires_per_cycle", "Number of instruction retires per cycle" },
         { "decodes_per_cycle", "Number of instruction decodes per cycle" },
+        { "print_retire_tables", "Print registers during retirement step (default is yes)" },
+        { "print_issue_tables", "Print registers during issue step (default is yes)" },
         { "print_int_reg", "Print integer registers true/false, auto set to true if verbose > 16" },
         { "print_fp_reg", "Print floating-point registers true/false, auto set to "
                           "true if verbose > 16" })
@@ -267,6 +269,8 @@ private:
     bool* halted_masks;
     bool  print_int_reg;
     bool  print_fp_reg;
+    bool  print_issue_tables;
+    bool  print_retire_tables;
 
     char*    instPrintBuffer;
     uint64_t nextInsID;

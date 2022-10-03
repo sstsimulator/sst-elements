@@ -65,6 +65,9 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     print_int_reg = params.find<bool>("print_int_reg", verbosity > 16 ? 1 : 0);
     print_fp_reg  = params.find<bool>("print_fp_reg", verbosity > 16 ? 1 : 0);
 
+    print_retire_tables = params.find<bool>("print_retire_tables", 1);
+    print_issue_tables  = params.find<bool>("print_issue_tables", 1);
+
     const uint16_t int_reg_count = params.find<uint16_t>("physical_integer_registers", 128);
     const uint16_t fp_reg_count  = params.find<uint16_t>("physical_fp_registers", 128);
 
@@ -549,7 +552,9 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
         if ( !halted_masks[i] ) {
 #ifdef VANADIS_BUILD_DEBUG
             if ( output->getVerboseLevel() >= 4 ) {
-                issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
+                if(print_issue_tables) {
+                    issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
+                }
             }
 #endif
             // we have not issued an instruction this cycle
@@ -619,7 +624,6 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
 #endif
                             ins->markIssued();
                             ins_issued_this_cycle++;
-                            //									stat_ins_issued->addData(1);
                             issued_an_ins = true;
                         }
                     } else {
@@ -663,7 +667,9 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
             // Only print the table if we issued an instruction, reduce print out
             // clutter
             if ( issued_an_ins && (output_verbosity >= 8) ) {
-                issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
+                if(print_issue_tables) {
+                    issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
+                }
             }
         }
         else {
@@ -936,8 +942,10 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
             }
 
             if ( output->getVerboseLevel() > 0 ) {
-                retire_isa_tables[rob_front->getHWThread()]->print(
-                    output, register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg);
+                if(print_retire_tables) {
+                    retire_isa_tables[rob_front->getHWThread()]->print(
+                        output, register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg);
+                }
             }
 
             if ( UNLIKELY(
@@ -1057,10 +1065,7 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
 
     case INST_LOAD:
         if ( !lsq->loadFull() ) {
-            //				if( ins->endsMicroOpGroup() ) {
             stat_loads_issued->addData(1);
-            //				}
-
             lsq->push((VanadisLoadInstruction*)ins);
             allocated_fu = true;
         }
@@ -1068,10 +1073,7 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
 
     case INST_STORE:
         if ( !lsq->storeFull() ) {
-            //				if( ins->endsMicroOpGroup() ) {
             stat_stores_issued->addData(1);
-            //				}
-
             lsq->push((VanadisStoreInstruction*)ins);
             allocated_fu = true;
         }
@@ -1124,8 +1126,9 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
         break;
     }
 
-    if ( allocated_fu ) { return 0; }
-    else {
+    if ( allocated_fu ) { 
+        return 0; 
+    } else {
         return 1;
     }
 }
