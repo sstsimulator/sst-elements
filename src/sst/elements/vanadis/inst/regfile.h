@@ -236,6 +236,10 @@ private:
 
         const long long int v = ((long long int*)ptr)[0];
 
+        for( auto i = 0; i < 64; ++i) {
+            val_string[i] = '0';
+        }
+
         for ( unsigned long long int i = 1L << (isInt ? ((int_reg_width * 8) - 1) : ((fp_reg_width * 8) - 1)); i > 0; i = i / 2 ) {
             val_string[index++] = (v & i) ? '1' : '0';
         }
