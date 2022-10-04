@@ -37,6 +37,8 @@ libember_la_SOURCES = \
 	embermotiflog.h \
 	embermotiflog.cc \
 	embermemoryev.h \
+	examples/motifs/emberfoo.h \
+	examples/motifs/emberfoo.cc \
 	libs/emberLib.h \
 	libs/misc.h \
 	libs/miscEvents/emberGetNodeNumEvent.h \
