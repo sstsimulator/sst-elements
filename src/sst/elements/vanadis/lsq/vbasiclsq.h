@@ -304,17 +304,11 @@ protected:
                     register_value.at(reg_offset + addr_offset + i) = ev->data[i];
                 }
 
-                /*
-                if((register_value.at(reg_offset + addr_offset + ev->size - 1) & 0x80) != 0) {
-                    for(auto i = reg_offset + addr_offset + ev->size; i < reg_width; ++i) {
-                        register_value.at(i) = 0xFF;
-                    }
-                } else {
-                    for(auto i = reg_offset + addr_offset + ev->size; i < reg_width; ++i) {
+                if(load_entry->countRequests() == 1) {
+                    for(auto i = reg_offset + addr_offset + load_width; i < reg_width; ++i) {
                         register_value.at(i) = 0x0;
                     }
                 }
-                */
 
                 lsq->registerFiles->at(hw_thr)->copyToFPRegister(target_reg, 0, &register_value[0], reg_width);
             } break;
@@ -390,11 +384,11 @@ protected:
                     if (ev->getSuccess()) {
                         out->verbose(CALL_INFO, 16, 0,
                                         "---> LSQ LLSC-STORE rt: %" PRIu16 " <- 1 (success)\n", value_reg);
-                        lsq->registerFiles->at(store_ins->getHWThread())->setIntReg(value_reg, 1ULL);
+                        lsq->registerFiles->at(store_ins->getHWThread())->setIntReg<uint64_t>(value_reg, 1ULL);
                     } else {
                         out->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE rt: %" PRIu16 " <- 0 (failed)\n",
                                         value_reg);
-                        lsq->registerFiles->at(store_ins->getHWThread())->setIntReg(value_reg, 0ULL);
+                        lsq->registerFiles->at(store_ins->getHWThread())->setIntReg<uint64_t>(value_reg, 0ULL);
                     }
 
                     store_entry->getInstruction()->markExecuted();
