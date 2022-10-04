@@ -292,6 +292,9 @@ protected:
                 }
             } break;
             case LOAD_FP_REGISTER: {
+                target_isa_reg = load_ins->getISAFPRegOut(0);
+                target_reg = load_ins->getPhysFPRegOut(0);
+
                 reg_width = lsq->registerFiles->at(hw_thr)->getFPRegWidth();
                 std::vector<uint8_t> register_value(reg_width);
                 
@@ -300,13 +303,13 @@ protected:
 
                 assert((reg_offset + addr_offset + ev->size) <= reg_width);
 
-                for(auto i = 0; i < ev->size; ++i) {
+                for(auto i = reg_offset + addr_offset; i < ev->size; ++i) {
                     register_value.at(reg_offset + addr_offset + i) = ev->data[i];
                 }
 
                 if(load_entry->countRequests() == 1) {
                     for(auto i = reg_offset + addr_offset + load_width; i < reg_width; ++i) {
-                        register_value.at(i) = 0x0;
+                        register_value.at(i) = 0x00;
                     }
                 }
 
@@ -728,39 +731,39 @@ protected:
                     return false;
                 }
 
-                    output->verbose(CALL_INFO, 16, 0, "-> queue front is load: ins: 0x%llx / thr: %" PRIu32 " has issued so will process...\n", 
+                output->verbose(CALL_INFO, 16, 0, "-> queue front is load: ins: 0x%llx / thr: %" PRIu32 " has issued so will process...\n", 
+                    load_ins->getInstructionAddress(), load_ins->getHWThread());
+                VanadisRegisterFile* hw_thr_reg = registerFiles->at(load_ins->getHWThread());
+
+                uint64_t load_address = 0;
+                uint16_t load_width   = 0;
+
+                load_ins->computeLoadAddress(output, hw_thr_reg, &load_address, &load_width);
+
+                if(UNLIKELY(load_ins->trapsError())) {
+                    output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%llx / thr: %" PRIu32 " traps error, will not process and allow pipeline to handle.\n",
                         load_ins->getInstructionAddress(), load_ins->getHWThread());
-                    VanadisRegisterFile* hw_thr_reg = registerFiles->at(load_ins->getHWThread());
-
-                    uint64_t load_address = 0;
-                    uint16_t load_width   = 0;
-
-                    load_ins->computeLoadAddress(output, hw_thr_reg, &load_address, &load_width);
-
-                    if(UNLIKELY(load_ins->trapsError())) {
-                        output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%llx / thr: %" PRIu32 " traps error, will not process and allow pipeline to handle.\n",
-                            load_ins->getInstructionAddress(), load_ins->getHWThread());
-                    } else {
-                        output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%llx / thr: %" PRIu32 " want load at 0x%llx / width: %" PRIu16 "\n",
+                } else {
+                    output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%llx / thr: %" PRIu32 " want load at 0x%llx / width: %" PRIu16 "\n",
+                        load_ins->getInstructionAddress(), load_ins->getHWThread(), load_address, load_width);
+                    
+                    // check to see if loading from this address would conflict with a store which
+                    // we have pending, if yes, wait for conflict to clear and then we can proceed
+                    if(UNLIKELY(checkStoreConflict(load_ins->getHWThread(), load_address, load_width))) {
+                        output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%llx / thr: %" PRIu32 " conflicts with store entry, will not issue until conflict is resolved (load-addr: 0x%llx / width: %" PRIu32 ")\n",
                             load_ins->getInstructionAddress(), load_ins->getHWThread(), load_address, load_width);
-                        
-                        // check to see if loading from this address would conflict with a store which
-                        // we have pending, if yes, wait for conflict to clear and then we can proceed
-                        if(UNLIKELY(checkStoreConflict(load_ins->getHWThread(), load_address, load_width))) {
-                            output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%llx / thr: %" PRIu32 " conflicts with store entry, will not issue until conflict is resolved (load-addr: 0x%llx / width: %" PRIu32 ")\n",
-                                load_ins->getInstructionAddress(), load_ins->getHWThread(), load_address, load_width);
 
-                            // tell caller we would not issue
-                            return false;
-                        } else {
-                            // We are good to issue with all checks completed!
-                            issueLoad(load_ins, load_address, load_width);
-                        }
+                        // tell caller we would not issue
+                        return false;
+                    } else {
+                        // We are good to issue with all checks completed!
+                        issueLoad(load_ins, load_address, load_width);
                     }
+                }
 
-                    // pop front entry and tell the caller we did something (true)
-                    op_q.pop_front();
-                    return true;
+                // pop front entry and tell the caller we did something (true)
+                op_q.pop_front();
+                return true;
             } break;
             case VanadisBasicLoadStoreEntryOp::STORE:
             {
