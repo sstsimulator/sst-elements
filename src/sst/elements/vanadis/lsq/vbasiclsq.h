@@ -621,7 +621,6 @@ protected:
             case MEM_TRANSACTION_NONE:
             {
                 if(UNLIKELY(needs_split)) {
-                    assert(0);
                     output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: standard load (line auto-split)\n");
                     // How many bytes are in the left most line?
                     const uint64_t load_width_right = (load_address + load_width) % cache_line_width;
@@ -647,7 +646,7 @@ protected:
                 } else {
                     output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: standard load (not split) load-at: 0x%llx width: %" PRIu64 "\n",
                         load_address, load_width);
-                    assert(load_width < 8);
+                    assert(load_width <= 8);
                     assert(load_width >= 0);
                     load_req = new StandardMem::Read(load_address, load_width, 0, 
                         load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
