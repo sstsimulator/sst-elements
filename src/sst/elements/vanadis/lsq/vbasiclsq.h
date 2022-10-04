@@ -632,8 +632,10 @@ protected:
                     const uint64_t load_right_start = load_address + load_width_left;
                     assert((load_right_start % cache_line_width) == 0);
 
-                    output->verbose(CALL_INFO, 16, 0, "---> split load at-left: 0x%llx left-width: %" PRIu64 " / at-right: 0x%llx right-width: %" PRIu64 "\n",
-                        load_address, load_width_left, load_address + load_width_left, load_width_right);
+                    if(output->getVerboseLevel() >= 16) {
+                        output->verbose(CALL_INFO, 16, 0, "---> split load at-left: 0x%llx left-width: %" PRIu64 " / at-right: 0x%llx right-width: %" PRIu64 "\n",
+                            load_address, load_width_left, load_address + load_width_left, load_width_right);
+                    }
 
                     load_req = new StandardMem::Read(load_address, load_width_left, 0, 
                         load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
@@ -644,10 +646,14 @@ protected:
                     load_req = new StandardMem::Read(load_address + load_width_left, load_width_right, 0, 
                         load_address + load_width_left, load_ins->getInstructionAddress(), load_ins->getHWThread());
                 } else {
-                    output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: standard load (not split) load-at: 0x%llx width: %" PRIu64 "\n",
-                        load_address, load_width);
+                    if(output->getVerboseLevel() >= 16) {   
+                        output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: standard load (not split) load-at: 0x%llx width: %" PRIu64 "\n",
+                            load_address, load_width);
+                    }
+
                     assert(load_width <= 8);
                     assert(load_width >= 0);
+
                     load_req = new StandardMem::Read(load_address, load_width, 0, 
                         load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
                 }
@@ -730,8 +736,11 @@ protected:
                     return false;
                 }
 
-                output->verbose(CALL_INFO, 16, 0, "-> queue front is load: ins: 0x%llx / thr: %" PRIu32 " has issued so will process...\n", 
-                    load_ins->getInstructionAddress(), load_ins->getHWThread());
+                if(output->getVerboseLevel() >= 16) {
+                    output->verbose(CALL_INFO, 16, 0, "-> queue front is load: ins: 0x%llx / thr: %" PRIu32 " has issued so will process...\n", 
+                        load_ins->getInstructionAddress(), load_ins->getHWThread());
+                }
+
                 VanadisRegisterFile* hw_thr_reg = registerFiles->at(load_ins->getHWThread());
 
                 uint64_t load_address = 0;
@@ -740,17 +749,23 @@ protected:
                 load_ins->computeLoadAddress(output, hw_thr_reg, &load_address, &load_width);
 
                 if(UNLIKELY(load_ins->trapsError())) {
-                    output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%llx / thr: %" PRIu32 " traps error, will not process and allow pipeline to handle.\n",
-                        load_ins->getInstructionAddress(), load_ins->getHWThread());
+                    if(output->getVerboseLevel() >= 16) {
+                        output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%llx / thr: %" PRIu32 " traps error, will not process and allow pipeline to handle.\n",
+                            load_ins->getInstructionAddress(), load_ins->getHWThread());
+                    }
                 } else {
-                    output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%llx / thr: %" PRIu32 " want load at 0x%llx / width: %" PRIu16 "\n",
-                        load_ins->getInstructionAddress(), load_ins->getHWThread(), load_address, load_width);
+                    if(output->getVerboseLevel() >= 16) {
+                        output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%llx / thr: %" PRIu32 " want load at 0x%llx / width: %" PRIu16 "\n",
+                            load_ins->getInstructionAddress(), load_ins->getHWThread(), load_address, load_width);
+                    }
                     
                     // check to see if loading from this address would conflict with a store which
                     // we have pending, if yes, wait for conflict to clear and then we can proceed
                     if(UNLIKELY(checkStoreConflict(load_ins->getHWThread(), load_address, load_width))) {
-                        output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%llx / thr: %" PRIu32 " conflicts with store entry, will not issue until conflict is resolved (load-addr: 0x%llx / width: %" PRIu32 ")\n",
-                            load_ins->getInstructionAddress(), load_ins->getHWThread(), load_address, load_width);
+                        if(output->getVerboseLevel() >= 16) {
+                            output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%llx / thr: %" PRIu32 " conflicts with store entry, will not issue until conflict is resolved (load-addr: 0x%llx / width: %" PRIu32 ")\n",
+                                load_ins->getInstructionAddress(), load_ins->getHWThread(), load_address, load_width);
+                        }
 
                         // tell caller we would not issue
                         return false;
@@ -853,8 +868,10 @@ protected:
 
         const bool splits_line = cache_line_left != cache_line_right;
 
-        output->verbose(CALL_INFO, 16, 0, "---> check split addr: %" PRIu64 " (0x%llx) / width: %" PRIu64 " / cache-line: %" PRIu64 " / line-left: %" PRIu64 " / line-right: %" PRIu64 " / split: %3s\n",
-            address, address, width, cache_line_width, cache_line_left, cache_line_right, splits_line ? "yes" : "no");
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(CALL_INFO, 16, 0, "---> check split addr: %" PRIu64 " (0x%llx) / width: %" PRIu64 " / cache-line: %" PRIu64 " / line-left: %" PRIu64 " / line-right: %" PRIu64 " / split: %3s\n",
+                address, address, width, cache_line_width, cache_line_left, cache_line_right, splits_line ? "yes" : "no");
+        }
 
         return splits_line;
     }
