@@ -40,9 +40,15 @@ public:
         count_isa_int_reg_in  = 2;
         count_phys_int_reg_in = 2;
 
+        count_isa_int_reg_out = 1;
+        count_phys_int_reg_out = 1;
+
         phys_int_regs_in = new uint16_t[count_phys_int_reg_in];
         isa_int_regs_in  = new uint16_t[count_isa_int_reg_in];
 
+        phys_int_reg_out = new uint16_t[count_phys_int_reg_out];
+        isa_int_regs_out = new uint16_t[count_isa_int_reg_out];
+        
         isa_int_regs_out[1] = tgtReg;
         isa_int_regs_in[0]  = memAddrReg;
         isa_int_regs_in[1]  = tgtReg;
