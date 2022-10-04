@@ -66,18 +66,6 @@ public:
         return fp_reg_width;
     }
 
-    char* getIntReg(const uint16_t reg)
-    {
-        assert(reg < count_int_regs);
-        return int_reg_storage + (int_reg_width * reg);
-    }
-
-    char* getFPReg(const uint16_t reg)
-    {
-        assert(reg < count_fp_regs);
-        return fp_reg_storage + (fp_reg_width * reg);
-    }
-
     void copyFromRegister(uint16_t reg, uint32_t offset, uint8_t* values, uint32_t len, bool is_fp) {
         if(is_fp) {
             copyFromFPRegister(reg, offset, values, len);
@@ -221,6 +209,18 @@ public:
     }
 
 private:
+    char* getIntReg(const uint16_t reg)
+    {
+        assert(reg < count_int_regs);
+        return int_reg_storage + (int_reg_width * reg);
+    }
+
+    char* getFPReg(const uint16_t reg)
+    {
+        assert(reg < count_fp_regs);
+        return fp_reg_storage + (fp_reg_width * reg);
+    }
+
     void printRegister(SST::Output* output, bool isInt, uint16_t reg)
     {
         char* ptr = NULL;
