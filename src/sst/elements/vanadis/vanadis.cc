@@ -564,7 +564,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
             for ( uint32_t j = rob_start; j < rob[i]->size(); ++j ) {
                 VanadisInstruction* ins = rob[i]->peekAt(j);
 
-                if ( !ins->completedIssue() ) {
+                if ( ! ins->completedIssue() ) {
 #ifdef VANADIS_BUILD_DEBUG
                     if ( output_verbosity >= 8 ) {
                         ins->printToBuffer(instPrintBuffer, 1024);
@@ -583,13 +583,12 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
                             (0 == resource_check) ? "success" : "cannot issue");
                     }
 #endif
+                    const auto ins_type = ins->getInstFuncType();
 
                     if ( 0 == resource_check ) {
-                        int allocate_fu;
+                        int allocate_fu = 1;
 
-                        if( (ins->getInstFuncType() == INST_LOAD || ins->getInstFuncType() == INST_STORE ||
-                            ins->getInstFuncType() == INST_FENCE) ) {
-
+                        if( (ins_type == INST_LOAD || ins_type == INST_STORE || ins_type == INST_FENCE) ) {
                             if(unallocated_memory_op_seen) {
                                 // the instruction should not be allocated because memory operations
                                 // must be issued to the LSQ in order to maintain memory ordering 
@@ -609,7 +608,6 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
                                 (0 == allocate_fu) ? "yes" : "no");
                         }
 #endif
-
                         if ( 0 == allocate_fu ) {
                             const int status = assignRegistersToInstruction(
                                 thread_decoders[i]->countISAIntReg(), thread_decoders[i]->countISAFPReg(), ins,
@@ -627,12 +625,11 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
                             issued_an_ins = true;
                         }
                     } else {
-                        if(ins->getInstFuncType() == INST_LOAD || ins->getInstFuncType() == INST_STORE ||
-                            ins->getInstFuncType() == INST_FENCE) {
-                                // we have seen a memory operation which is not issued, downstream operations
-                                // cannot issue yet to maintain ordering
-                                unallocated_memory_op_seen = true;
-                            }
+                        if(ins_type == INST_LOAD || ins_type == INST_STORE || ins_type == INST_FENCE) {
+                            // we have seen a memory operation which is not issued, downstream operations
+                            // cannot issue yet to maintain ordering
+                            unallocated_memory_op_seen = true;
+                        }
                     }
 
                     // if the instruction is *not* issued yet, we need to keep track
@@ -1039,7 +1036,6 @@ bool
 VANADIS_COMPONENT::mapInstructiontoFunctionalUnit(
     VanadisInstruction* ins, std::vector<VanadisFunctionalUnit*>& functional_units)
 {
-
     bool allocated = false;
 
     for ( VanadisFunctionalUnit* next_fu : functional_units ) {
@@ -1087,6 +1083,11 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
         allocated_fu = mapInstructiontoFunctionalUnit(ins, fu_branch);
         break;
 
+    case INST_NOOP:
+        ins->markExecuted();
+        allocated_fu = true;
+        break;
+
     case INST_INT_DIV:
         allocated_fu = mapInstructiontoFunctionalUnit(ins, fu_int_div);
         break;
@@ -1111,16 +1112,17 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
         allocated_fu = true;
     } break;
 
-    case INST_NOOP:
     case INST_FAULT:
         ins->markExecuted();
         allocated_fu = true;
         break;
+
     case INST_SYSCALL:
-        if ( lsq->storeBufferSize() == 0 &&  lsq->loadSize() == 0 ) { 
+        if ( lsq->storeBufferSize() == 0 && lsq->loadSize() == 0 ) { 
             allocated_fu = true;
         }
         break;
+
     default:
         output->fatal(CALL_INFO, -1, "Error - no processing for instruction class (%s)\n", ins->getInstCode());
         break;
@@ -1313,7 +1315,6 @@ int
 VANADIS_COMPONENT::checkInstructionResources(
     VanadisInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs, VanadisISATable* isa_table)
 {
-
     bool      resources_good   = true;
     const int output_verbosity = output->getVerboseLevel();
 
