@@ -278,8 +278,12 @@ protected:
                                 }
                             } else {
                                 for(auto i = reg_offset + addr_offset + load_width; i < reg_width; ++i) {
-                                    register_value.at(i) = 0x0;
+                                    register_value.at(i) = 0x00;
                                 }
+                            }
+                        } else {
+                            for(auto i = reg_offset + addr_offset + load_width; i < reg_width; ++i) {
+                                register_value.at(i) = 0x00;
                             }
                         }
                     }
