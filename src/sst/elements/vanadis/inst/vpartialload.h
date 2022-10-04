@@ -46,7 +46,7 @@ public:
         phys_int_regs_in = new uint16_t[count_phys_int_reg_in];
         isa_int_regs_in  = new uint16_t[count_isa_int_reg_in];
 
-        phys_int_reg_out = new uint16_t[count_phys_int_reg_out];
+        phys_int_regs_out = new uint16_t[count_phys_int_reg_out];
         isa_int_regs_out = new uint16_t[count_isa_int_reg_out];
         
         isa_int_regs_out[0] = tgtReg;
