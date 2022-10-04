@@ -623,6 +623,12 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
                             ins->markIssued();
                             ins_issued_this_cycle++;
                             issued_an_ins = true;
+                        } else {
+                            if(ins_type == INST_LOAD || ins_type == INST_STORE || ins_type == INST_FENCE) {
+                                // we have seen a memory operation which is not issued, downstream operations
+                                // cannot issue yet to maintain ordering
+                                unallocated_memory_op_seen = true;
+                            }
                         }
                     } else {
                         if(ins_type == INST_LOAD || ins_type == INST_STORE || ins_type == INST_FENCE) {
