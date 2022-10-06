@@ -59,7 +59,17 @@ public:
     SST_ELI_DOCUMENT_STATISTICS({ "bytes_read", "Count all the bytes read for data operations", "bytes", 1 },
                                 { "bytes_stored", "Count all the bytes written for data operations", "bytes", 1 },
                                 { "loads_issued", "Count the number of loads issued", "operations", 1 },
-                                { "stores_issued", "Count the number of stores issued", "operations", 1 })
+                                { "stores_issued", "Count the number of stores issued", "operations", 1 },
+                                { "fences_issued", "Count the number of fences issued", "operations", 1},
+                                { "loads_executed", "Count the number of loads issued", "operations", 1 },
+                                { "stores_executed", "Count the number of stores issued", "operations", 1 },
+                                { "fences_executed", "Count the number of fences issued", "operations", 1},
+                                { "operations_pending", "Count the number of operations which are held by the LSQ and not ready to be issued to the memory subsystem", "operations", 1},
+                                { "loads_in_flight", "Count the number of loads which are in-flight", "operations", 1},
+                                { "stores_in_flight", "Count the number of stores which are in-flight", "operations", 1},
+                                { "store_buffer_entries", "Count the number of stores held in the store buffer", "operations", 1},
+                                { "split_stores", "Count the number of stores which are fractured due to cache boundaries", "operations", 1},
+                                { "split_loads", "Count the number of loads which are fractured due to cache boundaries", "operations", 1})
 
     VanadisBasicLoadStoreQueue(ComponentId_t id, Params& params) : VanadisLoadStoreQueue(id, params),
         max_stores(params.find<size_t>("max_stores", 8)),
@@ -76,6 +86,22 @@ public:
         address_mask = params.find<uint64_t>("address_mask", 0xFFFFFFFFFFFFFFFFULL);
 
         cache_line_width = params.find<uint64_t>("cache_line_width", 64);
+
+        stat_loads_issued = registerStatistic<uint64_t>("loads_issued", "1");
+        stat_stores_issued = registerStatistic<uint64_t>("stores_issued", "1");
+        stat_fences_issued = registerStatistic<uint64_t>("fences_issued", "1");
+
+        stat_loads_executed = registerStatistic<uint64_t>("loads_executed", "1");
+        stat_stores_executed = registerStatistic<uint64_t>("stores_executed", "1");
+        stat_fences_executed = registerStatistic<uint64_t>("fences_executed", "1");
+
+        stat_loaded_bytes = registerStatistic<uint64_t>("bytes_read", "1");
+        stat_stored_bytes = registerStatistic<uint64_t>("bytes_stored", "1");
+
+        stat_store_buffer_entries = registerStatistic<uint64_t>("store_buffer_entries", "1");
+        stat_stores_pending = registerStatistic<uint64_t>("stores_in_flight", "1");
+        stat_loads_pending = registerStatistic<uint64_t>("loads_in_flight", "1");
+        stat_op_q_size = registerStatistic<uint64_t>("operations_pending");
     }
 
     virtual ~VanadisBasicLoadStoreQueue() {
@@ -97,14 +123,17 @@ public:
 
     void push(VanadisStoreInstruction* store_me) override {
         op_q.push_back( new VanadisBasicStoreEntry(store_me) );
+        stat_store_issued->addData(1);
     }
 
     void push(VanadisLoadInstruction* load_me) override {
         op_q.push_back( new VanadisBasicLoadEntry(load_me) );
+        stat_loads_issued->addData(1);
     }
 
     void push(VanadisFenceInstruction* fence) override {
         op_q.push_back( new VanadisBasicFenceEntry(fence) );
+        stat_fences_issued->addData(1);
     }
 
     void clearLSQByThreadID(const uint32_t thread) override {
@@ -189,6 +218,11 @@ public:
             }
         }
 
+        stat_op_q_size->addData(op_q.size());
+        stat_loads_pending->addData(loads_pending.size());
+        stat_stores_pending->addData(std_stores_in_flight.size());
+        stat_store_buffer_entries->addData(stores_pending.size());
+
         // this can be called multiple times per cycle if needed but lets just do once for now
         for(uint32_t attempt = 0; attempt < max_issue_attempts_per_cycle; ++attempt) {
             const bool attempt_result = attempt_to_issue(cycle, attempt);
@@ -216,6 +250,7 @@ protected:
 
         virtual void handle(StandardMem::ReadResp* ev) {
             out->verbose(CALL_INFO, 16, 0, "-> handle read-response (virt-addr: 0x%llx)\n", ev->vAddr);
+            lsq->stat_loaded_bytes->addData(ev->size);
 
             auto load_itr = lsq->loads_pending.begin();
             VanadisBasicLoadPendingEntry* load_entry = nullptr;
@@ -346,6 +381,7 @@ protected:
                 }
 
                 load_ins->markExecuted();
+                lsq->stat_loads_executed->addData(1);
                 lsq->loads_pending.erase(load_itr);
                 delete load_entry;
             } else {
@@ -361,6 +397,7 @@ protected:
         
         virtual void handle(StandardMem::WriteResp* ev) {
             out->verbose(CALL_INFO, 16, 0, "-> handle write-response (virt-addr: 0x%llx)\n", ev->vAddr);
+            lsq->stat_stored_bytes->addData(ev->size);
 
             bool std_store_found = false;
 
@@ -490,6 +527,7 @@ protected:
 
                     // mark executed
                     store_ins->markExecuted();
+                    stat_stores_executed->addData(1);
                 } else {
                     output->verbose(CALL_INFO, 16, 0, "---> issued non-standard store: 0x%llx / thr: %" PRIu32 " (marked dispatch, will stall until response)\n",
                         store_ins->getInstructionAddress(), store_ins->getHWThread());
@@ -886,6 +924,7 @@ protected:
                             current_fence_ins->getInstructionAddress());
                     }
                     current_fence_ins->markExecuted();
+                    stat_fences_executed->addData(1);
 
                     // erase the front entry
                     op_q.pop_front();
@@ -978,6 +1017,21 @@ protected:
 
     uint64_t cache_line_width;
     uint64_t address_mask;
+
+    Statistic<uint64_t>* stat_store_buffer_entries;
+    Statistic<uint64_t>* stat_op_q_size;
+    Statistic<uint64_t>* stat_stores_pending;
+    Statistic<uint64_t>* stat_loads_pending;
+    Statistic<uint64_t>* stat_stores_issued;
+    Statistic<uint64_t>* stat_loads_issued;
+    Statistic<uint64_t>* stat_fences_issued;
+    Statistic<uint64_t>* stat_stores_executed;
+    Statistic<uint64_t>* stat_loads_executed;
+    Statistic<uint64_t>* stat_fences_executed;
+    Statistic<uint64_t>* stat_split_stores;
+    Statistic<uint64_t>* stat_split_loads;
+    Statistic<uint64_t>* stat_stored_bytes;
+    Statistic<uint64_t>* stat_loaded_bytes;
 };
 
 } // namespace Vanadis
