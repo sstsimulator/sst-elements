@@ -940,7 +940,7 @@ protected:
                     case 0x0:
                     {
                         output->verbose(CALL_INFO, 16, 0, "------> ECALL/SYSCALL\n");
-								bundle->addInstruction(new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
+						bundle->addInstruction(new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
                         bundle->addInstruction(new VanadisSysCallInstruction(ins_address, hw_thr, options));
                         decode_fault = false;
                     } break;
@@ -1632,7 +1632,7 @@ protected:
                 case 0x6000:
                 {
                     // LD
-                    uint64_t imm_address = extract_uimm_rcv_t2(ins);
+                    uint64_t imm_address = extract_uimm_rvc_t1(ins);
                     uint16_t rvc_rd      = expand_rvc_int_register(extract_rs2_rvc(ins));
                     uint16_t rvc_rs1     = expand_rvc_int_register(extract_rs1_rvc(ins));
 
