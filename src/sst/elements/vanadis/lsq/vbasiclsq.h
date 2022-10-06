@@ -52,6 +52,7 @@ public:
             { "verbose", "Set the verbosity of output for the LSQ", "0" }, 
             { "max_stores", "Set the maximum number of stores permitted in the queue", "8" }, 
             { "max_loads", "Set the maximum number of loads permitted in the queue", "16" },
+            { "address_mask", "Can mask off address bits if needed during construction of a operation", "0xFFFFFFFFFFFFFFFF"},
             { "issues_per_cycle", "Maximum number of issues the LSQ can attempt per cycle.", "2"}
         )
 
@@ -71,6 +72,8 @@ public:
             "memory_interface", ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, getTimeConverter("1ps"),
             new StandardMem::Handler<SST::Vanadis::VanadisBasicLoadStoreQueue>(
                 this, &VanadisBasicLoadStoreQueue::processIncomingDataCacheEvent));
+
+        address_mask = params.find<uint64_t>("address_mask", 0xFFFFFFFFFFFFFFFFULL);
 
         cache_line_width = params.find<uint64_t>("cache_line_width", 64);
     }
@@ -523,7 +526,7 @@ protected:
                     store_ins->getPhysFPRegIn(0) : store_ins->getPhysIntRegIn(1), store_ins->getRegisterOffset(), &payload[0], store_width_left, 
                     store_ins->getValueRegisterType() == STORE_FP_REGISTER);
 
-                store_req = new StandardMem::Write(store_address, payload.size(), payload, 
+                store_req = new StandardMem::Write(store_address & address_mask, payload.size(), payload, 
                     false, 0, store_address, store_ins->getInstructionAddress(), store_ins->getHWThread());
 
                 std_stores_in_flight.insert(store_req->getID());
@@ -536,7 +539,7 @@ protected:
                     store_width_right, 
                     store_ins->getValueRegisterType() == STORE_FP_REGISTER);
 
-                store_req = new StandardMem::Write(store_address_right, payload.size(), payload, 
+                store_req = new StandardMem::Write(store_address_right & address_mask, payload.size(), payload, 
                     false, 0, store_address_right, store_ins->getInstructionAddress(), store_ins->getHWThread());
                 memInterface->send(store_req);
                 std_stores_in_flight.insert(store_req->getID());
@@ -554,7 +557,7 @@ protected:
 
                 output->verbose(CALL_INFO, 16, 0, "}\n");
 
-                store_req = new StandardMem::Write(store_address, payload.size(), payload, 
+                store_req = new StandardMem::Write(store_address & address_mask, payload.size(), payload, 
                     false, 0, store_address, store_ins->getInstructionAddress(), store_ins->getHWThread());
                 std_stores_in_flight.insert(store_req->getID());
                 memInterface->send(store_req);
@@ -574,7 +577,7 @@ protected:
                 output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: LLSC-store store-at: 0x%llx width: %" PRIu64 "\n",
                     store_address, store_width);
                 
-                store_req = new StandardMem::StoreConditional(store_address, payload.size(), payload,
+                store_req = new StandardMem::StoreConditional(store_address & address_mask, payload.size(), payload,
                             0, store_address, store_ins->getInstructionAddress());
             }
         } break;
@@ -586,7 +589,7 @@ protected:
                 output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: LOCK-store store-at: 0x%llx width: %" PRIu64 "\n",
                     store_address, store_width);
                 
-                store_req = new StandardMem::WriteUnlock(store_address, payload.size(), payload,
+                store_req = new StandardMem::WriteUnlock(store_address & address_mask, payload.size(), payload,
                             0, store_address, store_ins->getInstructionAddress());
             }
         } break;
@@ -637,13 +640,13 @@ protected:
                             load_address, load_width_left, load_address + load_width_left, load_width_right);
                     }
 
-                    load_req = new StandardMem::Read(load_address, load_width_left, 0, 
+                    load_req = new StandardMem::Read(load_address & address_mask, load_width_left, 0, 
                         load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
                     
                     load_entry->addRequest(load_req->getID());
                     memInterface->send(load_req);
 
-                    load_req = new StandardMem::Read(load_address + load_width_left, load_width_right, 0, 
+                    load_req = new StandardMem::Read((load_address + load_width_left) & address_mask, load_width_right, 0, 
                         load_address + load_width_left, load_ins->getInstructionAddress(), load_ins->getHWThread());
                 } else {
                     if(output->getVerboseLevel() >= 16) {   
@@ -654,7 +657,7 @@ protected:
                     assert(load_width <= 8);
                     assert(load_width >= 0);
 
-                    load_req = new StandardMem::Read(load_address, load_width, 0, 
+                    load_req = new StandardMem::Read(load_address & address_mask, load_width, 0, 
                         load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
                 }
             } break;
@@ -666,7 +669,7 @@ protected:
                 } else {
                     output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: LLSC-load (not split) load-at: 0x%llx width: %" PRIu64 "\n",
                         load_address, load_width);
-                    load_req = new StandardMem::LoadLink(load_address, load_width, 0, 
+                    load_req = new StandardMem::LoadLink(load_address & address_mask, load_width, 0, 
                                         load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
                 }
             } break;
@@ -684,7 +687,7 @@ protected:
                 } else {
                     output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: LOCK-load (not split) load-at: 0x%llx width: %" PRIu64 "\n",
                         load_address, load_width);
-                    load_req = new StandardMem::ReadLock(load_address, load_width, 0,
+                    load_req = new StandardMem::ReadLock(load_address & address_mask, load_width, 0,
                                         load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
                 }
             } break;
@@ -939,6 +942,7 @@ protected:
     const uint32_t max_issue_attempts_per_cycle;
 
     uint64_t cache_line_width;
+    uint64_t address_mask;
 };
 
 } // namespace Vanadis
