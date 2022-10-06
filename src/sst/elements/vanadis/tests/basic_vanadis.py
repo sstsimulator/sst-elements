@@ -12,6 +12,8 @@ verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
 os_verbosity = os.getenv("VANADIS_OS_VERBOSE", verbosity)
 pipe_trace_file = os.getenv("VANADIS_PIPE_TRACE", "")
 lsq_entries = os.getenv("VANADIS_LSQ_ENTRIES", 32)
+lsq_mask = 0xFFFFFFFFFFFFFFFF
+
 
 rob_slots = os.getenv("VANADIS_ROB_SLOTS", 64)
 retires_per_cycle = os.getenv("VANADIS_RETIRES_PER_CYCLE", 4)
@@ -50,6 +52,8 @@ v_cpu_0.addParams({
        "fp_arith_units" : fp_arith_units,
        "branch_unit_cycles" : branch_arith_cycles,
        "print_int_reg" : 1,
+       "print_fp_reg" : 1,
+       "print_issue_tables" :"no",
        "pipeline_trace_file" : pipe_trace_file,
        "reorder_slots" : rob_slots,
        "decodes_per_cycle" : decodes_per_cycle,
@@ -83,6 +87,9 @@ vanadis_isa = os.getenv("VANADIS_ISA", "MIPS")
 vanadis_decoder = "vanadis.Vanadis" + vanadis_isa + "Decoder"
 vanadis_os_hdlr = "vanadis.Vanadis" + vanadis_isa + "OSHandler"
 
+if vanadis_isa == "MIPS":
+	lsq_mask = 0xFFFFFFFF
+
 decode0     = v_cpu_0.setSubComponent( "decoder0", vanadis_decoder )
 os_hdlr     = decode0.setSubComponent( "os_handler", vanadis_os_hdlr )
 #os_hdlr     = decode0.setSubComponent( "os_handler", "vanadis.VanadisMIPSOSHandler" )
@@ -105,16 +112,11 @@ branch_pred.addParams({
 icache_if = v_cpu_0.setSubComponent( "mem_interface_inst", "memHierarchy.standardInterface" )
 
 #v_cpu_0_lsq = v_cpu_0.setSubComponent( "lsq", "vanadis.VanadisStandardLoadStoreQueue" )
-v_cpu_0_lsq = v_cpu_0.setSubComponent( "lsq", "vanadis.VanadisSequentialLoadStoreQueue" )
+v_cpu_0_lsq = v_cpu_0.setSubComponent( "lsq", "vanadis.VanadisBasicLoadStoreQueue" )
 v_cpu_0_lsq.addParams({
 	"verbose" : verbosity,
-	"address_mask" : 0xFFFFFFFF,
-#	"address_trace" : "address-lsq2.trace",
-#	"allow_speculated_operations" : 0,
-#	"load_store_entries" : 56,
-	"load_store_entries" : lsq_entries,
-	"fault_non_written_loads_after" : 0,
-	"check_memory_loads" : "no"
+	"address_mask" : lsq_mask,
+	"load_store_entries" : lsq_entries
 })
 
 dcache_if = v_cpu_0_lsq.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )

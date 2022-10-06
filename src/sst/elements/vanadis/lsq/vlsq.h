@@ -20,6 +20,7 @@
 #include <sst/core/subcomponent.h>
 
 #include "inst/regfile.h"
+#include "inst/vfence.h"
 #include "inst/vload.h"
 #include "inst/vstore.h"
 
@@ -46,7 +47,7 @@ public:
     VanadisLoadStoreQueue(ComponentId_t id, Params& params) : SubComponent(id) {
 
         uint32_t verbosity = params.find<uint32_t>("verbose");
-        output = new SST::Output("[lsq]: ", verbosity, 0, SST::Output::STDOUT);
+        output = new SST::Output("[lsq @t]: ", verbosity, 0, SST::Output::STDOUT);
 
         address_mask = params.find<uint64_t>("address_mask", 0xFFFFFFFFFFFFFFFF);
 
@@ -70,6 +71,7 @@ public:
 
     virtual bool storeFull() = 0;
     virtual bool loadFull() = 0;
+    virtual bool storeBufferFull() = 0;
 
     virtual size_t storeSize() = 0;
     virtual size_t loadSize() = 0;
@@ -77,14 +79,14 @@ public:
 
     virtual void push(VanadisStoreInstruction* store_me) = 0;
     virtual void push(VanadisLoadInstruction* load_me) = 0;
+    virtual void push(VanadisFenceInstruction* fence) = 0;
 
     virtual void tick(uint64_t cycle) = 0;
 
     virtual void clearLSQByThreadID(const uint32_t thread) = 0;
 
     virtual void init(unsigned int phase) = 0;
-    virtual void setInitialMemory(const uint64_t address, std::vector<uint8_t>& payload) = 0;
-
+    
     virtual void printStatus(SST::Output& output) {}
 
 protected:

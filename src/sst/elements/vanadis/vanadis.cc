@@ -65,6 +65,9 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     print_int_reg = params.find<bool>("print_int_reg", verbosity > 16 ? 1 : 0);
     print_fp_reg  = params.find<bool>("print_fp_reg", verbosity > 16 ? 1 : 0);
 
+    print_retire_tables = params.find<bool>("print_retire_tables", 1);
+    print_issue_tables  = params.find<bool>("print_issue_tables", 1);
+
     const uint16_t int_reg_count = params.find<uint16_t>("physical_integer_registers", 128);
     const uint16_t fp_reg_count  = params.find<uint16_t>("physical_fp_registers", 128);
 
@@ -532,29 +535,15 @@ VANADIS_COMPONENT::performDecode(const uint64_t cycle)
 void
 VANADIS_COMPONENT::resetRegisterUseTemps(const uint16_t int_reg_count, const uint16_t fp_reg_count)
 {
-
     std::fill_n(tmp_not_issued_int_reg_read.begin(), int_reg_count, false);
     std::fill_n(tmp_int_reg_write.begin(), int_reg_count, false);
 
     std::fill_n(tmp_not_issued_fp_reg_read.begin(), fp_reg_count, false);
     std::fill_n(tmp_fp_reg_write.begin(), fp_reg_count, false);
-
-    /*
-        for (uint16_t i = 0; i < int_reg_count; ++i) {
-            tmp_not_issued_int_reg_read[i] = false;
-            tmp_int_reg_write[i] = false;
-        }
-
-        for (uint16_t i = 0; i < fp_reg_count; ++i) {
-            tmp_not_issued_fp_reg_read[i] = false;
-            tmp_fp_reg_write[i] = false;
-        }
-    */
 }
 
-// TODO - rob_start found_store and found_load should be arrays per thread for this call I think?
 int
-VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool& found_store, bool& found_load)
+VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool& unallocated_memory_op_seen)
 {
     const int output_verbosity = output->getVerboseLevel();
     bool      issued_an_ins    = false;
@@ -563,7 +552,9 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
         if ( !halted_masks[i] ) {
 #ifdef VANADIS_BUILD_DEBUG
             if ( output->getVerboseLevel() >= 4 ) {
-                issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
+                if(print_issue_tables) {
+                    issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
+                }
             }
 #endif
             // we have not issued an instruction this cycle
@@ -573,7 +564,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
             for ( uint32_t j = rob_start; j < rob[i]->size(); ++j ) {
                 VanadisInstruction* ins = rob[i]->peekAt(j);
 
-                if ( !ins->completedIssue() ) {
+                if ( ! ins->completedIssue() ) {
 #ifdef VANADIS_BUILD_DEBUG
                     if ( output_verbosity >= 8 ) {
                         ins->printToBuffer(instPrintBuffer, 1024);
@@ -592,46 +583,58 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
                             (0 == resource_check) ? "success" : "cannot issue");
                     }
 #endif
+                    const auto ins_type = ins->getInstFuncType();
 
                     if ( 0 == resource_check ) {
-                        if ( ((INST_STORE == ins->getInstFuncType()) || (INST_LOAD == ins->getInstFuncType())) &&
-                             (found_load || found_store) ) {
-                            // We cannot issue
-                        }
-                        else {
-                            //							if(
-                            //(INST_LOAD == ins->getInstFuncType()) && (found_load ||
-                            // found_store) ) {
-                            //									//
-                            // We cannot issue 							} else {
-                            const int allocate_fu = allocateFunctionalUnit(ins);
+                        int allocate_fu = 1;
 
+                        if( (ins_type == INST_LOAD || ins_type == INST_STORE || ins_type == INST_FENCE) ) {
+                            if(unallocated_memory_op_seen) {
+                                // the instruction should not be allocated because memory operations
+                                // must be issued to the LSQ in order to maintain memory ordering 
+                                // semantics
+                                allocate_fu = 1;
+                            } else {
+                                allocate_fu = allocateFunctionalUnit(ins);
+                            }
+                        } else {
+                            allocate_fu = allocateFunctionalUnit(ins);
+                        }
+
+#ifdef VANADIS_BUILD_DEBUG
+                        if ( output_verbosity >= 8 ) {
+                            output->verbose(
+                                CALL_INFO, 8, 0, "----> allocated functional unit: %s\n",
+                                (0 == allocate_fu) ? "yes" : "no");
+                        }
+#endif
+                        if ( 0 == allocate_fu ) {
+                            const int status = assignRegistersToInstruction(
+                                thread_decoders[i]->countISAIntReg(), thread_decoders[i]->countISAFPReg(), ins,
+                                int_register_stacks[i], fp_register_stacks[i], issue_isa_tables[i]);
 #ifdef VANADIS_BUILD_DEBUG
                             if ( output_verbosity >= 8 ) {
+                                ins->printToBuffer(instPrintBuffer, 1024);
                                 output->verbose(
-                                    CALL_INFO, 8, 0, "----> allocated functional unit: %s\n",
-                                    (0 == allocate_fu) ? "yes" : "no");
+                                    CALL_INFO, 8, 0, "----> Issued for: %s / 0x%llx / status: %d\n",
+                                    instPrintBuffer, ins->getInstructionAddress(), status);
                             }
 #endif
-
-                            if ( 0 == allocate_fu ) {
-                                const int status = assignRegistersToInstruction(
-                                    thread_decoders[i]->countISAIntReg(), thread_decoders[i]->countISAFPReg(), ins,
-                                    int_register_stacks[i], fp_register_stacks[i], issue_isa_tables[i]);
-#ifdef VANADIS_BUILD_DEBUG
-                                if ( output_verbosity >= 8 ) {
-                                    ins->printToBuffer(instPrintBuffer, 1024);
-                                    output->verbose(
-                                        CALL_INFO, 8, 0, "----> Issued for: %s / 0x%llx / status: %d\n",
-                                        instPrintBuffer, ins->getInstructionAddress(), status);
-                                }
-#endif
-                                ins->markIssued();
-                                ins_issued_this_cycle++;
-                                //									stat_ins_issued->addData(1);
-                                issued_an_ins = true;
+                            ins->markIssued();
+                            ins_issued_this_cycle++;
+                            issued_an_ins = true;
+                        } else {
+                            if(ins_type == INST_LOAD || ins_type == INST_STORE || ins_type == INST_FENCE) {
+                                // we have seen a memory operation which is not issued, downstream operations
+                                // cannot issue yet to maintain ordering
+                                unallocated_memory_op_seen = true;
                             }
-                            //							}
+                        }
+                    } else {
+                        if(ins_type == INST_LOAD || ins_type == INST_STORE || ins_type == INST_FENCE) {
+                            // we have seen a memory operation which is not issued, downstream operations
+                            // cannot issue yet to maintain ordering
+                            unallocated_memory_op_seen = true;
                         }
                     }
 
@@ -656,19 +659,6 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
                     tmp_fp_reg_write[ins->getISAFPRegOut(k)] = true;
                 }
 
-                // Keep track of whether we have seen a load or a store ahead of us
-                // that hasn't been issued, because that means the LSQ hasn't seen it
-                // yet and so we could get an ordering violation in the memory system
-                found_store |= (INST_STORE == ins->getInstFuncType()) && (!ins->completedIssue());
-                found_load |= (INST_LOAD == ins->getInstFuncType()) && (!ins->completedIssue());
-
-                // Keep track of whether we have seen any fences, we just ensure we
-                // cannot issue load/stores until fences complete
-                if ( UNLIKELY(INST_FENCE == ins->getInstFuncType()) ) {
-                    found_store = true;
-                    found_load  = true;
-                }
-
                 // We issued an instruction this cycle, so exit
                 if ( issued_an_ins ) {
                     // tell the caller where we got this from
@@ -680,7 +670,9 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
             // Only print the table if we issued an instruction, reduce print out
             // clutter
             if ( issued_an_ins && (output_verbosity >= 8) ) {
-                issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
+                if(print_issue_tables) {
+                    issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
+                }
             }
         }
         else {
@@ -753,6 +745,7 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
 
     VanadisInstruction* rob_front              = rob->peek();
     bool                perform_pipeline_clear = false;
+    const uint32_t      ins_thread             = rob->peekAt(0)->getHWThread();
 
     // Instruction is flagging error, print out and halt
     if ( UNLIKELY(rob_front->trapsError()) ) {
@@ -762,7 +755,7 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
             "register status:\n");
 
         retire_isa_tables[rob_front->getHWThread()]->print(
-            output, register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg, 0);
+            output, register_files[ins_thread], print_int_reg, print_fp_reg, 0);
 
         char* inst_asm_buffer = new char[32768];
         rob_front->printToBuffer(inst_asm_buffer, 32768);
@@ -856,7 +849,7 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                     "(new addr: 0x%llx)\n",
                     pipeline_reset_addr);
 #endif
-                thread_decoders[rob_front->getHWThread()]->getBranchPredictor()->push(
+                thread_decoders[ins_thread]->getBranchPredictor()->push(
                     spec_ins->getInstructionAddress(), pipeline_reset_addr);
 
                 if ( (pause_on_retire_address > 0) &&
@@ -899,8 +892,6 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                     CALL_INFO, 8, 0, "----> Retire: 0x%0llx / %s\n", rob_front->getInstructionAddress(),
                     inst_asm_buffer);
 
-                //                            rob_front->getInstCode());
-
                 delete[] inst_asm_buffer;
             }
 #endif
@@ -908,18 +899,17 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                 fprintf(pipelineTrace, "0x%08llx %s\n", rob_front->getInstructionAddress(), rob_front->getInstCode());
             }
 
-				if(UNLIKELY(rob_front->updatesFPFlags())) {
-					rob_front->performFPFlagsUpdate();
-				}
+			if(UNLIKELY(rob_front->updatesFPFlags())) {
+				rob_front->performFPFlagsUpdate();
+			}
 
             recoverRetiredRegisters(
-                rob_front, int_register_stacks[rob_front->getHWThread()], fp_register_stacks[rob_front->getHWThread()],
-                issue_isa_tables[rob_front->getHWThread()], retire_isa_tables[rob_front->getHWThread()]);
+                rob_front, int_register_stacks[ins_thread], fp_register_stacks[ins_thread],
+                issue_isa_tables[ins_thread], retire_isa_tables[ins_thread]);
 
-				if(output->getVerboseLevel() >= 16) {
-					fp_flags.at(rob_front->getHWThread())->print(output);
-			   }
-
+			if(output->getVerboseLevel() >= 16) {
+				fp_flags.at(ins_thread)->print(output);
+			}
 
             ins_retired_this_cycle++;
 
@@ -936,9 +926,9 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                         pipelineTrace, "0x%08llx %s\n", delay_ins->getInstructionAddress(), delay_ins->getInstCode());
                 }
 
-					if(UNLIKELY(rob_front->updatesFPFlags())) {
-						rob_front->performFPFlagsUpdate();
-					}
+				if(UNLIKELY(rob_front->updatesFPFlags())) {
+					rob_front->performFPFlagsUpdate();
+				}
 
                 recoverRetiredRegisters(
                     delay_ins, int_register_stacks[delay_ins->getHWThread()],
@@ -947,20 +937,18 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
 
 				if(output->getVerboseLevel() >= 16) {
 					fp_flags.at(rob_front->getHWThread())->print(output);
-			   }
+			    }
 
-
-                //					if( delay_ins->endsMicroOpGroup() )
-                //{ 						stat_ins_retired->addData(1);
                 ins_retired_this_cycle++;
-                //					}
 
                 delete delay_ins;
             }
 
             if ( output->getVerboseLevel() > 0 ) {
-                retire_isa_tables[rob_front->getHWThread()]->print(
-                    output, register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg);
+                if(print_retire_tables) {
+                    retire_isa_tables[rob_front->getHWThread()]->print(
+                        output, register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg);
+                }
             }
 
             if ( UNLIKELY(
@@ -986,9 +974,9 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
 #ifdef VANADIS_BUILD_DEBUG
                 output->verbose(
                     CALL_INFO, 8, 0, "----> perform a pipeline clear thread %" PRIu32 ", reset to address: 0x%llx\n",
-                    rob_front->getHWThread(), pipeline_reset_addr);
+                    ins_thread, pipeline_reset_addr);
 #endif
-                handleMisspeculate(rob_front->getHWThread(), pipeline_reset_addr);
+                handleMisspeculate(ins_thread, pipeline_reset_addr);
 
                 stat_branch_mispredicts->addData(1);
             }
@@ -1037,8 +1025,9 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
             }
         }
         else {
-            if ( !rob_front->checkFrontOfROB() ) { rob_front->markFrontOfROB(); }
-            else {
+            if ( ! rob_front->checkFrontOfROB() ) { 
+                rob_front->markFrontOfROB(); 
+            } else {
                 // Return 2 because instruction is front of ROB but has not executed and
                 // so we cannot make progress any more this cycle
                 return 2;
@@ -1053,7 +1042,6 @@ bool
 VANADIS_COMPONENT::mapInstructiontoFunctionalUnit(
     VanadisInstruction* ins, std::vector<VanadisFunctionalUnit*>& functional_units)
 {
-
     bool allocated = false;
 
     for ( VanadisFunctionalUnit* next_fu : functional_units ) {
@@ -1079,10 +1067,7 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
 
     case INST_LOAD:
         if ( !lsq->loadFull() ) {
-            //				if( ins->endsMicroOpGroup() ) {
             stat_loads_issued->addData(1);
-            //				}
-
             lsq->push((VanadisLoadInstruction*)ins);
             allocated_fu = true;
         }
@@ -1090,10 +1075,7 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
 
     case INST_STORE:
         if ( !lsq->storeFull() ) {
-            //				if( ins->endsMicroOpGroup() ) {
             stat_stores_issued->addData(1);
-            //				}
-
             lsq->push((VanadisStoreInstruction*)ins);
             allocated_fu = true;
         }
@@ -1105,6 +1087,11 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
 
     case INST_BRANCH:
         allocated_fu = mapInstructiontoFunctionalUnit(ins, fu_branch);
+        break;
+
+    case INST_NOOP:
+        ins->markExecuted();
+        allocated_fu = true;
         break;
 
     case INST_INT_DIV:
@@ -1122,55 +1109,34 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
         if ( nullptr == fence_ins ) {
             output->fatal(
                 CALL_INFO, -1,
-                "Error: instruction (0x%0llu) is a fence but not "
+                "Error: instruction (0x%0llx /thr: %" PRIu32 ") is a fence but not "
                 "convertable to a fence instruction.\n",
-                ins->getInstructionAddress());
+                ins->getInstructionAddress(), ins->getHWThread());
         }
 
+        lsq->push(fence_ins);
         allocated_fu = true;
-
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "[fence]: processing ins: 0x%0llx functional unit "
-            "allocation for fencing (lsq-load size: %" PRIu32 " / lsq-store-buffer size: %" PRIu32 ")\n",
-            ins->getInstructionAddress(), (uint32_t)lsq->loadSize(), (uint32_t)lsq->storeBufferSize());
-
-        if ( fence_ins->createsStoreFence() ) {
-            if ( lsq->storeBufferSize() == 0 ) { allocated_fu = true; }
-            else {
-                allocated_fu = false;
-            }
-        }
-
-        if ( fence_ins->createsLoadFence() ) {
-            if ( lsq->loadSize() == 0 ) { allocated_fu = allocated_fu & true; }
-            else {
-                allocated_fu = false;
-            }
-        }
-
-        output->verbose(CALL_INFO, 16, 0, "[fence]: can proceed? %s\n", allocated_fu ? "yes" : "no");
-
-        if ( allocated_fu ) { ins->markExecuted(); }
     } break;
 
-    case INST_NOOP:
     case INST_FAULT:
         ins->markExecuted();
         allocated_fu = true;
         break;
+
     case INST_SYSCALL:
-        if ( lsq->storeBufferSize() == 0 &&  lsq->loadSize() == 0 ) { 
+        if ( lsq->storeBufferSize() == 0 && lsq->loadSize() == 0 ) { 
             allocated_fu = true;
         }
         break;
+
     default:
         output->fatal(CALL_INFO, -1, "Error - no processing for instruction class (%s)\n", ins->getInstCode());
         break;
     }
 
-    if ( allocated_fu ) { return 0; }
-    else {
+    if ( allocated_fu ) { 
+        return 0; 
+    } else {
         return 1;
     }
 }
@@ -1262,13 +1228,12 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     }
 
     uint32_t rob_start   = 0;
-    bool     found_store = false;
-    bool     found_load  = false;
+    bool unallocated_memory_op_seen = false;
 
     // Attempt to perform issues, cranking through the entire ROB call by call or until we
     // reach the max issues this cycle
     for ( uint32_t i = 0; i < issues_per_cycle; ++i ) {
-        if ( performIssue(cycle, rob_start, found_store, found_load) != 0 ) { break; }
+        if ( performIssue(cycle, rob_start, unallocated_memory_op_seen) != 0 ) { break; }
     }
 
     // Record how many instructions we issued this cycle
@@ -1356,7 +1321,6 @@ int
 VANADIS_COMPONENT::checkInstructionResources(
     VanadisInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs, VanadisISATable* isa_table)
 {
-
     bool      resources_good   = true;
     const int output_verbosity = output->getVerboseLevel();
 

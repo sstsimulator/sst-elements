@@ -131,8 +131,6 @@ public:
 
     void print(SST::Output* output, VanadisRegisterFile* regFile, bool print_int, bool print_fp, uint32_t output_v)
     {
-        // char* reg_bin_str = new char[65];
-
         if ( print_int ) {
             output->verbose(CALL_INFO, output_v, 0, "Integer Registers (Count=%" PRIu16 ")\n", count_int_reg);
             for ( uint16_t i = 0; i < count_int_reg; ++i ) {
@@ -143,9 +141,6 @@ public:
                         int_reg_ptr[i], int_reg_pending_read[i], int_reg_pending_write[i]);
                 }
                 else {
-                    int64_t* val = (int64_t*)regFile->getIntReg(i);
-                    // toBinaryString(reg_bin_str, *val);
-
                     output->verbose(
                         CALL_INFO, output_v, 0,
                         "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32
@@ -172,9 +167,9 @@ public:
                         output->verbose(
                             CALL_INFO, output_v, 0,
                             "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32
-                            " | v: 0x%016llx |\n",
+                            " | v: 0x%08x |\n",
                             i, fp_reg_ptr[i], fp_reg_pending_read[i], fp_reg_pending_write[i],
-                            (uint64_t)regFile->getFPReg<uint32_t>(fp_reg_ptr[i]));
+                            regFile->getFPReg<uint32_t>(fp_reg_ptr[i]));
                     }
                     else {
                         output->verbose(
@@ -205,7 +200,6 @@ public:
     }
 
     bool physIntRegInUse(const uint16_t reg) { return findInRegSet(reg, int_reg_ptr, count_int_reg); }
-
     bool physFPRegInUse(const uint16_t reg) { return findInRegSet(reg, fp_reg_ptr, count_fp_reg); }
 
 protected:

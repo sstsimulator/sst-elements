@@ -25,6 +25,7 @@
 #include "vinsloader.h"
 
 #include <list>
+#include <functional>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -1000,6 +1001,7 @@ protected:
 
                         case MIPS_SPEC_OP_MASK_SYSCALL:
                         {
+                            bundle->addInstruction(new VanadisFenceInstruction(ins_addr, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
                             bundle->addInstruction(new VanadisSysCallInstruction(ins_addr, hw_thr, options));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_syscall);
@@ -2003,9 +2005,11 @@ protected:
 
                     switch ( rd ) {
                     case 29:
+                        auto thread_call = std::bind(&VanadisMIPSDecoder::getThreadLocalStoragePointer, this);
+
                         bundle->addInstruction(
-                            new VanadisSetRegisterInstruction<int32_t>(
-                                ins_addr, hw_thr, options, target_reg, static_cast<int32_t>(getThreadLocalStoragePointer())));
+                            new VanadisSetRegisterByCallInstruction<int32_t>(
+                                ins_addr, hw_thr, options, target_reg, thread_call));
                         insertDecodeFault = false;
                         break;
                     }

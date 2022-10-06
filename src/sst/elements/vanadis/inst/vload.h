@@ -32,8 +32,11 @@ public:
         const int64_t offst, const uint16_t tgtReg, const uint16_t load_bytes, const bool extend_sign,
         const VanadisMemoryTransaction accessT, VanadisLoadRegisterType regT) :
         VanadisInstruction(
-            addr, hw_thr, isa_opts, 1, regT == LOAD_INT_REGISTER ? 1 : 0, 1, regT == LOAD_INT_REGISTER ? 1 : 0, 0,
-            regT == LOAD_FP_REGISTER ? 1 : 0, 0, regT == LOAD_FP_REGISTER ? 1 : 0),
+            addr, hw_thr, isa_opts, 
+            1, regT == LOAD_INT_REGISTER ? 1 : 0, 
+            1, regT == LOAD_INT_REGISTER ? 1 : 0,
+            0, regT == LOAD_FP_REGISTER ? 1 : 0, 
+            0, regT == LOAD_FP_REGISTER ? 1 : 0),
         offset(offst),
         load_width(load_bytes),
         signed_extend(extend_sign),
@@ -81,8 +84,17 @@ public:
         return "LOADUNK";
     }
 
-    uint16_t getMemoryAddressRegister() const { return phys_int_regs_in[1]; }
-    uint16_t getTargetRegister() const { return phys_int_regs_in[0]; }
+    uint16_t getMemoryAddressRegister() const { return phys_int_regs_in[0]; }
+    uint16_t getTargetRegister() const { 
+        switch(regType) {
+            case LOAD_INT_REGISTER:
+                return phys_int_regs_out[0];
+            case LOAD_FP_REGISTER:
+                return phys_fp_regs_out[0];
+            default:
+                assert(0);
+        }
+    }
 
     virtual void execute(SST::Output* output, VanadisRegisterFile* regFile) { markExecuted(); }
 
