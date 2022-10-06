@@ -50,6 +50,8 @@ v_cpu_0.addParams({
        "fp_arith_units" : fp_arith_units,
        "branch_unit_cycles" : branch_arith_cycles,
        "print_int_reg" : 1,
+       "print_fp_reg" : 1,
+       "print_issue_tables" :"no",
        "pipeline_trace_file" : pipe_trace_file,
        "reorder_slots" : rob_slots,
        "decodes_per_cycle" : decodes_per_cycle,
