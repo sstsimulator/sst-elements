@@ -60,15 +60,8 @@ class Foo : public EmberMessagePassingGenerator {
         { "time-Commcreate", "Time spent in Commcreate event", "ns", 0},
     );
 
-    Foo(SST::ComponentId_t id, Params& params) :
-		EmberMessagePassingGenerator(id, params, "Null" )
-	{
-    }
-
-    bool generate( std::queue<EmberEvent*>& evQ)
-	{
-		return true;
-	}
+    Foo(SST::ComponentId_t id, Params& params);
+    bool generate( std::queue<EmberEvent*>& evQ);
 };
 
 }
