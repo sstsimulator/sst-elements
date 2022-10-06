@@ -19,11 +19,13 @@
 
 #include <sst/core/interfaces/simpleNetwork.h>
 
+#define NUM_NODE_BITS     20
+#define NUM_PID_BITS      12
+#define NUM_STREAM_ID_BITS 20 
+
 namespace SST {
 namespace Firefly {
 
-
-#define FOO 0
 class FireflyNetworkEvent : public Event {
 
   public:
@@ -48,12 +50,27 @@ class FireflyNetworkEvent : public Event {
     bool isTail() { return m_isTail; }
     int calcPayloadSizeInBits() { return payloadSize() * 8; }
     int payloadSize() { return pktOverhead + bufSize(); }
-    void setSrcNode(int node ) { srcNode = node; }
-    void setSrcPid( int pid ) { srcPid = pid; }
-    void setDestPid( int pid ) { destPid = pid; }
+
+    void setSrcNode( int node ) { 
+        assert( node < (1 << NUM_NODE_BITS) );
+        srcNode = node; 
+    }
+    void setSrcPid( int pid ) {
+        assert( pid < (1 << NUM_PID_BITS) );
+        srcPid = pid; 
+    }
+    void setSrcStream( int stream ) { 
+        assert( stream < (1 << NUM_STREAM_ID_BITS) );
+        srcStream = stream; 
+    }
+    void setDestPid( int pid ) {
+        assert( pid < (1 << NUM_PID_BITS) );
+        destPid = pid; 
+    }
 
     int getSrcNode() { return srcNode; }
     int getSrcPid() { return srcPid; }
+    int getSrcStream() { return srcStream; }
     int getDestPid() { return destPid; }
 
     size_t bufSize() {
@@ -92,6 +109,7 @@ class FireflyNetworkEvent : public Event {
         seq = me->seq;
         srcNode = me->srcNode;
         srcPid = me->srcPid;
+        srcStream = me->srcStream;
         destPid = me->destPid;
         m_isHdr = me->m_isHdr;
         m_isTail = me->m_isTail;
@@ -107,6 +125,7 @@ class FireflyNetworkEvent : public Event {
         seq = me.seq;
         srcNode = me.srcNode;
         srcPid = me.srcPid;
+        srcStream = me.srcStream;
         destPid = me.destPid;
         m_isHdr = me.m_isHdr;
         m_isTail = me.m_isTail;
@@ -136,6 +155,7 @@ class FireflyNetworkEvent : public Event {
     uint16_t        seq;
     int             srcNode;
     int             srcPid;
+    int             srcStream;
     int             destPid;
     bool            m_isHdr;
     bool            m_isTail;
@@ -155,6 +175,7 @@ class FireflyNetworkEvent : public Event {
         ser & buf;
         ser & srcNode;
         ser & srcPid;
+        ser & srcStream;
         ser & destPid;
         ser & pktOverhead;
         ser & m_isHdr;
