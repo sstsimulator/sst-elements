@@ -44,6 +44,7 @@ v_cpu_0.addParams({
        "clock" : cpu_clock,
 #       "max_cycle" : 100000000,
        "verbose" : verbosity,
+       "dbg_mask" : 0,
        "physical_fp_registers" : 168,
        "physical_int_registers" : 180,
        "integer_arith_cycles" : integer_arith_cycles,
@@ -60,7 +61,8 @@ v_cpu_0.addParams({
        "issues_per_cycle" :  issues_per_cycle,
        "retires_per_cycle" : retires_per_cycle,
        "auto_clock_syscall" : auto_clock_sys,
-       "pause_when_retire_address" : os.getenv("VANADIS_HALT_AT_ADDRESS", 0)
+       "pause_when_retire_address" : os.getenv("VANADIS_HALT_AT_ADDRESS", 0),
+       "start_verbose_when_issue_address" : os.getenv("VANADIS_START_DBG_AT_ADDRESS", 0) 
 #       "reorder_slots" : 32,
 #       "decodes_per_cycle" : 2,
 #       "issues_per_cycle" :  1,
