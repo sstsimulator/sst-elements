@@ -23,6 +23,8 @@
 #include <cstdint>
 #include <vector>
 
+#include "vanadisDbgFlags.h"
+
 #include "datastruct/vcache.h"
 #include "vinsbundle.h"
 
@@ -79,7 +81,7 @@ public:
                 new_line->push_back(resp->data[i]);
             }
 
-            output->verbose(CALL_INFO, 16, 0, "[ins-loader] ---> response has: %" PRIu64 " bytes in payload\n",
+            output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ---> response has: %" PRIu64 " bytes in payload\n",
                             (uint64_t)resp->data.size());
 
             if (output->getVerboseLevel() >= 16) {
@@ -95,13 +97,13 @@ public:
                     snprintf(print_line, 2048, "%s %" PRIu8 "", temp_line, resp->data[i]);
                 }
 
-                output->verbose(CALL_INFO, 16, 0, "[ins-loader] ---> cache-line: %s\n", print_line);
+                output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ---> cache-line: %s\n", print_line);
 
                 delete[] print_line;
                 delete[] temp_line;
             }
 
-            output->verbose(CALL_INFO, 16, 0, "[ins-loader] ---> hit (addr=0x%llx), caching line in predecoder.\n",
+            output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ---> hit (addr=0x%llx), caching line in predecoder.\n",
                             resp->pAddr);
 
             predecode_cache->store(resp->pAddr, new_line);
@@ -134,7 +136,7 @@ public:
 
         bool filled = true;
 
-        output->verbose(CALL_INFO, 16, 0,
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG,
                         "[fill-decode]: ins-addr: 0x%llx line-offset: %" PRIu64 " line-start=%" PRIu64 " / 0x%llx\n",
                         addr, inst_line_offset, cache_line_start, cache_line_start);
 
@@ -143,25 +145,25 @@ public:
 
 				uint64_t bytes_from_this_line = std::min( static_cast<uint64_t>(buffer_req), cache_line_width - inst_line_offset );
 
-				output->verbose(CALL_INFO, 16, 0, "[fill-decode]: load %" PRIu64 " bytes from this line.\n", bytes_from_this_line);
+				output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[fill-decode]: load %" PRIu64 " bytes from this line.\n", bytes_from_this_line);
 
             for (uint64_t i = 0; i < bytes_from_this_line; ++i) {
                 buffer[i] = cached_bytes->at(inst_line_offset + i);
             }
 
 				if( bytes_from_this_line < buffer_req ) {
-					output->verbose(CALL_INFO, 16, 0, "[fill-decode]: requires split cache line load, first-line: %" PRIu64 " bytes\n", bytes_from_this_line);
+					output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[fill-decode]: requires split cache line load, first-line: %" PRIu64 " bytes\n", bytes_from_this_line);
 
 					if(predecode_cache->contains(cache_line_start + cache_line_width)) {
 						cached_bytes = predecode_cache->find(cache_line_start + cache_line_width);
 
-						output->verbose(CALL_INFO, 16, 0, "[fill-decode]: requires split cache line load, second-line: %" PRIu64 " bytes\n", (buffer_req - bytes_from_this_line));
+						output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[fill-decode]: requires split cache line load, second-line: %" PRIu64 " bytes\n", (buffer_req - bytes_from_this_line));
 
 						for( uint64_t i = 0; i < (buffer_req - bytes_from_this_line); ++i ) {
 							buffer[bytes_from_this_line + i] = cached_bytes->at(i);
 						}
 					} else {
-						output->verbose(CALL_INFO, 16, 0, "[fill-decode]: second line fill fails, line is not in predecode cache\n");
+						output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[fill-decode]: second line fill fails, line is not in predecode cache\n");
 						filled = false;
 					}
 				}
@@ -169,7 +171,7 @@ public:
             filled = false;
         }
 
-        output->verbose(CALL_INFO, 16, 0, "[fill-decode]: line-filled: %s\n", (filled) ? "yes" : "no");
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[fill-decode]: line-filled: %s\n", (filled) ? "yes" : "no");
 
         return filled;
     }
@@ -207,7 +209,7 @@ public:
                           len, cache_line_width);
         }
 
-        output->verbose(CALL_INFO, 8, 0,
+        output->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG,
                         "[ins-loader] ---> processing a requested load ip=%p, "
                         "icache-line: %" PRIu64 " bytes.\n",
                         (void*)addr, cache_line_width);
@@ -216,7 +218,7 @@ public:
         uint64_t line_start = addr - line_start_offset;
 
         do {
-            output->verbose(CALL_INFO, 8, 0,
+            output->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG,
                             "[ins-loader] ---> issue ins-load line-start: 0x%llx, line-len: %" PRIu64
                             " read-len=%" PRIu64 " \n",
                             line_start, line_start_offset, cache_line_width);
@@ -225,7 +227,7 @@ public:
 					// line is already in the cache, touch to make sure it is kept in LRU
 					predecode_cache->touch(line_start);
 
-					output->verbose(CALL_INFO, 8, 0, "[ins-loader] ----> line (start-addr: 0x%llx) is already in pre-decode cache, updated LRU priority\n",
+					output->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ----> line (start-addr: 0x%llx) is already in pre-decode cache, updated LRU priority\n",
 						line_start);
 				} else {
 	            bool found_pending_load = false;
@@ -238,7 +240,7 @@ public:
 	            }
 
 	            if (!found_pending_load) {
-						output->verbose(CALL_INFO, 8, 0, "[ins-loader] ----> creating a load for line at 0x%llx, len=%" PRIu64 "\n",
+						output->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ----> creating a load for line at 0x%llx, len=%" PRIu64 "\n",
 							line_start, cache_line_width);
 
 	                SST::Interfaces::StandardMem::Read* req_line = new SST::Interfaces::StandardMem::Read(
@@ -251,7 +253,7 @@ public:
 	                mem_if->send(req_line);
 
 	            } else {
-   	             output->verbose(CALL_INFO, 8, 0,
+   	             output->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG,
       	                          "[ins-loader] -----> load is already in progress, will "
          	                       "not issue another load.\n");
             	}
@@ -264,27 +266,27 @@ public:
     }
 
     void printStatus(SST::Output* output) {
-        output->verbose(CALL_INFO, 8, 0, "Instruction Loader - Internal State Report:\n");
-        output->verbose(CALL_INFO, 8, 0, "--> Cache Line Width:          %" PRIu64 "\n", cache_line_width);
-        output->verbose(CALL_INFO, 8, 0, "--> Pending Loads:             %" PRIu32 "\n",
+        output->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "Instruction Loader - Internal State Report:\n");
+        output->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "--> Cache Line Width:          %" PRIu64 "\n", cache_line_width);
+        output->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "--> Pending Loads:             %" PRIu32 "\n",
                         (uint32_t)pending_loads.size());
 
         for (auto pl_itr : pending_loads) {
-            output->verbose(CALL_INFO, 16, 0, "-----> Address:       %p\n", (void*)pl_itr.second->pAddr);
+            output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "-----> Address:       %p\n", (void*)pl_itr.second->pAddr);
         }
 
-        output->verbose(CALL_INFO, 8, 0, "--> uop Cache Entries:         %" PRIu32 " / %" PRIu32 "\n",
+        output->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "--> uop Cache Entries:         %" PRIu32 " / %" PRIu32 "\n",
                         (uint32_t)uop_cache->size(), (uint32_t)uop_cache->capacity());
-        output->verbose(CALL_INFO, 8, 0, "--> Predecode Cache Entries:   %" PRIu32 " / %" PRIu32 "\n",
+        output->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "--> Predecode Cache Entries:   %" PRIu32 " / %" PRIu32 "\n",
                         (uint32_t)predecode_cache->size(), (uint32_t)predecode_cache->capacity());
     }
 
 private:
 
 	void printPendingLoads(SST::Output* output) {
-		output->verbose(CALL_INFO, 8, 0, "[ins-loader]: Pending loads table\n");
+		output->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "[ins-loader]: Pending loads table\n");
 		for( auto next_load : pending_loads ) {
-			output->verbose(CALL_INFO, 8, 0, "[ins-loader]:   load: 0x%llx / size %" PRIu64 "\n",
+			output->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "[ins-loader]:   load: 0x%llx / size %" PRIu64 "\n",
 				next_load.second->pAddr, next_load.second->size);
 		}
 	}
