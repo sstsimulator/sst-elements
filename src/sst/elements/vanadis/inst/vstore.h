@@ -173,6 +173,7 @@ public:
         case STORE_FP_REGISTER:
             return phys_fp_regs_in[0];
         }
+        assert(0); // stop compiler "warning: control reaches end of non-void function [-Wreturn-type]"
     }
 
     VanadisStoreRegisterType getValueRegisterType() const { return regType; }
