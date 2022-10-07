@@ -37,13 +37,14 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     max_cycle = params.find<uint64_t>("max_cycle", std::numeric_limits<uint64_t>::max());
 
+    const int32_t dbg_mask = params.find<int32_t>("dbg_mask", 0);
     const int32_t verbosity = params.find<int32_t>("verbose", 0);
     core_id                 = params.find<uint32_t>("core_id", 0);
 
     char* outputPrefix = (char*)malloc(sizeof(char) * 256);
     sprintf(outputPrefix, "[Core: %4" PRIu32 "/@t]: ", core_id);
 
-    output = new SST::Output(outputPrefix, verbosity, 0, Output::STDOUT);
+    output = new SST::Output(outputPrefix, verbosity, dbg_mask, Output::STDOUT);
     free(outputPrefix);
 
     std::string clock_rate = params.find<std::string>("clock", "1GHz");
@@ -411,6 +412,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     }
 
     pause_on_retire_address = params.find<uint64_t>("pause_when_retire_address", 0);
+    start_verbose_when_issue_address = params.find<uint64_t>("start_verbose_when_issue_address", 0);
 
     // Register statistics ///////////////////////////////////////////////////////
     stat_ins_retired          = registerStatistic<uint64_t>("instructions_retired", "1");
@@ -569,7 +571,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
                     if ( output_verbosity >= 8 ) {
                         ins->printToBuffer(instPrintBuffer, 1024);
                         output->verbose(
-                            CALL_INFO, 8, 0, "--> Attempting issue for: rob[%" PRIu32 "]: 0x%llx / %s\n", j,
+                            CALL_INFO, 9, 0, "--> Attempting issue for: rob[%" PRIu32 "]: 0x%llx / %s\n", j,
                             ins->getInstructionAddress(), instPrintBuffer);
                     }
 #endif
@@ -579,7 +581,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
 #ifdef VANADIS_BUILD_DEBUG
                     if ( output_verbosity >= 8 ) {
                         output->verbose(
-                            CALL_INFO, 8, 0, "----> Check if registers are usable? result: %d (%s)\n", resource_check,
+                            CALL_INFO, 9, 0, "----> Check if registers are usable? result: %d (%s)\n", resource_check,
                             (0 == resource_check) ? "success" : "cannot issue");
                     }
 #endif
@@ -604,7 +606,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
 #ifdef VANADIS_BUILD_DEBUG
                         if ( output_verbosity >= 8 ) {
                             output->verbose(
-                                CALL_INFO, 8, 0, "----> allocated functional unit: %s\n",
+                                CALL_INFO, 9, 0, "----> allocated functional unit: %s\n",
                                 (0 == allocate_fu) ? "yes" : "no");
                         }
 #endif
@@ -620,6 +622,9 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
                                     instPrintBuffer, ins->getInstructionAddress(), status);
                             }
 #endif
+                            if ( ins->getInstructionAddress() == start_verbose_when_issue_address ) {
+                                output->setVerboseLevel(8);
+                            } 
                             ins->markIssued();
                             ins_issued_this_cycle++;
                             issued_an_ins = true;
@@ -677,7 +682,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
         }
         else {
             output->verbose(
-                CALL_INFO, 8, 0, "thread %" PRIu32 " is halted, did not process for issue this cycle.\n", i);
+                CALL_INFO, 9, 0, "thread %" PRIu32 " is halted, did not process for issue this cycle.\n", i);
         }
     }
 
