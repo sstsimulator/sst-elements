@@ -32,6 +32,7 @@ def build_vanadis_test_matrix():
     testlist.append(["basic_vanadis.py", "small/basic-math", "sqrt-float",    "mipsel", 300])
     testlist.append(["basic_vanadis.py", "small/basic-ops", "test-branch",    "mipsel", 300])
     testlist.append(["basic_vanadis.py", "small/basic-ops", "test-shift",     "mipsel",300])
+    testlist.append(["basic_vanadis.py", "small/misc", "stream",     "mipsel", 120])
 
     # Process each line and crack up into an index, hash, options and sdl file
     for testnum, test_info in enumerate(testlist):
@@ -154,16 +155,16 @@ class testcase_vanadis(SSTTestCase):
         self.assertTrue(os_outfileexists, "Vanadis test outfile-os not found in directory {0}".format(outdir))
         self.assertTrue(os_errfileexists, "Vanadis test errfile-os not found in directory {0}".format(outdir))
 
-        #print( "diff", sst_outfile, ref_sst_outfile )
-        #if ( os.path.exists( ref_sst_outfile ) ):
-        #    cmp_result = testing_compare_filtered_diff(testname, sst_outfile, ref_sst_outfile ,filters=[StartsWithFilter(" v0.instructions_issued.1")])
-        #    if (cmp_result == False):
-        #        diffdata = testing_get_diff_data(testname)
-        #        log_failure(oscmd)
-        #        log_failure(diffdata)
-        #    self.assertTrue(cmp_result, "Vanadis output file {0} does not match reference output file {1}".format(sst_outfile, ref_sst_outfile))
-        #else:
-        #    log_testing_note("vanadis test {0} SST gold file does not exist, did not compare".format(testDataFileName))
+        #print( "cp", sst_outfile, ref_sst_outfile )
+        if ( os.path.exists( ref_sst_outfile ) ):
+            cmp_result = testing_compare_filtered_diff(testname, sst_outfile, ref_sst_outfile ,filters=[StartsWithFilter(" v0.instructions_issued.1")])
+            if (cmp_result == False):
+                diffdata = testing_get_diff_data(testname)
+                log_failure(oscmd)
+                log_failure(diffdata)
+            self.assertTrue(cmp_result, "Vanadis output file {0} does not match reference output file {1}".format(sst_outfile, ref_sst_outfile))
+        else:
+            log_testing_note("vanadis test {0} SST gold file does not exist, did not compare".format(testDataFileName))
 
         cmp_result = testing_compare_diff(testname, os_outfile, ref_os_outfile)
         if (cmp_result == False):
