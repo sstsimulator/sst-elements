@@ -16,6 +16,7 @@
 
 #include <sst_config.h>
 #include <fstream>
+#include <iterator>
 #include "emberBFS.h"
 
 #include <cmath>
@@ -30,6 +31,9 @@ EmberBFSGenerator::EmberBFSGenerator(SST::ComponentId_t id,
     m_sz = (int32_t) params.find("arg.sz", 1);
     uint32_t rng_seed = (uint32_t) params.find("arg.seed", 1);
 
+    // TODO: Does every rank need to initialize? It seems like the answer
+    // is yes, as they need to tell the system the name of the global
+    // object they want to use.
     comm_model.initialize("comm_model", Shared::SharedObject::NO_VERIFY);
     comp_model.initialize("comp_model", Shared::SharedObject::NO_VERIFY);
 
@@ -41,21 +45,33 @@ EmberBFSGenerator::EmberBFSGenerator(SST::ComponentId_t id,
             out.fatal(CALL_INFO, 1, "Bad model file(s)");
         }
 
+        // Read the communication size model into a SharedMap
+        // Each line of the file is
+        //   callsite coeff1 coeff2 coeff3 [...]
         std::string line;
         while (getline(comm_file, line)) {
             std::istringstream iss(line);
             int cs;
             iss >> cs;
-            /*
             std::vector<float> coeff((std::istream_iterator<float>(iss)),
-                                        std::istream_iterator<float>());
-            comm_map.insert(pair<int, PolyModel>(cs, PolyModel(params)));
-            */
+                                      std::istream_iterator<float>());
+
+            comm_model.write(cs, PolyModel(coeff));
         }
- 
 
+        // Read the compute time model into a SharedMap
+        // Each line of the file is
+        //   src_callsite dst_callsite coeff1 coeff2 coeff3 [...]
+        while (getline(comp_file, line)) {
+            std::istringstream iss(line);
+            int src_cs, dst_cs;
+            iss >> src_cs >> dst_cs;
+            std::vector<float> coeff((std::istream_iterator<float>(iss)),
+                                      std::istream_iterator<float>());
 
- 
+            comp_model.write(std::pair<int,int>(src_cs, dst_cs), PolyModel(coeff));
+        }
+
     }
 
     // initial state
