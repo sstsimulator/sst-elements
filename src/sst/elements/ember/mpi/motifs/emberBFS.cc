@@ -34,8 +34,14 @@ EmberBFSGenerator::EmberBFSGenerator(SST::ComponentId_t id,
     // TODO: Does every rank need to initialize? It seems like the answer
     // is yes, as they need to tell the system the name of the global
     // object they want to use.
+
+    comm_filename = params.find<std::string>("arg.comm_model", "bfs-comm.model");
+    comp_filename = params.find<std::string>("arg.comp_model", "bfs-comp.model");
+
+    /*
     comm_model.initialize("comm_model", Shared::SharedObject::NO_VERIFY);
     comp_model.initialize("comp_model", Shared::SharedObject::NO_VERIFY);
+
 
     if (rank() == 0) {
         std::ifstream comm_file( params.find<std::string>("arg.comm_model", "bfs-comm.model") );
@@ -73,6 +79,7 @@ EmberBFSGenerator::EmberBFSGenerator(SST::ComponentId_t id,
         }
 
     }
+    */
 
     // initial state
     iter = 0;    
@@ -148,6 +155,51 @@ EmberBFSGenerator::~EmberBFSGenerator() {
     delete rng_comm0;
     delete rng_comm2;
     delete nullDispMap;
+}
+
+void EmberBFSGenerator::init(unsigned int phase) {
+
+    out.output("Info - this line executed");
+
+    comm_model.initialize("comm_model", Shared::SharedObject::NO_VERIFY);
+    comp_model.initialize("comp_model", Shared::SharedObject::NO_VERIFY);
+
+    if (rank() == 0) {
+        std::ifstream comm_file( comm_filename );
+        std::ifstream comp_file( comp_filename );
+
+        if (not (comp_file.good() and comm_file.good())) {
+            out.fatal(CALL_INFO, 1, "Bad model file(s)");
+        }
+
+        // Read the communication size model into a SharedMap
+        // Each line of the file is
+        //   callsite coeff1 coeff2 coeff3 [...]
+        std::string line;
+        while (getline(comm_file, line)) {
+            std::istringstream iss(line);
+            int cs;
+            iss >> cs;
+            std::vector<float> coeff((std::istream_iterator<float>(iss)),
+                                      std::istream_iterator<float>());
+
+            comm_model.write(cs, PolyModel(coeff));
+        }
+
+        // Read the compute time model into a SharedMap
+        // Each line of the file is
+        //   src_callsite dst_callsite coeff1 coeff2 coeff3 [...]
+        while (getline(comp_file, line)) {
+            std::istringstream iss(line);
+            int src_cs, dst_cs;
+            iss >> src_cs >> dst_cs;
+            std::vector<float> coeff((std::istream_iterator<float>(iss)),
+                                      std::istream_iterator<float>());
+
+            comp_model.write(std::pair<int,int>(src_cs, dst_cs), PolyModel(coeff));
+        }
+
+    }
 }
 
 void EmberBFSGenerator::initIter() {
