@@ -55,8 +55,6 @@ struct PolyModel : public SST::Core::Serialization::serializable
         return (coeff != lhs.coeff);
     }
 
-
-
     void serialize_order(SST::Core::Serialization::serializer& ser) override
     {
         ser& coeff;
@@ -112,6 +110,7 @@ public:
 public:
     EmberBFSGenerator(SST::ComponentId_t, Params& params);
     ~EmberBFSGenerator();
+    void init(unsigned int phase) override;
     bool generate( std::queue<EmberEvent*>& evQ);
 
 private:    
@@ -180,6 +179,9 @@ private:
         double roll = _rng->nextUniform() * range * 2.0;
         return input * (1.0-range+roll);
     }
+
+    std::string comm_filename;
+    std::string comp_filename;
 
     // Communication models
     Shared::SharedMap<int, PolyModel> comm_model;
