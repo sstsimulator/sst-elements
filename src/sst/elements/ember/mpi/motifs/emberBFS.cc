@@ -15,6 +15,7 @@
 
 
 #include <sst_config.h>
+#include <fstream>
 #include "emberBFS.h"
 
 #include <cmath>
@@ -28,6 +29,34 @@ EmberBFSGenerator::EmberBFSGenerator(SST::ComponentId_t id,
 {
     m_sz = (int32_t) params.find("arg.sz", 1);
     uint32_t rng_seed = (uint32_t) params.find("arg.seed", 1);
+
+    comm_model.initialize("comm_model", Shared::SharedObject::NO_VERIFY);
+    comp_model.initialize("comp_model", Shared::SharedObject::NO_VERIFY);
+
+    if (rank() == 0) {
+        std::ifstream comm_file( params.find<std::string>("arg.comm_model", "bfs-comm.model") );
+        std::ifstream comp_file( params.find<std::string>("arg.comp_model", "bfs-comp.model") );
+
+        if (not (comp_file.good() and comm_file.good())) {
+            out.fatal(CALL_INFO, 1, "Bad model file(s)");
+        }
+
+        std::string line;
+        while (getline(comm_file, line)) {
+            std::istringstream iss(line);
+            int cs;
+            iss >> cs;
+            /*
+            std::vector<float> coeff((std::istream_iterator<float>(iss)),
+                                        std::istream_iterator<float>());
+            comm_map.insert(pair<int, PolyModel>(cs, PolyModel(params)));
+            */
+        }
+ 
+
+
+ 
+    }
 
     // initial state
     iter = 0;    
