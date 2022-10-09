@@ -18,9 +18,53 @@
 
 #include "mpi/embermpigen.h"
 #include <sst/core/rng/mersenne.h>
+#include <sst/core/shared/sharedMap.h>
+#include <sst/core/output.h>
 
 namespace SST {
 namespace Ember {
+
+struct PolyModel : public SST::Core::Serialization::serializable
+{
+    std::vector<float> coeff;
+
+    PolyModel() : coeff(0) {}
+
+    PolyModel(std::vector<float> coeff) : coeff(coeff) {}
+
+    // Evaluate the model at x
+    // x should be between 0 and 1
+    float eval(float x)
+    {
+        float xt = 1.0;  // holds powers of x
+        float res = 0.0; // accumulator
+        for (auto c : coeff) {
+            res += c * xt;
+            xt  *= x;
+        }
+        return res;
+    }
+
+    bool operator==(const PolyModel& lhs) const
+    {
+        return (coeff == lhs.coeff);
+    }
+
+    bool operator!=(const PolyModel& lhs) const
+    {
+        return (coeff != lhs.coeff);
+    }
+
+
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override
+    {
+        ser& coeff;
+    }
+
+    ImplementSerializable(SST::Ember::PolyModel);
+
+};
 
 class EmberBFSGenerator : public EmberMessagePassingGenerator {
 
@@ -35,8 +79,10 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-        {   "arg.sz",   "Sets the graph size",    "14"},
-        {   "arg.seed",   "Sets the RNG seed",    "1"},
+        {   "arg.sz",           "Sets the graph size",              "14"},
+        {   "arg.seed",         "Sets the RNG seed",                "1"},
+        {   "arg.comm_model",   "Communication volume model file",  "bfs-comm.model"},
+        {   "arg.comp_model",   "Computation timing model file",    "bfs-comp.model"},
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -69,12 +115,13 @@ public:
     bool generate( std::queue<EmberEvent*>& evQ);
 
 private:    
+    Output out;
+
     int32_t m_sz; // graph size
 
     uint64_t s_time;
     
-    uint64_t state;
-    uint64_t prevState;  // for debugging
+    uint64_t state; uint64_t prevState;  // for debugging
     uint64_t iter;
     uint64_t maxIter;
     uint64_t idx_39; // state for node 39
@@ -133,6 +180,11 @@ private:
         double roll = _rng->nextUniform() * range * 2.0;
         return input * (1.0-range+roll);
     }
+
+    // Communication models
+    Shared::SharedMap<int, PolyModel> comm_model;
+    // Computation models
+    Shared::SharedMap<std::pair<int,int>, PolyModel> comp_model;
     
     // Random number generator    
     SST::RNG::MersenneRNG* rng;
