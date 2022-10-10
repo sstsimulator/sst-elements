@@ -160,6 +160,7 @@ EmberBFSGenerator::~EmberBFSGenerator() {
 void EmberBFSGenerator::init(unsigned int phase) {
 
     out.output("Info - this line executed");
+    printf("PATRICK - this happened!\n");
 
     comm_model.initialize("comm_model", Shared::SharedObject::NO_VERIFY);
     comp_model.initialize("comp_model", Shared::SharedObject::NO_VERIFY);
