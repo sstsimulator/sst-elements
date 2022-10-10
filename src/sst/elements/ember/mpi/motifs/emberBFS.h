@@ -21,6 +21,8 @@
 #include <sst/core/shared/sharedMap.h>
 #include <sst/core/output.h>
 
+#include <map>
+
 namespace SST {
 namespace Ember {
 
@@ -110,7 +112,6 @@ public:
 public:
     EmberBFSGenerator(SST::ComponentId_t, Params& params);
     ~EmberBFSGenerator();
-    void init(unsigned int phase) override;
     bool generate( std::queue<EmberEvent*>& evQ);
 
 private:    
@@ -180,14 +181,9 @@ private:
         return input * (1.0-range+roll);
     }
 
-    std::string comm_filename;
-    std::string comp_filename;
+    std::map<int,PolyModel> comm_model;
+    std::map<std::pair<int,int>,PolyModel> comp_model;
 
-    // Communication models
-    Shared::SharedMap<int, PolyModel> comm_model;
-    // Computation models
-    Shared::SharedMap<std::pair<int,int>, PolyModel> comp_model;
-    
     // Random number generator    
     SST::RNG::MersenneRNG* rng;
     // 'per rank' rng generator

@@ -31,55 +31,62 @@ EmberBFSGenerator::EmberBFSGenerator(SST::ComponentId_t id,
     m_sz = (int32_t) params.find("arg.sz", 1);
     uint32_t rng_seed = (uint32_t) params.find("arg.seed", 1);
 
-    // TODO: Does every rank need to initialize? It seems like the answer
-    // is yes, as they need to tell the system the name of the global
-    // object they want to use.
+    // Parse model files
+    std::ifstream comm_file( params.find<std::string>("arg.comm_model", "bfs-comm.model") );
+    std::ifstream comp_file( params.find<std::string>("arg.comp_model", "bfs-comp.model") );
 
-    comm_filename = params.find<std::string>("arg.comm_model", "bfs-comm.model");
-    comp_filename = params.find<std::string>("arg.comp_model", "bfs-comp.model");
+    if (not (comp_file.good() and comm_file.good())) {
+        out.fatal(CALL_INFO, 1, "Bad model file(s)");
+    }
 
-    /*
-    comm_model.initialize("comm_model", Shared::SharedObject::NO_VERIFY);
-    comp_model.initialize("comp_model", Shared::SharedObject::NO_VERIFY);
+    // Read the communication size model into a SharedMap
+    // Each line of the file is
+    //   callsite coeff1 coeff2 coeff3 [...]
+    std::string line;
+    while (getline(comm_file, line)) {
+        std::istringstream iss(line);
+        int cs;
+        iss >> cs;
+        std::vector<float> coeff((std::istream_iterator<float>(iss)),
+                                  std::istream_iterator<float>());
 
+        //comm_model.write(cs, PolyModel(coeff));
+        comm_model.insert(std::pair<int,PolyModel>(cs,PolyModel(coeff)));
+    }
+
+    // Read the compute time model into a SharedMap
+    // Each line of the file is
+    //   src_callsite dst_callsite coeff1 coeff2 coeff3 [...]
+    while (getline(comp_file, line)) {
+        std::istringstream iss(line);
+        int src_cs, dst_cs;
+        iss >> src_cs >> dst_cs;
+        std::vector<float> coeff((std::istream_iterator<float>(iss)),
+                                  std::istream_iterator<float>());
+
+        comp_model.insert(std::pair<std::pair<int,int>,PolyModel>(std::pair<int,int>(src_cs, dst_cs), PolyModel(coeff)));
+    }
 
     if (rank() == 0) {
-        std::ifstream comm_file( params.find<std::string>("arg.comm_model", "bfs-comm.model") );
-        std::ifstream comp_file( params.find<std::string>("arg.comp_model", "bfs-comp.model") );
-
-        if (not (comp_file.good() and comm_file.good())) {
-            out.fatal(CALL_INFO, 1, "Bad model file(s)");
+        std::cout << "COMM MODELS" << std::endl;
+        for (auto const& [cs, pm] : comm_model) {
+            std::cout << cs << ": ";
+            for (auto const p : pm.coeff) {
+                std::cout << " " << p;
+            }
+            std::cout << std::endl;
         }
 
-        // Read the communication size model into a SharedMap
-        // Each line of the file is
-        //   callsite coeff1 coeff2 coeff3 [...]
-        std::string line;
-        while (getline(comm_file, line)) {
-            std::istringstream iss(line);
-            int cs;
-            iss >> cs;
-            std::vector<float> coeff((std::istream_iterator<float>(iss)),
-                                      std::istream_iterator<float>());
-
-            comm_model.write(cs, PolyModel(coeff));
-        }
-
-        // Read the compute time model into a SharedMap
-        // Each line of the file is
-        //   src_callsite dst_callsite coeff1 coeff2 coeff3 [...]
-        while (getline(comp_file, line)) {
-            std::istringstream iss(line);
-            int src_cs, dst_cs;
-            iss >> src_cs >> dst_cs;
-            std::vector<float> coeff((std::istream_iterator<float>(iss)),
-                                      std::istream_iterator<float>());
-
-            comp_model.write(std::pair<int,int>(src_cs, dst_cs), PolyModel(coeff));
+        std::cout << "COMP MODELS" << std::endl;
+        for (auto const& [transition, pm] : comp_model) {
+            std::cout << transition.first << " -> " << transition.second << ": ";
+            for (auto const p : pm.coeff) {
+                std::cout << " " << p;
+            }
+            std::cout << std::endl;
         }
 
     }
-    */
 
     // initial state
     iter = 0;    
@@ -157,52 +164,6 @@ EmberBFSGenerator::~EmberBFSGenerator() {
     delete nullDispMap;
 }
 
-void EmberBFSGenerator::init(unsigned int phase) {
-
-    out.output("Info - this line executed");
-    printf("PATRICK - this happened!\n");
-
-    comm_model.initialize("comm_model", Shared::SharedObject::NO_VERIFY);
-    comp_model.initialize("comp_model", Shared::SharedObject::NO_VERIFY);
-
-    if (rank() == 0) {
-        std::ifstream comm_file( comm_filename );
-        std::ifstream comp_file( comp_filename );
-
-        if (not (comp_file.good() and comm_file.good())) {
-            out.fatal(CALL_INFO, 1, "Bad model file(s)");
-        }
-
-        // Read the communication size model into a SharedMap
-        // Each line of the file is
-        //   callsite coeff1 coeff2 coeff3 [...]
-        std::string line;
-        while (getline(comm_file, line)) {
-            std::istringstream iss(line);
-            int cs;
-            iss >> cs;
-            std::vector<float> coeff((std::istream_iterator<float>(iss)),
-                                      std::istream_iterator<float>());
-
-            comm_model.write(cs, PolyModel(coeff));
-        }
-
-        // Read the compute time model into a SharedMap
-        // Each line of the file is
-        //   src_callsite dst_callsite coeff1 coeff2 coeff3 [...]
-        while (getline(comp_file, line)) {
-            std::istringstream iss(line);
-            int src_cs, dst_cs;
-            iss >> src_cs >> dst_cs;
-            std::vector<float> coeff((std::istream_iterator<float>(iss)),
-                                      std::istream_iterator<float>());
-
-            comp_model.write(std::pair<int,int>(src_cs, dst_cs), PolyModel(coeff));
-        }
-
-    }
-}
-
 void EmberBFSGenerator::initIter() {
     prevState = -1;
     state = 1;
@@ -214,6 +175,18 @@ void EmberBFSGenerator::initIter() {
 int EmberBFSGenerator::msgSize_29(double meanSize) {
     // piecewise. if < 0.8 use pareto for "small messages', if >=0.8
     // use other distribution
+    static int test = 1;
+    if (test) {
+        test = 0;
+        if (rank() == 0) {
+            //TODO: Remove this line
+            float eval1 = comm_model[1111].eval(0.5);
+            printf("Test eval: comm_model[1111] is %f\n", eval1);
+            float eval1to2 = comp_model[std::pair<int,int>(1111,2222)].eval(0.5);
+            printf("Test eval: comp_model[(1111,2222)] is is %f\n", eval1to2);
+        }
+    }
+
     double roll = rng_opposite->nextUniform();
     if (roll < 0.8) {
         // pareto
