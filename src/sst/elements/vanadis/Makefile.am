@@ -257,6 +257,14 @@ EXTRA_DIST = \
 	tests/small/basic-ops/test-shift/mipsel/vanadis.stdout.gold \
 	tests/small/basic-ops/test-shift/riscv64/test-shift \
 \
+	tests/small/misc/stream/Makefile \
+	tests/small/misc/stream/stream.c \
+	tests/small/misc/stream/mipsel/stream \
+	tests/small/misc/stream/mipsel/sst.stdout.gold \
+	tests/small/misc/stream/mipsel/vanadis.stderr.gold \
+	tests/small/misc/stream/mipsel/vanadis.stdout.gold \
+	tests/small/misc/stream/riscv64/stream \
+\
 	tests/basic_vanadis.py \
 	tests/testsuite_default_vanadis.py
 

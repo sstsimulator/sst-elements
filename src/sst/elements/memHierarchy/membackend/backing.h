@@ -89,7 +89,7 @@ private:
 
 class BackingMalloc : public Backing {
 public:
-    BackingMalloc(size_t size) {
+    BackingMalloc(size_t size, bool init = false ) : m_init(init) {
         m_allocUnit = size;
         /* Alloc unit needs to be pwr-2 */
         if (!isPowerOfTwo(m_allocUnit)) {
@@ -157,6 +157,9 @@ private:
     void allocIfNeeded(Addr bAddr) {
         if (m_buffer.find(bAddr) == m_buffer.end()) {
             uint8_t* data = (uint8_t*) malloc(sizeof(uint8_t)*m_allocUnit);
+            if ( m_init ) {
+                bzero( data, m_allocUnit );
+            }
             if (!data) {
                 Output out("", 1, 0, Output::STDOUT);
                 out.fatal(CALL_INFO, -1, "BackingMalloc: Error - malloc failed.\n");
@@ -168,6 +171,7 @@ private:
     std::unordered_map<Addr,uint8_t*> m_buffer;
     unsigned int m_allocUnit;
     unsigned int m_shift;
+    bool m_init;
 };
 
 }
