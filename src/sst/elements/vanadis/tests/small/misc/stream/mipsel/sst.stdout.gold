@@ -3,9 +3,6 @@ Auto-clock syscalls: no
 No application arguments found, continuing with argc=0
 WARNING: Element vanadis.dbg_VanadisCPU has slot with an invalid name: decoder%(hardware_threads)d
 l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 3 cycles.
-memory, WARNING: Memories no longer inherit address regions from directories and no region parameters (addr_range_start, addr_range_end, interleave_size, interleave_step) were detected. All addresses will map to this memory: if this is intended, you may ignore this warning or set addr_range_start to 0 in your input deck to eliminate this warning.
-memory, Notice: memory controller's region is larger than the backend's mem_size, controller is limiting accessible memory to mem_size
-Region: start=0, end=18446744073709551615, interleaveStep=0, interleaveSize=0. MemSize: 4294967296B
  v0:decoder0:branch_unit.branch_cache_hit.1 : Accumulator : Sum.u64 = 78623; SumSQ.u64 = 78623; Count.u64 = 78623; Min.u64 = 1; Max.u64 = 1; 
  v0:decoder0:branch_unit.branch_cache_miss.1 : Accumulator : Sum.u64 = 38247; SumSQ.u64 = 38247; Count.u64 = 38247; Min.u64 = 1; Max.u64 = 1; 
  v0:decoder0:branch_unit.branch_cache_castout.1 : Accumulator : Sum.u64 = 8191; SumSQ.u64 = 8191; Count.u64 = 8191; Min.u64 = 1; Max.u64 = 1; 
