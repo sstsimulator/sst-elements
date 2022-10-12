@@ -159,6 +159,7 @@ util/vlinesplit.h \
 util/vsignx.h \
 util/vtypename.h \
 vanadis.h \
+vanadisDbgFlags.h \
 vbranch/vbranchbasic.h \
 vbranch/vbranchunit.h \
 velf/velfinfo.h \

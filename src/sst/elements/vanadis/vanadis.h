@@ -301,6 +301,7 @@ private:
     uint32_t ins_decoded_this_cycle;
 
     uint64_t pause_on_retire_address;
+    uint64_t start_verbose_when_issue_address;
 
     std::vector<VanadisFloatingPointFlags*> fp_flags;
 
