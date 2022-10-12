@@ -67,6 +67,8 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     // Output for debug
     dbg.init("", dlevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
 
+    bool initBacking = params.find<bool>("initBacking", false);
+
     // Debug address
     std::vector<Addr> addrArr;
     params.find_array<Addr>("debug_addr", addrArr);
@@ -299,7 +301,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
             else if (e == 2) {
                 if (memoryFile == "") {
                     out.verbose(CALL_INFO, 1, 0, "%s, Could not MMAP backing store (likely, simulated memory exceeds real memory). Creating malloc based store instead.\n", getName().c_str());
-                    backing_ = new Backend::BackingMalloc(sizeBytes);
+                    backing_ = new Backend::BackingMalloc(sizeBytes,initBacking);
                 } else {
                     out.fatal(CALL_INFO, -1, "%s, Error - Could not MMAP backing store from file %s\n", getName().c_str(), memoryFile.c_str());
                 }
@@ -307,7 +309,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
                 out.fatal(CALL_INFO, -1, "%s, Error - unable to create backing store. Exception thrown is %d.\n", getName().c_str(), e);
         }
     } else if (backingType == "malloc") {
-        backing_ = new Backend::BackingMalloc(sizeBytes);
+        backing_ = new Backend::BackingMalloc(sizeBytes,initBacking);
     }
 
     /* Custom command handler */

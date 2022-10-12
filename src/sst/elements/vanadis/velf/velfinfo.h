@@ -555,11 +555,19 @@ public:
     }
 
     void setBinaryPath(const char* new_path) {
-        bin_path = new char[strlen(new_path) + 1];
+        bin_path_short = bin_path = new char[strlen(new_path) + 1];
         sprintf(bin_path, "%s", new_path);
+
+        for ( auto i = strlen(bin_path); i > 0; i-- ) {
+            if ( '/' == bin_path[i-1] ) {
+                bin_path_short = bin_path + i;
+                break;
+            }
+        }
     }
 
     const char* getBinaryPath() const { return bin_path; }
+    const char* getBinaryPathShort() const { return bin_path_short; }
 
     uint64_t getEntryPoint() const { return elf_entry_point; }
     VanadisELFEndianness getEndian() const { return elf_endian; }
@@ -629,6 +637,7 @@ public:
 
 protected:
     char* bin_path;
+    char* bin_path_short;
     uint8_t elf_class;
     VanadisELFEndianness elf_endian;
     uint8_t elf_os_abi;
