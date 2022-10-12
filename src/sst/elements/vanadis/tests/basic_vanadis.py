@@ -29,6 +29,9 @@ sst.setProgramOption("stopAtCycle", "0 ns")
 # Tell SST what statistics handling we want
 sst.setStatisticLoadLevel(4)
 
+full_exe_name = os.getenv("VANADIS_EXE", "./tests/small/" + group + "/" + test +  "/mipsel/" + test )
+exe_name= full_exe_name.split("/")[-1]
+
 verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
 os_verbosity = os.getenv("VANADIS_OS_VERBOSE", verbosity)
 pipe_trace_file = os.getenv("VANADIS_PIPE_TRACE", "")
@@ -151,7 +154,8 @@ node_os.addParams({
 	"heap_end"   : (2 * 1024 * 1024 * 1024) - 4096,
 	"page_size"  : 4096,
 	"heap_verbose" : verbosity,
-    "executable" : os.getenv("VANADIS_EXE", "./tests/small/" + group + "/" + test +  "/mipsel/" + test ),
+    "executable" : full_exe_name,
+    "app.arg0" : exe_name,
     "app.env_count" : 2,
     "app.env0" : "HOME=/home/sdhammo",
     "app.env1" : "NEWHOME=/home/sdhammo2",
