@@ -108,7 +108,7 @@ uint64_t AppRuntimeMemory<Type>::configure( Output* output, Interfaces::Standard
 
         if ( "" == arg_value ) {
             if ( 0 == arg ) {
-                arg_value = elf_info->getBinaryPath();
+                arg_value = elf_info->getBinaryPathShort();
                 output->verbose(CALL_INFO, 8, 0, "--> auto-set \"%s\" to \"%s\"\n", arg_name, arg_value.c_str());
             }
             else {
@@ -204,14 +204,12 @@ uint64_t AppRuntimeMemory<Type>::configure( Output* output, Interfaces::Standard
 
     const uint64_t rand_values_address = phdr_address + phdr_data_block.size() + 64;
 
-    if ( 8 == sizeof( Type ) ) {
-        const char*    exe_path            = elf_info->getBinaryPath();
-        for ( int i = 0; i < std::strlen(exe_path); ++i ) {
-            random_values_data_block.push_back(exe_path[i]);
-        }
+    const char*    exe_path            = elf_info->getBinaryPathShort();
+    for ( int i = 0; i < std::strlen(exe_path); ++i ) {
+         random_values_data_block.push_back(exe_path[i]);
+    }
   
-        random_values_data_block.push_back('\0');
-    } 
+    random_values_data_block.push_back('\0');
 
     std::vector<uint8_t> aux_data_block;
 
