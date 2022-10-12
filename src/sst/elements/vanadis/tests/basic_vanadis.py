@@ -273,6 +273,8 @@ memctrl.addParams({
       "backend.mem_size" : "4GiB",
       "backing" : "malloc",
       "initBacking": 1,
+      "addr_range_start": 0, 
+      "addr_range_end": 0xffffffff, 
 })
 memToDir = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
 
