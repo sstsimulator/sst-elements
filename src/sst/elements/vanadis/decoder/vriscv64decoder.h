@@ -1742,13 +1742,13 @@ protected:
                     // ADDIW
                     uint16_t rd     = static_cast<uint16_t>((ins & 0xF80) >> 7);
                     uint32_t imm_40 = (ins & 0x7C) >> 2;
-                    uint32_t imm_5  = (ins & 0x1000) >> 6;
+                    uint32_t imm_5  = (ins & 0x1000) >> 7;
 
-                    int64_t imm = (imm_40 | imm_5);
+                    int32_t imm = (imm_40 | imm_5);
 
-                    if ( imm_5 != 0 ) { imm |= 0xFFFFFFFFFFFFFFC0; }
+                    if ( imm_5 != 0 ) { imm |= 0xFFFFFFC0; }
 
-                    output->verbose(CALL_INFO, 16, 0, "-----> RVC ADDIW  reg: %" PRIu16 ", imm=%" PRId64 "\n", rd, imm);
+                    output->verbose(CALL_INFO, 16, 0, "-----> RVC ADDIW  reg: %" PRIu16 ", imm=%" PRId32 "\n", rd, imm);
 
                     // This really is a W-clipping instruction, so make INT32
                     bundle->addInstruction(new VanadisAddImmInstruction<int32_t>(
