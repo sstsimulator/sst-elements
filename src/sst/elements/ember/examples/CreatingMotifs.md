@@ -5,34 +5,52 @@
 
 ## Motif
 
-Motifs are condensed, efficient generators for different kinds of communication patterns.
-We will be rather abstract with our motif.  In this case, we want it to be a "Foo" operation.
-But it could just as easily be an MPI Allreduce operation for example.
+Motifs are condensed, efficient generators for simulating different kinds of communication/computation patterns.
+The motif presented here does no real work, but more detailed motifs can be found in sst-elements/src/sst/elements/ember/mpi/motifs/.
+
+Motifs are executed as follows:
+
+1) The motif generator is initialized (The contructor)
+2) The generate function is invoked and returns either true or false
+3) The events on the eventQueue are processed.
+4) If the generate function in step 2 returned false, return to step 2, otherwise the motif is complete.
+
+Motifs are intended to be ran as a 'job submission'.
+The generate function models an entire iteration of an application, using the event queue to mix compute, and MPI operations in every iteration.
 
 ### Register Subcomponent
+
 To invoke an ember motif it first has to be registered as an SST subcomponent. This typically happens in the header file.
 for example:
 ```
 SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
-        Foo,
+        Example,
         "ember",
-        "FooMotif",
+        "ExampleMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs an idle on the node, no traffic can be generated.",
         SST::Ember::EmberGenerator
     );
 ```
-The first parameter is the class associated with this Motif. The second parameter specifies the aspect of elements being used, in the case of Motifs it is "ember". The next parameter specifies the identifier used to index the Motif. Note that the end of this parameter must always be Motif, as this is implied in the name of the Motif. The next parameter specifies the  SST elements version, then a description of what the motif does. The last parameter specifies the EmberGenerator used.
+1) class associated with this Motif. 
+3) Aspect of elements being used, in the case of Motifs it is "ember". 
+3) Identifier used to index the Motif. Note that the end of this parameter must always be Motif.
+4) SST elements version,
+5) Comment describing what the motif does. 
+6) EmberGenerator.
 
 ### Writing a constructor
 ```
-EmberFoo::EmberFoo(SST::ComponentId_t id, Params& params) :
+EmberFoo::EmberExample(SST::ComponentId_t id, Params& params) :
 	EmberMessagePassingGenerator(id, params, "Foo"),
 
 ```
-The params can be parsed using `firstParam = params.find<uint32_t>("arg.firstParam", 100);` where the name of the parameter is "firstParam".
 
-The params are created in the python file with the ep.addMotif("Foo firstParam=100 secondParam=200") line. Note that no space is allowed before or after the = operator. Parameters read from the python file will be prepended with "arg." before being passed to the C++ file. i.e. "firstParam" becomes "arg.firstParam".
+The constructor allows initialization to occur before invoking the generate function.
+
+The params are passed through the python file with ep.addMotif("Foo firstParam=100 secondParam=200"). Note that no space is allowed before or after the = operator. Parameters read from the python file will be prepended with "arg." before being passed to the C++ file. i.e. "firstParam" becomes "arg.firstParam".
+
+The params can be parsed using `firstParam = params.find<uint32_t>("arg.firstParam", 100);` where the name of the parameter is "firstParam".
 
 ### Writing a generate() function
 ```
@@ -44,15 +62,14 @@ Once the generate function returns true, the events queued into the evQ variable
 
 # User defined events
 
-There are a variety of functions that are used to allow the user to control aspects of the program computation.
+These functions allow the user to control how the simulation estimates computation time.
 
 * `enQ_compute(Queue&, uint64_t nanoSecondDelay)`   -- The delay by the expected cost of the input function in nanoSeconds (without actually computing it)
-* `enQ_compute( Queue& q, std::function<uint64_t()> func)`; -- The compute function is passed as a parameter and invoked.
+* `enQ_compute( Queue& q, std::function<uint64_t()> func)`; -- The compute function is passed as a parameter and invoked. It return a 64 bit unsigned integer that indicates the simulation delay associated with invoking the function.
 * `enQ_getTime(evQ, &m_startTime)` -- sets m_startTime to the current time
 
 There are two types of 'compute' operations that can be enqueued. The first is a 'pseudo' compute operation. The amount of time needed to perform the compute is already known and so we can skip the actual computation and just delay as if we had computed. 
-The other compute actually performs the compute and takes the function as a parameter. 
-The user can also measure the time using a enQ_getTime call. Hypothetically the amount of time could be measured with a real invokation and then all subsuquent invocations could be estimated.
+The second compute takes a function as a parameter and actually runs it allowing more dynamic control of run time. 
 
 
 # MPI Events
