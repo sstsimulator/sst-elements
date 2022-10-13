@@ -41,20 +41,20 @@ SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
 
 ### Writing a constructor
 ```
-EmberFoo::EmberExample(SST::ComponentId_t id, Params& params) :
-	EmberMessagePassingGenerator(id, params, "Foo"),
+EmberExample::EmberExample(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "Example"),
 
 ```
 
 The constructor allows initialization to occur before invoking the generate function.
 
-The params are passed through the python file with ep.addMotif("Foo firstParam=100 secondParam=200"). Note that no space is allowed before or after the = operator. Parameters read from the python file will be prepended with "arg." before being passed to the C++ file. i.e. "firstParam" becomes "arg.firstParam".
+The params are passed through the python file with ep.addMotif("Example firstParam=100 secondParam=200"). Note that no space is allowed before or after the = operator. Parameters read from the python file will be prepended with "arg." before being passed to the C++ file. i.e. "firstParam" becomes "arg.firstParam".
 
 The params can be parsed using `firstParam = params.find<uint32_t>("arg.firstParam", 100);` where the name of the parameter is "firstParam".
 
 ### Writing a generate() function
 ```
-bool Foo::generate( std::queue<EmberEvent*>& evQ)
+bool Example::generate( std::queue<EmberEvent*>& evQ)
 ```
 The generate function is the 'main' function to a Motif. 
 If the python file invokes a `addMotif` the generate function will be invoked until the generate function returns true.
