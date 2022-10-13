@@ -15,16 +15,16 @@
 
 
 #include <sst_config.h>
-#include "emberfoo.h"
+#include "emberexample.h"
 
 using namespace SST::Ember;
 
-Foo::Foo(SST::ComponentId_t id, Params& params) :
+Example::Example(SST::ComponentId_t id, Params& params) :
 	EmberMessagePassingGenerator(id, params, "Null" )
 {
 }
 
-bool Foo::generate( std::queue<EmberEvent*>& evQ)
+bool Example::generate( std::queue<EmberEvent*>& evQ)
 {
     return true;
 }
