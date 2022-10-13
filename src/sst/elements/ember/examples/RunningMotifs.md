@@ -86,8 +86,8 @@ Here we give a comprehensive list of the topologies and how they can be initiali
         Number of groups in network
     *   `intergroup_links`
     *   `algorithm`
-        The algorithm specifies how each virtual network routes messages.
-        This has to be specified for each router.vn, i.e. if router.vn=2 then topo.algorithm=\["minimal", "adaptive-local"], The first VN will use minimal and the second will use adaptive-local
+        Specifies how each virtual network routes messages.
+        Specified for each router.vn. i.e. if router.vn=2 then topo.algorithm=\["minimal", "adaptive-local"], The first will use minimal and the second will use adaptive-local.
         * `minimal` (default)\
         * `adaptive_local`
         * `ugal`
@@ -100,8 +100,8 @@ Here we give a comprehensive list of the topologies and how they can be initiali
         Array specifying connectivity of global links in each dragonfly group
     *   `global_route_mode`
         Mode for interpreting global link map
-    *   `absolute` (default)
-    *   `relative`
+        *   `absolute` (default)
+        *   `relative`
 
 # Creating a Router
 
@@ -165,9 +165,10 @@ Then a series of Motifs can be queued for computation
     ep.addMotif("Allreduce")
     ep.addMotif("Fini")
 ```
-The `addMotif` function adds the specified Motif to a queue. The Motif is named through a SST\_ELI\_REGISTER\_SUBCOMPONENT\_DERIVED command in the C++ Motif definition (usually in the include file). The SST\_ELI\_REGISTER\_SUBCOMPONENT\_DERIVED parameter follows the naming convention "ExampleMotif", and to add the motif to `ep` ep.addMotif("Example") The "Motif" component is implied in the naming.
-Parameters can be passed to motifs through the string. The parameters are read as a list of assignments, seperated by whitespace. For example, if there was a motif 'Sum' that took three integers as a parameter named x, y, and z
-The motif would be invoked `ep.addMotif("Sum x=4 y=5 z=6")` would compute the SumMotif with x, y, and z assigned 4, 5, and 6 respectively. 
+The `addMotif` function adds the specified Motif to a queue. The Motif is named through a SST\_ELI\_REGISTER\_SUBCOMPONENT\_DERIVED command in the C++ Motif definition (usually in the include file). The SST\_ELI\_REGISTER\_SUBCOMPONENT\_DERIVED parameter follows the naming convention "ExampleMotif", and to add the motif to `ep` usig `ep.addMotif("Example")` The "Motif" portion is implied in the naming.
+Parameters can be passed to motifs through the string. The parameters are read as a list of assignments, seperated by whitespace. For example, a motif 'Sum' that takes three integers as a parameter named x, y, and z
+The motif would be invoked `ep.addMotif("Sum x=4 y=5 z=6")` would pass the arguments as args.x, args.y, and args.z with assigned values 4, 5, and 6 respectively. The arguments are passed in a Param object to motif generator to be parsed. 
+
 Some additional functions that can be called on an endpoint or the `ep` variable:
 * getName()
 Returns the name of the ep. i.e. it will return "EmberMPIJob"
