@@ -19,7 +19,7 @@ To implement and run Ember Motif there are three different files:
 
 # Quick Start Guide
 
-This guide gives a simple example of how to create a simple Motif run a simulation.
+This guide gives a simple example of how to create and run a simple Motif.
 
 First ensure SST-core and SST-elements are properly installed on your machine. For download and installation see [SST-Downloads](http://sst-simulator.org/SSTPages/SSTMainDownloads/).
 
@@ -138,7 +138,7 @@ i.e.
      libs/emberLib.h \
 ```
 
-Finally, a python file needs to be created:
+Finally, a python file `example.py` needs to be created:
 
 ```
     from email.mime import base
@@ -206,6 +206,11 @@ Note multiple motifs can be added the same endpoint. The intended use for each m
 
 Finally, a system variable is created and 'built'
 
+To run the python script
+
+```
+sst example.py
+```
 
 
 
