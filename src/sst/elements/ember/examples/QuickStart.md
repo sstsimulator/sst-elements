@@ -199,11 +199,13 @@ Finally, a python file `example.py` needs to be created:
 This follows common python syntax.
 The hardware variables (topology, router and network interface) are created through assignment of a constructor
 The fields of the variables are accessed using a dot operator.
-Topology, router, and network interface variables need to be created for a simulation. More detailed descriptions of how to configure these variables is in RunningMotifs.md. 
+Topology, router, and network interface variables need to be created for a simulation. More detailed descriptions of configuration options is in RunningMotifs.md. 
 Next an endpoint is created and given the motif to be used using a ep.addMotif("MotifName")call
 Note multiple motifs can be added the same endpoint. The intended use for each motif to simulate an entire application. The event queue is used to simulate MPI events and computational workloads. Adding multiple motifs is useful for simulating workflows of a series of applications. 
 
 Finally, a system variable is created and 'built'
+
+Remake SST-elements.
 
 To run the python script
 
