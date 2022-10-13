@@ -27,7 +27,7 @@ class Foo : public EmberMessagePassingGenerator {
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         Foo,
         "ember",
-        "FooMotif",
+        "ExampleMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs an idle on the node, no traffic can be generated.",
         SST::Ember::EmberGenerator
@@ -60,7 +60,7 @@ class Foo : public EmberMessagePassingGenerator {
         { "time-Commcreate", "Time spent in Commcreate event", "ns", 0},
     );
 
-    Foo(SST::ComponentId_t id, Params& params);
+    Example(SST::ComponentId_t id, Params& params);
     bool generate( std::queue<EmberEvent*>& evQ);
 };
 
