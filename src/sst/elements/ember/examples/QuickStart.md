@@ -21,7 +21,7 @@ To implement and run Ember Motif there are three different files:
 
 This guide gives a simple example of how to create a simple Motif run a simulation.
 
-First ensure SST-core and SST-elements are properly installed on your machine. For download and installation see [SST-Downloads].
+First ensure SST-core and SST-elements are properly installed on your machine. For download and installation see [SST-Downloads](http://sst-simulator.org/SSTPages/SSTMainDownloads/).
 
 Navigate to `sst-elements/src/elements/ember` inside the sst-elements library.
 First, create a new directory to hold our example Motif.
@@ -206,6 +206,6 @@ Note multiple motifs can be added the same endpoint. The intended use for each m
 
 Finally, a system variable is created and 'built'
 
-[SST](http://sst-simulator.org/)
 
-[SST-Downloads](http://sst-simulator.org/SSTPages/SSTMainDownloads/)
+
+
