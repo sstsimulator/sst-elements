@@ -1,13 +1,12 @@
 # What is an Ember Motif?
 
-Ember Motifs compare the effects of different hardware parameters on a representative workflow.
 Ember Motifs provide representative workloads and then estimate performance on hardware using SST simulations.
 This guide provides a directions on how to:
 
 *   Implement a empty motif.
 *   Create and run motif in a SST simulation.
 
-To implement and run Ember Motif there are three different files:
+Implementing and running Ember Motifs requires three different files:
 
 1.  Python File
     Provides information on the hardware to be simulated when running an Ember Motif
