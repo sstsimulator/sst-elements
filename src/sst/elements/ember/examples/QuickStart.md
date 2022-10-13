@@ -19,32 +19,32 @@ To implement and run Ember Motif there have to be three different files:
 
 # Quick Start Guide
 
-This guide gives a simple example of how to create a 'Foomake' Motif and how to run a simulation.
+This guide gives a simple example of how to create a simple Motif run a simulation.
 
 First ensure SST-core and SST-elements are properly installed on your machine. For download and installation see [SST-Downloads].
 
-Next we navigate to `sst-elements/src/elements/ember` inside the elements library.
-First, create a new directory to hold our FooMotif.
+Navigate to `sst-elements/src/elements/ember` inside the sst-elements library.
+First, create a new directory to hold our example Motif.
 
-`mkdir fooMotif`
+`mkdir ExampleMotif`
 
-Next, create a `FooMotif/foo.h` file
-
-    #ifndef _H_EMBER_FOO
-    #define _H_EMBER_FOO
+Next, create a `ExampleMotif/exampleMotif.h` file
+```
+    #ifndef _H_EMBER_EXAMPLE
+    #define _H_EMBER_EXAMPLE
 
     #include "../../mpi/embermpigen.h"
 
     namespace SST {
     namespace Ember {
 
-    class FooGenerator : public EmberMessagePassingGenerator {
+    class ExampleGenerator : public EmberMessagePassingGenerator {
        public:
 
         SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
-          Foo,
+          Example,
           "ember",
-          "FooMotif",
+          "ExampleMotif",
            SST_ELI_ELEMENT_VERSION(1,0,0),
           "Performs an idle on the node, no traffic can be generated.",
           SST::Ember::EmberGenerator
@@ -82,42 +82,59 @@ Next, create a `FooMotif/foo.h` file
     }
     }
 
-    #endif /* _H_EMBER_FOO */
-
-This creates a class called FooGenerator that inherits from EmberMessagePassingGenerator. The Python code we provide later creates and invokes the generate function.
+    #endif /* _H_EMBER_EXAMPLE */
+```
+This creates a Motif generator class called ExampleGenerator that inherits from EmberMessagePassingGenerator. The Python code we provide later creates and invokes the generate function.
 The SST Document Statistics provides tracking for initialization and various MPI function calls.
 
-Then we create a file `fooMotif/foo.cc` with the contents:
+Then we create a file `ExampleMotif/Example.cc` with the contents:
 
+Motifs are executed as follows:
+
+1) The motif generator is initialized (The contructor)
+2) The generate function is invoked and returns either true or false
+3) The events on the eventQueue are processed.
+4) If the generate function in step 2 returned false, return to step 2, otherwise the motif is complete.
+
+Motifs are intended to be ran as a 'job submission'.
+The generate function models an entire iteration of an application, using the event queue to mix compute, and MPI operations in every iteration.
+
+Here is an example motif generator with an empty generate function:
+
+```
     #include <sst_config.h>
-    #include "foo.h"
+    #include "Example.h"
 
     using namespace SST:Ember;
     
-    FooGenerator::FooGenerator(SST::ComponentId_t id, Params& params) :
+    ExampleGenerator::ExampleGenerator(SST::ComponentId_t id, Params& params) :
         	EmberMessagePassingGenerator(id, params, "Null" )
     {
     }
 
-    bool FooGenerator::generate( std::queue<EmberEvent*>& evQ)
+    bool ExampleGenerator::generate( std::queue<EmberEvent*>& evQ)
     { 
         // Code here is repeated until true is returned. 
         return true;
     }
+```
+The C++ file loads the SST:Ember namespace giving it access to other Motifs and EmberEvents. 
+Each Motif generator has an constructor and generate function. 
 
-The C++ file loads the SST:Ember namespace and has an constructor and generate function. The generate function is the code that is invoked when the motif is ran in the simulation. The generate function is invoked with the same eventQueue until the generate function returns true. Once the generate function has returned true the events on the eventQ are computed in-order.
+The generate function defines the Motif behavior. Running a motif invokes the generate function of that motif until the generate function returns true. The generate function takes as a parameter an event queue, the generate function places `EmberEvents` onto the event queue.
+Once the generate function has returns true, the events on the eventQ are computed in-order. For more detail on how to create an add events to the event queue look at the CreatingMotifs.md.
 
 Then we add the `.cc` and `.h` file to `Makefile.am`
 
 i.e.
-
+```
      embermemoryev.h \
-     fooMotif/foo.h \
-     fooMotif/foo.cc \
+     ExampleMotif/example.h \
+     ExampleMotif/example.cc \
      libs/emberLib.h \
-
-Then finally there is a python file that needs to be created:
-
+```
+Finally, a python file needs to be created:
+```
     from email.mime import base
     import sst
     from sst.merlin.base import *
@@ -161,7 +178,7 @@ Then finally there is a python file that needs to be created:
 
         ep = EmberMPIJob(0,topo.getNumNodes())
         ep.network_interface = networkif
-        ep.addMotif("Foo")
+        ep.addMotif("Example")
         ep.nic.nic2host_lat= "100ns"
 
         system = System()
@@ -172,14 +189,13 @@ Then finally there is a python file that needs to be created:
 
     if __name__ == "__main__":
         example()
-
-The hardware aspects are created by:
-`variable = Variable()`
-Then parameters are set
-`Variable.paramFour = 4`
-The topology, router and network interface are defined.
+```
+This follows common python syntax.
+The hardware variables (topology, router and network interface) are created through assignment of a constructor
+Then parameters of the variables are set using a dot operator.
+Topology, router and network interface variables are created in the python file. More detailed descriptions of the available parameters is in RunningMotifs.md. 
 An endpoint is then created that utilizes the network interface.
-Motifs added to the endpoint in a queue. Note multiple motifs can be added the same endpoint, but in this case we just add the Foo motif.
+Motifs added to the endpoint in a queue. Note multiple motifs can be added the same endpoint, but the intended use is for each motif to simulate an entire application. Adding multiple motifs is useful for simulating workflows of a series of applications.
 
 Finally, a system variable is created and 'built'
 
