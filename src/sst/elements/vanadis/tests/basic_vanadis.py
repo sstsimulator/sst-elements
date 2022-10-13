@@ -1,12 +1,36 @@
 import os
 import sst
 
+
+group = "basic-io"
+test = "hello-world"
+#test = "hello-world-cpp"
+#test = "openat"
+#test = "printf-check"
+#test = "read-write"
+#test = "unlink"
+#test = "unlinkat"
+
+#group = "basic-math"
+#test = "sqrt-double"
+#test = "sqrt-float"
+
+#group = "basic-ops"
+#test = "test-branch"
+#test = "test-shfit"
+
+#group = "misc"
+#test = "stream"
+
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
 sst.setProgramOption("stopAtCycle", "0 ns")
 
 # Tell SST what statistics handling we want
 sst.setStatisticLoadLevel(4)
+
+full_exe_name = os.getenv("VANADIS_EXE", "./tests/small/" + group + "/" + test +  "/mipsel/" + test )
+exe_name= full_exe_name.split("/")[-1]
 
 verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
 os_verbosity = os.getenv("VANADIS_OS_VERBOSE", verbosity)
@@ -44,6 +68,7 @@ v_cpu_0.addParams({
        "clock" : cpu_clock,
 #       "max_cycle" : 100000000,
        "verbose" : verbosity,
+       "dbg_mask" : 0,
        "physical_fp_registers" : 168,
        "physical_int_registers" : 180,
        "integer_arith_cycles" : integer_arith_cycles,
@@ -60,7 +85,8 @@ v_cpu_0.addParams({
        "issues_per_cycle" :  issues_per_cycle,
        "retires_per_cycle" : retires_per_cycle,
        "auto_clock_syscall" : auto_clock_sys,
-       "pause_when_retire_address" : os.getenv("VANADIS_HALT_AT_ADDRESS", 0)
+       "pause_when_retire_address" : os.getenv("VANADIS_HALT_AT_ADDRESS", 0),
+       "start_verbose_when_issue_address" : os.getenv("VANADIS_START_DBG_AT_ADDRESS", 0) 
 #       "reorder_slots" : 32,
 #       "decodes_per_cycle" : 2,
 #       "issues_per_cycle" :  1,
@@ -130,7 +156,8 @@ node_os.addParams({
 	"heap_end"   : (2 * 1024 * 1024 * 1024) - 4096,
 	"page_size"  : 4096,
 	"heap_verbose" : verbosity,
-    "executable" : os.getenv("VANADIS_EXE", "./tests/small/basic-io/hello-world/mipsel/hello-world"),
+    "executable" : full_exe_name,
+    "app.arg0" : exe_name,
     "app.env_count" : 2,
     "app.env0" : "HOME=/home/sdhammo",
     "app.env1" : "NEWHOME=/home/sdhammo2",
@@ -244,7 +271,10 @@ memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
       "clock" : cpu_clock,
       "backend.mem_size" : "4GiB",
-      "backing" : "malloc"
+      "backing" : "malloc",
+      "initBacking": 1,
+      "addr_range_start": 0, 
+      "addr_range_end": 0xffffffff, 
 })
 memToDir = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
 
