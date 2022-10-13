@@ -53,7 +53,7 @@ def example():
 
     ep = EmberMPIJob(0, topo.getNumNodes())
     ep.network_interface = networkif
-    ep.addMotif("Foo")
+    ep.addMotif("Example")
     ep.nic.nic2host_lat = "100ns"
 
     system = System()
