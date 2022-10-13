@@ -179,12 +179,12 @@ Some common MPI-function call motifs that exist in Ember:
 # Running the simulation
 
 Finally, we create the 'system' which then runs the experiment. The topology is set with the setTopology function and the endpoint is specified with system. allocateNodes. Build executes the motifs in the endpoint.
-
+```
     system = System()
     system.setTopology(topo)
     system.allocateNodes(ep,"linear")
     system.build()
-
+```
 While most of the System is fairly self-explanitory, the system does allow the user to to specify how threads/processes are assigned to nodes in the allocateNodes function.
 The allocateNodes function allows the user to specify how the nodes are allocated. In the example above "linear" is chosen, so the nodes are sorted and threads are placed in linear order onto the simulated nodes. There are additional ways to allocate nodes such as "random", "interval", and "indexed".
 ![image](https://user-images.githubusercontent.com/77634936/195411855-a31b4656-de37-42ca-a794-8c233fd61c17.png)
