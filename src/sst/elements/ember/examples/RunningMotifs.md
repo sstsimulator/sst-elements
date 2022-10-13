@@ -165,7 +165,7 @@ Then a series of Motifs can be queued for computation
     ep.addMotif("Allreduce")
     ep.addMotif("Fini")
 ```
-The `addMotif` function adds the specified Motif to a queue. The Motif is named through a SST\_ELI\_REGISTER\_SUBCOMPONENT\_DERIVED command in the C++ Motif definition (usually in the include file). The SST\_ELI\_REGISTER\_SUBCOMPONENT\_DERIVED parameter follows the naming convention "FooMotif", and to add the motif to `ep` ep.addMotif("Foo") The "Motif" component is implied in the naming.
+The `addMotif` function adds the specified Motif to a queue. The Motif is named through a SST\_ELI\_REGISTER\_SUBCOMPONENT\_DERIVED command in the C++ Motif definition (usually in the include file). The SST\_ELI\_REGISTER\_SUBCOMPONENT\_DERIVED parameter follows the naming convention "ExampleMotif", and to add the motif to `ep` ep.addMotif("Example") The "Motif" component is implied in the naming.
 Parameters can be passed to motifs through the string. The parameters are read as a list of assignments, seperated by whitespace. For example, if there was a motif 'Sum' that took three integers as a parameter named x, y, and z
 The motif would be invoked `ep.addMotif("Sum x=4 y=5 z=6")` would compute the SumMotif with x, y, and z assigned 4, 5, and 6 respectively. 
 Some additional functions that can be called on an endpoint or the `ep` variable:
