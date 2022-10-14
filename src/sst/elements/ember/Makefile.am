@@ -12,8 +12,8 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libember.la
 
 libember_la_SOURCES = \
-	example/motifs/emberexample.h
-	example/motifs/emberexample.cc
+	example/motifs/emberexample.h \
+	example/motifs/emberexample.cc \
 	embergen.h \
 	embergen.cc	\
 	embermap.h \
