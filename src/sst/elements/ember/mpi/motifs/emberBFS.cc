@@ -418,8 +418,10 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
     enQ_getTime( evQ, &s_time );
 
     if (rank() == 0 && state == 54) {
+        /*
         printf("Rank %d Iter = %lld State = %lld Time=%llu\n", rank(),
                iter, state, s_time);
+               */
     }
 
     // initial timings based on 16x1 sz18
@@ -448,9 +450,11 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
             enQ_allreduce( evQ, nullBuf, nullBuf, 1, DOUBLE, MP::MAX, comm0 );
 
             enQ_compute(evQ,49*1000);
-            if (rank() == 0) {
-                auto model = comp_model[std::make_tuple(1,2,1,m_threads)];
-                std::cout << "old: " << 49*1000 << ", " << model.eval(m_sz) << std::endl;
+
+            if (rank() == 0 && iter==0) {
+                std::cout << "Rank " << rank() << ": " \
+                    << "(" << state << "->" << next_state  << ")" \
+                    << " old: " << 49*1000 << ", new: " << exec_time << std::endl;
             }
 
             state = next_state;
@@ -471,6 +475,12 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
             enQ_allreduce( evQ, nullBuf, nullBuf, 1, DOUBLE, MP::MAX, comm0 );
             enQ_compute(evQ,28*1000);
 
+            if (rank() == 0 && iter == 0) {
+                std::cout << "Rank " << rank() << ": " \
+                    << "(" << state << "->" << next_state  << ")" \
+                    << " old: " << 28*1000 << ", new: " << exec_time << std::endl;
+            }
+
             state = next_state;
         }
         break;
@@ -483,6 +493,12 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
             enQ_barrier( evQ, comm1 );
             enQ_compute(evQ,18*1000);
 
+            if (rank() == 0 && iter==0) {
+                std::cout << "Rank " << rank() << ": " \
+                    << "(" << state << "->" << next_state  << ")" \
+                    << " old: " << 18*1000 << ", new: " << exec_time << std::endl;
+            }
+
             state = next_state;
         }
         break;
@@ -494,6 +510,12 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
 
             enQ_allreduce( evQ, nullBuf, nullBuf, 1, DOUBLE, MP::MAX, comm1 );
             enQ_compute(evQ,17*1000);
+
+            if (rank() == 0 && iter==0) {
+                std::cout << "Rank " << rank() << ": " \
+                    << "(" << state << "->" << next_state  << ")" \
+                    << " old: " << 17*1000 << ", new: " << exec_time << std::endl;
+            }
 
             state = next_state;
         }
@@ -556,6 +578,12 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
 
             enQ_bcast( evQ, nullBuf, 1, DOUBLE, 0, comm1 );
             enQ_compute(evQ,114*1000);
+
+            if (rank() == 0 && iter==0) {
+                std::cout << "Rank " << rank() << ": " \
+                    << "(" << state << "->" << next_state  << ")" \
+                    << " old: " << 114*1000 << ", new: " << exec_time << std::endl;
+            }
 
             state = next_state;
         }
@@ -726,6 +754,12 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
             double base = adjustUniformRand(1.0, 0.25, rng_rank);
             enQ_compute(evQ,212*1000*szScale*nodeScale*base);
 
+            if (rank() == 0 && iter==0) {
+                std::cout << "Rank " << rank() << ": " \
+                    << "(" << state << "->" << next_state  << ")" \
+                    << " old: " << 212*1000*szScale*nodeScale*base << ", new: " << exec_time << std::endl;
+            }
+
             state = next_state;
         }
         break;
@@ -737,6 +771,12 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
 
             enQ_allreduce( evQ, nullBuf, nullBuf, 1, DOUBLE, MP::MAX, comm1 );
             enQ_compute(evQ,34*1000);
+
+            if (rank() == 0 && iter==0) {
+                std::cout << "Rank " << rank() << ": " \
+                    << "(" << state << "->" << next_state  << ")" \
+                    << " old: " << 34*1000 << ", new: " << exec_time << std::endl;
+            }
 
             state = next_state;
         }
@@ -776,6 +816,12 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
                           nullBuf, 1, INT, opposite, 0, //recv (tag=0)
                           GroupWorld, &m_resp );
             enQ_compute(evQ,14*1000);
+
+            if (rank() == 0 && iter==0) {
+                std::cout << "Rank " << rank() << ": " \
+                    << "(" << state << "->" << next_state  << ")" \
+                    << " old: " << 14*1000 << ", new: " << exec_time << std::endl;
+            }
 
             state = next_state;
         }
