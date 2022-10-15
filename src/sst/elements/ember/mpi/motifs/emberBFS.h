@@ -22,24 +22,25 @@
 #include <sst/core/output.h>
 
 #include <map>
+#include <tuple>
 
 namespace SST {
 namespace Ember {
 
 struct PolyModel : public SST::Core::Serialization::serializable
 {
-    std::vector<float> coeff;
+    std::vector<double> coeff;
 
     PolyModel() : coeff(0) {}
 
-    PolyModel(std::vector<float> coeff) : coeff(coeff) {}
+    PolyModel(std::vector<double> coeff) : coeff(coeff) {}
 
     // Evaluate the model at x
     // x should be between 0 and 1
-    float eval(float x)
+    double eval(double x)
     {
-        float xt = 1.0;  // holds powers of x
-        float res = 0.0; // accumulator
+        double xt = 1.0;  // holds powers of x
+        double res = 0.0; // accumulator
         for (auto c : coeff) {
             res += c * xt;
             xt  *= x;
@@ -118,6 +119,8 @@ private:
     Output out;
 
     int32_t m_sz; // graph size
+    int32_t m_threads; // threads per rank
+    int32_t m_ranks_per_node;
 
     uint64_t s_time;
     
@@ -181,8 +184,8 @@ private:
         return input * (1.0-range+roll);
     }
 
-    std::map<int,PolyModel> comm_model;
-    std::map<std::pair<int,int>,PolyModel> comp_model;
+    std::map<std::tuple<int,int,int>,PolyModel> comm_model;
+    std::map<std::tuple<int,int,int,int>,PolyModel> comp_model;
 
     // Random number generator    
     SST::RNG::MersenneRNG* rng;
