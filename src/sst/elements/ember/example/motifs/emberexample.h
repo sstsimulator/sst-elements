@@ -13,19 +13,19 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _H_EMBER_FOO
-#define _H_EMBER_FOO
+#ifndef _H_EMBER_EXAMPLE
+#define _H_EMBER_EXAMPLE
 
 #include "../../mpi/embermpigen.h"
 
 namespace SST {
 namespace Ember {
 
-class Foo : public EmberMessagePassingGenerator {
+class Example : public EmberMessagePassingGenerator {
     public:
 
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
-        Foo,
+        Example,
         "ember",
         "ExampleMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
@@ -67,4 +67,4 @@ class Foo : public EmberMessagePassingGenerator {
 }
 }
 
-#endif /* _H_EMBER_FOO */
+#endif /* _H_EMBER_EXAMPLE */
