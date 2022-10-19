@@ -130,6 +130,11 @@ public:
                 ? combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3])
                 : regFile->getFPReg<fp_format>(phys_fp_regs_in[1]);
 
+        // assuming these are signalling comparison units
+        // check both units for NaN
+        performFlagChecks<fp_format>(left_value);
+        performFlagChecks<fp_format>(right_value);
+
         switch ( compare_type ) {
         case REG_COMPARE_EQ:
             return (left_value == right_value);

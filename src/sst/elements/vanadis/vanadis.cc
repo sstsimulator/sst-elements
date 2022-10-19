@@ -905,7 +905,8 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
             }
 
 			if(UNLIKELY(rob_front->updatesFPFlags())) {
-				rob_front->performFPFlagsUpdate();
+                output->verbose(CALL_INFO, 16, 0, "------> updating floating-point flags.\n");
+				rob_front->updateFPFlags();
 			}
 
             recoverRetiredRegisters(
@@ -932,7 +933,8 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                 }
 
 				if(UNLIKELY(rob_front->updatesFPFlags())) {
-					rob_front->performFPFlagsUpdate();
+                    output->verbose(CALL_INFO, 16, 0, "------> updating floating-point flags.\n");
+					rob_front->updateFPFlags();
 				}
 
                 recoverRetiredRegisters(

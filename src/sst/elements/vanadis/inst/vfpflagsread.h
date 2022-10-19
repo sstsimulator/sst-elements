@@ -73,10 +73,10 @@ public:
 	      }
 
 		  if(copy_fp_flags) {
-			  flags_out |= fpflags.inexact() ? 0x1 : 0x0;
-			  flags_out |= fpflags.underflow() ? 0x2 : 0x0;
-		     flags_out |= fpflags.overflow() ? 0x4 : 0x0;
-   	     flags_out |= fpflags.divZero() ? 0x8 : 0x0;
+			flags_out |= fpflags.inexact() ? 0x1 : 0x0;
+			flags_out |= fpflags.underflow() ? 0x2 : 0x0;
+		    flags_out |= fpflags.overflow() ? 0x4 : 0x0;
+   	     	flags_out |= fpflags.divZero() ? 0x8 : 0x0;
 	        flags_out |= fpflags.invalidOp() ? 0x10 : 0x0;
 		  }
 
