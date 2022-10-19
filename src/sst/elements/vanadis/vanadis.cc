@@ -696,22 +696,37 @@ VANADIS_COMPONENT::performExecute(const uint64_t cycle)
 {
     for ( VanadisFunctionalUnit* next_fu : fu_int_arith ) {
         next_fu->tick(cycle, output, register_files);
+
+        if(output->getVerboseLevel() >= 16)
+            next_fu->print(output);
     }
 
     for ( VanadisFunctionalUnit* next_fu : fu_int_div ) {
         next_fu->tick(cycle, output, register_files);
+
+        if(output->getVerboseLevel() >= 16)
+            next_fu->print(output);
     }
 
     for ( VanadisFunctionalUnit* next_fu : fu_fp_arith ) {
         next_fu->tick(cycle, output, register_files);
+
+        if(output->getVerboseLevel() >= 16)
+            next_fu->print(output);
     }
 
     for ( VanadisFunctionalUnit* next_fu : fu_fp_div ) {
         next_fu->tick(cycle, output, register_files);
+
+        if(output->getVerboseLevel() >= 16)
+            next_fu->print(output);
     }
 
     for ( VanadisFunctionalUnit* next_fu : fu_branch ) {
         next_fu->tick(cycle, output, register_files);
+
+        if(output->getVerboseLevel() >= 16)
+            next_fu->print(output);
     }
 
     // Tick the load/store queue
@@ -1053,8 +1068,12 @@ VANADIS_COMPONENT::mapInstructiontoFunctionalUnit(
 
     for ( VanadisFunctionalUnit* next_fu : functional_units ) {
         if ( next_fu->isInstructionSlotFree() ) {
-            next_fu->setSlotInstruction(ins);
+            next_fu->insertInstruction(ins);
             allocated = true;
+
+            output->verbose(CALL_INFO, 16, 0, "------> mapped 0x%llx / %s to func-unit: %" PRIu16 "\n",
+                ins->getInstructionAddress(), ins->getInstCode(), next_fu->getUnitID());
+
             break;
         }
     }
@@ -1442,8 +1461,14 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
                 ins->getISAIntRegIn(i), int_reg_count);
         }
 
-        ins->setPhysIntRegIn(i, isa_table->getIntPhysReg(ins->getISAIntRegIn(i)));
-        isa_table->incIntRead(ins->getISAIntRegIn(i));
+        const uint16_t isa_reg_in = ins->getISAIntRegIn(i);
+        const uint16_t phys_reg_in = isa_table->getIntPhysReg(isa_reg_in);
+
+        output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx int reg-in for isa: %" PRIu16 " will mapped to phys: %" PRIu16 "\n",
+                ins->getInstructionAddress(), isa_reg_in, phys_reg_in);
+
+        ins->setPhysIntRegIn(i, phys_reg_in);
+        isa_table->incIntRead(isa_reg_in);
     }
 
     for ( uint16_t i = 0; i < ins->countISAFPRegIn(); ++i ) {
@@ -1453,8 +1478,14 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
                 ins->getISAFPRegIn(i), fp_reg_count);
         }
 
-        ins->setPhysFPRegIn(i, isa_table->getFPPhysReg(ins->getISAFPRegIn(i)));
-        isa_table->incFPRead(ins->getISAFPRegIn(i));
+        const uint16_t isa_reg_in = ins->getISAFPRegIn(i);
+        const uint16_t phys_reg_in = isa_table->getFPPhysReg(isa_reg_in);
+
+        output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx fp reg-in for isa: %" PRIu16 " will mapped to phys: %" PRIu16 "\n",
+                ins->getInstructionAddress(), isa_reg_in, phys_reg_in);
+
+        ins->setPhysFPRegIn(i, phys_reg_in);
+        isa_table->incFPRead(isa_reg_in);
     }
 
     // PROCESS OUTPUT REGISTERS
@@ -1536,28 +1567,15 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
             }
 
             const uint16_t ins_isa_reg    = ins->getISAIntRegOut(i);
-            bool           reg_is_also_in = false;
+            const uint16_t out_reg        = int_regs->pop();
 
-            for ( uint16_t j = 0; j < ins->countISAIntRegIn(); ++j ) {
-                if ( ins_isa_reg == ins->getISAIntRegIn(j) ) {
-                    reg_is_also_in = true;
-                    break;
-                }
-            }
+            output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx int reg-out for isa: %" PRIu16 " output will map to phys: %" PRIu16 "\n",
+                ins->getInstructionAddress(), ins_isa_reg, out_reg);
 
-            // if( reg_is_also_in ) {
-            //	out_reg = isa_table->getIntPhysReg( ins_isa_reg );
-
-            // if( ins_isa_reg > 0 )
-            //	output->fatal(CALL_INFO, -1, "STOP INSTRUCTION 0x%llx\n",
-            // ins->getInstructionAddress());
-            //} else {
-            const uint16_t out_reg = int_regs->pop();
             isa_table->setIntPhysReg(ins_isa_reg, out_reg);
-            //}
+            isa_table->incIntWrite(ins_isa_reg);
 
             ins->setPhysIntRegOut(i, out_reg);
-            isa_table->incIntWrite(ins_isa_reg);
         }
 
         // Set current ISA registers required for output
@@ -1570,25 +1588,15 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
             }
 
             const uint16_t ins_isa_reg = ins->getISAFPRegOut(i);
-            /*			bool reg_is_also_in = false;
-
-                                    for( uint16_t j = 0; j < ins->countISAFPRegIn();
-               ++j ) { if( ins_isa_reg == ins->getISAFPRegIn(j) ) { reg_is_also_in =
-               true; break;
-                                            }
-                                    }
-
-                                    uint16_t out_reg;
-
-                                    if( reg_is_also_in ) {
-                                            out_reg = isa_table->getFPPhysReg(
-               ins_isa_reg ); } else {*/
             const uint16_t out_reg     = fp_regs->pop();
+
+            output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx fp reg-out for isa: %" PRIu16 " output will map to phys: %" PRIu16 "\n",
+                ins->getInstructionAddress(), ins_isa_reg, out_reg);
+            
             isa_table->setFPPhysReg(ins_isa_reg, out_reg);
-            //			}
+            isa_table->incFPWrite(ins_isa_reg);
 
             ins->setPhysFPRegOut(i, out_reg);
-            isa_table->incFPWrite(ins_isa_reg);
         }
     }
 
