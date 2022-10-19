@@ -58,30 +58,30 @@ public:
 
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
-		  output->verbose(CALL_INFO, 16, 0, "Execute: 0x%llx FPFLAGS <- mask = %" PRIu64 " (0x%llx)\n",
-				getInstructionAddress(), imm_value, imm_value);
+		output->verbose(CALL_INFO, 16, 0, "Execute: 0x%llx FPFLAGS <- mask = %" PRIu64 " (0x%llx)\n",
+			getInstructionAddress(), imm_value, imm_value);
 
-		  if( (imm_value & 0x1) != 0 ) {
-				fpflags.setInexact();
-		  }
+		if( (imm_value & 0x1) != 0 ) {
+			fpflags.setInexact();
+		}
 
-		  if( (imm_value & 0x2) != 0 ) {
-				fpflags.setUnderflow();
-		  }
+		if( (imm_value & 0x2) != 0 ) {
+			fpflags.setUnderflow();
+		}
 
-		  if( (imm_value & 0x4) != 0 ) {
-				fpflags.setOverflow();
-		  }
+		if( (imm_value & 0x4) != 0 ) {
+			fpflags.setOverflow();
+		}
 
-		  if( (imm_value & 0x8) != 0 ) {
-				fpflags.setDivZero();
-		  }
+		if( (imm_value & 0x8) != 0 ) {
+			fpflags.setDivZero();
+		}
 
-		  if( (imm_value & 0x10) != 0 ) {
-				fpflags.setInvalidOp();
-		  }
+		if( (imm_value & 0x10) != 0 ) {
+			fpflags.setInvalidOp();
+		}
 
-		  update_fp_flags = true;
+		set_fp_flags = true;
 
         markExecuted();
     }
