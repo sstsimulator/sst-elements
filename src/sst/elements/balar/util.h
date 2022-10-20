@@ -155,6 +155,7 @@ namespace BalarComponent {
 
     // TODO: Need a function to convert struct to vector uint8_t and vice versa
     // TODO: Move the encode and decode to balar mmio handler?
+    // TODO: Rename this function?
     // Need to move the template instantiation to header file
     // See: https://stackoverflow.com/questions/495021/why-can-templates-only-be-implemented-in-the-header-file
     template <typename T> 

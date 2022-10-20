@@ -38,6 +38,8 @@ public:
     SST_ELI_DOCUMENT_PARAMS( 
         {"verbose",                 "(uint) Determine how verbose the output from the device is", "0"},
         {"clock",                   "(UnitAlgebra/string) Clock frequency", "1GHz"},
+        {"mmio_addr",               "(uint) Starting addr mapped to the device", "0"},
+        {"mmio_size",               "(uint) Size of the MMIO memory range (Bytes)", "512"},
     )
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( 
         {"host_if", "Interface into host controller", "SST::Interfaces::StandardMem"},
@@ -51,6 +53,50 @@ public:
     virtual void setup();
     void finish() {};
     bool tick(SST::Cycle_t x);
+
+    /* DMA Registers */
+    enum DMA_DIR {
+        SIM_TO_SST = 0,
+        SST_TO_SIM,
+    };
+
+    enum DMA_Status {
+        DMA_FREE = 0,
+        DMA_BUSY,
+        DMA_WAITING_DONE,   // Waiting for mem to return
+        DMA_DONE,
+    };
+
+    enum DMA_ERR {
+        DMA_OK = 0,
+        DMA_ERR_BUSY,
+        DMA_ERR_INVALID,
+    };
+
+    /**
+     * @brief DMA control and status registers
+     *        Host need to pass a struct like this in write request
+     *        to initiate a DMA transfer
+     *        
+     *        Once the transfer is done, status field will be updated
+     * 
+     */
+    struct DMAEngineControlRegisters {
+        uint8_t * simulator_mem_addr;
+        Addr sst_mem_addr;
+        size_t data_size;
+        // The bytes count to copy each time
+        // Sample values are like 4B or 8B
+        // We will change the data_size and address
+        // each time we perform a copy in DMA
+        // Once the data_size is zero, we are done
+        uint32_t transfer_size;
+        enum DMA_DIR dir;
+
+        // Rest are status regs
+        enum DMA_Status status;
+        enum DMA_ERR errflag;
+    };
 
 protected:
     /* Handle request from Host */
@@ -98,55 +144,15 @@ protected:
         DMAEngine* dma;
     };
 
-    /* DMA Registers */
-    enum DMA_DIR {
-        SIM_TO_SST = 0,
-        SST_TO_SIM,
-    };
-
-    enum DMA_Status {
-        DMA_FREE = 0,
-        DMA_BUSY,
-        DMA_WAITING_DONE,   // Waiting for mem to return
-        DMA_DONE,
-    };
-
-    enum DMA_ERR {
-        DMA_OK = 0,
-        DMA_ERR_BUSY,
-        DMA_ERR_INVALID,
-    };
-
-    /**
-     * @brief DMA control and status registers
-     *        Host need to pass a struct like this in write request
-     *        to initiate a DMA transfer
-     *        
-     *        Once the transfer is done, status field will be updated
-     * 
-     */
-    struct DMAEngineControlRegisters {
-        uint8_t * simulator_mem_addr;
-        Addr sst_mem_addr;
-        size_t data_size;
-        // The bytes count to copy each time
-        // Sample values are like 4B or 8B
-        // We will change the data_size and address
-        // each time we perform a copy in DMA
-        // Once the data_size is zero, we are done
-        uint32_t transfer_size;
-        enum DMA_DIR dir;
-
-        // Rest are status regs
-        enum DMA_Status status;
-        enum DMA_ERR errflag;
-    };
-
     struct DMAEngineControlRegisters dma_ctrl_regs;
 
 private:
     /* Output */
     Output out;
+
+    /* MMIO config */
+    Addr mmio_addr;
+    uint32_t mmio_size;
 
     /* Host and Memory interfaces */
     StandardMem* host_if;

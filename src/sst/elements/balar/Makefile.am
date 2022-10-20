@@ -21,6 +21,8 @@ libbalar_la_SOURCES = \
 	util.h \
 	balarMMIO.cc \
 	balarMMIO.h \
+	dmaEngine.cc \
+	dmaEngine.h \
 	testcpu/balarTestCPU.h \
 	testcpu/balarTestCPU.cc
 
