@@ -213,6 +213,17 @@ void BalarMMIO::SST_callback_memcpy_D2H_done() {
         std::string cmdString = "Issue_DMA_memcpy_D2H";
 
         // Prepare DMA config
+        
+        // NOTE: Modify D2H buffer directly
+        // TODO: Oct 20, 2022, Can confirm the first 16 bytes of memcpy_D2H are incorrect
+        // TODO: the first place (i.e. when this done() function is called)
+        // TODO: Probably timing issue? or something else related to how memcpy manipulate buffer?
+        // for (int i = 0; i < 16; i++) {
+        //     out.verbose(CALL_INFO, 1, 0, "Origin memcpyD2H data[%d] = %d\n", i, memcpyD2H_dst[i]);
+        //     memcpyD2H_dst[i] = 16 - i;
+        // }
+        // NOTE: End modification
+
         DMAEngine::DMAEngineControlRegisters dma_registers;
         dma_registers.sst_mem_addr = dstAddr;
         dma_registers.simulator_mem_addr = memcpyD2H_dst;
@@ -247,11 +258,6 @@ bool BalarMMIO::clockTic(Cycle_t cycle) {
 void BalarMMIO::handleEvent(StandardMem::Request* req) {
     // incoming CPU request, handle using mmioHandlers
     req->handle(handlers);
-}
-
-void BalarMMIO::handleDMAEvent(StandardMem::Request* req) {
-    // Handle DMA transfers
-    req->handle(dmaHandlers);
 }
 
 /**
@@ -631,6 +637,14 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::WriteResp* re
             BalarCudaCallPacket_t * packet = mmio->last_packet;
             StandardMem::Write* write = mmio->pending_write;
 
+            // NOTE: Print first 16 bytes for debugging purpose
+            // TODO: Oct 20, 2022, Can confirm the H2D data are all correct
+            // As the first 16 bytes from D2H after a H2D are wrong
+            // for (int i = 0; i < 16; i++) {
+            //     out->verbose(CALL_INFO, 1, 0, "Origin memcpyH2D data[%d] = %d\n", i, mmio->memcpyH2D_dst[i]);
+            // }
+            // NOTE: End print
+
             // Call with the source data in simulator space
             // mmio->memcpyH2D_dst is the buffer pointer where the DMA copied into
             mmio->cuda_ret.cuda_error = cudaMemcpy(
@@ -697,17 +711,6 @@ uint64_t BalarMMIO::mmioHandlers::dataToUInt64(vector<uint8_t>* data) {
         retval |= (*data)[i-1];
     }
     return retval;
-}
-
-// TODO
-void BalarMMIO::DMAHandlers::handle(SST::Interfaces::StandardMem::ReadResp* resp) {
-
-}
-
-// TODO
-void BalarMMIO::DMAHandlers::handle(SST::Interfaces::StandardMem::WriteResp* resp) {
-    // TODO DMA transfer is done
-    // TODO: Need to continue what is doing before
 }
 
 void BalarMMIO::printStatus(Output &statusOut) {

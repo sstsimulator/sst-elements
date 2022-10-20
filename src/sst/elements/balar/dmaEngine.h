@@ -42,8 +42,7 @@ public:
         {"mmio_size",               "(uint) Size of the MMIO memory range (Bytes)", "512"},
     )
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( 
-        {"host_if", "Interface into host controller", "SST::Interfaces::StandardMem"},
-        {"mem_if", "Interface into memory subsystem", "SST::Interfaces::StandardMem"},
+        {"iface", "Interface into interconnect", "SST::Interfaces::StandardMem"},
     )
 
     DMAEngine(ComponentId_t id, Params &params);
@@ -99,17 +98,14 @@ public:
     };
 
 protected:
-    /* Handle request from Host */
-    void handleHostEvent(StandardMem::Request* req);
+    /* Handle DMA requests from Host and responses from mem system */
+    void handleEvent(StandardMem::Request* req);
 
-    /* Handle request from memory side */
-    void handleMemEvent(StandardMem::Request* req);
-
-    class HostHandlers : public StandardMem::RequestHandler {
+    class DMAHandlers : public StandardMem::RequestHandler {
     public:
         friend class DMAEngine;
-        HostHandlers(DMAEngine* dma, SST::Output* out) : StandardMem::RequestHandler(out), dma(dma) {}
-        virtual ~HostHandlers() {}
+        DMAHandlers(DMAEngine* dma, SST::Output* out) : StandardMem::RequestHandler(out), dma(dma) {}
+        virtual ~DMAHandlers() {}
         virtual void handle(StandardMem::Read* read) override;
 
         /**
@@ -121,22 +117,7 @@ protected:
          */
         virtual void handle(StandardMem::Write* write) override;
         
-        // Since We don't issue read/write request to Host
-        // virtual void handle(StandardMem::ReadResp* resp) override;
-        // virtual void handle(StandardMem::WriteResp* resp) override;
-
-    private:
-        DMAEngine* dma;
-    };
-
-    class MemHandlers : public StandardMem::RequestHandler {
-        friend class DMAEngine;
-        MemHandlers(DMAEngine* dma, SST::Output* out) : StandardMem::RequestHandler(out), dma(dma) {}
-        virtual ~MemHandlers() {}
-
-        // Since mem won't read/write us
-        // virtual void handle(StandardMem::Read* read) override;
-        // virtual void handle(StandardMem::Write* write) override;
+        // Handlers for mem responses
         virtual void handle(StandardMem::ReadResp* resp) override;
         virtual void handle(StandardMem::WriteResp* resp) override;
 
@@ -154,13 +135,11 @@ private:
     Addr mmio_addr;
     uint32_t mmio_size;
 
-    /* Host and Memory interfaces */
-    StandardMem* host_if;
-    StandardMem* mem_if;
+    /* Interconnect interfaces */
+    StandardMem* iface;
 
     /* Handlers */
-    HostHandlers* host_handlers;
-    MemHandlers* mem_handlers;
+    DMAHandlers* handlers;
 
     /* Save pending transfer and notify host once finishes */
     StandardMem::Write* pending_transfer;
