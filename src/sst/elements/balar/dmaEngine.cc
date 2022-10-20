@@ -34,6 +34,10 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) : SST::Component(id) {
     // Bind tick function
     registerClock(tc, new Clock::Handler<DMAEngine>(this, &DMAEngine::tick));
 
+    // MMIO Memory address and size
+    mmio_addr = params.find<uint64_t>("mmio_addr", 0);
+    mmio_size = params.find<uint32_t>("mmio_size", 512);
+
     // Get interfaces and bind handlers
     host_if = loadUserSubComponent<SST::Interfaces::StandardMem>("host_if", ComponentInfo::SHARE_NONE, tc, 
             new StandardMem::Handler<DMAEngine>(this, &DMAEngine::handleHostEvent));
@@ -47,6 +51,9 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) : SST::Component(id) {
     if (!mem_if) {
         out.fatal(CALL_INFO, -1, "%s, Error: No interface found loaded into 'mem_if' subcomponent slot. Please check input file\n", getName().c_str());
     }
+
+    // Set MMIO address for dma Engine
+    host_if->setMemoryMappedAddressRegion(mmio_addr, mmio_size);
 
     // Initialize handlers
     mem_handlers = new MemHandlers(this, &out);

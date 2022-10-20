@@ -69,9 +69,12 @@ public:
         {"base_addr",               "(uint) Starting addr mapped to the device", "0"},
         {"gpu_cores",               "(uint) Number of GPU cores", "1"},
         {"mmio_size",               "(uint) Size of the MMIO memory range (Bytes)", "512"},
+        {"dma_addr",               "(uint) Starting addr mapped to the DMA Engine", "512"},
+    
     )
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( 
-        {"iface", "Interface into memory subsystem", "SST::Interfaces::StandardMem"}
+        {"iface", "Interface into memory subsystem", "SST::Interfaces::StandardMem"},
+        // {"dma_if", "Interface into DMA engine", "SST::Interfaces::StandardMem"},
     )
     SST_ELI_DOCUMENT_PORTS(
         {"requestLink%(num_cores)d", "Handle CUDA API calls", {} },
@@ -93,12 +96,15 @@ public:
     void SST_callback_memcpy_H2D_done();
     void SST_callback_memcpy_D2H_done();
 
-    bool tick(SST::Cycle_t x);
     uint32_t mmio_size;
 
 protected:
     /* Handle event from MMIO interface */
     void handleEvent(StandardMem::Request* req);
+
+    /* Handle DMA transfers */
+    void handleDMAEvent(StandardMem::Request* req);
+
 
     /* Handle event from gpu cache */
     void handleGPUCache(StandardMem::Request* req);
@@ -124,6 +130,19 @@ protected:
         BalarMMIO* mmio;
     };
 
+    class DMAHandlers : public StandardMem::RequestHandler {
+    public:
+        friend class BalarMMIO;
+
+        DMAHandlers(BalarMMIO* mmio, SST::Output* out) : StandardMem::RequestHandler(out), mmio(mmio) {}
+        virtual ~DMAHandlers() {}
+        virtual void handle(StandardMem::ReadResp* resp) override;
+        virtual void handle(StandardMem::WriteResp* resp) override;
+
+    private:
+        BalarMMIO* mmio;
+    };
+
     /* Debug -triggered by output.fatal() and/or SIGUSR2 */
     virtual void printStatus(Output &out);
     //virtual void emergencyShutdown();
@@ -133,9 +152,12 @@ protected:
 
     Addr mmio_addr;
     mmioHandlers* handlers;
+    Addr dma_addr;
+    DMAHandlers* dmaHandlers;
 
-    // Tmp buffer to hold D2H dst data
+    // Tmp buffer to hold D2H and H2D dst data
     uint8_t* memcpyD2H_dst;
+    uint8_t* memcpyH2D_dst;
 
     /* Debug -triggered by output.fatal() and/or SIGUSR2 */
     virtual void emergencyShutdown() {};
@@ -181,6 +203,9 @@ private:
 
     // The memH interface into the memory system
     StandardMem* iface;
+
+    // The interface to dma engine
+    StandardMem* dma_if;
 
     // Copy from original balar
     BalarMMIO(const BalarMMIO&); // do not implement

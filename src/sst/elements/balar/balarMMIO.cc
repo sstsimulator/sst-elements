@@ -15,6 +15,7 @@
 
 #include <sst_config.h>
 #include "balarMMIO.h"
+#include "dmaEngine.h"
 #include "util.h"
 
 using namespace SST;
@@ -44,6 +45,7 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
 
     // Memory address
     mmio_addr = params.find<uint64_t>("base_addr", 0);
+    dma_addr = params.find<uint64_t>("dma_addr", 0);
 
     std::string clockfreq = params.find<std::string>("clock", "1GHz");
     UnitAlgebra clock_ua(clockfreq);
@@ -74,8 +76,19 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
 
     iface->setMemoryMappedAddressRegion(mmio_addr, mmio_size);
 
+    // TODO: Not actually needed as we use MMIO for DMA
+    // Interface to DMA engine
+    // dma_if = loadUserSubComponent<SST::Interfaces::StandardMem>("dma_if", ComponentInfo::SHARE_NONE, tc, 
+    //         new StandardMem::Handler<BalarMMIO>(this, &BalarMMIO::handleDMAEvent));
+    // if (!dma_if) {
+    //     out.fatal(CALL_INFO, -1, "%s, Error: No interface found loaded into 'dma_if' subcomponent slot. Please check input file\n", getName().c_str());
+    // }
+
     // Handlers for cpu interactions
     handlers = new mmioHandlers(this, &out);
+
+    // Handlers for DMA transfer
+    // dmaHandlers = new DMAHandlers(this, &out);
     
     // GPU Cache interface configuration
     gpu_to_cache_links = (StandardMem**) malloc( sizeof(StandardMem*) * gpu_core_count );
@@ -188,30 +201,42 @@ void BalarMMIO::SST_callback_memcpy_H2D_done() {
 }
 
 void BalarMMIO::SST_callback_memcpy_D2H_done() {
-    // TODO: Not actually done here? The dst data is not correct
+    // Use DMA engine to send the copy from Simulator to SST memspace
     // Should wait for the memcpy to complete
     // as memcpy is blocking
     // Prepare a request to write the dst data to CPU
     out.verbose(CALL_INFO, 1, 0, "Prepare memcpyD2H writes\n");
     BalarCudaCallPacket_t * packet = last_packet;
     Addr dstAddr = packet->cuda_memcpy.dst;
-    std::string cmdString = "Store_memcpy_D2H_dst";
 
-    // Prepare request payload
-    std::vector<uint8_t> payload;
-    for (size_t i = 0; i < packet->cuda_memcpy.count; i++) {
-        payload.push_back(memcpyD2H_dst[i]);
+    if (packet->isSSTmem) {
+        std::string cmdString = "Issue_DMA_memcpy_D2H";
+
+        // Prepare DMA config
+        DMAEngine::DMAEngineControlRegisters dma_registers;
+        dma_registers.sst_mem_addr = dstAddr;
+        dma_registers.simulator_mem_addr = memcpyD2H_dst;
+        dma_registers.data_size = packet->cuda_memcpy.count;
+        dma_registers.transfer_size = 4;    // 4 bytes per transfer
+        dma_registers.dir = DMAEngine::DMA_DIR::SIM_TO_SST; // From SST memspace to simulator memspace
+
+        // Send the DMA request to DMA engine
+        std::vector<uint8_t> * payload_ptr = encode_balar_packet<DMAEngine::DMAEngineControlRegisters>(&dma_registers);
+        StandardMem::Request* dma_req = new StandardMem::Write(
+            dma_addr, 
+            sizeof(DMAEngine::DMAEngineControlRegisters), 
+            *payload_ptr);
+        delete payload_ptr;
+
+        // Record in hashmap
+        requests[dma_req->getID()] = std::make_pair(getCurrentSimTime(), cmdString);
+
+        // Send via mem iface
+        iface->send(dma_req);
+    } else {
+        // Not SST mem space copying, just return
+        iface->send(blocked_response);
     }
-    // We are done copying data
-    free(memcpyD2H_dst);
-
-    StandardMem::Request* store_req = new StandardMem::Write(dstAddr, packet->cuda_memcpy.count, payload);
-
-    // Record in hashmap
-    requests[store_req->getID()] = std::make_pair(getCurrentSimTime(), cmdString);
-
-    // Send via mem iface
-    iface->send(store_req);
 }
 
 bool BalarMMIO::clockTic(Cycle_t cycle) {
@@ -222,6 +247,11 @@ bool BalarMMIO::clockTic(Cycle_t cycle) {
 void BalarMMIO::handleEvent(StandardMem::Request* req) {
     // incoming CPU request, handle using mmioHandlers
     req->handle(handlers);
+}
+
+void BalarMMIO::handleDMAEvent(StandardMem::Request* req) {
+    // Handle DMA transfers
+    req->handle(dmaHandlers);
 }
 
 /**
@@ -375,20 +405,40 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* res
                     // within SST memory space
                     is_blocked = true;
                     if (packet->isSSTmem) {
+                        // TODO Need to use DMA Engine here
                         if (packet->cuda_memcpy.kind == cudaMemcpyHostToDevice) {
                             // We will end the handler early as we
                             // need to read the src data in host mem first
                             // and then proceed
-                            Addr srcAddr = packet->cuda_memcpy.src;
-                            std::string cmdString = "Fetch_memcpy_H2D_src";
-                            StandardMem::Request* fetch_req = new StandardMem::Read(srcAddr, packet->cuda_memcpy.count);
+
+                            // Assign device buffer
+                            size_t data_size = packet->cuda_memcpy.count;
+                            mmio->memcpyH2D_dst = (uint8_t *) malloc(sizeof(uint8_t) * data_size);
+
+                            DMAEngine::DMAEngineControlRegisters dma_registers;
+                            dma_registers.sst_mem_addr = packet->cuda_memcpy.src;
+                            dma_registers.simulator_mem_addr = mmio->memcpyH2D_dst;
+                            dma_registers.data_size = data_size;
+                            dma_registers.transfer_size = 4;    // 4 bytes per transfer
+                            dma_registers.dir = DMAEngine::DMA_DIR::SST_TO_SIM; // From SST memspace to simulator memspace
+                            
+                            // Handle the cmdString in Writeresp handler 
+                            std::string cmdString = "Issue_DMA_memcpy_H2D";
+
+                            // Send the DMA request to DMA engine
+                            std::vector<uint8_t> * payload_ptr = encode_balar_packet<DMAEngine::DMAEngineControlRegisters>(&dma_registers);
+                            StandardMem::Request* dma_req = new StandardMem::Write(
+                                mmio->dma_addr, 
+                                sizeof(DMAEngine::DMAEngineControlRegisters), 
+                                *payload_ptr);
+                            delete payload_ptr;
 
                             // Record this request for later reference
-                            mmio->requests[fetch_req->getID()] = std::make_pair(mmio->getCurrentSimTime(), cmdString);
+                            mmio->requests[dma_req->getID()] = std::make_pair(mmio->getCurrentSimTime(), cmdString);
 
-                            // Send the read request to read the 
-                            // src data
-                            mmio->iface->send(fetch_req);
+                            // Send the DMA request to the engine
+                            // Since we used MMIO for DMA engine, one interface is enough
+                            mmio->iface->send(dma_req);
 
                             // Delete the request 
                             mmio->requests.erase(i);
@@ -522,54 +572,6 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* res
             }
             delete write;
             delete resp;
-        } else if (request_type.compare("Fetch_memcpy_H2D_src") == 0) {
-            // TODO: Data not correct here!
-            // We continue for the memcpyH2D
-            bool is_blocked = true;
-            BalarCudaCallPacket_t * packet = mmio->last_packet;
-            StandardMem::Write* write = mmio->pending_write;
-
-            // First get the read src data and point the memcpy function to it
-            // Assign source buffer space
-            uint64_t size = packet->cuda_memcpy.count;
-            uint8_t * src_data_ptr = (uint8_t *) malloc(sizeof(uint8_t) * size);
-            std::vector<uint8_t> *buffer = &(resp->data);
-
-            // Copy from resp data to the buffer
-            std::copy(buffer->data(), buffer->data() + size, src_data_ptr);
-
-            // Call with the source data in simulator space
-            mmio->cuda_ret.cuda_error = cudaMemcpy(
-                    (void *) packet->cuda_memcpy.dst,
-                    (const void*) src_data_ptr,
-                    packet->cuda_memcpy.count,
-                    packet->cuda_memcpy.kind);
-
-            // Free the source data buffer
-            free(src_data_ptr);
-            
-            // Payload contains the pointer actual data from hw trace run
-            // dst is the pointer to the simulation cpy
-            mmio->cuda_ret.cudamemcpy.sim_data = (volatile uint8_t*) packet->cuda_memcpy.dst;
-            mmio->cuda_ret.cudamemcpy.real_data = (volatile uint8_t*) packet->cuda_memcpy.payload;
-            mmio->cuda_ret.cudamemcpy.size = packet->cuda_memcpy.count;
-            mmio->cuda_ret.cudamemcpy.kind = packet->cuda_memcpy.kind;
-
-            /* Send response (ack) to the CUDA API Cuda request if needed */
-            if (!(write->posted)) {
-                if (is_blocked) {
-                    // Save blocked req's response and send later
-                    mmio->blocked_response = write->makeResponse();
-                    out->verbose(CALL_INFO, 1, 0, "Handling a blocking request: %s\n", gpu_api_to_string(packet->cuda_call_id)->c_str());
-
-                } else {
-                    mmio->iface->send(write->makeResponse());
-                    out->verbose(CALL_INFO, 1, 0, "Handling a non-blocking request: %s\n", gpu_api_to_string(packet->cuda_call_id)->c_str());
-                }
-            }
-            delete write;
-            delete resp;
-
         } else {
             // Unknown cmdstring, abort
             out->fatal(CALL_INFO, -1, "%s: Unknown read request (%" PRIx64 "): %s!\n", mmio->getName().c_str(), resp->getID(), request_type.c_str());
@@ -611,13 +613,48 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::WriteResp* re
             mmio->iface->send(read_resp);
             delete read;
             delete resp;
-        } else if (request_type.compare("Store_memcpy_D2H_dst") == 0) {
-            // To a write we made to store the dst data into SST memory space
-            // Since we only get the data after the memcpy is actually
-            // done in GPGPU-Sim, we should just send the blocked response
-            // saved in the previous request handler for memcpyD2H
+        } else if (request_type.compare("Issue_DMA_memcpy_D2H") == 0) {
+            // To a DMA request we made to store the dst data into SST memory space
+            // Send the blocked response aved in the previous 
+            // request handler for memcpyD2H to notify CPU we are done with memcpyD2H
+            // Since we get this request only after all data have been copied into host memory
+
+            // Free temp buffer to hold memcpyD2H data
+            free(mmio->memcpyD2H_dst);
+
             mmio->iface->send(mmio->blocked_response);
 
+            delete resp;
+        } else if (request_type.compare("Issue_DMA_memcpy_H2D") == 0) {
+            // To a DMA request we made to store the src data from SST memory space to a buffer
+            // Now we need to actually perform the memcpy using GPGPUSim method
+            BalarCudaCallPacket_t * packet = mmio->last_packet;
+            StandardMem::Write* write = mmio->pending_write;
+
+            // Call with the source data in simulator space
+            // mmio->memcpyH2D_dst is the buffer pointer where the DMA copied into
+            mmio->cuda_ret.cuda_error = cudaMemcpy(
+                    (void *) packet->cuda_memcpy.dst,
+                    (const void*) mmio->memcpyH2D_dst,
+                    packet->cuda_memcpy.count,
+                    packet->cuda_memcpy.kind);
+
+            // Free the source data buffer
+            free(mmio->memcpyH2D_dst);
+            
+            // Payload contains the pointer actual data from hw trace run
+            // dst is the pointer to the simulation cpy
+            mmio->cuda_ret.cudamemcpy.sim_data = (volatile uint8_t*) packet->cuda_memcpy.dst;
+            mmio->cuda_ret.cudamemcpy.real_data = (volatile uint8_t*) packet->cuda_memcpy.payload;
+            mmio->cuda_ret.cudamemcpy.size = packet->cuda_memcpy.count;
+            mmio->cuda_ret.cudamemcpy.kind = packet->cuda_memcpy.kind;
+
+            // Save blocked req's response and send later (in SST_callback_memcpy_H2D_done()), since it is a memcpy
+            mmio->blocked_response = write->makeResponse();
+            out->verbose(CALL_INFO, 1, 0, "Handling a blocking request: %s\n", gpu_api_to_string(packet->cuda_call_id)->c_str());
+
+            // Delete requests as we don't need them anymore
+            delete write;
             delete resp;
         } else {
             // Unknown cmdstring, abort
@@ -660,6 +697,17 @@ uint64_t BalarMMIO::mmioHandlers::dataToUInt64(vector<uint8_t>* data) {
         retval |= (*data)[i-1];
     }
     return retval;
+}
+
+// TODO
+void BalarMMIO::DMAHandlers::handle(SST::Interfaces::StandardMem::ReadResp* resp) {
+
+}
+
+// TODO
+void BalarMMIO::DMAHandlers::handle(SST::Interfaces::StandardMem::WriteResp* resp) {
+    // TODO DMA transfer is done
+    // TODO: Need to continue what is doing before
 }
 
 void BalarMMIO::printStatus(Output &statusOut) {
