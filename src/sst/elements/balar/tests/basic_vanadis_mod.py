@@ -1,6 +1,6 @@
 import os
 # Automatically generated SST Python input
-# Run script: sst testBalar-simple.py --model-options="-c ariel-gpu-v100.cfg -v" > tmp.out 2>&1
+# Run script: sst basic_vanadis_mod.py --model-options='-c ariel-gpu-v100.cfg'
 import sst
 try:
     import ConfigParser
@@ -44,29 +44,37 @@ debug_params = { "debug" : 1, "debug_level" : 10 }
 # Logical communication: Core->L1->memory
 #                        Core->MMIO
 #                        MMIO->memory    
+# TODO Figure out the group config
 core_group = 0
 mmio_group = 1
-cache_group = 2
-memory_group = 3
+dma_group = 2
+cache_group = 3
+memory_group = 4
 
 core_dst = [cache_group, mmio_group]
-cache_src = [core_group, mmio_group]
+cache_src = [core_group, mmio_group, dma_group]
 cache_dst = [memory_group]
 mmio_src = [core_group]
-mmio_dst = [cache_group]
-memory_src = [cache_group,mmio_group]
+mmio_dst = [dma_group, cache_group]
+dma_src = [mmio_group]
+dma_dst = [cache_group]
+memory_src = [cache_group]
 
 # Constans shared across components
 network_bw = "25GB/s"
 clock = "2GHz"
 mmio_addr = 0xFFFF1000
+balar_mmio_size = 1024
+dma_mmio_addr = mmio_addr + balar_mmio_size
+dma_mmio_size = 512
 
 mmio = sst.Component("balar", "balar.balarMMIO")
 mmio.addParams({
       "verbose" : 20,
       "clock" : clock,
       "base_addr" : mmio_addr,
-      "mmio_size": 1024,
+      "mmio_size": balar_mmio_size,
+      "dma_addr" : dma_mmio_addr,
 })
 mmio.addParams(config.getGPUConfig())
 
@@ -75,7 +83,25 @@ mmio_iface = mmio.setSubComponent("iface", "memHierarchy.standardInterface")
 mmio_nic = mmio_iface.setSubComponent("memlink", "memHierarchy.MemNIC")
 mmio_nic.addParams({"group" : mmio_group,
                     "network_bw" : network_bw ,
+                    "sources": mmio_src,
+                    "destinations": mmio_dst ,
                     })
+
+# DMA Engine
+dma = sst.Component("dmaEngine", "balar.dmaEngine")
+dma.addParams({
+      "verbose" : 20,
+      "clock" : clock,
+      "mmio_addr" : dma_mmio_addr,
+      "mmio_size": dma_mmio_size,
+})
+dma_if = dma.setSubComponent("iface", "memHierarchy.standardInterface")
+dma_nic = dma_if.setSubComponent("memlink", "memHierarchy.MemNIC")
+dma_nic.addParams({"group" : dma_group,
+                   "network_bw" : network_bw,
+                   "sources": dma_src,
+                   "destinations": dma_dst
+                   })
 
 # GPU Memory hierarchy
 #          mmio/GPU
@@ -529,7 +555,7 @@ chiprtr.addParams({
       "xbar_bw" : "1GB/s",
       "id" : "0",
       "input_buf_size" : "1KB",
-      "num_ports" : "3",
+      "num_ports" : "4",
       "flit_size" : "72B",
       "output_buf_size" : "1KB",
       "link_bw" : "1GB/s",
@@ -547,6 +573,10 @@ link_l1d_rtr.connect( (l1d_nic, "port", '1000ps'), (chiprtr, "port1", "1000ps") 
 link_mmio_rtr = sst.Link("link_mmio")
 link_mmio_rtr.connect( (mmio_nic, "port", "500ps"), (chiprtr, "port2", "500ps"))
 ## end
+
+# Connect DMA to chiprtr
+link_dma_rtr = sst.Link("link_dma")
+link_dma_rtr.connect( (dma_nic, "port", "500ps"), (chiprtr, "port3", "500ps"))
 
 link_cpu0_l1icache_link = sst.Link("link_cpu0_l1icache_link")
 link_cpu0_l1icache_link.connect( (icache_if, "port", "1ns"), (l1icache_2_cpu, "port", "1ns") )
