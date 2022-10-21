@@ -1592,22 +1592,24 @@ VANADIS_COMPONENT::recoverRetiredRegisters(
     VanadisInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs,
     VanadisISATable* issue_isa_table, VanadisISATable* retire_isa_table)
 {
-
     std::vector<uint16_t> recovered_phys_reg_int;
     std::vector<uint16_t> recovered_phys_reg_fp;
 
-    for ( uint16_t i = 0; i < ins->countISAIntRegIn(); ++i ) {
+    const uint16_t count_int_reg_in = ins->countISAIntRegIn();
+    for ( uint16_t i = 0; i < count_int_reg_in; ++i ) {
         const uint16_t isa_reg = ins->getISAIntRegIn(i);
         issue_isa_table->decIntRead(isa_reg);
     }
 
-    for ( uint16_t i = 0; i < ins->countISAFPRegIn(); ++i ) {
+    const uint16_t count_fp_reg_in = ins->countISAFPRegIn();
+    for ( uint16_t i = 0; i < count_fp_reg_in; ++i ) {
         const uint16_t isa_reg = ins->getISAFPRegIn(i);
         issue_isa_table->decFPRead(isa_reg);
     }
 
+    const uint16_t count_int_reg_out = ins->countISAIntRegOut();
     if ( ins->performIntRegisterRecovery() ) {
-        for ( uint16_t i = 0; i < ins->countISAIntRegOut(); ++i ) {
+        for ( uint16_t i = 0; i < count_int_reg_out; ++i ) {
             const uint16_t isa_reg      = ins->getISAIntRegOut(i);
 
             // We are about to set a new physical register to hold the ISA value
@@ -1627,7 +1629,7 @@ VANADIS_COMPONENT::recoverRetiredRegisters(
 #ifdef VANADIS_BUILD_DEBUG
         output->verbose(CALL_INFO, 16, 0, "-> instruction bypasses integer register recovery\n");
 #endif
-        for ( uint16_t i = 0; i < ins->countISAIntRegOut(); ++i ) {
+        for ( uint16_t i = 0; i < count_int_reg_out; ++i ) {
             const uint16_t isa_reg      = ins->getISAIntRegOut(i);
             const uint16_t cur_phys_reg = retire_isa_table->getIntPhysReg(isa_reg);
 
@@ -1635,8 +1637,9 @@ VANADIS_COMPONENT::recoverRetiredRegisters(
         }
     }
 
+    const uint16_t count_fp_reg_out = ins->countISAFPRegOut();
     if ( ins->performFPRegisterRecovery() ) {
-        for ( uint16_t i = 0; i < ins->countISAFPRegOut(); ++i ) {
+        for ( uint16_t i = 0; i < count_fp_reg_out; ++i ) {
             const uint16_t isa_reg      = ins->getISAFPRegOut(i);
             const uint16_t cur_phys_reg = retire_isa_table->getFPPhysReg(isa_reg);
 
@@ -1653,7 +1656,7 @@ VANADIS_COMPONENT::recoverRetiredRegisters(
 #ifdef VANADIS_BUILD_DEBUG
         output->verbose(CALL_INFO, 16, 0, "-> instruction bypasses fp register recovery\n");
 #endif
-        for ( uint16_t i = 0; i < ins->countISAFPRegOut(); ++i ) {
+        for ( uint16_t i = 0; i < count_fp_reg_out; ++i ) {
             const uint16_t isa_reg      = ins->getISAFPRegOut(i);
             const uint16_t cur_phys_reg = retire_isa_table->getFPPhysReg(isa_reg);
 
