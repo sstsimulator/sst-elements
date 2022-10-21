@@ -47,30 +47,29 @@ public:
         count_isa_fp_reg_in(c_isa_fp_reg_in),
         count_isa_fp_reg_out(c_isa_fp_reg_out)
     {
-
         phys_int_regs_in = (count_phys_int_reg_in > 0) ? new uint16_t[count_phys_int_reg_in] : nullptr;
-        zero_array(phys_int_regs_in, count_phys_int_reg_in);
+        std::memset(phys_int_regs_in, 0, count_phys_int_reg_in);
 
         phys_int_regs_out = (count_phys_int_reg_out > 0) ? new uint16_t[count_phys_int_reg_out] : nullptr;
-        zero_array(phys_int_regs_out, count_phys_int_reg_out);
+        std::memset(phys_int_regs_out, 0, count_phys_int_reg_out);
   
         isa_int_regs_in = (count_isa_int_reg_in > 0) ? new uint16_t[count_isa_int_reg_in] : nullptr;
-        zero_array(isa_int_regs_in, count_isa_int_reg_in);
+        std::memset(isa_int_regs_in, 0, count_isa_int_reg_in);
  
         isa_int_regs_out = (count_isa_int_reg_out > 0) ? new uint16_t[count_isa_int_reg_out] : nullptr;
-        zero_array(isa_int_regs_out, count_isa_int_reg_out);
+        std::memset(isa_int_regs_out, 0, count_isa_int_reg_out);
 
         phys_fp_regs_in = (count_phys_fp_reg_in > 0) ? new uint16_t[count_phys_fp_reg_in] : nullptr;
-        zero_array(phys_fp_regs_in, count_phys_fp_reg_in);
+        std::memset(phys_fp_regs_in, 0, count_phys_fp_reg_in);
 
         phys_fp_regs_out = (count_phys_fp_reg_out > 0) ? new uint16_t[count_phys_fp_reg_out] : nullptr;
-        zero_array(phys_fp_regs_out, count_phys_fp_reg_out);
+        std::memset(phys_fp_regs_out, 0, count_phys_fp_reg_out);
 
         isa_fp_regs_in = (count_isa_fp_reg_in > 0) ? new uint16_t[count_isa_fp_reg_in] : nullptr;
-        zero_array(isa_fp_regs_in, count_isa_fp_reg_in);
+        std::memset(isa_fp_regs_in, 0, count_isa_fp_reg_in);
 
         isa_fp_regs_out = (count_isa_fp_reg_out > 0) ? new uint16_t[count_isa_fp_reg_out] : nullptr;
-        zero_array(isa_fp_regs_out, count_isa_fp_reg_out);
+        std::memset(isa_fp_regs_out, 0, count_isa_fp_reg_out);
   
         trapError             = false;
         hasExecuted           = false;
@@ -127,23 +126,31 @@ public:
         isa_fp_regs_in  = (count_isa_fp_reg_in > 0) ? new uint16_t[count_isa_fp_reg_in] : nullptr;
         isa_fp_regs_out = (count_isa_fp_reg_out > 0) ? new uint16_t[count_isa_fp_reg_out] : nullptr;
 
+        /*
+        std::memcpy(phys_int_regs_in, copy_me.phys_int_regs_in, count_phys_int_reg_in);
+        std::memcpy(phys_int_regs_out, copy_me.phys_int_regs_out, count_phys_int_reg_out);
+        std::memcpy(isa_int_regs_in, copy_me.isa_int_regs_in, count_isa_int_reg_in);
+        std::memcpy(isa_int_regs_out, copy_me.isa_int_regs_out, count_isa_int_reg_out);
+
+        std::memcpy(phys_fp_regs_in, copy_me.phys_fp_regs_in, count_phys_fp_reg_in);
+        std::memcpy(phys_fp_regs_out, copy_me.phys_fp_regs_out, count_phys_fp_reg_out);
+        std::memcpy(isa_fp_regs_in, copy_me.isa_fp_regs_in, count_isa_fp_reg_in);
+        std::memcpy(isa_fp_regs_out, copy_me.isa_fp_regs_out, count_isa_fp_reg_out);
+        */
+
         for ( uint16_t i = 0; i < count_phys_int_reg_in; ++i ) {
-            //assert(phys_int_regs_in != nullptr);
             phys_int_regs_in[i] = copy_me.phys_int_regs_in[i];
         }
 
         for ( uint16_t i = 0; i < count_phys_int_reg_out; ++i ) {
-            //assert(phys_int_regs_out != nullptr);
             phys_int_regs_out[i] = copy_me.phys_int_regs_out[i];
         }
 
         for ( uint16_t i = 0; i < count_isa_int_reg_in; ++i ) {
-            //assert(isa_int_regs_in != nullptr);
             isa_int_regs_in[i] = copy_me.isa_int_regs_in[i];
         }
 
         for ( uint16_t i = 0; i < count_isa_int_reg_out; ++i ) {
-            //assert(isa_int_regs_out != nullptr);
             isa_int_regs_out[i] = copy_me.isa_int_regs_out[i];
         }
 
@@ -371,12 +378,6 @@ public:
     virtual void updateFPFlags() {}
 
 protected:
-    void zero_array(uint16_t* array, size_t len) const {
-        for(auto i = 0; i < len; ++i) {
-            array[i] = 0;
-        }
-    }
-
     const uint64_t ins_address;
     const uint32_t hw_thread;
 
