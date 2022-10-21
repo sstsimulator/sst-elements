@@ -308,21 +308,21 @@ public:
     void setPhysIntRegOut(const uint16_t index, const uint16_t reg) { 
         phys_int_regs_out[index] = reg;
 
-        if(getInstFuncType() != INST_SYSCALL) {
-        for(auto i = 0; i < count_phys_int_reg_in; ++i) {
-            assert(phys_int_regs_in[i] != reg);
-        }
-        }
+        /*if(getInstFuncType() != INST_SYSCALL) {
+            for(auto i = 0; i < count_phys_int_reg_in; ++i) {
+                assert(phys_int_regs_in[i] != reg);
+            }
+        }*/
     }
     void setPhysFPRegIn(const uint16_t index, const uint16_t reg) { phys_fp_regs_in[index] = reg; }
     void setPhysFPRegOut(const uint16_t index, const uint16_t reg) { 
         phys_fp_regs_out[index] = reg;
 
-        if(getInstFuncType() != INST_SYSCALL) {
-        for(auto i = 0; i < count_phys_fp_reg_in; ++i) {
-            assert(phys_fp_regs_in[i] != reg);
-        } 
-        }
+        /*if(getInstFuncType() != INST_SYSCALL) {
+            for(auto i = 0; i < count_phys_fp_reg_in; ++i) {
+                assert(phys_fp_regs_in[i] != reg);
+            } 
+        }*/
     }
 
     virtual VanadisInstruction* clone() = 0;

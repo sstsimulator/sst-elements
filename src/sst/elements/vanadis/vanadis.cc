@@ -624,7 +624,8 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
 #endif
                             if ( ins->getInstructionAddress() == start_verbose_when_issue_address ) {
                                 output->setVerboseLevel(8);
-                            } 
+                            }
+
                             ins->markIssued();
                             ins_issued_this_cycle++;
                             issued_an_ins = true;
@@ -830,10 +831,12 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                     }
                     else {
 #ifdef VANADIS_BUILD_DEBUG
-                        output->verbose(
-                            CALL_INFO, 8, 0,
-                            "----> delay slot has not completed execution, "
-                            "stall to wait.\n");
+                        if(output->getVerboseLevel() >= 8) {
+                            output->verbose(
+                                CALL_INFO, 8, 0,
+                                "----> delay slot has not completed execution, "
+                                "stall to wait.\n");
+                        }
 #endif
                         if ( !delay_ins->checkFrontOfROB() ) { delay_ins->markFrontOfROB(); }
 
@@ -1071,8 +1074,10 @@ VANADIS_COMPONENT::mapInstructiontoFunctionalUnit(
             next_fu->insertInstruction(ins);
             allocated = true;
 
-            output->verbose(CALL_INFO, 16, 0, "------> mapped 0x%llx / %s to func-unit: %" PRIu16 "\n",
-                ins->getInstructionAddress(), ins->getInstCode(), next_fu->getUnitID());
+            if(output->getVerboseLevel() >= 16) {
+                output->verbose(CALL_INFO, 16, 0, "------> mapped 0x%llx / %s to func-unit: %" PRIu16 "\n",
+                    ins->getInstructionAddress(), ins->getInstCode(), next_fu->getUnitID());
+            }
 
             break;
         }
@@ -1470,8 +1475,10 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
         const uint16_t isa_reg_in = ins->getISAIntRegIn(i);
         const uint16_t phys_reg_in = isa_table->getIntPhysReg(isa_reg_in);
 
-        output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx int reg-in for isa: %" PRIu16 " will mapped to phys: %" PRIu16 "\n",
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx int reg-in for isa: %" PRIu16 " will mapped to phys: %" PRIu16 "\n",
                 ins->getInstructionAddress(), isa_reg_in, phys_reg_in);
+        }
 
         ins->setPhysIntRegIn(i, phys_reg_in);
         isa_table->incIntRead(isa_reg_in);
@@ -1487,8 +1494,10 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
         const uint16_t isa_reg_in = ins->getISAFPRegIn(i);
         const uint16_t phys_reg_in = isa_table->getFPPhysReg(isa_reg_in);
 
-        output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx fp reg-in for isa: %" PRIu16 " will mapped to phys: %" PRIu16 "\n",
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx fp reg-in for isa: %" PRIu16 " will mapped to phys: %" PRIu16 "\n",
                 ins->getInstructionAddress(), isa_reg_in, phys_reg_in);
+        }
 
         ins->setPhysFPRegIn(i, phys_reg_in);
         isa_table->incFPRead(isa_reg_in);
@@ -1550,8 +1559,10 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
 
             const uint16_t out_reg        = int_regs->pop();
 
-            output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx int reg-out for isa: %" PRIu16 " output will map to phys: %" PRIu16 "\n",
-                ins->getInstructionAddress(), ins_isa_reg, out_reg);
+            if(output->getVerboseLevel() >= 16) {
+                output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx int reg-out for isa: %" PRIu16 " output will map to phys: %" PRIu16 "\n",
+                    ins->getInstructionAddress(), ins_isa_reg, out_reg);
+            }
 
             isa_table->setIntPhysReg(ins_isa_reg, out_reg);
             isa_table->incIntWrite(ins_isa_reg);
@@ -1572,8 +1583,10 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
 
             const uint16_t out_reg     = fp_regs->pop();
 
-            output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx fp reg-out for isa: %" PRIu16 " output will map to phys: %" PRIu16 "\n",
-                ins->getInstructionAddress(), ins_isa_reg, out_reg);
+            if(output->getVerboseLevel() >= 16) {
+                output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx fp reg-out for isa: %" PRIu16 " output will map to phys: %" PRIu16 "\n",
+                    ins->getInstructionAddress(), ins_isa_reg, out_reg);
+            }
             
             isa_table->setFPPhysReg(ins_isa_reg, out_reg);
             isa_table->incFPWrite(ins_isa_reg);
@@ -1660,9 +1673,11 @@ VANADIS_COMPONENT::recoverRetiredRegisters(
     }
 
 #ifdef VANADIS_BUILD_DEBUG
-    output->verbose(
-        CALL_INFO, 16, 0, "Recovering: %d int-reg and %d fp-reg\n", (int)recovered_phys_reg_int.size(),
-        (int)recovered_phys_reg_fp.size());
+    if(output->getVerboseLevel() >= 16) {
+        output->verbose(
+            CALL_INFO, 16, 0, "Recovering: %d int-reg and %d fp-reg\n", (int)recovered_phys_reg_int.size(),
+            (int)recovered_phys_reg_fp.size());
+    }
 #endif
 
     for ( uint16_t next_reg : recovered_phys_reg_int ) {
@@ -1783,7 +1798,9 @@ void
 VANADIS_COMPONENT::handleMisspeculate(const uint32_t hw_thr, const uint64_t new_ip)
 {
 #ifdef VANADIS_BUILD_DEBUG
-    output->verbose(CALL_INFO, 16, 0, "-> Handle mis-speculation on %" PRIu32 " (new-ip: 0x%llx)...\n", hw_thr, new_ip);
+    if(output->getVerboseLevel() >= 16) {
+        output->verbose(CALL_INFO, 16, 0, "-> Handle mis-speculation on %" PRIu32 " (new-ip: 0x%llx)...\n", hw_thr, new_ip);
+    }
 #endif
     clearFuncUnit(hw_thr, fu_int_arith);
     clearFuncUnit(hw_thr, fu_int_div);
@@ -1801,7 +1818,9 @@ VANADIS_COMPONENT::handleMisspeculate(const uint32_t hw_thr, const uint64_t new_
     // Notify the decoder we need a clear and reset to new instruction pointer
     thread_decoders[hw_thr]->setInstructionPointerAfterMisspeculate(output, new_ip);
 
-    output->verbose(CALL_INFO, 16, 0, "-> Mis-speculate repair finished.\n");
+    if(output->getVerboseLevel() >= 16) {
+        output->verbose(CALL_INFO, 16, 0, "-> Mis-speculate repair finished.\n");
+    }
 }
 
 void
@@ -1817,10 +1836,12 @@ VANADIS_COMPONENT::resetRegisterStacks(const uint32_t hw_thr)
 {
     const uint16_t int_reg_count = int_register_stacks[hw_thr]->capacity();
 #ifdef VANADIS_BUILD_DEBUG
-    output->verbose(CALL_INFO, 16, 0, "-> Resetting register stacks on thread %" PRIu32 "...\n", hw_thr);
-    output->verbose(CALL_INFO, 16, 0, "---> Reclaiming integer registers...\n");
-    output->verbose(
-        CALL_INFO, 16, 0, "---> Creating a new int register stack with %" PRIu16 " registers...\n", int_reg_count);
+    if(output->getVerboseLevel() >= 16) {
+        output->verbose(CALL_INFO, 16, 0, "-> Resetting register stacks on thread %" PRIu32 "...\n", hw_thr);
+        output->verbose(CALL_INFO, 16, 0, "---> Reclaiming integer registers...\n");
+        output->verbose(
+            CALL_INFO, 16, 0, "---> Creating a new int register stack with %" PRIu16 " registers...\n", int_reg_count);
+    }
 #endif
     VanadisRegisterStack* thr_int_stack = int_register_stacks[hw_thr];
     thr_int_stack->clear();
@@ -1833,13 +1854,15 @@ VANADIS_COMPONENT::resetRegisterStacks(const uint32_t hw_thr)
     //	int_register_stacks[hw_thr] = new_int_stack;
     const uint16_t fp_reg_count = fp_register_stacks[hw_thr]->capacity();
 #ifdef VANADIS_BUILD_DEBUG
-    output->verbose(
-        CALL_INFO, 16, 0, "---> Integer register stack contains %" PRIu32 " registers.\n",
-        (uint32_t)thr_int_stack->size());
-    output->verbose(CALL_INFO, 16, 0, "---> Reclaiming floating point registers...\n");
+    if(output->getVerboseLevel() >= 16) {
+        output->verbose(
+            CALL_INFO, 16, 0, "---> Integer register stack contains %" PRIu32 " registers.\n",
+            (uint32_t)thr_int_stack->size());
+        output->verbose(CALL_INFO, 16, 0, "---> Reclaiming floating point registers...\n");
 
-    output->verbose(
-        CALL_INFO, 16, 0, "---> Creating a new fp register stack with %" PRIu16 " registers...\n", fp_reg_count);
+        output->verbose(
+            CALL_INFO, 16, 0, "---> Creating a new fp register stack with %" PRIu16 " registers...\n", fp_reg_count);
+    }
 #endif
     //	VanadisRegisterStack* new_fp_stack = new VanadisRegisterStack(
     // fp_reg_count );
@@ -1854,9 +1877,11 @@ VANADIS_COMPONENT::resetRegisterStacks(const uint32_t hw_thr)
     //	fp_register_stacks[hw_thr] = new_fp_stack;
 
 #ifdef VANADIS_BUILD_DEBUG
-    output->verbose(
-        CALL_INFO, 16, 0, "---> Floating point stack contains %" PRIu32 " registers.\n",
-        (uint32_t)thr_fp_stack->size());
+    if(output->getVerboseLevel() >= 16) {
+        output->verbose(
+            CALL_INFO, 16, 0, "---> Floating point stack contains %" PRIu32 " registers.\n",
+            (uint32_t)thr_fp_stack->size());
+    }
 #endif
 }
 
