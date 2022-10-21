@@ -1355,11 +1355,15 @@ VANADIS_COMPONENT::checkInstructionResources(
     bool      resources_good   = true;
     const int output_verbosity = output->getVerboseLevel();
 
+    const uint16_t int_reg_in_count = ins->countISAIntRegIn();
+    const uint16_t int_reg_out_count = ins->countISAIntRegOut();
+    const uint16_t fp_reg_in_count = ins->countISAFPRegIn();
+    const uint16_t fp_reg_out_count = ins->countISAFPRegOut();
+    
     // We need places to store our output registers
-    resources_good &= (int_regs->unused() >= ins->countISAIntRegOut());
-    resources_good &= (fp_regs->unused() >= ins->countISAFPRegOut());
+    resources_good &= (int_regs->unused() >= int_reg_out_count) && (fp_regs->unused() >= fp_reg_out_count);
 
-    if ( !resources_good ) {
+    if ( UNLIKELY(!resources_good )) {
 #ifdef VANADIS_BUILD_DEBUG
         output->verbose(
             CALL_INFO, 16, 0,
@@ -1373,13 +1377,10 @@ VANADIS_COMPONENT::checkInstructionResources(
 
     // If there are any pending writes against our reads, we can't issue until
     // they are done
-    const uint16_t int_reg_in_count = ins->countISAIntRegIn();
+    
     for ( uint16_t i = 0; i < int_reg_in_count; ++i ) {
         const uint16_t ins_isa_reg = ins->getISAIntRegIn(i);
-        resources_good &= (!isa_table->pendingIntWrites(ins_isa_reg));
-
-        // Check there are no RAW in the pending instruction queue
-        resources_good &= (!tmp_int_reg_write[ins_isa_reg]);
+        resources_good &= (!isa_table->pendingIntWrites(ins_isa_reg)) && (!tmp_int_reg_write[ins_isa_reg]);
     }
 
 #ifdef VANADIS_BUILD_DEBUG
@@ -1389,15 +1390,11 @@ VANADIS_COMPONENT::checkInstructionResources(
     }
 #endif
 
-    if ( !resources_good ) { return 2; }
+    if ( LIKELY(!resources_good )) { return 2; }
 
-    const uint16_t fp_reg_in_count = ins->countISAFPRegIn();
     for ( uint16_t i = 0; i < fp_reg_in_count; ++i ) {
         const uint16_t ins_isa_reg = ins->getISAFPRegIn(i);
-        resources_good &= (!isa_table->pendingFPWrites(ins_isa_reg));
-
-        // Check there are no RAW in the pending instruction queue
-        resources_good &= (!tmp_fp_reg_write[ins_isa_reg]);
+        resources_good &= (!isa_table->pendingFPWrites(ins_isa_reg)) & (!tmp_fp_reg_write[ins_isa_reg]);
     }
 
 #ifdef VANADIS_BUILD_DEBUG
@@ -1408,17 +1405,13 @@ VANADIS_COMPONENT::checkInstructionResources(
     }
 #endif
 
-    if ( !resources_good ) { return 3; }
+    if ( UNLIKELY(!resources_good )) { return 3; }
 
-    const uint16_t int_reg_out_count = ins->countISAIntRegOut();
     for ( uint16_t i = 0; i < int_reg_out_count; ++i ) {
         const uint16_t ins_isa_reg = ins->getISAIntRegOut(i);
 
         // Check there are no RAW in the pending instruction queue
-        resources_good &= (!tmp_not_issued_int_reg_read[ins_isa_reg]);
-
-        // Check there are no WAW in the pending instruction queue
-        resources_good &= (!tmp_int_reg_write[ins_isa_reg]);
+        resources_good &= (!tmp_not_issued_int_reg_read[ins_isa_reg]) && (!tmp_int_reg_write[ins_isa_reg]);
     }
 
 #ifdef VANADIS_BUILD_DEBUG
@@ -1429,17 +1422,13 @@ VANADIS_COMPONENT::checkInstructionResources(
     }
 #endif
 
-    if ( !resources_good ) { return 4; }
+    if ( LIKELY(!resources_good )) { return 4; }
 
-    const uint16_t fp_reg_out_count = ins->countISAFPRegOut();
-    for ( uint16_t i = 0; i < ins->countISAFPRegOut(); ++i ) {
+    for ( uint16_t i = 0; i < fp_reg_out_count; ++i ) {
         const uint16_t ins_isa_reg = ins->getISAFPRegOut(i);
 
         // Check there are no RAW in the pending instruction queue
-        resources_good &= (!tmp_not_issued_fp_reg_read[ins_isa_reg]);
-
-        // Check there are no WAW in the pending instruction queue
-        resources_good &= (!tmp_fp_reg_write[ins_isa_reg]);
+        resources_good &= (!tmp_not_issued_fp_reg_read[ins_isa_reg]) && (!tmp_fp_reg_write[ins_isa_reg]);
     }
 
 #ifdef VANADIS_BUILD_DEBUG
@@ -1450,7 +1439,7 @@ VANADIS_COMPONENT::checkInstructionResources(
     }
 #endif
 
-    if ( !resources_good ) { return 5; }
+    if ( UNLIKELY(!resources_good )) { return 5; }
 
     return 0;
 }
