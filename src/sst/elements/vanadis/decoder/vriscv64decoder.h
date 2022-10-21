@@ -1652,6 +1652,22 @@ protected:
                 case 0xA000:
                 {
                     // FSD
+                    uint16_t rvc_rs2  = expand_rvc_int_register(extract_rs2_rvc(ins));
+                    uint16_t rvc_rs1 = expand_rvc_int_register(extract_rs1_rvc(ins));
+
+                    uint32_t imm_53 = (ins & 0x1C00) >> 7;
+                    uint32_t imm_76 = (ins & 0x60) << 1;
+
+                    uint32_t imm = (imm_53 | imm_76);
+
+                    output->verbose(
+                        CALL_INFO, 16, 0, "-------> RVC FSD %" PRIu16 " -> memory[ %" PRIu16 " + %" PRIu32 " ]\n",
+                        rvc_rs2, rvc_rs1, imm);
+
+                    bundle->addInstruction(new VanadisStoreInstruction(
+                        ins_address, hw_thr, options, rvc_rs1, imm, rvc_rs2, 8, MEM_TRANSACTION_NONE,
+                        STORE_FP_REGISTER));
+                    decode_fault = false;
                 } break;
                 case 0xC000:
                 {
