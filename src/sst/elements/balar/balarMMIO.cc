@@ -196,6 +196,10 @@ void BalarMMIO::send_write_request_SST(unsigned core_id, uint64_t address, uint6
 }
 
 void BalarMMIO::SST_callback_memcpy_H2D_done() {
+    // Safely free the source data buffer
+    free(memcpyH2D_dst);
+    memcpyH2D_dst = NULL;
+    
     // Send blocked response
     iface->send(blocked_response);
 }
@@ -211,18 +215,7 @@ void BalarMMIO::SST_callback_memcpy_D2H_done() {
 
     if (packet->isSSTmem) {
         std::string cmdString = "Issue_DMA_memcpy_D2H";
-
         // Prepare DMA config
-        
-        // NOTE: Modify D2H buffer directly
-        // TODO: Oct 20, 2022, Can confirm the first 16 bytes of memcpy_D2H are incorrect
-        // TODO: the first place (i.e. when this done() function is called)
-        // TODO: Probably timing issue? or something else related to how memcpy manipulate buffer?
-        // for (int i = 0; i < 16; i++) {
-        //     out.verbose(CALL_INFO, 1, 0, "Origin memcpyD2H data[%d] = %d\n", i, memcpyD2H_dst[i]);
-        //     memcpyD2H_dst[i] = 16 - i;
-        // }
-        // NOTE: End modification
 
         DMAEngine::DMAEngineControlRegisters dma_registers;
         dma_registers.sst_mem_addr = dstAddr;
@@ -243,6 +236,7 @@ void BalarMMIO::SST_callback_memcpy_D2H_done() {
         requests[dma_req->getID()] = std::make_pair(getCurrentSimTime(), cmdString);
 
         // Send via mem iface
+        out.verbose(CALL_INFO, 1, 0, "Sending Issue_DMA_memcpy_D2H request to DMA\n");
         iface->send(dma_req);
     } else {
         // Not SST mem space copying, just return
@@ -411,7 +405,6 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* res
                     // within SST memory space
                     is_blocked = true;
                     if (packet->isSSTmem) {
-                        // TODO Need to use DMA Engine here
                         if (packet->cuda_memcpy.kind == cudaMemcpyHostToDevice) {
                             // We will end the handler early as we
                             // need to read the src data in host mem first
@@ -419,7 +412,7 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* res
 
                             // Assign device buffer
                             size_t data_size = packet->cuda_memcpy.count;
-                            mmio->memcpyH2D_dst = (uint8_t *) malloc(sizeof(uint8_t) * data_size);
+                            mmio->memcpyH2D_dst = (uint8_t *) calloc(data_size, sizeof(uint8_t));
 
                             DMAEngine::DMAEngineControlRegisters dma_registers;
                             dma_registers.sst_mem_addr = packet->cuda_memcpy.src;
@@ -458,7 +451,7 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* res
                             // once the gpgpusim finish cpy data in the callback
                             // `SST_callback_memcpy_D2H_done`
                             // Assign buffer space
-                            mmio->memcpyD2H_dst = (uint8_t *) malloc(sizeof(uint8_t) * packet->cuda_memcpy.count);
+                            mmio->memcpyD2H_dst = (uint8_t *) calloc(packet->cuda_memcpy.count, sizeof(uint8_t));
 
                             // Call memcpy
                             mmio->cuda_ret.cuda_error = cudaMemcpy(
@@ -490,8 +483,8 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* res
                         mmio->cuda_ret.cudamemcpy.real_data = (volatile uint8_t*) packet->cuda_memcpy.payload;
                         mmio->cuda_ret.cudamemcpy.size = packet->cuda_memcpy.count;
                         mmio->cuda_ret.cudamemcpy.kind = packet->cuda_memcpy.kind;
-                        break;
                     }
+                    break;
                 case GPU_CONFIG_CALL: 
                     {
                         // Brackets for var visibity issue, see 
@@ -627,6 +620,7 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::WriteResp* re
 
             // Free temp buffer to hold memcpyD2H data
             free(mmio->memcpyD2H_dst);
+            mmio->memcpyD2H_dst = NULL;
 
             mmio->iface->send(mmio->blocked_response);
 
@@ -637,14 +631,6 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::WriteResp* re
             BalarCudaCallPacket_t * packet = mmio->last_packet;
             StandardMem::Write* write = mmio->pending_write;
 
-            // NOTE: Print first 16 bytes for debugging purpose
-            // TODO: Oct 20, 2022, Can confirm the H2D data are all correct
-            // As the first 16 bytes from D2H after a H2D are wrong
-            // for (int i = 0; i < 16; i++) {
-            //     out->verbose(CALL_INFO, 1, 0, "Origin memcpyH2D data[%d] = %d\n", i, mmio->memcpyH2D_dst[i]);
-            // }
-            // NOTE: End print
-
             // Call with the source data in simulator space
             // mmio->memcpyH2D_dst is the buffer pointer where the DMA copied into
             mmio->cuda_ret.cuda_error = cudaMemcpy(
@@ -652,9 +638,6 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::WriteResp* re
                     (const void*) mmio->memcpyH2D_dst,
                     packet->cuda_memcpy.count,
                     packet->cuda_memcpy.kind);
-
-            // Free the source data buffer
-            free(mmio->memcpyH2D_dst);
             
             // Payload contains the pointer actual data from hw trace run
             // dst is the pointer to the simulation cpy

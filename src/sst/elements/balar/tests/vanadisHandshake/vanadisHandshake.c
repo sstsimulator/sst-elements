@@ -42,22 +42,10 @@ int main( int argc, char* argv[] ) {
     cudaMemcpy(d_a, h_a, 200 * sizeof(uint8_t), cudaMemcpyHostToDevice);
     cudaMemcpy(h_b, d_a, 200 * sizeof(uint8_t), cudaMemcpyDeviceToHost);
 
-    printf("First D2H memcpy\n");
     for (int i = 0; i < 200; i++) {
         printf("h_b[%d]: %d\n", i, h_b[i]);
         fflush(stdout);
     }
-
-    printf("\n----------------------------\n\n");
-
-    // Redo a memcpy again see if results are settle to correct values
-    printf("Second D2H memcpy\n");
-    cudaMemcpy(h_b, d_a, 200 * sizeof(uint8_t), cudaMemcpyDeviceToHost);
-    for (int i = 0; i < 200; i++) {
-        printf("h_b[%d]: %d\n", i, h_b[i]);
-        fflush(stdout);
-    }
-
-    printf("\n----------------------------\n\n");
+    
     return 0;
 }
