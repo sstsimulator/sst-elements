@@ -49,29 +49,29 @@ public:
     {
 
         phys_int_regs_in = (count_phys_int_reg_in > 0) ? new uint16_t[count_phys_int_reg_in] : nullptr;
-        std::memset(phys_int_regs_in, 0, count_phys_int_reg_in);
+        zero_array(phys_int_regs_in, count_phys_int_reg_in);
 
         phys_int_regs_out = (count_phys_int_reg_out > 0) ? new uint16_t[count_phys_int_reg_out] : nullptr;
-        std::memset(phys_int_regs_out, 0, count_phys_int_reg_out);
-
+        zero_array(phys_int_regs_out, count_phys_int_reg_out);
+  
         isa_int_regs_in = (count_isa_int_reg_in > 0) ? new uint16_t[count_isa_int_reg_in] : nullptr;
-        std::memset(isa_int_regs_in, 0, count_isa_int_reg_in);
-
+        zero_array(isa_int_regs_in, count_isa_int_reg_in);
+ 
         isa_int_regs_out = (count_isa_int_reg_out > 0) ? new uint16_t[count_isa_int_reg_out] : nullptr;
-        std::memset(isa_int_regs_out, 0, count_isa_int_reg_out);
+        zero_array(isa_int_regs_out, count_isa_int_reg_out);
 
         phys_fp_regs_in = (count_phys_fp_reg_in > 0) ? new uint16_t[count_phys_fp_reg_in] : nullptr;
-        std::memset(phys_fp_regs_in, 0, count_phys_fp_reg_in);
+        zero_array(phys_fp_regs_in, count_phys_fp_reg_in);
 
         phys_fp_regs_out = (count_phys_fp_reg_out > 0) ? new uint16_t[count_phys_fp_reg_out] : nullptr;
-        std::memset(phys_fp_regs_out, 0, count_phys_fp_reg_out);
+        zero_array(phys_fp_regs_out, count_phys_fp_reg_out);
 
         isa_fp_regs_in = (count_isa_fp_reg_in > 0) ? new uint16_t[count_isa_fp_reg_in] : nullptr;
-        std::memset(isa_fp_regs_in, 0, count_isa_fp_reg_in);
+        zero_array(isa_fp_regs_in, count_isa_fp_reg_in);
 
         isa_fp_regs_out = (count_isa_fp_reg_out > 0) ? new uint16_t[count_isa_fp_reg_out] : nullptr;
-        std::memset(isa_fp_regs_out, 0, count_isa_fp_reg_out);
-
+        zero_array(isa_fp_regs_out, count_isa_fp_reg_out);
+  
         trapError             = false;
         hasExecuted           = false;
         hasIssued             = false;
@@ -128,18 +128,22 @@ public:
         isa_fp_regs_out = (count_isa_fp_reg_out > 0) ? new uint16_t[count_isa_fp_reg_out] : nullptr;
 
         for ( uint16_t i = 0; i < count_phys_int_reg_in; ++i ) {
+            //assert(phys_int_regs_in != nullptr);
             phys_int_regs_in[i] = copy_me.phys_int_regs_in[i];
         }
 
         for ( uint16_t i = 0; i < count_phys_int_reg_out; ++i ) {
+            //assert(phys_int_regs_out != nullptr);
             phys_int_regs_out[i] = copy_me.phys_int_regs_out[i];
         }
 
         for ( uint16_t i = 0; i < count_isa_int_reg_in; ++i ) {
+            //assert(isa_int_regs_in != nullptr);
             isa_int_regs_in[i] = copy_me.isa_int_regs_in[i];
         }
 
         for ( uint16_t i = 0; i < count_isa_int_reg_out; ++i ) {
+            //assert(isa_int_regs_out != nullptr);
             isa_int_regs_out[i] = copy_me.isa_int_regs_out[i];
         }
 
@@ -301,9 +305,25 @@ public:
     uint16_t getISAFPRegOut(const uint16_t index) const { return isa_fp_regs_out[index]; }
 
     void setPhysIntRegIn(const uint16_t index, const uint16_t reg) { phys_int_regs_in[index] = reg; }
-    void setPhysIntRegOut(const uint16_t index, const uint16_t reg) { phys_int_regs_out[index] = reg; }
+    void setPhysIntRegOut(const uint16_t index, const uint16_t reg) { 
+        phys_int_regs_out[index] = reg;
+
+        if(getInstFuncType() != INST_SYSCALL) {
+        for(auto i = 0; i < count_phys_int_reg_in; ++i) {
+            assert(phys_int_regs_in[i] != reg);
+        }
+        }
+    }
     void setPhysFPRegIn(const uint16_t index, const uint16_t reg) { phys_fp_regs_in[index] = reg; }
-    void setPhysFPRegOut(const uint16_t index, const uint16_t reg) { phys_fp_regs_out[index] = reg; }
+    void setPhysFPRegOut(const uint16_t index, const uint16_t reg) { 
+        phys_fp_regs_out[index] = reg;
+
+        if(getInstFuncType() != INST_SYSCALL) {
+        for(auto i = 0; i < count_phys_fp_reg_in; ++i) {
+            assert(phys_fp_regs_in[i] != reg);
+        } 
+        }
+    }
 
     virtual VanadisInstruction* clone() = 0;
 
@@ -351,6 +371,12 @@ public:
     virtual void updateFPFlags() {}
 
 protected:
+    void zero_array(uint16_t* array, size_t len) const {
+        for(auto i = 0; i < len; ++i) {
+            array[i] = 0;
+        }
+    }
+
     const uint64_t ins_address;
     const uint32_t hw_thread;
 

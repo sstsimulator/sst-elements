@@ -65,6 +65,7 @@ public:
     bool isInstructionSlotFree() const { return accept_this_cycle; }
 
     void insertInstruction(VanadisInstruction* ins) {
+        //assert(accept_this_cycle == true);
         pending_execute.push_back(new VanadisFunctionalUnitInsRecord(ins, latency));
         accept_this_cycle = false;
     }

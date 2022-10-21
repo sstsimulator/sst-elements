@@ -1411,6 +1411,9 @@ VANADIS_COMPONENT::checkInstructionResources(
 
         // Check there are no RAW in the pending instruction queue
         resources_good &= (!tmp_not_issued_int_reg_read[ins_isa_reg]);
+
+        // Check there are no WAW in the pending instruction queue
+        resources_good &= (!tmp_int_reg_write[ins_isa_reg]);
     }
 
 #ifdef VANADIS_BUILD_DEBUG
@@ -1429,6 +1432,9 @@ VANADIS_COMPONENT::checkInstructionResources(
 
         // Check there are no RAW in the pending instruction queue
         resources_good &= (!tmp_not_issued_fp_reg_read[ins_isa_reg]);
+
+        // Check there are no WAW in the pending instruction queue
+        resources_good &= (!tmp_fp_reg_write[ins_isa_reg]);
     }
 
 #ifdef VANADIS_BUILD_DEBUG
@@ -1531,42 +1537,17 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
         }
     }
     else {
-
-        // Set the current ISA registers required for input
-        /*		for( uint16_t i = 0; i < ins->countISAIntRegIn(); ++i ) {
-                                if( ins->getISAIntRegIn(i) >= int_reg_count ) {
-                                        output->fatal(CALL_INFO, -1, "Error: ins
-           request in-int-reg: %" PRIu16 " but ISA has only %" PRIu16 "
-           available\n", ins->getISAIntRegIn(i), int_reg_count );
-                                }
-
-                                ins->setPhysIntRegIn(i, isa_table->getIntPhysReg(
-           ins->getISAIntRegIn(i) )); isa_table->incIntRead( ins->getISAIntRegIn(i)
-           );
-                        }
-
-                        for( uint16_t i = 0; i < ins->countISAFPRegIn(); ++i ) {
-                                if( ins->getISAFPRegIn(i) >= fp_reg_count ) {
-                                        output->fatal(CALL_INFO, -1, "Error: ins
-           request in-fp-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
-                                                ins->getISAFPRegIn(i),
-           fp_reg_count);
-                                }
-
-                                ins->setPhysFPRegIn(i, isa_table->getFPPhysReg(
-           ins->getISAFPRegIn(i) )); isa_table->incFPRead( ins->getISAFPRegIn(i) );
-                        }
-        */
         // Set current ISA registers required for output
         for ( uint16_t i = 0; i < ins->countISAIntRegOut(); ++i ) {
-            if ( UNLIKELY(ins->getISAIntRegOut(i) >= int_reg_count) ) {
+            const uint16_t ins_isa_reg    = ins->getISAIntRegOut(i);
+
+            if ( UNLIKELY(ins_isa_reg >= int_reg_count) ) {
                 output->fatal(
                     CALL_INFO, -1,
                     "Error: ins request out-int-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
-                    ins->getISAIntRegOut(i), int_reg_count);
+                    ins_isa_reg, int_reg_count);
             }
 
-            const uint16_t ins_isa_reg    = ins->getISAIntRegOut(i);
             const uint16_t out_reg        = int_regs->pop();
 
             output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx int reg-out for isa: %" PRIu16 " output will map to phys: %" PRIu16 "\n",
@@ -1580,14 +1561,15 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
 
         // Set current ISA registers required for output
         for ( uint16_t i = 0; i < ins->countISAFPRegOut(); ++i ) {
-            if ( UNLIKELY(ins->getISAFPRegOut(i) >= fp_reg_count) ) {
+            const uint16_t ins_isa_reg = ins->getISAFPRegOut(i);
+
+            if ( UNLIKELY(ins_isa_reg >= fp_reg_count) ) {
                 output->fatal(
                     CALL_INFO, -1,
                     "Error: ins request out-fp-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
-                    ins->getISAFPRegOut(i), fp_reg_count);
+                    ins_isa_reg, fp_reg_count);
             }
 
-            const uint16_t ins_isa_reg = ins->getISAFPRegOut(i);
             const uint16_t out_reg     = fp_regs->pop();
 
             output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx fp reg-out for isa: %" PRIu16 " output will map to phys: %" PRIu16 "\n",
@@ -1625,27 +1607,18 @@ VANADIS_COMPONENT::recoverRetiredRegisters(
     if ( ins->performIntRegisterRecovery() ) {
         for ( uint16_t i = 0; i < ins->countISAIntRegOut(); ++i ) {
             const uint16_t isa_reg      = ins->getISAIntRegOut(i);
+
+            // We are about to set a new physical register to hold the ISA value
+            // so recover the current holder ready to be issued further up.
             const uint16_t cur_phys_reg = retire_isa_table->getIntPhysReg(isa_reg);
 
             issue_isa_table->decIntWrite(isa_reg);
 
-            // Check this register isn't also in our input set because then we
-            // wouldn't have allocated a new register for it
-            // bool reg_also_input = false;
-
-            // for( uint16_t j = 0; j < ins->countISAIntRegIn(); ++j ) {
-            //	if( isa_reg == ins->getISAIntRegIn(j) ) {
-            //		reg_also_input = true;
-            //	}
-            // }
-
-            // if( ! reg_also_input ) {
             recovered_phys_reg_int.push_back(cur_phys_reg);
 
             // Set the ISA register in the retirement table to point
             // to the physical register used by this instruction
             retire_isa_table->setIntPhysReg(isa_reg, ins->getPhysIntRegOut(i));
-            //}
         }
     }
     else {
@@ -1667,23 +1640,11 @@ VANADIS_COMPONENT::recoverRetiredRegisters(
 
             issue_isa_table->decFPWrite(isa_reg);
 
-            // Check this register isn't also in our input set because then we
-            // wouldn't have allocated a new register for it
-            // bool reg_also_input = false;
-            //
-            // for( uint16_t j = 0; j < ins->countISAIntRegIn(); ++j ) {
-            //	if( isa_reg == ins->getISAIntRegIn(j) ) {
-            //		reg_also_input = true;
-            //	}
-            //}
-
-            // if( ! reg_also_input ) {
             recovered_phys_reg_fp.push_back(cur_phys_reg);
 
             // Set the ISA register in the retirement table to point
             // to the physical register used by this instruction
             retire_isa_table->setFPPhysReg(isa_reg, ins->getPhysFPRegOut(i));
-            //}
         }
     }
     else {
