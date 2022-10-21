@@ -91,8 +91,6 @@ bool DMAEngine::tick(SST::Cycle_t x) {
                 dma_ctrl_regs.sst_mem_addr, dma_ctrl_regs.transfer_size, 
                 data, false);
 
-            // Increase the SST mem space address for next copy
-            dma_ctrl_regs.sst_mem_addr += dma_ctrl_regs.transfer_size;
 
             // Reduce the total data_size for record
             dma_ctrl_regs.data_size -= dma_ctrl_regs.transfer_size;
@@ -100,6 +98,9 @@ bool DMAEngine::tick(SST::Cycle_t x) {
             // If we are done, change the status to WAITING_DONE
             if (dma_ctrl_regs.data_size == 0) {
                 dma_ctrl_regs.status = DMA_WAITING_DONE;
+            } else {
+                // Increase the SST mem space address for next copy
+                dma_ctrl_regs.sst_mem_addr += dma_ctrl_regs.transfer_size;
             }
 
             // Send the copy request
@@ -109,16 +110,17 @@ bool DMAEngine::tick(SST::Cycle_t x) {
             StandardMem::Read* req = new StandardMem::Read(
                 dma_ctrl_regs.sst_mem_addr, dma_ctrl_regs.transfer_size);
 
-            // Increase the SST mem space address and simulator mem space addr
-            // for next copy
-            // Also decrease the data size
-            dma_ctrl_regs.sst_mem_addr += dma_ctrl_regs.transfer_size;
-            dma_ctrl_regs.simulator_mem_addr += dma_ctrl_regs.transfer_size;
+            // Decrease the data size
             dma_ctrl_regs.data_size -= dma_ctrl_regs.transfer_size;
 
             // If we are done, change the status to WAITING_DONE
             if (dma_ctrl_regs.data_size == 0) {
                 dma_ctrl_regs.status = DMA_WAITING_DONE;
+            } else {
+                // Increase the SST mem space address and simulator mem space addr
+                // for next copy
+                dma_ctrl_regs.sst_mem_addr += dma_ctrl_regs.transfer_size;
+                dma_ctrl_regs.simulator_mem_addr += dma_ctrl_regs.transfer_size;
             }
 
             // Send the copy request
@@ -228,7 +230,9 @@ void DMAEngine::DMAHandlers::handle(StandardMem::ReadResp* resp) {
     }
 
     // Check if this is the last copy
-    if (dma->dma_ctrl_regs.status == DMA_WAITING_DONE) {
+    // Assuming the requests sent to memory are completed in order
+    if (resp->pAddr == dma->dma_ctrl_regs.sst_mem_addr &&
+        dma->dma_ctrl_regs.status == DMA_WAITING_DONE) {
         dma->dma_ctrl_regs.status = DMA_DONE;
     }
 
@@ -242,7 +246,9 @@ void DMAEngine::DMAHandlers::handle(StandardMem::ReadResp* resp) {
  */
 void DMAEngine::DMAHandlers::handle(StandardMem::WriteResp* resp) {
     // Check if this is the last copy
-    if (dma->dma_ctrl_regs.status == DMA_WAITING_DONE) {
+    // Assuming the requests sent to memory are completed in order
+    if (resp->pAddr == dma->dma_ctrl_regs.sst_mem_addr && 
+        dma->dma_ctrl_regs.status == DMA_WAITING_DONE) {
         dma->dma_ctrl_regs.status = DMA_DONE;
     }
 
