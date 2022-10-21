@@ -22,10 +22,12 @@ librtlcomponent_la_SOURCES = \
 	rtlmemmgr_simple.cc \
 	rtl_header.h \
 	rtlreadev.h \
-	sint.h \
 	AXI_port.h \
-	uint.h \ 
 	rtlwriteev.h 
+
+EXTRA_DIST = \
+			 eras_datatypes/sint.h \
+			 eras_datatypes/uint.h
 
 librtlcomponent_la_LDFLAGS = -module -avoid-version
 
