@@ -1,7 +1,3 @@
-# -*- Makefile -*-
-#
-#
-
 AM_CPPFLAGS += \
         $(MPI_CPPFLAGS) \
 	-I$(top_srcdir)/src
@@ -50,7 +46,9 @@ libariel_la_SOURCES = \
 	arieltexttracegen.cc \
 	arielfrontend.h \
 	gpu_enum.h \
-	arielgpuev.h
+	arielgpuev.h \
+	tb_header.h \
+	arielrtlev.h
 
 EXTRA_DIST = \
 	api/arielapi.c \

@@ -76,7 +76,8 @@ class ArielCPU : public SST::Component {
         {"gpu_enabled", "If enabled, gpu links will be set up", "0"})
 
     SST_ELI_DOCUMENT_PORTS( {"cache_link_%(corecount)d", "Each core's link to its cache", {}},
-       {"gpu_link_%(corecount)d", "Each core's link to the GPU", {}})
+       {"gpu_link_%(corecount)d", "Each core's link to the GPU", {}},
+       {"rtl_link_%(corecount)d", "Each core's link to the RTL", {}})
 
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -123,6 +124,7 @@ class ArielCPU : public SST::Component {
         std::vector<ArielCore*> cpu_cores;
         std::vector<Interfaces::StandardMem*> cpu_to_cache_links;
         std::vector<SST::Link*> cpu_to_gpu_links;
+        std::vector<SST::Link*> cpu_to_rtl_links;
 
         uint32_t core_count;
 
