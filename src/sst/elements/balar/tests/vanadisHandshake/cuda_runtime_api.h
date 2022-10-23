@@ -11,13 +11,20 @@
 #define __CUDA_RUNTIME_API_H__
 
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 
+#define LOG_LEVEL_INFO 20
+#define LOG_LEVEL_DEBUG 15
+#define LOG_LEVEL_WARNING 10
+#define LOG_LEVEL_ERROR 0
+
 // Global mmio gpu address
 static uint32_t* g_gpu = (uint32_t*) 0xFFFF1000;
 static uint8_t g_scratch_mem[512];
+static int32_t g_debug_level = LOG_LEVEL_DEBUG;
 
 enum GpuApi_t {
     GPU_REG_FAT_BINARY = 1,
@@ -97,7 +104,13 @@ enum cudaError
   cudaErrorApiFailureBase = 10000
 };
 
+struct dim3
+{
+    unsigned int x, y, z;
+};
+
 typedef enum cudaError cudaError_t;
+typedef struct dim3 dim3;
 
 // TODO: Make this into a class with additional serialization methods?
 // TODO: Make this into subclass of standardmem::request? and override the makeResponse function?
@@ -198,62 +211,31 @@ typedef struct BalarCudaCallReturnPacket {
     };
 } BalarCudaCallReturnPacket_t;
 
-cudaError_t cudaMalloc(void **devPtr, uint64_t size) {
-    // Send request to GPU
-    BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
-    call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_MALLOC;
-    call_packet_ptr->cuda_malloc.size = size;
-    call_packet_ptr->cuda_malloc.devPtr = devPtr;
+cudaError_t cudaMalloc(void **devPtr, uint64_t size);
 
-    printf("Malloc Packet address: %p\n", call_packet_ptr);
-    printf("Malloc Packet size: %ld\n", size);
-    printf("Malloc Packet devptr: %p\n", devPtr);
+cudaError_t cudaMemcpy(uint64_t dst, uint64_t src, uint64_t count, enum cudaMemcpyKind kind);
 
-    // Vanadis write with 4B chunk, thus use uint32_t to pass
-    // the pointer to the balar packet
-    *g_gpu = (uint32_t) call_packet_ptr;
+// TODO Need to register fatbin now
+// TODO Need to register function
+// TODO Also need to handle kernel arguments
 
-    // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_gpu;
-    printf("CUDA API ID: %d with error: %d\nMalloc addr: %p Dev addr: %p\n", 
-            response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error,
-            response_packet_ptr->cudamalloc.malloc_addr, response_packet_ptr->cudamalloc.devptr_addr);
-    
-    *devPtr = response_packet_ptr->cudamalloc.malloc_addr;
-    return response_packet_ptr->cuda_error;
-}
+// Cuda Configure call
+cudaError_t cudaConfigureCall(dim3 gridDim, dim3 blockDim, uint64_t sharedMem);
 
-cudaError_t cudaMemcpy(uint64_t dst, uint64_t src, uint64_t count, enum cudaMemcpyKind kind) {
-    // Send request to GPU
-    BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
-    call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_MEMCPY;
+// Cuda Setup argument
+cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[8], uint64_t size, uint64_t offset);
 
-    call_packet_ptr->cuda_memcpy.kind = kind;
-    call_packet_ptr->cuda_memcpy.dst = dst;
-    call_packet_ptr->cuda_memcpy.src = src;
-    call_packet_ptr->cuda_memcpy.count = count;
-    call_packet_ptr->cuda_memcpy.payload = (uint64_t) src;
+cudaError_t cudaLaunch(uint64_t func);
 
-    printf("Memcpy Packet address: %p\n", call_packet_ptr);
-    printf("Memcpy kind: %d\n", (uint8_t) (call_packet_ptr->cuda_memcpy.kind));
-    printf("Memcpy size: %ld\n", count);
-    printf("Memcpy src: %d\n", src);
-    printf("Memcpy dst: %d\n", dst);
-    // printf("sizeof: %d\n", sizeof(call_packet_ptr->cuda_memcpy.kind));
+unsigned int __cudaRegisterFatBinary(char file_name[256]);
 
-    // Vanadis write with 4B chunk, thus use uint32_t to pass
-    // the pointer to the balar packet
-    *g_gpu = (uint32_t) call_packet_ptr;
+// TODO: How to get the deviceFun name?
+// TODO: Requires parsing the binary?
+void __cudaRegisterFunction(
+    uint64_t fatCubinHandle,
+    uint64_t hostFun,
+    char deviceFun[256]
+);
 
-    // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_gpu;
-    printf("CUDA API ID: %d with error: %d\n", 
-            response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
-    
-    return response_packet_ptr->cuda_error;
-    return cudaSuccess;
-}
 
 #endif 

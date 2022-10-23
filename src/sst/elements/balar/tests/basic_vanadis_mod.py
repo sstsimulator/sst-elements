@@ -327,7 +327,8 @@ v_cpu_0.addParams({
 #       "retires_per_cycle" : 1
 })
 
-app_args = os.getenv("VANADIS_EXE_ARGS", "")
+# Use vector add as the default test binary
+app_args = os.getenv("VANADIS_EXE_ARGS", "./vectorAdd/vectorAdd")
 
 if app_args != "":
 	app_args_list = app_args.split(" ")
