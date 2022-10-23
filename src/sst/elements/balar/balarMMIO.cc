@@ -196,9 +196,11 @@ void BalarMMIO::send_write_request_SST(unsigned core_id, uint64_t address, uint6
 }
 
 void BalarMMIO::SST_callback_memcpy_H2D_done() {
-    // Safely free the source data buffer
-    free(memcpyH2D_dst);
-    memcpyH2D_dst = NULL;
+    if (last_packet->isSSTmem) {
+        // Safely free the source data buffer
+        free(memcpyH2D_dst);
+        memcpyH2D_dst = NULL;
+    }
     
     // Send blocked response
     iface->send(blocked_response);
