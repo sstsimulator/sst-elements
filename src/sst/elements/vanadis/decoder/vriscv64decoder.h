@@ -1264,7 +1264,7 @@ protected:
                     output->verbose(
                         CALL_INFO, 16, 0, "-----> FMUL.S %" PRIu16 " <- %" PRIu16 " * %" PRIu16 "\n", rd, rs1, rs2);
                     bundle->addInstruction(
-                        new VanadisFPMultiplyInstruction<double>(ins_address, hw_thr, options, fpflags, rd, rs1, rs2));
+                        new VanadisFPMultiplyInstruction<float>(ins_address, hw_thr, options, fpflags, rd, rs1, rs2));
                     decode_fault = false;
 					 } break;
                 case 9:
