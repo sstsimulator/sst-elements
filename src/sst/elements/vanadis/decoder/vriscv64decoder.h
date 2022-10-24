@@ -1473,10 +1473,9 @@ protected:
                         // FLE.S
                         output->verbose(
                             CALL_INFO, 16, 0, "-----> FLE.S %" PRIu16 " <- %" PRIu16 " <= %" PRIu16 "\n", rd, rs1, rs2);
-                        //								bundle->addInstruction(new
-                        // VanadisFPSetRegCompareInstruction<REG_COMPARE_LTE,
-                        // VanadisRegisterFormat::VANADIS_FORMAT_FP64>(ins_address, hw_thr, options, rd, rs1, rs2));
-                        //								decode_fault = false;
+                        bundle->addInstruction(new VanadisFPSetRegCompareInstruction<REG_COMPARE_LTE, float>(
+                            ins_address, hw_thr, options, fpflags, rd, rs1, rs2));
+                        decode_fault = false;
                     } break;
                     }
                 } break;
