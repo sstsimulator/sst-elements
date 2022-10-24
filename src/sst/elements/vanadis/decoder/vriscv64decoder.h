@@ -1477,6 +1477,15 @@ protected:
                             ins_address, hw_thr, options, fpflags, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
+                    case 0x1:
+                    {
+                        // FLT.S
+                        output->verbose(
+                            CALL_INFO, 16, 0, "-----> FLT.S %" PRIu16 " <- %" PRIu16 " <= %" PRIu16 "\n", rd, rs1, rs2);
+                        bundle->addInstruction(new VanadisFPSetRegCompareInstruction<REG_COMPARE_LT, float>(
+                            ins_address, hw_thr, options, fpflags, rd, rs1, rs2));
+                        decode_fault = false;
+                    } break;
                     }
                 } break;
                 case 0x51:
