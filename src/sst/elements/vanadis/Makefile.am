@@ -267,6 +267,9 @@ EXTRA_DIST = \
 	tests/small/basic-ops/test-branch/mipsel/vanadis.stderr.gold \
 	tests/small/basic-ops/test-branch/mipsel/vanadis.stdout.gold \
 	tests/small/basic-ops/test-branch/riscv64/test-branch \
+	tests/small/basic-ops/test-branch/riscv64/sst.stdout.gold \
+	tests/small/basic-ops/test-branch/riscv64/vanadis.stderr.gold \
+	tests/small/basic-ops/test-branch/riscv64/vanadis.stdout.gold \
 \
 	tests/small/basic-ops/test-shift/Makefile \
 	tests/small/basic-ops/test-shift/test-shift.c \
@@ -275,6 +278,9 @@ EXTRA_DIST = \
 	tests/small/basic-ops/test-shift/mipsel/vanadis.stderr.gold \
 	tests/small/basic-ops/test-shift/mipsel/vanadis.stdout.gold \
 	tests/small/basic-ops/test-shift/riscv64/test-shift \
+	tests/small/basic-ops/test-shift/riscv64/sst.stdout.gold \
+	tests/small/basic-ops/test-shift/riscv64/vanadis.stderr.gold \
+	tests/small/basic-ops/test-shift/riscv64/vanadis.stdout.gold \
 \
 	tests/small/misc/stream/Makefile \
 	tests/small/misc/stream/stream.c \
