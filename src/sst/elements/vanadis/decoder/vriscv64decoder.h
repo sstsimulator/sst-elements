@@ -1180,7 +1180,7 @@ protected:
                             "-----> SC.W.AQ.RL (LLSC_STORE) %" PRIu16 " -> memory[r%" PRIu16 "], result: %" PRIu16 "\n",
                             rs2, rs1, rd);
                         bundle->addInstruction(new VanadisStoreConditionalInstruction(
-                            ins_address, hw_thr, options, rs1, 0, rs2, rd, 4, STORE_INT_REGISTER));
+                            ins_address, hw_thr, options, rs1, 0, rs2, rd, 4, STORE_INT_REGISTER, 0, 1));
                         decode_fault = false;
                     } break;
                     }

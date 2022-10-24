@@ -30,11 +30,39 @@ public:
         const int64_t offset, const uint16_t valueReg, const uint16_t condResultReg, const uint16_t store_width,
         VanadisStoreRegisterType reg_type) :
         VanadisStoreInstruction(
-            addr, hw_thr, isa_opts, memAddrReg, offset, valueReg, store_width, MEM_TRANSACTION_LLSC_STORE, reg_type)
+            addr, hw_thr, isa_opts, memAddrReg, offset, valueReg, store_width, MEM_TRANSACTION_LLSC_STORE, reg_type),
+            value_success(1), value_failure(0)
     {
-
         isa_int_regs_out[0] = condResultReg;
     }
+
+    VanadisStoreConditionalInstruction(
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t memAddrReg,
+        const int64_t offset, const uint16_t valueReg, const uint16_t condResultReg, const uint16_t store_width,
+        VanadisStoreRegisterType reg_type, int64_t successValue, int64_t failureValue) :
+        VanadisStoreInstruction(
+            addr, hw_thr, isa_opts, memAddrReg, offset, valueReg, store_width, MEM_TRANSACTION_LLSC_STORE, reg_type),
+            value_success(successValue), value_failure(failureValue)
+    {
+        isa_int_regs_out[0] = condResultReg;
+    }
+
+    VanadisStoreConditionalInstruction(const VanadisStoreConditionalInstruction& copy_me) :
+        VanadisStoreInstruction(copy_me), value_success(copy_me.value_success),
+        value_failure(copy_me.value_failure) {
+    }
+
+    VanadisStoreConditionalInstruction* clone() { 
+        return new VanadisStoreConditionalInstruction(*this); 
+    }
+
+    int64_t getResultSuccess() const { return value_success; }
+    int64_t getResultFailure() const { return value_failure; }
+
+protected: 
+    const int64_t value_success;
+    const int64_t value_failure;
+
 };
 
 } // namespace Vanadis

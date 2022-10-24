@@ -23,6 +23,7 @@
 #include "lsq/vlsq.h"
 #include "lsq/vbasiclsqentry.h"
 #include "util/vsignx.h"
+#include "inst/vstorecond.h"
 
 #include <cassert>
 #include <cinttypes>
@@ -435,14 +436,27 @@ protected:
                 {
                     const uint16_t value_reg = store_ins->getPhysIntRegOut(0);
 
+                    VanadisStoreConditionalInstruction* store_cond_ins = dynamic_cast<VanadisStoreConditionalInstruction*>(store_ins);
+
+                    if(UNLIKELY(nullptr == store_cond_ins)) {
+                        out->fatal(CALL_INFO, -1, "Unable to cast an LLSC_STORE into a store-conditional, logic failure.\n");
+                    }
+
                     if (ev->getSuccess()) {
+                        const int64_t success_result = store_cond_ins->getResultSuccess();
+
                         out->verbose(CALL_INFO, 16, 0,
-                                        "---> LSQ LLSC-STORE rt: %" PRIu16 " <- 1 (success)\n", value_reg);
-                        lsq->registerFiles->at(store_ins->getHWThread())->setIntReg<uint64_t>(value_reg, 1ULL);
+                                        "---> LSQ LLSC-STORE rt: %" PRIu16 " <- %" PRId64 " (success)\n", 
+                                        success_result, value_reg);
+                        lsq->registerFiles->at(store_ins->getHWThread())->setIntReg<int64_t>(value_reg,
+                            success_result);
                     } else {
-                        out->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE rt: %" PRIu16 " <- 0 (failed)\n",
-                                        value_reg);
-                        lsq->registerFiles->at(store_ins->getHWThread())->setIntReg<uint64_t>(value_reg, 0ULL);
+                        const int64_t failure_result = store_cond_ins->getResultFailure();
+
+                        out->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE rt: %" PRIu16 " <- %" PRId64 " (failed)\n",
+                                        failure_result, value_reg);
+                        lsq->registerFiles->at(store_ins->getHWThread())->setIntReg<uint64_t>(value_reg,
+                            failure_result);
                     }
 
                     store_entry->getInstruction()->markExecuted();
