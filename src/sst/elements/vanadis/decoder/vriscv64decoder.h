@@ -1784,7 +1784,7 @@ protected:
                     // LI
                     uint16_t rd     = static_cast<uint16_t>((ins & 0xF80) >> 7);
                     uint32_t imm_40 = (ins & 0x7C) >> 2;
-                    uint32_t imm_5  = (ins & 0x1000) >> 6;
+                    uint32_t imm_5  = (ins & 0x1000) >> 7;
 
                     int64_t imm = (imm_40 | imm_5);
 
