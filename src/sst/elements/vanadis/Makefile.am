@@ -196,6 +196,9 @@ EXTRA_DIST = \
 	tests/small/basic-io/printf-check/mipsel/vanadis.stdout.gold \
     tests/small/basic-io/printf-check/mipsel/vanadis.stderr.gold \
     tests/small/basic-io/printf-check/riscv64/printf-check \
+	tests/small/basic-io/printf-check/riscv64/sst.stdout.gold \
+	tests/small/basic-io/printf-check/riscv64/vanadis.stdout.gold \
+    tests/small/basic-io/printf-check/riscv64/vanadis.stderr.gold \
 \
     tests/small/basic-io/unlinkat/Makefile \
     tests/small/basic-io/unlinkat/unlinkat.c \
@@ -204,6 +207,9 @@ EXTRA_DIST = \
     tests/small/basic-io/unlinkat/mipsel/vanadis.stderr.gold \
     tests/small/basic-io/unlinkat/mipsel/vanadis.stdout.gold \
     tests/small/basic-io/unlinkat/riscv64/unlinkat \
+    tests/small/basic-io/unlinkat/riscv64/sst.stdout.gold \
+    tests/small/basic-io/unlinkat/riscv64/vanadis.stderr.gold \
+    tests/small/basic-io/unlinkat/riscv64/vanadis.stdout.gold \
 \
     tests/small/basic-io/unlink/Makefile \
     tests/small/basic-io/unlink/unlink.c \
@@ -212,6 +218,9 @@ EXTRA_DIST = \
     tests/small/basic-io/unlink/mipsel/vanadis.stderr.gold \
     tests/small/basic-io/unlink/mipsel/vanadis.stdout.gold \
     tests/small/basic-io/unlink/riscv64/unlink \
+    tests/small/basic-io/unlink/riscv64/sst.stdout.gold \
+    tests/small/basic-io/unlink/riscv64/vanadis.stderr.gold \
+    tests/small/basic-io/unlink/riscv64/vanadis.stdout.gold \
 \
     tests/small/basic-io/openat/Makefile \
     tests/small/basic-io/openat/openat.c \
@@ -220,6 +229,9 @@ EXTRA_DIST = \
     tests/small/basic-io/openat/mipsel/vanadis.stderr.gold \
     tests/small/basic-io/openat/mipsel/vanadis.stdout.gold \
     tests/small/basic-io/openat/riscv64/openat \
+    tests/small/basic-io/openat/riscv64/sst.stdout.gold \
+    tests/small/basic-io/openat/riscv64/vanadis.stderr.gold \
+    tests/small/basic-io/openat/riscv64/vanadis.stdout.gold \
 \
     tests/small/basic-io/read-write/Makefile \
     tests/small/basic-io/read-write/read-write.c \
@@ -233,6 +245,9 @@ EXTRA_DIST = \
 	tests/small/basic-math/sqrt-double/mipsel/vanadis.stderr.gold \
 	tests/small/basic-math/sqrt-double/mipsel/vanadis.stdout.gold \
 	tests/small/basic-math/sqrt-double/riscv64/sqrt-double \
+	tests/small/basic-math/sqrt-double/riscv64/sst.stdout.gold \
+	tests/small/basic-math/sqrt-double/riscv64/vanadis.stderr.gold \
+	tests/small/basic-math/sqrt-double/riscv64/vanadis.stdout.gold \
 \
 	tests/small/basic-math/sqrt-float/Makefile \
 	tests/small/basic-math/sqrt-float/sqrt-float.c \
@@ -241,6 +256,9 @@ EXTRA_DIST = \
 	tests/small/basic-math/sqrt-float/mipsel/vanadis.stderr.gold \
 	tests/small/basic-math/sqrt-float/mipsel/vanadis.stdout.gold \
 	tests/small/basic-math/sqrt-float/riscv64/sqrt-float \
+	tests/small/basic-math/sqrt-float/riscv64/sst.stdout.gold \
+	tests/small/basic-math/sqrt-float/riscv64/vanadis.stderr.gold \
+	tests/small/basic-math/sqrt-float/riscv64/vanadis.stdout.gold \
 \
 	tests/small/basic-ops/test-branch/Makefile \
 	tests/small/basic-ops/test-branch/test-branch.c \
@@ -249,6 +267,9 @@ EXTRA_DIST = \
 	tests/small/basic-ops/test-branch/mipsel/vanadis.stderr.gold \
 	tests/small/basic-ops/test-branch/mipsel/vanadis.stdout.gold \
 	tests/small/basic-ops/test-branch/riscv64/test-branch \
+	tests/small/basic-ops/test-branch/riscv64/sst.stdout.gold \
+	tests/small/basic-ops/test-branch/riscv64/vanadis.stderr.gold \
+	tests/small/basic-ops/test-branch/riscv64/vanadis.stdout.gold \
 \
 	tests/small/basic-ops/test-shift/Makefile \
 	tests/small/basic-ops/test-shift/test-shift.c \
@@ -257,6 +278,9 @@ EXTRA_DIST = \
 	tests/small/basic-ops/test-shift/mipsel/vanadis.stderr.gold \
 	tests/small/basic-ops/test-shift/mipsel/vanadis.stdout.gold \
 	tests/small/basic-ops/test-shift/riscv64/test-shift \
+	tests/small/basic-ops/test-shift/riscv64/sst.stdout.gold \
+	tests/small/basic-ops/test-shift/riscv64/vanadis.stderr.gold \
+	tests/small/basic-ops/test-shift/riscv64/vanadis.stdout.gold \
 \
 	tests/small/misc/stream/Makefile \
 	tests/small/misc/stream/stream.c \
