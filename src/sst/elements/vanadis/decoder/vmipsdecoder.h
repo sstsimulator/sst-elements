@@ -984,7 +984,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_SUB:
                         {
                             bundle->addInstruction(
-                                new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                                new VanadisSubInstruction<int32_t>(
                                     ins_addr, hw_thr, options, rd, rs, rt, true));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_sub);
@@ -993,7 +993,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_SUBU:
                         {
                             bundle->addInstruction(
-                                new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                                new VanadisSubInstruction<int32_t>(
                                     ins_addr, hw_thr, options, rd, rs, rt, false));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_subu);

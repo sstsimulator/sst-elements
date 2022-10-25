@@ -574,7 +574,7 @@ protected:
                         output->verbose(
                             CALL_INFO, 16, 0, "-------> SUB %" PRIu16 " <- %" PRIu16 " - %" PRIu16 "\n", rd, rs1, rs2);
                         // SUB
-                        bundle->addInstruction(new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                        bundle->addInstruction(new VanadisSubInstruction<int64_t>(
                             ins_address, hw_thr, options, rd, rs1, rs2, false));
                         decode_fault = false;
                     } break;
@@ -1037,7 +1037,7 @@ protected:
                     {
                         // SUBW
                         // TODO - check register ordering
-                        bundle->addInstruction(new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                        bundle->addInstruction(new VanadisSubInstruction<int32_t>(
                             ins_address, hw_thr, options, rd, rs1, rs2, true));
                         decode_fault = false;
                     } break;
@@ -1928,7 +1928,7 @@ protected:
                                     CALL_INFO, 16, 0, "--------> RVC SUB %" PRIu16 " <- %" PRIu16 " - %" PRIu16 "\n",
                                     rvc_rs1, rvc_rs1, rvc_rs2);
                                 bundle->addInstruction(
-                                    new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                                    new VanadisSubInstruction<int64_t>(
                                         ins_address, hw_thr, options, rvc_rs1, rvc_rs1, rvc_rs2, true));
                                 decode_fault = false;
                             } break;
@@ -1980,7 +1980,7 @@ protected:
                                     rvc_rs1, rvc_rs1, rvc_rs2);
 
                                 bundle->addInstruction(
-                                    new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                                    new VanadisSubInstruction<int32_t>(
                                         ins_address, hw_thr, options, rvc_rs1, rvc_rs1, rvc_rs2, false));
                                 decode_fault = false;
 
