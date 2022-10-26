@@ -1828,11 +1828,11 @@ protected:
                         // ADDI16SP
                         output->verbose(CALL_INFO, 16, 0, "----> RVC ADDI16SP\n");
 
-                        uint32_t imm_5  = (ins & 0x4) << 3;
-                        uint32_t imm_87 = (ins & 0x18) << 4;
-                        uint32_t imm_6  = (ins & 0x20) << 1;
-                        uint32_t imm_4  = (ins & 0x40) >> 2;
-                        uint32_t imm_9  = (ins & 0x1000) >> 3;
+                        const uint32_t imm_5  = (ins & 0x4) << 3;
+                        const uint32_t imm_87 = (ins & 0x18) << 4;
+                        const uint32_t imm_6  = (ins & 0x20) << 1;
+                        const uint32_t imm_4  = (ins & 0x40) >> 2;
+                        const uint32_t imm_9  = (ins & 0x1000) >> 3;
 
                         int64_t imm = imm_5 | imm_87 | imm_6 | imm_4 | imm_9;
 
