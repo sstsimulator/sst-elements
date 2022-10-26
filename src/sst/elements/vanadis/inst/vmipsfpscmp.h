@@ -62,54 +62,6 @@ public:
 
     virtual const char* getInstCode() const override
     {
-        /*
-                switch ( register_format ) {
-                case VanadisRegisterFormat::VANADIS_FORMAT_FP64:
-                {
-                    switch ( compare_type ) {
-                    case REG_COMPARE_EQ:
-                        return "FP64CMPEQ";
-                    case REG_COMPARE_NEQ:
-                        return "FP64CMPNEQ";
-                    case REG_COMPARE_LT:
-                        return "FP64CMPLT";
-                    case REG_COMPARE_LTE:
-                        return "FP64CMPLTE";
-                    case REG_COMPARE_GT:
-                        return "FP64CMPGT";
-                    case REG_COMPARE_GTE:
-                        return "FP64CMPGTE";
-                    default:
-                        return "FP64CMPUKN";
-                    }
-                } break;
-                case VanadisRegisterFormat::VANADIS_FORMAT_FP32:
-                {
-                    switch ( compare_type ) {
-                    case REG_COMPARE_EQ:
-                        return "FP32CMPEQ";
-                    case REG_COMPARE_NEQ:
-                        return "FP32CMPNEQ";
-                    case REG_COMPARE_LT:
-                        return "FP32CMPLT";
-                    case REG_COMPARE_LTE:
-                        return "FP32CMPLTE";
-                    case REG_COMPARE_GT:
-                        return "FP32CMPGT";
-                    case REG_COMPARE_GTE:
-                        return "FP32CMPGTE";
-                    default:
-                        return "FP32CMPUKN";
-                    }
-                } break;
-                case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
-                    return "FPINT64ACMP";
-                case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
-                    return "FPINT32CMP";
-                default:
-                    return "FPCNVUNK";
-                }
-        */
         return "FPCMP-MO32";
     }
 
@@ -172,19 +124,9 @@ public:
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
-        char* int_register_buffer = new char[256];
-        char* fp_register_buffer  = new char[256];
-
-        writeIntRegs(int_register_buffer, 256);
-        writeFPRegs(fp_register_buffer, 256);
-
         output->verbose(
-            CALL_INFO, 16, 0, "Execute: 0x%llx %s (%s, %s) int: %s / fp: %s\n", getInstructionAddress(), getInstCode(),
-            convertCompareTypeToString(compare_type), (sizeof(fp_format) == 8) ? "64b" : "32b", int_register_buffer,
-            fp_register_buffer);
-
-        delete[] int_register_buffer;
-        delete[] fp_register_buffer;
+            CALL_INFO, 16, 0, "Execute: 0x%llx %s (%s, %s)\n", getInstructionAddress(), getInstCode(),
+            convertCompareTypeToString(compare_type), (sizeof(fp_format) == 8) ? "64b" : "32b");
 #endif
         const bool compare_result = performCompare(output, regFile);
 
@@ -194,18 +136,24 @@ public:
                 : phys_fp_regs_in[2];
         const uint16_t cond_reg_out = phys_fp_regs_out[0];
 
+#ifdef VANADIS_BUILD_DEBUG
         output->verbose(
             CALL_INFO, 16, 0, "---> condition register in: %" PRIu16 " out: %" PRIu16 "\n", cond_reg_in, cond_reg_out);
+#endif
 
         uint32_t cond_val = (regFile->getFPReg<uint32_t>(cond_reg_in) & VANADIS_MIPS_FP_COMPARE_BIT_INVERSE);
 
         if ( compare_result ) {
             // true, keep everything else the same and set the compare bit to 1
             cond_val = (cond_val | VANADIS_MIPS_FP_COMPARE_BIT);
+#ifdef VANADIS_BUILD_DEBUG
             output->verbose(CALL_INFO, 16, 0, "---> result: true\n");
+#endif
         }
         else {
+#ifdef VANADIS_BUILD_DEBUG
             output->verbose(CALL_INFO, 16, 0, "---> result: false\n");
+#endif
         }
 
         regFile->setFPReg<uint32_t>(cond_reg_out, cond_val);
