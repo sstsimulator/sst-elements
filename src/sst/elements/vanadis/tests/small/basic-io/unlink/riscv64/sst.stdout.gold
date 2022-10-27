@@ -6,12 +6,13 @@ l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to
  v0:decoder0:branch_unit.branch_cache_hit.1 : Accumulator : Sum.u64 = 3461; SumSQ.u64 = 3461; Count.u64 = 3461; Min.u64 = 1; Max.u64 = 1; 
  v0:decoder0:branch_unit.branch_cache_miss.1 : Accumulator : Sum.u64 = 4575; SumSQ.u64 = 4575; Count.u64 = 4575; Min.u64 = 1; Max.u64 = 1; 
  v0:decoder0:branch_unit.branch_cache_castout.1 : Accumulator : Sum.u64 = 823; SumSQ.u64 = 823; Count.u64 = 823; Min.u64 = 1; Max.u64 = 1; 
- v0:decoder0.uop_cache_hit.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- v0:decoder0.predecode_cache_hit.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- v0:decoder0.predecode_cache_miss.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ v0:decoder0.uop_cache_hit.1 : Accumulator : Sum.u64 = 287829; SumSQ.u64 = 287829; Count.u64 = 287829; Min.u64 = 1; Max.u64 = 1; 
+ v0:decoder0.predecode_cache_hit.1 : Accumulator : Sum.u64 = 2762; SumSQ.u64 = 2762; Count.u64 = 2762; Min.u64 = 1; Max.u64 = 1; 
+ v0:decoder0.predecode_cache_miss.1 : Accumulator : Sum.u64 = 201224; SumSQ.u64 = 201224; Count.u64 = 201224; Min.u64 = 1; Max.u64 = 1; 
  v0:decoder0.uops_generated.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  v0:decoder0.decode_faults.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- v0:decoder0.ins_bytes_loaded.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ v0:decoder0.ins_bytes_loaded.1 : Accumulator : Sum.u64 = 804896; SumSQ.u64 = 3219584; Count.u64 = 201224; Min.u64 = 4; Max.u64 = 4; 
+ v0:decoder0.uop_delayed_rob_full.1 : Accumulator : Sum.u64 = 253807; SumSQ.u64 = 253807; Count.u64 = 253807; Min.u64 = 1; Max.u64 = 1; 
  v0:lsq.loads_issued.1 : Accumulator : Sum.u64 = 1895; SumSQ.u64 = 1895; Count.u64 = 1895; Min.u64 = 1; Max.u64 = 1; 
  v0:lsq.stores_issued.1 : Accumulator : Sum.u64 = 841; SumSQ.u64 = 841; Count.u64 = 841; Min.u64 = 1; Max.u64 = 1; 
  v0:lsq.bytes_read.1 : Accumulator : Sum.u64 = 9834; SumSQ.u64 = 72156; Count.u64 = 1799; Min.u64 = 1; Max.u64 = 8; 

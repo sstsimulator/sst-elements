@@ -12,6 +12,7 @@ l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to
  v0:decoder0.uops_generated.1 : Accumulator : Sum.u64 = 7584; SumSQ.u64 = 7630; Count.u64 = 7561; Min.u64 = 1; Max.u64 = 2; 
  v0:decoder0.decode_faults.1 : Accumulator : Sum.u64 = 29; SumSQ.u64 = 29; Count.u64 = 29; Min.u64 = 1; Max.u64 = 1; 
  v0:decoder0.ins_bytes_loaded.1 : Accumulator : Sum.u64 = 1627664; SumSQ.u64 = 6510656; Count.u64 = 406916; Min.u64 = 4; Max.u64 = 4; 
+ v0:decoder0.uop_delayed_rob_full.1 : Accumulator : Sum.u64 = 152610; SumSQ.u64 = 152610; Count.u64 = 152610; Min.u64 = 1; Max.u64 = 1; 
  v0:decoder0.ins_decode_add.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  v0:decoder0.ins_decode_addu.1 : Accumulator : Sum.u64 = 273; SumSQ.u64 = 273; Count.u64 = 273; Min.u64 = 1; Max.u64 = 1; 
  v0:decoder0.ins_decode_and.1 : Accumulator : Sum.u64 = 50; SumSQ.u64 = 50; Count.u64 = 50; Min.u64 = 1; Max.u64 = 1; 
