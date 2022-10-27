@@ -2,6 +2,9 @@ import os
 import sst
 
 
+isa="mipsel"
+#isa="riscv64"
+
 group = "basic-io"
 test = "hello-world"
 #test = "hello-world-cpp"
@@ -29,7 +32,7 @@ sst.setProgramOption("stopAtCycle", "0 ns")
 # Tell SST what statistics handling we want
 sst.setStatisticLoadLevel(4)
 
-full_exe_name = os.getenv("VANADIS_EXE", "./tests/small/" + group + "/" + test +  "/mipsel/" + test )
+full_exe_name = os.getenv("VANADIS_EXE", "./tests/small/" + group + "/" + test +  "/" + isa + "/" + test )
 exe_name= full_exe_name.split("/")[-1]
 
 verbosity = int(os.getenv("VANADIS_VERBOSE", 0))

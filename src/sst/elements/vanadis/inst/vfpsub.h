@@ -91,18 +91,10 @@ public:
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
-        char* int_register_buffer = new char[256];
-        char* fp_register_buffer  = new char[256];
-
-        writeIntRegs(int_register_buffer, 256);
-        writeFPRegs(fp_register_buffer, 256);
-
-        output->verbose(
-            CALL_INFO, 16, 0, "Execute: (addr=0x%llx) %s int: %s / fp: %s\n", getInstructionAddress(), getInstCode(),
-            int_register_buffer, fp_register_buffer);
-
-        delete[] int_register_buffer;
-        delete[] fp_register_buffer;
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(
+                CALL_INFO, 16, 0, "Execute: (addr=0x%llx) %s\n");
+        }
 #endif
 
         if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
@@ -112,7 +104,9 @@ public:
 
             performFlagChecks<fp_format>(result);
 
-            output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, result);
+            if(output->getVerboseLevel() >= 16) {
+                output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, result);
+            }
 
             fractureToRegisters<fp_format>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], result);
         }
@@ -123,7 +117,10 @@ public:
             const fp_format result = src_1 - src_2;
 
             performFlagChecks<fp_format>(result);
-            output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, result);
+
+            if(output->getVerboseLevel() >= 16) {
+                output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, result);
+            }
 
             regFile->setFPReg<fp_format>(phys_fp_regs_out[0], result);
         }

@@ -32,15 +32,9 @@ public:
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
         VanadisFloatingPointFlags* fpflags, const uint16_t src_1) :
         VanadisFloatingPointInstruction(
-            addr, hw_thr, isa_opts, fpflags, 1, 0, 1, 0,
-				isa_opts->countISAFPRegisters(), isa_opts->countISAFPRegisters(), isa_opts->countISAFPRegisters(), isa_opts->countISAFPRegisters())
+            addr, hw_thr, isa_opts, fpflags, 1, 0, 1, 0, 0, 0, 0, 0)
     {
-			isa_int_regs_in[0] = src_1;
-
-			for( uint16_t i = 0; i < isa_opts->countISAFPRegisters(); ++i) {
-         	isa_fp_regs_in[i]  = i;
-         	isa_fp_regs_out[i] = i;
-      	}
+		isa_int_regs_in[0] = src_1;
     }
 
     VanadisFPFlagsSetInstruction*  clone() override { return new VanadisFPFlagsSetInstruction(*this); }
@@ -59,34 +53,38 @@ public:
 
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
-		const uint64_t mask_in = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
+		if(checkFrontOfROB()) {
+			const uint64_t mask_in = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
 
-		output->verbose(CALL_INFO, 16, 0, "Execute: 0x%llx in-reg: %" PRIu16 " / phys: %" PRIu16 " -> mask = %" PRIu64 " (0x%llx)\n",
-			getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0], mask_in, mask_in);
+			output->verbose(CALL_INFO, 16, 0, "Execute: 0x%llx %s in-reg: %" PRIu16 " / phys: %" PRIu16 " -> mask = %" PRIu64 " (0x%llx)\n",
+				getInstructionAddress(), getInstCode(), isa_int_regs_in[0], phys_int_regs_in[0], mask_in, mask_in);
 
-		if( (mask_in & 0x1) != 0 ) {
-			fpflags.setInexact();
+			if( (mask_in & 0x1) != 0 ) {
+				fpflags.setInexact();
+			}
+
+			if( (mask_in & 0x2) != 0 ) {
+				fpflags.setUnderflow();
+			}
+
+			if( (mask_in & 0x4) != 0 ) {
+				fpflags.setOverflow();
+			}
+
+			if( (mask_in & 0x8) != 0 ) {
+				fpflags.setDivZero();
+			}
+
+			if( (mask_in & 0x10) != 0 ) {
+				fpflags.setInvalidOp();
+			}
+
+			set_fp_flags = true;
+
+			markExecuted();
+		} else {
+			output->verbose(CALL_INFO, 16, 0, "not front of ROB for ins: 0x%llx %s\n", getInstructionAddress(), getInstCode());
 		}
-
-		if( (mask_in & 0x2) != 0 ) {
-			fpflags.setUnderflow();
-		}
-
-		if( (mask_in & 0x4) != 0 ) {
-			fpflags.setOverflow();
-		}
-
-		if( (mask_in & 0x8) != 0 ) {
-			fpflags.setDivZero();
-		}
-
-		if( (mask_in & 0x10) != 0 ) {
-			fpflags.setInvalidOp();
-		}
-
-		set_fp_flags = true;
-
-        markExecuted();
     }
 };
 

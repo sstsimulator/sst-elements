@@ -24,46 +24,52 @@ class VanadisRegisterStack
 public:
     VanadisRegisterStack(const size_t count) : reg_count(count), max_capacity(count)
     {
+        regs.reserve(count);
 
-        regs = new uint16_t[count];
-        for ( size_t i = count - 1; i > 0; --i ) {
-            regs[i] = (uint16_t)i;
+        for(auto i = 0; i < count; ++i) {
+            regs.push_back(i);
         }
-
-        index = count - 1;
     }
 
-    ~VanadisRegisterStack() { delete[] regs; }
+    ~VanadisRegisterStack() {}
 
     uint16_t pop()
     {
-        uint16_t temp = regs[index];
-        index--;
+        uint16_t temp = regs.back();
+        regs.pop_back();
         return temp;
     }
 
     void push(const uint16_t v)
     {
-        index++;
-        regs[index] = v;
+        regs.push_back(v);
     }
 
     size_t capacity() const { return max_capacity; }
 
-    size_t unused() const { return index; }
+    size_t unused() const { return size(); }
 
-    size_t size() const { return index; }
+    size_t size() const { return regs.size(); }
 
-    bool full() { return index == reg_count; }
-    bool empty() { return index == -1; }
+    bool full() { return (0 == size()); }
+    bool empty() { return size() == capacity(); }
 
-    void clear() { index = -1; }
+    void clear() { regs.clear(); }
+
+    void print() {
+        printf("----> free registers = { ");
+
+        for(size_t i = 0; i < regs.size(); ++i) {
+            printf("%" PRIu16 ", ", regs[i]);
+        }
+
+        printf("}\n");
+    }
 
 private:
     size_t    max_capacity;
     size_t    reg_count;
-    size_t    index;
-    uint16_t* regs;
+    std::vector<uint16_t> regs;
 };
 
 } // namespace Vanadis

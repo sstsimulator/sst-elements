@@ -20,19 +20,46 @@ def build_vanadis_test_matrix():
     vanadis_test_matrix = []
     testlist = []
 
-    # Add the SDL file, test dir compiled elf file, and test run timeout to create the testlist
-    testlist.append(["basic_vanadis.py", "small/basic-io", "hello-world",     "mipsel", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-io", "hello-world",     "riscv64", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-io", "hello-world-cpp", "mipsel", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-io", "printf-check",    "mipsel", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-io", "openat",          "mipsel", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-io", "unlink",          "mipsel", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-io", "unlinkat",        "mipsel", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-math", "sqrt-double",   "mipsel", 300])
-    testlist.append(["basic_vanadis.py", "small/basic-math", "sqrt-float",    "mipsel", 300])
-    testlist.append(["basic_vanadis.py", "small/basic-ops", "test-branch",    "mipsel", 300])
-    testlist.append(["basic_vanadis.py", "small/basic-ops", "test-shift",     "mipsel",300])
-    testlist.append(["basic_vanadis.py", "small/misc", "stream",     "mipsel", 120])
+    arch_list = ["mipsel","riscv64"]
+    #arch_list = ["riscv64"]
+
+    location="small/basic-io"
+    io_tests = ["hello-world","printf-check","openat","unlink","unlinkat"]
+    #io_tests = []
+    for test in io_tests:
+        for arch in arch_list:
+            testlist.append(["basic_vanadis.py", location, test,arch, 120])
+
+    location="small/basic-math"
+    math_tests = ["sqrt-double","sqrt-float"]
+    #math_tests = []
+    for test in math_tests:
+        for arch in arch_list:
+            testlist.append(["basic_vanadis.py", location, test,arch, 120])
+
+    location="small/basic-ops"
+    ops_tests = ["test-branch","test-shift"]
+    #ops_tests = []
+    for test in ops_tests:
+        for arch in arch_list:
+            testlist.append(["basic_vanadis.py", location, test,arch, 120])
+
+    # only MIPS from here
+    arch_list = ["mipsel"]
+
+    location="small/misc"
+    misc_tests = ["stream"]
+    #misc_tests =[]
+    for test in misc_tests:
+        for arch in arch_list:
+            testlist.append(["basic_vanadis.py", location, test,arch, 120])
+
+    location="small/basic-io"
+    io_tests = ["hello-world-cpp"]
+    #io_tests = []
+    for test in io_tests:
+        for arch in arch_list:
+            testlist.append(["basic_vanadis.py", location, test,arch, 120])
 
     # Process each line and crack up into an index, hash, options and sdl file
     for testnum, test_info in enumerate(testlist):

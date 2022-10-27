@@ -576,6 +576,7 @@ public:
                                     CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                     "---> --> micro-op for branch and delay exceed "
                                     "decode-q space. Cannot issue this cycle.\n");
+                                stat_uop_delayed_rob_full->addData(1);
                                 break;
                             }
                         }
@@ -613,6 +614,7 @@ public:
                                 (uint32_t)(thread_rob->capacity() - thread_rob->size()));
                             // We don't have enough space, so we have to stop and wait for
                             // more entries to free up.
+                            stat_uop_delayed_rob_full->addData(1);
                             break;
                         }
                     }
@@ -984,7 +986,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_SUB:
                         {
                             bundle->addInstruction(
-                                new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                                new VanadisSubInstruction<int32_t>(
                                     ins_addr, hw_thr, options, rd, rs, rt, true));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_sub);
@@ -993,7 +995,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_SUBU:
                         {
                             bundle->addInstruction(
-                                new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                                new VanadisSubInstruction<int32_t>(
                                     ins_addr, hw_thr, options, rd, rs, rt, false));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_subu);
@@ -1269,7 +1271,7 @@ protected:
                 //"[decoder/SC]: -> reg: %" PRIu16 " -> base: %" PRIu16 " + offset=%"
                 // PRId64 "\n", 					rt, rs, imm_value_64);
                 bundle->addInstruction(new VanadisStoreConditionalInstruction(
-                    ins_addr, hw_thr, options, rs, imm_value_64, rt, rt, 4, STORE_INT_REGISTER));
+                    ins_addr, hw_thr, options, rs, imm_value_64, rt, rt, 4, STORE_INT_REGISTER, 1, 0));
                 //                bundle->addInstruction(new VanadisStoreInstruction(
                 //                    ins_addr, hw_thr, options, rs, imm_value_64, rt, 4, MEM_TRANSACTION_LLSC_STORE,
                 //                    STORE_INT_REGISTER));

@@ -71,18 +71,17 @@
 #define VANADIS_SYSCALL_RISCV_RT_SETSIGMASK 135
 #define VANADIS_SYSCALL_RISCV_MADVISE 233
 #define VANADIS_SYSCALL_RISCV_FUTEX 98
-#define VANADIS_SYSCALL_RISCV_SET_TID 96
 #define VANADIS_SYSCALL_RISCV_EXIT 93
 #define VANADIS_SYSCALL_RISCV_EXIT_GROUP 94
+#define VANADIS_SYSCALL_RISCV_SET_THREAD_AREA 96 
 #define VANADIS_SYSCALL_RISCV_RM_INOTIFY 28
 #define VANADIS_SYSCALL_RISCV_OPENAT 56
 #define VANADIS_SYSCALL_RISCV_RET_REG 10
 #define VANADIS_SYSCALL_RISCV_SET_RLIST 99
 #define VANADIS_SYSCALL_RISCV_GET_RLIST 100
+#define VANADIS_SYSCALL_RISCV_GETTIME64 113 
 
 //These are undefined in RV64
-#define VANADIS_SYSCALL_RISCV_GETTIME64 4403
-#define VANADIS_SYSCALL_RISCV_SET_THREAD_AREA 4283
 #define VANADIS_SYSCALL_RISCV_MMAP2 4210
 #define VANADIS_SYSCALL_RISCV_FSTAT 4215
 #define VANADIS_SYSCALL_RISCV_READLINK 4085
@@ -174,9 +173,8 @@ public:
         } break;
 
         case VANADIS_SYSCALL_RISCV_SET_THREAD_AREA: {
-    assert(0);
-            const uint64_t phys_reg_4 = isaTable->getIntPhysReg(4);
-            uint64_t thread_area_ptr = regFile->getIntReg<uint64_t>(phys_reg_4);
+            const uint64_t phys_reg_10 = isaTable->getIntPhysReg(10);
+            uint64_t thread_area_ptr = regFile->getIntReg<uint64_t>(phys_reg_10);
 
             output->verbose(CALL_INFO, 8, 0,
                             "[syscall-handler] found a call to set_thread_area( value: %" PRIu64 " / 0x%llx )\n",
@@ -309,6 +307,7 @@ public:
             call_ev = new VanadisSyscallWriteEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, write_fd, write_buff, write_count);
         } break;
 
+#if 0
         case VANADIS_SYSCALL_RISCV_SET_TID: {
             const uint16_t phys_reg_10 = isaTable->getIntPhysReg(10);
             int64_t new_tid = regFile->getIntReg<int64_t>(phys_reg_10);
@@ -318,6 +317,7 @@ public:
 
             recvSyscallResp(new VanadisSyscallResponse(new_tid));
         } break;
+#endif
 
         case VANADIS_SYSCALL_RISCV_MADVISE: {
     assert(0);
@@ -473,7 +473,6 @@ public:
         } break;
 
         case VANADIS_SYSCALL_RISCV_GETTIME64: {
-    assert(0);
             const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
             int64_t clk_type = regFile->getIntReg<int64_t>(phys_reg_4);
 
