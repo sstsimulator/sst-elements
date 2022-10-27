@@ -44,6 +44,7 @@ def build_vanadis_test_matrix():
         for arch in arch_list:
             testlist.append(["basic_vanadis.py", location, test,arch, 120])
 
+    # only MIPS from here
     arch_list = ["mipsel"]
 
     location="small/misc"
