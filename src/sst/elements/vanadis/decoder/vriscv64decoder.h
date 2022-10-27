@@ -109,6 +109,7 @@ public:
                     // We have the instruction in our micro-op cache
                     output->verbose(
                         CALL_INFO, 16, 0, "---> Found uop bundle for ip=0x%llx, loading from cache...\n", ip);
+                    stat_uop_hit->addData(1);
 
                     VanadisInstructionBundle* bundle = ins_loader->getBundleAt(ip);
                     output->verbose(
@@ -172,6 +173,7 @@ public:
                     else {
                         output->verbose(
                             CALL_INFO, 16, 0, "----> Not enough space in the ROB, will stall this cycle.\n");
+                        stat_uop_delayed_rob_full->addData(1);
                     }
                 }
                 else if ( ins_loader->hasPredecodeAt(ip, 4) ) {
@@ -182,6 +184,7 @@ public:
                         "i0-icache (ip=0x%llx)\n",
                         ip);
                     VanadisInstructionBundle* decoded_bundle = new VanadisInstructionBundle(ip);
+                    stat_predecode_hit->addData(1);
 
                     uint32_t temp_ins = 0;
 
@@ -223,6 +226,8 @@ public:
                         "0x%llx, requested read for cache line (line=%" PRIu64 ")\n",
                         ip, ins_loader->getCacheLineWidth());
                     ins_loader->requestLoadAt(output, ip, 4);
+                    stat_ins_bytes_loaded->addData(4);
+                    stat_predecode_miss->addData(1);
                     break;
                 }
             }

@@ -576,6 +576,7 @@ public:
                                     CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                     "---> --> micro-op for branch and delay exceed "
                                     "decode-q space. Cannot issue this cycle.\n");
+                                stat_uop_delayed_rob_full->addData(1);
                                 break;
                             }
                         }
@@ -613,6 +614,7 @@ public:
                                 (uint32_t)(thread_rob->capacity() - thread_rob->size()));
                             // We don't have enough space, so we have to stop and wait for
                             // more entries to free up.
+                            stat_uop_delayed_rob_full->addData(1);
                             break;
                         }
                     }

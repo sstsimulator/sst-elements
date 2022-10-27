@@ -675,15 +675,17 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
 
             // Only print the table if we issued an instruction, reduce print out
             // clutter
-            if ( issued_an_ins && (output_verbosity >= 8) ) {
+            if ( (output_verbosity >= 8) && issued_an_ins ) {
                 if(print_issue_tables) {
                     issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
                 }
             }
         }
         else {
-            output->verbose(
-                CALL_INFO, 9, 0, "thread %" PRIu32 " is halted, did not process for issue this cycle.\n", i);
+            if(output->getVerboseLevel() >= 8) {
+                output->verbose(
+                    CALL_INFO, 8, 0, "thread %" PRIu32 " is halted, did not process for issue this cycle.\n", i);
+            }
         }
     }
 
@@ -797,7 +799,9 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
 
         if ( rob_front->isSpeculated() ) {
 #ifdef VANADIS_BUILD_DEBUG
-            output->verbose(CALL_INFO, 8, 0, "--> instruction is speculated\n");
+            if(output->getVerboseLevel() >= 8) {
+                output->verbose(CALL_INFO, 8, 0, "--> instruction is speculated\n");
+            }
 #endif
             VanadisSpeculatedInstruction* spec_ins = dynamic_cast<VanadisSpeculatedInstruction*>(rob_front);
 
@@ -860,6 +864,7 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                 perform_pipeline_clear = (pipeline_reset_addr != spec_ins->getSpeculatedAddress());
 
 #ifdef VANADIS_BUILD_DEBUG
+                if(output->getVerboseLevel() >= 8) {
                 output->verbose(
                     CALL_INFO, 8, 0,
                     "----> Retire: speculated addr: 0x%llx / result addr: 0x%llx / "
@@ -871,6 +876,7 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                     "----> Updating branch predictor with new information "
                     "(new addr: 0x%llx)\n",
                     pipeline_reset_addr);
+                }
 #endif
                 thread_decoders[ins_thread]->getBranchPredictor()->push(
                     spec_ins->getInstructionAddress(), pipeline_reset_addr);
