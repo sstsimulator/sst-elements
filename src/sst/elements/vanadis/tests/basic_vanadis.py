@@ -24,6 +24,8 @@ test = "hello-world"
 
 #group = "misc"
 #test = "stream"
+#test = "gettime"
+#test = "splitLoad"
 
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
