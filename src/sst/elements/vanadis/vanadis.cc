@@ -161,7 +161,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
             rob_count);
         rob.push_back(new VanadisCircularQueue<VanadisInstruction*>(rob_count));
         // WE NEED ISA INTEGER AND FP COUNTS HERE NOT ZEROS
-        issue_isa_tables.push_back(new VanadisISATable(
+        issue_isa_tables.push_back(new VanadisISATable( "issue",
             thread_decoders[i]->getDecoderOptions(), thread_decoders[i]->countISAIntReg(),
             thread_decoders[i]->countISAFPReg()));
 
@@ -175,7 +175,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
             issue_isa_tables[i]->setFPPhysReg(j, fp_register_stacks[i]->pop());
         }
 
-        retire_isa_tables.push_back(new VanadisISATable(
+        retire_isa_tables.push_back(new VanadisISATable( "retire",
             thread_decoders[i]->getDecoderOptions(), thread_decoders[i]->countISAIntReg(),
             thread_decoders[i]->countISAFPReg()));
         retire_isa_tables[i]->reset(issue_isa_tables[i]);
