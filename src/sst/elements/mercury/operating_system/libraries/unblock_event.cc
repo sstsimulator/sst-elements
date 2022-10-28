@@ -49,6 +49,9 @@ Questions? Contact sst-macro-help@sandia.gov
 namespace SST {
 namespace Hg {
 
+extern template class  HgBase<SST::Component>;
+extern template class  HgBase<SST::SubComponent>;
+
 UnblockEvent::UnblockEvent(OperatingSystem *os, Thread *thr)
   :  os_(os), thr_(thr)
 {

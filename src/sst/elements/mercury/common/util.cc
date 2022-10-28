@@ -49,6 +49,9 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #include <cstring>
 
+extern template class  SST::Hg::HgBase<SST::Component>;
+extern template class  SST::Hg::HgBase<SST::SubComponent>;
+
 typedef int (*main_fxn)(int,char**);
 typedef int (*empty_main_fxn)();
 

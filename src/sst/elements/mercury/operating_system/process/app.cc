@@ -306,7 +306,7 @@ App::App(SST::Params& params, SoftwareId sid,
   notify_(true),
   rc_(0)
 {
-  out_ = std::make_unique<Output>(sprintf("application%d:", sid.app_), 1, 0, Output::STDOUT);
+  out_ = std::unique_ptr<SST::Output>(new SST::Output(sprintf("application%d:", sid.app_), 1, 0, Output::STDOUT));
   out_->debug(CALL_INFO, 1, 0, "constructing");
 
   //globals_storage_ = allocateDataSegment(false); //not tls

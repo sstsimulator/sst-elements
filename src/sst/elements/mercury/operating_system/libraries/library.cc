@@ -48,6 +48,9 @@ Questions? Contact sst-macro-help@sandia.gov
 namespace SST {
 namespace Hg {
 
+extern template class  HgBase<SST::Component>;
+extern template class  HgBase<SST::SubComponent>;
+
 Library::Library(const std::string& libname, SoftwareId sid, OperatingSystem* os) :
   os_(os),
   sid_(sid), 

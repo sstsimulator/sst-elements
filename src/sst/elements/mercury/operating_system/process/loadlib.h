@@ -44,7 +44,7 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #pragma once
 
-#include <sst/core/sst_config.h>
+#include <sst_element_config.h>
 #include <sst/core/output.h>
 #include <string>
 

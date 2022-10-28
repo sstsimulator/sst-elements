@@ -74,6 +74,8 @@ using namespace std;
 namespace SST {
 namespace Hg {
 
+extern template class  HgBase<SST::Component>;
+extern template class  HgBase<SST::SubComponent>;
 extern template SST::TimeConverter* HgBase<SST::SubComponent>::time_converter_;
 
 static thread_safe_u32 THREAD_ID_CNT(0);

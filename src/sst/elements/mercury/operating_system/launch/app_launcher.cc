@@ -50,6 +50,9 @@ Questions? Contact sst-macro-help@sandia.gov
 namespace SST {
 namespace Hg {
 
+extern template class  HgBase<SST::Component>;
+extern template class  HgBase<SST::SubComponent>;
+
 AppLauncher::AppLauncher(OperatingSystem* os) :
   os_(os)
 {

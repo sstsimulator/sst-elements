@@ -56,6 +56,8 @@ Questions? Contact sst-macro-help@sandia.gov
 namespace SST {
 namespace Hg {
 
+extern template class  HgBase<SST::Component>;
+extern template class  HgBase<SST::SubComponent>;
 extern template SST::TimeConverter* HgBase<SST::SubComponent>::time_converter_;
 
 static thread_lock the_api_lock;
