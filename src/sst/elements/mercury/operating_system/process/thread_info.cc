@@ -61,6 +61,9 @@ Questions? Contact sst-macro-help@sandia.gov
 namespace SST {
 namespace Hg {
 
+extern template class  HgBase<SST::Component>;
+extern template class  HgBase<SST::SubComponent>;
+
 //#if (SST_HG_TLS_OFFSET != SPKT_TLS_OFFSET)
 //#error sprockit and sstmac do not agree on stack TLS offset
 //#endif
