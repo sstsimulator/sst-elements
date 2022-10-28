@@ -315,7 +315,7 @@ void GNA::processFire() {
 
 // run LIF on all neurons
 void GNA::lifAll() {
-    for (uint n = 0; n < numNeurons; ++n) {
+    for (uint32_t n = 0; n < numNeurons; ++n) {
         bool fired = neurons[n].lif(now);
         if (fired) {
             //printf(" %d fired\n", n);
