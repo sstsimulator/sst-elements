@@ -27,12 +27,12 @@ namespace Vanadis {
 class VanadisISATable
 {
 public:
-    VanadisISATable(const VanadisDecoderOptions* decoder_o, const uint16_t int_reg, const uint16_t fp_reg) :
+    VanadisISATable( const std::string& name, const VanadisDecoderOptions* decoder_o, const uint16_t int_reg, const uint16_t fp_reg) :
         decoder_opts(decoder_o),
         count_int_reg(int_reg),
-        count_fp_reg(fp_reg)
+        count_fp_reg(fp_reg),
+        tblName(name)
     {
-
         int_reg_ptr = new uint16_t[int_reg];
         fp_reg_ptr  = new uint16_t[fp_reg];
 
@@ -132,7 +132,7 @@ public:
     void print(SST::Output* output, VanadisRegisterFile* regFile, bool print_int, bool print_fp, uint32_t output_v)
     {
         if ( print_int ) {
-            output->verbose(CALL_INFO, output_v, 0, "Integer Registers (Count=%" PRIu16 ")\n", count_int_reg);
+            output->verbose(CALL_INFO, output_v, 0, "%s: Integer Registers (Count=%" PRIu16 ")\n", tblName.c_str(), count_int_reg);
             for ( uint16_t i = 0; i < count_int_reg; ++i ) {
                 if ( nullptr == regFile ) {
                     output->verbose(
@@ -227,6 +227,8 @@ protected:
     uint32_t* fp_reg_pending_write;
 
     const VanadisDecoderOptions* decoder_opts;
+
+    std::string tblName; 
 };
 
 } // namespace Vanadis
