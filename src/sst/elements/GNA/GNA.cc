@@ -130,7 +130,7 @@ void GNA::init(unsigned int phase) {
         using namespace Interfaces;
         // most neurons connect to 1-4, 1% connect to 15
         uint16_t roll = rng.generateNextUInt32() % 100;
-        uint numCon = 1;
+        uint32_t numCon = 1;
         bool local = 1;
         if (roll == 0) {
             numCon = 15;
@@ -214,7 +214,8 @@ void GNA::init(unsigned int phase) {
     }
 #endif
     for (int i = 0; i < bwpl_len; ++i) {
-        BWPs.insert(std::pair<uint,Ctrl_And_Stat_Types::T_BwpFl>(bwpl[i].TmpSft, bwpl[i]));
+        BWPs.insert(std::pair<uint32_t,Ctrl_And_Stat_Types::T_BwpFl>(bwpl[i].TmpSft, 
+bwpl[i]));
     }
 }
 
@@ -314,7 +315,7 @@ void GNA::processFire() {
 
 // run LIF on all neurons
 void GNA::lifAll() {
-    for (uint n = 0; n < numNeurons; ++n) {
+    for (uint32_t n = 0; n < numNeurons; ++n) {
         bool fired = neurons[n].lif(now);
         if (fired) {
             //printf(" %d fired\n", n);

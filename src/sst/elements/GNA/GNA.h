@@ -93,24 +93,24 @@ private:
 
     Output out;
     Interfaces::StandardMem * memory;
-    uint numNeurons;
-    uint BWPpTic;
-    uint STSDispatch;
-    uint STSParallelism;
-    uint maxOutMem;
-    uint now;
-    uint numFirings;
-    uint numDeliveries;
+    uint32_t numNeurons;
+    uint32_t BWPpTic;
+    uint32_t STSDispatch;
+    uint32_t STSParallelism;
+    uint32_t maxOutMem;
+    uint32_t now;
+    uint32_t numFirings;
+    uint32_t numDeliveries;
     queue<SST::Interfaces::StandardMem::Request *> outgoingReqs;
 
     neuron *neurons;
     vector<STS> STSUnits;
 
-    typedef multimap<const uint, Ctrl_And_Stat_Types::T_BwpFl> BWPBuf_t;
+    typedef multimap<const uint32_t, Ctrl_And_Stat_Types::T_BwpFl> BWPBuf_t;
     // brain wave pulse buffer
     BWPBuf_t BWPs;
 
-    std::deque<uint> firedNeurons;
+    std::deque<uint32_t> firedNeurons;
     std::map<uint64_t, STS*> requests;
 
     TimeConverter *clockTC;
