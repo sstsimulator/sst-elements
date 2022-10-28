@@ -94,6 +94,7 @@
 
 // FP Arith
 #include "inst/vfpadd.h"
+#include "inst/vfpmadd.h"
 #include "inst/vfpdiv.h"
 #include "inst/vfpmul.h"
 #include "inst/vfpscmp.h"
