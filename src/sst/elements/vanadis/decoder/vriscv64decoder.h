@@ -1175,42 +1175,44 @@ protected:
                 switch ( (func_code7 & 0x7C) ) {
                 case 0x4:
                 {
-                    // AMO.SWAP
-                    output->verbose(CALL_INFO, 16, 0, "-----> AMOSWAP %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16 " / width: " PRIu32 " / aq: %s / rl: %s\n",
-                        rd, rs1, rs2, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
+                    if(LIKELY(op_width != 0)) {
+                        // AMO.SWAP
+                        output->verbose(CALL_INFO, 16, 0, "-----> AMOSWAP %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16 " / width: " PRIu32 " / aq: %s / rl: %s\n",
+                            rd, rs1, rs2, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
 
-                    if(LIKELY(perform_aq)) {
-                        bundle->addInstruction(new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
+                        if(LIKELY(perform_aq)) {
+                            bundle->addInstruction(new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
+                        }
+
+                        // implement a micro-op sequence for AMOSWAP (yuck)
+                        bundle->addInstruction(new VanadisLoadInstruction(
+                                    ins_address, hw_thr, options, rs1, 0, /* place in r32 */ 32, op_width, 
+                                    true, MEM_TRANSACTION_LLSC_LOAD,
+                                    LOAD_INT_REGISTER));
+
+                        // 0 is a success, 1 is a failure 
+                        bundle->addInstruction(new VanadisStoreConditionalInstruction(
+                                ins_address, hw_thr, options, rs1, 0, rs2, /* place in r33 */ 33, op_width, 
+                                STORE_INT_REGISTER, 0, 1));
+
+                        // conditionally copy the loaded value into rd IF the store-conditional was successful
+                        // copy r32 into rd if r33 == 0
+                        bundle->addInstruction(new VanadisConditionalMoveImmInstruction<int64_t, int64_t, REG_COMPARE_EQ>(
+                                ins_address, hw_thr, options, rd, 32, 33, 0
+                        ));
+
+                        // branch back to this instruction address IF r32 == 1 (which means the store failed)
+                        bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<int64_t, REG_COMPARE_EQ>(
+                            ins_address, hw_thr, options, 4, 32, 1, 
+                            /* offset is 0 so we replay this instruction */ 0, VANADIS_NO_DELAY_SLOT
+                        ));
+
+                        if(LIKELY(perform_rl)) {
+                            bundle->addInstruction(new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
+                        }
+
+                        decode_fault = false;
                     }
-
-                    // implement a micro-op sequence for AMOSWAP (yuck)
-                    bundle->addInstruction(new VanadisLoadInstruction(
-                                ins_address, hw_thr, options, rs1, 0, /* place in r32 */ 32, op_width, 
-                                true, MEM_TRANSACTION_LLSC_LOAD,
-                                LOAD_INT_REGISTER));
-
-                    // 0 is a success, 1 is a failure 
-                    bundle->addInstruction(new VanadisStoreConditionalInstruction(
-                            ins_address, hw_thr, options, rs1, 0, rs2, /* place in r33 */ 33, op_width, 
-                            STORE_INT_REGISTER, 0, 1));
-
-                    // conditionally copy the loaded value into rd IF the store-conditional was successful
-                    // copy r32 into rd if r33 == 0
-                    bundle->addInstruction(new VanadisConditionalMoveImmInstruction<int64_t, int64_t, REG_COMPARE_EQ>(
-                            ins_address, hw_thr, options, rd, 32, 33, 0
-                    ));
-
-                    // branch back to this instruction address IF r32 == 1 (which means the store failed)
-                    bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<int64_t, REG_COMPARE_EQ>(
-                        ins_address, hw_thr, options, 4, 32, 1, 
-                        /* offset is 0 so we replay this instruction */ 0, VANADIS_NO_DELAY_SLOT
-                    ));
-
-                    if(LIKELY(perform_rl)) {
-                        bundle->addInstruction(new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
-                    }
-
-                    decode_fault = false;
                 } break;
                 case 0x8:
                 {
