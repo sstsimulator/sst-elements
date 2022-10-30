@@ -71,6 +71,9 @@
 #include "inst/vstore.h"
 #include "inst/vstorecond.h"
 
+// Conditional move instructions
+#include "inst/vcimov.h"
+
 // Fence Instructions
 #include "inst/vfence.h"
 
