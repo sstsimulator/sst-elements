@@ -42,6 +42,7 @@ inst/vfp2fp.h \
 inst/vfp2gpr.h \
 inst/vfpadd.h \
 inst/vfpmadd.h \
+inst/vfpmsub.h \
 inst/vfpconv.h \
 inst/vfpdiv.h \
 inst/vfpflagsread.h \
