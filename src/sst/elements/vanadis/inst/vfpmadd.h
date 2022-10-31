@@ -27,10 +27,10 @@ namespace Vanadis {
 
 // template <VanadisRegisterFormat register_format>
 template <typename fp_format>
-class VanadisFPFusedMultiplyInstruction : public VanadisFloatingPointInstruction
+class VanadisFPFusedMultiplyAddInstruction : public VanadisFloatingPointInstruction
 {
 public:
-    VanadisFPFusedMultiplyInstruction(
+    VanadisFPFusedMultiplyAddInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
         VanadisFloatingPointFlags* fpflags, const uint16_t dest, const uint16_t src_1, const uint16_t src_2, const uint64_t src_3) :
         VanadisFloatingPointInstruction(
@@ -58,7 +58,7 @@ public:
         }
     }
 
-    VanadisFPFusedMultiplyInstruction*  clone() override { return new VanadisFPFusedMultiplyInstruction(*this); }
+    VanadisFPFusedMultiplyAddInstruction*  clone() override { return new VanadisFPFusedMultiplyAddInstruction(*this); }
     VanadisFunctionalUnitType getInstFuncType() const override { return INST_FP_ARITH; }
 
     const char* getInstCode() const override
