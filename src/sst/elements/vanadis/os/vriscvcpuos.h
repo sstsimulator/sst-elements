@@ -79,7 +79,7 @@
 #define VANADIS_SYSCALL_RISCV_RET_REG 10
 #define VANADIS_SYSCALL_RISCV_SET_RLIST 99
 #define VANADIS_SYSCALL_RISCV_GET_RLIST 100
-#define VANADIS_SYSCALL_RISCV_GETTIME64 113 
+#define VANADIS_SYSCALL_RISCV_GETTIME 113 
 
 //These are undefined in RV64
 #define VANADIS_SYSCALL_RISCV_MMAP2 4210
@@ -472,18 +472,15 @@ public:
                                                        stack_ptr, 4096);
         } break;
 
-        case VANADIS_SYSCALL_RISCV_GETTIME64: {
-            const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
-            int64_t clk_type = regFile->getIntReg<int64_t>(phys_reg_4);
-
-            const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
-            uint64_t time_addr = regFile->getIntReg<uint64_t>(phys_reg_5);
+        case VANADIS_SYSCALL_RISCV_GETTIME: {
+            int64_t clk_type = getRegister(10);
+            uint64_t time_addr = getRegister(11);
 
             output->verbose(CALL_INFO, 8, 0,
                             "[syscall-handler] found a call to clock_gettime64( %" PRId64 ", 0x%llx )\n", clk_type,
                             time_addr);
 
-            call_ev = new VanadisSyscallGetTime64Event(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, clk_type, time_addr);
+            call_ev = new VanadisSyscallGetTimeEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, clk_type, time_addr);
         } break;
 
         case VANADIS_SYSCALL_RISCV_RT_SETSIGMASK: {

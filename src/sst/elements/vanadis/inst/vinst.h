@@ -48,28 +48,28 @@ public:
         count_isa_fp_reg_out(c_isa_fp_reg_out)
     {
         phys_int_regs_in = (count_phys_int_reg_in > 0) ? new uint16_t[count_phys_int_reg_in] : nullptr;
-        std::memset(phys_int_regs_in, 0, count_phys_int_reg_in);
+        std::memset(phys_int_regs_in, 0, count_phys_int_reg_in * sizeof( uint16_t ));
 
         phys_int_regs_out = (count_phys_int_reg_out > 0) ? new uint16_t[count_phys_int_reg_out] : nullptr;
-        std::memset(phys_int_regs_out, 0, count_phys_int_reg_out);
+        std::memset(phys_int_regs_out, 0, count_phys_int_reg_out * sizeof( uint16_t ) );
   
         isa_int_regs_in = (count_isa_int_reg_in > 0) ? new uint16_t[count_isa_int_reg_in] : nullptr;
-        std::memset(isa_int_regs_in, 0, count_isa_int_reg_in);
+        std::memset(isa_int_regs_in, 0, count_isa_int_reg_in * sizeof( uint16_t ));
  
         isa_int_regs_out = (count_isa_int_reg_out > 0) ? new uint16_t[count_isa_int_reg_out] : nullptr;
-        std::memset(isa_int_regs_out, 0, count_isa_int_reg_out);
+        std::memset(isa_int_regs_out, 0, count_isa_int_reg_out * sizeof( uint16_t ) );
 
         phys_fp_regs_in = (count_phys_fp_reg_in > 0) ? new uint16_t[count_phys_fp_reg_in] : nullptr;
-        std::memset(phys_fp_regs_in, 0, count_phys_fp_reg_in);
+        std::memset(phys_fp_regs_in, 0, count_phys_fp_reg_in * sizeof( uint16_t ));
 
         phys_fp_regs_out = (count_phys_fp_reg_out > 0) ? new uint16_t[count_phys_fp_reg_out] : nullptr;
-        std::memset(phys_fp_regs_out, 0, count_phys_fp_reg_out);
+        std::memset(phys_fp_regs_out, 0, count_phys_fp_reg_out * sizeof( uint16_t ));
 
         isa_fp_regs_in = (count_isa_fp_reg_in > 0) ? new uint16_t[count_isa_fp_reg_in] : nullptr;
-        std::memset(isa_fp_regs_in, 0, count_isa_fp_reg_in);
+        std::memset(isa_fp_regs_in, 0, count_isa_fp_reg_in * sizeof( uint16_t ) );
 
         isa_fp_regs_out = (count_isa_fp_reg_out > 0) ? new uint16_t[count_isa_fp_reg_out] : nullptr;
-        std::memset(isa_fp_regs_out, 0, count_isa_fp_reg_out);
+        std::memset(isa_fp_regs_out, 0, count_isa_fp_reg_out * sizeof( uint16_t ));
   
         trapError             = false;
         hasExecuted           = false;

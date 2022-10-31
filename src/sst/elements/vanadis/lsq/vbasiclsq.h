@@ -277,7 +277,7 @@ protected:
 
             VanadisLoadInstruction* load_ins = load_entry->getLoadInstruction();
 
-            const uint16_t load_width = load_entry->getLoadWidth();
+            const uint16_t load_width = ev->size;
             const uint64_t load_address = load_entry->getLoadAddress();
             const uint32_t hw_thr     = load_ins->getHWThread();
 
@@ -598,6 +598,7 @@ protected:
                         store_address, store_width_left, store_address_right, store_width_right);
                 }
 
+                payload.resize(store_width_left);
                 registerFiles->at(store_entry->getHWThread())->copyFromRegister(store_ins->getValueRegisterType() == STORE_FP_REGISTER ?
                     store_ins->getPhysFPRegIn(0) : store_ins->getPhysIntRegIn(1), store_ins->getRegisterOffset(), &payload[0], store_width_left, 
                     store_ins->getValueRegisterType() == STORE_FP_REGISTER);
@@ -610,6 +611,7 @@ protected:
 
                 payload.clear();
 
+                payload.resize(store_width_right);
                 registerFiles->at(store_entry->getHWThread())->copyFromRegister(store_ins->getValueRegisterType() == STORE_FP_REGISTER ?
                     store_ins->getPhysFPRegIn(0) : store_ins->getPhysIntRegIn(1), store_ins->getRegisterOffset() + store_width_left, &payload[0], 
                     store_width_right, 
@@ -697,6 +699,11 @@ protected:
         const bool needs_split = operationStraddlesCacheLine(load_address, load_width);
 
         VanadisBasicLoadPendingEntry* load_entry = new VanadisBasicLoadPendingEntry(load_ins, load_address, load_width);
+
+        if ( load_address + load_width < load_address ) {
+            load_ins->markExecuted();
+            return;
+        }
 
         switch (load_ins->getTransactionType()) {
             case MEM_TRANSACTION_NONE:
