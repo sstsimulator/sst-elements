@@ -226,6 +226,7 @@ private:
     int  performRetire(VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle);
     int  allocateFunctionalUnit(VanadisInstruction* ins);
     bool mapInstructiontoFunctionalUnit(VanadisInstruction* ins, std::vector<VanadisFunctionalUnit*>& functional_units);
+    void printRob(VanadisCircularQueue<VanadisInstruction*>* rob);
 
     SST::Output* output;
 
@@ -271,6 +272,7 @@ private:
     bool  print_fp_reg;
     bool  print_issue_tables;
     bool  print_retire_tables;
+    bool  print_rob;
 
     char*    instPrintBuffer;
     uint64_t nextInsID;

@@ -41,6 +41,8 @@ inst/vfence.h \
 inst/vfp2fp.h \
 inst/vfp2gpr.h \
 inst/vfpadd.h \
+inst/vfpmadd.h \
+inst/vfpmsub.h \
 inst/vfpconv.h \
 inst/vfpdiv.h \
 inst/vfpflagsread.h \
@@ -104,6 +106,7 @@ os/callev/voscallclose.h \
 os/callev/voscallexit.h \
 os/callev/voscallexitgrp.h \
 os/callev/voscallfstat.h \
+os/callev/voscallgettime.h \
 os/callev/voscallgettime64.h \
 os/callev/voscallioctl.h \
 os/callev/voscallmmap.h \
@@ -289,6 +292,42 @@ EXTRA_DIST = \
 	tests/small/misc/stream/mipsel/vanadis.stderr.gold \
 	tests/small/misc/stream/mipsel/vanadis.stdout.gold \
 	tests/small/misc/stream/riscv64/stream \
+	tests/small/misc/stream/riscv64/sst.stdout.gold \
+	tests/small/misc/stream/riscv64/vanadis.stderr.gold \
+	tests/small/misc/stream/riscv64/vanadis.stdout.gold \
+\
+	tests/small/misc/gettime/Makefile \
+	tests/small/misc/gettime/gettime.c \
+	tests/small/misc/gettime/mipsel/gettime \
+	tests/small/misc/gettime/mipsel/sst.stdout.gold \
+	tests/small/misc/gettime/mipsel/vanadis.stderr.gold \
+	tests/small/misc/gettime/mipsel/vanadis.stdout.gold \
+	tests/small/misc/gettime/riscv64/gettime \
+	tests/small/misc/gettime/riscv64/sst.stdout.gold \
+	tests/small/misc/gettime/riscv64/vanadis.stderr.gold \
+	tests/small/misc/gettime/riscv64/vanadis.stdout.gold \
+\
+	tests/small/misc/splitLoad/Makefile \
+	tests/small/misc/splitLoad/splitLoad.c \
+	tests/small/misc/splitLoad/mipsel/splitLoad \
+	tests/small/misc/splitLoad/mipsel/sst.stdout.gold \
+	tests/small/misc/splitLoad/mipsel/vanadis.stderr.gold \
+	tests/small/misc/splitLoad/mipsel/vanadis.stdout.gold \
+	tests/small/misc/splitLoad/riscv64/splitLoad \
+	tests/small/misc/splitLoad/riscv64/sst.stdout.gold \
+	tests/small/misc/splitLoad/riscv64/vanadis.stderr.gold \
+	tests/small/misc/splitLoad/riscv64/vanadis.stdout.gold \
+\
+	tests/small/misc/mt-dgemm/Makefile \
+	tests/small/misc/mt-dgemm/mt-dgemm.c \
+	tests/small/misc/mt-dgemm/mipsel/mt-dgemm \
+	tests/small/misc/mt-dgemm/mipsel/sst.stdout.gold \
+	tests/small/misc/mt-dgemm/mipsel/vanadis.stderr.gold \
+	tests/small/misc/mt-dgemm/mipsel/vanadis.stdout.gold \
+	tests/small/misc/mt-dgemm/riscv64/mt-dgemm \
+	tests/small/misc/mt-dgemm/riscv64/sst.stdout.gold \
+	tests/small/misc/mt-dgemm/riscv64/vanadis.stderr.gold \
+	tests/small/misc/mt-dgemm/riscv64/vanadis.stdout.gold \
 \
 	tests/basic_vanadis.py \
 	tests/testsuite_default_vanadis.py

@@ -717,6 +717,46 @@ public:
             sendMemRequest(new StandardMem::Read(access_ev->getPathPointer(), line_remain));
         } break;
 
+        case SYSCALL_OP_GETTIME: {
+            VanadisSyscallGetTimeEvent* gettime_ev = dynamic_cast<VanadisSyscallGetTimeEvent*>(sys_ev);
+            output->verbose(CALL_INFO, 16, 0, "[syscall-gettime] gettime64( %" PRId64 ", 0x%llx )\n",
+                            gettime_ev->getClockType(), gettime_ev->getTimeStructAddress());
+
+            // Need to do a handler state to force memory writes to complete before we
+            // return
+            handler_state = new VanadisNoActionHandlerState(output->getVerboseLevel(), 0);
+            handler_state->setHWThread( sys_ev->getThreadID() );
+
+            uint64_t sim_time_ns = getSimTimeNano();
+            uint64_t sim_seconds = (uint64_t)(sim_time_ns / 1000000000ULL);
+            uint64_t sim_ns = (uint64_t)(sim_time_ns % 1000000000ULL);
+
+            output->verbose(CALL_INFO, 16, 0,
+                            "[syscall-gettime] --> sim-time: %" PRIu64 " ns -> %" PRIu64 " secs + %" PRIu32 " us\n",
+                            sim_time_ns, sim_seconds, sim_ns);
+
+            std::vector<uint8_t> seconds_payload;
+            seconds_payload.resize(sizeof(sim_seconds), 0);
+
+            uint8_t* sec_ptr = (uint8_t*)&sim_seconds;
+            for (size_t i = 0; i < sizeof(sim_seconds); ++i) {
+                seconds_payload[i] = sec_ptr[i];
+            }
+
+            sendMemRequest(new StandardMem::Write(gettime_ev->getTimeStructAddress(), sizeof(sim_seconds), seconds_payload));
+
+            std::vector<uint8_t> ns_payload;
+            ns_payload.resize(sizeof(sim_ns), 0);
+
+            uint8_t* ns_ptr = (uint8_t*)&sim_ns;
+            for (size_t i = 0; i < sizeof(sim_ns); ++i) {
+                ns_payload[i] = ns_ptr[i];
+            }
+
+            sendMemRequest(new StandardMem::Write(gettime_ev->getTimeStructAddress() + sizeof(sim_seconds),
+                                                  sizeof(sim_ns), ns_payload));
+        } break;
+
         case SYSCALL_OP_GETTIME64: {
             VanadisSyscallGetTime64Event* gettime_ev = dynamic_cast<VanadisSyscallGetTime64Event*>(sys_ev);
             output->verbose(CALL_INFO, 16, 0, "[syscall-gettime64] gettime64( %" PRId64 ", 0x%llx )\n",

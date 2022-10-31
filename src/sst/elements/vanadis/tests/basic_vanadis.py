@@ -23,7 +23,10 @@ test = "hello-world"
 #test = "test-shfit"
 
 #group = "misc"
+#test = "mt-dgemm"
 #test = "stream"
+#test = "gettime"
+#test = "splitLoad"
 
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")

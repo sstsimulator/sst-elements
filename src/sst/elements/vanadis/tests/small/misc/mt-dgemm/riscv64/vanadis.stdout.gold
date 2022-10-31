@@ -1,0 +1,17 @@
+Matrix size defaulted to 64
+Alpha =    1.000000
+Beta  =    1.000000
+Iterations =    1
+Allocating Matrices...
+Allocation complete, populating with values...
+Performing multiplication...
+Calculating matrix check...
+
+===============================================================
+Final Sum is:         65.000000
+Memory for Matrices:  0.093750 MB
+Multiply time:        0.002123 seconds
+FLOPs computed:       532480.000000
+GFLOP/s rate:         0.250815 GF/s
+===============================================================
+

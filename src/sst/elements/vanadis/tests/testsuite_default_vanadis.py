@@ -3,10 +3,14 @@
 from sst_unittest import *
 from sst_unittest_support import *
 from sst_unittest_parameterized import parameterized
+import subprocess
 
 module_init = 0
 module_sema = threading.Semaphore()
 vanadis_test_matrix = []
+
+updateFiles = False
+#updateFiles = True
 
 ################################################################################
 # NOTES:
@@ -21,7 +25,6 @@ def build_vanadis_test_matrix():
     testlist = []
 
     arch_list = ["mipsel","riscv64"]
-    #arch_list = ["riscv64"]
 
     location="small/basic-io"
     io_tests = ["hello-world","printf-check","openat","unlink","unlinkat"]
@@ -44,15 +47,16 @@ def build_vanadis_test_matrix():
         for arch in arch_list:
             testlist.append(["basic_vanadis.py", location, test,arch, 120])
 
-    # only MIPS from here
-    arch_list = ["mipsel"]
 
     location="small/misc"
-    misc_tests = ["stream"]
+    misc_tests = ["stream","gettime","splitLoad","mt-dgemm"]
     #misc_tests =[]
     for test in misc_tests:
         for arch in arch_list:
             testlist.append(["basic_vanadis.py", location, test,arch, 120])
+
+    # only MIPS from here
+    arch_list = ["mipsel"]
 
     location="small/basic-io"
     io_tests = ["hello-world-cpp"]
@@ -182,13 +186,17 @@ class testcase_vanadis(SSTTestCase):
         self.assertTrue(os_outfileexists, "Vanadis test outfile-os not found in directory {0}".format(outdir))
         self.assertTrue(os_errfileexists, "Vanadis test errfile-os not found in directory {0}".format(outdir))
 
-        #print( "cp", sst_outfile, ref_sst_outfile )
         if ( os.path.exists( ref_sst_outfile ) ):
             cmp_result = testing_compare_filtered_diff(testname, sst_outfile, ref_sst_outfile ,filters=[StartsWithFilter(" v0.instructions_issued.1")])
             if (cmp_result == False):
                 diffdata = testing_get_diff_data(testname)
                 log_failure(oscmd)
                 log_failure(diffdata)
+
+                if updateFiles:
+                    print("Updating gold file ",sst_outfile, "->" ,ref_sst_outfile)
+                    subprocess.call( [ "cp", sst_outfile, ref_sst_outfile ] )
+
             self.assertTrue(cmp_result, "Vanadis output file {0} does not match reference output file {1}".format(sst_outfile, ref_sst_outfile))
         else:
             log_testing_note("vanadis test {0} SST gold file does not exist, did not compare".format(testDataFileName))
@@ -198,6 +206,11 @@ class testcase_vanadis(SSTTestCase):
             diffdata = testing_get_diff_data(testname)
             log_failure(oscmd)
             log_failure(diffdata)
+
+            if updateFiles:
+                print("Updating sst file ",os_outfile, "->" ,ref_os_outfile)
+                subprocess.call( [ "cp", os_outfile, ref_os_outfile ] )
+
         self.assertTrue(cmp_result, "Vanadis os output file {0} does not match reference output file {1}".format(os_outfile, ref_os_outfile))
 
         cmp_result = testing_compare_diff(testname, os_errfile, ref_os_errfile)
@@ -205,6 +218,11 @@ class testcase_vanadis(SSTTestCase):
             diffdata = testing_get_diff_data(testname)
             log_failure(oscmd)
             log_failure(diffdata)
+
+            if updateFiles:
+                print("Updating sst file ",os_outfile, "->" ,ref_os_outfile)
+                subprocess.call( [ "cp", os_outfile, ref_os_outfile ] )
+
         self.assertTrue(cmp_result, "Vanadis os error file {0} does not match reference error file {1}".format(os_outfile, ref_os_outfile))
 
         # DEVELOPER NOTE: In the future, we may want to compare the SST output (statisics) vs some reference file
