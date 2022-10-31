@@ -49,7 +49,7 @@ def build_vanadis_test_matrix():
 
 
     location="small/misc"
-    misc_tests = ["stream","gettime","splitLoad"]
+    misc_tests = ["stream","gettime","splitLoad","mt-dgemm"]
     #misc_tests =[]
     for test in misc_tests:
         for arch in arch_list:
