@@ -23,17 +23,24 @@
 
 #include <map>
 #include <tuple>
+#include <cmath>
 
 namespace SST {
 namespace Ember {
 
 struct PolyModel : public SST::Core::Serialization::serializable
 {
-    std::vector<double> coeff;
+    std::vector<double> coeff; // polynomial coefficients
+    double scale; // scale the result of eval
+    double min; // minimum value returned by the model
 
-    PolyModel() : coeff(0) {}
+    PolyModel() : coeff(0), scale(1), min(0) {}
 
-    PolyModel(std::vector<double> coeff) : coeff(coeff) {}
+    PolyModel(std::vector<double> coeff, double scale, double min)
+        : coeff(coeff)
+        , scale(scale)
+        , min(min)
+    {}
 
     // Evaluate the model at x
     // x should be between 0 and 1
@@ -45,7 +52,9 @@ struct PolyModel : public SST::Core::Serialization::serializable
             res += c * xt;
             xt  *= x;
         }
-        return res;
+        res *= scale;
+        res = std::nearbyint(res);
+        return res > min ? res : min;
     }
 
     bool operator==(const PolyModel& lhs) const
@@ -82,8 +91,8 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
         {   "arg.sz",           "Sets the graph size",              "14"},
         {   "arg.seed",         "Sets the RNG seed",                "1"},
-        {   "arg.comm_model",   "Communication volume model file",  "bfs-comm.model"},
-        {   "arg.comp_model",   "Computation timing model file",    "bfs-comp.model"},
+        {   "arg.msg_model",   "Communication volume model file",  "bfs-comm.model"},
+        {   "arg.exec_model",   "Computation timing model file",    "bfs-comp.model"},
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -120,6 +129,7 @@ private:
 
     int32_t m_sz; // graph size
     int32_t m_threads; // threads per rank
+    int32_t m_nodes;
     int32_t m_ranks_per_node;
 
     uint64_t s_time;
@@ -152,30 +162,20 @@ private:
     // start a new iteration
     void initIter();
 
-    // compute the send/receive data size pattern for site 29
-    int sendElem_29;
-    int recvElem_29;
-    int msgSize_29(double meanSize);
-    void computeSR_29(int &sendElem, int &recvElem);
-
     // compute the all-gather pattern for site 31
-    int sendCount_31;
+    //int sendCount_31;
     int *recvCounts_31;
-    int msgSize_31(double meanSize, double initRoll);
-    void computeAG_31();
+    //int msgSize_31(double meanSize, double initRoll);
+    //void computeAG_31();
 
     // compute the all-to-allV pattern for site 35
     int *sendCounts_35;
     int *recvCounts_35;
-    int msgSize_35(double meanSize, double initRoll);
-    void computeAA_35();
+    //int msgSize_35(double meanSize, double initRoll);
 
     // partner iterators for size 48/49;
     int s_partner_48;
     int r_partner_48;
-
-    // compute the send/receive data size pattern for site 49
-    void computeSR_49(int &msgElem);
 
     // add randomness from uniform dist
     double adjustUniformRand(double input, double range,
@@ -184,8 +184,8 @@ private:
         return input * (1.0-range+roll);
     }
 
-    std::map<std::tuple<int,int,int>,PolyModel> comm_model;
-    std::map<std::tuple<int,int,int,int>,PolyModel> comp_model;
+    std::map<std::tuple<int,int,int>,PolyModel> msg_model;
+    std::map<std::tuple<int,int,int,int>,PolyModel> exec_model;
 
     // Random number generator    
     SST::RNG::MersenneRNG* rng;
