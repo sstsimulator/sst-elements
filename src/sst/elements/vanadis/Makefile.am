@@ -317,6 +317,17 @@ EXTRA_DIST = \
 	tests/small/misc/splitLoad/riscv64/vanadis.stderr.gold \
 	tests/small/misc/splitLoad/riscv64/vanadis.stdout.gold \
 \
+	tests/small/misc/mt-dgemm/Makefile \
+	tests/small/misc/mt-dgemm/mt-dgemm.c \
+	tests/small/misc/mt-dgemm/mipsel/mt-dgemm \
+	tests/small/misc/mt-dgemm/mipsel/sst.stdout.gold \
+	tests/small/misc/mt-dgemm/mipsel/vanadis.stderr.gold \
+	tests/small/misc/mt-dgemm/mipsel/vanadis.stdout.gold \
+	tests/small/misc/mt-dgemm/riscv64/mt-dgemm \
+	tests/small/misc/mt-dgemm/riscv64/sst.stdout.gold \
+	tests/small/misc/mt-dgemm/riscv64/vanadis.stderr.gold \
+	tests/small/misc/mt-dgemm/riscv64/vanadis.stdout.gold \
+\
 	tests/basic_vanadis.py \
 	tests/testsuite_default_vanadis.py
 
