@@ -108,7 +108,7 @@ public:
             snprintf(
                 buffer, buffer_size,
                 "LOAD (%s, %" PRIu16 " bytes)  %5" PRIu16 " <- memory[ %5" PRIu16 " + %" PRId64
-                " (0x%llx) (phys: %5" PRIu16 " <- memory[%5" PRIu16 " + %" PRId64 " (0x%llx)])\n",
+                " (0x%llx) (phys: %5" PRIu16 " <- memory[%5" PRIu16 " + %" PRId64 " (0x%llx)])",
                 getTransactionTypeString(memAccessType), load_width, isa_int_regs_out[0], isa_int_regs_in[0], offset,
                 offset, phys_int_regs_out[0], phys_int_regs_in[0], offset, offset);
         } break;
@@ -117,7 +117,7 @@ public:
             snprintf(
                 buffer, buffer_size,
                 "LOADFP (%s, %" PRIu16 " bytes)  %5" PRIu16 " <- memory[ %5" PRIu16 " + %" PRId64
-                " (0x%llx) (phys: %5" PRIu16 " <- memory[%5" PRIu16 " + %" PRId64 " (0x%llx)])\n",
+                " (0x%llx) (phys: %5" PRIu16 " <- memory[%5" PRIu16 " + %" PRId64 " (0x%llx)])",
                 getTransactionTypeString(memAccessType), load_width, isa_fp_regs_out[0], isa_int_regs_in[0], offset,
                 offset, phys_fp_regs_out[0], phys_int_regs_in[0], offset, offset);
         } break;
