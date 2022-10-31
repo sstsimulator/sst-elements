@@ -1568,6 +1568,15 @@ protected:
                             ins_address, hw_thr, options, fpflags, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
+                    case 0x2:
+                    {
+                        // FEQ.D
+                        output->verbose(
+                            CALL_INFO, 16, 0, "-----> FEQ.D %" PRIu16 " <- %" PRIu16 " < %" PRIu16 "\n", rd, rs1, rs2);
+                        bundle->addInstruction(new VanadisFPSetRegCompareInstruction<REG_COMPARE_EQ, double>(
+                            ins_address, hw_thr, options, fpflags, rd, rs1, rs2));
+                        decode_fault = false;
+                    } break;
                     }
                 } break;
                 case 0x71:
@@ -1612,7 +1621,7 @@ protected:
                         output->verbose(
                             CALL_INFO, 16, 0, "-----> FMADD.D %" PRIu16 " <- %" PRIu16 " + %" PRIu16 "\n", rd, rs1, rs2);
                         bundle->addInstruction(
-                            new VanadisFPFusedMultiplyInstruction<double>(ins_address, hw_thr, options, fpflags, rd, rs1, rs2, rs3 ));
+                            new VanadisFPFusedMultiplyAddInstruction<double>(ins_address, hw_thr, options, fpflags, rd, rs1, rs2, rs3 ));
                         decode_fault = false;
                     } break;
                 }
@@ -1620,6 +1629,22 @@ protected:
             case 0x47:
             {
                 // FMSUB
+                uint32_t fmt;
+                processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
+                fmt = func_code7 & 0x3;
+                rs3 = func_code7 >> 2;
+
+                switch( fmt ) {
+                    case 1:
+                    {
+                        // FMSUB.D
+                        output->verbose(
+                            CALL_INFO, 16, 0, "-----> FMSUB.D %" PRIu16 " <- %" PRIu16 " + %" PRIu16 "\n", rd, rs1, rs2);
+                        bundle->addInstruction(
+                            new VanadisFPFusedMultiplySubInstruction<double>(ins_address, hw_thr, options, fpflags, rd, rs1, rs2, rs3 ));
+                        decode_fault = false;
+                    } break;
+                }
             } break;
             case 0x4B:
             {
