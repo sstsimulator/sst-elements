@@ -62,8 +62,8 @@ public:
 
     VanadisRISCV64Decoder(ComponentId_t id, Params& params) : VanadisDecoder(id, params)
     {
-        // we need TWO additional registers for AMO microcode operations, RISC-V has 32 + 2 for our micro-code.
-        options = new VanadisDecoderOptions(static_cast<uint16_t>(0), 34, 34, 2, VANADIS_REGISTER_MODE_FP64);
+        // we need TWO additional registers for AMO microcode operations, RISC-V has 32 + 2 int for our micro-code.
+        options = new VanadisDecoderOptions(static_cast<uint16_t>(0), 34, 32, 2, VANADIS_REGISTER_MODE_FP64);
         max_decodes_per_cycle = params.find<uint16_t>("decode_max_ins_per_cycle", 2);
 
         // See if we get an entry point the sub-component says we have to use
