@@ -23,6 +23,7 @@ test = "hello-world"
 #test = "test-shfit"
 
 #group = "misc"
+#test = "mt-dgemm"
 #test = "stream"
 #test = "gettime"
 #test = "splitLoad"
