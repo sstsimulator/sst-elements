@@ -1051,6 +1051,7 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
             int next_state = 56;
             auto exec_time = exec_model.at(std::make_tuple(state,next_state,m_nodes,m_threads)).eval(m_sz);
 
+            // MPI_comm_free
             enQ_compute(evQ, exec_time);
 
             state = next_state;
@@ -1061,6 +1062,7 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
             int next_state = 57;
             auto exec_time = exec_model.at(std::make_tuple(state,next_state,m_nodes,m_threads)).eval(m_sz);
 
+            // MPI_comm_free
             enQ_compute(evQ, exec_time);
 
             state = next_state;
@@ -1071,6 +1073,7 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
             int next_state = 58;
             auto exec_time = exec_model.at(std::make_tuple(state,next_state,m_nodes,m_threads)).eval(m_sz);
 
+            //MPI_comm_free
             enQ_compute(evQ, exec_time);
 
             state = next_state;
@@ -1081,6 +1084,7 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
             int next_state = 59;
             auto exec_time = exec_model.at(std::make_tuple(state,next_state,m_nodes,m_threads)).eval(m_sz);
 
+            //MPI_comm_free
             enQ_compute(evQ, exec_time);
 
             state = next_state;
@@ -1091,6 +1095,7 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
             int next_state = 60;
             auto exec_time = exec_model.at(std::make_tuple(state,next_state,m_nodes,m_threads)).eval(m_sz);
 
+            //MPI_comm_free
             enQ_compute(evQ, exec_time);
 
             state = next_state;
@@ -1101,6 +1106,7 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
             int next_state = 61;
             auto exec_time = exec_model.at(std::make_tuple(state,next_state,m_nodes,m_threads)).eval(m_sz);
 
+            //MPI_comm_free
             enQ_compute(evQ, exec_time);
 
             state = next_state;
@@ -1111,6 +1117,7 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
             int next_state = 62;
             auto exec_time = exec_model.at(std::make_tuple(state,next_state,m_nodes,m_threads)).eval(m_sz);
 
+            //MPI_comm_free
             enQ_compute(evQ, exec_time);
 
             state = next_state;
@@ -1121,6 +1128,7 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
             int next_state = 1;
             auto exec_time = exec_model.at(std::make_tuple(state,next_state,m_nodes,m_threads)).eval(m_sz);
 
+            //MPI_comm_free
             enQ_compute(evQ, exec_time);
 
             // done?
