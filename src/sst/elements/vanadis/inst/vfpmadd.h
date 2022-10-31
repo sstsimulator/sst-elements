@@ -98,11 +98,7 @@ public:
             const fp_format src_3  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[4], phys_fp_regs_in[5]);
             const fp_format result = std::fma( (fp_format) src_1, (fp_format) src_2, (fp_format) src_3 ); 
 
-            if ( std::fetestexcept(FE_INVALID) ) {
-                fpflags.setInvalidOp();
-                update_fp_flags = true;
-            }
-
+            performMaddFlagChecks<fp_format>(src_1,src_2,src_3);
             performFlagChecks<fp_format>(result);
 
             if ( output->getVerboseLevel() >= 16 ) {
@@ -118,11 +114,7 @@ public:
             const fp_format src_3  = regFile->getFPReg<fp_format>(phys_fp_regs_in[2]);
             const fp_format result = std::fma( (fp_format) src_1, (fp_format) src_2, (fp_format) src_3 ); 
 
-            if ( std::fetestexcept(FE_INVALID) ) {
-                fpflags.setInvalidOp();
-                update_fp_flags = true;
-            }
-
+            performMaddFlagChecks<fp_format>(src_1,src_2,src_3);
             performFlagChecks<fp_format>(result);
 
             if ( output->getVerboseLevel() >= 16 ) {
@@ -134,6 +126,18 @@ public:
 
         markExecuted();
     }
+    template <typename T>
+    void performMaddFlagChecks(const T src_1, const T src_2, const T src_3)
+    {
+        if ( std::fpclassify(src_1) == FP_ZERO || std::fpclassify(src_2) == FP_ZERO ||
+            std::fpclassify(src_1) == FP_INFINITE || std::fpclassify(src_2) == FP_INFINITE ||
+            std::fpclassify(src_1) == FP_NAN || std::fpclassify(src_2) == FP_NAN ||
+            src_3 == FP_NAN || src_3 == FP_INFINITE ) {
+            fpflags.setInvalidOp();
+            update_fp_flags = true;
+        }
+    }
+
 };
 
 } // namespace Vanadis
