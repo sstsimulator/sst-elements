@@ -160,14 +160,6 @@ EmberBFSGenerator::EmberBFSGenerator(SST::ComponentId_t id,
 
     // init RNGs
     rng = new SST::RNG::MersenneRNG(rng_seed);
-    rng_rank = new SST::RNG::MersenneRNG(rng_seed+rank());
-    rng_opposite
-        = new SST::RNG::MersenneRNG(rng_seed
-                                    + ((opposite<rank()) ? opposite : rank()));
-    rng_comm0
-        = new SST::RNG::MersenneRNG(rng_seed + myRow);
-    rng_comm2
-        = new SST::RNG::MersenneRNG(rng_seed + myCol);
 
 
     // setup empty buffers
@@ -185,10 +177,6 @@ EmberBFSGenerator::~EmberBFSGenerator() {
         delete recvCounts_35;
     }
     delete rng;
-    delete rng_rank;
-    delete rng_opposite;
-    delete rng_comm0;
-    delete rng_comm2;
     delete nullDispMap;
 }
 

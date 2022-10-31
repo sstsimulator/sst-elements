@@ -124,7 +124,7 @@ public:
     ~EmberBFSGenerator();
     bool generate( std::queue<EmberEvent*>& evQ);
 
-private:    
+private:
     Output out;
 
     int32_t m_sz; // graph size
@@ -133,7 +133,7 @@ private:
     int32_t m_ranks_per_node;
 
     uint64_t s_time;
-    
+
     uint64_t state; uint64_t prevState;  // for debugging
     uint64_t iter;
     uint64_t maxIter;
@@ -152,51 +152,32 @@ private:
     std::vector<int>    comm1_ranks;
     std::vector<int>    comm2_ranks;
     uint32_t comm0_rank; // rank within comm0
-    uint32_t comm2_rank; // rank within comm2    
+    uint32_t comm2_rank; // rank within comm2
 
     // since we are not sending data, we use null buffers /
     // displacement maps
     void* nullBuf;
     int* nullDispMap;
-    
+
     // start a new iteration
     void initIter();
 
-    // compute the all-gather pattern for site 31
-    //int sendCount_31;
+    // all-gather message sizes for site 31
     int *recvCounts_31;
-    //int msgSize_31(double meanSize, double initRoll);
-    //void computeAG_31();
 
-    // compute the all-to-allV pattern for site 35
+    // all-to-allV message sizessite 35
     int *sendCounts_35;
     int *recvCounts_35;
-    //int msgSize_35(double meanSize, double initRoll);
 
     // partner iterators for size 48/49;
     int s_partner_48;
     int r_partner_48;
 
-    // add randomness from uniform dist
-    double adjustUniformRand(double input, double range,
-                             SST::RNG::MersenneRNG *_rng) {
-        double roll = _rng->nextUniform() * range * 2.0;
-        return input * (1.0-range+roll);
-    }
-
     std::map<std::tuple<int,int,int>,PolyModel> msg_model;
     std::map<std::tuple<int,int,int,int>,PolyModel> exec_model;
 
-    // Random number generator    
+    // Random number generator
     SST::RNG::MersenneRNG* rng;
-    // 'per rank' rng generator
-    SST::RNG::MersenneRNG* rng_rank;
-    // 'per opposite pair' rng generator
-    SST::RNG::MersenneRNG* rng_opposite;   
-    // 'per comm0'
-    SST::RNG::MersenneRNG* rng_comm0;
-    // 'per comm2'
-    SST::RNG::MersenneRNG* rng_comm2;
 };
 
 }
