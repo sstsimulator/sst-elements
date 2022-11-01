@@ -1178,8 +1178,8 @@ protected:
                 {
                     if(LIKELY(op_width != 0)) {
                         // AMO.SWAP
-                        output->verbose(CALL_INFO, 16, 0, "-----> AMOSWAP %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16 " / width: " PRIu32 " / aq: %s / rl: %s\n",
-                            rd, rs1, rs2, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
+                        output->verbose(CALL_INFO, 16, 0, "-----> AMOSWAP 0x%llx / thr: %" PRIu32 " / %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16 " / width: %" PRIu32 " / aq: %s / rl: %s\n",
+                            ins_address, hw_thr, rd, rs1, rs2, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
 
                         if(LIKELY(perform_aq)) {
                             bundle->addInstruction(new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
@@ -1221,8 +1221,8 @@ protected:
                         // LR.?.AQ.RL
                         if(LIKELY(op_width != 0)) {
                             output->verbose(
-                                CALL_INFO, 16, 0, "-----> LR (LLSC_LOAD) %" PRIu16 " <- memory[r%" PRIu16 "] / width: %" PRIu32 " / aq: %s / rl: %s\n",
-                                rd, rs1, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
+                                CALL_INFO, 16, 0, "-----> LR 0x%llx / thr: %" PRIu32 " / (LLSC_LOAD) %" PRIu16 " <- memory[ %" PRIu16 " ] / width: %" PRIu32 " / aq: %s / rl: %s\n",
+                                    ins_address, hw_thr, rd, rs1, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
 
                             if(LIKELY(perform_aq)) {
                                 bundle->addInstruction(new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
@@ -1248,8 +1248,8 @@ protected:
                     if(LIKELY(op_width != 0)) {
                         output->verbose(
                             CALL_INFO, 16, 0,
-                            "-----> SC (LLSC_STORE) %" PRIu16 " -> memory[r%" PRIu16 "] / result: %" PRIu16 " / width: %" PRIu32 " / aq: %s / rl: %s \n",
-                            rs2, rs1, rd, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
+                            "-----> SC 0x%llx / thr: %" PRIu32 " / (LLSC_STORE) %" PRIu16 " -> memory[ %" PRIu16 " ] / result: %" PRIu16 " / width: %" PRIu32 " / aq: %s / rl: %s\n",
+                            ins_address, hw_thr, rs2, rs1, rd, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
 
                         if(LIKELY(perform_aq)) {
                             bundle->addInstruction(new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
