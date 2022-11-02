@@ -63,7 +63,7 @@ public:
         snprintf(
             buffer, buffer_size,
             "BCMP (%s) isa-in: %" PRIu16 ", %" PRIu16 " / phys-in: %" PRIu16 ", %" PRIu16 " offset: %" PRId64
-            " = 0x%llx\n",
+            " = 0x%llx",
             convertCompareTypeToString(compare_type), isa_int_regs_in[0], isa_int_regs_in[1], phys_int_regs_in[0],
             phys_int_regs_in[1], offset, getInstructionAddress() + offset);
     }
