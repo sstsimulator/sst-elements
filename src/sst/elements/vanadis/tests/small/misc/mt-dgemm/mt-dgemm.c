@@ -46,8 +46,10 @@ int main(int argc, char* argv[]) {
 	// DO NOT CHANGE CODE BELOW
 	// ------------------------------------------------------- //
 
-	//int N = 256;
-	//int repeats = 8;
+#if 0
+	int N = 256;
+	int repeats = 8;
+#endif
 	int N = SIZE;
 	int repeats = REPEATS;
 
@@ -95,15 +97,9 @@ int main(int argc, char* argv[]) {
 
 	printf("Allocating Matrices...\n");
 
-#if 0
 	double* DGEMM_RESTRICT matrixA = (double*) malloc(sizeof(double) * N * N);
 	double* DGEMM_RESTRICT matrixB = (double*) malloc(sizeof(double) * N * N);
 	double* DGEMM_RESTRICT matrixC = (double*) malloc(sizeof(double) * N * N);
-#endif
-	double DGEMM_RESTRICT matrixA[sizeof(double) * N * N];
-	double DGEMM_RESTRICT matrixB[sizeof(double) * N * N];
-	double DGEMM_RESTRICT matrixC[sizeof(double) * N * N];
-
 
 	printf("Allocation complete, populating with values...\n");
 
@@ -204,11 +200,9 @@ int main(int argc, char* argv[]) {
 	printf("===============================================================\n");
 	printf("\n");
 
-#if 0
 	free(matrixA);
 	free(matrixB);
 	free(matrixC);
-#endif
 
 	return 0;
 }
