@@ -19,5 +19,6 @@
 #define VANADIS_DBG_INS_LDR_FLG  (1<<0)
 #define VANADIS_DBG_DECODER_FLG  (1<<1)
 #define VANADIS_DBG_ISSUE_FLG  (1<<2)
+#define VANADIS_DBG_CYCLE_FLG  (1<<3)
 
 #endif
