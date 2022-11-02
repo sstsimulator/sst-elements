@@ -27,7 +27,7 @@ def build_vanadis_test_matrix():
     arch_list = ["mipsel","riscv64"]
 
     location="small/basic-io"
-    io_tests = ["hello-world","printf-check","openat","unlink","unlinkat"]
+    io_tests = ["hello-world","hello-world-cpp","printf-check","openat","unlink","unlinkat"]
     #io_tests = []
     for test in io_tests:
         for arch in arch_list:
@@ -52,16 +52,6 @@ def build_vanadis_test_matrix():
     misc_tests = ["stream","gettime","splitLoad","mt-dgemm"]
     #misc_tests =[]
     for test in misc_tests:
-        for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 120])
-
-    # only MIPS from here
-    arch_list = ["mipsel"]
-
-    location="small/basic-io"
-    io_tests = ["hello-world-cpp"]
-    #io_tests = []
-    for test in io_tests:
         for arch in arch_list:
             testlist.append(["basic_vanadis.py", location, test,arch, 120])
 
