@@ -111,6 +111,7 @@ os/callev/voscallgettime.h \
 os/callev/voscallgettime64.h \
 os/callev/voscallioctl.h \
 os/callev/voscallmmap.h \
+os/callev/voscallmmap2.h \
 os/callev/voscallmmapx.h \
 os/callev/voscallopen.h \
 os/callev/voscallopenat.h \
