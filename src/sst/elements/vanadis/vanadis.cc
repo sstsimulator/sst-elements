@@ -615,21 +615,23 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
                             const int status = assignRegistersToInstruction(
                                 thread_decoders[i]->countISAIntReg(), thread_decoders[i]->countISAFPReg(), ins,
                                 int_register_stacks[i], fp_register_stacks[i], issue_isa_tables[i]);
+
+                            if ( ins->getInstructionAddress() == start_verbose_when_issue_address ) {
+                                output->setVerboseLevel(8);
+                                output->setVerboseMask(VANADIS_DBG_ISSUE_FLG);
+                            }
+
 #ifdef VANADIS_BUILD_DEBUG
                             if ( output_verbosity >= 8 ) {
                                 ins->printToBuffer(instPrintBuffer, 1024);
                                 output->verbose(
-                                    CALL_INFO, 8, 0, "----> Issued for: %s / 0x%llx / status: %d\n",
+                                    CALL_INFO, 8, VANADIS_DBG_ISSUE_FLG, "----> Issued for: %s / 0x%llx / status: %d\n",
                                     instPrintBuffer, ins->getInstructionAddress(), status);
                                 if ( print_rob ) {
                                     printRob(rob[i]);
                                 }
                             }
 #endif
-                            if ( ins->getInstructionAddress() == start_verbose_when_issue_address ) {
-                                output->setVerboseLevel(8);
-                            }
-
                             ins->markIssued();
                             ins_issued_this_cycle++;
                             issued_an_ins = true;
@@ -809,7 +811,7 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
         if ( rob_front->isSpeculated() ) {
 #ifdef VANADIS_BUILD_DEBUG
             if(output->getVerboseLevel() >= 8) {
-                output->verbose(CALL_INFO, 8, 0, "--> instruction is speculated\n");
+                output->verbose(CALL_INFO, 9, 0, "--> instruction is speculated\n");
             }
 #endif
             VanadisSpeculatedInstruction* spec_ins = dynamic_cast<VanadisSpeculatedInstruction*>(rob_front);
@@ -881,7 +883,7 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                     spec_ins->getSpeculatedAddress(), pipeline_reset_addr, perform_pipeline_clear ? "yes" : "no");
 
                 output->verbose(
-                    CALL_INFO, 8, 0,
+                    CALL_INFO, 9, 0,
                     "----> Updating branch predictor with new information "
                     "(new addr: 0x%llx)\n",
                     pipeline_reset_addr);
@@ -1224,7 +1226,7 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
 
 #ifdef VANADIS_BUILD_DEBUG
     output->verbose(
-        CALL_INFO, 2, 0, "============================ Cycle %12" PRIu64 " ============================\n",
+        CALL_INFO, 2, VANADIS_DBG_CYCLE_FLG, "============================ Cycle %12" PRIu64 " ============================\n",
         current_cycle);
     output->verbose(CALL_INFO, 9, 0, "-- Core Status:\n");
 
@@ -1354,7 +1356,7 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
 
 #ifdef VANADIS_BUILD_DEBUG
     output->verbose(
-        CALL_INFO, 2, 0,
+        CALL_INFO, 2, VANADIS_DBG_CYCLE_FLG,
         "================================ End of Cycle "
         "==============================\n");
 #endif

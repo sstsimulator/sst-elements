@@ -832,6 +832,30 @@ public:
 
             output->verbose(CALL_INFO, 16, 0, "[syscall-mmap] --> \n");
 
+            uint64_t address = mmap_ev->getAllocationAddress();
+            uint64_t length = mmap_ev->getAllocationLength();
+            int64_t protect = mmap_ev->getProtectionFlags();
+            int64_t flags = mmap_ev->getAllocationFlags();
+            int fd = mmap_ev->getFd();
+            uint64_t offset = mmap_ev->getOffset();
+
+            std::function<void(StandardMem::Request*)> send_req_func
+                = std::bind(&VanadisNodeOSCoreHandler::sendMemRequest, this, std::placeholders::_1);
+            std::function<void(const uint64_t, std::vector<uint8_t>&)> send_block_func = std::bind(
+                &VanadisNodeOSCoreHandler::sendBlockToMemory, this, std::placeholders::_1, std::placeholders::_2);
+
+            handler_state = new VanadisMemoryMapHandlerState(output->getVerboseLevel(), address, length,
+                                                             protect, flags, offset,
+                                                             send_req_func, send_block_func, memory_mgr);
+            handler_state->setHWThread( sys_ev->getThreadID() );
+        } break;
+
+        case SYSCALL_OP_MMAP2: {
+            VanadisSyscallMemoryMap2Event* mmap_ev = dynamic_cast<VanadisSyscallMemoryMap2Event*>(sys_ev);
+            assert(mmap_ev != NULL);
+
+            output->verbose(CALL_INFO, 16, 0, "[syscall-mmap] --> \n");
+
             uint64_t map_address = mmap_ev->getAllocationAddress();
             uint64_t map_length = mmap_ev->getAllocationLength();
             int64_t map_protect = mmap_ev->getProtectionFlags();

@@ -47,7 +47,7 @@ public:
     virtual void printToBuffer(char* buffer, size_t buffer_size)
     {
         snprintf(
-            buffer, buffer_size, "JLR     link-reg: %" PRIu16 " addr-reg: %" PRIu16 " + %" PRIu64 "\n",
+            buffer, buffer_size, "JLR     link-reg: %" PRIu16 " addr-reg: %" PRIu16 " + %" PRIu64 "",
             isa_int_regs_out[0], isa_int_regs_in[0], imm);
     }
 
