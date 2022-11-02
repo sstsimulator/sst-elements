@@ -5,6 +5,9 @@
 AM_CPPFLAGS += \
 	$(MPI_CPPFLAGS)
 
+# unpleasant hack to make vintage automake (e.g. 1.13.4) work
+AM_LIBTOOLFLAGS = --tag=CXX
+
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libhg.la libsystemapi.la
 libhg_la_SOURCES = \
