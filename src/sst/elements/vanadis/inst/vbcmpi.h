@@ -34,7 +34,6 @@ public:
         imm_value(imm),
         offset(offst)
     {
-
         isa_int_regs_in[0] = src_1;
     }
 

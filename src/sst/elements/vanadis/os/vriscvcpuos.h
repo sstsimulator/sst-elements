@@ -420,7 +420,7 @@ public:
                             ", %" PRId32 ", %" PRId64 " )\n",
                             map_addr, map_len, map_prot, map_flags, map_fd, map_offset);
 
-            output->fatal(CALL_INFO, -1, "STOP\n");
+            output->fatal(CALL_INFO, -1, "STOP - mmap not supported.\n");
 
             if ((0 == map_addr) && (0 == map_len)) {
                 recvSyscallResp(new VanadisSyscallResponse(-22));

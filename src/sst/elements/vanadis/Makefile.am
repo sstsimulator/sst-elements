@@ -30,6 +30,7 @@ inst/vbcmp.h \
 inst/vbcmpi.h \
 inst/vbcmpil.h \
 inst/vbfp.h \
+inst/vcimov.h \
 inst/vcmptype.h \
 inst/vdecodealignfault.h \
 inst/vdecodefaultinst.h \
