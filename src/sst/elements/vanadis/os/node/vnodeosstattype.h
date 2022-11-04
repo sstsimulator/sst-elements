@@ -28,6 +28,10 @@ struct vanadis_timespec32 {
     int32_t tv_sec;
     int32_t tv_nsec;
 };
+struct vanadis_timespec64 {
+    int64_t tv_sec;
+    int64_t tv_nsec;
+};
 
 /*
 struct stat {
@@ -71,10 +75,52 @@ struct vanadis_stat32 {
     vanadis_timespec32 st_ctim;
 };
 
-struct vanadis_stat64 {};
 
+
+/* riscv64
+struct stat {
+    dev_t st_dev;
+    ino_t st_ino;
+    mode_t st_mode;
+    nlink_t st_nlink;
+    uid_t st_uid;
+    gid_t st_gid;
+    dev_t st_rdev;
+    unsigned long __pad;
+    off_t st_size;
+    blksize_t st_blksize;
+    int __pad2;
+    blkcnt_t st_blocks;
+    struct timespec st_atim;
+    struct timespec st_mtim;
+    struct timespec st_ctim;
+    unsigned __unused[2];
+};
+*/
+
+struct vanadis_stat64 {
+    uint64_t st_dev;
+    int64_t st_ino;
+    uint32_t st_mode;
+    uint32_t st_nlink;
+    uint32_t  st_uid;
+    uint32_t st_gid;
+    uint64_t st_rdev;
+    unsigned long __pad;
+    uint64_t st_size;
+    uint32_t st_blksize;
+    int __pad2;
+    uint64_t st_blocks;
+    vanadis_timespec64 st_atim;
+    vanadis_timespec64 st_mtim;
+    vanadis_timespec64 st_ctim;
+    unsigned __unused[2];
+};
+
+template <typename T>
 void
-vanadis_copy_native_stat(const struct stat* native_stat, struct vanadis_stat32* v_stat) {
+vanadis_copy_native_stat(const struct stat* native_stat, T* v_stat) {
+    bzero( v_stat, sizeof( T ) );
     v_stat->st_dev = native_stat->st_dev;
     v_stat->st_ino = native_stat->st_ino;
     v_stat->st_mode = (uint32_t)native_stat->st_mode;
