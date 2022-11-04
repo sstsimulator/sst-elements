@@ -111,10 +111,13 @@ struct vanadis_stat64 {
     uint32_t st_blksize;
     int __pad2;
     uint64_t st_blocks;
-    vanadis_timespec64 st_atim;
-    vanadis_timespec64 st_mtim;
-    vanadis_timespec64 st_ctim;
-    unsigned int __unused[2];
+    struct vanadis_timespec64 st_atim;
+    struct vanadis_timespec64 st_mtim;
+    struct vanadis_timespec64 st_ctim;
+    // why doesn't OSX like this line?
+    //unsigned int __unused[2];
+    unsigned int __unused1;
+    unsigned int __unused2;
 };
 
 template <typename T>
