@@ -114,7 +114,7 @@ struct vanadis_stat64 {
     vanadis_timespec64 st_atim;
     vanadis_timespec64 st_mtim;
     vanadis_timespec64 st_ctim;
-    unsigned __unused[2];
+    unsigned int __unused[2];
 };
 
 template <typename T>
