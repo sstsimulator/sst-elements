@@ -61,7 +61,7 @@ public:
         if (lookup_result == ev_core_map.end()) {
             output->fatal(CALL_INFO, -1, "Error - received a call which does not have a mapping to a core.\n");
         } else {
-            output->verbose(CALL_INFO, 8, 0, "redirecting to core %" PRIu32 "...\n", lookup_result->second);
+            output->verbose(CALL_INFO, 16, 0, "redirecting to core %" PRIu32 "...\n", lookup_result->second);
             core_handlers[lookup_result->second]->handleIncomingMemory(ev);
             ev_core_map.erase(lookup_result);
         }

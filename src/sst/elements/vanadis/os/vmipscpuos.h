@@ -515,7 +515,7 @@ public:
         }
 
         if (nullptr != call_ev) {
-            output->verbose(CALL_INFO, 8, 0, "Sending event to operating system...\n");
+            output->verbose(CALL_INFO, 16, 0, "Sending event to operating system...\n");
             sendSyscallEvent(call_ev);
             return false;
         } else {
