@@ -80,9 +80,9 @@
 #define VANADIS_SYSCALL_RISCV_SET_RLIST 99
 #define VANADIS_SYSCALL_RISCV_GET_RLIST 100
 #define VANADIS_SYSCALL_RISCV_GETTIME 113 
+#define VANADIS_SYSCALL_RISCV_FSTAT 80 
 
 //These are undefined in RV64
-#define VANADIS_SYSCALL_RISCV_FSTAT 4215
 #define VANADIS_SYSCALL_RISCV_READLINK 4085
 #define VANADIS_SYSCALL_RISCV_ACCESS 4033
 
@@ -212,14 +212,10 @@ public:
         } break;
 
         case VANADIS_SYSCALL_RISCV_FSTAT: {
-    assert(0);
-            const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
-            int32_t file_handle = regFile->getIntReg<int32_t>(phys_reg_4);
+            int32_t file_handle = getRegister<int32_t>( 10 );
+            uint64_t fstat_addr = getRegister<uint64_t>( 11 );
 
-            const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
-            uint64_t fstat_addr = regFile->getIntReg<uint64_t>(phys_reg_5);
-
-            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to fstat( %" PRId32 ", %" PRIu64 " )\n",
+            output->verbose(CALL_INFO, 16, 0, "[syscall-handler] found a call to fstat( %" PRId32 ", %#" PRIx64 " )\n",
                             file_handle, fstat_addr);
 
             call_ev = new VanadisSyscallFstatEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, file_handle, fstat_addr);
@@ -307,7 +303,6 @@ public:
         } break;
 
         case VANADIS_SYSCALL_RISCV_MADVISE: {
-    assert(0);
             const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
             uint64_t advise_addr = regFile->getIntReg<int64_t>(phys_reg_4);
 
@@ -455,7 +450,7 @@ public:
         }
 
         if (nullptr != call_ev) {
-            output->verbose(CALL_INFO, 8, 0, "Sending event to operating system...\n");
+            output->verbose(CALL_INFO, 16, 0, "Sending event to operating system...\n");
             sendSyscallEvent(call_ev);
             return false;
         } else {
