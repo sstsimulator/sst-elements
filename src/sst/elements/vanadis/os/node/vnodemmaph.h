@@ -69,12 +69,12 @@ public:
     virtual void handleIncomingRequest(StandardMem::Request* req) {
         if( req ) {
             req->handle(std_mem_handlers);
-        }
 
-        output->verbose(CALL_INFO, 16, 0,
+            output->verbose(CALL_INFO, 16, 0,
                         "[syscall-mmap] processing incoming request (addr: 0x%llx, "
                         "size: %" PRIu64 ")\n",
                         resp_addr, (uint64_t)resp_size);
+        }
 
         switch (state) {
         case 0: {
@@ -96,11 +96,13 @@ public:
 
             output->verbose(CALL_INFO, 16, 0, "[syscall-mmap] -> set file offset to %" PRIu64 "\n", 
                             file_offset);
+#if 0 // comment this out becauseit causes a valgrind error, this code will go away when with virtual memory
             output->verbose(CALL_INFO, 16, 0,
                             "[syscall-mmap] -> mmap( 0x%llx, %" PRIu64 ", %" PRId64 ", %" PRId64 ", %" PRId64
                             ", %" PRIu64 " ) file-offset-units: %" PRIu64 "\n",
                             map_address, map_length, map_protect, map_flags, file_descriptor, file_offset,
                             offset_units);
+#endif
 
             uint64_t allocation_start = 0;
 
