@@ -15,7 +15,7 @@ l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to
  v0:decoder0.uop_delayed_rob_full.1 : Accumulator : Sum.u64 = 6906213; SumSQ.u64 = 6906213; Count.u64 = 6906213; Min.u64 = 1; Max.u64 = 1; 
  v0:lsq.loads_issued.1 : Accumulator : Sum.u64 = 85956; SumSQ.u64 = 85956; Count.u64 = 85956; Min.u64 = 1; Max.u64 = 1; 
  v0:lsq.stores_issued.1 : Accumulator : Sum.u64 = 55928; SumSQ.u64 = 55928; Count.u64 = 55928; Min.u64 = 1; Max.u64 = 1; 
- v0:lsq.bytes_read.1 : Accumulator : Sum.u64 = 641177; SumSQ.u64 = 5061753; Count.u64 = 84902; Min.u64 = 1; Max.u64 = 8; 
+ v0:lsq.bytes_read.1 : Accumulator : Sum.u64 = 641178; SumSQ.u64 = 5061754; Count.u64 = 84903; Min.u64 = 1; Max.u64 = 8; 
  v0:lsq.bytes_stored.1 : Accumulator : Sum.u64 = 430756; SumSQ.u64 = 3422816; Count.u64 = 55232; Min.u64 = 1; Max.u64 = 8; 
  v0:lsq.fences_issued.1 : Accumulator : Sum.u64 = 405; SumSQ.u64 = 405; Count.u64 = 405; Min.u64 = 1; Max.u64 = 1; 
  v0:lsq.loads_executed.1 : Accumulator : Sum.u64 = 80543; SumSQ.u64 = 80543; Count.u64 = 80543; Min.u64 = 1; Max.u64 = 1; 
