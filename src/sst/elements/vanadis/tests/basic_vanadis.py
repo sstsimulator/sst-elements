@@ -42,7 +42,7 @@ verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
 os_verbosity = os.getenv("VANADIS_OS_VERBOSE", verbosity)
 pipe_trace_file = os.getenv("VANADIS_PIPE_TRACE", "")
 lsq_entries = os.getenv("VANADIS_LSQ_ENTRIES", 32)
-lsq_mask = 0xFFFFFFFFFFFFFFFF
+lsq_mask = 0xFFFFFFFF
 
 
 rob_slots = os.getenv("VANADIS_ROB_SLOTS", 64)
