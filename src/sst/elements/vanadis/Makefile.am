@@ -51,6 +51,8 @@ inst/vfpflagsset.h \
 inst/vfpflagssetimm.h \
 inst/vfpinst.h \
 inst/vfpmul.h \
+inst/vfpmin.h \
+inst/vfpsqrt.h \
 inst/vfpscmp.h \
 inst/vfpsignlogic.h \
 inst/vfpsub.h \
@@ -70,6 +72,7 @@ inst/vmovci.h \
 inst/vmul.h \
 inst/vmuli.h \
 inst/vmulsplit.h \
+inst/vmulhigh.h \
 inst/vnop.h \
 inst/vnor.h \
 inst/vor.h \
@@ -335,7 +338,12 @@ EXTRA_DIST = \
 	tests/small/misc/mt-dgemm/riscv64/vanadis.stderr.gold \
 	tests/small/misc/mt-dgemm/riscv64/vanadis.stdout.gold \
 \
+	tests/small/misc/hpcg/hpcg.dat \
+	tests/small/misc/hpcg/mipsel/hpcg \
+	tests/small/misc/hpcg/riscv64/hpcg \
+\
 	tests/basic_vanadis.py \
+	tests/no_rtr_vanadis.py \
 	tests/testsuite_default_vanadis.py
 
 libvanadis_la_SOURCES = \
