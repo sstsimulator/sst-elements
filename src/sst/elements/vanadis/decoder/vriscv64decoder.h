@@ -610,6 +610,18 @@ protected:
                 case 2:
                 {
                     switch ( func_code7 ) {
+                    case 0:
+                    {
+                        output->verbose(
+                            CALL_INFO, 16, 0, "-------> SLT %" PRIu16 " <-  %" PRIu16 " < %" PRIu16 "\n", rd, rs1,
+                            rs2);
+                        // SLT
+                        bundle->addInstruction(
+                            new VanadisSetRegCompareInstruction<
+                                VanadisRegisterCompareType::REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT64,
+                                true>(ins_address, hw_thr, options, rd, rs1, rs2));
+                        decode_fault = false;
+                    } break;
                     case 1:
                     {
                         // MULHSU
@@ -634,8 +646,15 @@ protected:
                     } break;
                     case 0x1:
                     {
-                        // MULHSU
-                        // NOT SURE WHAT THIS IS?
+                        // MULHU mul und place in upper XLEN bits, unsigned 
+                        // need to check the register order
+                        output->verbose(
+                            CALL_INFO, 16, 0, "-------> MULHU %" PRIu16 " <- %" PRIu16 " + %" PRIu16 "\n", rd, rs1, rs2);
+
+                        bundle->addInstruction(
+                            new VanadisMultiplyHighInstruction<uint64_t,uint64_t,uint64_t,__uint128_t,false,false>(
+                                ins_address, hw_thr, options, rd, rs1, rs2));
+                        decode_fault = false;
                     } break;
                     };
                 } break;
@@ -701,7 +720,6 @@ protected:
                 } break;
                 case 6:
                 {
-                    // TODO - REM INSTRUCTION
                     switch ( func_code7 ) {
                     case 0x0:
                     {
@@ -710,6 +728,16 @@ protected:
                             CALL_INFO, 16, 0, "-----> OR %" PRIu16 " <- %" PRIu16 " | %" PRIu16 "\n", rd, rs1, rs2);
 
                         bundle->addInstruction(new VanadisOrInstruction(ins_address, hw_thr, options, rd, rs1, rs2));
+                        decode_fault = false;
+                    } break;
+                    case 0x1:
+                    {
+                        // REM
+                        output->verbose(
+                            CALL_INFO, 16, 0, "-----> REM %" PRIu16 " <- %" PRIu16 " %% %" PRIu16 "\n", rd, rs1, rs2);
+                        bundle->addInstruction(
+                            new VanadisModuloInstruction<int64_t>(
+                                ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
                     }
@@ -958,6 +986,24 @@ protected:
                     case 0x1:
                     {
                         // CSRRW
+                        output->verbose(
+                            CALL_INFO, 16, 0, "-----> CSRRW CSR: ins: 0x%llx / %" PRIu64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", ins_address, uimm64, rd, rs1);
+
+                        // Switch based on the CSR being read
+                        switch ( uimm64 ) {
+                        case 0x1:
+                        {
+                            // Pseudoinstructions FSFLAGS; csrrw x0, fflags rs  
+                            output->verbose( CALL_INFO, 16, 0, "-----> FSFLAGS: %" PRIu64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", uimm64, rd, rs1);
+
+                            // CSSRW x0, clear the flags
+							bundle->addInstruction(new VanadisFPFlagsSetInstruction(ins_address, hw_thr, options, fpflags, rd));
+                            // FFLAGS rs, write the flags 
+							bundle->addInstruction(new VanadisFPFlagsSetInstruction(ins_address, hw_thr, options, fpflags, rs1));
+                            decode_fault = false;
+                        } break;
+                        default: assert(0);
+                        }
                     } break;
                     case 0x2:
                     {
@@ -970,16 +1016,15 @@ protected:
                         switch ( uimm64 ) {
                         case 0x1:
                         {
-                            // FFLAGs register is being read
-                            output->verbose(
-                                CALL_INFO, 16, 0,
-                                "-----> CSRRS CSR: %" PRIu64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", uimm64, rd,
-                                rs1);
+                            // Pseudoinstructions FRFLAGS; csrrs rd, fflags x0  
+                            output->verbose( CALL_INFO, 16, 0, "-----> FRFLAGS: %" PRIu64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", uimm64, rd, rs1);
 
-										bundle->addInstruction(new VanadisFPFlagsReadInstruction<true, true, true>(ins_address, hw_thr, options, fpflags, rd));
-										bundle->addInstruction(new VanadisFPFlagsSetInstruction(ins_address, hw_thr, options, fpflags, rs1));
+                            // CSRRS rd ; put fpflags in rd
+							bundle->addInstruction(new VanadisFPFlagsReadInstruction<true, true, true>(ins_address, hw_thr, options, fpflags, rd));
+                            // FFLAGS x0 ; zero fp fpflags
+							bundle->addInstruction(new VanadisFPFlagsSetInstruction(ins_address, hw_thr, options, fpflags, rs1));
 
-                              decode_fault = false;
+                            decode_fault = false;
                         } break;
                         case 0x2:
                         {
@@ -1301,6 +1346,19 @@ protected:
                     CALL_INFO, 16, 0, "---> func_code3=%" PRIu32 " / func_code7=%" PRIu32 "\n", func_code3, func_code7);
 
                 switch ( func_code7 ) {
+                case 44:
+                {
+                    //FSQRT.S
+                } break;
+                case 45:
+                {
+                    //FSQRT.D
+                    output->verbose(
+                        CALL_INFO, 16, 0, "-----> FSQRT.D %" PRIu16 " <- %" PRIu16 "\n", rd, rs1);
+                    bundle->addInstruction(
+                        new VanadisFPSquareRootInstruction<double>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                    decode_fault = false;
+                } break;
                 case 0:
                 {
                     // FADD.S
@@ -1441,6 +1499,14 @@ protected:
                         ins_address, hw_thr, options, fpflags, rd, rs1, rs2));
                     decode_fault = false;
                 } break;
+                case 21:
+                {
+                    output->verbose(
+                        CALL_INFO, 16, 0, "---> FMIN.D %" PRIu16 " <- %" PRIu16 " / %" PRIu16 "\n", rd, rs1, rs2);
+                    bundle->addInstruction(new VanadisFPMinimumInstruction<double>(
+                        ins_address, hw_thr, options, fpflags, rd, rs1, rs2));
+                    decode_fault = false;
+                } break;
 					 case 33:
 					 {
                     processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
@@ -1574,8 +1640,31 @@ protected:
                     }
                     }
                 } break;
-					 case 120:
-					 {
+				 case 112:
+				 {
+                    processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
+
+                    output->verbose(
+                        CALL_INFO, 16, 0, "---> func_code3=%" PRIu32 " / func_code7=%" PRIu32 "\n", func_code3,
+                        func_code7);
+
+                    // rs2 dictates the signed nature of the operands
+                    switch ( rs2 ) {
+                    case 0:
+                    {
+						switch(func_code3) {
+							case 0: {
+	                            output->verbose(CALL_INFO, 16, 0, "-----> FMV.X.W %" PRIu16 " <- %" PRIu16 "\n", rd, rs1);
+                                bundle->addInstruction(
+                                new VanadisFP2GPRInstruction<int32_t, int32_t>(ins_address, hw_thr, options, fpflags, rd, rs1));
+         	                    decode_fault = false;
+							} break;
+						}
+                    } break;
+                   }
+			    } break;
+				 case 120:
+				 {
                     processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
 
                     output->verbose(
@@ -1595,8 +1684,8 @@ protected:
 								} break;
 								}
                     } break;
-                    }
-					 } break;
+                   }
+			    } break;
                 case 0x50:
                 {
                     switch ( func_code3 ) {
@@ -1692,7 +1781,7 @@ protected:
                     {
                         // FMADD.D
                         output->verbose(
-                            CALL_INFO, 16, 0, "-----> FMADD.D %" PRIu16 " <- %" PRIu16 " + %" PRIu16 "\n", rd, rs1, rs2);
+                            CALL_INFO, 16, 0, "-----> FMADD.D %" PRIu16 " <- ( %" PRIu16 " *  %" PRIu16 " ) + %" PRIu16 "\n", rd, rs1, rs2, rs3);
                         bundle->addInstruction(
                             new VanadisFPFusedMultiplyAddInstruction<double>(ins_address, hw_thr, options, fpflags, rd, rs1, rs2, rs3 ));
                         decode_fault = false;
@@ -1712,16 +1801,33 @@ protected:
                     {
                         // FMSUB.D
                         output->verbose(
-                            CALL_INFO, 16, 0, "-----> FMSUB.D %" PRIu16 " <- %" PRIu16 " + %" PRIu16 "\n", rd, rs1, rs2);
+                            CALL_INFO, 16, 0, "-----> FMSUB.D %" PRIu16 " <- ( %" PRIu16 " *  %" PRIu16 " ) -  %" PRIu16 "\n", rd, rs1, rs2, rs3);
                         bundle->addInstruction(
-                            new VanadisFPFusedMultiplySubInstruction<double>(ins_address, hw_thr, options, fpflags, rd, rs1, rs2, rs3 ));
+                            new VanadisFPFusedMultiplySubInstruction<double,false>(ins_address, hw_thr, options, fpflags, rd, rs1, rs2, rs3 ));
                         decode_fault = false;
                     } break;
                 }
             } break;
             case 0x4B:
             {
-                // FNMSUB
+                uint32_t fmt;
+                processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
+                fmt = func_code7 & 0x3;
+                rs3 = func_code7 >> 2;
+
+                output->verbose(CALL_INFO, 16, 0, "-----> fmt: %" PRIu32 " rs3: %" PRIu32 "\n", fmt, rs3);
+
+                switch( fmt ) {
+                    case 1:
+                    {
+                        // FNMSUB.D
+                        output->verbose(
+                            CALL_INFO, 16, 0, "-----> FNMSUB.D %" PRIu16 " <- ( - %" PRIu16 " *  %" PRIu16 " ) -  %" PRIu16 "\n", rd, rs1, rs2, rs3);
+                        bundle->addInstruction(
+                            new VanadisFPFusedMultiplySubInstruction<double,true>(ins_address, hw_thr, options, fpflags, rd, rs1, rs2, rs3 ));
+                        decode_fault = false;
+                    } break;
+                }
             } break;
             case 0x4F:
             {
