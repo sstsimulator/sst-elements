@@ -18,6 +18,7 @@
 
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/mman.h>
 #include "sst/elements/memHierarchy/util.h"
 
 namespace SST {

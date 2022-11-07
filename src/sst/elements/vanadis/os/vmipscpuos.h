@@ -23,6 +23,7 @@
 #include <functional>
 
 #include <fcntl.h>
+#include <sys/mman.h>
 
 #define MIPS_CONVERT( x ) \
     if ( flags & MIPS_O_##x ) {\
