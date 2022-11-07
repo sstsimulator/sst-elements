@@ -19,6 +19,7 @@
 #include <cassert>
 #include <cstdio>
 #include <functional>
+#include <sys/mman.h>
 
 #include "os/node/vnodeoshstate.h"
 #include <sst/core/interfaces/stdMem.h>
