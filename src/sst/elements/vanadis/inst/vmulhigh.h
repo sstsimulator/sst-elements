@@ -21,7 +21,7 @@
 namespace SST {
 namespace Vanadis {
 
-template<typename resultType, typename left_format, typename right_format, typename tmpType, bool signed_left, bool signed_right>
+template< typename gpr_format_1, typename gpr_format_2 >
 class VanadisMultiplyHighInstruction : public VanadisInstruction
 {
 public:
@@ -30,6 +30,8 @@ public:
         const uint16_t src_1, const uint16_t src_2) :
         VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0)
     {
+        assert( sizeof(gpr_format_1) == 4 );
+        assert( sizeof(gpr_format_2) == 4 );
 
         isa_int_regs_in[0]  = src_1;
         isa_int_regs_in[1]  = src_2;
@@ -41,13 +43,13 @@ public:
     VanadisFunctionalUnitType getInstFuncType() const override { return INST_INT_ARITH; }
     const char*               getInstCode() const override
     {
-        if( signed_left && signed_right) {
+        if( std::is_signed<gpr_format_1>::value && std::is_signed<gpr_format_2>::value ) {
            return "MULH";
         }
-        if( ! signed_left && ! signed_right) {
+        if( ! std::is_signed<gpr_format_1>::value && ! std::is_signed<gpr_format_2>::value ) {
            return "MULHU";
         }
-        if( signed_left && ! signed_right) {
+        if( std::is_signed<gpr_format_1>::value && ! std::is_signed<gpr_format_2>::value ) {
            return "MULHSU";
         }
     }
@@ -72,11 +74,11 @@ public:
             isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);
 #endif
 
-        const left_format src_1 = regFile->getIntReg<left_format>(phys_int_regs_in[0]);
-        const right_format src_2 = regFile->getIntReg<right_format>(phys_int_regs_in[1]);
-        tmpType tmp = (tmpType)( src_1 * src_2 ) >> ( sizeof(resultType) * 8 );
+        const gpr_format_1 src_1 = regFile->getIntReg<gpr_format_1>(phys_int_regs_in[0]);
+        const gpr_format_2 src_2 = regFile->getIntReg<gpr_format_2>(phys_int_regs_in[1]);
+        const uint64_t tmp = (uint64_t)( src_1 * src_2 ) >> ( sizeof(uint32_t) * 8 );
         
-        regFile->setIntReg<resultType>( phys_int_regs_out[0], (resultType) tmp );
+        regFile->setIntReg<uint32_t>( phys_int_regs_out[0], (uint32_t) tmp );
 
         markExecuted();
     }
