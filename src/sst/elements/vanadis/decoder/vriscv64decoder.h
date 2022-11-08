@@ -652,7 +652,7 @@ protected:
                             CALL_INFO, 16, 0, "-------> MULHU %" PRIu16 " <- %" PRIu16 " + %" PRIu16 "\n", rd, rs1, rs2);
 
                         bundle->addInstruction(
-                            new VanadisMultiplyHighInstruction<uint32_t,uint32_t>( ins_address, hw_thr, options, rd, rs1, rs2));
+                            new VanadisMultiplyHighInstruction<uint64_t,uint64_t>( ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
                     };
