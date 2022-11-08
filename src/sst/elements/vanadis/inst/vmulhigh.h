@@ -30,8 +30,8 @@ public:
         const uint16_t src_1, const uint16_t src_2) :
         VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0)
     {
-        assert( sizeof(gpr_format_1) == 4 );
-        assert( sizeof(gpr_format_2) == 4 );
+        assert( sizeof(gpr_format_1) == sizeof(uint64_t) );
+        assert( sizeof(gpr_format_2) == sizeof(uint64_t) );
 
         isa_int_regs_in[0]  = src_1;
         isa_int_regs_in[1]  = src_2;
@@ -74,11 +74,32 @@ public:
             isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);
 #endif
 
-        const gpr_format_1 src_1 = regFile->getIntReg<gpr_format_1>(phys_int_regs_in[0]);
-        const gpr_format_2 src_2 = regFile->getIntReg<gpr_format_2>(phys_int_regs_in[1]);
-        const uint64_t tmp = (uint64_t)( src_1 * src_2 ) >> ( sizeof(uint32_t) * 8 );
+        uint64_t result;
+
+        // "MULH";
+        if ( std::is_signed<gpr_format_1>::value && std::is_signed<gpr_format_2>::value ) {
+            const __int128_t src_1 = regFile->getIntReg<gpr_format_1>(phys_int_regs_in[0]);
+            const __int128_t src_2 = regFile->getIntReg<gpr_format_2>(phys_int_regs_in[1]);
+            result = ( ( src_1 * src_2 ) >> (8 * sizeof(gpr_format_1)) );
+
+        // "MULHU";
+        } else if ( ! std::is_signed<gpr_format_1>::value && ! std::is_signed<gpr_format_2>::value ) {
+
+            const __uint128_t src_1 = regFile->getIntReg<gpr_format_1>(phys_int_regs_in[0]);
+            const __uint128_t src_2 = regFile->getIntReg<gpr_format_2>(phys_int_regs_in[1]);
+            result = ( ( src_1 * src_2 ) >> (8 * sizeof(gpr_format_1)) );
+
+        // "MULHSU";
+        } else if ( std::is_signed<gpr_format_1>::value && ! std::is_signed<gpr_format_2>::value ) {
+            const __int128_t src_1 = regFile->getIntReg<gpr_format_1>(phys_int_regs_in[0]);
+            const __uint128_t src_2 = regFile->getIntReg<gpr_format_2>(phys_int_regs_in[1]);
+            result = ( ( src_1 * src_2 ) >> (8 * sizeof(gpr_format_1)) );
+
+        } else {
+            assert(0);
+        }
         
-        regFile->setIntReg<uint32_t>( phys_int_regs_out[0], (uint32_t) tmp );
+        regFile->setIntReg<uint64_t>( phys_int_regs_out[0], result );
 
         markExecuted();
     }
