@@ -84,7 +84,7 @@ public:
             new StandardMem::Handler<SST::Vanadis::VanadisBasicLoadStoreQueue>(
                 this, &VanadisBasicLoadStoreQueue::processIncomingDataCacheEvent));
 
-        address_mask = params.find<uint64_t>("address_mask", 0xFFFFFFFFULL);
+        address_mask = params.find<uint64_t>("address_mask", 0xFFFFFFFFFFFFFFFFULL);
 
         cache_line_width = params.find<uint64_t>("cache_line_width", 64);
 
@@ -700,8 +700,7 @@ protected:
 
         VanadisBasicLoadPendingEntry* load_entry = new VanadisBasicLoadPendingEntry(load_ins, load_address, load_width);
 
-        //if ( load_address + load_width < load_address ) {
-        if ( (load_address + load_width) & ~address_mask) {
+        if ( load_address + load_width < load_address || (load_address + load_width) & ~address_mask) {
             load_ins->markExecuted();
             return;
         }
