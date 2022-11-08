@@ -130,6 +130,11 @@ public:
                 ? combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3])
                 : regFile->getFPReg<fp_format>(phys_fp_regs_in[1]);
 
+        // assuming these are signalling comparison units
+        // check both units for NaN
+        performFlagChecks<fp_format>(left_value);
+        performFlagChecks<fp_format>(right_value);
+
         switch ( compare_type ) {
         case REG_COMPARE_EQ:
             return (left_value == right_value);
@@ -153,28 +158,16 @@ public:
     {
 #ifdef VANADIS_BUILD_DEBUG
         if ( output->getVerboseLevel() >= 16 ) {
-            char* int_register_buffer = new char[256];
-            char* fp_register_buffer  = new char[256];
-
-            writeIntRegs(int_register_buffer, 256);
-            writeFPRegs(fp_register_buffer, 256);
-
             output->verbose(
-                CALL_INFO, 16, 0, "Execute: (addr=0x%llx) %s (%s) int: %s / fp: %s\n", getInstructionAddress(),
-                getInstCode(), convertCompareTypeToString(compare_type), int_register_buffer, fp_register_buffer);
-
-            delete[] int_register_buffer;
-            delete[] fp_register_buffer;
+                CALL_INFO, 16, 0, "Execute: (addr=0x%llx) %s (%s)\n", getInstructionAddress(),
+                getInstCode(), convertCompareTypeToString(compare_type));
         }
 #endif
         const bool compare_result = performCompare(output, regFile);
         regFile->setIntReg<uint64_t>(phys_int_regs_out[0], compare_result ? 1 : 0);
 
         if ( output->getVerboseLevel() >= 16 ) {
-            if ( compare_result ) { output->verbose(CALL_INFO, 16, 0, "---> result: true\n"); }
-            else {
-                output->verbose(CALL_INFO, 16, 0, "---> result: false\n");
-            }
+            output->verbose(CALL_INFO, 16, 0, "---> result: %s\n", compare_result ? "true" : "false");
         }
 
         markExecuted();

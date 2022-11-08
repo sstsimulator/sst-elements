@@ -47,31 +47,30 @@ public:
         count_isa_fp_reg_in(c_isa_fp_reg_in),
         count_isa_fp_reg_out(c_isa_fp_reg_out)
     {
-
         phys_int_regs_in = (count_phys_int_reg_in > 0) ? new uint16_t[count_phys_int_reg_in] : nullptr;
-        std::memset(phys_int_regs_in, 0, count_phys_int_reg_in);
+        std::memset(phys_int_regs_in, 0, count_phys_int_reg_in * sizeof( uint16_t ));
 
         phys_int_regs_out = (count_phys_int_reg_out > 0) ? new uint16_t[count_phys_int_reg_out] : nullptr;
-        std::memset(phys_int_regs_out, 0, count_phys_int_reg_out);
-
+        std::memset(phys_int_regs_out, 0, count_phys_int_reg_out * sizeof( uint16_t ) );
+  
         isa_int_regs_in = (count_isa_int_reg_in > 0) ? new uint16_t[count_isa_int_reg_in] : nullptr;
-        std::memset(isa_int_regs_in, 0, count_isa_int_reg_in);
-
+        std::memset(isa_int_regs_in, 0, count_isa_int_reg_in * sizeof( uint16_t ));
+ 
         isa_int_regs_out = (count_isa_int_reg_out > 0) ? new uint16_t[count_isa_int_reg_out] : nullptr;
-        std::memset(isa_int_regs_out, 0, count_isa_int_reg_out);
+        std::memset(isa_int_regs_out, 0, count_isa_int_reg_out * sizeof( uint16_t ) );
 
         phys_fp_regs_in = (count_phys_fp_reg_in > 0) ? new uint16_t[count_phys_fp_reg_in] : nullptr;
-        std::memset(phys_fp_regs_in, 0, count_phys_fp_reg_in);
+        std::memset(phys_fp_regs_in, 0, count_phys_fp_reg_in * sizeof( uint16_t ));
 
         phys_fp_regs_out = (count_phys_fp_reg_out > 0) ? new uint16_t[count_phys_fp_reg_out] : nullptr;
-        std::memset(phys_fp_regs_out, 0, count_phys_fp_reg_out);
+        std::memset(phys_fp_regs_out, 0, count_phys_fp_reg_out * sizeof( uint16_t ));
 
         isa_fp_regs_in = (count_isa_fp_reg_in > 0) ? new uint16_t[count_isa_fp_reg_in] : nullptr;
-        std::memset(isa_fp_regs_in, 0, count_isa_fp_reg_in);
+        std::memset(isa_fp_regs_in, 0, count_isa_fp_reg_in * sizeof( uint16_t ) );
 
         isa_fp_regs_out = (count_isa_fp_reg_out > 0) ? new uint16_t[count_isa_fp_reg_out] : nullptr;
-        std::memset(isa_fp_regs_out, 0, count_isa_fp_reg_out);
-
+        std::memset(isa_fp_regs_out, 0, count_isa_fp_reg_out * sizeof( uint16_t ));
+  
         trapError             = false;
         hasExecuted           = false;
         hasIssued             = false;
@@ -126,6 +125,18 @@ public:
 
         isa_fp_regs_in  = (count_isa_fp_reg_in > 0) ? new uint16_t[count_isa_fp_reg_in] : nullptr;
         isa_fp_regs_out = (count_isa_fp_reg_out > 0) ? new uint16_t[count_isa_fp_reg_out] : nullptr;
+
+        /*
+        std::memcpy(phys_int_regs_in, copy_me.phys_int_regs_in, count_phys_int_reg_in);
+        std::memcpy(phys_int_regs_out, copy_me.phys_int_regs_out, count_phys_int_reg_out);
+        std::memcpy(isa_int_regs_in, copy_me.isa_int_regs_in, count_isa_int_reg_in);
+        std::memcpy(isa_int_regs_out, copy_me.isa_int_regs_out, count_isa_int_reg_out);
+
+        std::memcpy(phys_fp_regs_in, copy_me.phys_fp_regs_in, count_phys_fp_reg_in);
+        std::memcpy(phys_fp_regs_out, copy_me.phys_fp_regs_out, count_phys_fp_reg_out);
+        std::memcpy(isa_fp_regs_in, copy_me.isa_fp_regs_in, count_isa_fp_reg_in);
+        std::memcpy(isa_fp_regs_out, copy_me.isa_fp_regs_out, count_isa_fp_reg_out);
+        */
 
         for ( uint16_t i = 0; i < count_phys_int_reg_in; ++i ) {
             phys_int_regs_in[i] = copy_me.phys_int_regs_in[i];
@@ -301,9 +312,25 @@ public:
     uint16_t getISAFPRegOut(const uint16_t index) const { return isa_fp_regs_out[index]; }
 
     void setPhysIntRegIn(const uint16_t index, const uint16_t reg) { phys_int_regs_in[index] = reg; }
-    void setPhysIntRegOut(const uint16_t index, const uint16_t reg) { phys_int_regs_out[index] = reg; }
+    void setPhysIntRegOut(const uint16_t index, const uint16_t reg) { 
+        phys_int_regs_out[index] = reg;
+
+        /*if(getInstFuncType() != INST_SYSCALL) {
+            for(auto i = 0; i < count_phys_int_reg_in; ++i) {
+                assert(phys_int_regs_in[i] != reg);
+            }
+        }*/
+    }
     void setPhysFPRegIn(const uint16_t index, const uint16_t reg) { phys_fp_regs_in[index] = reg; }
-    void setPhysFPRegOut(const uint16_t index, const uint16_t reg) { phys_fp_regs_out[index] = reg; }
+    void setPhysFPRegOut(const uint16_t index, const uint16_t reg) { 
+        phys_fp_regs_out[index] = reg;
+
+        /*if(getInstFuncType() != INST_SYSCALL) {
+            for(auto i = 0; i < count_phys_fp_reg_in; ++i) {
+                assert(phys_fp_regs_in[i] != reg);
+            } 
+        }*/
+    }
 
     virtual VanadisInstruction* clone() = 0;
 
@@ -347,8 +374,8 @@ public:
 
     virtual bool performFPRegisterRecovery() const { return true; }
 
-	 virtual bool updatesFPFlags() const { return false; }
-    virtual void performFPFlagsUpdate() const {}
+	virtual bool updatesFPFlags() const { return false; }
+    virtual void updateFPFlags() {}
 
 protected:
     const uint64_t ins_address;

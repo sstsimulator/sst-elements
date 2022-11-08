@@ -100,7 +100,7 @@ public:
     void setLink(SST::Link* new_link) { core_link = new_link; }
 
     uint32_t getCoreID() const { return core_id; }
-    int setBrk( uint64_t brk ) {
+    void setBrk( uint64_t brk ) {
         current_brk_point = brk;
     }
 
@@ -169,12 +169,17 @@ public:
 
             bool success = false;
             struct vanadis_stat32 v32_stat_output;
+            struct vanadis_stat64 v64_stat_output;
             struct stat stat_output;
             int fstat_return_code = 0;
 
             if (fstat_ev->getFileHandle() <= 2) {
                 if (0 == fstat(fstat_ev->getFileHandle(), &stat_output)) {
-                    vanadis_copy_native_stat(&stat_output, &v32_stat_output);
+                    if (  VanadisOSBitType::VANADIS_OS_64B == fstat_ev->getOSBitType() ) {
+                        vanadis_copy_native_stat<struct vanadis_stat64>(&stat_output, &v64_stat_output);
+                    } else {
+                        vanadis_copy_native_stat<struct vanadis_stat32>(&stat_output, &v32_stat_output);
+                    }
                     success = true;
                 } else {
                     fstat_return_code = -13;
@@ -189,7 +194,11 @@ public:
                     VanadisOSFileDescriptor* vos_descriptor = vos_descriptor_itr->second;
 
                     if (0 == fstat(vos_descriptor->getFileDescriptor(), &stat_output)) {
-                        vanadis_copy_native_stat(&stat_output, &v32_stat_output);
+                        if (  VanadisOSBitType::VANADIS_OS_64B == fstat_ev->getOSBitType() ) {
+                            vanadis_copy_native_stat<struct vanadis_stat64>(&stat_output, &v64_stat_output);
+                        } else {
+                            vanadis_copy_native_stat<struct vanadis_stat32>(&stat_output, &v32_stat_output);
+                        }
                         success = true;
                     } else {
                         fstat_return_code = -13;
@@ -199,10 +208,19 @@ public:
 
             if (success) {
                 std::vector<uint8_t> stat_write_payload;
-                stat_write_payload.reserve(sizeof(v32_stat_output));
+                size_t len;
 
-                uint8_t* stat_output_ptr = (uint8_t*)(&v32_stat_output);
-                for (int i = 0; i < sizeof(stat_output); ++i) {
+                uint8_t* stat_output_ptr;
+                if (  VanadisOSBitType::VANADIS_OS_64B == fstat_ev->getOSBitType() ) {
+                    len = sizeof(v64_stat_output);
+                    stat_output_ptr = (uint8_t*)(&v64_stat_output);
+                } else {
+                    len = sizeof(v32_stat_output);
+                    stat_output_ptr = (uint8_t*)(&v32_stat_output);
+                }
+                stat_write_payload.reserve(len);
+
+                for (int i = 0; i <  len; ++i) {
                     stat_write_payload.push_back(stat_output_ptr[i]);
                 }
 
@@ -717,6 +735,46 @@ public:
             sendMemRequest(new StandardMem::Read(access_ev->getPathPointer(), line_remain));
         } break;
 
+        case SYSCALL_OP_GETTIME: {
+            VanadisSyscallGetTimeEvent* gettime_ev = dynamic_cast<VanadisSyscallGetTimeEvent*>(sys_ev);
+            output->verbose(CALL_INFO, 16, 0, "[syscall-gettime] gettime64( %" PRId64 ", 0x%llx )\n",
+                            gettime_ev->getClockType(), gettime_ev->getTimeStructAddress());
+
+            // Need to do a handler state to force memory writes to complete before we
+            // return
+            handler_state = new VanadisNoActionHandlerState(output->getVerboseLevel(), 0);
+            handler_state->setHWThread( sys_ev->getThreadID() );
+
+            uint64_t sim_time_ns = getSimTimeNano();
+            uint64_t sim_seconds = (uint64_t)(sim_time_ns / 1000000000ULL);
+            uint64_t sim_ns = (uint64_t)(sim_time_ns % 1000000000ULL);
+
+            output->verbose(CALL_INFO, 16, 0,
+                            "[syscall-gettime] --> sim-time: %" PRIu64 " ns -> %" PRIu64 " secs + %" PRIu32 " us\n",
+                            sim_time_ns, sim_seconds, sim_ns);
+
+            std::vector<uint8_t> seconds_payload;
+            seconds_payload.resize(sizeof(sim_seconds), 0);
+
+            uint8_t* sec_ptr = (uint8_t*)&sim_seconds;
+            for (size_t i = 0; i < sizeof(sim_seconds); ++i) {
+                seconds_payload[i] = sec_ptr[i];
+            }
+
+            sendMemRequest(new StandardMem::Write(gettime_ev->getTimeStructAddress(), sizeof(sim_seconds), seconds_payload));
+
+            std::vector<uint8_t> ns_payload;
+            ns_payload.resize(sizeof(sim_ns), 0);
+
+            uint8_t* ns_ptr = (uint8_t*)&sim_ns;
+            for (size_t i = 0; i < sizeof(sim_ns); ++i) {
+                ns_payload[i] = ns_ptr[i];
+            }
+
+            sendMemRequest(new StandardMem::Write(gettime_ev->getTimeStructAddress() + sizeof(sim_seconds),
+                                                  sizeof(sim_ns), ns_payload));
+        } break;
+
         case SYSCALL_OP_GETTIME64: {
             VanadisSyscallGetTime64Event* gettime_ev = dynamic_cast<VanadisSyscallGetTime64Event*>(sys_ev);
             output->verbose(CALL_INFO, 16, 0, "[syscall-gettime64] gettime64( %" PRId64 ", 0x%llx )\n",
@@ -788,6 +846,39 @@ public:
 
         case SYSCALL_OP_MMAP: {
             VanadisSyscallMemoryMapEvent* mmap_ev = dynamic_cast<VanadisSyscallMemoryMapEvent*>(sys_ev);
+            assert(mmap_ev != NULL);
+
+            output->verbose(CALL_INFO, 16, 0, "[syscall-mmap] --> \n");
+
+            uint64_t address = mmap_ev->getAllocationAddress();
+            uint64_t length = mmap_ev->getAllocationLength();
+            int64_t protect = mmap_ev->getProtectionFlags();
+            int64_t flags = mmap_ev->getAllocationFlags();
+            int fd = mmap_ev->getFd();
+            uint64_t offset = mmap_ev->getOffset();
+
+            if ( fd == -1 )  {
+                std::function<void(StandardMem::Request*)> send_req_func
+                    = std::bind(&VanadisNodeOSCoreHandler::sendMemRequest, this, std::placeholders::_1);
+                std::function<void(const uint64_t, std::vector<uint8_t>&)> send_block_func = std::bind(
+                    &VanadisNodeOSCoreHandler::sendBlockToMemory, this, std::placeholders::_1, std::placeholders::_2);
+
+                handler_state = new VanadisMemoryMapHandlerState(output->getVerboseLevel(), address, length,
+                                                             protect, flags, offset,
+                                                             send_req_func, send_block_func, memory_mgr);
+                handler_state->setHWThread( sys_ev->getThreadID() );
+
+            } else {
+                VanadisSyscallResponse* resp = new VanadisSyscallResponse(-22);
+                resp->markFailed();
+                resp->setHWThread( sys_ev->getThreadID() );
+                core_link->send(resp);
+            }
+
+        } break;
+
+        case SYSCALL_OP_MMAP2: {
+            VanadisSyscallMemoryMap2Event* mmap_ev = dynamic_cast<VanadisSyscallMemoryMap2Event*>(sys_ev);
             assert(mmap_ev != NULL);
 
             output->verbose(CALL_INFO, 16, 0, "[syscall-mmap] --> \n");
@@ -918,7 +1009,7 @@ public:
             // if we are completed and all the memory events are processed
             if (handler_state->isComplete() && (pending_mem.size() == 0)) {
                 VanadisSyscallResponse* resp = handler_state->generateResponse();
-                output->verbose(CALL_INFO, 16, 0,
+                output->verbose(CALL_INFO, 8, 0,
                                 "handler is completed and all memory events are "
                                 "processed, sending response (= %" PRId64 " / 0x%llx, %s) to core.\n",
                                 resp->getReturnCode(), resp->getReturnCode(),

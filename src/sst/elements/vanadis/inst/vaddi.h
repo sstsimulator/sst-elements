@@ -31,7 +31,6 @@ public:
         VanadisInstruction(addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0),
         imm_value(immediate)
     {
-
         isa_int_regs_in[0]  = src_1;
         isa_int_regs_out[0] = dest;
     }
@@ -66,17 +65,28 @@ public:
 
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
+        const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in[0]);
+        const gpr_format result = src_1 + imm_value;
+
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: 0x%llx %s phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16
-            " / in=%" PRIu16 "\n",
-            getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value, isa_int_regs_out[0],
-            isa_int_regs_in[0]);
+        if(std::is_unsigned<gpr_format>::value) {
+            output->verbose(
+                CALL_INFO, 16, 0,
+                "Execute: 0x%llx %s phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16
+                " / in=%" PRIu16 " (%" PRIu64 " + %" PRIu64 " = %" PRIu64 ")\n",
+                getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value, isa_int_regs_out[0],
+                isa_int_regs_in[0], src_1, imm_value, result);
+        } else {
+            output->verbose(
+                CALL_INFO, 16, 0,
+                "Execute: 0x%llx %s phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16
+                " / in=%" PRIu16 " (%" PRId64 " + %" PRId64 " = %" PRId64 ")\n",
+                getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value, isa_int_regs_out[0],
+                isa_int_regs_in[0], src_1, imm_value, result);
+        }
 #endif
 
-		const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in[0]);
-		regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1 + imm_value);
+		regFile->setIntReg<gpr_format>(phys_int_regs_out[0], result);
 
       markExecuted();
     }

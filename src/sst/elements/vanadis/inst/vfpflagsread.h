@@ -33,17 +33,11 @@ public:
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
         VanadisFloatingPointFlags* fpflags, const uint16_t dest) :
         VanadisFloatingPointInstruction(
-            addr, hw_thr, isa_opts, fpflags, 0, 1, 0, 1,
-				isa_opts->countISAFPRegisters(), isa_opts->countISAFPRegisters(), isa_opts->countISAFPRegisters(), isa_opts->countISAFPRegisters())
+            addr, hw_thr, isa_opts, fpflags, 0, 1, 0, 1, 0, 0, 0, 0)
     {
 			static_assert( !((copy_round_mode && (!shift_round_mode)) && copy_fp_flags), "Cannot copy round, not shift and copy FP flags\n");
 
 			isa_int_regs_out[0] = dest;
-
-			for( uint16_t i = 0; i < isa_opts->countISAFPRegisters(); ++i) {
-         	isa_fp_regs_in[i]  = i;
-         	isa_fp_regs_out[i] = i;
-      	}
     }
 
     VanadisFPFlagsReadInstruction*  clone() override { return new VanadisFPFlagsReadInstruction(*this); }
@@ -62,31 +56,33 @@ public:
 
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
-		  uint64_t flags_out = 0;
+		if(checkFrontOfROB()) {
+		  	uint64_t flags_out = 0;
 
-        if(copy_round_mode) {
-			  	flags_out = convertRoundingToInteger(fpflags.getRoundingMode());
+			if(copy_round_mode) {
+					flags_out = convertRoundingToInteger(fpflags.getRoundingMode());
 
-				if(shift_round_mode) {
-					flags_out <<= 5;
-				}
-	      }
+					if(shift_round_mode) {
+						flags_out <<= 5;
+					}
+			}
 
-		  if(copy_fp_flags) {
-			  flags_out |= fpflags.inexact() ? 0x1 : 0x0;
-			  flags_out |= fpflags.underflow() ? 0x2 : 0x0;
-		     flags_out |= fpflags.overflow() ? 0x4 : 0x0;
-   	     flags_out |= fpflags.divZero() ? 0x8 : 0x0;
-	        flags_out |= fpflags.invalidOp() ? 0x10 : 0x0;
-		  }
+			if(copy_fp_flags) {
+				flags_out |= fpflags.inexact() ? 0x1 : 0x0;
+				flags_out |= fpflags.underflow() ? 0x2 : 0x0;
+				flags_out |= fpflags.overflow() ? 0x4 : 0x0;
+				flags_out |= fpflags.divZero() ? 0x8 : 0x0;
+				flags_out |= fpflags.invalidOp() ? 0x10 : 0x0;
+			}
 
-		  output->verbose(CALL_INFO, 16, 0, "Execute: 0x%llx out-reg: %" PRIu16 " / out-mask: 0x%llx / copy_round: %c / shift_round: %c / copy_fp: %c\n",
-				getInstructionAddress(), phys_int_regs_out[0], flags_out,
-				copy_round_mode ? 'y' : 'n', shift_round_mode ? 'y' : 'n', copy_fp_flags ? 'y' : 'n');
+			output->verbose(CALL_INFO, 16, 0, "Execute: 0x%llx %s out-reg: %" PRIu16 " / out-mask: 0x%llx / copy_round: %c / shift_round: %c / copy_fp: %c\n",
+					getInstructionAddress(), getInstCode(), phys_int_regs_out[0], flags_out,
+					copy_round_mode ? 'y' : 'n', shift_round_mode ? 'y' : 'n', copy_fp_flags ? 'y' : 'n');
 
-        regFile->setIntReg<uint64_t>(phys_int_regs_out[0], flags_out);
+			regFile->setIntReg<uint64_t>(phys_int_regs_out[0], flags_out);
 
-        markExecuted();
+			markExecuted();
+		}
     }
 };
 

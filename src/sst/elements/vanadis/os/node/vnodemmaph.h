@@ -19,6 +19,7 @@
 #include <cassert>
 #include <cstdio>
 #include <functional>
+#include <sys/mman.h>
 
 #include "os/node/vnodeoshstate.h"
 #include <sst/core/interfaces/stdMem.h>
@@ -46,15 +47,35 @@ public:
         std_mem_handlers = new StandardMemHandlers(this, output);
     }
 
+    VanadisMemoryMapHandlerState(uint32_t verbosity, uint64_t address, uint64_t length, int64_t prot_flg,
+                                 int64_t map_flg, uint64_t offset_size,
+                                 std::function<void(StandardMem::Request*)> send_mem_r,
+                                 std::function<void(const uint64_t, std::vector<uint8_t>&)> send_block,
+                                 VanadisMemoryManager* mem_mgr)
+        : VanadisHandlerState(verbosity), map_address(address), map_length(length), map_protect(prot_flg),
+          map_flags(map_flg), call_stack(0), offset_units(offset_size), memory_mgr(mem_mgr) {
+
+        send_block_mem = send_block;
+        send_mem_req = send_mem_r;
+        state = 1;
+        return_value = 0;
+        file_offset = offset_size;
+
+        std_mem_handlers = new StandardMemHandlers(this, output);
+        handleIncomingRequest(nullptr);
+    }
+
     ~VanadisMemoryMapHandlerState() { delete std_mem_handlers; }
 
     virtual void handleIncomingRequest(StandardMem::Request* req) {
-        req->handle(std_mem_handlers);
+        if( req ) {
+            req->handle(std_mem_handlers);
 
-        output->verbose(CALL_INFO, 16, 0,
+            output->verbose(CALL_INFO, 16, 0,
                         "[syscall-mmap] processing incoming request (addr: 0x%llx, "
                         "size: %" PRIu64 ")\n",
                         resp_addr, (uint64_t)resp_size);
+        }
 
         switch (state) {
         case 0: {
@@ -69,22 +90,26 @@ public:
             } break;
 
         case 1: {
-            assert(resp_size >= 4);
-            file_offset = (uint64_t)(*((int32_t*)&resp_data[0]));
+            if ( req ) {
+                assert(resp_size >= 4);
+                file_offset = (uint64_t)(*((int32_t*)&resp_data[0]));
+            }
 
             output->verbose(CALL_INFO, 16, 0, "[syscall-mmap] -> set file offset to %" PRIu64 "\n", 
                             file_offset);
+#if 0 // comment this out becauseit causes a valgrind error, this code will go away when with virtual memory
             output->verbose(CALL_INFO, 16, 0,
                             "[syscall-mmap] -> mmap( 0x%llx, %" PRIu64 ", %" PRId64 ", %" PRId64 ", %" PRId64
                             ", %" PRIu64 " ) file-offset-units: %" PRIu64 "\n",
                             map_address, map_length, map_protect, map_flags, file_descriptor, file_offset,
                             offset_units);
+#endif
 
             uint64_t allocation_start = 0;
 
             // Check if the allocation request is MAP_ANONYMOUS in which case we
             // ignore the file descriptor and offsets
-            if ((map_flags & 0x800) != 0x0) {
+            if ((map_flags & MAP_ANONYMOUS) != 0x0) {
                 output->verbose(CALL_INFO, 16, 0, "[syscall-mmap] --> calling memory manager to allocate pages...\n");
 
                 if (0 == map_address) {

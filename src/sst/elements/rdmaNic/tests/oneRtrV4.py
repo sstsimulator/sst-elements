@@ -75,6 +75,7 @@ class Mem_Builder:
 			"addr_range_end" : "0x7fffffff",
 			  "debug" : 0,
 			  "debug_level" : 11,
+                          "initBacking": 1,
 		})
 		memToDir = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
 

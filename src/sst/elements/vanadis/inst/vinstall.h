@@ -71,6 +71,9 @@
 #include "inst/vstore.h"
 #include "inst/vstorecond.h"
 
+// Conditional move instructions
+#include "inst/vcimov.h"
+
 // Fence Instructions
 #include "inst/vfence.h"
 
@@ -80,6 +83,7 @@
 #include "inst/vfault.h"
 #include "inst/vnop.h"
 #include "inst/vsetreg.h"
+#include "inst/vsetregcallable.h"
 #include "inst/vsyscall.h"
 
 // int-reg move
@@ -93,6 +97,8 @@
 
 // FP Arith
 #include "inst/vfpadd.h"
+#include "inst/vfpmadd.h"
+#include "inst/vfpmsub.h"
 #include "inst/vfpdiv.h"
 #include "inst/vfpmul.h"
 #include "inst/vfpscmp.h"

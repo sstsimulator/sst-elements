@@ -34,7 +34,6 @@ public:
         imm_value(imm),
         offset(offst)
     {
-
         isa_int_regs_in[0] = src_1;
     }
 
@@ -45,7 +44,7 @@ public:
     {
         snprintf(
             buffer, buffer_size,
-            "BCMPI isa-in: %" PRIu16 " / phys-in: %" PRIu16 " / imm: %" PRId64 " / offset: %" PRId64 " = 0x%llx\n",
+            "BCMPI isa-in: %" PRIu16 " / phys-in: %" PRIu16 " / imm: %" PRId64 " / offset: %" PRId64 " = 0x%llx",
             isa_int_regs_in[0], phys_int_regs_in[0], imm_value, offset,
             static_cast<int64_t>(getInstructionAddress()) + offset);
     }

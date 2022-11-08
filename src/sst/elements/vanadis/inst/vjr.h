@@ -40,7 +40,7 @@ public:
     virtual void printToBuffer(char* buffer, size_t buffer_size)
     {
         snprintf(
-            buffer, buffer_size, "JR   isa-in: %" PRIu16 " / phys-in: %" PRIu16 "\n", isa_int_regs_in[0],
+            buffer, buffer_size, "JR   isa-in: %" PRIu16 " / phys-in: %" PRIu16 "", isa_int_regs_in[0],
             phys_int_regs_in[0]);
     }
 

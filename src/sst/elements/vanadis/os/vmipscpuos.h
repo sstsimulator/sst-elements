@@ -23,6 +23,7 @@
 #include <functional>
 
 #include <fcntl.h>
+#include <sys/mman.h>
 
 #define MIPS_CONVERT( x ) \
     if ( flags & MIPS_O_##x ) {\
@@ -65,7 +66,6 @@
 #define VANADIS_SYSCALL_MIPS_BRK 4045
 #define VANADIS_SYSCALL_MIPS_IOCTL 4054
 #define VANADIS_SYSCALL_MIPS_READLINK 4085
-#define VANADIS_SYSCALL_MIPS_MMAP 4090
 #define VANADIS_SYSCALL_MIPS_UNMAP 4091
 #define VANADIS_SYSCALL_MIPS_UNAME 4122
 #define VANADIS_SYSCALL_MIPS_READV 4145
@@ -423,34 +423,6 @@ public:
                                                    data_size);
         } break;
 
-        case VANADIS_SYSCALL_MIPS_MMAP: {
-            const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
-            uint64_t map_addr = regFile->getIntReg<uint64_t>(phys_reg_4);
-
-            const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
-            uint64_t map_len = regFile->getIntReg<uint64_t>(phys_reg_5);
-
-            const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
-            int32_t map_prot = regFile->getIntReg<int32_t>(phys_reg_6);
-
-            const uint16_t phys_reg_7 = isaTable->getIntPhysReg(7);
-            int32_t map_flags = regFile->getIntReg<int32_t>(phys_reg_7);
-
-            const uint16_t phys_reg_sp = isaTable->getIntPhysReg(29);
-            uint64_t stack_ptr = regFile->getIntReg<uint64_t>(phys_reg_sp);
-
-            output->verbose(CALL_INFO, 8, 0,
-                            "[syscall-handler] found a call to mmap( 0x%llx, %" PRIu64 ", %" PRId32 ", %" PRId32
-                            ", sp: 0x%llx (> 4 arguments) )\n",
-                            map_addr, map_len, map_prot, map_flags, stack_ptr);
-
-            if ((0 == map_addr) && (0 == map_len)) {
-                recvSyscallResp(new VanadisSyscallResponse(-22));
-            } else {
-                output->fatal(CALL_INFO, -1, "STOP\n");
-            }
-        } break;
-
         case VANADIS_SYSCALL_MIPS_UNMAP: {
             const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
             uint64_t unmap_addr = regFile->getIntReg<uint64_t>(phys_reg_4);
@@ -484,12 +456,17 @@ public:
             const uint16_t phys_reg_sp = isaTable->getIntPhysReg(29);
             uint64_t stack_ptr = regFile->getIntReg<uint64_t>(phys_reg_sp);
 
+            int sst_flags = 0;
+            if ( map_flags & 0x2 ) sst_flags |= MAP_PRIVATE;
+            if ( map_flags & 0x10 ) sst_flags |= MAP_FIXED;
+            if ( map_flags & 0x800 ) sst_flags |= MAP_ANON;
+
             output->verbose(CALL_INFO, 8, 0,
                             "[syscall-handler] found a call to mmap2( 0x%llx, %" PRIu64 ", %" PRId32 ", %" PRId32
                             ", sp: 0x%llx (> 4 arguments) )\n",
                             map_addr, map_len, map_prot, map_flags, stack_ptr);
 
-            call_ev = new VanadisSyscallMemoryMapEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, map_addr, map_len, map_prot, map_flags,
+            call_ev = new VanadisSyscallMemoryMap2Event(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, map_addr, map_len, map_prot, sst_flags,
                                                        stack_ptr, 4096);
         } break;
 
@@ -539,7 +516,7 @@ public:
         }
 
         if (nullptr != call_ev) {
-            output->verbose(CALL_INFO, 8, 0, "Sending event to operating system...\n");
+            output->verbose(CALL_INFO, 16, 0, "Sending event to operating system...\n");
             sendSyscallEvent(call_ev);
             return false;
         } else {

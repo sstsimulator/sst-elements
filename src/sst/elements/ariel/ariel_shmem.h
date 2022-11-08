@@ -27,7 +27,8 @@
  */
 
 #include <inttypes.h>
-
+#include <string>
+#include <vector>
 #include <sst/core/interprocess/tunneldef.h>
 #include "ariel_inst_class.h"
 
@@ -62,6 +63,7 @@ enum ArielShmemCmd_t {
     ARIEL_NOOP = 128,
     ARIEL_OUTPUT_STATS = 140,
     ARIEL_ISSUE_CUDA = 144,
+    ARIEL_ISSUE_RTL = 150,
     ARIEL_FLUSHLINE_INSTRUCTION = 154,
     ARIEL_FENCE_INSTRUCTION = 155,
 };
@@ -171,6 +173,15 @@ struct ArielCommand {
         struct {
             uint64_t vaddr;
         } flushline;
+        struct {
+            void* inp_ptr;
+            void* ctrl_ptr;
+            void* updated_rtl_params;
+            size_t inp_size;
+            size_t ctrl_size;
+            size_t updated_rtl_params_size;
+        } shmem;
+
 #ifdef HAVE_CUDA
         struct {
             GpuApi_t name;

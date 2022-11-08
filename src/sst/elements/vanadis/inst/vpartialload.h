@@ -40,9 +40,15 @@ public:
         count_isa_int_reg_in  = 2;
         count_phys_int_reg_in = 2;
 
+        count_isa_int_reg_out = 1;
+        count_phys_int_reg_out = 1;
+
         phys_int_regs_in = new uint16_t[count_phys_int_reg_in];
         isa_int_regs_in  = new uint16_t[count_isa_int_reg_in];
 
+        phys_int_regs_out = new uint16_t[count_phys_int_reg_out];
+        isa_int_regs_out = new uint16_t[count_isa_int_reg_out];
+        
         isa_int_regs_out[0] = tgtReg;
         isa_int_regs_in[0]  = memAddrReg;
         isa_int_regs_in[1]  = tgtReg;
@@ -53,13 +59,12 @@ public:
     VanadisPartialLoadInstruction* clone() { return new VanadisPartialLoadInstruction(*this); }
 
     bool isPartialLoad() const { return true; }
-    bool performSignExtension() const { return signed_extend; }
 
     virtual VanadisFunctionalUnitType getInstFuncType() const { return INST_LOAD; }
     virtual const char*               getInstCode() const { return "PARTLOAD"; }
 
-    uint16_t getMemoryAddressRegister() const { return phys_int_regs_in[1]; }
-    uint16_t getTargetRegister() const { return phys_int_regs_in[0]; }
+    uint16_t getMemoryAddressRegister() const { return phys_int_regs_in[0]; }
+    uint16_t getTargetRegister() const { return phys_int_regs_in[1]; }
 
     virtual void execute(SST::Output* output, VanadisRegisterFile* regFile) { markExecuted(); }
 
@@ -111,7 +116,7 @@ protected:
     {
         const uint64_t width_64 = (uint64_t)load_width;
 
-        int64_t reg_tmp = reg->getIntReg<int64_t>(phys_int_regs_in[0]);
+        int64_t reg_tmp = reg->getIntReg<int64_t>(getMemoryAddressRegister());
 
         const uint64_t base_address =
             is_load_lower ? (uint64_t)(reg_tmp + offset) : (uint64_t)(reg_tmp + offset) - width_64;

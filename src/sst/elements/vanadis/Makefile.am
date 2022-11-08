@@ -10,11 +10,6 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libvanadis.la
 
 VANADIS_SRC_FILES = \
-vanadis.h \
-vfpflags.h \
-vfuncunit.h \
-vinsbundle.h \
-vinsloader.h \
 datastruct/cqueue.h \
 datastruct/vcache.h \
 decoder/vauxvec.h \
@@ -35,6 +30,7 @@ inst/vbcmp.h \
 inst/vbcmpi.h \
 inst/vbcmpil.h \
 inst/vbfp.h \
+inst/vcimov.h \
 inst/vcmptype.h \
 inst/vdecodealignfault.h \
 inst/vdecodefaultinst.h \
@@ -46,6 +42,8 @@ inst/vfence.h \
 inst/vfp2fp.h \
 inst/vfp2gpr.h \
 inst/vfpadd.h \
+inst/vfpmadd.h \
+inst/vfpmsub.h \
 inst/vfpconv.h \
 inst/vfpdiv.h \
 inst/vfpflagsread.h \
@@ -57,8 +55,8 @@ inst/vfpscmp.h \
 inst/vfpsignlogic.h \
 inst/vfpsub.h \
 inst/vgpr2fp.h \
-inst/vinstall.h \
 inst/vinst.h \
+inst/vinstall.h \
 inst/vinsttype.h \
 inst/vjl.h \
 inst/vjlr.h \
@@ -83,6 +81,7 @@ inst/vregfmt.h \
 inst/vscmp.h \
 inst/vscmpi.h \
 inst/vsetreg.h \
+inst/vsetregcallable.h \
 inst/vsll.h \
 inst/vslli.h \
 inst/vspeculate.h \
@@ -90,59 +89,39 @@ inst/vsra.h \
 inst/vsrai.h \
 inst/vsrl.h \
 inst/vsrli.h \
-inst/vstorecond.h \
 inst/vstore.h \
+inst/vstorecond.h \
 inst/vsub.h \
 inst/vsyscall.h \
 inst/vtrunc.h \
 inst/vxor.h \
 inst/vxori.h \
+lsq/vbasiclsq.h \
+lsq/vbasiclsqentry.h \
 lsq/vlsq.h \
-lsq/vlsqseq.h \
-lsq/vlsqstd.h \
 lsq/vmemwriterec.h \
-util/vcmpop.h \
-util/vdatacopy.h \
-util/vfpreghandler.h \
-util/vlinesplit.h \
-util/vsignx.h \
-util/vtypename.h \
-vbranch/vbranchbasic.h \
-vbranch/vbranchunit.h \
-velf/velfinfo.h \
-os/vappruntimememory.h \
-os/vcpuos.h \
-os/velfloader.cc \
-os/velfloader.h \
-os/vmipscpuos.h \
-os/vnodeos.cc \
-os/vnodeos.h \
-os/vnodeoshandler.h \
-os/vosbittype.h \
-os/voscallev.h \
-os/voscallfunc.h \
-os/vriscvcpuos.h \
-os/vstartthreadreq.h \
 os/callev/voscallaccessev.h \
 os/callev/voscallall.h \
 os/callev/voscallbrk.h \
 os/callev/voscallclose.h \
-os/callev/voscallexitgrp.h \
 os/callev/voscallexit.h \
+os/callev/voscallexitgrp.h \
 os/callev/voscallfstat.h \
+os/callev/voscallgettime.h \
 os/callev/voscallgettime64.h \
 os/callev/voscallioctl.h \
 os/callev/voscallmmap.h \
+os/callev/voscallmmap2.h \
 os/callev/voscallmmapx.h \
-os/callev/voscallopenat.h \
 os/callev/voscallopen.h \
+os/callev/voscallopenat.h \
 os/callev/voscallread.h \
 os/callev/voscallreadlink.h \
 os/callev/voscallreadv.h \
 os/callev/voscallsta.h \
 os/callev/voscalluname.h \
-os/callev/voscallunlinkat.h \
 os/callev/voscallunlink.h \
+os/callev/voscallunlinkat.h \
 os/callev/voscallunmap.h \
 os/callev/voscallwrite.h \
 os/callev/voscallwritev.h \
@@ -166,7 +145,35 @@ os/node/vnodeosunlinkh.h \
 os/node/vnodeoswriteh.h \
 os/node/vnodeoswritevh.h \
 os/resp/voscallresp.h \
-os/resp/vosexitresp.h
+os/resp/vosexitresp.h \
+os/vappruntimememory.h \
+os/vcpuos.h \
+os/velfloader.h \
+os/vmipscpuos.h \
+os/vnodeos.h \
+os/vnodeoshandler.h \
+os/vosbittype.h \
+os/voscallev.h \
+os/voscallfunc.h \
+os/vriscvcpuos.h \
+os/vstartthreadreq.h \
+util/vcmpop.h \
+util/vdatacopy.h \
+util/vfpreghandler.h \
+util/vlinesplit.h \
+util/vsignx.h \
+util/vtypename.h \
+vanadis.h \
+vanadisDbgFlags.h \
+vbranch/vbranchbasic.h \
+vbranch/vbranchunit.h \
+velf/velfinfo.h \
+vfpflags.h \
+vfuncunit.h \
+vinsbundle.h \
+vinsloader.h \
+os/velfloader.cc \
+os/vnodeos.cc
 
 EXTRA_DIST = \
 	tests/small/basic-io/hello-world/Makefile \
@@ -183,9 +190,13 @@ EXTRA_DIST = \
 	tests/small/basic-io/hello-world-cpp/Makefile \
 	tests/small/basic-io/hello-world-cpp/hello-world-cpp.cc \
 	tests/small/basic-io/hello-world-cpp/mipsel/hello-world-cpp \
+	tests/small/basic-io/hello-world-cpp/mipsel/sst.stdout.gold \
 	tests/small/basic-io/hello-world-cpp/mipsel/vanadis.stderr.gold \
 	tests/small/basic-io/hello-world-cpp/mipsel/vanadis.stdout.gold \
 	tests/small/basic-io/hello-world-cpp/riscv64/hello-world-cpp \
+	tests/small/basic-io/hello-world-cpp/riscv64/sst.stdout.gold \
+	tests/small/basic-io/hello-world-cpp/riscv64/vanadis.stderr.gold \
+	tests/small/basic-io/hello-world-cpp/riscv64/vanadis.stdout.gold \
 \
     tests/small/basic-io/printf-check/Makefile \
     tests/small/basic-io/printf-check/printf-check.c \
@@ -194,6 +205,9 @@ EXTRA_DIST = \
 	tests/small/basic-io/printf-check/mipsel/vanadis.stdout.gold \
     tests/small/basic-io/printf-check/mipsel/vanadis.stderr.gold \
     tests/small/basic-io/printf-check/riscv64/printf-check \
+	tests/small/basic-io/printf-check/riscv64/sst.stdout.gold \
+	tests/small/basic-io/printf-check/riscv64/vanadis.stdout.gold \
+    tests/small/basic-io/printf-check/riscv64/vanadis.stderr.gold \
 \
     tests/small/basic-io/unlinkat/Makefile \
     tests/small/basic-io/unlinkat/unlinkat.c \
@@ -202,6 +216,9 @@ EXTRA_DIST = \
     tests/small/basic-io/unlinkat/mipsel/vanadis.stderr.gold \
     tests/small/basic-io/unlinkat/mipsel/vanadis.stdout.gold \
     tests/small/basic-io/unlinkat/riscv64/unlinkat \
+    tests/small/basic-io/unlinkat/riscv64/sst.stdout.gold \
+    tests/small/basic-io/unlinkat/riscv64/vanadis.stderr.gold \
+    tests/small/basic-io/unlinkat/riscv64/vanadis.stdout.gold \
 \
     tests/small/basic-io/unlink/Makefile \
     tests/small/basic-io/unlink/unlink.c \
@@ -210,6 +227,9 @@ EXTRA_DIST = \
     tests/small/basic-io/unlink/mipsel/vanadis.stderr.gold \
     tests/small/basic-io/unlink/mipsel/vanadis.stdout.gold \
     tests/small/basic-io/unlink/riscv64/unlink \
+    tests/small/basic-io/unlink/riscv64/sst.stdout.gold \
+    tests/small/basic-io/unlink/riscv64/vanadis.stderr.gold \
+    tests/small/basic-io/unlink/riscv64/vanadis.stdout.gold \
 \
     tests/small/basic-io/openat/Makefile \
     tests/small/basic-io/openat/openat.c \
@@ -218,6 +238,9 @@ EXTRA_DIST = \
     tests/small/basic-io/openat/mipsel/vanadis.stderr.gold \
     tests/small/basic-io/openat/mipsel/vanadis.stdout.gold \
     tests/small/basic-io/openat/riscv64/openat \
+    tests/small/basic-io/openat/riscv64/sst.stdout.gold \
+    tests/small/basic-io/openat/riscv64/vanadis.stderr.gold \
+    tests/small/basic-io/openat/riscv64/vanadis.stdout.gold \
 \
     tests/small/basic-io/read-write/Makefile \
     tests/small/basic-io/read-write/read-write.c \
@@ -231,6 +254,9 @@ EXTRA_DIST = \
 	tests/small/basic-math/sqrt-double/mipsel/vanadis.stderr.gold \
 	tests/small/basic-math/sqrt-double/mipsel/vanadis.stdout.gold \
 	tests/small/basic-math/sqrt-double/riscv64/sqrt-double \
+	tests/small/basic-math/sqrt-double/riscv64/sst.stdout.gold \
+	tests/small/basic-math/sqrt-double/riscv64/vanadis.stderr.gold \
+	tests/small/basic-math/sqrt-double/riscv64/vanadis.stdout.gold \
 \
 	tests/small/basic-math/sqrt-float/Makefile \
 	tests/small/basic-math/sqrt-float/sqrt-float.c \
@@ -239,6 +265,9 @@ EXTRA_DIST = \
 	tests/small/basic-math/sqrt-float/mipsel/vanadis.stderr.gold \
 	tests/small/basic-math/sqrt-float/mipsel/vanadis.stdout.gold \
 	tests/small/basic-math/sqrt-float/riscv64/sqrt-float \
+	tests/small/basic-math/sqrt-float/riscv64/sst.stdout.gold \
+	tests/small/basic-math/sqrt-float/riscv64/vanadis.stderr.gold \
+	tests/small/basic-math/sqrt-float/riscv64/vanadis.stdout.gold \
 \
 	tests/small/basic-ops/test-branch/Makefile \
 	tests/small/basic-ops/test-branch/test-branch.c \
@@ -247,6 +276,9 @@ EXTRA_DIST = \
 	tests/small/basic-ops/test-branch/mipsel/vanadis.stderr.gold \
 	tests/small/basic-ops/test-branch/mipsel/vanadis.stdout.gold \
 	tests/small/basic-ops/test-branch/riscv64/test-branch \
+	tests/small/basic-ops/test-branch/riscv64/sst.stdout.gold \
+	tests/small/basic-ops/test-branch/riscv64/vanadis.stderr.gold \
+	tests/small/basic-ops/test-branch/riscv64/vanadis.stdout.gold \
 \
 	tests/small/basic-ops/test-shift/Makefile \
 	tests/small/basic-ops/test-shift/test-shift.c \
@@ -255,6 +287,53 @@ EXTRA_DIST = \
 	tests/small/basic-ops/test-shift/mipsel/vanadis.stderr.gold \
 	tests/small/basic-ops/test-shift/mipsel/vanadis.stdout.gold \
 	tests/small/basic-ops/test-shift/riscv64/test-shift \
+	tests/small/basic-ops/test-shift/riscv64/sst.stdout.gold \
+	tests/small/basic-ops/test-shift/riscv64/vanadis.stderr.gold \
+	tests/small/basic-ops/test-shift/riscv64/vanadis.stdout.gold \
+\
+	tests/small/misc/stream/Makefile \
+	tests/small/misc/stream/stream.c \
+	tests/small/misc/stream/mipsel/stream \
+	tests/small/misc/stream/mipsel/sst.stdout.gold \
+	tests/small/misc/stream/mipsel/vanadis.stderr.gold \
+	tests/small/misc/stream/mipsel/vanadis.stdout.gold \
+	tests/small/misc/stream/riscv64/stream \
+	tests/small/misc/stream/riscv64/sst.stdout.gold \
+	tests/small/misc/stream/riscv64/vanadis.stderr.gold \
+	tests/small/misc/stream/riscv64/vanadis.stdout.gold \
+\
+	tests/small/misc/gettime/Makefile \
+	tests/small/misc/gettime/gettime.c \
+	tests/small/misc/gettime/mipsel/gettime \
+	tests/small/misc/gettime/mipsel/sst.stdout.gold \
+	tests/small/misc/gettime/mipsel/vanadis.stderr.gold \
+	tests/small/misc/gettime/mipsel/vanadis.stdout.gold \
+	tests/small/misc/gettime/riscv64/gettime \
+	tests/small/misc/gettime/riscv64/sst.stdout.gold \
+	tests/small/misc/gettime/riscv64/vanadis.stderr.gold \
+	tests/small/misc/gettime/riscv64/vanadis.stdout.gold \
+\
+	tests/small/misc/splitLoad/Makefile \
+	tests/small/misc/splitLoad/splitLoad.c \
+	tests/small/misc/splitLoad/mipsel/splitLoad \
+	tests/small/misc/splitLoad/mipsel/sst.stdout.gold \
+	tests/small/misc/splitLoad/mipsel/vanadis.stderr.gold \
+	tests/small/misc/splitLoad/mipsel/vanadis.stdout.gold \
+	tests/small/misc/splitLoad/riscv64/splitLoad \
+	tests/small/misc/splitLoad/riscv64/sst.stdout.gold \
+	tests/small/misc/splitLoad/riscv64/vanadis.stderr.gold \
+	tests/small/misc/splitLoad/riscv64/vanadis.stdout.gold \
+\
+	tests/small/misc/mt-dgemm/Makefile \
+	tests/small/misc/mt-dgemm/mt-dgemm.c \
+	tests/small/misc/mt-dgemm/mipsel/mt-dgemm \
+	tests/small/misc/mt-dgemm/mipsel/sst.stdout.gold \
+	tests/small/misc/mt-dgemm/mipsel/vanadis.stderr.gold \
+	tests/small/misc/mt-dgemm/mipsel/vanadis.stdout.gold \
+	tests/small/misc/mt-dgemm/riscv64/mt-dgemm \
+	tests/small/misc/mt-dgemm/riscv64/sst.stdout.gold \
+	tests/small/misc/mt-dgemm/riscv64/vanadis.stderr.gold \
+	tests/small/misc/mt-dgemm/riscv64/vanadis.stdout.gold \
 \
 	tests/basic_vanadis.py \
 	tests/testsuite_default_vanadis.py

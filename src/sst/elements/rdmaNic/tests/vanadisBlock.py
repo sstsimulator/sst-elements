@@ -114,7 +114,7 @@ class Vanadis_Builder:
 			  "debug_start_time": debug_start_time,
 		})
 
-		v_cpu_0_lsq = v_cpu_0.setSubComponent( "lsq", "vanadis.VanadisSequentialLoadStoreQueue" )
+		v_cpu_0_lsq = v_cpu_0.setSubComponent( "lsq", "vanadis.VanadisBasicLoadStoreQueue" )
 		v_cpu_0_lsq.addParams({
 			"verbose" : verbosity,
 			"address_mask" : 0xFFFFFFFF,

@@ -74,7 +74,7 @@ public:
 #endif
 
 		const gpr_format pc = static_cast<gpr_format>(getInstructionAddress());
-		regFile->setIntReg<gpr_format>(phys_int_regs_out[0], pc + imm_value);
+		regFile->setIntReg<gpr_format>(phys_int_regs_out[0], (pc + imm_value) & 0xffffffff);
 
         markExecuted();
     }

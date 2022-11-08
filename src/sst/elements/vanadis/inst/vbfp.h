@@ -32,7 +32,6 @@ public:
         branch_on_true(branch_true),
         offset(offst)
     {
-
         isa_fp_regs_in[0] = cond_reg;
     }
 

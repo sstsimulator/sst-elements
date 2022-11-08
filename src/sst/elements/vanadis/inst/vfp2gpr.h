@@ -87,10 +87,12 @@ public:
         if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
             const fp_format fp_v = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
             regFile->setIntReg<gpr_format>(phys_int_regs_out[0], static_cast<gpr_format>(fp_v));
+            performFlagChecks<fp_format>(fp_v);
         }
         else {
             const fp_format fp_v = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
             regFile->setIntReg<gpr_format>(phys_int_regs_out[0], static_cast<gpr_format>(fp_v));
+            performFlagChecks<fp_format>(fp_v);
         }
 
         markExecuted();
