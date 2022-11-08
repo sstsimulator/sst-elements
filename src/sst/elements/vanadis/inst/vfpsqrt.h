@@ -55,7 +55,7 @@ public:
 
     const char* getInstCode() const override
     {
-        if ( std::is_same<fp_format, double>::value ) { return "FPSQRT"; }
+        if ( std::is_same<fp_format, double>::value ) { return "FP64SQRT"; }
         if ( std::is_same<fp_format, float>::value ) { return "FP32SQRT"; }
 
         return "FPUNK";
