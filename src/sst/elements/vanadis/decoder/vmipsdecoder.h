@@ -1107,6 +1107,10 @@ protected:
                 //                                "\n",
                 //                                        rt, rs, imm_value_64);
 
+if ( ins_addr == 0x406190  ) {
+    printf("%lx\n",imm_value_64);
+}
+
                 bundle->addInstruction(new VanadisLoadInstruction(
                     ins_addr, hw_thr, options, rs, imm_value_64, rt, 1, true, MEM_TRANSACTION_NONE, LOAD_INT_REGISTER));
                 insertDecodeFault = false;
