@@ -25,6 +25,7 @@
 #include <operating_system/process/thread_id.h>
 #include <operating_system/threading/stack_alloc.h>
 #include <stdlib.h>
+#include <sys/mman.h>
 
 extern "C" void* sst_hg_nullptr = nullptr;
 extern "C" void* sst_hg_nullptr_send = nullptr;
