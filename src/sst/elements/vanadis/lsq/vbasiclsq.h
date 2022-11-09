@@ -700,7 +700,7 @@ protected:
 
         VanadisBasicLoadPendingEntry* load_entry = new VanadisBasicLoadPendingEntry(load_ins, load_address, load_width);
 
-        if ( load_address + load_width < load_address ) {
+        if ( load_address + load_width < load_address || (load_address + load_width) & ~address_mask) {
             load_ins->markExecuted();
             return;
         }
