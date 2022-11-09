@@ -15,15 +15,15 @@ l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to
  v0:decoder0.uop_delayed_rob_full.1 : Accumulator : Sum.u64 = 37684249; SumSQ.u64 = 37684249; Count.u64 = 37684249; Min.u64 = 1; Max.u64 = 1; 
  v0:lsq.loads_issued.1 : Accumulator : Sum.u64 = 551766; SumSQ.u64 = 551766; Count.u64 = 551766; Min.u64 = 1; Max.u64 = 1; 
  v0:lsq.stores_issued.1 : Accumulator : Sum.u64 = 20104; SumSQ.u64 = 20104; Count.u64 = 20104; Min.u64 = 1; Max.u64 = 1; 
- v0:lsq.bytes_read.1 : Accumulator : Sum.u64 = 4397310; SumSQ.u64 = 35154042; Count.u64 = 551441; Min.u64 = 1; Max.u64 = 8; 
+ v0:lsq.bytes_read.1 : Accumulator : Sum.u64 = 4397282; SumSQ.u64 = 35153972; Count.u64 = 551427; Min.u64 = 1; Max.u64 = 8; 
  v0:lsq.bytes_stored.1 : Accumulator : Sum.u64 = 154462; SumSQ.u64 = 1228334; Count.u64 = 19793; Min.u64 = 1; Max.u64 = 8; 
  v0:lsq.fences_issued.1 : Accumulator : Sum.u64 = 48; SumSQ.u64 = 48; Count.u64 = 48; Min.u64 = 1; Max.u64 = 1; 
  v0:lsq.loads_executed.1 : Accumulator : Sum.u64 = 537689; SumSQ.u64 = 537689; Count.u64 = 537689; Min.u64 = 1; Max.u64 = 1; 
  v0:lsq.stores_executed.1 : Accumulator : Sum.u64 = 19793; SumSQ.u64 = 19793; Count.u64 = 19793; Min.u64 = 1; Max.u64 = 1; 
  v0:lsq.fences_executed.1 : Accumulator : Sum.u64 = 37; SumSQ.u64 = 37; Count.u64 = 37; Min.u64 = 1; Max.u64 = 1; 
  v0:lsq.store_buffer_entries.1 : Accumulator : Sum.u64 = 43320; SumSQ.u64 = 126104; Count.u64 = 5173996; Min.u64 = 0; Max.u64 = 8; 
- v0:lsq.stores_in_flight.1 : Accumulator : Sum.u64 = 524928; SumSQ.u64 = 5395086; Count.u64 = 5173996; Min.u64 = 0; Max.u64 = 28; 
- v0:lsq.loads_in_flight.1 : Accumulator : Sum.u64 = 5999523; SumSQ.u64 = 9964529; Count.u64 = 5173996; Min.u64 = 0; Max.u64 = 16; 
+ v0:lsq.stores_in_flight.1 : Accumulator : Sum.u64 = 524923; SumSQ.u64 = 5395035; Count.u64 = 5173996; Min.u64 = 0; Max.u64 = 28; 
+ v0:lsq.loads_in_flight.1 : Accumulator : Sum.u64 = 5999509; SumSQ.u64 = 9964515; Count.u64 = 5173996; Min.u64 = 0; Max.u64 = 16; 
  v0:lsq.operations_pending : Accumulator : Sum.u64 = 586567; SumSQ.u64 = 1173849; Count.u64 = 5173996; Min.u64 = 0; Max.u64 = 9; 
  v0.instructions_retired.1 : Accumulator : Sum.u64 = 1715815; SumSQ.u64 = 5195163; Count.u64 = 5173996; Min.u64 = 0; Max.u64 = 4; 
  v0.instructions_decoded.1 : Accumulator : Sum.u64 = 2357099; SumSQ.u64 = 10351109; Count.u64 = 5173996; Min.u64 = 0; Max.u64 = 10; 
