@@ -599,7 +599,7 @@ protected:
 		MIPS_CONVERT( TMPFILE );
 #else
         if ( flags & MIPS_O_LARGEFILE ) {
-            flags &= ~MIPS__O_LARGEFILE;
+            flags &= ~MIPS_O_LARGEFILE;
         }
 #endif
         assert( 0 == flags );
