@@ -197,10 +197,11 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     //	printf("MAX INT: %" PRIu16 ", MAX FP: %" PRIu16 "\n", max_int_regs,
     // max_fp_regs );
 
-    tmp_not_issued_int_reg_read.reserve(max_int_regs);
-    tmp_int_reg_write.reserve(max_int_regs);
-    tmp_not_issued_fp_reg_read.reserve(max_fp_regs);
-    tmp_fp_reg_write.reserve(max_fp_regs);
+    tmp_not_issued_int_reg_read = new uint8_t[max_int_regs];
+    tmp_int_reg_write = new uint8_t[max_int_regs];
+
+    tmp_not_issued_fp_reg_read = new uint8_t[max_fp_regs];
+    tmp_fp_reg_write = new uint8_t[max_fp_regs];
 
     resetRegisterUseTemps(max_int_regs, max_fp_regs);
 
@@ -441,9 +442,14 @@ VANADIS_COMPONENT::~VANADIS_COMPONENT()
 
     if ( pipelineTrace != nullptr ) { fclose(pipelineTrace); }
 
-	 for( VanadisFloatingPointFlags* next_fp_flags : fp_flags ) {
+	for( VanadisFloatingPointFlags* next_fp_flags : fp_flags ) {
 		delete next_fp_flags;
-	 }
+	}
+
+    delete[] tmp_not_issued_int_reg_read;
+    delete[] tmp_int_reg_write;
+    delete[] tmp_not_issued_fp_reg_read;
+    delete[] tmp_fp_reg_write;
 }
 
 void
@@ -538,11 +544,11 @@ VANADIS_COMPONENT::performDecode(const uint64_t cycle)
 void
 VANADIS_COMPONENT::resetRegisterUseTemps(const uint16_t int_reg_count, const uint16_t fp_reg_count)
 {
-    std::fill_n(tmp_not_issued_int_reg_read.begin(), int_reg_count, false);
-    std::fill_n(tmp_int_reg_write.begin(), int_reg_count, false);
+    std::memset(tmp_not_issued_int_reg_read, 0, int_reg_count);
+    std::memset(tmp_int_reg_write, 0, int_reg_count);
 
-    std::fill_n(tmp_not_issued_fp_reg_read.begin(), fp_reg_count, false);
-    std::fill_n(tmp_fp_reg_write.begin(), fp_reg_count, false);
+    std::memset(tmp_not_issued_fp_reg_read, 0, fp_reg_count);
+    std::memset(tmp_fp_reg_write, 0, fp_reg_count);
 }
 
 int
@@ -653,22 +659,22 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
                     // if the instruction is *not* issued yet, we need to keep track
                     // of which instructions are being read
                     for ( uint16_t k = 0; k < ins->countISAIntRegIn(); ++k ) {
-                        tmp_not_issued_int_reg_read[ins->getISAIntRegIn(k)] = true;
+                        tmp_not_issued_int_reg_read[ins->getISAIntRegIn(k)] = 1;
                     }
 
                     for ( uint16_t k = 0; k < ins->countISAFPRegIn(); ++k ) {
-                        tmp_not_issued_fp_reg_read[ins->getISAFPRegIn(k)] = true;
+                        tmp_not_issued_fp_reg_read[ins->getISAFPRegIn(k)] = 1;
                     }
                 }
 
                 // Collect up all integer registers we write to
                 for ( uint16_t k = 0; k < ins->countISAIntRegOut(); ++k ) {
-                    tmp_int_reg_write[ins->getISAIntRegOut(k)] = true;
+                    tmp_int_reg_write[ins->getISAIntRegOut(k)] = 1;
                 }
 
                 // Collect up all fp registers we write to
                 for ( uint16_t k = 0; k < ins->countISAFPRegOut(); ++k ) {
-                    tmp_fp_reg_write[ins->getISAFPRegOut(k)] = true;
+                    tmp_fp_reg_write[ins->getISAFPRegOut(k)] = 1;
                 }
 
                 // We issued an instruction this cycle, so exit

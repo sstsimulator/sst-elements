@@ -257,10 +257,10 @@ private:
     std::vector<VanadisISATable*> issue_isa_tables;
     std::vector<VanadisISATable*> retire_isa_tables;
 
-    std::vector<bool> tmp_not_issued_int_reg_read;
-    std::vector<bool> tmp_int_reg_write;
-    std::vector<bool> tmp_not_issued_fp_reg_read;
-    std::vector<bool> tmp_fp_reg_write;
+    uint8_t* tmp_not_issued_int_reg_read;
+    uint8_t* tmp_int_reg_write;
+    uint8_t* tmp_not_issued_fp_reg_read;
+    uint8_t* tmp_fp_reg_write;
 
     std::list<VanadisInsCacheLoadRecord*>* icache_load_records;
 
