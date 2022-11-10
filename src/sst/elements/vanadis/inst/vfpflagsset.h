@@ -56,8 +56,10 @@ public:
 		if(checkFrontOfROB()) {
 			const uint64_t mask_in = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
 
-			output->verbose(CALL_INFO, 16, 0, "Execute: 0x%llx %s in-reg: %" PRIu16 " / phys: %" PRIu16 " -> mask = %" PRIu64 " (0x%llx)\n",
-				getInstructionAddress(), getInstCode(), isa_int_regs_in[0], phys_int_regs_in[0], mask_in, mask_in);
+			if(output->getVerboseLevel() >= 16) {
+				output->verbose(CALL_INFO, 16, 0, "Execute: 0x%llx %s in-reg: %" PRIu16 " / phys: %" PRIu16 " -> mask = %" PRIu64 " (0x%llx)\n",
+					getInstructionAddress(), getInstCode(), isa_int_regs_in[0], phys_int_regs_in[0], mask_in, mask_in);
+			}
 
 			if( (mask_in & 0x1) != 0 ) {
 				fpflags.setInexact();

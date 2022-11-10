@@ -71,12 +71,14 @@ public:
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: (addr=0x%0llx) BCMP (%s) isa-in: %" PRIu16 ", %" PRIu16 " / phys-in: %" PRIu16 ", %" PRIu16
-            " offset: %" PRId64 " = 0x%llx\n",
-            getInstructionAddress(), convertCompareTypeToString(compare_type), isa_int_regs_in[0], isa_int_regs_in[1],
-            phys_int_regs_in[0], phys_int_regs_in[1], offset, getInstructionAddress() + offset);
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(
+                CALL_INFO, 16, 0,
+                "Execute: (addr=0x%0llx) BCMP (%s) isa-in: %" PRIu16 ", %" PRIu16 " / phys-in: %" PRIu16 ", %" PRIu16
+                " offset: %" PRId64 " = 0x%llx\n",
+                getInstructionAddress(), convertCompareTypeToString(compare_type), isa_int_regs_in[0], isa_int_regs_in[1],
+                phys_int_regs_in[0], phys_int_regs_in[1], offset, getInstructionAddress() + offset);
+        }
 #endif
         bool compare_result = false;
 

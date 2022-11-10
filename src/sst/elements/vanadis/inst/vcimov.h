@@ -56,12 +56,14 @@ public:
     virtual void execute(SST::Output* output, VanadisRegisterFile* regFile)
     {
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: CMOVI    inst: 0x%llx / %5" PRIu16 " <- %" PRIu16 " if %" PRIu16 " == %" PRId64 " { %" PRIu16 " <- %" PRIu16 " if %" PRIu16 " == %" PRId64 " }\n",
-            getInstructionAddress(), isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1], imm,
-            phys_int_regs_out[0], phys_int_regs_in[0],
-            phys_int_regs_in[1], imm);
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(
+                CALL_INFO, 16, 0,
+                "Execute: CMOVI    inst: 0x%llx / %5" PRIu16 " <- %" PRIu16 " if %" PRIu16 " == %" PRId64 " { %" PRIu16 " <- %" PRIu16 " if %" PRIu16 " == %" PRId64 " }\n",
+                getInstructionAddress(), isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1], imm,
+                phys_int_regs_out[0], phys_int_regs_in[0],
+                phys_int_regs_in[1], imm);
+        }
 #endif
         const reg_type src_1 = regFile->getIntReg<reg_type>(phys_int_regs_in[0]);
         const bool compare_result = registerCompareImm<compare_op, compare_type>(
