@@ -593,6 +593,7 @@ protected:
 
 #ifndef SST_COMPILE_MACOSX
 		MIPS_CONVERT( DIRECT );
+		MIPS_CONVERT( LARGEFILE );
 		MIPS_CONVERT( NOATIME );
 		MIPS_CONVERT( PATH );
 		MIPS_CONVERT( TMPFILE );
@@ -601,7 +602,6 @@ protected:
             flags &= ~MIPS__O_LARGEFILE;
         }
 #endif
-
         assert( 0 == flags );
 
 		return out;
