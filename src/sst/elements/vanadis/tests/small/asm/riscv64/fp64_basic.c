@@ -6,17 +6,17 @@
 int main()
 {
     uint32_t x;
-    float test_cases_a[NUM_TESTS] = {2.5e-6, 4.231e-11, 6.77e3, 8.98e12};
-    float test_cases_b[NUM_TESTS] = {1.0e-6, 4.0e-11, 6.0e3, 8.0e12};
-    float add_result[NUM_TESTS]   = {3.49999982063e-06, 8.23099990943e-11, 12770.0000, 1.69800001126e+13};
-    float sub_result[NUM_TESTS]   = {1.49999993937e-06, 2.30999941397e-12, 770.000000, 9.79999653888e+11};
-    float mul_result[NUM_TESTS]   = {2.49999999001e-12, 1.69239992125e-21, 40620000.0, 7.18399962448e+25};
-    float div_result[NUM_TESTS]   = {2.5, 1.05774998665, 1.12833333015, 1.12249994278};
+    double test_cases_a[NUM_TESTS] = {2.5e-6, 4.231e-11, 6.77e3, 8.98e12};
+    double test_cases_b[NUM_TESTS] = {1.0e-6, 4.0e-11, 6.0e3, 8.0e12};
+    double add_result[NUM_TESTS]   = {3.49999982063e-06, 8.23099990943e-11, 12770.0000, 1.69800001126e+13};
+    double sub_result[NUM_TESTS]   = {1.49999993937e-06, 2.30999941397e-12, 770.000000, 9.79999653888e+11};
+    double mul_result[NUM_TESTS]   = {2.49999999001e-12, 1.69239992125e-21, 40620000.0, 7.18399962448e+25};
+    double div_result[NUM_TESTS]   = {2.5, 1.05774998665, 1.12833333015, 1.12249994278};
 
-    register float a asm("fs2") = 2.5e-6;
-    register float b asm("fs3") = 1.0e-6;
-    register float c asm("ft0");
-    register float d asm("ft1");
+    register double a asm("fs2") = 2.5e-6;
+    register double b asm("fs3") = 1.0e-6;
+    register double c asm("ft0");
+    register double d asm("ft1");
 
     register uint64_t i asm("a2") = 99;
     register uint64_t j asm("a3") = 400;
@@ -26,9 +26,9 @@ int main()
         a = test_cases_a[x];
         b = test_cases_b[x];
         d = add_result[x];
-        __asm__ __volatile__ ("fadd.s  %0, %1, %2;" : "=f"(c) : "f"(a), "f"(b) );
-        __asm__ __volatile__ ("fmv.x.s %0, %1;" : "=r"(i) : "f"(c) );
-        __asm__ __volatile__ ("fmv.x.s %0, %1;" : "=r"(j) : "f"(d) );
+        __asm__ __volatile__ ("fadd.d  %0, %1, %2;" : "=f"(c) : "f"(a), "f"(b) );
+        __asm__ __volatile__ ("fmv.x.d %0, %1;" : "=r"(i) : "f"(c) );
+        __asm__ __volatile__ ("fmv.x.d %0, %1;" : "=r"(j) : "f"(d) );
         __asm__ __volatile__ ("bne     %0, %1, FAIL_;" : : "r"(i), "r"(j) );
 
         printf("Done %e %e %e %lx %lx\n", a, b, c, i, j);
@@ -39,9 +39,9 @@ int main()
         a = test_cases_a[x];
         b = test_cases_b[x];
         d = sub_result[x];
-        __asm__ __volatile__ ("fsub.s %0, %1, %2;" : "=f"(c) : "f"(a), "f"(b) );
-        __asm__ __volatile__ ("fmv.x.s %0, %1;" : "=r"(i) : "f"(c) );
-        __asm__ __volatile__ ("fmv.x.s %0, %1;" : "=r"(j) : "f"(d) );
+        __asm__ __volatile__ ("fsub.d %0, %1, %2;" : "=f"(c) : "f"(a), "f"(b) );
+        __asm__ __volatile__ ("fmv.x.d %0, %1;" : "=r"(i) : "f"(c) );
+        __asm__ __volatile__ ("fmv.x.d %0, %1;" : "=r"(j) : "f"(d) );
         __asm__ __volatile__ ("bne     %0, %1, FAIL_;" : : "r"(i), "r"(j) );
 
         printf("Done %e %e %e %lx %lx\n", a, b, c, i, j);
@@ -52,9 +52,9 @@ int main()
         a = test_cases_a[x];
         b = test_cases_b[x];
         d = mul_result[x];
-        __asm__ __volatile__ ("fmul.s  %0, %1, %2;" : "=f"(c) : "f"(a), "f"(b) );
-        __asm__ __volatile__ ("fmv.x.s %0, %1;" : "=r"(i) : "f"(c) );
-        __asm__ __volatile__ ("fmv.x.s %0, %1;" : "=r"(j) : "f"(d) );
+        __asm__ __volatile__ ("fmul.d  %0, %1, %2;" : "=f"(c) : "f"(a), "f"(b) );
+        __asm__ __volatile__ ("fmv.x.d %0, %1;" : "=r"(i) : "f"(c) );
+        __asm__ __volatile__ ("fmv.x.d %0, %1;" : "=r"(j) : "f"(d) );
         __asm__ __volatile__ ("bne     %0, %1, FAIL_;" : : "r"(i), "r"(j) );
 
         printf("Done %e %e %e %lx %lx\n", a, b, c, i, j);
@@ -65,9 +65,9 @@ int main()
         a = test_cases_a[x];
         b = test_cases_b[x];
         d = div_result[x];
-        __asm__ __volatile__ ("fdiv.s  %0, %1, %2;" : "=f"(c) : "f"(a), "f"(b) );
-        __asm__ __volatile__ ("fmv.x.s %0, %1;" : "=r"(i) : "f"(c) );
-        __asm__ __volatile__ ("fmv.x.s %0, %1;" : "=r"(j) : "f"(d) );
+        __asm__ __volatile__ ("fdiv.d  %0, %1, %2;" : "=f"(c) : "f"(a), "f"(b) );
+        __asm__ __volatile__ ("fmv.x.d %0, %1;" : "=r"(i) : "f"(c) );
+        __asm__ __volatile__ ("fmv.x.d %0, %1;" : "=r"(j) : "f"(d) );
         __asm__ __volatile__ ("bne     %0, %1, FAIL_;" : : "r"(i), "r"(j) );
 
         printf("Done %e %e %e %lx %lx\n", a, b, c, i, j);
