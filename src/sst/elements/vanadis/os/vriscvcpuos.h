@@ -541,7 +541,7 @@ protected:
         RISC_CONVERT( TMPFILE );
 #else
         if ( flags & RISCV_O_LARGEFILE ) {
-            flags &= ~RISCV__O_LARGEFILE;
+            flags &= ~RISCV_O_LARGEFILE;
         }
 #endif
         assert( 0 == flags );
