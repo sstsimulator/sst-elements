@@ -1368,10 +1368,10 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
 
     for ( uint16_t i = 0; i < hw_threads; ++i ) {
         VanadisRegisterStack* thr_reg_stack = int_register_stacks[i];
-        used_phys_int += (thr_reg_stack->capacity() - thr_reg_stack->size());
+        used_phys_int += (thr_reg_stack->capacity() - thr_reg_stack->unused());
 
         thr_reg_stack = fp_register_stacks[i];
-        used_phys_fp += (thr_reg_stack->capacity() - thr_reg_stack->size());
+        used_phys_fp += (thr_reg_stack->capacity() - thr_reg_stack->unused());
     }
 
     stat_int_phys_regs_in_use->addData(used_phys_int);
@@ -1888,7 +1888,7 @@ VANADIS_COMPONENT::resetRegisterStacks(const uint32_t hw_thr)
     if(output->getVerboseLevel() >= 16) {
         output->verbose(
             CALL_INFO, 16, 0, "---> Integer register stack contains %" PRIu32 " registers.\n",
-            (uint32_t)thr_int_stack->size());
+            (uint32_t)thr_int_stack->unused());
         output->verbose(CALL_INFO, 16, 0, "---> Reclaiming floating point registers...\n");
 
         output->verbose(
@@ -1911,7 +1911,7 @@ VANADIS_COMPONENT::resetRegisterStacks(const uint32_t hw_thr)
     if(output->getVerboseLevel() >= 16) {
         output->verbose(
             CALL_INFO, 16, 0, "---> Floating point stack contains %" PRIu32 " registers.\n",
-            (uint32_t)thr_fp_stack->size());
+            (uint32_t)thr_fp_stack->unused());
     }
 #endif
 }
