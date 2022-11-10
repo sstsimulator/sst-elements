@@ -2,11 +2,11 @@ import os
 import sst
 
 
-#isa="mipsel"
-isa="riscv64"
+isa="mipsel"
+#isa="riscv64"
 
-#group = "basic-io"
-#test = "hello-world"
+group = "basic-io"
+test = "hello-world"
 #test = "hello-world-cpp"
 #test = "openat"
 #test = "printf-check"
@@ -28,8 +28,8 @@ isa="riscv64"
 #test = "gettime"
 #test = "splitLoad"
 
-group = "asm"
-test = "fp64_basic.x"
+#group = "asm"
+#test = "fp64_basic.x"
 
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
