@@ -626,38 +626,40 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
 int
 VANADIS_COMPONENT::performExecute(const uint64_t cycle)
 {
+    const uint32_t verbose_level = output->getVerboseLevel();
+
     for ( VanadisFunctionalUnit* next_fu : fu_int_arith ) {
         next_fu->tick(cycle, output, register_files);
 
-        if(output->getVerboseLevel() >= 16)
+        if(verbose_level >= 16)
             next_fu->print(output);
     }
 
     for ( VanadisFunctionalUnit* next_fu : fu_int_div ) {
         next_fu->tick(cycle, output, register_files);
 
-        if(output->getVerboseLevel() >= 16)
+        if(verbose_level >= 16)
             next_fu->print(output);
     }
 
     for ( VanadisFunctionalUnit* next_fu : fu_fp_arith ) {
         next_fu->tick(cycle, output, register_files);
 
-        if(output->getVerboseLevel() >= 16)
+        if(verbose_level >= 16)
             next_fu->print(output);
     }
 
     for ( VanadisFunctionalUnit* next_fu : fu_fp_div ) {
         next_fu->tick(cycle, output, register_files);
 
-        if(output->getVerboseLevel() >= 16)
+        if(verbose_level >= 16)
             next_fu->print(output);
     }
 
     for ( VanadisFunctionalUnit* next_fu : fu_branch ) {
         next_fu->tick(cycle, output, register_files);
 
-        if(output->getVerboseLevel() >= 16)
+        if(verbose_level >= 16)
             next_fu->print(output);
     }
 
