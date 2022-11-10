@@ -2,11 +2,11 @@ import os
 import sst
 
 
-isa="mipsel"
-#isa="riscv64"
+#isa="mipsel"
+isa="riscv64"
 
-group = "basic-io"
-test = "hello-world"
+#group = "basic-io"
+#test = "hello-world"
 #test = "hello-world-cpp"
 #test = "openat"
 #test = "printf-check"
@@ -28,6 +28,9 @@ test = "hello-world"
 #test = "gettime"
 #test = "splitLoad"
 
+group = "asm"
+test = "fp64_basic.x"
+
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
 sst.setProgramOption("stopAtCycle", "0 ns")
@@ -35,14 +38,17 @@ sst.setProgramOption("stopAtCycle", "0 ns")
 # Tell SST what statistics handling we want
 sst.setStatisticLoadLevel(4)
 
-full_exe_name = os.getenv("VANADIS_EXE", "./tests/small/" + group + "/" + test +  "/" + isa + "/" + test )
+if group == "asm":
+    full_exe_name = os.getenv("VANADIS_EXE", "../tests/small/" + group + "/" + isa + "/" + test )
+else:
+    full_exe_name = os.getenv("VANADIS_EXE", "../tests/small/" + group + "/" + test +  "/" + isa + "/" + test )
 exe_name= full_exe_name.split("/")[-1]
 
 verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
 os_verbosity = os.getenv("VANADIS_OS_VERBOSE", verbosity)
 pipe_trace_file = os.getenv("VANADIS_PIPE_TRACE", "")
 lsq_entries = os.getenv("VANADIS_LSQ_ENTRIES", 32)
-lsq_mask = 0xFFFFFFFF
+lsq_mask = 0xFFFFFFFFFFFFFFFF
 
 
 rob_slots = os.getenv("VANADIS_ROB_SLOTS", 64)
@@ -102,25 +108,30 @@ v_cpu_0.addParams({
 app_args = os.getenv("VANADIS_EXE_ARGS", "")
 
 if app_args != "":
-	app_args_list = app_args.split(" ")
-	# We have a plus 1 because the executable name is arg0
-	app_args_count = len( app_args_list ) + 1
-	v_cpu_0.addParams({ "app.argc" : app_args_count })
-	print("Identified " + str(app_args_count) + " application arguments, adding to input parameters.")
-	arg_start = 1
-	for next_arg in app_args_list:
-		print("arg" + str(arg_start) + " = " + next_arg)
-		v_cpu_0.addParams({ "app.arg" + str(arg_start) : next_arg })
-		arg_start = arg_start + 1
+    app_args_list = app_args.split(" ")
+    # We have a plus 1 because the executable name is arg0
+    app_args_count = len( app_args_list ) + 1
+    v_cpu_0.addParams({ "app.argc" : app_args_count })
+    print("Identified " + str(app_args_count) + " application arguments, adding to input parameters.")
+    arg_start = 1
+    for next_arg in app_args_list:
+        print("arg" + str(arg_start) + " = " + next_arg)
+        v_cpu_0.addParams({ "app.arg" + str(arg_start) : next_arg })
+        arg_start = arg_start + 1
 else:
 	print("No application arguments found, continuing with argc=0")
 
-vanadis_isa = os.getenv("VANADIS_ISA", "MIPS")
+
+## choose decoder
+if isa == "mipsel":
+    vanadis_isa = os.getenv("VANADIS_ISA", "MIPS")
+    lsq_mask = 0xFFFFFFFF
+else:
+    vanadis_isa = os.getenv("VANADIS_ISA", "RISCV64")
+
 vanadis_decoder = "vanadis.Vanadis" + vanadis_isa + "Decoder"
 vanadis_os_hdlr = "vanadis.Vanadis" + vanadis_isa + "OSHandler"
 
-if vanadis_isa == "MIPS":
-	lsq_mask = 0xFFFFFFFF
 
 decode0     = v_cpu_0.setSubComponent( "decoder0", vanadis_decoder )
 os_hdlr     = decode0.setSubComponent( "os_handler", vanadis_os_hdlr )
@@ -128,17 +139,17 @@ os_hdlr     = decode0.setSubComponent( "os_handler", vanadis_os_hdlr )
 branch_pred = decode0.setSubComponent( "branch_unit", "vanadis.VanadisBasicBranchUnit" )
 
 decode0.addParams({
-	"uop_cache_entries" : 1536,
-	"predecode_cache_entries" : 4
+    "uop_cache_entries" : 1536,
+    "predecode_cache_entries" : 4
 })
 
 os_hdlr.addParams({
-	"verbose" : os_verbosity,
-	"brk_zero_memory" : "yes"
+    "verbose" : os_verbosity,
+    "brk_zero_memory" : "yes"
 })
 
 branch_pred.addParams({
-	"branch_entries" : 32
+    "branch_entries" : 32
 })
 
 icache_if = v_cpu_0.setSubComponent( "mem_interface_inst", "memHierarchy.standardInterface" )
@@ -146,9 +157,9 @@ icache_if = v_cpu_0.setSubComponent( "mem_interface_inst", "memHierarchy.standar
 #v_cpu_0_lsq = v_cpu_0.setSubComponent( "lsq", "vanadis.VanadisStandardLoadStoreQueue" )
 v_cpu_0_lsq = v_cpu_0.setSubComponent( "lsq", "vanadis.VanadisBasicLoadStoreQueue" )
 v_cpu_0_lsq.addParams({
-	"verbose" : verbosity,
-	"address_mask" : lsq_mask,
-	"load_store_entries" : lsq_entries
+    "verbose" : verbosity,
+    "address_mask" : lsq_mask,
+    "load_store_entries" : lsq_entries
 })
 
 dcache_if = v_cpu_0_lsq.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
@@ -156,12 +167,12 @@ dcache_if.addParams({"debug" : 0, "debug_level" : 11 })
 
 node_os = sst.Component("os", "vanadis.VanadisNodeOS")
 node_os.addParams({
-	"verbose" : os_verbosity,
-	"cores" : 1,
-	"heap_start" : 512 * 1024 * 1024,
-	"heap_end"   : (2 * 1024 * 1024 * 1024) - 4096,
-	"page_size"  : 4096,
-	"heap_verbose" : verbosity,
+    "verbose" : os_verbosity,
+    "cores" : 1,
+    "heap_start" : 512 * 1024 * 1024,
+    "heap_end"   : (2 * 1024 * 1024 * 1024) - 4096,
+    "page_size"  : 4096,
+    "heap_verbose" : verbosity,
     "executable" : full_exe_name,
     "app.arg0" : exe_name,
     "app.env_count" : 2,
