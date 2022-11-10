@@ -215,32 +215,6 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
         new StandardMem::Handler<SST::Vanadis::VANADIS_COMPONENT>(
             this, &VANADIS_COMPONENT::handleIncomingInstCacheEvent));
 
-    // Load anonymously if not found in config
-    /*
-            if (!memInterface) {
-                    std::string memIFace =
-       params.find<std::string>("meminterface", "memHierarchy.memInterface");
-                    output.verbose(CALL_INFO, 1, 0, "Loading memory interface: %s
-       ...\n", memIFace.c_str()); Params interfaceParams =
-       params.get_scoped_params("meminterface"); interfaceParams.insert("port",
-       "dcache_link");
-
-                    memInterface =
-       loadAnonymousSubComponent<Interfaces::SimpleMem>(memIFace, "memory", 0,
-       ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, interfaceParams,
-       cpuClockTC, new SimpleMem::Handler<JunoCPU>(this, &JunoCPU::handleEvent));
-
-                    if( NULL == mem )
-                            output.fatal(CALL_INFO, -1, "Error: unable to load %s
-       memory interface.\n", memIFace.c_str());
-            }
-    */
-
-    //	if( nullptr == memDataInterface ) {
-    //		output->fatal(CALL_INFO, -1, "Error: unable to load memory interface
-    // subcomponent for data cache.\n");
-    //	}
-
     if ( nullptr == memInstInterface ) {
         output->fatal(
             CALL_INFO, -1,
@@ -262,46 +236,6 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     }
 
     lsq->setRegisterFiles(&register_files);
-
-    //	VanadisInstruction* test_ins = new VanadisAddInstruction(nextInsID++, 0,
-    // 0, isa_options[0], 3, 4, 5); 	thread_decoders[0]->getDecodedQueue()->push(
-    // test_ins ); 	rob[0]->push(test_ins);
-
-    //	test_ins = new VanadisAddImmInstruction(nextInsID++, 1, 0,
-    // isa_options[0], 1, 3, 128); 	thread_decoders[0]->getDecodedQueue()->push(
-    // test_ins ); 	rob[0]->push(test_ins);
-
-    //	test_ins = new VanadisAddImmInstruction(nextInsID++, 2, 0,
-    // isa_options[0], 3, 10101010, 4);
-    //	thread_decoders[0]->getDecodedQueue()->push( test_ins );
-    //	rob[0]->push(test_ins);
-
-    //	test_ins = new VanadisAddInstruction(nextInsID++, 4, 0, isa_options[0],
-    // 9, 4, 3); 	thread_decoders[0]->getDecodedQueue()->push( test_ins );
-    //	rob[0]->push(test_ins);
-
-    //	test_ins = new VanadisSubInstruction(nextInsID++, 3, 0, isa_options[0],
-    // 4, 1, 1); 	thread_decoders[0]->getDecodedQueue()->push( test_ins );
-    //	rob[0]->push(test_ins);
-
-    //	test_ins = new VanadisSubInstruction(nextInsID++, 3, 0, isa_options[0],
-    // 5, 6, 1); 	thread_decoders[0]->getDecodedQueue()->push( test_ins );
-    //	rob[0]->push(test_ins);
-
-    //	test_ins = new VanadisAddImmInstruction(nextInsID++, 3, 0,
-    // isa_options[0], 10, 0, 256 ); 	thread_decoders[0]->getDecodedQueue()->push(
-    // test_ins );
-    //        rob[0]->push(test_ins);
-
-    //	test_ins = new VanadisStoreInstruction( nextInsID++, 3, 0,
-    // isa_options[0], 10, 512, 5, 8 );
-    //	thread_decoders[0]->getDecodedQueue()->push( test_ins );
-    //        rob[0]->push(test_ins);
-
-    //	test_ins = new VanadisLoadInstruction( nextInsID++, 4, 0,
-    // isa_options[0], 0, 768, 12, 8 );
-    //	thread_decoders[0]->getDecodedQueue()->push( test_ins );
-    //        rob[0]->push(test_ins);
 
     //////////////////////////////////////////////////////////////////////////////////////
 
@@ -374,16 +308,6 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     //////////////////////////////////////////////////////////////////////////////////////
 
-    //	const uint64_t max_addr_mask = binary_elf_info->isELF32() ? 0xFFFFFFFF :
-    // UINT64_MAX; 	output->verbose(CALL_INFO, 8, 0, "Setting maximum address mask
-    // for the LSQ to: 0x%0llx (derived from ELF-32? %s)\n", 		max_addr_mask,
-    // binary_elf_info->isELF32() ? "yes" : "no");
-    //
-    //	// if we are doing a 32-bit run, then limit the address ranges which can
-    // be reached
-    //	// otherwise leave the mask fully open.
-    //	lsq->setMaxAddressMask( max_addr_mask );
-
     fetches_per_cycle = params.find<uint32_t>("fetches_per_cycle", 2);
     decodes_per_cycle = params.find<uint32_t>("decodes_per_cycle", 2);
     issues_per_cycle  = params.find<uint32_t>("issues_per_cycle", 2);
@@ -393,13 +317,6 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     output->verbose(CALL_INFO, 8, 0, "-> Fetches/cycle:                %" PRIu32 "\n", fetches_per_cycle);
     output->verbose(CALL_INFO, 8, 0, "-> Decodes/cycle:                %" PRIu32 "\n", decodes_per_cycle);
     output->verbose(CALL_INFO, 8, 0, "-> Retires/cycle:                %" PRIu32 "\n", retires_per_cycle);
-    //        output->verbose(CALL_INFO, 8, 0, "-> LSQ Store Entries: %" PRIu32
-    //        "\n", (uint32_t) lsq_store_size ); output->verbose(CALL_INFO, 8, 0,
-    //        "-> LSQ Stores In-flight:         %" PRIu32 "\n", (uint32_t)
-    //        lsq_store_pending ); output->verbose(CALL_INFO, 8, 0, "-> LSQ Load
-    //        Entries:             %" PRIu32 "\n", (uint32_t) lsq_load_size );
-    //        output->verbose(CALL_INFO, 8, 0, "-> LSQ Loads In-flight: %" PRIu32
-    //        "\n", (uint32_t) lsq_load_pending );
 
     std::string pipeline_trace_path = params.find<std::string>("pipeline_trace_file", "");
 
