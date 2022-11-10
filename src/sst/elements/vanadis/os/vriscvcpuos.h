@@ -247,6 +247,13 @@ public:
             uint64_t openat_flags = getRegister<uint64_t>( 12 );
             uint64_t openat_mode = getRegister<uint64_t>(13);
 
+
+#ifdef SST_COMPILE_MACOSX
+            if ( openat_dirfd == -100 ) {
+                openat_dirfd = -2;
+            }
+#endif
+
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to openat( %d, %#llx, %#" PRIx64 ", %#" PRIx64 ")\n",
                     openat_dirfd, openat_path_ptr, openat_flags, openat_mode);
 

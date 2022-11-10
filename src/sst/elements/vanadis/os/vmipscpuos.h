@@ -276,6 +276,12 @@ public:
             const uint16_t phys_reg_7 = isaTable->getIntPhysReg(7);
             uint64_t openat_mode = regFile->getIntReg<uint64_t>(phys_reg_7);
 
+#ifdef SST_COMPILE_MACOSX
+            if ( openat_dirfd == -100 ) {
+                openat_dirfd = -2;
+            }
+#endif
+
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to openat()\n");
             call_ev = new VanadisSyscallOpenAtEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, openat_dirfd, openat_path_ptr, convertFlags(openat_flags), openat_mode);
         } break;
