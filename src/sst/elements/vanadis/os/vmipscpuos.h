@@ -47,10 +47,10 @@
 #define MIPS_O_TRUNC     0x200
 #define MIPS_O_NONBLOCK  0x80
 #define MIPS_O_NDELAY    0x80
+#define MIPS_O_LARGEFILE 0x2000
 
 #ifndef SST_COMPILE_MACOSX
 #define MIPS_O_DIRECT    0x8000
-#define MIPS_O_LARGEFILE 0x2000
 #define MIPS_O_NOATIME   0x40000
 #define MIPS_O_PATH      0x200000
 #define MIPS_O_TMPFILE   0x410000
@@ -593,10 +593,13 @@ protected:
 
 #ifndef SST_COMPILE_MACOSX
 		MIPS_CONVERT( DIRECT );
-		MIPS_CONVERT( LARGEFILE );
 		MIPS_CONVERT( NOATIME );
 		MIPS_CONVERT( PATH );
 		MIPS_CONVERT( TMPFILE );
+#else
+        if ( flags & MIPS_O_LARGEFILE ) {
+            flags &= ~MIPS__O_LARGEFILE;
+        }
 #endif
 
         assert( 0 == flags );
