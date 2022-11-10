@@ -47,10 +47,10 @@
 #define RISCV_O_TRUNC       01000
 #define RISCV_O_NONBLOCK    04000 
 #define RISCV_O_NDELAY      RISCV_O_NONBLOCK 
+#define RISCV_O_LARGEFILE   0100000 
 
 #ifndef SST_COMPILE_MACOSX
 #define RISCV_O_DIRECT      040000
-#define RISCV_O_LARGEFILE   0100000 
 #define RISCV_O_NOATIME     01000000  
 #define RISCV_O_PATH        010000000 
 #define RISCV_O_TMPFILE     020200000 
@@ -539,6 +539,10 @@ protected:
         RISC_CONVERT( NOATIME );
         RISC_CONVERT( PATH );
         RISC_CONVERT( TMPFILE );
+#else
+        if ( flags & RISCV_O_LARGEFILE ) {
+            flags &= ~RISCV_O_LARGEFILE;
+        }
 #endif
         assert( 0 == flags );
 
