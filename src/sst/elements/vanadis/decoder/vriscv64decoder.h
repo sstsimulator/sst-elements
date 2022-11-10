@@ -1754,20 +1754,6 @@ protected:
                         }
                     }
                 } break;
-                case 0x71:
-                {
-                    // fmv.x.d
-                    processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
-
-                    if ( 0 == rs2 ) {
-                        if ( 0 == func_code3 ) {
-                            output->verbose(CALL_INFO, 16, 0, "-----> FMV.X.D %" PRIu16 " <- %" PRIu16 "\n", rd, rs1);
-                            bundle->addInstruction(
-                                new VanadisFP2GPRInstruction<int64_t, int64_t>(ins_address, hw_thr, options, fpflags, rd, rs1));
-                            decode_fault = false;
-                        }
-                    }
-                } break;
                 case 0x79:
                 {
                     processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
