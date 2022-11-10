@@ -72,7 +72,7 @@ public:
         const uint64_t base_addr = reg_tmp + offset;
         const uint64_t width_64  = (uint64_t)store_width;
 
-        const uint64_t right_len = (base_addr % width_64) == 0 ? width_64 : (base_addr % width_64);
+        const uint64_t right_len = (reg_tmp % width_64) == 0 ? width_64 : (reg_tmp % width_64);
         const uint64_t left_len  = (width_64 - right_len) == 0 ? width_64 : (width_64 - right_len);
 
 #ifdef VANADIS_BUILD_DEBUG
@@ -85,7 +85,7 @@ public:
         }
 #endif
         if ( is_left_store ) {
-            (*store_addr)   = base_addr;
+            (*store_addr)   = base_addr - left_len;
             (*op_width)     = left_len;
             register_offset = 0;
         }

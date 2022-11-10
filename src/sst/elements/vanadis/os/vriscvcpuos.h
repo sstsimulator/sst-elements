@@ -47,10 +47,10 @@
 #define RISCV_O_TRUNC       01000
 #define RISCV_O_NONBLOCK    04000 
 #define RISCV_O_NDELAY      RISCV_O_NONBLOCK 
+#define RISCV_O_LARGEFILE   0100000 
 
 #ifndef SST_COMPILE_MACOSX
 #define RISCV_O_DIRECT      040000
-#define RISCV_O_LARGEFILE   0100000 
 #define RISCV_O_NOATIME     01000000  
 #define RISCV_O_PATH        010000000 
 #define RISCV_O_TMPFILE     020200000 
@@ -246,6 +246,13 @@ public:
             uint64_t openat_path_ptr = getRegister<uint64_t>( 11 );
             uint64_t openat_flags = getRegister<uint64_t>( 12 );
             uint64_t openat_mode = getRegister<uint64_t>(13);
+
+
+#ifdef SST_COMPILE_MACOSX
+            if ( openat_dirfd == -100 ) {
+                openat_dirfd = -2;
+            }
+#endif
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to openat( %d, %#llx, %#" PRIx64 ", %#" PRIx64 ")\n",
                     openat_dirfd, openat_path_ptr, openat_flags, openat_mode);
@@ -539,6 +546,10 @@ protected:
         RISC_CONVERT( NOATIME );
         RISC_CONVERT( PATH );
         RISC_CONVERT( TMPFILE );
+#else
+        if ( flags & RISCV_O_LARGEFILE ) {
+            flags &= ~RISCV_O_LARGEFILE;
+        }
 #endif
         assert( 0 == flags );
 

@@ -573,7 +573,7 @@ protected:
         // handle this case later after we do a load of address and width calculation
         if(LIKELY(! needs_split)) {
             registerFiles->at(store_entry->getHWThread())->copyFromRegister(store_ins->getValueRegisterType() == STORE_FP_REGISTER ?
-                store_ins->getPhysFPRegIn(0) : store_ins->getPhysIntRegIn(1), 0, &payload[0], store_width, 
+                store_ins->getPhysFPRegIn(0) : store_ins->getPhysIntRegIn(1), store_ins->getRegisterOffset(), &payload[0], store_width, 
                 store_ins->getValueRegisterType() == STORE_FP_REGISTER);
         }
 
