@@ -2,11 +2,11 @@ import os
 import sst
 
 
-isa="mipsel"
-#isa="riscv64"
+#isa="mipsel"
+isa="riscv64"
 
-group = "basic-io"
-test = "hello-world"
+#group = "basic-io"
+#test = "hello-world"
 #test = "hello-world-cpp"
 #test = "openat"
 #test = "printf-check"
