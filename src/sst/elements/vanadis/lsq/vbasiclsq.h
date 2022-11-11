@@ -573,7 +573,7 @@ protected:
         // handle this case later after we do a load of address and width calculation
         if(LIKELY(! needs_split)) {
             registerFiles->at(store_entry->getHWThread())->copyFromRegister(store_ins->getValueRegisterType() == STORE_FP_REGISTER ?
-                store_ins->getPhysFPRegIn(0) : store_ins->getPhysIntRegIn(1), 0, &payload[0], store_width, 
+                store_ins->getPhysFPRegIn(0) : store_ins->getPhysIntRegIn(1), store_ins->getRegisterOffset(), &payload[0], store_width, 
                 store_ins->getValueRegisterType() == STORE_FP_REGISTER);
         }
 
@@ -700,7 +700,7 @@ protected:
 
         VanadisBasicLoadPendingEntry* load_entry = new VanadisBasicLoadPendingEntry(load_ins, load_address, load_width);
 
-        if ( load_address + load_width < load_address ) {
+        if ( load_address + load_width < load_address || (load_address + load_width) & ~address_mask) {
             load_ins->markExecuted();
             return;
         }

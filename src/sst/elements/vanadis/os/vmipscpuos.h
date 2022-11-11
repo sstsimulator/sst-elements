@@ -47,10 +47,10 @@
 #define MIPS_O_TRUNC     0x200
 #define MIPS_O_NONBLOCK  0x80
 #define MIPS_O_NDELAY    0x80
+#define MIPS_O_LARGEFILE 0x2000
 
 #ifndef SST_COMPILE_MACOSX
 #define MIPS_O_DIRECT    0x8000
-#define MIPS_O_LARGEFILE 0x2000
 #define MIPS_O_NOATIME   0x40000
 #define MIPS_O_PATH      0x200000
 #define MIPS_O_TMPFILE   0x410000
@@ -275,6 +275,12 @@ public:
 
             const uint16_t phys_reg_7 = isaTable->getIntPhysReg(7);
             uint64_t openat_mode = regFile->getIntReg<uint64_t>(phys_reg_7);
+
+#ifdef SST_COMPILE_MACOSX
+            if ( openat_dirfd == -100 ) {
+                openat_dirfd = -2;
+            }
+#endif
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to openat()\n");
             call_ev = new VanadisSyscallOpenAtEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, openat_dirfd, openat_path_ptr, convertFlags(openat_flags), openat_mode);
@@ -597,8 +603,11 @@ protected:
 		MIPS_CONVERT( NOATIME );
 		MIPS_CONVERT( PATH );
 		MIPS_CONVERT( TMPFILE );
+#else
+        if ( flags & MIPS_O_LARGEFILE ) {
+            flags &= ~MIPS_O_LARGEFILE;
+        }
 #endif
-
         assert( 0 == flags );
 
 		return out;

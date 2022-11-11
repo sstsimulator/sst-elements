@@ -26,6 +26,7 @@
 #include "inst/vmul.h"
 #include "inst/vmuli.h"
 #include "inst/vmulsplit.h"
+#include "inst/vmulhigh.h"
 #include "inst/vsub.h"
 
 // Logical operations
@@ -101,6 +102,8 @@
 #include "inst/vfpmsub.h"
 #include "inst/vfpdiv.h"
 #include "inst/vfpmul.h"
+#include "inst/vfpmin.h"
+#include "inst/vfpsqrt.h"
 #include "inst/vfpscmp.h"
 #include "inst/vfpsignlogic.h"
 #include "inst/vfpsub.h"
