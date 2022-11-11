@@ -444,7 +444,7 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* res
                             // Delete the request 
                             mmio->requests.erase(i);
 
-                            // Delet the resp
+                            // Delete the resp
                             delete resp;
                             return;
                         } else if (packet->cuda_memcpy.kind == cudaMemcpyDeviceToHost) {
