@@ -120,30 +120,4 @@ l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to
  v0.syscall-cycles.1 : Accumulator : Sum.u64 = 33; SumSQ.u64 = 33; Count.u64 = 33; Min.u64 = 1; Max.u64 = 1; 
  v0.phys_int_reg_in_use.1 : Accumulator : Sum.u64 = 19377164; SumSQ.u64 = 716053086; Count.u64 = 526490; Min.u64 = 35; Max.u64 = 50; 
  v0.phys_fp_reg_in_use.1 : Accumulator : Sum.u64 = 18427243; SumSQ.u64 = 644957121; Count.u64 = 526490; Min.u64 = 35; Max.u64 = 39; 
-
-
-------------------------------------------------------------
-Simulation Timing Information:
-Build time:                      0.090080 seconds
-Simulation time:                 0.417548 seconds
-Total time:                      0.513253 seconds
-Simulated time:                  262.209 us
-
-Simulation Resource Information:
-Max Resident Set Size:           121.472 MB
-Approx. Global Max RSS Size:     121.472 MB
-Max Local Page Faults:           486 faults
-Global Page Faults:              486 faults
-Max Output Blocks:               0 blocks
-Max Input Blocks:                0 blocks
-Max mempool usage:               33.9761 MB
-Global mempool usage:            33.9761 MB
-Global active activities:        53 activities
-Current global TimeVortex depth: 5 entries
-Max TimeVortex depth:            325 entries
-Max Sync data size:              0 B
-Global Sync data size:           0 B
-------------------------------------------------------------
-
-
 Simulation is complete, simulated time: 262.209 us
