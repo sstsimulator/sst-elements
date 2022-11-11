@@ -474,8 +474,8 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
     const int output_verbosity = output->getVerboseLevel();
     bool      issued_an_ins    = false;
 
-    for ( uint32_t i = 0; i < hw_threads; ++i ) {
-        if ( !halted_masks[i] ) {
+    for ( auto i = 0; i < hw_threads; ++i ) {
+        if ( LIKELY(! halted_masks[i] )) {
 #ifdef VANADIS_BUILD_DEBUG
             if ( output->getVerboseLevel() >= 4 ) {
                 if(print_issue_tables) {
@@ -487,7 +487,9 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
             issued_an_ins = false;
 
             // Find the next instruction which has not been issued yet
-            for ( uint32_t j = rob_start; j < rob[i]->size(); ++j ) {
+            const auto rob_size = rob[i]->size();
+
+            for ( auto j = rob_start; j < rob_size; ++j ) {
                 VanadisInstruction* ins = rob[i]->peekAt(j);
 
                 if ( ! ins->completedIssue() ) {
@@ -575,22 +577,22 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
 
                     // if the instruction is *not* issued yet, we need to keep track
                     // of which instructions are being read
-                    for ( uint16_t k = 0; k < ins->countISAIntRegIn(); ++k ) {
+                    for ( auto k = 0; k < ins->countISAIntRegIn(); ++k ) {
                         tmp_not_issued_int_reg_read[ins->getISAIntRegIn(k)] = 1;
                     }
 
-                    for ( uint16_t k = 0; k < ins->countISAFPRegIn(); ++k ) {
+                    for ( auto k = 0; k < ins->countISAFPRegIn(); ++k ) {
                         tmp_not_issued_fp_reg_read[ins->getISAFPRegIn(k)] = 1;
                     }
                 }
 
                 // Collect up all integer registers we write to
-                for ( uint16_t k = 0; k < ins->countISAIntRegOut(); ++k ) {
+                for ( auto k = 0; k < ins->countISAIntRegOut(); ++k ) {
                     tmp_int_reg_write[ins->getISAIntRegOut(k)] = 1;
                 }
 
                 // Collect up all fp registers we write to
-                for ( uint16_t k = 0; k < ins->countISAFPRegOut(); ++k ) {
+                for ( auto k = 0; k < ins->countISAFPRegOut(); ++k ) {
                     tmp_fp_reg_write[ins->getISAFPRegOut(k)] = 1;
                 }
 
@@ -611,7 +613,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
             }
         }
         else {
-            if(output->getVerboseLevel() >= 8) {
+            if(output_verbosity >= 8) {
                 output->verbose(
                     CALL_INFO, 8, 0, "thread %" PRIu32 " is halted, did not process for issue this cycle.\n", i);
             }
@@ -1028,7 +1030,7 @@ VANADIS_COMPONENT::mapInstructiontoFunctionalUnit(
     bool allocated = false;
 
     for ( VanadisFunctionalUnit* next_fu : functional_units ) {
-        if ( next_fu->isInstructionSlotFree() ) {
+        if ( LIKELY(next_fu->isInstructionSlotFree() )) {
             next_fu->insertInstruction(ins);
             allocated = true;
 
@@ -1069,11 +1071,7 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
             allocated_fu = true;
         }
         break;
-
-    case INST_FP_ARITH:
-        allocated_fu = mapInstructiontoFunctionalUnit(ins, fu_fp_arith);
-        break;
-
+    
     case INST_BRANCH:
         allocated_fu = mapInstructiontoFunctionalUnit(ins, fu_branch);
         break;
@@ -1081,6 +1079,10 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
     case INST_NOOP:
         ins->markExecuted();
         allocated_fu = true;
+        break;
+
+    case INST_FP_ARITH:
+        allocated_fu = mapInstructiontoFunctionalUnit(ins, fu_fp_arith);
         break;
 
     case INST_INT_DIV:
@@ -1107,15 +1109,15 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
         allocated_fu = true;
     } break;
 
-    case INST_FAULT:
-        ins->markExecuted();
-        allocated_fu = true;
-        break;
-
     case INST_SYSCALL:
         if ( lsq->storeBufferSize() == 0 && lsq->loadSize() == 0 ) { 
             allocated_fu = true;
         }
+        break;
+
+    case INST_FAULT:
+        ins->markExecuted();
+        allocated_fu = true;
         break;
 
     default:
@@ -1123,11 +1125,7 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
         break;
     }
 
-    if ( allocated_fu ) { 
-        return 0; 
-    } else {
-        return 1;
-    }
+    return allocated_fu ? 0 : 1;
 }
 
 bool
@@ -1138,6 +1136,8 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
         primaryComponentOKToEndSim();
         return true;
     }
+
+    const auto output_verbosity = output->getVerboseLevel();
 
     stat_cycles->addData(1);
     ins_issued_this_cycle  = 0;
@@ -1150,21 +1150,27 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     }
 
 #ifdef VANADIS_BUILD_DEBUG
-    output->verbose(
-        CALL_INFO, 2, VANADIS_DBG_CYCLE_FLG, "============================ Cycle %12" PRIu64 " ============================\n",
-        current_cycle);
-    output->verbose(CALL_INFO, 9, 0, "-- Core Status:\n");
-
-    for ( uint32_t i = 0; i < hw_threads; ++i ) {
+    if(output_verbosity >= 2) {
         output->verbose(
-            CALL_INFO, 9, 0,
-            "---> Thr: %5" PRIu32 " (%s) / ROB-Pend: %" PRIu16 " / IntReg-Free: %" PRIu16 " / FPReg-Free: %" PRIu16
-            "\n",
-            i, halted_masks[i] ? "halted" : "unhalted", (uint16_t)rob[i]->size(),
-            (uint16_t)int_register_stacks[i]->unused(), (uint16_t)fp_register_stacks[i]->unused());
+            CALL_INFO, 2, VANADIS_DBG_CYCLE_FLG, "============================ Cycle %12" PRIu64 " ============================\n",
+            current_cycle);
     }
 
-    output->verbose(CALL_INFO, 9, 0, "-- Resetting Zero Registers\n");
+    if(output_verbosity >= 9) {
+        output->verbose(CALL_INFO, 9, 0, "-- Core Status:\n");
+
+        for ( uint32_t i = 0; i < hw_threads; ++i ) {
+            
+            output->verbose(
+                CALL_INFO, 9, 0,
+                "---> Thr: %5" PRIu32 " (%s) / ROB-Pend: %" PRIu16 " / IntReg-Free: %" PRIu16 " / FPReg-Free: %" PRIu16
+                "\n",
+                i, halted_masks[i] ? "halted" : "unhalted", (uint16_t)rob[i]->size(),
+                (uint16_t)int_register_stacks[i]->unused(), (uint16_t)fp_register_stacks[i]->unused());
+        }
+
+        output->verbose(CALL_INFO, 9, 0, "-- Resetting Zero Registers\n");
+    }
 #endif
 
     for ( uint32_t i = 0; i < hw_threads; ++i ) {
@@ -1180,10 +1186,12 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     // Fetch
     // //////////////////////////////////////////////////////////////////////////
 #ifdef VANADIS_BUILD_DEBUG
-    output->verbose(
-        CALL_INFO, 9, 0,
-        "=> Fetch Stage "
-        "<==========================================================\n");
+    if(output_verbosity >= 9) {
+        output->verbose(
+            CALL_INFO, 9, 0,
+            "=> Fetch Stage "
+            "<==========================================================\n");
+    }
 #endif
     for ( uint32_t i = 0; i < fetches_per_cycle; ++i ) {
         if ( performFetch(cycle) != 0 ) { break; }
@@ -1192,10 +1200,12 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     // Decode
     // //////////////////////////////////////////////////////////////////////////
 #ifdef VANADIS_BUILD_DEBUG
-    output->verbose(
-        CALL_INFO, 9, 0,
-        "=> Decode Stage "
-        "<==========================================================\n");
+    if(output_verbosity >= 9) {
+        output->verbose(
+            CALL_INFO, 9, 0,
+            "=> Decode Stage "
+            "<==========================================================\n");
+    }
 #endif
     for ( uint32_t i = 0; i < decodes_per_cycle; ++i ) {
         if ( performDecode(cycle) != 0 ) { break; }
@@ -1206,10 +1216,12 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     // Issue
     // //////////////////////////////////////////////////////////////////////////
 #ifdef VANADIS_BUILD_DEBUG
-    output->verbose(
-        CALL_INFO, 9, 0,
-        "=> Issue Stage  "
-        "<==========================================================\n");
+    if(output_verbosity >= 9) {
+        output->verbose(
+            CALL_INFO, 9, 0,
+            "=> Issue Stage  "
+            "<==========================================================\n");
+    }
 #endif
     // Clear our temps on a per-thread basis
     for ( uint32_t i = 0; i < hw_threads; ++i ) {
@@ -1231,20 +1243,24 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     // Execute
     // //////////////////////////////////////////////////////////////////////////
 #ifdef VANADIS_BUILD_DEBUG
-    output->verbose(
-        CALL_INFO, 9, 0,
-        "=> Execute Stage "
-        "<==========================================================\n");
+    if(output_verbosity >= 9) {
+        output->verbose(
+            CALL_INFO, 9, 0,
+            "=> Execute Stage "
+            "<==========================================================\n");
+    }
 #endif
     performExecute(cycle);
 
     bool tick_return = false;
 
 #ifdef VANADIS_BUILD_DEBUG
-    output->verbose(
-        CALL_INFO, 9, 0,
-        "=> Retire Stage "
-        "<==========================================================\n");
+    if(output_verbosity >= 9) {
+        output->verbose(
+            CALL_INFO, 9, 0,
+            "=> Retire Stage "
+            "<==========================================================\n");
+    }
 #endif
     // Retire
     // //////////////////////////////////////////////////////////////////////////
@@ -1257,10 +1273,12 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
                 // re-register
                 tick_return = true;
 #ifdef VANADIS_BUILD_DEBUG
-                output->verbose(
-                    CALL_INFO, 8, 0,
-                    "--> declocking core, result from retire is SYSCALL "
-                    "pending front of ROB\n");
+                if(output_verbosity >= 8) {
+                    output->verbose(
+                        CALL_INFO, 8, 0,
+                        "--> declocking core, result from retire is SYSCALL "
+                        "pending front of ROB\n");
+                }
 #endif
             }
             else {
@@ -1280,10 +1298,12 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     stat_rob_entries->addData(rob_total_count);
 
 #ifdef VANADIS_BUILD_DEBUG
-    output->verbose(
-        CALL_INFO, 2, VANADIS_DBG_CYCLE_FLG,
-        "================================ End of Cycle "
-        "==============================\n");
+    if(output_verbosity >= 2) {
+        output->verbose(
+            CALL_INFO, 2, VANADIS_DBG_CYCLE_FLG,
+            "================================ End of Cycle "
+            "==============================\n");
+    }
 #endif
 
     current_cycle++;
