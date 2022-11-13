@@ -232,6 +232,12 @@ public:
             int32_t path_addr = getRegister( 5 );
             int32_t flags = getRegister( 6 );
 
+#ifdef SST_COMPILE_MACOSX
+            if ( dirFd == -100 ) {
+                dirFd = -2;
+            }
+#endif
+
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to unlinkat( %d, %" PRId32 ", %#" PRIx32" )\n",dirFd,path_addr,flags);
 
             call_ev = new VanadisSyscallUnlinkatEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, dirFd,path_addr,flags);
