@@ -58,6 +58,12 @@ public:
                 output->verbose(CALL_INFO, 16, 0, "[syscall-openat] new Vanadis file descriptor %" PRIu32 ", SST file descriptor %d\n",
                         opened_fd_handle, desp->getFileDescriptor() );
             } catch ( int error ) {
+
+#ifdef SST_COMPILE_MACOSX
+                if ( errno == 30 ) {
+                    errno = 13;
+                }
+#endif
                 opened_fd_handle = -errno;
                 char buf[100];
                 strerror_r(errno,buf,100);
