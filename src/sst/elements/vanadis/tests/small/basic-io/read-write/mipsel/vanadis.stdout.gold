@@ -2,10 +2,10 @@ writeData() open( 'read_write_test.txt' ) succeeded
 write 10 bytes
 write 20 bytes
 write 718 bytes
-writeData() close 'read_write_test.txt' succeede
+writeData() close 'read_write_test.txt' succeeded
 readData() open 'read_write_test.txt' succeeded
 read 10 bytes
 read 20 bytes
 read 718 bytes
-readData() close 'read_write_test.txt' succeede’
+readData() close 'read_write_test.txt' succeeded
 unlink 'read_write_test.txt' succeeded
