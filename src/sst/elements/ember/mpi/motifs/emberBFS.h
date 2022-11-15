@@ -28,6 +28,59 @@
 namespace SST {
 namespace Ember {
 
+struct PolyModelND : public SST::Core::Serialization::serializable
+{
+    // coeff is a map from powers to coefficients, e.g.
+    // [0,2,2]:0.4 means that the coefficient of x0^0 * x1^2 * x2^2 is 0.4
+    // We will not worry about making sure all powers are there. We need only
+    // evaluate what we find in this list
+    std::map<std::vector<int>, double> coeff;
+    double scale; // scale the result of eval
+    double min; // minimum value returned by the model
+
+    PolyModelND() : coeff(), scale(1), min(0) {}
+
+    PolyModelND(std::map<std::vector<int>, double> coeff, double scale, double min)
+        : coeff(coeff)
+        , scale(scale)
+        , min(min)
+    {}
+
+    // Evaluate the model at x
+    double eval(std::vector<int> x)
+    {
+        double val = 0.0;
+        for (const auto &co : coeff) {         // loop over our map of powers->coefficients
+            double term = co.second;             // value in map is the coefficient
+            for (int i = 0; i < x.size(); i++) {       // for each power, evaluate that power and multiple
+                term *= pow(x[i], co.first[i]);
+            }
+            val += term;                        // sum terms
+        }
+        val *= scale;                           // scale value (used for time conversion)
+        val = std::nearbyint(val);              // round so we don't get fractional message sizes
+        return val > min ? val : min;           // don't return less than min, useful to remove negatives
+    }
+
+    bool operator==(const PolyModelND& lhs) const
+    {
+        return (coeff == lhs.coeff);
+    }
+
+    bool operator!=(const PolyModelND& lhs) const
+    {
+        return (coeff != lhs.coeff);
+    }
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override
+    {
+        ser& coeff;
+    }
+
+    ImplementSerializable(SST::Ember::PolyModelND);
+
+};
+
 struct PolyModel : public SST::Core::Serialization::serializable
 {
     std::vector<double> coeff; // polynomial coefficients
@@ -175,6 +228,9 @@ private:
 
     std::map<std::tuple<int,int,int>,PolyModel> msg_model;
     std::map<std::tuple<int,int,int,int>,PolyModel> exec_model;
+
+    std::map<std::tuple<int,int>,PolyModelND> msg_model_nd;
+    std::map<std::tuple<int,int,int>,PolyModelND> exec_model_nd;
 
     // Random number generator
     SST::RNG::MersenneRNG* rng;
