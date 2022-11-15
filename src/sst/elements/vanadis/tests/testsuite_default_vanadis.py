@@ -29,7 +29,7 @@ def build_vanadis_test_matrix():
     arch_list = ["mipsel","riscv64"]
 
     location="small/basic-io"
-    io_tests = ["hello-world","hello-world-cpp","printf-check","openat","unlink","unlinkat"]
+    io_tests = ["hello-world","hello-world-cpp","printf-check","openat","read-write","unlink","unlinkat"]
     #io_tests = []
     for test in io_tests:
         for arch in arch_list:
@@ -213,8 +213,8 @@ class testcase_vanadis(SSTTestCase):
             log_failure(diffdata)
 
             if updateFiles:
-                print("Updating sst file ",os_outfile, "->" ,ref_os_outfile)
-                subprocess.call( [ "cp", os_outfile, ref_os_outfile ] )
+                print("Updating sst file ",os_errfile, "->" ,ref_os_errfile)
+                subprocess.call( [ "cp", os_errfile, ref_os_errfile ] )
 
         self.assertTrue(cmp_result, "Vanadis os error file {0} does not match reference error file {1}".format(os_outfile, ref_os_outfile))
 
