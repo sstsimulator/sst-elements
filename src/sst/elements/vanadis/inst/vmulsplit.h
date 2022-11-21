@@ -55,12 +55,14 @@ public:
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: (addr=%p) MULSPLIT phys: out-lo: %" PRIu16 " out-hi: %" PRIu16 " in=%" PRIu16 ", %" PRIu16
-            ", isa: out-lo: %" PRIu16 " out-hi: %" PRIu16 " / in=%" PRIu16 ", %" PRIu16 "\n",
-            (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_out[1], phys_int_regs_in[0],
-            phys_int_regs_in[1], isa_int_regs_out[0], isa_int_regs_out[1], isa_int_regs_in[0], isa_int_regs_in[1]);
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(
+                CALL_INFO, 16, 0,
+                "Execute: (addr=%p) MULSPLIT phys: out-lo: %" PRIu16 " out-hi: %" PRIu16 " in=%" PRIu16 ", %" PRIu16
+                ", isa: out-lo: %" PRIu16 " out-hi: %" PRIu16 " / in=%" PRIu16 ", %" PRIu16 "\n",
+                (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_out[1], phys_int_regs_in[0],
+                phys_int_regs_in[1], isa_int_regs_out[0], isa_int_regs_out[1], isa_int_regs_in[0], isa_int_regs_in[1]);
+        }
 #endif
         if ( perform_signed ) {
             switch ( register_format ) {
@@ -73,11 +75,13 @@ public:
                 const int64_t result_lo       = (int32_t)(multiply_result & 0xFFFFFFFF);
                 const int64_t result_hi       = (int32_t)(multiply_result >> 32);
 
-                output->verbose(
-                    CALL_INFO, 16, 0,
-                    "-> Execute: (detail, signed, MULSPLIT64) %" PRId64 " * %" PRId64 " = %" PRId64 " = (lo: %" PRId64
-                    ", hi: %" PRId64 " )\n",
-                    src_1, src_2, multiply_result, result_lo, result_hi);
+                if(output->getVerboseLevel() >= 16) {
+                    output->verbose(
+                        CALL_INFO, 16, 0,
+                        "-> Execute: (detail, signed, MULSPLIT64) %" PRId64 " * %" PRId64 " = %" PRId64 " = (lo: %" PRId64
+                        ", hi: %" PRId64 " )\n",
+                        src_1, src_2, multiply_result, result_lo, result_hi);
+                }
 
                 regFile->setIntReg<int64_t>(phys_int_regs_out[0], result_lo);
                 regFile->setIntReg<int64_t>(phys_int_regs_out[1], result_hi);
@@ -91,11 +95,13 @@ public:
                 const int32_t result_lo       = (int32_t)(multiply_result & 0xFFFFFFFF);
                 const int32_t result_hi       = (int32_t)(multiply_result >> 32UL);
 
-                output->verbose(
-                    CALL_INFO, 16, 0,
-                    "-> Execute: (detail, signed, MULSPLIT32) %" PRId32 " * %" PRId32 " = %" PRId64 " = (lo: %" PRId32
-                    ", hi: %" PRId32 " )\n",
-                    src_1, src_2, multiply_result, result_lo, result_hi);
+                if(output->getVerboseLevel() >= 16) {
+                    output->verbose(
+                        CALL_INFO, 16, 0,
+                        "-> Execute: (detail, signed, MULSPLIT32) %" PRId32 " * %" PRId32 " = %" PRId64 " = (lo: %" PRId32
+                        ", hi: %" PRId32 " )\n",
+                        src_1, src_2, multiply_result, result_lo, result_hi);
+                }
 
                 regFile->setIntReg<int32_t>(phys_int_regs_out[0], result_lo);
                 regFile->setIntReg<int32_t>(phys_int_regs_out[1], result_hi);
@@ -117,11 +123,13 @@ public:
                 const uint64_t result_lo       = (uint32_t)(multiply_result & 0xFFFFFFFF);
                 const uint64_t result_hi       = (uint32_t)(multiply_result >> 32UL);
 
-                output->verbose(
-                    CALL_INFO, 16, 0,
-                    "-> Execute: (detail, unsigned, MULSPLIT64) %" PRIu64 " * %" PRIu64 " = %" PRIu64 " = (lo: %" PRIu64
-                    ", hi: %" PRIu64 " )\n",
-                    src_1, src_2, multiply_result, result_lo, result_hi);
+                if(output->getVerboseLevel() >= 16) {
+                    output->verbose(
+                        CALL_INFO, 16, 0,
+                        "-> Execute: (detail, unsigned, MULSPLIT64) %" PRIu64 " * %" PRIu64 " = %" PRIu64 " = (lo: %" PRIu64
+                        ", hi: %" PRIu64 " )\n",
+                        src_1, src_2, multiply_result, result_lo, result_hi);
+                }
 
                 regFile->setIntReg<uint64_t>(phys_int_regs_out[0], result_lo);
                 regFile->setIntReg<uint64_t>(phys_int_regs_out[1], result_hi);
@@ -135,11 +143,13 @@ public:
                 const uint32_t result_lo       = (uint32_t)(multiply_result & 0xFFFFFFFF);
                 const uint32_t result_hi       = (uint32_t)(multiply_result >> 32UL);
 
-                output->verbose(
-                    CALL_INFO, 16, 0,
-                    "-> Execute: (detail, unsigned, MULSPLIT32) %" PRIu32 " * %" PRIu32 " = %" PRIu64 " = (lo: %" PRIu32
-                    ", hi: %" PRIu32 " )\n",
-                    src_1, src_2, multiply_result, result_lo, result_hi);
+                if(output->getVerboseLevel() >= 16) {
+                    output->verbose(
+                        CALL_INFO, 16, 0,
+                        "-> Execute: (detail, unsigned, MULSPLIT32) %" PRIu32 " * %" PRIu32 " = %" PRIu64 " = (lo: %" PRIu32
+                        ", hi: %" PRIu32 " )\n",
+                        src_1, src_2, multiply_result, result_lo, result_hi);
+                }
 
                 regFile->setIntReg<uint32_t>(phys_int_regs_out[0], result_lo);
                 regFile->setIntReg<uint32_t>(phys_int_regs_out[1], result_hi);

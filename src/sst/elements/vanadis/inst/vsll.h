@@ -53,12 +53,14 @@ public:
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: (addr=%p) SLL phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
-            " / in=%" PRIu16 ", %" PRIu16 "\n",
-            (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1],
-            isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(
+                CALL_INFO, 16, 0,
+                "Execute: (addr=%p) SLL phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
+                " / in=%" PRIu16 ", %" PRIu16 "\n",
+                (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1],
+                isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);
+        }
 #endif
         switch ( register_format ) {
         case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
@@ -79,9 +81,6 @@ public:
         {
             const uint32_t src_1 = regFile->getIntReg<uint32_t>(phys_int_regs_in[0]);
             const uint32_t src_2 = regFile->getIntReg<uint32_t>(phys_int_regs_in[1]) & 0x1F;
-            //                                const uint32_t src_2 =
-            //                                regFile->getIntReg<uint32_t>(
-            //                                phys_int_regs_in[1] );
 
             if ( 0 == src_2 ) { regFile->setIntReg<uint32_t>(phys_int_regs_out[0], src_1); }
             else {

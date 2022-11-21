@@ -53,16 +53,20 @@ public:
         const reg_format reg_value = call_func();
 
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: (addr=0x%0llx) SETREG phys: out=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16 "\n",
-            getInstructionAddress(), phys_int_regs_out[0], reg_value, isa_int_regs_out[0]);
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(
+                CALL_INFO, 16, 0,
+                "Execute: (addr=0x%0llx) SETREG phys: out=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16 "\n",
+                getInstructionAddress(), phys_int_regs_out[0], reg_value, isa_int_regs_out[0]);
+        }
 #endif
 
 		regFile->setIntReg<reg_format>(phys_int_regs_out[0], reg_value);
 
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(CALL_INFO, 16, 0, "Result-reg %" PRIu16 ": %" PRId64 "\n", phys_int_regs_out[0], reg_value);
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(CALL_INFO, 16, 0, "Result-reg %" PRIu16 ": %" PRId64 "\n", phys_int_regs_out[0], reg_value);
+        }
 #endif
 
         markExecuted();
