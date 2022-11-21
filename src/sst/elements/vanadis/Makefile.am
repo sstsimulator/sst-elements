@@ -248,7 +248,13 @@ EXTRA_DIST = \
     tests/small/basic-io/read-write/Makefile \
     tests/small/basic-io/read-write/read-write.c \
     tests/small/basic-io/read-write/mipsel/read-write \
+    tests/small/basic-io/read-write/mipsel/sst.stdout.gold \
+    tests/small/basic-io/read-write/mipsel/vanadis.stderr.gold \
+    tests/small/basic-io/read-write/mipsel/vanadis.stdout.gold \
     tests/small/basic-io/read-write/riscv64/read-write \
+    tests/small/basic-io/read-write/riscv64/sst.stdout.gold \
+    tests/small/basic-io/read-write/riscv64/vanadis.stderr.gold \
+    tests/small/basic-io/read-write/riscv64/vanadis.stdout.gold \
 \
 	tests/small/basic-math/sqrt-double/Makefile \
 	tests/small/basic-math/sqrt-double/sqrt-double.c \

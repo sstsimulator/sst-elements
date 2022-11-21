@@ -9,6 +9,8 @@ module_init = 0
 module_sema = threading.Semaphore()
 vanadis_test_matrix = []
 
+MakeTests = False
+#MakeTests = True
 updateFiles = False
 #updateFiles = True
 
@@ -27,7 +29,7 @@ def build_vanadis_test_matrix():
     arch_list = ["mipsel","riscv64"]
 
     location="small/basic-io"
-    io_tests = ["hello-world","hello-world-cpp","printf-check","openat","unlink","unlinkat"]
+    io_tests = ["hello-world","hello-world-cpp","printf-check","openat","read-write","unlink","unlinkat"]
     #io_tests = []
     for test in io_tests:
         for arch in arch_list:
@@ -126,7 +128,8 @@ class testcase_vanadis(SSTTestCase):
     def test_vanadis_short_tests(self, testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec):
         self._checkSkipConditions( isa )
 
-        self.makeTest( testname, isa, elftestdir, elffile )
+        if MakeTests:
+            self.makeTest( testname, isa, elftestdir, elffile )
         log_debug("Running Vanadis test #{0} ({1}): elffile={4} in dir {3}, isa {5}; using sdl={2}".format(testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec))
         self.vanadis_test_template(testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec)
 
@@ -210,8 +213,8 @@ class testcase_vanadis(SSTTestCase):
             log_failure(diffdata)
 
             if updateFiles:
-                print("Updating sst file ",os_outfile, "->" ,ref_os_outfile)
-                subprocess.call( [ "cp", os_outfile, ref_os_outfile ] )
+                print("Updating sst file ",os_errfile, "->" ,ref_os_errfile)
+                subprocess.call( [ "cp", os_errfile, ref_os_errfile ] )
 
         self.assertTrue(cmp_result, "Vanadis os error file {0} does not match reference error file {1}".format(os_outfile, ref_os_outfile))
 
@@ -222,8 +225,9 @@ class testcase_vanadis(SSTTestCase):
 
     def _checkSkipConditions(self,isa):
         # Check to see if the musl compiler is missing
-        if self._is_musl_compiler_available(isa) == False:
-            self.skipTest("Vanadis Skipping Test - musl compiler not available")
+        if MakeTests:
+            if self._is_musl_compiler_available(isa) == False:
+                self.skipTest("Vanadis Skipping Test - musl compiler not available")
 
         if testing_check_get_num_ranks() > 1:
             self.skipTest("Vanadis Skipping Test - ranks > 1 not supported")
