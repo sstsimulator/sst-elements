@@ -57,9 +57,9 @@ public:
     }
 
     void store(const I& key, T value) {
-        if (contains(key)) {
+        if (LIKELY(contains(key))) {
             send_key_to_front(key);
-	    data_values[key] = value;
+	        data_values[key] = value;
         } else {
             kill_lru_key();
             data_values.insert(std::pair<I, T>(key, value));
@@ -68,7 +68,7 @@ public:
     }
 
     void touch(const I& key) {
-        if (contains(key)) {
+        if (LIKELY(contains(key))) {
             send_key_to_front(key);
         }
     }
@@ -84,7 +84,7 @@ private:
             return;
         }
 
-        I remove_key = ordering_q.back();
+        const I remove_key = ordering_q.back();
         ordering_q.pop_back();
 
         auto find_key = data_values.find(remove_key);
@@ -95,7 +95,7 @@ private:
     void send_key_to_front(const I& key) {
         bool found_key = false;
 
-        for (auto order_itr = ordering_q.begin(); order_itr != ordering_q.end();) {
+        for (auto order_itr = ordering_q.cbegin(); order_itr != ordering_q.cend();) {
             if (key == (*order_itr)) {
                 ordering_q.erase(order_itr);
                 found_key = true;
@@ -105,7 +105,7 @@ private:
             }
         }
 
-        if (found_key) {
+        if (LIKELY(found_key)) {
             ordering_q.push_front(key);
         }
     }
