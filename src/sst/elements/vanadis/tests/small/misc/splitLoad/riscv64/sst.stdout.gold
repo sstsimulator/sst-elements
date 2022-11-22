@@ -22,9 +22,9 @@ l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to
  v0:lsq.stores_executed.1 : Accumulator : Sum.u64 = 4797; SumSQ.u64 = 4797; Count.u64 = 4797; Min.u64 = 1; Max.u64 = 1; 
  v0:lsq.fences_executed.1 : Accumulator : Sum.u64 = 73; SumSQ.u64 = 73; Count.u64 = 73; Min.u64 = 1; Max.u64 = 1; 
  v0:lsq.store_buffer_entries.1 : Accumulator : Sum.u64 = 18144; SumSQ.u64 = 76432; Count.u64 = 161378; Min.u64 = 0; Max.u64 = 8; 
- v0:lsq.stores_in_flight.1 : Accumulator : Sum.u64 = 201691; SumSQ.u64 = 1951331; Count.u64 = 161378; Min.u64 = 0; Max.u64 = 27; 
- v0:lsq.loads_in_flight.1 : Accumulator : Sum.u64 = 118768; SumSQ.u64 = 303658; Count.u64 = 161378; Min.u64 = 0; Max.u64 = 14; 
- v0:lsq.operations_pending : Accumulator : Sum.u64 = 31776; SumSQ.u64 = 95940; Count.u64 = 161378; Min.u64 = 0; Max.u64 = 9; 
+ v0:lsq.stores_in_flight.1 : Accumulator : Sum.u64 = 201692; SumSQ.u64 = 1951334; Count.u64 = 161378; Min.u64 = 0; Max.u64 = 27; 
+ v0:lsq.loads_in_flight.1 : Accumulator : Sum.u64 = 118772; SumSQ.u64 = 303662; Count.u64 = 161378; Min.u64 = 0; Max.u64 = 14; 
+ v0:lsq.operations_pending : Accumulator : Sum.u64 = 31772; SumSQ.u64 = 95928; Count.u64 = 161378; Min.u64 = 0; Max.u64 = 9; 
  v0.instructions_retired.1 : Accumulator : Sum.u64 = 40584; SumSQ.u64 = 79454; Count.u64 = 161378; Min.u64 = 0; Max.u64 = 4; 
  v0.instructions_decoded.1 : Accumulator : Sum.u64 = 280439; SumSQ.u64 = 2056409; Count.u64 = 161378; Min.u64 = 0; Max.u64 = 9; 
  v0.instructions_issued.1 : Accumulator : Sum.u64 = 79025; SumSQ.u64 = 184559; Count.u64 = 161378; Min.u64 = 0; Max.u64 = 4; 
