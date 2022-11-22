@@ -102,7 +102,7 @@ public:
         return found;
     }
 
-    bool    storeAddressOverlaps(const uint64_t address, const uint64_t width) const {
+    bool    storeAddressOverlaps(const uint64_t loadAddress, const uint64_t loadWidth) const {
         bool overlaps = false;
 
         // Address Overlaps
@@ -110,8 +110,42 @@ public:
         // 1. the address being checked is within the range of the store being performed (overlaps fully/right side)
         // 2. the address + width being checked is within the range of the store being performed (overlaps left side)
 
-        overlaps = ((address >= storeAddress) && (address < (storeAddress + storeWidth)));
-        overlaps = overlaps || ((address + width) >= storeAddress) && ((address + width) < (storeAddress + storeWidth));
+        const auto store_end = storeAddress + storeWidth;
+        const auto load_end  = loadAddress + loadWidth;
+
+        /*
+            There are five main cases to capture:
+                (S = start of store)
+                (L = start of load)
+
+            Case 1: is overlap of load and store
+              S-------|
+              L-------|
+
+            Case 2: load starts below a store and overlaps a small part at the beginning
+                  S-------|
+              L-------|
+
+            Case 3: load starts within the region of the store and goes outside the range
+               S-------|
+                   L--------|
+
+            Case 4: load is larger and covers the store
+                  S--|
+               L-------|
+
+            Case 5: load is smaller and is covered by the store
+               S--------|
+                   L---|    
+        */
+
+        // Load address is between the start and end of the store
+        // captures cases 1, 3 and 5
+        overlaps = ((loadAddress >= storeAddress) & (loadAddress < (store_end)));
+
+        // Load address is less than the start of the store but its end is within the store range
+        // captures cases 1, 2 and 4
+        overlaps = overlaps | ((loadAddress <= storeAddress) & (load_end >= storeAddress));
 
         return overlaps;
     }

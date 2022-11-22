@@ -50,12 +50,14 @@ public:
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: (addr=%p) ANDI phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRIu64 ", isa: out=%" PRIu16
-            " / in=%" PRIu16 "\n",
-            (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value, isa_int_regs_out[0],
-            isa_int_regs_in[0]);
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(
+                CALL_INFO, 16, 0,
+                "Execute: (addr=%p) ANDI phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRIu64 ", isa: out=%" PRIu16
+                " / in=%" PRIu16 "\n",
+                (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value, isa_int_regs_out[0],
+                isa_int_regs_in[0]);
+        }
 #endif
         const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
         regFile->setIntReg<uint64_t>(phys_int_regs_out[0], (src_1 & imm_value));

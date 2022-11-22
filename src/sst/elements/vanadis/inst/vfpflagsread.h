@@ -75,9 +75,11 @@ public:
 				flags_out |= fpflags.invalidOp() ? 0x10 : 0x0;
 			}
 
-			output->verbose(CALL_INFO, 16, 0, "Execute: 0x%llx %s out-reg: %" PRIu16 " / out-mask: 0x%llx / copy_round: %c / shift_round: %c / copy_fp: %c\n",
-					getInstructionAddress(), getInstCode(), phys_int_regs_out[0], flags_out,
-					copy_round_mode ? 'y' : 'n', shift_round_mode ? 'y' : 'n', copy_fp_flags ? 'y' : 'n');
+			if(output->getVerboseLevel() >= 16) {
+				output->verbose(CALL_INFO, 16, 0, "Execute: 0x%llx %s out-reg: %" PRIu16 " / out-mask: 0x%llx / copy_round: %c / shift_round: %c / copy_fp: %c\n",
+						getInstructionAddress(), getInstCode(), phys_int_regs_out[0], flags_out,
+						copy_round_mode ? 'y' : 'n', shift_round_mode ? 'y' : 'n', copy_fp_flags ? 'y' : 'n');
+			}
 
 			regFile->setIntReg<uint64_t>(phys_int_regs_out[0], flags_out);
 

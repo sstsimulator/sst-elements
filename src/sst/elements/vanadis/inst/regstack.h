@@ -22,44 +22,71 @@ namespace Vanadis {
 class VanadisRegisterStack
 {
 public:
-    VanadisRegisterStack(const size_t count) : reg_count(count), max_capacity(count)
+    VanadisRegisterStack(const size_t count) : max_capacity(count)
     {
-        regs.reserve(count);
-
-        for(auto i = 0; i < count; ++i) {
-            regs.push_back(i);
-        }
+        regs = new uint16_t[max_capacity];
+        reset();
     }
 
-    ~VanadisRegisterStack() {}
+    ~VanadisRegisterStack() {
+        delete[] regs;
+    }
 
     uint16_t pop()
     {
-        uint16_t temp = regs.back();
-        regs.pop_back();
+/*
+        if(stack_top < 0) {
+            printf("LOGIC-ERROR - stack_top=%" PRId32 " / capacity=%" PRId32 "\n", stack_top, max_capacity);
+            int32_t* address = 0;
+            *address = 0;
+            printf("address=%" PRId32 "\n", *address);
+        }
+        assert(stack_top >= 0);
+*/
+        const uint16_t temp = regs[stack_top];
+        stack_top--;
         return temp;
     }
 
     void push(const uint16_t v)
     {
-        regs.push_back(v);
+/*
+        if(stack_top >= max_capacity) {
+            printf("LOGIC-ERROR - stack_top=%" PRId32 " / capacity=%" PRId32 "\n", stack_top, max_capacity);
+            int32_t* address = 0;
+            *address = 0;
+            printf("address=%" PRId32 "\n", *address);
+        } else {
+            printf("-> stack_top=%" PRId32 " / capacity=%" PRId32 "\n", stack_top, max_capacity);
+        }
+        assert(stack_top < max_capacity);
+*/
+        stack_top++;
+        regs[stack_top] = v;
     }
 
     size_t capacity() const { return max_capacity; }
+    size_t unused() const { return (stack_top > 0) ? stack_top : 0; }
 
-    size_t unused() const { return size(); }
+    bool full() { return (stack_top == (max_capacity - 1)); }
+    bool empty() { return -1 == stack_top; }
 
-    size_t size() const { return regs.size(); }
+    void clear() {
+        stack_top = -1;
+    }
 
-    bool full() { return (0 == size()); }
-    bool empty() { return size() == capacity(); }
+    void reset() {
+        stack_top = max_capacity - 1;
 
-    void clear() { regs.clear(); }
+        for(auto i = 0; i < max_capacity; ++i) {
+            regs[i] = i;
+        }
+    }
 
     void print() {
         printf("----> free registers = { ");
 
-        for(size_t i = 0; i < regs.size(); ++i) {
+        for(size_t i = 0; i < stack_top; ++i) {
             printf("%" PRIu16 ", ", regs[i]);
         }
 
@@ -67,9 +94,10 @@ public:
     }
 
 private:
-    size_t    max_capacity;
-    size_t    reg_count;
-    std::vector<uint16_t> regs;
+    const int32_t    max_capacity;
+    int32_t          stack_top;
+    
+    uint16_t* regs;
 };
 
 } // namespace Vanadis
