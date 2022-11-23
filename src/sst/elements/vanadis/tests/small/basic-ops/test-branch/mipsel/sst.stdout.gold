@@ -118,6 +118,6 @@ l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to
  v0.rob_slots_in_use.1 : Accumulator : Sum.u64 = 73931752; SumSQ.u64 = 4189505310; Count.u64 = 1666578; Min.u64 = 0; Max.u64 = 63; 
  v0.rob_cleared_entries.1 : Accumulator : Sum.u64 = 7346561; SumSQ.u64 = 416862183; Count.u64 = 133699; Min.u64 = 0; Max.u64 = 61; 
  v0.syscall-cycles.1 : Accumulator : Sum.u64 = 17; SumSQ.u64 = 17; Count.u64 = 17; Min.u64 = 1; Max.u64 = 1; 
- v0.phys_int_reg_in_use.1 : Accumulator : Sum.u64 = 60663212; SumSQ.u64 = 2212272848; Count.u64 = 1666578; Min.u64 = 34; Max.u64 = 49; 
- v0.phys_fp_reg_in_use.1 : Accumulator : Sum.u64 = 56666370; SumSQ.u64 = 1926754760; Count.u64 = 1666578; Min.u64 = 34; Max.u64 = 42; 
+ v0.phys_int_reg_in_use.1 : Accumulator : Sum.u64 = 62329790; SumSQ.u64 = 2335265850; Count.u64 = 1666578; Min.u64 = 35; Max.u64 = 50; 
+ v0.phys_fp_reg_in_use.1 : Accumulator : Sum.u64 = 58332948; SumSQ.u64 = 2041754078; Count.u64 = 1666578; Min.u64 = 35; Max.u64 = 43; 
 Simulation is complete, simulated time: 725.067 us

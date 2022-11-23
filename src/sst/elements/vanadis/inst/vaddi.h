@@ -69,20 +69,22 @@ public:
         const gpr_format result = src_1 + imm_value;
 
 #ifdef VANADIS_BUILD_DEBUG
-        if(std::is_unsigned<gpr_format>::value) {
-            output->verbose(
-                CALL_INFO, 16, 0,
-                "Execute: 0x%llx %s phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16
-                " / in=%" PRIu16 " (%" PRIu64 " + %" PRIu64 " = %" PRIu64 ")\n",
-                getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value, isa_int_regs_out[0],
-                isa_int_regs_in[0], src_1, imm_value, result);
-        } else {
-            output->verbose(
-                CALL_INFO, 16, 0,
-                "Execute: 0x%llx %s phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16
-                " / in=%" PRIu16 " (%" PRId64 " + %" PRId64 " = %" PRId64 ")\n",
-                getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value, isa_int_regs_out[0],
-                isa_int_regs_in[0], src_1, imm_value, result);
+        if(output->getVerboseLevel() >= 16) {
+            if(std::is_unsigned<gpr_format>::value) {
+                output->verbose(
+                    CALL_INFO, 16, 0,
+                    "Execute: 0x%llx %s phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16
+                    " / in=%" PRIu16 " (%" PRIu64 " + %" PRIu64 " = %" PRIu64 ")\n",
+                    getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value, isa_int_regs_out[0],
+                    isa_int_regs_in[0], src_1, imm_value, result);
+            } else {
+                output->verbose(
+                    CALL_INFO, 16, 0,
+                    "Execute: 0x%llx %s phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16
+                    " / in=%" PRIu16 " (%" PRId64 " + %" PRId64 " = %" PRId64 ")\n",
+                    getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value, isa_int_regs_out[0],
+                    isa_int_regs_in[0], src_1, imm_value, result);
+            }
         }
 #endif
 

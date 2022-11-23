@@ -60,10 +60,12 @@ public:
     computeStoreAddress(SST::Output* output, VanadisRegisterFile* reg, uint64_t* store_addr, uint16_t* op_width)
     {
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "[partial-store]: compute base address: phys-reg: %" PRIu16 " / offset: %" PRIu64 " / 0x%0llx\n",
-            phys_int_regs_in[0], offset, offset);
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(
+                CALL_INFO, 16, 0,
+                "[partial-store]: compute base address: phys-reg: %" PRIu16 " / offset: %" PRIu64 " / 0x%0llx\n",
+                phys_int_regs_in[0], offset, offset);
+        }
 #endif
         uint64_t reg_tmp = reg->getIntReg<uint64_t>(phys_int_regs_in[0]);
 
@@ -72,12 +74,15 @@ public:
 
         const uint64_t right_len = (reg_tmp % width_64) == 0 ? width_64 : (reg_tmp % width_64);
         const uint64_t left_len  = (width_64 - right_len) == 0 ? width_64 : (width_64 - right_len);
+
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0, "[partial-store]: base_addr: 0x%0llx full-width: %" PRIu64 "\n", base_addr, width_64);
-        output->verbose(CALL_INFO, 16, 0, "[partial-store]: store-type: %s\n", (is_left_store) ? "left" : "right");
-        output->verbose(
-            CALL_INFO, 16, 0, "[partial-store]: partial-width: %" PRIu64 "\n", (is_left_store) ? left_len : right_len);
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(
+                CALL_INFO, 16, 0, "[partial-store]: base_addr: 0x%0llx full-width: %" PRIu64 "\n", base_addr, width_64);
+            output->verbose(CALL_INFO, 16, 0, "[partial-store]: store-type: %s\n", (is_left_store) ? "left" : "right");
+            output->verbose(
+                CALL_INFO, 16, 0, "[partial-store]: partial-width: %" PRIu64 "\n", (is_left_store) ? left_len : right_len);
+        }
 #endif
         if ( is_left_store ) {
             (*store_addr)   = base_addr - left_len;
@@ -97,10 +102,12 @@ public:
             (*op_width) = right_len;
         }
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "[partial-store]: store-addr: 0x%0llu / store-width: %" PRIu16 " / reg-offset: %" PRIu16 "\n",
-            (*store_addr), (*op_width), register_offset);
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(
+                CALL_INFO, 16, 0,
+                "[partial-store]: store-addr: 0x%0llu / store-width: %" PRIu16 " / reg-offset: %" PRIu16 "\n",
+                (*store_addr), (*op_width), register_offset);
+        }
 #endif
     }
 

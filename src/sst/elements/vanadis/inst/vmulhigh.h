@@ -66,12 +66,14 @@ public:
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: 0x%llx %s phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
-            " / in=%" PRIu16 ", %" PRIu16 "\n",
-            getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1],
-            isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(
+                CALL_INFO, 16, 0,
+                "Execute: 0x%llx %s phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
+                " / in=%" PRIu16 ", %" PRIu16 "\n",
+                getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1],
+                isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);
+        }
 #endif
 
         uint64_t result;
@@ -81,20 +83,16 @@ public:
             const __int128_t src_1 = regFile->getIntReg<gpr_format_1>(phys_int_regs_in[0]);
             const __int128_t src_2 = regFile->getIntReg<gpr_format_2>(phys_int_regs_in[1]);
             result = ( ( src_1 * src_2 ) >> (8 * sizeof(gpr_format_1)) );
-
         // "MULHU";
         } else if ( ! std::is_signed<gpr_format_1>::value && ! std::is_signed<gpr_format_2>::value ) {
-
             const __uint128_t src_1 = regFile->getIntReg<gpr_format_1>(phys_int_regs_in[0]);
             const __uint128_t src_2 = regFile->getIntReg<gpr_format_2>(phys_int_regs_in[1]);
             result = ( ( src_1 * src_2 ) >> (8 * sizeof(gpr_format_1)) );
-
         // "MULHSU";
         } else if ( std::is_signed<gpr_format_1>::value && ! std::is_signed<gpr_format_2>::value ) {
             const __int128_t src_1 = regFile->getIntReg<gpr_format_1>(phys_int_regs_in[0]);
             const __uint128_t src_2 = regFile->getIntReg<gpr_format_2>(phys_int_regs_in[1]);
             result = ( ( src_1 * src_2 ) >> (8 * sizeof(gpr_format_1)) );
-
         } else {
             assert(0);
         }

@@ -53,8 +53,10 @@ public:
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 		if(checkFrontOfROB()) {
-			output->verbose(CALL_INFO, 16, 0, "Execute: 0x%llx %s FPFLAGS <- mask = %" PRIu64 " (0x%llx)\n",
-				getInstructionAddress(), getInstCode(), imm_value, imm_value);
+			if(output->getVerboseLevel() >= 16) {
+				output->verbose(CALL_INFO, 16, 0, "Execute: 0x%llx %s FPFLAGS <- mask = %" PRIu64 " (0x%llx)\n",
+					getInstructionAddress(), getInstCode(), imm_value, imm_value);
+			}
 
 			if( (imm_value & 0x1) != 0 ) {
 				fpflags.setInexact();
