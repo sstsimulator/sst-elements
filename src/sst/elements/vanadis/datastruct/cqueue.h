@@ -41,8 +41,8 @@ public:
         delete[] data;
     }
 
-    bool empty() { return 0 == count; }
-    bool full() { return max_capacity == count; }
+    bool empty() const { return 0 == count; }
+    bool full() const { return max_capacity == count; }
 
     void push(T item) {
         assert(count < max_capacity);
