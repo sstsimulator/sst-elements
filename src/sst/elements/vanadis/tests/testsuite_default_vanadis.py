@@ -57,6 +57,15 @@ def build_vanadis_test_matrix():
         for arch in arch_list:
             testlist.append(["basic_vanadis.py", location, test,arch, 120])
 
+    arch_list = ["riscv64"]
+
+    location="small/misc"
+    misc_tests = ["stream-fortran"]
+    #misc_tests =[]
+    for test in misc_tests:
+        for arch in arch_list:
+            testlist.append(["basic_vanadis.py", location, test,arch, 120])
+
     # Process each line and crack up into an index, hash, options and sdl file
     for testnum, test_info in enumerate(testlist):
         # Make testnum start at 1
