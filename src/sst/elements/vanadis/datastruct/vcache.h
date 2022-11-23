@@ -80,7 +80,7 @@ private:
     void kill_lru_key() {
         // if we aren't full yet, then keep entries otherwise we will
         // throw away
-        if (ordering_q.size() < max_entries) {
+        if (UNLIKELY(ordering_q.size() < max_entries)) {
             return;
         }
 
@@ -96,7 +96,7 @@ private:
         bool found_key = false;
 
         for (auto order_itr = ordering_q.cbegin(); order_itr != ordering_q.cend();) {
-            if (key == (*order_itr)) {
+            if (UNLIKELY(key == (*order_itr))) {
                 ordering_q.erase(order_itr);
                 found_key = true;
                 break;
