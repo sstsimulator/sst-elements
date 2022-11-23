@@ -301,7 +301,8 @@ EXTRA_DIST = \
 	tests/small/basic-ops/test-shift/riscv64/vanadis.stdout.gold \
 \
 	tests/small/misc/stream-fortran/Makefile \
-	tests/small/misc/stream-fortran/stream.c \
+	tests/small/misc/stream-fortran/stream.f \
+	tests/small/misc/stream-fortran/mysecond.c \
 	tests/small/misc/stream-fortran/riscv64/stream-fortran \
 	tests/small/misc/stream-fortran/riscv64/sst.stdout.gold \
 	tests/small/misc/stream-fortran/riscv64/vanadis.stderr.gold \
