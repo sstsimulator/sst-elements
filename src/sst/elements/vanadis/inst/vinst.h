@@ -360,7 +360,7 @@ public:
     void markIssued() { hasIssued = true; }
     void markRegistersAllocated() { hasRegistersAllocated = true; }
 
-    bool checkFrontOfROB() { return isFrontOfROB; }
+    bool checkFrontOfROB() const { return isFrontOfROB; }
     void markFrontOfROB() { isFrontOfROB = true; }
 
     bool hasROBSlotIssued() const { return hasROBSlot; }
@@ -371,7 +371,6 @@ public:
     void flagError() { trapError = true; }
 
     virtual bool performIntRegisterRecovery() const { return true; }
-
     virtual bool performFPRegisterRecovery() const { return true; }
 
 	virtual bool updatesFPFlags() const { return false; }
