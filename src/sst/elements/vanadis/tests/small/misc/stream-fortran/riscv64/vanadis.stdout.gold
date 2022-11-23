@@ -1,0 +1,28 @@
+----------------------------------------------
+ Double precision appears to have 16 digits of accuracy
+ Assuming 8 bytes per DOUBLE PRECISION word
+----------------------------------------------
+ ----------------------------------------------
+ STREAM Version $Revision: 5.6 $
+ ----------------------------------------------
+ Array size =       1000
+ Offset     =          0
+ The total memory requirement is    0 MB
+ You are running each test  10 times
+ --
+ The *best* time for each test is used
+ *EXCLUDING* the first and last iterations
+ ----------------------------------------------
+ ----------------------------------------------
+ Printing one line per active thread....
+ ----------------------------------------------------
+ Your clock granularity/precision appears to be 260864 microseconds
+ ----------------------------------------------------
+Function     Rate (MB/s)  Avg time   Min time  Max time
+Copy:        516.1290      0.0000      0.0000      0.0000
+Scale:       470.5882      0.0000      0.0000      0.0000
+Add:         585.3659      0.0000      0.0000      0.0000
+Triad:       533.3333      0.0000      0.0000      0.0000
+ ----------------------------------------------------
+ Solution Validates!
+ ----------------------------------------------------
