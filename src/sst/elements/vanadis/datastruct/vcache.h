@@ -95,7 +95,7 @@ private:
     void send_key_to_front(const I& key) {
         bool found_key = false;
 
-        for (auto order_itr = ordering_q.cbegin(); order_itr != ordering_q.cend();) {
+        for (auto order_itr = ordering_q.begin(); order_itr != ordering_q.end();) {
             if (UNLIKELY(key == (*order_itr))) {
                 ordering_q.erase(order_itr);
                 found_key = true;
