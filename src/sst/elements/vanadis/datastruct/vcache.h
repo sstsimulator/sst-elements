@@ -57,9 +57,9 @@ public:
     }
 
     void store(const I& key, T value) {
-        if (contains(key)) {
+        if (LIKELY(contains(key))) {
             send_key_to_front(key);
-	    data_values[key] = value;
+	        data_values[key] = value;
         } else {
             kill_lru_key();
             data_values.insert(std::pair<I, T>(key, value));
@@ -68,7 +68,7 @@ public:
     }
 
     void touch(const I& key) {
-        if (contains(key)) {
+        if (LIKELY(contains(key))) {
             send_key_to_front(key);
         }
     }
@@ -80,11 +80,11 @@ private:
     void kill_lru_key() {
         // if we aren't full yet, then keep entries otherwise we will
         // throw away
-        if (ordering_q.size() < max_entries) {
+        if (UNLIKELY(ordering_q.size() < max_entries)) {
             return;
         }
 
-        I remove_key = ordering_q.back();
+        const I remove_key = ordering_q.back();
         ordering_q.pop_back();
 
         auto find_key = data_values.find(remove_key);
@@ -96,7 +96,7 @@ private:
         bool found_key = false;
 
         for (auto order_itr = ordering_q.begin(); order_itr != ordering_q.end();) {
-            if (key == (*order_itr)) {
+            if (UNLIKELY(key == (*order_itr))) {
                 ordering_q.erase(order_itr);
                 found_key = true;
                 break;
@@ -105,7 +105,7 @@ private:
             }
         }
 
-        if (found_key) {
+        if (LIKELY(found_key)) {
             ordering_q.push_front(key);
         }
     }

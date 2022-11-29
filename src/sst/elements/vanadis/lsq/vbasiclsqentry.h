@@ -110,8 +110,8 @@ public:
         // 1. the address being checked is within the range of the store being performed (overlaps fully/right side)
         // 2. the address + width being checked is within the range of the store being performed (overlaps left side)
 
-        const auto store_end = storeAddress + storeWidth;
-        const auto load_end  = loadAddress + loadWidth;
+        const auto store_end = storeAddress + storeWidth - 1;
+        const auto load_end  = loadAddress + loadWidth - 1;
 
         /*
             There are five main cases to capture:
@@ -141,11 +141,11 @@ public:
 
         // Load address is between the start and end of the store
         // captures cases 1, 3 and 5
-        overlaps = ((loadAddress >= storeAddress) & (loadAddress < (store_end)));
+        overlaps = ((loadAddress >= storeAddress) & (loadAddress <= (store_end)));
 
         // Load address is less than the start of the store but its end is within the store range
         // captures cases 1, 2 and 4
-        overlaps = overlaps | ((loadAddress <= storeAddress) & (load_end >= storeAddress));
+        overlaps |= ((loadAddress <= storeAddress) & (load_end >= storeAddress));
 
         return overlaps;
     }

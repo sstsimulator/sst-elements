@@ -54,8 +54,8 @@ public:
 		pipeline_fpflags(copy_me.pipeline_fpflags)
     {}
 
-    virtual bool updatesFPFlags() const { return update_fp_flags || set_fp_flags; }
-    virtual void updateFPFlags() {
+    virtual bool updatesFPFlags() const override { return update_fp_flags || set_fp_flags; }
+    virtual void updateFPFlags() override {
         if(LIKELY(update_fp_flags)) {
             pipeline_fpflags->update(fpflags);
         } else if(UNLIKELY(set_fp_flags)) {

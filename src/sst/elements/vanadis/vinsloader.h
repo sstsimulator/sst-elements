@@ -38,7 +38,7 @@ public:
 
         cache_line_width = cachelinewidth;
         uop_cache = new VanadisCache<uint64_t, VanadisInstructionBundle*>(uop_cache_size);
-        predecode_cache = new VanadisCache<uint64_t, std::vector<uint8_t>*>(predecode_cache_entries);
+        predecode_cache = new VanadisCache<uint64_t, uint8_t*>(predecode_cache_entries);
 
         mem_if = nullptr;
     }
@@ -65,6 +65,8 @@ public:
         // Looks like we created this request, so we should accept and process it
         auto check_hit_local = pending_loads.find(req->getID());
 
+        const auto output_verbosity = output->getVerboseLevel();
+
         if (check_hit_local != pending_loads.end()) {
             SST::Interfaces::StandardMem::ReadResp* resp = static_cast<SST::Interfaces::StandardMem::ReadResp*>(req);
             if (resp->data.size() != cache_line_width) {
@@ -74,17 +76,14 @@ public:
                               (int)resp->data.size(), (int)cache_line_width);
             }
 
-            std::vector<uint8_t>* new_line = new std::vector<uint8_t>();
-            new_line->reserve(cache_line_width);
 
-            for (uint64_t i = 0; i < cache_line_width; ++i) {
-                new_line->push_back(resp->data[i]);
-            }
+            uint8_t* new_line = new uint8_t[cache_line_width];
+            std::memcpy(new_line, &resp->data[0], cache_line_width);
 
-            output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ---> response has: %" PRIu64 " bytes in payload\n",
+            if(output_verbosity >= 16) {
+                output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ---> response has: %" PRIu64 " bytes in payload\n",
                             (uint64_t)resp->data.size());
 
-            if (output->getVerboseLevel() >= 16) {
                 char* print_line = new char[2048];
                 char* temp_line = new char[2048];
                 print_line[0] = '\0';
@@ -97,14 +96,18 @@ public:
                     snprintf(print_line, 2048, "%s %" PRIu8 "", temp_line, resp->data[i]);
                 }
 
-                output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ---> cache-line: %s\n", print_line);
+                if(output_verbosity >= 16) {
+                    output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ---> cache-line: %s\n", print_line);
+                }
 
                 delete[] print_line;
                 delete[] temp_line;
             }
 
-            output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ---> hit (addr=0x%llx), caching line in predecoder.\n",
+            if(output_verbosity >= 16) {
+                output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ---> hit (addr=0x%llx), caching line in predecoder.\n",
                             resp->pAddr);
+            }
 
             predecode_cache->store(resp->pAddr, new_line);
 
@@ -117,8 +120,6 @@ public:
         }
     }
 
-    
-
     bool getPredecodeBytes(SST::Output* output, const uint64_t addr, uint8_t* buffer, const size_t buffer_req) {
 
         if (buffer_req > cache_line_width) {
@@ -128,6 +129,8 @@ public:
                           (uint64_t)buffer_req, cache_line_width);
         }
 
+        const auto output_verbosity = output->getVerboseLevel();
+
         // calculate offset within the cache line
         const uint64_t inst_line_offset = (addr % cache_line_width);
 
@@ -136,42 +139,50 @@ public:
 
         bool filled = true;
 
+        if(output_verbosity >= 16) {
         output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG,
                         "[fill-decode]: ins-addr: 0x%llx line-offset: %" PRIu64 " line-start=%" PRIu64 " / 0x%llx\n",
                         addr, inst_line_offset, cache_line_start, cache_line_start);
+        }
 
         if (predecode_cache->contains(cache_line_start)) {
-            std::vector<uint8_t>* cached_bytes = predecode_cache->find(cache_line_start);
+            uint8_t* cached_bytes = predecode_cache->find(cache_line_start);
+			uint64_t bytes_from_this_line = std::min( static_cast<uint64_t>(buffer_req), cache_line_width - inst_line_offset );
 
-				uint64_t bytes_from_this_line = std::min( static_cast<uint64_t>(buffer_req), cache_line_width - inst_line_offset );
-
-				output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[fill-decode]: load %" PRIu64 " bytes from this line.\n", bytes_from_this_line);
-
-            for (uint64_t i = 0; i < bytes_from_this_line; ++i) {
-                buffer[i] = cached_bytes->at(inst_line_offset + i);
+            if(output_verbosity >= 16) {
+			    output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[fill-decode]: load %" PRIu64 " bytes from this line.\n", bytes_from_this_line);
             }
 
-				if( bytes_from_this_line < buffer_req ) {
-					output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[fill-decode]: requires split cache line load, first-line: %" PRIu64 " bytes\n", bytes_from_this_line);
+            std::memcpy(buffer, &cached_bytes[inst_line_offset], bytes_from_this_line);
 
-					if(predecode_cache->contains(cache_line_start + cache_line_width)) {
-						cached_bytes = predecode_cache->find(cache_line_start + cache_line_width);
+            if( bytes_from_this_line < buffer_req ) {
+                if(output_verbosity >= 16) {
+                    output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[fill-decode]: requires split cache line load, first-line: %" PRIu64 " bytes\n", bytes_from_this_line);
+                }
 
-						output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[fill-decode]: requires split cache line load, second-line: %" PRIu64 " bytes\n", (buffer_req - bytes_from_this_line));
+                if(predecode_cache->contains(cache_line_start + cache_line_width)) {
+                    cached_bytes = predecode_cache->find(cache_line_start + cache_line_width);
 
-						for( uint64_t i = 0; i < (buffer_req - bytes_from_this_line); ++i ) {
-							buffer[bytes_from_this_line + i] = cached_bytes->at(i);
-						}
-					} else {
-						output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[fill-decode]: second line fill fails, line is not in predecode cache\n");
-						filled = false;
-					}
-				}
+                    if(output_verbosity >= 16) {
+                        output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[fill-decode]: requires split cache line load, second-line: %" PRIu64 " bytes\n", (buffer_req - bytes_from_this_line));
+                    }
+
+                    std::memcpy(&buffer[bytes_from_this_line], &cached_bytes[0], (buffer_req - bytes_from_this_line));
+                } else {
+                    if(output_verbosity >= 16) {
+                        output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[fill-decode]: second line fill fails, line is not in predecode cache\n");
+                    }
+
+                    filled = false;
+                }
+            }
         } else {
             filled = false;
         }
 
-        output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[fill-decode]: line-filled: %s\n", (filled) ? "yes" : "no");
+        if(output_verbosity >= 16) {
+            output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[fill-decode]: line-filled: %s\n", (filled) ? "yes" : "no");
+        }
 
         return filled;
     }
@@ -295,7 +306,7 @@ private:
     SST::Interfaces::StandardMem* mem_if;
 
     VanadisCache<uint64_t, VanadisInstructionBundle*>* uop_cache;
-    VanadisCache<uint64_t, std::vector<uint8_t>*>* predecode_cache;
+    VanadisCache<uint64_t, uint8_t*>* predecode_cache;
 
     std::unordered_map<SST::Interfaces::StandardMem::Request::id_t, SST::Interfaces::StandardMem::Read*> pending_loads;
 };
