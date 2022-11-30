@@ -62,6 +62,27 @@ struct PolyModelND : public SST::Core::Serialization::serializable
         return val > min ? val : min;           // don't return less than min, useful to remove negatives
     }
 
+    double eval(std::vector<int> x, int verbose)
+    {
+
+        std::cout << "[" << x[0] << "," << x[1] << "]" << std::endl;
+
+        double val = 0.0;
+        for (const auto &co : coeff) {         // loop over our map of powers->coefficients
+            std::cout << "  [" << co.first[0] << "," << co.first[1] << "]: " << co.second << std::endl;
+            double term = co.second;             // value in map is the coefficient
+            for (int i = 0; i < x.size(); i++) {       // for each power, evaluate that power and multiple
+                term *= pow(x[i], co.first[i]);
+            }
+            val += term;                        // sum terms
+        }
+        val *= scale;                           // scale value (used for time conversion)
+        val = std::nearbyint(val);              // round so we don't get fractional message sizes
+        val = val > min ? val : min;           // don't return less than min, useful to remove negatives
+        std::cout << "  -> " << val << std::endl;;
+        return val;
+    }
+
     bool operator==(const PolyModelND& lhs) const
     {
         return (coeff == lhs.coeff);
