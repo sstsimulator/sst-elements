@@ -13,7 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-    class MemRequestQ {
+    class MemRequestQ : public ComponentExtension {
 
         struct SrcChannel {
             SrcChannel( int maxSrcQsize ) : maxSrcQsize(maxSrcQsize), pendingCnts(0) {}
@@ -28,7 +28,7 @@
         };
 
       public:
-        MemRequestQ( RdmaNic* nic, int maxPending, int maxSrcQsize, int numSrcs ) : 
+        MemRequestQ(ComponentId_t cid, RdmaNic* nic, int maxPending, int maxSrcQsize, int numSrcs ) : ComponentExtension(cid), 
             m_nic(nic), m_maxPending(maxPending), m_curSrc(0), m_reqSrcQs(numSrcs,maxSrcQsize), m_pendingPair(NULL,NULL)
         {}
 
@@ -62,7 +62,7 @@
 
 			Interfaces::StandardMem::Request* stdMemReq;
             std::vector<uint8_t> payload;
-            req->reqTime=Simulation::getSimulation()->getCurrentSimCycle();
+            req->reqTime=getCurrentSimCycle();
 
             switch ( req->m_op ) {
               case MemRequest::Read:

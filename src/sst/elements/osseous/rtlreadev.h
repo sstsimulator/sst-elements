@@ -1,8 +1,8 @@
-// Copyright 2009-2020 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2020, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -16,8 +16,8 @@
 
 #include <inttypes.h>
 
-#ifndef _H_SST_ARIEL_READ_EVENT
-#define _H_SST_ARIEL_READ_EVENT
+#ifndef _H_SST_OSSEOUS_READ_EVENT
+#define _H_SST_OSSEOUS_READ_EVENT
 
 namespace SST {
 namespace RtlComponent {
