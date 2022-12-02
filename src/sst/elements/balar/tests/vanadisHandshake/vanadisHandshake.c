@@ -26,7 +26,7 @@ int main( int argc, char* argv[] ) {
     __cudaRegisterFunction(fatbin_handle, VEC_ADD_FUNC, "_Z6vecAddPiS_S_i");
 
     // Preparing the data
-    int n = 200;
+    int n = 15000;
     int * d_a = 0;
     int * d_b = 0;
     int * d_result = 0;
@@ -36,7 +36,7 @@ int main( int argc, char* argv[] ) {
     for (int i = 0; i < n; i++) {
         h_a[i] = i;
         h_b[i] = -2 * i;
-        if (i % 30 == 0){
+        if (i % 3000 == 0){
             printf("i:%d h_a[%d] = %d\th_b[%d] = %d\n", i, i, h_a[i], i, h_b[i]);
             fflush(stdout);
         }
@@ -54,7 +54,7 @@ int main( int argc, char* argv[] ) {
     cudaMemcpy(h_result, d_a, n * sizeof(int), cudaMemcpyDeviceToHost);
     printf("Checking d_a memcpy content\n");
     for (int i = 0; i < n; i++) {
-        if (i % 30 == 0) {
+        if (i % 3000 == 0) {
             printf("h_result[%d]: %d\n", i, h_result[i]);
             fflush(stdout);
         }
@@ -62,7 +62,7 @@ int main( int argc, char* argv[] ) {
     cudaMemcpy(h_result, d_b, n * sizeof(int), cudaMemcpyDeviceToHost);
     printf("Checking d_b memcpy content\n");
     for (int i = 0; i < n; i++) {
-        if (i % 30 == 0) {
+        if (i % 3000 == 0) {
             printf("h_result[%d]: %d\n", i, h_result[i]);
             fflush(stdout);
         }
@@ -77,7 +77,7 @@ int main( int argc, char* argv[] ) {
     gridSize.x = (int) ceil((float) n/blockSize.x);
     gridSize.y = 1;
     gridSize.z = 1;
-    uint8_t local_value[8];
+    uint8_t local_value[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     cudaConfigureCall(gridSize, blockSize, 0);
     cudaSetupArgument(d_a, NULL, 8, 0);
     cudaSetupArgument(d_b, NULL, 8, 8);
@@ -92,7 +92,7 @@ int main( int argc, char* argv[] ) {
     cudaMemcpy(h_result, d_result, n * sizeof(int), cudaMemcpyDeviceToHost);
 
     for (int i = 0; i < n; i++) {
-        if (i % 30 == 0) {
+        if (i % 3000 == 0) {
             printf("h_result[%d]: %d\n", i, h_result[i]);
             fflush(stdout);
         }

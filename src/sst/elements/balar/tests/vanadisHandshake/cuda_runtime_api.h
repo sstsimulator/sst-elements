@@ -24,7 +24,7 @@
 // Global mmio gpu address
 static uint32_t* g_gpu = (uint32_t*) 0xFFFF1000;
 static uint8_t g_scratch_mem[512];
-static int32_t g_debug_level = LOG_LEVEL_DEBUG;
+static int32_t g_debug_level = LOG_LEVEL_WARNING;
 
 enum GpuApi_t {
     GPU_REG_FAT_BINARY = 1,
@@ -196,6 +196,7 @@ typedef struct BalarCudaCallPacket {
 typedef struct BalarCudaCallReturnPacket {
     enum GpuApi_t cuda_call_id;
     cudaError_t cuda_error;
+    bool is_cuda_call_done; 
     union {
         uint64_t    fat_cubin_handle;
         struct {

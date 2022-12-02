@@ -138,6 +138,7 @@ namespace BalarComponent {
     typedef struct BalarCudaCallReturnPacket {
         enum GpuApi_t cuda_call_id;
         cudaError_t cuda_error;
+        bool is_cuda_call_done; 
         union {
             uint64_t    fat_cubin_handle;
             struct {
