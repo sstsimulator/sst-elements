@@ -1,8 +1,8 @@
-    // Copyright 2009-2020 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2020, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -34,10 +34,8 @@ public:
          update_eval_args, sim_done;
     uint64_t sim_cycles;
     RTLEvent() : SST::Event() {
-        //output = SST::Simulation::getSimulation()->getSimulationOutput(); 
         //output.init("RtlEvent-" + getName() + "-> ", 1, 0, SST::Output::STDOUT); 
         output.init("Rtlmodel->", 1, 0, SST::Output::STDOUT);
-        output = SST::Simulation::getSimulation()->getSimulationOutput();
     }
 
     void input_sigs(Rtlheader*);
