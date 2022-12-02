@@ -49,10 +49,22 @@ dnl pin.sh is present in pin 2.14, but not in 3.0+
   AC_SUBST([PINTOOL_PATH])
   
   AC_DEFINE_UNQUOTED([PINTOOL_EXECUTABLE], ["$PINTOOL_RUNTIME"], [Defines the exectuable to run when we are performing integrated runs of the PIN engine])
+
+dnl pin 3.24+ requires different compile line
+  sst_check_pin_324_ge="yes"
   
+  PIN_VERSION=$($PINTOOL_RUNTIME -version | head -1 | sed 's/.*pin-\(.*\)/\1/' | sed 's/-.*//')
+  dnl AC_MSG_CHECKING([pintool version])
+  dnl AC_MSG_RESULT([$PIN_VERSION])
+
+  AS_VERSION_COMPARE([$PIN_VERSION], [3.24], [sst_check_pin_324_ge="no"])
+  AC_MSG_CHECKING([for Pintool greater than or equal to 3.24])
+  AC_MSG_RESULT([$sst_check_pin_324_ge])
+
+  AM_CONDITIONAL([HAVE_PIN324], [test "$sst_check_pin_324_ge" = "yes"])
   AM_CONDITIONAL([HAVE_PIN3], [test "x$PINTOOL2_RUNTIME" = "x"])
   AM_CONDITIONAL([HAVE_PINTOOL], [test "$sst_check_pintool_happy" = "yes"])
-  
+
   AS_IF([test "x$sst_check_pintool_happy" = "xyes" -a  "x$PINTOOL2_RUNTIME" = "x"],
          [AC_DEFINE([HAVE_PINCRT], [1], [Set to 1 if Pin is using PinCRT])])
 

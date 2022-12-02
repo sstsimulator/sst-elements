@@ -23,17 +23,98 @@
 
 #include <map>
 #include <tuple>
+#include <cmath>
 
 namespace SST {
 namespace Ember {
 
+struct PolyModelND : public SST::Core::Serialization::serializable
+{
+    // coeff is a map from powers to coefficients, e.g.
+    // [0,2,2]:0.4 means that the coefficient of x0^0 * x1^2 * x2^2 is 0.4
+    // We will not worry about making sure all powers are there. We need only
+    // evaluate what we find in this list
+    std::map<std::vector<int>, double> coeff;
+    double scale; // scale the result of eval
+    double min; // minimum value returned by the model
+
+    PolyModelND() : coeff(), scale(1), min(0) {}
+
+    PolyModelND(std::map<std::vector<int>, double> coeff, double scale, double min)
+        : coeff(coeff)
+        , scale(scale)
+        , min(min)
+    {}
+
+    // Evaluate the model at x
+    double eval(std::vector<int> x)
+    {
+        double val = 0.0;
+        for (const auto &co : coeff) {         // loop over our map of powers->coefficients
+            double term = co.second;             // value in map is the coefficient
+            for (int i = 0; i < x.size(); i++) {       // for each power, evaluate that power and multiple
+                term *= pow(x[i], co.first[i]);
+            }
+            val += term;                        // sum terms
+        }
+        val *= scale;                           // scale value (used for time conversion)
+        val = std::nearbyint(val);              // round so we don't get fractional message sizes
+        return val > min ? val : min;           // don't return less than min, useful to remove negatives
+    }
+
+    double eval(std::vector<int> x, int verbose)
+    {
+
+        std::cout << "[" << x[0] << "," << x[1] << "]" << std::endl;
+
+        double val = 0.0;
+        for (const auto &co : coeff) {         // loop over our map of powers->coefficients
+            std::cout << "  [" << co.first[0] << "," << co.first[1] << "]: " << co.second << std::endl;
+            double term = co.second;             // value in map is the coefficient
+            for (int i = 0; i < x.size(); i++) {       // for each power, evaluate that power and multiple
+                term *= pow(x[i], co.first[i]);
+            }
+            val += term;                        // sum terms
+        }
+        val *= scale;                           // scale value (used for time conversion)
+        val = std::nearbyint(val);              // round so we don't get fractional message sizes
+        val = val > min ? val : min;           // don't return less than min, useful to remove negatives
+        std::cout << "  -> " << val << std::endl;;
+        return val;
+    }
+
+    bool operator==(const PolyModelND& lhs) const
+    {
+        return (coeff == lhs.coeff);
+    }
+
+    bool operator!=(const PolyModelND& lhs) const
+    {
+        return (coeff != lhs.coeff);
+    }
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override
+    {
+        ser& coeff;
+    }
+
+    ImplementSerializable(SST::Ember::PolyModelND);
+
+};
+
 struct PolyModel : public SST::Core::Serialization::serializable
 {
-    std::vector<double> coeff;
+    std::vector<double> coeff; // polynomial coefficients
+    double scale; // scale the result of eval
+    double min; // minimum value returned by the model
 
-    PolyModel() : coeff(0) {}
+    PolyModel() : coeff(0), scale(1), min(0) {}
 
-    PolyModel(std::vector<double> coeff) : coeff(coeff) {}
+    PolyModel(std::vector<double> coeff, double scale, double min)
+        : coeff(coeff)
+        , scale(scale)
+        , min(min)
+    {}
 
     // Evaluate the model at x
     // x should be between 0 and 1
@@ -45,7 +126,9 @@ struct PolyModel : public SST::Core::Serialization::serializable
             res += c * xt;
             xt  *= x;
         }
-        return res;
+        res *= scale;
+        res = std::nearbyint(res);
+        return res > min ? res : min;
     }
 
     bool operator==(const PolyModel& lhs) const
@@ -82,8 +165,8 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
         {   "arg.sz",           "Sets the graph size",              "14"},
         {   "arg.seed",         "Sets the RNG seed",                "1"},
-        {   "arg.comm_model",   "Communication volume model file",  "bfs-comm.model"},
-        {   "arg.comp_model",   "Computation timing model file",    "bfs-comp.model"},
+        {   "arg.msg_model",   "Communication volume model file",  "bfs-comm.model"},
+        {   "arg.exec_model",   "Computation timing model file",    "bfs-comp.model"},
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -115,15 +198,16 @@ public:
     ~EmberBFSGenerator();
     bool generate( std::queue<EmberEvent*>& evQ);
 
-private:    
+private:
     Output out;
 
     int32_t m_sz; // graph size
     int32_t m_threads; // threads per rank
+    int32_t m_nodes;
     int32_t m_ranks_per_node;
 
     uint64_t s_time;
-    
+
     uint64_t state; uint64_t prevState;  // for debugging
     uint64_t iter;
     uint64_t maxIter;
@@ -142,61 +226,35 @@ private:
     std::vector<int>    comm1_ranks;
     std::vector<int>    comm2_ranks;
     uint32_t comm0_rank; // rank within comm0
-    uint32_t comm2_rank; // rank within comm2    
+    uint32_t comm2_rank; // rank within comm2
 
     // since we are not sending data, we use null buffers /
     // displacement maps
     void* nullBuf;
     int* nullDispMap;
-    
+
     // start a new iteration
     void initIter();
 
-    // compute the send/receive data size pattern for site 29
-    int sendElem_29;
-    int recvElem_29;
-    int msgSize_29(double meanSize);
-    void computeSR_29(int &sendElem, int &recvElem);
-
-    // compute the all-gather pattern for site 31
-    int sendCount_31;
+    // all-gather message sizes for site 31
     int *recvCounts_31;
-    int msgSize_31(double meanSize, double initRoll);
-    void computeAG_31();
 
-    // compute the all-to-allV pattern for site 35
+    // all-to-allV message sizessite 35
     int *sendCounts_35;
     int *recvCounts_35;
-    int msgSize_35(double meanSize, double initRoll);
-    void computeAA_35();
 
     // partner iterators for size 48/49;
     int s_partner_48;
     int r_partner_48;
 
-    // compute the send/receive data size pattern for site 49
-    void computeSR_49(int &msgElem);
+    std::map<std::tuple<int,int,int>,PolyModel> msg_model;
+    std::map<std::tuple<int,int,int,int>,PolyModel> exec_model;
 
-    // add randomness from uniform dist
-    double adjustUniformRand(double input, double range,
-                             SST::RNG::MersenneRNG *_rng) {
-        double roll = _rng->nextUniform() * range * 2.0;
-        return input * (1.0-range+roll);
-    }
+    std::map<std::tuple<int,int>,PolyModelND> msg_model_nd;
+    std::map<std::tuple<int,int,int>,PolyModelND> exec_model_nd;
 
-    std::map<std::tuple<int,int,int>,PolyModel> comm_model;
-    std::map<std::tuple<int,int,int,int>,PolyModel> comp_model;
-
-    // Random number generator    
+    // Random number generator
     SST::RNG::MersenneRNG* rng;
-    // 'per rank' rng generator
-    SST::RNG::MersenneRNG* rng_rank;
-    // 'per opposite pair' rng generator
-    SST::RNG::MersenneRNG* rng_opposite;   
-    // 'per comm0'
-    SST::RNG::MersenneRNG* rng_comm0;
-    // 'per comm2'
-    SST::RNG::MersenneRNG* rng_comm2;
 };
 
 }

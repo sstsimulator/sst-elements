@@ -72,7 +72,7 @@ class ArielRtlEvent : public ArielEvent, public SST::Event {
           ser & payload;
       }*/
       
-      ArielEventType getEventType() const {
+      ArielEventType getEventType() const override {
          return RTL;
       }
 
