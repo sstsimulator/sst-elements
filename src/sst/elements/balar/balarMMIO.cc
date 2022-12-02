@@ -200,6 +200,9 @@ void BalarMMIO::SST_callback_memcpy_H2D_done() {
         // Safely free the source data buffer
         free(memcpyH2D_dst);
         memcpyH2D_dst = NULL;
+
+        // Mark the CUDA call as done
+        cuda_ret.is_cuda_call_done = true;
     }
     
     // Send blocked response
@@ -302,6 +305,10 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write)
     // Convert this into an address, assume little endian
     mmio->packet_scratch_mem_addr = dataToUInt64(&(write->data));
 
+    // On calling a new cuda call, we set the cuda return packet status
+    // to be not done so that our CUDA runtime lib will sync the cudaMemcpy
+    mmio->cuda_ret.is_cuda_call_done = false;
+
     // Create a memory request to read the cuda call packet
     StandardMem::Request* cuda_req = new StandardMem::Read(mmio->packet_scratch_mem_addr, sizeof(BalarCudaCallPacket_t));
 
@@ -390,6 +397,10 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* res
             // Save the call type for return packet
             mmio->cuda_ret.cuda_call_id = packet->cuda_call_id;
 
+            // Most of the CUDA api will return immediately
+            // except for memcpy and kernel launch
+            mmio->cuda_ret.is_cuda_call_done = true;
+
             // The following are for non-SST memspace
             switch (packet->cuda_call_id) {
                 case GPU_REG_FAT_BINARY: 
@@ -407,6 +418,8 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* res
                     // within SST memory space
                     is_blocked = true;
                     if (packet->isSSTmem) {
+                        // With SST memory/vanadis, we should sync for it to complete
+                        mmio->cuda_ret.is_cuda_call_done = false;
                         if (packet->cuda_memcpy.kind == cudaMemcpyHostToDevice) {
                             // We will end the handler early as we
                             // need to read the src data in host mem first
@@ -623,8 +636,11 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::WriteResp* re
             // Free temp buffer to hold memcpyD2H data
             free(mmio->memcpyD2H_dst);
             mmio->memcpyD2H_dst = NULL;
-
             mmio->iface->send(mmio->blocked_response);
+            
+            // Assert that this memcpy is done so that the vanadis CPU will
+            // able to sync properly
+            mmio->cuda_ret.is_cuda_call_done = true;
 
             delete resp;
         } else if (request_type.compare("Issue_DMA_memcpy_H2D") == 0) {

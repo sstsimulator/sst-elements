@@ -59,7 +59,21 @@ cudaError_t cudaMemcpy(uint64_t dst, uint64_t src, uint64_t count, enum cudaMemc
     *g_gpu = (uint32_t) call_packet_ptr;
 
     // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_gpu;
+    // Make the memcpy sync with balar so that CPU will
+    // issue another write/read to balar only if the previous memcpy is done
+    BalarCudaCallReturnPacket_t *response_packet_ptr;
+    while (1) {
+        int wait = 0;
+        response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_gpu;
+        if (response_packet_ptr->is_cuda_call_done)
+            break;
+        wait++;
+
+        // if (wait % 10 == 0) {
+        //     printf("Waited %d times\n", wait);
+        // }
+    }
+
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
@@ -135,6 +149,7 @@ cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[8], uint64_t size, uin
         if (g_debug_level >= LOG_LEVEL_DEBUG) {
             printf("Argument is a constant\n");
         }
+        call_packet_ptr->setup_argument.arg = NULL;
         for (int i = 0; i < 8; i++) {
             call_packet_ptr->setup_argument.value[i] = value[i];
         }

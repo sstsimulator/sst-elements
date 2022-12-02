@@ -1,5 +1,5 @@
 # Automatically generated SST Python input
-# Run script: sst testBalar-simple.py --model-options="-c ariel-gpu-v100.cfg -v -x ./vectorAdd/vectorAdd -t cuda_calls.trace"
+# Run cmd: sst testBalar-simple.py --model-options="-c ariel-gpu-v100.cfg -v -x ./vectorAdd/vectorAdd -t cuda_calls.trace"
 # TODO: Balar cannot read the cuda packet in the memory
 # TODO: Some configuration issue with the group, dst, and src setting
 #       Using the same config as vanadis_mod resolve this
