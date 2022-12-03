@@ -1,1 +1,2 @@
 This file is used to test Ariel IO redirection functionality.
+This is the second line in the file.

@@ -1,19 +1,16 @@
-// This is a simple program that copies stdin to stdout.
-// Specify -e to write to stderr instead of stdout.
+// This is a simple program that reads from stdin and writes to the specified output stream.
+// Specify -o to write to stdout and -e to write to stderr.
 #include <iostream>
 #include <string>
 #include <sys/poll.h>
 
+// Detect whether we are reading stdin from a file or not
 int stdin_is_redirected() {
     struct pollfd fds;
     int ret;
     fds.fd = 0; /* this is STDIN */
     fds.events = POLLIN;
-    ret = poll(&fds, 1, 0);
-    if (ret != 0 && ret != 1) {
-        std::cerr << "Error" << std::endl;
-    }
-    return ret;
+    return poll(&fds, 1, 0);
 }
 
 int main (int argc, char** argv)
@@ -27,7 +24,7 @@ int main (int argc, char** argv)
     // Users must specify at least one of stdout and stderr to write to
     if (argc <= 1) {
         std::cerr << "Error: Please specify at least of one of [-o, -e]" << std::endl;
-            return EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
 
     // Parse arguments. Only -o and -e are allowed.
@@ -47,7 +44,13 @@ int main (int argc, char** argv)
 
     // Copy from stdin to which ever outputs the user specified
     // If input is not being read from a file, use the default output.
-    if (stdin_is_redirected()) {
+    int is_redirected = stdin_is_redirected();
+    if (is_redirected != 0 and is_redirected != 1) {
+        // Error condition returned from poll
+        std::cout << "`poll` returned error code: " << is_redirected << std::endl;
+        return EXIT_FAILURE;
+    }
+    if (is_redirected) {
         if (out && err) {
             while (std::getline(std::cin, line) && !line.empty()) {
                 std::cout << line << std::endl;
