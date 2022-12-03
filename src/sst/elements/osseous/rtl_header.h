@@ -64,6 +64,8 @@ typedef struct Rtlheader {
     UInt<4> _GEN_2 = io_shift ? delays_1 : delays_2;
     UInt<4> _GEN_3 = io_shift ? delays_2 : delays_3;
     io_out = delays_3;
+    if(update_registers)
+        printf("\nio_out: %"PRIu8, io_out);
     if (update_registers) delays_0 = io_load ? io_ins_0 : _GEN_0;
     if (update_registers) delays_1 = io_load ? io_ins_1 : _GEN_1;
     if (update_registers) delays_2 = io_load ? io_ins_2 : _GEN_2;

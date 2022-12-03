@@ -121,7 +121,6 @@ Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
 Rtlmodel::~Rtlmodel() {
     delete dut;
     delete axiport;
-    delete RtlAckEv;
 }
 
 void Rtlmodel::setup() {
@@ -148,15 +147,13 @@ void Rtlmodel::finish() {
 //clockTick will actually execute the RTL design at every cycle based on the input and control signals updated by CPU CPU or Event Handler.
 bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
 
-    if(!isStalled) {
-        dut->eval(ev.update_registers, ev.verbose, ev.done_reset);
+    /*if(!isStalled) {
         if(tickCount == 4) {
             output.verbose(CALL_INFO, 1, 0, "AXI signals changed"); 
             axi_tvalid_$next = 1;
             axi_tdata_$next = 34;
             output.verbose(CALL_INFO, 1, 0, "\n Sending data at tickCount 4");
         }
-     tickCount++;
     }
 
     if((axi_tvalid_$old ^ axi_tvalid_$next) || (axi_tdata_$old ^ axi_tdata_$next))  {
@@ -192,10 +189,14 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
     axi_tready_$old = axi_tready_$next;
 
     uint64_t read_addr = (axiport->queue.ram[fifo_enq_$next].as_single_word());// << 32) | (axiport->queue.ram[fifo_enq_$next+1].as_single_word());
-    uint64_t size = (axiport->queue.ram[fifo_enq_$next+2].as_single_word());// << 32) | (axiport->queue.ram[fifo_enq_$next+3].as_single_word());
+    uint64_t size = (axiport->queue.ram[fifo_enq_$next+2].as_single_word());// << 32) | (axiport->queue.ram[fifo_enq_$next+3].as_single_word());*/
 
     //output.verbose(CALL_INFO, 1, 0, "\nSim Done is: %d", ev.sim_done);
 
+    if(!isStalled) {
+        dut->eval(ev.update_registers, ev.verbose, ev.done_reset);
+        tickCount++;
+    }
 	if( tickCount >= sim_cycle) {
         if(ev.sim_done) {
             output.verbose(CALL_INFO, 1, 0, "OKToEndSim, TickCount %" PRIu64, tickCount);
@@ -204,8 +205,9 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
             primaryComponentOKToEndSim();  //Tell the SST that it can finish the simulation.
             return true;
         }
-        }
-        return false;
+    }
+    
+    return false;
 }
 
 

@@ -27,7 +27,13 @@ librtlcomponent_la_SOURCES = \
 
 EXTRA_DIST = \
 			 eras_datatypes/sint.h \
-			 eras_datatypes/uint.h
+			 eras_datatypes/uint.h \
+			 tests/Makefile \
+			 tests/tb_header.h \
+			 tests/tb_header.c \
+			 tests/testbench.c \
+			 tests/runstream.py
+
 
 librtlcomponent_la_LDFLAGS = -module -avoid-version
 
