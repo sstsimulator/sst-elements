@@ -1,20 +1,22 @@
 import sst
 import os
+import sys
 
 sst.setProgramOption("timebase", "1ps")
 
-stream_app = os.getenv("ARIEL_TEST_STREAM_APP")
-if stream_app == None:
-    sst_root = os.getenv( "SST_ROOT" )
-    app = sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream"
-else:
-    app = stream_app
+app = os.getenv("ARIEL_EXE")
+if app == None or not os.path.exists(app):
+        sys.exit(os.EX_CONFIG)
 
-if not os.path.exists(app):
-    app = os.getenv( "OMP_EXE" )
+allowed_args = ["redirect_in", "redirect_out", "redirect_err",
+                "append_redirect_out", "append_redirect_err"]
 
-ariel = sst.Component("a0", "ariel.ariel")
-ariel.addParams({
+for arg in sys.argv[1:]:
+    if arg not in allowed_args:
+        print("ERROR: {} Recieved unknown argument", sys.argv[0])
+        sys.exit(os.EX_CONFIG)
+
+ariel_params = {
         "verbose" : "0",
         "maxcorequeue" : "256",
         "maxissuepercycle" : "2",
@@ -23,12 +25,35 @@ ariel.addParams({
         "arielmode" : "1",
         "launchparamcount" : 1,
         "launchparam0" : "-ifeellucky",
-        })
+}
+
+if "redirect_in" in sys.argv:
+    ariel_params["appstdin"] = "input.txt"
+
+if "redirect_out" in sys.argv:
+    ariel_params["appstdout"] = "app_stdout.txt"
+
+if "redirect_err" in sys.argv:
+    ariel_params["appstderr"] = "app_stderr.txt"
+
+if "append_redirect_out" in sys.argv:
+    f = open("app_stdout.txt", "w")
+    f.write("We will append to this file.\n")
+    f.close()
+    ariel_params["appstdout"] = "app_stdout.txt"
+    ariel_params["appstdoutappend"] = 1
+
+if "append_redirect_err" in sys.argv:
+    f = open("app_stderr.txt", "w")
+    f.write("We will append to this file.\n")
+    f.close()
+    ariel_params["appstderr"] = "app_stderr.txt"
+    ariel_params["appstderrappend"] = 1
+
+ariel = sst.Component("a0", "ariel.ariel")
+ariel.addParams(ariel_params)
 
 memmgr = ariel.setSubComponent("memmgr", "ariel.MemoryManagerSimple")
-
-
-corecount = 1;
 
 l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 l1cache.addParams({
@@ -46,6 +71,7 @@ l1cache.addParams({
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
         "clock" : "1GHz",
+        "addr_range_start" : 0,
 })
 
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
