@@ -2,8 +2,7 @@
 #
 #
 INCLUDE = -I$(top_srcdir)/src/sst/elements/osseous/eras_datatypes/ -I$(top_srcdir)/src/sst/elements/ariel/
-FLAGS = -fpermissive -std=c++11 -Wno-format
-
+FLAGS = -fpermissive -std=c++11 
 
 
 AM_CPPFLAGS += \
