@@ -187,12 +187,22 @@ public:
                 stat_output.st_size = 0;
                 stat_output.st_blksize = 1024;
                 stat_output.st_blocks = 0;
+
+#ifdef SST_COMPILE_MACOSX
+                stat_output.st_atimespec.tv_sec = 1670346792;
+                stat_output.st_atimespec.tv_nsec = 1670346792;
+                stat_output.st_mtimespec.tv_sec = 1670346792;
+                stat_output.st_mtimespec.tv_nsec = 1670346792;
+                stat_output.st_ctimespec.tv_sec = 1670342911;
+                stat_output.st_ctimespec.tv_nsec = 574486071;
+#else
                 stat_output.st_atim.tv_sec = 1670346792;
                 stat_output.st_atim.tv_nsec = 1670346792;
                 stat_output.st_mtim.tv_sec = 1670346792;
-                stat_output.st_mtim.tv_nsec = 573486059;
+                stat_output.st_mtim.tv_nsec = 1670346792;
                 stat_output.st_ctim.tv_sec = 1670342911;
                 stat_output.st_ctim.tv_nsec = 574486071;
+#endif
 
                 if (  VanadisOSBitType::VANADIS_OS_64B == fstat_ev->getOSBitType() ) {
                     vanadis_copy_native_stat<struct vanadis_stat64>(&stat_output, &v64_stat_output);
