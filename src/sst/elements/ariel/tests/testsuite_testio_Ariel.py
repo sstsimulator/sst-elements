@@ -162,9 +162,25 @@ class testcase_Ariel(SSTTestCase):
         redirect_testio_stderr = ["STDERR: This file is used to test Ariel IO redirection functionality.\n",
                                   "STDERR: This is the second line in the file.\n"]
 
+
+        # If the the sdl stdout is supposed to contain the program stdout, make sure it is there
+        if "redirect_out" not in args and "append_redirect_out" not in args:
+            if "redirect_in" in args:
+                self.file_contains(outfile, redirect_testio_stdout)
+            else:
+                self.file_contains(outfile, default_testio_stdout)
+
+
+        # If the the sdl stderr is supposed to contain the program stderr, make sure it is there
+        if "redirect_err" not in args and "append_redirect_err" not in args:
+            if "redirect_in" in args:
+                self.file_contains(errfile, redirect_testio_stderr)
+            else:
+                self.file_contains(errfile, default_testio_stderr)
+
+        # Pick the correct program stdout and stderr files based on the test settings
         gold_stdout = ""
         gold_stderr = ""
-
         if "redirect_out" in args:
             if "redirect_in" in args:
                 gold_stdout = "{}/ref/redirect-in_stdout.txt".format(ArielElementTestIODir)
@@ -184,24 +200,13 @@ class testcase_Ariel(SSTTestCase):
             gold_stderr = "{}/ref/default-in_appendstderr.txt".format(ArielElementTestIODir)
 
 
-        # If the the sdl output is supposed to contain the program stdout, make sure it is there
-        if "redirect_out" not in args and "append_redirect_out" not in args:
-            if "redirect_in" in args:
-                self.file_contains(outfile, redirect_testio_stdout)
-            else:
-                self.file_contains(outfile, default_testio_stdout)
-
-
-        # If the the sdl output is supposed to contain the program stderr, make sure it is there
-        if "redirect_err" not in args and "append_redirect_err" not in args:
-            if "redirect_in" in args:
-                self.file_contains(errfile, redirect_testio_stderr)
-            else:
-                self.file_contains(errfile, default_testio_stderr)
-
+        # Check that the specified out and err files contain the program output. There is also
+        # some Ariel output which may change in the future so we don't diff the files. We just
+        # check to see that the expected lines are there.
         if "redirect_out" in args or "append_redirect_out" in args:
             with open(gold_stdout, 'r') as gold:
                 self.file_contains("{0}/app_stdout.txt".format(ArielElementTestIODir), gold.readlines())
+
         if "redirect_err" in args or "append_redirect_err" in args:
             with open(gold_stderr, 'r') as gold:
                 self.file_contains("{0}/app_stderr.txt".format(ArielElementTestIODir), gold.readlines())
