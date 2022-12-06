@@ -33,21 +33,21 @@ def build_vanadis_test_matrix():
     #io_tests = []
     for test in io_tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 120])
+            testlist.append(["basic_vanadis.py", location, test,arch, 300])
 
     location="small/basic-math"
     math_tests = ["sqrt-double","sqrt-float"]
     #math_tests = []
     for test in math_tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 120])
+            testlist.append(["basic_vanadis.py", location, test,arch, 300])
 
     location="small/basic-ops"
     ops_tests = ["test-branch","test-shift"]
     #ops_tests = []
     for test in ops_tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 120])
+            testlist.append(["basic_vanadis.py", location, test,arch, 300])
 
 
     location="small/misc"
@@ -55,7 +55,7 @@ def build_vanadis_test_matrix():
     #misc_tests =[]
     for test in misc_tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 120])
+            testlist.append(["basic_vanadis.py", location, test,arch, 300])
 
     arch_list = ["riscv64"]
 
@@ -64,7 +64,7 @@ def build_vanadis_test_matrix():
     #misc_tests =[]
     for test in misc_tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 120])
+            testlist.append(["basic_vanadis.py", location, test,arch, 300])
 
     # Process each line and crack up into an index, hash, options and sdl file
     for testnum, test_info in enumerate(testlist):
