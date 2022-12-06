@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <uint.h>
+#include <string.h>
 #include <sint.h>
 #include <sst/core/sst_config.h>
 #include "sst_config.h"
