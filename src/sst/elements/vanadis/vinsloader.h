@@ -37,8 +37,8 @@ public:
                              const uint64_t cachelinewidth) {
 
         cache_line_width = cachelinewidth;
-        uop_cache = new VanadisCache<uint64_t, VanadisInstructionBundle*>(uop_cache_size);
-        predecode_cache = new VanadisCache<uint64_t, uint8_t*>(predecode_cache_entries);
+        uop_cache = new VanadisCache<uint64_t, VanadisInstructionBundle*, SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE>(uop_cache_size);
+        predecode_cache = new VanadisCache<uint64_t, uint8_t*, SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE_ARRAY>(predecode_cache_entries);
 
         mem_if = nullptr;
     }
@@ -273,7 +273,7 @@ public:
             line_start += cache_line_width;
         } while (line_start < (addr + len));
 
-			printPendingLoads(output);
+		printPendingLoads(output);
     }
 
     void printStatus(SST::Output* output) {
@@ -305,8 +305,8 @@ private:
     uint64_t cache_line_width;
     SST::Interfaces::StandardMem* mem_if;
 
-    VanadisCache<uint64_t, VanadisInstructionBundle*>* uop_cache;
-    VanadisCache<uint64_t, uint8_t*>* predecode_cache;
+    VanadisCache<uint64_t, VanadisInstructionBundle*, SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE>* uop_cache;
+    VanadisCache<uint64_t, uint8_t*, SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE_ARRAY>* predecode_cache;
 
     std::unordered_map<SST::Interfaces::StandardMem::Request::id_t, SST::Interfaces::StandardMem::Read*> pending_loads;
 };
