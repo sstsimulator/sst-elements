@@ -174,6 +174,34 @@ public:
             int fstat_return_code = 0;
 
             if (fstat_ev->getFileHandle() <= 2) {
+
+                // using an a call to fstat results in different statistics from run to run
+                // fill in the fstat struct for stdin, stdout, and stderr with the same data 
+                stat_output.st_dev = 23;
+                stat_output.st_ino = 29;
+                stat_output.st_mode = 8592;
+                stat_output.st_nlink = 1;
+                stat_output.st_uid = 1000;
+                stat_output.st_gid = 1000;
+                stat_output.st_rdev = 34832;
+                stat_output.st_size = 0;
+                stat_output.st_blksize = 1024;
+                stat_output.st_blocks = 0;
+                stat_output.st_atim.tv_sec = 1670346792;
+                stat_output.st_atim.tv_nsec = 1670346792;
+                stat_output.st_mtim.tv_sec = 1670346792;
+                stat_output.st_mtim.tv_nsec = 573486059;
+                stat_output.st_ctim.tv_sec = 1670342911;
+                stat_output.st_ctim.tv_nsec = 574486071;
+
+                if (  VanadisOSBitType::VANADIS_OS_64B == fstat_ev->getOSBitType() ) {
+                    vanadis_copy_native_stat<struct vanadis_stat64>(&stat_output, &v64_stat_output);
+                } else {
+                    vanadis_copy_native_stat<struct vanadis_stat32>(&stat_output, &v32_stat_output);
+                }
+                success = true;
+
+#if 0
                 if (0 == fstat(fstat_ev->getFileHandle(), &stat_output)) {
                     if (  VanadisOSBitType::VANADIS_OS_64B == fstat_ev->getOSBitType() ) {
                         vanadis_copy_native_stat<struct vanadis_stat64>(&stat_output, &v64_stat_output);
@@ -184,6 +212,7 @@ public:
                 } else {
                     fstat_return_code = -13;
                 }
+#endif
             } else {
                 auto vos_descriptor_itr = file_descriptors.find(fstat_ev->getFileHandle());
 
