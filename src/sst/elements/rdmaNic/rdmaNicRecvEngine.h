@@ -1,8 +1,22 @@
+// Copyright 2009-2022 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2022, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// of the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 class RecvEntry {
   public:
     RecvEntry( int thread, NicCmd* cmd = NULL ) : m_cmd(cmd), m_thread(thread), m_cqId(-1) {}
-	~RecvEntry() { if ( m_cmd) delete m_cmd; }
+	virtual ~RecvEntry() { if ( m_cmd) delete m_cmd; }
 	virtual size_t getPayloadLength() = 0;
 	virtual Addr_t getAddr() = 0;
 	virtual Addr_t getContext() = 0; 
@@ -49,12 +63,14 @@ class ReadRespRecvEntry : public RecvEntry  {
 
 class RecvQueue {
   public:
-    RecvQueue( CompQueueId cqId ) : cqId(cqId) {}
+    RecvQueue( CompQueueId cqId, int key  ) : cqId(cqId), key(key) {}
     void push( MsgRecvEntry* entry ) { entry->setCqId(cqId); recvQ.push(entry); }
     std::queue<MsgRecvEntry*>& getQ() { return recvQ; }
+    int getKey() { return key; };
   private:
     std::queue<MsgRecvEntry*> recvQ;
     CompQueueId cqId;
+    int key;
 };
 
 class RecvStream {
@@ -119,9 +135,20 @@ class RecvEngine {
     }   
     int createRQ( int cqId, int rqKey ) { 
         int rqId = m_nextRqId++;
-        m_recvQueueMap[ rqId ] = new RecvQueue( cqId );
+        m_recvQueueMap[ rqId ] = new RecvQueue( cqId, rqKey );
         m_recvQueueKeyMap[ rqKey ] = rqId;
         return rqId;
+    }
+
+    int destroyRQ( int rqId ) { 
+        auto iter = m_recvQueueMap.find( rqId );
+        if ( iter == m_recvQueueMap.end() ) {
+            return -1;
+        } 
+        assert( m_recvQueueKeyMap.find( iter->second->getKey() ) != m_recvQueueKeyMap.end() );
+        delete iter->second;
+        m_recvQueueMap.erase(rqId);
+        return 0;
     }
 	int addReadResp( int thread, Addr_t destAddr, uint32_t len, CompQueueId cqId, Context context ) {
 		int key = m_nextReadRespKey++;

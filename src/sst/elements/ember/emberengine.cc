@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -15,7 +15,6 @@
 
 
 #include "sst_config.h"
-#include "sst/core/stringize.h"
 #include <sst/core/timeLord.h>
 
 
@@ -58,9 +57,9 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 
     std::string motifLogFile = params.find<std::string>("motifLog", "");
     if("" != motifLogFile) {
-        m_motifLogger = new EmberMotifLog(motifLogFile, m_jobId);
+        m_motifLogger = loadComponentExtension<EmberMotifLog>(motifLogFile, m_jobId);
     } else {
-        m_motifLogger = NULL;
+        m_motifLogger = nullptr;
     }
 	output.verbose(CALL_INFO, 2, ENGINE_MASK, "\n");
 
@@ -99,8 +98,7 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     assert(selfEventLink);
 
 	// Create a time converter for our compute events
-	nanoTimeConverter =
-        Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ns");
+	nanoTimeConverter = getTimeConverter("1ns");
 }
 
 EmberEngine::~EmberEngine() {
@@ -153,7 +151,7 @@ EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
             std::string emberLib = "ember." + type + "Lib";
             output.verbose(CALL_INFO, 2, ENGINE_MASK, "lib=%s\n",emberLib.c_str() );
             SST::Params x;
-            lib = dynamic_cast<EmberLib*>( loadModule( emberLib, x ) );
+            lib = loadModule<EmberLib>( emberLib, x );
             assert(lib);
 
             lib->initApi( api );
@@ -187,10 +185,10 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 		output.fatal(CALL_INFO, -1, "Error: You did not specify a generator"
                 "or Ember to use\n");
 	} else {
-		params.insert("_jobId", SST::to_string( jobId ), true);
-		params.insert("_motifNum", SST::to_string( motifNum ), true);
+		params.insert("_jobId", std::to_string( jobId ), true);
+		params.insert("_motifNum", std::to_string( motifNum ), true);
 		assert( sizeof(this) == sizeof(uint64_t) );
-		params.insert("_enginePtr", SST::to_string( reinterpret_cast<uint64_t>( this ) ), true);
+		params.insert("_enginePtr", std::to_string( reinterpret_cast<uint64_t>( this ) ), true);
 
 		gen = loadAnonymousSubComponent<EmberGenerator>( gentype, "", 0, ComponentInfo::SHARE_NONE, params );
 		gen->setup();

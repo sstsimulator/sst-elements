@@ -1,3 +1,18 @@
+// Copyright 2009-2022 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2022, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// of the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <rdma.h>
@@ -17,7 +32,7 @@ int main( int argc, char* argv[] ) {
 	int myNode = rdma_getMyNode();
 	int numNodes = rdma_getNumNodes();
 
-	printf("%s() myNode=%d numNodes=%d\n",__func__,myNode,numNodes);
+	printf("myNode=%d numNodes=%d\n",myNode,numNodes);
 	printf("buffer=%p\n",buf);
 		
 	int cq = rdma_create_cq( );
@@ -41,17 +56,25 @@ int main( int argc, char* argv[] ) {
 		RdmaCompletion comp;
 		rdma_read_comp( cq, &comp, 1 );
 #if VALIDATE 
-		printf("%s() validate\n",__func__);
+		printf("validate\n");
 		for ( int i = 0; i < BUF_SIZE; i++ ) {
 			if ( buf[i] !=  i ) {
 				printf("Error: %p index=%d != %d\n",&buf[i],i,buf[i]);
 			}
 		}
-		printf("%s() validate complete\n",__func__);
+		printf("validate complete\n");
 #endif
 	}
 
+    if ( rdma_destroy_rq( rq ) ) {
+        printf("rdma_destroy_rq() failed\n");
+    }
+
+    if ( rdma_destroy_cq( cq ) ) {
+        printf("rdma_destroy_cq() failed\n");
+    }
+
 	free( buf );
 	rdma_fini();
-	printf("%s() returning\n",__func__);
+	printf("returning\n");
 }

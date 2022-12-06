@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -20,6 +20,8 @@
 #include "decoder/vriscv64decoder.h"
 #include "inst/vinstall.h"
 #include "velf/velfinfo.h"
+
+#include "os/resp/vosexitresp.h"
 
 #include <cstdio>
 #include <sst/core/output.h>
@@ -43,28 +45,6 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     output = new SST::Output(outputPrefix, verbosity, 0, Output::STDOUT);
     free(outputPrefix);
-
-    std::string binary_img = params.find<std::string>("executable", "");
-
-    if ( "" == binary_img ) {
-        output->verbose(CALL_INFO, 2, 0, "No executable specified, will not perform any binary load.\n");
-        binary_elf_info = nullptr;
-    }
-    else {
-        output->verbose(CALL_INFO, 2, 0, "Executable: %s\n", binary_img.c_str());
-        binary_elf_info = readBinaryELFInfo(output, binary_img.c_str());
-        binary_elf_info->print(output);
-
-        if ( binary_elf_info->isDynamicExecutable() ) {
-            output->fatal(
-                CALL_INFO, -1,
-                "--> error - executable is dynamically linked. Only static "
-                "executables are currently supported for simulation.\n");
-        }
-        else {
-            output->verbose(CALL_INFO, 2, 0, "--> executable is identified as static linked\n");
-        }
-    }
 
     std::string clock_rate = params.find<std::string>("clock", "1GHz");
     output->verbose(CALL_INFO, 2, 0, "Registering clock at %s.\n", clock_rate.c_str());
@@ -99,6 +79,11 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     halted_masks = new bool[hw_threads];
 
+    os_link = configureLink("os_link", "0ns", new Event::Handler<VANADIS_COMPONENT>(this, &VANADIS_COMPONENT::recvOSEvent));
+    if ( nullptr == os_link ) {
+        output->fatal(CALL_INFO, -1, "Error: was unable to configureLink %s \n", "os_link");
+    }
+
     //////////////////////////////////////////////////////////////////////////////////////
 
     char* decoder_name = new char[64];
@@ -111,7 +96,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 		  fp_flags.push_back(new VanadisFloatingPointFlags());
 		  thr_decoder->setFPFlags(fp_flags[i]);
 
-        //		thr_decoder->setHardwareThread( i );
+        //     thr_decoder->setHardwareThread( i );
 
         output->verbose(
             CALL_INFO, 8, 0, "Loading decoder%" PRIu32 ": %s.\n", i,
@@ -127,10 +112,8 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
         thr_decoder->setHardwareThread(i);
         thread_decoders.push_back(thr_decoder);
 
-        output->verbose(CALL_INFO, 8, 0, "Registering SYSCALL return interface...\n");
-        std::function<void(uint32_t)> sys_callback =
-            std::bind(&VANADIS_COMPONENT::syscallReturnCallback, this, std::placeholders::_1);
-        thread_decoders[i]->getOSHandler()->registerReturnCallback(sys_callback);
+
+        thread_decoders[i]->getOSHandler()->setOS_link(os_link);
 
         if ( 0 == thread_decoders[i]->getInsCacheLineWidth() ) {
             output->verbose(
@@ -274,39 +257,6 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     lsq->setRegisterFiles(&register_files);
 
-    if ( 0 == core_id ) {
-        halted_masks[0]            = false;
-        uint64_t initial_config_ip = thread_decoders[0]->getInstructionPointer();
-
-        // This wasn't provided, or its explicitly set to zero which means
-        // we should auto-calculate it
-        const uint64_t c0_entry = (binary_elf_info != nullptr) ? binary_elf_info->getEntryPoint() : 0;
-        output->verbose(CALL_INFO, 8, 0, "Configuring core-0, thread-0 entry point = %p\n", (void*)c0_entry);
-        thread_decoders[0]->setInstructionPointer(c0_entry);
-
-        uint64_t stack_start = 0;
-
-        Params app_params = params.get_scoped_params("app");
-
-        output->verbose(CALL_INFO, 8, 0, "Configuring core-0, thread-0 application info...\n");
-        thread_decoders[0]->configureApplicationLaunch(
-            output, issue_isa_tables[0], register_files[0], lsq, binary_elf_info, app_params);
-
-        // Force retire table to sync with issue table
-        retire_isa_tables[0]->reset(issue_isa_tables[0]);
-
-        if ( initial_config_ip > 0 ) {
-            output->verbose(
-                CALL_INFO, 8, 0, "Overrding entry point for core-0, thread-0, set to 0x%llx\n", initial_config_ip);
-            thread_decoders[0]->setInstructionPointer(initial_config_ip);
-        }
-        else {
-            output->verbose(
-                CALL_INFO, 8, 0, "Utilizing entry point from binary (auto-detected) 0x%llx\n",
-                thread_decoders[0]->getInstructionPointer());
-        }
-    }
-
     //	VanadisInstruction* test_ins = new VanadisAddInstruction(nextInsID++, 0,
     // 0, isa_options[0], 3, 4, 5); 	thread_decoders[0]->getDecodedQueue()->push(
     // test_ins ); 	rob[0]->push(test_ins);
@@ -409,16 +359,11 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     }
 
     //////////////////////////////////////////////////////////////////////////////////////
-
-    std::function<void(uint32_t, int64_t)> haltThreadCB =
-        std::bind(&VANADIS_COMPONENT::setHalt, this, std::placeholders::_1, std::placeholders::_2);
-
     for ( uint32_t i = 0; i < hw_threads; ++i ) {
         thread_decoders[i]->getOSHandler()->setCoreID(core_id);
         thread_decoders[i]->getOSHandler()->setHWThread(i);
         thread_decoders[i]->getOSHandler()->setRegisterFile(register_files[i]);
         thread_decoders[i]->getOSHandler()->setISATable(retire_isa_tables[i]);
-        thread_decoders[i]->getOSHandler()->setHaltThreadCallback(haltThreadCB);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////
@@ -433,7 +378,6 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     //	// otherwise leave the mask fully open.
     //	lsq->setMaxAddressMask( max_addr_mask );
 
-    handlingSysCall   = false;
     fetches_per_cycle = params.find<uint32_t>("fetches_per_cycle", 2);
     decodes_per_cycle = params.find<uint32_t>("decodes_per_cycle", 2);
     issues_per_cycle  = params.find<uint32_t>("issues_per_cycle", 2);
@@ -494,6 +438,34 @@ VANADIS_COMPONENT::~VANADIS_COMPONENT()
 	 for( VanadisFloatingPointFlags* next_fp_flags : fp_flags ) {
 		delete next_fp_flags;
 	 }
+}
+
+void
+VANADIS_COMPONENT::startThread(int thr, uint64_t stackStart, uint64_t instructionPointer ) {
+
+    halted_masks[thr]            = false;
+    uint64_t initial_config_ip = thread_decoders[thr]->getInstructionPointer();
+
+    // This wasn't provided, or its explicitly set to zero which means
+    // we should auto-calculate it
+    output->verbose(CALL_INFO, 8, 0, "Configuring core-%d, thread-%d entry point = %p stack = %#" PRIx64  "\n", core_id, thr, (void*)instructionPointer, stackStart);
+    thread_decoders[thr]->setInstructionPointer(instructionPointer);
+
+    thread_decoders[thr]->setStackPointer( output, issue_isa_tables[thr], register_files[thr], stackStart );
+
+    // Force retire table to sync with issue table
+    retire_isa_tables[thr]->reset(issue_isa_tables[thr]);
+
+    if ( initial_config_ip > 0 ) {
+        output->verbose(
+                CALL_INFO, 8, 0, "Overrding entry point for core-0, thread-0, set to 0x%llx\n", initial_config_ip);
+        thread_decoders[thr]->setInstructionPointer(initial_config_ip);
+    }
+    else {
+        output->verbose(
+            CALL_INFO, 8, 0, "Utilizing entry point from binary (auto-detected) 0x%llx\n",
+            thread_decoders[thr]->getInstructionPointer());
+    }
 }
 
 void
@@ -1046,10 +1018,14 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                         "(ins-addr: 0x%0llx)...\n",
                         the_syscall_ins->getInstructionAddress());
 #endif
-                    thread_decoders[rob_front->getHWThread()]->getOSHandler()->handleSysCall(the_syscall_ins);
+                    bool ret = thread_decoders[rob_front->getHWThread()]->getOSHandler()->handleSysCall(the_syscall_ins);
 
                     // mark as front of ROB now we can proceed
                     rob_front->markFrontOfROB();
+
+                    if ( ret ) {
+                        syscallReturn( rob_front->getHWThread() );
+                    }
                 }
 
                 // We spent this cycle waiting on an issued SYSCALL, it has not resolved
@@ -1817,210 +1793,17 @@ VANADIS_COMPONENT::init(unsigned int phase)
     //	memDataInterface->init( phase );
     memInstInterface->init(phase);
 
-    output->verbose(CALL_INFO, 2, 0, "-> Performing init operations for Vanadis...\n");
+    while (SST::Event* ev = os_link->recvInitData()) {
 
-    // Pull in all the binary contents and push this into the memory system
-    // everything should be correctly up and running by now (components, links
-    // etc)
-    if ( 0 == phase ) {
-        if ( nullptr != binary_elf_info ) {
-            if ( 0 == core_id ) {
-                output->verbose(
-                    CALL_INFO, 2, 0, "-> Loading %s, to locate program sections ...\n",
-                    binary_elf_info->getBinaryPath());
-                FILE* exec_file = fopen(binary_elf_info->getBinaryPath(), "rb");
-
-                if ( nullptr == exec_file ) {
-                    output->fatal(CALL_INFO, -1, "Error: unable to open %s\n", binary_elf_info->getBinaryPath());
-                }
-
-                std::vector<uint8_t> initial_mem_contents;
-                uint64_t             max_content_address = 0;
-
-                // Find the max value we think we are going to need to place entries up
-                // to
-
-                for ( size_t i = 0; i < binary_elf_info->countProgramHeaders(); ++i ) {
-                    const VanadisELFProgramHeaderEntry* next_prog_hdr = binary_elf_info->getProgramHeader(i);
-                    max_content_address                               = std::max(
-                        max_content_address,
-                        (uint64_t)next_prog_hdr->getVirtualMemoryStart() + next_prog_hdr->getHeaderImageLength());
-                }
-
-                for ( size_t i = 0; i < binary_elf_info->countProgramSections(); ++i ) {
-                    const VanadisELFProgramSectionEntry* next_sec = binary_elf_info->getProgramSection(i);
-                    max_content_address                           = std::max(
-                        max_content_address, (uint64_t)next_sec->getVirtualMemoryStart() + next_sec->getImageLength());
-                }
-
-                output->verbose(
-                    CALL_INFO, 2, 0,
-                    "-> expecting max address for initial binary load is "
-                    "0x%llx, zeroing the memory\n",
-                    max_content_address);
-                initial_mem_contents.resize(max_content_address, (uint8_t)0);
-
-                // Populate the memory with contents from the binary
-                output->verbose(CALL_INFO, 2, 0, "-> populating memory contents with info from the executable...\n");
-                /*
-                                                for( size_t i = 0; i <
-                   binary_elf_info->countProgramHeaders(); ++i ) { const
-                   VanadisELFProgramHeaderEntry* next_prog_hdr =
-                   binary_elf_info->getProgramHeader(i);
-
-                                                        if( (PROG_HEADER_LOAD ==
-                   next_prog_hdr->getHeaderType()) ) { output->verbose(CALL_INFO, 2, 0,
-                   ">> Loading Program Header from executable at %p, len=%" PRIu64
-                   "...\n", (void*) next_prog_hdr->getImageOffset(),
-                   next_prog_hdr->getHeaderImageLength()); output->verbose(CALL_INFO, 2,
-                   0, ">>>> Placing at virtual address: %p\n", (void*)
-                   next_prog_hdr->getVirtualMemoryStart());
-
-                                                                // Note - padding
-                   automatically zeros because we perform a resize with parameter 0
-                   given const uint64_t padding = 4096 -
-                   ((next_prog_hdr->getVirtualMemoryStart() +
-                   next_prog_hdr->getHeaderImageLength()) % 4096);
-
-                                                                // Do we have enough
-                   space in the memory image, if not, extend and zero if(
-                   initial_mem_contents.size() < (
-                   next_prog_hdr->getVirtualMemoryStart() +
-                   next_prog_hdr->getHeaderImageLength() )) {
-                                                                        initial_mem_contents.resize(
-                   ( next_prog_hdr->getVirtualMemoryStart() +
-                   next_prog_hdr->getHeaderImageLength()
-                                                                                +
-                   padding), 0);
-                                                                }
-
-                                                                fseek( exec_file,
-                   next_prog_hdr->getImageOffset(), SEEK_SET ); fread(
-                   &initial_mem_contents[ next_prog_hdr->getVirtualMemoryStart() ],
-                                                                        next_prog_hdr->getHeaderImageLength(),
-                   1, exec_file);
-                                                        }
-                                                }
-                */
-                for ( size_t i = 0; i < binary_elf_info->countProgramSections(); ++i ) {
-                    const VanadisELFProgramSectionEntry* next_sec = binary_elf_info->getProgramSection(i);
-
-                    if ( SECTION_HEADER_PROG_DATA == next_sec->getSectionType() ) {
-                        output->verbose(
-                            CALL_INFO, 2, 0,
-                            ">> Loading Section (%" PRIu64 ") from executable at: 0x%0llx, len=%" PRIu64 "...\n",
-                            next_sec->getID(), next_sec->getVirtualMemoryStart(), next_sec->getImageLength());
-
-                        if ( next_sec->getVirtualMemoryStart() > 0 ) {
-                            const uint64_t padding =
-                                4096 - ((next_sec->getVirtualMemoryStart() + next_sec->getImageLength()) % 4096);
-
-                            // Executable data, let's load it in
-                            if ( initial_mem_contents.size() <
-                                 (next_sec->getVirtualMemoryStart() + next_sec->getImageLength()) ) {
-                                size_t size_now = initial_mem_contents.size();
-                                initial_mem_contents.resize(
-                                    next_sec->getVirtualMemoryStart() + next_sec->getImageLength() + padding, 0);
-                            }
-
-                            // Find the section and read it all in
-                            fseek(exec_file, next_sec->getImageOffset(), SEEK_SET);
-                            fread(
-                                &initial_mem_contents[next_sec->getVirtualMemoryStart()], next_sec->getImageLength(), 1,
-                                exec_file);
-                        }
-                        else {
-                            output->verbose(CALL_INFO, 2, 0, "--> Not loading because virtual address is zero.\n");
-                        }
-                    }
-                    else if ( SECTION_HEADER_BSS == next_sec->getSectionType() ) {
-                        output->verbose(
-                            CALL_INFO, 2, 0,
-                            ">> Loading BSS Section (%" PRIu64 ") with zeroing at 0x%0llx, len=%" PRIu64 "\n",
-                            next_sec->getID(), next_sec->getVirtualMemoryStart(), next_sec->getImageLength());
-
-                        if ( next_sec->getVirtualMemoryStart() > 0 ) {
-                            const uint64_t padding =
-                                4096 - ((next_sec->getVirtualMemoryStart() + next_sec->getImageLength()) % 4096);
-
-                            // Resize if needed with zeroing
-                            if ( initial_mem_contents.size() <
-                                 (next_sec->getVirtualMemoryStart() + next_sec->getImageLength()) ) {
-                                size_t size_now = initial_mem_contents.size();
-                                initial_mem_contents.resize(
-                                    next_sec->getVirtualMemoryStart() + next_sec->getImageLength() + padding, 0);
-                            }
-
-                            // Zero out the section according to the Section header info
-                            std::memset(
-                                &initial_mem_contents[next_sec->getVirtualMemoryStart()], 0,
-                                next_sec->getImageLength());
-                        }
-                        else {
-                            output->verbose(CALL_INFO, 2, 0, "--> Not loading because virtual address is zero.\n");
-                        }
-                    }
-                    else {
-                        if ( next_sec->isAllocated() ) {
-                            output->verbose(
-                                CALL_INFO, 2, 0,
-                                ">> Loading Allocatable Section (%" PRIu64 ") at 0x%0llx, len: %" PRIu64 "\n",
-                                next_sec->getID(), next_sec->getVirtualMemoryStart(), next_sec->getImageLength());
-
-                            if ( next_sec->getVirtualMemoryStart() > 0 ) {
-                                const uint64_t padding =
-                                    4096 - ((next_sec->getVirtualMemoryStart() + next_sec->getImageLength()) % 4096);
-
-                                // Resize if needed with zeroing
-                                if ( initial_mem_contents.size() <
-                                     (next_sec->getVirtualMemoryStart() + next_sec->getImageLength()) ) {
-                                    size_t size_now = initial_mem_contents.size();
-                                    initial_mem_contents.resize(
-                                        next_sec->getVirtualMemoryStart() + next_sec->getImageLength() + padding, 0);
-                                }
-
-                                // Find the section and read it all in
-                                fseek(exec_file, next_sec->getImageOffset(), SEEK_SET);
-                                fread(
-                                    &initial_mem_contents[next_sec->getVirtualMemoryStart()],
-                                    next_sec->getImageLength(), 1, exec_file);
-                            }
-                        }
-                    }
-                }
-
-                fclose(exec_file);
-
-                output->verbose(
-                    CALL_INFO, 2, 0, ">> Writing memory contents (%" PRIu64 " bytes at index 0)\n",
-                    (uint64_t)initial_mem_contents.size());
-
-                //				SimpleMem::Request* writeExe = new
-                // SimpleMem::Request(SimpleMem::Request::Write, 					0,
-                // initial_mem_contents.size(), initial_mem_contents);
-                lsq->setInitialMemory(0, initial_mem_contents);
-                //				memInstInterface->sendInitData( writeExe
-                //);
-
-                const uint64_t page_size = 4096;
-
-                uint64_t initial_brk = (uint64_t)initial_mem_contents.size();
-                initial_brk          = initial_brk + (page_size - (initial_brk % page_size));
-
-                output->verbose(
-                    CALL_INFO, 2, 0,
-                    ">> Setting initial break point to image size in "
-                    "memory ( brk: 0x%llx )\n",
-                    initial_brk);
-                thread_decoders[0]->getOSHandler()->registerInitParameter(SYSCALL_INIT_PARAM_INIT_BRK, &initial_brk);
-            }
-            else {
-                output->verbose(CALL_INFO, 2, 0, "Not core-0, so will not perform any loading of binary info.\n");
-            }
+        VanadisStartThreadReq * req = dynamic_cast<VanadisStartThreadReq*>(ev);
+        if (nullptr == req) {
+             output->fatal(CALL_INFO, -1, "Error - event cannot be StartThreadReq\n");
         }
-        else {
-            output->verbose(CALL_INFO, 2, 0, "No ELF binary information loaded, will not perform any loading.\n");
-        }
+
+        output->verbose(CALL_INFO, 8, 0,
+                            "received start thread %d command from the operating system \n",req->getThread());
+        startThread(req->getThread(), req->getStackStart(), req->getInstructionPointer());
+        delete ev;
     }
 
     output->verbose(CALL_INFO, 2, 0, "End: init-phase: %" PRIu32 "...\n", (uint32_t)phase);
@@ -2039,7 +1822,7 @@ VANADIS_COMPONENT::handleIncomingInstCacheEvent(StandardMem::Request* ev)
     StandardMem::ReadResp* read_resp = static_cast<StandardMem::ReadResp*>(ev);
 
     output->verbose(
-        CALL_INFO, 16, 0, "-> Incoming i-cache event (addr=%p)...\n", read_resp->pAddr);
+        CALL_INFO, 16, 0, "-> Incoming i-cache event (addr=0x%" PRIx64 ")...\n", read_resp->pAddr);
 #endif
     // Needs to get attached to the decoder
     bool hit = false;
@@ -2154,7 +1937,7 @@ VANADIS_COMPONENT::clearROBMisspeculate(const uint32_t hw_thr)
 }
 
 void
-VANADIS_COMPONENT::syscallReturnCallback(uint32_t thr)
+VANADIS_COMPONENT::syscallReturn(uint32_t thr)
 {
     if ( rob[thr]->empty() ) {
         output->fatal(CALL_INFO, -1, "Error - syscall return called on thread: %" PRIu32 " but ROB is empty.\n", thr);
@@ -2179,9 +1962,53 @@ VANADIS_COMPONENT::syscallReturnCallback(uint32_t thr)
 #endif
     syscall_ins->markExecuted();
 
-    // Set back to false ready for the next SYSCALL
-    handlingSysCall = false;
-
     // re-register the CPU clock, it will fire on the next cycle
     reregisterClock(cpuClockTC, cpuClockHandler);
 }
+
+void VANADIS_COMPONENT::recvOSEvent(SST::Event* ev) {
+    output->verbose(CALL_INFO, 8, 0, "-> recv os response\n");
+
+    VanadisSyscallResponse* os_resp = dynamic_cast<VanadisSyscallResponse*>(ev);
+
+    if (nullptr != os_resp) {
+        int hw_thr = os_resp->getHWThread();
+
+        output->verbose(CALL_INFO, 8, 0, "hw_thread %d: syscall return-code: %" PRId64 " (success: %3s)\n",
+                        hw_thr, os_resp->getReturnCode(), os_resp->isSuccessful() ? "yes" : "no");
+        output->verbose(CALL_INFO, 8, 0, "-> issuing call-backs to clear syscall ROB stops...\n");
+        
+        thread_decoders[hw_thr]->getOSHandler()->recvSyscallResp ( os_resp ); 
+        syscallReturn( hw_thr );
+#if 0
+        for (int i = 0; i < returnCallbacks.size(); ++i) {
+            returnCallbacks[i](hw_thr);
+        }
+#endif
+    } else {
+        VanadisStartThreadReq* os_req = dynamic_cast<VanadisStartThreadReq*>(ev);
+
+        if ( nullptr != os_req ) {
+            output->verbose(CALL_INFO, 8, 0,
+                            "received start thread %d command from the operating system \n",os_req->getThread());
+            startThread(os_req->getThread(), os_req->getStackStart(), os_req->getInstructionPointer());
+        } else {
+
+            VanadisExitResponse* os_exit = dynamic_cast<VanadisExitResponse*>(ev);
+
+            if ( nullptr != os_exit ) {
+                output->verbose(CALL_INFO, 8, 0,
+                            "received an exit command from the operating system for hw_thr %d "
+                            "(return-code: %" PRId64 " )\n",
+                            os_exit->getHWThread(),
+                            os_exit->getReturnCode());
+
+                setHalt(os_exit->getHWThread(), os_exit->getReturnCode());
+            } else { 
+                assert(0);
+            }
+        } 
+        delete ev;
+    }
+}
+

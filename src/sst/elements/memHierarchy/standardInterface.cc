@@ -1,14 +1,14 @@
 // -*- mode: c++ -*-
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -186,7 +186,7 @@ StandardMem::Request* StandardInterface::recvUntimedData() {
 /* This could be a request or a response. */
 void StandardInterface::send(StandardMem::Request* req) {
 #ifdef __SST_DEBUG_OUTPUT__
-      debug.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Convert   (%s)\n", Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), req->getString().c_str());
+      debug.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Convert   (%s)\n", getCurrentSimCycle(), getName().c_str(), req->getString().c_str());
     fflush(stdout);
 #endif
     MemEventBase *me = static_cast<MemEventBase*>(req->convert(converter_));
@@ -196,7 +196,7 @@ void StandardInterface::send(StandardMem::Request* req) {
         delete req;
 #ifdef __SST_DEBUG_OUTPUT__
     debug.debug(_L4_, "E: %-40" PRIu64 "  %-20s Event:Send    (%s)\n", 
-        Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), me->getBriefString().c_str());
+        getCurrentSimCycle(), getName().c_str(), me->getBriefString().c_str());
 #endif
     link_->send(me);
 }
@@ -212,7 +212,7 @@ void StandardInterface::receive(SST::Event* ev) {
     Command cmd = me->getCmd();
     bool isResponse = (BasicCommandClassArr[(int)cmd] == BasicCommandClass::Response);
 #ifdef __SST_DEBUG_OUTPUT__ 
-    //debug.debug(_L4_, "E: %-40" PRIu64 "  %-20s Event:Recv    (%s)\n", Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), me->getBriefString().c_str());
+    //debug.debug(_L4_, "E: %-40" PRIu64 "  %-20s Event:Recv    (%s)\n", getCurrentSimCycle(), getName().c_str(), me->getBriefString().c_str());
 #endif
     /* Handle responses to requests we sent */
     if (isResponse) {
@@ -303,7 +303,7 @@ void StandardInterface::receive(SST::Event* ev) {
 
     if (deliverReq) {
 #ifdef __SST_DEBUG_OUTPUT__
-        debug.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Deliver   (%s)\n", Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), deliverReq->getString().c_str());
+        debug.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Deliver   (%s)\n", getCurrentSimCycle(), getName().c_str(), deliverReq->getString().c_str());
 #endif
         (*recvHandler_)(deliverReq);
     }
@@ -333,10 +333,10 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Read* req
     Addr bAddr = (iface->lineSize_ == 0 || noncacheable) ? req->pAddr : req->pAddr & iface->baseAddrMask_; // Line address
     MemEvent* read = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetS, req->size);
     read->setRqstr(iface->getName());
+    read->setThreadID(req->tid);
     read->setDst(iface->link_->getTargetDestination(bAddr));
     read->setVirtualAddress(req->vAddr);
     read->setInstructionPointer(req->iPtr);
-    
     if (noncacheable)
         read->setFlag(MemEvent::F_NONCACHEABLE);
 
@@ -368,6 +368,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Write* re
     MemEvent* write = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::Write, req->data);
     
     write->setRqstr(iface->getName());
+    write->setThreadID(req->tid);
     write->setDst(iface->link_->getTargetDestination(bAddr));
     write->setVirtualAddress(req->vAddr);
     write->setInstructionPointer(req->iPtr);
@@ -383,7 +384,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Write* re
     }
 #ifdef __SST_DEBUG_OUTPUT__
     else if (req->data.size() != req->size) {
-        output.verbose(CALL_INFO, 1, 0, "Warning (%s): Write request size is %zu and payload size is %zu. MemEvent will use payload size.\n",
+        output.verbose(CALL_INFO, 1, 0, "Warning (%s): Write request size is %" PRIu64 " and payload size is %zu. MemEvent will use payload size.\n",
             iface->getName().c_str(), req->size, req->data.size());
     } 
     debugChecks(write);
@@ -398,6 +399,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::FlushAddr
 
     MemEvent* flush = new MemEvent(iface->getName(), req->pAddr, bAddr, cmd, req->size);
     flush->setRqstr(iface->getName());
+    flush->setThreadID(req->tid);
     flush->setDst(iface->link_->getTargetDestination(bAddr));
     flush->setVirtualAddress(req->vAddr);
     flush->setInstructionPointer(req->iPtr);
@@ -414,6 +416,7 @@ Event* StandardInterface::MemEventConverter::convert(StandardMem::ReadLock* req)
     Addr bAddr = (iface->lineSize_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->baseAddrMask_;
     MemEvent* read = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetSX, req->size);
     read->setRqstr(iface->getName());
+    read->setThreadID(req->tid);
     read->setDst(iface->link_->getTargetDestination(bAddr));
     read->setVirtualAddress(req->vAddr);
     read->setInstructionPointer(req->iPtr);
@@ -430,6 +433,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::WriteUnlo
     Addr bAddr = (iface->lineSize_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->baseAddrMask_;
     MemEvent* write = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::Write, req->data);
     write->setRqstr(iface->getName());
+    write->setThreadID(req->tid);
     write->setDst(iface->link_->getTargetDestination(bAddr));
     write->setVirtualAddress(req->vAddr);
     write->setInstructionPointer(req->iPtr);
@@ -451,6 +455,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::LoadLink*
     MemEvent* load = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetS, req->size);
     load->setFlag(MemEvent::F_LLSC);
     load->setRqstr(iface->getName());
+    load->setThreadID(req->tid);
     load->setDst(iface->link_->getTargetDestination(bAddr));
     load->setVirtualAddress(req->vAddr);
     load->setInstructionPointer(req->iPtr);
@@ -468,6 +473,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::StoreCond
     MemEvent* store = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::Write, req->data);
     store->setFlag(MemEvent::F_LLSC);
     store->setRqstr(iface->getName());
+    store->setThreadID(req->tid);
     store->setDst(iface->link_->getTargetDestination(bAddr));
     store->setVirtualAddress(req->vAddr);
     store->setInstructionPointer(req->iPtr);
@@ -673,7 +679,7 @@ void StandardInterface::handleNACK(MemEventBase* ev) {
 
 #ifdef __SST_DEBUG_OUTPUT__
     debug.debug(_L4_, "E: %-40" PRIu64 "  %-20s Event:Resend  (%s)\n", 
-        Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), nackedEvent->getBriefString().c_str());
+        getCurrentSimCycle(), getName().c_str(), nackedEvent->getBriefString().c_str());
 #endif
 
     link_->send(nackedEvent);

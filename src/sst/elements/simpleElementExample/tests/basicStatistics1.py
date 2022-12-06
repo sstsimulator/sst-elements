@@ -67,7 +67,7 @@ sst.setStatisticLoadLevel(4)
 
 
 ## Determine where statistics should be sent
-sst.setStatisticOutput("sst.statOutputCSV", { "filepath" : "./basicStatistics1.csv", "seperator" : "," } ) 
+sst.setStatisticOutput("sst.statOutputCSV", { "filepath" : "./basicStatistics1.csv", "separator" : "," } ) 
 
 
 ## Enable statistics on the components

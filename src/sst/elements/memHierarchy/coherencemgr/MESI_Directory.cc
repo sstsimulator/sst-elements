@@ -1,13 +1,13 @@
-// Copyright 2013-2021 NTESS. Under the terms
+// Copyright 2013-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright(c) 2013-2021, NTESS
+// Copyright (c) 2013-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -18,7 +18,6 @@
 
 
 #include <sst/core/params.h>
-#include <sst/core/simulation.h>
 
 #include "memNIC.h"
 
@@ -1117,10 +1116,9 @@ void MESIDirectory::handleFlushLineResponse(MemEvent * ev) {
     reqEv->setMemFlags(ev->getMemFlags()); // Copy anything back up that needs to be
 
     MemEvent * me = reqEv->makeResponse();
+    me->copyMetadata(reqEv);
     me->setDst(reqEv->getSrc());
-    me->setRqstr(reqEv->getRqstr());
     me->setSuccess(ev->success());
-    me->setMemFlags(reqEv->getMemFlags());
 
     profileResponseSent(me);
     uint64_t deliveryTime = timestamp + accessLatency;
@@ -1293,8 +1291,8 @@ MESIDirectory::DirEntry* MESIDirectory::getDirEntry(Addr baseAddr){
 
 void MESIDirectory::sendInvalidate(int target, MemEvent * reqEv, DirEntry* entry, Command cmd){
     MemEvent *me = new MemEvent(getName(), entry->getBaseAddr(), entry->getBaseAddr(), cmd, cacheLineSize);
+    me->copyMetadata(reqEv);
     me->setDst(nodeid_to_name[target]);
-    me->setRqstr(reqEv->getRqstr());
 
     if (is_debug_event(reqEv)) dbg.debug(_L4_, "Sending Invalidate.  Dst: %s\n", nodeid_to_name[target].c_str());
     profileRequestSent(me);
@@ -1305,8 +1303,8 @@ void MESIDirectory::sendInvalidate(int target, MemEvent * reqEv, DirEntry* entry
 
 void MESIDirectory::sendAckPut(MemEvent * event) {
     MemEvent * me = event->makeResponse(Command::AckPut);
+    me->copyMetadata(event);
     me->setDst(event->getSrc());
-    me->setRqstr(event->getRqstr());
     me->setPayload(0, nullptr);
     me->setSize(cacheLineSize);
 
@@ -1320,10 +1318,7 @@ void MESIDirectory::sendAckPut(MemEvent * event) {
 
 void MESIDirectory::forwardFlushRequest(MemEvent * event) {
     MemEvent *reqEv     = new MemEvent(getName(), event->getAddr(), event->getBaseAddr(), Command::FlushLine, cacheLineSize);
-    reqEv->setRqstr(event->getRqstr());
-    reqEv->setVirtualAddress(event->getVirtualAddress());
-    reqEv->setInstructionPointer(event->getInstructionPointer());
-    reqEv->setMemFlags(event->getMemFlags());
+    reqEv->copyMetadata(event);
     memReqs[reqEv->getID()] = event->getBaseAddr();
     profileRequestSent(reqEv);
 

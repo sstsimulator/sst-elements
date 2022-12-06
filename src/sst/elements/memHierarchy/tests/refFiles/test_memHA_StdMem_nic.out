@@ -1,13 +1,13 @@
 StandardCPU: Test Completed Successfuly
- cpu:memory:memlink.packet_latency : Accumulator : Sum.u64 = 138768; SumSQ.u64 = 19412280; Count.u64 = 1000; Min.u64 = 69; Max.u64 = 141; 
- cpu:memory:memlink.send_bit_count : Accumulator : Sum.u64 = 86240; SumSQ.u64 = 7654400; Count.u64 = 1000; Min.u64 = 64; Max.u64 = 96; 
- cpu:memory:memlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- cpu:memory:memlink.idle_time : Accumulator : Sum.u64 = 933000; SumSQ.u64 = 170657000000; Count.u64 = 9; Min.u64 = 68000; Max.u64 = 360000; 
- cpu.pendCycle : Accumulator : Sum.u64 = 725240; SumSQ.u64 = 7169682; Count.u64 = 73658; Min.u64 = 0; Max.u64 = 10; 
- cpu.reads : Accumulator : Sum.u64 = 211; SumSQ.u64 = 211; Count.u64 = 211; Min.u64 = 1; Max.u64 = 1; 
- cpu.writes : Accumulator : Sum.u64 = 601; SumSQ.u64 = 601; Count.u64 = 601; Min.u64 = 1; Max.u64 = 1; 
- cpu.llsc : Accumulator : Sum.u64 = 94; SumSQ.u64 = 94; Count.u64 = 94; Min.u64 = 1; Max.u64 = 1; 
- cpu.llsc_success : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ core:memory:memlink.packet_latency : Accumulator : Sum.u64 = 138768; SumSQ.u64 = 19412280; Count.u64 = 1000; Min.u64 = 69; Max.u64 = 141; 
+ core:memory:memlink.send_bit_count : Accumulator : Sum.u64 = 86240; SumSQ.u64 = 7654400; Count.u64 = 1000; Min.u64 = 64; Max.u64 = 96; 
+ core:memory:memlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ core:memory:memlink.idle_time : Accumulator : Sum.u64 = 933000; SumSQ.u64 = 170657000000; Count.u64 = 9; Min.u64 = 68000; Max.u64 = 360000; 
+ core.pendCycle : Accumulator : Sum.u64 = 725240; SumSQ.u64 = 7169682; Count.u64 = 73658; Min.u64 = 0; Max.u64 = 10; 
+ core.reads : Accumulator : Sum.u64 = 211; SumSQ.u64 = 211; Count.u64 = 211; Min.u64 = 1; Max.u64 = 1; 
+ core.writes : Accumulator : Sum.u64 = 601; SumSQ.u64 = 601; Count.u64 = 601; Min.u64 = 1; Max.u64 = 1; 
+ core.llsc : Accumulator : Sum.u64 = 94; SumSQ.u64 = 94; Count.u64 = 94; Min.u64 = 1; Max.u64 = 1; 
+ core.llsc_success : Accumulator : Sum.u64 = 94; SumSQ.u64 = 94; Count.u64 = 94; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache:cpulink.packet_latency : Accumulator : Sum.u64 = 295622; SumSQ.u64 = 87493070; Count.u64 = 1016; Min.u64 = 115; Max.u64 = 720; 
  c0.l1cache:cpulink.send_bit_count : Accumulator : Sum.u64 = 97024; SumSQ.u64 = 9281536; Count.u64 = 1016; Min.u64 = 64; Max.u64 = 96; 
  c0.l1cache:cpulink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

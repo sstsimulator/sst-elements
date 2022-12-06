@@ -1,14 +1,14 @@
 // -*- mode: c++ -*-
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -26,15 +26,18 @@ using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
 
 
-
+DISABLE_WARN_DEPRECATED_DECLARATION
 MemHierarchyInterface::MemHierarchyInterface(SST::ComponentId_t id, Params &params, TimeConverter * time, HandlerBase* handler) :
     SimpleMem(id, params)
 {
+    
     setDefaultTimeBase(time); // Required for link since we no longer inherit it from our parent
 
     output.init("", 1, 0, Output::STDOUT);
     rqstr_ = "";
     initDone_ = false;
+    
+    output.output("DEPRECATION NOTICE: memHierarchy.memInterface uses the deprecated SST-Core SimpleMem Interface. This subcomponent is deprecated in favor of memHierarchy.standardMem which uses the SST-Core StandardMem Interface. memHierarchy.memInterface will be removed in SST 13\n");
 
     recvHandler_ = handler;
     std::string portname = params.find<std::string>("port", "port");
@@ -46,7 +49,6 @@ MemHierarchyInterface::MemHierarchyInterface(SST::ComponentId_t id, Params &para
     if (!link_)
         output.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), portname.c_str());
 }
-
 
 void MemHierarchyInterface::init(unsigned int phase) {
     /* Send region message */
@@ -108,7 +110,6 @@ void MemHierarchyInterface::sendRequest(SimpleMem::Request *req){
     link_->send(me);
 }
 
-
 SimpleMem::Request* MemHierarchyInterface::recvResponse(void){
     SST::Event *ev = link_->recv();
     if (NULL != ev) {
@@ -119,7 +120,6 @@ SimpleMem::Request* MemHierarchyInterface::recvResponse(void){
     }
     return NULL;
 }
-
 
 MemEventBase* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
     Command cmd = Command::NULLCMD;
@@ -234,7 +234,6 @@ SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEventBase *ev){
     return req;
 }
 
-
 void MemHierarchyInterface::updateRequest(SimpleMem::Request* req, MemEvent *me) const{
     switch (me->getCmd()) {
         case Command::GetSResp:
@@ -274,3 +273,4 @@ bool MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase 
 
     return (link_ != NULL);
 }
+REENABLE_WARNING

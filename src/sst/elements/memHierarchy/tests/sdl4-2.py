@@ -1,4 +1,3 @@
-# Automatically generated SST Python input
 import sst
 from mhlib import componentlist
 
@@ -9,16 +8,22 @@ DEBUG_CORE0 = 0
 DEBUG_CORE1 = 0
 
 # Define the simulation components
-comp_cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
-comp_cpu0.addParams({
-      "memSize" : "0x1000",
-      "num_loadstore" : "1000",
-      "commFreq" : "100",
-      "do_write" : "1"
+cpu0 = sst.Component("core0", "memHierarchy.standardCPU")
+cpu0.addParams({
+    "memFreq" : 1,
+    "memSize" : "1KiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "rngseed" : 987,
+    "maxOutstanding" : 8,
+    "opCount" : 3000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 25, # 25% writes
+    "read_freq" : 75,  # 75% reads
 })
-iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.memInterface")
-comp_c0_l1cache = sst.Component("c0.l1cache", "memHierarchy.Cache")
-comp_c0_l1cache.addParams({
+iface0 = cpu0.setSubComponent("memory", "memHierarchy.standardInterface")
+c0_l1cache = sst.Component("l1cache0.msi", "memHierarchy.Cache")
+c0_l1cache.addParams({
       "access_latency_cycles" : "5",
       "cache_frequency" : "2 Ghz",
       "replacement_policy" : "lru",
@@ -30,16 +35,22 @@ comp_c0_l1cache.addParams({
       "debug" : DEBUG_L1 | DEBUG_CORE0,
       "debug_level" : 10,
 })
-comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
-comp_cpu1.addParams({
-      "memSize" : "0x1000",
-      "num_loadstore" : "1000",
-      "commFreq" : "100",
-      "do_write" : "1"
+cpu1 = sst.Component("core1", "memHierarchy.standardCPU")
+cpu1.addParams({
+    "memFreq" : 1,
+    "memSize" : "1KiB",
+    "verbose" : 0,
+    "clock" : "2GHz",
+    "rngseed" : 989,
+    "maxOutstanding" : 8,
+    "opCount" : 3000,
+    "reqsPerIssue" : 4,
+    "write_freq" : 25, # 25% writes
+    "read_freq" : 75,  # 75% reads
 })
-iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.memInterface")
-comp_c1_l1cache = sst.Component("c1.l1cache", "memHierarchy.Cache")
-comp_c1_l1cache.addParams({
+iface1 = cpu1.setSubComponent("memory", "memHierarchy.standardInterface")
+c1_l1cache = sst.Component("l1cache1.msi", "memHierarchy.Cache")
+c1_l1cache.addParams({
       "access_latency_cycles" : "5",
       "cache_frequency" : "2 Ghz",
       "replacement_policy" : "lru",
@@ -51,12 +62,12 @@ comp_c1_l1cache.addParams({
       "debug" : DEBUG_L1 | DEBUG_CORE1,
       "debug_level" : 10,
 })
-comp_bus = sst.Component("bus", "memHierarchy.Bus")
-comp_bus.addParams({
+bus = sst.Component("bus", "memHierarchy.Bus")
+bus.addParams({
       "bus_frequency" : "2 Ghz"
 })
-comp_l2cache = sst.Component("l2cache", "memHierarchy.Cache")
-comp_l2cache.addParams({
+l2cache = sst.Component("l2cache.msi.inclus", "memHierarchy.Cache")
+l2cache.addParams({
       "access_latency_cycles" : "20",
       "cache_frequency" : "2 Ghz",
       "replacement_policy" : "lru",
@@ -75,12 +86,16 @@ memctrl.addParams({
     "addr_range_end" : 512*1024*1024-1,
 })
 
-memory = memctrl.setSubComponent("backend", "memHierarchy.dramsim")
+memory = memctrl.setSubComponent("backend", "memHierarchy.simpleDRAM")
 memory.addParams({
-      "mem_size" : "512MiB",
-      "access_time" : "100 ns",
-      "system_ini" : "system.ini",
-      "device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
+    "max_requests_per_cycle" : 1,
+    "mem_size" : "512MiB",
+    "tCAS" : 3,
+    "tRCD" : 3,
+    "tRP" : 3,
+    "cycle_time" : "5ns",
+    "row_size" : "8KiB",
+    "row_policy" : "open"
 })
 
 # Enable statistics
@@ -91,15 +106,14 @@ for a in componentlist:
 
 # Define the simulation links
 link_cpu0_l1cache_link = sst.Link("link_cpu0_l1cache_link")
-link_cpu0_l1cache_link.connect( (iface0, "port", "1000ps"), (comp_c0_l1cache, "high_network_0", "1000ps") )
+link_cpu0_l1cache_link.connect( (iface0, "port", "1000ps"), (c0_l1cache, "high_network_0", "1000ps") )
 link_c0_l1_l2_link = sst.Link("link_c0_l1_l2_link")
-link_c0_l1_l2_link.connect( (comp_c0_l1cache, "low_network_0", "1000ps"), (comp_bus, "high_network_0", "10000ps") )
+link_c0_l1_l2_link.connect( (c0_l1cache, "low_network_0", "1000ps"), (bus, "high_network_0", "10000ps") )
 link_cpu1_l1cache_link = sst.Link("link_cpu1_l1cache_link")
-link_cpu1_l1cache_link.connect( (iface1, "port", "1000ps"), (comp_c1_l1cache, "high_network_0", "1000ps") )
+link_cpu1_l1cache_link.connect( (iface1, "port", "1000ps"), (c1_l1cache, "high_network_0", "1000ps") )
 link_c1_l1_l2_link = sst.Link("link_c1_l1_l2_link")
-link_c1_l1_l2_link.connect( (comp_c1_l1cache, "low_network_0", "1000ps"), (comp_bus, "high_network_1", "10000ps") )
+link_c1_l1_l2_link.connect( (c1_l1cache, "low_network_0", "1000ps"), (bus, "high_network_1", "10000ps") )
 link_bus_l2cache = sst.Link("link_bus_l2cache")
-link_bus_l2cache.connect( (comp_bus, "low_network_0", "10000ps"), (comp_l2cache, "high_network_0", "1000ps") )
+link_bus_l2cache.connect( (bus, "low_network_0", "10000ps"), (l2cache, "high_network_0", "1000ps") )
 link_mem_bus_link = sst.Link("link_mem_bus_link")
-link_mem_bus_link.connect( (comp_l2cache, "low_network_0", "10000ps"), (memctrl, "direct_link", "10000ps") )
-# End of generated output.
+link_mem_bus_link.connect( (l2cache, "low_network_0", "10000ps"), (memctrl, "direct_link", "10000ps") )

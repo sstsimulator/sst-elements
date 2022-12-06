@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -20,7 +20,7 @@
 #define _H_SST_MEMH_HBM_PAGEDMULTI_BACKEND
 
 #include <queue>
-#include <sst/core/rng/sstrng.h>
+#include <sst/core/rng/rng.h>
 #include "sst/elements/memHierarchy/membackend/HBMdramSimBackend.h"
 
 #ifdef DEBUG
@@ -185,7 +185,7 @@ public:
 
 private:
     Output dbg;
-    RNG::SSTRandom*  rng;
+    RNG::Random*  rng;
 
 	struct Req : public SST::Core::Serialization::serializable {
         Req( ReqId id, Addr addr, bool isWrite, unsigned numBytes ) :
@@ -292,6 +292,7 @@ public:
     SimTime_t transferDelay;
     SimTime_t minAccTime;
     bool collectStats;
+    TimeConverter* nanoConv;
 
     void handleSelfEvent(SST::Event *event);
     bool quantaClock(SST::Cycle_t _cycle);

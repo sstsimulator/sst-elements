@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -18,10 +18,10 @@
 
 #include <functional>
 
-#include "os/resp/voscallresp.h"
-#include "os/resp/vosexitresp.h"
 #include "os/vnodeos.h"
 #include "os/voscallev.h"
+#include "os/velfloader.h"
+#include "os/vstartthreadreq.h"
 
 using namespace SST::Vanadis;
 
@@ -31,6 +31,35 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
     output = new SST::Output("[node-os]: ", verbosity, 0, SST::Output::STDOUT);
 
     const uint32_t core_count = params.find<uint32_t>("cores", 0);
+
+    std::string binary_img = params.find<std::string>("executable", "");
+
+    if ( "" == binary_img ) {
+        output->fatal(CALL_INFO, -1, "No executable specified, will not perform any binary load.\n");
+        elf_info = nullptr;
+    } else {
+        output->verbose(CALL_INFO, 2, 0, "Executable: %s\n", binary_img.c_str());
+        elf_info = readBinaryELFInfo(output, binary_img.c_str());
+        elf_info->print(output);
+
+        if ( elf_info->isDynamicExecutable() ) {
+            output->fatal(
+                CALL_INFO, -1,
+                "--> error - executable is dynamically linked. Only static "
+                "executables are currently supported for simulation.\n");
+        }
+        else {
+            output->verbose(CALL_INFO, 2, 0, "--> executable is identified as static linked\n");
+        }
+    }
+    elf_info->print(output);
+
+    Params tmpParams = params.get_scoped_params("app");
+    std::string modName = "vanadis.AppRuntimeMemory"; 
+    modName += elf_info->isELF32() ? "32" : "64";
+
+    output->verbose(CALL_INFO, 1, 0, "load app runtime memory module: %s\n",modName.c_str());
+    appRuntimeMemory = loadModule<AppRuntimeMemoryMod>(modName, tmpParams );
 
     output->verbose(CALL_INFO, 1, 0, "Configuring the memory interface...\n");
     mem_if = loadUserSubComponent<Interfaces::StandardMem>("mem_interface", ComponentInfo::SHARE_NONE,
@@ -110,6 +139,18 @@ VanadisNodeOSComponent::init(unsigned int phase) {
     // Trigger each core handler for initialization phase
     for (VanadisNodeOSCoreHandler* next_handler : core_handlers) {
         next_handler->init(phase);
+    }
+
+    if ( 0 == phase ) {
+
+        uint64_t stack_start = appRuntimeMemory->configure(output,mem_if,elf_info);
+        uint64_t brk = loadElfFile( output, mem_if, elf_info );
+
+        // we are starting the thread 0 on core 0 
+        core_handlers[0]->setBrk( brk );
+        uint64_t entry = elf_info->getEntryPoint();
+        output->verbose(CALL_INFO, 1, 0, "stack_start=%#" PRIx64 " entry=%#" PRIx64 " brk=%#" PRIx64 "\n",stack_start, entry, brk );
+        core_links[0]->sendInitData( new VanadisStartThreadReq( 0, stack_start, entry ) );
     }
 }
 

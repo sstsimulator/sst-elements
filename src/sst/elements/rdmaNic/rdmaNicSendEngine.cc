@@ -1,13 +1,13 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -58,7 +58,7 @@ RdmaNic::SendStream::SendStream( RdmaNic& nic, SendEntry* entry ) : m_nic(nic), 
         	}
     	}
 	} else {
-   		nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"zero length message\n",m_numReadsPending);
+   		nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"zero length message\n");
 		// get a new packet even though we will not use it, this way we will not have to check if we need one every time 
 		// thru the process loop
 		m_pkt = queuePkt( m_pkt );	
@@ -71,7 +71,7 @@ RdmaNic::SendStream::SendStream( RdmaNic& nic, SendEntry* entry ) : m_nic(nic), 
 void RdmaNic::SendStream::readResp( int thread, StandardMem::Request* req ) 
 {
 	StandardMem::ReadResp* resp = dynamic_cast<StandardMem::ReadResp*>(req);
-    m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"thread=%d numReadsPending=%d resp=%p pAddr=%" PRIx64 " size=%d tid=%d\n",
+    m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"thread=%d numReadsPending=%d resp=%p pAddr=%" PRIx64 " size=%" PRIu64 " tid=%d\n",
 		thread,m_numReadsPending,resp,resp->pAddr,resp->size,resp->tid);
 
     assert( resp->size == resp->data.size() );
@@ -108,7 +108,7 @@ bool RdmaNic::SendStream::process()
 	// send read requests if we need to and if we are not blocked 
 	if ( m_offset < m_sendEntry->getLength() && ! m_nic.m_memReqQ->full( m_nic.m_dmaMemChannel ) ) {
 
-    	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"pe=%d node=%d addr=%" PRIx32 " len=%d offset=%d\n",
+    	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"pe=%d node=%d addr=%" PRIx32 " len=%d offset=%zu\n",
             m_sendEntry->getDestPid(), m_sendEntry->getDestNode(), m_sendEntry->getAddr(), m_sendEntry->getLength(), m_offset );
 
        	uint64_t addr = m_sendEntry->getAddr() + m_offset;
@@ -142,7 +142,7 @@ bool RdmaNic::SendStream::process()
         if ( m_pkt->getData().size() == m_nic.getNetPktMtuLen() || 0 == m_numReadsPending ) {
 			m_nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"%p %p\n",m_pkt,m_pkt->getData().data());
 
-            m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"queue packet with %d bytes\n",m_pkt->getData().size());
+            m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"queue packet with %zu bytes\n",m_pkt->getData().size());
 			m_pkt = queuePkt(m_pkt);
         }
     }

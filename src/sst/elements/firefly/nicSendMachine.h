@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -133,7 +133,7 @@ class SendMachine {
 
       public:
 
-        SendMachine( Nic& nic, int nodeId, int verboseLevel, int verboseMask, int myId,
+    SendMachine( Nic& nic, int nodeId, int verboseLevel, int verboseMask, int myId,
               int packetSizeInBytes, int pktOverhead, int maxQsize, int unit, bool flag = false ) :
             m_nic(nic), m_id(myId), m_packetSizeInBytes( packetSizeInBytes - pktOverhead ),
             m_unit(unit), m_pktOverhead(pktOverhead), m_activeEntry(NULL), m_I_manage( flag ), m_numSent(0)

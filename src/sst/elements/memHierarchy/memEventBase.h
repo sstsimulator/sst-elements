@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -57,6 +57,7 @@ public:
         dst_            = NONE;
         src_            = NONE;
         rqstr_          = NONE;
+        tid_            = 0;
         cmd_            = Command::NULLCMD;
         flags_          = 0;
         memFlags_       = 0;
@@ -74,12 +75,14 @@ public:
         dst_ = event->src_;
         src_ = event->dst_;
         rqstr_ = event->rqstr_;
+        tid_ = event->tid_;
         flags_ = event->flags_;
         memFlags_ = event->memFlags_;
     }
 
     virtual void copyMetadata(MemEventBase* ev) {
         rqstr_ = ev->rqstr_;
+        tid_ = ev->tid_;
         flags_ = ev->flags_;
         memFlags_ = ev->memFlags_;
     }
@@ -110,6 +113,10 @@ public:
     /** Sets the requestor string - whose original request caused this MemEvent */
     void setRqstr(const std::string& rqstr) { rqstr_ = rqstr; }
 
+    /** @return the thread ID that originated the original request */
+    const uint32_t getThreadId(void) const { return tid_; }
+    /** Sets the thread ID that originated the original request */
+    void setThreadID(const uint32_t tid) { tid_ = tid; }
     /** @returns the state of all flags */
     uint32_t getFlags(void) const { return flags_; }
     /** Sets the specified flag.
@@ -174,7 +181,7 @@ public:
         std::string cmdStr(CommandString[(int)cmd_]);
         std::ostringstream str;
         str << " Flags: " << getFlagString();
-        return idstring.str() + cmdStr + " Src: " + src_ + " Dst: " + dst_ + " Rq: " + rqstr_ + str.str();
+        return idstring.str() + cmdStr + " Src: " + src_ + " Dst: " + dst_ + " Rq: " + rqstr_ + "Tid: " + std::to_string(tid_) + str.str();
     }
 
     /** Get brief print of the event */
@@ -207,6 +214,7 @@ protected:
     string          src_;               // Source ID
     string          dst_;               // Destination ID
     string          rqstr_;             // Cache that originated this request
+    uint32_t        tid_;               // Thread ID that originated this request
     Command         cmd_;               // Command
     uint32_t        flags_;
     uint32_t        memFlags_;
@@ -221,6 +229,7 @@ public:
         ser & src_;
         ser & dst_;
         ser & rqstr_;
+        ser & tid_;
         ser & cmd_;
         ser & flags_;
         ser & memFlags_;

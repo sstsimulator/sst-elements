@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -324,7 +324,7 @@ bool MESIL1::handleGetSX(MemEvent* event, bool inMSHR) {
                 line->setTimestamp(sendTime);
                 mshr_->setInProgress(addr);
                 if (is_debug_addr(addr))
-                    eventDI.reason = true;
+                    eventDI.reason = "miss";
             }
             break;
         case E:
@@ -370,8 +370,6 @@ bool MESIL1::handleFlushLine(MemEvent* event, bool inMSHR) {
 
     if (is_debug_addr(addr))
         eventDI.prefill(event->getID(), Command::FlushLine, false, addr, state);
-
-    printLine(addr);
 
     if (!inMSHR && mshr_->exists(addr)) {
         return (allocateMSHR(event, false) == MemEventStatus::Reject) ? false : true;
@@ -432,8 +430,6 @@ bool MESIL1::handleFlushLineInv(MemEvent* event, bool inMSHR) {
 
     if (is_debug_addr(addr))
         eventDI.prefill(event->getID(), Command::FlushLineInv, false, addr, state);
-
-    printLine(addr);
 
     if (!inMSHR && mshr_->exists(addr)) {
         return (allocateMSHR(event, false) != MemEventStatus::Reject);
@@ -1147,7 +1143,6 @@ bool MESIL1::handleEviction(Addr addr, L1CacheLine*& line) {
                         printDebugAlloc(false, line->getAddr(), "Drop");
                 }
                 line->setState(I);
-                line->setState(I);
                 break;
             }
         case M:
@@ -1194,9 +1189,10 @@ void MESIL1::cleanUpAfterRequest(MemEvent * event, bool inMSHR) {
     /* Replay any waiting events */
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
-            if (!mshr_->getInProgress(addr))
+            if (!mshr_->getInProgress(addr)) {
                 retryBuffer_.push_back(mshr_->getFrontEvent(addr));
                 mshr_->addPendingRetry(addr);
+            }
         } else { // Pointer -> either we're waiting for a writeback ACK or another address is waiting to evict this one
             if (mshr_->getFrontType(addr) == MSHREntryType::Evict) {
                 std::list<Addr>* evictPointers = mshr_->getEvictPointers(addr);

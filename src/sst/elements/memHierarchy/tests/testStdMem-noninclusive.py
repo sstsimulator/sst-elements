@@ -7,7 +7,7 @@ DEBUG_L3 = 0
 DEBUG_MEM = 0
 
 # Define the simulation components
-cpu = sst.Component("cpu", "memHierarchy.standardCPU")
+cpu = sst.Component("core", "memHierarchy.standardCPU")
 cpu.addParams({
       "opCount" : "10000",
       "memFreq" : "100",

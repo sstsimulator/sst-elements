@@ -1,3 +1,18 @@
+// Copyright 2009-2022 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2022, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// of the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
 class NicCmdEntry {
   public:
     NicCmdEntry( RdmaNic& nic, int thread, NicCmd* tmp ) : 
@@ -6,13 +21,13 @@ class NicCmdEntry {
         m_resp.retval = 0; 
 		*m_cmd = *tmp;
     } 
-    ~NicCmdEntry() {
+    virtual ~NicCmdEntry() {
         if ( m_cmd ) {
             delete m_cmd;
         }
     }
     virtual bool process( ) {
-        m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"%s respAddr=%#" PRIx64 " retval=%x\n", m_respAddr, name().c_str(), m_resp.retval );
+        m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"%s respAddr=%#" PRIx32 " retval=%x\n", name().c_str(), m_respAddr, m_resp.retval );
         m_nic.sendRespToHost( m_respAddr, m_resp, m_thread );
         return true;
     }
@@ -36,9 +51,9 @@ class RdmaCreateCQ_Cmd : public NicCmdEntry {
     	m_nic.m_compQueueMap[ cqId ] = new CompletionQueue( m_cmd );    
     	m_resp.retval = cqId;
     	m_resp.data.createCQ.tailIndexAddr = m_nic.calcCompQueueTailAddress( m_thread, cqId ); 
-    	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cqId=%d headPtr=%p datPtr=%p num=%d\n",
+    	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cqId=%d headPtr=%" PRIx32 " datPtr=%" PRIx32 " num=%d\n",
                     cqId, m_cmd->data.createCQ.headPtr, m_cmd->data.createCQ.dataPtr, m_cmd->data.createCQ.num);
-    	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cqId=%d headPtr=%p datPtr=%p num=%d tailIndexAddr=%p\n",
+    	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cqId=%d headPtr=%" PRIx32 " datPtr=%" PRIx32 " num=%d tailIndexAddr=%" PRIx32 "\n",
                     cqId, m_cmd->data.createCQ.headPtr, m_cmd->data.createCQ.dataPtr, m_cmd->data.createCQ.num, m_resp.data.createCQ.tailIndexAddr);
     
     	// passed the cmd to the CompletionQueue 
@@ -47,17 +62,52 @@ class RdmaCreateCQ_Cmd : public NicCmdEntry {
     virtual std::string name() { return "CreateCQ"; }
 }; 
 
+class RdmaDestroyCQ_Cmd : public NicCmdEntry {
+  public:
+    RdmaDestroyCQ_Cmd( RdmaNic& nic, int thread, NicCmd* cmd ) : NicCmdEntry(nic,thread,cmd)
+	{
+    	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cqId=%#x\n", m_cmd->data.destroyCQ.cqId );
+    
+        m_resp.retval = -1;
+
+        auto iter = m_nic.m_compQueueMap.find( m_cmd->data.destroyCQ.cqId );
+        if ( iter != m_nic.m_compQueueMap.end() ) {
+    	    delete m_nic.m_compQueueMap[ m_cmd->data.destroyCQ.cqId ];
+            m_resp.retval = 0;
+        }
+	}
+ 
+    virtual std::string name() { return "DestroyRQ"; }
+}; 
+
+
 class RdmaCreateRQ_Cmd : public NicCmdEntry {
   public:
     RdmaCreateRQ_Cmd( RdmaNic& nic, int thread, NicCmd* cmd ) : NicCmdEntry(nic,thread,cmd)
 	{
     	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"rqKey=%x cqId=%x\n",
             m_cmd->data.createRQ.rqKey, m_cmd->data.createRQ.cqId );
-    
-    	m_resp.retval = m_nic.m_recvEngine->createRQ(m_cmd->data.createRQ.cqId, m_cmd->data.createRQ.rqKey );
+
+        m_resp.retval = -1;
+        
+        auto iter = m_nic.m_compQueueMap.find( m_cmd->data.createRQ.cqId );
+        if ( iter != m_nic.m_compQueueMap.end() ) {
+    	    m_resp.retval = m_nic.m_recvEngine->createRQ(m_cmd->data.createRQ.cqId, m_cmd->data.createRQ.rqKey );
+        }
 	}
  
     virtual std::string name() { return "CreateRQ"; }
+}; 
+
+class RdmaDestroyRQ_Cmd : public NicCmdEntry {
+  public:
+    RdmaDestroyRQ_Cmd( RdmaNic& nic, int thread, NicCmd* cmd ) : NicCmdEntry(nic,thread,cmd)
+	{
+    	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"rqId=%#x\n", m_cmd->data.destroyRQ.rqId );
+    	m_resp.retval = m_nic.m_recvEngine->destroyRQ(m_cmd->data.destroyRQ.rqId );
+	}
+ 
+    virtual std::string name() { return "DestroyRQ"; }
 }; 
 
 class RdmaFiniCmd : public NicCmdEntry {

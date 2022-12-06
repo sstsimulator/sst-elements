@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -30,10 +30,10 @@ namespace Vanadis {
 
 class VanadisWritevHandlerState : public VanadisHandlerState {
 public:
-    VanadisWritevHandlerState(uint32_t verbosity, VanadisOSBitType bit_type, int64_t fd, uint64_t iovec_addr, int64_t iovec_count, FILE* handle,
+    VanadisWritevHandlerState(uint32_t verbosity, VanadisOSBitType bit_type, uint64_t iovec_addr, int64_t iovec_count, int file_descriptor,
                               std::function<void(StandardMem::Request*)> send_r)
-        : VanadisHandlerState(verbosity), writev_fd(fd), writev_iovec_addr(iovec_addr), writev_iovec_count(iovec_count),
-          file_handle(handle), send_mem_req(send_r), bittype(bit_type) {
+        : VanadisHandlerState(verbosity), writev_iovec_addr(iovec_addr), writev_iovec_count(iovec_count),
+          file_descriptor(file_descriptor), send_mem_req(send_r), bittype(bit_type) {
 
         reset_iovec();
         current_offset = 0;
@@ -228,8 +228,7 @@ public:
 
     void dump_buffer() {
         if (buffer.size() > 0) {
-            fwrite(&buffer[0], buffer.size(), 1, file_handle);
-            fflush(file_handle);
+            write( file_descriptor, &buffer[0], buffer.size() ); 			
 
             total_bytes_written += buffer.size();
         }
@@ -247,7 +246,6 @@ public:
 
     void printStatus() {
         output->verbose(CALL_INFO, 16, 0, "writev Handler Status\n");
-        output->verbose(CALL_INFO, 16, 0, "-> fd:                %" PRId64 "\n", writev_fd);
         output->verbose(CALL_INFO, 16, 0, "-> iovec_addr:        0x%llx\n", writev_iovec_addr);
         output->verbose(CALL_INFO, 16, 0, "-> iovec_count:       %" PRId64 "\n", writev_iovec_count);
         output->verbose(CALL_INFO, 16, 0, "-> current iovec state:\n");
@@ -260,7 +258,6 @@ public:
     }
 
 protected:
-    int64_t writev_fd;
     uint64_t writev_iovec_addr;
     int64_t writev_iovec_count;
 
@@ -273,7 +270,7 @@ protected:
     int64_t total_bytes_written;
     int32_t state;
 
-    FILE* file_handle;
+    int file_descriptor;
     std::function<void(StandardMem::Request*)> send_mem_req;
     std::vector<uint8_t> buffer;
 

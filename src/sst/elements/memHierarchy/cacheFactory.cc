@@ -1,20 +1,19 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
 #include <sst_config.h>
-#include <sst/core/stringize.h>
 #include <sst/core/params.h>
 #include <sst/core/timeLord.h>
 
@@ -640,7 +639,7 @@ uint64_t Cache::createMSHR(Params &params, uint64_t accessLatency, bool L1) {
     if (mshrSize == 1 || mshrSize == 0)
         out_->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - MSHR requires at least 2 entries to avoid deadlock. You specified %d\n", mshrSize);
 
-    mshr_ = new MSHR(dbg_, mshrSize, getName(), DEBUG_ADDR);
+    mshr_ = loadComponentExtension<MSHR>(dbg_, mshrSize, getName(), DEBUG_ADDR);
 
     if (mshrLatency > 0 && found)
         return mshrLatency;

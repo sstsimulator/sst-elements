@@ -1,11 +1,11 @@
 l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 5 cycles.
 l3cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 32 cycles.
 StandardCPU: Test Completed Successfuly
- cpu.pendCycle : Accumulator : Sum.u64 = 2391919; SumSQ.u64 = 8053513; Count.u64 = 1004998; Min.u64 = 0; Max.u64 = 10; 
- cpu.reads : Accumulator : Sum.u64 = 6727; SumSQ.u64 = 6727; Count.u64 = 6727; Min.u64 = 1; Max.u64 = 1; 
- cpu.writes : Accumulator : Sum.u64 = 3273; SumSQ.u64 = 3273; Count.u64 = 3273; Min.u64 = 1; Max.u64 = 1; 
- cpu.readNoncache : Accumulator : Sum.u64 = 23; SumSQ.u64 = 23; Count.u64 = 23; Min.u64 = 1; Max.u64 = 1; 
- cpu.writeNoncache : Accumulator : Sum.u64 = 17; SumSQ.u64 = 17; Count.u64 = 17; Min.u64 = 1; Max.u64 = 1; 
+ core.pendCycle : Accumulator : Sum.u64 = 2391919; SumSQ.u64 = 8053513; Count.u64 = 1004998; Min.u64 = 0; Max.u64 = 10; 
+ core.reads : Accumulator : Sum.u64 = 6727; SumSQ.u64 = 6727; Count.u64 = 6727; Min.u64 = 1; Max.u64 = 1; 
+ core.writes : Accumulator : Sum.u64 = 3273; SumSQ.u64 = 3273; Count.u64 = 3273; Min.u64 = 1; Max.u64 = 1; 
+ core.readNoncache : Accumulator : Sum.u64 = 23; SumSQ.u64 = 23; Count.u64 = 23; Min.u64 = 1; Max.u64 = 1; 
+ core.writeNoncache : Accumulator : Sum.u64 = 17; SumSQ.u64 = 17; Count.u64 = 17; Min.u64 = 1; Max.u64 = 1; 
  l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 6676; SumSQ.u64 = 6676; Count.u64 = 6676; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 22; SumSQ.u64 = 22; Count.u64 = 22; Min.u64 = 1; Max.u64 = 1; 

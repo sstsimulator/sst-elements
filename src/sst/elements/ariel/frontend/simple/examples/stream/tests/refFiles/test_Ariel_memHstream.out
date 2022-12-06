@@ -1,4 +1,3 @@
-ArielComponent[arielcpu.cc:91:ArielCPU] WARNING - ariel parameter name change: change 'defaultlevel' to 'memmgr.defaultlevel' in your input. The old parameter will continue to work for now but may not be supported in future releases.
 SSTARIEL: Function profiling is disabled.
 ARIEL-SST: Did not find ARIEL_OVERRIDE_POOL in the environment, no override applies.
 ARIEL-SST PIN tool activating with 8 threads

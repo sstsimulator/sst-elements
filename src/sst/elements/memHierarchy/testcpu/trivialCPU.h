@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -27,7 +27,7 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
-#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/interfaces/stdMem.h>
 #include <sst/core/rng/marsaglia.h>
 
 using namespace SST::Statistics;
@@ -62,7 +62,7 @@ public:
 
     SST_ELI_DOCUMENT_STATISTICS( {"pendCycle", "Number of pending requests per cycle", "count", 1} )
 
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( { "memory", "Interface to memory hierarchy", "SST::Interfaces::SimpleMem" } )
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( { "memory", "Interface to memory hierarchy", "SST::Interfaces::StandardMem" } )
 
 /* Begin class definition */
     trivialCPU(SST::ComponentId_t id, SST::Params& params);
@@ -86,7 +86,7 @@ private:
     void operator=(const trivialCPU&); // do not implement
     void init(unsigned int phase);
 
-    void handleEvent( Interfaces::SimpleMem::Request *ev );
+    void handleEvent( Interfaces::StandardMem::Request *ev );
     virtual bool clockTic( SST::Cycle_t );
 
     Output out;
@@ -106,7 +106,7 @@ private:
 
     std::map<uint64_t, SimTime_t> requests;
 
-    Interfaces::SimpleMem *memory;
+    Interfaces::StandardMem *memory;
 
     SST::RNG::MarsagliaRNG rng;
 

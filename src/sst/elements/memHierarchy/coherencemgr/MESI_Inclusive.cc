@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -2092,7 +2092,7 @@ void MESIInclusive::sendWriteback(Command cmd, SharedCacheLine* line, bool dirty
 
 void MESIInclusive::sendAckPut(MemEvent * event) {
     MemEvent * ack = event->makeResponse();
-    ack->setRqstr(event->getSrc());
+    ack->copyMetadata(event);
     ack->setSize(event->getSize());
 
     uint64_t deliveryTime = timestamp_ + tagLatency_;
@@ -2177,7 +2177,6 @@ uint64_t MESIInclusive::invalidateSharer(std::string shr, MemEvent * event, Shar
         MemEvent * inv = new MemEvent(cachename_, addr, addr, cmd);
         if (event) {
             inv->copyMetadata(event);
-            inv->setRqstr(event->getRqstr());
         } else {
             inv->setRqstr(cachename_);
         }
@@ -2215,7 +2214,6 @@ bool MESIInclusive::invalidateOwner(MemEvent * event, SharedCacheLine * line, bo
     MemEvent * inv = new MemEvent(cachename_, addr, addr, cmd);
     if (event) {
         inv->copyMetadata(event);
-        inv->setRqstr(event->getRqstr());
     } else {
         inv->setRqstr(cachename_);
     }

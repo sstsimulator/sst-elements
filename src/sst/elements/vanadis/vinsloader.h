@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -219,7 +219,7 @@ public:
             output->verbose(CALL_INFO, 8, 0,
                             "[ins-loader] ---> issue ins-load line-start: 0x%llx, line-len: %" PRIu64
                             " read-len=%" PRIu64 " \n",
-                            line_start, line_start_offset, cache_line_width, cache_line_width);
+                            line_start, line_start_offset, cache_line_width);
 
 				if(predecode_cache->contains(line_start)) {
 					// line is already in the cache, touch to make sure it is kept in LRU

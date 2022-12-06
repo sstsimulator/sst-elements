@@ -1,14 +1,14 @@
 
-// Copyright 2013-2021 NTESS. Under the terms
+// Copyright 2013-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2021, NTESS
+// Copyright (c) 2013-2022, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -223,7 +223,7 @@ class VirtNic : public SST::SubComponent {
 	SimTime_t m_nextTimeSlot;
 	uint32_t m_latPerSend_ns;
 	SimTime_t calcDelay() {
-		SimTime_t curTime = Simulation::getSimulation()->getCurrentSimCycle()/1000;
+		SimTime_t curTime = getCurrentSimCycle()/1000;
 
 		SimTime_t ret = curTime < m_nextTimeSlot ? m_nextTimeSlot - curTime: 0;	
 		m_dbg.debug(CALL_INFO,2,0,"curTime_ns=%" PRIu64 " delay_ns=%" PRIu64"\n",curTime,ret);
