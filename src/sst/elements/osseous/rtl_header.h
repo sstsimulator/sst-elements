@@ -17,6 +17,7 @@
 #define VECSHIFTREGISTER_H_
 
 #include <iostream>
+#include <sstream> 
 #include <inttypes.h>
 #include <array>
 #include <cstdint>
@@ -24,8 +25,6 @@
 #include <uint.h>
 #include <string.h>
 #include <sint.h>
-#include <sst/core/sst_config.h>
-#include "sst_config.h"
 namespace SST {
 //#define UNLIKELY(condition) __builtin_expect(static_cast<bool>(condition), 0)
 typedef struct Rtlheader {
