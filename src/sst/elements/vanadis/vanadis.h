@@ -228,6 +228,8 @@ private:
     bool mapInstructiontoFunctionalUnit(VanadisInstruction* ins, std::vector<VanadisFunctionalUnit*>& functional_units);
     void printRob(VanadisCircularQueue<VanadisInstruction*>* rob);
 
+    void resetHwThread(uint32_t thr);
+
     SST::Output* output;
 
     uint16_t core_id;
