@@ -21,13 +21,17 @@
 #include <unistd.h>
 #include <string>
 #include "sst/core/interfaces/stdMem.h"
-//#include "sst/core/module.h"
 #include <sst/core/module.h>
 
 #include "velf/velfinfo.h"
 #include "util/vdatacopy.h"
 #include "decoder/vauxvec.h"
 #include <sst/core/module.h>
+
+#include "sst/elements/mmu/mmu.h"
+#include "os/vphysmemmanager.h"
+#include "os/vloadpage.h"
+#include "os/include/process.h"
 
 namespace SST {
 namespace Vanadis {
@@ -38,25 +42,22 @@ class AppRuntimeMemoryMod : public Module {
 
     AppRuntimeMemoryMod() : Module() {} 
     virtual ~AppRuntimeMemoryMod() {} 
-
-    virtual uint64_t configure(  Output* output, Interfaces::StandardMem* mem_if, VanadisELFInfo* elf_info) = 0;
+    virtual uint64_t configurePhdr(  Output* output, int page_size, OS::ProcessInfo*, uint64_t phdr_address, std::vector<uint8_t>& phdr_data_block ) = 0;
+    virtual uint64_t configureStack(  Output* output, int page_size, OS::ProcessInfo*, uint64_t stack_top_address,
+        uint64_t phdr_address, uint64_t rand_values_address, std::vector<uint8_t>& stack_data ) = 0;
 };
 
 template<class Type>
 class AppRuntimeMemory : public AppRuntimeMemoryMod {
   public:
-
-    AppRuntimeMemory( Params& params ) : params(params) { }
-
-    virtual uint64_t configure(  Output* output, Interfaces::StandardMem* mem_if, VanadisELFInfo* elf_info);
-  protected:
-    Params params;
+    AppRuntimeMemory( Params& params ) { }
+    virtual uint64_t configurePhdr(  Output* output, int page_size, OS::ProcessInfo*, uint64_t phdr_address, std::vector<uint8_t>& phdr_data_block );
+    virtual uint64_t configureStack(  Output* output, int page_size, OS::ProcessInfo*, uint64_t start_top_address,
+        uint64_t phdr_address, uint64_t rand_values_address, std::vector<uint8_t>& stack_data );
 };
 
 class AppRuntimeMemory32 : public AppRuntimeMemory<uint32_t> {
-
   public:
-
     SST_ELI_REGISTER_MODULE_DERIVED(
         AppRuntimeMemory32,
         "vanadis",
@@ -65,15 +66,12 @@ class AppRuntimeMemory32 : public AppRuntimeMemory<uint32_t> {
         "Application runtime memory loader for 32 OS",
         SST::Vanadis::AppRuntimeMemory32
     ) 
-
     AppRuntimeMemory32( Params& params ) : 
         AppRuntimeMemory<uint32_t>( params ) {}
 };
 
-
 class AppRuntimeMemory64 : public AppRuntimeMemory<uint64_t> {
   public:
-
     SST_ELI_REGISTER_MODULE_DERIVED(
         AppRuntimeMemory64,
         "vanadis",
@@ -87,12 +85,69 @@ class AppRuntimeMemory64 : public AppRuntimeMemory<uint64_t> {
 };
 
 template<class Type>
-uint64_t AppRuntimeMemory<Type>::configure( Output* output, Interfaces::StandardMem* mem_if, VanadisELFInfo* elf_info ) 
+uint64_t AppRuntimeMemory<Type>::configurePhdr(  Output* output, int page_size, OS::ProcessInfo* processInfo, uint64_t phdr_address, std::vector<uint8_t>& phdr_data_block )
 {
-    // MIPS default is 0x7fffffff according to SYS-V manual
-    // we are using it for RISCV as well
-    uint64_t start_stack_address = params.find<uint64_t>("stack_start_address", 0x7ffffff0);
-    
+    auto elf_info = processInfo->getElfInfo();
+
+    for ( int i = 0; i < elf_info->getProgramHeaderEntryCount(); ++i ) {
+        const VanadisELFProgramHeaderEntry* nxt_entry = elf_info->getProgramHeader(i);
+
+        vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getHeaderTypeNumber());
+        if ( 8 == sizeof(Type)  ) {
+            vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getSegmentFlags()); 
+        }
+        vanadis_vec_copy_in<Type>(phdr_data_block, (Type)nxt_entry->getImageOffset());
+        vanadis_vec_copy_in<Type>(phdr_data_block, (Type)nxt_entry->getVirtualMemoryStart());
+        // Physical address - just ignore this for now
+        vanadis_vec_copy_in<Type>(phdr_data_block, (Type)nxt_entry->getPhysicalMemoryStart());
+        vanadis_vec_copy_in<Type>(phdr_data_block, (Type)nxt_entry->getHeaderImageLength());
+        vanadis_vec_copy_in<Type>(phdr_data_block, (Type)nxt_entry->getHeaderMemoryLength());
+        if ( 4 == sizeof(Type) ) {
+            vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getSegmentFlags());
+        }
+        vanadis_vec_copy_in<Type>(phdr_data_block, (Type)nxt_entry->getAlignment());
+    }
+    // Check endian-ness
+    if ( elf_info->getEndian() != VANADIS_LITTLE_ENDIAN ) {
+        output->fatal(
+            CALL_INFO, -1,
+            "Error: binary executable ELF information shows this was not compiled for little-endian processors "
+            "(\"mipsel\"), please recompile to a supported format.\n");
+    }
+
+    phdr_data_block.insert( phdr_data_block.end(), 64, 0 );
+
+    const uint64_t rand_values_address = phdr_address + phdr_data_block.size();
+
+    std::vector<uint8_t>& random_values_data_block = phdr_data_block;
+
+    for ( int i = 0; i < 8; ++i ) {
+        random_values_data_block.push_back(rand() % 255);
+    }
+
+    if ( 8 == sizeof( Type ) ) {
+        const char*    exe_path            = elf_info->getBinaryPath();
+        for ( int i = 0; i < std::strlen(exe_path); ++i ) {
+            random_values_data_block.push_back(exe_path[i]);
+        }
+  
+        random_values_data_block.push_back('\0');
+    } 
+    output->verbose(CALL_INFO, 16, 0,"phdr_address=%#" PRIx64 " length=%zu\n",phdr_address,phdr_data_block.size());
+
+    // pad to full page 
+    phdr_data_block.insert( phdr_data_block.end(), page_size - (phdr_data_block.size() % page_size), 0 );
+
+    return rand_values_address;
+}
+
+
+template<class Type>
+uint64_t AppRuntimeMemory<Type>::configureStack(  Output* output, int page_size, OS::ProcessInfo* processInfo, uint64_t start_stack_address,
+        uint64_t phdr_address, uint64_t rand_values_address, std::vector<uint8_t>& stack_data )
+{
+    Params& params = processInfo->getParams();
+    auto elf_info = processInfo->getElfInfo();
     output->verbose(CALL_INFO, 16, 0, "Application Startup Processing %s bit\n",8 == sizeof(Type)? "64":"32");
 
     const uint32_t arg_count = params.find<uint32_t>("argc", 1);
@@ -108,7 +163,7 @@ uint64_t AppRuntimeMemory<Type>::configure( Output* output, Interfaces::Standard
 
         if ( "" == arg_value ) {
             if ( 0 == arg ) {
-                arg_value = elf_info->getBinaryPathShort();
+                arg_value = elf_info->getBinaryPath();
                 output->verbose(CALL_INFO, 8, 0, "--> auto-set \"%s\" to \"%s\"\n", arg_name, arg_value.c_str());
             }
             else {
@@ -166,6 +221,7 @@ uint64_t AppRuntimeMemory<Type>::configure( Output* output, Interfaces::Standard
 
     delete[] env_var_name;
 
+#if 0 // PHDR
     std::vector<uint8_t> phdr_data_block;
 
     for ( int i = 0; i < elf_info->getProgramHeaderEntryCount(); ++i ) {
@@ -196,20 +252,25 @@ uint64_t AppRuntimeMemory<Type>::configure( Output* output, Interfaces::Standard
 
     const uint64_t phdr_address = params.find<uint64_t>("program_header_address", 0x60000000);
 
-    std::vector<uint8_t> random_values_data_block;
+    phdr_data_block.insert( phdr_data_block.end(), 64, 0 );
+
+    const uint64_t rand_values_address = phdr_address + phdr_data_block.size();
+
+    std::vector<uint8_t>& random_values_data_block = phdr_data_block;
 
     for ( int i = 0; i < 8; ++i ) {
         random_values_data_block.push_back(rand() % 255);
     }
 
-    const uint64_t rand_values_address = phdr_address + phdr_data_block.size() + 64;
-
-    const char*    exe_path            = elf_info->getBinaryPathShort();
-    for ( int i = 0; i < std::strlen(exe_path); ++i ) {
-         random_values_data_block.push_back(exe_path[i]);
-    }
+    if ( 8 == sizeof( Type ) ) {
+        const char*    exe_path            = elf_info->getBinaryPath();
+        for ( int i = 0; i < std::strlen(exe_path); ++i ) {
+            random_values_data_block.push_back(exe_path[i]);
+        }
   
-    random_values_data_block.push_back('\0');
+        random_values_data_block.push_back('\0');
+    } 
+#endif // PHDR
 
     std::vector<uint8_t> aux_data_block;
 
@@ -228,7 +289,7 @@ uint64_t AppRuntimeMemory<Type>::configure( Output* output, Interfaces::Standard
 
     // System page size
     vanadis_vec_copy_in<Type>(aux_data_block, VANADIS_AT_PAGESZ);
-    vanadis_vec_copy_in<Type>(aux_data_block, 4096);
+    vanadis_vec_copy_in<Type>(aux_data_block, page_size);
 
     vanadis_vec_copy_in<Type>(aux_data_block, VANADIS_AT_ENTRY);
     vanadis_vec_copy_in<Type>(aux_data_block, (int)elf_info->getEntryPoint());
@@ -334,9 +395,6 @@ uint64_t AppRuntimeMemory<Type>::configure( Output* output, Interfaces::Standard
 
     start_stack_address = aligned_start_stack_address;
 
-    // Allocate 64 zeros for now
-    std::vector<uint8_t> stack_data;
-
     const uint64_t arg_env_data_start = start_stack_address + (arg_env_space_needed * sizeof(Type));
 
     output->verbose(CALL_INFO, 16, 0, "-> Setting start of stack data to:       %#" PRIx64 "\n", arg_env_data_start );
@@ -384,44 +442,40 @@ uint64_t AppRuntimeMemory<Type>::configure( Output* output, Interfaces::Standard
             CALL_INFO, 16, 0, "-> Pushing %" PRIu64 " bytes to the start of stack (0x%llx) via memory init event..\n",
             (uint64_t)stack_data.size(), start_stack_address);
 
-    uint64_t index = 0;
-    while ( index < stack_data.size() ) {
-        uint64_t inner_index = 0;
+#if 0  // PHDR
+    output->verbose(CALL_INFO, 16, 0,"phdr_address=%#" PRIx64 " length=%zu\n",phdr_address,phdr_data_block.size());
 
-        while ( inner_index < 4 ) {
-            index++;
-            inner_index++;
-        }
-    }
+    // pad to full page 
+    phdr_data_block.insert( phdr_data_block.end(), page_size - (phdr_data_block.size() % page_size), 0 );
 
-    output->verbose(
-        CALL_INFO, 16, 0,
-            "-> Sending inital write of auxillary vector to memory, "
-            "forms basis of stack start (addr: 0x%llx) len %zu\n",
-            start_stack_address,stack_data.size());
+    size_t  phdrRegionStop = phdr_address + phdr_data_block.size();  
+    // setup a VM memory region for this process
+    processInfo->addMemRegion( "phdr", phdr_address, phdrRegionStop - phdr_address, 0x4  );
 
-    mem_if->sendUntimedData(new SST::Interfaces::StandardMem::Write( start_stack_address, stack_data.size(), stack_data) ); 
-  
-    output->verbose(
-            CALL_INFO, 16, 0,
-            "-> Sending initial write of AT_RANDOM values to memory "
-            "(0x%llx, len: %" PRIu64 ")\n",
-            rand_values_address, (uint64_t)random_values_data_block.size());
+    // write contents to memory 
+    loadPages( output, mem_if, mmu, memMgr, processInfo->getPid(), phdr_address, phdr_data_block, 0x4, page_size );
+#endif // PHDR
 
-    mem_if->sendUntimedData(new SST::Interfaces::StandardMem::Write( rand_values_address, random_values_data_block.size(), random_values_data_block ) );
+    // get a page aligned base of the stack 
+    uint64_t page_aligned_stack_addr = start_stack_address & ~(page_size - 1);
+    size_t pad = start_stack_address - page_aligned_stack_addr;
 
-    output->verbose(
-            CALL_INFO, 16, 0,
-            "-> Sending initial data for program headers (addr: "
-            "0x%llx, len: %" PRIu64 ")\n",
-            phdr_address, (uint64_t)phdr_data_block.size());
+    // this results in a reallocation and copy of the vector
+    stack_data.insert( stack_data.begin(), pad, 0 );
+    stack_data.insert( stack_data.end(), page_size - (stack_data.size() % page_size), 0 );
 
-    mem_if->sendUntimedData(new SST::Interfaces::StandardMem::Write( phdr_address, phdr_data_block.size(), phdr_data_block ) );
+#if 0
+    // stack vm region start right after the phdrs
+    uint64_t stackRegionStop = page_aligned_stack_addr + stack_data.size();
+    processInfo->addMemRegion( "stack", phdrRegionStop, stackRegionStop - phdrRegionStop, 0x6 );
 
-        output->verbose(
-            CALL_INFO, 16, 0, "-> Setting SP to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", start_stack_address,
-            start_stack_address);
+    output->verbose( CALL_INFO, 16, 0, "stack_address=%#" PRIx64 " aligned_stack_address=%#" PRIx64 " length=%zu\n",
+                                                        start_stack_address, page_aligned_stack_addr, stack_data.size());
 
+    loadPages( output, mem_if, mmu, memMgr, processInfo->getPid(), page_aligned_stack_addr, stack_data, 0x6, page_size );
+
+    processInfo->printRegions("after app runtime setup");
+#endif
     // Set up the stack pointer
     // Register 29 is MIPS for Stack Pointer
     // regFile->setIntReg(sp_phys_reg, start_stack_address);

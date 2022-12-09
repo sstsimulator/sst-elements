@@ -29,9 +29,9 @@ public:
     VanadisSyscallMemoryMapEvent() : VanadisSyscallEvent() {}
 
     VanadisSyscallMemoryMapEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t addr, uint64_t len, int64_t prot, int64_t flags,
-                                 int fd, uint64_t offset)
+                                 uint64_t stack_p, uint64_t offset_multiplier)
         : VanadisSyscallEvent(core, thr, bittype), address(addr), length(len), page_prot(prot), alloc_flags(flags),
-          fd(fd), offset(offset) {}
+          stack_pointer(stack_p), offset_units(offset_multiplier) {}
 
     VanadisSyscallOp getOperation() { return SYSCALL_OP_MMAP; }
 
@@ -46,16 +46,16 @@ public:
 
     bool isAllocationAnonymous() const { return (alloc_flags & 0x800) != 0; }
 
-    uint64_t getFd() const { return fd; }
-    uint64_t getOffset() const { return offset; }
+    uint64_t getStackPointer() const { return stack_pointer; }
+    uint64_t getOffsetUnits() const { return offset_units; }
 
 private:
     uint64_t address;
     uint64_t length;
     int64_t page_prot;
     int64_t alloc_flags;
-    int fd;
-    uint64_t offset;
+    uint64_t stack_pointer;
+    uint64_t offset_units;
 };
 
 } // namespace Vanadis

@@ -21,10 +21,10 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisSyscallOpenAtEvent : public VanadisSyscallEvent {
+class VanadisSyscallOpenatEvent : public VanadisSyscallEvent {
 public:
-    VanadisSyscallOpenAtEvent() : VanadisSyscallEvent() {}
-    VanadisSyscallOpenAtEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t dirfd, uint64_t path_ptr, uint64_t flags, uint64_t mode)
+    VanadisSyscallOpenatEvent() : VanadisSyscallEvent() {}
+    VanadisSyscallOpenatEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t dirfd, uint64_t path_ptr, uint64_t flags, uint64_t mode)
         : VanadisSyscallEvent(core, thr, bittype), openat_dirfd(dirfd), openat_path_ptr(path_ptr), openat_flags(flags), openat_mode(mode) {}
 
     VanadisSyscallOp getOperation() { return SYSCALL_OP_OPENAT; }
