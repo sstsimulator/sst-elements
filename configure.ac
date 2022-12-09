@@ -3,7 +3,7 @@
 #
 
 # Set Version of SST Elements Library
-AC_INIT([SST Elements Library],[-dev],[sst@sandia.gov])
+AC_INIT([SST Elements Library],[12.1.0],[sst@sandia.gov])
 
 AC_PREREQ([2.59])
 AC_COPYRIGHT([Copyright National Technology and Engineering Solutions of Sandia (NTESS), 2004-2022])
