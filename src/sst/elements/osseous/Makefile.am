@@ -2,7 +2,8 @@
 #
 #
 INCLUDE = -I$(top_srcdir)/src/sst/elements/osseous/eras_datatypes/ -I$(top_srcdir)/src/sst/elements/ariel/
-FLAGS = -fpermissive -std=c++11
+FLAGS = -fpermissive -std=c++11 
+
 
 AM_CPPFLAGS += \
 	$(MPI_CPPFLAGS) \
@@ -27,7 +28,13 @@ librtlcomponent_la_SOURCES = \
 
 EXTRA_DIST = \
 			 eras_datatypes/sint.h \
-			 eras_datatypes/uint.h
+			 eras_datatypes/uint.h \
+			 tests/Makefile \
+			 tests/tb_header.h \
+			 tests/tb_header.c \
+			 tests/testbench.c \
+			 tests/runstream.py
+
 
 librtlcomponent_la_LDFLAGS = -module -avoid-version
 
