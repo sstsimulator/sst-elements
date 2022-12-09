@@ -300,16 +300,24 @@ EXTRA_DIST = \
 	tests/small/basic-ops/test-shift/riscv64/vanadis.stderr.gold \
 	tests/small/basic-ops/test-shift/riscv64/vanadis.stdout.gold \
 \
-	tests/small/misc/stream/Makefile \
-	tests/small/misc/stream/stream.c \
-	tests/small/misc/stream/mipsel/stream \
-	tests/small/misc/stream/mipsel/sst.stdout.gold \
-	tests/small/misc/stream/mipsel/vanadis.stderr.gold \
-	tests/small/misc/stream/mipsel/vanadis.stdout.gold \
-	tests/small/misc/stream/riscv64/stream \
-	tests/small/misc/stream/riscv64/sst.stdout.gold \
-	tests/small/misc/stream/riscv64/vanadis.stderr.gold \
-	tests/small/misc/stream/riscv64/vanadis.stdout.gold \
+    tests/small/misc/stream/Makefile \
+    tests/small/misc/stream/stream.c \
+    tests/small/misc/stream/mipsel/stream \
+    tests/small/misc/stream/mipsel/sst.stdout.gold \
+    tests/small/misc/stream/mipsel/vanadis.stderr.gold \
+    tests/small/misc/stream/mipsel/vanadis.stdout.gold \
+    tests/small/misc/stream/riscv64/stream \
+    tests/small/misc/stream/riscv64/sst.stdout.gold \
+    tests/small/misc/stream/riscv64/vanadis.stderr.gold \
+    tests/small/misc/stream/riscv64/vanadis.stdout.gold \
+\
+	tests/small/misc/stream-fortran/Makefile \
+	tests/small/misc/stream-fortran/stream.f \
+	tests/small/misc/stream-fortran/mysecond.c \
+	tests/small/misc/stream-fortran/riscv64/stream-fortran \
+	tests/small/misc/stream-fortran/riscv64/sst.stdout.gold \
+	tests/small/misc/stream-fortran/riscv64/vanadis.stderr.gold \
+	tests/small/misc/stream-fortran/riscv64/vanadis.stdout.gold \
 \
 	tests/small/misc/gettime/Makefile \
 	tests/small/misc/gettime/gettime.c \

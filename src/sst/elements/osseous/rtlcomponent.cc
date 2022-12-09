@@ -1,9 +1,13 @@
-// Copyright 2009-2020 NTESS. Under the terms
+// Copyright 2009-2022 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2020, NTESS
+// Copyright (c) 2009-2022, NTESS
 // All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -32,12 +36,12 @@ Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
 
 	RTLClk  = params.find<std::string>("ExecFreq", "1GHz" , found);
     if (!found) {
-        Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find work per cycle\n");
+        getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find work per cycle\n");
     }
 
 	maxCycles = params.find<Cycle_t>("maxCycles", 0, found);
     if (!found) {
-        Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find work per cycle\n");
+        getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find work per cycle\n");
     }
 
 	/*if(RTLClk == NULL || RTLClk == "0") 
@@ -117,7 +121,6 @@ Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
 Rtlmodel::~Rtlmodel() {
     delete dut;
     delete axiport;
-    delete RtlAckEv;
 }
 
 void Rtlmodel::setup() {
@@ -144,15 +147,13 @@ void Rtlmodel::finish() {
 //clockTick will actually execute the RTL design at every cycle based on the input and control signals updated by CPU CPU or Event Handler.
 bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
 
-    if(!isStalled) {
-        dut->eval(ev.update_registers, ev.verbose, ev.done_reset);
+    /*if(!isStalled) {
         if(tickCount == 4) {
             output.verbose(CALL_INFO, 1, 0, "AXI signals changed"); 
             axi_tvalid_$next = 1;
             axi_tdata_$next = 34;
             output.verbose(CALL_INFO, 1, 0, "\n Sending data at tickCount 4");
         }
-     tickCount++;
     }
 
     if((axi_tvalid_$old ^ axi_tvalid_$next) || (axi_tdata_$old ^ axi_tdata_$next))  {
@@ -173,8 +174,11 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
             axiport->eval(true, true, true);
             fifo_enq_$next = axiport->queue.value.as_single_word();
             if(fifo_enq_$old ^ fifo_enq_$next) {
-                output.verbose(CALL_INFO, 1, 0, "\nQueue_value is: % %" PRIu64 PRIu64, axiport->queue.value, fifo_enq_$next); 
-                output.verbose(CALL_INFO, 1, 0, "\nData enqueued in the queue: %" PRIu64, axiport->queue.ram[fifo_enq_$next]);
+                stringstream queue_value, queue_ram;
+                queue_value << axiport->queue.value;
+                queue_ram << axiport->queue.ram[fifo_enq_$next];
+                output.verbose(CALL_INFO, 1, 0, "\nQueue_value is: %s %" PRIu64, queue_value.str().c_str(), fifo_enq_$next); 
+                output.verbose(CALL_INFO, 1, 0, "\nData enqueued in the queue: %s", queue_ram.str().c_str());
             }
             fifo_enq_$old = fifo_enq_$next;
         }
@@ -185,10 +189,14 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
     axi_tready_$old = axi_tready_$next;
 
     uint64_t read_addr = (axiport->queue.ram[fifo_enq_$next].as_single_word());// << 32) | (axiport->queue.ram[fifo_enq_$next+1].as_single_word());
-    uint64_t size = (axiport->queue.ram[fifo_enq_$next+2].as_single_word());// << 32) | (axiport->queue.ram[fifo_enq_$next+3].as_single_word());
+    uint64_t size = (axiport->queue.ram[fifo_enq_$next+2].as_single_word());// << 32) | (axiport->queue.ram[fifo_enq_$next+3].as_single_word());*/
 
     //output.verbose(CALL_INFO, 1, 0, "\nSim Done is: %d", ev.sim_done);
 
+    if(!isStalled) {
+        dut->eval(ev.update_registers, ev.verbose, ev.done_reset);
+        tickCount++;
+    }
 	if( tickCount >= sim_cycle) {
         if(ev.sim_done) {
             output.verbose(CALL_INFO, 1, 0, "OKToEndSim, TickCount %" PRIu64, tickCount);
@@ -197,10 +205,9 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
             primaryComponentOKToEndSim();  //Tell the SST that it can finish the simulation.
             return true;
         }
-	} 
+    }
     
-    else 
-        return false;
+    return false;
 }
 
 

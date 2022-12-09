@@ -7,7 +7,7 @@ Currently, the example is a simple vector shift register(_vecshiftreg_).
 
 ```
 osseous
-osseous/examples/vecshiftreg
+osseous/tests/
 ```
 To build and register _osseous_ & _vecshiftreg_ and run the shift register example, below are the steps.
 ```
@@ -21,15 +21,15 @@ make all
 make install
 export PATH=$SST_CORE_HOME/bin:$SST_ELEMENTS_HOME/bin:$PATH
 
-cd osseous/examples/vecshiftreg/tests
+cd src/sst/elements/osseous/tests
 make all (compiles RTL testbench into executable that is fed to Ariel)
-sst vecshiftreg.py
+sst runstream.py
 ```
 Note that Ariel and its links with vecshiftreg has to be specified in python configuration file for appropriate functionality. The statistics collected will be visible at the end of simulation. The cycle count of RTL testbench has to be increased by significant figure to observe notable changes in simulation time due to RTL simulation.
 
 **Modifying C-testbench: **
 ```
-osseous/examples/vecshiftreg/tests/testbench.c
+osseous/tests/testbench.c
 ```
 Provided testbench (_testbench.c_) contains both non-RTL computations (weighted matrix addition) and RTL testvectors. 
 It has following APIs:
