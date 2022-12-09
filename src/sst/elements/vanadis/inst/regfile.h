@@ -44,9 +44,13 @@ public:
     {
         // Registers are always 64-bits
         int_reg_storage = new char[int_reg_width * count_int_regs];
-		std::memset(int_reg_storage, 0, (int_reg_width * count_int_regs));
-
         fp_reg_storage = new char[fp_reg_width * count_fp_regs];
+
+        init();
+    }
+
+    void init( ) {
+        std::memset(int_reg_storage, 0, (int_reg_width * count_int_regs));
         std::memset(fp_reg_storage, 0, (fp_reg_width * count_fp_regs));
     }
 
