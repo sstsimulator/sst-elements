@@ -19,7 +19,7 @@
 namespace SST {
 namespace Vanadis {
 
-uint64_t
+static uint64_t
 vanadis_line_remainder(const uint64_t start, const uint64_t line_length) {
     if (64 == line_length) {
         return line_length - (start & (uint64_t)63);
