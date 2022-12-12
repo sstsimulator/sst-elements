@@ -50,7 +50,7 @@ struct FreeList {
     void print() {
         for ( const auto kv: m_freeList) {
             auto entry = kv.second;
-            FreeListDbg("free %#" PRIx64 " %#" PRIx64 "\n",entry->start, entry->end);
+            FreeListDbg("free key=%#" PRIx64 ", start=%#" PRIx64 " end=%#" PRIx64 "\n",kv.first,entry->start, entry->end);
         }
     }
 
@@ -59,6 +59,7 @@ struct FreeList {
         int ret = false;
         for ( const auto kv: m_freeList) {
             auto entry = kv.second;
+            assert( kv.first == kv.second->start );
             FreeListDbg("checking freeEntry [%#" PRIx64 "-%#" PRIx64 "]\n",entry->start, entry->end);
             if ( addr >= entry->start && addr + len <= entry->end ) {
                 ret = true;
@@ -66,7 +67,9 @@ struct FreeList {
                 if ( addr == entry->start ) { 
                     
                     if ( addr + len < entry->end ) {
+                        m_freeList.erase( kv.first );
                         entry->start = addr + len; 
+                        m_freeList[entry->start] = entry;
                     } else {
                         delete entry; 
                         m_freeList.erase( kv.first );
