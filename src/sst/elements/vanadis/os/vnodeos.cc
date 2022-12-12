@@ -444,8 +444,10 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
 
         // the fault is in a present region, check to see if the retions permissions satisfy the fault 
         if ( ! MMU_Lib::checkPerms( faultPerms, region->perms ) ) {
-            output->fatal(CALL_INFO, -1, "Error: memory fault instPtr=%#" PRIx64 ", could not be satified for %#" PRIx64 ", no permission wantPerms=%#x havePerms=%#x\n", 
+            output->verbose(CALL_INFO, 1, 0, "memory fault instPtr=%#" PRIx64 ", could not be satified for %#" PRIx64 ", no permission wantPerms=%#x havePerms=%#x\n", 
                     info->instPtr,virtAddr,faultPerms,region->perms);
+            pageFaultFini( reqId, link, pid, vpn, false );
+            return;
         }
 
         int pageTablePerms =  m_mmu->getPerms( pid, vpn );
