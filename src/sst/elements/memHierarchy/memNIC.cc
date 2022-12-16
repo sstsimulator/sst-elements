@@ -47,7 +47,7 @@ MemNIC::MemNIC(ComponentId_t id, Params &params, TimeConverter* tc) : MemNICBase
         std::string link_control_class = params.find<std::string>("network_link_control", "merlin.linkcontrol");
 
         if (link_control_class != "merlin.linkcontrol")
-            dbg.output("%s, Warning: use of the 'network_link_control' parameter is deprecated in favor of specifying a named 'linkcontrol' subcomponent in the input configuration.\n",
+          dbg.fatal(CALL_INFO, -1, "%s, Error: use of the 'network_link_control' parameter is no longer supported. Please specify a named 'linkcontrol' subcomponent in the input configuration.\n",
                     getName().c_str());
 
         link_control = loadAnonymousSubComponent<SimpleNetwork>(link_control_class, "linkcontrol", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, netparams, 1);
