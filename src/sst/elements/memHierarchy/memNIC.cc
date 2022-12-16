@@ -41,8 +41,8 @@ MemNIC::MemNIC(ComponentId_t id, Params &params, TimeConverter* tc) : MemNICBase
     if (!link_control) {
         Params netparams;
         netparams.insert("port_name", params.find<std::string>("port", "port"));
-        netparams.insert("in_buf_size", params.find<std::string>("network_input_buffer_size", "1KiB"));
-        netparams.insert("out_buf_size", params.find<std::string>("network_output_buffer_size", "1KiB"));
+        netparams.insert("input_buf_size", params.find<std::string>("network_input_buffer_size", "1KiB"));
+        netparams.insert("output_buf_size", params.find<std::string>("network_output_buffer_size", "1KiB"));
         netparams.insert("link_bw", params.find<std::string>("network_bw", "80GiB/s"));
         std::string link_control_class = params.find<std::string>("network_link_control", "merlin.linkcontrol");
 
