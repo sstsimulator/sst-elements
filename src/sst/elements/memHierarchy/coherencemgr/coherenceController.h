@@ -17,6 +17,7 @@
 #define MEMHIERARCHY_COHERENCECONTROLLER_H
 
 #include <array>
+#include <set>
 
 #include <sst/core/sst_config.h>
 #include <sst/core/subcomponent.h>
@@ -286,6 +287,7 @@ protected:
 
     /* Retry buffer - filled by coherence manangers and drained by parent */
     std::vector<MemEventBase*> retryBuffer_;
+    std::set<Addr> retryBufferAddrSet_;
 
     /* Statistics - some variables used by all are declared here, but they are maintained by coherence protocols */
     Statistic<uint64_t>* stat_eventSent[(int)Command::LAST_CMD];    // Count events sent

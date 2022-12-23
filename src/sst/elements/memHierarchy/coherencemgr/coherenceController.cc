@@ -487,6 +487,7 @@ std::vector<MemEventBase*>* CoherenceController::getRetryBuffer() {
 
 void CoherenceController::clearRetryBuffer() {
     retryBuffer_.clear();
+    retryBufferAddrSet_.clear();
 }
 
 

@@ -478,6 +478,7 @@ bool Incoherent::handleNULLCMD(MemEvent* event, bool inMSHR) {
     if (evicted) {
         notifyListenerOfEvict(line->getAddr(), lineSize_, event->getInstructionPointer());
         retryBuffer_.push_back(mshr_->getFrontEvent(newAddr));
+        retryBufferAddrSet_.insert(newAddr);
         if (mshr_->removeEvictPointer(oldAddr, newAddr))
             retry(oldAddr);
     } else { // Could be stalling for a new address or locked line
@@ -651,15 +652,22 @@ void Incoherent::cleanUpAfterResponse(MemEvent * event) {
 
 
 void Incoherent::retry(Addr addr) {
+    if (retryBufferAddrSet_.find(addr) != retryBufferAddrSet_.end()) {
+        return;
+    }
+
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
-            if (!mshr_->getInProgress(addr))
+            if (!mshr_->getInProgress(addr)) {
                 retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+                retryBufferAddrSet_.insert(addr);
+            }
         } else { // Pointer -> another request is waiting to evict this address
             std::list<Addr>* evictPointers = mshr_->getEvictPointers(addr);
             for (std::list<Addr>::iterator it = evictPointers->begin(); it != evictPointers->end(); it++) {
                 MemEvent * ev = new MemEvent(cachename_, addr, *it, Command::NULLCMD);
                 retryBuffer_.push_back(ev);
+                retryBufferAddrSet_.insert(addr);
             }
         }
     }

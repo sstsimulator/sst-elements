@@ -2245,6 +2245,7 @@ bool MESISharNoninclusive::handleNULLCMD(MemEvent* event, bool inMSHR) {
         if (evicted) {
             notifyListenerOfEvict(tag->getAddr(), lineSize_, event->getInstructionPointer());
             retryBuffer_.push_back(mshr_->getFrontEvent(newAddr));
+            retryBufferAddrSet_.insert(newAddr);
             mshr_->addPendingRetry(newAddr);
             if (mshr_->removeEvictPointer(oldAddr, newAddr))
                 retry(oldAddr);
@@ -2301,6 +2302,7 @@ bool MESISharNoninclusive::handleNULLCMD(MemEvent* event, bool inMSHR) {
                 else if (tag->getState() == MA)
                     tag->setState(M);
                 retryBuffer_.push_back(mshr_->getFrontEvent(newAddr));
+                retryBufferAddrSet_.insert(newAddr);
                 mshr_->addPendingRetry(newAddr);
             } else {
                 dataArray_->deallocate(data);
@@ -2697,11 +2699,16 @@ void MESISharNoninclusive::cleanUpAfterRequest(MemEvent* event, bool inMSHR) {
 
     cleanUpEvent(event, inMSHR);
 
+    if (retryBufferAddrSet_.find(addr) != retryBufferAddrSet_.end()) {
+        return;
+    }
+
     /* Replay any waiting events */
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
             if (!mshr_->getInProgress(addr) && mshr_->getAcksNeeded(addr) == 0) {
                 retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+                retryBufferAddrSet_.insert(addr);
                 mshr_->addPendingRetry(addr);
             }
         } else { // Pointer -> either we're waiting for a writeback ACK or another address is waiting for this one
@@ -2710,6 +2717,7 @@ void MESISharNoninclusive::cleanUpAfterRequest(MemEvent* event, bool inMSHR) {
                 for (std::list<Addr>::iterator it = evictPointers->begin(); it != evictPointers->end(); it++) {
                     MemEvent * ev = new MemEvent(cachename_, addr, *it, Command::NULLCMD);
                     retryBuffer_.push_back(ev);
+                    retryBufferAddrSet_.insert(addr);
                 }
             }
         }
@@ -2732,10 +2740,15 @@ void MESISharNoninclusive::cleanUpAfterResponse(MemEvent* event, bool inMSHR) {
     if (req)
         delete req;
 
+    if (retryBufferAddrSet_.find(addr) != retryBufferAddrSet_.end()) {
+        return;
+    }
+
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
             if (!mshr_->getInProgress(addr) && mshr_->getAcksNeeded(addr) == 0) {
                 retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+                retryBufferAddrSet_.insert(addr);
                 mshr_->addPendingRetry(addr);
             }
         } else {
@@ -2744,6 +2757,7 @@ void MESISharNoninclusive::cleanUpAfterResponse(MemEvent* event, bool inMSHR) {
                 for (std::list<Addr>::iterator it = evictPointers->begin(); it != evictPointers->end(); it++) {
                     MemEvent * ev = new MemEvent(cachename_, addr, *it, Command::NULLCMD);
                     retryBuffer_.push_back(ev);
+                    retryBufferAddrSet_.insert(addr);
                 }
             }
         }
@@ -2752,9 +2766,14 @@ void MESISharNoninclusive::cleanUpAfterResponse(MemEvent* event, bool inMSHR) {
 
 
 void MESISharNoninclusive::retry(Addr addr) {
+    if (retryBufferAddrSet_.find(addr) != retryBufferAddrSet_.end()) {
+        return;
+    }
+
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
             retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+            retryBufferAddrSet_.insert(addr);
             mshr_->addPendingRetry(addr);
             if (is_debug_addr(addr)) {
                 if (eventDI.reason != "")
@@ -2767,6 +2786,7 @@ void MESISharNoninclusive::retry(Addr addr) {
             for (std::list<Addr>::iterator it = evictPointers->begin(); it != evictPointers->end(); it++) {
                 MemEvent * ev = new MemEvent(cachename_, addr, *it, Command::NULLCMD);
                 retryBuffer_.push_back(ev);
+                retryBufferAddrSet_.insert(addr);
             }
             if (is_debug_addr(addr)) {
                 if (eventDI.reason != "")

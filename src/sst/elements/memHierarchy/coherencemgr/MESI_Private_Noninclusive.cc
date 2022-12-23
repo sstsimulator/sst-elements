@@ -1771,6 +1771,7 @@ bool MESIPrivNoninclusive::handleNULLCMD(MemEvent* event, bool inMSHR) {
         if (mshr_->exists(newAddr) && mshr_->getStalledForEvict(newAddr)) {
             debug->debug(_L5_, "%s, Retry for 0x%" PRIx64 "\n", cachename_.c_str(), newAddr);
             retryBuffer_.push_back(mshr_->getFrontEvent(newAddr));
+            retryBufferAddrSet_.insert(newAddr);
             mshr_->addPendingRetry(newAddr);
             mshr_->setStalledForEvict(newAddr, false);
         }
@@ -2063,11 +2064,16 @@ void MESIPrivNoninclusive::cleanUpAfterRequest(MemEvent* event, bool inMSHR) {
 
     cleanUpEvent(event, inMSHR);
 
+    if (retryBufferAddrSet_.find(addr) != retryBufferAddrSet_.end()) {
+        return;
+    }
+
     /* Replay any waiting events */
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
             if (!mshr_->getInProgress(addr) && !mshr_->getStalledForEvict(addr) && mshr_->getAcksNeeded(addr) == 0) {
                 retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+                retryBufferAddrSet_.insert(addr);
                 mshr_->addPendingRetry(addr);
             }
         } else { // Pointer -> either we're waiting for a writeback ACK or another address is waiting for this one
@@ -2076,6 +2082,7 @@ void MESIPrivNoninclusive::cleanUpAfterRequest(MemEvent* event, bool inMSHR) {
                 for (std::list<Addr>::iterator it = evictPointers->begin(); it != evictPointers->end(); it++) {
                     MemEvent * ev = new MemEvent(cachename_, addr, *it, Command::NULLCMD);
                     retryBuffer_.push_back(ev);
+                    retryBufferAddrSet_.insert(addr);
                 }
             }
         }
@@ -2098,10 +2105,15 @@ void MESIPrivNoninclusive::cleanUpAfterResponse(MemEvent* event, bool inMSHR) {
     if (req)
         delete req;
 
+    if (retryBufferAddrSet_.find(addr) != retryBufferAddrSet_.end()) {
+        return;
+    }
+
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
             if (!mshr_->getInProgress(addr) && mshr_->getAcksNeeded(addr) == 0) {
                 retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+                retryBufferAddrSet_.insert(addr);
                 mshr_->addPendingRetry(addr);
             }
         } else {
@@ -2110,6 +2122,7 @@ void MESIPrivNoninclusive::cleanUpAfterResponse(MemEvent* event, bool inMSHR) {
                 for (std::list<Addr>::iterator it = evictPointers->begin(); it != evictPointers->end(); it++) {
                     MemEvent * ev = new MemEvent(cachename_, addr, *it, Command::NULLCMD);
                     retryBuffer_.push_back(ev);
+                    retryBufferAddrSet_.insert(addr);
                 }
             }
         }
@@ -2118,15 +2131,21 @@ void MESIPrivNoninclusive::cleanUpAfterResponse(MemEvent* event, bool inMSHR) {
 
 
 void MESIPrivNoninclusive::retry(Addr addr) {
+    if (retryBufferAddrSet_.find(addr) != retryBufferAddrSet_.end()) {
+        return;
+    }
+
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
             retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+            retryBufferAddrSet_.insert(addr);
             mshr_->addPendingRetry(addr);
         } else if (!(mshr_->pendingWriteback(addr))) {
             std::list<Addr>* evictPointers = mshr_->getEvictPointers(addr);
             for (std::list<Addr>::iterator it = evictPointers->begin(); it != evictPointers->end(); it++) {
                 MemEvent * ev = new MemEvent(cachename_, addr, *it, Command::NULLCMD);
                 retryBuffer_.push_back(ev);
+                retryBufferAddrSet_.insert(addr);
             }
         }
     }
