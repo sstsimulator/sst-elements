@@ -55,7 +55,7 @@ class testcase_Ariel(SSTTestCase):
 
     pin_loaded = testing_is_PIN_loaded()
 
-    pin_error_msg = "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist."
+    pin_error_msg = "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist."
 
     # This is not an exhausitve list of tests, but it covers most of the options.
 

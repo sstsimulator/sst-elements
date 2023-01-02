@@ -47,34 +47,34 @@ class testcase_Ariel(SSTTestCase):
 #####
     pin_loaded = testing_is_PIN_loaded()
 
-    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
+    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_Ariel_runstream(self):
         self.ariel_Template("runstream")
 
-    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
+    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_Ariel_testSt(self):
         self.ariel_Template("runstreamSt")
 
-    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
+    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_Ariel_testNB(self):
         self.ariel_Template("runstreamNB")
 
-    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
+    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_Ariel_memH_test(self):
         self.ariel_Template("memHstream")
 
-    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
+    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     @unittest.skipIf(host_os_is_osx(), "Ariel: Open MP is not supported on OSX.")
     def test_Ariel_test_ivb(self):
         self.ariel_Template("ariel_ivb")
 
-    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
+    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     @unittest.skipIf(host_os_is_osx(), "Ariel: Open MP is not supported on OSX.")
     @unittest.skipIf(testing_check_get_num_ranks() > 1, "Ariel: test_Ariel_test_snb skipped if ranks > 1 - Sandy Bridge test is incompatible with Multi-Rank.")
     def test_Ariel_test_snb(self):
         self.ariel_Template("ariel_snb")
     
-    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
+    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_Ariel_test_snb_mlm(self):
         self.ariel_Template("ariel_snb_mlm", app="stream_mlm")
 #####
