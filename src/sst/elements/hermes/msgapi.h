@@ -34,11 +34,25 @@ typedef uint32_t RankID;
 
 enum PayloadDataType {
     CHAR,
-	INT,
-	LONG,
-	DOUBLE,
-	FLOAT,
-	COMPLEX
+    SIGNED_CHAR,
+    UNSIGNED_CHAR,
+    INT,
+    LONG,
+    LONG_LONG,
+    UNSIGNED_INT,
+    UNSIGNED_LONG,
+    UNSIGNED_LONG_LONG,
+    INT8_T,
+    INT16_T,
+    INT32_T,
+    INT64_T,
+    UINT8_T,
+    UINT16_T,
+    UINT32_T,
+    UINT64_T,
+    DOUBLE,
+    FLOAT,
+    COMPLEX
 };
 
 typedef struct MessageResponse {
