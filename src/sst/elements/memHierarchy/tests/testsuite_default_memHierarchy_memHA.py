@@ -232,8 +232,7 @@ class testcase_memHierarchy_memHA(SSTTestCase):
         # due to the synchronization interval sometimes allowing the clock to run ahead a cycle or so
         tol_stats = { "outstanding_requests" : [0, 0, 20, 0, 0], # Only diffs in number of cycles
                       "total_cycles" : [20, 'X', 20, 20, 20],    # This stat is set once at the end of sim. May vary in all fields
-                      "MSHR_occupancy" : [0, 0, 20, 0, 0],       # Only diffs in number of cycles
-                      "llsc_success" : ['X', 'X', 'X', 'X', 'X'] } # Temporarily remove LLSC stat from check 
+                      "MSHR_occupancy" : [0, 0, 20, 0, 0] }      # Only diffs in number of cycles
 
         filesAreTheSame, statDiffs, othDiffs = testing_stat_output_diff(outfile, reffile, ignore_lines, tol_stats, True)
 
