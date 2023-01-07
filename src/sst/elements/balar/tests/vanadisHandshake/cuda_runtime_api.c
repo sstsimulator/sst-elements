@@ -35,6 +35,7 @@ cudaError_t cudaMalloc(void **devPtr, uint64_t size) {
 
 cudaError_t cudaMemcpy(uint64_t dst, uint64_t src, uint64_t count, enum cudaMemcpyKind kind) {
     // Send request to GPU
+    printf("Memcpy dst: %llx\n", dst);
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
     call_packet_ptr->cuda_call_id = GPU_MEMCPY;
@@ -49,8 +50,8 @@ cudaError_t cudaMemcpy(uint64_t dst, uint64_t src, uint64_t count, enum cudaMemc
         printf("Memcpy Packet address: %p\n", call_packet_ptr);
         printf("Memcpy kind: %d\n", (uint8_t) (call_packet_ptr->cuda_memcpy.kind));
         printf("Memcpy size: %ld\n", count);
-        printf("Memcpy src: %d\n", src);
-        printf("Memcpy dst: %d\n", dst);
+        printf("Memcpy src: %p\n", src);
+        printf("Memcpy dst: %p\n", dst);
         // printf("sizeof: %d\n", sizeof(call_packet_ptr->cuda_memcpy.kind));
     }
 
