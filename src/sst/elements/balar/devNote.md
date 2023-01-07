@@ -6,7 +6,10 @@ After successful compilation and installation of SST core and SST elements, run:
 
 ```bash
 cd tests/
+# Run with testCPU
 sst testBalar-simple.py --model-options='-c ariel-gpu-v100.cfg -v -x vectorAdd/vectorAdd'
+# Run with vanadis
+sst basic_vanadis_mod.py --model-options='-c ariel-gpu-v100.cfg'
 ```
 
 Can also set `PTX_SIM_DEBUG=3` to enable debug output in GPGPU-Sim, check its manual for more details.
