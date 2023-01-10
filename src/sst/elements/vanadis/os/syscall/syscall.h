@@ -137,13 +137,13 @@ class VanadisSyscall {
             //printf("%s() %zu\n",__func__,m_data.size());
             uint64_t length = calcLength();
 
-//           printf("%s() addr=%#" PRIx64 " [ %#" PRIx64 "] write length=%zu\n",__func__,getAddress(), process->virtToPhys( getAddress() ), length);
+            //printf("%s() addr=%#" PRIx64 " [ %#" PRIx64 "] write length=%zu\n",__func__,getAddress(), process->virtToPhys( getAddress() ), length);
 
             std::vector<uint8_t> payload( length );
             memcpy( payload.data(), m_data.data() + m_offset, length );
             
             StandardMem::Request* req = new StandardMem::Write( process->virtToPhys( getAddress() ), payload.size(), payload);
-//            printf( "send memory event (%s)\n", req->getString().c_str());
+            //printf( "send memory event (%s)\n", req->getString().c_str());
 
             // do this last because it is used by getAddress()
             m_offset += length; 
@@ -157,13 +157,13 @@ class VanadisSyscall {
 
     VanadisSyscall( Output* output, Link* respLink, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallEvent* event, std::string name )
         : m_output(output), m_respLink(respLink), m_process(process), m_memReqSend(func), 
-            m_event(event), m_name(name), m_returnCode(0), m_success(true), m_complete(false), m_memHandler(nullptr), m_sendResp(true) {}
+            m_event(event), m_name(name), m_returnCode(0), m_success(true), m_complete(false), m_memHandler(nullptr), m_sendResp(true), m_hasExited(false) {}
 
     virtual ~VanadisSyscall() { 
         if ( m_sendResp ) {
             m_output->verbose(CALL_INFO, 16, 0,"pid=%d tid=%d syscall %s is complete\n",
                 m_process->getpid(), m_process->gettid(), m_name.c_str() );
-            VanadisSyscallResponse* resp = new VanadisSyscallResponse(m_returnCode,m_success);;
+            VanadisSyscallResponse* resp = new VanadisSyscallResponse(m_returnCode,m_success,m_hasExited);;
             resp->setHWThread( m_event->getThreadID() );
             m_output->verbose(CALL_INFO, 16, 0,
                                 "handler is completed and all memory events are "
@@ -201,15 +201,16 @@ class VanadisSyscall {
         m_returnCode = returnCode;
         m_success = success; 
     }
+    void setReturnExited() {
+        m_hasExited = true;
+        setComplete();
+    }
+
     void sendMemRequest( StandardMem::Request* ev ) { 
         m_pendingMem.insert(ev->getID());
         (*m_memReqSend)( this, ev ); 
     }
 
-    void setNoResp() {
-        m_sendResp = false;
-        setComplete();
-    }
 
     void sendResp( VanadisSyscallResponse* resp  ) { m_respLink->send(resp);}
     void readString( uint64_t addr, std::string& data );
@@ -231,6 +232,7 @@ class VanadisSyscall {
     bool m_complete;
     int m_returnCode;
     bool m_success;
+    bool m_hasExited;
 
     std::unordered_set<StandardMem::Request::id_t> m_pendingMem;
     MemoryHandler* m_memHandler;
