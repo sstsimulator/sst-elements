@@ -243,7 +243,7 @@ void VanadisNodeOSComponent::copyPage( uint64_t physFrom, uint64_t physTo, unsig
 }
 
 void 
-VanadisNodeOSComponent::startProcess(unsigned core, unsigned hwThread, unsigned pid, VanadisStartThreadFullReq* req ) 
+VanadisNodeOSComponent::startProcess(unsigned core, unsigned hwThread, unsigned pid, VanadisStartThreadForkReq* req ) 
 {
     output->verbose(CALL_INFO, 2, 0,"core=%d hwThread=%d \n",core,hwThread);
     core_links.at(core)->send( req );
@@ -291,7 +291,7 @@ VanadisNodeOSComponent::startProcess( OS::HwThreadID& threadID, OS::ProcessInfo*
     uint64_t entry = process->getEntryPoint();
     output->verbose(CALL_INFO, 1, 0, "stack_pointer=%#" PRIx64 " entry=%#" PRIx64 "\n",stack_pointer, entry );
     
-    core_links.at(threadID.core)->send( new VanadisStartThreadReq( threadID.hwThread, stack_pointer, entry ) );
+    core_links.at(threadID.core)->send( new VanadisStartThreadFirstReq( threadID.hwThread, entry, stack_pointer ) );
 }
 
 void VanadisNodeOSComponent::writeMem( OS::ProcessInfo* process, uint64_t virtAddr, std::vector<uint8_t>* data, int perms, unsigned pageSize, Callback* callback )
@@ -328,9 +328,18 @@ VanadisNodeOSComponent::handleIncomingSyscall(SST::Event* ev) {
                       "a system-call event.\n");
         } else {
             VanadisForkSyscall* syscall = dynamic_cast<VanadisForkSyscall*>(m_coreInfoMap[ resp->getCore()].getSyscall( resp->getThread() ));
-            assert( syscall ); 
-            syscall->complete( resp );
-            delete syscall;
+            if ( syscall ) { 
+                syscall->complete( resp );
+                delete syscall;
+            } else {
+                VanadisCloneSyscall* syscall = dynamic_cast<VanadisCloneSyscall*>(m_coreInfoMap[ resp->getCore()].getSyscall( resp->getThread() ));
+                if ( syscall ) { 
+                    syscall->complete( resp );
+                    delete syscall;
+                } else {
+                    assert(0);
+                }
+            }
         }
     } else {
 
@@ -375,12 +384,18 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
     uint32_t faultPerms = info->faultPerms;
 
     assert(pid > 0);
+    if ( m_threadMap.find(pid) == m_threadMap.end() ) {
+        output->verbose(CALL_INFO, 1, 0,"process %d is gone, wanted vpn=%d pass error back to CPU\n",pid,vpn);
+        pageFaultFini( reqId, link, pid, vpn, false );
+        return;
+    }
     auto thread = m_threadMap.at(pid);
     uint64_t virtAddr = vpn << m_pageShift; 
 
     // this is confusing because we have to virtAddrs one is the page virtaddr and the is the address of the memory req that faulted,
     // the full addres was added for debug, we should git rid of the VPN at some point. 
-    output->verbose(CALL_INFO, 1, 0,"virtAddr=%#" PRIx64 " %c%c%c instPtr=%#" PRIx64 " virtMemAddr=%#" PRIx64 "\n",virtAddr, 
+    output->verbose(CALL_INFO, 1, 0,"link=%d pid=%d virtAddr=%#" PRIx64 " %c%c%c instPtr=%#" PRIx64 " virtMemAddr=%#" PRIx64 "\n",
+            link,pid,virtAddr, 
             faultPerms & 0x4 ? 'R' : '-',
             faultPerms & 0x2 ? 'W' : '-',
             faultPerms & 0x1 ? 'X' : '-',
@@ -539,7 +554,7 @@ bool VanadisNodeOSComponent::PageMemReadReq::handleResp( StandardMem::Request* e
     StandardMem::ReadResp* req = dynamic_cast<StandardMem::ReadResp*>(ev);
     assert( req );
     assert( req->size == 64 );
-    //printf("PageMemReadReq::%s() %s\n",__func__,req->getString().c_str());
+
     memcpy( data + iter->second, req->data.data(), req->size );
     reqMap.erase( iter );
 
@@ -558,7 +573,6 @@ void VanadisNodeOSComponent::PageMemReadReq::sendReq() {
     if ( m_currentReqOffset < length ) {
  //       printf("%s() addr %#lx\n",__func__,addr + offset);
         StandardMem::Request* req = new SST::Interfaces::StandardMem::Read( addr + m_currentReqOffset, 64 );
-        //printf("%s() %s\n",__func__,req->getString().c_str());
         reqMap[req->getID()] = m_currentReqOffset;
         m_currentReqOffset += 64;
         mem_if->send(req);
@@ -578,13 +592,11 @@ bool VanadisNodeOSComponent::PageMemWriteReq::handleResp( StandardMem::Request* 
 }
 
 void VanadisNodeOSComponent::PageMemWriteReq::sendReq() {
-   // printf("%s()\n",__func__);
     if ( offset < length ) {
         std::vector< uint8_t > buffer( 64);  
 
         memcpy( buffer.data(), data + offset, buffer.size() );
         StandardMem::Request* req = new SST::Interfaces::StandardMem::Write( addr + offset, buffer.size(), buffer );
-        //printf("PageMemWriteReq::%s() %s\n",__func__,req->getString().c_str());
         reqMap[req->getID()] = offset;
         offset += buffer.size();
         mem_if->send(req);

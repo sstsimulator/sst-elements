@@ -33,6 +33,7 @@
 #include "os/include/process.h"
 #include "syscall/syscall.h"
 #include "os/syscall/fork.h"
+#include "os/syscall/clone.h"
 #include "os/syscall/exit.h"
 
 using namespace SST::Interfaces;
@@ -145,8 +146,8 @@ private:
     void pageFaultHandler( MMU_Lib::RequestID, unsigned link, unsigned core, unsigned hwThread,  unsigned pid, uint32_t vpn, uint32_t perms, uint64_t instPtr, uint64_t memVirtAddr );
     void pageFault( PageFault* );
     void pageFaultFini( MMU_Lib::RequestID, unsigned link, unsigned pid, uint32_t vpn, bool success = true );
-    void startProcess( OS::HwThreadID&, OS::ProcessInfo* process ); 
-    void startProcess(unsigned core, unsigned hwThread, unsigned pid, VanadisStartThreadFullReq* req ); 
+    void startProcess( OS::HwThreadID&, OS::ProcessInfo* process );
+    void startProcess(unsigned core, unsigned hwThread, unsigned pid, VanadisStartThreadForkReq* req );
     void copyPage(uint64_t physFrom, uint64_t physTo, unsigned pageSize, Callback* );
 
     void sendMemoryEvent(VanadisSyscall* syscall, StandardMem::Request* ev ) {
@@ -225,6 +226,7 @@ private:
         HardwareThreadInfo( ) : m_processInfo(nullptr), m_syscall(nullptr) {}
         void setProcess( OS::ProcessInfo* process ) { m_processInfo = process; }
         void setSyscall( VanadisSyscall* syscall ) { assert( nullptr == m_syscall ); m_syscall = syscall; }
+        void clearSyscall( ) { m_syscall = nullptr; }
         OS::ProcessInfo* getProcess() { return m_processInfo; }
         VanadisSyscall* getSyscall() { return m_syscall; }
       private:
@@ -236,6 +238,7 @@ private:
       public:
         CoreInfo( unsigned numHwThreads ) : m_hwThreadMap(numHwThreads) {}
         void setSyscall( unsigned hwThread,  VanadisSyscall* syscall ) { m_hwThreadMap[hwThread].setSyscall( syscall ); }
+        void clearSyscall( unsigned hwThread ) { m_hwThreadMap[hwThread].clearSyscall(); }
         void setProcess( unsigned hwThread,  OS::ProcessInfo* process ) { m_hwThreadMap[hwThread].setProcess( process ); }
 
         OS::ProcessInfo* getProcess( unsigned hwThread ) { return m_hwThreadMap.at(hwThread).getProcess(); }
