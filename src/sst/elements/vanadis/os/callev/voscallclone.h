@@ -24,9 +24,10 @@ namespace Vanadis {
 class VanadisSyscallCloneEvent : public VanadisSyscallEvent {
 public:
     VanadisSyscallCloneEvent() : VanadisSyscallEvent() {}
+
     VanadisSyscallCloneEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t instPtr, uint64_t threadStackAddr,
-                                uint64_t flags, uint64_t ptid, uint64_t tls, uint64_t stackAddr )
-        : VanadisSyscallEvent(core, thr, bittype, instPtr), threadStackAddr(threadStackAddr), flags(flags), ptid(ptid), tls(tls), stackAddr(stackAddr) {}
+                                uint64_t flags, uint64_t ptid, uint64_t tls, uint64_t ctid, uint64_t stackAddr = 0 )
+        : VanadisSyscallEvent(core, thr, bittype, instPtr), threadStackAddr(threadStackAddr), flags(flags), ptid(ptid), tls(tls), ctid(ctid), stackAddr(stackAddr) {}
 
     VanadisSyscallOp getOperation() { return SYSCALL_OP_CLONE; }
 
@@ -35,6 +36,7 @@ public:
     uint64_t getParentTidAddr() const { return ptid; }
     uint64_t getTlsAddr() const { return tls; }
     uint64_t getCallStackAddr() const { return stackAddr; }
+    uint64_t getchildTidAddr() const { return ctid; }
 
 private:
     uint64_t threadStackAddr; 
@@ -42,6 +44,7 @@ private:
     uint64_t ptid;
     uint64_t tls;
     uint64_t stackAddr;
+    uint64_t ctid;
 };
 
 } // namespace Vanadis
