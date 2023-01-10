@@ -26,19 +26,30 @@ public:
     VanadisSyscallFutexEvent() : VanadisSyscallEvent() {}
     VanadisSyscallFutexEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t addr, int32_t op, uint32_t val, uint64_t time_addr, uint64_t stack_ptr)
         : VanadisSyscallEvent(core, thr, bittype), addr(addr), op(op), val(val), time_addr(time_addr), stack_ptr(stack_ptr) {}
+    VanadisSyscallFutexEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t addr, int32_t op, uint32_t val, uint64_t time_addr,
+        uint32_t val2, uint64_t addr2, uint32_t val3)
+        : VanadisSyscallEvent(core, thr, bittype), addr(addr), op(op), val(val), time_addr(time_addr), stack_ptr(0), val2(val2), addr2(addr2), val3(val3)  {}
+
 
     VanadisSyscallOp getOperation() { return SYSCALL_OP_FUTEX; }
 
     uint64_t getAddr() const { return addr; }
+    uint64_t getAddr2() const { return addr2; }
     int32_t getOp() const { return op; }
     uint32_t getVal() const { return val; }
+    uint32_t getVal2() const { return val2; }
+    uint32_t getVal3() const { return val3; }
     uint64_t getTimeAddr() const { return time_addr; }
     uint64_t getStackPtr() const { return stack_ptr; }
 
 private:
     uint64_t addr;
+    uint64_t addr2;
     int32_t op;
     uint32_t val;
+    uint32_t val2;
+    uint32_t val3;
+
     uint64_t time_addr;
     uint64_t stack_ptr;
 };
