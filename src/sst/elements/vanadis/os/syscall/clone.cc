@@ -17,6 +17,7 @@
 
 #include "os/syscall/clone.h"
 #include "os/vnodeos.h"
+#include "os/vgetthreadstate.h"
 
 using namespace SST::Vanadis;
 
@@ -51,10 +52,59 @@ VanadisCloneSyscall::VanadisCloneSyscall( Output* output, Link* link, OS::Proces
     m_os->m_coreInfoMap.at(m_threadID->core).setProcess( m_threadID->hwThread, m_newThread );
     m_os->m_mmu->setCoreToPageTable( m_threadID->core, m_threadID->hwThread, m_newThread->getpid() );
 
-    // we need to get clone() arguments that are not in registers, for clone we have one argument on the clone call stack 
-    m_buffer.resize(sizeof(uint32_t));
-    readMemory( event->getCallStackAddr()+16, m_buffer );
-    m_state = ReadChildTidAddr;
+    // if that stackAddr is valid  we need to get clone() arguments that are not in registers, for clone we have one argument on the clone call stack 
+    if ( event->getCallStackAddr() ) {
+        // this has to be the size of pointer to pid_t
+        if ( event->getOSBitType() == VanadisOSBitType::VANADIS_OS_32B ) {
+            m_buffer.resize(sizeof(uint32_t));
+        } else {
+            m_buffer.resize(sizeof(uint64_t));
+        }
+
+        readMemory( event->getCallStackAddr()+16, m_buffer );
+
+        m_state = ReadChildTidAddr;
+    } else {
+        m_newThread->setTidAddress( event->getchildTidAddr());
+
+        m_state = ReadThreadStack;
+        // this has to be the size of function pointer and stack pointer
+        if ( event->getOSBitType() == VanadisOSBitType::VANADIS_OS_32B ) {
+            m_buffer.resize( 2 * sizeof(uint32_t));
+        } else {
+            m_buffer.resize( 2 * sizeof(uint64_t));
+        }
+        readMemory( event->getThreadStackAddr(), m_buffer );
+    }
+}
+
+// we have the instPtr and registers from the parent core/hwThread,
+void VanadisCloneSyscall::complete( VanadisGetThreadStateResp* resp )
+{
+    m_output->verbose(CALL_INFO, 16, 0, "[syscall-fork] got thread state response\n");
+
+    VanadisStartThreadCloneReq* req =  new VanadisStartThreadCloneReq( m_threadID->hwThread, 
+                                    m_threadStartAddr,
+                                    getEvent<VanadisSyscallCloneEvent*>()->getThreadStackAddr(),
+                                    getEvent<VanadisSyscallCloneEvent*>()->getTlsAddr(),
+                                    m_threadArgAddr );
+
+    req->setIntRegs( resp->intRegs );
+    req->setFpRegs( resp->fpRegs );
+
+     m_output->verbose(CALL_INFO, 16, 0, "[syscall-fork] core=%d thread=%d tid=%d instPtr=%lx\n",
+                 m_threadID->core, m_threadID->hwThread, m_newThread->gettid(), resp->getInstPtr() );
+#if 0
+    for ( int i = 0; i < req->getIntRegs().size(); i++ ) {
+        printf("int r%d %" PRIx64 "\n",i,req->getIntRegs()[i]);
+    }
+    printf("%s() %lx\n", __func__,m_newThread->getTidAddress());
+#endif
+
+    m_os->core_links.at(m_threadID->core)->send( req );
+    m_os->m_coreInfoMap[ m_event->getCoreID()].clearSyscall( m_event->getThreadID() );
+    setReturnSuccess( m_newThread->gettid() );
+    delete resp;
 }
 
 void VanadisCloneSyscall::memReqIsDone() {
@@ -69,7 +119,11 @@ void VanadisCloneSyscall::memReqIsDone() {
 
             // the entry point for the thread is a fucntion, "int (*fn)(void * arg)", the address of which is passed to to the syscall located
             // in the thread stack, the arg is also located in the thread stack, we need to read it 
-            m_buffer.resize( 2 * sizeof(uint32_t));
+            if ( getEvent<VanadisSyscallCloneEvent*>()->getOSBitType() == VanadisOSBitType::VANADIS_OS_32B ) {
+                m_buffer.resize( 2 * sizeof(uint32_t) );
+            } else {    
+                assert(0);
+            }
             readMemory( getEvent<VanadisSyscallCloneEvent*>()->getThreadStackAddr(), m_buffer );
 
             m_state = ReadThreadStack;
@@ -77,13 +131,25 @@ void VanadisCloneSyscall::memReqIsDone() {
 
       case ReadThreadStack:
         {
-            m_threadStartAddr = *(uint32_t*)m_buffer.data();
-            m_threadArgAddr = *((uint32_t*)m_buffer.data() + 1);
+            // this has to be the size of function pointer and stack pointer
+            if ( getEvent<VanadisSyscallCloneEvent*>()->getOSBitType() == VanadisOSBitType::VANADIS_OS_32B ) {
+                m_threadStartAddr = *(uint32_t*)m_buffer.data();
+                m_threadArgAddr = *((uint32_t*)m_buffer.data() + 1);
+            } else {
+                m_threadStartAddr = *(uint64_t*)m_buffer.data();
+                m_threadArgAddr = *((uint64_t*)m_buffer.data() + 1);
+            } 
 
-            //printf("%s() threadStartAddr=%#" PRIx64 " threadArgAddr=%#" PRIx64 "\n",__func__,m_threadStartAddr,m_threadArgAddr);
+             m_output->verbose(CALL_INFO, 16, 0, "[syscall-fork] threadStartAddr=%#" PRIx64 " threadArgAddr=%#" PRIx64 "\n", m_threadStartAddr,m_threadArgAddr);
 
-            m_buffer.resize(sizeof(uint32_t));
-            *((uint32_t*)m_buffer.data()) = m_newThread->gettid(); 
+            // this has to be size of pid_t
+            if ( getEvent<VanadisSyscallCloneEvent*>()->getOSBitType() == VanadisOSBitType::VANADIS_OS_32B ) {
+                m_buffer.resize(sizeof(uint32_t));
+                *((uint32_t*)m_buffer.data()) = m_newThread->gettid(); 
+            } else {
+                m_buffer.resize(sizeof(uint32_t));
+                *((uint32_t*)m_buffer.data()) = m_newThread->gettid(); 
+            }
             writeMemory( getEvent<VanadisSyscallCloneEvent*>()->getParentTidAddr(), m_buffer );
 
             m_state = WriteChildTid;
@@ -98,14 +164,9 @@ void VanadisCloneSyscall::memReqIsDone() {
             printf("%s() %" PRIx64 "\n",__func__,getEvent<VanadisSyscallCloneEvent*>()->getTlsAddr() );
 #endif
 
-            m_os->core_links.at(m_threadID->core)->send( 
-                new VanadisStartThreadReq(  m_threadID->hwThread, 
-                                            getEvent<VanadisSyscallCloneEvent*>()->getThreadStackAddr(),
-                                            m_threadStartAddr,
-                                            m_threadArgAddr,
-                                            getEvent<VanadisSyscallCloneEvent*>()->getTlsAddr() ) 
-            );
-            setReturnSuccess( m_newThread->gettid() );
+            // save this syscall so when we get the response we know what to do with it
+            m_os->m_coreInfoMap[ m_event->getCoreID()].setSyscall( m_event->getThreadID(), this );
+            m_respLink->send( new VanadisGetThreadStateReq( m_event->getThreadID() ) );
         } break;
     }
 }

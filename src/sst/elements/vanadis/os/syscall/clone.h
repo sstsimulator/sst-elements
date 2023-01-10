@@ -30,6 +30,7 @@ public:
     ~VanadisCloneSyscall() {
         delete m_threadID;
     }
+    void complete( VanadisGetThreadStateResp* resp );
 
  private:  
 
