@@ -28,7 +28,10 @@ VanadisForkSyscall::VanadisForkSyscall( Output* output, Link* link, OS::ProcessI
 
     // get a new hwThread to run the new process on
     m_threadID = m_os->allocHwThread();
-    assert( m_threadID );
+
+    if ( 0 == m_threadID ) {
+        output->fatal(CALL_INFO, -1, "Error: fork, out of hardware threads for new process\n");
+    }
 
     assert( m_os->m_mmu );
 
@@ -65,7 +68,12 @@ void VanadisForkSyscall::complete( VanadisGetThreadStateResp* resp )
 {
     m_output->verbose(CALL_INFO, 16, 0, "[syscall-fork] got thread state response\n");
 
+    VanadisStartThreadForkReq* req = new VanadisStartThreadForkReq( m_threadID->hwThread, resp->getInstPtr(), resp->getTlsPtr() );
+    req->setIntRegs( resp->intRegs );
+    req->setFpRegs( resp->fpRegs );
+
 #if 0 
+    printf("%s() %#lx\n", __func__,resp->getInstPtr() );
     printf("thread=%d instPtr=%lx\n",resp->getThread(), resp->getInstPtr() );
     for ( int i = 0; i < resp->intRegs.size(); i++ ) {
         printf("int r%d %" PRIx64 "\n",i,resp->intRegs[i]);
@@ -75,21 +83,6 @@ void VanadisForkSyscall::complete( VanadisGetThreadStateResp* resp )
     }
 #endif
 
-//***********
-// NOTE, fixme, we are adding 4 to the instruction pointer, at the very least this need to be fixed for portability between ARCH
-//***********
-
-    VanadisStartThreadFullReq* req = new VanadisStartThreadFullReq( m_threadID->core, m_threadID->hwThread, resp->getInstPtr() + 4, resp->getTlsPtr() );
-    req->intRegs = resp->intRegs;
-    req->fpRegs = resp->fpRegs;
-
-//***********
-// NOTE, fixme for different ISA
-//***********
-    // set the return from fork() for the child to 0
-    req->intRegs.at( 2 ) = 0;  
-    req->intRegs.at( 7 ) = 0; // signal success
-    
     m_os->startProcess( m_threadID->core, m_threadID->hwThread, m_child->getpid(), req ); 
 
     setReturnSuccess(m_child->getpid());
