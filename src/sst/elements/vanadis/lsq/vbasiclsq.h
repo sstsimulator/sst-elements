@@ -298,7 +298,7 @@ protected:
                 for ( std::vector<uint8_t>::iterator it = ev->data.begin(); it != ev->data.end(); it++ ) {
                     str << std::setw(2) << static_cast<unsigned>(*it);
                 }
-                out->verbose(CALL_INFO, 8, VANADIS_DBG_LSQ_LOAD_FLG, "---> LSQ recv load event ins: 0x%llx / hw-thr: %" PRIu32 " / entry-addr: 0x%llx / entry-width: %" PRIu16 " / reg-offset: %" PRIu64 " / ev-addr: 0x%llx / ev-width: %" PRIu16 " / addr-offset %" PRIu64 " / sign-extend: %s / target-isa-reg: %" PRIu16 " / target-phys-reg: %" PRIu16 " / reg-type: %s / %s\n",
+                out->verbose(CALL_INFO, 0, VANADIS_DBG_LSQ_LOAD_FLG, "---> LSQ recv load event ins: 0x%llx / hw-thr: %" PRIu32 " / entry-addr: 0x%llx / entry-width: %" PRIu16 " / reg-offset: %" PRIu64 " / ev-addr: 0x%llx / ev-width: %" PRIu16 " / addr-offset %" PRIu64 " / sign-extend: %s / target-isa-reg: %" PRIu16 " / target-phys-reg: %" PRIu16 " / reg-type: %s / %s\n",
                     load_ins->getInstructionAddress(), hw_thr, load_address, load_width, reg_offset, ev->vAddr, ev->size, 
                     addr_offset, (load_ins->performSignExtension() ? "yes" : "no"),
                     target_isa_reg, target_reg,
@@ -413,7 +413,18 @@ protected:
 
             bool std_store_found = false;
 
-            assert( ! ev->getFail() );
+            if ( ev->getFail() ) {
+                VanadisBasicStorePendingEntry* store_entry = lsq->stores_pending.front();
+                if ( store_entry ) {
+                    store_entry->getStoreInstruction()->flagError();
+
+                    out->verbose(CALL_INFO, 0, 0, "Write failed, instAddr=%#lx pAddr=%#lx vAddr=%#lx\n",
+                            store_entry->getStoreInstruction()->getInstructionAddress(), ev->pAddr, ev->vAddr );
+                    return;
+                } else {
+                    out->fatal(CALL_INFO, -1, "Write failed, pAddr=%#lx vAddr=%#lx\n", ev->pAddr, ev->vAddr);
+                }
+            }
 
             for(auto std_store_itr = lsq->std_stores_in_flight.begin(); std_store_itr != lsq->std_stores_in_flight.end();
                 std_store_itr++) {
@@ -575,7 +586,6 @@ protected:
         std::vector<uint8_t> payload(store_width);
 
         const bool needs_split = operationStraddlesCacheLine(store_address, store_width);
-
         if(output->getVerboseLevel() >= 8) {
             std::vector<uint8_t> tmp(store_width);
             registerFiles->at(store_entry->getHWThread())->copyFromRegister(store_ins->getValueRegisterType() == STORE_FP_REGISTER ?
@@ -587,8 +597,8 @@ protected:
             for ( std::vector<uint8_t>::iterator it = tmp.begin(); it != tmp.end(); it++ ) {
                 str << std::setw(2) << static_cast<unsigned>(*it);
             }
-            output->verbose(CALL_INFO, 8, VANADIS_DBG_LSQ_STORE_FLG, "--> issue-store at ins: 0x%llx / store-addr: 0x%llx / width: %" PRIu64 " / partial: %s / split: %s / offset: %" PRIu32 " / %s\n",
-                store_ins->getInstructionAddress(), store_address, store_width, store_ins->isPartialStore() ? "yes" : "no", needs_split ? "yes" : "no",
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_LSQ_STORE_FLG, "--> thr %d, issue-store at ins: 0x%llx / store-addr: 0x%llx / width: %" PRIu64 " / partial: %s / split: %s / offset: %" PRIu32 " / %s\n",
+                store_ins->getHWThread(), store_ins->getInstructionAddress(), store_address, store_width, store_ins->isPartialStore() ? "yes" : "no", needs_split ? "yes" : "no",
                 store_ins->getRegisterOffset(), str.str().c_str());
         }
 
@@ -723,10 +733,13 @@ protected:
 
         VanadisBasicLoadPendingEntry* load_entry = new VanadisBasicLoadPendingEntry(load_ins, load_address, load_width);
 
+#if 0
+//with virtual memory we shouldn't need this but until we are sure we will leave it here
         if ( load_address + load_width < load_address || (load_address + load_width) & ~address_mask) {
             load_ins->markExecuted();
             return;
         }
+#endif
 
         switch (load_ins->getTransactionType()) {
             case MEM_TRANSACTION_NONE:
