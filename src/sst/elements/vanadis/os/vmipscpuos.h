@@ -119,13 +119,14 @@ public:
 
     virtual ~VanadisMIPSOSHandler() {}
 
-    virtual bool handleSysCall(VanadisSysCallInstruction* syscallIns) {
+    virtual std::tuple<bool,bool> handleSysCall(VanadisSysCallInstruction* syscallIns) {
         uint64_t instPtr = syscallIns->getInstructionAddress();
         const uint16_t call_link_reg = isaTable->getIntPhysReg(31);
         uint64_t call_link_value = regFile->getIntReg<uint64_t>(call_link_reg);
         output->verbose(CALL_INFO, 8, 0, "System Call (syscall-ins: 0x%0llx, link-reg: 0x%llx)\n",
                         syscallIns->getInstructionAddress(), call_link_value);
 
+        bool flushLSQ = false;
         const uint32_t hw_thr = syscallIns->getHWThread();
 
         // MIPS puts codes in GPR r2
@@ -153,8 +154,8 @@ public:
             const uint16_t phys_reg_sp = isaTable->getIntPhysReg(29);
             uint64_t stackPtr = regFile->getIntReg<uint64_t>(phys_reg_sp);
 
-            call_ev = new VanadisSyscallCloneEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, instPtr, threadStack, flags, ptid, tls, stackPtr );
-
+            assert( stackPtr );
+            call_ev = new VanadisSyscallCloneEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, instPtr, threadStack, flags, ptid, tls, 0, stackPtr );
         } break;
         case VANADIS_SYSCALL_MIPS_MPROTECT: {
             const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -178,21 +179,26 @@ public:
         } break;
 
         case VANADIS_SYSCALL_MIPS_FORK: {
+            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] fork()\n");
             call_ev = new VanadisSyscallForkEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B);
         } break;
 
         case VANADIS_SYSCALL_MIPS_GETPID: {
+            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] getpid()\n");
             call_ev = new VanadisSyscallGetxEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B,SYSCALL_OP_GETPID);
         } break;
 
         case VANADIS_SYSCALL_MIPS_GETPGID: {
+            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] getpgid()\n");
             call_ev = new VanadisSyscallGetxEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B,SYSCALL_OP_GETPGID);
         } break;
         case VANADIS_SYSCALL_MIPS_GETPPID: {
+            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] getppid()\n");
             call_ev = new VanadisSyscallGetxEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B,SYSCALL_OP_GETPPID);
         } break;
 
         case VANADIS_SYSCALL_MIPS_GETTID: {
+            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] gettid()\n");
             call_ev = new VanadisSyscallGetxEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B,SYSCALL_OP_GETTID);
         } break;
 
@@ -387,6 +393,7 @@ public:
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] exit_group( %" PRId64 " )\n", exit_code);
             call_ev = new VanadisSyscallExitEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, exit_code);
+            flushLSQ = true;
         } break;
 
         case VANADIS_SYSCALL_MIPS_EXIT_GROUP: {
@@ -395,6 +402,7 @@ public:
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] exit_group( %" PRId64 " )\n", exit_code);
             call_ev = new VanadisSyscallExitGroupEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, exit_code);
+            flushLSQ = true;
         } break;
 
         case VANADIS_SYSCALL_MIPS_WRITE: {
@@ -603,9 +611,9 @@ public:
         if (nullptr != call_ev) {
             output->verbose(CALL_INFO, 8, 0, "Sending event to operating system...\n");
             sendSyscallEvent(call_ev);
-            return false;
+            return std::make_tuple(false,flushLSQ);
         } else {
-            return true;
+            return std::make_tuple(true,flushLSQ);
         }
     }
 
