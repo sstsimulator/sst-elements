@@ -197,18 +197,18 @@ public:
     uint16_t countIntRegs() const { return count_int_regs; }
     uint16_t countFPRegs() const { return count_fp_regs; }
 
-    void print(SST::Output* output)
+    void print(SST::Output* output, int level = 8 )
     {
-        output->verbose(CALL_INFO, 8, 0, "Integer Registers:\n");
+        output->verbose(CALL_INFO, level, 0, "Integer Registers:\n");
 
         for ( uint16_t i = 0; i < count_int_regs; ++i ) {
-            printRegister(output, true, i);
+            printRegister(output, true, i, level);
         }
 
-        output->verbose(CALL_INFO, 8, 0, "Floating Point Registers:\n");
+        output->verbose(CALL_INFO, level, 0, "Floating Point Registers:\n");
 
         for ( uint16_t i = 0; i < count_fp_regs; ++i ) {
-            printRegister(output, false, i);
+            printRegister(output, false, i, level);
         }
     }
 
@@ -225,7 +225,7 @@ private:
         return fp_reg_storage + (fp_reg_width * reg);
     }
 
-    void printRegister(SST::Output* output, bool isInt, uint16_t reg)
+    void printRegister(SST::Output* output, bool isInt, uint16_t reg, int level = 8)
     {
         char* ptr = NULL;
 
@@ -248,7 +248,7 @@ private:
             val_string[index++] = (v & i) ? '1' : '0';
         }
 
-        output->verbose(CALL_INFO, 8, 0, "R[%5" PRIu16 "]: %s\n", reg, val_string);
+        output->verbose(CALL_INFO, level, 0, "R[%5" PRIu16 "]: %s\n", reg, val_string);
         delete[] val_string;
     }
 
