@@ -29,7 +29,8 @@ VanadisExitSyscall::VanadisExitSyscall( Output* output, Link* link, OS::ProcessI
 
     printf("pid=%d tid=%d has exited\n",process->getpid(), process->gettid());
     uint64_t tid_addr = process->getTidAddress();
-    if ( tid_addr ) {;
+    if ( tid_addr ) {
+        // this has to be the size of pid_t
         m_buffer.resize(sizeof(uint32_t));
         *((uint32_t*)m_buffer.data()) = 0;
         writeMemory( tid_addr, m_buffer );
@@ -43,7 +44,5 @@ void VanadisExitSyscall::memReqIsDone() {
 
     delete m_process; 
 
-    // the hw thread that sent this event is currently halted, no need to response
-    // if we start this hw thread again we need to initialize all hw thread state 
-    setNoResp();
+    setReturnExited();
 }
