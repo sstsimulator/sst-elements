@@ -1,6 +1,9 @@
 import os
 import sst
 
+dbgAddr=0
+stopDbg=0
+
 vanadis_isa = os.getenv("VANADIS_ISA", "MIPS")
 isa="mipsel"
 vanadis_isa = os.getenv("VANADIS_ISA", "RISCV64")
@@ -8,12 +11,12 @@ isa="riscv64"
 
 testDir="basic-io"
 exe = "hello-world"
-#exe = "hello-world-cpp" fail
-#exe = "openat" fail
+#exe = "hello-world-cpp"
+#exe = "openat" # fail riscv
 #exe = "printf-check"
-#exe = "read-write" fail
-#exe = "unlink" fail
-#exe = "unlinkat" fail
+#exe = "read-write" #fail riscv
+#exe = "unlink" # fail riscv
+#exe = "unlinkat" # fail riscv
 
 #testDir = "basic-math"
 #exe = "sqrt-double"
@@ -23,11 +26,14 @@ exe = "hello-world"
 #exe = "test-branch"
 #exet = "test-shfit"
 
-testDir = "misc"
-#exe = "mt-dgemm" fail
-#exe = "stream" fail
-exe = "gettime"
+#testDir = "misc"
+#exe = "mt-dgemm"
+#exe = "stream"
+#exe = "gettime" 
 #exe = "splitLoad"
+#exe = "fork"
+#exe = "clone"
+#exe = "pthread"
 
 physMemSize = "4GiB"
 
@@ -91,7 +97,7 @@ else:
 vanadis_decoder = "vanadis.Vanadis" + vanadis_isa + "Decoder"
 vanadis_os_hdlr = "vanadis.Vanadis" + vanadis_isa + "OSHandler"
 
-numCpus=1
+numCpus=2
 numThreads=1
 
 protocol="MESI"
@@ -184,8 +190,8 @@ memParams = {
 
 # CPU related params
 tlbParams = {
-    "hitLatency": 10,
     "debug_level": 0,
+    "hitLatency": 10,
     "num_hardware_threads": numThreads,
     "num_tlb_entries_per_thread": 64,
     "tlb_set_size": 4,
@@ -226,7 +232,10 @@ cpuParams = {
     "issues_per_cycle" :  issues_per_cycle,
     "retires_per_cycle" : retires_per_cycle,
     "auto_clock_syscall" : auto_clock_sys,
-    "pause_when_retire_address" : os.getenv("VANADIS_HALT_AT_ADDRESS", 0)
+    "pause_when_retire_address" : os.getenv("VANADIS_HALT_AT_ADDRESS", 0),
+    "start_verbose_when_issue_address": dbgAddr,
+    "stop_verbose_when_retire_address": stopDbg,
+    "print_rob" : False,
 }
 
 lsqParams = {
