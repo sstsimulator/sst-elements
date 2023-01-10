@@ -25,7 +25,7 @@ namespace Vanadis {
 namespace OS {
 
 #if 0
-#define FreeListDbg( format, ... ) printf( "FreeList::%s() " format, __func__, ##__VA_ARGS__ )
+#define FreeListDbg( format, ... ) printf( "FreeList::%s():%d " format, __func__,__LINE__, ##__VA_ARGS__ )
 #else
 #define FreeListDbg( ... )
 #endif
@@ -55,7 +55,7 @@ struct FreeList {
     }
 
     bool alloc( uint64_t addr, size_t len ) {
-        FreeListDbg("[%#" PRIx64 "-%#" PRIx64 "]\n",addr,addr+len);
+        FreeListDbg("[%#" PRIx64 "-%#" PRIx64 " len=%zu]\n",addr,addr+len, len);
         int ret = false;
         for ( const auto kv: m_freeList) {
             auto entry = kv.second;
@@ -111,7 +111,9 @@ struct FreeList {
                     delete entry;
                     m_freeList.erase(kv.first);
                 } else {
+                    m_freeList.erase( kv.first );
                     entry->start = entry->start+wantLen; 
+                    m_freeList[entry->start] = entry;
                 }
                 break;
             }
@@ -122,25 +124,12 @@ struct FreeList {
     }
     void free( uint64_t addr, size_t length ) {
         FreeListDbg("[%#" PRIx64 "-%#" PRIx64 "]\n",addr,addr+length);
-        for ( const auto kv: m_freeList) {
-            auto entry = kv.second;
-            FreeListDbg("checking freeEntry [%#" PRIx64 "-%#" PRIx64 "]\n",entry->start, entry->end);
-            if ( addr == entry->end ) {
-                FreeListDbg("merge tail\n");
-                entry->end = addr + length;
-                merge();
-                break;
-            } else if ( addr + length == entry->start ) {
-                FreeListDbg("merge head\n");
-                entry->start = addr;
-                merge();
-                break;
-            } else {
-                FreeListDbg("new\n");
-                m_freeList[addr] = new FreeEntry( addr, addr + length );
-                break;
-            }
-        }
+
+        print();
+
+        m_freeList[addr] = new FreeEntry( addr, addr + length );
+        merge();
+
         print();
     }
 
@@ -175,7 +164,7 @@ struct FreeList {
             if ( next != m_freeList.end() ) {
                 auto nextEntry = next->second;
                 if ( entry->end == nextEntry->start ) {
-                    FreeListDbg("merge [%#" PRIx64 "-%#" PRIx64 "] [%#" PRIx64 "-%#" PRIx64 "]",
+                    FreeListDbg("merge [%#" PRIx64 "-%#" PRIx64 "] [%#" PRIx64 "-%#" PRIx64 "]\n",
                             entry->start, entry->end, nextEntry->start, nextEntry->end);
                     
                     // merge free list blocks
@@ -188,7 +177,7 @@ struct FreeList {
                     if ( next != m_freeList.end() ) {
                         auto nextEntry = next->second;
                         if ( entry->end == nextEntry->start ) {
-                            FreeListDbg("merge [%#" PRIx64 "-%#" PRIx64 "] [%#" PRIx64 "-%#" PRIx64 "]",
+                            FreeListDbg("merge [%#" PRIx64 "-%#" PRIx64 "] [%#" PRIx64 "-%#" PRIx64 "]\n",
                             entry->start, entry->end, nextEntry->start, nextEntry->end);
 
                             // merge free list block
