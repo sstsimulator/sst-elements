@@ -21,6 +21,7 @@
 #include <sst/core/subcomponent.h>
 
 #include <functional>
+#include <tuple>
 
 #include "inst/isatable.h"
 #include "inst/regfile.h"
@@ -60,7 +61,7 @@ public:
     void setRegisterFile(VanadisRegisterFile* newFile) { regFile = newFile; }
     void setISATable(VanadisISATable* newTable) { isaTable = newTable; }
 
-    virtual bool handleSysCall(VanadisSysCallInstruction* syscallIns) = 0;
+    virtual std::tuple<bool,bool> handleSysCall(VanadisSysCallInstruction* syscallIns) = 0;
     virtual void recvSyscallResp( VanadisSyscallResponse* os_resp ) = 0;
 
     void setOS_link( SST::Link* link ) {
