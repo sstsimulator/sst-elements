@@ -306,6 +306,40 @@ public:
         regFile->setIntReg(sp_phys_reg, start_stack_address);
     }
 
+    void setArg1Register( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+        output->verbose(
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting argument 1 register to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            value);
+        const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(4);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> argument 1 (r4) maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        regFile->setIntReg(sp_phys_reg, value);
+    }
+
+    virtual void setFuncPointer( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+        output->verbose(
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting register 25 to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            value);
+        const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(25);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> r25 maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        regFile->setIntReg(sp_phys_reg, value);
+    }
+    virtual void setReturnRegister( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+        output->verbose(
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting register 2 to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            value);
+        const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(2);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> r2 maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        regFile->setIntReg(sp_phys_reg, value);
+    }
+
+    virtual void setSuccessRegister( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+        output->verbose(
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting register 7 to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            value);
+        const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(7);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> r7 maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        regFile->setIntReg(sp_phys_reg, value);
+    }
 
     void initStatistics( ) {
         stat_decode_add       = registerStatistic<uint64_t>("ins_decode_add", "1");
