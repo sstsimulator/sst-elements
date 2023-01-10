@@ -56,8 +56,9 @@ using namespace SST::Vanadis;
 VanadisFutexSyscall::VanadisFutexSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallFutexEvent* event, VanadisNodeOSComponent* os )
         : VanadisSyscall( output, link, process, func, event, "futex" ), m_state(ReadAddr), m_numWokeup(0)
 {
-    m_output->verbose(CALL_INFO, 16, 0, "[syscall-futex] addr=%#" PRIx64 " op=%#x val=%#" PRIx32 " timeAddr=%#" PRIx64 " callStackAddr=%#" PRIx64 "\n", 
-            event->getAddr(), event->getOp(), event->getVal(), event->getTimeAddr(), event->getStackPtr() );
+    m_output->verbose(CALL_INFO, 16, 0, "[syscall-futex] addr=%#" PRIx64 " op=%#x val=%#" PRIx32 " timeAddr=%#" PRIx64 " callStackAddr=%#" PRIx64 
+            " val2=%d, addr2=%#" PRIx64 " val2=%d\n", 
+            event->getAddr(), event->getOp(), event->getVal(), event->getTimeAddr(), event->getStackPtr(), event->getVal2(), event->getAddr2(), event->getVal3() );
 
     m_op = event->getOp();
     if( m_op & ~0xff ) assert(0);
@@ -69,28 +70,28 @@ VanadisFutexSyscall::VanadisFutexSyscall( Output* output, Link* link, OS::Proces
     switch ( m_op ) {
       case FUTEX_WAKE:
         {
-            printf("%s() FUTEX_WAKE tid=%d addr=%#" PRIx64 "\n",__func__, process->gettid(), event->getAddr());
+            m_output->verbose(CALL_INFO, 16, 0, "[syscall-futex]  FUTEX_WAKE tid=%d addr=%#" PRIx64 "\n", process->gettid(), event->getAddr());
             VanadisSyscall* syscall = m_process->findFutex( event->getAddr() );
             if ( syscall ) {
-                printf("%s() FUTEX_WAKE tid=%d addr=%#" PRIx64 " found waiter\n",__func__, process->gettid(), event->getAddr());
+                m_output->verbose(CALL_INFO, 16, 0, "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 " found waiter\n",process->gettid(), event->getAddr());
                 dynamic_cast<VanadisFutexSyscall*>( syscall )->wakeup();
                 delete syscall;
                 setReturnSuccess(1);
             } else {
-                printf("%s() FUTEX_WAKE tid=%d addr=%#" PRIx64 " no waiter\n",__func__, process->gettid(), event->getAddr());
+                m_output->verbose(CALL_INFO, 16, 0, "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 " no waiter\n", process->gettid(), event->getAddr());
                 setReturnSuccess(0);
             }
         } break;
 
       case FUTEX_WAIT:
         {
-            printf("%s() FUTEX_WAIT tid=%d addr=%#" PRIx64 "\n",__func__, process->gettid(), event->getAddr());
+            m_output->verbose(CALL_INFO, 16, 0, "[syscall-futex] FUTEX_WAIT tid=%d addr=%#" PRIx64 "\n", process->gettid(), event->getAddr());
             m_buffer.resize(sizeof(uint32_t));
             readMemory( event->getAddr(), m_buffer );
         } break;
       case FUTEX_REQUEUE:
         {
-            printf("%s() FUTEX_REQUEUE tid=%d addr=%#" PRIx64 "\n",__func__, process->gettid(), event->getAddr());
+            m_output->verbose(CALL_INFO, 16, 0, "[syscall-futex] FUTEX_REQUEUE tid=%d addr=%#" PRIx64 "\n", process->gettid(), event->getAddr());
             m_buffer.resize(sizeof(uint32_t));
             readMemory( event->getAddr(), m_buffer );
         } break;
@@ -121,29 +122,26 @@ VanadisFutexSyscall::VanadisFutexSyscall( Output* output, Link* link, OS::Proces
 
 void VanadisFutexSyscall::wakeup() 
 {
-    //printf("%s() FUTEX_WAIT wakeup \n",__func__);
+    m_output->verbose(CALL_INFO, 16, 0, "[syscall-futex] FUTEX_WAIT wakeup \n");
     setReturnSuccess(0);
 }
 
 void VanadisFutexSyscall::memReqIsDone() 
 {
-    
     switch( m_op ) {
       case FUTEX_WAIT: 
         {
             uint32_t val = *(uint32_t*)m_buffer.data();
-            printf("%s() read %#" PRIx32 "\n",__func__,val);
 
-            //printf("%s() FUTEX_WAIT addr=%#" PRIx64 "\n",__func__, getEvent<VanadisSyscallFutexEvent*>()->getAddr());
             if ( val == getEvent<VanadisSyscallFutexEvent*>()->getVal() ) {
-                m_output->verbose(CALL_INFO,16,0,"%s() FUTEX_WAIT vals match go to sleep\n",__func__);
-                printf("%s() FUTEX_WAIT tid=%d addr=%#" PRIx64 " vals match go to sleep\n",__func__, m_process->gettid(), getEvent<VanadisSyscallFutexEvent*>()->getAddr());
+                m_output->verbose(CALL_INFO, 16, 0, "[syscall-futex] FUTEX_WAIT tid=%d addr=%#" PRIx64 " vals match go to sleep\n",
+                        m_process->gettid(), getEvent<VanadisSyscallFutexEvent*>()->getAddr());
 
                 m_process->addFutexWait( getEvent<VanadisSyscallFutexEvent*>()->getAddr(), this );
 
             } else { 
-                m_output->verbose(CALL_INFO,0,0,"%s() FUTEX_WAIT vals don't %d != %d match return fail\n",__func__, val, getEvent<VanadisSyscallFutexEvent*>()->getVal() );
-                printf("%s() FUTEX_WAIT tid=%d addr=%#" PRIx64 " vals dont match return\n",__func__, m_process->gettid(), getEvent<VanadisSyscallFutexEvent*>()->getAddr());
+                m_output->verbose(CALL_INFO, 16, 0, "[syscall-futex] FUTEX_WAIT tid=%d addr=%#" PRIx64 " vals dont match return\n",
+                         m_process->gettid(), getEvent<VanadisSyscallFutexEvent*>()->getAddr());
                 setReturnFail(-EINVAL);
             }
         } break;
@@ -151,53 +149,63 @@ void VanadisFutexSyscall::memReqIsDone()
         {
             if ( ReadAddr == m_state ) { 
                 uint32_t val = *(uint32_t*)m_buffer.data();
-                printf("%s() FUTEX_REQUEUE wakeup %d waiter\n",__func__,val);
+                m_output->verbose(CALL_INFO, 16, 0, "[syscall-futex] FUTEX_REQUEUE wakeup %d waiter\n",val);
 
                 int numWaiters = m_process->futexGetNumWaiters( getEvent<VanadisSyscallFutexEvent*>()->getAddr() );
-                printf("%s() FUTEX_REQUEUE numWaiters %d\n",__func__,numWaiters);
+                m_output->verbose(CALL_INFO, 16, 0, "[syscall-futex] FUTEX_REQUEUE numWaiters %d\n",numWaiters);
 
                 // wakeup at most val number of waiters
                 for ( int i = 0; i < val && i < numWaiters; i++ ) { 
                     VanadisSyscall* syscall = m_process->findFutex( getEvent<VanadisSyscallFutexEvent*>()->getAddr() );
                     if ( syscall ) {
                         ++m_numWokeup;
-                        printf("%s() FUTEX_REQUEUE tid=%d addr=%#" PRIx64 " wakeup\n",__func__, m_process->gettid(), getEvent<VanadisSyscallFutexEvent*>()->getAddr());
+                        m_output->verbose(CALL_INFO, 16, 0, "[syscall-futex] FUTEX_REQUEUE tid=%d addr=%#" PRIx64 " wakeup\n",
+                                    m_process->gettid(), getEvent<VanadisSyscallFutexEvent*>()->getAddr());
                         dynamic_cast<VanadisFutexSyscall*>( syscall )->wakeup();
                         delete syscall;
                     }
                 }
-                printf("%s() FUTEX_REQUEUE numWokeup %d\n",__func__,m_numWokeup);
+                m_output->verbose(CALL_INFO, 16, 0, "[syscall-futex] FUTEX_REQUEUE numWokeup %d\n",m_numWokeup);
                 
                 // if there are no more waiters, we are done
                 // else read val2 and addr2 so we can move val2 waiters to addr2
                 if ( 0 == numWaiters - m_numWokeup ) {
                     setReturnSuccess( m_numWokeup );
                 } else {
-                    // read val2 and uaddr2
-                    m_buffer.resize(sizeof(uint32_t)*2);
-                    readMemory( getEvent<VanadisSyscallFutexEvent*>()->getStackPtr(), m_buffer );
-                    m_state = ReadArgs;
-                }
-
-            } else {
-                uint32_t val2 = ((uint32_t*)m_buffer.data())[0];
-                uint64_t addr2 = ((uint32_t*)m_buffer.data())[1];
-                printf("%s() FUTEX_REQUEUE read val2=%d addr2=%#" PRIx64 "\n",__func__,val2,addr2);
-
-                int numWaiters = m_process->futexGetNumWaiters( getEvent<VanadisSyscallFutexEvent*>()->getAddr() );
-                printf("%s() FUTEX_REQUEUE numWaiters %d\n",__func__,numWaiters);
-
-                for ( int i = 0; i < val2 && i < numWaiters; i++ ) { 
-                    VanadisSyscall* syscall = m_process->findFutex( getEvent<VanadisSyscallFutexEvent*>()->getAddr() );
-                    if ( syscall ) {
-                        printf("%s() FUTEX_REQUEUE tid=%d addr=%#" PRIx64 " move to %#" PRIx64 "\n",__func__, m_process->gettid(),
-                                getEvent<VanadisSyscallFutexEvent*>()->getAddr(),addr2);
-                        m_process->addFutexWait( addr2, syscall );
+                    if ( getEvent<VanadisSyscallFutexEvent*>()->getStackPtr() ) {
+                        // read val2 and uaddr2
+                        m_buffer.resize(sizeof(uint32_t)*2);
+                        readMemory( getEvent<VanadisSyscallFutexEvent*>()->getStackPtr(), m_buffer );
+                        m_state = ReadArgs;
+                    } else {
+                        finish( getEvent<VanadisSyscallFutexEvent*>()->getVal2(), getEvent<VanadisSyscallFutexEvent*>()->getAddr2() );
                     }
                 }
 
-                setReturnSuccess( m_numWokeup );
+            } else if ( ReadArgs == m_state ) {
+                finish( ((uint32_t*)m_buffer.data())[0], ((uint32_t*)m_buffer.data())[1] );
+
+            } else {
+                assert(0);
             }
         } break;
     }
+}
+
+void VanadisFutexSyscall::finish( uint32_t val2, uint64_t addr2 ) 
+{
+    m_output->verbose(CALL_INFO, 16, 0, "[syscall-futex] FUTEX_REQUEUE read val2=%d addr2=%#" PRIx64 "\n",val2,addr2);
+
+    int numWaiters = m_process->futexGetNumWaiters( getEvent<VanadisSyscallFutexEvent*>()->getAddr() );
+    m_output->verbose(CALL_INFO, 16, 0, "[syscall-futex] FUTEX_REQUEUE numWaiters %d\n",numWaiters);
+
+    for ( int i = 0; i < val2 && i < numWaiters; i++ ) { 
+        VanadisSyscall* syscall = m_process->findFutex( getEvent<VanadisSyscallFutexEvent*>()->getAddr() );
+        if ( syscall ) {
+            m_output->verbose(CALL_INFO, 16, 0, "[syscall-futex] FUTEX_REQUEUE tid=%d addr=%#" PRIx64 " move to %#" PRIx64 "\n",m_process->gettid(),
+                getEvent<VanadisSyscallFutexEvent*>()->getAddr(),addr2); m_process->addFutexWait( addr2, syscall );
+        }
+    }
+
+    setReturnSuccess( m_numWokeup );
 }

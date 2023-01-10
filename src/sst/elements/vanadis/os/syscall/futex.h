@@ -34,6 +34,8 @@ public:
     enum State { ReadAddr, ReadArgs } m_state;
     void memReqIsDone();
     void wakeup();
+    void finish( uint32_t val2, uint64_t addr2 );
+
     int m_op;
     std::vector<uint8_t> m_buffer;
     int m_numWokeup;
