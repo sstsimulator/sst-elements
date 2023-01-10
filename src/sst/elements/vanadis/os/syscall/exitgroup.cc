@@ -56,7 +56,5 @@ VanadisExitGroupSyscall::VanadisExitGroupSyscall( Output* output, Link* link, OS
     os->removeThread( event->getCoreID(),event->getThreadID(), process->gettid() );
     delete process;
 
-    // the hw thread that sent this event is currently halted, no need to response
-    // if we start this hw thread again we need to initialize all hw thread state 
-    setNoResp();
+    setReturnExited();
 }
