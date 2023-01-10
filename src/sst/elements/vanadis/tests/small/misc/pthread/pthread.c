@@ -12,6 +12,7 @@ pid_t gettid() {
     return syscall(SYS_gettid);
 }
 
+#if 0
 static inline unsigned __get_tp()
 {
 #if __mips_isa_rev < 2
@@ -24,6 +25,11 @@ static inline unsigned __get_tp()
         return tp;
     return 0;
 }
+#else
+static inline unsigned __get_tp() {
+    return 0;
+}
+#endif
 
 
 static void* thread_start( void* arg ) {
