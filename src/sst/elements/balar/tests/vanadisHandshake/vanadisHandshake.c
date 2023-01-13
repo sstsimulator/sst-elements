@@ -26,7 +26,7 @@ int main( int argc, char* argv[] ) {
     __cudaRegisterFunction(fatbin_handle, VEC_ADD_FUNC, "_Z6vecAddPiS_S_i");
 
     // Preparing the data
-    int n = 100;
+    int n = 10000;
     int interval = n / 5;   // Print 5 times
     int * d_a = 0;
     int * d_b = 0;
@@ -103,6 +103,8 @@ int main( int argc, char* argv[] ) {
             fflush(stdout);
         }
     }
+
+    // TODO: Weili: Add CPU validation against GPU results here?
     
     return 0;
 }

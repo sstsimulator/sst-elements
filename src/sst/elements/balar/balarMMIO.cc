@@ -512,7 +512,7 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* res
                         blockDim.x = packet->configure_call.bdx;
                         blockDim.y = packet->configure_call.bdy;
                         blockDim.z = packet->configure_call.bdz;
-                        mmio->cuda_ret.cuda_error = cudaConfigureCallSST(
+                        mmio->cuda_ret.cuda_error = cudaConfigureCall(
                             gridDim, 
                             blockDim, 
                             packet->configure_call.sharedMem, 
