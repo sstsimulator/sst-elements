@@ -564,7 +564,7 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
                 bdy = std::stoul(params_map.find(std::string("bdy"))->second);
                 bdz = std::stoul(params_map.find(std::string("bdz"))->second);
                 sharedMem = std::stoul(params_map.find(std::string("sharedBytes"))->second);
-                cudaStream_t stream = nullptr;
+                cudaStream_t stream = NULL;
                 std::string arguments = trim(params_map.find(std::string("args"))->second);
 
 
