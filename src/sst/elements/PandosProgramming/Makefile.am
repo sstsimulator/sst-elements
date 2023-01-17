@@ -12,7 +12,9 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libPandosProgramming.la
 
 # add sources for this element library here
-libPandosProgramming_la_SOURCES =
+libPandosProgramming_la_SOURCES = \
+	PandosNode.h \
+	PandosNode.cc
 
 # deprecated sources... I guess?
 deprecated_libPandosProgramming_sources =
