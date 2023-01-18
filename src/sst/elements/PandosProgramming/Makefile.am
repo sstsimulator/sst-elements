@@ -24,7 +24,8 @@ libPandosProgramming_la_SOURCES += $(deprecated_libPandosProgramming_sources)
 endif
 
 # other stuff that should be included in the install
-EXTRA_DIST =
+EXTRA_DIST = \
+	tests/pandos-node.py
 
 deprecated_EXTRA_DIST =
 
