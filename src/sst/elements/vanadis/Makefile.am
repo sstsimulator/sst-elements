@@ -198,6 +198,7 @@ os/syscall/readlink.h \
 os/syscall/readv.h \
 os/syscall/settidaddress.h \
 os/syscall/syscall.h \
+os/syscall/syscall.cc \
 os/syscall/uname.h \
 os/syscall/unlinkat.h \
 os/syscall/unlink.h \
