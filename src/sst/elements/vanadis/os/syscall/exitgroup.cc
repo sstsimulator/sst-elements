@@ -52,7 +52,6 @@ VanadisExitGroupSyscall::VanadisExitGroupSyscall( VanadisNodeOSComponent* os, SS
 
     // clear the process from the core/hwThread it was running on
     os->removeThread( event->getCoreID(),event->getThreadID(), process->gettid() );
-    delete process;
 
     setReturnExited();
 }

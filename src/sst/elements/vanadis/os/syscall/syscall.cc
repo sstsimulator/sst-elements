@@ -42,7 +42,11 @@ VanadisSyscall::~VanadisSyscall() {
 
     m_coreLink->send( resp );
 
-    m_os->clearSyscall( getCoreId(), getThreadId());
+    m_os->clearSyscall( getCoreId(), getThreadId() );
+
+    if ( m_returnInfo.hasExited ) {
+        delete m_process;
+    }
 
     delete m_event;
 }

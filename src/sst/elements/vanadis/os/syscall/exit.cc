@@ -42,8 +42,6 @@ VanadisExitSyscall::VanadisExitSyscall( VanadisNodeOSComponent* os, SST::Link* c
 void VanadisExitSyscall::memReqIsDone() {
     m_os->removeThread( getEvent<VanadisSyscallExitEvent*>()->getCoreID(),getEvent<VanadisSyscallExitEvent*>()->getThreadID(), m_process->gettid() );
 
-    delete m_process; 
-
     m_output->verbose(CALL_INFO, 16, 0, "[syscall-exit] %s() called\n",__func__ );
     setReturnExited();
 }
