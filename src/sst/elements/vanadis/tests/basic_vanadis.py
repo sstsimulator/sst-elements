@@ -12,11 +12,11 @@ isa="riscv64"
 testDir="basic-io"
 exe = "hello-world"
 #exe = "hello-world-cpp"
-#exe = "openat" # fail riscv
+#exe = "openat"
 #exe = "printf-check"
-#exe = "read-write" #fail riscv
-#exe = "unlink" # fail riscv
-#exe = "unlinkat" # fail riscv
+#exe = "read-write"
+#exe = "unlink"
+#exe = "unlinkat"
 
 #testDir = "basic-math"
 #exe = "sqrt-double"
@@ -24,7 +24,7 @@ exe = "hello-world"
 
 #testDir = "basic-ops"
 #exe = "test-branch"
-#exet = "test-shfit"
+#exe = "test-shift"
 
 #testDir = "misc"
 #exe = "mt-dgemm"
@@ -97,7 +97,7 @@ else:
 vanadis_decoder = "vanadis.Vanadis" + vanadis_isa + "Decoder"
 vanadis_os_hdlr = "vanadis.Vanadis" + vanadis_isa + "OSHandler"
 
-numCpus=2
+numCpus=1
 numThreads=1
 
 protocol="MESI"
