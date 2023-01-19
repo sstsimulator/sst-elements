@@ -65,8 +65,8 @@ class IoVecTable {
 };
 
 public:
-    VanadisIoVecSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallIoVecEvent* event, std::string name  )
-        : VanadisSyscall( output, link, process, func, event, name ), m_ioVecTable(nullptr), m_currentVec(0), m_totalBytes(0), m_state(ReadIoVecTable)
+    VanadisIoVecSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallIoVecEvent* event, std::string name  )
+        : VanadisSyscall( os, coreLink, process, event, name ), m_ioVecTable(nullptr), m_currentVec(0), m_totalBytes(0), m_state(ReadIoVecTable)
     {
 
         m_output->verbose(CALL_INFO, 16, 0,

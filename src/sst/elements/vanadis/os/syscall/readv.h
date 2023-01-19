@@ -25,8 +25,8 @@ namespace Vanadis {
 
 class VanadisReadvSyscall : public VanadisIoVecSyscall {
 public:
-    VanadisReadvSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallReadvEvent* event )
-        : VanadisIoVecSyscall( output, link, process, func, event, "readv" ), m_eof( false )
+    VanadisReadvSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallReadvEvent* event)
+        : VanadisIoVecSyscall( os, coreLink, process, event, "readv" ), m_eof( false )
     { }
 
     void startIoVecTransfer() {

@@ -24,8 +24,8 @@ namespace Vanadis {
 
 class VanadisGetpgidSyscall : public VanadisSyscall {
 public:
-    VanadisGetpgidSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallGetxEvent* event )
-        : VanadisSyscall( output, link, process, func, event, "getpgid" ) 
+    VanadisGetpgidSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallGetxEvent* event )
+        : VanadisSyscall( os, coreLink, process, event, "getpgid" ) 
     {
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-getpgid]\n");
         setReturnSuccess(process->getpgid());

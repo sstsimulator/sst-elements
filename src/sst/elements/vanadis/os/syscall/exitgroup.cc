@@ -22,9 +22,8 @@
 
 using namespace SST::Vanadis;
 
-VanadisExitGroupSyscall::VanadisExitGroupSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func,
-                                            VanadisSyscallExitGroupEvent* event, VanadisNodeOSComponent* os )
-    : VanadisSyscall( output, link, process, func, event, "exitgroup" )
+VanadisExitGroupSyscall::VanadisExitGroupSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallExitGroupEvent* event )
+    : VanadisSyscall( os, coreLink, process, event, "exitgroup" )
 {
     m_output->verbose(CALL_INFO, 16, 0, "[syscall-exitgroup] core=%d thread=%d tid=%d pid=%d exit_code=%" PRIu64 "\n",
             event->getCoreID(), event->getThreadID(), process->gettid(), process->getpid(), event->getExitCode() );
@@ -38,10 +37,9 @@ VanadisExitGroupSyscall::VanadisExitGroupSyscall( Output* output, Link* link, OS
 
         unsigned core = tmp->getCore();
         unsigned hwThread = tmp->getHwThread();
-        //printf("%s() core=%d hwThread=%d tid=%d  pid=%d\n",__func__,core,hwThread,tmp->gettid(),tmp->getpid());
 
         // test the hwthread to halt execution
-        link->send( new VanadisExitResponse( -1, hwThread ) ); 
+        coreLink->send( new VanadisExitResponse( -1, hwThread ) ); 
 
         // remove the process/thread from the map
         os->removeThread( core, hwThread, tmp->gettid() );

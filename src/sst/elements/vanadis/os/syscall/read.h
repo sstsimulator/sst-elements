@@ -24,8 +24,8 @@ namespace Vanadis {
 
 class VanadisReadSyscall : public VanadisSyscall {
 public:
-    VanadisReadSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallReadEvent* event )
-        : VanadisSyscall( output, link, process, func, event, "read" ), m_numRead(0), m_eof(false)
+    VanadisReadSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallReadEvent* event  )
+        : VanadisSyscall( os, coreLink, process, event, "read" ), m_numRead(0), m_eof(false)
     {
         m_output->verbose(CALL_INFO, 16, 0, "-> call is read( %" PRId64 ", 0x%0llx, %" PRId64 " )\n",
                             event->getFileDescriptor(), event->getBufferAddress(), event->getBufferCount());
@@ -50,12 +50,12 @@ public:
 
     void readChunk(size_t length) {
 
-        std::vector<uint8_t> payload(length);
-
-        ssize_t retval = read( m_fd, payload.data(), length );
+        m_data.resize(length);
+        ssize_t retval = read( m_fd, m_data.data(), length );
         assert(retval>=0);
+        m_data.resize( retval );
 
-        sendMemRequest( new StandardMem::Write( m_process->virtToPhys( getEvent<VanadisSyscallReadEvent*>()->getBufferAddress() + m_numRead), retval, payload) );
+        writeMemory( getEvent<VanadisSyscallReadEvent*>()->getBufferAddress() + m_numRead, m_data );
 
         m_numRead += retval;
 
@@ -78,9 +78,10 @@ public:
     } 
 
  private:
-    bool                        m_eof;
-    int                         m_fd;
-    size_t                      m_numRead;
+    std::vector<uint8_t>    m_data;
+    bool                    m_eof;
+    int                     m_fd;
+    size_t                  m_numRead;
 };
 
 } // namespace Vanadis

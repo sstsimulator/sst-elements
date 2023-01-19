@@ -24,8 +24,8 @@ namespace Vanadis {
 
 class VanadisGettime64Syscall : public VanadisSyscall {
 public:
-    VanadisGettime64Syscall( Output* output, Link* link, OS::ProcessInfo* process, uint64_t sim_time_ns, SendMemReqFunc* func, VanadisSyscallGetTime64Event* event )
-        : VanadisSyscall( output, link, process, func, event, "gettime64" )
+    VanadisGettime64Syscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, uint64_t sim_time_ns, VanadisSyscallGetTime64Event* event )
+        : VanadisSyscall( os, coreLink, process, event, "gettime64" ), m_state(0)
     {
         uint64_t sim_seconds = (uint64_t)(sim_time_ns / 1000000000ULL);
         uint32_t sim_ns = (uint32_t)(sim_time_ns % 1000000000ULL);
@@ -34,23 +34,35 @@ public:
                             "[syscall-gettime64] --> sim-time: %" PRIu64 " ns -> %" PRIu64 " secs + %" PRIu32 " us\n",
                             sim_time_ns, sim_seconds, sim_ns);
 
-        std::vector<uint8_t> seconds_payload(sizeof(sim_seconds),0);
+        seconds_payload.resize(sizeof(sim_seconds),0);
+        ns_payload.resize(sizeof(sim_ns),0);
+
         uint8_t* sec_ptr = (uint8_t*)&sim_seconds;
         for (size_t i = 0; i < sizeof(sim_seconds); ++i) {
             seconds_payload[i] = sec_ptr[i];
         }
 
-        sendMemRequest( new StandardMem::Write( process->virtToPhys( event->getTimeStructAddress()), sizeof(sim_seconds), seconds_payload));
-
-        std::vector<uint8_t> ns_payload(sizeof(sim_seconds),0);
         uint8_t* ns_ptr = (uint8_t*)&sim_ns;
         for (size_t i = 0; i < sizeof(sim_ns); ++i) {
             ns_payload[i] = ns_ptr[i];
         }
 
-        sendMemRequest( new StandardMem::Write( process->virtToPhys( event->getTimeStructAddress() + sizeof(sim_seconds) ), sizeof(sim_ns), ns_payload));
-        setReturnSuccess(0);
+        writeMemory( event->getTimeStructAddress(), seconds_payload );
     }
+
+    void memReqIsDone() { 
+        if ( 0 == m_state ) {
+            m_state = 1;
+            writeMemory( getEvent<VanadisSyscallGetTime64Event*>()->getTimeStructAddress() + seconds_payload.size(), ns_payload );
+        } else if ( 1 == m_state ) {
+            setReturnSuccess(0);
+        }
+    }
+
+private:
+    int m_state;
+    std::vector<uint8_t> seconds_payload;
+    std::vector<uint8_t> ns_payload;
 };
 
 } // namespace Vanadis

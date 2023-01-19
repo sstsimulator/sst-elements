@@ -24,8 +24,8 @@ namespace Vanadis {
 
 class VanadisBrkSyscall : public VanadisSyscall {
 public:
-    VanadisBrkSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallBRKEvent* event )
-        : VanadisSyscall( output, link, process, func, event, "brk" )
+    VanadisBrkSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallBRKEvent* event )
+        : VanadisSyscall( os, coreLink, process, event, "brk" )
     {
         uint64_t brk = process->getBrk();
         if (event->getUpdatedBRK() < brk) {

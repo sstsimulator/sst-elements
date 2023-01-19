@@ -20,8 +20,8 @@
 
 using namespace SST::Vanadis;
 
-VanadisMprotectSyscall::VanadisMprotectSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallMprotectEvent* event, VanadisNodeOSComponent* os )
-        : VanadisSyscall( output, link, process, func, event, "mprotect" )
+VanadisMprotectSyscall::VanadisMprotectSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallMprotectEvent* event)
+    : VanadisSyscall( os, coreLink, process, event, "mprotect" )
 {
     m_output->verbose(CALL_INFO, 16, 0, "[syscall-mprotect] core %d thread %d process %d addr=%" PRIx64 " len=%" PRIu64 " prot=%#" PRIx64 "\n",
             event->getCoreID(), event->getThreadID(), process->getpid(), event->getAddr(), event->getLen(), event->getProt() );

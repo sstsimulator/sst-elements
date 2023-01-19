@@ -22,6 +22,7 @@
 #include "util/vlinesplit.h"
 #include "os/voscallev.h"
 #include "os/include/process.h"
+#include "os/vgetthreadstate.h"
 #include "os/resp/voscallresp.h"
 
 using namespace SST::Interfaces;
@@ -29,19 +30,27 @@ using namespace SST::Interfaces;
 namespace SST {
 namespace Vanadis {
 
+class VanadisNodeOSComponent;
+
 class VanadisSyscall {
+
+private:
 
     class MemoryHandler : public StandardMem::RequestHandler {
     public:
-        MemoryHandler( SST::Output* out ) : StandardMem::RequestHandler(out) {}
+        MemoryHandler( VanadisSyscall* obj, SST::Output* out )
+            : StandardMem::RequestHandler(out), obj(obj) {}
         virtual ~MemoryHandler() {}
         virtual bool isDone() = 0;
-        virtual StandardMem::Request* generateMemReq(OS::ProcessInfo* process) = 0;
+        virtual StandardMem::Request* generateMemReq() = 0;
+
+        VanadisSyscall* obj;
     };
 
     class ReadStringHandler : public MemoryHandler {
     public:
-        ReadStringHandler( SST::Output* out, uint64_t addr, std::string& str ) : MemoryHandler(out), m_addr(addr), m_str(str), m_isDone(false) {}
+        ReadStringHandler( VanadisSyscall* obj, SST::Output* out, uint64_t addr, std::string& str )
+            : MemoryHandler(obj,out), m_addr(addr), m_str(str), m_isDone(false) {}
 
         void handle(StandardMem::ReadResp* req ) override {
             for (size_t i = 0; i < req->size; ++i) {
@@ -54,15 +63,19 @@ class VanadisSyscall {
             }
         }
 
-        StandardMem::Request* generateMemReq(OS::ProcessInfo* process) override { 
+        StandardMem::Request* generateMemReq() override {
             uint64_t length;
             if ( m_str.empty() ) {
                 length = vanadis_line_remainder( getAddress(), 64 );
             } else {
                 length = 64;
             }
-            //printf("%s() addr=%#" PRIx64 " firstReadLen=%zu\n",__func__,getAddress(), length);
-            return new StandardMem::Read( process->virtToPhys( getAddress() ), length);
+            auto physAddr = obj->virtToPhys( getAddress(), false );
+            if ( -1 == physAddr ) {
+                return nullptr;
+            } else {
+                return new StandardMem::Read( physAddr, length);
+            }
         } 
 
         bool isDone() override { return m_isDone; }
@@ -76,14 +89,13 @@ class VanadisSyscall {
 
     class BlockMemoryHandler : public MemoryHandler {
     public:
-        BlockMemoryHandler( SST::Output* out, uint64_t addr, std::vector<uint8_t>& data ) : MemoryHandler(out), m_addr(addr), m_data(data),  m_offset(0) {
-            //printf("%s() %zu\n",__func__,m_data.size());
+        BlockMemoryHandler( VanadisSyscall* obj, SST::Output* out, uint64_t addr, std::vector<uint8_t>& data )
+            : MemoryHandler(obj,out), m_addr(addr), m_data(data),  m_offset(0) {
         }
 
         virtual ~BlockMemoryHandler() {}
 
         bool isDone() { 
-            //printf("%s() offset=%zu size=%zu\n",__func__,m_offset,m_data.size());
             return m_offset == m_data.size(); 
         }
 
@@ -106,81 +118,104 @@ class VanadisSyscall {
 
     class ReadMemoryHandler : public BlockMemoryHandler {
     public:
-        ReadMemoryHandler( SST::Output* out, uint64_t addr, std::vector<uint8_t>& data ) : BlockMemoryHandler(out,addr,data) {}
+        ReadMemoryHandler( VanadisSyscall* obj, SST::Output* out, uint64_t addr, std::vector<uint8_t>& data )
+            : BlockMemoryHandler(obj,out,addr,data) {}
 
         void handle(StandardMem::ReadResp* req ) override {
             memcpy( m_data.data() + m_offset, req->data.data(), req->size );
             m_offset += req->size; 
         }
-        StandardMem::Request* generateMemReq(OS::ProcessInfo* process) override { 
-
-            //printf("%s() %zu\n",__func__,m_data.size());
-            uint64_t length = calcLength();
-
-            //printf("%s() addr=%#" PRIx64 " read length=%zu\n",__func__,getAddress(), length);
-            uint64_t addr = process->virtToPhys( getAddress() );
-            StandardMem::Read* req = new StandardMem::Read( addr, length);
-            //printf("%s() %#" PRIx64 " %#" PRIx64 " %s \n",__func__,getAddress(),addr,req->getString().c_str());
-            return req;
+        StandardMem::Request* generateMemReq() override {
+            auto length = calcLength();
+            auto virtAddr = getAddress();
+            auto physAddr = obj->virtToPhys( virtAddr, false );
+            if ( -1 == physAddr ) {
+                return nullptr;
+            } else {
+                auto req =  new StandardMem::Read( physAddr, length, 0, virtAddr );
+                obj->m_output->verbose(CALL_INFO, 16, 0, " %s\n",req->getString().c_str());
+                return req;
+            }
         } 
     };
 
     class WriteMemoryHandler : public BlockMemoryHandler {
     public:
-        WriteMemoryHandler( SST::Output* out, uint64_t addr, std::vector<uint8_t>& data ) : BlockMemoryHandler(out,addr,data) {}
+        WriteMemoryHandler( VanadisSyscall* obj, SST::Output* out, uint64_t addr, std::vector<uint8_t>& data )
+            : BlockMemoryHandler(obj,out,addr,data) {}
 
-        void handle(StandardMem::WriteResp* req ) override {
-            //printf("WriteMemoryHandler::%s wrote %zu bytes\n",__func__,req->size);
-        }
+        void handle(StandardMem::WriteResp* req ) override {} 
 
-        StandardMem::Request* generateMemReq(OS::ProcessInfo* process) override {
-            //printf("%s() %zu\n",__func__,m_data.size());
+        StandardMem::Request* generateMemReq() override {
             uint64_t length = calcLength();
-
-            //printf("%s() addr=%#" PRIx64 " [ %#" PRIx64 "] write length=%zu\n",__func__,getAddress(), process->virtToPhys( getAddress() ), length);
 
             std::vector<uint8_t> payload( length );
             memcpy( payload.data(), m_data.data() + m_offset, length );
             
-            StandardMem::Request* req = new StandardMem::Write( process->virtToPhys( getAddress() ), payload.size(), payload);
-            //printf( "send memory event (%s)\n", req->getString().c_str());
+            auto physAddr = obj->virtToPhys( getAddress(), true ); 
 
-            // do this last because it is used by getAddress()
-            m_offset += length; 
-            return req;
+            if ( -1 == physAddr ) {
+                return nullptr;
+            } else {
+                m_offset += length; 
+                return new StandardMem::Write( physAddr, payload.size(), payload);
+            }
         } 
     };
 
 
   public:
-    typedef std::function<void(VanadisSyscall*, StandardMem::Request*)> SendMemReqFunc;
 
-    VanadisSyscall( Output* output, Link* respLink, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallEvent* event, std::string name )
-        : m_output(output), m_respLink(respLink), m_process(process), m_memReqSend(func), 
-            m_event(event), m_name(name), m_returnCode(0), m_success(true), m_complete(false), m_memHandler(nullptr), m_sendResp(true), m_hasExited(false) {}
+    struct ReturnInfo {
+        ReturnInfo( ) : code(0), success(true), hasExited(false) {}
+        int code;
+        bool success;
+        bool hasExited;
+    };
 
-    virtual ~VanadisSyscall() { 
-        if ( m_sendResp ) {
-            m_output->verbose(CALL_INFO, 16, 0,"pid=%d tid=%d syscall %s is complete\n",
-                m_process->getpid(), m_process->gettid(), m_name.c_str() );
-            VanadisSyscallResponse* resp = new VanadisSyscallResponse(m_returnCode,m_success,m_hasExited);;
-            resp->setHWThread( m_event->getThreadID() );
-            m_output->verbose(CALL_INFO, 16, 0,
-                                "handler is completed and all memory events are "
-                                "processed, sending response (= %" PRId64 " / 0x%llx, %s) to core.\n",
-                                resp->getReturnCode(), resp->getReturnCode(),
-                                resp->isSuccessful() ? "success" : "failed");
+    VanadisSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallEvent* event, std::string name );
+    virtual ~VanadisSyscall();
 
-            sendResp(resp);
+    virtual void handleEvent( VanadisCoreEvent* ) { assert(0); } 
+    virtual bool isComplete() { return m_complete && m_pendingMem.empty(); }
+    bool handleMemRespBase( StandardMem::Request* req );
+    int getCoreId()         { return m_process->getCore(); }
+    int getThreadId()       { return m_process->getHwThread(); }
+    int getPid()            { return m_process->getpid(); }
+    std::string& getName()  { return m_name; }
+
+
+    uint64_t virtToPhys( uint64_t virtAddr, bool isWrite ) {
+        auto physAddr = m_process->virtToPhys( virtAddr );
+        if ( physAddr == -1 ) {
+            m_output->verbose(CALL_INFO, 16, 0,"physAddr not found for virtAddr=%#" PRIx64  "\n",virtAddr);
+            m_pageFaultAddr = virtAddr; 
+            m_pageFaultIsWrite = isWrite;
         } else {
-            m_output->verbose(CALL_INFO, 16, 0,"syscall %s is complete\n", m_name.c_str() );
+            m_output->verbose(CALL_INFO, 16, 0,"virtAddr %#" PRIx64 " -> physAddr %#" PRIx64 "\n",virtAddr,physAddr);
         }
-        delete m_event;
+        return physAddr;
+    } 
+
+    StandardMem::Request* getMemoryRequest() {
+        m_output->verbose(CALL_INFO, 16, 0,"\n");
+        StandardMem::Request* req = nullptr;
+        if ( m_memHandler ) {
+            req = m_memHandler->generateMemReq();
+            if ( req ) {
+                m_pendingMem.insert(req->getID());
+            }
+        }
+        return req;
     }
 
-    virtual bool isComplete() { return m_complete && m_pendingMem.empty(); }
+    bool causedPageFault() {
+        return (m_pageFaultAddr);
+    }
 
-    bool handleMemRespBase( StandardMem::Request* req );
+    std::tuple<uint64_t,bool> getPageFault() {
+        return std::make_tuple(m_pageFaultAddr,m_pageFaultIsWrite);
+    }
 
   protected:
 
@@ -188,6 +223,10 @@ class VanadisSyscall {
     Type getEvent() { return static_cast<Type>(m_event); }           
     virtual bool handleMemResp( StandardMem::Request* req ) { delete req; return false; };
     virtual void memReqIsDone() {};
+
+    void sendNeedThreadState() { 
+        m_coreLink->send( new VanadisGetThreadStateReq( m_event->getThreadID() ) );
+    }
 
     void setReturnSuccess( int returnCode ) { 
         setReturnCode( returnCode, true );
@@ -198,70 +237,61 @@ class VanadisSyscall {
         setComplete();
     }
     void setReturnCode( int returnCode, bool success = true ) { 
-        m_returnCode = returnCode;
-        m_success = success; 
+        m_returnInfo.code = returnCode;
+        m_returnInfo.success = success;
     }
     void setReturnExited() {
-        m_hasExited = true;
+        m_returnInfo.hasExited = true;
         setComplete();
     }
 
-    void sendMemRequest( StandardMem::Request* ev ) { 
-        m_pendingMem.insert(ev->getID());
-        (*m_memReqSend)( this, ev ); 
-    }
-
-
-    void sendResp( VanadisSyscallResponse* resp  ) { m_respLink->send(resp);}
     void readString( uint64_t addr, std::string& data );
     void readMemory( uint64_t addr, std::vector<uint8_t>& data );
     void writeMemory( uint64_t addr, std::vector<uint8_t>& data );
-    Output*             m_output;
-    OS::ProcessInfo*    m_process;
-    Link*               m_respLink;
+
+    Output*                 m_output;
+    OS::ProcessInfo*        m_process;
     VanadisSyscallEvent*    m_event;
-    bool m_sendResp;
+    VanadisNodeOSComponent* m_os;
 
   private:
 
-    std::string m_name;
     void setComplete() { m_complete = true; }
-    
-    SendMemReqFunc* m_memReqSend;
 
-    bool m_complete;
-    int m_returnCode;
-    bool m_success;
-    bool m_hasExited;
+    bool    m_complete;
+
+    uint64_t            m_pageFaultAddr;
+    uint64_t            m_pageFaultIsWrite;
+    std::string         m_name;
+    ReturnInfo          m_returnInfo;
+    MemoryHandler*      m_memHandler;
 
     std::unordered_set<StandardMem::Request::id_t> m_pendingMem;
-    MemoryHandler* m_memHandler;
 
+    SST::Link*          m_coreLink;
 };
-
 
 inline void VanadisSyscall::readString( uint64_t addr, std::string& str ) {
     m_output->verbose(CALL_INFO, 16, 0,"addr=%#" PRIx64 "\n",addr);
-    m_memHandler = new ReadStringHandler( m_output, addr, str );
-    sendMemRequest( m_memHandler->generateMemReq(m_process) );
+    assert(nullptr == m_memHandler);
+    m_memHandler = new ReadStringHandler( this, m_output, addr, str );
 }
 
 inline void VanadisSyscall::readMemory( uint64_t addr, std::vector<uint8_t>& buffer ) {
     m_output->verbose(CALL_INFO, 16, 0,"addr=%#" PRIx64 " length=%zu\n", addr, buffer.size() );
-    m_memHandler = new ReadMemoryHandler( m_output, addr, buffer );
-    sendMemRequest( m_memHandler->generateMemReq(m_process) );
+    assert(nullptr == m_memHandler);
+    m_memHandler = new ReadMemoryHandler( this, m_output, addr, buffer );
 }
 
 inline void VanadisSyscall::writeMemory( uint64_t addr, std::vector<uint8_t>& buffer ) {
     m_output->verbose(CALL_INFO, 16, 0,"addr=%#" PRIx64 " length=%zu\n", addr, buffer.size() );
-    m_memHandler = new WriteMemoryHandler( m_output, addr, buffer );
-    sendMemRequest( m_memHandler->generateMemReq(m_process) );
+    assert(nullptr == m_memHandler);
+    m_memHandler = new WriteMemoryHandler( this, m_output, addr, buffer );
 }
 
 inline bool VanadisSyscall::handleMemRespBase( StandardMem::Request* req )
 {
     m_output->verbose(CALL_INFO, 16, 0, "recv memory event (%s)\n", req->getString().c_str());
-
     m_output->verbose(CALL_INFO, 16, 0,"m_pendingMem.size() %zu\n",m_pendingMem.size());
 
     auto find_event = m_pendingMem.find(req->getID());
@@ -277,8 +307,6 @@ inline bool VanadisSyscall::handleMemRespBase( StandardMem::Request* req )
             delete m_memHandler;
             m_memHandler = nullptr;
             memReqIsDone();
-        } else {
-            sendMemRequest( m_memHandler->generateMemReq(m_process) );
         }
     }
 

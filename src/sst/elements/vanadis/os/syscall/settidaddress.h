@@ -24,8 +24,8 @@ namespace Vanadis {
 
 class VanadisSetTidAddressSyscall : public VanadisSyscall {
 public:
-    VanadisSetTidAddressSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallSetTidAddressEvent* event, VanadisNodeOSComponent* os )
-        : VanadisSyscall( output, link, process, func, event, "set_tid_address" ) 
+    VanadisSetTidAddressSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallSetTidAddressEvent* event )
+        : VanadisSyscall( os, coreLink, process, event, "set_tid_address" ) 
     {
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-set_tid_address] address %#" PRIx64 "\n", event->getTidAddress());
 

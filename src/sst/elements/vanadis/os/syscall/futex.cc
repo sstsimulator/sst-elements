@@ -53,8 +53,8 @@
 
 using namespace SST::Vanadis;
 
-VanadisFutexSyscall::VanadisFutexSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallFutexEvent* event, VanadisNodeOSComponent* os )
-        : VanadisSyscall( output, link, process, func, event, "futex" ), m_state(ReadAddr), m_numWokeup(0)
+VanadisFutexSyscall::VanadisFutexSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallFutexEvent* event )
+        : VanadisSyscall( os, coreLink, process, event, "futex" ), m_state(ReadAddr), m_numWokeup(0)
 {
     m_output->verbose(CALL_INFO, 16, 0, "[syscall-futex] addr=%#" PRIx64 " op=%#x val=%#" PRIx32 " timeAddr=%#" PRIx64 " callStackAddr=%#" PRIx64 
             " val2=%d, addr2=%#" PRIx64 " val2=%d\n", 

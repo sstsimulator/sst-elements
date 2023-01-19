@@ -162,8 +162,6 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
         }
     }
 
-    m_sendMemReqFunc = std::bind(&VanadisNodeOSComponent::sendMemoryEvent, this, std::placeholders::_1, std::placeholders::_2);
-
     delete[] port_name_buffer;
 
     registerAsPrimaryComponent();
@@ -216,7 +214,7 @@ void VanadisNodeOSComponent::handleIncomingMemory(StandardMem::Request* ev) {
                     delete req;
                     m_blockMemoryWriteReqQ.pop();
                     if ( ! m_blockMemoryWriteReqQ.empty() ) {
-                        startFoo( m_blockMemoryWriteReqQ.front());
+                        startBlockXfer( m_blockMemoryWriteReqQ.front());
                     }
                 }
             } catch ( int e ) {
@@ -240,13 +238,6 @@ void VanadisNodeOSComponent::copyPage( uint64_t physFrom, uint64_t physTo, unsig
         writePage( physTo, data, pageSize, callback );
     });
     readPage( physFrom, data, pageSize, tmp );
-}
-
-void 
-VanadisNodeOSComponent::startProcess(unsigned core, unsigned hwThread, unsigned pid, VanadisStartThreadForkReq* req ) 
-{
-    output->verbose(CALL_INFO, 2, 0,"core=%d hwThread=%d \n",core,hwThread);
-    core_links.at(core)->send( req );
 }
 
 void
@@ -321,40 +312,70 @@ VanadisNodeOSComponent::handleIncomingSyscall(SST::Event* ev) {
     VanadisSyscallEvent* sys_ev = dynamic_cast<VanadisSyscallEvent*>(ev);
 
     if (nullptr == sys_ev) {
-        VanadisGetThreadStateResp* resp = dynamic_cast<VanadisGetThreadStateResp*>(ev);
-        if ( nullptr == resp ) { 
+        
+        VanadisCoreEvent* event = dynamic_cast<VanadisCoreEvent*>(ev);
+
+        if ( nullptr != event ) { 
+            auto syscall = getSyscall( event->getCore(), event->getThread() );
+            syscall->handleEvent( event );
+            processSyscallPost( syscall );
+        } else {
             output->fatal(CALL_INFO, -1,
                       "Error - received an event in the OS, but cannot cast it to "
                       "a system-call event.\n");
-        } else {
-            VanadisForkSyscall* syscall = dynamic_cast<VanadisForkSyscall*>(m_coreInfoMap[ resp->getCore()].getSyscall( resp->getThread() ));
-            if ( syscall ) { 
-                syscall->complete( resp );
-                delete syscall;
-            } else {
-                VanadisCloneSyscall* syscall = dynamic_cast<VanadisCloneSyscall*>(m_coreInfoMap[ resp->getCore()].getSyscall( resp->getThread() ));
-                if ( syscall ) { 
-                    syscall->complete( resp );
-                    delete syscall;
-                } else {
-                    assert(0);
-                }
-            }
         }
     } else {
-
         auto process = m_coreInfoMap.at(sys_ev->getCoreID()).getProcess( sys_ev->getThreadID() );
+        auto syscall = handleIncomingSyscall( process, sys_ev, core_links[ sys_ev->getCoreID() ] );
 
-        handleIncomingSyscall( process, sys_ev, core_links[sys_ev->getCoreID()] );
+        output->verbose(CALL_INFO, 1, 0, "\n");
+        processSyscallPost( syscall );
     } 
 }
 
-void VanadisNodeOSComponent::pageFaultHandler( MMU_Lib::RequestID reqId, unsigned link, unsigned core, unsigned hwThread, 
-                unsigned pid,  uint32_t vpn, uint32_t faultPerms, uint64_t instPtr, uint64_t memVirtAddr ) 
+void VanadisNodeOSComponent::processSyscallPost( VanadisSyscall* syscall ) {
+
+    auto core = syscall->getCoreId();
+    auto hwThread = syscall->getThreadId();
+    output->verbose(CALL_INFO, 16, 0,"syscall '%s' for core %d\n",syscall->getName().c_str(),core);
+
+    if ( syscall->isComplete() ) {
+        output->verbose(CALL_INFO, 16, 0,"syscall '%s' for core %d has finished\n",syscall->getName().c_str(),core);
+        delete syscall;
+
+    } else {
+        output->verbose(CALL_INFO, 16, 0,"syscall '%s' for core %d get memory reqeust\n",syscall->getName().c_str(),core);
+        auto ev = syscall->getMemoryRequest();
+
+        if ( ev ) {
+            output->verbose(CALL_INFO, 16, 0,"syscall '%s' for core %d has a memory request\n",syscall->getName().c_str(),core);
+            sendMemoryEvent(syscall, ev );
+        } else if ( syscall->causedPageFault() ) {
+            uint64_t virtAddr;
+            bool isWrite;
+            std::tie( virtAddr, isWrite) = syscall->getPageFault();
+            processOsPageFault( syscall, virtAddr, isWrite );
+        } else {
+            output->verbose(CALL_INFO, 16, 0,"syscall '%s' for core %d is blocked\n",syscall->getName().c_str(),core);
+        }
+    }
+}
+
+void VanadisNodeOSComponent::processOsPageFault( VanadisSyscall* syscall, uint64_t virtAddr, bool isWrite ) {
+    output->verbose(CALL_INFO, 1, 0, "virtAddr=%#lx isWrite=%d\n",virtAddr, isWrite);
+
+    uint32_t vpn = virtAddr >> m_pageShift;
+    uint32_t faultPerms = isWrite ? 1 << 1:  1<< 2;
+
+    pageFaultHandler2( -1, -1, -1, -1, syscall->getPid(), vpn, faultPerms, 0, virtAddr, syscall );    
+}
+
+void VanadisNodeOSComponent::pageFaultHandler2( MMU_Lib::RequestID reqId, unsigned link, unsigned core, unsigned hwThread, 
+                unsigned pid,  uint32_t vpn, uint32_t faultPerms, uint64_t instPtr, uint64_t memVirtAddr, VanadisSyscall* syscall ) 
 {
     output->verbose(CALL_INFO, 1, 0, "RequestID=%#" PRIx64 " link=%d pid=%d vpn=%d perms=%#x instPtr=%#" PRIx64 "\n", reqId, link, pid, vpn, faultPerms, instPtr ); 
 
-    auto tmp = new PageFault( reqId, link, core, hwThread, pid, vpn, faultPerms, instPtr, memVirtAddr );
+    auto tmp = new PageFault( reqId, link, core, hwThread, pid, vpn, faultPerms, instPtr, memVirtAddr, syscall );
     m_pendingFault.push( tmp );
     if ( 1 == m_pendingFault.size() ) {
         pageFault( tmp );
@@ -363,11 +384,18 @@ void VanadisNodeOSComponent::pageFaultHandler( MMU_Lib::RequestID reqId, unsigne
     }
 }
 
-void VanadisNodeOSComponent::pageFaultFini( MMU_Lib::RequestID reqId, unsigned link, unsigned pid, uint32_t vpn, bool success )
+void VanadisNodeOSComponent::pageFaultFini( PageFault* info, bool success )
 {
-    output->verbose(CALL_INFO, 1, 0,"link=%d pid=%d vpn=%d %#" PRIx32 "\n",link,pid,vpn, vpn << m_pageShift );
-    m_mmu->faultHandled( reqId, link, pid, vpn, success );
-    delete m_pendingFault.front();
+    output->verbose(CALL_INFO, 1, 0,"link=%d pid=%d vpn=%d %#" PRIx32 "\n",info->link,info->pid,info->vpn, info->vpn << m_pageShift );
+    if( info->syscall ) {
+        auto ev = info->syscall->getMemoryRequest();
+        assert(ev);
+        sendMemoryEvent(info->syscall, ev ); 
+    } else {
+        m_mmu->faultHandled( info->reqId, info->link, info->pid, info->vpn, success );
+    }
+    delete info;
+
     m_pendingFault.pop();
     if ( m_pendingFault.size() ) {
         auto tmp = m_pendingFault.front();
@@ -386,7 +414,7 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
     assert(pid > 0);
     if ( m_threadMap.find(pid) == m_threadMap.end() ) {
         output->verbose(CALL_INFO, 1, 0,"process %d is gone, wanted vpn=%d pass error back to CPU\n",pid,vpn);
-        pageFaultFini( reqId, link, pid, vpn, false );
+        pageFaultFini( info, false );
         return;
     }
     auto thread = m_threadMap.at(pid);
@@ -434,7 +462,7 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
             if ( ! MMU_Lib::checkPerms( faultPerms, region->perms ) ) {
                 output->verbose(CALL_INFO, 1, 0,"core %d, hwThread %d, instPtr %#" PRIx64 " caused page fault at address %#" PRIx64 "\n", 
                     info->core,info->hwThread,info->instPtr,info->memVirtAddr);
-                pageFaultFini( reqId, link, pid, vpn, false );
+                pageFaultFini( info, false );
                 return;
             }
 
@@ -451,7 +479,7 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
             m_mmu->map( thread->getpid(), vpn, newPage->getPPN(), m_pageSize, region->perms );
 
             auto callback = new Callback( [=]() {
-                pageFaultFini( reqId, link, pid, vpn);
+                pageFaultFini( info );
             });
             copyPage( origPPN << m_pageShift, newPage->getPPN() << m_pageShift, m_pageSize, callback );
             return;
@@ -461,7 +489,7 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
         if ( ! MMU_Lib::checkPerms( faultPerms, region->perms ) ) {
             output->verbose(CALL_INFO, 1, 0, "memory fault instPtr=%#" PRIx64 ", could not be satified for %#" PRIx64 ", no permission wantPerms=%#x havePerms=%#x\n", 
                     info->instPtr,virtAddr,faultPerms,region->perms);
-            pageFaultFini( reqId, link, pid, vpn, false );
+            pageFaultFini( info, false );
             return;
         }
 
@@ -471,11 +499,11 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
             if ( ! MMU_Lib::checkPerms( faultPerms, region->perms ) ) {
                 output->verbose(CALL_INFO, 1, 0,"core %d, hwThread %d, instPtr %#" PRIx64 " caused page fault at address %#" PRIx64 "\n", 
                     info->core,info->hwThread,info->instPtr,info->memVirtAddr);
-                pageFaultFini( reqId, link, pid, vpn, false );
+                pageFaultFini( info, false );
                 return;
             }
             output->verbose(CALL_INFO, 1, 0,"using existing page vpn=%d\n",vpn);
-            pageFaultFini( reqId, link, pid, vpn );
+            pageFaultFini( info );
             return;
         }
 
@@ -522,13 +550,13 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
                 updatePageCache( region->backing->elfInfo, vpn, page );
             } else {
                 output->verbose(CALL_INFO, 1, 0,"fault handled link=%d pid=%d vpn=%d %#" PRIx32 " ppn=%d\n",link,pid,vpn, vpn << m_pageShift,page->getPPN());
-                pageFaultFini( reqId, link, pid, vpn );
+                pageFaultFini( info );
                 return;
             }
         }
 
         auto callback = new Callback( [=]() {
-            pageFaultFini( reqId, link, pid, vpn );
+            pageFaultFini( info );
         });
 
         if ( nullptr == data ) {
@@ -542,7 +570,7 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
 
         output->verbose(CALL_INFO, 1, 0,"core %d, hwThread %d, instPtr %#" PRIx64 " caused page fault at address %#" PRIx64 "\n", 
             info->core, info->hwThread, info->instPtr, info->memVirtAddr );
-        pageFaultFini( reqId, link, pid, vpn, false );
+        pageFaultFini( info, false );
     } 
 }
 
@@ -569,9 +597,7 @@ bool VanadisNodeOSComponent::PageMemReadReq::handleResp( StandardMem::Request* e
 
 void VanadisNodeOSComponent::PageMemReadReq::sendReq() {
 
-//    printf("%s() offset=%zu length=%zu\n",__func__,m_currentReqOffset,length);
     if ( m_currentReqOffset < length ) {
- //       printf("%s() addr %#lx\n",__func__,addr + offset);
         StandardMem::Request* req = new SST::Interfaces::StandardMem::Read( addr + m_currentReqOffset, 64 );
         reqMap[req->getID()] = m_currentReqOffset;
         m_currentReqOffset += 64;
@@ -580,7 +606,6 @@ void VanadisNodeOSComponent::PageMemReadReq::sendReq() {
 }
 
 bool VanadisNodeOSComponent::PageMemWriteReq::handleResp( StandardMem::Request* ev ) {
-  //  printf("PageMemWriteReq::%s()\n",__func__);
     auto iter = reqMap.find( ev->getID() ); 
     assert ( iter != reqMap.end() );
     reqMap.erase( iter );

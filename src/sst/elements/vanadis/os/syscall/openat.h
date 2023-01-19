@@ -24,8 +24,8 @@ namespace Vanadis {
 
 class VanadisOpenatSyscall : public VanadisSyscall {
 public:
-    VanadisOpenatSyscall( Output* output, Link* link, OS::ProcessInfo* process,SendMemReqFunc* func, VanadisSyscallOpenatEvent* event ) 
-        : VanadisSyscall( output, link, process, func, event, "openat" )
+    VanadisOpenatSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallOpenatEvent* event ) 
+        : VanadisSyscall( os, coreLink, process, event, "openat" )
     {
         m_output->verbose( CALL_INFO, 16, 0, "[syscall-openat] -> call is openat( %" PRId64 " )\n", event->getPathPointer());
 

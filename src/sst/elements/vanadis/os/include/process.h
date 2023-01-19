@@ -205,7 +205,7 @@ class ProcessInfo {
         
         uint32_t ppn = m_mmu->virtToPhys( getpid(), vpn );
         if ( -1 == ppn ) {
-            assert(0);
+            return -1;
         }
         uint64_t physAddr = ppn << m_pageShift | virtAddr & ( (1<<m_pageShift) - 1 );
         m_dbg.verbose(CALL_INFO,1,0,"pid=%d virtAddr=%#" PRIx64 " -> %#" PRIx64 "\n",getpid(),virtAddr,physAddr);

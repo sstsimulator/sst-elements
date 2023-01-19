@@ -24,8 +24,8 @@ namespace Vanadis {
 
 class VanadisGetpidSyscall : public VanadisSyscall {
 public:
-    VanadisGetpidSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallGetxEvent* event )
-        : VanadisSyscall( output, link, process, func, event, "gitpid" ) 
+    VanadisGetpidSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallGetxEvent* event )
+        : VanadisSyscall( os, coreLink, process, event, "gitpid" ) 
     {
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-getpid]\n");
         setReturnSuccess(process->getpid());

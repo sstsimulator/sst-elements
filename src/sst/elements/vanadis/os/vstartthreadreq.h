@@ -89,46 +89,6 @@ public:
         _VanadisStartThreadBaseReq( thread, instPtr, stackAddr, argAddr, tlsAddr ) {} 
 };
 
-
-#if 0
-class VanadisStartThreadReq : public SST::Event {
-public:
-    VanadisStartThreadReq() : SST::Event(), thread(0), stackStart(0), instructionPointer(0), startArg(0) { }
-
-    VanadisStartThreadReq( int thread, uint64_t stackStart, uint64_t instructionPointer, uint64_t startArg = 0, uint64_t tlsAddr = 0 ) : 
-        SST::Event(), thread(thread), stackStart(stackStart), instructionPointer(instructionPointer), startArg(startArg), tlsAddr(tlsAddr) {}
-
-    ~VanadisStartThreadReq() {}
-
-    int     getThread() { return thread; }
-    int64_t getStackStart() { return stackStart; }
-    int64_t getInstructionPointer() { return instructionPointer; }
-    int64_t getStartArg() { return startArg; }
-    int64_t getTlsAddr() { return tlsAddr; }
-
-    std::vector<uint64_t> intRegs;
-    std::vector<uint64_t> fpRegs;
-
-private:
-    void serialize_order(SST::Core::Serialization::serializer& ser) override {
-        Event::serialize_order(ser);
-        ser& thread;
-        ser& stackStart;
-        ser& instructionPointer;
-        ser& startArg;
-        ser& tlsAddr;
-    }
-
-    ImplementSerializable(SST::Vanadis::VanadisStartThreadReq);
-
-    int     thread;
-    int64_t stackStart;
-    int64_t instructionPointer;
-    int64_t startArg;
-    int64_t tlsAddr;
-};
-#endif
-
 } // namespace Vanadis
 } // namespace SST
 

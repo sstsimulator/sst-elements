@@ -21,8 +21,8 @@
 
 using namespace SST::Vanadis;
 
-VanadisCloneSyscall::VanadisCloneSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallCloneEvent* event, VanadisNodeOSComponent* os )
-        : VanadisSyscall( output, link, process, func, event, "clone" ), m_os(os)
+VanadisCloneSyscall::VanadisCloneSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallCloneEvent* event )
+        : VanadisSyscall( os, coreLink, process, event, "clone" )
 {
     m_output->verbose(CALL_INFO, 16, 0, "[syscall-clone] threadStackAddr=%#" PRIx64 " flags=%#" PRIx64 " parentTidAddr=%#" PRIx64 " tlsAddr=%#" PRIx64 " callStackAddr=%#" PRIx64 "\n", 
             event->getThreadStackAddr(), event->getFlags(), event->getParentTidAddr(), event->getTlsAddr(), event->getCallStackAddr() );
@@ -31,7 +31,7 @@ VanadisCloneSyscall::VanadisCloneSyscall( Output* output, Link* link, OS::Proces
     assert( event->getFlags() == 0x7d0f00 );
     m_threadID = m_os->allocHwThread();
     if ( nullptr == m_threadID ) {
-        output->fatal(CALL_INFO, -1, "Error: clone, out of hardware threads for new thread\n");
+        m_output->fatal(CALL_INFO, -1, "Error: clone, out of hardware threads for new thread\n");
     }
 
     m_newThread = new OS::ProcessInfo;
@@ -45,12 +45,15 @@ VanadisCloneSyscall::VanadisCloneSyscall( Output* output, Link* link, OS::Proces
     m_newThread->incRefCnts();
     m_newThread->addThread( m_newThread );
 
-    m_os->m_threadMap[m_newThread->gettid()] = m_newThread;
+    m_newThread->setHwThread( *m_threadID );
 
-    //printf("pid=%d tid=%d ppid=%d numThreads=%d\n",m_newThread->getpid(), m_newThread->gettid(), m_newThread->getppid(), m_newThread->numThreads() );
+    m_os->setThread( m_newThread->gettid(), m_newThread );
 
-    m_os->m_coreInfoMap.at(m_threadID->core).setProcess( m_threadID->hwThread, m_newThread );
-    m_os->m_mmu->setCoreToPageTable( m_threadID->core, m_threadID->hwThread, m_newThread->getpid() );
+    m_output->verbose(CALL_INFO, 16, 0, "[syscall-clone] newthread pid=%d tid=%d ppid=%d numThreads=%d\n",
+            m_newThread->getpid(), m_newThread->gettid(), m_newThread->getppid(), m_newThread->numThreads() );
+
+    m_os->setProcess( m_threadID->core, m_threadID->hwThread, m_newThread ); 
+    m_os->getMMU()->setCoreToPageTable( m_threadID->core, m_threadID->hwThread, m_newThread->getpid() );
 
     // if that stackAddr is valid  we need to get clone() arguments that are not in registers, for clone we have one argument on the clone call stack 
     if ( event->getCallStackAddr() ) {
@@ -79,8 +82,11 @@ VanadisCloneSyscall::VanadisCloneSyscall( Output* output, Link* link, OS::Proces
 }
 
 // we have the instPtr and registers from the parent core/hwThread,
-void VanadisCloneSyscall::complete( VanadisGetThreadStateResp* resp )
+void VanadisCloneSyscall::handleEvent( VanadisCoreEvent* ev )
 {
+    auto resp = dynamic_cast<VanadisGetThreadStateResp*>( ev );
+    assert(resp);
+
     m_output->verbose(CALL_INFO, 16, 0, "[syscall-fork] got thread state response\n");
 
     VanadisStartThreadCloneReq* req =  new VanadisStartThreadCloneReq( m_threadID->hwThread, 
@@ -94,16 +100,17 @@ void VanadisCloneSyscall::complete( VanadisGetThreadStateResp* resp )
 
      m_output->verbose(CALL_INFO, 16, 0, "[syscall-fork] core=%d thread=%d tid=%d instPtr=%lx\n",
                  m_threadID->core, m_threadID->hwThread, m_newThread->gettid(), resp->getInstPtr() );
-#if 0
+#if 0 //debug
     for ( int i = 0; i < req->getIntRegs().size(); i++ ) {
         printf("int r%d %" PRIx64 "\n",i,req->getIntRegs()[i]);
     }
     printf("%s() %lx\n", __func__,m_newThread->getTidAddress());
 #endif
 
-    m_os->core_links.at(m_threadID->core)->send( req );
-    m_os->m_coreInfoMap[ m_event->getCoreID()].clearSyscall( m_event->getThreadID() );
+    m_os->sendEvent( m_threadID->core, req ); 
+
     setReturnSuccess( m_newThread->gettid() );
+
     delete resp;
 }
 
@@ -113,7 +120,6 @@ void VanadisCloneSyscall::memReqIsDone() {
       case ReadChildTidAddr:
         {
             uint64_t childTidAddr = *(uint32_t*)m_buffer.data();
-            //printf("%s() childTldAddr=%#" PRIx64 "\n",__func__,childTidAddr);
 
             m_newThread->setTidAddress( childTidAddr );
 
@@ -157,16 +163,7 @@ void VanadisCloneSyscall::memReqIsDone() {
 
       case WriteChildTid:
         {
-#if 0
-            printf("core=%d hwThead=%d tid=%d stackPtr=%#" PRIx64 " threadStart=%#" PRIx64 " threadArg=%#" PRIx64 "\n",
-                m_threadCore, m_threadHwThread, m_process->getTid( m_threadCore, m_threadHwThread),
-                getEvent<VanadisSyscallCloneEvent*>()->getThreadStack(), m_threadEntry,m_threadArg);
-            printf("%s() %" PRIx64 "\n",__func__,getEvent<VanadisSyscallCloneEvent*>()->getTlsAddr() );
-#endif
-
-            // save this syscall so when we get the response we know what to do with it
-            m_os->m_coreInfoMap[ m_event->getCoreID()].setSyscall( m_event->getThreadID(), this );
-            m_respLink->send( new VanadisGetThreadStateReq( m_event->getThreadID() ) );
+            sendNeedThreadState();
         } break;
     }
 }

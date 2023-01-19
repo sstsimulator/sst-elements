@@ -22,23 +22,19 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisNodeOSComponent;
-class VanadisGetThreadStateResp;
 class VanadisCloneSyscall : public VanadisSyscall {
 public:
-    VanadisCloneSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallCloneEvent* event, VanadisNodeOSComponent* );
+    VanadisCloneSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallCloneEvent* event );
     ~VanadisCloneSyscall() {
         delete m_threadID;
     }
-    void complete( VanadisGetThreadStateResp* resp );
+    void handleEvent( VanadisCoreEvent* ev );
 
  private:  
 
     enum State { ReadChildTidAddr, ReadThreadStack, WriteChildTid } m_state;
 
     void memReqIsDone();
-
-    VanadisNodeOSComponent* m_os;
 
     uint64_t m_threadStartAddr;
     uint64_t m_threadArgAddr;

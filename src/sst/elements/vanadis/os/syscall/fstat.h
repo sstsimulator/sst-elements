@@ -24,11 +24,11 @@ namespace Vanadis {
 
 class VanadisFstatSyscall : public VanadisSyscall {
 public:
-    VanadisFstatSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallFstatEvent* event )
-        : VanadisSyscall( output, link, process, func, event, "fstat" ) 
+    VanadisFstatSyscall( Output* output, OS::ProcessInfo* process, VanadisSyscallFstatEvent* event, SST::Link* coreLink )
+        : VanadisSyscall( output, process, event, coreLink, "fstat" ) 
     {
         assert(0);
-#if 0
+#if 0 // not implemented
         case SYSCALL_OP_FSTAT: {
             new VanadisFstatSyscall( output, core_link, &m_sendMemReqFunc, convertEvent<VanadisSyscallFstatEvent*>( "fstat", sys_ev ) );
             output->verbose(CALL_INFO, 16, 0, "-> call is fstat()\n");

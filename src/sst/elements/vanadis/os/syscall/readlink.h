@@ -24,8 +24,8 @@ namespace Vanadis {
 
 class VanadisReadlinkSyscall : public VanadisSyscall {
 public:
-    VanadisReadlinkSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallReadLinkEvent* event )
-        : VanadisSyscall( output, link, process, func, event, "readlink" ), m_data( event->getBufferSize() ), m_done(false)
+    VanadisReadlinkSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallReadLinkEvent* event )
+        : VanadisSyscall( os, coreLink, process, event, "readlink" ), m_data( event->getBufferSize() ), m_done(false)
     {
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-readlink] -> readlink( 0x%0llx, 0x%llx, %" PRId64 " )\n",
                                 event->getPathPointer(), event->getBufferPointer(),

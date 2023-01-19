@@ -24,13 +24,13 @@ namespace Vanadis {
 
 class VanadisUnmapSyscall : public VanadisSyscall {
 public:
-    VanadisUnmapSyscall( Output* output, Link* link, OS::ProcessInfo* process, PhysMemManager* memMgr, SendMemReqFunc* func, VanadisSyscallMemoryUnMapEvent* event )
-        : VanadisSyscall( output, link, process, func, event, "unmap" ) 
+    VanadisUnmapSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, PhysMemManager* memMgr, VanadisSyscallMemoryUnMapEvent* event )
+        : VanadisSyscall( os, coreLink, process, event, "unmap" ) 
     {
         uint64_t address = event->getDeallocationAddress();
         uint64_t length = event->getDeallocationLength();
 
-        output->verbose(CALL_INFO, 16, 0, "[syscall-unmap] addr=%#" PRIx64 " lenght=%" PRIu64 "\n",address, length);
+        m_output->verbose(CALL_INFO, 16, 0, "[syscall-unmap] addr=%#" PRIx64 " lenght=%" PRIu64 "\n",address, length);
 
         int ret = process->unmap( address, length );
         if ( ret ) {

@@ -22,17 +22,14 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisNodeOSComponent;
-class VanadisGetThreadStateResp;
 class VanadisExitSyscall : public VanadisSyscall {
 public:
-    VanadisExitSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallExitEvent* event, VanadisNodeOSComponent* );
+    VanadisExitSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallExitEvent* event );
     ~VanadisExitSyscall() {}
 
 private:
     void memReqIsDone();
     std::vector<uint8_t> m_buffer;
-    VanadisNodeOSComponent* m_os;
 };
 
 } // namespace Vanadis

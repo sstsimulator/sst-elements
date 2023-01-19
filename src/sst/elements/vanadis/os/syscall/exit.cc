@@ -22,8 +22,8 @@
 
 using namespace SST::Vanadis;
 
-VanadisExitSyscall::VanadisExitSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallExitEvent* event, VanadisNodeOSComponent* os )
-        : VanadisSyscall( output, link, process, func, event, "exit" ), m_os(os)
+VanadisExitSyscall::VanadisExitSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallExitEvent* event )
+        : VanadisSyscall( os, coreLink, process, event, "exit" )
 {
     m_output->verbose(CALL_INFO, 16, 0, "[syscall-exit] core %d thread %d process %d\n",event->getCoreID(), event->getThreadID(), process->getpid() );
 
@@ -44,5 +44,6 @@ void VanadisExitSyscall::memReqIsDone() {
 
     delete m_process; 
 
+    m_output->verbose(CALL_INFO, 16, 0, "[syscall-exit] %s() called\n",__func__ );
     setReturnExited();
 }

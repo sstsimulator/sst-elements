@@ -22,11 +22,9 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisNodeOSComponent;
-class VanadisGetThreadStateResp;
 class VanadisExitGroupSyscall : public VanadisSyscall {
 public:
-    VanadisExitGroupSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallExitGroupEvent* event, VanadisNodeOSComponent* );
+    VanadisExitGroupSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallExitGroupEvent* event );
     ~VanadisExitGroupSyscall() {}
 };
 

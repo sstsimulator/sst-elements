@@ -22,11 +22,9 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisNodeOSComponent;
-
 class VanadisMprotectSyscall : public VanadisSyscall {
 public:
-    VanadisMprotectSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallMprotectEvent* event, VanadisNodeOSComponent* );
+    VanadisMprotectSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallMprotectEvent* event );
     ~VanadisMprotectSyscall() {}
 };
 

@@ -26,8 +26,8 @@ namespace Vanadis {
 class VanadisWritevSyscall : public VanadisIoVecSyscall {
     enum State { ReadIoVecTable, ReadIoVec };
 public:
-    VanadisWritevSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallWritevEvent* event )
-        : VanadisIoVecSyscall( output, link, process, func, event, "writev" )
+    VanadisWritevSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallWritevEvent* event )
+        : VanadisIoVecSyscall( os, coreLink, process, event, "writev" )
     { }
 
     void startIoVecTransfer() { 

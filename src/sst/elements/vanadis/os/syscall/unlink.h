@@ -24,8 +24,8 @@ namespace Vanadis {
 
 class VanadisUnlinkSyscall : public VanadisSyscall {
 public:
-    VanadisUnlinkSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallUnlinkEvent* event )
-        : VanadisSyscall( output, link, process, func, event, "unlink" ) 
+    VanadisUnlinkSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallUnlinkEvent* event )
+        : VanadisSyscall( os, coreLink, process, event, "unlink" ) 
     {
         m_output->verbose( CALL_INFO, 16, 0, "[syscall-unlink] -> call is unlink( %" PRId64 " )\n", event->getPathPointer());
 

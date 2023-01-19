@@ -23,19 +23,16 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisNodeOSComponent;
-class VanadisGetThreadStateResp;
 class VanadisForkSyscall : public VanadisSyscall {
 public:
-    VanadisForkSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallForkEvent* event, VanadisNodeOSComponent* );
+    VanadisForkSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallForkEvent* event );
     ~VanadisForkSyscall() { 
         delete m_threadID;
     }
-    void complete( VanadisGetThreadStateResp* ); 
+    void handleEvent( VanadisCoreEvent* ev );
 
  private:  
     OS::ProcessInfo* m_child;  
-    VanadisNodeOSComponent* m_os;
     OS::HwThreadID* m_threadID;
 };
 

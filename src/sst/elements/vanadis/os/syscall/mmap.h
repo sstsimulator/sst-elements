@@ -24,8 +24,8 @@ namespace Vanadis {
 
 class VanadisMmapSyscall : public VanadisSyscall {
 public:
-    VanadisMmapSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallMemoryMapEvent* event )
-        : VanadisSyscall( output, link, process, func, event, "mmap" )
+    VanadisMmapSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallMemoryMapEvent* event )
+        : VanadisSyscall( os, coreLink, process, event, "mmap" )
     {
         uint64_t address = event->getAllocationAddress();
         uint64_t length = event->getAllocationLength();

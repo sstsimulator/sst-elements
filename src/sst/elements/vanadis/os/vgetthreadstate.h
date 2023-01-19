@@ -21,36 +21,42 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisGetThreadStateReq : public SST::Event {
+class VanadisCoreEvent : public SST::Event {
 public:
-    VanadisGetThreadStateReq() : SST::Event(), thread(-1) {}
-
-    VanadisGetThreadStateReq( int thread) : SST::Event(), thread(thread) {}
-
-    ~VanadisGetThreadStateReq() {}
-
+    VanadisCoreEvent() : SST::Event(), thread(-1), core(-1) {}
+    VanadisCoreEvent( int thread ) : SST::Event(), core(-1), thread(thread) {}
+    VanadisCoreEvent( int core, int thread ) : SST::Event(), core(core), thread(thread) {}
     int     getThread() { return thread; }
+    int     getCore() { return core; }
 private:
+    int     thread;
+    int     core;
+
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
         ser& thread;
+        ser& core;
     }
 
-    ImplementSerializable(SST::Vanadis::VanadisGetThreadStateReq);
-
-    int     thread;
+    ImplementSerializable(SST::Vanadis::VanadisCoreEvent);
 };
 
-class VanadisGetThreadStateResp : public SST::Event {
+class VanadisGetThreadStateReq : public VanadisCoreEvent {
 public:
-    VanadisGetThreadStateResp() : SST::Event(), core(-1), thread(-1), instPtr(-1), tlsPtr(-1) {}
+    VanadisGetThreadStateReq() : VanadisCoreEvent() {}
 
-    VanadisGetThreadStateResp( int core, int thread, uint64_t instPtr, uint64_t tlsPtr) : SST::Event(), core(core), thread(thread), instPtr(instPtr), tlsPtr(tlsPtr) {}
+    VanadisGetThreadStateReq( int thread) : VanadisCoreEvent( thread ) {}
+
+    ~VanadisGetThreadStateReq() {}
+};
+
+class VanadisGetThreadStateResp : public VanadisCoreEvent {
+public:
+    VanadisGetThreadStateResp() : VanadisCoreEvent(), instPtr(-1), tlsPtr(-1) {}
+
+    VanadisGetThreadStateResp( int core, int thread, uint64_t instPtr, uint64_t tlsPtr) : VanadisCoreEvent( core, thread), instPtr(instPtr), tlsPtr(tlsPtr) {}
 
     ~VanadisGetThreadStateResp() {}
-
-    int     getThread() { return thread; }
-    int     getCore() { return core; }
 
     uint64_t getInstPtr() { return instPtr; }
     uint64_t getTlsPtr() { return tlsPtr; }
@@ -61,8 +67,6 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        ser& thread;
-        ser& core;
         ser& intRegs;
         ser& fpRegs;
         ser& instPtr;
@@ -71,8 +75,6 @@ private:
 
     ImplementSerializable(SST::Vanadis::VanadisGetThreadStateResp);
 
-    int     thread;
-    int     core;
     uint64_t instPtr;
     uint64_t tlsPtr;
 };

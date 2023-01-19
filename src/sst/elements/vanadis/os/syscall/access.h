@@ -24,8 +24,8 @@ namespace Vanadis {
 
 class VanadisAccessSyscall : public VanadisSyscall {
 public:
-    VanadisAccessSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallAccessEvent* event )
-        : VanadisSyscall( output, link, process, func, event, "access" ) 
+    VanadisAccessSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallAccessEvent* event )
+        : VanadisSyscall( os, coreLink, process, event, "access" ) 
     {
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-access] access( 0x%llx, %" PRIu64 " )\n", event->getPathPointer(), event->getAccessMode());
 

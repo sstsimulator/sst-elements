@@ -22,11 +22,9 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisNodeOSComponent;
-class VanadisGetThreadStateResp;
 class VanadisFutexSyscall : public VanadisSyscall {
 public:
-    VanadisFutexSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallFutexEvent* event, VanadisNodeOSComponent* );
+    VanadisFutexSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallFutexEvent* event );
     ~VanadisFutexSyscall() {}
 
  private:  

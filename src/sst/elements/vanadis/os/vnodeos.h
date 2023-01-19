@@ -24,17 +24,15 @@
 
 #include "os/include/hwThreadID.h"
 #include "os/voscallev.h"
-
 #include "os/vstartthreadreq.h"
 #include "os/vappruntimememory.h"
-#include "sst/elements/mmu/mmu.h"
 #include "os/vphysmemmanager.h"
-
 #include "os/include/process.h"
-#include "syscall/syscall.h"
 #include "os/syscall/fork.h"
 #include "os/syscall/clone.h"
 #include "os/syscall/exit.h"
+#include "os/syscall/syscall.h"
+
 
 using namespace SST::Interfaces;
 
@@ -59,13 +57,6 @@ public:
 
     VanadisNodeOSComponent(SST::ComponentId_t id, SST::Params& params);
     ~VanadisNodeOSComponent();
-
-
-friend class VanadisForkSyscall;
-friend class VanadisCloneSyscall;
-friend class VanadisExitSyscall;
-friend class VanadisExitGroupSyscall;
-friend class VanadisFutexSyscall;
 
 private:
     enum PageInitType { Zeros, Random };
@@ -120,8 +111,9 @@ private:
 
     struct PageFault {
         PageFault(MMU_Lib::RequestID reqId, unsigned link, unsigned core,unsigned hwThread, unsigned pid,  uint32_t vpn,
-                            uint32_t faultPerms, uint64_t instPtr, uint64_t memVirtAddr )
-            : reqId(reqId), link(link), core(core), hwThread(hwThread), pid(pid), vpn(vpn), faultPerms(faultPerms), instPtr(instPtr), memVirtAddr(memVirtAddr) {}
+                            uint32_t faultPerms, uint64_t instPtr, uint64_t memVirtAddr, VanadisSyscall* syscall )
+            : reqId(reqId), link(link), core(core), hwThread(hwThread), pid(pid), vpn(vpn), faultPerms(faultPerms),
+                instPtr(instPtr), memVirtAddr(memVirtAddr), syscall(syscall) {}
         MMU_Lib::RequestID reqId;
         unsigned link;
         unsigned core;
@@ -131,6 +123,7 @@ private:
         uint32_t faultPerms;
         uint64_t instPtr;
         uint64_t memVirtAddr;
+        VanadisSyscall* syscall;
     };
 
 
@@ -141,13 +134,25 @@ private:
     virtual void init(unsigned int phase);
     void setup();
     void handleIncomingSyscall(SST::Event* ev);
+    VanadisSyscall* handleIncomingSyscall( OS::ProcessInfo*, VanadisSyscallEvent*, SST::Link* core_link );
+    void processSyscallPost( VanadisSyscall* syscall );
+
     void handleIncomingMemory(StandardMem::Request* ev);
-    void handleIncomingSyscall( OS::ProcessInfo*, VanadisSyscallEvent*, SST::Link* );
-    void pageFaultHandler( MMU_Lib::RequestID, unsigned link, unsigned core, unsigned hwThread,  unsigned pid, uint32_t vpn, uint32_t perms, uint64_t instPtr, uint64_t memVirtAddr );
+
+    void processOsPageFault( VanadisSyscall*, uint64_t virtAddr, bool isWrite );
+
+    void pageFaultHandler( MMU_Lib::RequestID reqId, unsigned link, unsigned core, unsigned hwThread, unsigned pid,
+        uint32_t vpn, uint32_t perms, uint64_t instPtr, uint64_t memVirtAddr ) 
+    {
+        pageFaultHandler2( reqId, link, core, hwThread, pid, vpn, perms, instPtr, memVirtAddr ); 
+    }
+
+    void pageFaultHandler2( MMU_Lib::RequestID, unsigned link, unsigned core, unsigned hwThread,  unsigned pid,
+        uint32_t vpn, uint32_t perms, uint64_t instPtr, uint64_t memVirtAddr, VanadisSyscall* syscall = nullptr );
+
     void pageFault( PageFault* );
-    void pageFaultFini( MMU_Lib::RequestID, unsigned link, unsigned pid, uint32_t vpn, bool success = true );
+    void pageFaultFini( PageFault*, bool success = true );
     void startProcess( OS::HwThreadID&, OS::ProcessInfo* process );
-    void startProcess(unsigned core, unsigned hwThread, unsigned pid, VanadisStartThreadForkReq* req );
     void copyPage(uint64_t physFrom, uint64_t physTo, unsigned pageSize, Callback* );
 
     void sendMemoryEvent(VanadisSyscall* syscall, StandardMem::Request* ev ) {
@@ -170,11 +175,11 @@ private:
     void queueBlockMemoryReq( PageMemReq* req ) {
         m_blockMemoryWriteReqQ.push( req );
         if ( 1 == m_blockMemoryWriteReqQ.size() ) {
-            startFoo( m_blockMemoryWriteReqQ.front() );    
+            startBlockXfer( m_blockMemoryWriteReqQ.front() );    
         }
     } 
 
-    void startFoo( PageMemReq* req ) {
+    void startBlockXfer( PageMemReq* req ) {
         // this specfies how many requests should be initially sent before waiting for a response 
         // this value was choose because hight does not increase performance, for the configuration used to test
         unsigned startWithNum = 6;
@@ -184,14 +189,14 @@ private:
     }
 
     void handleIncomingMemory( VanadisSyscall* syscall, StandardMem::Request* req ) {
-        if ( syscall->handleMemRespBase( req ) ) {
-            output->verbose(CALL_INFO, 16, 0,"syscall has finished\n");
-            delete syscall;
-        }
+
+        output->verbose(CALL_INFO, 8, 0,"\n");
+        syscall->handleMemRespBase( req );
+
+        processSyscallPost( syscall ); 
     }
 
     OS::Page* checkPageCache( VanadisELFInfo* elf_info , int vpn ) {
-        //printf("%s() elf_info=%p vpn=%d\n",__func__,elf_info,vpn);
         auto iter = m_elfPageCache.find( elf_info ); 
         if ( iter != m_elfPageCache.end() ) {
             auto tmp = iter->second; 
@@ -204,7 +209,6 @@ private:
     } 
 
     void updatePageCache( VanadisELFInfo* elf_info , int vpn, OS::Page* page ) {
-        //printf("%s() elf_info=%p vpn=%d ppn=%d\n",__func__,elf_info,vpn,ppn);
         m_elfPageCache[elf_info][vpn] = page;
     } 
 
@@ -226,7 +230,7 @@ private:
         HardwareThreadInfo( ) : m_processInfo(nullptr), m_syscall(nullptr) {}
         void setProcess( OS::ProcessInfo* process ) { m_processInfo = process; }
         void setSyscall( VanadisSyscall* syscall ) { assert( nullptr == m_syscall ); m_syscall = syscall; }
-        void clearSyscall( ) { m_syscall = nullptr; }
+        void clearSyscall( ) { assert(m_syscall); m_syscall = nullptr; }
         OS::ProcessInfo* getProcess() { return m_processInfo; }
         VanadisSyscall* getSyscall() { return m_syscall; }
       private:
@@ -247,28 +251,41 @@ private:
         std::vector< HardwareThreadInfo > m_hwThreadMap;
     };
 
-    SST::Output*                output;
-    StandardMem*                mem_if;
-    std::vector<SST::Link*>     core_links;
-    MMU_Lib::MMU*               m_mmu;
-    PhysMemManager*             m_physMemMgr;
-    AppRuntimeMemoryMod*        m_appRuntimeMemory;
-    std::vector< CoreInfo > m_coreInfoMap;
-    int                         m_processDebugLevel;
-    int                         m_pageSize;
-    int                         m_pageShift;
-    uint64_t                    m_phdr_address;
-    uint64_t                    m_stack_top;
+    VanadisSyscall* getSyscall( int core, int hwThread ) {
+        return m_coreInfoMap[core].getSyscall( hwThread ); 
+    }
 
-    std::queue<PageFault*>                          m_pendingFault;
-    std::map<std::string, VanadisELFInfo* >         m_elfMap; 
-    std::unordered_map<uint32_t,OS::ProcessInfo*>   m_threadMap;
-    std::map< VanadisELFInfo*, std::map<int,OS::Page*> >  m_elfPageCache;
-    std::queue<PageMemReq*>            m_blockMemoryWriteReqQ;
-    VanadisSyscall::SendMemReqFunc                  m_sendMemReqFunc;
+public:
 
+    void sendEvent( int core, SST::Event* ev ) {
+        core_links.at(core)->send( ev );
+    }
 
-    std::unordered_map<StandardMem::Request::id_t, VanadisSyscall*> m_memRespMap;
+    void setProcess( int core, int hwThread,  OS::ProcessInfo* process ) {
+        m_coreInfoMap.at(core).setProcess( hwThread, process );
+    }
+
+    Output* getOutput() { return output; }
+
+    void setSyscall( int core, int hwThread, VanadisSyscall* syscall) {
+        output->verbose(CALL_INFO, 1, 0,"core=%d hwThread=%d syscall=%p\n",core,hwThread, syscall);
+        m_coreInfoMap[core].setSyscall( hwThread, syscall ); 
+    }
+    void clearSyscall( int core, int hwThread ) {
+        output->verbose(CALL_INFO, 1, 0,"core=%d hwThread=%d syscall=%p\n",core, hwThread, getSyscall(core,hwThread));
+        m_coreInfoMap[core].clearSyscall( hwThread ); 
+    }
+
+    OS::HwThreadID* allocHwThread() {
+        if ( m_availHwThreads.empty() ) {
+            return nullptr;
+        } 
+
+        OS::HwThreadID* threadID = m_availHwThreads.front();
+        m_availHwThreads.pop();
+
+        return threadID;
+    }
 
     void removeThread( unsigned core, unsigned hwThread, unsigned tid ) {
 
@@ -289,21 +306,41 @@ private:
         }
     }
 
-    OS::HwThreadID* allocHwThread() {
-        if ( m_availHwThreads.empty() ) {
-            return nullptr;
-        } 
+    int getNewTid() { return m_currentTid++; }
+    MMU_Lib::MMU* getMMU() { return m_mmu; };
 
-        OS::HwThreadID* threadID = m_availHwThreads.front();
-        m_availHwThreads.pop();
-
-        return threadID;
+    void setThread( int tid, OS::ProcessInfo* thread ) {
+        m_threadMap[tid] = thread;
     }
+
+private:
+
+    SST::Output*                output;
+    std::vector<SST::Link*>     core_links;
+    std::vector< CoreInfo >     m_coreInfoMap;
+    MMU_Lib::MMU*               m_mmu;
+    StandardMem*                mem_if;
+    PhysMemManager*             m_physMemMgr;
+    AppRuntimeMemoryMod*        m_appRuntimeMemory;
+    int                         m_processDebugLevel;
+    int                         m_pageSize;
+    int                         m_pageShift;
+    uint64_t                    m_phdr_address;
+    uint64_t                    m_stack_top;
+
+    std::queue<PageFault*>                          m_pendingFault;
+    std::map<std::string, VanadisELFInfo* >         m_elfMap; 
+    std::unordered_map<uint32_t,OS::ProcessInfo*>   m_threadMap;
+    std::queue<PageMemReq*>                         m_blockMemoryWriteReqQ;
+
+    std::map< VanadisELFInfo*, std::map<int,OS::Page*> >            m_elfPageCache;
+    std::unordered_map<StandardMem::Request::id_t, VanadisSyscall*> m_memRespMap;
+
+
 
     std::queue< OS::HwThreadID* > m_availHwThreads;
 
     int m_currentTid;
-    int getNewTid() { return m_currentTid++; }
 
     OS::Page* allocPage() {
         auto page = new OS::Page(m_physMemMgr);

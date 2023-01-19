@@ -24,15 +24,15 @@ namespace Vanadis {
 
 class VanadisWriteSyscall : public VanadisSyscall {
 public:
-    VanadisWriteSyscall( Output* output, Link* link, OS::ProcessInfo* process, SendMemReqFunc* func, VanadisSyscallWriteEvent* event )
-        : VanadisSyscall( output, link, process, func, event, "write" ), m_numWritten(0)
+    VanadisWriteSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallWriteEvent* event )
+        : VanadisSyscall( os, coreLink, process, event, "write" ), m_numWritten(0)
     {
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-write] -> call is write( %" PRId64 ", 0x%0llx, %" PRId64 " )\n",
                             event->getFileDescriptor(), event->getBufferAddress(), event->getBufferCount());
 
         m_fd = process->getFileDescriptor( event->getFileDescriptor());
         if ( -1 == m_fd ) {
-            output->verbose(CALL_INFO, 16, 0,
+            m_output->verbose(CALL_INFO, 16, 0,
                             "[syscall-write] -> file handle %" PRId64
                             " is not currently open, return an error code.\n",
                             event->getFileDescriptor());
@@ -46,36 +46,32 @@ public:
             uint64_t length = vanadis_line_remainder(event->getBufferAddress(),64);
             length = event->getBufferCount() < length ? event->getBufferCount() : length;
 
-            sendMemRequest( new StandardMem::Read( process->virtToPhys(event->getBufferAddress()), length));
+            m_data.resize( length );
+            readMemory( event->getBufferAddress(), m_data );
         }
     }
 
-    bool handleMemResp( StandardMem::Request* req ) {
-        StandardMem::ReadResp* resp = dynamic_cast<StandardMem::ReadResp*>(req);
-        assert( nullptr != resp ); 
-        assert( resp->size > 0 );
+    void memReqIsDone() {
 
-        int retval = write( m_fd, resp->data.data(), resp->size);
+        int retval = write( m_fd, m_data.data(), m_data.size() );
         assert( retval >= 0 );
-        m_numWritten += resp->size;
-
-        delete resp;
+        m_numWritten += m_data.size();
 
         if ( m_numWritten == getEvent<VanadisSyscallWriteEvent*>()->getBufferCount() ) {
             setReturnSuccess( m_numWritten );
-            return true;
         } else {
             size_t length = getEvent<VanadisSyscallWriteEvent*>()->getBufferCount() - m_numWritten;
             if ( length > 64 ) { length = 64; }
-            
-            sendMemRequest( new StandardMem::Read( m_process->virtToPhys( getEvent<VanadisSyscallWriteEvent*>()->getBufferAddress() + m_numWritten ), length));
-            return false;
+
+            m_data.resize(length);
+            readMemory( getEvent<VanadisSyscallWriteEvent*>()->getBufferAddress() + m_numWritten, m_data );
         }
     } 
 
  private:
-    int                         m_fd;
-    size_t                      m_numWritten;
+    std::vector<uint8_t>    m_data;
+    int                     m_fd;
+    size_t                  m_numWritten;
 };
 
 } // namespace Vanadis
