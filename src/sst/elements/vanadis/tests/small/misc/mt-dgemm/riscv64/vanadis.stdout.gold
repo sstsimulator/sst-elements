@@ -10,8 +10,8 @@ Calculating matrix check...
 ===============================================================
 Final Sum is:         65.000000
 Memory for Matrices:  0.093750 MB
-Multiply time:        0.002107 seconds
+Multiply time:        0.005236 seconds
 FLOPs computed:       532480.000000
-GFLOP/s rate:         0.252720 GF/s
+GFLOP/s rate:         0.101696 GF/s
 ===============================================================
 
