@@ -46,10 +46,13 @@ sst.setProgramOption("stopAtCycle", "0 ns")
 
 # Tell SST what statistics handling we want
 sst.setStatisticLoadLevel(4)
+sst.setStatisticOutput("sst.statOutputConsole")
+
+full_exe_name = os.getenv("VANADIS_EXE", "./tests/small/" + testDir + "/" + exe +  "/" + isa + "/" + exe )
+exe_name= full_exe_name.split("/")[-1]
 
 verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
 os_verbosity = os.getenv("VANADIS_OS_VERBOSE", verbosity)
-#os_verbosity = os.getenv("VANADIS_OS_VERBOSE", 16)
 pipe_trace_file = os.getenv("VANADIS_PIPE_TRACE", "")
 lsq_entries = os.getenv("VANADIS_LSQ_ENTRIES", 32)
 
@@ -67,6 +70,9 @@ branch_arith_cycles = int(os.getenv("VANADIS_BRANCH_ARITH_CYCLES", 2))
 auto_clock_sys = os.getenv("VANADIS_AUTO_CLOCK_SYSCALLS", "no")
 
 cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "2.3GHz")
+
+numCpus = int(os.getenv("VANADIS_NUM_CORES", 1))
+numThreads = int(os.getenv("VANADIS_NUM_HW_THREADS", 1))
 
 vanadis_cpu_type = "vanadis.dbg_VanadisCPU"
 
@@ -97,8 +103,6 @@ else:
 vanadis_decoder = "vanadis.Vanadis" + vanadis_isa + "Decoder"
 vanadis_os_hdlr = "vanadis.Vanadis" + vanadis_isa + "OSHandler"
 
-numCpus=1
-numThreads=1
 
 protocol="MESI"
 
@@ -122,7 +126,7 @@ processList = (
         "env_count" : 2,
         "env0" : "HOME=/home/sdhammo",
         "env1" : "NEWHOME=/home/sdhammo2",
-        "exe" : "./tests/small/" + testDir + "/" +exe+ "/" + isa + "/" + exe,  
+        "exe" : full_exe_name,
     } ),
     #( 1, {
     #    "env_count" : 2, "env0" : "HOME=/home/sdhammo", "env1" : "NEWHOME=/home/sdhammo2", "argc" : 1, "exe" : "./tests/small/basic-io/hello-world/mipsel/hello-world",  
@@ -179,6 +183,9 @@ memCtrlParams = {
       "clock" : cpu_clock,
       "backend.mem_size" : physMemSize,
       "backing" : "malloc",
+      "initBacking": 1,
+      "addr_range_start": 0,
+      "addr_range_end": 0xffffffff,
       "debug_level" : 10,
       "debug" : 0,
 }
@@ -305,11 +312,14 @@ class CPU_Builder:
         cpu = sst.Component(prefix, vanadis_cpu_type)
         cpu.addParams( cpuParams )
         cpu.addParam( "core_id", cpuId )
+        cpu.enableAllStatistics()
 
         # CPU.decoder
         for n in range(numThreads):
             decode     = cpu.setSubComponent( "decoder"+str(n), vanadis_decoder )
             decode.addParams( decoderParams )
+
+            decode.enableAllStatistics()
 
             # CPU.decoder.osHandler 
             os_hdlr     = decode.setSubComponent( "os_handler", vanadis_os_hdlr )
@@ -318,10 +328,12 @@ class CPU_Builder:
             # CPU.decocer.branch_pred
             branch_pred = decode.setSubComponent( "branch_unit", "vanadis.VanadisBasicBranchUnit" )
             branch_pred.addParams( branchPredParams )
+            branch_pred.enableAllStatistics()
 
         # CPU.lsq
         cpu_lsq = cpu.setSubComponent( "lsq", "vanadis.VanadisBasicLoadStoreQueue" )
         cpu_lsq.addParams(lsqParams)
+        cpu_lsq.enableAllStatistics()
 
         # CPU.lsq mem interface which connects to D-cache 
         cpuDcacheIf = cpu_lsq.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
@@ -430,7 +442,7 @@ for i,process in processList:
         node_os.addParams( addParamsPrefix( "process" + str(num), process ) )
         num+=1
 
-print("total process",num)
+print("total hardware threads",num)
     
 # node OS MMU
 node_os_mmu = node_os.setSubComponent( "mmu", "mmu." + mmuType )
@@ -509,7 +521,6 @@ cpuBuilder = CPU_Builder()
 # build all CPUs
 nodeId = 0
 for cpu in range(numCpus):
-    print( cpu )
 
     prefix="node" + str(nodeId) + ".cpu" + str(cpu)
     os_hdlr, l2cache, dtlb, itlb = cpuBuilder.build(prefix, nodeId, cpu)
@@ -530,4 +541,3 @@ for cpu in range(numCpus):
     link_l2cache_2_rtr = sst.Link(prefix + ".link_l2cache_2_rtr")
     link_l2cache_2_rtr.connect( l2cache, (comp_chiprtr, "port" + str(cpu), "1ns") )
 
-print( "python configuration complete" )
