@@ -1,24 +1,24 @@
-&buf=0x7fffec18
-alignedPtr=0x7fffec80
-bufPtr=0x7fffec7c
-i=1 intPtr=0x7fffec7d
+&buf=0x7fffec58
+alignedPtr=0x7fffecc0
+bufPtr=0x7fffecbc
+i=1 intPtr=0x7fffecbd
 buf+1 deadbeef
-i=2 intPtr=0x7fffec7e
+i=2 intPtr=0x7fffecbe
 buf+2 deadbeef
-i=3 intPtr=0x7fffec7f
+i=3 intPtr=0x7fffecbf
 buf+3 deadbeef
-bufPtr=0x7fffec78
-i=1 longPtr=0x7fffec79
+bufPtr=0x7fffecb8
+i=1 longPtr=0x7fffecb9
 buf+1 deadbeef12345678
-i=2 longPtr=0x7fffec7a
+i=2 longPtr=0x7fffecba
 buf+2 deadbeef12345678
-i=3 longPtr=0x7fffec7b
+i=3 longPtr=0x7fffecbb
 buf+3 deadbeef12345678
-i=4 longPtr=0x7fffec7c
+i=4 longPtr=0x7fffecbc
 buf+4 deadbeef12345678
-i=5 longPtr=0x7fffec7d
+i=5 longPtr=0x7fffecbd
 buf+5 deadbeef12345678
-i=6 longPtr=0x7fffec7e
+i=6 longPtr=0x7fffecbe
 buf+6 deadbeef12345678
-i=7 longPtr=0x7fffec7f
+i=7 longPtr=0x7fffecbf
 buf+7 deadbeef12345678
