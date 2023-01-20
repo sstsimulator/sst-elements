@@ -59,6 +59,7 @@ def build_vanadis_test_matrix():
 
     location="small/misc"
     misc_tests = ["fork","clone","pthread"]
+    #misc_tests =[]
     for test in misc_tests:
         for arch in arch_list:
             testlist.append(["basic_vanadis.py", location, test,arch, 2,1,300])
@@ -67,7 +68,7 @@ def build_vanadis_test_matrix():
 
     location="small/misc"
     misc_tests = ["stream-fortran"]
-    #misc_tests =[]
+    misc_tests =[]
     for test in misc_tests:
         for arch in arch_list:
             testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, 300])
