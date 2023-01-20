@@ -24,29 +24,43 @@
 namespace SST {
 namespace Vanadis {
 
-template <typename I, typename T> class VanadisCache {
+enum class VanadisCacheRecordDeletion {
+    VANADIS_NO_DELETION,
+    VANADIS_PERFORM_DELETE,
+    VANADIS_PERFORM_DELETE_ARRAY
+};
+
+template <typename I, typename T, SST::Vanadis::VanadisCacheRecordDeletion D> class VanadisCache {
 public:
-    VanadisCache(const size_t cache_entries) { reset(cache_entries); }
+    VanadisCache(const size_t cache_entries) : max_entries(cache_entries) { reset(); }
 
     ~VanadisCache() {
-        ordering_q.clear();
-        data_values.clear();
+        clear();
     }
 
     void clear() {
-        for (auto next_value : data_values) {
-            delete next_value.second;
+        for (auto val_itr = data_values.begin(); val_itr != data_values.end(); val_itr++ ) {
+            switch(D) {
+                case SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE: 
+                {
+                    delete val_itr->second;
+                } break;
+                case SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE_ARRAY:
+                {
+                    delete[] val_itr->second;
+                } break;
+                case SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_NO_DELETION:
+                {} break;
+            }
         }
 
         ordering_q.clear();
         data_values.clear();
     }
 
-    void reset(const size_t cache_entries) {
+    void reset() {
         clear();
-
-        max_entries = cache_entries;
-        data_values.reserve(cache_entries);
+        data_values.reserve(max_entries);
     }
 
     bool contains(const I& value) const { return (data_values.find(value) != data_values.end()); }
@@ -88,14 +102,27 @@ private:
         ordering_q.pop_back();
 
         auto find_key = data_values.find(remove_key);
-        delete find_key->second;
+
+        switch(D) {
+            case SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE: 
+            {
+                delete find_key->second;
+            } break;
+            case SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE_ARRAY:
+            {
+                delete[] find_key->second;
+            } break;
+            case SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_NO_DELETION:
+            {} break;
+        }
+
         data_values.erase(find_key);
     }
 
     void send_key_to_front(const I& key) {
         bool found_key = false;
 
-        for (auto order_itr = ordering_q.cbegin(); order_itr != ordering_q.cend();) {
+        for (auto order_itr = ordering_q.begin(); order_itr != ordering_q.end();) {
             if (UNLIKELY(key == (*order_itr))) {
                 ordering_q.erase(order_itr);
                 found_key = true;
@@ -110,7 +137,7 @@ private:
         }
     }
 
-    size_t max_entries;
+    const size_t max_entries;
     std::list<I> ordering_q;
     std::unordered_map<I, T> data_values;
 };

@@ -3,7 +3,7 @@ l2cache.mesi.inclus: No MSHR lookup latency provided (mshr_latency_cycles)...int
  core0.reads : Accumulator : Sum.u64 = 1744; SumSQ.u64 = 1744; Count.u64 = 1744; Min.u64 = 1; Max.u64 = 1; 
  core0.writes : Accumulator : Sum.u64 = 1060; SumSQ.u64 = 1060; Count.u64 = 1060; Min.u64 = 1; Max.u64 = 1; 
  core0.llsc : Accumulator : Sum.u64 = 98; SumSQ.u64 = 98; Count.u64 = 98; Min.u64 = 1; Max.u64 = 1; 
- core0.llsc_success : Accumulator : Sum.u64 = 98; SumSQ.u64 = 98; Count.u64 = 98; Min.u64 = 1; Max.u64 = 1; 
+ core0.llsc_success : Accumulator : Sum.u64 = 95; SumSQ.u64 = 95; Count.u64 = 95; Min.u64 = 1; Max.u64 = 1; 
  l1cache0.mesi.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache0.mesi.stateEvent_GetS_I : Accumulator : Sum.u64 = 938; SumSQ.u64 = 938; Count.u64 = 938; Min.u64 = 1; Max.u64 = 1; 
  l1cache0.mesi.stateEvent_GetS_S : Accumulator : Sum.u64 = 208; SumSQ.u64 = 208; Count.u64 = 208; Min.u64 = 1; Max.u64 = 1; 

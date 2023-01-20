@@ -18,6 +18,7 @@
 
 #include "rdmaNic.h"
 
+
 using namespace SST::Interfaces;
 using namespace SST::MemHierarchy;
 
@@ -120,7 +121,8 @@ RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
     int numSrc = 3;
 
     int maxPending = params.find<int>("maxMemReqs",128);
-    m_memReqQ = new MemRequestQ( this, maxPending, maxPending/numSrc, numSrc );
+    //m_memReqQ = new MemRequestQ( this, maxPending, maxPending/numSrc, numSrc );
+    m_memReqQ = loadComponentExtension<MemRequestQ>( this, maxPending, maxPending/numSrc, numSrc );
 
 	m_handlers = new Handlers(this, &out);
 

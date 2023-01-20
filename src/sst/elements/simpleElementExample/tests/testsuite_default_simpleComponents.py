@@ -46,6 +46,9 @@ class testcase_simpleComponents(SSTTestCase):
 
     def test_basic_statistics_2(self):
         self.simple_components_template("basicStatistics2")
+    
+    def test_basic_simlifecycle(self):
+        self.simple_components_template("basicSimLifeCycle")
 
     #def test_simple_rng_component_marsaglia(self):
     #    self.simple_components_template("simpleRNGComponent_marsaglia", striptotail=1)
