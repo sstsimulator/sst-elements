@@ -33,21 +33,21 @@ def build_vanadis_test_matrix():
     #io_tests = []
     for test in io_tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, 300])
 
     location="small/basic-math"
     math_tests = ["sqrt-double","sqrt-float"]
     #math_tests = []
     for test in math_tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, 300])
 
     location="small/basic-ops"
     ops_tests = ["test-branch","test-shift"]
     #ops_tests = []
     for test in ops_tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, 300])
 
 
     location="small/misc"
@@ -55,7 +55,13 @@ def build_vanadis_test_matrix():
     #misc_tests =[]
     for test in misc_tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, 300])
+
+    location="small/misc"
+    misc_tests = ["fork","clone","pthread"]
+    for test in misc_tests:
+        for arch in arch_list:
+            testlist.append(["basic_vanadis.py", location, test,arch, 2,1,300])
 
     arch_list = ["riscv64"]
 
@@ -64,7 +70,7 @@ def build_vanadis_test_matrix():
     #misc_tests =[]
     for test in misc_tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, 300])
 
     # Process each line and crack up into an index, hash, options and sdl file
     for testnum, test_info in enumerate(testlist):
@@ -74,11 +80,13 @@ def build_vanadis_test_matrix():
         elftestdir = test_info[1]
         elffile = test_info[2]
         isa = test_info[3]
-        timeout_sec = test_info[4]
+        numCores = test_info[4]
+        numHwThreads = test_info[5]
+        timeout_sec = test_info[6]
         testname = "{0}_{1}_{2}".format(elftestdir.replace("/", "_"), elffile,isa)
 
         # Build the test_data structure
-        test_data = (testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec)
+        test_data = (testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, timeout_sec)
         vanadis_test_matrix.append(test_data)
 
 ################################################################################
@@ -134,17 +142,17 @@ class testcase_vanadis(SSTTestCase):
 #####
 
     @parameterized.expand(vanadis_test_matrix, name_func=gen_custom_name)
-    def test_vanadis_short_tests(self, testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec):
+    def test_vanadis_short_tests(self, testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, timeout_sec):
         self._checkSkipConditions( isa )
 
         if MakeTests:
             self.makeTest( testname, isa, elftestdir, elffile )
         log_debug("Running Vanadis test #{0} ({1}): elffile={4} in dir {3}, isa {5}; using sdl={2}".format(testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec))
-        self.vanadis_test_template(testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec)
+        self.vanadis_test_template(testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, timeout_sec)
 
 #####
 
-    def vanadis_test_template(self, testnum, testname, sdlfile, elftestdir, elffile, isa, testtimeout=120):
+    def vanadis_test_template(self, testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, testtimeout=120):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = "{0}/vanadis_tests/{1}/{2}/{3}".format(self.get_test_output_run_dir(), elftestdir,elffile,isa)
@@ -161,8 +169,9 @@ class testcase_vanadis(SSTTestCase):
         ref_sst_errfile = "{0}/{1}/{2}/{3}/sst.stderr.gold".format(test_path, elftestdir, elffile, isa)
         ref_os_outfile = "{0}/{1}/{2}/{3}/vanadis.stdout.gold".format(test_path, elftestdir, elffile, isa)
         ref_os_errfile = "{0}/{1}/{2}/{3}/vanadis.stderr.gold".format(test_path, elftestdir, elffile, isa)
-        os_outfile = "{0}/stdout-os".format(outdir)
-        os_errfile = "{0}/stderr-os".format(outdir)
+        # 100 is the pid
+        os_outfile = "{0}/stdout-100".format(outdir)
+        os_errfile = "{0}/stderr-100".format(outdir)
 
         # Set the Vanadis EXE path
         testfilepath = "{0}/{1}/{2}/{3}/{2}".format(test_path, elftestdir, elffile, isa )
@@ -171,6 +180,9 @@ class testcase_vanadis(SSTTestCase):
             os.environ['VANADIS_ISA'] = "MIPS"
         else:
             os.environ['VANADIS_ISA'] = "RISCV64"
+
+        os.environ['VANADIS_NUM_CORES'] = str(numCores)
+        os.environ['VANADIS_NUM_HW_THREADS'] = str(numHwThreads)
 
         testfile_exists = os.path.exists(testfilepath) and os.path.isfile(testfilepath)
         self.assertTrue(testfile_exists, "Vanadis test {0} does not exist".format(testfilepath))
@@ -182,7 +194,7 @@ class testcase_vanadis(SSTTestCase):
         if os_test_file(sst_errfile, "-s"):
             log_testing_note("vanadis test {0} has a Non-Empty Error File {1}".format(testDataFileName, sst_errfile))
 
-        # Verify that a stdout-os and stderr-os files were generated by the Vanadis run
+        # Verify that a stdout-* and stderr-* files were generated by the Vanadis run
         os_outfileexists = os.path.exists(os_outfile) and os.path.isfile(os_outfile)
         os_errfileexists = os.path.exists(os_errfile) and os.path.isfile(os_errfile)
         self.assertTrue(os_outfileexists, "Vanadis test outfile-os not found in directory {0}".format(outdir))
