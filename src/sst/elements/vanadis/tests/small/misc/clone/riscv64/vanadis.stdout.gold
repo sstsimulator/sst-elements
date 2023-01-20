@@ -1,0 +1,5 @@
+main() gettid()=100 getpid()=100
+threadEntry=0x102e4 stackPtr=0x19000 argPtr=0x7ffffc1c parentTidPtr=0x7ffffc18 tls=0x19000 childTidPtr=0x7ffffc14 
+clone ret=101, parentTidValue=101
+threadStart() gettid()=101 getpid()=100 arg=0xdeadbeef
+childTidValue=0
