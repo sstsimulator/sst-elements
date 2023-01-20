@@ -127,6 +127,7 @@ processList = (
         "env0" : "HOME=/home/sdhammo",
         "env1" : "NEWHOME=/home/sdhammo2",
         "exe" : full_exe_name,
+        "arg0" : exe_name,
     } ),
     #( 1, {
     #    "env_count" : 2, "env0" : "HOME=/home/sdhammo", "env1" : "NEWHOME=/home/sdhammo2", "argc" : 1, "exe" : "./tests/small/basic-io/hello-world/mipsel/hello-world",  
