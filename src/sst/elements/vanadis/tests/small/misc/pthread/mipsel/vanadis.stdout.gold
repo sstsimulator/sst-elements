@@ -1,0 +1,6 @@
+main() gettid()=100 getpid()=100 0
+after create thread_id=0x7ffffd84 23f84
+thread_start() gettid()=101 getpid()=100 arg=0xdeadbeef 0
+thread has exited
+thread_start2() gettid()=102 getpid()=100 arg=0xf00df00d 0
+thread2 has exited
