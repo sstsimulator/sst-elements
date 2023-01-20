@@ -134,7 +134,6 @@ os/voscallev.h \
 os/voscallfunc.h \
 os/include/fdTable.h \
 os/include/process.h \
-os/include/processGrp.h \
 os/include/virtMemMap.h \
 os/vphysmemmanager.h \
 os/vriscvcpuos.h \
@@ -205,7 +204,6 @@ os/syscall/unlink.h \
 os/syscall/unmap.h \
 os/syscall/write.h \
 os/syscall/writev.h \
-os/memmgr/vmemmgr.h \
 os/resp/voscallresp.h \
 os/resp/vosexitresp.h
 
