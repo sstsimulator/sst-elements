@@ -384,6 +384,39 @@ EXTRA_DIST = \
 	tests/small/misc/mt-dgemm/riscv64/vanadis.stderr.gold \
 	tests/small/misc/mt-dgemm/riscv64/vanadis.stdout.gold \
 \
+	tests/small/misc/fork/Makefile \
+	tests/small/misc/fork/fork.c \
+	tests/small/misc/fork/mipsel/fork \
+	tests/small/misc/fork/mipsel/sst.stdout.gold \
+	tests/small/misc/fork/mipsel/vanadis.stderr.gold \
+	tests/small/misc/fork/mipsel/vanadis.stdout.gold \
+	tests/small/misc/fork/riscv64/fork \
+	tests/small/misc/fork/riscv64/sst.stdout.gold \
+	tests/small/misc/fork/riscv64/vanadis.stderr.gold \
+	tests/small/misc/fork/riscv64/vanadis.stdout.gold \
+\
+	tests/small/misc/clone/Makefile \
+	tests/small/misc/clone/clone.c \
+	tests/small/misc/clone/mipsel/clone \
+	tests/small/misc/clone/mipsel/sst.stdout.gold \
+	tests/small/misc/clone/mipsel/vanadis.stderr.gold \
+	tests/small/misc/clone/mipsel/vanadis.stdout.gold \
+	tests/small/misc/clone/riscv64/clone \
+	tests/small/misc/clone/riscv64/sst.stdout.gold \
+	tests/small/misc/clone/riscv64/vanadis.stderr.gold \
+	tests/small/misc/clone/riscv64/vanadis.stdout.gold \
+\
+	tests/small/misc/pthread/Makefile \
+	tests/small/misc/pthread/pthread.c \
+	tests/small/misc/pthread/mipsel/pthread \
+	tests/small/misc/pthread/mipsel/sst.stdout.gold \
+	tests/small/misc/pthread/mipsel/vanadis.stderr.gold \
+	tests/small/misc/pthread/mipsel/vanadis.stdout.gold \
+	tests/small/misc/pthread/riscv64/pthread \
+	tests/small/misc/pthread/riscv64/sst.stdout.gold \
+	tests/small/misc/pthread/riscv64/vanadis.stderr.gold \
+	tests/small/misc/pthread/riscv64/vanadis.stdout.gold \
+\
 	tests/small/misc/hpcg/hpcg.dat \
 	tests/small/misc/hpcg/mipsel/hpcg \
 	tests/small/misc/hpcg/riscv64/hpcg \
