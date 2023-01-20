@@ -115,8 +115,6 @@ class ProcessInfo {
         
         initBrk( initial_brk );
 
-        printf("initial_brk=%" PRIx64 "\n",initial_brk);
-
         printRegions("after text/bss setup");
     }
 
