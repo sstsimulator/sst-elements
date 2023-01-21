@@ -57,7 +57,7 @@ public:
             setReturnFail( -errno );
             char buf[100];
             strerror_r(errno,buf,100);
-            m_output->verbose(CALL_INFO, 16, 0, "[syscall-unlinkat] unlink of %s failed, `%s`\n", m_filename.c_str(), buf );
+            m_output->verbose(CALL_INFO, 16, 0, "[syscall-unlinkat] unlink of %s failed, errno=%d `%s`\n", m_filename.c_str(), errno, buf );
         } else {
             setReturnSuccess(0);
         }
