@@ -443,7 +443,7 @@ for i,process in processList:
         node_os.addParams( addParamsPrefix( "process" + str(num), process ) )
         num+=1
 
-print("total hardware threads",num)
+print('total hardware threads ' + str(num) )
     
 # node OS MMU
 node_os_mmu = node_os.setSubComponent( "mmu", "mmu." + mmuType )
