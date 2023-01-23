@@ -126,7 +126,7 @@ uint64_t AppRuntimeMemory<Type>::configurePhdr(  Output* output, int page_size, 
     }
 
     if ( 8 == sizeof( Type ) ) {
-        const char*    exe_path            = elf_info->getBinaryPath();
+        const char*    exe_path            = elf_info->getBinaryPathShort();
         for ( int i = 0; i < std::strlen(exe_path); ++i ) {
             random_values_data_block.push_back(exe_path[i]);
         }
@@ -163,7 +163,7 @@ uint64_t AppRuntimeMemory<Type>::configureStack(  Output* output, int page_size,
 
         if ( "" == arg_value ) {
             if ( 0 == arg ) {
-                arg_value = elf_info->getBinaryPath();
+                arg_value = elf_info->getBinaryPathShort();
                 output->verbose(CALL_INFO, 8, 0, "--> auto-set \"%s\" to \"%s\"\n", arg_name, arg_value.c_str());
             }
             else {
