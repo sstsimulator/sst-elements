@@ -36,10 +36,11 @@ public:
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-unlink] path: \"%s\"\n", filename.c_str());
 
         if ( unlink( filename.c_str() ) ) {
-            setReturnFail( -errno );
+            auto myErrno = errno;
             char buf[100];
-            strerror_r(errno,buf,100);
-            m_output->verbose(CALL_INFO, 16, 0, "[syscall-unlink] unlink of %s failed, `%s`\n", filename.c_str(), buf );
+            auto str = strerror_r(errno,buf,100);
+            m_output->verbose(CALL_INFO, 16, 0, "[syscall-unlink] unlink of %s failed, `%s`\n", filename.c_str(), str );
+            setReturnFail( -myErrno );
         } else {
             setReturnSuccess( 0 );
         }
