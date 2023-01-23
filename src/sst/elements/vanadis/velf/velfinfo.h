@@ -564,6 +564,8 @@ public:
                 break;
             }
         }
+        printf("%s() `%s`\n",__func__,bin_path_short);
+        printf("%s() `%s`\n",__func__,bin_path);
     }
 
     const char* getBinaryPath() const { return bin_path; }
