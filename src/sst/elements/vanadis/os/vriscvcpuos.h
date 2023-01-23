@@ -47,15 +47,20 @@
 #define RISCV_O_TRUNC       01000
 #define RISCV_O_NONBLOCK    04000 
 #define RISCV_O_NDELAY      RISCV_O_NONBLOCK 
+#define RISCV_O_LARGEFILE   0100000 
 
 #ifndef SST_COMPILE_MACOSX
 #define RISCV_O_DIRECT      040000
-#define RISCV_O_LARGEFILE   0100000 
 #define RISCV_O_NOATIME     01000000  
 #define RISCV_O_PATH        010000000 
 #define RISCV_O_TMPFILE     020200000 
 #endif
 
+#define RISCV_MAP_ANONYMOUS 0x20
+#define RISCV_MAP_PRIVATE 0x2
+#define RISCV_MAP_FIXED 0x10
+
+#define RISCV_AT_FDCWD     -100
 
 #define RISCV_SIGCHLD 17
 
@@ -286,6 +291,14 @@ public:
             int64_t path_addr = getRegister( 11 );
             int64_t flags = getRegister( 12 );
 
+#ifdef SST_COMPILE_MACOSX
+            if (  RISCV_AT_FDCWD == dirFd ) {
+                dirFd = AT_FDCWD;                
+            } 
+#else
+            assert( RISCV_AT_FDCWD == dirFd );
+#endif
+
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to unlinkat( %" PRIu64 ", %" PRIu64 ", %#" PRIx64" )\n",dirFd,path_addr,flags);
 
             call_ev = new VanadisSyscallUnlinkatEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, dirFd,path_addr,flags);
@@ -301,15 +314,23 @@ public:
         } break;
 
         case VANADIS_SYSCALL_RISCV_OPENAT: {
-            uint64_t openat_dirfd = getRegister( 10 );
-            uint64_t openat_path_ptr = getRegister( 11 );
-            uint64_t openat_flags = getRegister( 12 );
-            uint64_t openat_mode = getRegister(13);
+            uint64_t dirfd = getRegister( 10 );
+            uint64_t path_ptr = getRegister( 11 );
+            uint64_t flags = getRegister( 12 );
+            uint64_t mode = getRegister(13);
+
+#ifdef SST_COMPILE_MACOSX
+            if (  RISCV_AT_FDCWD == dirfd ) {
+                dirfd = AT_FDCWD;                
+            } 
+#else
+            assert( RISCV_AT_FDCWD == dirfd );
+#endif
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to openat( %" PRIu64 ", %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ")\n",
-                    openat_dirfd, openat_path_ptr, openat_flags, openat_mode);
+                    dirfd, path_ptr, flags, mode);
 
-            call_ev = new VanadisSyscallOpenatEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, openat_dirfd, openat_path_ptr, convertFlags(openat_flags), openat_mode);
+            call_ev = new VanadisSyscallOpenatEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, dirfd, path_ptr, convertFlags(flags), mode);
         } break;
 
         case VANADIS_SYSCALL_RISCV_READV: {
@@ -463,6 +484,23 @@ public:
             int32_t fd = getRegister( 14 );
             int64_t offset = getRegister( 15 );
 
+
+            int32_t hostFlags = 0;
+
+            if ( map_flags & RISCV_MAP_ANONYMOUS ) {
+                hostFlags |= MAP_ANONYMOUS; 
+                map_flags &= ~RISCV_MAP_ANONYMOUS;
+            }
+            if ( map_flags & RISCV_MAP_PRIVATE ) {
+                hostFlags |= MAP_PRIVATE; 
+                map_flags &= ~RISCV_MAP_PRIVATE;
+            }
+            if ( map_flags & RISCV_MAP_FIXED ) {
+                hostFlags |= MAP_FIXED; 
+                map_flags &= ~RISCV_MAP_FIXED;
+            }
+            assert( map_flags == 0 );
+
 /*
  RISC has 8 arguments fix this
 */
@@ -474,7 +512,7 @@ public:
                             ", %d, %" PRIu64 ")\n",
                             map_addr, map_len, map_prot, map_flags, fd, offset );
 
-            call_ev = new VanadisSyscallMemoryMapEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, map_addr, map_len, map_prot, map_flags,
+            call_ev = new VanadisSyscallMemoryMapEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, map_addr, map_len, map_prot, hostFlags,
                                                        0, 0);
         } break;
 
@@ -557,14 +595,19 @@ protected:
         RISC_CONVERT( NONBLOCK );
         RISC_CONVERT( NDELAY );
 
-#ifndef SST_COMPILE_MACOSX
+#ifdef SST_COMPILE_MACOSX
+        flags &= ~RISCV_O_LARGEFILE; 
+#else
         RISC_CONVERT( DIRECT );
         RISC_CONVERT( LARGEFILE );
         RISC_CONVERT( NOATIME );
         RISC_CONVERT( PATH );
         RISC_CONVERT( TMPFILE );
 #endif
-        assert( 0 == flags );
+        if ( flags ) {
+            printf("%s() all flags have not been converted %#x\n",__func__,flags);
+            assert( 0 );
+        }
 
         return out;
     }

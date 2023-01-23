@@ -67,6 +67,7 @@
 #define MIPS_MAP_FIXED   0x010
 #define MIPS_MAP_PRIVATE   0x2
 
+#define MIPS_AT_FDCWD -100
 
 #define VANADIS_SYSCALL_MIPS_CLONE 4120
 #define VANADIS_SYSCALL_MIPS_MPROTECT 4125
@@ -311,6 +312,14 @@ public:
             int32_t path_addr = getRegister( 5 );
             int32_t flags = getRegister( 6 );
 
+#ifdef SST_COMPILE_MACOSX
+            if (  MIPS_AT_FDCWD == dirFd ) {
+                dirFd = AT_FDCWD;
+            }
+#else
+            assert( MIPS_AT_FDCWD == dirFd );
+#endif
+
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] unlinkat( %d, %" PRId32 ", %#" PRIx32" )\n",dirFd,path_addr,flags);
 
             call_ev = new VanadisSyscallUnlinkatEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, dirFd,path_addr,flags);
@@ -352,6 +361,14 @@ public:
 
             const uint16_t phys_reg_7 = isaTable->getIntPhysReg(7);
             uint64_t openat_mode = regFile->getIntReg<uint64_t>(phys_reg_7);
+
+#ifdef SST_COMPILE_MACOSX
+            if (  MIPS_AT_FDCWD == openat_dirfd ) {
+                openat_dirfd = AT_FDCWD;
+            }
+#else
+            assert( MIPS_AT_FDCWD == openat_dirFd );
+#endif
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] openat()\n");
             call_ev = new VanadisSyscallOpenatEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, openat_dirfd, openat_path_ptr, convertFlags(openat_flags), openat_mode);
