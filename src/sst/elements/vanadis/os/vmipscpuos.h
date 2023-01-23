@@ -367,7 +367,7 @@ public:
                 openat_dirfd = AT_FDCWD;
             }
 #else
-            assert( MIPS_AT_FDCWD == openat_dirFd );
+            assert( MIPS_AT_FDCWD == openat_dirfd );
 #endif
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] openat()\n");
