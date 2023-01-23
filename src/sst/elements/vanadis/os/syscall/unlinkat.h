@@ -63,7 +63,7 @@ public:
             }
             strerror_r(errno,buf,100);
 #else
-            auto str = strerror_r(errno,buf,100);
+            str = strerror_r(errno,buf,100);
 #endif
             m_output->verbose(CALL_INFO, 16, 0, "[syscall-unlinkat] unlink of %s failed, errno=%d `%s`\n", m_filename.c_str(), errno, str );
             setReturnFail( -myErrno );
