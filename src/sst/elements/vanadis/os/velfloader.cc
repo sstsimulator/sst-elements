@@ -43,11 +43,12 @@ void loadElfFile( Output* output, Interfaces::StandardMem* mem_if, MMU_Lib::MMU*
     assert(0);
     uint64_t initial_brk = 0;
 
-    output->verbose( CALL_INFO, 2, 0, "-> Loading %s, to locate program secs ...\n", elf_info->getBinaryPath());
-    FILE* exec_file = fopen(elf_info->getBinaryPath(), "rb");
+    auto path = elf_info->getBinaryPath(); 
+    output->verbose( CALL_INFO, 2, 0, "-> Loading %s, to locate program secs ...\n", path);
+    FILE* exec_file = fopen(path, "rb");
 
     if ( nullptr == exec_file ) {
-        output->fatal(CALL_INFO, -1, "Error: unable to open %s\n", elf_info->getBinaryPath());
+        output->fatal(CALL_INFO, -1, "Error: unable to open %s\n", path );
     }
 
     output->verbose(CALL_INFO, 2, 0, "-> populating memory contents with info from the executable...\n");
@@ -114,11 +115,12 @@ void loadElfFile( Output* output, Interfaces::StandardMem* mem_if, MMU_Lib::MMU*
 
 uint8_t* readElfPage( Output* output, VanadisELFInfo* elf_info, int vpn, int page_size ) {
     uint64_t virtAddr = vpn<<12;  
-    output->verbose( CALL_INFO, 2, 0, "-> Loading %s, to locate program sections ...\n", elf_info->getBinaryPath());
-    output->verbose( CALL_INFO, 2, 0,"%s vpn=%d addr=%#" PRIx64 " page_size=%d\n",elf_info->getBinaryPath(),vpn,virtAddr,page_size);
+    auto path = elf_info->getBinaryPath();
+    output->verbose( CALL_INFO, 2, 0, "-> Loading %s, to locate program sections ...\n", path);
+    output->verbose( CALL_INFO, 2, 0,"%s vpn=%d addr=%#" PRIx64 " page_size=%d\n",path,vpn,virtAddr,page_size);
     FILE* exec_file = fopen(elf_info->getBinaryPath(), "rb");
     if ( nullptr == exec_file ) {
-        output->fatal(CALL_INFO, -1, "Error: unable to open %s\n", elf_info->getBinaryPath());
+        output->fatal(CALL_INFO, -1, "Error: unable to open %s\n", path);
     }
     uint8_t* data = new uint8_t[page_size];
     bzero(data, page_size); 
