@@ -316,8 +316,6 @@ public:
             if (  MIPS_AT_FDCWD == dirFd ) {
                 dirFd = AT_FDCWD;
             }
-#else
-            assert( MIPS_AT_FDCWD == dirFd );
 #endif
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] unlinkat( %d, %" PRId32 ", %#" PRIx32" )\n",dirFd,path_addr,flags);
@@ -366,8 +364,6 @@ public:
             if (  MIPS_AT_FDCWD == openat_dirfd ) {
                 openat_dirfd = AT_FDCWD;
             }
-#else
-            assert( MIPS_AT_FDCWD == openat_dirfd );
 #endif
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] openat()\n");

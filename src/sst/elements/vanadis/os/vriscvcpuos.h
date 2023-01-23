@@ -295,8 +295,6 @@ public:
             if (  RISCV_AT_FDCWD == dirFd ) {
                 dirFd = AT_FDCWD;                
             } 
-#else
-            assert( RISCV_AT_FDCWD == dirFd );
 #endif
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to unlinkat( %" PRIu64 ", %" PRIu64 ", %#" PRIx64" )\n",dirFd,path_addr,flags);
@@ -323,8 +321,6 @@ public:
             if (  RISCV_AT_FDCWD == dirfd ) {
                 dirfd = AT_FDCWD;                
             } 
-#else
-            assert( RISCV_AT_FDCWD == dirfd );
 #endif
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to openat( %" PRIu64 ", %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ")\n",
