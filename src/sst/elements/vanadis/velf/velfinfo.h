@@ -568,8 +568,13 @@ public:
         printf("%s() `%s`\n",__func__,bin_path);
     }
 
-    const char* getBinaryPath() const { return bin_path; }
-    const char* getBinaryPathShort() const { return bin_path_short; }
+    const char* getBinaryPath() const { 
+        printf("%s() `%s`\n",__func__,bin_path);
+        return bin_path; }
+    const char* getBinaryPathShort() const { 
+        printf("%s() `%s`\n",__func__,bin_path_short);
+        return bin_path_short; 
+    }
 
     uint64_t getEntryPoint() const { return elf_entry_point; }
     VanadisELFEndianness getEndian() const { return elf_endian; }
