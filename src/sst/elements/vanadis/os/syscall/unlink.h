@@ -38,7 +38,12 @@ public:
         if ( unlink( filename.c_str() ) ) {
             auto myErrno = errno;
             char buf[100];
-            auto str = strerror_r(errno,buf,100);
+            char* str = buf;
+#ifdef SST_COMPILE_MACOSX
+            strerror_r(errno,buf,100);
+#else
+            str = strerror_r(errno,buf,100);
+#endif
             m_output->verbose(CALL_INFO, 16, 0, "[syscall-unlink] unlink of %s failed, `%s`\n", filename.c_str(), str );
             setReturnFail( -myErrno );
         } else {

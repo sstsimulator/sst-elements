@@ -54,14 +54,17 @@ public:
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-unlinkat] path: \"%s\"\n", m_filename.c_str());
 
         if ( unlinkat( m_dirFd, m_filename.c_str(), getEvent<VanadisSyscallUnlinkatEvent*>()->getFlags() ) ) {
-        auto myErrno = errno; 
+            auto myErrno = errno; 
+            char buf[100];
+            char* str = buf;
 #ifdef SST_COMPILE_MACOSX
             if ( myErrno == EBADF ) {
                 myErrno = ENOENT;
             }
-#endif
-            char buf[100];
+            strerror_r(errno,buf,100);
+#else
             auto str = strerror_r(errno,buf,100);
+#endif
             m_output->verbose(CALL_INFO, 16, 0, "[syscall-unlinkat] unlink of %s failed, errno=%d `%s`\n", m_filename.c_str(), errno, str );
             setReturnFail( -myErrno );
         } else {

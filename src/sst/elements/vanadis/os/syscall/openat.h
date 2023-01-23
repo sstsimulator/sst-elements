@@ -54,17 +54,20 @@ public:
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-openat] path: \"%s\"\n", m_filename.c_str());
 
         int fd = m_process->openFile( m_filename.c_str(), m_dirFd, getEvent<VanadisSyscallOpenatEvent*>()->getFlags(), getEvent<VanadisSyscallOpenatEvent*>()->getMode() );
-        // we need to save this because any other library calls could change it
-        auto myErrno = errno;
 
         if ( fd < 0 ) {
+            // we need to save this because any other library calls could change it
+            auto myErrno = errno;
+            char buf[100];
+            char* str = buf;
 #ifdef SST_COMPILE_MACOSX
             if ( myErrno == EROFS ) {
                 myErrno = EACCES;
             }
+            strerror_r(myErrno,buf,100); 
+#else
+            str = strerror_r(myErrno,buf,100); 
 #endif
-            char buf[100];
-            auto str = strerror_r(myErrno,buf,100); 
             m_output->verbose(CALL_INFO, 16, 0, "[syscall-openat] open of %s failed, errno=%d `%s`\n", m_filename.c_str(), myErrno, str );
 
             setReturnFail( -myErrno );
