@@ -128,7 +128,7 @@ printf("%s() %#lx\n",__func__,rand_values_address);
 
     if ( 8 == sizeof( Type ) ) {
         const char*    exe_path            = elf_info->getBinaryPathShort();
-printf("%s() %zu\n",strlen(exe_path));
+printf("%s() %zu\n",__func__,strlen(exe_path));
         for ( int i = 0; i < std::strlen(exe_path); ++i ) {
             random_values_data_block.push_back(exe_path[i]);
         }
