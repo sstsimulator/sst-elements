@@ -268,11 +268,13 @@ public:
     Output* getOutput() { return output; }
 
     void setSyscall( int core, int hwThread, VanadisSyscall* syscall) {
-        output->verbose(CALL_INFO, 1, 0,"core=%d hwThread=%d syscall=%p\n",core,hwThread, syscall);
+        //output->verbose(CALL_INFO, 1, 0,"core=%d hwThread=%d syscall=%p\n",core,hwThread, syscall);
+        output->verbose(CALL_INFO, 1, 0,"core=%d hwThread=%d\n",core,hwThread);
         m_coreInfoMap[core].setSyscall( hwThread, syscall ); 
     }
     void clearSyscall( int core, int hwThread ) {
-        output->verbose(CALL_INFO, 1, 0,"core=%d hwThread=%d syscall=%p\n",core, hwThread, getSyscall(core,hwThread));
+        //output->verbose(CALL_INFO, 1, 0,"core=%d hwThread=%d syscall=%p\n",core, hwThread, getSyscall(core,hwThread));
+        output->verbose(CALL_INFO, 1, 0,"core=%d hwThread=%d\n",core, hwThread );
         m_coreInfoMap[core].clearSyscall( hwThread ); 
     }
 
