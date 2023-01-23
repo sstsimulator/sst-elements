@@ -118,6 +118,7 @@ uint64_t AppRuntimeMemory<Type>::configurePhdr(  Output* output, int page_size, 
     phdr_data_block.insert( phdr_data_block.end(), 64, 0 );
 
     const uint64_t rand_values_address = phdr_address + phdr_data_block.size();
+printf("%s() %#lx\n",__func__,rand_values_address);
 
     std::vector<uint8_t>& random_values_data_block = phdr_data_block;
 
@@ -127,6 +128,7 @@ uint64_t AppRuntimeMemory<Type>::configurePhdr(  Output* output, int page_size, 
 
     if ( 8 == sizeof( Type ) ) {
         const char*    exe_path            = elf_info->getBinaryPathShort();
+printf("%s() %zu\n",strlen(exe_path));
         for ( int i = 0; i < std::strlen(exe_path); ++i ) {
             random_values_data_block.push_back(exe_path[i]);
         }
@@ -137,6 +139,7 @@ uint64_t AppRuntimeMemory<Type>::configurePhdr(  Output* output, int page_size, 
 
     // pad to full page 
     phdr_data_block.insert( phdr_data_block.end(), page_size - (phdr_data_block.size() % page_size), 0 );
+printf("%s() %#lx %zu\n",__func__,rand_values_address,phdr_data_block.size());
 
     return rand_values_address;
 }
