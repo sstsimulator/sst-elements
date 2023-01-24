@@ -41,7 +41,7 @@ class ProcessInfo {
 
     ProcessInfo( ) : m_pid(-1), m_fileTable(nullptr), m_virtMemMap(nullptr), m_tidAddress(0) { }
     
-    ProcessInfo( const ProcessInfo& obj, unsigned pid, unsigned debug_level = 0 ) : m_pid(pid), m_tid(pid), m_tidAddress(0) { 
+    ProcessInfo( const ProcessInfo& obj, unsigned pid, unsigned debug_level = 0 ) : m_pid(pid), m_tid(pid), m_uid(8000), m_gid(1000), m_tidAddress(0) { 
 
         char buffer[100];
         snprintf(buffer,100,"@t::ProcessInfo::@p():@l ");
@@ -69,7 +69,8 @@ class ProcessInfo {
     }
 
     ProcessInfo( MMU_Lib::MMU* mmu, PhysMemManager* physMemMgr, unsigned pid, VanadisELFInfo* elfInfo, int debug_level, unsigned pageSize, Params& params )
-        : m_mmu(mmu), m_physMemMgr(physMemMgr), m_pid(pid), m_ppid(0), m_pgid(pid), m_tid(pid), m_elfInfo(elfInfo), m_pageSize(pageSize), m_params(params), m_tidAddress(0)
+        : m_mmu(mmu), m_physMemMgr(physMemMgr), m_pid(pid), m_ppid(0), m_pgid(pid), m_tid(pid), m_uid(8000), m_gid(1000),
+          m_elfInfo(elfInfo), m_pageSize(pageSize), m_params(params), m_tidAddress(0)
     {
         uint64_t initial_brk = 0;
         char buffer[100];
@@ -275,6 +276,8 @@ class ProcessInfo {
     unsigned gettid() { return m_tid; }
     unsigned getppid() { return m_ppid; }
     unsigned getpgid() { return m_pgid; }
+    unsigned getuid() { return m_uid; }
+    unsigned getgid() { return m_gid; }
 
     int closeFile( int fd ) {
         return m_fileTable->close( fd );
@@ -327,6 +330,8 @@ class ProcessInfo {
     unsigned m_tid;
     unsigned m_ppid;
     unsigned m_pgid;
+    unsigned m_uid;
+    unsigned m_gid;
     unsigned m_core;
     unsigned m_hwThread;
     uint64_t m_tidAddress;
