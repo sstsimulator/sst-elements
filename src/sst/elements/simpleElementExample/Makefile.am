@@ -23,7 +23,11 @@ libsimpleElementExample_la_SOURCES = \
 	basicParams.cc \
 	basicSimLifeCycleEvent.h \
 	basicSimLifeCycle.h \
-	basicSimLifeCycle.cc
+	basicSimLifeCycle.cc \
+	basicSubComponent_component.h \
+	basicSubComponent_component.cc \
+	basicSubComponent_subcomponent.h \
+	basicSubComponent_subcomponent.cc
 
 deprecated_libsimpleElementExample_sources =
 
@@ -43,6 +47,7 @@ EXTRA_DIST = \
     tests/basicSimLifeCycle.py \
     tests/basicStatistics0.py \
     tests/basicStatistics2.py \
+    tests/basicSubComponent.py \
     tests/refFiles/basicClocks.out \
     tests/refFiles/basicLinks.out \
     tests/refFiles/basicParams.out \
@@ -51,6 +56,7 @@ EXTRA_DIST = \
     tests/refFiles/basicStatistics0.out \
     tests/refFiles/basicStatistics1.out \
     tests/refFiles/basicStatistics2.out \
+    tests/refFiles/basicSubComponent.out \
     tests/refFiles/example0.out \
     tests/refFiles/example1.out
 
