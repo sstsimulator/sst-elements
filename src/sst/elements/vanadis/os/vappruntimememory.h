@@ -143,6 +143,12 @@ uint64_t AppRuntimeMemory<Type>::configurePhdr(  Output* output, int page_size, 
     // pad to full page 
     phdr_data_block.insert( phdr_data_block.end(), page_size - (phdr_data_block.size() % page_size), 0 );
 
+    for ( int j = 0; j < phdr_data_block.size(); j++ ) {
+        if ( j % 64 == 0 ) printf("\n");
+        printf("%02x",phdr_data_block[j]);
+    }
+    printf("\n");
+
     return rand_values_address;
 }
 
