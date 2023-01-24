@@ -121,7 +121,7 @@ class SimpleTLB : public TLB {
         for ( int i = 0; i<vec.size(); i++ ) {
             auto entry = vec.at(i); 
             m_dbg.debug(CALL_INFO,1,0,"vpn=%#lx, tag=%#lx ppn %#lx -> %#lx perms %#x -> %#x \n",entry.tag(), entry.ppn(), ppn, entry.perms(), perms );
-            if ( tag == entry.tag() ) {
+            if ( entry.isValid() && tag == entry.tag() ) {
                 vec.at( i ).init( tag, ppn, perms );
                 return;
             }
