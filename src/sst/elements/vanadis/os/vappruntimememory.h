@@ -22,6 +22,8 @@
 #include <string>
 #include "sst/core/interfaces/stdMem.h"
 #include <sst/core/module.h>
+#include <sst/core/rng/marsaglia.h>
+
 
 #include "velf/velfinfo.h"
 #include "util/vdatacopy.h"
@@ -118,17 +120,18 @@ uint64_t AppRuntimeMemory<Type>::configurePhdr(  Output* output, int page_size, 
     phdr_data_block.insert( phdr_data_block.end(), 64, 0 );
 
     const uint64_t rand_values_address = phdr_address + phdr_data_block.size();
-printf("%s() %#lx\n",__func__,rand_values_address);
 
     std::vector<uint8_t>& random_values_data_block = phdr_data_block;
 
+    RNG::MarsagliaRNG rng(11, 272727);
+
     for ( int i = 0; i < 8; ++i ) {
-        random_values_data_block.push_back(rand() % 255);
+        auto val = rng.generateNextUInt32() % 255;
+        random_values_data_block.push_back(val);
     }
 
     if ( 8 == sizeof( Type ) ) {
         const char*    exe_path            = elf_info->getBinaryPathShort();
-printf("%s() %zu\n",__func__,strlen(exe_path));
         for ( int i = 0; i < std::strlen(exe_path); ++i ) {
             random_values_data_block.push_back(exe_path[i]);
         }
@@ -139,7 +142,6 @@ printf("%s() %zu\n",__func__,strlen(exe_path));
 
     // pad to full page 
     phdr_data_block.insert( phdr_data_block.end(), page_size - (phdr_data_block.size() % page_size), 0 );
-printf("%s() %#lx %zu\n",__func__,rand_values_address,phdr_data_block.size());
 
     return rand_values_address;
 }
@@ -462,6 +464,12 @@ uint64_t AppRuntimeMemory<Type>::configureStack(  Output* output, int page_size,
     // get a page aligned base of the stack 
     uint64_t page_aligned_stack_addr = start_stack_address & ~(page_size - 1);
     size_t pad = start_stack_address - page_aligned_stack_addr;
+
+    for ( int j = 0; j < stack_data.size(); j++ ) {
+        if ( j % 64 == 0 ) printf("\n");
+        printf("%02x",stack_data[j]);
+    }
+    printf("\n");
 
     // this results in a reallocation and copy of the vector
     stack_data.insert( stack_data.begin(), pad, 0 );
