@@ -1,6 +1,7 @@
 import os
 import sst
-
+mh_debug_level=10
+mh_debug=1
 dbgAddr=0
 stopDbg=0
 
@@ -11,7 +12,7 @@ isa="riscv64"
 
 testDir="basic-io"
 exe = "hello-world"
-#exe = "hello-world-cpp"
+exe = "hello-world-cpp"
 #exe = "openat"
 #exe = "printf-check"
 #exe = "read-write"
@@ -52,7 +53,7 @@ full_exe_name = os.getenv("VANADIS_EXE", "./tests/small/" + testDir + "/" + exe 
 exe_name= full_exe_name.split("/")[-1]
 
 verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
-os_verbosity = os.getenv("VANADIS_OS_VERBOSE", verbosity)
+os_verbosity = os.getenv("VANADIS_OS_VERBOSE", 16)
 pipe_trace_file = os.getenv("VANADIS_PIPE_TRACE", "")
 lsq_entries = os.getenv("VANADIS_LSQ_ENTRIES", 32)
 
@@ -144,8 +145,8 @@ osl1cacheParams = {
     "cache_line_size" : "64",
     "cache_size" : "32 KB",
     "L1" : "1",
-    "debug" : 0,
-    "debug_level" : 11
+    "debug" : mh_debug,
+    "debug_level" : mh_debug_level,
 }
 
 mmuParams = {
@@ -169,8 +170,8 @@ memRtrParams ={
 dirCtrlParams = {
       "coherence_protocol" : protocol,
       "entry_cache_size" : "1024",
-      "debug" : 0,
-      "debug_level" : 10,
+      "debug" : mh_debug,
+      "debug_level" : mh_debug_level,
       "addr_range_start" : "0x0",
       "addr_range_end" : "0xFFFFFFFF"
 }
@@ -187,8 +188,9 @@ memCtrlParams = {
       "initBacking": 1,
       "addr_range_start": 0,
       "addr_range_end": 0xffffffff,
-      "debug_level" : 10,
-      "debug" : 0,
+      "debug_level" : mh_debug_level,
+      "debug" : mh_debug,
+
 }
 
 memParams = {
@@ -263,8 +265,8 @@ l1dcacheParams = {
     "cache_line_size" : "64",
     "cache_size" : "32 KB",
     "L1" : "1",
-    "debug" : 0,
-    "debug_level" : 11
+    "debug" : mh_debug,
+    "debug_level" : mh_debug_level,
 }
 
 l1icacheParams = {
@@ -278,8 +280,8 @@ l1icacheParams = {
     "prefetcher" : "cassini.NextBlockPrefetcher",
     "prefetcher.reach" : 1,
     "L1" : "1",
-    "debug" : 0,
-    "debug_level" : 11
+    "debug" : mh_debug,
+    "debug_level" : mh_debug_level,
 }
 
 l2cacheParams = {
@@ -290,6 +292,8 @@ l2cacheParams = {
     "associativity" : "16",
     "cache_line_size" : "64",
     "cache_size" : "1MB",
+    "debug" : mh_debug,
+    "debug_level" : mh_debug_level,
 }
 busParams = { 
     "bus_frequency" : cpu_clock, 
