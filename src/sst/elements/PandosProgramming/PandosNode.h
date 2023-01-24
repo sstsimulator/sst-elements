@@ -3,6 +3,7 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <vector>
+#include <cstdint>
 
 namespace SST {
 namespace PandosProgramming {
@@ -23,12 +24,15 @@ public:
         )
         // Document the parameters that this component accepts
         SST_ELI_DOCUMENT_PARAMS(
-                {"exampleParameter", "An example parameter.", NULL},                
+                {"num_cores", "Number of cores on PandoNode", NULL},
+                {"instructions_per_task", "Instructions per task", NULL},
+                {"program_binary_fname", "Program binary file name", NULL},
         )
         // Document the ports that this component accepts
-        // SST_ELI_DOCUMENT_PORTS(
-        //         {"port",  "Link to another component", { "simpleElementExample.basicEvent", ""} }
-        // )
+        SST_ELI_DOCUMENT_PORTS(
+                {"port",  "Link to another component", { "PandosProgramming.PandosEvent", ""} }
+        )
+
         /**
          * Constructors/Destructors
          */
@@ -49,7 +53,11 @@ public:
         SST::Output *out;
 
         // Links to other nodes
-        std::vector<SST::Link*> links;
+        SST::Link* port;
+
+        int32_t num_cores; //!< The number of cores in this node
+        int32_t instr_per_task; //!< The number of instructions per task
+        std::string program_binary_fname; //!< The name of the program binary to load
 };
 
 }
