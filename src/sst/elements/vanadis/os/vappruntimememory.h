@@ -321,19 +321,26 @@ uint64_t AppRuntimeMemory<Type>::configureStack(  Output* output, int page_size,
 
     // Real UID
     vanadis_vec_copy_in<Type>(aux_data_block, VANADIS_AT_UID);
-    vanadis_vec_copy_in<Type>(aux_data_block, (Type)getuid());
+    vanadis_vec_copy_in<Type>(aux_data_block, (Type)processInfo->getuid());
 
     // Effective UID
     vanadis_vec_copy_in<Type>(aux_data_block, VANADIS_AT_EUID);
-    vanadis_vec_copy_in<Type>(aux_data_block, (Type)geteuid());
+    vanadis_vec_copy_in<Type>(aux_data_block, (Type)processInfo->getuid());
 
     // Real GID
     vanadis_vec_copy_in<Type>(aux_data_block, VANADIS_AT_GID);
-    vanadis_vec_copy_in<Type>(aux_data_block, (Type)getgid());
+    vanadis_vec_copy_in<Type>(aux_data_block, (Type)processInfo->getgid());
 
     // Effective GID
     vanadis_vec_copy_in<Type>(aux_data_block, VANADIS_AT_EGID);
-    vanadis_vec_copy_in<Type>(aux_data_block, (Type)getegid());
+    vanadis_vec_copy_in<Type>(aux_data_block, (Type)processInfo->getgid());
+
+    for ( int j = 0; j < aux_data_block.size(); j++ ) {
+        if ( j % 64 == 0 ) printf("\n");
+        printf("%02x",aux_data_block[j]);
+    }
+    printf(" 1\n");
+
 
     // D-Cache Line Size
     vanadis_vec_copy_in<Type>(aux_data_block, VANADIS_AT_DCACHEBSIZE);
@@ -424,16 +431,34 @@ uint64_t AppRuntimeMemory<Type>::configureStack(  Output* output, int page_size,
         vanadis_vec_copy_in<Type>(
                 stack_data, (Type)(arg_env_data_start + arg_data_block.size() + env_start_offsets[i]));
     }
+    for ( int j = 0; j < stack_data.size(); j++ ) {
+        if ( j % 64 == 0 ) printf("\n");
+        printf("%02x",stack_data[j]);
+    }
+    printf(" 1\n");
+
 
     vanadis_vec_copy_in<Type>(stack_data, 0);
 
     for ( size_t i = 0; i < aux_data_block.size(); ++i ) {
         stack_data.push_back(aux_data_block[i]);
     }
+    for ( int j = 0; j < stack_data.size(); j++ ) {
+        if ( j % 64 == 0 ) printf("\n");
+        printf("%02x",stack_data[j]);
+    }
+    printf("2 \n");
+
 
     for ( size_t i = 0; i < arg_data_block.size(); ++i ) {
         stack_data.push_back(arg_data_block[i]);
     }
+    for ( int j = 0; j < stack_data.size(); j++ ) {
+        if ( j % 64 == 0 ) printf("\n");
+        printf("%02x",stack_data[j]);
+    }
+    printf(" 3\n");
+
 
     for ( size_t i = 0; i < env_data_block.size(); ++i ) {
         stack_data.push_back(env_data_block[i]);
