@@ -70,7 +70,7 @@ basicSubComponent_Component::basicSubComponent_Component(ComponentId_t id, Param
         // Parameter 3: Index in slot to load into
         // Parameter 4: Whether the subcomponent can access our statistics and/or ports
         // Parameter 5: Parameters to pass the SubComponent constructor
-        loadAnonymousSubComponent<basicSubComponentAPI>("simpleElementExample.basicSubComponentIncrement",
+        computeUnit = loadAnonymousSubComponent<basicSubComponentAPI>("simpleElementExample.basicSubComponentIncrement",
                 "computeUnit", 0, ComponentInfo::SHARE_NONE, params);
 
         // Error check that the subcomponent did get loaded

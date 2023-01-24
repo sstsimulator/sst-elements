@@ -24,6 +24,7 @@ libsimpleElementExample_la_SOURCES = \
 	basicSimLifeCycleEvent.h \
 	basicSimLifeCycle.h \
 	basicSimLifeCycle.cc \
+	basicSubComponentEvent.h \
 	basicSubComponent_component.h \
 	basicSubComponent_component.cc \
 	basicSubComponent_subcomponent.h \

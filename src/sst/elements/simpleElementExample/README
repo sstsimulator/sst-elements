@@ -28,7 +28,8 @@ Basic Concepts
                       Python: Controlling the type of generated statistics (histogram, accumulator, etc.)
 - basicSimLifeCycle : C++: Component interaction with the SST simulation lifecycle
                       Command line: SST signal handling (SIGTERM, SIGINT, SIGUSR1, SIGUSR2)
-
+- basicSubComponent : C++: Defining subcomponents, loading subcomponents, ELI for subcomponents
+                      Python: Declaring and parameterizing user subcomponents
 
 Intermediate Concepts
 -------------------------------

@@ -18,16 +18,26 @@ import sst
 #       The end time is equal to the link latency multiplied by the number of components which is 100ns 
 #       (i.e., the time it takes an event to make it around the ring)
 #
+# Relevant code:
+#   simpleElementExample/basicSubComponent_component.h
+#   simpleElementExample/basicSubComponent_component.cc
+#   simpleElementExample/basicSubComponent_subcomponent.h
+#   simpleElementExample/basicSubComponent_subcomponent.cc
+#   simpleElementExample/basicSubComponentEvent.h
+#
+# Output:
+#   simpleElementExample/tests/refFiles/basicSubComponent.out
 #
 
-num_components = 10
-links = []
+# Some things we'll use when creating the simulation below
+num_components = 10 # Change to change the number of components that get simulated
 units = ("simpleElementExample.basicSubComponentIncrement",
          "simpleElementExample.basicSubComponentMultiply",
          "simpleElementExample.basicSubComponentDecrement",
          "simpleElementExample.basicSubComponentDivide")
 
 ### Create our links first so we can connect them as we create components
+links = [] # List of link handlers
 for x in range(num_components):
     link = sst.Link("link_" + str(x))
     links.append(link)
@@ -40,6 +50,7 @@ for x in range(num_components):
     # Have all components start with some number between 0 and 5
     component.addParam("value", (x + 1) % 6)
     
+    # Connect the components to each other in a ring
     component.addLink(links[x-1], "left", "10ns")
     component.addLink(links[x], "right", "10ns")
 
