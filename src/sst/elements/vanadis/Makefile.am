@@ -135,9 +135,11 @@ os/voscallfunc.h \
 os/include/fdTable.h \
 os/include/process.h \
 os/include/virtMemMap.h \
+os/include/hwThreadID.h \
 os/vphysmemmanager.h \
 os/vriscvcpuos.h \
 os/vstartthreadreq.h \
+os/vgetthreadstate.h \
 os/callev/voscallaccessev.h \
 os/callev/voscallall.h \
 os/callev/voscallbrk.h \
@@ -154,6 +156,7 @@ os/callev/voscalliovec.h \
 os/callev/voscallmmap.h \
 os/callev/voscallmmapx.h \
 os/callev/voscallopenat.h \
+os/callev/voscallmprotect.h \
 os/callev/voscallopen.h \
 os/callev/voscallread.h \
 os/callev/voscallreadlink.h \
