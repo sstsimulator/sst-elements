@@ -22,7 +22,7 @@
 #include <string>
 #include "sst/core/interfaces/stdMem.h"
 #include <sst/core/module.h>
-#include <sst/core/rng/marsaglia.h>
+#include <sst/core/rng/xorshift.h>
 
 
 #include "velf/velfinfo.h"
@@ -123,7 +123,7 @@ uint64_t AppRuntimeMemory<Type>::configurePhdr(  Output* output, int page_size, 
 
     std::vector<uint8_t>& random_values_data_block = phdr_data_block;
 
-    RNG::MarsagliaRNG rng(11, 272727);
+    RNG::XORShiftRNG rng(272727);
 
     for ( int i = 0; i < 8; ++i ) {
         auto val = rng.generateNextUInt32() % 255;
