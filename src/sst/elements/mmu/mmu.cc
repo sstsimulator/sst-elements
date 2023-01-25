@@ -26,17 +26,17 @@ MMU::MMU(SST::ComponentId_t id, SST::Params& params) : SubComponent(id)
 {
     m_numCores = params.find<int>("num_cores", 0);
     if ( 0 == m_numCores ) {
-        m_dbg.fatal(CALL_INFO, -1, "Error: num_cores is zero\n");
+        m_dbg.fatal(CALL_INFO, -1, "Error: %s, num_cores is zero\n",getName().c_str());
     }
 
     m_numHwThreads = params.find<int>("num_threads", 0);
     if ( 0 == m_numHwThreads ) {
-        m_dbg.fatal(CALL_INFO, -1, "Error: num_threads is zero\n");
+        m_dbg.fatal(CALL_INFO, -1, "Error: %s, num_threads is zero\n",getName().c_str());
     }
 
     int pageSize = params.find<int>("page_size", 0);
     if ( 0 == pageSize ) {
-        m_dbg.fatal(CALL_INFO, -1, "Error: page_size is zero\n");
+        m_dbg.fatal(CALL_INFO, -1, "Error: %s, page_size is zero\n",getName().c_str());
     }
     m_pageShift = log2( pageSize );
 
@@ -48,13 +48,13 @@ MMU::MMU(SST::ComponentId_t id, SST::Params& params) : SubComponent(id)
         name = "core" + core.str() + ".dtlb";
         Link* dtlb = configureLink( name, new Event::Handler<MMU,int>(this, &MMU::handleTlbEvent, i * 2 + 0 ) );
         if ( nullptr == dtlb ) {
-            m_dbg.fatal(CALL_INFO, -1, "Error: was unable to configure dtlb link `%s`\n",name.c_str());
+            m_dbg.fatal(CALL_INFO, -1, "Error: %s was unable to configure dtlb link `%s`\n",getName().c_str(),name.c_str());
         }
 
         name = "core" + core.str() + ".itlb";
         Link* itlb = configureLink( name, new Event::Handler<MMU,int>(this, &MMU::handleTlbEvent, i * 2 + 1 ) );
         if ( nullptr == itlb ) {
-            m_dbg.fatal(CALL_INFO, -1, "Error: was unable to configure itlb link `%s`\n",name.c_str());
+            m_dbg.fatal(CALL_INFO, -1, "Error: %s was unable to configure itlb link `%s`\n",getName().c_str(),name.c_str());
         }
         m_coreLinks.push_back( new CoreTlbLinks( dtlb, itlb ));
     }  
