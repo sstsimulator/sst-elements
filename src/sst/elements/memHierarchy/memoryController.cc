@@ -574,11 +574,9 @@ void MemController::setup(void) {
 
 
 void MemController::finish(void) {
-    if (!clockOn_) {
-        Cycle_t cycle = turnClockOn();
-        memBackendConvertor_->turnClockOn(cycle);
-    }
-    memBackendConvertor_->finish();
+    Cycle_t cycle = getNextClockCycle(clockTimeBase_); // Get finish time
+    cycle--;
+    memBackendConvertor_->finish(cycle);
     link_->finish();
 }
 
