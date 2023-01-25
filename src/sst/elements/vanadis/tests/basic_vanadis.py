@@ -12,7 +12,7 @@ isa="riscv64"
 
 testDir="basic-io"
 exe = "hello-world"
-exe = "hello-world-cpp"
+#exe = "hello-world-cpp"
 #exe = "openat"
 #exe = "printf-check"
 #exe = "read-write"
