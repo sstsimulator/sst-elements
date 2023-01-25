@@ -1,7 +1,7 @@
 import os
 import sst
 mh_debug_level=10
-mh_debug=1
+mh_debug=0
 dbgAddr=0
 stopDbg=0
 
@@ -53,7 +53,7 @@ full_exe_name = os.getenv("VANADIS_EXE", "./tests/small/" + testDir + "/" + exe 
 exe_name= full_exe_name.split("/")[-1]
 
 verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
-os_verbosity = os.getenv("VANADIS_OS_VERBOSE", 16)
+os_verbosity = os.getenv("VANADIS_OS_VERBOSE", verbosity)
 pipe_trace_file = os.getenv("VANADIS_PIPE_TRACE", "")
 lsq_entries = os.getenv("VANADIS_LSQ_ENTRIES", 32)
 
