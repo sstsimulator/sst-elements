@@ -373,8 +373,7 @@ void VanadisNodeOSComponent::processOsPageFault( VanadisSyscall* syscall, uint64
 void VanadisNodeOSComponent::pageFaultHandler2( MMU_Lib::RequestID reqId, unsigned link, unsigned core, unsigned hwThread, 
                 unsigned pid,  uint32_t vpn, uint32_t faultPerms, uint64_t instPtr, uint64_t memVirtAddr, VanadisSyscall* syscall ) 
 {
-    //output->verbose(CALL_INFO, 1, 0, "RequestID=%#" PRIx64 " link=%d pid=%d vpn=%d perms=%#x instPtr=%#" PRIx64 "\n", reqId, link, pid, vpn, faultPerms, instPtr ); 
-    output->verbose(CALL_INFO, 1, 0, "link=%d pid=%d vpn=%d perms=%#x instPtr=%#" PRIx64 "\n", link, pid, vpn, faultPerms, instPtr ); 
+    output->verbose(CALL_INFO, 1, 0, "RequestID=%#" PRIx64 " link=%d pid=%d vpn=%d perms=%#x instPtr=%#" PRIx64 "\n", reqId, link, pid, vpn, faultPerms, instPtr ); 
 
     auto tmp = new PageFault( reqId, link, core, hwThread, pid, vpn, faultPerms, instPtr, memVirtAddr, syscall );
     m_pendingFault.push( tmp );
