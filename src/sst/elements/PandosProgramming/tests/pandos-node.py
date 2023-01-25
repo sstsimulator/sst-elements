@@ -1,5 +1,6 @@
 # import the SST module
 import sst
+import sys
 
 # create a single pandos node
 pn0 = sst.Component("pn0", "PandosProgramming.PandosNodeT")
@@ -9,7 +10,7 @@ pn1 = sst.Component("pn1", "PandosProgramming.PandosNodeT")
 params = {
     "num_cores" : 128,
     "instructions_per_task" : 20,
-    "program_binary_fname": "/home/mrutt/work/AGILE/",
+    "program_binary_fname": sys.argv[1],
 }
 
 pn0.addParams(params)
