@@ -17,6 +17,8 @@
 #define SIMPLE_TLB_H
 
 #include <sst/core/link.h>
+#include <sst/core/rng/marsaglia.h>
+
 #include "mmuEvents.h"
 #include "tlb.h"
 #include <queue>
@@ -110,7 +112,7 @@ class SimpleTLB : public TLB {
     }
 
     int pickVictim() {
-        return rand() % m_tlbSetSize;
+        return rng.generateNextUInt32() % m_tlbSetSize;
     }
 
     void fillTlbEntry( int hwThreadId, size_t vpn, size_t ppn, uint32_t perms ) {
@@ -120,10 +122,13 @@ class SimpleTLB : public TLB {
         
         for ( int i = 0; i<vec.size(); i++ ) {
             auto entry = vec.at(i); 
-            m_dbg.debug(CALL_INFO,1,0,"vpn=%#lx, tag=%#lx ppn %#lx -> %#lx perms %#x -> %#x \n",entry.tag(), entry.ppn(), ppn, entry.perms(), perms );
-            if ( entry.isValid() && tag == entry.tag() ) {
-                vec.at( i ).init( tag, ppn, perms );
-                return;
+            if ( entry.isValid() ) {
+                m_dbg.debug(CALL_INFO,1,0,"vpn=%#lx, tag=%#lx ppn %#lx -> %#lx perms %#x -> %#x \n",entry.tag(), entry.ppn(), ppn, entry.perms(), perms );
+
+                if ( tag == entry.tag() ) {
+                    vec.at( i ).init( tag, ppn, perms );
+                    return;
+                }
             }
         } 
 
@@ -178,6 +183,7 @@ class SimpleTLB : public TLB {
     int m_pageShift;
     int m_tlbIndexShift;
     std::vector< std::vector< std::vector< TlbEntry > > > m_tlbData;
+    RNG::MarsagliaRNG rng;
 
     std::vector< std::map<size_t,std::queue<RequestID> > > m_waitingMiss;
 };
