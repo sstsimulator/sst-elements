@@ -20,8 +20,8 @@ libmmu_la_SOURCES = \
 	simpleTLB.h \
 	tlb.h \
 	tlbWrapper.cc \
-	tlbWrapper.h
-
+	tlbWrapper.h \
+	utils.h	
 
 libmmu_la_LDFLAGS = -module -avoid-version
 
