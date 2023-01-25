@@ -387,13 +387,13 @@ int Pin3Frontend::forkPINChild(const char* app, char** args, std::map<std::strin
     } else {
         //Do I/O redirection before exec
         if ("" != redirect_info.stdin_file){
-            output->verbose(CALL_INFO, 1, 0, "Redirecting child stdin from file %s\n", redirect_info.stdin_file);
+            output->verbose(CALL_INFO, 1, 0, "Redirecting child stdin from file %s\n", redirect_info.stdin_file.c_str());
             if (!freopen(redirect_info.stdin_file.c_str(), "r", stdin)) {
                 output->fatal(CALL_INFO, 1, 0, "Failed to redirect stdin\n");
             }
         }
         if ("" != redirect_info.stdout_file){
-            output->verbose(CALL_INFO, 1, 0, "Redirecting child stdout to file %s\n", redirect_info.stdout_file);
+            output->verbose(CALL_INFO, 1, 0, "Redirecting child stdout to file %s\n", redirect_info.stdout_file.c_str());
             std::string mode = "w+";
             if (redirect_info.stdoutappend) {
                 mode = "a+";
@@ -403,7 +403,7 @@ int Pin3Frontend::forkPINChild(const char* app, char** args, std::map<std::strin
             }
         }
         if ("" != redirect_info.stderr_file){
-            output->verbose(CALL_INFO, 1, 0, "Redirecting child stderr from file %s\n", redirect_info.stderr_file);
+            output->verbose(CALL_INFO, 1, 0, "Redirecting child stderr from file %s\n", redirect_info.stderr_file.c_str());
             std::string mode = "w+";
             if (redirect_info.stderrappend) {
                 mode = "a+";
