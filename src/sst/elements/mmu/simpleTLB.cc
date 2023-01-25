@@ -22,7 +22,7 @@
 using namespace SST;
 using namespace SST::MMU_Lib;
 
-SimpleTLB::SimpleTLB(SST::ComponentId_t id, SST::Params& params) : TLB(id,params), m_pageShift(0)
+SimpleTLB::SimpleTLB(SST::ComponentId_t id, SST::Params& params) : TLB(id,params), m_pageShift(0), rng(72727)
 {
     char buffer[100];
     snprintf(buffer,100,"@t:%s:SimpleTLB::@p():@l ",getName().c_str());

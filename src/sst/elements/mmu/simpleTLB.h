@@ -17,7 +17,7 @@
 #define SIMPLE_TLB_H
 
 #include <sst/core/link.h>
-#include <sst/core/rng/marsaglia.h>
+#include <sst/core/rng/xorshift.h>
 
 #include "mmuEvents.h"
 #include "tlb.h"
@@ -183,7 +183,7 @@ class SimpleTLB : public TLB {
     int m_pageShift;
     int m_tlbIndexShift;
     std::vector< std::vector< std::vector< TlbEntry > > > m_tlbData;
-    RNG::MarsagliaRNG rng;
+    RNG::XORShiftRNG rng;
 
     std::vector< std::map<size_t,std::queue<RequestID> > > m_waitingMiss;
 };
