@@ -196,6 +196,7 @@ class testcase_rdmaNic(SSTTestCase):
 ###############################################
 
     def _checkSkipConditions(self):
+        self.skipTest("RdmaNic Skipping Test - musl compiler not available")
         # Check to see if the musl compiler is missing
         if self._is_musl_compiler_available() == False:
             self.skipTest("RdmaNic Skipping Test - musl compiler not available")
