@@ -119,12 +119,15 @@ vfpflags.h \
 vfuncunit.h \
 vinsbundle.h \
 vinsloader.h \
+\
 os/vappruntimememory.h \
 os/vcpuos.h \
+os/vdumpregsreq.h \
 os/velfloader.cc \
 os/velfloader.h \
-os/vloadpage.h \
+os/vgetthreadstate.h \
 os/vloadpage.cc \
+os/vloadpage.h \
 os/vmipscpuos.h \
 os/vnodeos.cc \
 os/vnodeos.h \
@@ -132,18 +135,19 @@ os/vnodeoshandler.cc \
 os/vosbittype.h \
 os/voscallev.h \
 os/voscallfunc.h \
-os/vdumpregsreq.h \
-os/include/page.h \
-os/include/fdTable.h \
-os/include/process.h \
-os/include/virtMemMap.h \
-os/include/hwThreadID.h \
-os/include/freeList.h \
-os/include/futex.h \
 os/vphysmemmanager.h \
 os/vriscvcpuos.h \
 os/vstartthreadreq.h \
-os/vgetthreadstate.h \
+\
+os/include/fdTable.h \
+os/include/freeList.h \
+os/include/futex.h \
+os/include/hwThreadID.h \
+os/include/page.h \
+os/include/process.h \
+os/include/threadGrp.h \
+os/include/virtMemMap.h \
+\
 os/callev/voscallaccessev.h \
 os/callev/voscallall.h \
 os/callev/voscallbrk.h \
@@ -160,9 +164,9 @@ os/callev/voscallioctl.h \
 os/callev/voscalliovec.h \
 os/callev/voscallmmap.h \
 os/callev/voscallmmapx.h \
-os/callev/voscallopenat.h \
 os/callev/voscallmprotect.h \
 os/callev/voscallopen.h \
+os/callev/voscallopenat.h \
 os/callev/voscallread.h \
 os/callev/voscallreadlink.h \
 os/callev/voscallreadv.h \
@@ -174,6 +178,7 @@ os/callev/voscallunlink.h \
 os/callev/voscallunmap.h \
 os/callev/voscallwrite.h \
 os/callev/voscallwritev.h \
+\
 os/syscall/access.h \
 os/syscall/brk.h \
 os/syscall/clone.cc \
@@ -212,6 +217,7 @@ os/syscall/unlink.h \
 os/syscall/unmap.h \
 os/syscall/write.h \
 os/syscall/writev.h \
+\
 os/resp/voscallresp.h \
 os/resp/vosexitresp.h
 
