@@ -93,8 +93,11 @@
 #define VANADIS_SYSCALL_MIPS_UNAME 4122
 #define VANADIS_SYSCALL_MIPS_READV 4145
 #define VANADIS_SYSCALL_MIPS_WRITEV 4146
+#define VANADIS_SYSCALL_MIPS_RT_SIGACTION 4194
 #define VANADIS_SYSCALL_MIPS_RT_SETSIGMASK 4195
 #define VANADIS_SYSCALL_MIPS_MMAP2 4210
+
+#define VANADIS_SYSCALL_MIPS_STATX 4366
 #define VANADIS_SYSCALL_MIPS_FSTAT 4215
 #define VANADIS_SYSCALL_MIPS_MADVISE 4218
 #define VANADIS_SYSCALL_MIPS_FUTEX 4238
@@ -285,6 +288,26 @@ public:
 
             call_ev = new VanadisSyscallUnameEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, uname_addr);
         } break;
+
+        case VANADIS_SYSCALL_MIPS_STATX: {
+            int32_t dirfd = getRegister(4);
+            uint64_t pathname = getRegister(5);
+            int32_t flags = getRegister(6);
+            uint32_t mask = getRegister(7);
+            uint64_t stackPtr = getRegister(29);
+
+#ifdef SST_COMPILE_MACOSX
+            if (  MIPS_AT_FDCWD == dirFd ) {
+                dirFd = AT_FDCWD;
+            }
+#endif
+
+            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to "
+                            "statx( %" PRId32 ", %#" PRIx64 ", %#" PRIx32 ", %#" PRIx32 ", %#" PRIx64 " )\n",
+                            dirfd, pathname, flags, mask, stackPtr );
+
+            call_ev = new VanadisSyscallStatxEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, dirfd, pathname, flags, mask, stackPtr);
+         } break;
 
         case VANADIS_SYSCALL_MIPS_FSTAT: {
             const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -590,6 +613,11 @@ public:
                             "[syscall-handler] clock_gettime64( %" PRId64 ", 0x%llx )\n", clk_type, time_addr);
 
             call_ev = new VanadisSyscallGetTime64Event(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, clk_type, time_addr);
+        } break;
+
+        case VANADIS_SYSCALL_MIPS_RT_SIGACTION: {
+             printf("Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implmented return success\n");
+             recvSyscallResp(new VanadisSyscallResponse(0));
         } break;
 
         case VANADIS_SYSCALL_MIPS_RT_SETSIGMASK: {
