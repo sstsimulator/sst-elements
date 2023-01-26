@@ -136,6 +136,7 @@ os/include/fdTable.h \
 os/include/process.h \
 os/include/virtMemMap.h \
 os/include/hwThreadID.h \
+os/include/freeList.h \
 os/vphysmemmanager.h \
 os/vriscvcpuos.h \
 os/vstartthreadreq.h \
@@ -147,6 +148,7 @@ os/callev/voscallclone.h \
 os/callev/voscallclose.h \
 os/callev/voscallexitgrp.h \
 os/callev/voscallexit.h \
+os/callev/voscallfork.h \
 os/callev/voscallfstat.h \
 os/callev/voscallfutex.h \
 os/callev/voscallgettime64.h \
