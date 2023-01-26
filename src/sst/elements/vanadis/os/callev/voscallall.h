@@ -22,6 +22,7 @@
 #include "os/callev/voscallexit.h"
 #include "os/callev/voscallexitgrp.h"
 #include "os/callev/voscallfstat.h"
+#include "os/callev/voscallstatx.h"
 #include "os/callev/voscallgettime64.h"
 #include "os/callev/voscallioctl.h"
 #include "os/callev/voscallmmap.h"
