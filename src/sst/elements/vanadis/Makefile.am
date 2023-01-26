@@ -139,6 +139,7 @@ os/include/process.h \
 os/include/virtMemMap.h \
 os/include/hwThreadID.h \
 os/include/freeList.h \
+os/include/futex.h \
 os/vphysmemmanager.h \
 os/vriscvcpuos.h \
 os/vstartthreadreq.h \
