@@ -132,6 +132,8 @@ os/vnodeoshandler.cc \
 os/vosbittype.h \
 os/voscallev.h \
 os/voscallfunc.h \
+os/vdumpregsreq.h \
+os/include/page.h \
 os/include/fdTable.h \
 os/include/process.h \
 os/include/virtMemMap.h \
