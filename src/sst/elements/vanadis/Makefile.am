@@ -4,6 +4,7 @@
 
 AM_CPPFLAGS += \
 	$(MPI_CPPFLAGS) \
+	-I$(top_srcdir)/src \
 	-DVANADIS_BUILD_DEBUG
 
 compdir = $(pkglibdir)
@@ -103,63 +104,6 @@ lsq/vbasiclsq.h \
 lsq/vbasiclsqentry.h \
 lsq/vlsq.h \
 lsq/vmemwriterec.h \
-os/callev/voscallaccessev.h \
-os/callev/voscallall.h \
-os/callev/voscallbrk.h \
-os/callev/voscallclose.h \
-os/callev/voscallexit.h \
-os/callev/voscallexitgrp.h \
-os/callev/voscallfstat.h \
-os/callev/voscallgettime.h \
-os/callev/voscallgettime64.h \
-os/callev/voscallioctl.h \
-os/callev/voscallmmap.h \
-os/callev/voscallmmap2.h \
-os/callev/voscallmmapx.h \
-os/callev/voscallopen.h \
-os/callev/voscallopenat.h \
-os/callev/voscallread.h \
-os/callev/voscallreadlink.h \
-os/callev/voscallreadv.h \
-os/callev/voscallsta.h \
-os/callev/voscalluname.h \
-os/callev/voscallunlink.h \
-os/callev/voscallunlinkat.h \
-os/callev/voscallunmap.h \
-os/callev/voscallwrite.h \
-os/callev/voscallwritev.h \
-os/memmgr/vmemmgr.h \
-os/node/vnodemmaph.h \
-os/node/vnodenoactionh.h \
-os/node/vnodeosaccessh.h \
-os/node/vnodeosbrk.h \
-os/node/vnodeosfd.h \
-os/node/vnodeosfstath.h \
-os/node/vnodeoshstate.h \
-os/node/vnodeosopenath.h \
-os/node/vnodeosopenh.h \
-os/node/vnodeosreadh.h \
-os/node/vnodeosreadlink.h \
-os/node/vnodeosreadvh.h \
-os/node/vnodeosstattype.h \
-os/node/vnodeosunameh.h \
-os/node/vnodeosunlinkath.h \
-os/node/vnodeosunlinkh.h \
-os/node/vnodeoswriteh.h \
-os/node/vnodeoswritevh.h \
-os/resp/voscallresp.h \
-os/resp/vosexitresp.h \
-os/vappruntimememory.h \
-os/vcpuos.h \
-os/velfloader.h \
-os/vmipscpuos.h \
-os/vnodeos.h \
-os/vnodeoshandler.h \
-os/vosbittype.h \
-os/voscallev.h \
-os/voscallfunc.h \
-os/vriscvcpuos.h \
-os/vstartthreadreq.h \
 util/vcmpop.h \
 util/vdatacopy.h \
 util/vfpreghandler.h \
@@ -175,8 +119,108 @@ vfpflags.h \
 vfuncunit.h \
 vinsbundle.h \
 vinsloader.h \
+\
+os/vappruntimememory.h \
+os/vcpuos.h \
+os/vdumpregsreq.h \
 os/velfloader.cc \
-os/vnodeos.cc
+os/velfloader.h \
+os/vgetthreadstate.h \
+os/vloadpage.cc \
+os/vloadpage.h \
+os/vmipscpuos.h \
+os/vnodeos.cc \
+os/vnodeos.h \
+os/vnodeoshandler.cc \
+os/vosbittype.h \
+os/voscallev.h \
+os/voscallfunc.h \
+os/vphysmemmanager.h \
+os/vriscvcpuos.h \
+os/vstartthreadreq.h \
+\
+os/include/fdTable.h \
+os/include/freeList.h \
+os/include/futex.h \
+os/include/hwThreadID.h \
+os/include/page.h \
+os/include/process.h \
+os/include/threadGrp.h \
+os/include/virtMemMap.h \
+\
+os/callev/voscallaccessev.h \
+os/callev/voscallall.h \
+os/callev/voscallbrk.h \
+os/callev/voscallclone.h \
+os/callev/voscallclose.h \
+os/callev/voscallexitgrp.h \
+os/callev/voscallexit.h \
+os/callev/voscallfork.h \
+os/callev/voscallfstat.h \
+os/callev/voscallfutex.h \
+os/callev/voscallgettime64.h \
+os/callev/voscallgetx.h \
+os/callev/voscallioctl.h \
+os/callev/voscalliovec.h \
+os/callev/voscallmmap.h \
+os/callev/voscallmmapx.h \
+os/callev/voscallmprotect.h \
+os/callev/voscallopen.h \
+os/callev/voscallopenat.h \
+os/callev/voscallread.h \
+os/callev/voscallreadlink.h \
+os/callev/voscallreadv.h \
+os/callev/voscallsettidaddr.h \
+os/callev/voscallsta.h \
+os/callev/voscalluname.h \
+os/callev/voscallunlinkat.h \
+os/callev/voscallunlink.h \
+os/callev/voscallunmap.h \
+os/callev/voscallwrite.h \
+os/callev/voscallwritev.h \
+\
+os/syscall/access.h \
+os/syscall/brk.h \
+os/syscall/clone.cc \
+os/syscall/clone.h \
+os/syscall/close.h \
+os/syscall/exit.h \
+os/syscall/exit.cc \
+os/syscall/exitgroup.cc \
+os/syscall/exitgroup.h \
+os/syscall/fork.cc \
+os/syscall/fork.h \
+os/syscall/fstat.h \
+os/syscall/futex.cc \
+os/syscall/futex.h \
+os/syscall/getpgid.h \
+os/syscall/getpid.h \
+os/syscall/getppid.h \
+os/syscall/gettid.h \
+os/syscall/gettime.h \
+os/syscall/ioctl.h \
+os/syscall/iovec.h \
+os/syscall/mmap.h \
+os/syscall/mprotect.cc \
+os/syscall/mprotect.h \
+os/syscall/openat.h \
+os/syscall/open.h \
+os/syscall/read.h \
+os/syscall/readlink.h \
+os/syscall/readv.h \
+os/syscall/settidaddress.h \
+os/syscall/syscall.h \
+os/syscall/syscall.cc \
+os/syscall/uname.h \
+os/syscall/unlinkat.h \
+os/syscall/unlink.h \
+os/syscall/unmap.h \
+os/syscall/write.h \
+os/syscall/writev.h \
+\
+os/resp/voscallresp.h \
+os/resp/vosexitresp.h
+
 
 EXTRA_DIST = \
 	tests/small/basic-io/hello-world/Makefile \
@@ -351,6 +395,39 @@ EXTRA_DIST = \
 	tests/small/misc/mt-dgemm/riscv64/sst.stdout.gold \
 	tests/small/misc/mt-dgemm/riscv64/vanadis.stderr.gold \
 	tests/small/misc/mt-dgemm/riscv64/vanadis.stdout.gold \
+\
+	tests/small/misc/fork/Makefile \
+	tests/small/misc/fork/fork.c \
+	tests/small/misc/fork/mipsel/fork \
+	tests/small/misc/fork/mipsel/sst.stdout.gold \
+	tests/small/misc/fork/mipsel/vanadis.stderr.gold \
+	tests/small/misc/fork/mipsel/vanadis.stdout.gold \
+	tests/small/misc/fork/riscv64/fork \
+	tests/small/misc/fork/riscv64/sst.stdout.gold \
+	tests/small/misc/fork/riscv64/vanadis.stderr.gold \
+	tests/small/misc/fork/riscv64/vanadis.stdout.gold \
+\
+	tests/small/misc/clone/Makefile \
+	tests/small/misc/clone/clone.c \
+	tests/small/misc/clone/mipsel/clone \
+	tests/small/misc/clone/mipsel/sst.stdout.gold \
+	tests/small/misc/clone/mipsel/vanadis.stderr.gold \
+	tests/small/misc/clone/mipsel/vanadis.stdout.gold \
+	tests/small/misc/clone/riscv64/clone \
+	tests/small/misc/clone/riscv64/sst.stdout.gold \
+	tests/small/misc/clone/riscv64/vanadis.stderr.gold \
+	tests/small/misc/clone/riscv64/vanadis.stdout.gold \
+\
+	tests/small/misc/pthread/Makefile \
+	tests/small/misc/pthread/pthread.c \
+	tests/small/misc/pthread/mipsel/pthread \
+	tests/small/misc/pthread/mipsel/sst.stdout.gold \
+	tests/small/misc/pthread/mipsel/vanadis.stderr.gold \
+	tests/small/misc/pthread/mipsel/vanadis.stdout.gold \
+	tests/small/misc/pthread/riscv64/pthread \
+	tests/small/misc/pthread/riscv64/sst.stdout.gold \
+	tests/small/misc/pthread/riscv64/vanadis.stderr.gold \
+	tests/small/misc/pthread/riscv64/vanadis.stdout.gold \
 \
 	tests/small/misc/hpcg/hpcg.dat \
 	tests/small/misc/hpcg/mipsel/hpcg \

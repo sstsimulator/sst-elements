@@ -25,15 +25,13 @@ namespace Vanadis {
 
 class VanadisSyscallEvent : public SST::Event {
 public:
-    VanadisSyscallEvent() : SST::Event() {
-        core_id = 0;
-        thread_id = 0;
-    }
+    VanadisSyscallEvent() : SST::Event(), core_id(0), thread_id(0), instPtr(0) { }
 
-    VanadisSyscallEvent(uint32_t core, uint32_t thr) : SST::Event(), core_id(core), thread_id(thr),
-			bittage(VanadisOSBitType::VANADIS_OS_32B) {}
-    VanadisSyscallEvent(uint32_t core, uint32_t thr, VanadisOSBitType bit_type) : SST::Event(), core_id(core), thread_id(thr),
-			bittage(bit_type) {}
+    VanadisSyscallEvent(uint32_t core, uint32_t thr)
+        : SST::Event(), core_id(core), thread_id(thr), bittage(VanadisOSBitType::VANADIS_OS_32B), instPtr(0) {}
+
+    VanadisSyscallEvent(uint32_t core, uint32_t thr, VanadisOSBitType bit_type, uint64_t instPtr = 0 )
+        : SST::Event(), core_id(core), thread_id(thr), bittage(bit_type), instPtr(instPtr) {}
 
     ~VanadisSyscallEvent() {}
 
@@ -41,20 +39,23 @@ public:
     uint32_t getCoreID() const { return core_id; }
     uint32_t getThreadID() const { return thread_id; }
     virtual VanadisOSBitType getOSBitType() const { return bittage; }
+    uint64_t getInstPtr() const { return instPtr; }
 
 protected:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
         ser& core_id;
         ser& thread_id;
-		  ser& bittage;
+        ser& bittage;
+        ser& instPtr;
     }
 
     ImplementSerializable(SST::Vanadis::VanadisSyscallEvent);
 
+    uint64_t instPtr;
     uint32_t core_id;
     uint32_t thread_id;
-	 VanadisOSBitType bittage;
+    VanadisOSBitType bittage;
 };
 
 } // namespace Vanadis

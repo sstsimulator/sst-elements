@@ -29,6 +29,9 @@
 #include <cstdint>
 #include <vector>
 
+#define VANADIS_DBG_LSQ_STORE_FLG  (1<<0)
+#define VANADIS_DBG_LSQ_LOAD_FLG  (1<<1)
+
 namespace SST {
 namespace Vanadis {
 
@@ -47,7 +50,8 @@ public:
     VanadisLoadStoreQueue(ComponentId_t id, Params& params) : SubComponent(id) {
 
         uint32_t verbosity = params.find<uint32_t>("verbose");
-        output = new SST::Output("[lsq @t]: ", verbosity, 0, SST::Output::STDOUT);
+        uint32_t mask = params.find<uint32_t>("verboseMask",-1);
+        output = new SST::Output("[lsq @t]: ", verbosity, mask, SST::Output::STDOUT);
 
         address_mask = params.find<uint64_t>("address_mask", 0xFFFFFFFFFFFFFFFF);
 

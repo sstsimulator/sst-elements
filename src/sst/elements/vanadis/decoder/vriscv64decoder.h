@@ -99,6 +99,36 @@ public:
         regFile->setIntReg<uint64_t>(sp_phys_reg, start_stack_address);
     }
 
+    void setArg1Register( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+        output->verbose(
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting argument 1 register to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            value);
+        const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(10);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> argument 1 (r10) maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        regFile->setIntReg(sp_phys_reg, value);
+    }
+
+
+    virtual void setReturnRegister( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+        output->verbose(
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting register 10 to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            value);
+        const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(10);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> r10 maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        regFile->setIntReg(sp_phys_reg, value);
+    }
+
+
+    virtual void setThreadPointer( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+        output->verbose(
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting thread pointer to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            value);
+        const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(4);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Thread Pointer (r4) maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        regFile->setIntReg(sp_phys_reg, value);
+    }
+
+
     void tick(SST::Output* output, uint64_t cycle) override
     {
         if(output->getVerboseLevel() >= 16) {

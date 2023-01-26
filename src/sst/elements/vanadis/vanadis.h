@@ -28,6 +28,9 @@
 #include "vfpflags.h"
 #include "vfuncunit.h"
 
+#include "os/vgetthreadstate.h"
+#include "os/vdumpregsreq.h"
+
 #include <array>
 #include <limits>
 #include <set>
@@ -191,6 +194,10 @@ public:
     void syscallReturn(uint32_t thr);
     void setHalt(uint32_t thr, int64_t halt_code);
     void startThread(int thr, uint64_t stackStart, uint64_t instructionPointer );
+    void startThreadFork( VanadisStartThreadForkReq* req );
+    void startThreadClone( VanadisStartThreadCloneReq* req );
+    void getThreadState( VanadisGetThreadStateReq* req );
+    void dumpRegs( VanadisDumpRegsReq* req );
 
 private:
 #ifdef VANADIS_BUILD_DEBUG
@@ -227,6 +234,8 @@ private:
     int  allocateFunctionalUnit(VanadisInstruction* ins);
     bool mapInstructiontoFunctionalUnit(VanadisInstruction* ins, std::vector<VanadisFunctionalUnit*>& functional_units);
     void printRob(VanadisCircularQueue<VanadisInstruction*>* rob);
+
+    void resetHwThread(uint32_t thr);
 
     SST::Output* output;
 
@@ -304,6 +313,7 @@ private:
 
     uint64_t pause_on_retire_address;
     uint64_t start_verbose_when_issue_address;
+    uint64_t stop_verbose_when_retire_address;
 
     std::vector<VanadisFloatingPointFlags*> fp_flags;
 
