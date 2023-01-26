@@ -172,6 +172,7 @@ os/callev/voscallreadlink.h \
 os/callev/voscallreadv.h \
 os/callev/voscallsettidaddr.h \
 os/callev/voscallsta.h \
+os/callev/voscallstatx.h \
 os/callev/voscalluname.h \
 os/callev/voscallunlinkat.h \
 os/callev/voscallunlink.h \
@@ -209,6 +210,7 @@ os/syscall/read.h \
 os/syscall/readlink.h \
 os/syscall/readv.h \
 os/syscall/settidaddress.h \
+os/syscall/statx.h \
 os/syscall/syscall.h \
 os/syscall/syscall.cc \
 os/syscall/uname.h \
