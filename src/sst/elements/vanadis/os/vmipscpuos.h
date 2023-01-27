@@ -297,8 +297,8 @@ public:
             uint64_t stackPtr = getRegister(29);
 
 #ifdef SST_COMPILE_MACOSX
-            if (  MIPS_AT_FDCWD == dirFd ) {
-                dirFd = AT_FDCWD;
+            if (  MIPS_AT_FDCWD == dirfd ) {
+                dirfd = AT_FDCWD;
             }
 #endif
 

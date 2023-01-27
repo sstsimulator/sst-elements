@@ -7,7 +7,16 @@ build node0.cpu1
 WARNING: Element vanadis.dbg_VanadisCPU has slot with an invalid name: decoder%(hardware_threads)d
 node0.cpu0.l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 3 cycles.
 node0.cpu1.l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 3 cycles.
+Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
+Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
+Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
+Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
+Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
 pid=100 tid=101 has exited
+Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
+Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
+Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
+Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
 pid=100 tid=102 has exited
 pid=100 tid=100 has exited
 all process have exited
