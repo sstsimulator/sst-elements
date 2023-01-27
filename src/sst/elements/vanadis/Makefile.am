@@ -360,6 +360,10 @@ EXTRA_DIST = \
 	tests/small/misc/stream-fortran/Makefile \
 	tests/small/misc/stream-fortran/stream.f \
 	tests/small/misc/stream-fortran/mysecond.c \
+	tests/small/misc/stream-fortran/mipsel/stream-fortran \
+	tests/small/misc/stream-fortran/mipsel/sst.stdout.gold \
+	tests/small/misc/stream-fortran/mipsel/vanadis.stderr.gold \
+	tests/small/misc/stream-fortran/mipsel/vanadis.stdout.gold \
 	tests/small/misc/stream-fortran/riscv64/stream-fortran \
 	tests/small/misc/stream-fortran/riscv64/sst.stdout.gold \
 	tests/small/misc/stream-fortran/riscv64/vanadis.stderr.gold \
