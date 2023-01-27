@@ -386,7 +386,7 @@ void VanadisNodeOSComponent::pageFaultHandler2( MMU_Lib::RequestID reqId, unsign
 
 void VanadisNodeOSComponent::pageFaultFini( PageFault* info, bool success )
 {
-    output->verbose(CALL_INFO, 1, 0,"link=%d pid=%d vpn=%d %#" PRIx32 "\n",info->link,info->pid,info->vpn, info->vpn << m_pageShift );
+    output->verbose(CALL_INFO, 1, 0,"link=%d pid=%d vpn=%d %#" PRIx32 " %s\n",info->link,info->pid,info->vpn, info->vpn << m_pageShift, success ? "success":"fault" );
     if( info->syscall ) {
         auto ev = info->syscall->getMemoryRequest();
         assert(ev);

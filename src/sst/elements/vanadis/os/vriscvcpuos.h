@@ -75,7 +75,9 @@
 #define VANADIS_SYSCALL_RISCV_UNAME 160
 #define VANADIS_SYSCALL_RISCV_READV 65
 #define VANADIS_SYSCALL_RISCV_WRITEV 66
+#define VANADIS_SYSCALL_RISCV_FSTAT 80
 #define VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK 135
+#define VANADIS_SYSCALL_RISCV_RT_SIGACTION 134
 #define VANADIS_SYSCALL_RISCV_MADVISE 233
 #define VANADIS_SYSCALL_RISCV_FUTEX 98
 #define VANADIS_SYSCALL_RISCV_SET_TID_ADDRESS 96
@@ -271,20 +273,15 @@ public:
             call_ev = new VanadisSyscallUnameEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, uname_addr);
         } break;
 
-#if 0
         case VANADIS_SYSCALL_RISCV_FSTAT: {
-            const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
-            int32_t file_handle = regFile->getIntReg<int32_t>(phys_reg_4);
-
-            const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
-            uint64_t fstat_addr = regFile->getIntReg<uint64_t>(phys_reg_5);
+            int32_t file_handle = getRegister(10);
+            uint64_t fstat_addr = getRegister(11);
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to fstat( %" PRId32 ", %" PRIu64 " )\n",
                             file_handle, fstat_addr);
 
             call_ev = new VanadisSyscallFstatEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, file_handle, fstat_addr);
         } break;
-#endif
 
         case VANADIS_SYSCALL_RISCV_UNLINKAT: {
             int64_t dirFd = getRegister( 10 );
@@ -390,7 +387,6 @@ public:
         } break;
 
         case VANADIS_SYSCALL_RISCV_MADVISE: {
-    assert(0);
             const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
             uint64_t advise_addr = regFile->getIntReg<int64_t>(phys_reg_4);
 
@@ -404,7 +400,7 @@ public:
                             "[syscall-handler] found call to madvise( 0x%llx, %" PRIu64 ", %" PRIu64 " )\n",
                             advise_addr, advise_len, advise_advice);
 
-            // output->fatal(CALL_INFO, -1, "STOP\n");
+            printf("Warning: VANADIS_SYSCALL_RISCV_MADVISE not implmented return success\n");
             recvSyscallResp(new VanadisSyscallResponse(0));
         } break;
 
@@ -523,6 +519,11 @@ public:
             call_ev = new VanadisSyscallGetTime64Event(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, clk_type, time_addr);
         } break;
 
+        case VANADIS_SYSCALL_RISCV_RT_SIGACTION: {
+            printf("Warning: VANADIS_SYSCALL_RISCV_RT_SIGACTION not implmented return success\n");
+            recvSyscallResp(new VanadisSyscallResponse(0));
+        } break;
+
         case VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK: {
             int32_t how = getRegister( 10 );
             uint64_t signal_set_in = getRegister( 11 );
@@ -533,6 +534,8 @@ public:
                             "[syscall-handler] found a call to rt_sigprocmask( %" PRId32 ", 0x%llx, 0x%llx, %" PRId32
                             ")\n",
                             how, signal_set_in, signal_set_out, signal_set_size);
+
+            printf("Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success\n");
 
             recvSyscallResp(new VanadisSyscallResponse(0));
         } break;

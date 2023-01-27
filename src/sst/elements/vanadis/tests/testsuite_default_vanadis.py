@@ -51,7 +51,7 @@ def build_vanadis_test_matrix():
 
 
     location="small/misc"
-    misc_tests = ["stream","gettime","splitLoad","mt-dgemm"]
+    misc_tests = ["stream","gettime","splitLoad","mt-dgemm","stream-fortran"]
     #misc_tests =[]
     for test in misc_tests:
         for arch in arch_list:
@@ -64,14 +64,6 @@ def build_vanadis_test_matrix():
         for arch in arch_list:
             testlist.append(["basic_vanadis.py", location, test,arch, 2,1,300])
 
-    arch_list = ["riscv64"]
-
-    location="small/misc"
-    misc_tests = ["stream-fortran"]
-    misc_tests =[]
-    for test in misc_tests:
-        for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, 300])
 
     # Process each line and crack up into an index, hash, options and sdl file
     for testnum, test_info in enumerate(testlist):

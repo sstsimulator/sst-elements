@@ -115,6 +115,8 @@ public:
             return (left_value > right_value);
         case REG_COMPARE_GTE:
             return (left_value >= right_value);
+        case REG_COMPARE_ULT:
+            return std::isnan(left_value) | std::isnan(right_value) | (left_value < right_value);
         default:
             output->fatal(CALL_INFO, -1, "Unknown compare type.\n");
             return false;

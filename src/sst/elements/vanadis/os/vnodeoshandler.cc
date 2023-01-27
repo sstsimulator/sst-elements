@@ -17,8 +17,6 @@
 
 #include "os/vnodeos.h"
 
-//#include "os/vdumpregsreq.h"
-
 #include "os/syscall/fork.h"
 #include "os/syscall/clone.h"
 #include "os/syscall/futex.h"
@@ -47,6 +45,8 @@
 #include "os/syscall/write.h"
 #include "os/syscall/writev.h"
 #include "os/syscall/ioctl.h"
+#include "os/syscall/fstat.h"
+#include "os/syscall/statx.h"
 
 using namespace SST::Vanadis;
 
@@ -152,6 +152,12 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
         } break;
         case SYSCALL_OP_IOCTL: {
             syscall = new VanadisIoctlSyscall( this, coreLink, process, convertEvent<VanadisSyscallIoctlEvent*>( "ioctl", sys_ev ) );
+        } break;
+        case SYSCALL_OP_FSTAT: {
+            syscall = new VanadisFstatSyscall( this, coreLink, process, convertEvent<VanadisSyscallFstatEvent*>( "fstat", sys_ev ) );
+        } break;
+        case SYSCALL_OP_STATX: {
+            syscall = new VanadisStatxSyscall( this, coreLink, process, convertEvent<VanadisSyscallStatxEvent*>( "statx", sys_ev ) );
         } break;
 
         default: {

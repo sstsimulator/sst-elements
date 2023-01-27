@@ -172,6 +172,7 @@ os/callev/voscallreadlink.h \
 os/callev/voscallreadv.h \
 os/callev/voscallsettidaddr.h \
 os/callev/voscallsta.h \
+os/callev/voscallstatx.h \
 os/callev/voscalluname.h \
 os/callev/voscallunlinkat.h \
 os/callev/voscallunlink.h \
@@ -209,6 +210,7 @@ os/syscall/read.h \
 os/syscall/readlink.h \
 os/syscall/readv.h \
 os/syscall/settidaddress.h \
+os/syscall/statx.h \
 os/syscall/syscall.h \
 os/syscall/syscall.cc \
 os/syscall/uname.h \
@@ -358,6 +360,10 @@ EXTRA_DIST = \
 	tests/small/misc/stream-fortran/Makefile \
 	tests/small/misc/stream-fortran/stream.f \
 	tests/small/misc/stream-fortran/mysecond.c \
+	tests/small/misc/stream-fortran/mipsel/stream-fortran \
+	tests/small/misc/stream-fortran/mipsel/sst.stdout.gold \
+	tests/small/misc/stream-fortran/mipsel/vanadis.stderr.gold \
+	tests/small/misc/stream-fortran/mipsel/vanadis.stdout.gold \
 	tests/small/misc/stream-fortran/riscv64/stream-fortran \
 	tests/small/misc/stream-fortran/riscv64/sst.stdout.gold \
 	tests/small/misc/stream-fortran/riscv64/vanadis.stderr.gold \
