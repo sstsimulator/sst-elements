@@ -32,7 +32,7 @@ AC_DEFUN([SST_CHECK_PANDO_RUNTIME], [
   AC_LANG_PUSH(C++)
   AC_CHECK_HEADERS([pando/pando.hpp], [], [sst_check_pando_runtime_happy="no"])
   AC_CHECK_LIB([pando-rtl-backend], [libpandoruntime_is_present],
-    [PANDO_RUNTIME_LIB="-lpando-rtl -lpando-rtl-backend"], [sst_check_pando_runtime_happy="no"])
+    [PANDO_RUNTIME_LIB="-lpando-rtl -lpando-rtl-backend -lpando-rtl-arch"], [sst_check_pando_runtime_happy="no"])
   AC_LANG_POP(C++)
 
   # restore saved flags

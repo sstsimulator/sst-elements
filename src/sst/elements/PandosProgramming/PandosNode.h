@@ -1,5 +1,6 @@
 #pragma once
-
+#include <pando/backend_context.hpp>
+#include <pando/arch_coroutine.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <vector>
@@ -7,6 +8,10 @@
 
 namespace SST {
 namespace PandosProgramming {
+
+typedef pando::backend::context_t* (*getContextFunc_t)();
+typedef void  (*setContextFunc_t)(pando::backend::context_t*);
+typedef int (*mainFunc_t)(int, char **);
 
 /**
  * PANDOS Node component
@@ -49,6 +54,20 @@ public:
          */
         virtual bool clockTic(SST::Cycle_t);
 
+        /**
+         * Open a user program
+         */
+        void openProgramBinary();
+        /**
+         * Close a user program
+         */
+        void closeProgramBinary();
+
+        /**
+         * Start a PANDO Program
+         */
+        static void PANDOProgramStart(pando_coroutine_t *, void*);
+        
         // SST Output object, for printing error messages, etc.
         SST::Output *out;
 
@@ -58,6 +77,11 @@ public:
         int32_t num_cores; //!< The number of cores in this node
         int32_t instr_per_task; //!< The number of instructions per task
         std::string program_binary_fname; //!< The name of the program binary to load
+        void *program_binary_handle;
+        getContextFunc_t get_current_pando_ctx;
+        setContextFunc_t set_current_pando_ctx;
+        pando::backend::context_t *pando_context; //!< PANDO context
+        pando_coroutine_t pando_program_state; //!< PANDO program state which can be resumed
 };
 
 }
