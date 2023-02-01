@@ -1,5 +1,5 @@
 #pragma once
-#include <pando/backend_context.hpp>
+#include <pando/backend_node_context.hpp>
 #include <pando/arch_coroutine.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
@@ -9,8 +9,8 @@
 namespace SST {
 namespace PandosProgramming {
 
-typedef pando::backend::context_t* (*getContextFunc_t)();
-typedef void  (*setContextFunc_t)(pando::backend::context_t*);
+typedef pando::backend::node_context_t* (*getContextFunc_t)();
+typedef void  (*setContextFunc_t)(pando::backend::node_context_t*);
 typedef int (*mainFunc_t)(int, char **);
 
 /**
@@ -80,7 +80,7 @@ public:
         void *program_binary_handle;
         getContextFunc_t get_current_pando_ctx;
         setContextFunc_t set_current_pando_ctx;
-        pando::backend::context_t *pando_context; //!< PANDO context
+        pando::backend::node_context_t *pando_context; //!< PANDO context
         pando_coroutine_t pando_program_state; //!< PANDO program state which can be resumed
 };
 

@@ -1,4 +1,4 @@
-#include <pando/backend_context.hpp>
+#include <pando/backend_node_context.hpp>
 #include <dlfcn.h>
 #include "sst_config.h"
 #include "PandosNode.h"
@@ -37,7 +37,7 @@ void PandosNodeT::openProgramBinary()
                 "PANDORuntimeBackendSetCurrentContext"
                 );
 
-        pando_context = new pando::backend::context_t;
+        pando_context = new pando::backend::node_context_t;
         out->output(CALL_INFO, "made pando context @ %p\n", pando_context);
 }
 
