@@ -1,4 +1,5 @@
 #include <pando/backend_node_context.hpp>
+#include <pando/backend_task.hpp>
 #include <dlfcn.h>
 #include "sst_config.h"
 #include "PandosNode.h"
@@ -58,6 +59,41 @@ void PandosNodeT::closeProgramBinary()
 }
 
 /**
+ * initalize cores
+ */
+void PandosNodeT::initCores()
+{
+        /**
+         * start all cores
+         */
+        for (int64_t c = 0; c < num_cores; c++) {
+                auto *core = new pando::backend::core_context_t(pando_context);
+                core_contexts.push_back(core);
+                core->start();
+        }
+
+        /**
+         * enque an initial task on core 0
+         */
+        pando::backend::core_context_t *cc0 = core_contexts[0];
+        mainFunc_t my_main = (mainFunc_t)dlsym(
+                program_binary_handle,
+                "my_main"
+                );
+
+        if (!my_main) {
+                out->fatal(CALL_INFO, -1, "failed to find symbol '%s'\n", "my_main");
+                exit(1);
+        }
+
+        auto main_task = pando::backend::NewTask([=]()mutable{
+                        my_main(0, nullptr);
+                        out->output(CALL_INFO, "my_main() has returned\n");
+                });
+        cc0->task_deque.push_front(main_task);
+}
+
+/**
  * Constructors/Destructors
  */
 PandosNodeT::PandosNodeT(ComponentId_t id, Params &params) : Component(id), program_binary_handle(nullptr) {
@@ -77,7 +113,10 @@ PandosNodeT::PandosNodeT(ComponentId_t id, Params &params) : Component(id), prog
 
         // open binary
         openProgramBinary();
-        
+
+        // initialize cores
+        initCores();
+
         // Tell the simulation not to end until we're ready
         registerAsPrimaryComponent();
         primaryComponentDoNotEndSim();    
@@ -87,18 +126,16 @@ PandosNodeT::PandosNodeT(ComponentId_t id, Params &params) : Component(id), prog
         
         // Register clock
         registerClock("1GHz", new Clock::Handler<PandosNodeT>(this, &PandosNodeT::clockTic));
-
-        // Spawn PANDO program coroutine
-        pando_coroutine_opts_t opts = PANDO_COROUTINE_OPTS_INIT;
-        opts.coroutine_entry = PandosNodeT::PANDOProgramStart;
-        pando_coroutine_spawn(&pando_program_state, &opts, (void*)this);
 }
 
 PandosNodeT::~PandosNodeT() {
         out->output(CALL_INFO, "Goodbye, cruel world!\n");
+        for (int64_t cc = 0; cc < core_contexts.size(); cc++) {
+                delete core_contexts[cc];
+                core_contexts[cc] = nullptr;
+        }
+        core_contexts.clear();
         closeProgramBinary();
-        pando_coroutine_delete(&pando_program_state);
-        delete pando_context;
         delete out;
 }
 
@@ -129,33 +166,13 @@ bool PandosNodeT::clockTic(SST::Cycle_t cycle) {
 
         // execute some pando program
         set_current_pando_ctx(pando_context);
-        pando_coroutine_resume(&pando_program_state);
+
+        // have each core execute if not busy
+        for (pando::backend::core_context_t *core : core_contexts) {
+                if (core->busy || !core->task_deque.empty()) {
+                        core->execute();
+                }
+        }
+
         return false;
-}
-
-
-void PandosNodeT::PANDOProgramStart(
-        pando_coroutine_t *cr,
-        void *pando_node_v){
-        // get the pando node
-        PandosNodeT *pando_node = reinterpret_cast<PandosNodeT*>(pando_node_v);
-
-        // yield on first call
-        pando_coroutine_yield(cr);
-
-        // find "my_main"                
-        mainFunc_t my_main = (mainFunc_t)dlsym(
-                pando_node->program_binary_handle,
-                "my_main"
-                );
-        if (!my_main) {
-                pando_node->fatal(CALL_INFO, -1, "Could mot symbol '%s'\n", "my_main");
-                exit(1);
-        }        
-
-        pando_node->set_current_pando_ctx(pando_node->pando_context);
-        my_main(0, nullptr);
-
-        // yield indefinitely
-        while (1) pando_coroutine_yield(cr);
 }

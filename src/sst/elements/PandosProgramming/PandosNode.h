@@ -1,5 +1,6 @@
 #pragma once
 #include <pando/backend_node_context.hpp>
+#include <pando/backend_core_context.hpp>
 #include <pando/arch_coroutine.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
@@ -64,9 +65,9 @@ public:
         void closeProgramBinary();
 
         /**
-         * Start a PANDO Program
+         * initalize cores
          */
-        static void PANDOProgramStart(pando_coroutine_t *, void*);
+        void initCores();
         
         // SST Output object, for printing error messages, etc.
         SST::Output *out;
@@ -81,7 +82,7 @@ public:
         getContextFunc_t get_current_pando_ctx;
         setContextFunc_t set_current_pando_ctx;
         pando::backend::node_context_t *pando_context; //!< PANDO context
-        pando_coroutine_t pando_program_state; //!< PANDO program state which can be resumed
+        std::vector<pando::backend::core_context_t*> core_contexts; //!< PANDO cores
 };
 
 }
