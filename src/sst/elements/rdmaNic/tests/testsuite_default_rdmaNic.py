@@ -116,13 +116,13 @@ class testcase_rdmaNic(SSTTestCase):
 
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
 
-        node0_os_outfile = "{0}/stdout-node0.cpu0.os".format(test_path)
-        node0_os_errfile = "{0}/stderr-node0.cpu0.os".format(test_path)
+        node0_os_outfile = "{0}/stdout-0-100".format(test_path)
+        node0_os_errfile = "{0}/stderr-0-100".format(test_path)
         ref_node0_os_outfile = "{0}/{1}/{2}.stdout-node0.cpu0.os.gold".format(test_path, elftestdir, elffile)
         ref_node0_os_errfile = "{0}/{1}/{2}.stderr-node0.cpu0.os.gold".format(test_path, elftestdir, elffile)
 
-        node1_os_outfile = "{0}/stdout-node1.cpu0.os".format(test_path)
-        node1_os_errfile = "{0}/stderr-node1.cpu0.os".format(test_path)
+        node1_os_outfile = "{0}/stdout-1-100".format(test_path)
+        node1_os_errfile = "{0}/stderr-1-100".format(test_path)
         ref_node1_os_outfile = "{0}/{1}/{2}.stdout-node1.cpu0.os.gold".format(test_path, elftestdir, elffile)
         ref_node1_os_errfile = "{0}/{1}/{2}.stderr-node1.cpu0.os.gold".format(test_path, elftestdir, elffile)
 
@@ -196,7 +196,6 @@ class testcase_rdmaNic(SSTTestCase):
 ###############################################
 
     def _checkSkipConditions(self):
-        self.skipTest("RdmaNic Skipping Test - musl compiler not available")
         # Check to see if the musl compiler is missing
         if self._is_musl_compiler_available() == False:
             self.skipTest("RdmaNic Skipping Test - musl compiler not available")
