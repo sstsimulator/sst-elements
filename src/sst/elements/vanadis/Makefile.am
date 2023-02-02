@@ -139,6 +139,7 @@ os/vphysmemmanager.h \
 os/vriscvcpuos.h \
 os/vstartthreadreq.h \
 \
+os/include/device.h \
 os/include/fdTable.h \
 os/include/freeList.h \
 os/include/futex.h \
