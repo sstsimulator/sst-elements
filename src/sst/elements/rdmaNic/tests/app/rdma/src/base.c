@@ -13,6 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <sys/mman.h>
 #include <stdio.h>
 #include <inttypes.h>
 #include <assert.h>
@@ -20,16 +21,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-
-#if 0
 #include <unistd.h>
 #include <sys/syscall.h>
-#define syscall( a, x ) (uint32_t) x
-#endif
 
 #include "base.h"
 
-#define DEBUG 0 
+#define DEBUG 0
 #define dbgPrint(fmt, ARGS...) \
         do { if (DEBUG) fprintf(stdout, "%s():%d: " fmt, __func__,__LINE__, ##ARGS); } while (0) 
 
@@ -39,7 +36,7 @@ static HostQueueInfo s_hostQueueInfo;
 static int s_reqQueueHeadIndex;
 static volatile uint32_t s_reqQtailIndex;
 
-static uint32_t s_nicBaseAddr = 0x80000000;
+static uint32_t* s_nicBaseAddr;
 
 static uint32_t* getNicWindow();
 static void writeSetup( HostQueueInfo* setup );
@@ -53,9 +50,23 @@ int base_my_pe() {
     return s_nicQueueInfo.nodeId * s_nicQueueInfo.numThreads + s_nicQueueInfo.myThread;
 }
 
+Addr_t getNicBase() {
+    return (Addr_t) s_nicBaseAddr;
+}
+
 void base_init( ) {
 
 	dbgPrint("\n");
+
+    // We should do something like open("/dev/rdmaNic", ) but devices are not currently implemented in Vanadis
+    // so we use a magic file descriptor
+#ifdef SYS_mmap2
+    s_nicBaseAddr = (uint32_t*) syscall(SYS_mmap2, 0, 0, PROT_WRITE, 0, -1000, 0);
+#else
+    s_nicBaseAddr = (uint32_t*) syscall(SYS_mmap, 0, 0, PROT_WRITE, 0, -1000, 0);
+#endif
+
+    dbgPrint("nicBaseAddr=0x%p\n",s_nicBaseAddr);
 	s_reqQueueHeadIndex = 0;
 
 	bzero( &s_nicQueueInfo, sizeof(s_nicQueueInfo) );
@@ -64,12 +75,19 @@ void base_init( ) {
 
     s_hostQueueInfo.reqQueueTailIndexAddress = (uint32_t) &s_reqQtailIndex;
 
-	dbgPrint("req tail addr %#" PRIx32 "\n", s_hostQueueInfo.reqQueueTailIndexAddress);
+	dbgPrint("respAddress %#" PRIx32 ", req tail addr %#" PRIx32 "\n", s_hostQueueInfo.respAddress, s_hostQueueInfo.reqQueueTailIndexAddress);
 
 	// make sure this structure does not cross page boundary
     writeSetup( &s_hostQueueInfo );
 
     readNicQueueInfo( &s_nicQueueInfo );
+
+    // the NIC adds 1 to this addres to make sure it's not 0 as part of the handshake
+    s_nicQueueInfo.reqQueueAddress -= 1;
+    // the NIC returns addresses that are relative to the start of it's address space
+    // which is mapped into a virtual address space the process uses to talk to the NIC
+    // add the start of the virtual address space 
+    s_nicQueueInfo.reqQueueAddress += (uint32_t) s_nicBaseAddr;
 
     --s_nicQueueInfo.nodeId;
     --s_nicQueueInfo.myThread;
@@ -104,7 +122,7 @@ void writeCmd( NicCmd* cmd ) {
 static void readNicQueueInfo( volatile NicQueueInfo* info ) 
 {
 	dbgPrint("wait for response from NIC, addr %p\n",info);
-	uint32_t* ptr = (uint32_t*) info;
+	volatile uint32_t* ptr = (uint32_t*) info;
 
 	for ( int i = 0; i < sizeof( NicQueueInfo )/4;  i++ ) {
 		while ( 0 == ptr[i] );
