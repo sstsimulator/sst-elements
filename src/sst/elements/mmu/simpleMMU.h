@@ -61,11 +61,11 @@ class SimpleMMU : public MMU {
 
     void setCoreToPageTable( unsigned core, unsigned hwThread, unsigned pid ) {
         m_dbg.debug(CALL_INFO_LONG,1,0,"pid=%d core=%d hwTread=%d\n",pid,core,hwThread);
-        m_coreToPid.at(core).at(hwThread) = pid;
+        m_coreToPid[core][hwThread] = pid;
     }
 
     virtual uint32_t getPerms( unsigned pid, uint64_t vpn ) {
-        auto pageTable = m_pageTableMap.at(pid);
+        auto pageTable = m_pageTableMap[pid];
         assert( pageTable );
         uint32_t perms = -1;
         PTE* pte = nullptr;
@@ -78,7 +78,7 @@ class SimpleMMU : public MMU {
     }
 
     virtual uint32_t virtToPhys( unsigned pid, uint64_t vpn ) {
-        auto pageTable = m_pageTableMap.at(pid);
+        auto pageTable = m_pageTableMap[pid];
         assert( pageTable );
         uint32_t ppn= -1;
         PTE* pte = nullptr;
@@ -133,16 +133,17 @@ class SimpleMMU : public MMU {
     }
 
     void handleTlbEvent( Event* ev, int link );
+    void handleNicTlbEvent( Event* ev );
 
 
     unsigned getPid( unsigned core, unsigned hwThread ) {
-        m_dbg.debug(CALL_INFO_LONG,1,0,"core=%d hwThread=%d -> pid=%d\n",core,hwThread,m_coreToPid.at(core).at(hwThread));
-        return m_coreToPid.at(core).at(hwThread);
+        m_dbg.debug(CALL_INFO_LONG,1,0,"core=%d hwThread=%d -> pid=%d\n",core,hwThread,m_coreToPid[core][hwThread]);
+        return m_coreToPid[core][hwThread];
     }
 
     PageTable* getPageTable( unsigned core, unsigned hwThread ) {
         m_dbg.debug(CALL_INFO_LONG,1,0,"core=%d hwThread=%d\n",core,hwThread);
-        int pid = m_coreToPid.at(core).at(hwThread);
+        int pid = m_coreToPid[core][hwThread];
         return getPageTable( pid );
     }
 
