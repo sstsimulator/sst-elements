@@ -141,10 +141,13 @@ public:
         // Iterate over the queue, anything with a matching thread ID is
         // first deleted and then removed from the queue, otherwise entry
         // is left alone
+
         for(auto op_q_itr = op_q.begin(); op_q_itr != op_q.end(); ) {
             if( (*op_q_itr)->getHWThread() == thread ) {
                 delete (*op_q_itr);
                 op_q_itr = op_q.erase(op_q_itr);
+            } else {
+                ++op_q_itr;
             }
         }
 
@@ -152,6 +155,8 @@ public:
             if( (*load_itr)->getHWThread() == thread ) {
                 delete (*load_itr);
                 load_itr = loads_pending.erase(load_itr);
+            } else {
+                ++load_itr;
             }
         }
 
@@ -159,6 +164,8 @@ public:
             if( (*store_itr)->getHWThread() == thread) {
                 delete (*store_itr);
                 store_itr = stores_pending.erase(store_itr);
+            } else {
+                ++store_itr;
             }
         }
     }
