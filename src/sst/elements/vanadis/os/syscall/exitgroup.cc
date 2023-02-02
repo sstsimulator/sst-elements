@@ -33,7 +33,11 @@ VanadisExitGroupSyscall::VanadisExitGroupSyscall( VanadisNodeOSComponent* os, SS
     while ( process->numThreads() > 1 ) {
 
         OS::ProcessInfo* tmp = process->getThread();
-        printf("pid=%d tid=%d has exited\n",tmp->getpid(), tmp->gettid());
+        if ( m_os->getNodeNum() >= 0 ) {
+            printf("node=%d pid=%d tid=%d has exited\n",m_os->getNodeNum(), tmp->getpid(), tmp->gettid());
+        } else {
+            printf("pid=%d tid=%d has exited\n",tmp->getpid(), tmp->gettid());
+        }
 
         unsigned core = tmp->getCore();
         unsigned hwThread = tmp->getHwThread();
@@ -48,7 +52,11 @@ VanadisExitGroupSyscall::VanadisExitGroupSyscall( VanadisNodeOSComponent* os, SS
         delete tmp; 
     }
 
-    printf("pid=%d tid=%d has exited\n",process->getpid(), process->gettid());
+    if ( m_os->getNodeNum() >= 0 ) {
+        printf("node=%d pid=%d tid=%d has exited\n",m_os->getNodeNum(), process->getpid(), process->gettid());
+    } else {
+        printf("pid=%d tid=%d has exited\n",process->getpid(), process->gettid());
+    }
 
     // clear the process from the core/hwThread it was running on
     os->removeThread( event->getCoreID(),event->getThreadID(), process->gettid() );
