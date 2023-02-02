@@ -68,7 +68,7 @@ class ProcessInfo {
         m_fileTable->update( obj.m_fileTable );
     }
 
-    ProcessInfo( MMU_Lib::MMU* mmu, PhysMemManager* physMemMgr, unsigned pid, VanadisELFInfo* elfInfo, int debug_level, unsigned pageSize, Params& params )
+    ProcessInfo( MMU_Lib::MMU* mmu, PhysMemManager* physMemMgr, int node, unsigned pid, VanadisELFInfo* elfInfo, int debug_level, unsigned pageSize, Params& params )
         : m_mmu(mmu), m_physMemMgr(physMemMgr), m_pid(pid), m_ppid(0), m_pgid(pid), m_tid(pid), m_uid(8000), m_gid(1000),
           m_elfInfo(elfInfo), m_pageSize(pageSize), m_params(params), m_tidAddress(0)
     {
@@ -111,8 +111,13 @@ class ProcessInfo {
         }
 
         //openFileWithFd( "stdin-" + std::to_string(pid), 0 );
-        openFileWithFd( "stdout-" + std::to_string(m_pid), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR, 1 );
-        openFileWithFd( "stderr-" + std::to_string(m_pid), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR, 2 );
+        if ( node >= 0 ) {
+            openFileWithFd( "stdout-" + std::to_string(node) + "-" + std::to_string(m_pid), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR, 1 );
+            openFileWithFd( "stderr-" + std::to_string(node) + "-" + std::to_string(m_pid), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR, 2 );
+        } else {
+            openFileWithFd( "stdout-" + std::to_string(m_pid), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR, 1 );
+            openFileWithFd( "stderr-" + std::to_string(m_pid), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR, 2 );
+        }
         
         initBrk( initial_brk );
 
@@ -233,9 +238,8 @@ class ProcessInfo {
         m_virtMemMap->print( "mprotect" );
     }
 
-    uint64_t mmap( uint64_t addr, size_t length, int prot, int flags, size_t offset ) {
+    uint64_t mmap( uint64_t addr, size_t length, int prot, int flags, Device* dev, size_t offset ) {
         m_dbg.verbose(CALL_INFO,1,0,"addr=%#" PRIx64 " length=%zu prot=%#x flags=%#x offset=%zu\n",addr, length, prot, flags, offset );
-
         
         length = roundUp( length, m_pageSize );
 
@@ -244,7 +248,7 @@ class ProcessInfo {
         if ( prot & PROT_READ ) { perms |= 1<<2;}
 
         uint64_t ret;
-        if ( ( ret = m_virtMemMap->mmap( length, perms ) ) ) {
+        if ( ( ret = m_virtMemMap->mmap( length, perms, dev ) ) ) {
             m_virtMemMap->print( "mmapped" );
             return ret; 
         }
