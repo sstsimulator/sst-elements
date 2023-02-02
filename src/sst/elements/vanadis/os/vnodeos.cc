@@ -83,6 +83,8 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
         // we don't use it
     }
 
+    m_nodeNum = params.find<int>("nodeNum", -1);
+
     int numProcess = 0;
     while( 1 ) {
         std::string name("process" + std::to_string(numProcess) );
@@ -106,7 +108,7 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
             }
 
             unsigned tid = getNewTid();
-            m_threadMap[tid] = new OS::ProcessInfo( m_mmu, m_physMemMgr, tid, m_elfMap[exe], m_processDebugLevel, m_pageSize, tmp );
+            m_threadMap[tid] = new OS::ProcessInfo( m_mmu, m_physMemMgr, m_nodeNum, tid, m_elfMap[exe], m_processDebugLevel, m_pageSize, tmp );
             ++numProcess;
         } else {
           break;
@@ -163,6 +165,9 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
     }
 
     delete[] port_name_buffer;
+
+    m_deviceList[-1000] = new OS::Device( "/dev/rdmaNic", 0x80000000, 1048576 );
+
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
@@ -373,7 +378,8 @@ void VanadisNodeOSComponent::processOsPageFault( VanadisSyscall* syscall, uint64
 void VanadisNodeOSComponent::pageFaultHandler2( MMU_Lib::RequestID reqId, unsigned link, unsigned core, unsigned hwThread, 
                 unsigned pid,  uint32_t vpn, uint32_t faultPerms, uint64_t instPtr, uint64_t memVirtAddr, VanadisSyscall* syscall ) 
 {
-    output->verbose(CALL_INFO, 1, 0, "RequestID=%#" PRIx64 " link=%d pid=%d vpn=%d perms=%#x instPtr=%#" PRIx64 "\n", reqId, link, pid, vpn, faultPerms, instPtr ); 
+    output->verbose(CALL_INFO, 1, 0, "RequestID=%#" PRIx64 " link=%d pid=%d vpn=%d perms=%#x instPtr=%#" PRIx64 " syscall=%p\n",
+            reqId, link, pid, vpn, faultPerms, instPtr, syscall ); 
 
     auto tmp = new PageFault( reqId, link, core, hwThread, pid, vpn, faultPerms, instPtr, memVirtAddr, syscall );
     m_pendingFault.push( tmp );
@@ -520,6 +526,14 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
                 }  else {
                     output->verbose(CALL_INFO, 1, 0,"found elf page vpn %d -> ppn %d\n",vpn, page->getPPN());
                 }
+            } else if ( region->backing->dev ) {
+                // map this physical page into the MMU for this process 
+                auto physAddr = region->backing->dev->getPhysAddr();
+                auto ppn = physAddr >> m_pageShift;
+                output->verbose(CALL_INFO, 1, 0,"\n", "Device physAddr=%#lx ppn=%d\n",physAddr,ppn);
+                m_mmu->map( thread->getpid(), vpn, ppn, m_pageSize, region->perms );
+                pageFaultFini( info );
+                return;
             } else {
                 assert( region->backing->data.size());
                 data = region->readData( vpn << m_pageShift, m_pageSize );
