@@ -67,7 +67,7 @@
             switch ( req->m_op ) {
               case MemRequest::Read:
                 Nic().dbg.debug(CALL_INFO,1,DBG_MEMEVENT_FLAG,"read addr=%#" PRIx64 " dataSize=%d\n",req->addr,req->dataSize);
-				stdMemReq = new StandardMem::Read(req->addr, req->dataSize, 0, 0, 0, req->id);
+				stdMemReq = new StandardMem::Read(req->addr, req->dataSize, 0, req->addr );
                 break;
 
               case MemRequest::Write:
@@ -80,10 +80,10 @@
 						//printf("%x ", (req->data >> i*8) & 0xff  );
                     }
 					//printf("\n");
-					stdMemReq = new StandardMem::Write(req->addr, req->dataSize, payload);
+					stdMemReq = new StandardMem::Write(req->addr, req->dataSize, payload, false, 0, req->addr);
                 } else {
                     Nic().dbg.debug(CALL_INFO,1,DBG_MEMEVENT_FLAG,"write addr=%#" PRIx64 " dataSize=%d\n",req->addr,req->dataSize);
-					stdMemReq = new StandardMem::Write(req->addr, req->dataSize, req->buf);
+					stdMemReq = new StandardMem::Write(req->addr, req->dataSize, req->buf, false, 0, req->addr );
 #if 0
                     for ( int i = 0; i < req->dataSize/4; i++ ) {
 						for ( int j = 3; j >=0; j-- ) {
