@@ -19,7 +19,7 @@ class SendStream {
     ~SendStream( );
     bool process();
   private:
-    void readResp( int thread, Interfaces::StandardMem::Request* resp );
+    void readResp( int thread, Interfaces::StandardMem::Request* resp, int id );
 
 	bool isReadyQfull() {
 		return m_readyPktQ.size() == m_maxQueueSize;
