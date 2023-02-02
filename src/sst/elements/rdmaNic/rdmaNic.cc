@@ -31,12 +31,11 @@ RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
 	m_activeNicCmd(NULL),
 	m_nextCqId(0),
 	m_streamId(1),
-	m_netPktMtuLen( 1024 )
+	m_netPktMtuLen( 1024 ),
+	m_dmaLink( nullptr )
 {
     m_nicId = params.find<int>("nicId", -1);
     m_numNodes = params.find<int>("numNodes", 0);
-
-	printf("%s() sizeof(NicCmd) %zu\n",__func__,sizeof(NicCmd));
 
 	out.init("RdmaNic", params.find<int>("verbose", 1), 0, Output::STDOUT);
 
@@ -75,11 +74,12 @@ RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
 
 	m_perPeTotalMemSize += round_up( m_compQueuesBacking[0].size() ,4096 );	
 
+    auto mmioLength = 1024*1024 * m_pesPerNode;
+
     dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"\n");
     if ( m_nicId == 0 ) {
         dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"nicId=%d pesPerNode=%d numNodes=%d\n",m_nicId,m_pesPerNode,m_numNodes );
 		dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"numCmdQueueEntryes=%d cmdQsize %zu perPeReqQueueMemSize=%zu\n", m_cmdQSize, m_cmdQSize* sizeof(NicCmd),  m_perPeReqQueueMemSize );
-        dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"nicBaseAddr=%#" PRIx64 " total size command Q space %zu\n",  m_ioBaseAddr, m_reqQueueBacking.size()); 
         dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"nicCompQueueAddr=%#" PRIx64 " compQ backing size %zu\n",  m_ioBaseAddr + m_reqQueueBacking.size(), m_compQueuesBacking[0].size() );
 		dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"total per PE memory size %zu\n", m_perPeTotalMemSize);
     }
@@ -97,14 +97,15 @@ RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
     if (!m_mmioLink) {
         out.fatal(CALL_INFO_LONG, -1, "Unable to load StandardMem subcomponent; check that 'mmio' slot is filled in input.\n");
     }
-	m_mmioLink->setMemoryMappedAddressRegion(m_ioBaseAddr, 1024*1024 * m_pesPerNode);
 
-	m_useDmaCache = params.find<bool>("useDmaCache",false);
-	if ( m_useDmaCache ) {
+	m_mmioLink->setMemoryMappedAddressRegion(m_ioBaseAddr, mmioLength );
+
+	auto useDmaCache = params.find<bool>("useDmaCache",false);
+	if ( useDmaCache ) {
     	m_dmaLink = loadUserSubComponent<StandardMem>("dma", ComponentInfo::SHARE_NONE, m_clockTC, new StandardMem::Handler<RdmaNic>(this, &RdmaNic::handleEvent));
 
     	if (!m_dmaLink) {
-            out.fatal(CALL_INFO_LONG, -1, "Unable to load StandardMem subcomponent; check that 'mmio' slot is filled in input.\n");
+            out.fatal(CALL_INFO_LONG, -1, " Unable to load StandardMem subcomponent; check that 'dma' slot is filled in input.\n");
     	}
 	} else {
 		m_dmaLink = m_mmioLink;
@@ -158,7 +159,7 @@ void RdmaNic::mmioWriteSetup( StandardMem::Write* req) {
 	// Does this need to be a permanent structure?
     auto& info = m_threadInfo[thread].setupInfo;
 
-    dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"Write size=%zu addr=%" PRIx64 " offset=%llu thread=%d data %s\n",
+    dbg.debug( CALL_INFO_LONG,2,DBG_X_FLAG,"Write size=%zu addr=%" PRIx64 " offset=%llu thread=%d data %s\n",
                     req->data.size(), req->pAddr, req->pAddr - m_ioBaseAddr, thread, getDataStr(req->data).c_str() );
 
 	memcpy( (uint8_t*) (&info.hostInfo) + info.offset, req->data.data(), req->data.size() );
@@ -176,13 +177,15 @@ void RdmaNic::mmioWriteSetup( StandardMem::Write* req) {
 		m_nicCmdQueueV[thread] = NicCmdQueueInfo( info.hostInfo.reqQueueTailIndexAddress );
 
 		memset( (void*) &info.nicInfo, 1, sizeof( info.nicInfo ) );
-		info.nicInfo.reqQueueAddress = m_ioBaseAddr + thread * m_perPeReqQueueMemSize;
+		info.nicInfo.reqQueueAddress = (thread * m_perPeReqQueueMemSize) + 1;
 		info.nicInfo.reqQueueHeadIndexAddress = (info.nicInfo.reqQueueAddress + m_perPeReqQueueMemSize ) - 8; 
 		info.nicInfo.reqQueueSize = m_cmdQSize;
 		info.nicInfo.nodeId = m_nicId + 1;
 		info.nicInfo.numNodes = m_numNodes; 
 		info.nicInfo.numThreads = m_pesPerNode;
 		info.nicInfo.myThread = thread + 1;
+
+        dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"write info to host address %#lx\n",threadMemoryBase + info.hostInfo.respAddress);
 
     	m_memReqQ->write( m_tailWriteQnum, threadMemoryBase + info.hostInfo.respAddress, sizeof(info.nicInfo), reinterpret_cast<uint8_t*>(&info.nicInfo) );
 
@@ -319,7 +322,7 @@ void RdmaNic::writeCompletionToHost(int thread, int cqId, RdmaCompletion& comp )
 void RdmaNic::init(unsigned int phase) {
 	dbg.debug( CALL_INFO_LONG,2,DBG_X_FLAG,"phase=%d\n",phase);
 
-	if ( m_useDmaCache ) {
+	if ( m_dmaLink ) {
     	m_dmaLink->init(phase);
 	}
     m_mmioLink->init(phase);
@@ -328,7 +331,7 @@ void RdmaNic::init(unsigned int phase) {
 }
 
 void RdmaNic::setup(void) {
-	if ( m_useDmaCache ) {
+	if ( m_dmaLink ) {
     	m_dmaLink->setup();
 	}
     m_mmioLink->setup();
@@ -337,7 +340,7 @@ void RdmaNic::setup(void) {
 
 void RdmaNic::finish(void) {
 
-	if ( m_useDmaCache ) {
+	if ( m_dmaLink ) {
     	m_dmaLink->finish();
 	}
     m_mmioLink->finish();
