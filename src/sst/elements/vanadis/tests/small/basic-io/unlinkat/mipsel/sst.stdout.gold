@@ -1,10 +1,3 @@
-Verbosity: 0 -> loading Vanadis CPU type: vanadis.dbg_VanadisCPU
-Auto-clock syscalls: no
-No application arguments found, continuing with argc=0
-total hardware threads 1
-build node0.cpu0
-WARNING: Element vanadis.dbg_VanadisCPU has slot with an invalid name: decoder%(hardware_threads)d
-node0.cpu0.l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 3 cycles.
 pid=100 tid=100 has exited
 all process have exited
  node0.cpu0:decoder0:branch_unit.branch_cache_hit.1 : Accumulator : Sum.u64 = 2504; SumSQ.u64 = 2504; Count.u64 = 2504; Min.u64 = 1; Max.u64 = 1; 

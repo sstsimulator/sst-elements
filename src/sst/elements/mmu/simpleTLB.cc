@@ -56,9 +56,9 @@ SimpleTLB::SimpleTLB(SST::ComponentId_t id, SST::Params& params) : TLB(id,params
     m_waitingMiss.resize( numHwThreads );
     m_tlbData.resize( numHwThreads );
     for ( int i=0; i < m_tlbData.size(); i++ ) {
-        m_tlbData.at(i).resize( m_tlbSize );
-        for ( int j=0; j < m_tlbData.at(i).size(); j++ ) {
-            m_tlbData.at(i).at(j).resize( m_tlbSetSize );
+        m_tlbData[i].resize( m_tlbSize );
+        for ( int j=0; j < m_tlbData[i].size(); j++ ) {
+            m_tlbData[i][j].resize( m_tlbSetSize );
         }
     }
     m_dbg.debug(CALL_INFO,1,0,"numHwTHreads=%d tlbSize=%d tlbSetSize=%d\n",numHwThreads,m_tlbSize,m_tlbSetSize);
@@ -110,13 +110,13 @@ void SimpleTLB::handleMMUEvent( Event* ev ) {
 
     // send the first fill response 
     m_selfLink->send( 0, new SelfEvent( record->reqId, physAddr ));
-    auto& waiting = m_waitingMiss.at(record->hwThreadId);
-    waiting.at(vpn).pop();
+    auto& waiting = m_waitingMiss[record->hwThreadId];
+    waiting[vpn].pop();
     delete record;
 
     // while there are other misses for this page send them 
-    while ( ! waiting.at(vpn).empty() ) {
-        auto record = reinterpret_cast<TlbRecord*>(waiting.at(vpn).front());
+    while ( ! waiting[vpn].empty() ) {
+        auto record = reinterpret_cast<TlbRecord*>(waiting[vpn].front());
 
         uint64_t physAddr = req->getPPN() << m_pageShift | blockOffset( record->virtAddr );
         if( ! req->isSuccess() ) {
@@ -134,7 +134,7 @@ void SimpleTLB::handleMMUEvent( Event* ev ) {
 
         m_selfLink->send( 0, new SelfEvent( record->reqId, physAddr ));
         delete record;
-        waiting.at(vpn).pop();
+        waiting[vpn].pop();
     }
     waiting.erase(vpn);
 
@@ -145,7 +145,7 @@ void SimpleTLB::getVirtToPhys( RequestID reqId, int hwThreadId, uint64_t virtAdd
     size_t vpn = virtAddr >> m_pageShift;
     m_dbg.debug(CALL_INFO,1,0,"reqId=%p, hwThreadId=%d virtAddr=%#" PRIx64 " vpn=%d perms=%#x\n", reqId, hwThreadId, virtAddr, vpn, perms);
 
-    auto& waiting = m_waitingMiss.at(hwThreadId); 
+    auto& waiting = m_waitingMiss[hwThreadId]; 
 
     TlbEntry* entry = findTlbEntry( hwThreadId, vpn );
 

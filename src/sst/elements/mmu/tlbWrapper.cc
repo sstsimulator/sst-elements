@@ -53,11 +53,37 @@ TLB_Wrapper::TLB_Wrapper(SST::ComponentId_t id, SST::Params& params): Component(
 void TLB_Wrapper::init(unsigned int phase) 
 {
     SST::Event * ev;
-    while ((ev = m_cpu_if->recvInitData())) { //incoming from CPU, forward down
+
+    while ((ev = m_cpu_if->recvInitData())) { //incoming from CPU forward to mem/caches 
         m_cache_if->sendInitData(ev);
     }
-    while ((ev = m_cache_if->recvInitData())) { //incoming from mem/caches, forward up
-        m_cpu_if->sendInitData(ev);
+
+    while ((ev = m_cache_if->recvInitData())) { //incoming from mem/caches forward to the CPU
+        auto memEvent = dynamic_cast<MemHierarchy::MemEventInit*>(ev);
+        if (memEvent) {
+
+            // 
+            if (memEvent->getCmd() == MemHierarchy::Command::NULLCMD) {
+                if (memEvent->getInitCmd() == MemHierarchy::MemEventInit::InitCommand::Coherence) {
+                    m_cpu_if->sendInitData(ev);
+
+                } else if (memEvent->getInitCmd() == MemHierarchy::MemEventInit::InitCommand::Endpoint) {
+                    auto memEventE = static_cast<MemHierarchy::MemEventInitEndpoint*>(memEvent);
+                    m_dbg.debug(CALL_INFO_LONG,1,0,"Received initEndpoint message: %s\n", memEventE->getVerboseString(11).c_str());
+                    std::vector<std::pair<MemHierarchy::MemRegion,bool>> regions = memEventE->getRegions();
+                    for (auto it = regions.begin(); it != regions.end(); it++) {
+                        if (!it->second) {
+                            // we don't want to pass this event to the CPU
+                            noncacheableRegions.insert(std::make_pair(it->first.start, it->first));
+                        } else {
+                            m_cpu_if->sendInitData(ev);
+                        }
+                    }
+                } else {
+                    m_cpu_if->sendInitData(ev);
+                }        
+            }
+        }
     }
 
     m_tlb->init( phase );
@@ -79,6 +105,18 @@ void TLB_Wrapper::tlbCallback( RequestID reqId, uint64_t physAddr )
         memEv->setVirtualAddress( memEv->getAddr()  );
         memEv->setBaseAddr(roundDown(physAddr,64));
         memEv->setAddr(physAddr);
+
+        if (!((noncacheableRegions).empty())) {
+            // Check if addr lies in noncacheable regions.
+            // For simplicity we are not dealing with the case where the address range splits a noncacheable + cacheable region
+            std::multimap<MemHierarchy::Addr, MemHierarchy::MemRegion>::iterator ep = (noncacheableRegions).upper_bound(physAddr);
+            for (std::multimap<MemHierarchy::Addr, MemHierarchy::MemRegion>::iterator it = (noncacheableRegions).begin(); it != ep; it++) {
+                if (it->second.contains(physAddr)) {
+                    memEv->setFlag(MemHierarchy::MemEvent::F_NONCACHEABLE);
+                    break;
+                }
+            }
+        }
 
         m_dbg.debug(CALL_INFO_LONG,1,0,"memEvent thread=%d  addr=%#" PRIx64 " -> %#" PRIx64 "\n",
                 memEv->getThreadId(), addr, memEv->getAddr() );

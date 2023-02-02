@@ -315,6 +315,13 @@ public:
         m_threadMap[tid] = thread;
     }
 
+    OS::Device* getDevice( int id ) { 
+    	assert( m_deviceList.find(id) != m_deviceList.end() );
+	return m_deviceList[id];
+    }
+
+    int getNodeNum() { return m_nodeNum; }
+
 private:
 
     SST::Output*                output;
@@ -329,6 +336,7 @@ private:
     int                         m_pageShift;
     uint64_t                    m_phdr_address;
     uint64_t                    m_stack_top;
+    int                         m_nodeNum;
 
     std::queue<PageFault*>                          m_pendingFault;
     std::map<std::string, VanadisELFInfo* >         m_elfMap; 
@@ -341,6 +349,8 @@ private:
 
 
     std::queue< OS::HwThreadID* > m_availHwThreads;
+
+    std::map< int, OS::Device* > m_deviceList;
 
     int m_currentTid;
 

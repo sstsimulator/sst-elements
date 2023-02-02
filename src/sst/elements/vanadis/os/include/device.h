@@ -13,15 +13,31 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _BASE_H
-#define _BASE_H
+#ifndef _H_VANADIS_NODE_OS_INCLUDE_DEVICE
+#define _H_VANADIS_NODE_OS_INCLUDE_DEVICE
 
-#include <rdmaNicHostInterface.h>
-void writeCmd( NicCmd* cmd );
-void base_init();
-int base_n_pes(); 
-int base_my_pe();
-void base_make_progress();
-Addr_t getNicBase(); 
+namespace SST {
+namespace Vanadis {
+
+namespace OS {
+
+class Device {
+  public:
+    Device( std::string name, uint64_t addr, size_t length) : name(name), physAddr(addr), length(length)  
+    { }
+    ~Device() { }
+
+    std::string getName() { return name; } 
+    uint64_t getPhysAddr() { return physAddr; }
+    size_t getLength() { return length; }
+  private:
+    std::string name;
+    uint64_t physAddr;
+    size_t length;
+};
+
+}
+}
+}
 
 #endif

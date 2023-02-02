@@ -5,6 +5,8 @@ mh_debug=0
 dbgAddr=0
 stopDbg=0
 
+pythonDebug=False
+
 vanadis_isa = os.getenv("VANADIS_ISA", "MIPS")
 isa="mipsel"
 vanadis_isa = os.getenv("VANADIS_ISA", "RISCV64")
@@ -12,7 +14,7 @@ isa="riscv64"
 
 testDir="basic-io"
 exe = "hello-world"
-exe = "hello-world-cpp"
+#exe = "hello-world-cpp"
 #exe = "openat"
 #exe = "printf-check"
 #exe = "read-write"
@@ -78,12 +80,11 @@ numThreads = int(os.getenv("VANADIS_NUM_HW_THREADS", 1))
 
 vanadis_cpu_type = "vanadis.dbg_VanadisCPU"
 
-#if (verbosity > 0):
-#	print("Verbosity (" + str(verbosity) + ") is non-zero, using debug version of Vanadis.")
-#	vanadis_cpu_type = "vanadisdbg.VanadisCPU"
 
-print("Verbosity: " + str(verbosity) + " -> loading Vanadis CPU type: " + vanadis_cpu_type)
-print("Auto-clock syscalls: " + str(auto_clock_sys))
+if (verbosity > 0):
+    print("Verbosity: " + str(verbosity) + " -> loading Vanadis CPU type: " + vanadis_cpu_type)
+    print("Auto-clock syscalls: " + str(auto_clock_sys))
+#	vanadis_cpu_type = "vanadisdbg.VanadisCPU"
 
 app_args = os.getenv("VANADIS_EXE_ARGS", "")
 
@@ -93,14 +94,17 @@ if app_args != "":
 	# We have a plus 1 because the executable name is arg0
 	app_args_count = len( app_args_list ) + 1
 	cpu.addParams({ "app.argc" : app_args_count })
-	print("Identified " + str(app_args_count) + " application arguments, adding to input parameters.")
+	if (verbosity > 0):
+		print("Identified " + str(app_args_count) + " application arguments, adding to input parameters.")
 	arg_start = 1
 	for next_arg in app_args_list:
-		print("arg" + str(arg_start) + " = " + next_arg)
+		if (verbosity > 0):
+			print("arg" + str(arg_start) + " = " + next_arg)
 		cpu.addParams({ "app.arg" + str(arg_start) : next_arg })
 		arg_start = arg_start + 1
 else:
-	print("No application arguments found, continuing with argc=0")
+		if (verbosity > 0):
+			print("No application arguments found, continuing with argc=0")
 
 vanadis_decoder = "vanadis.Vanadis" + vanadis_isa + "Decoder"
 vanadis_os_hdlr = "vanadis.Vanadis" + vanadis_isa + "OSHandler"
@@ -293,6 +297,7 @@ l2cacheParams = {
     "associativity" : "16",
     "cache_line_size" : "64",
     "cache_size" : "1MB",
+    "mshr_latency_cycles": 3,
     "debug" : mh_debug,
     "debug_level" : mh_debug_level,
 }
@@ -312,7 +317,8 @@ class CPU_Builder:
     # CPU 
     def build( self, prefix, nodeId, cpuId ):
 
-        print("build {}".format(prefix) )
+        if pythonDebug:
+            print("build {}".format(prefix) )
 
         # CPU
         cpu = sst.Component(prefix, vanadis_cpu_type)
@@ -448,7 +454,8 @@ for i,process in processList:
         node_os.addParams( addParamsPrefix( "process" + str(num), process ) )
         num+=1
 
-print('total hardware threads ' + str(num) )
+if pythonDebug:
+    print('total hardware threads ' + str(num) )
     
 # node OS MMU
 node_os_mmu = node_os.setSubComponent( "mmu", "mmu." + mmuType )

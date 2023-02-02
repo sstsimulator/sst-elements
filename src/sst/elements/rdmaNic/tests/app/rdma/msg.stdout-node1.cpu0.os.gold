@@ -1,5 +1,5 @@
 myNode=1 numNodes=2
-buffer=0x20000040
+buffer=0x102040
 validate
 validate complete
 returning

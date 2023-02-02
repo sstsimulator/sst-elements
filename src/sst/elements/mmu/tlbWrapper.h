@@ -92,6 +92,10 @@ class TLB_Wrapper : public SST::Component {
 
     SST::Output m_dbg;
     int m_pending;
+
+    /* Record noncacheable regions (e.g., MMIO device addresses) */
+    std::multimap<MemHierarchy::Addr, MemHierarchy::MemRegion> noncacheableRegions;
+
 };
 
 } //namespace MMU_Lib

@@ -28,9 +28,9 @@ class VanadisSyscallMemoryMapEvent : public VanadisSyscallEvent {
 public:
     VanadisSyscallMemoryMapEvent() : VanadisSyscallEvent() {}
 
-    VanadisSyscallMemoryMapEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t addr, uint64_t len, int64_t prot, int64_t flags,
-                                 uint64_t stack_p, uint64_t offset_multiplier)
-        : VanadisSyscallEvent(core, thr, bittype), address(addr), length(len), page_prot(prot), alloc_flags(flags),
+    VanadisSyscallMemoryMapEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t addr, uint64_t len, int64_t prot, int64_t flags, int fd,
+                                 uint64_t offset, uint64_t stack_p, uint64_t offset_multiplier)
+        : VanadisSyscallEvent(core, thr, bittype), address(addr), length(len), page_prot(prot), alloc_flags(flags), fd(fd), offset(offset),
           stack_pointer(stack_p), offset_units(offset_multiplier) {}
 
     VanadisSyscallOp getOperation() { return SYSCALL_OP_MMAP; }
@@ -48,14 +48,18 @@ public:
 
     uint64_t getStackPointer() const { return stack_pointer; }
     uint64_t getOffsetUnits() const { return offset_units; }
+    uint64_t getOffset() const { return offset; }
 
+    int getFd() { return fd; }
 private:
     uint64_t address;
     uint64_t length;
     int64_t page_prot;
     int64_t alloc_flags;
     uint64_t stack_pointer;
+    uint64_t offset;
     uint64_t offset_units;
+    int fd;
 };
 
 } // namespace Vanadis

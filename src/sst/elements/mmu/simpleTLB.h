@@ -118,15 +118,15 @@ class SimpleTLB : public TLB {
     void fillTlbEntry( int hwThreadId, size_t vpn, size_t ppn, uint32_t perms ) {
         size_t tag = vpn >> m_tlbIndexShift;
         int index = vpn & ( m_tlbSize - 1 );
-        auto& vec = m_tlbData.at( hwThreadId ).at( index );
+        auto& vec = m_tlbData[ hwThreadId ][ index ];
         
         for ( int i = 0; i<vec.size(); i++ ) {
-            auto entry = vec.at(i); 
+            auto entry = vec[i];
             if ( entry.isValid() ) {
                 m_dbg.debug(CALL_INFO,1,0,"vpn=%#lx, tag=%#lx ppn %#lx -> %#lx perms %#x -> %#x \n",entry.tag(), entry.ppn(), ppn, entry.perms(), perms );
 
                 if ( tag == entry.tag() ) {
-                    vec.at( i ).init( tag, ppn, perms );
+                    vec[ i ].init( tag, ppn, perms );
                     return;
                 }
             }
@@ -135,7 +135,7 @@ class SimpleTLB : public TLB {
         assert(vpn);
         int slot = pickVictim();
         m_dbg.debug(CALL_INFO,1,0,"hwThread=%d vpn=%zu ppn=%zu tag%#x index=%#x slot=%d\n",hwThreadId, vpn, ppn, tag, index, slot );
-        vec.at( slot ).init( tag, ppn, perms );
+        vec[ slot ].init( tag, ppn, perms );
     }  
 
     TlbEntry* findTlbEntry( int hwThreadId, size_t vpn ) {
@@ -144,13 +144,13 @@ class SimpleTLB : public TLB {
 
         m_dbg.debug(CALL_INFO,1,0,"hwThread=%d vpn=%zu tag=%#x index=%#x\n",hwThreadId, vpn, tag, index );
 
-        auto& vec = m_tlbData.at( hwThreadId ).at( index );
+        auto& vec = m_tlbData[ hwThreadId ][ index ];
         for ( int i = 0; i < vec.size(); i++ ) {
 
-            m_dbg.debug(CALL_INFO,2,0,"check valid=%d wantTag=%#x foundTag=%#x\n",vec.at(i).isValid(), tag, vec.at(i).tag() );
-            if ( vec.at(i).isValid() && tag == vec.at(i).tag() ) {
+            m_dbg.debug(CALL_INFO,2,0,"check valid=%d wantTag=%#x foundTag=%#x\n",vec[i].isValid(), tag, vec[i].tag() );
+            if ( vec[i].isValid() && tag == vec[i].tag() ) {
                 m_dbg.debug(CALL_INFO,1,0,"found tag=%#x index=%#x slot=%d\n",tag, index, i );
-                return& vec.at(i);
+                return& vec[i];
             }
         }
         return nullptr;
@@ -158,11 +158,11 @@ class SimpleTLB : public TLB {
 
     void flushThread( int hwThread ) {
     
-        auto& slice = m_tlbData.at( hwThread );
+        auto& slice = m_tlbData[ hwThread ];
         m_dbg.debug(CALL_INFO,1,0,"hwThread=%d size=%zu\n",hwThread,slice.size() );
 
         for ( int i = 0; i < slice.size(); i++ ) {
-            auto& set = slice.at(i); 
+            auto& set = slice[i]; 
             //m_dbg.debug(CALL_INFO,1,0,"size=%zu\n",set.size() );
             for ( int j = 0; j < set.size(); j++ ) {  
                 if ( set[j].isValid() ) {

@@ -23,6 +23,7 @@
 #include "velf/velfinfo.h"
 #include "os/include/freeList.h"
 #include "os/include/page.h"
+#include "os/include/device.h"
 
 #if 0
 #define VirtMemDbg( format, ... ) printf( "VirtMemMap::%s() " format, __func__, ##__VA_ARGS__ )
@@ -43,8 +44,10 @@ namespace Vanadis {
 namespace OS {
 
 struct MemoryBacking {
-    MemoryBacking( VanadisELFInfo* elfInfo = nullptr ) : elfInfo( elfInfo ) {}
+    MemoryBacking( VanadisELFInfo* elfInfo = nullptr ) : elfInfo( elfInfo ), dev(nullptr) {}
+    MemoryBacking( Device* dev ) : elfInfo( nullptr ), dev(dev) {}
     VanadisELFInfo* elfInfo;
+    Device* dev;
     std::vector<uint8_t> data;
     uint64_t dataStartAddr;
 };
@@ -234,8 +237,15 @@ public:
 #endif
     }
 
-    uint64_t mmap( size_t length, uint32_t perms ) {
-        uint64_t start = addRegion( "", 0, length, perms );    
+    uint64_t mmap( size_t length, uint32_t perms, Device* dev ) {
+        std::string name;
+        MemoryBacking* backing = nullptr;
+        if ( dev ) {
+            backing = new MemoryBacking( dev );
+            name = dev->getName();
+        }
+
+        uint64_t start = addRegion( name, 0, length, perms, backing );
         VirtMemDbg("lenght=%zu perms=%#x start=%#" PRIx64 "\n",length,perms,start);
         return start;
     }

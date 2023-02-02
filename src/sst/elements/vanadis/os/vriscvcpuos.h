@@ -476,7 +476,6 @@ public:
             int32_t fd = getRegister( 14 );
             int64_t offset = getRegister( 15 );
 
-
             int32_t hostFlags = 0;
 
             if ( map_flags & RISCV_MAP_ANONYMOUS ) {
@@ -493,19 +492,13 @@ public:
             }
             assert( map_flags == 0 );
 
-/*
- RISC has 8 arguments fix this
-*/
-            assert( fd == -1 );
-            assert( offset == 0 );
-
             output->verbose(CALL_INFO, 8, 0,
                             "[syscall-handler] found a call to mmap2( 0x%llx, %" PRIu64 ", %" PRId32 ", %" PRId32
                             ", %d, %" PRIu64 ")\n",
                             map_addr, map_len, map_prot, map_flags, fd, offset );
 
-            call_ev = new VanadisSyscallMemoryMapEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, map_addr, map_len, map_prot, hostFlags,
-                                                       0, 0);
+            call_ev = new VanadisSyscallMemoryMapEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B,
+                        map_addr, map_len, map_prot, hostFlags, fd, offset, 0, 0);
         } break;
 
         case VANADIS_SYSCALL_RISCV_CLOCK_GETTIME: {

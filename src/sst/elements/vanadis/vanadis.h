@@ -165,7 +165,7 @@ public:
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         { "lsq", "Load-Store Queue for Memory Access", "SST::Vanadis::VanadisLoadStoreQueue" },
         { "mem_interface_inst", "Interface to memory system for instructions", "SST::Interfaces::StandardMem" },
-        { "decoder%(hardware_threads)d", "Instruction decoder for a hardware thread", "SST::Vanadis::VanadisDecoder" })
+    )
 
 #ifdef VANADIS_BUILD_DEBUG
     VanadisDebugComponent(SST::ComponentId_t id, SST::Params& params);

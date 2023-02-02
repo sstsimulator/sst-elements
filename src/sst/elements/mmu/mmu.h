@@ -38,6 +38,7 @@ class MMU : public SubComponent {
     SST_ELI_DOCUMENT_PORTS(
         { "core%(cores)d.dtlb", "", {} },
         { "core%(cores)d.itlb", "", {} },
+        { "nicTlb", "", {} },
         { "ostlb", "", {} },
     )
     SST_ELI_DOCUMENT_STATISTICS()
@@ -63,9 +64,12 @@ class MMU : public SubComponent {
   protected:
 
     void sendEvent( int link, Event* ev ) {
-        if ( 0 == link % 2 ) { 
+        if ( -1 == link ) {
+            assert( m_nicTlbLink );
+            m_nicTlbLink->send(0,ev);
+        } else if ( 0 == link % 2 ) {
             m_coreLinks[link/2]->dtlb->send(0,ev);
-        } else if ( 1 == link % 2 ) { 
+        } else if ( 1 == link % 2 ) {
             m_coreLinks[link/2]->itlb->send(0,ev);
         } else {
             assert(0);
@@ -99,6 +103,7 @@ class MMU : public SubComponent {
     }
 
     virtual void handleTlbEvent( Event*, int link ) = 0;
+    virtual void handleNicTlbEvent( Event* ){ assert(0); };
     Output m_dbg;
 
     unsigned m_numCores;
@@ -112,6 +117,7 @@ class MMU : public SubComponent {
         Link*  itlb;
     };
     std::vector<CoreTlbLinks*> m_coreLinks;
+    Link*   m_nicTlbLink;
     Callback m_permissionsCallback;
 };
 

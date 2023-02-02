@@ -598,8 +598,8 @@ public:
                             "[syscall-handler] mmap2( 0x%llx, %" PRIu64 ", %" PRId32 ", %" PRId32 ", sp: 0x%llx (> 4 arguments) )\n",
                             map_addr, map_len, map_prot, map_flags, stack_ptr);
 
-            call_ev = new VanadisSyscallMemoryMapEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, map_addr, map_len, map_prot, mmapConvertFlags(map_flags),
-                                                       stack_ptr, 4096);
+            call_ev = new VanadisSyscallMemoryMapEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B,
+                    map_addr, map_len, map_prot, mmapConvertFlags(map_flags), /*fd*/ 0, /*offset*/ 0, stack_ptr, 4096);
         } break;
 
         case VANADIS_SYSCALL_MIPS_GETTIME64: {

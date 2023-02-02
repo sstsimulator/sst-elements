@@ -33,8 +33,24 @@ SimpleMMU::SimpleMMU(SST::ComponentId_t id, SST::Params& params) : MMU(id,params
     m_dbg.debug(CALL_INFO_LONG,1,0,"num_cores=%d num_hw_threads=%d\n",m_numCores,m_numHwThreads);
     m_coreToPid.resize( m_numCores );
     for ( unsigned i = 0; i < m_coreToPid.size(); i++ ) {
-        m_coreToPid.at(i).resize( m_numHwThreads, -1 );
+        m_coreToPid[i].resize( m_numHwThreads, -1 );
     }
+}
+
+void SimpleMMU::handleNicTlbEvent( Event* ev ) 
+{
+    auto req = dynamic_cast<TlbMissEvent*>(ev);
+    auto link = -1;
+    auto core = 0;
+    auto hwThread = 0;
+    unsigned pid = getPid( 0, 0 );
+
+    m_dbg.debug(CALL_INFO_LONG,1,0,"event on link=%d name=%s core=%d pid=%d vpn=%d perms=%#x\n",
+        link,"nicTlb",core,pid,req->getVPN(),req->getPerms());
+
+    m_dbg.debug(CALL_INFO_LONG,1,0,"reqId=%d hwTHread=%d vpn=%zu %#" PRIx64 "\n", req->getReqId(), req->getHardwareThread(), req->getVPN(), req->getVPN() << 12  );
+    m_permissionsCallback( req->getReqId(), link, core, hwThread, pid, req->getVPN(), req->getPerms(), req->getInstPtr(), req->getMemAddr() );
+    delete ev;
 }
 
 void SimpleMMU::handleTlbEvent( Event* ev, int link ) 
