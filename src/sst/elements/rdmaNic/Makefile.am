@@ -27,11 +27,13 @@ librdmaNic_la_SOURCES = \
 	rdmaNicTree.h
 
 EXTRA_DIST = \
-	tests/testsuite_default_rdmaNic.py \
+	tests/memory.py \
+	tests/node.py \
+	tests/rdmaNic.py \
 	tests/runVanadis.py \
-	tests/oneRtrV3.py \
-	tests/oneRtrV4.py \
 	tests/vanadisBlock.py \
+	tests/testsuite_default_rdmaNic.py \
+	tests/vanadisOS.py \
 	tests/app/rdma/Makefile \
 	tests/app/rdma/barrier.c \
 	tests/app/rdma/incast.c \
