@@ -18,6 +18,7 @@
 
 #include "os/syscall/syscall.h"
 #include "os/callev/voscallmmap.h"
+#include "os/include/device.h"
 
 namespace SST {
 namespace Vanadis {
@@ -31,17 +32,43 @@ public:
         uint64_t length = event->getAllocationLength();
         int64_t protect = event->getProtectionFlags();
         int64_t flags = event->getAllocationFlags();
+        auto fd = event->getFd();
+        auto offset = event->getOffset();
         uint64_t call_stack = event->getStackPointer();
         uint64_t offset_units = event->getOffsetUnits();
 
-        m_output->verbose(CALL_INFO, 16, 0, "[syscall-mmap] addr=%#" PRIx64 " length=%" PRIu64 " prot=%#" PRIx64 " flags=%#" PRIx64 " call_stack=%#" PRIx64 " offset_units=%" PRIu64 "\n",
-                    address,length,protect,flags,call_stack,offset_units);
+        m_output->verbose(CALL_INFO, 16, 0, "[syscall-mmap] addr=%#" PRIx64 " length=%#" PRIx64 " prot=%#" PRIx64 " flags=%#" PRIx64
+                " fd=%d offset=%" PRIu64 " call_stack=%#" PRIx64 " offset_units=%" PRIu64 "\n",
+                    address,length,protect,flags,fd,offset,call_stack,offset_units);
+
+        // if that stackAddr is valid  we need to get mmap() arguments that are not in registers
+        if ( event->getStackPointer() ) {
+            if ( event->getOSBitType() == VanadisOSBitType::VANADIS_OS_32B ) {
+                // int fd, off_t offset
+                m_buffer.resize(sizeof(uint32_t)*2);
+            } else {
+                m_buffer.resize(sizeof(uint64_t)*2);
+            }
+            readMemory( event->getStackPointer() + 16, m_buffer );
+
+        } else {
+            mmap( address, length, protect, flags, fd, offset_units );
+        }
+    }
+
+    void mmap( uint64_t address, uint64_t length, int protect, int flags, int fd, uint64_t offset ) {
 
         if ( flags & ~( MAP_ANONYMOUS | MAP_PRIVATE | MAP_FIXED ) ) {
             m_output->fatal(CALL_INFO, -1, "-> error: mmap() flag %#" PRIx64 " not supported\n",flags);
         }
 
-        uint64_t addr = process->mmap( address, length, protect, flags, offset_units );
+        OS::Device* dev = nullptr;
+        if ( -1000 == fd ) {
+            dev = m_os->getDevice( fd );
+	    length = dev->getLength();
+        }
+
+        uint64_t addr = m_process->mmap( address, length, protect, flags, dev, offset );
 
         if ( 0 == addr ) {
             setReturnFail( 0 );
@@ -49,6 +76,21 @@ public:
             setReturnSuccess( addr );
         }
     }
+
+    void memReqIsDone() {
+        auto event = getEvent<VanadisSyscallMemoryMapEvent*>();
+        uint32_t* tmp  = (uint32_t*)m_buffer.data();
+        uint64_t address = event->getAllocationAddress();
+        uint64_t length = event->getAllocationLength();
+        int64_t protect = event->getProtectionFlags();
+        int64_t flags = event->getAllocationFlags();
+        m_output->verbose(CALL_INFO, 16, 0, "[syscall-mmap] fd=%d offset=%" PRIu64 "\n", tmp[0],tmp[1]);
+
+        mmap( address, length, protect, flags, tmp[0], tmp[1] );
+    }
+
+private:
+    std::vector<uint8_t> m_buffer;
 };
 
 } // namespace Vanadis
