@@ -22,7 +22,7 @@
 using namespace SST;
 using namespace SST::MMU_Lib;
 
-MMU::MMU(SST::ComponentId_t id, SST::Params& params) : SubComponent(id) 
+MMU::MMU(SST::ComponentId_t id, SST::Params& params) : SubComponent(id), m_nicTlbLink(nullptr)
 {
     m_numCores = params.find<int>("num_cores", 0);
     if ( 0 == m_numCores ) {
@@ -39,6 +39,8 @@ MMU::MMU(SST::ComponentId_t id, SST::Params& params) : SubComponent(id)
         m_dbg.fatal(CALL_INFO, -1, "Error: %s, page_size is zero\n",getName().c_str());
     }
     m_pageShift = log2( pageSize );
+
+    auto useNicTlb = params.find<bool>("useNicTlb",false);
 
     for ( int i = 0; i < m_numCores; i++ ) {
         std::string name;
@@ -58,6 +60,14 @@ MMU::MMU(SST::ComponentId_t id, SST::Params& params) : SubComponent(id)
         }
         m_coreLinks.push_back( new CoreTlbLinks( dtlb, itlb ));
     }  
+
+    if ( useNicTlb ) {
+        std::string name = "nicTlb";
+        m_nicTlbLink = configureLink( name, new Event::Handler<MMU>(this, &MMU::handleNicTlbEvent ) );
+        if ( nullptr == m_nicTlbLink ) {
+            m_dbg.fatal(CALL_INFO, -1, "Error: %s was unable to configure itlb link `%s`\n",getName().c_str(),name.c_str());
+        }
+    }
 }
 
 void MMU::init( unsigned int phase ) 
@@ -68,6 +78,9 @@ void MMU::init( unsigned int phase )
             m_dbg.debug(CALL_INFO_LONG,1,0,"send Init event to %d, pageShift=%d\n",i, m_pageShift);
             m_coreLinks[i]->dtlb->sendInitData( new TlbInitEvent( m_pageShift ) );
             m_coreLinks[i]->itlb->sendInitData( new TlbInitEvent( m_pageShift ) );
+        }
+        if ( m_nicTlbLink ) {
+            m_nicTlbLink->sendInitData( new TlbInitEvent( m_pageShift ) );
         }
     }
 }
