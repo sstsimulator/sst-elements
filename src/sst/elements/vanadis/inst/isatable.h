@@ -42,13 +42,17 @@ public:
         int_reg_pending_write = new uint32_t[int_reg];
         fp_reg_pending_write  = new uint32_t[fp_reg];
 
-        for ( uint16_t i = 0; i < int_reg; ++i ) {
+        init();
+    }
+
+    void init() {
+        for ( uint16_t i = 0; i < count_int_reg; ++i ) {
             int_reg_ptr[i]           = 0;
             int_reg_pending_read[i]  = 0;
             int_reg_pending_write[i] = 0;
         }
 
-        for ( uint16_t i = 0; i < fp_reg; ++i ) {
+        for ( uint16_t i = 0; i < count_fp_reg; ++i ) {
             fp_reg_ptr[i]           = 0;
             fp_reg_pending_read[i]  = 0;
             fp_reg_pending_write[i] = 0;
@@ -64,6 +68,9 @@ public:
         delete fp_reg_pending_read;
         delete fp_reg_pending_write;
     }
+
+    int getNumIntRegs() { return count_int_reg; }
+    int getNumFpRegs() { return count_fp_reg; }
 
     bool pendingIntReads(const uint16_t int_reg) { return int_reg_pending_read[int_reg] > 0; }
 

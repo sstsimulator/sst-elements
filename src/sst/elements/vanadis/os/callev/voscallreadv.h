@@ -16,27 +16,18 @@
 #ifndef _H_VANADIS_SYSCALL_READV
 #define _H_VANADIS_SYSCALL_READV
 
-#include "os/voscallev.h"
+#include "os/callev/voscalliovec.h"
 
 namespace SST {
 namespace Vanadis {
 
-class VanadisSyscallReadvEvent : public VanadisSyscallEvent {
+class VanadisSyscallReadvEvent : public VanadisSyscallIoVecEvent {
 public:
-    VanadisSyscallReadvEvent() : VanadisSyscallEvent() {}
+    VanadisSyscallReadvEvent() : VanadisSyscallIoVecEvent() {}
     VanadisSyscallReadvEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, int64_t fd, uint64_t iovec_addr, int64_t iovec_count)
-        : VanadisSyscallEvent(core, thr, bittype), readv_fd(fd), readv_iovec_addr(iovec_addr), readv_iov_count(iovec_count) {}
+        : VanadisSyscallIoVecEvent(core, thr, bittype, fd, iovec_addr, iovec_count) {}
 
     VanadisSyscallOp getOperation() { return SYSCALL_OP_READV; }
-
-    int64_t getFileDescriptor() const { return readv_fd; }
-    uint64_t getIOVecAddress() const { return readv_iovec_addr; }
-    int64_t getIOVecCount() const { return readv_iov_count; }
-
-private:
-    int64_t readv_fd;
-    uint64_t readv_iovec_addr;
-    int64_t readv_iov_count;
 };
 
 } // namespace Vanadis

@@ -21,31 +21,72 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisStartThreadReq : public SST::Event {
+class _VanadisStartThreadBaseReq : public SST::Event {
 public:
-    VanadisStartThreadReq() : SST::Event(), thread(0), stackStart(0), instructionPointer(0) { }
+    _VanadisStartThreadBaseReq() : SST::Event(), thread(0), instPtr(0), stackAddr(0), argAddr(0), tlsAddr(0) { }
 
-    VanadisStartThreadReq( int thread, uint64_t stackStart, uint64_t instructionPointer) : 
-        SST::Event(), thread(thread), stackStart(stackStart), instructionPointer(instructionPointer) {}
+    _VanadisStartThreadBaseReq( int thread, uint64_t instPtr, uint64_t stackAddr, uint64_t argAddr, uint64_t tlsAddr ) : 
+        SST::Event(), thread(thread), stackAddr(stackAddr), instPtr(instPtr), argAddr(argAddr), tlsAddr(tlsAddr) {}
 
-    ~VanadisStartThreadReq() {}
+    virtual ~_VanadisStartThreadBaseReq() {}
 
     int     getThread() { return thread; }
-    int64_t getStackStart() { return stackStart; }
-    int64_t getInstructionPointer() { return instructionPointer; }
+    int64_t getInstPtr() { return instPtr; }
+    int64_t getStackAddr() { return stackAddr; }
+    int64_t getArgAddr() { return argAddr; }
+    int64_t getTlsAddr() { return tlsAddr; }
+    void setIntRegs( std::vector<uint64_t>& regs ) { intRegs = regs; } 
+    void setFpRegs( std::vector<uint64_t>& regs ) { fpRegs = regs; } 
+    std::vector<uint64_t>& getIntRegs() { return intRegs; }
+    std::vector<uint64_t>& getFpRegs() { return fpRegs; }
+
+
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
         ser& thread;
-        ser& stackStart;
-        ser& instructionPointer;
+        ser& instPtr;
+        ser& stackAddr;
+        ser& argAddr;
+        ser& tlsAddr;
+        ser& intRegs;
+        ser& fpRegs;
     }
 
-    ImplementSerializable(SST::Vanadis::VanadisStartThreadReq);
+    ImplementSerializable(SST::Vanadis::_VanadisStartThreadBaseReq);
 
     int     thread;
-    int64_t stackStart;
-    int64_t instructionPointer;
+    int64_t instPtr;
+    int64_t stackAddr;
+    int64_t argAddr;
+    int64_t tlsAddr;
+
+    std::vector<uint64_t> intRegs;
+    std::vector<uint64_t> fpRegs;
+};
+
+class VanadisStartThreadFirstReq : public _VanadisStartThreadBaseReq {
+public:
+    VanadisStartThreadFirstReq() : _VanadisStartThreadBaseReq() {}
+
+    VanadisStartThreadFirstReq( int thread, uint64_t instPtr, uint64_t stackAddr ) : 
+        _VanadisStartThreadBaseReq( thread, instPtr, stackAddr, 0, 0 ) {} 
+};
+
+class VanadisStartThreadForkReq : public _VanadisStartThreadBaseReq {
+public:
+    VanadisStartThreadForkReq() : _VanadisStartThreadBaseReq() {}
+
+    VanadisStartThreadForkReq( int thread, uint64_t instPtr, uint64_t tlsAddr ) : 
+        _VanadisStartThreadBaseReq( thread, instPtr, 0, 0, tlsAddr ) {} 
+};
+
+class VanadisStartThreadCloneReq : public _VanadisStartThreadBaseReq {
+public:
+    VanadisStartThreadCloneReq() : _VanadisStartThreadBaseReq() {}
+
+    VanadisStartThreadCloneReq( int thread, uint64_t instPtr, uint64_t stackAddr, uint64_t tlsAddr, uint64_t argAddr ) : 
+        _VanadisStartThreadBaseReq( thread, instPtr, stackAddr, argAddr, tlsAddr ) {} 
 };
 
 } // namespace Vanadis

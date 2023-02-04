@@ -22,5 +22,6 @@ void base_init();
 int base_n_pes(); 
 int base_my_pe();
 void base_make_progress();
+Addr_t getNicBase(); 
 
 #endif

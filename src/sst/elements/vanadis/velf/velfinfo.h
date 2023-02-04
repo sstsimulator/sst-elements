@@ -582,6 +582,20 @@ public:
 
     size_t countProgramHeaders() const { return progHeaders.size(); }
     const VanadisELFProgramHeaderEntry* getProgramHeader(const size_t index) { return progHeaders[index]; }
+    const VanadisELFProgramHeaderEntry* findProgramHeader( uint64_t virtAddr ) {
+        for ( size_t i = 0; i < countProgramHeaders(); ++i ) {
+
+            const VanadisELFProgramHeaderEntry* hdr = getProgramHeader(i);
+            if ( PROG_HEADER_LOAD == hdr->getHeaderType() ) {
+                uint64_t hdrAddr = hdr->getVirtualMemoryStart() & ~(4096-1);
+                uint64_t endAddr = hdr->getVirtualMemoryStart() + hdr->getHeaderMemoryLength();
+                if ( virtAddr >= hdrAddr && virtAddr < endAddr ) {
+                    return hdr;
+                }
+            }
+        }
+        return nullptr;
+    }
 
     size_t countProgramSections() const { return progSections.size(); }
     const VanadisELFProgramSectionEntry* getProgramSection(const size_t index) { return progSections[index]; }
@@ -1079,8 +1093,8 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
         new_prg_hdr->setHeaderType(prg_hdr_type);
 
         if (elf_info->isELF64()) {
-            // Discard segment-dependent flags
             fread(&tmp_4byte, 4, 1, bin_file);
+            new_prg_hdr->setSegmentFlags(tmp_4byte);
 
             fread(&tmp_8byte, 8, 1, bin_file);
             new_prg_hdr->setImageOffset(tmp_8byte);
@@ -1115,7 +1129,6 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
             fread(&tmp_4byte, 4, 1, bin_file);
             new_prg_hdr->setHeaderMemoryLength(tmp_4byte);
 
-            // Segment dependent flags - ignore?
             fread(&tmp_4byte, 4, 1, bin_file);
             new_prg_hdr->setSegmentFlags(tmp_4byte);
 

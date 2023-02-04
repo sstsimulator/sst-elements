@@ -241,7 +241,6 @@ class RdmaNic : public SST::Component {
 	NetworkQueue* m_networkQ;
 	RecvEngine* m_recvEngine;
 	SendEngine* m_sendEngine;
-	bool m_useDmaCache;
 
 	Barrier* m_barrier;
 
@@ -257,7 +256,7 @@ class RdmaNic : public SST::Component {
 	int getNetPktMtuLen() { return m_netPktMtuLen; }
 
 	Addr_t calcCompQueueTailAddress( int thread, int cqId ) {
-		Addr_t addr = m_ioBaseAddr + m_perPeTotalMemSize * thread; 
+		Addr_t addr = m_perPeTotalMemSize * thread; 
 		addr += m_perPeReqQueueMemSize;
 		addr += sizeof( QueueIndex ) * cqId;
 		return addr;
@@ -277,7 +276,9 @@ class RdmaNic : public SST::Component {
 		case RdmaRecv: return "RdmaRecv";
 		case RdmaFini: return "RdmaFini";
 		case RdmaCreateRQ: return "RdmaCreateRQ";
+		case RdmaDestroyRQ: return "RdmaDestroyRQ";
 		case RdmaCreateCQ: return "RdmaCreateCQ";
+		case RdmaDestroyCQ: return "RdmaDestroyCQ";
 		case RdmaMemRgnReg: return "RdmaMemRgnReg";
 		case RdmaMemRgnUnreg: return "RdmaMemRgnUnreg";
 		case RdmaMemWrite: return "RdmaMemWrite";

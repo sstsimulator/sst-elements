@@ -332,6 +332,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     pause_on_retire_address = params.find<uint64_t>("pause_when_retire_address", 0);
     start_verbose_when_issue_address = params.find<uint64_t>("start_verbose_when_issue_address", 0);
+    stop_verbose_when_retire_address = params.find<uint64_t>("stop_verbose_when_retire_address", 0);
 
     // Register statistics ///////////////////////////////////////////////////////
     stat_ins_retired          = registerStatistic<uint64_t>("instructions_retired", "1");
@@ -348,8 +349,8 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     stat_int_phys_regs_in_use = registerStatistic<uint64_t>("phys_int_reg_in_use", "1");
     stat_fp_phys_regs_in_use  = registerStatistic<uint64_t>("phys_fp_reg_in_use", "1");
 
-    registerAsPrimaryComponent();
-    primaryComponentDoNotEndSim();
+    //registerAsPrimaryComponent();
+    //primaryComponentDoNotEndSim();
 }
 
 VANADIS_COMPONENT::~VANADIS_COMPONENT()
@@ -822,6 +823,10 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                 thread_decoders[ins_thread]->getBranchPredictor()->push(
                     spec_ins->getInstructionAddress(), pipeline_reset_addr);
 
+                if ( stop_verbose_when_retire_address > 0 && (rob_front->getInstructionAddress() == stop_verbose_when_retire_address) ) {
+                    output->setVerboseLevel(0);
+                    output->setVerboseMask(-1);
+                }
                 if ( (pause_on_retire_address > 0) &&
                      (rob_front->getInstructionAddress() == pause_on_retire_address) ) {
 
@@ -936,6 +941,11 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                 }
             }
 
+
+                if ( stop_verbose_when_retire_address > 0 && (rob_front->getInstructionAddress() == stop_verbose_when_retire_address) ) {
+                    output->setVerboseLevel(0);
+                    output->setVerboseMask(-1);
+                }
             if ( UNLIKELY(
                      (pause_on_retire_address > 0) &&
                      (rob_front->getInstructionAddress() == pause_on_retire_address)) ) {
@@ -991,13 +1001,17 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                         "(ins-addr: 0x%0llx)...\n",
                         the_syscall_ins->getInstructionAddress());
 #endif
-                    bool ret = thread_decoders[rob_front->getHWThread()]->getOSHandler()->handleSysCall(the_syscall_ins);
+                    bool ret, flushLSQ;
+                    std::tie( ret, flushLSQ) = thread_decoders[rob_front->getHWThread()]->getOSHandler()->handleSysCall(the_syscall_ins);
 
                     // mark as front of ROB now we can proceed
                     rob_front->markFrontOfROB();
 
                     if ( ret ) {
                         syscallReturn( rob_front->getHWThread() );
+                    }
+                    if ( flushLSQ ) {
+                        lsq->clearLSQByThreadID(ins_thread);
                     }
                 }
 
@@ -1324,7 +1338,7 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
 
     if ( current_cycle >= max_cycle ) {
         output->verbose(CALL_INFO, 1, 0, "Reached maximum cycle %" PRIu64 ". Core stops processing.\n", current_cycle);
-        primaryComponentOKToEndSim();
+        //primaryComponentOKToEndSim();
         return true;
     }
     else {
@@ -1726,15 +1740,7 @@ VANADIS_COMPONENT::init(unsigned int phase)
 
     while (SST::Event* ev = os_link->recvInitData()) {
 
-        VanadisStartThreadReq * req = dynamic_cast<VanadisStartThreadReq*>(ev);
-        if (nullptr == req) {
-             output->fatal(CALL_INFO, -1, "Error - event cannot be StartThreadReq\n");
-        }
-
-        output->verbose(CALL_INFO, 8, 0,
-                            "received start thread %d command from the operating system \n",req->getThread());
-        startThread(req->getThread(), req->getStackStart(), req->getInstructionPointer());
-        delete ev;
+        assert( 0 );
     }
 
     output->verbose(CALL_INFO, 2, 0, "End: init-phase: %" PRIu32 "...\n", (uint32_t)phase);
@@ -1897,7 +1903,7 @@ VANADIS_COMPONENT::syscallReturn(uint32_t thr)
 
 #ifdef VANADIS_BUILD_DEBUG
     output->verbose(
-        CALL_INFO, 16, 0,
+        CALL_INFO, 8, 0,
         "[syscall-return]: syscall on thread %" PRIu32 " (0x%0llx) is completed, return to processing.\n", thr,
         syscall_ins->getInstructionAddress());
 #endif
@@ -1919,37 +1925,232 @@ void VANADIS_COMPONENT::recvOSEvent(SST::Event* ev) {
                         hw_thr, os_resp->getReturnCode(), os_resp->isSuccessful() ? "yes" : "no");
         output->verbose(CALL_INFO, 8, 0, "-> issuing call-backs to clear syscall ROB stops...\n");
         
-        thread_decoders[hw_thr]->getOSHandler()->recvSyscallResp ( os_resp ); 
-        syscallReturn( hw_thr );
-#if 0
-        for (int i = 0; i < returnCallbacks.size(); ++i) {
-            returnCallbacks[i](hw_thr);
-        }
-#endif
-    } else {
-        VanadisStartThreadReq* os_req = dynamic_cast<VanadisStartThreadReq*>(ev);
-
-        if ( nullptr != os_req ) {
-            output->verbose(CALL_INFO, 8, 0,
-                            "received start thread %d command from the operating system \n",os_req->getThread());
-            startThread(os_req->getThread(), os_req->getStackStart(), os_req->getInstructionPointer());
+        if ( ! os_resp->hasExited() ) {
+            thread_decoders[hw_thr]->getOSHandler()->recvSyscallResp ( os_resp ); 
+            syscallReturn( hw_thr );
         } else {
+            output->verbose(CALL_INFO, 8, 0, "-> thread has exited, leave in halted state\n");
+        }
 
-            VanadisExitResponse* os_exit = dynamic_cast<VanadisExitResponse*>(ev);
+    } else {
 
-            if ( nullptr != os_exit ) {
-                output->verbose(CALL_INFO, 8, 0,
-                            "received an exit command from the operating system for hw_thr %d "
-                            "(return-code: %" PRId64 " )\n",
-                            os_exit->getHWThread(),
-                            os_exit->getReturnCode());
+        VanadisStartThreadFirstReq* os_req = dynamic_cast<VanadisStartThreadFirstReq*>(ev);
+        if ( nullptr != os_req ) {
+            startThread( os_req->getThread(), os_req->getStackAddr(), os_req->getInstPtr() );
+        } else { 
 
-                setHalt(os_exit->getHWThread(), os_exit->getReturnCode());
-            } else { 
-                assert(0);
+            VanadisStartThreadForkReq* req = dynamic_cast<VanadisStartThreadForkReq*>(ev);
+            if ( nullptr != req ) {
+                startThreadFork( req );
+            } else {
+
+                VanadisGetThreadStateReq* req = dynamic_cast<VanadisGetThreadStateReq*>(ev);
+                if ( nullptr != req ) {
+                    getThreadState( req );
+                } else {
+
+                    VanadisStartThreadCloneReq* req = dynamic_cast<VanadisStartThreadCloneReq*>(ev);
+                    if ( nullptr != req ) {
+                        startThreadClone( req );
+                    } else {
+    
+                        VanadisExitResponse* os_exit = dynamic_cast<VanadisExitResponse*>(ev);
+                        if ( nullptr != os_exit ) {
+                            output->verbose(CALL_INFO, 2, 0,
+                                "received an exit command from the operating system for hw_thr %d "
+                                "(return-code: %" PRId64 " )\n",
+                                os_exit->getHWThread(),
+                                os_exit->getReturnCode());
+
+                            setHalt(os_exit->getHWThread(), os_exit->getReturnCode());
+                        } else {
+    
+                            VanadisDumpRegsReq* req = dynamic_cast<VanadisDumpRegsReq*>(ev);
+                            if (nullptr != req ) {
+                                dumpRegs(req);
+                            } else { 
+                                assert(0);
+                            }
+                        } 
+                    }
+                }
             }
-        } 
-        delete ev;
+        }
     }
+
+    delete ev;
 }
 
+
+void VANADIS_COMPONENT::startThreadClone( VanadisStartThreadCloneReq* req )
+{
+    output->verbose(CALL_INFO, 8, 0, "received start thread %d command from the operating system \n",req->getThread());
+
+    int hw_thr = req->getThread();
+    auto thr_decoder = thread_decoders[hw_thr];
+    auto isa_table = retire_isa_tables[hw_thr];
+    auto reg_file = register_files[hw_thr];
+
+    resetHwThread( hw_thr );
+    reregisterClock(cpuClockTC, cpuClockHandler);
+
+    output->verbose(CALL_INFO, 8, 0,"instPtr=%lx stackAddr=%lx argAddr=%lx tlsAddr=%lx\n", req->getInstPtr(), req->getStackAddr(), req->getArgAddr(), req->getTlsAddr() );
+    for ( int i = 0; i < req->getIntRegs().size(); i++ ) {
+#if 0 
+        printf("%s() %d %#lx\n",__func__,i,req->getIntRegs()[i]);
+#endif
+        reg_file->setIntReg<uint64_t>(isa_table->getIntPhysReg(i), req->getIntRegs()[i]);
+    }
+    for ( int i = 0; i < req->getFpRegs().size(); i++ ) {
+        if ( VANADIS_REGISTER_MODE_FP32 == thr_decoder->getFPRegisterMode() ) {
+            reg_file->setFPReg<uint32_t>(isa_table->getFPPhysReg(i), req->getFpRegs()[i]);
+        } else {
+            reg_file->setFPReg<uint64_t>(isa_table->getFPPhysReg(i), req->getFpRegs()[i]);
+        }
+    }
+    
+    // Note that under the covers, based on ISA, some of these do nothing
+    thr_decoder->setArg1Register( output, isa_table, reg_file, req->getArgAddr() );
+    thr_decoder->setFuncPointer( output, isa_table, reg_file, req->getInstPtr() );
+    thr_decoder->setStackPointer( output, isa_table, reg_file, req->getStackAddr() );
+    thr_decoder->setThreadLocalStoragePointer( req->getTlsAddr() );
+    thr_decoder->setThreadPointer( output, isa_table, reg_file, req->getTlsAddr() );
+
+    halted_masks[hw_thr]            = false;
+    handleMisspeculate( hw_thr, req->getInstPtr() );
+}
+
+void VANADIS_COMPONENT::startThreadFork( VanadisStartThreadForkReq* req )
+{
+    auto hw_thr = req->getThread();
+    auto thr_decoder = thread_decoders[hw_thr];
+    auto isa_table = retire_isa_tables[hw_thr];
+    auto reg_file = register_files[hw_thr];
+
+    resetHwThread( hw_thr );
+    reregisterClock(cpuClockTC, cpuClockHandler);
+
+    output->verbose(CALL_INFO, 8, 0,"start thread fork, thread=%d instPtr=%lx tlsPtr=%lx\n",
+                req->getThread(), req->getInstPtr(), req->getTlsAddr() );
+
+    for ( int i = 0; i < req->getIntRegs().size(); i++ ) {
+#if 0
+        printf("%s() %d %#lx\n",__func__,i,req->getIntRegs()[i]);
+#endif
+        reg_file->setIntReg<uint64_t>(isa_table->getIntPhysReg(i), req->getIntRegs()[i]);
+    }
+
+    thr_decoder->setReturnRegister( output, isa_table, reg_file, 0 );
+    thr_decoder->setSuccessRegister( output, isa_table, reg_file, 0 );
+
+    for ( int i = 0; i < req->getFpRegs().size(); i++ ) {
+        if ( VANADIS_REGISTER_MODE_FP32 == thr_decoder->getFPRegisterMode() ) {
+            reg_file->setFPReg<uint32_t>(isa_table->getFPPhysReg(i), req->getFpRegs()[i]);
+        } else {
+            reg_file->setFPReg<uint64_t>(isa_table->getFPPhysReg(i), req->getFpRegs()[i]);
+        }
+    }
+    thread_decoders[hw_thr]->setThreadLocalStoragePointer( req->getTlsAddr() );
+
+    halted_masks[hw_thr]            = false;
+    handleMisspeculate( hw_thr, req->getInstPtr() + 4 );
+}
+
+void VANADIS_COMPONENT::getThreadState( VanadisGetThreadStateReq* req )
+{
+    int hw_thr = req->getThread();
+
+    auto thr_decoder = thread_decoders[hw_thr];
+    auto isa_table = retire_isa_tables[hw_thr];
+    auto reg_file = register_files[hw_thr];
+    uint64_t instPtr = rob[hw_thr]->peek()->getInstructionAddress();
+    uint64_t tlsPtr = thread_decoders[hw_thr]->getThreadLocalStoragePointer();
+
+    output->verbose(CALL_INFO, 8, 0,"get thread state, hw_th=%d instPtr=%lx tlsPtr=%lx\n",hw_thr,instPtr,tlsPtr);
+
+    VanadisGetThreadStateResp* resp = new VanadisGetThreadStateResp( core_id, hw_thr, instPtr, tlsPtr );
+    for ( int i = 0; i < isa_table->getNumIntRegs(); i++ ) {
+        uint64_t val = reg_file->getIntReg<uint64_t>( isa_table->getIntPhysReg( i ) );
+#if 0 
+        printf("%s() %d %#lx\n",__func__,i,val);
+#endif
+        resp->intRegs.push_back( val );
+    }
+    for ( int i = 0; i < isa_table->getNumFpRegs(); i++ ) {
+        if ( thr_decoder->getFPRegisterMode() == VANADIS_REGISTER_MODE_FP32 ) {
+            uint32_t val = reg_file->getFPReg<uint32_t>( isa_table->getFPPhysReg( i ) );
+            resp->fpRegs.push_back( val );
+        } else {
+            uint64_t val = reg_file->getFPReg<uint64_t>( isa_table->getFPPhysReg( i ) );
+            resp->fpRegs.push_back( val );
+        }
+    }
+    os_link->send( resp );
+}
+
+void VANADIS_COMPONENT::dumpRegs( VanadisDumpRegsReq* req  )
+{
+    int hw_thr = req->getThread();
+    auto reg_file = register_files[hw_thr];
+    output->verbose(CALL_INFO, 0, 0,"=======================================================================================\n");
+    output->verbose(CALL_INFO, 0, 0,"Memory Fault: dump registers and exit\n");
+    // print the register and pipeline status
+    output->setVerboseLevel( 16 );
+    printStatus((*output));
+#if 0
+    output->verbose(CALL_INFO, 0, 0,"issue isa table\n");
+    issue_isa_tables[hw_thr]->print(output, reg_file, true, false, 0);
+    output->verbose(CALL_INFO, 0, 0," isa table\n");
+    retire_isa_tables[hw_thr]->print(output, reg_file, true, false, 0);
+#endif
+    output->verbose(CALL_INFO, 0, 0,"=======================================================================================\n");
+    exit(0);
+}
+
+void
+VANADIS_COMPONENT::resetHwThread(uint32_t thr)
+{
+    auto decoder = thread_decoders[thr]; 
+    auto issue_table = issue_isa_tables[thr];
+    auto retire_table = retire_isa_tables[thr];
+    auto int_stack = int_register_stacks[thr];
+    auto fp_stack = fp_register_stacks[thr];
+    auto reg_file = register_files[thr];
+    auto thr_rob = rob[thr];
+
+    thr_rob->clear();
+
+#if 0
+    output->setVerboseLevel( 16 );
+    output->verbose(CALL_INFO, 0, 0,"%s() issue isa table\n",__func__);
+    issue_table->print(output, reg_file, true, false, 0);
+    output->verbose(CALL_INFO, 0, 0,"%s90 retireisa table\n",__func__);
+    retire_table->print(output, reg_file, true, false, 0);
+#endif
+
+    decoder->getInstructionLoader()->clearCache();
+    
+    reg_file->init();
+    
+    int_stack->reset();
+    fp_stack->reset();
+    issue_table->init();
+    retire_table->init();
+
+    for ( uint16_t j = 0; j < decoder->countISAIntReg(); ++j ) {
+        issue_table->setIntPhysReg(j, int_stack->pop());
+    }
+
+    for ( uint16_t j = 0; j < decoder->countISAFPReg(); ++j ) {
+        issue_table->setFPPhysReg(j, fp_stack->pop());
+    }
+
+    retire_table->reset(issue_table);
+#if 0
+    output->verbose(CALL_INFO, 0, 0,"%s() issue isa table\n",__func__);
+    issue_table->print(output, reg_file, true, false, 0);
+    output->verbose(CALL_INFO, 0, 0,"%s90 retireisa table\n",__func__);
+    retire_table->print(output, reg_file, true, false, 0);
+    output->setVerboseLevel( 0 );
+#endif
+}
