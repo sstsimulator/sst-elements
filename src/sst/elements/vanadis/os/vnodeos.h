@@ -295,6 +295,8 @@ public:
         assert( iter != m_threadMap.end() );
         m_threadMap.erase( iter );
 
+        getMMU()->flushTlb( core, hwThread );
+
         // clear the process/thread to hwThread map 
         m_coreInfoMap.at( core ).setProcess( hwThread, nullptr );
 
