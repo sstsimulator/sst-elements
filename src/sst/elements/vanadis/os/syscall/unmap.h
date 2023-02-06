@@ -32,6 +32,9 @@ public:
 
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-unmap] addr=%#" PRIx64 " lenght=%" PRIu64 "\n",address, length);
 
+        m_os->getMMU()->flushTlb( event->getCoreID(), event->getThreadID() );
+        m_os->getMMU()->unmap( process->getpid(), address >> m_os->getPageShift(), length/m_os->getPageSize() );
+
         int ret = process->unmap( address, length );
         if ( ret ) {
             setReturnFail( -ret );
