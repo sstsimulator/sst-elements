@@ -58,7 +58,7 @@ void SimpleMMU::handleTlbEvent( Event* ev, int link )
     int core = getTlbCore( link );
 
     if( dynamic_cast<TlbFlushRespEvent*>(ev) ) {
-        printf("got flush response\n");
+        // we currently don't do anything with the response because there are no race conditions?
         delete ev;
         return;
     }
