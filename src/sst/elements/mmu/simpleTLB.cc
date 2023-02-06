@@ -49,10 +49,14 @@ SimpleTLB::SimpleTLB(SST::ComponentId_t id, SST::Params& params) : TLB(id,params
         m_dbg.fatal(CALL_INFO, -1, "Error: tlb_set_size is not set\n");
     } 
 
+    m_minVirtAddr = params.find<uint64_t>("minVirtAddr",4096);
+    m_maxVirtAddr = params.find<uint64_t>("maxVirtAddr",0x80000000); 
+
     m_mmuLink = configureLink( "mmu", new Event::Handler<SimpleTLB>(this, &SimpleTLB::handleMMUEvent) );
     if ( nullptr == m_mmuLink ) {
         m_dbg.fatal(CALL_INFO, -1, "Error: was unable to configure mmu link\n");
     }
+
     m_waitingMiss.resize( numHwThreads );
     m_tlbData.resize( numHwThreads );
     for ( int i=0; i < m_tlbData.size(); i++ ) {
@@ -145,6 +149,12 @@ void SimpleTLB::handleMMUEvent( Event* ev ) {
 void SimpleTLB::getVirtToPhys( RequestID reqId, int hwThreadId, uint64_t virtAddr, uint32_t perms, uint64_t instPtr ) {
     size_t vpn = virtAddr >> m_pageShift;
     m_dbg.debug(CALL_INFO,1,0,"reqId=%p, hwThreadId=%d virtAddr=%#" PRIx64 " vpn=%d perms=%#x\n", reqId, hwThreadId, virtAddr, vpn, perms);
+
+    if ( virtAddr < m_minVirtAddr || virtAddr > m_maxVirtAddr ) {
+        m_dbg.debug(CALL_INFO,1,0,"virtAddr=%#" PRIx64 " is out of virtual memory range, flag error\n", virtAddr);
+        m_selfLink->send( m_hitLatency, new SelfEvent( reqId, -1 ));
+        return;
+    }
 
     auto& waiting = m_waitingMiss[hwThreadId]; 
 
