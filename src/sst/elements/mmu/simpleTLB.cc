@@ -84,9 +84,10 @@ void SimpleTLB::init(unsigned int phase)
 void SimpleTLB::handleMMUEvent( Event* ev ) {
     auto req = dynamic_cast<TlbFillEvent*>(ev);
     if ( nullptr == req ) {
-        auto req = dynamic_cast<TlbFlushEvent*>(ev);
+        auto req = dynamic_cast<TlbFlushReqEvent*>(ev);
         if ( nullptr != req ) {
             flushThread(req->getHwThread());
+            m_mmuLink->send( 0, new TlbFlushRespEvent( req->getHwThread() ) );
             return;
         } else {
             assert(0);
