@@ -321,6 +321,8 @@ public:
     }
 
     int getNodeNum() { return m_nodeNum; }
+    int getPageSize() { return m_pageSize; }
+    int getPageShift() { return m_pageShift; }
 
 private:
 
