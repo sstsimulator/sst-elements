@@ -128,7 +128,7 @@ osParams = {
 
 
 processList = ( 
-    ( 1, {
+    ( numThreads, {
         "env_count" : 2,
         "env0" : "HOME=/home/sdhammo",
         "env1" : "NEWHOME=/home/sdhammo2",
@@ -206,7 +206,7 @@ memParams = {
 # CPU related params
 tlbParams = {
     "debug_level": 0,
-    "hitLatency": 10,
+    "hitLatency": 1,
     "num_hardware_threads": numThreads,
     "num_tlb_entries_per_thread": 64,
     "tlb_set_size": 4,
@@ -240,7 +240,8 @@ cpuParams = {
     "fp_arith_cycles" : fp_arith_cycles,
     "fp_arith_units" : fp_arith_units,
     "branch_unit_cycles" : branch_arith_cycles,
-    "print_int_reg" : 1,
+    "print_int_reg" : False,
+    "print_fp_reg" : False,
     "pipeline_trace_file" : pipe_trace_file,
     "reorder_slots" : rob_slots,
     "decodes_per_cycle" : decodes_per_cycle,
