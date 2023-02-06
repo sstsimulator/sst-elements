@@ -42,6 +42,7 @@ public:
         m_group.erase( thread );
     }
 
+
     ProcessInfo* getThread( ProcessInfo* thread) {
         auto iter = m_group.begin();
         for ( ; iter != m_group.end(); ++iter ) {
@@ -53,6 +54,9 @@ public:
         }
         return nullptr;
     } 
+    std::set<ProcessInfo*>& getThreadList() {
+        return  m_group;
+    }
 
 private:
     std::set<ProcessInfo*> m_group;
