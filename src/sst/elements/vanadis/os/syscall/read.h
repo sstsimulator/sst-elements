@@ -52,15 +52,22 @@ public:
 
         m_data.resize(length);
         ssize_t retval = read( m_fd, m_data.data(), length );
+        m_output->verbose(CALL_INFO, 16, 0,"SST %d = read( %d,, %d)\n",retval,m_fd,length);
         assert(retval>=0);
-        m_data.resize( retval );
 
-        writeMemory( getEvent<VanadisSyscallReadEvent*>()->getBufferAddress() + m_numRead, m_data );
+        if ( retval ) {
+            m_data.resize( retval );
 
-        m_numRead += retval;
+            writeMemory( getEvent<VanadisSyscallReadEvent*>()->getBufferAddress() + m_numRead, m_data );
 
-        if ( retval < length ) {
-            m_eof = true;
+            m_numRead += retval;
+
+            if ( retval < length ) {
+                m_output->verbose(CALL_INFO, 16, 0,"read EOF\n");
+                m_eof = true;
+            }
+        } else {
+            setReturnSuccess( m_numRead );
         }
     }
 
