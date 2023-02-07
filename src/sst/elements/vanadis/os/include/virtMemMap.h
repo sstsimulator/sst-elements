@@ -281,31 +281,28 @@ public:
 
     void initBrk( uint64_t addr ) { 
         VirtMemDbg("brk=%#" PRIx64 "\n",addr);
-        m_regionMap[addr] = m_heapRegion = new MemoryRegion( "heap", addr, 0, 0x6, NULL ); 
+        auto start = addRegion( "heap", addr, 0x10000000, 0x6 );
+        assert( addr == start );
+        m_heapRegion = m_regionMap[addr];
+        m_brk = addr;
     }
 
     uint64_t getBrk() { 
-        VirtMemDbg("brk=%#" PRIx64 "\n",m_heapRegion->addr + m_heapRegion->length);
-        return m_heapRegion->addr + m_heapRegion->length;  
+        return m_brk;
     }
 
     bool setBrk( uint64_t brk ) { 
-        size_t length = brk - m_heapRegion->addr;  
-        bool ret = m_freeList->update( m_heapRegion->addr, length );
-
-        VirtMemDbg("brk=%#" PRIx64 "\n",m_heapRegion->addr + m_heapRegion->length);
-
-        if ( ret ) {
-            m_heapRegion->length = length;  
-        }
-        
-        return ret;
+        assert( brk >= m_brk );
+        assert( brk < m_heapRegion->addr + m_heapRegion->length );
+        m_brk = brk;
+        return true;
     }
 
 private:
 
     std::map< uint64_t, MemoryRegion* > m_regionMap;
 
+    uint64_t        m_brk;
     MemoryRegion*   m_heapRegion;
     FreeList*       m_freeList;
     int             m_refCnt;

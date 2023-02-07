@@ -45,7 +45,10 @@ VanadisForkSyscall::VanadisForkSyscall( VanadisNodeOSComponent* os, SST::Link* c
 
     m_child->setHwThread( *m_threadID );
 
+    //
     // flush the TLB for this hwThread, there shouldn't be any race conditions give the parent is blocked in the syscall 
+    // Is this true? we are returning to the parent CPU before we know that the TLB is flushed
+    //
     m_os->getMMU()->flushTlb( event->getCoreID(), event->getThreadID() );
 
     // create a page table for the child that is a copy of the parents

@@ -73,15 +73,26 @@ class TlbFillEvent  : public SST::Event {
     NotSerializable(TlbFillEvent)
 };
 
-class TlbFlushEvent  : public SST::Event {
+class TlbFlushReqEvent  : public SST::Event {
   public:
 
-    TlbFlushEvent( unsigned hwThread ) : Event(), hwThread(hwThread) { }
+    TlbFlushReqEvent( unsigned hwThread ) : Event(), hwThread(hwThread) { }
     unsigned getHwThread() { return hwThread; }
   private:
     unsigned hwThread;
 
-    NotSerializable(TlbFillEvent)
+    NotSerializable(TlbFlushReqEvent)
+};
+
+class TlbFlushRespEvent  : public SST::Event {
+  public:
+
+    TlbFlushRespEvent( unsigned hwThread ) : Event(), hwThread(hwThread) { }
+    unsigned getHwThread() { return hwThread; }
+  private:
+    unsigned hwThread;
+
+    NotSerializable(TlbFlushRespEvent)
 };
 
 } //namespace MMU_Lib
