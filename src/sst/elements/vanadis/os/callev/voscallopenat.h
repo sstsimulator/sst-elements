@@ -27,7 +27,7 @@ public:
     VanadisSyscallOpenatEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t dirfd, uint64_t path_ptr, uint64_t flags, uint64_t mode)
         : VanadisSyscallEvent(core, thr, bittype), openat_dirfd(dirfd), openat_path_ptr(path_ptr), openat_flags(flags), openat_mode(mode) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_OPENAT; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_OPENAT; }
 
     int64_t getDirectoryFileDescriptor() const { return openat_dirfd; }
     uint64_t getPathPointer() const { return openat_path_ptr; }
@@ -35,6 +35,15 @@ public:
     int64_t getMode() const { return openat_mode; }
 
 private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& openat_dirfd;
+        ser& openat_path_ptr;
+        ser& openat_flags;
+        ser& openat_mode;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallOpenatEvent);
+
     int64_t openat_dirfd;
     uint64_t openat_path_ptr;
     int64_t openat_flags;

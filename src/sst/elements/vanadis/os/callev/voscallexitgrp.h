@@ -27,11 +27,17 @@ public:
     VanadisSyscallExitGroupEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t rc)
         : VanadisSyscallEvent(core, thr, bittype), return_code(rc) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_EXIT_GROUP; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_EXIT_GROUP; }
 
     uint64_t getExitCode() const { return return_code; }
 
 private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& return_code;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallExitGroupEvent);
+
     uint64_t return_code;
 };
 

@@ -29,7 +29,7 @@ public:
         : VanadisSyscallEvent(core, thr, bittype), fd(file_d), op_read(o_read), op_write(o_write), io_op(io_request),
           io_drv(io_driver), ptr(data_ptr), ptr_len(data_len) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_IOCTL; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_IOCTL; }
 
     int64_t getFileDescriptor() const { return fd; }
     uint64_t getIOOperation() const { return io_op; }
@@ -42,6 +42,19 @@ public:
     bool isWrite() const { return op_write; }
 
 private:
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& fd;
+        ser& op_read;
+        ser& op_write;
+        ser& io_op;
+        ser& io_drv;
+        ser& ptr;
+        ser& ptr_len;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallIoctlEvent);
+
     int64_t fd;
 
     bool op_read;

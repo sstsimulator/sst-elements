@@ -27,9 +27,16 @@ public:
     VanadisSyscallGetxEvent( uint32_t core, uint32_t thr, VanadisOSBitType bittype, VanadisSyscallOp op )
         : VanadisSyscallEvent(core, thr, bittype ), m_op(op) {}
 
-    VanadisSyscallOp getOperation() { return m_op; }
+    VanadisSyscallOp getOperation() override { return m_op; }
 
 private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& m_op;
+    }
+
+    ImplementSerializable(SST::Vanadis::VanadisSyscallGetxEvent);
+
     VanadisSyscallOp m_op;
 };
 

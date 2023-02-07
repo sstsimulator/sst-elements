@@ -27,13 +27,20 @@ public:
     VanadisSyscallMprotectEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t addr, uint64_t len, int64_t prot)
         : VanadisSyscallEvent(core, thr, bittype), addr(addr), len(len), prot(prot) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_MPROTECT; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_MPROTECT; }
 
     int64_t getAddr() const { return addr; }
     uint64_t getLen() const { return len; }
     int64_t getProt() const { return prot; }
 
 private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& addr;
+        ser& len;
+        ser& prot;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallMprotectEvent);
     uint64_t addr;
     uint64_t len;
     uint64_t prot;

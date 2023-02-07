@@ -26,73 +26,128 @@ namespace MMU_Lib {
 class TlbInitEvent  : public SST::Event {
   public:
 
+    TlbInitEvent() : Event(), pageShift(0) {}
+
     TlbInitEvent( int pageShift ) : Event(), pageShift(pageShift) { }
+    virtual ~TlbInitEvent() {}
     int getPageShift() { return pageShift; }
+
   private:
 
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        Event::serialize_order(ser);
+        ser& pageShift;
+    }
+
+    ImplementSerializable(TlbInitEvent);
+
     int pageShift;
-    NotSerializable(TlbInitEvent)
 };
 
 class TlbMissEvent  : public SST::Event {
   public:
 
+    TlbMissEvent() : Event() {}
     TlbMissEvent( RequestID id, int hwThread, size_t vpn, uint32_t perms, uint64_t instPtr, uint64_t memAddr  )
         : Event(), id(id), hwThread(hwThread), vpn(vpn), perms(perms), instPtr(instPtr), memAddr(memAddr) { }
+    virtual ~TlbMissEvent() {}
+
     RequestID getReqId() { return id; }
     int getHardwareThread() { return hwThread; }
     size_t getVPN() { return vpn; }
     uint32_t getPerms() { return perms; }
     uint64_t getInstPtr() { return instPtr; }
     uint64_t getMemAddr() { return memAddr; }
+
   private:
-    RequestID id;
-    int hwThread;
-    size_t vpn;
-    uint32_t perms;
-    uint64_t instPtr;
-    uint64_t memAddr;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        Event::serialize_order(ser);
+        ser& id;
+        ser& hwThread;
+        ser& vpn;
+        ser& perms;
+        ser& instPtr;
+        ser& memAddr;
+    }
+        ImplementSerializable(TlbMissEvent);
 
-    NotSerializable(TlbMissEvent)
-};
+        RequestID id;
+        int hwThread;
+        size_t vpn;
+        uint32_t perms;
+        uint64_t instPtr;
+        uint64_t memAddr;
 
-class TlbFillEvent  : public SST::Event {
-  public:
+    };
 
-    TlbFillEvent( RequestID id, PTE pte ) : Event(), id(id), pte(pte), success(true) { }
-    TlbFillEvent( RequestID id ) : Event(), id(id), success(false) { }
+    class TlbFillEvent  : public SST::Event {
+
+      public:
+        TlbFillEvent() : Event() {}
+        TlbFillEvent( RequestID id, PTE pte ) : Event(), id(id), perms(pte.perms), ppn(pte.ppn), success(true) { }
+        TlbFillEvent( RequestID id ) : Event(), id(id), success(false) { }
+        virtual ~TlbFillEvent() {}
+
+
     RequestID getReqId() { return id; }
-    size_t getPPN() { return pte.ppn; }
-    int32_t getPerms() { return pte.perms; }
+    size_t getPPN() { return ppn; }
+    int32_t getPerms() { return perms; }
     bool isSuccess() { return success; }
+
   private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        Event::serialize_order(ser);
+        ser& id;
+        ser& perms;
+        ser& ppn;
+        ser& success;
+    }
+    ImplementSerializable(TlbFillEvent);
+
     RequestID id;
-    PTE    pte;
+    uint32_t ppn;
+    uint32_t perms; 
     bool success;
 
-    NotSerializable(TlbFillEvent)
 };
 
 class TlbFlushReqEvent  : public SST::Event {
+
   public:
-
+    TlbFlushReqEvent() : Event() {}
     TlbFlushReqEvent( unsigned hwThread ) : Event(), hwThread(hwThread) { }
-    unsigned getHwThread() { return hwThread; }
-  private:
-    unsigned hwThread;
+    virtual ~TlbFlushReqEvent() {}
 
-    NotSerializable(TlbFlushReqEvent)
+    unsigned getHwThread() { return hwThread; }
+
+  private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        Event::serialize_order(ser);
+        ser& hwThread;
+    }
+    ImplementSerializable(TlbFlushReqEvent);
+
+    unsigned hwThread;
 };
 
 class TlbFlushRespEvent  : public SST::Event {
+
+
   public:
-
+    TlbFlushRespEvent() : Event() {}
     TlbFlushRespEvent( unsigned hwThread ) : Event(), hwThread(hwThread) { }
-    unsigned getHwThread() { return hwThread; }
-  private:
-    unsigned hwThread;
+    virtual ~TlbFlushRespEvent() {}
 
-    NotSerializable(TlbFlushRespEvent)
+    unsigned getHwThread() { return hwThread; }
+
+  private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        Event::serialize_order(ser);
+        ser& hwThread;
+    }
+    ImplementSerializable(TlbFlushRespEvent);
+
+    unsigned hwThread;
 };
 
 } //namespace MMU_Lib

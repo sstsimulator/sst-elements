@@ -28,7 +28,8 @@ public:
     VanadisCoreEvent( int core, int thread ) : SST::Event(), core(core), thread(thread) {}
     int     getThread() { return thread; }
     int     getCore() { return core; }
-private:
+
+protected:
     int     thread;
     int     core;
 
@@ -66,7 +67,7 @@ public:
 
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
-        Event::serialize_order(ser);
+        VanadisCoreEvent::serialize_order(ser);
         ser& intRegs;
         ser& fpRegs;
         ser& instPtr;

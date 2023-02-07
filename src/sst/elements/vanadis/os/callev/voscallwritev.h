@@ -28,7 +28,11 @@ public:
     VanadisSyscallWritevEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, int64_t fd, uint64_t iovec_addr, int64_t iovec_count)
         : VanadisSyscallIoVecEvent(core, thr, bittype,fd,iovec_addr,iovec_count) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_WRITEV; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_WRITEV; }
+
+private:
+
+    ImplementSerializable(SST::Vanadis::VanadisSyscallWritevEvent);
 };
 
 } // namespace Vanadis
