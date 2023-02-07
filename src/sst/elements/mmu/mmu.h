@@ -52,6 +52,7 @@ class MMU : public SubComponent {
     virtual void dup( unsigned fromPid, unsigned toPid ) = 0;
     virtual void removeWrite( unsigned pid ) = 0;
     virtual void flushTlb( unsigned core, unsigned hwThread ) = 0;
+    virtual void unmap( unsigned pid, uint32_t vpn, size_t numPages ) = 0;
     virtual void map( unsigned pid, uint32_t vpn, std::vector<uint32_t>& ppns, int pageSize, uint64_t flags ) = 0;
     virtual void map( unsigned pid, uint32_t vpn, uint32_t ppn, int pageSize, uint64_t flags ) = 0;
     virtual int getPerms( unsigned pid, uint32_t vpn ) = 0;

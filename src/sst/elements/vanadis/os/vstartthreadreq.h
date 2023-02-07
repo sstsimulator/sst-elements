@@ -71,6 +71,9 @@ public:
 
     VanadisStartThreadFirstReq( int thread, uint64_t instPtr, uint64_t stackAddr ) : 
         _VanadisStartThreadBaseReq( thread, instPtr, stackAddr, 0, 0 ) {} 
+
+private:
+    ImplementSerializable(SST::Vanadis::VanadisStartThreadFirstReq);
 };
 
 class VanadisStartThreadForkReq : public _VanadisStartThreadBaseReq {
@@ -79,6 +82,9 @@ public:
 
     VanadisStartThreadForkReq( int thread, uint64_t instPtr, uint64_t tlsAddr ) : 
         _VanadisStartThreadBaseReq( thread, instPtr, 0, 0, tlsAddr ) {} 
+
+private:
+    ImplementSerializable(SST::Vanadis::VanadisStartThreadForkReq);
 };
 
 class VanadisStartThreadCloneReq : public _VanadisStartThreadBaseReq {
@@ -87,6 +93,9 @@ public:
 
     VanadisStartThreadCloneReq( int thread, uint64_t instPtr, uint64_t stackAddr, uint64_t tlsAddr, uint64_t argAddr ) : 
         _VanadisStartThreadBaseReq( thread, instPtr, stackAddr, argAddr, tlsAddr ) {} 
+
+private:
+    ImplementSerializable(SST::Vanadis::VanadisStartThreadCloneReq);
 };
 
 } // namespace Vanadis

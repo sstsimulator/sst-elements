@@ -27,11 +27,17 @@ public:
     VanadisSyscallUnameEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t uname_info_adr)
         : VanadisSyscallEvent(core, thr, bittype), uname_info_addr(uname_info_adr) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_UNAME; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_UNAME; }
 
     uint64_t getUnameInfoAddress() const { return uname_info_addr; }
 
 private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& uname_info_addr;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallUnameEvent);
+
     uint64_t uname_info_addr;
 };
 

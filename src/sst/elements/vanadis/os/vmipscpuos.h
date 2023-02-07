@@ -536,6 +536,7 @@ public:
         } break;
 
         case VANADIS_SYSCALL_MIPS_MMAP: {
+            assert(0);
             const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
             uint64_t map_addr = regFile->getIntReg<uint64_t>(phys_reg_4);
 
@@ -598,8 +599,15 @@ public:
                             "[syscall-handler] mmap2( 0x%llx, %" PRIu64 ", %" PRId32 ", %" PRId32 ", sp: 0x%llx (> 4 arguments) )\n",
                             map_addr, map_len, map_prot, map_flags, stack_ptr);
 
-            call_ev = new VanadisSyscallMemoryMapEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B,
+            if ( map_flags & MIPS_MAP_FIXED ) {
+                output->verbose(CALL_INFO, 8, 0,"[syscall-handler] mmap2() we don't support MAP_FIXED return error EEXIST\n");
+
+                recvSyscallResp(new VanadisSyscallResponse(-EEXIST));
+            } else {
+
+                call_ev = new VanadisSyscallMemoryMapEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B,
                     map_addr, map_len, map_prot, mmapConvertFlags(map_flags), /*fd*/ 0, /*offset*/ 0, stack_ptr, 4096);
+            }
         } break;
 
         case VANADIS_SYSCALL_MIPS_GETTIME64: {

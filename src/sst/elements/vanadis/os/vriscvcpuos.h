@@ -478,27 +478,30 @@ public:
 
             int32_t hostFlags = 0;
 
-            if ( map_flags & RISCV_MAP_ANONYMOUS ) {
-                hostFlags |= MAP_ANONYMOUS; 
-                map_flags &= ~RISCV_MAP_ANONYMOUS;
-            }
-            if ( map_flags & RISCV_MAP_PRIVATE ) {
-                hostFlags |= MAP_PRIVATE; 
-                map_flags &= ~RISCV_MAP_PRIVATE;
-            }
-            if ( map_flags & RISCV_MAP_FIXED ) {
-                hostFlags |= MAP_FIXED; 
-                map_flags &= ~RISCV_MAP_FIXED;
-            }
-            assert( map_flags == 0 );
+            if ( map_flags & MIPS_MAP_FIXED ) {
+                output->verbose(CALL_INFO, 8, 0,"[syscall-handler] mmap() we don't support MAP_FIXED return error EEXIST\n");
 
-            output->verbose(CALL_INFO, 8, 0,
+                recvSyscallResp(new VanadisSyscallResponse(-EEXIST));
+            } else {
+
+                if ( map_flags & RISCV_MAP_ANONYMOUS ) {
+                    hostFlags |= MAP_ANONYMOUS; 
+                    map_flags &= ~RISCV_MAP_ANONYMOUS;
+                }
+                if ( map_flags & RISCV_MAP_PRIVATE ) {
+                    hostFlags |= MAP_PRIVATE; 
+                    map_flags &= ~RISCV_MAP_PRIVATE;
+                }
+                assert( map_flags == 0 );
+
+                output->verbose(CALL_INFO, 8, 0,
                             "[syscall-handler] found a call to mmap2( 0x%llx, %" PRIu64 ", %" PRId32 ", %" PRId32
                             ", %d, %" PRIu64 ")\n",
                             map_addr, map_len, map_prot, map_flags, fd, offset );
 
-            call_ev = new VanadisSyscallMemoryMapEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B,
+                call_ev = new VanadisSyscallMemoryMapEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B,
                         map_addr, map_len, map_prot, hostFlags, fd, offset, 0, 0);
+            }
         } break;
 
         case VANADIS_SYSCALL_RISCV_CLOCK_GETTIME: {

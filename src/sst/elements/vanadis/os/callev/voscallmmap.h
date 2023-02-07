@@ -33,7 +33,7 @@ public:
         : VanadisSyscallEvent(core, thr, bittype), address(addr), length(len), page_prot(prot), alloc_flags(flags), fd(fd), offset(offset),
           stack_pointer(stack_p), offset_units(offset_multiplier) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_MMAP; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_MMAP; }
 
     uint64_t getAllocationAddress() const { return address; }
     uint64_t getAllocationLength() const { return length; }
@@ -52,6 +52,19 @@ public:
 
     int getFd() { return fd; }
 private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& address;
+        ser& length;
+        ser& page_prot;
+        ser& alloc_flags;
+        ser& stack_pointer;
+        ser& offset;
+        ser& offset_units;
+        ser& fd;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallMemoryMapEvent);
+
     uint64_t address;
     uint64_t length;
     int64_t page_prot;

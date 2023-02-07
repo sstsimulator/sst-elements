@@ -28,13 +28,22 @@ public:
         : VanadisSyscallEvent(core, thr, bittype), fd(fd), iovec_addr(iovec_addr), iov_count(iovec_count) {}
 
     virtual ~VanadisSyscallIoVecEvent() {} 
-    virtual VanadisSyscallOp getOperation() = 0;
+    virtual VanadisSyscallOp getOperation() { assert(0);};
 
     int64_t getFileDescriptor() const { return fd; }
     uint64_t getIOVecAddress() const { return iovec_addr; }
     int64_t getIOVecCount() const { return iov_count; }
 
 private:
+   void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& fd;
+        ser& iovec_addr;
+        ser& iov_count;
+    }
+
+    ImplementSerializable(SST::Vanadis::VanadisSyscallIoVecEvent);
+
     int64_t fd;
     uint64_t iovec_addr;
     int64_t iov_count;

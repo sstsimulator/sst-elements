@@ -168,7 +168,7 @@ memRtrParams ={
       "xbar_bw" : "1GB/s",
       "link_bw" : "1GB/s",
       "input_buf_size" : "2KB",
-      "num_ports" : "4",
+      "num_ports" : str(numCpus+2),
       "flit_size" : "72B",
       "output_buf_size" : "2KB",
       "id" : "0",
@@ -209,7 +209,7 @@ memParams = {
 # CPU related params
 tlbParams = {
     "debug_level": 0,
-    "hitLatency": 10,
+    "hitLatency": 1,
     "num_hardware_threads": numThreads,
     "num_tlb_entries_per_thread": 64,
     "tlb_set_size": 4,
@@ -244,7 +244,8 @@ cpuParams = {
     "fp_arith_cycles" : fp_arith_cycles,
     "fp_arith_units" : fp_arith_units,
     "branch_unit_cycles" : branch_arith_cycles,
-    "print_int_reg" : 1,
+    "print_int_reg" : False,
+    "print_fp_reg" : False,
     "pipeline_trace_file" : pipe_trace_file,
     "reorder_slots" : rob_slots,
     "decodes_per_cycle" : decodes_per_cycle,
@@ -408,30 +409,37 @@ class CPU_Builder:
         # CPU (data) -> TLB -> Cache
         link_cpu_dtlb_link = sst.Link(prefix+".link_cpu_dtlb_link")
         link_cpu_dtlb_link.connect( (cpuDcacheIf, "port", "1ns"), (dtlbWrapper, "cpu_if", "1ns") )
+        link_cpu_dtlb_link.setNoCut()
 
         # data TLB -> data L1 
         link_cpu_l1dcache_link = sst.Link(prefix+".link_cpu_l1dcache_link")
         link_cpu_l1dcache_link.connect( (dtlbWrapper, "cache_if", "1ns"), (l1dcache_2_cpu, "port", "1ns") )
+        link_cpu_l1dcache_link.setNoCut()
 
         # CPU (instruction) -> TLB -> Cache
         link_cpu_itlb_link = sst.Link(prefix+".link_cpu_itlb_link")
         link_cpu_itlb_link.connect( (cpuIcacheIf, "port", "1ns"), (itlbWrapper, "cpu_if", "1ns") )
+        link_cpu_itlb_link.setNoCut()
 
         # instruction TLB -> instruction L1 
         link_cpu_l1icache_link = sst.Link(prefix+".link_cpu_l1icache_link")
         link_cpu_l1icache_link.connect( (itlbWrapper, "cache_if", "1ns"), (l1icache_2_cpu, "port", "1ns") )
+        link_cpu_l1icache_link.setNoCut();
 
         # data L1 -> bus
         link_l1dcache_l2cache_link = sst.Link(prefix+".link_l1dcache_l2cache_link")
         link_l1dcache_l2cache_link.connect( (l1dcache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_0", "1ns") )
+        link_l1dcache_l2cache_link.setNoCut()
 
         # instruction L1 -> bus
         link_l1icache_l2cache_link = sst.Link(prefix+".link_l1icache_l2cache_link")
         link_l1icache_l2cache_link.connect( (l1icache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_1", "1ns") )
+        link_l1icache_l2cache_link.setNoCut()
 
         # BUS to L2 cache
         link_bus_l2cache_link = sst.Link(prefix+".link_bus_l2cache_link")
         link_bus_l2cache_link.connect( (cache_bus, "low_network_0", "1ns"), (l2cache_2_l1caches, "port", "1ns") )
+        link_bus_l2cache_link.setNoCut()
 
         return (cpu, "os_link", "5ns"), (l2cache_2_mem, "port", "1ns") , (dtlb, "mmu", "1ns"), (itlb, "mmu", "1ns")
 
@@ -515,10 +523,12 @@ memory.addParams(memParams)
 # Directory controller to memory router
 link_dir_2_rtr = sst.Link("link_dir_2_rtr")
 link_dir_2_rtr.connect( (comp_chiprtr, "port"+str(numCpus), "1ns"), (dirNIC, "port", "1ns") )
+link_dir_2_rtr.setNoCut()
 
 # Directory controller to memory controller 
 link_dir_2_mem = sst.Link("link_dir_2_mem")
 link_dir_2_mem.connect( (dirtoM, "port", "1ns"), (memToDir, "port", "1ns") )
+link_dir_2_mem.setNoCut()
 
 # MMU -> ostlb 
 # don't need when using pass through TLB
@@ -529,9 +539,11 @@ link_dir_2_mem.connect( (dirtoM, "port", "1ns"), (memToDir, "port", "1ns") )
 link_os_cache_link = sst.Link("link_os_cache_link")
 #link_os_cache_link.connect( (ostlbWrapper, "cache_if", "1ns"), (os_cache_2_cpu, "port", "1ns") )
 link_os_cache_link.connect( (node_os_mem_if, "port", "1ns"), (os_cache_2_cpu, "port", "1ns") )
+link_os_cache_link.setNoCut()
 
 os_cache_2_rtr = sst.Link("os_cache_2_rtr")
 os_cache_2_rtr.connect( (os_cache_2_mem, "port", "1ns"), (comp_chiprtr, "port"+str(numCpus+1), "1ns") )
+os_cache_2_rtr.setNoCut()
 
 cpuBuilder = CPU_Builder()
 
