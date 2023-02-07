@@ -22,6 +22,7 @@
 #include <cinttypes>
 #include <cstdint>
 #include <vector>
+#include <unordered_map>
 
 #include "vanadisDbgFlags.h"
 
@@ -30,6 +31,11 @@
 
 namespace SST {
 namespace Vanadis {
+
+enum class VanadisInstructionLoaderMode {
+    INFINITE_CACHE_MODE,
+    LRU_CACHE_MODE
+};
 
 class VanadisInstructionLoader {
 public:
@@ -41,11 +47,23 @@ public:
         predecode_cache = new VanadisCache<uint64_t, uint8_t*, SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE_ARRAY>(predecode_cache_entries);
 
         mem_if = nullptr;
+
+        loader_mode = VanadisInstructionLoaderMode::LRU_CACHE_MODE;
+        switchLoaderMode();
     }
 
     ~VanadisInstructionLoader() {
         delete uop_cache;
         delete predecode_cache;
+    }
+
+    void setLoaderMode(const VanadisInstructionLoaderMode new_loader_mode) {
+        loader_mode = new_loader_mode;
+        switchLoaderMode();
+    }
+
+    VanadisInstructionLoaderMode getLoaderMode() const {
+        return loader_mode;
     }
 
     uint64_t getCacheLineWidth() { return cache_line_width; }
@@ -188,15 +206,36 @@ public:
     }
 
     void cacheDecodedBundle(VanadisInstructionBundle* bundle) {
-        uop_cache->store(bundle->getInstructionAddress(), bundle);
+        switch(loader_mode) {
+        case VanadisInstructionLoaderMode::LRU_CACHE_MODE:
+        {
+            uop_cache->store(bundle->getInstructionAddress(), bundle);
+        } break;
+        case VanadisInstructionLoaderMode::INFINITE_CACHE_MODE:
+        {
+            infinite_uop_cache.insert(std::pair<uint64_t, VanadisInstructionBundle*>(bundle->getInstructionAddress(), bundle));
+        } break;
+        }
     }
 
     void clearCache() {
         uop_cache->clear();
         predecode_cache->clear();
+        infinite_uop_cache.clear();
     }
 
-    bool hasBundleAt(const uint64_t addr) const { return uop_cache->contains(addr); }
+    bool hasBundleAt(const uint64_t addr) const {
+        switch(loader_mode) {
+        case VanadisInstructionLoaderMode::LRU_CACHE_MODE:
+        {
+            return uop_cache->contains(addr);
+        } break;
+        case VanadisInstructionLoaderMode::INFINITE_CACHE_MODE:
+        {
+            return !(infinite_uop_cache.find(addr) == infinite_uop_cache.end());
+        } break;
+        }
+    }
 
 	bool hasPredecodeAt(const uint64_t addr, const uint64_t len) const {
 		const uint64_t line_start    = addr - (addr % static_cast<uint64_t>(cache_line_width));
@@ -210,7 +249,19 @@ public:
 		}
 	}
 
-    VanadisInstructionBundle* getBundleAt(const uint64_t addr) { return uop_cache->find(addr); }
+    VanadisInstructionBundle* getBundleAt(const uint64_t addr) { 
+        switch(loader_mode) {
+        case VanadisInstructionLoaderMode::LRU_CACHE_MODE:
+        {
+            return uop_cache->find(addr); 
+        } break;
+        case VanadisInstructionLoaderMode::INFINITE_CACHE_MODE:
+        {
+            return infinite_uop_cache.find(addr)->second;
+        } break;
+        }
+        
+    }
 
     void requestLoadAt(SST::Output* output, const uint64_t addr, const uint64_t len) {
         if (len > cache_line_width) {
@@ -302,13 +353,37 @@ private:
 		}
 	}
 
+    void switchLoaderMode() {
+        // clear the infinite cache so we get fresh entries
+        for(auto infinite_itr = infinite_uop_cache.cbegin(); infinite_itr != infinite_uop_cache.cend(); infinite_itr++) {
+            // delete all the bundles which have been cached to save memory, this could be substantial in very large executables
+            delete infinite_itr->second;
+        }
+
+        infinite_uop_cache.clear();
+
+        // any additional mode-specific clean up which is needed
+        switch(loader_mode) {
+        case VanadisInstructionLoaderMode::INFINITE_CACHE_MODE:
+        {
+            uop_cache->clear();
+        } break;
+        case VanadisInstructionLoaderMode::LRU_CACHE_MODE:
+        {} break;
+        }
+    }
+
     uint64_t cache_line_width;
     SST::Interfaces::StandardMem* mem_if;
 
     VanadisCache<uint64_t, VanadisInstructionBundle*, SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE>* uop_cache;
     VanadisCache<uint64_t, uint8_t*, SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE_ARRAY>* predecode_cache;
 
+    std::unordered_map<uint64_t, VanadisInstructionBundle*> infinite_uop_cache;
+
     std::unordered_map<SST::Interfaces::StandardMem::Request::id_t, SST::Interfaces::StandardMem::Read*> pending_loads;
+
+    VanadisInstructionLoaderMode loader_mode;
 };
 
 } // namespace Vanadis
