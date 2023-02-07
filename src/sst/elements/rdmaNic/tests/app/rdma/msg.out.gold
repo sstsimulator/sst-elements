@@ -2,4 +2,4 @@ node=0 pid=100 tid=100 has exited
 all process have exited
 node=1 pid=100 tid=100 has exited
 all process have exited
-Simulation is complete, simulated time: 69.6694 us
+Simulation is complete, simulated time: 69.6415 us
