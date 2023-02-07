@@ -27,13 +27,21 @@ public:
     VanadisSyscallUnlinkatEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, int64_t dirFd, uint64_t path_ptr, uint64_t flags)
         : VanadisSyscallEvent(core, thr, bittype), dirFd(dirFd), path_ptr(path_ptr),flags(flags) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_UNLINKAT; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_UNLINKAT; }
 
     uint64_t getPathPointer() const { return path_ptr; }
     uint64_t getDirectoryFileDescriptor() const { return dirFd; }
     uint64_t getFlags() const { return flags; }
 
 private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& dirFd;
+        ser& path_ptr;
+        ser& flags;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallUnlinkatEvent);
+
     uint64_t dirFd;
     uint64_t path_ptr;
     uint64_t flags;

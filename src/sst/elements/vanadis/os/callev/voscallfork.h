@@ -27,9 +27,11 @@ public:
     VanadisSyscallForkEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype)
         : VanadisSyscallEvent(core, thr, bittype) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_FORK; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_FORK; }
 
 private:
+
+    ImplementSerializable(SST::Vanadis::VanadisSyscallForkEvent);
 };
 
 } // namespace Vanadis
