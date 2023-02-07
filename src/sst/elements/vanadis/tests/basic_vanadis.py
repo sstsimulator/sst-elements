@@ -128,7 +128,7 @@ osParams = {
 
 
 processList = ( 
-    ( numThreads, {
+    ( 1, {
         "env_count" : 2,
         "env0" : "HOME=/home/sdhammo",
         "env1" : "NEWHOME=/home/sdhammo2",
