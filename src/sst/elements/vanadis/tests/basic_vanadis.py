@@ -4,6 +4,7 @@ mh_debug_level=10
 mh_debug=0
 dbgAddr=0
 stopDbg=0
+loader_mode = 0
 
 pythonDebug=False
 
@@ -11,6 +12,8 @@ vanadis_isa = os.getenv("VANADIS_ISA", "MIPS")
 isa="mipsel"
 vanadis_isa = os.getenv("VANADIS_ISA", "RISCV64")
 isa="riscv64"
+
+loader_mode = os.getenv("VANADIS_LOADER_MODE", "0")
 
 testDir="basic-io"
 exe = "hello-world"
@@ -217,6 +220,7 @@ tlbWrapperParams = {
 }
 
 decoderParams = {
+    "loader_mode" : loader_mode,
     "uop_cache_entries" : 1536,
     "predecode_cache_entries" : 4
 }
