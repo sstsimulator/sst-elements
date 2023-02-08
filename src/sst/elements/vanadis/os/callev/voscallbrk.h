@@ -28,11 +28,18 @@ public:
     VanadisSyscallBRKEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t newBrkAddr)
         : VanadisSyscallEvent(core, thr, bittype), newBrk(newBrkAddr) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_BRK; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_BRK; }
 
     uint64_t getUpdatedBRK() const { return newBrk; }
 
 private:
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& newBrk;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallBRKEvent);
+
     uint64_t newBrk;
 };
 

@@ -28,13 +28,21 @@ public:
         : VanadisSyscallEvent(core, thr, bittype), readlink_path_ptr(path_ptr), readlink_buff_ptr(buff_ptr),
           readlink_buff_size(size) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_READLINK; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_READLINK; }
 
     uint64_t getPathPointer() const { return readlink_path_ptr; }
     uint64_t getBufferPointer() const { return readlink_buff_ptr; }
     int64_t getBufferSize() const { return readlink_buff_size; }
 
 private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& readlink_path_ptr;
+        ser& readlink_buff_ptr;
+        ser& readlink_buff_size;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallReadLinkEvent);
+
     uint64_t readlink_path_ptr;
     uint64_t readlink_buff_ptr;
     int64_t readlink_buff_size;

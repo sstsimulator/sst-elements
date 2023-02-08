@@ -56,6 +56,13 @@ void SimpleMMU::handleNicTlbEvent( Event* ev )
 void SimpleMMU::handleTlbEvent( Event* ev, int link ) 
 {
     int core = getTlbCore( link );
+
+    if( dynamic_cast<TlbFlushRespEvent*>(ev) ) {
+        // we currently don't do anything with the response because there are no race conditions?
+        delete ev;
+        return;
+    }
+
     auto req = dynamic_cast<TlbMissEvent*>(ev);
     assert( req );
 
@@ -63,8 +70,8 @@ void SimpleMMU::handleTlbEvent( Event* ev, int link )
 
     unsigned pid = getPid( core, hwThread );
 
-    m_dbg.debug(CALL_INFO_LONG,1,0,"event on link=%d name=%s core=%d pid=%d vpn=%d perms=%#x\n",
-        link,getTlbName(link).c_str(),core,pid,req->getVPN(),req->getPerms());
+    m_dbg.debug(CALL_INFO_LONG,1,0,"event on link=%d name=%s core=%d hwThread=%d pid=%d vpn=%d perms=%#x\n",
+        link,getTlbName(link).c_str(),core,hwThread,pid,req->getVPN(),req->getPerms());
     
     m_dbg.debug(CALL_INFO_LONG,1,0,"reqId=%d hwTHread=%d vpn=%zu %#" PRIx64 "\n", req->getReqId(), req->getHardwareThread(), req->getVPN(), req->getVPN() << 12  );
     m_permissionsCallback( req->getReqId(), link, core, hwThread, pid, req->getVPN(), req->getPerms(), req->getInstPtr(), req->getMemAddr() );
@@ -86,6 +93,14 @@ void SimpleMMU::map( unsigned pid, uint32_t vpn, std::vector<uint32_t>& ppns, in
     assert(0);
 }
 
+void SimpleMMU::unmap( unsigned pid, uint32_t vpn, size_t numPages ) {
+    m_dbg.debug(CALL_INFO_LONG,1,0,"pid=%d vpn=%d numPages=%zu\n", pid, vpn, numPages );
+    auto pageTable = getPageTable(pid);
+    assert( pageTable );
+    for ( auto i = 0; i < numPages; i++ ) {
+        pageTable->remove( vpn + i );
+    }
+}
 
 void SimpleMMU::removeWrite( unsigned pid ) {
     m_dbg.debug(CALL_INFO_LONG,1,0,"pid=%d\n",pid);
@@ -109,7 +124,7 @@ void SimpleMMU::dup( unsigned fromPid, unsigned toPid ) {
 void SimpleMMU::flushTlb( unsigned core, unsigned hwThread ) {
     m_dbg.debug(CALL_INFO_LONG,1,0,"core=%d hwThread=%d\n",core,hwThread);
 //    sendEvent( getLink(core,"itlb"), new TlbFlushEvent( hwThread ) );
-    sendEvent( getLink(core,"dtlb"), new TlbFlushEvent( hwThread ) );
+    sendEvent( getLink(core,"dtlb"), new TlbFlushReqEvent( hwThread ) );
 } 
 
 void SimpleMMU::faultHandled( RequestID requestId, unsigned link, unsigned pid, unsigned vpn, bool success ) {

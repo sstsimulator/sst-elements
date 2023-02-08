@@ -31,7 +31,7 @@ public:
         : VanadisSyscallEvent(core, thr, bittype), addr(addr), op(op), val(val), time_addr(time_addr), stack_ptr(0), val2(val2), addr2(addr2), val3(val3)  {}
 
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_FUTEX; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_FUTEX; }
 
     uint64_t getAddr() const { return addr; }
     uint64_t getAddr2() const { return addr2; }
@@ -43,6 +43,19 @@ public:
     uint64_t getStackPtr() const { return stack_ptr; }
 
 private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& addr;
+        ser& addr2;
+        ser& op;
+        ser& val;
+        ser& val2;
+        ser& val3;
+        ser& time_addr;
+        ser& stack_ptr;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallFutexEvent);
+
     uint64_t addr;
     uint64_t addr2;
     int32_t op;

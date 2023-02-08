@@ -35,7 +35,7 @@ public:
 		isAnon = (alloc_flags & 0x800) != 0;
 	}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_MMAPX; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_MMAPX; }
 
     uint64_t getAllocationAddress() const { return address; }
     uint64_t getAllocationLength() const { return length; }
@@ -53,6 +53,19 @@ public:
     uint64_t getOffsetUnits() const { return offset_units; }
 
 private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& address;
+        ser& length;
+        ser& page_prot;
+        ser& alloc_flags;
+        ser& fd;
+        ser& offset;
+        ser& offset_units;
+        ser& isAnon;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallMemoryMapExtEvent);
+
     uint64_t address;
     uint64_t length;
     int64_t page_prot;

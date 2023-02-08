@@ -77,6 +77,8 @@ public:
                             { "predecode_cache_entries",
                               "Number of cache lines to store in the local L0 cache for instructions "
                               "pending decoding." },
+                            { "loader_mode",
+                              "Operation of the loader, 0 = LRU (more accurate), 1 = INFINITE cache (faster simulation)"},
                             { "branch_predictor_entries", "Number of entries in the branch predictor, "
                                                           "an entry is a branch instruction address" })
 
@@ -98,6 +100,16 @@ public:
         const size_t predecode_cache_entries = params.find<size_t>("predecode_cache_entries", 4);
 
         ins_loader = new VanadisInstructionLoader(uop_cache_size, predecode_cache_entries, icache_line_width);
+
+        const uint32_t loader_mode = params.find<uint32_t>("loader_mode", 0);
+        switch(loader_mode) {
+        case 0:
+            ins_loader->setLoaderMode(VanadisInstructionLoaderMode::LRU_CACHE_MODE);
+            break;
+        case 1:
+            ins_loader->setLoaderMode(VanadisInstructionLoaderMode::INFINITE_CACHE_MODE);
+            break;
+        }
 
         branch_predictor = loadUserSubComponent<SST::Vanadis::VanadisBranchUnit>("branch_unit");
         os_handler       = loadUserSubComponent<SST::Vanadis::VanadisCPUOSHandler>("os_handler");
@@ -231,7 +243,7 @@ protected:
     VanadisInstructionLoader* ins_loader;
     VanadisBranchUnit*        branch_predictor;
     VanadisCPUOSHandler*      os_handler;
-	 VanadisFloatingPointFlags* fpflags;
+	VanadisFloatingPointFlags* fpflags;
 
     bool canIssueStores;
     bool canIssueLoads;

@@ -27,12 +27,19 @@ public:
     VanadisSyscallFstatEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, int fd, uint64_t s_addr)
         : VanadisSyscallEvent(core, thr, bittype), file_id(fd), fstat_struct_addr(s_addr) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_FSTAT; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_FSTAT; }
 
     int getFileHandle() const { return file_id; }
     uint64_t getStructAddress() const { return fstat_struct_addr; }
 
 private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& file_id;
+        ser& fstat_struct_addr;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallFstatEvent);
+
     int file_id;
     uint64_t fstat_struct_addr;
 };

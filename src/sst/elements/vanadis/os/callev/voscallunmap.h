@@ -31,12 +31,19 @@ public:
     VanadisSyscallMemoryUnMapEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t addr, uint64_t len)
 		  : VanadisSyscallEvent(core, thr, bittype), address(addr), length(len) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_UNMAP; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_UNMAP; }
 
     uint64_t getDeallocationAddress() const { return address; }
     uint64_t getDeallocationLength() const { return length; }
 
 private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& address;
+        ser& length;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallMemoryUnMapEvent);
+
     uint64_t address;
     uint64_t length;
 };

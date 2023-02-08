@@ -41,8 +41,8 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
     const uint32_t core_count = params.find<uint32_t>("cores", 0);
     const uint32_t hardwareThreadCount = params.find<uint32_t>("hardwareThreadCount", 1);
 
-    for ( int i = 0; i <core_count; i++ ) {
-        for ( int j = 0; j <hardwareThreadCount; j++ ) {
+    for ( int i = core_count-1; i >= 0; i-- ) {
+        for ( int j = hardwareThreadCount-1; j >=0 ; j-- ) {
             m_availHwThreads.push( new OS::HwThreadID( i,j ) );
         } 
     } 
@@ -578,6 +578,7 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
             data = new uint8_t[m_pageSize];
             bzero( data, m_pageSize );
         }
+        output->verbose(CALL_INFO, 1, 0,"write page\n");
         writePage( page->getPPN() << m_pageShift, data, m_pageSize, callback );
         
     } else {
@@ -590,6 +591,7 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
 
 bool VanadisNodeOSComponent::PageMemReadReq::handleResp( StandardMem::Request* ev ) {
     
+    //printf("PageMemReadReq::%s()\n",__func__);
     auto iter = reqMap.find( ev->getID() ); 
     assert ( iter != reqMap.end() );
 
@@ -611,6 +613,7 @@ bool VanadisNodeOSComponent::PageMemReadReq::handleResp( StandardMem::Request* e
 
 void VanadisNodeOSComponent::PageMemReadReq::sendReq() {
 
+    //printf("PageMemReadReq::%s()\n",__func__);
     if ( m_currentReqOffset < length ) {
         StandardMem::Request* req = new SST::Interfaces::StandardMem::Read( addr + m_currentReqOffset, 64 );
         reqMap[req->getID()] = m_currentReqOffset;
@@ -620,6 +623,7 @@ void VanadisNodeOSComponent::PageMemReadReq::sendReq() {
 }
 
 bool VanadisNodeOSComponent::PageMemWriteReq::handleResp( StandardMem::Request* ev ) {
+    //printf("PageMemWriteReq::%s()\n",__func__);
     auto iter = reqMap.find( ev->getID() ); 
     assert ( iter != reqMap.end() );
     reqMap.erase( iter );
@@ -631,6 +635,7 @@ bool VanadisNodeOSComponent::PageMemWriteReq::handleResp( StandardMem::Request* 
 }
 
 void VanadisNodeOSComponent::PageMemWriteReq::sendReq() {
+    //printf("PageMemWriteReq::%s()\n",__func__);
     if ( offset < length ) {
         std::vector< uint8_t > buffer( 64);  
 

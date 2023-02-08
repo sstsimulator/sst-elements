@@ -165,6 +165,10 @@ class ProcessInfo {
         return m_threadGrp->getThread( this );
     }
 
+    std::set<ProcessInfo*>& getThreadList() {
+        return m_threadGrp->getThreadList();
+    }
+
     void addThread(ProcessInfo* thread ) {
         m_threadGrp->add( thread );
     }

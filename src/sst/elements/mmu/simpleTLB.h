@@ -185,6 +185,9 @@ class SimpleTLB : public TLB {
     std::vector< std::vector< std::vector< TlbEntry > > > m_tlbData;
     RNG::XORShiftRNG rng;
 
+    uint64_t m_minVirtAddr;
+    uint64_t m_maxVirtAddr;
+
     std::vector< std::map<size_t,std::queue<RequestID> > > m_waitingMiss;
 };
 

@@ -295,6 +295,8 @@ public:
         assert( iter != m_threadMap.end() );
         m_threadMap.erase( iter );
 
+        getMMU()->flushTlb( core, hwThread );
+
         // clear the process/thread to hwThread map 
         m_coreInfoMap.at( core ).setProcess( hwThread, nullptr );
 
@@ -321,6 +323,8 @@ public:
     }
 
     int getNodeNum() { return m_nodeNum; }
+    int getPageSize() { return m_pageSize; }
+    int getPageShift() { return m_pageShift; }
 
 private:
 

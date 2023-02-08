@@ -28,11 +28,19 @@ public:
     VanadisSyscallAccessEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, const uint64_t path, const uint64_t mode)
         : VanadisSyscallEvent(core, thr, bittype), path_ptr(path), access_mode(mode) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_ACCESS; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_ACCESS; }
 
     uint64_t getPathPointer() const { return path_ptr; }
 
     uint64_t getAccessMode() const { return access_mode; }
+
+private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& path_ptr;
+        ser& access_mode;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallAccessEvent);
 
 protected:
     uint64_t path_ptr;

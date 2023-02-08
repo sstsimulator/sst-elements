@@ -42,6 +42,7 @@ class SimpleMMU : public MMU {
     virtual void removeWrite( unsigned pid );
     virtual void map( unsigned pid, uint32_t vpn, std::vector<uint32_t>& ppns, int pageSize, uint64_t flags );
     virtual void map( unsigned pid, uint32_t vpn, uint32_t ppn, int pageSize, uint64_t flags );
+    virtual void unmap( unsigned pid, uint32_t vpn, size_t numPages );
     virtual void dup( unsigned fromPid, unsigned toPid );
 
     virtual void flushTlb( unsigned core, unsigned hwThread );
@@ -96,6 +97,9 @@ class SimpleMMU : public MMU {
       public:
         void add( uint32_t vpn, PTE pte ) { 
             pteMap[vpn] = pte;
+        }
+        void remove( uint32_t vpn ) { 
+            pteMap.erase(vpn);
         }
         PTE* find( uint32_t vpn ) {
             if ( pteMap.find( vpn ) == pteMap.end() ) {

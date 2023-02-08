@@ -29,7 +29,7 @@ public:
                                 uint64_t flags, uint64_t ptid, uint64_t tls, uint64_t ctid, uint64_t stackAddr = 0 )
         : VanadisSyscallEvent(core, thr, bittype, instPtr), threadStackAddr(threadStackAddr), flags(flags), ptid(ptid), tls(tls), ctid(ctid), stackAddr(stackAddr) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_CLONE; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_CLONE; }
 
     uint64_t getThreadStackAddr() const { return threadStackAddr; }
     uint64_t getFlags() const { return flags; }
@@ -39,6 +39,18 @@ public:
     uint64_t getchildTidAddr() const { return ctid; }
 
 private:
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& threadStackAddr;
+        ser& flags;
+        ser& ptid;
+        ser& tls;
+        ser& stackAddr;
+        ser& ctid;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallCloneEvent);
+
     uint64_t threadStackAddr; 
     uint64_t flags;
     uint64_t ptid;
