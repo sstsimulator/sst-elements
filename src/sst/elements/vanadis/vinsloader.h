@@ -235,6 +235,7 @@ public:
             return !(infinite_uop_cache.find(addr) == infinite_uop_cache.end());
         } break;
         }
+        assert(0);
     }
 
 	bool hasPredecodeAt(const uint64_t addr, const uint64_t len) const {
@@ -260,7 +261,7 @@ public:
             return infinite_uop_cache.find(addr)->second;
         } break;
         }
-        
+        assert(0);
     }
 
     void requestLoadAt(SST::Output* output, const uint64_t addr, const uint64_t len) {
