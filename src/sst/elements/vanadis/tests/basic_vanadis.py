@@ -4,7 +4,6 @@ mh_debug_level=10
 mh_debug=0
 dbgAddr=0
 stopDbg=0
-loader_mode = 0
 
 pythonDebug=False
 
