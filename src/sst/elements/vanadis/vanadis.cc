@@ -472,7 +472,9 @@ VANADIS_COMPONENT::resetRegisterUseTemps(const uint16_t int_reg_count, const uin
 int
 VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool& unallocated_memory_op_seen)
 {
+#ifdef VANADIS_BUILD_DEBUG
     const int output_verbosity = output->getVerboseLevel();
+#endif
     bool      issued_an_ins    = false;
 
     for ( auto i = 0; i < hw_threads; ++i ) {
@@ -607,17 +609,21 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
 
             // Only print the table if we issued an instruction, reduce print out
             // clutter
+#ifdef VANADIS_BUILD_DEBUG
             if ( (output_verbosity >= 8) && issued_an_ins ) {
                 if(print_issue_tables) {
                     issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg, output_verbosity );
                 }
             }
+#endif
         }
         else {
+#ifdef VANADIS_BUILD_DEBUG
             if(output_verbosity >= 8) {
                 output->verbose(
                     CALL_INFO, 8, 0, "thread %" PRIu32 " is halted, did not process for issue this cycle.\n", i);
             }
+#endif
         }
     }
 
@@ -629,41 +635,54 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
 int
 VANADIS_COMPONENT::performExecute(const uint64_t cycle)
 {
+
+#ifdef VANADIS_BUILD_DEBUG
     const uint32_t verbose_level = output->getVerboseLevel();
+#endif
 
     for ( VanadisFunctionalUnit* next_fu : fu_int_arith ) {
         next_fu->tick(cycle, output, register_files);
 
+#ifdef VANADIS_BUILD_DEBUG
         if(verbose_level >= 16)
             next_fu->print(output);
+#endif
     }
 
     for ( VanadisFunctionalUnit* next_fu : fu_int_div ) {
         next_fu->tick(cycle, output, register_files);
 
+#ifdef VANADIS_BUILD_DEBUG
         if(verbose_level >= 16)
             next_fu->print(output);
+#endif
     }
 
     for ( VanadisFunctionalUnit* next_fu : fu_fp_arith ) {
         next_fu->tick(cycle, output, register_files);
 
+#ifdef VANADIS_BUILD_DEBUG
         if(verbose_level >= 16)
             next_fu->print(output);
+#endif
     }
 
     for ( VanadisFunctionalUnit* next_fu : fu_fp_div ) {
         next_fu->tick(cycle, output, register_files);
 
+#ifdef VANADIS_BUILD_DEBUG
         if(verbose_level >= 16)
             next_fu->print(output);
+#endif
     }
 
     for ( VanadisFunctionalUnit* next_fu : fu_branch ) {
         next_fu->tick(cycle, output, register_files);
 
+#ifdef VANADIS_BUILD_DEBUG
         if(verbose_level >= 16)
             next_fu->print(output);
+#endif
     }
 
     // Tick the load/store queue
@@ -895,10 +914,10 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                     issue_isa_tables[ins_thread]->print(output, register_files[ins_thread], print_int_reg, print_fp_reg, output->getVerboseLevel());
                 }
             }
-#endif
 			if(output->getVerboseLevel() >= 16) {
 				fp_flags.at(ins_thread)->print(output);
 			}
+#endif
 
             ins_retired_this_cycle++;
 
@@ -925,22 +944,24 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                     fp_register_stacks[delay_ins->getHWThread()], issue_isa_tables[delay_ins->getHWThread()],
                     retire_isa_tables[delay_ins->getHWThread()]);
 
+#ifdef VANADIS_BUILD_DEBUG
 				if(output->getVerboseLevel() >= 16) {
 					fp_flags.at(rob_front->getHWThread())->print(output);
 			    }
-
+#endif
                 ins_retired_this_cycle++;
 
                 delete delay_ins;
             }
 
+#ifdef VANADIS_BUILD_DEBUG
             if ( output->getVerboseLevel() > 0 ) {
                 if(print_retire_tables) {
                     retire_isa_tables[rob_front->getHWThread()]->print(
                         output, register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg);
                 }
             }
-
+#endif
 
                 if ( stop_verbose_when_retire_address > 0 && (rob_front->getInstructionAddress() == stop_verbose_when_retire_address) ) {
                     output->setVerboseLevel(0);
@@ -1048,10 +1069,12 @@ VANADIS_COMPONENT::mapInstructiontoFunctionalUnit(
             next_fu->insertInstruction(ins);
             allocated = true;
 
+#ifdef VANADIS_BUILD_DEBUG
             if(output->getVerboseLevel() >= 16) {
                 output->verbose(CALL_INFO, 16, 0, "------> mapped 0x%llx / %s to func-unit: %" PRIu16 "\n",
                     ins->getInstructionAddress(), ins->getInstCode(), next_fu->getUnitID());
             }
+#endif
 
             break;
         }
@@ -1151,7 +1174,9 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
         return true;
     }
 
+#ifdef VANADIS_BUILD_DEBUG
     const auto output_verbosity = output->getVerboseLevel();
+#endif
 
     stat_cycles->addData(1);
     ins_issued_this_cycle  = 0;
@@ -1351,7 +1376,9 @@ VANADIS_COMPONENT::checkInstructionResources(
     VanadisInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs, VanadisISATable* isa_table)
 {
     bool      resources_good   = true;
+#ifdef VANADIS_BUILD_DEBUG
     const int output_verbosity = output->getVerboseLevel();
+#endif
 
     const uint16_t int_reg_in_count = ins->countISAIntRegIn();
     const uint16_t int_reg_out_count = ins->countISAIntRegOut();
@@ -1462,10 +1489,12 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
         const uint16_t isa_reg_in = ins->getISAIntRegIn(i);
         const uint16_t phys_reg_in = isa_table->getIntPhysReg(isa_reg_in);
 
+#ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16) {
             output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx int reg-in for isa: %" PRIu16 " will mapped to phys: %" PRIu16 "\n",
                 ins->getInstructionAddress(), isa_reg_in, phys_reg_in);
         }
+#endif
 
         ins->setPhysIntRegIn(i, phys_reg_in);
         isa_table->incIntRead(isa_reg_in);
@@ -1481,10 +1510,12 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
         const uint16_t isa_reg_in = ins->getISAFPRegIn(i);
         const uint16_t phys_reg_in = isa_table->getFPPhysReg(isa_reg_in);
 
+#ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16) {
             output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx fp reg-in for isa: %" PRIu16 " will mapped to phys: %" PRIu16 "\n",
                 ins->getInstructionAddress(), isa_reg_in, phys_reg_in);
         }
+#endif
 
         ins->setPhysFPRegIn(i, phys_reg_in);
         isa_table->incFPRead(isa_reg_in);
@@ -1546,10 +1577,12 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
 
             const uint16_t out_reg        = int_regs->pop();
 
+#ifdef VANADIS_BUILD_DEBUG
             if(output->getVerboseLevel() >= 16) {
                 output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx int reg-out for isa: %" PRIu16 " output will map to phys: %" PRIu16 "\n",
                     ins->getInstructionAddress(), ins_isa_reg, out_reg);
             }
+#endif
 
             isa_table->setIntPhysReg(ins_isa_reg, out_reg);
             isa_table->incIntWrite(ins_isa_reg);
@@ -1570,10 +1603,12 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
 
             const uint16_t out_reg     = fp_regs->pop();
 
+#ifdef VANADIS_BUILD_DEBUG
             if(output->getVerboseLevel() >= 16) {
                 output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx fp reg-out for isa: %" PRIu16 " output will map to phys: %" PRIu16 "\n",
                     ins->getInstructionAddress(), ins_isa_reg, out_reg);
             }
+#endif
             
             isa_table->setFPPhysReg(ins_isa_reg, out_reg);
             isa_table->incFPWrite(ins_isa_reg);
@@ -1800,9 +1835,11 @@ VANADIS_COMPONENT::handleMisspeculate(const uint32_t hw_thr, const uint64_t new_
     // Notify the decoder we need a clear and reset to new instruction pointer
     thread_decoders[hw_thr]->setInstructionPointerAfterMisspeculate(output, new_ip);
 
+#ifdef VANADIS_BUILD_DEBUG
     if(output->getVerboseLevel() >= 16) {
         output->verbose(CALL_INFO, 16, 0, "-> Mis-speculate repair finished.\n");
     }
+#endif
 }
 
 void

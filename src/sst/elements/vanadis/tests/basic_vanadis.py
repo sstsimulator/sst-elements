@@ -4,7 +4,6 @@ mh_debug_level=10
 mh_debug=0
 dbgAddr=0
 stopDbg=0
-loader_mode = 0
 
 pythonDebug=False
 
@@ -81,8 +80,8 @@ cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "2.3GHz")
 numCpus = int(os.getenv("VANADIS_NUM_CORES", 1))
 numThreads = int(os.getenv("VANADIS_NUM_HW_THREADS", 1))
 
-vanadis_cpu_type = "vanadis.dbg_VanadisCPU"
-
+vanadis_cpu_type = "vanadis."
+vanadis_cpu_type += os.getenv("VANADIS_CPU_ELEMENT_NAME","dbg_VanadisCPU")
 
 if (verbosity > 0):
     print("Verbosity: " + str(verbosity) + " -> loading Vanadis CPU type: " + vanadis_cpu_type)
