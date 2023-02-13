@@ -1,8 +1,7 @@
 /**
  * @file vanadisHandshake.c
  * @author Weili An (an107@purdue.edu)
- * @brief A simple program to test balar and vanadis handshake
- *        by writing packet to the MMIO address of balar
+ * @brief A simple program to test balar and vanadis with vectorAdd
  * @version 0.1
  * @date 2022-06-01
  * 
@@ -23,6 +22,8 @@ int main( int argc, char* argv[] ) {
     // Registering the fatbinary and function
     // Use first argument as the fatbinary path
     unsigned int fatbin_handle = __cudaRegisterFatBinary("./vectorAdd/vectorAdd");
+    
+    // Need the mangled PTX name here 
     __cudaRegisterFunction(fatbin_handle, VEC_ADD_FUNC, "_Z6vecAddPiS_S_i");
 
     // Preparing the data
