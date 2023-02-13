@@ -1,9 +1,16 @@
 # Automatically generated SST Python input
-# Run cmd: sst testBalar-simple.py --model-options="-c ariel-gpu-v100.cfg -v -x ./vectorAdd/vectorAdd -t cuda_calls.trace"
-# TODO: Balar cannot read the cuda packet in the memory
-# TODO: Some configuration issue with the group, dst, and src setting
-#       Using the same config as vanadis_mod resolve this
-# TODO: Need to figure out the correct way for this
+# Run cmd: sst testBalar-testcpu.py --model-options="-c ariel-gpu-v100.cfg -v -x ./vectorAdd/vectorAdd -t cuda_calls.trace"
+
+# This run script will run balar with a test cpu that consumes CUDA API trace 
+# To get the trace file and associated cudamemcpy data payload, you will need the
+# NVBit based CUDA API tracer tool in 
+#  `https://github.com/accel-sim/accel-sim-framework/tree/dev/util/tracer_nvbit/others/`
+# Which after compilation, simply run 
+#  `LD_PRELOAD=PATH/TO/cuda_api_tracer.so PATH/TO/CUDA_APP` to
+#  collect API trace
+# Sample run:
+#     LD_PRELOAD=cuda_api_tracer.so ./vectorAdd/vectorAdd
+
 import sst
 try:
     import ConfigParser
