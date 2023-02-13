@@ -185,7 +185,7 @@ public:
     bool isLoadLink() { return cmd_ == Command::GetS && queryFlag(MemEventBase::F_LLSC); }
 
     void setStoreConditional() { setFlag(MemEventBase::F_LLSC); }
-    bool isStoreConditional() { return cmd_ == Command::GetX && queryFlag(MemEventBase::F_LLSC); }
+    bool isStoreConditional() { return (cmd_ == Command::GetX || cmd_ == Command::Write) && queryFlag(MemEventBase::F_LLSC); }
 
     void setFail() { setFlag(MemEventBase::F_FAIL); }
     void setSuccess(bool b) { b ? clearFlag(MemEventBase::F_FAIL) : setFlag(MemEventBase::F_FAIL); }

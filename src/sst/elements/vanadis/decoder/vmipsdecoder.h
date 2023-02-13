@@ -25,6 +25,7 @@
 #include "vinsloader.h"
 
 #include <list>
+#include <functional>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -158,6 +159,7 @@
 #define MIPS_SPEC_COP_MASK_CMP_LT  0x3C
 #define MIPS_SPEC_COP_MASK_CMP_LTE 0x3E
 #define MIPS_SPEC_COP_MASK_CMP_EQ  0x32
+#define MIPS_SPEC_COP_MASK_CMP_ULT 0x35
 
 #define MIPS_INC_DECODE_STAT(stat_name) (stat_name)->addData(1);
 
@@ -262,6 +264,7 @@ public:
      { "ins_decode_cop1_cvtd", "Count number of instructions decoded", "ins", 1 },
      { "ins_decode_cop1_cvtw", "Count number of instructions decoded", "ins", 1 },
      { "ins_decode_cop1_lt", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_cop1_ult", "Count number of instructions decoded", "ins", 1 },
      { "ins_decode_cop1_lte", "Count number of instructions decoded", "ins", 1 },
      { "ins_decode_cop1_eq", "Count number of instructions decoded", "ins", 1 }
 			       )
@@ -296,15 +299,49 @@ public:
 
     void setStackPointer( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t start_stack_address ) {
         output->verbose(
-            CALL_INFO, 16, 0, "-> Setting SP to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", start_stack_address,
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting SP to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", start_stack_address,
             start_stack_address);
         const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(29);
-        output->verbose(CALL_INFO, 16, 0, "-> Stack Pointer (r29) maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Stack Pointer (r29) maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
         // Set up the stack pointer
         // Register 29 is MIPS for Stack Pointer
         regFile->setIntReg(sp_phys_reg, start_stack_address);
     }
 
+    void setArg1Register( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+        output->verbose(
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting argument 1 register to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            value);
+        const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(4);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> argument 1 (r4) maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        regFile->setIntReg(sp_phys_reg, value);
+    }
+
+    virtual void setFuncPointer( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+        output->verbose(
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting register 25 to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            value);
+        const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(25);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> r25 maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        regFile->setIntReg(sp_phys_reg, value);
+    }
+    virtual void setReturnRegister( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+        output->verbose(
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting register 2 to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            value);
+        const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(2);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> r2 maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        regFile->setIntReg(sp_phys_reg, value);
+    }
+
+    virtual void setSuccessRegister( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+        output->verbose(
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting register 7 to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            value);
+        const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(7);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> r7 maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        regFile->setIntReg(sp_phys_reg, value);
+    }
 
     void initStatistics( ) {
         stat_decode_add       = registerStatistic<uint64_t>("ins_decode_add", "1");
@@ -387,14 +424,15 @@ public:
         stat_decode_cop1_cvtd = registerStatistic<uint64_t>("ins_decode_cop1_cvtd", "1");
         stat_decode_cop1_cvtw = registerStatistic<uint64_t>("ins_decode_cop1_cvtw", "1");
         stat_decode_cop1_lt   = registerStatistic<uint64_t>("ins_decode_cop1_lt", "1");
+        stat_decode_cop1_ult  = registerStatistic<uint64_t>("ins_decode_cop1_ult", "1");
         stat_decode_cop1_lte  = registerStatistic<uint64_t>("ins_decode_cop1_lte", "1");
         stat_decode_cop1_eq   = registerStatistic<uint64_t>("ins_decode_cop1_eq", "1");
     }
 
     virtual void tick(SST::Output* output, uint64_t cycle)
     {
-        output->verbose(CALL_INFO, 16, 0, "-> Decode step for thr: %" PRIu32 "\n", hw_thr);
-        output->verbose(CALL_INFO, 16, 0, "---> Max decodes per cycle: %" PRIu16 "\n", max_decodes_per_cycle);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Decode step for thr: %" PRIu32 "\n", hw_thr);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "---> Max decodes per cycle: %" PRIu16 "\n", max_decodes_per_cycle);
 
         ins_loader->printStatus(output);
 
@@ -407,12 +445,12 @@ public:
             if ( !thread_rob->full() ) {
                 if ( ins_loader->hasBundleAt(ip) ) {
                     output->verbose(
-                        CALL_INFO, 16, 0, "---> Found uop bundle for ip=0x0%llx, loading from cache...\n", ip);
+                        CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "---> Found uop bundle for ip=0x0%llx, loading from cache...\n", ip);
                     VanadisInstructionBundle* bundle = ins_loader->getBundleAt(ip);
                     stat_uop_hit->addData(1);
 
                     output->verbose(
-                        CALL_INFO, 16, 0, "-----> Bundle contains %" PRIu32 " entries.\n",
+                        CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-----> Bundle contains %" PRIu32 " entries.\n",
                         bundle->getInstructionCount());
 
                     if ( 0 == bundle->getInstructionCount() ) {
@@ -422,7 +460,7 @@ public:
                     bool q_contains_store = false;
 
                     output->verbose(
-                        CALL_INFO, 16, 0, "----> thr-rob contains %" PRIu32 " entries.\n",
+                        CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "----> thr-rob contains %" PRIu32 " entries.\n",
                         (uint32_t)thread_rob->size());
 
                     // Check if last instruction is a BRANCH, if yes, we need to also
@@ -430,7 +468,7 @@ public:
                     if ( bundle->getInstructionByIndex(bundle->getInstructionCount() - 1)->getInstFuncType() ==
                          INST_BRANCH ) {
                         output->verbose(
-                            CALL_INFO, 16, 0,
+                            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                             "-----> Last instruction in the bundle causes potential "
                             "branch, checking on branch delay slot\n");
 
@@ -444,12 +482,12 @@ public:
                         }
                         else {
                             output->verbose(
-                                CALL_INFO, 16, 0,
+                                CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                 "-----> Branch delay slot is not currently "
                                 "decoded into a bundle.\n");
                             if ( ins_loader->hasPredecodeAt(ip + 4, 4) ) {
                                 output->verbose(
-                                    CALL_INFO, 16, 0,
+                                    CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                     "-----> Branch delay slot is a pre-decode "
                                     "cache item, decode it and keep bundle.\n");
                                 delay_bundle = new VanadisInstructionBundle(ip + 4);
@@ -472,7 +510,7 @@ public:
                             }
                             else {
                                 output->verbose(
-                                    CALL_INFO, 16, 0,
+                                    CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                     "-----> Branch delay slot also misses in "
                                     "pre-decode cache, need to request it.\n");
                                 ins_loader->requestLoadAt(output, ip + 4, 4);
@@ -487,7 +525,7 @@ public:
                                  (thread_rob->capacity() - thread_rob->size()) ) {
 
                                 output->verbose(
-                                    CALL_INFO, 16, 0,
+                                    CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                     "---> Proceeding with issue the branch and its "
                                     "delay slot...\n");
 
@@ -495,7 +533,7 @@ public:
                                     VanadisInstruction* next_ins = bundle->getInstructionByIndex(i)->clone();
 
                                     output->verbose(
-                                        CALL_INFO, 16, 0, "---> --> issuing ins addr: 0x0%llx, %s...\n",
+                                        CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "---> --> issuing ins addr: 0x0%llx, %s...\n",
                                         next_ins->getInstructionAddress(), next_ins->getInstCode());
 
                                     thread_rob->push(next_ins);
@@ -515,7 +553,7 @@ public:
                                             // This is essential a predicted not taken branch
                                             if ( predicted_address == (ip + 8) ) {
                                                 output->verbose(
-                                                    CALL_INFO, 16, 0,
+                                                    CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                                     "---> Branch 0x%llx predicted not "
                                                     "taken, ip set to: 0x%0llx\n",
                                                     ip, predicted_address);
@@ -524,7 +562,7 @@ public:
                                             }
                                             else {
                                                 output->verbose(
-                                                    CALL_INFO, 16, 0,
+                                                    CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                                     "---> Branch 0x%llx predicted taken, "
                                                     "jump to 0x%0llx\n",
                                                     ip, predicted_address);
@@ -534,14 +572,14 @@ public:
 
                                             ip = predicted_address;
                                             output->verbose(
-                                                CALL_INFO, 16, 0,
+                                                CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                                 "---> Forcing IP update according to branch "
                                                 "prediction table, new-ip: %0llx\n",
                                                 ip);
                                         }
                                         else {
                                             output->verbose(
-                                                CALL_INFO, 16, 0,
+                                                CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                                 "---> Branch table does not contain an "
                                                 "entry for ins: 0x%0llx, continue with "
                                                 "normal ip += 8 = 0x%0llx\n",
@@ -563,7 +601,7 @@ public:
                                     VanadisInstruction* next_ins = delay_bundle->getInstructionByIndex(i)->clone();
 
                                     output->verbose(
-                                        CALL_INFO, 16, 0, "---> --> issuing ins addr: 0x0%llx, %s...\n",
+                                        CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "---> --> issuing ins addr: 0x0%llx, %s...\n",
                                         next_ins->getInstructionAddress(), next_ins->getInstCode());
                                     thread_rob->push(next_ins);
                                 }
@@ -572,16 +610,17 @@ public:
                             }
                             else {
                                 output->verbose(
-                                    CALL_INFO, 16, 0,
+                                    CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                     "---> --> micro-op for branch and delay exceed "
                                     "decode-q space. Cannot issue this cycle.\n");
+                                stat_uop_delayed_rob_full->addData(1);
                                 break;
                             }
                         }
                     }
                     else {
                         output->verbose(
-                            CALL_INFO, 16, 0,
+                            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                             "---> Instruction for issue is not a branch, "
                             "continuing with normal copy to issue-queue...\n");
                         // Do we have enough space in the decode queue for the bundle
@@ -592,7 +631,7 @@ public:
                                 VanadisInstruction* next_ins = bundle->getInstructionByIndex(i);
 
                                 output->verbose(
-                                    CALL_INFO, 16, 0, "---> --> issuing ins addr: 0x0%llx, %s...\n",
+                                    CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "---> --> issuing ins addr: 0x0%llx, %s...\n",
                                     next_ins->getInstructionAddress(), next_ins->getInstCode());
                                 thread_rob->push(next_ins->clone());
                             }
@@ -604,7 +643,7 @@ public:
                         }
                         else {
                             output->verbose(
-                                CALL_INFO, 16, 0,
+                                CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                 "---> --> micro-op bundle for %p contains %" PRIu32 " ops, we only have %" PRIu32
                                 " slots available in the decode q, wait for resources to "
                                 "become available.\n",
@@ -612,6 +651,7 @@ public:
                                 (uint32_t)(thread_rob->capacity() - thread_rob->size()));
                             // We don't have enough space, so we have to stop and wait for
                             // more entries to free up.
+                            stat_uop_delayed_rob_full->addData(1);
                             break;
                         }
                     }
@@ -620,7 +660,7 @@ public:
                     // We do have a locally cached copy of the data at the IP though, so
                     // decode into a bundle
                     output->verbose(
-                        CALL_INFO, 16, 0,
+                        CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                         "---> uop not found, but matched in predecoded "
                         "L0-icache (ip=%p)\n",
                         (void*)ip);
@@ -631,14 +671,14 @@ public:
 
                     if ( ins_loader->getPredecodeBytes(output, ip, (uint8_t*)&temp_ins, sizeof(temp_ins)) ) {
                         output->verbose(
-                            CALL_INFO, 16, 0,
+                            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                             "---> performing a decode of the bytes found "
                             "(ins-bytes: 0x%x)\n",
                             temp_ins);
                         decode(output, ip, temp_ins, decoded_bundle);
 
                         output->verbose(
-                            CALL_INFO, 16, 0,
+                            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                             "---> performing a decode of the bytes found "
                             "(generates %" PRIu32 " micro-op bundle).\n",
                             (uint32_t)decoded_bundle->getInstructionCount());
@@ -657,7 +697,7 @@ public:
                 }
                 else {
                     output->verbose(
-                        CALL_INFO, 16, 0,
+                        CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                         "---> uop bundle and pre-decoded bytes are not found "
                         "(ip=%p), requesting icache read (line-width=%" PRIu64 ")\n",
                         (void*)ip, ins_loader->getCacheLineWidth());
@@ -669,7 +709,7 @@ public:
             }
             else {
                 output->verbose(
-                    CALL_INFO, 16, 0,
+                    CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                     "---> Decoded pending issue queue is full, no more "
                     "decodes permitted.\n");
                 break;
@@ -677,7 +717,7 @@ public:
         }
 
         output->verbose(
-            CALL_INFO, 16, 0,
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
             "---> Performed %" PRIu16 " decodes this cycle, %" PRIu16 " uop-bundles used / updated-ip: 0x%llx.\n",
             decodes_performed, uop_bundles_used, ip);
     }
@@ -702,7 +742,7 @@ protected:
 
     void decode(SST::Output* output, const uint64_t ins_addr, const uint32_t next_ins, VanadisInstructionBundle* bundle)
     {
-        output->verbose(CALL_INFO, 16, 0, "[decode] > addr: 0x%llx ins: 0x%08x\n", ins_addr, next_ins);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "[decode] > addr: 0x%llx ins: 0x%08x\n", ins_addr, next_ins);
 
         const uint32_t hw_thr    = getHardwareThread();
         const uint32_t ins_mask  = next_ins & MIPS_OP_MASK;
@@ -710,7 +750,7 @@ protected:
 
         if ( 0 != (ins_addr & 0x3) ) {
             output->verbose(
-                CALL_INFO, 16, 0, "[decode] ---> fault address 0x%llu is not aligned at 4 bytes.\n", ins_addr);
+                CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "[decode] ---> fault address 0x%llu is not aligned at 4 bytes.\n", ins_addr);
             bundle->addInstruction(new VanadisInstructionDecodeFault(ins_addr, hw_thr, options));
             return;
         }
@@ -720,7 +760,7 @@ protected:
             return;
         }
 
-        output->verbose(CALL_INFO, 16, 0, "[decode] ---> ins-mask: 0x%08x / 0x%08x\n", ins_mask, func_mask);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "[decode] ---> ins-mask: 0x%08x / 0x%08x\n", ins_mask, func_mask);
 
         uint16_t rt = 0;
         uint16_t rs = 0;
@@ -732,7 +772,7 @@ protected:
         extract_three_regs(next_ins, &rt, &rs, &rd);
         extract_imm(next_ins, &imm);
 
-        output->verbose(CALL_INFO, 16, 0, "[decode] rt=%" PRIu32 ", rs=%" PRIu32 ", rd=%" PRIu32 "\n", rt, rs, rd);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "[decode] rt=%" PRIu32 ", rs=%" PRIu32 ", rd=%" PRIu32 "\n", rt, rs, rd);
 
         const uint64_t imm64 = (uint64_t)imm;
 
@@ -746,7 +786,7 @@ protected:
         }
         else {
 
-            output->verbose(CALL_INFO, 16, 0, "[decode] -> inst-mask: 0x%08x\n", ins_mask);
+            output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "[decode] -> inst-mask: 0x%08x\n", ins_mask);
 
             switch ( ins_mask ) {
             case 0:
@@ -754,11 +794,11 @@ protected:
                 // The SHIFT 5 bits must be zero for these operations according to the
                 // manual
                 if ( 0 == (next_ins & MIPS_SHFT_MASK) ) {
-                    output->verbose(CALL_INFO, 16, 0, "[decode] -> special-class, func-mask: 0x%x\n", func_mask);
+                    output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "[decode] -> special-class, func-mask: 0x%x\n", func_mask);
 
                     if ( (0 == func_mask) && (0 == rs) ) {
                         output->verbose(
-                            CALL_INFO, 16, 0,
+                            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                             "[decode] -> rs is also zero, implies truncate "
                             "(generate: 64 to 32 truncate)\n");
                         bundle->addInstruction(
@@ -983,7 +1023,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_SUB:
                         {
                             bundle->addInstruction(
-                                new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                                new VanadisSubInstruction<int32_t>(
                                     ins_addr, hw_thr, options, rd, rs, rt, true));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_sub);
@@ -992,7 +1032,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_SUBU:
                         {
                             bundle->addInstruction(
-                                new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                                new VanadisSubInstruction<int32_t>(
                                     ins_addr, hw_thr, options, rd, rs, rt, false));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_subu);
@@ -1000,6 +1040,7 @@ protected:
 
                         case MIPS_SPEC_OP_MASK_SYSCALL:
                         {
+                            bundle->addInstruction(new VanadisFenceInstruction(ins_addr, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
                             bundle->addInstruction(new VanadisSysCallInstruction(ins_addr, hw_thr, options));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_syscall);
@@ -1267,7 +1308,7 @@ protected:
                 //"[decoder/SC]: -> reg: %" PRIu16 " -> base: %" PRIu16 " + offset=%"
                 // PRId64 "\n", 					rt, rs, imm_value_64);
                 bundle->addInstruction(new VanadisStoreConditionalInstruction(
-                    ins_addr, hw_thr, options, rs, imm_value_64, rt, rt, 4, STORE_INT_REGISTER));
+                    ins_addr, hw_thr, options, rs, imm_value_64, rt, rt, 4, STORE_INT_REGISTER, 1, 0));
                 //                bundle->addInstruction(new VanadisStoreInstruction(
                 //                    ins_addr, hw_thr, options, rs, imm_value_64, rt, 4, MEM_TRANSACTION_LLSC_STORE,
                 //                    STORE_INT_REGISTER));
@@ -1281,8 +1322,8 @@ protected:
                 ;
 
 #ifdef VANADIS_BUILD_DEBUG
-                output->verbose(CALL_INFO, 16, 0, "[decoder/REGIMM] -> imm: %" PRIu64 "\n", offset_value_64);
-                output->verbose(CALL_INFO, 16, 0, "[decoder]        -> rt: 0x%08x\n", (next_ins & MIPS_RT_MASK));
+                output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "[decoder/REGIMM] -> imm: %" PRIu64 "\n", offset_value_64);
+                output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "[decoder]        -> rt: 0x%08x\n", (next_ins & MIPS_RT_MASK));
 #endif
 
                 switch ( (next_ins & MIPS_RT_MASK) ) {
@@ -1834,6 +1875,7 @@ protected:
 
                     break;
 
+                    case MIPS_SPEC_COP_MASK_CMP_ULT:
                     case MIPS_SPEC_COP_MASK_CMP_LT:
                     case MIPS_SPEC_COP_MASK_CMP_LTE:
                     case MIPS_SPEC_COP_MASK_CMP_EQ:
@@ -1901,6 +1943,15 @@ protected:
 
                                 bundle->addInstruction(
                                     new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_LTE, double>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                insertDecodeFault = false;
+
+                                break;
+                            case 0x5:
+                                MIPS_INC_DECODE_STAT(stat_decode_cop1_ult);
+
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_ULT, double>(
                                         ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
@@ -2003,9 +2054,11 @@ protected:
 
                     switch ( rd ) {
                     case 29:
+                        auto thread_call = std::bind(&VanadisMIPSDecoder::getThreadLocalStoragePointer, this);
+
                         bundle->addInstruction(
-                            new VanadisSetRegisterInstruction<int32_t>(
-                                ins_addr, hw_thr, options, target_reg, static_cast<int32_t>(getThreadLocalStoragePointer())));
+                            new VanadisSetRegisterByCallInstruction<int32_t>(
+                                ins_addr, hw_thr, options, target_reg, thread_call));
                         insertDecodeFault = false;
                         break;
                     }
@@ -2028,7 +2081,7 @@ protected:
 
         for ( uint32_t i = 0; i < bundle->getInstructionCount(); ++i ) {
             output->verbose(
-                CALL_INFO, 16, 0, "-> [%3" PRIu32 "]: %s\n", i, bundle->getInstructionByIndex(i)->getInstCode());
+                CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> [%3" PRIu32 "]: %s\n", i, bundle->getInstructionByIndex(i)->getInstCode());
         }
 
         // Mark the end of a micro-op group so we can count real instructions and
@@ -2126,6 +2179,7 @@ protected:
     Statistic<uint64_t>* stat_decode_cop1_cvtd;
     Statistic<uint64_t>* stat_decode_cop1_cvtw;
     Statistic<uint64_t>* stat_decode_cop1_lt;
+    Statistic<uint64_t>* stat_decode_cop1_ult;
     Statistic<uint64_t>* stat_decode_cop1_lte;
     Statistic<uint64_t>* stat_decode_cop1_eq;
 };

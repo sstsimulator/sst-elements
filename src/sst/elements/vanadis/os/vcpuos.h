@@ -21,6 +21,7 @@
 #include <sst/core/subcomponent.h>
 
 #include <functional>
+#include <tuple>
 
 #include "inst/isatable.h"
 #include "inst/regfile.h"
@@ -49,7 +50,6 @@ public:
 
         hw_thr = 0;
         core_id = 0;
-        tid = 0;
     }
 
     virtual ~VanadisCPUOSHandler() { delete output; }
@@ -61,20 +61,20 @@ public:
     void setRegisterFile(VanadisRegisterFile* newFile) { regFile = newFile; }
     void setISATable(VanadisISATable* newTable) { isaTable = newTable; }
 
-    virtual bool handleSysCall(VanadisSysCallInstruction* syscallIns) = 0;
+    virtual std::tuple<bool,bool> handleSysCall(VanadisSysCallInstruction* syscallIns) = 0;
     virtual void recvSyscallResp( VanadisSyscallResponse* os_resp ) = 0;
-
-    void setThreadID(int64_t new_tid) { tid = new_tid; }
-    int64_t getThreadID() const { return tid; }
 
     void setOS_link( SST::Link* link ) {
         os_link = link;
     } 
 
-
 protected:
 
     void sendSyscallEvent( VanadisSyscallEvent* ev ) {
+        os_link->send( ev );
+    }
+
+    void sendEvent( Event* ev ) {
         os_link->send( ev );
     }
 
@@ -86,7 +86,6 @@ protected:
     VanadisISATable* isaTable;
 
     uint64_t* tls_address;
-    int64_t tid;
 
 private:
     SST::Link* os_link;

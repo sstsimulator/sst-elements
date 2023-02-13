@@ -21,6 +21,7 @@ namespace Vanadis {
 
 enum VanadisRegisterCompareType {
     REG_COMPARE_EQ,
+    REG_COMPARE_ULT,
     REG_COMPARE_LT,
     REG_COMPARE_LTE,
     REG_COMPARE_GT,
@@ -34,6 +35,8 @@ convertCompareTypeToString(VanadisRegisterCompareType cType)
     switch ( cType ) {
     case REG_COMPARE_EQ:
         return "EQ";
+    case REG_COMPARE_ULT:
+        return "ULT";
     case REG_COMPARE_LT:
         return "LT";
     case REG_COMPARE_LTE:

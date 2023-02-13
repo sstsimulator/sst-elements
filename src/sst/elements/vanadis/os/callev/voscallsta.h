@@ -27,11 +27,16 @@ public:
     VanadisSyscallSetThreadAreaEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t ta)
         : VanadisSyscallEvent(core, thr, bittype), ta_ptr(ta) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_SET_THREAD_AREA; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_SET_THREAD_AREA; }
 
     uint64_t getThreadAreaInfoPtr() const { return ta_ptr; }
 
 private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& ta_ptr;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallSetThreadAreaEvent);
     uint64_t ta_ptr;
 };
 

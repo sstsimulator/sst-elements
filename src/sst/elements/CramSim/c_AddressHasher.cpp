@@ -66,9 +66,9 @@ void c_AddressHasher::build(Params &params) {
 
   // this is replacement code for the above, which is generally safer than my implemention
   // of parsePattern below
-  uint l_curPos = 0;
+  uint32_t l_curPos = 0;
   vector<string> l_simpleOrder;
-  pair<string,uint> l_parsedData;
+  pair<string,uint32_t> l_parsedData;
 
   while(!l_mapCopy.empty()) {
     parsePattern(&l_mapCopy, &l_parsedData);
@@ -102,15 +102,15 @@ void c_AddressHasher::build(Params &params) {
     }
 
     l_curPos = 0;
-    map<string, uint> l_cfgBits;
-    l_cfgBits["C"] = (uint)log2(k_pNumChannels);
-    l_cfgBits["c"] = (uint)log2(k_pNumPseudoChannels);   // set the number of address bits assigned to pseudo channel.
-    l_cfgBits["R"] = (uint)log2(k_pNumRanks);
-    l_cfgBits["B"] = (uint)log2(k_pNumBankGroups);
-    l_cfgBits["b"] = (uint)log2(k_pNumBanks);
-    l_cfgBits["r"] = (uint)log2(k_pNumRows);
-    l_cfgBits["l"] = (uint)log2(k_pNumCols);
-    l_cfgBits["h"] = (uint)log2(k_pBurstSize);
+    map<string, uint32_t> l_cfgBits;
+    l_cfgBits["C"] = (uint32_t)log2(k_pNumChannels);
+    l_cfgBits["c"] = (uint32_t)log2(k_pNumPseudoChannels);   // set the number of address bits assigned to pseudo channel.
+    l_cfgBits["R"] = (uint32_t)log2(k_pNumRanks);
+    l_cfgBits["B"] = (uint32_t)log2(k_pNumBankGroups);
+    l_cfgBits["b"] = (uint32_t)log2(k_pNumBanks);
+    l_cfgBits["r"] = (uint32_t)log2(k_pNumRows);
+    l_cfgBits["l"] = (uint32_t)log2(k_pNumCols);
+    l_cfgBits["h"] = (uint32_t)log2(k_pBurstSize);
 
     for(auto l_iter : l_simpleOrder) {
       m_structureSizes[l_iter] = l_cfgBits[l_iter];
@@ -526,7 +526,7 @@ ulong c_AddressHasher::getAddressForBankId(const unsigned x_bankId) {
 // also removes the matched portion of the pattern from l_inStr
 //
 // everything is parsed from the end of the string backwards
-void c_AddressHasher::parsePattern(string *x_inStr, std::pair<string,uint> *x_outPair) {
+void c_AddressHasher::parsePattern(string *x_inStr, std::pair<string,uint32_t> *x_outPair) {
   assert(x_inStr != nullptr);
   assert(x_outPair != nullptr);
 
@@ -575,4 +575,4 @@ void c_AddressHasher::parsePattern(string *x_inStr, std::pair<string,uint> *x_ou
       break;
     }
   } // while(!l_matched)
-} // parsePattern(string, pair<string,uint>)
+} // parsePattern(string, pair<string,uint32_t>)

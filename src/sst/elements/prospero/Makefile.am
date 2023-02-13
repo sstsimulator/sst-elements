@@ -102,6 +102,37 @@ all-local: prosperotrace.so
 
 if HAVE_PIN3
 
+if HAVE_PIN324
+prosperotrace.so : prosperotrace.o
+	$(CXX) -shared -Wl,--hash-style=sysv \
+	    $(PINTOOL_DIR)/intel64/runtime/pincrt/crtbeginS.o \
+	    -Wl,-Bsymbolic -Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver -fabi-version=2 \
+	    -o prosperotrace.so prosperotrace.o \
+	    -L$(PINTOOL_DIR)/intel64/runtime/pincrt \
+	    -L$(PINTOOL_DIR)/intel64/lib \
+	    -L$(PINTOOL_DIR)/intel64/lib-ext \
+	    -L$(PINTOOL_DIR)/extras/xed-intel64/lib -lpin -lxed \
+	    $(PINTOOL_DIR)/intel64/runtime/pincrt/crtendS.o \
+	    -lpin3dwarf -ldl-dynamic -nostdlib -lc++ -lc++abi -lm-dynamic -lc-dynamic -lunwind-dynamic
+
+prosperotrace.o : $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.cc
+	$(CXX) -g -Wall -Werror -Wno-unknown-pragmas -D__PIN__=1 -DPIN_CRT=1 \
+	    -fno-stack-protector -fno-exceptions -funwind-tables -fasynchronous-unwind-tables -fno-rtti \
+	    -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX -fabi-version=2 \
+	    $(AM_CPPFLAGS) $(CPPFLAGS) \
+	    -I$(PINTOOL_DIR)/source/include/pin \
+	    -I$(PINTOOL_DIR)/source/include/pin/gen \
+	    -isystem $(PINTOOL_DIR)/extras/cxx/include \
+	    -isystem $(PINTOOL_DIR)/extras/crt/include \
+	    -isystem $(PINTOOL_DIR)/extras/crt/include/arch-x86_64 \
+	    -isystem $(PINTOOL_DIR)/extras/crt/include/kernel/uapi \
+	    -isystem $(PINTOOL_DIR)/extras/crt/include/kernel/uapi/asm-x86 \
+	    -I$(PINTOOL_DIR)/extras/components/include \
+	    -I$(PINTOOL_DIR)/extras/xed-intel64/include/xed \
+	    -I$(PINTOOL_DIR)/source/tools/Utils \
+	    -I$(PINTOOL_DIR)/source/tools/InstLib \
+	    -O3 -fomit-frame-pointer -fno-strict-aliasing -c $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.cc
+else
 prosperotrace.so : prosperotrace.o
 	$(CXX) -shared -Wl,--hash-style=sysv \
 	    $(PINTOOL_DIR)/intel64/runtime/pincrt/crtbeginS.o \
@@ -120,7 +151,6 @@ prosperotrace.o : $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.
 	    -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX -fabi-version=2 \
 	    $(AM_CPPFLAGS) \
 	    $(CPPFLAGS) \
-	    -I$(top_srcdir)/src/sst/elements/ariel \
 	    -I$(PINTOOL_DIR)/source/include/pin \
 	    -I$(PINTOOL_DIR)/source/include/pin/gen \
 	    -isystem $(PINTOOL_DIR)/extras/stlport/include \
@@ -135,6 +165,7 @@ prosperotrace.o : $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.
 	    -I$(PINTOOL_DIR)/source/tools/InstLib \
 	    -O3 -fomit-frame-pointer -fno-strict-aliasing \
 	    -o prosperotrace.o -c $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.cc
+endif
 
 else
 

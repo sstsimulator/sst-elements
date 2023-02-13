@@ -23,11 +23,13 @@
 #include "inst/regstack.h"
 #include "inst/vinst.h"
 #include "lsq/vlsq.h"
-#include "lsq/vlsqseq.h"
-#include "lsq/vlsqstd.h"
+#include "lsq/vbasiclsq.h"
 #include "velf/velfinfo.h"
 #include "vfpflags.h"
 #include "vfuncunit.h"
+
+#include "os/vgetthreadstate.h"
+#include "os/vdumpregsreq.h"
 
 #include <array>
 #include <limits>
@@ -130,6 +132,8 @@ public:
         { "fetches_per_cycle", "Number of instruction fetches per cycle" },
         { "retires_per_cycle", "Number of instruction retires per cycle" },
         { "decodes_per_cycle", "Number of instruction decodes per cycle" },
+        { "print_retire_tables", "Print registers during retirement step (default is yes)" },
+        { "print_issue_tables", "Print registers during issue step (default is yes)" },
         { "print_int_reg", "Print integer registers true/false, auto set to true if verbose > 16" },
         { "print_fp_reg", "Print floating-point registers true/false, auto set to "
                           "true if verbose > 16" })
@@ -161,7 +165,7 @@ public:
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         { "lsq", "Load-Store Queue for Memory Access", "SST::Vanadis::VanadisLoadStoreQueue" },
         { "mem_interface_inst", "Interface to memory system for instructions", "SST::Interfaces::StandardMem" },
-        { "decoder%(hardware_threads)d", "Instruction decoder for a hardware thread", "SST::Vanadis::VanadisDecoder" })
+    )
 
 #ifdef VANADIS_BUILD_DEBUG
     VanadisDebugComponent(SST::ComponentId_t id, SST::Params& params);
@@ -190,6 +194,10 @@ public:
     void syscallReturn(uint32_t thr);
     void setHalt(uint32_t thr, int64_t halt_code);
     void startThread(int thr, uint64_t stackStart, uint64_t instructionPointer );
+    void startThreadFork( VanadisStartThreadForkReq* req );
+    void startThreadClone( VanadisStartThreadCloneReq* req );
+    void getThreadState( VanadisGetThreadStateReq* req );
+    void dumpRegs( VanadisDumpRegsReq* req );
 
 private:
 #ifdef VANADIS_BUILD_DEBUG
@@ -220,11 +228,14 @@ private:
 
     int  performFetch(const uint64_t cycle);
     int  performDecode(const uint64_t cycle);
-    int  performIssue(const uint64_t cycle, uint32_t& rob_start, bool& found_store, bool& found_load);
+    int  performIssue(const uint64_t cycle, uint32_t& rob_start, bool& unallocated_memory_op_seen);
     int  performExecute(const uint64_t cycle);
     int  performRetire(VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle);
     int  allocateFunctionalUnit(VanadisInstruction* ins);
     bool mapInstructiontoFunctionalUnit(VanadisInstruction* ins, std::vector<VanadisFunctionalUnit*>& functional_units);
+    void printRob(VanadisCircularQueue<VanadisInstruction*>* rob);
+
+    void resetHwThread(uint32_t thr);
 
     SST::Output* output;
 
@@ -255,10 +266,10 @@ private:
     std::vector<VanadisISATable*> issue_isa_tables;
     std::vector<VanadisISATable*> retire_isa_tables;
 
-    std::vector<bool> tmp_not_issued_int_reg_read;
-    std::vector<bool> tmp_int_reg_write;
-    std::vector<bool> tmp_not_issued_fp_reg_read;
-    std::vector<bool> tmp_fp_reg_write;
+    uint8_t* tmp_not_issued_int_reg_read;
+    uint8_t* tmp_int_reg_write;
+    uint8_t* tmp_not_issued_fp_reg_read;
+    uint8_t* tmp_fp_reg_write;
 
     std::list<VanadisInsCacheLoadRecord*>* icache_load_records;
 
@@ -268,6 +279,9 @@ private:
     bool* halted_masks;
     bool  print_int_reg;
     bool  print_fp_reg;
+    bool  print_issue_tables;
+    bool  print_retire_tables;
+    bool  print_rob;
 
     char*    instPrintBuffer;
     uint64_t nextInsID;
@@ -298,6 +312,8 @@ private:
     uint32_t ins_decoded_this_cycle;
 
     uint64_t pause_on_retire_address;
+    uint64_t start_verbose_when_issue_address;
+    uint64_t stop_verbose_when_retire_address;
 
     std::vector<VanadisFloatingPointFlags*> fp_flags;
 

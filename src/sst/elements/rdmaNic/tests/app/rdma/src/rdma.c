@@ -165,6 +165,11 @@ int rdma_create_cq( ) {
 	NicResp* resp = getResp(cmd);
 	waitResp( resp );
 
+	// the NIC returns addresses that are relative to the start of it's address space
+	// which is mapped into a virtual address space the process uses to talk to the NIC
+	// add the start of the virtual address space
+	resp->data.createCQ.tailIndexAddr += getNicBase();
+
 	int retval = resp->retval; 
 	dbgPrint("retval=%d tailIndexPtr=%#x\n",retval,resp->data.createCQ.tailIndexAddr);
 	assert( retval < NUM_COMP_Q ); 

@@ -1,9 +1,9 @@
 import sst
 from sst.merlin import *
 
-#import shmemMultiNode 
-#import latestV3 as node
-import oneRtrV4 as node
+import node as node
+
+debugPython=False
 
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
@@ -51,10 +51,14 @@ ep = node.Endpoint( 2 )
 
 def setNode( nodeId ):
     return ep;
+if debugPython:
+    print( 'call topo.setEndPointFunc()' )
 
-print( 'call topo.setEndPointFunc()' )
 topo.setEndPointFunc( setNode )
-print( 'call topo.build()' )
+
+if debugPython:
+    print( 'call topo.build()' )
+
 topo.build()
 
 # Enable SST Statistics Outputs for this simulation

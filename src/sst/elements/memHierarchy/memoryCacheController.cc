@@ -580,11 +580,8 @@ void MemCacheController::setup(void) {
 
 
 void MemCacheController::finish(void) {
-    if (!clockOn_) {
-        Cycle_t cycle = turnClockOn();
-        memBackendConvertor_->turnClockOn(cycle);
-    }
-    memBackendConvertor_->finish();
+    Cycle_t cycle = getNextClockCycle(clockTimeBase_);
+    memBackendConvertor_->finish(cycle);
     link_->finish();
 }
 

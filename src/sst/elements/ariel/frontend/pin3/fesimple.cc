@@ -21,10 +21,12 @@
 #include <sys/stat.h>
 #include "atomic.hpp"
 #include <time.h>
+#include <inttypes.h>
 
 #include <string>
 #include <map>
 #include <set>
+#include "tb_header.h"
 
 #ifdef HAVE_CUDA
 #include "host_defines.h"
@@ -1602,6 +1604,49 @@ void mapped_ariel_malloc_flag(int64_t mallocLocId, int count, int level)
     }
 }
 
+void ariel_start_RTL_sim(RTL_shmem_info* rtl_shmem) {
+    
+    ArielCommand acRtl; 
+    acRtl.command = ARIEL_ISSUE_RTL;
+    acRtl.shmem.inp_size = rtl_shmem->get_inp_size();
+    acRtl.shmem.ctrl_size = rtl_shmem->get_ctrl_size();
+    acRtl.shmem.updated_rtl_params_size = rtl_shmem->get_params_size();
+
+    acRtl.shmem.inp_ptr = rtl_shmem->get_inp_ptr(); 
+    acRtl.shmem.ctrl_ptr = rtl_shmem->get_ctrl_ptr();
+    acRtl.shmem.updated_rtl_params = rtl_shmem->get_updated_rtl_params();
+
+    THREADID thr = PIN_ThreadId();
+    const uint32_t thrID = (uint32_t) thr;
+    tunnel->writeMessage(thrID, acRtl);
+    #ifdef ARIEL_DEBUG
+    fprintf(stderr, "\nMessage to add RTL Event into Ariel Event Queue successfully delivered via ArielTunnel");
+    #endif
+    
+    return;
+}
+
+void ariel_update_RTL_signals(RTL_shmem_info* rtl_shmem) {
+
+    ArielCommand acRtl;
+    acRtl.command = ARIEL_ISSUE_RTL;
+    acRtl.shmem.inp_size = rtl_shmem->get_inp_size();
+    acRtl.shmem.ctrl_size = rtl_shmem->get_ctrl_size();
+    acRtl.shmem.updated_rtl_params_size = rtl_shmem->get_params_size();
+    acRtl.shmem.inp_ptr = rtl_shmem->get_inp_ptr(); 
+    acRtl.shmem.ctrl_ptr = rtl_shmem->get_ctrl_ptr();
+    acRtl.shmem.updated_rtl_params = rtl_shmem->get_updated_rtl_params();
+
+    THREADID thr = PIN_ThreadId();
+    const uint32_t thrID = (uint32_t) thr;
+    tunnel->writeMessage(thrID, acRtl);
+    #ifdef ARIEL_DEBUG
+    fprintf(stderr, "\nMessage to add RTL Event into Ariel Event Queue to update RTL signals successfully delivered via ArielTunnel");
+    #endif
+    
+    return;
+}
+
 VOID InstrumentRoutine(RTN rtn, VOID* args)
 {
     if (KeepMallocStackTrace.Value() == 1) {
@@ -1635,6 +1680,17 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
         fprintf(stderr,"Replacement complete.\n");
         return;
 #endif
+    } else if (RTN_Name(rtn) == "start_RTL_sim") {
+        fprintf(stderr,"Identified routine: start_RTL_sim, replacing with Ariel equivalent...\n");
+        RTN_Replace(rtn, (AFUNPTR) ariel_start_RTL_sim); 
+        fprintf(stderr,"Replacement complete.\n");
+        return;
+    } else if(RTN_Name(rtn) == "update_RTL_sig") {
+        fprintf(stderr,"Identified routine: update_RTL_signals, replacing with Ariel equivalent...\n");
+        RTN_Replace(rtn, (AFUNPTR) ariel_update_RTL_signals); 
+        fprintf(stderr,"Replacement complete.\n");
+        return;
+
     } else if ((InterceptMemAllocations.Value() > 0) && RTN_Name(rtn) == "mlm_malloc") {
         // This means we want a special malloc to be used (needs a TLB map inside the virtual core)
         fprintf(stderr,"Identified routine: mlm_malloc, replacing with Ariel equivalent...\n");

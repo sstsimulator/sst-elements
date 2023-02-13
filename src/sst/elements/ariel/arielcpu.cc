@@ -225,6 +225,13 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
             std::string executable = params.find<std::string>("executable", "");
             cpu_cores[i]->setFilePath(executable);
 #endif
+
+            //Configuring Ariel to RTL link and RTLAck Event Handle
+               sprintf(link_buffer, "rtl_link_%" PRIu32, i);
+               cpu_to_rtl_links.push_back(configureLink(link_buffer, new Event::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleRtlAckEvent)));
+               cpu_cores[i]->setRtlLink(cpu_to_rtl_links[i]);
+               output->verbose(CALL_INFO, 1, 0, "Completed initialization of the Ariel RTL Link.\n");
+
         }
     }
 

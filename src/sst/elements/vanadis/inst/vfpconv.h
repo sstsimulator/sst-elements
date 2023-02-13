@@ -130,12 +130,14 @@ public:
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: 0x%llx %s fp-dest isa: %" PRIu16 " phys: %" PRIu16 " <- fp-src: isa: %" PRIu16 " phys: %" PRIu16
-            "\n",
-            getInstructionAddress(), getInstCode(), isa_fp_regs_out[0], phys_fp_regs_out[0], isa_fp_regs_in[0],
-            phys_fp_regs_in[0]);
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(
+                CALL_INFO, 16, 0,
+                "Execute: 0x%llx %s fp-dest isa: %" PRIu16 " phys: %" PRIu16 " <- fp-src: isa: %" PRIu16 " phys: %" PRIu16
+                "\n",
+                getInstructionAddress(), getInstCode(), isa_fp_regs_out[0], phys_fp_regs_out[0], isa_fp_regs_in[0],
+                phys_fp_regs_in[0]);
+        }
 #endif
 
         if ( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) {
@@ -145,11 +147,14 @@ public:
                         combineFromRegisters<src_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
                     fractureToRegisters<dest_format>(
                         regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], static_cast<dest_format>(fp_v));
+
+                    performFlagChecks<dest_format>(fp_v);
                 }
                 else {
                     const src_format fp_v =
                         combineFromRegisters<src_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
                     regFile->setFPReg<dest_format>(phys_fp_regs_out[0], static_cast<dest_format>(fp_v));
+                    performFlagChecks<dest_format>(fp_v);
                 }
             }
             else {
@@ -157,16 +162,20 @@ public:
                     const src_format fp_v = regFile->getFPReg<src_format>(phys_fp_regs_in[0]);
                     fractureToRegisters<dest_format>(
                         regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], static_cast<dest_format>(fp_v));
+                    performFlagChecks<dest_format>(fp_v);
                 }
                 else {
                     const src_format fp_v = regFile->getFPReg<src_format>(phys_fp_regs_in[0]);
                     regFile->setFPReg<dest_format>(phys_fp_regs_out[0], static_cast<dest_format>(fp_v));
+                    performFlagChecks<dest_format>(fp_v);
                 }
             }
         }
         else {
             const src_format fp_v = regFile->getFPReg<src_format>(phys_fp_regs_in[0]);
             regFile->setFPReg<dest_format>(phys_fp_regs_out[0], static_cast<dest_format>(fp_v));
+
+            performFlagChecks<dest_format>(fp_v);
         }
 
         markExecuted();

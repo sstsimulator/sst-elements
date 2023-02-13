@@ -191,12 +191,13 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 		params.insert("_enginePtr", std::to_string( reinterpret_cast<uint64_t>( this ) ), true);
 
 		gen = loadAnonymousSubComponent<EmberGenerator>( gentype, "", 0, ComponentInfo::SHARE_NONE, params );
-		gen->setup();
 
 		if(NULL == gen) {
 			output.fatal(CALL_INFO, -1, "Error: Could not load the "
                     "generator %s for Ember\n", gentype.c_str());
 		}
+
+                gen->setup();
 	}
 
 	// Make sure we don't stop the simulation until we are ready

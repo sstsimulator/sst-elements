@@ -29,12 +29,12 @@ public:
     void configure(const Neuron_Loader_Types::T_NctFl &in) {
         config = in;
     }
-    void deliverSpike(float str, uint when) {
+    void deliverSpike(float str, uint32_t when) {
         temporalBuffer[when] += str;
         //printf(" got %f @ %d\n", str, when);
     }
     // performs Leaky Integrate and Fire. Returns true if fired.
-    bool lif(const uint now) {
+    bool lif(const uint32_t now) {
         // Leak
         value -= config.NrnLkg;
 
@@ -65,7 +65,7 @@ private:
     Neuron_Loader_Types::T_NctFl config;
     float value;
     // temporal buffer
-    typedef map<const uint, float> tBuf_t;
+    typedef map<const uint32_t, float> tBuf_t;
     tBuf_t temporalBuffer;
     // Neuron's white matter list
     uint64_t WMLAddr; // start

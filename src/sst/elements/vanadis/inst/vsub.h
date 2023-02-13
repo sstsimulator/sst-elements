@@ -21,7 +21,7 @@
 namespace SST {
 namespace Vanadis {
 
-template <VanadisRegisterFormat register_format>
+template <typename gpr_format>
 class VanadisSubInstruction : public VanadisInstruction
 {
 public:
@@ -31,7 +31,6 @@ public:
         VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
         trapOverflow(trapOverflw)
     {
-
         isa_int_regs_in[0]  = src_1;
         isa_int_regs_in[1]  = src_2;
         isa_int_regs_out[0] = dest;
@@ -41,12 +40,10 @@ public:
     VanadisFunctionalUnitType getInstFuncType() const override { return INST_INT_ARITH; }
     const char*               getInstCode() const override
     {
-        if ( register_format == VanadisRegisterFormat::VANADIS_FORMAT_INT32 ) { return "SUB32"; }
-        else if ( register_format == VanadisRegisterFormat::VANADIS_FORMAT_INT64 ) {
+        if(sizeof(gpr_format) == 8) {
             return "SUB64";
-        }
-        else {
-            return "SUB";
+        } else {
+            return "SUB32";
         }
     }
 
@@ -69,26 +66,11 @@ public:
             (void*)getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0],
             phys_int_regs_in[1], isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);
 #endif
-        switch ( register_format ) {
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
-        {
-            const int64_t src_1 = regFile->getIntReg<int64_t>(phys_int_regs_in[0]);
-            const int64_t src_2 = regFile->getIntReg<int64_t>(phys_int_regs_in[1]);
+        const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in[0]);
+        const gpr_format src_2 = regFile->getIntReg<gpr_format>(phys_int_regs_in[1]);
 
-            regFile->setIntReg<int64_t>(phys_int_regs_out[0], ((src_1) - (src_2)));
-        } break;
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
-        {
-            const int32_t src_1 = regFile->getIntReg<int32_t>(phys_int_regs_in[0]);
-            const int32_t src_2 = regFile->getIntReg<int32_t>(phys_int_regs_in[1]);
-
-            regFile->setIntReg<int32_t>(phys_int_regs_out[0], ((src_1) - (src_2)));
-        } break;
-        default:
-        {
-            flagError();
-        } break;
-        }
+        const gpr_format result = src_1 - src_2;
+        regFile->setIntReg<gpr_format>(phys_int_regs_out[0], result);
 
         markExecuted();
     }

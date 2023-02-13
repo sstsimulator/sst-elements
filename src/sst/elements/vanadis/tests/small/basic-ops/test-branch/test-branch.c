@@ -15,12 +15,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int main( int argc, char* argv[] ) {
 
 	int max_value = 100000;
 
-	int* value_bins = (int*) malloc( sizeof(int) * 3 );
+	int value_bins[3];
+    bzero( value_bins, sizeof(int) * 3 );
 
 	for( int i = 0; i < max_value; ++i ) {
 		if( 0 == (i%3) ) {
@@ -33,7 +35,6 @@ int main( int argc, char* argv[] ) {
 	}
 
 	printf("value-bins: 0 = %d, 1 = %d\n", value_bins[0], value_bins[1]);
-	free( value_bins );
 
 	return 0;
 }

@@ -1,0 +1,5 @@
+openat(dirfd=-10, /openat.test) failed  `Permission denied`
+openat(dirfd=-100, openat.test) returned 3
+open('tmp') dirfd=3
+openat(dirfd=3, openat.test) returned 4
+openat(dirfd=20, openat.test) failed  `Bad file descriptor`

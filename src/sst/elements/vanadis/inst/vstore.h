@@ -33,9 +33,17 @@ public:
         const int64_t offst, const uint16_t valueReg, const uint16_t store_bytes, VanadisMemoryTransaction accessT,
         VanadisStoreRegisterType regT) :
         VanadisInstruction(
-            addr, hw_thr, isa_opts, regT == STORE_INT_REGISTER ? 2 : 1, accessT == MEM_TRANSACTION_LLSC_STORE ? 1 : 0,
+            addr, hw_thr, isa_opts, 
+            /*
+            const uint16_t c_phys_int_reg_in, const uint16_t c_phys_int_reg_out, 
+            const uint16_t c_isa_int_reg_in, const uint16_t c_isa_int_reg_out,
+            const uint16_t c_phys_fp_reg_in, const uint16_t c_phys_fp_reg_out,
+            const uint16_t c_isa_fp_reg_in, const uint16_t c_isa_fp_reg_out
+            */
             regT == STORE_INT_REGISTER ? 2 : 1, accessT == MEM_TRANSACTION_LLSC_STORE ? 1 : 0,
-            regT == STORE_FP_REGISTER ? 1 : 0, 0, regT == STORE_FP_REGISTER ? 1 : 0, 0),
+            regT == STORE_INT_REGISTER ? 2 : 1, accessT == MEM_TRANSACTION_LLSC_STORE ? 1 : 0,
+            regT == STORE_FP_REGISTER ? 1 : 0, 0,
+            regT == STORE_FP_REGISTER ? 1 : 0, 0),
         store_width(store_bytes),
         offset(offst),
         memAccessType(accessT),
@@ -165,6 +173,7 @@ public:
         case STORE_FP_REGISTER:
             return phys_fp_regs_in[0];
         }
+        assert(0); // stop compiler "warning: control reaches end of non-void function [-Wreturn-type]"
     }
 
     VanadisStoreRegisterType getValueRegisterType() const { return regType; }

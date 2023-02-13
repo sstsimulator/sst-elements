@@ -27,11 +27,17 @@ public:
     VanadisSyscallCloseEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, int32_t file_id)
         : VanadisSyscallEvent(core, thr, bittype), close_file_descriptor(file_id) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_CLOSE; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_CLOSE; }
 
     int32_t getFileDescriptor() const { return close_file_descriptor; }
 
 private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& close_file_descriptor;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallCloseEvent);
+
     int32_t close_file_descriptor;
 };
 

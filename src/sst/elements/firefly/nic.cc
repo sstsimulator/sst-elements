@@ -93,6 +93,10 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     m_num_vNics = params.find<int>("num_vNics", 1 );
 
+    for ( unsigned i = 0; i < m_num_vNics; i++  ) {
+        m_sendStreamNum.push_back(0);
+    }
+
     m_tracedNode =     params.find<int>( "tracedNode", -1 );
     m_tracedPkt  =     params.find<int>( "tracedPkt", -1 );
     int maxSendMachineQsize = params.find<int>( "maxSendMachineQsize", 1 );
@@ -456,7 +460,7 @@ void Nic::dmaSend( NicCmdEvent *e, int vNicNum )
 {
     std::function<void(void*)> callback = std::bind( &Nic::notifySendDmaDone, this, vNicNum, _1 );
 
-    CmdSendEntry* entry = new CmdSendEntry( vNicNum, e, callback );
+    CmdSendEntry* entry = new CmdSendEntry( vNicNum, getSendStreamNum(vNicNum), e, callback );
 
     m_dbg.debug(CALL_INFO,1,1,"dest=%#x tag=%#x vecLen=%lu totalBytes=%lu\n",
                     e->node, e->tag, e->iovec.size(), entry->totalBytes() );
@@ -468,7 +472,7 @@ void Nic::pioSend( NicCmdEvent *e, int vNicNum )
 {
     std::function<void(void*)> callback = std::bind( &Nic::notifySendPioDone, this, vNicNum, _1 );
 
-    CmdSendEntry* entry = new CmdSendEntry( vNicNum,  e, callback );
+    CmdSendEntry* entry = new CmdSendEntry( vNicNum, getSendStreamNum(vNicNum),  e, callback );
 
     m_dbg.debug(CALL_INFO,1,1,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x "
         "vecLen=%lu totalBytes=%lu vn=%d\n", vNicNum, e->node, e->dst_vNic,
@@ -501,7 +505,7 @@ void Nic::get( NicCmdEvent *e, int vNicNum )
     m_dbg.debug(CALL_INFO,1,1,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x vecLen=%lu totalBytes=%lu\n",
                 vNicNum, e->node, e->dst_vNic, e->tag, e->iovec.size(), entry->totalBytes() );
 
-    qSendEntry( new GetOrgnEntry( vNicNum, e->node, e->dst_vNic, e->tag, getKey, m_getHdrVN ) );
+    qSendEntry( new GetOrgnEntry( vNicNum, getSendStreamNum(vNicNum), e->node, e->dst_vNic, e->tag, getKey, m_getHdrVN ) );
 }
 
 void Nic::put( NicCmdEvent *e, int vNicNum )
@@ -509,7 +513,7 @@ void Nic::put( NicCmdEvent *e, int vNicNum )
     assert(0);
 
     std::function<void(void*)> callback = std::bind(  &Nic::notifyPutDone, this, vNicNum, _1 );
-    CmdSendEntry* entry = new CmdSendEntry( vNicNum, e, callback );
+    CmdSendEntry* entry = new CmdSendEntry( vNicNum, getSendStreamNum(vNicNum), e, callback );
     m_dbg.debug(CALL_INFO,1,1,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x "
                         "vecLen=%lu totalBytes=%lu\n",
                 vNicNum, e->node, e->dst_vNic, e->tag, e->iovec.size(),

@@ -70,7 +70,7 @@
  core0.flushes : Accumulator : Sum.u64 = 236; SumSQ.u64 = 236; Count.u64 = 236; Min.u64 = 1; Max.u64 = 1; 
  core0.flushinvs : Accumulator : Sum.u64 = 201; SumSQ.u64 = 201; Count.u64 = 201; Min.u64 = 1; Max.u64 = 1; 
  core0.llsc : Accumulator : Sum.u64 = 72; SumSQ.u64 = 72; Count.u64 = 72; Min.u64 = 1; Max.u64 = 1; 
- core0.llsc_success : Accumulator : Sum.u64 = 72; SumSQ.u64 = 72; Count.u64 = 72; Min.u64 = 1; Max.u64 = 1; 
+ core0.llsc_success : Accumulator : Sum.u64 = 60; SumSQ.u64 = 60; Count.u64 = 60; Min.u64 = 1; Max.u64 = 1; 
  l1cache0.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache0.stateEvent_GetS_I : Accumulator : Sum.u64 = 1088; SumSQ.u64 = 1088; Count.u64 = 1088; Min.u64 = 1; Max.u64 = 1; 
  l1cache0.stateEvent_GetS_S : Accumulator : Sum.u64 = 266; SumSQ.u64 = 266; Count.u64 = 266; Min.u64 = 1; Max.u64 = 1; 
@@ -472,7 +472,7 @@
  core1.flushes : Accumulator : Sum.u64 = 234; SumSQ.u64 = 234; Count.u64 = 234; Min.u64 = 1; Max.u64 = 1; 
  core1.flushinvs : Accumulator : Sum.u64 = 215; SumSQ.u64 = 215; Count.u64 = 215; Min.u64 = 1; Max.u64 = 1; 
  core1.llsc : Accumulator : Sum.u64 = 62; SumSQ.u64 = 62; Count.u64 = 62; Min.u64 = 1; Max.u64 = 1; 
- core1.llsc_success : Accumulator : Sum.u64 = 62; SumSQ.u64 = 62; Count.u64 = 62; Min.u64 = 1; Max.u64 = 1; 
+ core1.llsc_success : Accumulator : Sum.u64 = 52; SumSQ.u64 = 52; Count.u64 = 52; Min.u64 = 1; Max.u64 = 1; 
  l1cache1.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache1.stateEvent_GetS_I : Accumulator : Sum.u64 = 1040; SumSQ.u64 = 1040; Count.u64 = 1040; Min.u64 = 1; Max.u64 = 1; 
  l1cache1.stateEvent_GetS_S : Accumulator : Sum.u64 = 258; SumSQ.u64 = 258; Count.u64 = 258; Min.u64 = 1; Max.u64 = 1; 
@@ -874,7 +874,7 @@
  core2.flushes : Accumulator : Sum.u64 = 248; SumSQ.u64 = 248; Count.u64 = 248; Min.u64 = 1; Max.u64 = 1; 
  core2.flushinvs : Accumulator : Sum.u64 = 236; SumSQ.u64 = 236; Count.u64 = 236; Min.u64 = 1; Max.u64 = 1; 
  core2.llsc : Accumulator : Sum.u64 = 65; SumSQ.u64 = 65; Count.u64 = 65; Min.u64 = 1; Max.u64 = 1; 
- core2.llsc_success : Accumulator : Sum.u64 = 65; SumSQ.u64 = 65; Count.u64 = 65; Min.u64 = 1; Max.u64 = 1; 
+ core2.llsc_success : Accumulator : Sum.u64 = 56; SumSQ.u64 = 56; Count.u64 = 56; Min.u64 = 1; Max.u64 = 1; 
  l1cache2.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache2.stateEvent_GetS_I : Accumulator : Sum.u64 = 1057; SumSQ.u64 = 1057; Count.u64 = 1057; Min.u64 = 1; Max.u64 = 1; 
  l1cache2.stateEvent_GetS_S : Accumulator : Sum.u64 = 287; SumSQ.u64 = 287; Count.u64 = 287; Min.u64 = 1; Max.u64 = 1; 
@@ -1276,7 +1276,7 @@
  core3.flushes : Accumulator : Sum.u64 = 233; SumSQ.u64 = 233; Count.u64 = 233; Min.u64 = 1; Max.u64 = 1; 
  core3.flushinvs : Accumulator : Sum.u64 = 233; SumSQ.u64 = 233; Count.u64 = 233; Min.u64 = 1; Max.u64 = 1; 
  core3.llsc : Accumulator : Sum.u64 = 55; SumSQ.u64 = 55; Count.u64 = 55; Min.u64 = 1; Max.u64 = 1; 
- core3.llsc_success : Accumulator : Sum.u64 = 55; SumSQ.u64 = 55; Count.u64 = 55; Min.u64 = 1; Max.u64 = 1; 
+ core3.llsc_success : Accumulator : Sum.u64 = 48; SumSQ.u64 = 48; Count.u64 = 48; Min.u64 = 1; Max.u64 = 1; 
  l1cache3.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache3.stateEvent_GetS_I : Accumulator : Sum.u64 = 1048; SumSQ.u64 = 1048; Count.u64 = 1048; Min.u64 = 1; Max.u64 = 1; 
  l1cache3.stateEvent_GetS_S : Accumulator : Sum.u64 = 291; SumSQ.u64 = 291; Count.u64 = 291; Min.u64 = 1; Max.u64 = 1; 
@@ -1678,7 +1678,7 @@
  core4.flushes : Accumulator : Sum.u64 = 239; SumSQ.u64 = 239; Count.u64 = 239; Min.u64 = 1; Max.u64 = 1; 
  core4.flushinvs : Accumulator : Sum.u64 = 244; SumSQ.u64 = 244; Count.u64 = 244; Min.u64 = 1; Max.u64 = 1; 
  core4.llsc : Accumulator : Sum.u64 = 69; SumSQ.u64 = 69; Count.u64 = 69; Min.u64 = 1; Max.u64 = 1; 
- core4.llsc_success : Accumulator : Sum.u64 = 69; SumSQ.u64 = 69; Count.u64 = 69; Min.u64 = 1; Max.u64 = 1; 
+ core4.llsc_success : Accumulator : Sum.u64 = 60; SumSQ.u64 = 60; Count.u64 = 60; Min.u64 = 1; Max.u64 = 1; 
  l1cache4.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache4.stateEvent_GetS_I : Accumulator : Sum.u64 = 1045; SumSQ.u64 = 1045; Count.u64 = 1045; Min.u64 = 1; Max.u64 = 1; 
  l1cache4.stateEvent_GetS_S : Accumulator : Sum.u64 = 304; SumSQ.u64 = 304; Count.u64 = 304; Min.u64 = 1; Max.u64 = 1; 
@@ -2080,7 +2080,7 @@
  core5.flushes : Accumulator : Sum.u64 = 242; SumSQ.u64 = 242; Count.u64 = 242; Min.u64 = 1; Max.u64 = 1; 
  core5.flushinvs : Accumulator : Sum.u64 = 230; SumSQ.u64 = 230; Count.u64 = 230; Min.u64 = 1; Max.u64 = 1; 
  core5.llsc : Accumulator : Sum.u64 = 47; SumSQ.u64 = 47; Count.u64 = 47; Min.u64 = 1; Max.u64 = 1; 
- core5.llsc_success : Accumulator : Sum.u64 = 47; SumSQ.u64 = 47; Count.u64 = 47; Min.u64 = 1; Max.u64 = 1; 
+ core5.llsc_success : Accumulator : Sum.u64 = 42; SumSQ.u64 = 42; Count.u64 = 42; Min.u64 = 1; Max.u64 = 1; 
  l1cache5.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache5.stateEvent_GetS_I : Accumulator : Sum.u64 = 1056; SumSQ.u64 = 1056; Count.u64 = 1056; Min.u64 = 1; Max.u64 = 1; 
  l1cache5.stateEvent_GetS_S : Accumulator : Sum.u64 = 279; SumSQ.u64 = 279; Count.u64 = 279; Min.u64 = 1; Max.u64 = 1; 

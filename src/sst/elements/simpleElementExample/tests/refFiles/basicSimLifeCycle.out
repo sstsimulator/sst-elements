@@ -1,0 +1,161 @@
+Phase: Construction, component_0
+Phase: Construction, component_1
+Phase: Construction, component_2
+Phase: Construction, component_3
+Phase: Construction, component_4
+Phase: Construction, component_5
+Phase: Construction, component_6
+Phase: Construction, component_7
+Phase: Init(0), component_7
+Phase: Init(0), component_6
+Phase: Init(0), component_5
+Phase: Init(0), component_4
+Phase: Init(0), component_3
+Phase: Init(0), component_2
+Phase: Init(0), component_1
+Phase: Init(0), component_0
+Phase: Init(1), component_7
+Phase: Init(1), component_6
+Phase: Init(1), component_5
+Phase: Init(1), component_4
+Phase: Init(1), component_3
+Phase: Init(1), component_2
+Phase: Init(1), component_1
+Phase: Init(1), component_0
+Phase: Init(2), component_7
+Phase: Init(2), component_6
+Phase: Init(2), component_5
+Phase: Init(2), component_4
+Phase: Init(2), component_3
+Phase: Init(2), component_2
+Phase: Init(2), component_1
+Phase: Init(2), component_0
+Phase: Init(3), component_7
+Phase: Init(3), component_6
+Phase: Init(3), component_5
+Phase: Init(3), component_4
+Phase: Init(3), component_3
+Phase: Init(3), component_2
+Phase: Init(3), component_1
+Phase: Init(3), component_0
+Phase: Init(4), component_7
+Phase: Init(4), component_6
+Phase: Init(4), component_5
+Phase: Init(4), component_4
+Phase: Init(4), component_3
+Phase: Init(4), component_2
+Phase: Init(4), component_1
+Phase: Init(4), component_0
+Phase: Init(5), component_7
+Phase: Init(5), component_6
+Phase: Init(5), component_5
+Phase: Init(5), component_4
+Phase: Init(5), component_3
+Phase: Init(5), component_2
+Phase: Init(5), component_1
+Phase: Init(5), component_0
+Phase: Init(6), component_7
+Phase: Init(6), component_6
+Phase: Init(6), component_5
+Phase: Init(6), component_4
+Phase: Init(6), component_3
+Phase: Init(6), component_2
+Phase: Init(6), component_1
+Phase: Init(6), component_0
+Phase: Init(7), component_7
+Phase: Init(7), component_6
+Phase: Init(7), component_5
+Phase: Init(7), component_4
+Phase: Init(7), component_3
+Phase: Init(7), component_2
+Phase: Init(7), component_1
+Phase: Init(7), component_0
+Phase: Init(8), component_7
+Phase: Init(8), component_6
+Phase: Init(8), component_5
+Phase: Init(8), component_4
+Phase: Init(8), component_3
+Phase: Init(8), component_2
+Phase: Init(8), component_1
+Phase: Init(8), component_0
+Phase: Setup, component_7
+    component_7 will send 8 events to each other component.
+Phase: Run, component_7
+Phase: Setup, component_6
+    component_6 will send 8 events to each other component.
+Phase: Run, component_6
+Phase: Setup, component_5
+    component_5 will send 8 events to each other component.
+Phase: Run, component_5
+Phase: Setup, component_4
+    component_4 will send 8 events to each other component.
+Phase: Run, component_4
+Phase: Setup, component_3
+    component_3 will send 8 events to each other component.
+Phase: Run, component_3
+Phase: Setup, component_2
+    component_2 will send 8 events to each other component.
+Phase: Run, component_2
+Phase: Setup, component_1
+    component_1 will send 8 events to each other component.
+Phase: Run, component_1
+Phase: Setup, component_0
+    component_0 will send 8 events to each other component.
+Phase: Run, component_0
+Phase: Complete(0), component_7
+Phase: Complete(0), component_6
+Phase: Complete(0), component_5
+Phase: Complete(0), component_4
+Phase: Complete(0), component_3
+Phase: Complete(0), component_2
+Phase: Complete(0), component_1
+Phase: Complete(0), component_0
+Phase: Complete(1), component_7
+Phase: Complete(1), component_6
+Phase: Complete(1), component_5
+Phase: Complete(1), component_4
+Phase: Complete(1), component_3
+Phase: Complete(1), component_2
+Phase: Complete(1), component_1
+Phase: Complete(1), component_0
+Phase: Finish, component_7
+    My name is component_7 and I sent 56 messages. I received 56 messages and forwarded 168 messages.
+    My left neighbor said: Farewell from component_6
+    My right neighbor said: Goodbye from component_0
+Phase: Finish, component_6
+    My name is component_6 and I sent 56 messages. I received 56 messages and forwarded 168 messages.
+    My left neighbor said: Farewell from component_5
+    My right neighbor said: Goodbye from component_7
+Phase: Finish, component_5
+    My name is component_5 and I sent 56 messages. I received 56 messages and forwarded 168 messages.
+    My left neighbor said: Farewell from component_4
+    My right neighbor said: Goodbye from component_6
+Phase: Finish, component_4
+    My name is component_4 and I sent 56 messages. I received 56 messages and forwarded 168 messages.
+    My left neighbor said: Farewell from component_3
+    My right neighbor said: Goodbye from component_5
+Phase: Finish, component_3
+    My name is component_3 and I sent 56 messages. I received 56 messages and forwarded 168 messages.
+    My left neighbor said: Farewell from component_2
+    My right neighbor said: Goodbye from component_4
+Phase: Finish, component_2
+    My name is component_2 and I sent 56 messages. I received 56 messages and forwarded 168 messages.
+    My left neighbor said: Farewell from component_1
+    My right neighbor said: Goodbye from component_3
+Phase: Finish, component_1
+    My name is component_1 and I sent 56 messages. I received 56 messages and forwarded 168 messages.
+    My left neighbor said: Farewell from component_0
+    My right neighbor said: Goodbye from component_2
+Phase: Finish, component_0
+    My name is component_0 and I sent 56 messages. I received 56 messages and forwarded 168 messages.
+    My left neighbor said: Farewell from component_7
+    My right neighbor said: Goodbye from component_1
+Phase: Destruction
+Phase: Destruction
+Phase: Destruction
+Phase: Destruction
+Phase: Destruction
+Phase: Destruction
+Phase: Destruction
+Phase: Destruction
+Simulation is complete, simulated time: 2.24 us

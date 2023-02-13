@@ -15,12 +15,13 @@
 
 class SendEntryBase {
   public:
-    SendEntryBase( int local_vNic ) :
-        m_local_vNic( local_vNic ), m_isCtrl(false), m_isAck(false)
+    SendEntryBase( int local_vNic, int streamNum ) :
+        m_local_vNic( local_vNic ), m_streamNum(streamNum), m_isCtrl(false), m_isAck(false)
     { }
     virtual ~SendEntryBase() { }
 
     virtual int local_vNic()   { return m_local_vNic; }
+    virtual int streamNum()  { return m_streamNum; }
 
     virtual MsgHdr::Op getOp() = 0;
     virtual size_t totalBytes() = 0;
@@ -47,13 +48,14 @@ class SendEntryBase {
   private:
     int m_txDelay;
     int m_local_vNic;
+    int m_streamNum;
 };
 
 class CmdSendEntry: public SendEntryBase, public EntryBase {
   public:
 
-    CmdSendEntry( int local_vNic, NicCmdEvent* cmd, std::function<void(void*)> callback ) :
-        SendEntryBase( local_vNic ),
+    CmdSendEntry( int local_vNic, int streamNum, NicCmdEvent* cmd, std::function<void(void*)> callback ) :
+        SendEntryBase( local_vNic, streamNum ),
         m_cmd(cmd),
         m_callback(callback)
     {
@@ -90,8 +92,8 @@ class CmdSendEntry: public SendEntryBase, public EntryBase {
 class MsgSendEntry: public SendEntryBase {
   public:
 
-    MsgSendEntry( int local_vNic, int dst_node,int dst_vNic ) :
-        SendEntryBase( local_vNic ),
+    MsgSendEntry( int local_vNic, int streamNum, int dst_node,int dst_vNic ) :
+        SendEntryBase( local_vNic, streamNum ),
         m_dst_node( dst_node ),
         m_dst_vNic( dst_vNic )
     { }
@@ -108,8 +110,8 @@ class MsgSendEntry: public SendEntryBase {
 
 class GetOrgnEntry : public MsgSendEntry {
   public:
-    GetOrgnEntry( int local_vNic, int dst_node, int dst_vNic, int rgnNum, int respKey, int vn ) :
-            MsgSendEntry( local_vNic, dst_node, dst_vNic ), m_vn( vn )
+    GetOrgnEntry( int local_vNic, int streamNum, int dst_node, int dst_vNic, int rgnNum, int respKey, int vn ) :
+            MsgSendEntry( local_vNic, streamNum, dst_node, dst_vNic ), m_vn( vn )
     {
         m_hdr.respKey = respKey;
         m_hdr.rgnNum = rgnNum;
@@ -141,9 +143,9 @@ class GetOrgnEntry : public MsgSendEntry {
 
 class PutOrgnEntry : public MsgSendEntry, public EntryBase {
   public:
-    PutOrgnEntry( int local_vNic, int dst_node,int dst_vNic,
+    PutOrgnEntry( int local_vNic, int streamNum, int dst_node,int dst_vNic,
             int respKey, MemRgnEntry* memRgn, int vn ) :
-        MsgSendEntry( local_vNic, dst_node, dst_vNic ),
+        MsgSendEntry( local_vNic, streamNum, dst_node, dst_vNic ),
         m_memRgn( memRgn ), m_vn(vn)
     {
         m_totalBytes = EntryBase::totalBytes();

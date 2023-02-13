@@ -15,7 +15,7 @@
 
     struct MemRequest {
 
-        typedef std::function<void(Interfaces::StandardMem::Request*)> Callback;
+        typedef std::function<void(Interfaces::StandardMem::Request*, int )> Callback;
         
         enum Op { Write, Read, Fence } m_op;
         MemRequest( int src, uint64_t addr, int dataSize, uint8_t* data, Callback* callback = NULL  ) : 
@@ -36,7 +36,7 @@
 
         virtual void handleResponse( Interfaces::StandardMem::Request* resp ) { 
             if ( callback ) {
-                (*callback)( resp );
+                (*callback)( resp, id );
             } else {
                 delete resp; 
             }

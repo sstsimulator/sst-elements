@@ -82,18 +82,8 @@ public:
     {
 #ifdef VANADIS_BUILD_DEBUG
         if ( output->getVerboseLevel() >= 16 ) {
-            char* int_register_buffer = new char[256];
-            char* fp_register_buffer  = new char[256];
-
-            writeIntRegs(int_register_buffer, 256);
-            writeFPRegs(fp_register_buffer, 256);
-
             output->verbose(
-                CALL_INFO, 16, 0, "Execute: 0x%llx %s int: %s / fp: %s\n", getInstructionAddress(), getInstCode(),
-                int_register_buffer, fp_register_buffer);
-
-            delete[] int_register_buffer;
-            delete[] fp_register_buffer;
+                CALL_INFO, 16, 0, "Execute: 0x%llx %s\n", getInstructionAddress(), getInstCode());
         }
 #endif
 
@@ -107,6 +97,7 @@ public:
             if ( output->getVerboseLevel() >= 16 ) {
                 output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, result);
             }
+
             fractureToRegisters<fp_format>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], result);
         }
         else {

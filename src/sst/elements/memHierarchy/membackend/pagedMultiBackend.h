@@ -41,12 +41,12 @@ struct pageInfo {
     typedef pageList_t::iterator pageListIter;
 
     uint64_t pageAddr;
-    uint touched; // how many times it is touched in quanta (used in LFU)
+    uint32_t touched; // how many times it is touched in quanta (used in LFU)
     pageListIter listEntry;
     bool inFast;
     SimTime_t lastTouch; // used in mrpuLRU
     uint64_t lastRef; // used in scan detection
-    uint scanLeng; // number of consecutive unit-1-stride accesses
+    uint32_t scanLeng; // number of consecutive unit-1-stride accesses
     SimTime_t pageDelay; // time when page will be in fast mem
 
     typedef enum {NONE, FtoS, StoF} swapDir_t;
@@ -283,12 +283,12 @@ public:
 
     typedef map<uint64_t, pageInfo> pageMap_t;
     pageMap_t pageMap;
-    uint maxFastPages;
-    uint pageShift;
-    uint pagesInFast;
-    uint lastMin;
-    uint threshold;
-    uint scanThreshold;
+    uint32_t maxFastPages;
+    uint32_t pageShift;
+    uint32_t pagesInFast;
+    uint32_t lastMin;
+    uint32_t threshold;
+    uint32_t scanThreshold;
     SimTime_t transferDelay;
     SimTime_t minAccTime;
     bool collectStats;

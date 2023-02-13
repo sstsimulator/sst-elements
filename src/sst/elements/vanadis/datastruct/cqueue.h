@@ -19,6 +19,7 @@
 #include <cassert>
 #include <cstddef>
 #include <deque>
+#include <bitset>
 
 namespace SST {
 namespace Vanadis {
@@ -27,45 +28,80 @@ template <typename T>
 class VanadisCircularQueue
 {
 public:
-    VanadisCircularQueue(const size_t size) : max_capacity(size) {}
+    VanadisCircularQueue(const int size) : max_capacity(size) {
+        data = new T[size];
+        clear();
 
-    ~VanadisCircularQueue() {}
+        std::bitset<32> size_bits(size);
+        max_power_two = (size_bits.count() == 1);
+        bit_mask = max_power_two ? size - 1 : 0;
+    }
 
-    bool empty() { return 0 == data.size(); }
+    ~VanadisCircularQueue() {
+        delete[] data;
+    }
 
-    bool full() { return max_capacity == data.size(); }
+    bool empty() const { return 0 == count; }
+    bool full() const { return max_capacity == count; }
 
-    void push(T item) { data.push_back(item); }
+    void push(T item) {
+        assert(count < max_capacity);
 
-    T peek() { return data.front(); }
+        data[tail] = item;
+        tail = incrementIndex(tail);
+        count++;
+    }
 
-    T peekAt(const size_t index) { return data.at(index); }
+    T peek() {
+        assert(count > 0);
+
+        T peek_me = data[head];
+        return peek_me;
+    }
+
+    T peekAt(const size_t index) { 
+        assert(index < count);
+        return data[calculateIndex(index)];
+    }
 
     T pop()
     {
-        T tmp = data.front();
-        data.pop_front();
-        return tmp;
+        assert(count > 0);
+
+        T pop_me = data[head];
+        head = incrementIndex(head);
+        count--;
+
+        return pop_me;
     }
 
-    size_t size() const { return data.size(); }
-
+    size_t size() const { return count; }
     size_t capacity() const { return max_capacity; }
 
-    void clear() { data.clear(); }
-
-    void removeAt(const size_t index)
-    {
-        auto remove_itr = data.begin();
-
-        for ( size_t i = 0; i < index; ++i, remove_itr++ ) {}
-
-        data.erase(remove_itr);
+    void clear() {
+        head = 0;
+        tail = 0;
+        count = 0;
     }
 
 private:
+    int calculateIndex(const int index) const {
+        return max_power_two ? (head + index) & bit_mask : (head + index) % max_capacity;
+    }
+
+    int incrementIndex(const int index) const {
+        return max_power_two ? (index + 1) & bit_mask : (index + 1) % max_capacity;
+    }
+
     const size_t  max_capacity;
-    std::deque<T> data;
+    int head;
+    int tail;
+    int count;
+
+    T* data;
+
+    bool max_power_two;
+    int bit_mask;
 };
 
 } // namespace Vanadis

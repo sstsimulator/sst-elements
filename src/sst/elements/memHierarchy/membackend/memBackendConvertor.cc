@@ -226,7 +226,17 @@ void MemBackendConvertor::sendResponse( SST::Event::id_type id, uint32_t flags )
 
 }
 
-void MemBackendConvertor::finish(void) {
+void MemBackendConvertor::finish(Cycle_t endCycle) {
+    // endCycle can be less than m_cycleCount in parallel simulations
+    // because the simulation end isn't detected until a sync interval boundary
+    // and endCycle is adjusted to the actual (not detected) end time
+    // stat_outstandingReqs may vary slightly in parallel & serial
+    if (endCycle > m_cycleCount) {
+        Cycle_t cyclesOff = endCycle - m_cycleCount;
+        for (Cycle_t i = 0; i < cyclesOff; i++)
+            stat_outstandingReqs->addData( m_pendingRequests.size() );
+        m_cycleCount = endCycle;
+    }
     stat_totalCycles->addData(m_cycleCount);
     m_backend->finish();
 }

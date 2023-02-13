@@ -13,7 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-    class MemRequestQ {
+    class MemRequestQ : public ComponentExtension {
 
         struct SrcChannel {
             SrcChannel( int maxSrcQsize ) : maxSrcQsize(maxSrcQsize), pendingCnts(0) {}
@@ -28,7 +28,7 @@
         };
 
       public:
-        MemRequestQ( RdmaNic* nic, int maxPending, int maxSrcQsize, int numSrcs ) : 
+        MemRequestQ(ComponentId_t cid, RdmaNic* nic, int maxPending, int maxSrcQsize, int numSrcs ) : ComponentExtension(cid), 
             m_nic(nic), m_maxPending(maxPending), m_curSrc(0), m_reqSrcQs(numSrcs,maxSrcQsize), m_pendingPair(NULL,NULL)
         {}
 
@@ -62,12 +62,12 @@
 
 			Interfaces::StandardMem::Request* stdMemReq;
             std::vector<uint8_t> payload;
-            req->reqTime=Simulation::getSimulation()->getCurrentSimCycle();
+            req->reqTime=getCurrentSimCycle();
 
             switch ( req->m_op ) {
               case MemRequest::Read:
                 Nic().dbg.debug(CALL_INFO,1,DBG_MEMEVENT_FLAG,"read addr=%#" PRIx64 " dataSize=%d\n",req->addr,req->dataSize);
-				stdMemReq = new StandardMem::Read(req->addr, req->dataSize, 0, 0, 0, req->id);
+				stdMemReq = new StandardMem::Read(req->addr, req->dataSize, 0, req->addr );
                 break;
 
               case MemRequest::Write:
@@ -80,10 +80,10 @@
 						//printf("%x ", (req->data >> i*8) & 0xff  );
                     }
 					//printf("\n");
-					stdMemReq = new StandardMem::Write(req->addr, req->dataSize, payload);
+					stdMemReq = new StandardMem::Write(req->addr, req->dataSize, payload, false, 0, req->addr);
                 } else {
                     Nic().dbg.debug(CALL_INFO,1,DBG_MEMEVENT_FLAG,"write addr=%#" PRIx64 " dataSize=%d\n",req->addr,req->dataSize);
-					stdMemReq = new StandardMem::Write(req->addr, req->dataSize, req->buf);
+					stdMemReq = new StandardMem::Write(req->addr, req->dataSize, req->buf, false, 0, req->addr );
 #if 0
                     for ( int i = 0; i < req->dataSize/4; i++ ) {
 						for ( int j = 3; j >=0; j-- ) {

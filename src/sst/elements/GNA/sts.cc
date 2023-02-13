@@ -41,7 +41,7 @@ bool STS::isFree() {
     return (numSpikes == 0);
 }
 
-void STS::advance(uint now) {
+void STS::advance(uint32_t now) {
     // AFR: should throttle
     while (incomingReqs.empty() == false) {
         // get the request

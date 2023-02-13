@@ -47,15 +47,22 @@
 #define RISCV_O_TRUNC       01000
 #define RISCV_O_NONBLOCK    04000 
 #define RISCV_O_NDELAY      RISCV_O_NONBLOCK 
+#define RISCV_O_LARGEFILE   0100000 
 
 #ifndef SST_COMPILE_MACOSX
 #define RISCV_O_DIRECT      040000
-#define RISCV_O_LARGEFILE   0100000 
 #define RISCV_O_NOATIME     01000000  
 #define RISCV_O_PATH        010000000 
 #define RISCV_O_TMPFILE     020200000 
 #endif
 
+#define RISCV_MAP_ANONYMOUS 0x20
+#define RISCV_MAP_PRIVATE 0x2
+#define RISCV_MAP_FIXED 0x10
+
+#define RISCV_AT_FDCWD     -100
+
+#define RISCV_SIGCHLD 17
 
 #define VANADIS_SYSCALL_RISCV_UNLINKAT 35 
 #define VANADIS_SYSCALL_RISCV_READ 63
@@ -68,25 +75,28 @@
 #define VANADIS_SYSCALL_RISCV_UNAME 160
 #define VANADIS_SYSCALL_RISCV_READV 65
 #define VANADIS_SYSCALL_RISCV_WRITEV 66
-#define VANADIS_SYSCALL_RISCV_RT_SETSIGMASK 135
+#define VANADIS_SYSCALL_RISCV_FSTAT 80
+#define VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK 135
+#define VANADIS_SYSCALL_RISCV_RT_SIGACTION 134
 #define VANADIS_SYSCALL_RISCV_MADVISE 233
 #define VANADIS_SYSCALL_RISCV_FUTEX 98
-#define VANADIS_SYSCALL_RISCV_SET_TID 96
+#define VANADIS_SYSCALL_RISCV_SET_TID_ADDRESS 96
+#define VANADIS_SYSCALL_RISCV_CLONE 220
 #define VANADIS_SYSCALL_RISCV_EXIT 93
 #define VANADIS_SYSCALL_RISCV_EXIT_GROUP 94
 #define VANADIS_SYSCALL_RISCV_RM_INOTIFY 28
 #define VANADIS_SYSCALL_RISCV_OPENAT 56
-#define VANADIS_SYSCALL_RISCV_RET_REG 10
 #define VANADIS_SYSCALL_RISCV_SET_RLIST 99
 #define VANADIS_SYSCALL_RISCV_GET_RLIST 100
+#define VANADIS_SYSCALL_RISCV_CLOCK_GETTIME 113
+#define VANADIS_SYSCALL_RISCV_GETPGID 155
+#define VANADIS_SYSCALL_RISCV_GETPID 172 
+#define VANADIS_SYSCALL_RISCV_GETPPID 173
+#define VANADIS_SYSCALL_RISCV_GETTID 178 
+#define VANADIS_SYSCALL_RISCV_MPROTECT 226 
 
-//These are undefined in RV64
-#define VANADIS_SYSCALL_RISCV_GETTIME64 4403
-#define VANADIS_SYSCALL_RISCV_SET_THREAD_AREA 4283
-#define VANADIS_SYSCALL_RISCV_MMAP2 4210
-#define VANADIS_SYSCALL_RISCV_FSTAT 4215
-#define VANADIS_SYSCALL_RISCV_READLINK 4085
-#define VANADIS_SYSCALL_RISCV_ACCESS 4033
+#define VANADIS_SYSCALL_RISCV_THREAD_REG 4 
+#define VANADIS_SYSCALL_RISCV_RET_REG 10
 
 namespace SST {
 namespace Vanadis {
@@ -99,21 +109,21 @@ public:
                                           "Provides SYSCALL handling for a RISCV-based decoding core",
                                           SST::Vanadis::VanadisCPUOSHandler)
 
-    SST_ELI_DOCUMENT_PARAMS({ "brk_zero_memory", "Zero memory during OS calls to brk", "0" })
 
     VanadisRISCV64OSHandler(ComponentId_t id, Params& params) : VanadisCPUOSHandler(id, params) {
 
-        brk_zero_memory = params.find<bool>("brk_zero_memory", false);
     }
 
     virtual ~VanadisRISCV64OSHandler() {}
 
-    virtual bool handleSysCall(VanadisSysCallInstruction* syscallIns) {
+    virtual std::tuple<bool,bool> handleSysCall(VanadisSysCallInstruction* syscallIns) {
+        uint64_t instPtr = syscallIns->getInstructionAddress();
         const uint16_t call_link_reg = isaTable->getIntPhysReg(31);
         uint64_t call_link_value = regFile->getIntReg<uint64_t>(call_link_reg);
         output->verbose(CALL_INFO, 8, 0, "System Call (syscall-ins: 0x%0llx, link-reg: 0x%llx)\n",
                         syscallIns->getInstructionAddress(), call_link_value);
 
+        bool flushLSQ = false;
         const uint32_t hw_thr = syscallIns->getHWThread();
 
         // RISCV puts codes in GPR r2
@@ -125,8 +135,54 @@ public:
         VanadisSyscallEvent* call_ev = nullptr;
 
         switch (os_code) {
+
+        case VANADIS_SYSCALL_RISCV_CLONE: {
+            uint64_t flags = getRegister(10);
+            uint64_t threadStack = getRegister(11);
+            int64_t ptid = getRegister(12);
+            int64_t tls = getRegister(13);
+            int64_t ctid  = getRegister(14);
+
+            if ( flags == RISCV_SIGCHLD ) {
+                call_ev = new VanadisSyscallForkEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B);
+            } else { 
+                call_ev = new VanadisSyscallCloneEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, instPtr, threadStack, flags, ptid, tls, ctid );
+            }
+        } break;
+
+        case VANADIS_SYSCALL_RISCV_MPROTECT: {
+            uint64_t addr = getRegister(10);
+            uint64_t len = getRegister(11);
+            int64_t prot = getRegister(12);
+
+            int myProt = 0;
+            if ( prot & 0x1 ) {
+                myProt |= PROT_READ;
+            }
+            if ( prot & 0x2 ) {
+                myProt |= PROT_WRITE;
+            }
+
+            call_ev = new VanadisSyscallMprotectEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, addr, len, myProt );
+        } break;
+
+        case VANADIS_SYSCALL_RISCV_GETPID: {
+            call_ev = new VanadisSyscallGetxEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B,SYSCALL_OP_GETPID);
+        } break;
+
+        case VANADIS_SYSCALL_RISCV_GETPGID: {
+            call_ev = new VanadisSyscallGetxEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B,SYSCALL_OP_GETPGID);
+        } break;
+        case VANADIS_SYSCALL_RISCV_GETPPID: {
+            call_ev = new VanadisSyscallGetxEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B,SYSCALL_OP_GETPPID);
+        } break;
+
+        case VANADIS_SYSCALL_RISCV_GETTID: {
+            call_ev = new VanadisSyscallGetxEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B,SYSCALL_OP_GETTID);
+        } break;
+
+#if 0
         case VANADIS_SYSCALL_RISCV_READLINK: {
-    assert(0);
             const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
             uint64_t readlink_path = regFile->getIntReg<uint64_t>(phys_reg_4);
 
@@ -138,6 +194,7 @@ public:
 
             call_ev = new VanadisSyscallReadLinkEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, readlink_path, readlink_buff_ptr, readlink_size);
         } break;
+#endif
 
         case VANADIS_SYSCALL_RISCV_READ: {
             int64_t read_fd = getRegister(10);
@@ -151,8 +208,8 @@ public:
             call_ev = new VanadisSyscallReadEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, read_fd, read_buff_ptr, read_count);
         } break;
 
+#if 0
         case VANADIS_SYSCALL_RISCV_ACCESS: {
-    assert(0);
             const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
             uint64_t path_ptr = regFile->getIntReg<uint64_t>(phys_reg_4);
 
@@ -163,18 +220,19 @@ public:
                             path_ptr, access_mode);
             call_ev = new VanadisSyscallAccessEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, path_ptr, access_mode);
         } break;
+#endif
 
         case VANADIS_SYSCALL_RISCV_BRK: {
             const uint64_t phys_reg_10 = isaTable->getIntPhysReg(10);
             uint64_t newBrk = regFile->getIntReg<uint64_t>(phys_reg_10);
 
-            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to brk( value: %" PRIu64 " / 0x%llx ), zero: %s\n",
-                            newBrk, newBrk, brk_zero_memory ? "yes" : "no");
-            call_ev = new VanadisSyscallBRKEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, newBrk, brk_zero_memory);
+            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to brk( value: %" PRIu64 " / 0x%llx )\n",
+                            newBrk, newBrk);
+            call_ev = new VanadisSyscallBRKEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, newBrk);
         } break;
 
+#if 0
         case VANADIS_SYSCALL_RISCV_SET_THREAD_AREA: {
-    assert(0);
             const uint64_t phys_reg_4 = isaTable->getIntPhysReg(4);
             uint64_t thread_area_ptr = regFile->getIntReg<uint64_t>(phys_reg_4);
 
@@ -188,6 +246,7 @@ public:
 
             call_ev = new VanadisSyscallSetThreadAreaEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, thread_area_ptr);
         } break;
+#endif
 
         case VANADIS_SYSCALL_RISCV_RM_INOTIFY: {
     assert(0);
@@ -215,12 +274,8 @@ public:
         } break;
 
         case VANADIS_SYSCALL_RISCV_FSTAT: {
-    assert(0);
-            const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
-            int32_t file_handle = regFile->getIntReg<int32_t>(phys_reg_4);
-
-            const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
-            uint64_t fstat_addr = regFile->getIntReg<uint64_t>(phys_reg_5);
+            int32_t file_handle = getRegister(10);
+            uint64_t fstat_addr = getRegister(11);
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to fstat( %" PRId32 ", %" PRIu64 " )\n",
                             file_handle, fstat_addr);
@@ -233,7 +288,13 @@ public:
             int64_t path_addr = getRegister( 11 );
             int64_t flags = getRegister( 12 );
 
-            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to unlinkat( %d, %" PRIu64 ", %#" PRIx64" )\n",dirFd,path_addr,flags);
+#ifdef SST_COMPILE_MACOSX
+            if (  RISCV_AT_FDCWD == dirFd ) {
+                dirFd = AT_FDCWD;                
+            } 
+#endif
+
+            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to unlinkat( %" PRIu64 ", %" PRIu64 ", %#" PRIx64" )\n",dirFd,path_addr,flags);
 
             call_ev = new VanadisSyscallUnlinkatEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, dirFd,path_addr,flags);
         } break;
@@ -248,15 +309,21 @@ public:
         } break;
 
         case VANADIS_SYSCALL_RISCV_OPENAT: {
-            uint64_t openat_dirfd = getRegister( 10 );
-            uint64_t openat_path_ptr = getRegister( 11 );
-            uint64_t openat_flags = getRegister( 12 );
-            uint64_t openat_mode = getRegister(13);
+            uint64_t dirfd = getRegister( 10 );
+            uint64_t path_ptr = getRegister( 11 );
+            uint64_t flags = getRegister( 12 );
+            uint64_t mode = getRegister(13);
 
-            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to openat( %d, %#llx, %#" PRIx64 ", %#" PRIx64 ")\n",
-                    openat_dirfd, openat_path_ptr, openat_flags, openat_mode);
+#ifdef SST_COMPILE_MACOSX
+            if (  RISCV_AT_FDCWD == dirfd ) {
+                dirfd = AT_FDCWD;                
+            } 
+#endif
 
-            call_ev = new VanadisSyscallOpenAtEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, openat_dirfd, openat_path_ptr, convertFlags(openat_flags), openat_mode);
+            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to openat( %" PRIu64 ", %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ")\n",
+                    dirfd, path_ptr, flags, mode);
+
+            call_ev = new VanadisSyscallOpenatEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, dirfd, path_ptr, convertFlags(flags), mode);
         } break;
 
         case VANADIS_SYSCALL_RISCV_READV: {
@@ -287,6 +354,7 @@ public:
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to exit( %" PRId64 " )\n",
                             exit_code);
             call_ev = new VanadisSyscallExitEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, exit_code);
+            flushLSQ=true;
         } break;
 
         case VANADIS_SYSCALL_RISCV_EXIT_GROUP: {
@@ -296,6 +364,7 @@ public:
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to exit_group( %" PRId64 " )\n",
                             exit_code);
             call_ev = new VanadisSyscallExitGroupEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, exit_code);
+            flushLSQ=true;
         } break;
 
         case VANADIS_SYSCALL_RISCV_WRITE: {
@@ -309,18 +378,15 @@ public:
             call_ev = new VanadisSyscallWriteEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, write_fd, write_buff, write_count);
         } break;
 
-        case VANADIS_SYSCALL_RISCV_SET_TID: {
-            const uint16_t phys_reg_10 = isaTable->getIntPhysReg(10);
-            int64_t new_tid = regFile->getIntReg<int64_t>(phys_reg_10);
+        case VANADIS_SYSCALL_RISCV_SET_TID_ADDRESS: {
+            uint64_t addr = getRegister(10);
 
-            setThreadID(new_tid);
-            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found call to set_tid( %" PRId64 " / 0x%llx )\n", new_tid, new_tid);
+            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] set_tid_address( %#" PRIx64 " )\n", addr);
+            call_ev = new VanadisSyscallSetTidAddressEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, addr);
 
-            recvSyscallResp(new VanadisSyscallResponse(new_tid));
         } break;
 
         case VANADIS_SYSCALL_RISCV_MADVISE: {
-    assert(0);
             const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
             uint64_t advise_addr = regFile->getIntReg<int64_t>(phys_reg_4);
 
@@ -334,33 +400,25 @@ public:
                             "[syscall-handler] found call to madvise( 0x%llx, %" PRIu64 ", %" PRIu64 " )\n",
                             advise_addr, advise_len, advise_advice);
 
-            // output->fatal(CALL_INFO, -1, "STOP\n");
+            printf("Warning: VANADIS_SYSCALL_RISCV_MADVISE not implmented return success\n");
             recvSyscallResp(new VanadisSyscallResponse(0));
         } break;
 
         case VANADIS_SYSCALL_RISCV_FUTEX: {
-    assert(0);
-            const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
-            uint64_t futex_addr = regFile->getIntReg<uint64_t>(phys_reg_4);
-
-            const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
-            int32_t futex_op = regFile->getIntReg<uint64_t>(phys_reg_5);
-
-            const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
-            uint32_t futex_val = regFile->getIntReg<int32_t>(phys_reg_6);
-
-            const uint16_t phys_reg_7 = isaTable->getIntPhysReg(7);
-            uint64_t futex_timeout_addr = regFile->getIntReg<int32_t>(phys_reg_7);
-
-            const uint16_t phys_reg_sp = isaTable->getIntPhysReg(29);
-            uint64_t stack_ptr = regFile->getIntReg<uint64_t>(phys_reg_sp);
+            uint64_t addr = getRegister(10);
+            int32_t op = getRegister(11);
+            uint32_t val = getRegister(12);
+            uint64_t timeout_addr = getRegister(13);
+            uint64_t val2 = getRegister(14);
+            uint64_t addr2 = getRegister(15);
+            uint64_t val3 = getRegister(16);
 
             output->verbose(CALL_INFO, 8, 0,
-                            "[syscall-handler] found a call to futex( 0x%llx, %" PRId32 ", %" PRIu32 ", %" PRIu64
-                            ", sp: 0x%llx (arg-count is greater than 4))\n",
-                            futex_addr, futex_op, futex_val, futex_timeout_addr, stack_ptr);
+                            "[syscall-handler] futex( %#" PRIx64 ", %" PRId32 ", %" PRIu32 ", %#" PRIu64 ", %" PRIu32 " %#" PRIu64 " %" PRIu32 " )\n",
+                            addr, op, val, timeout_addr, val2, addr2, val3);
 
-            recvSyscallResp(new VanadisSyscallResponse(0));
+            call_ev = new VanadisSyscallFutexEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, addr, op, val, timeout_addr, val2, addr2, val3 );
+
         } break;
 
         case VANADIS_SYSCALL_RISCV_IOCTL: {
@@ -392,49 +450,13 @@ public:
                             "\n",
                             is_read ? 'y' : 'n', is_write ? 'y' : 'n', data_size, io_op, io_driver);
 
-            call_ev = new VanadisSyscallIOCtlEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, fd, is_read, is_write, io_op, io_driver, ptr,
+            call_ev = new VanadisSyscallIoctlEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, fd, is_read, is_write, io_op, io_driver, ptr,
                                                    data_size);
         } break;
 
-        case VANADIS_SYSCALL_RISCV_MMAP: {
-            const uint16_t phys_reg_10 = isaTable->getIntPhysReg(10);
-            uint64_t map_addr = regFile->getIntReg<uint64_t>(phys_reg_10);
-
-            const uint16_t phys_reg_11 = isaTable->getIntPhysReg(11);
-            uint64_t map_len = regFile->getIntReg<uint64_t>(phys_reg_11);
-
-            const uint16_t phys_reg_12 = isaTable->getIntPhysReg(12);
-            int32_t map_prot = regFile->getIntReg<int32_t>(phys_reg_12);
-
-            const uint16_t phys_reg_13 = isaTable->getIntPhysReg(13);
-            int32_t map_flags = regFile->getIntReg<int32_t>(phys_reg_13);
-
-            const uint16_t phys_reg_14 = isaTable->getIntPhysReg(14);
-            int32_t map_fd = regFile->getIntReg<int32_t>(phys_reg_14);
-
-            const uint16_t phys_reg_15 = isaTable->getIntPhysReg(15);
-            int64_t map_offset = regFile->getIntReg<int64_t>(phys_reg_15);
-
-            output->verbose(CALL_INFO, 8, 0,
-                            "[syscall-handler] found a call to mmap( 0x%llx, %" PRIu64 ", %" PRId32 ", %" PRId32
-                            ", %" PRId32 ", %" PRId64 " )\n",
-                            map_addr, map_len, map_prot, map_flags, map_fd, map_offset);
-
-            output->fatal(CALL_INFO, -1, "STOP\n");
-
-            if ((0 == map_addr) && (0 == map_len)) {
-                recvSyscallResp(new VanadisSyscallResponse(-22));
-            } else {
-            }
-        } break;
-
         case VANADIS_SYSCALL_RISCV_UNMAP: {
-    assert(0);
-            const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
-            uint64_t unmap_addr = regFile->getIntReg<uint64_t>(phys_reg_4);
-
-            const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
-            uint64_t unmap_len = regFile->getIntReg<uint64_t>(phys_reg_5);
+            uint64_t unmap_addr = getRegister( 10 );
+            uint64_t unmap_len = getRegister( 11 );
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to unmap( 0x%llx, %" PRIu64 " )\n",
                             unmap_addr, unmap_len);
@@ -446,39 +468,45 @@ public:
             }
         } break;
 
-        case VANADIS_SYSCALL_RISCV_MMAP2: {
-    assert(0);
-            const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
-            uint64_t map_addr = regFile->getIntReg<uint64_t>(phys_reg_4);
+        case VANADIS_SYSCALL_RISCV_MMAP: {
+            uint64_t map_addr = getRegister( 10 );
+            uint64_t map_len = getRegister( 11 );
+            int32_t map_prot = getRegister( 12 );
+            int32_t map_flags = getRegister( 13 );
+            int32_t fd = getRegister( 14 );
+            int64_t offset = getRegister( 15 );
 
-            const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
-            uint64_t map_len = regFile->getIntReg<uint64_t>(phys_reg_5);
+            int32_t hostFlags = 0;
 
-            const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
-            int32_t map_prot = regFile->getIntReg<int32_t>(phys_reg_6);
+            if ( map_flags & MIPS_MAP_FIXED ) {
+                output->verbose(CALL_INFO, 8, 0,"[syscall-handler] mmap() we don't support MAP_FIXED return error EEXIST\n");
 
-            const uint16_t phys_reg_7 = isaTable->getIntPhysReg(7);
-            int32_t map_flags = regFile->getIntReg<int32_t>(phys_reg_7);
+                recvSyscallResp(new VanadisSyscallResponse(-EEXIST));
+            } else {
 
-            const uint16_t phys_reg_sp = isaTable->getIntPhysReg(29);
-            uint64_t stack_ptr = regFile->getIntReg<uint64_t>(phys_reg_sp);
+                if ( map_flags & RISCV_MAP_ANONYMOUS ) {
+                    hostFlags |= MAP_ANONYMOUS; 
+                    map_flags &= ~RISCV_MAP_ANONYMOUS;
+                }
+                if ( map_flags & RISCV_MAP_PRIVATE ) {
+                    hostFlags |= MAP_PRIVATE; 
+                    map_flags &= ~RISCV_MAP_PRIVATE;
+                }
+                assert( map_flags == 0 );
 
-            output->verbose(CALL_INFO, 8, 0,
+                output->verbose(CALL_INFO, 8, 0,
                             "[syscall-handler] found a call to mmap2( 0x%llx, %" PRIu64 ", %" PRId32 ", %" PRId32
-                            ", sp: 0x%llx (> 4 arguments) )\n",
-                            map_addr, map_len, map_prot, map_flags, stack_ptr);
+                            ", %d, %" PRIu64 ")\n",
+                            map_addr, map_len, map_prot, map_flags, fd, offset );
 
-            call_ev = new VanadisSyscallMemoryMapEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, map_addr, map_len, map_prot, map_flags,
-                                                       stack_ptr, 4096);
+                call_ev = new VanadisSyscallMemoryMapEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B,
+                        map_addr, map_len, map_prot, hostFlags, fd, offset, 0, 0);
+            }
         } break;
 
-        case VANADIS_SYSCALL_RISCV_GETTIME64: {
-    assert(0);
-            const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
-            int64_t clk_type = regFile->getIntReg<int64_t>(phys_reg_4);
-
-            const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
-            uint64_t time_addr = regFile->getIntReg<uint64_t>(phys_reg_5);
+        case VANADIS_SYSCALL_RISCV_CLOCK_GETTIME: {
+            int64_t clk_type = getRegister( 10 );
+            uint64_t time_addr = getRegister( 11 );
 
             output->verbose(CALL_INFO, 8, 0,
                             "[syscall-handler] found a call to clock_gettime64( %" PRId64 ", 0x%llx )\n", clk_type,
@@ -487,24 +515,23 @@ public:
             call_ev = new VanadisSyscallGetTime64Event(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, clk_type, time_addr);
         } break;
 
-        case VANADIS_SYSCALL_RISCV_RT_SETSIGMASK: {
-    assert(0);
-            const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
-            int32_t how = regFile->getIntReg<int32_t>(phys_reg_4);
+        case VANADIS_SYSCALL_RISCV_RT_SIGACTION: {
+            printf("Warning: VANADIS_SYSCALL_RISCV_RT_SIGACTION not implmented return success\n");
+            recvSyscallResp(new VanadisSyscallResponse(0));
+        } break;
 
-            const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
-            uint64_t signal_set_in = regFile->getIntReg<uint64_t>(phys_reg_5);
-
-            const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
-            uint64_t signal_set_out = regFile->getIntReg<uint64_t>(phys_reg_6);
-
-            const uint16_t phys_reg_7 = isaTable->getIntPhysReg(7);
-            int32_t signal_set_size = regFile->getIntReg<int32_t>(phys_reg_7);
+        case VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK: {
+            int32_t how = getRegister( 10 );
+            uint64_t signal_set_in = getRegister( 11 );
+            uint64_t signal_set_out = getRegister( 12 );
+            int32_t signal_set_size = getRegister( 13 );
 
             output->verbose(CALL_INFO, 8, 0,
                             "[syscall-handler] found a call to rt_sigprocmask( %" PRId32 ", 0x%llx, 0x%llx, %" PRId32
                             ")\n",
                             how, signal_set_in, signal_set_out, signal_set_size);
+
+            printf("Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success\n");
 
             recvSyscallResp(new VanadisSyscallResponse(0));
         } break;
@@ -522,9 +549,9 @@ public:
         if (nullptr != call_ev) {
             output->verbose(CALL_INFO, 8, 0, "Sending event to operating system...\n");
             sendSyscallEvent(call_ev);
-            return false;
+            return std::make_tuple(false,flushLSQ);
         } else {
-            return true;
+            return std::make_tuple(true,flushLSQ);
         }
     }
 
@@ -533,50 +560,17 @@ public:
                             os_resp->getReturnCode(), os_resp->isSuccessful() ? "yes" : "no");
         output->verbose(CALL_INFO, 8, 0, "-> issuing call-backs to clear syscall ROB stops...\n");
 
-        // Set up the return code (according to ABI, this goes in r2)
+        // Set up the return code (according to ABI, this goes in r10)
         const uint16_t rc_reg = isaTable->getIntPhysReg(VANADIS_SYSCALL_RISCV_RET_REG);
         const int64_t rc_val = (int64_t)os_resp->getReturnCode();
         regFile->setIntReg(rc_reg, rc_val);
 
-//            if (os_resp->isSuccessful()) {
-//                if (rc_val < 0) {
-//                    writeSyscallResult(false);
-//                } else {
-//                    // Generate correct markers for OS return code checks
-//                    writeSyscallResult(os_resp->isSuccessful());
-//                }
-//            } else {
-//                writeSyscallResult(false);
-//            }
+        delete os_resp;
     }
-
 
 protected:
-/*
-    void writeSyscallResult(const bool success) {
-        const uint64_t os_success = 0;
-        const uint64_t os_failed = 1;
-        const uint16_t succ_reg = isaTable->getIntPhysReg(VANADIS_SYSCALL_RISCV_RET_REG);
 
-        if (success) {
-            output->verbose(CALL_INFO, 8, 0,
-                            "syscall - generating successful (v: 0) result (isa-reg: "
-                            "7, phys-reg: %" PRIu16 ")\n",
-                            succ_reg);
-
-            regFile->setIntReg(succ_reg, os_success);
-        } else {
-            output->verbose(CALL_INFO, 8, 0,
-                            "syscall - generating failed (v: 1) result (isa-reg: 7, "
-                            "phys-reg: %" PRIu16 ")\n",
-                            succ_reg);
-
-            regFile->setIntReg(succ_reg, os_failed);
-        }
-    }
-*/
-
-   uint64_t convertFlags( uint64_t flags ) {
+    uint64_t convertFlags( uint64_t flags ) {
         uint64_t out = 0;
 
         RISC_CONVERT( RDONLY );
@@ -596,14 +590,19 @@ protected:
         RISC_CONVERT( NONBLOCK );
         RISC_CONVERT( NDELAY );
 
-#ifndef SST_COMPILE_MACOSX
+#ifdef SST_COMPILE_MACOSX
+        flags &= ~RISCV_O_LARGEFILE; 
+#else
         RISC_CONVERT( DIRECT );
         RISC_CONVERT( LARGEFILE );
         RISC_CONVERT( NOATIME );
         RISC_CONVERT( PATH );
         RISC_CONVERT( TMPFILE );
 #endif
-        assert( 0 == flags );
+        if ( flags ) {
+            printf("%s() all flags have not been converted %#x\n",__func__,flags);
+            assert( 0 );
+        }
 
         return out;
     }

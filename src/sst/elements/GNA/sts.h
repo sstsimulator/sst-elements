@@ -44,7 +44,7 @@ public:
     STS(GNA *parent, int n) : myGNA(parent), stsID(n), numSpikes(0) {;}
     bool isFree();
     void assign(int);
-    void advance(uint);
+    void advance(uint32_t);
     void returnRequest(SST::Interfaces::StandardMem::Request *req) {
         incomingReqs.push(req);
     }
