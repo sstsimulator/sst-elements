@@ -197,6 +197,10 @@ link_mem_rtr.connect( (mem_nic, "port", "1000ps"), (chiprtr, "port3", "1000ps") 
 # GPU Memory hierarchy configuration
 print ("Configuring GPU Network-on-Chip...")
 
+# GPU Xbar group
+l1g_group = 1
+l2g_group = 2
+
 gpu_router_ports = config.gpu_cores + config.gpu_l2_parts
 
 GPUrouter = sst.Component("gpu_xbar", "shogun.ShogunXBar")
@@ -216,13 +220,18 @@ for next_core_id in range(config.gpu_cores):
     l1g.addParams(config.getGPUL1Params())
     l1g.addParams(debug_params)
 
+    l1g_gpulink = l1g.setSubComponent("cpulink", "memHierarchy.MemLink")
+    l1g_memlink = l1g.setSubComponent("memlink", "memHierarchy.MemNIC")
+    l1g_memlink.addParams({"group": l1g_group})
+    l1g_linkctrl = l1g_memlink.setSubComponent("linkcontrol", "shogun.ShogunNIC")
+
     connect("gpu_cache_link_%d"%next_core_id,
             mmio, gpuPort,
-            l1g, "high_network_0",
+            l1g_gpulink, "port",
             config.default_link_latency).setNoCut()
 
     connect("l1gcache_%d_link"%next_core_id,
-            l1g, "cache",
+            l1g_linkctrl, "port",
             GPUrouter, "port%d"%next_core_id,
             config.default_link_latency)
 
@@ -315,14 +324,18 @@ for next_group_id in range(config.hbmStacks):
 
       l2g = sst.Component("l2gcache_%d"%(next_cache), "memHierarchy.Cache")
       l2g.addParams(config.getGPUL2Params(cacheStartAddr, endAddr))
+      l2g_gpulink = l2g.setSubComponent("cpulink", "memHierarchy.MemNIC")
+      l2g_gpulink.addParams({"group": l2g_group})
+      l2g_linkctrl = l2g_gpulink.setSubComponent("linkcontrol", "shogun.ShogunNIC")
+      l2g_memlink = l2g.setSubComponent("memlink", "memHierarchy.MemLink")
 
       connect("l2g_xbar_link_%d"%(next_cache),
       GPUrouter, "port%d"%(config.gpu_cores+(next_cache)),
-      l2g, "cache",
+      l2g_linkctrl, "port",
       config.default_link_latency).setNoCut()
 
       connect("l2g_mem_link_%d"%(next_cache),
-      l2g, "low_network_0",
+      l2g_memlink, "port",
       mem_l2_bus, "high_network_%d"%(next_mem_id),
       config.default_link_latency).setNoCut()
 
