@@ -36,7 +36,10 @@ public:
         )
         // Document the ports that this component accepts
         SST_ELI_DOCUMENT_PORTS(
-                {"port",  "Link to another component", { "PandosProgramming.PandosEvent", ""} }
+                // example link
+                {"port",  "Link to another component", { "PandosProgramming.PandosEvent", ""} },
+                // this link should link a node to itself
+                {"coreLocalSPM", "Link to core local memory", {"PandosProgramming.PandosMemoryRequestEvent", ""}}
         )
 
         /**
@@ -68,12 +71,25 @@ public:
          * initalize cores
          */
         void initCores();
+
+        /**
+         * send memory request on behalf of a core
+         */
+        void sendMemoryRequest(int src_core);
+
+        /**
+         * handle a response from memory to a request
+         */
+        void recvMemoryResponse(SST::Event *memrsp);
         
         // SST Output object, for printing error messages, etc.
         SST::Output *out;
 
         // Links to other nodes
         SST::Link* port;
+
+        // Links memories
+        SST::Link* coreLocalSPM; // Link to core local scratchpad
 
         int32_t num_cores; //!< The number of cores in this node
         int32_t instr_per_task; //!< The number of instructions per task

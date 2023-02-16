@@ -4,6 +4,7 @@
 #include "sst_config.h"
 #include "PandosNode.h"
 #include "PandosEvent.h"
+#include "PandosMemoryRequestEvent.h"
 
 using namespace SST;
 using namespace SST::PandosProgramming;
@@ -121,8 +122,8 @@ PandosNodeT::PandosNodeT(ComponentId_t id, Params &params) : Component(id), prog
         registerAsPrimaryComponent();
         primaryComponentDoNotEndSim();    
 
-        // Configure link
-        port = configureLink("port", new Event::Handler<PandosNodeT>(this, &PandosNodeT::handleEvent));
+        // configure the coreLocalSPM link
+        coreLocalSPM = configureLink("coreLocalSPM", new Event::Handler<PandosNodeT>(this, &PandosNodeT::recvMemoryResponse));
         
         // Register clock
         registerClock("1GHz", new Clock::Handler<PandosNodeT>(this, &PandosNodeT::clockTic));
@@ -140,38 +141,102 @@ PandosNodeT::~PandosNodeT() {
 }
 
 /**
- * Handles event when it arrives on the link
+ * send memory request on behalf of a core
  */
-void PandosNodeT::handleEvent(SST::Event *ev) {    
-        out->output(CALL_INFO, "Event received.\n");
-        PandosEventT *pev = dynamic_cast<PandosEventT*>(ev);
-        if (!pev) {
-                out->fatal(CALL_INFO, -1, "Bad event type received by %s\n", getName().c_str());
-        } else {
-                delete pev;
+void PandosNodeT::sendMemoryRequest(int src_core) {
+        using namespace pando;
+        using namespace backend;
+        core_context_t *core_ctx = core_contexts[src_core];
+        cs_stall_mem_info_t *info = &core_ctx->core_state.stall_mem_info;
+        PandosMemoryRequestEventT *req;        
+        switch (info->mem_type) {
+        case eMemTypeSPM:                
+        case eMemTypeDRAM: // FOR NOW... treat like SPM. TODO: fix
+                req = new PandosMemoryRequestEventT;
+                req->src_core = src_core;
+                req->size = 0;
+                coreLocalSPM->send(req);
+                break;
+        default: // should never happen
+                out->fatal(CALL_INFO, -1, "%s: %s: Sending memory request with bad type %d\n", __func__, getName().c_str());
+                abort();
+                break;
         }
-        //primaryComponentOKToEndSim();
 }
 
+/**
+ * handle a response from memory to a request
+ */
+void PandosNodeT::recvMemoryResponse(SST::Event *memrsp) {
+        using namespace pando;
+        using namespace backend;
+        out->output(CALL_INFO, "Memory response recieved.\n");
+
+        // check that this is actually the right type of event        
+        PandosMemoryRequestEventT *mem_request_event = dynamic_cast<PandosMemoryRequestEventT*>(memrsp);
+        if (!mem_request_event) {
+                out->fatal(CALL_INFO, -1
+                           ,"%s: %s: Received an event that is not a memory request\n"
+                           ,__func__
+                           ,getName().c_str()
+                        );
+                return;
+        }
+        
+        // map memory request back to the core from which it originated
+        int core_id = mem_request_event->src_core;
+        if (core_id >= core_contexts.size()) {
+                out->fatal(CALL_INFO, -1
+                           ,"%s: %s: Received a request with src_core=%4d: num_cores = %4d\n"
+                           ,__func__
+                           ,getName().c_str()
+                           ,core_id
+                           ,core_contexts.size()
+                        );
+                abort();
+        }
+        core_context_t *core_ctx = core_contexts[core_id];
+
+        // make core as ready
+        core_ctx->core_state.type = eCoreReady;
+
+        // cleanup the event
+        delete mem_request_event;
+}
+
+        
 /**
  * Handle a clockTic
  *
  * return true if the clock handler should be disabeld, false o/w
  */
 bool PandosNodeT::clockTic(SST::Cycle_t cycle) {
-        // auto *ev = new PandosEventT();
-        // ev->payload.push_back('h');
-        // ev->payload.push_back('i');
-        // port->send(ev);
-
-        // execute some pando program
+        using namespace pando;
+        using namespace backend;
+        
+        // execute some pando program        
         set_current_pando_ctx(pando_context);
-
+        
         // have each core execute if not busy
-        for (pando::backend::core_context_t *core : core_contexts) {
-                if (core->busy || !core->task_deque.empty()) {
+        for (int core_id = 0; core_id < core_contexts.size(); core_id++) {
+                core_context_t *core = core_contexts[core_id];
+                // TODO: this should maybe be a while () loop instead...
+                if (core->core_state.type == eCoreReady || !core->task_deque.empty()) {
+                        // execute some code on this core
                         core->execute();
-                }
+                        // check the core's state
+                        switch (core->core_state.type) {
+                        case eCoreStallMemory:
+                                // generate an event an depending on the memory type
+                                sendMemoryRequest(core_id);
+                                break;
+                        case eCoreReady:
+                        case eCoreIdle:
+                        default:                                
+                                break;
+                                
+                        }
+                }                
         }
 
         return false;
