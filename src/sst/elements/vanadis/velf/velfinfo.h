@@ -939,7 +939,12 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
     FILE* bin_file = fopen(path, "rb");
 
     if (nullptr == bin_file) {
-        output->fatal(CALL_INFO, -1, "Error: unable to open \'%s\', cannot read ELF table.\n", path);
+        if (bin_file = fopen(path, "r")) {
+            fclose(bin_file);
+            output->fatal(CALL_INFO, -1, "Error: unable to open \'%s\', cannot read ELF table.\n", path);
+        } else {
+            output->fatal(CALL_INFO, -1, "Error: unable to open \'%s\', is this path correct?\n", path);
+        }
     }
 
     uint8_t* elf_magic = new uint8_t[4];
