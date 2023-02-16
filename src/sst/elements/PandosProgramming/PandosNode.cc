@@ -6,8 +6,19 @@
 #include "PandosEvent.h"
 #include "PandosMemoryRequestEvent.h"
 
+
 using namespace SST;
 using namespace SST::PandosProgramming;
+
+void PandosNodeT::checkCoreID(int line, const char *file, const char *function, int core_id) {
+        if (core_id < 0 || core_id >= core_contexts.size()) {
+                out->fatal(line, file, function, -1, "%s: bad core id = %d, num_cores = %d\n"
+                           ,getName().c_str()
+                           ,core_id
+                           ,core_contexts.size());
+                abort();
+        }
+}
 
 void PandosNodeT::openProgramBinary()
 {
@@ -124,6 +135,7 @@ PandosNodeT::PandosNodeT(ComponentId_t id, Params &params) : Component(id), prog
 
         // configure the coreLocalSPM link
         coreLocalSPM = configureLink("coreLocalSPM", new Event::Handler<PandosNodeT>(this, &PandosNodeT::recvMemoryResponse));
+        podSharedDRAM = configureLink("podSharedDRAM", new Event::Handler<PandosNodeT>(this, &PandosNodeT::recvMemoryResponse));
         
         // Register clock
         registerClock("1GHz", new Clock::Handler<PandosNodeT>(this, &PandosNodeT::clockTic));
@@ -146,16 +158,22 @@ PandosNodeT::~PandosNodeT() {
 void PandosNodeT::sendMemoryRequest(int src_core) {
         using namespace pando;
         using namespace backend;
+        checkCoreID(CALL_INFO, src_core);
         core_context_t *core_ctx = core_contexts[src_core];
         cs_stall_mem_info_t *info = &core_ctx->core_state.stall_mem_info;
         PandosMemoryRequestEventT *req;        
         switch (info->mem_type) {
         case eMemTypeSPM:                
-        case eMemTypeDRAM: // FOR NOW... treat like SPM. TODO: fix
                 req = new PandosMemoryRequestEventT;
                 req->src_core = src_core;
                 req->size = 0;
                 coreLocalSPM->send(req);
+                break;
+        case eMemTypeDRAM: // FOR NOW... treat like SPM. TODO: fix
+                req = new PandosMemoryRequestEventT;
+                req->src_core = src_core;
+                req->size = 0;
+                podSharedDRAM->send(req);
                 break;
         default: // should never happen
                 out->fatal(CALL_INFO, -1, "%s: %s: Sending memory request with bad type %d\n", __func__, getName().c_str());
@@ -185,16 +203,8 @@ void PandosNodeT::recvMemoryResponse(SST::Event *memrsp) {
         
         // map memory request back to the core from which it originated
         int core_id = mem_request_event->src_core;
-        if (core_id >= core_contexts.size()) {
-                out->fatal(CALL_INFO, -1
-                           ,"%s: %s: Received a request with src_core=%4d: num_cores = %4d\n"
-                           ,__func__
-                           ,getName().c_str()
-                           ,core_id
-                           ,core_contexts.size()
-                        );
-                abort();
-        }
+        checkCoreID(CALL_INFO, core_id);
+
         core_context_t *core_ctx = core_contexts[core_id];
 
         // make core as ready

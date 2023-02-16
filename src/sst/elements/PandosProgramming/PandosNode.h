@@ -38,8 +38,10 @@ public:
         SST_ELI_DOCUMENT_PORTS(
                 // example link
                 {"port",  "Link to another component", { "PandosProgramming.PandosEvent", ""} },
-                // this link should link a node to itself
-                {"coreLocalSPM", "Link to core local memory", {"PandosProgramming.PandosMemoryRequestEvent", ""}}
+                // this link should link a node to itself, for now...
+                {"coreLocalSPM",  "Link to core local memory", {"PandosProgramming.PandosMemoryRequestEvent", ""}},
+                // this link should link a node to itself, for now...                
+                {"podSharedDRAM", "Link to pod's shared DRAM", {"PandosProgramming.PandosMemoryRequestEvent", ""}}                
         )
 
         /**
@@ -81,6 +83,12 @@ public:
          * handle a response from memory to a request
          */
         void recvMemoryResponse(SST::Event *memrsp);
+
+
+        /**
+         * check if core id is valid, abort() if not
+         */
+        void checkCoreID(int line, const char *file, const char *function, int core_id);
         
         // SST Output object, for printing error messages, etc.
         SST::Output *out;
@@ -90,6 +98,7 @@ public:
 
         // Links memories
         SST::Link* coreLocalSPM; // Link to core local scratchpad
+        SST::Link* podSharedDRAM; // link to pod's shared DRAM
 
         int32_t num_cores; //!< The number of cores in this node
         int32_t instr_per_task; //!< The number of instructions per task
