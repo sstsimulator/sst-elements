@@ -1964,6 +1964,7 @@ void VANADIS_COMPONENT::recvOSEvent(SST::Event* ev) {
         
         if ( ! os_resp->hasExited() ) {
             thread_decoders[hw_thr]->getOSHandler()->recvSyscallResp ( os_resp ); 
+            ev = nullptr;
             syscallReturn( hw_thr );
         } else {
             output->verbose(CALL_INFO, 8, 0, "-> thread has exited, leave in halted state\n");
@@ -2015,7 +2016,9 @@ void VANADIS_COMPONENT::recvOSEvent(SST::Event* ev) {
         }
     }
 
-    delete ev;
+    if ( ev ) {
+        delete ev;
+    }
 }
 
 
