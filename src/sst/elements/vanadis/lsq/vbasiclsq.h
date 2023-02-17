@@ -909,6 +909,7 @@ protected:
                 }
 
                 // pop front entry and tell the caller we did something (true)
+                delete op_q.front();
                 op_q.pop_front();
                 return true;
             } break;
@@ -958,6 +959,7 @@ protected:
                 }
 
                 // clear the front entry as we have just processed it
+                delete op_q.front();
                 op_q.pop_front();
                 return true;
             } break;
@@ -991,6 +993,7 @@ protected:
                     stat_fences_executed->addData(1);
 
                     // erase the front entry
+                    delete op_q.front();
                     op_q.pop_front();
                     return true;
                 } else {
