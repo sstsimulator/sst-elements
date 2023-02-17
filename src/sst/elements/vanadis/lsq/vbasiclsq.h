@@ -432,15 +432,11 @@ protected:
                     out->fatal(CALL_INFO, -1, "Write failed, pAddr=%#lx vAddr=%#lx\n", ev->pAddr, ev->vAddr);
                 }
             }
-
-            for(auto std_store_itr = lsq->std_stores_in_flight.begin(); std_store_itr != lsq->std_stores_in_flight.end();
-                std_store_itr++) {
-                    if((*std_store_itr) == ev->getID()) {
-                        lsq->std_stores_in_flight.erase(std_store_itr);
-                        std_store_found = true;
-                        break;
-                    }
-                }
+            auto iter = lsq->std_stores_in_flight.find( ev->getID() ); 
+            if ( iter != lsq->std_stores_in_flight.end() ) {
+                lsq->std_stores_in_flight.erase(iter);
+                std_store_found = true;
+            }
 
             if(std_store_found) {
                 out->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG, "--> write-response is a standard store is matched and cleared from in-flight operations successfully.\n");
@@ -1072,7 +1068,7 @@ protected:
     std::deque<VanadisBasicLoadStoreEntry*> op_q;
     std::deque<VanadisBasicStorePendingEntry*> stores_pending;
     std::deque<VanadisBasicLoadPendingEntry*> loads_pending;
-    std::unordered_set<StandardMem::Request::id_t> std_stores_in_flight;
+    std::set<StandardMem::Request::id_t> std_stores_in_flight;
 
     StandardMem* memInterface;
     StandardMemHandlers* std_mem_handlers;
