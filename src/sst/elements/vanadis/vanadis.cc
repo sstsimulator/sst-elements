@@ -358,6 +358,10 @@ VANADIS_COMPONENT::~VANADIS_COMPONENT()
     delete[] instPrintBuffer;
     delete lsq;
 
+    for ( int i= 0; i < rob.size(); i++ ) {
+        delete rob[i];
+    }
+
     if ( pipelineTrace != nullptr ) { fclose(pipelineTrace); }
 
 	for( VanadisFloatingPointFlags* next_fp_flags : fp_flags ) {
