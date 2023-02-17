@@ -31,7 +31,7 @@ class SimpleTLB : public TLB {
 
     class TlbEntry {
       public:
-        TlbEntry() : m_valid(false) {} 
+        TlbEntry() : m_valid(false) {}
         ~TlbEntry() {}
         void setInvalid() { m_valid = false; }
         bool isValid() { return m_valid; }
@@ -103,6 +103,7 @@ class SimpleTLB : public TLB {
     void callback( Event* ev ) {
         auto selfEvent = dynamic_cast<SelfEvent*>(ev);
         m_callback( selfEvent->getReqId(), selfEvent->getAddr() ); 
+        delete ev; 
     }
 
     void handleMMUEvent( Event * );
@@ -121,11 +122,10 @@ class SimpleTLB : public TLB {
         auto& vec = m_tlbData[ hwThreadId ][ index ];
         
         for ( int i = 0; i<vec.size(); i++ ) {
-            auto entry = vec[i];
-            if ( entry.isValid() ) {
-                m_dbg.debug(CALL_INFO,1,0,"vpn=%#lx, tag=%#lx ppn %#lx -> %#lx perms %#x -> %#x \n",entry.tag(), entry.ppn(), ppn, entry.perms(), perms );
+            if ( vec[i].isValid() ) {
+                m_dbg.debug(CALL_INFO,1,0,"vpn=%#lx, tag=%#lx ppn %#lx -> %#lx perms %#x -> %#x \n",vec[i].tag(), vec[i].ppn(), ppn, vec[i].perms(), perms );
 
-                if ( tag == entry.tag() ) {
+                if ( tag == vec[i].tag() ) {
                     vec[ i ].init( tag, ppn, perms );
                     return;
                 }
@@ -147,7 +147,7 @@ class SimpleTLB : public TLB {
         auto& vec = m_tlbData[ hwThreadId ][ index ];
         for ( int i = 0; i < vec.size(); i++ ) {
 
-            m_dbg.debug(CALL_INFO,2,0,"check valid=%d wantTag=%#x foundTag=%#x\n",vec[i].isValid(), tag, vec[i].tag() );
+            m_dbg.debug(CALL_INFO,2,0,"check valid=%d wantTag=%#x\n",vec[i].isValid(), tag );
             if ( vec[i].isValid() && tag == vec[i].tag() ) {
                 m_dbg.debug(CALL_INFO,1,0,"found tag=%#x index=%#x slot=%d\n",tag, index, i );
                 return& vec[i];
