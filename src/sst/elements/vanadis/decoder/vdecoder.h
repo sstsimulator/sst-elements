@@ -132,6 +132,7 @@ public:
 
     virtual ~VanadisDecoder()
     {
+        delete ins_loader;
         delete os_handler;
         delete branch_predictor;
     }
