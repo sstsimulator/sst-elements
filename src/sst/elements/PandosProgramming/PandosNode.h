@@ -33,6 +33,7 @@ public:
                 {"num_cores", "Number of cores on PandoNode", NULL},
                 {"instructions_per_task", "Instructions per task", NULL},
                 {"program_binary_fname", "Program binary file name", NULL},
+                {"verbose_level", "Verbosity of logging", NULL},                
         )
         // Document the ports that this component accepts
         SST_ELI_DOCUMENT_PORTS(

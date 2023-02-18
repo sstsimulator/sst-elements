@@ -36,7 +36,7 @@ void PandosNodeT::openProgramBinary()
                            program_binary_fname.c_str(), dlerror());
                 exit(1);
         }
-        out->output(CALL_INFO, "opened shared object '%s @ %p\n",
+        out->verbose(CALL_INFO, 1, 0, "opened shared object '%s @ %p\n",
                     program_binary_fname.c_str(),
                     program_binary_handle
                 );
@@ -50,8 +50,8 @@ void PandosNodeT::openProgramBinary()
                 "PANDORuntimeBackendSetCurrentContext"
                 );
 
-        pando_context = new pando::backend::node_context_t;
-        out->output(CALL_INFO, "made pando context @ %p\n", pando_context);
+        pando_context = new pando::backend::node_context_t(static_cast<int64_t>(getId()));
+        out->verbose(CALL_INFO, 1, 0, "made pando context @ %p\n", pando_context);
 }
 
 void PandosNodeT::closeProgramBinary()
@@ -60,12 +60,11 @@ void PandosNodeT::closeProgramBinary()
           close the shared object
         */
         if (program_binary_handle != nullptr) {
-                out->output(CALL_INFO, "closing shared object '%s' @ %p\n",
+                out->verbose(CALL_INFO, 1, 0, "closing shared object '%s' @ %p\n",
                             program_binary_fname.c_str(),
                             program_binary_handle
                         );
                 dlclose(program_binary_handle);
-                out->output(CALL_INFO, "closed\n");
                 program_binary_handle = nullptr;
         }
 }
@@ -80,6 +79,7 @@ void PandosNodeT::initCores()
          */
         for (int64_t c = 0; c < num_cores; c++) {
                 auto *core = new pando::backend::core_context_t(pando_context);
+                core->id = c;
                 core_contexts.push_back(core);
                 core->start();
         }
@@ -100,7 +100,7 @@ void PandosNodeT::initCores()
 
         auto main_task = pando::backend::NewTask([=]()mutable{
                         my_main(0, nullptr);
-                        out->output(CALL_INFO, "my_main() has returned\n");
+                        out->verbose(CALL_INFO, 1, 0, "my_main() has returned\n");
                 });
         cc0->task_deque.push_front(main_task);
 }
@@ -109,19 +109,20 @@ void PandosNodeT::initCores()
  * Constructors/Destructors
  */
 PandosNodeT::PandosNodeT(ComponentId_t id, Params &params) : Component(id), program_binary_handle(nullptr) {
-        out = new Output("[PandosNode] ", 1, 0, Output::STDOUT);
-        out->output(CALL_INFO, "Hello, world!\n");    
-
         // Read parameters
         bool found;
+        int64_t verbose_level = params.find<int32_t>("verbose_level", 0, found);
         num_cores = params.find<int32_t>("num_cores", 1, found);
         instr_per_task = params.find<int32_t>("instr_per_task", 100, found);
         program_binary_fname = params.find<std::string>("program_binary_fname", "", found);
+
+        out = new Output("[PandosNode] ", verbose_level, 0, Output::STDOUT);
+        out->verbose(CALL_INFO, 2, 0, "Hello, world!\n");    
         
-        out->output(CALL_INFO, "num_cores = %d, instr_per_task = %d, program_binary_fname = %s\n"
-                    ,num_cores
-                    ,instr_per_task
-                    ,program_binary_fname.c_str());
+        out->verbose(CALL_INFO, 1, 0, "num_cores = %d, instr_per_task = %d, program_binary_fname = %s\n"
+                   ,num_cores
+                   ,instr_per_task
+                   ,program_binary_fname.c_str());
 
         // open binary
         openProgramBinary();
@@ -142,7 +143,7 @@ PandosNodeT::PandosNodeT(ComponentId_t id, Params &params) : Component(id), prog
 }
 
 PandosNodeT::~PandosNodeT() {
-        out->output(CALL_INFO, "Goodbye, cruel world!\n");
+        out->verbose(CALL_INFO, 2, 0, "Goodbye, cruel world!\n");
         for (int64_t cc = 0; cc < core_contexts.size(); cc++) {
                 delete core_contexts[cc];
                 core_contexts[cc] = nullptr;
@@ -160,25 +161,17 @@ void PandosNodeT::sendMemoryRequest(int src_core) {
         using namespace backend;
         checkCoreID(CALL_INFO, src_core);
         core_context_t *core_ctx = core_contexts[src_core];
-        cs_stall_mem_info_t *info = &core_ctx->core_state.stall_mem_info;
-        PandosMemoryRequestEventT *req;        
-        switch (info->mem_type) {
-        case eMemTypeSPM:                
-                req = new PandosMemoryRequestEventT;
-                req->src_core = src_core;
-                req->size = 0;
+
+        // create a new event
+        PandosMemoryRequestEventT *req = new PandosMemoryRequestEventT;
+        req->src_core = src_core;
+        req->size = 0;
+
+        // send event on link
+        if (core_ctx->core_state.mem_request_addr.dram_not_spm) {
+                podSharedDRAM->send(req);                
+        } else {
                 coreLocalSPM->send(req);
-                break;
-        case eMemTypeDRAM: // FOR NOW... treat like SPM. TODO: fix
-                req = new PandosMemoryRequestEventT;
-                req->src_core = src_core;
-                req->size = 0;
-                podSharedDRAM->send(req);
-                break;
-        default: // should never happen
-                out->fatal(CALL_INFO, -1, "%s: %s: Sending memory request with bad type %d\n", __func__, getName().c_str());
-                abort();
-                break;
         }
 }
 
@@ -188,7 +181,7 @@ void PandosNodeT::sendMemoryRequest(int src_core) {
 void PandosNodeT::recvMemoryResponse(SST::Event *memrsp) {
         using namespace pando;
         using namespace backend;
-        out->output(CALL_INFO, "Memory response recieved.\n");
+        out->verbose(CALL_INFO, 1, 0, "Memory response recieved.\n");
 
         // check that this is actually the right type of event        
         PandosMemoryRequestEventT *mem_request_event = dynamic_cast<PandosMemoryRequestEventT*>(memrsp);

@@ -11,6 +11,7 @@ params = {
     "num_cores" : 1,
     "instructions_per_task" : 20,
     "program_binary_fname": sys.argv[1],
+    "verbose_level" : 1,
 }
 
 pn0.addParams(params)
