@@ -46,6 +46,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <climits>
 
 using namespace SST;
 using namespace SST::Ember;
@@ -61,6 +62,7 @@ EmberTriCountGenerator::EmberTriCountGenerator(SST::ComponentId_t id, Params& pr
     std::cout << "Running Tricount Ember motif\n";
 
   // Set number of tasks = (NT^2 + NT) / 2 ~= 6 * number of localities
+  // (from SHAD reference implementation)
   NL_ = EmberMessagePassingGenerator::size() - 1;
   double quad = ( -1.0 + std::sqrt(1.0 + 4.0 * 12.0 * NL_) ) / 2.0;
   NT_ = std::llround(quad);
@@ -80,7 +82,6 @@ void
 EmberTriCountGenerator::init_vertices() {
 
   // Read in precomputed Vertices (start index of vertex i's edges)
-
   std::string vertices_filename( (std::string) params_.find<std::string>("arg.vertices_filename") );
   debug_ = params_.find<int>("arg.debug_level");
   std::ifstream infile;
@@ -108,7 +109,8 @@ EmberTriCountGenerator::init_vertices() {
 
 void
 EmberTriCountGenerator::first_edges() {
-  // rank0 doesn't hold data in this motif (NL_ is num_ranks - 1)
+  // Rank 0 doesn't hold data in this motif (NL_ is num_ranks - 1)
+  // This data distributions matches a SHAD distributed array
   uint64_t pivot = (num_edges_ % NL_ == 0) ? NL_ : NL_ - (num_edges_ % NL_) + 1;
   uint64_t div = num_edges_ / NL_;
   first_edges_.resize(NL_ + 1);
@@ -122,6 +124,7 @@ EmberTriCountGenerator::first_edges() {
 
 void
 EmberTriCountGenerator::starts() {
+  // Algorithm adapted from SHAD reference implementation
   uint64_t task = 1;
   uint64_t incr = (1.5 * num_edges_) / NT_;
   uint64_t edge_target = incr;
@@ -275,6 +278,9 @@ EmberTriCountGenerator::task_client() {
     uint64_t task = task_recv_memaddr_.at<uint64_t>(0);
     if (debug_) std::cerr << "rank " << rank_ << " received task " << task << std::endl;
 
+    // Pull in data required to count triangles
+    // Algorithm adapted from SHAD reference implementation
+
     // compute task indices
     uint64_t i = NT_ - 1 - (uint64_t) (sqrt(-8 * task + 4 * (NT_ + 1) * NT_ - 7) / 2.0 - 0.5);
     uint64_t j = task + i - ((NT_ + 1) * NT_ / 2) + ((NT_ + 1 - i) * (NT_ - i) / 2);
@@ -402,7 +408,7 @@ void
 EmberTriCountGenerator::request_edges(uint64_t vertex) {
   std::queue<EmberEvent*>& evQ = *evQ_;
 
-  // figure out what other ranks have your vertex_i data
+  // Determine what other ranks have edge data for this vertex
   std::set<uint64_t> ranks;
   vertex_to_ranks(vertex,ranks);
   ranks.erase(rank_);
@@ -412,9 +418,10 @@ EmberTriCountGenerator::request_edges(uint64_t vertex) {
 
   // get the data
   if (num_nonlocal == 0) return;  // I have all the data locally
-  else {                          // send a data request to each rank
+
+  else {                          // Else send a data request to each rank
     if(free_data_requests_) {
-      if (debug_ > 1) std::cerr << "freeing data_recv_requests_\n";
+      if (debug_ > 1) std::cerr << "freeing data requests\n";
       while (!data_recv_requests_.empty()){
         delete data_recv_requests_.back();
         data_recv_requests_.pop_back();
