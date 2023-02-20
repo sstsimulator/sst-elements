@@ -414,7 +414,7 @@ public:
             uint64_t val3 = getRegister(16);
 
             output->verbose(CALL_INFO, 8, 0,
-                            "[syscall-handler] futex( %#" PRIx64 ", %" PRId32 ", %" PRIu32 ", %#" PRIu64 ", %" PRIu32 " %#" PRIu64 " %" PRIu32 " )\n",
+                            "[syscall-handler] futex( %#" PRIx64 ", %" PRId32 ", %" PRIu64 ", %" PRIu64 ", %" PRIu32 " %" PRIu64 " %" PRIu64 " )\n",
                             addr, op, val, timeout_addr, val2, addr2, val3);
 
             call_ev = new VanadisSyscallFutexEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, addr, op, val, timeout_addr, val2, addr2, val3 );

@@ -42,7 +42,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     core_id                 = params.find<uint32_t>("core_id", 0);
 
     char* outputPrefix = (char*)malloc(sizeof(char) * 256);
-    sprintf(outputPrefix, "[Core: %4" PRIu32 "/@t]: ", core_id);
+    snprintf(outputPrefix, sizeof(outputPrefix), "[Core: %4" PRIu32 "/@t]: ", core_id);
 
     output = new SST::Output(outputPrefix, verbosity, dbg_mask, Output::STDOUT);
     free(outputPrefix);
@@ -95,7 +95,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     for ( uint32_t i = 0; i < hw_threads; ++i ) {
 
-        sprintf(decoder_name, "decoder%" PRIu32 "", i);
+        snprintf(decoder_name, sizeof(decoder_name), "decoder%" PRIu32 "", i);
         VanadisDecoder* thr_decoder = loadUserSubComponent<SST::Vanadis::VanadisDecoder>(decoder_name);
 
 		  fp_flags.push_back(new VanadisFloatingPointFlags());
@@ -2038,7 +2038,7 @@ void VANADIS_COMPONENT::startThreadClone( VanadisStartThreadCloneReq* req )
     resetHwThread( hw_thr );
     reregisterClock(cpuClockTC, cpuClockHandler);
 
-    output->verbose(CALL_INFO, 8, 0,"instPtr=%lx stackAddr=%lx argAddr=%lx tlsAddr=%lx\n", req->getInstPtr(), req->getStackAddr(), req->getArgAddr(), req->getTlsAddr() );
+    output->verbose(CALL_INFO, 8, 0,"instPtr=%llx stackAddr=%llx argAddr=%llx tlsAddr=%llx\n", req->getInstPtr(), req->getStackAddr(), req->getArgAddr(), req->getTlsAddr() );
     for ( int i = 0; i < req->getIntRegs().size(); i++ ) {
 #if 0 
         printf("%s() %d %#lx\n",__func__,i,req->getIntRegs()[i]);
@@ -2074,7 +2074,7 @@ void VANADIS_COMPONENT::startThreadFork( VanadisStartThreadForkReq* req )
     resetHwThread( hw_thr );
     reregisterClock(cpuClockTC, cpuClockHandler);
 
-    output->verbose(CALL_INFO, 8, 0,"start thread fork, thread=%d instPtr=%lx tlsPtr=%lx\n",
+    output->verbose(CALL_INFO, 8, 0,"start thread fork, thread=%d instPtr=%llx tlsPtr=%lx\n",
                 req->getThread(), req->getInstPtr(), req->getTlsAddr() );
 
     for ( int i = 0; i < req->getIntRegs().size(); i++ ) {
@@ -2110,7 +2110,7 @@ void VANADIS_COMPONENT::getThreadState( VanadisGetThreadStateReq* req )
     uint64_t instPtr = rob[hw_thr]->peek()->getInstructionAddress();
     uint64_t tlsPtr = thread_decoders[hw_thr]->getThreadLocalStoragePointer();
 
-    output->verbose(CALL_INFO, 8, 0,"get thread state, hw_th=%d instPtr=%lx tlsPtr=%lx\n",hw_thr,instPtr,tlsPtr);
+    output->verbose(CALL_INFO, 8, 0,"get thread state, hw_th=%d instPtr=%llx tlsPtr=%lx\n",hw_thr,instPtr,tlsPtr);
 
     VanadisGetThreadStateResp* resp = new VanadisGetThreadStateResp( core_id, hw_thr, instPtr, tlsPtr );
     for ( int i = 0; i < isa_table->getNumIntRegs(); i++ ) {

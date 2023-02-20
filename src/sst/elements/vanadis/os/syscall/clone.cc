@@ -98,7 +98,7 @@ void VanadisCloneSyscall::handleEvent( VanadisCoreEvent* ev )
     req->setIntRegs( resp->intRegs );
     req->setFpRegs( resp->fpRegs );
 
-     m_output->verbose(CALL_INFO, 16, 0, "[syscall-fork] core=%d thread=%d tid=%d instPtr=%lx\n",
+     m_output->verbose(CALL_INFO, 16, 0, "[syscall-fork] core=%d thread=%d tid=%d instPtr=%llx\n",
                  m_threadID->core, m_threadID->hwThread, m_newThread->gettid(), resp->getInstPtr() );
 #if 0 //debug
     for ( int i = 0; i < req->getIntRegs().size(); i++ ) {

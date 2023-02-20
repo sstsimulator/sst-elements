@@ -556,7 +556,7 @@ public:
 
     void setBinaryPath(const char* new_path) {
         bin_path_short = bin_path = new char[strlen(new_path) + 1];
-        sprintf(bin_path, "%s", new_path);
+        snprintf(bin_path, sizeof(bin_path), "%s", new_path);
 
         for ( auto i = strlen(bin_path); i > 0; i-- ) {
             if ( '/' == bin_path[i-1] ) {
@@ -939,7 +939,8 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
     FILE* bin_file = fopen(path, "rb");
 
     if (nullptr == bin_file) {
-        if (bin_file = fopen(path, "r")) {
+        bin_file = fopen(path, "r");
+        if ( nullptr == bin_file) {
             fclose(bin_file);
             output->fatal(CALL_INFO, -1, "Error: unable to open \'%s\', cannot read ELF table.\n", path);
         } else {

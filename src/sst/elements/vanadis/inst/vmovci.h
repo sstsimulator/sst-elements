@@ -105,6 +105,9 @@ public:
         case REG_COMPARE_GTE:
             compare_result = (compare_check >= imm_value);
             break;
+        case REG_COMPARE_ULT:
+            compare_result = (std::isnan(compare_check) | std::isnan(imm_value) | (compare_check < imm_value));
+            break;
         }
 
         if ( compare_result ) { regFile->setIntReg<uint64_t>(phys_int_regs_out[0], reg_value); }
