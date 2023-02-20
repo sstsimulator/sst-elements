@@ -175,6 +175,8 @@ libember_la_SOURCES = \
 	mpi/motifs/embersiriustrace.cc \
 	mpi/motifs/emberrandomgen.h \
 	mpi/motifs/emberrandomgen.cc \
+        mpi/motifs/embertricount.h \
+        mpi/motifs/embertricount.cc \
 	mpi/motifs/emberunstructured.h \
 	mpi/motifs/emberunstructured.cc \
 	mpi/motifs/emberNtoM.h \
