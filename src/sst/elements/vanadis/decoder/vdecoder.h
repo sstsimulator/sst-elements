@@ -213,6 +213,7 @@ public:
     void setThreadLocalStoragePointer(uint64_t new_tls) { tls_ptr = new_tls; }
 
     uint64_t getThreadLocalStoragePointer() const { return tls_ptr; }
+    uint64_t getCycleCount() const { return cycle_count; }
 
     // VanadisCircularQueue<VanadisInstruction*>* getDecodedQueue() { return
     // decoded_q; }
@@ -235,6 +236,7 @@ protected:
     uint32_t hw_thr;
 
     uint64_t tls_ptr;
+    uint64_t cycle_count;
 
     bool                                       wantDelegatedLoad;
     VanadisCircularQueue<VanadisInstruction*>* thread_rob;

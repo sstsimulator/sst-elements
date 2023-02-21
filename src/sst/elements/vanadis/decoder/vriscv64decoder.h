@@ -136,6 +136,8 @@ public:
             output->verbose(CALL_INFO, 16, 0, "---> Max decodes per cycle: %" PRIu16 "\n", max_decodes_per_cycle);
         }
 
+        cycle_count = cycle;
+
         for ( uint16_t i = 0; i < max_decodes_per_cycle; ++i ) {
             if ( ! thread_rob->full() ) {
                 if ( ins_loader->hasBundleAt(ip) ) {
@@ -1088,6 +1090,18 @@ protected:
 
 										bundle->addInstruction(new VanadisFPFlagsReadInstruction<true, false, false>(ins_address, hw_thr, options, fpflags, rd));
                               decode_fault = false;
+                        } break;
+                        case 0xfffffffffffffc00:
+                        {
+                            auto thread_call = std::bind(&VanadisRISCV64Decoder::getCycleCount, this);
+
+                            // Read the cycle count
+                            output->verbose( CALL_INFO, 16, 0, "-------> RDCYCLE, read the cycle count\n");
+
+                            bundle->addInstruction(
+                                new VanadisSetRegisterByCallInstruction<int64_t>(
+                                    ins_address, hw_thr, options, rd, thread_call));
+                            decode_fault = false;
                         } break;
                         }
                     } break;
