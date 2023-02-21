@@ -15,6 +15,17 @@
 
 #include <stdio.h>
 
+extern __inline
+    unsigned long
+    __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+rdcycle(void)
+{
+    unsigned long dst;
+    asm volatile ("csrrs %0, 0xc00, x0" : "=r" (dst) );
+    return dst;
+}
+
+
 double squareRoot(double n) {
 	double i = 0;
 	double precision = 0.00001;
@@ -29,8 +40,10 @@ int main( int argc, char* argv[] ) {
    int n = 24;
 
 	for( int i = 1; i < n; ++i ) {
-		printf("Square root of %d = %30.12f\n", i,
-			squareRoot( (double) i));
+        unsigned long start = rdcycle(); 
+	    double value = squareRoot( (double) i);
+        unsigned cycles =  rdcycle() - start; 
+		printf("Square root of %d = %30.12f %lu\n", i, value, cycles );
 		fflush(stdout);
 	}
 
