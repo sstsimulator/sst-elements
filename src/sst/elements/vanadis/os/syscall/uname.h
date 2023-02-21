@@ -29,13 +29,30 @@ public:
     {
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-uname] ---> uname struct is at address 0x%0llx\n", event->getUnameInfoAddress());
 
-        payload.resize(65 * 5, (uint8_t)'\0');
+#if 0 
+struct new_utsname {
+        char sysname[__NEW_UTS_LEN + 1];
+        char nodename[__NEW_UTS_LEN + 1];
+        char release[__NEW_UTS_LEN + 1];
+        char version[__NEW_UTS_LEN + 1];
+        char machine[__NEW_UTS_LEN + 1];
+        char domainname[__NEW_UTS_LEN + 1];
+};
+#endif
+
+        payload.resize(65 * 6, (uint8_t)'\0');
 
         const char* sysname = "Linux";
         const char* node = "sim.sstsimulator.org";
         const char* release = "4.19.136";
         const char* version = "#1 Wed Sep 2 23:59:59 MST 2020";
-        const char* machine = "mips";
+        char* machine;
+
+        if ( VanadisOSBitType::VANADIS_OS_64B == event->getOSBitType() ) {
+            machine = "riscv64";
+        } else {
+            machine = "mips4";
+        } 
 
         for (size_t i = 0; i < std::strlen(sysname); ++i) {
             payload[i] = sysname[i];
@@ -58,6 +75,9 @@ public:
         }
 
         writeMemory( event->getUnameInfoAddress(), payload );
+    }
+
+    void memReqIsDone() {
         setReturnSuccess(0);
     }
 
