@@ -100,26 +100,37 @@ EmberTriCountGenerator::init_vertices() {
       ++expected;
     }
   }
+  num_vertices_ = Vertices_.size();
+  // Last vertex never holds a unique edge, Vertices_ entry is equal to "last edge index + 1"
+  // Push back that entry one more time so we can compute zero edges by difference
+  Vertices_.push_back(first_edge);
+
 
   if (rank_ == 0 && debug_ > 2) {
+    std::cerr << "num_edges_ " << num_edges_ << std::endl;
     for (int i=0; i<Vertices_.size(); ++i)
-      std::cout << Vertices_[i] << std::endl;
+      std::cerr << i << " " << Vertices_[i] << std::endl;
   }
 }
 
 void
 EmberTriCountGenerator::first_edges() {
+  // Compute first edge that each rank holds in distributed array
   // Rank 0 doesn't hold data in this motif (NL_ is num_ranks - 1)
   // This data distributions matches a SHAD distributed array
-  uint64_t pivot = (num_edges_ % NL_ == 0) ? NL_ : NL_ - (num_edges_ % NL_) + 1;
+  uint64_t remainder = num_edges_ % NL_;
+  uint64_t pivot = NL_ - remainder;
   uint64_t div = num_edges_ / NL_;
-  first_edges_.resize(NL_ + 1);
+  first_edges_.resize(NL_ + 2);
   first_edges_[0] = 0;
   first_edges_[1] = 0;
   for (int i=2; i <= NL_; ++i) {
     first_edges_[i] = first_edges_[i-1] + div;
-    if (i >= pivot) ++first_edges_[i];
+    if (i > pivot + 1) ++first_edges_[i];
   }
+  // first_edges_[NL_ + 1] is used to compute the number of edges rank NL_ holds
+  first_edges_[NL_ + 1] = first_edges_[NL_] + div;
+  if (NL_ > pivot) ++first_edges_[NL_ + 1];
 }
 
 void
@@ -132,15 +143,15 @@ EmberTriCountGenerator::starts() {
   uint64_t vertex=0;
   taskStarts_.push_back(vertex);
   if (rank_ == 0 && debug_) std::cerr << "A task starts at " << vertex << std::endl;
-  for (uint64_t i = 0; i < num_edges_; ++i, ++vertex) {  // for each vertex
-    if (Vertices_[i] < edge_target) continue;            // ... continue until edge target is reached
-    if (vertex > 0) taskStarts_.push_back(vertex);                       // ... else store start vertex for this task
+  for (uint64_t vertex = 0; vertex < num_vertices_; ++vertex) {  // for each vertex
+    if (Vertices_[vertex] < edge_target) continue;               // ... continue until edge target is reached
+    if (vertex > 0) taskStarts_.push_back(vertex);               // ... else store start vertex for this task
     if (rank_ == 0 && debug_) std::cerr << "A task starts at " << vertex << std::endl;
 
-    uint64_t task_size = incr + (Vertices_[i] - edge_target);
+    uint64_t task_size = incr + (Vertices_[vertex] - edge_target);
     maxTask_ = std::max(task_size, maxTask_);             // max task size
 
-    if (edge_target == num_edges_) return;               // ... all done
+    if (edge_target == num_edges_) break;                 // ... all done
 
     // incr reduces at 1/4 NT and 3/4 NT
     if      ( task < std::llround(0.25 * NT_) ) incr = (1.5 * num_edges_) / NT_;
@@ -148,8 +159,10 @@ EmberTriCountGenerator::starts() {
     else                                       incr = (0.5 * num_edges_) / NT_;
 
     ++task;
-    edge_target = std::min(Vertices_[i] + incr, num_edges_);
+    edge_target = std::min(Vertices_[vertex] + incr, num_edges_);
   }
+  if (rank_ == 0 && debug_) std::cerr << "A (psuedo) task starts at " << num_vertices_ << std::endl;
+  taskStarts_.push_back(num_vertices_);
 }
 
 bool
@@ -245,9 +258,8 @@ EmberTriCountGenerator::task_client() {
   // If we have a data request then send data
   if (request_index_ == datareq_index_) {
     int requestor = any_response_.src;
-    uint64_t requested_vertex = datareq_recv_memaddr_.at<uint64_t>(0);
-    uint64_t size = vertex_to_size(requested_vertex,rank_);
-    if (debug_ > 1) std::cerr << "rank " << rank_ << " sending vertex " << requested_vertex << " data to " << requestor << ", size " << size << std::endl;
+    uint64_t size = datareq_recv_memaddr_.at<uint64_t>(0);
+    if (debug_ > 1) std::cerr << "rank " << rank_ << " sending " << size << " to " << requestor << std::endl;
     enQ_isend( evQ, nullptr, size, UINT64_T, requestor, DATA, GroupWorld, nullptr );
 
     // prepare for next request
@@ -289,31 +301,44 @@ EmberTriCountGenerator::task_client() {
       std::cerr << "j: " << j << std::endl;
     }
 
-    uint64_t first_i, last_i, first_j, last_j;
-    if (i != old_i_) {
+    uint64_t first_i, last_i, first_j, last_j, first_edge, last_edge;
+    bool skip = false;
+    if (taskStarts_[i] == num_vertices_ - 1 || taskStarts_[j] == num_vertices_ - 1) {
+      skip = true;
+      if (debug_) {
+        std::cerr << "skipping last vertex task (which never holds unique edges)\n";
+      }
+    }
+    if (i != old_i_ && !skip) {
        old_i_   = i;
-       first_i = taskStarts_[i];         // first verex of partition i
-       last_i  = taskStarts_[i + 1];     // last  verex of partition i
-       if (debug_ > 1) {
-         std::cerr << "fist_i: " << first_i << std::endl;
-         std::cerr << "last_i: " << last_i << std::endl;
+       first_i = taskStarts_[i];      // first vertex of partition i
+       last_i  = taskStarts_[i + 1];  // first vertex of partition i + 1
+       first_edge = Vertices_[first_i];
+       last_edge = Vertices_[last_i];
+       if (first_edge != last_edge) --last_edge;
+       if (debug_ > 2) {
+         std::cerr << "first_i     : " << first_i << std::endl;
+         std::cerr << "last_i      : " << last_i << std::endl;
+         std::cerr << "i first_edge: " << first_edge << std::endl;
+         std::cerr << "i last_edge : " << last_edge << std::endl;
        }
-       for (uint64_t vertex=first_i; vertex < last_i; ++vertex) {
-         request_edges(vertex);
-       }
+       request_edges( first_edge, last_edge );
     }
 
-    if ((j != old_j_) && (j != i)) {
+    if ((j != old_j_) && (j != i) && !skip) {
        old_j_   = j;
-       first_j = taskStarts_[j];         // first verex of partition j
-       last_j  = taskStarts_[j + 1];     // last  verex of partition j
-       if (debug_ > 1) {
-         std::cerr << "fist_j: " << first_j << std::endl;
-         std::cerr << "last_j: " << last_j << std::endl;
+       first_j = taskStarts_[j];         // first vertex of partition j
+       last_j  = taskStarts_[j + 1];     // first vertex of partition j + 1
+       first_edge = Vertices_[first_j];
+       last_edge = Vertices_[last_j];
+       if (first_edge != last_edge) --last_edge;
+       if (debug_ > 2) {
+         std::cerr << "first_j     : " << first_j << std::endl;
+         std::cerr << "last_j      : " << last_j << std::endl;
+         std::cerr << "j first_edge: " << first_edge << std::endl;
+         std::cerr << "j last_edge : " << last_edge << std::endl;
        }
-       for (uint64_t vertex=first_j; vertex < last_j; ++vertex) {
-         request_edges(vertex);
-       }
+       request_edges( first_edge, last_edge );
     }
     if (num_data_ranks_ == 0) { // all data is local, compute
       if (debug_) std::cerr << "all data is local, computing\n";
@@ -386,34 +411,34 @@ EmberTriCountGenerator::wait_for_any() {
         ++major;
       }
       int minor = i - current;
-      if (debug_ > 1) std::cerr << "copy data_recv_requests_[" << major << "][" << minor << "] " << data_recv_requests_[major][minor] << " to " << index << std::endl;
+      if (debug_ > 2) std::cerr << "copy data_recv_requests_[" << major << "][" << minor << "] " << data_recv_requests_[major][minor] << " to " << index << std::endl;
       all_requests_[index] = data_recv_requests_[major][minor];
       datareq_index_map_[index] = i;
       ++index;
     }
   }
   if (task_recv_active_) {
-    if (debug_ > 1) std::cerr << "copy task recv " << task_recv_request_ << " to " << task_index_ << std::endl;
+    if (debug_ > 2) std::cerr << "copy task recv " << task_recv_request_ << " to " << task_index_ << std::endl;
     all_requests_[index] = task_recv_request_;
     ++index;
   }
   if (datareq_recv_active_) {
-    if (debug_ > 1) std::cerr << "copy datareq_recv " << datareq_recv_request_ << " to " << datareq_index_ << std::endl;
+    if (debug_ > 2) std::cerr << "copy datareq_recv " << datareq_recv_request_ << " to " << datareq_index_ << std::endl;
     all_requests_[index] = datareq_recv_request_;
   }
   enQ_waitany(evQ, size, all_requests_, &request_index_, &any_response_);
 }
 
 void
-EmberTriCountGenerator::request_edges(uint64_t vertex) {
+EmberTriCountGenerator::request_edges( uint64_t first_edge, uint64_t last_edge ) {
   std::queue<EmberEvent*>& evQ = *evQ_;
 
   // Determine what other ranks have edge data for this vertex
-  std::set<uint64_t> ranks;
-  vertex_to_ranks(vertex,ranks);
-  ranks.erase(rank_);
-  int num_nonlocal = ranks.size();
-  if (debug_ > 1) std::cerr << num_nonlocal << " ranks have nonlocal data for vertex " << vertex << std::endl;
+  std::map<uint64_t,uint64_t> rank_to_size;
+  edges_to_ranks( first_edge, last_edge, rank_to_size );
+  rank_to_size.erase(rank_); // don't request from ourself
+  int num_nonlocal = rank_to_size.size();
+  if (debug_ > 1) std::cerr << num_nonlocal << " ranks have nonlocal data for this partition\n";
   num_data_ranks_ += num_nonlocal;
 
   // get the data
@@ -437,44 +462,39 @@ EmberTriCountGenerator::request_edges(uint64_t vertex) {
     data_recv_requests_sizes_.push_back(num_nonlocal);
     if (debug_ > 1) std::cerr << "pushing back MessageRequest array of size " << num_nonlocal << std::endl;
 
-    datareq_send_memaddrs_.push_back( SST::Hermes::MemAddr(memAlloc(sizeofDataType(UINT64_T))) );
-    uint64_t* send_buffer = (uint64_t*) datareq_send_memaddrs_.back().getBacking();
-    *send_buffer = vertex;
+
     int index=0;
-    for (auto ri : ranks) {
-      unsigned int size = vertex_to_size(vertex,ri);
-      if (debug_ > 1) std::cerr << "rank " << rank_ << " sending data request to rank " << ri << " for size "
-                                << size << "(" << data_recv_requests_.back()[index] << ")" << std::endl;
-      enQ_isend( evQ, datareq_send_memaddrs_.back(), 1, UINT64_T, ri, DATA_REQUEST, GroupWorld, nullptr);
-      enQ_irecv( evQ, nullptr, size, UINT64_T, ri, DATA, GroupWorld, &data_recv_requests_.back()[index]);
+    for (auto iter : rank_to_size) {
+      uint64_t rank = iter.first;
+      uint64_t size = iter.second;
+      datareq_send_memaddrs_.push_back( SST::Hermes::MemAddr(memAlloc(sizeofDataType(UINT64_T))) );
+      uint64_t* send_buffer = (uint64_t*) datareq_send_memaddrs_.back().getBacking();
+      *send_buffer = size;
+      if (debug_) std::cerr << "rank " << rank_ << " sending data request to rank " << rank << " for size " << size << std::endl;
+      enQ_isend( evQ, datareq_send_memaddrs_.back(), 1, UINT64_T, rank, DATA_REQUEST, GroupWorld, nullptr);
+      enQ_irecv( evQ, nullptr, size, UINT64_T, rank, DATA, GroupWorld, &data_recv_requests_.back()[index]);
       ++index;
     }
   }
 }
 
 void
-EmberTriCountGenerator::vertex_to_ranks(uint64_t vertex, std::set<uint64_t> &ranks) {
-  uint64_t first_edge = Vertices_[vertex];
-  uint64_t last_edge = Vertices_[vertex+1] - 1;
-  for (uint64_t i=1; i<=NL_; ++i) {
-    if (first_edge < first_edges_[i+1] && last_edge >= first_edges_[i]) {
-      ranks.insert(i);
+EmberTriCountGenerator::edges_to_ranks(uint64_t first_edge, uint64_t last_edge, std::map<uint64_t,uint64_t>& rank_to_size) {
+  for (int rank=1; rank <= NL_; ++rank) {
+    uint64_t rank_first = first_edges_[rank];
+    uint64_t rank_last = first_edges_[rank + 1] - 1;
+    if (debug_ > 2) {
+      std::cerr << "rank " << rank << " rank_first " << rank_first << std::endl;
+      std::cerr << "rank " << rank << " rank_last  " << rank_last << std::endl;
     }
+    if (first_edge > rank_last || last_edge < rank_first) continue;
+    int size = rank_last - rank_first + 1;
+    if (last_edge < rank_last) {
+      size -= rank_last - last_edge;
+    }
+    if (first_edge > rank_first) {
+      size -= first_edge - rank_first;
+    }
+    rank_to_size[rank] = size;
   }
-}
-
-uint64_t
-EmberTriCountGenerator::vertex_to_size(uint64_t vertex, uint64_t rank) {
-  uint64_t first = Vertices_[vertex];
-  uint64_t last = Vertices_[vertex + 1] - 1;
-  uint64_t rank_first = first_edges_[rank];
-  uint64_t rank_last = first_edges_[rank + 1] - 1;
-  uint64_t size=0;
-  if (first >= rank_first && first <= rank_last) {
-    size = rank_last - first + 1;
-  }
-  if (last < rank_last) {
-    size -= rank_last - last;
-  }
-  return size;
 }
