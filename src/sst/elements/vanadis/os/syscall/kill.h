@@ -13,22 +13,22 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _H_VANADIS_OS_SYSCALL_GETPID
-#define _H_VANADIS_OS_SYSCALL_GETPID
+#ifndef _H_VANADIS_OS_SYSCALL_KILL
+#define _H_VANADIS_OS_SYSCALL_KILL
 
 #include "os/syscall/syscall.h"
-#include "os/callev/voscallgetx.h"
+#include "os/callev/voscallkill.h"
 
 namespace SST {
 namespace Vanadis {
 
-class VanadisGetpidSyscall : public VanadisSyscall {
+class VanadisKillSyscall : public VanadisSyscall {
 public:
-    VanadisGetpidSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallGetxEvent* event )
-        : VanadisSyscall( os, coreLink, process, event, "gitpid" ) 
+    VanadisKillSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallKillEvent* event )
+        : VanadisSyscall( os, coreLink, process, event, "kill" ) 
     {
-        m_output->verbose(CALL_INFO, 16, 0, "[syscall-getpid] pid=%d\n",process->getpid());
-        setReturnSuccess(process->getpid());
+        m_output->verbose(CALL_INFO, 16, 0, "[syscall-kill] ---> pid=%d sig=%d\n", event->getPid(), event->getSig() );
+        assert(0);
     }
 };
 
