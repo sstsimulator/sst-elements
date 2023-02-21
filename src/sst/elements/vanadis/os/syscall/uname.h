@@ -46,12 +46,12 @@ struct new_utsname {
         const char* node = "sim.sstsimulator.org";
         const char* release = "4.19.136";
         const char* version = "#1 Wed Sep 2 23:59:59 MST 2020";
-        char* machine;
+        std::string machine;
 
         if ( VanadisOSBitType::VANADIS_OS_64B == event->getOSBitType() ) {
-            machine = "riscv64";
+            machine.assign( "riscv64" );
         } else {
-            machine = "mips4";
+            machine.assign( "mips" );
         } 
 
         for (size_t i = 0; i < std::strlen(sysname); ++i) {
@@ -63,15 +63,15 @@ struct new_utsname {
         }
 
         for (size_t i = 0; i < std::strlen(release); ++i) {
-            payload[65 + 65 + i] = release[i];
+            payload[65 * 2 + i] = release[i];
         }
 
         for (size_t i = 0; i < std::strlen(version); ++i) {
-            payload[65 + 65 + 65 + i] = version[i];
+            payload[65 * 3 + i] = version[i];
         }
 
-        for (size_t i = 0; i < std::strlen(machine); ++i) {
-            payload[65 + 65 + 65 + 65 + i] = machine[i];
+        for (size_t i = 0; i < machine.length(); ++i) {
+            payload[65 * 4 + i] = machine[i];
         }
 
         writeMemory( event->getUnameInfoAddress(), payload );
