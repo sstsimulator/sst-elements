@@ -16,22 +16,13 @@
 
 #include <sys/utsname.h>
 #include <stdio.h>
-#include <string.h>
 
 int main(int argc, char* argv[]) {
-	setvbuf(stdout, NULL, _IONBF, 0);
 
 	struct utsname name;
-    bzero( &name, sizeof(name));
-    strcpy( name.sysname, "foobar");
-    strcpy( name.nodename, "foobar");
-    strcpy( name.release, "foobar");
-    strcpy( name.version, "foobar");
-    strcpy( name.machine, "foobar");
 
-    printf("%p\n",&name);
 	uname(&name);
 
-    printf("%zu\n",sizeof(name));
+    printf("sizeof(struct utsname) %zu\n",sizeof(struct utsname));
 	printf("%s\n%s\n%s\n%s\n%s\n", name.sysname, name.nodename, name.release, name.version, name.machine );
 }
