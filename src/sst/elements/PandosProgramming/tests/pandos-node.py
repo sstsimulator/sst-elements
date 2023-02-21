@@ -26,4 +26,6 @@ fromCoreLocalSPM.connect((pn0, "fromCoreLocalSPM", "1ns"), (pn0, "fromCoreLocalS
     
 # link up the node shared dram
 toPodSharedDRAM = sst.Link("to_pod_shared_dram_link")
+fromPodSharedDRAM = sst.Link("from_pod_shared_dram_link")
 toPodSharedDRAM.connect((pn0, "toNodeSharedDRAM", "35ns"), (pn0, "toNodeSharedDRAM", "35ns"))
+fromPodSharedDRAM.connect((pn0, "fromNodeSharedDRAM", "35ns"), (pn0, "fromNodeSharedDRAM", "35ns"))

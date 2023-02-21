@@ -7,6 +7,8 @@
 #include "PandosMemoryRequestEvent.h"
 #include "PandosPacketEvent.h"
 
+#define DO_MEMCPY
+
 using namespace SST;
 using namespace SST::PandosProgramming;
 
@@ -214,7 +216,9 @@ void PandosNodeT::sendMemoryRequest(int src_core) {
                 PandosWriteRequestEventT *write_req = new PandosWriteRequestEventT;
                 write_req->size = core_ctx->core_state.mem_req.size;
                 write_req->payload.reserve(write_req->size);
+#ifdef DO_MEMCPY
                 memcpy(write_req->payload.data(), core_ctx->core_state.mem_req.data, write_req->size);
+#endif
                 req = write_req;
         }
         req->src_core = src_core;
@@ -263,7 +267,9 @@ void PandosNodeT::receiveResponse(SST::Event *evt, Link** requestLink) {
         PandosReadResponseEventT *read_rsp = dynamic_cast<PandosReadResponseEventT*>(rsp);
         if (read_rsp) {
                 void *read_val_p = malloc(read_rsp->size);
+#ifdef DO_MEMCPY
                 memcpy(read_val_p, read_rsp->payload.data(), read_rsp->size);
+#endif
                 core_ctx->core_state.mem_req.data = read_val_p;
         }
 
@@ -282,12 +288,16 @@ void PandosNodeT::receiveWriteRequest(PandosWriteRequestEventT *write_req, Link 
         write_rsp->src_pxn = write_req->src_pxn;
         write_rsp->src_core = write_req->src_core;
         void *p = reinterpret_cast<void*>(write_req->dst.uptr);
+        out->verbose(CALL_INFO, 1, 0, "%s: memcpying %zu bytes to %p\n", __func__, write_req->size, p);
+#ifdef DO_MEMCPY
         memcpy(p, write_req->payload.data(), write_req->size);
+#endif
         /* delete the request */
         delete write_req;
         /* send the response */
         out->verbose(CALL_INFO, 1, 0, "Sending write response\n");
         (*responseLink)->send(write_rsp);
+        out->verbose(CALL_INFO, 1, 0, "Write response sent\n");
 }
 
 /**
@@ -302,7 +312,9 @@ void PandosNodeT::receiveReadRequest(PandosReadRequestEventT *read_req, Link **r
         read_rsp->size = read_req->size;
         read_rsp->payload.reserve(read_req->size);
         void *p = reinterpret_cast<void*>(read_req->dst.uptr);
-        memcpy(read_rsp->payload.data(), p, read_rsp->size);
+#ifdef DO_MEMCPY
+        memcpy(read_rsp->payload.data(), p, read_req->size);
+#endif
         /* delete the request event */
         delete read_req;
         /* send the response */
