@@ -4,8 +4,10 @@
 #include <pando/arch_coroutine.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
+#include <PandosPacketEvent.h>
 #include <vector>
 #include <cstdint>
+#include <string>
 
 namespace SST {
 namespace PandosProgramming {
@@ -37,24 +39,22 @@ public:
         )
         // Document the ports that this component accepts
         SST_ELI_DOCUMENT_PORTS(
-                // example link
-                {"port",  "Link to another component", { "PandosProgramming.PandosEvent", ""} },
-                // this link should link a node to itself, for now...
-                {"coreLocalSPM",  "Link to core local memory", {"PandosProgramming.PandosMemoryRequestEvent", ""}},
-                // this link should link a node to itself, for now...                
-                {"podSharedDRAM", "Link to pod's shared DRAM", {"PandosProgramming.PandosMemoryRequestEvent", ""}}                
-        )
+                // self-links to represent latency from node to spm
+                {"toCoreLocalSPM"         ,"Link from node to SPM"             ,{"PandosProgramming.PandosMemoryRequestEventT",""}},
+                {"fromCoreLocalSPM"       ,"Link from SPM to node"             ,{"PandosProgramming.PandosMemoryResponseEventT",""}},
+                // self-links to represent latency from node to dram
+                {"toNodeSharedDRAM"       ,"Link from node to DRAM"            ,{"PandosProgramming.PandosMemoryRequestEventT",""}},
+                {"fromNodeSharedDRAM"     ,"Link from DRAM to Node"            ,{"PandosProgramming.PandosMemoryResponseEventT",""}},
+                // links to a remote node component
+                {"requestsToRemoteNode"   ,"Link from this Node to other Node" ,{"PandosProgramming.PandosMemoryResponseEventT",""}},
+                {"requestsfromRemoteNode" ,"Link from other Node to this Node" ,{"PandosProgramming.PandosMemoryRequestEventT",""}},
+         )
 
         /**
          * Constructors/Destructors
          */
         PandosNodeT(ComponentId_t id, Params &params);
         ~PandosNodeT();
-
-        /**
-         * Event handler which we register to a link
-         */
-        void handleEvent(SST::Event *ev);
 
         /**
          * Clock tick handler
@@ -83,23 +83,55 @@ public:
         /**
          * handle a response from memory to a request
          */
-        void recvMemoryResponse(SST::Event *memrsp);
+        void receiveResponse(SST::Event *rsp, Link **requestLink);
 
+        /**
+         * handle a write request
+         */
+        void receiveWriteRequest(PandosWriteRequestEventT *write_req, Link **responseLink);
+
+        /**
+         * handle a read request
+         */
+        void receiveReadRequest(PandosReadRequestEventT *read_req, Link **responseLink);
+                
+        /**
+         * handle a request for memory operation
+         */
+        void receiveRequest(SST::Event *req, Link **responseLink);
 
         /**
          * check if core id is valid, abort() if not
          */
         void checkCoreID(int line, const char *file, const char *function, int core_id);
+
+        /**
+         * check if pxn id is valid, abort() if not
+         */
+        void checkPXNID(int line, const char *file, const char *function, int pxn_id);
         
         // SST Output object, for printing error messages, etc.
         SST::Output *out;
 
-        // Links to other nodes
-        SST::Link* port;
-
         // Links memories
-        SST::Link* coreLocalSPM; // Link to core local scratchpad
-        SST::Link* podSharedDRAM; // link to pod's shared DRAM
+
+        /*
+         * Core <=> SPM
+         */
+        Link *toCoreLocalSPM;
+        Link *fromCoreLocalSPM;
+        
+        /*
+         * Core <=> DRAM
+         */
+        Link *toNodeSharedDRAM;
+        Link *fromNodeSharedDRAM;
+        
+        /*
+         * Core <=> REMOTE
+         */
+        Link *toRemoteNode;
+        Link *fromRemoteNode;
 
         int32_t num_cores; //!< The number of cores in this node
         int32_t instr_per_task; //!< The number of instructions per task

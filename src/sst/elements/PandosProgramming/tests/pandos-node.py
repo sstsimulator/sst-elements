@@ -19,8 +19,13 @@ pn0.addParams(params)
 
 # Link the components via their ports
 # link up the core local spm
-coreLocalSPM = sst.Link("core_local_spm_link")
-coreLocalSPM.connect((pn0, "coreLocalSPM", "2ns"), (pn0, "coreLocalSPM", "2ns"))
+toCoreLocalSPM = sst.Link("to_core_local_spm_link")
+fromCoreLocalSPM = sst.Link("from_core_local_spm_link")
+toCoreLocalSPM.connect((pn0, "toCoreLocalSPM", "1ns"), (pn0, "toCoreLocalSPM", "1ns"))
+fromCoreLocalSPM.connect((pn0, "fromCoreLocalSPM", "1ns"), (pn0, "fromCoreLocalSPM", "1ns"))
+    
 # link up the node shared dram
-podSharedDRAM = sst.Link("pod_shared_dram_link")
-podSharedDRAM.connect((pn0, "podSharedDRAM", "35ns"), (pn0, "podSharedDRAM", "35ns"))
+toPodSharedDRAM = sst.Link("to_pod_shared_dram_link")
+fromPodSharedDRAM = sst.Link("from_pod_shared_dram_link")
+toPodSharedDRAM.connect((pn0, "toNodeSharedDRAM", "35ns"), (pn0, "toNodeSharedDRAM", "35ns"))
+fromPodSharedDRAM.connect((pn0, "fromNodeSharedDRAM", "35ns"), (pn0, "fromNodeSharedDRAM", "35ns"))
