@@ -134,7 +134,7 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
             syscall = new VanadisUnmapSyscall( this, coreLink, process, m_physMemMgr, convertEvent<VanadisSyscallMemoryUnMapEvent*>( "unmap", sys_ev ) );
         } break;
         case SYSCALL_OP_GETTIME64: {
-            syscall = new VanadisGettime64Syscall( this, coreLink, process, getSimNanoSeconds(), convertEvent<VanadisSyscallGetTime64Event*>( "gettime64", sys_ev ) );
+            syscall = new VanadisGettime64Syscall( this, coreLink, process, getNanoSeconds(), convertEvent<VanadisSyscallGetTime64Event*>( "gettime64", sys_ev ) );
         } break;
         case SYSCALL_OP_ACCESS: {
             syscall = new VanadisAccessSyscall( this, coreLink, process, convertEvent<VanadisSyscallAccessEvent*>( "access", sys_ev ) );
