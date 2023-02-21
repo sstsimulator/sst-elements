@@ -334,41 +334,6 @@ void PandosNodeT::receiveRequest(SST::Event *evt, Link **responseLink) {
         }
 }
 
-
-#if 0
-/**
- * handle a response from memory to a request
- */
-void PandosNodeT::recvMemoryResponse(SST::Event *memrsp) {
-        using namespace pando;
-        using namespace backend;
-        out->verbose(CALL_INFO, 1, 0, "Memory response recieved.\n");
-
-        // check that this is actually the right type of event        
-        PandosMemoryRequestEventT *mem_request_event = dynamic_cast<PandosMemoryRequestEventT*>(memrsp);
-        if (!mem_request_event) {
-                out->fatal(CALL_INFO, -1
-                           ,"%s: %s: Received an event that is not a memory request\n"
-                           ,__func__
-                           ,getName().c_str()
-                        );
-                return;
-        }
-        
-        // map memory request back to the core from which it originated
-        int core_id = mem_request_event->src_core;
-        checkCoreID(CALL_INFO, core_id);
-
-        core_context_t *core_ctx = core_contexts[core_id];
-
-        // make core as ready
-        core_ctx->core_state.type = eCoreReady;
-
-        // cleanup the event
-        delete mem_request_event;
-}
-#endif
-        
 /**
  * Handle a clockTic
  *
