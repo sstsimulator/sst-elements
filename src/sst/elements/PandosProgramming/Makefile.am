@@ -14,6 +14,7 @@ comp_LTLIBRARIES = libPandosProgramming.la
 # add sources for this element library here
 libPandosProgramming_la_SOURCES = \
 	PandosMemoryRequestEvent.h \
+	PandosPacketEvent.h \
 	PandosNode.h \
 	PandosNode.cc
 
