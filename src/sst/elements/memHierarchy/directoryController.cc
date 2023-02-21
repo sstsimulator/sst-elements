@@ -384,8 +384,10 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
         if (maxRequestsPerCycle != 0 && requestsThisCycle == maxRequestsPerCycle) {
             break;
         }
+#ifdef __SST_DEBUG_OUTPUT__
         dbg.debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Retry   (%s)\n",
                 getCurrentSimCycle(), timestamp, getName().c_str(), (*it)->getVerboseString(dlevel).c_str());
+#endif
         
         if (processPacket(*it, true)) {
             requestsThisCycle++;
@@ -400,8 +402,10 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
         if (maxRequestsPerCycle != 0 && requestsThisCycle == maxRequestsPerCycle)
             break;
 
+#ifdef __SST_DEBUG_OUTPUT__
         dbg.debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
                 getCurrentSimCycle(), timestamp, getName().c_str(), (*it)->getVerboseString(dlevel).c_str());
+#endif
 
         if (processPacket(*it, false)) {
             requestsThisCycle++;
