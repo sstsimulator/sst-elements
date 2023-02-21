@@ -378,6 +378,10 @@ class EmberMpiLib : public EmberLib {
 		m_backed = true;
 	}
 
+        void setNotBacked() {
+                m_backed = false;
+        }
+
 	void completed(const SST::Output* output, uint64_t time, std::string motifName, int motifNum );
 
   private:
