@@ -1,2 +1,6 @@
-main() pid=100 tid=100 ppid=0 pgid=100
-parent: new child=101
+sizeof(struct utsname) 390
+Linux
+sim.sstsimulator.org
+4.19.136
+#1 Wed Sep 2 23:59:59 MST 2020
+riscv64
