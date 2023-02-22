@@ -22,6 +22,7 @@
 #include "os/syscall/futex.h"
 #include "os/syscall/exit.h"
 #include "os/syscall/exitgroup.h"
+#include "os/syscall/kill.h"
 #include "os/syscall/settidaddress.h"
 #include "os/syscall/mprotect.h"
 #include "os/syscall/getpid.h"
@@ -83,6 +84,9 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
         } break;
         case SYSCALL_OP_FUTEX: {
             syscall = new VanadisFutexSyscall( this, coreLink, process, convertEvent<VanadisSyscallFutexEvent*>( "futex", sys_ev ) );
+        } break;
+        case SYSCALL_OP_KILL: {
+            syscall = new VanadisKillSyscall( this, coreLink, process, convertEvent<VanadisSyscallKillEvent*>( "exit", sys_ev ) );
         } break;
         case SYSCALL_OP_EXIT: {
             syscall = new VanadisExitSyscall( this, coreLink, process, convertEvent<VanadisSyscallExitEvent*>( "exit", sys_ev ) );

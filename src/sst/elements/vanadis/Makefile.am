@@ -163,6 +163,7 @@ os/callev/voscallgettime64.h \
 os/callev/voscallgetx.h \
 os/callev/voscallioctl.h \
 os/callev/voscalliovec.h \
+os/callev/voscallkill.h \
 os/callev/voscallmmap.h \
 os/callev/voscallmmapx.h \
 os/callev/voscallmprotect.h \
@@ -202,6 +203,7 @@ os/syscall/gettid.h \
 os/syscall/gettime.h \
 os/syscall/ioctl.h \
 os/syscall/iovec.h \
+os/syscall/kill.h \
 os/syscall/mmap.h \
 os/syscall/mprotect.cc \
 os/syscall/mprotect.h \
@@ -435,6 +437,17 @@ EXTRA_DIST = \
 	tests/small/misc/pthread/riscv64/sst.stdout.gold \
 	tests/small/misc/pthread/riscv64/vanadis.stderr.gold \
 	tests/small/misc/pthread/riscv64/vanadis.stdout.gold \
+\
+	tests/small/misc/uname/Makefile \
+	tests/small/misc/uname/uname.c \
+	tests/small/misc/uname/mipsel/uname \
+	tests/small/misc/uname/mipsel/sst.stdout.gold \
+	tests/small/misc/uname/mipsel/vanadis.stderr.gold \
+	tests/small/misc/uname/mipsel/vanadis.stdout.gold \
+	tests/small/misc/uname/riscv64/uname \
+	tests/small/misc/uname/riscv64/sst.stdout.gold \
+	tests/small/misc/uname/riscv64/vanadis.stderr.gold \
+	tests/small/misc/uname/riscv64/vanadis.stdout.gold \
 \
 	tests/small/misc/hpcg/hpcg.dat \
 	tests/small/misc/hpcg/mipsel/hpcg \

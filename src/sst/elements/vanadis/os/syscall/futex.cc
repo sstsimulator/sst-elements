@@ -140,9 +140,9 @@ void VanadisFutexSyscall::memReqIsDone()
                 m_process->addFutexWait( getEvent<VanadisSyscallFutexEvent*>()->getAddr(), this );
 
             } else { 
-                m_output->verbose(CALL_INFO, 16, 0, "[syscall-futex] FUTEX_WAIT tid=%d addr=%#" PRIx64 " vals dont match return\n",
-                         m_process->gettid(), getEvent<VanadisSyscallFutexEvent*>()->getAddr());
-                setReturnFail(-EINVAL);
+                m_output->verbose(CALL_INFO, 16, 0, "[syscall-futex] FUTEX_WAIT tid=%d addr=%#" PRIx64 " %d != %d, vals dont match return\n",
+                         m_process->gettid(), getEvent<VanadisSyscallFutexEvent*>()->getAddr(), val, getEvent<VanadisSyscallFutexEvent*>()->getVal());
+                setReturnFail(-EAGAIN);
             }
         } break;
       case FUTEX_REQUEUE:

@@ -38,6 +38,7 @@
 #include "os/callev/voscallsta.h"
 #include "os/callev/voscalluname.h"
 #include "os/callev/voscallfork.h"
+#include "os/callev/voscallkill.h"
 #include "os/callev/voscallgetx.h"
 #include "os/callev/voscallunmap.h"
 #include "os/callev/voscallwrite.h"

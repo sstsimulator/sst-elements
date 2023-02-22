@@ -353,7 +353,9 @@ public:
         }
     }
 
-    ~MESIL1() {}
+    ~MESIL1() {
+        delete cacheArray_;
+    }
 
     /** Event handlers - called by controller */
     bool handleGetS(MemEvent * event, bool inMSHR);
