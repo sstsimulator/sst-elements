@@ -99,17 +99,17 @@ int main(int argc, char **argv){
   for (int i=0; i<target_edges; ++i)
     RMAT(rmat_args,i);
 
-  // Compute totel number of edges
+  // Compute total number of edges
   for (auto& it: edges) {
     num_edges += it.second.size();
   }
 
-  for (auto& it: edges) {
-    std::cout << it.first;
-    for (auto& it2: it.second)
-      std::cout << " " << it2;
-    std::cout << std::endl;
-  }
+//  for (auto& it: edges) {
+//    std::cout << it.first;
+//    for (auto& it2: it.second)
+//      std::cout << " " << it2;
+//    std::cout << std::endl;
+//  }
 
   // Set Vertices[i] to start index of vertex i's edges
   std::vector<int64_t> Vertices(num_vertices);
