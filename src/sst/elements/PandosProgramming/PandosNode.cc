@@ -22,27 +22,38 @@ void PandosNodeT::schedule(int thief_core_id) {
         using namespace pando;
         using namespace backend;
         core_context_t *thief_core_ctx = core_contexts[thief_core_id];
-        out->verbose(CALL_INFO, 1, DEBUG_SCHEDULE, "%s: scheduling for thief core %d\n", __func__, thief_core_id);
+        out->verbose(CALL_INFO, 3, DEBUG_SCHEDULE, "%s: scheduling for thief core %d\n", __func__, thief_core_id);
         // search for a core that's not idle
         for (int victim_core_id = 0;
              victim_core_id < core_contexts.size();
              victim_core_id++) {
                 core_context_t *victim_core_ctx = core_contexts[victim_core_id];
-                // skip over self
-                if (victim_core_id == thief_core_id)
+                out->verbose(CALL_INFO, 4, DEBUG_SCHEDULE, "%s: scanning victim %d\n", __func__, victim_core_id);
+                // skip over self                
+                if (victim_core_id == thief_core_id) {
+                        out->verbose(CALL_INFO, 4, DEBUG_SCHEDULE, "%s: victim %d: = thief\n", __func__, victim_core_id);
                         continue;
+                }
                 // skip over idle cores
-                if (victim_core_ctx->core_state.type == eCoreIdle)
+                if (victim_core_ctx->core_state.type == eCoreIdle) {
+                        out->verbose(CALL_INFO, 4, DEBUG_SCHEDULE, "%s: victim %d: is idle\n", __func__, victim_core_id);
                         continue;
-
-                out->verbose(CALL_INFO, 3, DEBUG_SCHEDULE, "%s: thief %d stealing from victim %d\n",
+                }
+                // skip over if task queeu is empty
+                if (victim_core_ctx->task_deque.empty()) {
+                        out->verbose(CALL_INFO, 4, DEBUG_SCHEDULE, "%s: victim %d: task queue empty\n", __func__, victim_core_id);
+                        continue;
+                }
+                
+                out->verbose(CALL_INFO, 1, DEBUG_SCHEDULE, "%s: thief %d stealing from victim %d\n",
                              __func__, thief_core_id, victim_core_id);
                                 
                 // steal a task from the back
                 task_t *stolen = victim_core_ctx->task_deque.back();
                 victim_core_ctx->task_deque.pop_back();
                 thief_core_ctx->task_deque.push_front(stolen);
-                thief_core_ctx->core_state.type = eCoreReady;
+                thief_core_ctx->setStateType(eCoreReady);
+                break;
         }
 }
 
@@ -152,7 +163,7 @@ void PandosNodeT::initCores()
                         out->verbose(CALL_INFO, 1, 0, "my_main() has returned\n");
                 });
         cc0->task_deque.push_front(main_task);
-        cc0->core_state.type = eCoreReady;
+        cc0->setStateType(eCoreReady);
 }
 
 /**
@@ -305,7 +316,7 @@ void PandosNodeT::receiveResponse(SST::Event *evt, Link** requestLink) {
         core_context_t *core_ctx = core_contexts[src_core];
 
         // change core's state to ready
-        core_ctx->core_state.type = eCoreReady;
+        core_ctx->setStateType(eCoreReady);
 
         // was this a read response?
         PandosReadResponseEventT *read_rsp = dynamic_cast<PandosReadResponseEventT*>(rsp);
@@ -415,9 +426,7 @@ bool PandosNodeT::clockTic(SST::Cycle_t cycle) {
                 case eCoreIdle:
                         out->verbose(CALL_INFO, 2, DEBUG_SCHEDULE, "core %d is idle\n", core_id);                        
                         schedule(core_id);
-                        break;
                 case eCoreReady:
-                        out->verbose(CALL_INFO, 2, DEBUG_SCHEDULE, "core %d is ready\n", core_id);
                         core->execute();
                         break;
                 default:
