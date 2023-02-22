@@ -35,7 +35,8 @@ public:
                 {"num_cores", "Number of cores on PandoNode", NULL},
                 {"instructions_per_task", "Instructions per task", NULL},
                 {"program_binary_fname", "Program binary file name", NULL},
-                {"verbose_level", "Verbosity of logging", NULL},                
+                {"verbose_level", "Verbosity of logging", NULL},
+                {"debug_scheduler", "Debug scheduler", NULL},
         )
         // Document the ports that this component accepts
         SST_ELI_DOCUMENT_PORTS(
@@ -109,6 +110,11 @@ public:
          * check if pxn id is valid, abort() if not
          */
         void checkPXNID(int line, const char *file, const char *function, int pxn_id);
+
+        /**
+         * schedule work onto a core
+         */
+        void schedule(int core_id);
         
         // SST Output object, for printing error messages, etc.
         SST::Output *out;

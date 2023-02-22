@@ -7,10 +7,56 @@
 #include "PandosMemoryRequestEvent.h"
 #include "PandosPacketEvent.h"
 
-#define DO_MEMCPY
+//#define DO_MEMCPY
 
 using namespace SST;
 using namespace SST::PandosProgramming;
+
+#define DEBUG_SCHEDULE        0x00000001
+#define DEBUG_MEMORY_REQUESTS 0x00000002
+
+/**
+ * schedule work onto a core
+ */
+void PandosNodeT::schedule(int thief_core_id) {
+        using namespace pando;
+        using namespace backend;
+        core_context_t *thief_core_ctx = core_contexts[thief_core_id];
+        out->verbose(CALL_INFO, 3, DEBUG_SCHEDULE, "%s: scheduling for thief core %d\n", __func__, thief_core_id);
+        // search for a core that's not idle
+        for (int victim_core_id = 0;
+             victim_core_id < core_contexts.size();
+             victim_core_id++) {
+                core_context_t *victim_core_ctx = core_contexts[victim_core_id];
+                out->verbose(CALL_INFO, 4, DEBUG_SCHEDULE, "%s: scanning victim %d\n", __func__, victim_core_id);
+                // skip over self                
+                if (victim_core_id == thief_core_id) {
+                        out->verbose(CALL_INFO, 4, DEBUG_SCHEDULE, "%s: victim %d: = thief\n", __func__, victim_core_id);
+                        continue;
+                }
+                // skip over idle cores
+                if (victim_core_ctx->core_state.type == eCoreIdle) {
+                        out->verbose(CALL_INFO, 4, DEBUG_SCHEDULE, "%s: victim %d: is idle\n", __func__, victim_core_id);
+                        continue;
+                }
+                // skip over if task queeu is empty
+                if (victim_core_ctx->task_deque.empty()) {
+                        out->verbose(CALL_INFO, 4, DEBUG_SCHEDULE, "%s: victim %d: task queue empty\n", __func__, victim_core_id);
+                        continue;
+                }
+                
+                out->verbose(CALL_INFO, 1, DEBUG_SCHEDULE, "%s: thief %d stealing from victim %d\n",
+                             __func__, thief_core_id, victim_core_id);
+                                
+                // steal a task from the back
+                task_t *stolen = victim_core_ctx->task_deque.back();
+                victim_core_ctx->task_deque.pop_back();
+                thief_core_ctx->task_deque.push_front(stolen);
+                thief_core_ctx->setStateType(eCoreReady);
+                break;
+        }
+}
+
 
 void PandosNodeT::checkCoreID(int line, const char *file, const char *function, int core_id) {
         if (core_id < 0 || core_id >= core_contexts.size()) {
@@ -86,6 +132,8 @@ void PandosNodeT::closeProgramBinary()
  */
 void PandosNodeT::initCores()
 {
+        using namespace pando;
+        using namespace backend;
         /**
          * start all cores
          */
@@ -115,6 +163,7 @@ void PandosNodeT::initCores()
                         out->verbose(CALL_INFO, 1, 0, "my_main() has returned\n");
                 });
         cc0->task_deque.push_front(main_task);
+        cc0->setStateType(eCoreReady);
 }
 
 /**
@@ -131,8 +180,12 @@ PandosNodeT::PandosNodeT(ComponentId_t id, Params &params) : Component(id), prog
         num_cores = params.find<int32_t>("num_cores", 1, found);
         instr_per_task = params.find<int32_t>("instr_per_task", 100, found);
         program_binary_fname = params.find<std::string>("program_binary_fname", "", found);
+        bool debug_scheduler = params.find<bool>("debug_scheduler", true, found);
 
-        out = new Output("[PandosNode] ", verbose_level, 0, Output::STDOUT);
+        uint32_t verbose_mask = 0;
+        if (debug_scheduler) verbose_mask |= DEBUG_SCHEDULE;
+        
+        out = new Output("[PandosNode] ", verbose_level, verbose_mask, Output::STDOUT);
         out->verbose(CALL_INFO, 2, 0, "Hello, world!\n");    
         
         out->verbose(CALL_INFO, 1, 0, "num_cores = %d, instr_per_task = %d, program_binary_fname = %s\n"
@@ -231,9 +284,11 @@ void PandosNodeT::sendMemoryRequest(int src_core) {
                 toRemoteNode->send(req);
         } else if (core_ctx->core_state.mem_req.addr.dram_not_spm) {
                 /* dram */
+                out->verbose(CALL_INFO, 1, 0, "%s: Sending memory request to DRAM\n", __func__);
                 toNodeSharedDRAM->send(req);
         } else {
                 /* spm */
+                out->verbose(CALL_INFO, 1, 0, "%s: Sending memory request to SPM\n", __func__);                
                 toCoreLocalSPM->send(req);
         }        
 }
@@ -261,7 +316,7 @@ void PandosNodeT::receiveResponse(SST::Event *evt, Link** requestLink) {
         core_context_t *core_ctx = core_contexts[src_core];
 
         // change core's state to ready
-        core_ctx->core_state.type = eCoreReady;
+        core_ctx->setStateType(eCoreReady);
 
         // was this a read response?
         PandosReadResponseEventT *read_rsp = dynamic_cast<PandosReadResponseEventT*>(rsp);
@@ -362,24 +417,21 @@ bool PandosNodeT::clockTic(SST::Cycle_t cycle) {
         for (int core_id = 0; core_id < core_contexts.size(); core_id++) {
                 core_context_t *core = core_contexts[core_id];
                 // TODO: this should maybe be a while () loop instead...
-                if (core->core_state.type == eCoreReady || !core->task_deque.empty()) {
-                        // execute some code on this core
+                switch (core->core_state.type) {
+                case eCoreStallMemoryRead:
+                case eCoreStallMemoryWrite:
+                        // generate an event an depending on the memory type
+                        sendMemoryRequest(core_id);
+                        break;
+                case eCoreIdle:
+                        out->verbose(CALL_INFO, 2, DEBUG_SCHEDULE, "core %d is idle\n", core_id);                        
+                        schedule(core_id);
+                case eCoreReady:
                         core->execute();
-                        // check the core's state
-                        switch (core->core_state.type) {
-                        case eCoreStallMemoryRead:
-                        case eCoreStallMemoryWrite:
-                                // generate an event an depending on the memory type
-                                sendMemoryRequest(core_id);
-                                break;
-                        case eCoreReady:
-                        case eCoreIdle:
-                        default:                                
-                                break;
-                                
-                        }
-                }                
+                        break;
+                default:
+                        break;
+                }                        
         }
-
         return false;
 }
