@@ -93,10 +93,10 @@ public:
 #endif
 
         if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
-            const fp_format src_1  = rs1_is_neg ? -regFile->getFPReg<fp_format>(phys_fp_regs_in[0]) : regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
+            const fp_format src_1  = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
             const fp_format src_2  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3]);
             const fp_format src_3  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[4], phys_fp_regs_in[5]);
-            const fp_format result = std::fma( (fp_format) src_1, (fp_format) src_2, (fp_format) -src_3 ); 
+            const fp_format result = std::fma( (fp_format) src_1, (fp_format) src_2, (fp_format) -src_3 ) * -1.0; 
 
             performMsubFlagChecks<fp_format>(src_1,src_2,src_3);
             performFlagChecks<fp_format>(result);
@@ -109,10 +109,10 @@ public:
             fractureToRegisters<fp_format>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], result);
         }
         else {
-            const fp_format src_1  = rs1_is_neg ? -regFile->getFPReg<fp_format>(phys_fp_regs_in[0]) : regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
+            const fp_format src_1  = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
             const fp_format src_2  = regFile->getFPReg<fp_format>(phys_fp_regs_in[1]);
             const fp_format src_3  = regFile->getFPReg<fp_format>(phys_fp_regs_in[2]);
-            const fp_format result = std::fma( (fp_format) src_1, (fp_format) src_2, (fp_format) -src_3 ); 
+            const fp_format result = std::fma( (fp_format) src_1, (fp_format) src_2, (fp_format) -src_3 ) * -1.0; 
 
             performMsubFlagChecks<fp_format>(src_1,src_2,src_3);
             performFlagChecks<fp_format>(result);
