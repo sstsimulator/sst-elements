@@ -160,7 +160,7 @@ private:
         mem_if->send(ev);
     }
 
-    uint64_t getSimNanoSeconds() { return getCurrentSimTimeNano(); }
+    uint64_t getNanoSeconds() { return getCurrentSimTimeNano() + m_osStartTimeNano;  }
 
     void writePage( uint64_t physAddr, uint8_t* data, unsigned page_size, Callback* callback )
     {
@@ -341,6 +341,7 @@ private:
     uint64_t                    m_phdr_address;
     uint64_t                    m_stack_top;
     int                         m_nodeNum;
+    uint64_t                    m_osStartTimeNano;
 
     std::queue<PageFault*>                          m_pendingFault;
     std::map<std::string, VanadisELFInfo* >         m_elfMap; 
@@ -349,8 +350,6 @@ private:
 
     std::map< VanadisELFInfo*, std::map<int,OS::Page*> >            m_elfPageCache;
     std::unordered_map<StandardMem::Request::id_t, VanadisSyscall*> m_memRespMap;
-
-
 
     std::queue< OS::HwThreadID* > m_availHwThreads;
 

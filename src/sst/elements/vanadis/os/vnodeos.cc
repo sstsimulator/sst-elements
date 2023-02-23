@@ -47,6 +47,7 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
         } 
     } 
 
+    m_osStartTimeNano = params.find<uint64_t>("osStartTimeNano",1000000000);
     m_processDebugLevel = params.find<uint32_t>("processDebugLevel",0);
     m_phdr_address = params.find<uint64_t>("program_header_address", 0x60000000);
 

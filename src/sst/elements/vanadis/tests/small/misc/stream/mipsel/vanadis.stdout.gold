@@ -10,9 +10,9 @@ Each kernel will be executed 3 times.
  The *best* time for each kernel (excluding the first iteration)
  will be used to compute the reported bandwidth.
 -------------------------------------------------------------
-Your clock granularity/precision appears to be 5 microseconds.
-Each test below will take on the order of 193 microseconds.
-   (= 38 clock ticks)
+Your clock granularity/precision appears to be 4 microseconds.
+Each test below will take on the order of 194 microseconds.
+   (= 48 clock ticks)
 Increase the size of the arrays if this shows that
 you are not getting at least 20 clock ticks per test.
 -------------------------------------------------------------

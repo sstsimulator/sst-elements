@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
     topo = topoSingle()
     topo.link_latency = "20ns"
-    topo.num_ports = 4
+    topo.num_ports = 32
     
     # Set up the routers
     router = hr_router()

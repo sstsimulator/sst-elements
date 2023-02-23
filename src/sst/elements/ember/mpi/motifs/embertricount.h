@@ -53,9 +53,8 @@ public:
   void request_task();
   void recv_datareq();
   void wait_for_any();
-  void request_edges(uint64_t vertex);
-  void vertex_to_ranks(uint64_t vertex, std::set<uint64_t> &ranks);
-  uint64_t vertex_to_size(uint64_t vertex, uint64_t rank);
+  void request_edges(uint64_t first_edge, uint64_t last_edge);
+  void edges_to_ranks(uint64_t first_edge, uint64_t last_edge, std::map<uint64_t,uint64_t>& rank_to_size);
 
 private:
   enum {TASK_REQUEST, TASK_ASSIGN, TASK_NULL, TASKS_COMPLETE, DATA_REQUEST, DATA};
@@ -65,6 +64,7 @@ private:
   uint64_t rank_;
   uint64_t NT_;
   uint64_t NL_;
+  uint64_t num_vertices_;
   uint64_t num_edges_;
   uint64_t num_tasks_;
   uint64_t next_task_;
@@ -83,8 +83,6 @@ private:
 
   // task client
   Hermes::MemAddr task_recv_memaddr_;
-//  Hermes::MemAddr datareq_send_memaddr_;
-//  Hermes::MemAddr datareq_recv_memaddr_;
   std::vector<Hermes::MemAddr> datareq_send_memaddrs_;
   Hermes::MemAddr datareq_recv_memaddr_;
   MessageRequest* all_requests_;
