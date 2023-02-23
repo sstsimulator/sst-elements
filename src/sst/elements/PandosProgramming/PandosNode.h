@@ -37,6 +37,7 @@ public:
                 {"program_binary_fname", "Program binary file name", NULL},
                 {"verbose_level", "Verbosity of logging", NULL},
                 {"debug_scheduler", "Debug scheduler", NULL},
+                {"debug_memory_requests", "Debug memory requests", NULL},
         )
         // Document the ports that this component accepts
         SST_ELI_DOCUMENT_PORTS(

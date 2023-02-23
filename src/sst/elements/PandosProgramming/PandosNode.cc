@@ -7,7 +7,7 @@
 #include "PandosMemoryRequestEvent.h"
 #include "PandosPacketEvent.h"
 
-//#define DO_MEMCPY
+#define DO_MEMCPY
 
 using namespace SST;
 using namespace SST::PandosProgramming;
@@ -180,10 +180,11 @@ PandosNodeT::PandosNodeT(ComponentId_t id, Params &params) : Component(id), prog
         num_cores = params.find<int32_t>("num_cores", 1, found);
         instr_per_task = params.find<int32_t>("instr_per_task", 100, found);
         program_binary_fname = params.find<std::string>("program_binary_fname", "", found);
-        bool debug_scheduler = params.find<bool>("debug_scheduler", true, found);
-
+        bool debug_scheduler = params.find<bool>("debug_scheduler", false, found);
+        bool debug_memory_requests = params.find<bool>("debug_memory_requests", false, found);
         uint32_t verbose_mask = 0;
         if (debug_scheduler) verbose_mask |= DEBUG_SCHEDULE;
+        if (debug_memory_requests) verbose_mask |= DEBUG_MEMORY_REQUESTS;
         
         out = new Output("[PandosNode] ", verbose_level, verbose_mask, Output::STDOUT);
         out->verbose(CALL_INFO, 2, 0, "Hello, world!\n");    
@@ -258,13 +259,15 @@ void PandosNodeT::sendMemoryRequest(int src_core) {
         // create a new event
         // TODO: constructors here
         PandosRequestEventT *req = nullptr;
-        if (core_ctx->core_state.type == eCoreStallMemoryRead) {
+        if (core_ctx->core_state.type == eCoreIssueMemoryRead) {
                 /* read request */
                 PandosReadRequestEventT *read_req = new PandosReadRequestEventT;
                 read_req->size = core_ctx->core_state.mem_req.size;
-                out->verbose(CALL_INFO, 1, 0, "%s: Sending memory request with size = %ld\n", __func__, core_ctx->core_state.mem_req.size);
+                out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "core %d: Sending memory request with size = %ld\n",
+                             src_core, core_ctx->core_state.mem_req.size);
+                core_ctx->setStateType(eCoreStallMemoryRead);
                 req = read_req;
-        } else {
+        } else if (core_ctx->core_state.type == eCoreIssueMemoryWrite) {
                 /* write request */
                 PandosWriteRequestEventT *write_req = new PandosWriteRequestEventT;
                 write_req->size = core_ctx->core_state.mem_req.size;
@@ -272,7 +275,15 @@ void PandosNodeT::sendMemoryRequest(int src_core) {
 #ifdef DO_MEMCPY
                 memcpy(write_req->payload.data(), core_ctx->core_state.mem_req.data, write_req->size);
 #endif
+                core_ctx->setStateType(eCoreStallMemoryWrite);
                 req = write_req;
+        } else {
+                // should never happen
+                out->fatal(CALL_INFO, -1, "%s: core %d: bad core state: %s\n"
+                           ,__func__
+                           ,src_core
+                           ,core_state_type_string(core_ctx->core_state.type)
+                        );
         }
         req->src_core = src_core;
         req->src_pxn = core_ctx->node_ctx->id;;
@@ -284,13 +295,13 @@ void PandosNodeT::sendMemoryRequest(int src_core) {
                 toRemoteNode->send(req);
         } else if (core_ctx->core_state.mem_req.addr.dram_not_spm) {
                 /* dram */
-                out->verbose(CALL_INFO, 1, 0, "%s: Sending memory request to DRAM\n", __func__);
+                out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "%s: Sending memory request to DRAM\n", __func__);
                 toNodeSharedDRAM->send(req);
         } else {
                 /* spm */
-                out->verbose(CALL_INFO, 1, 0, "%s: Sending memory request to SPM\n", __func__);                
+                out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "%s: Sending memory request to SPM\n", __func__);                
                 toCoreLocalSPM->send(req);
-        }        
+        }
 }
 
 /**
@@ -299,10 +310,10 @@ void PandosNodeT::sendMemoryRequest(int src_core) {
 void PandosNodeT::receiveResponse(SST::Event *evt, Link** requestLink) {
         using namespace pando;
         using namespace backend;
-        out->verbose(CALL_INFO, 1, 0, "Received packet on link\n");
+        out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "Received packet on link\n");
         PandosResponseEventT *rsp = dynamic_cast<PandosResponseEventT*>(evt);
         if (!rsp) {
-                out->fatal(CALL_INFO, 1, 0, "Bad event type\n");
+                out->fatal(CALL_INFO, -1, "Bad event type\n");
                 abort();
         }
         /**
@@ -338,21 +349,21 @@ void PandosNodeT::receiveResponse(SST::Event *evt, Link** requestLink) {
  */
 void PandosNodeT::receiveWriteRequest(PandosWriteRequestEventT *write_req, Link **responseLink) {
         /* create a response packet */
-        out->verbose(CALL_INFO, 1, 0, "%s: formatting a response packet\n", __func__);
+        out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "%s: formatting a response packet\n", __func__);
         PandosWriteResponseEventT *write_rsp = new PandosWriteResponseEventT;
         write_rsp->src_pxn = write_req->src_pxn;
         write_rsp->src_core = write_req->src_core;
         void *p = reinterpret_cast<void*>(write_req->dst.uptr);
-        out->verbose(CALL_INFO, 1, 0, "%s: memcpying %zu bytes to %p\n", __func__, write_req->size, p);
+        out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "%s: memcpying %zu bytes to %p\n", __func__, write_req->size, p);
 #ifdef DO_MEMCPY
         memcpy(p, write_req->payload.data(), write_req->size);
 #endif
         /* delete the request */
         delete write_req;
         /* send the response */
-        out->verbose(CALL_INFO, 1, 0, "Sending write response\n");
+        out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "Sending write response\n");
         (*responseLink)->send(write_rsp);
-        out->verbose(CALL_INFO, 1, 0, "Write response sent\n");
+        out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "Write response sent\n");
 }
 
 /**
@@ -360,7 +371,7 @@ void PandosNodeT::receiveWriteRequest(PandosWriteRequestEventT *write_req, Link 
  */
 void PandosNodeT::receiveReadRequest(PandosReadRequestEventT *read_req, Link **responseLink) {
         /* create a response packet */
-        out->verbose(CALL_INFO, 1, 0, "%s: formatting response packet\n", __func__);
+        out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "%s: formatting response packet\n", __func__);
         PandosReadResponseEventT *read_rsp = new PandosReadResponseEventT;
         read_rsp->src_pxn = read_req->src_pxn;
         read_rsp->src_core = read_req->src_core;
@@ -373,7 +384,7 @@ void PandosNodeT::receiveReadRequest(PandosReadRequestEventT *read_req, Link **r
         /* delete the request event */
         delete read_req;
         /* send the response */
-        out->verbose(CALL_INFO, 1, 0, "Sending read response\n");
+        out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "Sending read response\n");
         (*responseLink)->send(read_rsp);
 }
 
@@ -381,7 +392,7 @@ void PandosNodeT::receiveReadRequest(PandosReadRequestEventT *read_req, Link **r
  * handle a request for memory operation
  */
 void PandosNodeT::receiveRequest(SST::Event *evt, Link **responseLink) {
-        out->verbose(CALL_INFO, 1, 0, "Received packet on link\n");
+        out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "Received packet on link\n");
         PandosReadRequestEventT *read_req;
         PandosWriteRequestEventT *write_req;
         read_req = dynamic_cast<PandosReadRequestEventT*>(evt);
@@ -392,11 +403,11 @@ void PandosNodeT::receiveRequest(SST::Event *evt, Link **responseLink) {
                         abort();
                 }
                 // write request
-                out->verbose(CALL_INFO, 1, 0, "Received write packet\n");
+                out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "Received write packet\n");
                 receiveWriteRequest(write_req, responseLink);
         } else {
                 // read request
-                out->verbose(CALL_INFO, 1, 0, "Received read packet\n");
+                out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "Received read packet\n");
                 receiveReadRequest(read_req, responseLink);                
         }
 }
@@ -418,8 +429,8 @@ bool PandosNodeT::clockTic(SST::Cycle_t cycle) {
                 core_context_t *core = core_contexts[core_id];
                 // TODO: this should maybe be a while () loop instead...
                 switch (core->core_state.type) {
-                case eCoreStallMemoryRead:
-                case eCoreStallMemoryWrite:
+                case eCoreIssueMemoryRead:
+                case eCoreIssueMemoryWrite:
                         // generate an event an depending on the memory type
                         sendMemoryRequest(core_id);
                         break;
@@ -429,9 +440,12 @@ bool PandosNodeT::clockTic(SST::Cycle_t cycle) {
                 case eCoreReady:
                         core->execute();
                         break;
+                case eCoreStallMemoryRead:
+                case eCoreStallMemoryWrite:
                 default:
                         break;
                 }                        
         }
         return false;
 }
+
