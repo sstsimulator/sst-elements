@@ -38,6 +38,7 @@ public:
                 {"verbose_level", "Verbosity of logging", NULL},
                 {"debug_scheduler", "Debug scheduler", NULL},
                 {"debug_memory_requests", "Debug memory requests", NULL},
+                {"debug_initialization", "Debug initializtion code", NULL},                
         )
         // Document the ports that this component accepts
         SST_ELI_DOCUMENT_PORTS(
@@ -49,7 +50,7 @@ public:
                 {"fromNodeSharedDRAM"     ,"Link from DRAM to Node"            ,{"PandosProgramming.PandosMemoryResponseEventT",""}},
                 // links to a remote node component
                 {"requestsToRemoteNode"   ,"Link from this Node to other Node" ,{"PandosProgramming.PandosMemoryResponseEventT",""}},
-                {"requestsfromRemoteNode" ,"Link from other Node to this Node" ,{"PandosProgramming.PandosMemoryRequestEventT",""}},
+                {"requestsFromRemoteNode" ,"Link from other Node to this Node" ,{"PandosProgramming.PandosMemoryRequestEventT",""}},
          )
 
         /**

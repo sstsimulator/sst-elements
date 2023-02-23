@@ -14,6 +14,7 @@ using namespace SST::PandosProgramming;
 
 #define DEBUG_SCHEDULE        0x00000001
 #define DEBUG_MEMORY_REQUESTS 0x00000002
+#define DEBUG_INITIALIZATION  0x00000004
 
 /**
  * schedule work onto a core
@@ -109,7 +110,7 @@ void PandosNodeT::openProgramBinary()
                 );
 
         pando_context = new pando::backend::node_context_t(static_cast<int64_t>(getId()));
-        out->verbose(CALL_INFO, 1, 0, "made pando context @ %p\n", pando_context);
+        out->verbose(CALL_INFO, 1, DEBUG_INITIALIZATION, "made pando context @ %p with id %ld\n", pando_context, pando_context->id);
 }
 
 void PandosNodeT::closeProgramBinary()
@@ -182,9 +183,11 @@ PandosNodeT::PandosNodeT(ComponentId_t id, Params &params) : Component(id), prog
         program_binary_fname = params.find<std::string>("program_binary_fname", "", found);
         bool debug_scheduler = params.find<bool>("debug_scheduler", false, found);
         bool debug_memory_requests = params.find<bool>("debug_memory_requests", false, found);
+        bool debug_initialization = params.find<bool>("debug_initialization", false, found);        
         uint32_t verbose_mask = 0;
         if (debug_scheduler) verbose_mask |= DEBUG_SCHEDULE;
         if (debug_memory_requests) verbose_mask |= DEBUG_MEMORY_REQUESTS;
+        if (debug_initialization) verbose_mask |= DEBUG_INITIALIZATION;
         
         out = new Output("[PandosNode] ", verbose_level, verbose_mask, Output::STDOUT);
         out->verbose(CALL_INFO, 2, 0, "Hello, world!\n");    
