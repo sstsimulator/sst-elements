@@ -138,6 +138,7 @@ os/voscallfunc.h \
 os/vphysmemmanager.h \
 os/vriscvcpuos.h \
 os/vstartthreadreq.h \
+os/vosDbgFlags.h \
 \
 os/include/device.h \
 os/include/fdTable.h \
@@ -159,6 +160,7 @@ os/callev/voscallexit.h \
 os/callev/voscallfork.h \
 os/callev/voscallfstat.h \
 os/callev/voscallfutex.h \
+os/callev/voscallgetaffinity.h \
 os/callev/voscallgettime64.h \
 os/callev/voscallgetx.h \
 os/callev/voscallioctl.h \
@@ -199,6 +201,7 @@ os/syscall/futex.h \
 os/syscall/getpgid.h \
 os/syscall/getpid.h \
 os/syscall/getppid.h \
+os/syscall/getaffinity.h \
 os/syscall/gettid.h \
 os/syscall/gettime.h \
 os/syscall/ioctl.h \
