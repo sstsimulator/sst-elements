@@ -432,7 +432,7 @@ void PandosNodeT::receiveReadRequest(PandosReadRequestEventT *read_req, Link **r
     read_rsp->src_pxn = read_req->src_pxn;
     read_rsp->src_core = read_req->src_core;
     read_rsp->size = read_req->size;
-    read_rsp->payload.reserve(read_req->size);
+    read_rsp->payload.resize(read_req->size);
     void *p = translateAddress(read_req->getDst());
 #ifdef DO_MEMCPY
     memcpy(read_rsp->payload.data(), p, read_req->size);
