@@ -12,15 +12,15 @@ all process have exited
  node0.cpu0:decoder0.uop_delayed_rob_full.1 : Accumulator : Sum.u64 = 992962; SumSQ.u64 = 992962; Count.u64 = 992962; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:lsq.loads_issued.1 : Accumulator : Sum.u64 = 1895; SumSQ.u64 = 1895; Count.u64 = 1895; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:lsq.stores_issued.1 : Accumulator : Sum.u64 = 840; SumSQ.u64 = 840; Count.u64 = 840; Min.u64 = 1; Max.u64 = 1; 
- node0.cpu0:lsq.bytes_read.1 : Accumulator : Sum.u64 = 9851; SumSQ.u64 = 72285; Count.u64 = 1802; Min.u64 = 1; Max.u64 = 8; 
+ node0.cpu0:lsq.bytes_read.1 : Accumulator : Sum.u64 = 9826; SumSQ.u64 = 72168; Count.u64 = 1793; Min.u64 = 1; Max.u64 = 8; 
  node0.cpu0:lsq.bytes_stored.1 : Accumulator : Sum.u64 = 5392; SumSQ.u64 = 41592; Count.u64 = 801; Min.u64 = 1; Max.u64 = 8; 
  node0.cpu0:lsq.fences_issued.1 : Accumulator : Sum.u64 = 27; SumSQ.u64 = 27; Count.u64 = 27; Min.u64 = 1; Max.u64 = 1; 
- node0.cpu0:lsq.loads_executed.1 : Accumulator : Sum.u64 = 1382; SumSQ.u64 = 1382; Count.u64 = 1382; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0:lsq.loads_executed.1 : Accumulator : Sum.u64 = 1376; SumSQ.u64 = 1376; Count.u64 = 1376; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:lsq.stores_executed.1 : Accumulator : Sum.u64 = 801; SumSQ.u64 = 801; Count.u64 = 801; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:lsq.fences_executed.1 : Accumulator : Sum.u64 = 19; SumSQ.u64 = 19; Count.u64 = 19; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:lsq.store_buffer_entries.1 : Accumulator : Sum.u64 = 5163; SumSQ.u64 = 14065; Count.u64 = 259427; Min.u64 = 0; Max.u64 = 8; 
  node0.cpu0:lsq.stores_in_flight.1 : Accumulator : Sum.u64 = 258951; SumSQ.u64 = 3294115; Count.u64 = 259427; Min.u64 = 0; Max.u64 = 27; 
- node0.cpu0:lsq.loads_in_flight.1 : Accumulator : Sum.u64 = 171449; SumSQ.u64 = 257581; Count.u64 = 259427; Min.u64 = 0; Max.u64 = 14; 
+ node0.cpu0:lsq.loads_in_flight.1 : Accumulator : Sum.u64 = 171408; SumSQ.u64 = 257466; Count.u64 = 259427; Min.u64 = 0; Max.u64 = 14; 
  node0.cpu0:lsq.operations_pending : Accumulator : Sum.u64 = 9818; SumSQ.u64 = 17646; Count.u64 = 259427; Min.u64 = 0; Max.u64 = 9; 
  node0.cpu0.instructions_retired.1 : Accumulator : Sum.u64 = 6200; SumSQ.u64 = 11408; Count.u64 = 259427; Min.u64 = 0; Max.u64 = 4; 
  node0.cpu0.instructions_decoded.1 : Accumulator : Sum.u64 = 33987; SumSQ.u64 = 235011; Count.u64 = 259427; Min.u64 = 0; Max.u64 = 9; 
