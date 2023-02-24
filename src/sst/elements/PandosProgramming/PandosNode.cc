@@ -111,7 +111,7 @@ void PandosNodeT::openProgramBinary()
         "PANDORuntimeBackendSetCurrentContext"
         );
 
-    pando_context = new pando::backend::node_context_t(static_cast<int64_t>(getId()));
+    pando_context = new pando::backend::node_context_t(static_cast<int64_t>(getId()), node_shared_dram_size);
     out->verbose(CALL_INFO, 1, DEBUG_INITIALIZATION, "made pando context @ %p with id %ld\n", pando_context, pando_context->id);
 }
 
@@ -183,6 +183,7 @@ PandosNodeT::PandosNodeT(ComponentId_t id, Params &params) : Component(id), prog
     num_cores = params.find<int32_t>("num_cores", 1, found);
     instr_per_task = params.find<int32_t>("instr_per_task", 100, found);
     program_binary_fname = params.find<std::string>("program_binary_fname", "", found);
+    node_shared_dram_size = params.find<size_t>("node_shared_dram_size", 1024*1024*1024, found);
     bool debug_scheduler = params.find<bool>("debug_scheduler", false, found);
     bool debug_memory_requests = params.find<bool>("debug_memory_requests", false, found);
     bool debug_initialization = params.find<bool>("debug_initialization", false, found);        
@@ -195,8 +196,9 @@ PandosNodeT::PandosNodeT(ComponentId_t id, Params &params) : Component(id), prog
     out = new Output(ss.str(), verbose_level, verbose_mask, Output::STDOUT);
     out->verbose(CALL_INFO, 2, DEBUG_INITIALIZATION, "Hello, world!\n");    
         
-    out->verbose(CALL_INFO, 1, DEBUG_INITIALIZATION, "num_cores = %d, program_binary_fname = %s\n"
+    out->verbose(CALL_INFO, 1, DEBUG_INITIALIZATION, "num_cores = %d, node_shared_dram_size=%zu, program_binary_fname = %s\n"
                  ,num_cores
+                 ,node_shared_dram_size
                  ,program_binary_fname.c_str());
 
     // open binary
@@ -389,7 +391,7 @@ void *PandosNodeT::translateAddress(const pando::backend::address_t &addr)
         out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "%s: translate address = %s => %p\n",__func__,address_to_string(addr).c_str(),p);
         return reinterpret_cast<void*>(p);
     } else {
-        p = reinterpret_cast<void*>(addr.uptr);
+        p =  (void*)&pando_context->node_shared_dram[addr.uptr];
         out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "%s: translate address = %s => %p\n",__func__,address_to_string(addr).c_str(),p);
         return p;
     }
