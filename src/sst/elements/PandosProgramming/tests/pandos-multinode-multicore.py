@@ -13,19 +13,19 @@ class PXN(object):
         self.component.addParams(self.params)
         # Link the components via their ports
         # link up the core local spm
-        self.toCoreLocalSPM = sst.Link(self.component_name + ".to_core_local_spm_link")
-        self.fromCoreLocalSPM = sst.Link(self.component_name + ".from_core_local_spm_link")
+        self.toCoreLocalSPM = sst.Link(self.component_name + "_to_core_local_spm_link")
+        self.fromCoreLocalSPM = sst.Link(self.component_name + "_from_core_local_spm_link")
         self.toCoreLocalSPM.connect((self.component, "toCoreLocalSPM", "1ns"), (self.component, "toCoreLocalSPM", "1ns"))
         self.fromCoreLocalSPM.connect((self.component, "fromCoreLocalSPM", "1ns"), (self.component, "fromCoreLocalSPM", "1ns"))
         # link up the node shared dram
-        self.toPodSharedDRAM = sst.Link(self.component_name + ".to_pod_shared_dram_link")
-        self.fromPodSharedDRAM = sst.Link(self.component_name + ".from_pod_shared_dram_link")
+        self.toPodSharedDRAM = sst.Link(self.component_name + "_to_pod_shared_dram_link")
+        self.fromPodSharedDRAM = sst.Link(self.component_name + "_from_pod_shared_dram_link")
         self.toPodSharedDRAM.connect((self.component, "toNodeSharedDRAM", "35ns"), (self.component, "toNodeSharedDRAM", "35ns"))
         self.fromPodSharedDRAM.connect((self.component,"fromNodeSharedDRAM", "35ns"), (self.component, "fromNodeSharedDRAM", "35ns"))
 
 def PXN_connect(pxn0, pxn1):
-    _0_to_1 = sst.Link(pxn0.component_name + ".to." + pxn1.component_name)
-    _1_to_0 = sst.Link(pxn1.component_name + ".to." + pxn0.component_name)
+    _0_to_1 = sst.Link(pxn0.component_name + "__to__" + pxn1.component_name)
+    _1_to_0 = sst.Link(pxn1.component_name + "__to__" + pxn0.component_name)
     _0_to_1.connect(
         (pxn0.component, "requestsToRemoteNode", "100ns"),
         (pxn1.component, "requestsFromRemoteNode", "100ns")
@@ -46,7 +46,7 @@ params = {
     "program_binary_fname": sys.argv[1],
     "verbose_level" : 2,
     "debug_scheduler" : False,
-    "debug_memory_requests" : False,
+    "debug_memory_requests" : True,
     "debug_initialization" : True,
 }
 

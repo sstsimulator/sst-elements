@@ -104,6 +104,11 @@ public:
         void receiveRequest(SST::Event *req, Link **responseLink);
 
         /**
+         * translate an address to a pointer 
+         */
+        void *translateAddress(const pando::backend::address_t &addr);
+        
+        /**
          * check if core id is valid, abort() if not
          */
         void checkCoreID(int line, const char *file, const char *function, int core_id);
