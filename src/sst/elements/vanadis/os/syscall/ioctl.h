@@ -27,7 +27,7 @@ public:
     VanadisIoctlSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallIoctlEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "ioctl" ) 
     {
-        m_output->verbose(CALL_INFO, 16, 0,
+        m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
                             "[syscall-ioctl] ioctl( %" PRId64 ", r: %c / w: %c / ptr: 0x%llx / size: %" PRIu64
                             " / op: %" PRIu64 " / drv: %" PRIu64 " )\n",
                             event->getFileDescriptor(), event->isRead() ? 'y' : 'n',

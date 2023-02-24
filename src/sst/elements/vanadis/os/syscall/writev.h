@@ -34,7 +34,8 @@ public:
         m_currentVecOffset = 0;
 
         m_dataBuffer.resize( calcBuffSize() );
-        m_output->verbose(CALL_INFO, 16, 0,"pos=%i length=%zu buffer length=%zu\n", m_currentVec, m_ioVecTable->getLength(m_currentVec)  ,m_dataBuffer.size());
+        m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
+            "[syscall-writev] pos=%i length=%zu buffer length=%zu\n", m_currentVec, m_ioVecTable->getLength(m_currentVec)  ,m_dataBuffer.size());
 
         readMemory( m_ioVecTable->getAddr(m_currentVec), m_dataBuffer ); 
     }
@@ -45,20 +46,21 @@ public:
         m_totalBytes += numWritten;
         m_currentVecOffset += m_dataBuffer.size();
 
-        m_output->verbose(CALL_INFO, 16, 0,"numWriten=%zu totalWritten=%zu currentVecOffset=%zu vecLength=%zu\n",
+        m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
+            "[syscall-writev] numWriten=%zu totalWritten=%zu currentVecOffset=%zu vecLength=%zu\n",
             numWritten,m_totalBytes, m_currentVecOffset, m_ioVecTable->getLength(m_currentVec));
 
         if ( m_currentVecOffset < m_ioVecTable->getLength(m_currentVec)  ) {
             m_dataBuffer.resize( calcBuffSize() );
-            m_output->verbose(CALL_INFO, 16, 0,"read %zu bytes\n", m_dataBuffer.size());
+            m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"[syscall-writev] read %zu bytes\n", m_dataBuffer.size());
             readMemory( m_ioVecTable->getAddr(m_currentVec) + m_currentVecOffset, m_dataBuffer ); 
         } else {
-            m_output->verbose(CALL_INFO, 16, 0,"vector %d is complete \n",m_currentVec);
+            m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"[syscall-writev] vector %d is complete \n",m_currentVec);
             ++m_currentVec;
             if ( findNonZeroIoVec() ) {
                 startIoVecTransfer(); 
             } else {
-                m_output->verbose(CALL_INFO, 16, 0,"return success total written %zu\n",m_totalBytes);
+                m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"[syscall-writev] return success total written %zu\n",m_totalBytes);
                 setReturnSuccess( m_totalBytes );
             }
         }

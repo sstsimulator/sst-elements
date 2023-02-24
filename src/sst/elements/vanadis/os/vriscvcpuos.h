@@ -100,7 +100,7 @@
 #define VANADIS_SYSCALL_RISCV_PRLIMIT 261
 #define VANADIS_SYSCALL_RISCV_SPLICE 76
 #define VANADIS_SYSCALL_RISCV_READLINKAT 78 
-
+#define VANADIS_SYSCALL_RISCV_SCHED_GETAFFINITY 123 
 
 #define VANADIS_SYSCALL_RISCV_THREAD_REG 4 
 #define VANADIS_SYSCALL_RISCV_RET_REG 10
@@ -155,6 +155,19 @@ public:
             } else { 
                 call_ev = new VanadisSyscallCloneEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, instPtr, threadStack, flags, ptid, tls, ctid );
             }
+        } break;
+
+        case VANADIS_SYSCALL_RISCV_SCHED_GETAFFINITY: {
+            uint64_t pid = getRegister(10);
+            uint64_t cpusetsize = getRegister(11);
+            int64_t maskAddr = getRegister(12);
+
+            output->verbose(CALL_INFO, 8, 0,
+                            "[syscall-handler] found a call to sched_getaffinity( %" PRId64 ", %" PRId64", %#" PRIx64 " )\n",
+                                pid, cpusetsize, maskAddr );
+
+            call_ev = new VanadisSyscallGetaffinityEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, pid, cpusetsize, maskAddr );
+
         } break;
 
         case VANADIS_SYSCALL_RISCV_MPROTECT: {
