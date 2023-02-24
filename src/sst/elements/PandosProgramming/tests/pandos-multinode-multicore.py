@@ -46,8 +46,8 @@ params = {
     "program_binary_fname": sys.argv[1],
     "verbose_level" : 2,
     "debug_scheduler" : False,
-    "debug_memory_requests" : True,
-    "debug_initialization" : True,
+    "debug_memory_requests" : False,
+    "debug_initialization" : False,
 }
 
 pn0 = PXN("pn0", params)

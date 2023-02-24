@@ -30,7 +30,7 @@ public:
         int64_t   dst_pxn;
         int64_t   dst_core;
         uintptr_t dst_uptr;
-
+        
         pando::backend::address_t getDst() const {
                 return {dst_dram_not_spm, dst_pxn, dst_core, dst_uptr};
         }
@@ -58,26 +58,6 @@ public:
 };
 
 /**
- * A PANDO Response Packet
- */
-class PandosResponseEventT : public PandosPacketEventT {
-public:
-        PandosResponseEventT():PandosPacketEventT() {}
-        virtual ~PandosResponseEventT() {}
-        int64_t src_pxn;
-        int64_t src_core;
-
-        // serialization function
-        void serialize_order(SST::Core::Serialization::serializer &ser) override {
-                PandosPacketEventT::serialize_order(ser);
-                ser & src_pxn;
-                ser & src_core;
-        }
-
-        ImplementSerializable(SST::PandosProgramming::PandosResponseEventT);
-};
-
-/**
  * A PANDO Read Request Packet
  */
 class PandosReadRequestEventT : public PandosRequestEventT {
@@ -95,15 +75,35 @@ public:
         PandosWriteRequestEventT():PandosRequestEventT() {}
         virtual ~PandosWriteRequestEventT() {}
 
-        std::vector<unsigned char> payload;
-
         // serialization function
         void serialize_order(SST::Core::Serialization::serializer &ser) override {
                 PandosRequestEventT::serialize_order(ser);
                 ser & payload;
         }
+
+        std::vector<unsigned char> payload;
         
         ImplementSerializable(SST::PandosProgramming::PandosWriteRequestEventT);
+};
+
+/**
+ * A PANDO Response Packet
+ */
+class PandosResponseEventT : public PandosPacketEventT {
+public:
+        PandosResponseEventT():PandosPacketEventT() {}
+        virtual ~PandosResponseEventT() {}
+        int64_t src_pxn;
+        int64_t src_core;
+
+        // serialization function
+        void serialize_order(SST::Core::Serialization::serializer &ser) override {
+                PandosPacketEventT::serialize_order(ser);
+                ser & src_pxn;
+                ser & src_core;
+        }
+
+        ImplementSerializable(SST::PandosProgramming::PandosResponseEventT);
 };
 
 /**

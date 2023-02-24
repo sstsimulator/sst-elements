@@ -283,7 +283,7 @@ void PandosNodeT::sendMemoryRequest(int src_core) {
         /* write request */
         PandosWriteRequestEventT *write_req = new PandosWriteRequestEventT;
         write_req->size = core_ctx->core_state.mem_req.size;
-        write_req->payload.reserve(write_req->size);
+        write_req->payload.resize(write_req->size);
 #ifdef DO_MEMCPY
         memcpy(write_req->payload.data(), core_ctx->core_state.mem_req.data, write_req->size);
 #endif
