@@ -1587,6 +1587,7 @@ protected:
                     switch ( rs2 ) {
                     case 0:
                     {
+                        // float to double
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.D.S %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
                             new VanadisFPConvertInstruction<float, double>(ins_address, hw_thr, options, fpflags, rd, rs1));
@@ -1594,6 +1595,7 @@ protected:
                     } break;
                     case 1:
                     {
+                        // double to float
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.S.D %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
                             new VanadisFPConvertInstruction<double, float>(ins_address, hw_thr, options, fpflags, rd, rs1));
@@ -1614,6 +1616,7 @@ protected:
                     switch ( rs2 ) {
                     case 0:
                     {
+                        // int32 to float
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.S.W %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
                             new VanadisGPR2FPInstruction<int32_t, float>(ins_address, hw_thr, options, fpflags, rd, rs1));
@@ -1621,6 +1624,7 @@ protected:
                     } break;
                     case 1:
                     {
+                        // uint32 to float
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.S.WU %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
                             new VanadisGPR2FPInstruction<uint32_t, float>(ins_address, hw_thr, options, fpflags, rd, rs1));
@@ -1639,30 +1643,34 @@ protected:
                     switch ( rs2 ) {
                     case 0:
                     {
+                        // double to int32
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.W.D %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
-                            new VanadisGPR2FPInstruction<double, int32_t>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                            new VanadisFP2GPRInstruction<double, int32_t>(ins_address, hw_thr, options, fpflags, rd, rs1));
                         decode_fault = false;
                     } break;
                     case 1:
                     {
+                        // double to uint32
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.WU.D %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
-                            new VanadisGPR2FPInstruction<double, uint32_t>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                            new VanadisFP2GPRInstruction<double, uint32_t>(ins_address, hw_thr, options, fpflags, rd, rs1));
                         decode_fault = false;
                     } break;
                     case 2:
                     {
+                        // double to int64
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.L.D %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
-                            new VanadisGPR2FPInstruction<double, int64_t>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                            new VanadisFP2GPRInstruction<double, int64_t>(ins_address, hw_thr, options, fpflags, rd, rs1));
                         decode_fault = false;
                     }
                     case 3:
                     {
+                        // double to uint64
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.LU.D %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
-                            new VanadisGPR2FPInstruction<double, uint64_t>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                            new VanadisFP2GPRInstruction<double, uint64_t>(ins_address, hw_thr, options, fpflags, rd, rs1));
                         decode_fault = false;
                     }
                     }
@@ -1679,6 +1687,7 @@ protected:
                     switch ( rs2 ) {
                     case 0:
                     {
+                        // int32 to double
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.D.W %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
                             new VanadisGPR2FPInstruction<int32_t, double>(ins_address, hw_thr, options, fpflags, rd, rs1));
@@ -1686,6 +1695,7 @@ protected:
                     } break;
                     case 1:
                     {
+                        // uint32 to double
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.D.WU %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
                             new VanadisGPR2FPInstruction<uint32_t, double>(ins_address, hw_thr, options, fpflags, rd, rs1));
@@ -1693,6 +1703,7 @@ protected:
                     } break;
                     case 2:
                     {
+                        // int64 to double
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.D.L %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
                             new VanadisGPR2FPInstruction<int64_t, double>(ins_address, hw_thr, options, fpflags, rd, rs1));
@@ -1700,6 +1711,7 @@ protected:
                     }
                     case 3:
                     {
+                        // uint64 to double
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.D.LU %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
                             new VanadisGPR2FPInstruction<uint64_t, double>(ins_address, hw_thr, options, fpflags, rd, rs1));
