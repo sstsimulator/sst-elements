@@ -18,6 +18,7 @@
 
 #include <cinttypes>
 #include <cstdio>
+#include "os/vosDbgFlags.h"
 
 namespace SST {
 namespace Vanadis {
@@ -213,7 +214,7 @@ public:
     }
 
     void print(SST::Output* output, uint32_t index) {
-        output->verbose(CALL_INFO, 16, 0,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF,
                         "Relocation (index: %" PRIu32 " / address: %" PRIu64 " (0x%0llx) / info: %" PRIu64 "\n", index,
                         rel_address, rel_address, symbol_info);
     }
@@ -260,7 +261,7 @@ public:
     uint64_t getSymbolSection() const { return sym_sndx; }
 
     void print(SST::Output* output, size_t index) {
-        output->verbose(CALL_INFO, 32, 0,
+        output->verbose(CALL_INFO, 32, VANADIS_OS_DBG_READ_ELF,
                         "Symbol (index: %" PRIu32 " / name: %s / offset: %" PRIu64 " / address: 0x%0llx / sz: %" PRIu64
                         ", type: %s / bind: %s / sndx: %" PRIu64 ")\n",
                         (uint32_t)index, symbolName.c_str(), sym_name_offset, sym_address, sym_size,
@@ -307,21 +308,21 @@ public:
     uint64_t getSegmentFlags() const { return segment_flags; }
 
     void print(SST::Output* output, uint64_t index) {
-        output->verbose(CALL_INFO, 16, 0, ">> Program Header Entry:    %" PRIu64 "\n", index);
-        output->verbose(CALL_INFO, 16, 0, "---> Header Type:           %" PRIu64 " / 0x%llx / %s\n", hdr_type_num,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, ">> Program Header Entry:    %" PRIu64 "\n", index);
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Header Type:           %" PRIu64 " / 0x%llx / %s\n", hdr_type_num,
                         hdr_type_num, getELFProgramHeaderTypeString(hdr_type));
-        output->verbose(CALL_INFO, 16, 0, "---> Image Offset:          %" PRIu64 "\n", imgOffset);
-        output->verbose(CALL_INFO, 16, 0, "---> Virtual Memory Start:  %" PRIu64 " / %p\n", virtMemAddrStart,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Image Offset:          %" PRIu64 "\n", imgOffset);
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Virtual Memory Start:  %" PRIu64 " / %p\n", virtMemAddrStart,
                         (void*)virtMemAddrStart);
-        output->verbose(CALL_INFO, 16, 0, "---> Phys. Memory Start:    %" PRIu64 " / %p\n", physMemAddrStart,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Phys. Memory Start:    %" PRIu64 " / %p\n", physMemAddrStart,
                         (void*)physMemAddrStart);
-        output->verbose(CALL_INFO, 16, 0, "---> Image Data Length:     %" PRIu64 " / %p\n", imgDataLen,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Image Data Length:     %" PRIu64 " / %p\n", imgDataLen,
                         (void*)imgDataLen);
-        output->verbose(CALL_INFO, 16, 0, "---> Image Mem Length:      %" PRIu64 " / %p\n", memDataLen,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Image Mem Length:      %" PRIu64 " / %p\n", memDataLen,
                         (void*)memDataLen);
-        output->verbose(CALL_INFO, 16, 0, "---> Flags:                 %" PRIu64 " / 0x%0llx\n", segment_flags,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Flags:                 %" PRIu64 " / 0x%0llx\n", segment_flags,
                         segment_flags);
-        output->verbose(CALL_INFO, 16, 0, "---> Alignment:             %" PRIu64 " / %p\n", alignment,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Alignment:             %" PRIu64 " / %p\n", alignment,
                         (void*)alignment);
     }
 
@@ -383,26 +384,26 @@ public:
     uint64_t getAlignment() const { return alignment; }
 
     void print(SST::Output* output, uint64_t index) {
-        output->verbose(CALL_INFO, 16, 0, ">> Section Entry %" PRIu64 " (id: %" PRIu64 ")\n", index, id);
-        output->verbose(CALL_INFO, 16, 0, "---> Header Type:                 %s\n",
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, ">> Section Entry %" PRIu64 " (id: %" PRIu64 ")\n", index, id);
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Header Type:                 %s\n",
                         getELFSectionHeaderTypeString(sec_type));
-        output->verbose(CALL_INFO, 16, 0, "---> Section Flags:               %" PRIu64 " / %p\n", sec_flags,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Section Flags:               %" PRIu64 " / %p\n", sec_flags,
                         (void*)sec_flags);
-        output->verbose(CALL_INFO, 16, 0, "-----> isWriteable():             %s\n", isWriteable() ? "yes" : "no");
-        output->verbose(CALL_INFO, 16, 0, "-----> isAllocated():             %s\n", isAllocated() ? "yes" : "no");
-        output->verbose(CALL_INFO, 16, 0, "-----> isExecutable():            %s\n", isExecutable() ? "yes" : "no");
-        output->verbose(CALL_INFO, 16, 0, "-----> isMergeable():             %s\n", isMergable() ? "yes" : "no");
-        output->verbose(CALL_INFO, 16, 0, "-----> isNullTermStrings():       %s\n",
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "-----> isWriteable():             %s\n", isWriteable() ? "yes" : "no");
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "-----> isAllocated():             %s\n", isAllocated() ? "yes" : "no");
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "-----> isExecutable():            %s\n", isExecutable() ? "yes" : "no");
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "-----> isMergeable():             %s\n", isMergable() ? "yes" : "no");
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "-----> isNullTermStrings():       %s\n",
                         isNullTerminatedStrings() ? "yes" : "no");
-        output->verbose(CALL_INFO, 16, 0, "-----> SHT-Index():               %s\n", containsSHTIndex() ? "yes" : "no");
-        output->verbose(CALL_INFO, 16, 0, "-----> TLS-Data():                %s\n", containsTLSData() ? "yes" : "no");
-        output->verbose(CALL_INFO, 16, 0, "---> Virtual Address:             %" PRIu64 " / %p\n", virtMemAddrStart,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "-----> SHT-Index():               %s\n", containsSHTIndex() ? "yes" : "no");
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "-----> TLS-Data():                %s\n", containsTLSData() ? "yes" : "no");
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Virtual Address:             %" PRIu64 " / %p\n", virtMemAddrStart,
                         (void*)virtMemAddrStart);
-        output->verbose(CALL_INFO, 16, 0, "---> Image Offset:                %" PRIu64 " / %p\n", imgOffset,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Image Offset:                %" PRIu64 " / %p\n", imgOffset,
                         (void*)imgOffset);
-        output->verbose(CALL_INFO, 16, 0, "---> Image Data Length:           %" PRIu64 " / %p\n", imgDataLen,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Image Data Length:           %" PRIu64 " / %p\n", imgDataLen,
                         (void*)imgDataLen);
-        output->verbose(CALL_INFO, 16, 0, "---> Alignment:                   %" PRIu64 " / %p\n", alignment,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Alignment:                   %" PRIu64 " / %p\n", alignment,
                         (void*)alignment);
     }
 
@@ -447,39 +448,39 @@ public:
     }
 
     void print(SST::Output* output) {
-        output->verbose(CALL_INFO, 2, 0, "-------------------------------------------------------\n");
-        output->verbose(CALL_INFO, 2, 0, "ELF Information [%s]\n", (nullptr == bin_path) ? "Not set" : bin_path);
-        output->verbose(CALL_INFO, 2, 0, "-------------------------------------------------------\n");
-        output->verbose(CALL_INFO, 2, 0, "Class:                %s\n",
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "-------------------------------------------------------\n");
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "ELF Information [%s]\n", (nullptr == bin_path) ? "Not set" : bin_path);
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "-------------------------------------------------------\n");
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Class:                %s\n",
                         isELF64()   ? "64-bit"
                         : isELF32() ? "32-bit"
                                     : "Unknown");
-        output->verbose(CALL_INFO, 2, 0, "Instruction-Set:      %" PRIu16 " / %s\n", elf_isa,
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Instruction-Set:      %" PRIu16 " / %s\n", elf_isa,
                         getELFISAString(getISA()));
-	output->verbose(CALL_INFO, 2, 0, "Endian:               %s\n", elf_endian == VANADIS_LITTLE_ENDIAN ? "Little Endian" : "Big Endian");
-        output->verbose(CALL_INFO, 2, 0, "Object Type:          %s\n", getELFObjectTypeString(getObjectType()));
-        output->verbose(CALL_INFO, 2, 0, "OS-ABI:               %" PRIu8 " / %s\n", elf_os_abi,
+	output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Endian:               %s\n", elf_endian == VANADIS_LITTLE_ENDIAN ? "Little Endian" : "Big Endian");
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Object Type:          %s\n", getELFObjectTypeString(getObjectType()));
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "OS-ABI:               %" PRIu8 " / %s\n", elf_os_abi,
                         getELFOSABIString(getOSABI()));
-        output->verbose(CALL_INFO, 2, 0, "Entry-Point:          %p\n", (void*)getEntryPoint());
-        output->verbose(CALL_INFO, 2, 0, "Prog-Hdr Offset:      %p\n", (void*)getProgramHeaderOffset());
-        output->verbose(CALL_INFO, 2, 0, "Prog-Hdr Entry Size:  %" PRIu16 "\n", getProgramHeaderEntrySize());
-        output->verbose(CALL_INFO, 2, 0, "Prog-Hdr Entry Count: %" PRIu16 "\n", getProgramHeaderEntryCount());
-        output->verbose(CALL_INFO, 2, 0, "Sect-hdr Offset:      %p\n", (void*)getSectionHeaderOffset());
-        output->verbose(CALL_INFO, 2, 0, "Sect-Hdr Entry Size:  %" PRIu16 "\n", getSectionHeaderEntrySize());
-        output->verbose(CALL_INFO, 2, 0, "Sect-Hdr Entry Count: %" PRIu16 "\n", getSectionHeaderEntryCount());
-        output->verbose(CALL_INFO, 2, 0, "Sect-Hdr Strings Loc: %" PRIu16 "\n", getSectionHeaderNameEntryOffset());
-        output->verbose(CALL_INFO, 2, 0, "Symbols Found:        %" PRIu32 "\n", (uint32_t)progSymbols.size());
-        output->verbose(CALL_INFO, 2, 0, "Relocation Entries:   %" PRIu32 "\n", (uint32_t)progRelDyn.size());
-        output->verbose(CALL_INFO, 2, 0, "-------------------------------------------------------\n");
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Entry-Point:          %p\n", (void*)getEntryPoint());
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Prog-Hdr Offset:      %p\n", (void*)getProgramHeaderOffset());
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Prog-Hdr Entry Size:  %" PRIu16 "\n", getProgramHeaderEntrySize());
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Prog-Hdr Entry Count: %" PRIu16 "\n", getProgramHeaderEntryCount());
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Sect-hdr Offset:      %p\n", (void*)getSectionHeaderOffset());
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Sect-Hdr Entry Size:  %" PRIu16 "\n", getSectionHeaderEntrySize());
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Sect-Hdr Entry Count: %" PRIu16 "\n", getSectionHeaderEntryCount());
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Sect-Hdr Strings Loc: %" PRIu16 "\n", getSectionHeaderNameEntryOffset());
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Symbols Found:        %" PRIu32 "\n", (uint32_t)progSymbols.size());
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "Relocation Entries:   %" PRIu32 "\n", (uint32_t)progRelDyn.size());
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "-------------------------------------------------------\n");
 
         for (int i = 0; i < progHeaders.size(); ++i) {
             progHeaders[i]->print(output, i);
-            output->verbose(CALL_INFO, 16, 0, "-------------------------------------------------------\n");
+            output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "-------------------------------------------------------\n");
         }
 
         for (int i = 0; i < progSections.size(); ++i) {
             progSections[i]->print(output, i);
-            output->verbose(CALL_INFO, 16, 0, "-------------------------------------------------------\n");
+            output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "-------------------------------------------------------\n");
         }
 
         for (int i = 0; i < progSymbols.size(); ++i) {
@@ -490,7 +491,7 @@ public:
             progRelDyn[i]->print(output, i);
         }
 
-        output->verbose(CALL_INFO, 16, 0, "-------------------------------------------------------\n");
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "-------------------------------------------------------\n");
     }
 
     void setClass(const uint8_t new_class) { elf_class = new_class; }
@@ -714,7 +715,7 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
 
     const bool binary_is_32 = elf_info->isELF32();
 
-    output->verbose(CALL_INFO, 16, 0, "Symbol Table located at %" PRIu64 " / 0x%0llx in executable (is 32bit? %s).\n",
+    output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Symbol Table located at %" PRIu64 " / 0x%0llx in executable (is 32bit? %s).\n",
                     symbolSection->getImageOffset(), symbolSection->getImageOffset(), binary_is_32 ? "yes" : "no");
 
     // Wind forward to the symbol table entries
@@ -722,7 +723,7 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
     uint64_t symbol_size = binary_is_32 ? (4 + 4 + 4 + 2 + 2) : (4 + 2 + 2 + 8 + 8);
 
     output->verbose(
-        CALL_INFO, 16, 0,
+        CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF,
         "Symbol entry is %" PRIu64 " bytes in size, expecting %" PRIu64 " symbols (remainder: %" PRIu64 ")\n",
         symbol_size, (symbolSection->getImageLength() / symbol_size), symbolSection->getImageLength() % symbol_size);
 
@@ -734,11 +735,11 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
     std::vector<char> name_buffer;
 
 	if(elf_info->isELF32()) {
-		output->verbose(CALL_INFO, 16, 0, "Binary is marked as 32bit\n");
+		output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Binary is marked as 32bit\n");
 	}
 
 	if(elf_info->isELF64()) {
-		output->verbose(CALL_INFO, 16, 0, "Binary is marked as 64bit\n");
+		output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Binary is marked as 64bit\n");
 	}
 
     for (uint64_t i = symbolSection->getImageOffset();
@@ -757,7 +758,7 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
             new_symbol->setSize(tmp_u32);
 
             fread(&tmp_u8, 1, 1, bin_file);
-            // output->verbose(CALL_INFO, 16, 0, "Symbol info >> 4 = %" PRIu64 "\n", (tmp_u8 >> 4));
+            // output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Symbol info >> 4 = %" PRIu64 "\n", (tmp_u8 >> 4));
 
             switch ((tmp_u8 >> 4)) {
             case 0:
@@ -773,7 +774,7 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
                 break;
             }
 
-            // output->verbose(CALL_INFO, 16, 0, "Symbol type = %" PRIu64 "\n", (tmp_u8 & 0xf) );
+            // output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Symbol type = %" PRIu64 "\n", (tmp_u8 & 0xf) );
             switch ((tmp_u8 & 0xf)) {
             case 0:
                 new_symbol->setType(SYMBOL_NO_TYPE);
@@ -815,7 +816,7 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
             new_symbol->setNameOffset(tmp_u32);
 
             fread(&tmp_u8, 1, 1, bin_file);
-            // output->verbose(CALL_INFO, 16, 0, "Symbol info >> 4 = %" PRIu64 "\n", (tmp_u8 >> 4));
+            // output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Symbol info >> 4 = %" PRIu64 "\n", (tmp_u8 >> 4));
 
             switch ((tmp_u8 >> 4)) {
             case 0:
@@ -831,7 +832,7 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
                 break;
             }
 
-            // output->verbose(CALL_INFO, 16, 0, "Symbol type = %" PRIu64 "\n", (tmp_u8 & 0xf) );
+            // output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Symbol type = %" PRIu64 "\n", (tmp_u8 & 0xf) );
             switch ((tmp_u8 & 0xf)) {
             case 0:
                 new_symbol->setType(SYMBOL_NO_TYPE);
@@ -1053,7 +1054,7 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
     fseek(bin_file, elf_info->getProgramHeaderOffset(), SEEK_SET);
 
     for (uint32_t i = 0; i < prog_header_count; ++i) {
-        output->verbose(CALL_INFO, 4, 0, "Reading Program Header %" PRIu32 "...\n", i);
+        output->verbose(CALL_INFO, 4, VANADIS_OS_DBG_READ_ELF, "Reading Program Header %" PRIu32 "...\n", i);
         VanadisELFProgramHeaderEntry* new_prg_hdr = new VanadisELFProgramHeaderEntry();
 
         // Header type
@@ -1086,7 +1087,7 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
             prg_hdr_type = PROG_HEADER_THREAD_LOCAL;
             break;
         default:
-            output->verbose(CALL_INFO, 4, 0, "Unknown program header type in ELF: %" PRIu32 "\n", tmp_4byte);
+            output->verbose(CALL_INFO, 4, VANADIS_OS_DBG_READ_ELF, "Unknown program header type in ELF: %" PRIu32 "\n", tmp_4byte);
         }
 
         new_prg_hdr->setHeaderTypeNum(tmp_4byte);
@@ -1144,7 +1145,7 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
     fseek(bin_file, elf_info->getSectionHeaderOffset(), SEEK_SET);
 
     for (uint32_t i = 0; i < elf_info->getSectionHeaderEntryCount(); ++i) {
-        output->verbose(CALL_INFO, 4, 0, "Reading Section Header %" PRIu32 "...\n", i);
+        output->verbose(CALL_INFO, 4, VANADIS_OS_DBG_READ_ELF, "Reading Section Header %" PRIu32 "...\n", i);
         VanadisELFProgramSectionEntry* new_sec = new VanadisELFProgramSectionEntry();
         new_sec->setID(i);
 
@@ -1207,7 +1208,7 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
             sec_type = SECTION_HEADER_DEFINED_TYPES;
             break;
         default:
-            output->verbose(CALL_INFO, 4, 0, "Unknown Section type: %" PRIu32 "\n", tmp_4byte);
+            output->verbose(CALL_INFO, 4, VANADIS_OS_DBG_READ_ELF, "Unknown Section type: %" PRIu32 "\n", tmp_4byte);
             break;
         }
 
@@ -1277,19 +1278,19 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
         const VanadisELFProgramSectionEntry* next_entry = elf_info->getProgramSection(i);
 
         if (next_entry->getSectionType() == SECTION_HEADER_SYMBOL_TABLE) {
-            output->verbose(CALL_INFO, 16, 0, "Reading in symbol table (Section %" PRIu64 ")...\n",
+            output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Reading in symbol table (Section %" PRIu64 ")...\n",
                             next_entry->getID());
 
             readBinarySymbolTable(output, path, elf_info, next_entry, string_table_entry);
 
-            output->verbose(CALL_INFO, 16, 0, "Read of section completed.\n");
+            output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Read of section completed.\n");
         } else if (next_entry->getSectionType() == SECTION_HEADER_REL) {
-            output->verbose(CALL_INFO, 16, 0, "Reading in relocation table (Section %" PRIu64 ")...\n",
+            output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Reading in relocation table (Section %" PRIu64 ")...\n",
                             next_entry->getID());
 
             readELFRelocationInformation(output, path, elf_info, next_entry);
 
-            output->verbose(CALL_INFO, 16, 0, "Read of relocation entry completed\n");
+            output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Read of relocation entry completed\n");
         }
     }
 

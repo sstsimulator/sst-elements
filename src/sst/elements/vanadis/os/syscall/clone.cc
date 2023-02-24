@@ -24,8 +24,9 @@ using namespace SST::Vanadis;
 VanadisCloneSyscall::VanadisCloneSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallCloneEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "clone" )
 {
-    m_output->verbose(CALL_INFO, 16, 0, "[syscall-clone] threadStackAddr=%#" PRIx64 " flags=%#" PRIx64 " parentTidAddr=%#" PRIx64 " tlsAddr=%#" PRIx64 " callStackAddr=%#" PRIx64 "\n", 
-            event->getThreadStackAddr(), event->getFlags(), event->getParentTidAddr(), event->getTlsAddr(), event->getCallStackAddr() );
+    m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
+        "[syscall-clone] threadStackAddr=%#" PRIx64 " flags=%#" PRIx64 " parentTidAddr=%#" PRIx64 " tlsAddr=%#" PRIx64 " callStackAddr=%#" PRIx64 "\n", 
+        event->getThreadStackAddr(), event->getFlags(), event->getParentTidAddr(), event->getTlsAddr(), event->getCallStackAddr() );
 
     // only honor PTHREAD clone config
     assert( event->getFlags() == 0x7d0f00 );
@@ -49,7 +50,7 @@ VanadisCloneSyscall::VanadisCloneSyscall( VanadisNodeOSComponent* os, SST::Link*
 
     m_os->setThread( m_newThread->gettid(), m_newThread );
 
-    m_output->verbose(CALL_INFO, 16, 0, "[syscall-clone] newthread pid=%d tid=%d ppid=%d numThreads=%d\n",
+    m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-clone] newthread pid=%d tid=%d ppid=%d numThreads=%d\n",
             m_newThread->getpid(), m_newThread->gettid(), m_newThread->getppid(), m_newThread->numThreads() );
 
     m_os->setProcess( m_threadID->core, m_threadID->hwThread, m_newThread ); 
@@ -87,7 +88,7 @@ void VanadisCloneSyscall::handleEvent( VanadisCoreEvent* ev )
     auto resp = dynamic_cast<VanadisGetThreadStateResp*>( ev );
     assert(resp);
 
-    m_output->verbose(CALL_INFO, 16, 0, "[syscall-fork] got thread state response\n");
+    m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-clone] got thread state response\n");
 
     VanadisStartThreadCloneReq* req =  new VanadisStartThreadCloneReq( m_threadID->hwThread, 
                                     m_threadStartAddr,
@@ -98,7 +99,7 @@ void VanadisCloneSyscall::handleEvent( VanadisCoreEvent* ev )
     req->setIntRegs( resp->intRegs );
     req->setFpRegs( resp->fpRegs );
 
-     m_output->verbose(CALL_INFO, 16, 0, "[syscall-fork] core=%d thread=%d tid=%d instPtr=%lx\n",
+     m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-clone] core=%d thread=%d tid=%d instPtr=%lx\n",
                  m_threadID->core, m_threadID->hwThread, m_newThread->gettid(), resp->getInstPtr() );
 #if 0 //debug
     for ( int i = 0; i < req->getIntRegs().size(); i++ ) {
@@ -146,7 +147,8 @@ void VanadisCloneSyscall::memReqIsDone() {
                 m_threadArgAddr = *((uint64_t*)m_buffer.data() + 1);
             } 
 
-             m_output->verbose(CALL_INFO, 16, 0, "[syscall-fork] threadStartAddr=%#" PRIx64 " threadArgAddr=%#" PRIx64 "\n", m_threadStartAddr,m_threadArgAddr);
+             m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
+                "[syscall-clone] threadStartAddr=%#" PRIx64 " threadArgAddr=%#" PRIx64 "\n", m_threadStartAddr,m_threadArgAddr);
 
             // this has to be size of pid_t
             if ( getEvent<VanadisSyscallCloneEvent*>()->getOSBitType() == VanadisOSBitType::VANADIS_OS_32B ) {
