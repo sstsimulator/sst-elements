@@ -8,6 +8,7 @@
 #include "PandosMemoryRequestEvent.h"
 #include "PandosPacketEvent.h"
 
+#define DEBUG
 #define DO_MEMCPY
 
 using namespace SST;
@@ -298,8 +299,8 @@ void PandosNodeT::sendMemoryRequest(int src_core) {
     }
     req->src_core = src_core;
     req->src_pxn = core_ctx->node_ctx->id;;
-    req->dst = core_ctx->core_state.mem_req.addr;
-
+    req->setDst(core_ctx->core_state.mem_req.addr);
+    out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "%s: Sending memory request to %s\n", __func__, address_to_string(req->getDst()).c_str());
     // destination?
     if (core_ctx->core_state.mem_req.addr.pxn != core_ctx->node_ctx->id) {
         /* remote request */
@@ -378,7 +379,7 @@ void *PandosNodeT::translateAddress(const pando::backend::address_t &addr)
 {
     using namespace pando;
     using namespace backend;
-    //out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "%s: called\n", __func__);
+    out->verbose(CALL_INFO, 2, DEBUG_MEMORY_REQUESTS, "%s: translating address = %s\n", __func__, address_to_string(addr).c_str());
     void *p = nullptr;        
     checkCoreID(CALL_INFO, addr.core);
     checkPXNID(CALL_INFO, addr.pxn);
@@ -403,8 +404,10 @@ void PandosNodeT::receiveWriteRequest(PandosWriteRequestEventT *write_req, Link 
     PandosWriteResponseEventT *write_rsp = new PandosWriteResponseEventT;
     write_rsp->src_pxn = write_req->src_pxn;
     write_rsp->src_core = write_req->src_core;
-    //void *p = reinterpret_cast<void*>(write_req->dst.uptr);
-    void *p = translateAddress(write_req->dst);        
+#ifdef DEBUG
+    out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "%s: write_req->payload.size() = %zu\n", __func__, write_req->payload.size());
+#endif    
+    void *p = translateAddress(write_req->getDst());
     out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "%s: memcpying %zu bytes to %p\n", __func__, write_req->size, p);
 #ifdef DO_MEMCPY
     memcpy(p, write_req->payload.data(), write_req->size);
@@ -428,8 +431,7 @@ void PandosNodeT::receiveReadRequest(PandosReadRequestEventT *read_req, Link **r
     read_rsp->src_core = read_req->src_core;
     read_rsp->size = read_req->size;
     read_rsp->payload.reserve(read_req->size);
-    void *p = translateAddress(read_req->dst);
-    //void *p = reinterpret_cast<void*>(read_req->dst.uptr);
+    void *p = translateAddress(read_req->getDst());
 #ifdef DO_MEMCPY
     memcpy(read_rsp->payload.data(), p, read_req->size);
 #endif
@@ -455,11 +457,11 @@ void PandosNodeT::receiveRequest(SST::Event *evt, Link **responseLink) {
             abort();
         }
         // write request
-        out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "Received write packet\n");
+        out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "Received write packet: response link = %p\n", *responseLink);
         receiveWriteRequest(write_req, responseLink);
     } else {
         // read request
-        out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "Received read packet\n");
+        out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "Received read packet: response link = %p\n", *responseLink);
         receiveReadRequest(read_req, responseLink);                
     }
 }
