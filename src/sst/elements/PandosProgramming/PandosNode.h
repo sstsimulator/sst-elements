@@ -33,10 +33,13 @@ public:
         // Document the parameters that this component accepts
         SST_ELI_DOCUMENT_PARAMS(
                 {"num_cores", "Number of cores on PandoNode", NULL},
+                {"node_shared_dram_size", "Size of Node Shared DRAM in Bytes", NULL},
                 {"instructions_per_task", "Instructions per task", NULL},
                 {"program_binary_fname", "Program binary file name", NULL},
                 {"verbose_level", "Verbosity of logging", NULL},
                 {"debug_scheduler", "Debug scheduler", NULL},
+                {"debug_memory_requests", "Debug memory requests", NULL},
+                {"debug_initialization", "Debug initializtion code", NULL},                
         )
         // Document the ports that this component accepts
         SST_ELI_DOCUMENT_PORTS(
@@ -48,7 +51,7 @@ public:
                 {"fromNodeSharedDRAM"     ,"Link from DRAM to Node"            ,{"PandosProgramming.PandosMemoryResponseEventT",""}},
                 // links to a remote node component
                 {"requestsToRemoteNode"   ,"Link from this Node to other Node" ,{"PandosProgramming.PandosMemoryResponseEventT",""}},
-                {"requestsfromRemoteNode" ,"Link from other Node to this Node" ,{"PandosProgramming.PandosMemoryRequestEventT",""}},
+                {"requestsFromRemoteNode" ,"Link from other Node to this Node" ,{"PandosProgramming.PandosMemoryRequestEventT",""}},
          )
 
         /**
@@ -102,6 +105,11 @@ public:
         void receiveRequest(SST::Event *req, Link **responseLink);
 
         /**
+         * translate an address to a pointer 
+         */
+        void *translateAddress(const pando::backend::address_t &addr);
+        
+        /**
          * check if core id is valid, abort() if not
          */
         void checkCoreID(int line, const char *file, const char *function, int core_id);
@@ -142,6 +150,7 @@ public:
         int32_t num_cores; //!< The number of cores in this node
         int32_t instr_per_task; //!< The number of instructions per task
         std::string program_binary_fname; //!< The name of the program binary to load
+        size_t node_shared_dram_size; //!< how large is dram on this node
         void *program_binary_handle;
         getContextFunc_t get_current_pando_ctx;
         setContextFunc_t set_current_pando_ctx;
