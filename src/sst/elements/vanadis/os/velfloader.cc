@@ -19,6 +19,7 @@
 #include <math.h>
 #include "os/velfloader.h"
 #include "os/vloadpage.h"
+#include "os/vosDbgFlags.h"
 
 namespace SST {
 namespace Vanadis {
@@ -116,8 +117,8 @@ void loadElfFile( Output* output, Interfaces::StandardMem* mem_if, MMU_Lib::MMU*
 uint8_t* readElfPage( Output* output, VanadisELFInfo* elf_info, int vpn, int page_size ) {
     uint64_t virtAddr = vpn<<12;  
     auto path = elf_info->getBinaryPath();
-    output->verbose( CALL_INFO, 2, 0, "-> Loading %s, to locate program sections ...\n", path);
-    output->verbose( CALL_INFO, 2, 0,"%s vpn=%d addr=%#" PRIx64 " page_size=%d\n",path,vpn,virtAddr,page_size);
+    output->verbose( CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF, "-> Loading %s, to locate program sections ...\n", path);
+    output->verbose( CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF,"%s vpn=%d addr=%#" PRIx64 " page_size=%d\n",path,vpn,virtAddr,page_size);
     FILE* exec_file = fopen(elf_info->getBinaryPath(), "rb");
     if ( nullptr == exec_file ) {
         output->fatal(CALL_INFO, -1, "Error: unable to open %s\n", path);
@@ -134,7 +135,7 @@ uint8_t* readElfPage( Output* output, VanadisELFInfo* elf_info, int vpn, int pag
     uint64_t secAlignment = secHdr->getAlignment();
     uint64_t secFlags = secHdr->getSegmentFlags();
 
-    output->verbose( CALL_INFO, 2, 0," section: virtAddr=%#" PRIx64 " imageOffset=%zu memLen=%zu imageLen=%zu flags=%#" PRIx64 " align=%#" PRIx64 "\n",
+    output->verbose( CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF," section: virtAddr=%#" PRIx64 " imageOffset=%zu memLen=%zu imageLen=%zu flags=%#" PRIx64 " align=%#" PRIx64 "\n",
             secAddr,secImageOffset,secMemLen,secImageLen,secFlags,secAlignment);
 
     // if the requested address is less than the section virtual address then this is the first page and it's not aligned
@@ -156,7 +157,7 @@ uint8_t* readElfPage( Output* output, VanadisELFInfo* elf_info, int vpn, int pag
         // if there is not enough data to read a full pagge
         numBytes = secImageLen - imageOffset < numBytes ? secImageLen - imageOffset : numBytes;
     
-        output->verbose( CALL_INFO, 2, 0,"imageOffset=%zu dataOffset=%zu numBytes=%zu toEnd=%zu\n", imageOffset, dataOffset, numBytes, secImageLen - imageOffset );
+        output->verbose( CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF,"imageOffset=%zu dataOffset=%zu numBytes=%zu toEnd=%zu\n", imageOffset, dataOffset, numBytes, secImageLen - imageOffset );
         fseek(exec_file, secImageOffset + imageOffset, SEEK_SET); 
 
         fread( data + dataOffset, numBytes, 1, exec_file);
