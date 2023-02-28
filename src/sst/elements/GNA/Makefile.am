@@ -14,15 +14,16 @@ libGNA_la_SOURCES = \
 	sts.h \
 	sts.cc \
 	GNA.h \
-	GNA.cc
+	GNA.cc \
+	OutputHolder.h
 
 EXTRA_DIST = \
+	README \
+	gna.py \
 	tests/testsuite_default_GNA.py \
 	tests/test_GNA_1.py \
-	tests/refFiles/test_GNA_1.out \
-	tests/test.py \
-	tests/test.ref.out \
-	README
+	tests/model \
+	tests/OutputParser.py
 
 libGNA_la_LDFLAGS = -module -avoid-version
 
