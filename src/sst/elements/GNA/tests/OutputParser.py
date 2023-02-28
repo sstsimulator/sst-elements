@@ -1,5 +1,4 @@
 import numpy
-import re
 import sys
 
 class Column:
