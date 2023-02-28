@@ -1,5 +1,5 @@
-import numpy
 import sys
+import math
 
 class Column:
     """ Utility class used by OutputParser. Keeps track of header and all rows
@@ -13,15 +13,15 @@ class Column:
         self.value     = 0.0  # For most recent row
         self.startRow  = 0
         self.textWidth = 0
-        self.minimum   =  numpy.inf
-        self.maximum   = -numpy.inf
+        self.minimum   =  math.inf
+        self.maximum   = -math.inf
         self.range     = 0.0
         self.color     = ''
         self.scale     = ''
 
     def computeStats(self):
         for f in self.values:
-            if numpy.isinf(f) or numpy.isnan(f): continue
+            if math.isinf(f) or math.isnan(f): continue
             self.minimum = min(self.minimum, f)
             self.maximum = max(self.maximum, f)
         if numpy.isinf(self.maximum):  # There was no good data. If max is infinite, then so is min.
@@ -255,15 +255,6 @@ class OutputParser:
         column = self.getColumn(columnNameOrNumber)
         if column is None: return self.defaultValue
         return column.get(row)
-
-    def getNumpyArray(self):
-        columnCount = len(self.columns)
-        result = numpy.full((self.rows, columnCount), self.defaultValue)
-        for c in range(0,columnCount):
-            column = self.columns[c]
-            for r in range(column.startRow,self.rows):
-                result[r,c] = column.values[r-column.startRow]
-        return result
 
     def set(self, columnNameOrNumber, row, value):
         c = self.getColumn(columnNameOrNumber)
