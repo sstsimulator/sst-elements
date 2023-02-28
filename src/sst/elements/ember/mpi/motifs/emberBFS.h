@@ -13,6 +13,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+// Model parameter files associated with this model can be found at:
+// https://github.com/sstsimulator/a-sst/tree/new-bfs-models/ISB-BFS
+
 #ifndef _H_EMBER_BFS_MOTIF
 #define _H_EMBER_BFS_MOTIF
 
@@ -28,30 +31,196 @@
 namespace SST {
 namespace Ember {
 
-struct PolyModelND : public SST::Core::Serialization::serializable
+struct Model : public SST::Core::Serialization::serializable
+{
+    double scale = 1.0;
+    virtual double eval(int nodes, int size) = 0;
+
+    // TODO: Remove setter or make `scale` private and add getter
+    void setScale(double newScale)
+    {
+        scale = newScale;
+    }
+};
+
+struct ConstModel : public Model
+{
+    double val;
+
+    ConstModel() : val(0) {}
+
+    ConstModel(double val) : val(val) {}
+
+    double eval(int nodes, int size) override {
+        return val*scale;
+    }
+
+    bool operator==(const ConstModel& lhs) const
+    {
+        return (val == lhs.val);
+    }
+
+    bool operator!=(const ConstModel& lhs) const
+    {
+        return (val != lhs.val);
+    }
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override
+    {
+        ser& val;
+    }
+
+    ImplementSerializable(SST::Ember::ConstModel);
+
+};
+
+struct BilinearModel : public Model
+{
+    double A, B, C, D;
+
+    BilinearModel() : A(0), B(0), C(0), D(0) {}
+
+    BilinearModel(double A, double B, double C, double D)
+        : A(A)
+        , B(B)
+        , C(C)
+        , D(D)
+    {}
+
+    double eval(int nodes, int size) override {
+        return std::nearbyint(scale*(A*nodes*size + B*nodes + C*size + D));
+    }
+
+    bool operator==(const BilinearModel& lhs) const
+    {
+        return (A == lhs.A && B == lhs.B && C == lhs.C && D == lhs.D);
+    }
+
+    bool operator!=(const BilinearModel& lhs) const
+    {
+        return (A != lhs.A || B != lhs.B || C != lhs.C || D != lhs.D);
+    }
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override
+    {
+        ser& A;
+        ser& B;
+        ser& C;
+        ser& D;
+    }
+
+    ImplementSerializable(SST::Ember::BilinearModel);
+
+};
+
+struct TraceModel : public Model
+{
+    std::vector<double> val;
+    int idx = 0;
+
+    TraceModel() : val(0) {}
+
+    TraceModel(std::vector<double> val) : val(val)  {}
+
+    double eval(int nodes, int size) override
+    {
+        int _idx = idx;
+        idx = (idx + 1) == val.size() ? 0 : idx+1;
+        return std::nearbyint(scale*val[_idx]);
+    }
+
+    bool operator==(const TraceModel& lhs) const
+    {
+        return (val == lhs.val);
+    }
+
+    bool operator!=(const TraceModel& lhs) const
+    {
+        return (val != lhs.val);
+    }
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override
+    {
+        ser& val;
+    }
+
+    ImplementSerializable(SST::Ember::TraceModel);
+
+};
+
+struct ExpModel : public Model
+{
+    double A, B, C, D, memo = -1;
+
+    ExpModel() : A(0), B(0), C(0), D(0) {}
+
+    ExpModel(double A, double B, double C, double D)
+        : A(A)
+        , B(B)
+        , C(C)
+        , D(D)
+    {}
+
+    double _eval(int nodes, int size) {
+        return std::nearbyint(scale*exp(A*nodes*size + B*nodes + C*size + D));
+    }
+
+    double eval(int nodes, int size) override {
+        // memoize result
+        if (memo > -1) {
+            return memo;
+        }
+        memo = _eval(nodes, size);
+        return memo;
+    }
+
+    bool operator==(const ExpModel& lhs) const
+    {
+        return (A == lhs.A && B == lhs.B && C == lhs.C && D == lhs.D);
+    }
+
+    bool operator!=(const ExpModel& lhs) const
+    {
+        return (A != lhs.A || B != lhs.B || C != lhs.C || D != lhs.D);
+    }
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override
+    {
+        ser& A;
+        ser& B;
+        ser& C;
+        ser& D;
+    }
+
+    ImplementSerializable(SST::Ember::ExpModel);
+
+};
+
+struct PolyModelND : public Model
 {
     // coeff is a map from powers to coefficients, e.g.
     // [0,2,2]:0.4 means that the coefficient of x0^0 * x1^2 * x2^2 is 0.4
     // We will not worry about making sure all powers are there. We need only
     // evaluate what we find in this list
     std::map<std::vector<int>, double> coeff;
-    double scale; // scale the result of eval
     double min; // minimum value returned by the model
 
-    PolyModelND() : coeff(), scale(1), min(0) {}
+    PolyModelND() : coeff(), min(0) {}
 
-    PolyModelND(std::map<std::vector<int>, double> coeff, double scale, double min)
+    PolyModelND(std::map<std::vector<int>, double> coeff, double min)
         : coeff(coeff)
-        , scale(scale)
         , min(min)
     {}
 
     // Evaluate the model at x
-    double eval(std::vector<int> x)
+    double _eval(std::vector<int> x)
     {
         double val = 0.0;
         for (const auto &co : coeff) {         // loop over our map of powers->coefficients
             double term = co.second;             // value in map is the coefficient
+            if ( x.size() != co.first.size() ) {
+                std::cout << "x: " << x.size() << ", co: " << co.first.size() << std::endl;
+            }
             for (int i = 0; i < x.size(); i++) {       // for each power, evaluate that power and multiple
                 term *= pow(x[i], co.first[i]);
             }
@@ -62,14 +231,14 @@ struct PolyModelND : public SST::Core::Serialization::serializable
         return val > min ? val : min;           // don't return less than min, useful to remove negatives
     }
 
-    double eval(std::vector<int> x, int verbose)
+    double _eval(std::vector<int> x, int verbose)
     {
 
-        std::cout << "[" << x[0] << "," << x[1] << "]" << std::endl;
+        //std::cout << "[" << x[0] << "," << x[1] << "]" << std::endl;
 
         double val = 0.0;
         for (const auto &co : coeff) {         // loop over our map of powers->coefficients
-            std::cout << "  [" << co.first[0] << "," << co.first[1] << "]: " << co.second << std::endl;
+            //std::cout << "  [" << co.first[0] << "," << co.first[1] << "]: " << co.second << std::endl;
             double term = co.second;             // value in map is the coefficient
             for (int i = 0; i < x.size(); i++) {       // for each power, evaluate that power and multiple
                 term *= pow(x[i], co.first[i]);
@@ -79,8 +248,16 @@ struct PolyModelND : public SST::Core::Serialization::serializable
         val *= scale;                           // scale value (used for time conversion)
         val = std::nearbyint(val);              // round so we don't get fractional message sizes
         val = val > min ? val : min;           // don't return less than min, useful to remove negatives
-        std::cout << "  -> " << val << std::endl;;
+        //std::cout << "  -> " << val << std::endl;;
         return val;
+    }
+
+    double eval(int nodes, int size) override
+    {
+        std::vector<int> x;
+        x.push_back(size);
+        x.push_back(nodes);
+        return _eval(x);
     }
 
     bool operator==(const PolyModelND& lhs) const
@@ -163,10 +340,10 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-        {   "arg.sz",           "Sets the graph size",              "14"},
-        {   "arg.seed",         "Sets the RNG seed",                "1"},
-        {   "arg.msg_model",   "Communication volume model file",  "bfs-comm.model"},
-        {   "arg.exec_model",   "Computation timing model file",    "bfs-comp.model"},
+        {   "arg.sz",          "Sets the graph size",              "14"},
+        {   "arg.seed",        "Sets the RNG seed",                "1"},
+        {   "arg.msg_model",   "Communication volume model file",  "msg.model"},
+        {   "arg.exec_model",  "Computation timing model file",    "exec.model"},
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -226,6 +403,7 @@ private:
     std::vector<int>    comm1_ranks;
     std::vector<int>    comm2_ranks;
     uint32_t comm0_rank; // rank within comm0
+    uint32_t comm1_rank; // rank within comm_world
     uint32_t comm2_rank; // rank within comm2
 
     // since we are not sending data, we use null buffers /
@@ -247,14 +425,13 @@ private:
     int s_partner_48;
     int r_partner_48;
 
-    std::map<std::tuple<int,int,int>,PolyModel> msg_model;
-    std::map<std::tuple<int,int,int,int>,PolyModel> exec_model;
-
-    std::map<std::tuple<int,int>,PolyModelND> msg_model_nd;
-    std::map<std::tuple<int,int,int>,PolyModelND> exec_model_nd;
+    std::map<std::tuple<int,int>,std::unique_ptr<Model>> msg_model;
+    std::map<std::tuple<int,int,int>,std::unique_ptr<Model>> exec_model;
 
     // Random number generator
     SST::RNG::MersenneRNG* rng;
+
+    int trace; // whether to print a trace
 };
 
 }
