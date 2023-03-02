@@ -183,6 +183,7 @@ private:
     int getCoreId()         { return m_process->getCore(); }
     int getThreadId()       { return m_process->getHwThread(); }
     int getPid()            { return m_process->getpid(); }
+    int getTid()            { return m_process->gettid(); }
     std::string& getName()  { return m_name; }
 
 
