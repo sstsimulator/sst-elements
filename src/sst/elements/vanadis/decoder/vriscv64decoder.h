@@ -1290,9 +1290,10 @@ protected:
                 {
                     if(LIKELY(op_width != 0)) {
                         // AMO.ADD
-                        output->verbose(CALL_INFO, 16, 0,
-                        "-----> AMOADD 0x%llx / core: %d thr: %" PRIu32 " / %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16 " / width: %" PRIu32 " / aq: %s / rl: %s\n",
-                            ins_address, coreNum, hw_thr, rd, rs1, rs2, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
+                        output->verbose(CALL_INFO, 16, 0, 
+                            "-----> AMOADD 0x%llx / thr: %" PRIu32 " / %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16 
+                            " / width: %" PRIu32 " / aq: %s / rl: %s\n",
+                            ins_address, hw_thr, rd, rs1, rs2, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
 
                         if(LIKELY(perform_aq)) {
                             bundle->addInstruction(new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
@@ -1305,7 +1306,7 @@ protected:
                                     true, MEM_TRANSACTION_LLSC_LOAD,
                                     LOAD_INT_REGISTER));
 
-                        // rs2 + r32 -> r32
+                        // r32 + rs2 -> r32
                         bundle->addInstruction(
                             new VanadisAddInstruction<int64_t>(
                                 ins_address, hw_thr, options, 32, 32, rs2));
@@ -1315,6 +1316,11 @@ protected:
                         bundle->addInstruction(new VanadisStoreConditionalInstruction(
                                 ins_address, hw_thr, options, rs1, 0, 32, /* success code */ 33, op_width,
                                 STORE_INT_REGISTER, 0, 1));
+
+                        // r32 - rs2 -> r32
+                        bundle->addInstruction(
+                            new VanadisSubInstruction<int64_t>(
+                                ins_address, hw_thr, options, 32, 32, rs2, true));
 
                         // conditionally copy the loaded value into rd IF the store-conditional was successful
                         // copy r32 into rd if r33 == 0
@@ -1340,7 +1346,9 @@ protected:
                 {
                     if(LIKELY(op_width != 0)) {
                         // AMO.SWAP
-                        output->verbose(CALL_INFO, 16, 0, "-----> AMOSWAP 0x%llx / thr: %" PRIu32 " / %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16 " / width: %" PRIu32 " / aq: %s / rl: %s\n",
+                        output->verbose(CALL_INFO, 16, 0, 
+                            "-----> AMOSWAP 0x%llx / thr: %" PRIu32 " / %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16 
+                            " / width: %" PRIu32 " / aq: %s / rl: %s\n",
                             ins_address, hw_thr, rd, rs1, rs2, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
 
                         if(LIKELY(perform_aq)) {
