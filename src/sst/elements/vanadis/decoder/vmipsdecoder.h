@@ -74,6 +74,7 @@
 #define MIPS_SPEC_OP_MASK_LW     0x8C000000
 #define MIPS_SPEC_OP_MASK_LWL    0x88000000
 #define MIPS_SPEC_OP_MASK_LWR    0x98000000
+#define MIPS_SPEC_OP_MASK_LH     0x84000000
 #define MIPS_SPEC_OP_MASK_LHU    0x94000000
 #define MIPS_SPEC_OP_MASK_SB     0xA0000000
 #define MIPS_SPEC_OP_MASK_SC     0xE0000000
@@ -227,6 +228,7 @@ public:
      { "ins_decode_lb", "Count number of instructions decoded", "ins", 1 },
      { "ins_decode_lbu", "Count number of instructions decoded", "ins", 1 },
      { "ins_decode_lhu", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_lh", "Count number of instructions decoded", "ins", 1 },
      { "ins_decode_lw", "Count number of instructions decoded", "ins", 1 },
      { "ins_decode_lfp32", "Count number of instructions decoded", "ins", 1 },
      { "ins_decode_ll", "Count number of instructions decoded", "ins", 1 },
@@ -387,6 +389,7 @@ public:
         stat_decode_lb        = registerStatistic<uint64_t>("ins_decode_lb", "1");
         stat_decode_lbu       = registerStatistic<uint64_t>("ins_decode_lbu", "1");
         stat_decode_lhu       = registerStatistic<uint64_t>("ins_decode_lhu", "1");
+        stat_decode_lh        = registerStatistic<uint64_t>("ins_decode_lh", "1");
         stat_decode_lw        = registerStatistic<uint64_t>("ins_decode_lw", "1");
         stat_decode_lfp32     = registerStatistic<uint64_t>("ins_decode_lfp32", "1");
         stat_decode_ll        = registerStatistic<uint64_t>("ins_decode_ll", "1");
@@ -1235,6 +1238,20 @@ protected:
                     LOAD_INT_REGISTER));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_lhu);
+            } break;
+
+            case MIPS_SPEC_OP_MASK_LH:
+            {
+                const int64_t imm_value_64 = vanadis_sign_extend_offset_16(next_ins);
+
+                //				output->verbose(CALL_INFO, 16, 0,
+                //"[decoder/LH]: -> reg: %" PRIu16 " <- base: %" PRIu16 " + offset=%"
+                // PRId64 "\n", 					rt, rs, imm_value_64);
+                bundle->addInstruction(new VanadisLoadInstruction(
+                    ins_addr, hw_thr, options, rs, imm_value_64, rt, 2, true, MEM_TRANSACTION_NONE,
+                    LOAD_INT_REGISTER));
+                insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_lh);
             } break;
 
             case MIPS_SPEC_OP_MASK_SB:
@@ -2144,6 +2161,7 @@ protected:
     Statistic<uint64_t>* stat_decode_lb;
     Statistic<uint64_t>* stat_decode_lbu;
     Statistic<uint64_t>* stat_decode_lhu;
+    Statistic<uint64_t>* stat_decode_lh;
     Statistic<uint64_t>* stat_decode_lw;
     Statistic<uint64_t>* stat_decode_lfp32;
     Statistic<uint64_t>* stat_decode_ll;
