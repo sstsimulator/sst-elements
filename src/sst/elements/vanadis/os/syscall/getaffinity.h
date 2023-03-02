@@ -25,7 +25,6 @@ namespace Vanadis {
 #define __CPU_op_S(i, size, set, op) ( (i)/8U >= (size) ? 0 : \
     (((unsigned long *)(set))[(i)/8/sizeof(long)] op (1UL<<((i)%(8*sizeof(long))))) )
 
-
 class VanadisGetaffinitySyscall : public VanadisSyscall {
 public:
     VanadisGetaffinitySyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallGetaffinityEvent* event )
@@ -38,9 +37,9 @@ public:
 typedef struct cpu_set_t { unsigned long __bits[128/sizeof(long)]; } cpu_set_t;
 #endif
         assert( 0 == event->getPid() );
-        payload.resize( sizeof(uint64_t) * 128/sizeof(uint64_t) ,0 );
-        auto cpu_set = (uint64_t*) payload.data();
-        cpu_set[0] = 1;
+        // for now set every CPU available for scheduling
+        payload.resize( sizeof(uint64_t) * 128/sizeof(uint64_t) , 0xff );
+        //auto cpu_set = (uint64_t*) payload.data();
         writeMemory( event->getMaskAddr(), payload );
     }
 
