@@ -452,6 +452,17 @@ EXTRA_DIST = \
 	tests/small/misc/uname/riscv64/vanadis.stderr.gold \
 	tests/small/misc/uname/riscv64/vanadis.stdout.gold \
 \
+	tests/small/misc/openmp/Makefile \
+	tests/small/misc/openmp/openmp.c \
+	tests/small/misc/openmp/mipsel/openmp \
+	tests/small/misc/openmp/mipsel/sst.stdout.gold \
+	tests/small/misc/openmp/mipsel/vanadis.stderr.gold \
+	tests/small/misc/openmp/mipsel/vanadis.stdout.gold \
+	tests/small/misc/openmp/riscv64/openmp \
+	tests/small/misc/openmp/riscv64/sst.stdout.gold \
+	tests/small/misc/openmp/riscv64/vanadis.stderr.gold \
+	tests/small/misc/openmp/riscv64/vanadis.stdout.gold \
+\
 	tests/small/misc/hpcg/hpcg.dat \
 	tests/small/misc/hpcg/mipsel/hpcg \
 	tests/small/misc/hpcg/riscv64/hpcg \
