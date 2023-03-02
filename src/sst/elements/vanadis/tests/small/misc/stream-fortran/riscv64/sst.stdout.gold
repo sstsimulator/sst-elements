@@ -39,7 +39,7 @@ all process have exited
  node0.cpu0:lsq.operations_pending : Accumulator : Sum.u64 = 1297390; SumSQ.u64 = 5028686; Count.u64 = 8192124; Min.u64 = 0; Max.u64 = 10; 
  node0.cpu0.instructions_retired.1 : Accumulator : Sum.u64 = 1593231; SumSQ.u64 = 2744089; Count.u64 = 8192124; Min.u64 = 0; Max.u64 = 4; 
  node0.cpu0.instructions_decoded.1 : Accumulator : Sum.u64 = 2400804; SumSQ.u64 = 8879164; Count.u64 = 8192124; Min.u64 = 0; Max.u64 = 11; 
- node0.cpu0.instructions_issued.1 : Accumulator : Sum.u64 = 1711024; SumSQ.u64 = 2464262; Count.u64 = 8192124; Min.u64 = 0; Max.u64 = 4; 
+ node0.cpu0.instructions_issued.1 : Accumulator : Sum.u64 = 1711024; SumSQ.u64 = 2464264; Count.u64 = 8192124; Min.u64 = 0; Max.u64 = 4; 
  node0.cpu0.loads_issued.1 : Accumulator : Sum.u64 = 343066; SumSQ.u64 = 343066; Count.u64 = 343066; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0.stores_issued.1 : Accumulator : Sum.u64 = 130146; SumSQ.u64 = 130146; Count.u64 = 130146; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0.branch_mispredicts.1 : Accumulator : Sum.u64 = 21754; SumSQ.u64 = 21754; Count.u64 = 21754; Min.u64 = 1; Max.u64 = 1; 
