@@ -97,7 +97,7 @@ void GNA::init(unsigned int phase)
 
     // Read data
     // format:
-    // index,Vthreshold,Vreset,leak,p -- neuron info; for input neurons, only specify index
+    // index,Vinit,Vthreshold,Vreset,leak,p -- neuron info; for input neurons, only specify index
     //  to,weight,delay -- synapse info
     //  s<timing list> -- optional spike list for input neurons
     //  o -- optional output configuration
@@ -121,6 +121,8 @@ void GNA::init(unsigned int phase)
         Neuron * n;
         piece = strtok(0, ",");
         if (piece) {
+            float Vinit = atof(piece);
+            piece = strtok(0, ",");
             float Vthreshold = atof(piece);
             piece = strtok(0, ",");
             float Vreset = atof(piece);
@@ -128,7 +130,7 @@ void GNA::init(unsigned int phase)
             float leak = 1 - atof(piece);  // The parameter in the file is the portion of voltage to get rid of each cycle. It's simpler for us to compute with (1-decay).
             piece = strtok(0, ",");  // Actually, there should only be one piece left, with no more commas.
             float p = atof(piece);
-            n = neurons[id] = new NeuronLIF(Vthreshold, Vreset, leak, p);
+            n = neurons[id] = new NeuronLIF(Vinit, Vthreshold, Vreset, leak, p);
         } else {
             n = neurons[id] = new NeuronInput();
         }

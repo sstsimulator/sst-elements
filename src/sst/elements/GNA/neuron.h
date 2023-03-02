@@ -75,7 +75,7 @@ public:
     typedef std::map<const uint, float> temporalBuffer_t;
     temporalBuffer_t temporalBuffer;
 
-    NeuronLIF(float Vthreshold = 1, float Vreset = 0, float leak = 1, float p = 1);
+    NeuronLIF (float Vinit = 0, float Vthreshold = 1, float Vreset = 0, float leak = 1, float p = 1);
 
     virtual void deliverSpike(float str, uint when);
     virtual bool update      (const uint now);

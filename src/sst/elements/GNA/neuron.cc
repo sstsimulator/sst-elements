@@ -66,8 +66,9 @@ void Neuron::deliverSpike(float str, uint when)
 
 SST::RNG::MarsagliaRNG NeuronLIF::rng(1,13);
 
-NeuronLIF::NeuronLIF(float Vthreshold, float Vreset, float leak, float p)
-:   Vthreshold (Vthreshold),
+NeuronLIF::NeuronLIF(float Vinit, float Vthreshold, float Vreset, float leak, float p)
+:   V          (Vinit),
+    Vthreshold (Vthreshold),
     Vreset     (Vreset),
     leak       (leak),
     p          (p)
