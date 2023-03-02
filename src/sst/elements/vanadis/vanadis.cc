@@ -548,17 +548,15 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
                                 thread_decoders[i]->countISAIntReg(), thread_decoders[i]->countISAFPReg(), ins,
                                 int_register_stacks[i], fp_register_stacks[i], issue_isa_tables[i]);
 
-                            if ( ins->getInstructionAddress() == start_verbose_when_issue_address ) {
-                                output->setVerboseLevel(8);
-                                output->setVerboseMask(VANADIS_DBG_ISSUE_FLG);
-                            }
-
 #ifdef VANADIS_BUILD_DEBUG
+                            if ( checkVerboseAddr( ins->getInstructionAddress() ) ) {
+                                output->setVerboseLevel(8);
+                            }
                             if ( output_verbosity >= 8 ) {
                                 ins->printToBuffer(instPrintBuffer, 1024);
                                 output->verbose(
-                                    CALL_INFO, 8, VANADIS_DBG_ISSUE_FLG, "----> Issued for: %s / 0x%llx / status: %d\n",
-                                    instPrintBuffer, ins->getInstructionAddress(), status);
+                                    CALL_INFO, 8, VANADIS_DBG_ISSUE_FLG, "%d: ----> Issued for: %s / 0x%llx / status: %d\n",
+                                    ins->getHWThread(), instPrintBuffer, ins->getInstructionAddress(), status);
                                 if ( print_rob ) {
                                     printRob(rob[i]);
                                 }
@@ -625,7 +623,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
 #ifdef VANADIS_BUILD_DEBUG
             if(output_verbosity >= 8) {
                 output->verbose(
-                    CALL_INFO, 8, 0, "thread %" PRIu32 " is halted, did not process for issue this cycle.\n", i);
+                    CALL_INFO, 16, 0, "thread %" PRIu32 " is halted, did not process for issue this cycle.\n", i);
             }
 #endif
         }
@@ -829,9 +827,9 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                 if(output->getVerboseLevel() >= 8) {
                 output->verbose(
                     CALL_INFO, 8, 0,
-                    "----> Retire: speculated addr: 0x%llx / result addr: 0x%llx / "
+                    "%d ----> Retire: speculated addr: 0x%llx / result addr: 0x%llx / "
                     "pipeline-clear: %s\n",
-                    spec_ins->getSpeculatedAddress(), pipeline_reset_addr, perform_pipeline_clear ? "yes" : "no");
+                    spec_ins->getHWThread(), spec_ins->getSpeculatedAddress(), pipeline_reset_addr, perform_pipeline_clear ? "yes" : "no");
 
                 output->verbose(
                     CALL_INFO, 9, 0,
@@ -887,7 +885,7 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                 rob_front->printToBuffer(inst_asm_buffer, 32768);
 
                 output->verbose(
-                    CALL_INFO, 8, 0, "----> Retire: 0x%0llx / %s\n", rob_front->getInstructionAddress(),
+                    CALL_INFO, 8, 0, "%d: ----> Retire: 0x%0llx / %s\n", rob_front->getHWThread(), rob_front->getInstructionAddress(),
                     inst_asm_buffer);
 
                 delete[] inst_asm_buffer;

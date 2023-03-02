@@ -234,7 +234,9 @@ private:
     int  allocateFunctionalUnit(VanadisInstruction* ins);
     bool mapInstructiontoFunctionalUnit(VanadisInstruction* ins, std::vector<VanadisFunctionalUnit*>& functional_units);
     void printRob(VanadisCircularQueue<VanadisInstruction*>* rob);
-
+    bool checkVerboseAddr( uint64_t addr ) {
+        return ( addr == start_verbose_when_issue_address );
+    }
     void resetHwThread(uint32_t thr);
 
     SST::Output* output;
