@@ -53,6 +53,7 @@ all process have exited
  node0.cpu0:decoder0.ins_decode_lb.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node0.cpu0:decoder0.ins_decode_lbu.1 : Accumulator : Sum.u64 = 551; SumSQ.u64 = 551; Count.u64 = 551; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:decoder0.ins_decode_lhu.1 : Accumulator : Sum.u64 = 28; SumSQ.u64 = 28; Count.u64 = 28; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0:decoder0.ins_decode_lh.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node0.cpu0:decoder0.ins_decode_lw.1 : Accumulator : Sum.u64 = 6550; SumSQ.u64 = 6550; Count.u64 = 6550; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:decoder0.ins_decode_lfp32.1 : Accumulator : Sum.u64 = 814; SumSQ.u64 = 814; Count.u64 = 814; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu0:decoder0.ins_decode_ll.1 : Accumulator : Sum.u64 = 28; SumSQ.u64 = 28; Count.u64 = 28; Min.u64 = 1; Max.u64 = 1; 
