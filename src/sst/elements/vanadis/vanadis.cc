@@ -42,7 +42,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     core_id                 = params.find<uint32_t>("core_id", 0);
 
     char* outputPrefix = (char*)malloc(sizeof(char) * 256);
-    sprintf(outputPrefix, "[Core: %4" PRIu32 "/@t]: ", core_id);
+    snprintf(outputPrefix, sizeof(char)*256, "[Core: %4" PRIu32 "/@t]: ", core_id);
 
     output = new SST::Output(outputPrefix, verbosity, dbg_mask, Output::STDOUT);
     free(outputPrefix);
@@ -95,7 +95,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     for ( uint32_t i = 0; i < hw_threads; ++i ) {
 
-        sprintf(decoder_name, "decoder%" PRIu32 "", i);
+        snprintf(decoder_name, 64, "decoder%" PRIu32 "", i);
         VanadisDecoder* thr_decoder = loadUserSubComponent<SST::Vanadis::VanadisDecoder>(decoder_name);
 
 		  fp_flags.push_back(new VanadisFloatingPointFlags());

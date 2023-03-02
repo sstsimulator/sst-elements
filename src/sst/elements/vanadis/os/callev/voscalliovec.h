@@ -28,7 +28,7 @@ public:
         : VanadisSyscallEvent(core, thr, bittype), fd(fd), iovec_addr(iovec_addr), iov_count(iovec_count) {}
 
     virtual ~VanadisSyscallIoVecEvent() {} 
-    virtual VanadisSyscallOp getOperation() { assert(0);};
+    virtual VanadisSyscallOp getOperation() override { assert(0);};
 
     int64_t getFileDescriptor() const { return fd; }
     uint64_t getIOVecAddress() const { return iovec_addr; }
