@@ -420,18 +420,6 @@ protected:
 
             bool std_store_found = false;
 
-            if ( ev->getFail() ) {
-                VanadisBasicStorePendingEntry* store_entry = lsq->stores_pending.front();
-                if ( store_entry ) {
-                    store_entry->getStoreInstruction()->flagError();
-
-                    out->verbose(CALL_INFO, 0, 0, "Write failed, instAddr=%#lx pAddr=%#lx vAddr=%#lx\n",
-                            store_entry->getStoreInstruction()->getInstructionAddress(), ev->pAddr, ev->vAddr );
-                    return;
-                } else {
-                    out->fatal(CALL_INFO, -1, "Write failed, pAddr=%#lx vAddr=%#lx\n", ev->pAddr, ev->vAddr);
-                }
-            }
             auto iter = lsq->std_stores_in_flight.find( ev->getID() ); 
             if ( iter != lsq->std_stores_in_flight.end() ) {
                 lsq->std_stores_in_flight.erase(iter);
