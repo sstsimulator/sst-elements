@@ -44,7 +44,7 @@ RouteToGroup::init_write(const std::string& basename, int group_id, global_route
     slices = params.n;
     links = params.h;
     gid = group_id;
-    global_start = params.p + params.a - 1;
+    global_start = params.p + ((params.a - 1) * params.m);
     mode = route_mode;
     consider_failed_links = config_failed_links;
 
@@ -57,7 +57,7 @@ RouteToGroup::init_write(const std::string& basename, int group_id, global_route
         int group = value % (params.g - 1);
         int route_num = value / (params.g - 1);
         int router = i / params.h;
-        int port = (i % params.h) + params.p + params.a - 1;
+        int port = (i % params.h) + params.p + ((params.a - 1) * params.m);
 
         RouterPortPair rpp;
         rpp.router = router;
@@ -131,7 +131,7 @@ RouteToGroup::init(const std::string& basename, int group_id, global_route_mode_
     slices = params.n;
     links = params.h;
     gid = group_id;
-    global_start = params.p + params.a - 1;
+    global_start = params.p + ((params.a - 1) * params.m);
     mode = route_mode;
     consider_failed_links = config_failed_links;
 
@@ -238,6 +238,9 @@ topo_dragonfly::topo_dragonfly(ComponentId_t cid, Params &p, int num_ports, int 
     params.h = p.find<uint32_t>("intergroup_per_router");
     params.g = p.find<uint32_t>("num_groups");
     params.n = p.find<uint32_t>("intergroup_links");
+    params.m = p.find<uint32_t>("intragroup_links", 1);
+
+    global_start = params.p + ((params.a - 1) * params.m);
 
     group_id = rtr_id / params.a;
     router_id = rtr_id % params.a;
@@ -351,17 +354,17 @@ void topo_dragonfly::route_nonadaptive(int port, int vc, internal_router_event* 
                 // Route to the router specified by mid_group.  If
                 // this is a direct route then mid_group will equal
                 // router and packet will go direct.
-                next_port = port_for_router(td_ev->dest.mid_group);
+                next_port = port_for_router(td_ev->dest.mid_group, td_ev->local_slice);
             }
         }
         else {
             // Packet is leaving group.  Simply route to group
             // specified by mid_group.  If this is a direct route then
             // mid_group will be set to group.
-            next_port = port_for_group(td_ev->dest.mid_group, td_ev->global_slice);
+            next_port = port_for_group(td_ev->dest.mid_group, td_ev->global_slice, td_ev->local_slice);
         }
     }
-    else if ( (uint32_t)port < ( params.p + params.a - 1) ) {
+    else if ( (uint32_t)port < global_start ) {
         // Intragroup links
 
         if ( td_ev->dest.group == group_id ) {
@@ -375,16 +378,16 @@ void topo_dragonfly::route_nonadaptive(int port, int vc, internal_router_event* 
                 // Need to increment the VC and route to correct
                 // router.
                 td_ev->setVC(vc+1);
-                next_port = port_for_router(td_ev->dest.router);
+                next_port = port_for_router(td_ev->dest.router, td_ev->local_slice);
             }
         }
         else {
             // Not in correct group, should route out one of the
             // global links
             if ( td_ev->dest.mid_group != group_id ) {
-                next_port = port_for_group(td_ev->dest.mid_group, td_ev->global_slice);
+                next_port = port_for_group(td_ev->dest.mid_group, td_ev->global_slice, td_ev->local_slice);
             } else {
-                next_port = port_for_group(td_ev->dest.group, td_ev->global_slice);
+                next_port = port_for_group(td_ev->dest.group, td_ev->global_slice, td_ev->local_slice);
             }
         }
     }
@@ -398,13 +401,13 @@ void topo_dragonfly::route_nonadaptive(int port, int vc, internal_router_event* 
             }
             else {
                 // Go to final router
-                next_port = port_for_router(td_ev->dest.router);
+                next_port = port_for_router(td_ev->dest.router, td_ev->local_slice);
             }
         }
         else {
             // Just passing through on a valiant route.  Route
             // directly to final group
-            next_port = port_for_group(td_ev->dest.group, td_ev->global_slice);
+            next_port = port_for_group(td_ev->dest.group, td_ev->global_slice, td_ev->local_slice);
         }
     }
 
@@ -434,10 +437,13 @@ void topo_dragonfly::route_ugal(int port, int vc, internal_router_event* ev)
             // Adaptive routing when packet stays in group.
             // Check to see if we take the valiant route or direct route.
 
-            int direct_route_port = port_for_router(td_ev->dest.router);
+            // NOTE: need to change this to look at all the possible
+            // local_slices, but for now just get the one assigned in
+            // process_input.
+            int direct_route_port = port_for_router(td_ev->dest.router, td_ev->local_slice);
             int direct_route_weight = output_queue_lengths[direct_route_port * num_vcs + vc];
 
-            int valiant_route_port = port_for_router(td_ev->dest.mid_group);
+            int valiant_route_port = port_for_router(td_ev->dest.mid_group, td_ev->local_slice);
             int valiant_route_weight = output_queue_lengths[valiant_route_port * num_vcs + vc];
 
             if ( direct_route_weight <= 2 * valiant_route_weight + vns[vn].bias ) {
@@ -459,33 +465,35 @@ void topo_dragonfly::route_ugal(int port, int vc, internal_router_event* ev)
             std::vector<std::pair<int,int> > min_ports;
             for ( int i = 0; i < params.n; ++i ) {
                 // Direct routes
-                int weight;
-                int port = port_for_group(td_ev->dest.group, i);
-                if ( port != -1 ) {
-                    weight = output_queue_lengths[port * num_vcs + vc];
+                for ( int j = 0; j < params.m; ++j ) {
+                    int weight;
+                    int port = port_for_group(td_ev->dest.group, i, j);
+                    if ( port != -1 ) {
+                        weight = output_queue_lengths[port * num_vcs + vc];
 
-                    if ( weight == min_weight ) {
-                        min_ports.emplace_back(port,i);
+                        if ( weight == min_weight ) {
+                            min_ports.emplace_back(port,i);
+                        }
+                        else if ( weight < min_weight ) {
+                            min_weight = weight;
+                            min_ports.clear();
+                            min_ports.emplace_back(port,i);
+                        }
                     }
-                    else if ( weight < min_weight ) {
-                        min_weight = weight;
-                        min_ports.clear();
-                        min_ports.emplace_back(port,i);
-                    }
-                }
 
-                // Valiant routes
-                port = port_for_group(td_ev->dest.mid_group, i);
-                if ( port != -1 ) {
-                    weight = 2 * output_queue_lengths[port * num_vcs + vc] + vns[vn].bias;
+                    // Valiant routes
+                    port = port_for_group(td_ev->dest.mid_group, i, j);
+                    if ( port != -1 ) {
+                        weight = 2 * output_queue_lengths[port * num_vcs + vc] + vns[vn].bias;
 
-                    if ( weight == min_weight ) {
-                        min_ports.emplace_back(port,i);
-                    }
-                    else if ( weight < min_weight ) {
-                        min_weight = weight;
-                        min_ports.clear();
-                        min_ports.emplace_back(port,i);
+                        if ( weight == min_weight ) {
+                            min_ports.emplace_back(port,i);
+                        }
+                        else if ( weight < min_weight ) {
+                            min_weight = weight;
+                            min_ports.clear();
+                            min_ports.emplace_back(port,i);
+                        }
                     }
                 }
             }
@@ -498,7 +506,7 @@ void topo_dragonfly::route_ugal(int port, int vc, internal_router_event* ev)
     }
 
     // Intragroup links
-    else if ( port < ( params.p + params.a -1 ) ) {
+    else if ( port < global_start ) {
         // In final group
         if ( td_ev->dest.group == group_id ) {
             if ( td_ev->dest.router == router_id ) {
@@ -512,15 +520,22 @@ void topo_dragonfly::route_ugal(int port, int vc, internal_router_event* ev)
                 // router.  We'll use VC2 to avoid interfering with
                 // valiant traffic routing through the group.
                 td_ev->setVC(vc+2);
-                td_ev->setNextPort(port_for_router(td_ev->dest.router));
+                // NOTE: need to change this to look at all the possible
+                // local_slices, but for now just get the one assigned in
+                // process_input.
+                td_ev->setNextPort(port_for_router(td_ev->dest.router, td_ev->local_slice));
                 return;
             }
         }
         // Need to route it over the global link
         else {
+            // Since this came in on an intragroup link, the port for
+            // the next group is in the router, so we can just pass
+            // the local_slice assigned in process_input to any calls
+            // to port_for_group.
             if ( td_ev->dest.mid_group == group_id ) {
-                // In valiant group, just route out to next group
-                td_ev->setNextPort( port_for_group(td_ev->dest.group, td_ev->global_slice) );
+                // In valiant group, just route out to next group.
+                td_ev->setNextPort( port_for_group(td_ev->dest.group, td_ev->global_slice, td_ev->local_slice) );
                 return;
             }
 
@@ -531,8 +546,8 @@ void topo_dragonfly::route_ugal(int port, int vc, internal_router_event* ev)
             // exist take the port with the least weight.
 
             // Check direct route first
-            int direct_port = port_for_group(td_ev->dest.group, td_ev->global_slice);
-            int valiant_port = port_for_group(td_ev->dest.mid_group, td_ev->global_slice);
+            int direct_port = port_for_group(td_ev->dest.group, td_ev->global_slice, td_ev->local_slice);
+            int valiant_port = port_for_group(td_ev->dest.mid_group, td_ev->global_slice, td_ev->local_slice);
 
             // Need to see if these are global ports on this router.
             // If not, then we won't consider them.  At least one of
@@ -542,7 +557,7 @@ void topo_dragonfly::route_ugal(int port, int vc, internal_router_event* ev)
                 min_port = direct_port;
             }
 
-                if ( valiant_port != -1 && is_port_global(valiant_port) ) {
+            if ( valiant_port != -1 && is_port_global(valiant_port) ) {
                 if ( min_port == std::numeric_limits<int>::max() ) {
                     min_port = valiant_port;
                 }
@@ -574,7 +589,11 @@ void topo_dragonfly::route_ugal(int port, int vc, internal_router_event* ev)
             }
             else {
                 // Need to route to the dest router
-                td_ev->setNextPort(port_for_router(td_ev->dest.router));
+
+                // NOTE: need to change this to look at all the possible
+                // local_slices, but for now just get the one assigned in
+                // process_input.
+                td_ev->setNextPort(port_for_router(td_ev->dest.router, td_ev->local_slice));
                 return;
             }
         }
@@ -587,19 +606,21 @@ void topo_dragonfly::route_ugal(int port, int vc, internal_router_event* ev)
         // Look through all routes.  If the port is in current router,
         // weight with 1, other weight with 2
         for ( int i = 0; i < params.n; ++i ) {
-            int port = port_for_group(td_ev->dest.group, i);
-            if ( port == -1 ) continue;
-            int weight = output_queue_lengths[port * num_vcs + vc];
+            for ( int j = 0; j < params.m; ++j ) {
+                int port = port_for_group(td_ev->dest.group, i, j);
+                if ( port == -1 ) continue;
+                int weight = output_queue_lengths[port * num_vcs + vc];
 
-            if ( !is_port_global(port) ) weight *= 2;
+                if ( !is_port_global(port) ) weight *= 2;
 
-            if ( weight == min_weight ) {
-                min_ports.emplace_back(port,i);
-            }
-            else if ( weight < min_weight ) {
-                min_weight = weight;
-                min_ports.clear();
-                min_ports.emplace_back(port,i);
+                if ( weight == min_weight ) {
+                    min_ports.emplace_back(port,i);
+                }
+                else if ( weight < min_weight ) {
+                    min_weight = weight;
+                    min_ports.clear();
+                    min_ports.emplace_back(port,i);
+                }
             }
         }
         auto& route = min_ports[rng->generateNextUInt32() % min_ports.size()];
@@ -630,7 +651,10 @@ void topo_dragonfly::route_mina(int port, int vc, internal_router_event* ev)
             }
 
             // No adaptive routing, just route to destination router
-            td_ev->setNextPort(port_for_router(td_ev->dest.router));
+            // NOTE: need to change this to look at all the possible
+            // local_slices, but for now just get the one assigned in
+            // process_input.
+            td_ev->setNextPort(port_for_router(td_ev->dest.router, td_ev->local_slice));
             return;
         }
 
@@ -642,24 +666,25 @@ void topo_dragonfly::route_mina(int port, int vc, internal_router_event* ev)
             int min_weight = std::numeric_limits<int>::max();
             std::vector<std::pair<int,int> > min_ports;
             for ( int i = 0; i < params.n; ++i ) {
+                for ( int j = 0; j < params.m; ++j ) {
+                    // Direct routes
+                    int weight;
+                    int port = port_for_group(td_ev->dest.group, i, j);
+                    if ( port != -1 ) {
+                        int hops = hops_to_router(td_ev->dest.group, td_ev->dest.router, i);
+                        // Weight by hop count, thus favoring shorter
+                        // paths.  The "+ hops" on the end is to make
+                        // shorter paths win ties.
+                        weight = hops * output_queue_lengths[port * num_vcs + vc] + hops;
 
-                // Direct routes
-                int weight;
-                int port = port_for_group(td_ev->dest.group, i);
-                if ( port != -1 ) {
-                    int hops = hops_to_router(td_ev->dest.group, td_ev->dest.router, i);
-                    // Weight by hop count, thus favoring shorter
-                    // paths.  The "+ hops" on the end is to make
-                    // shorter paths win ties.
-                    weight = hops * output_queue_lengths[port * num_vcs + vc] + hops;
-
-                    if ( weight == min_weight ) {
-                        min_ports.emplace_back(port,i);
-                    }
-                    else if ( weight < min_weight ) {
-                        min_weight = weight;
-                        min_ports.clear();
-                        min_ports.emplace_back(port,i);
+                        if ( weight == min_weight ) {
+                            min_ports.emplace_back(port,i);
+                        }
+                        else if ( weight < min_weight ) {
+                            min_weight = weight;
+                            min_ports.clear();
+                            min_ports.emplace_back(port,i);
+                        }
                     }
                 }
             }
@@ -672,7 +697,7 @@ void topo_dragonfly::route_mina(int port, int vc, internal_router_event* ev)
     }
 
     // Intragroup links
-    else if ( port < ( params.p + params.a -1 ) ) {
+    else if ( port < global_start ) {
         // In final group
         if ( td_ev->dest.group == group_id ) {
             if ( td_ev->dest.router == router_id ) {
@@ -689,7 +714,7 @@ void topo_dragonfly::route_mina(int port, int vc, internal_router_event* ev)
         else {
             // Find the route.  We stored the global slice when
             // initially routing, so this should be a global link.
-            td_ev->setNextPort(port_for_group(td_ev->dest.group, td_ev->global_slice));
+            td_ev->setNextPort(port_for_group(td_ev->dest.group, td_ev->global_slice, td_ev->local_slice));
             return;
         }
     }
@@ -708,7 +733,10 @@ void topo_dragonfly::route_mina(int port, int vc, internal_router_event* ev)
             }
             else {
                 // Need to route to the dest router
-                td_ev->setNextPort(port_for_router(td_ev->dest.router));
+                // NOTE: need to change this to look at all the possible
+                // local_slices, but for now just get the one assigned in
+                // process_input.
+                td_ev->setNextPort(port_for_router(td_ev->dest.router, td_ev->local_slice));
                 return;
             }
         }
@@ -739,10 +767,10 @@ void topo_dragonfly::route_adaptive_local(int port, int vc, internal_router_even
         // If we're at the correct router, no adaptive needed
         if ( td_ev->dest.router == router_id) return;
 
-        int direct_route_port = port_for_router(td_ev->dest.router);
+        int direct_route_port = port_for_router(td_ev->dest.router, td_ev->local_slice);
         int direct_route_credits = output_credits[direct_route_port * num_vcs + vc];
 
-        int valiant_route_port = port_for_router(td_ev->dest.mid_group);
+        int valiant_route_port = port_for_router(td_ev->dest.mid_group, td_ev->local_slice);
         int valiant_route_credits = output_credits[valiant_route_port * num_vcs + vc];
 
         if ( valiant_route_credits > (int)((double)direct_route_credits * adaptive_threshold) ) {
@@ -769,8 +797,8 @@ void topo_dragonfly::route_adaptive_local(int port, int vc, internal_router_even
     int direct_slice1 = td_ev->global_slice_shadow;
     // int direct_slice2 = td_ev->global_slice;
     int direct_slice2 = (td_ev->global_slice_shadow + 1) % params.n;
-    int direct_route_port1 = port_for_group(td_ev->dest.group, direct_slice1, 0 );
-    int direct_route_port2 = port_for_group(td_ev->dest.group, direct_slice2, 1 );
+    int direct_route_port1 = port_for_group(td_ev->dest.group, direct_slice1, td_ev->local_slice );
+    int direct_route_port2 = port_for_group(td_ev->dest.group, direct_slice2, td_ev->local_slice );
     int direct_route_credits1 = output_credits[direct_route_port1 * num_vcs + vc];
     int direct_route_credits2 = output_credits[direct_route_port2 * num_vcs + vc];
     int direct_slice;
@@ -800,8 +828,8 @@ void topo_dragonfly::route_adaptive_local(int port, int vc, internal_router_even
         int valiant_slice1 = td_ev->global_slice;
         // int valiant_slice2 = td_ev->global_slice;
         int valiant_slice2 = (td_ev->global_slice + 1) % params.n;
-        int valiant_route_port1 = port_for_group(td_ev->dest.mid_group_shadow, valiant_slice1, 2 );
-        int valiant_route_port2 = port_for_group(td_ev->dest.mid_group_shadow, valiant_slice2, 3 );
+        int valiant_route_port1 = port_for_group(td_ev->dest.mid_group_shadow, valiant_slice1, td_ev->local_slice );
+        int valiant_route_port2 = port_for_group(td_ev->dest.mid_group_shadow, valiant_slice2, td_ev->local_slice );
         int valiant_route_credits1 = output_credits[valiant_route_port1 * num_vcs + vc];
         int valiant_route_credits2 = output_credits[valiant_route_port2 * num_vcs + vc];
         if ( valiant_route_credits1 > valiant_route_credits2 ) {
@@ -882,6 +910,7 @@ internal_router_event* topo_dragonfly::process_input(RtrEvent* ev)
     td_ev->setVC(vns[vn].start_vc);
     td_ev->global_slice = ev->getTrustedSrc() % params.n;
     td_ev->global_slice_shadow = ev->getTrustedSrc() % params.n;
+    td_ev->local_slice = (ev->getTrustedSrc() + ev->getDest()) % params.m;
 
     if ( td_ev->getTraceType() != SST::Interfaces::SimpleNetwork::Request::NONE ) {
         output.output("TRACE(%d): process_input():"
@@ -927,10 +956,10 @@ topo_dragonfly::routeControlPacket(CtrlRtrEvent* ev)
     // Just get next port on minimal route
     int next_port;
     if ( addr.group != group_id ) {
-        next_port = port_for_group(addr.group, 0 /* global slice */);
+        next_port = port_for_group(addr.group, 0 /* global slice */, 0 /* local slice */ );
     }
     else if ( addr.router != router_id ) {
-        next_port = port_for_router(addr.router);
+        next_port = port_for_router(addr.router, 0);
     }
     else {
         next_port = addr.host;
@@ -996,7 +1025,7 @@ void topo_dragonfly::routeInitData(int port, internal_router_event* ev, std::vec
             next_port = port_for_group_init(td_ev->dest.group, td_ev->global_slice);
         }
         else if ( td_ev->dest.router != router_id ) {
-            next_port = port_for_router(td_ev->dest.router);
+            next_port = port_for_router(td_ev->dest.router, 0);
         }
         else {
             next_port = td_ev->dest.host;
@@ -1103,9 +1132,9 @@ int32_t topo_dragonfly::hops_to_router(uint32_t group, uint32_t router, uint32_t
 }
 
 /* returns local router port if group can't be reached from this router */
-int32_t topo_dragonfly::port_for_group(uint32_t group, uint32_t slice, int id)
+int32_t topo_dragonfly::port_for_group(uint32_t group, uint32_t global_slice, uint32_t local_slice)
 {
-    const RouterPortPair& pair = group_to_global_port.getRouterPortPair(group,slice);
+    const RouterPortPair& pair = group_to_global_port.getRouterPortPair(group,global_slice);
     if ( group_to_global_port.isFailedPort(pair) ) {
         // printf("******** Skipping failed port ********\n");
         return -1;
@@ -1114,29 +1143,32 @@ int32_t topo_dragonfly::port_for_group(uint32_t group, uint32_t slice, int id)
     if ( pair.router == router_id ) {
         return pair.port;
     } else {
-        return port_for_router(pair.router);
+        return port_for_router(pair.router, local_slice);
     }
 }
 
 // Always ignore failed links during init
-int32_t topo_dragonfly::port_for_group_init(uint32_t group, uint32_t slice)
+int32_t topo_dragonfly::port_for_group_init(uint32_t group, uint32_t global_slice)
 {
     // TraceFunction trace(CALL_INFO_LONG);
     // trace.output("Routing from group %d to group %u over slice %u\n",group_id,group,slice);
-    const RouterPortPair& pair = group_to_global_port.getRouterPortPair(group,slice);
+    const RouterPortPair& pair = group_to_global_port.getRouterPortPair(group,global_slice);
     // trace.output("This maps to router %d and port %d\n",pair.router,pair.port);
 
     if ( pair.router == router_id ) {
         return pair.port;
     } else {
-        return port_for_router(pair.router);
+        return port_for_router(pair.router, 0);
     }
 }
 
 
-int32_t topo_dragonfly::port_for_router(uint32_t router)
+int32_t topo_dragonfly::port_for_router(uint32_t router, int local_slice)
 {
-    uint32_t tgt = params.p + router;
-    if ( router > router_id ) tgt--;
-    return tgt;
+    uint32_t index = (router > router_id) ? router - 1 : router;
+    return params.p + ( index * params.m ) + local_slice;
+
+    // uint32_t tgt = params.p + router;
+    // if ( router > router_id ) tgt--;
+    // return tgt;
 }

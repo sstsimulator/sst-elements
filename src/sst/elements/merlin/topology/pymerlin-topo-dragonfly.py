@@ -24,11 +24,12 @@ class topoDragonFly(Topology):
     def __init__(self):
         Topology.__init__(self)
         self._declareClassVariables(["link_latency","host_link_latency","global_link_map"])
-        self._declareParams("main",["hosts_per_router","routers_per_group","intergroup_links","num_groups",
-                                    "algorithm","adaptive_threshold","global_routes","config_failed_links",
-                                    "failed_links"])
+        self._declareParams("main",["hosts_per_router","routers_per_group","intergroup_links","intragroup_links",
+                                    "num_groups","algorithm","adaptive_threshold","global_routes",
+                                    "config_failed_links","failed_links"])
         self.global_routes = "absolute"
         self._subscribeToPlatformParamSet("topology")
+        self.intragroup_links = 1
 
     def getName(self):
         return "Dragonfly"
@@ -37,11 +38,12 @@ class topoDragonFly(Topology):
     def getNumNodes(self):
         return self.num_groups * self.routers_per_group * self.hosts_per_router
 
-    def setShape(self,hosts_per_router, router_per_group, intergroup_links, num_groups):
+    def setShape(self,hosts_per_router, router_per_group, intergroup_links, num_groups, intragroup_links = 1):
         self.hosts_per_router = hosts_per_router
         self.routers_per_group = routers_per_group
         self.intergroup_links = intergroup_links
         self.num_groups = num_groups
+        self.intragroup_links = intragroup_links
 
 
     def setRoutingModeAbsolute(self):
@@ -78,7 +80,7 @@ class topoDragonFly(Topology):
 
         empty_ports = intergroup_per_router * self.routers_per_group - total_intergroup_links
 
-        num_ports = self.routers_per_group - 1 + self.hosts_per_router + intergroup_per_router
+        num_ports = ((self.routers_per_group - 1) * self.intragroup_links) + self.hosts_per_router + intergroup_per_router
 
 
         links = dict()
@@ -189,8 +191,9 @@ class topoDragonFly(Topology):
                     if p != r:
                         src = min(p,r)
                         dst = max(p,r)
-                        rtr.addLink(getLink("link_g%dr%dr%d"%(g, src, dst)), "port%d"%port, self.link_latency)
-                        port = port + 1
+                        for s in range(self.intragroup_links):
+                            rtr.addLink(getLink("link_g%dr%dr%ds%d"%(g, src, dst, s)), "port%d"%port, self.link_latency)
+                            port = port + 1
 
                 for p in range(igpr):
                     link = getGlobalLink(g,r,p)
