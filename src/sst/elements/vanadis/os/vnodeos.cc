@@ -370,7 +370,7 @@ void VanadisNodeOSComponent::processSyscallPost( VanadisSyscall* syscall ) {
 }
 
 void VanadisNodeOSComponent::processOsPageFault( VanadisSyscall* syscall, uint64_t virtAddr, bool isWrite ) {
-    output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "virtAddr=%#lx isWrite=%d\n",virtAddr, isWrite);
+    output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "virtAddr=%#" PRIx64 " isWrite=%d\n",virtAddr, isWrite);
 
     uint32_t vpn = virtAddr >> m_pageShift;
     uint32_t faultPerms = isWrite ? 1 << 1:  1<< 2;
@@ -535,7 +535,7 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
                 // map this physical page into the MMU for this process 
                 auto physAddr = region->backing->dev->getPhysAddr();
                 auto ppn = physAddr >> m_pageShift;
-                output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"\n", "Device physAddr=%#lx ppn=%d\n",physAddr,ppn);
+                output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "Device physAddr=%#lx ppn=%d\n",physAddr,ppn);
                 m_mmu->map( thread->getpid(), vpn, ppn, m_pageSize, region->perms );
                 pageFaultFini( info );
                 return;
