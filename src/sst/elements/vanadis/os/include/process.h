@@ -183,7 +183,7 @@ class ProcessInfo {
 
     void addFutexWait( uint64_t addr, VanadisSyscall* syscall ) {
         m_dbg.verbose(CALL_INFO,1,0,"addr=%#" PRIx64 "\n",addr);
-        m_futex->addWait( addr, syscall );
+        m_futex->addWait( addr, gettid(), syscall );
     }
 
     VanadisSyscall* findFutex( uint64_t addr ) {

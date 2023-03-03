@@ -35,12 +35,12 @@ namespace OS {
 
 class Futex {
 public:
-    void addWait( uint64_t addr, VanadisSyscall* syscall ) {
+    void addWait( uint64_t addr, uint32_t tid, VanadisSyscall* syscall ) {
         OSFutexDbg("Futex::%s() addr=%#" PRIx64 " syscall=%p\n", addr,syscall );
 
         auto& tmp = m_futexMap[addr]; 
-        assert( tmp.find( syscall ) == tmp.end() );
-        tmp.insert( syscall );
+        assert( tmp.find( tid ) == tmp.end() );
+        tmp[tid] = syscall;
         OSFutexDbg("Futex::%s() %p %zu\n",this,tmp.size());
     }
 
@@ -62,9 +62,10 @@ public:
         auto& tmp = m_futexMap[addr]; 
 
         OSFutexDbg("Futex::%s() %p %zu\n",this,tmp.size());
-
         assert( ! tmp.empty() );
-        VanadisSyscall* syscall = *tmp.begin();
+
+        auto syscall = tmp.begin()->second;
+
         tmp.erase( tmp.begin() );
         if ( tmp.empty() ) {
             m_futexMap.erase( addr );
@@ -74,7 +75,7 @@ public:
     }
 
 private:
-    std::map< uint64_t, std::set< VanadisSyscall* > > m_futexMap;
+    std::map< uint64_t, std::map< uint64_t, VanadisSyscall* > > m_futexMap;
 };
 
 }
