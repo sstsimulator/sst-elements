@@ -152,7 +152,7 @@ void VanadisFutexSyscall::memReqIsDone()
                 m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
                     "[syscall-futex] FUTEX_WAIT tid=%d addr=%#" PRIx64 " %d != %d, vals dont match return\n",
                     m_process->gettid(), getEvent<VanadisSyscallFutexEvent*>()->getAddr(), val, getEvent<VanadisSyscallFutexEvent*>()->getVal());
-                setReturnFail(-EAGAIN);
+                setReturnFail(-LINUX_EAGAIN);
             }
         } break;
       case FUTEX_REQUEUE:

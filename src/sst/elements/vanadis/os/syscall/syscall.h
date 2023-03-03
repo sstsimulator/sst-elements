@@ -28,6 +28,11 @@
 
 using namespace SST::Interfaces;
 
+#define LINUX_EBADF            9
+#define LINUX_EAGAIN          11
+#define LINUX_EINVAL          22
+#define LINUX_ENOTTY          25
+
 namespace SST {
 namespace Vanadis {
 
