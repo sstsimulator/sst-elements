@@ -19,6 +19,7 @@
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
 #endif
+
 #include <inttypes.h>
 #include <vector>
 
@@ -28,94 +29,81 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
-
 #include <sst/core/interfaces/stdMem.h>
-#include "gna_lib.h"
+
 #include "neuron.h"
 #include "sts.h"
+
 
 namespace SST {
 namespace GNAComponent {
 
-
 class GNA : public SST::Component {
 public:
-/* Element Library Info */
+    // Element Library Info
+
     SST_ELI_REGISTER_COMPONENT(GNA, "GNA", "GNA", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Spiking Temportal Processing Unit", COMPONENT_CATEGORY_PROCESSOR)
+        "Spiking Temportal Processing Unit", COMPONENT_CATEGORY_PROCESSOR)
 
     SST_ELI_DOCUMENT_PARAMS(
-            {"verbose",                 "(uint) Determine how verbose the output from the CPU is", "0"},
-            {"clock",                   "(string) Clock frequency", "1GHz"},
-            {"BWPperTic",               "Max # of Brain Wave Pulses which can be delivered each clock cycle","2"},
-            {"STSDispatch",               "Max # spikes that can be dispatched to the STS in a clock cycle","2"},
-            {"STSParallelism",               "Max # spikes the STS can process in parallelism ","2"},
-            {"MaxOutMem", "Maximum # of outgoing memory requests per cycle","STSParallelism"},
-            {"neurons",                  "(uint) number of neurons", "32"}
-                            )
+        {"verbose",        "(uint) Determine how verbose the output from the CPU is",            "0"},
+        {"clock",          "(string) Clock frequency",                                           "1GHz"},
+        {"InputsPerTic",   "Max # of input spikes which can be delivered each clock cycle",      "2"},
+        {"STSDispatch",    "Max # spikes that can be dispatched to the STS in a clock cycle",    "2"},
+        {"STSParallelism", "Max # spikes the STS can process in parallel",                       "2"},
+        {"MaxOutMem",      "Maximum # of outgoing memory requests per cycle",                    "STSParallelism"},
+        {"modelPath",      "(string) Path to neuron file",                                       "model"},
+        {"steps",          "(uint) how many ticks the simulation should last",                   "1000"},
+        {"dt",             "(float) duration of one tick in sim time; used for output",          "1"}
+    )
 
     SST_ELI_DOCUMENT_PORTS( {"mem_link", "Connection to memory", { "memHierarchy.MemEventBase" } } )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"memory", "Interface to memory (e.g., caches)", "SST::Interfaces::StandardMem"} )
 
-    /* Begin class definiton */
-    GNA(SST::ComponentId_t id, SST::Params& params);
-    void finish() {
-        printf("Completed %d neuron firings\n", numFirings);
-        printf("Completed %d spike deliveries\n", numDeliveries);
-    }
+    // class definiton
 
-public:
-    void deliver(float val, int targetN, int time);
-    neuron* getNeuron(int n) {return &neurons[n];}
-    void readMem(Interfaces::StandardMem::Request *req, STS *requestor) {
-        // queue the request to send later
-        outgoingReqs.push(req);
-        // record who it came from
-        requests.insert(std::make_pair(req->getID(), requestor));
-    }
+    GNA(SST::ComponentId_t id, SST::Params& params);  // regular constructor
+    GNA();                                            // for serialization only
+    GNA(const GNA&) = delete;
+    ~GNA();
 
-private:
-    GNA();  // for serialization only
-    GNA(const GNA&); // do not implement
-    void operator=(const GNA&); // do not implement
+    void operator=(const GNA&) = delete;
+
     void init(unsigned int phase);
+    void finish();
 
-    void handleEvent( SST::Interfaces::StandardMem::Request * req );
-    virtual bool clockTic( SST::Cycle_t );
-    bool deliverBWPs();
+    void handleEvent(SST::Interfaces::StandardMem::Request * req);
+    void deliver(float val, int targetN, int time);
+    void readMem(Interfaces::StandardMem::Request *req, STS *requestor);
     void assignSTS();
     void processFire();
-    void lifAll();
+    virtual bool clockTic(SST::Cycle_t);
 
     typedef enum {IDLE, PROCESS_FIRE, LIF, LAST_STATE} gnaState_t;
     gnaState_t state;
 
-    Output out;
+    Output                    out;
     Interfaces::StandardMem * memory;
-    uint32_t numNeurons;
-    uint32_t BWPpTic;
-    uint32_t STSDispatch;
-    uint32_t STSParallelism;
-    uint32_t maxOutMem;
-    uint32_t now;
-    uint32_t numFirings;
-    uint32_t numDeliveries;
-    queue<SST::Interfaces::StandardMem::Request *> outgoingReqs;
+    std::string               modelPath;
+    uint                      InputsPerTic;
+    uint                      STSDispatch;
+    uint                      STSParallelism;
+    uint                      maxOutMem;
+    uint                      now;
+    uint                      steps;  ///< maximum number of steps the sim should take
+    uint                      numFirings;
+    uint                      numDeliveries;
 
-    neuron *neurons;
-    vector<STS> STSUnits;
+    std::queue<SST::Interfaces::StandardMem::Request *> outgoingReqs;
+    std::vector<Neuron *> neurons;
+    std::vector<STS> STSUnits;
 
-    typedef multimap<const uint32_t, Ctrl_And_Stat_Types::T_BwpFl> BWPBuf_t;
-    // brain wave pulse buffer
-    BWPBuf_t BWPs;
-
-    std::deque<uint32_t> firedNeurons;
+    std::deque<Neuron *> firedNeurons;
     std::map<uint64_t, STS*> requests;
 
     TimeConverter *clockTC;
     Clock::HandlerBase *clockHandler;
-
 };
 
 }

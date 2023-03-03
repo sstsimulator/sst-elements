@@ -99,7 +99,7 @@ public:
         regFile->setIntReg<uint64_t>(sp_phys_reg, start_stack_address);
     }
 
-    void setArg1Register( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+    void setArg1Register( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) override {
         output->verbose(
             CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting argument 1 register to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
             value);
@@ -109,7 +109,7 @@ public:
     }
 
 
-    virtual void setReturnRegister( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+    virtual void setReturnRegister( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) override {
         output->verbose(
             CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting register 10 to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
             value);
@@ -119,7 +119,7 @@ public:
     }
 
 
-    virtual void setThreadPointer( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+    virtual void setThreadPointer( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) override {
         output->verbose(
             CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting thread pointer to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
             value);
@@ -825,10 +825,10 @@ protected:
             case 0x37:
             {
                 // LUI
-					 int32_t uimm32 = 0;
+		int32_t uimm32 = 0;
                 processU<int32_t>(ins, op_code, rd, uimm32);;
 
-					 output->verbose(CALL_INFO, 16, 0, "----> LUI %" PRIu16 " <- 0x%lx\n", rd, uimm32);
+		output->verbose(CALL_INFO, 16, 0, "----> LUI %" PRIu16 " <- 0x%lx\n", rd, uimm32);
 
                 bundle->addInstruction(new VanadisSetRegisterInstruction<int32_t>(
                     ins_address, hw_thr, options, rd, uimm32));
