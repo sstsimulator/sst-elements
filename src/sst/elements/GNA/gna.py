@@ -3,9 +3,10 @@ import os
 from optparse import OptionParser
 
 # options
+# TODO: pass a file that contains machine specification
+# We will have two command-line options: 1) machine spec, 2) neural network
 op = OptionParser()
-cwd = os.path.dirname(__file__)
-op.add_option("-n", "--neurons", action="store", type="string", dest="neurons", default=cwd+"/model")
+op.add_option("-n", "--neurons", action="store", type="string", dest="neurons", default="model")
 op.add_option("-d", "--dt", action="store", type="float", dest="dt", default="1")
 op.add_option("-l", "--steps", action="store", type="int", dest="steps", default="1000")
 # cache size in KiB
@@ -62,7 +63,7 @@ memory.addParams({
 # Enable statistics
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
-sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
+#sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
 
 
 # Define the simulation links
