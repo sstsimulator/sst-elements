@@ -139,7 +139,8 @@ public:
     void print(SST::Output* output, VanadisRegisterFile* regFile, bool print_int, bool print_fp, uint32_t output_v)
     {
         if ( print_int ) {
-            output->verbose(CALL_INFO, output_v, 0, "%s: Integer Registers (Count=%" PRIu16 ")\n", tblName.c_str(), count_int_reg);
+            output->verbose(CALL_INFO, output_v, 0, "[Thread: %d]: %s: Integer Registers (Count=%" PRIu16 ")\n", 
+                regFile ? regFile->getHWThread() : -1, tblName.c_str(), count_int_reg);
             for ( uint16_t i = 0; i < count_int_reg; ++i ) {
                 if ( nullptr == regFile ) {
                     output->verbose(
@@ -150,9 +151,9 @@ public:
                 else {
                     output->verbose(
                         CALL_INFO, output_v, 0,
-                        "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32
+                        "[Thread: %d]: | isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32
                         " | v: 0x%016llx | v: %" PRIu64 " / %" PRId64 "\n",
-                        i, int_reg_ptr[i], int_reg_pending_read[i], int_reg_pending_write[i],
+                        regFile-> getHWThread(), i, int_reg_ptr[i], int_reg_pending_read[i], int_reg_pending_write[i],
                         regFile->getIntReg<int64_t>(int_reg_ptr[i]), regFile->getIntReg<uint64_t>(int_reg_ptr[i]),
                         regFile->getIntReg<int64_t>(int_reg_ptr[i]));
                 }

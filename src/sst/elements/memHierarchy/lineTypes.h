@@ -253,7 +253,9 @@ class L1CacheLine : public CacheLine {
         L1CacheLine(uint32_t size, unsigned int index) : userLock_(0), LLSCAtomic_(false), eventsWaitingForLock_(false), CacheLine(size, index) {
             info = new ReplacementInfo(index, I);
         }
-        virtual ~L1CacheLine() { }
+        virtual ~L1CacheLine() { 
+            delete info;
+        }
 
         void reset() {
             CacheLine::reset();
@@ -300,7 +302,9 @@ class SharedCacheLine : public CacheLine {
             info = new CoherenceReplacementInfo(index, I, false, false);
         }
 
-        virtual ~SharedCacheLine() { }
+        virtual ~SharedCacheLine() { 
+             delete info;
+        }
 
         void reset() {
             CacheLine::reset();

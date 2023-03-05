@@ -29,8 +29,7 @@ int main( int argc, char* argv[] ) {
    int n = 24;
 
 	for( int i = 1; i < n; ++i ) {
-		printf("Square root of %d = %30.12f\n", i,
-			squareRoot( (double) i));
+		printf("Square root of %d = %30.12f %lu\n", i, squareRoot( (double) i) );
 		fflush(stdout);
 	}
 

@@ -358,6 +358,10 @@ VANADIS_COMPONENT::~VANADIS_COMPONENT()
     delete[] instPrintBuffer;
     delete lsq;
 
+    for ( int i= 0; i < rob.size(); i++ ) {
+        delete rob[i];
+    }
+
     if ( pipelineTrace != nullptr ) { fclose(pipelineTrace); }
 
 	for( VanadisFloatingPointFlags* next_fp_flags : fp_flags ) {
@@ -1964,6 +1968,7 @@ void VANADIS_COMPONENT::recvOSEvent(SST::Event* ev) {
         
         if ( ! os_resp->hasExited() ) {
             thread_decoders[hw_thr]->getOSHandler()->recvSyscallResp ( os_resp ); 
+            ev = nullptr;
             syscallReturn( hw_thr );
         } else {
             output->verbose(CALL_INFO, 8, 0, "-> thread has exited, leave in halted state\n");
@@ -2015,7 +2020,9 @@ void VANADIS_COMPONENT::recvOSEvent(SST::Event* ev) {
         }
     }
 
-    delete ev;
+    if ( ev ) {
+        delete ev;
+    }
 }
 
 

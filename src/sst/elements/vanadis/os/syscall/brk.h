@@ -31,7 +31,7 @@ public:
         if (event->getUpdatedBRK() < brk) {
 
             m_output->verbose(CALL_INFO, 16, 0,
-                                "[syscall-brl]: brk provided (0x%llx) is less than existing brk "
+                                "[syscall-brk]: brk provided (0x%llx) is less than existing brk "
                                 "point (0x%llx), so returning current brk point\n",
                                 event->getUpdatedBRK(), brk);
         } else {

@@ -471,7 +471,9 @@ public:
             stat_eventSent[(int)Command::PutE] = registerStatistic<uint64_t>("eventSent_PutE");
         }
     }
-    ~MESIInclusive() {}
+    ~MESIInclusive() {
+        delete cacheArray_;
+    }
 
     /** Event handlers **/
     virtual bool handleGetS(MemEvent * event, bool inMSHR);

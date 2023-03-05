@@ -434,6 +434,8 @@ public:
         output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Decode step for thr: %" PRIu32 "\n", hw_thr);
         output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "---> Max decodes per cycle: %" PRIu16 "\n", max_decodes_per_cycle);
 
+        cycle_count = cycle;
+
         ins_loader->printStatus(output);
 
         uint16_t decodes_performed = 0;
