@@ -72,11 +72,11 @@ void PandosNodeT::checkCoreID(int line, const char *file, const char *function, 
 }
 
 void PandosNodeT::checkPXNID(int line, const char *file, const char *function, int pxn_id) {
-    if (pxn_id != pando_context->id) {
+    if (pxn_id != pando_context->getId()) {
         out->fatal(line, file, function, -1, "%s: bad pxn id = %d, this pxn's id = %d\n"
                    ,getName().c_str()
                    ,pxn_id
-                   ,pando_context->id);
+                   ,pando_context->getId());
         abort();
     }
 }
@@ -112,7 +112,7 @@ void PandosNodeT::openProgramBinary()
         );
 
     pando_context = new pando::backend::node_context_t(static_cast<int64_t>(getId()), node_shared_dram_size);
-    out->verbose(CALL_INFO, 1, DEBUG_INITIALIZATION, "made pando context @ %p with id %ld\n", pando_context, pando_context->id);
+    out->verbose(CALL_INFO, 1, DEBUG_INITIALIZATION, "made pando context @ %p with id %ld\n", pando_context, pando_context->getId());
 }
 
 void PandosNodeT::closeProgramBinary()
@@ -300,11 +300,11 @@ void PandosNodeT::sendMemoryRequest(int src_core) {
             );
     }
     req->src_core = src_core;
-    req->src_pxn = core_ctx->node_ctx->id;;
+    req->src_pxn = core_ctx->node_ctx->getId();
     req->setDst(core_ctx->core_state.mem_req.addr);
     out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "%s: Sending memory request to %s\n", __func__, address_to_string(req->getDst()).c_str());
     // destination?
-    if (core_ctx->core_state.mem_req.addr.pxn != core_ctx->node_ctx->id) {
+    if (core_ctx->core_state.mem_req.addr.pxn != core_ctx->node_ctx->getId()) {
         /* remote request */
         out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "%s: Sending memory request to Remote Node\n", __func__);
 #ifdef DEBUG
