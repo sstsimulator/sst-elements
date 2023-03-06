@@ -989,7 +989,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_SLT:
                         {
                             bundle->addInstruction(new VanadisSetRegCompareInstruction<
-                                                   REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
+                                                   REG_COMPARE_LT, int32_t>(
                                 ins_addr, hw_thr, options, rd, rs, rt));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_slt);
@@ -998,7 +998,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_SLTU:
                         {
                             bundle->addInstruction(new VanadisSetRegCompareInstruction<
-                                                   REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT32, false>(
+                                                   REG_COMPARE_LT, uint32_t>(
                                 ins_addr, hw_thr, options, rd, rs, rt));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_sltu);

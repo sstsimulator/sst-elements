@@ -674,8 +674,7 @@ protected:
                         // SLT
                         bundle->addInstruction(
                             new VanadisSetRegCompareInstruction<
-                                VanadisRegisterCompareType::REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT64,
-                                true>(ins_address, hw_thr, options, rd, rs1, rs2));
+                                VanadisRegisterCompareType::REG_COMPARE_LT, int64_t>(ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
                     case 1:
@@ -696,8 +695,7 @@ protected:
                         // SLTU
                         bundle->addInstruction(
                             new VanadisSetRegCompareInstruction<
-                                VanadisRegisterCompareType::REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT64,
-                                false>(ins_address, hw_thr, options, rd, rs1, rs2));
+                                VanadisRegisterCompareType::REG_COMPARE_LT, uint64_t>(ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
                     case 0x1:
