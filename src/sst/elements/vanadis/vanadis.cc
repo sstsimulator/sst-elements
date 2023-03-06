@@ -1386,9 +1386,9 @@ VANADIS_COMPONENT::checkInstructionResources(
 
     const uint16_t int_reg_in_count = ins->countISAIntRegIn();
     const uint16_t int_reg_out_count = ins->countISAIntRegOut();
-    const uint16_t fp_reg_in_count = ins->countISAFPRegIn();
     const uint16_t fp_reg_out_count = ins->countISAFPRegOut();
-    
+    const uint16_t fp_reg_in_count = ins->countISAFPRegIn();
+
     // We need places to store our output registers
     resources_good &= (int_regs->unused() >= int_reg_out_count) && (fp_regs->unused() >= fp_reg_out_count);
 
