@@ -1075,7 +1075,7 @@ protected:
                             rd, rt, shf_amnt);
 
                         bundle->addInstruction(
-                            new VanadisShiftLeftLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                            new VanadisShiftLeftLogicalImmInstruction<uint32_t>(
                                 ins_addr, hw_thr, options, rd, rt, shf_amnt));
                         insertDecodeFault = false;
                         MIPS_INC_DECODE_STAT(stat_decode_sll);

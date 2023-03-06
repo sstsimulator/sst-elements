@@ -514,7 +514,7 @@ protected:
                     case 0x0:
                     {
                         bundle->addInstruction(
-                            new VanadisShiftLeftLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                            new VanadisShiftLeftLogicalImmInstruction<uint64_t>(
                                 ins_address, hw_thr, options, rd, rs1, shift_by));
                         decode_fault = false;
                     } break;
@@ -878,7 +878,7 @@ protected:
                             CALL_INFO, 16, 0, "-------> SLLIW %" PRIu16 " <- %" PRIu16 " << %" PRIu16 " (0x%lx)\n", rd,
                             rs1, rs2, rs2);
                         bundle->addInstruction(
-                            new VanadisShiftLeftLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                            new VanadisShiftLeftLogicalImmInstruction<uint32_t>(
                                 ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
@@ -2467,7 +2467,7 @@ protected:
                         CALL_INFO, 16, 0, "--------> RVC SLLI %" PRIu16 " = %" PRIu16 " >> %" PRIu64 " (0x%" PRIx64 ")\n",
                         rvc_rs1, rvc_rs1, shift_by, shift_by);
                     bundle->addInstruction(
-                        new VanadisShiftLeftLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                        new VanadisShiftLeftLogicalImmInstruction<uint64_t>(
                             ins_address, hw_thr, options, rvc_rs1, rvc_rs1, shift_by));
                     decode_fault = false;
 
