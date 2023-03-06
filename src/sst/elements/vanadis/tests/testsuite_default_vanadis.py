@@ -64,6 +64,12 @@ def build_vanadis_test_matrix():
         for arch in arch_list:
             testlist.append(["basic_vanadis.py", location, test,arch, 2,1,300])
 
+    location="small/misc"
+    misc_tests = ["openmp"]
+    for test in misc_tests:
+        for arch in arch_list:
+            testlist.append(["basic_vanadis.py", location, test,arch, 4,1,300])
+
 
     # Process each line and crack up into an index, hash, options and sdl file
     for testnum, test_info in enumerate(testlist):

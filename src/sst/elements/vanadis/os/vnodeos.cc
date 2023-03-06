@@ -42,8 +42,8 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
     const uint32_t core_count = params.find<uint32_t>("cores", 0);
     const uint32_t hardwareThreadCount = params.find<uint32_t>("hardwareThreadCount", 1);
 
-    for ( int i = core_count-1; i >= 0; i-- ) {
-        for ( int j = hardwareThreadCount-1; j >=0 ; j-- ) {
+    for ( int i = 0; i < core_count; i++ ) {
+        for ( int j = 0; j < hardwareThreadCount; j++ ) {
             m_availHwThreads.push( new OS::HwThreadID( i,j ) );
         } 
     } 
@@ -348,7 +348,7 @@ void VanadisNodeOSComponent::processSyscallPost( VanadisSyscall* syscall ) {
     output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"syscall '%s' for core %d\n",syscall->getName().c_str(),core);
 
     if ( syscall->isComplete() ) {
-        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"syscall '%s' for core %d has finished\n",syscall->getName().c_str(),core);
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,"syscall '%s' for core %d has finished\n",syscall->getName().c_str(),core);
         delete syscall;
 
     } else {

@@ -107,6 +107,7 @@
 #define VANADIS_SYSCALL_MIPS_RM_INOTIFY 4286
 #define VANADIS_SYSCALL_MIPS_OPENAT 4288
 #define VANADIS_SYSCALL_MIPS_GETTIME64 4403
+#define VANADIS_SYSCALL_MIPS_SCHED_GETAFFINITY 4240
 
 namespace SST {
 namespace Vanadis {
@@ -161,6 +162,20 @@ public:
             assert( stackPtr );
             call_ev = new VanadisSyscallCloneEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, instPtr, threadStack, flags, ptid, tls, 0, stackPtr );
         } break;
+
+       case VANADIS_SYSCALL_MIPS_SCHED_GETAFFINITY: {
+            uint64_t pid = getRegister(4);
+            uint64_t cpusetsize = getRegister(5);
+            int64_t maskAddr = getRegister(6);
+
+            output->verbose(CALL_INFO, 8, 0,
+                            "[syscall-handler] found a call to sched_getaffinity( %" PRId64 ", %" PRId64", %#" PRIx64 " )\n",
+                                pid, cpusetsize, maskAddr );
+
+            call_ev = new VanadisSyscallGetaffinityEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, pid, cpusetsize, maskAddr );
+
+        } break;
+
         case VANADIS_SYSCALL_MIPS_MPROTECT: {
             const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
             uint64_t addr = regFile->getIntReg<uint64_t>(phys_reg_4);

@@ -80,9 +80,9 @@ public:
                                 " is not currently open, return an error code.\n",
                                 getName().c_str(), event->getFileDescriptor());
 
-            setReturnFail(-EINVAL);
+            setReturnFail(-LINUX_EINVAL);
          } else if (event->getIOVecCount() < 0) {
-            setReturnFail(-EINVAL);
+            setReturnFail(-LINUX_EINVAL);
          } else if (event->getIOVecCount() == 0) {
             setReturnSuccess(0);
         } else {

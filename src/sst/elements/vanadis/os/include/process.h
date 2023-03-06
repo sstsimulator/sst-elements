@@ -57,7 +57,8 @@ class ProcessInfo {
         m_pgid = obj.m_pgid;
        
         m_futex = new Futex;
-        m_threadGrp = new ThreadGrp( this );
+        m_threadGrp = new ThreadGrp();
+        m_threadGrp->add( this, gettid() );
         m_virtMemMap = new VirtMemMap( *obj.m_virtMemMap );
         m_fileTable = new FileDescriptorTable( 1024 ); 
 
@@ -80,7 +81,8 @@ class ProcessInfo {
         m_pageShift = log2(m_pageSize);
 
         m_futex = new Futex;
-        m_threadGrp = new ThreadGrp( this );
+        m_threadGrp = new ThreadGrp();
+        m_threadGrp->add( this, gettid() );
         m_virtMemMap = new VirtMemMap;
         m_fileTable = new FileDescriptorTable( 1024 ); 
 
@@ -125,7 +127,7 @@ class ProcessInfo {
     }
 
     ~ProcessInfo() {
-        m_threadGrp->remove( this );
+        m_threadGrp->remove( this->gettid() );
         if ( 0 == numThreads() ) {
             delete m_threadGrp;
         }
@@ -161,16 +163,16 @@ class ProcessInfo {
         return m_threadGrp->size();
     }
 
-    ProcessInfo* getThread() {
-        return m_threadGrp->getThread( this );
+    void removeThread( int tid ) {
+        m_threadGrp->remove(tid);
     }
 
-    std::set<ProcessInfo*>& getThreadList() {
+    std::map<int,ProcessInfo*>& getThreadList() {
         return m_threadGrp->getThreadList();
     }
 
     void addThread(ProcessInfo* thread ) {
-        m_threadGrp->add( thread );
+        m_threadGrp->add( thread, thread->gettid() );
     }
 
     void addMemRegion( std::string name, uint64_t start, size_t length, uint32_t perms, MemoryBacking* backing = nullptr ) {

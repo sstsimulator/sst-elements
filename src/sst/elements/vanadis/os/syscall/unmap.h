@@ -33,8 +33,11 @@ public:
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-unmap] addr=%#" PRIx64 " lenght=%" PRIu64 "\n",address, length);
 
         auto threads = process->getThreadList();
-        for ( const auto thread : threads) {
-            m_os->getMMU()->flushTlb( thread->getCore(), thread->getHwThread() );
+        for ( const auto iter : threads) {
+            auto thread = iter.second;
+            if ( thread ) {
+                m_os->getMMU()->flushTlb( thread->getCore(), thread->getHwThread() );
+            }
         } 
 
         m_os->getMMU()->unmap( process->getpid(), address >> m_os->getPageShift(), length/m_os->getPageSize() );

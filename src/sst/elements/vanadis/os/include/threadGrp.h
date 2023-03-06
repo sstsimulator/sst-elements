@@ -28,38 +28,32 @@ class ProcessInfo;
 
 class ThreadGrp {
 public:
-    ThreadGrp( ProcessInfo* thread ) {
-        m_group.insert( thread );
-    }
+    size_t size() { return m_numThreads; }
 
-    size_t size() { return m_group.size(); }
+    void add( ProcessInfo* thread, int tid ) {
 
-    void add( ProcessInfo* thread ) {
-        m_group.insert( thread );
-    }
-
-    void remove( ProcessInfo* thread ) {
-        m_group.erase( thread );
-    }
-
-
-    ProcessInfo* getThread( ProcessInfo* thread) {
-        auto iter = m_group.begin();
-        for ( ; iter != m_group.end(); ++iter ) {
-            if ( *iter != thread ) {
-                auto ret = *iter;
-                m_group.erase(iter);
-                return ret;
-            }
+        if ( m_group.find( tid ) != m_group.end() ) {
+            assert( m_group[tid] == nullptr );
         }
-        return nullptr;
-    } 
-    std::set<ProcessInfo*>& getThreadList() {
+
+        m_group[tid] = thread ;
+        ++m_numThreads;
+    }
+
+    void remove( int tid ) {
+        assert ( m_group.find( tid ) != m_group.end() );
+        m_group[tid] = nullptr;
+
+        --m_numThreads;
+    }
+
+    std::map<int,ProcessInfo*>& getThreadList() {
         return  m_group;
     }
 
 private:
-    std::set<ProcessInfo*> m_group;
+    std::map<int,ProcessInfo*> m_group;
+    size_t m_numThreads;
 };
 
 }

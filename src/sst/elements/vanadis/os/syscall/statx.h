@@ -46,7 +46,7 @@ public:
         if ( getEvent<VanadisSyscallStatxEvent*>()->getFlags() != 0x1000 ) {
             m_output->fatal(CALL_INFO, -1, "Error: statx only support AT_EMPTY_PATH\n");
         }
-        setReturnFail( -EINVAL);
+        setReturnFail( -LINUX_EINVAL);
     }
 
 private:

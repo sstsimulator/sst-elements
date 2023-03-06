@@ -39,8 +39,12 @@ public:
         OSFutexDbg("Futex::%s() addr=%#" PRIx64 " syscall=%p\n", addr,syscall );
 
         auto& tmp = m_futexMap[addr]; 
-        assert( tmp.find( syscall ) == tmp.end() );
-        tmp.insert( syscall );
+
+        for ( auto iter = tmp.begin(); iter != tmp.end(); ++iter ) {
+            assert( *iter != syscall );
+        }
+
+        tmp.push_back( syscall );
         OSFutexDbg("Futex::%s() %p %zu\n",this,tmp.size());
     }
 
@@ -62,10 +66,11 @@ public:
         auto& tmp = m_futexMap[addr]; 
 
         OSFutexDbg("Futex::%s() %p %zu\n",this,tmp.size());
-
         assert( ! tmp.empty() );
-        VanadisSyscall* syscall = *tmp.begin();
-        tmp.erase( tmp.begin() );
+
+        auto syscall = tmp.front();
+
+        tmp.pop_front( );
         if ( tmp.empty() ) {
             m_futexMap.erase( addr );
         }
@@ -74,7 +79,7 @@ public:
     }
 
 private:
-    std::map< uint64_t, std::set< VanadisSyscall* > > m_futexMap;
+    std::map< uint64_t, std::deque<VanadisSyscall* > > m_futexMap;
 };
 
 }

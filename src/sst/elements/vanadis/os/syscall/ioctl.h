@@ -34,7 +34,7 @@ public:
                             event->isWrite() ? 'y' : 'n', event->getDataPointer(), event->getDataLength(),
                             event->getIOOperation(), event->getIODriver());
 
-        setReturnFail(-25 );
+        setReturnFail(-LINUX_ENOTTY );
     }
 };
 

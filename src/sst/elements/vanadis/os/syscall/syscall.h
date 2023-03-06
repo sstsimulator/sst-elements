@@ -28,6 +28,11 @@
 
 using namespace SST::Interfaces;
 
+#define LINUX_EBADF            9
+#define LINUX_EAGAIN          11
+#define LINUX_EINVAL          22
+#define LINUX_ENOTTY          25
+
 namespace SST {
 namespace Vanadis {
 
@@ -183,6 +188,7 @@ private:
     int getCoreId()         { return m_process->getCore(); }
     int getThreadId()       { return m_process->getHwThread(); }
     int getPid()            { return m_process->getpid(); }
+    int getTid()            { return m_process->gettid(); }
     std::string& getName()  { return m_name; }
 
 
