@@ -142,7 +142,7 @@ void PandosNodeT::initCores()
      */
     for (int64_t c = 0; c < num_cores; c++) {
         auto *core = new pando::backend::core_context_t(pando_context);
-        core->id = c;
+        core->setId(c);
         core_contexts.push_back(core);
         core->start();
     }
