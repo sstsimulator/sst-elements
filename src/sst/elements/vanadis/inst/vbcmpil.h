@@ -23,19 +23,18 @@
 namespace SST {
 namespace Vanadis {
 
-template <VanadisRegisterFormat register_format, VanadisRegisterCompareType compareType>
+template <typename register_format, VanadisRegisterCompareType compareType>
 class VanadisBranchRegCompareImmLinkInstruction : public VanadisSpeculatedInstruction
 {
 public:
     VanadisBranchRegCompareImmLinkInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint64_t ins_width,
-        const uint16_t src_1, const int64_t imm, const int64_t offst, const uint16_t link_reg,
+        const uint16_t src_1, const register_format imm, const int64_t offst, const uint16_t link_reg,
         const VanadisDelaySlotRequirement delayT) :
         VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 1, 1, 1, 1, 0, 0, 0, 0, delayT),
         imm_value(imm),
         offset(offst)
     {
-
         isa_int_regs_in[0]  = src_1;
         isa_int_regs_out[0] = link_reg;
     }
@@ -44,7 +43,15 @@ public:
     {
         return new VanadisBranchRegCompareImmLinkInstruction(*this);
     }
-    const char* getInstCode() const override { return "BCMPIL"; }
+    const char* getInstCode() const override {
+        if(sizeof(register_format) == 4) {
+            return "BCMPIL32";
+        } else if (sizeof(register_format) == 8) {
+            return "BCMPIL64"; 
+        } else {
+            return "BCMPILER";
+        }
+    }
 
     void printToBuffer(char* buffer, size_t buffer_size) override
     {
@@ -61,30 +68,16 @@ public:
         if(output->getVerboseLevel() >= 16) {
             output->verbose(
                 CALL_INFO, 16, 0,
-                "Execute: (addr=0x%0llx) BCMPIL isa-in: %" PRIu16 " / phys-in: %" PRIu16 " / imm: %" PRId64
+                "Execute: (addr=0x%0llx) %s isa-in: %" PRIu16 " / phys-in: %" PRIu16 " / imm: %" PRId64
                 " / offset: %" PRId64 " / isa-link: %" PRIu16 " / phys-link: %" PRIu16 "\n",
-                getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0], imm_value, offset, isa_int_regs_out[0],
+                getInstructionAddress(), getInstCode(), isa_int_regs_in[0], phys_int_regs_in[0], imm_value, offset, isa_int_regs_out[0],
                 phys_int_regs_out[0]);
         }
 #endif
         bool compare_result = false;
 
-        switch ( register_format ) {
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
-        {
-            compare_result =
-                registerCompareImm<compareType, int64_t>(regFile, this, output, phys_int_regs_in[0], imm_value);
-        } break;
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
-        {
-            compare_result = registerCompareImm<compareType, int32_t>(
-                regFile, this, output, phys_int_regs_in[0], static_cast<int32_t>(imm_value));
-        } break;
-        default:
-        {
-            flagError();
-        } break;
-        }
+        compare_result =
+                registerCompareImm<compareType, register_format>(regFile, this, output, phys_int_regs_in[0], imm_value);
 
         if ( compare_result ) {
             takenAddress = (uint64_t)(((int64_t)getInstructionAddress()) + offset);
@@ -104,7 +97,7 @@ public:
 
 protected:
     const int64_t offset;
-    const int64_t imm_value;
+    const register_format imm_value;
 };
 
 } // namespace Vanadis
