@@ -48,6 +48,7 @@
 #include "os/syscall/ioctl.h"
 #include "os/syscall/fstat.h"
 #include "os/syscall/statx.h"
+#include "os/syscall/getaffinity.h"
 
 using namespace SST::Vanadis;
 
@@ -58,7 +59,7 @@ static const char* SyscallName[] = {
 VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* process, VanadisSyscallEvent* sys_ev, SST::Link* coreLink ) 
 {
     if ( sys_ev->getOperation() < NUM_SYSCALLS  ) {
-       output->verbose(CALL_INFO, 16, 0, "from core=%" PRIu32 " thr=%" PRIu32 " syscall=%s\n",
+       output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL, "from core=%" PRIu32 " thr=%" PRIu32 " syscall=%s\n",
                     sys_ev->getCoreID(), sys_ev->getThreadID(),SyscallName[sys_ev->getOperation()]);
     }
 
@@ -75,6 +76,9 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
         } break;
         case SYSCALL_OP_MPROTECT: {
             syscall = new VanadisMprotectSyscall( this, coreLink, process, convertEvent<VanadisSyscallMprotectEvent*>( "mprotect", sys_ev ) );
+        } break;
+        case SYSCALL_OP_GETAFFINITY: {
+            syscall = new VanadisGetaffinitySyscall( this, coreLink, process, convertEvent<VanadisSyscallGetaffinityEvent*>( "getaffinity", sys_ev ) );
         } break;
         case SYSCALL_OP_FORK: {
             syscall = new VanadisForkSyscall( this, coreLink, process, convertEvent<VanadisSyscallForkEvent*>( "fork", sys_ev ) );

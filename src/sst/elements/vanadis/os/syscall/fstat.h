@@ -69,7 +69,7 @@ public:
     {
 	    m_output->verbose(CALL_INFO, 16, 0, "-> call is fstat( %d, 0x%0llx )\n", event->getFileHandle(), event->getStructAddress());
 
-        setReturnFail(-EINVAL);
+        setReturnFail(-LINUX_EINVAL);
 
  #if 0       
 	    auto fd = process->getFileDescriptor( event->getFileHandle());

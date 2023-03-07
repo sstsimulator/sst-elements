@@ -27,7 +27,7 @@ public:
     VanadisStatxSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallStatxEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "statx" ) 
     {
-        m_output->verbose( CALL_INFO, 16, 0, "[syscall-statx] -> dirFd=%d pathPtr=%#" PRIx32 ", flags=%#" PRIx32 ", mask=%#" PRIx32 ",stackPtr=%#" PRIx64 "\n", 
+        m_output->verbose( CALL_INFO, 16, 0, "[syscall-statx] -> dirFd=%#" PRIx64 " pathPtr=%#" PRIx64 ", flags=%#" PRIx64 ", mask=%#" PRIx32 ",stackPtr=%#" PRIx64 "\n", 
             event->getDirectoryFileDescriptor(), event->getPathPointer(), event->getFlags(), event->getMask(), event->getStackPtr() );
   
         if ( AT_FDCWD == event->getDirectoryFileDescriptor() ) {
@@ -46,7 +46,7 @@ public:
         if ( getEvent<VanadisSyscallStatxEvent*>()->getFlags() != 0x1000 ) {
             m_output->fatal(CALL_INFO, -1, "Error: statx only support AT_EMPTY_PATH\n");
         }
-        setReturnFail( -EINVAL);
+        setReturnFail( -LINUX_EINVAL);
     }
 
 private:

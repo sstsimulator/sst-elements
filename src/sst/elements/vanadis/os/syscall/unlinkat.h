@@ -37,7 +37,7 @@ public:
 
             if ( -1 == m_dirFd) {
                 m_output->verbose(CALL_INFO, 16, 0, "can't find m_dirFd=%d in unlink file descriptor table\n", m_dirFd);
-                setReturnFail(-EBADF);
+                setReturnFail(-LINUX_EBADF);
                 return;
             }
             // get the FD that SST will use

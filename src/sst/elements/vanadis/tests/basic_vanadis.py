@@ -40,6 +40,8 @@ exe = "hello-world"
 #exe = "fork"
 #exe = "clone"
 #exe = "pthread"
+#exe = "openmp"
+#exe = "uname"
 
 physMemSize = "4GiB"
 
@@ -117,7 +119,8 @@ protocol="MESI"
 # OS related params
 osParams = {
     "processDebugLevel" : 0,
-    "verbose" : os_verbosity,
+    "dbgLevel" : os_verbosity,
+    "dbgMask" : 8,
     "cores" : numCpus,
     "hardwareThreadCount" : numThreads,
     "heap_start" : 512 * 1024 * 1024,
@@ -131,9 +134,8 @@ osParams = {
 
 processList = ( 
     ( 1, {
-        "env_count" : 2,
-        "env0" : "HOME=/home/sdhammo",
-        "env1" : "NEWHOME=/home/sdhammo2",
+        "env_count" : 1,
+        "env0" : "OMP_NUM_THREADS={}".format(numCpus),
         "exe" : full_exe_name,
         "arg0" : exe_name,
     } ),

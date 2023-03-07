@@ -207,7 +207,7 @@ public:
                 for(int i = loads_pending.size() - 1; i >= 0; i--) {
                     VanadisBasicLoadPendingEntry* load_entry = loads_pending.at(i);
 
-                    output->verbose(CALL_INFO, 8, 0, "-->   load[%5d] ins: 0x%llx / thr: %" PRIu32 " / addr: 0x%llx / width: %" PRIu32 "\n",
+                    output->verbose(CALL_INFO, 8, 0, "-->   load[%5d] ins: 0x%llx / thr: %" PRIu32 " / addr: 0x%llx / width: %" PRIu64 "\n",
                         i, load_entry->getLoadInstruction()->getInstructionAddress(),
                         load_entry->getLoadInstruction()->getHWThread(),
                         load_entry->getLoadAddress(), load_entry->getLoadWidth()); 
@@ -218,7 +218,7 @@ public:
                 for(int i = stores_pending.size() - 1; i >= 0; i--) {
                     VanadisBasicStorePendingEntry* store_entry = stores_pending.at(i);
 
-                    output->verbose(CALL_INFO, 16, 0, "--> stores[%5d] ins: 0x%llx / thr: %" PRIu32 " / addr: 0x%llx / width: %" PRIu32 "\n",
+                    output->verbose(CALL_INFO, 16, 0, "--> stores[%5d] ins: 0x%llx / thr: %" PRIu32 " / addr: 0x%llx / width: %" PRIu64 "\n",
                         i, store_entry->getStoreInstruction()->getInstructionAddress(),
                         store_entry->getStoreInstruction()->getHWThread(),
                         store_entry->getStoreAddress(), store_entry->getStoreWidth());
@@ -305,7 +305,7 @@ protected:
                 for ( std::vector<uint8_t>::iterator it = ev->data.begin(); it != ev->data.end(); it++ ) {
                     str << std::setw(2) << static_cast<unsigned>(*it);
                 }
-                out->verbose(CALL_INFO, 0, VANADIS_DBG_LSQ_LOAD_FLG, "---> LSQ recv load event ins: 0x%llx / hw-thr: %" PRIu32 " / entry-addr: 0x%llx / entry-width: %" PRIu16 " / reg-offset: %" PRIu64 " / ev-addr: 0x%llx / ev-width: %" PRIu16 " / addr-offset %" PRIu64 " / sign-extend: %s / target-isa-reg: %" PRIu16 " / target-phys-reg: %" PRIu16 " / reg-type: %s / %s\n",
+                out->verbose(CALL_INFO, 0, VANADIS_DBG_LSQ_LOAD_FLG, "---> LSQ recv load event ins: 0x%llx / hw-thr: %" PRIu32 " / entry-addr: 0x%llx / entry-width: %" PRIu16 " / reg-offset: %" PRIu64 " / ev-addr: 0x%llx / ev-width: %" PRIu64 " / addr-offset %" PRIu64 " / sign-extend: %s / target-isa-reg: %" PRIu16 " / target-phys-reg: %" PRIu16 " / reg-type: %s / %s\n",
                     load_ins->getInstructionAddress(), hw_thr, load_address, load_width, reg_offset, ev->vAddr, ev->size, 
                     addr_offset, (load_ins->performSignExtension() ? "yes" : "no"),
                     target_isa_reg, target_reg,
@@ -406,7 +406,7 @@ protected:
             } else {
                 if(out->getVerboseLevel() >= 9) {
                     out->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_LOAD_FLG,
-                        "---> LSQ Execute: %s (0x%llx / thr:%" PRIu32 ") does not have all requests completed yet %" PRIu32 " left, will not execute until all done.\n",
+                        "---> LSQ Execute: %s (0x%llx / thr:%" PRIu32 ") does not have all requests completed yet %zu left, will not execute until all done.\n",
                             load_ins->getInstCode(), load_ins->getInstructionAddress(), load_ins->getHWThread(), load_entry->countRequests());
                 }
             }
@@ -420,18 +420,7 @@ protected:
 
             bool std_store_found = false;
 
-            if ( ev->getFail() ) {
-                VanadisBasicStorePendingEntry* store_entry = lsq->stores_pending.front();
-                if ( store_entry ) {
-                    store_entry->getStoreInstruction()->flagError();
 
-                    out->verbose(CALL_INFO, 0, 0, "Write failed, instAddr=%#lx pAddr=%#lx vAddr=%#lx\n",
-                            store_entry->getStoreInstruction()->getInstructionAddress(), ev->pAddr, ev->vAddr );
-                    return;
-                } else {
-                    out->fatal(CALL_INFO, -1, "Write failed, pAddr=%#lx vAddr=%#lx\n", ev->pAddr, ev->vAddr);
-                }
-            }
             auto iter = lsq->std_stores_in_flight.find( ev->getID() ); 
             if ( iter != lsq->std_stores_in_flight.end() ) {
                 lsq->std_stores_in_flight.erase(iter);

@@ -27,7 +27,7 @@ public:
     VanadisSetTidAddressSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallSetTidAddressEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "set_tid_address" ) 
     {
-        m_output->verbose(CALL_INFO, 16, 0, "[syscall-set_tid_address] address %#" PRIx64 "\n", event->getTidAddress());
+        m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL, "[syscall-set_tid_address] address %#" PRIx64 "\n", event->getTidAddress());
 
         process->setTidAddress( event->getTidAddress() );
 

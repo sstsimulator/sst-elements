@@ -30,7 +30,7 @@ public:
         uint64_t brk = process->getBrk();
         if (event->getUpdatedBRK() < brk) {
 
-            m_output->verbose(CALL_INFO, 16, 0,
+            m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
                                 "[syscall-brk]: brk provided (0x%llx) is less than existing brk "
                                 "point (0x%llx), so returning current brk point\n",
                                 event->getUpdatedBRK(), brk);
@@ -39,7 +39,7 @@ public:
                 m_output->fatal(CALL_INFO, -1, "-> error: brk() %#" PRIx64 " ran out of memory\n",event->getUpdatedBRK());
             }
 
-            m_output->verbose(CALL_INFO, 16, 0,
+            m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
                                 "[syscall-brk] old brk: 0x%llx -> new brk: 0x%llx (diff: %" PRIu64 ")\n", brk,
                                 event->getUpdatedBRK(), (event->getUpdatedBRK() - brk));
             process->printRegions( "after brk" );

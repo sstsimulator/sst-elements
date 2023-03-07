@@ -99,7 +99,7 @@ public:
         regFile->setIntReg<uint64_t>(sp_phys_reg, start_stack_address);
     }
 
-    void setArg1Register( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+    void setArg1Register( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) override {
         output->verbose(
             CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting argument 1 register to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
             value);
@@ -109,7 +109,7 @@ public:
     }
 
 
-    virtual void setReturnRegister( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+    virtual void setReturnRegister( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) override {
         output->verbose(
             CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting register 10 to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
             value);
@@ -119,7 +119,7 @@ public:
     }
 
 
-    virtual void setThreadPointer( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+    virtual void setThreadPointer( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) override {
         output->verbose(
             CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting thread pointer to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
             value);
@@ -823,10 +823,10 @@ protected:
             case 0x37:
             {
                 // LUI
-					 int32_t uimm32 = 0;
+		int32_t uimm32 = 0;
                 processU<int32_t>(ins, op_code, rd, uimm32);;
 
-					 output->verbose(CALL_INFO, 16, 0, "----> LUI %" PRIu16 " <- 0x%lx\n", rd, uimm32);
+		output->verbose(CALL_INFO, 16, 0, "----> LUI %" PRIu16 " <- 0x%lx\n", rd, uimm32);
 
                 bundle->addInstruction(new VanadisSetRegisterInstruction<int32_t>(
                     ins_address, hw_thr, options, rd, uimm32));
@@ -1278,11 +1278,69 @@ protected:
 
                 // need to mask out AQ and RL bits, these are used for deciding on fence operations
                 switch ( (func_code7 & 0x7C) ) {
+                case 0x0:
+                {
+                    if(LIKELY(op_width != 0)) {
+                        // AMO.ADD
+                        output->verbose(CALL_INFO, 16, 0, 
+                            "-----> AMOADD 0x%llx / thr: %" PRIu32 " / %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16 
+                            " / width: %" PRIu32 " / aq: %s / rl: %s\n",
+                            ins_address, hw_thr, rd, rs1, rs2, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
+
+                        if(LIKELY(perform_aq)) {
+                            bundle->addInstruction(new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
+                        }
+
+                        // implement a micro-op sequence for AMOADD
+                        // (r1) -> r32
+                        bundle->addInstruction(new VanadisLoadInstruction(
+                                    ins_address, hw_thr, options, rs1, 0, 32, op_width,
+                                    true, MEM_TRANSACTION_LLSC_LOAD,
+                                    LOAD_INT_REGISTER));
+
+                        // r32 + rs2 -> r32
+                        bundle->addInstruction(
+                            new VanadisAddInstruction<int64_t>(
+                                ins_address, hw_thr, options, 32, 32, rs2));
+
+                        // r32 -> (rs1) and place success code in r33
+                        // 0 is a success, 1 is a failure
+                        bundle->addInstruction(new VanadisStoreConditionalInstruction(
+                                ins_address, hw_thr, options, rs1, 0, 32, /* success code */ 33, op_width,
+                                STORE_INT_REGISTER, 0, 1));
+
+                        // r32 - rs2 -> r32
+                        bundle->addInstruction(
+                            new VanadisSubInstruction<int64_t>(
+                                ins_address, hw_thr, options, 32, 32, rs2, true));
+
+                        // conditionally copy the loaded value into rd IF the store-conditional was successful
+                        // copy r32 into rd if r33 == 0
+                        bundle->addInstruction(new VanadisConditionalMoveImmInstruction<int64_t, int64_t, REG_COMPARE_EQ>(
+                                ins_address, hw_thr, options, rd, 32, 33, 0
+                        ));
+
+                        // branch back to this instruction address IF r33 == 1 (which means the store failed)
+                        bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<int64_t, REG_COMPARE_EQ>(
+                            ins_address, hw_thr, options, 4, 33, 1,
+                            /* offset is 0 so we replay this instruction */ 0, VANADIS_NO_DELAY_SLOT
+                        ));
+
+                        if(LIKELY(perform_rl)) {
+                            bundle->addInstruction(new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
+                        }
+
+                        decode_fault = false;
+                    }
+                } break;
+
                 case 0x4:
                 {
                     if(LIKELY(op_width != 0)) {
                         // AMO.SWAP
-                        output->verbose(CALL_INFO, 16, 0, "-----> AMOSWAP 0x%llx / thr: %" PRIu32 " / %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16 " / width: %" PRIu32 " / aq: %s / rl: %s\n",
+                        output->verbose(CALL_INFO, 16, 0, 
+                            "-----> AMOSWAP 0x%llx / thr: %" PRIu32 " / %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16 
+                            " / width: %" PRIu32 " / aq: %s / rl: %s\n",
                             ins_address, hw_thr, rd, rs1, rs2, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
 
                         if(LIKELY(perform_aq)) {
@@ -1306,9 +1364,9 @@ protected:
                                 ins_address, hw_thr, options, rd, 32, 33, 0
                         ));
 
-                        // branch back to this instruction address IF r32 == 1 (which means the store failed)
+                        // branch back to this instruction address IF r33 == 1 (which means the store failed)
                         bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<int64_t, REG_COMPARE_EQ>(
-                            ins_address, hw_thr, options, 4, 32, 1, 
+                            ins_address, hw_thr, options, 4, 33, 1,
                             /* offset is 0 so we replay this instruction */ 0, VANADIS_NO_DELAY_SLOT
                         ));
 
