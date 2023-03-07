@@ -363,11 +363,7 @@ void PandosNodeT::receiveResponse(SST::Event *evt, Link** requestLink) {
     // was this a read response?
     PandosReadResponseEventT *read_rsp = dynamic_cast<PandosReadResponseEventT*>(rsp);
     if (read_rsp) {
-        void *read_val_p = malloc(read_rsp->size);
-#ifdef DO_MEMCPY
-        memcpy(read_val_p, read_rsp->payload.data(), read_rsp->size);
-#endif
-        core_ctx->core_state.mem_req.data = read_val_p;
+        memcpy(core_ctx->core_state.mem_req.data, read_rsp->payload.data(), read_rsp->size);
     }
 
     // delete response
