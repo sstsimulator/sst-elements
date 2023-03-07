@@ -992,7 +992,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_SLT:
                         {
                             bundle->addInstruction(new VanadisSetRegCompareInstruction<
-                                                   REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
+                                                   REG_COMPARE_LT, int32_t>(
                                 ins_addr, hw_thr, options, rd, rs, rt));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_slt);
@@ -1001,7 +1001,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_SLTU:
                         {
                             bundle->addInstruction(new VanadisSetRegCompareInstruction<
-                                                   REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT32, false>(
+                                                   REG_COMPARE_LT, uint32_t>(
                                 ins_addr, hw_thr, options, rd, rs, rt));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_sltu);
@@ -1078,7 +1078,7 @@ protected:
                             rd, rt, shf_amnt);
 
                         bundle->addInstruction(
-                            new VanadisShiftLeftLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                            new VanadisShiftLeftLogicalImmInstruction<uint32_t>(
                                 ins_addr, hw_thr, options, rd, rt, shf_amnt));
                         insertDecodeFault = false;
                         MIPS_INC_DECODE_STAT(stat_decode_sll);
@@ -1356,9 +1356,8 @@ protected:
                 } break;
                 case MIPS_SPEC_OP_MASK_BGEZAL:
                 {
-                    bundle->addInstruction(new VanadisBranchRegCompareImmLinkInstruction<
-                                           VanadisRegisterFormat::VANADIS_FORMAT_INT32, REG_COMPARE_GTE>(
-                        ins_addr, hw_thr, options, 4, rs, 0, offset_value_64 + 4, (uint16_t)31,
+                    bundle->addInstruction(new VanadisBranchRegCompareImmLinkInstruction<int32_t, REG_COMPARE_GTE>(
+                        ins_addr, hw_thr, options, 4, rs, 0, offset_value_64 + 4, (uint16_t) 31,
                         VANADIS_SINGLE_DELAY_SLOT));
                     insertDecodeFault = false;
                     MIPS_INC_DECODE_STAT(stat_decode_bgezal);
@@ -1408,8 +1407,7 @@ protected:
                 //"[decoder/BEQ]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64
                 //"\n",
                 //                                        rt, rs, imm_value_64 );
-                bundle->addInstruction(new VanadisBranchRegCompareInstruction<
-                                       VanadisRegisterFormat::VANADIS_FORMAT_INT32, REG_COMPARE_EQ, true>(
+                bundle->addInstruction(new VanadisBranchRegCompareInstruction<int32_t, REG_COMPARE_EQ>(
                     ins_addr, hw_thr, options, 4, rt, rs, imm_value_64 + 4, VANADIS_SINGLE_DELAY_SLOT));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_beq);
@@ -1451,8 +1449,7 @@ protected:
                 //"[decoder/BNE]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64
                 //"\n",
                 //                                        rt, rs, imm_value_64 );
-                bundle->addInstruction(new VanadisBranchRegCompareInstruction<
-                                       VanadisRegisterFormat::VANADIS_FORMAT_INT32, REG_COMPARE_NEQ, true>(
+                bundle->addInstruction(new VanadisBranchRegCompareInstruction<int32_t, REG_COMPARE_NEQ>(
                     ins_addr, hw_thr, options, 4, rt, rs, imm_value_64 + 4, VANADIS_SINGLE_DELAY_SLOT));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_bne);

@@ -22,16 +22,15 @@
 namespace SST {
 namespace Vanadis {
 
-template <VanadisRegisterFormat register_format>
+template <typename register_format>
 class VanadisShiftLeftLogicalImmInstruction : public VanadisInstruction
 {
 public:
     VanadisShiftLeftLogicalImmInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
-        const uint16_t src_1, const uint64_t immediate) :
+        const uint16_t src_1, const register_format immediate) :
         VanadisInstruction(addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0)
     {
-
         isa_int_regs_in[0]  = src_1;
         isa_int_regs_out[0] = dest;
 
@@ -42,11 +41,12 @@ public:
     VanadisFunctionalUnitType              getInstFuncType() const override { return INST_INT_ARITH; }
     const char*                            getInstCode() const override
     {
-        if ( register_format == VanadisRegisterFormat::VANADIS_FORMAT_INT64 ) { return "SLLI64"; }
-        else if ( register_format == VanadisRegisterFormat::VANADIS_FORMAT_INT32 ) {
+        switch(sizeof(register_format)) {
+        case 4:
             return "SLLI32";
-        }
-        else {
+        case 8:
+            return "SLLI64";
+        default:
             return "SLLI";
         }
     }
@@ -74,28 +74,14 @@ public:
 #endif
         assert(imm_value > 0);
 
-        switch ( register_format ) {
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
-        {
-            const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
-            regFile->setIntReg<uint64_t>(phys_int_regs_out[0], src_1 << imm_value);
-        } break;
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
-        {
-            const uint32_t src_1 = regFile->getIntReg<uint32_t>(phys_int_regs_in[0]);
-            regFile->setIntReg<uint32_t>(phys_int_regs_out[0], src_1 << static_cast<uint32_t>(imm_value));
-        } break;
-        default:
-        {
-            flagError();
-        }
-        }
+        const register_format src_1 = regFile->getIntReg<register_format>(phys_int_regs_in[0]);
+        regFile->setIntReg<register_format>(phys_int_regs_out[0], src_1 << imm_value);
 
         markExecuted();
     }
 
 private:
-    uint64_t imm_value;
+    register_format imm_value;
 };
 
 } // namespace Vanadis

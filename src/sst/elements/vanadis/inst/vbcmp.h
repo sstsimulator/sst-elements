@@ -23,7 +23,7 @@
 namespace SST {
 namespace Vanadis {
 
-template <VanadisRegisterFormat register_format, VanadisRegisterCompareType compare_type, bool perform_signed>
+template <typename register_format, VanadisRegisterCompareType compare_type>
 class VanadisBranchRegCompareInstruction : public VanadisSpeculatedInstruction
 {
 public:
@@ -82,34 +82,8 @@ public:
 #endif
         bool compare_result = false;
 
-        switch ( register_format ) {
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
-        {
-            if ( perform_signed ) {
-                compare_result = registerCompare<compare_type, int64_t>(
-                    regFile, this, output, phys_int_regs_in[0], phys_int_regs_in[1]);
-            }
-            else {
-                compare_result = registerCompare<compare_type, uint64_t>(
-                    regFile, this, output, phys_int_regs_in[0], phys_int_regs_in[1]);
-            }
-        } break;
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
-        {
-            if ( perform_signed ) {
-                compare_result = registerCompare<compare_type, int32_t>(
-                    regFile, this, output, phys_int_regs_in[0], phys_int_regs_in[1]);
-            }
-            else {
-                compare_result = registerCompare<compare_type, uint32_t>(
-                    regFile, this, output, phys_int_regs_in[0], phys_int_regs_in[1]);
-            }
-        } break;
-        default:
-        {
-            flagError();
-        } break;
-        }
+        compare_result = registerCompare<compare_type, register_format>(
+            regFile, this, output, phys_int_regs_in[0], phys_int_regs_in[1]);
 
         if ( compare_result ) {
             takenAddress = (uint64_t)(((int64_t)getInstructionAddress()) + offset);

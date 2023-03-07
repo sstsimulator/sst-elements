@@ -770,8 +770,17 @@ protected:
                     assert(load_width <= 8);
                     assert(load_width >= 0);
 
-                    load_req = new StandardMem::Read(load_address & address_mask, load_width, 0, 
-                        load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
+                    if(UNLIKELY(0 == (load_address & address_mask))) {
+                        if(output->getVerboseLevel() >= 16) {
+                            output->verbose(CALL_INFO, 16, 0, "---> address resolves to zero, flag as error and do not generate event.\n");
+                        }
+
+                        load_ins->flagError();
+                        load_req = nullptr;
+                    } else {
+                        load_req = new StandardMem::Read(load_address & address_mask, load_width, 0, 
+                            load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
+                    }
                 }
             } break;
             case MEM_TRANSACTION_LLSC_LOAD:
