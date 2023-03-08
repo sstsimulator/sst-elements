@@ -32,14 +32,19 @@ public:
         uintptr_t dst_uptr;
         
         pando::backend::address_t getDst() const {
-                return {dst_dram_not_spm, dst_pxn, dst_core, dst_uptr};
+                pando::backend::address_t a;
+                a.setDRAMNotSPM(dst_dram_not_spm);
+                a.setPXN(dst_pxn);
+                a.setCore(dst_core);
+                a.setAddress(dst_uptr);
+                return a;
         }
         
         void setDst(const pando::backend::address_t &address) {
-                dst_dram_not_spm = address.dram_not_spm;
-                dst_pxn = address.pxn;
-                dst_core = address.core;
-                dst_uptr = address.uptr;
+                dst_dram_not_spm = address.getDRAMNotSPM();
+                dst_pxn = address.getPXN();
+                dst_core = address.getCore();
+                dst_uptr = address.getAddress();
         }
         
         // serialization function
