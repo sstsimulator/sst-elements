@@ -1259,8 +1259,8 @@ protected:
                 // Atomic operations (A extension)
                 processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
 
-                const bool perform_aq = func_code & 0x2;
-                const bool perform_rl = func_code & 0x1;
+                const bool perform_aq = func_code7 & 0x2;
+                const bool perform_rl = func_code7 & 0x1;
 
                 uint32_t op_width = 0;
 
