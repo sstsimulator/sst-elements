@@ -765,7 +765,10 @@ bool MESIL1::handleFetchInvX(MemEvent* event, bool inMSHR) {
         eventDI.newst = line->getState();
         eventDI.verboseline = line->getString();
     }
-    delete event;
+    if (inMSHR)
+        cleanUpAfterResponse(event, inMSHR);
+    else
+        delete event;
     return true;
 }
 
@@ -1178,7 +1181,7 @@ bool MESIL1::handleEviction(Addr addr, L1CacheLine*& line) {
 void MESIL1::cleanUpAfterRequest(MemEvent * event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
     Command cmd = event->getCmd();
-
+    
     /* Remove from MSHR */
     if (inMSHR) {
         mshr_->removeFront(addr);
