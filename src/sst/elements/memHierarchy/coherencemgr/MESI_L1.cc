@@ -766,7 +766,7 @@ bool MESIL1::handleFetchInvX(MemEvent* event, bool inMSHR) {
         eventDI.verboseline = line->getString();
     }
     if (inMSHR)
-        cleanUpAfterResponse(event, inMSHR);
+        cleanUpAfterRequest(event, inMSHR);
     else
         delete event;
     return true;
