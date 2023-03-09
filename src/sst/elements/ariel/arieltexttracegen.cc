@@ -44,8 +44,9 @@ void ArielTextTraceGenerator::publishEntry(const uint64_t picoS,
 void ArielTextTraceGenerator::setCoreID(const uint32_t core) {
     coreID = core;
 
-    char* tracePath = (char*) malloc(sizeof(char) * PATH_MAX);
-    sprintf(tracePath, "%s-%" PRIu32 ".trace", tracePrefix.c_str(), core);
+    size_t size = sizeof(char) * PATH_MAX;
+    char* tracePath = (char*) malloc(size);
+    snprintf(tracePath, size, "%s-%" PRIu32 ".trace", tracePrefix.c_str(), core);
 
     textFile = fopen(tracePath, "wt");
 

@@ -52,7 +52,7 @@ void autoCalculateRanks() {
 	char* nameBuffer = (char*) malloc(sizeof(char) * 128);
 
 	while(continueChecking) {
-		sprintf(nameBuffer, "ember-%d.spy", ranks);
+		snprintf(nameBuffer, sizeof(char)*128, "ember-%d.spy", ranks);
 		FILE* checkFile = fopen(nameBuffer, "rt");
 
 		if(NULL == checkFile) {
@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
 	char* lineBuffer = (char*) malloc(sizeof(char) * 1024);
 
 	for(int i = 0; i < ranks; ++i) {
-		sprintf(spynameBuffer, "ember-%d.spy", i);
+		snprintf(spynameBuffer, sizeof(char)*256, "ember-%d.spy", i);
 
 		if(verbose) {
 			printf("Processing rank %d (%s)...\n", i, spynameBuffer);

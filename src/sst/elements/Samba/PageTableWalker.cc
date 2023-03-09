@@ -101,7 +101,7 @@ PageTableWalker::PageTableWalker(ComponentId_t id, int tlb_id, PageTableWalker *
     os_page_size = ((uint32_t) params.find<uint32_t>("os_page_size", 4));
 
 	char* subID = (char*) malloc(sizeof(char) * 32);
-	sprintf(subID, "Core%d_PTWC", tlb_id);
+	snprintf(subID, sizeof(char)*32, "Core%d_PTWC", tlb_id);
 
 
 

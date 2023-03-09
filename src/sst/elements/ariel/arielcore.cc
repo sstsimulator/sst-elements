@@ -77,7 +77,7 @@ ArielCore::ArielCore(ComponentId_t id, ArielTunnel *tunnel,
 #endif
 
     char* subID = (char*) malloc(sizeof(char) * 32);
-    sprintf(subID, "%" PRIu32, thisCoreID);
+    snprintf(subID, sizeof(char)*32, "%" PRIu32, thisCoreID);
 
     statReadRequests  = registerStatistic<uint64_t>( "read_requests", subID );
     statWriteRequests = registerStatistic<uint64_t>( "write_requests", subID );
@@ -205,7 +205,7 @@ void ArielCore::commitWriteEvent(const uint64_t address,
                 char* buffer = new char[64];
                 std::string payloadString = "";
                 for(int i = 0; i < length; ++i) {
-                    sprintf(buffer, "0x%X ", payload[i]);
+                    snprintf(buffer, 64, "0x%X ", payload[i]);
                     payloadString.append(buffer);
                 }
 

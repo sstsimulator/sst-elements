@@ -162,15 +162,16 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         //lists->createAll<CacheListener>(listeners_, false, ComponentInfo::SHARE_NONE);
     } else { // Manually load via the old way of doing it
         const uint32_t listenerCount  = params.find<uint32_t>("listenercount", 0);
-        char* nextListenerName   = (char*) malloc(sizeof(char) * 64);
-        char* nextListenerParams = (char*) malloc(sizeof(char) * 64);
+        size_t bufferSize = sizeof(char) * 64;
+        char* nextListenerName   = (char*) malloc(bufferSize);
+        char* nextListenerParams = (char*) malloc(bufferSize);
 
         for (uint32_t i = 0; i < listenerCount; ++i) {
-            sprintf(nextListenerName, "listener%" PRIu32, i);
+            snprintf(nextListenerName, bufferSize, "listener%" PRIu32, i);
             string listenerMod     = params.find<std::string>(nextListenerName, "");
 
             if (listenerMod != "") {
-                sprintf(nextListenerParams, "listener%" PRIu32 "", i);
+                snprintf(nextListenerParams, bufferSize, "listener%" PRIu32 "", i);
                 Params listenerParams = params.get_scoped_params(nextListenerParams);
 
                 CacheListener* loadedListener = loadAnonymousSubComponent<CacheListener>(listenerMod, "listener", i, ComponentInfo::INSERT_STATS, listenerParams);
