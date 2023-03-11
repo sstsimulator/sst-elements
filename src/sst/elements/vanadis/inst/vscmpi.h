@@ -23,17 +23,16 @@
 namespace SST {
 namespace Vanadis {
 
-template <VanadisRegisterCompareType compare_type, VanadisRegisterFormat register_format, bool perform_signed>
+template <VanadisRegisterCompareType compare_type, typename register_format>
 class VanadisSetRegCompareImmInstruction : public VanadisInstruction
 {
 public:
     VanadisSetRegCompareImmInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
-        const uint16_t src_1, const int64_t imm) :
+        const uint16_t src_1, const register_format imm) :
         VanadisInstruction(addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0),
         imm_value(imm)
     {
-
         isa_int_regs_in[0]  = src_1;
         isa_int_regs_out[0] = dest;
     }
@@ -49,7 +48,8 @@ public:
             buffer, buffer_size,
             "CMPSETI (op: %s, %s) isa-out: %" PRIu16 " isa-in: %" PRIu16 " / phys-out: %" PRIu16 " phys-in: %" PRIu16
             " / imm: %" PRId64 "\n",
-            convertCompareTypeToString(compare_type), perform_signed ? "signed" : "unsigned", isa_int_regs_out[0],
+            convertCompareTypeToString(compare_type), (std::is_signed<register_format>::value ? "signed" : "unsigned"),
+            isa_int_regs_out[0],
             isa_int_regs_in[0], phys_int_regs_out[0], phys_int_regs_in[0], imm_value);
     }
 
@@ -61,51 +61,17 @@ public:
                 CALL_INFO, 16, 0,
                 "Execute: (addr=0x%0llx) CMPSET (op: %s, %s) isa-out: %" PRIu16 " isa-in: %" PRIu16 " / phys-out: %" PRIu16
                 " phys-in: %" PRIu16 " / imm: %" PRId64 "\n",
-                getInstructionAddress(), convertCompareTypeToString(compare_type), perform_signed ? "signed" : "unsigned",
+                getInstructionAddress(), convertCompareTypeToString(compare_type),
+                (std::is_signed<register_format>::value ? "signed" : "unsigned"),
                 isa_int_regs_out[0], isa_int_regs_in[0], phys_int_regs_out[0], phys_int_regs_in[0], imm_value);
         }
 #endif
-        bool compare_result = false;
+        const bool compare_result = registerCompareImm<compare_type, register_format>(regFile, 
+                this, output, phys_int_regs_in[0], imm_value);
 
-        if ( perform_signed ) {
-            switch ( register_format ) {
-            case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
-            {
-                compare_result =
-                    registerCompareImm<compare_type, int64_t>(regFile, this, output, phys_int_regs_in[0], imm_value);
-            } break;
-            case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
-            {
-                compare_result = registerCompareImm<compare_type, int32_t>(
-                    regFile, this, output, phys_int_regs_in[0], static_cast<int32_t>(imm_value));
-            } break;
-            default:
-            {
-                flagError();
-            } break;
-            }
-        }
-        else {
-            switch ( register_format ) {
-            case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
-            {
-                compare_result = registerCompareImm<compare_type, uint64_t>(
-                    regFile, this, output, phys_int_regs_in[0], static_cast<uint64_t>(imm_value));
-            } break;
-            case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
-            {
-                compare_result = registerCompareImm<compare_type, uint32_t>(
-                    regFile, this, output, phys_int_regs_in[0], static_cast<uint32_t>(imm_value));
-            } break;
-            default:
-            {
-                flagError();
-            } break;
-            }
-        }
-
-        if ( compare_result ) { regFile->setIntReg<uint64_t>(phys_int_regs_out[0], static_cast<uint64_t>(1)); }
-        else {
+        if ( compare_result ) { 
+            regFile->setIntReg<uint64_t>(phys_int_regs_out[0], static_cast<uint64_t>(1)); 
+        } else {
             regFile->setIntReg<uint64_t>(phys_int_regs_out[0], static_cast<uint64_t>(0));
         }
 
@@ -113,7 +79,7 @@ public:
     }
 
 protected:
-    const int64_t imm_value;
+    const register_format imm_value;
 };
 
 } // namespace Vanadis
