@@ -50,7 +50,7 @@ public:
         readString(event->getPathPointer(),m_filename);
     }
 
-    void memReqIsDone() {
+    void memReqIsDone(bool) {
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-openat] path: \"%s\"\n", m_filename.c_str());
 
         int fd = m_process->openFile( m_filename.c_str(), m_dirFd, getEvent<VanadisSyscallOpenatEvent*>()->getFlags(), getEvent<VanadisSyscallOpenatEvent*>()->getMode() );

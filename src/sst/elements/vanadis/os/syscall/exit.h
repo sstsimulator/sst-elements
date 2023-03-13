@@ -28,7 +28,7 @@ public:
     ~VanadisExitSyscall() {}
 
 private:
-    void memReqIsDone();
+    void memReqIsDone(bool);
     std::vector<uint8_t> m_buffer;
 };
 

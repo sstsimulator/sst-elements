@@ -51,7 +51,7 @@ public:
         }
     }
 
-    void memReqIsDone() {
+    void memReqIsDone(bool) {
 
         int retval = write( m_fd, m_data.data(), m_data.size() );
         assert( retval >= 0 );

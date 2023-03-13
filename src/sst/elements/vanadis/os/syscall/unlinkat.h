@@ -50,7 +50,7 @@ public:
         readString(event->getPathPointer(),m_filename);
     }
 
-    void memReqIsDone() {
+    void memReqIsDone(bool) {
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-unlinkat] path: \"%s\"\n", m_filename.c_str());
 
         if ( unlinkat( m_dirFd, m_filename.c_str(), getEvent<VanadisSyscallUnlinkatEvent*>()->getFlags() ) ) {

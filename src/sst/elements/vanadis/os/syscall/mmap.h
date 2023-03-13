@@ -77,7 +77,7 @@ public:
         }
     }
 
-    void memReqIsDone() {
+    void memReqIsDone(bool) {
         auto event = getEvent<VanadisSyscallMemoryMapEvent*>();
         uint32_t* tmp  = (uint32_t*)m_buffer.data();
         uint64_t address = event->getAllocationAddress();

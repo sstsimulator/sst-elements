@@ -37,7 +37,7 @@ public:
         readString(event->getPathPointer(),m_filename);
     }
 
-    void memReqIsDone() {
+    void memReqIsDone(bool) {
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-open] path: \"%s\"\n", m_filename.c_str());
 
         if ( 0 == m_filename.compare("") ) {

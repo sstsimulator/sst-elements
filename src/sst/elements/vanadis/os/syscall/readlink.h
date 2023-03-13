@@ -34,7 +34,7 @@ public:
         readString(event->getPathPointer(),m_filename);
     }
 
-    void memReqIsDone() {
+    void memReqIsDone(bool) {
         if ( ! m_done ) {
             m_done = true;
             m_output->verbose(CALL_INFO, 16, 0, "[syscall-readlink] path: \"%s\"\n", m_filename.c_str());

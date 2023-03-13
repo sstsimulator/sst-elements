@@ -32,7 +32,7 @@ public:
         readString(event->getPathPointer(),filename);
     }
 
-    void memReqIsDone() {
+    void memReqIsDone(bool) {
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-unlink] path: \"%s\"\n", filename.c_str());
 
         if ( unlink( filename.c_str() ) ) {

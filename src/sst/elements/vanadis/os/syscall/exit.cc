@@ -40,11 +40,11 @@ VanadisExitSyscall::VanadisExitSyscall( VanadisNodeOSComponent* os, SST::Link* c
         *((uint32_t*)m_buffer.data()) = 0;
         writeMemory( tid_addr, m_buffer );
     } else {
-        memReqIsDone();
+        memReqIsDone(true);
     }
 }
 
-void VanadisExitSyscall::memReqIsDone() {
+void VanadisExitSyscall::memReqIsDone(bool) {
     m_os->removeThread( getEvent<VanadisSyscallExitEvent*>()->getCoreID(),getEvent<VanadisSyscallExitEvent*>()->getThreadID(), m_process->gettid() );
 
     m_output->verbose(CALL_INFO, 16, 0, "[syscall-exit] %s() called\n",__func__ );
