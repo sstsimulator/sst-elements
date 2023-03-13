@@ -285,7 +285,14 @@ void Pin3Frontend::init(unsigned int phase)
     }
 }
 
-void Pin3Frontend::finish() { }
+void Pin3Frontend::finish() {
+    // If the simulation ended early, e.g. by using --stop-at, the child
+    // may still be executing. It will become a zombie if we do not
+    // kill it.
+    if (child_pid != 0) {
+        kill(child_pid, SIGKILL);
+    }
+}
 
 ArielTunnel* Pin3Frontend::getTunnel() {
     return tunnel;
