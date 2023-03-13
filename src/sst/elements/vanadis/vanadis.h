@@ -234,9 +234,29 @@ private:
     int  allocateFunctionalUnit(VanadisInstruction* ins);
     bool mapInstructiontoFunctionalUnit(VanadisInstruction* ins, std::vector<VanadisFunctionalUnit*>& functional_units);
     void printRob(VanadisCircularQueue<VanadisInstruction*>* rob);
+
     bool checkVerboseAddr( uint64_t addr ) {
-        return ( addr == start_verbose_when_issue_address );
+        for ( auto& it : start_verbose_when_issue_address ) {
+            if ( it == addr ) return true;
+        }
+        return false;
     }
+
+    void setVerboseWhenIssueAddress( std::string addrs ) {
+        while ( ! addrs.empty() ) {
+            auto pos = addrs.find(',');
+            std::string addr;
+            if ( pos == std::string::npos ) {
+                addr = addrs;
+                addrs.clear();
+            } else  {
+                addr = addrs.substr(0,pos);
+                addrs = addrs.substr(pos+1);
+            }
+            start_verbose_when_issue_address.push_back(  strtol( addr.c_str(), NULL , 16 ) );
+        }
+    }
+
     void resetHwThread(uint32_t thr);
 
     SST::Output* output;
@@ -314,7 +334,7 @@ private:
     uint32_t ins_decoded_this_cycle;
 
     uint64_t pause_on_retire_address;
-    uint64_t start_verbose_when_issue_address;
+    std::deque<uint64_t> start_verbose_when_issue_address;
     uint64_t stop_verbose_when_retire_address;
 
     std::vector<VanadisFloatingPointFlags*> fp_flags;
