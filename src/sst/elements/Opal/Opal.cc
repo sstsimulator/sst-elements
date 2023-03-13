@@ -53,6 +53,7 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 	opalBase = new OpalBase();
 
 	char* buffer = (char*) malloc(sizeof(char) * 256);
+        size_t buffer_size = sizeof(char) * 256;
 
 	/* Configuring shared memory */
 	/*----------------------------------------------------------------------------------------*/
@@ -66,13 +67,13 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 	for(uint32_t i = 0; i < num_shared_mempools; i++) {
 		memset(buffer, 0 , 256);
-		sprintf(buffer, "mempool%" PRIu32 "", i);
+		snprintf(buffer, buffer_size, "mempool%" PRIu32 "", i);
 		Params memPoolParams = sharedMemParams.get_scoped_params(buffer);
 		sharedMemoryInfo[i] = new MemoryPrivateInfo(opalBase, i, memPoolParams);
 		std::cerr << getName().c_str() << "Configuring Shared " << buffer << std::endl;
 		shared_mem_size += memPoolParams.find<uint64_t>("size", 0);
 		memset(buffer, 0 , 256);
-		sprintf(buffer, "globalMemCntrLink%" PRIu32, i);
+		snprintf(buffer, buffer_size, "globalMemCntrLink%" PRIu32, i);
 		sharedMemoryInfo[i]->link = configureLink(buffer, "1ns", new Event::Handler<MemoryPrivateInfo>((sharedMemoryInfo[i]), &MemoryPrivateInfo::handleRequest));
 	}
 
@@ -80,27 +81,27 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 	/*----------------------------------------------------------------------------------------*/
 	for(uint32_t i = 0; i < num_nodes; i++) {
 		memset(buffer, 0 , 256);
-		sprintf(buffer, "node%" PRIu32 "", i);
+		snprintf(buffer, buffer_size, "node%" PRIu32 "", i);
 		Params nodePrivateParams = params.get_scoped_params(buffer);
 		nodeInfo[i] = new NodePrivateInfo(opalBase, i, nodePrivateParams);
 		for(uint32_t j=0; j<nodeInfo[i]->cores; j++) {
 			memset(buffer, 0 , 256);
-			sprintf(buffer, "coreLink%" PRIu32, num_cores);
+			snprintf(buffer, buffer_size, "coreLink%" PRIu32, num_cores);
 			nodeInfo[i]->coreInfo[j].coreLink = configureLink(buffer, "1ns", new Event::Handler<CorePrivateInfo>((&nodeInfo[i]->coreInfo[j]), &CorePrivateInfo::handleRequest));
 			memset(buffer, 0 , 256);
-			sprintf(buffer, "mmuLink%" PRIu32, num_cores);
+			snprintf(buffer, buffer_size, "mmuLink%" PRIu32, num_cores);
 			nodeInfo[i]->coreInfo[j].mmuLink = configureLink(buffer, "1ns", new Event::Handler<CorePrivateInfo>((&nodeInfo[i]->coreInfo[j]), &CorePrivateInfo::handleRequest));
 			num_cores++;
 		}
 		for(uint32_t j=0; j<nodeInfo[i]->memory_cntrls; j++) {
 			memset(buffer, 0 , 256);
-			sprintf(buffer, "memCntrLink%" PRIu32, num_memCntrls);
+			snprintf(buffer, buffer_size, "memCntrLink%" PRIu32, num_memCntrls);
 			nodeInfo[i]->memCntrlInfo[j].link = configureLink(buffer, "1ns", new Event::Handler<MemoryPrivateInfo>((&nodeInfo[i]->memCntrlInfo[j]), &MemoryPrivateInfo::handleRequest));
 			num_memCntrls++;
 		}
 
 		char* subID = (char*) malloc(sizeof(char) * 32);
-		sprintf(subID, "%" PRIu32, i);
+		snprintf(subID, sizeof(char) * 32, "%" PRIu32, i);
 		nodeInfo[i]->statLocalMemUsage = registerStatistic<uint64_t>("local_mem_usage", subID );
 		nodeInfo[i]->statSharedMemUsage = registerStatistic<uint64_t>("shared_mem_usage", subID );
 		free(subID);

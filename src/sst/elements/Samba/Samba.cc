@@ -77,12 +77,14 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 	char* link_buffer2 = (char*) malloc(sizeof(char) * 256);
 
 	char* link_buffer3 = (char*) malloc(sizeof(char) * 256);
+        
+        size_t buffer_size = sizeof(char) * 256;
 
 	std::cout<<"Before initialization "<<std::endl;
 	for(uint32_t i = 0; i < core_count; ++i) {
-		sprintf(link_buffer, "cpu_to_mmu%" PRIu32, i);
+		snprintf(link_buffer, buffer_size, "cpu_to_mmu%" PRIu32, i);
 
-		sprintf(link_buffer2, "mmu_to_cache%" PRIu32, i);
+		snprintf(link_buffer2, buffer_size, "mmu_to_cache%" PRIu32, i);
 
 
 
@@ -98,7 +100,7 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 		mmu_to_cache[i] = link;
 
 
-		sprintf(link_buffer3, "ptw_to_mem%" PRIu32, i);
+		snprintf(link_buffer3, buffer_size, "ptw_to_mem%" PRIu32, i);
 		SST::Link * link3;
 
 		if(self==0)
@@ -115,7 +117,7 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 			pageFaultHandler->registerPageFaultHandler(i, new PageFaultHandler::PageFaultHandlerInterface<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvPageFaultResp));
 			TLB[i]->getPTW()->setPageFaultHandler(pageFaultHandler);
 
-			sprintf(link_buffer, "event_bus%" PRIu32, i);
+			snprintf(link_buffer, buffer_size, "event_bus%" PRIu32, i);
 
 			event_link = configureSelfLink(link_buffer, "1ns", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::handleEvent));
 

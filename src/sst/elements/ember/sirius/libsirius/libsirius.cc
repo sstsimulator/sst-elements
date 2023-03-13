@@ -194,7 +194,7 @@ extern "C" int MPI_Init(int* argc, char** argv[]) {
 	}
 
 	char buffer[1024];
-	sprintf(buffer, "%s-%d.stf.%d", (*argv)[0], sirius_npes, sirius_rank);
+	snprintf(buffer, 1024, "%s-%d.stf.%d", (*argv)[0], sirius_npes, sirius_rank);
 
 	trace_dump = fopen(buffer, "wb");
 
@@ -203,7 +203,7 @@ extern "C" int MPI_Init(int* argc, char** argv[]) {
 
 	if(sirius_rank == 0) {
 		char buffer_meta[512];
-		sprintf(buffer_meta, "%s-%d.meta",
+		snprintf(buffer_meta, 512, "%s-%d.meta",
 			(*argv)[0], sirius_npes);
 		FILE* meta_file = fopen(buffer_meta, "wt");
 
