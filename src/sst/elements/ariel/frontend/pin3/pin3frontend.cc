@@ -223,7 +223,7 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
     }
     execute_args[arg++] = const_cast<char*>("-d");
     execute_args[arg++] = (char*) malloc(buff8size);
-    snprintf(execute_args[arg-1], "%" PRIu32, defMemPool);
+    snprintf(execute_args[arg-1], buff8size, "%" PRIu32, defMemPool);
     execute_args[arg++] = const_cast<char*>("--");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (executable.size() + 1));
     strcpy(execute_args[arg-1], executable.c_str());
