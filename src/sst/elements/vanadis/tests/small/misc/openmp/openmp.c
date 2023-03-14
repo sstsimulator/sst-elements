@@ -20,6 +20,11 @@
 
 int main(int argc, char* argv[]) {
 
+    setvbuf(stdout, NULL, _IONBF ,0);
+
+    omp_lock_t lock;
+    omp_init_lock(&lock);
+
     int nthreads, tid;
     char* tmp = getenv("OMP_NUM_THREADS");
     printf("OMP_NUM_THREADS %s\n", tmp ? tmp: "not set");
@@ -29,16 +34,20 @@ int main(int argc, char* argv[]) {
     {
         /* Obtain thread number */
         tid = omp_get_thread_num();
-        printf("Hello World from thread = %d\n", tid);
-        fflush(stdout);
 
         /* Only master thread does this */
         if (tid == 0) 
         {
             nthreads = omp_get_num_threads();
+            omp_set_lock( &lock );
             printf("Number of threads = %d\n", nthreads);
-            fflush(stdout);
+            omp_unset_lock( &lock );
         }
+
+        omp_set_lock( &lock );
+        printf("Hello World from thread = %d\n", tid);
+        omp_unset_lock( &lock );
+
     } /* All threads join master thread and disband */
 
     printf("exit\n");

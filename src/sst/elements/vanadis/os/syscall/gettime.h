@@ -53,7 +53,7 @@ public:
         writeMemory( event->getTimeStructAddress(), payload );
     }
 
-    void memReqIsDone() { 
+    void memReqIsDone(bool) { 
         setReturnSuccess(0);
     }
 

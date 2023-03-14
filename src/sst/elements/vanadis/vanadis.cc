@@ -331,8 +331,9 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     }
 
     pause_on_retire_address = params.find<uint64_t>("pause_when_retire_address", 0);
-    start_verbose_when_issue_address = params.find<uint64_t>("start_verbose_when_issue_address", 0);
     stop_verbose_when_retire_address = params.find<uint64_t>("stop_verbose_when_retire_address", 0);
+
+    setVerboseWhenIssueAddress( params.find<std::string>("start_verbose_when_issue_address", "") );
 
     // Register statistics ///////////////////////////////////////////////////////
     stat_ins_retired          = registerStatistic<uint64_t>("instructions_retired", "1");

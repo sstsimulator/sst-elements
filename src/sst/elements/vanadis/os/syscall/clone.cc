@@ -115,7 +115,7 @@ void VanadisCloneSyscall::handleEvent( VanadisCoreEvent* ev )
     delete resp;
 }
 
-void VanadisCloneSyscall::memReqIsDone() {
+void VanadisCloneSyscall::memReqIsDone(bool) {
 
     switch( m_state ) {
       case ReadChildTidAddr:

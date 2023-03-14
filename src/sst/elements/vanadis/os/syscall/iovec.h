@@ -98,7 +98,7 @@ public:
 
   protected:
 
-    void memReqIsDone() {
+    void memReqIsDone(bool) {
         if ( ReadIoVecTable == m_state ) {
             m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-%s] read ioVecTable complete\n", getName().c_str());
             m_state = IoVecTransfer;
