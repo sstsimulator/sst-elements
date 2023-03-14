@@ -230,6 +230,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     }
 
     lsq = loadUserSubComponent<SST::Vanadis::VanadisLoadStoreQueue>("lsq");
+    lsq->setCoreId(core_id);
 
     if ( nullptr == lsq ) {
         output->fatal(CALL_INFO, -1, "Error - unable to load the load-store queue (lsq subcomponent)\n");
