@@ -92,7 +92,7 @@ VanadisFutexSyscall::VanadisFutexSyscall( VanadisNodeOSComponent* os, SST::Link*
       case FUTEX_WAIT:
         {
             m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
-                "[syscall-futex] FUTEX_WAIT tid=%d addr=%#" PRIx64 "\n", process->gettid(), event->getAddr());
+                "[syscall-futex] FUTEX_WAIT tid=%d addr=%#" PRIx64 " do LoadLink\n", process->gettid(), event->getAddr());
             m_buffer.resize(sizeof(uint32_t));
             readMemory( event->getAddr(), m_buffer, true );
         } break;
@@ -142,10 +142,17 @@ void VanadisFutexSyscall::memReqIsDone(bool failed )
             if ( ! m_waitStoreConditional ) { 
                 m_val = *(uint32_t*)m_buffer.data();
 
+                assert(!failed);
+
                 if ( m_val == getEvent<VanadisSyscallFutexEvent*>()->getVal() ) {
+
                     writeMemory( getEvent<VanadisSyscallFutexEvent*>()->getAddr(), m_buffer, true );
 
                     m_waitStoreConditional = true;
+
+                    m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
+                        "[syscall-futex] FUTEX_WAIT tid=%d addr=%#" PRIx64 " do StoreConditional\n",
+                        m_process->gettid(), getEvent<VanadisSyscallFutexEvent*>()->getAddr());
 
                 } else { 
                     m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
