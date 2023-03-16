@@ -420,10 +420,10 @@ EXTRA_DIST = \
 	tests/small/misc/fork/riscv64/fork \
 	tests/small/misc/fork/riscv64/gold1/sst.stdout.gold \
 	tests/small/misc/fork/riscv64/gold1/vanadis.stderr.gold \
-	tests/small/misc/fork/riscv64/gold1vanadis.stdout.gold \
+	tests/small/misc/fork/riscv64/gold1/vanadis.stdout.gold \
 	tests/small/misc/fork/riscv64/gold2/sst.stdout.gold \
 	tests/small/misc/fork/riscv64/gold2/vanadis.stderr.gold \
-	tests/small/misc/fork/riscv64/gold2vanadis.stdout.gold \
+	tests/small/misc/fork/riscv64/gold2/vanadis.stdout.gold \
 \
 	tests/small/misc/clone/Makefile \
 	tests/small/misc/clone/clone.c \
