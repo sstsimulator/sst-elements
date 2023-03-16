@@ -228,12 +228,12 @@ private:
 
     int  performFetch(const uint64_t cycle);
     int  performDecode(const uint64_t cycle);
-    int  performIssue(const uint64_t cycle, uint32_t& rob_start, bool& unallocated_memory_op_seen);
+    int  performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_start, int& unallocated_memory_op_seen);
     int  performExecute(const uint64_t cycle);
-    int  performRetire(VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle);
+    int  performRetire(int rob_num, VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle);
     int  allocateFunctionalUnit(VanadisInstruction* ins);
     bool mapInstructiontoFunctionalUnit(VanadisInstruction* ins, std::vector<VanadisFunctionalUnit*>& functional_units);
-    void printRob(VanadisCircularQueue<VanadisInstruction*>* rob);
+    void printRob(int rob_num, VanadisCircularQueue<VanadisInstruction*>* rob);
 
     bool checkVerboseAddr( uint64_t addr ) {
         for ( auto& it : start_verbose_when_issue_address ) {
@@ -271,6 +271,9 @@ private:
     uint32_t issues_per_cycle;
     uint32_t retires_per_cycle;
 
+    uint32_t m_curRetireHwThread;
+    uint32_t m_curIssueHwThread;
+
     std::vector<VanadisCircularQueue<VanadisInstruction*>*> rob;
     std::vector<VanadisDecoder*>                            thread_decoders;
     std::vector<const VanadisDecoderOptions*>               isa_options;
@@ -288,10 +291,10 @@ private:
     std::vector<VanadisISATable*> issue_isa_tables;
     std::vector<VanadisISATable*> retire_isa_tables;
 
-    uint8_t* tmp_not_issued_int_reg_read;
-    uint8_t* tmp_int_reg_write;
-    uint8_t* tmp_not_issued_fp_reg_read;
-    uint8_t* tmp_fp_reg_write;
+    std::vector<uint8_t*> tmp_not_issued_int_reg_read;
+    std::vector<uint8_t*> tmp_int_reg_write;
+    std::vector<uint8_t*> tmp_not_issued_fp_reg_read;
+    std::vector<uint8_t*> tmp_fp_reg_write;
 
     std::list<VanadisInsCacheLoadRecord*>* icache_load_records;
 

@@ -33,21 +33,21 @@ def build_vanadis_test_matrix():
     #io_tests = []
     for test in io_tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 300])
 
     location="small/basic-math"
     math_tests = ["sqrt-double","sqrt-float"]
     #math_tests = []
     for test in math_tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 300])
 
     location="small/basic-ops"
     ops_tests = ["test-branch","test-shift"]
     #ops_tests = []
     for test in ops_tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 300])
 
 
     location="small/misc"
@@ -55,20 +55,21 @@ def build_vanadis_test_matrix():
     #misc_tests =[]
     for test in misc_tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 300])
 
-    location="small/misc"
     misc_tests = ["fork","clone","pthread"]
     #misc_tests =[]
     for test in misc_tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 2,1,300])
+            testlist.append(["basic_vanadis.py", location, test, arch, 2,1, "gold1", 300])
+            testlist.append(["basic_vanadis.py", location, test, arch, 1,2, "gold2", 300])
 
-    location="small/misc"
     misc_tests = ["openmp"]
+    #misc_tests =[]
     for test in misc_tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 4,1,300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 4,1, "gold1", 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1,4, "gold2", 300])
 
 
     # Process each line and crack up into an index, hash, options and sdl file
@@ -81,11 +82,12 @@ def build_vanadis_test_matrix():
         isa = test_info[3]
         numCores = test_info[4]
         numHwThreads = test_info[5]
-        timeout_sec = test_info[6]
-        testname = "{0}_{1}_{2}".format(elftestdir.replace("/", "_"), elffile,isa)
+        goldfiledir = test_info[6]
+        timeout_sec = test_info[7]
+        testname = "{0}_{1}_{2}_{3}".format(elftestdir.replace("/", "_"), elffile,isa,goldfiledir)
 
         # Build the test_data structure
-        test_data = (testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, timeout_sec)
+        test_data = (testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, goldfiledir, timeout_sec )
         vanadis_test_matrix.append(test_data)
 
 ################################################################################
@@ -141,20 +143,20 @@ class testcase_vanadis(SSTTestCase):
 #####
 
     @parameterized.expand(vanadis_test_matrix, name_func=gen_custom_name)
-    def test_vanadis_short_tests(self, testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, timeout_sec):
+    def test_vanadis_short_tests(self, testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, goldfiledir, timeout_sec):
         self._checkSkipConditions( isa )
 
         if MakeTests:
             self.makeTest( testname, isa, elftestdir, elffile )
         log_debug("Running Vanadis test #{0} ({1}): elffile={4} in dir {3}, isa {5}; using sdl={2}".format(testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec))
-        self.vanadis_test_template(testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, timeout_sec)
+        self.vanadis_test_template(testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, goldfiledir, timeout_sec )
 
 #####
 
-    def vanadis_test_template(self, testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, testtimeout=120):
+    def vanadis_test_template(self, testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, goldfiledir, testtimeout=120):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
-        outdir = "{0}/vanadis_tests/{1}/{2}/{3}".format(self.get_test_output_run_dir(), elftestdir,elffile,isa)
+        outdir = "{0}/vanadis_tests/{1}/{2}/{3}/{4}".format(self.get_test_output_run_dir(), elftestdir,elffile,isa,goldfiledir)
         tmpdir = self.get_test_output_tmp_dir()
         os.makedirs(outdir)
 
@@ -164,10 +166,14 @@ class testcase_vanadis(SSTTestCase):
         sst_outfile = "{0}/{1}.out".format(outdir, testDataFileName)
         sst_errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
-        ref_sst_outfile = "{0}/{1}/{2}/{3}/sst.stdout.gold".format(test_path, elftestdir, elffile, isa)
-        ref_sst_errfile = "{0}/{1}/{2}/{3}/sst.stderr.gold".format(test_path, elftestdir, elffile, isa)
-        ref_os_outfile = "{0}/{1}/{2}/{3}/vanadis.stdout.gold".format(test_path, elftestdir, elffile, isa)
-        ref_os_errfile = "{0}/{1}/{2}/{3}/vanadis.stderr.gold".format(test_path, elftestdir, elffile, isa)
+
+        if len(goldfiledir):
+            goldfiledir = goldfiledir + "/"
+
+        ref_sst_outfile = "{0}/{1}/{2}/{3}/{4}sst.stdout.gold".format(test_path, elftestdir, elffile, isa, goldfiledir)
+        ref_sst_errfile = "{0}/{1}/{2}/{3}/{4}sst.stderr.gold".format(test_path, elftestdir, elffile, isa, goldfiledir)
+        ref_os_outfile = "{0}/{1}/{2}/{3}/{4}vanadis.stdout.gold".format(test_path, elftestdir, elffile, isa, goldfiledir)
+        ref_os_errfile = "{0}/{1}/{2}/{3}/{4}vanadis.stderr.gold".format(test_path, elftestdir, elffile, isa, goldfiledir)
         # 100 is the pid
         os_outfile = "{0}/stdout-100".format(outdir)
         os_errfile = "{0}/stderr-100".format(outdir)

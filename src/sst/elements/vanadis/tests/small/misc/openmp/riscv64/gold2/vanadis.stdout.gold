@@ -1,0 +1,4 @@
+OMP_NUM_THREADS 1
+Number of threads = 1
+Hello World from thread = 0
+exit
