@@ -1066,7 +1066,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
             } else {
                 // Return 2 because instruction is front of ROB but has not executed and
                 // so we cannot make progress any more this cycle
-                return 2;
+                return 1;
             }
         }
     }
@@ -1345,7 +1345,7 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     for ( uint32_t i = 0; i < retires_per_cycle; ++i ) {
 
         // find an unblocked hardware thread 
-        while ( 0 != rc[m_curRetireHwThread] && cnt ) { 
+        while ( 1 == rc[m_curRetireHwThread] && cnt ) { 
             ++m_curRetireHwThread;
             m_curRetireHwThread %= hw_threads;
             --cnt;
@@ -1355,27 +1355,25 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
         if ( cnt ) {
             auto thr = m_curRetireHwThread;
             rc[thr] = performRetire(thr, rob[thr], cycle);
+
+            // what are the odds of more than one thread having a system call on the same cycle
+            // simplify the logic and only declock if we are running 1 thread 
+            if ( rc[thr] == INT_MAX && hw_threads == 1 ) {
+                // we will return true and tell the handler not to clock us until
+                // re-register
+                tick_return = true;
+#ifdef VANADIS_BUILD_DEBUG
+                if(output_verbosity >= 8) {
+                    output->verbose( CALL_INFO, 8, 0, "--> declocking core, result from retire is SYSCALL " "pending front of ROB\n");
+                }
+#endif
+            }
             ++m_curRetireHwThread;
             m_curRetireHwThread %= hw_threads;
             cnt = hw_threads;
         } else {
             break;
         }
-    }
-    
-    // what are the odds that more than one hardware thread have retired a syscall at the same time?
-    // only de-clock for one hardware thread
-    if ( hw_threads == 1 ) {
-        if ( rc[0] == INT_MAX ) { 
-            // we will return true and tell the handler not to clock us until
-            // re-register
-            tick_return = true;
-#ifdef VANADIS_BUILD_DEBUG
-            if(output_verbosity >= 8) {
-                output->verbose( CALL_INFO, 8, 0, "--> declocking core, result from retire is SYSCALL " "pending front of ROB\n");
-            }
-#endif
-        }   
     }
 }
 
