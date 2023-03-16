@@ -66,6 +66,7 @@ def build_vanadis_test_matrix():
 
     location="small/misc"
     misc_tests = ["openmp"]
+    #misc_tests =[]
     for test in misc_tests:
         for arch in arch_list:
             testlist.append(["basic_vanadis.py", location, test,arch, 4,1,300])
