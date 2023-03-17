@@ -84,12 +84,18 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNod
         uint32_t currentAppNode = nodeQueue.front();
         nodeQueue.pop();
 
+        // simple assumes some things about queues
+        QueueArgMap* arguments = new QueueArgMap;
+        arguments->emplace( 0, app_vertex_map_->at(currentAppNode).getValue().argument_[0] );
+
         app_vertex_map_->at(currentAppNode).setVisited(1);
         opType tempOp = app_vertex_map_->at(currentAppNode).getValue().optype_;
-        if( tempOp == ADDCONST || tempOp == SUBCONST || tempOp == MULCONST || tempOp == DIVCONST || tempOp == REMCONST) {
-            addNode( tempOp, app_vertex_map_->at(currentAppNode).getValue().argument_, newNodeNum, graphOut, llyr_config );
+        if( tempOp == ADDCONST || tempOp == SUBCONST || tempOp == MULCONST || tempOp == DIVCONST || tempOp == REMCONST ) {
+            addNode( tempOp, arguments, newNodeNum, graphOut, llyr_config );
+        } else if( tempOp == INC || tempOp == ACC ) {
+            addNode( tempOp, arguments, newNodeNum, graphOut, llyr_config );
         } else if( tempOp == LDADDR || tempOp == STREAM_LD || tempOp == STADDR || tempOp == STREAM_ST ) {
-            addNode( tempOp, app_vertex_map_->at(currentAppNode).getValue().argument_, newNodeNum, graphOut, llyr_config );
+            addNode( tempOp, arguments, newNodeNum, graphOut, llyr_config );
         } else {
             addNode( tempOp, newNodeNum, graphOut, llyr_config );
         }
@@ -131,7 +137,6 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNod
         bool found  = 0;
         uint32_t appPE;
         for( auto it = mapping.begin(); it != mapping.end(); ++it) {
-
             if( it->second == vertexIterator->first ) {
                 found = 1;
                 appPE = it->first;
@@ -206,11 +211,13 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNod
         //FIXME Need to use a fake init on ST for now
         opType tempOp = vertex_map_->at(currentNode).getValue()->getOpBinding();
         if( tempOp == ST ) {
-            vertex_map_->at(currentNode).getValue()->queueInit();
+            vertex_map_->at(currentNode).getValue()->inputQueueInit();
         } else if( tempOp == LDADDR || tempOp == STADDR ) {
-            vertex_map_->at(currentNode).getValue()->queueInit();
+            vertex_map_->at(currentNode).getValue()->inputQueueInit();
         } else if( tempOp == STREAM_LD || tempOp == STREAM_ST ) {
-            vertex_map_->at(currentNode).getValue()->queueInit();
+            vertex_map_->at(currentNode).getValue()->inputQueueInit();
+        } else if( tempOp == ACC ) {
+            vertex_map_->at(currentNode).getValue()->inputQueueInit();
         }
     }
 
@@ -219,7 +226,7 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNod
     std::vector< Edge* >* rootAdjacencyList = vertex_map_->at(0).getAdjacencyList();
     for( auto it = rootAdjacencyList->begin(); it != rootAdjacencyList->end(); it++ ) {
         uint32_t destinationVertex = (*it)->getDestination();
-        vertex_map_->at(destinationVertex).getValue()->queueInit();
+        vertex_map_->at(destinationVertex).getValue()->inputQueueInit();
     }
 
 }// mapGraph

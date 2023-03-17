@@ -37,8 +37,8 @@ public:
                     ProcessingElement(op_binding, processor_id, llyr_config)
     {
         cycles_ = cycles;
-        input_queues_= new std::vector< LlyrQueue* >;
-        output_queues_ = new std::vector< LlyrQueue* >;
+
+
     }
 
     virtual bool doSend()
@@ -63,6 +63,7 @@ public:
         }
 
         if( output_->getVerboseLevel() >= 10 ) {
+            output_->verbose(CALL_INFO, 10, 0, "Queue Contents (2)\n");
             printInputQueue();
             printOutputQueue();
         }
@@ -74,7 +75,7 @@ public:
 
     virtual bool doCompute()
     {
-        output_->verbose(CALL_INFO, 4, 0, ">> Compute 0x%" PRIx32 "\n", op_binding_);
+        output_->verbose(CALL_INFO, 4, 0, ">> Compute %s\n", getOpString(op_binding_).c_str());
 
         uint64_t intResult = 0x0F;
 
@@ -83,17 +84,55 @@ public:
         LlyrData retVal;
 
         if( output_->getVerboseLevel() >= 10 ) {
+            output_->verbose(CALL_INFO, 10, 0, "Queue Contents (0)\n");
             printInputQueue();
             printOutputQueue();
         }
 
         uint32_t num_ready = 0;
-        uint32_t num_inputs  = input_queues_->size();
+        uint32_t num_inputs = 0;
+        uint32_t total_num_inputs = input_queues_->size();
+
+        // discover which of the input queues are used for the compute
+        for( uint32_t i = 0; i < total_num_inputs; ++i) {
+            if( input_queues_->at(i)->argument_ > -1 ) {
+                num_inputs = num_inputs + 1;
+            }
+        }
+
+        // FIXME check to see of there are any routing jobs -- should be able to do this without waiting to fire
+        for( uint32_t i = 0; i < total_num_inputs; ++i) {
+            const std::string rtr_arg = *input_queues_->at(i)->routing_arg_;
+            std::cout << "\trtr_arg " << i << " -- " << rtr_arg << " (" << input_queues_->at(i)->forwarded_ << ")" << std::endl;
+            if( rtr_arg == "" || input_queues_->at(i)->forwarded_ == 1 ) {
+                std::cout << "continue" << std::endl;
+                continue;
+            }
+
+            std::cout << "num output queues " << output_queues_->size() << std::endl;
+            for( uint32_t j = 0; j < output_queues_->size(); ++j) {
+                std::cout << "output queue arg (" << j << ") " << *output_queues_->at(j)->routing_arg_ << std::endl;
+                if( *output_queues_->at(j)->routing_arg_ == rtr_arg && input_queues_->at(i)->data_queue_->size() > 0) {
+                    std::cout << "Now I'm hereherehere_3 -- " << input_queues_->at(i)->data_queue_->front() << std::endl;
+
+                    output_queues_->at(j)->data_queue_->push(input_queues_->at(i)->data_queue_->front());
+                    std::cout << "data type arg " << input_queues_->at(i)->argument_ << std::endl;
+                    if( input_queues_->at(i)->argument_ == -1 ) {
+                        input_queues_->at(i)->data_queue_->pop();
+                    } else {
+                        input_queues_->at(i)->forwarded_ = 1;
+                    }
+                    output_->verbose(CALL_INFO, 4, 0, "+Routing %s from %" PRIu32 "\n", rtr_arg.c_str(), i);
+                }
+            }
+        }
 
         //check to see if all of the input queues have data
-        for( uint32_t i = 0; i < num_inputs; ++i) {
-            if( input_queues_->at(i)->data_queue_->size() > 0 ) {
-                num_ready = num_ready + 1;
+        for( uint32_t i = 0; i < total_num_inputs; ++i) {
+            if( input_queues_->at(i)->argument_ > -1 ) {
+                if( input_queues_->at(i)->data_queue_->size() > 0 ) {
+                    num_ready = num_ready + 1;
+                }
             }
         }
 
@@ -105,14 +144,17 @@ public:
         }
 
         //if all inputs are available pull from queue and add to arg list
-        if( num_ready < num_inputs ) {
+        if( num_inputs == 0 || num_ready < num_inputs ) {
             output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
             return false;
         } else {
             output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
-            for( uint32_t i = 0; i < num_inputs; ++i) {
-                argList.push_back(input_queues_->at(i)->data_queue_->front());
-                input_queues_->at(i)->data_queue_->pop();
+            for( uint32_t i = 0; i < total_num_inputs; ++i) {
+                if( input_queues_->at(i)->argument_ > -1 ) {
+                    argList.push_back(input_queues_->at(i)->data_queue_->front());
+                    input_queues_->at(i)->forwarded_ = 0;
+                    input_queues_->at(i)->data_queue_->pop();
+                }
             }
         }
 
@@ -168,6 +210,7 @@ public:
         }
 
         if( output_->getVerboseLevel() >= 10 ) {
+            output_->verbose(CALL_INFO, 10, 0, "Queue Contents (1)\n");
             printInputQueue();
             printOutputQueue();
         }
@@ -176,7 +219,8 @@ public:
     }
 
     //TODO for testing only
-    virtual void queueInit() {};
+    virtual void inputQueueInit() {};
+    virtual void outputQueueInit() {};
 
 private:
     //helper to convert from bitset to float

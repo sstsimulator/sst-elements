@@ -27,6 +27,7 @@
 #include <string>
 #include <cstdint>
 #include <sstream>
+#include <algorithm>
 
 
 #include "../graph/graph.h"
@@ -37,8 +38,9 @@ namespace SST {
 namespace Llyr {
 
 typedef struct alignas(uint64_t) {
-    bool forward_;
-    uint32_t target_queue_;
+    bool forwarded_;
+    int32_t argument_;
+    std::string* routing_arg_;
     std::queue< LlyrData >* data_queue_;
 } LlyrQueue;
 
@@ -57,6 +59,9 @@ public:
         pending_op_ = 0;
         lsqueue_ = llyr_config->lsqueue_;
         mem_interface_ = llyr_config->mem_interface_;
+
+        input_queues_= new std::vector< LlyrQueue* >();
+        output_queues_ = new std::vector< LlyrQueue* >();
     }
 
     virtual ~ProcessingElement() {};
@@ -73,13 +78,61 @@ public:
             return 0;
         }
 
-        //if insert succeeded need to create the queue
-//         std::queue< LlyrData >* tempQueue = new std::queue< LlyrData >;
-//         input_queues_->push_back(tempQueue);
-
         LlyrQueue* tempQueue = new LlyrQueue;
+        tempQueue->forwarded_ = 0;
+        tempQueue->argument_  = 0;
+        tempQueue->routing_arg_ = new std::string("");
         tempQueue->data_queue_ = new std::queue< LlyrData >;
         input_queues_->push_back(tempQueue);
+
+        return queueId;
+    }
+
+    uint32_t bindInputQueue(ProcessingElement* src, uint32_t queueId, int32_t argument)
+    {
+        output_->verbose(CALL_INFO, 4, 0, ">> Binding Input Queue-%" PRIu32 " on PE-%" PRIu32 " to PE-%" PRIu32 "\n",
+                         queueId, processor_id_, src->getProcessorId() );
+
+        auto retVal = input_queue_map_.emplace( queueId, src );
+        if( retVal.second == false ) {
+            return 0;
+        }
+
+        while( input_queues_->size() <= queueId ) {
+            LlyrQueue* tempQueue    = new LlyrQueue;
+            tempQueue->forwarded_   = 0;
+            tempQueue->routing_arg_ = new std::string("");
+            tempQueue->argument_    = 0;
+            tempQueue->data_queue_  = new std::queue< LlyrData >;
+            input_queues_->push_back(tempQueue);
+        }
+
+        input_queues_->at(queueId)->argument_ = argument;
+
+        return queueId;
+    }
+
+    uint32_t bindInputQueue(ProcessingElement* src, uint32_t queueId, int32_t argument, std::string* routing_arg)
+    {
+        output_->verbose(CALL_INFO, 4, 0, ">> Binding Input Queue-%" PRIu32 " on PE-%" PRIu32 " to PE-%" PRIu32 "\n",
+                         queueId, processor_id_, src->getProcessorId() );
+
+        auto retVal = input_queue_map_.emplace( queueId, src );
+        if( retVal.second == false ) {
+            return 0;
+        }
+
+        while( input_queues_->size() <= queueId ) {
+            LlyrQueue* tempQueue    = new LlyrQueue;
+            tempQueue->forwarded_   = 0;
+            tempQueue->routing_arg_ = new std::string("");
+            tempQueue->argument_    = 0;
+            tempQueue->data_queue_  = new std::queue< LlyrData >;
+            input_queues_->push_back(tempQueue);
+        }
+
+        input_queues_->at(queueId)->argument_    = argument;
+        input_queues_->at(queueId)->routing_arg_ = routing_arg;
 
         return queueId;
     }
@@ -96,15 +149,46 @@ public:
             return 0;
         }
 
-        //if insert succeeded need to create the queue
-//         std::queue< LlyrData >* tempQueue = new std::queue< LlyrData >;
-//         output_queues_->push_back(tempQueue);
-
         LlyrQueue* tempQueue = new LlyrQueue;
+        tempQueue->forwarded_ = 0;
+        tempQueue->argument_  = 0;
+        tempQueue->routing_arg_ = new std::string("");
         tempQueue->data_queue_ = new std::queue< LlyrData >;
         output_queues_->push_back(tempQueue);
 
         return queueId;
+    }
+
+    uint32_t bindOutputQueue(ProcessingElement* dst, uint32_t queueId)
+    {
+        output_->verbose(CALL_INFO, 4, 0, ">> Binding Output Queue-%" PRIu32 " on PE-%" PRIu32 " to PE-%" PRIu32 "\n",
+                         queueId, processor_id_, dst->getProcessorId() );
+
+        auto retVal = output_queue_map_.emplace( queueId, dst );
+        if( retVal.second == false ) {
+            return 0;
+        }
+
+        while( output_queues_->size() <= queueId ) {
+            LlyrQueue* tempQueue = new LlyrQueue;
+            tempQueue->forwarded_ = 0;
+            tempQueue->argument_  = 0;
+            tempQueue->routing_arg_ = new std::string("");
+            tempQueue->data_queue_ = new std::queue< LlyrData >;
+            output_queues_->push_back(tempQueue);
+        }
+
+        return queueId;
+    }
+
+    void setOutputQueueRoute(uint32_t queueID, std::string* routing_arg)
+    {
+        if( output_queues_->size() < queueID ) {
+            output_->fatal(CALL_INFO, -1, "Error: Output Size %" PRIu64 " Smaller Than ID(%" PRIu32 "\n",
+                           output_queues_->size(), queueID);
+        }
+
+        output_queues_->at(queueID)->routing_arg_ = routing_arg;
     }
 
     void pushInputQueue(uint32_t id, uint64_t &inVal )
@@ -142,6 +226,18 @@ public:
         return -1;
     }
 
+    int32_t getQueueOutputProcBinding(ProcessingElement* pe) const
+    {
+        auto it = output_queue_map_.begin();
+        for( ; it != output_queue_map_.end(); ++it ) {
+            if( it->second == pe ) {
+                return it->first;
+            }
+        }
+
+        return -1;
+    }
+
     ProcessingElement* getProcInputQueueBinding(uint32_t id) const
     {
         auto it = input_queue_map_.begin();
@@ -154,8 +250,34 @@ public:
         return NULL;
     }
 
-    uint32_t getNumInputQueues() const { return input_queues_->size(); }
-    uint32_t getNumOutputQueues() const { return output_queues_->size(); }
+    int32_t getQueueInputProcBinding(ProcessingElement* pe) const
+    {
+        auto it = input_queue_map_.begin();
+        for( ; it != input_queue_map_.end(); ++it ) {
+            if( it->second == pe ) {
+                return it->first;
+            }
+        }
+
+        return -1;
+    }
+
+    uint32_t getNumInputQueues() const
+    {
+        if( input_queues_ != nullptr) {
+            return input_queues_->size();
+        } else {
+            return 0;
+        }
+    }
+    uint32_t getNumOutputQueues() const
+    {
+        if( output_queues_ != nullptr) {
+            return output_queues_->size();
+        } else {
+            return 0;
+        }
+    }
 
     void     setOpBinding(opType binding) { op_binding_ = binding; }
     opType   getOpBinding() const { return op_binding_; }
@@ -168,7 +290,8 @@ public:
     void printInputQueue()
     {
         for( uint32_t i = 0; i < input_queues_->size(); ++i ) {
-            std::cout << "i:" << i << ": " << input_queues_->at(i)->data_queue_->size();
+            std::cout << "i:" << i << "(" << input_queues_->at(i)->argument_ << ")";
+            std::cout << ": " << input_queues_->at(i)->data_queue_->size();
             if( input_queues_->at(i)->data_queue_->size() > 0 ) {
                 std::cout << ":" << input_queues_->at(i)->data_queue_->front().to_ullong() << ":" << input_queues_->at(i)->data_queue_->front() << "\n";
             } else {
@@ -194,7 +317,8 @@ public:
     virtual bool doCompute() = 0;
 
     //TODO for testing only
-    virtual void queueInit() = 0;
+    virtual void inputQueueInit() = 0;
+    virtual void outputQueueInit() = 0;
 
 protected:
     opType op_binding_;
@@ -206,9 +330,6 @@ protected:
     uint32_t queue_depth_;
     std::vector< LlyrQueue* >* input_queues_;
     std::vector< LlyrQueue* >* output_queues_;
-
-/*    std::vector< std::queue< LlyrData >* >* input_queues_;
-    std::vector< std::queue< LlyrData >* >* output_queues_;*/
 
     // need to connect PEs to queues -- queue_id, src/dst
     std::map< uint32_t, ProcessingElement* > input_queue_map_;

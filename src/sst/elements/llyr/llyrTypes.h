@@ -51,8 +51,26 @@ typedef struct alignas(uint64_t) {
     uint16_t        fp_div_Latency_;
 } LlyrConfig;
 
+// data type to store PE data
+typedef std::pair< std::string, std::string > PairEdge;
+typedef std::pair< std::string, uint32_t > PairPE;
+typedef std::tuple< std::string, uint32_t, uint32_t > TriplePE;
+
+// data type for adv pes
+typedef std::map< uint32_t, Arg > QueueArgMap;
+
+typedef struct alignas(uint64_t) {
+    std::string     pe_id_;
+    std::string     job_id_;
+    std::string     op_;
+    std::list< std::string >* const_list_;
+    std::list< PairPE >*      input_list_;
+    std::list< PairPE >*      output_list_;
+    std::list< TriplePE >*    route_list_;
+} HardwareNode;
+
 typedef enum {
-    RTR = 0x00,
+    ROUTE = 0x00,
     ANY,
     ANY_MEM,
     LD,
@@ -61,6 +79,7 @@ typedef enum {
     ST,
     STADDR,
     STREAM_ST,
+    ALLOCA,
     ANY_LOGIC = 0x20,
     AND,
     OR,
@@ -70,16 +89,22 @@ typedef enum {
     SLR,
     ROL,
     ROR,
+    AND_IMM,
+    OR_IMM,
     ANY_TEST = 0x40,
     EQ,
     NE,
     UGT,
+    UGT_IMM,
     UGE,
+    UGE_IMM,
     SGT,
+    SGT_IMM,
     SGE,
     ULT,
     ULE,
     SLT,
+    SLT_IMM,
     SLE,
     ANY_INT = 0x80,
     ADD,
@@ -92,6 +117,8 @@ typedef enum {
     MULCONST,
     DIVCONST,
     REMCONST,
+    INC,
+    ACC,
     ANY_FP = 0xC0,
     FADD,
     FSUB,
@@ -104,12 +131,14 @@ typedef enum {
     TTAN,
     DUMMY = 0xFF,
     BUFFER,
+    REPEATER,
+    ROS,
     SEL,
     RET,
     OTHER
 } opType;
 
-inline opType getOptype(std::string &opString)
+inline opType const getOptype(std::string &opString)
 {
     opType operation;
 
@@ -118,8 +147,8 @@ inline opType getOptype(std::string &opString)
                    [](unsigned char c){ return std::toupper(c); }
     );
 
-    if( opString == "RTR" )
-        operation = RTR;
+    if( opString == "ROUTE" )
+        operation = ROUTE;
     else if( opString == "ANY" )
         operation = ANY;
     else if( opString == "ANY_MEM" )
@@ -136,6 +165,8 @@ inline opType getOptype(std::string &opString)
         operation = STADDR;
     else if( opString == "STREAM_ST" )
         operation = STREAM_ST;
+    else if( opString == "ALLOCA" )
+        operation = ALLOCA;
     else if( opString == "ANY_LOGIC" )
         operation = ANY_LOGIC;
     else if( opString == "AND" )
@@ -160,10 +191,16 @@ inline opType getOptype(std::string &opString)
         operation = NE;
     else if( opString == "UGT" )
         operation = UGT;
+    else if( opString == "UGT_IMM" )
+        operation = UGT_IMM;
     else if( opString == "UGE" )
         operation = UGE;
+    else if( opString == "UGE_IMM" )
+        operation = UGE_IMM;
     else if( opString == "SGT" )
         operation = SGT;
+    else if( opString == "SGT_IMM" )
+        operation = SGT_IMM;
     else if( opString == "SGE" )
         operation = SGE;
     else if( opString == "ULT" )
@@ -172,8 +209,14 @@ inline opType getOptype(std::string &opString)
         operation = ULE;
     else if( opString == "SLT" )
         operation = SLT;
+    else if( opString == "SLT_IMM" )
+        operation = SLT_IMM;
     else if( opString == "SLE" )
         operation = SLE;
+    else if( opString == "AND_IMM" )
+        operation = AND_IMM;
+    else if( opString == "OR_IMM" )
+        operation = OR_IMM;
     else if( opString == "ANY_INT" )
         operation = ANY_INT;
     else if( opString == "ADD" )
@@ -196,6 +239,10 @@ inline opType getOptype(std::string &opString)
         operation = DIVCONST;
     else if( opString == "REMCONST" )
         operation = REMCONST;
+    else if( opString == "INC" )
+	operation = INC;
+    else if( opString == "ACC" )
+        operation = ACC;
     else if( opString == "ANY_FP" )
         operation = ANY_FP;
     else if( opString == "FADD" )
@@ -220,6 +267,10 @@ inline opType getOptype(std::string &opString)
         operation = DUMMY;
     else if( opString == "BUFFER" )
         operation = BUFFER;
+    else if( opString == "REPEATER" )
+        operation = REPEATER;
+    else if( opString == "ROS" )
+        operation = ROS;
     else if( opString == "SEL" )
         operation = SEL;
     else if( opString == "RET" )
@@ -230,12 +281,12 @@ inline opType getOptype(std::string &opString)
     return operation;
 }
 
-inline std::string getOpString(opType &op)
+inline std::string const getOpString(const opType &op)
 {
     std::string operation;
 
-    if( op == RTR )
-        operation = "RTR";
+    if( op == ROUTE )
+        operation = "ROUTE";
     else if( op == ANY )
         operation = "ANY";
     else if( op == ANY_MEM )
@@ -252,6 +303,8 @@ inline std::string getOpString(opType &op)
         operation = "STADDR";
     else if( op == STREAM_ST )
         operation = "STREAM_ST";
+    else if( op == ALLOCA )
+        operation = "ALLOCA";
     else if( op == ANY_LOGIC )
         operation = "ANY_LOGIC";
     else if( op == AND )
@@ -276,10 +329,16 @@ inline std::string getOpString(opType &op)
         operation = "NE";
     else if( op == UGT )
         operation = "UGT";
+    else if( op == UGT_IMM )
+        operation = "UGT_IMM";
     else if( op == UGE )
         operation = "UGE";
+    else if( op == UGE_IMM )
+        operation = "UGE_IMM";
     else if( op == SGT )
         operation = "SGT";
+    else if( op == SGT_IMM )
+        operation = "SGT_IMM";
     else if( op == SGE )
         operation = "SGE";
     else if( op == ULT )
@@ -288,8 +347,14 @@ inline std::string getOpString(opType &op)
         operation = "ULE";
     else if( op == SLT )
         operation = "SLT";
+    else if( op == SLT_IMM )
+        operation = "SLT_IMM";
     else if( op == SLE )
         operation = "SLE";
+    else if( op == AND_IMM )
+        operation = "AND_IMM";
+    else if( op == OR_IMM )
+        operation = "OR_IMM";
     else if( op == ANY_INT )
         operation = "ANY_INT";
     else if( op == ADD )
@@ -312,6 +377,10 @@ inline std::string getOpString(opType &op)
         operation = "DIVCONST";
     else if( op == REMCONST )
         operation = "REMCONST";
+    else if( op == INC )
+	operation = "INC";
+    else if( op == ACC )
+        operation = "ACC";
     else if( op == ANY_FP )
         operation = "ANY_FP";
     else if( op == FADD )
@@ -336,6 +405,10 @@ inline std::string getOpString(opType &op)
         operation = "DUMMY";
     else if( op == BUFFER )
         operation = "BUFFER";
+    else if( op == ROS )
+        operation = "ROS";
+    else if( op == REPEATER )
+        operation = "REPEATER";
     else if( op == SEL )
         operation = "SEL";
     else if( op == RET )

@@ -36,13 +36,15 @@ public:
                     ProcessingElement(op_binding, processor_id, llyr_config)
     {
         cycles_ = cycles;
-        output_queues_ = new std::vector< LlyrQueue* >;
+
 
         //stores need two input queues -- address and data
-        input_queues_= new std::vector< LlyrQueue* >;
-        LlyrQueue* tempQueue = new LlyrQueue;
-        tempQueue->data_queue_ = new std::queue< LlyrData >;
-        input_queues_->push_back(tempQueue);
+
+//         LlyrQueue* tempQueue = new LlyrQueue;
+//         tempQueue->forwarded_ = 0;
+//         tempQueue->routing_arg_ = new std::string("");
+//         tempQueue->data_queue_ = new std::queue< LlyrData >;
+//         input_queues_->push_back(tempQueue);
     }
 
     virtual bool doSend()
@@ -73,9 +75,11 @@ public:
     {
         output_->verbose(CALL_INFO, 8, 0, ">> Receive 0x%" PRIx64 "\n", uint64_t(data.to_ullong()));
 
-        //for now push the result to all output queues
-        for( uint32_t i = 0; i < output_queues_->size(); ++i) {
-            output_queues_->at(i)->data_queue_->push(data);
+        //for now push the result to all output queues that need this result
+        for( uint32_t i = 0; i < output_queues_->size(); ++i ) {
+            if( *output_queues_->at(i)->routing_arg_ == "" ) {
+                output_queues_->at(i)->data_queue_->push(data);
+            }
         }
 
         return true;
@@ -83,21 +87,60 @@ public:
 
     virtual bool doCompute()
     {
-        output_->verbose(CALL_INFO, 4, 0, ">> Compute 0x%" PRIx32 "\n", op_binding_);
+//         output_->verbose(CALL_INFO, 4, 0, ">> Compute 0x%" PRIx32 "\n", op_binding_);
+        output_->verbose(CALL_INFO, 4, 0, ">> Compute %s\n", getOpString(op_binding_).c_str());
 
-        if( output_->getVerboseLevel() >= 64 ) {
+        if( output_->getVerboseLevel() >= 10 ) {
+            output_->verbose(CALL_INFO, 10, 0, "Queue Contents (0)\n");
             printInputQueue();
             printOutputQueue();
         }
 
         std::vector< LlyrData > argList;
         uint32_t num_ready = 0;
-        uint32_t num_inputs  = input_queues_->size();
+        uint32_t num_inputs = 0;
+        uint32_t total_num_inputs = input_queues_->size();
+
+        // discover which of the input queues are used for the compute
+        for( uint32_t i = 0; i < total_num_inputs; ++i) {
+            if( input_queues_->at(i)->argument_ > -1 ) {
+                num_inputs = num_inputs + 1;
+            }
+        }
+
+        // FIXME check to see of there are any routing jobs -- should be able to do this without waiting to fire
+        for( uint32_t i = 0; i < total_num_inputs; ++i) {
+            const std::string rtr_arg = *input_queues_->at(i)->routing_arg_;
+            std::cout << "\trtr_arg " << i << " -- " << rtr_arg << " (" << input_queues_->at(i)->forwarded_ << ")" << std::endl;
+            if( rtr_arg == "" || input_queues_->at(i)->forwarded_ == 1 ) {
+                std::cout << "continue" << std::endl;
+                continue;
+            }
+
+            std::cout << "num output queues " << output_queues_->size() << std::endl;
+            for( uint32_t j = 0; j < output_queues_->size(); ++j) {
+                std::cout << "output queue arg (" << j << ") " << *output_queues_->at(j)->routing_arg_ << std::endl;
+                if( *output_queues_->at(j)->routing_arg_ == rtr_arg && input_queues_->at(i)->data_queue_->size() > 0) {
+                    std::cout << "Now I'm hereherehere_3 -- " << input_queues_->at(i)->data_queue_->front() << std::endl;
+
+                    output_queues_->at(j)->data_queue_->push(input_queues_->at(i)->data_queue_->front());
+                    std::cout << "data type arg " << input_queues_->at(i)->argument_ << std::endl;
+                    if( input_queues_->at(i)->argument_ == -1 ) {
+                        input_queues_->at(i)->data_queue_->pop();
+                    } else {
+                        input_queues_->at(i)->forwarded_ = 1;
+                    }
+                    output_->verbose(CALL_INFO, 4, 0, "+Routing %s from %" PRIu32 "\n", rtr_arg.c_str(), i);
+                }
+            }
+        }
 
         //check to see if all of the input queues have data
-        for( uint32_t i = 0; i < num_inputs; ++i) {
-            if( input_queues_->at(i)->data_queue_->size() > 0 ) {
-                num_ready = num_ready + 1;
+        for( uint32_t i = 0; i < total_num_inputs; ++i) {
+            if( input_queues_->at(i)->argument_ > -1 ) {
+                if( input_queues_->at(i)->data_queue_->size() > 0 ) {
+                    num_ready = num_ready + 1;
+                }
             }
         }
 
@@ -109,20 +152,24 @@ public:
         }
 
         //if all inputs are available pull from queue and add to arg list
-        if( num_ready < num_inputs ) {
+        if( num_inputs == 0 || num_ready < num_inputs ) {
             output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
             return false;
         } else {
             output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
-            for( uint32_t i = 0; i < num_inputs; ++i) {
-                argList.push_back(input_queues_->at(i)->data_queue_->front());
-                input_queues_->at(i)->data_queue_->pop();
+            for( uint32_t i = 0; i < total_num_inputs; ++i) {
+                if( input_queues_->at(i)->argument_ > -1 ) {
+                    argList.push_back(input_queues_->at(i)->data_queue_->front());
+                    input_queues_->at(i)->forwarded_ = 0;
+                    input_queues_->at(i)->data_queue_->pop();
+                }
             }
         }
 
         doStore(argList[0].to_ullong(), argList[1].to_ullong());
 
         if( output_->getVerboseLevel() >= 10 ) {
+            output_->verbose(CALL_INFO, 10, 0, "Queue Contents (1)\n");
             printInputQueue();
             printOutputQueue();
         }
@@ -130,15 +177,32 @@ public:
         return true;
     }
 
-    virtual void queueInit()
+    virtual void inputQueueInit()
     {
-        output_->verbose(CALL_INFO, 4, 0, ">> Fake Init(%" PRIu32 "), Op %" PRIu32 " \n",
+        output_->verbose(CALL_INFO, 4, 0, ">> Fake Init Input Queue(%" PRIu32 "), Op %" PRIu32 " \n",
                          processor_id_, op_binding_ );
 
+        while( input_queues_->size() < input_queues_init_.size() ) {
+            LlyrQueue* tempQueue = new LlyrQueue;
+            tempQueue->forwarded_ = 0;
+            tempQueue->argument_ = 0;
+            tempQueue->routing_arg_ = new std::string("");
+            tempQueue->data_queue_ = new std::queue< LlyrData >;
+            input_queues_->push_back(tempQueue);
+        }
+
         //TODO Need a more elegant way to initialize these queues
+        uint32_t queue_id = 0;
         if( input_queues_init_.size() > 0 ) {
-            std::queue< LlyrData >* tempQueue(&input_queues_init_);
-            input_queues_->at(0)->data_queue_ = tempQueue;
+            for( auto it = input_queues_init_.begin(); it != input_queues_init_.end(); ++it ) {
+                if( it->first == queue_id ) {
+                    int64_t init_value = std::stoll(it->second);
+                    LlyrData temp = LlyrData(init_value);
+                    input_queues_->at(queue_id)->argument_ = 0;
+                    input_queues_->at(queue_id)->data_queue_->push(temp);
+                }
+                queue_id = queue_id + 1;
+            }
         } else {
             //for now assume that the address queue is on in-0
             uint64_t addr = llyr_config_->starting_addr_ + ( (processor_id_ - 1) * (Bit_Length / 8) );
@@ -152,8 +216,10 @@ public:
         }
     }
 
+    virtual void outputQueueInit() {};
+
 protected:
-    std::queue< LlyrData > input_queues_init_;
+    std::map< uint32_t, Arg > input_queues_init_;
 
     bool doStore(uint64_t addr, LlyrData data)
     {
@@ -206,48 +272,98 @@ class AdvStoreProcessingElement : public StoreProcessingElement
 {
 public:
     AdvStoreProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
-                          std::string *arguments, uint32_t cycles = 1)  :
+                          QueueArgMap* arguments, uint32_t cycles = 1)  :
                           StoreProcessingElement(op_binding, processor_id, llyr_config)
     {
         cycles_ = cycles;
 
-        if( arguments[0] != "" ) {
-            int64_t init_value = std::stoll(arguments[0]);
-            input_queues_init_.push(LlyrData(init_value));
+        // iterate through the arguments and set initial queue values
+        for( auto it = arguments->begin(); it != arguments->end(); ++it ) {
+
+            std::cout << "[AdvStoreProcessingElement]";
+            std::cout << "input_queues_init_ -- ";
+            std::cout << " queue: " << it->first;
+            std::cout << " arg: "   << it->second;
+            std::cout << std::endl;
+
+            auto retVal = input_queues_init_.emplace( it->first, it->second );
+            if( retVal.second == false ) {
+                ///TODO
+            }
         }
 
-        if( arguments[1] != "" ) {
-            termination_ = std::stoll(arguments[1]);
-        } else {
-            termination_ = 0;
-        }
+//         if( arguments[1] != "" ) {
+//             termination_ = std::stoll(arguments[1]);
+//         } else {
+//             termination_ = 0;
+//         }
 
-        output_queues_ = new std::vector< LlyrQueue* >;
+
 
         //stores need two input queues -- address and data
-        input_queues_= new std::vector< LlyrQueue* >;
-        LlyrQueue* tempQueue = new LlyrQueue;
-        tempQueue->data_queue_ = new std::queue< LlyrData >;
-        input_queues_->push_back(tempQueue);
+
+//         LlyrQueue* tempQueue = new LlyrQueue;
+//         tempQueue->forwarded_ = 0;
+//         tempQueue->routing_arg_ = new std::string("");
+//         tempQueue->data_queue_ = new std::queue< LlyrData >;
+//         input_queues_->push_back(tempQueue);
     }
 
     virtual bool doCompute()
     {
-        output_->verbose(CALL_INFO, 4, 0, ">> Compute 0x%" PRIx32 "\n", op_binding_);
+        output_->verbose(CALL_INFO, 4, 0, ">> Compute %s\n", getOpString(op_binding_).c_str());
 
-        if( output_->getVerboseLevel() >= 64 ) {
+        if( output_->getVerboseLevel() >= 10 ) {
+            output_->verbose(CALL_INFO, 10, 0, "Queue Contents (0)\n");
             printInputQueue();
             printOutputQueue();
         }
 
         std::vector< LlyrData > argList;
         uint32_t num_ready = 0;
-        uint32_t num_inputs  = input_queues_->size();
+        uint32_t num_inputs = 0;
+        uint32_t total_num_inputs = input_queues_->size();
+
+        // discover which of the input queues are used for the compute
+        for( uint32_t i = 0; i < total_num_inputs; ++i) {
+            if( input_queues_->at(i)->argument_ > -1 ) {
+                num_inputs = num_inputs + 1;
+            }
+        }
+
+        // FIXME check to see of there are any routing jobs -- should be able to do this without waiting to fire
+        for( uint32_t i = 0; i < total_num_inputs; ++i) {
+            const std::string rtr_arg = *input_queues_->at(i)->routing_arg_;
+            std::cout << "\trtr_arg " << i << " -- " << rtr_arg << " (" << input_queues_->at(i)->forwarded_ << ")" << std::endl;
+            if( rtr_arg == "" || input_queues_->at(i)->forwarded_ == 1 ) {
+                std::cout << "continue" << std::endl;
+                continue;
+            }
+
+            std::cout << "num output queues " << output_queues_->size() << std::endl;
+            for( uint32_t j = 0; j < output_queues_->size(); ++j) {
+                std::cout << "output queue arg (" << j << ") " << *output_queues_->at(j)->routing_arg_ << std::endl;
+                if( *output_queues_->at(j)->routing_arg_ == rtr_arg && input_queues_->at(i)->data_queue_->size() > 0) {
+                    std::cout << "Now I'm hereherehere_3 -- " << input_queues_->at(i)->data_queue_->front() << std::endl;
+
+                    output_queues_->at(j)->data_queue_->push(input_queues_->at(i)->data_queue_->front());
+                    std::cout << "data type arg " << input_queues_->at(i)->argument_ << std::endl;
+                    if( input_queues_->at(i)->argument_ == -1 ) {
+                        input_queues_->at(i)->data_queue_->pop();
+                    } else {
+                        input_queues_->at(i)->forwarded_ = 1;
+                    }
+                    output_->verbose(CALL_INFO, 4, 0, "+Routing %s from %" PRIu32 "\n", rtr_arg.c_str(), i);
+                }
+            }
+        }
 
         //check to see if all of the input queues have data
-        for( uint32_t i = 0; i < num_inputs; ++i) {
-            if( input_queues_->at(i)->data_queue_->size() > 0 ) {
-                num_ready = num_ready + 1;
+        for( uint32_t i = 0; i < total_num_inputs; ++i) {
+            if( input_queues_->at(i)->argument_ > -1 ) {
+                if( input_queues_->at(i)->data_queue_->size() > 0 ) {
+                    num_ready = num_ready + 1;
+                }
             }
         }
 
@@ -259,14 +375,17 @@ public:
         }
 
         //if all inputs are available pull from queue and add to arg list
-        if( num_ready < num_inputs ) {
+        if( num_inputs == 0 || num_ready < num_inputs ) {
             output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
             return false;
         } else {
             output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
-            for( uint32_t i = 0; i < num_inputs; ++i) {
-                argList.push_back(input_queues_->at(i)->data_queue_->front());
-                input_queues_->at(i)->data_queue_->pop();
+            for( uint32_t i = 0; i < total_num_inputs; ++i) {
+                if( input_queues_->at(i)->argument_ > -1 ) {
+                    argList.push_back(input_queues_->at(i)->data_queue_->front());
+                    input_queues_->at(i)->forwarded_ = 0;
+                    input_queues_->at(i)->data_queue_->pop();
+                }
             }
         }
 
@@ -275,7 +394,7 @@ public:
             doStore(argList[0].to_ullong(), argList[1].to_ullong());
         } else if( op_binding_ == STREAM_ST ) {
             doStore(argList[0].to_ullong(), argList[1].to_ullong());
-            if( termination_ > 0 ) {
+            if( termination_ > 1 ) {
                 termination_ = termination_ - 1;
                 input_queues_->at(0)->data_queue_->push(LlyrData(argList[0].to_ullong() + (Bit_Length / 8)));
             }
@@ -285,6 +404,7 @@ public:
         }
 
         if( output_->getVerboseLevel() >= 10 ) {
+            output_->verbose(CALL_INFO, 10, 0, "Queue Contents (1)\n");
             printInputQueue();
             printOutputQueue();
         }
