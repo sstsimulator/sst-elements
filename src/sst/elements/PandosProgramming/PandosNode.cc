@@ -2,6 +2,7 @@
 #include <pando/backend_task.hpp>
 #include <pando/backend_address_utils.hpp>
 #include <dlfcn.h>
+#include <string.h>
 #include "sst_config.h"
 #include "PandosNode.h"
 #include "PandosEvent.h"
@@ -79,6 +80,24 @@ void PandosNodeT::checkPXNID(int line, const char *file, const char *function, i
                    ,pando_context->getId());
         abort();
     }
+}
+
+/**
+ * parse the program argument vector
+ */
+void PandosNodeT::parseProgramArgv(Params &params)
+{
+    bool found;
+    std::string argv_str = params.find<std::string>("program_argv", "", found);
+    std::stringstream ss(argv_str);
+    // tokenize the string
+    while (!ss.eof()) {
+        std::string arg;
+        ss >> arg;
+        program_argv.push_back(strdup(arg.c_str()));
+    }
+    // add a nullptr at the end
+    program_argv.push_back(nullptr);
 }
 
 void PandosNodeT::openProgramBinary()
@@ -162,7 +181,7 @@ void PandosNodeT::initCores()
     }
 
     auto main_task = pando::backend::NewTask([=]()mutable{
-            my_main(0, nullptr);
+            my_main(program_argv.size()-1, program_argv.data());
             out->verbose(CALL_INFO, 1, 0, "my_main() has returned\n");
         });
     cc0->task_deque.push_front(main_task);
@@ -186,7 +205,8 @@ PandosNodeT::PandosNodeT(ComponentId_t id, Params &params) : Component(id), prog
     node_shared_dram_size = params.find<size_t>("node_shared_dram_size", 1024*1024*1024, found);
     bool debug_scheduler = params.find<bool>("debug_scheduler", false, found);
     bool debug_memory_requests = params.find<bool>("debug_memory_requests", false, found);
-    bool debug_initialization = params.find<bool>("debug_initialization", false, found);        
+    bool debug_initialization = params.find<bool>("debug_initialization", false, found);
+    parseProgramArgv(params);
     uint32_t verbose_mask = 0;
     if (debug_scheduler) verbose_mask |= DEBUG_SCHEDULE;
     if (debug_memory_requests) verbose_mask |= DEBUG_MEMORY_REQUESTS;
@@ -255,6 +275,10 @@ PandosNodeT::~PandosNodeT() {
     }
     core_contexts.clear();
     closeProgramBinary();
+
+    for (int i = 0; i < program_argv.size(); i++)
+        free(program_argv[i]);
+
     delete out;
 }
 
