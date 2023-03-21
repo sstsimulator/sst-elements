@@ -36,6 +36,7 @@ public:
                 {"node_shared_dram_size", "Size of Node Shared DRAM in Bytes", NULL},
                 {"instructions_per_task", "Instructions per task", NULL},
                 {"program_binary_fname", "Program binary file name", NULL},
+                {"program_argv", "Program arguments", NULL},
                 {"verbose_level", "Verbosity of logging", NULL},
                 {"debug_scheduler", "Debug scheduler", NULL},
                 {"debug_memory_requests", "Debug memory requests", NULL},
@@ -123,6 +124,11 @@ public:
          * schedule work onto a core
          */
         void schedule(int core_id);
+
+        /**
+         * parse the program argument vector
+         */
+        void parseProgramArgv(Params &params);
         
         // SST Output object, for printing error messages, etc.
         SST::Output *out;
@@ -152,6 +158,7 @@ public:
         std::string program_binary_fname; //!< The name of the program binary to load
         size_t node_shared_dram_size; //!< how large is dram on this node
         void *program_binary_handle;
+        std::vector<char*> program_argv;
         getContextFunc_t get_current_pando_ctx;
         setContextFunc_t set_current_pando_ctx;
         pando::backend::node_context_t *pando_context; //!< PANDO context
