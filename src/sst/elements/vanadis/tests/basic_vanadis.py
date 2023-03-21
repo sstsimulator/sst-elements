@@ -135,7 +135,7 @@ osParams = {
 processList = ( 
     ( 1, {
         "env_count" : 1,
-        "env0" : "OMP_NUM_THREADS={}".format(numCpus),
+        "env0" : "OMP_NUM_THREADS={}".format(numCpus*numThreads),
         "exe" : full_exe_name,
         "arg0" : exe_name,
     } ),
