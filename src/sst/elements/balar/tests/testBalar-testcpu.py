@@ -120,7 +120,7 @@ l1_nic.addParams({ "group" : l1_group,
 
 mmio = sst.Component("balar", "balar.balarMMIO")
 mmio.addParams({
-      "verbose" : 20,
+      "verbose" : 0,
       "clock" : clock,
       "base_addr" : mmio_addr,
       "mmio_size": 1024,
