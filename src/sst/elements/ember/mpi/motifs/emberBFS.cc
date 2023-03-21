@@ -13,12 +13,20 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+// Model parameter files associated with this model can be found at:
+// https://github.com/sstsimulator/a-sst/tree/new-bfs-models/ISB-BFS
+
 
 #include <sst_config.h>
 #include <fstream>
 #include <iterator>
 #include <algorithm>
+#include <iostream>
+#include <string>
+#include <memory>
 #include "emberBFS.h"
+#include <stdint.h>
+#include <regex>
 
 using namespace SST::Ember;
 
@@ -27,121 +35,211 @@ EmberBFSGenerator::EmberBFSGenerator(SST::ComponentId_t id,
     EmberMessagePassingGenerator(id, params, "BFS"), state(0),
     recvCounts_31(0), sendCounts_35(0), recvCounts_35(0)
 {
+
+    trace = false;
     m_sz = (int32_t) params.find("arg.sz", 1);
     m_threads = (int32_t) params.find("arg.threads", 1);
     uint32_t rng_seed = (uint32_t) params.find("arg.seed", 1);
     m_nodes = (uint32_t) params.find("arg.nodes", 1);
 
     // Parse model files
-    std::ifstream msg_model_file( params.find<std::string>("arg.msg_model", "msg_size_2D.model") );
-    std::ifstream exec_model_file( params.find<std::string>("arg.exec_model", "exec_time_2D.model") );
+    std::string msg_model_filename  = params.find<std::string>("arg.msg_model", "msg.model");
+    std::string exec_model_filename = params.find<std::string>("arg.exec_model", "exec.model");
+
+    // If it is a trace file and has an X in place of rank_id, each rank should read its own file
+    // This code replaces "_X." with "-N.", where N is the rank.
+    // This code DOES NOT WORK. The motif will hang, probably due to breaking assumptions about symmetric message sizes.
+    // There also appear to be issues with not every exec trace having every model it needs. We could possibly fix that
+    // by having a default behavior of a constant model when something is missing from the map.
+
+    /*
+    if (msg_model_filename.find("msgtrace") != std::string::npos) {
+        if (msg_model_filename.find("-X.txt") != std::string::npos) {
+            std::cout << "found it" << std::endl;
+            std::string rep = "-" + std::to_string(rank()) + ".";
+            //std::string rep = "-0."; // used for bug testing, have everyone use rank 0
+            std::cout << "replaced: " << std::regex_replace(msg_model_filename, std::regex("\\-X\\."), rep) << std::endl;
+            msg_model_filename = std::regex_replace(msg_model_filename, std::regex("\\-X\\."), rep);
+        }
+    }
+    if (exec_model_filename.find("exectrace") != std::string::npos) {
+        if (exec_model_filename.find("-X.txt") != std::string::npos) {
+            std::cout << "found it" << std::endl;
+            std::string rep = "-" + std::to_string(rank()) + ".";
+            std::cout << "replaced: " << std::regex_replace(exec_model_filename, std::regex("\\-X\\."), rep) << std::endl;
+            exec_model_filename = std::regex_replace(exec_model_filename, std::regex("\\-X\\."), rep);
+        }
+    }
+    */
+
+    std::ifstream msg_model_file(msg_model_filename);
+    std::ifstream exec_model_file(exec_model_filename);
 
     if (not (exec_model_file.good() and msg_model_file.good())) {
         out.fatal(CALL_INFO, 1, "Bad model file(s)");
     }
 
-    // Read the communication size model into a SharedMap
-    // Each line of the file is
-    //   callsite coeff1 coeff2 coeff3 [...]
     std::string line;
-    int skip_first = true;
-    double scale = 1.0;
-    double min   = 4.0; // the minimum communication size should be 1 float/int
-    std::vector<std::vector<int>> powers; // powers holds the column headers e,g, [0,1] => x0^0 * x1^1
-    getline(msg_model_file, line);
 
-    std::istringstream iss(line);
-    std::string tok;
-    iss >> tok >> tok; // drop first two column headers
+    // Parse the message model file. We have a different parsing scheme for polynomial models and other
+    // models. The polynomial models have a header that tells us, for each column, what term the coefficeints
+    // in that column are associated with. For instance, a column header of X,Y means that column contains the
+    // coefficients for the term size^X*nodes^Y. The constant term is thus 0,0.
+    if (msg_model_filename.find("poly") != std::string::npos) {
+        // Using polynomial models
+        int min = 0;
+        std::vector<std::vector<int>> powers; // 0,1 => x0^0 * x1^1
 
-    // Each token is x0,x1,...,xn
-    // Parse this into a vector => [x0,x1,...,xn]
-    while (iss >> tok) {
-        std::vector<int> pows;
-        auto start = 0U;
-        std::string delim = ",";
-        auto end = tok.find(delim);
-        while (end != std::string::npos) {
+        // Parse column headers
+        getline(msg_model_file, line);
+        std::istringstream iss(line);
+
+        std::string tok;
+
+        iss >> tok >> tok; // drop first two column headers
+        // Each token is x0,x1,...,xn
+        // Parse this into a vector => [x0,x1,...,xn]
+        while (iss >> tok) {
+            std::vector<int> pows;
+            std::string delim = ",";
+            auto start = 0U;
+            auto end = tok.find(delim);
+            while (end != std::string::npos) {
+                pows.push_back(std::stoi(tok.substr(start, end - start)));
+                start = end + delim.length();
+                end = tok.find(delim, start);
+            }
             pows.push_back(std::stoi(tok.substr(start, end - start)));
-            start = end + delim.length();
-            end = tok.find(delim, start);
-        }
-        pows.push_back(std::stoi(tok.substr(start, end - start)));
-        powers.push_back(pows);
-    }
-
-    // Each line is
-    // callsite threads_per_rank coeff1 coeff2 ... coeffm
-    while (getline(msg_model_file, line)) {
-        std::istringstream iss(line);
-        int cs, threads_per_rank;
-        iss >> cs >> threads_per_rank;
-        double co;
-        std::map<std::vector<int>, double> coeff;
-        int idx = 0;
-        while (iss >> co) {
-            coeff[powers[idx]] = co;
-            idx++;
+            powers.push_back(pows);
         }
 
-        msg_model_nd[std::make_tuple(cs, threads_per_rank)] = PolyModelND(coeff, scale, min);
-    }
-    /*
-    for (auto const& [key, pm] : msg_model_nd) {
-        std::cout << "[cs: " << std::get<0>(key) << ", tpr: " << std::get<1>(key) << "]" << std::endl;
-        if (std::get<0>(key) == 53 && std::get<1>(key) == 3) {
-            for (auto const& [pows, co] : pm.coeff) {
-                std::cout << "  [ ";
-                for (auto const& i : pows) {
-                    std::cout << i << " ";
+        // Parse the rest of the file. Each line is:
+        //   src dst threads_per_rank coeff0 coeff1 ...
+        while (getline(msg_model_file, line)) {
+            std::istringstream iss(line);
+            int cs, threads_per_rank;
+                iss >> cs >> threads_per_rank;
+                double co;
+                std::map<std::vector<int>, double> coeff;
+                int idx = 0;
+                while (iss >> co) {
+                    coeff[powers[idx]] = co;
+                    idx++;
                 }
-                std::cout << "] -> " << co << std::endl;
+                msg_model[std::make_tuple(cs, threads_per_rank)] = std::unique_ptr<Model>(new PolyModelND(coeff, min));
+        }
+    }
+    else {
+        // Using new models
+        while (getline(msg_model_file, line)) {
+            std::istringstream iss(line);
+            int cs, threads_per_rank;
+            std::string model_type;
+            iss >> cs >> threads_per_rank >> model_type;
+
+            if (!(model_type.compare("CONSTANT"))) {
+                double constant;
+                iss >> constant;
+                msg_model[std::make_tuple(cs, threads_per_rank)] = std::unique_ptr<Model>(new ConstModel(constant));
+            }
+            else if (!(model_type.compare("EXPONENTIAL"))) {
+                double A, B, C, D;
+                iss >> A >>  B >>  C >> D;
+                msg_model[std::make_tuple(cs, threads_per_rank)] = std::unique_ptr<Model>(new ExpModel(A, B, C, D));
+            }
+            else if (!(model_type.compare("TRACE"))) {
+                std::vector<double> vals((std::istream_iterator<double>(iss)), std::istream_iterator<double>());
+                msg_model[std::make_tuple(cs, threads_per_rank)] = std::unique_ptr<Model>(new TraceModel(vals));
+            }
+            else {
+                std::cout << "ERROR\n";
+                exit(1);
             }
 
         }
     }
-    std::cout << "done" << std::endl;
-    */
 
-    // Read the compute time model into a SharedMap
-    // Each line of the file is
-    //   src_callsite dst_callsite coeff1 coeff2 coeff3 [...]
-    skip_first = true;
-    //scale=1000.0; // adjust timescale
-    min = 0.0;    // no negative times
-    while (getline(exec_model_file, line)) {
-        if (skip_first) { // skip the first line -- assume it's the same coeff order as msg_size
-            skip_first = false;
-            continue;
-        }
+
+    // Parse the execution time models. These are nearly identical to the message size models except that a
+    // compute region, or "callsite transition" is defiend by the callsites that come before and after it.
+    // Thus, a compute region is identified by a source callsite and a destination callsite at the beginning
+    // of each line instead of a single callsite in the case of the message models.
+    if (exec_model_filename.find("poly") != std::string::npos) {
+        // Using polynomial models
+        int min = 0;
+        std::vector<std::vector<int>> powers; // 0,1 => x0^0 * x1^1
+
+        // Parse column headers
+        getline(exec_model_file, line);
         std::istringstream iss(line);
-        int src_cs, dst_cs, threads_per_rank;
-        iss >> src_cs >> dst_cs >> threads_per_rank;
-        double co;
-        std::map<std::vector<int>, double> coeff;
-        int idx = 0;
-        while (iss >> co) {
-            coeff[powers[idx]] = co;
-            idx++;
-        }
-        exec_model_nd[std::make_tuple(src_cs, dst_cs, threads_per_rank)] = PolyModelND(coeff, scale, min);
-    }
+        std::string tok;
 
-    /*
-    for (auto const& [key, pm] : exec_model_nd) {
-        std::cout << "[src: " << std::get<0>(key) << ", dst: " << std::get<1>(key) << ", tpr: " << std::get<2>(key) << "]" << std::endl;
-        if (std::get<0>(key) == 2 && std::get<1>(key) == 3 && std::get<2>(key) == 1) {
-            for (auto const& [pows, co] : pm.coeff) {
-                std::cout << "  [ ";
-                for (auto const& i : pows) {
-                    std::cout << i << " ";
-                }
-                std::cout << "] -> " << co << std::endl;
+        iss >> tok >> tok >> tok; // drop first three column headers
+        // Each token is x0,x1,...,xn
+        // Parse this into a vector => [x0,x1,...,xn]
+        while (iss >> tok) {
+            std::vector<int> pows;
+            std::string delim = ",";
+            auto start = 0U;
+            auto end = tok.find(delim);
+            while (end != std::string::npos) {
+                pows.push_back(std::stoi(tok.substr(start, end - start)));
+                start = end + delim.length();
+                end = tok.find(delim, start);
             }
+            pows.push_back(std::stoi(tok.substr(start, end - start)));
+            powers.push_back(pows);
+        }
 
+        while (getline(exec_model_file, line)) {
+            std::istringstream iss(line);
+            int src, dst, threads_per_rank;
+            iss >> src >> dst >> threads_per_rank;
+            double co;
+            std::map<std::vector<int>, double> coeff;
+            int idx = 0;
+            while (iss >> co) {
+                coeff[powers[idx]] = co;
+                idx++;
+            }
+            exec_model[std::make_tuple(src, dst, threads_per_rank)] = std::unique_ptr<Model>(new PolyModelND(coeff, min));
+        exec_model[std::make_tuple(src, dst, threads_per_rank)]->setScale(1000.0);
+        }
+
+    } else {
+        // new models
+        while (getline(exec_model_file, line)) {
+            std::istringstream iss(line);
+            int src, dst, threads_per_rank;
+            std::string model_type;
+            iss >> src >> dst >> threads_per_rank >> model_type;
+
+            if (!(model_type.compare("CONSTANT"))) {
+                double constant;
+                iss >> constant;
+                exec_model[std::make_tuple(src, dst, threads_per_rank)] = std::unique_ptr<Model>(new ConstModel(constant));
+            }
+            else if (!(model_type.compare("BILINEAR"))) {
+                double A, B, C, D;
+                iss >> A >>  B >>  C >> D;
+                exec_model[std::make_tuple(src, dst, threads_per_rank)] = std::unique_ptr<Model>(new BilinearModel(A, B, C, D));
+            }
+            else if (!(model_type.compare("EXPONENTIAL"))) {
+                double A, B, C, D;
+                iss >> A >>  B >>  C >> D;
+                exec_model[std::make_tuple(src, dst, threads_per_rank)] = std::unique_ptr<Model>(new ExpModel(A, B, C, D));
+            }
+            else if (!(model_type.compare("TRACE"))) {
+                std::vector<double> vals((std::istream_iterator<double>(iss)), std::istream_iterator<double>());
+                exec_model[std::make_tuple(src, dst, threads_per_rank)] = std::unique_ptr<Model>(new TraceModel(vals));
+            }
+            else {
+                std::cout << "ERROR\n";
+                exit(1);
+            }
+            exec_model[std::make_tuple(src, dst, threads_per_rank)]->setScale(1000.0);
         }
     }
-    */
 
     // initial state
     iter = 0;
@@ -220,6 +318,13 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
 
     enQ_getTime( evQ, &s_time );
 
+    double msg_size  = 0.0;
+    double exec_time = 0.0;
+
+    int next_state = -1;
+
+    int zero_compute = 0;
+
     switch(state) {
     case 0: // special init state
         // create communicators
@@ -227,30 +332,35 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
             enQ_commCreate( evQ, GroupWorld, comm0_ranks, &comm0 );
             enQ_commCreate( evQ, GroupWorld, comm1_ranks, &comm1 );
             enQ_commCreate( evQ, GroupWorld, comm2_ranks, &comm2 );
+            comm1_rank = UINT32_MAX; //inital value
         }
         state = 1;
+
         break;
     case 1:
         {
-            int next_state = 2;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 2;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             // find our 'local' ranks
-            enQ_rank( evQ, comm2, &comm2_rank );
             enQ_rank( evQ, comm0, &comm0_rank );
+            enQ_rank( evQ, comm1, &comm1_rank ); // comm1 is comm_world
+            enQ_rank( evQ, comm2, &comm2_rank );
+
 
             enQ_allreduce( evQ, nullBuf, nullBuf, 8, CHAR, MP::MAX, comm0 );
-            enQ_compute(evQ, exec_time);
+            if (!zero_compute) enQ_compute(evQ, exec_time);
 
             state = next_state;
         }
         break;
     case 2:
         {
-            int next_state = 3;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 3;
+
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             // we do some initialization for state 48 here since we
             // now have the comm0_rank
@@ -259,15 +369,15 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
             }
 
             enQ_allreduce( evQ, nullBuf, nullBuf, msg_size, CHAR, MP::MAX, comm0 );
-            enQ_compute(evQ, exec_time);
+            if (!zero_compute) enQ_compute(evQ, exec_time);
 
             state = next_state;
         }
         break;
     case 3:
         {
-            int next_state = 4;
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 4;
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_barrier( evQ, comm1 );
             enQ_compute(evQ, exec_time);
@@ -277,9 +387,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 4:
         {
-            int next_state = 5;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 5;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_allreduce( evQ, nullBuf, nullBuf, msg_size, CHAR, MP::MAX, comm1 );
             enQ_compute(evQ, exec_time);
@@ -289,9 +399,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 5:
         {
-            int next_state = 6;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 6;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_allreduce( evQ, nullBuf, nullBuf, msg_size, CHAR, MP::MAX, comm0 );
             enQ_compute(evQ, exec_time);
@@ -301,9 +411,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 6:
         {
-            int next_state = 7;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 7;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_bcast( evQ, nullBuf, msg_size, CHAR, 0, comm1 );
             enQ_compute(evQ, exec_time);
@@ -313,9 +423,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 7:
         {
-            int next_state = 8;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 8;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_bcast( evQ, nullBuf, msg_size, CHAR, 0, comm1 );
             enQ_compute(evQ, exec_time);
@@ -325,9 +435,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 8:
         {
-            int next_state = 9;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 9;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_bcast( evQ, nullBuf, msg_size, CHAR, 0, comm1 );
             enQ_compute(evQ, exec_time);
@@ -337,9 +447,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 9:
         {
-            int next_state = 10;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 10;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_bcast( evQ, nullBuf, msg_size, CHAR, 0, comm1 );
             enQ_compute(evQ, exec_time);
@@ -349,8 +459,8 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 10:
         {
-            int next_state = 11;
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 11;
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             // comm_dup
             enQ_compute(evQ, exec_time);
@@ -360,8 +470,8 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 11:
         {
-            int next_state = 12;
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 12;
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             // comm_dup
             enQ_compute(evQ, exec_time);
@@ -371,8 +481,8 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 12:
         {
-            int next_state = 13;
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 13;
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             // comm_dup
             enQ_compute(evQ, exec_time);
@@ -382,8 +492,8 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 13:
         {
-            int next_state = 14;
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 14;
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             // comm_dup
             enQ_compute(evQ, exec_time);
@@ -393,9 +503,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 14:
         {
-            int next_state = 15;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 15;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_sendrecv( evQ,
                           nullBuf, msg_size, CHAR, opposite, 0, //send (tag=0)
@@ -409,9 +519,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 15: //COMMTODO
         {
-            int next_state = 16;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 16;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_allgather( evQ,
                            nullBuf, msg_size, CHAR,
@@ -425,9 +535,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 16: //COMMTODO
         {
-            int next_state = 17;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 17;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_sendrecv( evQ,
                           nullBuf, msg_size, CHAR, opposite, 0, //send (tag=0)
@@ -441,8 +551,8 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 17:
         {
-            int next_state = 18;
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 18;
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             // comm_dup
             enQ_compute(evQ, exec_time);
@@ -452,8 +562,8 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 18:
         {
-            int next_state = 19;
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 19;
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             // comm_dup
             enQ_compute(evQ, exec_time);
@@ -463,8 +573,8 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 19:
         {
-            int next_state = 20;
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 20;
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             // comm_dup
             enQ_compute(evQ, exec_time);
@@ -474,8 +584,8 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 20:
         {
-            int next_state = 21;
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 21;
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             // comm_dup
             enQ_compute(evQ, exec_time);
@@ -485,9 +595,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 21:
         {
-            int next_state = 22;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 22;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_allgather( evQ,
                            nullBuf, msg_size, CHAR,
@@ -501,9 +611,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 22:
         {
-            int next_state = 23;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 23;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_bcast( evQ, nullBuf, msg_size, CHAR, 0, comm0 );
             enQ_compute(evQ, exec_time);
@@ -514,9 +624,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 23:
         {
-            int next_state = 24;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 24;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_allreduce( evQ, nullBuf, nullBuf, msg_size, CHAR, MP::MAX, comm1 );
             enQ_compute(evQ, exec_time);
@@ -526,9 +636,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 24:
         {
-            int next_state = 25;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 25;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_allreduce( evQ, nullBuf, nullBuf, msg_size, CHAR, MP::MAX, comm1 );
             enQ_compute(evQ, exec_time);
@@ -538,9 +648,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 25:
         {
-            int next_state = 26;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 26;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_allreduce( evQ, nullBuf, nullBuf, msg_size, CHAR, MP::MAX, comm0 );
             enQ_compute(evQ, exec_time);
@@ -550,9 +660,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 26:
         {
-            int next_state = 27;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 27;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_sendrecv( evQ,
                           nullBuf, msg_size, CHAR, opposite, 0, //send (tag=0)
@@ -566,9 +676,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 27:
         {
-            int next_state = 28;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 28;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_sendrecv( evQ,
                           nullBuf, msg_size, CHAR, opposite, 0, //send (tag=0)
@@ -582,9 +692,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 28:
         {
-            int next_state = 29;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 29;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_sendrecv( evQ,
                           nullBuf, msg_size, CHAR, opposite, 0, //send (tag=0)
@@ -598,9 +708,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 29:
         {
-            int next_state = 30;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 30;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_sendrecv( evQ,
                           nullBuf, msg_size, CHAR, opposite, 0, //send (tag=0)
@@ -614,9 +724,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 30:
         {
-            int next_state = 31;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 31;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_allgather( evQ,
                            nullBuf, msg_size, CHAR,
@@ -630,9 +740,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 31:
         {
-            int next_state = 32;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 32;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             int csize = comm2_ranks.size();
             if (0 == recvCounts_31) {
@@ -652,9 +762,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 32:
         {
-            int next_state = 33;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 33;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_bcast( evQ, nullBuf, msg_size, CHAR, 0, comm2 );
             enQ_compute(evQ, exec_time);
@@ -664,9 +774,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 33:
         {
-            int next_state = 34;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 34;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_allreduce( evQ, nullBuf, nullBuf, msg_size, CHAR, MP::MAX, comm2 );
             enQ_compute(evQ, exec_time);
@@ -676,9 +786,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 34:
         {
-            int next_state = 35;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 35;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_alltoall( evQ,
                           nullBuf, msg_size, CHAR,
@@ -691,9 +801,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 35:
         {
-            int next_state = 36;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 36;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             int csize = comm0_ranks.size();
             if (0 == sendCounts_35) {
@@ -715,9 +825,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 36:
         {
-            int next_state = 37;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 37;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             // Reuse buffers from 35
             // They should be allocated but we'll check just in case
@@ -743,9 +853,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 37:
         {
-            int next_state = 38;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 38;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_allreduce( evQ, nullBuf, nullBuf, msg_size, CHAR, MP::MAX, comm1 );
             enQ_compute(evQ, exec_time);
@@ -755,9 +865,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 38:
         {
-            int next_state = 39;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 39;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_allreduce( evQ, nullBuf, nullBuf, msg_size, CHAR, MP::MAX, comm1 );
             enQ_compute(evQ, exec_time);
@@ -767,7 +877,7 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 39:
         {
-            int next_state;
+            next_state;
 
             // the next state is determined by a pattern for each
             //iteration. It goes 25, 40 then a 67% chance of 25 again,
@@ -792,8 +902,8 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
             }
             idx_39++;
 
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_allreduce( evQ, nullBuf, nullBuf, msg_size, CHAR, MP::MAX, comm1 );
             enQ_compute(evQ, exec_time);
@@ -805,9 +915,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 40:
         {
-            int next_state = 41;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 41;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_barrier(evQ,comm1);
             enQ_compute(evQ, exec_time);
@@ -817,9 +927,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 41:
         {
-            int next_state = 42;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 42;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_sendrecv( evQ,
                           nullBuf, msg_size, CHAR, opposite, 0, //send (tag=0)
@@ -833,9 +943,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 42:
         {
-            int next_state = 43;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 43;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_bcast( evQ, nullBuf, msg_size, CHAR, 0, comm2 );
             enQ_compute(evQ, exec_time);
@@ -845,9 +955,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 43:
         {
-            int next_state = 44;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 44;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_bcast( evQ, nullBuf, msg_size, CHAR, 0, comm0 );
             enQ_compute(evQ, exec_time);
@@ -857,9 +967,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 44:
         {
-            int next_state = 45;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 45;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_sendrecv( evQ,
                           nullBuf, msg_size, CHAR, opposite, 0, //send(tag=0)
@@ -873,9 +983,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 45:
         {
-            int next_state = 46;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 46;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
             //this is an allgatherv, but we
             // treat it as an allgather because the variation is very
             // small.
@@ -891,9 +1001,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 46:
         {
-            int next_state = 47;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 47;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_allgather( evQ,
                            nullBuf, msg_size, CHAR,
@@ -907,9 +1017,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 47:
         {
-            int next_state = 48;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 48;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             // shift within row
             // make sure send and recv partner should be the same
@@ -931,9 +1041,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 48:
         {
-            int next_state = 49;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 49;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_sendrecv( evQ,
                           nullBuf, msg_size, CHAR, s_partner_48, 0, //send (tag=0)
@@ -948,9 +1058,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 49:
         {
-            int next_state = -1;
+            next_state = -1;
 
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
             int msgElem;
 
             enQ_sendrecv( evQ,
@@ -970,13 +1080,13 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
             // goes 47 X times (where X is (sqrt(nodes)-1)) then 50
             if (idx_49 == (square-1)) {
                 next_state = 50;
-                auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+                exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
                 enQ_compute(evQ, exec_time);
 
                 idx_49 = 0;
             } else {
                 next_state = 47;
-                auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+                exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
                 enQ_compute(evQ, exec_time);
 
                 idx_49++;
@@ -988,7 +1098,7 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
     case 50:
         {
             // goes to 41 2 (70%) or 3 (30%) times then 25
-            int next_state;
+            next_state;
             switch(idx_50) {
             case 0:
                 next_state = 41;
@@ -1016,8 +1126,8 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
                 break;
             }
 
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_allreduce( evQ, nullBuf, nullBuf, msg_size, CHAR, MP::MAX, comm1);
             enQ_compute(evQ, exec_time);
@@ -1027,9 +1137,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 51:
         {
-            int next_state = 52;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 52;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_barrier(evQ,comm1);
             enQ_compute(evQ, exec_time);
@@ -1039,9 +1149,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 52:
         {
-            int next_state = 53;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 53;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_allreduce( evQ, nullBuf, nullBuf, msg_size, CHAR, MP::MAX, comm1);
             enQ_compute(evQ, exec_time);
@@ -1051,9 +1161,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 53:
         {
-            int next_state = 54;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 54;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_allreduce( evQ, nullBuf, nullBuf, msg_size, CHAR, MP::MAX, comm1);
             enQ_compute(evQ, exec_time);
@@ -1063,9 +1173,9 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 54:
         {
-            int next_state = 55;
-            auto msg_size  = msg_model_nd.at(std::make_tuple(state,m_threads)).eval({m_nodes,m_sz});
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 55;
+            msg_size  = msg_model.at(std::make_tuple(state,m_threads))->eval(m_nodes,m_sz);
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             enQ_bcast( evQ, nullBuf, msg_size, CHAR, 0, comm1 );
             enQ_compute(evQ, exec_time);
@@ -1076,8 +1186,8 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 55:
         {
-            int next_state = 56;
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 56;
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             // MPI_comm_free
             enQ_compute(evQ, exec_time);
@@ -1087,8 +1197,8 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 56:
         {
-            int next_state = 57;
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 57;
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             // MPI_comm_free
             enQ_compute(evQ, exec_time);
@@ -1098,8 +1208,8 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 57:
         {
-            int next_state = 58;
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 58;
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             //MPI_comm_free
             enQ_compute(evQ, exec_time);
@@ -1109,8 +1219,8 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 58:
         {
-            int next_state = 59;
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 59;
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             //MPI_comm_free
             enQ_compute(evQ, exec_time);
@@ -1120,8 +1230,8 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 59:
         {
-            int next_state = 60;
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 60;
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             //MPI_comm_free
             enQ_compute(evQ, exec_time);
@@ -1131,8 +1241,8 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 60:
         {
-            int next_state = 61;
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 61;
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             //MPI_comm_free
             enQ_compute(evQ, exec_time);
@@ -1142,8 +1252,8 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 61:
         {
-            int next_state = 62;
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 62;
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             //MPI_comm_free
             enQ_compute(evQ, exec_time);
@@ -1153,8 +1263,8 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 62:
         {
-            int next_state = 1;
-            auto exec_time = exec_model_nd.at(std::make_tuple(state,next_state,m_threads)).eval({m_nodes,m_sz});
+            next_state = 1;
+            exec_time = exec_model.at(std::make_tuple(state,next_state,m_threads))->eval(m_nodes,m_sz);
 
             //MPI_comm_free
             enQ_compute(evQ, exec_time);
@@ -1174,8 +1284,8 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     }
 
-    if (rank()==0&&0) {
-        printf("TRACE %lld -> %lld 0\n", prevState, state);
+    if (rank()==0 && trace) {
+        printf("TRACE %lld -> %lld %.1lf %.1lf\n", prevState, next_state, msg_size, exec_time);
         prevState = state;
     }
 

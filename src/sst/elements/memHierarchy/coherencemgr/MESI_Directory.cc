@@ -1506,16 +1506,16 @@ bool MESIDirectory::isRequestAddressValid(Addr addr){
 const char* MESIDirectory::printDirectoryEntryStatus(Addr baseAddr){
     DirEntry *entry = getDirEntry(baseAddr);
     if(!entry){
-        sprintf(dirEntStatus, "[Not Created]");
+        snprintf(dirEntStatus, 1024, "[Not Created]");
     } else {
         uint32_t refs = entry->countRefs();
 
-        if(0 == refs) sprintf(dirEntStatus, "[Noncacheable]");
+        if(0 == refs) snprintf(dirEntStatus, 1024, "[Noncacheable]");
         else if(entry->isDirty()){
             uint32_t owner = entry->findOwner();
-            sprintf(dirEntStatus, "[owned by %s]", nodeid_to_name[owner].c_str());
+            snprintf(dirEntStatus, 1024, "[owned by %s]", nodeid_to_name[owner].c_str());
         }
-        else sprintf(dirEntStatus, "[Shared by %u]", refs);
+        else snprintf(dirEntStatus, 1024, "[Shared by %u]", refs);
 
 
     }

@@ -138,6 +138,7 @@ os/voscallfunc.h \
 os/vphysmemmanager.h \
 os/vriscvcpuos.h \
 os/vstartthreadreq.h \
+os/vosDbgFlags.h \
 \
 os/include/device.h \
 os/include/fdTable.h \
@@ -159,10 +160,12 @@ os/callev/voscallexit.h \
 os/callev/voscallfork.h \
 os/callev/voscallfstat.h \
 os/callev/voscallfutex.h \
+os/callev/voscallgetaffinity.h \
 os/callev/voscallgettime64.h \
 os/callev/voscallgetx.h \
 os/callev/voscallioctl.h \
 os/callev/voscalliovec.h \
+os/callev/voscallkill.h \
 os/callev/voscallmmap.h \
 os/callev/voscallmmapx.h \
 os/callev/voscallmprotect.h \
@@ -198,10 +201,12 @@ os/syscall/futex.h \
 os/syscall/getpgid.h \
 os/syscall/getpid.h \
 os/syscall/getppid.h \
+os/syscall/getaffinity.h \
 os/syscall/gettid.h \
 os/syscall/gettime.h \
 os/syscall/ioctl.h \
 os/syscall/iovec.h \
+os/syscall/kill.h \
 os/syscall/mmap.h \
 os/syscall/mprotect.cc \
 os/syscall/mprotect.h \
@@ -406,35 +411,81 @@ EXTRA_DIST = \
 	tests/small/misc/fork/Makefile \
 	tests/small/misc/fork/fork.c \
 	tests/small/misc/fork/mipsel/fork \
-	tests/small/misc/fork/mipsel/sst.stdout.gold \
-	tests/small/misc/fork/mipsel/vanadis.stderr.gold \
-	tests/small/misc/fork/mipsel/vanadis.stdout.gold \
+	tests/small/misc/fork/mipsel/gold1/sst.stdout.gold \
+	tests/small/misc/fork/mipsel/gold1/vanadis.stderr.gold \
+	tests/small/misc/fork/mipsel/gold1/vanadis.stdout.gold \
+	tests/small/misc/fork/mipsel/gold2/sst.stdout.gold \
+	tests/small/misc/fork/mipsel/gold2/vanadis.stderr.gold \
+	tests/small/misc/fork/mipsel/gold2/vanadis.stdout.gold \
 	tests/small/misc/fork/riscv64/fork \
-	tests/small/misc/fork/riscv64/sst.stdout.gold \
-	tests/small/misc/fork/riscv64/vanadis.stderr.gold \
-	tests/small/misc/fork/riscv64/vanadis.stdout.gold \
+	tests/small/misc/fork/riscv64/gold1/sst.stdout.gold \
+	tests/small/misc/fork/riscv64/gold1/vanadis.stderr.gold \
+	tests/small/misc/fork/riscv64/gold1/vanadis.stdout.gold \
+	tests/small/misc/fork/riscv64/gold2/sst.stdout.gold \
+	tests/small/misc/fork/riscv64/gold2/vanadis.stderr.gold \
+	tests/small/misc/fork/riscv64/gold2/vanadis.stdout.gold \
 \
 	tests/small/misc/clone/Makefile \
 	tests/small/misc/clone/clone.c \
 	tests/small/misc/clone/mipsel/clone \
-	tests/small/misc/clone/mipsel/sst.stdout.gold \
-	tests/small/misc/clone/mipsel/vanadis.stderr.gold \
-	tests/small/misc/clone/mipsel/vanadis.stdout.gold \
+	tests/small/misc/clone/mipsel/gold1/sst.stdout.gold \
+	tests/small/misc/clone/mipsel/gold1/vanadis.stderr.gold \
+	tests/small/misc/clone/mipsel/gold1/vanadis.stdout.gold \
+	tests/small/misc/clone/mipsel/gold2/sst.stdout.gold \
+	tests/small/misc/clone/mipsel/gold2/vanadis.stderr.gold \
+	tests/small/misc/clone/mipsel/gold2/vanadis.stdout.gold \
 	tests/small/misc/clone/riscv64/clone \
-	tests/small/misc/clone/riscv64/sst.stdout.gold \
-	tests/small/misc/clone/riscv64/vanadis.stderr.gold \
-	tests/small/misc/clone/riscv64/vanadis.stdout.gold \
+	tests/small/misc/clone/riscv64/gold1/sst.stdout.gold \
+	tests/small/misc/clone/riscv64/gold1/vanadis.stderr.gold \
+	tests/small/misc/clone/riscv64/gold1/vanadis.stdout.gold \
+	tests/small/misc/clone/riscv64/gold2/sst.stdout.gold \
+	tests/small/misc/clone/riscv64/gold2/vanadis.stderr.gold \
+	tests/small/misc/clone/riscv64/gold2/vanadis.stdout.gold \
 \
 	tests/small/misc/pthread/Makefile \
 	tests/small/misc/pthread/pthread.c \
 	tests/small/misc/pthread/mipsel/pthread \
-	tests/small/misc/pthread/mipsel/sst.stdout.gold \
-	tests/small/misc/pthread/mipsel/vanadis.stderr.gold \
-	tests/small/misc/pthread/mipsel/vanadis.stdout.gold \
+	tests/small/misc/pthread/mipsel/gold1/sst.stdout.gold \
+	tests/small/misc/pthread/mipsel/gold1/vanadis.stderr.gold \
+	tests/small/misc/pthread/mipsel/gold1/vanadis.stdout.gold \
+	tests/small/misc/pthread/mipsel/gold2/sst.stdout.gold \
+	tests/small/misc/pthread/mipsel/gold2/vanadis.stderr.gold \
+	tests/small/misc/pthread/mipsel/gold2/vanadis.stdout.gold \
 	tests/small/misc/pthread/riscv64/pthread \
-	tests/small/misc/pthread/riscv64/sst.stdout.gold \
-	tests/small/misc/pthread/riscv64/vanadis.stderr.gold \
-	tests/small/misc/pthread/riscv64/vanadis.stdout.gold \
+	tests/small/misc/pthread/riscv64/gold1/sst.stdout.gold \
+	tests/small/misc/pthread/riscv64/gold1/vanadis.stderr.gold \
+	tests/small/misc/pthread/riscv64/gold1/vanadis.stdout.gold \
+	tests/small/misc/pthread/riscv64/gold2/sst.stdout.gold \
+	tests/small/misc/pthread/riscv64/gold2/vanadis.stderr.gold \
+	tests/small/misc/pthread/riscv64/gold2/vanadis.stdout.gold \
+\
+	tests/small/misc/uname/Makefile \
+	tests/small/misc/uname/uname.c \
+	tests/small/misc/uname/mipsel/uname \
+	tests/small/misc/uname/mipsel/sst.stdout.gold \
+	tests/small/misc/uname/mipsel/vanadis.stderr.gold \
+	tests/small/misc/uname/mipsel/vanadis.stdout.gold \
+	tests/small/misc/uname/riscv64/uname \
+	tests/small/misc/uname/riscv64/sst.stdout.gold \
+	tests/small/misc/uname/riscv64/vanadis.stderr.gold \
+	tests/small/misc/uname/riscv64/vanadis.stdout.gold \
+\
+	tests/small/misc/openmp/Makefile \
+	tests/small/misc/openmp/openmp.c \
+	tests/small/misc/openmp/mipsel/openmp \
+	tests/small/misc/openmp/mipsel/gold1/sst.stdout.gold \
+	tests/small/misc/openmp/mipsel/gold1/vanadis.stderr.gold \
+	tests/small/misc/openmp/mipsel/gold1/vanadis.stdout.gold \
+	tests/small/misc/openmp/mipsel/gold2/sst.stdout.gold \
+	tests/small/misc/openmp/mipsel/gold2/vanadis.stderr.gold \
+	tests/small/misc/openmp/mipsel/gold2/vanadis.stdout.gold \
+	tests/small/misc/openmp/riscv64/openmp \
+	tests/small/misc/openmp/riscv64/gold1/sst.stdout.gold \
+	tests/small/misc/openmp/riscv64/gold1/vanadis.stderr.gold \
+	tests/small/misc/openmp/riscv64/gold1/vanadis.stdout.gold \
+	tests/small/misc/openmp/riscv64/gold2/sst.stdout.gold \
+	tests/small/misc/openmp/riscv64/gold2/vanadis.stderr.gold \
+	tests/small/misc/openmp/riscv64/gold2/vanadis.stdout.gold \
 \
 	tests/small/misc/hpcg/hpcg.dat \
 	tests/small/misc/hpcg/mipsel/hpcg \

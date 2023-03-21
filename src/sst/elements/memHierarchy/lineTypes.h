@@ -243,32 +243,36 @@ class CacheLine {
 /* With atomic/lock flags for L1 caches */
 class L1CacheLine : public CacheLine {
     private:
-        unsigned int userLock_;
-        bool LLSCAtomic_;
-        bool eventsWaitingForLock_;
-        ReplacementInfo * info;
+        unsigned int userLock_; /* Count number of lock operations to the line */
+        bool LLSCAtomic_;       /* True if LL has been issued and no intervening accesses have occured */
+        Cycle_t LLSCAtomicTime_;    /* For caches that guarantee forward progress on LLSC, LLSC temporarily locks the line. This is the time that the LLSC lock will be released */
+        bool eventsWaitingForLock_; /* Number of events in teh queue waiting for the lock */
+        ReplacementInfo * info;     /* Replacement info - depends on replacement algorithm */
     protected:
         void updateReplacement() { info->setState(state_); }
     public:
-        L1CacheLine(uint32_t size, unsigned int index) : userLock_(0), LLSCAtomic_(false), eventsWaitingForLock_(false), CacheLine(size, index) {
+        L1CacheLine(uint32_t size, unsigned int index) : userLock_(0), LLSCAtomic_(false), LLSCAtomicTime_(0), eventsWaitingForLock_(false), CacheLine(size, index) {
             info = new ReplacementInfo(index, I);
         }
-        virtual ~L1CacheLine() { }
+        virtual ~L1CacheLine() { 
+            delete info;
+        }
 
         void reset() {
             CacheLine::reset();
             userLock_ = 0;
             LLSCAtomic_ = false;
+            LLSCAtomicTime_ = 0;
             eventsWaitingForLock_ = false;
         }
 
         // LLSC
-        void atomicStart() { LLSCAtomic_ = true; }
-        void atomicEnd() { LLSCAtomic_ = false; }
+        void atomicStart(Cycle_t time) { LLSCAtomic_ = true; LLSCAtomicTime_ = time; }
+        void atomicEnd() { LLSCAtomic_ = false; LLSCAtomicTime_ = 0; }
         bool isAtomic() { return LLSCAtomic_; }
 
         // Lock
-        bool isLocked() { return (userLock_ > 0) ? true : false; }
+        bool isLocked(Cycle_t currentTime) { return (userLock_ > 0) ? true : ((LLSCAtomic_ && (currentTime < LLSCAtomicTime_)) ? true : false)  ; }
         void incLock() { userLock_++; }
         void decLock() { userLock_--; }
 
@@ -282,6 +286,7 @@ class L1CacheLine : public CacheLine {
         std::string getString() {
             std::ostringstream str;
             str << "LLSC: " << (LLSCAtomic_ ? "Y" : "N");
+            str << " LLSCTime: " << LLSCAtomicTime_;
             str << " Lock: (" << userLock_ << "," << eventsWaitingForLock_ << ")";
             return str.str();
         }
@@ -300,7 +305,9 @@ class SharedCacheLine : public CacheLine {
             info = new CoherenceReplacementInfo(index, I, false, false);
         }
 
-        virtual ~SharedCacheLine() { }
+        virtual ~SharedCacheLine() { 
+             delete info;
+        }
 
         void reset() {
             CacheLine::reset();

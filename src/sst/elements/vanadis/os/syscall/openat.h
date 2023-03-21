@@ -37,7 +37,7 @@ public:
 
             if ( -1 == m_dirFd) {
                 m_output->verbose(CALL_INFO, 16, 0, "can't find m_dirFd=%d in open file descriptor table\n", m_dirFd);
-                setReturnFail(-EBADF);
+                setReturnFail(-LINUX_EBADF);
                 return;
             }
             // get the FD that SST will use
@@ -50,7 +50,7 @@ public:
         readString(event->getPathPointer(),m_filename);
     }
 
-    void memReqIsDone() {
+    void memReqIsDone(bool) {
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-openat] path: \"%s\"\n", m_filename.c_str());
 
         int fd = m_process->openFile( m_filename.c_str(), m_dirFd, getEvent<VanadisSyscallOpenatEvent*>()->getFlags(), getEvent<VanadisSyscallOpenatEvent*>()->getMode() );

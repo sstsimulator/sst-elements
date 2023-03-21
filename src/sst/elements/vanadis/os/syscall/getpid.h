@@ -27,7 +27,7 @@ public:
     VanadisGetpidSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallGetxEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "gitpid" ) 
     {
-        m_output->verbose(CALL_INFO, 16, 0, "[syscall-getpid]\n");
+        m_output->verbose(CALL_INFO, 16, 0, "[syscall-getpid] pid=%d\n",process->getpid());
         setReturnSuccess(process->getpid());
     }
 };

@@ -37,7 +37,7 @@ public:
                             " is not currently open, return an error code.\n",
                             event->getFileDescriptor());
 
-            setReturnFail(-EINVAL);
+            setReturnFail(-LINUX_EINVAL);
         } else if (event->getBufferCount() == 0) {
             setReturnSuccess(0);
         } else {
@@ -51,7 +51,7 @@ public:
         }
     }
 
-    void memReqIsDone() {
+    void memReqIsDone(bool) {
 
         int retval = write( m_fd, m_data.data(), m_data.size() );
         assert( retval >= 0 );

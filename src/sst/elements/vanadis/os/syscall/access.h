@@ -32,7 +32,7 @@ public:
         readString(event->getPathPointer(),m_filename);
     }
 
-    void memReqIsDone() {
+    void memReqIsDone(bool) {
         m_output->verbose(CALL_INFO, 16, 0, "-> [syscall-access] path is: \"%s\"\n", m_filename.c_str());
 
         int ret = access( m_filename.c_str(), getEvent<VanadisSyscallAccessEvent*>()->getAccessMode() );

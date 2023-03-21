@@ -22,6 +22,7 @@
 #include "os/syscall/futex.h"
 #include "os/syscall/exit.h"
 #include "os/syscall/exitgroup.h"
+#include "os/syscall/kill.h"
 #include "os/syscall/settidaddress.h"
 #include "os/syscall/mprotect.h"
 #include "os/syscall/getpid.h"
@@ -47,6 +48,7 @@
 #include "os/syscall/ioctl.h"
 #include "os/syscall/fstat.h"
 #include "os/syscall/statx.h"
+#include "os/syscall/getaffinity.h"
 
 using namespace SST::Vanadis;
 
@@ -57,7 +59,7 @@ static const char* SyscallName[] = {
 VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* process, VanadisSyscallEvent* sys_ev, SST::Link* coreLink ) 
 {
     if ( sys_ev->getOperation() < NUM_SYSCALLS  ) {
-       output->verbose(CALL_INFO, 16, 0, "from core=%" PRIu32 " thr=%" PRIu32 " syscall=%s\n",
+       output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL, "from core=%" PRIu32 " thr=%" PRIu32 " syscall=%s\n",
                     sys_ev->getCoreID(), sys_ev->getThreadID(),SyscallName[sys_ev->getOperation()]);
     }
 
@@ -75,6 +77,9 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
         case SYSCALL_OP_MPROTECT: {
             syscall = new VanadisMprotectSyscall( this, coreLink, process, convertEvent<VanadisSyscallMprotectEvent*>( "mprotect", sys_ev ) );
         } break;
+        case SYSCALL_OP_GETAFFINITY: {
+            syscall = new VanadisGetaffinitySyscall( this, coreLink, process, convertEvent<VanadisSyscallGetaffinityEvent*>( "getaffinity", sys_ev ) );
+        } break;
         case SYSCALL_OP_FORK: {
             syscall = new VanadisForkSyscall( this, coreLink, process, convertEvent<VanadisSyscallForkEvent*>( "fork", sys_ev ) );
         } break;
@@ -83,6 +88,9 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
         } break;
         case SYSCALL_OP_FUTEX: {
             syscall = new VanadisFutexSyscall( this, coreLink, process, convertEvent<VanadisSyscallFutexEvent*>( "futex", sys_ev ) );
+        } break;
+        case SYSCALL_OP_KILL: {
+            syscall = new VanadisKillSyscall( this, coreLink, process, convertEvent<VanadisSyscallKillEvent*>( "exit", sys_ev ) );
         } break;
         case SYSCALL_OP_EXIT: {
             syscall = new VanadisExitSyscall( this, coreLink, process, convertEvent<VanadisSyscallExitEvent*>( "exit", sys_ev ) );
@@ -130,7 +138,7 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
             syscall = new VanadisUnmapSyscall( this, coreLink, process, m_physMemMgr, convertEvent<VanadisSyscallMemoryUnMapEvent*>( "unmap", sys_ev ) );
         } break;
         case SYSCALL_OP_GETTIME64: {
-            syscall = new VanadisGettime64Syscall( this, coreLink, process, getSimNanoSeconds(), convertEvent<VanadisSyscallGetTime64Event*>( "gettime64", sys_ev ) );
+            syscall = new VanadisGettime64Syscall( this, coreLink, process, getNanoSeconds(), convertEvent<VanadisSyscallGetTime64Event*>( "gettime64", sys_ev ) );
         } break;
         case SYSCALL_OP_ACCESS: {
             syscall = new VanadisAccessSyscall( this, coreLink, process, convertEvent<VanadisSyscallAccessEvent*>( "access", sys_ev ) );

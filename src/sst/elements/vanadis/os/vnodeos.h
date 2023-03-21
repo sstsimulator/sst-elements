@@ -22,6 +22,7 @@
 #include <sst/core/component.h>
 #include <sst/core/interfaces/stdMem.h>
 
+#include "os/vosDbgFlags.h"
 #include "os/include/hwThreadID.h"
 #include "os/voscallev.h"
 #include "os/vstartthreadreq.h"
@@ -160,7 +161,7 @@ private:
         mem_if->send(ev);
     }
 
-    uint64_t getSimNanoSeconds() { return getCurrentSimTimeNano(); }
+    uint64_t getNanoSeconds() { return getCurrentSimTimeNano() + m_osStartTimeNano;  }
 
     void writePage( uint64_t physAddr, uint8_t* data, unsigned page_size, Callback* callback )
     {
@@ -190,7 +191,7 @@ private:
 
     void handleIncomingMemory( VanadisSyscall* syscall, StandardMem::Request* req ) {
 
-        output->verbose(CALL_INFO, 8, 0,"\n");
+        output->verbose(CALL_INFO, 8, VANADIS_OS_DBG_SYSCALL_MEM,"\n");
         syscall->handleMemRespBase( req );
 
         processSyscallPost( syscall ); 
@@ -216,7 +217,7 @@ private:
 
     template<typename T>
     T convertEvent( std::string name, VanadisSyscallEvent* sys_ev ) {
-        output->verbose(CALL_INFO, 16, 0, "-> call is %s()\n",name.c_str());
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "-> call is %s()\n",name.c_str());
         T out = dynamic_cast<T>(sys_ev);
 
         if (nullptr == out ) {
@@ -268,13 +269,11 @@ public:
     Output* getOutput() { return output; }
 
     void setSyscall( int core, int hwThread, VanadisSyscall* syscall) {
-        //output->verbose(CALL_INFO, 1, 0,"core=%d hwThread=%d syscall=%p\n",core,hwThread, syscall);
-        output->verbose(CALL_INFO, 1, 0,"core=%d hwThread=%d\n",core,hwThread);
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"core=%d hwThread=%d\n",core,hwThread);
         m_coreInfoMap[core].setSyscall( hwThread, syscall ); 
     }
     void clearSyscall( int core, int hwThread ) {
-        //output->verbose(CALL_INFO, 1, 0,"core=%d hwThread=%d syscall=%p\n",core, hwThread, getSyscall(core,hwThread));
-        output->verbose(CALL_INFO, 1, 0,"core=%d hwThread=%d\n",core, hwThread );
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"core=%d hwThread=%d\n",core, hwThread );
         m_coreInfoMap[core].clearSyscall( hwThread ); 
     }
 
@@ -341,6 +340,7 @@ private:
     uint64_t                    m_phdr_address;
     uint64_t                    m_stack_top;
     int                         m_nodeNum;
+    uint64_t                    m_osStartTimeNano;
 
     std::queue<PageFault*>                          m_pendingFault;
     std::map<std::string, VanadisELFInfo* >         m_elfMap; 
@@ -350,8 +350,6 @@ private:
     std::map< VanadisELFInfo*, std::map<int,OS::Page*> >            m_elfPageCache;
     std::unordered_map<StandardMem::Request::id_t, VanadisSyscall*> m_memRespMap;
 
-
-
     std::queue< OS::HwThreadID* > m_availHwThreads;
 
     std::map< int, OS::Device* > m_deviceList;
@@ -360,7 +358,7 @@ private:
 
     OS::Page* allocPage() {
         auto page = new OS::Page(m_physMemMgr);
-        output->verbose(CALL_INFO, 1, 0,"ppn=%d\n",page->getPPN());
+        output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"ppn=%d\n",page->getPPN());
         return page;
     }
 };

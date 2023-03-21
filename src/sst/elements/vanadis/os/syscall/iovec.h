@@ -69,22 +69,20 @@ public:
         : VanadisSyscall( os, coreLink, process, event, name ), m_ioVecTable(nullptr), m_currentVec(0), m_totalBytes(0), m_state(ReadIoVecTable)
     {
 
-        m_output->verbose(CALL_INFO, 16, 0,
-                            "[syscall-%s] -> call is writev( %" PRId64 ", 0x%0llx, %" PRId64 " )\n",
-                            event->getOperation() == SYSCALL_OP_WRITEV ? "writev" : "readv",
-                            event->getFileDescriptor(), event->getIOVecAddress(), event->getIOVecCount());
+        m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
+                            "[syscall-%s] call is writev( %" PRId64 ", 0x%0llx, %" PRId64 " )\n",
+                            getName().c_str(), event->getFileDescriptor(), event->getIOVecAddress(), event->getIOVecCount());
 
         m_fd = process->getFileDescriptor( event->getFileDescriptor() );
         if ( -1 == m_fd ) {
-            m_output->verbose(CALL_INFO, 16, 0,
-                                "[syscall-%s] -> file handle %" PRId64
+            m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
+                                "[syscall-%s] file handle %" PRId64
                                 " is not currently open, return an error code.\n",
-                                event->getOperation() == SYSCALL_OP_WRITEV ? "writev" : "readv",
-                                event->getFileDescriptor());
+                                getName().c_str(), event->getFileDescriptor());
 
-            setReturnFail(-EINVAL);
+            setReturnFail(-LINUX_EINVAL);
          } else if (event->getIOVecCount() < 0) {
-            setReturnFail(-EINVAL);
+            setReturnFail(-LINUX_EINVAL);
          } else if (event->getIOVecCount() == 0) {
             setReturnSuccess(0);
         } else {
@@ -100,12 +98,13 @@ public:
 
   protected:
 
-    void memReqIsDone() {
+    void memReqIsDone(bool) {
         if ( ReadIoVecTable == m_state ) {
-            m_output->verbose(CALL_INFO, 16, 0,"read ioVecTable complete\n");
+            m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-%s] read ioVecTable complete\n", getName().c_str());
             m_state = IoVecTransfer;
             for ( int i =0; i < getEvent<VanadisSyscallIoVecEvent*>()->getIOVecCount(); i++ ) {
-                m_output->verbose(CALL_INFO, 16, 0,"addr=%#" PRIx64 " length=%zu\n",m_ioVecTable->getAddr(i),m_ioVecTable->getLength(i));
+                m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-%s] addr=%#" PRIx64 " length=%zu\n",
+                    getName().c_str(), m_ioVecTable->getAddr(i),m_ioVecTable->getLength(i));
             }
             if ( findNonZeroIoVec() )  {
                 startIoVecTransfer();
@@ -125,15 +124,18 @@ public:
         if ( m_ioVecTable->getLength(m_currentVec) - m_currentVecOffset < 4096 ) { 
             retval = m_ioVecTable->getLength(m_currentVec) - m_currentVecOffset;
         }
-        m_output->verbose(CALL_INFO, 16, 0,"buff size %zu\n", retval);
+        m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"[syscall-%s] buff size %zu\n", getName().c_str(), retval);
         return retval;
     }
 
     bool findNonZeroIoVec() { 
-        m_output->verbose(CALL_INFO, 16, 0,"count=%" PRIu64 "\n",getEvent<VanadisSyscallIoVecEvent*>()->getIOVecCount());
+
+        m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-%s] count=%" PRIu64 "\n",
+            getName().c_str(), getEvent<VanadisSyscallIoVecEvent*>()->getIOVecCount());
+
         while ( m_currentVec < getEvent<VanadisSyscallIoVecEvent*>()->getIOVecCount() ) {
             if ( m_ioVecTable->getLength(m_currentVec) ) {
-                m_output->verbose(CALL_INFO, 16, 0,"found pos=%d\n",m_currentVec);
+                m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-%s] found pos=%d\n", getName().c_str(), m_currentVec );
                 return true;
             }
             ++m_currentVec;

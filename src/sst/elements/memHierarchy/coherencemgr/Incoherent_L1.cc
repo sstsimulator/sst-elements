@@ -80,7 +80,7 @@ bool IncoherentL1::handleGetS(MemEvent* event, bool inMSHR){
             recordLatencyType(event->getID(), LatType::HIT);
 
             if (event->isLoadLink())
-                line->atomicStart();
+                line->atomicStart(timestamp_ + llscBlockCycles_);
 
             data.assign(line->getData()->begin() + (event->getAddr() - event->getBaseAddr()), line->getData()->begin() + (event->getAddr() - event->getBaseAddr() + event->getSize()));
             sendTime = sendResponseUp(event, &data, inMSHR, line->getTimestamp());
@@ -284,7 +284,7 @@ bool IncoherentL1::handleFlushLine(MemEvent* event, bool inMSHR) {
     // At this point, state must be stable
 
     /* Flush fails if line is locked */
-    if (state != I && line->isLocked()) {
+    if (state != I && line->isLocked(timestamp_)) {
         if (!inMSHR || !mshr_->getProfiled(addr)) {
             stat_eventState[(int)Command::FlushLine][state]->addData(1);
         }
@@ -341,7 +341,7 @@ bool IncoherentL1::handleFlushLineInv(MemEvent* event, bool inMSHR) {
     }
 
     /* Flush fails if line is locked */
-    if (state != I && line->isLocked()) {
+    if (state != I && line->isLocked(timestamp_)) {
         stat_eventState[(int)Command::FlushLineInv][state]->addData(1);
         sendResponseUp(event, nullptr, inMSHR, line->getTimestamp(), false);
         recordLatencyType(event->getID(), LatType::MISS);
@@ -400,7 +400,7 @@ bool IncoherentL1::handleGetSResp(MemEvent * event, bool inMSHR) {
         printDataValue(addr, line->getData(), false);
     
     if (req->isLoadLink())
-        line->atomicStart();
+        line->atomicStart(timestamp_ + llscBlockCycles_);
 
     if (is_debug_addr(addr))
         printDataValue(addr, line->getData(), true);
@@ -656,7 +656,7 @@ bool IncoherentL1::handleEviction(Addr addr, L1CacheLine*& line) {
         evictDI.oldst = line->getState();
 
     /* L1s can have locked cache lines */
-    if (line->isLocked()) {
+    if (line->isLocked(timestamp_)) {
         if (is_debug_addr(line->getAddr()))
             printDebugAlloc(false, line->getAddr(), "InProg, line locked");
         return false;

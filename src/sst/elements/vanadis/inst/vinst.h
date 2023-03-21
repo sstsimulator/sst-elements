@@ -105,7 +105,6 @@ public:
         count_isa_fp_reg_in(copy_me.count_isa_fp_reg_in),
         count_isa_fp_reg_out(copy_me.count_isa_fp_reg_out)
     {
-
         trapError             = copy_me.trapError;
         hasExecuted           = copy_me.hasExecuted;
         hasIssued             = copy_me.hasIssued;
@@ -125,18 +124,6 @@ public:
 
         isa_fp_regs_in  = (count_isa_fp_reg_in > 0) ? new uint16_t[count_isa_fp_reg_in] : nullptr;
         isa_fp_regs_out = (count_isa_fp_reg_out > 0) ? new uint16_t[count_isa_fp_reg_out] : nullptr;
-
-        /*
-        std::memcpy(phys_int_regs_in, copy_me.phys_int_regs_in, count_phys_int_reg_in);
-        std::memcpy(phys_int_regs_out, copy_me.phys_int_regs_out, count_phys_int_reg_out);
-        std::memcpy(isa_int_regs_in, copy_me.isa_int_regs_in, count_isa_int_reg_in);
-        std::memcpy(isa_int_regs_out, copy_me.isa_int_regs_out, count_isa_int_reg_out);
-
-        std::memcpy(phys_fp_regs_in, copy_me.phys_fp_regs_in, count_phys_fp_reg_in);
-        std::memcpy(phys_fp_regs_out, copy_me.phys_fp_regs_out, count_phys_fp_reg_out);
-        std::memcpy(isa_fp_regs_in, copy_me.isa_fp_regs_in, count_isa_fp_reg_in);
-        std::memcpy(isa_fp_regs_out, copy_me.isa_fp_regs_out, count_isa_fp_reg_out);
-        */
 
         for ( uint16_t i = 0; i < count_phys_int_reg_in; ++i ) {
             phys_int_regs_in[i] = copy_me.phys_int_regs_in[i];
@@ -283,11 +270,11 @@ public:
 
     uint16_t countPhysIntRegIn() const { return count_phys_int_reg_in; }
     uint16_t countPhysIntRegOut() const { return count_phys_int_reg_out; }
-    uint16_t countISAIntRegIn() const { return count_isa_int_reg_in; }
-    uint16_t countISAIntRegOut() const { return count_isa_int_reg_out; }
-
     uint16_t countPhysFPRegIn() const { return count_phys_fp_reg_in; }
     uint16_t countPhysFPRegOut() const { return count_phys_fp_reg_out; }
+
+    uint16_t countISAIntRegIn() const { return count_isa_int_reg_in; }
+    uint16_t countISAIntRegOut() const { return count_isa_int_reg_out; }
     uint16_t countISAFPRegIn() const { return count_isa_fp_reg_in; }
     uint16_t countISAFPRegOut() const { return count_isa_fp_reg_out; }
 
@@ -314,22 +301,11 @@ public:
     void setPhysIntRegIn(const uint16_t index, const uint16_t reg) { phys_int_regs_in[index] = reg; }
     void setPhysIntRegOut(const uint16_t index, const uint16_t reg) { 
         phys_int_regs_out[index] = reg;
-
-        /*if(getInstFuncType() != INST_SYSCALL) {
-            for(auto i = 0; i < count_phys_int_reg_in; ++i) {
-                assert(phys_int_regs_in[i] != reg);
-            }
-        }*/
     }
+
     void setPhysFPRegIn(const uint16_t index, const uint16_t reg) { phys_fp_regs_in[index] = reg; }
     void setPhysFPRegOut(const uint16_t index, const uint16_t reg) { 
         phys_fp_regs_out[index] = reg;
-
-        /*if(getInstFuncType() != INST_SYSCALL) {
-            for(auto i = 0; i < count_phys_fp_reg_in; ++i) {
-                assert(phys_fp_regs_in[i] != reg);
-            } 
-        }*/
     }
 
     virtual VanadisInstruction* clone() = 0;
@@ -380,25 +356,25 @@ protected:
     const uint64_t ins_address;
     const uint32_t hw_thread;
 
-    uint16_t count_phys_int_reg_in;
-    uint16_t count_phys_int_reg_out;
     uint16_t count_isa_int_reg_in;
     uint16_t count_isa_int_reg_out;
-
-    uint16_t count_phys_fp_reg_in;
-    uint16_t count_phys_fp_reg_out;
     uint16_t count_isa_fp_reg_in;
     uint16_t count_isa_fp_reg_out;
 
-    uint16_t* phys_int_regs_in;
-    uint16_t* phys_int_regs_out;
     uint16_t* isa_int_regs_in;
     uint16_t* isa_int_regs_out;
-
-    uint16_t* phys_fp_regs_in;
-    uint16_t* phys_fp_regs_out;
     uint16_t* isa_fp_regs_in;
     uint16_t* isa_fp_regs_out;
+
+    uint16_t count_phys_int_reg_in;
+    uint16_t count_phys_int_reg_out;
+    uint16_t count_phys_fp_reg_in;
+    uint16_t count_phys_fp_reg_out;
+
+    uint16_t* phys_int_regs_in;
+    uint16_t* phys_int_regs_out;
+    uint16_t* phys_fp_regs_in;
+    uint16_t* phys_fp_regs_out;
 
     bool trapError;
     bool hasExecuted;
