@@ -72,6 +72,8 @@ public:
 
         registerFiles = reg_f;
     }
+    void setCoreId( int core ) { core_id = core; }
+    int getCoreId( ) { return core_id; }
 
     virtual bool storeFull() = 0;
     virtual bool loadFull() = 0;
@@ -94,6 +96,7 @@ public:
     virtual void printStatus(SST::Output& output) {}
 
 protected:
+    int core_id;
     uint64_t address_mask;
     std::vector<VanadisRegisterFile*>* registerFiles;
     SST::Output* output;

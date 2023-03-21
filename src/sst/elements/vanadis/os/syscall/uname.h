@@ -77,7 +77,7 @@ struct new_utsname {
         writeMemory( event->getUnameInfoAddress(), payload );
     }
 
-    void memReqIsDone() {
+    void memReqIsDone(bool) {
         setReturnSuccess(0);
     }
 

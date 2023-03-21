@@ -42,7 +42,7 @@ public:
     VanadisCPUOSHandler(ComponentId_t id, Params& params) : SubComponent(id) {
 
         const uint32_t verbosity = params.find<uint32_t>("verbose", 0);
-        output = new SST::Output("[os]: ", verbosity, 0, Output::STDOUT);
+        output = new SST::Output("[os_hdlr]:@p() ", verbosity, 1, Output::STDOUT);
 
         regFile = nullptr;
         isaTable = nullptr;

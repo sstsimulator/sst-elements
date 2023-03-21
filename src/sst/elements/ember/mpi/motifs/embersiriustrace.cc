@@ -33,7 +33,7 @@ EmberSIRIUSTraceGenerator::EmberSIRIUSTraceGenerator(SST::ComponentId_t id,
 		fatal(CALL_INFO, -1, "Error: trace prefix is empty, no way to load a trace!\n");
 	} else {
 		char* full_trace = (char*) malloc( sizeof(char) * PATH_MAX );
-		sprintf(full_trace, "%s.%d", trace_prefix.c_str(), rank());
+		snprintf(full_trace, sizeof(char)*PATH_MAX, "%s.%d", trace_prefix.c_str(), rank());
 
 		trace_file = fopen(full_trace, "rb");
 

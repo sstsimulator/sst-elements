@@ -43,7 +43,7 @@ typedef struct cpu_set_t { unsigned long __bits[128/sizeof(long)]; } cpu_set_t;
         writeMemory( event->getMaskAddr(), payload );
     }
 
-    void memReqIsDone() {
+    void memReqIsDone(bool) {
         setReturnSuccess(0);
     }
 

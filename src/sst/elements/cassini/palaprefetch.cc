@@ -238,7 +238,7 @@ PalaPrefetcher::PalaPrefetcher(ComponentId_t id, Params& params) : CacheListener
     verbosity = params.find<int>("verbose", 0);
 
     char* new_prefix = (char*) malloc(sizeof(char) * 128);
-    sprintf(new_prefix, "PalaPrefetcher[%s | @f:@p:@l] ", getName().c_str());
+    snprintf(new_prefix, sizeof(char)*128, "PalaPrefetcher[%s | @f:@p:@l] ", getName().c_str());
     output = new Output(new_prefix, verbosity, 0, Output::STDOUT);
     free(new_prefix);
 

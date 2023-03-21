@@ -59,7 +59,7 @@ DMAEngine::DMAEngine(SST::ComponentId_t id, SST::Params& params) :
 	cpuSideLinks = (SST::Link*) malloc(sizeof(SST::Link) * cpuLinkCount);
 
 	for(uint32_t i = 0; i < cpuLinkCount; ++i) {
-		sprintf(linkNameBuffer, "cpu_link_%" PRIu32, i);
+		snprintf(linkNameBuffer, sizeof(char)*256, "cpu_link_%" PRIu32, i);
 		cpuSideLinks[i] = configureLink(linkNameBuffer);
 
 		if(NULL == cpuSideLinks[i]) {

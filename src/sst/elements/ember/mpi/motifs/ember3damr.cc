@@ -802,9 +802,9 @@ void Ember3DAMRGenerator::configure()
 	char* newPrefix = (char*) malloc(sizeof(char) * 64);
 
 	if(out->getVerboseLevel() > 8) {
-		sprintf(newPrefix, "AMR3D[%7" PRIu32 "](@f:@p:@l): ", (uint32_t) rank());
+		snprintf(newPrefix, sizeof(char)*64, "AMR3D[%7" PRIu32 "](@f:@p:@l): ", (uint32_t) rank());
 	} else {
-		sprintf(newPrefix, "AMR3D[%7" PRIu32 "](@p:@l): ", (uint32_t) rank());
+		snprintf(newPrefix, sizeof(char)*64, "AMR3D[%7" PRIu32 "](@p:@l): ", (uint32_t) rank());
 	}
 
 	std::string newPrefixStr(newPrefix);
@@ -1002,7 +1002,7 @@ bool Ember3DAMRGenerator::generate( std::queue<EmberEvent*>& evQ)
 		return false;
 	} else {
 		char* timeBuffer = (char*) malloc(sizeof(char) * 64);
-		sprintf(timeBuffer, "%" PRIu64 "ns", getCurrentSimTimeNano());
+		snprintf(timeBuffer, sizeof(char)*64, "%" PRIu64 "ns", getCurrentSimTimeNano());
 		UnitAlgebra timeUA(timeBuffer);
 
 		out->verbose(CALL_INFO, 2, 0, "Completed %" PRIu32 " iterations @ time=%s, will now complete and unload.\n",
@@ -1098,7 +1098,7 @@ void Ember3DAMRGenerator::printBlockMap() {
 	std::map<uint32_t, int32_t>::iterator block_itr;
 
 	char* map_output = (char*) malloc(sizeof(char) * PATH_MAX);
-	sprintf(map_output, "blocks-%" PRIu32 ".map", rank());
+	snprintf(map_output, sizeof(char)*PATH_MAX, "blocks-%" PRIu32 ".map", rank());
 
 	FILE* map_output_file = fopen(map_output, "wt");
 
@@ -1109,7 +1109,7 @@ void Ember3DAMRGenerator::printBlockMap() {
 
 	fclose(map_output_file);
 
-	sprintf(map_output, "blocks-local-%" PRIu32 ".map", rank());
+	snprintf(map_output, sizeof(char)*PATH_MAX, "blocks-local-%" PRIu32 ".map", rank());
 	map_output_file = fopen(map_output, "wt");
 
 	assert(map_output_file != NULL);
