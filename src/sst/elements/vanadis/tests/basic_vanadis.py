@@ -50,7 +50,7 @@ mmuType = "simpleMMU"
 
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
-sst.setProgramOption("stopAtCycle", "0 ns")
+sst.setProgramOption("stop-at", "0 ns")
 
 # Tell SST what statistics handling we want
 sst.setStatisticLoadLevel(4)
@@ -238,8 +238,8 @@ cpuParams = {
     "clock" : cpu_clock,
     "verbose" : verbosity,
     "hardware_threads": numThreads,
-    "physical_fp_registers" : 168,
-    "physical_int_registers" : 180,
+    "physical_fp_registers" : 168 * numThreads,
+    "physical_integer_registers" : 180 * numThreads,
     "integer_arith_cycles" : integer_arith_cycles,
     "integer_arith_units" : integer_arith_units,
     "fp_arith_cycles" : fp_arith_cycles,
