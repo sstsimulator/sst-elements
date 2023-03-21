@@ -473,19 +473,25 @@ EXTRA_DIST = \
 	tests/small/misc/openmp/Makefile \
 	tests/small/misc/openmp/openmp.c \
 	tests/small/misc/openmp/mipsel/openmp \
-	tests/small/misc/openmp/mipsel/gold1/sst.stdout.gold \
-	tests/small/misc/openmp/mipsel/gold1/vanadis.stderr.gold \
-	tests/small/misc/openmp/mipsel/gold1/vanadis.stdout.gold \
-	tests/small/misc/openmp/mipsel/gold2/sst.stdout.gold \
-	tests/small/misc/openmp/mipsel/gold2/vanadis.stderr.gold \
-	tests/small/misc/openmp/mipsel/gold2/vanadis.stdout.gold \
+	tests/small/misc/openmp/mipsel/4core/sst.stdout.gold \
+	tests/small/misc/openmp/mipsel/4core/vanadis.stderr.gold \
+	tests/small/misc/openmp/mipsel/4core/vanadis.stdout.gold \
+	tests/small/misc/openmp/mipsel/2core-2thread/sst.stdout.gold \
+	tests/small/misc/openmp/mipsel/2core-2thread/vanadis.stderr.gold \
+	tests/small/misc/openmp/mipsel/2core-2thread/vanadis.stdout.gold \
+	tests/small/misc/openmp/mipsel/4thread/sst.stdout.gold \
+	tests/small/misc/openmp/mipsel/4thread/vanadis.stderr.gold \
+	tests/small/misc/openmp/mipsel/4thread/vanadis.stdout.gold \
 	tests/small/misc/openmp/riscv64/openmp \
-	tests/small/misc/openmp/riscv64/gold1/sst.stdout.gold \
-	tests/small/misc/openmp/riscv64/gold1/vanadis.stderr.gold \
-	tests/small/misc/openmp/riscv64/gold1/vanadis.stdout.gold \
-	tests/small/misc/openmp/riscv64/gold2/sst.stdout.gold \
-	tests/small/misc/openmp/riscv64/gold2/vanadis.stderr.gold \
-	tests/small/misc/openmp/riscv64/gold2/vanadis.stdout.gold \
+	tests/small/misc/openmp/riscv64/4core/sst.stdout.gold \
+	tests/small/misc/openmp/riscv64/4core/vanadis.stderr.gold \
+	tests/small/misc/openmp/riscv64/4core/vanadis.stdout.gold \
+	tests/small/misc/openmp/riscv64/2core-2thread/sst.stdout.gold \
+	tests/small/misc/openmp/riscv64/2core-2thread/vanadis.stderr.gold \
+	tests/small/misc/openmp/riscv64/2core-2thread/vanadis.stdout.gold \
+	tests/small/misc/openmp/riscv64/4thread/sst.stdout.gold \
+	tests/small/misc/openmp/riscv64/4thread/vanadis.stderr.gold \
+	tests/small/misc/openmp/riscv64/4thread/vanadis.stdout.gold \
 \
 	tests/small/misc/hpcg/hpcg.dat \
 	tests/small/misc/hpcg/mipsel/hpcg \

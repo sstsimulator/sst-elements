@@ -212,6 +212,6 @@ all process have exited
  node0.cpu0.rob_slots_in_use.1 : Accumulator : Sum.u64 = 26946017; SumSQ.u64 = 2954664747; Count.u64 = 551965; Min.u64 = 0; Max.u64 = 126; 
  node0.cpu0.rob_cleared_entries.1 : Accumulator : Sum.u64 = 56997; SumSQ.u64 = 2991969; Count.u64 = 1338; Min.u64 = 0; Max.u64 = 61; 
  node0.cpu0.syscall-cycles.1 : Accumulator : Sum.u64 = 61583; SumSQ.u64 = 61583; Count.u64 = 61583; Min.u64 = 1; Max.u64 = 1; 
- node0.cpu0.phys_int_reg_in_use.1 : Accumulator : Sum.u64 = 40427732; SumSQ.u64 = 2970754130; Count.u64 = 551965; Min.u64 = 70; Max.u64 = 92; 
- node0.cpu0.phys_fp_reg_in_use.1 : Accumulator : Sum.u64 = 38646367; SumSQ.u64 = 2705880061; Count.u64 = 551965; Min.u64 = 70; Max.u64 = 79; 
+ node0.cpu0.phys_int_reg_in_use.1 : Accumulator : Sum.u64 = 79751534; SumSQ.u64 = 11561802524; Count.u64 = 551965; Min.u64 = 138; Max.u64 = 182; 
+ node0.cpu0.phys_fp_reg_in_use.1 : Accumulator : Sum.u64 = 76188804; SumSQ.u64 = 10516557168; Count.u64 = 551965; Min.u64 = 138; Max.u64 = 156; 
 Simulation is complete, simulated time: 240.105 us
