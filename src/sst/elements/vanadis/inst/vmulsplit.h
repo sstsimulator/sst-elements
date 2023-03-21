@@ -78,22 +78,13 @@ public:
         const register_format src_1 = regFile->getIntReg<register_format>(phys_int_regs_in[0]);
         const register_format src_2 = regFile->getIntReg<register_format>(phys_int_regs_in[1]);
 
+        constexpr int64_t lo_mask = (4 == sizeof(register_format)) ?
+                0xFFFFFFFF : 
+                (2 == sizeof(register_format)) ?
+                0xFFFF : 0xFF;
+
         if(std::is_signed<register_format>::value) {
             const int64_t multiply_result = (src_1) * (src_2);
-            constexpr int64_t lo_mask = 0;
-            
-            switch(sizeof(register_format)) {
-            case 4:
-                lo_mask = 0xFFFFFFFF;
-                break;
-            case 2:
-                lo_mask = 0xFFFF;
-                break;
-            case 1:
-                lo_mask = 0xFF;
-                break;
-            }
-
             const register_format result_lo       = (register_format)(multiply_result & lo_mask);
             const register_format result_hi       = (register_format)(multiply_result >> (sizeof(register_format) * 8));
 
@@ -109,20 +100,6 @@ public:
             regFile->setIntReg<register_format>(phys_int_regs_out[1], result_hi);
         } else {
             const uint64_t multiply_result = (src_1) * (src_2);
-            uint64_t lo_mask = 0;
-
-            switch(sizeof(register_format)) {
-            case 4:
-                lo_mask = 0xFFFFFFFF;
-                break;
-            case 2:
-                lo_mask = 0xFFFF;
-                break;
-            case 1:
-                lo_mask = 0xFF;
-                break;
-            }
-
             const register_format result_lo       = (register_format)(multiply_result & lo_mask);
             const register_format result_hi       = (register_format)(multiply_result >> (sizeof(register_format) * 8));
 
