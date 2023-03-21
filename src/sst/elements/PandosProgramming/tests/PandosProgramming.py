@@ -1,4 +1,6 @@
 import sst
+import sys
+
 class Node(object):
     def __init__(self
                  ,component_name
@@ -36,3 +38,8 @@ class Node(object):
         other.toRemoteNode = other_to_self
         other.fromRemoteNode = self_to_other
 
+def program_fpath():
+    return sys.argv[1]
+
+def program_argv():
+    return " ".join(sys.argv[2:]) if len(sys.argv) > 1 else ""
