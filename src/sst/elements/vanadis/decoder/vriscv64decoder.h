@@ -525,7 +525,7 @@ protected:
                     // SLTI
                     processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
                     bundle->addInstruction(new VanadisSetRegCompareImmInstruction<
-                                           REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT64, true>(
+                                           REG_COMPARE_LT, int64_t>(
                         ins_address, hw_thr, options, rd, rs1, simm64));
                     decode_fault = false;
                 } break;
@@ -534,7 +534,7 @@ protected:
                     // SLTIU
                     processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
                     bundle->addInstruction(new VanadisSetRegCompareImmInstruction<
-                                           REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT64, false>(
+                                           REG_COMPARE_LT, uint64_t>(
                         ins_address, hw_thr, options, rd, rs1, simm64));
                     decode_fault = false;
                 } break;
