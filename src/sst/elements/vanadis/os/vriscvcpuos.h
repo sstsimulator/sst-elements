@@ -230,8 +230,8 @@ public:
             uint64_t bufsize = getRegister(13);
 
 #ifdef SST_COMPILE_MACOSX
-            if (  RISCV_AT_FDCWD == dirFd ) {
-                dirFd = AT_FDCWD;
+            if (  RISCV_AT_FDCWD == dirfd ) {
+                dirfd = AT_FDCWD;
             }
 #endif
 
@@ -341,8 +341,8 @@ public:
             uint64_t flags = getRegister(13);
 
 #ifdef SST_COMPILE_MACOSX
-            if (  RISCV_AT_FDCWD == dirFd ) {
-                dirFd = AT_FDCWD;
+            if (  RISCV_AT_FDCWD == dirfd ) {
+                dirfd = AT_FDCWD;
             }
 #endif
 
