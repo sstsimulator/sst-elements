@@ -37,19 +37,12 @@ EXTRA_DIST = \
 	tests/vectorAdd/Makefile \
 	tests/refFiles/test_gpgpu_vectorAdd.out
 
-# libbalar_la_CPPFLAGS = \
-# 	-I$(top_srcdir)/src \
-# 	$(SST_CXX0X_FLAGS) -fPIC -Wall \
-# 	$(MPI_CPPFLAGS) \
-# 	$(CUDA_CPPFLAGS) \
-# 	-fdiagnostics-color=always
-
 libbalar_la_LDFLAGS = \
 	-lm \
-	-avoid-version
+	-avoid-version \
+	$(AM_LDFLAGS)
 
 libbalar_la_LIBADD = \
-	$(SST_SYSTEMC_LIB) \
 	-L$(GPGPUSIM_LIBDIR) \
 	$(GPGPUSIM_LIB)
 
