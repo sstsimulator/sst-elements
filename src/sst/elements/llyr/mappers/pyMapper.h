@@ -121,28 +121,7 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
         } else {
             edge_list.push_back( process_edge_row(row) );
         }
-
-//         for( const auto& cell : row ) {
-//             std::cout << cell << " ";
-//         }
-//         std::cout << std::endl;
     }
-
-
-//     std::ifstream inputStream(fileName, std::ios::in);
-//     if( inputStream.is_open() ) {
-//         CSVParser row('|');
-//
-//         while(inputStream >> row) {
-//             std::cout << row[0] << std::endl;
-//             std::string row_type = std::string(row[0]);
-//             if( row_type == "node" ) {
-//                 node_list.push_back( process_node_row(row) );
-//             } else {
-//                 edge_list.push_back( process_edge_row(row) );
-//             }
-//         }
-//     }
 
     // add the nodes from the mapper to the hardware graph
     for( auto it = node_list.begin(); it != node_list.end(); ++it ) {
@@ -171,7 +150,6 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
 
                     Arg some_arg = val_it->substr(0, posA);
                     uint32_t queue_id = std::stoll(val_it->substr(posA + 1));
-std::cout << "\tqueue id " << queue_id << " " << some_arg << std::endl;
                     arguments->emplace( queue_id, some_arg );
                 }
             }
