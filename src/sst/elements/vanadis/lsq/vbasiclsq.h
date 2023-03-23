@@ -270,6 +270,17 @@ protected:
                 }
             }
 
+#ifdef VANADIS_BUILD_DEBUG
+        if ( lsq->isDbgAddr( ev->vAddr ) ) {
+            VanadisLoadInstruction* load_ins = nullptr;
+            if ( load_entry ) {
+                load_ins = load_entry->getLoadInstruction();
+            }
+            printf("ReadResp::%s() load_address=%#" PRIx64 " %s ins_addr=%#" PRIx64 "\n",__func__,
+                ev->vAddr, ev->getFail()? "Failed":"Success", load_ins ? load_ins->getInstructionAddress() : 0 );
+        }
+#endif
+
             if(nullptr == load_entry) {
                 // not found, so previous cleared by a branch mis-predict ignore
                 return;
@@ -577,6 +588,12 @@ protected:
         StandardMem::Request* store_req = nullptr;
         std::vector<uint8_t> payload(store_width);
 
+#ifdef VANADIS_BUILD_DEBUG
+        if ( isDbgInsAddr( store_ins->getInstructionAddress() ) || isDbgAddr( store_address ) ) {
+            printf("%s() ins_addr=%#lx store_address=%#lx \n",__func__,store_ins->getInstructionAddress(), store_address);
+        }
+#endif
+
         const bool needs_split = operationStraddlesCacheLine(store_address, store_width);
         if(output->getVerboseLevel() >= 8) {
             std::vector<uint8_t> tmp(store_width);
@@ -720,6 +737,11 @@ protected:
     void issueLoad(VanadisLoadInstruction* load_ins, uint64_t load_address, uint64_t load_width) {
         StandardMem::Request* load_req = nullptr;
 
+#ifdef VANADIS_BUILD_DEBUG
+        if ( isDbgInsAddr( load_ins->getInstructionAddress() ) || isDbgAddr( load_address ) ) {
+            printf("%s() ins_addr=%#lx load_address=%#lx \n",__func__,load_ins->getInstructionAddress(), load_address);
+        }
+#endif
         // do we need to perform a split load (which loads from two cache lines)?
         const bool needs_split = operationStraddlesCacheLine(load_address, load_width);
 

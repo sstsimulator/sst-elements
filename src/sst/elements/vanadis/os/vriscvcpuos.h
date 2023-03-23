@@ -75,6 +75,7 @@
 #define VANADIS_SYSCALL_RISCV_UNAME 160
 #define VANADIS_SYSCALL_RISCV_READV 65
 #define VANADIS_SYSCALL_RISCV_WRITEV 66
+#define VANADIS_SYSCALL_RISCV_FSTATAT 79
 #define VANADIS_SYSCALL_RISCV_FSTAT 80
 #define VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK 135
 #define VANADIS_SYSCALL_RISCV_RT_SIGACTION 134
@@ -101,6 +102,7 @@
 #define VANADIS_SYSCALL_RISCV_SPLICE 76
 #define VANADIS_SYSCALL_RISCV_READLINKAT 78 
 #define VANADIS_SYSCALL_RISCV_SCHED_GETAFFINITY 123 
+#define VANADIS_SYSCALL_RISCV_GETRANDOM 278
 
 #define VANADIS_SYSCALL_RISCV_THREAD_REG 4 
 #define VANADIS_SYSCALL_RISCV_RET_REG 10
@@ -210,6 +212,34 @@ public:
             call_ev = new VanadisSyscallGetxEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B,SYSCALL_OP_GETTID);
         } break;
 
+        case VANADIS_SYSCALL_RISCV_GETRANDOM: {
+            uint64_t buf = getRegister( 10 );
+            uint64_t buflen = getRegister( 11 );
+            uint64_t flags = getRegister( 12 );
+
+            output->verbose(CALL_INFO, 8, 0, "getrandom( %#" PRIu64 ", %" PRIu64 ", %#" PRIx64 ")\n",
+                    buf, buflen, flags);
+
+            call_ev = new VanadisSyscallGetrandomEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, buf, buflen, flags );
+        } break;
+
+        case VANADIS_SYSCALL_RISCV_READLINKAT: {
+            uint64_t dirfd = getRegister( 10 );
+            uint64_t pathname = getRegister( 11 );
+            uint64_t buf = getRegister( 12 );
+            uint64_t bufsize = getRegister(13);
+
+#ifdef SST_COMPILE_MACOSX
+            if (  RISCV_AT_FDCWD == dirfd ) {
+                dirfd = AT_FDCWD;
+            }
+#endif
+
+            output->verbose(CALL_INFO, 8, 0, "readlinkat( %" PRIu64 ", %#" PRIx64 ", %#" PRIx64 ", %#" PRIu64 ")\n",
+                    dirfd, pathname, buf, bufsize);
+
+            call_ev = new VanadisSyscallReadLinkAtEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, dirfd, pathname, buf, bufsize);
+        } break;
 #if 0
         case VANADIS_SYSCALL_RISCV_READLINK: {
             const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -302,6 +332,23 @@ public:
             output->verbose(CALL_INFO, 8, 0, "fstat( %" PRId32 ", %" PRIu64 " )\n", file_handle, fstat_addr);
 
             call_ev = new VanadisSyscallFstatEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, file_handle, fstat_addr);
+        } break;
+
+        case VANADIS_SYSCALL_RISCV_FSTATAT: {
+            int32_t dirfd = getRegister(10);
+            uint64_t pathname = getRegister(11);
+            uint64_t statbuf= getRegister(12);
+            uint64_t flags = getRegister(13);
+
+#ifdef SST_COMPILE_MACOSX
+            if (  RISCV_AT_FDCWD == dirfd ) {
+                dirfd = AT_FDCWD;
+            }
+#endif
+
+            output->verbose(CALL_INFO, 8, 0, "fstat( %d, %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ")\n",dirfd,pathname,statbuf,flags);
+
+            call_ev = new VanadisSyscallFstatAtEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, dirfd, pathname, statbuf, flags );
         } break;
 
         case VANADIS_SYSCALL_RISCV_UNLINKAT: {
@@ -484,18 +531,20 @@ public:
         case VANADIS_SYSCALL_RISCV_KILL: {
             uint64_t  pid = getRegister( 10 );
             uint64_t  sig = getRegister( 11 );
+
             output->verbose(CALL_INFO, 8, 0, "kill( %d, %d  )\n",pid,sig);
 
             call_ev = new VanadisSyscallKillEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, pid, sig );
         } break;
 
-#if 0
         case VANADIS_SYSCALL_RISCV_SET_ROBUST_LIST: {
-            printf("%s() set_robust_list\n",__func__);
-            output->verbose(CALL_INFO, 8, 0, "set_robust_list(  )\n");
-            recvSyscallResp(new VanadisSyscallResponse(0));
+            uint64_t  head = getRegister( 10 );
+            uint64_t  len = getRegister( 11 );
+
+            output->verbose(CALL_INFO, 8, 0, "set_robust_list(  %#" PRIx64 ", %#" PRIu64" )\n",head,len);
+
+            call_ev = new VanadisSyscallSetRobustListEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, head, len );
         } break;
-#endif
 
         case VANADIS_SYSCALL_RISCV_MMAP: {
             uint64_t map_addr = getRegister( 10 );
@@ -562,11 +611,19 @@ public:
             recvSyscallResp(new VanadisSyscallResponse(0));
         } break;
 
-#if 0
         case VANADIS_SYSCALL_RISCV_PRLIMIT: {
-            recvSyscallResp(new VanadisSyscallResponse(0));
+            uint64_t pid = getRegister( 10 );
+            uint64_t resource  = getRegister( 11 );
+            uint64_t new_limit  = getRegister( 12 );
+            uint64_t  old_limit = getRegister( 13 );
+
+            output->verbose(CALL_INFO, 8, 0,
+                            "prlimit( %" PRIu64 ", %" PRIu64 ",  %#" PRIx64 ", %#" PRIx64 ")\n", pid, new_limit, old_limit );
+
+            call_ev = new VanadisSyscallPrlimitEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, pid, resource, new_limit, old_limit);
         } break;
 
+#if 0
         case VANADIS_SYSCALL_RISCV_SPLICE: {
             recvSyscallResp(new VanadisSyscallResponse(0));
         } break;
