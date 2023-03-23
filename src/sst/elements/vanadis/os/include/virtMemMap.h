@@ -27,6 +27,7 @@
 
 #if 0
 #define VirtMemDbg( format, ... ) printf( "VirtMemMap::%s() " format, __func__, ##__VA_ARGS__ )
+#define VIRT_MEM_DBG 1
 #else
 #define VirtMemDbg( format, ... )
 #endif
@@ -187,12 +188,17 @@ public:
     }
 
     void mprotect( uint64_t addr, size_t length, int prot ) {
+        VirtMemDbg("addr=%#" PRIx64 " length=%zu prot=%#x\n", addr, length, prot );
         auto* region = findRegion( addr );
         if ( addr == region->addr ) {
+            // split region in two 
             if ( length < region->length ) {
-                region->addr = addr + length;
-                region->length -= length;
-                m_regionMap[addr] = new MemoryRegion( "", addr, length, prot ); 
+                // create part two of split
+                m_regionMap[addr+length] = new MemoryRegion( region->name, addr + length, region->length - length, region->perms ); 
+                // update part one of split
+                region->length = length;
+                region->perms = prot;
+            // mprotect complete region
             } else if ( length == region->length ) {
                 region->perms = prot;
             } else {
@@ -209,7 +215,6 @@ public:
     }
 
     void print(std::string msg) {
-
 #ifdef VIRT_MEM_DBG 
         auto iter = m_regionMap.begin();
         printf("Process VM regions: %s\n",msg.c_str());
