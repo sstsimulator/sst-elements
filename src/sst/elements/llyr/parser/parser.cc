@@ -44,6 +44,7 @@ namespace Llyr {
 
 void Parser::generateAppGraph(std::string functionName)
 {
+    bool foundOffload;
     llvm::SMDiagnostic Err;
     llvm::LLVMContext Context;
 
@@ -53,14 +54,13 @@ void Parser::generateAppGraph(std::string functionName)
 
     //get names for anonymous instructions
     auto pm = std::make_unique<llvm::legacy::FunctionPassManager>(mod_);
-//     llvm::legacy::PassManager pm;
     pm->add(llvm::createPromoteMemoryToRegisterPass());
     pm->add(llvm::createInstructionNamerPass());
     pm->add(llvm::createIndVarSimplifyPass());
-//     pm->add(llvm::createLoopUnrollAndJamPass());
+    pm->add(llvm::createLoopUnrollAndJamPass());
     pm->doInitialization();
-//     pm->run(*mod_);
 
+    foundOffload = 0;
     for( auto functionIter = mod_->getFunctionList().begin(), functionEnd = mod_->getFunctionList().end(); functionIter != functionEnd; ++functionIter ) {
         if( output_->getVerboseLevel() > 64 ) {
             llvm::errs() << "Function Name: ";
@@ -78,12 +78,15 @@ void Parser::generateAppGraph(std::string functionName)
             mergeGraphs();
 //             collapseInductionVars();
 
+            foundOffload = 1;
             break;
-        } else {
-            output_->fatal(CALL_INFO, -1, "Error: No offload target\n");
-            exit(0);
         }
     }// function loop
+
+    if( foundOffload == 0 ) {
+        output_->fatal(CALL_INFO, -1, "Error: No offload target\n");
+        exit(0);
+    }
 
     output_->verbose(CALL_INFO, 1, 0, "Finished parsing...\n");
 
@@ -217,6 +220,9 @@ void Parser::expandBBGraph(llvm::Function* func)
             }
 
             //determine operation
+            if( tempOpcode == llvm::Instruction::GetElementPtr ) {
+                std::cout << "R#REWREFDSFDASFA" <<std::endl;
+            }
             if( tempOpcode == llvm::Instruction::Alloca ) {                                     // BEGIN Allocate
 
                 std::vector< llvm::Instruction* > *tempUseVector = new std::vector< llvm::Instruction* >;
@@ -1739,7 +1745,6 @@ void Parser::printPyMapper( const std::string fileName ) const
     auto funcVertexMap = functionGraph_->getVertexMap();
     for( auto vertexIterator = funcVertexMap->begin(); vertexIterator != funcVertexMap ->end(); ++vertexIterator ) {
 
-        bool swapped = 0;
         llvm::Instruction* tempInstruction = vertexIterator->second.getValue()->instruction_;
         if( tempInstruction != NULL ) {
             std::cout << "vertex: " << vertexIterator->first << "\n";
@@ -1749,6 +1754,10 @@ void Parser::printPyMapper( const std::string fileName ) const
             //write node ID
             outputFile << vertexIterator->first << " [";
             outputFile << std::flush;
+
+            //if this is a call, we want to swipper-swap the op with the operand
+            const char* pos = strstr(tempInstruction->getOpcodeName(), "call");
+            std::string newOpcode;
 
             //write operands
             bool first = 0;
@@ -1774,20 +1783,23 @@ void Parser::printPyMapper( const std::string fileName ) const
 
                         constVector.emplace( operandIter->getOperandNo(), tempConst->getNameOrAsOperand() );
                         std::cout << tempConst->getNameOrAsOperand() << " -- inboop" << std::endl;
-
                     } else if( llvm::isa<llvm::ConstantFP>(operandIter) ) {
                         llvm::ConstantFP* tempConst = llvm::cast<llvm::ConstantFP>(operandIter);
 
-                        constVector.emplace( operandIter->getOperandNo(), tempConst->getNameOrAsOperand() );
-                        std::cout << tempConst->getNameOrAsOperand() << " -- fpboop" << std::endl;
-
+                        //this is super hacky ^-^
+                        constVector.emplace( operandIter->getOperandNo(), std::to_string(std::stod(tempConst->getNameOrAsOperand())) );
+                        std::cout << std::to_string(std::stod(tempConst->getNameOrAsOperand())) << " -- fpboop" << std::endl;
                     } else if( llvm::isa<llvm::ConstantExpr>(operandIter) ) {
                         outputFile << operandIter->get()->getNameOrAsOperand();
                         std::cout << operandIter->get()->getNameOrAsOperand() << " -- boopB" << std::endl;
-
                     } else if( llvm::isa<llvm::GlobalValue>(operandIter) ) {
-                        outputFile << operandIter->get()->getNameOrAsOperand();
-                        std::cout << operandIter->get()->getNameOrAsOperand() << " -- boopG" << std::endl;
+                        if( tempInstruction->getOpcodeName() == pos ) {
+                            outputFile << "";
+                            newOpcode = operandIter->get()->getNameOrAsOperand();
+                        } else {
+                            outputFile << operandIter->get()->getNameOrAsOperand();
+                            std::cout << operandIter->get()->getNameOrAsOperand() << " -- boopG" << std::endl;
+                        }
                     } else {
                         output_->fatal(CALL_INFO, -1, "Error: No valid operand\n");
                         exit(0);
@@ -1806,7 +1818,7 @@ void Parser::printPyMapper( const std::string fileName ) const
                 outputFile << it->second << ":" << it->first;
                 ++it;
                 if( it != constVector.end() ) {
-                    outputFile << "\":";
+                    outputFile << " ";
                 }
             }
             outputFile << "\"" << ", ";
@@ -1821,7 +1833,11 @@ void Parser::printPyMapper( const std::string fileName ) const
 
             //write op
             outputFile << "op=" << "\"";
-            outputFile << tempInstruction->getOpcodeName();
+            if( tempInstruction->getOpcodeName() == pos ) {
+                outputFile << newOpcode;
+            } else {
+                outputFile << tempInstruction->getOpcodeName();
+            }
             outputFile << "\"" << ", ";
 
             //write type
@@ -1909,5 +1925,6 @@ void Parser::collapseInductionVars()
 
 } // namespace llyr
 } // namespace SST
+
 
 
