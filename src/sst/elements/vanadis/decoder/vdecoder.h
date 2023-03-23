@@ -220,6 +220,9 @@ public:
 
     virtual void setThreadROB(VanadisCircularQueue<VanadisInstruction*>* thr_rob) { thread_rob = thr_rob; }
 
+    void     setCore(const uint32_t num ) { core = num; }
+    uint32_t getCore() const { return core; }
+
     void     setHardwareThread(const uint32_t thr) { hw_thr = thr; }
     uint32_t getHardwareThread() const { return hw_thr; }
 
@@ -234,6 +237,7 @@ protected:
     uint64_t ip;
     uint64_t icache_line_width;
     uint32_t hw_thr;
+    uint32_t core;
 
     uint64_t tls_ptr;
     uint64_t cycle_count;

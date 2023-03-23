@@ -28,6 +28,7 @@
 #include <cinttypes>
 #include <cstdint>
 #include <vector>
+#include <queue>
 
 #define VANADIS_DBG_LSQ_STORE_FLG  (1<<0)
 #define VANADIS_DBG_LSQ_LOAD_FLG  (1<<1)
@@ -54,6 +55,8 @@ public:
         output = new SST::Output("[lsq @t]: ", verbosity, mask, SST::Output::STDOUT);
 
         address_mask = params.find<uint64_t>("address_mask", 0xFFFFFFFFFFFFFFFF);
+        setDbgInsAddrs( params.find<std::string>("dbgInsAddrs", "") );
+        setDbgAddrs( params.find<std::string>("dbgAddrs", "") );
 
         registerFiles = nullptr;
 
@@ -96,6 +99,59 @@ public:
     virtual void printStatus(SST::Output& output) {}
 
 protected:
+
+    void setDbgInsAddrs( std::string addrs ) {
+
+        while ( ! addrs.empty() ) {
+            printf("%s() %s\n",__func__,addrs.c_str());
+            auto pos = addrs.find(',');
+            std::string addr;
+            if ( pos == std::string::npos ) {
+                addr = addrs;
+                addrs.clear();
+            } else  {
+                addr = addrs.substr(0,pos);
+                addrs = addrs.substr(pos+1);
+            }
+            m_dbgInsAddrs.push_back(  strtol( addr.c_str(), NULL , 16 ) );
+        }
+    }
+
+
+    bool isDbgInsAddr( uint64_t addr ) {
+        for ( auto& it : m_dbgInsAddrs ) {
+            if ( it == addr ) return true;
+        }
+        return false;
+    }
+
+    void setDbgAddrs( std::string addrs ) {
+
+        while ( ! addrs.empty() ) {
+            printf("%s() %s\n",__func__,addrs.c_str());
+            auto pos = addrs.find(',');
+            std::string addr;
+            if ( pos == std::string::npos ) {
+                addr = addrs;
+                addrs.clear();
+            } else  {
+                addr = addrs.substr(0,pos);
+                addrs = addrs.substr(pos+1);
+            }
+            m_dbgAddrs.push_back(  strtol( addr.c_str(), NULL , 16 ) );
+        }
+    }
+
+
+    bool isDbgAddr( uint64_t addr ) {
+        for ( auto& it : m_dbgAddrs ) {
+            if ( it == addr ) return true;
+        }
+        return false;
+    }
+
+    std::deque<uint64_t> m_dbgInsAddrs;
+    std::deque<uint64_t> m_dbgAddrs;
     int core_id;
     uint64_t address_mask;
     std::vector<VanadisRegisterFile*>* registerFiles;
