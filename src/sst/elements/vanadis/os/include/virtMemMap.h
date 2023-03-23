@@ -207,7 +207,7 @@ public:
             }
         } else if ( ( addr < region->addr + region->length ) && ( addr + length == region->end() ) ) {
             region->length -= length; 
-            m_regionMap[addr] = new MemoryRegion( "", addr, length, prot ); 
+            m_regionMap[addr] = new MemoryRegion( region->name, addr, length, prot ); 
         } else {
                 // we currently are only supporting splitting a region
                 assert(0);
