@@ -1,6 +1,5 @@
 #include "cuda_runtime_api.h"
 
-// TODO: DMA engine timing issue when removing the debug statements
 cudaError_t cudaMalloc(void **devPtr, uint64_t size) {
     // Send request to GPU
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
@@ -28,7 +27,6 @@ cudaError_t cudaMalloc(void **devPtr, uint64_t size) {
                 response_packet_ptr->cudamalloc.malloc_addr, response_packet_ptr->cudamalloc.devptr_addr);
     }
 
-    // TODO: Malloc address incorrect? malloc_addr or devptr_addr?
     *devPtr = response_packet_ptr->cudamalloc.malloc_addr;
     return response_packet_ptr->cuda_error;
 }
@@ -83,10 +81,6 @@ cudaError_t cudaMemcpy(uint64_t dst, uint64_t src, uint64_t count, enum cudaMemc
     
     return response_packet_ptr->cuda_error;
 }
-
-// TODO Need to register fatbin now
-// TODO Need to register function
-// TODO Also need to handle kernel arguments
 
 // Cuda Configure call
 cudaError_t cudaConfigureCall(dim3 gridDim, dim3 blockDim, uint64_t sharedMem) {
@@ -222,8 +216,8 @@ unsigned int __cudaRegisterFatBinary(char file_name[256]) {
     return response_packet_ptr->fat_cubin_handle;
 }
 
-// TODO: How to get the deviceFun name?
-// TODO: Requires parsing the binary?
+// Future: How to get the deviceFun name automatically?
+// Future: Requires parsing the binary?
 void __cudaRegisterFunction(
     uint64_t fatCubinHandle,
     uint64_t hostFun,

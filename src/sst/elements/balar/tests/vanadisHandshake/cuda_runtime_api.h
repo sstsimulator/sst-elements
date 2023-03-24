@@ -112,8 +112,8 @@ struct dim3
 typedef enum cudaError cudaError_t;
 typedef struct dim3 dim3;
 
-// TODO: Make this into a class with additional serialization methods?
-// TODO: Make this into subclass of standardmem::request? and override the makeResponse function?
+// Future: Make this into a class with additional serialization methods?
+// Future: Make this into subclass of standardmem::request? and override the makeResponse function?
 typedef struct BalarCudaCallPacket {
     enum GpuApi_t cuda_call_id;
     // 0: means pointer data are not in SST mem space
@@ -216,10 +216,6 @@ cudaError_t cudaMalloc(void **devPtr, uint64_t size);
 
 cudaError_t cudaMemcpy(uint64_t dst, uint64_t src, uint64_t count, enum cudaMemcpyKind kind);
 
-// TODO Need to register fatbin now
-// TODO Need to register function
-// TODO Also need to handle kernel arguments
-
 // Cuda Configure call
 cudaError_t cudaConfigureCall(dim3 gridDim, dim3 blockDim, uint64_t sharedMem);
 
@@ -230,7 +226,7 @@ cudaError_t cudaLaunch(uint64_t func);
 
 unsigned int __cudaRegisterFatBinary(char file_name[256]);
 
-// TODO: How to get the deviceFun name?
+// TODO: How to get the deviceFun name automatically?
 // TODO: Requires parsing the binary?
 void __cudaRegisterFunction(
     uint64_t fatCubinHandle,

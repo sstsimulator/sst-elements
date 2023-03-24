@@ -53,7 +53,7 @@ int main( int argc, char* argv[] ) {
     printf("d_b: %p\n", d_b);
     printf("d_result: %p\n", d_result);
 
-    // Looks like the 32 bit pointer get signed extended, use AND to revert this
+    // Looks like the 32 bit pointer get signed extended, use AND to force unsigned extend
     cudaMemcpy((uint64_t)d_a & 0xFFFFFFFF, (uint64_t)h_a, n * sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy((uint64_t)d_b & 0xFFFFFFFF, (uint64_t)h_b, n * sizeof(int), cudaMemcpyHostToDevice);
 
@@ -105,7 +105,7 @@ int main( int argc, char* argv[] ) {
         }
     }
 
-    // TODO: Weili: Add CPU validation against GPU results here?
+    // Future: Weili: Add CPU validation against GPU results here?
     
     return 0;
 }
