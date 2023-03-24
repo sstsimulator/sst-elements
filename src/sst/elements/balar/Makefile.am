@@ -28,13 +28,17 @@ libbalar_la_SOURCES = \
 
 EXTRA_DIST = \
 	tests/ariel-gpu-v100.cfg \
-	tests/cuda-test.py \
-	tests/testBalar-simple.py \
+	tests/testBalar-vanadis.py \
+	tests/testBalar-testcpu.py \
 	tests/gpgpusim.config \
 	tests/testsuite_default_balar.py \
 	tests/utils.py \
 	tests/vectorAdd/vecAdd.cu \
 	tests/vectorAdd/Makefile \
+	tests/vanadisHandshake/vanadisHandshake.c \
+	tests/vanadisHandshake/cuda_runtime_api.c \
+	tests/vanadisHandshake/cuda_runtime_api.h \
+	tests/vanadisHandshake/Makefile \
 	tests/refFiles/test_gpgpu_vectorAdd.out
 
 libbalar_la_LDFLAGS = \
