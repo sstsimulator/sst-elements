@@ -396,7 +396,7 @@ public:
             uint64_t mode = regFile->getIntReg<uint64_t>(phys_reg_7);
 
 #ifdef SST_COMPILE_MACOSX
-            if (  MIPS_AT_FDCWD == openat_dirfd ) {
+            if (  MIPS_AT_FDCWD == dirfd ) {
                 dirfd = AT_FDCWD;
             }
 #endif
