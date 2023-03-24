@@ -24,6 +24,7 @@
 
 #include "llyr.h"
 #include "llyrTypes.h"
+#include "llyrHelpers.h"
 #include "parser/parser.h"
 #include "mappers/mapperList.h"
 
@@ -91,13 +92,16 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     uint16_t queue_depth = params.find< uint16_t >("queue_depth", 256);
     uint16_t arith_latency = params.find< uint16_t >("arith_latency", 1);
     uint16_t int_latency = params.find< uint16_t >("int_latency", 1);
-    uint16_t fp_latency = params.find< uint16_t >("fp_latency", 1);
-    uint16_t fp_mul_latency = params.find< uint16_t >("fp_mul_latency", 1);
-    uint16_t fp_div_latency = params.find< uint16_t >("fp_div_latency", 1);
+    uint16_t int_div_latency = params.find< uint16_t >("int_div_latency", 4);
+    uint16_t fp_latency = params.find< uint16_t >("fp_latency", 4);
+    uint16_t fp_mul_latency = params.find< uint16_t >("fp_mul_latency", 8);
+    uint16_t fp_div_latency = params.find< uint16_t >("fp_div_latency", 40);
+    uint16_t complex_latency = params.find< uint16_t >("complex_latency_", 80);
     std::string mapping_tool_ = params.find< std::string >("mapping_tool", "");
 
     configData_ = new LlyrConfig { ls_queue_, mem_interface_, starting_addr_, mapping_tool_, verbosity, queue_depth,
-                                   arith_latency, int_latency, fp_latency, fp_mul_latency, fp_div_latency };
+                                   arith_latency, int_latency, int_div_latency, fp_latency, fp_mul_latency, fp_div_latency,
+                                   complex_latency };
 
     memFileName_ = params.find<std::string>("mem_init", "");
 

@@ -29,13 +29,9 @@ namespace Llyr {
 class LoadProcessingElement : public ProcessingElement
 {
 public:
-    LoadProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
-                          uint32_t cycles = 1)  :
+    LoadProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config) :
                           ProcessingElement(op_binding, processor_id, llyr_config)
     {
-        cycles_ = cycles;
-
-
     }
 
     virtual bool doSend()
@@ -264,11 +260,9 @@ class AdvLoadProcessingElement : public LoadProcessingElement
 {
 public:
     AdvLoadProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
-                          QueueArgMap* arguments, uint32_t cycles = 1)  :
+                          QueueArgMap* arguments)  :
                           LoadProcessingElement(op_binding, processor_id, llyr_config)
     {
-        cycles_ = cycles;
-
         // iterate through the arguments and set initial queue values
         for( auto it = arguments->begin(); it != arguments->end(); ++it ) {
 

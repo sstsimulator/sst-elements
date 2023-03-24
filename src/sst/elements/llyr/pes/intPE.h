@@ -29,11 +29,15 @@ namespace Llyr {
 class IntProcessingElement : public ProcessingElement
 {
 public:
-    IntProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config)  :
+    IntProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config) :
                          ProcessingElement(op_binding, processor_id, llyr_config)
     {
-
-
+        if( op_binding == DIV ) {
+            latency_ = llyr_config->int_div_latency_;
+        } else {
+            latency_ = llyr_config->int_latency_;
+        }
+        cycles_to_fire_ = latency_;
     }
 
     virtual bool doSend()
@@ -115,10 +119,15 @@ public:
 
         //if all inputs are available pull from queue and add to arg list
         if( num_inputs == 0 || num_ready < num_inputs ) {
-            output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
+            output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 " Fire %" PRIu16 "\n", num_inputs, num_ready, cycles_to_fire_);
+            return false;
+        } else if( cycles_to_fire_ > 0 ) {
+            output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 " Fire %" PRIu16 "\n", num_inputs, num_ready, cycles_to_fire_);
+            cycles_to_fire_ = cycles_to_fire_ - 1;
+            pending_op_ = 1;
             return false;
         } else {
-            output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
+            output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 " Fire %" PRIu16 "\n", num_inputs, num_ready, cycles_to_fire_);
             for( uint32_t i = 0; i < total_num_inputs; ++i) {
                 if( input_queues_->at(i)->argument_ > -1 ) {
                     argList.push_back(input_queues_->at(i)->data_queue_->front());
@@ -126,6 +135,7 @@ public:
                     input_queues_->at(i)->data_queue_->pop();
                 }
             }
+            cycles_to_fire_ = latency_;
         }
 
         switch( op_binding_ ) {
@@ -184,6 +194,13 @@ public:
                               QueueArgMap* arguments)  :
                               IntProcessingElement(op_binding, processor_id, llyr_config)
     {
+        if( op_binding == DIVCONST ) {
+            latency_ = llyr_config->int_div_latency_;
+        } else {
+            latency_ = llyr_config->int_latency_;
+        }
+        cycles_to_fire_ = latency_;
+
         // iterate through the arguments and set initial queue values
         for( auto it = arguments->begin(); it != arguments->end(); ++it ) {
             auto retVal = input_queues_init_.emplace( it->first, it->second );
@@ -246,10 +263,15 @@ public:
 
         //if all inputs are available pull from queue and add to arg list
         if( num_inputs == 0 || num_ready < num_inputs ) {
-            output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
+            output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 " Fire %" PRIu16 "\n", num_inputs, num_ready, cycles_to_fire_);
+            return false;
+        } else if( cycles_to_fire_ > 0 ) {
+            output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 " Fire %" PRIu16 "\n", num_inputs, num_ready, cycles_to_fire_);
+            cycles_to_fire_ = cycles_to_fire_ - 1;
+            pending_op_ = 1;
             return false;
         } else {
-            output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
+            output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 " Fire %" PRIu16 "\n", num_inputs, num_ready, cycles_to_fire_);
             // first queue should be const
             for( uint32_t i = 1; i < total_num_inputs; ++i) {
                 if( input_queues_->at(i)->argument_ > -1 ) {
@@ -257,6 +279,7 @@ public:
                     input_queues_->at(i)->data_queue_->pop();
                 }
             }
+            cycles_to_fire_ = latency_;
         }
 
         switch( op_binding_ ) {
@@ -340,6 +363,10 @@ public:
                             QueueArgMap* arguments)  :
                             IntProcessingElement(op_binding, processor_id, llyr_config)
     {
+
+        latency_ = llyr_config->int_latency_;
+        cycles_to_fire_ = latency_;
+
         // iterate through the arguments and set initial queue values
         for( auto it = arguments->begin(); it != arguments->end(); ++it ) {
             auto retVal = input_queues_init_.emplace( it->first, it->second );
@@ -435,16 +462,22 @@ public:
 
         //if all inputs are available pull from queue and add to arg list
         if( num_inputs == 0 || num_ready < num_inputs ) {
-            output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
+            output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 " Fire %" PRIu16 "\n", num_inputs, num_ready, cycles_to_fire_);
+            return false;
+        } else if( cycles_to_fire_ > 0 ) {
+            output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 " Fire %" PRIu16 "\n", num_inputs, num_ready, cycles_to_fire_);
+            cycles_to_fire_ = cycles_to_fire_ - 1;
+            pending_op_ = 1;
             return false;
         } else {
-            output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
+            output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 " Fire %" PRIu16 "\n", num_inputs, num_ready, cycles_to_fire_);
             for( uint32_t i = 0; i < total_num_inputs; ++i) {
                 if( input_queues_->at(i)->argument_ > -1 ) {
                     argList.push_back(input_queues_->at(i)->data_queue_->front());
                     input_queues_->at(i)->data_queue_->pop();
                 }
             }
+            cycles_to_fire_ = latency_;
         }
 
         if( op_binding_ == INC ) {

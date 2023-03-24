@@ -22,6 +22,7 @@
 #include "../graph/graph.h"
 #include "../lsQueue.h"
 #include "../llyrTypes.h"
+#include "../llyrHelpers.h"
 #include "pes/peList.h"
 
 namespace SST {

@@ -29,13 +29,11 @@ namespace Llyr {
 class ControlProcessingElement : public ProcessingElement
 {
 public:
-    ControlProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
-                           uint32_t cycles = 1)  :
+    ControlProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config) :
                     ProcessingElement(op_binding, processor_id, llyr_config)
     {
         do_forward_ = 0;
         first_touch_ = 1;
-        cycles_ = cycles;
     }
 
     virtual bool doSend()

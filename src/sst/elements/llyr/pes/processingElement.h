@@ -29,7 +29,6 @@
 #include <sstream>
 #include <algorithm>
 
-
 #include "../graph/graph.h"
 #include "../lsQueue.h"
 #include "../llyrTypes.h"
@@ -322,10 +321,11 @@ public:
     virtual void outputQueueInit() = 0;
 
 protected:
-    opType op_binding_;
-
-    uint32_t cycles_;
+    opType   op_binding_;
     uint32_t processor_id_;
+
+    uint16_t latency_;
+    uint16_t cycles_to_fire_;
 
     // input and output queues per PE
     uint32_t queue_depth_;

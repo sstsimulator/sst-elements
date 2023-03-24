@@ -31,20 +31,9 @@ namespace Llyr {
 class StoreProcessingElement : public ProcessingElement
 {
 public:
-    StoreProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
-                           uint32_t cycles = 1)  :
+    StoreProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config) :
                     ProcessingElement(op_binding, processor_id, llyr_config)
     {
-        cycles_ = cycles;
-
-
-        //stores need two input queues -- address and data
-
-//         LlyrQueue* tempQueue = new LlyrQueue;
-//         tempQueue->forwarded_ = 0;
-//         tempQueue->routing_arg_ = new std::string("");
-//         tempQueue->data_queue_ = new std::queue< LlyrData >;
-//         input_queues_->push_back(tempQueue);
     }
 
     virtual bool doSend()
@@ -248,11 +237,9 @@ class AdvStoreProcessingElement : public StoreProcessingElement
 {
 public:
     AdvStoreProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
-                          QueueArgMap* arguments, uint32_t cycles = 1)  :
+                          QueueArgMap* arguments) :
                           StoreProcessingElement(op_binding, processor_id, llyr_config)
     {
-        cycles_ = cycles;
-
         // iterate through the arguments and set initial queue values
         for( auto it = arguments->begin(); it != arguments->end(); ++it ) {
 

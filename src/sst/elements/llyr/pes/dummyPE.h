@@ -29,7 +29,7 @@ namespace Llyr {
 class DummyProcessingElement : public ProcessingElement
 {
 public:
-    DummyProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config)  :
+    DummyProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config) :
                     ProcessingElement(op_binding, processor_id, llyr_config)
     {
     }
