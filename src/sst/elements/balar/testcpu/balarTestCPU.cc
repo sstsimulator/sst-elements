@@ -158,7 +158,6 @@ Interfaces::StandardMem::Request*
     // Instead of writing to GPU MMIO address
     // We write to the scratch memory address first
     StandardMem::Request* req = new Interfaces::StandardMem::Write(scratchMemAddr, buffer->size(), *buffer, false);
-    // num_gpu_issued->addData(1);
 
     out.verbose(_INFO_, "creating GPU request %s, CUDA Function enum %s; packet address: %x\n", getName().c_str(), gpu_api_to_string(pack.cuda_call_id)->c_str(), scratchMemAddr);
     return req;
@@ -431,11 +430,9 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
             std::getline(traceStream, line);
             out->verbose(CALL_INFO, 2, 0, "Trace info: %s\n", line.c_str());
 
-            // TODO Parse the trace
+            // Parse the trace
             // Before first colon: api type
             // Search every colon for individual argument
-            // TODO Need to maintain a hashmap for device pointer
-            // TODO Need to load host data for cpy
             size_t firstColIdx = line.find(":");
             std::string cudaCallType = line.substr(0, firstColIdx);
             line = line.substr(firstColIdx + 1);
@@ -690,7 +687,7 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
                 Interfaces::StandardMem::Request* launch_req = cpu->createGPUReqFromPacket(launch_pack);
                 initReqs->push(launch_req);
             } else if (cudaCallType.find("free") != std::string::npos) {
-                // TODO Remove device pointer from hashmap? 
+                // Future: Remove device pointer from hashmap as cleanup task? 
             }
         }
         return req;

@@ -145,7 +145,6 @@ protected:
 
     /* Debug -triggered by output.fatal() and/or SIGUSR2 */
     virtual void printStatus(Output &out);
-    //virtual void emergencyShutdown();
     
     /* Output */
     Output out;

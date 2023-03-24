@@ -166,8 +166,6 @@ private:
              */
             std::map<std::string, uint64_t>* func_map;
 
-
-            // TODO Only on cubin here?
             unsigned fatCubinHandle;
     };
     CudaAPITraceParser* trace_parser;

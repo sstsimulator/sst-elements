@@ -16,20 +16,6 @@ sst testBalar-vanadis.py --model-options='-c ariel-gpu-v100.cfg'
 
 Can also set `PTX_SIM_DEBUG=3` to enable debug output in GPGPU-Sim, check its manual for more details.
 
-## Usage
-
-After successful compilation and installation of SST core and SST elements, run:
-
-```bash
-cd tests/
-# Run with testCPU
-sst testBalar-simple.py --model-options='-c ariel-gpu-v100.cfg -v -x vectorAdd/vectorAdd'
-# Run with vanadis
-sst basic_vanadis_mod.py --model-options='-c ariel-gpu-v100.cfg'
-```
-
-Can also set `PTX_SIM_DEBUG=3` to enable debug output in GPGPU-Sim, check its manual for more details.
-
 ## TODO
 
 1. [x] Link the custom cuda lib with nvcc executable
@@ -100,13 +86,6 @@ Can also set `PTX_SIM_DEBUG=3` to enable debug output in GPGPU-Sim, check its ma
             1. Cycles with issue
             1. Total cycles
 
-## Caveats
-
-1. Cuda memcpy data pointer need to remain valid under the operation finish
-2. Need to provide definitions for virtual inherited functions like `handle()` in handlers else the SST might not able to recognize the component
-3. Still use simpleMem interface to communicate with gpu caches
-4. Change the standardInterface to accept a param call `port` that configure the link (bypass it)
-
 ## Note
 
 1. Use `--output-dot [filename]` to output a dot file describing the graph and use `dot -Tpng [File.dot] > [File.png]` to output to png format
@@ -118,11 +97,11 @@ Can also set `PTX_SIM_DEBUG=3` to enable debug output in GPGPU-Sim, check its ma
     3. sst-core: `./configure --prefix=$SST_CORE_HOME --disable-mpi --disable-mem-pools`
     4. Source setup for CUDA: `source SST_EXTERNAL_PATH/setup_environment`
         1. Also need to build the gpgpusim beforehand
-    5. sst-elements: `./configure --prefix=$SST_ELEMENTS_HOME --with-sst-core=$SST_CORE_HOME --with-pin=$PIN_HOME --with-cuda=$CUDA_ROOT --with-gpgpusim=$GPGPUSIM_ROOT`
-    6. Without PIN (mmio balar only): `./configure --prefix=$SST_ELEMENTS_HOME --with-sst-core=$SST_CORE_HOME --with-cuda=$CUDA_ROOT --with-gpgpusim=$GPGPUSIM_ROOT`
+    5. sst-elements: `./configure --prefix=$SST_ELEMENTS_HOME --with-sst-core=$SST_CORE_HOME --with-pin=$PIN_HOME --with-cuda=$CUDA_INSTALL_PATH --with-gpgpusim=$GPGPUSIM_ROOT`
+    6. Without PIN (mmio balar only): `./configure --prefix=$SST_ELEMENTS_HOME --with-sst-core=$SST_CORE_HOME --with-cuda=$CUDA_INSTALL_PATH --with-gpgpusim=$GPGPUSIM_ROOT`
 1. Can build sst-core with `--enable-debug` to enable memHierarchy debug output, useful for debugging
 1. Filter memory subsystem stats from SST run
     1. `grep -E -e '(l1gcache_.*)|(l2gcache_.*)|(Simplehbm_.*)' stats.out > mmio_mem.out`
     1. `grep -E -e '(l1gcache_.*)|(l2gcache_.*)|(Simplehbm_.*)' refFiles/test_gpgpu_vectorAdd.out > prev_mem.out`
     1. Compare with `git diff --word-diff=color --no-index mmio_mem.out prev_mem.out`
-1. Try vanadis handshake binary: `sst basic_vanadis_mod.py --model-options='-c ariel-gpu-v100.cfg'`
+1. Try vanadis handshake binary: `sst testBalar-vanadis.py --model-options='-c ariel-gpu-v100.cfg'`

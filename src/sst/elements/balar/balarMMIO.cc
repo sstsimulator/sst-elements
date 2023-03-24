@@ -76,19 +76,8 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
 
     iface->setMemoryMappedAddressRegion(mmio_addr, mmio_size);
 
-    // TODO: Not actually needed as we use MMIO for DMA
-    // Interface to DMA engine
-    // dma_if = loadUserSubComponent<SST::Interfaces::StandardMem>("dma_if", ComponentInfo::SHARE_NONE, tc, 
-    //         new StandardMem::Handler<BalarMMIO>(this, &BalarMMIO::handleDMAEvent));
-    // if (!dma_if) {
-    //     out.fatal(CALL_INFO, -1, "%s, Error: No interface found loaded into 'dma_if' subcomponent slot. Please check input file\n", getName().c_str());
-    // }
-
     // Handlers for cpu interactions
     handlers = new mmioHandlers(this, &out);
-
-    // Handlers for DMA transfer
-    // dmaHandlers = new DMAHandlers(this, &out);
     
     // GPU Cache interface configuration
     gpu_to_cache_links = (StandardMem**) malloc( sizeof(StandardMem*) * gpu_core_count );
@@ -117,11 +106,6 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
             out.verbose(CALL_INFO, 1, 0, "Starts to configure cache link (%s) for core %d\n", link_cache_buffer, i);
             Params param;
             param.insert("port", link_cache_buffer);
-
-            // Debug
-            param.insert("debug", "1");
-            param.insert("debug_level", "10");
-            // Debug end
 
             gpu_to_cache_links[i] = loadAnonymousSubComponent<SST::Interfaces::StandardMem>("memHierarchy.standardInterface", 
                     "gpu_cache", i, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, 
@@ -281,7 +265,6 @@ void BalarMMIO::handleGPUCache(SST::Interfaces::StandardMem::Request* req) {
     } else {
         out.fatal(CALL_INFO, -1, "GPU Cache Request (%d) not found!\n", req_id);
     }
-    // req->handle(gpuCacheHandlers);
 }
 
 /**
@@ -294,9 +277,6 @@ void BalarMMIO::handleGPUCache(SST::Interfaces::StandardMem::Request* req) {
  * @param write 
  */
 void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write) {
-    // Convert 8 bytes of the payload into an int
-    // std::vector<uint8_t> buff = write->data;
-
     // Save this write instance as we will need it to make response
     // when finish calling GPGPUSim after getting readresp
     mmio->pending_write = write;
@@ -336,8 +316,6 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Read* read) {
     // when finish writing return packet to memory
     mmio->pending_read = read;
 
-    // TODO: Might need to free this? Since the data vector copy on move when
-    // TODO: Creating the request?
     vector<uint8_t> *payload = encode_balar_packet<BalarCudaCallReturnPacket_t>(&mmio->cuda_ret);
 
     // Write to the scratch memory region first
@@ -572,7 +550,7 @@ void BalarMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* res
                     break;
             }
 
-            /* Send response (ack) to the CUDA API Cuda request if needed */
+            // Send response (ack) to the CUDA API Cuda request if needed
             if (!(write->posted)) {
                 if (is_blocked) {
                     // Save blocked req's response and send later
@@ -716,14 +694,9 @@ uint64_t BalarMMIO::mmioHandlers::dataToUInt64(vector<uint8_t>* data) {
 
 void BalarMMIO::printStatus(Output &statusOut) {
     statusOut.output("Balar::BalarMMIO %s\n", getName().c_str());
-    // statusOut.output("    Register: %d\n", squared);
-    // iface->printStatus(statusOut);
     statusOut.output("End Balar::BalarMMIO\n\n");
 }
 
-// TODO Global Wrappers
-// TODO Finish for mmiohere
-// TODO Handle cache timing simulation?
 extern bool is_SST_buffer_full(unsigned core_id) {
     assert(g_balarmmio_component);
     return g_balarmmio_component->is_SST_buffer_full(core_id);

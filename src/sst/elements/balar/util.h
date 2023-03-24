@@ -54,8 +54,8 @@ namespace BalarComponent {
     };
 
     
-    // TODO: Make this into a class with additional serialization methods?
-    // TODO: Make this into subclass of standardmem::request? and override the makeResponse function?
+    // Future: Make this into a class with additional serialization methods?
+    // Future: Make this into subclass of standardmem::request? and override the makeResponse function?
     typedef struct BalarCudaCallPacket {
         enum GpuApi_t cuda_call_id;
         // Whether the pointer data are in SST memory space
@@ -154,9 +154,6 @@ namespace BalarComponent {
         };
     } BalarCudaCallReturnPacket_t;
 
-    // TODO: Need a function to convert struct to vector uint8_t and vice versa
-    // TODO: Move the encode and decode to balar mmio handler?
-    // TODO: Rename this function?
     // Need to move the template instantiation to header file
     // See: https://stackoverflow.com/questions/495021/why-can-templates-only-be-implemented-in-the-header-file
     template <typename T> 
