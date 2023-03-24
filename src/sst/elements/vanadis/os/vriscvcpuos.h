@@ -592,6 +592,12 @@ public:
         } break;
 
         case VANADIS_SYSCALL_RISCV_RT_SIGACTION: {
+            int64_t signum = getRegister( 10 );
+            int64_t act = getRegister( 11 );
+            int64_t oldact = getRegister( 12 );
+
+            output->verbose(CALL_INFO, 8, 0, "rt_sigaction( %" PRId64 ", 0#" PRIx64 ", %#" PRIx64 ")\n",signum,act,oldact);
+
             printf("Warning: VANADIS_SYSCALL_RISCV_RT_SIGACTION not implmented return success\n");
             recvSyscallResp(new VanadisSyscallResponse(0));
         } break;
