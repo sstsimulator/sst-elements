@@ -91,6 +91,32 @@ private:
     SST::Link* os_link;
 };
 
+template <class T1, VanadisOSBitType BitType, int regZero, int OsCodeReg, int LinkReg >
+class VanadisCPUOSHandler2 : public VanadisCPUOSHandler {
+public:
+    VanadisCPUOSHandler2(ComponentId_t id, Params& params) : VanadisCPUOSHandler(id,params) {}
+
+    VanadisSyscallEvent* uname() {
+        T1 addr = getRegister(0);
+
+        output->verbose(CALL_INFO, 8, 0, "uname( %#" PRIx64 ")\n",addr);
+
+        return  new VanadisSyscallUnameEvent(core_id, hw_thr, BitType, addr);
+    }
+
+    T1 getLinkReg() {
+        return regFile->getIntReg< uint64_t >( isaTable->getIntPhysReg(LinkReg));
+    }
+
+    T1 getOsCode() {
+        return regFile->getIntReg<uint64_t>( isaTable->getIntPhysReg(OsCodeReg) );
+    }
+
+    T1 getRegister( int reg ) {
+        return regFile->getIntReg<uint64_t>( isaTable->getIntPhysReg( reg + regZero ) );
+    }
+};
+
 } // namespace Vanadis
 } // namespace SST
 

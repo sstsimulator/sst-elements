@@ -112,17 +112,25 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisMIPSOSHandler : public VanadisCPUOSHandler {
+template <typename T1, VanadisOSBitType BitType, int RegZero, int OsCodeReg, int LinkReg >
+class VanadisMIPSOSHandler2 : public VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg > {
+
+    using VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >::output;
+    using VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >::regFile;
+    using VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >::core_id;
+    using VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >::isaTable;
+    using VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >::sendSyscallEvent;
+    using VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >::getRegister;
+    using VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >::getLinkReg;
+    using VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >::getOsCode;
+    using VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >::uname;
+    using VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >::tls_address;
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(VanadisMIPSOSHandler, "vanadis", "VanadisMIPSOSHandler",
-                                          SST_ELI_ELEMENT_VERSION(1, 0, 0),
-                                          "Provides SYSCALL handling for a MIPS-based decoding core",
-                                          SST::Vanadis::VanadisCPUOSHandler)
+    VanadisMIPSOSHandler2(ComponentId_t id, Params& params) :
+        VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >(id, params) {}
 
-    VanadisMIPSOSHandler(ComponentId_t id, Params& params) : VanadisCPUOSHandler(id, params) { }
-
-    virtual ~VanadisMIPSOSHandler() {}
+    virtual ~VanadisMIPSOSHandler2() {}
 
     virtual std::tuple<bool,bool> handleSysCall(VanadisSysCallInstruction* syscallIns) {
         uint32_t instPtr = syscallIns->getInstructionAddress();
@@ -262,11 +270,7 @@ public:
         } break;
 
         case VANADIS_SYSCALL_MIPS_UNAME: {
-            uint32_t addr = getRegister(0);
-
-            output->verbose(CALL_INFO, 8, 0, "uname( %#" PRIx64 ")\n",addr);
-
-            call_ev = new VanadisSyscallUnameEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, addr);
+            call_ev = uname();
         } break;
 
         case VANADIS_SYSCALL_MIPS_STATX: {
@@ -281,6 +285,7 @@ public:
                 dirfd = AT_FDCWD;
             }
 #endif
+
             output->verbose(CALL_INFO, 8, 0, "statx( %" PRId32 ", %#" PRIx64 ", %#" PRIx32 ", %#" PRIx32 ", %#" PRIx64 " )\n",
                             dirfd, pathname, flags, mask, stackPtr );
 
@@ -344,7 +349,7 @@ public:
             uint32_t mode       = getRegister(3);
 
 #ifdef SST_COMPILE_MACOSX
-            if (  MIPS_AT_FDCWD == dirfd ) {
+            if (  MIPS_AT_FDCWD == openat_dirfd ) {
                 dirfd = AT_FDCWD;
             }
 #endif
@@ -621,21 +626,26 @@ protected:
 
 		return out;
 	}
-    uint32_t getOsCode() {
-        // MIPS puts codes in GPR r2
-        return regFile->getIntReg<uint32_t>( isaTable->getIntPhysReg(2) );
-    }
-    uint32_t getLinkReg() {
-        return regFile->getIntReg<uint32_t>( isaTable->getIntPhysReg(31) );
-    }
     uint32_t getSP( ) {
-        return regFile->getIntReg<uint32_t>( isaTable->getIntPhysReg( 29 ) );
+        return regFile->template getIntReg<uint32_t>( isaTable->getIntPhysReg( 29 ) );
     }
-    uint32_t getRegister( int reg ) {
-        return regFile->getIntReg<uint32_t>( isaTable->getIntPhysReg( reg + 4 ) );
-    }
+};
 
-    bool brk_zero_memory;
+#define MIPS_ARG_REG_ZERO 4 
+#define MIPS_OS_CODE_REG 2 
+#define MIPS_LINK_REG 31
+
+class VanadisMIPSOSHandler : public VanadisMIPSOSHandler2< uint32_t, VanadisOSBitType::VANADIS_OS_32B, MIPS_ARG_REG_ZERO, MIPS_OS_CODE_REG, MIPS_LINK_REG > {
+
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(VanadisMIPSOSHandler, "vanadis",
+                                            "VanadisMIPSOSHandler",
+                                            SST_ELI_ELEMENT_VERSION(1, 0, 0),
+                                            "Provides SYSCALL handling for a MIPS-based decoding core",
+                                            SST::Vanadis::VanadisCPUOSHandler)
+
+    VanadisMIPSOSHandler(ComponentId_t id, Params& params) : 
+        VanadisMIPSOSHandler2<uint32_t, VanadisOSBitType::VANADIS_OS_32B, MIPS_ARG_REG_ZERO, MIPS_OS_CODE_REG, MIPS_LINK_REG >(id, params) { }
 };
 
 } // namespace Vanadis

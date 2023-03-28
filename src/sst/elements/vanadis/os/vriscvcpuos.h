@@ -110,20 +110,24 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisRISCV64OSHandler : public VanadisCPUOSHandler {
+template <typename T1, VanadisOSBitType BitType, int RegZero, int OsCodeReg, int LinkReg >
+class VanadisRISCV64OSHandler2 : public VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg > {
+
+    using VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >::output;
+    using VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >::regFile;
+    using VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >::core_id;
+    using VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >::isaTable;
+    using VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >::sendSyscallEvent;
+    using VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >::getRegister;
+    using VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >::getLinkReg;
+    using VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >::getOsCode;
+    using VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >::uname;
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(VanadisRISCV64OSHandler, "vanadis", "VanadisRISCV64OSHandler",
-                                          SST_ELI_ELEMENT_VERSION(1, 0, 0),
-                                          "Provides SYSCALL handling for a RISCV-based decoding core",
-                                          SST::Vanadis::VanadisCPUOSHandler)
+    VanadisRISCV64OSHandler2(ComponentId_t id, Params& params) : 
+        VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >(id, params) {}
 
-
-    VanadisRISCV64OSHandler(ComponentId_t id, Params& params) : VanadisCPUOSHandler(id, params) {
-
-    }
-
-    virtual ~VanadisRISCV64OSHandler() {}
+    virtual ~VanadisRISCV64OSHandler2() {}
 
     virtual std::tuple<bool,bool> handleSysCall(VanadisSysCallInstruction* syscallIns) {
         uint64_t instPtr = syscallIns->getInstructionAddress();
@@ -314,11 +318,7 @@ public:
         } break;
 
         case VANADIS_SYSCALL_RISCV_UNAME: {
-            uint64_t addr = getRegister(0);
-
-            output->verbose(CALL_INFO, 8, 0, "uname( %#" PRIx64 ")\n",addr);
-
-            call_ev = new VanadisSyscallUnameEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, addr);
+            call_ev = uname();
         } break;
 
         case VANADIS_SYSCALL_RISCV_FSTAT: {
@@ -688,20 +688,24 @@ protected:
 
         return out;
     }
+};
 
-    uint64_t getLinkReg(  ) {
-        return regFile->getIntReg<uint64_t>( isaTable->getIntPhysReg(31));
-    }
+#define RISCV_ARG_REG_ZERO 10
+#define RISCV_OS_CODE_REG 17
+#define RISCV_LINK_REG 31
 
-    uint64_t getOsCode() {
-        // RISCV puts codes in GPR r2
-        return regFile->getIntReg<uint64_t>( isaTable->getIntPhysReg(17) );
-    }
-    uint64_t getRegister( int reg ) {
-        return regFile->getIntReg<uint64_t>( isaTable->getIntPhysReg( reg + 10 ) );
-    }
+class VanadisRISCV64OSHandler : public VanadisRISCV64OSHandler2< uint64_t, VanadisOSBitType::VANADIS_OS_64B, RISCV_ARG_REG_ZERO, RISCV_OS_CODE_REG, RISCV_LINK_REG > {
 
-    bool brk_zero_memory;
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(VanadisRISCV64OSHandler,
+                                            "vanadis",
+                                            "VanadisRISCV64OSHandler",
+                                            SST_ELI_ELEMENT_VERSION(1, 0, 0),
+                                            "Provides SYSCALL handling for a RISCV-based decoding core",
+                                            SST::Vanadis::VanadisCPUOSHandler)
+
+    VanadisRISCV64OSHandler(ComponentId_t id, Params& params) : 
+        VanadisRISCV64OSHandler2<uint64_t, VanadisOSBitType::VANADIS_OS_64B, RISCV_ARG_REG_ZERO, RISCV_OS_CODE_REG, RISCV_LINK_REG >(id, params) { }
 };
 
 } // namespace Vanadis
