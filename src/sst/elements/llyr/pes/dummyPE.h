@@ -29,11 +29,9 @@ namespace Llyr {
 class DummyProcessingElement : public ProcessingElement
 {
 public:
-    DummyProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config)  :
+    DummyProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config) :
                     ProcessingElement(op_binding, processor_id, llyr_config)
     {
-        input_queues_= new std::vector< LlyrQueue* >;
-        output_queues_ = new std::vector< LlyrQueue* >;
     }
 
     virtual bool doSend() { return 0; };
@@ -41,7 +39,8 @@ public:
     virtual bool doCompute() { return 0; };
 
     //TODO for testing only
-    virtual void queueInit() {};
+    virtual void inputQueueInit() {};
+    virtual void outputQueueInit() {};
 
 };
 

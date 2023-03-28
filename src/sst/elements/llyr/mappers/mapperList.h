@@ -18,6 +18,5 @@
 
 #include "simpleMapper.h"
 #include "pyMapper.h"
-#include "gemmMapper.h"
 
 #endif //MAPPER_LIST_H

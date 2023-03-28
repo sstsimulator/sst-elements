@@ -1,13 +1,18 @@
 # -*- Makefile -*-
 #
 #
+AM_CPPFLAGS += \
+	$(MPI_CPPFLAGS) \
+	-I$(top_srcdir)/src
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libllyr.la
 libllyr_la_SOURCES = \
-	llyrTypes.h \
 	llyr.h \
 	llyr.cc \
+	llyrTypes.h \
+	llyrHelpers.h \
+	lsQueue.h \
 	graph/graph.h \
 	graph/edge.h \
 	graph/vertex.h \
@@ -16,7 +21,7 @@ libllyr_la_SOURCES = \
 	mappers/llyrMapper.h \
 	mappers/simpleMapper.h \
 	mappers/pyMapper.h \
-	mappers/gemmMapper.h \
+	mappers/csvParser.h \
 	pes/processingElement.h \
 	pes/dummyPE.h \
 	pes/fpPE.h \
@@ -24,8 +29,7 @@ libllyr_la_SOURCES = \
 	pes/logicPE.h \
 	pes/loadPE.h \
 	pes/storePE.h \
-	pes/complexPE.h \
-	lsQueue.h
+	pes/complexPE.h
 
 deprecated_libllyr_sources =
 
