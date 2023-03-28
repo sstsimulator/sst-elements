@@ -1057,7 +1057,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
                 // a lot longer
                 stat_syscall_cycles->addData(1);
 
-                return INT_MAX;
+                return 3;
             }
         }
         else {
@@ -1066,7 +1066,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
             } else {
                 // Return 2 because instruction is front of ROB but has not executed and
                 // so we cannot make progress any more this cycle
-                return 1;
+                return 2;
             }
         }
     }
@@ -1327,8 +1327,6 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
 #endif
     performExecute(cycle);
 
-    bool tick_return = false;
-
 #ifdef VANADIS_BUILD_DEBUG
     if(output_verbosity >= 9) {
         output->verbose(
@@ -1356,18 +1354,6 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
             auto thr = m_curRetireHwThread;
             rc[thr] = performRetire(thr, rob[thr], cycle);
 
-            // what are the odds of more than one thread having a system call on the same cycle
-            // simplify the logic and only declock if we are running 1 thread 
-            if ( rc[thr] == INT_MAX && hw_threads == 1 ) {
-                // we will return true and tell the handler not to clock us until
-                // re-register
-                tick_return = true;
-#ifdef VANADIS_BUILD_DEBUG
-                if(output_verbosity >= 8) {
-                    output->verbose( CALL_INFO, 8, 0, "--> declocking core, result from retire is SYSCALL " "pending front of ROB\n");
-                }
-#endif
-            }
             ++m_curRetireHwThread;
             m_curRetireHwThread %= hw_threads;
             cnt = hw_threads;
@@ -1417,7 +1403,7 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
         return true;
     }
     else {
-        return tick_return;
+        return false;
     }
 }
 
@@ -1950,11 +1936,6 @@ VANADIS_COMPONENT::syscallReturn(uint32_t thr)
         syscall_ins->getInstructionAddress());
 #endif
     syscall_ins->markExecuted();
-
-    // re-register the CPU clock, it will fire on the next cycle
-    if ( 1 == hw_threads ) { 
-        reregisterClock(cpuClockTC, cpuClockHandler);
-    }
 }
 
 void VANADIS_COMPONENT::recvOSEvent(SST::Event* ev) {
@@ -2039,9 +2020,6 @@ void VANADIS_COMPONENT::startThreadClone( VanadisStartThreadCloneReq* req )
     auto reg_file = register_files[hw_thr];
 
     resetHwThread( hw_thr );
-    if ( 1 == hw_threads ) {
-        reregisterClock(cpuClockTC, cpuClockHandler);
-    }
 
     output->verbose(CALL_INFO, 8, 0,"instPtr=%lx stackAddr=%lx argAddr=%lx tlsAddr=%lx\n", req->getInstPtr(), req->getStackAddr(), req->getArgAddr(), req->getTlsAddr() );
     for ( int i = 0; i < req->getIntRegs().size(); i++ ) {
@@ -2077,9 +2055,6 @@ void VANADIS_COMPONENT::startThreadFork( VanadisStartThreadForkReq* req )
     auto reg_file = register_files[hw_thr];
 
     resetHwThread( hw_thr );
-    if ( 1 == hw_threads ) {
-        reregisterClock(cpuClockTC, cpuClockHandler);
-    }
 
     output->verbose(CALL_INFO, 8, 0,"start thread fork, thread=%d instPtr=%lx tlsPtr=%lx\n",
                 req->getThread(), req->getInstPtr(), req->getTlsAddr() );
