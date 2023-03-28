@@ -42,18 +42,18 @@ public:
         int_reg_pending_write = new uint32_t[int_reg];
         fp_reg_pending_write  = new uint32_t[fp_reg];
 
-        init();
+        for ( uint16_t i = 0; i < count_int_reg; ++i ) { int_reg_ptr[i] = 0; }
+        for ( uint16_t i = 0; i < count_fp_reg; ++i )  { fp_reg_ptr[i]  = 0; }
+        resetPendingCnts();
     }
 
-    void init() {
+    void resetPendingCnts() {
         for ( uint16_t i = 0; i < count_int_reg; ++i ) {
-            int_reg_ptr[i]           = 0;
             int_reg_pending_read[i]  = 0;
             int_reg_pending_write[i] = 0;
         }
 
         for ( uint16_t i = 0; i < count_fp_reg; ++i ) {
-            fp_reg_ptr[i]           = 0;
             fp_reg_pending_read[i]  = 0;
             fp_reg_pending_write[i] = 0;
         }

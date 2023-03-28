@@ -33,6 +33,11 @@ VanadisMprotectSyscall::VanadisMprotectSyscall( VanadisNodeOSComponent* os, SST:
     if ( event->getProt() & PROT_WRITE ) {
         perms |= 0x2;
     }
+
+    // ***************
+    // Note that we are not flushing the TLBs
+    // to this point in development calls to mprotect have been limited and we can get away with not flushing TLBs
+    // ***************
     process->mprotect( event->getAddr(), event->getLen(), perms );
 
     setReturnSuccess(0);
