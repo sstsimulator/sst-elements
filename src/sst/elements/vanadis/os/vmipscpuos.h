@@ -349,7 +349,7 @@ public:
             uint32_t mode       = getRegister(3);
 
 #ifdef SST_COMPILE_MACOSX
-            if (  MIPS_AT_FDCWD == openat_dirfd ) {
+            if (  MIPS_AT_FDCWD == dirfd ) {
                 dirfd = AT_FDCWD;
             }
 #endif
