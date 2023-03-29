@@ -151,7 +151,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
     frontend = loadUserSubComponent<ArielFrontend>("frontend", ComponentInfo::SHARE_NONE, core_count, maxCoreQueueLen, memmgr->getDefaultPool());
     if (!frontend) {
-        // ariel.frontend.pin points to either pin2 or pin3 based on sst-elements configuration
+        // ariel.frontend.pin points to pin3
         frontend = loadAnonymousSubComponent<ArielFrontend>("ariel.frontend.pin", "frontend", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_STATS,
                 params, core_count, maxCoreQueueLen, memmgr->getDefaultPool());
     }
