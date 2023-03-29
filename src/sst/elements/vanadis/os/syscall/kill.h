@@ -27,7 +27,7 @@ public:
     VanadisKillSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallKillEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "kill" ) 
     {
-        m_output->verbose(CALL_INFO, 16, 0, "[syscall-kill] ---> pid=%d sig=%d\n", event->getPid(), event->getSig() );
+        m_output->verbose(CALL_INFO, 0, 0, "[syscall-kill] ---> pid=%d sig=%d\n", event->getPid(), event->getSig() );
         assert(0);
     }
 };

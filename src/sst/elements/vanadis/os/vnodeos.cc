@@ -42,8 +42,8 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
     const uint32_t core_count = params.find<uint32_t>("cores", 0);
     const uint32_t hardwareThreadCount = params.find<uint32_t>("hardwareThreadCount", 1);
 
-    for ( int i = core_count-1; i >= 0; i-- ) {
-        for ( int j = hardwareThreadCount-1; j >=0 ; j-- ) {
+    for ( int i = 0; i < core_count; i++ ) {
+        for ( int j = 0; j < hardwareThreadCount; j++ ) {
             m_availHwThreads.push( new OS::HwThreadID( i,j ) );
         } 
     } 
@@ -348,7 +348,7 @@ void VanadisNodeOSComponent::processSyscallPost( VanadisSyscall* syscall ) {
     output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"syscall '%s' for core %d\n",syscall->getName().c_str(),core);
 
     if ( syscall->isComplete() ) {
-        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"syscall '%s' for core %d has finished\n",syscall->getName().c_str(),core);
+        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,"syscall '%s' for core %d has finished\n",syscall->getName().c_str(),core);
         delete syscall;
 
     } else {
@@ -370,7 +370,7 @@ void VanadisNodeOSComponent::processSyscallPost( VanadisSyscall* syscall ) {
 }
 
 void VanadisNodeOSComponent::processOsPageFault( VanadisSyscall* syscall, uint64_t virtAddr, bool isWrite ) {
-    output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "virtAddr=%#lx isWrite=%d\n",virtAddr, isWrite);
+    output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "virtAddr=%#" PRIx64 " isWrite=%d\n",virtAddr, isWrite);
 
     uint32_t vpn = virtAddr >> m_pageShift;
     uint32_t faultPerms = isWrite ? 1 << 1:  1<< 2;
@@ -535,7 +535,7 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
                 // map this physical page into the MMU for this process 
                 auto physAddr = region->backing->dev->getPhysAddr();
                 auto ppn = physAddr >> m_pageShift;
-                output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"\n", "Device physAddr=%#lx ppn=%d\n",physAddr,ppn);
+                output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "Device physAddr=%#lx ppn=%d\n",physAddr,ppn);
                 m_mmu->map( thread->getpid(), vpn, ppn, m_pageSize, region->perms );
                 pageFaultFini( info );
                 return;

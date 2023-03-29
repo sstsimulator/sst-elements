@@ -77,14 +77,14 @@ public:
         }
     }
 
-    void memReqIsDone() {
+    void memReqIsDone(bool) {
         auto event = getEvent<VanadisSyscallMemoryMapEvent*>();
         uint32_t* tmp  = (uint32_t*)m_buffer.data();
         uint64_t address = event->getAllocationAddress();
         uint64_t length = event->getAllocationLength();
         int64_t protect = event->getProtectionFlags();
         int64_t flags = event->getAllocationFlags();
-        m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-mmap] fd=%d offset=%" PRIu64 "\n", tmp[0],tmp[1]);
+        m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-mmap] fd=%d offset=%" PRIu32 "\n", tmp[0],tmp[1]);
 
         mmap( address, length, protect, flags, tmp[0], tmp[1] );
     }

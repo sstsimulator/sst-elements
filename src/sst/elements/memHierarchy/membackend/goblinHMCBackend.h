@@ -54,7 +54,7 @@ class HMCCMCConfig{
 public:
   HMCCMCConfig( std::string P, hmc_rqst_t R, int RQ, int RS ) :
     path(P), cmd(R), rqst_flits(RQ), rsp_flits(RS) {}
-  ~HMCCMCConfig();
+  ~HMCCMCConfig() {};
 
   std::string getPath() { return path; }
   hmc_rqst_t getCmdType() { return cmd; }

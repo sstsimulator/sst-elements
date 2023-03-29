@@ -182,8 +182,8 @@ void GNA::init(unsigned int phase)
 
                 if (col.empty()) {
                     char buffer[32];
-                    if (p == "spike") sprintf(buffer, "%i",    id);              // Default column name for spike is just neuron index,
-                    else              sprintf(buffer, "%i.%s", id, p.c_str ());  // while default name for anything else is index.probe
+                    if (p == "spike") snprintf(buffer, 32, "%i",    id);              // Default column name for spike is just neuron index,
+                    else              snprintf(buffer, 32, "%i.%s", id, p.c_str ());  // while default name for anything else is index.probe
                     col = buffer;
                 }
 

@@ -23,7 +23,7 @@
 namespace SST {
 namespace Vanadis {
 
-template <VanadisRegisterCompareType compare_type, VanadisRegisterFormat register_format, bool perform_signed>
+template <VanadisRegisterCompareType compare_type, typename register_format>
 class VanadisSetRegCompareInstruction : public VanadisInstruction
 {
 public:
@@ -32,7 +32,6 @@ public:
         const uint16_t src_1, const uint16_t src_2) :
         VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0)
     {
-
         isa_int_regs_in[0]  = src_1;
         isa_int_regs_in[1]  = src_2;
         isa_int_regs_out[0] = dest;
@@ -41,15 +40,27 @@ public:
     VanadisSetRegCompareInstruction* clone() override { return new VanadisSetRegCompareInstruction(*this); }
 
     VanadisFunctionalUnitType getInstFuncType() const override { return INST_INT_ARITH; }
-    const char*               getInstCode() const override { return "CMPSET"; }
+    const char*               getInstCode() const override { 
+        if(std::is_same<register_format, uint64_t>::value) {
+            return "CMPSETU64"; 
+        } else if(std::is_same<register_format, int64_t>::value) {
+            return "CMPSETI64"; 
+        } else if(std::is_same<register_format, uint32_t>::value) {
+            return "CMPSETU32"; 
+        } else if(std::is_same<register_format, int32_t>::value) {
+            return "CMPSETI32"; 
+        } else {
+            return "CMPSET";
+        }
+    }
 
     void printToBuffer(char* buffer, size_t buffer_size) override
     {
         snprintf(
             buffer, buffer_size,
-            "CMPSET (op: %s, %s) isa-out: %" PRIu16 " isa-in: %" PRIu16 ", %" PRIu16 " / phys-out: %" PRIu16
+            "CMPSET (op: %s) isa-out: %" PRIu16 " isa-in: %" PRIu16 ", %" PRIu16 " / phys-out: %" PRIu16
             " phys-in: %" PRIu16 ", %" PRIu16 "\n",
-            convertCompareTypeToString(compare_type), perform_signed ? "signed" : "unsigned", isa_int_regs_out[0],
+            convertCompareTypeToString(compare_type), isa_int_regs_out[0],
             isa_int_regs_in[0], isa_int_regs_in[1], phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1]);
     }
 
@@ -59,62 +70,19 @@ public:
         if(output->getVerboseLevel() >= 16) {
             output->verbose(
                 CALL_INFO, 16, 0,
-                "Execute: (addr=0x%0llx) CMPSET (op: %s, %s) isa-out: %" PRIu16 " isa-in: %" PRIu16 ", %" PRIu16
+                "Execute: (addr=0x%0llx) CMPSET (op: %s isa-out: %" PRIu16 " isa-in: %" PRIu16 ", %" PRIu16
                 " / phys-out: %" PRIu16 " phys-in: %" PRIu16 ", %" PRIu16 "\n",
-                getInstructionAddress(), convertCompareTypeToString(compare_type), perform_signed ? "signed" : "unsigned",
+                getInstructionAddress(), convertCompareTypeToString(compare_type),
                 isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1], phys_int_regs_out[0], phys_int_regs_in[0],
                 phys_int_regs_in[1]);
         }
 #endif
-        bool compare_result = false;
-
-        if ( perform_signed ) {
-            switch ( register_format ) {
-            case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
-            {
-                compare_result = registerCompare<compare_type, int64_t>(
+        const bool compare_result = registerCompare<compare_type, register_format>(
                     regFile, this, output, phys_int_regs_in[0], phys_int_regs_in[1]);
-            } break;
-            case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
-            {
-                compare_result = registerCompare<compare_type, int32_t>(
-                    regFile, this, output, phys_int_regs_in[0], phys_int_regs_in[1]);
-            } break;
-            default:
-            {
-                flagError();
-            } break;
-            }
-        }
-        else {
-            switch ( register_format ) {
-            case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
-            {
-                compare_result = registerCompare<compare_type, uint64_t>(
-                    regFile, this, output, phys_int_regs_in[0], phys_int_regs_in[1]);
-            } break;
-            case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
-            {
-                compare_result = registerCompare<compare_type, uint32_t>(
-                    regFile, this, output, phys_int_regs_in[0], phys_int_regs_in[1]);
-            } break;
-            default:
-            {
-                flagError();
-            } break;
-            }
-        }
 
         const uint16_t result_reg = phys_int_regs_out[0];
-
-        if ( compare_result ) {
-            const uint64_t vanadis_one = 1;
-            regFile->setIntReg(result_reg, vanadis_one);
-        }
-        else {
-            const uint64_t vanadis_zero = 0;
-            regFile->setIntReg(result_reg, vanadis_zero);
-        }
+        // always write result in unsigned 64b so we completely set register
+        regFile->setIntReg<uint64_t>(result_reg, compare_result ? 1 : 0);
 
         markExecuted();
     }

@@ -24,6 +24,7 @@
 #include "os/syscall/exitgroup.h"
 #include "os/syscall/kill.h"
 #include "os/syscall/settidaddress.h"
+#include "os/syscall/setrobustlist.h"
 #include "os/syscall/mprotect.h"
 #include "os/syscall/getpid.h"
 #include "os/syscall/gettid.h"
@@ -39,16 +40,20 @@
 #include "os/syscall/mmap.h"
 #include "os/syscall/unmap.h"
 #include "os/syscall/gettime.h"
+#include "os/syscall/getrandom.h"
 #include "os/syscall/access.h"
 #include "os/syscall/readlink.h"
+#include "os/syscall/readlinkat.h"
 #include "os/syscall/read.h"
 #include "os/syscall/readv.h"
 #include "os/syscall/write.h"
 #include "os/syscall/writev.h"
 #include "os/syscall/ioctl.h"
 #include "os/syscall/fstat.h"
+#include "os/syscall/fstatat.h"
 #include "os/syscall/statx.h"
 #include "os/syscall/getaffinity.h"
+#include "os/syscall/prlimit.h"
 
 using namespace SST::Vanadis;
 
@@ -71,6 +76,12 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
     // for now we will leave this inconsistency
     // ***********************************
     switch (sys_ev->getOperation()) {
+        case SYSCALL_OP_SET_ROBUST_LIST: {
+            syscall = new VanadisSetRobustListSyscall( this, coreLink, process, convertEvent<VanadisSyscallSetRobustListEvent*>( "set_robust_list", sys_ev ) );
+        } break;
+        case SYSCALL_OP_PRLIMIT: {
+            syscall = new VanadisPrlimitSyscall( this, coreLink, process, convertEvent<VanadisSyscallPrlimitEvent*>( "prlimit", sys_ev ) );
+        } break;
         case SYSCALL_OP_SET_TID_ADDRESS: {
             syscall = new VanadisSetTidAddressSyscall( this, coreLink, process, convertEvent<VanadisSyscallSetTidAddressEvent*>( "set_tid_address", sys_ev ) );
         } break;
@@ -90,7 +101,7 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
             syscall = new VanadisFutexSyscall( this, coreLink, process, convertEvent<VanadisSyscallFutexEvent*>( "futex", sys_ev ) );
         } break;
         case SYSCALL_OP_KILL: {
-            syscall = new VanadisKillSyscall( this, coreLink, process, convertEvent<VanadisSyscallKillEvent*>( "exit", sys_ev ) );
+            syscall = new VanadisKillSyscall( this, coreLink, process, convertEvent<VanadisSyscallKillEvent*>( "kill", sys_ev ) );
         } break;
         case SYSCALL_OP_EXIT: {
             syscall = new VanadisExitSyscall( this, coreLink, process, convertEvent<VanadisSyscallExitEvent*>( "exit", sys_ev ) );
@@ -140,11 +151,17 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
         case SYSCALL_OP_GETTIME64: {
             syscall = new VanadisGettime64Syscall( this, coreLink, process, getNanoSeconds(), convertEvent<VanadisSyscallGetTime64Event*>( "gettime64", sys_ev ) );
         } break;
+        case SYSCALL_OP_GETRANDOM: {
+            syscall = new VanadisGetrandomSyscall( this, coreLink, process, convertEvent<VanadisSyscallGetrandomEvent*>( "getrandom", sys_ev ) );
+        } break;
         case SYSCALL_OP_ACCESS: {
             syscall = new VanadisAccessSyscall( this, coreLink, process, convertEvent<VanadisSyscallAccessEvent*>( "access", sys_ev ) );
         } break;
         case SYSCALL_OP_READLINK: {
             syscall = new VanadisReadlinkSyscall( this, coreLink, process, convertEvent<VanadisSyscallReadLinkEvent*>( "readlink", sys_ev ) );
+        } break;
+        case SYSCALL_OP_READLINKAT: {
+            syscall = new VanadisReadlinkatSyscall( this, coreLink, process, convertEvent<VanadisSyscallReadLinkAtEvent*>( "readlinkat", sys_ev ) );
         } break;
         case SYSCALL_OP_READ: {
             syscall = new VanadisReadSyscall( this, coreLink, process, convertEvent<VanadisSyscallReadEvent*>( "read", sys_ev ) );
@@ -163,6 +180,9 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
         } break;
         case SYSCALL_OP_FSTAT: {
             syscall = new VanadisFstatSyscall( this, coreLink, process, convertEvent<VanadisSyscallFstatEvent*>( "fstat", sys_ev ) );
+        } break;
+        case SYSCALL_OP_FSTATAT: {
+            syscall = new VanadisFstatatSyscall( this, coreLink, process, convertEvent<VanadisSyscallFstatAtEvent*>( "fstatat", sys_ev ) );
         } break;
         case SYSCALL_OP_STATX: {
             syscall = new VanadisStatxSyscall( this, coreLink, process, convertEvent<VanadisSyscallStatxEvent*>( "statx", sys_ev ) );

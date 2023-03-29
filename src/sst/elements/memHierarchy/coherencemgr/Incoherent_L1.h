@@ -140,6 +140,8 @@ public:
         cacheArray_ = new CacheArray<L1CacheLine>(debug, lines, assoc, lineSize_, rmgr, ht);
         cacheArray_->setBanked(params.find<uint64_t>("banks", 0));
 
+        llscBlockCycles_ = params.find<Cycle_t>("llsc_block_cycles", 0);
+
         stat_eventState[(int)Command::GetS][I] = registerStatistic<uint64_t>("stateEvent_GetS_I");
         stat_eventState[(int)Command::GetS][E] = registerStatistic<uint64_t>("stateEvent_GetS_E");
         stat_eventState[(int)Command::GetS][M] = registerStatistic<uint64_t>("stateEvent_GetS_M");
@@ -294,6 +296,8 @@ private:
     void printLine(Addr addr);
 
     CacheArray<L1CacheLine>* cacheArray_;
+    
+    Cycle_t llscBlockCycles_;
 
     /* Statistics */
     Statistic<uint64_t>* stat_latencyGetS[2];

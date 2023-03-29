@@ -18,6 +18,7 @@
 
 #include "decoder/visaopts.h"
 #include "inst/regfile.h"
+#include "inst/regstack.h"
 #include "inst/vinsttype.h"
 #include "inst/vregfmt.h"
 
@@ -74,7 +75,6 @@ public:
         trapError             = false;
         hasExecuted           = false;
         hasIssued             = false;
-        hasRegistersAllocated = false;
         enduOpGroup           = false;
         isFrontOfROB          = false;
         hasROBSlot            = false;
@@ -105,11 +105,9 @@ public:
         count_isa_fp_reg_in(copy_me.count_isa_fp_reg_in),
         count_isa_fp_reg_out(copy_me.count_isa_fp_reg_out)
     {
-
         trapError             = copy_me.trapError;
         hasExecuted           = copy_me.hasExecuted;
         hasIssued             = copy_me.hasIssued;
-        hasRegistersAllocated = copy_me.hasRegistersAllocated;
         enduOpGroup           = copy_me.enduOpGroup;
         isFrontOfROB          = false;
         hasROBSlot            = false;
@@ -125,18 +123,6 @@ public:
 
         isa_fp_regs_in  = (count_isa_fp_reg_in > 0) ? new uint16_t[count_isa_fp_reg_in] : nullptr;
         isa_fp_regs_out = (count_isa_fp_reg_out > 0) ? new uint16_t[count_isa_fp_reg_out] : nullptr;
-
-        /*
-        std::memcpy(phys_int_regs_in, copy_me.phys_int_regs_in, count_phys_int_reg_in);
-        std::memcpy(phys_int_regs_out, copy_me.phys_int_regs_out, count_phys_int_reg_out);
-        std::memcpy(isa_int_regs_in, copy_me.isa_int_regs_in, count_isa_int_reg_in);
-        std::memcpy(isa_int_regs_out, copy_me.isa_int_regs_out, count_isa_int_reg_out);
-
-        std::memcpy(phys_fp_regs_in, copy_me.phys_fp_regs_in, count_phys_fp_reg_in);
-        std::memcpy(phys_fp_regs_out, copy_me.phys_fp_regs_out, count_phys_fp_reg_out);
-        std::memcpy(isa_fp_regs_in, copy_me.isa_fp_regs_in, count_isa_fp_reg_in);
-        std::memcpy(isa_fp_regs_out, copy_me.isa_fp_regs_out, count_isa_fp_reg_out);
-        */
 
         for ( uint16_t i = 0; i < count_phys_int_reg_in; ++i ) {
             phys_int_regs_in[i] = copy_me.phys_int_regs_in[i];
@@ -283,23 +269,13 @@ public:
 
     uint16_t countPhysIntRegIn() const { return count_phys_int_reg_in; }
     uint16_t countPhysIntRegOut() const { return count_phys_int_reg_out; }
-    uint16_t countISAIntRegIn() const { return count_isa_int_reg_in; }
-    uint16_t countISAIntRegOut() const { return count_isa_int_reg_out; }
-
     uint16_t countPhysFPRegIn() const { return count_phys_fp_reg_in; }
     uint16_t countPhysFPRegOut() const { return count_phys_fp_reg_out; }
+
+    uint16_t countISAIntRegIn() const { return count_isa_int_reg_in; }
+    uint16_t countISAIntRegOut() const { return count_isa_int_reg_out; }
     uint16_t countISAFPRegIn() const { return count_isa_fp_reg_in; }
     uint16_t countISAFPRegOut() const { return count_isa_fp_reg_out; }
-
-    uint16_t* getPhysIntRegIn() { return phys_int_regs_in; }
-    uint16_t* getPhysIntRegOut() { return phys_int_regs_out; }
-    uint16_t* getISAIntRegIn() { return isa_int_regs_in; }
-    uint16_t* getISAIntRegOut() { return isa_int_regs_out; }
-
-    uint16_t* getPhysFPRegIn() { return phys_fp_regs_in; }
-    uint16_t* getPhysFPRegOut() { return phys_fp_regs_out; }
-    uint16_t* getISAFPRegIn() { return isa_fp_regs_in; }
-    uint16_t* getISAFPRegOut() { return isa_fp_regs_out; }
 
     uint16_t getPhysIntRegIn(const uint16_t index) const { return phys_int_regs_in[index]; }
     uint16_t getPhysIntRegOut(const uint16_t index) const { return phys_int_regs_out[index]; }
@@ -314,22 +290,11 @@ public:
     void setPhysIntRegIn(const uint16_t index, const uint16_t reg) { phys_int_regs_in[index] = reg; }
     void setPhysIntRegOut(const uint16_t index, const uint16_t reg) { 
         phys_int_regs_out[index] = reg;
-
-        /*if(getInstFuncType() != INST_SYSCALL) {
-            for(auto i = 0; i < count_phys_int_reg_in; ++i) {
-                assert(phys_int_regs_in[i] != reg);
-            }
-        }*/
     }
+
     void setPhysFPRegIn(const uint16_t index, const uint16_t reg) { phys_fp_regs_in[index] = reg; }
     void setPhysFPRegOut(const uint16_t index, const uint16_t reg) { 
         phys_fp_regs_out[index] = reg;
-
-        /*if(getInstFuncType() != INST_SYSCALL) {
-            for(auto i = 0; i < count_phys_fp_reg_in; ++i) {
-                assert(phys_fp_regs_in[i] != reg);
-            } 
-        }*/
     }
 
     virtual VanadisInstruction* clone() = 0;
@@ -354,11 +319,9 @@ public:
 
     bool completedExecution() const { return hasExecuted; }
     bool completedIssue() const { return hasIssued; }
-    bool completedRegisterAllocation() const { return hasRegistersAllocated; }
 
     void markExecuted() { hasExecuted = true; }
     void markIssued() { hasIssued = true; }
-    void markRegistersAllocated() { hasRegistersAllocated = true; }
 
     bool checkFrontOfROB() const { return isFrontOfROB; }
     void markFrontOfROB() { isFrontOfROB = true; }
@@ -376,34 +339,42 @@ public:
 	virtual bool updatesFPFlags() const { return false; }
     virtual void updateFPFlags() {}
 
+    virtual void returnOutRegs( VanadisRegisterStack* int_stack, VanadisRegisterStack* fp_stack ) {
+        for ( auto i = 0; i < countPhysIntRegOut(); i++ ) {
+            int_stack->push( getPhysIntRegOut(i) );
+        }
+        for ( auto i = 0; i < countPhysFPRegOut(); i++ ) {
+            fp_stack->push( getPhysFPRegOut(i) );
+        }
+    }
+
 protected:
     const uint64_t ins_address;
     const uint32_t hw_thread;
 
-    uint16_t count_phys_int_reg_in;
-    uint16_t count_phys_int_reg_out;
     uint16_t count_isa_int_reg_in;
     uint16_t count_isa_int_reg_out;
-
-    uint16_t count_phys_fp_reg_in;
-    uint16_t count_phys_fp_reg_out;
     uint16_t count_isa_fp_reg_in;
     uint16_t count_isa_fp_reg_out;
 
-    uint16_t* phys_int_regs_in;
-    uint16_t* phys_int_regs_out;
     uint16_t* isa_int_regs_in;
     uint16_t* isa_int_regs_out;
-
-    uint16_t* phys_fp_regs_in;
-    uint16_t* phys_fp_regs_out;
     uint16_t* isa_fp_regs_in;
     uint16_t* isa_fp_regs_out;
+
+    uint16_t count_phys_int_reg_in;
+    uint16_t count_phys_int_reg_out;
+    uint16_t count_phys_fp_reg_in;
+    uint16_t count_phys_fp_reg_out;
+
+    uint16_t* phys_int_regs_in;
+    uint16_t* phys_int_regs_out;
+    uint16_t* phys_fp_regs_in;
+    uint16_t* phys_fp_regs_out;
 
     bool trapError;
     bool hasExecuted;
     bool hasIssued;
-    bool hasRegistersAllocated;
     bool enduOpGroup;
     bool isFrontOfROB;
     bool hasROBSlot;

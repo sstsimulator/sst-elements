@@ -30,9 +30,14 @@ VanadisExitGroupSyscall::VanadisExitGroupSyscall( VanadisNodeOSComponent* os, SS
 
     // given we are terminating all threads in the group, I'm assuming we don't have to write 0 to the tidAddress
     
-    while ( process->numThreads() > 1 ) {
+    auto threads = process->getThreadList();
+    for ( const auto thread : threads) {
 
-        OS::ProcessInfo* tmp = process->getThread();
+        auto tmp = thread.second; 
+        if ( thread.first == process->gettid() || nullptr == tmp ) {
+            continue;
+        }
+
         if ( m_os->getNodeNum() >= 0 ) {
             printf("node=%d pid=%d tid=%d has exited\n",m_os->getNodeNum(), tmp->getpid(), tmp->gettid());
         } else {

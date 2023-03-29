@@ -21,15 +21,8 @@ import copy
 import re
 from collections import deque
 
-# importlib didn't exist until 2.7, so if we're running on 2.6, then
-# import statement will fail.
-try:
-    from importlib import import_module
-except ImportError:
-    # We must be using 2.6, use the old module import code.
-    def import_module(filename):
-        return __import__( filename, fromlist=[''] )
-
+# Need import_module to load platform files
+from importlib import import_module
 
 class PlatformDefinition:
 
@@ -55,7 +48,7 @@ class PlatformDefinition:
 
     @classmethod
     def loadPlatformFile(cls,name):
-        import_module(name)
+        return import_module(name)
 
     @classmethod
     def getClassType(cls,key):

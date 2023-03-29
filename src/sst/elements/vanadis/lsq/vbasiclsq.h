@@ -207,7 +207,7 @@ public:
                 for(int i = loads_pending.size() - 1; i >= 0; i--) {
                     VanadisBasicLoadPendingEntry* load_entry = loads_pending.at(i);
 
-                    output->verbose(CALL_INFO, 8, 0, "-->   load[%5d] ins: 0x%llx / thr: %" PRIu32 " / addr: 0x%llx / width: %" PRIu32 "\n",
+                    output->verbose(CALL_INFO, 8, 0, "-->   load[%5d] ins: 0x%llx / thr: %" PRIu32 " / addr: 0x%llx / width: %" PRIu64 "\n",
                         i, load_entry->getLoadInstruction()->getInstructionAddress(),
                         load_entry->getLoadInstruction()->getHWThread(),
                         load_entry->getLoadAddress(), load_entry->getLoadWidth()); 
@@ -218,7 +218,7 @@ public:
                 for(int i = stores_pending.size() - 1; i >= 0; i--) {
                     VanadisBasicStorePendingEntry* store_entry = stores_pending.at(i);
 
-                    output->verbose(CALL_INFO, 16, 0, "--> stores[%5d] ins: 0x%llx / thr: %" PRIu32 " / addr: 0x%llx / width: %" PRIu32 "\n",
+                    output->verbose(CALL_INFO, 16, 0, "--> stores[%5d] ins: 0x%llx / thr: %" PRIu32 " / addr: 0x%llx / width: %" PRIu64 "\n",
                         i, store_entry->getStoreInstruction()->getInstructionAddress(),
                         store_entry->getStoreInstruction()->getHWThread(),
                         store_entry->getStoreAddress(), store_entry->getStoreWidth());
@@ -270,6 +270,17 @@ protected:
                 }
             }
 
+#ifdef VANADIS_BUILD_DEBUG
+        if ( lsq->isDbgAddr( ev->vAddr ) ) {
+            VanadisLoadInstruction* load_ins = nullptr;
+            if ( load_entry ) {
+                load_ins = load_entry->getLoadInstruction();
+            }
+            printf("ReadResp::%s() load_address=%#" PRIx64 " %s ins_addr=%#" PRIx64 "\n",__func__,
+                ev->vAddr, ev->getFail()? "Failed":"Success", load_ins ? load_ins->getInstructionAddress() : 0 );
+        }
+#endif
+
             if(nullptr == load_entry) {
                 // not found, so previous cleared by a branch mis-predict ignore
                 return;
@@ -305,7 +316,7 @@ protected:
                 for ( std::vector<uint8_t>::iterator it = ev->data.begin(); it != ev->data.end(); it++ ) {
                     str << std::setw(2) << static_cast<unsigned>(*it);
                 }
-                out->verbose(CALL_INFO, 0, VANADIS_DBG_LSQ_LOAD_FLG, "---> LSQ recv load event ins: 0x%llx / hw-thr: %" PRIu32 " / entry-addr: 0x%llx / entry-width: %" PRIu16 " / reg-offset: %" PRIu64 " / ev-addr: 0x%llx / ev-width: %" PRIu16 " / addr-offset %" PRIu64 " / sign-extend: %s / target-isa-reg: %" PRIu16 " / target-phys-reg: %" PRIu16 " / reg-type: %s / %s\n",
+                out->verbose(CALL_INFO, 0, VANADIS_DBG_LSQ_LOAD_FLG, "---> LSQ recv load event ins: 0x%llx / hw-thr: %" PRIu32 " / entry-addr: 0x%llx / entry-width: %" PRIu16 " / reg-offset: %" PRIu64 " / ev-addr: 0x%llx / ev-width: %" PRIu64 " / addr-offset %" PRIu64 " / sign-extend: %s / target-isa-reg: %" PRIu16 " / target-phys-reg: %" PRIu16 " / reg-type: %s / %s\n",
                     load_ins->getInstructionAddress(), hw_thr, load_address, load_width, reg_offset, ev->vAddr, ev->size, 
                     addr_offset, (load_ins->performSignExtension() ? "yes" : "no"),
                     target_isa_reg, target_reg,
@@ -406,7 +417,7 @@ protected:
             } else {
                 if(out->getVerboseLevel() >= 9) {
                     out->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_LOAD_FLG,
-                        "---> LSQ Execute: %s (0x%llx / thr:%" PRIu32 ") does not have all requests completed yet %" PRIu32 " left, will not execute until all done.\n",
+                        "---> LSQ Execute: %s (0x%llx / thr:%" PRIu32 ") does not have all requests completed yet %zu left, will not execute until all done.\n",
                             load_ins->getInstCode(), load_ins->getInstructionAddress(), load_ins->getHWThread(), load_entry->countRequests());
                 }
             }
@@ -420,18 +431,7 @@ protected:
 
             bool std_store_found = false;
 
-            if ( ev->getFail() ) {
-                VanadisBasicStorePendingEntry* store_entry = lsq->stores_pending.front();
-                if ( store_entry ) {
-                    store_entry->getStoreInstruction()->flagError();
 
-                    out->verbose(CALL_INFO, 0, 0, "Write failed, instAddr=%#lx pAddr=%#lx vAddr=%#lx\n",
-                            store_entry->getStoreInstruction()->getInstructionAddress(), ev->pAddr, ev->vAddr );
-                    return;
-                } else {
-                    out->fatal(CALL_INFO, -1, "Write failed, pAddr=%#lx vAddr=%#lx\n", ev->pAddr, ev->vAddr);
-                }
-            }
             auto iter = lsq->std_stores_in_flight.find( ev->getID() ); 
             if ( iter != lsq->std_stores_in_flight.end() ) {
                 lsq->std_stores_in_flight.erase(iter);
@@ -588,6 +588,12 @@ protected:
         StandardMem::Request* store_req = nullptr;
         std::vector<uint8_t> payload(store_width);
 
+#ifdef VANADIS_BUILD_DEBUG
+        if ( isDbgInsAddr( store_ins->getInstructionAddress() ) || isDbgAddr( store_address ) ) {
+            printf("%s() ins_addr=%#lx store_address=%#lx \n",__func__,store_ins->getInstructionAddress(), store_address);
+        }
+#endif
+
         const bool needs_split = operationStraddlesCacheLine(store_address, store_width);
         if(output->getVerboseLevel() >= 8) {
             std::vector<uint8_t> tmp(store_width);
@@ -731,6 +737,11 @@ protected:
     void issueLoad(VanadisLoadInstruction* load_ins, uint64_t load_address, uint64_t load_width) {
         StandardMem::Request* load_req = nullptr;
 
+#ifdef VANADIS_BUILD_DEBUG
+        if ( isDbgInsAddr( load_ins->getInstructionAddress() ) || isDbgAddr( load_address ) ) {
+            printf("%s() ins_addr=%#lx load_address=%#lx \n",__func__,load_ins->getInstructionAddress(), load_address);
+        }
+#endif
         // do we need to perform a split load (which loads from two cache lines)?
         const bool needs_split = operationStraddlesCacheLine(load_address, load_width);
 
@@ -781,8 +792,17 @@ protected:
                     assert(load_width <= 8);
                     assert(load_width >= 0);
 
-                    load_req = new StandardMem::Read(load_address & address_mask, load_width, 0, 
-                        load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
+                    if(UNLIKELY(0 == (load_address & address_mask))) {
+                        if(output->getVerboseLevel() >= 16) {
+                            output->verbose(CALL_INFO, 16, 0, "---> address resolves to zero, flag as error and do not generate event.\n");
+                        }
+
+                        load_ins->flagError();
+                        load_req = nullptr;
+                    } else {
+                        load_req = new StandardMem::Read(load_address & address_mask, load_width, 0, 
+                            load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
+                    }
                 }
             } break;
             case MEM_TRANSACTION_LLSC_LOAD:

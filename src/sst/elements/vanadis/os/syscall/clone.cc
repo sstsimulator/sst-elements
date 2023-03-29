@@ -99,7 +99,7 @@ void VanadisCloneSyscall::handleEvent( VanadisCoreEvent* ev )
     req->setIntRegs( resp->intRegs );
     req->setFpRegs( resp->fpRegs );
 
-     m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-clone] core=%d thread=%d tid=%d instPtr=%lx\n",
+     m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-clone] core=%d thread=%d tid=%d instPtr=%llx\n",
                  m_threadID->core, m_threadID->hwThread, m_newThread->gettid(), resp->getInstPtr() );
 #if 0 //debug
     for ( int i = 0; i < req->getIntRegs().size(); i++ ) {
@@ -115,7 +115,7 @@ void VanadisCloneSyscall::handleEvent( VanadisCoreEvent* ev )
     delete resp;
 }
 
-void VanadisCloneSyscall::memReqIsDone() {
+void VanadisCloneSyscall::memReqIsDone(bool) {
 
     switch( m_state ) {
       case ReadChildTidAddr:

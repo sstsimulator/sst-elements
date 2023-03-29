@@ -34,7 +34,7 @@ public:
 
     enum State { ReadChildTidAddr, ReadThreadStack, WriteChildTid } m_state;
 
-    void memReqIsDone();
+    void memReqIsDone(bool);
 
     uint64_t m_threadStartAddr;
     uint64_t m_threadArgAddr;

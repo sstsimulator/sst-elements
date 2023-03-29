@@ -50,13 +50,14 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
     core_count = cores;
 
     /////////////////////////////////////////////////////////////////////////////////////
-
-    char* tool_path = (char*) malloc(sizeof(char) * 1024);
+    
+    size_t tool_path_size = sizeof(char) * 1024;
+    char* tool_path = (char*) malloc(tool_path_size);
 
 #ifdef SST_COMPILE_MACOSX
-    sprintf(tool_path, "%s/fesimple.dylib", ARIEL_STRINGIZE(ARIEL_TOOL_DIR));
+    snprintf(tool_path, tool_path_size, "%s/fesimple.dylib", ARIEL_STRINGIZE(ARIEL_TOOL_DIR));
 #else
-    sprintf(tool_path, "%s/fesimple.so", ARIEL_STRINGIZE(ARIEL_TOOL_DIR));
+    snprintf(tool_path, tool_path_size, "%s/fesimple.so", ARIEL_STRINGIZE(ARIEL_TOOL_DIR));
 #endif
 
     std::string ariel_tool = params.find<std::string>("arieltool", tool_path);
@@ -134,8 +135,9 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
     output->verbose(CALL_INFO, 1, 0, "Processing application arguments...\n");
 
     uint32_t arg = 0;
-    execute_args[0] = (char*) malloc(sizeof(char) * (appLauncher.size() + 2));
-    sprintf(execute_args[0], "%s", appLauncher.c_str());
+    size_t execute_args_size = sizeof(char) * (appLauncher.size() + 2);
+    execute_args[0] = (char*) malloc(execute_args_size);
+    snprintf(execute_args[0], execute_args_size, "%s", appLauncher.c_str());
     arg++;
 
 #if 0
@@ -150,10 +152,11 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
 
     execute_args[arg++] = const_cast<char*>("-follow_execv");
 
-    char* param_name_buffer = (char*) malloc(sizeof(char) * 512);
+    size_t param_name_buffer_size = sizeof(char) * 512;
+    char* param_name_buffer = (char*) malloc(param_name_buffer_size);
 
     for(uint32_t aa = 0; aa < launch_param_count; aa++) {
-        sprintf(param_name_buffer, "launchparam%" PRIu32, aa);
+        snprintf(param_name_buffer, param_name_buffer_size, "launchparam%" PRIu32, aa);
         std::string launch_p = params.find<std::string>(param_name_buffer, "");
 
         if("" == launch_p) {
@@ -178,10 +181,12 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
     } else {
         execute_args[arg++] = const_cast<char*>("1");
     }
+    
+    size_t buff8size = sizeof(char)*8;
 
     execute_args[arg++] = const_cast<char*>("-E");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[arg-1], "%d", instrument_instructions);
+    execute_args[arg++] = (char*) malloc(buff8size);
+    snprintf(execute_args[arg-1], buff8size, "%d", instrument_instructions);
     execute_args[arg++] = const_cast<char*>("-p");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (shmem_region_name.length() + 1));
     strcpy(execute_args[arg-1], shmem_region_name.c_str());
@@ -194,37 +199,37 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
     strcpy(execute_args[arg-1], shmem_region_name3.c_str());
 #endif
     execute_args[arg++] = const_cast<char*>("-v");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[arg-1], "%d", verbosity);
+    execute_args[arg++] = (char*) malloc(buff8size);
+    snprintf(execute_args[arg-1], buff8size, "%d", verbosity);
     execute_args[arg++] = const_cast<char*>("-t");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[arg-1], "%" PRIu32, profileFunctions);
+    execute_args[arg++] = (char*) malloc(buff8size);
+    snprintf(execute_args[arg-1], buff8size, "%" PRIu32, profileFunctions);
     execute_args[arg++] = const_cast<char*>("-c");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[arg-1], "%" PRIu32, core_count);
+    execute_args[arg++] = (char*) malloc(buff8size);
+    snprintf(execute_args[arg-1], buff8size, "%" PRIu32, core_count);
     execute_args[arg++] = const_cast<char*>("-s");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[arg-1], "%" PRIu32, pin_startup_mode);
+    execute_args[arg++] = (char*) malloc(buff8size);
+    snprintf(execute_args[arg-1], buff8size, "%" PRIu32, pin_startup_mode);
     execute_args[arg++] = const_cast<char*>("-m");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[arg-1], "%" PRIu32, intercept_mem_allocations);
+    execute_args[arg++] = (char*) malloc(buff8size);
+    snprintf(execute_args[arg-1], buff8size, "%" PRIu32, intercept_mem_allocations);
     execute_args[arg++] = const_cast<char*>("-k");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[arg-1], "%" PRIu32, keep_malloc_stack_trace);
+    execute_args[arg++] = (char*) malloc(buff8size);
+    snprintf(execute_args[arg-1], buff8size, "%" PRIu32, keep_malloc_stack_trace);
     if (malloc_map_filename != "") {
         execute_args[arg++] = const_cast<char*>("-u");
         execute_args[arg++] = (char*) malloc(sizeof(char) * (malloc_map_filename.size() + 1));
         strcpy(execute_args[arg-1], malloc_map_filename.c_str());
     }
     execute_args[arg++] = const_cast<char*>("-d");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[arg-1], "%" PRIu32, defMemPool);
+    execute_args[arg++] = (char*) malloc(buff8size);
+    snprintf(execute_args[arg-1], buff8size, "%" PRIu32, defMemPool);
     execute_args[arg++] = const_cast<char*>("--");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (executable.size() + 1));
     strcpy(execute_args[arg-1], executable.c_str());
     char* argv_buffer = (char*) malloc(sizeof(char) * 256);
     for(uint32_t aa = 0; aa < app_argc ; ++aa) {
-        sprintf(argv_buffer, "apparg%" PRIu32, aa);
+        snprintf(argv_buffer, sizeof(char)*256, "apparg%" PRIu32, aa);
         std::string argv_i = params.find<std::string>(argv_buffer, "");
 
         output->verbose(CALL_INFO, 1, 0, "Found application argument %" PRIu32 " (%s) = %s\n",
@@ -241,7 +246,7 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
         char* env_name_buffer = (char*) malloc(sizeof(char) * 256);
 
         for(int32_t next_env_param = 0; next_env_param < pin_env_count; next_env_param++) {
-                sprintf(env_name_buffer, "envparamname%" PRId32 , next_env_param);
+                snprintf(env_name_buffer, sizeof(char)*256, "envparamname%" PRId32 , next_env_param);
 
                 std::string env_name = params.find<std::string>(env_name_buffer, "");
 
@@ -250,7 +255,7 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
                             env_name_buffer);
                 }
 
-                sprintf(env_name_buffer, "envparamval%" PRId32, next_env_param);
+                snprintf(env_name_buffer, sizeof(char)*256, "envparamval%" PRId32, next_env_param);
 
                 std::string env_value = params.find<std::string>(env_name_buffer, "");
 
@@ -285,7 +290,14 @@ void Pin3Frontend::init(unsigned int phase)
     }
 }
 
-void Pin3Frontend::finish() { }
+void Pin3Frontend::finish() {
+    // If the simulation ended early, e.g. by using --stop-at, the child
+    // may still be executing. It will become a zombie if we do not
+    // kill it.
+    if (child_pid != 0) {
+        kill(child_pid, SIGKILL);
+    }
+}
 
 ArielTunnel* Pin3Frontend::getTunnel() {
     return tunnel;
@@ -442,13 +454,13 @@ int Pin3Frontend::forkPINChild(const char* app, char** args, std::map<std::strin
             uint32_t next_env_cp_index = 0;
 
             for(auto env_itr = app_env.begin(); env_itr != app_env.end(); env_itr++) {
-                char* execute_env_nv_pair = (char*) malloc(sizeof(char) * (2 +
-                        env_itr->first.size() + env_itr->second.size()));
-
+                size_t nv_pair_size = sizeof(char) * (2 + env_itr->first.size() + env_itr->second.size());
+                char* execute_env_nv_pair = (char*) malloc(nv_pair_size);
+                
                 output->verbose(CALL_INFO, 2, 0, "Env: %s=%s\n",
                         env_itr->first.c_str(), env_itr->second.c_str());
 
-                sprintf(execute_env_nv_pair, "%s=%s", env_itr->first.c_str(),
+                snprintf(execute_env_nv_pair, nv_pair_size, "%s=%s", env_itr->first.c_str(),
                         env_itr->second.c_str());
 
                 execute_env_cp[next_env_cp_index] = execute_env_nv_pair;
