@@ -77,18 +77,6 @@ class testcase_prospero(SSTTestCase):
     def test_prospero_binary_withtimingdram_using_TAR_traces(self):
         self.prospero_test_template("binary", WITH_TIMINGDRAM, USE_TAR_TRACES)
 
-    @unittest.skipIf(libz_missing, "test_prospero_compressed_using_PIN_traces test: Requires LIBZ, but LIBZ is not found in build configuration.")
-    @unittest.skipIf(not pin_loaded, "test_prospero_compressed_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
-    @unittest.skipIf(pin3_used, "test_prospero_compressed_using_PIN_traces test: Requires PIN2, but PIN3 is COMPILED.")
-    def test_prospero_compressed_using_PIN_traces(self):
-        self.prospero_test_template("compressed", NO_TIMINGDRAM, USE_PIN_TRACES)
-
-    @unittest.skipIf(libz_missing, "test_prospero_compressed_withtimingdram_using_PIN_traces test: Requires LIBZ, but LIBZ is not found in build configuration.")
-    @unittest.skipIf(not pin_loaded, "test_prospero_compressed_withtimingdram_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
-    @unittest.skipIf(pin3_used, "test_prospero_compressed_withtimingdram_using_PIN_traces test: Requires PIN2, but PIN3 is COMPILED.")
-    def test_prospero_compressed_withtimingdram_using_PIN_traces(self):
-        self.prospero_test_template("compressed", WITH_TIMINGDRAM, USE_PIN_TRACES)
-
     @unittest.skipIf(not pin_loaded, "test_prospero_text_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_prospero_text_using_PIN_traces(self):
         self.prospero_test_template("text", NO_TIMINGDRAM, USE_PIN_TRACES)
@@ -283,14 +271,6 @@ class testcase_prospero(SSTTestCase):
             rtn = OSCommand(cmd, set_cwd=targetdir).run()
             log_debug("Prospero build binary Traces result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
             self.assertTrue(rtn.result() == 0, "Binary Traces failed to compile")
-
-            # Now build the Compressed traces (ONLY ON PIN2)
-            if testing_is_PIN2_used():
-                cmd = "{0} -ifeellucky -t 1 -f compressed -o sstprospero -- ./array".format(filepath_sst_prospero_trace_app)
-                log_debug("Prospero compressed Traces build cmd = {0}".format(cmd))
-                rtn = OSCommand(cmd, set_cwd=targetdir).run()
-                log_debug("Prospero build compressed Traces result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
-                self.assertTrue(rtn.result() == 0, "Compressed Traces failed to compile")
 
 ####
 
