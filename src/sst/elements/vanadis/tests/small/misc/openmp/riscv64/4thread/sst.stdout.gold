@@ -1,17 +1,17 @@
-Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
-Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
-Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
-Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
-Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
-Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
-Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
-Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
-Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
-Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
-Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
-Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
-Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
-Warning: VANADIS_SYSCALL_RISCV_RT_SETSIGMASK not implmented return success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
 pid=100 tid=101 has exited
 pid=100 tid=102 has exited
 pid=100 tid=103 has exited
