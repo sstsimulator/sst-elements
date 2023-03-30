@@ -99,32 +99,35 @@ private:
 #define Install_ISA_FuncPtr( isa, funcName ) install( VANADIS_SYSCALL_##isa##_##funcName, Make_ISA_FuncPtr( isa, funcName ) )
 #define Make_ISA_FuncPtr( isa, x ) std::bind(&Vanadis##isa##OSHandler2< T1,BitType,RegZero,OsCodeReg,LinkReg >::x, this, std::placeholders::_1 )
 
-#define InstallCommonFuncs( isa )\
-        InstallFunc( isa, BRK ); \
-        InstallFunc( isa, CLOSE ); \
-        InstallFunc( isa, EXIT ); \
-        InstallFunc( isa, EXIT_GROUP ); \
-        InstallFunc( isa, FSTAT ); \
-        InstallFunc( isa, GETPGID ); \
-        InstallFunc( isa, GETPID ); \
-        InstallFunc( isa, GETPPID ); \
-        InstallFunc( isa, GETTID ); \
-        InstallFunc( isa, IOCTL ); \
-        InstallFunc( isa, KILL ); \
-        InstallFunc( isa, MADVISE ); \
-        InstallFunc( isa, MPROTECT ); \
-        InstallFunc( isa, OPENAT ); \
-        InstallFunc( isa, READ ); \
-        InstallFunc( isa, READV );\
-        InstallFunc( isa, RT_SIGACTION ); \
-        InstallFunc( isa, RT_SIGPROCMASK ); \
-        InstallFunc( isa, SCHED_GETAFFINITY ); \
-        InstallFunc( isa, SET_TID_ADDRESS ); \
-        InstallFunc( isa, UNAME); \
-        InstallFunc( isa, UNLINKAT ); \
-        InstallFunc( isa, UNMAP ); \
-        InstallFunc( isa, WRITE ); \
-        InstallFunc( isa, WRITEV ); 
+#define FOREACH_COMMON( FUNC, arg ) \
+        FUNC( arg, BRK ); \
+        FUNC( arg, CLOSE ); \
+        FUNC( arg, EXIT ); \
+        FUNC( arg, EXIT_GROUP); \
+        FUNC( arg, FSTAT ); \
+        FUNC( arg, GETPGID ); \
+        FUNC( arg, GETPID ); \
+        FUNC( arg, GETPPID ); \
+        FUNC( arg, GETTID ); \
+        FUNC( arg, IOCTL); \
+        FUNC( arg, KILL ); \
+        FUNC( arg, MADVISE ); \
+        FUNC( arg, MPROTECT ); \
+        FUNC( arg, OPENAT ); \
+        FUNC( arg, READ ); \
+        FUNC( arg, READV ); \
+        FUNC( arg, RT_SIGACTION ); \
+        FUNC( arg, RT_SIGPROCMASK ); \
+        FUNC( arg, SCHED_GETAFFINITY ); \
+        FUNC( arg, SET_TID_ADDRESS ); \
+        FUNC( arg, UNAME ); \
+        FUNC( arg, UNLINKAT ); \
+        FUNC( arg, UNMAP ); \
+        FUNC( arg, WRITE ); \
+        FUNC( arg, WRITEV); 
+
+
+#define InstallCommonFuncs( isa ) FOREACH_COMMON( InstallFunc, isa )
 
 #define InstallFunc( isa,funcName ) install( VANADIS_SYSCALL_##isa##_##funcName, SYSCALL_OP_##funcName )
 
@@ -164,32 +167,7 @@ public:
         assert( m_functionMap.find( opCode ) == m_functionMap.end() );
 
         switch ( syscall ) {
-            InstallFuncPtr( opCode, SET_TID_ADDRESS )
-            InstallFuncPtr( opCode, MADVISE )
-            InstallFuncPtr( opCode, UNAME )
-            InstallFuncPtr( opCode, KILL )
-            InstallFuncPtr( opCode, READ )
-            InstallFuncPtr( opCode, WRITE )
-            InstallFuncPtr( opCode, WRITEV )
-            InstallFuncPtr( opCode, EXIT_GROUP )
-            InstallFuncPtr( opCode, IOCTL )
-            InstallFuncPtr( opCode, BRK )
-            InstallFuncPtr( opCode, OPENAT )
-            InstallFuncPtr( opCode, CLOSE )
-            InstallFuncPtr( opCode, FSTAT )
-            InstallFuncPtr( opCode, GETPID )
-            InstallFuncPtr( opCode, GETPGID )
-            InstallFuncPtr( opCode, GETPPID )
-            InstallFuncPtr( opCode, GETTID )
-            InstallFuncPtr( opCode, UNLINKAT )
-            InstallFuncPtr( opCode, READV )
-            InstallFuncPtr( opCode, EXIT )
-            InstallFuncPtr( opCode, UNMAP )
-            InstallFuncPtr( opCode, RT_SIGPROCMASK )
-            InstallFuncPtr( opCode, RT_SIGACTION )
-            InstallFuncPtr( opCode, MPROTECT )
-            InstallFuncPtr( opCode, SCHED_GETAFFINITY )
-
+            FOREACH_COMMON( InstallFuncPtr, opCode )
             default: assert(0);
         }
     }
@@ -260,7 +238,7 @@ protected:
     VanadisSyscallEvent* SCHED_GETAFFINITY( int hw_thr ) {
         T1 pid        = getArgRegister(0);
         T1 cpusetsize = getArgRegister(1);
-        T1  maskAddr   = getArgRegister(2);
+        T1 maskAddr   = getArgRegister(2);
 
         output->verbose(CALL_INFO, 8, 0,
                             "sched_getaffinity( %" PRId64 ", %" PRId64", %#" PRIx64 " )\n", pid, cpusetsize, maskAddr );
@@ -270,7 +248,7 @@ protected:
     VanadisSyscallEvent* MPROTECT( int hw_thr ) {
         T1 addr   = getArgRegister(0);
         T1 len    = getArgRegister(1);
-        T1 prot    = getArgRegister(2);
+        T1 prot   = getArgRegister(2);
 
         T1 myProt = 0;
         if ( prot & 0x1 ) {
@@ -317,9 +295,9 @@ protected:
     }
 
     VanadisSyscallEvent* READV( int hw_thr ) {
-        T1  fd          = getArgRegister(0);
-        T1 iovec_ptr    = getArgRegister(1);
-        T1  iovec_count = getArgRegister(2);
+        T1 fd          = getArgRegister(0);
+        T1 iovec_ptr   = getArgRegister(1);
+        T1 iovec_count = getArgRegister(2);
 
         output->verbose(CALL_INFO, 8, 0, "readv( %" PRId64 ", 0x%llx, %" PRId64 " )\n", fd, iovec_ptr, iovec_count);
         return new VanadisSyscallReadvEvent(core_id, hw_thr, BitType, fd, iovec_ptr, iovec_count);
@@ -362,7 +340,7 @@ protected:
     }
 
     VanadisSyscallEvent* WRITE( int hw_thr ) {
-        T1  fd     = getArgRegister(0);
+        T1 fd     = getArgRegister(0);
         T1 buff   = getArgRegister(1);
         T1 count  = getArgRegister(2);
 
@@ -416,7 +394,7 @@ protected:
     }
 
     VanadisSyscallEvent* WRITEV( int hw_thr ) {
-        T1  writev_fd          = getArgRegister( 0 );
+        T1 writev_fd          = getArgRegister( 0 );
         T1 writev_iovec_ptr   = getArgRegister( 1 );
         T1 writev_iovec_count = getArgRegister( 2 );
 
@@ -450,7 +428,7 @@ protected:
     }
 
     VanadisSyscallEvent* IOCTL( int hw_thr ) {
-        T1  fd     = getArgRegister(0);
+        T1 fd     = getArgRegister(0);
         T1 io_req = getArgRegister(1);
         T1 ptr    = getArgRegister(2);
 
