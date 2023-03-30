@@ -90,6 +90,7 @@ void PandosNodeT::parseProgramArgv(Params &params)
     bool found;
     std::string argv_str = params.find<std::string>("program_argv", "", found);
     std::stringstream ss(argv_str);
+    program_argv.push_back(strdup(program_binary_fname.c_str()));
     // tokenize the string
     while (!ss.eof()) {
         std::string arg;
