@@ -11,12 +11,8 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libbalar.la
 
 libbalar_la_SOURCES = \
-	mempool.h \
-	mempool.cpp \
 	balar_event.h \
 	cuda_runtime_api.h \
-	balar.cc \
-	balar.h \
 	util.cc \
 	util.h \
 	balarMMIO.cc \
