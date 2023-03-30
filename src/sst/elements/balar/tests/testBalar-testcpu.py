@@ -1,5 +1,5 @@
 # Automatically generated SST Python input
-# Run cmd: sst testBalar-testcpu.py --model-options="-c ariel-gpu-v100.cfg -v -x ./vectorAdd/vectorAdd -t cuda_calls.trace"
+# Run cmd: sst testBalar-testcpu.py --model-options="-c gpu-v100-mem.cfg -v -x ./vectorAdd/vectorAdd -t cuda_calls.trace"
 
 # This run script will run balar with a test cpu that consumes CUDA API trace
 # To get the trace file and associated cudamemcpy data payload, you will need the

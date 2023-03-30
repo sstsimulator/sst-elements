@@ -1,5 +1,5 @@
 # Automatically generated SST Python input
-# Run script: sst testBalar-vanadis.py --model-options='-c ariel-gpu-v100.cfg'
+# Run script: sst testBalar-vanadis.py --model-options='-c gpu-v100-mem.cfg'
 
 # This script will run the vanadisHandshake binary that perform a
 # vectoradd progam similar to a native CUDA program launch with

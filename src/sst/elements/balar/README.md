@@ -106,12 +106,12 @@ LD_PRELOAD=PATH/TO/cuda_api_tracer_tool.so ./vectorAdd/vectorAdd
 # Run with testCPU in tracer mode
 # You will need the trace file for this, checkout `testBalar-testcpu.py` header
 # for more information
-sst testBalar-testcpu.py --model-options='-c ariel-gpu-v100.cfg -v -x vectorAdd/vectorAdd -t cuda_calls.trace'
+sst testBalar-testcpu.py --model-options='-c gpu-v100-mem.cfg -v -x vectorAdd/vectorAdd -t cuda_calls.trace'
 
 # Compile vanadis binary and a custom CUDA API library
 # (currently still under testing)
 make -C vanadisHandshake/
 
 # Run the handshake binary with vanadis core
-sst testBalar-vanadis.py --model-options='-c ariel-gpu-v100.cfg'
+sst testBalar-vanadis.py --model-options='-c gpu-v100-mem.cfg'
 ```

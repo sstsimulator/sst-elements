@@ -100,8 +100,8 @@ class testcase_balar(SSTTestCase):
         log_debug("stats file = {0}".format(statsfile))
         log_debug("testbalarDir = {0}".format(self.testbalarDir))
 
-        arielcfgfile = "{0}/ariel-gpu-v100.cfg".format(self.testbalarDir)
-        otherargs = '--model-options=\"-c {0} -s {1} -x {2} -t {3}"'.format(arielcfgfile, statsfile, vecAddBinary, vecAddTrace)
+        gpuMemCfgfile = "{0}/gpu-v100-mem.cfg".format(self.testbalarDir)
+        otherargs = '--model-options=\"-c {0} -s {1} -x {2} -t {3}"'.format(gpuMemCfgfile, statsfile, vecAddBinary, vecAddTrace)
 
         # Run SST
         self.run_sst(sdlfile, outfile, errfile, set_cwd=self.testbalarDir,
@@ -149,7 +149,7 @@ class testcase_balar(SSTTestCase):
         os.makedirs(self.testbalarVectorAddDir)
 
         # Create a simlink of required test files balar/tests directory
-        os_symlink_file(test_path, self.testbalarDir, "ariel-gpu-v100.cfg")
+        os_symlink_file(test_path, self.testbalarDir, "gpu-v100-mem.cfg")
         os_symlink_file(test_path, self.testbalarDir, "gpgpusim.config")
         os_symlink_file(test_path, self.testbalarDir, "utils.py")
 
