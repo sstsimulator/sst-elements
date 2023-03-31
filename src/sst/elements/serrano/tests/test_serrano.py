@@ -4,7 +4,6 @@ import sst
 
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
-sst.setProgramOption("stopAtCycle", "0s")
 
 serr_comp = sst.Component("serrano", "serrano.Serrano")
 serr_comp.addParams({

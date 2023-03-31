@@ -373,7 +373,7 @@ def doPIM(pimNum, prevRtr):
 
 # Define SST core options
 #sst.setProgramOption("partitioner", "self")
-sst.setProgramOption("stopAtCycle", "300 us")
+sst.setProgramOption("stop-at", "300 us")
 sst.setStatisticLoadLevel(7)   
 sst.setStatisticOutput("sst.statOutputConsole")
 
