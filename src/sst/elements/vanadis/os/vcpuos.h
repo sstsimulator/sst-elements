@@ -20,6 +20,7 @@
 #include <sst/core/link.h>
 #include <sst/core/subcomponent.h>
 
+#include <sys/fcntl.h>
 #include <sys/mman.h>
 
 #include <functional>
@@ -92,6 +93,9 @@ protected:
 private:
     SST::Link* os_link;
 };
+
+
+#define VANADIS_AT_FDCWD -100
 
 #define InstallFuncPtr( opCode, funcName ) case SYSCALL_OP_##funcName:  m_functionMap[ opCode ] = MakeFuncPtr( funcName ); break;
 #define MakeFuncPtr( funcName ) std::bind(&VanadisCPUOSHandler2< T1,BitType,regZero,OsCodeReg,LinkReg >::funcName, this, std::placeholders::_1 )

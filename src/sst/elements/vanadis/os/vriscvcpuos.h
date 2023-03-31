@@ -167,7 +167,7 @@ public:
         uint64_t bufsize    = getArgRegister( 3 );
 
 #ifdef SST_COMPILE_MACOSX
-        if (  RISCV_AT_FDCWD == dirfd ) {
+        if (  VANADIS_AT_FDCWD == dirfd ) {
             dirfd = AT_FDCWD;
         }
 #endif
@@ -185,7 +185,7 @@ public:
         uint64_t flags      = getArgRegister(3);
 
 #ifdef SST_COMPILE_MACOSX
-        if (  RISCV_AT_FDCWD == dirfd ) {
+        if (  VANADIS_AT_FDCWD == dirfd ) {
             dirfd = AT_FDCWD;
         }
 #endif
