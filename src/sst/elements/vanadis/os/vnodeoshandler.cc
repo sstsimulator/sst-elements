@@ -88,7 +88,7 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
         case SYSCALL_OP_MPROTECT: {
             syscall = new VanadisMprotectSyscall( this, coreLink, process, convertEvent<VanadisSyscallMprotectEvent*>( "mprotect", sys_ev ) );
         } break;
-        case SYSCALL_OP_GETAFFINITY: {
+        case SYSCALL_OP_SCHED_GETAFFINITY: {
             syscall = new VanadisGetaffinitySyscall( this, coreLink, process, convertEvent<VanadisSyscallGetaffinityEvent*>( "getaffinity", sys_ev ) );
         } break;
         case SYSCALL_OP_FORK: {
