@@ -1,6 +1,7 @@
 #pragma once
 #include <pando/backend_node_context.hpp>
 #include <pando/backend_core_context.hpp>
+#include <pando/backend_sysinfo.hpp>
 #include <pando/arch_coroutine.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
@@ -14,6 +15,7 @@ namespace PandosProgramming {
 
 typedef pando::backend::node_context_t* (*getContextFunc_t)();
 typedef void  (*setContextFunc_t)(pando::backend::node_context_t*);
+typedef void  (*setSysInfoFunc_t)(pando::backend::sysinfo_t*);
 typedef int (*mainFunc_t)(int, char **);
 
 /**
@@ -33,6 +35,7 @@ public:
         // Document the parameters that this component accepts
         SST_ELI_DOCUMENT_PARAMS(
                 {"num_cores", "Number of cores on PandoNode", NULL},
+                {"sys_num_nodes", "Number of PandosNode in system", NULL},                
                 {"node_shared_dram_size", "Size of Node Shared DRAM in Bytes", NULL},
                 {"instructions_per_task", "Instructions per task", NULL},
                 {"program_binary_fname", "Program binary file name", NULL},
@@ -75,6 +78,11 @@ public:
          */
         void closeProgramBinary();
 
+        /**
+         * Setup system info
+         */
+        void setupSysInfo();
+        
         /**
          * initalize cores
          */
@@ -153,7 +161,8 @@ public:
         Link *toRemoteNode;
         Link *fromRemoteNode;
 
-        int32_t num_cores; //!< The number of cores in this node
+        pando::CoreId_t num_cores; //!< The number of cores in this node
+        pando::NodeId_t num_nodes; //!< The number of nodes in the system
         int32_t instr_per_task; //!< The number of instructions per task
         std::string program_binary_fname; //!< The name of the program binary to load
         size_t node_shared_dram_size; //!< how large is dram on this node

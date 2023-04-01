@@ -12,4 +12,7 @@ params = {
     "verbose_level" : 1,
 }
 
-pn0 = Node("pn0", params)
+nf = NodeFactory(params)
+pn0 = nf.createNode("pn0")
+nf.done()
+

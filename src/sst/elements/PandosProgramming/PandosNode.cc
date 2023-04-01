@@ -130,7 +130,6 @@ void PandosNodeT::openProgramBinary()
         program_binary_handle,
         "PANDORuntimeBackendSetCurrentContext"
         );
-
     pando_context = new pando::backend::node_context_t(static_cast<int64_t>(getId()), node_shared_dram_size);
     out->verbose(CALL_INFO, 1, DEBUG_INITIALIZATION, "made pando context @ %p with id %ld\n", pando_context, pando_context->getId());
 }
@@ -147,6 +146,22 @@ void PandosNodeT::closeProgramBinary()
             );
         dlclose(program_binary_handle);
         program_binary_handle = nullptr;
+    }
+}
+
+/**
+ * setup the system info struct
+ */
+void PandosNodeT::setupSysInfo()
+{
+    using namespace pando;
+    using namespace backend;
+    
+    if (PANDORuntimeGetSysInfo() == nullptr) {
+        sysinfo_t *sysinfo = new sysinfo_t;        
+        sysinfo->setNumCores(num_cores);
+        sysinfo->setNumNodes(num_nodes);
+        PANDORuntimeSetSysInfo(sysinfo);
     }
 }
 
@@ -201,6 +216,7 @@ PandosNodeT::PandosNodeT(ComponentId_t id, Params &params) : Component(id), prog
     bool found;
     int64_t verbose_level = params.find<int32_t>("verbose_level", 0, found);
     num_cores = params.find<int32_t>("num_cores", 1, found);
+    num_nodes = params.find<int32_t>("sys_num_nodes", 1, found);    
     instr_per_task = params.find<int32_t>("instr_per_task", 100, found);
     program_binary_fname = params.find<std::string>("program_binary_fname", "", found);
     node_shared_dram_size = params.find<size_t>("node_shared_dram_size", 1024*1024*1024, found);
@@ -224,6 +240,7 @@ PandosNodeT::PandosNodeT(ComponentId_t id, Params &params) : Component(id), prog
 
     // open binary
     openProgramBinary();
+    setupSysInfo();
 
     // initialize cores
     initCores();
