@@ -15,6 +15,8 @@ params = {
     "debug_initialization" : False,
 }
 
-n0 = Node("n0", params)
-n1 = Node("n1", params)
+nf = NodeFactory(params)
+n0 = nf.createNode("n0")
+n1 = nf.createNode("n1")
 n0.connect(n1)
+nf.done()

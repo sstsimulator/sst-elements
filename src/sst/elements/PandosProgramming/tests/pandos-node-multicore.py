@@ -17,4 +17,6 @@ params = {
 
 
 # create a single pandos node
-pn0 = Node("pn0", params)
+nf = NodeFactory(params)
+n0 = nf.createNode('n0')
+nf.done()

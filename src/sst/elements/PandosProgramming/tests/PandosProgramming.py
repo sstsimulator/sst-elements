@@ -1,6 +1,7 @@
 import sst
 import sys
 
+
 class Node(object):
     def __init__(self
                  ,component_name
@@ -43,3 +44,18 @@ def program_fpath():
 
 def program_argv():
     return " ".join(sys.argv[2:]) if len(sys.argv) > 1 else ""
+
+
+class NodeFactory(object):
+    def __init__(self, params):
+        self.params =  params
+        self.nodes = []
+
+    def createNode(self, node_name):
+        new_node = Node(node_name, self.params)
+        self.nodes.append(new_node)
+        return new_node
+    
+    def done(self):
+        for node in self.nodes:
+            node.component.addParams({'sys_num_nodes':len(self.nodes)})
