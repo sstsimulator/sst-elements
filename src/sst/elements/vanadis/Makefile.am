@@ -180,7 +180,6 @@ os/callev/voscallreadlink.h \
 os/callev/voscallreadv.h \
 os/callev/voscallsetrobustlist.h \
 os/callev/voscallsettidaddr.h \
-os/callev/voscallsta.h \
 os/callev/voscallstatx.h \
 os/callev/voscalluname.h \
 os/callev/voscallunlinkat.h \

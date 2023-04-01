@@ -133,7 +133,7 @@ g_params = setup_config_params()
 
 # Define SST core options
 sst.setProgramOption("timebase", g_params["clockCycle"])
-sst.setProgramOption("stopAtCycle", g_params["stopAtCycle"])
+sst.setProgramOption("stop-at", g_params["stopAtCycle"])
 
 
 # Define the simulation components

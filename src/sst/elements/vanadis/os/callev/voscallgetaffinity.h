@@ -28,7 +28,7 @@ public:
     VanadisSyscallGetaffinityEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, int64_t pid, int64_t cpusetsize, uint64_t maskAddr ) 
         : VanadisSyscallEvent(core, thr, bittype), pid(pid), cpusetsize(cpusetsize), maskAddr(maskAddr) {} 
 
-    VanadisSyscallOp getOperation() override { return SYSCALL_OP_GETAFFINITY; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_SCHED_GETAFFINITY; }
 
     int64_t getPid() const { return pid; }
     int64_t getCpusetsize() const { return cpusetsize; }
