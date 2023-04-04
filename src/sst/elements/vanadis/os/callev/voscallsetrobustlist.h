@@ -13,31 +13,37 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _H_VANADIS_SYSCALL_SET_THREAD_AREA
-#define _H_VANADIS_SYSCALL_SET_THREAD_AREA
+#ifndef _H_VANADIS_SYSCALL_SET_ROBUST_LIST
+#define _H_VANADIS_SYSCALL_SET_ROBUST_LIST
 
 #include "os/voscallev.h"
+#include "os/vosbittype.h"
 
 namespace SST {
 namespace Vanadis {
 
-class VanadisSyscallSetThreadAreaEvent : public VanadisSyscallEvent {
+class VanadisSyscallSetRobustListEvent : public VanadisSyscallEvent {
 public:
-    VanadisSyscallSetThreadAreaEvent() : VanadisSyscallEvent() {}
-    VanadisSyscallSetThreadAreaEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t ta)
-        : VanadisSyscallEvent(core, thr, bittype), ta_ptr(ta) {}
+    VanadisSyscallSetRobustListEvent() : VanadisSyscallEvent() {}
+    VanadisSyscallSetRobustListEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t head, uint64_t len)
+        : VanadisSyscallEvent(core, thr, bittype), head(head), len(len) {}
 
-    VanadisSyscallOp getOperation() override { return SYSCALL_OP_SET_THREAD_AREA; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_SET_ROBUST_LIST; }
 
-    uint64_t getThreadAreaInfoPtr() const { return ta_ptr; }
+    uint64_t getHead() const { return head; }
+    uint64_t getLen() const { return len; }
 
 private:
+
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisSyscallEvent::serialize_order(ser);
-        ser& ta_ptr;
+        ser& head;
+        ser& len; 
     }
-    ImplementSerializable(SST::Vanadis::VanadisSyscallSetThreadAreaEvent);
-    uint64_t ta_ptr;
+    ImplementSerializable(SST::Vanadis::VanadisSyscallSetRobustListEvent);
+
+    uint64_t head;
+    uint64_t len;
 };
 
 } // namespace Vanadis

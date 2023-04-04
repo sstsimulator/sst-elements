@@ -56,7 +56,7 @@ private:
 class DMAEngine : public Component {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_COMPONENT(DMAEngine, "memHierarchy", "DMAEngine", SST_ELI_ELEMENT_VERSION(1,0,0),
+   /* SST_ELI_REGISTER_COMPONENT(DMAEngine, "memHierarchy", "DMAEngine", SST_ELI_ELEMENT_VERSION(1,0,0),
             "DMA Engine", COMPONENT_CATEGORY_MEMORY)
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -68,7 +68,7 @@ public:
             {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"} )
 
     SST_ELI_DOCUMENT_PORTS( {"netLink", "Network Link", {"memHierarchy.MemRtrEvent"} } )
-
+*/
 /* Begin class definition */
 private:
     struct Request {

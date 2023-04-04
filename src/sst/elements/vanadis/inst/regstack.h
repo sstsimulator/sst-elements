@@ -50,6 +50,9 @@ public:
 
     void push(const uint16_t v)
     {
+#if 0
+        check( v );
+#endif
 /*
         if(stack_top >= max_capacity) {
             printf("LOGIC-ERROR - stack_top=%" PRId32 " / capacity=%" PRId32 "\n", stack_top, max_capacity);
@@ -71,9 +74,19 @@ public:
     bool full() { return (stack_top == (max_capacity - 1)); }
     bool empty() { return -1 == stack_top; }
 
-    void clear() {
-        stack_top = -1;
+private:
+
+#if 0
+    void check(int v) {
+
+        for(auto i = 0; i <= stack_top; ++i) {
+            if ( regs[i] == v ) {
+                printf("check() pos=%d v=%d %d\n",i,v,regs[i]);
+                assert(0);
+            }
+        }
     }
+#endif
 
     void reset() {
         stack_top = max_capacity - 1;
@@ -83,6 +96,7 @@ public:
         }
     }
 
+public:
     void print() {
         printf("----> free registers = { ");
 

@@ -950,7 +950,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_MULT:
                         {
                             bundle->addInstruction(
-                                new VanadisMultiplySplitInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
+                                new VanadisMultiplySplitInstruction<int32_t>(
                                     ins_addr, hw_thr, options, MIPS_REG_LO, MIPS_REG_HI, rs, rt));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_mult);
@@ -959,7 +959,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_MULTU:
                         {
                             bundle->addInstruction(
-                                new VanadisMultiplySplitInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, false>(
+                                new VanadisMultiplySplitInstruction<uint32_t>(
                                     ins_addr, hw_thr, options, MIPS_REG_LO, MIPS_REG_HI, rs, rt));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_multu);
@@ -1464,7 +1464,7 @@ protected:
                 //"\n",
                 //                                        rt, rs, imm_value_64 );
                 bundle->addInstruction(new VanadisSetRegCompareImmInstruction<
-                                       REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
+                                       REG_COMPARE_LT, int32_t>(
                     ins_addr, hw_thr, options, rt, rs, imm_value_64));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_slti);
@@ -1479,7 +1479,7 @@ protected:
                 //"\n",
                 //                                        rt, rs, imm_value_64 );
                 bundle->addInstruction(new VanadisSetRegCompareImmInstruction<
-                                       REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT32, false>(
+                                       REG_COMPARE_LT, uint32_t>(
                     ins_addr, hw_thr, options, rt, rs, imm_value_64));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_sltiu);

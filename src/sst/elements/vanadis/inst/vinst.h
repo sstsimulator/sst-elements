@@ -18,6 +18,7 @@
 
 #include "decoder/visaopts.h"
 #include "inst/regfile.h"
+#include "inst/regstack.h"
 #include "inst/vinsttype.h"
 #include "inst/vregfmt.h"
 
@@ -74,7 +75,6 @@ public:
         trapError             = false;
         hasExecuted           = false;
         hasIssued             = false;
-        hasRegistersAllocated = false;
         enduOpGroup           = false;
         isFrontOfROB          = false;
         hasROBSlot            = false;
@@ -108,7 +108,6 @@ public:
         trapError             = copy_me.trapError;
         hasExecuted           = copy_me.hasExecuted;
         hasIssued             = copy_me.hasIssued;
-        hasRegistersAllocated = copy_me.hasRegistersAllocated;
         enduOpGroup           = copy_me.enduOpGroup;
         isFrontOfROB          = false;
         hasROBSlot            = false;
@@ -278,16 +277,6 @@ public:
     uint16_t countISAFPRegIn() const { return count_isa_fp_reg_in; }
     uint16_t countISAFPRegOut() const { return count_isa_fp_reg_out; }
 
-    uint16_t* getPhysIntRegIn() { return phys_int_regs_in; }
-    uint16_t* getPhysIntRegOut() { return phys_int_regs_out; }
-    uint16_t* getISAIntRegIn() { return isa_int_regs_in; }
-    uint16_t* getISAIntRegOut() { return isa_int_regs_out; }
-
-    uint16_t* getPhysFPRegIn() { return phys_fp_regs_in; }
-    uint16_t* getPhysFPRegOut() { return phys_fp_regs_out; }
-    uint16_t* getISAFPRegIn() { return isa_fp_regs_in; }
-    uint16_t* getISAFPRegOut() { return isa_fp_regs_out; }
-
     uint16_t getPhysIntRegIn(const uint16_t index) const { return phys_int_regs_in[index]; }
     uint16_t getPhysIntRegOut(const uint16_t index) const { return phys_int_regs_out[index]; }
     uint16_t getISAIntRegIn(const uint16_t index) const { return isa_int_regs_in[index]; }
@@ -330,11 +319,9 @@ public:
 
     bool completedExecution() const { return hasExecuted; }
     bool completedIssue() const { return hasIssued; }
-    bool completedRegisterAllocation() const { return hasRegistersAllocated; }
 
     void markExecuted() { hasExecuted = true; }
     void markIssued() { hasIssued = true; }
-    void markRegistersAllocated() { hasRegistersAllocated = true; }
 
     bool checkFrontOfROB() const { return isFrontOfROB; }
     void markFrontOfROB() { isFrontOfROB = true; }
@@ -351,6 +338,15 @@ public:
 
 	virtual bool updatesFPFlags() const { return false; }
     virtual void updateFPFlags() {}
+
+    virtual void returnOutRegs( VanadisRegisterStack* int_stack, VanadisRegisterStack* fp_stack ) {
+        for ( auto i = 0; i < countPhysIntRegOut(); i++ ) {
+            int_stack->push( getPhysIntRegOut(i) );
+        }
+        for ( auto i = 0; i < countPhysFPRegOut(); i++ ) {
+            fp_stack->push( getPhysFPRegOut(i) );
+        }
+    }
 
 protected:
     const uint64_t ins_address;
@@ -379,7 +375,6 @@ protected:
     bool trapError;
     bool hasExecuted;
     bool hasIssued;
-    bool hasRegistersAllocated;
     bool enduOpGroup;
     bool isFrontOfROB;
     bool hasROBSlot;

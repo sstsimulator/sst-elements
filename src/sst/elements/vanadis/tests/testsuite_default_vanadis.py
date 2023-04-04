@@ -68,8 +68,9 @@ def build_vanadis_test_matrix():
     #misc_tests =[]
     for test in misc_tests:
         for arch in arch_list:
-            testlist.append(["basic_vanadis.py", location, test,arch, 4,1, "gold1", 300])
-            testlist.append(["basic_vanadis.py", location, test,arch, 1,4, "gold2", 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 4,1, "4core", 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1,4, "4thread", 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 2,2, "2core-2thread", 300])
 
 
     # Process each line and crack up into an index, hash, options and sdl file

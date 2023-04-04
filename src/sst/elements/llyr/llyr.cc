@@ -24,6 +24,7 @@
 
 #include "llyr.h"
 #include "llyrTypes.h"
+#include "llyrHelpers.h"
 #include "parser/parser.h"
 #include "mappers/mapperList.h"
 
@@ -91,13 +92,16 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     uint16_t queue_depth = params.find< uint16_t >("queue_depth", 256);
     uint16_t arith_latency = params.find< uint16_t >("arith_latency", 1);
     uint16_t int_latency = params.find< uint16_t >("int_latency", 1);
-    uint16_t fp_latency = params.find< uint16_t >("fp_latency", 1);
-    uint16_t fp_mul_latency = params.find< uint16_t >("fp_mul_latency", 1);
-    uint16_t fp_div_latency = params.find< uint16_t >("fp_div_latency", 1);
+    uint16_t int_div_latency = params.find< uint16_t >("int_div_latency", 4);
+    uint16_t fp_latency = params.find< uint16_t >("fp_latency", 4);
+    uint16_t fp_mul_latency = params.find< uint16_t >("fp_mul_latency", 8);
+    uint16_t fp_div_latency = params.find< uint16_t >("fp_div_latency", 40);
+    uint16_t complex_latency = params.find< uint16_t >("complex_latency_", 80);
     std::string mapping_tool_ = params.find< std::string >("mapping_tool", "");
 
     configData_ = new LlyrConfig { ls_queue_, mem_interface_, starting_addr_, mapping_tool_, verbosity, queue_depth,
-                                   arith_latency, int_latency, fp_latency, fp_mul_latency, fp_div_latency };
+                                   arith_latency, int_latency, int_div_latency, fp_latency, fp_mul_latency, fp_div_latency,
+                                   complex_latency };
 
     memFileName_ = params.find<std::string>("mem_init", "");
 
@@ -115,7 +119,7 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     llyr_mapper_ = loadModule<LlyrMapper>(mapperName, mapperParams);
     output_->verbose(CALL_INFO, 1, 0, "Mapping application to hardware with %s\n", mapperName.c_str());
     llyr_mapper_->mapGraph(hardwareGraph_, applicationGraph_, mappedGraph_, configData_);
-    mappedGraph_.printDot("llyr_mapped.dot");
+    mappedGraph_.printDotHardware("llyr_mapped.dot");
     //all done
     output_->verbose(CALL_INFO, 1, 0, "Initialization done.\n");
 }
@@ -206,6 +210,7 @@ void LlyrComponent::finish()
 
 bool LlyrComponent::tick( Cycle_t )
 {
+    TraceFunction trace(CALL_INFO_LONG);
     if( clock_enabled_ == 0 ) {
         return false;
     }
@@ -232,7 +237,6 @@ bool LlyrComponent::tick( Cycle_t )
         uint32_t currentNode = nodeQueue.front();
         nodeQueue.pop();
 
-//         std::cout << "\n Adjacency list of vertex " << currentNode << "\n head ";
         std::vector< Edge* >* adjacencyList = vertex_map_->at(currentNode).getAdjacencyList();
 
         //set visited for bfs
@@ -247,6 +251,7 @@ bool LlyrComponent::tick( Cycle_t )
         //Let the PE decide whether or not it can do the compute
         vertex_map_->at(currentNode).getValue()->doCompute();
         compute_complete = compute_complete | vertex_map_->at(currentNode).getValue()->getPendingOp();
+        output_->verbose(CALL_INFO, 1, 0, "PE(%" PRIu32 ") status: %" PRIu32 "\n\n", currentNode, compute_complete);
 
         //add the destination vertices from this node to the node queue
         for( auto it = adjacencyList->begin(); it != adjacencyList->end(); it++ ) {
@@ -260,10 +265,13 @@ bool LlyrComponent::tick( Cycle_t )
 
     // return false so we keep going
     if( ls_queue_->getNumEntries() > 0 ) {
+        output_->verbose(CALL_INFO, 40, 0, "Continuing simulation due to live memory...\n");
         return false;
     } else if( compute_complete == 1 ){
+        output_->verbose(CALL_INFO, 40, 0, "Continuing simulation due to live data...\n");
         return false;
     } else {
+        output_->verbose(CALL_INFO, 40, 0, "Ending simulation due to flying cows...\n");
         primaryComponentOKToEndSim();
         return true;
     }
@@ -298,6 +306,8 @@ void LlyrComponent::LlyrMemHandlers::handle(StandardMem::Write* write) {
 // Handler for incoming Read responses
 // - should be a response to a Read we issued
 void LlyrComponent::LlyrMemHandlers::handle(StandardMem::ReadResp* resp) {
+
+    TraceFunction trace(CALL_INFO_LONG);
 
     std::stringstream dataOut;
     for( auto &it : resp->data ) {
@@ -348,6 +358,7 @@ void LlyrComponent::LlyrMemHandlers::handle(StandardMem::WriteResp* resp) {
 
 void LlyrComponent::doLoadStoreOps( uint32_t numOps )
 {
+    TraceFunction trace(CALL_INFO_LONG);
     output_->verbose(CALL_INFO, 10, 0, "Doing L/S ops\n");
     for(uint32_t i = 0; i < numOps; ++i ) {
         if( ls_queue_->getNumEntries() > 0 ) {
@@ -377,7 +388,7 @@ void LlyrComponent::constructHardwareGraph(std::string fileName)
     std::ifstream inputStream(fileName, std::ios::in);
     if( inputStream.is_open() ) {
         std::string thisLine;
-        std::uint64_t position;
+        uint64_t position;
         while( std::getline( inputStream, thisLine ) ) {
             output_->verbose(CALL_INFO, 15, 0, "Parsing:  %s\n", thisLine.c_str());
 
@@ -399,8 +410,8 @@ void LlyrComponent::constructHardwareGraph(std::string fileName)
                 if( position !=  std::string::npos ) {
                     uint32_t vertex = std::stoul( thisLine.substr( 0, position ) );
 
-                    std::uint64_t posA = thisLine.find_first_of( "=" ) + 1;
-                    std::uint64_t posB = thisLine.find_last_of( "]" );
+                    uint64_t posA = thisLine.find_first_of( "=" ) + 1;
+                    uint64_t posB = thisLine.find_last_of( "]" );
                     std::string op = thisLine.substr( posA, posB-posA );
                     opType operation = getOptype(op);
 
@@ -440,7 +451,7 @@ void LlyrComponent::constructSoftwareGraph(std::string fileName)
     std::ifstream inputStream(fileName, std::ios::in);
     if( inputStream.is_open() ) {
         std::string thisLine;
-        std::uint64_t position;
+        uint64_t position;
 
         std::getline( inputStream, thisLine );
         position = thisLine.find( "ModuleID" );
@@ -475,7 +486,7 @@ void LlyrComponent::constructSoftwareGraphIR(std::ifstream& inputStream)
 void LlyrComponent::constructSoftwareGraphApp(std::ifstream& inputStream)
 {
     std::string thisLine;
-    std::uint64_t position;
+    uint64_t position;
 
     inputStream.seekg (0, inputStream.beg);
     while( std::getline( inputStream, thisLine ) ) {

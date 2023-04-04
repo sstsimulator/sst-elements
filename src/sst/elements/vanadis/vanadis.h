@@ -188,7 +188,6 @@ public:
 
     void handleMisspeculate(const uint32_t hw_thr, const uint64_t new_ip);
     void clearROBMisspeculate(const uint32_t hw_thr);
-    void resetRegisterStacks(const uint32_t hw_thr);
     void clearFuncUnit(const uint32_t hw_thr, std::vector<VanadisFunctionalUnit*>& unit);
 
     void syscallReturn(uint32_t thr);
@@ -285,8 +284,8 @@ private:
     std::vector<VanadisFunctionalUnit*> fu_fp_div;
 
     std::vector<VanadisRegisterFile*>  register_files;
-    std::vector<VanadisRegisterStack*> int_register_stacks;
-    std::vector<VanadisRegisterStack*> fp_register_stacks;
+    VanadisRegisterStack* int_register_stack;
+    VanadisRegisterStack* fp_register_stack;
 
     std::vector<VanadisISATable*> issue_isa_tables;
     std::vector<VanadisISATable*> retire_isa_tables;

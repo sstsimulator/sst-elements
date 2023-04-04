@@ -27,7 +27,7 @@ maxTxns = 100000 * totalChannel
 
 # Define SST core options
 sst.setProgramOption("timebase", g_params["clockCycle"])
-sst.setProgramOption("stopAtCycle", g_params["stopAtCycle"])
+sst.setProgramOption("stop-at", g_params["stopAtCycle"])
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
 

@@ -29,13 +29,11 @@ namespace Llyr {
 class ControlProcessingElement : public ProcessingElement
 {
 public:
-    ControlProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
-                           uint32_t cycles = 1)  :
+    ControlProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config) :
                     ProcessingElement(op_binding, processor_id, llyr_config)
     {
-        cycles_ = cycles;
-        input_queues_= new std::vector< LlyrQueue* >;
-        output_queues_ = new std::vector< LlyrQueue* >;
+        do_forward_ = 0;
+        first_touch_ = 1;
     }
 
     virtual bool doSend()
@@ -60,6 +58,7 @@ public:
         }
 
         if( output_->getVerboseLevel() >= 10 ) {
+            output_->verbose(CALL_INFO, 10, 0, "Queue Contents (2)\n");
             printInputQueue();
             printOutputQueue();
         }
@@ -71,12 +70,19 @@ public:
 
     virtual bool doCompute()
     {
-        output_->verbose(CALL_INFO, 4, 0, ">> Compute 0x%" PRIx32 "\n", op_binding_);
+        TraceFunction trace(CALL_INFO_LONG);
+        output_->verbose(CALL_INFO, 4, 0, ">> Compute %s\n", getOpString(op_binding_).c_str());
 
         uint64_t intResult = 0x0F;
 
         std::vector< LlyrData > argList;
         LlyrData retVal;
+
+        // FIXME lazy way to do a post-init so that the first token is free
+        if( op_binding_ == ROS && first_touch_ == 1 ) {
+            input_queues_->at(0)->data_queue_->push(LlyrData(0x00));
+            first_touch_ = 0;
+        }
 
         if( output_->getVerboseLevel() >= 10 ) {
             printInputQueue();
@@ -84,45 +90,65 @@ public:
         }
 
         uint32_t num_ready = 0;
-        uint32_t num_inputs  = input_queues_->size();
+        uint32_t num_inputs = 0;
+        uint32_t total_num_inputs = input_queues_->size();
 
-        //check to see if all of the input queues have data
-        for( uint32_t i = 0; i < num_inputs; ++i) {
-            if( input_queues_->at(i)->data_queue_->size() > 0 ) {
-                num_ready = num_ready + 1;
+        // discover which of the input queues are used for the compute
+        for( uint32_t i = 0; i < total_num_inputs; ++i) {
+            if( input_queues_->at(i)->argument_ > -1 ) {
+                num_inputs = num_inputs + 1;
             }
         }
 
-        //if there are values waiting on any of the inputs, this PE could still fire
-        if( num_ready < num_inputs && num_ready > 0) {
-            pending_op_ = 1;
-        } else {
-            pending_op_ = 0;
+        // FIXME check to see of there are any routing jobs -- should be able to do this without waiting to fire
+        doRouting( total_num_inputs );
+
+        //check to see if all of the input queues have data
+        for( uint32_t i = 0; i < total_num_inputs; ++i) {
+            if( input_queues_->at(i)->argument_ > -1 ) {
+                if( input_queues_->at(i)->data_queue_->size() > 0 ) {
+                    num_ready = num_ready + 1;
+                }
+            }
         }
 
+        //FIXME do control PEs need to know if they're waiting on data?
+        //if there are values waiting on any of the inputs, this PE could still fire
+//         if( num_ready < num_inputs && num_ready > 0) {
+//             pending_op_ = 1;
+//         } else {
+//             pending_op_ = 0;
+//         }
+
         //if all inputs are available pull from queue and add to arg list
-        if( num_ready < num_inputs ) {
+        if( num_inputs == 0 || num_ready < num_inputs ) {
             output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
             return false;
         } else {
             output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
-            for( uint32_t i = 0; i < num_inputs; ++i) {
-                argList.push_back(input_queues_->at(i)->data_queue_->front());
-                input_queues_->at(i)->data_queue_->pop();
+            for( uint32_t i = 0; i < total_num_inputs; ++i) {
+                if( input_queues_->at(i)->argument_ > -1 ) {
+                    argList.push_back(input_queues_->at(i)->data_queue_->front());
+                    if( op_binding_ != ROS && op_binding_ != REPEATER ) {
+                        input_queues_->at(i)->data_queue_->pop();
+                    }
+                }
             }
         }
 
         switch( op_binding_ ) {
             case SEL :
+            case ROS :
+            case REPEATER :
                 retVal = helperFunction(op_binding_, argList[0], argList[1], argList[2]);
                 break;
-            case RTR :
+            case ROUTE :
                 retVal = LlyrData(0x00);
                 break;
             case RET :
                 retVal = LlyrData(0x00);
                 break;
-             default :
+            default :
                 output_->verbose(CALL_INFO, 0, 0, "Error: could not find corresponding op-%" PRIu32 ".\n", op_binding_);
                 exit(-1);
         }
@@ -130,9 +156,47 @@ public:
         output_->verbose(CALL_INFO, 32, 0, "intResult = %" PRIu64 "\n", intResult);
         output_->verbose(CALL_INFO, 32, 0, "retVal = %s\n", retVal.to_string().c_str());
 
-        //for now push the result to all output queues
-        for( uint32_t i = 0; i < output_queues_->size(); ++i) {
-            output_queues_->at(i)->data_queue_->push(retVal);
+        //for now push the result to all output queues that need this result
+        if( op_binding_ == SEL ) {
+            for( uint32_t i = 0; i < output_queues_->size(); ++i ) {
+                if( *output_queues_->at(i)->routing_arg_ == "" ) {
+                    output_queues_->at(i)->data_queue_->push(retVal);
+                }
+            }
+        } else if( op_binding_ == ROS ) {
+            if( do_forward_ == 1 ) {
+                for( uint32_t i = 0; i < total_num_inputs; ++i) {
+                    if( input_queues_->at(i)->argument_ > -1 ) {
+                        input_queues_->at(i)->data_queue_->pop();
+                    }
+                }
+
+                for( uint32_t i = 0; i < output_queues_->size(); ++i ) {
+                    if( *output_queues_->at(i)->routing_arg_ == "" ) {
+                        output_queues_->at(i)->data_queue_->push(retVal);
+                    }
+                }
+            } else {
+                input_queues_->at(0)->data_queue_->pop();
+            }
+        } else if( op_binding_ == REPEATER ) {
+            if( do_forward_ > 0 ) {
+                for( uint32_t i = 0; i < output_queues_->size(); ++i ) {
+                    if( *output_queues_->at(i)->routing_arg_ == "" ) {
+                        output_queues_->at(i)->data_queue_->push(retVal);
+                    }
+                }
+            }
+
+            if( do_forward_ == 1 ) {
+                input_queues_->at(0)->data_queue_->pop();
+            } else {
+                for( uint32_t i = 0; i < total_num_inputs; ++i) {
+                    if( input_queues_->at(i)->argument_ > -1 ) {
+                        input_queues_->at(i)->data_queue_->pop();
+                    }
+                }
+            }
         }
 
         if( output_->getVerboseLevel() >= 10 ) {
@@ -144,9 +208,13 @@ public:
     }
 
     //TODO for testing only
-    virtual void queueInit() {};
+    virtual void inputQueueInit() {};
+    virtual void outputQueueInit() {};
 
 private:
+    bool first_touch_;
+    uint16_t do_forward_;
+
     LlyrData helperFunction( opType op, LlyrData arg0, LlyrData arg1, LlyrData arg2 )
     {
 
@@ -164,11 +232,30 @@ private:
                     return arg1;
                     break;
                 default :
-                    output_->verbose(CALL_INFO, 0, 0, "Error: invalid select signal.\n");
+                    output_->verbose( CALL_INFO, 0, 0, "Error: invalid select signal.\n" );
                     exit(-1);
             }
+        } else if( op == ROS ) {
+            if( arg0 == 0 ) {
+                do_forward_ = 1;
+                return arg1;
+            } else {
+                do_forward_ = 0;
+                return LlyrData(0x00);
+            }
+        } else if( op == REPEATER ) {
+            if( arg0 == 1 ) {
+                do_forward_ = 1;
+                return arg1;
+            } else if( do_forward_ == 1 ) {
+                do_forward_ = 2;
+                return arg1;
+            } else {
+                do_forward_ = 0;
+                return LlyrData(0x00);
+            }
         } else {
-            output_->verbose(CALL_INFO, 0, 0, "Error: could not find corresponding op-%" PRIu32 ".\n", op_binding_);
+            output_->verbose( CALL_INFO, 0, 0, "Error: could not find corresponding op-%" PRIu32 ".\n", op );
             exit(-1);
         }
     }
