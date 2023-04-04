@@ -23,7 +23,7 @@ libbalar_la_SOURCES = \
 	testcpu/balarTestCPU.cc
 
 EXTRA_DIST = \
-	tests/ariel-gpu-v100.cfg \
+	tests/gpu-v100-mem.cfg \
 	tests/testBalar-vanadis.py \
 	tests/testBalar-testcpu.py \
 	tests/gpgpusim.config \
