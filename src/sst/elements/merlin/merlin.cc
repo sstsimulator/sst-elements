@@ -79,6 +79,15 @@ char pymerlin_topo_mesh[] = {
 #include "topology/pymerlin-topo-mesh.inc"
     0x00};
 
+char pymerlin_topo_polarfly[] = {
+#include "topology/pymerlin-topo-polarfly.inc"
+    0x00};
+
+char pymerlin_topo_polarstar[] = {
+#include "topology/pymerlin-topo-polarstar.inc"
+    0x00};
+
+
 class MerlinPyModule : public SSTElementPythonModule {
 public:
     MerlinPyModule(std::string library) :
@@ -94,6 +103,8 @@ public:
         primary_module->addSubModule("topology",pymerlin_topo_hyperx,"topology/pymerlin-topo-hyperx.py");
         primary_module->addSubModule("topology",pymerlin_topo_fattree,"topology/pymerlin-topo-fattree.py");
         primary_module->addSubModule("topology",pymerlin_topo_mesh,"topology/pymerlin-topo-mesh.py");
+        primary_module->addSubModule("topology",pymerlin_topo_polarfly,"topology/pymerlin-topo-polarfly.py");
+        primary_module->addSubModule("topology",pymerlin_topo_polarstar,"topology/pymerlin-topo-polarstar.py");
     }
 
     SST_ELI_REGISTER_PYTHON_MODULE(

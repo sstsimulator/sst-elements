@@ -76,6 +76,12 @@ class testcase_merlin_Component(SSTTestCase):
     def test_merlin_dragon_128_fl(self):
         self.merlin_test_template("dragon_128_test_fl")
 
+    def test_merlin_polarfly_455(self):
+        self.merlin_test_template("polarfly_455_test")
+
+    def test_merlin_polarstar_504(self):
+        self.merlin_test_template("polarstar_504_test")
+
 
 #####
 
