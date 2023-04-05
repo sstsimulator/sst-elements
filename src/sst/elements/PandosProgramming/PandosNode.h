@@ -35,6 +35,7 @@ public:
         // Document the parameters that this component accepts
         SST_ELI_DOCUMENT_PARAMS(
                 {"num_cores", "Number of cores on PandoNode", NULL},
+                {"node_id", "ID of this PandosNode", NULL},
                 {"sys_num_nodes", "Number of PandosNode in system", NULL},                
                 {"node_shared_dram_size", "Size of Node Shared DRAM in Bytes", NULL},
                 {"instructions_per_task", "Instructions per task", NULL},
@@ -72,7 +73,7 @@ public:
         /**
          * Open a user program
          */
-        void openProgramBinary();
+        void openProgramBinary(Params &params);
         /**
          * Close a user program
          */

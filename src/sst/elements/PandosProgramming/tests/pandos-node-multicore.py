@@ -12,7 +12,7 @@ params = {
     "verbose_level" : 4,
     "debug_scheduler" : False,
     "debug_memory_requests" : False,
-    "debug_initialization" : False,
+    "debug_initialization" : True,
 }
 
 
