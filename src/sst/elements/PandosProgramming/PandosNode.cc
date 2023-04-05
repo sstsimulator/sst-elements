@@ -101,7 +101,7 @@ void PandosNodeT::parseProgramArgv(Params &params)
     program_argv.push_back(nullptr);
 }
 
-void PandosNodeT::openProgramBinary()
+void PandosNodeT::openProgramBinary(Params &params)
 {
     /*
       open program binary in its own namespace 
@@ -130,7 +130,19 @@ void PandosNodeT::openProgramBinary()
         program_binary_handle,
         "PANDORuntimeBackendSetCurrentContext"
         );
-    pando_context = new pando::backend::node_context_t(static_cast<int64_t>(getId()), node_shared_dram_size);
+
+    bool found;
+    pando::NodeId_t node_id = params.find<pando::NodeId_t>("node_id", 0, found);
+    if (!found) {
+        out->fatal(CALL_INFO, -1, "no node_id given\n");
+        exit(1);
+    }
+    out->verbose(CALL_INFO, 1, DEBUG_INITIALIZATION, "node id = %u\n", node_id);
+    pando_context = new pando::backend::node_context_t(
+        node_id,
+        node_shared_dram_size
+        );
+    
     out->verbose(CALL_INFO, 1, DEBUG_INITIALIZATION, "made pando context @ %p with id %ld\n", pando_context, pando_context->getId());
 }
 
@@ -239,7 +251,7 @@ PandosNodeT::PandosNodeT(ComponentId_t id, Params &params) : Component(id), prog
                  ,program_binary_fname.c_str());
 
     // open binary
-    openProgramBinary();
+    openProgramBinary(params);
     setupSysInfo();
 
     // initialize cores

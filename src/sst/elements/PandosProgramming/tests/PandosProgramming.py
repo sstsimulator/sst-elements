@@ -52,7 +52,9 @@ class NodeFactory(object):
         self.nodes = []
 
     def createNode(self, node_name):
-        new_node = Node(node_name, self.params)
+        params = self.params.copy()
+        params['node_id']=len(self.nodes)
+        new_node = Node(node_name, params)
         self.nodes.append(new_node)
         return new_node
     
