@@ -42,13 +42,13 @@ public:
     void notifyAccess(const CacheListenerNotification& notify);
     void registerResponseCallback(Event::HandlerBase *handler);
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         AddrHistogrammer,
-            "cassini",
-            "AddrHistogrammer",
-            SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Address access histogram generator",
-            SST::MemHierarchy::CacheListener
+        "cassini",
+        "AddrHistogrammer",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Address access histogram generator",
+        SST::MemHierarchy::CacheListener
     )
 
     SST_ELI_DOCUMENT_PARAMS(

@@ -26,7 +26,7 @@ class SingleThread : public DetailedCompute {
 
   public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         SingleThread,
         "thornhill",
         "SingleThread",

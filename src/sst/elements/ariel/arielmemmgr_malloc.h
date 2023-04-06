@@ -36,8 +36,14 @@ class ArielMemoryManagerMalloc : public ArielMemoryManagerCache {
 
     public:
         /* SST ELI */
-        SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(ArielMemoryManagerMalloc, "ariel", "MemoryManagerMalloc", SST_ELI_ELEMENT_VERSION(1,0,0),
-                "MLM memory manager which supports malloc/free in different memory pools", SST::ArielComponent::ArielMemoryManager)
+        SST_ELI_REGISTER_SUBCOMPONENT(
+            ArielMemoryManagerMalloc,
+            "ariel",
+            "MemoryManagerMalloc",
+            SST_ELI_ELEMENT_VERSION(1,0,0),
+            "MLM memory manager which supports malloc/free in different memory pools",
+            SST::ArielComponent::ArielMemoryManager
+        )
 
 #define ARIEL_MEMMGR_MALLOC_ELI_PARAMS ARIEL_ELI_MEMMGR_CACHE_PARAMS,\
             {"memorylevels",    "Number of memory levels in the system", "1"},\

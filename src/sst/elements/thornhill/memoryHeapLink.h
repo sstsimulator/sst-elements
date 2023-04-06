@@ -29,7 +29,7 @@ class MemoryHeapLink : public SubComponent {
 
   public:
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Thornhill::MemoryHeapLink)
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         MemoryHeapLink,
         "thornhill",
         "MemoryHeapLink",

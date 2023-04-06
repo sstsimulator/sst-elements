@@ -48,7 +48,7 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
     const int32_t verbosity = params.find<uint32_t>("verbose", 0);
 
     char prefix[256];
-    sprintf(prefix, "[t=@t][%s]: ", getName().c_str());
+    snprintf(prefix, 256, "[t=@t][%s]: ", getName().c_str());
     output = new SST::Output(prefix, verbosity, 0, Output::STDOUT);
     arb->setOutput(output);
 
@@ -70,7 +70,7 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
     char* linkName = new char[256];
 
     for (int32_t i = 0; i < port_count; ++i) {
-        sprintf(linkName, "port%" PRIi32, i);
+        snprintf(linkName, 256, "port%" PRIi32, i);
         output->verbose(CALL_INFO, 1, 0, "Configuring port %s ...\n", linkName);
 
         links[i] = configureLink(linkName, new Event::Handler<ShogunComponent>(this, &ShogunComponent::handleIncoming));

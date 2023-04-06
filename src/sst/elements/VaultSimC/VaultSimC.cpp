@@ -89,7 +89,7 @@ VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
 void VaultSimC::init(unsigned int phase)
 {
     SST::Event *ev = NULL;
-    while ( (ev = m_memChan->recvInitData()) != NULL ) {
+    while ( (ev = m_memChan->recvUntimedData()) != NULL ) {
         assert(0);
         MemEvent *me = dynamic_cast<MemEvent*>(ev);
         if ( me ) {
