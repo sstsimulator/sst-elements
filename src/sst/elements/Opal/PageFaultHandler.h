@@ -36,13 +36,22 @@ class PageFaultHandler : public SambaComponent::PageFaultHandler {
 
     public:
         /* SST ELI */
-        SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(PageFaultHandler, "Opal", "PageFaultHandler", SST_ELI_ELEMENT_VERSION(1,0,0),
-                "Page fault hander uses the Opal memory allocation component", SST::SambaComponent::PageFaultHandler)
+        SST_ELI_REGISTER_SUBCOMPONENT(
+            PageFaultHandler,
+            "Opal",
+            "PageFaultHandler",
+            SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Page fault hander uses the Opal memory allocation component",
+            SST::SambaComponent::PageFaultHandler
+        )
 
         SST_ELI_DOCUMENT_PARAMS(
-                { "opal_latency",   "latency to communicate to the Opal manager", "32ps"} )
+                { "opal_latency",   "latency to communicate to the Opal manager", "32ps"}
+        )
 
-        SST_ELI_DOCUMENT_PORTS( {"opal_link_%(corecound)d", "Each core's mmu link to the Opal page fault handler", {"Opal.OpalEvent"}} )
+        SST_ELI_DOCUMENT_PORTS(
+            {"opal_link_%(corecound)d", "Each core's mmu link to the Opal page fault handler", {"Opal.OpalEvent"}}
+        )
 
         /* MemoryManagerOpal */
         PageFaultHandler(ComponentId_t id, Params& params);

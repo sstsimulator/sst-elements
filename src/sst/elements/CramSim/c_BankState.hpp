@@ -29,12 +29,12 @@
 #ifndef C_BANKSTATE_HPP
 #define C_BANKSTATE_HPP
 
+#include <sst/core/sst_types.h>
+
 // C++ includes
 #include <memory>
 #include <list>
 #include <map>
-
-#include <sst/core/simulation.h>
 
 // CramSim includes
 //#include "c_BankCommand.hpp"

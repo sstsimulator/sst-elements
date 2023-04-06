@@ -140,12 +140,12 @@ void SimpleTLB::init(unsigned int phase) {
     out->verbose(_L2_, "SimpleTLB::init() called\n");
 
     SST::Event * ev;
-    while ((ev = link_high->recvInitData())) { //incoming from CPU, forward down
-        link_low->sendInitData(ev);
+    while ((ev = link_high->recvUntimedData())) { //incoming from CPU, forward down
+        link_low->sendUntimedData(ev);
     }
 
-    while ((ev = link_low->recvInitData())) { //incoming from mem/caches, forward up
-        link_high->sendInitData(ev);
+    while ((ev = link_low->recvUntimedData())) { //incoming from mem/caches, forward up
+        link_high->sendUntimedData(ev);
     }
 
     /*  // == CODE COPIED FROM SAMBA: to snoop on cache-line size from mem init events
