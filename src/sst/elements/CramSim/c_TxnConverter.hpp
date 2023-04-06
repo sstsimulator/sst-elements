@@ -60,7 +60,7 @@ public:
 
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::CramSim::c_TxnConverter, Output*, unsigned, c_CmdScheduler*)
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         c_TxnConverter,
         "CramSim",
         "c_TxnConverter",

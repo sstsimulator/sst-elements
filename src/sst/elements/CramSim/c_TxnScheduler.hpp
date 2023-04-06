@@ -50,7 +50,7 @@ namespace SST {
 
             SST_ELI_REGISTER_SUBCOMPONENT_API(SST::CramSim::c_TxnScheduler, Output*, unsigned, c_TxnConverter*, c_CmdScheduler*)
 
-            SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+            SST_ELI_REGISTER_SUBCOMPONENT(
                 c_TxnScheduler,
                 "CramSim",
                 "c_TxnScheduler",

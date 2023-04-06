@@ -63,7 +63,7 @@ public:
 
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::CramSim::c_DeviceDriver, Output*, std::function<void(c_BankCommand*)>)
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         c_DeviceDriver,
         "CramSim",
         "c_DeviceDriver",

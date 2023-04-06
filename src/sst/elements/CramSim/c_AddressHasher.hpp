@@ -58,7 +58,7 @@ namespace SST {
 
             SST_ELI_REGISTER_SUBCOMPONENT_API(SST::CramSim::c_AddressHasher, Output*, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned)
 
-            SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+            SST_ELI_REGISTER_SUBCOMPONENT(
                 c_AddressHasher,
                 "CramSim",
                 "c_AddressHasher",

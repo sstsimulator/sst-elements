@@ -85,7 +85,7 @@ TLB::TLB(ComponentId_t id, int tlb_id, TLB * Next_level, int Level, SST::Params&
     // === Init statistics
 
 	char* subID = (char*) malloc(sizeof(char) * 32);
-	sprintf(subID, "Core%d_L%d", tlb_id,level);
+	snprintf(subID, 32, "Core%d_L%d", tlb_id,level);
 
 	// The stats that will appear, not that these stats are going to be part of the Samba unit
 	statTLBHits =       registerStatistic<uint64_t>( "tlb_hits",      subID);
