@@ -59,7 +59,7 @@ public:
     void registerResponseCallback(Event::HandlerBase *handler);
     void printStats(Output &out);
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         PalaPrefetcher,
             "cassini",
             "PalaPrefetcher",

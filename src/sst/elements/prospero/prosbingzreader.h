@@ -26,22 +26,22 @@ namespace Prospero {
 class ProsperoCompressedBinaryTraceReader : public ProsperoTraceReader {
 
 public:
-        ProsperoCompressedBinaryTraceReader( ComponentId_t id, Params& params, Output* out );
-        ~ProsperoCompressedBinaryTraceReader();
-        ProsperoTraceEntry* readNextEntry();
-
-	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
-               	ProsperoCompressedBinaryTraceReader,
-               	"prospero",
-               	"ProsperoCompressedBinaryTraceReader",
-               	SST_ELI_ELEMENT_VERSION(1,0,0),
-               	"Compressed Binary Trace Reader",
-	       	SST::Prospero::ProsperoTraceReader
+    ProsperoCompressedBinaryTraceReader( ComponentId_t id, Params& params, Output* out );
+    ~ProsperoCompressedBinaryTraceReader();
+    ProsperoTraceEntry* readNextEntry();
+    
+	SST_ELI_REGISTER_SUBCOMPONENT(
+        ProsperoCompressedBinaryTraceReader,
+        "prospero",
+        "ProsperoCompressedBinaryTraceReader",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Compressed Binary Trace Reader",
+        SST::Prospero::ProsperoTraceReader
 	)
 
-       	SST_ELI_DOCUMENT_PARAMS(
-               	{ "file", "Sets the file for the trace reader to use", "" }
-       	)
+    SST_ELI_DOCUMENT_PARAMS(
+        { "file", "Sets the file for the trace reader to use", "" }
+    )
 
 private:
 	void copy(char* target, const char* source, const size_t buffOffset, const size_t len);

@@ -72,8 +72,14 @@ public:
 
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::CacheListener)
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(CacheListener, "memHierarchy", "emptyCacheListener", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Empty cache listener", SST::MemHierarchy::CacheListener)
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        CacheListener,
+        "memHierarchy",
+        "emptyCacheListener",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Empty cache listener",
+        SST::MemHierarchy::CacheListener
+    )
 
     CacheListener(ComponentId_t id, Params& UNUSED(params)) : SubComponent(id) {}
     virtual ~CacheListener() {}

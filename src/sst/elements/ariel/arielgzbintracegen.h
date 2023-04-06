@@ -30,11 +30,19 @@ class ArielCompressedBinaryTraceGenerator : public ArielTraceGenerator {
 
     public:
 
-    SST_ELI_REGISTER_MODULE_DERIVED(SST::ArielComponent::ArielCompressedBinaryTraceGenerator, "ariel", "CompressedBinaryTraceGenerator",
-                SST_ELI_ELEMENT_VERSION(1,0,0), "Provides tracing to compressed file capabilities", SST::ArielComponent::ArielTraceGenerator)
+        SST_ELI_REGISTER_MODULE_DERIVED(
+            SST::ArielComponent::ArielCompressedBinaryTraceGenerator,
+            "ariel",
+            "CompressedBinaryTraceGenerator",
+            SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Provides tracing to compressed file capabilities",
+            SST::ArielComponent::ArielTraceGenerator
+        )
 
-        SST_ELI_DOCUMENT_PARAMS( { "trace_prefix", "Sets the prefix for the trace file", "ariel-core-" } )
-
+        SST_ELI_DOCUMENT_PARAMS(
+            { "trace_prefix", "Sets the prefix for the trace file", "ariel-core-" }
+        )
+    
         ArielCompressedBinaryTraceGenerator(Params& params);
 
         ~ArielCompressedBinaryTraceGenerator();

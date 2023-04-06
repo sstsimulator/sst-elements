@@ -56,18 +56,28 @@ ShogunNIC::~ShogunNIC()
 
 void ShogunNIC::sendInitData(SimpleNetwork::Request* req)
 {
+    sendUntimedData(req);
+}
+
+void ShogunNIC::sendUntimedData(SimpleNetwork::Request* req)
+{
     output->verbose(CALL_INFO, 8, 0, "Send init-data called.\n");
 
     ShogunEvent* ev = new ShogunEvent();
     ev->setSource(netID);
     ev->setPayload(req);
 
-    link->sendInitData(ev);
+    link->sendUntimedData(ev);
 
     output->verbose(CALL_INFO, 8, 0, "Send init-data completed.\n");
 }
 
 SimpleNetwork::Request* ShogunNIC::recvInitData()
+{
+    return recvUntimedData();
+}
+
+SimpleNetwork::Request* ShogunNIC::recvUntimedData()
 {
     output->verbose(CALL_INFO, 8, 0, "Recv init-data on net: %5" PRId64 " init-events have %5zu events.\n", netID, initReqs.size());
 
@@ -147,7 +157,7 @@ void ShogunNIC::init(unsigned int phase)
     //		link->sendInitData( new ShogunInitEvent( -1, -1, -1 ) );
     //	}
 
-    SST::Event* ev = link->recvInitData();
+    SST::Event* ev = link->recvUntimedData();
 
     while (nullptr != ev) {
         ShogunInitEvent* initEv = dynamic_cast<ShogunInitEvent*>(ev);
@@ -171,7 +181,7 @@ void ShogunNIC::init(unsigned int phase)
             }
         }
 
-        ev = link->recvInitData();
+        ev = link->recvUntimedData();
     }
 }
 
@@ -289,7 +299,7 @@ void ShogunNIC::reconfigureNIC(ShogunInitEvent* initEv)
         delete output;
         char outPrefix[256];
 
-        sprintf(outPrefix, "[t=@t][NIC%5" PRId64 "][%25s][%5" PRId64 "]: ", netID, getName().c_str(), netID);
+        snprintf(outPrefix, 256, "[t=@t][NIC%5" PRId64 "][%25s][%5" PRId64 "]: ", netID, getName().c_str(), netID);
         output = new SST::Output(outPrefix, currentVerbosity, 0, SST::Output::STDOUT);
     }
 }

@@ -53,13 +53,13 @@ public:
     void notifyAccess(const CacheListenerNotification& notify);
     void registerResponseCallback(Event::HandlerBase *handler);
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         cacheLineTrack,
-            "cassini",
-            "cacheLineTrack",
-            SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Tracks cacheline usage before eviction",
-            SST::MemHierarchy::CacheListener
+        "cassini",
+        "cacheLineTrack",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Tracks cacheline usage before eviction",
+        SST::MemHierarchy::CacheListener
     )
 
     SST_ELI_DOCUMENT_PARAMS(

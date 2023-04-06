@@ -26,16 +26,17 @@ using namespace SST::Prospero;
 #define PROSPERO_MAX(a, b) ((a) < (b) ? (b) : (a))
 
 ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
-	Component(id) {
+	Component(id)
+{
 
 	const uint32_t output_level = (uint32_t) params.find<uint32_t>("verbose", 0);
 	output = new SST::Output("Prospero[@p:@l]: ", output_level, 0, SST::Output::STDOUT);
 
-        // Load Reader the new way
-        reader = loadUserSubComponent<ProsperoTraceReader>("reader", ComponentInfo::SHARE_NONE, output);
+    // Load Reader the new way
+    reader = loadUserSubComponent<ProsperoTraceReader>("reader", ComponentInfo::SHARE_NONE, output);
 
-        // Load Reader the old way
-        if (!reader) {
+    // Load Reader the old way
+    if (!reader) {
 	    std::string traceModule = params.find<std::string>("reader", "prospero.ProsperoTextTraceReader");
 	    output->verbose(CALL_INFO, 1, 0, "Reader module is: %s\n", traceModule.c_str());
 
@@ -47,12 +48,12 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	if (NULL == reader)
 	    output->fatal(CALL_INFO, -1, "%s, Fatal: Failed to load reader module\n", getName().c_str());
 
-        reader->setOutput(output);
+    reader->setOutput(output);
 
 	pageSize = (uint64_t) params.find<uint64_t>("pagesize", 4096);
 	output->verbose(CALL_INFO, 1, 0, "Configured Prospero page size for %" PRIu64 " bytes.\n", pageSize);
 
-        cacheLineSize = (uint64_t) params.find<uint64_t>("cache_line_size", 64);
+    cacheLineSize = (uint64_t) params.find<uint64_t>("cache_line_size", 64);
 	output->verbose(CALL_INFO, 1, 0, "Configured Prospero cache line size for %" PRIu64 " bytes.\n", cacheLineSize);
 
 	std::string prosClock = params.find<std::string>("clock", "2GHz");
@@ -73,15 +74,15 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 
 	output->verbose(CALL_INFO, 1, 0, "Configuring Prospero cache connection...\n");
 
-        // Check for interface in the input config; if not, load an anonymous interface (must use our port instead of its own)
-        cache_link = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, time,
-                new StandardMem::Handler<ProsperoComponent>(this, &ProsperoComponent::handleResponse));
-        if (!cache_link) {
-            Params par;
-            par.insert("port", "cache_link");
-            cache_link = loadAnonymousSubComponent<Interfaces::StandardMem>("memHierarchy.standardInterface", "memory", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, par,
+    // Check for interface in the input config; if not, load an anonymous interface (must use our port instead of its own)
+    cache_link = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, time,
+            new StandardMem::Handler<ProsperoComponent>(this, &ProsperoComponent::handleResponse));
+    if (!cache_link) {
+        Params par;
+        par.insert("port", "cache_link");
+        cache_link = loadAnonymousSubComponent<Interfaces::StandardMem>("memHierarchy.standardInterface", "memory", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, par,
                     time, new StandardMem::Handler<ProsperoComponent>(this, &ProsperoComponent::handleResponse));
-        }
+    }
 	output->verbose(CALL_INFO, 1, 0, "Configuration of memory interface completed.\n");
 
 	output->verbose(CALL_INFO, 1, 0, "Reading first entry from the trace reader...\n");
@@ -147,7 +148,7 @@ void ProsperoComponent::finish() {
 	const double secondsDbl = ((double) nanoSeconds) / 1000000000.0;
 
 	char buffBWRead[32];
-	sprintf(buffBWRead, "%f B/s", ((double) totalBytesReadDbl / secondsDbl));
+	snprintf(buffBWRead, 32, "%f B/s", ((double) totalBytesReadDbl / secondsDbl));
 
 	UnitAlgebra baBWRead(buffBWRead);
 
@@ -155,7 +156,7 @@ void ProsperoComponent::finish() {
 		baBWRead.toStringBestSI().c_str());
 
 	char buffBWWrite[32];
-	sprintf(buffBWWrite, "%f B/s", ((double) totalBytesWrittenDbl / secondsDbl));
+	snprintf(buffBWWrite, 32, "%f B/s", ((double) totalBytesWrittenDbl / secondsDbl));
 
 	UnitAlgebra uaBWWrite(buffBWWrite);
 
@@ -163,7 +164,7 @@ void ProsperoComponent::finish() {
 		uaBWWrite.toStringBestSI().c_str());
 
 	char buffBWCombined[32];
-	sprintf(buffBWCombined, "%f B/s", ((double) (totalBytesReadDbl + totalBytesWrittenDbl) / secondsDbl));
+	snprintf(buffBWCombined, 32, "%f B/s", ((double) (totalBytesReadDbl + totalBytesWrittenDbl) / secondsDbl));
 
 	UnitAlgebra uaBWCombined(buffBWCombined);
 
