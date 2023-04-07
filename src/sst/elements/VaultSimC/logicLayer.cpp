@@ -110,12 +110,12 @@ void logicLayer::init(unsigned int phase) {
     // in the chain should report, so every one sends towards the cpu,
     // but only the first one will arrive.
     if ( !phase ) {
-        toCPU->sendInitData(new SST::Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
+        toCPU->sendUntimedData(new SST::Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
     }
 
     // rec data events from the direction of the cpu
     SST::Event *ev = NULL;
-    while ( (ev = toCPU->recvInitData()) != NULL ) {
+    while ( (ev = toCPU->recvUntimedData()) != NULL ) {
         MemEvent *me = dynamic_cast<MemEvent*>(ev);
         if ( me ) {
             /* Push data to memory */
@@ -149,10 +149,10 @@ void logicLayer::init(unsigned int phase) {
                             // send to the vault
                             unsigned int vaultID =
                                 (newEv->getAddr() >> VAULT_SHIFT) % m_memChans.size();
-                            m_memChans[vaultID]->sendInitData(newEv);
+                            m_memChans[vaultID]->sendUntimedData(newEv);
                         } else {
                             // send down the chain
-                            toMem->sendInitData(newEv);
+                            toMem->sendUntimedData(newEv);
                         }
                     }
                     delete ev;
@@ -161,11 +161,11 @@ void logicLayer::init(unsigned int phase) {
                         // send to the vault
                         unsigned int vaultID = (me->getAddr() >> VAULT_SHIFT) % m_memChans.size();
                         // printf("Propagating initial write %p to vault %d\n", me, vaultID);
-                        m_memChans[vaultID]->sendInitData(me);
+                        m_memChans[vaultID]->sendUntimedData(me);
                     } else {
 
                         // send down the chain
-                        toMem->sendInitData(ev);
+                        toMem->sendUntimedData(ev);
                     }
                 }
             } else {

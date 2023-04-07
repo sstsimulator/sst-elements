@@ -45,7 +45,7 @@ namespace SST{
 
             SST_ELI_REGISTER_SUBCOMPONENT_API(SST::CramSim::c_CmdScheduler, Output*, c_DeviceDriver*)
 
-            SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+            SST_ELI_REGISTER_SUBCOMPONENT(
                 c_CmdScheduler,
                 "CramSim",
                 "c_CmdScheduler",

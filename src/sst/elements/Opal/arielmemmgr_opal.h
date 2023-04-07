@@ -36,17 +36,27 @@ class MemoryManagerOpal : public ArielComponent::ArielMemoryManager {
 
     public:
         /* SST ELI */
-        SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MemoryManagerOpal, "Opal", "MemoryManagerOpal", SST_ELI_ELEMENT_VERSION(1,0,0),
-                "Memory manager which uses the Opal memory allocation component", SST::ArielComponent::ArielMemoryManager)
+        SST_ELI_REGISTER_SUBCOMPONENT(
+            MemoryManagerOpal,
+            "Opal",
+            "MemoryManagerOpal",
+            SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Memory manager which uses the Opal memory allocation component",
+            SST::ArielComponent::ArielMemoryManager
+       )
 
         SST_ELI_DOCUMENT_PARAMS(
         		{ "corecount", "Sets the verbosity of the memory manager output", "1"},
                 { "opal_latency",   "latency to communicate to the Opal manager", "32ps"},
                 { "translator",     "(temporary) translation memory manager to actually translate addresses for now", "MemoryManagerSimple"} )
 
-        SST_ELI_DOCUMENT_PORTS( {"opal_link_%(corecound)d", "Each core's link to the Opal memory manager", {"Opal.OpalEvent"}} )
+        SST_ELI_DOCUMENT_PORTS(
+            {"opal_link_%(corecound)d", "Each core's link to the Opal memory manager", {"Opal.OpalEvent"}}
+        )
 
-        SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( { "translator", "Temporarily, which memory manager to use to translate addresses", "SST::Ariel::ArielMemoryManager" } )
+        SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+            { "translator", "Temporarily, which memory manager to use to translate addresses", "SST::Ariel::ArielMemoryManager" }
+        )
 
         /* MemoryManagerOpal */
         MemoryManagerOpal(ComponentId_t id, Params& params);

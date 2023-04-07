@@ -35,8 +35,14 @@ class ArielMemoryManagerSimple : public ArielMemoryManagerCache {
 
     public:
         /* SST ELI */
-        SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(ArielMemoryManagerSimple, "ariel", "MemoryManagerSimple", SST_ELI_ELEMENT_VERSION(1,0,0),
-                "Simple allocate-on-first touch memory manager", SST::ArielComponent::ArielMemoryManager)
+        SST_ELI_REGISTER_SUBCOMPONENT(
+            ArielMemoryManagerSimple,
+            "ariel",
+            "MemoryManagerSimple",
+            SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Simple allocate-on-first touch memory manager",
+            SST::ArielComponent::ArielMemoryManager
+        )
 
 #define MEMMGR_SIMPLE_ELI_PARAMS ARIEL_ELI_MEMMGR_CACHE_PARAMS,\
             {"pagesize0", "Page size", "4096"},\
