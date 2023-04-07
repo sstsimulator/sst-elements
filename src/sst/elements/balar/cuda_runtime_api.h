@@ -41,6 +41,7 @@ __host__ cudaError_t CUDARTAPI cudaMemcpy(void * dst, const void * src, size_t c
 
 __host__ cudaError_t CUDARTAPI cudaConfigureCallSST(dim3 gridDim, dim3 blockDim, size_t sharedMem, cudaStream_t stream );
 
+__host__ cudaError_t CUDARTAPI cudaConfigureCall(dim3 gridDim, dim3 blockDim, size_t sharedMem, cudaStream_t stream );
 
 __host__ cudaError_t CUDARTAPI cudaSetupArgumentSST(uint64_t arg, uint8_t value[8], size_t size, size_t offset);
 

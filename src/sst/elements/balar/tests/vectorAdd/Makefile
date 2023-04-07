@@ -7,9 +7,12 @@ vectorAdd: vectorAdd.o
 vectorAdd.o: vecAdd.cu
 	$(CXX) $(CXXFLAGS) -O3 -o vectorAdd.o -c vecAdd.cu
 
+vectorAdd.objdump: vectorAdd
+	objdump -Mno-aliases -Mnumeric --disassemble-all --disassemble-zeroes $< > $@
+
 all: vectorAdd
 
 clean:
-	rm vectorAdd vectorAdd.o
+	rm -f vectorAdd vectorAdd.o
 
 
