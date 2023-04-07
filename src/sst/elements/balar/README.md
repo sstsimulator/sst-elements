@@ -16,22 +16,22 @@ Balar is tested with the following settings:
 
 The following components are needed to run Balar:
 
-### [`sst-core`](https://github.com/sstsimulator/sst-core/tree/0f358dda178f96db3b0da88b2b965492c4be187d)
+### [`sst-core`](https://github.com/sstsimulator/sst-core)
 
-- Tested on commit `0f358dda178f96db3b0da88b2b965492c4be187d`
+- Tested on commit [`0f358dda178f96db3b0da88b2b965492c4be187d`](https://github.com/sstsimulator/sst-core/tree/0f358dda178f96db3b0da88b2b965492c4be187d)
 - Use `./configure --prefix=$SST_CORE_HOME --disable-mpi --disable-mem-pools` for sst-core config
 
-### [`sst-elements`](https://github.com/William-An/sst-elements/tree/balar-mmio)
+### [`sst-elements`](https://github.com/sstsimulator/sst-elements)
 
 - Use `./configure --prefix=$SST_ELEMENTS_HOME --with-sst-core=$SST_CORE_HOME --with-cuda=$CUDA_INSTALL_PATH --with-gpgpusim=$GPGPUSIM_ROOT` for sst-elements config
 - `$CUDA_INSTALL_PATH` should point to CUDA toolkit path
 - `$GPGPUSIM_ROOT` will be set when sourcing the `setup_environment` script in `GPGPU-Sim`, which should point to its folder path
 
-### [`GPGPU-Sim`](https://github.com/William-An/gpgpu-sim_distribution/tree/sst-integration)
+### [`GPGPU-Sim`](https://github.com/accel-sim/gpgpu-sim_distribution)
 
 ```sh
 # Pull GPGPU-Sim repo
-git clone git@github.com:William-An/gpgpu-sim_distribution.git
+git clone git@github.com:accel-sim/gpgpu-sim_distribution.git
 cd gpgpu-sim_distribution
 
 # Make sure $CUDA_INSTALL_PATH is set
@@ -49,13 +49,13 @@ make -j
 > # GPGPU-Sim dependencies
 > sudo apt-get install build-essential xutils-dev bison zlib1g-dev flex libglu1-mesa-dev```
 
-### [`cudaAPITracer`](https://github.com/William-An/accel-sim-framework/tree/cuda_api_tracer)
+### [`cudaAPITracer`](https://github.com/accel-sim/accel-sim-framework)
 
-We put the CUDA api tracer tool inside [Accel-Sim](https://github.com/William-An/accel-sim-framework/tree/cuda_api_tracer) framework in folder `ACCEL-SIM/util/tracer_nvbit/others/cuda_api_tracer_tool`, to install it:
+We put the CUDA api tracer tool inside [Accel-Sim](https://github.com/accel-sim/accel-sim-framework) framework in folder `ACCEL-SIM/util/tracer_nvbit/others/cuda_api_tracer_tool`, to install it:
 
 ```shell
-# Get the Accel-Sim
-git pull https://github.com/William-An/accel-sim-framework/tree/cuda_api_tracer
+# Get the Accel-Sim framework
+git clone git@github.com:accel-sim/accel-sim-framework.git
 
 # cd into tracer tool folder
 cd accel-sim-framework/util/tracer_nvbit
