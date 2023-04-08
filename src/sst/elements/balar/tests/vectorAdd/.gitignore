@@ -1,0 +1,4 @@
+vectorAdd
+*.ptx
+*.objdump
+libcudart.so.9.1
