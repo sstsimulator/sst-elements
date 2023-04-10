@@ -32,7 +32,7 @@
 namespace SST {
 namespace Vanadis {
 
-uint64_t
+inline uint64_t
 vanadis_sign_extend(const uint8_t value) {
     uint64_t value_64 = (uint64_t)value;
 
@@ -43,7 +43,7 @@ vanadis_sign_extend(const uint8_t value) {
     return value_64;
 };
 
-uint64_t
+inline uint64_t
 vanadis_sign_extend(const uint16_t value) {
     uint64_t value_64 = (uint64_t)value;
 
@@ -54,7 +54,7 @@ vanadis_sign_extend(const uint16_t value) {
     return value_64;
 };
 
-uint64_t
+inline uint64_t
 vanadis_sign_extend(const uint32_t value) {
     uint64_t value_64 = (uint64_t)value;
 
@@ -65,7 +65,7 @@ vanadis_sign_extend(const uint32_t value) {
     return value_64;
 };
 
-int64_t
+inline int64_t
 vanadis_sign_extend_offset_16(const uint32_t value) {
     int64_t value_64 = (value & VANADIS_4BYTE_EXTRACT);
 
@@ -76,7 +76,7 @@ vanadis_sign_extend_offset_16(const uint32_t value) {
     return value_64;
 };
 
-int64_t
+inline int64_t
 vanadis_sign_extend_offset_16_and_shift(const uint32_t value, const int64_t shift) {
     int64_t value_64 = vanadis_sign_extend_offset_16(value);
     value_64 <<= shift;

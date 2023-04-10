@@ -17,7 +17,9 @@ decoder/vauxvec.h \
 decoder/vdecoder.h \
 decoder/visaopts.h \
 decoder/vmipsdecoder.h \
+decoder/vmipsdecoder.cc\
 decoder/vriscv64decoder.h \
+decoder/vriscv64decoder.cc \
 inst/fpregmode.h \
 inst/isatable.h \
 inst/regfile.h \
@@ -122,6 +124,7 @@ vinsloader.h \
 \
 os/vappruntimememory.h \
 os/vcpuos.h \
+os/vcpuos2.h \
 os/vdumpregsreq.h \
 os/velfloader.cc \
 os/velfloader.h \

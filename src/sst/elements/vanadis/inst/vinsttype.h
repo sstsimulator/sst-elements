@@ -34,7 +34,7 @@ enum VanadisFunctionalUnitType {
     INST_FAULT
 };
 
-const char*
+inline const char*
 funcTypeToString(VanadisFunctionalUnitType unit_type)
 {
     switch ( unit_type ) {

@@ -29,7 +29,7 @@ enum VanadisRegisterCompareType {
     REG_COMPARE_NEQ
 };
 
-const char*
+inline const char*
 convertCompareTypeToString(VanadisRegisterCompareType cType)
 {
     switch ( cType ) {
