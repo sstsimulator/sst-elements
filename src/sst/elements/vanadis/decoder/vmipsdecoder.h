@@ -22,6 +22,7 @@
 #include "inst/vinstall.h"
 #include "os/vmipscpuos.h"
 #include "util/vdatacopy.h"
+#include "util/vsignx.h"
 #include "vinsloader.h"
 
 #include <list>

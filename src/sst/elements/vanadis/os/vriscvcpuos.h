@@ -16,8 +16,12 @@
 #ifndef _H_VANADIS_RISCV_CPU_OS
 #define _H_VANADIS_RISCV_CPU_OS
 
+#define PRIuXX PRIu64
+#define PRIdXX PRId64
+#define PRIxXX PRIx64
+
 #include "os/callev/voscallall.h"
-#include "os/vcpuos.h"
+#include "os/vcpuos2.h"
 #include "os/voscallev.h"
 #include <functional>
 
