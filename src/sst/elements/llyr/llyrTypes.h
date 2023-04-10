@@ -54,6 +54,7 @@ typedef struct alignas(uint64_t) {
     uint16_t        queueDepth_;
     uint16_t        arith_latency_;
     uint16_t        int_latency_;
+    uint16_t        int_mul_latency_;
     uint16_t        int_div_latency_;
     uint16_t        fp_latency_;
     uint16_t        fp_mul_latency_;

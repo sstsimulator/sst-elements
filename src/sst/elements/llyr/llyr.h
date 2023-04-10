@@ -64,6 +64,7 @@ public:
         { "queue_depth",    "Number of buffer elements", "256" },
         { "arith_latency",  "Number of clock ticks for ARITH operations", "1" },
         { "int_latency",    "Number of clock ticks for INT operations", "1" },
+        { "int_mul_latency","Number of clock ticks for INT DIV operations", "1" },
         { "int_div_latency","Number of clock ticks for INT DIV operations", "4" },
         { "fp_latency",     "Number of clock ticks for FP operations", "4" },
         { "fp_mul_latency", "Number of clock ticks for FP MUL operations", "8" },
