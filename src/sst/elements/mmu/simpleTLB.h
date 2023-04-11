@@ -77,10 +77,15 @@ class SimpleTLB : public TLB {
     }; 
 
   public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(SimpleTLB, "mmu", "simpleTLB",
-                                          SST_ELI_ELEMENT_VERSION(1, 0, 0),
-                                          "Simple TLB,",
-                                          SST::MMU_Lib::SimpleTLB)
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        SimpleTLB,
+        "mmu",
+        "simpleTLB",
+        SST_ELI_ELEMENT_VERSION(1, 0, 0),
+        "Simple TLB,",
+        SST::MMU_Lib::SimpleTLB
+    )
+    
     SST_ELI_DOCUMENT_PARAMS(
         {"hitLatency", "latency of TLB hit in ns","0"},
     )

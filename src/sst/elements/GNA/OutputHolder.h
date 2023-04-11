@@ -186,11 +186,11 @@ public:
         if (raw)
         {
             index = (int) round (column);
-            sprintf (buffer, "%i", index);
+            snprintf (buffer, 32, "%i", index);
         }
         else
         {
-            sprintf (buffer, "%g", column);
+            snprintf (buffer, 32, "%g", column);
         }
         std::string columnName = buffer;
 

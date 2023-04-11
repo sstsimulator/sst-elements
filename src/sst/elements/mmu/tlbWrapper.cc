@@ -54,18 +54,18 @@ void TLB_Wrapper::init(unsigned int phase)
 {
     SST::Event * ev;
 
-    while ((ev = m_cpu_if->recvInitData())) { //incoming from CPU forward to mem/caches 
-        m_cache_if->sendInitData(ev);
+    while ((ev = m_cpu_if->recvUntimedData())) { //incoming from CPU forward to mem/caches 
+        m_cache_if->sendUntimedData(ev);
     }
 
-    while ((ev = m_cache_if->recvInitData())) { //incoming from mem/caches forward to the CPU
+    while ((ev = m_cache_if->recvUntimedData())) { //incoming from mem/caches forward to the CPU
         auto memEvent = dynamic_cast<MemHierarchy::MemEventInit*>(ev);
         if (memEvent) {
 
             // 
             if (memEvent->getCmd() == MemHierarchy::Command::NULLCMD) {
                 if (memEvent->getInitCmd() == MemHierarchy::MemEventInit::InitCommand::Coherence) {
-                    m_cpu_if->sendInitData(ev);
+                    m_cpu_if->sendUntimedData(ev);
 
                 } else if (memEvent->getInitCmd() == MemHierarchy::MemEventInit::InitCommand::Endpoint) {
                     auto memEventE = static_cast<MemHierarchy::MemEventInitEndpoint*>(memEvent);
@@ -76,11 +76,11 @@ void TLB_Wrapper::init(unsigned int phase)
                             // we don't want to pass this event to the CPU
                             noncacheableRegions.insert(std::make_pair(it->first.start, it->first));
                         } else {
-                            m_cpu_if->sendInitData(ev);
+                            m_cpu_if->sendUntimedData(ev);
                         }
                     }
                 } else {
-                    m_cpu_if->sendInitData(ev);
+                    m_cpu_if->sendUntimedData(ev);
                 }        
             }
         }

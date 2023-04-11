@@ -25,13 +25,14 @@ namespace Serrano {
 class SerranoIteratorUnit : public SerranoCoarseUnit {
 
 public:
-	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+	SST_ELI_REGISTER_SUBCOMPONENT(
 		SST::Serrano::SerranoIteratorUnit,
 		"serrano",
 		"SerranoIteratorUnit",
 		SST_ELI_ELEMENT_VERSION(1, 0, 0),
 		"Performs iteration-like behavior",
-		SST::Serrano::SerranoCoarseUnit )
+		SST::Serrano::SerranoCoarseUnit
+    )
 
 	SST_ELI_DOCUMENT_PARAMS(
 		{ "start", "Value to start iterating at."      },

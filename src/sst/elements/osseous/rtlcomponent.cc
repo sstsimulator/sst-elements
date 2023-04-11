@@ -359,7 +359,7 @@ void Rtlmodel::commitWriteEvent(const uint64_t address,
                 char* buffer = new char[64];
                 std::string payloadString = "";
                 for(int i = 0; i < length; ++i) {
-                    sprintf(buffer, "0x%X ", payload[i]);
+                    snprintf(buffer, 64, "0x%X ", payload[i]);
                     payloadString.append(buffer);
                 }
 
