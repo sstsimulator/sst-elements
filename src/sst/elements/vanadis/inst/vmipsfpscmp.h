@@ -99,7 +99,9 @@ public:
                 : regFile->getFPReg<fp_format>(phys_fp_regs_in[1]);
 
         if ( output->getVerboseLevel() >= 16 ) {
-            output->verbose(CALL_INFO, 16, 0, "---> fp-values: left: %f / right: %f\n", left_value, right_value);
+            std::ostringstream ss;
+            ss << "---> fp-values: left: " << left_value << " / right: " << right_value;
+            output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
         }
 
         switch ( compare_type ) {

@@ -53,23 +53,26 @@ public:
 
     void printToBuffer(char* buffer, size_t buffer_size) override
     {
-        snprintf(
-            buffer, buffer_size,
-            "%6s  %5" PRIu16 " <- %5" PRIu16 " << imm=%" PRId64 " (phys: %5" PRIu16 " <- %5" PRIu16 " << %" PRId64 ")",
-            getInstCode(), isa_int_regs_out[0], isa_int_regs_in[0], imm_value, phys_int_regs_out[0],
-            phys_int_regs_in[0], imm_value);
+        std::ostringstream ss;
+        ss << getInstCode();
+        ss << " "       << isa_int_regs_out[0]  << " <- " << isa_int_regs_in[0]  << " << imm=" << imm_value;
+        ss << " phys: " << phys_int_regs_out[0] << " <- " << phys_int_regs_in[0] << " << imm=" << imm_value;
+
+        strncpy( buffer, ss.str().c_str(), buffer_size );
     }
 
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16) {
-            output->verbose(
-                CALL_INFO, 16, 0,
-                "Execute: (addr=%p) %s phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16
-                " / in=%" PRIu16 "\n",
-                (void*)getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value,
-                isa_int_regs_out[0], isa_int_regs_in[0]);
+
+            std::ostringstream ss;
+            ss << "Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
+            ss << " phys: out=" <<  phys_int_regs_out[0] << " in=" << phys_int_regs_in[0];
+            ss << " imm=" << imm_value;
+            ss << ", isa: out=" <<  isa_int_regs_out[0]  << " in=" << isa_int_regs_in[0];
+
+            output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
         }
 #endif
         assert(imm_value > 0);
