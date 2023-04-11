@@ -159,7 +159,7 @@ public:
         uint64_t buflen = getArgRegister( 1 );
         uint64_t flags  = getArgRegister( 2 );
 
-        output->verbose(CALL_INFO, 8, 0, "getrandom( %#" PRIu64 ", %" PRIu64 ", %#" PRIx64 ")\n", buf, buflen, flags);
+        output->verbose(CALL_INFO, 8, 0, "getrandom( %" PRIu64 ", %" PRIu64 ", %#" PRIx64 ")\n", buf, buflen, flags);
 
         return new VanadisSyscallGetrandomEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, buf, buflen, flags );
     }
@@ -176,7 +176,7 @@ public:
         }
 #endif
 
-        output->verbose(CALL_INFO, 8, 0, "readlinkat( %" PRIu64 ", %#" PRIx64 ", %#" PRIx64 ", %#" PRIu64 ")\n",
+        output->verbose(CALL_INFO, 8, 0, "readlinkat( %" PRIu64 ", %#" PRIx64 ", %#" PRIx64 ", %" PRIu64 ")\n",
                     dirfd, pathname, buf, bufsize);
 
         return new VanadisSyscallReadLinkAtEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, dirfd, pathname, buf, bufsize);
@@ -209,7 +209,7 @@ public:
         uint64_t val3           = getArgRegister(6);
 
         output->verbose(CALL_INFO, 8, 0,
-                            "futex( %#" PRIx64 ", %" PRId32 ", %" PRIu64 ", %#" PRIu64 ", %" PRIu32 " %#" PRIu64 " %" PRIu64 " )\n",
+                            "futex( %#" PRIx64 ", %" PRId32 ", %" PRIu32 ", %" PRIu64 ", %" PRIu64 " %" PRIu64 " %" PRIu64 " )\n",
                             addr, op, val, timeout_addr, val2, addr2, val3);
 
         return new VanadisSyscallFutexEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, addr, op, val, timeout_addr, val2, addr2, val3 );
@@ -219,7 +219,7 @@ public:
         uint64_t  head  = getArgRegister( 0 );
         uint64_t  len   = getArgRegister( 1 );
 
-        output->verbose(CALL_INFO, 8, 0, "set_robust_list(  %#" PRIx64 ", %#" PRIu64" )\n",head,len);
+        output->verbose(CALL_INFO, 8, 0, "set_robust_list(  %#" PRIx64 ", %" PRIu64" )\n",head,len);
 
         return new VanadisSyscallSetRobustListEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, head, len );
     }
@@ -293,7 +293,7 @@ public:
         uint64_t old_limit  = getArgRegister( 3 );
 
         output->verbose(CALL_INFO, 8, 0,
-                            "prlimit( %" PRIu64 ", %" PRIu64 ",  %#" PRIx64 ", %#" PRIx64 ")\n", pid, new_limit, old_limit );
+                            "prlimit( %" PRIu64 ", %" PRIu64 ",  %#" PRIx64 ", %#" PRIx64 ")\n", pid, resource, new_limit, old_limit );
 
         return new VanadisSyscallPrlimitEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, pid, resource, new_limit, old_limit);
     }
@@ -343,7 +343,7 @@ private:
         RISC_CONVERT( TMPFILE );
 #endif
         if ( flags ) {
-            printf("%s() all flags have not been converted %#x\n",__func__,flags);
+            printf("%s() all flags have not been converted %#" PRIx64 "\n",__func__,flags);
             assert( 0 );
         }
 

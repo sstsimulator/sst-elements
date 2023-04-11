@@ -30,7 +30,7 @@ public:
     VanadisGetaffinitySyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallGetaffinityEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "getaffinity" ) 
     {
-        m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL, "[syscall-getaffinity] uname pid=%d cpusetsize=%d maskAddr=%#" PRIx64 "\n",
+        m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL, "[syscall-getaffinity] uname pid=%" PRIu64 " cpusetsize=%" PRIu64 " maskAddr=%#" PRIx64 "\n",
                                             event->getPid(), event->getCpusetsize(), event->getMaskAddr());
 
 #if 0 

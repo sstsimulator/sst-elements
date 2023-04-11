@@ -52,7 +52,7 @@ public:
 
         m_data.resize(length);
         ssize_t retval = read( m_fd, m_data.data(), length );
-        m_output->verbose(CALL_INFO, 16, 0,"SST %d = read( %d,, %d)\n",retval,m_fd,length);
+        m_output->verbose(CALL_INFO, 16, 0,"SST %zu = read( %d, %zu)\n",retval,m_fd,length);
         assert(retval>=0);
 
         if ( retval ) {

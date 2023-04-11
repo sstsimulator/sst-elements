@@ -95,7 +95,7 @@ class ProcessInfo {
                 uint64_t virtAddrPage = roundDown( virtAddr, m_pageSize );
                 uint64_t virtAddrEnd = roundUp(virtAddr + memLen, m_pageSize );
 
-                m_dbg.verbose( CALL_INFO, 2, 0,"virtAddr %#" PRIx64 ", page aligned virtual address region: %#" PRIx64 " - %#" PRIx64 " flags=%#x\n", 
+                m_dbg.verbose( CALL_INFO, 2, 0,"virtAddr %#" PRIx64 ", page aligned virtual address region: %#" PRIx64 " - %#" PRIx64 " flags=%#" PRIx64 "\n", 
                         virtAddr, virtAddrPage, virtAddrEnd, hdr->getSegmentFlags() );
                 std::string name;
                 if ( m_elfInfo->getEntryPoint() >= virtAddrPage && m_elfInfo->getEntryPoint() < virtAddrEnd ) {
