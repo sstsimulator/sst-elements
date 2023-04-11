@@ -73,7 +73,7 @@ void SimpleTLB::init(unsigned int phase)
 {
     m_dbg.debug(CALL_INFO,2,0,"phase=%d\n",phase);
     Event* ev;
-    while ((ev = m_mmuLink->recvInitData())) { 
+    while ((ev = m_mmuLink->recvUntimedData())) { 
         auto initEvent = dynamic_cast<TlbInitEvent*>(ev);
         if ( nullptr == initEvent ) {
             m_dbg.fatal(CALL_INFO, -1, "Error: received unexpected event in init()\n");

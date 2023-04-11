@@ -27,10 +27,15 @@ namespace MMU_Lib {
 class SimpleMMU : public MMU {
 
   public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(SimpleMMU, "mmu", "simpleMMU",
-                                          SST_ELI_ELEMENT_VERSION(1, 0, 0),
-                                          "Simple MMU,",
-                                          SST::MMU_Lib::SimpleMMU)
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        SimpleMMU,
+        "mmu",
+        "simpleMMU",
+        SST_ELI_ELEMENT_VERSION(1, 0, 0),
+        "Simple MMU,",
+        SST::MMU_Lib::SimpleMMU
+    )
+
     SST_ELI_DOCUMENT_PARAMS(
 #if 0
         {"hitLatency", "latency of MMU hit in ns","0"},

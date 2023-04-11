@@ -50,10 +50,14 @@ class TLB : public SubComponent {
 
 class PassThroughTLB : public TLB {
   public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(PassThroughTLB, "mmu", "passThroughTLB",
-                                          SST_ELI_ELEMENT_VERSION(1, 0, 0),
-                                          "Pass-through TLB, allways hits and returns virtAddr as physAddr",
-                                          SST::MMU_Lib::PassThroughTLB)
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        PassThroughTLB,
+        "mmu",
+        "passThroughTLB",
+        SST_ELI_ELEMENT_VERSION(1, 0, 0),
+        "Pass-through TLB, allways hits and returns virtAddr as physAddr",
+        SST::MMU_Lib::PassThroughTLB
+    )
 
     PassThroughTLB(SST::ComponentId_t id, SST::Params& params) : TLB(id,params) {}
 

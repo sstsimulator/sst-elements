@@ -39,13 +39,14 @@ enum SerranoStandardOp {
 class SerranoBasicUnit : public SerranoCoarseUnit {
 
 public:
-	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+	SST_ELI_REGISTER_SUBCOMPONENT(
 		SST::Serrano::SerranoBasicUnit,
 		"serrano",
 		"SerranoBasicUnit",
 		SST_ELI_ELEMENT_VERSION(1, 0, 0),
 		"Basic coarse-grained functional unit for simple operations",
-		SST::Serrano::SerranoCoarseUnit )
+		SST::Serrano::SerranoCoarseUnit
+    )
 
 	SST_ELI_DOCUMENT_PARAMS()
 	SST_ELI_DOCUMENT_STATISTICS()				

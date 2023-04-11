@@ -33,8 +33,14 @@ class RtlMemoryManagerSimple : public RtlMemoryManagerCache {
 
     public:
         /* SST ELI */
-        SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(RtlMemoryManagerSimple, "rtl", "MemoryManagerSimple", SST_ELI_ELEMENT_VERSION(1,0,0),
-                "Simple allocate-on-first touch memory manager", SST::RtlComponent::RtlMemoryManager)
+        SST_ELI_REGISTER_SUBCOMPONENT(
+            RtlMemoryManagerSimple,
+            "rtl",
+            "MemoryManagerSimple",
+            SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Simple allocate-on-first touch memory manager",
+            SST::RtlComponent::RtlMemoryManager
+        )
 
         SST_ELI_DOCUMENT_STATISTICS( RTL_ELI_MEMMGR_CACHE_STATS )
 

@@ -76,11 +76,11 @@ void MMU::init( unsigned int phase )
     if ( 0 == phase ) {
         for ( int i=0; i < m_coreLinks.size(); i++ ) {
             m_dbg.debug(CALL_INFO_LONG,1,0,"send Init event to %d, pageShift=%d\n",i, m_pageShift);
-            m_coreLinks[i]->dtlb->sendInitData( new TlbInitEvent( m_pageShift ) );
-            m_coreLinks[i]->itlb->sendInitData( new TlbInitEvent( m_pageShift ) );
+            m_coreLinks[i]->dtlb->sendUntimedData( new TlbInitEvent( m_pageShift ) );
+            m_coreLinks[i]->itlb->sendUntimedData( new TlbInitEvent( m_pageShift ) );
         }
         if ( m_nicTlbLink ) {
-            m_nicTlbLink->sendInitData( new TlbInitEvent( m_pageShift ) );
+            m_nicTlbLink->sendUntimedData( new TlbInitEvent( m_pageShift ) );
         }
     }
 }
