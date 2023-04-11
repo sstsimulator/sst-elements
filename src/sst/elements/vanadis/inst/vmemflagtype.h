@@ -26,7 +26,7 @@ enum VanadisMemoryTransaction {
     MEM_TRANSACTION_LOCK
 };
 
-const char*
+inline const char*
 getTransactionTypeString(VanadisMemoryTransaction transT)
 {
     switch ( transT ) {

@@ -34,6 +34,8 @@ public:
     {
         if( op_binding == DIV ) {
             latency_ = llyr_config->int_div_latency_;
+        } else if( op_binding == MUL ) {
+            latency_ = llyr_config->int_mul_latency_;
         } else {
             latency_ = llyr_config->int_latency_;
         }
@@ -196,6 +198,8 @@ public:
     {
         if( op_binding == DIVCONST ) {
             latency_ = llyr_config->int_div_latency_;
+        } else if( op_binding == MULCONST ) {
+            latency_ = llyr_config->int_mul_latency_;
         } else {
             latency_ = llyr_config->int_latency_;
         }

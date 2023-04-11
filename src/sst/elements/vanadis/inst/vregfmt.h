@@ -26,7 +26,7 @@ enum class VanadisRegisterFormat {
     VANADIS_FORMAT_INT64
 };
 
-const char*
+inline const char*
 registerFormatToString(const VanadisRegisterFormat fmt)
 {
     switch ( fmt ) {

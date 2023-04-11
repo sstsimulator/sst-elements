@@ -16,15 +16,21 @@
 #ifndef _H_VANADIS_MIPS_CPU_OS
 #define _H_VANADIS_MIPS_CPU_OS
 
+#define PRIuXX PRIu32
+#define PRIdXX PRId32
+#define PRIxXX PRIx32
+
 #include "os/callev/voscallall.h"
 #include "os/resp/voscallresp.h"
 #include "os/vstartthreadreq.h"
-#include "os/vcpuos.h"
+#include "os/vcpuos2.h"
 #include "os/voscallev.h"
 #include <functional>
 #include <sys/mman.h>
 
 #include <fcntl.h>
+
+
 
 #define MIPS_CONVERT( x ) \
     if ( flags & MIPS_O_##x ) {\
