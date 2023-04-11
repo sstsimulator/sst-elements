@@ -44,26 +44,35 @@ public:
 
     void printToBuffer(char* buffer, size_t buffer_size) override
     {
-        snprintf(
-            buffer, buffer_size,
-            "CMPSETI (op: %s, %s) isa-out: %" PRIu16 " isa-in: %" PRIu16 " / phys-out: %" PRIu16 " phys-in: %" PRIu16
-            " / imm: %" PRId64 "\n",
-            convertCompareTypeToString(compare_type), (std::is_signed<register_format>::value ? "signed" : "unsigned"),
-            isa_int_regs_out[0],
-            isa_int_regs_in[0], phys_int_regs_out[0], phys_int_regs_in[0], imm_value);
+        std::ostringstream ss;
+        ss << getInstCode();
+        ss << "(op: ";
+        ss << convertCompareTypeToString(compare_type);
+        ss << ", ";
+        ss << (std::is_signed<register_format>::value ? "signed" : "unsigned");
+        ss << ")";
+        ss << " isa-out: "    <<  isa_int_regs_out[0] << " isa-in: "  <<  isa_int_regs_in[0];
+        ss << " / phys-out: " << phys_int_regs_out[0] << " phys-in: " <<  phys_int_regs_in[0]; 
+        ss << " / imm: " << imm_value; 
+        strncpy( buffer, ss.str().c_str(), buffer_size );
     }
 
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16) {
-            output->verbose(
-                CALL_INFO, 16, 0,
-                "Execute: (addr=0x%0llx) CMPSET (op: %s, %s) isa-out: %" PRIu16 " isa-in: %" PRIu16 " / phys-out: %" PRIu16
-                " phys-in: %" PRIu16 " / imm: %" PRId64 "\n",
-                getInstructionAddress(), convertCompareTypeToString(compare_type),
-                (std::is_signed<register_format>::value ? "signed" : "unsigned"),
-                isa_int_regs_out[0], isa_int_regs_in[0], phys_int_regs_out[0], phys_int_regs_in[0], imm_value);
+            std::ostringstream ss;
+
+            ss << "Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
+            ss << " (op: ";
+            ss << convertCompareTypeToString(compare_type);
+            ss << ", ";
+            ss << (std::is_signed<register_format>::value ? "signed" : "unsigned"); 
+            ss << ")";
+            ss << " isa-out: "    << isa_int_regs_out[0]  << " isa-in: "  << isa_int_regs_in[0];
+            ss << " / phys-out: " << phys_int_regs_out[0] << " phys-in: " << phys_int_regs_in[0];
+            ss << " / imm: " << imm_value;
+            output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
         }
 #endif
         const bool compare_result = registerCompareImm<compare_type, register_format>(regFile, 

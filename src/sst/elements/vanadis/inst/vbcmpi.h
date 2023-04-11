@@ -42,23 +42,23 @@ public:
 
     void printToBuffer(char* buffer, size_t buffer_size) override
     {
-        snprintf(
-            buffer, buffer_size,
-            "BCMPI isa-in: %" PRIu16 " / phys-in: %" PRIu16 " / imm: %" PRId64 " / offset: %" PRId64 " = 0x%llx",
-            isa_int_regs_in[0], phys_int_regs_in[0], imm_value, offset,
-            static_cast<int64_t>(getInstructionAddress()) + offset);
+        std::ostringstream ss;
+        ss << getInstCode();
+        ss << " isa-in: " << isa_int_regs_in[0] << " / phys-in: " <<  phys_int_regs_in[0];
+        ss << " / imm: " <<  imm_value << " / offset: " << offset;
+        ss << " = " << static_cast<int64_t>(getInstructionAddress()) + offset;
+        strncpy( buffer, ss.str().c_str(), buffer_size );
     }
 
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16) {
-            output->verbose(
-                CALL_INFO, 16, 0,
-                "Execute: 0x%0llx BCMPI isa-in: %" PRIu16 " / phys-in: %" PRIu16 " / imm: %" PRId64
-                " / offset: %" PRId64 " = (0x%llx) \n",
-                getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0], imm_value, offset,
-                static_cast<int64_t>(getInstructionAddress()) + offset);
+            std::ostringstream ss;
+            ss << "Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
+            ss << " isa-in: " <<  isa_int_regs_in[0] << " / phys-in: " << phys_int_regs_in[0];
+            ss << " / imm: " << imm_value << " / offset: " << offset << " = " << static_cast<int64_t>(getInstructionAddress()) + offset; 
+            output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
         }
 #endif
         const bool compare_result = registerCompareImm<compareType, gpr_format>(regFile, this, output, phys_int_regs_in[0], imm_value);

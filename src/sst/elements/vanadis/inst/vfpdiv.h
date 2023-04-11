@@ -116,7 +116,9 @@ public:
             performFlagChecks<fp_format>(result);
 
             if ( output->getVerboseLevel() >= 16 ) {
-                output->verbose(CALL_INFO, 16, 0, "---> %f / %f = %f\n", src_1, src_2, result);
+                std::ostringstream ss;
+                ss << "---> " << src_1 << " / " << src_2 << " = " << result;
+                output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
             }
 
             fractureToRegisters<fp_format>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], result);
@@ -130,7 +132,9 @@ public:
             performFlagChecks<fp_format>(result);
 
             if ( output->getVerboseLevel() >= 16 ) {
-                output->verbose(CALL_INFO, 16, 0, "---> %f / %f = %f\n", src_1, src_2, result);
+                std::ostringstream ss;
+                ss << "---> " << src_1 << " / " << src_2 << " = " << result;
+                output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
             }
 
             regFile->setFPReg<fp_format>(phys_fp_regs_out[0], result);
