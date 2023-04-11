@@ -35,7 +35,7 @@ public:
     VanadisPrlimitSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallPrlimitEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "prlimit" ), m_state( READ )  
     {
-        m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL, "[syscall-prlimit] pid=%d resource=%d new_limit=%#" PRIx64 " old_limit=%#" PRIx64 "\n",
+        m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL, "[syscall-prlimit] pid=%" PRIu64 " resource=%" PRIu64 " new_limit=%#" PRIx64 " old_limit=%#" PRIx64 "\n",
             event->getPid(),event->getResource(),event->getNewLimit(),event->getOldLimit());
 
         assert( event->getResource() == VANADIS_RLIMIT_STACK );

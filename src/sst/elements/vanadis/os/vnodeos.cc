@@ -281,7 +281,7 @@ VanadisNodeOSComponent::startProcess( OS::HwThreadID& threadID, OS::ProcessInfo*
 
     output->verbose( CALL_INFO, 16, VANADIS_OS_DBG_APP_INIT,
         "stack_pointer=%#" PRIx64 " stack_memory_region_start=%#" PRIx64" stack_region_length=%" PRIu64 "\n",
-        stack_pointer, phdrRegionEnd, stackRegionEnd - phdrRegionEnd);
+        stack_pointer, (uint64_t) phdrRegionEnd, stackRegionEnd - phdrRegionEnd);
 
     process->printRegions("after app runtime setup");
 
@@ -535,7 +535,7 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
                 // map this physical page into the MMU for this process 
                 auto physAddr = region->backing->dev->getPhysAddr();
                 auto ppn = physAddr >> m_pageShift;
-                output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "Device physAddr=%#lx ppn=%d\n",physAddr,ppn);
+                output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "Device physAddr=%#" PRIx64 " ppn=%" PRIu64 "\n",physAddr,ppn);
                 m_mmu->map( thread->getpid(), vpn, ppn, m_pageSize, region->perms );
                 pageFaultFini( info );
                 return;

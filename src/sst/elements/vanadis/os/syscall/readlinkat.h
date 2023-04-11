@@ -27,7 +27,7 @@ public:
     VanadisReadlinkatSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallReadLinkAtEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "readlinkat" ), m_data( event->getBufsize()), m_state(READ)
     {
-        m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL, "[syscall-readlinkat] -> readlinkat( dirfd=%d pathname=%#" PRIx64 " buf=%#" PRIx64 " size=%" PRIu64 ")\n",
+        m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL, "[syscall-readlinkat] -> readlinkat( dirfd=%" PRIu64 " pathname=%#" PRIx64 " buf=%#" PRIx64 " size=%" PRIu64 ")\n",
                                 event->getDirfd(), event->getPathname(), event->getBuf(), event->getBufsize());
 
         m_dirFd  = event->getDirfd();

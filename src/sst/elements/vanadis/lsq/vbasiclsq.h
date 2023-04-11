@@ -473,14 +473,14 @@ protected:
                         const int64_t success_result = store_cond_ins->getResultSuccess();
 
                         out->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG,
-                                        "---> LSQ LLSC-STORE rt: %" PRIu16 " <- %" PRId64 " (success)\n", 
+                                        "---> LSQ LLSC-STORE rt: %" PRIu64 " <- %" PRIu16 " (success)\n", 
                                         success_result, value_reg);
                         lsq->registerFiles->at(store_ins->getHWThread())->setIntReg<int64_t>(value_reg,
                             success_result);
                     } else {
                         const int64_t failure_result = store_cond_ins->getResultFailure();
 
-                        out->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG, "---> LSQ LLSC-STORE rt: %" PRIu16 " <- %" PRId64 " (failed)\n",
+                        out->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG, "---> LSQ LLSC-STORE rt: %" PRIu64 " <- %" PRIu16 " (failed)\n",
                                         failure_result, value_reg);
                         lsq->registerFiles->at(store_ins->getHWThread())->setIntReg<uint64_t>(value_reg,
                             failure_result);
@@ -590,7 +590,7 @@ protected:
 
 #ifdef VANADIS_BUILD_DEBUG
         if ( isDbgInsAddr( store_ins->getInstructionAddress() ) || isDbgAddr( store_address ) ) {
-            printf("%s() ins_addr=%#lx store_address=%#lx \n",__func__,store_ins->getInstructionAddress(), store_address);
+            printf("%s() ins_addr=%#" PRIx64 " store_address=%#" PRIx64 "\n",__func__,store_ins->getInstructionAddress(), store_address);
         }
 #endif
 
@@ -739,7 +739,7 @@ protected:
 
 #ifdef VANADIS_BUILD_DEBUG
         if ( isDbgInsAddr( load_ins->getInstructionAddress() ) || isDbgAddr( load_address ) ) {
-            printf("%s() ins_addr=%#lx load_address=%#lx \n",__func__,load_ins->getInstructionAddress(), load_address);
+            printf("%s() ins_addr=%#" PRIx64 " load_address=%#" PRIx64 " \n",__func__,load_ins->getInstructionAddress(), load_address);
         }
 #endif
         // do we need to perform a split load (which loads from two cache lines)?
