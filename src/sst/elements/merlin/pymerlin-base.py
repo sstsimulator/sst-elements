@@ -638,7 +638,7 @@ class Topology(TemplateBase):
     def getNumNodes(self):
         pass
     def getRouterNameForId(self,rtr_id):
-        return "%srtr.%d"%(self._prefix,rtr_id)
+        return "%srtr%d"%(self._prefix,rtr_id)
     def findRouterById(self,rtr_id):
         return sst.findComponentByName(self.getRouterNameForId(rtr_id))
     def _instanceRouter(self,radix,rtr_id):

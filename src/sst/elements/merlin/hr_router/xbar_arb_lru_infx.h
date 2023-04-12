@@ -33,13 +33,14 @@ class xbar_arb_lru_infx : public XbarArbitration {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         xbar_arb_lru_infx,
         "merlin",
         "xbar_arb_lru_infx",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Least recently used arbitration unit with \"infiinite crossbar\" for hr_router",
-        SST::Merlin::XbarArbitration)
+        SST::Merlin::XbarArbitration
+    )
 
 
 private:

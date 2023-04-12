@@ -51,9 +51,9 @@ topo_singlerouter::process_input(RtrEvent* ev)
 }
 
 
-void topo_singlerouter::routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts)
+void topo_singlerouter::routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts)
 {
-    if ( ev->getDest() == INIT_BROADCAST_ADDR ) {
+    if ( ev->getDest() == UNTIMED_BROADCAST_ADDR ) {
         for ( int i = 0 ; i < num_ports ; i++ ) {
             if ( i != port )
                 outPorts.push_back(i);
@@ -66,7 +66,7 @@ void topo_singlerouter::routeInitData(int port, internal_router_event* ev, std::
 }
 
 
-internal_router_event* topo_singlerouter::process_InitData_input(RtrEvent* ev)
+internal_router_event* topo_singlerouter::process_UntimedData_input(RtrEvent* ev)
 {
     return new internal_router_event(ev);
 }

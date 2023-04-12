@@ -28,7 +28,7 @@ class single_arb_lru : public SingleArbitration {
 
 public:
 
-    SST_ELI_REGISTER_MODULE_DERIVED(
+    SST_ELI_REGISTER_MODULE(
         single_arb_lru,
         "merlin",
         "arb.base.single.lru",

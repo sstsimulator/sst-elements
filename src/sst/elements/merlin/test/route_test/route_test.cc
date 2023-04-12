@@ -94,11 +94,11 @@ route_test::init(unsigned int phase) {
             SimpleNetwork::Request* req =
                 new SimpleNetwork::Request(SimpleNetwork::INIT_BROADCAST_ADDR, id,
                                            0, true, true);
-            link_control->sendInitData(req);
+            link_control->sendUntimedData(req);
         }
     }
     else {
-        SimpleNetwork::Request* req = link_control->recvInitData();
+        SimpleNetwork::Request* req = link_control->recvUntimedData();
         if ( req != NULL ) {
             // std::cout << "ROUTE_TEST " << id << " Received an init event in phase " << phase << "!" << std::endl;
             delete req;

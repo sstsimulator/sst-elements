@@ -35,13 +35,14 @@ class xbar_arb_rr : public XbarArbitration {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         xbar_arb_rr,
         "merlin",
         "xbar_arb_rr",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Round robin arbitration unit for hr_router",
-        SST::Merlin::XbarArbitration)
+        SST::Merlin::XbarArbitration
+    )
 
 
 private:

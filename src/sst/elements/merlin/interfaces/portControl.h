@@ -45,13 +45,14 @@ namespace Merlin {
 class PortControl : public PortInterface {
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         PortControl,
         "merlin",
         "portcontrol",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Port Control module for use by hr_router",
-        SST::Merlin::PortInterface)
+        SST::Merlin::PortInterface
+    )
 
     SST_ELI_DOCUMENT_PARAMS(
         {"port_name",          "Port name to connect to.  Only used when loaded anonymously",""},
@@ -334,8 +335,6 @@ public:
     void complete(unsigned int phase);
 
 
-    void sendInitData(Event *ev);
-    Event* recvInitData();
     void sendUntimedData(Event *ev);
     Event* recvUntimedData();
 

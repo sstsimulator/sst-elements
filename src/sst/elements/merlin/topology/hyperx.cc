@@ -220,10 +220,10 @@ topo_hyperx::process_input(RtrEvent* ev)
 }
 
 
-void topo_hyperx::routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts)
+void topo_hyperx::routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts)
 {
     // topo_hyperx_init_event *tt_ev = static_cast<topo_hyperx_init_event*>(ev);
-    if ( ev->getDest() == INIT_BROADCAST_ADDR ) {
+    if ( ev->getDest() == UNTIMED_BROADCAST_ADDR ) {
         // Figure out what dimension it came in on.  Next to forward
         // to all higher dimensions and to hosts
         int start_dim = 0;
@@ -258,12 +258,12 @@ void topo_hyperx::routeInitData(int port, internal_router_event* ev, std::vector
 }
 
 
-internal_router_event* topo_hyperx::process_InitData_input(RtrEvent* ev)
+internal_router_event* topo_hyperx::process_UntimedData_input(RtrEvent* ev)
 {
     topo_hyperx_init_event* tt_ev = new topo_hyperx_init_event(dimensions);
     tt_ev->setEncapsulatedEvent(ev);
     tt_ev->setVC(vns[tt_ev->getVN()].start_vc);
-    if ( tt_ev->getDest() != INIT_BROADCAST_ADDR ) {
+    if ( tt_ev->getDest() != UNTIMED_BROADCAST_ADDR ) {
         int rtr_id = get_dest_router(tt_ev->getDest());
         idToLocation(rtr_id, tt_ev->dest_loc);
     }

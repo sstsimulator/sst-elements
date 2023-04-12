@@ -178,16 +178,6 @@ SST::Interfaces::SimpleNetwork::Request* ReorderLinkControl::recvUntimedData()
     return link_control->recvUntimedData();
 }
 
-void ReorderLinkControl::sendInitData(SST::Interfaces::SimpleNetwork::Request* req)
-{
-    link_control->sendInitData(req);
-}
-
-SST::Interfaces::SimpleNetwork::Request* ReorderLinkControl::recvInitData()
-{
-    return link_control->recvInitData();
-}
-
 
 void ReorderLinkControl::setNotifyOnReceive(HandlerBase* functor) {
     receiveFunctor = functor;

@@ -33,13 +33,14 @@ class UniformDist : public TargetGenerator {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         UniformDist,
         "merlin",
         "targetgen.uniform",
         SST_ELI_ELEMENT_VERSION(0,0,1),
         "Generates a uniform random set of target IDs.",
-        SST::Merlin::TargetGenerator)
+        SST::Merlin::TargetGenerator
+    )
 
     SST_ELI_DOCUMENT_PARAMS(
         {"min",   "Minimum address to generate","0"},

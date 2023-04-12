@@ -29,13 +29,14 @@ class output_arb_basic : public PortInterface::OutputArbitration {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         output_arb_basic,
         "merlin",
         "arb.output.basic",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Basic output arbitration for PortControl",
-        SST::Merlin::PortInterface::OutputArbitration)
+        SST::Merlin::PortInterface::OutputArbitration
+    )
 
     SST_ELI_DOCUMENT_PARAMS(
         {"arb",    "Tyoe of arbitration to use","merlin.arb.base.single.roundrobin"},

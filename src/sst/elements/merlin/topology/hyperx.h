@@ -146,13 +146,14 @@ class topo_hyperx: public Topology {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         topo_hyperx,
         "merlin",
         "hyperx",
         SST_ELI_ELEMENT_VERSION(0,1,0),
         "Multi-dimensional hyperx topology object",
-        SST::Merlin::Topology)
+        SST::Merlin::Topology
+    )
 
     SST_ELI_DOCUMENT_PARAMS(
         // Parameters needed for use with old merlin python module
@@ -219,8 +220,8 @@ public:
     virtual void route_packet(int port, int vc, internal_router_event* ev);
     virtual internal_router_event* process_input(RtrEvent* ev);
 
-    virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts);
-    virtual internal_router_event* process_InitData_input(RtrEvent* ev);
+    virtual void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts);
+    virtual internal_router_event* process_UntimedData_input(RtrEvent* ev);
 
     virtual PortState getPortState(int port) const;
     virtual int getEndpointID(int port);
