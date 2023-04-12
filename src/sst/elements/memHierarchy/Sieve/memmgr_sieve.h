@@ -36,7 +36,7 @@ class MemoryManagerSieve : public ArielComponent::ArielMemoryManager {
 
     public:
         /* SST ELI */
-        SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MemoryManagerSieve, "memHierarchy", "MemoryManagerSieve", SST_ELI_ELEMENT_VERSION(1,0,0),
+        SST_ELI_REGISTER_SUBCOMPONENT(MemoryManagerSieve, "memHierarchy", "MemoryManagerSieve", SST_ELI_ELEMENT_VERSION(1,0,0),
                 "Memory manager for interfacing to MemSieve", SST::ArielComponent::ArielMemoryManager)
 
         SST_ELI_DOCUMENT_PORTS( {"alloc_link_%(corecound)d", "Each core's link memSieve", {"memHierarchy.AllocTrackEvent"}} )

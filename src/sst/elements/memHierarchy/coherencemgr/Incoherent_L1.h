@@ -28,7 +28,7 @@ namespace SST { namespace MemHierarchy {
 class IncoherentL1 : public CoherenceController {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(IncoherentL1, "memHierarchy", "coherence.incoherent_l1", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(IncoherentL1, "memHierarchy", "coherence.incoherent_l1", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Implements an L1 cache without coherence", SST::MemHierarchy::CoherenceController)
 
     SST_ELI_DOCUMENT_STATISTICS(

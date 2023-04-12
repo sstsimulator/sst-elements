@@ -71,7 +71,7 @@ public:
     friend class MemEventConverter;
 
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(StandardInterface, "memHierarchy", "standardInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(StandardInterface, "memHierarchy", "standardInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Interface to memory hierarchy between endpoint and cache. Converts StandardMem requests into MemEventBases.", SST::Interfaces::StandardMem)
     
     SST_ELI_DOCUMENT_PARAMS( 

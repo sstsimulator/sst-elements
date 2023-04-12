@@ -564,10 +564,10 @@ void MemCacheController::init(unsigned int phase) {
     /* Inherit region from our source(s) */
     if (!phase) {
         /* Announce our presence on link */
-        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), false));
+        link_->sendUntimedData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), false));
     }
 
-    while (MemEventInit *ev = link_->recvInitData()) {
+    while (MemEventInit *ev = link_->recvUntimedData()) {
         processInitEvent(ev);
     }
 }
@@ -670,7 +670,7 @@ void MemCacheController::processInitEvent( MemEventInit* me ) {
         MemEventInit * mEv = me->clone();
         mEv->setSrc(getName());
         mEv->setDst(link_->getTargetDestination(mEv->getRoutingAddress()));
-        link_->sendInitData(mEv);
+        link_->sendUntimedData(mEv);
     }
     delete me;
 }

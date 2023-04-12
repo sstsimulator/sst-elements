@@ -35,7 +35,7 @@ using SST::Interfaces::SimpleNetwork;
 class MemNetBridge : public SST::Merlin::Bridge::Translator {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         MemNetBridge,
         "memHierarchy",
         "MemNetBridge",

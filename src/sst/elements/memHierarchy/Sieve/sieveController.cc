@@ -183,12 +183,12 @@ void Sieve::init(unsigned int phase) {
         MemRegion region;
         region.setDefault();
         for (int i = 0; i < cpuLinkCount_; i++) {
-            cpuLinks_[i]->sendInitData(new MemEventInitRegion(getName(), region ,false));
+            cpuLinks_[i]->sendUntimedData(new MemEventInitRegion(getName(), region ,false));
         }
     }
 
     for (int i = 0; i < cpuLinkCount_; i++) {
-        while (SST::Event* ev = cpuLinks_[i]->recvInitData()) {
+        while (SST::Event* ev = cpuLinks_[i]->recvUntimedData()) {
             if (ev) delete ev;
         }
     }

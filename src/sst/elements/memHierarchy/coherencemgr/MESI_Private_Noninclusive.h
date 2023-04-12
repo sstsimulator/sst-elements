@@ -27,7 +27,7 @@ namespace SST { namespace MemHierarchy {
 
 class MESIPrivNoninclusive : public CoherenceController {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MESIPrivNoninclusive, "memHierarchy", "coherence.mesi_private_noninclusive", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(MESIPrivNoninclusive, "memHierarchy", "coherence.mesi_private_noninclusive", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Implements MESI or MSI coherence for a non-inclusive, non-L1 private cache", SST::MemHierarchy::CoherenceController)
 
     SST_ELI_DOCUMENT_STATISTICS(

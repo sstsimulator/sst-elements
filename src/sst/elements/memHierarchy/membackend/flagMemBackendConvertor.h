@@ -27,7 +27,7 @@ public:
 /* Element Library Info */
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::MemHierarchy::FlagMemBackendConvertor, SST::MemHierarchy::MemBackendConvertor, MemBackend*, uint32_t)
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(FlagMemBackendConvertor, "memHierarchy", "flagMemBackendConvertor", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(FlagMemBackendConvertor, "memHierarchy", "flagMemBackendConvertor", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Convert MemEventBase* for a FlagMemBackend - accepts and returns the 'flags' field", SST::MemHierarchy::FlagMemBackendConvertor)
 
     SST_ELI_DOCUMENT_PARAMS( MEMBACKENDCONVERTOR_ELI_PARAMS )

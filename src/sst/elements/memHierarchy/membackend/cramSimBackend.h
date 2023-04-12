@@ -26,7 +26,7 @@ namespace MemHierarchy {
 class CramSimMemory : public SimpleMemBackend {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(CramSimMemory, "memHierarchy", "cramsim", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(CramSimMemory, "memHierarchy", "cramsim", SST_ELI_ELEMENT_VERSION(1,0,0),
             "CramSim memory timings", SST::MemHierarchy::SimpleMemBackend)
 
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,

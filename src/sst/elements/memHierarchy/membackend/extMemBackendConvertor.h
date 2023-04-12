@@ -25,7 +25,7 @@ namespace MemHierarchy {
 class ExtMemBackendConvertor : public MemBackendConvertor {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(ExtMemBackendConvertor, "memHierarchy", "extMemBackendConvertor", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(ExtMemBackendConvertor, "memHierarchy", "extMemBackendConvertor", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Converts MemEventBase* for an ExtMemBackend - passes additional opcode information", SST::MemHierarchy::MemBackendConvertor)
 
     SST_ELI_DOCUMENT_PARAMS( MEMBACKENDCONVERTOR_ELI_PARAMS )

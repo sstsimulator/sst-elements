@@ -28,7 +28,7 @@ namespace SST { namespace MemHierarchy {
 
 class MESIInclusive : public CoherenceController {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MESIInclusive, "memHierarchy", "coherence.mesi_inclusive", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(MESIInclusive, "memHierarchy", "coherence.mesi_inclusive", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Implements MESI or MSI coherence for a second level or greater cache", SST::MemHierarchy::CoherenceController)
 
     SST_ELI_DOCUMENT_STATISTICS(

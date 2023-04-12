@@ -117,11 +117,11 @@ public:
             Nic_t &otherNic = interfaces[i^1];
 
 
-            while ( SimpleNetwork::Request *req = nic.nic->recvInitData() ) {
+            while ( SimpleNetwork::Request *req = nic.nic->recvUntimedData() ) {
                 dbg.debug(CALL_INFO, 2, 0, "Received init phase event on interface %d\n", i);
                 SimpleNetwork::Request *res = translator->initTranslate(req, i);
                 if ( res ) {
-                    otherNic.nic->sendInitData(res);
+                    otherNic.nic->sendUntimedData(res);
                 }
             }
         }

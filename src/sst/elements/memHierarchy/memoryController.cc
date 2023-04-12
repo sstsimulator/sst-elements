@@ -559,11 +559,11 @@ void MemController::init(unsigned int phase) {
 
     if (!phase) {
         /* Announce our presence on link */
-        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), false));
-        link_->sendInitData(new MemEventInitEndpoint(getName().c_str(), Endpoint::Memory, region_, true));
+        link_->sendUntimedData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), false));
+        link_->sendUntimedData(new MemEventInitEndpoint(getName().c_str(), Endpoint::Memory, region_, true));
     }
 
-    while (MemEventInit *ev = link_->recvInitData()) {
+    while (MemEventInit *ev = link_->recvUntimedData()) {
         processInitEvent(ev);
     }
 }
