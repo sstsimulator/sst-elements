@@ -29,13 +29,14 @@ class output_arb_qos_multi : public PortInterface::OutputArbitration {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         output_arb_qos_multi,
         "merlin",
         "arb.output.qos.multi",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Multi-level output arbitration with quality of service for PortControl",
-        SST::Merlin::PortInterface::OutputArbitration)
+        SST::Merlin::PortInterface::OutputArbitration
+    )
 
     SST_ELI_DOCUMENT_PARAMS(
         {"arb_vns",      "Tyoe of arbitration to use for virtual networks","merlin.arb.base.single.lru"},

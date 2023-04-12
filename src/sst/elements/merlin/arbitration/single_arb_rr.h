@@ -28,7 +28,7 @@ class single_arb_rr : public SingleArbitration {
 
 public:
 
-    SST_ELI_REGISTER_MODULE_DERIVED(
+    SST_ELI_REGISTER_MODULE(
         single_arb_rr,
         "merlin",
         "arb.base.single.roundrobin",

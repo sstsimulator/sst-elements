@@ -528,14 +528,6 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recvUntimedData()
     }
 }
 
-void LinkControl::sendInitData(SST::Interfaces::SimpleNetwork::Request* req) {
-    sendUntimedData(req);
-}
-
-SST::Interfaces::SimpleNetwork::Request* LinkControl::recvInitData() {
-    return recvUntimedData();
-}
-
 
 void LinkControl::handle_input(Event* ev)
 {

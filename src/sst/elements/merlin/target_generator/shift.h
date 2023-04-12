@@ -29,13 +29,14 @@ class ShiftDist : public TargetGenerator {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         ShiftDist,
         "merlin",
         "targetgen.shift",
         SST_ELI_ELEMENT_VERSION(0,0,1),
         "Generates a generalized bit complement pattern.  Returns the same value of num_peers - 1 - id.",
-        SST::Merlin::TargetGenerator)
+        SST::Merlin::TargetGenerator
+    )
 
     SST_ELI_DOCUMENT_PARAMS(
         {"shift",        "Number of endpoints to shift by"}        

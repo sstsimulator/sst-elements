@@ -28,13 +28,14 @@ class CircNetworkInspector : public SimpleNetwork::NetworkInspector {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         CircNetworkInspector,
         "merlin",
         "circuit_network_inspector",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Used to count the number of network circuits (as in 'circuit switched' circuits)",
-        SST::Interfaces::SimpleNetwork::NetworkInspector)
+        SST::Interfaces::SimpleNetwork::NetworkInspector
+    )
 
 
 private:

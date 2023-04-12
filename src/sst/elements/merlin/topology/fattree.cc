@@ -216,10 +216,10 @@ internal_router_event* topo_fattree::process_input(RtrEvent* ev)
     return ire;
 }
 
-void topo_fattree::routeInitData(int inPort, internal_router_event* ev, std::vector<int> &outPorts)
+void topo_fattree::routeUntimedData(int inPort, internal_router_event* ev, std::vector<int> &outPorts)
 {
 
-    if ( ev->getDest() == INIT_BROADCAST_ADDR ) {
+    if ( ev->getDest() == UNTIMED_BROADCAST_ADDR ) {
         // Send to all my downports except the one it came from
         for ( int i = 0; i < down_ports; i++ ) {
             if ( i != inPort ) outPorts.push_back(i);
@@ -238,7 +238,7 @@ void topo_fattree::routeInitData(int inPort, internal_router_event* ev, std::vec
 }
 
 
-internal_router_event* topo_fattree::process_InitData_input(RtrEvent* ev)
+internal_router_event* topo_fattree::process_UntimedData_input(RtrEvent* ev)
 {
     return new internal_router_event(ev);
 }

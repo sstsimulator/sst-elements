@@ -33,13 +33,14 @@ class xbar_arb_lru : public XbarArbitration {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         xbar_arb_lru,
         "merlin",
         "xbar_arb_lru",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Least recently used arbitration unit for hr_router",
-        SST::Merlin::XbarArbitration)
+        SST::Merlin::XbarArbitration
+    )
 
 
 private:
