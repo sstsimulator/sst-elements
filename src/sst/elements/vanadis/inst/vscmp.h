@@ -68,13 +68,12 @@ public:
     {
 #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16) {
-            output->verbose(
-                CALL_INFO, 16, 0,
-                "Execute: (addr=0x%0llx) CMPSET (op: %s isa-out: %" PRIu16 " isa-in: %" PRIu16 ", %" PRIu16
-                " / phys-out: %" PRIu16 " phys-in: %" PRIu16 ", %" PRIu16 "\n",
-                getInstructionAddress(), convertCompareTypeToString(compare_type),
-                isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1], phys_int_regs_out[0], phys_int_regs_in[0],
-                phys_int_regs_in[1]);
+            std::ostringstream ss;
+            ss << "Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
+            ss << " (op: " << convertCompareTypeToString(compare_type); 
+            ss << " isa-out: " << isa_int_regs_out[0] << " isa-in: " << isa_int_regs_in[0] << ", " << isa_int_regs_in[1];
+            ss << " / phys-out: " << phys_int_regs_out[0] << " phys-in: " << phys_int_regs_in[0] << ", " << phys_int_regs_in[1];
+            output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
         }
 #endif
         const bool compare_result = registerCompare<compare_type, register_format>(
