@@ -441,9 +441,9 @@ void Cache::init(unsigned int phase) {
 
         // Exchange coherence configuration information
         if (!phase)
-            linkDown_->sendInitData(coherenceMgr_->getInitCoherenceEvent());
+            linkDown_->sendUntimedData(coherenceMgr_->getInitCoherenceEvent());
 
-        while(MemEventInit *event = linkDown_->recvInitData()) {
+        while(MemEventInit *event = linkDown_->recvUntimedData()) {
             if (event->getCmd() == Command::NULLCMD) {
                 dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
                         getName().c_str(), event->getVerboseString().c_str());
@@ -455,7 +455,7 @@ void Cache::init(unsigned int phase) {
             } else if (event->getInitCmd() == MemEventInit::InitCommand::Endpoint) {
                 MemEventInit * mEv = event->clone();
                 mEv->setSrc(getName());
-                linkDown_->sendInitData(mEv);
+                linkDown_->sendUntimedData(mEv);
             }
             delete event;
         }
@@ -467,11 +467,11 @@ void Cache::init(unsigned int phase) {
     linkDown_->init(phase);
 
     if (!phase) {
-        linkUp_->sendInitData(coherenceMgr_->getInitCoherenceEvent());
-        linkDown_->sendInitData(coherenceMgr_->getInitCoherenceEvent());
+        linkUp_->sendUntimedData(coherenceMgr_->getInitCoherenceEvent());
+        linkDown_->sendUntimedData(coherenceMgr_->getInitCoherenceEvent());
     }
 
-    while (MemEventInit * memEvent = linkUp_->recvInitData()) {
+    while (MemEventInit * memEvent = linkUp_->recvUntimedData()) {
         if (memEvent->getCmd() == Command::NULLCMD) {
             dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
                     getName().c_str(), memEvent->getVerboseString().c_str());
@@ -482,19 +482,19 @@ void Cache::init(unsigned int phase) {
             } else if (memEvent->getInitCmd() == MemEventInit::InitCommand::Endpoint ) {
                 MemEventInit * mEv = memEvent->clone();
                 mEv->setSrc(getName());
-                linkDown_->sendInitData(mEv);
+                linkDown_->sendUntimedData(mEv);
             }
         } else {
             dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
                     getName().c_str(), memEvent->getVerboseString().c_str());
             MemEventInit * mEv = memEvent->clone();
             mEv->setSrc(getName());
-            linkDown_->sendInitData(mEv, false);
+            linkDown_->sendUntimedData(mEv, false);
         }
         delete memEvent;
     }
 
-    while (MemEventInit * memEvent = linkDown_->recvInitData()) {
+    while (MemEventInit * memEvent = linkDown_->recvUntimedData()) {
         if (memEvent->getCmd() == Command::NULLCMD) {
             dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
                     getName().c_str(), memEvent->getVerboseString().c_str());
@@ -505,7 +505,7 @@ void Cache::init(unsigned int phase) {
             } else if (memEvent->getInitCmd() == MemEventInitEndpoint::InitCommand::Endpoint) {
                 MemEventInit * mEv = memEvent->clone();
                 mEv->setSrc(getName());
-                linkUp_->sendInitData(mEv);
+                linkUp_->sendUntimedData(mEv);
             }
         }
         delete memEvent;

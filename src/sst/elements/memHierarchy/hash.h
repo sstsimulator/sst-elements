@@ -44,7 +44,7 @@ public:
 /* Default hash function - none */
 class NoHashFunction : public HashFunction {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(NoHashFunction, "memHierarchy", "hash.none", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(NoHashFunction, "memHierarchy", "hash.none", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Default hash function - none, returns unmodified value", SST::MemHierarchy::HashFunction)
 
     NoHashFunction(ComponentId_t id, Params& params) : HashFunction(id, params) {}
@@ -58,7 +58,7 @@ public:
    each input to an output. */
 class LinearHashFunction : public HashFunction {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(LinearHashFunction, "memHierarchy", "hash.linear", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(LinearHashFunction, "memHierarchy", "hash.linear", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Linear hash from C99 standard's RNG function", SST::MemHierarchy::HashFunction)
 
     LinearHashFunction(ComponentId_t id, Params& params) : HashFunction(id, params) {}
@@ -71,7 +71,7 @@ public:
 /* Just a simple xor-based hash. */
 class XorHashFunction : public HashFunction {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(XorHashFunction, "memHierarchy", "hash.xor", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(XorHashFunction, "memHierarchy", "hash.xor", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Simple XOR hash", SST::MemHierarchy::HashFunction)
 
     XorHashFunction(ComponentId_t id, Params& params) : HashFunction(id, params) {}

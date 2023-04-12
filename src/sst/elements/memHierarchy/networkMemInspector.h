@@ -32,7 +32,7 @@ namespace SST { namespace MemHierarchy {
 class networkMemInspector : public SimpleNetwork::NetworkInspector {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         networkMemInspector,
         "memHierarchy",
         "networkMemoryInspector",

@@ -112,6 +112,13 @@ class MemNICBase : public MemLinkBase {
         };
 
         // Init functions
+        virtual void sendUntimedData(MemEventInit* ev, bool broadcast = true) {
+            DISABLE_WARN_DEPRECATED_DECLARATION
+            sendInitData(ev, broadcast);
+            REENABLE_WARNING
+        }
+
+        [[deprecated("sendInitData() has been deprecated and will be removed in SST 14.  Please use sendUntimedData().")]]
         virtual void sendInitData(MemEventInit * ev, bool broadcast = true) {
             if (!broadcast) {
                 std::string dst = findTargetDestination(ev->getRoutingAddress());
@@ -129,6 +136,14 @@ class MemNICBase : public MemLinkBase {
             initSendQueue.push(req);
         }
 
+        virtual MemEventInit* recvUntimedData() {
+            DISABLE_WARN_DEPRECATED_DECLARATION
+            auto ret = recvInitData();
+            REENABLE_WARNING
+                return ret;
+        }
+    
+        [[deprecated("recvInitData() has been deprecated and will be removed in SST 14.  Please use recvUntimedData().")]]
         virtual MemEventInit* recvInitData() {
             if (initQueue.size()) {
                 MemRtrEvent * mre = initQueue.front();
@@ -232,7 +247,7 @@ class MemNICBase : public MemLinkBase {
             // After we've set up network and exchanged params, drain the send queue
             if (networkReady && initMsgSent) {
                 while (!initSendQueue.empty()) {
-                    linkcontrol->sendInitData(initSendQueue.front());
+                    linkcontrol->sendUntimedData(initSendQueue.front());
                     initSendQueue.pop();
                 }
 
@@ -244,7 +259,7 @@ class MemNICBase : public MemLinkBase {
                         SST::Interfaces::SimpleNetwork::Request* req = new SST::Interfaces::SimpleNetwork::Request();
                         req->dest = SST::Interfaces::SimpleNetwork::INIT_BROADCAST_ADDR;
                         req->givePayload(mre);
-                        linkcontrol->sendInitData(req);
+                        linkcontrol->sendUntimedData(req);
                         it = initWaitForDst.erase(it);
                     } else {
                         it++;
@@ -261,7 +276,7 @@ class MemNICBase : public MemLinkBase {
                 req->dest = SST::Interfaces::SimpleNetwork::INIT_BROADCAST_ADDR;
                 req->src = info.addr;
                 req->givePayload(ev);
-                linkcontrol->sendInitData(req);
+                linkcontrol->sendUntimedData(req);
                 initMsgSent = true;
             }
 
@@ -270,7 +285,7 @@ class MemNICBase : public MemLinkBase {
             // 2. MemEventBase - only notify parent if sender is a src or dst for us
             // We should know since network is in order and NIC does its init before the
             // parents do
-            while (SST::Interfaces::SimpleNetwork::Request *req = linkcontrol->recvInitData()) {
+            while (SST::Interfaces::SimpleNetwork::Request *req = linkcontrol->recvUntimedData()) {
                 Event * payload = req->takePayload();
                 InitMemRtrEvent * imre = dynamic_cast<InitMemRtrEvent*>(payload);
                 if (imre) {

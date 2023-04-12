@@ -31,7 +31,7 @@ class PagePolicy : public SST::SubComponent {
 class SimplePagePolicy : public PagePolicy {
   public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(SimplePagePolicy, "memHierarchy", "simplePagePolicy", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(SimplePagePolicy, "memHierarchy", "simplePagePolicy", SST_ELI_ELEMENT_VERSION(1,0,0),
             "static page open or close policy", SST::MemHierarchy::TimingDRAM_NS::PagePolicy)
 
     SST_ELI_DOCUMENT_PARAMS( {"close", "Whether to use a closed (true) or open (false) page policy", "true"} )
@@ -56,7 +56,7 @@ class SimplePagePolicy : public PagePolicy {
 class TimeoutPagePolicy : public PagePolicy {
   public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(TimeoutPagePolicy, "memHierarchy", "timeoutPagePolicy", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(TimeoutPagePolicy, "memHierarchy", "timeoutPagePolicy", SST_ELI_ELEMENT_VERSION(1,0,0),
             "timeout based page open or close policy", SST::MemHierarchy::TimingDRAM_NS::PagePolicy)
 
     SST_ELI_DOCUMENT_PARAMS( {"timeoutCycles", "Timeout (close page) after this many cycles", "5"} )

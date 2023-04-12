@@ -50,7 +50,7 @@ class MemHierarchyScratchInterface : public Interfaces::SimpleMem {
 
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MemHierarchyScratchInterface, "memHierarchy", "scratchInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(MemHierarchyScratchInterface, "memHierarchy", "scratchInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
             "[DEPRECATED: Use standard.interface instead] Interface to a scratchpad", SST::Interfaces::SimpleMem)
 
     SST_ELI_DOCUMENT_PARAMS( { "scratchpad_size", "Size of the scratchpad, with units" } )

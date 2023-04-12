@@ -37,7 +37,7 @@ namespace MemHierarchy {
 class FlashDIMMSimMemory : public SimpleMemBackend {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(FlashDIMMSimMemory, "memHierarchy", "FlashDIMMSim", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(FlashDIMMSimMemory, "memHierarchy", "FlashDIMMSim", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Backend interface to FlashDIMM simulator for memory timings", SST::MemHierarchy::SimpleMemBackend)
 
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,

@@ -37,7 +37,7 @@ namespace MemHierarchy {
 class DRAMSim3Memory : public SimpleMemBackend {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(DRAMSim3Memory, "memHierarchy", "dramsim3", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(DRAMSim3Memory, "memHierarchy", "dramsim3", SST_ELI_ELEMENT_VERSION(1,0,0),
             "DRAMSim3-driven memory timings", SST::MemHierarchy::SimpleMemBackend)
 
 #define DRAMSIM3_ELI_PARAMS MEMBACKEND_ELI_PARAMS,\

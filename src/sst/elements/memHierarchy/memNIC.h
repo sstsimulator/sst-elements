@@ -57,7 +57,7 @@ public:
         { "network_link_control",        "Deprecated. Specify link control type by using named subcomponents", "merlin.linkcontrol" }
 
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MemNIC, "memHierarchy", "MemNIC", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(MemNIC, "memHierarchy", "MemNIC", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Memory-oriented network interface", SST::MemHierarchy::MemLinkBase)
 
     SST_ELI_DOCUMENT_PARAMS( MEMNIC_ELI_PARAMS )
