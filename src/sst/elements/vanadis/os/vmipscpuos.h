@@ -390,7 +390,7 @@ private:
 class VanadisMIPSOSHandler : public VanadisMIPSOSHandler2< uint32_t, VanadisOSBitType::VANADIS_OS_32B, MIPS_ARG_REG_ZERO, MIPS_OS_CODE_REG, MIPS_LINK_REG > {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(VanadisMIPSOSHandler, "vanadis",
+    SST_ELI_REGISTER_SUBCOMPONENT(VanadisMIPSOSHandler, "vanadis",
                                             "VanadisMIPSOSHandler",
                                             SST_ELI_ELEMENT_VERSION(1, 0, 0),
                                             "Provides SYSCALL handling for a MIPS-based decoding core",

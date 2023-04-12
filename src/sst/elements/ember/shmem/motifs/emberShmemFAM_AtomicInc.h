@@ -271,7 +271,7 @@ public:
 
 class EmberShmemFAM_AtomicIncIntGenerator : public EmberShmemFAM_AtomicIncGenerator<int, 0> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemFAM_AtomicIncIntGenerator,
         "ember",
         "ShmemFAM_AtomicIncIntMotif",
@@ -290,7 +290,7 @@ public:
 
 class EmberShmemFAM_AtomicIncLongGenerator : public EmberShmemFAM_AtomicIncGenerator<long, 0 > {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemFAM_AtomicIncLongGenerator,
         "ember",
         "ShmemFAM_AtomicIncLongMotif",

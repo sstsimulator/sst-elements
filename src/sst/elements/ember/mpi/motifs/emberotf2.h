@@ -32,7 +32,7 @@ public:
 	~EmberOTF2Generator();
     	bool generate( std::queue<EmberEvent*>& evQ );
 
-	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+	SST_ELI_REGISTER_SUBCOMPONENT(
         	EmberOTF2Generator,
         	"ember",
          	"OTF2Motif",

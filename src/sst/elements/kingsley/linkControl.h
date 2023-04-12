@@ -47,7 +47,7 @@ class LinkControl : public SST::Interfaces::SimpleNetwork {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         LinkControl,
         "kingsley",
         "linkcontrol",
@@ -159,8 +159,8 @@ public:
     // otherwise.
     bool requestToReceive( int vn ) { return ! input_buf[vn].empty(); }
 
-    void sendInitData(SST::Interfaces::SimpleNetwork::Request* ev);
-    SST::Interfaces::SimpleNetwork::Request* recvInitData();
+    void sendUntimedData(SST::Interfaces::SimpleNetwork::Request* ev);
+    SST::Interfaces::SimpleNetwork::Request* recvUntimedData();
 
     // const PacketStats& getPacketStats(void) const { return stats; }
 

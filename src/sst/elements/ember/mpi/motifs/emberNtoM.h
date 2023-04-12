@@ -25,7 +25,7 @@ namespace Ember {
 class EmberNtoMGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberNtoMGenerator,
         "ember",
         "NtoMMotif",

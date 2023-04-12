@@ -28,7 +28,7 @@ namespace Firefly {
 class HadesMisc : public Misc::Interface
 {
   public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         HadesMisc,
         "firefly",
         "hadesMisc",

@@ -26,7 +26,7 @@ namespace Ember {
 class EmberCMT1DGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberCMT1DGenerator,
         "ember",
         "CMT1DMotif",

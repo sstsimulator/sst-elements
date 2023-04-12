@@ -186,14 +186,14 @@ void LinkControl::init(unsigned int phase)
         init_ev = new NocInitEvent();
         init_ev->command = NocInitEvent::REPORT_ENDPOINT;
         init_ev->int_value = req_vns;
-        rtr_link->sendInitData(init_ev);
+        rtr_link->sendUntimedData(init_ev);
 
         init_state = 1;
         break;
     }
     case 1:
     {
-        ev = rtr_link->recvInitData();
+        ev = rtr_link->recvUntimedData();
         if ( NULL == ev ) break;
         init_ev = static_cast<NocInitEvent*>(ev);
         UnitAlgebra flit_size_ua = init_ev->ua_value;
@@ -214,14 +214,14 @@ void LinkControl::init(unsigned int phase)
     }
     case 2:
     {
-        ev = rtr_link->recvInitData();
+        ev = rtr_link->recvUntimedData();
         if ( NULL == ev ) break;
         init_ev = static_cast<NocInitEvent*>(ev);
         id = init_ev->int_value;
 
         // Send credit event to router
         credit_event* cr_ev = new credit_event(0,inbuf_size.getRoundedValue() / flit_size);
-        rtr_link->sendInitData(cr_ev);
+        rtr_link->sendUntimedData(cr_ev);
 
         // network_initialized = true;
         init_state = 3;
@@ -235,7 +235,7 @@ void LinkControl::init(unsigned int phase)
         // For all other phases, look for credit events, any other
         // events get passed up to containing component by adding them
         // to init_events queue
-        while ( ( ev = rtr_link->recvInitData() ) != NULL ) {
+        while ( ( ev = rtr_link->recvUntimedData() ) != NULL ) {
             BaseNocEvent* bev = static_cast<BaseNocEvent*>(ev);
             switch (bev->getType()) {
             case BaseNocEvent::CREDIT:
@@ -274,7 +274,7 @@ void LinkControl::complete(unsigned int phase)
     // For all other phases, look for credit events, any other
     // events get passed up to containing component by adding them
     // to init_events queue
-    while ( ( ev = rtr_link->recvInitData() ) != NULL ) {
+    while ( ( ev = rtr_link->recvUntimedData() ) != NULL ) {
         BaseNocEvent* bev = static_cast<BaseNocEvent*>(ev);
         switch (bev->getType()) {
         case BaseNocEvent::CREDIT:
@@ -398,12 +398,12 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
     return ret;
 }
 
-void LinkControl::sendInitData(SST::Interfaces::SimpleNetwork::Request* req)
+void LinkControl::sendUntimedData(SST::Interfaces::SimpleNetwork::Request* req)
 {
-    rtr_link->sendInitData(new NocPacket(req));
+    rtr_link->sendUntimedData(new NocPacket(req));
 }
 
-SST::Interfaces::SimpleNetwork::Request* LinkControl::recvInitData()
+SST::Interfaces::SimpleNetwork::Request* LinkControl::recvUntimedData()
 {
     if ( init_events.size() ) {
         NocPacket *ev = init_events.front();

@@ -106,7 +106,7 @@ public:
 
 class EmberShmemCswapIntGenerator : public EmberShmemCswapGenerator<int> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemCswapIntGenerator,
         "ember",
         "ShmemCswapIntMotif",
@@ -124,7 +124,7 @@ public:
 
 class EmberShmemCswapLongGenerator : public EmberShmemCswapGenerator<long> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemCswapLongGenerator,
         "ember",
         "ShmemCswapLongMotif",
@@ -143,7 +143,7 @@ public:
 
 class EmberShmemCswapDoubleGenerator : public EmberShmemCswapGenerator<double> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemCswapDoubleGenerator,
         "ember",
         "ShmemCswapDoubleMotif",
@@ -161,7 +161,7 @@ public:
 
 class EmberShmemCswapFloatGenerator : public EmberShmemCswapGenerator<float> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemCswapFloatGenerator,
         "ember",
         "ShmemCswapFloatMotif",

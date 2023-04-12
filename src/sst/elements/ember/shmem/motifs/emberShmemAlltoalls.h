@@ -145,7 +145,7 @@ public:
 
 class EmberShmemAlltoalls32Generator : public EmberShmemAlltoallsGenerator<uint32_t> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemAlltoalls32Generator,
         "ember",
         "ShmemAlltoalls32Motif",
@@ -168,7 +168,7 @@ public:
 
 class EmberShmemAlltoalls64Generator : public EmberShmemAlltoallsGenerator<uint64_t> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemAlltoalls64Generator,
         "ember",
         "ShmemAlltoalls64Motif",

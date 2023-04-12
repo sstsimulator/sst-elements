@@ -34,7 +34,7 @@ class VirtNic : public SST::SubComponent {
   public:
 	SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Firefly::VirtNic)
 
-	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+	SST_ELI_REGISTER_SUBCOMPONENT(
         VirtNic,
         "firefly",
         "VirtNic",

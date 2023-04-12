@@ -37,7 +37,7 @@ namespace Firefly {
 class AlltoallvFuncSM :  public FunctionSMInterface
 {
   public:
-    SST_ELI_REGISTER_MODULE_DERIVED(
+    SST_ELI_REGISTER_MODULE(
         AlltoallvFuncSM,
         "firefly",
         "Alltoallv",

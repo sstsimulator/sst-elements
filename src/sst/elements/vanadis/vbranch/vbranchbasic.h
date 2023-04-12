@@ -27,7 +27,7 @@ namespace Vanadis {
 class VanadisBasicBranchUnit : public VanadisBranchUnit {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(VanadisBasicBranchUnit, "vanadis", "VanadisBasicBranchUnit",
+    SST_ELI_REGISTER_SUBCOMPONENT(VanadisBasicBranchUnit, "vanadis", "VanadisBasicBranchUnit",
                                           SST_ELI_ELEMENT_VERSION(1, 0, 0),
                                           "Implements basic branch prediction capability that stores the last "
                                           "branch direction in a cache",

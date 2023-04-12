@@ -110,7 +110,7 @@ public:
 
 class EmberShmemRing2IntGenerator : public EmberShmemRing2Generator<int> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemRing2IntGenerator,
         "ember",
         "ShmemRing2IntMotif",

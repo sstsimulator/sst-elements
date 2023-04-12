@@ -25,7 +25,7 @@ namespace Ember {
 class EmberReduceGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberReduceGenerator,
         "ember",
         "ReduceMotif",

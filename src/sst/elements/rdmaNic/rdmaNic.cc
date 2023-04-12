@@ -185,7 +185,7 @@ void RdmaNic::mmioWriteSetup( StandardMem::Write* req) {
 		info.nicInfo.numThreads = m_pesPerNode;
 		info.nicInfo.myThread = thread + 1;
 
-        dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"write info to host address %#lx\n",threadMemoryBase + info.hostInfo.respAddress);
+        dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"write info to host address %#" PRIx64 "\n",threadMemoryBase + info.hostInfo.respAddress);
 
     	m_memReqQ->write( m_tailWriteQnum, threadMemoryBase + info.hostInfo.respAddress, sizeof(info.nicInfo), reinterpret_cast<uint8_t*>(&info.nicInfo) );
 

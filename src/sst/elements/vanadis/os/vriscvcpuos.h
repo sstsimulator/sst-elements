@@ -359,7 +359,7 @@ class VanadisRISCV64OSHandler :
     public VanadisRISCV64OSHandler2< uint64_t, VanadisOSBitType::VANADIS_OS_64B, RISCV_ARG_REG_ZERO, RISCV_OS_CODE_REG, RISCV_LINK_REG > {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(VanadisRISCV64OSHandler,
+    SST_ELI_REGISTER_SUBCOMPONENT(VanadisRISCV64OSHandler,
                                             "vanadis",
                                             "VanadisRISCV64OSHandler",
                                             SST_ELI_ELEMENT_VERSION(1, 0, 0),

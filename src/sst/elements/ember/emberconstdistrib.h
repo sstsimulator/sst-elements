@@ -24,7 +24,7 @@ namespace Ember {
 
 class EmberConstDistribution : public EmberComputeDistribution {
 public:
-   SST_ELI_REGISTER_MODULE_DERIVED(
+   SST_ELI_REGISTER_MODULE(
         EmberConstDistribution,
         "ember",
         "ConstDistrib",

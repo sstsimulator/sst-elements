@@ -39,7 +39,7 @@ class Hades : public OS
 {
   public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         Hades,
         "firefly",
         "hades",

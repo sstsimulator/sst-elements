@@ -107,7 +107,7 @@ public:
 
 class EmberShmemGetvIntGenerator : public EmberShmemGetvGenerator<int> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemGetvIntGenerator,
         "ember",
         "ShmemGetvIntMotif",
@@ -125,7 +125,7 @@ public:
 
 class EmberShmemGetvLongGenerator : public EmberShmemGetvGenerator<long> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemGetvLongGenerator,
         "ember",
         "ShmemGetvLongMotif",
@@ -143,7 +143,7 @@ public:
 
 class EmberShmemGetvDoubleGenerator : public EmberShmemGetvGenerator<double> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemGetvDoubleGenerator,
         "ember",
         "ShmemGetvDoubleMotif",
@@ -161,7 +161,7 @@ public:
 
 class EmberShmemGetvFloatGenerator : public EmberShmemGetvGenerator<float> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemGetvFloatGenerator,
         "ember",
         "ShmemGetvFloatMotif",

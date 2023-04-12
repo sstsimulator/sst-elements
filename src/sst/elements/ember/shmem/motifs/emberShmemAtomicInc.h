@@ -325,7 +325,7 @@ private:
 
 class EmberShmemAtomicIncIntGenerator : public EmberShmemAtomicIncGenerator<int, 0> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemAtomicIncIntGenerator,
         "ember",
         "ShmemAtomicIncIntMotif",
@@ -354,7 +354,7 @@ public:
 
 class EmberShmemNSAtomicIncIntGenerator : public EmberShmemAtomicIncGenerator<int, 1> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemNSAtomicIncIntGenerator,
         "ember",
         "ShmemNSAtomicIncIntMotif",
@@ -372,7 +372,7 @@ public:
 
 class EmberShmemHotAtomicIncIntGenerator : public EmberShmemAtomicIncGenerator<int, 2> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemHotAtomicIncIntGenerator,
         "ember",
         "ShmemHotAtomicIncIntMotif",
@@ -390,7 +390,7 @@ public:
 
 class EmberShmemAtomicIncLongGenerator : public EmberShmemAtomicIncGenerator<long, 0 > {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemAtomicIncLongGenerator,
         "ember",
         "ShmemAtomicIncLongMotif",
@@ -408,7 +408,7 @@ public:
 
 class EmberShmemHotAtomicIncLongGenerator : public EmberShmemAtomicIncGenerator<long, 1 > {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemHotAtomicIncLongGenerator,
         "ember",
         "ShmemHotAtomicIncLongMotif",

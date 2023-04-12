@@ -32,7 +32,7 @@ namespace Ember {
 class EmberShmemFAM_ScattervGenerator : public EmberShmemGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemFAM_ScattervGenerator,
         "ember",
         "ShmemFAM_ScattervMotif",

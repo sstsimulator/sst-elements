@@ -45,7 +45,7 @@ class OperatingSystem : public SST::Hg::SubComponent {
 
 public:
 
-  SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+  SST_ELI_REGISTER_SUBCOMPONENT(
     OperatingSystem,
     "hg",
     "operating_system",

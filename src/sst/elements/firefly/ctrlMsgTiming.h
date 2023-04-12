@@ -28,7 +28,7 @@ class MsgTiming : public SubComponent {
 
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Firefly::CtrlMsg::MsgTiming)
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         MsgTiming,
         "firefly",
         "msgTiming",

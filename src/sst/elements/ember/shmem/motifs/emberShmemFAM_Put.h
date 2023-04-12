@@ -32,7 +32,7 @@ namespace Ember {
 class EmberShmemFAM_PutGenerator : public EmberShmemGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemFAM_PutGenerator,
         "ember",
         "ShmemFAM_PutMotif",

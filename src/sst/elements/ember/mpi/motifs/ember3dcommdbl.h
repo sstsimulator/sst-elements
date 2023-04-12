@@ -25,7 +25,7 @@ namespace Ember {
 class Ember3DCommDoublingGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         Ember3DCommDoublingGenerator,
         "ember",
         "CommDoubleMotif",

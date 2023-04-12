@@ -105,7 +105,7 @@ public:
 
 class EmberShmemFaddIntGenerator : public EmberShmemFaddGenerator<int> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemFaddIntGenerator,
         "ember",
         "ShmemFaddIntMotif",
@@ -123,7 +123,7 @@ public:
 
 class EmberShmemFaddLongGenerator : public EmberShmemFaddGenerator<long> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemFaddLongGenerator,
         "ember",
         "ShmemFaddLongMotif",
@@ -141,7 +141,7 @@ public:
 
 class EmberShmemFaddDoubleGenerator : public EmberShmemFaddGenerator<double> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemFaddDoubleGenerator,
         "ember",
         "ShmemFaddDoubleMotif",
@@ -159,7 +159,7 @@ public:
 
 class EmberShmemFaddFloatGenerator : public EmberShmemFaddGenerator<float> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemFaddFloatGenerator,
         "ember",
         "ShmemFaddFloatMotif",

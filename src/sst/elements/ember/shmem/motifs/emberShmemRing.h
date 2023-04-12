@@ -107,7 +107,7 @@ public:
 };
 class EmberShmemRingIntGenerator : public EmberShmemRingGenerator<int> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemRingIntGenerator,
         "ember",
         "ShmemRingIntMotif",

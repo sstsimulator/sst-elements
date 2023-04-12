@@ -330,7 +330,7 @@ struct PolyModel : public SST::Core::Serialization::serializable
 class EmberBFSGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberBFSGenerator,
         "ember",
         "BFSMotif",

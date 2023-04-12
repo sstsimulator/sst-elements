@@ -25,7 +25,7 @@ namespace Ember {
 class EmberHalo3D26Generator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberHalo3D26Generator,
         "ember",
         "Halo3D26Motif",

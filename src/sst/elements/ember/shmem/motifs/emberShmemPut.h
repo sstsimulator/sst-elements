@@ -157,7 +157,7 @@ public:
 
 class EmberShmemPutIntGenerator : public EmberShmemPutGenerator<int> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemPutIntGenerator,
         "ember",
         "ShmemPutIntMotif",
@@ -177,7 +177,7 @@ public:
 
 class EmberShmemPutLongGenerator : public EmberShmemPutGenerator<long> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemPutLongGenerator,
         "ember",
         "ShmemPutLongMotif",
@@ -197,7 +197,7 @@ public:
 
 class EmberShmemPutDoubleGenerator : public EmberShmemPutGenerator<double> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemPutDoubleGenerator,
         "ember",
         "ShmemPutDoubleMotif",
@@ -217,7 +217,7 @@ public:
 
 class EmberShmemPutFloatGenerator : public EmberShmemPutGenerator<float> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemPutFloatGenerator,
         "ember",
         "ShmemPutFloatMotif",

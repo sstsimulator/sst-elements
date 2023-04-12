@@ -94,7 +94,7 @@ public:
 
 class EmberShmemWaitIntGenerator : public EmberShmemWaitGenerator<int> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemWaitIntGenerator,
         "ember",
         "ShmemWaitIntMotif",
@@ -112,7 +112,7 @@ public:
 
 class EmberShmemWaitLongGenerator : public EmberShmemWaitGenerator<long> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemWaitLongGenerator,
         "ember",
         "ShmemWaitLongMotif",

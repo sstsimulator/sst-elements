@@ -26,7 +26,7 @@ namespace Firefly {
 class WaitAllFuncSM :  public FunctionSMInterface
 {
   public:
-    SST_ELI_REGISTER_MODULE_DERIVED(
+    SST_ELI_REGISTER_MODULE(
         WaitAllFuncSM,
         "firefly",
         "WaitAll",

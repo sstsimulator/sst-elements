@@ -39,7 +39,7 @@ namespace Vanadis {
 class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(VanadisBasicLoadStoreQueue, "vanadis", "VanadisBasicLoadStoreQueue",
+    SST_ELI_REGISTER_SUBCOMPONENT(VanadisBasicLoadStoreQueue, "vanadis", "VanadisBasicLoadStoreQueue",
                                           SST_ELI_ELEMENT_VERSION(1, 0, 0),
                                           "Implements a basic load-store queue for use with the SST standardInterface",
                                           SST::Vanadis::VanadisLoadStoreQueue)

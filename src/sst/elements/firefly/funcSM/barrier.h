@@ -26,7 +26,7 @@ class BarrierFuncSM :  public CollectiveTreeFuncSM
   public:
     SST_ELI_REGISTER_MODULE_DERIVED_API(SST::Firefly::BarrierFuncSM, SST::Firefly::CollectiveTreeFuncSM)
 
-    SST_ELI_REGISTER_MODULE_DERIVED(
+    SST_ELI_REGISTER_MODULE(
         BarrierFuncSM,
         "firefly",
         "Barrier",

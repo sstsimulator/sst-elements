@@ -26,7 +26,7 @@ namespace Ember {
 class EmberShmemTestGenerator : public EmberShmemGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemTestGenerator,
         "ember",
         "ShmemTestMotif",

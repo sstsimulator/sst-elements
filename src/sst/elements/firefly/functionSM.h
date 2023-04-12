@@ -70,7 +70,7 @@ class FunctionSM : public SubComponent {
 
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Firefly::FunctionSM,ProtocolAPI*)
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         FunctionSM,
         "firefly",
         "functionSM",

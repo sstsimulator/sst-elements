@@ -1813,7 +1813,7 @@ VANADIS_COMPONENT::init(unsigned int phase)
     //	memDataInterface->init( phase );
     memInstInterface->init(phase);
 
-    while (SST::Event* ev = os_link->recvInitData()) {
+    while (SST::Event* ev = os_link->recvUntimedData()) {
 
         assert( 0 );
     }

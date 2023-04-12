@@ -28,7 +28,7 @@ namespace Ember {
 class EmberSendrecvGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberSendrecvGenerator,
         "ember",
         "SendrecvMotif",

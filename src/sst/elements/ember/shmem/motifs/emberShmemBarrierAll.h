@@ -26,7 +26,7 @@ namespace Ember {
 class EmberShmemBarrierAllGenerator : public EmberShmemGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemBarrierAllGenerator,
         "ember",
         "ShmemBarrierAllMotif",

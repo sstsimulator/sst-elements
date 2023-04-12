@@ -44,7 +44,7 @@ namespace Vanadis {
 class VanadisRISCV64Decoder : public VanadisDecoder
 {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
       VanadisRISCV64Decoder, "vanadis", "VanadisRISCV64Decoder",
       SST_ELI_ELEMENT_VERSION(1, 0, 0),
       "Implements a RISCV64-compatible decoder for Vanadis CPU processing.",

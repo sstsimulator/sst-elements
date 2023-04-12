@@ -28,7 +28,7 @@ namespace Ember {
 class EmberSIRIUSTraceGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberSIRIUSTraceGenerator,
         "ember",
         "SIRIUSTraceMotif",

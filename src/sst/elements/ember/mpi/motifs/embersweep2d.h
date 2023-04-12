@@ -24,7 +24,7 @@ namespace Ember {
 
 class EmberSweep2DGenerator : public EmberMessagePassingGenerator {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberSweep2DGenerator,
         "ember",
         "Sweep2DMotif",

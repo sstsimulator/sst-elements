@@ -273,7 +273,7 @@ public:
 
 class EmberShmemFAM_CswapIntGenerator : public EmberShmemFAM_CswapGenerator<int, 0> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemFAM_CswapIntGenerator,
         "ember",
         "ShmemFAM_CswapIntMotif",
@@ -292,7 +292,7 @@ public:
 
 class EmberShmemFAM_CswapLongGenerator : public EmberShmemFAM_CswapGenerator<long, 0 > {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemFAM_CswapLongGenerator,
         "ember",
         "ShmemFAM_CswapLongMotif",

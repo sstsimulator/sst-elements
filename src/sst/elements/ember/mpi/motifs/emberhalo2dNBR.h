@@ -24,7 +24,7 @@ namespace Ember {
 
 class EmberHalo2DNBRGenerator : public EmberMessagePassingGenerator {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberHalo2DNBRGenerator,
         "ember",
         "Halo2DNBRMotif",
