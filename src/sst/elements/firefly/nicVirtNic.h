@@ -34,7 +34,7 @@ class VirtNic {
 
         void init( unsigned int phase ) {
             if ( 0 == phase ) {
-                m_toCoreLink->sendInitData( new NicInitEvent(
+                m_toCoreLink->sendUntimedData( new NicInitEvent(
                         m_nic.getNodeId(), id, m_nic.getNum_vNics() ) );
             }
         }

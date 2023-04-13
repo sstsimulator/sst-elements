@@ -35,7 +35,7 @@ class FamNodeMapper : public Module {
 class Group_FamNodeMapper : public FamNodeMapper {
   public:
 
-    SST_ELI_REGISTER_MODULE_DERIVED(
+    SST_ELI_REGISTER_MODULE(
         Group_FamNodeMapper,
         "firefly",
         "Group_FamNodeMapper",

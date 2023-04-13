@@ -60,7 +60,7 @@ class AppRuntimeMemory : public AppRuntimeMemoryMod {
 
 class AppRuntimeMemory32 : public AppRuntimeMemory<uint32_t> {
   public:
-    SST_ELI_REGISTER_MODULE_DERIVED(
+    SST_ELI_REGISTER_MODULE(
         AppRuntimeMemory32,
         "vanadis",
         "AppRuntimeMemory32",
@@ -74,7 +74,7 @@ class AppRuntimeMemory32 : public AppRuntimeMemory<uint32_t> {
 
 class AppRuntimeMemory64 : public AppRuntimeMemory<uint64_t> {
   public:
-    SST_ELI_REGISTER_MODULE_DERIVED(
+    SST_ELI_REGISTER_MODULE(
         AppRuntimeMemory64,
         "vanadis",
         "AppRuntimeMemory64",

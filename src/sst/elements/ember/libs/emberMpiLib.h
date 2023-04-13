@@ -118,7 +118,7 @@ class EmberMpiLib : public EmberLib {
 
   public:
 
-    SST_ELI_REGISTER_MODULE_DERIVED(
+    SST_ELI_REGISTER_MODULE(
         EmberMpiLib,
         "ember",
         "mpiLib",

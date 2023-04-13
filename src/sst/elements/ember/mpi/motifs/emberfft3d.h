@@ -25,7 +25,7 @@ namespace Ember {
 class EmberFFT3DGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberFFT3DGenerator,
         "ember",
         "FFT3DMotif",

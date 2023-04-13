@@ -26,7 +26,7 @@ namespace Firefly {
 class CancelFuncSM :  public FunctionSMInterface
 {
   public:
-    SST_ELI_REGISTER_MODULE_DERIVED(
+    SST_ELI_REGISTER_MODULE(
         CancelFuncSM,
         "firefly",
         "Cancel",

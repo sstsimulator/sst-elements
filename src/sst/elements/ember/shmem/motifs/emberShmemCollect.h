@@ -135,7 +135,7 @@ public:
 
 class EmberShmemCollect32Generator : public EmberShmemCollectGenerator<uint32_t> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemCollect32Generator,
         "ember",
         "ShmemCollect32Motif",
@@ -155,7 +155,7 @@ public:
 
 class EmberShmemCollect64Generator : public EmberShmemCollectGenerator<uint64_t> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemCollect64Generator,
         "ember",
         "ShmemCollect64Motif",

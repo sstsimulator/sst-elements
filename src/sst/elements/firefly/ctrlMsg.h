@@ -57,7 +57,7 @@ class API : public ProtocolAPI {
 
 	SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Firefly::CtrlMsg::API)
 
-	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+	SST_ELI_REGISTER_SUBCOMPONENT(
         API,
         "firefly",
         "CtrlMsgProto",

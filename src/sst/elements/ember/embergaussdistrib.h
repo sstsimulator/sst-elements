@@ -25,7 +25,7 @@ namespace Ember {
 
 class EmberGaussianDistribution : public EmberComputeDistribution {
 public:
-    SST_ELI_REGISTER_MODULE_DERIVED(
+    SST_ELI_REGISTER_MODULE(
         EmberGaussianDistribution,
         "ember",
         "GaussianDistrib",

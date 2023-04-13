@@ -29,7 +29,7 @@ namespace Ember {
 
 class EmberCustomRankMap : public EmberRankMap {
 public:
-    SST_ELI_REGISTER_MODULE_DERIVED(
+    SST_ELI_REGISTER_MODULE(
         EmberCustomRankMap,
         "ember",
         "CustomMap",

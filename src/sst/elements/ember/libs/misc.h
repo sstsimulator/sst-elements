@@ -32,7 +32,7 @@ class EmberMiscLib : public EmberLib {
 
   public:
 
-    SST_ELI_REGISTER_MODULE_DERIVED(
+    SST_ELI_REGISTER_MODULE(
         EmberMiscLib,
         "ember",
         "miscLib",

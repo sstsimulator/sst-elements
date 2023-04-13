@@ -31,7 +31,7 @@ class DetailedInterface : public SubComponent {
 
 public:
 	SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Firefly::DetailedInterface)
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         DetailedInterface,
         "firefly",
         "detailedInterface",

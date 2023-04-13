@@ -25,7 +25,7 @@ namespace Ember {
 class EmberLinearRankMap : public EmberRankMap {
 public:
 
-    SST_ELI_REGISTER_MODULE_DERIVED(
+    SST_ELI_REGISTER_MODULE(
         EmberLinearRankMap,
         "ember",
         "LinearMap",

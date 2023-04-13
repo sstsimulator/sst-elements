@@ -32,7 +32,7 @@ class TrivialMemoryModel : public MemoryModel {
 
 public:
 
-   SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+   SST_ELI_REGISTER_SUBCOMPONENT(
         TrivialMemoryModel,
         "firefly",
         "TrivialMemory",

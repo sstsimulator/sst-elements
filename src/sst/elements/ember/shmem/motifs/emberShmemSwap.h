@@ -101,7 +101,7 @@ public:
 
 class EmberShmemSwapIntGenerator : public EmberShmemSwapGenerator<int> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemSwapIntGenerator,
         "ember",
         "ShmemSwapIntMotif",
@@ -119,7 +119,7 @@ public:
 
 class EmberShmemSwapLongGenerator : public EmberShmemSwapGenerator<long> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemSwapLongGenerator,
         "ember",
         "ShmemSwapLongMotif",

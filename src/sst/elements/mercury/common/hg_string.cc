@@ -55,7 +55,7 @@ std::string sprintf(const char *fmt, ...)
 
   va_list args;
   va_start(args, fmt);
-  vsprintf(tmpbuf, fmt, args);
+  vsnprintf(tmpbuf, 512, fmt, args);
   std::string strobj = tmpbuf;
   va_end(args);
 

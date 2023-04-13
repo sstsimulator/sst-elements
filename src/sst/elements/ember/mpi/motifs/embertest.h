@@ -26,7 +26,7 @@ namespace Ember {
 class EmberTestGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberTestGenerator,
         "ember",
         "TestMotif",

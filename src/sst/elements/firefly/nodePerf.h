@@ -24,7 +24,7 @@ namespace Firefly {
 class SimpleNodePerf : public NodePerf {
 
   public:
-    SST_ELI_REGISTER_MODULE_DERIVED(
+    SST_ELI_REGISTER_MODULE(
         SimpleNodePerf,
         "firefly",
         "SimpleNodePerf",

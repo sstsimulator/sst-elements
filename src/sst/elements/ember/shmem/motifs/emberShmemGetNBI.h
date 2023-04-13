@@ -124,7 +124,7 @@ public:
 
 class EmberShmemGetNBIIntGenerator : public EmberShmemGetNBIGenerator<int> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemGetNBIIntGenerator,
         "ember",
         "ShmemGetNBIIntMotif",
@@ -144,7 +144,7 @@ public:
 
 class EmberShmemGetNBILongGenerator : public EmberShmemGetNBIGenerator<long> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemGetNBILongGenerator,
         "ember",
         "ShmemGetNBILongMotif",
@@ -164,7 +164,7 @@ public:
 
 class EmberShmemGetNBIDoubleGenerator : public EmberShmemGetNBIGenerator<double> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemGetNBIDoubleGenerator,
         "ember",
         "ShmemGetNBIDoubleMotif",
@@ -184,7 +184,7 @@ public:
 
 class EmberShmemGetNBIFloatGenerator : public EmberShmemGetNBIGenerator<float> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemGetNBIFloatGenerator,
         "ember",
         "ShmemGetNBIFloatMotif",

@@ -33,7 +33,7 @@ namespace Firefly {
 class SimpleMemoryModel : public MemoryModel {
 
 public:
-   SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+   SST_ELI_REGISTER_SUBCOMPONENT(
         SimpleMemoryModel,
         "firefly",
         "SimpleMemory",

@@ -25,7 +25,7 @@ namespace Ember {
 class EmberNullGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberNullGenerator,
         "ember",
         "NullMotif",

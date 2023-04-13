@@ -190,7 +190,7 @@ VanadisNodeOSComponent::init(unsigned int phase) {
 
     // do we need to check for this, really?
     for (Link* next_link : core_links) {
-        while (SST::Event* ev = next_link->recvInitData()) {
+        while (SST::Event* ev = next_link->recvUntimedData()) {
             assert(0);
         }
     }

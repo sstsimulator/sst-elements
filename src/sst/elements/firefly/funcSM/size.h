@@ -25,7 +25,7 @@ namespace Firefly {
 class SizeFuncSM :  public FunctionSMInterface
 {
   public:
-    SST_ELI_REGISTER_MODULE_DERIVED(
+    SST_ELI_REGISTER_MODULE(
         SizeFuncSM,
         "firefly",
         "Size",

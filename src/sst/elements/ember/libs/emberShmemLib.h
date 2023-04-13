@@ -63,7 +63,7 @@ class EmberShmemLib : public EmberLib {
 
   public:
 
-    SST_ELI_REGISTER_MODULE_DERIVED(
+    SST_ELI_REGISTER_MODULE(
         EmberShmemLib,
         "ember",
         "shmemLib",

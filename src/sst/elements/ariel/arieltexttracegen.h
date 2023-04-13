@@ -29,7 +29,7 @@ namespace ArielComponent {
 class ArielTextTraceGenerator : public ArielTraceGenerator {
 
     public:
-        SST_ELI_REGISTER_MODULE_DERIVED(
+        SST_ELI_REGISTER_MODULE(
             ArielTextTraceGenerator,
             "ariel",
             "TextTraceGenerator",

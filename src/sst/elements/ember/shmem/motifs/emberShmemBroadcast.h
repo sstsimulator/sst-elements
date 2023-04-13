@@ -137,7 +137,7 @@ public:
 
 class EmberShmemBroadcast32Generator : public EmberShmemBroadcastGenerator<uint32_t> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemBroadcast32Generator,
         "ember",
         "ShmemBroadcast32Motif",
@@ -157,7 +157,7 @@ public:
 
 class EmberShmemBroadcast64Generator : public EmberShmemBroadcastGenerator<uint64_t> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemBroadcast64Generator,
         "ember",
         "ShmemBroadcast64Motif",

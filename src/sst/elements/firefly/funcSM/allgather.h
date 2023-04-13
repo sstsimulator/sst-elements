@@ -41,7 +41,7 @@ class AllgatherFuncSM :  public FunctionSMInterface
   public:
     SST_ELI_REGISTER_MODULE_DERIVED_API(SST::Firefly::AllgatherFuncSM, SST::Firefly:: FunctionSMInterface)
 
-    SST_ELI_REGISTER_MODULE_DERIVED(
+    SST_ELI_REGISTER_MODULE(
         AllgatherFuncSM,
         "firefly",
         "Allgather",

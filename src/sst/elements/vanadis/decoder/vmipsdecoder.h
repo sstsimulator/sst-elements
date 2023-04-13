@@ -171,7 +171,7 @@ namespace Vanadis {
 class VanadisMIPSDecoder : public VanadisDecoder
 {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(VanadisMIPSDecoder, "vanadis", "VanadisMIPSDecoder",
+    SST_ELI_REGISTER_SUBCOMPONENT(VanadisMIPSDecoder, "vanadis", "VanadisMIPSDecoder",
                                           SST_ELI_ELEMENT_VERSION(1, 0, 0),
                                           "Implements a MIPS-compatible decoder for Vanadis CPU processing.",
                                           SST::Vanadis::VanadisDecoder)

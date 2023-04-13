@@ -25,7 +25,7 @@ namespace Ember {
 class EmberSweep3DGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberSweep3DGenerator,
         "ember",
         "Sweep3DMotif",

@@ -58,7 +58,7 @@ class ProcessQueuesState : public SubComponent
 {
   public:
     SST_ELI_REGISTER_SUBCOMPONENT_API( SST::Firefly::CtrlMsg::ProcessQueuesState )
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         ProcessQueuesState,
         "firefly",
         "ctrlMsg",
