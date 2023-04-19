@@ -129,7 +129,7 @@ void SimpleTLB::handleMMUEvent( Event* ev ) {
         } else {
             TlbEntry* entry = findTlbEntry( record->hwThreadId, vpn );
             assert(entry);
-            if ( (record->perms & 0x2) != (entry->perms() & 0x2) ) {
+            if ( record->perms & 0x2 != entry->perms() & 0x2 ) {
                 printf("%s() %#lx %#x %#x\n",__func__,vpn, record->perms, entry->perms());
                 fflush(stdout);
                 assert( 0);
