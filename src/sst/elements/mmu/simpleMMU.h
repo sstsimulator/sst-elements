@@ -75,11 +75,11 @@ class SimpleMMU : public MMU {
         assert( pageTable );
         uint32_t perms = -1;
         PTE* pte = nullptr;
-        if ( pte = pageTable->find( vpn ) ) {
+        if ( ( pte = pageTable->find( vpn ) ) ) {
             m_dbg.debug(CALL_INFO_LONG,1,0,"found PTE ppn %d, perms %#x\n",pte->ppn,pte->perms);
             perms = pte->perms;
         }
-        m_dbg.debug(CALL_INFO_LONG,1,0,"pid=%d vpn=%d -> perms=%d\n",pid,vpn,perms);
+        m_dbg.debug(CALL_INFO_LONG,1,0,"pid=%d vpn=%" PRIu64 " -> perms=%d\n",pid,vpn,perms);
         return perms;
     }
 
@@ -88,11 +88,11 @@ class SimpleMMU : public MMU {
         assert( pageTable );
         uint32_t ppn= -1;
         PTE* pte = nullptr;
-        if ( pte = pageTable->find( vpn ) ) {
+        if ( ( pte = pageTable->find( vpn ) ) ) {
             m_dbg.debug(CALL_INFO_LONG,1,0,"found PTE ppn %d, perms %#x\n",pte->ppn,pte->perms);
             ppn = pte->ppn;
         }
-        m_dbg.debug(CALL_INFO_LONG,1,0,"pid=%d vpn=%d -> ppn=%d\n",pid,vpn,ppn);
+        m_dbg.debug(CALL_INFO_LONG,1,0,"pid=%d vpn=%" PRIu64 " -> ppn=%d\n",pid,vpn,ppn);
         return ppn;
     }
 

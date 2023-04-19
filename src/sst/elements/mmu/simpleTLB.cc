@@ -65,7 +65,7 @@ SimpleTLB::SimpleTLB(SST::ComponentId_t id, SST::Params& params) : TLB(id,params
             m_tlbData[i][j].resize( m_tlbSetSize );
         }
     }
-    m_dbg.debug(CALL_INFO,1,0,"numHwTHreads=%d tlbSize=%d tlbSetSize=%d\n",numHwThreads,m_tlbSize,m_tlbSetSize);
+    m_dbg.debug(CALL_INFO,1,0,"numHwTHreads=%d tlbSize=%zu tlbSetSize=%d\n",numHwThreads,m_tlbSize,m_tlbSetSize);
     m_tlbIndexShift = log2( m_tlbSize );
 }
 
@@ -111,7 +111,7 @@ void SimpleTLB::handleMMUEvent( Event* ev ) {
         physAddr = -1;
     } 
 
-    m_dbg.debug(CALL_INFO,1,0,"virtAddr=%#" PRIx64 " physAddr=%#" PRIx64 " ppn=%d perms=%#x\n", record->virtAddr, physAddr,  req->getPPN(), req->getPerms() );
+    m_dbg.debug(CALL_INFO,1,0,"virtAddr=%#" PRIx64 " physAddr=%#" PRIx64 " ppn=%zu perms=%#x\n", record->virtAddr, physAddr,  req->getPPN(), req->getPerms() );
 
     // send the first fill response 
     m_selfLink->send( 0, new SelfEvent( record->reqId, physAddr ));
@@ -129,7 +129,7 @@ void SimpleTLB::handleMMUEvent( Event* ev ) {
         } else {
             TlbEntry* entry = findTlbEntry( record->hwThreadId, vpn );
             assert(entry);
-            if ( record->perms & 0x2 != entry->perms() & 0x2 ) {
+            if ( (record->perms & 0x2) != (entry->perms() & 0x2) ) {
                 printf("%s() %#lx %#x %#x\n",__func__,vpn, record->perms, entry->perms());
                 fflush(stdout);
                 assert( 0);
@@ -148,7 +148,7 @@ void SimpleTLB::handleMMUEvent( Event* ev ) {
 
 void SimpleTLB::getVirtToPhys( RequestID reqId, int hwThreadId, uint64_t virtAddr, uint32_t perms, uint64_t instPtr ) {
     size_t vpn = virtAddr >> m_pageShift;
-    m_dbg.debug(CALL_INFO,1,0,"reqId=%p, hwThreadId=%d virtAddr=%#" PRIx64 " vpn=%d perms=%#x\n", reqId, hwThreadId, virtAddr, vpn, perms);
+    m_dbg.debug(CALL_INFO,1,0,"reqId=%#" PRIx64 ", hwThreadId=%d virtAddr=%#" PRIx64 " vpn=%zu perms=%#x\n", reqId, hwThreadId, virtAddr, vpn, perms);
 
     if ( virtAddr < m_minVirtAddr || virtAddr > m_maxVirtAddr ) {
         m_dbg.debug(CALL_INFO,1,0,"virtAddr=%#" PRIx64 " is out of virtual memory range, flag error\n", virtAddr);

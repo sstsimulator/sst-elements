@@ -45,10 +45,10 @@ void SimpleMMU::handleNicTlbEvent( Event* ev )
     auto hwThread = 0;
     unsigned pid = getPid( 0, 0 );
 
-    m_dbg.debug(CALL_INFO_LONG,1,0,"event on link=%d name=%s core=%d pid=%d vpn=%d perms=%#x\n",
+    m_dbg.debug(CALL_INFO_LONG,1,0,"event on link=%d name=%s core=%d pid=%d vpn=%zu perms=%#x\n",
         link,"nicTlb",core,pid,req->getVPN(),req->getPerms());
 
-    m_dbg.debug(CALL_INFO_LONG,1,0,"reqId=%d hwTHread=%d vpn=%zu %#" PRIx64 "\n", req->getReqId(), req->getHardwareThread(), req->getVPN(), req->getVPN() << 12  );
+    m_dbg.debug(CALL_INFO_LONG,1,0,"reqId=%" PRIu64 " hwTHread=%d vpn=%zu %#" PRIx64 "\n", req->getReqId(), req->getHardwareThread(), req->getVPN(), (uint64_t) req->getVPN() << 12  );
     m_permissionsCallback( req->getReqId(), link, core, hwThread, pid, req->getVPN(), req->getPerms(), req->getInstPtr(), req->getMemAddr() );
     delete ev;
 }
@@ -70,10 +70,10 @@ void SimpleMMU::handleTlbEvent( Event* ev, int link )
 
     unsigned pid = getPid( core, hwThread );
 
-    m_dbg.debug(CALL_INFO_LONG,1,0,"event on link=%d name=%s core=%d hwThread=%d pid=%d vpn=%d perms=%#x\n",
+    m_dbg.debug(CALL_INFO_LONG,1,0,"event on link=%d name=%s core=%d hwThread=%d pid=%d vpn=%zu perms=%#x\n",
         link,getTlbName(link).c_str(),core,hwThread,pid,req->getVPN(),req->getPerms());
     
-    m_dbg.debug(CALL_INFO_LONG,1,0,"reqId=%d hwTHread=%d vpn=%zu %#" PRIx64 "\n", req->getReqId(), req->getHardwareThread(), req->getVPN(), req->getVPN() << 12  );
+    m_dbg.debug(CALL_INFO_LONG,1,0,"reqId=%" PRIu64 " hwTHread=%d vpn=%zu %#" PRIx64 "\n", req->getReqId(), req->getHardwareThread(), req->getVPN(), (uint64_t) req->getVPN() << 12  );
     m_permissionsCallback( req->getReqId(), link, core, hwThread, pid, req->getVPN(), req->getPerms(), req->getInstPtr(), req->getMemAddr() );
     delete ev;
 }
@@ -132,7 +132,8 @@ void SimpleMMU::faultHandled( RequestID requestId, unsigned link, unsigned pid, 
     if ( success ) {
         auto pageTable = getPageTable(pid);
         assert( pageTable );
-        m_dbg.debug(CALL_INFO_LONG,1,0,"link=%d vpn=%#x virtAddr=%#lx ppn=%#x\n",link, vpn, vpn<<12, pageTable->find( vpn )->ppn );
+        m_dbg.debug(CALL_INFO_LONG,1,0,"link=%d vpn=%#x virtAddr=%#" PRIx64 " ppn=%#x\n",
+            link, vpn, (uint64_t) vpn<<12, pageTable->find( vpn )->ppn );
         sendEvent( link, new TlbFillEvent( requestId, *pageTable->find( vpn ) ) );
     } else {
         m_dbg.debug(CALL_INFO_LONG,1,0,"link=%d vpn=%#x failed\n",link,vpn);
