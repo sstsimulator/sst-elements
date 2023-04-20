@@ -50,8 +50,8 @@ libmemHierarchy_la_SOURCES = \
 	membackend/requestReorderByRow.cc \
 	membackend/vaultSimBackend.h \
 	membackend/vaultSimBackend.cc \
-	membackend/MessierBackend.h \
-	membackend/MessierBackend.cc \
+	membackend/messierBackend.h \
+	membackend/messierBackend.cc \
 	membackend/scratchBackendConvertor.h \
 	membackend/scratchBackendConvertor.cc \
 	membackend/simpleMemScratchBackendConvertor.h \
@@ -338,7 +338,7 @@ nobase_sst_HEADERS = \
 	membackend/backing.h \
 	membackend/memBackend.h \
 	membackend/vaultSimBackend.h \
-	membackend/MessierBackend.h \
+	membackend/messierBackend.h \
 	membackend/simpleMemBackend.h \
 	membackend/simpleDRAMBackend.h \
 	membackend/requestReorderSimple.h \

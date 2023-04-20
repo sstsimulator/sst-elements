@@ -47,7 +47,7 @@ sst test.py > test.ref.out
 
 # Messier
 echo "messier..."
-cd ../../Messier/tests
+cd ../../messier/tests
 sst gupsgen_2RANKS.py > refFiles/test_Messier_gupsgen_2RANKS.out &
 sst gupsgen_fastNVM.py > refFiles/test_Messier_gupsgen_fastNVM.out &
 sst gupsgen.py > refFiles/test_Messier_gupsgen.out &
