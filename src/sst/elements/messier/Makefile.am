@@ -45,17 +45,6 @@ EXTRA_DIST = \
 	tests/refFiles/test_Messier_stencil3dbench_messier.out \
 	tests/refFiles/test_Messier_streambench_messier.out
 
-#noinst_PROGRAMS = infogather
-#infogather_SOURCES = infogather.cc
-#infogather_CPPFLAGS = -I/usr/local/systemc-2.3/include \
-#											-std=c++11 -fPIC -Wall \
-#											$(BOOST_CPPFLAGS) \
-#											$(MPI_CPPFLAGS)
-#infogather_LDFLAGS =  -L/usr/local/systemc-2.3/lib-linux64/ -lsystemc \
-#											-lhmcsim \
-#										 	-avoid-version
-#infogather_LDADD = libhmcsim.so
-
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     Messier=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      Messier=$(abs_srcdir)/tests
