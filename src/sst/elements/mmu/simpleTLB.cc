@@ -130,9 +130,12 @@ void SimpleTLB::handleMMUEvent( Event* ev ) {
             TlbEntry* entry = findTlbEntry( record->hwThreadId, vpn );
             assert(entry);
             if ( ! checkPerms( record->perms, entry->perms() ) ) {
-                printf("%s() %#lx %#x %#x\n",__func__,vpn, record->perms, entry->perms());
-                fflush(stdout);
-                assert( 0);
+                m_dbg.debug(CALL_INFO,1,0,"miss vpn=%zu want=%#" PRIx32 " have=%#" PRIx32 "\n",vpn, record->perms, entry->perms());
+ 
+                auto id = reinterpret_cast<RequestID>( record );
+                m_mmuLink->send( 0, new TlbMissEvent( id, record->hwThreadId, vpn, record->perms, record->instPtr, record->virtAddr) );
+                delete ev;
+                return;
             }
         }
         m_dbg.debug(CALL_INFO,1,0,"virtAddr=%#" PRIx64 " physAddr=%#" PRIx64 "\n", record->virtAddr, physAddr );
@@ -167,7 +170,7 @@ void SimpleTLB::getVirtToPhys( RequestID reqId, int hwThreadId, uint64_t virtAdd
         m_selfLink->send( m_hitLatency, new SelfEvent( reqId, physAddr ));
 
     } else {
-        auto record = new TlbRecord( reqId, hwThreadId, virtAddr, perms );
+        auto record = new TlbRecord( reqId, hwThreadId, virtAddr, perms, instPtr );
         auto id = reinterpret_cast<RequestID>( record );
 
         m_dbg.debug(CALL_INFO,1,0,"miss id=%#" PRIx64 "\n", id );

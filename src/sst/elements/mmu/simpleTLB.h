@@ -56,11 +56,13 @@ class SimpleTLB : public TLB {
 
     class TlbRecord { 
       public:
-        TlbRecord( RequestID reqId, int hwThreadId, uint64_t virtAddr, uint32_t perms ) : reqId(reqId), hwThreadId(hwThreadId), virtAddr(virtAddr),perms(perms) {}
+        TlbRecord( RequestID reqId, int hwThreadId, uint64_t virtAddr, uint32_t perms, uint64_t instPtr )
+            : reqId(reqId), hwThreadId(hwThreadId), virtAddr(virtAddr),perms(perms), instPtr(instPtr) {}
         RequestID reqId;
         int hwThreadId;
         uint64_t virtAddr;
         uint32_t perms;
+        uint64_t instPtr;
     };
 
     class SelfEvent  : public SST::Event {
