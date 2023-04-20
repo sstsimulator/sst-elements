@@ -57,7 +57,7 @@ wait
 
 # Opal
 echo "opal..."
-cd ../../Opal/tests
+cd ../../opal/tests
 cd app
 make
 cd ..
@@ -65,7 +65,7 @@ sst basic_1node_1smp.py > refFiles/test_Opal_basic_1node_1smp.out
 
 # Samba
 echo "samba..."
-cd ../../Samba/tests
+cd ../../samba/tests
 sst gupsgen_mmu_4KB.py > refFiles/test_Samba_gupsgen_mmu_4KB.out &
 sst gupsgen_mmu.py > refFiles/test_Samba_gupsgen_mmu.out &
 sst gupsgen_mmu_three_levels.py > refFiles/test_Samba_gupsgen_mmu_three_levels.out &
