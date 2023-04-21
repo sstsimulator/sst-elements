@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -89,11 +89,10 @@ public:
             const register_format result_hi       = (register_format)(multiply_result >> (sizeof(register_format) * 8));
 
             if(output->getVerboseLevel() >= 16) {
-                output->verbose(
-                    CALL_INFO, 16, 0,
-                    "-> Execute: (detail, MULSPLIT64) %" PRId64 " * %" PRId64 " = %" PRId64 " = (lo: %" PRId64
-                    ", hi: %" PRId64 " )\n",
-                    src_1, src_2, multiply_result, result_lo, result_hi);
+                std::ostringstream ss;
+                ss << "-> Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
+                ss << " " << src_1 <<" * " << src_2 << " = "<< multiply_result << " = (lo: " << result_lo << ", hi: " << result_hi;
+                output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
             }
 
             regFile->setIntReg<register_format>(phys_int_regs_out[0], result_lo);
@@ -104,11 +103,10 @@ public:
             const register_format result_hi       = (register_format)(multiply_result >> (sizeof(register_format) * 8));
 
             if(output->getVerboseLevel() >= 16) {
-                output->verbose(
-                    CALL_INFO, 16, 0,
-                    "-> Execute: (detail, MULSPLIT64) %" PRId64 " * %" PRId64 " = %" PRId64 " = (lo: %" PRId64
-                    ", hi: %" PRId64 " )\n",
-                    src_1, src_2, multiply_result, result_lo, result_hi);
+                std::ostringstream ss;
+                ss << "-> Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
+                ss << " " << src_1 <<" * " << src_2 << " = "<< multiply_result << " = (lo: " << result_lo << ", hi: " << result_hi;
+                output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
             }
 
             regFile->setIntReg<register_format>(phys_int_regs_out[0], result_lo);

@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,10 +27,15 @@ namespace MMU_Lib {
 class SimpleMMU : public MMU {
 
   public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(SimpleMMU, "mmu", "simpleMMU",
-                                          SST_ELI_ELEMENT_VERSION(1, 0, 0),
-                                          "Simple MMU,",
-                                          SST::MMU_Lib::SimpleMMU)
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        SimpleMMU,
+        "mmu",
+        "simpleMMU",
+        SST_ELI_ELEMENT_VERSION(1, 0, 0),
+        "Simple MMU,",
+        SST::MMU_Lib::SimpleMMU
+    )
+
     SST_ELI_DOCUMENT_PARAMS(
 #if 0
         {"hitLatency", "latency of MMU hit in ns","0"},
@@ -70,11 +75,11 @@ class SimpleMMU : public MMU {
         assert( pageTable );
         uint32_t perms = -1;
         PTE* pte = nullptr;
-        if ( pte = pageTable->find( vpn ) ) {
+        if ( ( pte = pageTable->find( vpn ) ) ) {
             m_dbg.debug(CALL_INFO_LONG,1,0,"found PTE ppn %d, perms %#x\n",pte->ppn,pte->perms);
             perms = pte->perms;
         }
-        m_dbg.debug(CALL_INFO_LONG,1,0,"pid=%d vpn=%d -> perms=%d\n",pid,vpn,perms);
+        m_dbg.debug(CALL_INFO_LONG,1,0,"pid=%d vpn=%" PRIu64 " -> perms=%d\n",pid,vpn,perms);
         return perms;
     }
 
@@ -83,11 +88,11 @@ class SimpleMMU : public MMU {
         assert( pageTable );
         uint32_t ppn= -1;
         PTE* pte = nullptr;
-        if ( pte = pageTable->find( vpn ) ) {
+        if ( ( pte = pageTable->find( vpn ) ) ) {
             m_dbg.debug(CALL_INFO_LONG,1,0,"found PTE ppn %d, perms %#x\n",pte->ppn,pte->perms);
             ppn = pte->ppn;
         }
-        m_dbg.debug(CALL_INFO_LONG,1,0,"pid=%d vpn=%d -> ppn=%d\n",pid,vpn,ppn);
+        m_dbg.debug(CALL_INFO_LONG,1,0,"pid=%d vpn=%" PRIu64 " -> ppn=%d\n",pid,vpn,ppn);
         return ppn;
     }
 

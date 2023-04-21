@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -36,13 +36,14 @@ class xbar_arb_rand : public XbarArbitration {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         xbar_arb_rand,
         "merlin",
         "xbar_arb_rand",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Random arbitration unit for hr_router",
-        SST::Merlin::XbarArbitration)
+        SST::Merlin::XbarArbitration
+    )
 
 
 private:

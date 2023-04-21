@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -95,7 +95,7 @@ public:
 
 class EmberShmemAddIntGenerator : public EmberShmemAddGenerator<int> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemAddIntGenerator,
         "ember",
         "ShmemAddIntMotif",
@@ -115,7 +115,7 @@ public:
 
 class EmberShmemAddLongGenerator : public EmberShmemAddGenerator<long> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemAddLongGenerator,
         "ember",
         "ShmemAddLongMotif",
@@ -135,7 +135,7 @@ public:
 
 class EmberShmemAddDoubleGenerator : public EmberShmemAddGenerator<double> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemAddDoubleGenerator,
         "ember",
         "ShmemAddDoubleMotif",
@@ -155,7 +155,7 @@ public:
 
 class EmberShmemAddFloatGenerator : public EmberShmemAddGenerator<float> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemAddFloatGenerator,
         "ember",
         "ShmemAddFloatMotif",

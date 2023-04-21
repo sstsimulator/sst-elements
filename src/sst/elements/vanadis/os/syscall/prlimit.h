@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -35,7 +35,7 @@ public:
     VanadisPrlimitSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallPrlimitEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "prlimit" ), m_state( READ )  
     {
-        m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL, "[syscall-prlimit] pid=%d resource=%d new_limit=%#" PRIx64 " old_limit=%#" PRIx64 "\n",
+        m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL, "[syscall-prlimit] pid=%" PRIu64 " resource=%" PRIu64 " new_limit=%#" PRIx64 " old_limit=%#" PRIx64 "\n",
             event->getPid(),event->getResource(),event->getNewLimit(),event->getOldLimit());
 
         assert( event->getResource() == VANADIS_RLIMIT_STACK );

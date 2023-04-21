@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -34,7 +34,9 @@ namespace Merlin {
 
 #define VERIFY_DECLOCKING 0
 
+[[deprecated("INIT_BROADCAST_ADDR has been deprecated, please use UNTIMED_BROADCAST_ADDR")]]
 const int INIT_BROADCAST_ADDR = -1;
+const int UNTIMED_BROADCAST_ADDR = -1;
 
 class TopologyEvent;
 class CtrlRtrEvent;
@@ -488,20 +490,7 @@ public:
     Topology(ComponentId_t cid) : SubComponent(cid), output(getSimulationOutput()) {}
     virtual ~Topology() {}
 
-    virtual void route(int port, int vc, internal_router_event* ev) __attribute__ ((deprecated("route() is deprecated and will be removed in SST 11. Please use route_packet(), which is now called when a packet reaches the head of the input queue."))) { }
-
-    virtual void reroute(int port, int vc, internal_router_event* ev) __attribute__ ((deprecated("reroute() is deprecated and will be removed in SST 11. Please use route_packet(), which is now called when a packet reaches the head of the input queue."))) {
-        DISABLE_WARN_DEPRECATED_DECLARATION
-        route(port,vc,ev);
-        REENABLE_WARNING
-    }
-
-    virtual void route_packet(int port, int vc, internal_router_event* ev)  {
-        DISABLE_WARN_DEPRECATED_DECLARATION
-        route(port,vc,ev);
-        reroute(port,vc,ev);
-        REENABLE_WARNING
-    }
+    virtual void route_packet(int port, int vc, internal_router_event* ev) = 0;
     virtual internal_router_event* process_input(RtrEvent* ev) = 0;
     virtual std::pair<int,int> getDeliveryPortForEndpointID(int ep_id) { return std::make_pair(-1,-1); }
 
@@ -518,21 +507,31 @@ public:
 
 
     // Methods used during init phase to route init messages
-    virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts) = 0;
-    virtual internal_router_event* process_InitData_input(RtrEvent* ev) = 0;
+    virtual void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts)
+    {
+        DISABLE_WARN_DEPRECATED_DECLARATION
+        routeInitData(port,ev,outPorts);
+        REENABLE_WARNING
+        return;
+    }
+    virtual internal_router_event* process_UntimedData_input(RtrEvent* ev)
+    {
+        DISABLE_WARN_DEPRECATED_DECLARATION
+        auto ret = process_UntimedData_input(ev);
+        REENABLE_WARNING
+        return ret;
+    }
 
-    // Method used for autodiscovery of VC/VN
-    virtual int computeNumVCs(int vns) __attribute__ ((deprecated("computeNumVCs() is deprecated and will be removed in SST 11. Please use getVCsPerVN() instead."))) {return vns;}
+    [[deprecated ("routeInitData() has been deprecated and will be removed in SST 14. Please rename to routeUntimedData(), which will become pure virtual in SST 14.")]]
+    virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts) {}
+    [[deprecated ("process_InitData_input() has been deprecated and will be removed in SST 14. Please rename to process_UntimedData_input(), which will become pure virtual in SST 14.")]]
+    virtual internal_router_event* process_InitData_input(RtrEvent* ev) {return nullptr;}
 
     // Gets the number of VCs per VN for each VN.  Vector that is
     // passed in must have it's size set to num_vns before making this
     // call.
-    virtual void getVCsPerVN(std::vector<int>& vns_per_vn) {
-        DISABLE_WARN_DEPRECATED_DECLARATION
-        int vcs = computeNumVCs(1);
-        REENABLE_WARNING
-        for ( int& val : vns_per_vn ) val = vcs;
-    }
+    virtual void getVCsPerVN(std::vector<int>& vns_per_vn) = 0;
+
     // Method used to set endpoint ID
     virtual int getEndpointID(int port) {return -1;}
 
@@ -599,8 +598,6 @@ public:
     // void complete(unsigned int phase);
 
 
-    virtual void sendInitData(Event *ev) = 0;
-    virtual Event* recvInitData() = 0;
     virtual void sendUntimedData(Event *ev) = 0;
     virtual Event* recvUntimedData() = 0;
 

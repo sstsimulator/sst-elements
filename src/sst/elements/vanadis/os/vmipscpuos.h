@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -149,7 +149,7 @@ public:
         T1 buf_ptr    = getArgRegister(1);
         T1 size        = getArgRegister(2);
 
-        output->verbose(CALL_INFO, 8, 0, "readLink( %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ")\n",path,buf_ptr,size);
+        output->verbose(CALL_INFO, 8, 0, "readLink( %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 ")\n",path,buf_ptr,size);
         return new VanadisSyscallReadLinkEvent(core_id, hw_thr, BitType, path, buf_ptr, size);
     }
 
@@ -167,7 +167,7 @@ public:
         T1 flags      = getArgRegister(1);
         T1 mode       = getArgRegister(2);
 
-        output->verbose(CALL_INFO, 8, 0, "open( %#" PRIx64 ", %" PRIu64 ", %" PRIu64 " )\n", path_ptr, flags, mode);
+        output->verbose(CALL_INFO, 8, 0, "open( %#" PRIx32 ", %" PRIu32 ", %" PRIu32 " )\n", path_ptr, flags, mode);
 
         return new VanadisSyscallOpenEvent(core_id, hw_thr, BitType, path_ptr, convertFlags(flags), mode);
     }
@@ -176,7 +176,7 @@ public:
         T1 path_ptr       = getArgRegister(0);
         T1 access_mode    = getArgRegister(1);
 
-        output->verbose(CALL_INFO, 8, 0, "access( 0x%llx, %" PRIu64 " )\n", path_ptr, access_mode);
+        output->verbose(CALL_INFO, 8, 0, "access( %#" PRIx32 ", %" PRId32 " )\n", path_ptr, access_mode);
         return new VanadisSyscallAccessEvent(core_id, hw_thr, BitType, path_ptr, access_mode);
     }
 
@@ -190,7 +190,7 @@ public:
         assert( stackPtr );
 
         output->verbose(CALL_INFO, 8, 0,
-                "clone( %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 " )\n",
+                "clone( %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 " )\n",
                 flags, threadStack, ptid, tls, stackPtr );
 
         return new VanadisSyscallCloneEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, instPtr, threadStack, flags, ptid, tls, 0, stackPtr );
@@ -204,7 +204,7 @@ public:
     VanadisSyscallEvent* SET_THREAD_AREA( int hw_thr ) {
         T1 ptr = getArgRegister(0);
 
-        output->verbose(CALL_INFO, 8, 0, "set_thread_area( %#" PRIx64 ")\n", ptr);
+        output->verbose(CALL_INFO, 8, 0, "set_thread_area( %#" PRIx32 ")\n", ptr);
 
         if (tls_address != nullptr) {
             (*tls_address) = ptr;
@@ -228,7 +228,7 @@ public:
        }
 #endif
 
-        output->verbose(CALL_INFO, 8, 0, "statx( %" PRId32 ", %#" PRIx64 ", %#" PRIx32 ", %#" PRIx32 ", %#" PRIx64 " )\n",
+        output->verbose(CALL_INFO, 8, 0, "statx( %" PRId32 ", %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 ", %#" PRIx32 " )\n",
                         dirfd, pathname, flags, mask, stackPtr );
 
         return new VanadisSyscallStatxEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, dirfd, pathname, flags, mask, stackPtr);
@@ -241,7 +241,7 @@ public:
         uint32_t timeout_addr   = getArgRegister(3);
         uint32_t stack_ptr      = getSP();
 
-        output->verbose(CALL_INFO, 8, 0, "futex( 0x%llx, %" PRId32 ", %" PRIu32 ", %" PRIu64 ", sp: 0x%llx (arg-count is greater than 4))\n",
+        output->verbose(CALL_INFO, 8, 0, "futex( %#" PRIx32 ", %" PRId32 ", %" PRIu32 ", %" PRIu32 ", sp: %#" PRIx32 " (arg-count is greater than 4))\n",
                             addr, op, val, timeout_addr, stack_ptr);
 
         return new VanadisSyscallFutexEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, addr, op, val, timeout_addr, stack_ptr );
@@ -254,7 +254,7 @@ public:
         int32_t  flags      = getArgRegister(3);
         uint32_t stack_ptr  = getSP();
 
-        output->verbose(CALL_INFO, 8, 0, "mmap2( 0x%llx, %" PRIu64 ", %" PRId32 ", %" PRId32 ", sp: 0x%llx (> 4 arguments) )\n",
+        output->verbose(CALL_INFO, 8, 0, "mmap2( %#" PRIx32 ", %" PRIu32 ", %" PRId32 ", %" PRId32 ", sp: %#" PRIx32 " (> 4 arguments) )\n",
                             addr, len, prot, flags, stack_ptr);
 
         if ( flags & MIPS_MAP_FIXED ) {
@@ -273,7 +273,7 @@ public:
         int32_t  clk_type   = getArgRegister(0);
         uint32_t time_addr  = getArgRegister(1);
 
-        output->verbose(CALL_INFO, 8, 0, "clock_gettime64( %" PRId64 ", 0x%llx )\n", clk_type, time_addr);
+        output->verbose(CALL_INFO, 8, 0, "clock_gettime64( %" PRId32 ", %#" PRIx32 ")\n", clk_type, time_addr);
 
         return new VanadisSyscallGetTime64Event(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, clk_type, time_addr);
     }
@@ -390,7 +390,7 @@ private:
 class VanadisMIPSOSHandler : public VanadisMIPSOSHandler2< uint32_t, VanadisOSBitType::VANADIS_OS_32B, MIPS_ARG_REG_ZERO, MIPS_OS_CODE_REG, MIPS_LINK_REG > {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(VanadisMIPSOSHandler, "vanadis",
+    SST_ELI_REGISTER_SUBCOMPONENT(VanadisMIPSOSHandler, "vanadis",
                                             "VanadisMIPSOSHandler",
                                             SST_ELI_ELEMENT_VERSION(1, 0, 0),
                                             "Provides SYSCALL handling for a MIPS-based decoding core",

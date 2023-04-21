@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -190,7 +190,7 @@ VanadisNodeOSComponent::init(unsigned int phase) {
 
     // do we need to check for this, really?
     for (Link* next_link : core_links) {
-        while (SST::Event* ev = next_link->recvInitData()) {
+        while (SST::Event* ev = next_link->recvUntimedData()) {
             assert(0);
         }
     }
@@ -281,7 +281,7 @@ VanadisNodeOSComponent::startProcess( OS::HwThreadID& threadID, OS::ProcessInfo*
 
     output->verbose( CALL_INFO, 16, VANADIS_OS_DBG_APP_INIT,
         "stack_pointer=%#" PRIx64 " stack_memory_region_start=%#" PRIx64" stack_region_length=%" PRIu64 "\n",
-        stack_pointer, phdrRegionEnd, stackRegionEnd - phdrRegionEnd);
+        stack_pointer, (uint64_t) phdrRegionEnd, stackRegionEnd - phdrRegionEnd);
 
     process->printRegions("after app runtime setup");
 
@@ -535,7 +535,7 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
                 // map this physical page into the MMU for this process 
                 auto physAddr = region->backing->dev->getPhysAddr();
                 auto ppn = physAddr >> m_pageShift;
-                output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "Device physAddr=%#lx ppn=%d\n",physAddr,ppn);
+                output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "Device physAddr=%#" PRIx64 " ppn=%" PRIu64 "\n",physAddr,ppn);
                 m_mmu->map( thread->getpid(), vpn, ppn, m_pageSize, region->perms );
                 pageFaultFini( info );
                 return;

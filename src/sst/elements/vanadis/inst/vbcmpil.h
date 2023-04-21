@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -55,23 +55,24 @@ public:
 
     void printToBuffer(char* buffer, size_t buffer_size) override
     {
-        snprintf(
-            buffer, buffer_size,
-            "BCMPIL isa-in: %" PRIu16 " / phys-in: %" PRIu16 " / imm: %" PRId64 " / offset: %" PRId64
-            " / isa-link: %" PRIu16 " / phys-link: %" PRIu16 "\n",
-            isa_int_regs_in[0], phys_int_regs_in[0], imm_value, offset, isa_int_regs_out[0], phys_int_regs_out[0]);
+        std::ostringstream ss;
+        ss << getInstCode();
+        ss << " isa-in: "     << isa_int_regs_in[0] << " / phys-in: "    << phys_int_regs_in[0];
+        ss << " / imm: " << imm_value << " / offset: " << offset;
+        ss << " / isa-link: " << isa_int_regs_out[0] << " / phys-link: " << phys_int_regs_out[0];
+        strncpy( buffer, ss.str().c_str(), buffer_size );
     }
 
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16) {
-            output->verbose(
-                CALL_INFO, 16, 0,
-                "Execute: (addr=0x%0llx) %s isa-in: %" PRIu16 " / phys-in: %" PRIu16 " / imm: %" PRId64
-                " / offset: %" PRId64 " / isa-link: %" PRIu16 " / phys-link: %" PRIu16 "\n",
-                getInstructionAddress(), getInstCode(), isa_int_regs_in[0], phys_int_regs_in[0], imm_value, offset, isa_int_regs_out[0],
-                phys_int_regs_out[0]);
+            std::ostringstream ss;
+            ss << "Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
+            ss << " isa-in: "     <<  isa_int_regs_in[0]  << " / phys-in: "   << phys_int_regs_in[0];
+            ss << " / imm: " << imm_value << " / offset: " << offset;
+            ss << " / isa-link: " <<  isa_int_regs_out[0] << " / phys-link: " << phys_int_regs_out[0];
+            output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
         }
 #endif
         bool compare_result = false;

@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,7 +26,7 @@ namespace MemHierarchy {
 class SimpleMemScratchBackendConvertor : public ScratchBackendConvertor {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(SimpleMemScratchBackendConvertor, "memHierarchy", "simpleMemScratchBackendConvertor", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(SimpleMemScratchBackendConvertor, "memHierarchy", "simpleMemScratchBackendConvertor", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Convert a MemEventBase to a base MemBacked but uses a different interface than MemBackendConvertor", SST::MemHierarchy::ScratchBackendConvertor)
 
     SST_ELI_DOCUMENT_PARAMS(

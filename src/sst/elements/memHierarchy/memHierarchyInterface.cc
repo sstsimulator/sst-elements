@@ -1,9 +1,9 @@
 // -*- mode: c++ -*-
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -58,14 +58,14 @@ void MemHierarchyInterface::init(unsigned int phase) {
         region.end = (uint64_t) - 1;
         region.interleaveStep = 0;
         region.interleaveSize = 0;
-        link_->sendInitData(new MemEventInitRegion(getName(), region, false));
+        link_->sendUntimedData(new MemEventInitRegion(getName(), region, false));
 
         MemEventInitCoherence * event = new MemEventInitCoherence(getName(), Endpoint::CPU, false, false, 0, false);
-        link_->sendInitData(event);
+        link_->sendUntimedData(event);
 
     }
 
-    while (SST::Event * ev = link_->recvInitData()) {
+    while (SST::Event * ev = link_->recvUntimedData()) {
         MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
         if (memEvent) {
             if (memEvent->getCmd() == Command::NULLCMD) {
@@ -83,7 +83,7 @@ void MemHierarchyInterface::init(unsigned int phase) {
 
     if (initDone_) { // Drain send queue
         while (!initSendQueue_.empty()) {
-            link_->sendInitData(initSendQueue_.front());
+            link_->sendUntimedData(initSendQueue_.front());
             initSendQueue_.pop();
         }
     }
@@ -93,7 +93,7 @@ void MemHierarchyInterface::init(unsigned int phase) {
 void MemHierarchyInterface::sendInitData(SimpleMem::Request *req){
     MemEventInit *me = new MemEventInit(getName(), Command::Write, req->addrs[0], req->data);
     if (initDone_)
-        link_->sendInitData(me);
+        link_->sendUntimedData(me);
     else
         initSendQueue_.push(me);
 }

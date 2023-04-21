@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -144,11 +144,11 @@ topo_mesh::process_input(RtrEvent* ev)
 }
 
 
-void topo_mesh::routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts)
+void topo_mesh::routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts)
 {
     topo_mesh_init_event *tt_ev = static_cast<topo_mesh_init_event*>(ev);
     if ( tt_ev->phase == 0 ) {
-        if ( (0 == router_id) && (ev->getDest() == INIT_BROADCAST_ADDR) ) {
+        if ( (0 == router_id) && (ev->getDest() == UNTIMED_BROADCAST_ADDR) ) {
             /* Broadcast has arrived at 0.  Switch Phases */
             tt_ev->phase = 1;
         } else {
@@ -188,11 +188,11 @@ void topo_mesh::routeInitData(int port, internal_router_event* ev, std::vector<i
 }
 
 
-internal_router_event* topo_mesh::process_InitData_input(RtrEvent* ev)
+internal_router_event* topo_mesh::process_UntimedData_input(RtrEvent* ev)
 {
     topo_mesh_init_event* tt_ev = new topo_mesh_init_event(dimensions);
     tt_ev->setEncapsulatedEvent(ev);
-    if ( tt_ev->getDest() == INIT_BROADCAST_ADDR ) {
+    if ( tt_ev->getDest() == UNTIMED_BROADCAST_ADDR ) {
         /* For broadcast, first send to rtr 0 */
         idToLocation(0, tt_ev->dest_loc);
     } else {

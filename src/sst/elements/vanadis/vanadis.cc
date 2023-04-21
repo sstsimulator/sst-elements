@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -1813,7 +1813,7 @@ VANADIS_COMPONENT::init(unsigned int phase)
     //	memDataInterface->init( phase );
     memInstInterface->init(phase);
 
-    while (SST::Event* ev = os_link->recvInitData()) {
+    while (SST::Event* ev = os_link->recvUntimedData()) {
 
         assert( 0 );
     }
@@ -2019,7 +2019,8 @@ void VANADIS_COMPONENT::startThreadClone( VanadisStartThreadCloneReq* req )
 
     resetHwThread( hw_thr );
 
-    output->verbose(CALL_INFO, 8, 0,"instPtr=%lx stackAddr=%lx argAddr=%lx tlsAddr=%lx\n", req->getInstPtr(), req->getStackAddr(), req->getArgAddr(), req->getTlsAddr() );
+    output->verbose(CALL_INFO, 8, 0,"instPtr=%#" PRIx64 " stackAddr=%#" PRIx64 " argAddr=%#" PRIx64 " tlsAddr=%#" PRIx64 "\n",
+        req->getInstPtr(), req->getStackAddr(), req->getArgAddr(), req->getTlsAddr() );
     for ( int i = 0; i < req->getIntRegs().size(); i++ ) {
 #if 0 
         printf("%s() %d %#lx\n",__func__,i,req->getIntRegs()[i]);
@@ -2054,7 +2055,7 @@ void VANADIS_COMPONENT::startThreadFork( VanadisStartThreadForkReq* req )
 
     resetHwThread( hw_thr );
 
-    output->verbose(CALL_INFO, 8, 0,"start thread fork, thread=%d instPtr=%lx tlsPtr=%lx\n",
+    output->verbose(CALL_INFO, 8, 0,"start thread fork, thread=%d instPtr=%#" PRIx64 " tlsPtr=%#" PRIx64 "\n",
                 req->getThread(), req->getInstPtr(), req->getTlsAddr() );
 
     for ( int i = 0; i < req->getIntRegs().size(); i++ ) {
@@ -2090,7 +2091,7 @@ void VANADIS_COMPONENT::getThreadState( VanadisGetThreadStateReq* req )
     uint64_t instPtr = rob[hw_thr]->peek()->getInstructionAddress();
     uint64_t tlsPtr = thread_decoders[hw_thr]->getThreadLocalStoragePointer();
 
-    output->verbose(CALL_INFO, 8, 0,"get thread state, hw_th=%d instPtr=%lx tlsPtr=%lx\n",hw_thr,instPtr,tlsPtr);
+    output->verbose(CALL_INFO, 8, 0,"get thread state, hw_th=%d instPtr=%#" PRIx64 " tlsPtr=%#" PRIx64 "\n",hw_thr,instPtr,tlsPtr);
 
     VanadisGetThreadStateResp* resp = new VanadisGetThreadStateResp( core_id, hw_thr, instPtr, tlsPtr );
     for ( int i = 0; i < isa_table->getNumIntRegs(); i++ ) {

@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -56,11 +56,13 @@ class SimpleTLB : public TLB {
 
     class TlbRecord { 
       public:
-        TlbRecord( RequestID reqId, int hwThreadId, uint64_t virtAddr, uint32_t perms ) : reqId(reqId), hwThreadId(hwThreadId), virtAddr(virtAddr),perms(perms) {}
+        TlbRecord( RequestID reqId, int hwThreadId, uint64_t virtAddr, uint32_t perms, uint64_t instPtr )
+            : reqId(reqId), hwThreadId(hwThreadId), virtAddr(virtAddr),perms(perms), instPtr(instPtr) {}
         RequestID reqId;
         int hwThreadId;
         uint64_t virtAddr;
         uint32_t perms;
+        uint64_t instPtr;
     };
 
     class SelfEvent  : public SST::Event {
@@ -77,10 +79,15 @@ class SimpleTLB : public TLB {
     }; 
 
   public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(SimpleTLB, "mmu", "simpleTLB",
-                                          SST_ELI_ELEMENT_VERSION(1, 0, 0),
-                                          "Simple TLB,",
-                                          SST::MMU_Lib::SimpleTLB)
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        SimpleTLB,
+        "mmu",
+        "simpleTLB",
+        SST_ELI_ELEMENT_VERSION(1, 0, 0),
+        "Simple TLB,",
+        SST::MMU_Lib::SimpleTLB
+    )
+    
     SST_ELI_DOCUMENT_PARAMS(
         {"hitLatency", "latency of TLB hit in ns","0"},
     )
@@ -123,7 +130,8 @@ class SimpleTLB : public TLB {
         
         for ( int i = 0; i<vec.size(); i++ ) {
             if ( vec[i].isValid() ) {
-                m_dbg.debug(CALL_INFO,1,0,"vpn=%#lx, tag=%#lx ppn %#lx -> %#lx perms %#x -> %#x \n",vec[i].tag(), vec[i].ppn(), ppn, vec[i].perms(), perms );
+                m_dbg.debug(CALL_INFO,1,0,"vpn=%zu, tag=%#" PRIx64 " ppn %#lx -> %zu, perms %#x -> %#x \n",
+                        vpn, (uint64_t) vec[i].tag(), vec[i].ppn(), ppn, vec[i].perms(), perms  );
 
                 if ( tag == vec[i].tag() ) {
                     vec[ i ].init( tag, ppn, perms );
@@ -134,7 +142,8 @@ class SimpleTLB : public TLB {
 
         assert(vpn);
         int slot = pickVictim();
-        m_dbg.debug(CALL_INFO,1,0,"hwThread=%d vpn=%zu ppn=%zu tag%#x index=%#x slot=%d\n",hwThreadId, vpn, ppn, tag, index, slot );
+        m_dbg.debug(CALL_INFO,1,0,"hwThread=%d vpn=%zu ppn=%zu tag%#" PRIx64 " index=%#x slot=%d\n",hwThreadId,
+            vpn, ppn, (uint64_t) tag, index, slot );
         vec[ slot ].init( tag, ppn, perms );
     }  
 
@@ -142,14 +151,15 @@ class SimpleTLB : public TLB {
         size_t tag = vpn >> m_tlbIndexShift;
         int index = vpn & ( m_tlbSize - 1 );
 
-        m_dbg.debug(CALL_INFO,1,0,"hwThread=%d vpn=%zu tag=%#x index=%#x\n",hwThreadId, vpn, tag, index );
+        m_dbg.debug(CALL_INFO,1,0,"hwThread=%d vpn=%zu tag=%#" PRIx64 " index=%#x\n",
+            hwThreadId, vpn, (uint64_t) tag, index );
 
         auto& vec = m_tlbData[ hwThreadId ][ index ];
         for ( int i = 0; i < vec.size(); i++ ) {
 
-            m_dbg.debug(CALL_INFO,2,0,"check valid=%d wantTag=%#x\n",vec[i].isValid(), tag );
+            m_dbg.debug(CALL_INFO,2,0,"check valid=%d wantTag=%#" PRIx64 "\n",vec[i].isValid(), (uint64_t) tag );
             if ( vec[i].isValid() && tag == vec[i].tag() ) {
-                m_dbg.debug(CALL_INFO,1,0,"found tag=%#x index=%#x slot=%d\n",tag, index, i );
+                m_dbg.debug(CALL_INFO,1,0,"found tag=%#" PRIx64 " index=%#x slot=%d\n",(uint64_t) tag, index, i );
                 return& vec[i];
             }
         }
@@ -166,7 +176,8 @@ class SimpleTLB : public TLB {
             //m_dbg.debug(CALL_INFO,1,0,"size=%zu\n",set.size() );
             for ( int j = 0; j < set.size(); j++ ) {  
                 if ( set[j].isValid() ) {
-                    m_dbg.debug(CALL_INFO,1,0,"hwThread=%d index=%d set=%d vpn=%#x\n",hwThread,i,j, set[j].tag() << m_tlbIndexShift | i );
+                    m_dbg.debug(CALL_INFO,1,0,"hwThread=%d index=%d set=%d vpn=%zu\n",
+                            hwThread,i,j, (size_t) ( set[j].tag() << m_tlbIndexShift | i ));
                     set[j].setInvalid();
                 }
             }

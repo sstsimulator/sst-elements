@@ -1,13 +1,13 @@
-// Copyright 2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -321,7 +321,7 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
     double msg_size  = 0.0;
     double exec_time = 0.0;
 
-    int next_state = -1;
+    uint64_t next_state = -1;
 
     int zero_compute = 0;
 
@@ -877,8 +877,6 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         break;
     case 39:
         {
-            next_state;
-
             // the next state is determined by a pattern for each
             //iteration. It goes 25, 40 then a 67% chance of 25 again,
             //then 51.
@@ -1098,7 +1096,6 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
     case 50:
         {
             // goes to 41 2 (70%) or 3 (30%) times then 25
-            next_state;
             switch(idx_50) {
             case 0:
                 next_state = 41;
@@ -1285,7 +1282,7 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
     }
 
     if (rank()==0 && trace) {
-        printf("TRACE %lld -> %lld %.1lf %.1lf\n", prevState, next_state, msg_size, exec_time);
+        printf("TRACE %" PRIu64 " -> %" PRIu64 " %.1lf %.1lf\n", prevState, next_state, msg_size, exec_time);
         prevState = state;
     }
 

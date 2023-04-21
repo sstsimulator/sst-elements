@@ -1,9 +1,9 @@
 // -*- mode: c++ -*-
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -50,7 +50,7 @@ class MemHierarchyInterface : public Interfaces::SimpleMem {
 
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MemHierarchyInterface, "memHierarchy", "memInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(MemHierarchyInterface, "memHierarchy", "memInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
             "[DEPRECATED: Use standInterface instead] Interface to memory hierarchy. Converts SimpleMem requests into MemEventBases.", SST::Interfaces::SimpleMem)
     SST_ELI_DOCUMENT_PARAMS( {"port", "Optional, specify the owning component's port to used (not needed if this subcomponent is loaded in the input config)", ""} )
 
@@ -65,7 +65,13 @@ public:
     /** Link getter */
     virtual SST::Link* getLink(void) const { return link_; }
 
+    [[deprecated("sendInitData() has been deprecated and will be removed in SST 14.  Please use sendUntimedData().")]]
     virtual void sendInitData(Request *req);
+    virtual void sendUntimedData(Request *req) {
+        DISABLE_WARN_DEPRECATED_DECLARATION
+        sendInitData(req);
+        REENABLE_WARNING
+    }
     virtual void sendRequest(Request *req);
     virtual Request* recvResponse(void);
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -59,7 +59,7 @@ public:
     void mmap( uint64_t address, uint64_t length, int protect, int flags, int fd, uint64_t offset ) {
 
         if ( flags & ~( MAP_ANONYMOUS | MAP_PRIVATE | MAP_FIXED ) ) {
-            m_output->fatal(CALL_INFO, -1, "-> error: mmap() flag %#" PRIx64 " not supported\n",flags);
+            m_output->fatal(CALL_INFO, -1, "-> error: mmap() flag %#" PRIx32 " not supported\n",flags);
         }
 
         OS::Device* dev = nullptr;

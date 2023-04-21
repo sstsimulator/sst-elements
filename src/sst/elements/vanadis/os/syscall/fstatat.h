@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -72,7 +72,7 @@ public:
     VanadisFstatatSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallFstatAtEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "fstatat" ), m_state( READ ) 
     {
-	    m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL, "[syscall-fstatat] dirfd=%d pathaname=%#" PRIx64 " statbuf=%#" PRIx64 " flags=%#" PRIx64 "\n",
+	    m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL, "[syscall-fstatat] dirfd=%" PRIu64 " pathaname=%#" PRIx64 " statbuf=%#" PRIx64 " flags=%#" PRIx64 "\n",
                 event->getDirfd(), event->getPathname(), event->getStatbuf(), event->getFlags() );
 
         setReturnFail(-LINUX_EINVAL);

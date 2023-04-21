@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -86,18 +86,10 @@ public:
         if ( output->getVerboseLevel() >= 16 ) {
             output->verbose(CALL_INFO, 16, 0, "----> convert: ");
 
-            if ( std::is_same<gpr_format, int32_t>::value ) {
-                output->verbose(CALL_INFO, 16, 0, "%" PRId32 " -> %f\n", v, v_fp);
-            }
-            else if ( std::is_same<gpr_format, uint32_t>::value ) {
-                output->verbose(CALL_INFO, 16, 0, "%" PRIu32 " -> %f\n", v, v_fp);
-            }
-            else if ( std::is_same<gpr_format, int64_t>::value ) {
-                output->verbose(CALL_INFO, 16, 0, "%" PRId64 " -> %f\n", v, v_fp);
-            }
-            else if ( std::is_same<gpr_format, uint64_t>::value ) {
-                output->verbose(CALL_INFO, 16, 0, "%" PRIu64 " -> %f\n", v, v_fp);
-            }
+            std::ostringstream ss;
+            ss << v << " -> " << v_fp;
+
+            output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
         }
 
         if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {

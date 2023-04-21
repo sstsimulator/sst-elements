@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -971,11 +971,11 @@ topo_dragonfly::routeControlPacket(CtrlRtrEvent* ev)
 
 
 
-void topo_dragonfly::routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts)
+void topo_dragonfly::routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts)
 {
     bool broadcast_to_groups = false;
     topo_dragonfly_event *td_ev = static_cast<topo_dragonfly_event*>(ev);
-    if ( td_ev->dest.host == (uint32_t)INIT_BROADCAST_ADDR ) {
+    if ( td_ev->dest.host == (uint32_t)UNTIMED_BROADCAST_ADDR ) {
         if ( (uint32_t)port >= (params.p + params.a-1) ) {
             /* Came in from another group.
              * Send to locals, and other routers in group
@@ -1037,7 +1037,7 @@ void topo_dragonfly::routeInitData(int port, internal_router_event* ev, std::vec
 }
 
 
-internal_router_event* topo_dragonfly::process_InitData_input(RtrEvent* ev)
+internal_router_event* topo_dragonfly::process_UntimedData_input(RtrEvent* ev)
 {
     dgnflyAddr dstAddr;
     idToLocation(ev->getDest(), &dstAddr);
@@ -1093,11 +1093,11 @@ topo_dragonfly::setOutputQueueLengthsArray(int const* array, int vcs)
 
 void topo_dragonfly::idToLocation(int id, dgnflyAddr *location)
 {
-    if ( id == INIT_BROADCAST_ADDR) {
-        location->group = (uint32_t)INIT_BROADCAST_ADDR;
-        location->mid_group = (uint32_t)INIT_BROADCAST_ADDR;
-        location->router = (uint32_t)INIT_BROADCAST_ADDR;
-        location->host = (uint32_t)INIT_BROADCAST_ADDR;
+    if ( id == UNTIMED_BROADCAST_ADDR) {
+        location->group = (uint32_t)UNTIMED_BROADCAST_ADDR;
+        location->mid_group = (uint32_t)UNTIMED_BROADCAST_ADDR;
+        location->router = (uint32_t)UNTIMED_BROADCAST_ADDR;
+        location->host = (uint32_t)UNTIMED_BROADCAST_ADDR;
     } else {
         uint32_t hosts_per_group = params.p * params.a;
         location->group = id / hosts_per_group;

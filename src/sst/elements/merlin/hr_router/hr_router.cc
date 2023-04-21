@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -465,13 +465,13 @@ hr_router::init(unsigned int phase)
     for ( int i = 0; i < num_ports; i++ ) {
         ports[i]->init(phase);
         Event *ev = NULL;
-        while ( (ev = ports[i]->recvInitData()) != NULL ) {
+        while ( (ev = ports[i]->recvUntimedData()) != NULL ) {
             internal_router_event *ire = dynamic_cast<internal_router_event*>(ev);
             if ( ire == NULL ) {
-                ire = topo->process_InitData_input(static_cast<RtrEvent*>(ev));
+                ire = topo->process_UntimedData_input(static_cast<RtrEvent*>(ev));
             }
             std::vector<int> outPorts;
-            topo->routeInitData(i, ire, outPorts);
+            topo->routeUntimedData(i, ire, outPorts);
             for ( std::vector<int>::iterator j = outPorts.begin() ; j != outPorts.end() ; ++j ) {
                 /* Little tricky here.  Need to clone both the event, and the
                  * encapsulated event.
@@ -515,13 +515,13 @@ hr_router::complete(unsigned int phase)
     for ( int i = 0; i < num_ports; i++ ) {
         ports[i]->complete(phase);
         Event *ev = NULL;
-        while ( (ev = ports[i]->recvInitData()) != NULL ) {
+        while ( (ev = ports[i]->recvUntimedData()) != NULL ) {
             internal_router_event *ire = dynamic_cast<internal_router_event*>(ev);
             if ( ire == NULL ) {
-                ire = topo->process_InitData_input(static_cast<RtrEvent*>(ev));
+                ire = topo->process_UntimedData_input(static_cast<RtrEvent*>(ev));
             }
             std::vector<int> outPorts;
-            topo->routeInitData(i, ire, outPorts);
+            topo->routeUntimedData(i, ire, outPorts);
             for ( std::vector<int>::iterator j = outPorts.begin() ; j != outPorts.end() ; ++j ) {
                 /* Little tricky here.  Need to clone both the event, and the
                  * encapsulated event.

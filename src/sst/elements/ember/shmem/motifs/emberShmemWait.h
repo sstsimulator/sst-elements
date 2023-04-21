@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -94,7 +94,7 @@ public:
 
 class EmberShmemWaitIntGenerator : public EmberShmemWaitGenerator<int> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemWaitIntGenerator,
         "ember",
         "ShmemWaitIntMotif",
@@ -112,7 +112,7 @@ public:
 
 class EmberShmemWaitLongGenerator : public EmberShmemWaitGenerator<long> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         EmberShmemWaitLongGenerator,
         "ember",
         "ShmemWaitLongMotif",

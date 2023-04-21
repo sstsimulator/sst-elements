@@ -1,12 +1,23 @@
+// Copyright 2009-2023 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2023, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// of the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
 /*
 A utility class for writing output files in the same format as the N2A C simulator.
 This code is not used by the C runtime. Instead, it is a simplified version
 for use by those who wish to write C++ code compatible with OutputParser.
 This is a pure header implementation. No need to build/link extra libraries.
-
-Copyright 2023 National Technology & Engineering Solutions of Sandia, LLC (NTESS).
-Under the terms of Contract DE-NA0003525 with NTESS,
-the U.S. Government retains certain rights in this software.
 */
 
 
@@ -186,11 +197,11 @@ public:
         if (raw)
         {
             index = (int) round (column);
-            sprintf (buffer, "%i", index);
+            snprintf (buffer, 32, "%i", index);
         }
         else
         {
-            sprintf (buffer, "%g", column);
+            snprintf (buffer, 32, "%g", column);
         }
         std::string columnName = buffer;
 

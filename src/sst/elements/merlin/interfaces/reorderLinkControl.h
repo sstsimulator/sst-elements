@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -114,13 +114,14 @@ struct ReorderInfo {
 class ReorderLinkControl : public SST::Interfaces::SimpleNetwork {
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         ReorderLinkControl,
         "merlin",
         "reorderlinkcontrol",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Link Control module that can handle out of order packet arrival. Events are sequenced and order is reconstructed on receive.",
-        SST::Interfaces::SimpleNetwork)
+        SST::Interfaces::SimpleNetwork
+    )
 
     SST_ELI_DOCUMENT_PARAMS(
         {"rlc.networkIF","SimpleNetwork subcomponent to be used for connecting to network", "merlin.linkcontrol"},
@@ -183,9 +184,6 @@ public:
     // Returns true if there is an event in the input buffer and false
     // otherwise.
     bool requestToReceive( int vn );
-
-    void sendInitData(SST::Interfaces::SimpleNetwork::Request* ev);
-    SST::Interfaces::SimpleNetwork::Request* recvInitData();
 
     void sendUntimedData(SST::Interfaces::SimpleNetwork::Request* ev);
     SST::Interfaces::SimpleNetwork::Request* recvUntimedData();

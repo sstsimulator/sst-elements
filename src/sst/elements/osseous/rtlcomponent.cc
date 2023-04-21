@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -359,7 +359,7 @@ void Rtlmodel::commitWriteEvent(const uint64_t address,
                 char* buffer = new char[64];
                 std::string payloadString = "";
                 for(int i = 0; i < length; ++i) {
-                    sprintf(buffer, "0x%X ", payload[i]);
+                    snprintf(buffer, 64, "0x%X ", payload[i]);
                     payloadString.append(buffer);
                 }
 

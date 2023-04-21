@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -178,13 +178,14 @@ class topo_dragonfly: public Topology {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         topo_dragonfly,
         "merlin",
         "dragonfly",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Dragonfly topology object.  Implements a dragonfly with a single all to all pattern within the group.",
-        SST::Merlin::Topology)
+        SST::Merlin::Topology
+    )
 
     SST_ELI_DOCUMENT_PARAMS(
         // Parameters needed for use with old merlin python module
@@ -264,8 +265,8 @@ public:
     virtual PortState getPortState(int port) const;
     virtual std::string getPortLogicalGroup(int port) const;
 
-    virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts);
-    virtual internal_router_event* process_InitData_input(RtrEvent* ev);
+    virtual void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts);
+    virtual internal_router_event* process_UntimedData_input(RtrEvent* ev);
 
     virtual void getVCsPerVN(std::vector<int>& vcs_per_vn) {
         for ( int i = 0; i < num_vns; ++i ) {

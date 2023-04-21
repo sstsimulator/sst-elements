@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -36,7 +36,7 @@ class MemoryManagerSieve : public ArielComponent::ArielMemoryManager {
 
     public:
         /* SST ELI */
-        SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MemoryManagerSieve, "memHierarchy", "MemoryManagerSieve", SST_ELI_ELEMENT_VERSION(1,0,0),
+        SST_ELI_REGISTER_SUBCOMPONENT(MemoryManagerSieve, "memHierarchy", "MemoryManagerSieve", SST_ELI_ELEMENT_VERSION(1,0,0),
                 "Memory manager for interfacing to MemSieve", SST::ArielComponent::ArielMemoryManager)
 
         SST_ELI_DOCUMENT_PORTS( {"alloc_link_%(corecound)d", "Each core's link memSieve", {"memHierarchy.AllocTrackEvent"}} )

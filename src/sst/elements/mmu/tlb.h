@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -50,10 +50,14 @@ class TLB : public SubComponent {
 
 class PassThroughTLB : public TLB {
   public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(PassThroughTLB, "mmu", "passThroughTLB",
-                                          SST_ELI_ELEMENT_VERSION(1, 0, 0),
-                                          "Pass-through TLB, allways hits and returns virtAddr as physAddr",
-                                          SST::MMU_Lib::PassThroughTLB)
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        PassThroughTLB,
+        "mmu",
+        "passThroughTLB",
+        SST_ELI_ELEMENT_VERSION(1, 0, 0),
+        "Pass-through TLB, allways hits and returns virtAddr as physAddr",
+        SST::MMU_Lib::PassThroughTLB
+    )
 
     PassThroughTLB(SST::ComponentId_t id, SST::Params& params) : TLB(id,params) {}
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -118,7 +118,7 @@ public:
         if ( m_functionMap.find( os_code ) != m_functionMap.end() ) {
             call_ev = m_functionMap[os_code]( hw_thr );
         } else {
-            output->fatal(CALL_INFO, -1, "Error: unknown code %" PRIuXX " (ins: %#" PRIx64 ", link-reg: %#" PRIx64 ")\n",
+            output->fatal(CALL_INFO, -1, "Error: unknown code %" PRIu64 " (ins: %#" PRIx64 ", link-reg: %#" PRIx64 ")\n",
                 os_code, syscallIns->getInstructionAddress(), call_link_value);
         }
 
@@ -148,7 +148,7 @@ protected:
         T1 advise_advice  = getArgRegister( 2 );
 
         output->verbose(CALL_INFO, 8, 0,
-                            "madvise( %#" PRIx64 ", %" PRIuXX ", %" PRIuXX " )\n", advise_addr, advise_len, advise_advice);
+                            "madvise( %#" PRIxXX ", %" PRIuXX ", %" PRIuXX " )\n", advise_addr, advise_len, advise_advice);
 
         printf("Warning: VANADIS_SYSCALL_%s_%s not implmented returning success\n",m_isaName,__func__);
 
@@ -265,7 +265,7 @@ protected:
         T1 buff_ptr = getArgRegister(1);
         T1 count    = getArgRegister(2);
 
-        output->verbose(CALL_INFO, 8, 0, "read( %#" PRIdXX ", %#" PRIxXX ", %#" PRIxXX ")\n", fd, buff_ptr, count );
+        output->verbose(CALL_INFO, 8, 0, "read( %" PRIdXX ", %#" PRIxXX ", %#" PRIxXX ")\n", fd, buff_ptr, count );
         return new VanadisSyscallReadEvent(core_id, hw_thr, BitType, fd, buff_ptr, count);
     }
 
