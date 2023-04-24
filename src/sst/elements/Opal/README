@@ -1,0 +1,20 @@
+
+
+Opal is a centralized memory manager that will be used to request physical memory from the system
+
+Opal will be configured and exposed to the details (capacity and memory types) of the shared memory system.
+
+A single or multiple/hirarchical (in case of disaggregated memory system) Opal components should be instantiated and connected to:
+
+1- Samba unit --- A- Minor page faults (or first access to virtual page) in Samba will trigger a request for a physical page from Opal manager
+		  B- Any updates or page migration requests to Opal will trigger TLB shootdown to be sent to all samba units
+
+2- Ariel (or other core types) ---
+		  A- unmap requests can be sent directly to Opal to deallocate physical space, which might also result in Opal sending TLB shootdowns to Samba units
+		  B- Although virtual memory allocations (mmap, new, malloc) do not immediately allocate physical space, sometimes they carry out some hints such as memory type, huge page preference, pinning hints. Accordingly, Opal need to keep track of such preferences for specific virtual address ranges of different virtual memory spaces.
+
+Assumptions and limitations:
+* In real systems, libc or any memory allocation library typically return allocated physical space to the OS through unmap, either when unmap is called by the application or when enough chunks have been returned by the applications through **free/delete**. For instance, if free/delete tries to delete a large allocation, then it can be beneficial to immediately return its corresponding physical allocation to the OS, so other applications can allocate it. Also when there are many contigious chunks that have been freed by the application and they can be coalecsed in multiple virtual pages, then the memory allocation library might return them back to the OS through unmap. Due to the overhead (TLB shootdown and context switching) of returning physical pages to the OS, memory allocation libraries try to reuse the **freed/deleted** virtual spaces. Accordingly, since we don't simulate libc or memory allocation library behavior, we only return physical spaces to Opal when unmap is called by the applications, and do not do anything when free/delete is called.
+
+Possible TODO:
+When free is called for a **really** large allocation, we can assume the libc (or other memory allocation libraries) will immediately return this space to Opal
