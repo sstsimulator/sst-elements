@@ -188,7 +188,7 @@ main(int argc, char **argv)
         }
 
         for ( int n = 0 ; n < params.numnodes ; n++ ) {
-            fprintf(output, "    <link name=nic.%d:%d port=port%d latency=%s />\n",
+            fprintf(output, "    <link name=nic:%d_%d port=port%d latency=%s />\n",
                     i, n, port++, params.link_lat);
         }
         fprintf(output, "  </component>\n");
@@ -201,7 +201,7 @@ main(int argc, char **argv)
             fprintf(output, "    <params include=nic_params>\n");
             fprintf(output, "      <id> %d </id>\n", nodeID);
             fprintf(output, "    </params>\n");
-            fprintf(output, "    <link name=nic.%d:%d port=rtr latency=%s />\n",
+            fprintf(output, "    <link name=nic:%d_%d port=rtr latency=%s />\n",
                     i, n, params.link_lat);
             fprintf(output, "  </component>\n");
             fprintf(output, "\n");

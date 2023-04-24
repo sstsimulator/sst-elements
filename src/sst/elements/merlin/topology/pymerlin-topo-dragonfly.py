@@ -198,7 +198,7 @@ class topoDragonFly(Topology):
                 for p in range(igpr):
                     link = getGlobalLink(g,r,p)
                     if link is not None:
-                        rtr.addLink(link,"port%d"%port, self.link_latency)
+                        rtr.addLink(link,"port%d"%port, self.link_latency) #TODO: add parameter -- global_link_latency
                     port = port +1
 
                 router_num = router_num + 1

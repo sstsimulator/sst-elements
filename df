@@ -1,0 +1,48 @@
+[1mdiff --git a/src/sst/elements/merlin/test/torus_sdlgen.c b/src/sst/elements/merlin/test/torus_sdlgen.c[m
+[1mindex 75c473059..e973dba1e 100644[m
+[1m--- a/src/sst/elements/merlin/test/torus_sdlgen.c[m
+[1m+++ b/src/sst/elements/merlin/test/torus_sdlgen.c[m
+[36m@@ -188,7 +188,7 @@[m [mmain(int argc, char **argv)[m
+         }[m
+ [m
+         for ( int n = 0 ; n < params.numnodes ; n++ ) {[m
+[31m-            fprintf(output, "    <link name=nic.%d:%d port=port%d latency=%s />\n",[m
+[32m+[m[32m            fprintf(output, "    <link name=nic:%d_%d port=port%d latency=%s />\n",[m
+                     i, n, port++, params.link_lat);[m
+         }[m
+         fprintf(output, "  </component>\n");[m
+[36m@@ -201,7 +201,7 @@[m [mmain(int argc, char **argv)[m
+             fprintf(output, "    <params include=nic_params>\n");[m
+             fprintf(output, "      <id> %d </id>\n", nodeID);[m
+             fprintf(output, "    </params>\n");[m
+[31m-            fprintf(output, "    <link name=nic.%d:%d port=rtr latency=%s />\n",[m
+[32m+[m[32m            fprintf(output, "    <link name=nic:%d_%d port=rtr latency=%s />\n",[m
+                     i, n, params.link_lat);[m
+             fprintf(output, "  </component>\n");[m
+             fprintf(output, "\n");[m
+[1mdiff --git a/src/sst/elements/merlin/topology/pymerlin-topo-dragonfly.py b/src/sst/elements/merlin/topology/pymerlin-topo-dragonfly.py[m
+[1mindex bc8fe358a..dd1c91602 100644[m
+[1m--- a/src/sst/elements/merlin/topology/pymerlin-topo-dragonfly.py[m
+[1m+++ b/src/sst/elements/merlin/topology/pymerlin-topo-dragonfly.py[m
+[36m@@ -198,7 +198,7 @@[m [mclass topoDragonFly(Topology):[m
+                 for p in range(igpr):[m
+                     link = getGlobalLink(g,r,p)[m
+                     if link is not None:[m
+[31m-                        rtr.addLink(link,"port%d"%port, self.link_latency)[m
+[32m+[m[32m                        rtr.addLink(link,"port%d"%port, self.link_latency) #TODO: add parameter -- global_link_latency[m
+                     port = port +1[m
+ [m
+                 router_num = router_num + 1[m
+[1mdiff --git a/src/sst/elements/merlin/topology/pymerlin-topo-mesh.py b/src/sst/elements/merlin/topology/pymerlin-topo-mesh.py[m
+[1mindex a92cca74d..7762be34d 100644[m
+[1m--- a/src/sst/elements/merlin/topology/pymerlin-topo-mesh.py[m
+[1m+++ b/src/sst/elements/merlin/topology/pymerlin-topo-mesh.py[m
+[36m@@ -175,7 +175,7 @@[m [mclass _topoMeshBase(Topology):[m
+                 nodeID = local_ports * i + n[m
+                 (ep, port_name) = endpoint.build(nodeID, {})[m
+                 if ep:[m
+[31m-                    nicLink = sst.Link("nic.%d:%d"%(i, n))[m
+[32m+[m[32m                    nicLink = sst.Link("nic_%d_%d"%(i, n))[m
+                     if self.bundleEndpoints:[m
+                        nicLink.setNoCut()[m
+                     nicLink.connect( (ep, port_name, self.host_link_latency), (rtr, "port%d"%port, self.host_link_latency) )[m

@@ -175,7 +175,7 @@ class _topoMeshBase(Topology):
                 nodeID = local_ports * i + n
                 (ep, port_name) = endpoint.build(nodeID, {})
                 if ep:
-                    nicLink = sst.Link("nic.%d:%d"%(i, n))
+                    nicLink = sst.Link("nic_%d_%d"%(i, n))
                     if self.bundleEndpoints:
                        nicLink.setNoCut()
                     nicLink.connect( (ep, port_name, self.host_link_latency), (rtr, "port%d"%port, self.host_link_latency) )
