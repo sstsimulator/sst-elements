@@ -131,6 +131,28 @@ void PandosNodeT::openProgramBinary(Params &params)
         "PANDORuntimeBackendSetCurrentContext"
         );
 
+    // find the task info section
+    using namespace pando;
+    using namespace backend;
+
+    TaskTypeInfo_t *start = (TaskTypeInfo_t*)dlsym(
+        program_binary_handle,
+        "__start_task_type_info"
+        );
+    TaskTypeInfo_t *stop = (TaskTypeInfo_t*)dlsym(
+        program_binary_handle,
+        "__stop_task_type_info"
+        );
+    out->verbose(CALL_INFO, 1, DEBUG_INITIALIZATION, "task_type_info: start = %p, stop = %p\n", start, stop);
+
+    if (start && stop) {
+        TaskTypeInfo_t *info;
+        TaskTypeID_t id = 0;
+        for (info = start; info < stop; info++) {
+            info->type_id = id++;
+        }
+    }
+    
     bool found;
     pando::NodeId_t node_id = params.find<pando::NodeId_t>("node_id", 0, found);
     if (!found) {
