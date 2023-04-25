@@ -1,0 +1,23 @@
+
+
+Implementation of a 'Generic Neural Architecture' based on the STPU work (Hill et All, ICRC 2017, "A Spike-Timing Neuromorphic Architecture", 10.1109/ICRC.2017.8123631)
+
+General simulation process:
+
+0) GNA in idle state waiting for user input. If user sends EXEC command
+   proceed to step 1, otherwise, stay idle.
+1) process any firing events currently stored in output aggregation FIFO
+   into neuronal matrix based on connectivity defined in specified CSE context.
+2) Perform single LIF operation on neuronal matrix.
+3) Collect firing events (if any) into output aggregation FIFO.
+4) If more LIFs to perform or more CSEs to process, then return to step 0,
+   otherwise, dump aggregated firing events to host machine and return to step
+   0.
+
+
+TODO:
+Set Neuron values as (variable precision) ints or floats
+time delay for output consoldiation?
+statistics (request q size)
+switch to output, rm printf()s
+make sure maxOutMem works
