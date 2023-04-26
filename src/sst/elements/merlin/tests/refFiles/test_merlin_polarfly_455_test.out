@@ -1,0 +1,1379 @@
+----> Generating Polarfly topology!!
+--> Validating Polarfly(9):
+WARNING: Component name 'rtr.0' is not valid
+WARNING: Component name 'rtr.1' is not valid
+WARNING: Component name 'rtr.2' is not valid
+WARNING: Component name 'rtr.3' is not valid
+WARNING: Component name 'rtr.4' is not valid
+WARNING: Component name 'rtr.5' is not valid
+WARNING: Component name 'rtr.6' is not valid
+WARNING: Component name 'rtr.7' is not valid
+WARNING: Component name 'rtr.8' is not valid
+WARNING: Component name 'rtr.9' is not valid
+WARNING: Number of invalid component names exceeds limit of 10, no more messages will be printed
+8852:  229 Finished sending packets (total of 10)
+8852:  272 Finished sending packets (total of 10)
+8852:  273 Finished sending packets (total of 10)
+8852:  274 Finished sending packets (total of 10)
+8852:  450 Finished sending packets (total of 10)
+8852:  451 Finished sending packets (total of 10)
+8852:  452 Finished sending packets (total of 10)
+8852:  453 Finished sending packets (total of 10)
+8852:  454 Finished sending packets (total of 10)
+8884:  94 Finished sending packets (total of 10)
+8896:  271 Finished sending packets (total of 10)
+8922:  139 Finished sending packets (total of 10)
+8925:  364 Finished sending packets (total of 10)
+8939:  181 Finished sending packets (total of 10)
+8972:  361 Finished sending packets (total of 10)
+8974:  270 Finished sending packets (total of 10)
+8979:  138 Finished sending packets (total of 10)
+9052:  174 Finished sending packets (total of 10)
+9063:  136 Finished sending packets (total of 10)
+9069:  225 Finished sending packets (total of 10)
+9088:  227 Finished sending packets (total of 10)
+9094:  449 Finished sending packets (total of 10)
+9112:  354 Finished sending packets (total of 10)
+9114:  228 Finished sending packets (total of 10)
+9122:  226 Finished sending packets (total of 10)
+9128:  137 Finished sending packets (total of 10)
+9147:  444 Finished sending packets (total of 10)
+9150:  135 Finished sending packets (total of 10)
+9178:  92 Finished sending packets (total of 10)
+9189:  316 Finished sending packets (total of 10)
+9198:  194 Finished sending packets (total of 10)
+9238:  49 Finished sending packets (total of 10)
+9242:  183 Finished sending packets (total of 10)
+9272:  48 Finished sending packets (total of 10)
+9274:  254 Finished sending packets (total of 10)
+9278:  404 Finished sending packets (total of 10)
+9291:  24 Finished sending packets (total of 10)
+9298:  90 Finished sending packets (total of 10)
+9304:  334 Finished sending packets (total of 10)
+9305:  84 Finished sending packets (total of 10)
+9316:  74 Finished sending packets (total of 10)
+9343:  329 Finished sending packets (total of 10)
+9351:  319 Finished sending packets (total of 10)
+9364:  224 Finished sending packets (total of 10)
+9374:  119 Finished sending packets (total of 10)
+9374:  189 Finished sending packets (total of 10)
+9387:  89 Finished sending packets (total of 10)
+9393:  44 Finished sending packets (total of 10)
+9394:  253 Finished sending packets (total of 10)
+9404:  164 Finished sending packets (total of 10)
+9414:  88 Finished sending packets (total of 10)
+9415:  349 Finished sending packets (total of 10)
+9416:  379 Finished sending packets (total of 10)
+9421:  328 Finished sending packets (total of 10)
+9428:  93 Finished sending packets (total of 10)
+9428:  223 Finished sending packets (total of 10)
+9433:  173 Finished sending packets (total of 10)
+9433:  204 Finished sending packets (total of 10)
+9438:  429 Finished sending packets (total of 10)
+9445:  222 Finished sending packets (total of 10)
+9449:  91 Finished sending packets (total of 10)
+9459:  203 Finished sending packets (total of 10)
+9470:  348 Finished sending packets (total of 10)
+9478:  159 Finished sending packets (total of 10)
+9481:  304 Finished sending packets (total of 10)
+9487:  378 Finished sending packets (total of 10)
+9495:  414 Finished sending packets (total of 10)
+9498:  294 Finished sending packets (total of 10)
+9501:  303 Finished sending packets (total of 10)
+9504:  362 Finished sending packets (total of 10)
+9505:  87 Finished sending packets (total of 10)
+9508:  252 Finished sending packets (total of 10)
+9513:  45 Finished sending packets (total of 10)
+9513:  79 Finished sending packets (total of 10)
+9519:  23 Finished sending packets (total of 10)
+9519:  129 Finished sending packets (total of 10)
+9535:  124 Finished sending packets (total of 10)
+9535:  353 Finished sending packets (total of 10)
+9545:  46 Finished sending packets (total of 10)
+9549:  352 Finished sending packets (total of 10)
+9556:  363 Finished sending packets (total of 10)
+9559:  171 Finished sending packets (total of 10)
+9567:  298 Finished sending packets (total of 10)
+9571:  428 Finished sending packets (total of 10)
+9585:  259 Finished sending packets (total of 10)
+9587:  251 Finished sending packets (total of 10)
+9589:  317 Finished sending packets (total of 10)
+9602:  219 Finished sending packets (total of 10)
+9605:  369 Finished sending packets (total of 10)
+9606:  427 Finished sending packets (total of 10)
+9613:  114 Finished sending packets (total of 10)
+9614:  322 Finished sending packets (total of 10)
+9617:  315 Finished sending packets (total of 10)
+9620:  172 Finished sending packets (total of 10)
+9622:  112 Finished sending packets (total of 10)
+9625:  221 Finished sending packets (total of 10)
+9627:  109 Finished sending packets (total of 10)
+9629:  1 Finished sending packets (total of 10)
+9629:  318 Finished sending packets (total of 10)
+9630:  299 Finished sending packets (total of 10)
+9633:  128 Finished sending packets (total of 10)
+9635:  360 Finished sending packets (total of 10)
+9638:  47 Finished sending packets (total of 10)
+9639:  202 Finished sending packets (total of 10)
+9639:  269 Finished sending packets (total of 10)
+9640:  314 Finished sending packets (total of 10)
+9642:  188 Finished sending packets (total of 10)
+9646:  2 Finished sending packets (total of 10)
+9650:  177 Finished sending packets (total of 10)
+9652:  29 Finished sending packets (total of 10)
+9658:  0 Finished sending packets (total of 10)
+9663:  134 Finished sending packets (total of 10)
+9664:  184 Finished sending packets (total of 10)
+9664:  220 Finished sending packets (total of 10)
+9665:  193 Finished sending packets (total of 10)
+9667:  309 Finished sending packets (total of 10)
+9671:  239 Finished sending packets (total of 10)
+9672:  284 Finished sending packets (total of 10)
+9675:  158 Finished sending packets (total of 10)
+9680:  250 Finished sending packets (total of 10)
+9683:  39 Finished sending packets (total of 10)
+9688:  170 Finished sending packets (total of 10)
+9694:  108 Finished sending packets (total of 10)
+9695:  443 Finished sending packets (total of 10)
+9697:  179 Finished sending packets (total of 10)
+9697:  187 Finished sending packets (total of 10)
+9703:  4 Finished sending packets (total of 10)
+9703:  237 Finished sending packets (total of 10)
+9703:  347 Finished sending packets (total of 10)
+9708:  399 Finished sending packets (total of 10)
+9715:  384 Finished sending packets (total of 10)
+9715:  434 Finished sending packets (total of 10)
+9717:  3 Finished sending packets (total of 10)
+9725:  43 Finished sending packets (total of 10)
+9726:  218 Finished sending packets (total of 10)
+9727:  107 Finished sending packets (total of 10)
+9733:  73 Finished sending packets (total of 10)
+9734:  345 Finished sending packets (total of 10)
+9735:  268 Finished sending packets (total of 10)
+9736:  313 Finished sending packets (total of 10)
+9736:  344 Finished sending packets (total of 10)
+9746:  324 Finished sending packets (total of 10)
+9747:  432 Finished sending packets (total of 10)
+9749:  36 Finished sending packets (total of 10)
+9749:  186 Finished sending packets (total of 10)
+9755:  433 Finished sending packets (total of 10)
+9757:  64 Finished sending packets (total of 10)
+9759:  420 Finished sending packets (total of 10)
+9761:  99 Finished sending packets (total of 10)
+9761:  255 Finished sending packets (total of 10)
+9768:  249 Finished sending packets (total of 10)
+9769:  169 Finished sending packets (total of 10)
+9769:  296 Finished sending packets (total of 10)
+9772:  258 Finished sending packets (total of 10)
+9777:  389 Finished sending packets (total of 10)
+9777:  403 Finished sending packets (total of 10)
+9779:  106 Finished sending packets (total of 10)
+9784:  402 Finished sending packets (total of 10)
+9787:  178 Finished sending packets (total of 10)
+9789:  149 Finished sending packets (total of 10)
+9789:  199 Finished sending packets (total of 10)
+9796:  308 Finished sending packets (total of 10)
+9796:  312 Finished sending packets (total of 10)
+9799:  374 Finished sending packets (total of 10)
+9799:  423 Finished sending packets (total of 10)
+9801:  238 Finished sending packets (total of 10)
+9802:  63 Finished sending packets (total of 10)
+9803:  144 Finished sending packets (total of 10)
+9804:  431 Finished sending packets (total of 10)
+9806:  157 Finished sending packets (total of 10)
+9807:  311 Finished sending packets (total of 10)
+9808:  192 Finished sending packets (total of 10)
+9812:  279 Finished sending packets (total of 10)
+9813:  168 Finished sending packets (total of 10)
+9815:  166 Finished sending packets (total of 10)
+9815:  302 Finished sending packets (total of 10)
+9817:  185 Finished sending packets (total of 10)
+9823:  236 Finished sending packets (total of 10)
+9828:  235 Finished sending packets (total of 10)
+9831:  123 Finished sending packets (total of 10)
+9833:  198 Finished sending packets (total of 10)
+9834:  217 Finished sending packets (total of 10)
+9835:  383 Finished sending packets (total of 10)
+9844:  346 Finished sending packets (total of 10)
+9847:  62 Finished sending packets (total of 10)
+9847:  351 Finished sending packets (total of 10)
+9849:  430 Finished sending packets (total of 10)
+9852:  180 Finished sending packets (total of 10)
+9854:  350 Finished sending packets (total of 10)
+9856:  197 Finished sending packets (total of 10)
+9861:  377 Finished sending packets (total of 10)
+9862:  77 Finished sending packets (total of 10)
+9863:  104 Finished sending packets (total of 10)
+9864:  154 Finished sending packets (total of 10)
+9864:  165 Finished sending packets (total of 10)
+9871:  342 Finished sending packets (total of 10)
+9873:  441 Finished sending packets (total of 10)
+9877:  282 Finished sending packets (total of 10)
+9879:  59 Finished sending packets (total of 10)
+9879:  426 Finished sending packets (total of 10)
+9881:  265 Finished sending packets (total of 10)
+9883:  133 Finished sending packets (total of 10)
+9892:  209 Finished sending packets (total of 10)
+9895:  71 Finished sending packets (total of 10)
+9897:  167 Finished sending packets (total of 10)
+9898:  214 Finished sending packets (total of 10)
+9899:  42 Finished sending packets (total of 10)
+9901:  264 Finished sending packets (total of 10)
+9903:  425 Finished sending packets (total of 10)
+9905:  113 Finished sending packets (total of 10)
+9905:  343 Finished sending packets (total of 10)
+9910:  201 Finished sending packets (total of 10)
+9910:  306 Finished sending packets (total of 10)
+9913:  156 Finished sending packets (total of 10)
+9913:  341 Finished sending packets (total of 10)
+9916:  182 Finished sending packets (total of 10)
+9917:  371 Finished sending packets (total of 10)
+9918:  83 Finished sending packets (total of 10)
+9919:  340 Finished sending packets (total of 10)
+9923:  401 Finished sending packets (total of 10)
+9925:  96 Finished sending packets (total of 10)
+9925:  244 Finished sending packets (total of 10)
+9927:  339 Finished sending packets (total of 10)
+9937:  247 Finished sending packets (total of 10)
+9939:  98 Finished sending packets (total of 10)
+9944:  196 Finished sending packets (total of 10)
+9944:  305 Finished sending packets (total of 10)
+9944:  388 Finished sending packets (total of 10)
+9945:  307 Finished sending packets (total of 10)
+9945:  400 Finished sending packets (total of 10)
+9947:  163 Finished sending packets (total of 10)
+9953:  132 Finished sending packets (total of 10)
+9954:  216 Finished sending packets (total of 10)
+9959:  103 Finished sending packets (total of 10)
+9959:  387 Finished sending packets (total of 10)
+9961:  105 Finished sending packets (total of 10)
+9961:  195 Finished sending packets (total of 10)
+9961:  382 Finished sending packets (total of 10)
+9962:  321 Finished sending packets (total of 10)
+9963:  155 Finished sending packets (total of 10)
+9963:  162 Finished sending packets (total of 10)
+9965:  122 Finished sending packets (total of 10)
+9969:  78 Finished sending packets (total of 10)
+9972:  208 Finished sending packets (total of 10)
+9972:  297 Finished sending packets (total of 10)
+9974:  422 Finished sending packets (total of 10)
+9977:  126 Finished sending packets (total of 10)
+9979:  27 Finished sending packets (total of 10)
+9979:  338 Finished sending packets (total of 10)
+9980:  20 Finished sending packets (total of 10)
+9980:  76 Finished sending packets (total of 10)
+9981:  34 Finished sending packets (total of 10)
+9981:  333 Finished sending packets (total of 10)
+9982:  54 Finished sending packets (total of 10)
+9982:  256 Finished sending packets (total of 10)
+9983:  75 Finished sending packets (total of 10)
+9989:  448 Finished sending packets (total of 10)
+9991:  69 Finished sending packets (total of 10)
+9991:  439 Finished sending packets (total of 10)
+9992:  257 Finished sending packets (total of 10)
+9996:  53 Finished sending packets (total of 10)
+9997:  127 Finished sending packets (total of 10)
+9997:  380 Finished sending packets (total of 10)
+9997:  381 Finished sending packets (total of 10)
+10000:  55 Finished sending packets (total of 10)
+10001:  72 Finished sending packets (total of 10)
+10001:  280 Finished sending packets (total of 10)
+10002:  86 Finished sending packets (total of 10)
+10003:  373 Finished sending packets (total of 10)
+10005:  38 Finished sending packets (total of 10)
+10005:  215 Finished sending packets (total of 10)
+10009:  213 Finished sending packets (total of 10)
+10011:  248 Finished sending packets (total of 10)
+10012:  336 Finished sending packets (total of 10)
+10015:  437 Finished sending packets (total of 10)
+10018:  111 Finished sending packets (total of 10)
+10021:  357 Finished sending packets (total of 10)
+10022:  50 Finished sending packets (total of 10)
+10023:  125 Finished sending packets (total of 10)
+10031:  385 Finished sending packets (total of 10)
+10035:  417 Finished sending packets (total of 10)
+10042:  32 Finished sending packets (total of 10)
+10043:  234 Finished sending packets (total of 10)
+10044:  176 Finished sending packets (total of 10)
+10048:  246 Finished sending packets (total of 10)
+10052:  295 Finished sending packets (total of 10)
+10052:  337 Finished sending packets (total of 10)
+10053:  61 Finished sending packets (total of 10)
+10055:  19 Finished sending packets (total of 10)
+10055:  191 Finished sending packets (total of 10)
+10055:  200 Finished sending packets (total of 10)
+10055:  438 Finished sending packets (total of 10)
+10057:  35 Finished sending packets (total of 10)
+10059:  14 Finished sending packets (total of 10)
+10059:  263 Finished sending packets (total of 10)
+10062:  242 Finished sending packets (total of 10)
+10063:  442 Finished sending packets (total of 10)
+10069:  435 Finished sending packets (total of 10)
+10079:  190 Finished sending packets (total of 10)
+10081:  60 Finished sending packets (total of 10)
+10081:  110 Finished sending packets (total of 10)
+10084:  356 Finished sending packets (total of 10)
+10085:  70 Finished sending packets (total of 10)
+10091:  33 Finished sending packets (total of 10)
+10097:  56 Finished sending packets (total of 10)
+10097:  358 Finished sending packets (total of 10)
+10098:  41 Finished sending packets (total of 10)
+10106:  143 Finished sending packets (total of 10)
+10108:  365 Finished sending packets (total of 10)
+10109:  232 Finished sending packets (total of 10)
+10114:  359 Finished sending packets (total of 10)
+10115:  37 Finished sending packets (total of 10)
+10115:  40 Finished sending packets (total of 10)
+10116:  212 Finished sending packets (total of 10)
+10117:  207 Finished sending packets (total of 10)
+10118:  310 Finished sending packets (total of 10)
+10119:  175 Finished sending packets (total of 10)
+10119:  398 Finished sending packets (total of 10)
+10121:  267 Finished sending packets (total of 10)
+10124:  436 Finished sending packets (total of 10)
+10127:  440 Finished sending packets (total of 10)
+10129:  30 Finished sending packets (total of 10)
+10131:  13 Finished sending packets (total of 10)
+10133:  412 Finished sending packets (total of 10)
+10137:  211 Finished sending packets (total of 10)
+10139:  51 Finished sending packets (total of 10)
+10142:  355 Finished sending packets (total of 10)
+10144:  372 Finished sending packets (total of 10)
+10144:  397 Finished sending packets (total of 10)
+10149:  293 Finished sending packets (total of 10)
+10153:  266 Finished sending packets (total of 10)
+10165:  233 Finished sending packets (total of 10)
+10165:  292 Finished sending packets (total of 10)
+10169:  386 Finished sending packets (total of 10)
+10177:  12 Finished sending packets (total of 10)
+10181:  231 Finished sending packets (total of 10)
+10181:  243 Finished sending packets (total of 10)
+10185:  81 Finished sending packets (total of 10)
+10187:  147 Finished sending packets (total of 10)
+10188:  22 Finished sending packets (total of 10)
+10194:  327 Finished sending packets (total of 10)
+10194:  445 Finished sending packets (total of 10)
+10199:  394 Finished sending packets (total of 10)
+10203:  121 Finished sending packets (total of 10)
+10205:  131 Finished sending packets (total of 10)
+10207:  447 Finished sending packets (total of 10)
+10208:  82 Finished sending packets (total of 10)
+10210:  326 Finished sending packets (total of 10)
+10210:  446 Finished sending packets (total of 10)
+10213:  291 Finished sending packets (total of 10)
+10218:  323 Finished sending packets (total of 10)
+10219:  240 Finished sending packets (total of 10)
+10219:  281 Finished sending packets (total of 10)
+10222:  21 Finished sending packets (total of 10)
+10222:  368 Finished sending packets (total of 10)
+10223:  18 Finished sending packets (total of 10)
+10223:  413 Finished sending packets (total of 10)
+10227:  148 Finished sending packets (total of 10)
+10230:  28 Finished sending packets (total of 10)
+10231:  120 Finished sending packets (total of 10)
+10231:  145 Finished sending packets (total of 10)
+10234:  10 Finished sending packets (total of 10)
+10241:  300 Finished sending packets (total of 10)
+10242:  146 Finished sending packets (total of 10)
+10243:  370 Finished sending packets (total of 10)
+10245:  16 Finished sending packets (total of 10)
+10245:  392 Finished sending packets (total of 10)
+10249:  283 Finished sending packets (total of 10)
+10250:  290 Finished sending packets (total of 10)
+10251:  11 Finished sending packets (total of 10)
+10253:  118 Finished sending packets (total of 10)
+10253:  411 Finished sending packets (total of 10)
+10254:  205 Finished sending packets (total of 10)
+10255:  241 Finished sending packets (total of 10)
+10255:  418 Finished sending packets (total of 10)
+10258:  289 Finished sending packets (total of 10)
+10263:  410 Finished sending packets (total of 10)
+10267:  130 Finished sending packets (total of 10)
+10269:  31 Finished sending packets (total of 10)
+10269:  206 Finished sending packets (total of 10)
+10275:  17 Finished sending packets (total of 10)
+10277:  85 Finished sending packets (total of 10)
+10277:  210 Finished sending packets (total of 10)
+10277:  325 Finished sending packets (total of 10)
+10278:  25 Finished sending packets (total of 10)
+10279:  390 Finished sending packets (total of 10)
+10281:  375 Finished sending packets (total of 10)
+10285:  332 Finished sending packets (total of 10)
+10288:  245 Finished sending packets (total of 10)
+10289:  102 Finished sending packets (total of 10)
+10292:  262 Finished sending packets (total of 10)
+10294:  376 Finished sending packets (total of 10)
+10296:  261 Finished sending packets (total of 10)
+10299:  26 Finished sending packets (total of 10)
+10303:  8 Finished sending packets (total of 10)
+10305:  396 Finished sending packets (total of 10)
+10312:  68 Finished sending packets (total of 10)
+10319:  287 Finished sending packets (total of 10)
+10321:  393 Finished sending packets (total of 10)
+10322:  153 Finished sending packets (total of 10)
+10323:  141 Finished sending packets (total of 10)
+10325:  15 Finished sending packets (total of 10)
+10327:  285 Finished sending packets (total of 10)
+10329:  80 Finished sending packets (total of 10)
+10334:  320 Finished sending packets (total of 10)
+10335:  95 Finished sending packets (total of 10)
+10343:  66 Finished sending packets (total of 10)
+10343:  331 Finished sending packets (total of 10)
+10343:  391 Finished sending packets (total of 10)
+10344:  278 Finished sending packets (total of 10)
+10345:  160 Finished sending packets (total of 10)
+10349:  301 Finished sending packets (total of 10)
+10353:  97 Finished sending packets (total of 10)
+10355:  67 Finished sending packets (total of 10)
+10359:  161 Finished sending packets (total of 10)
+10365:  260 Finished sending packets (total of 10)
+10369:  65 Finished sending packets (total of 10)
+10370:  276 Finished sending packets (total of 10)
+10379:  9 Finished sending packets (total of 10)
+10384:  416 Finished sending packets (total of 10)
+10385:  117 Finished sending packets (total of 10)
+10396:  5 Finished sending packets (total of 10)
+10399:  335 Finished sending packets (total of 10)
+10403:  275 Finished sending packets (total of 10)
+10405:  230 Finished sending packets (total of 10)
+10405:  330 Finished sending packets (total of 10)
+10409:  415 Finished sending packets (total of 10)
+10417:  116 Finished sending packets (total of 10)
+10418:  277 Finished sending packets (total of 10)
+10422:  57 Finished sending packets (total of 10)
+10428:  150 Finished sending packets (total of 10)
+10429:  58 Finished sending packets (total of 10)
+10431:  140 Finished sending packets (total of 10)
+10431:  142 Finished sending packets (total of 10)
+10433:  115 Finished sending packets (total of 10)
+10438:  395 Finished sending packets (total of 10)
+10454:  152 Finished sending packets (total of 10)
+10467:  52 Finished sending packets (total of 10)
+10471:  419 Finished sending packets (total of 10)
+10480:  6 Finished sending packets (total of 10)
+10504:  288 Finished sending packets (total of 10)
+10511:  151 Finished sending packets (total of 10)
+10547:  286 Finished sending packets (total of 10)
+10562:  7 Finished sending packets (total of 10)
+10563:  101 Finished sending packets (total of 10)
+10575:  367 Finished sending packets (total of 10)
+10585:  366 Finished sending packets (total of 10)
+10589:  100 Finished sending packets (total of 10)
+10620:  424 Finished sending packets (total of 10)
+10896:  421 Finished sending packets (total of 10)
+11766:  409 Finished sending packets (total of 10)
+13314:  405 Finished sending packets (total of 10)
+13904:  408 Finished sending packets (total of 10)
+14027:  406 Finished sending packets (total of 10)
+14497:  407 Finished sending packets (total of 10)
+14725: NIC 409 received all packets (total of 4550)!
+14842: NIC 450 received all packets (total of 4550)!
+14845: NIC 451 received all packets (total of 4550)!
+14846: NIC 452 received all packets (total of 4550)!
+14849: NIC 453 received all packets (total of 4550)!
+14850: NIC 454 received all packets (total of 4550)!
+14852: NIC 410 received all packets (total of 4550)!
+14854: NIC 411 received all packets (total of 4550)!
+14856: NIC 412 received all packets (total of 4550)!
+14858: NIC 413 received all packets (total of 4550)!
+14860: NIC 414 received all packets (total of 4550)!
+14862: NIC 415 received all packets (total of 4550)!
+14865: NIC 416 received all packets (total of 4550)!
+14866: NIC 417 received all packets (total of 4550)!
+14869: NIC 0 received all packets (total of 4550)!
+14869: NIC 418 received all packets (total of 4550)!
+14870: NIC 419 received all packets (total of 4550)!
+14872: NIC 1 received all packets (total of 4550)!
+14872: NIC 420 received all packets (total of 4550)!
+14873: NIC 2 received all packets (total of 4550)!
+14874: NIC 421 received all packets (total of 4550)!
+14876: NIC 3 received all packets (total of 4550)!
+14876: NIC 422 received all packets (total of 4550)!
+14877: NIC 4 received all packets (total of 4550)!
+14878: NIC 423 received all packets (total of 4550)!
+14880: NIC 424 received all packets (total of 4550)!
+14882: NIC 425 received all packets (total of 4550)!
+14885: NIC 426 received all packets (total of 4550)!
+14886: NIC 427 received all packets (total of 4550)!
+14889: NIC 428 received all packets (total of 4550)!
+14890: NIC 429 received all packets (total of 4550)!
+14892: NIC 430 received all packets (total of 4550)!
+14894: NIC 431 received all packets (total of 4550)!
+14896: NIC 432 received all packets (total of 4550)!
+14898: NIC 433 received all packets (total of 4550)!
+14900: NIC 434 received all packets (total of 4550)!
+14902: NIC 435 received all packets (total of 4550)!
+14905: NIC 436 received all packets (total of 4550)!
+14906: NIC 437 received all packets (total of 4550)!
+14909: NIC 45 received all packets (total of 4550)!
+14909: NIC 438 received all packets (total of 4550)!
+14910: NIC 439 received all packets (total of 4550)!
+14912: NIC 46 received all packets (total of 4550)!
+14912: NIC 440 received all packets (total of 4550)!
+14913: NIC 47 received all packets (total of 4550)!
+14914: NIC 441 received all packets (total of 4550)!
+14916: NIC 48 received all packets (total of 4550)!
+14916: NIC 442 received all packets (total of 4550)!
+14917: NIC 49 received all packets (total of 4550)!
+14918: NIC 5 received all packets (total of 4550)!
+14918: NIC 443 received all packets (total of 4550)!
+14920: NIC 444 received all packets (total of 4550)!
+14921: NIC 6 received all packets (total of 4550)!
+14922: NIC 7 received all packets (total of 4550)!
+14922: NIC 445 received all packets (total of 4550)!
+14925: NIC 8 received all packets (total of 4550)!
+14925: NIC 446 received all packets (total of 4550)!
+14926: NIC 9 received all packets (total of 4550)!
+14926: NIC 447 received all packets (total of 4550)!
+14929: NIC 10 received all packets (total of 4550)!
+14929: NIC 448 received all packets (total of 4550)!
+14930: NIC 449 received all packets (total of 4550)!
+14932: NIC 11 received all packets (total of 4550)!
+14933: NIC 12 received all packets (total of 4550)!
+14936: NIC 13 received all packets (total of 4550)!
+14937: NIC 14 received all packets (total of 4550)!
+14938: NIC 15 received all packets (total of 4550)!
+14941: NIC 16 received all packets (total of 4550)!
+14942: NIC 17 received all packets (total of 4550)!
+14945: NIC 18 received all packets (total of 4550)!
+14946: NIC 19 received all packets (total of 4550)!
+14949: NIC 20 received all packets (total of 4550)!
+14952: NIC 21 received all packets (total of 4550)!
+14953: NIC 22 received all packets (total of 4550)!
+14956: NIC 23 received all packets (total of 4550)!
+14957: NIC 24 received all packets (total of 4550)!
+14958: NIC 25 received all packets (total of 4550)!
+14961: NIC 26 received all packets (total of 4550)!
+14961: NIC 408 received all packets (total of 4550)!
+14962: NIC 27 received all packets (total of 4550)!
+14965: NIC 28 received all packets (total of 4550)!
+14966: NIC 29 received all packets (total of 4550)!
+14969: NIC 30 received all packets (total of 4550)!
+14972: NIC 31 received all packets (total of 4550)!
+14973: NIC 32 received all packets (total of 4550)!
+14976: NIC 33 received all packets (total of 4550)!
+14977: NIC 34 received all packets (total of 4550)!
+14978: NIC 35 received all packets (total of 4550)!
+14978: NIC 50 received all packets (total of 4550)!
+14981: NIC 36 received all packets (total of 4550)!
+14981: NIC 51 received all packets (total of 4550)!
+14982: NIC 37 received all packets (total of 4550)!
+14982: NIC 52 received all packets (total of 4550)!
+14985: NIC 38 received all packets (total of 4550)!
+14985: NIC 53 received all packets (total of 4550)!
+14986: NIC 39 received all packets (total of 4550)!
+14986: NIC 54 received all packets (total of 4550)!
+14989: NIC 40 received all packets (total of 4550)!
+14989: NIC 55 received all packets (total of 4550)!
+14992: NIC 41 received all packets (total of 4550)!
+14992: NIC 56 received all packets (total of 4550)!
+14993: NIC 42 received all packets (total of 4550)!
+14993: NIC 57 received all packets (total of 4550)!
+14996: NIC 43 received all packets (total of 4550)!
+14996: NIC 58 received all packets (total of 4550)!
+14996: NIC 90 received all packets (total of 4550)!
+14997: NIC 44 received all packets (total of 4550)!
+14997: NIC 59 received all packets (total of 4550)!
+14998: NIC 60 received all packets (total of 4550)!
+14998: NIC 91 received all packets (total of 4550)!
+15000: NIC 92 received all packets (total of 4550)!
+15001: NIC 61 received all packets (total of 4550)!
+15002: NIC 62 received all packets (total of 4550)!
+15002: NIC 93 received all packets (total of 4550)!
+15004: NIC 94 received all packets (total of 4550)!
+15005: NIC 63 received all packets (total of 4550)!
+15006: NIC 64 received all packets (total of 4550)!
+15009: NIC 65 received all packets (total of 4550)!
+15012: NIC 66 received all packets (total of 4550)!
+15013: NIC 67 received all packets (total of 4550)!
+15016: NIC 68 received all packets (total of 4550)!
+15017: NIC 69 received all packets (total of 4550)!
+15018: NIC 70 received all packets (total of 4550)!
+15021: NIC 71 received all packets (total of 4550)!
+15022: NIC 72 received all packets (total of 4550)!
+15025: NIC 73 received all packets (total of 4550)!
+15026: NIC 74 received all packets (total of 4550)!
+15029: NIC 75 received all packets (total of 4550)!
+15029: NIC 135 received all packets (total of 4550)!
+15032: NIC 76 received all packets (total of 4550)!
+15032: NIC 136 received all packets (total of 4550)!
+15033: NIC 77 received all packets (total of 4550)!
+15033: NIC 137 received all packets (total of 4550)!
+15036: NIC 78 received all packets (total of 4550)!
+15036: NIC 138 received all packets (total of 4550)!
+15037: NIC 79 received all packets (total of 4550)!
+15037: NIC 139 received all packets (total of 4550)!
+15038: NIC 80 received all packets (total of 4550)!
+15038: NIC 95 received all packets (total of 4550)!
+15041: NIC 81 received all packets (total of 4550)!
+15041: NIC 96 received all packets (total of 4550)!
+15042: NIC 82 received all packets (total of 4550)!
+15042: NIC 97 received all packets (total of 4550)!
+15045: NIC 83 received all packets (total of 4550)!
+15045: NIC 98 received all packets (total of 4550)!
+15046: NIC 84 received all packets (total of 4550)!
+15046: NIC 99 received all packets (total of 4550)!
+15049: NIC 85 received all packets (total of 4550)!
+15049: NIC 100 received all packets (total of 4550)!
+15052: NIC 86 received all packets (total of 4550)!
+15052: NIC 101 received all packets (total of 4550)!
+15053: NIC 87 received all packets (total of 4550)!
+15053: NIC 102 received all packets (total of 4550)!
+15056: NIC 88 received all packets (total of 4550)!
+15056: NIC 103 received all packets (total of 4550)!
+15057: NIC 89 received all packets (total of 4550)!
+15057: NIC 104 received all packets (total of 4550)!
+15058: NIC 105 received all packets (total of 4550)!
+15061: NIC 106 received all packets (total of 4550)!
+15062: NIC 107 received all packets (total of 4550)!
+15065: NIC 108 received all packets (total of 4550)!
+15066: NIC 109 received all packets (total of 4550)!
+15069: NIC 110 received all packets (total of 4550)!
+15072: NIC 111 received all packets (total of 4550)!
+15073: NIC 112 received all packets (total of 4550)!
+15076: NIC 113 received all packets (total of 4550)!
+15077: NIC 114 received all packets (total of 4550)!
+15078: NIC 115 received all packets (total of 4550)!
+15081: NIC 116 received all packets (total of 4550)!
+15082: NIC 117 received all packets (total of 4550)!
+15085: NIC 118 received all packets (total of 4550)!
+15086: NIC 119 received all packets (total of 4550)!
+15088: NIC 180 received all packets (total of 4550)!
+15089: NIC 120 received all packets (total of 4550)!
+15090: NIC 181 received all packets (total of 4550)!
+15092: NIC 121 received all packets (total of 4550)!
+15092: NIC 182 received all packets (total of 4550)!
+15093: NIC 122 received all packets (total of 4550)!
+15094: NIC 183 received all packets (total of 4550)!
+15096: NIC 123 received all packets (total of 4550)!
+15096: NIC 184 received all packets (total of 4550)!
+15097: NIC 124 received all packets (total of 4550)!
+15098: NIC 125 received all packets (total of 4550)!
+15101: NIC 126 received all packets (total of 4550)!
+15102: NIC 127 received all packets (total of 4550)!
+15102: NIC 140 received all packets (total of 4550)!
+15105: NIC 128 received all packets (total of 4550)!
+15105: NIC 141 received all packets (total of 4550)!
+15106: NIC 129 received all packets (total of 4550)!
+15106: NIC 142 received all packets (total of 4550)!
+15109: NIC 130 received all packets (total of 4550)!
+15109: NIC 143 received all packets (total of 4550)!
+15110: NIC 144 received all packets (total of 4550)!
+15112: NIC 131 received all packets (total of 4550)!
+15112: NIC 145 received all packets (total of 4550)!
+15113: NIC 132 received all packets (total of 4550)!
+15114: NIC 146 received all packets (total of 4550)!
+15116: NIC 133 received all packets (total of 4550)!
+15116: NIC 147 received all packets (total of 4550)!
+15117: NIC 134 received all packets (total of 4550)!
+15118: NIC 148 received all packets (total of 4550)!
+15120: NIC 149 received all packets (total of 4550)!
+15122: NIC 150 received all packets (total of 4550)!
+15125: NIC 151 received all packets (total of 4550)!
+15126: NIC 152 received all packets (total of 4550)!
+15129: NIC 153 received all packets (total of 4550)!
+15130: NIC 154 received all packets (total of 4550)!
+15132: NIC 155 received all packets (total of 4550)!
+15134: NIC 156 received all packets (total of 4550)!
+15136: NIC 157 received all packets (total of 4550)!
+15138: NIC 158 received all packets (total of 4550)!
+15140: NIC 159 received all packets (total of 4550)!
+15142: NIC 160 received all packets (total of 4550)!
+15145: NIC 161 received all packets (total of 4550)!
+15146: NIC 162 received all packets (total of 4550)!
+15148: NIC 225 received all packets (total of 4550)!
+15149: NIC 163 received all packets (total of 4550)!
+15150: NIC 164 received all packets (total of 4550)!
+15150: NIC 226 received all packets (total of 4550)!
+15152: NIC 165 received all packets (total of 4550)!
+15152: NIC 227 received all packets (total of 4550)!
+15154: NIC 166 received all packets (total of 4550)!
+15154: NIC 228 received all packets (total of 4550)!
+15156: NIC 167 received all packets (total of 4550)!
+15156: NIC 229 received all packets (total of 4550)!
+15158: NIC 168 received all packets (total of 4550)!
+15158: NIC 185 received all packets (total of 4550)!
+15160: NIC 169 received all packets (total of 4550)!
+15161: NIC 186 received all packets (total of 4550)!
+15162: NIC 170 received all packets (total of 4550)!
+15162: NIC 187 received all packets (total of 4550)!
+15165: NIC 171 received all packets (total of 4550)!
+15165: NIC 188 received all packets (total of 4550)!
+15166: NIC 172 received all packets (total of 4550)!
+15166: NIC 189 received all packets (total of 4550)!
+15169: NIC 173 received all packets (total of 4550)!
+15169: NIC 190 received all packets (total of 4550)!
+15170: NIC 174 received all packets (total of 4550)!
+15172: NIC 175 received all packets (total of 4550)!
+15172: NIC 191 received all packets (total of 4550)!
+15173: NIC 192 received all packets (total of 4550)!
+15174: NIC 176 received all packets (total of 4550)!
+15176: NIC 177 received all packets (total of 4550)!
+15176: NIC 193 received all packets (total of 4550)!
+15177: NIC 194 received all packets (total of 4550)!
+15178: NIC 178 received all packets (total of 4550)!
+15178: NIC 195 received all packets (total of 4550)!
+15180: NIC 179 received all packets (total of 4550)!
+15181: NIC 196 received all packets (total of 4550)!
+15182: NIC 197 received all packets (total of 4550)!
+15185: NIC 198 received all packets (total of 4550)!
+15186: NIC 199 received all packets (total of 4550)!
+15189: NIC 200 received all packets (total of 4550)!
+15192: NIC 201 received all packets (total of 4550)!
+15193: NIC 202 received all packets (total of 4550)!
+15196: NIC 203 received all packets (total of 4550)!
+15197: NIC 204 received all packets (total of 4550)!
+15198: NIC 205 received all packets (total of 4550)!
+15201: NIC 206 received all packets (total of 4550)!
+15202: NIC 207 received all packets (total of 4550)!
+15205: NIC 208 received all packets (total of 4550)!
+15206: NIC 209 received all packets (total of 4550)!
+15209: NIC 210 received all packets (total of 4550)!
+15209: NIC 270 received all packets (total of 4550)!
+15212: NIC 211 received all packets (total of 4550)!
+15212: NIC 271 received all packets (total of 4550)!
+15213: NIC 212 received all packets (total of 4550)!
+15213: NIC 272 received all packets (total of 4550)!
+15216: NIC 213 received all packets (total of 4550)!
+15216: NIC 273 received all packets (total of 4550)!
+15217: NIC 214 received all packets (total of 4550)!
+15217: NIC 274 received all packets (total of 4550)!
+15218: NIC 215 received all packets (total of 4550)!
+15218: NIC 230 received all packets (total of 4550)!
+15221: NIC 216 received all packets (total of 4550)!
+15221: NIC 231 received all packets (total of 4550)!
+15222: NIC 217 received all packets (total of 4550)!
+15222: NIC 232 received all packets (total of 4550)!
+15225: NIC 218 received all packets (total of 4550)!
+15225: NIC 233 received all packets (total of 4550)!
+15226: NIC 219 received all packets (total of 4550)!
+15226: NIC 234 received all packets (total of 4550)!
+15229: NIC 220 received all packets (total of 4550)!
+15229: NIC 235 received all packets (total of 4550)!
+15232: NIC 221 received all packets (total of 4550)!
+15232: NIC 236 received all packets (total of 4550)!
+15233: NIC 222 received all packets (total of 4550)!
+15233: NIC 237 received all packets (total of 4550)!
+15236: NIC 223 received all packets (total of 4550)!
+15236: NIC 238 received all packets (total of 4550)!
+15237: NIC 224 received all packets (total of 4550)!
+15237: NIC 239 received all packets (total of 4550)!
+15238: NIC 240 received all packets (total of 4550)!
+15241: NIC 241 received all packets (total of 4550)!
+15242: NIC 242 received all packets (total of 4550)!
+15245: NIC 243 received all packets (total of 4550)!
+15246: NIC 244 received all packets (total of 4550)!
+15249: NIC 245 received all packets (total of 4550)!
+15252: NIC 246 received all packets (total of 4550)!
+15253: NIC 247 received all packets (total of 4550)!
+15256: NIC 248 received all packets (total of 4550)!
+15257: NIC 249 received all packets (total of 4550)!
+15258: NIC 250 received all packets (total of 4550)!
+15261: NIC 251 received all packets (total of 4550)!
+15262: NIC 252 received all packets (total of 4550)!
+15265: NIC 253 received all packets (total of 4550)!
+15266: NIC 254 received all packets (total of 4550)!
+15269: NIC 255 received all packets (total of 4550)!
+15269: NIC 315 received all packets (total of 4550)!
+15272: NIC 256 received all packets (total of 4550)!
+15272: NIC 316 received all packets (total of 4550)!
+15273: NIC 257 received all packets (total of 4550)!
+15273: NIC 317 received all packets (total of 4550)!
+15276: NIC 258 received all packets (total of 4550)!
+15276: NIC 318 received all packets (total of 4550)!
+15277: NIC 259 received all packets (total of 4550)!
+15277: NIC 319 received all packets (total of 4550)!
+15278: NIC 260 received all packets (total of 4550)!
+15281: NIC 261 received all packets (total of 4550)!
+15282: NIC 262 received all packets (total of 4550)!
+15282: NIC 275 received all packets (total of 4550)!
+15285: NIC 263 received all packets (total of 4550)!
+15285: NIC 276 received all packets (total of 4550)!
+15286: NIC 264 received all packets (total of 4550)!
+15286: NIC 277 received all packets (total of 4550)!
+15289: NIC 265 received all packets (total of 4550)!
+15289: NIC 278 received all packets (total of 4550)!
+15290: NIC 279 received all packets (total of 4550)!
+15292: NIC 266 received all packets (total of 4550)!
+15292: NIC 280 received all packets (total of 4550)!
+15293: NIC 267 received all packets (total of 4550)!
+15294: NIC 281 received all packets (total of 4550)!
+15296: NIC 268 received all packets (total of 4550)!
+15296: NIC 282 received all packets (total of 4550)!
+15297: NIC 269 received all packets (total of 4550)!
+15298: NIC 283 received all packets (total of 4550)!
+15300: NIC 284 received all packets (total of 4550)!
+15302: NIC 285 received all packets (total of 4550)!
+15305: NIC 286 received all packets (total of 4550)!
+15306: NIC 287 received all packets (total of 4550)!
+15309: NIC 288 received all packets (total of 4550)!
+15310: NIC 289 received all packets (total of 4550)!
+15312: NIC 290 received all packets (total of 4550)!
+15314: NIC 291 received all packets (total of 4550)!
+15316: NIC 292 received all packets (total of 4550)!
+15318: NIC 293 received all packets (total of 4550)!
+15320: NIC 294 received all packets (total of 4550)!
+15322: NIC 295 received all packets (total of 4550)!
+15325: NIC 296 received all packets (total of 4550)!
+15326: NIC 297 received all packets (total of 4550)!
+15326: NIC 405 received all packets (total of 4550)!
+15328: NIC 406 received all packets (total of 4550)!
+15329: NIC 298 received all packets (total of 4550)!
+15329: NIC 360 received all packets (total of 4550)!
+15329: NIC 407 received all packets (total of 4550)!
+15330: NIC 299 received all packets (total of 4550)!
+15332: NIC 300 received all packets (total of 4550)!
+15332: NIC 361 received all packets (total of 4550)!
+15333: NIC 362 received all packets (total of 4550)!
+15334: NIC 301 received all packets (total of 4550)!
+15336: NIC 302 received all packets (total of 4550)!
+15336: NIC 363 received all packets (total of 4550)!
+15337: NIC 364 received all packets (total of 4550)!
+15338: NIC 303 received all packets (total of 4550)!
+15338: NIC 320 received all packets (total of 4550)!
+15340: NIC 304 received all packets (total of 4550)!
+15341: NIC 321 received all packets (total of 4550)!
+15342: NIC 305 received all packets (total of 4550)!
+15342: NIC 322 received all packets (total of 4550)!
+15345: NIC 306 received all packets (total of 4550)!
+15345: NIC 323 received all packets (total of 4550)!
+15346: NIC 307 received all packets (total of 4550)!
+15346: NIC 324 received all packets (total of 4550)!
+15349: NIC 308 received all packets (total of 4550)!
+15349: NIC 325 received all packets (total of 4550)!
+15350: NIC 309 received all packets (total of 4550)!
+15352: NIC 310 received all packets (total of 4550)!
+15352: NIC 326 received all packets (total of 4550)!
+15353: NIC 327 received all packets (total of 4550)!
+15354: NIC 311 received all packets (total of 4550)!
+15356: NIC 312 received all packets (total of 4550)!
+15356: NIC 328 received all packets (total of 4550)!
+15357: NIC 329 received all packets (total of 4550)!
+15358: NIC 313 received all packets (total of 4550)!
+15358: NIC 330 received all packets (total of 4550)!
+15360: NIC 314 received all packets (total of 4550)!
+15361: NIC 331 received all packets (total of 4550)!
+15362: NIC 332 received all packets (total of 4550)!
+15365: NIC 333 received all packets (total of 4550)!
+15366: NIC 334 received all packets (total of 4550)!
+15369: NIC 335 received all packets (total of 4550)!
+15372: NIC 336 received all packets (total of 4550)!
+15373: NIC 337 received all packets (total of 4550)!
+15376: NIC 338 received all packets (total of 4550)!
+15377: NIC 339 received all packets (total of 4550)!
+15378: NIC 340 received all packets (total of 4550)!
+15381: NIC 341 received all packets (total of 4550)!
+15382: NIC 342 received all packets (total of 4550)!
+15385: NIC 343 received all packets (total of 4550)!
+15386: NIC 344 received all packets (total of 4550)!
+15389: NIC 345 received all packets (total of 4550)!
+15392: NIC 346 received all packets (total of 4550)!
+15393: NIC 347 received all packets (total of 4550)!
+15396: NIC 348 received all packets (total of 4550)!
+15397: NIC 349 received all packets (total of 4550)!
+15398: NIC 350 received all packets (total of 4550)!
+15398: NIC 365 received all packets (total of 4550)!
+15401: NIC 351 received all packets (total of 4550)!
+15401: NIC 366 received all packets (total of 4550)!
+15402: NIC 352 received all packets (total of 4550)!
+15402: NIC 367 received all packets (total of 4550)!
+15405: NIC 353 received all packets (total of 4550)!
+15405: NIC 368 received all packets (total of 4550)!
+15406: NIC 354 received all packets (total of 4550)!
+15406: NIC 369 received all packets (total of 4550)!
+15409: NIC 355 received all packets (total of 4550)!
+15409: NIC 370 received all packets (total of 4550)!
+15412: NIC 356 received all packets (total of 4550)!
+15412: NIC 371 received all packets (total of 4550)!
+15413: NIC 357 received all packets (total of 4550)!
+15413: NIC 372 received all packets (total of 4550)!
+15416: NIC 358 received all packets (total of 4550)!
+15416: NIC 373 received all packets (total of 4550)!
+15417: NIC 359 received all packets (total of 4550)!
+15417: NIC 374 received all packets (total of 4550)!
+15418: NIC 375 received all packets (total of 4550)!
+15421: NIC 376 received all packets (total of 4550)!
+15422: NIC 377 received all packets (total of 4550)!
+15425: NIC 378 received all packets (total of 4550)!
+15426: NIC 379 received all packets (total of 4550)!
+15429: NIC 380 received all packets (total of 4550)!
+15432: NIC 381 received all packets (total of 4550)!
+15433: NIC 382 received all packets (total of 4550)!
+15436: NIC 383 received all packets (total of 4550)!
+15437: NIC 384 received all packets (total of 4550)!
+15438: NIC 385 received all packets (total of 4550)!
+15441: NIC 386 received all packets (total of 4550)!
+15442: NIC 387 received all packets (total of 4550)!
+15445: NIC 388 received all packets (total of 4550)!
+15446: NIC 389 received all packets (total of 4550)!
+15449: NIC 390 received all packets (total of 4550)!
+15452: NIC 391 received all packets (total of 4550)!
+15453: NIC 392 received all packets (total of 4550)!
+15456: NIC 393 received all packets (total of 4550)!
+15457: NIC 394 received all packets (total of 4550)!
+15458: NIC 395 received all packets (total of 4550)!
+15461: NIC 396 received all packets (total of 4550)!
+15462: NIC 397 received all packets (total of 4550)!
+15465: NIC 398 received all packets (total of 4550)!
+15466: NIC 399 received all packets (total of 4550)!
+15469: NIC 400 received all packets (total of 4550)!
+15472: NIC 401 received all packets (total of 4550)!
+15473: NIC 402 received all packets (total of 4550)!
+15476: NIC 403 received all packets (total of 4550)!
+15477: NIC 404 received all packets (total of 4550)!
+Nic 454 had 4302 stalled cycles.
+Nic 453 had 4302 stalled cycles.
+Nic 452 had 4302 stalled cycles.
+Nic 451 had 4302 stalled cycles.
+Nic 450 had 4302 stalled cycles.
+Nic 449 had 4544 stalled cycles.
+Nic 448 had 5439 stalled cycles.
+Nic 447 had 5657 stalled cycles.
+Nic 446 had 5660 stalled cycles.
+Nic 445 had 5644 stalled cycles.
+Nic 444 had 4597 stalled cycles.
+Nic 443 had 5145 stalled cycles.
+Nic 442 had 5513 stalled cycles.
+Nic 441 had 5323 stalled cycles.
+Nic 440 had 5577 stalled cycles.
+Nic 439 had 5441 stalled cycles.
+Nic 438 had 5505 stalled cycles.
+Nic 437 had 5465 stalled cycles.
+Nic 436 had 5574 stalled cycles.
+Nic 435 had 5519 stalled cycles.
+Nic 434 had 5165 stalled cycles.
+Nic 433 had 5205 stalled cycles.
+Nic 432 had 5197 stalled cycles.
+Nic 431 had 5254 stalled cycles.
+Nic 430 had 5299 stalled cycles.
+Nic 429 had 4888 stalled cycles.
+Nic 428 had 5021 stalled cycles.
+Nic 427 had 5056 stalled cycles.
+Nic 426 had 5329 stalled cycles.
+Nic 425 had 5353 stalled cycles.
+Nic 424 had 6070 stalled cycles.
+Nic 423 had 5249 stalled cycles.
+Nic 422 had 5424 stalled cycles.
+Nic 421 had 6346 stalled cycles.
+Nic 420 had 5209 stalled cycles.
+Nic 419 had 5921 stalled cycles.
+Nic 418 had 5705 stalled cycles.
+Nic 417 had 5485 stalled cycles.
+Nic 416 had 5834 stalled cycles.
+Nic 415 had 5859 stalled cycles.
+Nic 414 had 4945 stalled cycles.
+Nic 413 had 5673 stalled cycles.
+Nic 412 had 5583 stalled cycles.
+Nic 411 had 5703 stalled cycles.
+Nic 410 had 5713 stalled cycles.
+Nic 409 had 7216 stalled cycles.
+Nic 408 had 9354 stalled cycles.
+Nic 407 had 9947 stalled cycles.
+Nic 406 had 9477 stalled cycles.
+Nic 405 had 8764 stalled cycles.
+Nic 404 had 4728 stalled cycles.
+Nic 403 had 5227 stalled cycles.
+Nic 402 had 5234 stalled cycles.
+Nic 401 had 5373 stalled cycles.
+Nic 400 had 5395 stalled cycles.
+Nic 399 had 5158 stalled cycles.
+Nic 398 had 5569 stalled cycles.
+Nic 397 had 5594 stalled cycles.
+Nic 396 had 5755 stalled cycles.
+Nic 395 had 5888 stalled cycles.
+Nic 394 had 5649 stalled cycles.
+Nic 393 had 5771 stalled cycles.
+Nic 392 had 5695 stalled cycles.
+Nic 391 had 5793 stalled cycles.
+Nic 390 had 5729 stalled cycles.
+Nic 389 had 5227 stalled cycles.
+Nic 388 had 5394 stalled cycles.
+Nic 387 had 5409 stalled cycles.
+Nic 386 had 5619 stalled cycles.
+Nic 385 had 5481 stalled cycles.
+Nic 384 had 5165 stalled cycles.
+Nic 383 had 5285 stalled cycles.
+Nic 382 had 5411 stalled cycles.
+Nic 381 had 5447 stalled cycles.
+Nic 380 had 5447 stalled cycles.
+Nic 379 had 4866 stalled cycles.
+Nic 378 had 4937 stalled cycles.
+Nic 377 had 5311 stalled cycles.
+Nic 376 had 5744 stalled cycles.
+Nic 375 had 5731 stalled cycles.
+Nic 374 had 5249 stalled cycles.
+Nic 373 had 5453 stalled cycles.
+Nic 372 had 5594 stalled cycles.
+Nic 371 had 5367 stalled cycles.
+Nic 370 had 5693 stalled cycles.
+Nic 369 had 5055 stalled cycles.
+Nic 368 had 5672 stalled cycles.
+Nic 367 had 6025 stalled cycles.
+Nic 366 had 6035 stalled cycles.
+Nic 365 had 5558 stalled cycles.
+Nic 364 had 4375 stalled cycles.
+Nic 363 had 5006 stalled cycles.
+Nic 362 had 4954 stalled cycles.
+Nic 361 had 4422 stalled cycles.
+Nic 360 had 5085 stalled cycles.
+Nic 359 had 5564 stalled cycles.
+Nic 358 had 5547 stalled cycles.
+Nic 357 had 5471 stalled cycles.
+Nic 356 had 5534 stalled cycles.
+Nic 355 had 5592 stalled cycles.
+Nic 354 had 4562 stalled cycles.
+Nic 353 had 4985 stalled cycles.
+Nic 352 had 4999 stalled cycles.
+Nic 351 had 5297 stalled cycles.
+Nic 350 had 5304 stalled cycles.
+Nic 349 had 4865 stalled cycles.
+Nic 348 had 4920 stalled cycles.
+Nic 347 had 5153 stalled cycles.
+Nic 346 had 5294 stalled cycles.
+Nic 345 had 5184 stalled cycles.
+Nic 344 had 5186 stalled cycles.
+Nic 343 had 5355 stalled cycles.
+Nic 342 had 5321 stalled cycles.
+Nic 341 had 5363 stalled cycles.
+Nic 340 had 5369 stalled cycles.
+Nic 164 had 4854 stalled cycles.
+Nic 163 had 5397 stalled cycles.
+Nic 162 had 5413 stalled cycles.
+Nic 161 had 5809 stalled cycles.
+Nic 160 had 5795 stalled cycles.
+Nic 159 had 4928 stalled cycles.
+Nic 158 had 5125 stalled cycles.
+Nic 157 had 5256 stalled cycles.
+Nic 156 had 5363 stalled cycles.
+Nic 155 had 5413 stalled cycles.
+Nic 154 had 5314 stalled cycles.
+Nic 153 had 5772 stalled cycles.
+Nic 152 had 5904 stalled cycles.
+Nic 151 had 5961 stalled cycles.
+Nic 150 had 5878 stalled cycles.
+Nic 149 had 5239 stalled cycles.
+Nic 148 had 5677 stalled cycles.
+Nic 147 had 5637 stalled cycles.
+Nic 146 had 5692 stalled cycles.
+Nic 145 had 5681 stalled cycles.
+Nic 144 had 5253 stalled cycles.
+Nic 143 had 5556 stalled cycles.
+Nic 142 had 5881 stalled cycles.
+Nic 141 had 5773 stalled cycles.
+Nic 140 had 5881 stalled cycles.
+Nic 139 had 4372 stalled cycles.
+Nic 138 had 4429 stalled cycles.
+Nic 137 had 4578 stalled cycles.
+Nic 136 had 4513 stalled cycles.
+Nic 135 had 4600 stalled cycles.
+Nic 134 had 5113 stalled cycles.
+Nic 133 had 5333 stalled cycles.
+Nic 132 had 5403 stalled cycles.
+Nic 131 had 5655 stalled cycles.
+Nic 130 had 5717 stalled cycles.
+Nic 129 had 4969 stalled cycles.
+Nic 128 had 5083 stalled cycles.
+Nic 127 had 5447 stalled cycles.
+Nic 126 had 5427 stalled cycles.
+Nic 125 had 5473 stalled cycles.
+Nic 124 had 4985 stalled cycles.
+Nic 123 had 5281 stalled cycles.
+Nic 122 had 5415 stalled cycles.
+Nic 121 had 5653 stalled cycles.
+Nic 120 had 5681 stalled cycles.
+Nic 119 had 4824 stalled cycles.
+Nic 118 had 5703 stalled cycles.
+Nic 117 had 5835 stalled cycles.
+Nic 116 had 5867 stalled cycles.
+Nic 115 had 5883 stalled cycles.
+Nic 114 had 5063 stalled cycles.
+Nic 113 had 5355 stalled cycles.
+Nic 112 had 5072 stalled cycles.
+Nic 111 had 5468 stalled cycles.
+Nic 110 had 5531 stalled cycles.
+Nic 109 had 5077 stalled cycles.
+Nic 108 had 5144 stalled cycles.
+Nic 107 had 5177 stalled cycles.
+Nic 106 had 5229 stalled cycles.
+Nic 105 had 5411 stalled cycles.
+Nic 104 had 5313 stalled cycles.
+Nic 103 had 5409 stalled cycles.
+Nic 102 had 5739 stalled cycles.
+Nic 101 had 6013 stalled cycles.
+Nic 100 had 6039 stalled cycles.
+Nic 99 had 5211 stalled cycles.
+Nic 98 had 5389 stalled cycles.
+Nic 97 had 5803 stalled cycles.
+Nic 96 had 5375 stalled cycles.
+Nic 95 had 5785 stalled cycles.
+Nic 94 had 4334 stalled cycles.
+Nic 93 had 4878 stalled cycles.
+Nic 92 had 4628 stalled cycles.
+Nic 91 had 4899 stalled cycles.
+Nic 90 had 4748 stalled cycles.
+Nic 89 had 4837 stalled cycles.
+Nic 88 had 4864 stalled cycles.
+Nic 87 had 4955 stalled cycles.
+Nic 86 had 5452 stalled cycles.
+Nic 85 had 5727 stalled cycles.
+Nic 84 had 4755 stalled cycles.
+Nic 83 had 5368 stalled cycles.
+Nic 82 had 5658 stalled cycles.
+Nic 81 had 5635 stalled cycles.
+Nic 80 had 5779 stalled cycles.
+Nic 38 had 5455 stalled cycles.
+Nic 37 had 5565 stalled cycles.
+Nic 36 had 5199 stalled cycles.
+Nic 35 had 5507 stalled cycles.
+Nic 34 had 5431 stalled cycles.
+Nic 33 had 5541 stalled cycles.
+Nic 32 had 5492 stalled cycles.
+Nic 31 had 5719 stalled cycles.
+Nic 30 had 5579 stalled cycles.
+Nic 29 had 5102 stalled cycles.
+Nic 28 had 5680 stalled cycles.
+Nic 27 had 5429 stalled cycles.
+Nic 26 had 5749 stalled cycles.
+Nic 25 had 5728 stalled cycles.
+Nic 24 had 4741 stalled cycles.
+Nic 23 had 4969 stalled cycles.
+Nic 22 had 5638 stalled cycles.
+Nic 21 had 5672 stalled cycles.
+Nic 20 had 5430 stalled cycles.
+Nic 19 had 5505 stalled cycles.
+Nic 8 had 5753 stalled cycles.
+Nic 7 had 6012 stalled cycles.
+Nic 6 had 5930 stalled cycles.
+Nic 5 had 5846 stalled cycles.
+Nic 4 had 5153 stalled cycles.
+Nic 3 had 5167 stalled cycles.
+Nic 2 had 5096 stalled cycles.
+Nic 1 had 5079 stalled cycles.
+Nic 0 had 5108 stalled cycles.
+Nic 9 had 5829 stalled cycles.
+Nic 10 had 5684 stalled cycles.
+Nic 11 had 5701 stalled cycles.
+Nic 12 had 5627 stalled cycles.
+Nic 13 had 5581 stalled cycles.
+Nic 14 had 5509 stalled cycles.
+Nic 15 had 5775 stalled cycles.
+Nic 16 had 5695 stalled cycles.
+Nic 17 had 5725 stalled cycles.
+Nic 18 had 5673 stalled cycles.
+Nic 39 had 5133 stalled cycles.
+Nic 40 had 5565 stalled cycles.
+Nic 41 had 5548 stalled cycles.
+Nic 42 had 5349 stalled cycles.
+Nic 43 had 5175 stalled cycles.
+Nic 44 had 4843 stalled cycles.
+Nic 45 had 4963 stalled cycles.
+Nic 46 had 4995 stalled cycles.
+Nic 47 had 5088 stalled cycles.
+Nic 48 had 4722 stalled cycles.
+Nic 49 had 4688 stalled cycles.
+Nic 50 had 5472 stalled cycles.
+Nic 51 had 5589 stalled cycles.
+Nic 52 had 5917 stalled cycles.
+Nic 53 had 5446 stalled cycles.
+Nic 54 had 5432 stalled cycles.
+Nic 55 had 5450 stalled cycles.
+Nic 56 had 5547 stalled cycles.
+Nic 57 had 5872 stalled cycles.
+Nic 58 had 5879 stalled cycles.
+Nic 59 had 5329 stalled cycles.
+Nic 60 had 5531 stalled cycles.
+Nic 61 had 5503 stalled cycles.
+Nic 62 had 5297 stalled cycles.
+Nic 63 had 5252 stalled cycles.
+Nic 64 had 5207 stalled cycles.
+Nic 65 had 5819 stalled cycles.
+Nic 66 had 5793 stalled cycles.
+Nic 67 had 5805 stalled cycles.
+Nic 68 had 5762 stalled cycles.
+Nic 69 had 5441 stalled cycles.
+Nic 70 had 5535 stalled cycles.
+Nic 71 had 5345 stalled cycles.
+Nic 72 had 5451 stalled cycles.
+Nic 73 had 5183 stalled cycles.
+Nic 74 had 4766 stalled cycles.
+Nic 75 had 5433 stalled cycles.
+Nic 76 had 5430 stalled cycles.
+Nic 77 had 5312 stalled cycles.
+Nic 78 had 5419 stalled cycles.
+Nic 79 had 4963 stalled cycles.
+Nic 165 had 5314 stalled cycles.
+Nic 166 had 5265 stalled cycles.
+Nic 167 had 5347 stalled cycles.
+Nic 168 had 5263 stalled cycles.
+Nic 169 had 5219 stalled cycles.
+Nic 170 had 5138 stalled cycles.
+Nic 171 had 5009 stalled cycles.
+Nic 172 had 5070 stalled cycles.
+Nic 173 had 4883 stalled cycles.
+Nic 174 had 4502 stalled cycles.
+Nic 175 had 5569 stalled cycles.
+Nic 176 had 5494 stalled cycles.
+Nic 177 had 5100 stalled cycles.
+Nic 178 had 5237 stalled cycles.
+Nic 179 had 5147 stalled cycles.
+Nic 180 had 5302 stalled cycles.
+Nic 181 had 4389 stalled cycles.
+Nic 182 had 5366 stalled cycles.
+Nic 183 had 4692 stalled cycles.
+Nic 184 had 5114 stalled cycles.
+Nic 185 had 5267 stalled cycles.
+Nic 186 had 5199 stalled cycles.
+Nic 187 had 5147 stalled cycles.
+Nic 188 had 5092 stalled cycles.
+Nic 189 had 4824 stalled cycles.
+Nic 190 had 5529 stalled cycles.
+Nic 191 had 5505 stalled cycles.
+Nic 192 had 5258 stalled cycles.
+Nic 193 had 5115 stalled cycles.
+Nic 194 had 4648 stalled cycles.
+Nic 195 had 5411 stalled cycles.
+Nic 196 had 5394 stalled cycles.
+Nic 197 had 5306 stalled cycles.
+Nic 198 had 5283 stalled cycles.
+Nic 199 had 5239 stalled cycles.
+Nic 200 had 5505 stalled cycles.
+Nic 201 had 5360 stalled cycles.
+Nic 202 had 5089 stalled cycles.
+Nic 203 had 4909 stalled cycles.
+Nic 204 had 4883 stalled cycles.
+Nic 205 had 5704 stalled cycles.
+Nic 206 had 5719 stalled cycles.
+Nic 207 had 5567 stalled cycles.
+Nic 208 had 5422 stalled cycles.
+Nic 209 had 5342 stalled cycles.
+Nic 210 had 5727 stalled cycles.
+Nic 211 had 5587 stalled cycles.
+Nic 212 had 5566 stalled cycles.
+Nic 213 had 5459 stalled cycles.
+Nic 214 had 5348 stalled cycles.
+Nic 215 had 5455 stalled cycles.
+Nic 216 had 5404 stalled cycles.
+Nic 217 had 5284 stalled cycles.
+Nic 218 had 5176 stalled cycles.
+Nic 219 had 5052 stalled cycles.
+Nic 220 had 5114 stalled cycles.
+Nic 221 had 5075 stalled cycles.
+Nic 222 had 4895 stalled cycles.
+Nic 223 had 4878 stalled cycles.
+Nic 224 had 4814 stalled cycles.
+Nic 225 had 4519 stalled cycles.
+Nic 226 had 4572 stalled cycles.
+Nic 227 had 4538 stalled cycles.
+Nic 228 had 4564 stalled cycles.
+Nic 229 had 4302 stalled cycles.
+Nic 230 had 5855 stalled cycles.
+Nic 231 had 5631 stalled cycles.
+Nic 232 had 5559 stalled cycles.
+Nic 233 had 5615 stalled cycles.
+Nic 234 had 5493 stalled cycles.
+Nic 235 had 5278 stalled cycles.
+Nic 236 had 5273 stalled cycles.
+Nic 237 had 5153 stalled cycles.
+Nic 238 had 5251 stalled cycles.
+Nic 239 had 5121 stalled cycles.
+Nic 240 had 5669 stalled cycles.
+Nic 241 had 5705 stalled cycles.
+Nic 242 had 5512 stalled cycles.
+Nic 243 had 5631 stalled cycles.
+Nic 244 had 5375 stalled cycles.
+Nic 245 had 5738 stalled cycles.
+Nic 246 had 5498 stalled cycles.
+Nic 247 had 5387 stalled cycles.
+Nic 248 had 5461 stalled cycles.
+Nic 249 had 5218 stalled cycles.
+Nic 250 had 5130 stalled cycles.
+Nic 251 had 5037 stalled cycles.
+Nic 252 had 4958 stalled cycles.
+Nic 253 had 4844 stalled cycles.
+Nic 254 had 4724 stalled cycles.
+Nic 255 had 5211 stalled cycles.
+Nic 256 had 5432 stalled cycles.
+Nic 257 had 5442 stalled cycles.
+Nic 258 had 5222 stalled cycles.
+Nic 259 had 5035 stalled cycles.
+Nic 260 had 5815 stalled cycles.
+Nic 261 had 5746 stalled cycles.
+Nic 262 had 5742 stalled cycles.
+Nic 263 had 5509 stalled cycles.
+Nic 264 had 5351 stalled cycles.
+Nic 265 had 5331 stalled cycles.
+Nic 266 had 5603 stalled cycles.
+Nic 267 had 5571 stalled cycles.
+Nic 268 had 5185 stalled cycles.
+Nic 269 had 5089 stalled cycles.
+Nic 270 had 4424 stalled cycles.
+Nic 271 had 4346 stalled cycles.
+Nic 272 had 4302 stalled cycles.
+Nic 273 had 4302 stalled cycles.
+Nic 274 had 4302 stalled cycles.
+Nic 275 had 5853 stalled cycles.
+Nic 276 had 5820 stalled cycles.
+Nic 277 had 5868 stalled cycles.
+Nic 278 had 5794 stalled cycles.
+Nic 279 had 5262 stalled cycles.
+Nic 280 had 5451 stalled cycles.
+Nic 281 had 5669 stalled cycles.
+Nic 282 had 5327 stalled cycles.
+Nic 283 had 5699 stalled cycles.
+Nic 284 had 5122 stalled cycles.
+Nic 285 had 5777 stalled cycles.
+Nic 286 had 5997 stalled cycles.
+Nic 287 had 5769 stalled cycles.
+Nic 288 had 5954 stalled cycles.
+Nic 289 had 5708 stalled cycles.
+Nic 290 had 5700 stalled cycles.
+Nic 291 had 5663 stalled cycles.
+Nic 292 had 5615 stalled cycles.
+Nic 293 had 5599 stalled cycles.
+Nic 294 had 4948 stalled cycles.
+Nic 295 had 5502 stalled cycles.
+Nic 296 had 5219 stalled cycles.
+Nic 297 had 5422 stalled cycles.
+Nic 298 had 5017 stalled cycles.
+Nic 299 had 5080 stalled cycles.
+Nic 300 had 5691 stalled cycles.
+Nic 301 had 5799 stalled cycles.
+Nic 302 had 5265 stalled cycles.
+Nic 303 had 4951 stalled cycles.
+Nic 304 had 4931 stalled cycles.
+Nic 305 had 5394 stalled cycles.
+Nic 306 had 5360 stalled cycles.
+Nic 307 had 5395 stalled cycles.
+Nic 308 had 5246 stalled cycles.
+Nic 309 had 5117 stalled cycles.
+Nic 310 had 5568 stalled cycles.
+Nic 311 had 5257 stalled cycles.
+Nic 312 had 5246 stalled cycles.
+Nic 313 had 5186 stalled cycles.
+Nic 314 had 5090 stalled cycles.
+Nic 315 had 5067 stalled cycles.
+Nic 316 had 4639 stalled cycles.
+Nic 317 had 5039 stalled cycles.
+Nic 318 had 5079 stalled cycles.
+Nic 319 had 4801 stalled cycles.
+Nic 320 had 5784 stalled cycles.
+Nic 321 had 5412 stalled cycles.
+Nic 322 had 5064 stalled cycles.
+Nic 323 had 5668 stalled cycles.
+Nic 324 had 5196 stalled cycles.
+Nic 325 had 5727 stalled cycles.
+Nic 326 had 5660 stalled cycles.
+Nic 327 had 5644 stalled cycles.
+Nic 328 had 4871 stalled cycles.
+Nic 329 had 4793 stalled cycles.
+Nic 330 had 5855 stalled cycles.
+Nic 331 had 5793 stalled cycles.
+Nic 332 had 5735 stalled cycles.
+Nic 333 had 5431 stalled cycles.
+Nic 334 had 4754 stalled cycles.
+Nic 335 had 5849 stalled cycles.
+Nic 336 had 5462 stalled cycles.
+Nic 337 had 5502 stalled cycles.
+Nic 338 had 5429 stalled cycles.
+Nic 339 had 5377 stalled cycles.
+Simulation is complete, simulated time: 15.477 us
