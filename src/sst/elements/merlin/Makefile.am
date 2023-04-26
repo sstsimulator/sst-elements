@@ -54,7 +54,6 @@ libmerlin_la_SOURCES = \
 	topology/polarfly.h \
 	topology/polarstar.cc \
 	topology/polarstar.h \
-	topology/polar.H \
 	hr_router/hr_router.h \
 	hr_router/hr_router.cc \
 	hr_router/xbar_arb_age.h \

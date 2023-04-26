@@ -133,11 +133,6 @@ public:
 
     SST_ELI_DOCUMENT_PARAMS(
         // Parameters needed for use with old merlin python module
-        {"polarfly.q", "size of the Gallois field. parameter should be a prime power."},
-        {"polarfly.hosts_per_router", "endpoints per router."},
-        {"polarfly.total_radix", "Radix of the router."},
-        {"polarfly.total_routers", "Number of total routers in the network."},
-        {"polarfly.total_endnodes", "Number of total endpoints in the network."},
         {"q", "size of the Gallois field. parameter should be a prime power."},
         {"hosts_per_router", "endpoints per router."},
         {"total_radix", "Radix of the router."},

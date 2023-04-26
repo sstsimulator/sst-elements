@@ -131,16 +131,6 @@ public:
 
     SST_ELI_DOCUMENT_PARAMS(
         // Parameters needed for use with old merlin python module
-        {"polarstar.d", "Network Radix per router"},
-        {"polarstar.sn_type", "Type of supernode -- {iq, paley or max}"},
-        {"polarstar.pfq", "Prime power q for polarfly, pfq<0 will automatically compute pfq for optimal scale"},
-        {"polarstar.snq", "parameter q for supernodes; for Paley q=num nodes, for IQ q=degree"},
-        
-        {"polarstar.hosts_per_router", "endpoints per router."},
-        {"polarstar.total_radix", "Radix of the router."},
-        {"polarstar.total_routers", "Number of total routers in the network."},
-        {"polarstar.total_endnodes", "Number of total endpoints in the network."},
-
         {"d", "Network Radix per router"},
         {"sn_type", "Type of supernode -- {iq, paley or max} "},
         {"pfq", "Prime power q for polarfly, pfq<0 will automatically compute pfq for optimal scale"},
