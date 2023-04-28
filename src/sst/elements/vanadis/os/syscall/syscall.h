@@ -141,11 +141,11 @@ private:
             } else {
 
                 if ( m_lock ) {
-                    auto req =  new StandardMem::LoadLink( physAddr, length, 0, virtAddr );
+                    auto req =  new StandardMem::LoadLink( physAddr, length, 0, virtAddr, 0, 0 );
                     obj->m_output->verbose(CALL_INFO, 16, 0, " %s\n",req->getString().c_str());
                     return req;
                 } else {
-                    auto req =  new StandardMem::Read( physAddr, length, 0, virtAddr );
+                    auto req =  new StandardMem::Read( physAddr, length, 0, virtAddr, 0, 0 );
                     obj->m_output->verbose(CALL_INFO, 16, 0, " %s\n",req->getString().c_str());
                     return req;
                 }
@@ -158,7 +158,9 @@ private:
         WriteMemoryHandler( VanadisSyscall* obj, SST::Output* out, uint64_t addr, std::vector<uint8_t>& data, bool lock )
             : BlockMemoryHandler(obj,out,addr,data,lock) {}
 
-        void handle(StandardMem::WriteResp* req ) override {} 
+        void handle(StandardMem::WriteResp* req ) override {
+            m_offset += req->size;
+        }
 
         StandardMem::Request* generateMemReq() override {
             uint64_t length = calcLength();
@@ -171,11 +173,10 @@ private:
             if ( -1 == physAddr ) {
                 return nullptr;
             } else {
-                m_offset += length; 
                 if ( m_lock ) {
-                    return new StandardMem::StoreConditional( physAddr, payload.size(), payload);
+                    return new StandardMem::StoreConditional( physAddr, payload.size(), payload, 0);
                 } else {
-                    return new StandardMem::Write( physAddr, payload.size(), payload);
+                    return new StandardMem::Write( physAddr, payload.size(), payload, 0);
                 }
             }
         } 
