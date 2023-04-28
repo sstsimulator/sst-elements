@@ -9,10 +9,11 @@ params = {
     "instructions_per_task" : 20,
     "program_binary_fname": program_fpath(),
     "program_argv": program_argv(),
-    "verbose_level" : 2,
+    "verbose_level" : 5,
     "debug_scheduler" : False,
     "debug_memory_requests" : False,
-    "debug_initialization" : False,
+    "debug_initialization" : True,
+    "debug_delegate_requests" : True,    
 }
 
 nf = NodeFactory(params)
