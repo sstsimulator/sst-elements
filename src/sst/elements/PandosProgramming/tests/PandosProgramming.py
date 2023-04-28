@@ -28,11 +28,11 @@ class Node(object):
         other_to_self = sst.Link(other.component_name + "__to__" + self.component_name)
         self_to_other.connect(
             (self.component, "requestsToRemoteNode", "100ns"),
-            (self.component, "requestsFromRemoteNode", "100ns")
+            (other.component, "requestsFromRemoteNode", "100ns")
         )
         other_to_self.connect(
             (other.component, "requestsToRemoteNode", "100ns"),
-            (other.component, "requestsFromRemoteNode", "100ns")
+            (self.component, "requestsFromRemoteNode", "100ns")
         )
         self.toRemoteNode = self_to_other
         self.fromRemoteNode = other_to_self
