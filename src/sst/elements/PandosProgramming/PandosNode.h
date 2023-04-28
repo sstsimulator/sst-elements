@@ -44,7 +44,8 @@ public:
                 {"verbose_level", "Verbosity of logging", NULL},
                 {"debug_scheduler", "Debug scheduler", NULL},
                 {"debug_memory_requests", "Debug memory requests", NULL},
-                {"debug_initialization", "Debug initializtion code", NULL},                
+                {"debug_initialization", "Debug initializtion code", NULL},
+                {"debug_delegate_requests", "Debug delegate requests", NULL},                
         )
         // Document the ports that this component accepts
         SST_ELI_DOCUMENT_PORTS(
@@ -95,6 +96,11 @@ public:
         void sendMemoryRequest(int src_core);
 
         /**
+         * send a delegate request on behalf of a core
+         */
+        void sendDelegateRequest(int src_core);
+
+        /**
          * handle a response from memory to a request
          */
         void receiveResponse(SST::Event *rsp, Link **requestLink);
@@ -108,7 +114,12 @@ public:
          * handle a read request
          */
         void receiveReadRequest(PandosReadRequestEventT *read_req, Link **responseLink);
-                
+
+        /**
+         * handle a delegate request
+         */
+        void receiveDelegateRequest(PandosDelegateRequestEventT *delegate_req, Link **responseLink);
+        
         /**
          * handle a request for memory operation
          */
@@ -130,6 +141,27 @@ public:
         void checkPXNID(int line, const char *file, const char *function, int pxn_id);
 
         /**
+         * find a task factory function from a task type id
+         */
+        pando::backend::TaskFactory_t findTaskFactoryFromTaskTypeID(pando::backend::TaskTypeID_t task_type_id);
+
+        /**
+         * start of the task type info array
+         */
+        pando::backend::TaskTypeInfo_t* taskTypeInfoStart();
+
+        /**
+         * stop of the task type info array
+         */
+        pando::backend::TaskTypeInfo_t* taskTypeInfoStop();
+
+
+        /**
+         * schedule a task on a core
+         */
+        void scheduleTaskOnCore(pando::backend::task_t*delegate_task, int src_core);
+        
+        /**
          * schedule work onto a core
          */
         void schedule(int core_id);
@@ -138,6 +170,11 @@ public:
          * parse the program argument vector
          */
         void parseProgramArgv(Params &params);
+
+        /**
+         * get the the node id 
+         */
+        pando::NodeId_t getNodeID() const { return pando_context->getId(); }
         
         // SST Output object, for printing error messages, etc.
         SST::Output *out;
