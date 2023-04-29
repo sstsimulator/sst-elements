@@ -700,7 +700,7 @@ protected:
                     store_address, store_width);
                 
                 store_req = new StandardMem::StoreConditional(store_address & address_mask, payload.size(), payload,
-                            0, store_address, store_ins->getInstructionAddress());
+                            0, store_address, store_ins->getInstructionAddress(), store_ins->getHWThread() );
             }
         } break;
         case MEM_TRANSACTION_LOCK:
@@ -712,7 +712,7 @@ protected:
                     store_address, store_width);
                 
                 store_req = new StandardMem::WriteUnlock(store_address & address_mask, payload.size(), payload,
-                            0, store_address, store_ins->getInstructionAddress());
+                            0, store_address, store_ins->getInstructionAddress(), store_ins->getHWThread());
             }
         } break;
         }
