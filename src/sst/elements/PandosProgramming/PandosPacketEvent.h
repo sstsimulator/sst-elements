@@ -92,6 +92,28 @@ public:
 };
 
 /**
+ * A PANDO Delegate Request Packet
+ */
+class PandosDelegateRequestEventT : public PandosRequestEventT {
+public:
+        PandosDelegateRequestEventT():PandosRequestEventT(){}
+        virtual ~PandosDelegateRequestEventT() {}
+
+        // serialization function
+        void serialize_order(SST::Core::Serialization::serializer &ser) override {
+                PandosRequestEventT::serialize_order(ser);
+                ser & task_type_id;
+                ser & task_data;
+        }
+
+        ImplementSerializable(SST::PandosProgramming::PandosDelegateRequestEventT);
+public:
+        pando::backend::TaskTypeID_t task_type_id;
+        std::vector<unsigned char> task_data;
+};
+
+
+/**
  * A PANDO Response Packet
  */
 class PandosResponseEventT : public PandosPacketEventT {
@@ -142,6 +164,18 @@ public:
         // register event as serializable
         ImplementSerializable(SST::PandosProgramming::PandosWriteResponseEventT);
 };
-                
+
+/**
+ * A PANDO Delegate Response Packet
+ */
+class PandosDelegateResponseEventT : public PandosResponseEventT {
+public:
+        PandosDelegateResponseEventT():PandosResponseEventT(){}
+        virtual ~PandosDelegateResponseEventT(){}
+        // register event as serializable
+        ImplementSerializable(SST::PandosProgramming::PandosDelegateResponseEventT);
+};
+
+
 }
 }

@@ -15,9 +15,27 @@
 using namespace SST;
 using namespace SST::PandosProgramming;
 
-#define DEBUG_SCHEDULE        0x00000001
-#define DEBUG_MEMORY_REQUESTS 0x00000002
-#define DEBUG_INITIALIZATION  0x00000004
+#define DEBUG_SCHEDULE          0x00000001
+#define DEBUG_MEMORY_REQUESTS   0x00000002
+#define DEBUG_INITIALIZATION    0x00000004
+#define DEBUG_DELEGATE_REQUESTS 0x00000008
+
+
+/**
+ * schedule a task onto a core
+ */
+void PandosNodeT::scheduleTaskOnCore(pando::backend::task_t*delegate_task, int target_core) {
+    using namespace pando;
+    using namespace backend;
+    core_context_t *target_core_ctx = core_contexts[target_core];
+    out->verbose(CALL_INFO, 3, DEBUG_DELEGATE_REQUESTS|DEBUG_SCHEDULE, "%s: scheduling a task onto core %d\n",
+                 __PRETTY_FUNCTION__, target_core);
+    target_core_ctx->task_deque.push_back(delegate_task);
+    if (target_core_ctx->getStateType() == eCoreIdle) {
+        target_core_ctx->setStateType(eCoreReady);
+    }
+    return;
+}
 
 /**
  * schedule work onto a core
@@ -101,6 +119,52 @@ void PandosNodeT::parseProgramArgv(Params &params)
     program_argv.push_back(nullptr);
 }
 
+/**
+ * start of the task type info array
+ */
+pando::backend::TaskTypeInfo_t* PandosNodeT::taskTypeInfoStart()
+{
+    using namespace pando;
+    using namespace backend;
+
+    if (program_binary_handle == nullptr) {
+#ifdef DEBUG
+        out->fatal(CALL_INFO, -1, "%s: called with out opened program\n", __func__);
+        abort();
+#endif
+        return nullptr;
+    }
+    TaskTypeInfo_t *start = (TaskTypeInfo_t*)dlsym(
+        program_binary_handle,
+        "__start_task_type_info"
+        );
+    out->verbose(CALL_INFO, 1, DEBUG_DELEGATE_REQUESTS, "task_type_info: start = %p\n", start);
+    return start;
+}
+
+/**
+ * stop of the task type info array
+ */
+pando::backend::TaskTypeInfo_t* PandosNodeT::taskTypeInfoStop()
+{
+    using namespace pando;
+    using namespace backend;
+
+    if (program_binary_handle == nullptr) {
+#ifdef DEBUG
+        out->fatal(CALL_INFO, -1, "%s: called with out opened program\n", __func__);
+        abort();
+#endif
+        return nullptr;
+    }
+    TaskTypeInfo_t *stop = (TaskTypeInfo_t*)dlsym(
+        program_binary_handle,
+        "__stop_task_type_info"
+        );        
+    out->verbose(CALL_INFO, 1, DEBUG_DELEGATE_REQUESTS, "task_type_info: stop = %p\n", stop);
+    return stop;
+}
+
 void PandosNodeT::openProgramBinary(Params &params)
 {
     /*
@@ -131,6 +195,21 @@ void PandosNodeT::openProgramBinary(Params &params)
         "PANDORuntimeBackendSetCurrentContext"
         );
 
+    // find the task info section
+    using namespace pando;
+    using namespace backend;
+
+    TaskTypeInfo_t *start = taskTypeInfoStart();
+    TaskTypeInfo_t *stop = taskTypeInfoStop();
+
+    if (start && stop) {
+        TaskTypeInfo_t *info;
+        TaskTypeID_t id = 0;
+        for (info = start; info < stop; info++) {
+            info->type_id = id++;
+        }
+    }
+    
     bool found;
     pando::NodeId_t node_id = params.find<pando::NodeId_t>("node_id", 0, found);
     if (!found) {
@@ -194,26 +273,28 @@ void PandosNodeT::initCores()
         core->start();
     }
 
-    /**
-     * enque an initial task on core 0
-     */
-    pando::backend::core_context_t *cc0 = core_contexts[0];
-    mainFunc_t my_main = (mainFunc_t)dlsym(
-        program_binary_handle,
-        "my_main"
-        );
+    if (getNodeID() == 0) { // if we are node 0
+        /**
+         * enque an initial task on core 0
+         */
+        pando::backend::core_context_t *cc0 = core_contexts[0];
+        mainFunc_t my_main = (mainFunc_t)dlsym(
+            program_binary_handle,
+            "my_main"
+            );
 
-    if (!my_main) {
-        out->fatal(CALL_INFO, -1, "failed to find symbol '%s'\n", "my_main");
-        exit(1);
+        if (!my_main) {
+            out->fatal(CALL_INFO, -1, "failed to find symbol '%s'\n", "my_main");
+            exit(1);
+        }
+
+        auto main_task = pando::backend::NewTask([=]()mutable{
+                my_main(program_argv.size()-1, program_argv.data());
+                out->verbose(CALL_INFO, 1, 0, "my_main() has returned\n");
+            });
+        cc0->task_deque.push_front(main_task);
+        cc0->setStateType(eCoreReady);
     }
-
-    auto main_task = pando::backend::NewTask([=]()mutable{
-            my_main(program_argv.size()-1, program_argv.data());
-            out->verbose(CALL_INFO, 1, 0, "my_main() has returned\n");
-        });
-    cc0->task_deque.push_front(main_task);
-    cc0->setStateType(eCoreReady);
 }
 
 /**
@@ -234,12 +315,14 @@ PandosNodeT::PandosNodeT(ComponentId_t id, Params &params) : Component(id), prog
     node_shared_dram_size = params.find<size_t>("node_shared_dram_size", 1024*1024*1024, found);
     bool debug_scheduler = params.find<bool>("debug_scheduler", false, found);
     bool debug_memory_requests = params.find<bool>("debug_memory_requests", false, found);
+    bool debug_delegate_requests = params.find<bool>("debug_delegate_requests", false, found);    
     bool debug_initialization = params.find<bool>("debug_initialization", false, found);
     parseProgramArgv(params);
     uint32_t verbose_mask = 0;
     if (debug_scheduler) verbose_mask |= DEBUG_SCHEDULE;
     if (debug_memory_requests) verbose_mask |= DEBUG_MEMORY_REQUESTS;
     if (debug_initialization) verbose_mask |= DEBUG_INITIALIZATION;
+    if (debug_delegate_requests) verbose_mask |= DEBUG_DELEGATE_REQUESTS;
     std::stringstream ss;
     ss << "[PandosNode " << id << "] ";
     out = new Output(ss.str(), verbose_level, verbose_mask, Output::STDOUT);
@@ -310,6 +393,40 @@ PandosNodeT::~PandosNodeT() {
         free(program_argv[i]);
 
     delete out;
+}
+
+
+/**
+ * send delegate request on behalf of a core
+ */
+void PandosNodeT::sendDelegateRequest(int src_core) {
+    using namespace pando;
+    using namespace backend;
+    checkCoreID(CALL_INFO, src_core);
+    core_context_t *core_ctx = core_contexts[src_core];
+
+    address_t addr = core_ctx->core_state.delegate_req.addr;
+    task_t *task = core_ctx->core_state.delegate_req.task;
+    
+    PandosDelegateRequestEventT *req = new PandosDelegateRequestEventT;
+    req->task_type_id = task->taskTypeID();
+    req->task_data = task->taskData();
+    req->src_pxn = src_core;
+    req->src_pxn = core_ctx->node_ctx->getId();
+    req->src_core = src_core;
+    req->dst_pxn = addr.getPXN();
+    req->dst_core = addr.getCore();
+    delete task;
+    
+#ifdef DEBUG
+    if (!toRemoteNode) {
+        out->fatal(CALL_INFO, -1, "%s: toRemoteNode not configured\n", __func__);
+        abort();
+    }
+#endif
+    out->verbose(CALL_INFO, 2, DEBUG_DELEGATE_REQUESTS, "%s: sending delegate to remote node\n", __PRETTY_FUNCTION__);
+    toRemoteNode->send(req);
+    core_ctx->setStateType(eCoreReady);
 }
 
 /**
@@ -398,7 +515,7 @@ void PandosNodeT::receiveResponse(SST::Event *evt, Link** requestLink) {
     out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "Received packet on link\n");
     PandosResponseEventT *rsp = dynamic_cast<PandosResponseEventT*>(evt);
     if (!rsp) {
-        out->fatal(CALL_INFO, -1, "Bad event type\n");
+        out->fatal(CALL_INFO, -1, "Bad event type: line %d\n", __LINE__);
         abort();
     }
     /**
@@ -411,13 +528,21 @@ void PandosNodeT::receiveResponse(SST::Event *evt, Link** requestLink) {
 
     core_context_t *core_ctx = core_contexts[src_core];
 
-    // change core's state to ready
-    core_ctx->setStateType(eCoreReady);
-
     // was this a read response?
     PandosReadResponseEventT *read_rsp = dynamic_cast<PandosReadResponseEventT*>(rsp);
     if (read_rsp) {
         memcpy(core_ctx->core_state.mem_req.data, read_rsp->payload.data(), read_rsp->size);
+        core_ctx->setStateType(eCoreReady);        
+    }
+
+    PandosWriteResponseEventT *write_rsp = dynamic_cast<PandosWriteResponseEventT*>(rsp);
+    if (write_rsp) {
+        core_ctx->setStateType(eCoreReady);
+    }
+
+    PandosDelegateResponseEventT *delegate_rsp = dynamic_cast<PandosDelegateResponseEventT*>(rsp);
+    if (delegate_rsp) {
+        ;
     }
 
     // delete response
@@ -445,6 +570,53 @@ void *PandosNodeT::translateAddress(const pando::backend::address_t &addr)
         out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "%s: translate address = %s => %p\n",__func__,address_to_string(addr).c_str(),p);
         return p;
     }
+}
+
+/**
+ * find a task factory function from a task type id
+ */
+pando::backend::TaskFactory_t
+PandosNodeT::findTaskFactoryFromTaskTypeID(pando::backend::TaskTypeID_t task_type_id) {
+    using namespace pando;
+    using namespace backend;
+    TaskTypeInfo_t*start = taskTypeInfoStart();
+    TaskTypeInfo_t*stop  = taskTypeInfoStop();
+    if (!start || !stop) {
+        return nullptr;
+    }
+    if (task_type_id > (stop-start)) {
+#ifdef DEBUG        
+        out->fatal(CALL_INFO, -1, "%s: bad task_type_id (%lu) only %zu found\n"
+                   ,__PRETTY_FUNCTION__
+                   ,task_type_id
+                   ,(stop-start));
+        abort();
+#endif
+        return nullptr;
+    }
+    return start[task_type_id].type_factory;
+}
+
+/**
+ * receive a delegate request
+ */
+void PandosNodeT::receiveDelegateRequest(PandosDelegateRequestEventT *delegate_req, Link **responseLink) {
+    using namespace pando;
+    using namespace backend;
+    
+    out->verbose(CALL_INFO, 1, DEBUG_DELEGATE_REQUESTS, "%s: formatting a resposne packet\n", __func__);
+    TaskFactory_t factory = findTaskFactoryFromTaskTypeID(delegate_req->task_type_id);
+    task_t *delegate_task = factory(delegate_req->task_data);
+    scheduleTaskOnCore(delegate_task, delegate_req->dst_core);
+    
+    PandosDelegateResponseEventT *delegate_rsp = new PandosDelegateResponseEventT;
+    delegate_rsp->src_pxn = delegate_req->src_pxn;
+    delegate_rsp->src_core = delegate_req->src_core;    
+    delete delegate_req;
+    
+    out->verbose(CALL_INFO, 1, DEBUG_DELEGATE_REQUESTS, "Sending delegate response\n");
+    (*responseLink)->send(delegate_rsp);
+    out->verbose(CALL_INFO, 1, DEBUG_DELEGATE_REQUESTS, "Delegate response sent\n");
 }
 
 /**
@@ -498,24 +670,30 @@ void PandosNodeT::receiveReadRequest(PandosReadRequestEventT *read_req, Link **r
  * handle a request for memory operation
  */
 void PandosNodeT::receiveRequest(SST::Event *evt, Link **responseLink) {
-    out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "Received packet on link\n");
-    PandosReadRequestEventT *read_req;
-    PandosWriteRequestEventT *write_req;
-    read_req = dynamic_cast<PandosReadRequestEventT*>(evt);
-    if (!read_req) {
-        write_req = dynamic_cast<PandosWriteRequestEventT*>(evt);
-        if (!write_req) {
-            out->fatal(CALL_INFO, -1, "Bad event type\n");
-            abort();
-        }
-        // write request
+    out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "Received packet on link\n");    
+    PandosReadRequestEventT *read_req = dynamic_cast<PandosReadRequestEventT*>(evt);
+    if (read_req) {
+        out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "Received read packet: response link = %p\n", *responseLink);
+        receiveReadRequest(read_req, responseLink);
+        return;
+    }
+    
+    PandosWriteRequestEventT * write_req = dynamic_cast<PandosWriteRequestEventT*>(evt);
+    if (write_req) {
         out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "Received write packet: response link = %p\n", *responseLink);
         receiveWriteRequest(write_req, responseLink);
-    } else {
-        // read request
-        out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "Received read packet: response link = %p\n", *responseLink);
-        receiveReadRequest(read_req, responseLink);                
+        return;
     }
+
+    PandosDelegateRequestEventT *delegate_req = dynamic_cast<PandosDelegateRequestEventT*>(evt);
+    if (delegate_req) {
+        out->verbose(CALL_INFO, 1, DEBUG_DELEGATE_REQUESTS, "Received delegate packet: response link = %p\n", *responseLink);
+        receiveDelegateRequest(delegate_req, responseLink);
+        return;
+    }
+    
+    out->fatal(CALL_INFO, -1, "Bad event type: line %d\n", __LINE__);    
+    abort();
 }
 
 /**
@@ -539,6 +717,9 @@ bool PandosNodeT::clockTic(SST::Cycle_t cycle) {
         case eCoreIssueMemoryWrite:
             // generate an event an depending on the memory type
             sendMemoryRequest(core_id);
+            break;
+        case eCoreIssueDelegateRequest:
+            sendDelegateRequest(core_id);
             break;
         case eCoreIdle:
             out->verbose(CALL_INFO, 2, DEBUG_SCHEDULE, "core %d is idle\n", core_id);                        
