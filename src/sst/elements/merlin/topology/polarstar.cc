@@ -431,7 +431,79 @@ internal_router_event* topo_polarstar::process_input(RtrEvent* ev)
     return tt_ev;
 }
 
-internal_router_event* topo_polarstar::process_InitData_input(RtrEvent* ev)
+//internal_router_event* topo_polarstar::process_InitData_input(RtrEvent* ev)
+//{
+//    topo_polarstar_init_event *tt_ev = new topo_polarstar_init_event(0, this->total_routers);
+//    tt_ev->setEncapsulatedEvent(ev);
+//
+//    return tt_ev;
+//}
+//
+//void topo_polarstar::routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts)
+//{
+//    topo_polarstar_init_event *tt_ev = static_cast<topo_polarstar_init_event*>(ev);
+//
+//    if (ev->getDest() == INIT_BROADCAST_ADDR ){
+//        //phase=0 -> packet injected into network from this router
+//        if (tt_ev->phase == 0) {
+//            //This is the entry router. First send to local ports.
+//            tt_ev->covered[router_id] = 1;
+//
+//            for (int i=0; i < hosts_per_router;i++) {
+//
+//                if( port != i) outPorts.push_back(i) ;
+//            }
+//
+//            // Also send to the adjacent neighbors
+//            for (int j=0; j < node_links; j++) {
+//
+//                outPorts.push_back(j+hosts_per_router);
+//                tt_ev->covered[neighbor_list[j]]    = 1; 
+//            }
+//
+//            //Increment the phase value
+//            tt_ev->phase = 1;
+//        }
+//
+//        else if (tt_ev->phase < 3) {
+//            //Send to all the adjacent routers that have not received
+//            for (int j=0; j < node_links; j++) {
+//                int neighbor    = neighbor_list[j];
+//                if (tt_ev->covered[neighbor]==0)
+//                {
+//                    outPorts.push_back(j+hosts_per_router);
+//                    tt_ev->covered[neighbor]    = 1;
+//                }
+//            }
+//            tt_ev->phase    += 1;
+//
+//            //Don't forget to send it to the local endpoints
+//            for (int i=0; i < hosts_per_router;i++) {
+//                if( port != i) outPorts.push_back(i) ;
+//            }
+//        }
+//        else if (tt_ev->phase == 3) {
+//            //This means that the initial BROADCAST packet has reached the final stage of routers. No need to forward further as it is a 3 hop network.
+//            //Just send it to the local endpoints
+//            for (int i=0; i < hosts_per_router;i++) {
+//                if( port != i) outPorts.push_back(i) ;
+//            }
+//        }
+//        else {
+//            //You shouldn't reach here
+//            tt_ev->phase =0;
+//        }
+//    }
+//    else {
+//
+//        route_packet(port,0,ev);
+//        outPorts.push_back(ev->getNextPort());
+//    }
+//}
+
+
+
+internal_router_event* topo_polarstar::process_UntimedData_input(RtrEvent* ev)
 {
     topo_polarstar_init_event *tt_ev = new topo_polarstar_init_event(0, this->total_routers);
     tt_ev->setEncapsulatedEvent(ev);
@@ -439,11 +511,11 @@ internal_router_event* topo_polarstar::process_InitData_input(RtrEvent* ev)
     return tt_ev;
 }
 
-void topo_polarstar::routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts)
+void topo_polarstar::routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts)
 {
     topo_polarstar_init_event *tt_ev = static_cast<topo_polarstar_init_event*>(ev);
 
-    if (ev->getDest() == INIT_BROADCAST_ADDR ){
+    if (ev->getDest() == UNTIMED_BROADCAST_ADDR ){
         //phase=0 -> packet injected into network from this router
         if (tt_ev->phase == 0) {
             //This is the entry router. First send to local ports.
@@ -500,6 +572,7 @@ void topo_polarstar::routeInitData(int port, internal_router_event* ev, std::vec
         outPorts.push_back(ev->getNextPort());
     }
 }
+
 
 
 void

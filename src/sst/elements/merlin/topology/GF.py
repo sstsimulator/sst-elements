@@ -24,11 +24,13 @@ import itertools
 try:
     from sympy.polys.domains import ZZ
 except:
-    print('--> MODULE NOT FOUND: sympy.polys.domains')
+    pass
+    #print('--> MODULE NOT FOUND: sympy.polys.domains')
 try:
     from sympy.polys.galoistools import (gf_irreducible_p, gf_add, gf_mul, gf_rem)
 except:
-    print('--> MODULE NOT FOUND: sympy.polys.galoistools')
+    pass
+    #print('--> MODULE NOT FOUND: sympy.polys.galoistools')
 
 
 def isPowerOfPrime(num):

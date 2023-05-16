@@ -123,7 +123,7 @@ class topo_polarfly: public Topology {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         topo_polarfly,
         "merlin",
         "polarfly",
@@ -194,10 +194,13 @@ public:
     //called at injection, add metadata about packet
     virtual internal_router_event* process_input(RtrEvent* ev);
 
-    //called during topology initilaization for sanity checks
-    virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts);
-    //process_input for initilaization packets
-    virtual internal_router_event* process_InitData_input(RtrEvent* ev);
+    ////called during topology initilaization for sanity checks
+    //virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts);
+    ////process_input for initilaization packets
+    //virtual internal_router_event* process_InitData_input(RtrEvent* ev);
+
+    virtual void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts);
+    virtual internal_router_event* process_UntimedData_input(RtrEvent* ev);
 
     virtual PortState getPortState(int port) const;
     virtual int getEndpointID(int port);

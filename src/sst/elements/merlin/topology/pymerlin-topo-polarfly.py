@@ -27,11 +27,15 @@ from sst.merlin.base import *
 
 from os import path, makedirs
 import numpy as np
-import networkx as nx
-import pandas as pd
 
 import os
 import sys
+
+try:
+    import networkx as nx
+except:
+    pass
+    #print('--> MODULE NOT FOUND: networkx')
 
 supp_path   = os.environ["SST_ELEMENTS_ROOT"]
 sys.path.append(supp_path+"/src/sst/elements/merlin/topology/")
@@ -49,10 +53,9 @@ class topoPolarFly(Topology):
         Topology.__init__(self)
         self._declareClassVariables(["link_latency","host_link_latency","global_link_map","bundleEndpoints"])
         self._declareParams("main",["topo","q","hosts_per_router","network_radix","total_radix","total_routers",
-                                    "total_endnodes","edge","name","visualize_output","algorithm","adaptive_threshold","global_routes","config_failed_links",
+                                    "total_endnodes","edge","name","algorithm","adaptive_threshold","global_routes","config_failed_links",
                                     "failed_links", "GF", "vec_len"])
         self.global_routes = "absolute"
-        self.visualize_output = "csv"
         self._subscribeToPlatformParamSet("topology")
         
         #Set the q value (size of Gallois field) and throw an error if it is not from the q candidates list
@@ -213,7 +216,7 @@ class topoPolarFly(Topology):
         return 1
 
 
-    def generate(self, validate=False, save=False, visualize=False):
+    def generate(self, validate=False, save=False):
         print("----> Generating Polarfly topology!!")
         self.make()
         self.setEP()
@@ -225,13 +228,11 @@ class topoPolarFly(Topology):
         if save:
             filename = self.getFileName()
             folderpath = self.getFolderPath()
-            self.save(folderpath,filename,visualize)
-
-        #if visualize:
-        ###Add logic to write adjacency list into a output format which can be used to visualize the network (maybe some format compatible with gephy)
+            self.save(folderpath,filename)
 
 
-    def save(self, folderpath, filename, visualize):
+
+    def save(self, folderpath, filename):
         if not path.exists(folderpath):
             makedirs(folderpath)
         
@@ -242,11 +243,6 @@ class topoPolarFly(Topology):
             for node in self.topo:
                 print( " ".join(str(e) for e in node) + " ", file=f)
         
-        if visualize:
-            if self.visualize_output == "csv" :
-                my_df = pd.DataFrame(self.topo)
-                my_df.to_csv(file+".csv",index=False,header=False)
-
 
     def build(self, endpoint):
         if self._check_first_build():
@@ -267,7 +263,10 @@ class topoPolarFly(Topology):
             return links[name]
 
         #1. Generate the adjacency list for the polarfly topology
-        self.generate(validate=True, save=True, visualize=True)
+        nxFound     = False
+        if 'networkx' in sys.modules:
+            nxFound = True
+        self.generate(validate=nxFound, save=True)
 
         node_num = 0
         #2. Iterate over each router

@@ -26,11 +26,15 @@ from sst.merlin.topology import topoPolarFly
 
 from os import path, makedirs
 import numpy as np
-import networkx as nx
-import pandas as pd
 
 import os
 import sys
+
+try:
+    import networkx as nx
+except: 
+    pass
+    #print('--> MODULE NOT FOUND: networkx')
 
 supp_path   = os.environ["SST_ELEMENTS_ROOT"]
 sys.path.append(supp_path+"/src/sst/elements/merlin/topology/")
@@ -63,8 +67,9 @@ class Paley():
         print("----> Generating Paley Graph")
         self.makePhi()
         self.makeTopo()
-        if not self.validate():
-            raise Exception("Validation not passed!")
+        if 'networkx' in sys.modules:
+            if not self.validate():
+                raise Exception("Validation not passed!")
         return self.phi, self.topo
 
 
@@ -170,8 +175,9 @@ class IQ():
         print("----> Generating Inductive-quad Graph")
         if self.topo is None:
             self.makeTopo()
-        if not self.validate():
-            raise Exception("Validation not passed!")
+        if 'networkx' in sys.modules:
+            if not self.validate():
+                raise Exception("Validation not passed!")
         return self.phi, self.topo
 
 
@@ -343,10 +349,9 @@ class topoPolarStar(Topology):
         Topology.__init__(self)
         self._declareClassVariables(["link_latency", "host_link_latency", "global_link_map", "bundleEndpoints"])
         self._declareParams("main",["topo","phi","d","sn_type","pfq","snq","pfV", "snV", "phi", "hosts_per_router","network_radix","total_radix","total_routers",
-                                    "total_endnodes","edge","name","visualize_output","algorithm","adaptive_threshold","global_routes","config_failed_links",
+                                    "total_endnodes","edge","name","algorithm","adaptive_threshold","global_routes","config_failed_links",
                                     "failed_links"])
         self.global_routes      = "absolute"
-        self.visualize_output   = "csv"
         self._subscribeToPlatformParamSet("topology")
 
         #Configure
@@ -466,7 +471,7 @@ class topoPolarStar(Topology):
         return 1
 
 
-    def generate(self, validate=False, save=False, visualize=False):
+    def generate(self, validate=False, save=False):
         print("------> Generating Polarstar topology!!")
         self.make()
         self.setEP()
@@ -479,13 +484,11 @@ class topoPolarStar(Topology):
         if True: #mandatory save for importing in polarfly.cc
             filename    = self.getFileName()
             folderpath  = self.getFolderPath()
-            self.save(folderpath, filename, visualize)
-
-        #if visualize:
-        ###Add logic to write adjacency list into a output format which can be used to visualize the network (maybe some format compatible with gephy)
+            self.save(folderpath, filename)
 
 
-    def save(self, folderpath, filename, visualize):
+
+    def save(self, folderpath, filename):
 
         if not os.path.exists(folderpath):
             os.makedirs(folderpath)
@@ -498,10 +501,6 @@ class topoPolarStar(Topology):
                 print( " ".join(str(e) for e in node) + " ", file=f)
 
 
-        if visualize:
-            if self.visualize_output == "csv" :
-                my_ps = pd.DataFrame(self.topo)
-                my_ps.to_csv(file+".csv",index=False,header=False)
 
 
     #derive the degree distribution between supenrode (joiner) and structure (PF) graphs with largest config
@@ -630,7 +629,10 @@ class topoPolarStar(Topology):
             return links[name]
             
         #1. Generate the adjacency list for the polarstar topology
-        self.generate(validate=True, save=True, visualize=True)
+        nxFound     = False
+        if 'networkx' in sys.modules:
+            nxFound = True
+        self.generate(validate=nxFound, save=True)
                            
         node_num    = 0
         #2. Iterate over each router
