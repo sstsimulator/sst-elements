@@ -25,7 +25,6 @@ from sst.merlin.base import *
 from sst.merlin.topology import topoPolarFly
 
 from os import path, makedirs
-import numpy as np
 
 import os
 import sys
@@ -357,7 +356,7 @@ class topoPolarStar(Topology):
         #Configure
         self.d                  = d
         if (d<0 and N>=0):
-            self.d       = np.cbrt(3*N) 
+            self.d       = int((3*N)**(1/3))
             sn           = "max"
         elif (d>=0 and N<0):
             if (d < 3):

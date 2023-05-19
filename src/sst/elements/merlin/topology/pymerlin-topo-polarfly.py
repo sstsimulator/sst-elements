@@ -26,7 +26,6 @@ from sst.merlin.base import *
 
 
 from os import path, makedirs
-import numpy as np
 
 import os
 import sys
