@@ -101,8 +101,8 @@ typedef struct __attribute__((aligned(64))) {
 typedef struct __attribute__((aligned(64))) {
 	uint32_t numThreads;
 	uint32_t reqQueueAddress;
-	uint32_t reqQueueHeadIndexAddress;
 	uint32_t reqQueueSize;
+	uint32_t compQueuesAddress;
 
 	uint32_t nodeId;
 	uint32_t numNodes;
