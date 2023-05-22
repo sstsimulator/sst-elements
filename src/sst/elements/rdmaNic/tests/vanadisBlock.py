@@ -1,9 +1,12 @@
 import os
 import sst
 
-#map = "0x0:0x80000000:0x80000000"
-
 coherence_protocol="MESI"
+
+vanadis_isa = os.getenv("VANADIS_ISA", "MIPS")
+isa="mipsel"
+vanadis_isa = os.getenv("VANADIS_ISA", "RISCV64")
+isa="riscv64"
 
 #physMemSize = "4GiB"
 
@@ -105,14 +108,14 @@ class Vanadis_Builder:
             if (verbosity > 0):
                 print( "No application arguments found, continuing with argc=0" )
 
-        decode = cpu.setSubComponent( "decoder0", "vanadis.VanadisMIPSDecoder" )
+        decode = cpu.setSubComponent( "decoder0", "vanadis.Vanadis" + vanadis_isa + "Decoder" )
 
         decode.addParams({
             "uop_cache_entries" : 1536,
             "predecode_cache_entries" : 4
         })
 
-        os_hdlr = decode.setSubComponent( "os_handler", "vanadis.VanadisMIPSOSHandler" )
+        os_hdlr = decode.setSubComponent( "os_handler", "vanadis.Vanadis" + vanadis_isa + "OSHandler" )
         os_hdlr.addParams({
             "verbose" : os_verbosity,
             "brk_zero_memory" : "yes"
