@@ -22,11 +22,6 @@
 using namespace SST::Interfaces;
 using namespace SST::MemHierarchy;
 
-int round_up(int num, int factor)
-{
-    return num + factor - 1 - (num + factor - 1) % factor;
-}
-
 RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
 	m_activeNicCmd(NULL),
 	m_nextCqId(0),
@@ -35,7 +30,10 @@ RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
 	m_dmaLink( nullptr )
 {
     m_nicId = params.find<int>("nicId", -1);
+    assert( m_nicId != -1 );
+
     m_numNodes = params.find<int>("numNodes", 0);
+    assert( m_numNodes > 1 );
 
 	out.init("RdmaNic", params.find<int>("verbose", 1), 0, Output::STDOUT);
 
@@ -47,45 +45,38 @@ RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
         params.find<int>("debug_mask",0), 
 		Output::STDOUT );
 
-    m_pesPerNode = params.find<int>("pesPerNode", 0);
-	assert( m_pesPerNode > 0 );
+    auto pesPerNode = params.find<int>("pesPerNode", 0);
+	assert( pesPerNode > 0 );
+
+    // multi pe has not been tested
+	assert( pesPerNode == 1 );
 
 	m_mmioWriteFunc = std::bind( &RdmaNic::mmioWriteSetup, this, std::placeholders::_1 );
 
     m_ioBaseAddr = params.find<uint64_t>( "baseAddr", 0x100000000 );
-    m_cmdQSize = params.find<int>("cmdQSize", 64);
-
-    m_perPeReqQueueMemSize = m_cmdQSize * sizeof(NicCmd) + 64; // 64 bytes for for queue index info
-    m_perPeReqQueueMemSize =  round_up(m_perPeReqQueueMemSize, 4096);
-
-	m_perPeTotalMemSize = m_perPeReqQueueMemSize;
-
-	// do we need this?
-    m_cacheLineSize = params.find<uint64_t>("cache_line_size",0);
-
-    assert( m_nicId != -1 );
-    assert( m_cmdQSize );
-    assert( m_pesPerNode );
     assert( m_ioBaseAddr != -1 );
 
-    m_cmdBytesWritten.resize( m_perPeReqQueueMemSize * m_pesPerNode, 0 );
-    m_reqQueueBacking.resize( m_perPeReqQueueMemSize * m_pesPerNode );
-	m_compQueuesBacking.resize( m_pesPerNode, std::vector<int>( NUM_COMP_Q, 0 ) );
+    auto cmdQSize = params.find<int>("cmdQSize", 64);
+    assert( cmdQSize );
 
-	m_perPeTotalMemSize += round_up( m_compQueuesBacking[0].size() ,4096 );	
+    // make sure a NicCmd is multiple of a ache line
+    // Make this more general 
+    assert( sizeof( NicCmd) == 64 );
 
-    auto mmioLength = 1024*1024 * m_pesPerNode;
+    m_backing = new Backing< NicCmd, QueueIndex >( pesPerNode, cmdQSize, NUM_COMP_Q );
+
+    auto mmioLength = 1024*1024 * pesPerNode;
+    assert( m_backing->getMemorySize() <= mmioLength );
 
     dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"\n");
     if ( m_nicId == 0 ) {
-        dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"nicId=%d pesPerNode=%d numNodes=%d\n",m_nicId,m_pesPerNode,m_numNodes );
-		dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"numCmdQueueEntryes=%d cmdQsize %zu perPeReqQueueMemSize=%zu\n", m_cmdQSize, m_cmdQSize* sizeof(NicCmd),  m_perPeReqQueueMemSize );
-        dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"nicCompQueueAddr=%#" PRIx64 " compQ backing size %zu\n",  m_ioBaseAddr + m_reqQueueBacking.size(), m_compQueuesBacking[0].size() );
-		dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"total per PE memory size %zu\n", m_perPeTotalMemSize);
+        dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"nicId=%d pesPerNode=%d numNodes=%d\n", m_nicId, pesPerNode, m_numNodes );
+		dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"number cmd Q entries %d, cmd Q memory footprint %zu\n", 
+                m_backing->getCmdQSize(), m_backing->getCmdQueueMemSize() );
     }
 
-    m_threadInfo.resize( m_pesPerNode );
-    m_nicCmdQueueV.resize( m_pesPerNode );
+    m_hostInfo.resize( pesPerNode );
+    m_nicCmdQueueV.resize( pesPerNode );
 
     // Clock handler
     std::string clockFreq = params.find<std::string>("clock", "1GHz");
@@ -110,7 +101,6 @@ RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
 	} else {
 		m_dmaLink = m_mmioLink;
 	}
-
 
     // Set up the linkcontrol for inter node network
     m_linkControl = loadUserSubComponent<Interfaces::SimpleNetwork>( "rtrLink", ComponentInfo::SHARE_NONE, 2 );
@@ -153,43 +143,50 @@ void RdmaNic::readResp(StandardMem::ReadResp* req) {
 }
 
 void RdmaNic::mmioWriteSetup( StandardMem::Write* req) {
-	// each thread will write a pointer to a block in memory at offset  
-    int thread = ( req->pAddr - m_ioBaseAddr ) / m_perPeTotalMemSize;
+
+    int thread = calcThread( req->pAddr );
 
 	// Does this need to be a permanent structure?
-    auto& info = m_threadInfo[thread].setupInfo;
+    auto& hostInfo = m_hostInfo[thread].hostInfo;
+    auto& offset = m_hostInfo[thread].offset;
 
     dbg.debug( CALL_INFO_LONG,2,DBG_X_FLAG,"Write size=%zu addr=%" PRIx64 " offset=%llu thread=%d data %s\n",
                     req->data.size(), req->pAddr, req->pAddr - m_ioBaseAddr, thread, getDataStr(req->data).c_str() );
 
-	memcpy( (uint8_t*) (&info.hostInfo) + info.offset, req->data.data(), req->data.size() );
+	memcpy( (uint8_t*) (&hostInfo) + offset, req->data.data(), req->data.size() );
 
-	info.offset += req->data.size(); 
+	offset += req->data.size();
 
-	if ( info.offset == sizeof(HostQueueInfo) ) {
+	if ( offset == sizeof(hostInfo) ) {
+
+        NicQueueInfo nicInfo;
 
 		uint64_t threadMemoryBase = 0;
 
-		dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"resp Address=%#" PRIx32 "\n", 
-				info.hostInfo.respAddress );
+		dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"resp Address=%#" PRIx32 "\n", hostInfo.respAddress );
 
 		// set up the info about the req queue in the NIC
-		m_nicCmdQueueV[thread] = NicCmdQueueInfo( info.hostInfo.reqQueueTailIndexAddress );
+		m_nicCmdQueueV[thread] = NicCmdQueueInfo( hostInfo.reqQueueTailIndexAddress );
 
-		memset( (void*) &info.nicInfo, 1, sizeof( info.nicInfo ) );
-		info.nicInfo.reqQueueAddress = (thread * m_perPeReqQueueMemSize) + 1;
-		info.nicInfo.reqQueueHeadIndexAddress = (info.nicInfo.reqQueueAddress + m_perPeReqQueueMemSize ) - 8; 
-		info.nicInfo.reqQueueSize = m_cmdQSize;
-		info.nicInfo.nodeId = m_nicId + 1;
-		info.nicInfo.numNodes = m_numNodes; 
-		info.nicInfo.numThreads = m_pesPerNode;
-		info.nicInfo.myThread = thread + 1;
+		memset( (void*) &nicInfo, 1, sizeof( nicInfo ) );
 
-        dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"write info to host address %#" PRIx64 "\n",threadMemoryBase + info.hostInfo.respAddress);
+		nicInfo.reqQueueAddress = (thread * m_backing->getPeMemorySize() );
+		nicInfo.compQueuesAddress = nicInfo.reqQueueAddress + m_backing->getCompInfoOffset();
 
-    	m_memReqQ->write( m_tailWriteQnum, threadMemoryBase + info.hostInfo.respAddress, sizeof(info.nicInfo), reinterpret_cast<uint8_t*>(&info.nicInfo) );
+        dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cmdQAddress=%#" PRIx32 " compInfoOffset=%#" PRIx32 "\n",nicInfo.reqQueueAddress,nicInfo.compQueuesAddress);
 
-       	uint32_t* tailPtr = (uint32_t*) (m_reqQueueBacking.data() + m_perPeReqQueueMemSize * thread + m_perPeReqQueueMemSize  - 4); 
+		// add 1 because the host is looking for something other that 1 to signal it has been writen by the NICt
+		nicInfo.reqQueueAddress += 1;
+
+		nicInfo.reqQueueSize = m_backing->getCmdQSize();
+		nicInfo.nodeId = m_nicId + 1;
+		nicInfo.numNodes = m_numNodes;
+		nicInfo.numThreads = m_backing->getNumPEs();
+		nicInfo.myThread = thread + 1;
+
+        dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"write info to host address %#" PRIx64 "\n",threadMemoryBase + hostInfo.respAddress);
+
+    	m_memReqQ->write( m_tailWriteQnum, threadMemoryBase + hostInfo.respAddress, sizeof(nicInfo), reinterpret_cast<uint8_t*>(&nicInfo) );
 
 		dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"thread %d setup finished\n",thread);
     }
@@ -198,7 +195,7 @@ void RdmaNic::mmioWriteSetup( StandardMem::Write* req) {
 		m_mmioLink->send( req->makeResponse() );
 	}
     // if all of the HostQueueInfo struct has been written we are done with setup, switch to normal processing of write to MMIO space
-	if ( info.offset == sizeof(HostQueueInfo) ) {
+	if ( offset == sizeof(HostQueueInfo) ) {
 		m_mmioWriteFunc = std::bind( &RdmaNic::mmioWrite, this, std::placeholders::_1 );
 	}
 }
@@ -206,38 +203,26 @@ void RdmaNic::mmioWriteSetup( StandardMem::Write* req) {
 
 void RdmaNic::mmioWrite(StandardMem::Write* req) {
 
-	int thread = ( req->pAddr - m_ioBaseAddr ) / m_perPeTotalMemSize;
+	int thread = calcThread( req->pAddr );
+	uint64_t offset = calcOffset( req->pAddr );
 
     dbg.debug( CALL_INFO_LONG,2,DBG_X_FLAG,"thread=%d Write size=%zu addr=%" PRIx64 " offset=%llu data %s\n",
-                    thread,req->data.size(), req->pAddr, req->pAddr - m_ioBaseAddr, getDataStr(req->data).c_str() );
+                    thread,req->data.size(), req->pAddr, offset, getDataStr(req->data).c_str() );
 
-	uint64_t offset = req->pAddr - m_ioBaseAddr;
+    if ( ! m_backing->write( offset, req->data.data(), req->data.size() ) ) {
+        out.fatal(CALL_INFO_LONG, -1, "Failed to write: thread=%d Write size=%zu addr=%" PRIx64 " offset=%llu data %s\n",
+                    thread,req->data.size(), req->pAddr, offset, getDataStr(req->data).c_str() );
+    }
 
-	if ( offset >= m_perPeReqQueueMemSize ) {
-		
-		offset -= m_perPeReqQueueMemSize;
-		memcpy( &m_compQueuesBacking[thread][ offset/sizeof(QueueIndex) ], req->data.data(), req->data.size() );
-		dbg.debug( CALL_INFO_LONG,2,DBG_X_FLAG,"Write of Comp Queue tail %llu %x\n", offset/sizeof(QueueIndex), m_compQueuesBacking[thread][ offset/sizeof(QueueIndex) ]);
+    if ( m_backing->isCmdReady( thread ) ) {
+		NicCmdEntry* entry = createNewCmd( *this, thread, m_backing->readCmd(thread) ); 
+		dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"new command from thread %d op=%s\n", thread, entry->name().c_str() );
+        m_nicCmdQ.push( entry );
+    }
 
-	} else { 
-
-		int index = offset / sizeof(NicCmd);
-		m_cmdBytesWritten[index] += req->data.size();
-		dbg.debug( CALL_INFO_LONG,2,DBG_X_FLAG,"index=%d bytesWriten=%d\n",index,m_cmdBytesWritten[index]);
-		memcpy( m_reqQueueBacking.data() + offset, req->data.data(), req->data.size() );
-        if ( m_cmdBytesWritten[index] == sizeof(NicCmd) ) {
-			NicCmd* cmd = reinterpret_cast<NicCmd*>(m_reqQueueBacking.data() + index * sizeof(NicCmd) );
-
-			NicCmdEntry* entry = createNewCmd( *this, thread, cmd ); 
-		//	dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"new command %p from thread %d op=%s respAddr=%#x\n",cmd, thread, entry->name().c_str(), cmd->respAddr );
-			m_nicCmdQ.push( entry );
-
-			m_cmdBytesWritten[index] = 0;
-		}
-	}
 	if ( ! req->posted ) {
 		m_mmioLink->send( req->makeResponse() );
-	}
+    }
 }
 
 bool RdmaNic::clock(Cycle_t cycle) {
@@ -272,7 +257,7 @@ void RdmaNic::processThreadCmdQs( ) {
 		dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"thread %d cmd available tail=%d %s\n",m_activeNicCmd->getThread(),info.localTailIndex, m_activeNicCmd->name().c_str() );
 
         ++info.localTailIndex;
-        info.localTailIndex %= m_cmdQSize;		
+        info.localTailIndex %= m_backing->getCmdQSize();
         dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"write tail=%d at %#" PRIx64 "\n",info.localTailIndex, info.tailAddr );
         m_memReqQ->write( m_tailWriteQnum, info.tailAddr, 4, info.localTailIndex );
     }
