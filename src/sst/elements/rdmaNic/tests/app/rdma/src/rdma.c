@@ -165,10 +165,7 @@ int rdma_create_cq( ) {
 	NicResp* resp = getResp(cmd);
 	waitResp( resp );
 
-	// the NIC returns addresses that are relative to the start of it's address space
-	// which is mapped into a virtual address space the process uses to talk to the NIC
-	// add the start of the virtual address space
-	resp->data.createCQ.tailIndexAddr += getNicBase();
+	resp->data.createCQ.tailIndexAddr = getCompQueueInfoAddress();
 
 	int retval = resp->retval; 
 	dbgPrint("retval=%d tailIndexPtr=%#x\n",retval,resp->data.createCQ.tailIndexAddr);
@@ -309,6 +306,7 @@ int rdma_read_comp( CompQueueId cqId, RdmaCompletion* buf, int blocking ) {
 
 	++s_compQ[cqId].tailIndex;
 	s_compQ[cqId].tailIndex %= s_compQ[cqId].num;
+	dbgPrint("tailIndexAddr=%p index=%d\n",s_compQ[cqId].tailIndexAddr,s_compQ[cqId].tailIndex);
  	*s_compQ[cqId].tailIndexAddr = s_compQ[cqId].tailIndex;
 
 	return 0;
