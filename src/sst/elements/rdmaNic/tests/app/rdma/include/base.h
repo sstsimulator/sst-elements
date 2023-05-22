@@ -16,6 +16,10 @@
 #ifndef _BASE_H
 #define _BASE_H
 
+#include <stdint.h>
+
+typedef ADDR_TYPE Addr_t;
+
 #include <rdmaNicHostInterface.h>
 void writeCmd( NicCmd* cmd );
 void base_init();
