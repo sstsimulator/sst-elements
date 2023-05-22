@@ -26,6 +26,8 @@
 #include <sst/core/interfaces/stdMem.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 
+typedef uint64_t Addr_t;
+
 #include "rdmaNicHostInterface.h"
 
 #define DBG_X_FLAG (1<<0)
