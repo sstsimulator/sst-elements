@@ -50,8 +50,8 @@ int base_my_pe() {
     return s_nicQueueInfo.nodeId * s_nicQueueInfo.numThreads + s_nicQueueInfo.myThread;
 }
 
-Addr_t getNicBase() {
-    return (Addr_t) s_nicBaseAddr;
+Addr_t getCompQueueInfoAddress() {
+    return (Addr_t) s_nicQueueInfo.compQueuesAddress;
 }
 
 void base_init( ) {
@@ -88,12 +88,12 @@ void base_init( ) {
     // which is mapped into a virtual address space the process uses to talk to the NIC
     // add the start of the virtual address space 
     s_nicQueueInfo.reqQueueAddress += (uint32_t) s_nicBaseAddr;
+    s_nicQueueInfo.compQueuesAddress += (uint32_t) s_nicBaseAddr;
 
     --s_nicQueueInfo.nodeId;
     --s_nicQueueInfo.myThread;
 
-    dbgPrint("req Q addr %#" PRIx32 "\n",s_nicQueueInfo.reqQueueAddress);
-    dbgPrint("req head index %#" PRIx32 "\n",s_nicQueueInfo.reqQueueHeadIndexAddress);
+    dbgPrint("req Q addr %#" PRIx32 " comp Qs addr %#" PRIx32 "\n",s_nicQueueInfo.reqQueueAddress,s_nicQueueInfo.compQueuesAddress);
     dbgPrint("req size %d\n",s_nicQueueInfo.reqQueueSize);
 }
 
