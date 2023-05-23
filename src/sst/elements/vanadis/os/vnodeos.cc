@@ -534,7 +534,8 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
             } else if ( region->backing->dev ) {
                 // map this physical page into the MMU for this process 
                 auto physAddr = region->backing->dev->getPhysAddr();
-                auto ppn = physAddr >> m_pageShift;
+                auto offset = vpn - ( region->addr >> m_pageShift);
+                auto ppn = ( physAddr >> m_pageShift ) + offset;
                 output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "Device physAddr=%#" PRIx64 " ppn=%" PRIu64 "\n",physAddr,ppn);
                 m_mmu->map( thread->getpid(), vpn, ppn, m_pageSize, region->perms );
                 pageFaultFini( info );
