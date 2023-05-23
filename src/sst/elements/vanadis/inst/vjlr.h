@@ -67,6 +67,7 @@ public:
         const uint64_t link_value = calculateStandardNotTakenAddress();
 
         regFile->setIntReg<uint64_t>(phys_int_regs_out[0], link_value);
+        regFile->setIntReg<uint64_t>(phys_int_regs_in[0], jump_to);
 
 #ifdef VANADIS_BUILD_DEBUG
         output->verbose(CALL_INFO, 16, 0, "Execute JLR jump-to: 0x%0llx link-value: 0x%0llx\n", jump_to, link_value);
