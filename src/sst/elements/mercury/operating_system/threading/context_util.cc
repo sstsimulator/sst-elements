@@ -65,7 +65,7 @@ ThreadContext::defaultThreading()
   if (default_threading.size() == 0){
     //this did not get updated - so we don't have any multithreading-compatible thread interfaces
     sprockit::abort("OperatingSystem: there are no threading frameworks compatible "
-                    "with multithreaded SST - must have ucontext or Boost::context");
+                    "with multithreaded SST - must have ucontext");
   }
 #else
   default_threading = valid_threading_contexts[0].first;
