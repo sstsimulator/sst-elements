@@ -3,7 +3,6 @@ CramSim - ControlleR And Memory SIMulator
 Developed using the Structural Simulation Toolkit
 
 PREREQUISITES TO INSTALLATION:
-  - Boost 1.57
   - OpenMPI 1.8.8
   - SST Release Version
 
