@@ -23,6 +23,7 @@
 import sst
 from sst.merlin.base import *
 from sst.merlin.topology import topoPolarFly
+from sst.merlin.topology import GF
 
 from os import path, makedirs
 
@@ -35,10 +36,26 @@ except:
     pass
     #print('--> MODULE NOT FOUND: networkx')
 
-supp_path   = os.environ["SST_ELEMENTS_ROOT"]
-sys.path.append(supp_path+"/src/sst/elements/merlin/topology/")
+def isPowerOfPrime(num):
+    if (num<2):
+        return False
 
-from GF import *
+    fact    = 2
+    while(fact < num):
+        rem = num%fact
+        if (rem == 0):
+            break
+        else:
+            fact += 1
+
+    tmp     = num
+    while(tmp>fact):
+        if ((tmp%fact) > 0):
+            return False
+        else:
+            tmp = tmp/fact
+    return True
+
 
 #Paley Supernode
 class Paley():
