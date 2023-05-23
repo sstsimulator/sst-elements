@@ -34,11 +34,11 @@
 static NicQueueInfo s_nicQueueInfo;
 static HostQueueInfo s_hostQueueInfo;
 static int s_reqQueueHeadIndex;
-static volatile uint32_t s_reqQtailIndex;
+static volatile Addr_t s_reqQtailIndex;
 
-static uint32_t* s_nicBaseAddr;
+static Addr_t* s_nicBaseAddr;
 
-static uint32_t* getNicWindow();
+static Addr_t* getNicWindow();
 static void writeSetup( HostQueueInfo* setup );
 static void readNicQueueInfo( volatile NicQueueInfo* info );
 
@@ -61,21 +61,21 @@ void base_init( ) {
     // We should do something like open("/dev/rdmaNic", ) but devices are not currently implemented in Vanadis
     // so we use a magic file descriptor
 #ifdef SYS_mmap2
-    s_nicBaseAddr = (uint32_t*) syscall(SYS_mmap2, 0, 0, PROT_WRITE, 0, -1000, 0);
+    s_nicBaseAddr = (Addr_t*) syscall(SYS_mmap2, 0, 0, PROT_WRITE, 0, -1000, 0);
 #else
-    s_nicBaseAddr = (uint32_t*) syscall(SYS_mmap, 0, 0, PROT_WRITE, 0, -1000, 0);
+    s_nicBaseAddr = (Addr_t*) syscall(SYS_mmap, 0, 0, PROT_WRITE, 0, -1000, 0);
 #endif
 
-    dbgPrint("nicBaseAddr=0x%p\n",s_nicBaseAddr);
+    dbgPrint("nicBaseAddr=%p\n",s_nicBaseAddr);
 	s_reqQueueHeadIndex = 0;
 
 	bzero( &s_nicQueueInfo, sizeof(s_nicQueueInfo) );
 
-    s_hostQueueInfo.respAddress = (uint32_t) &s_nicQueueInfo;
+    s_hostQueueInfo.respAddress = (Addr_t) &s_nicQueueInfo;
 
-    s_hostQueueInfo.reqQueueTailIndexAddress = (uint32_t) &s_reqQtailIndex;
+    s_hostQueueInfo.reqQueueTailIndexAddress = (Addr_t) &s_reqQtailIndex;
 
-	dbgPrint("respAddress %#" PRIx32 ", req tail addr %#" PRIx32 "\n", s_hostQueueInfo.respAddress, s_hostQueueInfo.reqQueueTailIndexAddress);
+	dbgPrint("respAddress %#" PRIxBITS ", req tail addr %#" PRIxBITS "\n", s_hostQueueInfo.respAddress, s_hostQueueInfo.reqQueueTailIndexAddress);
 
 	// make sure this structure does not cross page boundary
     writeSetup( &s_hostQueueInfo );
@@ -87,13 +87,13 @@ void base_init( ) {
     // the NIC returns addresses that are relative to the start of it's address space
     // which is mapped into a virtual address space the process uses to talk to the NIC
     // add the start of the virtual address space 
-    s_nicQueueInfo.reqQueueAddress += (uint32_t) s_nicBaseAddr;
-    s_nicQueueInfo.compQueuesAddress += (uint32_t) s_nicBaseAddr;
+    s_nicQueueInfo.reqQueueAddress += (Addr_t) s_nicBaseAddr;
+    s_nicQueueInfo.compQueuesAddress += (Addr_t) s_nicBaseAddr;
 
     --s_nicQueueInfo.nodeId;
     --s_nicQueueInfo.myThread;
 
-    dbgPrint("req Q addr %#" PRIx32 " comp Qs addr %#" PRIx32 "\n",s_nicQueueInfo.reqQueueAddress,s_nicQueueInfo.compQueuesAddress);
+    dbgPrint("req Q addr %#" PRIxBITS " comp Qs addr %#" PRIxBITS "\n",s_nicQueueInfo.reqQueueAddress,s_nicQueueInfo.compQueuesAddress);
     dbgPrint("req size %d\n",s_nicQueueInfo.reqQueueSize);
 }
 
@@ -101,8 +101,8 @@ static inline int getReqQueueTailIndex() {
 	return s_reqQtailIndex;
 }
 
-static inline uint32_t* getReqQueueHeadAddr() {
-	return  (uint32_t*)((NicCmd*) s_nicQueueInfo.reqQueueAddress + s_reqQueueHeadIndex); 
+static inline Addr_t* getReqQueueHeadAddr() {
+	return  (Addr_t*) ( (NicCmd*) s_nicQueueInfo.reqQueueAddress + s_reqQueueHeadIndex); 
 }
 
 void writeCmd( NicCmd* cmd ) {
@@ -122,28 +122,30 @@ void writeCmd( NicCmd* cmd ) {
 static void readNicQueueInfo( volatile NicQueueInfo* info ) 
 {
 	dbgPrint("wait for response from NIC, addr %p\n",info);
-	volatile uint32_t* ptr = (uint32_t*) info;
+	volatile Addr_t* ptr = (Addr_t*) info;
 
-	for ( int i = 0; i < sizeof( NicQueueInfo )/4;  i++ ) {
+	for ( int i = 0; i < sizeof( NicQueueInfo )/sizeof(Addr_t);  i++ ) {
 		while ( 0 == ptr[i] );
 	}
 }
 
 static void writeSetup( HostQueueInfo* setup ) {
 
-	dbgPrint("\n");
+	dbgPrint("enter\n");
 
-	uint32_t* tmp = (uint32_t*) setup;
-	uint32_t* ptr = getNicWindow( );
+	Addr_t* tmp = (Addr_t*) setup;
+	Addr_t* ptr = getNicWindow( );
 
 	// the NIC is waiting on number of bytes writen so we don't need a memory fence
 	// why can't this be a memcpy
 	// for some reason this doesn't work with a memcpy 
-	for ( int i = 0; i < sizeof( HostQueueInfo )/4;  i++ ) {
+	for ( int i = 0; i < sizeof( HostQueueInfo )/sizeof(Addr_t);  i++ ) {
 		ptr[i] = tmp[i];
 	}
+
+	dbgPrint("return\n");
 }
 
-static uint32_t* getNicWindow( ) {
-	return (uint32_t*) s_nicBaseAddr;
+static Addr_t* getNicWindow( ) {
+	return (Addr_t*) s_nicBaseAddr;
 }

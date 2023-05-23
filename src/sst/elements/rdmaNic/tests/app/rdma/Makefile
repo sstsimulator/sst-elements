@@ -1,10 +1,15 @@
-AR=mipsel-linux-musl-ar
-CC=mipsel-linux-musl-gcc
+ARCH ?= riscv64
+ADDR_TYPE ?= uint64_t
+PRIxBITS ?= PRIx64
+PRIuBITS ?= PRIu64
 
-CFLAGS=-Iinclude -I../../.. -Wattributes -Wall 
+AR=$(ARCH)-linux-musl-ar
+CC=$(ARCH)-linux-musl-gcc
+
+CFLAGS=-Iinclude -I../../.. -Wattributes -Wall -DADDR_TYPE=$(ADDR_TYPE)  -DPRIxBITS=$(PRIxBITS) -DPRIuBITS=$(PRIuBITS)
 LIBS=-lrdma -L.
 
-OBJS=rdma.o base.o
+OBJS=base.o rdma.o
 
 all: librdma.a write msg incast incast-v2 barrier
 librdma.a: ${OBJS}
