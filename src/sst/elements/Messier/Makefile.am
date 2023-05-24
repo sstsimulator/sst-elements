@@ -49,7 +49,6 @@ EXTRA_DIST = \
 #infogather_SOURCES = infogather.cc
 #infogather_CPPFLAGS = -I/usr/local/systemc-2.3/include \
 #											-std=c++11 -fPIC -Wall \
-#											$(BOOST_CPPFLAGS) \
 #											$(MPI_CPPFLAGS)
 #infogather_LDFLAGS =  -L/usr/local/systemc-2.3/lib-linux64/ -lsystemc \
 #											-lhmcsim \
