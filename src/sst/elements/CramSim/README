@@ -143,18 +143,3 @@ RUNNING A SIMULATION WITH CPU MODELS:
     $ cd $SST_ELEMENT_ROOT/src/sst/elements/CramSim/tests
 	$ make
     $ sst ariel_cramsim.py
-
-2. Run with MacSim
-   - install 
-    $ cd $SST_ELEMENT_ROOT/src/sst/elements/CramSim/tests
-    $ ./get_macsim.sh
-    $ cd $SST_ELEMENT_ROOT
-    $ ./autogen.sh
-    $ export PIN_HOME = "PIN tool installation directory"
-    $ ./configure --prefix=$SST_ELEMENT_HOME --with-sst-core=$SST_CORE_HOME --with-pin=$PIN_HOME
-    $ make install
-
-   - run
-    $ cd $SST_ELEMENT_ROOT/src/sst/elements/CramSim/tests
-    $ sst macsim_cramsim.py
-
