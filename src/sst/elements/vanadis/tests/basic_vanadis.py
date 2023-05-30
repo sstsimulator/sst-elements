@@ -42,6 +42,7 @@ exe = "hello-world"
 #exe = "pthread"
 #exe = "openmp"
 #exe = "uname"
+#exe = "mem-test"
 
 physMemSize = "4GiB"
 
