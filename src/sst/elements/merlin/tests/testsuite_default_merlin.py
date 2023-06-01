@@ -87,11 +87,11 @@ class testcase_merlin_Component(SSTTestCase):
         self.merlin_test_template("dragon_128_test_fl")
 
 
-    @unittest.skipIf(not(('sympy.polys.galoistools' in sys.modules) and ('sympy.polys.domains' in sys.modules)), "Polarfly construction requires sympy"):
+    @unittest.skipIf(not(('sympy.polys.galoistools' in sys.modules) and ('sympy.polys.domains' in sys.modules)), "Polarfly construction requires sympy")
     def test_merlin_polarfly_455(self):
         self.merlin_test_template("polarfly_455_test")
 
-    @unittest.skipIf(not(('sympy.polys.galoistools' in sys.modules) and ('sympy.polys.domains' in sys.modules)), "Polarstar construction requires sympy"):
+    @unittest.skipIf(not(('sympy.polys.galoistools' in sys.modules) and ('sympy.polys.domains' in sys.modules)), "Polarstar construction requires sympy")
     def test_merlin_polarstar_504(self):
         self.merlin_test_template("polarstar_504_test")
 
