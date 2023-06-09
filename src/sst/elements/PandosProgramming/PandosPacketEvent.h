@@ -92,6 +92,25 @@ public:
 };
 
 /**
+ * A PANDO Atomic Integer Add Packet
+ */
+class PandosAtomicIAddRequestEventT : public PandosRequestEventT {
+public:
+    PandosAtomicIAddRequestEventT():PandosRequestEventT(){}
+    virtual ~PandosAtomicIAddRequestEventT(){}
+
+    // serialization function
+    void serialize_order(SST::Core::Serialization::serializer &ser) override {
+        PandosRequestEventT::serialize_order(ser);
+        ser & payload;
+    }
+
+    std::vector<unsigned char> payload;
+
+    ImplementSerializable(SST::PandosProgramming::PandosAtomicIAddRequestEventT);
+};
+
+/**
  * A PANDO Delegate Request Packet
  */
 class PandosDelegateRequestEventT : public PandosRequestEventT {
@@ -163,6 +182,28 @@ public:
         virtual ~PandosWriteResponseEventT() {}
         // register event as serializable
         ImplementSerializable(SST::PandosProgramming::PandosWriteResponseEventT);
+};
+
+/**
+ * Response Packet to an Atomic Add
+ */
+class PandosAtomicIAddResponseEventT : public PandosResponseEventT {
+public:
+    PandosAtomicIAddResponseEventT():PandosResponseEventT(){}
+    virtual ~PandosAtomicIAddResponseEventT() {}
+
+    int64_t size;
+    std::vector<unsigned char> payload;
+
+    // serialization function
+    void serialize_order(SST::Core::Serialization::serializer &ser) override {
+        PandosResponseEventT::serialize_order(ser);
+        ser & size;
+        ser & payload;
+    }
+
+    // register event as serializable
+    ImplementSerializable(SST::PandosProgramming::PandosAtomicIAddResponseEventT);
 };
 
 /**

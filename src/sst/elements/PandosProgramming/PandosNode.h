@@ -91,6 +91,22 @@ public:
         void initCores();
 
         /**
+         * do an atomic add
+         */
+        template <typename SIntT>
+        void mAtomicAdd(PandosAtomicIAddRequestEventT *amoadd_req,
+                        void*target,
+                        PandosAtomicIAddResponseEventT *amoadd_rsp) {
+                SIntT op = *(reinterpret_cast<SIntT*>(amoadd_req->payload.data()));
+                SIntT*ovp = reinterpret_cast<SIntT*>(amoadd_rsp->payload.data());
+                SIntT*tgtp = reinterpret_cast<SIntT*>(target);
+                SIntT tgt = *tgtp;
+                *ovp = tgt;
+                *tgtp = tgt+op;
+                *(SIntT*)(amoadd_rsp->payload.data()) = tgt;
+        }
+
+        /**
          * send memory request on behalf of a core
          */
         void sendMemoryRequest(int src_core);
@@ -114,6 +130,11 @@ public:
          * handle a read request
          */
         void receiveReadRequest(PandosReadRequestEventT *read_req, Link **responseLink);
+
+        /**
+         * handle an atomic add request
+         */
+        void receiveAtomicIAddRequest(PandosAtomicIAddRequestEventT *amoadd_req, Link **responseLink);
 
         /**
          * handle a delegate request

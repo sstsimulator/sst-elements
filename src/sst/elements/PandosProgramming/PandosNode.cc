@@ -462,6 +462,16 @@ void PandosNodeT::sendMemoryRequest(int src_core) {
 #endif
         core_ctx->setStateType(eCoreStallMemoryWrite);
         req = write_req;
+    } else if (core_ctx->core_state.type == eCoreIssueMemoryAtomicIntegerAdd) {
+        /* atomic add request */
+        PandosAtomicIAddRequestEventT *amoadd_req = new PandosAtomicIAddRequestEventT;
+        amoadd_req->size = core_ctx->core_state.mem_req.size;
+        amoadd_req->payload.resize(amoadd_req->size);
+#ifdef DO_MEMCPY
+        memcpy(amoadd_req->payload.data(), core_ctx->core_state.mem_req.data, amoadd_req->size);
+#endif
+        core_ctx->setStateType(eCoreStallMemoryAtomicIntegerAdd);
+        req = amoadd_req;
     } else {
         // should never happen
         out->fatal(CALL_INFO, -1, "%s: core %d: bad core state: %s\n"
@@ -537,6 +547,12 @@ void PandosNodeT::receiveResponse(SST::Event *evt, Link** requestLink) {
 
     PandosWriteResponseEventT *write_rsp = dynamic_cast<PandosWriteResponseEventT*>(rsp);
     if (write_rsp) {
+        core_ctx->setStateType(eCoreReady);
+    }
+
+    PandosAtomicIAddResponseEventT *amoadd_rsp = dynamic_cast<PandosAtomicIAddResponseEventT*>(rsp);
+    if (amoadd_rsp) {
+        memcpy(core_ctx->core_state.mem_req.data, amoadd_rsp->payload.data(), amoadd_rsp->size);
         core_ctx->setStateType(eCoreReady);
     }
 
@@ -645,6 +661,39 @@ void PandosNodeT::receiveWriteRequest(PandosWriteRequestEventT *write_req, Link 
 }
 
 /**
+ * receive an atomic add request
+ */
+void PandosNodeT::receiveAtomicIAddRequest(PandosAtomicIAddRequestEventT *amoadd_req, Link **responseLink) {
+    /* create a response packet */
+    out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "%s: formatting response packet\n", __func__);
+    PandosAtomicIAddResponseEventT *amoadd_rsp = new PandosAtomicIAddResponseEventT;
+    amoadd_rsp->src_pxn = amoadd_req->src_pxn;
+    amoadd_rsp->src_core = amoadd_req->src_core;
+    amoadd_rsp->size = amoadd_req->size;
+    amoadd_rsp->payload.resize(amoadd_req->size);
+    void *p = translateAddress(amoadd_req->getDst());
+#ifdef DO_MEMCPY
+    // do a read-modify-write
+    switch (amoadd_req->size) {
+    case 8: mAtomicAdd<int64_t>(amoadd_req, p, amoadd_rsp); break;
+    case 4: mAtomicAdd<int32_t>(amoadd_req, p, amoadd_rsp); break;
+    case 2: mAtomicAdd<int16_t>(amoadd_req, p, amoadd_rsp); break;
+    case 1: mAtomicAdd<int8_t> (amoadd_req, p, amoadd_rsp); break;
+    default:
+        out->fatal(CALL_INFO, -1, "%s: bad request size %d\n"
+                   ,getName().c_str()
+                   ,amoadd_req->size);
+        abort();
+    }
+#endif
+    /* delete the request event */
+    delete amoadd_req;
+    /* send the response */
+    out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "Sending amoadd response\n");
+    (*responseLink)->send(amoadd_rsp);
+}
+
+/**
  * receive a read request
  */
 void PandosNodeT::receiveReadRequest(PandosReadRequestEventT *read_req, Link **responseLink) {
@@ -678,10 +727,17 @@ void PandosNodeT::receiveRequest(SST::Event *evt, Link **responseLink) {
         return;
     }
     
-    PandosWriteRequestEventT * write_req = dynamic_cast<PandosWriteRequestEventT*>(evt);
+    PandosWriteRequestEventT *write_req = dynamic_cast<PandosWriteRequestEventT*>(evt);
     if (write_req) {
         out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "Received write packet: response link = %p\n", *responseLink);
         receiveWriteRequest(write_req, responseLink);
+        return;
+    }
+
+    PandosAtomicIAddRequestEventT *amoadd_req = dynamic_cast<PandosAtomicIAddRequestEventT*>(evt);
+    if (amoadd_req){
+        out->verbose(CALL_INFO, 1, DEBUG_MEMORY_REQUESTS, "Received amoadd packet: response link = %p\n", *responseLink);
+        receiveAtomicIAddRequest(amoadd_req, responseLink);
         return;
     }
 
@@ -691,7 +747,7 @@ void PandosNodeT::receiveRequest(SST::Event *evt, Link **responseLink) {
         receiveDelegateRequest(delegate_req, responseLink);
         return;
     }
-    
+
     out->fatal(CALL_INFO, -1, "Bad event type: line %d\n", __LINE__);    
     abort();
 }
@@ -715,6 +771,7 @@ bool PandosNodeT::clockTic(SST::Cycle_t cycle) {
         switch (core->core_state.type) {
         case eCoreIssueMemoryRead:
         case eCoreIssueMemoryWrite:
+        case eCoreIssueMemoryAtomicIntegerAdd:
             // generate an event an depending on the memory type
             sendMemoryRequest(core_id);
             break;
