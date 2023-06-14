@@ -42,7 +42,7 @@ class GNA : public SST::Component {
 public:
     // Element Library Info
 
-    SST_ELI_REGISTER_COMPONENT(GNA, "GNA", "GNA", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_COMPONENT(GNA, "GNA", "core", SST_ELI_ELEMENT_VERSION(1,0,0),
         "Spiking Temportal Processing Unit", COMPONENT_CATEGORY_PROCESSOR)
 
     SST_ELI_DOCUMENT_PARAMS(
