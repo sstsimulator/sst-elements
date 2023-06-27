@@ -175,7 +175,6 @@ class EmberMpiLib : public EmberLib {
 	}
     void isend( Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group,
         MessageRequest* req ) {
-        std::cerr << "req: " << req << std::endl;
         if (!req) abort_output.fatal(CALL_INFO, -1, "isend requires nonnull MessageRequest\n");
 
     	q.push( new EmberISendEvent( api(), m_output, m_Stats[Isend], payload, count, dtype, dest, tag, group, req ) );
