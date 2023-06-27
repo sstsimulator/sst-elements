@@ -95,8 +95,7 @@ public:
         topo_polarfly_event::serialize_order(ser);
         ser & phase;
         ser & total_routers;
-        for (int i=0; i<total_routers; i++)
-            ser & covered[i];
+        ser & covered;
     }
 private:
     ImplementSerializable(SST::Merlin::topo_polarfly_init_event)
