@@ -80,7 +80,7 @@ bool IncoherentL1::handleGetS(MemEvent* event, bool inMSHR){
             recordLatencyType(event->getID(), LatType::HIT);
 
             if (event->isLoadLink())
-                line->atomicStart(timestamp_ + llscBlockCycles_);
+                line->atomicStart(timestamp_ + llscBlockCycles_, event->getThreadID());
 
             data.assign(line->getData()->begin() + (event->getAddr() - event->getBaseAddr()), line->getData()->begin() + (event->getAddr() - event->getBaseAddr() + event->getSize()));
             sendTime = sendResponseUp(event, &data, inMSHR, line->getTimestamp());
@@ -168,7 +168,7 @@ bool IncoherentL1::handleGetX(MemEvent* event, bool inMSHR) {
             }
 
             // Handle
-            if (!event->isStoreConditional() || line->isAtomic()) { /* Don't write on a non-atomic SC */
+            if (!event->isStoreConditional() || line->isAtomic(event->getThreadID())) { /* Don't write on a non-atomic SC */
                 line->setData(event->getPayload(), event->getAddr() - event->getBaseAddr());
                 line->atomicEnd();
                 if (is_debug_addr(addr))
@@ -400,7 +400,7 @@ bool IncoherentL1::handleGetSResp(MemEvent * event, bool inMSHR) {
         printDataValue(addr, line->getData(), false);
     
     if (req->isLoadLink())
-        line->atomicStart(timestamp_ + llscBlockCycles_);
+        line->atomicStart(timestamp_ + llscBlockCycles_, req->getThreadID());
 
     if (is_debug_addr(addr))
         printDataValue(addr, line->getData(), true);
@@ -457,7 +457,7 @@ bool IncoherentL1::handleGetXResp(MemEvent * event, bool inMSHR) {
     std::vector<uint8_t> data;
     bool success = true;
     if (req->getCmd() == Command::GetX || req->getCmd() == Command::Write) {
-        if (!req->isStoreConditional() || line->isAtomic()) {
+        if (!req->isStoreConditional() || line->isAtomic(req->getThreadID())) {
             line->setData(req->getPayload(), offset);
             if (is_debug_addr(line->getAddr()))
                 printDataValue(line->getAddr(), line->getData(), true);

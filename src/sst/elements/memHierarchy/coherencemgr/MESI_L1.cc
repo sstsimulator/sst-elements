@@ -104,7 +104,7 @@ bool MESIL1::handleGetS(MemEvent * event, bool inMSHR) {
             recordPrefetchResult(line, statPrefetchHit);
 
             if (event->isLoadLink())
-                line->atomicStart(timestamp_ + llscBlockCycles_);
+                line->atomicStart(timestamp_ + llscBlockCycles_, event->getThreadID());
             data.assign(line->getData()->begin() + (event->getAddr() - event->getBaseAddr()), line->getData()->begin() + (event->getAddr() - event->getBaseAddr() + event->getSize()));
             sendTime = sendResponseUp(event, &data, inMSHR, line->getTimestamp());
             line->setTimestamp(sendTime - 1);
@@ -220,7 +220,7 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
                 stat_hits->addData(1);
             }
 
-            if (!event->isStoreConditional() || line->isAtomic()) { // Don't write on a non-atomic SC
+            if (!event->isStoreConditional() || line->isAtomic(event->getThreadID())) { // Don't write on a non-atomic SC
                 line->setData(event->getPayload(), event->getAddr() - event->getBaseAddr());
                 line->atomicEnd();
                 if (is_debug_addr(addr))
@@ -794,7 +794,7 @@ bool MESIL1::handleGetSResp(MemEvent* event, bool inMSHR) {
         printDataValue(addr, line->getData(), false);
 
     if (req->isLoadLink())
-        line->atomicStart(timestamp_ + llscBlockCycles_);
+        line->atomicStart(timestamp_ + llscBlockCycles_, req->getThreadID());
 
     if (is_debug_addr(addr))
         printDataValue(addr, line->getData(), true);
@@ -855,7 +855,7 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
                 }
 
                 if (req->isLoadLink())
-                    line->atomicStart(timestamp_ + llscBlockCycles_);
+                    line->atomicStart(timestamp_ + llscBlockCycles_, req->getThreadID());
 
                 if (localPrefetch) {
                     line->setPrefetch(true);
@@ -876,7 +876,7 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
                 line->setState(M);
 
                 if (req->getCmd() == Command::Write || req->getCmd() == Command::GetX) {
-                    if (!req->isStoreConditional() || line->isAtomic()) { // Normal or successful store-conditional
+                    if (!req->isStoreConditional() || line->isAtomic(req->getThreadID())) { // Normal or successful store-conditional
                         line->setData(req->getPayload(), offset);
 
                         if (is_debug_addr(addr))
