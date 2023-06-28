@@ -53,8 +53,8 @@ using namespace SST::Ember;
 
 EmberTriCountGenerator::EmberTriCountGenerator(SST::ComponentId_t id, Params& prms):
   EmberMessagePassingGenerator(id, prms, "Null" ), params_(prms), debug_(0), generate_loop_index_(0), need_to_wait_(false),
-  next_task_(0), old_i_(ULLONG_MAX), old_j_(ULLONG_MAX), num_data_ranks_(0), num_data_received_(0), num_end_messages_(0),
-  free_data_requests_(false), free_datareq_buffers_(false)
+  next_task_(0), old_i_(ULLONG_MAX), old_j_(ULLONG_MAX), num_data_ranks_(0), request_index_(-1), num_data_received_(0), num_end_messages_(0),
+  free_data_requests_(false), free_datareq_buffers_(false), send_request_flag_(false), send_request_array_(nullptr), test_sends_(false)
 {
   rank_ = EmberMessagePassingGenerator::rank();
 
@@ -228,6 +228,31 @@ EmberTriCountGenerator::task_client() {
 
   if (debug_ > 1) std::cerr << "rank " << rank_ << " beginning client loop " << generate_loop_index_ << std::endl;
 
+  if (send_request_flag_) {
+    if (debug_ > 1) std::cerr << "rank " << rank_ << " send request complete" << std::endl;
+    test_sends_ = false;
+    send_request_flag_ = false;
+    std::list<MessageRequest*>::iterator iter = send_requests_.begin();
+    for (int i=0; i < send_request_index_; ++i) ++iter;
+    delete *iter;
+    send_requests_.erase(iter);
+    if (send_requests_.size()) {
+      if (debug_ > 1) std::cerr << "rank " << rank_ << " testing " << send_requests_.size() << " send requests\n";
+      clean_send_requests();
+      ++generate_loop_index_;
+      return false;
+    }
+  }
+  else if (test_sends_) {
+    if (debug_ > 1) std::cerr << "rank " << rank_ << " testing send requests" << std::endl;
+    test_sends_ = false;
+    if (send_requests_.size()) {
+      clean_send_requests();
+      ++generate_loop_index_;
+      return false;
+    }
+  }
+
   // setup request indexes (num_data_ranks_ may be zero)
   task_index_ = num_data_ranks_ - num_data_received_;
   datareq_index_ = num_data_ranks_ - num_data_received_ + task_recv_active_;
@@ -257,11 +282,13 @@ EmberTriCountGenerator::task_client() {
 
   // If we have a data request then send data
   if (request_index_ == datareq_index_) {
+    //datareq_recv_active_ = false;
     int requestor = any_response_.src;
     uint64_t size = datareq_recv_memaddr_.at<uint64_t>(0);
     if (debug_ > 1) std::cerr << "rank " << rank_ << " sending " << size << " to " << requestor << std::endl;
-    enQ_isend( evQ, nullptr, size, UINT64_T, requestor, DATA, GroupWorld, nullptr );
-
+    MessageRequest *send_req = new MessageRequest();
+    send_requests_.push_back(send_req);
+    enQ_isend( evQ, nullptr, size, UINT64_T, requestor, DATA, GroupWorld, send_req );
     // prepare for next request
     recv_datareq();
   }
@@ -284,6 +311,7 @@ EmberTriCountGenerator::task_client() {
     else if (any_response_.tag == TASKS_COMPLETE) {
       if (debug_) std::cerr << "rank " << rank_ << " received TASKS_COMPLETE -- Bye!\n";
       enQ_cancel( evQ, datareq_recv_request_ );
+      clean_send_requests(true);
       return true;
     }
 
@@ -303,6 +331,7 @@ EmberTriCountGenerator::task_client() {
 
     uint64_t first_i, last_i, first_j, last_j, first_edge, last_edge;
     bool skip = false;
+    if (i > taskStarts_.size() || j > taskStarts_.size() ) skip = true;
     if (taskStarts_[i] == num_vertices_ - 1 || taskStarts_[j] == num_vertices_ - 1) {
       skip = true;
       if (debug_) {
@@ -344,12 +373,14 @@ EmberTriCountGenerator::task_client() {
       if (debug_) std::cerr << "all data is local, computing\n";
       //enQ_compute(evQ, 1000); // FIXME: need model of compute times
       request_task();
+      // make send requests go away
+      test_sends_ = true;
     }
   }
 
   // test if data is back
   else if (request_index_ < (num_data_ranks_ - num_data_received_)) {
-    if (debug_ > 1) std::cerr << "rank " << rank_ << " received data with index " << request_index_ << std::endl;
+    if (debug_ > 1) std::cerr << "rank " << rank_ << " received data with index " << request_index_ << " from " << any_response_.src << std::endl;
     ++num_data_received_;
     data_recvs_complete_.insert( datareq_index_map_[request_index_] );
     if (num_data_received_ == num_data_ranks_) {
@@ -359,10 +390,13 @@ EmberTriCountGenerator::task_client() {
       free_data_requests_ = true;
       //enQ_compute(evQ, 1000); // FIXME: need model of compute times
       request_task();
+      // make send requests go away
+      test_sends_ = true;
     }
     else {
       wait_for_any();
       need_to_wait_ = false;
+      ++generate_loop_index_;
       return false;
     }
   }
@@ -376,7 +410,7 @@ void
 EmberTriCountGenerator::request_task() {
   std::queue<EmberEvent*>& evQ = *evQ_;
   // send a request for a task
-  enQ_send( evQ, nullptr, 1, UINT64_T, 0, TASK_REQUEST, GroupWorld );
+  enQ_send( evQ, nullptr, 1, UINT64_T, 0, TASK_REQUEST, GroupWorld);
   // fire off a recv for the task request
   if (debug_ > 1) std::cerr << "rank " << rank_ << " start a task recv\n";
   enQ_irecv( evQ, task_recv_memaddr_, 1, UINT64_T, 0, Hermes::MP::AnyTag, GroupWorld, &task_recv_request_ );
@@ -497,4 +531,23 @@ EmberTriCountGenerator::edges_to_ranks(uint64_t first_edge, uint64_t last_edge, 
     }
     rank_to_size[rank] = size;
   }
+}
+
+void
+EmberTriCountGenerator::clean_send_requests(bool wait) {
+   std::queue<EmberEvent*>& evQ = *evQ_;
+   int size = send_requests_.size();
+   if (size == 0) return;
+   if (send_request_array_) delete send_request_array_;
+   send_request_array_ = new MessageRequest[size];
+   int i=0;
+   for(auto req : send_requests_) {
+       send_request_array_[i] = *req;
+       ++i;
+   }
+   if (wait) {
+     enQ_waitall( evQ, size, send_request_array_);
+   }
+   else
+     enQ_testany( evQ, size, send_request_array_, &send_request_index_, &send_request_flag_);
 }
