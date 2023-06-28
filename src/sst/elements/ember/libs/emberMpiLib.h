@@ -22,6 +22,8 @@
 
 #include "sst/elements/hermes/msgapi.h"
 
+#include "sst/core/output.h"
+
 #include "mpi/emberMPIEvent.h"
 #include "mpi/emberinitev.h"
 #include "mpi/embermakeprogressev.h"
@@ -58,6 +60,8 @@ using namespace SST::Statistics;
 
 namespace SST {
 namespace Ember {
+
+static SST::Output abort_output("EmberMpiLib: ", 5, -1, Output::STDERR);
 
 #undef FOREACH_ENUM
 #define FOREACH_ENUM(NAME) \
@@ -171,6 +175,8 @@ class EmberMpiLib : public EmberLib {
 	}
     void isend( Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group,
         MessageRequest* req ) {
+        if (!req) abort_output.fatal(CALL_INFO, -1, "isend requires nonnull MessageRequest\n");
+
     	q.push( new EmberISendEvent( api(), m_output, m_Stats[Isend], payload, count, dtype, dest, tag, group, req ) );
 
 		size_t bytes = api().sizeofDataType(dtype);
