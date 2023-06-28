@@ -367,7 +367,6 @@ l2cacheParams = {
     "associativity" : "8",
     "cache_line_size" : "64",
     "cache_size" : "4 MB",
-    "mshr_num_entries": 2,
     "mshr_latency_cycles": 3,
     "debug" : mh_debug,
     "debug_level" : mh_debug_level,
