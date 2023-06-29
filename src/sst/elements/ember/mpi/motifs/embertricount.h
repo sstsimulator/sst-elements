@@ -19,6 +19,7 @@
 
 #include "mpi/embermpigen.h"
 #include <vector>
+#include <list>
 #include <queue>
 #include <set>
 #include <map>
@@ -55,6 +56,7 @@ public:
   void wait_for_any();
   void request_edges(uint64_t first_edge, uint64_t last_edge);
   void edges_to_ranks(uint64_t first_edge, uint64_t last_edge, std::map<uint64_t,uint64_t>& rank_to_size);
+  void clean_send_requests(bool wait=false);
 
 private:
   enum {TASK_REQUEST, TASK_ASSIGN, TASK_NULL, TASKS_COMPLETE, DATA_REQUEST, DATA};
@@ -86,17 +88,22 @@ private:
   std::vector<Hermes::MemAddr> datareq_send_memaddrs_;
   Hermes::MemAddr datareq_recv_memaddr_;
   MessageRequest* all_requests_;
+  MessageRequest *send_request_array_;
   MessageResponse any_response_;
   MessageRequest task_recv_request_;
   MessageRequest datareq_recv_request_;
   std::vector<MessageRequest*> data_recv_requests_;
+  std::list<MessageRequest*> send_requests_;
   std::vector<uint64_t> data_recv_requests_sizes_;
   bool task_recv_active_;
   bool datareq_recv_active_;
   bool need_to_wait_;
   bool free_data_requests_;
   bool free_datareq_buffers_;
+  bool test_sends_;
+  int send_request_flag_;
   int request_index_;
+  int send_request_index_;
   uint64_t task_index_;
   uint64_t datareq_index_;
   uint64_t num_data_ranks_;
