@@ -372,6 +372,11 @@ l2cacheParams = {
     "debug_level" : mh_debug_level,
 }
 
+l2_prefetch_params = {
+    "reach" : 16,
+    "detect_range" : 1
+}
+
 busParams = {
     "bus_frequency" : cpu_clock,
 }
@@ -446,6 +451,8 @@ class CPU_Builder:
         # L2 cache
         cpu_l2cache = sst.Component(prefix + ".l2cache", "memHierarchy.Cache")
         cpu_l2cache.addParams( l2cacheParams )
+        l2pre = cpu_l2cache.setSubComponent("prefetcher", "cassini.StridePrefetcher")
+        l2pre.addParams(l2_prefetch_params)
 
         # L2 cache cpu interface
         l2cache_2_l1caches = cpu_l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
