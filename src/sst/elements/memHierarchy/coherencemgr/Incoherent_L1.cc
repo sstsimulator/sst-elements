@@ -45,7 +45,7 @@ bool IncoherentL1::handleGetS(MemEvent* event, bool inMSHR){
     vector<uint8_t> data;
 
     if (is_debug_addr(addr)) {
-        eventDI.prefill(event->getID(), Command::GetS, localPrefetch, addr, state);
+        eventDI.prefill(event->getID(), Command::GetS, (localPrefetch ? "-pref" : ""), addr, state);
         eventDI.reason = "hit";
     }
 
@@ -118,7 +118,7 @@ bool IncoherentL1::handleGetX(MemEvent* event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_addr(addr))
-        eventDI.prefill(event->getID(), Command::GetX, false, addr, state);
+        eventDI.prefill(event->getID(), Command::GetX, (event->isStoreConditional() ? "-SC" : ""), addr, state);
 
     MemEventStatus status = MemEventStatus::OK;
     bool success = true;
@@ -214,7 +214,7 @@ bool IncoherentL1::handleGetSX(MemEvent* event, bool inMSHR) {
     std::vector<uint8_t> data;
 
     if (is_debug_addr(addr))
-        eventDI.prefill(event->getID(), Command::GetSX, false, addr, state);
+        eventDI.prefill(event->getID(), Command::GetSX, (event->isLoadLink() ? "-LL" : ""), addr, state);
 
     switch (state) {
         case I:
@@ -275,7 +275,7 @@ bool IncoherentL1::handleFlushLine(MemEvent* event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_addr(addr))
-        eventDI.prefill(event->getID(), Command::FlushLine, false, addr, state);
+        eventDI.prefill(event->getID(), Command::FlushLine, "", addr, state);
 
     if (!inMSHR && mshr_->exists(addr)) {
         return (allocateMSHR(event, false) == MemEventStatus::Reject) ? false : true;
@@ -334,7 +334,7 @@ bool IncoherentL1::handleFlushLineInv(MemEvent* event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_addr(addr))
-        eventDI.prefill(event->getID(), Command::FlushLineInv, false, addr, state);
+        eventDI.prefill(event->getID(), Command::FlushLineInv, "", addr, state);
 
     if (!inMSHR && mshr_->exists(addr)) {
         return (allocateMSHR(event, false) == MemEventStatus::Reject) ? false : true;
@@ -391,7 +391,7 @@ bool IncoherentL1::handleGetSResp(MemEvent * event, bool inMSHR) {
     bool localPrefetch = req->isPrefetch() && (req->getRqstr() == cachename_);
 
    if (is_debug_addr(addr))
-        eventDI.prefill(event->getID(), Command::GetSResp, localPrefetch, addr, state);
+        eventDI.prefill(event->getID(), Command::GetSResp, (localPrefetch ? "-pref" : ""), addr, state);
 
     // Update line
     line->setData(event->getPayload(), 0);
@@ -440,7 +440,7 @@ bool IncoherentL1::handleGetXResp(MemEvent * event, bool inMSHR) {
     }
     
     if (is_debug_addr(addr))
-        eventDI.prefill(event->getID(), Command::GetXResp, false, addr, state);
+        eventDI.prefill(event->getID(), Command::GetXResp, "", addr, state);
 
     req->setMemFlags(event->getMemFlags());
 
@@ -497,7 +497,7 @@ bool IncoherentL1::handleFlushLineResp(MemEvent * event, bool inMSHR) {
     stat_eventState[(int)Command::FlushLineResp][state]->addData(1);
 
     if (is_debug_addr(addr))
-        eventDI.prefill(event->getID(), Command::FlushLineResp, false, addr, state);
+        eventDI.prefill(event->getID(), Command::FlushLineResp, "", addr, state);
 
     MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
 
@@ -539,7 +539,7 @@ bool IncoherentL1::handleNULLCMD(MemEvent* event, bool inMSHR) {
     bool evicted = handleEviction(newAddr, line);
 
     if (is_debug_addr(newAddr)) {
-        eventDI.prefill(event->getID(), Command::NULLCMD, false, line->getAddr(), evictDI.oldst);
+        eventDI.prefill(event->getID(), Command::NULLCMD, "", line->getAddr(), evictDI.oldst);
         eventDI.newst = line->getState();
         eventDI.verboseline = line->getString();
     }
@@ -585,7 +585,7 @@ bool IncoherentL1::handleNACK(MemEvent* event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_addr(event->getBaseAddr()))
-        eventDI.prefill(event->getID(), Command::NACK, false, event->getBaseAddr(), state);
+        eventDI.prefill(event->getID(), Command::NACK, "", event->getBaseAddr(), state);
 
     delete event;
     resendEvent(nackedEvent, false); // resend this down (since we're an L1)

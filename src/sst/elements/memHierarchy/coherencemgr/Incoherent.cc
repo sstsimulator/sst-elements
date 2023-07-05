@@ -41,7 +41,7 @@ bool Incoherent::handleGetS(MemEvent * event, bool inMSHR) {
     MemEventStatus status = MemEventStatus::OK;
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::GetS, localPrefetch, addr, state);
+        eventDI.prefill(event->getID(), Command::GetS, (localPrefetch ? "-pref" : ""), addr, state);
 
     switch (state) {
         case I:
@@ -120,7 +120,7 @@ bool Incoherent::handleGetX(MemEvent * event, bool inMSHR) {
     MemEventStatus status = MemEventStatus::OK;
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), event->getCmd(), false, addr, state);
+        eventDI.prefill(event->getID(), event->getCmd(), "", addr, state);
 
     switch (state) {
         case I:
@@ -188,7 +188,7 @@ bool Incoherent::handleFlushLine(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::FlushLine, false, addr, state);
+        eventDI.prefill(event->getID(), Command::FlushLine, "", addr, state);
 
     MemEventStatus status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
     if (!inMSHR)
@@ -238,7 +238,7 @@ bool Incoherent::handleFlushLineInv(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::FlushLine, false, addr, state);
+        eventDI.prefill(event->getID(), Command::FlushLine, "", addr, state);
 
     MemEventStatus status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
     if (!inMSHR)
@@ -378,7 +378,7 @@ bool Incoherent::handleGetSResp(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::GetSResp, false, addr, state);
+        eventDI.prefill(event->getID(), Command::GetSResp, "", addr, state);
 
     stat_eventState[(int)Command::GetSResp][state]->addData(1);
 
@@ -412,7 +412,7 @@ bool Incoherent::handleGetXResp(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::GetXResp, false, addr, state);
+        eventDI.prefill(event->getID(), Command::GetXResp, "", addr, state);
 
     stat_eventState[(int)Command::GetXResp][state]->addData(1);
 
@@ -433,7 +433,7 @@ bool Incoherent::handleFlushLineResp(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::FlushLineResp, false, addr, state);
+        eventDI.prefill(event->getID(), Command::FlushLineResp, "", addr, state);
 
     stat_eventState[(int)Command::FlushLineResp][state]->addData(1);
 
@@ -504,7 +504,7 @@ bool Incoherent::handleNACK(MemEvent* event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_event(event) || is_debug_event(nackedEvent))
-        eventDI.prefill(event->getID(), Command::NACK, false, addr, state);
+        eventDI.prefill(event->getID(), Command::NACK, "", addr, state);
 
     delete event;
 
@@ -533,7 +533,7 @@ MemEventStatus Incoherent::processCacheMiss(MemEvent * event, PrivateCacheLine* 
 }
 
 MemEventStatus Incoherent::allocateLine(MemEvent * event, PrivateCacheLine* &line, bool inMSHR) {
-    evictDI.prefill(event->getID(), Command::Evict, false, 0, I);
+    evictDI.prefill(event->getID(), Command::Evict, "", 0, I);
 
     bool evicted = handleEviction(event->getBaseAddr(), line, evictDI);
 

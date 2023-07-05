@@ -452,7 +452,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::WriteUnlo
 
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::LoadLink* req) {
     Addr bAddr = (iface->lineSize_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->baseAddrMask_;
-    MemEvent* load = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetS, req->size);
+    MemEvent* load = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetSX, req->size);
     load->setFlag(MemEvent::F_LLSC);
     load->setRqstr(iface->getName());
     load->setThreadID(req->tid);
