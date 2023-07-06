@@ -18,10 +18,10 @@
 #include <iostream>
 #include <common/skeleton.h>
 int main(int argc, char** argv) {
-  std::cerr << "Hello from Mercury!\n";
-  std::cerr << "Now I will sleep\n";
+  std::cout << "Hello from Mercury!\n";
+  std::cout << "Now I will sleep\n";
   sleep(5);
-  std::cerr << "I'm back!\n";
-  std::cerr << "Bye!\n"; 
+  std::cout << "I'm back!\n";
+  std::cout << "Bye!\n"; 
   return 0;
 }

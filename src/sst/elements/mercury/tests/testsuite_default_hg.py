@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import subprocess
 
 from sst_unittest import *
 from sst_unittest_support import *
@@ -8,39 +9,39 @@ from sst_unittest_support import *
 
 class testcase_hg(SSTTestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        hg_dir = subprocess.run(["sst-config", "SST_ELEMENT_TESTS", "mercury"],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        build_sh = hg_dir.stdout.rstrip().decode() + "/build.sh"
+        subprocess.run(build_sh)
+
     def setUp(self):
-        super(type(self), self).setUp()
+        super(testcase_hg, self).setUp()
         # Put test based setup code here. it is called once before every test
 
     def tearDown(self):
         # Put test based teardown code here. it is called once after every test
-        super(type(self), self).tearDown()
+        super(testcase_hg, self).tearDown()
 
 #####
 
-    def test_node(self):
-        self.simple_components_template("example1")
+    def test_testme(self):
+        lib_dir = subprocess.run(["sst-config", "SST_ELEMENT_LIBRARY", "SST_ELEMENT_LIBRARY_LIBDIR"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        lib_dir = lib_dir.stdout.rstrip().decode()
+        tests_dir = subprocess.run(["sst-config", "SST_ELEMENT_TESTS", "mercury"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        tests_dir = tests_dir.stdout.rstrip().decode()
+        sst_lib_path = lib_dir + ":" + tests_dir
 
-    def test_basic_clocks(self):
-        self.simple_components_template("basicClocks")
+        paths = os.environ.get("SST_LIB_PATH")
+        if paths is None:
+            os.environ["SST_LIB_PATH"] = sst_lib_path
+        else:
+            os.environ["SST_LIB_PATH"] = paths + ":" + sst_lib_path
 
-    def test_basic_links(self):
-        self.simple_components_template("basicLinks")
-
-    def test_basic_params(self):
-        self.simple_components_template("basicParams")
-
-    def test_basic_statistics_0(self):
-        self.simple_components_template("basicStatistics0")
-
-    def test_basic_statistics_1(self):
-        self.simple_components_template("basicStatistics1")
-
-    def test_basic_statistics_2(self):
-        self.simple_components_template("basicStatistics2")
-
-    #def test_simple_rng_component_marsaglia(self):
-    #    self.simple_components_template("simpleRNGComponent_marsaglia", striptotail=1)
+        self.simple_components_template("ostest2")
 
 #####
 
