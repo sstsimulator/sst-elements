@@ -274,8 +274,7 @@ public:
             return false;
         } else {
             output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 " Fire %" PRIu16 "\n", num_inputs, num_ready, cycles_to_fire_);
-            // first queue should be const
-            for( uint32_t i = 1; i < total_num_inputs; ++i) {
+            for( uint32_t i = 0; i < total_num_inputs; ++i ) {
                 if( input_queues_->at(i)->argument_ > -1 ) {
                     argList.push_back(input_queues_->at(i)->data_queue_->front());
                     input_queues_->at(i)->data_queue_->pop();
@@ -283,6 +282,9 @@ public:
             }
             cycles_to_fire_ = latency_;
         }
+
+        // first queue should be const
+        input_queues_->at(0)->data_queue_->push(LlyrData(argList[0].to_ullong()));
 
         switch( op_binding_ ) {
             case ADDCONST :

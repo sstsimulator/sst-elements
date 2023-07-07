@@ -217,7 +217,7 @@ protected:
         }
 
         StandardMem::Request* req = new StandardMem::Write(addr, 8, payload);
-        output_->verbose(CALL_INFO, 4, 0, "Creating a store request (%" PRIu32 ") to address: %" PRIu64 "\n", uint32_t(req->getID()), addr);
+        output_->verbose(CALL_INFO, 4, 0, "Creating a store request (%" PRIu32 ") for %" PRIu64 " at address: %" PRIu64 "\n", uint32_t(req->getID()), newValue, addr);
 
         LSEntry* tempEntry = new LSEntry( req->getID(), processor_id_, targetPe );
         lsqueue_->addEntry( tempEntry );
