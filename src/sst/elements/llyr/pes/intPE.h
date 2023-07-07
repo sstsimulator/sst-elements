@@ -333,7 +333,7 @@ public:
         while( input_queues_->size() < input_queues_init_.size() ) {
             LlyrQueue* tempQueue = new LlyrQueue;
             tempQueue->forwarded_ = 0;
-            tempQueue->argument_ = 0;
+            tempQueue->argument_ = 0;  //TODO all args are consts right now, should change to -1
             tempQueue->routing_arg_ = new std::string("");
             tempQueue->data_queue_ = new std::queue< LlyrData >;
             input_queues_->push_back(tempQueue);
@@ -365,12 +365,17 @@ public:
                             QueueArgMap* arguments)  :
                             IntProcessingElement(op_binding, processor_id, llyr_config)
     {
-
         latency_ = llyr_config->int_latency_;
         cycles_to_fire_ = latency_;
 
         // iterate through the arguments and set initial queue values
         for( auto it = arguments->begin(); it != arguments->end(); ++it ) {
+            std::cout << "[AdvIntProcessingElement]";
+            std::cout << "input_queues_init_ -- ";
+            std::cout << " queue: " << it->first;
+            std::cout << " arg: "   << it->second;
+            std::cout << std::endl;
+
             auto retVal = input_queues_init_.emplace( it->first, it->second );
             if( retVal.second == false ) {
                 ///TODO
@@ -379,8 +384,6 @@ public:
 
         triggered_ = 0;
         initialized_ = 0;
-
-
     }
 
     virtual bool doCompute()
@@ -475,6 +478,9 @@ public:
             output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 " Fire %" PRIu16 "\n", num_inputs, num_ready, cycles_to_fire_);
             for( uint32_t i = 0; i < total_num_inputs; ++i) {
                 if( input_queues_->at(i)->argument_ > -1 ) {
+                    argList.push_back(input_queues_->at(i)->data_queue_->front());
+                    input_queues_->at(i)->data_queue_->pop();
+                } else if ( op_binding_ == ACC && input_queues_->at(i)->argument_ == -1) {
                     argList.push_back(input_queues_->at(i)->data_queue_->front());
                     input_queues_->at(i)->data_queue_->pop();
                 }
@@ -574,6 +580,12 @@ public:
                 queue_id = queue_id + 1;
             }
         }
+
+        // this is hacky but need to ignore queue-0 on the accumulator
+        if( op_binding_ == ACC ) {
+            input_queues_->at(0)->argument_ = -1;
+        }
+
     }
 
 private:

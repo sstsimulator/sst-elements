@@ -37,6 +37,7 @@
 namespace SST {
 namespace Llyr {
 
+// Contains input/output queue and metadata
 typedef struct alignas(uint64_t) {
     bool forwarded_;
     int32_t argument_;

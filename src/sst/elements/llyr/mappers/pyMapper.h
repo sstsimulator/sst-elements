@@ -21,6 +21,7 @@
 #include <string>
 #include <utility>
 #include <iostream>
+#include <filesystem>
 #include <Python.h>
 
 #include "mappers/llyrMapper.h"
@@ -49,7 +50,7 @@ public:
         LlyrMapper() {}
     ~PyMapper() { }
 
-    SST_ELI_REGISTER_MODULE_DERIVED(
+    SST_ELI_REGISTER_MODULE(
         PyMapper,
         "llyr",
         "mapper.py",
@@ -99,17 +100,29 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
     }
 
     char tmp[256];
+<<<<<<< HEAD
     if( getcwd(tmp, 256) == nullptr ) {
         output_->fatal( CALL_INFO, -1, "Unable to find current working directory.\n" );
         exit(0);
     } else {
         std::cout << "Current working directory: " << tmp << std::endl;
     }
+=======
+    if( getcwd(tmp, sizeof(tmp) ) != NULL) {
+        std::cout << "Current working directory: " << tmp << std::endl;
+    } else {
+        output_->fatal( CALL_INFO, -1, "Failed to get pwd.\n" );
+        exit(0);
+    }
+
+    // namespace filesystem_var = std::filesystem;
+    // std::cout << "Current working directory: " << filesystem_var.current_path() << std::endl;
+>>>>>>> 231e313ff (Warning cleanup; fix accumulator)
     runMappingTool(llyr_config->mapping_tool_);
 
 //     std::string fileName = "deepmind/strassen2x2_clay.csv";
 //     std::string fileName = "deepmind/strassen_6x7_rect_gap1.csv";
-    std::string fileName = "deepmind/generic_solution.csv";
+    std::string fileName = "hpca23/generic_solution.csv";
     output_->verbose(CALL_INFO, 1, 0, "Mapping Application Using: %s\n", fileName.c_str());
 
     std::list< HardwareNode* > node_list;

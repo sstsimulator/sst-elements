@@ -263,7 +263,6 @@ public:
     {
         // iterate through the arguments and set initial queue values
         for( auto it = arguments->begin(); it != arguments->end(); ++it ) {
-
             std::cout << "[AdvLoadProcessingElement]";
             std::cout << "input_queues_init_ -- ";
             std::cout << " queue: " << it->first;

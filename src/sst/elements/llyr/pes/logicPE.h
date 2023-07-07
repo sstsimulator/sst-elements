@@ -349,7 +349,7 @@ public:
         uint32_t total_num_inputs = input_queues_->size();
 
         // discover which of the input queues are used for the compute
-        for( uint32_t i = 0; i < total_num_inputs; ++i) {
+        for( uint32_t i = 0; i < total_num_inputs; ++i ) {
             if( input_queues_->at(i)->argument_ > -1 ) {
                 num_inputs = num_inputs + 1;
             }

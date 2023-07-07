@@ -33,7 +33,7 @@ public:
         LlyrMapper() {}
     ~SimpleMapper() { }
 
-    SST_ELI_REGISTER_MODULE_DERIVED(
+    SST_ELI_REGISTER_MODULE(
         SimpleMapper,
         "llyr",
         "mapper.simple",

@@ -314,6 +314,7 @@ public:
 
         //create the memory request
         if( op_binding_ == STADDR ) {
+            input_queues_->at(0)->data_queue_->push(LlyrData(argList[0].to_ullong()));
             doStore(argList[0].to_ullong(), argList[1].to_ullong());
         } else if( op_binding_ == STREAM_ST ) {
             if( argList[1].to_ullong() > 0 ) {
