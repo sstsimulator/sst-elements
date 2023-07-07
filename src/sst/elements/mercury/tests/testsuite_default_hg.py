@@ -9,12 +9,12 @@ from sst_unittest_support import *
 
 class testcase_hg(SSTTestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        hg_dir = subprocess.run(["sst-config", "SST_ELEMENT_TESTS", "mercury"],
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        build_sh = hg_dir.stdout.rstrip().decode() + "/build.sh"
-        subprocess.run(build_sh)
+#    @classmethod
+#    def setUpClass(cls):
+#        hg_dir = subprocess.run(["sst-config", "SST_ELEMENT_TESTS", "mercury"],
+#                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#        build_sh = hg_dir.stdout.rstrip().decode() + "/build.sh"
+#        subprocess.run(build_sh)
 
     def setUp(self):
         super(testcase_hg, self).setUp()
@@ -32,6 +32,7 @@ class testcase_hg(SSTTestCase):
         lib_dir = lib_dir.stdout.rstrip().decode()
         tests_dir = subprocess.run(["sst-config", "SST_ELEMENT_TESTS", "mercury"],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
         tests_dir = tests_dir.stdout.rstrip().decode()
         sst_lib_path = lib_dir + ":" + tests_dir
 

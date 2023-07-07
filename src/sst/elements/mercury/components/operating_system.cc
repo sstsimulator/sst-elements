@@ -70,7 +70,7 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
 {
   my_addr_ = node_ ? node_->addr() : 0;
   auto os_params = params.get_scoped_params("OperatingSystem");
-  os_params.print_all_params(std::cerr);
+  //os_params.print_all_params(std::cerr);
   unsigned int verbose = os_params.find<unsigned int>("verbose",0);
   out_ = std::unique_ptr<SST::Output>(new SST::Output(sprintf("Node%d:OperatingSystem:", my_addr_), verbose, 0, Output::STDOUT));
   out_->debug(CALL_INFO, 1, 0, "constructing\n");
@@ -215,7 +215,7 @@ OperatingSystem::addLaunchRequests(SST::Params& params)
   while (keep_going || aid < 10){
       std::string name = sprintf("app%d",aid);
       SST::Params app_params = params.get_scoped_params(name);
-      app_params.print_all_params(std::cerr);
+      //app_params.print_all_params(std::cerr);
       if (!app_params.empty()){
           app_params.insert(all_app_params);
           //      bool terminate_on_end = app_params.find<bool>("terminate", false);
