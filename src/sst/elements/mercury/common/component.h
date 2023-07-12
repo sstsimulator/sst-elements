@@ -19,6 +19,7 @@
 #include <sst/core/component.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/link.h>
+#include <sst/core/timeLord.h>
 #include <common/events.h>
 #include <common/timestamp.h>
 #include <cstdint>
@@ -41,7 +42,7 @@ HgBase(uint32_t id) :
       time_converter_ = CoreBase::getTimeConverter(_tick_spacing_string_);
     }
     self_link_ = CoreBase::configureSelfLink("HgComponent" + std::to_string(self_id()), time_converter_,new SST::Event::Handler<HgBase>(this, &HgBase::handleExecutionEvent));
-//    ++selfid;
+    ++selfid;
   }
 
  int self_id();

@@ -32,15 +32,18 @@ Node::Node(ComponentId_t id, Params &params)
   out_ = std::unique_ptr<SST::Output>(new SST::Output(sprintf("Node%d:",my_addr_), verbose, 0, Output::STDOUT));
 
   out_->debug(CALL_INFO, 1, 0, "loading hg.operatingsystem\n");
-  os_ =  loadAnonymousSubComponent<OperatingSystem>("hg.operating_system", "os_slot", OS_SLOT,
-                                                     SST::ComponentInfo::SHARE_STATS, params, this);
+  os_ =  loadUserSubComponent<OperatingSystem>("os_slot", SST::ComponentInfo::SHARE_NONE, this);
+  assert(os_);
+
+  // currently unused (but needs to be there or multithread termination breaks)
+  netLink_ = configureLink("network");
 
   int ncores_ = params.find<std::int32_t>("ncores", 1);
   int nsockets_ = params.find<std::int32_t>("nsockets",1);
 
 //  // Tell the simulation not to end until we're ready
-//  registerAsPrimaryComponent();
-//  primaryComponentDoNotEndSim();
+  registerAsPrimaryComponent();
+  primaryComponentDoNotEndSim();
 }
 
 void
