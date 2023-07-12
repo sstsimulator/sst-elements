@@ -72,9 +72,9 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
   next_condition_(0),
   next_mutex_(0)
 {
-  // super big temporary hack to get some sort of testing up and running
   if (active_os_.size() == 0){
-    active_os_.resize(2);
+    RankInfo num_ranks = getNumRanks();
+    active_os_.resize(num_ranks.thread);
   }
 
   my_addr_ = node_ ? node_->addr() : 0;
@@ -248,7 +248,7 @@ OperatingSystem::addLaunchRequests(SST::Params& params)
 void
 OperatingSystem::startApp(App* theapp, const std::string&  /*unique_name*/)
 {
-    out_->verbose(CALL_INFO, 1, 0, "starting app %d:%d on thread %d\n",
+    out_->verbose(CALL_INFO, 1, 0, "starting app %d:%d on physical thread %d\n",
                 int(theapp->tid()), int(theapp->aid()), threadId());
   //this should be called from the actual thread running it
   initThreading(params_);
@@ -284,7 +284,6 @@ OperatingSystem::scheduleThreadDeletion(Thread* thr)
   //However, because of weird thread swapping the DES thread
   //might still operate on the thread... we need to delay the delete
   //until the DES thread has completely finished processing its current event
-  out_->verbose(CALL_INFO, 1, 0, "scheduling thread deletion\n");
   selfEventLink_->send(new DeleteThreadEvent(thr));
   node_->endSim();
 }
@@ -298,7 +297,6 @@ OperatingSystem::completeActiveThread()
   Thread* thr_todelete = active_thread_;
 
   //if any threads waiting on the join, unblock them
-  out_->verbose(CALL_INFO, 1, 0, "completing thread %d\n", thr_todelete->threadId());
   while (!thr_todelete->joiners_.empty()) {
       Thread* blocker = thr_todelete->joiners_.front();
       out_->verbose(CALL_INFO, 1, 0, "thread %d is unblocking joiner %p\n",
@@ -308,7 +306,7 @@ OperatingSystem::completeActiveThread()
       thr_todelete->joiners_.pop();
     }
   active_thread_ = nullptr;  
-  out_->verbose(CALL_INFO, 1, 0, "completing context for %d\n", thr_todelete->threadId());
+  out_->verbose(CALL_INFO, 1, 0, "completing context %d on thread %d\n", thr_todelete->threadId(), threadId());
   thr_todelete->context()->completeContext(des_context_);
 }
 
@@ -322,14 +320,14 @@ OperatingSystem::switchToThread(Thread* tothread)
       return;
     }
 
-  out_->verbose(CALL_INFO, 1, 0, "switching to thread %d\n", tothread->threadId());
+  out_->verbose(CALL_INFO, 1, 0, "switching to context %d on physical thread %d\n", tothread->threadId(), threadId());
   if (active_thread_ == blocked_thread_){
       blocked_thread_ = nullptr;
     }
   active_thread_ = tothread;
   activeOs() = this;
   tothread->context()->resumeContext(des_context_);
-  out_->verbose(CALL_INFO, 1, 0, "switched back from thread %d to main thread\n", tothread->threadId());
+  out_->verbose(CALL_INFO, 1, 0, "switched back from context %d to main thread %d\n", tothread->threadId(), threadId());
   /** back to main thread */
   active_thread_ = nullptr;
 }
@@ -339,14 +337,17 @@ OperatingSystem::block()
 {
   Timestamp before = now();
   //back to main DES thread
+  if (active_thread_ == nullptr) {
+    sst_hg_abort_printf("null active_thread_, blocking main DES thread?");
+  }
   ThreadContext* old_context = active_thread_->context();
   if (old_context == des_context_){
-      sst_hg_abort_printf("blocking main DES thread");
+    sst_hg_abort_printf("blocking main DES thread");
   }
   Thread* old_thread = active_thread_;
   //reset the time flag
   active_thread_->setTimedOut(false);
-  out_->verbose(CALL_INFO, 1, 0, "pausing context on thread %d\n", active_thread_->threadId());
+  out_->verbose(CALL_INFO, 1, 0, "pausing context %d on physical thread %d\n", active_thread_->threadId(), threadId());
   blocked_thread_ = active_thread_;
   active_thread_ = nullptr;
   old_context->pauseContext(des_context_);
@@ -357,7 +358,7 @@ OperatingSystem::block()
 
   //restore state to indicate this thread and this OS are active again
   activeOs() = this;
-  out_->verbose(CALL_INFO, 1, 0, "resuming context on thread %d\n", active_thread_->threadId());
+  out_->verbose(CALL_INFO, 1, 0, "resuming context %d on physical thread %d\n", active_thread_->threadId(), threadId());
   active_thread_ = old_thread;
   active_thread_->incrementBlockCounter();
 

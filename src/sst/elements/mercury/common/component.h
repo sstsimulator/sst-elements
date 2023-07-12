@@ -43,6 +43,11 @@ HgBase(uint32_t id) :
     }
     self_link_ = CoreBase::configureSelfLink("HgComponent" + std::to_string(self_id()), time_converter_,new SST::Event::Handler<HgBase>(this, &HgBase::handleExecutionEvent));
     ++selfid;
+
+    RankInfo num_ranks = CoreBase::getNumRanks();
+    nthread_ = num_ranks.thread;
+    RankInfo rank = CoreBase::getRank();
+    thread_id_ = rank.thread;
   }
 
  int self_id();
