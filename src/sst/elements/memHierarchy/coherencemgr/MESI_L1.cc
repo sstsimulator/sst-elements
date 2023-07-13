@@ -164,11 +164,15 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
 
     switch (state) {
         case I:
-            if (event->isStoreConditional()) { /* Definitely failed */
-                sendTime = sendResponseUp(event, nullptr, inMSHR, 0, false);
-                if (is_debug_addr(addr))
-                    eventDI.reason = "hit/fail";
-                cleanUpAfterRequest(event, inMSHR);
+            if (event->isStoreConditional()) { /* Check if we can process the event, if so, it failed */
+                status = checkMSHRCollision(event, inMSHR);
+                if (status == MemEventStatus::OK) {
+                    sendTime = sendResponseUp(event, nullptr, inMSHR, 0, false);
+                    if (is_debug_addr(addr))
+                        eventDI.reason = "hit/fail";
+                    cleanUpAfterRequest(event, inMSHR);
+                    break;
+                }
                 break;
             }
 
@@ -296,7 +300,7 @@ bool MESIL1::handleGetSX(MemEvent* event, bool inMSHR) {
      * can upgrade without forwarding request */
     if (state == S && lastLevel_) {
         state = protocolExclState_;
-        line->setState(M);
+        line->setState(protocolExclState_);
     }
 
     MemEventStatus status = MemEventStatus::OK;
@@ -1103,6 +1107,29 @@ MemEventStatus MESIL1::processCacheMiss(MemEvent* event, L1CacheLine * line, boo
     if (status == MemEventStatus::OK && !line) {
         line = allocateLine(event, line);
         status = line ? MemEventStatus::OK : MemEventStatus::Stall;
+    }
+    return status;
+}
+
+/* 
+ * Check for an MSHR collision.
+ * If one exists, put event into MSHR
+ * Otherwise do nothing
+ */
+MemEventStatus MESIL1::checkMSHRCollision(MemEvent* event, bool inMSHR) {
+    MemEventStatus status = MemEventStatus::OK;
+    if (inMSHR) {
+        status = MemEventStatus::Stall;
+        if (mshr_->getFrontEvent(event->getBaseAddr())) {
+            MemEvent* front = static_cast<MemEvent*>(mshr_->getFrontEvent(event->getBaseAddr()));
+            status = (front == event) ? MemEventStatus::OK : MemEventStatus::Stall;
+        }
+    } else {
+        int ins = mshr_->insertEventIfConflict(event->getBaseAddr(), event);
+        if (ins == -1)
+            status = MemEventStatus::Reject;
+        else if (ins != 0) 
+            status = MemEventStatus::Stall;
     }
     return status;
 }

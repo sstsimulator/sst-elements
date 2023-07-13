@@ -312,6 +312,10 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
                 }
                 break;
             }
+            
+            if (state == S) {
+                line->setState(E); // Clean/exclusive
+            }
 
             line->setOwner(event->getSrc());
             if (line->isSharer(event->getSrc()))

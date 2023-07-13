@@ -392,6 +392,7 @@ private:
 
     /** Cache and MSHR management */
     MemEventStatus processCacheMiss(MemEvent * event, L1CacheLine * line, bool inMSHR);
+    MemEventStatus checkMSHRCollision(MemEvent* event, bool inMSHR);
     L1CacheLine* allocateLine(MemEvent * event, L1CacheLine * line);
     bool handleEviction(Addr addr, L1CacheLine *& line);
     void cleanUpAfterRequest(MemEvent * event, bool inMSHR);
