@@ -26,6 +26,7 @@
 #include <operating_system/launch/app_launch_request.h>
 #include <operating_system/process/app.h>
 #include <operating_system/process/thread.h>
+#include <operating_system/process/thread_info.h>
 #include <operating_system/process/mutex.h>
 #include <operating_system/process/tls.h>
 #include <operating_system/process/compute_scheduler.h>
@@ -96,20 +97,20 @@ public:
   }
 
   static inline OperatingSystem*& staticOsThreadContext(){
-  #if SSTMAC_USE_MULTITHREAD
+//  #if SSTMAC_USE_MULTITHREAD
     int thr = ThreadInfo::currentPhysicalThreadId();
     return active_os_[thr];
-  #else
-    return active_os_;
-  #endif
+//  #else
+//    return active_os_;
+//  #endif
   }
 
   inline OperatingSystem*& activeOs() {
-#if SSTMAC_USE_MULTITHREAD
+//#if SSTMAC_USE_MULTITHREAD
   return active_os_[threadId()];
-#else
-  return active_os_;
-#endif
+//#else
+//  return active_os_;
+//#endif
   }
 
   Thread* activeThread() const {
@@ -161,11 +162,11 @@ public:
 //  std::map<int, condition_t> conditions_;
 //  std::map<int, mutex_t> mutexes_;
 
-#if SSTMAC_USE_MULTITHREAD
-  static std::vector<OperatingSystem*> active_os_;
-#else
-  static OperatingSystem* active_os_;
-#endif
+  //#if SSTMAC_USE_MULTITHREAD
+    static std::vector<OperatingSystem*> active_os_;
+  //#else
+  //  static OperatingSystem* active_os_;
+  //#endif
 
  public:
   static SST::TimeConverter* timeConverter() {

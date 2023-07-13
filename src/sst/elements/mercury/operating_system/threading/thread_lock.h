@@ -56,21 +56,21 @@ typedef MutexThreadLock thread_lock;
 class Lockable {
  public:
   void lock(){
-#if SST_HG_USE_MULTITHREAD
+//#if SST_HG_USE_MULTITHREAD
     lock_.lock();
-#endif
+//#endif
   }
 
   void unlock(){
-#if SST_HG_USE_MULTITHREAD
+//#if SST_HG_USE_MULTITHREAD
     lock_.unlock();
-#endif
+//#endif
   }
 
  private:
-#if SST_HG_USE_MULTITHREAD
+//#if SST_HG_USE_MULTITHREAD
   thread_lock lock_;
-#endif
+//#endif
 };
 
 } // end of namespace Hg

@@ -48,11 +48,11 @@ systemAPI::ssthg_sleep(unsigned int secs){
     Thread* t = cos->activeThread();
     UnblockEvent* ev = new UnblockEvent(cos, t);
     cos->sendDelayedExecutionEvent(TimeDelta(secs, TimeDelta::one_second), ev);
-    int ncores = t->numActiveCcores();
+//    int ncores = t->numActiveCcores();
     //when sleeping, release all cores
-    cos->releaseCores(ncores, t);
+//    cos->releaseCores(ncores, t);
     cos->block();
-    cos->reserveCores(ncores, t);
+//    cos->reserveCores(ncores, t);
     return 0;
 }
 
