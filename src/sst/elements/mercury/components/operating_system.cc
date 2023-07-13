@@ -40,7 +40,11 @@ extern template class  HgBase<SST::Component>;
 extern template class  HgBase<SST::SubComponent>;
 extern template SST::TimeConverter* HgBase<SST::SubComponent>::time_converter_;
 
-OperatingSystem* OperatingSystem::active_os_ = nullptr;
+//#if SSTMAC_USE_MULTITHREAD
+std::vector<OperatingSystem*> OperatingSystem::active_os_;
+//#else
+//OperatingSystem* OperatingSystem::active_os_ = nullptr;
+//#endif
 
 //SST::TimeConverter* OperatingSystem::time_converter_ = nullptr;
 
@@ -68,10 +72,15 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
   next_condition_(0),
   next_mutex_(0)
 {
+  if (active_os_.size() == 0){
+    RankInfo num_ranks = getNumRanks();
+    active_os_.resize(num_ranks.thread);
+  }
+
   my_addr_ = node_ ? node_->addr() : 0;
-  auto os_params = params.get_scoped_params("OperatingSystem");
-  os_params.print_all_params(std::cerr);
-  unsigned int verbose = os_params.find<unsigned int>("verbose",0);
+  //auto os_params = params.get_scoped_params("operating_system");
+  //params.print_all_params(std::cerr);
+  unsigned int verbose = params.find<unsigned int>("verbose",0);
   out_ = std::unique_ptr<SST::Output>(new SST::Output(sprintf("Node%d:OperatingSystem:", my_addr_), verbose, 0, Output::STDOUT));
   out_->debug(CALL_INFO, 1, 0, "constructing\n");
 
@@ -99,7 +108,7 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
   assert(selfEventLink_);
   selfEventLink_->setDefaultTimeBase(time_converter_);
 
-  out_->debug(CALL_INFO, 1, 0, "adding launch requests\n");
+  out_->verbose(CALL_INFO, 1, 0, "adding launch requests\n");
   app_launcher_ = new AppLauncher(this);
   addLaunchRequests(params);
 
@@ -197,7 +206,7 @@ void OperatingSystem::handleEvent(SST::Event *ev) {
   if (auto *req = dynamic_cast<AppLaunchRequest*>(ev)) {
       Params params = req->params();
       //params.print_all_params(std::cerr);
-      out_->debug(CALL_INFO, 1, 0, "app name: %s\n",  params.find<std::string>("name").c_str());
+      out_->verbose(CALL_INFO, 1, 0, "app name: %s\n",  params.find<std::string>("name").c_str());
       app_launcher_->incomingRequest(req);
     }
   else {
@@ -215,14 +224,14 @@ OperatingSystem::addLaunchRequests(SST::Params& params)
   while (keep_going || aid < 10){
       std::string name = sprintf("app%d",aid);
       SST::Params app_params = params.get_scoped_params(name);
-      app_params.print_all_params(std::cerr);
+      //app_params.print_all_params(std::cerr);
       if (!app_params.empty()){
           app_params.insert(all_app_params);
           //      bool terminate_on_end = app_params.find<bool>("terminate", false);
           //      if (terminate_on_end){
           //        terminators_.insert(aid);
           //      }
-          out_->debug(CALL_INFO, 1, 0, "adding app launch request %d:%s\n", aid, name.c_str());
+          out_->verbose(CALL_INFO, 1, 0, "adding app launch request %d:%s\n", aid, name.c_str());
           out_->flush();
           AppLaunchRequest* mgr = new AppLaunchRequest(app_params, AppId(aid), name);
           requests_.push_back(mgr);
@@ -239,7 +248,7 @@ OperatingSystem::addLaunchRequests(SST::Params& params)
 void
 OperatingSystem::startApp(App* theapp, const std::string&  /*unique_name*/)
 {
-    out_->debug(CALL_INFO, 1, 0, "starting app %d:%d on thread %d\n",
+    out_->verbose(CALL_INFO, 1, 0, "starting app %d:%d on physical thread %d\n",
                 int(theapp->tid()), int(theapp->aid()), threadId());
   //this should be called from the actual thread running it
   initThreading(params_);
@@ -275,8 +284,8 @@ OperatingSystem::scheduleThreadDeletion(Thread* thr)
   //However, because of weird thread swapping the DES thread
   //might still operate on the thread... we need to delay the delete
   //until the DES thread has completely finished processing its current event
-  out_->debug(CALL_INFO, 1, 0, "scheduling thread deletion\n");
   selfEventLink_->send(new DeleteThreadEvent(thr));
+  node_->endSim();
 }
 
 void
@@ -288,17 +297,16 @@ OperatingSystem::completeActiveThread()
   Thread* thr_todelete = active_thread_;
 
   //if any threads waiting on the join, unblock them
-  out_->debug(CALL_INFO, 1, 0, "completing thread %d\n", thr_todelete->threadId());
   while (!thr_todelete->joiners_.empty()) {
       Thread* blocker = thr_todelete->joiners_.front();
-      out_->debug(CALL_INFO, 1, 0, "thread %d is unblocking joiner %p\n",
+      out_->verbose(CALL_INFO, 1, 0, "thread %d is unblocking joiner %p\n",
                   thr_todelete->threadId(), blocker);
       unblock(blocker);
       //to_awake_.push(thr_todelete->joiners_.front());
       thr_todelete->joiners_.pop();
     }
   active_thread_ = nullptr;  
-  out_->debug(CALL_INFO, 1, 0, "completing context for %d\n", thr_todelete->threadId());
+  out_->verbose(CALL_INFO, 1, 0, "completing context %d on thread %d\n", thr_todelete->threadId(), threadId());
   thr_todelete->context()->completeContext(des_context_);
 }
 
@@ -312,14 +320,14 @@ OperatingSystem::switchToThread(Thread* tothread)
       return;
     }
 
-  out_->debug(CALL_INFO, 1, 0, "switching to thread %d\n", tothread->threadId());
+  out_->verbose(CALL_INFO, 1, 0, "switching to context %d on physical thread %d\n", tothread->threadId(), threadId());
   if (active_thread_ == blocked_thread_){
       blocked_thread_ = nullptr;
     }
   active_thread_ = tothread;
   activeOs() = this;
   tothread->context()->resumeContext(des_context_);
-  out_->debug(CALL_INFO, 0, 0, "switched back from thread %d to main thread\n", tothread->threadId());
+  out_->verbose(CALL_INFO, 1, 0, "switched back from context %d to main thread %d\n", tothread->threadId(), threadId());
   /** back to main thread */
   active_thread_ = nullptr;
 }
@@ -329,14 +337,17 @@ OperatingSystem::block()
 {
   Timestamp before = now();
   //back to main DES thread
+  if (active_thread_ == nullptr) {
+    sst_hg_abort_printf("null active_thread_, blocking main DES thread?");
+  }
   ThreadContext* old_context = active_thread_->context();
   if (old_context == des_context_){
-      sst_hg_abort_printf("blocking main DES thread");
+    sst_hg_abort_printf("blocking main DES thread");
   }
   Thread* old_thread = active_thread_;
   //reset the time flag
   active_thread_->setTimedOut(false);
-  out_->debug(CALL_INFO, 1, 0, "pausing context on thread %d\n", active_thread_->threadId());
+  out_->verbose(CALL_INFO, 1, 0, "pausing context %d on physical thread %d\n", active_thread_->threadId(), threadId());
   blocked_thread_ = active_thread_;
   active_thread_ = nullptr;
   old_context->pauseContext(des_context_);
@@ -347,7 +358,7 @@ OperatingSystem::block()
 
   //restore state to indicate this thread and this OS are active again
   activeOs() = this;
-  out_->debug(CALL_INFO, 1, 0, "resuming context on thread %d\n", active_thread_->threadId());
+  out_->verbose(CALL_INFO, 1, 0, "resuming context %d on physical thread %d\n", active_thread_->threadId(), threadId());
   active_thread_ = old_thread;
   active_thread_->incrementBlockCounter();
 
@@ -474,17 +485,17 @@ OperatingSystem::registerLib(Library* lib)
     sprockit::abort("OperatingSystem: trying to register a lib with no name");
   }
 #endif
-  out_->debug(CALL_INFO, 1, 0, "registering lib %s:%p\n", lib->libName().c_str(), lib);
+  out_->verbose(CALL_INFO, 1, 0, "registering lib %s:%p\n", lib->libName().c_str(), lib);
   int& refcount = lib_refcounts_[lib];
   ++refcount;
   libs_[lib->libName()] = lib;
-  out_->debug(CALL_INFO, 1, 0, "OS %d should no longer drop events for %s\n",
+  out_->verbose(CALL_INFO, 1, 0, "OS %d should no longer drop events for %s\n",
               addr(), lib->libName().c_str());
   auto iter = pending_library_request_.find(lib->libName());
   if (iter != pending_library_request_.end()){
     const std::list<Request*> reqs = iter->second;
     for (Request* req : reqs){
-        out_->debug(CALL_INFO, 1, 0, "delivering delayed event to lib %s: %s\n",
+        out_->verbose(CALL_INFO, 1, 0, "delivering delayed event to lib %s: %s\n",
                     lib->libName().c_str(), toString(req).c_str());
       sendExecutionEventNow(newCallback(lib, &Library::incomingRequest, req));
     }
@@ -495,11 +506,11 @@ OperatingSystem::registerLib(Library* lib)
 void
 OperatingSystem::unregisterLib(Library* lib)
 {
-  out_->debug(CALL_INFO, 1, 0, "unregistering lib %s\n", lib->libName().c_str());
+  out_->verbose(CALL_INFO, 1, 0, "unregistering lib %s\n", lib->libName().c_str());
   int& refcount = lib_refcounts_[lib];
   if (refcount == 1){
     lib_refcounts_.erase(lib);
-    out_->debug(CALL_INFO, 1, 0, "OS %d will now drop events for %s\n",
+    out_->verbose(CALL_INFO, 1, 0, "OS %d will now drop events for %s\n",
                 addr(), lib->libName().c_str());
     libs_.erase(lib->libName());
     //delete lib;
@@ -515,11 +526,11 @@ OperatingSystem::handleLibraryRequest(const std::string& name, Request* req)
   bool found = it != libs_.end();
   if (found){
     Library* lib = it->second;
-    out_->debug(CALL_INFO, 1, 0, "delivering message to lib %s:%p: %s\n",
+    out_->verbose(CALL_INFO, 1, 0, "delivering message to lib %s:%p: %s\n",
                 name.c_str(), lib, toString(req).c_str());
     lib->incomingRequest(req);
   } else {
-      out_->debug(CALL_INFO, 1, 0, "unable to deliver message to lib %s: %s\n",
+      out_->verbose(CALL_INFO, 1, 0, "unable to deliver message to lib %s: %s\n",
                   name.c_str(), toString(req).c_str());
   }
   return found;
@@ -531,7 +542,7 @@ OperatingSystem::handleRequest(Request* req)
   //this better be an incoming event to a library, probably from off node
   Flow* libmsg = dynamic_cast<Flow*>(req);
   if (!libmsg) {
-      out_->debug(CALL_INFO, 1, 0, "OperatingSystem::handle_event: got event %s instead of library event\n",
+      out_->verbose(CALL_INFO, 1, 0, "OperatingSystem::handle_event: got event %s instead of library event\n",
      toString(req).c_str());
   }
 
