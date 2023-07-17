@@ -203,7 +203,7 @@ extern int ssthg_global_stacksize;
 //extern char* static_init_tls_segment;
 //void sstmac_init_global_space(void* ptr, int size, int offset, bool tls);
 //void sstmac_advance_time(const char* param_name);
-//void sstmac_blocking_call(int condition, double timeout, const char* api);
+void sst_hg_blocking_call(int condition, double timeout, const char* api);
 
 #ifdef __cplusplus
 }

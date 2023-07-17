@@ -15,14 +15,15 @@
 
 #pragma once
 
-#include <common/errors.h>
-#include <common/node_address.h>
-#include <common/timestamp.h>
-#include <components/operating_system_fwd.h>
-#include <operating_system/process/process_context.h>
-#include <operating_system/process/software_id.h>
-#include <operating_system/process/app_fwd.h>
-#include <operating_system/threading/threading_interface.h>
+#include <mercury/common/errors.h>
+#include <mercury/common/node_address.h>
+#include <mercury/common/timestamp.h>
+#include <mercury/components/operating_system_fwd.h>
+#include <mercury/operating_system/process/process_context.h>
+#include <mercury/operating_system/process/software_id.h>
+#include <mercury/operating_system/process/app_fwd.h>
+#include <mercury/operating_system/libraries/api.h>
+#include <mercury/operating_system/threading/threading_interface.h>
 
 #include <queue>
 #include <map>
@@ -67,15 +68,15 @@ class Thread
 
   static Thread* current();
 
-//  template <class T> T* getApi(const std::string& name) {
-//    API* a = getAppApi(name);
-//    T* casted = dynamic_cast<T*>(a);
-//    if (!casted) {
-//      spkt_abort_printf("Failed to cast API to correct type for %s: got %s",
-//                        name.c_str(), typeid(a).name());
-//    }
-//    return casted;
-//  }
+  template <class T> T* getApi(const std::string& name) {
+    API* a = getAppApi(name);
+    T* casted = dynamic_cast<T*>(a);
+    if (!casted) {
+      sst_hg_abort_printf("Failed to cast API to correct type for %s: got %s",
+                        name.c_str(), typeid(a).name());
+    }
+    return casted;
+  }
 
   virtual App* parentApp() const {
     return parent_app_;
@@ -395,7 +396,7 @@ class Thread
 //  HostTimer* host_timer_;
 
  private:
-//  API* getAppApi(const std::string& name) const;
+  API* getAppApi(const std::string& name) const;
 
 //  CallGraphTrace backtrace_; //each function is labeled by unique integer
 

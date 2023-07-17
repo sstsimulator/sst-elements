@@ -210,11 +210,11 @@ Thread::initId()
   return thread_id_;
 }
 
-//API*
-//Thread::getAppApi(const std::string &name) const
-//{
-//  return parentApp()->getPrebuiltApi(name);
-//}
+API*
+Thread::getAppApi(const std::string &name) const
+{
+  return parentApp()->getAPI(name);
+}
 
 void*
 Thread::getTlsValue(long thekey) const

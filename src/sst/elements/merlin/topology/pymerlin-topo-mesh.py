@@ -240,7 +240,7 @@ class topoSingle(Topology):
         for l in range(self.num_ports):
             (ep, portname) = endpoint.build(l, {})
             if ep:
-                link = sst.Link("link:%d"%l)
+                link = sst.Link("link%d"%l)
                 if self.bundleEndpoints:
                     link.setNoCut()
                 link.connect( (ep, portname, self.link_latency), (rtr, "port%d"%l, self.link_latency) )

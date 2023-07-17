@@ -15,7 +15,6 @@
 
 #pragma once
 
-#include <sst_element_config.h>
 #include <sst/core/component.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/link.h>

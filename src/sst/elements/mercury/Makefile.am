@@ -3,7 +3,8 @@
 #
 
 AM_CPPFLAGS += \
-	$(MPI_CPPFLAGS)
+	$(MPI_CPPFLAGS) \
+        -I$(top_srcdir)/src/sst/elements
 
 # unpleasant hack to make vintage automake (e.g. 1.13.4) work
 AM_LIBTOOLFLAGS = --tag=CXX
@@ -11,12 +12,15 @@ AM_LIBTOOLFLAGS = --tag=CXX
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libhg.la libsystemapi.la testme.la
 libhg_la_SOURCES = \
+  common/event_link.cc \
   common/component.cc \
   common/hg_string.cc \
   common/mercury.cc \
   common/output.cc \
   common/util.cc \
   common/timestamp.cc \
+  common/connection.cc \
+  components/nic.cc \
   components/node.cc \
   components/operating_system.cc \
   hardware/common/packet.cc \
@@ -30,6 +34,7 @@ libhg_la_SOURCES = \
   operating_system/process/app.cc \
   operating_system/process/simple_compute_scheduler.cc \
   operating_system/process/loadlib.cc \
+  operating_system/process/progress_queue.cc \
   operating_system/process/thread.cc \
   operating_system/process/thread_info.cc \
   operating_system/threading/context_util.cc \
@@ -76,17 +81,24 @@ libsystemapi_la_SOURCES = \
 testme_la_SOURCES = \
   tests/testme.cc
 
-library_includedir=$(includedir)/sst/elements/hg
+library_includedir=$(includedir)/sst/elements/mercury
 
 nobase_library_include_HEADERS = \
-  common/thread_lock.h \
+  common/component.h \
+  common/connection.h \
+  common/connection_fwd.h \
+  common/event_link.h \
   common/events.h \
   common/hg_printf.h \
   common/errors.h \
-  common/thread_safe_new.h \
+  common/event_handler.h \
+  common/factory.h \
   common/node_address.h \
   common/serializable.h \
+  common/stl_string.h \
+  common/thread_lock.h \
   common/thread_safe_int.h \
+  common/thread_safe_new.h \
   common/output.h \
   common/skeleton.h \
   common/printable.h \
@@ -94,15 +106,15 @@ nobase_library_include_HEADERS = \
   common/request_fwd.h \
   common/util.h \
   common/request.h \
-  common/component.h \
   common/null_buffer.h \
   common/sim_thread_lock.h \
   common/timestamp.h \
-  common/factory.h \
-  components/operating_system_fwd.h \
+  common/unusedvariablemacro.h \
+  components/nic.h \
+  components/nic_fwd.h \
   components/node.h \
-  components/operating_system.h \
   components/node_fwd.h \
+  components/operating_system.h \
   external/json.hpp \
   hardware/network/network_id.h \
   hardware/network/network_message.h \
@@ -151,6 +163,7 @@ nobase_library_include_HEADERS = \
   operating_system/process/thread.h \
   operating_system/process/simple_compute_scheduler.h \
   operating_system/process/loadlib.h \
+  operating_system/process/progress_queue.h \
   operating_system/process/thread_id.h \
   operating_system/process/app_id.h \
   operating_system/process/task_id.h \

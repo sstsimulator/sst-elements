@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <sst_element_config.h>
+//#include <sst_element_config.h>
 #include <vector>
 #include <set>
 

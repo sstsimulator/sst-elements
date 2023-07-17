@@ -31,7 +31,7 @@ class ThreadingUContext : public ThreadContext
   SST_ELI_REGISTER_DERIVED(
     ThreadContext,
     ThreadingUContext,
-    "macro",
+    "hg",
     "ucontext",
     SST_ELI_ELEMENT_VERSION(1,0,0),
     "uses ucontext for portable linux context switching")

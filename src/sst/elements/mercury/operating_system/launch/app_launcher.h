@@ -25,6 +25,8 @@
 namespace SST {
 namespace Hg {
 
+static int app_rank_;
+
 /**
  * A launcher that can be cooperatively scheduled by a very naive scheduler.
  */

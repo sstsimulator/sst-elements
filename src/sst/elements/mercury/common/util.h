@@ -35,3 +35,39 @@
 //using sprockit::RangeError;
 //using sprockit::SpktError;
 #endif
+
+namespace SST::Hg {
+
+template <class Out, class In>
+Out* __safe_cast__(const char*  /*objname*/,
+              const char* file,
+              int line,
+              In* in,
+              const char* error_msg = "error")
+{
+  Out* out = dynamic_cast<Out*>(in);
+  if (!out) {
+    sst_hg_abort_printf("%s: failed to cast object at %s:%d\n%s",
+                     error_msg, file, line, "null");
+                     //in ? toString(in).c_str() : "null");
+  }
+  return out;
+}
+
+/**
+ * First entry in VA_ARGS is the obj
+ * Second entry is optional being an error msg
+*/
+#define safe_cast(type,...) \
+    ::SST::Hg::__safe_cast__<type>(#type, __FILE__, __LINE__, __VA_ARGS__)
+
+#define test_cast(type, obj) \
+    dynamic_cast<type*>(obj)
+
+#define known_cast(type,...) \
+    safe_cast(type, __VA_ARGS__)
+
+#define interface_cast(type,obj) \
+    dynamic_cast<type*>(obj)
+
+} // end of namespace SST::Hg
