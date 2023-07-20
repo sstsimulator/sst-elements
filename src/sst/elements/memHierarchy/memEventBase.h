@@ -57,7 +57,6 @@ public:
         dst_            = NONE;
         src_            = NONE;
         rqstr_          = NONE;
-        tid_            = 0;
         cmd_            = Command::NULLCMD;
         flags_          = 0;
         memFlags_       = 0;
@@ -114,7 +113,9 @@ public:
     void setRqstr(const std::string& rqstr) { rqstr_ = rqstr; }
 
     /** @return the thread ID that originated the original request */
+    [[deprecated("Use getThreadID() instead (with capital 'D')")]]
     const uint32_t getThreadId(void) const { return tid_; }
+    const uint32_t getThreadID(void) const { return tid_; }
     /** Sets the thread ID that originated the original request */
     void setThreadID(const uint32_t tid) { tid_ = tid; }
     /** @returns the state of all flags */
@@ -181,7 +182,7 @@ public:
         std::string cmdStr(CommandString[(int)cmd_]);
         std::ostringstream str;
         str << " Flags: " << getFlagString();
-        return idstring.str() + cmdStr + " Src: " + src_ + " Dst: " + dst_ + " Rq: " + rqstr_ + "Tid: " + std::to_string(tid_) + str.str();
+        return idstring.str() + cmdStr + " Src: " + src_ + " Dst: " + dst_ + " Rq: " + rqstr_ + " Tid: " + std::to_string(tid_) + str.str();
     }
 
     /** Get brief print of the event */
@@ -189,7 +190,7 @@ public:
         std::string cmdStr(CommandString[(int)cmd_]);
         std::ostringstream idstring;
         idstring << "<" << eventID_.first << "," << eventID_.second << "> ";
-        return idstring.str() + cmdStr + " Src: " + src_ + " Dst: " + dst_;
+        return idstring.str() + cmdStr + " Src: " + src_ + " Dst: " + dst_ + " Tid: " + std::to_string(tid_);
     }
 
     virtual bool doDebug(std::set<Addr> &UNUSED(addr)) {

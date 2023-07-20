@@ -29,4 +29,4 @@ EXTRA_DIST =
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     mmu=$(abs_srcdir)
-	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      mmu=$(abs_srcdir)/tests
+#	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      mmu=$(abs_srcdir)/tests

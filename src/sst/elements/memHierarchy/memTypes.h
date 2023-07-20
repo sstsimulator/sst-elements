@@ -48,8 +48,9 @@ enum class MemEventType { Cache, Move, Custom };                    // For parsi
     /* Requests */ \
     X(GetS,             GetSResp,       Request,    Request,        1, 0,   Cache)   /* Read:  Request to get cache line in S state */\
     X(GetX,             GetXResp,       Request,    Request,        1, 0,   Cache)   /* Write: Request to get cache line in M state */\
-    X(GetSX,            GetSResp,       Request,    Request,        1, 0,   Cache)   /* Read:  Request to get cache line in M state with a LOCK flag. Invalidates will block until LOCK flag is lifted */\
-                                                                        /*        GetSX sets the LOCK, GetX removes the LOCK  */\
+    X(GetSX,            GetXResp,       Request,    Request,        1, 0,   Cache)   /* Read:  Request to get cache line in exclusive (E or M) state.*/\
+                                                                        /*        Flag = F_LOCKED: GetSX sets the LOCK, GetX removes the LOCK  */\
+                                                                        /*        Flag = F_LLSC: GetSX sets the load-link state, GetX becomes a conditonal write */\
     X(Write,            WriteResp,      Request,    Request,        1, 0,   Cache)   /* Write: Request to write a cache line (does not return the line) */\
     X(FlushLine,        FlushLineResp,  Request,    Request,        1, 0,   Cache)   /* Request to flush a cache line */\
     X(FlushLineInv,     FlushLineResp,  Request,    Request,        1, 0,   Cache)   /* Request to flush and invalidate a cache line */\

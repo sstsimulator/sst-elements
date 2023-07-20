@@ -185,11 +185,12 @@ StandardMem::Request* StandardInterface::recvUntimedData() {
 
 /* This could be a request or a response. */
 void StandardInterface::send(StandardMem::Request* req) {
+    MemEventBase *me = static_cast<MemEventBase*>(req->convert(converter_));
 #ifdef __SST_DEBUG_OUTPUT__
-      debug.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Convert   (%s)\n", getCurrentSimCycle(), getName().c_str(), req->getString().c_str());
+      debug.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Convert   EventID: <%" PRIu64", %" PRIu32 "> (%s)\n", getCurrentSimCycle(), getName().c_str(), me->getID().first, me->getID().second, req->getString().c_str());
     fflush(stdout);
 #endif
-    MemEventBase *me = static_cast<MemEventBase*>(req->convert(converter_));
+
     if (req->needsResponse())
         requests_[me->getID()] = std::make_pair(req,me->getCmd());   /* Save this request so we can use it when a response is returned */
     else
@@ -452,7 +453,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::WriteUnlo
 
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::LoadLink* req) {
     Addr bAddr = (iface->lineSize_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->baseAddrMask_;
-    MemEvent* load = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetS, req->size);
+    MemEvent* load = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetSX, req->size);
     load->setFlag(MemEvent::F_LLSC);
     load->setRqstr(iface->getName());
     load->setThreadID(req->tid);

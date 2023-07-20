@@ -303,7 +303,7 @@ l2cache.msi.inclus: No MSHR lookup latency provided (mshr_latency_cycles)...intr
  l1cache1.msi.AckPut_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache1.msi.MSHR_occupancy : Accumulator : Sum.u64 = 142553; SumSQ.u64 = 2019351; Count.u64 = 10763; Min.u64 = 0; Max.u64 = 16; 
  l1cache1.msi.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l2cache.msi.inclus.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache.msi.inclus.default_stat : Accumulator : Sum.u64 = 24; SumSQ.u64 = 24; Count.u64 = 24; Min.u64 = 1; Max.u64 = 1; 
  l2cache.msi.inclus.evict_I : Accumulator : Sum.u64 = 15; SumSQ.u64 = 15; Count.u64 = 15; Min.u64 = 1; Max.u64 = 1; 
  l2cache.msi.inclus.evict_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache.msi.inclus.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -319,10 +319,10 @@ l2cache.msi.inclus: No MSHR lookup latency provided (mshr_latency_cycles)...intr
  l2cache.msi.inclus.evict_SBInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache.msi.inclus.stateEvent_GetS_I : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
  l2cache.msi.inclus.stateEvent_GetS_S : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; Min.u64 = 1; Max.u64 = 1; 
- l2cache.msi.inclus.stateEvent_GetS_M : Accumulator : Sum.u64 = 386; SumSQ.u64 = 386; Count.u64 = 386; Min.u64 = 1; Max.u64 = 1; 
+ l2cache.msi.inclus.stateEvent_GetS_M : Accumulator : Sum.u64 = 384; SumSQ.u64 = 384; Count.u64 = 384; Min.u64 = 1; Max.u64 = 1; 
  l2cache.msi.inclus.stateEvent_GetX_I : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
  l2cache.msi.inclus.stateEvent_GetX_S : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
- l2cache.msi.inclus.stateEvent_GetX_M : Accumulator : Sum.u64 = 688; SumSQ.u64 = 688; Count.u64 = 688; Min.u64 = 1; Max.u64 = 1; 
+ l2cache.msi.inclus.stateEvent_GetX_M : Accumulator : Sum.u64 = 682; SumSQ.u64 = 682; Count.u64 = 682; Min.u64 = 1; Max.u64 = 1; 
  l2cache.msi.inclus.stateEvent_GetSX_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache.msi.inclus.stateEvent_GetSX_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache.msi.inclus.stateEvent_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -391,9 +391,9 @@ l2cache.msi.inclus: No MSHR lookup latency provided (mshr_latency_cycles)...intr
  l2cache.msi.inclus.stateEvent_ForceInv_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache.msi.inclus.stateEvent_ForceInv_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache.msi.inclus.stateEvent_ForceInv_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l2cache.msi.inclus.stateEvent_FetchResp_MInv : Accumulator : Sum.u64 = 307; SumSQ.u64 = 307; Count.u64 = 307; Min.u64 = 1; Max.u64 = 1; 
- l2cache.msi.inclus.stateEvent_FetchXResp_MInvX : Accumulator : Sum.u64 = 386; SumSQ.u64 = 386; Count.u64 = 386; Min.u64 = 1; Max.u64 = 1; 
- l2cache.msi.inclus.stateEvent_AckInv_MInv : Accumulator : Sum.u64 = 389; SumSQ.u64 = 389; Count.u64 = 389; Min.u64 = 1; Max.u64 = 1; 
+ l2cache.msi.inclus.stateEvent_FetchResp_MInv : Accumulator : Sum.u64 = 301; SumSQ.u64 = 301; Count.u64 = 301; Min.u64 = 1; Max.u64 = 1; 
+ l2cache.msi.inclus.stateEvent_FetchXResp_MInvX : Accumulator : Sum.u64 = 384; SumSQ.u64 = 384; Count.u64 = 384; Min.u64 = 1; Max.u64 = 1; 
+ l2cache.msi.inclus.stateEvent_AckInv_MInv : Accumulator : Sum.u64 = 381; SumSQ.u64 = 381; Count.u64 = 381; Min.u64 = 1; Max.u64 = 1; 
  l2cache.msi.inclus.stateEvent_AckInv_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache.msi.inclus.stateEvent_AckInv_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache.msi.inclus.stateEvent_AckInv_SBInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
