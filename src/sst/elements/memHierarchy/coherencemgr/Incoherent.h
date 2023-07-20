@@ -73,7 +73,9 @@ public:
         {"stateEvent_GetSX_I",          "Event/State: Number of times a GetSX was seen in state I (Miss)", "count", 3},
         {"stateEvent_GetSX_E",          "Event/State: Number of times a GetSX was seen in state E (Hit)", "count", 3},
         {"stateEvent_GetSX_M",          "Event/State: Number of times a GetSX was seen in state M (Hit)", "count", 3},
+        {"stateEvent_GetSResp_I",       "Event/State: Number of times a GetSResp was seen in state I", "count", 3},
         {"stateEvent_GetSResp_IS",      "Event/State: Number of times a GetSResp was seen in state IS", "count", 3},
+        {"stateEvent_GetXResp_I",       "Event/State: Number of times a GetXResp was seen in state I", "count", 3},
         {"stateEvent_GetXResp_IS",      "Event/State: Number of times a GetXResp was seen in state IS", "count", 3},
         {"stateEvent_GetXResp_IM",      "Event/State: Number of times a GetXResp was seen in state IM", "count", 3},
         {"stateEvent_PutE_I",           "Event/State: Number of times a PutE was seen in state I", "count", 3},
@@ -156,7 +158,9 @@ public:
         stat_eventState[(int)Command::GetSX][I] = registerStatistic<uint64_t>("stateEvent_GetSX_I");
         stat_eventState[(int)Command::GetSX][E] = registerStatistic<uint64_t>("stateEvent_GetSX_E");
         stat_eventState[(int)Command::GetSX][M] = registerStatistic<uint64_t>("stateEvent_GetSX_M");
+        stat_eventState[(int)Command::GetSResp][I] = registerStatistic<uint64_t>("stateEvent_GetSResp_I");
         stat_eventState[(int)Command::GetSResp][IS] = registerStatistic<uint64_t>("stateEvent_GetSResp_IS");
+        stat_eventState[(int)Command::GetXResp][I] = registerStatistic<uint64_t>("stateEvent_GetXResp_I");
         stat_eventState[(int)Command::GetXResp][IS] = registerStatistic<uint64_t>("stateEvent_GetXResp_IS");
         stat_eventState[(int)Command::GetXResp][IM] = registerStatistic<uint64_t>("stateEvent_GetXResp_IM");
         stat_eventState[(int)Command::PutE][I] = registerStatistic<uint64_t>("stateEvent_PutE_I");
@@ -229,6 +233,13 @@ public:
         stat_miss[2][1] = registerStatistic<uint64_t>("GetSXMiss_Blocked");
         stat_hits = registerStatistic<uint64_t>("CacheHits");
         stat_misses = registerStatistic<uint64_t>("CacheMisses");
+        stat_evict[I] = registerStatistic<uint64_t>("evict_I");
+        stat_evict[E] = registerStatistic<uint64_t>("evict_E");
+        stat_evict[M] = registerStatistic<uint64_t>("evict_M");
+        stat_evict[IS] = registerStatistic<uint64_t>("evict_IS");
+        stat_evict[IM] = registerStatistic<uint64_t>("evict_IM");
+        stat_evict[I_B] = registerStatistic<uint64_t>("evict_IB");
+        stat_evict[S_B] = registerStatistic<uint64_t>("evict_SB");
 
         if (prefetch) {
             statPrefetchEvict = registerStatistic<uint64_t>("prefetch_evict");
