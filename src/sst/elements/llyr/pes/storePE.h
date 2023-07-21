@@ -129,6 +129,9 @@ public:
             }
         }
 
+        // If data tokens in output queue then simulation cannot end
+        pending_op_ = 1;
+
         doStore(argList[0].to_ullong(), argList[1].to_ullong());
 
         if( output_->getVerboseLevel() >= 10 ) {
@@ -311,6 +314,9 @@ public:
                 }
             }
         }
+
+        // If data tokens in output queue then simulation cannot end
+        pending_op_ = 1;
 
         //create the memory request
         if( op_binding_ == STADDR ) {

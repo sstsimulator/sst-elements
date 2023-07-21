@@ -72,7 +72,7 @@ public:
 
     virtual bool doCompute()
     {
-        TraceFunction trace(CALL_INFO_LONG);
+        // TraceFunction trace(CALL_INFO_LONG);
         output_->verbose(CALL_INFO, 4, 0, ">> Compute %s\n", getOpString(op_binding_).c_str());
 
         if( output_->getVerboseLevel() >= 10 ) {
@@ -126,6 +126,9 @@ public:
                 }
             }
         }
+
+        // If data tokens in output queue then simulation cannot end
+        pending_op_ = 1;
 
         //create the memory request
         switch( op_binding_ ) {
@@ -278,7 +281,7 @@ public:
 
     virtual bool doCompute()
     {
-        TraceFunction trace(CALL_INFO_LONG);
+        // TraceFunction trace(CALL_INFO_LONG);
         output_->verbose(CALL_INFO, 4, 0, ">> Compute %s\n", getOpString(op_binding_).c_str());
 
         if( output_->getVerboseLevel() >= 10 ) {
@@ -334,6 +337,9 @@ public:
                 }
             }
         }
+
+        // If data tokens in output queue then simulation cannot end
+        pending_op_ = 1;
 
         //create the memory request
         if( op_binding_ == LDADDR ) {

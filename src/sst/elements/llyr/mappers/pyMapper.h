@@ -88,7 +88,7 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
                             LlyrGraph< ProcessingElement* > &graphOut,
                             LlyrConfig* llyr_config)
 {
-    TraceFunction trace(CALL_INFO_LONG);
+    // TraceFunction trace(CALL_INFO_LONG);
     //setup up i/o for messages
     char prefix[256];
     sprintf(prefix, "[t=@t][pyMapper]: ");
@@ -174,13 +174,13 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
             // encode node in hardware graph
             if( op == ADDCONST || op == SUBCONST || op == MULCONST || op == DIVCONST || op == REMCONST ) {
                 addNode( op, arguments, hardwareVertex, graphOut, llyr_config );
-            } else if( op == INC || op == ACC ) {
+            } else if( op == INC || op == INC_RST || op == ACC ) {
                 addNode( op, arguments, hardwareVertex, graphOut, llyr_config );
             } else if( op == LDADDR || op == STREAM_LD || op == STADDR || op == STREAM_ST ) {
                 addNode( op, arguments, hardwareVertex, graphOut, llyr_config );
             } else if( op == OR_IMM || op == AND_IMM ) {
                 addNode( op, arguments, hardwareVertex, graphOut, llyr_config );
-            } else if( op == UGT_IMM || op == UGE_IMM || op == SGT_IMM || op == SLT_IMM ) {
+            } else if( op == EQ_IMM || op == UGT_IMM || op == UGE_IMM || op == ULE_IMM || op == SGT_IMM || op == SLT_IMM ) {
                 addNode( op, arguments, hardwareVertex, graphOut, llyr_config );
             } else {
                 addNode( op, hardwareVertex, graphOut, llyr_config );
@@ -206,9 +206,18 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
     std::list< RoutingFixUp* > routing_fix_list;
     std::map< uint32_t, Vertex< ProcessingElement* > >* vertex_map = graphOut.getVertexMap();
     for( auto vertexIterator = vertex_map->begin(); vertexIterator != vertex_map->end(); ++vertexIterator ) {
-        std::cout << "num input queues: " << vertexIterator->second.getValue()->getNumInputQueues() << std::endl;
+        // std::cout << "num input queues: " << vertexIterator->second.getValue()->getNumInputQueues() << std::endl;
+        // vertexIterator->second.getValue()->inputQueueInit();
+        // std::cout << std::flush;
+        // std::cout << "num input queues: " << vertexIterator->second.getValue()->getNumInputQueues() << std::endl;
+        // std::cout << std::endl;
+
+        std::cout << "num input queues(" << vertexIterator->second.getValue()->getProcessorId() << ")";
+        std::cout << ": " << vertexIterator->second.getValue()->getNumInputQueues() << std::endl;
         vertexIterator->second.getValue()->inputQueueInit();
-        std::cout << "num input queues: " << vertexIterator->second.getValue()->getNumInputQueues() << std::endl;
+        std::cout << std::flush;
+        std::cout << "num input queues(" << vertexIterator->second.getValue()->getProcessorId() << ")";
+        std::cout << ": " << vertexIterator->second.getValue()->getNumInputQueues() << std::endl;
         std::cout << std::endl;
     }
 
@@ -484,48 +493,7 @@ std::cout << "xxxxx: " << (*dst_node_iter)->const_list_->size() << "  " << (*dst
                 graphOut.addEdge( 0, vertexIterator->first );
             }
         }
-
     }
-
-    //FIXME Need to use a fake init on some PEs for
-//     for(vertexIterator = vertex_map->begin(); vertexIterator != vertex_map->end(); ++vertexIterator) {
-//         opType tempOp = vertexIterator->second.getValue()->getOpBinding();
-// //         if( tempOp == ST ) {
-// //             vertexIterator->second.getValue()->inputQueueInit();
-// //         } else if( tempOp == LDADDR || tempOp == STADDR ) {
-// //             vertexIterator->second.getValue()->inputQueueInit();
-// //         } else if( tempOp == STREAM_LD || tempOp == STREAM_ST ) {
-// //             vertexIterator->second.getValue()->inputQueueInit();
-// //         } else if( tempOp == INC || tempOp == ACC ) {
-// //             vertexIterator->second.getValue()->inputQueueInit();
-// //         } else if( tempOp == ALLOCA ) {
-// //             vertexIterator->second.getValue()->outputQueueInit();
-// //         }
-//
-//         if( tempOp == ADDCONST || tempOp == SUBCONST || tempOp == MULCONST || tempOp == DIVCONST || tempOp == REMCONST ) {
-//             vertexIterator->second.getValue()->inputQueueInit();
-//         } else if( tempOp == INC || tempOp == ACC ) {
-//             vertexIterator->second.getValue()->inputQueueInit();
-//         } else if( tempOp == LDADDR || tempOp == STREAM_LD || tempOp == STADDR || tempOp == STREAM_ST ) {
-//             vertexIterator->second.getValue()->inputQueueInit();
-//         }
-//     }
-
-//     //FIXME Fake init for now, need to read values from stack
-//     //Initialize any L/S PEs at the top of the graph (unless already init'd)
-//     std::vector< Edge* >* rootAdjacencyList = vertex_map->at(0).getAdjacencyList();
-//     for( auto it = rootAdjacencyList->begin(); it != rootAdjacencyList->end(); it++ ) {
-//         uint32_t destinationVertex = (*it)->getDestination();
-//
-//         opType tempOp = vertex_map->at(destinationVertex).getValue()->getOpBinding();
-//         if( tempOp == ADDCONST || tempOp == SUBCONST || tempOp == MULCONST || tempOp == DIVCONST || tempOp == REMCONST ) {
-//         } else if( tempOp == INC || tempOp == ACC ) {
-//         } else if( tempOp == LDADDR || tempOp == STREAM_LD || tempOp == STADDR || tempOp == STREAM_ST ) {
-//         } else {
-//             vertex_map->at(destinationVertex).getValue()->inputQueueInit();
-//         }
-//     }
-
 }
 
 void PyMapper::getAdjacencyList( std::string opList, std::vector< uint32_t >* vecIn )

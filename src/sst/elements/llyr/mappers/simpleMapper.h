@@ -92,7 +92,7 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNod
         opType tempOp = app_vertex_map_->at(currentAppNode).getValue().optype_;
         if( tempOp == ADDCONST || tempOp == SUBCONST || tempOp == MULCONST || tempOp == DIVCONST || tempOp == REMCONST ) {
             addNode( tempOp, arguments, newNodeNum, graphOut, llyr_config );
-        } else if( tempOp == INC || tempOp == ACC ) {
+        } else if( tempOp == INC || tempOp == INC_RST || tempOp == ACC ) {
             addNode( tempOp, arguments, newNodeNum, graphOut, llyr_config );
         } else if( tempOp == LDADDR || tempOp == STREAM_LD || tempOp == STADDR || tempOp == STREAM_ST ) {
             addNode( tempOp, arguments, newNodeNum, graphOut, llyr_config );

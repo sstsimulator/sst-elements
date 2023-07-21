@@ -21,6 +21,8 @@
 namespace SST {
 namespace Llyr {
 
+typedef std::pair< int32_t, LlyrData > HelperReturn;
+
 /**
  * @todo write docs
  */
@@ -68,7 +70,7 @@ public:
 
     virtual bool doCompute()
     {
-        TraceFunction trace(CALL_INFO_LONG);
+        // TraceFunction trace(CALL_INFO_LONG);
         output_->verbose(CALL_INFO, 4, 0, ">> Compute %s\n", getOpString(op_binding_).c_str());
 
         uint64_t intResult = 0x0F;
@@ -112,14 +114,22 @@ public:
 
         //FIXME do control PEs need to know if they're waiting on data?
         //if there are values waiting on any of the inputs, this PE could still fire
-//         if( num_ready < num_inputs && num_ready > 0) {
-//             pending_op_ = 1;
-//         } else {
-//             pending_op_ = 0;
-//         }
+        if( num_ready < num_inputs && num_ready > 0) {
+            pending_op_ = 1;
+        } else {
+            pending_op_ = 0;
+        }
 
-        //if all inputs are available pull from queue and add to arg list
-        if( num_inputs == 0 || num_ready < num_inputs ) {
+        // if all inputs are available pull from queue and add to arg list
+        // exception is COR, which will forward the first data token to arrive
+        if( op_binding_ == COR && num_ready > 0 ) {
+            output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
+            for( uint32_t i = 0; i < total_num_inputs; ++i) {
+                if( input_queues_->at(i)->argument_ > -1 ) {
+                    argList.push_back(input_queues_->at(i)->data_queue_->front());
+                }
+            }
+        } else if( num_inputs == 0 || num_ready < num_inputs ) {
             output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
             return false;
         } else {
@@ -134,11 +144,17 @@ public:
             }
         }
 
+        // If data tokens in output queue then simulation cannot end
+        pending_op_ = 1;
+        HelperReturn tempReturn;
+
         switch( op_binding_ ) {
             case SEL :
             case ROS :
+            case COR :
             case REPEATER :
-                retVal = helperFunction(op_binding_, argList[0], argList[1], argList[2]);
+                tempReturn = helperFunction(op_binding_, argList[0], argList[1], argList[2]);
+                retVal = tempReturn.second;
                 break;
             case ROUTE :
                 retVal = LlyrData(0x00);
@@ -163,19 +179,29 @@ public:
             }
         } else if( op_binding_ == ROS ) {
             if( do_forward_ == 1 ) {
-                for( uint32_t i = 0; i < total_num_inputs; ++i) {
-                    if( input_queues_->at(i)->argument_ > -1 ) {
-                        input_queues_->at(i)->data_queue_->pop();
-                    }
-                }
+                // for( uint32_t i = 0; i < total_num_inputs; ++i) {
+                //     if( input_queues_->at(i)->argument_ > -1 ) {
+                //         input_queues_->at(i)->data_queue_->pop();
+                //     }
+                // }
+
+                input_queues_->at(1)->data_queue_->pop();
 
                 for( uint32_t i = 0; i < output_queues_->size(); ++i ) {
                     if( *output_queues_->at(i)->routing_arg_ == "" ) {
                         output_queues_->at(i)->data_queue_->push(retVal);
                     }
                 }
-            } else {
-                input_queues_->at(0)->data_queue_->pop();
+            } /*else {
+                input_queues_->at(1)->data_queue_->pop();
+            }*/
+        } else if( op_binding_ == COR ) {
+            input_queues_->at(tempReturn.first)->data_queue_->pop();
+
+            for( uint32_t i = 0; i < output_queues_->size(); ++i ) {
+                if( *output_queues_->at(i)->routing_arg_ == "" ) {
+                    output_queues_->at(i)->data_queue_->push(retVal);
+                }
             }
         } else if( op_binding_ == REPEATER ) {
             if( do_forward_ > 0 ) {
@@ -213,44 +239,56 @@ private:
     bool first_touch_;
     uint16_t do_forward_;
 
-    LlyrData helperFunction( opType op, LlyrData arg0, LlyrData arg1, LlyrData arg2 )
+    HelperReturn helperFunction( opType op, LlyrData arg0, LlyrData arg1, LlyrData arg2 )
     {
 
-//         std::cout << "ARG[0]:" << arg0 << "::" << arg0.to_ullong() << std::endl;
-//         std::cout << "ARG[1]:" << arg1 << "::" << arg1.to_ullong() << std::endl;
-//         std::cout << "ARG[2]:" << arg2 << "::" << arg2.to_ullong() << std::endl;
+        std::cout << "ARG[0]:" << arg0 << "::" << arg0.to_ullong() << std::endl;
+        std::cout << "ARG[1]:" << arg1 << "::" << arg1.to_ullong() << std::endl;
+        std::cout << "ARG[2]:" << arg2 << "::" << arg2.to_ullong() << std::endl;
 
+        // SEL - Select: If control (arg2) is 0, send arg0, else send arg1
+        // ROS - Route on Signal: Push stored token out when input-1 is high
+        // COR - Choose One: Forward first token to arrive
+        // RPT - Repeater:
         uint32_t select_signal = arg2.to_ullong();
         if( op == SEL ) {
             switch( select_signal ) {
                 case 0 :
-                    return arg0;
+                    return std::make_pair(0, arg0);
                     break;
                 case 1 :
-                    return arg1;
+                    return std::make_pair(1, arg1);;
                     break;
                 default :
                     output_->verbose( CALL_INFO, 0, 0, "Error: invalid select signal.\n" );
                     exit(-1);
             }
         } else if( op == ROS ) {
-            if( arg0 == 0 ) {
+            if( arg1.any() != 0 ) {
                 do_forward_ = 1;
-                return arg1;
+                return std::make_pair(0, arg0);;
             } else {
                 do_forward_ = 0;
-                return LlyrData(0x00);
+                return std::make_pair(-1, LlyrData(0x00));
+            }
+        } else if( op == COR ) {
+            if( arg0.size() > 0 ) {
+                return std::make_pair(0, arg0);;
+            } else if( arg1.size() > 0 ) {
+                return std::make_pair(1, arg1);;
+            } else {
+                return std::make_pair(-1, LlyrData(0x00));
             }
         } else if( op == REPEATER ) {
             if( arg0 == 1 ) {
                 do_forward_ = 1;
-                return arg1;
+                return std::make_pair(1, arg1);;
             } else if( do_forward_ == 1 ) {
                 do_forward_ = 2;
-                return arg1;
+                return std::make_pair(1, arg1);;
             } else {
                 do_forward_ = 0;
-                return LlyrData(0x00);
+                return std::make_pair(-1, LlyrData(0x00));
             }
         } else {
             output_->verbose( CALL_INFO, 0, 0, "Error: could not find corresponding op-%" PRIu32 ".\n", op );

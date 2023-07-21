@@ -132,6 +132,9 @@ public:
             cycles_to_fire_ = latency_;
         }
 
+        // If data tokens in output queue then simulation cannot end
+        pending_op_ = 1;
+
         switch( op_binding_ ) {
             case AND :
                 retVal = argList[0];
@@ -220,7 +223,7 @@ protected:
 //         std::cout << "ARG[0]:" << arg0 << "::" << arg0.to_ullong() << std::endl;
 //         std::cout << "ARG[1]:" << arg1 << "::" << arg1.to_ullong() << std::endl;
 
-        if( op == EQ ) {
+        if( op == EQ || op == EQ_IMM ) {
             if( arg0.to_ullong() == arg1.to_ullong() ) {
                 return 1;
             } else {
@@ -255,7 +258,7 @@ protected:
                 return 0;
             }
         }
-        else if( op == ULE ) {
+        else if( op == ULE || op == ULE_IMM ) {
             if( arg0.to_ullong() <= arg1.to_ullong() ) {
                 return 1;
             } else {
@@ -399,6 +402,9 @@ public:
             cycles_to_fire_ = latency_;
         }
 
+        // If data tokens in output queue then simulation cannot end
+        pending_op_ = 1;
+
         switch( op_binding_ ) {
             case AND_IMM:
                 retVal = argList[0];
@@ -408,8 +414,10 @@ public:
                 retVal = argList[0];
                 retVal |= argList[1];
                 break;
+            case EQ_IMM  :
             case UGT_IMM :
             case UGE_IMM :
+            case ULE_IMM :
             case SGT_IMM :
             case SLT_IMM :
                 retVal = helperFunction(op_binding_, argList[0], argList[1]);

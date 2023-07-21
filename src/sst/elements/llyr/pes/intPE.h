@@ -138,6 +138,9 @@ public:
             cycles_to_fire_ = latency_;
         }
 
+        // If data tokens in output queue then simulation cannot end
+        pending_op_ = 1;
+
         switch( op_binding_ ) {
             case ADD :
                 intResult = argList[0].to_ullong() + argList[1].to_ullong();
@@ -283,6 +286,9 @@ public:
             cycles_to_fire_ = latency_;
         }
 
+        // If data tokens in output queue then simulation cannot end
+        pending_op_ = 1;
+
         // first queue should be const
         input_queues_->at(0)->data_queue_->push(LlyrData(argList[0].to_ullong()));
 
@@ -421,6 +427,12 @@ public:
             init1_ = input_queues_->at(1)->data_queue_->front();
         }
 
+        // and on the sync reset for inc
+        if( op_binding_ == INC_RST && total_num_inputs > 2 ) {
+            std::cout << "MMMOFODSOFSDOFDSDS" << std::endl;
+            input_queues_->at(2)->argument_ = -1;
+        }
+
         // FIXME check to see of there are any routing jobs -- should be able to do this without waiting to fire
         doRouting( total_num_inputs );
 
@@ -433,25 +445,25 @@ public:
             }
         }
 
-        // if there is an extra non-routed input queue, this is a triggered PE
-        if( num_inputs == 3 && input_queues_->at(2)->data_queue_->size() > 0 ) {
-            triggered_ = 1;
-            input_queues_->at(2)->data_queue_->pop();
-
-            // reset if necessary
-            if( initialized_ == 1 ) {
-                initialized_ = 2;
-            } else {
-                input_queues_->at(0)->data_queue_->push(init0_);
-                input_queues_->at(1)->data_queue_->push(init1_);
-            }
-        }
-        std::cout << std::flush;
-
-        // tricksy to force fire
-        if( triggered_ == 1 ) {
-            num_inputs = num_inputs - 1;
-        }
+        // // if there is an extra non-routed input queue, this is a triggered PE
+        // if( num_inputs == 3 && input_queues_->at(2)->data_queue_->size() > 0 ) {
+        //     triggered_ = 1;
+        //     input_queues_->at(2)->data_queue_->pop();
+        //
+        //     // reset if necessary
+        //     if( initialized_ == 1 ) {
+        //         initialized_ = 2;
+        //     } else {
+        //         input_queues_->at(0)->data_queue_->push(init0_);
+        //         input_queues_->at(1)->data_queue_->push(init1_);
+        //     }
+        // }
+        // std::cout << std::flush;
+        //
+        // // tricksy to force event
+        // if( triggered_ == 1 ) {
+        //     num_inputs = num_inputs - 1;
+        // }
 
         //if there are values waiting on any of the inputs, this PE could still fire
         if( num_ready <= num_inputs && num_ready > 0) {
@@ -490,6 +502,9 @@ public:
             cycles_to_fire_ = latency_;
         }
 
+        // If data tokens in output queue then simulation cannot end
+        pending_op_ = 1;
+
         if( op_binding_ == INC ) {
             if( argList[0].to_ullong() <= argList[1].to_ullong() ) {
                 intResult = argList[0].to_ullong();
@@ -527,6 +542,45 @@ public:
                     printOutputQueue();
                 }
             }
+        } else if( op_binding_ == INC_RST ) {
+            if( argList[0].to_ullong() <= argList[1].to_ullong() ) {
+                intResult = argList[0].to_ullong();
+                input_queues_->at(0)->data_queue_->push(LlyrData(intResult + 1));
+                input_queues_->at(1)->data_queue_->push(LlyrData(argList[1].to_ullong()));
+
+                retVal = LlyrData(intResult);
+
+                output_->verbose(CALL_INFO, 32, 0, "intResult = %" PRIu64 "\n", intResult);
+                output_->verbose(CALL_INFO, 32, 0, "retVal = %s\n", retVal.to_string().c_str());
+
+                // for now push the result to all output queues that need this result
+                for( uint32_t i = 0; i < output_queues_->size(); ++i ) {
+                    if( *output_queues_->at(i)->routing_arg_ == "" ) {
+                        output_queues_->at(i)->data_queue_->push(retVal);
+                    }
+                }
+
+                if( output_->getVerboseLevel() >= 10 ) {
+                    output_->verbose(CALL_INFO, 10, 0, "Queue Contents (1)\n");
+                    printInputQueue();
+                    printOutputQueue();
+                }
+            }
+
+            std::cout << "total_num_inputs=" << total_num_inputs;
+            if( total_num_inputs > 2 )
+                std::cout << "   queue_size=" << input_queues_->at(2)->data_queue_->size();
+            std::cout << std::endl;
+            if( total_num_inputs == 3 && input_queues_->at(2)->data_queue_->size() > 0 ) {
+                std::cout << "RESET ME PLEASE!!" << std::endl;
+                if( argList[0].to_ullong() > argList[1].to_ullong() ) {
+                    std::cout << "RESET NOW!!!!!" << std::endl;
+                    input_queues_->at(0)->data_queue_->push(LlyrData(init0_));
+                    input_queues_->at(1)->data_queue_->push(LlyrData(init1_));
+                    input_queues_->at(2)->data_queue_->pop();
+                }
+            }
+
         } else if( op_binding_ == ACC ) {
             intResult = argList[0].to_ullong() + argList[1].to_ullong();
             input_queues_->at(0)->data_queue_->push(LlyrData(intResult));
@@ -587,7 +641,6 @@ public:
         if( op_binding_ == ACC ) {
             input_queues_->at(0)->argument_ = -1;
         }
-
     }
 
 private:

@@ -134,6 +134,9 @@ public:
             cycles_to_fire_ = latency_;
         }
 
+        // If data tokens in output queue then simulation cannot end
+        pending_op_ = 1;
+
         switch( op_binding_ ) {
             case TSIN :
                 intResult = sin(argList[0].to_ullong());

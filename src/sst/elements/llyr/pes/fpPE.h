@@ -142,6 +142,9 @@ public:
             cycles_to_fire_ = latency_;
         }
 
+        // If data tokens in output queue then simulation cannot end
+        pending_op_ = 1;
+
         //need to convert from the raw bits to floating point
         for(auto it = argList.begin() ; it != argList.end(); ++it ) {
             double fpResult = bits_to_double(*it);

@@ -133,6 +133,8 @@ void LlyrMapper::addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< Process
         tempPE = new ControlProcessingElement( REPEATER, nodeNum, llyr_config );
     } else if( op_binding == ROS ) {
         tempPE = new ControlProcessingElement( ROS, nodeNum, llyr_config );
+    } else if( op_binding == COR ) {
+        tempPE = new ControlProcessingElement( COR, nodeNum, llyr_config );
     } else if( op_binding == SEL ) {
         tempPE = new ControlProcessingElement( SEL, nodeNum, llyr_config );
     } else if( op_binding == ROUTE ) {
@@ -170,10 +172,14 @@ void LlyrMapper::addNode(opType op_binding, QueueArgMap* arguments, uint32_t nod
         tempPE = new LogicConstProcessingElement( AND_IMM, nodeNum, llyr_config, arguments );
     } else if( op_binding == OR_IMM ) {
         tempPE = new LogicConstProcessingElement( OR_IMM, nodeNum, llyr_config, arguments );
+    } else if( op_binding == EQ_IMM ) {
+        tempPE = new LogicConstProcessingElement( EQ_IMM, nodeNum, llyr_config, arguments );
     } else if( op_binding == UGT_IMM ) {
         tempPE = new LogicConstProcessingElement( UGT_IMM, nodeNum, llyr_config, arguments );
     } else if( op_binding == UGE_IMM ) {
         tempPE = new LogicConstProcessingElement( UGE_IMM, nodeNum, llyr_config, arguments );
+    } else if( op_binding == ULE_IMM ) {
+        tempPE = new LogicConstProcessingElement( ULE_IMM, nodeNum, llyr_config, arguments );
     } else if( op_binding == SGT_IMM ) {
         tempPE = new LogicConstProcessingElement( SGT_IMM, nodeNum, llyr_config, arguments );
     } else if( op_binding == SLT_IMM ) {
@@ -189,7 +195,9 @@ void LlyrMapper::addNode(opType op_binding, QueueArgMap* arguments, uint32_t nod
     } else if( op_binding == REMCONST ) {
         tempPE = new IntConstProcessingElement( REMCONST, nodeNum, llyr_config, arguments );
     } else if( op_binding == INC ) {
-        tempPE = new AdvIntProcessingElement( INC, nodeNum, llyr_config, arguments );    
+        tempPE = new AdvIntProcessingElement( INC, nodeNum, llyr_config, arguments );
+    } else if( op_binding == INC_RST ) {
+        tempPE = new AdvIntProcessingElement( INC_RST, nodeNum, llyr_config, arguments );
     } else if( op_binding == ACC ) {
         tempPE = new AdvIntProcessingElement( ACC, nodeNum, llyr_config, arguments );
     } else {
