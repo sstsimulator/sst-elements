@@ -5,9 +5,7 @@
 #include "sst/elements/hermes/msgapi.h"
 #include <codecvt>
 
-namespace SST {
-
-namespace Ember {
+namespace SST::Ember {
 
 const long combined_read_size = 10*1024*1024;
 
@@ -29,11 +27,11 @@ class agileIOconsumer : public EmberMessagePassingGenerator
   )
 
   agileIOconsumer(SST::ComponentId_t id, Params& prms);
-  ~agileIOconsumer() {}
+  ~agileIOconsumer() override = default;
 
   void init();
 
-  bool generate(std::queue<EmberEvent*>& evQ);
+  bool generate(std::queue<EmberEvent*>& evQ) override;
   void read_request();
   int  write_data();
   int  num_io_nodes();
@@ -57,8 +55,6 @@ class agileIOconsumer : public EmberMessagePassingGenerator
   enum Kind { Green, Blue };
   Kind kind;
 };
-
-}
 
 }
 

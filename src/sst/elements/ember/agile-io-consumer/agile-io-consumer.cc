@@ -14,6 +14,7 @@
 // distribution.
 
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
@@ -147,15 +148,14 @@ long
 agileIOconsumer::green_read()
 {
   std::queue<EmberEvent *> &evQ = *evQ_;
-
-  char incoming_payload[100];
+  std::array<char, 100> incoming_payload;
 
   std::string str;
   long count;
   uint64_t target;
 
-  enQ_recv(evQ, incoming_payload, 100, CHAR, MPI_ANY_SOURCE, 0, GroupWorld);
-  std::stringstream foo(incoming_payload);
+  enQ_recv(evQ, incoming_payload.data(), 100, CHAR, MPI_ANY_SOURCE, 0, GroupWorld);
+  std::stringstream foo(incoming_payload.data());
   foo >> str >> count >> target;
   enQ_send(evQ, sendBuf, count, CHAR, target, 0, GroupWorld);
 
