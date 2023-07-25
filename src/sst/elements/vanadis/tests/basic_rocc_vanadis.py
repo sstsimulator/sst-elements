@@ -57,7 +57,7 @@ sst.setProgramOption("stop-at", "0 ns")
 sst.setStatisticLoadLevel(4)
 sst.setStatisticOutput("sst.statOutputConsole")
 
-full_exe_name = os.getenv("VANADIS_EXE", "./tests/small/" + testDir + "/" + exe +  "/" + isa + "/" + "mvp")
+full_exe_name = os.getenv("VANADIS_EXE", "./tests/small/" + testDir + "/hello-world-cpp-rocc/" + isa + "/" + exe)
 exe_name= full_exe_name.split("/")[-1]
 
 verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
