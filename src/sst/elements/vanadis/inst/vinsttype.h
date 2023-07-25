@@ -27,6 +27,7 @@ enum VanadisFunctionalUnitType {
     INST_LOAD,
     INST_STORE,
     INST_BRANCH,
+    INST_ROCC,
     INST_SPECIAL,
     INST_SYSCALL,
     INST_FENCE,

@@ -24,6 +24,9 @@
 #include "inst/vinst.h"
 #include "lsq/vlsq.h"
 #include "lsq/vbasiclsq.h"
+#include "rocc/vroccinterface.h"
+#include "rocc/vbasicrocc.h"
+#include "rocc/vroccanalog.h"
 #include "velf/velfinfo.h"
 #include "vfpflags.h"
 #include "vfuncunit.h"
@@ -164,6 +167,7 @@ public:
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         { "lsq", "Load-Store Queue for Memory Access", "SST::Vanadis::VanadisLoadStoreQueue" },
+        { "rocc", "RoCC accelerator interface", "SST::Vanadis::VanadisRoCCInterface" },
         { "mem_interface_inst", "Interface to memory system for instructions", "SST::Interfaces::StandardMem" },
     )
 
@@ -299,6 +303,8 @@ private:
 
     VanadisLoadStoreQueue* lsq;
     StandardMem*           memInstInterface;
+
+    VanadisRoCCInterface* rocc;
 
     bool* halted_masks;
     bool  print_int_reg;
