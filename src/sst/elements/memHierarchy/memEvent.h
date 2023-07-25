@@ -180,9 +180,12 @@ public:
     /** Increments the number of retries */
     void incrementRetries() { retries_++; }
     int getRetries() { return retries_; }
+    
+    void setReadLock() { setFlag(MemEventBase::F_LOCKED); }
+    bool isReadLock() { return cmd_ == Command::GetSX && queryFlag(MemEventBase::F_LOCKED); }
 
     void setLoadLink() { setFlag(MemEventBase::F_LLSC); }
-    bool isLoadLink() { return cmd_ == Command::GetS && queryFlag(MemEventBase::F_LLSC); }
+    bool isLoadLink() { return cmd_ == Command::GetSX && queryFlag(MemEventBase::F_LLSC); }
 
     void setStoreConditional() { setFlag(MemEventBase::F_LLSC); }
     bool isStoreConditional() { return (cmd_ == Command::GetX || cmd_ == Command::Write) && queryFlag(MemEventBase::F_LLSC); }

@@ -19,7 +19,7 @@
 #include <iostream>
 #include <array>
 
-#include "sst/elements/memHierarchy/coherencemgr/coherenceController.h"
+#include "coherencemgr/coherenceController.h"
 #include "sst/elements/memHierarchy/memTypes.h"
 #include "sst/elements/memHierarchy/lineTypes.h"
 #include "sst/elements/memHierarchy/cacheArray.h"
@@ -188,12 +188,14 @@ public:
         bool MESI = params.find<bool>("protocol", true);
         llscBlockCycles_ = params.find<Cycle_t>("llsc_block_cycles", 0);
 
-        // State to transition to on a GetXResp/clean to a read (GetS)
-        if (MESI)
-            protocolState_ = E;
-        else
-            protocolState_ = S;
-
+        // Coherence protocol transition states
+        if (MESI) {
+            protocolReadState_ = E;
+            protocolExclState_ = E; 
+        } else {
+            protocolReadState_ = S; // State to transition to when a GetXResp/clean is received in response to a read (GetS)
+            protocolExclState_ = M; // State to transition to on a Read-exclusive/read-for-ownership
+        }
         // Cache Array
         uint64_t lines = params.find<uint64_t>("lines", 0);
         uint64_t assoc = params.find<uint64_t>("associativity", 0);
@@ -390,6 +392,7 @@ private:
 
     /** Cache and MSHR management */
     MemEventStatus processCacheMiss(MemEvent * event, L1CacheLine * line, bool inMSHR);
+    MemEventStatus checkMSHRCollision(MemEvent* event, bool inMSHR);
     L1CacheLine* allocateLine(MemEvent * event, L1CacheLine * line);
     bool handleEviction(Addr addr, L1CacheLine *& line);
     void cleanUpAfterRequest(MemEvent * event, bool inMSHR);
@@ -414,7 +417,8 @@ private:
     void printLine(Addr addr);
 
     bool snoopL1Invs_;
-    State protocolState_; // E for MESI, S for MSI
+    State protocolReadState_; // E for MESI, S for MSI
+    State protocolExclState_; // E for MESI, M for MSI
     Cycle_t llscBlockCycles_;
 
     CacheArray<L1CacheLine>* cacheArray_;

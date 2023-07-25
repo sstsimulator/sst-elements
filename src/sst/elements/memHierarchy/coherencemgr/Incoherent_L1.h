@@ -77,7 +77,7 @@ public:
         {"stateEvent_GetSX_I",          "Event/State: Number of times a GetSX was seen in state I (Miss)", "count", 3},
         {"stateEvent_GetSX_E",          "Event/State: Number of times a GetSX was seen in state E (Hit)", "count", 3},
         {"stateEvent_GetSX_M",          "Event/State: Number of times a GetSX was seen in state M (Hit)", "count", 3},
-        {"stateEvent_GetSResp_IS",      "Event/State: Number of times a GetSResp was seen in state IS", "count", 3},
+        {"stateEvent_GetSResp_IM",      "Event/State: Number of times a GetSResp was seen in state IM", "count", 3},
         {"stateEvent_GetXResp_IM",      "Event/State: Number of times a GetXResp was seen in state IM", "count", 3},
         {"stateEvent_FlushLine_I",      "Event/State: Number of times a FlushLine was seen in state I", "count", 3},
         {"stateEvent_FlushLine_E",      "Event/State: Number of times a FlushLine was seen in state E", "count", 3},
@@ -100,7 +100,6 @@ public:
         {"evict_I",                 "Eviction: Attempted to evict a block in state I", "count", 3},
         {"evict_E",                 "Eviction: Attempted to evict a block in state E", "count", 3},
         {"evict_M",                 "Eviction: Attempted to evict a block in state M", "count", 3},
-        {"evict_IS",                "Eviction: Attempted to evict a block in state IS", "count", 3},
         {"evict_IM",                "Eviction: Attempted to evict a block in state IM", "count", 3},
         {"evict_IB",                "Eviction: Attempted to evict a block in state S_B", "count", 3},
         {"evict_SB",                "Eviction: Attempted to evict a block in state I_B", "count", 3},
@@ -151,7 +150,7 @@ public:
         stat_eventState[(int)Command::GetSX][I] = registerStatistic<uint64_t>("stateEvent_GetSX_I");
         stat_eventState[(int)Command::GetSX][E] = registerStatistic<uint64_t>("stateEvent_GetSX_E");
         stat_eventState[(int)Command::GetSX][M] = registerStatistic<uint64_t>("stateEvent_GetSX_M");
-        stat_eventState[(int)Command::GetSResp][IS] = registerStatistic<uint64_t>("stateEvent_GetSResp_IS");
+        stat_eventState[(int)Command::GetSResp][IM] = registerStatistic<uint64_t>("stateEvent_GetSResp_IM");
         stat_eventState[(int)Command::GetXResp][IM] = registerStatistic<uint64_t>("stateEvent_GetXResp_IM");
         stat_eventState[(int)Command::FlushLine][I] = registerStatistic<uint64_t>("stateEvent_FlushLine_I");
         stat_eventState[(int)Command::FlushLine][E] = registerStatistic<uint64_t>("stateEvent_FlushLine_E");
@@ -212,6 +211,12 @@ public:
         stat_miss[2][1] = registerStatistic<uint64_t>("GetSXMiss_Blocked");
         stat_hits = registerStatistic<uint64_t>("CacheHits");
         stat_misses = registerStatistic<uint64_t>("CacheMisses");
+        stat_evict[I] = registerStatistic<uint64_t>("evict_I");
+        stat_evict[E] = registerStatistic<uint64_t>("evict_E");
+        stat_evict[M] = registerStatistic<uint64_t>("evict_M");
+        stat_evict[IM] = registerStatistic<uint64_t>("evict_IM");
+        stat_evict[I_B] = registerStatistic<uint64_t>("evict_IB");
+        stat_evict[S_B] = registerStatistic<uint64_t>("evict_SB");
 
         /* Only for caches that write back clean blocks (i.e., lower cache is non-inclusive and may need the data) but don't know yet and can't register statistics later. Always enabled for now. */
         stat_eventSent[(int)Command::PutE] =           registerStatistic<uint64_t>("eventSent_PutE");
@@ -290,7 +295,6 @@ private:
     /* Statistics recording */
     void recordPrefetchResult(L1CacheLine * line, Statistic<uint64_t> * stat);
     void recordLatency(Command cmd, int type, uint64_t timestamp);
-    void eventProfileAndNotify(MemEvent * event, State state, NotifyAccessType type, NotifyResultType result, bool inMSHR, bool stalled);
 
     /* Debug output */
     void printLine(Addr addr);
