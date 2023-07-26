@@ -275,19 +275,6 @@ roccParams = {
     "max_instructions" : 8
 }
 
-arrayParams = {
-    "arrayLatency" : "100ns",
-    "clock" : cpu_clock,
-    "verbose" : verbosity,
-    "max_instructions" : 8,
-    "mmioAddr" : 0,      
-    "numArrays" : 1,
-    "arrayInputSize" : 4,
-    "arrayOutputSize" : 4, 
-    "inputOperandSize" : 1,
-    "outputOperandSize" : 1
-}
-
 l1dcacheParams = {
     "access_latency_cycles" : "2",
     "cache_frequency" : cpu_clock,
@@ -381,9 +368,6 @@ class CPU_Builder:
         # CPU.lsq mem interface which connects to D-cache 
         cpuDcacheIf = cpu_lsq.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
 
-        # CPU.rocc mem interface which connects to D-cache 
-        roccDcacheIf = cpu_rocc.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
-
         # CPU.mem interface for I-cache
         cpuIcacheIf = cpu.setSubComponent( "mem_interface_inst", "memHierarchy.standardInterface" )
 
@@ -443,11 +427,6 @@ class CPU_Builder:
         link_lsq_l1dcache_link = sst.Link(prefix+".link_cpu_dbus_link")
         link_lsq_l1dcache_link.connect( (cpuDcacheIf, "port", "1ns"), (processor_bus, "high_network_0", "1ns") )
         link_lsq_l1dcache_link.setNoCut()
-
-        # RoCC (data) -> processor_bus
-        link_rocc_l1dcache_link = sst.Link(prefix+".link_rocc_dbus_link")
-        link_rocc_l1dcache_link.connect( (roccDcacheIf, "port", "1ns"), (processor_bus, "high_network_1", "1ns") )
-        link_rocc_l1dcache_link.setNoCut()
 
         # processor_bus -> L1 cache
         link_bus_l1cache_link = sst.Link(prefix+".link_bus_l1cache_link")

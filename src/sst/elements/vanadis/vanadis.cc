@@ -38,8 +38,8 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     max_cycle = params.find<uint64_t>("max_cycle", std::numeric_limits<uint64_t>::max());
 
     auto nodeId = params.find<int32_t>("nodeId", 0);
-    const int32_t dbg_mask = params.find<int32_t>("dbg_mask", 0xFFFFFFFF);
-    const int32_t verbosity = params.find<int32_t>("verbose", 20);
+    const int32_t dbg_mask = params.find<int32_t>("dbg_mask", 0);
+    const int32_t verbosity = params.find<int32_t>("verbose", 0);
     core_id                 = params.find<uint32_t>("core_id", 0);
 
     char* outputPrefix = (char*)malloc(sizeof(char) * 256);

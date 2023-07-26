@@ -138,8 +138,6 @@ public:
         (*store_addr) = (uint64_t)(reg_tmp + offset);
         (*op_width)   = store_width;
 
-        output->verbose(CALL_INFO, 16, 0, "printing register file...\n");
-        reg->print(output);
         switch ( regType ) {
         case STORE_INT_REGISTER:
         {
