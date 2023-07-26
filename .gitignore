@@ -19,3 +19,6 @@ tags
 .DS_Store
 *.pdf
 *.dot
+*.out
+sst_test_outputs/*
+*.inc

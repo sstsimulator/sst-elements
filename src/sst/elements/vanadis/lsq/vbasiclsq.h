@@ -374,7 +374,6 @@ protected:
                             }
                         }
                     }
-
                     lsq->registerFiles->at(hw_thr)->copyToIntRegister(target_reg, 0, &register_value[0], register_value.size());
                 }
             } break;
