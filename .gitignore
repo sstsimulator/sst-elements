@@ -22,3 +22,6 @@ tags
 *.out
 sst_test_outputs/*
 *.inc
+src/sst/elements/ember/embertricount_setup
+.vscode/settings.json
+.vscode/settings.json
