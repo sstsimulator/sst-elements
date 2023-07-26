@@ -9,7 +9,7 @@ AM_CPPFLAGS += \
 AM_LIBTOOLFLAGS = --tag=CXX
 
 compdir = $(pkglibdir)
-comp_LTLIBRARIES = libhg.la libsystemapi.la
+comp_LTLIBRARIES = libhg.la libsystemapi.la testme.la
 libhg_la_SOURCES = \
   common/component.cc \
   common/hg_string.cc \
@@ -72,6 +72,9 @@ endif
 
 libsystemapi_la_SOURCES = \
   libraries/system/system_api.cc
+
+testme_la_SOURCES = \
+  tests/testme.cc
 
 library_includedir=$(includedir)/sst/elements/hg
 
@@ -161,7 +164,8 @@ endif
 
 EXTRA_DIST = \
     tests/testsuite_default_hg.py \
-    tests/node.py
+    tests/ostest2.py \
+    tests/refFiles/ostest2.out
 
 deprecated_EXTRA_DIST =
 
@@ -172,9 +176,11 @@ endif
 
 libhg_la_LDFLAGS = -module -avoid-version
 libsystemapi_la_LDFLAGS = -module -avoid-version
+testme_la_LDFLAGS = -module -avoid-version
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     mercury=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      mercury=$(abs_srcdir)/tests
 
 BUILT_SOURCES = \
    pymercury.inc

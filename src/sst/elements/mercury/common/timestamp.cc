@@ -34,7 +34,8 @@ namespace Hg {
 //
 TimeDelta::tick_t TimeDelta::ASEC_PER_TICK = 100;
 TimeDelta::tick_t TimeDelta::one_femtosecond = 1000/TimeDelta::ASEC_PER_TICK;
-TimeDelta::tick_t TimeDelta::one_picosecond = TimeDelta::one_femtosecond * 1000;
+//TimeDelta::tick_t TimeDelta::one_picosecond = TimeDelta::one_femtosecond * 1000;
+TimeDelta::tick_t TimeDelta::one_picosecond = 1;
 TimeDelta::tick_t TimeDelta::one_nanosecond = TimeDelta::one_picosecond * 1000;
 TimeDelta::tick_t TimeDelta::one_microsecond = 1000 * TimeDelta::one_nanosecond;
 TimeDelta::tick_t TimeDelta::one_millisecond = 1000 * TimeDelta::one_microsecond;

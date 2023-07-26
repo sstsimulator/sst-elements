@@ -205,8 +205,10 @@ protected:
 
     struct dbgin {
         SST::Event::id_type id;
+        uint32_t thr;
+        bool hasThr;
         Command cmd;
-        bool prefetch;
+        std::string mod; // Command modifier
         Addr addr;
         State oldst;
         State newst;
@@ -214,10 +216,17 @@ protected:
         std::string reason;
         std::string verboseline;
 
-        void prefill(SST::Event::id_type i, Command c, bool p, Addr a, State o) {
+        void prefill(SST::Event::id_type i, Command c, std::string m, Addr a, State o) {
+            prefill(i, 0, c, m, a, o);
+            hasThr = false;
+        }
+
+        void prefill(SST::Event::id_type i, uint32_t t, Command c, std::string m, Addr a, State o) {
             id = i;
+            thr = t;
+            hasThr = true;
             cmd = c;
-            prefetch = p;
+            mod = m;
             addr = a;
             oldst = o;
             newst = o;

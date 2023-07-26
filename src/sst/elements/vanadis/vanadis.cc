@@ -232,9 +232,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
         thread_decoders[i]->getInstructionLoader()->setMemoryInterface(memInstInterface);
     }
 
-    lsq = loadUserSubComponent<SST::Vanadis::VanadisLoadStoreQueue>("lsq");
-    lsq->setCoreId(core_id);
-
+    lsq = loadUserSubComponent<SST::Vanadis::VanadisLoadStoreQueue>("lsq", ComponentInfo::SHARE_NONE, core_id, hw_threads);
     if ( nullptr == lsq ) {
         output->fatal(CALL_INFO, -1, "Error - unable to load the load-store queue (lsq subcomponent)\n");
     }

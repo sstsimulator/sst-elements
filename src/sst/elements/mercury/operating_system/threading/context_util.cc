@@ -55,7 +55,7 @@ ThreadContext::defaultThreading()
   fill_lock.unlock();
 
   std::string default_threading;
-#if SSTMAC_USE_MULTITHREAD
+//#if SSTMAC_USE_MULTITHREAD
   for (auto& pair : valid_threading_contexts){
     if (pair.second){ //supports multithreading
       default_threading = pair.first;
@@ -64,12 +64,12 @@ ThreadContext::defaultThreading()
   }
   if (default_threading.size() == 0){
     //this did not get updated - so we don't have any multithreading-compatible thread interfaces
-    sprockit::abort("OperatingSystem: there are no threading frameworks compatible "
+    Hg::abort("OperatingSystem: there are no threading frameworks compatible "
                     "with multithreaded SST - must have ucontext");
   }
-#else
-  default_threading = valid_threading_contexts[0].first;
-#endif
+//#else
+//  default_threading = valid_threading_contexts[0].first;
+//#endif
   const char *threading_pchar = getenv("SST_HG_THREADING");
   if (threading_pchar){
     default_threading = threading_pchar;

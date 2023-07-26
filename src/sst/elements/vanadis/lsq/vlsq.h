@@ -39,7 +39,7 @@ namespace Vanadis {
 class VanadisLoadStoreQueue : public SST::SubComponent {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Vanadis::VanadisLoadStoreQueue)
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Vanadis::VanadisLoadStoreQueue, int, int)
 
     SST_ELI_DOCUMENT_PARAMS({ "verbose", "Set the verbosity of output for the LSQ", "0" }, )
 
@@ -48,16 +48,26 @@ public:
                                 { "loads_issued", "Count the number of loads issued", "operations", 1 },
                                 { "stores_issued", "Count the number of stores issued", "operations", 1 })
 
-    VanadisLoadStoreQueue(ComponentId_t id, Params& params) : SubComponent(id) {
+    /* 
+     * Constructor takes two additional parameters
+     * coreid - an integer specifying the core ID for the core that loaded this LSQ
+     *          - Each vanadis core should have a unique and sequential ID. E.g., for one core the ID=0, for two cores, one has ID=0 and one has ID=1
+     * hwthreads - the total number of hardware threads supported by the core. The LSQ will use this to appropriately partition queues and detect 
+     *              ordering violations
+     */
+    VanadisLoadStoreQueue(ComponentId_t id, Params& params, int coreid, int hwthreads) : SubComponent(id) {
 
         uint32_t verbosity = params.find<uint32_t>("verbose");
         uint32_t mask = params.find<uint32_t>("verboseMask",-1);
-        output = new SST::Output("[lsq @t]: ", verbosity, mask, SST::Output::STDOUT);
+        std::string prefix = "[lsq " + getName() + " !t]: ";
+        output = new SST::Output(prefix, verbosity, mask, SST::Output::STDOUT);
 
         address_mask = params.find<uint64_t>("address_mask", 0xFFFFFFFFFFFFFFFF);
         setDbgInsAddrs( params.find<std::string>("dbgInsAddrs", "") );
         setDbgAddrs( params.find<std::string>("dbgAddrs", "") );
-
+        
+        core_id = coreid;
+        hw_threads = hwthreads;
         registerFiles = nullptr;
 
         stat_load_issued = registerStatistic<uint64_t>("loads_issued", "1");
@@ -77,6 +87,9 @@ public:
     }
     void setCoreId( int core ) { core_id = core; }
     int getCoreId( ) { return core_id; }
+    
+    void setHWThreads( int threads ) { hw_threads = threads; }
+    int getHWThreads( ) { return hw_threads; }
 
     virtual bool storeFull() = 0;
     virtual bool loadFull() = 0;
@@ -153,6 +166,7 @@ protected:
     std::deque<uint64_t> m_dbgInsAddrs;
     std::deque<uint64_t> m_dbgAddrs;
     int core_id;
+    int hw_threads;
     uint64_t address_mask;
     std::vector<VanadisRegisterFile*>* registerFiles;
     SST::Output* output;

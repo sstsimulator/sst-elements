@@ -92,14 +92,14 @@ ThreadInfo::registerUserSpaceVirtualThread(int phys_thread_id, void *stack,
                                            bool isThreadStartup)
 {
   //abort("abort ThreadInfo::registerUserSpaceVirtualThread");
-//  size_t stack_mod = ((size_t)stack) % sst_hg_global_stacksize;
-//  if (stack_mod != 0){
-//    spkt_throw_printf(sprockit::ValueError,
-//        "user space thread stack is not aligned on %llu bytes",
-//        sst_hg_global_stacksize);
-//  }
+  size_t stack_mod = ((size_t)stack) % sst_hg_global_stacksize;
+  if (stack_mod != 0){
+    sst_hg_throw_printf(Hg::ValueError,
+        "user space thread stack is not aligned on %llu bytes",
+        sst_hg_global_stacksize);
+  }
 
-//  configureStack(phys_thread_id, stack, globalsMap, tlsMap);
+  configureStack(phys_thread_id, stack, globalsMap, tlsMap);
 
 //  //there is no parent user-space thread...
 //  static std::vector<char> fake_globals(1e6);

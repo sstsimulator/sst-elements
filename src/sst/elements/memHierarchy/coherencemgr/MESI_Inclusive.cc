@@ -28,6 +28,17 @@ using namespace SST::MemHierarchy;
 /*----------------------------------------------------------------------------------------------------------------------
  * MESI Coherence Controller Implementation
  * Provides MESI & MSI coherence for inclusive, non-L1 caches
+ *
+ * MESI: 
+ *  M   Exclusive, dirty
+ *  E   Exclusive, clean
+ *  S   Shared, clean
+ *  I   Invalid / not present
+ *
+ * MSI:
+ *  M   Exclusive (treated as dirty)
+ *  S   Shared, clean
+ *  I   Invalid / not present
  *---------------------------------------------------------------------------------------------------------------------*/
 
 /***********************************************************************************************************
@@ -46,7 +57,7 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
     Command respcmd;
 
     if (is_debug_addr(addr))
-        eventDI.prefill(event->getID(), Command::GetS, localPrefetch, addr, state);
+        eventDI.prefill(event->getID(), Command::GetS, (localPrefetch ? "-pref" : ""), addr, state);
 
     if (inMSHR)
         mshr_->removePendingRetry(addr);
@@ -204,7 +215,7 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
     uint64_t sendTime = 0;
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), event->getCmd(), false, addr, state);
+        eventDI.prefill(event->getID(), event->getCmd(), "", addr, state);
 
     if (inMSHR)
         mshr_->removePendingRetry(addr);
@@ -260,7 +271,6 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
                 break;
             }
         case E:
-            line->setState(M);
         case M:
             if (!inMSHR || !mshr_->getProfiled(addr)) {
                 notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
@@ -280,7 +290,10 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
                     recordLatencyType(event->getID(), LatType::INV);
                     mshr_->setProfiled(addr);
                     invalidateExceptRequestor(event, line, inMSHR);
-                    line->setState(M_Inv);
+                    if (state == M)
+                        line->setState(M_Inv);
+                    else
+                        line->setState(E_Inv);
                     mshr_->setInProgress(addr);
                 }
                 break;
@@ -291,10 +304,17 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
                     mshr_->setProfiled(addr);
                     recordLatencyType(event->getID(), LatType::INV);
                     invalidateOwner(event, line, inMSHR, Command::FetchInv);
-                    line->setState(M_Inv);
+                    if (state == M)
+                        line->setState(M_Inv);
+                    else
+                        line->setState(E_Inv);
                     mshr_->setInProgress(addr);
                 }
                 break;
+            }
+            
+            if (state == S) {
+                line->setState(E); // Clean/exclusive
             }
 
             line->setOwner(event->getSrc());
@@ -339,7 +359,7 @@ bool MESIInclusive::handleFlushLine(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::FlushLine, false, addr, state);
+        eventDI.prefill(event->getID(), Command::FlushLine, "", addr, state);
 
     // Always need an MSHR for a flush
     MemEventStatus status = MemEventStatus::OK;
@@ -445,7 +465,7 @@ bool MESIInclusive::handleFlushLineInv(MemEvent * event, bool inMSHR) {
     MemEventStatus status = MemEventStatus::OK;
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::FlushLineInv, false, addr, state);
+        eventDI.prefill(event->getID(), Command::FlushLineInv, "", addr, state);
     //printLine(addr);
 
     // Always need an MSHR entry
@@ -570,7 +590,7 @@ bool MESIInclusive::handlePutS(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_event(event)) {
-        eventDI.prefill(event->getID(), Command::PutS, false, addr, state);
+        eventDI.prefill(event->getID(), Command::PutS, "", addr, state);
         eventDI.action = "Done";
     }
 
@@ -653,7 +673,7 @@ bool MESIInclusive::handlePutE(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_event(event)) {
-        eventDI.prefill(event->getID(), Command::PutE, false, addr, state);
+        eventDI.prefill(event->getID(), Command::PutE, "", addr, state);
         eventDI.action = "Done";
     }
 
@@ -717,7 +737,7 @@ bool MESIInclusive::handlePutM(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_event(event)) {
-        eventDI.prefill(event->getID(), Command::PutM, false, addr, state);
+        eventDI.prefill(event->getID(), Command::PutM, "", addr, state);
         eventDI.action = "Done";
     }
 
@@ -779,7 +799,7 @@ bool MESIInclusive::handlePutX(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::PutX, false, addr, state);
+        eventDI.prefill(event->getID(), Command::PutX, "", addr, state);
 
     if (inMSHR)
         mshr_->removePendingRetry(addr);
@@ -842,7 +862,7 @@ bool MESIInclusive::handleFetch(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::Fetch, false, addr, state);
+        eventDI.prefill(event->getID(), Command::Fetch, "", addr, state);
 
     if (inMSHR)
         mshr_->removePendingRetry(addr);
@@ -884,7 +904,7 @@ bool MESIInclusive::handleInv(MemEvent * event, bool inMSHR) {
     MemEventStatus status = MemEventStatus::OK;
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::Inv, false, addr, state);
+        eventDI.prefill(event->getID(), Command::Inv, "", addr, state);
 
     if (inMSHR)
         mshr_->removePendingRetry(addr);
@@ -965,7 +985,7 @@ bool MESIInclusive::handleForceInv(MemEvent * event, bool inMSHR) {
     MemEventStatus status = MemEventStatus::OK;
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::ForceInv, false, addr, state);
+        eventDI.prefill(event->getID(), Command::ForceInv, "", addr, state);
 
     if (inMSHR)
         mshr_->removePendingRetry(addr);
@@ -1088,7 +1108,7 @@ bool MESIInclusive::handleFetchInv(MemEvent * event, bool inMSHR) {
     MemEventStatus status = MemEventStatus::OK;
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::FetchInv, false, addr, state);
+        eventDI.prefill(event->getID(), Command::FetchInv, "", addr, state);
 
     if (inMSHR)
         mshr_->removePendingRetry(addr);
@@ -1209,7 +1229,7 @@ bool MESIInclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
     MemEventStatus status = MemEventStatus::OK;
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::FetchInvX, false, addr, state);
+        eventDI.prefill(event->getID(), Command::FetchInvX, "", addr, state);
 
     if (inMSHR)
         mshr_->removePendingRetry(addr);
@@ -1287,7 +1307,7 @@ bool MESIInclusive::handleGetSResp(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::GetSResp, false, addr, state);
+        eventDI.prefill(event->getID(), Command::GetSResp, "", addr, state);
 
     stat_eventState[(int)Command::GetSResp][state]->addData(1);
 
@@ -1338,7 +1358,7 @@ bool MESIInclusive::handleGetXResp(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::GetXResp, false, addr, state);
+        eventDI.prefill(event->getID(), Command::GetXResp, "", addr, state);
 
     stat_eventState[(int)Command::GetXResp][state]->addData(1);
 
@@ -1423,7 +1443,7 @@ bool MESIInclusive::handleFlushLineResp(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::FlushLineResp, false, addr, state);
+        eventDI.prefill(event->getID(), Command::FlushLineResp, "", addr, state);
 
     stat_eventState[(int)Command::FlushLineResp][state]->addData(1);
 
@@ -1460,7 +1480,7 @@ bool MESIInclusive::handleFetchResp(MemEvent * event, bool inMSHR) {
     State state = line->getState();
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::FetchResp, false, addr, state);
+        eventDI.prefill(event->getID(), Command::FetchResp, "", addr, state);
 
     stat_eventState[(int)Command::FetchResp][state]->addData(1);
 
@@ -1502,7 +1522,7 @@ bool MESIInclusive::handleFetchXResp(MemEvent * event, bool inMSHR) {
         eventDI.verboseline = line->getString();
     }
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::FetchXResp, false, addr, state);
+        eventDI.prefill(event->getID(), Command::FetchXResp, "", addr, state);
 
     stat_eventState[(int)Command::FetchXResp][state]->addData(1);
 
@@ -1539,7 +1559,7 @@ bool MESIInclusive::handleAckInv(MemEvent * event, bool inMSHR) {
     State state = line->getState();
 
     if (is_debug_event(event))
-        eventDI.prefill(event->getID(), Command::AckInv, false, addr, state);
+        eventDI.prefill(event->getID(), Command::AckInv, "", addr, state);
 
     stat_eventState[(int)Command::AckInv][state]->addData(1);
 
@@ -1605,7 +1625,7 @@ bool MESIInclusive::handleAckPut(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_event(event)) {
-        eventDI.prefill(event->getID(), Command::AckPut, false, addr, state);
+        eventDI.prefill(event->getID(), Command::AckPut, "", addr, state);
         eventDI.action = "Done";
     }
 
@@ -1626,7 +1646,7 @@ bool MESIInclusive::handleNULLCMD(MemEvent* event, bool inMSHR) {
     bool evicted = handleEviction(newAddr, line);
 
     if (is_debug_addr(newAddr)) {
-        eventDI.prefill(event->getID(), Command::NULLCMD, false, line->getAddr(), evictDI.oldst);
+        eventDI.prefill(event->getID(), Command::NULLCMD, "", line->getAddr(), evictDI.oldst);
         eventDI.newst = line->getState();
         eventDI.verboseline = line->getString();
     }
@@ -1673,7 +1693,7 @@ bool MESIInclusive::handleNACK(MemEvent * event, bool inMSHR) {
 
     if (is_debug_event(event) || is_debug_event(nackedEvent)) {
         SharedCacheLine * line = cacheArray_->lookup(addr, false);
-        eventDI.prefill(event->getID(), Command::NACK, false, addr, line ? line->getState() : I);
+        eventDI.prefill(event->getID(), Command::NACK, "", addr, line ? line->getState() : I);
     }
 
     delete event;

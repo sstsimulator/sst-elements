@@ -218,6 +218,7 @@ public:
     bool pendingWritebackIsDowngrade(Addr addr);
 
     int insertEvent(Addr addr, MemEventBase* event, int position, bool fwdRequest, bool stallEvict);
+    int insertEventIfConflict(Addr addr, MemEventBase* event);
     bool insertWriteback(Addr addr, bool downgrade);
     bool insertEviction(Addr evictAddr, Addr newAddr);
 
