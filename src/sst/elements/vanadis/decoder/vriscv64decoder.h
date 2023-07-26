@@ -332,7 +332,6 @@ protected:
 
         bool decode_fault = true;
 
-
         // if the last two bits that are set are 11, then we are performing at least 32bit instruction formats,
         // otherwise we are performing decodes on the C-extension (16b) formats
         if ( (ins & 0x3) == 0x3 ) {
@@ -1922,8 +1921,16 @@ protected:
                 processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
                 fmt = func_code7 & 0x3;
                 rs3 = func_code7 >> 2;
-
                 switch( fmt ) {
+                    case 0:
+                    {
+                        // FMADD.S
+                        output->verbose(
+                            CALL_INFO, 16, 0, "-----> FMADD.S %" PRIu16 " <- ( %" PRIu16 " *  %" PRIu16 " ) + %" PRIu16 "\n", rd, rs1, rs2, rs3);
+                        bundle->addInstruction(
+                            new VanadisFPFusedMultiplyAddInstruction<float>(ins_address, hw_thr, options, fpflags, rd, rs1, rs2, rs3 ));
+                        decode_fault = false;
+                    } break;
                     case 1:
                     {
                         // FMADD.D
@@ -2767,8 +2774,8 @@ protected:
             if ( fatal_decode_fault ) {
                 output->fatal(
                     CALL_INFO, -1,
-                    "[decode] -> decode fault detected at 0x%llx / thr: %" PRIu32 ", set to fatal on detect\n",
-                    ins_address, hw_thr);
+                    "[decode] -> decode fault detected at 0x%llx / inst: 0x%llx / thr: %" PRIu32 ", set to fatal on detect\n",
+                    ins_address, ins, hw_thr);
             }
             bundle->addInstruction(new VanadisInstructionDecodeFault(ins_address, hw_thr, options));
         }

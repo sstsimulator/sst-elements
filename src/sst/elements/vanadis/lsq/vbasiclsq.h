@@ -328,7 +328,6 @@ protected:
             case LOAD_INT_REGISTER: {
                 target_isa_reg = load_ins->getISAIntRegOut(0);
                 target_reg = load_ins->getPhysIntRegOut(0);
-                std::cout << "target register: " << target_reg << std::endl;
 
                 assert(target_isa_reg < load_ins->getISAOptions()->countISAIntRegisters());
 
@@ -363,9 +362,7 @@ protected:
                             }
                         }
                     }
-                    lsq->registerFiles->at(hw_thr)->print(out);
                     lsq->registerFiles->at(hw_thr)->copyToIntRegister(target_reg, 0, &register_value[0], register_value.size());
-                    lsq->registerFiles->at(hw_thr)->print(out);
                 }
             } break;
             case LOAD_FP_REGISTER: {
@@ -804,8 +801,6 @@ protected:
                     } else {
                         load_req = new StandardMem::Read(load_address & address_mask, load_width, 0, 
                             load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
-                        output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_LOAD_FLG, "----> Read Req: physAddr: %llx, size: %llx, vAddr: %llx, inst ptr: %llx, tid: %llx\n", 
-                        load_address & address_mask, load_width, load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
                     }
                 }
             } break;

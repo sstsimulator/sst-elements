@@ -18,6 +18,7 @@
 
 #include "inst/vinstall.h"
 #include "velf/velfinfo.h"
+#include "decoder/vriscv64decoder.h"
 
 #include "os/resp/vosexitresp.h"
 
@@ -44,7 +45,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     char* outputPrefix = (char*)malloc(sizeof(char) * 256);
     snprintf(outputPrefix, sizeof(char)*256, "[node%d,Core: %4" PRIu32 "/@t]: ", nodeId, core_id);
 
-    output = new SST::Output(outputPrefix, 0, VANADIS_DBG_RETIRE_FLG, Output::STDOUT);
+    output = new SST::Output(outputPrefix, verbosity, dbg_mask, Output::STDOUT);
     free(outputPrefix);
 
     std::string clock_rate = params.find<std::string>("clock", "1GHz");

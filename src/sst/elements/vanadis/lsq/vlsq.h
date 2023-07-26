@@ -52,7 +52,7 @@ public:
 
         uint32_t verbosity = params.find<uint32_t>("verbose");
         uint32_t mask = params.find<uint32_t>("verboseMask",-1);
-        output = new SST::Output("[lsq @t]: ", 100, 0xFFFFFFFF, SST::Output::STDOUT);
+        output = new SST::Output("[lsq @t]: ", verbosity, 0xFFFFFFFF, SST::Output::STDOUT);
 
         address_mask = params.find<uint64_t>("address_mask", 0xFFFFFFFFFFFFFFFF);
         setDbgInsAddrs( params.find<std::string>("dbgInsAddrs", "") );
