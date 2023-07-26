@@ -304,6 +304,7 @@ private:
     StandardMem*           memInstInterface;
 
     VanadisRoCCInterface* rocc;
+    bool has_rocc;
 
     bool* halted_masks;
     bool  print_int_reg;

@@ -22,3 +22,9 @@ tags
 *.out
 sst_test_outputs/*
 *.inc
+src/sst/elements/ember/embertricount_setup
+.vscode/settings.json
+.vscode/settings.json
+src/sst/elements/vanadis/stderr-100
+src/sst/elements/vanadis/stdout-100
+src/sst/elements/vanadis/sst-vanadis-tracediff

@@ -243,9 +243,11 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     if ( nullptr == rocc ) {
         output->verbose(CALL_INFO, 8, 0, "no RoCC interface subcomponent loaded\n");
+        has_rocc = false;
+    } else {
+        has_rocc = true;
+        rocc->setRegisterFiles(&register_files);
     }
-
-    rocc->setRegisterFiles(&register_files);
 
     uint16_t fu_id = 0;
 
@@ -711,7 +713,7 @@ VANADIS_COMPONENT::performExecute(const uint64_t cycle)
     lsq->tick((uint64_t)cycle);
 
     // Tick the RoCC command queue
-    rocc->tick((uint64_t)cycle);
+    if (has_rocc) rocc->tick((uint64_t)cycle);
 
     return 0;
 }
@@ -1832,7 +1834,7 @@ VANADIS_COMPONENT::init(unsigned int phase)
     //	memDataInterface->init( phase );
     memInstInterface->init(phase);
 
-    rocc->init(phase);
+    if (has_rocc) rocc->init(phase);
 
     while (SST::Event* ev = os_link->recvUntimedData()) {
 
