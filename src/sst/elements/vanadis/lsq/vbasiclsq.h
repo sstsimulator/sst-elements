@@ -328,7 +328,6 @@ protected:
             case LOAD_INT_REGISTER: {
                 target_isa_reg = load_ins->getISAIntRegOut(0);
                 target_reg = load_ins->getPhysIntRegOut(0);
-                std::cout << "target register: " << target_reg << std::endl;
 
                 assert(target_isa_reg < load_ins->getISAOptions()->countISAIntRegisters());
 
