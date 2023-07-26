@@ -119,9 +119,10 @@ public:
     void performADD() {
         uint64_t src_1 = registerFiles->at(curr_inst->getHWThread())->getIntReg<int64_t>(curr_inst->getPhysIntRegIn(0));
         uint64_t src_2 = registerFiles->at(curr_inst->getHWThread())->getIntReg<int64_t>(curr_inst->getPhysIntRegIn(1));
-        output->verbose(CALL_INFO, 9, 0, "EXECUTE RoCC ADD w/ rs1: %llx, rs2: %llx, result: %llx + %llx", src_1, src_2, src_1 + src_2);
-        registerFiles->at(curr_inst->getHWThread())->setIntReg<uint64_t>(curr_inst->getPhysIntRegOut(0), src_1 + src_2);
-        completeRoCC(new RoCCResponse(curr_inst->getPhysIntRegOut(0), 4));
+        uint64_t result = src_1 + src_2;
+        output->verbose(CALL_INFO, 9, 0, "EXECUTE RoCC ADD w/ rs1: %llx, rs2: %llx, result: %llx + %llx", src_1, src_2, result);
+        registerFiles->at(curr_inst->getHWThread())->setIntReg<uint64_t>(curr_inst->getPhysIntRegOut(0), result);
+        completeRoCC(new RoCCResponse(curr_inst->getPhysIntRegOut(0), result));
         return;
     }
 
@@ -129,9 +130,10 @@ public:
     void performSRAI() {
         uint64_t src_1 = registerFiles->at(curr_inst->getHWThread())->getIntReg<int64_t>(curr_inst->getPhysIntRegIn(0));
         uint64_t shamt = curr_inst->getPhysIntRegIn(1);
-        output->verbose(CALL_INFO, 9, 0, "EXECUTE RoCC SRAI w/ rs1: %llx, shamt: %llx, result: %llx + %llx", src_1, shamt, src_1 >> shamt);
-        registerFiles->at(curr_inst->getHWThread())->setIntReg<uint64_t>(curr_inst->getPhysIntRegOut(0), src_1 >> shamt);
-        completeRoCC(new RoCCResponse(curr_inst->getPhysIntRegOut(0), 4));
+        uint64_t result = src_1 >> shamt;
+        output->verbose(CALL_INFO, 9, 0, "EXECUTE RoCC SRAI w/ rs1: %llx, shamt: %llx, result: %llx + %llx", src_1, shamt, result);
+        registerFiles->at(curr_inst->getHWThread())->setIntReg<uint64_t>(curr_inst->getPhysIntRegOut(0), result);
+        completeRoCC(new RoCCResponse(curr_inst->getPhysIntRegOut(0), result));
         return;
     }
 
