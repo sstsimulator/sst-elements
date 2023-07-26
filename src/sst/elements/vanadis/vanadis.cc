@@ -244,7 +244,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     rocc = loadUserSubComponent<SST::Vanadis::VanadisRoCCInterface>("rocc");
 
     if ( nullptr == rocc ) {
-        output->fatal(CALL_INFO, -1, "Error - unable to load the rocc interface (rocc subcomponent)\n");
+        output->verbose(CALL_INFO, 8, 0, "no RoCC interface subcomponent loaded\n");
     }
 
     rocc->setRegisterFiles(&register_files);

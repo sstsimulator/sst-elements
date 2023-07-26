@@ -28,8 +28,6 @@
 #include <queue>
 #include <limits>
 
-#define VANADIS_RISCV_FUNC7_MASK  0xFE000000
-
 using namespace SST::Interfaces;
 
 namespace SST {
@@ -40,7 +38,7 @@ class VanadisRoCCBasic : public SST::Vanadis::VanadisRoCCInterface {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(VanadisRoCCBasic, "vanadis", "VanadisRoCCBasic",
                                           SST_ELI_ELEMENT_VERSION(1, 0, 0),
-                                          "Implements a RoCC accelerator interface for the analog core",
+                                          "Implements a basic RoCC accelerator",
                                           SST::Vanadis::VanadisRoCCInterface)
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -62,19 +60,19 @@ public:
     }
 
     virtual ~VanadisRoCCBasic() {
-        for(auto analogCmd_q_itr = analogCmd_q.begin(); analogCmd_q_itr != analogCmd_q.end(); ) {
-            delete (*analogCmd_q_itr);
-            analogCmd_q_itr = analogCmd_q.erase(analogCmd_q_itr);
+        for(auto cmd_q_itr = cmd_q.begin(); cmd_q_itr != cmd_q.end(); ) {
+            delete (*cmd_q_itr);
+            cmd_q_itr = cmd_q.erase(cmd_q_itr);
         }
     }
 
-    bool RoCCFull() override { return analogCmd_q.size() >= max_instructions; }
+    bool RoCCFull() override { return cmd_q.size() >= max_instructions; }
 
-    size_t roccQueueSize() override { return analogCmd_q.size(); }
+    size_t roccQueueSize() override { return cmd_q.size(); }
 
     void push(VanadisRoCCInstruction* rocc_me) override {
         stat_roccs_issued->addData(1);
-        analogCmd_q.push_back( rocc_me );
+        cmd_q.push_back( rocc_me );
     }
 
     // initialize subcomponents and parameterizable data structures
@@ -82,7 +80,7 @@ public:
 
     void tick(uint64_t cycle) override {
         output->verbose(CALL_INFO, 16, 0, "-> tick RoCC at cycle %" PRIu64 "\n", cycle);
-        if(0 == analogCmd_q.size()) {
+        if(0 == cmd_q.size()) {
             output->verbose(CALL_INFO, 16, 0, "--> nothing to do in RoCC\n");
             return;
         }
@@ -90,7 +88,7 @@ public:
 
         if (!busy) { // are we already processing something? If not:
             busy = true; // start processing something
-            curr_inst = analogCmd_q.front(); // grab the command to process
+            curr_inst = cmd_q.front(); // grab the command to process
             VanadisRegisterFile* hw_thr_reg = registerFiles->at(curr_inst->getHWThread()); // grab that instruction's register file
             uint64_t rs1 = -1; // initialize variables to hold the src reg values 
             uint64_t rs2 = -1;
@@ -141,34 +139,18 @@ public:
     // writing any status data to rd
     // mark the instruction executed so main CPU pipeline knows it is finished
     // pop it out of the command queue so it will no longer be processed 
-    // reset state of this analog RoCC frontend in case all-in-one just finished
     // turn off busy bit so host knows this accelerator is no longer busy
     void completeRoCC(RoCCResponse* roccRsp) {
         registerFiles->at(curr_inst->getHWThread())->setIntReg<int64_t>(roccRsp->rd, roccRsp->rd_val); 
 
         output->verbose(CALL_INFO, 16, 0, "Finalize RoCC command w/ rd %" PRIu16 ", rd_val %" PRIu64 " \n", roccRsp->rd, roccRsp->rd_val);
         curr_inst->markExecuted();
-        analogCmd_q.pop_front();
+        cmd_q.pop_front();
         busy = false;
     }
 
-    // takes the vector of 8bit chunks and converts it into single uint64_t value
-    inline uint64_t dataToInt(std::vector<uint8_t>* data) {
-        uint64_t retval = 0;
-        assert (data->size() <= 8);
-
-        for (int i = data->size(); i > 0; i--) {
-            retval <<= 8;
-            retval |= (*data)[i-1];
-        }
-        return retval;
-    }
-
-    // grabs the func7 field of RoCC instruction
-    uint32_t extract_func7(const uint32_t ins) const { return ((ins & VANADIS_RISCV_FUNC7_MASK) >> 25); }
-
-    std::deque<VanadisRoCCInstruction*> analogCmd_q; // queue of RoCC commands issued from CPU
-    bool busy; // busy line from analog accelerator that keeps this interface from sending more commands
+    std::deque<VanadisRoCCInstruction*> cmd_q; // queue of RoCC commands issued from CPU
+    bool busy; // busy line that keeps accelerator from doing more than one thing at a time
     VanadisRoCCInstruction* curr_inst;
     RoCCCommand* curr_roccCmd;
 
