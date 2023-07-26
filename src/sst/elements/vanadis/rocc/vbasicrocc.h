@@ -205,7 +205,6 @@ public:
         virtual ~StandardMemHandlers() {}
 
         virtual void handle(StandardMem::ReadResp* ev) {
-            //std::cout << "flags: " << ev->getAllFlags() << std::endl; // flags identify origin of read request
             out->verbose(CALL_INFO, 16, 0, "-> handle read-response (virt-addr: 0x%llx)\n", ev->vAddr);
             VanadisRoCCInstruction* load_ins = rocc->analogCmd_q.front(); // need to grab the instrution that generated the read request
             // so that we know where to store the read response results
@@ -226,8 +225,6 @@ public:
             std::vector<uint8_t> register_value(reg_width); // initialize placeholder for read response data this way because it comes in 8bit (I think?) chunks
             // copy entire register here
             rocc->registerFiles->at(hw_thr)->copyFromIntRegister(target_reg, 0, &register_value[0], reg_width);
-            std::cout << "size of read response: " << ev->size << std::endl;
-            std::cout << "size of target register: " << reg_width << std::endl;
             for (auto i = 0; i < reg_width; ++i) { // fill data placeholder with read response data
                 register_value.at(reg_offset + addr_offset + i) = ev->data[i];
             }
