@@ -5,6 +5,8 @@ SuperNodeSize = 8
 Num SuperNodes: 21
 ------> Generating Polarstar topology!!
 ----> Generating Inductive-quad Graph
+--> Validating Inducitve-Quad(3):
+--> Validating PolarStar(8):
 10196:  38 Finished sending packets (total of 10)
 10547:  47 Finished sending packets (total of 10)
 10615:  113 Finished sending packets (total of 10)
