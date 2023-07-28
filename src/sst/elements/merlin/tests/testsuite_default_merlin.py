@@ -5,11 +5,11 @@ from sst_unittest_support import *
 
 try:
     from sympy.polys.domains import ZZ
-except:
+except ImportError:
     pass
 try:
     from sympy.polys.galoistools import (gf_irreducible_p, gf_add, gf_mul, gf_rem)
-except:
+except ImportError:
     pass
 
 ################################################################################

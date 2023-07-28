@@ -17,9 +17,8 @@ import sys
 
 try:
     import networkx as nx
-except: 
+except ImportError:
     pass
-    #print('--> MODULE NOT FOUND: networkx')
 
 def isPowerOfPrime(num):
     if (num<2):
