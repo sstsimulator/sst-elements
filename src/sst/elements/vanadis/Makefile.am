@@ -505,6 +505,29 @@ EXTRA_DIST = \
 	tests/small/misc/openmp/riscv64/4thread/vanadis.stderr.gold \
 	tests/small/misc/openmp/riscv64/4thread/vanadis.stdout.gold \
 \
+	tests/small/misc/openmp2/Makefile \
+	tests/small/misc/openmp2/openmp2.c \
+	tests/small/misc/openmp2/mipsel/openmp2 \
+	tests/small/misc/openmp2/mipsel/16core/sst.stdout.gold \
+	tests/small/misc/openmp2/mipsel/16core/vanadis.stderr.gold \
+	tests/small/misc/openmp2/mipsel/16core/vanadis.stdout.gold \
+	tests/small/misc/openmp2/mipsel/4core-8thread/sst.stdout.gold \
+	tests/small/misc/openmp2/mipsel/4core-8thread/vanadis.stderr.gold \
+	tests/small/misc/openmp2/mipsel/4core-8thread/vanadis.stdout.gold \
+	tests/small/misc/openmp2/mipsel/32thread/sst.stdout.gold \
+	tests/small/misc/openmp2/mipsel/32thread/vanadis.stderr.gold \
+	tests/small/misc/openmp2/mipsel/32thread/vanadis.stdout.gold \
+	tests/small/misc/openmp2/riscv64/openmp2 \
+	tests/small/misc/openmp2/riscv64/16core/sst.stdout.gold \
+	tests/small/misc/openmp2/riscv64/16core/vanadis.stderr.gold \
+	tests/small/misc/openmp2/riscv64/16core/vanadis.stdout.gold \
+	tests/small/misc/openmp2/riscv64/4core-8thread/sst.stdout.gold \
+	tests/small/misc/openmp2/riscv64/4core-8thread/vanadis.stderr.gold \
+	tests/small/misc/openmp2/riscv64/4core-8thread/vanadis.stdout.gold \
+	tests/small/misc/openmp2/riscv64/32thread/sst.stdout.gold \
+	tests/small/misc/openmp2/riscv64/32thread/vanadis.stderr.gold \
+	tests/small/misc/openmp2/riscv64/32thread/vanadis.stdout.gold \
+\
 	tests/small/misc/hpcg/hpcg.dat \
 	tests/small/misc/hpcg/mipsel/hpcg \
 	tests/small/misc/hpcg/riscv64/hpcg \
