@@ -100,14 +100,6 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
     }
 
     char tmp[256];
-<<<<<<< HEAD
-    if( getcwd(tmp, 256) == nullptr ) {
-        output_->fatal( CALL_INFO, -1, "Unable to find current working directory.\n" );
-        exit(0);
-    } else {
-        std::cout << "Current working directory: " << tmp << std::endl;
-    }
-=======
     if( getcwd(tmp, sizeof(tmp) ) != NULL) {
         std::cout << "Current working directory: " << tmp << std::endl;
     } else {
@@ -117,7 +109,6 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
 
     // namespace filesystem_var = std::filesystem;
     // std::cout << "Current working directory: " << filesystem_var.current_path() << std::endl;
->>>>>>> 231e313ff (Warning cleanup; fix accumulator)
     runMappingTool(llyr_config->mapping_tool_);
 
 //     std::string fileName = "deepmind/strassen2x2_clay.csv";

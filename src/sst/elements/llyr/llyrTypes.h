@@ -1,8 +1,8 @@
-// Copyright 2009-2023 NTESS. Under the terms
+// Copyright 2013-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2023, NTESS
+// Copyright (c) 2013-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -54,7 +54,6 @@ typedef struct alignas(uint64_t) {
     uint16_t        queueDepth_;
     uint16_t        arith_latency_;
     uint16_t        int_latency_;
-    uint16_t        int_mul_latency_;
     uint16_t        int_div_latency_;
     uint16_t        fp_latency_;
     uint16_t        fp_mul_latency_;
