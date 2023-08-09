@@ -92,7 +92,6 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     uint16_t queue_depth = params.find< uint16_t >("queue_depth", 256);
     uint16_t arith_latency = params.find< uint16_t >("arith_latency", 1);
     uint16_t int_latency = params.find< uint16_t >("int_latency", 1);
-    uint16_t int_mul_latency = params.find< uint16_t >("int_mul_latency", 1);
     uint16_t int_div_latency = params.find< uint16_t >("int_div_latency", 4);
     uint16_t fp_latency = params.find< uint16_t >("fp_latency", 4);
     uint16_t fp_mul_latency = params.find< uint16_t >("fp_mul_latency", 8);
@@ -101,8 +100,8 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     std::string mapping_tool_ = params.find< std::string >("mapping_tool", "");
 
     configData_ = new LlyrConfig { ls_queue_, mem_interface_, starting_addr_, mapping_tool_, verbosity, queue_depth,
-                                   arith_latency, int_latency, int_mul_latency, int_div_latency, fp_latency,
-                                   fp_mul_latency, fp_div_latency, complex_latency };
+                                   arith_latency, int_latency, int_div_latency, fp_latency, fp_mul_latency, fp_div_latency,
+                                   complex_latency };
 
     memFileName_ = params.find<std::string>("mem_init", "");
 
@@ -121,6 +120,11 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     output_->verbose(CALL_INFO, 1, 0, "Mapping application to hardware with %s\n", mapperName.c_str());
     llyr_mapper_->mapGraph(hardwareGraph_, applicationGraph_, mappedGraph_, configData_);
     mappedGraph_.printDotHardware("llyr_mapped.dot");
+
+    //init stats
+    zeroEventCycles_ = registerStatistic< uint64_t >("cycles_zero_events");
+    eventCycles_ = registerStatistic< uint64_t >("cycles_events");
+
     //all done
     output_->verbose(CALL_INFO, 1, 0, "Initialization done.\n");
 }
@@ -209,9 +213,9 @@ void LlyrComponent::finish()
 {
 }
 
-bool LlyrComponent::tick( Cycle_t )
+bool LlyrComponent::tick(SST::Cycle_t currentCycle)
 {
-    TraceFunction trace(CALL_INFO_LONG);
+    // TraceFunction trace(CALL_INFO_LONG);
     if( clock_enabled_ == 0 ) {
         return false;
     }
@@ -243,16 +247,18 @@ bool LlyrComponent::tick( Cycle_t )
         //set visited for bfs
         vertex_map_->at(currentNode).setVisited(1);
 
-        //send one item from each output queue to destination
-        vertex_map_->at(currentNode).getValue()->doSend();
-
         //send n responses from L/S unit to destination
         doLoadStoreOps(ls_entries_);
 
         //Let the PE decide whether or not it can do the compute
         vertex_map_->at(currentNode).getValue()->doCompute();
+
+        //send one item from each output queue to destination
+        vertex_map_->at(currentNode).getValue()->doSend();
+
         compute_complete = compute_complete | vertex_map_->at(currentNode).getValue()->getPendingOp();
-        output_->verbose(CALL_INFO, 1, 0, "PE(%" PRIu32 ") status: %" PRIu32 "\n\n", currentNode, compute_complete);
+        output_->verbose(CALL_INFO, 1, 0, "PE(%" PRIu32 ") pending: %" PRIu32 " status: %" PRIu32 "\n\n",
+                        currentNode, vertex_map_->at(currentNode).getValue()->getPendingOp(), compute_complete );
 
         //add the destination vertices from this node to the node queue
         for( auto it = adjacencyList->begin(); it != adjacencyList->end(); it++ ) {
@@ -265,11 +271,13 @@ bool LlyrComponent::tick( Cycle_t )
     }
 
     // return false so we keep going
-    if( ls_queue_->getNumEntries() > 0 ) {
-        output_->verbose(CALL_INFO, 40, 0, "Continuing simulation due to live memory...\n");
-        return false;
-    } else if( compute_complete == 1 ){
+    if( compute_complete == 1 ){
+        eventCycles_->addData(1);
         output_->verbose(CALL_INFO, 40, 0, "Continuing simulation due to live data...\n");
+        return false;
+    } else if( ls_queue_->getNumEntries() > 0 ) {
+        zeroEventCycles_->addData(1);
+        output_->verbose(CALL_INFO, 40, 0, "Continuing simulation due to live memory...\n");
         return false;
     } else {
         output_->verbose(CALL_INFO, 40, 0, "Ending simulation due to flying cows...\n");
@@ -308,7 +316,7 @@ void LlyrComponent::LlyrMemHandlers::handle(StandardMem::Write* write) {
 // - should be a response to a Read we issued
 void LlyrComponent::LlyrMemHandlers::handle(StandardMem::ReadResp* resp) {
 
-    TraceFunction trace(CALL_INFO_LONG);
+    // TraceFunction trace(CALL_INFO_LONG);
 
     std::stringstream dataOut;
     for( auto &it : resp->data ) {
@@ -359,7 +367,7 @@ void LlyrComponent::LlyrMemHandlers::handle(StandardMem::WriteResp* resp) {
 
 void LlyrComponent::doLoadStoreOps( uint32_t numOps )
 {
-    TraceFunction trace(CALL_INFO_LONG);
+    // TraceFunction trace(CALL_INFO_LONG);
     output_->verbose(CALL_INFO, 10, 0, "Doing L/S ops\n");
     for(uint32_t i = 0; i < numOps; ++i ) {
         if( ls_queue_->getNumEntries() > 0 ) {

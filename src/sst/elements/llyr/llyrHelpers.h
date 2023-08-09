@@ -77,6 +77,8 @@ inline opType const getOptype(std::string &opString)
         operation = ROR;
     else if( opString == "EQ" )
         operation = EQ;
+    else if( opString == "EQ_IMM" )
+        operation = EQ_IMM;
     else if( opString == "NE" )
         operation = NE;
     else if( opString == "UGT" )
@@ -97,6 +99,8 @@ inline opType const getOptype(std::string &opString)
         operation = ULT;
     else if( opString == "ULE" )
         operation = ULE;
+    else if( opString == "ULE_IMM" )
+        operation = ULE_IMM;
     else if( opString == "SLT" )
         operation = SLT;
     else if( opString == "SLT_IMM" )
@@ -130,7 +134,9 @@ inline opType const getOptype(std::string &opString)
     else if( opString == "REMCONST" )
         operation = REMCONST;
     else if( opString == "INC" )
-	operation = INC;
+        operation = INC;
+    else if( opString == "INC_RST" )
+        operation = INC_RST;
     else if( opString == "ACC" )
         operation = ACC;
     else if( opString == "ANY_FP" )
@@ -161,6 +167,20 @@ inline opType const getOptype(std::string &opString)
         operation = REPEATER;
     else if( opString == "ROS" )
         operation = ROS;
+    else if( opString == "RNE" )
+        operation = RNE;
+    else if( opString == "ROZ" )
+        operation = ROZ;
+    else if( opString == "ROO" )
+        operation = ROO;
+    else if( opString == "ONEONAND" )
+        operation = ONEONAND;
+    else if( opString == "GATED_ONE" )
+        operation = GATED_ONE;
+    else if( opString == "MERGE" )
+        operation = MERGE;
+    else if( opString == "FILTER" )
+        operation = FILTER;
     else if( opString == "SEL" )
         operation = SEL;
     else if( opString == "RET" )
@@ -215,6 +235,8 @@ inline std::string const getOpString(const opType &op)
         operation = "ROR";
     else if( op == EQ )
         operation = "EQ";
+    else if( op == EQ_IMM )
+        operation = "EQ_IMM";
     else if( op == NE )
         operation = "NE";
     else if( op == UGT )
@@ -235,6 +257,8 @@ inline std::string const getOpString(const opType &op)
         operation = "ULT";
     else if( op == ULE )
         operation = "ULE";
+    else if( op == ULE_IMM )
+        operation = "ULE_IMM";
     else if( op == SLT )
         operation = "SLT";
     else if( op == SLT_IMM )
@@ -268,7 +292,9 @@ inline std::string const getOpString(const opType &op)
     else if( op == REMCONST )
         operation = "REMCONST";
     else if( op == INC )
-	operation = "INC";
+        operation = "INC";
+    else if( op == INC_RST )
+        operation = "INC_RST";
     else if( op == ACC )
         operation = "ACC";
     else if( op == ANY_FP )
@@ -297,6 +323,20 @@ inline std::string const getOpString(const opType &op)
         operation = "BUFFER";
     else if( op == ROS )
         operation = "ROS";
+    else if( op == RNE )
+        operation = "RNE";
+    else if( op == ROZ )
+        operation = "ROZ";
+    else if( op == ROO )
+        operation = "ROO";
+    else if( op == ONEONAND )
+        operation = "ONEONAND";
+    else if( op == GATED_ONE )
+        operation = "GATED_ONE";
+    else if( op == MERGE )
+        operation = "MERGE";
+    else if( op == FILTER )
+        operation = "FILTER";
     else if( op == REPEATER )
         operation = "REPEATER";
     else if( op == SEL )
