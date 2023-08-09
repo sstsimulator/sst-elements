@@ -227,7 +227,7 @@ class FireflyHades(FireflyOS):
         self._declareParamsWithUserPrefix(
             "ctrl", # dictionary params will end up in
             "ctrl", # user visible prefix
-            [ 'pqs.verboseMask', 'pqs.verboseLevel' ],
+            [ 'pqs.verboseMask', 'pqs.verboseLevel', 'pqs.maxPostedShortBuffers', 'pqs.minPostedShortBuffers', 'pqs.maxUnexpectedMsg' ],
             "pqs." # prefix needed in the dictionary so things get passed correctly to elements
         )
 
