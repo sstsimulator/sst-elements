@@ -167,8 +167,20 @@ inline opType const getOptype(std::string &opString)
         operation = REPEATER;
     else if( opString == "ROS" )
         operation = ROS;
-    else if( opString == "COR" )
-        operation = COR;
+    else if( opString == "RNE" )
+        operation = RNE;
+    else if( opString == "ROZ" )
+        operation = ROZ;
+    else if( opString == "ROO" )
+        operation = ROO;
+    else if( opString == "ONEONAND" )
+        operation = ONEONAND;
+    else if( opString == "GATED_ONE" )
+        operation = GATED_ONE;
+    else if( opString == "MERGE" )
+        operation = MERGE;
+    else if( opString == "FILTER" )
+        operation = FILTER;
     else if( opString == "SEL" )
         operation = SEL;
     else if( opString == "RET" )
@@ -311,8 +323,20 @@ inline std::string const getOpString(const opType &op)
         operation = "BUFFER";
     else if( op == ROS )
         operation = "ROS";
-    else if( op == COR )
-        operation = "COR";
+    else if( op == RNE )
+        operation = "RNE";
+    else if( op == ROZ )
+        operation = "ROZ";
+    else if( op == ROO )
+        operation = "ROO";
+    else if( op == ONEONAND )
+        operation = "ONEONAND";
+    else if( op == GATED_ONE )
+        operation = "GATED_ONE";
+    else if( op == MERGE )
+        operation = "MERGE";
+    else if( op == FILTER )
+        operation = "FILTER";
     else if( op == REPEATER )
         operation = "REPEATER";
     else if( op == SEL )

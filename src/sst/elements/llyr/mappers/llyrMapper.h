@@ -131,10 +131,16 @@ void LlyrMapper::addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< Process
         tempPE = new ControlProcessingElement( BUFFER, nodeNum, llyr_config );
     } else if( op_binding == REPEATER ) {
         tempPE = new ControlProcessingElement( REPEATER, nodeNum, llyr_config );
-    } else if( op_binding == ROS ) {
-        tempPE = new ControlProcessingElement( ROS, nodeNum, llyr_config );
-    } else if( op_binding == COR ) {
-        tempPE = new ControlProcessingElement( COR, nodeNum, llyr_config );
+    } else if( op_binding == ROZ ) {
+        tempPE = new ControlProcessingElement( ROZ, nodeNum, llyr_config );
+    } else if( op_binding == ROO ) {
+        tempPE = new ControlProcessingElement( ROO, nodeNum, llyr_config );
+    } else if( op_binding == ONEONAND ) {
+        tempPE = new ControlProcessingElement( ONEONAND, nodeNum, llyr_config );
+    } else if( op_binding == GATED_ONE ) {
+        tempPE = new ControlProcessingElement( GATED_ONE, nodeNum, llyr_config );
+    } else if( op_binding == MERGE ) {
+        tempPE = new ControlProcessingElement( MERGE, nodeNum, llyr_config );
     } else if( op_binding == SEL ) {
         tempPE = new ControlProcessingElement( SEL, nodeNum, llyr_config );
     } else if( op_binding == ROUTE ) {
@@ -200,6 +206,12 @@ void LlyrMapper::addNode(opType op_binding, QueueArgMap* arguments, uint32_t nod
         tempPE = new AdvIntProcessingElement( INC_RST, nodeNum, llyr_config, arguments );
     } else if( op_binding == ACC ) {
         tempPE = new AdvIntProcessingElement( ACC, nodeNum, llyr_config, arguments );
+    } else if( op_binding == ROS ) {
+        tempPE = new ControlConstProcessingElement( ROS, nodeNum, llyr_config, arguments );
+    } else if( op_binding == RNE ) {
+        tempPE = new ControlConstProcessingElement( RNE, nodeNum, llyr_config, arguments );
+    } else if( op_binding == FILTER ) {
+        tempPE = new ControlConstProcessingElement( FILTER, nodeNum, llyr_config, arguments );
     } else {
         output_->fatal(CALL_INFO, -1, "Error: Unable to find specified operation\n");
         exit(0);

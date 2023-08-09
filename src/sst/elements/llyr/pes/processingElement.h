@@ -22,6 +22,7 @@
 
 #include <map>
 #include <queue>
+#include <tuple>
 #include <vector>
 #include <bitset>
 #include <string>
@@ -45,6 +46,11 @@ typedef struct alignas(uint64_t) {
     std::queue< LlyrData >* data_queue_;
 } LlyrQueue;
 
+typedef struct alignas(uint64_t) {
+    bool        valid_;
+    LlyrData    data_;
+} QueueData;
+
 class ProcessingElement
 {
 public:
@@ -61,6 +67,7 @@ public:
         lsqueue_ = llyr_config->lsqueue_;
         mem_interface_ = llyr_config->mem_interface_;
 
+        queue_depth_ = llyr_config->queueDepth_;
         input_queues_= new std::vector< LlyrQueue* >();
         output_queues_ = new std::vector< LlyrQueue* >();
     }
@@ -192,6 +199,20 @@ public:
         output_queues_->at(queueID)->routing_arg_ = routing_arg;
     }
 
+    void createInputQueues(uint32_t numQueues)
+    {
+        while( input_queues_->size() < numQueues ) {
+            LlyrQueue* tempQueue    = new LlyrQueue;
+            tempQueue->forwarded_   = 0;
+            tempQueue->routing_arg_ = new std::string("");
+            tempQueue->argument_    = 0;
+            tempQueue->data_queue_  = new std::queue< LlyrData >;
+            input_queues_->push_back(tempQueue);
+        }
+
+        std::cout << "Node " << processor_id_ << " -- " << input_queues_->size() << " queues" << std::endl;
+    }
+
     void pushInputQueue(uint32_t id, uint64_t &inVal )
     {
         LlyrData newValue = LlyrData(inVal);
@@ -271,6 +292,7 @@ public:
             return 0;
         }
     }
+
     uint32_t getNumOutputQueues() const
     {
         if( output_queues_ != nullptr) {
@@ -279,6 +301,20 @@ public:
             return 0;
         }
     }
+
+    bool checkInputArgs(std::string* arg_in)
+    {
+        for( auto iter = input_queues_->begin(); iter != input_queues_->end(); ++iter ) {
+            if( *(*iter)->routing_arg_ == *arg_in ) {
+                std::cout << "TT " << *(*iter)->routing_arg_ << " -- " << * arg_in <<std::endl;
+                return 1;
+            }
+        }
+
+        return 0;
+    }
+
+    uint32_t getInputQueueSize(uint32_t id) const { return input_queues_->at(id)->data_queue_->size(); }
 
     void     setOpBinding(opType binding) { op_binding_ = binding; }
     opType   getOpBinding() const { return op_binding_; }
@@ -291,6 +327,7 @@ public:
     void printInputQueue()
     {
         for( uint32_t i = 0; i < input_queues_->size(); ++i ) {
+            std::cout << "[PE-" << processor_id_ << "] ";
             std::cout << "i:" << i << "(" << input_queues_->at(i)->argument_ << ")";
             std::cout << ": " << input_queues_->at(i)->data_queue_->size();
             if( input_queues_->at(i)->data_queue_->size() > 0 ) {
@@ -304,16 +341,57 @@ public:
     void printOutputQueue()
     {
         for( uint32_t i = 0; i < output_queues_->size(); ++i ) {
-            std::cout << "o:" << i << ": " << output_queues_->at(i)->data_queue_->size();
+            std::cout << "[PE-" << processor_id_ << "] ";
+            std::cout << "o:" << i << "(" << output_queues_->at(i)->argument_ << ")";
+            std::cout << ": " << output_queues_->at(i)->data_queue_->size();
             if( output_queues_->at(i)->data_queue_->size() > 0 ) {
-                std::cout << ":" << output_queues_->at(i)->data_queue_->back().to_ullong() << ":" << output_queues_->at(i)->data_queue_->front() << "\n";
+                std::cout << ":" << output_queues_->at(i)->data_queue_->front().to_ullong() << ":" << output_queues_->at(i)->data_queue_->front() << "\n";
             } else {
                 std::cout << ":x" << ":x" << "\n";
             }
         }
     }
 
-    virtual bool doSend() = 0;
+    virtual bool doSend()
+    {
+        uint32_t queueId;
+        LlyrData sendVal;
+        ProcessingElement* dstPe;
+
+        for(auto it = output_queue_map_.begin() ; it != output_queue_map_.end(); ++it ) {
+            queueId = it->first;
+            dstPe = it->second;
+
+            if( output_queues_->at(queueId)->data_queue_->size() > 0 ) {
+                std::cout << " Input Queue Depth at PE-" << dstPe->getProcessorId();
+                std::cout << "(" << queueId << ") " << dstPe->getInputQueueSize(dstPe->getInputQueueId(processor_id_));
+                std::cout << ", max is " << queue_depth_ << std::endl;
+                if( dstPe->getInputQueueSize(dstPe->getInputQueueId(processor_id_)) < queue_depth_ ) {
+                    output_->verbose(CALL_INFO, 8, 0, ">> Sending...%" PRIu32 "-%" PRIu32 " to %" PRIu32 "\n",
+                                processor_id_, queueId, dstPe->getProcessorId());
+
+                    sendVal = output_queues_->at(queueId)->data_queue_->front();
+                    dstPe->pushInputQueue(dstPe->getInputQueueId(processor_id_), sendVal);
+                    output_queues_->at(queueId)->data_queue_->pop();
+                } else {
+                    output_->verbose(CALL_INFO, 8, 0, ">> Sending failed...%" PRIu32 "-%" PRIu32 " to %" PRIu32 "\n",
+                                processor_id_, queueId, dstPe->getProcessorId());
+                }
+
+                // with back pressure, sometimes the simulation will end even if tokens are live
+                pending_op_ = 1;
+            }
+        }
+
+        if( output_->getVerboseLevel() >= 10 ) {
+            output_->verbose(CALL_INFO, 10, 0, "Queue Contents (2)\n");
+            printInputQueue();
+            printOutputQueue();
+        }
+
+        return true;
+    }
+
     virtual bool doReceive(LlyrData data) = 0;
     virtual bool doCompute() = 0;
 
@@ -325,6 +403,7 @@ protected:
     opType   op_binding_;
     uint32_t processor_id_;
 
+    uint16_t timeout_;
     uint16_t latency_;
     uint16_t cycles_to_fire_;
 
@@ -350,8 +429,9 @@ protected:
     LlyrConfig* llyr_config_;
 
     // Make sure that anything that needs to be routed gets routed
-    virtual void doRouting( uint32_t total_num_inputs )
+    virtual bool doRouting( uint32_t total_num_inputs )
     {
+        bool global_route = 0;
         for( uint32_t i = 0; i < total_num_inputs; ++i) {
             bool routed = 0;
             const std::string rtr_arg = *input_queues_->at(i)->routing_arg_;
@@ -360,7 +440,7 @@ protected:
                 std::cout << "continue" << std::endl;
                 continue;
             }
-
+printOutputQueue();
             std::cout << "num output queues " << output_queues_->size() << std::endl;
             for( uint32_t j = 0; j < output_queues_->size(); ++j) {
                 std::cout << "output queue arg (" << j << ") " << *output_queues_->at(j)->routing_arg_ << std::endl;
@@ -373,7 +453,7 @@ protected:
                     output_->verbose(CALL_INFO, 4, 0, "+Routing %s from %" PRIu32 "\n", rtr_arg.c_str(), i);
                 }
             }
-
+printOutputQueue();
             if( routed == 1 ) {
                 if( input_queues_->at(i)->argument_ == -1 ) {
                     input_queues_->at(i)->data_queue_->pop();
@@ -382,7 +462,10 @@ protected:
                 }
             }
 
+            global_route = global_route | routed;
         }
+
+        return global_route;
     }
 
 private:
@@ -394,3 +477,4 @@ private:
 }//Llyr
 
 #endif //_LLYR_PE_H
+

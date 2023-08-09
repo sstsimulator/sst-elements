@@ -40,36 +40,6 @@ public:
         cycles_to_fire_ = latency_;
     }
 
-    virtual bool doSend()
-    {
-        uint32_t queueId;
-        LlyrData sendVal;
-        ProcessingElement* dstPe;
-
-        for(auto it = output_queue_map_.begin() ; it != output_queue_map_.end(); ++it ) {
-            queueId = it->first;
-            dstPe = it->second;
-
-            if( output_queues_->at(queueId)->data_queue_->size() > 0 ) {
-                output_->verbose(CALL_INFO, 8, 0, ">> Sending...%" PRIu32 "-%" PRIu32 " to %" PRIu32 "\n",
-                                processor_id_, queueId, dstPe->getProcessorId());
-
-                sendVal = output_queues_->at(queueId)->data_queue_->front();
-                output_queues_->at(queueId)->data_queue_->pop();
-
-                dstPe->pushInputQueue(dstPe->getInputQueueId(this->getProcessorId()), sendVal);
-            }
-        }
-
-        if( output_->getVerboseLevel() >= 10 ) {
-            output_->verbose(CALL_INFO, 10, 0, "Queue Contents (2)\n");
-            printInputQueue();
-            printOutputQueue();
-        }
-
-        return true;
-    }
-
     virtual bool doReceive(LlyrData data) { return 0; };
 
     virtual bool doCompute()
@@ -99,7 +69,7 @@ public:
         }
 
         // FIXME check to see of there are any routing jobs -- should be able to do this without waiting to fire
-        doRouting( total_num_inputs );
+        bool routed = doRouting( total_num_inputs );
 
         //check to see if all of the input queues have data
         for( uint32_t i = 0; i < total_num_inputs; ++i) {
@@ -114,7 +84,16 @@ public:
         if( num_ready < num_inputs && num_ready > 0) {
             pending_op_ = 1;
         } else {
-            pending_op_ = 0;
+            pending_op_ = 0 | routed;
+        }
+
+        // make sure all of the output queues have room for new data
+        for( uint32_t i = 0; i < output_queues_->size(); ++i) {
+            // std::cout << " Queue " << i << " Size " << output_queues_->at(i)->data_queue_->size() << " Max " << queue_depth_ << std::endl;
+            if( output_queues_->at(i)->data_queue_->size() >= queue_depth_ && *output_queues_->at(i)->routing_arg_ == "" ) {
+                output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 " -- No room in output queue %" PRIu32 ", cannot fire\n", num_inputs, num_ready, i);
+                return false;
+            }
         }
 
         //if all inputs are available pull from queue and add to arg list
@@ -242,7 +221,7 @@ public:
         }
 
         // FIXME check to see of there are any routing jobs -- should be able to do this without waiting to fire
-        doRouting( total_num_inputs );
+        bool routed = doRouting( total_num_inputs );
 
         //check to see if all of the input queues have data -- this no longer assumes contiguous input args
         for( uint32_t i = 0; i < total_num_inputs; ++i) {
@@ -253,18 +232,28 @@ public:
             }
         }
 
+        pending_op_ = 0 | routed;
         //if there are values waiting on any of the inputs (queue-0 is a const), this PE could still fire
         for( uint32_t i = 1; i < total_num_inputs; ++i ) {
             if( input_queues_->at(i)->data_queue_->size() > 0 ) {
                 pending_op_ = 1;
             } else {
-                pending_op_ = 0;
+                pending_op_ = 0 | routed;
             }
         }
 
         std::cout << "++++++ Input Queue Size: " << input_queues_->at(0)->data_queue_->size();
         std::cout << ", Num Inputs: " << num_inputs;
         std::cout << ", Num Ready: " << num_ready << std::endl;
+
+        // make sure all of the output queues have room for new data
+        for( uint32_t i = 0; i < output_queues_->size(); ++i) {
+            // std::cout << " Queue " << i << " Size " << output_queues_->at(i)->data_queue_->size() << " Max " << queue_depth_ << std::endl;
+            if( output_queues_->at(i)->data_queue_->size() >= queue_depth_ && *output_queues_->at(i)->routing_arg_ == "" ) {
+                output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 " -- No room in output queue %" PRIu32 ", cannot fire\n", num_inputs, num_ready, i);
+                return false;
+            }
+        }
 
         //if all inputs are available pull from queue and add to arg list
         if( num_inputs == 0 || num_ready < num_inputs ) {
@@ -280,6 +269,7 @@ public:
             for( uint32_t i = 0; i < total_num_inputs; ++i ) {
                 if( input_queues_->at(i)->argument_ > -1 ) {
                     argList.push_back(input_queues_->at(i)->data_queue_->front());
+                    input_queues_->at(i)->forwarded_ = 0;
                     input_queues_->at(i)->data_queue_->pop();
                 }
             }
@@ -289,7 +279,7 @@ public:
         // If data tokens in output queue then simulation cannot end
         pending_op_ = 1;
 
-        // first queue should be const
+        // first queue should be const, so save for later
         input_queues_->at(0)->data_queue_->push(LlyrData(argList[0].to_ullong()));
 
         switch( op_binding_ ) {
@@ -434,7 +424,7 @@ public:
         }
 
         // FIXME check to see of there are any routing jobs -- should be able to do this without waiting to fire
-        doRouting( total_num_inputs );
+        bool routed = doRouting( total_num_inputs );
 
         //check to see if all of the input queues have data
         for( uint32_t i = 0; i < total_num_inputs; ++i) {
@@ -466,10 +456,19 @@ public:
         // }
 
         //if there are values waiting on any of the inputs, this PE could still fire
-        if( num_ready <= num_inputs && num_ready > 0) {
+        if( num_ready < num_inputs && num_ready > 0) {
             pending_op_ = 1;
         } else {
-            pending_op_ = 0;
+            pending_op_ = 0 | routed;
+        }
+
+        // make sure all of the output queues have room for new data
+        for( uint32_t i = 0; i < output_queues_->size(); ++i) {
+            // std::cout << " Queue " << i << " Size " << output_queues_->at(i)->data_queue_->size() << " Max " << queue_depth_ << std::endl;
+            if( output_queues_->at(i)->data_queue_->size() >= queue_depth_ && *output_queues_->at(i)->routing_arg_ == "" ) {
+                output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 " -- No room in output queue %" PRIu32 ", cannot fire\n", num_inputs, num_ready, i);
+                return false;
+            }
         }
 
         // there is no way to purge the queue so assume that compute is done
@@ -493,9 +492,7 @@ public:
             for( uint32_t i = 0; i < total_num_inputs; ++i) {
                 if( input_queues_->at(i)->argument_ > -1 ) {
                     argList.push_back(input_queues_->at(i)->data_queue_->front());
-                    input_queues_->at(i)->data_queue_->pop();
-                } else if ( op_binding_ == ACC && input_queues_->at(i)->argument_ == -1) {
-                    argList.push_back(input_queues_->at(i)->data_queue_->front());
+                    input_queues_->at(i)->forwarded_ = 0;
                     input_queues_->at(i)->data_queue_->pop();
                 }
             }
@@ -582,7 +579,11 @@ public:
             }
 
         } else if( op_binding_ == ACC ) {
-            intResult = argList[0].to_ullong() + argList[1].to_ullong();
+            // need to save the next accumulator value
+            LlyrData temp = input_queues_->at(0)->data_queue_->front();
+            input_queues_->at(0)->data_queue_->pop();
+std::cout << "XXX " << temp.to_ullong() << " + " << argList[0].to_ullong() <<std::endl;
+            intResult = temp.to_ullong() + argList[0].to_ullong();
             input_queues_->at(0)->data_queue_->push(LlyrData(intResult));
 
             retVal = LlyrData(intResult);

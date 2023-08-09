@@ -172,6 +172,7 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
             }
 
             // encode node in hardware graph
+            // some nodes need queue initialization -- right now, that's mostly const/imm pes TODO fix naming
             if( op == ADDCONST || op == SUBCONST || op == MULCONST || op == DIVCONST || op == REMCONST ) {
                 addNode( op, arguments, hardwareVertex, graphOut, llyr_config );
             } else if( op == INC || op == INC_RST || op == ACC ) {
@@ -181,6 +182,8 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
             } else if( op == OR_IMM || op == AND_IMM ) {
                 addNode( op, arguments, hardwareVertex, graphOut, llyr_config );
             } else if( op == EQ_IMM || op == UGT_IMM || op == UGE_IMM || op == ULE_IMM || op == SGT_IMM || op == SLT_IMM ) {
+                addNode( op, arguments, hardwareVertex, graphOut, llyr_config );
+            } else if( op == ROS || op == RNE || op == FILTER ) {
                 addNode( op, arguments, hardwareVertex, graphOut, llyr_config );
             } else {
                 addNode( op, hardwareVertex, graphOut, llyr_config );
@@ -206,12 +209,6 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
     std::list< RoutingFixUp* > routing_fix_list;
     std::map< uint32_t, Vertex< ProcessingElement* > >* vertex_map = graphOut.getVertexMap();
     for( auto vertexIterator = vertex_map->begin(); vertexIterator != vertex_map->end(); ++vertexIterator ) {
-        // std::cout << "num input queues: " << vertexIterator->second.getValue()->getNumInputQueues() << std::endl;
-        // vertexIterator->second.getValue()->inputQueueInit();
-        // std::cout << std::flush;
-        // std::cout << "num input queues: " << vertexIterator->second.getValue()->getNumInputQueues() << std::endl;
-        // std::cout << std::endl;
-
         std::cout << "num input queues(" << vertexIterator->second.getValue()->getProcessorId() << ")";
         std::cout << ": " << vertexIterator->second.getValue()->getNumInputQueues() << std::endl;
         vertexIterator->second.getValue()->inputQueueInit();
@@ -219,6 +216,18 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
         std::cout << "num input queues(" << vertexIterator->second.getValue()->getProcessorId() << ")";
         std::cout << ": " << vertexIterator->second.getValue()->getNumInputQueues() << std::endl;
         std::cout << std::endl;
+
+        // testing creating all input queues on init
+        uint32_t current_node = vertexIterator->first;
+        auto src_node_iter = std::find_if(node_list.begin(), node_list.end(), [&current_node]
+                (const HardwareNode* some_node){ return std::stoul(some_node->pe_id_) == current_node;} );
+
+        std::cout << "Node " << vertexIterator->second.getValue()->getProcessorId();
+        std::cout << ": const " << (*src_node_iter)->const_list_->size();
+        std::cout << ": input " << (*src_node_iter)->input_list_->size();
+        std::cout << std::endl;
+
+        vertexIterator->second.getValue()->createInputQueues((*src_node_iter)->const_list_->size() + (*src_node_iter)->input_list_->size());
     }
 
     for( auto vertexIterator = vertex_map->begin(); vertexIterator != vertex_map->end(); ++vertexIterator ) {
@@ -231,7 +240,7 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
 
         std::cout << "** Binding Node " << (*src_node_iter)->pe_id_ << " **" << std::endl;
         std::cout << "\t** Output Queue " << (*src_node_iter)->pe_id_ << " **" << std::endl;
-        uint32_t input_offset = 0;
+
         uint32_t output_queue_num = 0;
         for( auto output_iter = (*src_node_iter)->output_list_->begin(); output_iter != (*src_node_iter)->output_list_->end(); ++output_iter ) {
 
@@ -244,14 +253,16 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
 
             // check input list at destination for match
             bool is_also_route = 0;
+            uint32_t new_input_id = 0;
             for( auto input_iter = (*dst_node_iter)->input_list_->begin(); input_iter != (*dst_node_iter)->input_list_->end(); ++input_iter ) {
-                std::cout << "\t\t" << input_iter->first << " -- " << input_iter->second << " (offset " << input_offset << ")" << std::endl;
 
+                std::cout << "\t\t" << input_iter->first << " -- " << input_iter->second << " (offset " << new_input_id << ")" << std::endl;
                 std::string* routing_arg = new std::string("");
                 if( arg == input_iter->first ) {
 
                     // check to see if this variable is also being routed
                     for( auto route_iter = (*dst_node_iter)->route_list_->begin(); route_iter != (*dst_node_iter)->route_list_->end(); ++route_iter ) {
+
                         std::cout << "\t" << std::get<0>(*route_iter) << " ++ " << std::get<1>(*route_iter);
                         std::cout << " ++ " << std::get<2>(*route_iter) << std::endl;
 
@@ -265,58 +276,47 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
                     srcNode = vertex_map->at(current_node).getValue();
                     dstNode = vertex_map->at(dst_node).getValue();
 
-                    uint32_t input_queue_num = (*dst_node_iter)->const_list_->size();
-                    std::cout << "input num-0 " << input_queue_num << "(" << dstNode->getNumInputQueues() << ")" << std::endl;
-                    if( dstNode->getNumInputQueues() > 0 ) {
-                        while( dstNode->getProcInputQueueBinding(input_queue_num) != NULL ) {
-                            input_queue_num = input_queue_num + 1;
-                            std::cout << "input num-1 " << input_queue_num << "(" << dstNode->getNumInputQueues() << ")" << std::endl;
-                        }
-                    }
+                    const uint32_t input_queue_offset = (*dst_node_iter)->const_list_->size() + new_input_id;
 
                     if( is_also_route == 1 ) {
                         srcNode->bindOutputQueue(dstNode, output_queue_num);
-                        dstNode->bindInputQueue(srcNode, input_queue_num, 1, routing_arg);
-                        std::cout << "AAA: " << current_node << " -> " << dst_node << " :: " << input_queue_num << " -> " << output_queue_num;
+                        dstNode->bindInputQueue(srcNode, input_queue_offset, 1, routing_arg);
+                        std::cout << "AAA: " << current_node << " -> " << dst_node << " :: " << input_queue_offset << " -> " << output_queue_num;
                         std::cout << " <" << *routing_arg << ">";
                         std::cout << std::endl;
                     } else {
                         srcNode->bindOutputQueue(dstNode, output_queue_num);
-                        dstNode->bindInputQueue(srcNode, input_queue_num, 0);
-                        std::cout << "BBB: " << current_node << " -> " << dst_node << " :: " << input_queue_num << " -> " << output_queue_num;
+                        dstNode->bindInputQueue(srcNode, input_queue_offset, 0);
+                        std::cout << "BBB: " << current_node << " -> " << dst_node << " :: " << input_queue_offset << " -> " << output_queue_num;
                         std::cout << std::endl;
                     }
 
                     break;
                 }
+
+                new_input_id = new_input_id + 1;
             }// dst for
 
             // check route list at destination for match
+            new_input_id = 0;
             for( auto route_iter = (*dst_node_iter)->route_list_->begin(); route_iter != (*dst_node_iter)->route_list_->end(); ++route_iter ) {
                 if( arg == std::get<0>(*route_iter) ) {
                     if( is_also_route == 1 ) {
                         continue;
                     }
 
-                    std::cout << "\t\t" << arg << " ++ " << std::get<0>(*route_iter) << " " << (*dst_node_iter)->pe_id_ << " (offset " << input_offset << ")" << std::endl;
+                    std::cout << "\t\t" << arg << " ++ " << std::get<0>(*route_iter) << " " << (*dst_node_iter)->pe_id_ << " (offset " << new_input_id << ")" << std::endl;
 
                     std::string* routing_arg = new std::string(arg);
 
                     srcNode = vertex_map->at(current_node).getValue();
                     dstNode = vertex_map->at(dst_node).getValue();
 
-                    uint32_t input_queue_num = (*dst_node_iter)->const_list_->size();
-                    std::cout << "input num-0 " << input_queue_num << "(" << dstNode->getNumInputQueues() << ")" << std::endl;
-                    if( dstNode->getNumInputQueues() > 0 ) {
-                        while( dstNode->getProcInputQueueBinding(input_queue_num) != NULL ) {
-                            input_queue_num = input_queue_num + 1;
-                            std::cout << "input num-1 " << input_queue_num << "(" << dstNode->getNumInputQueues() << ")" << std::endl;
-                        }
-                    }
+                    const uint32_t input_queue_offset = (*dst_node_iter)->const_list_->size() + (*dst_node_iter)->input_list_->size() + new_input_id;
 
                     srcNode->bindOutputQueue(dstNode, output_queue_num);
-                    dstNode->bindInputQueue(srcNode, input_queue_num, -1, routing_arg);
-                    std::cout << "CCC: " << current_node << " -> " << dst_node << " :: " << input_queue_num << " -> " << output_queue_num;
+                    dstNode->bindInputQueue(srcNode, input_queue_offset, -1, routing_arg);
+                    std::cout << "CCC: " << current_node << " -> " << dst_node << " :: " << input_queue_offset << " -> " << output_queue_num;
                     std::cout << " <" << *routing_arg << ">";
                     std::cout << std::endl;
                 }
@@ -325,7 +325,7 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
                 // If this item is also on the input list, don't increment
                 bool dual_list = 0;
                 for( auto input_iter = (*dst_node_iter)->input_list_->begin(); input_iter != (*dst_node_iter)->input_list_->end(); ++input_iter ) {
-                    std::cout << "\t\tx " << input_iter->first << " -- " << std::get<0>(*route_iter) << " (offset " << input_offset << ")" << std::endl;
+                    std::cout << "\t\tx " << input_iter->first << " -- " << std::get<0>(*route_iter) << " (offset " << new_input_id << ")" << std::endl;
 
                     if( std::get<0>(*route_iter) == input_iter->first ) {
                         dual_list = 1;
@@ -334,7 +334,7 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
                 }
 
                 if( dual_list == 0 ) {
-                    input_offset = input_offset + 1;
+                    new_input_id = new_input_id + 1;
                 }
             }
 
@@ -355,8 +355,9 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
 
             // check input list at destination for match
             bool is_input = 0;
-            uint32_t input_offset = 0;
             std::cout << "\t\tChecking input list at dst..." << std::endl;
+
+            uint32_t new_input_id = 0;
             for( auto input_iter = (*dst_node_iter)->input_list_->begin(); input_iter != (*dst_node_iter)->input_list_->end(); ++input_iter ) {
                 std::string* routing_arg = new std::string("");
                 if( arg == input_iter->first ) {
@@ -377,25 +378,18 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
                     srcNode = vertex_map->at(current_node).getValue();
                     dstNode = vertex_map->at(dst_node).getValue();
 
-                    uint32_t input_queue_num = (*dst_node_iter)->const_list_->size();
-                    std::cout << "input num-0 " << input_queue_num << "(" << dstNode->getNumInputQueues() << ")" << std::endl;
-                    if( dstNode->getNumInputQueues() > 0 ) {
-                        while( dstNode->getProcInputQueueBinding(input_queue_num) != NULL ) {
-                            input_queue_num = input_queue_num + 1;
-                            std::cout << "input num-1 " << input_queue_num << "(" << dstNode->getNumInputQueues() << ")" << std::endl;
-                        }
-                    }
+                    const uint32_t input_queue_offset = (*dst_node_iter)->const_list_->size() + new_input_id;
 
                     if( is_also_route == 1 ) {
                         srcNode->bindOutputQueue(dstNode, output_queue_num);
-                        dstNode->bindInputQueue(srcNode, input_queue_num, 1, routing_arg);
-                        std::cout << "DDD: " << current_node << " -> " << dst_node << " :: " << input_queue_num << " -> " << output_queue_num;
+                        dstNode->bindInputQueue(srcNode, input_queue_offset, 1, routing_arg);
+                        std::cout << "DDD: " << current_node << " -> " << dst_node << " :: " << input_queue_offset << " -> " << output_queue_num;
                         std::cout << " <" << *routing_arg << ">";
                         std::cout << std::endl;
                     } else {
                         srcNode->bindOutputQueue(dstNode, output_queue_num);
-                        dstNode->bindInputQueue(srcNode, input_queue_num, 0);
-                        std::cout << "EEE: " << current_node << " -> " << dst_node << " :: " << input_queue_num << " -> " << output_queue_num;
+                        dstNode->bindInputQueue(srcNode, input_queue_offset, 0);
+                        std::cout << "EEE: " << current_node << " -> " << dst_node << " :: " << input_queue_offset << " -> " << output_queue_num;
                         std::cout << std::endl;
                     }
 
@@ -403,35 +397,34 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
                     is_input = 1;
                     break;
                 }
+
+                new_input_id = new_input_id + 1;
             }
 
             //if not an input, check routing queue (node could route-to-route)
+            uint32_t input_route_count = 0;
             std::cout << "\t\tChecking route list at dst..." << std::endl;
             if( is_input == 0 ) {
+                new_input_id = 0;
                 for( auto dst_route_iter = (*dst_node_iter)->route_list_->begin(); dst_route_iter != (*dst_node_iter)->route_list_->end(); ++dst_route_iter ) {
+
                     std::string* routing_arg = new std::string(arg);
                     std::cout << "\t\t\t" << std::get<0>(*dst_route_iter) << std::endl;
                     if( arg == std::get<0>(*dst_route_iter) ) {
-                        std::cout << "FOUND " << arg << std::endl;
+                        std::cout << "FOUND " << arg << ", input " << is_input << ", offset " << new_input_id;
+                        std::cout << ", count " << input_route_count << std::endl;
 
                         srcNode = vertex_map->at(current_node).getValue();
                         dstNode = vertex_map->at(dst_node).getValue();
 
                         //find which input queue -- const list size + something
-                        uint32_t input_queue_num = (*dst_node_iter)->const_list_->size();
-                        std::cout << "input num " << input_queue_num << "(" << dstNode->getNumInputQueues() << ")" << std::endl;
-                        if( dstNode->getNumInputQueues() > 0 ) {
-                            while( dstNode->getProcInputQueueBinding(input_queue_num) != NULL ) {
-                                std::cout << "input num " << input_queue_num << "(" << dstNode->getNumInputQueues() << ")" << std::endl;
-                                input_queue_num = input_queue_num + 1;
-                            }
-                        }
+                        const uint32_t input_queue_offset = (*dst_node_iter)->const_list_->size() + (*dst_node_iter)->input_list_->size() + new_input_id;
 
-std::cout << "xxxxx: " << (*dst_node_iter)->const_list_->size() << "  " << (*dst_node_iter)->input_list_->size() << " <> " << input_queue_num << std::endl;
+std::cout << "xxxxx: " << (*dst_node_iter)->const_list_->size() << "  " << (*dst_node_iter)->input_list_->size() << " <> " << input_queue_offset << std::endl;
 
                         srcNode->bindOutputQueue(dstNode, output_queue_num);
-                        dstNode->bindInputQueue(srcNode, input_queue_num, -1, routing_arg);
-                        std::cout << "FFF: " << current_node << " -> " << dst_node << " :: " << input_queue_num << " -> " << output_queue_num;
+                        dstNode->bindInputQueue(srcNode, input_queue_offset, -1, routing_arg);
+                        std::cout << "FFF: " << current_node << " -> " << dst_node << " :: " << input_queue_offset << " -> " << output_queue_num;
                         std::cout << " <" << *routing_arg << ">";
                         std::cout << std::endl;
 
@@ -439,11 +432,18 @@ std::cout << "xxxxx: " << (*dst_node_iter)->const_list_->size() << "  " << (*dst
                         is_input = 1;
                         break;
                     }
+
+                    // don't want to inc the place in the queue binding for routes if we already treated it as an input
+                    auto in_rt_pair = std::find_if((*dst_node_iter)->input_list_->begin(), (*dst_node_iter)->input_list_->end(),
+                              [&dst_route_iter](const PairPE some_pe){ return some_pe.first == std::get<0>(*dst_route_iter);} );
+                    if( in_rt_pair != (*dst_node_iter)->input_list_->end() ) {
+                        std::cout << "pp-" << (*in_rt_pair).first << std::endl;
+                        input_route_count = input_route_count + 1;
+                    } else {
+                        new_input_id = new_input_id + 1;
+                    }
                 }
-
-                input_offset = input_offset + 1;
             }
-
         }// binding route queue
     }
 
@@ -592,4 +592,5 @@ void PyMapper::printDot( std::string fileName, LlyrGraph< ProcessingElement* >* 
 }// namespace SST
 
 #endif // _PY_MAPPER_H
+
 

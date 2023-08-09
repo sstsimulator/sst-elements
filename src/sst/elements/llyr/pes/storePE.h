@@ -34,30 +34,6 @@ public:
     {
     }
 
-    virtual bool doSend()
-    {
-        uint32_t queueId;
-        LlyrData sendVal;
-        ProcessingElement* dstPe;
-
-        for(auto it = output_queue_map_.begin() ; it != output_queue_map_.end(); ++it ) {
-            queueId = it->first;
-            dstPe = it->second;
-
-            if( output_queues_->at(queueId)->data_queue_->size() > 0 ) {
-                output_->verbose(CALL_INFO, 8, 0, ">> Sending...%" PRIu32 "-%" PRIu32 " to %" PRIu32 "\n",
-                                processor_id_, queueId, dstPe->getProcessorId());
-
-                sendVal = output_queues_->at(queueId)->data_queue_->front();
-                output_queues_->at(queueId)->data_queue_->pop();
-
-                dstPe->pushInputQueue(dstPe->getInputQueueId(this->getProcessorId()), sendVal);
-            }
-        }
-
-        return true;
-    }
-
     virtual bool doReceive(LlyrData data)
     {
         output_->verbose(CALL_INFO, 8, 0, ">> Receive 0x%" PRIx64 "\n", uint64_t(data.to_ullong()));
@@ -96,7 +72,7 @@ public:
         }
 
         // FIXME check to see of there are any routing jobs -- should be able to do this without waiting to fire
-        doRouting( total_num_inputs );
+        bool routed = doRouting( total_num_inputs );
 
         //check to see if all of the input queues have data
         for( uint32_t i = 0; i < total_num_inputs; ++i) {
@@ -111,7 +87,16 @@ public:
         if( num_ready < num_inputs && num_ready > 0) {
             pending_op_ = 1;
         } else {
-            pending_op_ = 0;
+            pending_op_ = 0 | routed;
+        }
+
+        // make sure all of the output queues have room for new data
+        for( uint32_t i = 0; i < output_queues_->size(); ++i) {
+            // std::cout << " Queue " << i << " Size " << output_queues_->at(i)->data_queue_->size() << " Max " << queue_depth_ << std::endl;
+            if( output_queues_->at(i)->data_queue_->size() >= queue_depth_ && *output_queues_->at(i)->routing_arg_ == "" ) {
+                output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 " -- No room in output queue %" PRIu32 ", cannot fire\n", num_inputs, num_ready, i);
+                return false;
+            }
         }
 
         //if all inputs are available pull from queue and add to arg list
@@ -128,9 +113,6 @@ public:
                 }
             }
         }
-
-        // If data tokens in output queue then simulation cannot end
-        pending_op_ = 1;
 
         doStore(argList[0].to_ullong(), argList[1].to_ullong());
 
@@ -267,7 +249,7 @@ public:
             printOutputQueue();
         }
 
-        std::vector< LlyrData > argList;
+        std::vector< QueueData > argList(3);
         uint32_t num_ready = 0;
         uint32_t num_inputs = 0;
         uint32_t total_num_inputs = input_queues_->size();
@@ -280,7 +262,7 @@ public:
         }
 
         // FIXME check to see of there are any routing jobs -- should be able to do this without waiting to fire
-        doRouting( total_num_inputs );
+        bool routed = doRouting( total_num_inputs );
 
         //check to see if all of the input queues have data
         for( uint32_t i = 0; i < total_num_inputs; ++i ) {
@@ -291,12 +273,22 @@ public:
             }
         }
 
+        pending_op_ = 0 | routed;
         //if there are values waiting on any of the inputs (queue-0/-1 are not valid for stream_st), this PE could still fire
         for( uint32_t i = 2; i < total_num_inputs; ++i ) {
             if( input_queues_->at(i)->data_queue_->size() > 0 ) {
                 pending_op_ = 1;
             } else {
-                pending_op_ = 0;
+                pending_op_ = 0 | routed;
+            }
+        }
+
+        // make sure all of the output queues have room for new data
+        for( uint32_t i = 0; i < output_queues_->size(); ++i) {
+            // std::cout << " Queue " << i << " Size " << output_queues_->at(i)->data_queue_->size() << " Max " << queue_depth_ << std::endl;
+            if( output_queues_->at(i)->data_queue_->size() >= queue_depth_ && *output_queues_->at(i)->routing_arg_ == "" ) {
+                output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 " -- No room in output queue %" PRIu32 ", cannot fire\n", num_inputs, num_ready, i);
+                return false;
             }
         }
 
@@ -308,25 +300,33 @@ public:
             output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
             for( uint32_t i = 0; i < total_num_inputs; ++i) {
                 if( input_queues_->at(i)->argument_ > -1 ) {
-                    argList.push_back(input_queues_->at(i)->data_queue_->front());
-                    input_queues_->at(i)->forwarded_ = 0;
-                    input_queues_->at(i)->data_queue_->pop();
+                    if( input_queues_->at(i)->data_queue_->size() > 0 ) {
+                        argList[i].valid_ = 1;
+                        argList[i].data_  = input_queues_->at(i)->data_queue_->front();
+                        input_queues_->at(i)->forwarded_ = 0;
+                        input_queues_->at(i)->data_queue_->pop();
+                    } else {
+                        argList[i].valid_ = 0;
+                    }
                 }
             }
         }
 
-        // If data tokens in output queue then simulation cannot end
         pending_op_ = 1;
 
+        // STADDR: Takes a constant and a variable; constant is addr, variable is data
+        // STREAM_ST: Takes two constants and a variable; const0 is starting addr, const1 is number of stores, var is data
         //create the memory request
         if( op_binding_ == STADDR ) {
-            input_queues_->at(0)->data_queue_->push(LlyrData(argList[0].to_ullong()));
-            doStore(argList[0].to_ullong(), argList[1].to_ullong());
+            input_queues_->at(0)->data_queue_->push(LlyrData(argList[0].data_.to_ullong()));
+            doStore(argList[0].data_.to_ullong(), argList[1].data_.to_ullong());
         } else if( op_binding_ == STREAM_ST ) {
-            if( argList[1].to_ullong() > 0 ) {
-                input_queues_->at(0)->data_queue_->push(LlyrData(argList[0].to_ullong() + (Bit_Length / 8) ));
-                input_queues_->at(1)->data_queue_->push(LlyrData(argList[1].to_ullong() - 1));
-                doStore(argList[0].to_ullong(), argList[1].to_ullong());
+            if( argList[2].valid_ == 1 ) {
+                if( argList[1].data_.to_ullong() >= 0 ) {
+                    input_queues_->at(0)->data_queue_->push(LlyrData(argList[0].data_.to_ullong() + (Bit_Length / 8) ));
+                    input_queues_->at(1)->data_queue_->push(LlyrData(argList[1].data_.to_ullong() - 1));
+                    doStore(argList[0].data_.to_ullong(), argList[2].data_.to_ullong());
+                }
             }
         } else {
             output_->fatal(CALL_INFO, -1, "Error: could not find corresponding op-%" PRIu32 ".\n", op_binding_);
