@@ -18,9 +18,9 @@
 #include <sst/core/link.h>
 #include "sst/elements/memHierarchy/util.h"
 #include "membackend/MessierBackend.h"
-#include "sst/elements/Messier/NVM_Request.h"
+#include "sst/elements/messier/nvm_request.h"
 
-#include "sst/elements/Messier/memReqEvent.h"
+#include "sst/elements/messier/memReqEvent.h"
 
 #include "membackend/memBackend.h"
 

@@ -10,25 +10,10 @@
 // distribution.
 //
 
-
-//
-/* Author: Amro Awad
- * E-mail: aawad@sandia.gov
- */
-
-
-/*
-#include <sst_config.h>
-#include <sst/core/component.h>
-#include <sst/core/timeConverter.h>
-#include <sst/elements/memHierarchy/memEvent.h>
-*/
-
-#include<map>
+#include <map>
 #include <cstddef>
-#include<vector>
-#include "WriteBuffer.h"
-
+#include <vector>
+#include "writeBuffer.h"
 
 using namespace SST;
 using namespace SST::MessierComponent;

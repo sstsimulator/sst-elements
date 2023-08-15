@@ -11,28 +11,24 @@
 //
 
 
-//
-/* Author: Amro Awad
- * E-mail: aawad@sandia.gov
- */
-
 #ifndef _H_SST_NVM_DIMM
 #define _H_SST_NVM_DIMM
-
 
 #include <sst_config.h>
 #include <sst/core/componentExtension.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/link.h>
 #include <sst/elements/memHierarchy/memEvent.h>
+
 #include <map>
 #include <list>
-#include "Rank.h"
-#include "WriteBuffer.h"
-#include "NVM_Params.h"
-#include "NVM_Request.h"
+
+#include "rank.h"
+#include "writeBuffer.h"
+#include "nvm_params.h"
+#include "nvm_request.h"
 #include "memReqEvent.h"
-#include "Cache.h"
+#include "cache.h"
 
 using namespace SST;
 using namespace SST::MessierComponent;

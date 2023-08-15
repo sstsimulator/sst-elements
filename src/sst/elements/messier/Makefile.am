@@ -11,20 +11,20 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libMessier.la
 
 libMessier_la_SOURCES = \
-	Cache.h \
+	cache.h \
 	libMessier.cpp \
 	memReqEvent.h \
-	Messier.cc \
-	Messier.h \
-	Bank.h \
-	Rank.h \
-        Messier_Event.h \
-	WriteBuffer.h \
-	WriteBuffer.cc \
-	NVM_Request.h \
-	NVM_DIMM.h \
-	NVM_DIMM.cc \
-	NVM_Params.h
+	messier.cc \
+	messier.h \
+	bank.h \
+	rank.h \
+        messier_event.h \
+	writeBuffer.h \
+	writeBuffer.cc \
+	nvm_request.h \
+	nvm_dimm.h \
+	nvm_dimm.cc \
+	nvm_params.h
 
 libMessier_la_LDFLAGS = \
 	-avoid-version
@@ -44,16 +44,6 @@ EXTRA_DIST = \
 	tests/refFiles/test_Messier_gupsgen_fastNVM.out \
 	tests/refFiles/test_Messier_stencil3dbench_messier.out \
 	tests/refFiles/test_Messier_streambench_messier.out
-
-#noinst_PROGRAMS = infogather
-#infogather_SOURCES = infogather.cc
-#infogather_CPPFLAGS = -I/usr/local/systemc-2.3/include \
-#											-std=c++11 -fPIC -Wall \
-#											$(MPI_CPPFLAGS)
-#infogather_LDFLAGS =  -L/usr/local/systemc-2.3/lib-linux64/ -lsystemc \
-#											-lhmcsim \
-#										 	-avoid-version
-#infogather_LDADD = libhmcsim.so
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     Messier=$(abs_srcdir)
