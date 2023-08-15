@@ -81,6 +81,8 @@ void agileIOconsumer::init()
 bool
 agileIOconsumer::generate(std::queue<EmberEvent*>& evQ)
 {
+  evQ_ = &evQ;
+
   switch (kind) {
     case Green:
       break;
