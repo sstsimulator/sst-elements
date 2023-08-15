@@ -29,7 +29,7 @@ class agileIOconsumer : public EmberMessagePassingGenerator
   agileIOconsumer(SST::ComponentId_t id, Params& prms);
   ~agileIOconsumer() override = default;
 
-  void init();
+  void setup() override;
 
   bool generate(std::queue<EmberEvent*>& evQ) override;
   void read_request();

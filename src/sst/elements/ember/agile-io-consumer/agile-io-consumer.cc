@@ -63,7 +63,7 @@ agileIOconsumer::agileIOconsumer(SST::ComponentId_t id, Params& prms) : EmberMes
   }
 }
 
-void agileIOconsumer::init()
+void agileIOconsumer::setup()
 {
   rank_ = EmberMessagePassingGenerator::rank();
 
@@ -127,12 +127,13 @@ void agileIOconsumer::broadcast_and_receive(const long &total_request_size,
     for (int i = 0; i < ionodes.size(); i++) {
       // send( Queue& q, Addr payload, uint32_t count, PayloadDataType dtype,
       // RankID dest, uint32_t tag, Communicator group)
+      char buffer[100];
       std::stringstream sstream;
       sstream << "file_request: " << total_request_size << " " << rank_;
-      auto payload_string = sstream.str();
-      auto payload = payload_string.data();
-      auto len = strlen(payload);
-      enQ_send(evQ, payload, len, CHAR, ionodes[i], 0, GroupWorld);
+      std::string payload_string = sstream.str();
+      auto len = payload_string.copy(buffer, payload_string.length());
+      buffer[len] = '\0';
+      enQ_send(evQ, buffer, len, CHAR, ionodes[i], 0, GroupWorld);
       enQ_recv(evQ, recvBuf[i], total_request_size / ionodes.size(), CHAR, MPI_ANY_SOURCE, 0, GroupWorld);
     }
 }
