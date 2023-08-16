@@ -13,11 +13,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-/* Author: Vamsee Reddy Kommareddy
- * E-mail: vamseereddy8@knights.ucf.edu
- */
-
-
 #ifndef _H_SAMBA_PAGE_FAULT_HANDLER
 #define _H_SAMBA_PAGE_FAULT_HANDLER
 

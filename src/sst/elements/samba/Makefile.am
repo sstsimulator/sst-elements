@@ -12,19 +12,19 @@ comp_LTLIBRARIES = libSamba.la
 libSamba_la_SOURCES = \
 	libSamba.cc \
 	utils.h \
-	Samba_Event.h \
-	Samba.cc \
-	Samba.h \
-	TLBUnit.cc \
-	TLBUnit.h \
-	TLBentry.h \
-	TLBhierarchy.h \
-	TLBhierarchy.cc \
-	PageTableWalker.h \
-	PageTableWalker.cc \
-	PageFaultHandler.h \
-	SimpleTLB.cc \
-	SimpleTLB.h 
+	samba_event.h \
+	samba.cc \
+	samba.h \
+	tlb_unit.cc \
+	tlb_unit.h \
+	tlb_enty.h \
+	tlb_hierarchy.h \
+	tlb_hierarchy.cc \
+	page_tble_walker.h \
+	page_table_walker.cc \
+	page_fault_handler.h \
+	simple_tlb.cc \
+	simple_tlb.h 
 
 libSamba_la_LDFLAGS = \
 	-lm \
