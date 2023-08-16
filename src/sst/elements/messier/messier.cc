@@ -11,17 +11,11 @@
 //
 
 
-//
-/* Author: Amro Awad
- * E-mail: aawad@sandia.gov
- */
-
-
-
 #include <sst_config.h>
 #include <string>
-#include "Messier.h"
-#include "Messier_Event.h"
+
+#include "messier.h"
+#include "messier_event.h"
 
 using namespace SST::Interfaces;
 using namespace SST;
@@ -114,14 +108,6 @@ void Messier::parser(NVM_PARAMS * nvm, SST::Params& params)
 		nvm->adaptive_writes = false;
 
 
-	// Skipe it for now
-	//	clock = D.clock;
-
-	//memory_clock = D.clock;
-
-	//io_clock = D.io_clock;;
-
-
 	nvm->tCMD = (uint32_t) params.find<uint32_t>("tCMD", 1); ;
 
 	nvm->tCL = (uint32_t) params.find<uint32_t>("tCL", 70); ;
@@ -159,20 +145,14 @@ Messier::Messier(SST::ComponentId_t id, SST::Params& params): Component(id) {
 	char* link_buffer = (char*) malloc(sizeof(char) * 256);
         size_t buffer_size = sizeof(char) * 256;
 
-//	m_memChan = configureLink( "bus", "1 ns" );
-
 	snprintf(link_buffer, buffer_size, "bus");
 
 
-       //m_memChan = configureLink(link_buffer, "0ps", new Event::Handler<TLBhierarchy>(TLB[i], &TLBhierarchy::handleEvent_CPU));
-
 	nvm_params = new NVM_PARAMS();
 
-	// This converts the sst paramters into an object of NVM_PARAMS, used to instantiate NVM_DIMM
 	parser(nvm_params, params);
 
 
-	// Instantiating the NVM-DIMM with the provided parameters
 	DIMM = loadComponentExtension<NVM_DIMM>(*nvm_params);
 
         m_memChan = configureLink(link_buffer, "1ns", new Event::Handler<NVM_DIMM>(DIMM, &NVM_DIMM::handleRequest));

@@ -11,25 +11,21 @@
 //
 
 
-//
-/* Author: Amro Awad
- * E-mail: aawad@sandia.gov
- */
-
-
 #include <sst_config.h>
 #include <sst/core/component.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/link.h>
 #include <sst/elements/memHierarchy/memEvent.h>
-#include<map>
+
+#include <map>
 #include <cstddef>
-#include<iostream>
-#include<list>
-#include "Rank.h"
-#include "WriteBuffer.h"
-#include "NVM_DIMM.h"
-#include "Messier_Event.h"
+#include <iostream>
+#include <list>
+
+#include "rank.h"
+#include "writeBuffer.h"
+#include "nvm_dimm.h"
+#include "messier_event.h"
 #include "memReqEvent.h"
 
 using namespace SST::MemHierarchy;

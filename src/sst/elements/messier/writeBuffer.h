@@ -10,23 +10,18 @@
 // distribution.
 //
 
-
-//
-/* Author: Amro Awad
- * E-mail: aawad@sandia.gov
- */
-
 #ifndef _H_SST_NVM_WB
 #define _H_SST_NVM_WB
-
 
 #include <sst_config.h>
 #include <sst/core/component.h>
 #include <sst/core/timeConverter.h>
 #include <sst/elements/memHierarchy/memEvent.h>
-#include<map>
-#include<list>
-#include "NVM_Request.h"
+
+#include <map>
+#include <list>
+
+#include "nvm_request.h"
 
 using namespace SST;
 

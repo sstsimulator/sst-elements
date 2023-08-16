@@ -11,22 +11,18 @@
 //
 
 
-//
-/* Author: Amro Awad
- * E-mail: aawad@sandia.gov
- */
-
 #ifndef _H_SST_NVM_RANK
 #define _H_SST_NVM_RANK
-
 
 #include <sst_config.h>
 #include <sst/core/component.h>
 #include <sst/core/timeConverter.h>
 #include <sst/elements/memHierarchy/memEvent.h>
-#include<map>
-#include<list>
-#include "Bank.h"
+
+#include <map>
+#include <list>
+
+#include "bank.h"
 // Defines the state of the bank
 
 // This class structure represents NVM memory Bank
