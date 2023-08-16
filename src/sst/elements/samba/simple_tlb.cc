@@ -10,27 +10,18 @@
 // distribution.
 //
 
-/* Author: Janet Vorobyeva
- * E-mail: jvoroby@sandia.gov
- */
-
-
 
 #include <sst_config.h>
-#include "SimpleTLB.h"
+#include "simple_tlb.h"
 
-//#include <string>
 
 using namespace SST::Interfaces;
 using namespace SST;
 using namespace SST::SambaComponent;
 
-#include <sst/elements/memHierarchy/memEventBase.h>
-#include <sst/elements/memHierarchy/memEvent.h>
 using SST::MemHierarchy::MemEventBase;
 using SST::MemHierarchy::MemEvent;
 using SST::MemHierarchy::Addr;
-#include <sst/elements/memHierarchy/util.h>
 
 
 // VERBOSITIES (using definitions from memHierarchy/util.h

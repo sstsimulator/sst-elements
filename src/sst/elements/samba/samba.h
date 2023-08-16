@@ -10,12 +10,6 @@
 // distribution.
 
 
-/* Author: Amro Awad
- * E-mail: aawad@sandia.gov
- */
-
-
-
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
 #include <sst/core/component.h>
@@ -35,12 +29,11 @@
 #include <stdint.h>
 #include <poll.h>
 
-#include "TLBhierarchy.h"
-#include "PageTableWalker.h"
-#include "PageFaultHandler.h"
+#include "tlb_hierarchy.h"
+#include "page_table_walker.h"
+#include "page_fault_handler.h"
 #include <sst/elements/memHierarchy/memEventBase.h>
 
-//#include "arielcore.h"
 
 using namespace std;
 

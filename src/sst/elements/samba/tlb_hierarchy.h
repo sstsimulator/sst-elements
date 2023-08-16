@@ -10,11 +10,6 @@
 // distribution.
 //
 
-/* Author: Amro Awad
- * E-mail: aawad@sandia.gov
- */
-
-
 
 #ifndef _H_SST_TLBSTRUCTURE
 #define _H_SST_TLBSTRUCTURE
@@ -27,15 +22,15 @@
 #include <sst/core/output.h>
 #include <sst/core/interfaces/simpleMem.h>
 
-#include<string>
+#include <string>
 
 #include "utils.h"
-#include "TLBentry.h"
-#include "TLBUnit.h"
-#include "PageTableWalker.h"
+#include "tlb_entry.h"
+#include "tlb_unit.h"
+#include "page_table_walker.h"
 
-#include<map>
-#include<vector>
+#include <map>
+#include <vector>
 
 
 // This is going to define the Samba/TLB Hierarchy for each core

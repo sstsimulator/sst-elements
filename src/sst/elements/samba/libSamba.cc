@@ -9,18 +9,14 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-/* Author: Amro Awad
- * E-mail: aawad@sandia.gov
-*/
-
 
 #include <sst_config.h>
 
 #include "sst/core/component.h"
 
-#include "Samba.h"
-#include "TLBhierarchy.h"
-#include<iostream>
+#include "samba.h"
+#include "tlb_hierarchy.h"
+#include <iostream>
 
 using namespace SST;
 using namespace SST::SambaComponent;

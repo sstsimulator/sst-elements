@@ -10,15 +10,10 @@
 // distribution.
 //
 
-/* Author: Amro Awad
- * E-mail: aawad@sandia.gov
- */
-
-
 
 #include <sst_config.h>
 #include <string>
-#include "Samba.h"
+#include "samba.h"
 
 
 using namespace SST::Interfaces;

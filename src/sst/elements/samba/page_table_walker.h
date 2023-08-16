@@ -10,11 +10,6 @@
 // distribution.
 //
 
-/* Author: Amro Awad
- * E-mail: aawad@sandia.gov
- */
-
-
 #ifndef _H_SST_PTW
 #define _H_SST_PTW
 
@@ -25,12 +20,12 @@
 #include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/link.h>
 #include <sst/core/event.h>
-#include<map>
-#include<vector>
+#include <map>
+#include <vector>
 #include <sst/core/sst_types.h>
 
 #include "utils.h"
-#include "PageFaultHandler.h"
+#include "page_fault_handler.h"
 
 // This file defines the page table walker and
 

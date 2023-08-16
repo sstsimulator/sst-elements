@@ -20,7 +20,7 @@
 #include <sst/core/component.h>
 #include <sst/core/output.h>
 
-#include "sst/elements/Samba/PageFaultHandler.h"
+#include "sst/elements/samba/page_fault_handler.h"
 
 #include <stdint.h>
 #include <deque>
