@@ -11,22 +11,17 @@
 //
 
 
-//
-/* Author: Amro Awad
- * E-mail: aawad@sandia.gov
- */
-
 #ifndef _H_SST_MESSIER_EVENT
 #define _H_SST_MESSIER_EVENT
-
 
 #include <sst_config.h>
 #include <sst/core/component.h>
 #include <sst/core/timeConverter.h>
 #include <sst/elements/memHierarchy/memEvent.h>
-#include "NVM_Request.h"
-#include<map>
-#include<list>
+#include "nvm_request.h"
+
+#include <map>
+#include <list>
 
 
 using namespace SST;

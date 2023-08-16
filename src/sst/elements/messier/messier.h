@@ -10,13 +10,6 @@
 // distribution.
 //
 
-
-/* Author: Amro Awad
- * E-mail: aawad@sandia.gov
- */
-
-
-
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
 #include <sst/core/component.h>
@@ -36,8 +29,8 @@
 #include <stdint.h>
 #include <poll.h>
 
-#include "NVM_Params.h"
-#include "NVM_DIMM.h"
+#include "nvm_params.h"
+#include "nvm_dimm.h"
 
 
 using namespace std;
