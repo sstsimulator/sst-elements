@@ -13,15 +13,15 @@ comp_LTLIBRARIES = libOpal.la
 libOpal_la_SOURCES = \
 	mempool.h \
 	mempool.cc \
-	Opal.cc \
-	Opal.h \
-        Opal_Event.h \
+	opal.cc \
+	opal.h \
+        opal_event.h \
 	arielmemmgr_opal.cc \
 	arielmemmgr_opal.h \
 	opalMemNIC.cc \
 	opalMemNIC.h \
-	PageFaultHandler.cc \
-	PageFaultHandler.h
+	page_fault_handler.cc \
+	page_fault_handler.h
 
 libOpal_la_LDFLAGS = \
 	-avoid-version

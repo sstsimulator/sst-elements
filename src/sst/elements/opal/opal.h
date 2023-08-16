@@ -10,14 +10,6 @@
 // distribution.
 //
 
-
-/* Author: Amro Awad
- * E-mail: amro.awad@ucf.edu
- */
-/* Author: Vamsee Reddy Kommareddy
- * E-mail: vamseereddy@knights.ucf.edu
- */
-
 #include <cstring>
 #include <string>
 #include <fstream>
@@ -37,7 +29,7 @@
 #include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/output.h>
 
-#include "Opal_Event.h"
+#include "opal_event.h"
 #include "mempool.h"
 
 using namespace SST;
