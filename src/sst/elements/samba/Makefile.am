@@ -20,7 +20,7 @@ libSamba_la_SOURCES = \
 	tlb_entry.h \
 	tlb_hierarchy.h \
 	tlb_hierarchy.cc \
-	page_tble_walker.h \
+	page_table_walker.h \
 	page_table_walker.cc \
 	page_fault_handler.h \
 	simple_tlb.cc \
