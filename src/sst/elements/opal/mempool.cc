@@ -10,14 +10,6 @@
 // distribution.
 //
 
-
-/* Author: Amro Awad
- * E-mail: amro.awad@ucf.edu
- */
-/* Author: Vamsee Reddy Kommareddy
- * E-mail: vamseereddy@knights.ucf.edu
- */
-
 #include <sst_config.h>
 
 #include "mempool.h"

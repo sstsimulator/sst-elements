@@ -19,8 +19,8 @@
 
 #include <sst_config.h>
 
-#include "PageFaultHandler.h"
-#include "Opal_Event.h"
+#include "page_fault_handler.h"
+#include "opal_event.h"
 
 #include <sst/core/link.h>
 

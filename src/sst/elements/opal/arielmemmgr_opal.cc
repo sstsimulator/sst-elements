@@ -15,7 +15,7 @@
 
 #include <sst_config.h>
 #include "arielmemmgr_opal.h"
-#include "Opal_Event.h"
+#include "opal_event.h"
 
 #include <sst/core/link.h>
 

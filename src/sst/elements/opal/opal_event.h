@@ -10,15 +10,6 @@
 // distribution.
 //
 
-
-//
-/* Author: Amro Awad
- * E-mail: aawad@sandia.gov
- */
-/* Author: Vamsee Reddy Kommareddy
- * E-mail: vamseereddy@knights.ucf.edu
- */
-
 #ifndef _H_SST_OPAL_EVENT
 #define _H_SST_OPAL_EVENT
 
