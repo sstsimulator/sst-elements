@@ -17,7 +17,7 @@ libSamba_la_SOURCES = \
 	samba.h \
 	tlb_unit.cc \
 	tlb_unit.h \
-	tlb_enty.h \
+	tlb_entry.h \
 	tlb_hierarchy.h \
 	tlb_hierarchy.cc \
 	page_tble_walker.h \
