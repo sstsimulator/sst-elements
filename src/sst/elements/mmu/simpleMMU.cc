@@ -39,7 +39,14 @@ SimpleMMU::SimpleMMU(SST::ComponentId_t id, SST::Params& params) : MMU(id,params
 
 void SimpleMMU::handleNicTlbEvent( Event* ev ) 
 {
+    if( dynamic_cast<TlbFlushRespEvent*>(ev) ) {
+        // we currently don't do anything with the response because there are no race conditions?
+        delete ev;
+        return;
+    }
+
     auto req = dynamic_cast<TlbMissEvent*>(ev);
+    assert(req);
     auto link = -1;
     auto core = 0;
     auto hwThread = 0;
@@ -125,6 +132,9 @@ void SimpleMMU::flushTlb( unsigned core, unsigned hwThread ) {
     m_dbg.debug(CALL_INFO_LONG,1,0,"core=%d hwThread=%d\n",core,hwThread);
 //    sendEvent( getLink(core,"itlb"), new TlbFlushEvent( hwThread ) );
     sendEvent( getLink(core,"dtlb"), new TlbFlushReqEvent( hwThread ) );
+    if ( m_nicTlbLink ) {
+        m_nicTlbLink->send(0,new TlbFlushReqEvent( hwThread ) );
+    }
 } 
 
 void SimpleMMU::faultHandled( RequestID requestId, unsigned link, unsigned pid, unsigned vpn, bool success ) {
