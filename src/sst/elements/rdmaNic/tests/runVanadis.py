@@ -2,6 +2,7 @@ import sst
 from sst.merlin import *
 
 import node as node
+import os
 
 debugPython=False
 
@@ -35,9 +36,9 @@ sst.merlin._params["input_latency"] = networkParams['input_latency']
 sst.merlin._params["output_latency"] = networkParams['output_latency']
 sst.merlin._params["input_buf_size"] = networkParams['input_buf_size']
 sst.merlin._params["output_buf_size"] = networkParams['output_buf_size']
-sst.merlin._params["num_dims"] = "1"
-sst.merlin._params["torus.shape"] = "2"
-sst.merlin._params["torus.width"] = "1"
+sst.merlin._params["num_dims"] = "2"
+sst.merlin._params["torus.shape"] = os.getenv("RDMANIC_NETWORK_SHAPE", "2x1" )
+sst.merlin._params["torus.width"] = "1x1"
 #sst.merlin._params["num_dims"] = "3"
 #sst.merlin._params["torus:shape"] = "1x2"
 #sst.merlin._params["torus:width"] = "1x1"
@@ -46,7 +47,7 @@ sst.merlin._params["torus.local_ports"] = "1"
 topo = topoTorus()
 topo.prepParams()
 
-ep = node.Endpoint( 2 )
+ep = node.Endpoint( int( os.getenv("RDMANIC_NUMNODES", 2) ) )
 
 def setNode( nodeId ):
     return ep;
