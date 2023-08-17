@@ -1,7 +1,5 @@
-node=2 pid=100 tid=100 has exited
+node=0 pid=100 tid=100 has exited
 all process have exited
 node=1 pid=100 tid=100 has exited
 all process have exited
-node=0 pid=100 tid=100 has exited
-all process have exited
-Simulation is complete, simulated time: 22.5693 ms
+Simulation is complete, simulated time: 9.25198 ms

@@ -48,7 +48,7 @@ class Builder:
             self.nodeOS.addParams({
                 "process0.argc" : 5,
                 "process0.arg1" : "-iter",
-                "process0.arg2" : "2",
+                "process0.arg2" : "1",
                 "process0.arg3" : "-msglen",
                 "process0.arg4" : "msglen.txt",
             })

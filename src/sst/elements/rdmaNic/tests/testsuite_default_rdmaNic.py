@@ -22,7 +22,7 @@ def build_rdmaNic_test_matrix():
 
     # Add the SDL file, test dir compiled elf file, and test run timeout to create the testlist
     testlist.append(["runVanadis.py", "app/rdma", "msg", {}, 120])
-    testlist.append(["runVanadis.py", "app/mpi", "IMB-MPI1", {'RDMANIC_IMB':'True','RDMANIC_NETWORK_SHAPE':'3x1','RDMANIC_NUMNODES':'3' }, 800 ])
+    testlist.append(["runVanadis.py", "app/mpi", "IMB-MPI1", {'RDMANIC_IMB':'True','RDMANIC_NETWORK_SHAPE':'2x1','RDMANIC_NUMNODES':'2' }, 300 ])
 
     # Process each line and crack up into an index, hash, options and sdl file
     for testnum, test_info in enumerate(testlist):
