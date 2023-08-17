@@ -10,10 +10,6 @@
 // distribution.
 //
 
-/* Author: Amro Awad
- * E-mail: aawad@sandia.gov
- */
-
 #ifndef _H_SST_TLB
 #define _H_SST_TLB
 
@@ -21,7 +17,7 @@
 #include <sst/core/componentExtension.h>
 #include <sst/core/timeConverter.h>
 #include <sst/elements/memHierarchy/memEvent.h>
-#include "PageTableWalker.h"
+#include "page_table_walker.h"
 #include <map>
 #include <vector>
 #include "utils.h"

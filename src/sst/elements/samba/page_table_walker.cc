@@ -10,15 +10,11 @@
 // distribution.
 //
 
-/* Author: Amro Awad
- * E-mail: aawad@sandia.gov
- */
-
 #include <sst_config.h>
-#include "PageTableWalker.h"
+#include "page_table_walker.h"
 #include <sst/core/link.h>
-#include "Samba_Event.h"
-#include<iostream>
+#include "samba_event.h"
+#include <iostream>
 
 using namespace SST::SambaComponent;
 using namespace SST::MemHierarchy;

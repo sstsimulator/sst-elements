@@ -10,18 +10,8 @@
 // distribution.
 //
 
-
-//
-/* Author: Amro Awad
- * E-mail: aawad@sandia.gov
- */
-/* Author: Vamsee Reddy Kommareddy
- * E-mail: vamseereddy@knights.ucf.edu
- */
-
-
 #include <sst_config.h>
-#include "Opal.h"
+#include "opal.h"
 
 #include <string>
 #include <iostream>

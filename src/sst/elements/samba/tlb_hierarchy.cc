@@ -13,7 +13,7 @@
 
 #include <sst_config.h>
 
-#include "TLBhierarchy.h"
+#include "tlb_hierarchy.h"
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>

@@ -10,13 +10,8 @@
 // distribution.
 //
 
-/* Author: Amro Awad
- * E-mail: aawad@sandia.gov
- */
-
 #include <sst_config.h>
-#include "TLBUnit.h"
-
+#include "tlb_unit.h"
 
 #include<iostream>
 
