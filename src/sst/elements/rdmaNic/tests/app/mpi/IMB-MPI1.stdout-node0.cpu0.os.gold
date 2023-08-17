@@ -1,0 +1,289 @@
+main() enter
+#----------------------------------------------------------------
+#    Intel(R) MPI Benchmarks 2018, MPI-1 part
+#----------------------------------------------------------------
+# Date                  : Thu Jan  1 00:00:01 1970
+# Machine               : riscv64
+# System                : Linux
+# Release               : 4.19.136
+# Version               : #1 Wed Sep 2 23:59:59 MST 2020
+# MPI Version           : 3.1
+# MPI Thread Environment: 
+
+
+# Calling sequence was: 
+
+# IMB-MPI1 -iter 2 -msglen msglen.txt
+
+# Message lengths were user defined
+#
+# MPI_Datatype                   :   MPI_BYTE 
+# MPI_Datatype for reductions    :   MPI_FLOAT
+# MPI_Op                         :   MPI_SUM  
+#
+#
+
+# List of Benchmarks to run:
+
+# PingPong
+# PingPing
+# Sendrecv
+# Exchange
+# Allreduce
+# Reduce
+# Reduce_scatter
+# Allgather
+# Allgatherv
+# Gather
+# Gatherv
+# Scatter
+# Scatterv
+# Alltoall
+# Alltoallv
+# Bcast
+# Barrier
+
+#---------------------------------------------------
+# Benchmarking PingPong 
+# #processes = 2 
+# ( 1 additional process waiting in MPI_Barrier)
+#---------------------------------------------------
+       #bytes #repetitions      t[usec]   Mbytes/sec
+            1            2         6.59         0.15
+
+#---------------------------------------------------
+# Benchmarking PingPing 
+# #processes = 2 
+# ( 1 additional process waiting in MPI_Barrier)
+#---------------------------------------------------
+       #bytes #repetitions      t[usec]   Mbytes/sec
+            1            2         9.37         0.11
+
+#-----------------------------------------------------------------------------
+# Benchmarking Sendrecv 
+# #processes = 2 
+# ( 1 additional process waiting in MPI_Barrier)
+#-----------------------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]   Mbytes/sec
+            1            2         8.44         8.48         8.46         0.24
+
+#-----------------------------------------------------------------------------
+# Benchmarking Sendrecv 
+# #processes = 3 
+#-----------------------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]   Mbytes/sec
+            1            2         8.41         8.52         8.46         0.23
+
+#-----------------------------------------------------------------------------
+# Benchmarking Exchange 
+# #processes = 2 
+# ( 1 additional process waiting in MPI_Barrier)
+#-----------------------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]   Mbytes/sec
+            1            2        17.75        18.16        17.96         0.22
+
+#-----------------------------------------------------------------------------
+# Benchmarking Exchange 
+# #processes = 3 
+#-----------------------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]   Mbytes/sec
+            1            2        17.80        18.13        18.01         0.22
+
+#----------------------------------------------------------------
+# Benchmarking Allreduce 
+# #processes = 2 
+# ( 1 additional process waiting in MPI_Barrier)
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            4            2        11.26        11.27        11.27
+
+#----------------------------------------------------------------
+# Benchmarking Allreduce 
+# #processes = 3 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            4            2        21.40        24.54        23.02
+
+#----------------------------------------------------------------
+# Benchmarking Reduce 
+# #processes = 2 
+# ( 1 additional process waiting in MPI_Barrier)
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            4            2         7.63         9.01         8.32
+
+#----------------------------------------------------------------
+# Benchmarking Reduce 
+# #processes = 3 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            4            2         7.63        13.43         9.68
+
+#----------------------------------------------------------------
+# Benchmarking Reduce_scatter 
+# #processes = 2 
+# ( 1 additional process waiting in MPI_Barrier)
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            4            2        10.65        12.84        11.75
+
+#----------------------------------------------------------------
+# Benchmarking Reduce_scatter 
+# #processes = 3 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            4            2        11.00        23.15        18.31
+
+#----------------------------------------------------------------
+# Benchmarking Allgather 
+# #processes = 2 
+# ( 1 additional process waiting in MPI_Barrier)
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            2         9.68         9.74         9.71
+
+#----------------------------------------------------------------
+# Benchmarking Allgather 
+# #processes = 3 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            2        19.18        19.33        19.26
+
+#----------------------------------------------------------------
+# Benchmarking Allgatherv 
+# #processes = 2 
+# ( 1 additional process waiting in MPI_Barrier)
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            2        12.07        12.07        12.07
+
+#----------------------------------------------------------------
+# Benchmarking Allgatherv 
+# #processes = 3 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            2        20.01        20.11        20.06
+
+#----------------------------------------------------------------
+# Benchmarking Gather 
+# #processes = 2 
+# ( 1 additional process waiting in MPI_Barrier)
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            2         6.71         7.72         7.21
+
+#----------------------------------------------------------------
+# Benchmarking Gather 
+# #processes = 3 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            2         6.71        12.76         8.73
+
+#----------------------------------------------------------------
+# Benchmarking Gatherv 
+# #processes = 2 
+# ( 1 additional process waiting in MPI_Barrier)
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            2         5.13         8.48         6.81
+
+#----------------------------------------------------------------
+# Benchmarking Gatherv 
+# #processes = 3 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            2         5.13        12.93         7.73
+
+#----------------------------------------------------------------
+# Benchmarking Scatter 
+# #processes = 2 
+# ( 1 additional process waiting in MPI_Barrier)
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            2         5.75         7.10         6.42
+
+#----------------------------------------------------------------
+# Benchmarking Scatter 
+# #processes = 3 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            2         8.86        10.99         9.82
+
+#----------------------------------------------------------------
+# Benchmarking Scatterv 
+# #processes = 2 
+# ( 1 additional process waiting in MPI_Barrier)
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            2         8.52         8.75         8.63
+
+#----------------------------------------------------------------
+# Benchmarking Scatterv 
+# #processes = 3 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            2         9.99        12.24        11.47
+
+#----------------------------------------------------------------
+# Benchmarking Alltoall 
+# #processes = 2 
+# ( 1 additional process waiting in MPI_Barrier)
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            2        17.95        18.22        18.08
+
+#----------------------------------------------------------------
+# Benchmarking Alltoall 
+# #processes = 3 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            2        25.64        25.87        25.73
+
+#----------------------------------------------------------------
+# Benchmarking Alltoallv 
+# #processes = 2 
+# ( 1 additional process waiting in MPI_Barrier)
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            2        18.53        18.70        18.61
+
+#----------------------------------------------------------------
+# Benchmarking Alltoallv 
+# #processes = 3 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            2        26.31        26.56        26.43
+
+#----------------------------------------------------------------
+# Benchmarking Bcast 
+# #processes = 2 
+# ( 1 additional process waiting in MPI_Barrier)
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            2         5.41         7.14         6.28
+
+#----------------------------------------------------------------
+# Benchmarking Bcast 
+# #processes = 3 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            2         8.04        10.87         9.38
+
+#---------------------------------------------------
+# Benchmarking Barrier 
+# #processes = 2 
+# ( 1 additional process waiting in MPI_Barrier)
+#---------------------------------------------------
+ #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            2         7.87         7.97         7.92
+
+#---------------------------------------------------
+# Benchmarking Barrier 
+# #processes = 3 
+#---------------------------------------------------
+ #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            2        14.96        15.06        15.02
+
+
+# All processes entering MPI_Finalize
+
