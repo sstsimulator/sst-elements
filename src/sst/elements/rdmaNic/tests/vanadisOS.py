@@ -26,7 +26,8 @@ class Builder:
         self.nodeOS = sst.Component(self.prefix + ".os", "vanadis.VanadisNodeOS")
         self.nodeOS.addParams({
             "nodeId": nodeId,
-            "verbose" : os_verbosity,
+            "dbgLevel" : os_verbosity,
+            "dbgMask" : -1,
             "cores" : 1,
             "nodeNum" : nodeId,
             "hardwareThreadCount" : 1,
@@ -34,10 +35,13 @@ class Builder:
             "heap_end"   : (2 * 1024 * 1024 * 1024) - 4096,
             "page_size"  : 4096,
             "heap_verbose" : 0, #verbosity
-            "process0.env_count" : 2,
+            "process0.env_count" : 3,
+            # MUSL libc uses this in localtime, if we don't set it we 
+            # can get different results on different systems
+            "process0.env0" : "TZ=UTC",
             # for mvapich runtime
-            "process0.env0" : "PMI_SIZE=" + str(numNodes),
-            "process0.env1" : "PMI_RANK=" + str(nodeId),
+            "process0.env1" : "PMI_SIZE=" + str(numNodes),
+            "process0.env2" : "PMI_RANK=" + str(nodeId),
             "process0.exe" : full_exe_name,
             "process0.arg0" : exe_name,
             "physMemSize" : physMemSize,
