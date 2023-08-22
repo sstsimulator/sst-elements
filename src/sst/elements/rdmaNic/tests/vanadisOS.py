@@ -26,7 +26,7 @@ class Builder:
         self.nodeOS = sst.Component(self.prefix + ".os", "vanadis.VanadisNodeOS")
         self.nodeOS.addParams({
             "nodeId": nodeId,
-            "dbgLevel" : os_verbosity,
+            "dbgLevel" : 16,#os_verbosity,
             "dbgMask" : -1,
             "cores" : 1,
             "nodeNum" : nodeId,
