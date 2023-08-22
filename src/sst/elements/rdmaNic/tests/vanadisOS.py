@@ -26,7 +26,7 @@ class Builder:
         self.nodeOS = sst.Component(self.prefix + ".os", "vanadis.VanadisNodeOS")
         self.nodeOS.addParams({
             "nodeId": nodeId,
-            "dbgLevel" : 16,#os_verbosity,
+            "dbgLevel" : os_verbosity,
             "dbgMask" : -1,
             "cores" : 1,
             "nodeNum" : nodeId,
@@ -50,11 +50,13 @@ class Builder:
 
         if os.getenv("RDMANIC_IMB",False):
             self.nodeOS.addParams({
-                "process0.argc" : 5,
+                "process0.argc" : 7,
                 "process0.arg1" : "-iter",
                 "process0.arg2" : "1",
                 "process0.arg3" : "-msglen",
                 "process0.arg4" : "msglen.txt",
+                "process0.arg5" : "-exclude",
+                "process0.arg6" : "Reduce,Reduce_scatter",
             })
 
         self.mmu = self.nodeOS.setSubComponent( "mmu", "mmu.simpleMMU" )
