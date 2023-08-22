@@ -9,6 +9,8 @@ debugPython=False
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
 
+# Tell SST what statistics handling we want
+
 networkParams = {
     "packetSize" : "2048B",
     "link_bw" : "16GB/s",
@@ -60,6 +62,9 @@ if debugPython:
     print( 'call topo.build()' )
 
 topo.build()
+
+sst.setStatisticLoadLevel(4)
+sst.setStatisticOutput("sst.statOutputConsole")
 
 # Enable SST Statistics Outputs for this simulation
 #sst.setStatisticLoadLevel(16)
