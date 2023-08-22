@@ -88,6 +88,7 @@ class Vanadis_Builder:
             "retires_per_cycle" : retires_per_cycle,
             "pause_when_retire_address" : os.getenv("VANADIS_HALT_AT_ADDRESS", 0)
         })
+        cpu.enableAllStatistics()
 
         app_args = os.getenv("VANADIS_EXE_ARGS", "")
 
@@ -114,6 +115,7 @@ class Vanadis_Builder:
             "uop_cache_entries" : 1536,
             "predecode_cache_entries" : 4
         })
+        decode.enableAllStatistics()
 
         os_hdlr = decode.setSubComponent( "os_handler", "vanadis.Vanadis" + vanadis_isa + "OSHandler" )
         os_hdlr.addParams({
@@ -125,6 +127,7 @@ class Vanadis_Builder:
         branch_pred.addParams({
             "branch_entries" : 32
         })
+        branch_pred.enableAllStatistics()
 
         icache_if = cpu.setSubComponent( "mem_interface_inst", "memHierarchy.standardInterface" )
         icache_if.addParam("coreId",cpuId)
@@ -142,6 +145,7 @@ class Vanadis_Builder:
             "check_memory_loads" : "no",
             "allow_speculated_operations": "no"
         })
+        cpu_lsq.enableAllStatistics()
 
         dcache_if = cpu_lsq.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
         dcache_if.addParam("coreId",cpuId)
