@@ -167,4 +167,4 @@ private:
 } // namespace LLyr
 } // namespace SST
 
-#endif /* _LLYR_H */
+#endif // _LLYR_H

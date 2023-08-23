@@ -14,8 +14,6 @@
 #include <sst_config.h>
 #include "simple_tlb.h"
 
-
-using namespace SST::Interfaces;
 using namespace SST;
 using namespace SST::SambaComponent;
 
