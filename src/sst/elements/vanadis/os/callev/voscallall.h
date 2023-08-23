@@ -32,6 +32,7 @@
 #include "os/callev/voscallmmapx.h"
 #include "os/callev/voscallopen.h"
 #include "os/callev/voscallopenat.h"
+#include "os/callev/voscalllseek.h"
 #include "os/callev/voscallread.h"
 #include "os/callev/voscallreadv.h"
 #include "os/callev/voscallreadlink.h"
