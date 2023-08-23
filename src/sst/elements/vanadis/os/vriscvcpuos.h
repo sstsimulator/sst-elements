@@ -132,6 +132,7 @@ public:
         InstallRISCV64FuncPtr( READLINKAT );
         InstallRISCV64FuncPtr( GETRANDOM );
         InstallRISCV64FuncPtr( FSTATAT );
+        InstallRISCV64FuncPtr( LSEEK );
     }
 
     virtual ~VanadisRISCV64OSHandler2() {}
@@ -298,6 +299,16 @@ public:
 
         return new VanadisSyscallPrlimitEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, pid, resource, new_limit, old_limit);
     }
+
+    VanadisSyscallEvent* LSEEK( int hw_thr ) {
+        int32_t fd       = getArgRegister(0);
+        uint64_t offset   = getArgRegister(1);
+        int32_t whence   = getArgRegister(2);
+
+        output->verbose(CALL_INFO, 8, 0, "lseek( %" PRIdXX ", %" PRIdXX", %" PRIdXX " )\n", fd, offset, whence);
+        return new VanadisSyscallLseekEvent(core_id, hw_thr, BitType, fd, offset, whence);
+    }
+
 
     void recvSyscallResp( VanadisSyscallResponse* os_resp ) {
         output->verbose(CALL_INFO, 8, 0, "return-code: %" PRId64 " (success: %3s)\n",
