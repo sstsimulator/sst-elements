@@ -44,7 +44,6 @@ namespace Vanadis {
         FUNC( arg, MADVISE ); \
         FUNC( arg, MPROTECT ); \
         FUNC( arg, OPENAT ); \
-        FUNC( arg, LSEEK ); \
         FUNC( arg, READ ); \
         FUNC( arg, READV ); \
         FUNC( arg, RT_SIGACTION ); \
@@ -223,15 +222,6 @@ protected:
         } else {
             return new VanadisSyscallMemoryUnMapEvent(core_id, hw_thr, BitType, addr, len);
         }
-    }
-
-    VanadisSyscallEvent* LSEEK( int hw_thr ) {
-        T1 fd       = getArgRegister(0);
-        T1 offset   = getArgRegister(1);
-        T1 whence   = getArgRegister(2);
-
-        output->verbose(CALL_INFO, 8, 0, "lseek( %" PRIdXX ", %" PRIdXX", %" PRIdXX " )\n", fd, offset, whence);
-        return new VanadisSyscallLseekEvent(core_id, hw_thr, BitType, fd, offset, whence);
     }
 
     VanadisSyscallEvent* READV( int hw_thr ) {
