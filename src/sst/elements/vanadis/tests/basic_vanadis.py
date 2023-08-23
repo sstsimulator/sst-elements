@@ -22,6 +22,7 @@ exe = "hello-world"
 #exe = "read-write"
 #exe = "unlink"
 #exe = "unlinkat"
+#exe = "lseek"
 
 #testDir = "basic-math"
 #exe = "sqrt-double"

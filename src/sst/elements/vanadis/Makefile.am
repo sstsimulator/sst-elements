@@ -171,6 +171,7 @@ os/callev/voscallgetx.h \
 os/callev/voscallioctl.h \
 os/callev/voscalliovec.h \
 os/callev/voscallkill.h \
+os/callev/voscalllseek.h \
 os/callev/voscallmmap.h \
 os/callev/voscallmmapx.h \
 os/callev/voscallmprotect.h \
@@ -216,6 +217,7 @@ os/syscall/gettime.h \
 os/syscall/ioctl.h \
 os/syscall/iovec.h \
 os/syscall/kill.h \
+os/syscall/lseek.h \
 os/syscall/mmap.h \
 os/syscall/mprotect.cc \
 os/syscall/mprotect.h \
@@ -319,6 +321,24 @@ EXTRA_DIST = \
     tests/small/basic-io/read-write/riscv64/sst.stdout.gold \
     tests/small/basic-io/read-write/riscv64/vanadis.stderr.gold \
     tests/small/basic-io/read-write/riscv64/vanadis.stdout.gold \
+\
+    tests/small/basic-io/fread-fwrite/Makefile \
+    tests/small/basic-io/fread-fwrite/fread-fwrite.c \
+    tests/small/basic-io/fread-fwrite/mipsel/fread-fwrite \
+    tests/small/basic-io/fread-fwrite/mipsel/sst.stdout.gold \
+    tests/small/basic-io/fread-fwrite/mipsel/vanadis.stderr.gold \
+    tests/small/basic-io/fread-fwrite/mipsel/vanadis.stdout.gold \
+    tests/small/basic-io/fread-fwrite/riscv64/fread-fwrite \
+    tests/small/basic-io/fread-fwrite/riscv64/sst.stdout.gold \
+    tests/small/basic-io/fread-fwrite/riscv64/vanadis.stderr.gold \
+    tests/small/basic-io/fread-fwrite/riscv64/vanadis.stdout.gold \
+\
+    tests/small/basic-io/lseek/Makefile \
+    tests/small/basic-io/lseek/lseek.c \
+    tests/small/basic-io/lseek/riscv64/lseek \
+    tests/small/basic-io/lseek/riscv64/sst.stdout.gold \
+    tests/small/basic-io/lseek/riscv64/vanadis.stderr.gold \
+    tests/small/basic-io/lseek/riscv64/vanadis.stdout.gold \
 \
 	tests/small/basic-math/sqrt-double/Makefile \
 	tests/small/basic-math/sqrt-double/sqrt-double.c \
