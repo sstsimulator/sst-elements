@@ -13,7 +13,7 @@ main() enter
 
 # Calling sequence was: 
 
-# IMB-MPI1 -iter 1 -msglen msglen.txt Reduce
+# IMB-MPI1 -iter 1 -msglen msglen.txt
 
 # Message lengths were user defined
 #
@@ -25,14 +25,142 @@ main() enter
 
 # List of Benchmarks to run:
 
+# PingPong
+# PingPing
+# Sendrecv
+# Exchange
+# Allreduce
 # Reduce
+# Reduce_scatter
+# Allgather
+# Allgatherv
+# Gather
+# Gatherv
+# Scatter
+# Scatterv
+# Alltoall
+# Alltoallv
+# Bcast
+# Barrier
+
+#---------------------------------------------------
+# Benchmarking PingPong 
+# #processes = 2 
+#---------------------------------------------------
+       #bytes #repetitions      t[usec]   Mbytes/sec
+            1            1         6.85         0.15
+
+#---------------------------------------------------
+# Benchmarking PingPing 
+# #processes = 2 
+#---------------------------------------------------
+       #bytes #repetitions      t[usec]   Mbytes/sec
+            1            1         9.72         0.10
+
+#-----------------------------------------------------------------------------
+# Benchmarking Sendrecv 
+# #processes = 2 
+#-----------------------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]   Mbytes/sec
+            1            1         8.56         8.80         8.68         0.23
+
+#-----------------------------------------------------------------------------
+# Benchmarking Exchange 
+# #processes = 2 
+#-----------------------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]   Mbytes/sec
+            1            1        18.23        18.34        18.29         0.22
+
+#----------------------------------------------------------------
+# Benchmarking Allreduce 
+# #processes = 2 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            4            1        10.97        11.04        11.01
 
 #----------------------------------------------------------------
 # Benchmarking Reduce 
 # #processes = 2 
 #----------------------------------------------------------------
        #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
-            4            1         7.94        10.75         9.34
+            4            1         7.90        10.81         9.35
+
+#----------------------------------------------------------------
+# Benchmarking Reduce_scatter 
+# #processes = 2 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            4            1        13.14        16.54        14.84
+
+#----------------------------------------------------------------
+# Benchmarking Allgather 
+# #processes = 2 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            1         9.78         9.94         9.86
+
+#----------------------------------------------------------------
+# Benchmarking Allgatherv 
+# #processes = 2 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            1        11.94        11.97        11.95
+
+#----------------------------------------------------------------
+# Benchmarking Gather 
+# #processes = 2 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            1         7.62         9.89         8.76
+
+#----------------------------------------------------------------
+# Benchmarking Gatherv 
+# #processes = 2 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            1         5.33         9.60         7.46
+
+#----------------------------------------------------------------
+# Benchmarking Scatter 
+# #processes = 2 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            1         6.06         7.59         6.82
+
+#----------------------------------------------------------------
+# Benchmarking Scatterv 
+# #processes = 2 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            1         8.25         8.53         8.39
+
+#----------------------------------------------------------------
+# Benchmarking Alltoall 
+# #processes = 2 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            1        18.61        18.68        18.65
+
+#----------------------------------------------------------------
+# Benchmarking Alltoallv 
+# #processes = 2 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            1        18.93        18.98        18.96
+
+#----------------------------------------------------------------
+# Benchmarking Bcast 
+# #processes = 2 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1            1         5.54         7.52         6.53
+
+#---------------------------------------------------
+# Benchmarking Barrier 
+# #processes = 2 
+#---------------------------------------------------
+ #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            1         8.04         8.10         8.07
 
 
 # All processes entering MPI_Finalize
