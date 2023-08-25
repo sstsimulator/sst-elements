@@ -36,7 +36,7 @@ networkMemInspector::networkMemInspector(ComponentId_t id, Params &params, const
 void networkMemInspector::inspectNetworkData(SimpleNetwork::Request* req) {
     MemNIC::MemRtrEvent *mre = dynamic_cast<MemNIC::MemRtrEvent*>(req->inspectPayload());
     if (mre) {
-        memCmdStat[(int)mre->event->getCmd()]->addData(1);
+        memCmdStat[(int)mre->inspectEvent()->getCmd()]->addData(1);
     } else {
         dbg.output(CALL_INFO,"Unexpected payload encountered. Ignoring.\n");
     }
