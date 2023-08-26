@@ -86,7 +86,7 @@ SimpleNetwork::Request* MemNetBridge::translate(SimpleNetwork::Request *req, uin
 
     SimpleNetwork::nid_t tgt;
     if ( mre->hasClientData() ) {
-        tgt = getAddrFor(outNet, mre->event->getDst());
+        tgt = getAddrFor(outNet, mre->inspectEvent()->getDst());
     } else {
         MemNIC::InitMemRtrEvent *imre = static_cast<MemNIC::InitMemRtrEvent*>(mre);
         imre->info.addr = getAddrForNetwork(fromNet^1);

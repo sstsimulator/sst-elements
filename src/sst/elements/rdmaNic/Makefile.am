@@ -34,6 +34,7 @@ EXTRA_DIST = \
 	tests/vanadisBlock.py \
 	tests/testsuite_default_rdmaNic.py \
 	tests/vanadisOS.py \
+	tests/msglen.txt \
 	tests/app/rdma/Makefile \
 	tests/app/rdma/barrier.c \
 	tests/app/rdma/incast.c \
@@ -49,7 +50,15 @@ EXTRA_DIST = \
 	tests/app/rdma/msg.stdout-node1.cpu0.os.gold \
 	tests/app/rdma/write.c \
 	tests/app/rdma/src/base.c \
-	tests/app/rdma/src/rdma.c
+	tests/app/rdma/src/rdma.c \
+	tests/app/mpi/IMB-MPI1 \
+	tests/app/mpi/IMB-MPI1.err.gold \
+	tests/app/mpi/IMB-MPI1.out.gold \
+	tests/app/mpi/IMB-MPI1.stderr-node0.cpu0.os.gold \
+	tests/app/mpi/IMB-MPI1.stderr-node1.cpu0.os.gold \
+	tests/app/mpi/IMB-MPI1.stdout-node0.cpu0.os.gold \
+	tests/app/mpi/IMB-MPI1.stdout-node1.cpu0.os.gold \
+	tests/app/mpi/README
 
 sstdir = $(includedir)/sst/elements/rdmaNic
 nobase_sst_HEADERS = \

@@ -36,6 +36,7 @@
 #include "os/syscall/open.h"
 #include "os/syscall/openat.h"
 #include "os/syscall/close.h"
+#include "os/syscall/lseek.h"
 #include "os/syscall/brk.h"
 #include "os/syscall/mmap.h"
 #include "os/syscall/unmap.h"
@@ -138,6 +139,9 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
         } break;
         case SYSCALL_OP_CLOSE: {
             syscall = new VanadisCloseSyscall( this, coreLink, process, convertEvent<VanadisSyscallCloseEvent*>( "close", sys_ev ) );
+        } break;
+        case SYSCALL_OP_LSEEK: {
+            syscall = new VanadisLseekSyscall( this, coreLink, process, convertEvent<VanadisSyscallLseekEvent*>( "lseek", sys_ev ) );
         } break;
         case SYSCALL_OP_BRK: {
             syscall = new VanadisBrkSyscall( this, coreLink, process, convertEvent<VanadisSyscallBRKEvent*>( "brk", sys_ev ) );

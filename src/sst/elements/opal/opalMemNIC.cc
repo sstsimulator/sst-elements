@@ -57,7 +57,7 @@ bool OpalMemNIC::clock() {
 bool OpalMemNIC::recvNotify(int) {
     MemRtrEvent * mre = doRecv(link_control);
     if (mre) {
-        MemHierarchy::MemEventBase * me = mre->event;
+        MemHierarchy::MemEventBase * me = mre->takeEvent();
         delete mre;
         if (me) {
             (*recvHandler)(me);

@@ -55,10 +55,16 @@ class MemNICBase : public MemLinkBase {
 
         // Router events
         class MemRtrEvent : public SST::Event {
-            public:
+            protected:
                 MemEventBase * event;
+            public:
                 MemRtrEvent() : Event(), event(nullptr) { }
                 MemRtrEvent(MemEventBase * ev) : Event(), event(ev) { }
+                ~MemRtrEvent() {
+                    if (event) {
+                        delete event;
+                    }
+                }
 
                 virtual Event* clone(void) override {
                     MemRtrEvent *mre = new MemRtrEvent(*this);
@@ -67,6 +73,20 @@ class MemNICBase : public MemLinkBase {
                     else
                         mre->event = nullptr;
                     return mre;
+                }
+
+                void putEvent(MemEventBase* ev) {
+                    event = ev;
+                }
+
+                MemEventBase* takeEvent() {
+                    MemEventBase* tmp = event;
+                    event = nullptr;
+                    return tmp;
+                }
+
+                MemEventBase* inspectEvent() {
+                    return event;
                 }
 
                 virtual bool hasClientData() const { return true; }
@@ -148,7 +168,7 @@ class MemNICBase : public MemLinkBase {
             if (initQueue.size()) {
                 MemRtrEvent * mre = initQueue.front();
                 initQueue.pop();
-                MemEventInit * ev = static_cast<MemEventInit*>(mre->event);
+                MemEventInit * ev = static_cast<MemEventInit*>(mre->takeEvent());
                 delete mre;
                 return ev;
             }
@@ -295,8 +315,8 @@ class MemNICBase : public MemLinkBase {
                     delete imre;
                 } else {
                     MemRtrEvent * mre = static_cast<MemRtrEvent*>(payload);
-                    MemEventInit *ev = static_cast<MemEventInit*>(mre->event);
-                    dbg.debug(_L10_, "%s (memNICBase) received mre during init. %s\n", getName().c_str(), mre->event->getVerboseString(dlevel).c_str());
+                    MemEventInit *ev = static_cast<MemEventInit*>(mre->takeEvent()); // mre no longer has a copy of its event
+                    dbg.debug(_L10_, "%s (memNICBase) received mre during init. %s\n", getName().c_str(), ev->getVerboseString(dlevel).c_str());
 
                     /*
                      * Event is for us if:
@@ -327,10 +347,12 @@ class MemNICBase : public MemLinkBase {
                                 epInfo.region = it->first;
                                 addEndpoint(epInfo);
                             }
+                            mre->putEvent(ev); // If we did not delete the Event, give it back to the MemRtrEvent
                             initQueue.push(mre); // Our component will forward on all its other ports
                         }
-                    } else if ((ev->getCmd() == Command::NULLCMD && (isSource(mre->event->getSrc()) || isDest(mre->event->getSrc()))) || ev->getDst() == info.name) {
+                    } else if ((ev->getCmd() == Command::NULLCMD && (isSource(ev->getSrc()) || isDest(ev->getSrc()))) || ev->getDst() == info.name) {
                         dbg.debug(_L10_, "\tInserting in initQueue\n");
+                        mre->putEvent(ev); // If we did not delete the Event, give it back to the MemRtrEvent
                         initQueue.push(mre);
                     }
                 }
