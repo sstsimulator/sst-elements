@@ -18,7 +18,7 @@ class NicCmdEntry {
     NicCmdEntry( RdmaNic& nic, int thread, NicCmd* tmp ) : 
         m_nic(nic), m_thread(thread), m_cmd( new NicCmd ), m_respAddr(tmp->respAddr) 
     {
-        bzero( &m_resp.data, sizeof( m_resp.data ) );
+        bzero( &m_resp, sizeof( m_resp ) );
         m_resp.retval = 0; 
 		*m_cmd = *tmp;
     } 

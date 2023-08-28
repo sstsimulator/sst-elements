@@ -50,13 +50,11 @@ class Builder:
 
         if os.getenv("RDMANIC_IMB",False):
             self.nodeOS.addParams({
-                "process0.argc" : 7,
+                "process0.argc" : 5,
                 "process0.arg1" : "-iter",
                 "process0.arg2" : "1",
                 "process0.arg3" : "-msglen",
                 "process0.arg4" : "msglen.txt",
-                "process0.arg5" : "-exclude",
-                "process0.arg6" : "Reduce,Reduce_scatter",
             })
 
         self.mmu = self.nodeOS.setSubComponent( "mmu", "mmu.simpleMMU" )

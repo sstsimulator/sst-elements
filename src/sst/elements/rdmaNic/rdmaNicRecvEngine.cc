@@ -219,6 +219,7 @@ RdmaNic::RecvStream::~RecvStream() {
     	nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cqId=%d\n",recvEntry->getCqId());
 		if ( -1 != recvEntry->getCqId() ) {
     		RdmaCompletion comp;
+            bzero( &comp, sizeof(comp));
     		comp.context = recvEntry->getContext();
     		nic.writeCompletionToHost( recvEntry->getThread(), recvEntry->getCqId(), comp );
 		}

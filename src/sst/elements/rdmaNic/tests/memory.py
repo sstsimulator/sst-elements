@@ -62,7 +62,6 @@ class Builder:
             "debug" : mc_debug,
             "debug_level" : 11,
             "debug_addr" : debug_addr,
-            "initBacking": 1,
         })
 
         memToDir = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
