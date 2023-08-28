@@ -55,7 +55,8 @@ class Builder:
         memctrl.addParams({
             "clock" : cpu_clock,
             "backend.mem_size" : "4GiB",
-            "backing" : "mmap",
+            "backing" : "malloc",
+            "initBacking" : 1,
             "addr_range_start" : "0x0",
             "addr_range_end" : "0x7fffffff",
             "debug" : mc_debug,
