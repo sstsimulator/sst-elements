@@ -311,7 +311,7 @@ protected:
             const uint64_t load_address = load_entry->getLoadAddress();
             const uint32_t hw_thr     = load_ins->getHWThread();
 
-            if ( ev->getFail() ) { 
+            if ( ev->getFail() || ev->vAddr < 64) {
                 load_ins->flagError();
             }
 
@@ -335,9 +335,13 @@ protected:
                     (load_ins->getValueRegisterType() == LOAD_INT_REGISTER) ? "int" : "fp",str.str().c_str());
 
             }
+
             
             switch(load_ins->getValueRegisterType()) {
             case LOAD_INT_REGISTER: {
+
+                if ( ! load_ins->trapsError() ) {;
+
                 target_isa_reg = load_ins->getISAIntRegOut(0);
                 target_reg = load_ins->getPhysIntRegOut(0);
 
@@ -377,8 +381,12 @@ protected:
 
                     lsq->registerFiles->at(hw_thr)->copyToIntRegister(target_reg, 0, &register_value[0], register_value.size());
                 }
+                }
             } break;
             case LOAD_FP_REGISTER: {
+
+                if ( ! load_ins->trapsError() ) {
+
                 target_isa_reg = load_ins->getISAFPRegOut(0);
                 target_reg = load_ins->getPhysFPRegOut(0);
 
@@ -401,16 +409,13 @@ protected:
                 }
 
                 lsq->registerFiles->at(hw_thr)->copyToFPRegister(target_reg, 0, &register_value[0], reg_width);
+                }
             } break;
             default:
                 out->fatal(CALL_INFO, -1, "Unknown register type.\n");
             }
 
             ///////////////////////////////////////////////////////////////////////////////////
-
-            if (ev->vAddr < 64) {
-                load_ins->flagError();
-            }
 
             load_entry->removeRequest(ev->getID());
 
