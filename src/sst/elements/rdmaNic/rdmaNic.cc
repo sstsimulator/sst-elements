@@ -160,6 +160,7 @@ void RdmaNic::mmioWriteSetup( StandardMem::Write* req) {
 	if ( offset == sizeof(hostInfo) ) {
 
         NicQueueInfo nicInfo;
+        bzero( &nicInfo, sizeof(nicInfo ) );
 
 		uint64_t threadMemoryBase = 0;
 
@@ -298,7 +299,7 @@ void RdmaNic::writeCompletionToHost(int thread, int cqId, RdmaCompletion& comp )
 	Addr_t data = q.cmd().data.createCQ.dataPtr + q.headIndex() * sizeof(comp);
 
 	q.incHeadIndex();
-	
+
 	m_memReqQ->write( m_respQueueMemChannel, data, sizeof(comp), reinterpret_cast<uint8_t*>(&comp) );
     m_memReqQ->fence( m_respQueueMemChannel );
 	m_memReqQ->write( m_respQueueMemChannel, q.cmd().data.createCQ.headPtr, sizeof(q.headIndex()), q.headIndex() );
