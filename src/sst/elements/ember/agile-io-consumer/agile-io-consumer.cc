@@ -82,14 +82,6 @@ bool
 agileIOconsumer::generate(std::queue<EmberEvent*>& evQ)
 {
   evQ_ = &evQ;
-
-  switch (kind) {
-    case Green:
-      break;
-    case Blue:
-      break;
-  }
-    return true;
 }
 
 void
@@ -138,7 +130,8 @@ void agileIOconsumer::broadcast_and_receive(const long &total_request_size,
     }
 }
 
-void agileIOconsumer::blue_request(const long total_request_size) {
+bool
+agileIOconsumer::blue_request(const long total_request_size) {
     std::queue<EmberEvent *> &evQ = *evQ_;
 
     validate(total_request_size);
@@ -147,7 +140,7 @@ void agileIOconsumer::blue_request(const long total_request_size) {
 }
 
 // Each IO node responds with amount of data read, possibly less than requested
-long
+bool
 agileIOconsumer::green_read()
 {
   std::queue<EmberEvent *> &evQ = *evQ_;
@@ -162,5 +155,5 @@ agileIOconsumer::green_read()
   foo >> str >> count >> target;
   enQ_send(evQ, sendBuf, count, CHAR, target, 0, GroupWorld);
 
-  return 0;
+  return false;
 }

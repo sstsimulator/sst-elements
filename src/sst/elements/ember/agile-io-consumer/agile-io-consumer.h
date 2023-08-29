@@ -39,10 +39,10 @@ class agileIOconsumer : public EmberMessagePassingGenerator
   // Sent to all the IO nodes
   void validate(const long total_request_size);
   void broadcast_and_receive(const long &total_request_size, std::queue<EmberEvent *> &evQ);
-  void blue_request(long total_request_size);
+  bool blue_request(long total_request_size);
 
   // Each IO node responds with amount of data read
-  long green_read();
+  bool green_read();
 
   private:
 
