@@ -45,6 +45,7 @@ using namespace SST;
 using namespace SST::Ember;
 
 int agileIOconsumer::memory_bitmask = 0;
+long agileIOconsumer::iteration = -1;
 
 agileIOconsumer::agileIOconsumer(SST::ComponentId_t id, Params& prms) : EmberMessagePassingGenerator(id, prms, "Null")
 {
@@ -59,8 +60,6 @@ agileIOconsumer::agileIOconsumer(SST::ComponentId_t id, Params& prms) : EmberMes
   count = ionodes.size();
 
   long buffer_size = combined_read_size / count;
-
-  iteration = -1;
 }
 
 void agileIOconsumer::setup()
@@ -106,7 +105,7 @@ agileIOconsumer::generate(std::queue<EmberEvent*>& evQ)
     return false;
   }
 
-  iteration++;
+  enQ_barrier(evQ, GroupWorld);
 
   if (rank_ == 1) return blue_request(combined_read_size);
   if (kind == Green) return green_read();
