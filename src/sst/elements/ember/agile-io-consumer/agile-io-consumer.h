@@ -5,6 +5,7 @@
 #include "sst/elements/hermes/hermes.h"
 #include "sst/elements/hermes/msgapi.h"
 #include <codecvt>
+#include <cstddef>
 #include <cstdint>
 
 namespace SST::Ember {
@@ -59,8 +60,11 @@ class agileIOconsumer : public EmberMessagePassingGenerator
   long iteration;
   static int memory_bitmask;
 
-  Hermes::MemAddr sendBuf;
-  Hermes::MemAddr *recvBuf;
+  Hermes::MemAddr blue_sendBuf = nullptr;
+  Hermes::MemAddr *blue_recvBuf = nullptr;
+  Hermes::MemAddr green_sendBuf = nullptr;
+  Hermes::MemAddr green_recvBuf = nullptr;
+
   std::queue<EmberEvent*>* evQ_;
   uint64_t rank_;
   std::vector<int> ionodes;

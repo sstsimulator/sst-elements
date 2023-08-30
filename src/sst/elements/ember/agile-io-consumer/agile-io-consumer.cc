@@ -88,15 +88,16 @@ agileIOconsumer::generate(std::queue<EmberEvent*>& evQ)
     memSetBacked();
     if (rank_ == 1) {
       // Rank 1 is Blue
-      enQ_memAlloc(evQ, &sendBuf, sizeof(Ember::PacketHeader));
-      recvBuf = new Hermes::MemAddr[count];
+      enQ_memAlloc(evQ, &blue_sendBuf, sizeof(Ember::PacketHeader));
+      blue_recvBuf = new Hermes::MemAddr[count];
       for (int i = 0; i < count; i++) {
-        enQ_memAlloc(evQ, &recvBuf[i], sizeof(Ember::PacketHeader));
+        enQ_memAlloc(evQ, &blue_recvBuf[i], sizeof(Ember::PacketHeader));
       }
       memory_bitmask |= (1 << rank_);
     }
     if (kind == Green) {
-      enQ_memAlloc(evQ, &sendBuf, sizeof(Ember::PacketHeader));
+      enQ_memAlloc(evQ, &green_sendBuf, sizeof(Ember::PacketHeader));
+      enQ_memAlloc(evQ, &green_recvBuf, sizeof(Ember::PacketHeader));
       memory_bitmask |= (1 << rank_);
     }
   }
@@ -155,7 +156,7 @@ agileIOconsumer::broadcast_and_receive(const long &total_request_size,
       auto len = payload_string.copy(buffer, payload_string.length());
       buffer[len] = '\0';
       enQ_send(evQ, buffer, len, CHAR, ionodes[i], 0, GroupWorld);
-      enQ_recv(evQ, recvBuf[i], total_request_size / ionodes.size(), CHAR, MPI_ANY_SOURCE, 0, GroupWorld);
+      enQ_recv(evQ, blue_recvBuf[i], total_request_size / ionodes.size(), CHAR, MPI_ANY_SOURCE, 0, GroupWorld);
     }
 
     return true;
@@ -184,7 +185,7 @@ agileIOconsumer::green_read()
   enQ_recv(evQ, incoming_payload.data(), 100, CHAR, MPI_ANY_SOURCE, 0, GroupWorld);
   std::stringstream foo(incoming_payload.data());
   foo >> str >> count >> target;
-  enQ_send(evQ, sendBuf, count, CHAR, target, 0, GroupWorld);
+  enQ_send(evQ, green_sendBuf, count, CHAR, target, 0, GroupWorld);
 
   return false;
 }
