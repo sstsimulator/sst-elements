@@ -2,12 +2,22 @@
 #define AGILE_IO_CONSUMER_H_
 
 #include "mpi/embermpigen.h"
+#include "sst/elements/hermes/hermes.h"
 #include "sst/elements/hermes/msgapi.h"
 #include <codecvt>
+#include <cstdint>
 
 namespace SST::Ember {
 
 const long combined_read_size = 10*1024*1024;
+
+struct PacketHeader {
+    uint64_t src;
+    uint64_t dst;
+    uint64_t len;
+};
+
+const int magicNumber = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12) + (1 << 1);
 
 class agileIOconsumer : public EmberMessagePassingGenerator
 {
@@ -38,16 +48,19 @@ class agileIOconsumer : public EmberMessagePassingGenerator
 
   // Sent to all the IO nodes
   void validate(const long total_request_size);
-  void broadcast_and_receive(const long &total_request_size, std::queue<EmberEvent *> &evQ);
+  bool broadcast_and_receive(const long &total_request_size, std::queue<EmberEvent *> &evQ);
   bool blue_request(long total_request_size);
 
   // Each IO node responds with amount of data read
   bool green_read();
 
   private:
+  unsigned count;
+  long iteration;
+  static int memory_bitmask;
 
-  Hermes::MP::Addr sendBuf;
-  std::vector<Hermes::MP::Addr> recvBuf;
+  Hermes::MemAddr sendBuf;
+  Hermes::MemAddr *recvBuf;
   std::queue<EmberEvent*>* evQ_;
   uint64_t rank_;
   std::vector<int> ionodes;

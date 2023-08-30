@@ -26,6 +26,7 @@
 #include "event.h"
 #include "mpi/embermpigen.h"
 #include "params.h"
+#include "sst/elements/hermes/hermes.h"
 #include "sst/elements/hermes/msgapi.h"
 
 #include <iostream>
@@ -43,7 +44,7 @@
 using namespace SST;
 using namespace SST::Ember;
 
-
+int agileIOconsumer::memory_bitmask = 0;
 
 agileIOconsumer::agileIOconsumer(SST::ComponentId_t id, Params& prms) : EmberMessagePassingGenerator(id, prms, "Null")
 {
@@ -55,12 +56,11 @@ agileIOconsumer::agileIOconsumer(SST::ComponentId_t id, Params& prms) : EmberMes
 
   prms.find_array<int>("arg.IONodes", ionodes);
 
-  long buffer_size = combined_read_size / ionodes.size();
+  count = ionodes.size();
 
-  sendBuf = memAlloc(buffer_size);
-  for (int i = 0; i < ionodes.size(); i++) {
-    recvBuf.push_back(memAlloc(buffer_size));
-  }
+  long buffer_size = combined_read_size / count;
+
+  iteration = -1;
 }
 
 void agileIOconsumer::setup()
@@ -82,6 +82,34 @@ bool
 agileIOconsumer::generate(std::queue<EmberEvent*>& evQ)
 {
   evQ_ = &evQ;
+
+  if (iteration == -1) {
+    // Handle memory allocation
+    memSetBacked();
+    if (rank_ == 1) {
+      // Rank 1 is Blue
+      enQ_memAlloc(evQ, &sendBuf, sizeof(Ember::PacketHeader));
+      recvBuf = new Hermes::MemAddr[count];
+      for (int i = 0; i < count; i++) {
+        enQ_memAlloc(evQ, &recvBuf[i], sizeof(Ember::PacketHeader));
+      }
+      memory_bitmask |= (1 << rank_);
+    }
+    if (kind == Green) {
+      enQ_memAlloc(evQ, &sendBuf, sizeof(Ember::PacketHeader));
+      memory_bitmask |= (1 << rank_);
+    }
+  }
+
+  if (memory_bitmask != magicNumber) {
+    return false;
+  }
+
+  iteration++;
+
+  if (rank_ == 1) return blue_request(combined_read_size);
+  if (kind == Green) return green_read();
+  return false;
 }
 
 void
@@ -114,7 +142,8 @@ void agileIOconsumer::validate(const long total_request_size) {
 
 // send each of the IO nodes a request for total_request_size
 // it will be up to them to return total_request_size / num_io_nodes
-void agileIOconsumer::broadcast_and_receive(const long &total_request_size,
+bool
+agileIOconsumer::broadcast_and_receive(const long &total_request_size,
                                 std::queue<EmberEvent *> &evQ) {
     for (int i = 0; i < ionodes.size(); i++) {
       // send( Queue& q, Addr payload, uint32_t count, PayloadDataType dtype,
@@ -128,6 +157,8 @@ void agileIOconsumer::broadcast_and_receive(const long &total_request_size,
       enQ_send(evQ, buffer, len, CHAR, ionodes[i], 0, GroupWorld);
       enQ_recv(evQ, recvBuf[i], total_request_size / ionodes.size(), CHAR, MPI_ANY_SOURCE, 0, GroupWorld);
     }
+
+    return true;
 }
 
 bool
@@ -136,7 +167,7 @@ agileIOconsumer::blue_request(const long total_request_size) {
 
     validate(total_request_size);
 
-    broadcast_and_receive(total_request_size, evQ);
+    return broadcast_and_receive(total_request_size, evQ);
 }
 
 // Each IO node responds with amount of data read, possibly less than requested
