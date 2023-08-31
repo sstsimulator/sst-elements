@@ -45,7 +45,6 @@ using namespace SST;
 using namespace SST::Ember;
 
 int agileIOconsumer::memory_bitmask = 0;
-long agileIOconsumer::iteration = -1;
 
 agileIOconsumer::agileIOconsumer(SST::ComponentId_t id, Params& prms) : EmberMessagePassingGenerator(id, prms, "Null")
 {
@@ -82,7 +81,7 @@ agileIOconsumer::generate(std::queue<EmberEvent*>& evQ)
 {
   evQ_ = &evQ;
 
-  if (iteration == -1) {
+  if (first) {
     // Handle memory allocation
     memSetBacked();
     if (rank_ == 1) {
@@ -99,13 +98,14 @@ agileIOconsumer::generate(std::queue<EmberEvent*>& evQ)
       enQ_memAlloc(evQ, &green_recvBuf, sizeof(Ember::PacketHeader));
       memory_bitmask |= (1 << rank_);
     }
+    first = false;
+
+    return false;
   }
 
   if (memory_bitmask != magicNumber) {
     return false;
   }
-
-  enQ_barrier(evQ, GroupWorld);
 
   if (rank_ == 1) return blue_request(combined_read_size);
   if (kind == Green) return green_read();
