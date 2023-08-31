@@ -42,22 +42,25 @@ EXTRA_DIST = \
 	tests/app/rdma/include/base.h \
 	tests/app/rdma/include/rdma.h \
 	tests/app/rdma/msg.c \
-	tests/app/rdma/msg.err.gold \
-	tests/app/rdma/msg.out.gold \
-	tests/app/rdma/msg.stderr-node0.cpu0.os.gold \
-	tests/app/rdma/msg.stderr-node1.cpu0.os.gold \
-	tests/app/rdma/msg.stdout-node0.cpu0.os.gold \
-	tests/app/rdma/msg.stdout-node1.cpu0.os.gold \
+	tests/app/rdma/riscv64/msg.err.gold \
+	tests/app/rdma/riscv64/msg.out.gold \
+	tests/app/rdma/riscv64/msg.stderr-node0.cpu0.os.gold \
+	tests/app/rdma/riscv64/msg.stderr-node1.cpu0.os.gold \
+	tests/app/rdma/riscv64/msg.stdout-node0.cpu0.os.gold \
+	tests/app/rdma/riscv64/msg.stdout-node1.cpu0.os.gold \
 	tests/app/rdma/write.c \
 	tests/app/rdma/src/base.c \
 	tests/app/rdma/src/rdma.c \
-	tests/app/mpi/IMB-MPI1 \
-	tests/app/mpi/IMB-MPI1.err.gold \
-	tests/app/mpi/IMB-MPI1.out.gold \
-	tests/app/mpi/IMB-MPI1.stderr-node0.cpu0.os.gold \
-	tests/app/mpi/IMB-MPI1.stderr-node1.cpu0.os.gold \
-	tests/app/mpi/IMB-MPI1.stdout-node0.cpu0.os.gold \
-	tests/app/mpi/IMB-MPI1.stdout-node1.cpu0.os.gold \
+	tests/app/mpi/configure_rdma \
+	tests/app/mpi/patch.diff \
+	tests/app/mpi/runVanadis \
+	tests/app/mpi/riscv64/IMB-MPI1 \
+	tests/app/mpi/riscv64/IMB-MPI1.err.gold \
+	tests/app/mpi/riscv64/IMB-MPI1.out.gold \
+	tests/app/mpi/riscv64/IMB-MPI1.stderr-node0.cpu0.os.gold \
+	tests/app/mpi/riscv64/IMB-MPI1.stderr-node1.cpu0.os.gold \
+	tests/app/mpi/riscv64/IMB-MPI1.stdout-node0.cpu0.os.gold \
+	tests/app/mpi/riscv64/IMB-MPI1.stdout-node1.cpu0.os.gold \
 	tests/app/mpi/README
 
 sstdir = $(includedir)/sst/elements/rdmaNic
