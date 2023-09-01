@@ -61,6 +61,8 @@ EmberTriCountGenerator::EmberTriCountGenerator(SST::ComponentId_t id, Params& pr
   if (rank_ == 0)
     std::cout << "Running Tricount Ember motif\n";
 
+  debug_ = params_.find<int>("arg.debug_level");
+
   // Set number of tasks = (NT^2 + NT) / 2 ~= 6 * number of localities
   // (from SHAD reference implementation)
   NL_ = EmberMessagePassingGenerator::size() - 1;
@@ -68,8 +70,17 @@ EmberTriCountGenerator::EmberTriCountGenerator(SST::ComponentId_t id, Params& pr
   NT_ = std::llround(quad);
   num_tasks_ = ( (NT_ * NT_) + NT_ ) / 2;
 
-  // Find where each vertex's edges start
-  init_vertices();
+  do_constant_degree_ =  (bool) params_.find<bool>("arg.use_constant_degree",false);
+  if (do_constant_degree_) {
+    uint64_t scale = (uint64_t) params_.find<uint64_t>("arg.scale");
+    num_vertices_ = pow(2,scale);
+    constant_degree_ = (uint64_t) params_.find<uint64_t>("arg.constant_degree");
+    num_edges_ = num_vertices_ * constant_degree_;
+  }
+  else
+    init_vertices();
+  if (rank_ == 0 && debug_ > 2)
+    std::cerr << "num_edges_ " << num_edges_ << std::endl;
 
   // Compute each first edge held by each rank
   first_edges();
@@ -83,7 +94,6 @@ EmberTriCountGenerator::init_vertices() {
 
   // Read in precomputed Vertices (start index of vertex i's edges)
   std::string vertices_filename( (std::string) params_.find<std::string>("arg.vertices_filename") );
-  debug_ = params_.find<int>("arg.debug_level");
   std::ifstream infile;
   infile.open(vertices_filename);
   if (!infile.is_open()) { printf("File open failed"); abort(); }
@@ -95,7 +105,7 @@ EmberTriCountGenerator::init_vertices() {
     infile >> vertex >> first_edge;
     end = infile.eof();
     if (!end) {
-      if (vertex != expected) { printf("Found unconnected vertex"); abort(); }
+      if (vertex != expected) { printf("Missing vertex"); abort(); }
       Vertices_.push_back(first_edge);
       ++expected;
     }
@@ -107,7 +117,6 @@ EmberTriCountGenerator::init_vertices() {
 
 
   if (rank_ == 0 && debug_ > 2) {
-    std::cerr << "num_edges_ " << num_edges_ << std::endl;
     for (int i=0; i<Vertices_.size(); ++i)
       std::cerr << i << " " << Vertices_[i] << std::endl;
   }
@@ -144,11 +153,18 @@ EmberTriCountGenerator::starts() {
   taskStarts_.push_back(vertex);
   if (rank_ == 0 && debug_) std::cerr << "A task starts at " << vertex << std::endl;
   for (uint64_t vertex = 0; vertex < num_vertices_; ++vertex) {  // for each vertex
-    if (Vertices_[vertex] < edge_target) continue;               // ... continue until edge target is reached
+
+    int vertex_start;
+    if (do_constant_degree_)
+      vertex_start = vertex * constant_degree_;
+    else
+      vertex_start = Vertices_[vertex];
+
+    if (vertex_start < edge_target) continue;               // ... continue until edge target is reached
     if (vertex > 0) taskStarts_.push_back(vertex);               // ... else store start vertex for this task
     if (rank_ == 0 && debug_) std::cerr << "A task starts at " << vertex << std::endl;
 
-    uint64_t task_size = incr + (Vertices_[vertex] - edge_target);
+    uint64_t task_size = incr + (vertex_start - edge_target);
     maxTask_ = std::max(task_size, maxTask_);             // max task size
 
     if (edge_target == num_edges_) break;                 // ... all done
@@ -159,7 +175,7 @@ EmberTriCountGenerator::starts() {
     else                                       incr = (0.5 * num_edges_) / NT_;
 
     ++task;
-    edge_target = std::min(Vertices_[vertex] + incr, num_edges_);
+    edge_target = std::min(vertex_start + incr, num_edges_);
   }
   if (rank_ == 0 && debug_) std::cerr << "A (psuedo) task starts at " << num_vertices_ << std::endl;
   taskStarts_.push_back(num_vertices_);
@@ -238,7 +254,7 @@ EmberTriCountGenerator::task_client() {
     send_requests_.erase(iter);
     if (send_requests_.size()) {
       if (debug_ > 1) std::cerr << "rank " << rank_ << " testing " << send_requests_.size() << " send requests\n";
-      clean_send_requests();
+      test_send_requests();
       ++generate_loop_index_;
       return false;
     }
@@ -247,7 +263,7 @@ EmberTriCountGenerator::task_client() {
     if (debug_ > 1) std::cerr << "rank " << rank_ << " testing send requests" << std::endl;
     test_sends_ = false;
     if (send_requests_.size()) {
-      clean_send_requests();
+      test_send_requests();
       ++generate_loop_index_;
       return false;
     }
@@ -311,7 +327,7 @@ EmberTriCountGenerator::task_client() {
     else if (any_response_.tag == TASKS_COMPLETE) {
       if (debug_) std::cerr << "rank " << rank_ << " received TASKS_COMPLETE -- Bye!\n";
       enQ_cancel( evQ, datareq_recv_request_ );
-      clean_send_requests(true);
+      wait_send_requests();
       return true;
     }
 
@@ -342,8 +358,14 @@ EmberTriCountGenerator::task_client() {
        old_i_   = i;
        first_i = taskStarts_[i];      // first vertex of partition i
        last_i  = taskStarts_[i + 1];  // first vertex of partition i + 1
-       first_edge = Vertices_[first_i];
-       last_edge = Vertices_[last_i];
+       if (do_constant_degree_) {
+         first_edge = first_i * constant_degree_;
+         last_edge = last_i * constant_degree_;
+       }
+       else {
+         first_edge = Vertices_[first_i];
+         last_edge = Vertices_[last_i];
+       }
        if (first_edge != last_edge) --last_edge;
        if (debug_ > 2) {
          std::cerr << "first_i     : " << first_i << std::endl;
@@ -358,8 +380,14 @@ EmberTriCountGenerator::task_client() {
        old_j_   = j;
        first_j = taskStarts_[j];         // first vertex of partition j
        last_j  = taskStarts_[j + 1];     // first vertex of partition j + 1
-       first_edge = Vertices_[first_j];
-       last_edge = Vertices_[last_j];
+       if (do_constant_degree_) {
+         first_edge = first_j * constant_degree_;
+         last_edge = last_j * constant_degree_;
+       }
+       else {
+         first_edge = Vertices_[first_j];
+         last_edge = Vertices_[last_j];
+       }
        if (first_edge != last_edge) --last_edge;
        if (debug_ > 2) {
          std::cerr << "first_j     : " << first_j << std::endl;
@@ -490,6 +518,10 @@ EmberTriCountGenerator::request_edges( uint64_t first_edge, uint64_t last_edge )
         memFree(datareq_send_memaddrs_.back().getBacking());
         datareq_send_memaddrs_.pop_back();
       }
+      while (!datareq_send_requests_.empty()){
+        delete datareq_send_requests_.back();
+        datareq_send_requests_.pop_back();
+      }
       free_data_requests_ = false;
     }
     data_recv_requests_.push_back(new MessageRequest[num_nonlocal]);
@@ -505,7 +537,9 @@ EmberTriCountGenerator::request_edges( uint64_t first_edge, uint64_t last_edge )
       uint64_t* send_buffer = (uint64_t*) datareq_send_memaddrs_.back().getBacking();
       *send_buffer = size;
       if (debug_) std::cerr << "rank " << rank_ << " sending data request to rank " << rank << " for size " << size << std::endl;
-      enQ_isend( evQ, datareq_send_memaddrs_.back(), 1, UINT64_T, rank, DATA_REQUEST, GroupWorld, nullptr);
+      MessageRequest *send_req = new MessageRequest();
+      datareq_send_requests_.push_back(send_req);
+      enQ_isend( evQ, datareq_send_memaddrs_.back(), 1, UINT64_T, rank, DATA_REQUEST, GroupWorld, send_req);
       enQ_irecv( evQ, nullptr, size, UINT64_T, rank, DATA, GroupWorld, &data_recv_requests_.back()[index]);
       ++index;
     }
@@ -534,7 +568,7 @@ EmberTriCountGenerator::edges_to_ranks(uint64_t first_edge, uint64_t last_edge, 
 }
 
 void
-EmberTriCountGenerator::clean_send_requests(bool wait) {
+EmberTriCountGenerator::test_send_requests() {
    std::queue<EmberEvent*>& evQ = *evQ_;
    int size = send_requests_.size();
    if (size == 0) return;
@@ -545,9 +579,25 @@ EmberTriCountGenerator::clean_send_requests(bool wait) {
        send_request_array_[i] = *req;
        ++i;
    }
-   if (wait) {
-     enQ_waitall( evQ, size, send_request_array_);
+   enQ_testany( evQ, size, send_request_array_, &send_request_index_, &send_request_flag_);
+}
+
+void
+EmberTriCountGenerator::wait_send_requests() {
+   std::queue<EmberEvent*>& evQ = *evQ_;
+   int size = send_requests_.size();
+   if (size == 0) return;
+   if (send_request_array_) delete send_request_array_;
+   send_request_array_ = new MessageRequest[size];
+   int i=0;
+   for(auto req : send_requests_) {
+       send_request_array_[i] = *req;
+       ++i;
    }
-   else
-     enQ_testany( evQ, size, send_request_array_, &send_request_index_, &send_request_flag_);
+   // these have to be complete to get here
+   while (!datareq_send_requests_.empty()){
+     delete datareq_send_requests_.back();
+     datareq_send_requests_.pop_back();
+   }
+   enQ_waitall( evQ, size, send_request_array_);
 }
