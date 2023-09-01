@@ -72,9 +72,11 @@ EmberTriCountGenerator::EmberTriCountGenerator(SST::ComponentId_t id, Params& pr
 
   do_constant_degree_ =  (bool) params_.find<bool>("arg.use_constant_degree",false);
   if (do_constant_degree_) {
-    uint64_t scale = (uint64_t) params_.find<uint64_t>("arg.scale");
+    uint64_t scale = (uint64_t) params_.find<uint64_t>("arg.scale",0);
+    if (scale == 0) { printf("scale argument required when using constant degree\n"); abort(); }
     num_vertices_ = pow(2,scale);
-    constant_degree_ = (uint64_t) params_.find<uint64_t>("arg.constant_degree");
+    constant_degree_ = (uint64_t) params_.find<uint64_t>("arg.constant_degree", 0);
+    if (constant_degree_ == 0) { printf("constant_degree argument required when using constant degree\n"); abort(); }
     num_edges_ = num_vertices_ * constant_degree_;
   }
   else
@@ -96,16 +98,16 @@ EmberTriCountGenerator::init_vertices() {
   std::string vertices_filename( (std::string) params_.find<std::string>("arg.vertices_filename") );
   std::ifstream infile;
   infile.open(vertices_filename);
-  if (!infile.is_open()) { printf("File open failed"); abort(); }
+  if (!infile.is_open()) { printf("File open failed\n"); abort(); }
   infile >> num_edges_;
   bool end(infile.eof());
-  if (end) { printf("Couldn't read number of edges from file"); abort(); }
+  if (end) { printf("Couldn't read number of edges from file\n"); abort(); }
   uint64_t vertex, first_edge, expected=0;
   while (!end) {
     infile >> vertex >> first_edge;
     end = infile.eof();
     if (!end) {
-      if (vertex != expected) { printf("Missing vertex"); abort(); }
+      if (vertex != expected) { printf("Missing vertex\n"); abort(); }
       Vertices_.push_back(first_edge);
       ++expected;
     }
