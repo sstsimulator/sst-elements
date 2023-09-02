@@ -15,8 +15,6 @@
 #include <string>
 #include "samba.h"
 
-
-using namespace SST::Interfaces;
 using namespace SST;
 using namespace SST::SambaComponent;
 
