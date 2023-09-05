@@ -18,6 +18,8 @@ struct PacketHeader {
     uint64_t len;
 };
 
+const unsigned long PacketSize = sizeof(Ember::PacketHeader) / sizeof(uint64_t);
+
 const int magicNumber = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12) + (1 << 1);
 
 class agileIOconsumer : public EmberMessagePassingGenerator
@@ -64,6 +66,7 @@ class agileIOconsumer : public EmberMessagePassingGenerator
   Hermes::MemAddr *blue_recvBuf = nullptr;
   Hermes::MemAddr green_sendBuf = nullptr;
   Hermes::MemAddr green_recvBuf = nullptr;
+  MessageResponse green_mesgResp;
 
   std::queue<EmberEvent*>* evQ_;
   uint64_t rank_;

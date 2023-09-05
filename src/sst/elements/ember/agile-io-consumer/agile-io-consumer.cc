@@ -175,16 +175,14 @@ bool
 agileIOconsumer::green_read()
 {
   std::queue<EmberEvent *> &evQ = *evQ_;
-  std::array<char, 100> incoming_payload;
-
-  std::string str;
-  long count;
   uint64_t target;
 
-  enQ_recv(evQ, incoming_payload.data(), 100, CHAR, MPI_ANY_SOURCE, 0, GroupWorld);
-  std::stringstream foo(incoming_payload.data());
-  foo >> str >> count >> target;
+  enQ_recv(evQ, green_recvBuf, PacketSize, CHAR, Hermes::MP::AnyTag, 0, GroupWorld, &green_mesgResp);
+  enQ_wait(evQ, NULL, &green_mesgResp);
+  if (green_mesgResp.status == false) {
+    return false;
+  }
   enQ_send(evQ, green_sendBuf, count, CHAR, target, 0, GroupWorld);
 
-  return false;
+  return true;
 }
