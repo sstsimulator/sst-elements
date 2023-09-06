@@ -63,12 +63,15 @@ class agileIOconsumer : public EmberMessagePassingGenerator
   bool first = true;
   static int memory_bitmask;
 
-  Hermes::MemAddr blue_sendBuf = nullptr;
+  Hermes::MemAddr *blue_sendBuf = nullptr;
   Hermes::MemAddr *blue_recvBuf = nullptr;
   Hermes::MemAddr green_sendBuf = nullptr;
   Hermes::MemAddr green_recvBuf = nullptr;
-  MessageRequest blue_mesgReq;
+  MessageRequest *blue_mesgReq = nullptr;
   MessageResponse green_mesgResp;
+  MessageRequest green_mesgReq;
+  bool green_read_first = true;
+  unsigned blue_round = 0;
 
   std::queue<EmberEvent*>* evQ_;
   uint64_t rank_;

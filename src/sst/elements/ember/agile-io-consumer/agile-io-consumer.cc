@@ -86,10 +86,12 @@ agileIOconsumer::generate(std::queue<EmberEvent*>& evQ)
     memSetBacked();
     if (rank_ == 1) {
       // Rank 1 is Blue
-      enQ_memAlloc(evQ, &blue_sendBuf, sizeof(Ember::PacketHeader));
+      blue_mesgReq = new MessageRequest[count];
       blue_recvBuf = new Hermes::MemAddr[count];
+      blue_sendBuf = new Hermes::MemAddr[count];
       for (int i = 0; i < count; i++) {
         enQ_memAlloc(evQ, &blue_recvBuf[i], sizeof(Ember::PacketHeader));
+        enQ_memAlloc(evQ, &blue_sendBuf[i], sizeof(Ember::PacketHeader));
       }
       memory_bitmask |= (1 << rank_);
     }
@@ -127,7 +129,6 @@ agileIOconsumer::num_io_nodes()
 
 // Sent to all the IO nodes
 void agileIOconsumer::validate(const long total_request_size) {
-    int count = ionodes.size();
     long request = total_request_size / count;
     if (request * count != total_request_size) {
       std::cerr << request << " * " << count << " != " << total_request_size
@@ -141,19 +142,34 @@ void agileIOconsumer::validate(const long total_request_size) {
 bool
 agileIOconsumer::broadcast_and_receive(const long &total_request_size,
                                 std::queue<EmberEvent *> &evQ) {
-    for (int i = 0; i < ionodes.size(); i++) {
-      // send( Queue& q, Addr payload, uint32_t count, PayloadDataType dtype,
-      // RankID dest, uint32_t tag, Communicator group)
-      PacketHeader* send_buffer = (PacketHeader*) blue_sendBuf.getBacking();
-      send_buffer->dst = ionodes[i];
-      send_buffer->src = rank_;
-      send_buffer->len = 24;
-      enQ_send(evQ, blue_sendBuf, PacketSize, UINT64_T, ionodes[i], Tag, GroupWorld);
-      // enQ_send(evQ, buffer, len, CHAR, ionodes[i], 0, GroupWorld);
-      // enQ_recv(evQ, blue_recvBuf[i], total_request_size / ionodes.size(), CHAR, MPI_ANY_SOURCE, 0, GroupWorld);
+    if (blue_round == 0) {
+      blue_round++;
+      for (int i = 0; i < count; i++) {
+        // send( Queue& q, Addr payload, uint32_t count, PayloadDataType dtype,
+        // RankID dest, uint32_t tag, Communicator group)
+        PacketHeader* send_buffer = (PacketHeader*) blue_sendBuf[i].getBacking();
+        send_buffer->dst = ionodes[i];
+        send_buffer->src = rank_;
+        send_buffer->len = 24;
+        enQ_send(evQ, blue_sendBuf[i], PacketSize, UINT64_T, ionodes[i], Tag, GroupWorld);
+      }
+      return false;
     }
-
-    return false;
+    else if (blue_round == 1) {
+      blue_round++;
+      for (int i = 0; i < count; i++) {
+        PacketHeader *recv_buffer = (PacketHeader*) blue_recvBuf[i].getBacking();
+        enQ_irecv(evQ, blue_recvBuf[i], PacketSize, UINT64_T, AnySrc, Tag, GroupWorld, &blue_mesgReq[i]);
+        enQ_wait(evQ, &blue_mesgReq[i]);
+      }
+      return false;
+    }
+    else {
+      for (int i = 0; i < count; i++) {
+        PacketHeader *ph = (PacketHeader*)blue_recvBuf[i].getBacking();
+      }
+      return true;
+    }
 }
 
 bool
@@ -172,14 +188,27 @@ agileIOconsumer::green_read()
   std::queue<EmberEvent *> &evQ = *evQ_;
   // uint64_t target;
 
-  MessageResponse response = {0};
-
-  enQ_recv(evQ, green_recvBuf, PacketSize, UINT64_T, AnySrc, Tag, GroupWorld, &response);
-  enQ_wait(evQ, NULL, &response);
-  if (response.status == false) {
+  if (green_read_first) {
+    green_read_first = false;
+    enQ_irecv(evQ, green_recvBuf, PacketSize, UINT64_T, AnySrc, Tag, GroupWorld, &green_mesgReq);
+    // enQ_recv(evQ, green_recvBuf, PacketSize, UINT64_T, AnySrc, Tag, GroupWorld, &green_mesgResp);
+    enQ_wait(evQ, &green_mesgReq, &green_mesgResp);
+    // enQ_wait(evQ, NULL, &green_mesgResp);
+    // if (green_mesgResp.status == false) {
+    //   return false;
+    // }
+    // enQ_send(evQ, green_sendBuf, count, CHAR, target, 0, GroupWorld);
     return false;
   }
-  // enQ_send(evQ, green_sendBuf, count, CHAR, target, 0, GroupWorld);
+  else {
+    PacketHeader *ph = (PacketHeader*) green_recvBuf.getBacking();
+    auto target = ph->src;
+    PacketHeader *ph2 = (PacketHeader*)green_sendBuf.getBacking();
+    ph2->dst = target;
+    ph2->src = rank_;
+    ph2->len = 15;
+    enQ_send(evQ, green_sendBuf, PacketSize, UINT64_T, target, Tag, GroupWorld);
 
-  return false;
+    return true;
+  }
 }
