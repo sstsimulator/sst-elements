@@ -11,6 +11,7 @@
 namespace SST::Ember {
 
 const long combined_read_size = 10*1024*1024;
+const long Tag = 37;
 
 struct PacketHeader {
     uint64_t src;
@@ -66,6 +67,7 @@ class agileIOconsumer : public EmberMessagePassingGenerator
   Hermes::MemAddr *blue_recvBuf = nullptr;
   Hermes::MemAddr green_sendBuf = nullptr;
   Hermes::MemAddr green_recvBuf = nullptr;
+  MessageRequest blue_mesgReq;
   MessageResponse green_mesgResp;
 
   std::queue<EmberEvent*>* evQ_;

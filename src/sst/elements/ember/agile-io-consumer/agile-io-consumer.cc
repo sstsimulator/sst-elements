@@ -103,10 +103,6 @@ agileIOconsumer::generate(std::queue<EmberEvent*>& evQ)
     return false;
   }
 
-  if (memory_bitmask != magicNumber) {
-    return false;
-  }
-
   if (rank_ == 1) return blue_request(combined_read_size);
   if (kind == Green) return green_read();
   return false;
@@ -148,17 +144,16 @@ agileIOconsumer::broadcast_and_receive(const long &total_request_size,
     for (int i = 0; i < ionodes.size(); i++) {
       // send( Queue& q, Addr payload, uint32_t count, PayloadDataType dtype,
       // RankID dest, uint32_t tag, Communicator group)
-      char buffer[100];
-      std::stringstream sstream;
-      sstream << "file_request: " << total_request_size << " " << rank_;
-      std::string payload_string = sstream.str();
-      auto len = payload_string.copy(buffer, payload_string.length());
-      buffer[len] = '\0';
-      enQ_send(evQ, buffer, len, CHAR, ionodes[i], 0, GroupWorld);
-      enQ_recv(evQ, blue_recvBuf[i], total_request_size / ionodes.size(), CHAR, MPI_ANY_SOURCE, 0, GroupWorld);
+      PacketHeader* send_buffer = (PacketHeader*) blue_sendBuf.getBacking();
+      send_buffer->dst = ionodes[i];
+      send_buffer->src = rank_;
+      send_buffer->len = 24;
+      enQ_send(evQ, blue_sendBuf, PacketSize, UINT64_T, ionodes[i], Tag, GroupWorld);
+      // enQ_send(evQ, buffer, len, CHAR, ionodes[i], 0, GroupWorld);
+      // enQ_recv(evQ, blue_recvBuf[i], total_request_size / ionodes.size(), CHAR, MPI_ANY_SOURCE, 0, GroupWorld);
     }
 
-    return true;
+    return false;
 }
 
 bool
@@ -175,14 +170,16 @@ bool
 agileIOconsumer::green_read()
 {
   std::queue<EmberEvent *> &evQ = *evQ_;
-  uint64_t target;
+  // uint64_t target;
 
-  enQ_recv(evQ, green_recvBuf, PacketSize, CHAR, Hermes::MP::AnyTag, 0, GroupWorld, &green_mesgResp);
-  enQ_wait(evQ, NULL, &green_mesgResp);
-  if (green_mesgResp.status == false) {
+  MessageResponse response = {0};
+
+  enQ_recv(evQ, green_recvBuf, PacketSize, UINT64_T, AnySrc, Tag, GroupWorld, &response);
+  enQ_wait(evQ, NULL, &response);
+  if (response.status == false) {
     return false;
   }
-  enQ_send(evQ, green_sendBuf, count, CHAR, target, 0, GroupWorld);
+  // enQ_send(evQ, green_sendBuf, count, CHAR, target, 0, GroupWorld);
 
-  return true;
+  return false;
 }
