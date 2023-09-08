@@ -145,8 +145,6 @@ agileIOconsumer::broadcast_and_receive(const long &total_request_size,
     if (blue_round == 0) {
       blue_round++;
       for (int i = 0; i < count; i++) {
-        // send( Queue& q, Addr payload, uint32_t count, PayloadDataType dtype,
-        // RankID dest, uint32_t tag, Communicator group)
         PacketHeader* send_buffer = (PacketHeader*) blue_sendBuf[i].getBacking();
         send_buffer->dst = ionodes[i];
         send_buffer->src = rank_;
@@ -192,13 +190,8 @@ agileIOconsumer::green_read()
   if (green_read_first) {
     green_read_first = false;
     enQ_irecv(evQ, green_recvBuf, PacketSize, UINT64_T, AnySrc, Tag, GroupWorld, &green_mesgReq);
-    // enQ_recv(evQ, green_recvBuf, PacketSize, UINT64_T, AnySrc, Tag, GroupWorld, &green_mesgResp);
     enQ_wait(evQ, &green_mesgReq, &green_mesgResp);
-    // enQ_wait(evQ, NULL, &green_mesgResp);
-    // if (green_mesgResp.status == false) {
-    //   return false;
-    // }
-    // enQ_send(evQ, green_sendBuf, count, CHAR, target, 0, GroupWorld);
+
     return false;
   }
   else {
