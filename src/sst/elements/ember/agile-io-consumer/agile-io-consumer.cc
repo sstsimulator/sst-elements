@@ -103,7 +103,7 @@ agileIOconsumer::generate(std::queue<EmberEvent*>& evQ)
 
   if (rank_ == 1) return blue_request(combined_read_size);
   if (kind == Green) return green_read();
-  return false;
+  return true;
 }
 
 void
