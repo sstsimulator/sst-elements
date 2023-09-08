@@ -161,7 +161,7 @@ agileIOconsumer::broadcast_and_receive(const long &total_request_size,
     else {
       for (int i = 0; i < count; i++) {
         PacketHeader *ph = (PacketHeader*)blue_recvBuf[i].getBacking();
-        std::cerr << ph << "\n";
+        std::cerr << *ph << "\n";
       }
       return true;
     }
