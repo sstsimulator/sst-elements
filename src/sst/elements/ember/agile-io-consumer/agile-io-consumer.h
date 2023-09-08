@@ -27,8 +27,6 @@ struct PacketHeader {
 
 const unsigned long PacketSize = sizeof(Ember::PacketHeader) / sizeof(uint64_t);
 
-const int magicNumber = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12) + (1 << 1);
-
 class agileIOconsumer : public EmberMessagePassingGenerator
 {
     public:
