@@ -44,8 +44,6 @@
 using namespace SST;
 using namespace SST::Ember;
 
-int agileIOconsumer::memory_bitmask = 0;
-
 agileIOconsumer::agileIOconsumer(SST::ComponentId_t id, Params& prms) : EmberMessagePassingGenerator(id, prms, "Null")
 {
     rank_ = EmberMessagePassingGenerator::rank();
@@ -82,6 +80,7 @@ agileIOconsumer::generate(std::queue<EmberEvent*>& evQ)
   evQ_ = &evQ;
 
   if (first) {
+    first = false;
     // Handle memory allocation
     memSetBacked();
     if (rank_ == 1) {
@@ -93,14 +92,11 @@ agileIOconsumer::generate(std::queue<EmberEvent*>& evQ)
         enQ_memAlloc(evQ, &blue_recvBuf[i], sizeof(Ember::PacketHeader));
         enQ_memAlloc(evQ, &blue_sendBuf[i], sizeof(Ember::PacketHeader));
       }
-      memory_bitmask |= (1 << rank_);
     }
     if (kind == Green) {
       enQ_memAlloc(evQ, &green_sendBuf, sizeof(Ember::PacketHeader));
       enQ_memAlloc(evQ, &green_recvBuf, sizeof(Ember::PacketHeader));
-      memory_bitmask |= (1 << rank_);
     }
-    first = false;
 
     return false;
   }

@@ -67,7 +67,6 @@ class agileIOconsumer : public EmberMessagePassingGenerator
   private:
   unsigned count;
   bool first = true;
-  static int memory_bitmask;
 
   Hermes::MemAddr *blue_sendBuf = nullptr;
   Hermes::MemAddr *blue_recvBuf = nullptr;
