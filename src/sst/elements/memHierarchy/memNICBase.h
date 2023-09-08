@@ -464,7 +464,7 @@ class MemNICBase : public MemLinkBase {
             while (!(queue->empty())) {
                 SST::Interfaces::SimpleNetwork::Request* head = queue->front();
 #ifdef __SST_DEBUG_OUTPUT__
-                MemEventBase* ev = (static_cast<MemRtrEvent*>(head->inspectPayload()))->takeEvent();
+                MemEventBase* ev = (static_cast<MemRtrEvent*>(head->inspectPayload()))->inspectEvent();
                 std::string debugEvStr = ev ? ev->getBriefString() : "";
                 uint64_t dst = head->dest;
                 bool doDebug = ev ? is_debug_event(ev) : false;
