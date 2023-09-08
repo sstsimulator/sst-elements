@@ -7,6 +7,7 @@
 #include <codecvt>
 #include <cstddef>
 #include <cstdint>
+#include <ostream>
 
 namespace SST::Ember {
 
@@ -17,6 +18,11 @@ struct PacketHeader {
     uint64_t src;
     uint64_t dst;
     uint64_t len;
+
+    friend std::ostream &operator<<(std::ostream &os, const PacketHeader &ph) {
+        os << ph.src << ":" << ph.dst << " " << ph.len;
+        return os;
+    }
 };
 
 const unsigned long PacketSize = sizeof(Ember::PacketHeader) / sizeof(uint64_t);
