@@ -153,12 +153,13 @@ agileIOconsumer::broadcast_and_receive(const long &total_request_size,
       blue_round++;
       for (int i = 0; i < count; i++) {
         PacketHeader *recv_buffer = (PacketHeader*) blue_recvBuf[i].getBacking();
-        enQ_irecv(evQ, blue_recvBuf[i], PacketSize, UINT64_T, AnySrc, Tag, GroupWorld, &blue_mesgReq[i]);
+        enQ_irecv(evQ, blue_recvBuf[i], PacketSize, UINT64_T, ionodes[i], Tag, GroupWorld, &blue_mesgReq[i]);
         enQ_wait(evQ, &blue_mesgReq[i]);
       }
       return false;
     }
     else {
+      blue_round++;
       for (int i = 0; i < count; i++) {
         PacketHeader *ph = (PacketHeader*)blue_recvBuf[i].getBacking();
         std::cerr << *ph << "\n";
@@ -181,7 +182,6 @@ bool
 agileIOconsumer::green_read()
 {
   std::queue<EmberEvent *> &evQ = *evQ_;
-  // uint64_t target;
 
   if (green_read_first) {
     green_read_first = false;
@@ -200,6 +200,8 @@ agileIOconsumer::green_read()
     ph2->len = request_size / count;
     enQ_send(evQ, green_sendBuf, PacketSize, UINT64_T, target, Tag, GroupWorld);
     // Now should we send a non-backed buffer of size ph2->len???
+    // The line below causes the sim not to terminate
+    // enQ_send(evQ, green_fileBuf, ph2->len, CHAR, target, Tag, GroupWorld);
 
     return true;
   }
