@@ -144,7 +144,7 @@ agileIOconsumer::broadcast_and_receive(const long &total_request_size,
         PacketHeader* send_buffer = (PacketHeader*) blue_sendBuf[i].getBacking();
         send_buffer->dst = ionodes[i];
         send_buffer->src = rank_;
-        send_buffer->len = 24;
+        send_buffer->len = combined_read_size;
         enQ_send(evQ, blue_sendBuf[i], PacketSize, UINT64_T, ionodes[i], Tag, GroupWorld);
       }
       return false;
@@ -193,11 +193,13 @@ agileIOconsumer::green_read()
   else {
     PacketHeader *ph = (PacketHeader*) green_recvBuf.getBacking();
     auto target = ph->src;
+    auto request_size = ph->len;
     PacketHeader *ph2 = (PacketHeader*)green_sendBuf.getBacking();
     ph2->dst = target;
     ph2->src = rank_;
-    ph2->len = 15;
+    ph2->len = request_size / count;
     enQ_send(evQ, green_sendBuf, PacketSize, UINT64_T, target, Tag, GroupWorld);
+    // Now should we send a non-backed buffer of size ph2->len???
 
     return true;
   }
