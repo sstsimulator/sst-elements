@@ -18,6 +18,8 @@ struct PacketHeader {
     uint64_t src;
     uint64_t dst;
     uint64_t len;
+    // 116 works.  anything larger hangs
+    uint64_t data[116];
 
     friend std::ostream &operator<<(std::ostream &os, const PacketHeader &ph) {
         os << ph.src << ":" << ph.dst << " " << ph.len;
