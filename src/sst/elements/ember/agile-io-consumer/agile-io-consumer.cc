@@ -106,23 +106,6 @@ agileIOconsumer::generate(std::queue<EmberEvent*>& evQ)
   return true;
 }
 
-void
-agileIOconsumer::read_request()
-{
-}
-
-int
-agileIOconsumer::write_data()
-{
-    return 0;
-}
-
-int
-agileIOconsumer::num_io_nodes()
-{
-    return 0;
-}
-
 // Sent to all the IO nodes
 void agileIOconsumer::validate(const long total_request_size) {
     long request = total_request_size / count;

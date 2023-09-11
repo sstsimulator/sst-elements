@@ -52,9 +52,6 @@ class agileIOconsumer : public EmberMessagePassingGenerator
   void setup() override;
 
   bool generate(std::queue<EmberEvent*>& evQ) override;
-  void read_request();
-  int  write_data();
-  int  num_io_nodes();
 
   // Sent to all the IO nodes
   void validate(const long total_request_size);
@@ -78,7 +75,7 @@ class agileIOconsumer : public EmberMessagePassingGenerator
   bool green_read_first = true;
   unsigned blue_round = 0;
 
-  std::queue<EmberEvent*>* evQ_;
+  std::queue<EmberEvent*>* evQ_ = nullptr;
   uint64_t rank_;
   std::vector<int> ionodes;
   // Whether the node is IO (green) or consumer (blue)
