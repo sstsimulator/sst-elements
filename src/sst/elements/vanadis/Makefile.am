@@ -568,8 +568,11 @@ libvanadis_la_LDFLAGS = -module -avoid-version
 
 #libvanadisdbg_la_LDFLAGS = -module -avoid-version
 
-bin_PROGRAMS = sst-vanadis-tracediff
+bin_PROGRAMS = sst-vanadis-tracediff tricount_clean tricount_clean_gen_only tricount_clean_with_gen
 
+tricount_clean_SOURCES = tests/small/misc/tricount/tricount_clean.cc
+tricount_clean_gen_only_SOURCES = tests/small/misc/tricount/tricount_clean_gen_only.cc
+tricount_clean_with_gen_SOURCES = tests/small/misc/tricount/tricount_clean_with_gen.cc
 sst_vanadis_tracediff_SOURCES = tools/tracediff/tracediff.cc
 
 #vanadisdbg.cc: vanadis.cc $(VANADIS_SRC_FILES)
