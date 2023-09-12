@@ -21,52 +21,60 @@ using namespace SST;
 using namespace SST::GNAComponent;
 
 
-STS::STS(GNA * parent, int n)
-:   myGNA(parent),
-    stsID(n),
-    numSpikes(0)
+STS::STS (GNA * container, int ID)
+:   container (container),
+    ID        (ID)
 {
+    synapsesRemaining = 0;
 }
 
-void STS::assign(const Neuron * n)
+void
+STS::assign (const Neuron * n)
 {
-    numSpikes = n->synapseCount;
+    synapsesRemaining = n->synapseCount;
     uint64_t listAddr = n->synapseBase;
 
-    for (int i = 0; i < numSpikes; i++) {
+    for (int i = 0; i < n->synapseCount; i++)
+    {
         // AFR: should throttle
         using namespace Interfaces;
-        StandardMem::Read *req = new StandardMem::Read(listAddr, sizeof(Synapse));
-        myGNA->readMem(req, this);
-        listAddr += sizeof(Synapse);
+        StandardMem::Read * req = new StandardMem::Read (listAddr, sizeof (Synapse));
+        container->readMem (req, this);
+        listAddr += sizeof (Synapse);
     }
 }
 
-bool STS::isFree()
+bool
+STS::isFree ()
 {
-    return (numSpikes == 0);
+    return synapsesRemaining == 0;
 }
 
-void STS::advance(uint now)
+void
+STS::advance (uint now)
 {
-    // AFR: should throttle
-    while (! incomingReqs.empty()) {
+    while (! synapseRecords.empty ())
+    {
         // get the request
-        SST::Interfaces::StandardMem::Request *  req  = incomingReqs.front();
-        SST::Interfaces::StandardMem::ReadResp * resp = dynamic_cast<SST::Interfaces::StandardMem::ReadResp*>(req);
-        assert(resp);
+        SST::Interfaces::StandardMem::Request * req = synapseRecords.front ();
+        synapseRecords.pop ();
+        SST::Interfaces::StandardMem::ReadResp * resp = dynamic_cast<SST::Interfaces::StandardMem::ReadResp *> (req);
+        assert (resp);
 
         // deliver the spike
         Synapse * s = (Synapse *) &resp->data[0];
-        myGNA->deliver(s->weight, s->target, s->delay+now);
-        numSpikes--;
+        container->deliver (s->weight, s->target, s->delay+now);
+        synapsesRemaining--;
 
-        incomingReqs.pop();
         delete req;
     }
 }
 
-void STS::returnRequest(SST::Interfaces::StandardMem::Request * req)
+// TODO: process incoming memory records asynchronously
+// Here is where we should generat DAR messages
+void
+STS::receiveMemory (SST::Interfaces::StandardMem::Request * req)
 {
-    incomingReqs.push(req);
+    synapseRecords.push (req);
 }
+

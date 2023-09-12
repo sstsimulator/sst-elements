@@ -38,19 +38,21 @@ class Request;
 
 //  A Spike Transfer Structure engine - transforms a given spike by
 //  performing a look up and delivering spikes
-class STS {
+class STS
+{
 public:
-    GNA * myGNA;
-    int   stsID;
-    int   numSpikes; // number of spikes yet to deliver
-    std::queue<SST::Interfaces::StandardMem::Request *> incomingReqs;
+    GNA * container;
+    int   ID;
+    int   synapsesRemaining; // to send for current neuron
 
-    STS(GNA *parent, int n);
+    std::queue<SST::Interfaces::StandardMem::Request *> synapseRecords;  // received from memory
 
-    bool isFree       ();
-    void assign       (const Neuron * n);
-    void advance      (uint);
-    void returnRequest(SST::Interfaces::StandardMem::Request *req);
+    STS (GNA * parent, int id);
+
+    bool isFree        ();
+    void assign        (const Neuron * n);
+    void advance       (uint);
+    void receiveMemory (SST::Interfaces::StandardMem::Request * req);
 };
 
 }

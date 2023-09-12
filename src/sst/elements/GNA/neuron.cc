@@ -138,3 +138,16 @@ bool NeuronInput::update(const uint now)
     return true;
 }
 
+
+// class SpikeEvent ----------------------------------------------------------
+
+uint32_t SpikeEvent::cls_id() const
+{
+    return 1234;  // TODO: how do you pick a class ID?
+}
+
+std::string SpikeEvent::serialization_name() const
+{
+    return "SpikeEvent";
+}
+

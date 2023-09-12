@@ -30,6 +30,7 @@
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
 #include <sst/core/interfaces/stdMem.h>
+#include <sst/core/interfaces/simpleNetwork.h>
 
 #include "neuron.h"
 #include "sts.h"
@@ -43,7 +44,7 @@ public:
     // Element Library Info
 
     SST_ELI_REGISTER_COMPONENT(GNA, "GNA", "core", SST_ELI_ELEMENT_VERSION(1,0,0),
-        "Spiking Temportal Processing Unit", COMPONENT_CATEGORY_PROCESSOR)
+        "Spiking Processor", COMPONENT_CATEGORY_PROCESSOR)
 
     SST_ELI_DOCUMENT_PARAMS(
         {"verbose",        "(uint) Determine how verbose the output from the CPU is",            "0"},
@@ -59,7 +60,10 @@ public:
 
     SST_ELI_DOCUMENT_PORTS( {"mem_link", "Connection to memory", { "memHierarchy.MemEventBase" } } )
 
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"memory", "Interface to memory (e.g., caches)", "SST::Interfaces::StandardMem"} )
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+		{"memory", "Interface to memory (e.g., caches)", "SST::Interfaces::StandardMem"},
+        {"networkIF", "Network interface", "SST::Interfaces::SimpleNetwork"}
+    )
 
     // class definiton
 
@@ -71,29 +75,35 @@ public:
     void operator=(const GNA&) = delete;
 
     void init(unsigned int phase);
+    void setup();
+    void complete(unsigned int phase);
     void finish();
 
-    void handleEvent(SST::Interfaces::StandardMem::Request * req);
+    void handleMemory(SST::Interfaces::StandardMem::Request * req);
+    bool handleNetwork(int vn);
     void deliver(float val, int targetN, int time);
     void readMem(Interfaces::StandardMem::Request *req, STS *requestor);
     void assignSTS();
-    void processFire();
-    virtual bool clockTic(SST::Cycle_t);
+    virtual bool clockTic (SST::Cycle_t);
+    void processFire ();
+    void processLIF ();
 
     typedef enum {IDLE, PROCESS_FIRE, LIF, LAST_STATE} gnaState_t;
     gnaState_t state;
 
-    Output                    out;
-    Interfaces::StandardMem * memory;
-    std::string               modelPath;
-    uint                      InputsPerTic;
-    uint                      STSDispatch;
-    uint                      STSParallelism;
-    uint                      maxOutMem;
-    uint                      now;
-    uint                      steps;  ///< maximum number of steps the sim should take
-    uint                      numFirings;
-    uint                      numDeliveries;
+    Output      out;
+    std::string modelPath;
+    uint        InputsPerTic;
+    uint        STSDispatch;
+    uint        STSParallelism;
+    uint        maxOutMem;
+    uint        now;
+    uint        steps;  ///< maximum number of steps the sim should take
+    uint        numFirings;
+    uint        numDeliveries;
+
+    Interfaces::StandardMem *   memory;
+    Interfaces::SimpleNetwork * link;
 
     std::queue<SST::Interfaces::StandardMem::Request *> outgoingReqs;
     std::vector<Neuron *> neurons;

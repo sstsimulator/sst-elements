@@ -29,15 +29,15 @@ using namespace SST::GNAComponent;
 using namespace std;
 
 
-GNA::GNA(ComponentId_t id, Params& params)
-:   Component(id),
-    state(IDLE),
-    now(0),
-    numFirings(0),
-    numDeliveries(0)
+GNA::GNA (ComponentId_t id, Params & params)
+:   Component     (id),
+    state         (IDLE),
+    now           (0),
+    numFirings    (0),
+    numDeliveries (0)
 {
-    uint32_t outputLevel = params.find<uint32_t>("verbose", 0);
-    out.init("GNA:@p:@l: ", outputLevel, 0, Output::STDOUT);
+    uint32_t outputLevel = params.find<uint32_t> ("verbose", 0);
+    out.init ("GNA:@p:@l: ", outputLevel, 0, Output::STDOUT);
 
     // get parameters
     modelPath      = params.find<string>("modelPath",      "model");
@@ -53,47 +53,57 @@ GNA::GNA(ComponentId_t id, Params& params)
     if (maxOutMem      < 1) out.fatal(CALL_INFO, -1, "MaxOutMem invalid\n");
 
     //set our clock
-    string clockFreq = params.find<string>("clock", "1GHz");
-    clockHandler = new Clock::Handler<GNA>(this, &GNA::clockTic);
-    clockTC = registerClock(clockFreq, clockHandler);
+    string clockFreq = params.find<string> ("clock", "1GHz");
+    clockTC = registerClock (clockFreq, new Clock::Handler<GNA> (this, &GNA::clockTic));
 
     // tell the simulator not to end without us
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
     // init memory
-    memory = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::StandardMem::Handler<GNA>(this, &GNA::handleEvent));
-    if (!memory) {
-        params.insert("port", "mem_link");
-        memory = loadAnonymousSubComponent<Interfaces::StandardMem>("memHierarchy.standardInterface", "memory", 0,
-                ComponentInfo::SHARE_PORTS, params, clockTC, new Interfaces::StandardMem::Handler<GNA>(this, &GNA::handleEvent));
+    memory = loadUserSubComponent<Interfaces::StandardMem> (
+        "memory",
+        ComponentInfo::SHARE_NONE, clockTC,
+        new Interfaces::StandardMem::Handler<GNA> (this, &GNA::handleMemory)
+    );
+    if (!memory)
+    {
+        params.insert ("port", "mem_link");
+        memory = loadAnonymousSubComponent<Interfaces::StandardMem> (
+            "memHierarchy.standardInterface", "memory", 0,
+            ComponentInfo::SHARE_PORTS, params, clockTC,
+            new Interfaces::StandardMem::Handler<GNA>(this, &GNA::handleMemory)
+        );
     }
-    if (!memory) out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.standardInterface subcomponent\n");
+    if (!memory) out.fatal (CALL_INFO, -1, "Unable to load memHierarchy.standardInterface subcomponent\n");
+
+    link = loadUserSubComponent<Interfaces::SimpleNetwork> ("networkIF", ComponentInfo::SHARE_NONE, 1);
+    if (!link) out.fatal (CALL_INFO, 1, "No networkIF subcomponent\n");
+    link->setNotifyOnReceive (new Interfaces::SimpleNetwork::Handler<GNA> (this, &GNA::handleNetwork));
 }
 
-GNA::GNA()
+GNA::GNA ()
 :   Component(-1)
 {
     // for serialization only
 }
 
-GNA::~GNA()
+GNA::~GNA ()
 {
     for (auto n : neurons) delete n;
 }
 
-void GNA::init(unsigned int phase)
+void
+GNA::init (unsigned int phase)
 {
-    // init memory
-    memory->init(phase);
+    memory->init (phase);
+    link  ->init (phase);
 
     // Everything below we only do once
     if (phase != 0) return;
 
     // create STS units
-    for (int i = 0; i < STSParallelism; ++i) {
-        STSUnits.push_back(STS(this,i));
-    }
+    for (int i = 0; i < STSParallelism; ++i) STSUnits.push_back (STS (this, i));
 
     // Read data
     // format:
@@ -265,43 +275,114 @@ void GNA::init(unsigned int phase)
     printf("Constructed %d neurons with %d links\n", numNeurons, countLinks);
 }
 
-void GNA::finish()
+void
+GNA::setup ()
 {
+	memory->setup ();
+	link->setup ();
+}
+
+void
+GNA::complete (unsigned int phase)
+{
+	memory->complete (phase);
+	link->complete (phase);
+}
+
+void
+GNA::finish ()
+{
+	memory->finish ();
+	link  ->finish ();
     for (auto i : Neuron::outputs) delete i.second;  // flushes last row
 
-	printf("Completed %d neuron firings\n", numFirings);
-    printf("Completed %d spike deliveries\n", numDeliveries);
+	printf ("Completed %d neuron firings\n", numFirings);
+    printf ("Completed %d spike deliveries\n", numDeliveries);
 }
 
-// handle incoming memory
-void GNA::handleEvent(Interfaces::StandardMem::Request * req)
+void
+GNA::handleMemory (Interfaces::StandardMem::Request * req)
 {
-    map<uint64_t, STS*>::iterator i = requests.find(req->getID());
-    if (i == requests.end()) out.fatal(CALL_INFO, -1, "Request ID (%" PRIx64 ") not found in outstanding requests!\n", req->getID());
+    auto i = requests.find (req->getID ());
+    if (i == requests.end ()) out.fatal (CALL_INFO, -1, "Request ID (%" PRIx64 ") not found in outstanding requests!\n", req->getID());
 
-    // handle event
     STS * requestor = i->second;
-    requestor->returnRequest(req);
-    // clean up
-    requests.erase(i);
+    requestor->receiveMemory (req);
+    requests.erase (i);
 }
 
-void GNA::deliver(float val, int targetN, int time)
+bool
+GNA::handleNetwork (int vn)
 {
-    // AFR: should really throttle this in some way
-    if (targetN >= neurons.size()) out.fatal(CALL_INFO, -1, "Invalid Neuron Address\n");
-    neurons[targetN]->deliverSpike(val, time);
+    // Ignore vn. It should always be 0 because that's all we registered for.
+
+    using namespace Interfaces;
+    while (SimpleNetwork::Request * req = link->recv (0))
+    {
+        SpikeEvent * event = (SpikeEvent *) req->inspectPayload ();
+        cerr << "Got network packet " << event->neuron << endl;
+        delete req;
+    }
+    return true;
+}
+
+void
+GNA::deliver (float val, int targetN, int time)
+{
+    if (targetN >= neurons.size()) out.fatal (CALL_INFO, -1, "Invalid Neuron Address\n");
+    neurons[targetN]->deliverSpike (val, time);
     numDeliveries++;
 }
 
-void GNA::readMem(Interfaces::StandardMem::Request *req, STS *requestor)
+void
+GNA::readMem (Interfaces::StandardMem::Request * req, STS * requestor)
 {
     outgoingReqs.push(req);  // queue the request to send later
     requests.insert(make_pair(req->getID(), requestor));  // record who it came from
 }
 
-void GNA::processFire()
+bool
+GNA::clockTic (Cycle_t)
 {
+    // send some outgoing mem reqs
+    for (int i = 0; i < maxOutMem  &&  ! outgoingReqs.empty (); i++)
+    {
+        memory->send(outgoingReqs.front());
+        outgoingReqs.pop();
+    }
+
+    switch(state) {
+    case IDLE:
+        state = PROCESS_FIRE; // for now
+        break;
+    case PROCESS_FIRE:
+        processFire ();
+        break;
+    case LIF:
+        processLIF ();
+        state = PROCESS_FIRE;
+        break;
+    default:
+        out.fatal (CALL_INFO, -1, "Invalid GNA state\n");
+    }
+
+    return false;  // keep going
+}
+
+void
+GNA::processFire ()
+{
+    // TODO: Inject spikes into network.
+    SpikeEvent * event = new SpikeEvent;
+    event->neuron = 42;
+    using namespace Interfaces;
+    SimpleNetwork::nid_t source = 0;
+    SimpleNetwork::nid_t dest   = 0;
+    SimpleNetwork::Request * req = new SimpleNetwork::Request (dest, source, event->getSize (), false, false, event);
+    req->setTraceID (0);
+    req->setTraceType (SimpleNetwork::Request::FULL);
+    link->send (req, 0);
+
     // assign neuron firings to lookup units (spike transfer structures)
     int remainDispatches = STSDispatch;
     for (auto & e : STSUnits) {
@@ -325,31 +406,12 @@ void GNA::processFire()
     if (allSpikesDelivered & firedNeurons.empty()) state = LIF;
 }
 
-bool GNA::clockTic(Cycle_t)
+void
+GNA::processLIF ()
 {
-    // send some outgoing mem reqs
-    for (int i = 0; i < maxOutMem  &&  ! outgoingReqs.empty(); i++) {
-        memory->send(outgoingReqs.front());
-        outgoingReqs.pop();
-    }
-
-    switch(state) {
-    case IDLE:
-        state = PROCESS_FIRE; // for now
-        break;
-    case PROCESS_FIRE:
-        processFire();
-        break;
-    case LIF:
-        for (auto n : neurons) if (n->update(now)) firedNeurons.push_back(n);
-        now++;
-        if (now >= steps) primaryComponentOKToEndSim();
-        state = PROCESS_FIRE;
-        numFirings += firedNeurons.size();
-        break;
-    default:
-        out.fatal(CALL_INFO, -1,"Invalid GNA state\n");
-    }
-
-    return false;  // keep going
+    for (auto n : neurons) if (n->update (now)) firedNeurons.push_back (n);
+    numFirings += firedNeurons.size ();
+    now++;
+    if (now >= steps) primaryComponentOKToEndSim();
 }
+
