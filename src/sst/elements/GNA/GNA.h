@@ -22,6 +22,7 @@
 
 #include <inttypes.h>
 #include <vector>
+#include <queue>
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
@@ -33,7 +34,6 @@
 #include <sst/core/interfaces/simpleNetwork.h>
 
 #include "neuron.h"
-#include "sts.h"
 
 
 namespace SST {
@@ -49,10 +49,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
         {"verbose",        "(uint) Determine how verbose the output from the CPU is",            "0"},
         {"clock",          "(string) Clock frequency",                                           "1GHz"},
-        {"InputsPerTic",   "Max # of input spikes which can be delivered each clock cycle",      "2"},
-        {"STSDispatch",    "Max # spikes that can be dispatched to the STS in a clock cycle",    "2"},
-        {"STSParallelism", "Max # spikes the STS can process in parallel",                       "2"},
-        {"MaxOutMem",      "Maximum # of outgoing memory requests per cycle",                    "STSParallelism"},
         {"modelPath",      "(string) Path to neuron file",                                       "model"},
         {"steps",          "(uint) how many ticks the simulation should last",                   "1000"},
         {"dt",             "(float) duration of one tick in sim time; used for output",          "1"}
@@ -67,54 +63,52 @@ public:
 
     // class definiton
 
-    GNA(SST::ComponentId_t id, SST::Params& params);  // regular constructor
-    GNA();                                            // for serialization only
-    GNA(const GNA&) = delete;
-    ~GNA();
+    Output      out;             ///< Log file
+    std::string modelPath;       ///< Where to load network configuration from
+    uint32_t    now;             ///< Current step of simulation
+    uint32_t    steps;           ///< maximum number of steps the sim should take
+    uint32_t    numFirings;      ///< Statistics
+    uint32_t    numDeliveries;   ///< Statistics
+    int         neuronIndex;     ///< Current neuron being processed in current cycle
+    int         synapseIndex;    ///< Current downstream synapse (associated with current neuron) being sent a spike
+    bool        syncSent;
+    uint32_t    maxRequestDepth; ///< Shared by memory and network. Should be a pretty small number like 2 or 3.
 
-    void operator=(const GNA&) = delete;
+    std::vector<Neuron*> neurons;
 
-    void init(unsigned int phase);
-    void setup();
-    void complete(unsigned int phase);
-    void finish();
-
-    void handleMemory(SST::Interfaces::StandardMem::Request * req);
-    bool handleNetwork(int vn);
-    void deliver(float val, int targetN, int time);
-    void readMem(Interfaces::StandardMem::Request *req, STS *requestor);
-    void assignSTS();
-    virtual bool clockTic (SST::Cycle_t);
-    void processFire ();
-    void processLIF ();
-
-    typedef enum {IDLE, PROCESS_FIRE, LIF, LAST_STATE} gnaState_t;
-    gnaState_t state;
-
-    Output      out;
-    std::string modelPath;
-    uint        InputsPerTic;
-    uint        STSDispatch;
-    uint        STSParallelism;
-    uint        maxOutMem;
-    uint        now;
-    uint        steps;  ///< maximum number of steps the sim should take
-    uint        numFirings;
-    uint        numDeliveries;
-
+    TimeConverter *             clockTC;
     Interfaces::StandardMem *   memory;
     Interfaces::SimpleNetwork * link;
+    std::set<uint64_t>                                   memoryRequests;
+    std::queue<SST::Interfaces::SimpleNetwork::Request*> networkRequests;
 
-    std::queue<SST::Interfaces::StandardMem::Request *> outgoingReqs;
-    std::vector<Neuron *> neurons;
-    std::vector<STS> STSUnits;
+    GNA (SST::ComponentId_t id, SST::Params& params);  // regular constructor
+    GNA ();                                            // for serialization only
+    GNA (const GNA&) = delete;
+    ~GNA();
 
-    std::deque<Neuron *> firedNeurons;
-    std::map<uint64_t, STS*> requests;
+    void operator= (const GNA&) = delete;
 
-    TimeConverter *clockTC;
-    Clock::HandlerBase *clockHandler;
+    void init     (unsigned int phase);
+    void setup    ();
+    void complete (unsigned int phase);
+    void finish   ();
+
+    virtual bool clockTic (SST::Cycle_t);
+    void send ();  ///< Try to send next network request in queue.
+    void handleMemory (SST::Interfaces::StandardMem::Request * req);
+    bool handleNetwork (int vn);
 };
+
+class SyncEvent : public SST::Event
+{
+public:
+    int phase;
+
+    virtual uint32_t cls_id () const;
+    virtual std::string serialization_name () const;
+};
+
 
 }
 }

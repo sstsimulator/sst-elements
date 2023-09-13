@@ -11,8 +11,6 @@ comp_LTLIBRARIES = libGNA.la
 libGNA_la_SOURCES = \
 	neuron.h \
 	neuron.cc \
-	sts.h \
-	sts.cc \
 	GNA.h \
 	GNA.cc \
 	OutputHolder.h
