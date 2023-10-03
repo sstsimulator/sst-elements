@@ -367,8 +367,9 @@ public:
                 std::cout << "(" << queueId << ") " << dstPe->getInputQueueSize(dstPe->getInputQueueId(processor_id_));
                 std::cout << ", max is " << queue_depth_ << std::endl;
                 if( dstPe->getInputQueueSize(dstPe->getInputQueueId(processor_id_)) < queue_depth_ ) {
-                    output_->verbose(CALL_INFO, 8, 0, ">> Sending...%" PRIu32 "-%" PRIu32 " to %" PRIu32 "\n",
-                                processor_id_, queueId, dstPe->getProcessorId());
+                    output_->verbose(CALL_INFO, 8, 0, ">> Sending (%llu)...%" PRIu32 "-%" PRIu32 " to %" PRIu32 "\n",
+                                output_queues_->at(queueId)->data_queue_->front().to_ullong(), processor_id_, queueId,
+                                dstPe->getProcessorId());
 
                     sendVal = output_queues_->at(queueId)->data_queue_->front();
                     dstPe->pushInputQueue(dstPe->getInputQueueId(processor_id_), sendVal);
@@ -435,7 +436,7 @@ protected:
         for( uint32_t i = 0; i < total_num_inputs; ++i) {
             bool routed = 0;
             const std::string rtr_arg = *input_queues_->at(i)->routing_arg_;
-            std::cout << "\trtr_arg " << i << " -- " << rtr_arg << " (" << input_queues_->at(i)->forwarded_ << ")" << std::endl;
+            std::cout << "\trtr_arg " << i << " -- fwd " << rtr_arg << " (" << input_queues_->at(i)->forwarded_ << ")" << std::endl;
             if( rtr_arg == "" || input_queues_->at(i)->forwarded_ == 1 ) {
                 std::cout << "continue" << std::endl;
                 continue;

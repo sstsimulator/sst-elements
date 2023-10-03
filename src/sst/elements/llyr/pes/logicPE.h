@@ -355,8 +355,8 @@ public:
             }
         }
 
-std::cout << " logic fucked a " << pending_op_ << " " << routed << std::endl;
-pending_op_ = 0 | routed;
+
+        pending_op_ = 0 | routed;
         //if there are values waiting on any of the inputs (queue-0 is a const), this PE could still fire
         for( uint32_t i = 1; i < total_num_inputs; ++i ) {
             if( input_queues_->at(i)->data_queue_->size() > 0 ) {
@@ -378,7 +378,7 @@ pending_op_ = 0 | routed;
         std::cout << "++++++ Input Queue Size: " << input_queues_->at(0)->data_queue_->size();
         std::cout << ", Num Inputs: " << num_inputs;
         std::cout << ", Num Ready: " << num_ready << std::endl;
-std::cout << " logic fucked b " << pending_op_ << std::endl;
+
         //if all inputs are available pull from queue and add to arg list
         if( num_inputs == 0 || num_ready < num_inputs ) {
             output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 " Fire %" PRIu16 "\n", num_inputs, num_ready, cycles_to_fire_);
@@ -406,7 +406,6 @@ std::cout << " logic fucked b " << pending_op_ << std::endl;
         }
 
         // If data tokens in output queue then simulation cannot end
-        std::cout << " logic fucked c " << pending_op_ << std::endl;
         pending_op_ = 1;
 
         // first queue should be const, so save for later
