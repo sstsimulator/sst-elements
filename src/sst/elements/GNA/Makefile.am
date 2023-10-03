@@ -17,7 +17,6 @@ libGNA_la_SOURCES = \
 
 EXTRA_DIST = \
 	README \
-	gna.py \
 	tests/testsuite_default_GNA.py \
 	tests/test_GNA_1.py \
 	tests/model \
