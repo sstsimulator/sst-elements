@@ -21,6 +21,7 @@
 namespace SST {
 namespace Llyr {
 
+// valid, queue id, data
 typedef std::tuple< bool, int32_t, LlyrData > HelperReturn;
 
 /**
@@ -46,6 +47,7 @@ public:
         uint64_t intResult = 0x0F;
 
         std::vector< QueueData > argList(3);
+        std::vector< bool > forwarded(input_queues_->size(), 0);
         LlyrData retVal;
         uint32_t queue_id;
         bool valid_return;
@@ -108,6 +110,7 @@ public:
                         argList[i].valid_ = 1;
                         argList[i].data_  = input_queues_->at(i)->data_queue_->front();
 
+                        forwarded[i] = input_queues_->at(i)->forwarded_;
                         input_queues_->at(i)->forwarded_ = 0;
                         input_queues_->at(i)->data_queue_->pop();
 
@@ -121,6 +124,7 @@ public:
                 output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
                 for( uint32_t i = 0; i < argList.size(); ++i ) {
                     if( argList[i].valid_ ==  1 ) {
+                        input_queues_->at(i)->forwarded_ = forwarded[i];
                         input_queues_->at(i)->data_queue_->push(argList[i].data_);
                     }
                 }
@@ -140,6 +144,7 @@ public:
                         argList[i].valid_ = 1;
                         argList[i].data_  = input_queues_->at(i)->data_queue_->front();
 
+                        forwarded[i] = input_queues_->at(i)->forwarded_;
                         input_queues_->at(i)->forwarded_ = 0;
                         input_queues_->at(i)->data_queue_->pop();
                     } else {
@@ -186,7 +191,7 @@ public:
 
         // for now push the result to all output queues that need this result
         if( op_binding_ == MERGE ) {
-            input_queues_->at(queue_id)->forwarded_ = 0;
+            input_queues_->at(queue_id)->forwarded_ = forwarded[queue_id];
             input_queues_->at(queue_id)->data_queue_->pop();
 
             for( uint32_t i = 0; i < output_queues_->size(); ++i ) {
@@ -205,12 +210,14 @@ public:
                 // need to keep the arg-1 value if it wasn't reset, using queueId of 2 for this
                 if( argList[0].valid_ == 1 && argList[0].data_ == 0 && queue_id == 2 ) {
                     if( argList[1].valid_ == 1 ) {
+                        input_queues_->at(1)->forwarded_ = forwarded[1];
                         input_queues_->at(1)->data_queue_->push(argList[1].data_);
                     }
                 }
             } else if( queue_id == 2 ) {
                 for( uint32_t i = 0; i < argList.size(); ++i ) {
                     if( argList[i].valid_ ==  1 ) {
+                        input_queues_->at(i)->forwarded_ = forwarded[1];
                         input_queues_->at(i)->data_queue_->push(argList[i].data_);
                     }
                 }
@@ -219,6 +226,7 @@ public:
             // need to keep the arg-0 value if the data stream didn't gnom it up
             if( argList[1].valid_ == 1 && argList[1].data_ == 0 ) {
                 if( argList[0].valid_ == 1 ) {
+                    input_queues_->at(0)->forwarded_ = forwarded[0];
                     input_queues_->at(0)->data_queue_->push(argList[0].data_);
                 }
             }
@@ -264,11 +272,12 @@ protected:
 
         // SEL - Select: If control (arg2) is 0, send arg0, else send arg1
         // ROS - Route on Signal: Push stored token out when input-1 is high
-        // ROZ - Route on 0: Forward data if control (arg1) == 0
-        // ROO - Route on 1: Forward data if control (arg1) == 1
+        // ROZ - Route on 0: Forward data if control (arg0) == 0
+        // ROO - Route on 1: Forward data if control (arg0) == 1
         // ONEONAND - Test & Set: Emit a '1' if both inputs are 1, else drop the inputs and emit nothing TODO move to logic
         // MERGE - Choose One: Forward first token to arrive
-        // RPT - Repeater:
+        // REPEATER - Repeater: If ctrl = 0, fwd buffer; if buffer empty, fill buffer and fwd; if ctrl = 1, fill buffer
+        // FILTER - Filter: Filter based on value (e.g. if filter 0s, forward all but 0s)
         if( op == SEL ) {
             if( arg2.valid_ == 1 ) {
                 switch( arg2.data_.to_ullong() ) {
@@ -292,12 +301,12 @@ protected:
                 return std::make_tuple(1, 0, arg0.data_);
             } else {
                 do_forward_ = 0;
-                return std::make_tuple(0, 1, LlyrData(0x00));
+                return std::make_tuple(0, 0, LlyrData(0x00));
             }
         } else if( op == RNE ) {
             if( arg1.valid_ == 1 ) {
                 if( arg0.data_ == arg1.data_ ) {
-                    return std::make_tuple(0, 1, LlyrData(0x00));
+                    return std::make_tuple(0, 0, LlyrData(0x00));
                 } else {
                     return std::make_tuple(1, 1, LlyrData(arg1.data_));
                 }
@@ -315,9 +324,9 @@ protected:
                 exit(-1);
             }
         } else if( op == ROO ) {
-            if( arg1.valid_ == 1 && arg1.data_ == 1 ) {
-                return std::make_tuple(1, 0, arg0.data_);
-            } else if( arg1.valid_ == 1 && arg1.data_ == 0 ) {
+            if( arg0.valid_ == 1 && arg0.data_[0] == 1 ) {
+                return std::make_tuple(1, 1, arg1.data_);
+            } else if( arg0.valid_ == 1 && arg0.data_[0] == 0 ) {
                 return std::make_tuple(0, 0, LlyrData(0xFF));
             } else {
                 output_->verbose( CALL_INFO, 0, 0, "Error: invalid select signal.\n" );
@@ -326,7 +335,7 @@ protected:
         } else if( op == ONEONAND ) {
             if( arg0.valid_ == 1 && arg1.valid_ == 1 ) {
                 if( arg0.data_[0] && arg1.data_[0] ) {
-                    return std::make_tuple(1, 1, LlyrData(0x01));
+                    return std::make_tuple(1, 0, LlyrData(0x01));
                 } else {
                     return std::make_tuple(0, 0, LlyrData(0xFF));
                 }
@@ -337,13 +346,13 @@ protected:
         } else if( op == GATED_ONE ) {
             if( arg0.valid_ == 1 && arg1.valid_ == 1 ) {
                 if( arg0.data_[0] == 0 && arg1.data_[0] == 0 ) {
-                    return std::make_tuple(1, 1, LlyrData(0x00));
+                    return std::make_tuple(1, 0, LlyrData(0x00));
                 } else if( arg0.data_[0] == 0 && arg1.data_[0] == 1 ) {
                     return std::make_tuple(0, 0, LlyrData(0xFF));
                 } else if( arg0.data_[0] == 1 && arg1.data_[0] == 0 ) {
-                    return std::make_tuple(1, 1, LlyrData(0x00));
+                    return std::make_tuple(1, 0, LlyrData(0x00));
                 } else if( arg0.data_[0] == 1 && arg1.data_[0] == 1 ) {
-                    return std::make_tuple(1, 1, LlyrData(0x01));
+                    return std::make_tuple(1, 0, LlyrData(0x01));
                 } else {
                     return std::make_tuple(0, 0, LlyrData(0xFF));
                 }
@@ -365,15 +374,14 @@ protected:
                 return std::make_tuple(0, 0, LlyrData(0xFF));
             } else if( arg0.data_ == 1 && arg1.data_ == 1 ) {
                 do_forward_ = 0;
-                return std::make_tuple(0, 1, LlyrData(0x00));
+                return std::make_tuple(0, 0, LlyrData(0x00));
             } else {
                 return std::make_tuple(1, 1, LlyrData(arg1.data_));
             }
         } else if( op == REPEATER ) {
-            if( arg0.valid_ == 1 && arg0.data_ == 0 ) {
+            if( arg0.valid_ == 1 && arg0.data_[0] == 0 ) {
                 if( control_buffer_.size() > 0 ) {
                     output_->verbose( CALL_INFO, 0, 0, "RPTR AAAAAA\n" );
-
                     return std::make_tuple(1, 2, control_buffer_.front());
                 } else if( arg1.valid_ == 1 ) {
                     output_->verbose( CALL_INFO, 0, 0, "RPTR XXXXXXX\n" );
@@ -382,7 +390,7 @@ protected:
                 } else {
                     return std::make_tuple(0, 2, 0xFF);
                 }
-            } else if( arg0.valid_ == 1 && arg0.data_ == 1 ) {
+            } else if( arg0.valid_ == 1 && arg0.data_[0] == 1 ) {
                 if( arg1.valid_ == 1 ) {
                     output_->verbose( CALL_INFO, 0, 0, "RPTR NNNNNNN\n" );
                     control_buffer_.pop();
@@ -433,12 +441,6 @@ public:
 
         std::vector< QueueData > argList(3);
         LlyrData retVal;
-
-        // FIXME lazy way to do a post-init so that the first token is free
-        // if( op_binding_ == ROS && first_touch_ == 1 ) {
-        //     input_queues_->at(0)->data_queue_->push(LlyrData(0x00));
-        //     first_touch_ = 0;
-        // }
 
         if( output_->getVerboseLevel() >= 10 ) {
             printInputQueue();
