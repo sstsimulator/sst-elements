@@ -26,7 +26,7 @@
 
 
 namespace SST {
-namespace GNAComponent {
+namespace gensaComponent {
 
 struct Synapse {
     float    weight;

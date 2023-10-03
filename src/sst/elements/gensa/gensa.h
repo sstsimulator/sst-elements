@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _GNA_H
-#define _GNA_H
+#ifndef _gensa_h
+#define _gensa_h
 
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
@@ -37,13 +37,13 @@
 
 
 namespace SST {
-namespace GNAComponent {
+namespace gensaComponent {
 
-class GNA : public SST::Component {
+class gensa : public SST::Component {
 public:
     // Element Library Info
 
-    SST_ELI_REGISTER_COMPONENT(GNA, "GNA", "core", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_COMPONENT(gensa, "gensa", "core", SST_ELI_ELEMENT_VERSION(1,0,0),
         "Spiking Processor", COMPONENT_CATEGORY_PROCESSOR)
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -82,12 +82,12 @@ public:
     std::set<uint64_t>                                   memoryRequests;
     std::queue<SST::Interfaces::SimpleNetwork::Request*> networkRequests;
 
-    GNA (SST::ComponentId_t id, SST::Params& params);  // regular constructor
-    GNA ();                                            // for serialization only
-    GNA (const GNA&) = delete;
-    ~GNA();
+    gensa (SST::ComponentId_t id, SST::Params& params);  // regular constructor
+    gensa ();                                            // for serialization only
+    gensa (const gensa&) = delete;
+    ~gensa();
 
-    void operator= (const GNA&) = delete;
+    void operator= (const gensa&) = delete;
 
     void init     (unsigned int phase);
     void setup    ();
@@ -112,4 +112,4 @@ public:
 
 }
 }
-#endif /* _GNA_H */
+#endif /* _gensa_h */

@@ -14,7 +14,7 @@ op.add_option("-m", "--memOut", action="store", type="int", dest="memOut", defau
 (options, args) = op.parse_args()
 
 # Define the simulation components
-comp_gna = sst.Component("GNA", "GNA.GNA")
+comp_gna = sst.Component("gensa", "gensa.core")
 comp_gna.addParams({
     "verbose" : 1,
     "neurons" : options.neurons,
