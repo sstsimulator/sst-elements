@@ -11,15 +11,12 @@ comp_LTLIBRARIES = libGNA.la
 libGNA_la_SOURCES = \
 	neuron.h \
 	neuron.cc \
-	sts.h \
-	sts.cc \
 	GNA.h \
 	GNA.cc \
 	OutputHolder.h
 
 EXTRA_DIST = \
 	README \
-	gna.py \
 	tests/testsuite_default_GNA.py \
 	tests/test_GNA_1.py \
 	tests/model \
