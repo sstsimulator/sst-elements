@@ -69,6 +69,7 @@ class TLB_Wrapper : public SST::Component {
         uint32_t perms = m_exe;
         switch( ev->getCmd() ) {
           case MemHierarchy::Command::GetS:
+          case MemHierarchy::Command::GetSX:
             perms |= 1<<2;
             break;
           case MemHierarchy::Command::Write:

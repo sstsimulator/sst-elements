@@ -13,8 +13,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-typedef uint32_t Addr_t;
-
 typedef Addr_t Context;
 typedef int QueueIndex;
 typedef enum { RdmaDone=0, RdmaSend=1, RdmaRecv, RdmaFini, RdmaCreateCQ, RdmaDestroyCQ, RdmaCreateRQ, 
@@ -100,9 +98,9 @@ typedef struct __attribute__((aligned(64))) {
 
 typedef struct __attribute__((aligned(64))) {
 	uint32_t numThreads;
-	uint32_t reqQueueAddress;
-	uint32_t reqQueueHeadIndexAddress;
+	Addr_t reqQueueAddress;
 	uint32_t reqQueueSize;
+	Addr_t compQueuesAddress;
 
 	uint32_t nodeId;
 	uint32_t numNodes;
@@ -110,8 +108,8 @@ typedef struct __attribute__((aligned(64))) {
 } NicQueueInfo;
 
 typedef struct __attribute__((aligned(64))) {
-	uint32_t respAddress;
-	uint32_t reqQueueTailIndexAddress;
+	Addr_t respAddress;
+	Addr_t reqQueueTailIndexAddress;
 
 } HostQueueInfo;
 

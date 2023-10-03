@@ -175,7 +175,7 @@ App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
       file = str.substr(pos + 1);
     }
 
-    std::cerr << "loading " << name.c_str() << "API\n";
+    //std::cerr << "loading " << name.c_str() << "API\n";
     dlopen_lock.lock();
     dlopen_entry& entry = api_dlopens_[name];
     entry.name = file;
@@ -192,7 +192,7 @@ App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
   if (params.contains("exe")){
     dlopen_lock.lock();
     std::string libname = params.find<std::string>("exe");
-    std::cerr << libname << std::endl;
+    //std::cerr << libname << std::endl;
     dlopen_entry& entry = exe_dlopens_[aid];
     entry.name = libname;
     if (entry.refcount == 0 || !entry.loaded){

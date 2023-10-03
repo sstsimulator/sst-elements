@@ -33,5 +33,8 @@ template<> int HgBase<SST::SubComponent>::self_id() {
     return _self_id_;
   }
 
+template class HgBase<SST::Component>;
+template class HgBase<SST::SubComponent>;
+
 } // end of namespace Hg
 } // end of namespace SST

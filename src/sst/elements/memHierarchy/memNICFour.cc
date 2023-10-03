@@ -238,7 +238,7 @@ void MemNICFour::doRecv(SimpleNetwork::Request * req, NetType net) {
 }
 
 void MemNICFour::recvNotify(OrderedMemRtrEvent* mre) {
-    MemEventBase * me = static_cast<MemEventBase*>(mre->event);
+    MemEventBase * me = static_cast<MemEventBase*>(mre->takeEvent());
     delete mre;
 
     if (!me) return;

@@ -37,7 +37,13 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
 
     const uint32_t verbosity = params.find<uint32_t>("dbgLevel", 0);
     const uint32_t mask = params.find<uint32_t>("dbgMask", 0);
-    output = new SST::Output("[node-os]:@p():@l ", verbosity, mask, SST::Output::STDOUT);
+    auto node = params.find<uint32_t>("nodeId", 0);
+
+    char* outputPrefix = (char*)malloc(sizeof(char) * 256);
+    snprintf(outputPrefix, sizeof(char)*256, "[node%d-os]:@p():@l ", node);
+
+    output = new SST::Output(outputPrefix, verbosity, mask, Output::STDOUT);
+    free(outputPrefix);
 
     const uint32_t core_count = params.find<uint32_t>("cores", 0);
     const uint32_t hardwareThreadCount = params.find<uint32_t>("hardwareThreadCount", 1);
@@ -334,10 +340,15 @@ VanadisNodeOSComponent::handleIncomingSyscall(SST::Event* ev) {
                       "a system-call event.\n");
         }
     } else {
-        auto process = m_coreInfoMap.at(sys_ev->getCoreID()).getProcess( sys_ev->getThreadID() );
-        auto syscall = handleIncomingSyscall( process, sys_ev, core_links[ sys_ev->getCoreID() ] );
+	auto process = m_coreInfoMap.at(sys_ev->getCoreID()).getProcess( sys_ev->getThreadID() );
+	if ( process ) {
+		auto syscall = handleIncomingSyscall( process, sys_ev, core_links[ sys_ev->getCoreID() ] );
 
-        processSyscallPost( syscall );
+		processSyscallPost( syscall );
+	} else {
+		printf("no active process for core %d, hwthread %d\n", sys_ev->getCoreID(), sys_ev->getThreadID() );
+		delete ev;
+	}
     } 
 }
 
@@ -534,7 +545,8 @@ void VanadisNodeOSComponent::pageFault( PageFault *info )
             } else if ( region->backing->dev ) {
                 // map this physical page into the MMU for this process 
                 auto physAddr = region->backing->dev->getPhysAddr();
-                auto ppn = physAddr >> m_pageShift;
+                auto offset = vpn - ( region->addr >> m_pageShift);
+                auto ppn = ( physAddr >> m_pageShift ) + offset;
                 output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT, "Device physAddr=%#" PRIx64 " ppn=%" PRIu64 "\n",physAddr,ppn);
                 m_mmu->map( thread->getpid(), vpn, ppn, m_pageSize, region->perms );
                 pageFaultFini( info );

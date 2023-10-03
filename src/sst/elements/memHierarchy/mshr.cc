@@ -296,6 +296,35 @@ int MSHR::insertEvent(Addr addr, MemEventBase* event, int pos, bool fwdRequest, 
     }
 }
 
+/*
+ *  Attempt to insert the event if a conflict exists
+ *  Return:
+ *      0 = no conflict, not inserted
+ *      >=1 = conflict, inserted (returns position in which event was inserted)
+ *      -1 = conflict, not inserted
+ */
+int MSHR::insertEventIfConflict(Addr addr, MemEventBase* event) {
+    if (mshr_.find(addr) == mshr_.end())
+        return 0;
+    
+    if (size_ == maxSize_-1) { /* Assuming fwdEvent == false */
+        if (is_debug_addr(addr)) {
+            stringstream reason;
+            reason << "<" << event->getID().first << "," << event->getID().second << "> FAILED " << "maxsz: " << maxSize_;
+            printDebug(10, "InsEv", addr, reason.str());
+        }
+        return -1;
+    }
+    size_++;
+    mshr_.find(addr)->second.entries.push_back(MSHREntry(event, false, getCurrentSimCycle()));
+    if (is_debug_addr(addr)) {
+        stringstream reason;
+        reason << "<" << event->getID().first << "," << event->getID().second << ">, pos=" << (mshr_.find(addr)->second.entries.size() - 1);
+        printDebug(10, "InsEv", addr, reason.str());
+    }
+    return (mshr_.find(addr)->second.entries.size() - 1);
+}
+
 MemEventBase* MSHR::swapFrontEvent(Addr addr, MemEventBase* event) {
     if (is_debug_addr(addr))
         printDebug(10, "SwpEv", addr, "");
@@ -642,17 +671,17 @@ void MSHR::setDataDirty(Addr addr, bool dirty) {
 void MSHR::printDebug(uint32_t lev, std::string action, Addr addr, std::string reason) {
     if (lev == 10) {
         if (reason.empty())
-            d_->debug(_L10_, "M: %-41" PRIu64 " %-20s MSHR:%-8s 0x%-16" PRIx64 " Sz: %-6d\n",
+            d_->debug(_L10_, "M: %-41" PRIu64 " %-25s MSHR:%-8s 0x%-16" PRIx64 " Sz: %-6d\n",
                     getCurrentSimCycle(), ownerName_.c_str(), action.c_str(), addr, size_);
         else
-            d_->debug(_L10_, "M: %-41" PRIu64 " %-20s MSHR:%-8s 0x%-16" PRIx64 " Sz: %-6d (%s)\n",
+            d_->debug(_L10_, "M: %-41" PRIu64 " %-25s MSHR:%-8s 0x%-16" PRIx64 " Sz: %-6d (%s)\n",
                     getCurrentSimCycle(), ownerName_.c_str(), action.c_str(), addr, size_, reason.c_str());
     } else {
         if (reason.empty())
-            d_->debug(_L20_, "M: %-41" PRIu64 " %-20s MSHR:%-8s 0x%-16" PRIx64 " Sz: %-6d\n",
+            d_->debug(_L20_, "M: %-41" PRIu64 " %-25s MSHR:%-8s 0x%-16" PRIx64 " Sz: %-6d\n",
                     getCurrentSimCycle(), ownerName_.c_str(), action.c_str(), addr, size_);
         else
-            d_->debug(_L20_, "M: %-41" PRIu64 " %-20s MSHR:%-8s 0x%-16" PRIx64 " Sz: %-6d (%s)\n",
+            d_->debug(_L20_, "M: %-41" PRIu64 " %-25s MSHR:%-8s 0x%-16" PRIx64 " Sz: %-6d (%s)\n",
                     getCurrentSimCycle(), ownerName_.c_str(), action.c_str(), addr, size_, reason.c_str());
     }
 }

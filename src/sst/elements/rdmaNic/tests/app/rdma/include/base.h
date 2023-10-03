@@ -16,12 +16,16 @@
 #ifndef _BASE_H
 #define _BASE_H
 
+#include <stdint.h>
+
+typedef ADDR_TYPE Addr_t;
+
 #include <rdmaNicHostInterface.h>
 void writeCmd( NicCmd* cmd );
 void base_init();
 int base_n_pes(); 
 int base_my_pe();
 void base_make_progress();
-Addr_t getNicBase(); 
+Addr_t getCompQueueInfoAddress();
 
 #endif

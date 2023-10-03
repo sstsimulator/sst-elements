@@ -243,15 +243,18 @@ class CacheLine {
 /* With atomic/lock flags for L1 caches */
 class L1CacheLine : public CacheLine {
     private:
-        unsigned int userLock_; /* Count number of lock operations to the line */
-        bool LLSCAtomic_;       /* True if LL has been issued and no intervening accesses have occured */
-        Cycle_t LLSCAtomicTime_;    /* For caches that guarantee forward progress on LLSC, LLSC temporarily locks the line. This is the time that the LLSC lock will be released */
-        bool eventsWaitingForLock_; /* Number of events in teh queue waiting for the lock */
+        bool LLSC_;           /* True if LL has been issued and no intervening accesses have occured */
+        Cycle_t LLSCTime_;    /* For caches that guarantee forward progress on LLSC, LLSC temporarily locks the line. This is the time that the LLSC lock will be released */
+        std::set<uint32_t> LLSCTidBuf_; /* Track hardware thread IDs that have LL'd this line*/
+                                        /* This is stored in the line rather than in a separate cache-side map to make lookup & maintenance faster (esp. on non-atomic accesses) */
+                                        /* TODO add ability to limit outstanding LLSCs per thread and/or overall (requires a cache-side structure to track global cache state) */
+        unsigned int userLock_;     /* Count number of lock operations to the line */
+        bool eventsWaitingForLock_; /* Number of events in the queue waiting for the lock */
         ReplacementInfo * info;     /* Replacement info - depends on replacement algorithm */
     protected:
         void updateReplacement() { info->setState(state_); }
     public:
-        L1CacheLine(uint32_t size, unsigned int index) : userLock_(0), LLSCAtomic_(false), LLSCAtomicTime_(0), eventsWaitingForLock_(false), CacheLine(size, index) {
+        L1CacheLine(uint32_t size, unsigned int index) : LLSC_(false), LLSCTime_(0), userLock_(0), eventsWaitingForLock_(false), CacheLine(size, index) {
             info = new ReplacementInfo(index, I);
         }
         virtual ~L1CacheLine() { 
@@ -260,19 +263,34 @@ class L1CacheLine : public CacheLine {
 
         void reset() {
             CacheLine::reset();
+            LLSC_ = false;
+            LLSCTime_ = 0;
+            LLSCTidBuf_.clear();
             userLock_ = 0;
-            LLSCAtomic_ = false;
-            LLSCAtomicTime_ = 0;
             eventsWaitingForLock_ = false;
         }
 
         // LLSC
-        void atomicStart(Cycle_t time) { LLSCAtomic_ = true; LLSCAtomicTime_ = time; }
-        void atomicEnd() { LLSCAtomic_ = false; LLSCAtomicTime_ = 0; }
-        bool isAtomic() { return LLSCAtomic_; }
+        void atomicStart(Cycle_t time, uint32_t tid) {
+            if (!LLSC_) {
+                LLSC_ = true; 
+                LLSCTime_ = time; // To reduce starvation, this does not update on subsequent hits to an LL'd line 
+            }
+            LLSCTidBuf_.insert(tid);
+        }
+
+        void atomicEnd() { 
+            if(LLSC_) {
+                LLSC_ = false; 
+                LLSCTime_ = 0;
+                LLSCTidBuf_.clear();
+            }
+        }
+
+        bool isAtomic(uint32_t tid) { return LLSC_ && (LLSCTidBuf_.find(tid) != LLSCTidBuf_.end()); }
 
         // Lock
-        bool isLocked(Cycle_t currentTime) { return (userLock_ > 0) ? true : ((LLSCAtomic_ && (currentTime < LLSCAtomicTime_)) ? true : false)  ; }
+        bool isLocked(Cycle_t currentTime) { return (userLock_ > 0) ? true : ((LLSC_ && (currentTime < LLSCTime_)) ? true : false)  ; }
         void incLock() { userLock_++; }
         void decLock() { userLock_--; }
 
@@ -285,9 +303,14 @@ class L1CacheLine : public CacheLine {
         // String-ify for debugging
         std::string getString() {
             std::ostringstream str;
-            str << "LLSC: " << (LLSCAtomic_ ? "Y" : "N");
-            str << " LLSCTime: " << LLSCAtomicTime_;
-            str << " Lock: (" << userLock_ << "," << eventsWaitingForLock_ << ")";
+            str << "LLSC: " << (LLSC_ ? "Y" : "N");
+            str << " LLSCTime: " << LLSCTime_;
+            str << " LLSCTid: [";
+            for (std::set<uint32_t>::iterator it = LLSCTidBuf_.begin(); it != LLSCTidBuf_.end(); it++) {
+                if (it != LLSCTidBuf_.begin()) str << ",";
+                str << *it;
+            }
+            str << "] Lock: (" << userLock_ << "," << eventsWaitingForLock_ << ")";
             return str.str();
         }
 };

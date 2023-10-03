@@ -18,6 +18,7 @@
 #include <rdma.h>
 #include <unistd.h>
 #include <strings.h>
+#include <inttypes.h>
 
 #define BUF_SIZE 100000
 
@@ -48,7 +49,7 @@ int main( int argc, char* argv[] ) {
 		for ( int i = 0; i < numNodes -1; i++ ) {
 			RdmaCompletion comp;
 			rdma_read_comp( cq, &comp, 1 );
-			printf("got a message in buffer %#x\n",comp.context);
+			printf("got a message in buffer %#" PRIxBITS "\n",comp.context);
 #if VALIDATE
 			uint32_t* buf = (uint32_t*) comp.context;
 			for ( int i = 0; i < BUF_SIZE; i++ ) {

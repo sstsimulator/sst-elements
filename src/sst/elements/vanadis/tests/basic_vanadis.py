@@ -22,6 +22,7 @@ exe = "hello-world"
 #exe = "read-write"
 #exe = "unlink"
 #exe = "unlinkat"
+#exe = "lseek"
 
 #testDir = "basic-math"
 #exe = "sqrt-double"
@@ -42,6 +43,7 @@ exe = "hello-world"
 #exe = "pthread"
 #exe = "openmp"
 #exe = "uname"
+#exe = "mem-test"
 
 physMemSize = "4GiB"
 

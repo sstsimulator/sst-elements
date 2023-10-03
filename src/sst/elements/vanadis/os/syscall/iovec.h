@@ -70,8 +70,8 @@ public:
     {
 
         m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
-                            "[syscall-%s] call is writev( %" PRId64 ", 0x%0llx, %" PRId64 " )\n",
-                            getName().c_str(), event->getFileDescriptor(), event->getIOVecAddress(), event->getIOVecCount());
+                            "[syscall-%s] call is %s( %" PRId64 ", 0x%0llx, %" PRId64 " )\n",
+                            getName().c_str(), getName().c_str(), event->getFileDescriptor(), event->getIOVecAddress(), event->getIOVecCount());
 
         m_fd = process->getFileDescriptor( event->getFileDescriptor() );
         if ( -1 == m_fd ) {

@@ -47,31 +47,18 @@ public:
       COMPONENT_CATEGORY_UNCATEGORIZED // Category
   )
 
-  SST_ELI_DOCUMENT_PARAMS({"eventsToSend",
-                           "How many events this component should send.", NULL},
-                          {"eventSize",
-                           "Payload size for each event, in bytes.", "16"})
+  SST_ELI_DOCUMENT_PARAMS({"verbose",
+                           "Output verbose level", 0},
+                          )
 
   SST_ELI_DOCUMENT_PORTS(
-      {"detailed%(num_vNics)d", "Port connected to the detailed model", {}},
-      {"nic", "Port connected to the nic", {}},
-      {"loop", "Port connected to the loopBack", {}},
-      {"memoryHeap", "Port connected to the memory heap", {}},
+      {"network", "Internode connection network", {}},
+
   )
 
-  SST_ELI_DOCUMENT_STATISTICS(
-      {"EventSizeReceived", "Records the payload size of each event received",
-       "bytes", 1})
-
   SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-      {"OS_SLOT", "The operating system", "hg.node"}
+      {"os_slot", "The operating system", "hg.operating_system"}
       )
-
-  enum {
-    NIC_SLOT,
-    MEMORY_SLOT,
-    OS_SLOT
-  } SubcomponentSlots;
 
   Node(SST::ComponentId_t id, SST::Params &params);
 
@@ -83,6 +70,9 @@ public:
   }
 
   void setup() override;
+  void endSim() {
+    primaryComponentOKToEndSim();
+  }
 
   int ncores() { return ncores_; }
   int nsockets() { return nsockets_; }
@@ -90,14 +80,11 @@ public:
 private:
 
   SST::Hg::OperatingSystem* os_;
-
+  SST::Link* netLink_;
   std::unique_ptr<SST::Output> out_;
-
   NodeId my_addr_;
   int ncores_;
   int nsockets_;
-
-  //sw::AppLauncher* app_launcher_;
 };
 
 } // namespace Hg

@@ -41,7 +41,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(VanadisBasicLoadStoreQueue, "vanadis", "VanadisBasicLoadStoreQueue",
                                           SST_ELI_ELEMENT_VERSION(1, 0, 0),
-                                          "Implements a basic load-store queue for use with the SST standardInterface",
+                                          "Implements a basic load-store queue with write buffer for use with the SST standardInterface",
                                           SST::Vanadis::VanadisLoadStoreQueue)
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS({ "memory_interface", "Set the interface to memory",
@@ -72,11 +72,11 @@ public:
                                 { "split_stores", "Count the number of stores which are fractured due to cache boundaries", "operations", 1},
                                 { "split_loads", "Count the number of loads which are fractured due to cache boundaries", "operations", 1})
 
-    VanadisBasicLoadStoreQueue(ComponentId_t id, Params& params) : VanadisLoadStoreQueue(id, params),
+    VanadisBasicLoadStoreQueue(ComponentId_t id, Params& params, int coreid, int hwthreads) : VanadisLoadStoreQueue(id, params, coreid, hwthreads),
         max_stores(params.find<size_t>("max_stores", 8)),
         max_loads(params.find<size_t>("max_loads", 16)),
         max_issue_attempts_per_cycle(params.find("issues_per_cycle", 2)) {
-
+        
         std_mem_handlers = new VanadisBasicLoadStoreQueue::StandardMemHandlers(this, output);
 
         memInterface = loadUserSubComponent<Interfaces::StandardMem>(
@@ -87,6 +87,14 @@ public:
         address_mask = params.find<uint64_t>("address_mask", 0xFFFFFFFFFFFFFFFFULL);
 
         cache_line_width = params.find<uint64_t>("cache_line_width", 64);
+
+        op_q.resize(hw_threads);
+        op_q_index = 0;
+        op_q_size = 0;
+
+        stores_pending.resize(hw_threads);
+        stores_pending_index = 0;
+        stores_pending_size = 0;
 
         stat_loads_issued = registerStatistic<uint64_t>("loads_issued", "1");
         stat_stores_issued = registerStatistic<uint64_t>("stores_issued", "1");
@@ -106,34 +114,38 @@ public:
     }
 
     virtual ~VanadisBasicLoadStoreQueue() {
-        for(auto op_q_itr = op_q.begin(); op_q_itr != op_q.end(); ) {
-            delete (*op_q_itr);
-            op_q_itr = op_q.erase(op_q_itr);
+        for (int i = 0; i < hw_threads; i++ ) {
+            for(auto op_q_itr = op_q[i].begin(); op_q_itr != op_q[i].end(); ) {
+                delete (*op_q_itr);
+                op_q_itr = op_q[i].erase(op_q_itr);
+            }
         }
-
         delete std_mem_handlers;
     }
 
-    bool storeFull() override { return op_q.size() >= max_stores; }
-    bool loadFull() override { return op_q.size() >= max_loads; }
+    bool storeFull() override { return op_q_size >= max_stores; }
+    bool loadFull() override { return op_q_size >= max_loads; }
     bool storeBufferFull() override { return std_stores_in_flight.size() >= max_stores; }
 
-    size_t storeSize() override { return op_q.size(); }
-    size_t loadSize() override { return op_q.size(); }
+    size_t storeSize() override { return op_q_size; }
+    size_t loadSize() override { return op_q_size; }
     size_t storeBufferSize() override { return std_stores_in_flight.size(); }
 
     void push(VanadisStoreInstruction* store_me) override {
-        op_q.push_back( new VanadisBasicStoreEntry(store_me) );
+        op_q[store_me->getHWThread()].push_back( new VanadisBasicStoreEntry(store_me) );
+        op_q_size++;
         stat_store_issued->addData(1);
     }
 
     void push(VanadisLoadInstruction* load_me) override {
-        op_q.push_back( new VanadisBasicLoadEntry(load_me) );
+        op_q[load_me->getHWThread()].push_back( new VanadisBasicLoadEntry(load_me) );
+        op_q_size++;
         stat_loads_issued->addData(1);
     }
 
     void push(VanadisFenceInstruction* fence) override {
-        op_q.push_back( new VanadisBasicFenceEntry(fence) );
+        op_q[fence->getHWThread()].push_back( new VanadisBasicFenceEntry(fence) );
+        op_q_size++;
         stat_fences_issued->addData(1);
     }
 
@@ -142,13 +154,11 @@ public:
         // first deleted and then removed from the queue, otherwise entry
         // is left alone
 
-        for(auto op_q_itr = op_q.begin(); op_q_itr != op_q.end(); ) {
-            if( (*op_q_itr)->getHWThread() == thread ) {
-                delete (*op_q_itr);
-                op_q_itr = op_q.erase(op_q_itr);
-            } else {
-                ++op_q_itr;
-            }
+        op_q_size -= op_q[thread].size();
+        for(auto op_q_itr = op_q[thread].begin(); op_q_itr != op_q[thread].end(); ) {
+            delete (*op_q_itr);
+            op_q_itr = op_q[thread].erase(op_q_itr);
+
         }
 
         for(auto load_itr = loads_pending.begin(); load_itr != loads_pending.end(); ) {
@@ -160,13 +170,10 @@ public:
             }
         }
 
-        for(auto store_itr = stores_pending.begin(); store_itr != stores_pending.end(); ) {
-            if( (*store_itr)->getHWThread() == thread) {
-                delete (*store_itr);
-                store_itr = stores_pending.erase(store_itr);
-            } else {
-                ++store_itr;
-            }
+        stores_pending_size -= stores_pending[thread].size();
+        for(auto store_itr = stores_pending[thread].begin(); store_itr != stores_pending[thread].end(); ) {
+            delete (*store_itr);
+            store_itr = stores_pending[thread].erase(store_itr);
         }
     }
 
@@ -185,16 +192,18 @@ public:
         int32_t next_line = 0;
 
         if(output->getVerboseLevel() >= 16) {
-            for(auto op_q_itr = op_q.begin(); op_q_itr != op_q.end(); op_q_itr++) {
-                VanadisBasicLoadStoreEntryOp op_type = (*op_q_itr)->getEntryOp();
+            for (int i = 0; i < hw_threads; i++) {
+                for(auto op_q_itr = op_q[i].begin(); op_q_itr != op_q[i].end(); op_q_itr++) {
+                    VanadisBasicLoadStoreEntryOp op_type = (*op_q_itr)->getEntryOp();
 
-                out.verbose(CALL_INFO, 16, 0, "-> [%4" PRId32 "] type: %5s ins: 0x%8llx thr: %4" PRIu32 "\n",
-                    next_line,
-                    (op_type == VanadisBasicLoadStoreEntryOp::LOAD) ? "LOAD" :
-                    (op_type == VanadisBasicLoadStoreEntryOp::STORE) ? "STORE" : "FENCE",
-                    (*op_q_itr)->getInstruction()->getInstructionAddress(),
-                    (*op_q_itr)->getInstruction()->getHWThread());
-                next_line++;
+                    out.verbose(CALL_INFO, 16, 0, "-> [%4" PRId32 "] type: %5s ins: 0x%8llx thr: %4" PRIu32 "\n",
+                        next_line,
+                        (op_type == VanadisBasicLoadStoreEntryOp::LOAD) ? "LOAD" :
+                        (op_type == VanadisBasicLoadStoreEntryOp::STORE) ? "STORE" : "FENCE",
+                        (*op_q_itr)->getInstruction()->getInstructionAddress(),
+                        (*op_q_itr)->getInstruction()->getHWThread());
+                    next_line++;
+                }
             }
         }
     }
@@ -206,43 +215,46 @@ public:
             if(loads_pending.size() > 0) {
                 for(int i = loads_pending.size() - 1; i >= 0; i--) {
                     VanadisBasicLoadPendingEntry* load_entry = loads_pending.at(i);
-
                     output->verbose(CALL_INFO, 8, 0, "-->   load[%5d] ins: 0x%llx / thr: %" PRIu32 " / addr: 0x%llx / width: %" PRIu64 "\n",
                         i, load_entry->getLoadInstruction()->getInstructionAddress(),
                         load_entry->getLoadInstruction()->getHWThread(),
-                        load_entry->getLoadAddress(), load_entry->getLoadWidth()); 
+                        load_entry->getLoadAddress(), load_entry->getLoadWidth());
                 }
             }
+  
+            if(stores_pending_size > 0) {
+                for (int t = 0; t < hw_threads; t++) {
+                    for(int i = stores_pending[t].size() - 1; i >= 0; i--) {
+                        VanadisBasicStorePendingEntry* store_entry = stores_pending[t].at(i);
 
-            if(stores_pending.size() > 0) {
-                for(int i = stores_pending.size() - 1; i >= 0; i--) {
-                    VanadisBasicStorePendingEntry* store_entry = stores_pending.at(i);
-
-                    output->verbose(CALL_INFO, 16, 0, "--> stores[%5d] ins: 0x%llx / thr: %" PRIu32 " / addr: 0x%llx / width: %" PRIu64 "\n",
-                        i, store_entry->getStoreInstruction()->getInstructionAddress(),
-                        store_entry->getStoreInstruction()->getHWThread(),
-                        store_entry->getStoreAddress(), store_entry->getStoreWidth());
+                        output->verbose(CALL_INFO, 16, 0, "--> stores[%5d] ins: 0x%llx / thr: %" PRIu32 " / addr: 0x%llx / width: %" PRIu64 "\n",
+                            i, store_entry->getStoreInstruction()->getInstructionAddress(),
+                            store_entry->getStoreInstruction()->getHWThread(),
+                            store_entry->getStoreAddress(), store_entry->getStoreWidth());
+                    }
                 }
             }
         }
 
-        stat_op_q_size->addData(op_q.size());
+        stat_op_q_size->addData(op_q_size);
         stat_loads_pending->addData(loads_pending.size());
         stat_stores_pending->addData(std_stores_in_flight.size());
-        stat_store_buffer_entries->addData(stores_pending.size());
+        stat_store_buffer_entries->addData(stores_pending_size);
 
-        // this can be called multiple times per cycle if needed but lets just do once for now
+        // this can be called multiple times per cycle
         for(uint32_t attempt = 0; attempt < max_issue_attempts_per_cycle; ++attempt) {
-            const bool attempt_result = attempt_to_issue(cycle, attempt);
-
-            // if the attempt failed then stop because it will just fail again this cycle
-            if(!attempt_result) {
+            if (op_q_size == 0)
                 break;
-            }
+            const bool attempt_result = attempt_to_issue(cycle, attempt, op_q_index);
+            op_q_index = (op_q_index + 1) % hw_threads;
         }
 
         // attempt to issue any front of ROB stores into memory system
-        issueStoreFront();
+        for (int i = 0; i < hw_threads; i++) {
+            bool issued = issueStoreFront(stores_pending_index);
+            stores_pending_index = (stores_pending_index + 1) % hw_threads;
+            if (issued) break; // one per cycle TODO: parameterize
+        }
     }
 
 protected:
@@ -299,7 +311,7 @@ protected:
             const uint64_t load_address = load_entry->getLoadAddress();
             const uint32_t hw_thr     = load_ins->getHWThread();
 
-            if ( ev->getFail() ) { 
+            if ( ev->getFail() || ev->vAddr < 64) {
                 load_ins->flagError();
             }
 
@@ -323,9 +335,13 @@ protected:
                     (load_ins->getValueRegisterType() == LOAD_INT_REGISTER) ? "int" : "fp",str.str().c_str());
 
             }
+
             
             switch(load_ins->getValueRegisterType()) {
             case LOAD_INT_REGISTER: {
+
+                if ( ! load_ins->trapsError() ) {;
+
                 target_isa_reg = load_ins->getISAIntRegOut(0);
                 target_reg = load_ins->getPhysIntRegOut(0);
 
@@ -365,8 +381,12 @@ protected:
 
                     lsq->registerFiles->at(hw_thr)->copyToIntRegister(target_reg, 0, &register_value[0], register_value.size());
                 }
+                }
             } break;
             case LOAD_FP_REGISTER: {
+
+                if ( ! load_ins->trapsError() ) {
+
                 target_isa_reg = load_ins->getISAFPRegOut(0);
                 target_reg = load_ins->getPhysFPRegOut(0);
 
@@ -389,16 +409,13 @@ protected:
                 }
 
                 lsq->registerFiles->at(hw_thr)->copyToFPRegister(target_reg, 0, &register_value[0], reg_width);
+                }
             } break;
             default:
                 out->fatal(CALL_INFO, -1, "Unknown register type.\n");
             }
 
             ///////////////////////////////////////////////////////////////////////////////////
-
-            if (ev->vAddr < 64) {
-                load_ins->flagError();
-            }
 
             load_entry->removeRequest(ev->getID());
 
@@ -446,14 +463,14 @@ protected:
 
             // this was not a standard store OR was removed by a branch mis-predict but we need to find
             // out now
-
-            if(0 == lsq->stores_pending.size()) {
+            int thr = ev->tid;
+            if(0 == lsq->stores_pending[thr].size()) {
                 // no other pending stores so this request is free and can move on
                 delete ev;
                 return;
             }
 
-            VanadisBasicStorePendingEntry* store_entry = lsq->stores_pending.front();
+            VanadisBasicStorePendingEntry* store_entry = lsq->stores_pending[thr].front();
 
             if(store_entry->containsRequest(ev->getID())) {
                 VanadisStoreInstruction* store_ins = store_entry->getStoreInstruction();
@@ -487,14 +504,16 @@ protected:
                     }
 
                     store_entry->getInstruction()->markExecuted();
-                    lsq->stores_pending.erase(lsq->stores_pending.begin());
+                    lsq->stores_pending[thr].erase(lsq->stores_pending[thr].begin());
+                    lsq->stores_pending_size--;
                     delete store_entry;
                     delete ev;
                 } break;
                 case MEM_TRANSACTION_LOCK:
                 {
                     store_entry->getInstruction()->markExecuted();
-                    lsq->stores_pending.erase(lsq->stores_pending.begin());
+                    lsq->stores_pending[thr].erase(lsq->stores_pending[thr].begin());
+                    lsq->stores_pending_size--;
                     delete store_entry;
                     delete ev;
                 } break;
@@ -524,19 +543,18 @@ protected:
         output->verbose(CALL_INFO, 16, 0, "completed pass off to incoming handlers\n");
     }
 
-    void issueStoreFront() {
-        if(output->getVerboseLevel() >= 16) {
-            output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_STORE_FLG, "issue store-front -> check store is front of ROB and attempt to issue\n");
+    bool issueStoreFront(uint32_t thr) {
+        if(stores_pending[thr].empty()) {
+            return false;
         }
 
-        if(stores_pending.empty()) {
-            output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_STORE_FLG, "-> stores-pending is empty, return without processing\n");
-            return;
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_STORE_FLG, "issue store-front (thr: %" PRIu32 ")-> check store is front of ROB and attempt to issue\n", thr);
         }
 
         // check the front store of the pending queue, if this isn't currently dispatched
         // and is front of ROB, then we can execute it into the memory system
-        VanadisBasicStorePendingEntry* current_store = stores_pending.front();
+        VanadisBasicStorePendingEntry* current_store = stores_pending[thr].front();
         VanadisStoreInstruction* store_ins = current_store->getStoreInstruction();
 
         if(output->getVerboseLevel() >= 16) {
@@ -558,7 +576,8 @@ protected:
 
                 // this was a standard store (not LLSC/LOCK) and we issued into system successfully
                 if(LIKELY(issue_result)) {
-                    stores_pending.pop_front();
+                    stores_pending[thr].pop_front();
+                    stores_pending_size--;
                     delete current_store;
 
                     if(output->getVerboseLevel() >= 16) {
@@ -574,10 +593,15 @@ protected:
                         store_ins->getInstructionAddress(), store_ins->getHWThread());
                     current_store->markDispatched();
                 }
+                return issue_result;
             } else {
                 output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_STORE_FLG, "----> store is not at ROB front so need to wait until this is marked\n");
             }
+        } else {
+
+            output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_STORE_FLG, "-> current store queue front is already dispatched. Returning\n");
         }
+        return false;
     }
 
     bool issueStore(VanadisBasicStorePendingEntry* store_entry, 
@@ -851,15 +875,14 @@ protected:
         }
     }
 
-    bool attempt_to_issue(uint64_t cycle, uint16_t attempt_this_cycle) {
+    bool attempt_to_issue(uint64_t cycle, uint16_t attempt_this_cycle, int thr) {
         // if we don't have any work to do, return and get out of here
-        if(0 == op_q.size()) {
+        if(0 == op_q[thr].size()) {
             return false;
         }
+        output->verbose(CALL_INFO, 16, 0, "-> cycle: %" PRIu64 " / attempt: %" PRIu16 " / thr: %" PRId32"\n", cycle, attempt_this_cycle, thr);
 
-        output->verbose(CALL_INFO, 16, 0, "-> cycle: %" PRIu64 " / attempt: %" PRIu16 "\n", cycle, attempt_this_cycle);
-
-        VanadisBasicLoadStoreEntry* front_entry = op_q.front();
+        VanadisBasicLoadStoreEntry* front_entry = op_q[thr].front();
 
         if(! front_entry->getInstruction()->completedIssue()) {
             if(output->getVerboseLevel() >= 16) {
@@ -872,6 +895,7 @@ protected:
         switch(front_entry->getEntryOp()) {
             case VanadisBasicLoadStoreEntryOp::LOAD:
             {
+                //output->verbose(CALL_INFO, 16, 0, "--> cycle: %" PRIu64 " attempt to issue LOAD\n", cycle);
                 VanadisLoadInstruction* load_ins = dynamic_cast<VanadisLoadInstruction*>(
                     front_entry->getInstruction());
 
@@ -882,6 +906,7 @@ protected:
     
                 // can't do anything cycle, so return false
                 if(loads_pending.size() >= max_loads) {
+                    //output->verbose(CALL_INFO, 16, 0, "--> cycle: %" PRIu64 " issue LOAD failed: max_loads\n", cycle);
                     return false;
                 }
 
@@ -917,7 +942,16 @@ protected:
                         }
 
                         // tell caller we would not issue
+                        //output->verbose(CALL_INFO, 16, 0, "--> cycle: %" PRIu64 " issue LOAD failed: cannot execute\n", cycle);
                         return false;
+
+                    // Drain store q to ensure that a paired SC/Unlock can be issued close to the LL/Lock
+                    } else if((load_ins->getTransactionType() == MEM_TRANSACTION_LLSC_LOAD) || (load_ins->getTransactionType() == MEM_TRANSACTION_LOCK)) {
+                        if (!stores_pending[load_ins->getHWThread()].empty()) {
+                            return false;
+                        } else {
+                            issueLoad(load_ins, load_address, load_width);
+                        }
                     } else {
                         // We are good to issue with all checks completed!
                         issueLoad(load_ins, load_address, load_width);
@@ -925,12 +959,16 @@ protected:
                 }
 
                 // pop front entry and tell the caller we did something (true)
-                delete op_q.front();
-                op_q.pop_front();
+                delete op_q[thr].front();
+                op_q[thr].pop_front();
+                op_q_size--;
+                //output->verbose(CALL_INFO, 16, 0, "--> cycle: %" PRIu64 " issue LOAD succeeded\n", cycle);
                 return true;
             } break;
             case VanadisBasicLoadStoreEntryOp::STORE:
             {
+
+                //output->verbose(CALL_INFO, 16, 0, "--> cycle: %" PRIu64 " attempt to issue STORE\n", cycle);
                 VanadisStoreInstruction* store_ins = dynamic_cast<VanadisStoreInstruction*>(
                     front_entry->getInstruction());
 
@@ -941,7 +979,8 @@ protected:
 
                 // if we have too many operations pending, return false to tell handler
                 // we couldn't perform any operations this cycle
-                if(stores_pending.size() >= max_stores) {
+                if(stores_pending_size >= max_stores) {
+                    //output->verbose(CALL_INFO, 16, 0, "--> cycle: %" PRIu64 " issue STORE failed: max stores\n", cycle);
                     return false;
                 }
 
@@ -971,17 +1010,21 @@ protected:
                         store_ins, store_address, store_width, store_ins->getValueRegisterType(),
                         store_ins->getValueRegister());
 
-                    stores_pending.push_back(new_pending_store);
+                    stores_pending[store_ins->getHWThread()].push_back(new_pending_store);
+                    stores_pending_size++;
                 }
 
                 // clear the front entry as we have just processed it
-                delete op_q.front();
-                op_q.pop_front();
+                delete op_q[thr].front();
+                op_q[thr].pop_front();
+                op_q_size--;
+                //output->verbose(CALL_INFO, 16, 0, "--> cycle: %" PRIu64 " issue STORE succeeded\n", cycle);
                 return true;
             } break;
             case VanadisBasicLoadStoreEntryOp::FENCE: 
             {
-                VanadisInstruction* current_ins = op_q.front()->getInstruction();
+                //output->verbose(CALL_INFO, 16, 0, "--> cycle: %" PRIu64 " attempt to issue FENCE\n", cycle);
+                VanadisInstruction* current_ins = op_q[thr].front()->getInstruction();
                 VanadisFenceInstruction* current_fence_ins = (VanadisFenceInstruction*) current_ins;
 
                 bool can_execute = true;
@@ -996,7 +1039,7 @@ protected:
                 if(current_fence_ins->createsStoreFence()) {
                     // stores are fenced if there are no pending stores AND all issued to the memory system
                     // have returned so are currently visible.
-                    can_execute = can_execute && (!pendingStores(current_fence_ins->getHWThread())) && 
+                    can_execute = can_execute && (stores_pending[current_fence_ins->getHWThread()].size() == 0) && 
                         (std_stores_in_flight.size() == 0);
                 }
 
@@ -1009,10 +1052,13 @@ protected:
                     stat_fences_executed->addData(1);
 
                     // erase the front entry
-                    delete op_q.front();
-                    op_q.pop_front();
+                    delete op_q[thr].front();
+                    op_q[thr].pop_front();
+                    op_q_size--;
+                    //output->verbose(CALL_INFO, 16, 0, "--> cycle: %" PRIu64 " issue FENCE succeeded\n", cycle);
                     return true;
                 } else {
+                    //output->verbose(CALL_INFO, 16, 0, "--> cycle: %" PRIu64 " issue FENCE failed: cannot execute\n", cycle);
                     return false;
                 }
             } break;
@@ -1043,16 +1089,7 @@ protected:
     }
 
     bool pendingStores(const uint32_t thr) {
-        bool matchID = false;
-
-        for(auto store_itr = stores_pending.begin(); store_itr != stores_pending.end(); store_itr++) {
-            if(thr == (*store_itr)->getHWThread()) {
-                matchID = true;
-                break;
-            }
-        }
-
-        return matchID;
+        return stores_pending[thr].size() > 0;
     }
 
     bool pendingLoads(const uint32_t thr) {
@@ -1071,24 +1108,27 @@ protected:
     bool checkStoreConflict(const uint32_t thread, const uint64_t address, const uint64_t width) {
         bool conflicts = false;
 
-        for(auto store_itr = stores_pending.begin(); store_itr != stores_pending.end(); store_itr++) {
+        for(auto store_itr = stores_pending[thread].begin(); store_itr != stores_pending[thread].end(); store_itr++) {
             VanadisBasicStorePendingEntry* current_entry = (*store_itr);
 
-            if(thread == current_entry->getHWThread()) {
-                if(UNLIKELY(current_entry->storeAddressOverlaps(address, width))) {
-                    conflicts = true;
-                    break;
-                }
+            if(UNLIKELY(current_entry->storeAddressOverlaps(address, width))) {
+                conflicts = true;
+                break;
             }
         }
 
         return conflicts;
     }
 
-    std::deque<VanadisBasicLoadStoreEntry*> op_q;
-    std::deque<VanadisBasicStorePendingEntry*> stores_pending;
+    // Per-hardware-thread queues
+    std::vector< std::deque<VanadisBasicLoadStoreEntry*> > op_q;
+    std::vector< std::deque<VanadisBasicStorePendingEntry*> > stores_pending;
     std::deque<VanadisBasicLoadPendingEntry*> loads_pending;
     std::set<StandardMem::Request::id_t> std_stores_in_flight;
+    int op_q_index; // Next hw_thread to check in op_q queues
+    int stores_pending_index; // Next hw thread to check in stores_pending q's
+    size_t op_q_size;
+    size_t stores_pending_size;
 
     StandardMem* memInterface;
     StandardMemHandlers* std_mem_handlers;

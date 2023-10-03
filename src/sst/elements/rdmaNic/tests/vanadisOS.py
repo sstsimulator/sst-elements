@@ -7,7 +7,7 @@ stdMem_debug = 0
 debugPython=False
 
 physMemSize = "4GiB"
-full_exe_name="./app/rdma/msg"
+full_exe_name= os.getenv("RDMANIC_EXE", "./app/rdma/msg" )
 exe_name= full_exe_name.split("/")[-1]
 
 coherence_protocol="MESI"
@@ -19,13 +19,15 @@ class Builder:
     def __init__(self):
                 pass
 
-    def build( self, nodeId, cpuId ):
+    def build( self, numNodes, nodeId, cpuId ):
 
         self.prefix = 'node' + str(nodeId)
 
         self.nodeOS = sst.Component(self.prefix + ".os", "vanadis.VanadisNodeOS")
         self.nodeOS.addParams({
-            "verbose" : os_verbosity,
+            "nodeId": nodeId,
+            "dbgLevel" : os_verbosity,
+            "dbgMask" : -1,
             "cores" : 1,
             "nodeNum" : nodeId,
             "hardwareThreadCount" : 1,
@@ -33,15 +35,30 @@ class Builder:
             "heap_end"   : (2 * 1024 * 1024 * 1024) - 4096,
             "page_size"  : 4096,
             "heap_verbose" : 0, #verbosity
-            "process0.env_count" : 2,
-            "process0.env0" : "HOME=/home/sdhammo",
-            "process0.env1" : "NEWHOME=/home/sdhammo2",
+            "process0.env_count" : 3,
+            # MUSL libc uses this in localtime, if we don't set it we 
+            # can get different results on different systems
+            "process0.env0" : "TZ=UTC",
+            # for mvapich runtime
+            "process0.env1" : "PMI_SIZE=" + str(numNodes),
+            "process0.env2" : "PMI_RANK=" + str(nodeId),
             "process0.exe" : full_exe_name,
             "process0.arg0" : exe_name,
             "physMemSize" : physMemSize,
             "useMMU" : True,
         })
+
+        if os.getenv("RDMANIC_IMB",False):
+            self.nodeOS.addParams({
+                "process0.argc" : 5,
+                "process0.arg1" : "-iter",
+                "process0.arg2" : "1",
+                "process0.arg3" : "-msglen",
+                "process0.arg4" : "msglen.txt",
+            })
+
         self.mmu = self.nodeOS.setSubComponent( "mmu", "mmu.simpleMMU" )
+
         self.mmu.addParams({
             "debug_level": 0,
             "num_cores": 1,

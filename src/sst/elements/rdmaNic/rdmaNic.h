@@ -26,6 +26,8 @@
 #include <sst/core/interfaces/stdMem.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 
+typedef uint64_t Addr_t;
+
 #include "rdmaNicHostInterface.h"
 
 #define DBG_X_FLAG (1<<0)
@@ -134,39 +136,139 @@ class RdmaNic : public SST::Component {
     StandardMem* m_mmioLink;
     StandardMem* m_dmaLink;
     uint64_t m_ioBaseAddr;
-    int m_pesPerNode;
-    size_t m_perPeReqQueueMemSize;
-	size_t m_perPeTotalMemSize;
-	std::vector<int> m_cmdBytesWritten;
-    std::vector<uint8_t> m_reqQueueBacking;
-	std::vector< std::vector<QueueIndex> > m_compQueuesBacking;
-#if 0 
-    bool m_clockLink;            // Flag - should we call clock() on this link or not
-#endif
-    size_t m_cacheLineSize;
-    uint64_t m_hostQueueBaseAddr;
 
-	struct SetupInfo {
-		SetupInfo() : offset(0) {}
-		HostQueueInfo hostInfo;
-		NicQueueInfo  nicInfo;
-		int           offset;
-	};
 
-    struct ThreadInfo {
-		ThreadInfo() {}
-		SetupInfo setupInfo;
+    template < typename CMD, typename COMP_INDEX>
+    class Backing {
 
-		struct CompTailInfo {
-			CompTailInfo() : info(NUM_COMP_Q,std::vector<int>(RDMA_COMP_Q_SIZE, 0) )  {}
-			
-	 		std::vector< std::vector<int> > info;
-			int read(int qNum, int qSlot ) { return info[qNum][qSlot];}
-			//Addr_t getAddr(int qNum, int qSlot ) { return &info[qNum][qSlot] - this->comTailInfo;}
-		} compTailInfo;
+        int round_up(int num, int factor)
+        {
+            return num + factor - 1 - (num + factor - 1) % factor;
+        }
+
+      public:
+        Backing( int numPe, int cmdQSize, int compQSize ) : peBacking( numPe, PE_backing( compQSize ) ), cmdQSize(cmdQSize), compQSize(compQSize) 
+        {
+            assert( numPe );
+            //printf("%s() numPe=%d cmdQSize=%d compQSize=%d\n",__func__,numPe, cmdQSize, compQSize);
+        }
+
+        int getNumPEs() { return peBacking.size(); }
+        size_t getMemorySize() { return getPeMemorySize() * peBacking.size(); }
+
+        size_t getCmdQSize()        { return cmdQSize; }
+        size_t getCmdQueueMemSize() { return getCmdQSize() * sizeof(CMD); }
+
+        size_t getCompInfoOffset()  { return round_up( getCmdQueueMemSize(), 4096 ); }
+        size_t getCompInfoMemSize() { return sizeof(COMP_INDEX) * compQSize; }
+
+        size_t getPeMemorySize() { 
+            size_t tmp = getCompInfoOffset();
+            tmp += round_up( getCompInfoMemSize(), 4096); 
+            return tmp;
+        }
+
+        bool write( uint64_t offset, unsigned char* data, size_t length ) {
+            auto retval = false;
+            auto thread = calcThread( offset );
+            auto& pe = peBacking[thread];
+
+            //printf("%s() thread=%d offset=%#x length=%zu\n",__func__, thread, offset, length );
+
+            offset = offset % getPeMemorySize();
+
+            if ( offset + length <= getCmdQueueMemSize() ) {
+                auto index = offset / getCmdQSize();
+
+                //printf("%s() write cmd index=%d bytesWritten=%d\n",__func__, index, pe.bytesWritten );
+                assert( index == pe.cmdIndex );
+
+                pe.bytesWritten += length;
+                offset = (offset % sizeof(NicCmd));
+                auto ptr = ( (unsigned char*) &pe.cmd ) + offset;
+                memcpy( ptr, data, length );
+                retval = true;
+
+
+            } if ( offset >= getCompInfoOffset() && ( offset + length <= getCompInfoOffset() + getCompInfoMemSize() ) ) {
+
+                offset -= getCompInfoOffset();
+
+                auto index = offset / sizeof( COMP_INDEX );
+
+                memcpy( &pe.compQueuesTailIndex[index], data, length );
+                //printf("write comp index=%d value=%d\n", index, pe.compQueuesTailIndex[index]);
+                retval = true;
+            }
+
+            return retval;
+        }
+
+        bool isCmdReady( int thread ) {
+            return peBacking[thread].bytesWritten == sizeof(CMD); 
+        }
+
+        NicCmd* readCmd( int thread ) {
+            //printf("%s()\n",__func__);
+            auto& pe = peBacking[thread];
+            pe.bytesWritten = 0;
+            ++pe.cmdIndex;
+            pe.cmdIndex %= getCmdQSize(); 
+            return &pe.cmd;
+        }
+
+        uint64_t getCompQueueTailOffset( int thread, int cqId ) {
+            uint64_t offset = (getPeMemorySize() * thread) + (cqId * sizeof( COMP_INDEX ) ); 
+            //printf("%s() thread=%d cqId=%d\n",__func__,thread,cqId,offset);
+            return offset;
+        }
+        int getCompQueueTailIndex( int thread, int cqId ) {
+            auto& pe = peBacking[thread];
+
+            //printf("%s() thread=%d cqId=%d index=%d\n",__func__,thread,cqId, pe.compQueuesTailIndex[cqId]);
+            return pe.compQueuesTailIndex[cqId];
+        }
+
+      private:
+
+        int calcThread( uint64_t addr ) {
+            return addr / getPeMemorySize();
+        }
+
+        struct PE_backing {
+            PE_backing( int compQSize) : compQueuesTailIndex( compQSize, 0), bytesWritten(0), cmdIndex(0) {}
+
+            CMD  cmd;
+            int  bytesWritten;
+
+            // each PE has N Completion Queues, this vector holds the tail index for each
+	        std::vector< COMP_INDEX > compQueuesTailIndex;
+
+            int cmdIndex;
+        };
+
+        std::vector< PE_backing > peBacking;
+        int cmdQSize;
+        int compQSize;
     };
 
-    std::vector<ThreadInfo> m_threadInfo;
+    uint64_t calcOffset( uint64_t addr ) {
+        return addr - m_ioBaseAddr;
+    }
+
+    int calcThread( uint64_t addr ) {
+        return ( addr - m_ioBaseAddr ) / m_backing->getPeMemorySize();
+    }
+
+    Backing< NicCmd, QueueIndex >* m_backing;
+
+    struct HostInfo {
+		HostInfo() : offset(0) {}
+		HostQueueInfo   hostInfo;
+		int             offset;
+    };
+
+    std::vector<HostInfo> m_hostInfo;
 
 	void mmioWriteSetup( StandardMem::Write* );
 	void mmioWrite( StandardMem::Write* );
@@ -188,9 +290,6 @@ class RdmaNic : public SST::Component {
     Clock::HandlerBase *m_clockHandler;
 
     Interfaces::SimpleNetwork*     m_linkControl;
-
-	// Size of the NIC command Q
-    int m_cmdQSize;
 
 	int m_netPktMtuLen;
 
@@ -256,14 +355,11 @@ class RdmaNic : public SST::Component {
 	int getNetPktMtuLen() { return m_netPktMtuLen; }
 
 	Addr_t calcCompQueueTailAddress( int thread, int cqId ) {
-		Addr_t addr = m_perPeTotalMemSize * thread; 
-		addr += m_perPeReqQueueMemSize;
-		addr += sizeof( QueueIndex ) * cqId;
-		return addr;
+        return m_backing->getCompQueueTailOffset( thread, cqId );
 	}
 
 	int readCompQueueTailIndex( int thread, int cqId ) {
-		return m_compQueuesBacking[thread][cqId];
+        return m_backing->getCompQueueTailIndex( thread, cqId );
 	}
 
 	StreamId generateStreamId() {
@@ -314,7 +410,7 @@ class RdmaNic : public SST::Component {
 			return new RdmaMemReadCmd( nic, thread, cmd );
 	  	case RdmaBarrier:
 			return new RdmaBarrierCmd( nic, thread, cmd );
-                default:
+        default:
 		    dbg.output(CALL_INFO_LONG,"Error: thread=%d %d\n",thread,cmd->type);
 		    assert(0);
 		}
