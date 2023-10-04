@@ -13,7 +13,7 @@ op.add_option("-l", "--steps", action="store", type="int", dest="steps", default
 
 # Define the simulation components
 
-core = sst.Component("GNA", "GNA.core")
+core = sst.Component("gensa", "gensa.core")
 core.addParams({
     "verbose"   : 1,
     "modelPath" : options.neurons,

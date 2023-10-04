@@ -17,7 +17,7 @@
 #include <sst_config.h>
 #include "neuron.h"
 
-using namespace SST::GNAComponent;
+using namespace SST::gensaComponent;
 using namespace std;
 
 

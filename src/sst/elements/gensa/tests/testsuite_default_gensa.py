@@ -25,7 +25,7 @@ def initializeTestModule_SingleInstance(class_inst):
 
 ################################################################################
 
-class testcase_GNA_Component(SSTTestCase):
+class testcase_gensa_Component(SSTTestCase):
 
     def initializeClass(self, testName):
         super(type(self), self).initializeClass(testName)
@@ -43,12 +43,12 @@ class testcase_GNA_Component(SSTTestCase):
 
 #####
 
-    def test_GNA_1(self):
-        self.GNA_test_template("1")
+    def test_gensa_1(self):
+        self.gensa_test_template("1")
 
 #####
 
-    def GNA_test_template(self, testcase):
+    def gensa_test_template(self, testcase):
         # Note: testcase param is ignored for now
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
@@ -56,7 +56,7 @@ class testcase_GNA_Component(SSTTestCase):
         tmpdir = self.get_test_output_tmp_dir()
 
         # Set the various file paths
-        testDataFileName="test_GNA_{0}".format(testcase)
+        testDataFileName="test_gensa_{0}".format(testcase)
 
         sdlfile = "{0}/{1}.py".format(test_path, testDataFileName)
         reffile = "{0}/refFiles/{1}.out".format(test_path, testDataFileName)
@@ -72,7 +72,7 @@ class testcase_GNA_Component(SSTTestCase):
 
         #   Check if any output to stderr
         if os_test_file(errfile, "-s"):
-            log_testing_note("GNA test {0} has a Non-Empty Error File {1}".format(testDataFileName, errfile))
+            log_testing_note("gensa test {0} has a Non-Empty Error File {1}".format(testDataFileName, errfile))
 
         #   Check if spiking pattern exactly matches expected values
         cmp_result = True

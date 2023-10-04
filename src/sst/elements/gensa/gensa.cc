@@ -14,7 +14,7 @@
 // distribution.
 
 #include <sst_config.h>
-#include "GNA.h"
+#include "gensa.h"
 
 #include <fstream>
 
@@ -25,11 +25,11 @@
 
 using namespace SST;
 //using namespace SST::MemHierarchy;
-using namespace SST::GNAComponent;
+using namespace SST::gensaComponent;
 using namespace std;
 
 
-GNA::GNA (ComponentId_t id, Params & params)
+gensa::gensa (ComponentId_t id, Params & params)
 :   Component (id)
 {
     now            = 0;
@@ -40,7 +40,7 @@ GNA::GNA (ComponentId_t id, Params & params)
     numDeliveries  = 0;
 
     uint32_t outputLevel = params.find<uint32_t> ("verbose", 0);
-    out.init ("GNA:@p:@l: ", outputLevel, 0, Output::STDOUT);
+    out.init ("gensa:@p:@l: ", outputLevel, 0, Output::STDOUT);
 
     // get parameters
     modelPath       = params.find<string>("modelPath",       "model");
@@ -50,7 +50,7 @@ GNA::GNA (ComponentId_t id, Params & params)
 
     //set our clock
     string clockFreq = params.find<string> ("clock", "1GHz");
-    clockTC = registerClock (clockFreq, new Clock::Handler<GNA> (this, &GNA::clockTic));
+    clockTC = registerClock (clockFreq, new Clock::Handler<gensa> (this, &gensa::clockTic));
 
     // tell the simulator not to end without us
     registerAsPrimaryComponent ();
@@ -60,7 +60,7 @@ GNA::GNA (ComponentId_t id, Params & params)
     memory = loadUserSubComponent<Interfaces::StandardMem> (
         "memory",
         ComponentInfo::SHARE_NONE, clockTC,
-        new Interfaces::StandardMem::Handler<GNA> (this, &GNA::handleMemory)
+        new Interfaces::StandardMem::Handler<gensa> (this, &gensa::handleMemory)
     );
     if (!memory)
     {
@@ -68,23 +68,23 @@ GNA::GNA (ComponentId_t id, Params & params)
         memory = loadAnonymousSubComponent<Interfaces::StandardMem> (
             "memHierarchy.standardInterface", "memory", 0,
             ComponentInfo::SHARE_PORTS, params, clockTC,
-            new Interfaces::StandardMem::Handler<GNA>(this, &GNA::handleMemory)
+            new Interfaces::StandardMem::Handler<gensa>(this, &gensa::handleMemory)
         );
     }
     if (!memory) out.fatal (CALL_INFO, -1, "Unable to load memHierarchy.standardInterface subcomponent\n");
 
     link = loadUserSubComponent<Interfaces::SimpleNetwork> ("networkIF", ComponentInfo::SHARE_NONE, 1);
     if (!link) out.fatal (CALL_INFO, 1, "No networkIF subcomponent\n");
-    link->setNotifyOnReceive (new Interfaces::SimpleNetwork::Handler<GNA> (this, &GNA::handleNetwork));
+    link->setNotifyOnReceive (new Interfaces::SimpleNetwork::Handler<gensa> (this, &gensa::handleNetwork));
 }
 
-GNA::GNA ()
+gensa::gensa ()
 :   Component(-1)
 {
     // for serialization only
 }
 
-GNA::~GNA ()
+gensa::~gensa ()
 {
     for (auto n : neurons) delete n;
     while (! networkRequests.empty ())
@@ -95,7 +95,7 @@ GNA::~GNA ()
 }
 
 void
-GNA::init (unsigned int phase)
+gensa::init (unsigned int phase)
 {
     memory->init (phase);
     link  ->init (phase);
@@ -274,21 +274,21 @@ GNA::init (unsigned int phase)
 }
 
 void
-GNA::setup ()
+gensa::setup ()
 {
 	memory->setup ();
 	link->setup ();
 }
 
 void
-GNA::complete (unsigned int phase)
+gensa::complete (unsigned int phase)
 {
 	memory->complete (phase);
 	link->complete (phase);
 }
 
 void
-GNA::finish ()
+gensa::finish ()
 {
 	memory->finish ();
 	link  ->finish ();
@@ -305,7 +305,7 @@ GNA::finish ()
 // Retrieving synapse records and transmitting spike packets can run in parallel with executing the LIF model,
 // but the LIF model needs to stall until all spikes are sent.
 bool
-GNA::clockTic (Cycle_t t)
+gensa::clockTic (Cycle_t t)
 {
     using namespace Interfaces;
     if (! networkRequests.empty ())
@@ -366,7 +366,7 @@ GNA::clockTic (Cycle_t t)
 }
 
 void
-GNA::handleMemory (Interfaces::StandardMem::Request * req)
+gensa::handleMemory (Interfaces::StandardMem::Request * req)
 {
     SST::Interfaces::StandardMem::ReadResp * resp = dynamic_cast<SST::Interfaces::StandardMem::ReadResp *> (req);
     assert (resp);
@@ -386,7 +386,7 @@ GNA::handleMemory (Interfaces::StandardMem::Request * req)
 }
 
 bool
-GNA::handleNetwork (int vn)
+gensa::handleNetwork (int vn)
 {
     // Ignore vn. It should always be 0 because that's all we registered for.
 
