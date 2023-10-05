@@ -92,7 +92,7 @@ class RecvStream {
 
 	size_t calcLen( Addr_t addr, size_t len, int maxLen ) {
 		int tmp = maxLen - ( addr & ( maxLen - 1 ) );	
-		nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"addr=%#x len=%zu maxLen=%d tmp=%d\n",addr,len,maxLen,tmp);
+		nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"addr=%#" PRIx64 " len=%zu maxLen=%d tmp=%d\n",addr,len,maxLen,tmp);
 		return tmp > len ? len : tmp;
 	}
 

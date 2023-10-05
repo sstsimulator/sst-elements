@@ -71,7 +71,7 @@ RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
     dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"\n");
     if ( m_nicId == 0 ) {
         dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"nicId=%d pesPerNode=%d numNodes=%d\n", m_nicId, pesPerNode, m_numNodes );
-		dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"number cmd Q entries %d, cmd Q memory footprint %zu\n", 
+		dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"number cmd Q entries %zu, cmd Q memory footprint %zu\n", 
                 m_backing->getCmdQSize(), m_backing->getCmdQueueMemSize() );
     }
 
@@ -164,7 +164,7 @@ void RdmaNic::mmioWriteSetup( StandardMem::Write* req) {
 
 		uint64_t threadMemoryBase = 0;
 
-		dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"resp Address=%#" PRIx32 "\n", hostInfo.respAddress );
+		dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"resp Address=%#" PRIx64 "\n", hostInfo.respAddress );
 
 		// set up the info about the req queue in the NIC
 		m_nicCmdQueueV[thread] = NicCmdQueueInfo( hostInfo.reqQueueTailIndexAddress );
@@ -174,7 +174,7 @@ void RdmaNic::mmioWriteSetup( StandardMem::Write* req) {
 		nicInfo.reqQueueAddress = (thread * m_backing->getPeMemorySize() );
 		nicInfo.compQueuesAddress = nicInfo.reqQueueAddress + m_backing->getCompInfoOffset();
 
-        dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cmdQAddress=%#" PRIx32 " compInfoOffset=%#" PRIx32 "\n",nicInfo.reqQueueAddress,nicInfo.compQueuesAddress);
+        dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cmdQAddress=%#" PRIx64 " compInfoOffset=%#" PRIx64 "\n",nicInfo.reqQueueAddress,nicInfo.compQueuesAddress);
 
 		// add 1 because the host is looking for something other that 1 to signal it has been writen by the NICt
 		nicInfo.reqQueueAddress += 1;
@@ -286,9 +286,9 @@ void RdmaNic::writeCompletionToHost(int thread, int cqId, RdmaCompletion& comp )
     CompletionQueue& q = *m_compQueueMap[cqId]; 
 
     int tailIndex = readCompQueueTailIndex(thread,cqId);
-    dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cqId=%d headIndex=%d tailIndex=%d queueSize=%d headPtr=%x dataPtr=%x\n", 
+    dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cqId=%d headIndex=%d tailIndex=%d queueSize=%d headPtr=%#" PRIx64 " dataPtr=%#" PRIx64 "\n", 
 		cqId, q.headIndex(), tailIndex, q.cmd().data.createCQ.num, q.cmd().data.createCQ.headPtr, q.cmd().data.createCQ.dataPtr );
-    dbg.debug( CALL_INFO_LONG,2,DBG_X_FLAG,"ctx=%x\n", comp.context);
+    dbg.debug( CALL_INFO_LONG,2,DBG_X_FLAG,"ctx=%#" PRIx64 "\n", comp.context);
 
 	// if we move the head index and it's equal to the tail index we are full
 	// Note that with this logic the max number of items in the circular queue is N - 1
