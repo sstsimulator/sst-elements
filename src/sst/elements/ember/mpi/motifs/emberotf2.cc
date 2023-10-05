@@ -83,6 +83,53 @@ static OTF2_CallbackCode EmberOTF2LeaveRegion(
 	return OTF2_CALLBACK_SUCCESS;
 }
 
+void EmberOTF2Generator::send(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group)
+{
+    enQ_send(q, payload, count, dtype, dest, tag, group);
+}
+
+void EmberOTF2Generator::isend(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group, MessageRequest* req)
+{
+    enQ_isend(q, payload, count, dtype, dest, tag, group, req);
+}
+
+void EmberOTF2Generator::recv(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID src, uint32_t tag, Communicator group, MessageResponse* resp = NULL )
+{
+    enQ_recv(q, payload, count, dtype, src, tag, group, resp); 
+}
+
+// void EmberOTF2Generator::irecv(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID src, uint32_t tag, Communicator group, MessageResponse* resp )
+// {
+//     enQ_irecv(q, payload, count, dtype, src, tag, group, resp);
+//     enQ_irecv( evQ, m_recvBuf, m_messageSize, CHAR, m_rank2,
+//                                         TAG, GroupWorld, &m_req );
+// }
+
+void EmberOTF2Generator::wait(Queue& q, MessageRequest* req, MessageResponse* resp = NULL)
+{
+    enQ_wait(q, req, resp);
+}
+
+void EmberOTF2Generator::barrier(Queue& q, Communicator comm)
+{
+    enQ_barrier(q, comm); 
+}
+    
+void EmberOTF2Generator::bcast(Queue& q, const Hermes::MemAddr& mydata, uint32_t count, PayloadDataType dtype, int root, Communicator group)
+{
+    enQ_bcast(q, mydata, count, dtype, root, group);
+}
+    
+void EmberOTF2Generator::allreduce( Queue& q, const Hermes::MemAddr& mydata, const Hermes::MemAddr& result, uint32_t count, PayloadDataType dtype, ReductionOperation op, Communicator group )
+{
+    enQ_allreduce(q, mydata, result, count, dtype, op, group);
+}
+    
+void EmberOTF2Generator::reduce(Queue& q, const Hermes::MemAddr& mydata, const Hermes::MemAddr& result, uint32_t count, PayloadDataType dtype, ReductionOperation op, int root, Communicator group )
+{
+    enQ_reduce(q, mydata, result, count, dtype, op,root, group);
+}
+    
 static OTF2_CallbackCode EmberOTF2MPISend(
 	OTF2_LocationRef location,
 	OTF2_TimeStamp time,
@@ -94,7 +141,7 @@ static OTF2_CallbackCode EmberOTF2MPISend(
 	uint64_t msgLen) {
 
 	EmberOTF2Generator* gen = (EmberOTF2Generator*) userData;
-	gen->enQ_send( *(gen->getEventQueue()), 0, msgLen, gen->extractDataTypeFromAttributeList(attributes), receiver, tag, GroupWorld );
+	gen->send( *(gen->getEventQueue()), 0, msgLen, gen->extractDataTypeFromAttributeList(attributes), receiver, tag, GroupWorld );
 
 	return OTF2_CALLBACK_SUCCESS;
 }
@@ -113,7 +160,7 @@ static OTF2_CallbackCode EmberOTF2MPIISend(
 	MessageRequest* newReq = new MessageRequest();
 
 	EmberOTF2Generator* gen = (EmberOTF2Generator*) userData;
-	gen->enQ_isend( *(gen->getEventQueue()), 0, msgLen, gen->extractDataTypeFromAttributeList(attributes), receiver, tag, GroupWorld, newReq );
+	gen->isend( *(gen->getEventQueue()), 0, msgLen, gen->extractDataTypeFromAttributeList(attributes), receiver, tag, GroupWorld, newReq );
 
 	gen->getRequestMap().insert( std::pair<uint64_t, MessageRequest*>( reqID, newReq ) );
 
@@ -138,7 +185,7 @@ static OTF2_CallbackCode EmberOTF2MPIISendComplete(
 			reqID);
 	}
 
-	gen->enQ_wait( *(gen->getEventQueue()), checkReq->second, NULL );
+	gen->wait( *(gen->getEventQueue()), checkReq->second, NULL );
 	gen->getRequestMap().erase( checkReq );
 
 	return OTF2_CALLBACK_SUCCESS;
@@ -183,7 +230,7 @@ static OTF2_CallbackCode EmberOTF2MPIRecv(
 	gen->verbose( CALL_INFO, 4, 0, "Trace::Recv sender=%" PRIu32 ", tag=%" PRIu32 ", len=%" PRIu64 "\n",
 		sender, tag, msgLen);
 
-        gen->enQ_recv( *(gen->getEventQueue()), 0, msgLen, gen->extractDataTypeFromAttributeList(attributes), sender, tag, GroupWorld );
+        gen->recv( *(gen->getEventQueue()), 0, msgLen, gen->extractDataTypeFromAttributeList(attributes), sender, tag, GroupWorld );
 
 	return OTF2_CALLBACK_SUCCESS;
 }
@@ -215,7 +262,7 @@ static OTF2_CallbackCode EmberOTF2MPIIRecv(
 	gen->verbose( CALL_INFO, 4, 0, "Trace::Recv sender=%" PRIu32 ", tag=%" PRIu32 ", len=%" PRIu64 "\n",
 		sender, tag, msgLen);
 
-        gen->enQ_recv( *(gen->getEventQueue()), 0, msgLen, gen->extractDataTypeFromAttributeList(attributes), sender, tag, GroupWorld );
+        gen->recv( *(gen->getEventQueue()), 0, msgLen, gen->extractDataTypeFromAttributeList(attributes), sender, tag, GroupWorld );
 
         return OTF2_CALLBACK_SUCCESS;
 }
@@ -247,25 +294,25 @@ static OTF2_CallbackCode EmberOTF2MPICollectiveEnd(
 	switch( collectiveOp ) {
 	case OTF2_COLLECTIVE_OP_BARRIER:
 		gen->verbose( CALL_INFO, 4, 0, "Trace::Barrier\n");
-		gen->enQ_barrier( *(gen->getEventQueue()), GroupWorld );
+		gen->barrier( *(gen->getEventQueue()), GroupWorld );
 		break;
 
 	case OTF2_COLLECTIVE_OP_BCAST:
 		gen->verbose( CALL_INFO, 4, 0, "Trace::Bcast, Root=%" PRIu32 ", Size=%" PRIu64 "\n", root, sizeSent );
-		gen->enQ_bcast( *(gen->getEventQueue()), 0, sizeSent, CHAR, static_cast<int>(root),
+		gen->bcast( *(gen->getEventQueue()), 0, sizeSent, CHAR, static_cast<int>(root),
 			GroupWorld);
 		break;
 
 	case OTF2_COLLECTIVE_OP_ALLREDUCE:
 		gen->verbose( CALL_INFO, 4, 0, "Trace::Allreduce, Root=%" PRIu32 ", Size=%" PRIu64 "\n",
 			root, sizeSent);
-		gen->enQ_allreduce( *(gen->getEventQueue()), 0, 0, sizeSent, CHAR, SUM, GroupWorld );
+		gen->allreduce( *(gen->getEventQueue()), 0, 0, sizeSent, CHAR, SUM, GroupWorld );
 		break;
 
 	case OTF2_COLLECTIVE_OP_REDUCE:
 		gen->verbose( CALL_INFO, 4, 0, "Trace::Reduce, Root=%" PRIu32 ", Size=%" PRIu64 "\n",
 			root, sizeSent);
-		gen->enQ_reduce( *(gen->getEventQueue()), 0, 0, sizeSent, CHAR, SUM, static_cast<int>(root),
+		gen->reduce( *(gen->getEventQueue()), 0, 0, sizeSent, CHAR, SUM, static_cast<int>(root),
 			GroupWorld);
 		break;
 
@@ -288,7 +335,7 @@ static OTF2_CallbackCode EmberOTF2RegisterLocation( void* userData,
 	return OTF2_CALLBACK_SUCCESS;
 }
 
-EmberOTF2Generator::EmberOTF2Generator(SST::ComponentId_T id, Params& params) :
+EmberOTF2Generator::EmberOTF2Generator(SST::ComponentId_t id, Params& params) :
 	EmberMessagePassingGenerator(id, params, "OTF2"),
 	traceLocationCount(0), currentLocation(0), currentTime(0)
 {
@@ -374,7 +421,7 @@ EmberOTF2Generator::EmberOTF2Generator(SST::ComponentId_T id, Params& params) :
 
 	uint64_t globalDefinitionsRead = 0;
 	OTF2_Reader_ReadAllGlobalDefinitions( traceReader, traceGlobalDefReader, &globalDefinitionsRead );
-	verbose( CALL_INFO, 1, 0, "Read %" PRIu64 " global definitions from trace on rank %" PRIu64 "\n",
+	verbose( CALL_INFO, 1, 0, "Read %" PRIu64 " global definitions from trace on rank %d\n",
 		globalDefinitionsRead, rank() );
 
 	traceOpenedDefFiles = OTF2_Reader_OpenDefFiles( traceReader );
@@ -391,7 +438,7 @@ EmberOTF2Generator::EmberOTF2Generator(SST::ComponentId_T id, Params& params) :
 
 	// Select only the location of the rank represented by this motif
 	if( OTF2_SUCCESS != OTF2_Reader_SelectLocation( traceReader, static_cast<uint64_t>(rank()) ) ) {
-		fatal( CALL_INFO, -1, "Error: unable to select location %" PRIu64 "\n", rank() );
+		fatal( CALL_INFO, -1, "Error: unable to select location %d\n", rank() );
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -400,9 +447,9 @@ EmberOTF2Generator::EmberOTF2Generator(SST::ComponentId_T id, Params& params) :
 		traceLocalDefReader = OTF2_Reader_GetDefReader( traceReader, static_cast<uint64_t>(rank()) );
 
 		if( NULL == traceLocalDefReader ) {
-			fatal( CALL_INFO, -1, "Error: unable to open a local definition reader on rank %" PRIu64 "\n", rank() );
+			fatal( CALL_INFO, -1, "Error: unable to open a local definition reader on rank %d\n", rank() );
 		} else {
-			verbose( CALL_INFO, 1, 0, "Opened local definition reader on rank %" PRIu64 "\n", rank() );
+			verbose( CALL_INFO, 1, 0, "Opened local definition reader on rank %d\n", rank() );
 		}
 
 		uint64_t localDefs = 0;
@@ -471,24 +518,24 @@ bool EmberOTF2Generator::generate( std::queue<EmberEvent*>& evQ ) {
 	OTF2_Reader_HasGlobalEvent( traceReader, traceGlobalEvtReader, &hasEvent );
 
 	if( hasEvent ) {
-		verbose( CALL_INFO, 4, 0, "Rank %" PRIu64 " has events to process, begin trace read...\n", rank() );
+		verbose( CALL_INFO, 4, 0, "Rank %d has events to process, begin trace read...\n", rank() );
 
 		while( (hasEvent != 0) && (evQ.size() == 0) ) {
 			if( OTF2_SUCCESS != OTF2_Reader_ReadGlobalEvents( traceReader, traceGlobalEvtReader, 1, &eventsRead ) ) {
-				fatal( CALL_INFO, -1, "Error reading global event on rank %" PRIu64 "\n", rank() );
+				fatal( CALL_INFO, -1, "Error reading global event on rank %d\n", rank() );
 			} else {
-				verbose( CALL_INFO, 4, 0, "Read %" PRIu64 " events from trace on rank: %" PRIu64 "\n",
+				verbose( CALL_INFO, 4, 0, "Read %" PRIu64 " events from trace on rank: %d\n",
 					eventsRead, rank() );
 			}
 
 			OTF2_Reader_HasGlobalEvent( traceReader, traceGlobalEvtReader, &hasEvent );
 		}
 
-		verbose( CALL_INFO, 4, 0, "Rank %" PRIu64 " has completed its read period from trace.\n", rank() );
+		verbose( CALL_INFO, 4, 0, "Rank %d has completed its read period from trace.\n", rank() );
 
 		return false;
 	} else {
-		verbose( CALL_INFO, 4, 0, "Rank %" PRIu64 " has no events to read in global trace. Motif will mark complete.\n", rank() );
+		verbose( CALL_INFO, 4, 0, "Rank %d has no events to read in global trace. Motif will mark complete.\n", rank() );
 		return true;
 	}
 

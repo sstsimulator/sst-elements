@@ -3,12 +3,8 @@ import os
 from optparse import OptionParser
 
 # options
-# TODO: pass a file that contains machine specification
-# We will have two command-line options: 1) machine spec, 2) neural network
 op = OptionParser()
-op.add_option("-n", "--neurons", action="store", type="string", dest="neurons", default="model")
-op.add_option("-d", "--dt", action="store", type="float", dest="dt", default="1")
-op.add_option("-l", "--steps", action="store", type="int", dest="steps", default="1000")
+op.add_option("-n", "--neurons", action="store", type="int", dest="neurons", default=500)
 # cache size in KiB
 op.add_option("-c", "--cacheSz", action="store", type="int", dest="cacheSz", default=2)
 #sts dispatch & parallelism
@@ -18,14 +14,12 @@ op.add_option("-m", "--memOut", action="store", type="int", dest="memOut", defau
 (options, args) = op.parse_args()
 
 # Define the simulation components
-comp_gna = sst.Component("GNA", "GNA.GNA")
+comp_gna = sst.Component("gensa", "gensa.core")
 comp_gna.addParams({
     "verbose" : 1,
-    "modelPath" : options.neurons,
-    "dt" : options.dt,
-    "steps" : options.steps,
+    "neurons" : options.neurons,
     "clock" : "1GHz",
-    "InputsPerTic" : 1,
+    "BWPperTic" : 1,
     "STSDispatch" : options.sts,
     "STSParallelism" : options.sts,
     "MaxOutMem" : options.memOut 
@@ -52,7 +46,6 @@ comp_memctrl.addParams({
       "debug_level" : 10,
       "backing" : "malloc", 
       "clock" : "1GHz",
-      "addr_range_start" : 0,
 })
 memory = comp_memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
 memory.addParams({
@@ -63,7 +56,7 @@ memory.addParams({
 # Enable statistics
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
-#sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
+sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
 
 
 # Define the simulation links

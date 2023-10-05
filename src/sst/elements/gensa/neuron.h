@@ -26,7 +26,7 @@
 
 
 namespace SST {
-namespace GNAComponent {
+namespace gensaComponent {
 
 struct Synapse {
     float    weight;
@@ -90,6 +90,20 @@ public:
 
     virtual bool update(const uint now);
 };
+
+class SpikeEvent : public SST::Event
+{
+public:
+    // 10 bytes total, or 80 bits
+    uint32_t neuron; ///< Global address. Used for either SAR or DAR.
+    float    weight; ///< For DAR. (SAR would encode this info on the receiving side.)
+    uint16_t delay;  ///< ditto
+
+    virtual uint32_t cls_id () const;
+    virtual std::string serialization_name () const;
+    uint32_t getSize () const {return 80;}  ///< For DAR. If doing SAR, should only report bits for neuron index.
+};
+
 }
 }
 

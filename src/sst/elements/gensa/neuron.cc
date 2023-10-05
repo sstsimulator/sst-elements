@@ -17,7 +17,7 @@
 #include <sst_config.h>
 #include "neuron.h"
 
-using namespace SST::GNAComponent;
+using namespace SST::gensaComponent;
 using namespace std;
 
 
@@ -136,5 +136,20 @@ bool NeuronInput::update(const uint now)
     }
 
     return true;
+}
+
+
+// class SpikeEvent ----------------------------------------------------------
+
+uint32_t
+SpikeEvent::cls_id () const
+{
+    return 1234;  // TODO: how do you pick a class ID?
+}
+
+string
+SpikeEvent::serialization_name () const
+{
+    return "SpikeEvent";
 }
 
