@@ -1028,7 +1028,7 @@ bool ProcessQueuesState::checkMatchHdr( MatchHdr& hdr, MatchHdr& wantHdr,
 
     dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"want count %d %d\n", wantHdr.count,
                                     hdr.count);
-    if ( wantHdr.count !=  hdr.count ) {
+    if ( wantHdr.count <  hdr.count ) {
         return false;
     }
 

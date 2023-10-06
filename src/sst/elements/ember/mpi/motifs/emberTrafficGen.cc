@@ -241,7 +241,6 @@ bool EmberTrafficGenGenerator::generate_random( std::queue<EmberEvent*>& evQ)
         m_requestIndex = -1;
         m_dataSendActive = false;
         if (m_currentTime < m_stopTime && m_currentIteration <= m_iterations) {
-            //enQ_compute( evQ, 1000000);
             ++m_currentIteration;
             send_data();
         }
@@ -306,10 +305,7 @@ void EmberTrafficGenGenerator::send_data() {
     if (m_debug > 1) std::cerr << "rank " << m_rank << " sending data (size=" << m_dataSize << ") to rank " << partner << std::endl;
     if (m_dataSendRequest) delete m_dataSendRequest;
     m_dataSendRequest = new MessageRequest;
-
-    // Firefly waitany is broken. It won't match if the isend/irecv sizes don't match, just use maxMessageSize as workaround until fixed
-    //enQ_isend( evQ, m_sendBuf, m_dataSize, UINT64_T, partner, DATA, GroupWorld, m_dataSendRequest);
-    enQ_isend( evQ, m_sendBuf, m_maxMessageSize, UINT64_T, partner, DATA, GroupWorld, m_dataSendRequest);
+    enQ_isend( evQ, m_sendBuf, m_dataSize, UINT64_T, partner, DATA, GroupWorld, m_dataSendRequest);
     m_dataSendActive = true;
 }
 
@@ -317,7 +313,6 @@ void EmberTrafficGenGenerator::wait_for_any() {
     std::queue<EmberEvent*>& evQ = *evQ_;
     uint64_t size = m_dataSendActive + m_dataRecvActive + 1;
     if (m_debug > 2) std::cerr << "rank " << m_rank <<  " enqueing waitany with size " << size << std::endl;
-//    if (m_generateLoopIndex > 1) delete m_allRequests;
     if (m_allRequests) delete m_allRequests;
     m_allRequests = new MessageRequest[size];
     uint64_t index=0;
