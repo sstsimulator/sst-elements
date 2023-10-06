@@ -81,7 +81,8 @@ class AppRuntimeMemory64 : public AppRuntimeMemory<uint64_t> {
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Application runtime memory loader for 64b OS",
         SST::Vanadis::AppRuntimeMemory64
-    ) 
+    )
+
     AppRuntimeMemory64( Params& params ) : 
         AppRuntimeMemory<uint64_t>( params ) {}
 };
@@ -165,7 +166,6 @@ uint64_t AppRuntimeMemory<Type>::configureStack(  Output* output, int page_size,
     for ( uint32_t arg = 0; arg < arg_count; ++arg ) {
         snprintf(arg_name, 32, "arg%" PRIu32 "", arg);
         std::string arg_value = params.find<std::string>(arg_name, "");
-
         if ( "" == arg_value ) {
             if ( 0 == arg ) {
                 arg_value = elf_info->getBinaryPathShort();

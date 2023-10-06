@@ -49,16 +49,14 @@ public:
       SST_ELI_ELEMENT_VERSION(1, 0, 0),
       "Implements a RISCV64-compatible decoder for Vanadis CPU processing.",
       SST::Vanadis::VanadisDecoder)
+      
     SST_ELI_DOCUMENT_PARAMS(
       {"decode_max_ins_per_cycle", "Maximum number of instructions that can be "
-                                   "decoded and issued per cycle"},
-      {"uop_cache_entries", "Number of micro-op cache entries, this "
-                            "corresponds to ISA-level instruction counts."},
-      {"predecode_cache_entries",
-       "Number of cache lines that a cached prior to decoding (these support "
-       "loading from cache prior to decode)"},
+                                   "decoded and issued per cycle", "2"},
       {"halt_on_decode_fault",
-		"Fatal error if a decode fault occurs, used for debugging and not recommmended default is 0 (false)", "0"})
+		"Fatal error if a decode fault occurs, used for debugging and not recommmended default is 0 (false)", "0"},
+      { "entry_point", "Starting instruction pointer; if not specified (set to 0), "
+                      "falls back to the core's ELF reader to discover", "0"})
 
     VanadisRISCV64Decoder(ComponentId_t id, Params& params) : VanadisDecoder(id, params)
     {
@@ -72,6 +70,7 @@ public:
         setInstructionPointer(params.find<uint64_t>("entry_point", 0));
 
         fatal_decode_fault = params.find<bool>("halt_on_decode_fault", false);
+
     }
 
     ~VanadisRISCV64Decoder() {}

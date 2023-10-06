@@ -177,12 +177,9 @@ public:
                                           SST::Vanadis::VanadisDecoder)
 
     SST_ELI_DOCUMENT_PARAMS({ "decode_max_ins_per_cycle", "Maximum number of instructions that can be "
-                                                          "decoded and issued per cycle" },
-                            { "uop_cache_entries", "Number of micro-op cache entries, this "
-                                                   "corresponds to ISA-level instruction counts." },
-                            { "predecode_cache_entries",
-                              "Number of cache lines that a cached prior to decoding (these support "
-                              "loading from cache prior to decode)" })
+                                                          "decoded and issued per cycle", "2" },
+                            { "entry_point", "Starting instruction pointer; if not specified (set to 0), "
+                                             "falls back to the core's ELF reader to discover", "0"})
 
     SST_ELI_DOCUMENT_STATISTICS(
 				VANADIS_DECODER_ELI_STATISTICS,
