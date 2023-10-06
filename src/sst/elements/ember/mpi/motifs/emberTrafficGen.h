@@ -18,6 +18,7 @@
 #define _H_EMBER_TRAFFIC_GEN
 
 #include <sst/core/rng/gaussian.h>
+#include <sst/core/rng/marsaglia.h>
 
 #include "mpi/embermpigen.h"
 
@@ -71,22 +72,81 @@ public:
 public:
 	EmberTrafficGenGenerator(SST::ComponentId_t, Params& params);
     bool generate( std::queue<EmberEvent*>& evQ);
+    bool generate_plusOne( std::queue<EmberEvent*>& evQ);
     bool primary( ) {
-        return false;
+        if (m_pattern == "plusOne")
+            return false;
+        return true;
     }
     void configure();
+    void configure_plusOne();
+
+    // extended patterns
+    bool generate_random( std::queue<EmberEvent*>& evQ);
+    void recv_data();
+    void send_data();
+    void wait_for_any();
+    void recv_stopping();
+    void recv_allstopped();
+    bool check_stop();
 
 private:
-//    MessageResponse m_resp;
-    double  m_mean;
-    double  m_stddev;
-    double  m_startDelay;
-    void*    m_sendBuf;
-    void*    m_recvBuf;
+    std::string m_pattern;
+
+    uint32_t m_messageSize;
+    uint32_t m_maxMessageSize;
+    void* m_sendBuf;
+    void* m_recvBuf;
     MessageRequest m_req;
 
-	uint32_t m_messageSize;
+    // original "plusOne" pattern
+    //    MessageResponse m_resp;
+    double  m_startDelay;
+    double  m_mean;
+    double  m_stddev;
     SSTGaussianDistribution* m_random;
+
+    // extended patterns
+    enum {DATA, STOPPING, ALLSTOPPED};
+    std::queue<EmberEvent*>* evQ_;
+    bool m_dataSendActive;
+    bool m_dataRecvActive;
+    bool m_needToWait;
+    bool m_stopped;
+    unsigned int m_generateLoopIndex;
+    unsigned int m_iterations;
+    unsigned int m_currentIteration;
+    unsigned int m_numStopped;
+    Hermes::MemAddr m_rankBytes;
+    Hermes::MemAddr m_totalBytes;
+    Hermes::MemAddr m_allStopped;
+    MessageRequest* m_dataSendRequest;
+    MessageRequest* m_dataRecvRequest;
+    MessageRequest m_stopRequest;
+    MessageRequest* m_allRequests;
+    MessageResponse m_anyResponse;
+    uint32_t m_rank;
+    uint32_t m_hotSpots;
+    uint32_t m_hotSpotsRatio;
+    std::vector<uint32_t> m_hotRanks;
+    std::set<uint32_t> m_hotRanks_set;
+    uint32_t m_hotCounter;
+    uint32_t m_hotCounterInitial;
+    uint32_t m_debug;
+    uint64_t m_dataSize;
+    uint64_t m_computeDelay;
+    uint64_t m_startTime;
+    uint64_t m_currentTime;
+    uint64_t m_stopTime;
+    uint64_t m_stopTimeActual;
+    int m_requestIndex;
+    double  m_meanMessageSize;
+    double  m_stddevMessageSize;
+    SSTGaussianDistribution* m_distMessageSize;
+    double  m_meanComputeDelay;
+    double  m_stddevComputeDelay;
+    SSTGaussianDistribution* m_distComputeDelay;
+    SST::RNG::MarsagliaRNG* m_distPartner;
 };
 
 }
