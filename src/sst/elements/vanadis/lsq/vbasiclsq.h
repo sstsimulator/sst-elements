@@ -50,11 +50,11 @@ public:
     SST_ELI_DOCUMENT_PORTS({ "dcache_link", "Connects the LSQ to the data cache", {} })
 
     SST_ELI_DOCUMENT_PARAMS(
-            { "verbose", "Set the verbosity of output for the LSQ", "0" }, 
             { "max_stores", "Set the maximum number of stores permitted in the queue", "8" }, 
             { "max_loads", "Set the maximum number of loads permitted in the queue", "16" },
             { "address_mask", "Can mask off address bits if needed during construction of a operation", "0xFFFFFFFFFFFFFFFF"},
-            { "issues_per_cycle", "Maximum number of issues the LSQ can attempt per cycle.", "2"}
+            { "issues_per_cycle", "Maximum number of issues the LSQ can attempt per cycle.", "2"},
+            { "cache_line_width", "Number of bytes in a (L1) cache line", "64"} 
         )
 
     SST_ELI_DOCUMENT_STATISTICS({ "bytes_read", "Count all the bytes read for data operations", "bytes", 1 },
