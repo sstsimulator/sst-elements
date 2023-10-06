@@ -37,8 +37,8 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
 
     const uint32_t verbosity = params.find<uint32_t>("dbgLevel", 0);
     const uint32_t mask = params.find<uint32_t>("dbgMask", 0);
-    auto node = params.find<uint32_t>("nodeId", 0);
 
+    auto node = params.find<int>("node_id", 0); // Read as default 0 instead of -1 for tagging output only
     char* outputPrefix = (char*)malloc(sizeof(char) * 256);
     snprintf(outputPrefix, sizeof(char)*256, "[node%d-os]:@p():@l ", node);
 
@@ -47,6 +47,10 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
 
     const uint32_t core_count = params.find<uint32_t>("cores", 0);
     const uint32_t hardwareThreadCount = params.find<uint32_t>("hardwareThreadCount", 1);
+    
+    if (core_count == 0) {
+        output->fatal(CALL_INFO, -1, "Missing parameter (%s): 'cores' must be specified and at least 1.\n", getName().c_str());
+    }
 
     for ( int i = 0; i < core_count; i++ ) {
         for ( int j = 0; j < hardwareThreadCount; j++ ) {
@@ -91,7 +95,7 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
         // we don't use it
     }
 
-    m_nodeNum = params.find<int>("nodeNum", -1);
+    m_nodeNum = params.find<int>("node_id", -1);
 
     int numProcess = 0;
     while( 1 ) {
@@ -144,15 +148,6 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
     core_links.reserve(core_count);
 
     char* port_name_buffer = new char[128];
-
-    uint64_t heap_start = params.find<uint64_t>("heap_start", 0);
-    uint64_t heap_end = params.find<uint64_t>("heap_end", 0);
-    int heap_verbose = params.find<int>("heap_verbose", 0);
-
-    output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_INIT, "-> configuring mmap page range start: 0x%llx\n", heap_start);
-    output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_INIT, "-> configuring mmap page range end:   0x%llx\n", heap_end);
-    output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_INIT, "-> implies:                           %" PRIu64 " pages\n", (heap_end - heap_start) / m_pageSize);
-    output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_INIT, "-> configuring mmap page size:        %d bytes\n", m_pageSize);
 
     m_coreInfoMap.resize( core_count, hardwareThreadCount ); 
 

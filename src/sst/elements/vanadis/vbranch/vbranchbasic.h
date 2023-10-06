@@ -34,7 +34,7 @@ public:
                                           SST::Vanadis::VanadisBranchUnit)
 
     SST_ELI_DOCUMENT_PARAMS({ "branch_entries", "Sets the number of entries in the underlying cache "
-                                                "of branch directions" })
+                                                "of branch directions", "64" })
 
     SST_ELI_DOCUMENT_STATISTICS({ "branch_cache_hit",
                                   "Counts the number of times a speculated "
