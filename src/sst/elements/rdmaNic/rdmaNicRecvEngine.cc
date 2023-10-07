@@ -128,7 +128,7 @@ void RdmaNic::RecvEngine::processMsgHdr( RdmaNicNetworkEvent* pkt )
 					nic.getName().c_str(), rqId, hdr->payloadLength, entry->getPayloadLength() );
 	}
 	Addr_t destAddr = entry->getAddr();
-	nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"key=%#x rqId=%d destAddr=%#x\n", hdr->data.msgKey, rqId, destAddr );
+	nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"key=%#x rqId=%d destAddr=%#" PRIx64 "\n", hdr->data.msgKey, rqId, destAddr );
 
 	m_recvStreamMap[ calcNodeStreamId( pkt->getSrcNode(), pkt->getStreamId() ) ] = new RecvStream( nic, destAddr, hdr->payloadLength, entry );
 
@@ -148,7 +148,7 @@ void RdmaNic::RecvEngine::processWriteHdr( RdmaNicNetworkEvent* pkt )
 // FIXME check for length violation
 
 	Addr_t destAddr = entry->getAddr() + hdr->data.rdma.offset;
-    nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"destAddr=%x\n", destAddr );
+    nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"destAddr=%#" PRIx64 "\n", destAddr );
 	m_recvStreamMap[ calcNodeStreamId( pkt->getSrcNode(), pkt->getStreamId() ) ] = new RecvStream( nic, destAddr, hdr->payloadLength, entry );
 }
 
@@ -249,7 +249,7 @@ bool RdmaNic::RecvStream::process() {
 	auto pkt = pktQ.front();
 	Addr_t addr = destAddr + offset;
     int len = calcLen( addr, pkt->getData().size(), 64 );
-    nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"destAddr=%#x len=%d\n",addr,len);
+    nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"destAddr=%#" PRIx64 " len=%d\n",addr,len);
     nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"%s\n",getDataStr(pkt->getData(),len).c_str());
 
 	if ( len ) {
