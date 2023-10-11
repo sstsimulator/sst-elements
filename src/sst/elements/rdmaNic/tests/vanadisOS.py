@@ -25,16 +25,12 @@ class Builder:
 
         self.nodeOS = sst.Component(self.prefix + ".os", "vanadis.VanadisNodeOS")
         self.nodeOS.addParams({
-            "nodeId": nodeId,
+            "node_id": nodeId,
             "dbgLevel" : os_verbosity,
             "dbgMask" : -1,
             "cores" : 1,
-            "nodeNum" : nodeId,
             "hardwareThreadCount" : 1,
-            "heap_start" : 512 * 1024 * 1024,
-            "heap_end"   : (2 * 1024 * 1024 * 1024) - 4096,
             "page_size"  : 4096,
-            "heap_verbose" : 0, #verbosity
             "process0.env_count" : 3,
             # MUSL libc uses this in localtime, if we don't set it we 
             # can get different results on different systems

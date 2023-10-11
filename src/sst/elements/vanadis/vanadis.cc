@@ -36,7 +36,14 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     max_cycle = params.find<uint64_t>("max_cycle", std::numeric_limits<uint64_t>::max());
 
-    auto nodeId = params.find<int32_t>("nodeId", 0);
+    bool found;
+    auto nodeId = params.find<int32_t>("node_id", 0, found);
+    if (!found) {
+        nodeId = params.find<int32_t>("nodeId", 0, found);
+        if (found) 
+            getSimulationOutput().output("WARNING (%s): Vanadis parameter 'nodeId' is now 'node_id'. Fix your input file to remove this warning.\n", getName().c_str()); 
+    }
+    
     const int32_t dbg_mask = params.find<int32_t>("dbg_mask", 0);
     const int32_t verbosity = params.find<int32_t>("verbose", 0);
     core_id                 = params.find<uint32_t>("core_id", 0);
@@ -61,6 +68,9 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     output->verbose(CALL_INFO, 2, 0, "-> I-Cache Line Width:       %" PRIu64 " bytes\n", iCacheLineWidth);
 
     hw_threads = params.find<uint32_t>("hardware_threads", 1);
+    if (hw_threads == 0) {
+        output->fatal(CALL_INFO, -1, "Incorrect parameter (%s): 'hardware_threads' cannot be 0. Fix parameter in the input file\n", getName().c_str());
+    }
     output->verbose(CALL_INFO, 2, 0, "Creating %" PRIu32 " SMT threads.\n", hw_threads);
 
     print_int_reg = params.find<bool>("print_int_reg", verbosity > 16 ? 1 : 0);
@@ -79,8 +89,6 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
         "hardware thread)...\n");
     output->verbose(CALL_INFO, 2, 0, "Physical Integer Registers (GPRs): %5" PRIu16 "\n", int_reg_count);
     output->verbose(CALL_INFO, 2, 0, "Physical Floating-Point Registers: %5" PRIu16 "\n", fp_reg_count);
-
-    const uint16_t issue_queue_len = params.find<uint16_t>("issue_queue_length", 4);
 
     halted_masks = new bool[hw_threads];
 
@@ -101,8 +109,8 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
         snprintf(decoder_name, 64, "decoder%" PRIu32 "", i);
         VanadisDecoder* thr_decoder = loadUserSubComponent<SST::Vanadis::VanadisDecoder>(decoder_name);
 
-		  fp_flags.push_back(new VanadisFloatingPointFlags());
-		  thr_decoder->setFPFlags(fp_flags[i]);
+        fp_flags.push_back(new VanadisFloatingPointFlags());
+	thr_decoder->setFPFlags(fp_flags[i]);
 
         //     thr_decoder->setHardwareThread( i );
 

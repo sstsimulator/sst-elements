@@ -65,7 +65,8 @@ exe_name= full_exe_name.split("/")[-1]
 verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
 os_verbosity = os.getenv("VANADIS_OS_VERBOSE", verbosity)
 pipe_trace_file = os.getenv("VANADIS_PIPE_TRACE", "")
-lsq_entries = os.getenv("VANADIS_LSQ_ENTRIES", 32)
+lsq_ld_entries = os.getenv("VANADIS_LSQ_LD_ENTRIES", 16)
+lsq_st_entries = os.getenv("VANADIS_LSQ_ST_ENTRIES", 8)
 
 rob_slots = os.getenv("VANADIS_ROB_SLOTS", 96)
 retires_per_cycle = os.getenv("VANADIS_RETIRES_PER_CYCLE", 3)
@@ -78,8 +79,6 @@ integer_arith_units = int(os.getenv("VANADIS_INTEGER_ARITH_UNITS", 3))
 fp_arith_cycles = int(os.getenv("VANADIS_FP_ARITH_CYCLES", 4))
 fp_arith_units = int(os.getenv("VANADIS_FP_ARITH_UNITS", 1))
 branch_arith_cycles = int(os.getenv("VANADIS_BRANCH_ARITH_CYCLES", 2))
-
-auto_clock_sys = os.getenv("VANADIS_AUTO_CLOCK_SYSCALLS", "no")
 
 cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "3.2GHz")
 mem_clock = os.getenv("VANADIS_MEM_CLOCK", "1.0GHz")
@@ -135,23 +134,26 @@ if (verbosity > 0):
 
 app_args = os.getenv("VANADIS_EXE_ARGS", "")
 
-# this is broke, it need to be in CpuBlock
+app_params = {}
 if app_args != "":
     app_args_list = app_args.split(" ")
     # We have a plus 1 because the executable name is arg0
     app_args_count = len( app_args_list ) + 1
-    cpu.addParams({ "app.argc" : app_args_count })
+
+    app_params["argc"] = app_args_count
+
     if (verbosity > 0):
         print("Identified " + str(app_args_count) + " application arguments, adding to input parameters.")
     arg_start = 1
     for next_arg in app_args_list:
         if (verbosity > 0):
             print("arg" + str(arg_start) + " = " + next_arg)
-        cpu.addParams({ "app.arg" + str(arg_start) : next_arg })
+        app_params["arg" + str(arg_start)] = next_arg
         arg_start = arg_start + 1
 else:
+    app_params["argc"] = 1
     if (verbosity > 0):
-        print("No application arguments found, continuing with argc=0")
+        print("No application arguments found, continuing with argc=1")
 
 vanadis_decoder = "vanadis.Vanadis" + vanadis_isa + "Decoder"
 vanadis_os_hdlr = "vanadis.Vanadis" + vanadis_isa + "OSHandler"
@@ -166,10 +168,7 @@ osParams = {
     "dbgMask" : 8,
     "cores" : numCpus,
     "hardwareThreadCount" : numThreads,
-    "heap_start" : 512 * 1024 * 1024,
-    "heap_end"   : (2 * 1024 * 1024 * 1024) - 4096,
     "page_size"  : 4096,
-    "heap_verbose" : verbosity,
     "physMemSize" : physMemSize,
     "useMMU" : True,
 }
@@ -187,6 +186,8 @@ processList = (
         #"exe" : "./tests/small/basic-io/read-write/mipsel/read-write",
     #} ),
 )
+
+procssList[0][1].update(app_params)
 
 osl1cacheParams = {
     "access_latency_cycles" : "2",
@@ -279,9 +280,7 @@ decoderParams = {
     "predecode_cache_entries" : 4
 }
 
-osHdlrParams = {
-    "verbose" : os_verbosity,
-}
+osHdlrParams = { }
 
 branchPredParams = {
     "branch_entries" : 32
@@ -314,9 +313,6 @@ cpuParams = {
     "issues_per_cycle" :  issues_per_cycle,
     "fetches_per_cycle" : fetches_per_cycle,
     "retires_per_cycle" : retires_per_cycle,
-    "load_units" : 4,
-    "store_units" : 4,
-    "auto_clock_syscall" : auto_clock_sys,
     "pause_when_retire_address" : os.getenv("VANADIS_HALT_AT_ADDRESS", 0),
     "start_verbose_when_issue_address": dbgAddr,
     "stop_verbose_when_retire_address": stopDbg,
@@ -326,9 +322,8 @@ cpuParams = {
 lsqParams = {
     "verbose" : verbosity,
     "address_mask" : 0xFFFFFFFF,
-    "load_store_entries" : lsq_entries,
-    "fault_non_written_loads_after" : 0,
-    "check_memory_loads" : "no"
+    "max_loads" : lsq_ld_entries,
+    "max_stores" : lsq_st_entries,
 }
 
 l1dcacheParams = {
