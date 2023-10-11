@@ -22,7 +22,8 @@ debugPython=False
 verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
 os_verbosity = os.getenv("VANADIS_OS_VERBOSE", 0)
 pipe_trace_file = os.getenv("VANADIS_PIPE_TRACE", "")
-lsq_entries = os.getenv("VANADIS_LSQ_ENTRIES", 32)
+lsq_ld_entries = os.getenv("VANADIS_LSQ_LD_ENTRIES", 16)
+lsq_st_entries = os.getenv("VANADIS_LSQ_ST_ENTRIES", 8)
 
 rob_slots = os.getenv("VANADIS_ROB_SLOTS", 64)
 retires_per_cycle = os.getenv("VANADIS_RETIRES_PER_CYCLE", 4)
@@ -140,10 +141,8 @@ class Vanadis_Builder:
         cpu_lsq.addParams({
             "verbose" : verbosity,
             "address_mask" : 0xFFFFFFFF,
-            "load_store_entries" : lsq_entries,
-            "fault_non_written_loads_after" : 0,
-            "check_memory_loads" : "no",
-            "allow_speculated_operations": "no"
+            "max_loads" : lsq_ld_entries,
+            "max_stores" : lsq_st_entries
         })
         cpu_lsq.enableAllStatistics()
 
