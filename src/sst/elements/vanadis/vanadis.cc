@@ -1235,35 +1235,56 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
         }
     }
 
-    // Fetch
+    #ifdef VANADIS_BUILD_DEBUG
+    if(output_verbosity >= 9) {
+        output->verbose(
+            CALL_INFO, 9, 0,
+            "=> Retire Stage "
+            "<==========================================================\n");
+    }
+#endif
+    // Retire
+    // //////////////////////////////////////////////////////////////////////////
+{  
+    std::vector<int>  rc(hw_threads,0);
+    auto cnt = hw_threads;
+    for ( uint32_t i = 0; i < retires_per_cycle; ++i ) {
+
+        // find an unblocked hardware thread 
+        while ( 1 == rc[m_curRetireHwThread] && cnt ) { 
+            ++m_curRetireHwThread;
+            m_curRetireHwThread %= hw_threads;
+            --cnt;
+        }
+
+        // we found a unblocked hardware thread
+        if ( cnt ) {
+            auto thr = m_curRetireHwThread;
+            rc[thr] = performRetire(thr, rob[thr], cycle);
+
+            ++m_curRetireHwThread;
+            m_curRetireHwThread %= hw_threads;
+            cnt = hw_threads;
+        } else {
+            break;
+        }
+    }
+}
+
+    // Record how many instructions we retired this cycle
+    stat_ins_retired->addData(ins_retired_this_cycle);
+
+    // Execute
     // //////////////////////////////////////////////////////////////////////////
 #ifdef VANADIS_BUILD_DEBUG
     if(output_verbosity >= 9) {
         output->verbose(
             CALL_INFO, 9, 0,
-            "=> Fetch Stage "
+            "=> Execute Stage "
             "<==========================================================\n");
     }
 #endif
-    for ( uint32_t i = 0; i < fetches_per_cycle; ++i ) {
-        if ( performFetch(cycle) != 0 ) { break; }
-    }
-
-    // Decode
-    // //////////////////////////////////////////////////////////////////////////
-#ifdef VANADIS_BUILD_DEBUG
-    if(output_verbosity >= 9) {
-        output->verbose(
-            CALL_INFO, 9, 0,
-            "=> Decode Stage "
-            "<==========================================================\n");
-    }
-#endif
-    for ( uint32_t i = 0; i < decodes_per_cycle; ++i ) {
-        if ( performDecode(cycle) != 0 ) { break; }
-    }
-
-    stat_ins_decoded->addData(ins_decoded_this_cycle);
+    performExecute(cycle);
 
     // Issue
     // //////////////////////////////////////////////////////////////////////////
@@ -1312,56 +1333,35 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     // Record how many instructions we issued this cycle
     stat_ins_issued->addData(ins_issued_this_cycle);
 
-    // Execute
+    // Decode
     // //////////////////////////////////////////////////////////////////////////
 #ifdef VANADIS_BUILD_DEBUG
     if(output_verbosity >= 9) {
         output->verbose(
             CALL_INFO, 9, 0,
-            "=> Execute Stage "
+            "=> Decode Stage "
             "<==========================================================\n");
     }
 #endif
-    performExecute(cycle);
+    for ( uint32_t i = 0; i < decodes_per_cycle; ++i ) {
+        if ( performDecode(cycle) != 0 ) { break; }
+    }
 
+    stat_ins_decoded->addData(ins_decoded_this_cycle);
+
+    // Fetch
+    // //////////////////////////////////////////////////////////////////////////
 #ifdef VANADIS_BUILD_DEBUG
     if(output_verbosity >= 9) {
         output->verbose(
             CALL_INFO, 9, 0,
-            "=> Retire Stage "
+            "=> Fetch Stage "
             "<==========================================================\n");
     }
 #endif
-    // Retire
-    // //////////////////////////////////////////////////////////////////////////
-{  
-    std::vector<int>  rc(hw_threads,0);
-    auto cnt = hw_threads;
-    for ( uint32_t i = 0; i < retires_per_cycle; ++i ) {
-
-        // find an unblocked hardware thread 
-        while ( 1 == rc[m_curRetireHwThread] && cnt ) { 
-            ++m_curRetireHwThread;
-            m_curRetireHwThread %= hw_threads;
-            --cnt;
-        }
-
-        // we found a unblocked hardware thread
-        if ( cnt ) {
-            auto thr = m_curRetireHwThread;
-            rc[thr] = performRetire(thr, rob[thr], cycle);
-
-            ++m_curRetireHwThread;
-            m_curRetireHwThread %= hw_threads;
-            cnt = hw_threads;
-        } else {
-            break;
-        }
+    for ( uint32_t i = 0; i < fetches_per_cycle; ++i ) {
+        if ( performFetch(cycle) != 0 ) { break; }
     }
-}
-
-    // Record how many instructions we retired this cycle
-    stat_ins_retired->addData(ins_retired_this_cycle);
 
     uint64_t rob_total_count = 0;
     for ( uint32_t i = 0; i < hw_threads; ++i ) {
