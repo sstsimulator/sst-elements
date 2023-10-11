@@ -12,7 +12,7 @@ comp_LTLIBRARIES = libMessier.la
 
 libMessier_la_SOURCES = \
 	cache.h \
-	libMessier.cpp \
+	libMessier.cc \
 	memReqEvent.h \
 	messier.cc \
 	messier.h \
