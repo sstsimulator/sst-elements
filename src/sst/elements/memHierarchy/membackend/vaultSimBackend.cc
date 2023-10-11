@@ -18,7 +18,7 @@
 #include <sst/core/link.h>
 #include "sst/elements/memHierarchy/util.h"
 #include "membackend/vaultSimBackend.h"
-#include "sst/elements/VaultSimC/memReqEvent.h"
+#include "sst/elements/vaultSim/memReqEvent.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;

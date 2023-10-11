@@ -195,7 +195,7 @@ memory.addParams({
     "access_time" : "2 ns",   # Phy latency
     "mem_size" : "512MiB",
 })
-logic_layer = sst.Component("logic_layer", "VaultSimC.logicLayer")
+logic_layer = sst.Component("logic_layer", "vaultsim.logicLayer")
 logic_layer.addParams({
     "clock" : "1GHz",
     "bwlimit" : "32",
@@ -205,56 +205,56 @@ logic_layer.addParams({
     "LL_MASK" : 0
 })
 
-vault0 = sst.Component("vault_0", "VaultSimC.VaultSimC")
+vault0 = sst.Component("vault_0", "vaultsim.vaultsim")
 vault0.addParams({
     "clock" : "500MHz",
     "VaultID" : 0,
     "numVaults2" : 3
 })
 
-vault1 = sst.Component("vault_1", "VaultSimC.VaultSimC")
+vault1 = sst.Component("vault_1", "vaultsim.vaultsim")
 vault1.addParams({
     "clock" : "500MHz",
     "VaultID" : 1,
     "numVaults2" : 3
 })
 
-vault2 = sst.Component("vault_2", "VaultSimC.VaultSimC")
+vault2 = sst.Component("vault_2", "vaultsim.vaultsim")
 vault2.addParams({
     "clock" : "500MHz",
     "VaultID" : 2,
     "numVaults2" : 3
 })
 
-vault3 = sst.Component("vault_3", "VaultSimC.VaultSimC")
+vault3 = sst.Component("vault_3", "vaultsim.vaultsim")
 vault3.addParams({
     "clock" : "500MHz",
     "VaultID" : 3,
     "numVaults2" : 3
 })
 
-vault4 = sst.Component("vault_4", "VaultSimC.VaultSimC")
+vault4 = sst.Component("vault_4", "vaultsim.vaultsim")
 vault4.addParams({
     "clock" : "500MHz",
     "VaultID" : 4,
     "numVaults2" : 3
 })
 
-vault5 = sst.Component("vault_5", "VaultSimC.VaultSimC")
+vault5 = sst.Component("vault_5", "vaultsim.vaultsim")
 vault5.addParams({
     "clock" : "500MHz",
     "VaultID" : 5,
     "numVaults2" : 3
 })
 
-vault6 = sst.Component("vault_6", "VaultSimC.VaultSimC")
+vault6 = sst.Component("vault_6", "vaultsim.vaultsim")
 vault6.addParams({
     "clock" : "500MHz",
     "VaultID" : 6,
     "numVaults2" : 3
 })
 
-vault7 = sst.Component("vault_7", "VaultSimC.VaultSimC")
+vault7 = sst.Component("vault_7", "vaultsim.vaultsim")
 vault7.addParams({
     "clock" : "500MHz",
     "VaultID" : 7,

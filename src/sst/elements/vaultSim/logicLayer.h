@@ -22,7 +22,8 @@
 #include <sst/core/output.h>
 #include <sst/core/statapi/stataccumulator.h>
 #include <sst/core/statapi/stathistogram.h>
-#include "vaultGlobals.h"
+
+#include "globals.h"
 
 using namespace std;
 
@@ -37,7 +38,7 @@ public: // functions
 
     SST_ELI_REGISTER_COMPONENT(
                                logicLayer,
-                               "VaultSimC",
+                               "vaultsim",
                                "logicLayer",
                                SST_ELI_ELEMENT_VERSION(1,0,0),
                                "A logic layer in a stacked memory",
