@@ -19,9 +19,9 @@ EXTRA_DIST = \
 	tests/refFiles/test_VaultSim_sdl2.out
 
 compdir = $(pkglibdir)
-comp_LTLIBRARIES = libvaultSim.la
+comp_LTLIBRARIES = libvaultsim.la
 
-libvaultSim_la_SOURCES = \
+libvaultsim_la_SOURCES = \
 	logicLayer.h \
 	logicLayer.cc \
 	cpu.h \
@@ -32,8 +32,8 @@ libvaultSim_la_SOURCES = \
 	memReqEvent.h \
 	globals.h
 
-libvaultSim_la_LDFLAGS = -module -avoid-version
+libvaultsim_la_LDFLAGS = -module -avoid-version
 
 install-exec-hook:
-	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     vaultSim=$(abs_srcdir)
-	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      vaultSim=$(abs_srcdir)/tests
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     vaultsim=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      vaultsim=$(abs_srcdir)/tests
