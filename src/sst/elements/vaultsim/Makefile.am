@@ -25,8 +25,8 @@ libvaultsim_la_SOURCES = \
 	logicLayer.h \
 	logicLayer.cc \
 	cpu.h \
-	cpu.cpp \
-	app.cpp \
+	cpu.cc \
+	app.cc \
 	vaultsim.cc \
 	vaultsim.h \
 	memReqEvent.h \
