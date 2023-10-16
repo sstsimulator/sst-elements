@@ -14,16 +14,16 @@
 // distribution.
 
 #include <sst_config.h>
-#include <cpu.h>
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #include <sst/core/link.h>
 #include <sst/core/params.h>
 #include <sst/core/rng/mersenne.h>
 
-#include <sst/elements/VaultSimC/memReqEvent.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "cpu.h"
+#include "memReqEvent.h"
 
 using namespace SST;
 using namespace SST::VaultSim;
@@ -113,28 +113,27 @@ bool cpu::clock( Cycle_t current )
   for (int w = 0; w < 4; ++w) { //issue width
     for (int c = 0; c < threads; ++c) {
       if (outstanding < MAX_OUT && Missued <= bwlimit) {
-	if (thrOutstanding[c].size() <= MAX_OUT_THR) {
-	  MemReqEvent *event = getInst(1,app,c); // L1
-	  inst++;
-	  if (event) {
-	    toMem->send( event );
-	    outstanding++;
-	    Missued++;
-	    if (! event->getIsWrite()) {
-	      thrOutstanding[c].insert(event->getAddr());
-	    }
-	  }
-	}
+        if (thrOutstanding[c].size() <= MAX_OUT_THR) {
+          MemReqEvent *event = getInst(1,app,c); // L1
+          inst++;
+          if (event) {
+            toMem->send( event );
+            outstanding++;
+            Missued++;
+            if (! event->getIsWrite()) {
+              thrOutstanding[c].insert(event->getAddr());
+            }
+          }
+        }
       } else {
-	break; // reached MAX_OUT
+        break; // reached MAX_OUT
       }
     }
   }
 
   if ((current & 0x3ff) == 0) {
-//      printf("%lld: out:%d ops/cycle:%0.2f\n", current, outstanding,
-      printf("%" PRIu64 ": out:%d ops/cycle:%0.2f\n", current, outstanding,
-	   double(memOps)/double(current));
+    printf("%" PRIu64 ": out:%d ops/cycle:%0.2f\n", current, outstanding,
+    double(memOps)/double(current));
   }
 
   return false;

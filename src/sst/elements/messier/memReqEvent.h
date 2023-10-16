@@ -20,38 +20,38 @@
 #include <sst/core/timeConverter.h>
 #include <sst/core/link.h>
 #include <sst/core/event.h>
-//#include <sst/elements/Messier/Messier.h>
 
 namespace SST {
 namespace MessierComponent {
+
 typedef uint64_t Addr;
 typedef uint64_t ReqId;
 
 class MemReqEvent : public SST::Event {
   public:
     MemReqEvent(ReqId id, Addr addr1, bool isWrite, unsigned numBytes, uint32_t flags) :
-		SST::Event(), reqId(id), addr(addr1), isWrite(isWrite), numBytes(numBytes), flags(flags)
+        SST::Event(), reqId(id), addr(addr1), isWrite(isWrite), numBytes(numBytes), flags(flags)
     {
 
-		eventID  = generateUniqueId();
-	}
+        eventID  = generateUniqueId();
+    }
 
-	ReqId getReqId() { return reqId; }
-	Addr getAddr() { return addr; }
-	bool getIsWrite() { return isWrite; }
-	unsigned  getNumBytes() { return numBytes; }
-	uint32_t getFlags() { return flags; }
-	id_type getID(void) const { return eventID; }
+    ReqId getReqId() { return reqId; }
+    Addr getAddr() { return addr; }
+    bool getIsWrite() { return isWrite; }
+    unsigned  getNumBytes() { return numBytes; }
+    uint32_t getFlags() { return flags; }
+    id_type getID(void) const { return eventID; }
 
   private:
     MemReqEvent() {} // For Serialization only
 
-	ReqId reqId;
-	Addr addr;
-	bool isWrite;
-	unsigned numBytes;
+    ReqId reqId;
+    Addr addr;
+    bool isWrite;
+    unsigned numBytes;
     uint32_t flags;
-	id_type eventID;
+    id_type eventID;
 
   public:
     void serialize_order(SST::Core::Serialization::serializer &ser) override {
@@ -61,7 +61,7 @@ class MemReqEvent : public SST::Event {
         ser & isWrite;
         ser & numBytes;
         ser & flags;
-		ser & eventID;
+        ser & eventID;
     }
 
     ImplementSerializable(MemReqEvent);
@@ -70,23 +70,23 @@ class MemReqEvent : public SST::Event {
 class MemRespEvent : public SST::Event {
   public:
     MemRespEvent(ReqId id, Addr addr, uint32_t flags) :
-		SST::Event(), reqId(id), addr(addr), flags(flags)
-	{
-		eventID  = generateUniqueId();
-	}
+        SST::Event(), reqId(id), addr(addr), flags(flags)
+    {
+        eventID  = generateUniqueId();
+    }
 
-	ReqId getReqId() { return reqId; }
-	Addr getAddr() { return addr; }
-	uint32_t getFlags() { return flags; }
-	id_type getID(void) const { return eventID; }
+    ReqId getReqId() { return reqId; }
+    Addr getAddr() { return addr; }
+    uint32_t getFlags() { return flags; }
+    id_type getID(void) const { return eventID; }
 
   private:
     MemRespEvent() {} // For Serialization only
 
-	ReqId reqId;
-	Addr addr;
+    ReqId reqId;
+    Addr addr;
     uint32_t flags;
-	id_type eventID;
+    id_type eventID;
 
   public:
     void serialize_order(SST::Core::Serialization::serializer &ser) override {
@@ -94,7 +94,7 @@ class MemRespEvent : public SST::Event {
         ser & reqId;
         ser & flags;
         ser & addr;
-		ser & eventID;
+        ser & eventID;
     }
 
     ImplementSerializable(MemRespEvent);

@@ -29,21 +29,20 @@
 class RANK
 {
 
-	// This determines the rank busy until time, this is used to enforce timing parameters, such as maximum number of bank activation per unit of time
-	// It also covers the time when the shared circutary between banks is used (e.g., data output circuits of NVM chips)
-	long long int BusyUntil;
+    // This determines the rank busy until time, this is used to enforce timing parameters, such as maximum number of bank activation per unit of time
+    // It also covers the time when the shared circutary between banks is used (e.g., data output circuits of NVM chips)
+    uint64_t BusyUntil;
+    uint32_t num_banks;
 
-	int num_banks;
+    BANK * banks;
 
-	BANK * banks;
-	public:
+public:
+    RANK(uint32_t numBanks) {BusyUntil = 0; num_banks = numBanks; banks = new BANK[numBanks];}
 
-	RANK(int numBanks) {BusyUntil = 0; num_banks = numBanks; banks = new BANK[numBanks];}
-
-	// Get a specific bank inside this rank
-	BANK * getBank(int ind) { return &banks[ind];}
-	void setBusyUntil(long long int x) {BusyUntil = x;}
-	long long int getBusyUntil() { return BusyUntil; }
+    // Get a specific bank inside this rank
+    BANK * getBank(uint32_t ind) { return &banks[ind];}
+    void setBusyUntil(uint64_t x) {BusyUntil = x;}
+    uint64_t getBusyUntil() { return BusyUntil; }
 
 };
 
