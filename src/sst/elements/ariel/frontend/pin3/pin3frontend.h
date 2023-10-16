@@ -47,7 +47,7 @@ class Pin3Frontend : public ArielFrontend {
     public:
 
     /* SST ELI */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(Pin3Frontend, "ariel", "frontend.pin", SST_ELI_ELEMENT_VERSION(1,0,0), "Ariel frontend for dynamic tracing using Pin3", SST::ArielComponent::ArielFrontend)
+    SST_ELI_REGISTER_SUBCOMPONENT(Pin3Frontend, "ariel", "frontend.pin", SST_ELI_ELEMENT_VERSION(1,0,0), "Ariel frontend for dynamic tracing using Pin3", SST::ArielComponent::ArielFrontend)
 
     SST_ELI_DOCUMENT_PARAMS(
         {"verbose", "Verbosity for debugging. Increased numbers for increased verbosity.", "0"},
