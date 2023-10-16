@@ -107,6 +107,8 @@ EXTRA_DIST = \
 	tests/dragon_128_platform_test.py \
 	tests/dragon_128_platform_test_cm.py \
 	tests/platform_file_dragon_128.py \
+	tests/polarfly_455_test.py \
+	tests/polarstar_504_test.py \
 	tests/refFiles/test_merlin_dragon_128_platform_test.out \
 	tests/refFiles/test_merlin_dragon_128_platform_test_cm.out \
 	tests/refFiles/test_merlin_dragon_128_test.out \
@@ -117,7 +119,9 @@ EXTRA_DIST = \
 	tests/refFiles/test_merlin_hyperx_128_test.out \
 	tests/refFiles/test_merlin_torus_128_test.out \
 	tests/refFiles/test_merlin_torus_5_trafficgen.out \
-	tests/refFiles/test_merlin_torus_64_test.out
+	tests/refFiles/test_merlin_torus_64_test.out \
+	tests/refFiles/test_merlin_polarfly_455_test.out \
+	tests/refFiles/test_merlin_polarstar_504_test.out
 
 sstdir = $(includedir)/sst/elements/merlin
 nobase_sst_HEADERS = \
