@@ -279,6 +279,16 @@ public:
         return MemEventBase::getVerboseString(level) + str.str();
     }
 
+    virtual std::string toString() const override {
+        std::ostringstream str;
+        if (addr_ != baseAddr_)
+            str << std::hex << " Addr: 0x" << baseAddr_ << "/0x" << addr_;
+        else
+            str << std::hex << " Addr: 0x" << baseAddr_;
+        str << std::dec << " Size: " << size_;
+        return MemEventBase::toString() + str.str();
+    }
+
     virtual std::string getBriefString() override {
         std::ostringstream str;
         if (addr_ != baseAddr_)
