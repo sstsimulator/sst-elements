@@ -129,7 +129,7 @@ void c_BankCommand::print(SimTime_t x_cycle) const {
 }
 
 void c_BankCommand::print(SST::Output *x_debugOutput, SimTime_t x_cycle) const {
-	x_debugOutput->verbose(CALL_INFO, 1, 0, "[BankCommand] Cycle:%llu," , x_cycle);
+	x_debugOutput->verbose(CALL_INFO, 1, 0, "[BankCommand] Cycle:%lu," , x_cycle);
 	x_debugOutput->verbose(CALL_INFO, 1, 0, "CMD:%s,",this->getCommandString().c_str());
 	x_debugOutput->verbose(CALL_INFO, 1, 0,	"SEQNUM:%d,",this->getSeqNum());
 	x_debugOutput->verbose(CALL_INFO, 1, 0,	"ADDR:%lx,",this->getAddress());
@@ -147,7 +147,7 @@ void c_BankCommand::print(SST::Output *x_debugOutput, SimTime_t x_cycle) const {
 }
 
 void c_BankCommand::print(SST::Output *x_debugOutput,const std::string x_prefix, SimTime_t x_cycle) const {
-	x_debugOutput->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%lld Cmd:%s seqNum: %llu CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d\n",
+	x_debugOutput->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%lld Cmd:%s seqNum: %lu CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d\n",
 							x_cycle,
 							getCommandString().c_str(),
 							m_seqNum,
