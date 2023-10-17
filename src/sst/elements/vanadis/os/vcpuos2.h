@@ -150,7 +150,7 @@ protected:
         output->verbose(CALL_INFO, 8, 0,
                             "madvise( %#" PRIxXX ", %" PRIuXX ", %" PRIuXX " )\n", advise_addr, advise_len, advise_advice);
 
-        printf("Warning: VANADIS_SYSCALL_%s_%s not implmented returning success\n",m_isaName,__func__);
+        printf("Warning: VANADIS_SYSCALL_%s_%s not implemented returning success\n",m_isaName,__func__);
 
         recvSyscallResp(new VanadisSyscallResponse(0));
         return nullptr;
@@ -192,7 +192,7 @@ protected:
     }
 
     VanadisSyscallEvent* RT_SIGACTION( int hw_thr ) {
-        printf("Warning: VANADIS_SYSCALL_%s_%s not implmented returning success\n",m_isaName,__func__);
+        printf("Warning: VANADIS_SYSCALL_%s_%s not implemented returning success\n",m_isaName,__func__);
         recvSyscallResp(new VanadisSyscallResponse(0));
         return nullptr;
     }
@@ -204,7 +204,7 @@ protected:
         T1 set_size   = getArgRegister(3);
 
         output->verbose(CALL_INFO, 8, 0, "rt_sigprocmask( %" PRIdXX ", %#" PRIxXX ", %#" PRIxXX ", %" PRIdXX ")\n", how, set_in, set_out, set_size);
-        printf("Warning: VANADIS_SYSCALL_%s_%s not implmented returning success\n",m_isaName,__func__);
+        printf("Warning: VANADIS_SYSCALL_%s_%s not implemented returning success\n",m_isaName,__func__);
 
         recvSyscallResp(new VanadisSyscallResponse(0));
         return nullptr;

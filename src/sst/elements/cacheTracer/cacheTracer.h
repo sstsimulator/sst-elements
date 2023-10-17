@@ -21,7 +21,6 @@
 #include <sst/core/component.h>
 #include <sst/core/params.h>
 #include <sst/core/timeLord.h>
-#include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>

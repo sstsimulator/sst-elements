@@ -1,13 +1,13 @@
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
 pid=100 tid=101 has exited
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
-Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
+Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented returning success
 pid=100 tid=102 has exited
 pid=100 tid=100 has exited
 all process have exited
