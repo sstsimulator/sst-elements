@@ -14,15 +14,15 @@
 // distribution.
 
 #include <sst_config.h>
-#include "cpu.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdlib.h>
 
+#include "cpu.h"
 
-static unsigned int missRate[][3] = {{0,51,32},   //app 0
-				     {0,18,15}};  //app 1
+static unsigned int missRate[][3] = {{0,51,32},  //app 0
+                                    {0,18,15}};  //app 1
 static unsigned int isLoad[] = {3,32}; // out of 64
 
 using namespace SST::VaultSim;
@@ -52,7 +52,7 @@ L2 miss/inst	32	15
       addr = (roll >> 6) << 6;
     }
     coreAddr[core] = addr;
-	bool isWrite;
+    bool isWrite;
 
     if (memRoll <= isLoad[app]) {
         isWrite = false;

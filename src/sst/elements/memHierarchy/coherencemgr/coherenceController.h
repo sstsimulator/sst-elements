@@ -155,6 +155,9 @@ public:
     /* Call through to cache array to configure banking/slicing */
     virtual void setSliceAware(uint64_t interleaveSize, uint64_t interleaveStep) = 0;
 
+    /* Register callback to enable the cache's clock if needed */
+    void registerClockEnableFunction(std::function<void()> fcn) { reenableClock_ = fcn; }
+    
     /* Setup debug info (cache-wide) */
     void setDebug(std::set<Addr> debugAddr) { DEBUG_ADDR = debugAddr; }
 
@@ -310,6 +313,8 @@ protected:
 
     std::map<SST::Event::id_type, LatencyStat> startTimes_;
 
+    /* When internally monitoring a timeout period, a coherence controller may need to re-enable the cache's clock */
+    std::function<void()> reenableClock_;
 
     /* Add a new event to the outgoing command queue towards memory */
     virtual void addToOutgoingQueue(Response& resp);

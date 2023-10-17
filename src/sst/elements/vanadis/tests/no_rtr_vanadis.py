@@ -49,7 +49,8 @@ exe_name= full_exe_name.split("/")[-1]
 verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
 os_verbosity = 0 #os.getenv("VANADIS_OS_VERBOSE", verbosity)
 pipe_trace_file = os.getenv("VANADIS_PIPE_TRACE", "")
-lsq_entries = os.getenv("VANADIS_LSQ_ENTRIES", 32)
+lsq_ld_entries = os.getenv("VANADIS_LSQ_LD_ENTRIES", 16)
+lsq_st_entries = os.getenv("VANADIS_LSQ_ST_ENTRIES", 8)
 #lsq_mask = 0xFFFFFFFFFFFFFFFF
 lsq_mask = 0xFFFFFFFF
 
@@ -64,8 +65,6 @@ integer_arith_units = int(os.getenv("VANADIS_INTEGER_ARITH_UNITS", 2))
 fp_arith_cycles = int(os.getenv("VANADIS_FP_ARITH_CYCLES", 8))
 fp_arith_units = int(os.getenv("VANADIS_FP_ARITH_UNITS", 2))
 branch_arith_cycles = int(os.getenv("VANADIS_BRANCH_ARITH_CYCLES", 2))
-
-auto_clock_sys = os.getenv("VANADIS_AUTO_CLOCK_SYSCALLS", "no")
 
 cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "2.3GHz")
 
@@ -108,7 +107,6 @@ v_cpu_0.addParams({
        "decodes_per_cycle" : decodes_per_cycle,
        "issues_per_cycle" :  issues_per_cycle,
        "retires_per_cycle" : retires_per_cycle,
-       "auto_clock_syscall" : auto_clock_sys,
        #"pause_when_retire_address" : os.getenv("VANADIS_HALT_AT_ADDRESS", 0),
        #"start_verbose_when_issue_address" : os.getenv("VANADIS_START_DBG_AT_ADDRESS", 0) 
 #       "reorder_slots" : 32,
@@ -150,8 +148,6 @@ decode0.addParams({
 })
 
 os_hdlr.addParams({
-	"verbose" : os_verbosity,
-	"brk_zero_memory" : "yes"
 })
 
 branch_pred.addParams({
@@ -165,7 +161,8 @@ v_cpu_0_lsq = v_cpu_0.setSubComponent( "lsq", "vanadis.VanadisBasicLoadStoreQueu
 v_cpu_0_lsq.addParams({
 	"verbose" : verbosity,
 	"address_mask" : lsq_mask,
-	"load_store_entries" : lsq_entries
+	"max_loads" : lsq_ld_entries
+	"max_stores" : lsq_st_entries
 })
 
 dcache_if = v_cpu_0_lsq.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
@@ -180,14 +177,14 @@ node_os.addParams({
 	"page_size"  : 4096,
 	"heap_verbose" : verbosity,
     "executable" : full_exe_name,
-    "app.arg0" : exe_name,
-    "app.env_count" : 2,
-    "app.env0" : "HOME=/home/sdhammo",
-    "app.env1" : "NEWHOME=/home/sdhammo2",
-#    "app.argc" : 4,
-#    "app.arg1" : "16",
-#    "app.arg2" : "8",
-#    "app.arg3" : "8",
+    "process0.arg0" : exe_name,
+    "process0..env_count" : 2,
+    "process0.env0" : "HOME=/home/sdhammo",
+    "process0.env1" : "NEWHOME=/home/sdhammo2",
+#    "process0.argc" : 4,
+#    "process0.arg1" : "16",
+#    "process0.arg2" : "8",
+#    "process0.arg3" : "8",
 })
 
 node_os_mem_if = node_os.setSubComponent( "mem_interface", "memHierarchy.standardInterface" )

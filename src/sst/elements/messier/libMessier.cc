@@ -11,7 +11,7 @@
 //
 
 #include <sst_config.h>
-#include <messier.h>
+#include "messier.h"
 
 using namespace SST;
 using namespace SST::MessierComponent;

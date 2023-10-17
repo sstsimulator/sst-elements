@@ -1,10 +1,18 @@
 import sst
 import math
+from optparse import OptionParser
+
+op = OptionParser()
+op.add_option("-a", "--algorithm", action="store", type="int", dest="algo", default=1)
+op.add_option("-t", "--num_thr", action="store", type="int", dest="thr", default=16)
+op.add_option("-r", "--remap", action="store", type="int", dest="re", default=0)
+op.add_option("-p", "--pims", action="store", type="int", dest="pims", default=3)
+(options, args) = op.parse_args()
 
 # globals
-CPUQuads = 2  # "Quads" per CPU
-PIMQuads = 1  # "Quads per PIM
-PIMs = 2      # number of PIMs
+CPUQuads = 1  # "Quads" per CPU
+PIMQuads = 0  # "Quads per PIM
+PIMs = options.pims      # number of PIMs
 ccLat = "5ns" # cube to cube latency i.e. PIM to PIM
 
 vaultsPerCube = 8 
@@ -17,7 +25,7 @@ flit_size = "72B"
 coherence_protocol = "MESI"
 busLat = "50ps"
 netLat = "6ns"
-useAriel = 1
+useAriel = 0
 useVaultSim = 1
 baseclock = 1500  # in MHz
 clock = "%g MHz"%(baseclock)
@@ -41,7 +49,6 @@ coreCtr = corePorts()
 
 # common
 memParams = {
-        "mem_size": str(rank_size) + "MiB",
         "access_time" : "50ns"
         }
 l1PrefetchParams = { }
@@ -83,18 +90,49 @@ routerParams = {"topology": "merlin.torus",
 def makeAriel():
     ariel = sst.Component("a0", "ariel.ariel")
     ariel.addParams({
-        "verbose" : 0,
-        "clock" : clock,
-        "maxcorequeue" : 256,
-        "maxissuepercycle" : 2,
-        "pipetimeout" : 0,
-        #"executable" : "/home/student/tlvlstream/sstgups",
-        #"executable" : "/home/student/tlvlstream/ministream",
-        "executable" : "/home/student/tlvlstream/miniFE_openmp_opt/miniFE.x",
-        "corecount" : corecount,
-        "arielmode" : 0,
-        "arieltool": "/home/student/sst-simulator/tools/ariel/fesimple/fesimple_r.so"
+            "verbose" : 5,
+            "clock" : clock,
+            "maxcorequeue" : 256,
+            "maxissuepercycle" : 6,
+            "pipetimeout" : 10,
+            "fullproc" : (CPUQuads+PIMQuads) * 4,
+            #"executable" : "/home/student/tlvlstream/ministream",
+            "corecount" : corecount,
+            "arielmode" : 0,
+            #"arieltool": "/home/student/sst-simulator/tools/ariel/fesimple/fesimple.so"
             })
+    print("fullproc " + str((CPUQuads+PIMQuads)*4) + "\n\n")
+    if options.re == 1:
+        print("Remap\n")
+        ariel.addParams({"arieltool": "/home/afrodri/sst-simulator/tools/ariel/fesimple/fesimple_r.so"})
+    else:
+        print("No Remap\n")
+        #ariel.addParams({"arieltool": "/home/afrodri/sst-simulator/tools/ariel/fesimple/fesimple.so"})
+        ariel.addParams({"arieltool": "/Users/afrodri/Public/sst/sst-simulator/tools/ariel/fesimple/fesimple.dylib"})
+
+    thr = str(options.thr)
+    if options.algo == 1:
+        print("GUPS\n")
+        ariel.addParams({"executable" : "/Users/afrodri/bench2/sstgups." + thr})
+    elif options.algo == 2:
+        print("stream\n")
+        ariel.addParams({"executable" : "/home/afrodri/bench2/ministream." + thr})
+    elif options.algo == 3:
+        print("PathFinder\n")
+        ariel.addParams({"executable" : "/home/afrodri/bench2/PathFinder." + thr + ".x"})
+        ariel.addParams({"appargcount" : 2,
+                         "apparg0" : "-x",
+                         "apparg1" : "medsmall1.adj_list"})
+    elif options.algo == 4:
+        print("miniFE\n")
+        ariel.addParams({"executable" : "/home/afrodri/bench2/miniFE." + thr + ".x"})
+    elif options.algo == 5:
+        print("lulesh\n")
+        ariel.addParams({"executable" : "/home/afrodri/bench2/lulesh." + thr + ".x"})
+    elif options.algo == 6:
+        print("minighost\n")
+        ariel.addParams({"executable" : "/home/afrodri/bench2/miniGhost." + thr + ".x"})
+
     coreCounter = 0
     return ariel
 
@@ -122,8 +160,10 @@ def doQuad(quad, cores, rtr, rtrPort, netAddr):
             "cache_size": "8KB",
             "associativity": 8,
             "cache_line_size": 64,
+            "low_network_links": 1,
             "access_latency_cycles": 2,
             "L1": 1,
+            "statistics": 1,
             "debug": memDebug,
             "debug_level" : 6,
             })
@@ -153,7 +193,6 @@ def doQuad(quad, cores, rtr, rtrPort, netAddr):
         "cache_line_size": 64,
         "access_latency_cycles": 23,
         "mshr_num_entries" : 4096, #64,   # TODO: Cesar will update
-        "L1": 0,
         "network_bw": coreNetBW,
         "debug_level" : 6,
         "debug": memDebug
@@ -169,7 +208,7 @@ def doQuad(quad, cores, rtr, rtrPort, netAddr):
 # make a cube
 def doVS(num, cpu) :
     sst.pushNamePrefix("cube%d"%num)
-    ll = sst.Component("logicLayer", "VaultSimC.logicLayer")
+    ll = sst.Component("logicLayer", "vaultsim.logicLayer")
     ll.addParams ({
             "clock" : """500Mhz""",
             "vaults" : str(vaultsPerCube),
@@ -178,40 +217,47 @@ def doVS(num, cpu) :
             "LL_MASK" : """0""",
             "terminal" : """1"""
             })
+    ll.enableStatistics(["BW_recv_from_CPU"], 
+                        {"type":"sst.AccumulatorStatistic",
+                         "rate":"0 ns"})
     fromCPU = sst.Link("link_cpu_cube");
     fromCPU.connect((cpu, "cube_link", ccLat),
                     (ll, "toCPU", ccLat))
     #make vaults
     for x in range(0, vaultsPerCube):
-        v = sst.Component("ll.Vault"+str(x), "VaultSimC.VaultSimC")
+        v = sst.Component("ll.Vault"+str(x), "vaultsim.vaultsim")
         v.addParams({
                 "clock" : """750Mhz""",
                 "VaultID" : str(x),
                 "numVaults2" : math.log(vaultsPerCube,2)
                 })
+        v.enableStatistics(["Mem_Outstanding"], 
+                           {"type":"sst.AccumulatorStatistic",
+                            "rate":"0 ns"})
         ll2V = sst.Link("link_ll_vault" + str(x))
         ll2V.connect((ll,"bus_" + str(x), "1ns"),
                      (v, "bus", "1ns"))
     sst.popNamePrefix()
 
 def doFakeDC(rtr, nextPort, netAddr, dcNum):
-    memory = sst.Component("fake_memory", "memHierarchy.MemController")
-    memory.addParams({
+    memctrl = sst.Component("fake_memory", "memHierarchy.MemController")
+    memctrl.addParams({
             "clock": memclock,
             "debug": memDebug
             })
     memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
+    memory.addParams({ "mem_size": str(rank_size) + "MiB" })
     # use a fixed latency
     memory.addParams(memParams)
     # add fake DC
     dc = sst.Component("dc_nid%d"%netAddr, "memHierarchy.DirectoryController")
-    print(("DC nid%d\n %x to %x\n iSize %x iStep %x" % (netAddr, 0, 0, 0, 0)))
+    print("DC nid%d\n %x to %x\n iSize %x iStep %x" % (netAddr, 0, 0, 0, 0))
     dc.addParams({
             "coherence_protocol": coherence_protocol,
             "network_bw": memNetBW,
             "addr_range_start": 0,
-            "addr_range_end":  1,
-            "interleave_size": 0//1024,   # in KB
+            "addr_range_end":  0,
+            "interleave_size": 0//1024,    # in KB
             "interleave_step": 0,         # in KB
             "entry_cache_size": 128*1024, #Entry cache size of mem/blocksize
             "clock": memclock,
@@ -219,7 +265,7 @@ def doFakeDC(rtr, nextPort, netAddr, dcNum):
             })
     #wire up
     memLink = sst.Link("fake_mem%d_link"%dcNum)
-    memLink.connect((memctrl, "direct_link", busLat), (dc, "memory", busLat))
+    memLink.connect((memctrl, "direct_link", busLat), (dc, "memctrl", busLat))
     netLink = sst.Link("fake_dc%d_netlink"%dcNum)
     netLink.connect((dc, "network", netLat), (rtr, "port%d"%(nextPort), netLat))
 
@@ -229,31 +275,30 @@ def doDC(rtr, nextPort, netAddr, dcNum):
     end_pos = start_pos + ((512*1024*1024)-(interleave_size*(PIMs-1))) 
 
     # add memory
-    #TODO: add vaults
-    memctrl = sst.Component("memory", "memHierarchy.MemController")
-    memctrl.addParams({
+    memory = sst.Component("memory", "memHierarchy.MemController")
+    memory.addParams({
             "clock": memclock,
             "debug": memDebug
             })
     if (useVaultSim == 1):
         # use vaultSim
         memory = memctrl.setSubComponent("backend", "memHierarchy.vaultsim")
-        memory.addParams({"mem_size": str(rank_size) + "MiB"})
         doVS(dcNum, memory)
     else:
         # use a fixed latency
-        memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
+        memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
         memory.addParams(memParams)
 
+    memory.addParams({ "mem_size" : rank_size })
     # add DC
     dc = sst.Component("dc_nid%d"%netAddr, "memHierarchy.DirectoryController")
-    print(("DC nid%d\n %x to %x\n iSize %x iStep %x" % (netAddr, start_pos, end_pos, interleave_size, interleave_step)))
+    print("DC nid%d\n %x to %x\n iSize %x iStep %x" % (netAddr, start_pos, end_pos, interleave_size, interleave_step))
     dc.addParams({
             "coherence_protocol": coherence_protocol,
             "network_bw": memNetBW,
             "addr_range_start": start_pos,
             "addr_range_end":  end_pos,
-            "interleave_size": interleave_size//1024,   # in KB
+            "interleave_size": interleave_size//1024,    # in KB
             "interleave_step": interleave_step,         # in KB
             "entry_cache_size": 128*1024, #Entry cache size of mem/blocksize
             "clock": memclock,
@@ -327,8 +372,10 @@ def doPIM(pimNum, prevRtr):
 # "MAIN"
 
 # Define SST core options
-sst.setProgramOption("partitioner", "self")
-#sst.setProgramOption("stop-at", "2000 us")
+#sst.setProgramOption("partitioner", "self")
+sst.setProgramOption("stop-at", "300 us")
+sst.setStatisticLoadLevel(7)   
+sst.setStatisticOutput("sst.statOutputConsole")
 
 #if needed, create the ariel component
 if useAriel:

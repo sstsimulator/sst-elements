@@ -187,6 +187,10 @@ public:
         snoopL1Invs_ = params.find<bool>("snoop_l1_invalidations", false);
         bool MESI = params.find<bool>("protocol", true);
         llscBlockCycles_ = params.find<Cycle_t>("llsc_block_cycles", 0);
+    
+        std::string frequency = params.find<std::string>("cache_frequency", "");
+
+        llscTimeoutSelfLink_ = configureSelfLink("llscTimeoutLink", frequency, new Event::Handler<MESIL1>(this, &MESIL1::handleLoadLinkExpiration));
 
         // Coherence protocol transition states
         if (MESI) {
@@ -388,6 +392,18 @@ public:
 
     Addr getBank(Addr addr);
 
+    /* LoadLink wakeup event - not serializable since it only goes over a self link */
+    class LoadLinkWakeup : public SST::Event {
+        public:
+            LoadLinkWakeup(Addr addr, id_type id) : SST::Event(), addr_(addr), id_(id) { }
+            ~LoadLinkWakeup() { }
+
+            Addr addr_;  // Address that was locked
+            id_type id_; // id of event that stalled for the locked address
+            
+            NotSerializable(LoadLinkWakeup); // Will never traverse a remote link
+    };
+
 private:
 
     /** Cache and MSHR management */
@@ -398,6 +414,7 @@ private:
     void cleanUpAfterRequest(MemEvent * event, bool inMSHR);
     void cleanUpAfterResponse(MemEvent * event, bool inMSHR);
     void retry(Addr addr);
+    void handleLoadLinkExpiration(SST::Event* ev);
 
     /** Event send */
     uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t time, bool success = true);
@@ -417,9 +434,10 @@ private:
     void printLine(Addr addr);
 
     bool snoopL1Invs_;
-    State protocolReadState_; // E for MESI, S for MSI
-    State protocolExclState_; // E for MESI, M for MSI
+    State protocolReadState_;   // E for MESI, S for MSI
+    State protocolExclState_;   // E for MESI, M for MSI
     Cycle_t llscBlockCycles_;
+    Link* llscTimeoutSelfLink_; // A self-link to trigger waiting requests when a LoadLink times out 
 
     CacheArray<L1CacheLine>* cacheArray_;
 

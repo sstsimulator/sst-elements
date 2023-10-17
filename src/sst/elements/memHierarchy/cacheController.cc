@@ -198,6 +198,7 @@ bool Cache::clockTick(Cycle_t time) {
 }
 
 void Cache::turnClockOn() {
+    if (clockIsOn_) return;
     Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_);
     timestamp_ = time - 1;
     coherenceMgr_->updateTimestamp(timestamp_);

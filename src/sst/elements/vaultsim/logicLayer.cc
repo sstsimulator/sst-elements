@@ -14,13 +14,14 @@
 // distribution.
 
 #include <sst_config.h>
-#include <logicLayer.h>
 
-#include <sst/core/interfaces/stringEvent.h>
-#include <sst/elements/memHierarchy/memEvent.h>
-#include <sst/elements/VaultSimC/memReqEvent.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
+#include <sst/core/interfaces/stringEvent.h>
+#include <sst/elements/memHierarchy/memEvent.h>
+
+#include "logicLayer.h"
+#include "memReqEvent.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -47,13 +48,13 @@ logicLayer::logicLayer( ComponentId_t id, Params& params ) :
   bwlimit = params.find( "bwlimit", -1 );
   if (-1 == bwlimit ) {
     dbg.fatal(CALL_INFO, -1,
-	   " no <bwlimit> tag defined for logiclayer\n");
+      " no <bwlimit> tag defined for logiclayer\n");
   }
 
   int mask = params.find( "LL_MASK", -1 );
   if ( -1 == mask ) {
     dbg.fatal(CALL_INFO, -1,
-	   " no <LL_MASK> tag defined for logiclayer\n");
+      " no <LL_MASK> tag defined for logiclayer\n");
   }
   LL_MASK = mask;
 
@@ -67,17 +68,17 @@ logicLayer::logicLayer( ComponentId_t id, Params& params ) :
       snprintf(bus_name, 50, "bus_%d", i);
       memChan_t *chan = configureLink( bus_name, "1 ns" );
       if (chan) {
-	m_memChans.push_back(chan);
-	dbg.output(" connected %s\n", bus_name);
+        m_memChans.push_back(chan);
+        dbg.output(" connected %s\n", bus_name);
       } else {
-	dbg.fatal(CALL_INFO, -1,
-	       " could not find %s\n", bus_name);
+        dbg.fatal(CALL_INFO, -1,
+                " could not find %s\n", bus_name);
       }
     }
     printf(" Connected %d Vaults\n", numVaults);
   } else {
     dbg.fatal(CALL_INFO, -1,
-	   " no <vaults> tag defined for LogicLayer\n");
+        " no <vaults> tag defined for LogicLayer\n");
   }
 
   // connect chain
@@ -119,58 +120,58 @@ void logicLayer::init(unsigned int phase) {
         MemEvent *me = dynamic_cast<MemEvent*>(ev);
         if ( me ) {
             /* Push data to memory */
-	  if ( me->isWriteback() || me->getCmd() == Command::GetX) {
-	         //printf("Memory received Init Command: of size 0x%x at addr 0x%lx\n", me->getSize(), me->getAddr() );
-                uint32_t chunkSize = (1 << VAULT_SHIFT);
-                if (me->getSize() > chunkSize) {
-                    // may need to break request up in to 256 byte chunks (minimal
-                    // vault width)
-                    int numNewEv = (me->getSize() / chunkSize) + 1;
-                    uint8_t *inData = &(me->getPayload()[0]);
-                    SST::MemHierarchy::Addr addr = me->getAddr();
-                    for (int i = 0; i < numNewEv; ++i) {
-                        // make new event
-                        MemEvent *newEv = new MemEvent(this, addr,
-                                                       me->getBaseAddr(),
-                                                       me->getCmd());
-                        // set size and payload
-                        if (i != (numNewEv - 1)) {
-                            newEv->setSize(chunkSize);
-                            newEv->setPayload(chunkSize, inData);
-                            inData += chunkSize;
-                            addr += chunkSize;
-                        } else {
-                            uint32_t remain = me->getSize() - (chunkSize * (numNewEv - 1));
-                            newEv->setSize(remain);
-                            newEv->setPayload(remain, inData);
-                        }
-                        // sent to where it needs to go
-                        if (isOurs(newEv->getAddr())) {
-                            // send to the vault
-                            unsigned int vaultID =
-                                (newEv->getAddr() >> VAULT_SHIFT) % m_memChans.size();
-                            m_memChans[vaultID]->sendUntimedData(newEv);
-                        } else {
-                            // send down the chain
-                            toMem->sendUntimedData(newEv);
-                        }
-                    }
-                    delete ev;
-                } else {
-                    if (isOurs(me->getAddr())) {
-                        // send to the vault
-                        unsigned int vaultID = (me->getAddr() >> VAULT_SHIFT) % m_memChans.size();
-                        // printf("Propagating initial write %p to vault %d\n", me, vaultID);
-                        m_memChans[vaultID]->sendUntimedData(me);
+          if ( me->isWriteback() || me->getCmd() == Command::GetX) {
+            //printf("Memory received Init Command: of size 0x%x at addr 0x%lx\n", me->getSize(), me->getAddr() );
+            uint32_t chunkSize = (1 << VAULT_SHIFT);
+            if (me->getSize() > chunkSize) {
+                // may need to break request up in to 256 byte chunks (minimal
+                // vault width)
+                int numNewEv = (me->getSize() / chunkSize) + 1;
+                uint8_t *inData = &(me->getPayload()[0]);
+                SST::MemHierarchy::Addr addr = me->getAddr();
+                for (int i = 0; i < numNewEv; ++i) {
+                    // make new event
+                    MemEvent *newEv = new MemEvent(this, addr,
+                                                    me->getBaseAddr(),
+                                                    me->getCmd());
+                    // set size and payload
+                    if (i != (numNewEv - 1)) {
+                        newEv->setSize(chunkSize);
+                        newEv->setPayload(chunkSize, inData);
+                        inData += chunkSize;
+                        addr += chunkSize;
                     } else {
-
+                        uint32_t remain = me->getSize() - (chunkSize * (numNewEv - 1));
+                        newEv->setSize(remain);
+                        newEv->setPayload(remain, inData);
+                    }
+                    // sent to where it needs to go
+                    if (isOurs(newEv->getAddr())) {
+                        // send to the vault
+                        unsigned int vaultID =
+                            (newEv->getAddr() >> VAULT_SHIFT) % m_memChans.size();
+                        m_memChans[vaultID]->sendUntimedData(newEv);
+                    } else {
                         // send down the chain
-                        toMem->sendUntimedData(ev);
+                        toMem->sendUntimedData(newEv);
                     }
                 }
+                delete ev;
             } else {
-	        printf("Memory received unexpected Init Command: %s\n", CommandString[(int)me->getCmd()] );
+                if (isOurs(me->getAddr())) {
+                    // send to the vault
+                    unsigned int vaultID = (me->getAddr() >> VAULT_SHIFT) % m_memChans.size();
+                    // printf("Propagating initial write %p to vault %d\n", me, vaultID);
+                    m_memChans[vaultID]->sendUntimedData(me);
+                } else {
+
+                    // send down the chain
+                    toMem->sendUntimedData(ev);
+                }
             }
+          } else {
+          printf("Memory received unexpected Init Command: %s\n", CommandString[(int)me->getCmd()] );
+          }
         }
     }
 }
@@ -186,9 +187,9 @@ bool logicLayer::clock( Cycle_t current )
   // check for events from the CPU
   while((tc[0] < bwlimit) && (e = toCPU->recv())) {
     MemReqEvent *event  = dynamic_cast<MemReqEvent*>(e);
-//    dbg.output(CALL_INFO, "LL%d got req for %p (%lld %d)\n", llID,
+
     dbg.output(CALL_INFO, "LL%d got req for %p (%" PRIu64 " %d)\n", llID,
-	       (void*)event->getAddr(), event->getID().first, event->getID().second);
+        (void*)event->getAddr(), event->getID().first, event->getID().second);
     if (event == NULL) {
       dbg.fatal(CALL_INFO, -1, "logic layer got bad event\n");
     }
@@ -197,18 +198,16 @@ bool logicLayer::clock( Cycle_t current )
     if (isOurs(event->getAddr())) {
       // it is ours!
       unsigned int vaultID = (event->getAddr() >> VAULT_SHIFT) % m_memChans.size();
-//      dbg.output(CALL_INFO, "ll%d sends %p to vault @ %lld\n", llID, event,
+
       dbg.output(CALL_INFO, "ll%d sends %p to vault @ %" PRIu64 "\n", llID, event,
-		 current);
+        current);
       m_memChans[vaultID]->send(event);
     } else {
       // it is not ours
       if (toMem) {
-	toMem->send( event );
-	tm[1]++;
-	dbg.output(CALL_INFO, "ll%d sends %p to next\n", llID, event);
-      } else {
-	//printf("ll%d not sure what to do with %p...\n", llID, event);
+        toMem->send( event );
+        tm[1]++;
+        dbg.output(CALL_INFO, "ll%d sends %p to next\n", llID, event);
       }
     }
   }
@@ -218,14 +217,13 @@ bool logicLayer::clock( Cycle_t current )
     while((tm[0] < bwlimit) && (e = toMem->recv())) {
       MemRespEvent *event  = dynamic_cast<MemRespEvent*>(e);
       if (event == NULL) {
-	dbg.fatal(CALL_INFO, -1, "logic layer got bad event\n");
+        dbg.fatal(CALL_INFO, -1, "logic layer got bad event\n");
       }
 
       tm[0]++;
       // pass along to the CPU
-//      dbg.output(CALL_INFO, "ll%d sends %p towards cpu (%lld %d)\n",
       dbg.output(CALL_INFO, "ll%d sends %p towards cpu (%" PRIu64 " %d)\n",
-		 llID, event, event->getID().first, event->getID().second);
+          llID, event, event->getID().first, event->getID().second);
       toCPU->send( event );
       tc[1]++;
     }
@@ -240,9 +238,9 @@ bool logicLayer::clock( Cycle_t current )
       if (event == NULL) {
         dbg.fatal(CALL_INFO, -1, "logic layer got bad event from vaults\n");
       }
-//      dbg.output(CALL_INFO, "ll%d got an event %p from vault @ %lld, sends "
+
       dbg.output(CALL_INFO, "ll%d got an event %p from vault @ %" PRIu64 ", sends "
-		 "towards cpu\n", llID, event, current);
+        "towards cpu\n", llID, event, current);
 
       // send to CPU
       memOps++;
@@ -256,13 +254,13 @@ bool logicLayer::clock( Cycle_t current )
       tc[0] > bwlimit ||
       tc[1] > bwlimit) {
     dbg.output(CALL_INFO, "ll%d Bandwdith: %d %d %d %d\n",
-	       llID, tm[0], tm[1], tc[0], tc[1]);
+      llID, tm[0], tm[1], tc[0], tc[1]);
   }
+
   bwUsedToCpu[0]->addData(tc[0]);
   bwUsedToCpu[1]->addData(tc[1]);
   bwUsedToMem[0]->addData(tm[0]);
   bwUsedToMem[1]->addData(tm[1]);
-
 
   return false;
 }

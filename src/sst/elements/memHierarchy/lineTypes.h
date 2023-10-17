@@ -291,8 +291,10 @@ class L1CacheLine : public CacheLine {
 
         // Lock
         bool isLocked(Cycle_t currentTime) { return (userLock_ > 0) ? true : ((LLSC_ && (currentTime < LLSCTime_)) ? true : false)  ; }
+        uint64_t getLLSCTime() { return LLSC_ ?  LLSCTime_ : 0; }
         void incLock() { userLock_++; }
         void decLock() { userLock_--; }
+        
 
         // Waiting events
         bool getEventsWaitingForLock() { return eventsWaitingForLock_; }

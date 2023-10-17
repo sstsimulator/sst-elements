@@ -14,24 +14,22 @@
 // distribution.
 
 #include <sst_config.h>
-#include <VaultSimC.h>
-
-#include <sys/mman.h>
 
 #include <sst/core/link.h>
 #include <sst/core/params.h>
-#include <sst/elements/VaultSimC/memReqEvent.h>
 
-#include <vaultGlobals.h>
+#include <sys/mman.h>
 
-//typedef  VaultCompleteFn;
+#include "vaultsim.h"
+#include "memReqEvent.h"
+#include "globals.h"
 
 static size_t MEMSIZE = size_t(4096)*size_t(1024*1024);
 
 using namespace SST::VaultSim;
 using namespace SST::MemHierarchy;
 
-VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
+VaultSim::VaultSim( ComponentId_t id, Params& params ) :
     Component( id ), numOutstanding(0) {
     dbg.init("@R:Vault::@p():@l " + getName() + ": ", 0, 0,
              (Output::output_location_t)params.find<uint32_t>("debug", 0));
@@ -62,7 +60,7 @@ VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
     // Configuration if we're not using Phx Library
 
     registerClock( frequency,
-                   new Clock::Handler<VaultSimC>(this, &VaultSimC::clock) );
+                   new Clock::Handler<VaultSim>(this, &VaultSim::clock) );
 
     std::string delay = "40ns";
     delay = params.find<std::string>("delay", "40ns");
@@ -79,14 +77,14 @@ VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
     memOutStat = registerStatistic<uint64_t>("Mem_Outstanding","1");
 }
 
-    int VaultSimC::Finish()
+    int VaultSim::Finish()
 {
     //munmap(memBuffer, MEMSIZE);
 
     return 0;
 }
 
-void VaultSimC::init(unsigned int phase)
+void VaultSim::init(unsigned int phase)
 {
     SST::Event *ev = NULL;
     while ( (ev = m_memChan->recvUntimedData()) != NULL ) {
@@ -113,7 +111,7 @@ void VaultSimC::init(unsigned int phase)
     }
 }
 
-bool VaultSimC::clock( Cycle_t current ) {
+bool VaultSim::clock( Cycle_t current ) {
     SST::Event *e = 0;
     while (NULL != (e = m_memChan->recv())) {
         // process incoming events
