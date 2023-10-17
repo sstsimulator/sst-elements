@@ -103,8 +103,9 @@ bool MESIL1::handleGetS(MemEvent * event, bool inMSHR) {
 
             recordPrefetchResult(line, statPrefetchHit);
 
-            if (event->isLoadLink())
+            if (event->isLoadLink()) {
                 line->atomicStart(timestamp_ + llscBlockCycles_, event->getThreadID());
+            }
             data.assign(line->getData()->begin() + (event->getAddr() - event->getBaseAddr()), line->getData()->begin() + (event->getAddr() - event->getBaseAddr() + event->getSize()));
             sendTime = sendResponseUp(event, &data, inMSHR, line->getTimestamp());
             line->setTimestamp(sendTime - 1);
@@ -363,9 +364,9 @@ bool MESIL1::handleGetSX(MemEvent* event, bool inMSHR) {
                 stat_hit[2][inMSHR]->addData(1);
                 stat_hits->addData(1);
             }
-            if (event->isLoadLink())
+            if (event->isLoadLink()) {
                 line->atomicStart(timestamp_ + llscBlockCycles_, event->getThreadID());
-            
+            }
             else
                 line->incLock();
             data.assign(line->getData()->begin() + (event->getAddr() - event->getBaseAddr()), line->getData()->begin() + (event->getAddr() - event->getBaseAddr() + event->getSize()));
@@ -629,8 +630,15 @@ bool MESIL1::handleForceInv(MemEvent* event, bool inMSHR) {
                     return false;
                 else {
                     stat_eventStalledForLock->addData(1);
-                    retryBuffer_.push_back(mshr_->getFrontEvent(addr));
-                    mshr_->addPendingRetry(addr);
+                    // If lock is on a timer, schedule a retry
+                    // Otherwise, the unlock event will retry this one
+                    uint64_t wakeupTime = line->getLLSCTime();
+                    if (wakeupTime > timestamp_) {
+                        llscTimeoutSelfLink_->send(wakeupTime - timestamp_, new LoadLinkWakeup(addr, event->getID())); 
+                    } else {
+                        retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+                        mshr_->addPendingRetry(addr);
+                    }
                     if (is_debug_event(event)) {
                         eventDI.action = "Stall";
                         eventDI.reason = "line locked";
@@ -702,8 +710,15 @@ bool MESIL1::handleFetchInv(MemEvent* event, bool inMSHR) {
                     return false; /* Unable to allocate MSHR, must NACK */
                 else {
                     stat_eventStalledForLock->addData(1);
-                    retryBuffer_.push_back(mshr_->getFrontEvent(addr));
-                    mshr_->addPendingRetry(addr);
+                    // If lock is on a timer, schedule a retry
+                    // Otherwise, the unlock event will retry this one
+                    uint64_t wakeupTime = line->getLLSCTime();
+                    if (wakeupTime > timestamp_) {
+                        llscTimeoutSelfLink_->send(wakeupTime - timestamp_, new LoadLinkWakeup(addr, event->getID())); 
+                    } else {
+                        retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+                        mshr_->addPendingRetry(addr);
+                    }
                     if (is_debug_event(event)) {
                         eventDI.action = "Stall";
                         eventDI.reason = "line locked";
@@ -770,9 +785,16 @@ bool MESIL1::handleFetchInvX(MemEvent* event, bool inMSHR) {
                 if (!inMSHR && (allocateMSHR(event, true, 0) == MemEventStatus::Reject)) {
                     return false;
                 } else {
+                    // If lock is on a timer, schedule a retry
+                    // Otherwise, the unlock event will retry this one
+                    uint64_t wakeupTime = line->getLLSCTime();
+                    if (wakeupTime > timestamp_) {
+                        llscTimeoutSelfLink_->send(wakeupTime - timestamp_, new LoadLinkWakeup(addr, event->getID())); 
+                    } else {
+                        retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+                        mshr_->addPendingRetry(addr);
+                    }
                     stat_eventStalledForLock->addData(1);
-                    retryBuffer_.push_back(mshr_->getFrontEvent(addr));
-                    mshr_->addPendingRetry(addr);
                     if (is_debug_event(event)) {
                         eventDI.action = "Stall";
                         eventDI.reason = "line locked";
@@ -831,8 +853,9 @@ bool MESIL1::handleGetSResp(MemEvent* event, bool inMSHR) {
     if (is_debug_addr(addr))
         printDataValue(addr, line->getData(), false);
 
-    if (req->isLoadLink())
+    if (req->isLoadLink()) {
         line->atomicStart(timestamp_ + llscBlockCycles_, req->getThreadID());
+    }
 
     if (is_debug_addr(addr))
         printDataValue(addr, line->getData(), true);
@@ -1258,7 +1281,7 @@ void MESIL1::cleanUpAfterRequest(MemEvent * event, bool inMSHR) {
     /* Replay any waiting events */
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
-            if (!mshr_->getInProgress(addr)) {
+            if (!mshr_->getInProgress(addr) && mshr_->getPendingRetries(addr) == 0) {
                 retryBuffer_.push_back(mshr_->getFrontEvent(addr));
                 mshr_->addPendingRetry(addr);
             }
@@ -1322,6 +1345,21 @@ void MESIL1::retry(Addr addr) {
     }
 }
 
+void MESIL1::handleLoadLinkExpiration(SST::Event* ev) {
+    LoadLinkWakeup* ll = static_cast<LoadLinkWakeup*>(ev);
+    
+    if (mshr_->exists(ll->addr_) && (mshr_->getFrontType(ll->addr_) == MSHREntryType::Event) &&
+            mshr_->getFrontEvent(ll->addr_)->getID() == ll->id_ && !mshr_->getInProgress(ll->addr_) &&
+            (mshr_->getPendingRetries(ll->addr_) == 0)) {
+
+        retryBuffer_.push_back(mshr_->getFrontEvent(ll->addr_));
+        mshr_->addPendingRetry(ll->addr_);
+        reenableClock_();
+    }
+
+    fflush(stdout);
+    delete ev;
+}
 
 /***********************************************************************************************************
  * Event creation and send
