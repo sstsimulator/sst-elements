@@ -83,7 +83,7 @@ void CircNetworkInspector::finish() {
                 // print
                 output_file->output(CALL_INFO, "%s %" PRIu64 "\n",
                                     i->first.c_str(),
-                                    (unsigned long long)i->second->size());
+                                    i->second->size());
                 // clean up
                 delete(i->second);
             }

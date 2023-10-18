@@ -249,7 +249,7 @@ OfferedLoad::handle_receives(int vn)
 {
     SimpleNetwork::Request* req = link_if->recv(vn);
     if ( req->dest != id ) {
-        out.fatal(CALL_INFO,-1,"Endpoint %d received a packet intended for %lld\n",id,req->dest);
+        out.fatal(CALL_INFO,-1,"Endpoint %d received a packet intended for %ld\n",id,req->dest);
     }
     if ( req != NULL ) {
         SimTime_t current_time = getCurrentSimTime(base_tc);
