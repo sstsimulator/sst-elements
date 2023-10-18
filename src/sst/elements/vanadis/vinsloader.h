@@ -123,7 +123,7 @@ public:
             }
 
             if(output_verbosity >= 16) {
-                output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ---> hit (addr=0x%llx), caching line in predecoder.\n",
+                output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ---> hit (addr=0x%" PRI_ADDR "), caching line in predecoder.\n",
                             resp->pAddr);
             }
 
@@ -159,7 +159,7 @@ public:
 
         if(output_verbosity >= 16) {
         output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG,
-                        "[fill-decode]: ins-addr: 0x%llx line-offset: %" PRIu64 " line-start=%" PRIu64 " / 0x%llx\n",
+                        "[fill-decode]: ins-addr: 0x%" PRI_ADDR " line-offset: %" PRIu64 " line-start=%" PRIu64 " / 0x%" PRI_ADDR "\n",
                         addr, inst_line_offset, cache_line_start, cache_line_start);
         }
 
