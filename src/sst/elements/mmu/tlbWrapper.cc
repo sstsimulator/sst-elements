@@ -119,7 +119,7 @@ void TLB_Wrapper::tlbCallback( RequestID reqId, uint64_t physAddr )
         }
 
         m_dbg.debug(CALL_INFO_LONG,1,0,"memEvent thread=%d  addr=%#" PRIx64 " -> %#" PRIx64 "\n",
-                memEv->getThreadId(), addr, memEv->getAddr() );
+                memEv->getThreadID(), addr, memEv->getAddr() );
 
         m_cache_if->send( memEv );
     }
@@ -130,11 +130,11 @@ void TLB_Wrapper::handleCpuEvent( Event* ev )
 {
     ++m_pending;
     MemHierarchy::MemEvent* memEv = dynamic_cast<MemHierarchy::MemEvent*>(ev);
-    m_dbg.debug(CALL_INFO_LONG,1,0,"memEvent thread=%d baseAddr=%#" PRIx64  " addr=%#"  PRIx64  "\n",  memEv->getThreadId(), memEv->getBaseAddr(), memEv->getAddr() );
+    m_dbg.debug(CALL_INFO_LONG,1,0,"memEvent thread=%d baseAddr=%#" PRIx64  " addr=%#"  PRIx64  "\n",  memEv->getThreadID(), memEv->getBaseAddr(), memEv->getAddr() );
     m_dbg.debug(CALL_INFO_LONG,1,0," %s \n", memEv->getVerboseString(16).c_str() );
 
     auto reqId = reinterpret_cast<RequestID>(memEv);
-    int hwThread = memEv->getThreadId();
+    int hwThread = memEv->getThreadID();
     uint64_t virtAddr = memEv->getAddr(); // getVirtualAddress() 
     uint64_t instPtr = memEv->getInstructionPointer();
     uint32_t perms = getPerms( memEv );

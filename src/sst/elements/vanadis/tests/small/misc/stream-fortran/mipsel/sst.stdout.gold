@@ -1,18 +1,18 @@
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implmented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implmented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implmented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implmented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implmented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implmented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implmented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implmented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implmented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implmented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implmented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implmented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implmented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implmented returning success
-Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implmented returning success
+Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implemented returning success
+Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implemented returning success
+Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implemented returning success
+Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implemented returning success
+Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implemented returning success
+Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implemented returning success
+Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implemented returning success
+Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implemented returning success
+Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implemented returning success
+Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implemented returning success
+Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implemented returning success
+Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implemented returning success
+Warning: VANADIS_SYSCALL_MIPS_RT_SIGACTION not implemented returning success
+Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implemented returning success
+Warning: VANADIS_SYSCALL_MIPS_RT_SIGPROCMASK not implemented returning success
 pid=100 tid=100 has exited
 all process have exited
  node0.cpu0:decoder0:branch_unit.branch_cache_hit.1 : Accumulator : Sum.u64 = 143527; SumSQ.u64 = 143527; Count.u64 = 143527; Min.u64 = 1; Max.u64 = 1; 

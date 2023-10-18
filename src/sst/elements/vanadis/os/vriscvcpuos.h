@@ -282,7 +282,7 @@ public:
                             "rt_sigprocmask( %" PRId32 ", 0x%llx, 0x%llx, %" PRId32 ")\n",
                             how, signal_set_in, signal_set_out, signal_set_size);
 
-        printf("Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented return success\n");
+        printf("Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented return success\n");
 
         recvSyscallResp(new VanadisSyscallResponse(0));
         return nullptr;

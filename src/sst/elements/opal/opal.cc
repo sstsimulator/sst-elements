@@ -16,7 +16,6 @@
 #include <string>
 #include <iostream>
 
-using namespace SST::Interfaces;
 using namespace SST;
 using namespace SST::OpalComponent;
 
