@@ -556,7 +556,7 @@ LinkControl::printStatus(Output& out)
     }
     else {
         NocPacket* event = output_buf[0].front();
-        out.output("      src = %ld, dest = %ld, flits = %d\n",
+        out.output("      src = %" PRI_NID ", dest = %" PRI_NID ", flits = %d\n",
                    event->request->src, event->request->dest,
                    event->getSizeInFlits());
     }
