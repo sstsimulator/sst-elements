@@ -163,7 +163,7 @@ public:
     }
 
     virtual void print(const std::string& header, Output &out) const  override {
-        out.output("%s RtrEvent to be delivered at %" PRIu64 " with priority %d. src = %lld (logical: %lld), dest = %lld\n",
+        out.output("%s RtrEvent to be delivered at %" PRIu64 " with priority %d. src = %ld (logical: %ld), dest = %ld\n",
                    header.c_str(), getDeliveryTime(), getPriority(), trusted_src, request->src, request->dest);
         if ( request->inspectPayload() != NULL) request->inspectPayload()->print("  -> ", out);
     }
