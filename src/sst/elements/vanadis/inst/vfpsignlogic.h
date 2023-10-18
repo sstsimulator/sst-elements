@@ -84,11 +84,11 @@ public:
 #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16 ) {
             if((8 == sizeof(fp_format)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode())) {
-                output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%llx) %s / isa-in: { %" PRIu16 ", %" PRIu16 " } / { %" PRIu16 ", %" PRIu16 " } -> isa-out: { %" PRIu16 ", %" PRIu16 " }\n", 
+                output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%" PRI_ADDR ") %s / isa-in: { %" PRIu16 ", %" PRIu16 " } / { %" PRIu16 ", %" PRIu16 " } -> isa-out: { %" PRIu16 ", %" PRIu16 " }\n", 
                     getInstructionAddress(), getInstCode(), phys_fp_regs_in[0], phys_fp_regs_in[1], 
                     phys_fp_regs_in[2], phys_fp_regs_in[3], phys_fp_regs_out[0], phys_fp_regs_out[1]);
             } else {
-                output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%llx) %s / isa-in: %" PRIu16 " / %" PRIu16 " -> isa-out: %" PRIu16 "\n", 
+                output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%" PRI_ADDR ") %s / isa-in: %" PRIu16 " / %" PRIu16 " -> isa-out: %" PRIu16 "\n", 
                     getInstructionAddress(), getInstCode(), phys_fp_regs_in[0], phys_fp_regs_in[1], phys_fp_regs_out[0]);
             }
 		}

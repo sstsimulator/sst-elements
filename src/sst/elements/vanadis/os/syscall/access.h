@@ -27,7 +27,7 @@ public:
     VanadisAccessSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallAccessEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "access" ) 
     {
-        m_output->verbose(CALL_INFO, 16, 0, "[syscall-access] access( 0x%llx, %" PRIu64 " )\n", event->getPathPointer(), event->getAccessMode());
+        m_output->verbose(CALL_INFO, 16, 0, "[syscall-access] access( 0x%" PRI_ADDR ", %" PRIu64 " )\n", event->getPathPointer(), event->getAccessMode());
 
         readString(event->getPathPointer(),m_filename);
     }

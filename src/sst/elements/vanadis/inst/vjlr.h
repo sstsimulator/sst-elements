@@ -57,7 +57,7 @@ public:
         if(output->getVerboseLevel() >= 16) {
             output->verbose(
                 CALL_INFO, 16, 0,
-                "Execute: addr=(0x%0llx) JLR isa-link: %" PRIu16 " isa-addr: %" PRIu16 " + %" PRIu64 " phys-link: %" PRIu16
+                "Execute: addr=(0x%0" PRI_ADDR ") JLR isa-link: %" PRIu16 " isa-addr: %" PRIu16 " + %" PRIu64 " phys-link: %" PRIu16
                 " phys-addr: %" PRIu16 "\n",
                 getInstructionAddress(), isa_int_regs_out[0], isa_int_regs_in[0], imm, phys_int_regs_out[0],
                 phys_int_regs_in[0]);
@@ -70,7 +70,7 @@ public:
         regFile->setIntReg<uint64_t>(phys_int_regs_in[0], jump_to);
 
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(CALL_INFO, 16, 0, "Execute JLR jump-to: 0x%0llx link-value: 0x%0llx\n", jump_to, link_value);
+        output->verbose(CALL_INFO, 16, 0, "Execute JLR jump-to: 0x%0" PRI_ADDR " link-value: 0x%0" PRI_ADDR "\n", jump_to, link_value);
 #endif
         takenAddress = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
 

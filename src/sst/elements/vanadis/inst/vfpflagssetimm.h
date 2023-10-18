@@ -54,7 +54,7 @@ public:
     {
 		if(checkFrontOfROB()) {
 			if(output->getVerboseLevel() >= 16) {
-				output->verbose(CALL_INFO, 16, 0, "Execute: 0x%llx %s FPFLAGS <- mask = %" PRIu64 " (0x%llx)\n",
+				output->verbose(CALL_INFO, 16, 0, "Execute: 0x%" PRI_ADDR " %s FPFLAGS <- mask = %" PRIu64 " (0x%" PRI_ADDR ")\n",
 					getInstructionAddress(), getInstCode(), imm_value, imm_value);
 			}
 

@@ -85,7 +85,7 @@ public:
 	VanadisRegisterFile* regFile, const uint64_t start_stack_address ) override {
 
         output->verbose(
-            CALL_INFO, 16, 0, "-> Setting SP to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", start_stack_address,
+            CALL_INFO, 16, 0, "-> Setting SP to (64B-aligned):          %" PRIu64 " / 0x%0" PRI_ADDR "\n", start_stack_address,
             start_stack_address);
 
         // Per RISCV Assembly Programemr's handbook, register x2 is for stack
@@ -100,7 +100,7 @@ public:
 
     void setArg1Register( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) override {
         output->verbose(
-            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting argument 1 register to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting argument 1 register to (64B-aligned):          %" PRIu64 " / 0x%0" PRI_ADDR "\n", value,
             value);
         const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(10);
         output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> argument 1 (r10) maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
@@ -110,7 +110,7 @@ public:
 
     virtual void setReturnRegister( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) override {
         output->verbose(
-            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting register 10 to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting register 10 to (64B-aligned):          %" PRIu64 " / 0x%0" PRI_ADDR "\n", value,
             value);
         const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(10);
         output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> r10 maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
@@ -120,7 +120,7 @@ public:
 
     virtual void setThreadPointer( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) override {
         output->verbose(
-            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting thread pointer to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting thread pointer to (64B-aligned):          %" PRIu64 " / 0x%0" PRI_ADDR "\n", value,
             value);
         const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(4);
         output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Thread Pointer (r4) maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
@@ -143,7 +143,7 @@ public:
                     // We have the instruction in our micro-op cache
                     if(output->getVerboseLevel() >= 16) {
                         output->verbose(
-                            CALL_INFO, 16, 0, "---> Found uop bundle for ip=0x%llx, loading from cache...\n", ip);
+                            CALL_INFO, 16, 0, "---> Found uop bundle for ip=0x%" PRI_ADDR ", loading from cache...\n", ip);
                     }
                     stat_uop_hit->addData(1);
 
@@ -175,8 +175,8 @@ public:
                                     if(output->getVerboseLevel() >= 16) {
                                         output->verbose(
                                             CALL_INFO, 16, 0,
-                                            "----> contains a branch: 0x%llx / predicted "
-                                            "(found in predictor): 0x%llx\n",
+                                            "----> contains a branch: 0x%" PRI_ADDR " / predicted "
+                                            "(found in predictor): 0x%" PRI_ADDR "\n",
                                             ip, predicted_address);
                                     }
 
@@ -191,8 +191,8 @@ public:
                                     if(output->getVerboseLevel() >= 16) {
                                         output->verbose(
                                             CALL_INFO, 16, 0,
-                                            "----> contains a branch: 0x%llx / predicted "
-                                            "(not-found in predictor): 0x%llx, pc-increment: %" PRIu64 "\n",
+                                            "----> contains a branch: 0x%" PRI_ADDR " / predicted "
+                                            "(not-found in predictor): 0x%" PRI_ADDR ", pc-increment: %" PRIu64 "\n",
                                             ip, ip + 4, bundle->pcIncrement());
                                     }
 
@@ -209,7 +209,7 @@ public:
                         // already found a predicted target addeess to decode
                         if(output->getVerboseLevel() >= 16) {
                             output->verbose(
-                                CALL_INFO, 16, 0, "----> branch? %s, ip=0x%llx + inc=%" PRIu64 " = new-ip=0x%llx\n",
+                                CALL_INFO, 16, 0, "----> branch? %s, ip=0x%" PRI_ADDR " + inc=%" PRIu64 " = new-ip=0x%" PRI_ADDR "\n",
                                 bundle_has_branch ? "yes" : "no", ip, bundle_has_branch ? 0 : bundle->pcIncrement(),
                                 bundle_has_branch ? ip : ip + bundle->pcIncrement());
                         }
@@ -228,7 +228,7 @@ public:
                         output->verbose(
                             CALL_INFO, 16, 0,
                             "---> uop not found, but is located in the predecode "
-                            "i0-icache (ip=0x%llx)\n",
+                            "i0-icache (ip=0x%" PRI_ADDR ")\n",
                             ip);
                     }
 
@@ -241,7 +241,7 @@ public:
                         ins_loader->getPredecodeBytes(output, ip, (uint8_t*)&temp_ins, sizeof(temp_ins));
 
                     if ( predecode_bytes ) {
-                        output->verbose(CALL_INFO, 16, 0, "---> performing a decode for ip=0x%llx\n", ip);
+                        output->verbose(CALL_INFO, 16, 0, "---> performing a decode for ip=0x%" PRI_ADDR "\n", ip);
                         decode(output, ip, temp_ins, decoded_bundle);
 
                         if(output->getVerboseLevel() >= 16) {
@@ -253,7 +253,7 @@ public:
                         ins_loader->cacheDecodedBundle(decoded_bundle);
 
                         if ( 0 == decoded_bundle->getInstructionCount() ) {
-                            output->fatal(CALL_INFO, -1, "Error - bundle at: 0x%llx generates no micro-ops.\n", ip);
+                            output->fatal(CALL_INFO, -1, "Error - bundle at: 0x%" PRI_ADDR " generates no micro-ops.\n", ip);
                         }
 
                         // Exit this cycle because results saved to cache are available next
@@ -275,7 +275,7 @@ public:
                         output->verbose(
                             CALL_INFO, 16, 0,
                             "---> microop bundle and pre-decoded bytes are not found for "
-                            "0x%llx, requested read for cache line (line=%" PRIu64 ")\n",
+                            "0x%" PRI_ADDR ", requested read for cache line (line=%" PRIu64 ")\n",
                             ip, ins_loader->getCacheLineWidth());
                     }
                     ins_loader->requestLoadAt(output, ip, 4);
@@ -294,7 +294,7 @@ public:
         }
 
         if(output->getVerboseLevel() >= 16) {
-            output->verbose(CALL_INFO, 16, 0, "---> cycle is completed, ip=0x%llx\n", ip);
+            output->verbose(CALL_INFO, 16, 0, "---> cycle is completed, ip=0x%" PRI_ADDR "\n", ip);
         }
     }
 
@@ -307,7 +307,7 @@ protected:
 
     void decode(SST::Output* output, const uint64_t ins_address, const uint32_t ins, VanadisInstructionBundle* bundle)
     {
-        output->verbose(CALL_INFO, 16, 0, "[decode] -> addr: 0x%llx / ins: 0x%08x\n", ins_address, ins);
+        output->verbose(CALL_INFO, 16, 0, "[decode] -> addr: 0x%" PRI_ADDR " / ins: 0x%08x\n", ins_address, ins);
         output->verbose(CALL_INFO, 16, 0, "[decode] -> ins-bytes: 0x%08x\n", ins);
 
         // We are supposed to have 16b packets for RISCV instructions, if we don't then mark fault
@@ -467,7 +467,7 @@ protected:
                     output->verbose(
                         CALL_INFO, 16, 0,
                         "----> STORE width: %" PRIu32 " bytes == (1 << %" PRIu32 ") %" PRIu16 " -> memory[ %" PRIu16
-                        " + %" PRId64 " / (0x%llx)]\n",
+                        " + %" PRId64 " / (0x%" PRI_ADDR ")]\n",
                         store_bytes, func_code3, rs2, rs1, simm64, simm64);
 
                     bundle->addInstruction(new VanadisStoreInstruction(
@@ -922,7 +922,7 @@ protected:
 
                 output->verbose(
                     CALL_INFO, 16, 0,
-                    "-----> JAL link-reg: %" PRIu16 " / jump-address: 0x%llx + %" PRId64 " = 0x%llx\n", rd, ins_address,
+                    "-----> JAL link-reg: %" PRIu16 " / jump-address: 0x%" PRI_ADDR " + %" PRId64 " = 0x%" PRI_ADDR "\n", rd, ins_address,
                     simm64, jump_to);
 
                 bundle->addInstruction(new VanadisJumpLinkInstruction(
@@ -1033,7 +1033,7 @@ protected:
                     {
                         // CSRRW
                         output->verbose(
-                            CALL_INFO, 16, 0, "-----> CSRRW CSR: ins: 0x%llx / %" PRIu64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", ins_address, uimm64, rd, rs1);
+                            CALL_INFO, 16, 0, "-----> CSRRW CSR: ins: 0x%" PRI_ADDR " / %" PRIu64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", ins_address, uimm64, rd, rs1);
 
                         // Switch based on the CSR being read
                         switch ( uimm64 ) {
@@ -1055,7 +1055,7 @@ protected:
                     {
                         // CSRRS
                         output->verbose(
-                            CALL_INFO, 16, 0, "-----> CSRRS CSR: ins: 0x%llx / %" PRIu64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", ins_address, uimm64, rd, rs1);
+                            CALL_INFO, 16, 0, "-----> CSRRS CSR: ins: 0x%" PRI_ADDR " / %" PRIu64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", ins_address, uimm64, rd, rs1);
                         // ignore for now?
 
                         // Switch based on the CSR being read
@@ -1101,7 +1101,7 @@ protected:
                         // CSRRSI
                         output->verbose(
                             CALL_INFO, 16, 0,
-                            "-----> CSRRS CSRRSI: ins: 0x%llx / %" PRIu64 " / reg: %" PRIu16 " / UIMMM: %" PRIu16 "\n", ins_address, uimm64, rd, rs1);
+                            "-----> CSRRS CSRRSI: ins: 0x%" PRI_ADDR " / %" PRIu64 " / reg: %" PRIu16 " / UIMMM: %" PRIu16 "\n", ins_address, uimm64, rd, rs1);
 
                         if ( 0 == rd ) {
 										switch(uimm64) {
@@ -1282,7 +1282,7 @@ protected:
                     if(LIKELY(op_width != 0)) {
                         // AMO.ADD
                         output->verbose(CALL_INFO, 16, 0, 
-                            "-----> AMOADD 0x%llx / thr: %" PRIu32 " / %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16 
+                            "-----> AMOADD 0x%" PRI_ADDR " / thr: %" PRIu32 " / %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16 
                             " / width: %" PRIu32 " / aq: %s / rl: %s\n",
                             ins_address, hw_thr, rd, rs1, rs2, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
 
@@ -1338,7 +1338,7 @@ protected:
                     if(LIKELY(op_width != 0)) {
                         // AMO.SWAP
                         output->verbose(CALL_INFO, 16, 0, 
-                            "-----> AMOSWAP 0x%llx / thr: %" PRIu32 " / %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16 
+                            "-----> AMOSWAP 0x%" PRI_ADDR " / thr: %" PRIu32 " / %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16 
                             " / width: %" PRIu32 " / aq: %s / rl: %s\n",
                             ins_address, hw_thr, rd, rs1, rs2, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
 
@@ -1382,7 +1382,7 @@ protected:
                         // LR.?.AQ.RL
                         if(LIKELY(op_width != 0)) {
                             output->verbose(
-                                CALL_INFO, 16, 0, "-----> LR 0x%llx / thr: %" PRIu32 " / (LLSC_LOAD) %" PRIu16 " <- memory[ %" PRIu16 " ] / width: %" PRIu32 " / aq: %s / rl: %s\n",
+                                CALL_INFO, 16, 0, "-----> LR 0x%" PRI_ADDR " / thr: %" PRIu32 " / (LLSC_LOAD) %" PRIu16 " <- memory[ %" PRIu16 " ] / width: %" PRIu32 " / aq: %s / rl: %s\n",
                                     ins_address, hw_thr, rd, rs1, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
 
                             if(LIKELY(perform_aq)) {
@@ -1409,7 +1409,7 @@ protected:
                     if(LIKELY(op_width != 0)) {
                         output->verbose(
                             CALL_INFO, 16, 0,
-                            "-----> SC 0x%llx / thr: %" PRIu32 " / (LLSC_STORE) %" PRIu16 " -> memory[ %" PRIu16 " ] / result: %" PRIu16 " / width: %" PRIu32 " / aq: %s / rl: %s\n",
+                            "-----> SC 0x%" PRI_ADDR " / thr: %" PRIu32 " / (LLSC_STORE) %" PRIu16 " -> memory[ %" PRIu16 " ] / result: %" PRIu16 " / width: %" PRIu32 " / aq: %s / rl: %s\n",
                             ins_address, hw_thr, rs2, rs1, rd, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
 
                         if(LIKELY(perform_aq)) {
@@ -2315,7 +2315,7 @@ protected:
                         uint16_t rvc_rs1 = expand_rvc_int_register(extract_rs1_rvc(ins));
 
                         output->verbose(
-                            CALL_INFO, 16, 0, "--------> RVC SRLI %" PRIu16 " = %" PRIu16 " >> %" PRIu64 " (0x%llx)\n",
+                            CALL_INFO, 16, 0, "--------> RVC SRLI %" PRIu16 " = %" PRIu16 " >> %" PRIu64 " (0x%" PRI_ADDR ")\n",
                             rvc_rs1, rvc_rs1, shift_by, shift_by);
                         bundle->addInstruction(
                             new VanadisShiftRightLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
@@ -2333,7 +2333,7 @@ protected:
                         uint16_t rvc_rs1 = expand_rvc_int_register(extract_rs1_rvc(ins));
 
                         output->verbose(
-                            CALL_INFO, 16, 0, "--------> RVC SRAI %" PRIu16 " = %" PRIu16 " >> %" PRIu64 " (0x%llx)\n",
+                            CALL_INFO, 16, 0, "--------> RVC SRAI %" PRIu16 " = %" PRIu16 " >> %" PRIu64 " (0x%" PRI_ADDR ")\n",
                             rvc_rs1, rvc_rs1, shift_by, shift_by);
                         bundle->addInstruction(
                             new VanadisShiftRightArithmeticImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
@@ -2353,7 +2353,7 @@ protected:
                         uint16_t rvc_rs1 = expand_rvc_int_register(extract_rs1_rvc(ins));
 
                         output->verbose(
-                            CALL_INFO, 16, 0, "--------> RVC ANDI %" PRIu16 " = %" PRIu16 " & %" PRIu64 " (0x%llx)\n",
+                            CALL_INFO, 16, 0, "--------> RVC ANDI %" PRIu16 " = %" PRIu16 " & %" PRIu64 " (0x%" PRI_ADDR ")\n",
                             rvc_rs1, rvc_rs1, imm, imm);
 
                         bundle->addInstruction(
@@ -2488,7 +2488,7 @@ protected:
                     const uint64_t jump_target = static_cast<uint64_t>(pc_i64 + imm_final);
 
                     output->verbose(
-                        CALL_INFO, 16, 0, "----> decode RVC JUMP pc=0x%llx + imm=%" PRId64 " = 0x%llx\n", ins_address,
+                        CALL_INFO, 16, 0, "----> decode RVC JUMP pc=0x%" PRI_ADDR " + imm=%" PRId64 " = 0x%" PRI_ADDR "\n", ins_address,
                         imm_final, jump_target);
 
                     bundle->addInstruction(new VanadisJumpInstruction(
@@ -2511,7 +2511,7 @@ protected:
                     if ( imm_8 != 0 ) { imm_final |= 0xFFFFFFFFFFFFFE00; }
 
                     output->verbose(
-                        CALL_INFO, 16, 0, "----> decode RVC BEQZ %" PRIu16 " jump to: 0x%llx + 0x%llx = 0x%llx\n",
+                        CALL_INFO, 16, 0, "----> decode RVC BEQZ %" PRIu16 " jump to: 0x%" PRI_ADDR " + 0x%" PRI_ADDR " = 0x%" PRI_ADDR "\n",
                         rvc_rs1, ins_address, imm_final, ins_address + imm_final);
 
                     bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<
@@ -2535,7 +2535,7 @@ protected:
                     if ( imm_8 != 0 ) { imm_final |= 0xFFFFFFFFFFFFFE00; }
 
                     output->verbose(
-                        CALL_INFO, 16, 0, "----> decode RVC BNEZ %" PRIu16 " jump to: 0x%llx + 0x%llx = 0x%llx\n",
+                        CALL_INFO, 16, 0, "----> decode RVC BNEZ %" PRIu16 " jump to: 0x%" PRI_ADDR " + 0x%" PRI_ADDR " = 0x%" PRI_ADDR "\n",
                         rvc_rs1, ins_address, imm_final, ins_address + imm_final);
 
                     bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<
@@ -2793,7 +2793,7 @@ protected:
             if ( fatal_decode_fault ) {
                 output->fatal(
                     CALL_INFO, -1,
-                    "[decode] -> decode fault detected at 0x%llx / thr: %" PRIu32 ", set to fatal on detect\n",
+                    "[decode] -> decode fault detected at 0x%" PRI_ADDR " / thr: %" PRIu32 ", set to fatal on detect\n",
                     ins_address, hw_thr);
             }
             bundle->addInstruction(new VanadisInstructionDecodeFault(ins_address, hw_thr, options));

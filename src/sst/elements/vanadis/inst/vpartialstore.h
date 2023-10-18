@@ -63,7 +63,7 @@ public:
         if(output->getVerboseLevel() >= 16) {
             output->verbose(
                 CALL_INFO, 16, 0,
-                "[partial-store]: compute base address: phys-reg: %" PRIu16 " / offset: %" PRIu64 " / 0x%0llx\n",
+                "[partial-store]: compute base address: phys-reg: %" PRIu16 " / offset: %" PRIu64 " / 0x%0" PRI_ADDR "\n",
                 phys_int_regs_in[0], offset, offset);
         }
 #endif
@@ -78,7 +78,7 @@ public:
 #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16) {
             output->verbose(
-                CALL_INFO, 16, 0, "[partial-store]: base_addr: 0x%0llx full-width: %" PRIu64 "\n", base_addr, width_64);
+                CALL_INFO, 16, 0, "[partial-store]: base_addr: 0x%0" PRI_ADDR " full-width: %" PRIu64 "\n", base_addr, width_64);
             output->verbose(CALL_INFO, 16, 0, "[partial-store]: store-type: %s\n", (is_left_store) ? "left" : "right");
             output->verbose(
                 CALL_INFO, 16, 0, "[partial-store]: partial-width: %" PRIu64 "\n", (is_left_store) ? left_len : right_len);

@@ -76,7 +76,7 @@ public:
 			}
 
 			if(output->getVerboseLevel() >= 16) {
-				output->verbose(CALL_INFO, 16, 0, "Execute: 0x%llx %s out-reg: %" PRIu16 " / out-mask: 0x%llx / copy_round: %c / shift_round: %c / copy_fp: %c\n",
+				output->verbose(CALL_INFO, 16, 0, "Execute: 0x%" PRI_ADDR " %s out-reg: %" PRIu16 " / out-mask: 0x%" PRI_ADDR " / copy_round: %c / shift_round: %c / copy_fp: %c\n",
 						getInstructionAddress(), getInstCode(), phys_int_regs_out[0], flags_out,
 						copy_round_mode ? 'y' : 'n', shift_round_mode ? 'y' : 'n', copy_fp_flags ? 'y' : 'n');
 			}

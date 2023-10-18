@@ -196,7 +196,7 @@ public:
                 for(auto op_q_itr = op_q[i].begin(); op_q_itr != op_q[i].end(); op_q_itr++) {
                     VanadisBasicLoadStoreEntryOp op_type = (*op_q_itr)->getEntryOp();
 
-                    out.verbose(CALL_INFO, 16, 0, "-> [%4" PRId32 "] type: %5s ins: 0x%8llx thr: %4" PRIu32 "\n",
+                    out.verbose(CALL_INFO, 16, 0, "-> [%4" PRId32 "] type: %5s ins: 0x%8" PRI_ADDR " thr: %4" PRIu32 "\n",
                         next_line,
                         (op_type == VanadisBasicLoadStoreEntryOp::LOAD) ? "LOAD" :
                         (op_type == VanadisBasicLoadStoreEntryOp::STORE) ? "STORE" : "FENCE",
@@ -215,7 +215,7 @@ public:
             if(loads_pending.size() > 0) {
                 for(int i = loads_pending.size() - 1; i >= 0; i--) {
                     VanadisBasicLoadPendingEntry* load_entry = loads_pending.at(i);
-                    output->verbose(CALL_INFO, 8, 0, "-->   load[%5d] ins: 0x%llx / thr: %" PRIu32 " / addr: 0x%llx / width: %" PRIu64 "\n",
+                    output->verbose(CALL_INFO, 8, 0, "-->   load[%5d] ins: 0x%" PRI_ADDR " / thr: %" PRIu32 " / addr: 0x%" PRI_ADDR " / width: %" PRIu64 "\n",
                         i, load_entry->getLoadInstruction()->getInstructionAddress(),
                         load_entry->getLoadInstruction()->getHWThread(),
                         load_entry->getLoadAddress(), load_entry->getLoadWidth());
@@ -227,7 +227,7 @@ public:
                     for(int i = stores_pending[t].size() - 1; i >= 0; i--) {
                         VanadisBasicStorePendingEntry* store_entry = stores_pending[t].at(i);
 
-                        output->verbose(CALL_INFO, 16, 0, "--> stores[%5d] ins: 0x%llx / thr: %" PRIu32 " / addr: 0x%llx / width: %" PRIu64 "\n",
+                        output->verbose(CALL_INFO, 16, 0, "--> stores[%5d] ins: 0x%" PRI_ADDR " / thr: %" PRIu32 " / addr: 0x%" PRI_ADDR " / width: %" PRIu64 "\n",
                             i, store_entry->getStoreInstruction()->getInstructionAddress(),
                             store_entry->getStoreInstruction()->getHWThread(),
                             store_entry->getStoreAddress(), store_entry->getStoreWidth());
@@ -269,7 +269,7 @@ protected:
         virtual ~StandardMemHandlers() {}
 
         virtual void handle(StandardMem::ReadResp* ev) {
-            out->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "-> handle read-response (virt-addr: 0x%llx)\n", ev->vAddr);
+            out->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "-> handle read-response (virt-addr: 0x%" PRI_ADDR ")\n", ev->vAddr);
             lsq->stat_loaded_bytes->addData(ev->size);
 
             auto load_itr = lsq->loads_pending.begin();
@@ -301,7 +301,7 @@ protected:
             if(out->getVerboseLevel() >= 16) {
                 out->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG,
                                 "--> LSQ match load entry, unpacking payload "
-                                "(load-addr: 0x%0llx, load-thr: %" PRIu32 ").\n",
+                                "(load-addr: 0x%0" PRI_ADDR ", load-thr: %" PRIu32 ").\n",
                                 ev->pAddr, load_entry->getHWThread());
             }
 
@@ -328,7 +328,7 @@ protected:
                 for ( std::vector<uint8_t>::iterator it = ev->data.begin(); it != ev->data.end(); it++ ) {
                     str << std::setw(2) << static_cast<unsigned>(*it);
                 }
-                out->verbose(CALL_INFO, 0, VANADIS_DBG_LSQ_LOAD_FLG, "---> LSQ recv load event ins: 0x%llx / hw-thr: %" PRIu32 " / entry-addr: 0x%llx / entry-width: %" PRIu16 " / reg-offset: %" PRIu64 " / ev-addr: 0x%llx / ev-width: %" PRIu64 " / addr-offset %" PRIu64 " / sign-extend: %s / target-isa-reg: %" PRIu16 " / target-phys-reg: %" PRIu16 " / reg-type: %s / %s\n",
+                out->verbose(CALL_INFO, 0, VANADIS_DBG_LSQ_LOAD_FLG, "---> LSQ recv load event ins: 0x%" PRI_ADDR " / hw-thr: %" PRIu32 " / entry-addr: 0x%" PRI_ADDR " / entry-width: %" PRIu16 " / reg-offset: %" PRIu64 " / ev-addr: 0x%" PRI_ADDR " / ev-width: %" PRIu64 " / addr-offset %" PRIu64 " / sign-extend: %s / target-isa-reg: %" PRIu16 " / target-phys-reg: %" PRIu16 " / reg-type: %s / %s\n",
                     load_ins->getInstructionAddress(), hw_thr, load_address, load_width, reg_offset, ev->vAddr, ev->size, 
                     addr_offset, (load_ins->performSignExtension() ? "yes" : "no"),
                     target_isa_reg, target_reg,
@@ -422,7 +422,7 @@ protected:
             if(0 == load_entry->countRequests()) {
                 if(out->getVerboseLevel() >= 9) {
                     out->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_LOAD_FLG,
-                        "---> LSQ Execute: %s (0x%llx / thr: %" PRIu32 ") load data instruction "
+                        "---> LSQ Execute: %s (0x%" PRI_ADDR " / thr: %" PRIu32 ") load data instruction "
                         "marked executed.\n",
                         load_ins->getInstCode(), load_ins->getInstructionAddress(), load_ins->getHWThread());
                 }
@@ -434,7 +434,7 @@ protected:
             } else {
                 if(out->getVerboseLevel() >= 9) {
                     out->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_LOAD_FLG,
-                        "---> LSQ Execute: %s (0x%llx / thr:%" PRIu32 ") does not have all requests completed yet %zu left, will not execute until all done.\n",
+                        "---> LSQ Execute: %s (0x%" PRI_ADDR " / thr:%" PRIu32 ") does not have all requests completed yet %zu left, will not execute until all done.\n",
                             load_ins->getInstCode(), load_ins->getInstructionAddress(), load_ins->getHWThread(), load_entry->countRequests());
                 }
             }
@@ -443,7 +443,7 @@ protected:
         } 
         
         virtual void handle(StandardMem::WriteResp* ev) {
-            out->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG, "-> handle write-response (virt-addr: 0x%llx)\n", ev->vAddr);
+            out->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG, "-> handle write-response (virt-addr: 0x%" PRI_ADDR ")\n", ev->vAddr);
             lsq->stat_stored_bytes->addData(ev->size);
 
             bool std_store_found = false;
@@ -520,7 +520,7 @@ protected:
                 default:
                 {
                     // this is a logical error. fatal()
-                    out->fatal(CALL_INFO, -1, "Error - reached a transaction NONE or LLSC_LOAD in a store return. Logical error (ins: 0x%llx / thr: %" PRIu32 ")\n",
+                    out->fatal(CALL_INFO, -1, "Error - reached a transaction NONE or LLSC_LOAD in a store return. Logical error (ins: 0x%" PRI_ADDR " / thr: %" PRIu32 ")\n",
                         store_ins->getInstructionAddress(), store_ins->getHWThread());
                 } break;
                 }
@@ -558,7 +558,7 @@ protected:
         VanadisStoreInstruction* store_ins = current_store->getStoreInstruction();
 
         if(output->getVerboseLevel() >= 16) {
-            output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_STORE_FLG, "-> current store queue front is ins addr: 0x%llx\n", store_ins->getInstructionAddress());
+            output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_STORE_FLG, "-> current store queue front is ins addr: 0x%" PRI_ADDR "\n", store_ins->getInstructionAddress());
         }
 
         // check we have not already dispatched this entry
@@ -581,7 +581,7 @@ protected:
                     delete current_store;
 
                     if(output->getVerboseLevel() >= 16) {
-                        output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_STORE_FLG, "---> issued store: 0x%llx / thr: %" PRIu32 " into memory system using standard store operation\n",
+                        output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_STORE_FLG, "---> issued store: 0x%" PRI_ADDR " / thr: %" PRIu32 " into memory system using standard store operation\n",
                             store_ins->getInstructionAddress(), store_ins->getHWThread());
                     }
 
@@ -589,7 +589,7 @@ protected:
                     store_ins->markExecuted();
                     stat_stores_executed->addData(1);
                 } else {
-                    output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_STORE_FLG, "---> issued non-standard store: 0x%llx / thr: %" PRIu32 " (marked dispatch, will stall until response)\n",
+                    output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_STORE_FLG, "---> issued non-standard store: 0x%" PRI_ADDR " / thr: %" PRIu32 " (marked dispatch, will stall until response)\n",
                         store_ins->getInstructionAddress(), store_ins->getHWThread());
                     current_store->markDispatched();
                 }
@@ -630,7 +630,7 @@ protected:
             for ( std::vector<uint8_t>::iterator it = tmp.begin(); it != tmp.end(); it++ ) {
                 str << std::setw(2) << static_cast<unsigned>(*it);
             }
-            output->verbose(CALL_INFO, 0, VANADIS_DBG_LSQ_STORE_FLG, "--> thr %d, issue-store at ins: 0x%llx / store-addr: 0x%llx / width: %" PRIu64 " / partial: %s / split: %s / offset: %" PRIu32 " / %s\n",
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_LSQ_STORE_FLG, "--> thr %d, issue-store at ins: 0x%" PRI_ADDR " / store-addr: 0x%" PRI_ADDR " / width: %" PRIu64 " / partial: %s / split: %s / offset: %" PRIu32 " / %s\n",
                 store_ins->getHWThread(), store_ins->getInstructionAddress(), store_address, store_width, store_ins->isPartialStore() ? "yes" : "no", needs_split ? "yes" : "no",
                 store_ins->getRegisterOffset(), str.str().c_str());
         }
@@ -660,7 +660,7 @@ protected:
                 const uint64_t store_address_right = store_address + store_width_left;
 
                 if(output->getVerboseLevel() >= 9) {
-                    output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG, "---> store-left-at: 0x%llx left-width: %" PRIu64 ", store-right-at: 0x%llx right-width: %" PRIu64 "\n",
+                    output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG, "---> store-left-at: 0x%" PRI_ADDR " left-width: %" PRIu64 ", store-right-at: 0x%" PRI_ADDR " right-width: %" PRIu64 "\n",
                         store_address, store_width_left, store_address_right, store_width_right);
                 }
 
@@ -691,7 +691,7 @@ protected:
                 return true;
             } else {
                 if(output->getVerboseLevel() >= 9) {
-                    output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG, "---> [memory-transaction]: standard store ins: 0x%llx store-at: 0x%llx width: %" PRIu64 "\n",
+                    output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG, "---> [memory-transaction]: standard store ins: 0x%" PRI_ADDR " store-at: 0x%" PRI_ADDR " width: %" PRIu64 "\n",
                         store_ins->getInstructionAddress(), store_address, store_width);
 
                     output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG, "-----> payload = {");
@@ -720,7 +720,7 @@ protected:
             if(UNLIKELY(needs_split)) {
                 output->fatal(CALL_INFO, -1, "Error - attempted to perform an LLSC-store over a split-cache line. This is not permitted.\n");
             } else {
-                output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG, "---> [memory-transaction]: LLSC-store store-at: 0x%llx width: %" PRIu64 "\n",
+                output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG, "---> [memory-transaction]: LLSC-store store-at: 0x%" PRI_ADDR " width: %" PRIu64 "\n",
                     store_address, store_width);
                 
                 store_req = new StandardMem::StoreConditional(store_address & address_mask, payload.size(), payload,
@@ -732,7 +732,7 @@ protected:
             if(UNLIKELY(needs_split)) {
                 output->fatal(CALL_INFO, -1, "Error - attempted to perform an LOCK-store over a split-cache line. This is not permitted.\n");
             } else {
-                output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG, "---> [memory-transaction]: LOCK-store store-at: 0x%llx width: %" PRIu64 "\n",
+                output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG, "---> [memory-transaction]: LOCK-store store-at: 0x%" PRI_ADDR " width: %" PRIu64 "\n",
                     store_address, store_width);
                 
                 store_req = new StandardMem::WriteUnlock(store_address & address_mask, payload.size(), payload,
@@ -795,7 +795,7 @@ protected:
                     assert((load_right_start % cache_line_width) == 0);
 
                     if(output->getVerboseLevel() >= 9) {
-                        output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_LOAD_FLG, "---> split load at-left: 0x%llx left-width: %" PRIu64 " / at-right: 0x%llx right-width: %" PRIu64 "\n",
+                        output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_LOAD_FLG, "---> split load at-left: 0x%" PRI_ADDR " left-width: %" PRIu64 " / at-right: 0x%" PRI_ADDR " right-width: %" PRIu64 "\n",
                             load_address, load_width_left, load_address + load_width_left, load_width_right);
                     }
 
@@ -809,7 +809,7 @@ protected:
                         load_address + load_width_left, load_ins->getInstructionAddress(), load_ins->getHWThread());
                 } else {
                     if(output->getVerboseLevel() >= 9) {   
-                        output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_LOAD_FLG, "---> [memory-transaction]: standard load (not split) load-at: 0x%llx width: %" PRIu64 "\n",
+                        output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_LOAD_FLG, "---> [memory-transaction]: standard load (not split) load-at: 0x%" PRI_ADDR " width: %" PRIu64 "\n",
                             load_address, load_width);
                     }
 
@@ -835,7 +835,7 @@ protected:
                     output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_LOAD_FLG, "---> load is marked LLSC but it requires a cache line split, generates an error\n");
                     load_ins->flagError();
                 } else {
-                    output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_LOAD_FLG, "---> [memory-transaction]: LLSC-load (not split) load-at: 0x%llx width: %" PRIu64 "\n",
+                    output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_LOAD_FLG, "---> [memory-transaction]: LLSC-load (not split) load-at: 0x%" PRI_ADDR " width: %" PRIu64 "\n",
                         load_address, load_width);
                     load_req = new StandardMem::LoadLink(load_address & address_mask, load_width, 0, 
                                         load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
@@ -853,7 +853,7 @@ protected:
                     output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_LOAD_FLG, "---> load is marked LOCK but it requires a cache line split, this generates an error\n");
                     load_ins->flagError();
                 } else {
-                    output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_LOAD_FLG, "---> [memory-transaction]: LOCK-load (not split) load-at: 0x%llx width: %" PRIu64 "\n",
+                    output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_LOAD_FLG, "---> [memory-transaction]: LOCK-load (not split) load-at: 0x%" PRI_ADDR " width: %" PRIu64 "\n",
                         load_address, load_width);
                     load_req = new StandardMem::ReadLock(load_address & address_mask, load_width, 0,
                                         load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
@@ -863,7 +863,7 @@ protected:
 
         // if the instruction does not trap an error we will continue to process it
         if(LIKELY(! load_ins->trapsError())) {
-            output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "-----> ins: 0x%llx / thr: %" PRIu32 " processed and requests sent to memory system.\n",
+            output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "-----> ins: 0x%" PRI_ADDR " / thr: %" PRIu32 " processed and requests sent to memory system.\n",
                 load_ins->getInstructionAddress(), load_ins->getHWThread());
 
             assert(load_req != nullptr);
@@ -886,7 +886,7 @@ protected:
 
         if(! front_entry->getInstruction()->completedIssue()) {
             if(output->getVerboseLevel() >= 16) {
-                output->verbose(CALL_INFO, 16, 0, "--> ins: 0x%llx / thr: %" PRIu32 " has not completed issue, will not process this cycle.\n",
+                output->verbose(CALL_INFO, 16, 0, "--> ins: 0x%" PRI_ADDR " / thr: %" PRIu32 " has not completed issue, will not process this cycle.\n",
                     front_entry->getInstruction()->getInstructionAddress(), front_entry->getInstruction()->getHWThread());
             }
             return false;
@@ -900,7 +900,7 @@ protected:
                     front_entry->getInstruction());
 
                 if(UNLIKELY(load_ins == nullptr)) {
-                    output->fatal(CALL_INFO, -1, "Error: attempted to convert a load entry to a load instruction but failed, ins: 0x%llx / thr: %" PRIu32 "\n",
+                    output->fatal(CALL_INFO, -1, "Error: attempted to convert a load entry to a load instruction but failed, ins: 0x%" PRI_ADDR " / thr: %" PRIu32 "\n",
                         front_entry->getInstructionAddress(), front_entry->getHWThread());
                 }
     
@@ -911,7 +911,7 @@ protected:
                 }
 
                 if(output->getVerboseLevel() >= 16) {
-                    output->verbose(CALL_INFO, 16, 0, "-> queue front is load: ins: 0x%llx / thr: %" PRIu32 " has issued so will process...\n", 
+                    output->verbose(CALL_INFO, 16, 0, "-> queue front is load: ins: 0x%" PRI_ADDR " / thr: %" PRIu32 " has issued so will process...\n", 
                         load_ins->getInstructionAddress(), load_ins->getHWThread());
                 }
 
@@ -924,12 +924,12 @@ protected:
 
                 if(UNLIKELY(load_ins->trapsError())) {
                     if(output->getVerboseLevel() >= 16) {
-                        output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%llx / thr: %" PRIu32 " traps error, will not process and allow pipeline to handle.\n",
+                        output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%" PRI_ADDR " / thr: %" PRIu32 " traps error, will not process and allow pipeline to handle.\n",
                             load_ins->getInstructionAddress(), load_ins->getHWThread());
                     }
                 } else {
                     if(output->getVerboseLevel() >= 16) {
-                        output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%llx / thr: %" PRIu32 " want load at 0x%llx / width: %" PRIu16 "\n",
+                        output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%" PRI_ADDR " / thr: %" PRIu32 " want load at 0x%" PRI_ADDR " / width: %" PRIu16 "\n",
                             load_ins->getInstructionAddress(), load_ins->getHWThread(), load_address, load_width);
                     }
                     
@@ -937,7 +937,7 @@ protected:
                     // we have pending, if yes, wait for conflict to clear and then we can proceed
                     if(UNLIKELY(checkStoreConflict(load_ins->getHWThread(), load_address, load_width))) {
                         if(output->getVerboseLevel() >= 16) {
-                            output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%llx / thr: %" PRIu32 " conflicts with store entry, will not issue until conflict is resolved (load-addr: 0x%llx / width: %" PRIu32 ")\n",
+                            output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%" PRI_ADDR " / thr: %" PRIu32 " conflicts with store entry, will not issue until conflict is resolved (load-addr: 0x%" PRI_ADDR " / width: %" PRIu32 ")\n",
                                 load_ins->getInstructionAddress(), load_ins->getHWThread(), load_address, load_width);
                         }
 
@@ -973,7 +973,7 @@ protected:
                     front_entry->getInstruction());
 
                 if(UNLIKELY(store_ins == nullptr)) {
-                    output->fatal(CALL_INFO, -1, "Error: attempted to convert a store entry into store instruction but this failed (ins: 0x%llx, thr: %" PRIu32 ")\n",
+                    output->fatal(CALL_INFO, -1, "Error: attempted to convert a store entry into store instruction but this failed (ins: 0x%" PRI_ADDR ", thr: %" PRIu32 ")\n",
                         front_entry->getInstructionAddress(), front_entry->getHWThread());
                 }
 
@@ -985,7 +985,7 @@ protected:
                 }
 
                 if(output->getVerboseLevel() >= 16) {
-                    output->verbose(CALL_INFO, 16, 0, "-> queue front is store: ins: 0x%llx / thr: %" PRIu32 " has issued so will process...\n", 
+                    output->verbose(CALL_INFO, 16, 0, "-> queue front is store: ins: 0x%" PRI_ADDR " / thr: %" PRIu32 " has issued so will process...\n", 
                         store_ins->getInstructionAddress(), store_ins->getHWThread());
                 }
                 
@@ -997,12 +997,12 @@ protected:
                 store_ins->computeStoreAddress(output, hw_thr_reg, &store_address, &store_width);
                 
                 if(store_ins->trapsError()) {
-                    output->verbose(CALL_INFO, 16, 0, "----> warning: 0x%llx / thr: %" PRIu32 " traps error, marks executed and does not process.\n",
+                    output->verbose(CALL_INFO, 16, 0, "----> warning: 0x%" PRI_ADDR " / thr: %" PRIu32 " traps error, marks executed and does not process.\n",
                         store_ins->getInstructionAddress(), store_ins->getHWThread());
                     store_ins->markExecuted();
                 } else {
                     if(output->getVerboseLevel() >= 16) {
-                        output->verbose(CALL_INFO, 16, 0, "----> computed store address: 0x%llx width: %" PRIu16 " thr: %" PRIu32 "\n",
+                        output->verbose(CALL_INFO, 16, 0, "----> computed store address: 0x%" PRI_ADDR " width: %" PRIu16 " thr: %" PRIu32 "\n",
                             store_address, store_width, store_ins->getHWThread());
                     }
 
@@ -1045,7 +1045,7 @@ protected:
 
                 if(can_execute) {
                     if(output->getVerboseLevel() >= 16) {
-                        output->verbose(CALL_INFO, 16, 0, "-> execute fence instruction (0x%llx), all checks have passed.\n", 
+                        output->verbose(CALL_INFO, 16, 0, "-> execute fence instruction (0x%" PRI_ADDR "), all checks have passed.\n", 
                             current_fence_ins->getInstructionAddress());
                     }
                     current_fence_ins->markExecuted();
@@ -1075,7 +1075,7 @@ protected:
         const bool splits_line = cache_line_left != cache_line_right;
 
         if(output->getVerboseLevel() >= 16) {
-            output->verbose(CALL_INFO, 16, 0, "---> check split addr: %" PRIu64 " (0x%llx) / width: %" PRIu64 " / cache-line: %" PRIu64 " / line-left: %" PRIu64 " / line-right: %" PRIu64 " / split: %3s\n",
+            output->verbose(CALL_INFO, 16, 0, "---> check split addr: %" PRIu64 " (0x%" PRI_ADDR ") / width: %" PRIu64 " / cache-line: %" PRIu64 " / line-left: %" PRIu64 " / line-right: %" PRIu64 " / split: %3s\n",
                 address, address, width, cache_line_width, cache_line_left, cache_line_right, splits_line ? "yes" : "no");
         }
 
