@@ -27,7 +27,7 @@ public:
     VanadisWriteSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallWriteEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "write" ), m_numWritten(0)
     {
-        m_output->verbose(CALL_INFO, 16, 0, "[syscall-write] -> call is write( %" PRId64 ", 0x%0llx, %" PRId64 " )\n",
+        m_output->verbose(CALL_INFO, 16, 0, "[syscall-write] -> call is write( %" PRId64 ", 0x%0" PRI_ADDR ", %" PRId64 " )\n",
                             event->getFileDescriptor(), event->getBufferAddress(), event->getBufferCount());
 
         m_fd = process->getFileDescriptor( event->getFileDescriptor());

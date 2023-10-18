@@ -99,7 +99,7 @@ public:
             writeFPRegs(fp_register_buffer, 256);
 
             output->verbose(
-                CALL_INFO, 16, 0, "Execute: (addr=0x%llx) %s int: %s / fp: %s\n", getInstructionAddress(),
+                CALL_INFO, 16, 0, "Execute: (addr=0x%" PRI_ADDR ") %s int: %s / fp: %s\n", getInstructionAddress(),
                 getInstCode(), int_register_buffer, fp_register_buffer);
 
             delete[] int_register_buffer;

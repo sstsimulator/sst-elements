@@ -44,7 +44,7 @@ public:
             m_output->verbose(CALL_INFO, 16, 0, "sst fd=%d pathname=%s\n", m_dirFd, process->getFilePath(m_dirFd).c_str());
         }
 
-        m_output->verbose( CALL_INFO, 16, 0, "[syscall-openat] -> call is openat( %" PRId64 ", 0x%0llx, %" PRId64 " )\n",
+        m_output->verbose( CALL_INFO, 16, 0, "[syscall-openat] -> call is openat( %" PRId64 ", 0x%0" PRI_ADDR ", %" PRId64 " )\n",
                 event->getDirectoryFileDescriptor(), event->getPathPointer(), event->getFlags());
 
         readString(event->getPathPointer(),m_filename);

@@ -57,7 +57,7 @@ public:
 			const uint64_t mask_in = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
 
 			if(output->getVerboseLevel() >= 16) {
-				output->verbose(CALL_INFO, 16, 0, "Execute: 0x%llx %s in-reg: %" PRIu16 " / phys: %" PRIu16 " -> mask = %" PRIu64 " (0x%llx)\n",
+				output->verbose(CALL_INFO, 16, 0, "Execute: 0x%" PRI_ADDR " %s in-reg: %" PRIu16 " / phys: %" PRIu16 " -> mask = %" PRIu64 " (0x%" PRI_ADDR ")\n",
 					getInstructionAddress(), getInstCode(), isa_int_regs_in[0], phys_int_regs_in[0], mask_in, mask_in);
 			}
 
@@ -85,7 +85,7 @@ public:
 
 			markExecuted();
 		} else {
-			output->verbose(CALL_INFO, 16, 0, "not front of ROB for ins: 0x%llx %s\n", getInstructionAddress(), getInstCode());
+			output->verbose(CALL_INFO, 16, 0, "not front of ROB for ins: 0x%" PRI_ADDR " %s\n", getInstructionAddress(), getInstCode());
 		}
     }
 };

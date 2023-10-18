@@ -63,7 +63,7 @@ public:
         snprintf(
             buffer, buffer_size,
             "BCMP (%s) isa-in: %" PRIu16 ", %" PRIu16 " / phys-in: %" PRIu16 ", %" PRIu16 " offset: %" PRId64
-            " = 0x%llx",
+            " = 0x%" PRI_ADDR "",
             convertCompareTypeToString(compare_type), isa_int_regs_in[0], isa_int_regs_in[1], phys_int_regs_in[0],
             phys_int_regs_in[1], offset, getInstructionAddress() + offset);
     }
@@ -90,14 +90,14 @@ public:
             takenAddress = (uint64_t)(((int64_t)getInstructionAddress()) + offset);
 #ifdef VANADIS_BUILD_DEBUG
             output->verbose(
-                CALL_INFO, 16, 0, "-----> taken-address: 0x%llx + %" PRId64 " = 0x%llx\n", getInstructionAddress(),
+                CALL_INFO, 16, 0, "-----> taken-address: 0x%" PRI_ADDR " + %" PRId64 " = 0x%" PRI_ADDR "\n", getInstructionAddress(),
                 offset, takenAddress);
 #endif
         }
         else {
             takenAddress = calculateStandardNotTakenAddress();
 #ifdef VANADIS_BUILD_DEBUG
-            output->verbose(CALL_INFO, 16, 0, "-----> not-taken-address: 0x%llx\n", takenAddress);
+            output->verbose(CALL_INFO, 16, 0, "-----> not-taken-address: 0x%" PRI_ADDR "\n", takenAddress);
 #endif
         }
 

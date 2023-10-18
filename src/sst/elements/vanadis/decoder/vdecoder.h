@@ -204,7 +204,7 @@ public:
     {
         ip = newIP;
 
-        output->verbose(CALL_INFO, 16, 0, "[decoder] -> clear decode-q and set new ip: 0x%llx\n", newIP);
+        output->verbose(CALL_INFO, 16, 0, "[decoder] -> clear decode-q and set new ip: 0x%" PRI_ADDR "\n", newIP);
 
         // Clear out the decode queue, need to restart
         // decoded_q->clear();

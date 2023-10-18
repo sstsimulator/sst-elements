@@ -109,7 +109,7 @@ void loadElfFile( Output* output, Interfaces::StandardMem* mem_if, MMU_Lib::MMU*
 
     output->verbose( CALL_INFO, 2, 0,
                     ">> Setting initial break point to image size in "
-                    "memory ( brk: 0x%llx )\n",
+                    "memory ( brk: 0x%" PRI_ADDR " )\n",
                     initial_brk);
     processInfo->initBrk( initial_brk );
 }

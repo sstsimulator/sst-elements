@@ -28,7 +28,7 @@ public:
         : VanadisSyscall( os, coreLink, process, event, "ioctl" ) 
     {
         m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
-                            "[syscall-ioctl] ioctl( %" PRId64 ", r: %c / w: %c / ptr: 0x%llx / size: %" PRIu64
+                            "[syscall-ioctl] ioctl( %" PRId64 ", r: %c / w: %c / ptr: 0x%" PRI_ADDR " / size: %" PRIu64
                             " / op: %" PRIu64 " / drv: %" PRIu64 " )\n",
                             event->getFileDescriptor(), event->isRead() ? 'y' : 'n',
                             event->isWrite() ? 'y' : 'n', event->getDataPointer(), event->getDataLength(),
