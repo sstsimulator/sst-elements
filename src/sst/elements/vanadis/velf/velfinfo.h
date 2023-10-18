@@ -215,7 +215,7 @@ public:
 
     void print(SST::Output* output, uint32_t index) {
         output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF,
-                        "Relocation (index: %" PRIu32 " / address: %" PRIu64 " (0x%0llx) / info: %" PRIu64 "\n", index,
+                        "Relocation (index: %" PRIu32 " / address: %" PRIu64 " (0x%0" PRI_ADDR ") / info: %" PRIu64 "\n", index,
                         rel_address, rel_address, symbol_info);
     }
 
@@ -262,7 +262,7 @@ public:
 
     void print(SST::Output* output, size_t index) {
         output->verbose(CALL_INFO, 32, VANADIS_OS_DBG_READ_ELF,
-                        "Symbol (index: %" PRIu32 " / name: %s / offset: %" PRIu64 " / address: 0x%0llx / sz: %" PRIu64
+                        "Symbol (index: %" PRIu32 " / name: %s / offset: %" PRIu64 " / address: 0x%0" PRI_ADDR " / sz: %" PRIu64
                         ", type: %s / bind: %s / sndx: %" PRIu64 ")\n",
                         (uint32_t)index, symbolName.c_str(), sym_name_offset, sym_address, sym_size,
                         getSymbolTypeString(sym_type), getSymbolBindTypeString(sym_bind), sym_sndx);
@@ -309,7 +309,7 @@ public:
 
     void print(SST::Output* output, uint64_t index) {
         output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, ">> Program Header Entry:    %" PRIu64 "\n", index);
-        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Header Type:           %" PRIu64 " / 0x%llx / %s\n", hdr_type_num,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Header Type:           %" PRIu64 " / 0x%" PRI_ADDR " / %s\n", hdr_type_num,
                         hdr_type_num, getELFProgramHeaderTypeString(hdr_type));
         output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Image Offset:          %" PRIu64 "\n", imgOffset);
         output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Virtual Memory Start:  %" PRIu64 " / %p\n", virtMemAddrStart,
@@ -320,7 +320,7 @@ public:
                         (void*)imgDataLen);
         output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Image Mem Length:      %" PRIu64 " / %p\n", memDataLen,
                         (void*)memDataLen);
-        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Flags:                 %" PRIu64 " / 0x%0llx\n", segment_flags,
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Flags:                 %" PRIu64 " / 0x%0" PRI_ADDR "\n", segment_flags,
                         segment_flags);
         output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "---> Alignment:             %" PRIu64 " / %p\n", alignment,
                         (void*)alignment);
@@ -715,7 +715,7 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
 
     const bool binary_is_32 = elf_info->isELF32();
 
-    output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Symbol Table located at %" PRIu64 " / 0x%0llx in executable (is 32bit? %s).\n",
+    output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Symbol Table located at %" PRIu64 " / 0x%0" PRI_ADDR " in executable (is 32bit? %s).\n",
                     symbolSection->getImageOffset(), symbolSection->getImageOffset(), binary_is_32 ? "yes" : "no");
 
     // Wind forward to the symbol table entries

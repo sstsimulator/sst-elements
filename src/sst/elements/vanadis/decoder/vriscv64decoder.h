@@ -263,7 +263,7 @@ public:
                     else {
                         output->fatal(
                             CALL_INFO, -1,
-                            "Error - predecoded bytes for 0x%llu found, but "
+                            "Error - predecoded bytes for 0x%" PRIu64 " found, but "
                             "retrieval of bytes failed.\n",
                             ip);
                     }
