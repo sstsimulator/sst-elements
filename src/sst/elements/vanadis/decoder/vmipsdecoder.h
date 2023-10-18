@@ -753,7 +753,7 @@ protected:
 
         if ( 0 != (ins_addr & 0x3) ) {
             output->verbose(
-                CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "[decode] ---> fault address 0x%llu is not aligned at 4 bytes.\n", ins_addr);
+                CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "[decode] ---> fault address 0x%" PRIu64 " is not aligned at 4 bytes.\n", ins_addr);
             bundle->addInstruction(new VanadisInstructionDecodeFault(ins_addr, hw_thr, options));
             return;
         }
