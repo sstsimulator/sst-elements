@@ -50,11 +50,11 @@ public:
     SST_ELI_DOCUMENT_PORTS({ "dcache_link", "Connects the LSQ to the data cache", {} })
 
     SST_ELI_DOCUMENT_PARAMS(
-            { "max_stores", "Set the maximum number of stores permitted in the queue", "8" }, 
+            { "max_stores", "Set the maximum number of stores permitted in the queue", "8" },
             { "max_loads", "Set the maximum number of loads permitted in the queue", "16" },
             { "address_mask", "Can mask off address bits if needed during construction of a operation", "0xFFFFFFFFFFFFFFFF"},
             { "issues_per_cycle", "Maximum number of issues the LSQ can attempt per cycle.", "2"},
-            { "cache_line_width", "Number of bytes in a (L1) cache line", "64"} 
+            { "cache_line_width", "Number of bytes in a (L1) cache line", "64"}
         )
 
     SST_ELI_DOCUMENT_STATISTICS({ "bytes_read", "Count all the bytes read for data operations", "bytes", 1 },
@@ -76,7 +76,7 @@ public:
         max_stores(params.find<size_t>("max_stores", 8)),
         max_loads(params.find<size_t>("max_loads", 16)),
         max_issue_attempts_per_cycle(params.find("issues_per_cycle", 2)) {
-        
+
         std_mem_handlers = new VanadisBasicLoadStoreQueue::StandardMemHandlers(this, output);
 
         memInterface = loadUserSubComponent<Interfaces::StandardMem>(
@@ -179,8 +179,8 @@ public:
 
     // must be implemented to allow the memory system to initialize itself during
     // boot-up
-    void init(unsigned int phase) override { 
-        memInterface->init(phase); 
+    void init(unsigned int phase) override {
+        memInterface->init(phase);
 
         // update the cache line size each cycle to make sure we get updates
         cache_line_width = memInterface->getLineSize();
@@ -221,7 +221,7 @@ public:
                         load_entry->getLoadAddress(), load_entry->getLoadWidth());
                 }
             }
-  
+
             if(stores_pending_size > 0) {
                 for (int t = 0; t < hw_threads; t++) {
                     for(int i = stores_pending[t].size() - 1; i >= 0; i--) {
@@ -265,7 +265,7 @@ protected:
 
         StandardMemHandlers(VanadisBasicLoadStoreQueue* lsq, SST::Output* output) :
                 Interfaces::StandardMem::RequestHandler(output), lsq(lsq) {}
-        
+
         virtual ~StandardMemHandlers() {}
 
         virtual void handle(StandardMem::ReadResp* ev) {
@@ -329,14 +329,14 @@ protected:
                     str << std::setw(2) << static_cast<unsigned>(*it);
                 }
                 out->verbose(CALL_INFO, 0, VANADIS_DBG_LSQ_LOAD_FLG, "---> LSQ recv load event ins: 0x%" PRI_ADDR " / hw-thr: %" PRIu32 " / entry-addr: 0x%" PRI_ADDR " / entry-width: %" PRIu16 " / reg-offset: %" PRIu64 " / ev-addr: 0x%" PRI_ADDR " / ev-width: %" PRIu64 " / addr-offset %" PRIu64 " / sign-extend: %s / target-isa-reg: %" PRIu16 " / target-phys-reg: %" PRIu16 " / reg-type: %s / %s\n",
-                    load_ins->getInstructionAddress(), hw_thr, load_address, load_width, reg_offset, ev->vAddr, ev->size, 
+                    load_ins->getInstructionAddress(), hw_thr, load_address, load_width, reg_offset, ev->vAddr, ev->size,
                     addr_offset, (load_ins->performSignExtension() ? "yes" : "no"),
                     target_isa_reg, target_reg,
                     (load_ins->getValueRegisterType() == LOAD_INT_REGISTER) ? "int" : "fp",str.str().c_str());
 
             }
 
-            
+
             switch(load_ins->getValueRegisterType()) {
             case LOAD_INT_REGISTER: {
 
@@ -392,7 +392,7 @@ protected:
 
                 reg_width = lsq->registerFiles->at(hw_thr)->getFPRegWidth();
                 std::vector<uint8_t> register_value(reg_width);
-                
+
                 // copy entire register here
                 lsq->registerFiles->at(hw_thr)->copyFromFPRegister(target_reg, 0, &register_value[0], reg_width);
 
@@ -440,8 +440,8 @@ protected:
             }
 
             delete ev;
-        } 
-        
+        }
+
         virtual void handle(StandardMem::WriteResp* ev) {
             out->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG, "-> handle write-response (virt-addr: 0x%" PRI_ADDR ")\n", ev->vAddr);
             lsq->stat_stored_bytes->addData(ev->size);
@@ -449,7 +449,7 @@ protected:
             bool std_store_found = false;
 
 
-            auto iter = lsq->std_stores_in_flight.find( ev->getID() ); 
+            auto iter = lsq->std_stores_in_flight.find( ev->getID() );
             if ( iter != lsq->std_stores_in_flight.end() ) {
                 lsq->std_stores_in_flight.erase(iter);
                 std_store_found = true;
@@ -490,7 +490,7 @@ protected:
                         const int64_t success_result = store_cond_ins->getResultSuccess();
 
                         out->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG,
-                                        "---> LSQ LLSC-STORE rt: %" PRIu64 " <- %" PRIu16 " (success)\n", 
+                                        "---> LSQ LLSC-STORE rt: %" PRIu64 " <- %" PRIu16 " (success)\n",
                                         success_result, value_reg);
                         lsq->registerFiles->at(store_ins->getHWThread())->setIntReg<int64_t>(value_reg,
                             success_result);
@@ -529,7 +529,7 @@ protected:
                 return;
             }
         }
-    
+
         VanadisBasicLoadStoreQueue* lsq;
     };
 
@@ -604,7 +604,7 @@ protected:
         return false;
     }
 
-    bool issueStore(VanadisBasicStorePendingEntry* store_entry, 
+    bool issueStore(VanadisBasicStorePendingEntry* store_entry,
             VanadisStoreInstruction* store_ins) {
 
         const uint64_t store_address = store_entry->getStoreAddress();
@@ -622,7 +622,7 @@ protected:
         if(output->getVerboseLevel() >= 8) {
             std::vector<uint8_t> tmp(store_width);
             registerFiles->at(store_entry->getHWThread())->copyFromRegister(store_ins->getValueRegisterType() == STORE_FP_REGISTER ?
-                store_ins->getPhysFPRegIn(0) : store_ins->getPhysIntRegIn(1), store_ins->getRegisterOffset(), &tmp[0], store_width, 
+                store_ins->getPhysFPRegIn(0) : store_ins->getPhysIntRegIn(1), store_ins->getRegisterOffset(), &tmp[0], store_width,
                 store_ins->getValueRegisterType() == STORE_FP_REGISTER);
             std::ostringstream str;
             str << ", Payload: 0x";
@@ -639,7 +639,7 @@ protected:
         // handle this case later after we do a load of address and width calculation
         if(LIKELY(! needs_split)) {
             registerFiles->at(store_entry->getHWThread())->copyFromRegister(store_ins->getValueRegisterType() == STORE_FP_REGISTER ?
-                store_ins->getPhysFPRegIn(0) : store_ins->getPhysIntRegIn(1), store_ins->getRegisterOffset(), &payload[0], store_width, 
+                store_ins->getPhysFPRegIn(0) : store_ins->getPhysIntRegIn(1), store_ins->getRegisterOffset(), &payload[0], store_width,
                 store_ins->getValueRegisterType() == STORE_FP_REGISTER);
         }
 
@@ -666,10 +666,10 @@ protected:
 
                 payload.resize(store_width_left);
                 registerFiles->at(store_entry->getHWThread())->copyFromRegister(store_ins->getValueRegisterType() == STORE_FP_REGISTER ?
-                    store_ins->getPhysFPRegIn(0) : store_ins->getPhysIntRegIn(1), store_ins->getRegisterOffset(), &payload[0], store_width_left, 
+                    store_ins->getPhysFPRegIn(0) : store_ins->getPhysIntRegIn(1), store_ins->getRegisterOffset(), &payload[0], store_width_left,
                     store_ins->getValueRegisterType() == STORE_FP_REGISTER);
 
-                store_req = new StandardMem::Write(store_address & address_mask, payload.size(), payload, 
+                store_req = new StandardMem::Write(store_address & address_mask, payload.size(), payload,
                     false, 0, store_address, store_ins->getInstructionAddress(), store_ins->getHWThread());
 
                 std_stores_in_flight.insert(store_req->getID());
@@ -679,11 +679,11 @@ protected:
 
                 payload.resize(store_width_right);
                 registerFiles->at(store_entry->getHWThread())->copyFromRegister(store_ins->getValueRegisterType() == STORE_FP_REGISTER ?
-                    store_ins->getPhysFPRegIn(0) : store_ins->getPhysIntRegIn(1), store_ins->getRegisterOffset() + store_width_left, &payload[0], 
-                    store_width_right, 
+                    store_ins->getPhysFPRegIn(0) : store_ins->getPhysIntRegIn(1), store_ins->getRegisterOffset() + store_width_left, &payload[0],
+                    store_width_right,
                     store_ins->getValueRegisterType() == STORE_FP_REGISTER);
 
-                store_req = new StandardMem::Write(store_address_right & address_mask, payload.size(), payload, 
+                store_req = new StandardMem::Write(store_address_right & address_mask, payload.size(), payload,
                     false, 0, store_address_right, store_ins->getInstructionAddress(), store_ins->getHWThread());
                 memInterface->send(store_req);
                 std_stores_in_flight.insert(store_req->getID());
@@ -703,7 +703,7 @@ protected:
                     output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG, "}\n");
                 }
 
-                store_req = new StandardMem::Write(store_address & address_mask, payload.size(), payload, 
+                store_req = new StandardMem::Write(store_address & address_mask, payload.size(), payload,
                     false, 0, store_address, store_ins->getInstructionAddress(), store_ins->getHWThread());
                 std_stores_in_flight.insert(store_req->getID());
                 memInterface->send(store_req);
@@ -712,7 +712,7 @@ protected:
             }
         } break;
         case MEM_TRANSACTION_LLSC_LOAD:
-        {  
+        {
             output->fatal(CALL_INFO, -1, "Error - attempted to issue a LLSC-load via store instruction. Invalid operation.\n");
         } break;
         case MEM_TRANSACTION_LLSC_STORE:
@@ -722,7 +722,7 @@ protected:
             } else {
                 output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG, "---> [memory-transaction]: LLSC-store store-at: 0x%" PRI_ADDR " width: %" PRIu64 "\n",
                     store_address, store_width);
-                
+
                 store_req = new StandardMem::StoreConditional(store_address & address_mask, payload.size(), payload,
                             0, store_address, store_ins->getInstructionAddress(), store_ins->getHWThread() );
             }
@@ -734,7 +734,7 @@ protected:
             } else {
                 output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG, "---> [memory-transaction]: LOCK-store store-at: 0x%" PRI_ADDR " width: %" PRIu64 "\n",
                     store_address, store_width);
-                
+
                 store_req = new StandardMem::WriteUnlock(store_address & address_mask, payload.size(), payload,
                             0, store_address, store_ins->getInstructionAddress(), store_ins->getHWThread());
             }
@@ -787,7 +787,7 @@ protected:
                     // How many bytes are in the left most line?
                     const uint64_t load_width_right = (load_address + load_width) % cache_line_width;
                     assert(load_width_right > 0);
-                    
+
                     const uint64_t load_width_left = load_width - load_width_right;
                     assert(load_width_left > 0);
 
@@ -799,16 +799,16 @@ protected:
                             load_address, load_width_left, load_address + load_width_left, load_width_right);
                     }
 
-                    load_req = new StandardMem::Read(load_address & address_mask, load_width_left, 0, 
+                    load_req = new StandardMem::Read(load_address & address_mask, load_width_left, 0,
                         load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
-                    
+
                     load_entry->addRequest(load_req->getID());
                     memInterface->send(load_req);
 
-                    load_req = new StandardMem::Read((load_address + load_width_left) & address_mask, load_width_right, 0, 
+                    load_req = new StandardMem::Read((load_address + load_width_left) & address_mask, load_width_right, 0,
                         load_address + load_width_left, load_ins->getInstructionAddress(), load_ins->getHWThread());
                 } else {
-                    if(output->getVerboseLevel() >= 9) {   
+                    if(output->getVerboseLevel() >= 9) {
                         output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_LOAD_FLG, "---> [memory-transaction]: standard load (not split) load-at: 0x%" PRI_ADDR " width: %" PRIu64 "\n",
                             load_address, load_width);
                     }
@@ -824,7 +824,7 @@ protected:
                         load_ins->flagError();
                         load_req = nullptr;
                     } else {
-                        load_req = new StandardMem::Read(load_address & address_mask, load_width, 0, 
+                        load_req = new StandardMem::Read(load_address & address_mask, load_width, 0,
                             load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
                     }
                 }
@@ -837,7 +837,7 @@ protected:
                 } else {
                     output->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_LOAD_FLG, "---> [memory-transaction]: LLSC-load (not split) load-at: 0x%" PRI_ADDR " width: %" PRIu64 "\n",
                         load_address, load_width);
-                    load_req = new StandardMem::LoadLink(load_address & address_mask, load_width, 0, 
+                    load_req = new StandardMem::LoadLink(load_address & address_mask, load_width, 0,
                                         load_address, load_ins->getInstructionAddress(), load_ins->getHWThread());
                 }
             } break;
@@ -903,7 +903,7 @@ protected:
                     output->fatal(CALL_INFO, -1, "Error: attempted to convert a load entry to a load instruction but failed, ins: 0x%" PRI_ADDR " / thr: %" PRIu32 "\n",
                         front_entry->getInstructionAddress(), front_entry->getHWThread());
                 }
-    
+
                 // can't do anything cycle, so return false
                 if(loads_pending.size() >= max_loads) {
                     //output->verbose(CALL_INFO, 16, 0, "--> cycle: %" PRIu64 " issue LOAD failed: max_loads\n", cycle);
@@ -911,7 +911,7 @@ protected:
                 }
 
                 if(output->getVerboseLevel() >= 16) {
-                    output->verbose(CALL_INFO, 16, 0, "-> queue front is load: ins: 0x%" PRI_ADDR " / thr: %" PRIu32 " has issued so will process...\n", 
+                    output->verbose(CALL_INFO, 16, 0, "-> queue front is load: ins: 0x%" PRI_ADDR " / thr: %" PRIu32 " has issued so will process...\n",
                         load_ins->getInstructionAddress(), load_ins->getHWThread());
                 }
 
@@ -932,7 +932,7 @@ protected:
                         output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%" PRI_ADDR " / thr: %" PRIu32 " want load at 0x%" PRI_ADDR " / width: %" PRIu16 "\n",
                             load_ins->getInstructionAddress(), load_ins->getHWThread(), load_address, load_width);
                     }
-                    
+
                     // check to see if loading from this address would conflict with a store which
                     // we have pending, if yes, wait for conflict to clear and then we can proceed
                     if(UNLIKELY(checkStoreConflict(load_ins->getHWThread(), load_address, load_width))) {
@@ -985,17 +985,17 @@ protected:
                 }
 
                 if(output->getVerboseLevel() >= 16) {
-                    output->verbose(CALL_INFO, 16, 0, "-> queue front is store: ins: 0x%" PRI_ADDR " / thr: %" PRIu32 " has issued so will process...\n", 
+                    output->verbose(CALL_INFO, 16, 0, "-> queue front is store: ins: 0x%" PRI_ADDR " / thr: %" PRIu32 " has issued so will process...\n",
                         store_ins->getInstructionAddress(), store_ins->getHWThread());
                 }
-                
+
                 VanadisRegisterFile* hw_thr_reg = registerFiles->at(store_ins->getHWThread());
 
                 uint64_t store_address = 0;
                 uint16_t store_width   = 0;
 
                 store_ins->computeStoreAddress(output, hw_thr_reg, &store_address, &store_width);
-                
+
                 if(store_ins->trapsError()) {
                     output->verbose(CALL_INFO, 16, 0, "----> warning: 0x%" PRI_ADDR " / thr: %" PRIu32 " traps error, marks executed and does not process.\n",
                         store_ins->getInstructionAddress(), store_ins->getHWThread());
@@ -1021,7 +1021,7 @@ protected:
                 //output->verbose(CALL_INFO, 16, 0, "--> cycle: %" PRIu64 " issue STORE succeeded\n", cycle);
                 return true;
             } break;
-            case VanadisBasicLoadStoreEntryOp::FENCE: 
+            case VanadisBasicLoadStoreEntryOp::FENCE:
             {
                 //output->verbose(CALL_INFO, 16, 0, "--> cycle: %" PRIu64 " attempt to issue FENCE\n", cycle);
                 VanadisInstruction* current_ins = op_q[thr].front()->getInstruction();
@@ -1035,17 +1035,17 @@ protected:
                     // if no pending loads, then we are good to go
                     can_execute = (!pendingLoads(current_fence_ins->getHWThread()));
                 }
-                
+
                 if(current_fence_ins->createsStoreFence()) {
                     // stores are fenced if there are no pending stores AND all issued to the memory system
                     // have returned so are currently visible.
-                    can_execute = can_execute && (stores_pending[current_fence_ins->getHWThread()].size() == 0) && 
+                    can_execute = can_execute && (stores_pending[current_fence_ins->getHWThread()].size() == 0) &&
                         (std_stores_in_flight.size() == 0);
                 }
 
                 if(can_execute) {
                     if(output->getVerboseLevel() >= 16) {
-                        output->verbose(CALL_INFO, 16, 0, "-> execute fence instruction (0x%" PRI_ADDR "), all checks have passed.\n", 
+                        output->verbose(CALL_INFO, 16, 0, "-> execute fence instruction (0x%" PRI_ADDR "), all checks have passed.\n",
                             current_fence_ins->getInstructionAddress());
                     }
                     current_fence_ins->markExecuted();
