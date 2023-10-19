@@ -35,8 +35,8 @@ def example():
     ### set up the endpoint
     networkif = ReorderLinkControl()
     networkif.link_bw = "4GB/s"
-    networkif.input_buf_size = "1kB"
-    networkif.output_buf_size = "1kB"
+    networkif.input_buf_size = "16kB"
+    networkif.output_buf_size = "16kB"
 
     ep = EmberMPIJob(0,topo.getNumNodes())
     ep.network_interface = networkif
