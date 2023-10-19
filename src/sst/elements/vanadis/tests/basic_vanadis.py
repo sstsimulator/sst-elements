@@ -14,8 +14,8 @@ isa="riscv64"
 
 loader_mode = os.getenv("VANADIS_LOADER_MODE", "0")
 
-testDir="basic-io"
-exe = "hello-world"
+#testDir="basic-io"
+#exe = "hello-world"
 #exe = "hello-world-cpp"
 #exe = "openat"
 #exe = "printf-check"
@@ -32,16 +32,17 @@ exe = "hello-world"
 #exe = "test-branch"
 #exe = "test-shift"
 
-#testDir = "misc"
+testDir = "misc"
 #exe = "mt-dgemm"
 #exe = "stream"
 #exe = "stream-fortran"
-#exe = "gettime" 
+#exe = "gettime"
 #exe = "splitLoad"
 #exe = "fork"
 #exe = "clone"
 #exe = "pthread"
 #exe = "openmp"
+exe = "openmp2"
 #exe = "uname"
 #exe = "mem-test"
 
@@ -58,7 +59,7 @@ sst.setProgramOption("stop-at", "0 ns")
 sst.setStatisticLoadLevel(4)
 sst.setStatisticOutput("sst.statOutputConsole")
 
-full_exe_name = os.getenv("VANADIS_EXE", "./tests/small/" + testDir + "/" + exe +  "/" + isa + "/" + exe )
+full_exe_name = os.getenv("VANADIS_EXE", "./small/" + testDir + "/" + exe +  "/" + isa + "/" + exe )
 exe_name= full_exe_name.split("/")[-1]
 
 verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
