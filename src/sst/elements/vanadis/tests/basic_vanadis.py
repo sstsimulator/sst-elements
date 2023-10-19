@@ -14,12 +14,13 @@ isa="riscv64"
 
 loader_mode = os.getenv("VANADIS_LOADER_MODE", "0")
 
-#testDir="basic-io"
-#exe = "hello-world"
+testDir="basic-io"
+exe = "hello-world"
 #exe = "hello-world-cpp"
 #exe = "openat"
 #exe = "printf-check"
 #exe = "read-write"
+#exe = "fread-fwrite"
 #exe = "unlink"
 #exe = "unlinkat"
 #exe = "lseek"
@@ -32,7 +33,7 @@ loader_mode = os.getenv("VANADIS_LOADER_MODE", "0")
 #exe = "test-branch"
 #exe = "test-shift"
 
-testDir = "misc"
+#testDir = "misc"
 #exe = "mt-dgemm"
 #exe = "stream"
 #exe = "stream-fortran"
@@ -42,7 +43,7 @@ testDir = "misc"
 #exe = "clone"
 #exe = "pthread"
 #exe = "openmp"
-exe = "openmp2"
+#exe = "openmp2"
 #exe = "uname"
 #exe = "mem-test"
 
