@@ -20,6 +20,7 @@ exe = "hello-world"
 #exe = "openat"
 #exe = "printf-check"
 #exe = "read-write"
+#exe = "fread-fwrite"
 #exe = "unlink"
 #exe = "unlinkat"
 #exe = "lseek"
@@ -36,12 +37,13 @@ exe = "hello-world"
 #exe = "mt-dgemm"
 #exe = "stream"
 #exe = "stream-fortran"
-#exe = "gettime" 
+#exe = "gettime"
 #exe = "splitLoad"
 #exe = "fork"
 #exe = "clone"
 #exe = "pthread"
 #exe = "openmp"
+#exe = "openmp2"
 #exe = "uname"
 #exe = "mem-test"
 
@@ -58,7 +60,7 @@ sst.setProgramOption("stop-at", "0 ns")
 sst.setStatisticLoadLevel(4)
 sst.setStatisticOutput("sst.statOutputConsole")
 
-full_exe_name = os.getenv("VANADIS_EXE", "./tests/small/" + testDir + "/" + exe +  "/" + isa + "/" + exe )
+full_exe_name = os.getenv("VANADIS_EXE", "./small/" + testDir + "/" + exe +  "/" + isa + "/" + exe )
 exe_name= full_exe_name.split("/")[-1]
 
 verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
