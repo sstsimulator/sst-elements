@@ -105,7 +105,7 @@ public:
         if(output->getVerboseLevel() >= 16) {
             output->verbose(
                 CALL_INFO, 16, 0,
-                "[partial-store]: store-addr: 0x%0llu / store-width: %" PRIu16 " / reg-offset: %" PRIu16 "\n",
+                "[partial-store]: store-addr: 0x%0" PRIu64 " / store-width: %" PRIu16 " / reg-offset: %" PRIu16 "\n",
                 (*store_addr), (*op_width), register_offset);
         }
 #endif

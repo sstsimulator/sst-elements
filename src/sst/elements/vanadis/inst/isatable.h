@@ -21,6 +21,10 @@
 
 #include <cstdint>
 
+#ifndef PRI_ADDR
+#define PRI_ADDR PRIx64
+#endif
+
 namespace SST {
 namespace Vanadis {
 
@@ -152,7 +156,7 @@ public:
                     output->verbose(
                         CALL_INFO, output_v, 0,
                         "[Thread: %d]: | isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32
-                        " | v: 0x%016llx | v: %" PRIu64 " / %" PRId64 "\n",
+                        " | v: 0x%016" PRI_ADDR " | v: %" PRIu64 " / %" PRId64 "\n",
                         regFile-> getHWThread(), i, int_reg_ptr[i], int_reg_pending_read[i], int_reg_pending_write[i],
                         regFile->getIntReg<int64_t>(int_reg_ptr[i]), regFile->getIntReg<uint64_t>(int_reg_ptr[i]),
                         regFile->getIntReg<int64_t>(int_reg_ptr[i]));
@@ -183,7 +187,7 @@ public:
                         output->verbose(
                             CALL_INFO, output_v, 0,
                             "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32
-                            " | v: 0x%016llx |\n",
+                            " | v: 0x%016" PRI_ADDR " |\n",
                             i, fp_reg_ptr[i], fp_reg_pending_read[i], fp_reg_pending_write[i],
                             regFile->getFPReg<uint64_t>(fp_reg_ptr[i]));
                     }
