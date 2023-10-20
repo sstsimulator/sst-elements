@@ -383,7 +383,7 @@ void c_DeviceDriver::build(Params& params) {
  *
  */
 c_DeviceDriver::~c_DeviceDriver() {
-    output->output("%s", __PRETTY_FUNCTION__);
+    output->output("%s\n", __PRETTY_FUNCTION__);
     // for (unsigned l_i = 0; l_i != m_numBanks; ++l_i)
     //     delete m_banks.at(l_i);
     //
