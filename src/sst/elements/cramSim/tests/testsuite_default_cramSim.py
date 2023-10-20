@@ -108,7 +108,7 @@ class testcase_cramSim_Component(SSTTestCase):
 
         if os.path.isfile(testpyfilepath):
             sdlfile = testpyfilepath
-            otherargs = '--model-options=\"--configfile={0} traceFile={1}\"'.format(configfile, tracefile)
+            otherargs = '--model-options=\"--configfile={0} --traceFile={1}\"'.format(configfile, tracefile)
         else:
             sdlfile = "{0}/test_txntrace4.py".format(self.testcramSimTestsDir)
             otherargs = '--model-options=\"--configfile={0} --traceFile={1}\"'.format(configfile, tracefile)

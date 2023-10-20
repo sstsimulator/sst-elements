@@ -126,37 +126,20 @@ void c_Transaction::print() const {
 
 
 void c_Transaction::print(SST::Output *x_output, const std::string x_prefix, SimTime_t x_cycle) const {
-<<<<<<< HEAD:src/sst/elements/cramSim/c_Transaction.cc
     x_output->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%" PRIx64 " Cmd:%s seqNum: %" PRIx64 " addr:0x%lx CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d\n",
-                  x_cycle,
-                  getTransactionString().c_str(),
-                    m_seqNum,
-                            m_addr,
-                  getHashedAddress().getChannel(),
-                  getHashedAddress().getPChannel(),
-                  getHashedAddress().getRank(),
-                  getHashedAddress().getBankGroup(),
-                  getHashedAddress().getBank(),
-                  getHashedAddress().getRow(),
-                  getHashedAddress().getCol(),
-                  getHashedAddress().getBankId()
+        x_cycle,
+        getTransactionString().c_str(),
+        m_seqNum,
+                m_addr,
+        getHashedAddress().getChannel(),
+        getHashedAddress().getPChannel(),
+        getHashedAddress().getRank(),
+        getHashedAddress().getBankGroup(),
+        getHashedAddress().getBank(),
+        getHashedAddress().getRow(),
+        getHashedAddress().getCol(),
+        getHashedAddress().getBankId()
     );
-=======
-	x_output->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%" PRI_SIMTIME " Cmd:%s seqNum: %" PRIu64 " addr:0x%lx CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d\n",
-				  x_cycle,
-				  getTransactionString().c_str(),
-					m_seqNum,
-							m_addr,
-				  getHashedAddress().getChannel(),
-				  getHashedAddress().getPChannel(),
-				  getHashedAddress().getRank(),
-				  getHashedAddress().getBankGroup(),
-				  getHashedAddress().getBank(),
-				  getHashedAddress().getRow(),
-				  getHashedAddress().getCol(),
-				  getHashedAddress().getBankId()
-	);
->>>>>>> 71f54da3d6 (Use print format specifiers for typedefs):src/sst/elements/CramSim/c_Transaction.cpp
 }
 
 void c_Transaction::serialize_order(SST::Core::Serialization::serializer &ser)

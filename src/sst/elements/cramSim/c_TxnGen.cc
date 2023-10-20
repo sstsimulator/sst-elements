@@ -117,7 +117,6 @@ c_TxnGenBase::c_TxnGenBase() :
 void c_TxnGenBase::finish()
 {
     output->output("\n======= CramSim Simulation Report [Transaction Generator] ============================\n");
-<<<<<<< HEAD:src/sst/elements/cramSim/c_TxnGen.cc
 
     output->output("Total Read-Txns Requests sent: %" PRIx64 "\n", m_resReadCount);
     output->output("Total Write-Txns Requests sent: %" PRIx64 "\n", m_resWriteCount);
@@ -127,15 +126,6 @@ void c_TxnGenBase::finish()
     output->output("Total Write-Txns Responses received: %" PRIx64 "\n", m_resWriteCount);
     output->output("Total Txns Received: %" PRIx64 "\n", m_resReadCount + m_resWriteCount);
 
-=======
-    output->output("Total Read-Txns Requests sent: %" PRIu64 "\n", m_resReadCount);
-    output->output("Total Write-Txns Requests sent: %" PRIu64 "\n", m_resWriteCount);
-    output->output("Total Txns Sents: %" PRIu64 "\n", m_resReadCount + m_resWriteCount);
-
-    output->output("Total Read-Txns Responses received: %" PRIu64 "\n", m_resReadCount);
-    output->output("Total Write-Txns Responses received: %" PRIu64 "\n", m_resWriteCount);
-    output->output("Total Txns Received: %" PRIu64 "\n", m_resReadCount + m_resWriteCount);
->>>>>>> 71f54da3d6 (Use print format specifiers for typedefs):src/sst/elements/CramSim/c_TxnGen.cpp
     output->output("Cycles Per Transaction (CPT) = %.2f\n",
         static_cast<double>(m_simCycle) / static_cast<double>(m_resReadCount + m_resWriteCount));
     output->output("Component Finished.\n");
