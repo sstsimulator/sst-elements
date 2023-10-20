@@ -59,7 +59,7 @@ public:
         if(output->getVerboseLevel() >= 16) {
             output->verbose(
                 CALL_INFO, 16, 0,
-                "Execute: CMOVI    inst: 0x%llx / %5" PRIu16 " <- %" PRIu16 " if %" PRIu16 " == %" PRId64 " { %" PRIu16 " <- %" PRIu16 " if %" PRIu16 " == %" PRId64 " }\n",
+                "Execute: CMOVI    inst: 0x%" PRI_ADDR " / %5" PRIu16 " <- %" PRIu16 " if %" PRIu16 " == %" PRId64 " { %" PRIu16 " <- %" PRIu16 " if %" PRIu16 " == %" PRId64 " }\n",
                 getInstructionAddress(), isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1], imm,
                 phys_int_regs_out[0], phys_int_regs_in[0],
                 phys_int_regs_in[1], imm);

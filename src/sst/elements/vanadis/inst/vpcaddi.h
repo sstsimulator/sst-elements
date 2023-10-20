@@ -57,7 +57,7 @@ public:
     {
         snprintf(
             buffer, buffer_size,
-            "%s %5" PRIu16 " <- 0x%llx + imm=%" PRId64 " (phys: %5" PRIu16 " <- 0x%llx + %" PRId64 ") = 0x%llx",
+            "%s %5" PRIu16 " <- 0x%" PRI_ADDR " + imm=%" PRId64 " (phys: %5" PRIu16 " <- 0x%" PRI_ADDR " + %" PRId64 ") = 0x%" PRI_ADDR "",
             getInstCode(), isa_int_regs_out[0], getInstructionAddress(), imm_value, phys_int_regs_out[0], getInstructionAddress(),
             imm_value, getInstructionAddress() + imm_value);
     }
@@ -67,8 +67,8 @@ public:
 #ifdef VANADIS_BUILD_DEBUG
         output->verbose(
             CALL_INFO, 16, 0,
-            "Execute: 0x%llx %s phys: out=%" PRIu16 " in=0x%llx / imm=%" PRId64 ", isa: out=%" PRIu16
-            " = 0x%llx\n",
+            "Execute: 0x%" PRI_ADDR " %s phys: out=%" PRIu16 " in=0x%" PRI_ADDR " / imm=%" PRId64 ", isa: out=%" PRIu16
+            " = 0x%" PRI_ADDR "\n",
             getInstructionAddress(), getInstCode(), phys_int_regs_out[0], getInstructionAddress(), imm_value,
             isa_int_regs_out[0], (static_cast<int64_t>(getInstructionAddress()) + imm_value));
 #endif

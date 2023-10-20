@@ -49,7 +49,7 @@ public:
 #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16) {
             output->verbose(
-                CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) JR   isa-in: %" PRIu16 " / phys-in: %" PRIu16 "\n",
+                CALL_INFO, 16, 0, "Execute: (addr=0x%0" PRI_ADDR ") JR   isa-in: %" PRIu16 " / phys-in: %" PRIu16 "\n",
                 getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0]);
         }
 #endif

@@ -73,7 +73,7 @@
               case MemRequest::Write:
 
                 if ( req->buf.empty() ) {
-                    Nic().dbg.debug(CALL_INFO,1,DBG_MEMEVENT_FLAG,"write addr=%#" PRIx64 " data=%llu dataSize=%d\n",
+                    Nic().dbg.debug(CALL_INFO,1,DBG_MEMEVENT_FLAG,"write addr=%#" PRIx64 " data=%" PRIu64 " dataSize=%d\n",
                                     req->addr,req->data,req->dataSize);
                     for ( int i = 0; i < req->dataSize; i++ ) {
                         payload.push_back( (req->data >> i*8) & 0xff );
@@ -132,7 +132,7 @@
 
         void write( int srcNum, uint64_t addr, int dataSize, uint64_t data, MemRequest::Callback* callback = NULL ) {
 			assert( ! full(srcNum) );
-            Nic().dbg.debug(CALL_INFO,1,DBG_X_FLAG,"srcNum=%d addr=%#" PRIx64 " data=%llu dataSize=%d\n",srcNum,addr,data,dataSize);
+            Nic().dbg.debug(CALL_INFO,1,DBG_X_FLAG,"srcNum=%d addr=%#" PRIx64 " data=%" PRIu64 " dataSize=%d\n",srcNum,addr,data,dataSize);
             m_reqSrcQs[srcNum].queue.push( new MemRequest( srcNum, addr, dataSize, data, callback ) );
         }
 

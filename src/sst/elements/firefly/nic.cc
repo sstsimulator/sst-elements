@@ -590,7 +590,7 @@ void Nic::feedTheNetwork( int vn )
                     m_linkSendWidget->setNotify( [=]() {
 						SimTime_t curTime = getCurrentSimCycle();
 						if ( curTime > m_predNetIdleTime ) {
-							m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"network stalled latency=%lld\n",
+							m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"network stalled latency=%" PRI_SIMTIME "\n",
 								curTime -  m_predNetIdleTime);
 							m_networkStall->addData( curTime - m_predNetIdleTime );
 						}
@@ -609,8 +609,8 @@ void Nic::feedTheNetwork( int vn )
 			}
 			m_predNetIdleTime += latPS;
 
-			m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"predNetIdleTime=%lld\n",m_predNetIdleTime );
-			m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"p1=%" PRIu64 " p2=%d\n", entry->p1(), entry->p2() );
+			m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"predNetIdleTime=%" PRI_SIMTIME "\n",m_predNetIdleTime );
+			m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"p1=%" PRI_SIMTIME " p2=%d\n", entry->p1(), entry->p2() );
 
 			sendPkt( x.pkt, x.dest, vn );
 

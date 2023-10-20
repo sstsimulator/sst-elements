@@ -31,8 +31,8 @@ public:
         if (event->getUpdatedBRK() < brk) {
 
             m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
-                                "[syscall-brk]: brk provided (0x%llx) is less than existing brk "
-                                "point (0x%llx), so returning current brk point\n",
+                                "[syscall-brk]: brk provided (0x%" PRI_ADDR ") is less than existing brk "
+                                "point (0x%" PRI_ADDR "), so returning current brk point\n",
                                 event->getUpdatedBRK(), brk);
         } else {
             if ( ! process->setBrk( event->getUpdatedBRK() ) ) {
@@ -40,7 +40,7 @@ public:
             }
 
             m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
-                                "[syscall-brk] old brk: 0x%llx -> new brk: 0x%llx (diff: %" PRIu64 ")\n", brk,
+                                "[syscall-brk] old brk: 0x%" PRI_ADDR " -> new brk: 0x%" PRI_ADDR " (diff: %" PRIu64 ")\n", brk,
                                 event->getUpdatedBRK(), (event->getUpdatedBRK() - brk));
             process->printRegions( "after brk" );
         }

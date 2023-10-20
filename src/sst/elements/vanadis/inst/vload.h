@@ -18,6 +18,10 @@
 
 #include "inst/vmemflagtype.h"
 
+#ifndef PRI_ADDR
+#define PRI_ADDR PRIx64
+#endif
+
 namespace SST {
 namespace Vanadis {
 
@@ -108,7 +112,7 @@ public:
             snprintf(
                 buffer, buffer_size,
                 "LOAD (%s, %" PRIu16 " bytes)  %5" PRIu16 " <- memory[ %5" PRIu16 " + %" PRId64
-                " (0x%llx) (phys: %5" PRIu16 " <- memory[%5" PRIu16 " + %" PRId64 " (0x%llx)])",
+                " (0x%" PRI_ADDR ") (phys: %5" PRIu16 " <- memory[%5" PRIu16 " + %" PRId64 " (0x%" PRI_ADDR ")])",
                 getTransactionTypeString(memAccessType), load_width, isa_int_regs_out[0], isa_int_regs_in[0], offset,
                 offset, phys_int_regs_out[0], phys_int_regs_in[0], offset, offset);
         } break;
@@ -117,7 +121,7 @@ public:
             snprintf(
                 buffer, buffer_size,
                 "LOADFP (%s, %" PRIu16 " bytes)  %5" PRIu16 " <- memory[ %5" PRIu16 " + %" PRId64
-                " (0x%llx) (phys: %5" PRIu16 " <- memory[%5" PRIu16 " + %" PRId64 " (0x%llx)])",
+                " (0x%" PRI_ADDR ") (phys: %5" PRIu16 " <- memory[%5" PRIu16 " + %" PRId64 " (0x%" PRI_ADDR ")])",
                 getTransactionTypeString(memAccessType), load_width, isa_fp_regs_out[0], isa_int_regs_in[0], offset,
                 offset, phys_fp_regs_out[0], phys_int_regs_in[0], offset, offset);
         } break;
@@ -143,7 +147,7 @@ public:
             if(output->getVerboseLevel() >= 16) {
                 output->verbose(
                     CALL_INFO, 16, 0,
-                    "Execute: (0x%llx) LOAD addr-reg: %" PRIu16 " phys: %" PRIu16 " / offset: %" PRId64
+                    "Execute: (0x%" PRI_ADDR ") LOAD addr-reg: %" PRIu16 " phys: %" PRIu16 " / offset: %" PRId64
                     " / target: %" PRIu16 " phys: %" PRIu16 "\n",
                     getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0], offset, isa_int_regs_out[0],
                     phys_int_regs_out[0]);
@@ -154,7 +158,7 @@ public:
             if(output->getVerboseLevel() >= 16) {
                 output->verbose(
                     CALL_INFO, 16, 0,
-                    "Execute: (0x%llx) LOAD addr-reg: %" PRIu16 " phys: %" PRIu16 " / offset: %" PRId64
+                    "Execute: (0x%" PRI_ADDR ") LOAD addr-reg: %" PRIu16 " phys: %" PRIu16 " / offset: %" PRId64
                     " / target: %" PRIu16 " phys: %" PRIu16 "\n",
                     getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0], offset, isa_fp_regs_out[0],
                     phys_fp_regs_out[0]);
@@ -165,7 +169,7 @@ public:
 #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16) {
             output->verbose(
-                CALL_INFO, 16, 0, "[execute-load]: transaction-type:  %s / ins: 0x%llx\n",
+                CALL_INFO, 16, 0, "[execute-load]: transaction-type:  %s / ins: 0x%" PRI_ADDR "\n",
                 getTransactionTypeString(memAccessType), getInstructionAddress());
             output->verbose(
                 CALL_INFO, 16, 0, "[execute-load]: reg[%5" PRIu16 "]:       %" PRIu64 "\n", phys_int_regs_in[0],

@@ -222,7 +222,7 @@ nic::init_complete(unsigned int phase) {
                 init_broadcast_count++;
             }
             else {
-                if ( req->dest != net_id ) output.output("%d: received event with dest %lld and src %lld\n",net_id,req->dest,req->src);
+                if ( req->dest != net_id ) output.output("%d: received event with dest %" PRI_NID " and src %" PRI_NID "\n",net_id,req->dest,req->src);
                 init_count++;
             }
             delete req;

@@ -150,7 +150,7 @@ void RdmaNic::mmioWriteSetup( StandardMem::Write* req) {
     auto& hostInfo = m_hostInfo[thread].hostInfo;
     auto& offset = m_hostInfo[thread].offset;
 
-    dbg.debug( CALL_INFO_LONG,2,DBG_X_FLAG,"Write size=%zu addr=%" PRIx64 " offset=%llu thread=%d data %s\n",
+    dbg.debug( CALL_INFO_LONG,2,DBG_X_FLAG,"Write size=%zu addr=%" PRI_ADDR " offset=%" PRIu64 " thread=%d data %s\n",
                     req->data.size(), req->pAddr, req->pAddr - m_ioBaseAddr, thread, getDataStr(req->data).c_str() );
 
 	memcpy( (uint8_t*) (&hostInfo) + offset, req->data.data(), req->data.size() );
@@ -207,11 +207,11 @@ void RdmaNic::mmioWrite(StandardMem::Write* req) {
 	int thread = calcThread( req->pAddr );
 	uint64_t offset = calcOffset( req->pAddr );
 
-    dbg.debug( CALL_INFO_LONG,2,DBG_X_FLAG,"thread=%d Write size=%zu addr=%" PRIx64 " offset=%llu data %s\n",
+    dbg.debug( CALL_INFO_LONG,2,DBG_X_FLAG,"thread=%d Write size=%zu addr=%" PRI_ADDR " offset=%" PRIu64 " data %s\n",
                     thread,req->data.size(), req->pAddr, offset, getDataStr(req->data).c_str() );
 
     if ( ! m_backing->write( offset, req->data.data(), req->data.size() ) ) {
-        out.fatal(CALL_INFO_LONG, -1, "Failed to write: thread=%d Write size=%zu addr=%" PRIx64 " offset=%llu data %s\n",
+        out.fatal(CALL_INFO_LONG, -1, "Failed to write: thread=%d Write size=%zu addr=%" PRI_ADDR " offset=%" PRIu64 " data %s\n",
                     thread,req->data.size(), req->pAddr, offset, getDataStr(req->data).c_str() );
     }
 

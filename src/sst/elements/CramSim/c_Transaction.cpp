@@ -125,7 +125,7 @@ void c_Transaction::print() const {
 
 
 void c_Transaction::print(SST::Output *x_output, const std::string x_prefix, SimTime_t x_cycle) const {
-	x_output->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%lld Cmd:%s seqNum: %llu addr:0x%lx CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d\n",
+	x_output->verbosePrefix(x_prefix.c_str(),CALL_INFO,1,0,"Cycle:%" PRI_SIMTIME " Cmd:%s seqNum: %" PRIu64 " addr:0x%lx CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d\n",
 				  x_cycle,
 				  getTransactionString().c_str(),
 					m_seqNum,

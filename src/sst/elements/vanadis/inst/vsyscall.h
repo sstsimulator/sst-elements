@@ -60,7 +60,7 @@ public:
         const uint64_t code_reg_ptr = regFile->getIntReg<uint64_t>(isa_options->getISASysCallCodeReg());
 #ifdef VANADIS_BUILD_DEBUG
         output->verbose(
-            CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) SYSCALL (isa: %" PRIu16 ", os-code: %" PRIu64 ")\n",
+            CALL_INFO, 16, 0, "Execute: (addr=0x%0" PRI_ADDR ") SYSCALL (isa: %" PRIu16 ", os-code: %" PRIu64 ")\n",
             getInstructionAddress(), isa_options->getISASysCallCodeReg(), code_reg_ptr);
 #endif
         markExecuted();
