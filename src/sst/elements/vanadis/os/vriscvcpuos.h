@@ -305,7 +305,7 @@ public:
         uint64_t offset   = getArgRegister(1);
         int32_t whence   = getArgRegister(2);
 
-        output->verbose(CALL_INFO, 8, 0, "lseek( %" PRIdXX ", %" PRIdXX", %" PRIdXX " )\n", fd, offset, whence);
+        output->verbose(CALL_INFO, 8, 0, "lseek( %" PRId32 ", %" PRIu64 ", %" PRId32 " )\n", fd, offset, whence);
         return new VanadisSyscallLseekEvent(core_id, hw_thr, BitType, fd, offset, whence);
     }
 
