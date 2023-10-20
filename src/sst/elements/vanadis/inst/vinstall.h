@@ -117,4 +117,7 @@
 #include "inst/vfpflagsset.h"
 #include "inst/vfpflagsread.h"
 
+// RoCC Custom
+#include "inst/vrocc.h"
+
 #endif

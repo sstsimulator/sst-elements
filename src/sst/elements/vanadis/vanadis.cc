@@ -18,6 +18,7 @@
 
 #include "inst/vinstall.h"
 #include "velf/velfinfo.h"
+#include "decoder/vriscv64decoder.h"
 
 #include "os/resp/vosexitresp.h"
 
@@ -247,7 +248,15 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     lsq->setRegisterFiles(&register_files);
 
-    //////////////////////////////////////////////////////////////////////////////////////
+    rocc = loadUserSubComponent<SST::Vanadis::VanadisRoCCInterface>("rocc");
+
+    if ( nullptr == rocc ) {
+        output->verbose(CALL_INFO, 8, 0, "no RoCC interface subcomponent loaded\n");
+        has_rocc = false;
+    } else {
+        has_rocc = true;
+        rocc->setRegisterFiles(&register_files);
+    }
 
     uint16_t fu_id = 0;
 
@@ -368,6 +377,7 @@ VANADIS_COMPONENT::~VANADIS_COMPONENT()
 {
     delete[] instPrintBuffer;
     delete lsq;
+    delete rocc;
 
     for ( int i= 0; i < rob.size(); i++ ) {
         delete rob[i];
@@ -710,6 +720,9 @@ VANADIS_COMPONENT::performExecute(const uint64_t cycle)
 
     // Tick the load/store queue
     lsq->tick((uint64_t)cycle);
+
+    // Tick the RoCC command queue
+    if (has_rocc) rocc->tick((uint64_t)cycle);
 
     return 0;
 }
@@ -1113,6 +1126,15 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
     switch ( ins->getInstFuncType() ) {
     case INST_INT_ARITH:
         allocated_fu = mapInstructiontoFunctionalUnit(ins, fu_int_arith);
+        break;
+
+    case INST_ROCC:
+        output->verbose(CALL_INFO, 16, 0, "issuing rocc instruction\n");
+        if ( !rocc->RoCCFull() ) {
+            output->verbose(CALL_INFO, 16, 0, "pushing to RoCC queue\n");
+            rocc->push((VanadisRoCCInstruction*)ins);
+            allocated_fu = true;
+        }
         break;
 
     case INST_LOAD:
@@ -1820,6 +1842,8 @@ VANADIS_COMPONENT::init(unsigned int phase)
     lsq->init(phase);
     //	memDataInterface->init( phase );
     memInstInterface->init(phase);
+
+    if (has_rocc) rocc->init(phase);
 
     while (SST::Event* ev = os_link->recvUntimedData()) {
 
