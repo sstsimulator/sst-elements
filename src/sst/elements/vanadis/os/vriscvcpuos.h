@@ -254,7 +254,7 @@ public:
             assert( map_flags == 0 );
 
             output->verbose(CALL_INFO, 8, 0,
-                        "mmap2( 0x%llx, %" PRIu64 ", %" PRId32 ", %" PRId32 ", %d, %" PRIu64 ")\n",
+                        "mmap2( 0x%" PRI_ADDR ", %" PRIu64 ", %" PRId32 ", %" PRId32 ", %d, %" PRIu64 ")\n",
                         map_addr, map_len, map_prot, map_flags, fd, offset );
 
             return new VanadisSyscallMemoryMapEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B,
@@ -267,7 +267,7 @@ public:
         uint64_t time_addr  = getArgRegister( 1 );
 
         output->verbose(CALL_INFO, 8, 0,
-                            "clock_gettime64( %" PRId64 ", 0x%llx )\n", clk_type, time_addr);
+                            "clock_gettime64( %" PRId64 ", 0x%" PRI_ADDR " )\n", clk_type, time_addr);
 
         return new VanadisSyscallGetTime64Event(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, clk_type, time_addr);
     }
@@ -279,7 +279,7 @@ public:
         int32_t  signal_set_size    = getArgRegister( 3 );
 
         output->verbose(CALL_INFO, 8, 0,
-                            "rt_sigprocmask( %" PRId32 ", 0x%llx, 0x%llx, %" PRId32 ")\n",
+                            "rt_sigprocmask( %" PRId32 ", 0x%" PRI_ADDR ", 0x%" PRI_ADDR ", %" PRId32 ")\n",
                             how, signal_set_in, signal_set_out, signal_set_size);
 
         printf("Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented return success\n");
@@ -305,7 +305,7 @@ public:
         uint64_t offset   = getArgRegister(1);
         int32_t whence   = getArgRegister(2);
 
-        output->verbose(CALL_INFO, 8, 0, "lseek( %" PRIdXX ", %" PRIdXX", %" PRIdXX " )\n", fd, offset, whence);
+        output->verbose(CALL_INFO, 8, 0, "lseek( %" PRId32 ", %" PRIu64 ", %" PRId32 " )\n", fd, offset, whence);
         return new VanadisSyscallLseekEvent(core_id, hw_thr, BitType, fd, offset, whence);
     }
 

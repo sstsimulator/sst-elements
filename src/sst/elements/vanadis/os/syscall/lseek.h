@@ -33,7 +33,7 @@ public:
         int fd = process->getFileDescriptor( event->getFileDescriptor() );
         if ( -1 == fd ) {
             m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
-                                "[syscall-%s] file handle %" PRId64
+                                "[syscall-%s] file handle %" PRId32
                                 " is not currently open, return an error code.\n",
                                 getName().c_str(), event->getFileDescriptor());
 

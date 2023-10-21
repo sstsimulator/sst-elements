@@ -40,10 +40,11 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     auto nodeId = params.find<int32_t>("node_id", 0, found);
     if (!found) {
         nodeId = params.find<int32_t>("nodeId", 0, found);
-        if (found) 
-            getSimulationOutput().output("WARNING (%s): Vanadis parameter 'nodeId' is now 'node_id'. Fix your input file to remove this warning.\n", getName().c_str()); 
+        if (found) {
+            getSimulationOutput().output("WARNING (%s): Vanadis parameter 'nodeId' is now 'node_id'. Fix your input file to remove this warning.\n", getName().c_str());
+        }
     }
-    
+
     const int32_t dbg_mask = params.find<int32_t>("dbg_mask", 0);
     const int32_t verbosity = params.find<int32_t>("verbose", 0);
     core_id                 = params.find<uint32_t>("core_id", 0);
@@ -110,7 +111,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
         VanadisDecoder* thr_decoder = loadUserSubComponent<SST::Vanadis::VanadisDecoder>(decoder_name);
 
         fp_flags.push_back(new VanadisFloatingPointFlags());
-	thr_decoder->setFPFlags(fp_flags[i]);
+        thr_decoder->setFPFlags(fp_flags[i]);
 
         //     thr_decoder->setHardwareThread( i );
 
@@ -404,12 +405,12 @@ VANADIS_COMPONENT::startThread(int thr, uint64_t stackStart, uint64_t instructio
 
     if ( initial_config_ip > 0 ) {
         output->verbose(
-                CALL_INFO, 8, 0, "Overrding entry point for core-0, thread-0, set to 0x%llx\n", initial_config_ip);
+                CALL_INFO, 8, 0, "Overrding entry point for core-0, thread-0, set to 0x%" PRI_ADDR "\n", initial_config_ip);
         thread_decoders[thr]->setInstructionPointer(initial_config_ip);
     }
     else {
         output->verbose(
-            CALL_INFO, 8, 0, "Utilizing entry point from binary (auto-detected) 0x%llx\n",
+            CALL_INFO, 8, 0, "Utilizing entry point from binary (auto-detected) 0x%" PRI_ADDR "\n",
             thread_decoders[thr]->getInstructionPointer());
     }
 }
@@ -519,7 +520,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
                         if ( j == 0 ) {
                         ins->printToBuffer(instPrintBuffer, 1024);
                         output->verbose(
-                            CALL_INFO, 8, VANADIS_DBG_ISSUE_FLG, "%d: --> Attempting issue for: rob[%" PRIu32 "]: 0x%llx / %s\n", i, j,
+                            CALL_INFO, 8, VANADIS_DBG_ISSUE_FLG, "%d: --> Attempting issue for: rob[%" PRIu32 "]: 0x%" PRI_ADDR " / %s\n", i, j,
                             ins->getInstructionAddress(), instPrintBuffer);
                         }
                     }
@@ -544,7 +545,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
                         if( (ins_type == INST_LOAD || ins_type == INST_STORE || ins_type == INST_FENCE) ) {
                             if(unallocated_memory_op_seen) {
                                 // the instruction should not be allocated because memory operations
-                                // must be issued to the LSQ in order to maintain memory ordering 
+                                // must be issued to the LSQ in order to maintain memory ordering
                                 // semantics
                                 allocate_fu = 1;
                             } else {
@@ -575,7 +576,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
                             if ( output_verbosity >= 8 ) {
                                 ins->printToBuffer(instPrintBuffer, 1024);
                                 output->verbose(
-                                    CALL_INFO, 8, VANADIS_DBG_ISSUE_FLG, "%d: ----> Issued for: %s / 0x%llx / status: %d\n",
+                                    CALL_INFO, 8, VANADIS_DBG_ISSUE_FLG, "%d: ----> Issued for: %s / 0x%" PRI_ADDR " / status: %d\n",
                                     ins->getHWThread(), instPrintBuffer, ins->getInstructionAddress(), status);
                                 if ( print_rob ) {
                                     printRob(i,rob[i]);
@@ -722,7 +723,7 @@ void VANADIS_COMPONENT::printRob(int rob_num, VanadisCircularQueue<VanadisInstru
     for ( int j = (int)rob->size() - 1; j >= 0; --j ) {
         output->verbose(
             CALL_INFO, 8, 0,
-            "%d: ----> ROB[%2d]: ins: 0x%016llx / %10s / error: %3s / "
+            "%d: ----> ROB[%2d]: ins: 0x%016" PRI_ADDR " / %10s / error: %3s / "
             "issued: %3s / spec: %3s / rob-front: %3s / exe: %3s\n",
             rob_num, j, rob->peekAt(j)->getInstructionAddress(), rob->peekAt(j)->getInstCode(),
             rob->peekAt(j)->trapsError() ? "yes" : "no", rob->peekAt(j)->completedIssue() ? "yes" : "no",
@@ -765,7 +766,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
 
         output->fatal(
             CALL_INFO, -1,
-            "Instruction 0x%llx flags an error (instruction-type=%s) at "
+            "Instruction 0x%" PRI_ADDR " flags an error (instruction-type=%s) at "
             "cycle %" PRIu64 " (inst: %s)\n",
             rob_front->getInstructionAddress(), rob_front->getInstCode(), cycle, inst_asm_buffer);
 
@@ -806,7 +807,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
                         if ( UNLIKELY(delay_ins->trapsError()) ) {
                             output->fatal(
                                 CALL_INFO, -1,
-                                "Instruction (delay-slot) 0x%llx flags an error "
+                                "Instruction (delay-slot) 0x%" PRI_ADDR " flags an error "
                                 "(instruction-type: %s)\n",
                                 delay_ins->getInstructionAddress(), delay_ins->getInstCode());
                         }
@@ -847,14 +848,14 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
                 if(output->getVerboseLevel() >= 8) {
                 output->verbose(
                     CALL_INFO, 8, VANADIS_DBG_RETIRE_FLG,
-                    "%d ----> Retire: speculated addr: 0x%llx / result addr: 0x%llx / "
+                    "%d ----> Retire: speculated addr: 0x%" PRI_ADDR " / result addr: 0x%" PRI_ADDR " / "
                     "pipeline-clear: %s\n",
                     spec_ins->getHWThread(), spec_ins->getSpeculatedAddress(), pipeline_reset_addr, perform_pipeline_clear ? "yes" : "no");
 
                 output->verbose(
                     CALL_INFO, 9, VANADIS_DBG_RETIRE_FLG,
                     "----> Updating branch predictor with new information "
-                    "(new addr: 0x%llx)\n",
+                    "(new addr: 0x%" PRI_ADDR ")\n",
                     pipeline_reset_addr);
                 if ( print_rob ) {
                     printRob(rob_num,rob);
@@ -876,8 +877,8 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
 
                     output->verbose(
                         CALL_INFO, 0, 0,
-                        "ins: 0x%llx / speculated-address: 0x%llx / taken: 0x%llx / "
-                        "reset: 0x%llx / clear-check: %3s / pipe-clear: %3s / "
+                        "ins: 0x%" PRI_ADDR " / speculated-address: 0x%" PRI_ADDR " / taken: 0x%" PRI_ADDR " / "
+                        "reset: 0x%" PRI_ADDR " / clear-check: %3s / pipe-clear: %3s / "
                         "delay-cleanup: %3s\n",
                         spec_ins->getInstructionAddress(), spec_ins->getSpeculatedAddress(),
                         spec_ins->getTakenAddress(), pipeline_reset_addr,
@@ -887,7 +888,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
                     // stop simulation
                     output->fatal(
                         CALL_INFO, -2,
-                        "Retired instruction address 0x%llx, requested "
+                        "Retired instruction address 0x%" PRI_ADDR ", requested "
                         "terminate on retire this address.\n",
                         pause_on_retire_address);
                 }
@@ -905,7 +906,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
                 rob_front->printToBuffer(inst_asm_buffer, 32768);
 
                 output->verbose(
-                    CALL_INFO, 8, VANADIS_DBG_RETIRE_FLG, "%d: ----> Retire: 0x%0llx / %s\n", rob_front->getHWThread(), rob_front->getInstructionAddress(),
+                    CALL_INFO, 8, VANADIS_DBG_RETIRE_FLG, "%d: ----> Retire: 0x%0" PRI_ADDR " / %s\n", rob_front->getHWThread(), rob_front->getInstructionAddress(),
                     inst_asm_buffer);
 
                 delete[] inst_asm_buffer;
@@ -915,7 +916,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
             }
 #endif
             if ( pipelineTrace != nullptr ) {
-                fprintf(pipelineTrace, "0x%08llx %s\n", rob_front->getInstructionAddress(), rob_front->getInstCode());
+                fprintf(pipelineTrace, "0x%08" PRI_ADDR " %s\n", rob_front->getInstructionAddress(), rob_front->getInstCode());
             }
 
 			if(UNLIKELY(rob_front->updatesFPFlags())) {
@@ -948,12 +949,12 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
                 VanadisInstruction* delay_ins = rob->pop();
 #ifdef VANADIS_BUILD_DEBUG
                 output->verbose(
-                    CALL_INFO, 8, VANADIS_DBG_RETIRE_FLG, "----> Retire delay: 0x%llx / %s\n", delay_ins->getInstructionAddress(),
+                    CALL_INFO, 8, VANADIS_DBG_RETIRE_FLG, "----> Retire delay: 0x%" PRI_ADDR " / %s\n", delay_ins->getInstructionAddress(),
                     delay_ins->getInstCode());
 #endif
                 if ( pipelineTrace != nullptr ) {
                     fprintf(
-                        pipelineTrace, "0x%08llx %s\n", delay_ins->getInstructionAddress(), delay_ins->getInstCode());
+                        pipelineTrace, "0x%08" PRI_ADDR " %s\n", delay_ins->getInstructionAddress(), delay_ins->getInstCode());
                 }
 
 				if(UNLIKELY(rob_front->updatesFPFlags())) {
@@ -1002,7 +1003,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
                 // stop simulation
                 output->fatal(
                     CALL_INFO, -2,
-                    "Retired instruction address 0x%llx, requested terminate "
+                    "Retired instruction address 0x%" PRI_ADDR ", requested terminate "
                     "on retire this address.\n",
                     pause_on_retire_address);
             }
@@ -1010,7 +1011,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
             if ( UNLIKELY(perform_pipeline_clear) ) {
 #ifdef VANADIS_BUILD_DEBUG
                 output->verbose(
-                    CALL_INFO, 8, VANADIS_DBG_RETIRE_FLG, "----> perform a pipeline clear thread %" PRIu32 ", reset to address: 0x%llx\n",
+                    CALL_INFO, 8, VANADIS_DBG_RETIRE_FLG, "----> perform a pipeline clear thread %" PRIu32 ", reset to address: 0x%" PRI_ADDR "\n",
                     ins_thread, pipeline_reset_addr);
 #endif
                 handleMisspeculate(ins_thread, pipeline_reset_addr);
@@ -1040,7 +1041,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
                     output->verbose(
                         CALL_INFO, 8, VANADIS_DBG_RETIRE_FLG,
                         "[syscall] -> calling OS handler in decode engine "
-                        "(ins-addr: 0x%0llx)...\n",
+                        "(ins-addr: 0x%0" PRI_ADDR ")...\n",
                         the_syscall_ins->getInstructionAddress());
 #endif
                     bool ret, flushLSQ;
@@ -1066,8 +1067,8 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
             }
         }
         else {
-            if ( ! rob_front->checkFrontOfROB() ) { 
-                rob_front->markFrontOfROB(); 
+            if ( ! rob_front->checkFrontOfROB() ) {
+                rob_front->markFrontOfROB();
             } else {
                 // Return 2 because instruction is front of ROB but has not executed and
                 // so we cannot make progress any more this cycle
@@ -1092,7 +1093,7 @@ VANADIS_COMPONENT::mapInstructiontoFunctionalUnit(
 
 #ifdef VANADIS_BUILD_DEBUG
             if(output->getVerboseLevel() >= 16) {
-                output->verbose(CALL_INFO, 16, 0, "------> mapped 0x%llx / %s to func-unit: %" PRIu16 "\n",
+                output->verbose(CALL_INFO, 16, 0, "------> mapped 0x%" PRI_ADDR " / %s to func-unit: %" PRIu16 "\n",
                     ins->getInstructionAddress(), ins->getInstCode(), next_fu->getUnitID());
             }
 #endif
@@ -1129,7 +1130,7 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
             allocated_fu = true;
         }
         break;
-    
+
     case INST_BRANCH:
         allocated_fu = mapInstructiontoFunctionalUnit(ins, fu_branch);
         break;
@@ -1158,7 +1159,7 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
         if ( nullptr == fence_ins ) {
             output->fatal(
                 CALL_INFO, -1,
-                "Error: instruction (0x%0llx /thr: %" PRIu32 ") is a fence but not "
+                "Error: instruction (0x%0" PRI_ADDR " /thr: %" PRIu32 ") is a fence but not "
                 "convertable to a fence instruction.\n",
                 ins->getInstructionAddress(), ins->getHWThread());
         }
@@ -1168,7 +1169,7 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
     } break;
 
     case INST_SYSCALL:
-        if ( lsq->storeBufferSize() == 0 && lsq->loadSize() == 0 ) { 
+        if ( lsq->storeBufferSize() == 0 && lsq->loadSize() == 0 ) {
             allocated_fu = true;
         }
         break;
@@ -1220,7 +1221,7 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
         output->verbose(CALL_INFO, 9, 0, "-- Core Status:\n");
 
         for ( uint32_t i = 0; i < hw_threads; ++i ) {
-            
+
             output->verbose(
                 CALL_INFO, 9, 0,
                 "---> Thr: %5" PRIu32 " (%s) / ROB-Pend: %" PRIu16 " / IntReg-Free: %" PRIu16 " / FPReg-Free: %" PRIu16
@@ -1243,35 +1244,56 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
         }
     }
 
-    // Fetch
+    #ifdef VANADIS_BUILD_DEBUG
+    if(output_verbosity >= 9) {
+        output->verbose(
+            CALL_INFO, 9, 0,
+            "=> Retire Stage "
+            "<==========================================================\n");
+    }
+#endif
+    // Retire
+    // //////////////////////////////////////////////////////////////////////////
+{
+    std::vector<int>  rc(hw_threads,0);
+    auto cnt = hw_threads;
+    for ( uint32_t i = 0; i < retires_per_cycle; ++i ) {
+
+        // find an unblocked hardware thread
+        while ( 1 == rc[m_curRetireHwThread] && cnt ) {
+            ++m_curRetireHwThread;
+            m_curRetireHwThread %= hw_threads;
+            --cnt;
+        }
+
+        // we found a unblocked hardware thread
+        if ( cnt ) {
+            auto thr = m_curRetireHwThread;
+            rc[thr] = performRetire(thr, rob[thr], cycle);
+
+            ++m_curRetireHwThread;
+            m_curRetireHwThread %= hw_threads;
+            cnt = hw_threads;
+        } else {
+            break;
+        }
+    }
+}
+
+    // Record how many instructions we retired this cycle
+    stat_ins_retired->addData(ins_retired_this_cycle);
+
+    // Execute
     // //////////////////////////////////////////////////////////////////////////
 #ifdef VANADIS_BUILD_DEBUG
     if(output_verbosity >= 9) {
         output->verbose(
             CALL_INFO, 9, 0,
-            "=> Fetch Stage "
+            "=> Execute Stage "
             "<==========================================================\n");
     }
 #endif
-    for ( uint32_t i = 0; i < fetches_per_cycle; ++i ) {
-        if ( performFetch(cycle) != 0 ) { break; }
-    }
-
-    // Decode
-    // //////////////////////////////////////////////////////////////////////////
-#ifdef VANADIS_BUILD_DEBUG
-    if(output_verbosity >= 9) {
-        output->verbose(
-            CALL_INFO, 9, 0,
-            "=> Decode Stage "
-            "<==========================================================\n");
-    }
-#endif
-    for ( uint32_t i = 0; i < decodes_per_cycle; ++i ) {
-        if ( performDecode(cycle) != 0 ) { break; }
-    }
-
-    stat_ins_decoded->addData(ins_decoded_this_cycle);
+    performExecute(cycle);
 
     // Issue
     // //////////////////////////////////////////////////////////////////////////
@@ -1297,8 +1319,8 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     std::vector<int> rc(hw_threads,0);
     auto cnt = hw_threads;
     for ( uint32_t i = 0; i < issues_per_cycle; ++i ) {
-        // find an unblocked hardware thread 
-        while ( 0 != rc[m_curIssueHwThread] && cnt ) { 
+        // find an unblocked hardware thread
+        while ( 0 != rc[m_curIssueHwThread] && cnt ) {
             ++m_curIssueHwThread;
             m_curIssueHwThread %= hw_threads;
             --cnt;
@@ -1320,56 +1342,35 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
     // Record how many instructions we issued this cycle
     stat_ins_issued->addData(ins_issued_this_cycle);
 
-    // Execute
+    // Decode
     // //////////////////////////////////////////////////////////////////////////
 #ifdef VANADIS_BUILD_DEBUG
     if(output_verbosity >= 9) {
         output->verbose(
             CALL_INFO, 9, 0,
-            "=> Execute Stage "
+            "=> Decode Stage "
             "<==========================================================\n");
     }
 #endif
-    performExecute(cycle);
+    for ( uint32_t i = 0; i < decodes_per_cycle; ++i ) {
+        if ( performDecode(cycle) != 0 ) { break; }
+    }
 
+    stat_ins_decoded->addData(ins_decoded_this_cycle);
+
+    // Fetch
+    // //////////////////////////////////////////////////////////////////////////
 #ifdef VANADIS_BUILD_DEBUG
     if(output_verbosity >= 9) {
         output->verbose(
             CALL_INFO, 9, 0,
-            "=> Retire Stage "
+            "=> Fetch Stage "
             "<==========================================================\n");
     }
 #endif
-    // Retire
-    // //////////////////////////////////////////////////////////////////////////
-{  
-    std::vector<int>  rc(hw_threads,0);
-    auto cnt = hw_threads;
-    for ( uint32_t i = 0; i < retires_per_cycle; ++i ) {
-
-        // find an unblocked hardware thread 
-        while ( 1 == rc[m_curRetireHwThread] && cnt ) { 
-            ++m_curRetireHwThread;
-            m_curRetireHwThread %= hw_threads;
-            --cnt;
-        }
-
-        // we found a unblocked hardware thread
-        if ( cnt ) {
-            auto thr = m_curRetireHwThread;
-            rc[thr] = performRetire(thr, rob[thr], cycle);
-
-            ++m_curRetireHwThread;
-            m_curRetireHwThread %= hw_threads;
-            cnt = hw_threads;
-        } else {
-            break;
-        }
+    for ( uint32_t i = 0; i < fetches_per_cycle; ++i ) {
+        if ( performFetch(cycle) != 0 ) { break; }
     }
-}
-
-    // Record how many instructions we retired this cycle
-    stat_ins_retired->addData(ins_retired_this_cycle);
 
     uint64_t rob_total_count = 0;
     for ( uint32_t i = 0; i < hw_threads; ++i ) {
@@ -1449,7 +1450,7 @@ VANADIS_COMPONENT::checkInstructionResources(
 
     // If there are any pending writes against our reads, we can't issue until
     // they are done
-    
+
     for ( uint16_t i = 0; i < int_reg_in_count; ++i ) {
         const uint16_t ins_isa_reg = ins->getISAIntRegIn(i);
         resources_good &= (!isa_table->pendingIntWrites(ins_isa_reg)) && (!int_reg_write[ins_isa_reg]);
@@ -1538,7 +1539,7 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
 
 #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16) {
-            output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx int reg-in for isa: %" PRIu16 " will mapped to phys: %" PRIu16 "\n",
+            output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%" PRI_ADDR " int reg-in for isa: %" PRIu16 " will mapped to phys: %" PRIu16 "\n",
                 ins->getInstructionAddress(), isa_reg_in, phys_reg_in);
         }
 #endif
@@ -1559,7 +1560,7 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
 
 #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16) {
-            output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx fp reg-in for isa: %" PRIu16 " will mapped to phys: %" PRIu16 "\n",
+            output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%" PRI_ADDR " fp reg-in for isa: %" PRIu16 " will mapped to phys: %" PRIu16 "\n",
                 ins->getInstructionAddress(), isa_reg_in, phys_reg_in);
         }
 #endif
@@ -1626,7 +1627,7 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
 
 #ifdef VANADIS_BUILD_DEBUG
             if(output->getVerboseLevel() >= 16) {
-                output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx int reg-out for isa: %" PRIu16 " output will map to phys: %" PRIu16 "\n",
+                output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%" PRI_ADDR " int reg-out for isa: %" PRIu16 " output will map to phys: %" PRIu16 "\n",
                     ins->getInstructionAddress(), ins_isa_reg, out_reg);
             }
 #endif
@@ -1652,11 +1653,11 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
 
 #ifdef VANADIS_BUILD_DEBUG
             if(output->getVerboseLevel() >= 16) {
-                output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%llx fp reg-out for isa: %" PRIu16 " output will map to phys: %" PRIu16 "\n",
+                output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%" PRI_ADDR " fp reg-out for isa: %" PRIu16 " output will map to phys: %" PRIu16 "\n",
                     ins->getInstructionAddress(), ins_isa_reg, out_reg);
             }
 #endif
-            
+
             isa_table->setFPPhysReg(ins_isa_reg, out_reg);
             isa_table->incFPWrite(ins_isa_reg);
 
@@ -1792,7 +1793,7 @@ VANADIS_COMPONENT::printStatus(SST::Output& output)
             VanadisInstruction* next_ins = next_rob->peekAt(i - 1);
             output.verbose(
                 CALL_INFO, 0, 0,
-                "---> rob[%5" PRIu16 "]: addr: 0x%08llx / %10s / spec: %3s / err: "
+                "---> rob[%5" PRIu16 "]: addr: 0x%08" PRI_ADDR " / %10s / spec: %3s / err: "
                 "%3s / issued: %3s / front: %3s / exe: %3s\n",
                 (uint16_t)(i - 1), next_ins->getInstructionAddress(), next_ins->getInstCode(),
                 next_ins->isSpeculated() ? "yes" : "no", next_ins->trapsError() ? "yes" : "no",
@@ -1863,7 +1864,7 @@ VANADIS_COMPONENT::handleMisspeculate(const uint32_t hw_thr, const uint64_t new_
 {
 #ifdef VANADIS_BUILD_DEBUG
     if(output->getVerboseLevel() >= 16) {
-        output->verbose(CALL_INFO, 16, 0, "-> Handle mis-speculation on %" PRIu32 " (new-ip: 0x%llx)...\n", hw_thr, new_ip);
+        output->verbose(CALL_INFO, 16, 0, "-> Handle mis-speculation on %" PRIu32 " (new-ip: 0x%" PRI_ADDR ")...\n", hw_thr, new_ip);
     }
 #endif
     clearFuncUnit(hw_thr, fu_int_arith);
@@ -1937,7 +1938,7 @@ VANADIS_COMPONENT::syscallReturn(uint32_t thr)
 #ifdef VANADIS_BUILD_DEBUG
     output->verbose(
         CALL_INFO, 8, 0,
-        "[syscall-return]: syscall on thread %" PRIu32 " (0x%0llx) is completed, return to processing.\n", thr,
+        "[syscall-return]: syscall on thread %" PRIu32 " (0x%0" PRI_ADDR ") is completed, return to processing.\n", thr,
         syscall_ins->getInstructionAddress());
 #endif
     syscall_ins->markExecuted();
@@ -1954,9 +1955,9 @@ void VANADIS_COMPONENT::recvOSEvent(SST::Event* ev) {
         output->verbose(CALL_INFO, 8, 0, "hw_thread %d: syscall return-code: %" PRId64 " (success: %3s)\n",
                         hw_thr, os_resp->getReturnCode(), os_resp->isSuccessful() ? "yes" : "no");
         output->verbose(CALL_INFO, 8, 0, "-> issuing call-backs to clear syscall ROB stops...\n");
-        
+
         if ( ! os_resp->hasExited() ) {
-            thread_decoders[hw_thr]->getOSHandler()->recvSyscallResp ( os_resp ); 
+            thread_decoders[hw_thr]->getOSHandler()->recvSyscallResp ( os_resp );
             ev = nullptr;
             syscallReturn( hw_thr );
         } else {
@@ -1968,7 +1969,7 @@ void VANADIS_COMPONENT::recvOSEvent(SST::Event* ev) {
         VanadisStartThreadFirstReq* os_req = dynamic_cast<VanadisStartThreadFirstReq*>(ev);
         if ( nullptr != os_req ) {
             startThread( os_req->getThread(), os_req->getStackAddr(), os_req->getInstPtr() );
-        } else { 
+        } else {
 
             VanadisStartThreadForkReq* req = dynamic_cast<VanadisStartThreadForkReq*>(ev);
             if ( nullptr != req ) {
@@ -1984,7 +1985,7 @@ void VANADIS_COMPONENT::recvOSEvent(SST::Event* ev) {
                     if ( nullptr != req ) {
                         startThreadClone( req );
                     } else {
-    
+
                         VanadisExitResponse* os_exit = dynamic_cast<VanadisExitResponse*>(ev);
                         if ( nullptr != os_exit ) {
                             output->verbose(CALL_INFO, 2, 0,
@@ -1995,14 +1996,14 @@ void VANADIS_COMPONENT::recvOSEvent(SST::Event* ev) {
 
                             setHalt(os_exit->getHWThread(), os_exit->getReturnCode());
                         } else {
-    
+
                             VanadisDumpRegsReq* req = dynamic_cast<VanadisDumpRegsReq*>(ev);
                             if (nullptr != req ) {
                                 dumpRegs(req);
-                            } else { 
+                            } else {
                                 assert(0);
                             }
-                        } 
+                        }
                     }
                 }
             }
@@ -2029,7 +2030,7 @@ void VANADIS_COMPONENT::startThreadClone( VanadisStartThreadCloneReq* req )
     output->verbose(CALL_INFO, 8, 0,"instPtr=%#" PRIx64 " stackAddr=%#" PRIx64 " argAddr=%#" PRIx64 " tlsAddr=%#" PRIx64 "\n",
         req->getInstPtr(), req->getStackAddr(), req->getArgAddr(), req->getTlsAddr() );
     for ( int i = 0; i < req->getIntRegs().size(); i++ ) {
-#if 0 
+#if 0
         printf("%s() %d %#lx\n",__func__,i,req->getIntRegs()[i]);
 #endif
         reg_file->setIntReg<uint64_t>(isa_table->getIntPhysReg(i), req->getIntRegs()[i]);
@@ -2041,7 +2042,7 @@ void VANADIS_COMPONENT::startThreadClone( VanadisStartThreadCloneReq* req )
             reg_file->setFPReg<uint64_t>(isa_table->getFPPhysReg(i), req->getFpRegs()[i]);
         }
     }
-    
+
     // Note that under the covers, based on ISA, some of these do nothing
     thr_decoder->setArg1Register( output, isa_table, reg_file, req->getArgAddr() );
     thr_decoder->setFuncPointer( output, isa_table, reg_file, req->getInstPtr() );
@@ -2103,7 +2104,7 @@ void VANADIS_COMPONENT::getThreadState( VanadisGetThreadStateReq* req )
     VanadisGetThreadStateResp* resp = new VanadisGetThreadStateResp( core_id, hw_thr, instPtr, tlsPtr );
     for ( int i = 0; i < isa_table->getNumIntRegs(); i++ ) {
         uint64_t val = reg_file->getIntReg<uint64_t>( isa_table->getIntPhysReg( i ) );
-#if 0 
+#if 0
         printf("%s() %d %#lx\n",__func__,i,val);
 #endif
         resp->intRegs.push_back( val );
@@ -2142,7 +2143,7 @@ void VANADIS_COMPONENT::dumpRegs( VanadisDumpRegsReq* req  )
 void
 VANADIS_COMPONENT::resetHwThread(uint32_t thr)
 {
-    auto decoder = thread_decoders[thr]; 
+    auto decoder = thread_decoders[thr];
     auto issue_table = issue_isa_tables[thr];
     auto retire_table = retire_isa_tables[thr];
     auto int_stack = int_register_stack;
@@ -2161,7 +2162,7 @@ VANADIS_COMPONENT::resetHwThread(uint32_t thr)
 #endif
 
     decoder->getInstructionLoader()->clearCache();
-    
+
     reg_file->init();
 
     issue_table->resetPendingCnts();

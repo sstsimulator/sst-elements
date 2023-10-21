@@ -74,7 +74,7 @@ void VanadisForkSyscall::handleEvent( VanadisCoreEvent* ev )
     req->setFpRegs( resp->fpRegs );
 
 #if 0 // debug
-    printf("thread=%d instPtr=%llx\n",resp->getThread(), resp->getInstPtr() );
+    printf("thread=%d instPtr=%" PRI_ADDR "\n",resp->getThread(), resp->getInstPtr() );
     for ( int i = 0; i < resp->intRegs.size(); i++ ) {
         printf("int r%d %" PRIx64 "\n",i,resp->intRegs[i]);
     }

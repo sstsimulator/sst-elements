@@ -114,45 +114,6 @@ nobase_sst_HEADERS = \
 
 libexec_PROGRAMS =
 
-
-#if SST_COMPILE_OSX
-
-#all-local: frontend/simple/fesimple.cc
-#	$(CXX) -O3 -shared \
-#	$(CXXFLAGS) \
-#	$(CPPFLAGS) \
-#	$(LIBZ_CPPFLAGS) \
-#	-DBIGARRAY_MULTIPLIER=1 \
-#	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_MAC \
-#	$(CUDA_CPPFLAGS) \
-#	-I./ \
-#	-I$(PINTOOL_DIR)/source/include/pin \
-#	-I$(PINTOOL_DIR)/ \
-#	-I$(PINTOOL_DIR)/extras/components/include \
-#	-I$(PINTOOL_DIR)/source/include/pin/gen/ \
-#	-I$(PINTOOL_DIR)/extras/xed-intel64/include \
-#	-I$(top_srcdir)/src/sst \
-#	-I$(top_srcdir)/src/sst/elements/ariel \
-#	-fomit-frame-pointer -fno-stack-protector \
-#	-Wl,-exported_symbols_list \
-#	-Wl,$(PINTOOL_DIR)/source/include/pin/pintool.exp \
-#	$(CUDA_LIBS) \
-#	-L$(PINTOOL_DIR)/intel64/lib \
-#	-L$(PINTOOL_DIR)/intel64/lib-ext \
-#	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
-#	-o fesimple.dylib $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc \
-#	-stdlib=libstdc++ \
-#	-lpin -lxed -lpindwarf -lpthread $(LIBZ_LDFLAGS) $(LIBZ_LIB) $(CUDA_LDFLAGS)
-
-#install-exec-hook:
-#	$(MKDIR_P) $(libexecdir)
-#	$(INSTALL) fesimple.dylib $(libexecdir)/fesimple.dylib
-#	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     ariel=$(abs_srcdir)
-#	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      ariel=$(abs_srcdir)/tests
-
-#else
-
-
 if !SST_COMPILE_OSX
 
 if HAVE_PINTOOL

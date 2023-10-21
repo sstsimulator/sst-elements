@@ -81,9 +81,9 @@ void CircNetworkInspector::finish() {
             for(setMap_t::iterator i = setMap.begin();
                 i != setMap.end(); ++i) {
                 // print
-                output_file->output(CALL_INFO, "%s %" PRIu64 "\n",
+                output_file->output(CALL_INFO, "%s %zu\n",
                                     i->first.c_str(),
-                                    (unsigned long long)i->second->size());
+                                    i->second->size());
                 // clean up
                 delete(i->second);
             }

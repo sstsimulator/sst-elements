@@ -58,6 +58,9 @@ const unsigned int pebi = tebi * 1024;
 const unsigned int exbi = pebi * 1024;
 
 typedef uint64_t Addr;
+#ifndef PRI_ADDR
+#define PRI_ADDR PRIx64
+#endif
 
 // Event attributes
 /*

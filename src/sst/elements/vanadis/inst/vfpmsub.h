@@ -88,7 +88,7 @@ public:
 #ifdef VANADIS_BUILD_DEBUG
         if ( output->getVerboseLevel() >= 16 ) {
             output->verbose(
-                CALL_INFO, 16, 0, "Execute: 0x%llx %s\n", getInstructionAddress(), getInstCode());
+                CALL_INFO, 16, 0, "Execute: 0x%" PRI_ADDR " %s\n", getInstructionAddress(), getInstCode());
         }
 #endif
 

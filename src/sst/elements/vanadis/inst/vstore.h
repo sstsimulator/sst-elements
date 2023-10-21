@@ -143,8 +143,8 @@ public:
         {
             output->verbose(
                 CALL_INFO, 16, 0,
-                "Execute: (addr=0x%llx) STORE addr-reg: %" PRIu16 " / val-reg: %" PRIu16 " / offset: %" PRId64
-                " / width: %" PRIu16 " / store-addr: %" PRIu64 " (0x%llx)\n",
+                "Execute: (addr=0x%" PRI_ADDR ") STORE addr-reg: %" PRIu16 " / val-reg: %" PRIu16 " / offset: %" PRId64
+                " / width: %" PRIu16 " / store-addr: %" PRIu64 " (0x%" PRI_ADDR ")\n",
                 getInstructionAddress(), phys_int_regs_in[0], phys_int_regs_in[1], offset, store_width, (*store_addr),
                 (*store_addr));
         } break;
@@ -152,8 +152,8 @@ public:
         {
             output->verbose(
                 CALL_INFO, 16, 0,
-                "Execute: (addr=0x%llx) STOREFP addr-reg: %" PRIu16 " / val-reg: %" PRIu16 " / offset: %" PRId64
-                " / width: %" PRIu16 " / store-addr: %" PRIu64 " (0x%llx)\n",
+                "Execute: (addr=0x%" PRI_ADDR ") STOREFP addr-reg: %" PRIu16 " / val-reg: %" PRIu16 " / offset: %" PRId64
+                " / width: %" PRIu16 " / store-addr: %" PRIu64 " (0x%" PRI_ADDR ")\n",
                 getInstructionAddress(), phys_int_regs_in[0], phys_fp_regs_in[0], offset, store_width, (*store_addr),
                 (*store_addr));
         } break;
