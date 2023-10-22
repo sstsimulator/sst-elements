@@ -1355,7 +1355,7 @@ noc_mesh::printStatus(Output& out)
             }
             else {
                 noc_mesh_event* event = port_queues[pinfo.second].front();
-                out.output("      src = %lld, dest = %lld, next_port = %d, flits = %d\n",
+                out.output("      src = %ld, dest = %ld, next_port = %d, flits = %d\n",
                            event->encap_ev->request->src, event->encap_ev->request->dest,
                            event->next_port, event->encap_ev->getSizeInFlits());
             }

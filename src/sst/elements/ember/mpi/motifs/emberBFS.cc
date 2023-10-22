@@ -1346,7 +1346,7 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
                 idx_50 = 0;
                 break;
             default:
-                printf("idx_50 incorrect (%llu)\n", idx_50);
+                printf("idx_50 incorrect (%lu)\n", idx_50);
                 break;
             }
 
@@ -1435,12 +1435,12 @@ bool EmberBFSGenerator::generate( std::queue<EmberEvent*>& evQ) {
         }
         break;
     default:
-        printf("error\n Bad State %llu in rank %d\n", state, rank());
+        printf("error\n Bad State %lu in rank %d\n", state, rank());
         break;
     }
 
     if (rank()==0&&0) {
-        printf("TRACE %lld -> %lld 0\n", prevState, state);
+        printf("TRACE %lu -> %lu 0\n", prevState, state);
         prevState = state;
     }
 
