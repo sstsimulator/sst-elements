@@ -83,7 +83,7 @@ sst.setStatisticOutput("sst.statOutputConsole")
 #########################################################################################################
 
 ## Configure transaction generator
-comp_txnGen = sst.Component("TxnGen", "CramSim.c_TraceFileReader")
+comp_txnGen = sst.Component("TxnGen", "cramSim.c_TraceFileReader")
 comp_txnGen.addParams(g_params)
 comp_txnGen.addParams({
     "maxTxns" : maxTxns,
@@ -94,13 +94,13 @@ comp_txnGen.enableAllStatistics()
 
 
 # controller
-comp_controller = sst.Component("MemController"+"0", "CramSim.c_Controller")
+comp_controller = sst.Component("MemController"+"0", "cramSim.c_Controller")
 comp_controller.addParams(g_params)
-c0 = comp_controller.setSubComponent("TxnScheduler", "CramSim.c_TxnScheduler")
-c1 = comp_controller.setSubComponent("TxnConverter", "CramSim.c_TxnConverter")
-c2 = comp_controller.setSubComponent("AddrMapper", "CramSim.c_AddressHasher")
-c3 = comp_controller.setSubComponent("CmdScheduler", "CramSim.c_CmdScheduler")
-c4 = comp_controller.setSubComponent("DeviceDriver", "CramSim.c_DeviceDriver")
+c0 = comp_controller.setSubComponent("TxnScheduler", "cramSim.c_TxnScheduler")
+c1 = comp_controller.setSubComponent("TxnConverter", "cramSim.c_TxnConverter")
+c2 = comp_controller.setSubComponent("AddrMapper", "cramSim.c_AddressHasher")
+c3 = comp_controller.setSubComponent("CmdScheduler", "cramSim.c_CmdScheduler")
+c4 = comp_controller.setSubComponent("DeviceDriver", "cramSim.c_DeviceDriver")
 c0.addParams(g_params)
 c1.addParams(g_params)
 c2.addParams(g_params)
@@ -108,7 +108,7 @@ c3.addParams(g_params)
 c4.addParams(g_params)
 
 # device
-comp_dimm = sst.Component("Dimm"+"0", "CramSim.c_Dimm")
+comp_dimm = sst.Component("Dimm"+"0", "cramSim.c_Dimm")
 comp_dimm.addParams(g_params)
 
 # TXNGEN / Controller LINKS

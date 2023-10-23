@@ -204,7 +204,7 @@ def genMemHierarchy(cores):
     L3MemCtrlLink.connect((l3, "low_network_0", busLat), (memory, "direct_link", busLat))
 
     # txn gen --> memHierarchy Bridge
-    comp_memhBridge = sst.Component("memh_bridge", "CramSim.c_MemhBridge")
+    comp_memhBridge = sst.Component("memh_bridge", "cramSim.c_MemhBridge")
     comp_memhBridge.addParams(g_params);
     comp_memhBridge.addParams({
                         "verbose" : "0",
@@ -213,22 +213,22 @@ def genMemHierarchy(cores):
                         "boolPrintTxnTrace" : "1"
                         })
     # controller
-    comp_controller0 = sst.Component("MemController0", "CramSim.c_Controller")
+    comp_controller0 = sst.Component("MemController0", "cramSim.c_Controller")
     comp_controller0.addParams(g_params)
     comp_controller0.addParams({
                         "verbose" : "0",
                         })
-    c0 = comp_controller0.setSubComponent("TxnConverter","CramSim.c_TxnConverter")
-    c1 = comp_controller0.setSubComponent("AddrMapper", "CramSim.c_AddressHasher")
-    c2 = comp_controller0.setSubComponent("CmdScheduler", "CramSim.c_CmdScheduler")
-    c3 = comp_controller0.setSubComponent("DeviceController", "CramSim.c_DeviceController")
+    c0 = comp_controller0.setSubComponent("TxnConverter","cramSim.c_TxnConverter")
+    c1 = comp_controller0.setSubComponent("AddrMapper", "cramSim.c_AddressHasher")
+    c2 = comp_controller0.setSubComponent("CmdScheduler", "cramSim.c_CmdScheduler")
+    c3 = comp_controller0.setSubComponent("DeviceController", "cramSim.c_DeviceController")
     c0.addParams(g_params)
     c1.addParams(g_params)
     c2.addParams(g_params)
     c3.addParams(g_params)
 
     # bank receiver
-    comp_dimm0 = sst.Component("Dimm0", "CramSim.c_Dimm")
+    comp_dimm0 = sst.Component("Dimm0", "cramSim.c_Dimm")
     comp_dimm0.addParams(g_params)
 
 

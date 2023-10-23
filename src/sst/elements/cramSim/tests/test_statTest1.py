@@ -70,7 +70,7 @@ sst.setProgramOption("stop-at", g_params["stopAtCycle"])
 
 # Define the simulation components
 # txn gen
-comp_txnGen0 = sst.Component("TxnGen", "CramSim.c_TxnGen")
+comp_txnGen0 = sst.Component("TxnGen", "cramSim.c_TxnGen")
 comp_txnGen0.addParams(g_params)
 comp_txnGen0.addParams({
         "mode" : "rand",
@@ -83,13 +83,13 @@ comp_txnGen0.enableAllStatistics()
 
 
 # controller
-comp_controller0 = sst.Component("MemController0", "CramSim.c_Controller")
+comp_controller0 = sst.Component("MemController0", "cramSim.c_Controller")
 comp_controller0.addParams(g_params)
-c0 = comp_controller0.setSubComponent("TxnScheduler", "CramSim.c_TxnScheduler")
-c1 = comp_controller0.setSubComponent("TxnConverter", "CramSim.c_TxnConverter")
-c2 = comp_controller0.setSubComponent("AddrMapper", "CramSim.c_AddressHasher")
-c3 = comp_controller0.setSubComponent("CmdScheduler", "CramSim.c_CmdScheduler")
-c4 = comp_controller0.setSubComponent("DeviceDriver", "CramSim.c_DeviceDriver")
+c0 = comp_controller0.setSubComponent("TxnScheduler", "cramSim.c_TxnScheduler")
+c1 = comp_controller0.setSubComponent("TxnConverter", "cramSim.c_TxnConverter")
+c2 = comp_controller0.setSubComponent("AddrMapper", "cramSim.c_AddressHasher")
+c3 = comp_controller0.setSubComponent("CmdScheduler", "cramSim.c_CmdScheduler")
+c4 = comp_controller0.setSubComponent("DeviceDriver", "cramSim.c_DeviceDriver")
 c0.addParams(g_params)
 c1.addParams(g_params)
 c2.addParams(g_params)
@@ -98,7 +98,7 @@ c4.addParams(g_params)
 
 
 # bank receiver
-comp_dimm0 = sst.Component("Dimm0", "CramSim.c_Dimm")
+comp_dimm0 = sst.Component("Dimm0", "cramSim.c_Dimm")
 comp_dimm0.addParams(g_params)
 
 '''

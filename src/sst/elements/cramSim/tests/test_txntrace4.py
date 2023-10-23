@@ -112,9 +112,9 @@ def setup_config_params():
 def setup_txn_generator(params):
     l_txnGenStr = ""
     if g_boolUseRandomTrace:
-        l_txnGen = "CramSim.c_TxnGen"
+        l_txnGen = "cramSim.c_TxnGen"
     else:
-        l_txnGen = "CramSim.c_TraceFileReader"
+        l_txnGen = "cramSim.c_TraceFileReader"
     l_txnGen = sst.Component("TxnGen0", l_txnGen)
     l_txnGen.addParams(params)
     return l_txnGen
@@ -142,13 +142,13 @@ sst.setProgramOption("stop-at", g_params["stopAtCycle"])
 comp_txnGen0 = setup_txn_generator(g_params)
 
 # controller
-comp_controller0 = sst.Component("MemController0", "CramSim.c_Controller")
+comp_controller0 = sst.Component("MemController0", "cramSim.c_Controller")
 comp_controller0.addParams(g_params)
-c0 = comp_controller0.setSubComponent("TxnScheduler", "CramSim.c_TxnScheduler")
-c1 = comp_controller0.setSubComponent("TxnConverter", "CramSim.c_TxnConverter")
-c2 = comp_controller0.setSubComponent("AddrMapper", "CramSim.c_AddressHasher")
-c3 = comp_controller0.setSubComponent("CmdScheduler", "CramSim.c_CmdScheduler")
-c4 = comp_controller0.setSubComponent("DeviceDriver", "CramSim.c_DeviceDriver")
+c0 = comp_controller0.setSubComponent("TxnScheduler", "cramSim.c_TxnScheduler")
+c1 = comp_controller0.setSubComponent("TxnConverter", "cramSim.c_TxnConverter")
+c2 = comp_controller0.setSubComponent("AddrMapper", "cramSim.c_AddressHasher")
+c3 = comp_controller0.setSubComponent("CmdScheduler", "cramSim.c_CmdScheduler")
+c4 = comp_controller0.setSubComponent("DeviceDriver", "cramSim.c_DeviceDriver")
 c0.addParams(g_params)
 c1.addParams(g_params)
 c2.addParams(g_params)
@@ -157,7 +157,7 @@ c4.addParams(g_params)
 
 
 # bank receiver
-comp_dimm0 = sst.Component("Dimm0", "CramSim.c_Dimm")
+comp_dimm0 = sst.Component("Dimm0", "cramSim.c_Dimm")
 comp_dimm0.addParams(g_params)
 
 
