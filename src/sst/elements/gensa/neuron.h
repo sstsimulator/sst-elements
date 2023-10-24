@@ -57,8 +57,8 @@ public:
     Neuron();
     virtual ~Neuron();
 
-    virtual void deliverSpike(float str, uint when);
-    virtual bool update      (const uint now) = 0;  ///< performs Leaky Integrate and Fire. Returns true if fired.
+    virtual void deliverSpike(float str, uint32_t when);
+    virtual bool update      (const uint32_t now) = 0;  ///< performs Leaky Integrate and Fire. Returns true if fired.
 };
 
 class NeuronLIF : public Neuron {
@@ -77,8 +77,8 @@ public:
 
     NeuronLIF (float Vinit = 0, float Vthreshold = 1, float Vreset = 0, float leak = 1, float p = 1);
 
-    virtual void deliverSpike(float str, uint when);
-    virtual bool update      (const uint now);
+    virtual void deliverSpike(float str, uint32_t when);
+    virtual bool update      (const uint32_t now);
 };
 
 class NeuronInput : public Neuron {
@@ -88,7 +88,7 @@ public:
 
     NeuronInput();
 
-    virtual bool update(const uint now);
+    virtual bool update(const uint32_t now);
 };
 
 class SpikeEvent : public SST::Event
