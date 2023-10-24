@@ -267,7 +267,7 @@ comp_memory.addParams({
 })
 
 # txn gen <--> memHierarchy Bridge
-comp_memhBridge = sst.Component("memh_bridge", "CramSim.c_MemhBridge")
+comp_memhBridge = sst.Component("memh_bridge", "cramSim.c_MemhBridge")
 comp_memhBridge.addParams(g_params);
 comp_memhBridge.addParams({
                      "verbose" : "0",
@@ -276,19 +276,19 @@ comp_memhBridge.addParams({
                      "boolPrintTxnTrace" : "1"
                      })
 # controller
-comp_controller0 = sst.Component("MemController0", "CramSim.c_Controller")
+comp_controller0 = sst.Component("MemController0", "cramSim.c_Controller")
 comp_controller0.addParams(g_params)
 comp_controller0.addParams({
                 "verbose" : "0",
-     		"TxnConverter" : "CramSim.c_TxnConverter",
-     		"AddrHasher" : "CramSim.c_AddressHasher",
-     		"CmdScheduler" : "CramSim.c_CmdScheduler" ,
-     		"DeviceController" : "CramSim.c_DeviceController"
+     		"TxnConverter" : "cramSim.c_TxnConverter",
+     		"AddrHasher" : "cramSim.c_AddressHasher",
+     		"CmdScheduler" : "cramSim.c_CmdScheduler" ,
+     		"DeviceController" : "cramSim.c_DeviceController"
      		})
 
 
 # bank receiver
-comp_dimm0 = sst.Component("Dimm0", "CramSim.c_Dimm")
+comp_dimm0 = sst.Component("Dimm0", "cramSim.c_Dimm")
 comp_dimm0.addParams(g_params)
 
 
