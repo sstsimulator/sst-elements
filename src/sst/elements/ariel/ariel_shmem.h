@@ -29,6 +29,8 @@
 #include <inttypes.h>
 #include <string>
 #include <vector>
+#include <sys/time.h>
+
 #include <sst/core/interprocess/tunneldef.h>
 #include "ariel_inst_class.h"
 

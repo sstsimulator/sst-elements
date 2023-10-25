@@ -533,7 +533,7 @@ void pagedMultiMemory::moveToFast(pageInfo &page) {
     assert(page.swapDir == pageInfo::NONE);
 
     uint64_t addr = page.pageAddr << pageShift;
-    const uint numTransfers = 1 << (pageShift - 6); // assume 2^6 byte cache liens
+    const uint32_t numTransfers = 1 << (pageShift - 6); // assume 2^6 byte cache liens
 
     // mark page as swapping
     page.swapDir = pageInfo::StoF;
@@ -557,7 +557,7 @@ void pagedMultiMemory::moveToSlow(pageInfo *page) {
     assert(page->swapDir == pageInfo::NONE);
 
     uint64_t addr = page->pageAddr << pageShift;
-    const uint numTransfers = 1 << (pageShift - 6); // assume 2^6 byte cache liens
+    const uint32_t numTransfers = 1 << (pageShift - 6); // assume 2^6 byte cache liens
 
     dbg.debug(_L10_, "moveToSlow(%p addr:%p)\n", page, (void*)(addr));
 
