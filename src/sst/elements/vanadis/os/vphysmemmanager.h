@@ -77,9 +77,11 @@ class PhysMemManager {
     enum PageSize { FourKB, TwoMB, OneGB }; 
     PhysMemManager( size_t memSize ) : m_bitMap( memSize/4096), m_numAllocated(0) { }
     ~PhysMemManager() {
+#if 0
         if ( m_numAllocated > 1 ) { 
             printf("%s() numAllocated=%" PRIu64 "\n",__func__,m_numAllocated);
         }
+#endif
     }
     
     void allocPages( PageSize pageSize, int numPages, PageList& pagesOut ) {
