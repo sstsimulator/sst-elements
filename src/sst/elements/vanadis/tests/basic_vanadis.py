@@ -2,8 +2,9 @@ import os
 import sst
 mh_debug_level=10
 mh_debug=0
-dbgAddr=0
-stopDbg=0
+# this has to be a string
+dbgAddr="0"
+stopDbg="0"
 
 pythonDebug=False
 

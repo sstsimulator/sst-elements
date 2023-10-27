@@ -32,12 +32,17 @@ public:
 
  private:  
 
-    enum State { ReadChildTidAddr, ReadThreadStack, WriteChildTid } m_state;
+    enum State { ReadCallStack, ReadThreadStack, ChildSetTid } m_state;
 
     void memReqIsDone(bool);
+    void readThreadStack( VanadisSyscallCloneEvent* );
+    void setTid( VanadisSyscallCloneEvent* );
+    void finish( VanadisSyscallCloneEvent* );
 
     uint64_t m_threadStartAddr;
     uint64_t m_threadArgAddr;
+
+    uint64_t m_childTidAddr; 
 
     OS::HwThreadID* m_threadID;
     OS::ProcessInfo* m_newThread;

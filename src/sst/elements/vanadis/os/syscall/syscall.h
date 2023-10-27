@@ -155,8 +155,8 @@ private:
 
     class WriteMemoryHandler : public BlockMemoryHandler {
     public:
-        WriteMemoryHandler( VanadisSyscall* obj, SST::Output* out, uint64_t addr, std::vector<uint8_t>& data, bool lock )
-            : BlockMemoryHandler(obj,out,addr,data,lock) {}
+        WriteMemoryHandler( VanadisSyscall* obj, SST::Output* out, uint64_t addr, std::vector<uint8_t>& data, bool lock, OS::ProcessInfo* process  = nullptr)
+            : BlockMemoryHandler(obj,out,addr,data,lock), process( process ) {}
 
         void handle(StandardMem::WriteResp* req ) override {
             m_offset += req->size;
@@ -168,7 +168,7 @@ private:
             std::vector<uint8_t> payload( length );
             memcpy( payload.data(), m_data.data() + m_offset, length );
             
-            auto physAddr = obj->virtToPhys( getAddress(), true ); 
+            auto physAddr = obj->virtToPhys( getAddress(), true, process ); 
 
             if ( -1 == physAddr ) {
                 return nullptr;
@@ -180,6 +180,8 @@ private:
                 }
             }
         } 
+    private:
+        OS::ProcessInfo* process;
     };
 
 
@@ -205,8 +207,13 @@ private:
     std::string& getName()  { return m_name; }
 
 
-    uint64_t virtToPhys( uint64_t virtAddr, bool isWrite ) {
-        auto physAddr = m_process->virtToPhys( virtAddr );
+    uint64_t virtToPhys( uint64_t virtAddr, bool isWrite, OS::ProcessInfo* process = nullptr ) {
+        uint64_t physAddr = m_process->virtToPhys( virtAddr );
+        if ( process ) {
+            physAddr = process->virtToPhys( virtAddr );
+        } else {
+            physAddr = m_process->virtToPhys( virtAddr );
+        }
         if ( physAddr == -1 ) {
             m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"physAddr not found for virtAddr=%#" PRIx64  "\n",virtAddr);
             m_pageFaultAddr = virtAddr; 
@@ -268,6 +275,7 @@ private:
     void readString( uint64_t addr, std::string& data );
     void readMemory( uint64_t addr, std::vector<uint8_t>& data, bool lock = false );
     void writeMemory( uint64_t addr, std::vector<uint8_t>& data, bool lock = false );
+    void writeMemory( uint64_t addr, std::vector<uint8_t>& data, OS::ProcessInfo* process );
 
     Output*                 m_output;
     OS::ProcessInfo*        m_process;
@@ -301,6 +309,12 @@ inline void VanadisSyscall::readMemory( uint64_t addr, std::vector<uint8_t>& buf
     m_output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL_MEM,"addr=%#" PRIx64 " length=%zu\n", addr, buffer.size() );
     assert(nullptr == m_memHandler);
     m_memHandler = new ReadMemoryHandler( this, m_output, addr, buffer, lock );
+}
+
+inline void VanadisSyscall::writeMemory( uint64_t addr, std::vector<uint8_t>& buffer, OS::ProcessInfo* process ) {
+    m_output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL_MEM,"addr=%#" PRIx64 " length=%zu\n", addr, buffer.size() );
+    assert(nullptr == m_memHandler);
+    m_memHandler = new WriteMemoryHandler( this, m_output, addr, buffer, false, process );
 }
 
 inline void VanadisSyscall::writeMemory( uint64_t addr, std::vector<uint8_t>& buffer, bool lock ) {

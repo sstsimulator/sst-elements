@@ -1376,6 +1376,50 @@ protected:
                         decode_fault = false;
                     }
                 } break;
+                case 0x20:
+                {
+                    if(LIKELY(op_width != 0)) {
+                        // AMO.OR
+                        output->verbose(CALL_INFO, 16, 0,
+                            "-----> AMOOR 0x%llx / thr: %" PRIu32 " / %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16
+                            " / width: %" PRIu32 " / aq: %s / rl: %s\n",
+                            ins_address, hw_thr, rd, rs1, rs2, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
+
+                        if(LIKELY(perform_aq)) {
+                            bundle->addInstruction(new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
+                        }
+
+                        // implement a micro-op sequence for AMOADD
+                        // (r1) -> rd
+                        bundle->addInstruction(new VanadisLoadInstruction(
+                                    ins_address, hw_thr, options, rs1, 0, rd, op_width,
+                                    true, MEM_TRANSACTION_LLSC_LOAD,
+                                    LOAD_INT_REGISTER));
+
+                        // rd | rs2 -> r32
+                        bundle->addInstruction(
+                            new VanadisOrInstruction(
+                                ins_address, hw_thr, options, 32, rd, rs2));
+
+                        // r32 -> (rs1) and place success code in r33
+                        // 0 is a success, 1 is a failure
+                        bundle->addInstruction(new VanadisStoreConditionalInstruction(
+                                ins_address, hw_thr, options, rs1, 0, 32, /* success code */ 33, op_width,
+                                STORE_INT_REGISTER, 0, 1));
+
+                        // branch back to this instruction address IF r33 == 1 (which means the store failed)
+                        bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<int64_t, REG_COMPARE_EQ>(
+                            ins_address, hw_thr, options, 4, 33, 1,
+                            /* offset is 0 so we replay this instruction */ 0, VANADIS_NO_DELAY_SLOT
+                        ));
+
+                        if(LIKELY(perform_rl)) {
+                            bundle->addInstruction(new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
+                        }
+
+                        decode_fault = false;
+                    }
+                } break;
                 case 0x8:
                 {
                     if ( rs2 == 0 ) {

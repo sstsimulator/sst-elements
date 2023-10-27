@@ -60,6 +60,7 @@
 #define RISCV_O_TMPFILE     020200000 
 #endif
 
+#define RISCV_MAP_STACK 0x20000
 #define RISCV_MAP_ANONYMOUS 0x20
 #define RISCV_MAP_PRIVATE 0x2
 #define RISCV_MAP_FIXED 0x10
@@ -144,16 +145,11 @@ public:
         int64_t  tls            = getArgRegister(3);
         int64_t  ctid           = getArgRegister(4);
 
-        if ( flags == RISCV_SIGCHLD ) {
-            output->verbose(CALL_INFO, 8, 0,"clone( flags = RISCV_SIGCHLD )\n");
-            return new VanadisSyscallForkEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B);
-        } else { 
-            output->verbose(CALL_INFO, 8, 0,
+        output->verbose(CALL_INFO, 8, 0,
                     "clone( %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ")\n",
                     instPtr,threadStack,flags,ptid,tls,ctid);
-            return new VanadisSyscallCloneEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, instPtr,
+        return new VanadisSyscallCloneEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, instPtr,
                     threadStack, flags, ptid, tls, ctid );
-        }
     }
 
     VanadisSyscallEvent* GETRANDOM( int hw_thr ) {
@@ -206,15 +202,14 @@ public:
         int32_t  op             = getArgRegister(1);
         uint32_t val            = getArgRegister(2);
         uint64_t timeout_addr   = getArgRegister(3);
-        uint64_t val2           = getArgRegister(4);
-        uint64_t addr2          = getArgRegister(5);
-        uint64_t val3           = getArgRegister(6);
+        uint64_t addr2          = getArgRegister(4);
+        uint32_t val3           = getArgRegister(5);
 
         output->verbose(CALL_INFO, 8, 0,
-                            "futex( %#" PRIx64 ", %" PRId32 ", %" PRIu32 ", %" PRIu64 ", %" PRIu64 " %" PRIu64 " %" PRIu64 " )\n",
-                            addr, op, val, timeout_addr, val2, addr2, val3);
+                            "futex( %#" PRIx64 ", %" PRIx32 ", %" PRIx32 ", %" PRIx64 ", %" PRIx64 ", %" PRIu32 " )\n",
+                            addr, op, val, timeout_addr, addr2, val3);
 
-        return new VanadisSyscallFutexEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, addr, op, val, timeout_addr, val2, addr2, val3 );
+        return new VanadisSyscallFutexEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, addr, op, val, timeout_addr, addr2, val3 );
     }
 
     VanadisSyscallEvent* SET_ROBUST_LIST( int hw_thr ) {
@@ -243,6 +238,10 @@ public:
             return nullptr;
         } else {
 
+            // ignore this flag
+            if ( map_flags & RISCV_MAP_STACK ) {
+                map_flags &= ~RISCV_MAP_STACK;
+            }
             if ( map_flags & RISCV_MAP_ANONYMOUS ) {
                 hostFlags |= MAP_ANONYMOUS; 
                 map_flags &= ~RISCV_MAP_ANONYMOUS;

@@ -58,14 +58,20 @@ VanadisFutexSyscall::VanadisFutexSyscall( VanadisNodeOSComponent* os, SST::Link*
 {
     m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
             "[syscall-futex] addr=%#" PRIx64 " op=%#x val=%#" PRIx32 " timeAddr=%#" PRIx64 " callStackAddr=%#" PRIx64 
-            " val2=%d, addr2=%#" PRIx64 " val2=%d\n", 
-            event->getAddr(), event->getOp(), event->getVal(), event->getTimeAddr(), event->getStackPtr(), event->getVal2(), event->getAddr2(), event->getVal3() );
+            " addr2=%#" PRIx64 " val3=%#x, \n", 
+            event->getAddr(), event->getOp(), event->getVal(), event->getTimeAddr(), event->getStackPtr(), event->getAddr2(), event->getVal3() );
 
     m_op = event->getOp();
-    if( m_op & ~0xff ) assert(0);
+    if( m_op & ~0x1ff ) {
+         m_output->fatal(CALL_INFO, -1, "Error: futex, op not supported %#x\n",event->getOp());
+    } 
 
     if ( m_op & FUTEX_PRIVATE_FLAG ) {
         m_op -= FUTEX_PRIVATE_FLAG;
+    }
+
+    if ( m_op & FUTEX_CLOCK_REALTIME ) {
+        m_op -= FUTEX_CLOCK_REALTIME;
     }
 
     switch ( m_op ) {
@@ -89,6 +95,8 @@ VanadisFutexSyscall::VanadisFutexSyscall( VanadisNodeOSComponent* os, SST::Link*
             }
         } break;
 
+      case FUTEX_WAIT_BITSET:
+        assert( event->getVal3() == 0xffffffff );
       case FUTEX_WAIT:
         {
             m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
@@ -116,8 +124,6 @@ VanadisFutexSyscall::VanadisFutexSyscall( VanadisNodeOSComponent* os, SST::Link*
         assert(0);
       case FUTEX_TRYLOCK_PI:
         assert(0);
-      case FUTEX_WAIT_BITSET:
-        assert(0);
       case FUTEX_WAKE_BITSET:
         assert(0);
       case FUTEX_WAIT_REQUEUE_PI:
@@ -138,6 +144,7 @@ void VanadisFutexSyscall::memReqIsDone(bool failed )
 {
     switch( m_op ) {
       case FUTEX_WAIT: 
+      case FUTEX_WAIT_BITSET:
         {
             if ( ! m_waitStoreConditional ) { 
                 m_val = *(uint32_t*)m_buffer.data();
@@ -208,7 +215,8 @@ void VanadisFutexSyscall::memReqIsDone(bool failed )
                         readMemory( getEvent<VanadisSyscallFutexEvent*>()->getStackPtr(), m_buffer );
                         m_state = ReadArgs;
                     } else {
-                        finish( getEvent<VanadisSyscallFutexEvent*>()->getVal2(), getEvent<VanadisSyscallFutexEvent*>()->getAddr2() );
+                        m_output->verbose(CALL_INFO, 0, VANADIS_OS_DBG_SYSCALL, "[syscall-futex] FUTEX_REQUEUE not tested code\n");
+                        finish( getEvent<VanadisSyscallFutexEvent*>()->getTimeAddr() & 0xffff, getEvent<VanadisSyscallFutexEvent*>()->getAddr2()  );
                     }
                 }
 
