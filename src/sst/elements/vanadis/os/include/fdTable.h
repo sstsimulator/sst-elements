@@ -59,17 +59,21 @@ public:
         //printf("%s() %s oldfd=%d flags=%#x mode=%#x newfd=%d\n",__func__,path.c_str(), obj.fd,flags,buf.st_mode,fd);
     }
 
-    FileDescriptor(std::string& file_path, int flags, mode_t mode) : path(file_path)
+    FileDescriptor(std::string& file_path, int flags, mode_t mode, bool lazy) : path(file_path), flags(flags), mode(mode)
     {
-        fd = open(file_path.c_str(), flags, mode );
-        if ( -1 == fd ) {
-            printf("%s() FAILED: %s flags=%#x mode=%#x\n",__func__,path.c_str(),flags,mode);
-            throw errno;
+        if ( ! lazy ) {
+            fd = open(file_path.c_str(), flags, mode );
+            if ( -1 == fd ) {
+                printf("%s() FAILED: %s flags=%#x mode=%#x\n",__func__,path.c_str(),flags,mode);
+                throw errno;
+            }
+        } else {
+            fd = -1;
         }
         //printf("%s() %s flags=%#x mode=%#x fd=%d\n",__func__,path.c_str(),flags,mode,fd);
     }
 
-    FileDescriptor(std::string& file_path, int dirfd, int flags, mode_t mode) : path(file_path)
+    FileDescriptor(std::string& file_path, int dirfd, int flags, mode_t mode) : path(file_path), fd( -1 )
     {
         fd = openat(dirfd, file_path.c_str(), flags, mode );
         if ( -1 == fd ) {
@@ -78,7 +82,20 @@ public:
     }
 
     ~FileDescriptor() {
-        close(fd);
+        if ( -1 != fd ) {
+            close(fd);
+        }
+    }
+
+    int openLate() {
+        fd = open(path.c_str(), flags, mode );
+        if ( -1 == fd ) {
+            printf("%s() FAILED: %s flags=%#x mode=%#x\n",__func__,path.c_str(),flags,mode);
+            throw errno;
+        } else {
+            printf("%s() %s flags=%#x mode=%#x\n",__func__,path.c_str(),flags,mode);
+        }
+        return fd;
     }
 
     std::string getPath() const {
@@ -92,6 +109,8 @@ public:
 protected:
     std::string path;
     int fd;
+    int flags;
+    mode_t mode;
 };
 
 class FileDescriptorTable {
@@ -137,7 +156,8 @@ public:
         }
         if ( fd >= 0 ) {
             try {
-                m_fileDescriptors[fd] = new FileDescriptor(file_path,flags,mode); 
+        //        m_fileDescriptors[fd] = new FileDescriptor(file_path,flags,mode, fd <= 2 );
+                m_fileDescriptors[fd] = new FileDescriptor(file_path,flags,mode, false );
             } catch ( int err ) {
                 fd = -err;
             }
@@ -173,7 +193,11 @@ public:
         if (iter == m_fileDescriptors.end()) {
             return -1;
         }
-        return iter->second->getFileDescriptor();
+        auto fd = iter->second->getFileDescriptor();
+        if ( -1 == fd ) {
+            fd = iter->second->openLate();
+        }
+        return fd;
     }
 
     std::string getPath( uint32_t handle ) {
