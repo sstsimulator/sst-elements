@@ -238,8 +238,8 @@ public:
             return nullptr;
         } else {
 
+            // ignore this flag
             if ( map_flags & RISCV_MAP_STACK ) {
-                hostFlags |= MAP_STACK; 
                 map_flags &= ~RISCV_MAP_STACK;
             }
             if ( map_flags & RISCV_MAP_ANONYMOUS ) {
