@@ -64,8 +64,11 @@ struct MemoryRegion {
     ~MemoryRegion() {
         for ( auto kv: m_virtToPhysMap) { 
             auto page = kv.second;
-            if ( 0 == page->decRefCnt() ) {
-                delete page;
+            // don't delete text pages because they are in the page cache
+            if ( name.compare("text" ) ) {
+                if ( 0 == page->decRefCnt() ) {
+                    delete page;
+                }
             }
         }
     }
@@ -243,7 +246,7 @@ public:
     }
 
     uint64_t mmap( size_t length, uint32_t perms, Device* dev ) {
-        std::string name;
+        std::string name("mmap");
         MemoryBacking* backing = nullptr;
         if ( dev ) {
             backing = new MemoryBacking( dev );
