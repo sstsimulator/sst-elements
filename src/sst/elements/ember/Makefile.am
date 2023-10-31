@@ -175,8 +175,6 @@ libember_la_SOURCES = \
 	mpi/motifs/embersiriustrace.cc \
 	mpi/motifs/emberrandomgen.h \
 	mpi/motifs/emberrandomgen.cc \
-        mpi/motifs/embertricount.h \
-        mpi/motifs/embertricount.cc \
 	mpi/motifs/emberunstructured.h \
 	mpi/motifs/emberunstructured.cc \
 	mpi/motifs/emberNtoM.h \
@@ -255,11 +253,10 @@ libember_la_SOURCES = \
 	pyember.py
 
 
-bin_PROGRAMS = sst-spygen sst-meshconvert embertricount_setup
+bin_PROGRAMS = sst-spygen sst-meshconvert
 
 sst_spygen_SOURCES = tools/spygen/spygen.cc
 sst_meshconvert_SOURCES = tools/meshconverter/meshconverter.cc
-embertricount_setup_SOURCES = tools/embertricount/embertricount_setup.cc
 
 libember_la_LDFLAGS = -module -avoid-version
 
