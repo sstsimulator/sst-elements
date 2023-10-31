@@ -16,6 +16,7 @@
 #include <sst_config.h>
 
 #include "os/syscall/exit.h"
+#include "os/syscall/futex.h"
 #include "os/vnodeos.h"
 #include "os/vgetthreadstate.h"
 #include "os/resp/vosexitresp.h"
@@ -45,8 +46,20 @@ VanadisExitSyscall::VanadisExitSyscall( VanadisNodeOSComponent* os, SST::Link* c
 }
 
 void VanadisExitSyscall::memReqIsDone(bool) {
-    m_os->removeThread( getEvent<VanadisSyscallExitEvent*>()->getCoreID(),getEvent<VanadisSyscallExitEvent*>()->getThreadID(), m_process->gettid() );
 
+    auto event = getEvent<VanadisSyscallCloneEvent*>();
+
+    auto syscall = m_process->findFutex( m_process->getTidAddress());
+    if ( syscall ) {
+        m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
+            "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 " found waiter, wakeup tid=%d\n",
+            m_process->gettid(), m_process->getTidAddress(), syscall->getTid());
+        dynamic_cast<VanadisFutexSyscall*>( syscall )->wakeup();
+        delete syscall;
+    }
+
+    m_os->removeThread( event->getCoreID(),event->getThreadID(), m_process->gettid() );
     m_output->verbose(CALL_INFO, 16, 0, "[syscall-exit] %s() called\n",__func__ );
+
     setReturnExited();
 }
