@@ -17,6 +17,7 @@ loader_mode = os.getenv("VANADIS_LOADER_MODE", "0")
 testDir="basic-io"
 exe = "hello-world"
 #exe = "hello-world-cpp"
+#exe = "hello-world-cpp-rocc"
 #exe = "openat"
 #exe = "printf-check"
 #exe = "read-write"
@@ -58,10 +59,10 @@ sst.setProgramOption("stop-at", "0 ns")
 sst.setStatisticLoadLevel(4)
 sst.setStatisticOutput("sst.statOutputConsole")
 
-full_exe_name = os.getenv("VANADIS_EXE", "./tests/small/" + testDir + "/" + exe +  "/" + isa + "/" + "mvp")
+full_exe_name = os.getenv("VANADIS_EXE", "./tests/small/" + testDir + "/" + exe +  "/" + isa + "/" + exe)
 exe_name= full_exe_name.split("/")[-1]
 
-verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
+verbosity = int(os.getenv("VANADIS_VERBOSE", 100))
 os_verbosity = os.getenv("VANADIS_OS_VERBOSE", verbosity)
 pipe_trace_file = os.getenv("VANADIS_PIPE_TRACE", "")
 lsq_entries = os.getenv("VANADIS_LSQ_ENTRIES", 32)

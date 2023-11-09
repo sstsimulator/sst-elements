@@ -26,7 +26,6 @@
 #include "lsq/vbasiclsq.h"
 #include "rocc/vroccinterface.h"
 #include "rocc/vbasicrocc.h"
-#include "rocc/vroccanalog.h"
 #include "velf/velfinfo.h"
 #include "vfpflags.h"
 #include "vfuncunit.h"
