@@ -37,14 +37,14 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     max_cycle = params.find<uint64_t>("max_cycle", std::numeric_limits<uint64_t>::max());
 
     auto nodeId = params.find<int32_t>("nodeId", 0);
-    const int32_t dbg_mask = params.find<int32_t>("dbg_mask", 0);
-    const int32_t verbosity = params.find<int32_t>("verbose", 0);
+    const int32_t dbg_mask = params.find<int32_t>("dbg_mask", 0xFFFFFFFF);
+    const int32_t verbosity = params.find<int32_t>("verbose", 20);
     core_id                 = params.find<uint32_t>("core_id", 0);
 
     char* outputPrefix = (char*)malloc(sizeof(char) * 256);
     snprintf(outputPrefix, sizeof(char)*256, "[node%d,Core: %4" PRIu32 "/@t]: ", nodeId, core_id);
 
-    output = new SST::Output(outputPrefix, verbosity, dbg_mask, Output::STDOUT);
+    output = new SST::Output(outputPrefix, 0, VANADIS_DBG_RETIRE_FLG, Output::STDOUT);
     free(outputPrefix);
 
     std::string clock_rate = params.find<std::string>("clock", "1GHz");
@@ -238,7 +238,13 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     lsq->setRegisterFiles(&register_files);
 
-    //////////////////////////////////////////////////////////////////////////////////////
+    rocc = loadUserSubComponent<SST::Vanadis::VanadisRoCCInterface>("rocc");
+
+    if ( nullptr == rocc ) {
+        output->fatal(CALL_INFO, -1, "Error - unable to load the rocc interface (rocc subcomponent)\n");
+    }
+
+    rocc->setRegisterFiles(&register_files);
 
     uint16_t fu_id = 0;
 
@@ -359,6 +365,7 @@ VANADIS_COMPONENT::~VANADIS_COMPONENT()
 {
     delete[] instPrintBuffer;
     delete lsq;
+    delete rocc;
 
     for ( int i= 0; i < rob.size(); i++ ) {
         delete rob[i];
@@ -701,6 +708,9 @@ VANADIS_COMPONENT::performExecute(const uint64_t cycle)
 
     // Tick the load/store queue
     lsq->tick((uint64_t)cycle);
+
+    // Tick the RoCC command queue
+    rocc->tick((uint64_t)cycle);
 
     return 0;
 }
@@ -1104,6 +1114,15 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
     switch ( ins->getInstFuncType() ) {
     case INST_INT_ARITH:
         allocated_fu = mapInstructiontoFunctionalUnit(ins, fu_int_arith);
+        break;
+
+    case INST_ROCC:
+        output->verbose(CALL_INFO, 16, 0, "issuing rocc instruction\n");
+        if ( !rocc->RoCCFull() ) {
+            output->verbose(CALL_INFO, 16, 0, "pushing to RoCC queue\n");
+            rocc->push((VanadisRoCCInstruction*)ins);
+            allocated_fu = true;
+        }
         break;
 
     case INST_LOAD:
@@ -1811,6 +1830,8 @@ VANADIS_COMPONENT::init(unsigned int phase)
     lsq->init(phase);
     //	memDataInterface->init( phase );
     memInstInterface->init(phase);
+
+    rocc->init(phase);
 
     while (SST::Event* ev = os_link->recvUntimedData()) {
 

@@ -456,6 +456,20 @@ protected:
                 } break;
                 }
             } break;
+            case 0xb:
+            {
+                // custom encoding space for RoCC instructions
+                // space derived from custom-0 in table 19.1 of RISC-V Manual
+                processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
+                output->verbose(
+                        CALL_INFO, 16, 0, "----> RoCC w/ accelerator id: %" PRIu8 ", rd: %" PRIu16 ", rs1: %" PRIu16
+                        ", rs2: %" PRIu16 ", and func7: %" PRIu32 "\n", 
+                        (op_code & 0x70), rd, rs1, rs2, func_code7);
+                bundle->addInstruction(new VanadisRoCCInstruction(
+                    ins_address, hw_thr, options, rs1, rs2, rd, func_code3 & 0x1, func_code3 & 0x2, 
+                    func_code3 & 0x4, func_code7, op_code & 0x70));
+                decode_fault = false;
+            } break;
             case 0x23:
             {
                 // Store data
@@ -592,6 +606,9 @@ protected:
                 {
                     // ANDI
                     processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
+                    output->verbose(
+                            CALL_INFO, 16, 0, "--------> ANDI %" PRIu16 " <- %" PRIu16 " & %" PRIu32 "\n", rd, rs1,
+                            simm64);
                     bundle->addInstruction(new VanadisAndImmInstruction(ins_address, hw_thr, options, rd, rs1, simm64));
                     decode_fault = false;
                 } break;
@@ -837,6 +854,7 @@ protected:
                 // AUIPC
                 processU<int64_t>(ins, op_code, rd, simm64);
 
+                output->verbose(CALL_INFO, 16, 0, "----> AUIPC %" PRIu16 " <- %#" PRIx32 "\n", rd, simm64);
                 bundle->addInstruction(new VanadisPCAddImmInstruction<int64_t>(
                     ins_address, hw_thr, options, rd, simm64));
                 decode_fault = false;

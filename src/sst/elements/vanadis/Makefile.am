@@ -84,6 +84,7 @@ inst/vpartialload.h \
 inst/vpartialstore.h \
 inst/vpcaddi.h \
 inst/vregfmt.h \
+inst/vrocc.h \
 inst/vscmp.h \
 inst/vscmpi.h \
 inst/vsetreg.h \
@@ -241,7 +242,10 @@ os/syscall/write.h \
 os/syscall/writev.h \
 \
 os/resp/voscallresp.h \
-os/resp/vosexitresp.h
+os/resp/vosexitresp.h \
+rocc/vroccinterface.h \
+rocc/vbasicrocc.h \
+rocc/vroccanalog.h 
 
 
 EXTRA_DIST = \
