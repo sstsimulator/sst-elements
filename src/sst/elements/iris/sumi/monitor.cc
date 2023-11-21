@@ -42,8 +42,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#include <sumi/monitor.h>
-#include <sumi/transport.h>
+#include <iris/sumi/monitor.h>
+#include <iris/sumi/transport.h>
 
 //RegisterDebugSlot(sumi_ping,
 //  "print all debug output associated with ping/timeout operations in the sumi framework");

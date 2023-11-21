@@ -44,12 +44,12 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #pragma once
 
-#include <output.h>
-#include <sumi/collective.h>
-#include <sumi/collective_actor.h>
-#include <sumi/collective_message.h>
-#include <sumi/comm_functions.h>
-#include <sumi/allgather.h>
+#include <sst/core/output.h>
+#include <iris/sumi/collective.h>
+#include <iris/sumi/collective_actor.h>
+#include <iris/sumi/collective_message.h>
+#include <iris/sumi/comm_functions.h>
+#include <iris/sumi/allgather.h>
 
 namespace SST::Iris::sumi {
 

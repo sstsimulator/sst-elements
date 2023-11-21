@@ -14,8 +14,8 @@
 // distribution.
 
 #define _ISOC99_SOURCE // llabs was added in C99
-#include <common/timestamp.h>
-#include <common/errors.h>
+#include <mercury/common/timestamp.h>
+#include <mercury/common/errors.h>
 
 #include <iostream>
 #include <sstream>
@@ -23,8 +23,8 @@
 #include <limits>
 #include <stdio.h>
 #include <math.h>
-#include <common/util.h>
-#include <common/output.h>
+#include <mercury/common/util.h>
+#include <mercury/common/output.h>
 
 namespace SST {
 namespace Hg {

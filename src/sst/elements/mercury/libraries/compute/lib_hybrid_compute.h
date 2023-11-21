@@ -13,14 +13,13 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef SSTMAC_SOFTWARE_LIBRARIES_COMPUTE_LIB_HYBRID_COMPUTE_H_INCLUDED
-#define SSTMAC_SOFTWARE_LIBRARIES_COMPUTE_LIB_HYBRID_COMPUTE_H_INCLUDED
+#pragma once
 
-#include <sstmac/software/libraries/compute/lib_compute_inst.h>
-#include <sstmac/software/libraries/compute/lib_compute_memmove.h>
+#include <mercury/libraries/compute/lib_compute_inst.h>
+#include <mercury/libraries/compute/lib_compute_memmove.h>
 
-namespace sstmac {
-namespace sw {
+namespace SST {
+namespace Hg {
 
 class lib_hybrid_compute :
   public LibComputeInst,
@@ -40,7 +39,5 @@ class lib_hybrid_compute :
 
 };
 
-} //end of namespace sstmac
 }
-
-#endif
+} //end of namespace

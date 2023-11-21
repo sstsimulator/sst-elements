@@ -15,8 +15,8 @@
 
 #pragma once
 
-#include <operating_system/process/compute_scheduler.h>
-#include <operating_system/process/thread.h>
+#include <mercury/operating_system/process/compute_scheduler.h>
+#include <mercury/operating_system/process/thread.h>
 
 namespace SST {
 namespace Hg {

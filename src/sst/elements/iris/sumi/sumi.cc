@@ -45,8 +45,8 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mercury/operating_system/process/app.h>
 #include <mercury/components/operating_system.h>
 #include <mercury/common/util.h>
-#include <sumi/transport.h>
-#include <sumi/sim_transport.h>
+#include <iris/sumi/transport.h>
+#include <iris/sumi/sim_transport.h>
 
 using namespace SST::Hg;
 

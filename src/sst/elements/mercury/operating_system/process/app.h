@@ -17,18 +17,18 @@
 
 #include <sst/core/params.h>
 
-#include <common/component.h>
-//#include <common/factory.h>
+#include <mercury/common/component.h>
+//#include <mercury/common/factory.h>
 #include <sst/core/eli/elementbuilder.h>
-#include <components/operating_system.h>
-#include <operating_system/process/thread.h>
-#include <operating_system/process/mutex.h>
-#include <operating_system/libraries/api.h>
+#include <mercury/components/operating_system.h>
+#include <mercury/operating_system/process/thread.h>
+#include <mercury/operating_system/process/mutex.h>
+#include <mercury/operating_system/libraries/api.h>
 
 #include <fstream>
 
 #ifdef sleep
-#if sleep == sstmac_sleep
+#if sleep == sst_hg_sleep
 #define refactor_sleep_macro
 #undef sleep
 #endif
@@ -348,6 +348,6 @@ void computeTime(double tsec);
 } // end of namespace SST
 
 #ifdef refactor_sleep_macro
-#define sleep sstmac_sleep
+#define sleep sst_hg_sleep
 #undef refactor_sleep_macro
 #endif

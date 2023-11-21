@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <common/errors.h>
+#include <mercury/common/errors.h>
 #include <sst_hg_config.h>
 
 #include <assert.h>

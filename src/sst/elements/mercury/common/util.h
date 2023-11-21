@@ -17,8 +17,8 @@
 
 #ifdef __cplusplus
 
-#include <common/errors.h>
-#include <operating_system/process/task_id.h>
+#include <mercury/common/errors.h>
+#include <mercury/operating_system/process/task_id.h>
 //#include <sprockit/spkt_string.h>
 //#include <sprockit/debug.h>
 

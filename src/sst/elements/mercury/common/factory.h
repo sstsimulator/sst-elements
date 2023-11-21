@@ -17,8 +17,8 @@
 
 #include <sst/core/params.h>
 #include <sst/core/component.h>
-#include <common/component.h>
-#include <common/errors.h>
+#include <mercury/common/component.h>
+#include <mercury/common/errors.h>
 
 #include <type_traits>
 #include <map>

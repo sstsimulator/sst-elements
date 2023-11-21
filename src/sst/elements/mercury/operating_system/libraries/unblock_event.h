@@ -15,10 +15,10 @@
 
 #pragma once
 
-#include <common/events.h>
-#include <common/thread_safe_new.h>
-#include <components/operating_system_fwd.h>
-#include <operating_system/process/thread_fwd.h>
+#include <mercury/common/events.h>
+#include <mercury/common/thread_safe_new.h>
+#include <mercury/components/operating_system_fwd.h>
+#include <mercury/operating_system/process/thread_fwd.h>
 
 namespace SST {
 namespace Hg {

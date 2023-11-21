@@ -19,8 +19,8 @@
 #include <sst/core/subcomponent.h>
 #include <sst/core/link.h>
 #include <sst/core/timeLord.h>
-#include <common/events.h>
-#include <common/timestamp.h>
+#include <mercury/common/events.h>
+#include <mercury/common/timestamp.h>
 #include <cstdint>
 
 namespace SST {

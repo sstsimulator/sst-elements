@@ -18,7 +18,7 @@
 
 #include <sst/core/params.h>
 #include <sst/core/eli/elementinfo.h>
-#include <operating_system/libraries/api.h>
+#include <mercury/operating_system/libraries/api.h>
 
 namespace SST {
 namespace Hg {

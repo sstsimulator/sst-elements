@@ -13,13 +13,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef sstmac_libraries_compute_LIBCOMPUTE_H
-#define sstmac_libraries_compute_LIBCOMPUTE_H
+#pragma once
 
-#include <sstmac/software/libraries/library.h>
-#include <sprockit/debug.h>
-
-DeclareDebugSlot(lib_compute)
+#include <mercury/operating_system/libraries/library.h>
+#include <mercury/common/errors.h>
 
 namespace sstmac {
 namespace sw {
@@ -52,5 +49,3 @@ class LibCompute :
 
 }
 }
-
-#endif // LIBCOMPUTE_H

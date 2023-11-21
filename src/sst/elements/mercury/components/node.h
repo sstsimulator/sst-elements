@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <common/component.h>
+#include <mercury/common/component.h>
 
 #include <sst/core/timeConverter.h>
 #include <sst/core/link.h>

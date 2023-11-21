@@ -42,9 +42,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#include <sumi/scan.h>
-#include <sumi/transport.h>
-#include <sumi/communicator.h>
+#include <iris/sumi/scan.h>
+#include <iris/sumi/transport.h>
+#include <iris/sumi/communicator.h>
 //#include <sprockit/output.h>
 #include <mercury/common/stl_string.h>
 #include <cstring>

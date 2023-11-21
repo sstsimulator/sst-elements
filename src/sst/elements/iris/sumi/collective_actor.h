@@ -44,10 +44,10 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #pragma once
 
-#include <sumi/collective.h>
-#include <sumi/collective_message.h>
-#include <sumi/dense_rank_map.h>
-#include <sumi/communicator.h>
+#include <iris/sumi/collective.h>
+#include <iris/sumi/collective_message.h>
+#include <iris/sumi/dense_rank_map.h>
+#include <iris/sumi/communicator.h>
 #include <set>
 #include <map>
 #include <stdint.h>

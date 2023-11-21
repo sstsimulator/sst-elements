@@ -44,21 +44,21 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #include <output.h>
 #include <cstring>
-#include <sumi/transport.h>
-#include <sumi/allreduce.h>
-#include <sumi/reduce_scatter.h>
-#include <sumi/reduce.h>
-#include <sumi/allgather.h>
-#include <sumi/allgatherv.h>
-#include <sumi/alltoall.h>
-#include <sumi/alltoallv.h>
-#include <sumi/communicator.h>
-#include <sumi/bcast.h>
-#include <sumi/gather.h>
-#include <sumi/scatter.h>
-#include <sumi/gatherv.h>
-#include <sumi/scatterv.h>
-#include <sumi/scan.h>
+#include <iris/sumi/transport.h>
+#include <iris/sumi/allreduce.h>
+#include <iris/sumi/reduce_scatter.h>
+#include <iris/sumi/reduce.h>
+#include <iris/sumi/allgather.h>
+#include <iris/sumi/allgatherv.h>
+#include <iris/sumi/alltoall.h>
+#include <iris/sumi/alltoallv.h>
+#include <iris/sumi/communicator.h>
+#include <iris/sumi/bcast.h>
+#include <iris/sumi/gather.h>
+#include <iris/sumi/scatter.h>
+#include <iris/sumi/gatherv.h>
+#include <iris/sumi/scatterv.h>
+#include <iris/sumi/scan.h>
 #include <mercury/common/stl_string.h>
 #include <sst/core/params.h>
 //#include <sprockit/keyword_registration.h>
@@ -86,8 +86,8 @@ Questions? Contact sst-macro-help@sandia.gov
 //);
 
 #include <sst/core/event.h>
-#include <sumi/sim_transport.h>
-#include <sumi/message.h>
+#include <iris/sumi/sim_transport.h>
+#include <iris/sumi/message.h>
 #include <mercury/operating_system/process/app.h>
 #include <mercury/components/operating_system.h>
 #include <mercury/operating_system/launch/app_launcher.h>

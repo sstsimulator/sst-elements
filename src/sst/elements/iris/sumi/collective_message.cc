@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#include <sumi/collective_message.h>
+#include <iris/sumi/collective_message.h>
 #include <mercury/common/serializable.h>
 
 namespace SST::Iris::sumi {

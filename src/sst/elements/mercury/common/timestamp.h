@@ -16,8 +16,8 @@
 #pragma once
 
 #include <sst/core/sst_types.h>
-#include <common/serializable.h>
-#include <common/errors.h>
+#include <mercury/common/serializable.h>
+#include <mercury/common/errors.h>
 #include <iosfwd>
 #include <stdint.h>
 #include <iostream>

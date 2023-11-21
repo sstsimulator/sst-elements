@@ -517,7 +517,7 @@ NIC::internodeSend(NetworkMessage* netmsg)
 //  if (msg->toaddr() == my_addr_){
 //    intranodeSend(msg);
 //  } else {
-//#if SSTMAC_SANITY_CHECK
+//#if SST_HG_SANITY_CHECK
 //    if (!logp_link_){
 //      spkt_abort_printf("NIC %d does not have LogP link", addr());
 //    }

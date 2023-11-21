@@ -13,9 +13,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <common/thread_lock.h>
-#include <common/sim_thread_lock.h>
-#include <common/errors.h>
+#include <mercury/common/thread_lock.h>
+#include <mercury/common/sim_thread_lock.h>
+#include <mercury/common/errors.h>
 #include <string.h>
 
 namespace SST {

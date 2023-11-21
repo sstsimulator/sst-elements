@@ -13,9 +13,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <common/errors.h>
-#include <operating_system/threading/thread_lock.h>
-#include <operating_system/threading/sim_thread_lock.h>
+#include <mercury/common/errors.h>
+#include <mercury/operating_system/threading/thread_lock.h>
+#include <mercury/operating_system/threading/sim_thread_lock.h>
 
 #include <string.h>
 
@@ -92,7 +92,7 @@ MutexThreadLock::unlock()
   }
 }
 
-#if SSTMAC_USE_SPINLOCK
+#if SST_HG_USE_SPINLOCK
 SpinThreadLock::SpinThreadLock()
 {
   int signal = pthread_spin_init(&lock_, PTHREAD_PROCESS_PRIVATE);

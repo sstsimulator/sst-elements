@@ -18,7 +18,7 @@
 #include <sst/core/event.h>
 #include <sst/core/params.h>
 
-#include <operating_system/process/app_id.h>
+#include <mercury/operating_system/process/app_id.h>
 
 namespace SST {
 namespace Hg {

@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <components/operating_system.h>
-#include <operating_system/libraries/library.h>
+#include <mercury/components/operating_system.h>
+#include <mercury/operating_system/libraries/library.h>
 
 namespace SST {
 namespace Hg {

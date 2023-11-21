@@ -13,7 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <operating_system/launch/app_launch_request.h>
+#include <mercury/operating_system/launch/app_launch_request.h>
 #include <external/json.hpp>
 
 namespace SST {

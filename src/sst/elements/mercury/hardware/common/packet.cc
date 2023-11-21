@@ -14,9 +14,9 @@
 // distribution.
 
 #include <sst/core/event.h>
-#include <hardware/common/packet.h>
-#include <hardware/common/unique_id.h>
-#include <hardware/common/flow.h>
+#include <mercury/hardware/common/packet.h>
+#include <mercury/hardware/common/unique_id.h>
+#include <mercury/hardware/common/flow.h>
 
 namespace SST {
 namespace Hg {

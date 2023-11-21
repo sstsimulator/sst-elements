@@ -47,10 +47,10 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <queue>
 #include <map>
 #include <list>
-#include <common/errors.h>
-#include <common/timestamp.h>
-#include <operating_system/process/thread_fwd.h>
-#include <components/operating_system_fwd.h>
+#include <mercury/common/errors.h>
+#include <mercury/common/timestamp.h>
+#include <mercury/operating_system/process/thread_fwd.h>
+#include <mercury/components/operating_system_fwd.h>
 
 namespace SST {
 namespace Hg {
@@ -86,7 +86,7 @@ struct SingleProgressQueue : public ProgressQueue {
       }
     }
     if (items.empty()){
-#if SSTMAC_SANITY_CHECK
+#if SST_HG_SANITY_CHECK
       if (timeout <= 0){
         spkt_abort_printf("not given a timeout, but unblocked to find no items");
       }
@@ -216,7 +216,7 @@ struct MultiProgressQueue : public ProgressQueue {
       }
     }
 
-#if SSTMAC_SANITY_CHECK
+#if SST_HG_SANITY_CHECK
     if (timeout <= 0){
       spkt_abort_printf("unblocked on CQ without timeout, but there are no messages");
     }
@@ -235,7 +235,7 @@ struct MultiProgressQueue : public ProgressQueue {
 
 
     if (queues[cq].empty()){
-#if SSTMAC_SANITY_CHECK
+#if SST_HG_SANITY_CHECK
       if (timeout <= 0){
         spkt_abort_printf("unblocked on CQ with no timeout, but there are no items");
       }

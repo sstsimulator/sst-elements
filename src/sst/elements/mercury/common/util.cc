@@ -13,9 +13,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <common/util.h>
-#include <components/operating_system.h>
-#include <operating_system/process/app.h>
+#include <mercury/common/util.h>
+#include <mercury/components/operating_system.h>
+#include <mercury/operating_system/process/app.h>
 //#include <sstmac/null_buffer.h>
 
 #include <cstring>
@@ -27,12 +27,12 @@ typedef int (*main_fxn)(int,char**);
 typedef int (*empty_main_fxn)();
 
 //extern "C" double
-//sstmac_now(){
+//sst_hg_now(){
 //  return sstmac::sw::OperatingSystem::currentOs()->now().sec();
 //}
 
 //extern "C" void
-//sstmac_sleep_precise(double secs){
+//sst_hg_sleep_precise(double secs){
 //  sstmac::sw::OperatingSystem::currentOs()->sleep(sstmac::TimeDelta(secs));
 //}
 
@@ -97,7 +97,7 @@ extern "C" int ssthg_atexit(void (* /*fxn*/)(void))
 }
 
 //extern "C"
-//int sstmac_gethostname(char* name, size_t len)
+//int sst_hg_gethostname(char* name, size_t len)
 //{
 //  std::string sst_name = sstmac::sw::OperatingSystem::currentOs()->hostname();
 //  if (sst_name.size() > len){
@@ -109,13 +109,13 @@ extern "C" int ssthg_atexit(void (* /*fxn*/)(void))
 //}
 
 //extern "C"
-//long sstmac_gethostid()
+//long sst_hg_gethostid()
 //{
 //  return sstmac::sw::OperatingSystem::currentOs()->addr();
 //}
 
 //extern "C"
-//void sstmac_free(void* ptr){
+//void sst_hg_free(void* ptr){
 //#ifdef free
 //#error #sstmac free macro should not be defined in util.cc - refactor needed
 //#endif
@@ -125,7 +125,7 @@ extern "C" int ssthg_atexit(void (* /*fxn*/)(void))
 #include <unordered_map>
 
 //extern "C"
-//void sstmac_advance_time(const char* param_name)
+//void sst_hg_advance_time(const char* param_name)
 //{
 //  sstmac::sw::Thread* thr = sstmac::sw::OperatingSystem::currentThread();
 //  sstmac::sw::App* parent = thr->parentApp();

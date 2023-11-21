@@ -42,9 +42,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#include <sumi/collective_actor.h>
-#include <sumi/transport.h>
-#include <sumi/communicator.h>
+#include <iris/sumi/collective_actor.h>
+#include <iris/sumi/transport.h>
+#include <iris/sumi/communicator.h>
 //#include <sprockit/output.h>
 #include <mercury/common/null_buffer.h>
 #include <cstring>
@@ -341,7 +341,6 @@ DagCollectiveActor::addCommDependency(Action* precursor, Action *ac)
     } else if (ac->join_counter == 0){
       output.output("Rank %s, collective %s adding initial %s on tag=%d",
         rankStr().c_str(), Collective::tostr(type_), ac->toString().c_str(), tag_);
-      std::cerr << "adding initial action " << ac << std::endl;
       initial_actions_.insert(ac);
     } else {
       //no new dependency, but not an initial action

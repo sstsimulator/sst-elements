@@ -16,8 +16,8 @@
 #pragma once
 
 #include <unordered_map>
-#include <hardware/common/packet.h>
-#include <common/allocator.h>
+#include <mercury/hardware/common/packet.h>
+#include <mercury/common/allocator.h>
 
 namespace SST {
 namespace Hg {
