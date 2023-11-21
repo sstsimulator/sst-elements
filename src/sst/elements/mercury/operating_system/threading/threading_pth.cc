@@ -28,7 +28,7 @@ class ThreadingPth : public ThreadContext
   SST_ELI_REGISTER_DERIVED(
     ThreadContext,
     ThreadingPth,
-    "macro",
+    "hg",
     "pth",
     SST_ELI_ELEMENT_VERSION(1,0,0),
     "uses GNU Pth for fast context switching")
