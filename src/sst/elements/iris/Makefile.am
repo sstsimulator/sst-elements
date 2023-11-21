@@ -16,26 +16,26 @@ AM_LIBTOOLFLAGS = --tag=CXX
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libsumi.la
 libsumi_la_SOURCES = \
-  sumi/allgather.cc \        
-  sumi/allgatherv.cc  \        
+  sumi/allgather.cc \
+  sumi/allgatherv.cc  \
   sumi/allreduce.cc \
   sumi/alltoall.cc \
   sumi/alltoallv.cc \
-  sumi/bcast.cc \        
+  sumi/bcast.cc \
   sumi/collective.cc \
   sumi/collective_actor.cc \
   sumi/collective_message.cc \
   sumi/communicator.cc \
-  sumi/dense_rank_map.cc \       
+  sumi/dense_rank_map.cc \
   sumi/gather.cc \
-  sumi/gatherv.cc \ 
+  sumi/gatherv.cc \
   sumi/message.cc \
   sumi/monitor.cc \
   sumi/reduce.cc \
   sumi/reduce_scatter.cc \
   sumi/scan.cc \
   sumi/scatter.cc \
-  sumi/scatterv.cc  \    
+  sumi/scatterv.cc  \
   sumi/sim_transport.cc \
   sumi/sumi.cc \
   sumi/sumi_thread.cc
@@ -45,7 +45,7 @@ library_includedir=$(includedir)/sst/elements/iris
 nobase_library_include_HEADERS = \
   sumi/allgather.h \
   sumi/allgatherv.h \
-  sumi/allreduce.h \ 
+  sumi/allreduce.h \
   sumi/alltoall.h \
   sumi/alltoallv.h \
   sumi/bcast.h \

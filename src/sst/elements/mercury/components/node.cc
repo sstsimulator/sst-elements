@@ -25,7 +25,7 @@ extern template class  HgBase<SST::Component>;
 extern template SST::TimeConverter* HgBase<SST::Component>::time_converter_;
 
 Node::Node(ComponentId_t id, Params &params)
-    : SST::Hg::Component(id) {
+    : SST::Hg::Component(id), nic_(0) {
 
   my_addr_ = getId();
   unsigned int verbose = params.find<unsigned int>("verbose",0);
