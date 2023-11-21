@@ -115,6 +115,7 @@ nobase_library_include_HEADERS = \
   components/node.h \
   components/node_fwd.h \
   components/operating_system.h \
+  components/operating_system_fwd.h \
   external/json.hpp \
   hardware/network/network_id.h \
   hardware/network/network_message.h \
