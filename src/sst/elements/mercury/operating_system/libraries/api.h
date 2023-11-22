@@ -17,7 +17,8 @@
 
 #include <sst/core/event.h>
 #include <sst/core/subcomponent.h>
-#include <common/factory.h>
+//#include <common/factory.h>
+#include <sst/core/eli/elementbuilder.h>
 #include <common/component.h>
 #include <common/events.h>
 #include <operating_system/process/software_id.h>

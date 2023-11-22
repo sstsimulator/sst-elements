@@ -20,6 +20,7 @@
 #include <sst/core/params.h>
 
 #include <common/factory.h>
+#include <sst/core/eli/elementbuilder.h>
 #include <common/output.h>
 #include <common/util.h>
 #include <common/errors.h>
@@ -43,7 +44,6 @@
 //#include <sstmac/main/sstmac.h>
 #include <operating_system/process/loadlib.h>
 #include <components/operating_system.h>
-
 #include <inttypes.h>
 #include <dlfcn.h>
 
@@ -153,13 +153,15 @@ App::unlockDlopen_API(std::string api_name)
 void
 App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
 {
-  // check params for apis
+  //params.print_all_params(std::cerr);
   std::vector<std::string> apis;
   if (params.contains("apis")){
-    params.find_array("apis", apis);
+    params.find_array<std::string>("apis", apis);
+//    for (auto i: apis)
+//      std::cerr << i << std::endl;
   }
   else {
-    apis.push_back("system:libsystemapi.so");
+    apis.push_back("systemAPI:libsystemapi.so");
   }
 
   // parse apis and dlopen the libraries
@@ -175,7 +177,7 @@ App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
       file = str.substr(pos + 1);
     }
 
-    //std::cerr << "loading " << name.c_str() << "API\n";
+    //std::cerr << "loading " << name.c_str() << " API from " << file.c_str() << "\n";;
     dlopen_lock.lock();
     dlopen_entry& entry = api_dlopens_[name];
     entry.name = file;
@@ -271,6 +273,7 @@ App::App(SST::Params& params, SoftwareId sid,
   Thread(params, sid, os),
   params_(params),
 //  compute_lib_(nullptr),
+  os_(os),
   next_tls_key_(0),
   min_op_cutoff_(0),
   globals_storage_(nullptr),
@@ -316,7 +319,7 @@ App::App(SST::Params& params, SoftwareId sid,
   } else {
 //    apis.push_back("mpi");
 //    apis.push_back("sumi:mpi");
-      apis.push_back("system");
+      apis.push_back("systemAPI:libsystemapi.so");
   }
 
   for (auto& str : apis){
@@ -327,23 +330,25 @@ App::App(SST::Params& params, SoftwareId sid,
       name = str;
       alias = str;
     } else {
-      alias = str.substr(0, pos);
-      name = str.substr(pos + 1);
+      name = str.substr(0, pos);
+      alias = str.substr(pos + 1);
     }
 
-    out_->debug(CALL_INFO, 1, 0, "checking %sAPI", name.c_str());
+    out_->debug(CALL_INFO, 1, 0, "checking %s API", name.c_str());
 
-    auto iter = apis_.find(name);
-    if (iter == apis_.end()){
-      out_->debug(CALL_INFO, 1, 0, "loading %sAPI", name.c_str());
-      SST::Params api_params = params.get_scoped_params(name);
-      //SST::Component* comp = dynamic_cast<SST::Component*>(os->node());
-      //if(!comp) sst_hg_abort_printf("APP can't dyncast to SST::Component*");
-      API* api = SST::Hg::create<API>(
-          "hg", name, api_params, this, os->node());
-      apis_[name] = api;
+    if (name != "SimTransport") {
+      auto iter = apis_.find(name);
+      if (iter == apis_.end()){
+        out_->debug(CALL_INFO, 1, 0, "loading %s API", name.c_str());
+        SST::Params api_params = params.get_scoped_params(name);
+        //SST::Component* comp = dynamic_cast<SST::Component*>(os->node());
+        //if(!comp) sst_hg_abort_printf("APP can't dyncast to SST::Component*");
+        API* api = SST::Hg::create<API>(
+              "hg", name, api_params, this, os->node());
+        apis_[name] = api;
+      }
+      apis_[alias] = apis_[name];
     }
-    apis_[alias] = apis_[name];
   }
 
   std::string stdout_str = params.find<std::string>("stdout", "stdout");
@@ -500,17 +505,19 @@ App::cleanup()
   Thread::cleanup();
 }
 
-//void
-//App::sleep(TimeDelta time)
-//{
-//  computeLib()->sleep(time);
-//}
+void
+App::sleep(TimeDelta time)
+{
+  os_->blockTimeout(time);
+  //computeLib()->sleep(time);
+}
 
-//void
-//App::compute(TimeDelta time)
-//{
-//  computeLib()->compute(time);
-//}
+void
+App::compute(TimeDelta time)
+{
+  os_->blockTimeout(time);
+  //computeLib()->compute(time);
+}
 
 //void
 //App::computeInst(ComputeEvent* cmsg)
@@ -571,11 +578,11 @@ App::getParams()
 //}
 
 API*
-App::getPrebuiltApi(const std::string &name)
+App::getAPI(const std::string &name)
 {
   auto iter = apis_.find(name);
   if (iter == apis_.end()){
-    sst_hg_abort_printf("API %s was not included in launch params for app %d",
+    sst_hg_abort_printf("API %s not found for app %d",
                 name.c_str(), aid());
   }
   return iter->second;
@@ -739,12 +746,12 @@ UserAppCxxFullMain::aliasMains()
     //std::cerr << "have main_fxns_\n";
     for (auto& pair : *main_fxns_){
     auto* builder = lib->getBuilder("UserAppCxxFullMain");
-    //std::cerr << "adding " << pair.first << " builder\n";
+    //std::cerr << "adding " << pair.first << " builder " << builder << "\n";
     lib->addBuilder(pair.first, builder);
     }
   }
   else {
-      //std::cerr << "no main_fxns_\n";
+      std::cerr << "no main_fxns_\n";
     }
   lock.unlock();
 }
@@ -845,7 +852,7 @@ UserAppCxxEmptyMain::UserAppCxxEmptyMain(SST::Params& params, SoftwareId sid,
 void
 UserAppCxxEmptyMain::registerMainFxn(const char *name, App::empty_main_fxn fxn)
 {
-  std::cerr << "registering empty main " << name << "\n";
+  //std::cerr << "registering empty main " << name << "\n";
   if (empty_main_fxns_){ //already cleared static init
     (*empty_main_fxns_)[name] = fxn;
   } else { 
@@ -855,17 +862,6 @@ UserAppCxxEmptyMain::registerMainFxn(const char *name, App::empty_main_fxn fxn)
 
     (*empty_main_fxns_init_)[name] = fxn;
   }
-
-#if 0
-  auto* lib = App::getBuilderLibrary("macro");
-#if SSTMAC_INTEGRATED_SST_CORE
-  using builder_t = SST::ELI::DerivedBuilder<App,UserAppCxxFullMain,SST::Params&,SoftwareId,OperatingSystem*>;
-  lib->addBuilder(name, new builder_t);
-#else
-  using builder_t = sprockit::DerivedBuilder<App,UserAppCxxFullMain,SST::Params&,SoftwareId,OperatingSystem*>;
-  lib->addBuilder(name, std::unique_ptr<builder_t>(new builder_t));
-#endif
-#endif
 }
 
 int

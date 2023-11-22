@@ -15,6 +15,7 @@
 
 #include <sst/core/params.h>
 
+#include <common/factory.h>
 #include <operating_system/launch/app_launcher.h>
 #include <operating_system/process/software_id.h>
 
@@ -33,16 +34,19 @@ void
 AppLauncher::incomingRequest(AppLaunchRequest* req)
 {
   Params app_params = req->params();
-  SoftwareId sid(req->aid(), 0);
+  SoftwareId sid(req->aid(), os_->addr()-1);
 
   std::string app_name;
   if (app_params.count("label")) {
       app_name = app_params.find<std::string>("label","");
   }
   else app_name = app_params.find<std::string>("name","");
+  //std::cerr << "launching app_name " << app_name << std::endl;
+  std::string exe = app_params.find<std::string>("exe","");
+  //std::cerr << "launching exe " << exe << std::endl;
 
   App::dlopenCheck(req->aid(), app_params);
-
+  //app_params.print_all_params(std::cerr);
   App* theapp = create<App>("hg", app_name, app_params, sid, os_);
   //theapp->setUniqueName(lreq->uniqueName());
   //int intranode_rank = num_apps_launched_[lreq->aid()]++;

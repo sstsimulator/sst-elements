@@ -18,7 +18,8 @@
 #include <sst/core/params.h>
 
 #include <common/component.h>
-#include <common/factory.h>
+//#include <common/factory.h>
+#include <sst/core/eli/elementbuilder.h>
 #include <components/operating_system.h>
 #include <operating_system/process/thread.h>
 #include <operating_system/process/mutex.h>
@@ -68,9 +69,9 @@ class App : public Thread
 
   static void deleteStatics();
 
-//  void sleep(TimeDelta time);
+  void sleep(TimeDelta time);
 
-//  void compute(TimeDelta time);
+  void compute(TimeDelta time);
 
 //  void computeInst(ComputeEvent* cmsg);
 
@@ -221,11 +222,13 @@ class App : public Thread
   SST::Params params_;
 
  private:
-  API* getPrebuiltApi(const std::string& name);
+  API* getAPI(const std::string& name);
 
   void dlcloseCheck(){
     dlcloseCheck(aid());
   }
+
+ OperatingSystem* os_;
 
   char* allocateDataSegment(bool tls);
 

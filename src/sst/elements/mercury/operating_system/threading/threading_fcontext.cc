@@ -62,7 +62,7 @@ class ThreadingFContext : public ThreadContext
   SST_ELI_REGISTER_DERIVED(
     ThreadContext,
     ThreadingFContext,
-    "macro",
+    "hg",
     "fcontext",
     SST_ELI_ELEMENT_VERSION(1,0,0),
     "uses fcontext for fast context switching")

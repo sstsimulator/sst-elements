@@ -18,12 +18,14 @@
 #include <sst/core/params.h>
 #include <common/events.h>
 #include <common/factory.h>
+#include <sst/core/eli/elementbuilder.h>
 #include <common/request.h>
 #include <components/node.h>
 #include <operating_system/launch/app_launcher.h>
 #include <operating_system/process/app.h>
 #include <operating_system/process/thread_id.h>
 #include <operating_system/threading/stack_alloc.h>
+#include <operating_system/libraries/unblock_event.h>
 #include <stdlib.h>
 #include <sys/mman.h>
 
@@ -154,7 +156,7 @@ OperatingSystem::initThreading(SST::Params& params)
     }
 
   des_context_ = create<ThreadContext>(
-        "macro", params.find<std::string>("context", ThreadContext::defaultThreading()));
+        "hg", params.find<std::string>("context", ThreadContext::defaultThreading()));
 
   des_context_->initContext();
 
@@ -213,6 +215,19 @@ void OperatingSystem::handleEvent(SST::Event *ev) {
       sst_hg_abort_printf("Error! Bad Event Type received by %s!\n",
                           getName().c_str());
     }
+}
+
+
+std::function<void(NetworkMessage*)>
+OperatingSystem::nicDataIoctl()
+{
+  return node_->nic()->dataIoctl();
+}
+
+std::function<void(NetworkMessage*)>
+OperatingSystem::nicCtrlIoctl()
+{
+  return node_->nic()->ctrlIoctl();
 }
 
 void
@@ -369,6 +384,13 @@ OperatingSystem::block()
 //  if (elapsed.ticks()){
 //    active_thread_->collectStats(before, elapsed);
 //  }
+}
+
+void
+OperatingSystem::blockTimeout(TimeDelta delay)
+{
+  sendDelayedExecutionEvent(delay, new TimeoutEvent(this, active_thread_));
+  block();
 }
 
 void
