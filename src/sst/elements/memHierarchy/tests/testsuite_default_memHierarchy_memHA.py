@@ -97,6 +97,9 @@ class testcase_memHierarchy_memHA(SSTTestCase):
 
     def test_memHA_ThroughputThrottling(self):
         self.memHA_Template("ThroughputThrottling")
+    
+    def test_memHA_CoherenceDomains(self):
+        self.memHA_Template("CoherenceDomains")
 
     @skip_on_sstsimulator_conf_empty_str("GOBLIN_HMCSIM", "LIBDIR", "GOBLIN_HMCSIM is not included as part of this build")
     def test_memHA_BackendGoblinHMC(self):

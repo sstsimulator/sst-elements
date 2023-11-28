@@ -1346,6 +1346,8 @@ bool DirectoryController::handlePutS(MemEvent * event, bool inMSHR) {
         case S_Inv:
             if (mshr->decrementAcksNeeded(addr)) {
                 entry->hasSharers() ? entry->setState(S) : entry->setState(I);
+                retryBuffer.push_back(static_cast<MemEvent*>(mshr->getFrontEvent(addr)));
+                mshr->setInProgress(addr); /* Make sure we don't retry twice */
             }
             break;
         case SD_Inv:
