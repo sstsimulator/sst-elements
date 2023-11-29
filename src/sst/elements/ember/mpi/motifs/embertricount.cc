@@ -349,8 +349,7 @@ EmberTriCountGenerator::task_client() {
 
     uint64_t first_i, last_i, first_j, last_j, first_edge, last_edge;
     bool skip = false;
-    if (i > taskStarts_.size() || j > taskStarts_.size() ) skip = true;
-    if (taskStarts_[i] == num_vertices_ - 1 || taskStarts_[j] == num_vertices_ - 1) {
+    if (i >= taskStarts_.size() - 1 || j >= taskStarts_.size() - 1 ) {
       skip = true;
       if (debug_) {
         std::cerr << "skipping last vertex task (which never holds unique edges)\n";
