@@ -38,7 +38,7 @@ libmask_mpi_la_SOURCES = \
   mpi_debug.cc \
   mpi_delay_stats.cc \
   mpi_message.cc \
-  mpi_request.cc 
+  mpi_request.cc
 
 library_includedir=$(includedir)/sst/elements/mask-mpi
 
@@ -76,7 +76,7 @@ library_include_HEADERS = \
   otf2_output_stat.h \
   otf2_output_stat_fwd.h \
   mask_mpi.h \
-  mask_mpi_macro.h 
+  mask_mpi_macro.h
 
 sendrecv_la_SOURCES = tests/sendrecv.cc
 
@@ -90,5 +90,5 @@ libmask_mpi_la_LDFLAGS = -module -avoid-version
 sendrecv_la_LDFLAGS = -module -avoid-version
 
 install-exec-hook: 
-        $(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     mask-mpi=$(abs_srcdir)
-        $(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      mask-mpi=$(abs_srcdir)/tests
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     mask-mpi=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      mask-mpi=$(abs_srcdir)/tests
