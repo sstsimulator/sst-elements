@@ -74,6 +74,17 @@ StandardInterface::StandardInterface(SST::ComponentId_t id, Params &params, Time
 
     baseAddrMask_ = 0;
     lineSize_ = 0;
+
+    std::vector<uint64_t> noncache;
+    params.find_array<uint64_t>("noncacheable_regions", noncache);
+
+    for (int i = 0; i < noncache.size(); i+=2) {
+        MemRegion reg;
+        reg.setEmpty();
+        reg.start = noncache[i];
+        reg.end = noncache[i+1];
+        noncacheableRegions.insert(std::make_pair(reg.start, reg));
+    }
 }
 
 void StandardInterface::setMemoryMappedAddressRegion(Addr start, Addr size) {

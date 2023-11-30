@@ -31,6 +31,8 @@ comp_cpu0.addParams({
 
 # CPU0 uses the standardInterface to interface to the memory hierarchy
 iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.standardInterface")
+iface0.addParams({"debug" : 0, "debug_level" : 10})
+
 #######################################################################################################################
 
 
