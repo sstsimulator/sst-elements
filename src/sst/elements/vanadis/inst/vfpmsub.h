@@ -92,53 +92,64 @@ public:
         }
 #endif
 
-        if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
-            const fp_format src_1  = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
-            const fp_format src_2  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3]);
-            const fp_format src_3  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[4], phys_fp_regs_in[5]);
+        clear_IEEE754_except();
+
+        if ( sizeof(fp_format) >= regFile->getFPRegWidth() ) {
+
+            fp_format src_1,src_2, src_3;
+            READ_3FP_REGS;
+
+            performMsubFlagChecks<fp_format>(src_1,src_2,src_3);
+
             fp_format result = std::fma( (fp_format) src_1, (fp_format) src_2, (fp_format) -src_3 );
             if ( rs1_is_neg ) {
                 result *= -1.0;
             }
 
-            performMsubFlagChecks<fp_format>(src_1,src_2,src_3);
             performFlagChecks<fp_format>(result);
 
-            if ( output->getVerboseLevel() >= 16 ) {
-                output->verbose(CALL_INFO, 0, 0, "---> %f * %f + %f= %f\n", src_1, src_2, src_3, result);
-                output->verbose(CALL_INFO, 16, 0, "---> %f * %f + %f= %f\n", src_1, src_2, src_3, result);
-            }
+            performFlagChecks<fp_format>(result);
 
-            fractureToRegisters<fp_format>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], result);
-        }
-        else {
-            const fp_format src_1  = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
-            const fp_format src_2  = regFile->getFPReg<fp_format>(phys_fp_regs_in[1]);
-            const fp_format src_3  = regFile->getFPReg<fp_format>(phys_fp_regs_in[2]);
-            fp_format result = std::fma( (fp_format) src_1, (fp_format) src_2, (fp_format) -src_3 );
+            WRITE_FP_REGS;
+
+        } else {
+
+            const uint64_t src_1  = regFile->getFPReg<uint64_t>(phys_fp_regs_in[0]);
+            const uint64_t src_2  = regFile->getFPReg<uint64_t>(phys_fp_regs_in[1]);
+            const uint64_t src_3  = regFile->getFPReg<uint64_t>(phys_fp_regs_in[2]);
+
+            assert( isNaN_boxed( src_1 ) );
+            assert( isNaN_boxed( src_2 ) );
+            assert( isNaN_boxed( src_3 ) );
+
+            float fp_1 = int64To<float>(src_1);
+            float fp_2 = int64To<float>(src_2);
+            float fp_3 = int64To<float>(src_3);
+            performMsubFlagChecks<fp_format>(fp_1,fp_2,fp_3);
+
+            fp_format tmp = std::fma( (fp_format) fp_1, (fp_format) fp_2, (fp_format) -fp_3 );
             if ( rs1_is_neg ) {
-                result *= -1.0;
+                tmp *= -1.0;
             }
+            performFlagChecks<fp_format>(tmp);
 
-            performMsubFlagChecks<fp_format>(src_1,src_2,src_3);
-            performFlagChecks<fp_format>(result);
+            const uint64_t result = 0xffffffff00000000 | convertTo<int64_t>(tmp);
 
-            if ( output->getVerboseLevel() >= 16 ) {
-                output->verbose(CALL_INFO, 16, 0, "---> %f * %f + %f = %f\n", src_1, src_2, src_3, result);
-            }
-
-            regFile->setFPReg<fp_format>(phys_fp_regs_out[0], result);
+            regFile->setFPReg<uint64_t>(phys_fp_regs_out[0], result);
         }
+
+        check_IEEE754_except();
 
         markExecuted();
     }
+
     template <typename T>
     void performMsubFlagChecks(const T src_1, const T src_2, const T src_3)
     {
         if ( std::fpclassify(src_1) == FP_ZERO || std::fpclassify(src_2) == FP_ZERO ||
             std::fpclassify(src_1) == FP_INFINITE || std::fpclassify(src_2) == FP_INFINITE ||
             std::fpclassify(src_1) == FP_NAN || std::fpclassify(src_2) == FP_NAN ||
-            src_3 == FP_NAN || src_3 == FP_INFINITE ) {
+            std::fpclassify(src_3) == FP_NAN || std::fpclassify(src_3) == FP_INFINITE ) {
             fpflags.setInvalidOp();
             update_fp_flags = true;
         }

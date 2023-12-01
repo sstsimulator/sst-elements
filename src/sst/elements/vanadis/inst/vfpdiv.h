@@ -106,39 +106,47 @@ public:
             delete[] fp_register_buffer;
         }
 #endif
-
-        if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
-            const fp_format src_1  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
-            const fp_format src_2  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3]);
-            const fp_format result = src_1 / src_2;
-
-            performDivFlagChecks<fp_format>(src_2);
-            performFlagChecks<fp_format>(result);
-
-            if ( output->getVerboseLevel() >= 16 ) {
-                std::ostringstream ss;
-                ss << "---> " << src_1 << " / " << src_2 << " = " << result;
-                output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
-            }
-
-            fractureToRegisters<fp_format>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], result);
-        }
-        else {
-            const fp_format src_1  = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
-            const fp_format src_2  = regFile->getFPReg<fp_format>(phys_fp_regs_in[1]);
-            const fp_format result = src_1 / src_2;
+        clear_IEEE754_except();
+        
+        if ( sizeof(fp_format) >= regFile->getFPRegWidth() ) {
+            
+            fp_format src_1,src_2;
+            READ_2FP_REGS;
 
             performDivFlagChecks<fp_format>(src_2);
+            
+            const fp_format result = src_1 / src_2;
+
+            performFlagChecks(result);
+            
             performFlagChecks<fp_format>(result);
+            
+            WRITE_FP_REGS;
+            
+        } else {
 
-            if ( output->getVerboseLevel() >= 16 ) {
-                std::ostringstream ss;
-                ss << "---> " << src_1 << " / " << src_2 << " = " << result;
-                output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
-            }
+            const uint64_t src_1  = regFile->getFPReg<uint64_t>(phys_fp_regs_in[0]);
+            const uint64_t src_2  = regFile->getFPReg<uint64_t>(phys_fp_regs_in[1]);
 
-            regFile->setFPReg<fp_format>(phys_fp_regs_out[0], result);
+            fprintf(stdout,"DIV FP64 float %#lx %#lx %#lx\n",getInstructionAddress(),src_1,src_2);
+            
+            assert( isNaN_boxed( src_1 ) );
+            assert( isNaN_boxed( src_2 ) );
+
+            float fp_1 = int64To<float>(src_1);
+            float fp_2 = int64To<float>(src_2);
+            performDivFlagChecks(fp_2);
+            
+            float tmp = fp_1 / fp_2;
+
+            performFlagChecks<float>(tmp);
+            
+            const uint64_t result = 0xffffffff00000000 | convertTo<int64_t>(tmp);
+            
+            regFile->setFPReg<uint64_t>(phys_fp_regs_out[0], result);
         }
+
+        check_IEEE754_except();
 
         markExecuted();
     }

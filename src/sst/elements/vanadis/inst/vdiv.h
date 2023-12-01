@@ -78,13 +78,39 @@ public:
         }
 #endif
 
-		const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in[0]);
-		const gpr_format src_2 = regFile->getIntReg<gpr_format>(phys_int_regs_in[1]);
+        const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in[0]);
+        const gpr_format src_2 = regFile->getIntReg<gpr_format>(phys_int_regs_in[1]);
 
-	   if(0 == src_2) {
-			flagError();
-		} else {
-			regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1 / src_2);
+        if ( ( UNLIKELY( 0 == src_2 ) ) ) {
+            regFile->setIntReg<gpr_format>(phys_int_regs_out[0], -1);
+
+            auto str = getenv("VANADIS_NO_FAULT");
+            if ( nullptr == str ) {
+                flagError();
+            }
+
+        } else {
+            if constexpr (std::is_signed<gpr_format>::value) {
+                if ( 8 == regFile->getIntRegWidth() ) {
+                    if constexpr ( std::is_same_v<gpr_format,int32_t> ) {
+                        if ( (1<< 31) == src_1 && -1 == src_2 ) {
+                            regFile->setIntReg<gpr_format>(phys_int_regs_out[0], 1 << 31);
+                        } else {
+                            regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1 / src_2);
+                        }
+                    } else if constexpr ( std::is_same_v<gpr_format,int64_t> ) {
+                        if ( ((uint64_t)1<< 63) == src_1 && -1 == src_2 ) {
+                            regFile->setIntReg<gpr_format>(phys_int_regs_out[0], (uint64_t) 1 << 63);
+                        } else {
+                            regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1 / src_2);
+                        }
+                    } else {
+                        assert(0);
+                    }
+                }
+            } else {
+                regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1 / src_2);
+            }
 		}
 
         markExecuted();

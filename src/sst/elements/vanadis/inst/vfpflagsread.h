@@ -60,7 +60,7 @@ public:
 		  	uint64_t flags_out = 0;
 
 			if(copy_round_mode) {
-					flags_out = convertRoundingToInteger(fpflags.getRoundingMode());
+					flags_out = convertRoundingToInteger(pipeline_fpflags->getRoundingMode());
 
 					if(shift_round_mode) {
 						flags_out <<= 5;
@@ -68,11 +68,11 @@ public:
 			}
 
 			if(copy_fp_flags) {
-				flags_out |= fpflags.inexact() ? 0x1 : 0x0;
-				flags_out |= fpflags.underflow() ? 0x2 : 0x0;
-				flags_out |= fpflags.overflow() ? 0x4 : 0x0;
-				flags_out |= fpflags.divZero() ? 0x8 : 0x0;
-				flags_out |= fpflags.invalidOp() ? 0x10 : 0x0;
+				flags_out |= pipeline_fpflags->inexact() ? 0x1 : 0x0;
+				flags_out |= pipeline_fpflags->underflow() ? 0x2 : 0x0;
+				flags_out |= pipeline_fpflags->overflow() ? 0x4 : 0x0;
+				flags_out |= pipeline_fpflags->divZero() ? 0x8 : 0x0;
+				flags_out |= pipeline_fpflags->invalidOp() ? 0x10 : 0x0;
 			}
 
 			if(output->getVerboseLevel() >= 16) {
