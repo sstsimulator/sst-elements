@@ -31,7 +31,11 @@ VanadisExitSyscall::VanadisExitSyscall( VanadisNodeOSComponent* os, SST::Link* c
     if ( m_os->getNodeNum() >= 0 ) {
         printf("node=%d pid=%d tid=%d has exited\n", m_os->getNodeNum(), process->getpid(), process->gettid());
     } else {
-        printf("pid=%d tid=%d has exited\n", process->getpid(), process->gettid());
+        if ( event->getExitCode() > 0 ) {
+            printf("pid=%d tid=%d has exited with code %d, Failed\n", process->getpid(), process->gettid(),event->getExitCode());
+        } else {
+            printf("pid=%d tid=%d has exited\n", process->getpid(), process->gettid());
+        }
     }
 
     uint64_t tid_addr = process->getTidAddress();
