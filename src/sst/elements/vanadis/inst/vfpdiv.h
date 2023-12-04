@@ -128,8 +128,6 @@ public:
             const uint64_t src_1  = regFile->getFPReg<uint64_t>(phys_fp_regs_in[0]);
             const uint64_t src_2  = regFile->getFPReg<uint64_t>(phys_fp_regs_in[1]);
 
-            fprintf(stdout,"DIV FP64 float %#lx %#lx %#lx\n",getInstructionAddress(),src_1,src_2);
-            
             assert( isNaN_boxed( src_1 ) );
             assert( isNaN_boxed( src_2 ) );
 

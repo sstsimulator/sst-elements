@@ -269,6 +269,7 @@ protected:
     template <typename T>
     bool isNaN_boxed( T src ) {
         if constexpr (std::is_same_v<T,uint64_t>) {
+            if ( src == 0 ) return true;
             return ((src & 0xffffffff00000000) == 0xffffffff00000000); 
         } else {
             assert(0);
