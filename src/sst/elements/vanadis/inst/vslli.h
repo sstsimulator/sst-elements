@@ -75,7 +75,15 @@ public:
             output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
         }
 #endif
-        assert(imm_value > 0);
+        if constexpr ( sizeof( register_format ) == 4 ) {
+            // imm cannot be 0 for RV32 or for RV64 when working on 32 bit values
+            if ( UNLIKELY( 0 == imm_value ) ) {
+                auto str = getenv("VANADIS_NO_FAULT");
+                if ( nullptr == str ) {
+                    flagError();
+                }
+            }
+        }
 
         const register_format src_1 = regFile->getIntReg<register_format>(phys_int_regs_in[0]);
         regFile->setIntReg<register_format>(phys_int_regs_out[0], src_1 << imm_value);

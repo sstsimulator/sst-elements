@@ -75,7 +75,15 @@ public:
             (void*)getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value,
             isa_int_regs_out[0], isa_int_regs_in[0]);
 #endif
-        assert(imm_value > 0);
+        if constexpr ( sizeof( register_format ) == 4 ) {
+            // imm cannot be 0 for RV32 or for RV64 when working on 32 bit values
+            if ( UNLIKELY( 0 == imm_value ) ) {
+                auto str = getenv("VANADIS_NO_FAULT");
+                if ( nullptr == str ) {
+                    flagError();
+                }
+            }
+        }
 
         switch ( register_format ) {
         case VanadisRegisterFormat::VANADIS_FORMAT_INT64:

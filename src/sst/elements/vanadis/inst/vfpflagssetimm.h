@@ -25,15 +25,16 @@
 namespace SST {
 namespace Vanadis {
 
+template<bool SetFRM, bool SetFFLAGS>
 class VanadisFPFlagsSetImmInstruction : public VanadisFloatingPointInstruction
 {
 public:
     VanadisFPFlagsSetImmInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
-        VanadisFloatingPointFlags* fpflags, const uint64_t imm) :
+        VanadisFloatingPointFlags* fpflags, const uint64_t imm, int mode) :
         VanadisFloatingPointInstruction(
             addr, hw_thr, isa_opts, fpflags, 0, 0, 0, 0, 0, 0, 0, 0),
-			   imm_value(imm)
+			   imm_value(imm), mode(mode)
     {}
 
     VanadisFPFlagsSetImmInstruction*  clone() override { return new VanadisFPFlagsSetImmInstruction(*this); }
@@ -58,34 +59,15 @@ public:
 					getInstructionAddress(), getInstCode(), imm_value, imm_value);
 			}
 
-			if( (imm_value & 0x1) != 0 ) {
-				fpflags.setInexact();
-			}
-
-			if( (imm_value & 0x2) != 0 ) {
-				fpflags.setUnderflow();
-			}
-
-			if( (imm_value & 0x4) != 0 ) {
-				fpflags.setOverflow();
-			}
-
-			if( (imm_value & 0x8) != 0 ) {
-				fpflags.setDivZero();
-			}
-
-			if( (imm_value & 0x10) != 0 ) {
-				fpflags.setInvalidOp();
-			}
-
-			set_fp_flags = true;
-
+			updateFP_flags<SetFRM,SetFFLAGS>( imm_value, mode );
+            
 			markExecuted();
 		}
     }
 
 protected:
 	const uint64_t imm_value;
+    const int mode;
 
 };
 

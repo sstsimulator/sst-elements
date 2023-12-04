@@ -51,21 +51,25 @@ public:
         round_mode(VanadisFPRoundingMode::ROUND_NEAREST)
     {}
 
-    void update(const VanadisFloatingPointFlags& new_flags) {
+    void update_flags(const VanadisFloatingPointFlags& new_flags) {
 		f_invalidop = f_invalidop ? true : new_flags.f_invalidop;
 		f_divzero = f_divzero ? true : new_flags.f_divzero;
 		f_overflow = f_overflow ? true : new_flags.f_overflow;
 		f_underflow = f_underflow ? true : new_flags.f_underflow;
 		f_inexact = f_inexact ? true : new_flags.f_inexact;
+    }
+    void update_rm(const VanadisFloatingPointFlags& new_flags) {
 		round_mode = new_flags.round_mode;
     }
 
-    void set(const VanadisFloatingPointFlags& new_flags) {
+    void set_flags(const VanadisFloatingPointFlags& new_flags) {
 		f_invalidop = new_flags.f_invalidop;
 		f_divzero = new_flags.f_divzero;
 		f_overflow = new_flags.f_overflow;
 		f_underflow = new_flags.f_underflow;
 		f_inexact = new_flags.f_inexact;
+    }
+    void set_rm(const VanadisFloatingPointFlags& new_flags) {
 		round_mode = new_flags.round_mode;
     }
 
@@ -99,7 +103,8 @@ public:
     VanadisFPRoundingMode getRoundingMode() const { return round_mode; }
 
 	void print(SST::Output* output) {
-		output->verbose(CALL_INFO, 16, 0, "-> FP Status: IVLD: %c / DIV0: %c / OF: %c / UF: %c / INXCT: %c\n",
+		output->verbose(CALL_INFO, 16, 0, "-> FP Status: RM: %#x / IVLD: %c / DIV0: %c / OF: %c / UF: %c / INXCT: %c\n",
+            round_mode,
 			f_invalidop ? 'y' : 'n',
 			f_divzero ? 'y' : 'n',
 			f_overflow ? 'y' : 'n',
