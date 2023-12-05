@@ -34,6 +34,9 @@
 int main( int argc, char* argv[] ) {
     printf("Hello from Vanadis and Balar\n");
 
+    // Map balar
+    __vanadisMapBalar();
+
     // Registering the fatbinary and function
     // Use first argument as the fatbinary path
     unsigned int fatbin_handle = __cudaRegisterFatBinary("./vectorAdd/vectorAdd");

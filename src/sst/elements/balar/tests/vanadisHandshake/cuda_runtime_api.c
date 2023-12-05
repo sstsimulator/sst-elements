@@ -14,6 +14,8 @@
 // distribution.
 
 #include "cuda_runtime_api.h"
+#include <sys/syscall.h>
+#include <sys/mman.h>
 
 cudaError_t cudaMalloc(void **devPtr, uint64_t size) {
     // Send request to GPU
@@ -31,10 +33,10 @@ cudaError_t cudaMalloc(void **devPtr, uint64_t size) {
 
     // Vanadis write with 4B chunk, thus use uint32_t to pass
     // the pointer to the balar packet
-    *g_gpu = (uint32_t) call_packet_ptr;
+    *g_balarBaseAddr = (uint32_t) call_packet_ptr;
 
     // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_gpu;
+    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\nMalloc addr: %lu Dev addr: %lu\n", 
@@ -70,7 +72,7 @@ cudaError_t cudaMemcpy(uint64_t dst, uint64_t src, uint64_t count, enum cudaMemc
 
     // Vanadis write with 4B chunk, thus use uint32_t to pass
     // the pointer to the balar packet
-    *g_gpu = (uint32_t) call_packet_ptr;
+    *g_balarBaseAddr = (uint32_t) call_packet_ptr;
 
     // Read from GPU will return the address to the cuda return packet
     // Make the memcpy sync with balar so that CPU will
@@ -78,7 +80,7 @@ cudaError_t cudaMemcpy(uint64_t dst, uint64_t src, uint64_t count, enum cudaMemc
     BalarCudaCallReturnPacket_t *response_packet_ptr;
     while (1) {
         int wait = 0;
-        response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_gpu;
+        response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
         if (response_packet_ptr->is_cuda_call_done)
             break;
         wait++;
@@ -121,10 +123,10 @@ cudaError_t cudaConfigureCall(dim3 gridDim, dim3 blockDim, uint64_t sharedMem) {
 
     // Vanadis write with 4B chunk, thus use uint32_t to pass
     // the pointer to the balar packet
-    *g_gpu = (uint32_t) call_packet_ptr;
+    *g_balarBaseAddr = (uint32_t) call_packet_ptr;
 
     // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_gpu;
+    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
@@ -167,10 +169,10 @@ cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[8], uint64_t size, uin
 
     // Vanadis write with 4B chunk, thus use uint32_t to pass
     // the pointer to the balar packet
-    *g_gpu = (uint32_t) call_packet_ptr;
+    *g_balarBaseAddr = (uint32_t) call_packet_ptr;
 
     // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_gpu;
+    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
@@ -192,10 +194,10 @@ cudaError_t cudaLaunch(uint64_t func) {
 
     // Vanadis write with 4B chunk, thus use uint32_t to pass
     // the pointer to the balar packet
-    *g_gpu = (uint32_t) call_packet_ptr;
+    *g_balarBaseAddr = (uint32_t) call_packet_ptr;
 
     // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_gpu;
+    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
@@ -203,6 +205,19 @@ cudaError_t cudaLaunch(uint64_t func) {
     }
     
     return response_packet_ptr->cuda_error;
+}
+
+void __vanadisMapBalar() {
+    // TODO Get proper Addr_t
+    #ifdef SYS_mmap2
+        g_balarBaseAddr = (Addr_t*) syscall(SYS_mmap2, 0, 0, PROT_WRITE, 0, -2000, 0);
+    #else
+        g_balarBaseAddr = (Addr_t*) syscall(SYS_mmap, 0, 0, PROT_WRITE, 0, -2000, 0);
+    #endif
+
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("Mapping balar to address: %llx\n", g_balarBaseAddr);
+    }
 }
 
 unsigned int __cudaRegisterFatBinary(char file_name[256]) {
@@ -217,10 +232,10 @@ unsigned int __cudaRegisterFatBinary(char file_name[256]) {
 
     // Vanadis write with 4B chunk, thus use uint32_t to pass
     // the pointer to the balar packet
-    *g_gpu = (uint32_t) call_packet_ptr;
+    *g_balarBaseAddr = (uint32_t) call_packet_ptr;
 
     // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_gpu;
+    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d and fatbin handle %d\n", 
@@ -255,10 +270,10 @@ void __cudaRegisterFunction(
 
     // Vanadis write with 4B chunk, thus use uint32_t to pass
     // the pointer to the balar packet
-    *g_gpu = (uint32_t) call_packet_ptr;
+    *g_balarBaseAddr = (uint32_t) call_packet_ptr;
 
     // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_gpu;
+    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 

@@ -36,8 +36,11 @@
 #define LOG_LEVEL_WARNING 10
 #define LOG_LEVEL_ERROR 0
 
+// Depends on arch, mips use uint32_t, riscv get uint64_t
+typedef ADDR_TYPE Addr_t;
+
 // Global mmio gpu address
-static uint32_t* g_gpu = (uint32_t*) 0xFFFF1000;
+static Addr_t* g_balarBaseAddr = (Addr_t*) 0xFFFF1000;
 static uint8_t g_scratch_mem[512];
 static int32_t g_debug_level = LOG_LEVEL_WARNING;
 
@@ -238,6 +241,9 @@ cudaError_t cudaConfigureCall(dim3 gridDim, dim3 blockDim, uint64_t sharedMem);
 cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[8], uint64_t size, uint64_t offset);
 
 cudaError_t cudaLaunch(uint64_t func);
+
+// Use syscall to map balar to virtual memory space in vanadis
+void __vanadisMapBalar();
 
 unsigned int __cudaRegisterFatBinary(char file_name[256]);
 
