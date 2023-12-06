@@ -404,7 +404,7 @@ protected:
 
                 if(load_entry->countRequests() == 1) {
                     for(auto i = reg_offset + addr_offset + load_width; i < reg_width; ++i) {
-                        register_value.at(i) = 0x00;
+                        register_value.at(i) = 0xff;
                     }
                 }
 

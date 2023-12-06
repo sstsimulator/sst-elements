@@ -80,31 +80,45 @@ public:
                 getInstCode());
         }
 #endif
+        clear_IEEE754_except();
 
-        if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
-            const fp_format src_1  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
-            const fp_format result = std::sqrt(src_1);
+        if ( sizeof(fp_format) >= regFile->getFPRegWidth() ) {
 
+            fp_format src_1;
+            READ_FP_REG;
+
+            fp_format result = std::sqrt(src_1);
             performFlagChecks<fp_format>(result);
 
-            if(output->getVerboseLevel() >= 16) {
-                output->verbose(CALL_INFO, 16, 0, "---> sqrt( %f )  = %f\n", src_1, result);
+            if ( isNaN(result) ) {
+                result = NaN<fp_format>();
+            }   
+
+            WRITE_FP_REGS;
+
+        } else {
+
+            uint64_t src_1  = regFile->getFPReg<uint64_t>(phys_fp_regs_in[0]);
+
+            assert( isNaN_boxed( src_1 ) );
+
+            float tmp = std::sqrt( int64To<float>(src_1) );
+
+            performFlagChecks<float>(tmp);
+
+            uint64_t result = 0xffffffff00000000;
+
+            if ( UNLIKELY( isNaN(tmp) ) ) {
+                float i = NaN<float>();
+                result |= *(uint32_t*) &i;
+            } else {
+                result |= *(uint32_t*) &tmp;
             }
-
-            fractureToRegisters<fp_format>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], result);
+            
+            regFile->setFPReg<uint64_t>(phys_fp_regs_out[0], result);
         }
-        else {
-            const fp_format src_1  = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
-            const fp_format result = std::sqrt(src_1);
 
-            performFlagChecks<fp_format>(result);
-
-            if(output->getVerboseLevel() >= 16) {
-                output->verbose(CALL_INFO, 16, 0, "---> sqrt( %f ) = %f\n", src_1, result);
-            }
-
-            regFile->setFPReg<fp_format>(phys_fp_regs_out[0], result);
-        }
+        check_IEEE754_except();
 
         markExecuted();
     }

@@ -65,32 +65,33 @@ public:
             (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value, isa_int_regs_out[0],
             isa_int_regs_in[0]);
 #endif
-        //        assert(imm_value > 0);
-
-        if ( imm_value > 0 ) {
-
-            switch ( register_format ) {
-            case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
-            {
-                const int64_t src_1 = regFile->getIntReg<int64_t>(phys_int_regs_in[0]);
-                regFile->setIntReg<int64_t>(phys_int_regs_out[0], src_1 >> imm_value);
-            } break;
-            case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
-            {
-                const int32_t src_1        = regFile->getIntReg<int32_t>(phys_int_regs_in[0]);
-                const int32_t imm_value_32 = static_cast<int32_t>(imm_value);
-
-                regFile->setIntReg<int32_t>(phys_int_regs_out[0], src_1 >> imm_value_32);
-            } break;
-            default:
-            {
-                flagError();
-            } break;
+        if constexpr ( sizeof( register_format ) == 4 ) {
+            // imm cannot be 0 for RV32 or for RV64 when working on 32 bit values
+            if ( UNLIKELY( 0 == imm_value ) ) {
+                auto str = getenv("VANADIS_NO_FAULT");
+                if ( nullptr == str ) {
+                    flagError();
+                }
             }
         }
-        else {
-            // Shift by ZERO is error?
+      
+        switch ( register_format ) {
+        case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
+        {
+            const int64_t src_1 = regFile->getIntReg<int64_t>(phys_int_regs_in[0]);
+            regFile->setIntReg<int64_t>(phys_int_regs_out[0], src_1 >> imm_value);
+        } break;
+        case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
+        {
+            const int32_t src_1        = regFile->getIntReg<int32_t>(phys_int_regs_in[0]);
+            const int32_t imm_value_32 = static_cast<int32_t>(imm_value);
+
+            regFile->setIntReg<int32_t>(phys_int_regs_out[0], src_1 >> imm_value_32);
+        } break;
+        default:
+        {
             flagError();
+        } break;
         }
 
         markExecuted();
