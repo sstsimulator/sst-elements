@@ -44,7 +44,7 @@ all process have exited
  node0.cpu0.rob_slots_in_use.1 : Accumulator : Sum.u64 = 24690232; SumSQ.u64 = 1522602596; Count.u64 = 565281; Min.u64 = 0; Max.u64 = 63; 
  node0.cpu0.rob_cleared_entries.1 : Accumulator : Sum.u64 = 47675; SumSQ.u64 = 2505583; Count.u64 = 1055; Min.u64 = 0; Max.u64 = 62; 
  node0.cpu0.syscall-cycles.1 : Accumulator : Sum.u64 = 653745; SumSQ.u64 = 653745; Count.u64 = 653745; Min.u64 = 1; Max.u64 = 1; 
- node0.cpu0.phys_int_reg_in_use.1 : Accumulator : Sum.u64 = 21032246; SumSQ.u64 = 788783602; Count.u64 = 565281; Min.u64 = 35; Max.u64 = 52; 
+ node0.cpu0.phys_int_reg_in_use.1 : Accumulator : Sum.u64 = 21597527; SumSQ.u64 = 831413375; Count.u64 = 565281; Min.u64 = 36; Max.u64 = 53; 
  node0.cpu0.phys_fp_reg_in_use.1 : Accumulator : Sum.u64 = 18654273; SumSQ.u64 = 615591009; Count.u64 = 565281; Min.u64 = 33; Max.u64 = 33; 
  node0.cpu1:decoder0:branch_unit.branch_cache_hit.1 : Accumulator : Sum.u64 = 4750; SumSQ.u64 = 4750; Count.u64 = 4750; Min.u64 = 1; Max.u64 = 1; 
  node0.cpu1:decoder0:branch_unit.branch_cache_miss.1 : Accumulator : Sum.u64 = 9045; SumSQ.u64 = 9045; Count.u64 = 9045; Min.u64 = 1; Max.u64 = 1; 
@@ -79,6 +79,6 @@ all process have exited
  node0.cpu1.rob_slots_in_use.1 : Accumulator : Sum.u64 = 10593981; SumSQ.u64 = 647910155; Count.u64 = 565281; Min.u64 = 0; Max.u64 = 63; 
  node0.cpu1.rob_cleared_entries.1 : Accumulator : Sum.u64 = 52141; SumSQ.u64 = 2784737; Count.u64 = 1110; Min.u64 = 0; Max.u64 = 62; 
  node0.cpu1.syscall-cycles.1 : Accumulator : Sum.u64 = 330649; SumSQ.u64 = 330649; Count.u64 = 330649; Min.u64 = 1; Max.u64 = 1; 
- node0.cpu1.phys_int_reg_in_use.1 : Accumulator : Sum.u64 = 20280349; SumSQ.u64 = 730422089; Count.u64 = 565281; Min.u64 = 35; Max.u64 = 52; 
+ node0.cpu1.phys_int_reg_in_use.1 : Accumulator : Sum.u64 = 20845630; SumSQ.u64 = 771548068; Count.u64 = 565281; Min.u64 = 36; Max.u64 = 53; 
  node0.cpu1.phys_fp_reg_in_use.1 : Accumulator : Sum.u64 = 18654273; SumSQ.u64 = 615591009; Count.u64 = 565281; Min.u64 = 33; Max.u64 = 33; 
 Simulation is complete, simulated time: 245.897 us
