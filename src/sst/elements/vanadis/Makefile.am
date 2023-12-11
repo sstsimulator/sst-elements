@@ -45,6 +45,7 @@ inst/vfence.h \
 inst/vfp2fp.h \
 inst/vfp2gpr.h \
 inst/vfpadd.h \
+inst/vfpclass.h \
 inst/vfpmadd.h \
 inst/vfpmsub.h \
 inst/vfpconv.h \
@@ -69,6 +70,7 @@ inst/vjr.h \
 inst/vjump.h \
 inst/vload.h \
 inst/vmemflagtype.h \
+inst/vmin.h \
 inst/vmipsfpscmp.h \
 inst/vmod.h \
 inst/vmovci.h \
