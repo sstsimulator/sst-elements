@@ -18,6 +18,7 @@
 
 #include <sst/core/sst_types.h>
 #include <limits>
+#include <numeric>
 
 #include <sst/core/eli/elibase.h>   // For ElementInfoStatistic
 #include <sst/core/serialization/serializable.h> // For serializable MemRegion
@@ -259,15 +260,6 @@ public:
         return false;
     }
 
-    // Move into util if helpful elsewhere
-    // TODO replace with std function when Core moves to C++17 
-    // a > b
-    uint64_t gcd(const uint64_t a, const uint64_t b) const {
-        if (b == 0)
-            return a;
-        return gcd(b, a % b);
-    }
-
     // TODO clean this up to something more succinct
     // We need to compute the set intersection of this MemRegion with MemRegion 'o'
     // The intersection may not be describable as a single MemRegion, so a set is returned
@@ -284,7 +276,7 @@ public:
         }
 
         // Easy case, no interleaving
-        if (interleaveSize == 0 && o.interleaveStep == 0) {
+        if (interleaveSize == 0 && o.interleaveSize == 0) {
             MemRegion reg;
             reg.start = std::max(start, o.start);
             reg.end = std::min(end, o.end);
@@ -294,20 +286,58 @@ public:
             return regions;
         }
        
-        // Otherwise, compute LCM of interleaveStep & o.interleaveStep
-        uint64_t lcm; 
-        if (interleaveStep == o.interleaveStep) {
-            lcm = interleaveStep;
-        } else if (interleaveStep > o.interleaveStep) {
-            lcm = (interleaveStep / gcd(interleaveStep, o.interleaveStep)) * o.interleaveStep;
-        } else {
-            lcm = (interleaveStep / gcd(o.interleaveStep, interleaveStep)) * o.interleaveStep;
+        // One is interleaved, other is not
+        if (interleaveSize == 0) {
+            MemRegion reg;
+            reg.end = std::min(end, o.end);
+            if (start > o.start) {
+                uint64_t tmp = start - o.start;
+                tmp = tmp / o.interleaveStep;
+                tmp = (tmp + 1) * o.interleaveStep + o.start;
+                if (tmp > reg.end) return regions;
+                reg.start = tmp;
+            } else {
+                reg.start = o.start;
+            }
+            if ((reg.end - reg.start) <= o.interleaveStep) {
+                reg.interleaveSize = 0;
+                reg.interleaveStep = 0;
+                reg.end = std::min(reg.end, reg.start + o.interleaveSize);
+            } else {
+                reg.interleaveSize = o.interleaveSize;
+                reg.interleaveStep = o.interleaveStep;
+            }
+            regions.insert(reg);
+            return regions;
+        } else if (o.interleaveSize == 0) {
+            MemRegion reg;
+            reg.end = std::min(end, o.end);
+            if (o.start > start) {
+                uint64_t tmp = o.start - start;
+                tmp = tmp / interleaveStep;
+                tmp = (tmp + 1) * interleaveStep + start;
+                if (tmp > reg.end) return regions;
+                reg.start = tmp;
+            } else {
+                reg.start = start;
+            }
+            if ((reg.end - reg.start) <= interleaveStep) {
+                reg.interleaveSize = 0;
+                reg.interleaveStep = 0;
+                reg.end = std::min(reg.end, reg.start + interleaveSize);
+            } else {
+                reg.interleaveSize = interleaveSize;
+                reg.interleaveStep = interleaveStep;
+            }
+            regions.insert(reg);
+            return regions;
         }
 
         // Check interval from max(start, o.start) to lcm + max(start, o.start)
         // for overlap
         // If overlap, add a region with (start_overlap, min(end, o.end), 1, lcm)
         //  Consecutive regions can be merged
+        uint64_t lcm = std::lcm(interleaveStep, o.interleaveStep); 
         uint64_t check_start = std::max(start, o.start);
         uint64_t check_end = check_start + lcm;
         uint64_t region_start = check_start;
@@ -351,23 +381,14 @@ public:
             return true;
         }
 
-        // Easy case, no interleaving
-        if (interleaveSize == 0 && o.interleaveStep == 0) {
+        // No interleaving
+        if (interleaveStep == 0 && o.interleaveStep == 0) {
             return true;
-        }
-       
-        // Otherwise, compute LCM of interleaveStep & o.interleaveStep
-        uint64_t lcm; 
-        if (interleaveStep == o.interleaveStep) {
-            lcm = interleaveStep;
-        } else if (interleaveStep > o.interleaveStep) {
-            lcm = (interleaveStep / gcd(interleaveStep, o.interleaveStep)) * o.interleaveStep;
-        } else {
-            lcm = (interleaveStep / gcd(o.interleaveStep, interleaveStep)) * o.interleaveStep;
         }
 
         // Check interval from max(start, o.start) to lcm + max(start, o.start)
         // for overlap
+        uint64_t lcm = std::lcm(interleaveStep, o.interleaveStep); 
         uint64_t check_start = std::max(start, o.start);
         uint64_t check_end = check_start + lcm;
         for (uint64_t i = check_start; i < check_end; i++) {

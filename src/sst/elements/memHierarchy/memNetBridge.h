@@ -23,6 +23,7 @@
 #include <sst/core/output.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 
+#include <sst/elements/memHierarchy/memTypes.h>
 #include <sst/elements/merlin/bridge.h>
 
 #include <map>
@@ -58,7 +59,10 @@ public:
     SimpleNetwork::Request* initTranslate(SimpleNetwork::Request* req, uint8_t fromNetwork);
 
 private:
+    // Debug
     Output dbg;
+    std::set<Addr> DEBUG_ADDR;
+    int dlevel;
 
     typedef std::map<std::string, SimpleNetwork::nid_t> addrMap_t;
     typedef std::map<std::string, uint64_t> imreMap_t;
