@@ -35,7 +35,7 @@ all process have exited
  node0.cpu0.rob_slots_in_use.1 : Accumulator : Sum.u64 = 1084751429; SumSQ.u64 = 64629012065; Count.u64 = 22317983; Min.u64 = 0; Max.u64 = 63; 
  node0.cpu0.rob_cleared_entries.1 : Accumulator : Sum.u64 = 9671127; SumSQ.u64 = 507490761; Count.u64 = 226622; Min.u64 = 0; Max.u64 = 62; 
  node0.cpu0.syscall-cycles.1 : Accumulator : Sum.u64 = 1955251; SumSQ.u64 = 1955251; Count.u64 = 1955251; Min.u64 = 1; Max.u64 = 1; 
- node0.cpu0.phys_int_reg_in_use.1 : Accumulator : Sum.u64 = 855681110; SumSQ.u64 = 32985194640; Count.u64 = 22317983; Min.u64 = 35; Max.u64 = 56; 
+ node0.cpu0.phys_int_reg_in_use.1 : Accumulator : Sum.u64 = 877999093; SumSQ.u64 = 34718874843; Count.u64 = 22317983; Min.u64 = 36; Max.u64 = 57; 
  node0.cpu0.phys_fp_reg_in_use.1 : Accumulator : Sum.u64 = 736612631; SumSQ.u64 = 24312313925; Count.u64 = 22317983; Min.u64 = 33; Max.u64 = 36; 
  node1.cpu0:decoder0:branch_unit.branch_cache_hit.1 : Accumulator : Sum.u64 = 534921; SumSQ.u64 = 534921; Count.u64 = 534921; Min.u64 = 1; Max.u64 = 1; 
  node1.cpu0:decoder0:branch_unit.branch_cache_miss.1 : Accumulator : Sum.u64 = 1029979; SumSQ.u64 = 1029979; Count.u64 = 1029979; Min.u64 = 1; Max.u64 = 1; 
@@ -70,6 +70,6 @@ all process have exited
  node1.cpu0.rob_slots_in_use.1 : Accumulator : Sum.u64 = 1169918107; SumSQ.u64 = 70966506107; Count.u64 = 22317983; Min.u64 = 0; Max.u64 = 63; 
  node1.cpu0.rob_cleared_entries.1 : Accumulator : Sum.u64 = 6133691; SumSQ.u64 = 321912013; Count.u64 = 142897; Min.u64 = 0; Max.u64 = 62; 
  node1.cpu0.syscall-cycles.1 : Accumulator : Sum.u64 = 89715; SumSQ.u64 = 89715; Count.u64 = 89715; Min.u64 = 1; Max.u64 = 1; 
- node1.cpu0.phys_int_reg_in_use.1 : Accumulator : Sum.u64 = 842664438; SumSQ.u64 = 31929583382; Count.u64 = 22317983; Min.u64 = 35; Max.u64 = 56; 
+ node1.cpu0.phys_int_reg_in_use.1 : Accumulator : Sum.u64 = 864982421; SumSQ.u64 = 33637230241; Count.u64 = 22317983; Min.u64 = 36; Max.u64 = 57; 
  node1.cpu0.phys_fp_reg_in_use.1 : Accumulator : Sum.u64 = 736573339; SumSQ.u64 = 24309671715; Count.u64 = 22317983; Min.u64 = 33; Max.u64 = 36; 
 Simulation is complete, simulated time: 9.70832 ms
