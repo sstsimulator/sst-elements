@@ -61,7 +61,7 @@ public:
     VanadisRISCV64Decoder(ComponentId_t id, Params& params) : VanadisDecoder(id, params)
     {
         // we need TWO additional registers for AMO microcode operations, RISC-V has 32 + 2 int for our micro-code.
-        options = new VanadisDecoderOptions(static_cast<uint16_t>(0), 34, 32, 2, VANADIS_REGISTER_MODE_FP64);
+        options = new VanadisDecoderOptions(static_cast<uint16_t>(0), 35, 32, 2, VANADIS_REGISTER_MODE_FP64);
         max_decodes_per_cycle = params.find<uint16_t>("decode_max_ins_per_cycle", 2);
 
         // See if we get an entry point the sub-component says we have to use
@@ -1308,7 +1308,7 @@ protected:
 
                         // implement a micro-op sequence for AMOSWAP (yuck)
                         bundle->addInstruction(new VanadisLoadInstruction(
-                                    ins_address, hw_thr, options, rs1, 0, /* place in r32 */ 32, op_width,
+                                    ins_address, hw_thr, options, rs1, 0, /* place in r34 */ 34, op_width,
                                     true, MEM_TRANSACTION_LLSC_LOAD,
                                     LOAD_INT_REGISTER));
 
@@ -1320,7 +1320,7 @@ protected:
                         // conditionally copy the loaded value into rd IF the store-conditional was successful
                         // copy r32 into rd if r33 == 0
                         bundle->addInstruction(new VanadisConditionalMoveImmInstruction<int64_t, int64_t, REG_COMPARE_EQ>(
-                                ins_address, hw_thr, options, rd, 32, 33, 0
+                                ins_address, hw_thr, options, rd, 34, 33, 0
                         ));
 
                         // branch back to this instruction address IF r33 == 1 (which means the store failed)
@@ -1349,7 +1349,7 @@ protected:
                         output->verbose(CALL_INFO, 16, 0,
                             "-----> %s.%s 0x%llx / thr: %" PRIu32 " / %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16
                             " / width: %" PRIu32 " / aq: %s / rl: %s\n",
-                            getAMO_name(amo_op).c_str(), getAMO_type( func_code3 ),
+                            getAMO_name(amo_op).c_str(), getAMO_type( func_code3 ).c_str(),
                             ins_address, hw_thr, rd, rs1, rs2, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
 
                         if(LIKELY(perform_aq)) {
@@ -1358,49 +1358,50 @@ protected:
 
                         // (r1) -> rd
                         bundle->addInstruction(new VanadisLoadInstruction(
-                                    ins_address, hw_thr, options, rs1, 0, rd, op_width,
+                                    ins_address, hw_thr, options, rs1, 0, 34, op_width,
                                     true, MEM_TRANSACTION_LLSC_LOAD,
                                     LOAD_INT_REGISTER));
 
+                        // r34 OP rs2 => r32
                         switch( amo_op ) { 
                         case AMO_ADD:
-                            bundle->addInstruction( new VanadisAddInstruction<int64_t>( ins_address, hw_thr, options, 32, rd, rs2));
+                            bundle->addInstruction( new VanadisAddInstruction<int64_t>( ins_address, hw_thr, options, 32, 34, rs2));
                             break;
                         case AMO_XOR:
-                            bundle->addInstruction( new VanadisXorInstruction( ins_address, hw_thr, options, 32, rd, rs2)); 
+                            bundle->addInstruction( new VanadisXorInstruction( ins_address, hw_thr, options, 32, 34, rs2)); 
                             break;
                         case AMO_OR:
-                            bundle->addInstruction( new VanadisOrInstruction( ins_address, hw_thr, options, 32, rd, rs2)); 
+                            bundle->addInstruction( new VanadisOrInstruction( ins_address, hw_thr, options, 32, 34, rs2)); 
                             break;
                         case AMO_AND:
-                            bundle->addInstruction( new VanadisAndInstruction( ins_address, hw_thr, options, 32, rd, rs2));
+                            bundle->addInstruction( new VanadisAndInstruction( ins_address, hw_thr, options, 32, 34, rs2));
                             break;
                         case AMO_MIN:
                             if ( AMO_W == func_code3 ) {
-                                bundle->addInstruction( new VanadisMinInstruction<int32_t,true>( ins_address, hw_thr, options, 32, rd, rs2));
+                                bundle->addInstruction( new VanadisMinInstruction<int32_t,true>( ins_address, hw_thr, options, 32, 34, rs2));
                             } else {
-                                bundle->addInstruction( new VanadisMinInstruction<int64_t,true>( ins_address, hw_thr, options, 32, rd, rs2));
+                                bundle->addInstruction( new VanadisMinInstruction<int64_t,true>( ins_address, hw_thr, options, 32, 34, rs2));
                             }
                             break;
                         case AMO_MAX:
                             if ( AMO_W == func_code3 ) {
-                                bundle->addInstruction( new VanadisMinInstruction<int32_t,false>( ins_address, hw_thr, options, 32, rd, rs2));
+                                bundle->addInstruction( new VanadisMinInstruction<int32_t,false>( ins_address, hw_thr, options, 32, 34, rs2));
                             } else {
-                                bundle->addInstruction( new VanadisMinInstruction<int64_t,false>( ins_address, hw_thr, options, 32, rd, rs2));
+                                bundle->addInstruction( new VanadisMinInstruction<int64_t,false>( ins_address, hw_thr, options, 32, 34, rs2));
                             }
                             break;
                         case AMO_MINU:
                             if ( AMO_W == func_code3 ) {
-                                bundle->addInstruction( new VanadisMinInstruction<uint32_t,true>( ins_address, hw_thr, options, 32, rd, rs2));
+                                bundle->addInstruction( new VanadisMinInstruction<uint32_t,true>( ins_address, hw_thr, options, 32, 34, rs2));
                             } else {
-                                bundle->addInstruction( new VanadisMinInstruction<uint64_t,true>( ins_address, hw_thr, options, 32, rd, rs2));
+                                bundle->addInstruction( new VanadisMinInstruction<uint64_t,true>( ins_address, hw_thr, options, 32, 34, rs2));
                             }
                             break;
                         case AMO_MAXU:
                             if ( AMO_W == func_code3 ) {
-                                bundle->addInstruction( new VanadisMinInstruction<uint32_t,false>( ins_address, hw_thr, options, 32, rd, rs2));
+                                bundle->addInstruction( new VanadisMinInstruction<uint32_t,false>( ins_address, hw_thr, options, 32, 34, rs2));
                             } else {
-                                bundle->addInstruction( new VanadisMinInstruction<uint64_t,false>( ins_address, hw_thr, options, 32, rd, rs2));
+                                bundle->addInstruction( new VanadisMinInstruction<uint64_t,false>( ins_address, hw_thr, options, 32, 34, rs2));
                             }
                             break;
                         default: assert(0);
@@ -1411,6 +1412,12 @@ protected:
                         bundle->addInstruction(new VanadisStoreConditionalInstruction(
                                 ins_address, hw_thr, options, rs1, 0, 32, /* success code */ 33, op_width,
                                 STORE_INT_REGISTER, 0, 1));
+
+                        // conditionally copy the loaded value into rd IF the store-conditional was successful
+                        // copy r34 into rd if r33 == 0
+                        bundle->addInstruction(new VanadisConditionalMoveImmInstruction<int64_t, int64_t, REG_COMPARE_EQ>(
+                                ins_address, hw_thr, options, rd, 34, 33, 0
+                        ));
 
                         // branch back to this instruction address IF r33 == 1 (which means the store failed)
                         bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<int64_t, REG_COMPARE_EQ>(
