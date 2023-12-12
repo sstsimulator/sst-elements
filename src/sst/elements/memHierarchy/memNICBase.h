@@ -91,6 +91,10 @@ class MemNICBase : public MemLinkBase {
 
                 virtual bool hasClientData() const { return true; }
 
+                virtual std::string toString() const override {
+                    return event->toString();
+                }
+
                 void serialize_order(SST::Core::Serialization::serializer &ser) override {
                     Event::serialize_order(ser);
                     ser & event;
@@ -116,6 +120,10 @@ class MemNICBase : public MemLinkBase {
                 }
 
                 virtual bool hasClientData() const override { return false; }
+                
+                virtual std::string toString() const override {
+                    return info.toString();
+                }
 
                 void serialize_order(SST::Core::Serialization::serializer & ser) override {
                     MemRtrEvent::serialize_order(ser);
@@ -247,16 +255,17 @@ class MemNICBase : public MemLinkBase {
         }
 
         virtual void processInitMemRtrEvent(InitMemRtrEvent* imre) {
-            dbg.debug(_L10_, "%s (memNICBase) received imre. Name: %s, Addr: %" PRIu64 ", ID: %" PRIu32 ", start: %" PRIu64 ", end: %" PRIu64 ", size: %" PRIu64 ", step: %" PRIu64 "\n",
-                    getName().c_str(), imre->info.name.c_str(), imre->info.addr, imre->info.id, imre->info.region.start, imre->info.region.end, imre->info.region.interleaveSize, imre->info.region.interleaveStep);
 
             if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
                 addSource(imre->info);
-                dbg.debug(_L10_, "\tAdding to sourceEndpointInfo. %zu sources found\n", sourceEndpointInfo.size());
+                dbg.debug(_L10_, "%s (memNICBase) received source imre. Name: %s, Addr: %" PRIu64 ", ID: %" PRIu32 ", start: %" PRIu64 ", end: %" PRIu64 ", size: %" PRIu64 ", step: %" PRIu64 "\n",
+                        getName().c_str(), imre->info.name.c_str(), imre->info.addr, imre->info.id, imre->info.region.start, imre->info.region.end, imre->info.region.interleaveSize, imre->info.region.interleaveStep);
             }
+            
             if (destIDs.find(imre->info.id) != destIDs.end()) {
                 addDest(imre->info);
-                dbg.debug(_L10_, "\tAdding to destEndpointInfo. %zu destinations found\n", destEndpointInfo.size());
+                dbg.debug(_L10_, "%s (memNICBase) received dest imre. Name: %s, Addr: %" PRIu64 ", ID: %" PRIu32 ", start: %" PRIu64 ", end: %" PRIu64 ", size: %" PRIu64 ", step: %" PRIu64 "\n",
+                        getName().c_str(), imre->info.name.c_str(), imre->info.addr, imre->info.id, imre->info.region.start, imre->info.region.end, imre->info.region.interleaveSize, imre->info.region.interleaveStep);
             }
         }
 
