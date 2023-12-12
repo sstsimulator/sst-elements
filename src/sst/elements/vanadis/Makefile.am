@@ -556,7 +556,12 @@ EXTRA_DIST = \
 \
 	tests/basic_vanadis.py \
 	tests/no_rtr_vanadis.py \
-	tests/testsuite_default_vanadis.py
+	tests/testsuite_default_vanadis.py \
+\
+	tests/riscv-tests/patch.txt \
+	tests/riscv-tests/README \
+	tests/riscv-tests/run-riscv-tests \
+	tests/riscv-tests/run-riscv-tests.out
 
 libvanadis_la_SOURCES = \
 	vanadis.cc \
