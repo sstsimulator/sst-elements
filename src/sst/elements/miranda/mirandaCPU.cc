@@ -263,9 +263,6 @@ void RequestGenCPU::StdMemHandler::handle(Interfaces::StandardMem::WriteResp* rs
 
 void RequestGenCPU::StdMemHandler::handle(Interfaces::StandardMem::CustomResp* rsp) {
     cpu->requestsPending[CUSTOM]--;
-    // The CustomResp destructor does not delete the data
-    // Do not need to delete the cpuReq data as the memory system should take care of that
-    delete rsp->data;
 }
 
 void RequestGenCPU::issueCustomRequest(CustomOpRequest* req) {
