@@ -1046,7 +1046,7 @@ protected:
                     // CSRRS(I) atomic read and set bits
                     // CSRRC(I) atomic read and clear bit
                     output->verbose(
-                            CALL_INFO, 16, 0, "-----> %s: ins: 0x%" PRI_ADDR " / %" PRIu64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", 
+                            CALL_INFO, 16, 0, "-----> %s: ins: 0x%" PRI_ADDR " / %#" PRIx64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", 
                                         getCSR_name(func_code).c_str(),ins_address, uimm64, rd, rs1);
 
                     switch ( uimm64 ) 
@@ -1104,6 +1104,21 @@ protected:
                                 }
                             }
                             decode_fault = false;
+                      } break;
+                      default:
+                      {
+                        uint64_t csrNum = uimm64 & 0xfff;
+                        switch ( csrNum ) {
+                            case 0xc00:
+                            {
+                                if ( 0 == rs1 ) {
+                                    auto thread_call = std::bind(&VanadisRISCV64Decoder::getCycleCount, this);
+                                    bundle->addInstruction( new VanadisSetRegisterByCallInstruction<int64_t>( ins_address, hw_thr, options, rd, thread_call));
+                                    decode_fault = false;
+                                }
+                            } break;
+                        }
+
                       } break;
                     }
                 }
