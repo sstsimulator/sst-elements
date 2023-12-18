@@ -45,6 +45,7 @@ inst/vfence.h \
 inst/vfp2fp.h \
 inst/vfp2gpr.h \
 inst/vfpadd.h \
+inst/vfpclass.h \
 inst/vfpmadd.h \
 inst/vfpmsub.h \
 inst/vfpconv.h \
@@ -69,6 +70,7 @@ inst/vjr.h \
 inst/vjump.h \
 inst/vload.h \
 inst/vmemflagtype.h \
+inst/vmin.h \
 inst/vmipsfpscmp.h \
 inst/vmod.h \
 inst/vmovci.h \
@@ -554,7 +556,12 @@ EXTRA_DIST = \
 \
 	tests/basic_vanadis.py \
 	tests/no_rtr_vanadis.py \
-	tests/testsuite_default_vanadis.py
+	tests/testsuite_default_vanadis.py \
+\
+	tests/riscv-tests/patch.txt \
+	tests/riscv-tests/README \
+	tests/riscv-tests/run-riscv-tests \
+	tests/riscv-tests/run-riscv-tests.out
 
 libvanadis_la_SOURCES = \
 	vanadis.cc \

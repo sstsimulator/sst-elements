@@ -108,6 +108,8 @@ static inline Addr_t* getReqQueueHeadAddr() {
 void writeCmd( NicCmd* cmd ) {
 
 	dbgPrint("cmd=%p\n",cmd);
+    // we need a memory fence here to get MVAPICH working, It's not clear why it has to be hear 
+	__sync_synchronize();
 	while ( ( s_reqQueueHeadIndex + 1 ) % s_nicQueueInfo.reqQueueSize == getReqQueueTailIndex() );
 
 	memcpy( getReqQueueHeadAddr(), cmd, sizeof(*cmd) );
