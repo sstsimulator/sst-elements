@@ -54,15 +54,20 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) : SST::Component(id) {
     mmio_size = params.find<uint32_t>("mmio_size", 512);
 
     // Get interfaces and bind handlers
-    iface = loadUserSubComponent<SST::Interfaces::StandardMem>("iface", ComponentInfo::SHARE_NONE, tc, 
+    mmio_iface = loadUserSubComponent<SST::Interfaces::StandardMem>("mmio_iface", ComponentInfo::SHARE_NONE, tc, 
+            new StandardMem::Handler<DMAEngine>(this, &DMAEngine::handleEvent));
+    mem_iface = loadUserSubComponent<SST::Interfaces::StandardMem>("mem_iface", ComponentInfo::SHARE_NONE, tc, 
             new StandardMem::Handler<DMAEngine>(this, &DMAEngine::handleEvent));
 
-    if (!iface) {
-        out.fatal(CALL_INFO, -1, "%s, Error: No interface found loaded into 'iface' subcomponent slot. Please check input file\n", getName().c_str());
+    if (!mmio_iface) {
+        out.fatal(CALL_INFO, -1, "%s, Error: No interface found loaded into 'mmio_iface' subcomponent slot. Please check input file\n", getName().c_str());
+    }
+    if (!mem_iface) {
+        out.fatal(CALL_INFO, -1, "%s, Error: No interface found loaded into 'mem_iface' subcomponent slot. Please check input file\n", getName().c_str());
     }
 
     // Set MMIO address for dma Engine
-    iface->setMemoryMappedAddressRegion(mmio_addr, mmio_size);
+    mmio_iface->setMemoryMappedAddressRegion(mmio_addr, mmio_size);
 
     // Initialize handlers
     handlers = new DMAHandlers(this, &out);
@@ -73,11 +78,13 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) : SST::Component(id) {
 }
 
 void DMAEngine::init(unsigned int phase) {
-    iface->init(phase);
+    mmio_iface->init(phase);
+    mem_iface->init(phase);
 }
 
 void DMAEngine::setup() {
-    iface->setup();
+    mmio_iface->setup();
+    mem_iface->setup();
 }
 
 /**
@@ -118,8 +125,8 @@ bool DMAEngine::tick(SST::Cycle_t x) {
                 dma_ctrl_regs.sst_mem_addr += dma_ctrl_regs.transfer_size;
             }
 
-            // Send the copy request
-            iface->send(req);
+            // Send the copy request to memory system
+            mem_iface->send(req);
         } else if (dma_ctrl_regs.dir == SST_TO_SIM) {
             // Need to first read it and get copy done inside readresp handler
             StandardMem::Read* req = new StandardMem::Read(
@@ -138,8 +145,8 @@ bool DMAEngine::tick(SST::Cycle_t x) {
                 dma_ctrl_regs.simulator_mem_addr += dma_ctrl_regs.transfer_size;
             }
 
-            // Send the copy request
-            iface->send(req);
+            // Send the read request
+            mem_iface->send(req);
         } else {
             out.fatal(CALL_INFO, -1, "%s: invalid DMA copy direction!\n", this->getName().c_str());
         }
@@ -156,7 +163,7 @@ bool DMAEngine::tick(SST::Cycle_t x) {
 
         if (!(pending_transfer->posted)) {
             out.verbose(_INFO_, "%s: DMA done!\n", this->getName().c_str());
-            iface->send(pending_transfer->makeResponse());
+            mmio_iface->send(pending_transfer->makeResponse());
             delete pending_transfer;
         }
 
@@ -183,7 +190,7 @@ void DMAEngine::DMAHandlers::handle(StandardMem::Read* read) {
     payload->resize(read->size, 0);
     resp->data = *payload;
 
-    dma->iface->send(resp);
+    dma->mmio_iface->send(resp);
     delete payload;
 }
 
@@ -199,7 +206,7 @@ void DMAEngine::DMAHandlers::handle(StandardMem::Write* write) {
         out->verbose(_INFO_, "%s: issued request while DMA busy!\n", dma->getName().c_str());
 
         if (!(write->posted)) {
-            dma->iface->send(write->makeResponse());
+            dma->mmio_iface->send(write->makeResponse());
             delete write;
         }
     } else {

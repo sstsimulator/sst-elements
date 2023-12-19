@@ -69,12 +69,13 @@ public:
         {"base_addr",               "(uint) Starting addr mapped to the device", "0"},
         {"gpu_cores",               "(uint) Number of GPU cores", "1"},
         {"mmio_size",               "(uint) Size of the MMIO memory range (Bytes)", "512"},
-        {"dma_addr",               "(uint) Starting addr mapped to the DMA Engine", "512"},
+        {"dma_addr",                "(uint) Starting addr mapped to the DMA Engine", "512"},
+        {"cpu_no_cache",            "(bool) Whether the cpu is using cache, if true, need to connect mem_iface to it, else can use mmio_iface along", "true"},
     
     )
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( 
-        {"iface", "Interface into memory subsystem", "SST::Interfaces::StandardMem"},
-        // {"dma_if", "Interface into DMA engine", "SST::Interfaces::StandardMem"},
+        {"mmio_iface", "Command packet MMIO interface", "SST::Interfaces::StandardMem"},
+        {"mem_iface", "Memory data packet interface", "SST::Interfaces::StandardMem"},
     )
     SST_ELI_DOCUMENT_PORTS(
         {"requestLink%(num_cores)d", "Handle CUDA API calls", {} },
@@ -109,15 +110,17 @@ protected:
     /* Handle event from gpu cache */
     void handleGPUCache(StandardMem::Request* req);
     
-    /* Handlers for StandardMem::Request types we handle */
-    class mmioHandlers : public StandardMem::RequestHandler {
+    /* Handlers for command and data requests/responses on the two interfaces */
+    class BalarHandlers : public StandardMem::RequestHandler {
     public:
         friend class BalarMMIO;
 
-        mmioHandlers(BalarMMIO* mmio, SST::Output* out) : StandardMem::RequestHandler(out), mmio(mmio) {}
-        virtual ~mmioHandlers() {}
+        BalarHandlers(BalarMMIO* balar, SST::Output* out) : StandardMem::RequestHandler(out), balar(balar) {}
+        virtual ~BalarHandlers() {}
+        // These two handle read/write from `mmio_iface` and issue read/write of CUDA packets via `mem_iface`
         virtual void handle(StandardMem::Read* read) override;
         virtual void handle(StandardMem::Write* write) override;
+        // These two handle response from `mem_iface` and send response back to cpu via `mmio_iface`
         virtual void handle(StandardMem::ReadResp* resp) override;
         virtual void handle(StandardMem::WriteResp* resp) override;
 
@@ -127,20 +130,7 @@ protected:
         void UInt64ToData(uint64_t num, std::vector<uint8_t>* data);
         uint64_t dataToUInt64(std::vector<uint8_t>* data);
 
-        BalarMMIO* mmio;
-    };
-
-    class DMAHandlers : public StandardMem::RequestHandler {
-    public:
-        friend class BalarMMIO;
-
-        DMAHandlers(BalarMMIO* mmio, SST::Output* out) : StandardMem::RequestHandler(out), mmio(mmio) {}
-        virtual ~DMAHandlers() {}
-        virtual void handle(StandardMem::ReadResp* resp) override;
-        virtual void handle(StandardMem::WriteResp* resp) override;
-
-    private:
-        BalarMMIO* mmio;
+        BalarMMIO* balar;
     };
 
     /* Debug -triggered by output.fatal() and/or SIGUSR2 */
@@ -150,9 +140,8 @@ protected:
     Output out;
 
     Addr mmio_addr;
-    mmioHandlers* handlers;
+    BalarHandlers* handlers;
     Addr dma_addr;
-    DMAHandlers* dmaHandlers;
 
     // Tmp buffer to hold D2H and H2D dst data
     uint8_t* memcpyD2H_dst;
@@ -200,11 +189,10 @@ private:
 
     virtual bool clockTic( SST::Cycle_t );
 
-    // The memH interface into the memory system
-    StandardMem* iface;
-
-    // The interface to dma engine
-    StandardMem* dma_if;
+    // The command mmio interface into the memory system
+    StandardMem* mmio_iface;
+    // The data interface
+    StandardMem* mem_iface;
 
     // Copy from original balar
     BalarMMIO(const BalarMMIO&); // do not implement
