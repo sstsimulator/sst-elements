@@ -628,9 +628,7 @@ void DirectoryController::turnClockOn() {
     timestamp = reregisterClock(defaultTimeBase, clockHandler);
     timestamp--; // reregisterClock returns next cycle clock will be enabled, set timestamp to current cycle
     uint64_t inactiveCycles = timestamp - lastActiveClockCycle;
-    for (uint64_t i = 0; i < inactiveCycles; i++) {
-        stat_MSHROccupancy->addData(mshr->getSize());
-    }
+    stat_MSHROccupancy->addDataNTimes(inactiveCycles, mshr->getSize());
 }
 
 
