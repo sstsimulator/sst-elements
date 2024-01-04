@@ -990,9 +990,9 @@ void ariel_mlm_free(void* ptr)
 #ifdef ARIEL_DEBUG
         fprintf(stderr, "ARIEL: Matched call to free, passing to Ariel free routine.\n");
 #endif
-        free(ptr);
 
         const uint64_t virtAddr = (uint64_t) ptr;
+        free(ptr);
 
         ArielCommand ac;
         ac.command = ARIEL_ISSUE_TLM_FREE;
