@@ -354,7 +354,7 @@ l3cache.msi.inclus: No MSHR lookup latency provided (mshr_latency_cycles)...intr
  l2cache.msi.inclus.AckPut_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache.msi.inclus.MSHR_occupancy : Accumulator : Sum.u64 = 2104630; SumSQ.u64 = 44975336; Count.u64 = 101320; Min.u64 = 0; Max.u64 = 31; 
  l2cache.msi.inclus.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache.msi.inclus.default_stat : Accumulator : Sum.u64 = 758; SumSQ.u64 = 758; Count.u64 = 758; Min.u64 = 1; Max.u64 = 1; 
+ l3cache.msi.inclus.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.msi.inclus.evict_I : Accumulator : Sum.u64 = 1024; SumSQ.u64 = 1024; Count.u64 = 1024; Min.u64 = 1; Max.u64 = 1; 
  l3cache.msi.inclus.evict_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.msi.inclus.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -389,7 +389,7 @@ l3cache.msi.inclus: No MSHR lookup latency provided (mshr_latency_cycles)...intr
  l3cache.msi.inclus.stateEvent_PutS_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.msi.inclus.stateEvent_PutS_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.msi.inclus.stateEvent_PutS_SBInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache.msi.inclus.stateEvent_PutM_M : Accumulator : Sum.u64 = 2185; SumSQ.u64 = 2185; Count.u64 = 2185; Min.u64 = 1; Max.u64 = 1; 
+ l3cache.msi.inclus.stateEvent_PutM_M : Accumulator : Sum.u64 = 2943; SumSQ.u64 = 2943; Count.u64 = 2943; Min.u64 = 1; Max.u64 = 1; 
  l3cache.msi.inclus.stateEvent_PutM_MInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.msi.inclus.stateEvent_PutM_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.msi.inclus.stateEvent_PutX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
