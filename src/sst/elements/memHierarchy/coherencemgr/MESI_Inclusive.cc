@@ -314,7 +314,10 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
             }
             
             if (state == S) {
-                line->setState(E); // Clean/exclusive
+                if (protocol_)
+                    line->setState(E);
+                else
+                    line->setState(M);
             }
 
             line->setOwner(event->getSrc());

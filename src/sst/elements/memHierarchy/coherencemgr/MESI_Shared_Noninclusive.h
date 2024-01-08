@@ -621,6 +621,7 @@ private:
 
 /* Miscellaneous */
     void printLine(Addr addr);
+    void printStatus(Output &out);
 
 /* Statistics */
     void recordLatency(Command cmd, int type, uint64_t latency);
