@@ -76,7 +76,8 @@ library_include_HEADERS = \
   otf2_output_stat.h \
   otf2_output_stat_fwd.h \
   mask_mpi.h \
-  mask_mpi_macro.h
+  mask_mpi_macro.h \
+  unusedvariablemacro.h
 
 sendrecv_la_SOURCES = tests/sendrecv.cc
 
