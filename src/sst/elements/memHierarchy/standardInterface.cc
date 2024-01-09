@@ -525,7 +525,7 @@ Event* StandardInterface::MemEventConverter::convert(StandardMem::MoveData* req)
     return move;
 }
 Event* StandardInterface::MemEventConverter::convert(StandardMem::CustomReq* req) {
-    CustomMemEvent* creq = new CustomMemEvent(iface->getName(), Command::CustomReq, req->getData());
+    CustomMemEvent* creq = new CustomMemEvent(iface->getName(), Command::CustomReq, req->releaseData());
     if (!req->needsResponse())
         creq->setFlag(MemEventBase::F_NORESPONSE);
 
