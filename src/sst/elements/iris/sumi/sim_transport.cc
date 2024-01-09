@@ -198,9 +198,8 @@ Transport::activeDelay(SST::Hg::Timestamp start)
   last_collection_ = _now;
   if (_now > wait_start){
     return _now - wait_start;
-  } else {
-    return SST::Hg::TimeDelta();
   }
+  return SST::Hg::TimeDelta();
 }
 
 void
@@ -357,6 +356,7 @@ SimTransport::nidlist() const
   //interpreted correctly
   //return (int*) rank_mapper_->rankToNode().data();
   sst_hg_abort_printf("nidlist unimplemented\n");
+  return nullptr;
 }
 
 void
@@ -479,6 +479,8 @@ uint64_t
 SimTransport::allocateFlowId()
 {
   //return parent_->os()->node()->allocateUniqueId();
+  // FIXME
+  return 0;
 }
 
 void
@@ -510,6 +512,8 @@ SST::Hg::Timestamp
 SimTransport::now() const
 {
   //return parent_app_->now();
+  //FIXME
+  return SST::Hg::Timestamp(0);
 }
 
 void*
@@ -599,9 +603,8 @@ CollectiveEngine::skipCollective(Collective::type_t ty,
   if (comm->nproc() == 1){
     tport_->memcopy(dst, src, nelems*type_size);
     return new CollectiveDoneMessage(tag, ty, comm, cq_id);
-  } else {
-    return nullptr;
   }
+  return nullptr;
 }
 
 CollectiveDoneMessage*
@@ -796,6 +799,8 @@ CollectiveEngine::alltoall(void *dst, void *src, int nelems, int type_size, int 
 //    AllToAllCollective* coll = builder->create(this, dst, src, nelems, type_size, tag, cq_id, comm);
 //    return startCollective(coll);
 //  }
+  sst_hg_abort_printf("unimplemented\n");
+  return nullptr;
 }
 
 CollectiveDoneMessage*
@@ -863,6 +868,8 @@ CollectiveEngine::allgather(void *dst, void *src, int nelems, int type_size, int
 //    AllgatherCollective* coll = builder->create(this, dst, src, nelems, type_size, tag, cq_id, comm);
 //    return startCollective(coll);
 //  }
+  sst_hg_abort_printf("unimplemented\n");
+  return nullptr;
 }
 
 CollectiveDoneMessage*
@@ -1013,6 +1020,7 @@ CollectiveEngine::incoming(Message* msg)
   int tag = cmsg->tag();
   Collective::type_t ty = cmsg->type();
   tag_to_collective_map::iterator it = collectives_[ty].find(tag);
+
   if (it == collectives_[ty].end()){
 //    debug_printf(sprockit::dbg::sumi_collective,
 //      "Rank %d, queuing %p %s from %d on tag %d for type %s",
@@ -1023,16 +1031,16 @@ CollectiveEngine::incoming(Message* msg)
       //message for collective we haven't started yet
       pending_collective_msgs_[ty][tag].push_back(cmsg);
       return nullptr;
-  } else {
-    Collective* coll = it->second;
-    auto* dmsg = coll->recv(cmsg);
-    while (dmsg && coll->hasSubsequent()){
-      delete dmsg;
-      coll = coll->popSubsequent();
-      dmsg = startCollective(coll);
-    }
-    return dmsg;
+  } 
+
+  Collective* coll = it->second;
+  auto* dmsg = coll->recv(cmsg);
+  while (dmsg && coll->hasSubsequent()){
+    delete dmsg;
+    coll = coll->popSubsequent();
+    dmsg = startCollective(coll);
   }
+  return dmsg;
 }
 
 CollectiveDoneMessage*
