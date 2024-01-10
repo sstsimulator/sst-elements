@@ -1,7 +1,7 @@
 import sst
 from sst.merlin.base import *
 
-platdef = PlatformDefinition("platform_hg_mpi_test")
+platdef = PlatformDefinition("platform_mask_mpi_test")
 PlatformDefinition.registerPlatformDefinition(platdef)
 
 platdef.addParamSet("operating_system",{

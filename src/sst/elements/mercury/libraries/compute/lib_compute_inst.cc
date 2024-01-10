@@ -13,22 +13,20 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <sstmac/common/event_callback.h>
-#include <sstmac/common/stats/ftq.h>
-#include <sstmac/software/process/ftq_scope.h>
-#include <sstmac/software/process/operating_system.h>
-#include <sstmac/software/process/backtrace.h>
-#include <sstmac/software/libraries/compute/lib_compute_inst.h>
-#include <sstmac/software/libraries/compute/compute_event.h>
-#include <sprockit/keyword_registration.h>
-#include <sprockit/sim_parameters.h>
-#include <sstmac/software/process/operating_system.h>
-#include <sstmac/software/process/thread.h>
+#include <sst/core/params.h>
+#include <mercury/components/operating_system.h>
+#include <mercury/libraries/compute/lib_compute_inst.h>
+#include <mercury/libraries/compute/compute_event.h>
+#include <mercury/operating_system/process/thread.h>
+//#include <sstmac/software/process/backtrace.h>
+//#include <mercury/common/event_callback.h>
+//#include <sstmac/common/stats/ftq.h>
+//#include <sstmac/software/process/ftq_scope.h>
 
-RegisterDebugSlot(lib_compute_inst);
+//RegisterDebugSlot(lib_compute_inst);
 
-namespace sstmac {
-namespace sw {
+namespace SST {
+namespace Hg {
 
 RegisterKeywords(
  { "lib_compute_unroll_loops", "DEPRECATED: tunes the loop control overhead for compute loop functions" },
@@ -107,4 +105,4 @@ LibComputeInst::computeInst(ComputeEvent* cmsg, int nthr)
 }
 
 }
-} //end of namespace sstmac
+} //end of namespace

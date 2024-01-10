@@ -15,9 +15,9 @@
 
 #include <sst/core/params.h>
 
-#include <common/factory.h>
-#include <operating_system/launch/app_launcher.h>
-#include <operating_system/process/software_id.h>
+#include <mercury/common/factory.h>
+#include <mercury/operating_system/launch/app_launcher.h>
+#include <mercury/operating_system/process/software_id.h>
 
 namespace SST {
 namespace Hg {

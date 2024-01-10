@@ -9,8 +9,9 @@ AM_CPPFLAGS += \
 # unpleasant hack to make vintage automake (e.g. 1.13.4) work
 AM_LIBTOOLFLAGS = --tag=CXX
 
+comp_LTLIBRARIES = libhg.la libsystemapi.la ostest.la
 compdir = $(pkglibdir)
-comp_LTLIBRARIES = libhg.la libsystemapi.la testme.la
+
 libhg_la_SOURCES = \
   common/event_link.cc \
   common/component.cc \
@@ -78,8 +79,8 @@ endif
 libsystemapi_la_SOURCES = \
   libraries/system/system_api.cc
 
-testme_la_SOURCES = \
-  tests/testme.cc
+ostest_la_SOURCES = \
+  tests/ostest.cc
 
 library_includedir=$(includedir)/sst/elements/mercury
 
@@ -178,8 +179,8 @@ endif
 
 EXTRA_DIST = \
     tests/testsuite_default_hg.py \
-    tests/ostest2.py \
-    tests/refFiles/ostest2.out
+    tests/ostest.py \
+    tests/refFiles/ostest.out
 
 deprecated_EXTRA_DIST =
 
@@ -190,7 +191,7 @@ endif
 
 libhg_la_LDFLAGS = -module -avoid-version
 libsystemapi_la_LDFLAGS = -module -avoid-version
-testme_la_LDFLAGS = -module -avoid-version
+ostest_la_LDFLAGS = -module -avoid-version
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     mercury=$(abs_srcdir)

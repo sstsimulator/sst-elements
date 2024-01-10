@@ -16,7 +16,7 @@
 #pragma once
 
 #include <sst/core/event.h>
-#include <common/timestamp.h>
+#include <mercury/common/timestamp.h>
 #include <cstdint>
 #include <tuple>
 

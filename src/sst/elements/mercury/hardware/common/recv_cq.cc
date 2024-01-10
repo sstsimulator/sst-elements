@@ -19,9 +19,9 @@
 
 #include <inttypes.h>
 
-#include <hardware/common/packet.h>
-#include <hardware/common/recv_cq.h>
-#include <hardware/common/flow.h>
+#include <mercury/hardware/common/packet.h>
+#include <mercury/hardware/common/recv_cq.h>
+#include <mercury/hardware/common/flow.h>
 //#include <sprockit/output.h>
 
 namespace SST {
@@ -45,7 +45,7 @@ Flow*
 RecvCQ::recv(uint64_t unique_id, uint32_t bytes, Flow* orig)
 {
   incomingMsg& incoming  = bytes_recved_[unique_id];
-#if SSTMAC_SANITY_CHECK
+#if SST_HG_SANITY_CHECK
   if (incoming.msg && orig){
     spkt_abort_printf(
         "RecvCQ::recv: only one message chunk should carry the parent payload for %" PRIu64 ": %s",

@@ -45,13 +45,13 @@ Questions? Contact sst-macro-help@sandia.gov
 #ifndef sumi_msg_api_h
 #define sumi_msg_api_h
 
-#include <sumi/options.h>
-#include <sumi/message.h>
-#include <sumi/comm_functions.h>
-#include <sumi/collective_message.h>
-#include <sumi/timeout.h>
-#include <sumi/communicator.h>
-#include <sumi/transport.h>
+#include <iris/sumi/options.h>
+#include <iris/sumi/message.h>
+#include <iris/sumi/comm_functions.h>
+#include <iris/sumi/collective_message.h>
+#include <iris/sumi/timeout.h>
+#include <iris/sumi/communicator.h>
+#include <iris/sumi/transport.h>
 
 namespace SST::Iris::sumi {
 

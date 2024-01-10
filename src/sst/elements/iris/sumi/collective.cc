@@ -42,12 +42,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#include <sumi/collective.h>
-#include <sumi/collective_actor.h>
-#include <sumi/dense_rank_map.h>
-#include <sumi/message.h>
-#include <sumi/transport.h>
-#include <sumi/communicator.h>
+#include <iris/sumi/collective.h>
+#include <iris/sumi/collective_actor.h>
+#include <iris/sumi/dense_rank_map.h>
+#include <iris/sumi/message.h>
+#include <iris/sumi/transport.h>
+#include <iris/sumi/communicator.h>
 #include <sst/core/params.h>
 #include <mercury/common/stl_string.h>
 

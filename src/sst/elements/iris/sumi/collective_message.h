@@ -44,8 +44,8 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #pragma once
 
-#include <sumi/message.h>
-#include <sumi/collective.h>
+#include <iris/sumi/message.h>
+#include <iris/sumi/collective.h>
 #include <mercury/common/thread_safe_new.h>
 
 namespace SST::Iris::sumi {

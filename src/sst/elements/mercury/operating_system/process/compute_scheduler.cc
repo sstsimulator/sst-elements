@@ -13,9 +13,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <components/operating_system.h>
-#include <operating_system/process/compute_scheduler.h>
-#include <operating_system/process/thread.h>
+#include <mercury/components/operating_system.h>
+#include <mercury/operating_system/process/compute_scheduler.h>
+#include <mercury/operating_system/process/thread.h>
 
 //RegisterDebugSlot(compute_scheduler, "Print all debug information related to the OS compute scheduler");
 

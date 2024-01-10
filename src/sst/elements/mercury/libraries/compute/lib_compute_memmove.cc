@@ -13,16 +13,18 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <sstmac/software/process/backtrace.h>
-#include <sstmac/software/process/operating_system.h>
-#include <sstmac/software/libraries/compute/lib_compute_memmove.h>
-#include <sstmac/software/libraries/compute/lib_compute_inst.h>
-#include <sstmac/software/libraries/compute/compute_event.h>
-#include <sstmac/common/event_callback.h>
-#include <sprockit/sim_parameters.h>
 
-namespace sstmac {
-namespace sw {
+#include <sst/core/params.h>
+#include <mercury/components/operating_system.h>
+#include <mercury/libraries/compute/lib_compute_inst.h>
+#include <mercury/libraries/compute/compute_event.h>
+#include <mercury/operating_system/process/thread.h>
+#include <mercury/libraries/compute/lib_compute_memmove.h>
+//#include <sstmac/common/event_callback.h>
+//#include <sstmac/software/process/backtrace.h>
+
+namespace SST {
+namespace Hg {
 
 LibComputeMemmove::LibComputeMemmove(SST::Params& params,
                                      SoftwareId id, OperatingSystem* os) :
@@ -73,4 +75,4 @@ LibComputeMemmove::copy(uint64_t bytes)
 
 
 }
-} //end of namespace sstmac
+} //end of namespace

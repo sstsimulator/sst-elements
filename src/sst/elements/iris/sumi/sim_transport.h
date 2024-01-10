@@ -54,22 +54,22 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mercury/hardware/network/network_message_fwd.h>
 #include <mercury/components/node_fwd.h>
 
-#include <sumi/message_fwd.h>
-#include <sumi/collective.h>
-#include <sumi/comm_functions.h>
-#include <sumi/transport.h>
-#include <sumi/collective_message.h>
-#include <sumi/collective.h>
-#include <sumi/comm_functions.h>
-#include <sumi/options.h>
-#include <sumi/communicator_fwd.h>
+#include <iris/sumi/message_fwd.h>
+#include <iris/sumi/collective.h>
+#include <iris/sumi/comm_functions.h>
+#include <iris/sumi/transport.h>
+#include <iris/sumi/collective_message.h>
+#include <iris/sumi/collective.h>
+#include <iris/sumi/comm_functions.h>
+#include <iris/sumi/options.h>
+#include <iris/sumi/communicator_fwd.h>
 
 #include <mercury/common/errors.h>
 #include <mercury/common/factory.h>
 #include <sst/core/eli/elementbuilder.h>
 #include <mercury/common/util.h>
 
-#include <sumi/null_buffer.h>
+#include <iris/sumi/null_buffer.h>
 
 #include <unordered_map>
 #include <queue>

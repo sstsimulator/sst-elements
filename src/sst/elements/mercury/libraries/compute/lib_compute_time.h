@@ -13,16 +13,15 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef SSTMAC_SOFTWARE_LIBRARIES_COMPUTE_LIB_COMPUTE_TIME_H_INCLUDED
-#define SSTMAC_SOFTWARE_LIBRARIES_COMPUTE_LIB_COMPUTE_TIME_H_INCLUDED
+#pragma once
 
-#include <sstmac/software/libraries/compute/lib_compute.h>
-#include <sstmac/software/process/software_id.h>
-#include <sstmac/common/timestamp.h>
-#include <sstmac/common/sstmac_config.h>
+#include <mercury/libraries/compute/lib_compute.h>
+#include <mercury/operating_system/process/software_id.h>
+#include <mercury/common/timestamp.h>
+//#include <sstmac/common/sstmac_config.h>
 
-namespace sstmac {
-namespace sw {
+namespace SST {
+namespace Hg {
 
 class LibComputeTime :
   public LibCompute
@@ -52,6 +51,4 @@ class LibComputeTime :
 };
 
 }
-} //end of namespace sstmac
-
-#endif
+} //end of namespace

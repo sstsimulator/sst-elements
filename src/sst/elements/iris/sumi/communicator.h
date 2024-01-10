@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#include <sumi/transport_fwd.h>
+#include <iris/sumi/transport_fwd.h>
 #include <set>
 #include <map>
 #include <vector>

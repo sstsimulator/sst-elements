@@ -25,9 +25,9 @@
  ****************************************************************************************/
 
 .text
-.globl _sstmac_jump_fcontext
+.globl _sst_hg_jump_fcontext
 .align 8
-_sstmac_jump_fcontext:
+_sst_hg_jump_fcontext:
     pushq  %rbp  /* save RBP */
     pushq  %rbx  /* save RBX */
     pushq  %r15  /* save R15 */

@@ -45,13 +45,13 @@ Questions? Contact sst-macro-help@sandia.gov
 #pragma once
 
 #include <output.h>
-#include <sumi/timeout.h>
-#include <sumi/collective_message_fwd.h>
-#include <sumi/transport_fwd.h>
-#include <sumi/communicator_fwd.h>
-#include <sumi/collective_actor_fwd.h>
-#include <sumi/comm_functions.h>
-#include <sumi/options.h>
+#include <iris/sumi/timeout.h>
+#include <iris/sumi/collective_message_fwd.h>
+#include <iris/sumi/transport_fwd.h>
+#include <iris/sumi/communicator_fwd.h>
+#include <iris/sumi/collective_actor_fwd.h>
+#include <iris/sumi/comm_functions.h>
+#include <iris/sumi/options.h>
 #include <sst/core/eli/elementbuilder.h>
 //#include <mercury/common/factory.h>
 //#include <sprockit/debug.h>

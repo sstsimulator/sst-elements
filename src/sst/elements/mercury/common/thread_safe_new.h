@@ -64,11 +64,11 @@ template <class T>
 class thread_safe_new {
 
  public:
-#if SSTMAC_ENABLE_SANITY_CHECK
+#if SST_HG_ENABLE_SANITY_CHECK
   static constexpr uint32_t magic_number = std::numeric_limits<uint32_t>::max();
 #endif
 
-#if SSTMAC_CUSTOM_NEW
+#if SST_HG_CUSTOM_NEW
   static void freeAtEnd(T*){
     //do nothing - the allocation is getting cleaned up
   }
@@ -84,7 +84,7 @@ class thread_safe_new {
       grow(thread);
     }
     void* ret = alloc_.available[thread].back();
-#if SSTMAC_ENABLE_SANITY_CHECK
+#if SST_HG_ENABLE_SANITY_CHECK
     (uint32_t*) casted = (uint32_t*) ret;
     *casted = 0;
 #endif
@@ -111,7 +111,7 @@ class thread_safe_new {
   static void operator delete(void* ptr){
     int thread = currentThreadId();
     alloc_.available[thread].push_back(ptr);
-#if SSTMAC_ENABLE_SANITY_CHECK
+#if SST_HG_ENABLE_SANITY_CHECK
     (uint32_t*) casted = (uint32_t*) ptr;
     if (*casted == magic_number){
       spkt_abort_printf("chunk %p already freed!", ptr);
@@ -127,19 +127,19 @@ class thread_safe_new {
 #endif
   }
 
-#define SSTMAC_CACHE_ALIGNMENT 64
+#define SST_HG_CACHE_ALIGNMENT 64
   static void grow(int thread){
     size_t unitSize = sizeof(T);
-    if (unitSize % SSTMAC_CACHE_ALIGNMENT != 0){
-      size_t rem = SSTMAC_CACHE_ALIGNMENT - unitSize % SSTMAC_CACHE_ALIGNMENT;
+    if (unitSize % SST_HG_CACHE_ALIGNMENT != 0){
+      size_t rem = SST_HG_CACHE_ALIGNMENT - unitSize % SST_HG_CACHE_ALIGNMENT;
       unitSize += rem;
     }
 
     char* newTs = new char[unitSize*increment];
     char* ptr = newTs;
     int numElems = increment;
-    if (uintptr_t(ptr) % SSTMAC_CACHE_ALIGNMENT){
-      size_t rem = SSTMAC_CACHE_ALIGNMENT - (uintptr_t(ptr) % SSTMAC_CACHE_ALIGNMENT);
+    if (uintptr_t(ptr) % SST_HG_CACHE_ALIGNMENT){
+      size_t rem = SST_HG_CACHE_ALIGNMENT - (uintptr_t(ptr) % SST_HG_CACHE_ALIGNMENT);
       ptr += rem;
       numElems -= 1;
     }
@@ -172,7 +172,7 @@ class thread_safe_new {
 #endif
 };
 
-#if SSTMAC_CUSTOM_NEW
+#if SST_HG_CUSTOM_NEW
 template <class T> ThreadAllocatorSet thread_safe_new<T>::alloc_;
 
 #if SPKT_NEW_SUPER_DEBUG

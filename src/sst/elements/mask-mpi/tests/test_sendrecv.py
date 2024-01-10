@@ -20,15 +20,15 @@ from sst.hg import *
 
 if __name__ == "__main__":
 
-    PlatformDefinition.loadPlatformFile("platform_file_hg_mpi_test")
-    PlatformDefinition.setCurrentPlatform("platform_hg_mpi_test")
+    PlatformDefinition.loadPlatformFile("platform_file_mask_mpi_test")
+    PlatformDefinition.setCurrentPlatform("platform_mask_mpi_test")
     platform = PlatformDefinition.getCurrentPlatform()
 
     platform.addParamSet("operating_system", {
         "verbose" : "0",
-        "app1.name" : "runsendrecv",
-        "app1.exe"  : "runsendrecv",
-        "app1.apis" : ["systemAPI:libsystemapi.so", "SimTransport:libsumi.so", "MpiApi:libsst_mpi.so"],
+        "app1.name" : "sendrecv",
+        "app1.exe"  : "sendrecv.so",
+        "app1.apis" : ["systemAPI:libsystemapi.so", "SimTransport:libsumi.so", "MpiApi:libmask_mpi.so"],
     })
 
     topo = topoSingle()

@@ -45,7 +45,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #pragma once
 
 #include <set>
-#include <sumi/communicator_fwd.h>
+#include <iris/sumi/communicator_fwd.h>
 
 namespace SST::Iris::sumi {
 

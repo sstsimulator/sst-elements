@@ -42,9 +42,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#include <sumi/allgather.h>
-#include <sumi/transport.h>
-#include <sumi/communicator.h>
+#include <iris/sumi/allgather.h>
+#include <iris/sumi/transport.h>
+#include <iris/sumi/communicator.h>
 #include <output.h>
 #include <cstring>
 

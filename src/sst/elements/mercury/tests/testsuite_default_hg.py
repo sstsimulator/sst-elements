@@ -42,7 +42,7 @@ class testcase_hg(SSTTestCase):
         else:
             os.environ["SST_LIB_PATH"] = paths + ":" + sst_lib_path
 
-        self.simple_components_template("ostest2")
+        self.simple_components_template("ostest")
 
 #####
 

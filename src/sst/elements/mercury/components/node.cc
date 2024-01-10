@@ -13,10 +13,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <components/node.h>
-#include <components/operating_system.h>
-#include <operating_system/launch/app_launch_request.h>
-#include <operating_system/process/app.h>
+#include <mercury/components/node.h>
+#include <mercury/components/operating_system.h>
+#include <mercury/operating_system/launch/app_launch_request.h>
+#include <mercury/operating_system/process/app.h>
 
 namespace SST {
 namespace Hg {

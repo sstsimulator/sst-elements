@@ -13,10 +13,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#define ssthg_app_name testme
+#define ssthg_app_name ostest
 #include <libraries/system/replacements/unistd.h>
 #include <iostream>
-#include <common/skeleton.h>
+#include <mercury/common/skeleton.h>
 int main(int argc, char** argv) {
   std::cout << "Hello from Mercury!\n";
   std::cout << "Now I will sleep\n";

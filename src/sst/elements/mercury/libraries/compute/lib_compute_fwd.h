@@ -13,11 +13,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef sstmac_software_lib_compute_inst_fwd_h
-#define sstmac_software_lib_compute_inst_fwd_h
+#pragma once
 
-namespace sstmac {
-namespace sw {
+namespace SST {
+namespace Hg {
 
 class LibComputeMemmove;
 class LibComputeSleep;
@@ -26,5 +25,3 @@ class LibComputeInst;
 class LibComputeLoops;
 
 } }
-
-#endif

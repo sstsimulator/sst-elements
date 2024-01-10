@@ -13,15 +13,15 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <common/thread_safe_int.h>
-#include <common/errors.h>
-#include <common/output.h>
-#include <components/node.h>
-#include <components/operating_system.h>
+#include <mercury/common/thread_safe_int.h>
+#include <mercury/common/errors.h>
+#include <mercury/common/output.h>
+#include <mercury/components/node.h>
+#include <mercury/components/operating_system.h>
 //#include <sstmac/common/stats/ftq.h>
-#include <operating_system/process/thread.h>
-#include <operating_system/process/thread_info.h>
-#include <operating_system/process/app.h>
+#include <mercury/operating_system/process/thread.h>
+#include <mercury/operating_system/process/thread_info.h>
+#include <mercury/operating_system/process/app.h>
 //#include <sstmac/software/libraries/library.h>
 //#include <sstmac/software/libraries/compute/compute_event.h>
 //#include <sstmac/software/api/api.h>
@@ -234,7 +234,7 @@ Thread::setTlsValue(long thekey, void *ptr)
 //void
 //Thread::appendBacktrace(int  /*id*/)
 //{
-//#if SSTMAC_HAVE_CALL_GRAPH
+//#if SST_HG_HAVE_CALL_GRAPH
 //  backtrace_[bt_nfxn_] = id;
 //  bt_nfxn_++;
 //#else
@@ -329,7 +329,7 @@ Thread::~Thread()
 //     TimeDelta elapsed)
 //{
 //#if !SSTMAC_INTEGRATED_SST_CORE
-//#if SSTMAC_HAVE_CALL_GRAPH
+//#if SST_HG_HAVE_CALL_GRAPH
 //  if (callGraph_) {
 //    callGraph_->collect(elapsed.ticks(), this);
 //  }

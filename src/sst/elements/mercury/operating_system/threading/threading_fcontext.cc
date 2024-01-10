@@ -13,9 +13,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <operating_system/process/thread.h>
-#include <operating_system/process/thread_info.h>
-#include <operating_system/threading/threading_interface.h>
+#include <mercury/operating_system/process/thread.h>
+#include <mercury/operating_system/process/thread_info.h>
+#include <mercury/operating_system/threading/threading_interface.h>
 
 #include <iostream>
 #include <stdint.h>
@@ -39,9 +39,9 @@ struct fcontext_stack_t
 
 typedef void (*pfn_fcontext)(fcontext_transfer_t);
 
-fcontext_transfer_t sstmac_jump_fcontext(fcontext_t const to, void * vp);
+fcontext_transfer_t sst_hg_jump_fcontext(fcontext_t const to, void * vp);
 
-fcontext_t sstmac_make_fcontext(void * sp, size_t size, pfn_fcontext corofn);
+fcontext_t sst_hg_make_fcontext(void * sp, size_t size, pfn_fcontext corofn);
 
 } //end extern C
 
@@ -85,27 +85,27 @@ class ThreadingFContext : public ThreadContext
       ThreadContext*  /*from*/) override {
     fxn_ = func;
     void* stacktop = (char*) stack + sz;
-    ctx_ = sstmac_make_fcontext(stacktop, sz, start_fcontext_thread);
+    ctx_ = sst_hg_make_fcontext(stacktop, sz, start_fcontext_thread);
     args_ = args;
-    ctx_ = sstmac_jump_fcontext(ctx_, this).ctx;
+    ctx_ = sst_hg_jump_fcontext(ctx_, this).ctx;
   }
 
   void pauseContext(ThreadContext*  /*to*/) override {
-    transfer_ = sstmac_jump_fcontext(transfer_, nullptr).ctx;
+    transfer_ = sst_hg_jump_fcontext(transfer_, nullptr).ctx;
   }
 
   void resumeContext(ThreadContext*  /*from*/) override {
-    auto newctx = sstmac_jump_fcontext(ctx_, nullptr).ctx;
+    auto newctx = sst_hg_jump_fcontext(ctx_, nullptr).ctx;
     ctx_ = newctx;
   }
 
   void completeContext(ThreadContext*  /*to*/) override {
-    sstmac_jump_fcontext(transfer_, nullptr);
+    sst_hg_jump_fcontext(transfer_, nullptr);
   }
 
   void jumpContext(ThreadContext*  /*to*/) override {
     sst_hg_abort_printf("error: fcontext interface does not support jump_context feature\n"
-                      "must set SSTMAC_THREADING=pth or ucontext");
+                      "must set SST_HG_THREADING=pth or ucontext");
   }
 
  private:
