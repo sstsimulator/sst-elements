@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <operating_system/threading/thread_lock.h>
+#include <mercury/operating_system/threading/thread_lock.h>
 
 #include <cstring>
 #include <cstdint>

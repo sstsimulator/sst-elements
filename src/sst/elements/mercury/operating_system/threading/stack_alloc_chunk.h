@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <operating_system/threading/stack_alloc.h>
+#include <mercury/operating_system/threading/stack_alloc.h>
 
 #include <algorithm>
 #include <iostream>

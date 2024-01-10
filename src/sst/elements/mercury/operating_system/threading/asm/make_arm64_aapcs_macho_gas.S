@@ -32,10 +32,10 @@
  *******************************************************/
 
 .text
-.globl _sstmac_make_fcontext
+.globl _sst_hg_make_fcontext
 .balign 16
 
-_sstmac_make_fcontext:
+_sst_hg_make_fcontext:
     ; shift address in x0 (allocated stack) to lower 16 byte boundary
     and x0, x0, ~0xF
 

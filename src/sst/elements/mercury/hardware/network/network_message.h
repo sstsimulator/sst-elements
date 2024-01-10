@@ -15,11 +15,11 @@
 
 #pragma once
 
-#include <hardware/common/flow.h>
-#include <hardware/network/network_id.h>
-#include <operating_system/process/task_id.h>
-#include <operating_system/process/app_id.h>
-#include <common/timestamp.h>
+#include <mercury/hardware/common/flow.h>
+#include <mercury/hardware/network/network_id.h>
+#include <mercury/operating_system/process/task_id.h>
+#include <mercury/operating_system/process/app_id.h>
+#include <mercury/common/timestamp.h>
 
 namespace SST {
 namespace Hg {

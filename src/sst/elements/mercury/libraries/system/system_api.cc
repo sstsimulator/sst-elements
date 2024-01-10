@@ -14,12 +14,12 @@
 // distribution.
 
 #include <libraries/system/system_api.h>
-#include <common/timestamp.h>
-#include <common/thread_safe_new.h>
-#include <components/operating_system.h>
-#include <operating_system/process/thread.h>
-#include <operating_system/process/app.h>
-#include <operating_system/libraries/unblock_event.h>
+#include <mercury/common/timestamp.h>
+#include <mercury/common/thread_safe_new.h>
+#include <mercury/components/operating_system.h>
+#include <mercury/operating_system/process/thread.h>
+#include <mercury/operating_system/process/app.h>
+#include <mercury/operating_system/libraries/unblock_event.h>
 //#include <sstmac/skeleton.h>
 
 namespace SST {
@@ -56,42 +56,42 @@ systemAPI::ssthg_sleep(unsigned int secs){
     return 0;
 }
 
-//extern "C" unsigned sstmac_sleepUntil(double t){
+//extern "C" unsigned sst_hg_sleepUntil(double t){
 //  os::currentOs()->sleepUntil(Timestamp(t));
 //  return 0;
 //}
 
-//extern "C" int sstmac_usleep(unsigned int usecs){
+//extern "C" int sst_hg_usleep(unsigned int usecs){
 //  os::currentOs()->sleep(TimeDelta(usecs, TimeDelta::one_microsecond));
 //  return 0;
 //}
 
-//extern "C" int sstmac_nanosleep(unsigned int nanosecs){
+//extern "C" int sst_hg_nanosleep(unsigned int nanosecs){
 //  os::currentOs()->sleep(TimeDelta(nanosecs, TimeDelta::one_nanosecond));
 //  return 0;
 //}
 
-//extern "C" int sstmac_msleep(unsigned int msecs){
+//extern "C" int sst_hg_msleep(unsigned int msecs){
 //  os::currentOs()->sleep(TimeDelta(msecs, TimeDelta::one_millisecond));
 //  return 0;
 //}
 
-//extern "C" int sstmac_fsleep(double secs){
+//extern "C" int sst_hg_fsleep(double secs){
 //  sstmac::sw::OperatingSystem::currentThread()->parentApp()->sleep(sstmac::TimeDelta(secs));
 //  return 0;
 //}
 
-//extern "C" void sstmac_memread(uint64_t bytes){
+//extern "C" void sst_hg_memread(uint64_t bytes){
 //  sstmac::sw::OperatingSystem::currentThread()->parentApp()
 //    ->computeBlockRead(bytes);
 //}
 
-//extern "C" void sstmac_memwrite(uint64_t bytes){
+//extern "C" void sst_hg_memwrite(uint64_t bytes){
 //  sstmac::sw::OperatingSystem::currentThread()->parentApp()
 //    ->computeBlockWrite(bytes);
 //}
 
-//extern "C" void sstmac_memcopy(uint64_t bytes){
+//extern "C" void sst_hg_memcopy(uint64_t bytes){
 //  sstmac::sw::OperatingSystem::currentThread()->parentApp()
 //    ->computeBlockMemcpy(bytes);
 //}

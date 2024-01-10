@@ -13,14 +13,14 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <common/errors.h>
-#include <components/operating_system.h>
-#include <operating_system/process/thread_info.h>
-#include <operating_system/process/tls.h>
-#include <operating_system/threading/thread_lock.h>
-#include <operating_system/threading/stack_alloc.h>
+#include <mercury/common/errors.h>
+#include <mercury/components/operating_system.h>
+#include <mercury/operating_system/process/thread_info.h>
+#include <mercury/operating_system/process/tls.h>
+#include <mercury/operating_system/threading/thread_lock.h>
+#include <mercury/operating_system/threading/stack_alloc.h>
 //#include <process/global.h>
-//#include <common/sstmac_config.h>
+//#include <mercury/common/sstmac_config.h>
 //#include <sprockit/thread_safe_new.h>
 //#include <sstmac/skeleton_tls.h>
 
@@ -75,7 +75,7 @@ extern "C" void* sst_hg_alloc_stack(int sz, int md_sz)
                       SST::Hg::OperatingSystem::stacksize(), sz);
   }
   void* stack = SST::Hg::StackAlloc::alloc();
-  //configureStack(get_sstmac_tls_thread_id(), stack, get_sstmac_global_data(), get_sstmac_tls_data());
+  //configureStack(get_sst_hg_tls_thread_id(), stack, get_sst_hg_global_data(), get_sst_hg_tls_data());
   return stack;
 }
 
@@ -131,9 +131,9 @@ ThreadInfo::deregisterUserSpaceVirtualThread(void* stack)
 {
 //  globals_lock.lock();
 //  char* tls = (char*) stack;
-//  void** globalsPtr = (void**) &tls[SSTMAC_TLS_GLOBAL_MAP];
+//  void** globalsPtr = (void**) &tls[SST_HG_TLS_GLOBAL_MAP];
 //  void* globalsMap = *globalsPtr;
-//  void** tlsPtr = (void**) &tls[SSTMAC_TLS_TLS_MAP];
+//  void** tlsPtr = (void**) &tls[SST_HG_TLS_TLS_MAP];
 //  void* tlsMap = *tlsPtr;
 //  if (globalsMap){
 //    GlobalVariable::glblCtx.removeActiveSegment(globalsMap);

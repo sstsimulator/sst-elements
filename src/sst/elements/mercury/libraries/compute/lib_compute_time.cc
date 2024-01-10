@@ -13,14 +13,16 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <sstmac/software/libraries/compute/lib_compute_time.h>
-#include <sstmac/software/process/operating_system.h>
-#include <sstmac/software/process/backtrace.h>
-#include <sstmac/software/libraries/compute/compute_event.h>
-#include <sstmac/software/process/thread.h>
+#include <mercury/components/operating_system.h>
+#include <mercury/libraries/compute/lib_compute_inst.h>
+#include <mercury/libraries/compute/lib_compute_time.h>
+#include <mercury/libraries/compute/compute_event.h>
+#include <mercury/operating_system/process/thread.h>
+#include <mercury/libraries/compute/lib_compute_memmove.h>
+//#include <sstmac/software/process/backtrace.h>
 
-namespace sstmac {
-namespace sw {
+namespace SST {
+namespace Hg {
 
 LibComputeTime::LibComputeTime(SST::Params& params, SoftwareId id,
                                OperatingSystem* os) :
@@ -64,4 +66,4 @@ LibComputeTime::sleep(TimeDelta time)
 }
 
 }
-} //end of namespace sstmac
+} //end of namespace

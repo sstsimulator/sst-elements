@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <common/serializable.h>
+#include <mercury/common/serializable.h>
 #include <sstream>
 #include <stdint.h>
 

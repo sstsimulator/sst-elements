@@ -15,8 +15,8 @@
 
 #pragma once
 
-#include <components/operating_system_fwd.h>
-#include <operating_system/libraries/library.h>
+#include <mercury/components/operating_system_fwd.h>
+#include <mercury/operating_system/libraries/library.h>
 
 namespace SST {
 namespace Hg {

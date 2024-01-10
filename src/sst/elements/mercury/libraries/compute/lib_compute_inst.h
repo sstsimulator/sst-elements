@@ -13,22 +13,20 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef SSTMAC_SOFTWARE_LIBRARIES_COMPUTE_LIB_COMPUTE_INST_H_INCLUDED
-#define SSTMAC_SOFTWARE_LIBRARIES_COMPUTE_LIB_COMPUTE_INST_H_INCLUDED
+#pragma once
 
-#include <sstmac/software/libraries/compute/lib_compute_time.h>
-#include <sstmac/software/libraries/compute/compute_event_fwd.h>
-#include <sstmac/software/process/software_id.h>
-#include <sstmac/common/sstmac_config.h>
+#include <mercury/libraries/compute/lib_compute_time.h>
+#include <mercury/libraries/compute/compute_event_fwd.h>
+#include <mercury/operating_system/process/software_id.h>
 #include <stdint.h>
-#include <sstmac/common/stats/ftq_tag.h>
+//#include <sstmac/common/stats/ftq_tag.h>
 
 //these are the default instruction labels
 
-DeclareDebugSlot(lib_compute_inst);
+//DeclareDebugSlot(lib_compute_inst);
 
-namespace sstmac {
-namespace sw {
+namespace SST {
+namespace Hg {
 
 class LibComputeInst :
   public LibComputeTime
@@ -66,6 +64,4 @@ class LibComputeInst :
 };
 
 }
-} //end of namespace sstmac
-
-#endif
+} //end of namespace

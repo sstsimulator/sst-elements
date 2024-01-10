@@ -13,9 +13,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <common/errors.h>
-#include <common/output.h>
-#include <operating_system/threading/stack_alloc_chunk.h>
+#include <mercury/common/errors.h>
+#include <mercury/common/output.h>
+#include <mercury/operating_system/threading/stack_alloc_chunk.h>
 
 #include <sys/mman.h>
 #include <unistd.h>

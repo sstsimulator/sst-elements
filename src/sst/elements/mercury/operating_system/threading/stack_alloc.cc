@@ -16,11 +16,11 @@
 #include <sst/core/params.h>
 #include <sst/core/unitAlgebra.h>
 
-#include <common/errors.h>
-#include <operating_system/process/thread_info.h>
-#include <operating_system/threading/stack_alloc.h>
-#include <operating_system/threading/stack_alloc_chunk.h>
-#include <operating_system/threading/thread_lock.h>
+#include <mercury/common/errors.h>
+#include <mercury/operating_system/process/thread_info.h>
+#include <mercury/operating_system/threading/stack_alloc.h>
+#include <mercury/operating_system/threading/stack_alloc_chunk.h>
+#include <mercury/operating_system/threading/thread_lock.h>
 
 #include <unistd.h>
 

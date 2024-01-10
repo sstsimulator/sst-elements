@@ -16,13 +16,13 @@
 #pragma once
 
 #include <sst/core/params.h>
-#include <common/events.h>
-#include <common/request_fwd.h>
-#include <common/node_address.h>
-#include <components/operating_system_fwd.h>
-#include <operating_system/process/software_id.h>
-#include <operating_system/libraries/library_fwd.h>
-#include <common/hg_printf.h>
+#include <mercury/common/events.h>
+#include <mercury/common/request_fwd.h>
+#include <mercury/common/node_address.h>
+#include <mercury/components/operating_system_fwd.h>
+#include <mercury/operating_system/process/software_id.h>
+#include <mercury/operating_system/libraries/library_fwd.h>
+#include <mercury/common/hg_printf.h>
 #include <map>
 
 

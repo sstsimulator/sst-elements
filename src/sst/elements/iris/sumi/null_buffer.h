@@ -59,7 +59,7 @@ extern void* sst_hg_nullptr;
 extern void* sst_hg_nullptr_send;
 extern void* sst_hg_nullptr_recv;
 // the maximum pointer in the reserved mmap range
-// all pointers between sstmac_nullptr and this
+// all pointers between sst_hg_nullptr and this
 // are not real data
 extern void* sst_hg_nullptr_range_max;
 

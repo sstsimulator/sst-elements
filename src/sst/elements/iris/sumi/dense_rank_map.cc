@@ -42,8 +42,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#include <sumi/dense_rank_map.h>
-#include <sumi/communicator.h>
+#include <iris/sumi/dense_rank_map.h>
+#include <iris/sumi/communicator.h>
 #include <mercury/common/errors.h>
 #include <algorithm>
 

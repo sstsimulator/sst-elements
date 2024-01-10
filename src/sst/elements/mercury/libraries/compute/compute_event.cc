@@ -13,8 +13,5 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <sprockit/errors.h>
-#include <sstmac/software/libraries/compute/compute_event.h>
-
-RegisterDebugSlot(compute_intensity,
-    "print output related to compute intensity (flops,intops,bytes) of specific threads");
+#include <mercury/common/errors.h>
+#include <mercury/libraries/compute/compute_event.h>

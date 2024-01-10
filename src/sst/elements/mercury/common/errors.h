@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <common/hg_printf.h>
+#include <mercury/common/hg_printf.h>
 
 #include <exception>
 #include <cstdlib>

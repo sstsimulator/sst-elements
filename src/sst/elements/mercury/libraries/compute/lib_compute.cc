@@ -13,12 +13,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <sstmac/software/libraries/compute/lib_compute.h>
+#include <mercury/libraries/compute/lib_compute.h>
 
-RegisterDebugSlot(lib_compute)
-
-namespace sstmac {
-namespace sw {
+namespace SST {
+namespace Hg {
 
 }
 }

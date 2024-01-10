@@ -48,9 +48,9 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <sst/core/eli/elementbuilder.h>
 //#include <sprockit/debug.h>
 #include <sst/core/params.h>
-#include <sumi/message.h>
-#include <sumi/timeout.h>
-#include <sumi/transport_fwd.h>
+#include <iris/sumi/message.h>
+#include <iris/sumi/timeout.h>
+#include <iris/sumi/transport_fwd.h>
 
 //DeclareDebugSlot(sumi_ping)
 //DeclareDebugSlot(sumi_failure)

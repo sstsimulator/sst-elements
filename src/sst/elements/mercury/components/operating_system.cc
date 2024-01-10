@@ -13,19 +13,19 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <components/operating_system.h>
+#include <mercury/components/operating_system.h>
 
 #include <sst/core/params.h>
-#include <common/events.h>
-#include <common/factory.h>
+#include <mercury/common/events.h>
+#include <mercury/common/factory.h>
 #include <sst/core/eli/elementbuilder.h>
-#include <common/request.h>
-#include <components/node.h>
-#include <operating_system/launch/app_launcher.h>
-#include <operating_system/process/app.h>
-#include <operating_system/process/thread_id.h>
-#include <operating_system/threading/stack_alloc.h>
-#include <operating_system/libraries/unblock_event.h>
+#include <mercury/common/request.h>
+#include <mercury/components/node.h>
+#include <mercury/operating_system/launch/app_launcher.h>
+#include <mercury/operating_system/process/app.h>
+#include <mercury/operating_system/process/thread_id.h>
+#include <mercury/operating_system/threading/stack_alloc.h>
+#include <mercury/operating_system/libraries/unblock_event.h>
 #include <stdlib.h>
 #include <sys/mman.h>
 
@@ -42,7 +42,7 @@ extern template class  HgBase<SST::Component>;
 extern template class  HgBase<SST::SubComponent>;
 extern template SST::TimeConverter* HgBase<SST::SubComponent>::time_converter_;
 
-//#if SSTMAC_USE_MULTITHREAD
+//#if SST_HG_USE_MULTITHREAD
 std::vector<OperatingSystem*> OperatingSystem::active_os_;
 //#else
 //OperatingSystem* OperatingSystem::active_os_ = nullptr;
@@ -502,7 +502,7 @@ OperatingSystem::lib(const std::string& name) const
 void
 OperatingSystem::registerLib(Library* lib)
 {
-#if SSTMAC_SANITY_CHECK
+#if SST_HG_SANITY_CHECK
   if (lib->libName() == "") {
     sprockit::abort("OperatingSystem: trying to register a lib with no name");
   }

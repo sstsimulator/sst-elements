@@ -13,7 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <common/errors.h>
+#include <mercury/common/errors.h>
 
 #include <dlfcn.h>
 #include <vector>

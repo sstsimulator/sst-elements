@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <common/component.h>
+#include <mercury/common/component.h>
 
 #include <sst/core/link.h>
 
@@ -105,7 +105,7 @@ public:
   }
 
   static inline OperatingSystem*& staticOsThreadContext(){
-//  #if SSTMAC_USE_MULTITHREAD
+//  #if SST_HG_USE_MULTITHREAD
     int thr = ThreadInfo::currentPhysicalThreadId();
     return active_os_[thr];
 //  #else
@@ -114,7 +114,7 @@ public:
   }
 
   inline OperatingSystem*& activeOs() {
-//#if SSTMAC_USE_MULTITHREAD
+//#if SST_HG_USE_MULTITHREAD
   return active_os_[threadId()];
 //#else
 //  return active_os_;
@@ -170,7 +170,7 @@ public:
 //  std::map<int, condition_t> conditions_;
 //  std::map<int, mutex_t> mutexes_;
 
-  //#if SSTMAC_USE_MULTITHREAD
+  //#if SST_HG_USE_MULTITHREAD
     static std::vector<OperatingSystem*> active_os_;
   //#else
   //  static OperatingSystem* active_os_;

@@ -13,24 +13,21 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef SSTMAC_HARDWARE_PROCESSOR_EVENTDATA_H_INCLUDED
-#define SSTMAC_HARDWARE_PROCESSOR_EVENTDATA_H_INCLUDED
+#pragma once
 
-
-#include <sstmac/common/timestamp.h>
-#include <sstmac/common/sst_event.h>
-#include <sstmac/hardware/common/flow.h>
-#include <sstmac/hardware/memory/memory_id.h>
+#include <sst/core/event.h>
+#include <mercury/common/timestamp.h>
+#include <mercury/hardware/common/flow.h>
+#include <mercury/common/thread_safe_new.h>
+//#include <mercury/hardware/memory/memory_id.h>
+//#include <mercury/typedefs.h>
 #include <type_traits>
-#include <sprockit/debug.h>
-#include <sprockit/typedefs.h>
-#include <sprockit/thread_safe_new.h>
 #include <stdint.h>
 
-DeclareDebugSlot(compute_intensity);
+//DeclareDebugSlot(compute_intensity);
 
-namespace sstmac {
-namespace sw {
+namespace SST {
+namespace Hg {
 
 /**
  * Input for processor models that use
@@ -110,6 +107,4 @@ typedef ComputeEvent_impl<TimeDelta> TimedComputeEvent;
 typedef ComputeEvent_impl<basic_instructions_st> BasicComputeEvent;
 
 }
-}  // end of namespace sstmac
-
-#endif
+}  // end of namespace

@@ -13,9 +13,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <common/errors.h>
-#include <operating_system/process/thread_info.h>
-#include <operating_system/threading/threading_interface.h>
+#include <mercury/common/errors.h>
+#include <mercury/operating_system/process/thread_info.h>
+#include <mercury/operating_system/threading/threading_interface.h>
 
 #include <pth.h>
 

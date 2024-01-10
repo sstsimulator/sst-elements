@@ -25,11 +25,11 @@
  ****************************************************************************************/
 
 .text
-.globl sstmac_make_fcontext
-.type sstmac_make_fcontext,@function
+.globl sst_hg_make_fcontext
+.type sst_hg_make_fcontext,@function
 .align 16
-sstmac_make_fcontext:
-    /* first arg of sstmac_make_fcontext() == top of context-stack */
+sst_hg_make_fcontext:
+    /* first arg of sst_hg_make_fcontext() == top of context-stack */
     movq  %rdi, %rax
 
     /* shift address in RAX to lower 16 byte boundary */
@@ -39,7 +39,7 @@ sstmac_make_fcontext:
     /* on context-function entry: (RSP -0x8) % 16 == 0 */
     leaq  -0x40(%rax), %rax
 
-    /* third arg of sstmac_make_fcontext() == address of context-function */
+    /* third arg of sst_hg_make_fcontext() == address of context-function */
     movq  %rdx, 0x30(%rax)
 
     /* compute abs address of label finish */
@@ -56,7 +56,7 @@ finish:
     /* exit application */
     call  _exit@PLT
     hlt
-.size sstmac_make_fcontext,.-sstmac_make_fcontext
+.size sst_hg_make_fcontext,.-sst_hg_make_fcontext
 
 /* Mark that we don't need executable stack. */
 .section .note.GNU-stack,"",%progbits

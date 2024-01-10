@@ -15,7 +15,7 @@
 
 #include <sstmac_config.h>
 
-#ifdef SSTMAC_HAVE_UCONTEXT
+#ifdef SST_HG_HAVE_UCONTEXT
 
 #include <sstmac/software/process/thread_info.h>
 #include <sstmac/software/threading/threading_interface.h>

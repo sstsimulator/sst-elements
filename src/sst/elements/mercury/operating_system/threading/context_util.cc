@@ -13,10 +13,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <common/errors.h>
-#include <operating_system/threading/context_util.h>
-#include <operating_system/threading/threading_interface.h>
-#include <operating_system/threading/thread_lock.h>
+#include <mercury/common/errors.h>
+#include <mercury/operating_system/threading/context_util.h>
+#include <mercury/operating_system/threading/threading_interface.h>
+#include <mercury/operating_system/threading/thread_lock.h>
 
 #include <vector>
 
@@ -29,13 +29,13 @@ static std::vector<std::pair<std::string,bool>> valid_threading_contexts;
 static void fill_valid_threading_contexts(std::vector<std::pair<std::string,bool>>& contexts)
 {
   contexts.emplace_back("fcontext", true);
-#ifdef SSTMAC_HAVE_UCONTEXT
+#ifdef SST_HG_HAVE_UCONTEXT
   contexts.emplace_back("ucontext", true);
 #endif
-#ifdef SSTMAC_HAVE_GNU_PTH
+#ifdef SST_HG_HAVE_GNU_PTH
   contexts.emplace_back("pth", false);
 #endif
-#ifdef SSTMAC_HAVE_PTHREAD
+#ifdef SST_HG_HAVE_PTHREAD
   contexts.emplace_back("pthread", false);
 #endif
 
@@ -55,7 +55,7 @@ ThreadContext::defaultThreading()
   fill_lock.unlock();
 
   std::string default_threading;
-//#if SSTMAC_USE_MULTITHREAD
+//#if SST_HG_USE_MULTITHREAD
   for (auto& pair : valid_threading_contexts){
     if (pair.second){ //supports multithreading
       default_threading = pair.first;

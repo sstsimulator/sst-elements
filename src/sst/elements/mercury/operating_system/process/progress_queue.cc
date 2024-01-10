@@ -41,9 +41,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Questions? Contact sst-macro-help@sandia.gov
 */
-#include <operating_system/process/progress_queue.h>
-#include <operating_system/libraries/unblock_event.h>
-#include <components/operating_system.h>
+#include <mercury/operating_system/process/progress_queue.h>
+#include <mercury/operating_system/libraries/unblock_event.h>
+#include <mercury/components/operating_system.h>
 
 namespace SST {
 namespace Hg {
@@ -62,7 +62,7 @@ ProgressQueue::block(std::list<Thread*>& q, double timeout){
 
 void
 ProgressQueue::unblock(std::list<Thread*>& q){
-#if SSTMAC_SANITY_CHECK
+#if SST_HG_SANITY_CHECK
   if (q.empty()){
     spkt_abort_printf("trying to unblock CQ, but there are no pending threads");
   }

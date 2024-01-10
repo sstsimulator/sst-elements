@@ -19,31 +19,31 @@
 
 #include <sst/core/params.h>
 
-#include <common/factory.h>
+#include <mercury/common/factory.h>
 #include <sst/core/eli/elementbuilder.h>
-#include <common/output.h>
-#include <common/util.h>
-#include <common/errors.h>
-#include <common/hg_printf.h>
-#include <components/node.h>
+#include <mercury/common/output.h>
+#include <mercury/common/util.h>
+#include <mercury/common/errors.h>
+#include <mercury/common/hg_printf.h>
+#include <mercury/components/node.h>
 //#include <sstmac/software/libraries/compute/lib_compute_inst.h>
 //#include <sstmac/software/libraries/compute/lib_compute_time.h>
 //#include <sstmac/software/libraries/compute/lib_compute_memmove.h>
-#include <operating_system/process/app.h>
+#include <mercury/operating_system/process/app.h>
 //#include <sstmac/software/api/api.h>
 //#include <sstmac/software/process/backtrace.h>
 //#include <sstmac/common/sstmac_env.h>
 //#include <sstmac/dumpi_util/dumpi_meta.h>
 //#include <sstmac/software/launch/job_launcher.h>
 //#include <sstmac/software/launch/launch_event.h>
-#include <operating_system/threading/thread_lock.h>
+#include <mercury/operating_system/threading/thread_lock.h>
 //#include <sstmac/common/sstmac_env.h>
 //#include <sstmac/dumpi_util/dumpi_meta.h>
 //#include <sprockit/statics.h>
 //#include <sstmac/software/api/api.h>
 //#include <sstmac/main/sstmac.h>
-#include <operating_system/process/loadlib.h>
-#include <components/operating_system.h>
+#include <mercury/operating_system/process/loadlib.h>
+#include <mercury/components/operating_system.h>
 #include <inttypes.h>
 #include <dlfcn.h>
 
@@ -60,13 +60,13 @@
 
 //MakeDebugSlot(app_compute);
 
-void sstmac_app_loaded(int /*aid*/){}
+void sst_hg_app_loaded(int /*aid*/){}
 
-extern "C" FILE* sstmac_stdout(){
+extern "C" FILE* sst_hg_stdout(){
   return SST::Hg::Thread::current()->parentApp()->stdOutFile();
 }
 
-extern "C" FILE* sstmac_stderr(){
+extern "C" FILE* sst_hg_stderr(){
   return SST::Hg::Thread::current()->parentApp()->stdErrFile();
 }
 
@@ -215,7 +215,7 @@ App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
     }
 
     ++entry.refcount;
-    sstmac_app_loaded(aid);
+    sst_hg_app_loaded(aid);
     dlopen_lock.unlock();
   }
   else {

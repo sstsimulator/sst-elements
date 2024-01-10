@@ -16,7 +16,7 @@
 #pragma once
 
 #include <sst/core/event.h>
-#include <common/node_address.h>
+#include <mercury/common/node_address.h>
 #include <mercury/common/request.h>
 
 namespace SST {
