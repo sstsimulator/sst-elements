@@ -1,7 +1,7 @@
 PREFIX := mipsel-linux-musl-
 CC     := $(PREFIX)gcc
-CFLAGS := -I. -static 
-OBJDUMPFLAGS := -Mno-aliases -Mnumeric --disassemble-all --disassemble-zeroes
+CFLAGS := -I. -static -O3
+OBJDUMPFLAGS := -Mno-aliases -Mnumeric --disassemble-all --disassemble-zeroes -S
 # TODO Check RDMA test makefile for the arch and addr_type changing
 ADDR_TYPE ?= uint32_t
 

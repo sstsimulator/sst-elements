@@ -40,9 +40,9 @@
 typedef ADDR_TYPE Addr_t;
 
 // Global mmio gpu address
-static Addr_t* g_balarBaseAddr = (Addr_t*) 0xFFFF1000;
-static uint8_t g_scratch_mem[512];
-static int32_t g_debug_level = LOG_LEVEL_WARNING;
+static Addr_t* g_balarBaseAddr = (Addr_t*) 0;
+static uint8_t g_scratch_mem[1024];
+static int32_t g_debug_level = LOG_LEVEL_ERROR;
 
 enum GpuApi_t {
     GPU_REG_FAT_BINARY = 1,
