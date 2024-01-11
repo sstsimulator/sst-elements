@@ -70,7 +70,7 @@ public:
         {"gpu_cores",               "(uint) Number of GPU cores", "1"},
         {"mmio_size",               "(uint) Size of the MMIO memory range (Bytes)", "512"},
         {"dma_addr",                "(uint) Starting addr mapped to the DMA Engine", "512"},
-        {"cpu_no_cache",            "(bool) Whether the cpu is using cache, if true, need to connect mem_iface to it, else can use mmio_iface along", "true"},
+        {"separate_mem_iface",      "(bool) Whether need to separate mmio_iface and mem_iface, set to true on case of TLB", "true"},
     
     )
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( 
@@ -189,6 +189,8 @@ private:
 
     virtual bool clockTic( SST::Cycle_t );
 
+    // Whether to have separate mmio and mem interface
+    bool separate_mem_iface;
     // The command mmio interface into the memory system
     StandardMem* mmio_iface;
     // The data interface

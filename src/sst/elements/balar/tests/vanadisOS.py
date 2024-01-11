@@ -19,7 +19,7 @@ os_verbosity = os.getenv("VANADIS_OS_VERBOSE", 0)
                
 class Builder:
     def __init__(self):
-                pass
+        pass
 
     def build( self, numNodes, nodeId, cpuId ):
 
