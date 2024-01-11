@@ -29,6 +29,10 @@ EXTRA_DIST = \
 	tests/gpgpusim.config \
 	tests/testsuite_default_balar.py \
 	tests/utils.py \
+	tests/balarBlock.py \
+	tests/memory.py \
+	tests/vanadisBlock.py \
+	tests/vanadisOS.py \
 	tests/vectorAdd/vecAdd.cu \
 	tests/vectorAdd/Makefile \
 	tests/vanadisHandshake/vanadisHandshake.c \
