@@ -141,6 +141,7 @@ void BalarMMIO::init(unsigned int phase) {
 }
 
 void BalarMMIO::setup() {
+    mmio_iface->setup();
     mem_iface->setup();
     for (uint32_t i = 0; i < gpu_core_count; i++)
         gpu_to_cache_links[i]->setup();

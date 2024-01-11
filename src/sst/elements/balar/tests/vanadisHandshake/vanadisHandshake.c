@@ -16,9 +16,9 @@
 /**
  * @file vanadisHandshake.c
  * @author Weili An (an107@purdue.edu)
- * @brief A simple program to test balar and vanadis with vectorAdd
- * @version 0.1
- * @date 2022-06-01
+ * @brief A simple program to test balar and vanadis with vectorAdd using MMAP
+ * @version 0.2
+ * @date 2024-01-11
  * 
  */
 
@@ -35,6 +35,8 @@ int main( int argc, char* argv[] ) {
     printf("Hello from Vanadis and Balar\n");
 
     // Map balar
+    printf("Mapping balar...\n");
+    fflush(stdout);
     __vanadisMapBalar();
 
     // Registering the fatbinary and function
@@ -46,7 +48,8 @@ int main( int argc, char* argv[] ) {
 
     // Preparing the data
     int n = 10000;
-    int interval = n / 5;   // Print 5 times
+    int total_prints = 5;   // Print 5 times
+    int interval = n / total_prints;
     int * d_a = 0;
     int * d_b = 0;
     int * d_result = 0;
@@ -56,40 +59,48 @@ int main( int argc, char* argv[] ) {
     for (int i = 0; i < n; i++) {
         h_a[i] = i;
         h_b[i] = -2 * i;
-        if (i % interval == 0){
-            printf("i:%d h_a[%d] = %d\th_b[%d] = %d\n", i, i, h_a[i], i, h_b[i]);
-            fflush(stdout);
+        if (g_debug_level >= LOG_LEVEL_DEBUG) {
+            if (i % interval == 0){
+                printf("i:%d h_a[%d] = %d\th_b[%d] = %d\n", i, i, h_a[i], i, h_b[i]);
+                fflush(stdout);
+            }
         }
     }
+    printf("Array allocation done\n");
+    fflush(stdout);
 
     // Prepare device data
     cudaMalloc(&d_a, n * sizeof(int));
     cudaMalloc(&d_b, n * sizeof(int));
     cudaMalloc(&d_result, n * sizeof(int));
 
-    printf("d_a: %p\n", d_a);
-    printf("d_b: %p\n", d_b);
-    printf("d_result: %p\n", d_result);
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("d_a: %p\n", d_a);
+        printf("d_b: %p\n", d_b);
+        printf("d_result: %p\n", d_result);
+    }
 
     // Looks like the 32 bit pointer get signed extended, use AND to force unsigned extend
     cudaMemcpy((uint64_t)d_a & 0xFFFFFFFF, (uint64_t)h_a, n * sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy((uint64_t)d_b & 0xFFFFFFFF, (uint64_t)h_b, n * sizeof(int), cudaMemcpyHostToDevice);
 
     // DEBUG: Check if copy is correct
-    cudaMemcpy(h_result, (uint64_t)d_a & 0xFFFFFFFF, n * sizeof(int), cudaMemcpyDeviceToHost);
-    printf("Checking d_a memcpy content\n");
-    for (int i = 0; i < n; i++) {
-        if (i % interval == 0) {
-            printf("h_result[%d]: %d\n", i, h_result[i]);
-            fflush(stdout);
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        cudaMemcpy(h_result, (uint64_t)d_a & 0xFFFFFFFF, n * sizeof(int), cudaMemcpyDeviceToHost);
+        printf("Checking d_a memcpy content\n");
+        for (int i = 0; i < n; i++) {
+            if (i % interval == 0) {
+                printf("h_result[%d]: %d\n", i, h_result[i]);
+                fflush(stdout);
+            }
         }
-    }
-    cudaMemcpy(h_result, (uint64_t)d_b & 0xFFFFFFFF, n * sizeof(int), cudaMemcpyDeviceToHost);
-    printf("Checking d_b memcpy content\n");
-    for (int i = 0; i < n; i++) {
-        if (i % interval == 0) {
-            printf("h_result[%d]: %d\n", i, h_result[i]);
-            fflush(stdout);
+        cudaMemcpy(h_result, (uint64_t)d_b & 0xFFFFFFFF, n * sizeof(int), cudaMemcpyDeviceToHost);
+        printf("Checking d_b memcpy content\n");
+        for (int i = 0; i < n; i++) {
+            if (i % interval == 0) {
+                printf("h_result[%d]: %d\n", i, h_result[i]);
+                fflush(stdout);
+            }
         }
     }
     // DEBUG: END
@@ -123,7 +134,18 @@ int main( int argc, char* argv[] ) {
         }
     }
 
-    // Future: Weili: Add CPU validation against GPU results here?
+    // Weili: CPU validation against GPU results
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        int * h_cpu = malloc(sizeof(int) * n);
+        int err_count = 0;
+        for (int i = 0; i < n; i++) {
+            h_cpu[i] = h_a[i] + h_b[i];
+            if (h_cpu[i] != h_result[i])
+                err_count++;
+        }
+        printf("Error count against cpu result: %d\n", err_count);
+        fflush(stdout);
+    }
     
     return 0;
 }
