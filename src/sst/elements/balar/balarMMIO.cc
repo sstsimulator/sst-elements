@@ -46,7 +46,7 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
     // Memory address
     mmio_addr = params.find<uint64_t>("base_addr", 0);
     dma_addr = params.find<uint64_t>("dma_addr", 0);
-    bool cpu_no_cache = params.find<bool>("cpu_no_cache", true);
+    separate_mem_iface = params.find<bool>("separate_mem_iface", true);
 
     std::string clockfreq = params.find<std::string>("clock", "1GHz");
     UnitAlgebra clock_ua(clockfreq);
@@ -75,9 +75,8 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
     }
 
     // Interface to memory
-    if (cpu_no_cache) {
-        // If CPU does not have cache (connected to memory backend and balar via NIC for instance)
-        // can just use mmio_iface for memory requests as well
+    if (!separate_mem_iface) {
+        // If we dont need to have a separate memory interface, can just use mmio_iface for memory requests as well
         mem_iface = mmio_iface;
     } else {
         mem_iface = loadUserSubComponent<SST::Interfaces::StandardMem>("mem_iface", ComponentInfo::SHARE_NONE, tc, 
@@ -135,14 +134,16 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
 
 void BalarMMIO::init(unsigned int phase) {
     mmio_iface->init(phase);
-    mem_iface->init(phase);
+    if (separate_mem_iface)
+        mem_iface->init(phase);
     for (uint32_t i = 0; i < gpu_core_count; i++)
         gpu_to_cache_links[i]->init(phase);
 }
 
 void BalarMMIO::setup() {
     mmio_iface->setup();
-    mem_iface->setup();
+    if (separate_mem_iface)
+        mem_iface->setup();
     for (uint32_t i = 0; i < gpu_core_count; i++)
         gpu_to_cache_links[i]->setup();
 }
@@ -311,6 +312,9 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::Write* write
     // Record the read request we made
     balar->requests[cuda_req->getID()] = std::make_pair(balar->getCurrentSimTime(), "Read_cuda_packet");
 
+    // Log this write
+    out->verbose(_INFO_, "%s: receiving incoming write with scratch mem address: 0x%llx, issuing read to this address\n", balar->getName().c_str(), balar->packet_scratch_mem_addr);
+
     // Now send the memory request
     // inside the SST memory space to read the cuda packet
     balar->mem_iface->send(cuda_req);
@@ -339,6 +343,9 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::Read* read) 
 
     // Record this request
     balar->requests[write_cuda_ret->getID()] = std::make_pair(balar->getCurrentSimTime(), "Write_cuda_ret");
+
+    // Log this read
+    out->verbose(_INFO_, "%s: receiving incoming read, writing cuda return packet to scratch mem address: 0x%llx\n", balar->getName().c_str(), balar->packet_scratch_mem_addr);
 
     // Now send the memory request to write the cuda return packet
     // inside the SST memory space

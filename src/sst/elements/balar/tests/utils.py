@@ -61,15 +61,6 @@ class Config:
         self.gpu_xbar_linkbandwidth = cp.get('GPUNetwork', 'linkbandwidth')
         self.gpu_xbar_flit_size = cp.get('GPUNetwork', 'flit_size')
 
-
-    def getCoreConfig(self, core_id):
-        params = dict({
-                'clock': self.clock,
-                'verbose': int(self.verbose)
-                })
-        params.update(self.coreConfig(core_id))
-        return params
-
     def getGPUConfig(self):
         params = dict({
                 'clock': self.gpuclock,
