@@ -203,9 +203,7 @@ void Cache::turnClockOn() {
     timestamp_ = time - 1;
     coherenceMgr_->updateTimestamp(timestamp_);
     int64_t cyclesOff = timestamp_ - lastActiveClockCycle_;
-    for (int64_t i = 0; i < cyclesOff; i++) {           // TODO more efficient way to do this? Don't want to add in one-shot or we get weird averages/sum sq.
-        statMSHROccupancy->addData(mshr_->getSize());
-    }
+    statMSHROccupancy->addDataNTimes(cyclesOff, mshr_->getSize());
     //dbg_->debug(_L3_, "%s turning clock ON at cycle %" PRIu64 ", timestamp %" PRIu64 ", ns %" PRIu64 "\n", this->getName().c_str(), getCurrentSimCycle(), timestamp_, getCurrentSimTimeNano());
     clockIsOn_ = true;
 }
