@@ -98,7 +98,11 @@ void EmberTrafficGenGenerator::configure()
 
     memSetBacked();
     m_rankBytes = memAlloc(sizeofDataType(UINT64_T));
+    uint64_t* value_ptr = (uint64_t*) m_rankBytes.getBacking();
+    *value_ptr = 0;
     m_totalBytes = memAlloc(sizeofDataType(UINT64_T));
+    value_ptr = (uint64_t*) m_totalBytes.getBacking();
+    *value_ptr = 0;
 }
 
 void EmberTrafficGenGenerator::configure_plusOne()
