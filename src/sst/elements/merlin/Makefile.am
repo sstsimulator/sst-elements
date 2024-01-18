@@ -107,12 +107,14 @@ EXTRA_DIST = \
 	tests/dragon_128_platform_test.py \
 	tests/dragon_128_platform_test_cm.py \
 	tests/platform_file_dragon_128.py \
+	tests/dragon_128_test_deferred.py \
 	tests/polarfly_455_test.py \
 	tests/polarstar_504_test.py \
 	tests/refFiles/test_merlin_dragon_128_platform_test.out \
 	tests/refFiles/test_merlin_dragon_128_platform_test_cm.out \
 	tests/refFiles/test_merlin_dragon_128_test.out \
 	tests/refFiles/test_merlin_dragon_128_test_fl.out \
+	tests/refFiles/test_merlin_dragon_128_test_deferred.out \
 	tests/refFiles/test_merlin_dragon_72_test.out \
 	tests/refFiles/test_merlin_fattree_128_test.out \
 	tests/refFiles/test_merlin_fattree_256_test.out \

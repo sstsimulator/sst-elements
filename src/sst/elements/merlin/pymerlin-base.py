@@ -599,10 +599,9 @@ class TemplateBase(_AttributeManager):
 class Topology(TemplateBase):
     def __init__(self):
         TemplateBase.__init__(self)
-        self._declareClassVariables(["network_name","endPointLinks","built","router","_prefix"])
+        self._declareClassVariables(["network_name","endPointLinks","built","router"])
 
-        self._prefix = ""
-        self._lockVariable("_prefix")
+        self.network_name = ""
         self._setCallbackOnWrite("network_name",self._network_name_callback)
 
         self._setCallbackOnWrite("router",self._router_callback)
@@ -619,26 +618,30 @@ class Topology(TemplateBase):
 
     def _network_name_callback(self, variable_name, value):
         self._lockVariable(variable_name)
-        if value:
-            self._unlockVariable("_prefix")
-            self._prefix = "%s."%value
-            self._lockVariable("_prefix")
 
     def _router_callback(self, variable_name, value):
         # Lock variable if it wasn't set to None
         if value: self._lockVariable(variable_name)
 
-
     def getName(self):
         return "NoName"
+    # build() will automatically apply the network_name as a name
+    # prefix before calling _build_impl().  If you want to have the
+    # prefix automatically applied, override the _build_impl()
+    # function.  If you want to control this yourself, overload the
+    # build() function.
     def build(self, endpoint):
+        sst.pushNamePrefix(self.network_name)
+        self._build_impl(endpoint)
+        sst.popNamePrefix()
+    def _build_impl(self, endpoint):
         pass
     def getEndPointLinks(self):
         pass
     def getNumNodes(self):
         pass
     def getRouterNameForId(self,rtr_id):
-        return "%srtr%d"%(self._prefix,rtr_id)
+        return "rtr%d"%(rtr_id)
     def findRouterById(self,rtr_id):
         return sst.findComponentByName(self.getRouterNameForId(rtr_id))
     def _instanceRouter(self,radix,rtr_id):
@@ -648,10 +651,72 @@ class NetworkInterface(TemplateBase):
     def __init__(self):
         TemplateBase.__init__(self)
 
-    # returns subcomp, port_name
-    def build(self,comp,slot,slot_num,link,job_id,job_size,logical_nid,use_nid_remap=False):
+
+    # NetworkInterface.build() has two possible implementations:
+
+    # OLD: Takes no link and returns an sst.SubComponent and port name
+
+    # NEW: Take a link and returns True if something was connected to
+    # it.
+
+    # This is the new method for instancing endpoints.  You need to
+    # create the Link object first, then pass it in.  If False is
+    # returned, then nothing was hooked up to the Link by build().  If
+    # True is returned, then something was connected and the parent
+    # needs to hook up its end of the Link.  Note that the python Link
+    # class does not add anything to the ConfigGraph until a call to
+    # Link.connect or (Sub)Component.addLink is called, so it won't
+    # create strange artificts in the ConfigGraph if a Link is created
+    # by not used.
+
+    # For backward compatibility, use_nid_map and link should be
+    # optional arguments, in that order.  Once we transition
+    # completely over to the new way, both will become required.
+
+    # To maintain backward compatibility with the old method, the new
+    # implemenation will need to check to see if link is None, if so,
+    # then return subcomp, port_name.  Otherwise, return True or False
+    # depending on if the passed in link was connected or not.
+
+    # Objects that want to use the new Link version of the function
+    # will need to do so in a try block and catch the TypeError
+    # exception.  If no exception is thrown the implementation
+    # supports the Link method, otherwise the object needs to fallback
+    # to the old method.  Once the old version is no longer supported,
+    # the try/except block can be removed.  This functionality is
+    # encapsulated in the _instanceNetworkInterfaceBackCompat()
+    def build(self,comp,slot,slot_num,job_id,job_size,logical_nid,use_nid_remap=False,link=None):
         return None
 
+
+    # Convenience function to loada NetworkInterface in a backward
+    # compatibile manner.  Adheres to the rules for backward
+    # compatilbility described in the comment to build()
+    @staticmethod
+    def _instanceNetworkInterfaceBackCompat(
+            netif,comp,slot,slot_num,job_id,job_size,logical_nid,use_nid_remap,link):
+        if not link:
+            # If link is None, then we are using the old method.
+            # This will return (subcomp, port_name)
+            return netif.build(comp,slot,slot_num,job_id,job_size,logical_nid,use_nid_remap)
+
+        # Using the new method, need to do a try/except to make sure
+        # the underlying networkif supports the link method
+        try:
+            built = netif.build(comp,slot,slot_num,job_id,job_size,logical_nid,use_nid_remap,link)
+            return built
+        except TypeError:
+            # Underlying networkif doesn't support the Link method.
+            # Need to call the old method and connect the link
+            # manually
+            subcomp, port_name = netif.build(comp,slot,slot_num,job_id,job_size,logical_nid,use_nid_remap)
+            if not subcomp:
+                # Nothing was hooked up, return False
+                return False
+            # Need to hookup the subcomponent to the link that was
+            # passed in
+            subcomp.addLink(link, port_name)
+            return True
 
 
 # Base class that is used to build endpoints
@@ -659,9 +724,63 @@ class Buildable(TemplateBase):
     def __init__(self):
         TemplateBase.__init__(self)
 
-    # build() returns an sst.SubComponent and port name
-    def build(self, nID, extraKeys):
+    def name(self):
+        return "Buildable"
+
+    # build() has two possible implemenations.
+
+    # OLD: Takes no link and returns an sst.SubComponent and port name
+
+    # NEW: Take a link and returns True if something was connected to
+    # it.
+
+    # This is the new method for instancing endpoints.  You need to
+    # create the Link object first, then pass it in.  If False is
+    # returned, then nothing was hooked up to the Link by build().  If
+    # True is returned, then something was connected and the parent
+    # needs to hook up its end of the Link.  Note that the python Link
+    # class does not add anything to the ConfigGraph until a call to
+    # Link.connect or (Sub)Component.addLink is called, so it won't
+    # create strange artificts in the ConfigGraph if a Link is created
+    # by not used.
+
+    # For backward compatibility, link should be an optional
+    # argumentr.  Once we transition completely over to the new way,
+    # link will become required.
+
+    # To maintain backward compatibility with the old method, the new
+    # implemenation will need to check to see if link is None, if so,
+    # then return subcomp, port_name.  Otherwise, return True or False
+    # depending on if the passed in link was connected or not.
+
+    # Objects that want to use the new Link version of the function
+    # will need to do so in a try block and catch the TypeError
+    # exception.  If no exception is thrown the implementation
+    # supports the Link method, otherwise the object needs to fallback
+    # to the old method.  Once the old version is no longer supported,
+    # the try/except block can be removed.  This functionality is
+    # encapsulated in the _instanceNetworkInterfaceBackCompat()
+    def build(self, nID, extraKeys, link=None):
         return None
+
+
+    # Convenience function to load a Buildable in a backward
+    # compatibile manner.  Adheres to the rules for backward
+    # compatilbility described in the comment to build()
+    @staticmethod
+    def _instanceBuildableBackCompat(endpoint, comp, comp_port, nID, extraKeys, link):
+        try:
+            # Try the new Link-based method first
+            built = endpoint.build(nID, extraKeys, link)
+            if built:
+                comp.addLink(link, comp_port)
+        except TypeError as error:
+            # If it doesn't support the Link-based method,
+            # fall-back to old method
+            (nic, port_name) = endpoint.build(nID, extraKeys)
+            if nic:
+                link.connect( (nic, port_name), (comp, comp_port) )
+
 
 # Classes that define endpoints
 class Job(Buildable):
@@ -681,6 +800,10 @@ class Job(Buildable):
     def getSize(self):
         return self.size
 
+    # This will create a linear nid map in the case where you build
+    # this using a deferred build
+    def createLinearNidMap(self):
+        self._nid_map = list(range(self.size))
 
 
 class RouterTemplate(TemplateBase):
@@ -735,20 +858,57 @@ class hr_router(RouterTemplate):
     def getTopologySlotName(self):
         return "topology"
 
-
 class SystemEndpoint(Buildable):
     def __init__(self,system):
         Buildable.__init__(self)
         self._declareClassVariables(["_system"])
         self._system = system
 
-    # build() returns an sst.Component and port name
-    def build(self, nID, extraKeys):
+    # build() returns an sst.Component and port name if no link is
+    # passed in.  Otherwise, it returns True if an endpoint was
+    # connected and False otherwise.
+    def build(self, nID, extraKeys, link=None):
         # Just get the proper job object for this nID and call build
         if self._system._endpoints[nID]:
-            return self._system._endpoints[nID].build(nID, extraKeys)
+            # There is an endpoint, instance it
+            if link:
+                # Need to try the new Link method
+                try:
+                    return self._system._endpoints[nID].build(nID, extraKeys, link)
+                except TypeError:
+                    # Link method not support, so will need to hook up
+                    # the link manually
+                    comp, port = self._system._endpoints[nID].build(nID, extraKeys)
+                    comp.addLink(link, port)
+                    return True
+            else:
+                # Using old method
+                return self._system._endpoints[nID].build(nID, extraKeys)
         else:
-            return (None, None)
+            if link:
+                return False
+            else:
+                return (None, None)
+
+# This is a endpoint class used to get all the links in a topology
+# build.  This info is then used to create the endpoints in the
+# multiplane system
+class DeferredEndpoint(Buildable):
+    def __init__(self):
+        Buildable.__init__(self)
+        self._declareClassVariables(["_link_map"])
+        # Dictionary that holds a map from network id to (extraKeys, Link)
+        self._link_map = {}
+
+
+    def build(self, nID, extraKeys, link):
+        self._link_map[nID] = link
+        return True
+
+    # Return the link associated with the specified endpoint ID.  Will
+    # throw an exception if passed an invalid nID.
+    def getLink(self, nID):
+        return self._link_map[nID]
 
 
 class EmptyJob(Job):
@@ -758,13 +918,13 @@ class EmptyJob(Job):
     def getName(self):
         return "Empty Job"
 
-    def build(self, nID, extraKeys):
+    def build(self, nID, extraKeys, link=None):
         nic = sst.Component("empty_node_%d"%nID, "merlin.simple_patterns.empty")
         id = self._nid_map[nID]
 
         #  Add the linkcontrol
-        networkif, port_name = self.network_interface.build(nic,"networkIF",0,self.job_id,self.size,id)
-        return (networkif, port_name)
+        return NetworkInterface._instanceNetworkInterfaceBackCompat(
+            self.network_interface,nic,"networkIF",0,self.job_id,self.size,id,False,link)
 
 
 class System(TemplateBase):
@@ -779,12 +939,13 @@ class System(TemplateBase):
 
     def __init__(self):
         TemplateBase.__init__(self)
-        self._declareClassVariables(["topology","allocation_block_size","_available_nodes","_num_nodes","_endpoints"])
+        self._declareClassVariables(["topology","allocation_block_size","_available_nodes","_num_nodes","_endpoints","_deferred_endpoint"])
         self._setCallbackOnWrite("topology",self._topology_config_callback)
         self._setCallbackOnWrite("allocation_block_size",self._block_size_config_callback)
 
         self._subscribeToPlatformParamSet("system")
         self.topology = PlatformDefinition.getPlatformDefinedClassInstance("topology")
+        self._deferred_endpoint = None
         #self.allocation_block_size = 1
 
     def setTopology(self, topo, allocation_block_size = 1):
@@ -801,6 +962,20 @@ class System(TemplateBase):
             self.allocateNodes(remainder,"linear");
         system_ep = SystemEndpoint(self)
         self.topology.build(system_ep)
+
+    # Will build the topology using the DeferredEndpoint, which means
+    # all allocations will be ignored.  After this is called, use the
+    # getLinkForEndpoint(nID) call to get the link associated with
+    # that endpoint.
+    def deferred_build(self):
+        self._deferred_endpoint = DeferredEndpoint()
+        self.topology.build(self._deferred_endpoint)
+
+    def getLinkForEndpoint(self, nID):
+        if not self._deferred_endpoint:
+            # throw exception
+            pass
+        return self._deferred_endpoint.getLink(nID)
 
     def _topology_config_callback(self, variable_name, value):
         if not value: return

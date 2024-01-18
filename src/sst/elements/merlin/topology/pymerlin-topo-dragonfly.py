@@ -58,16 +58,16 @@ class topoDragonFly(Topology):
         return self.getRouterNameForLocation(rtr_id // self.routers_per_group, rtr_id % self.routers_per_group)
 
     def getRouterNameForLocation(self,group,rtr):
-        return "%srtr_G%dR%d"%(self._prefix,group,rtr)
+        return "rtr_G%dR%d"%(group,rtr)
 
     def findRouterByLocation(self,group,rtr):
         return sst.findComponentByName(self.getRouterNameForLocation(group,rtr))
 
 
-    def build(self, endpoint):
+    def _build_impl(self, endpoint):
         if self._check_first_build():
             sst.addGlobalParams("params_%s"%self._instance_name, self._getGroupParams("main"))
-
+            sst.addGlobalParam("params_%s"%self._instance_name, "network_name", self.network_name)
 
         if self.host_link_latency is None:
             self.host_link_latency = self.link_latency
@@ -149,8 +149,7 @@ class topoDragonFly(Topology):
             src = min(dest_grp, g)
             dest = max(dest_grp, g)
 
-            #getLink("link:g%dg%dr%d"%(g, src, dst)), "port%d"%port, self.params["link_lat"])
-            return getLink("%sglobal_link_g%dg%dr%d"%(self._prefix,src,dest,link_num))
+            return getLink("global_link_g%dg%dr%d"%(src,dest,link_num))
 
         #########################
 
@@ -176,14 +175,11 @@ class topoDragonFly(Topology):
 
                 port = 0
                 for p in range(self.hosts_per_router):
-                    #(nic, port_name) = endpoint.build(nic_num, {"num_peers":num_peers})
-                    (nic, port_name) = endpoint.build(nic_num, {})
-                    if nic:
-                        link = sst.Link("link_g%dr%dh%d"%(g, r, p))
-                        #network_interface.build(nic,slot,0,link,self.host_link_latency)
-                        link.connect( (nic, port_name, self.host_link_latency), (rtr, "port%d"%port, self.host_link_latency) )
-                        #link.setNoCut()
-                        #rtr.addLink(link,"port%d"%port,self.host_link_latency)
+                    link = sst.Link("link_g%dr%dh%d"%(g, r, p), self.host_link_latency)
+
+                    Buildable._instanceBuildableBackCompat(endpoint, rtr, "port%d"%port, nic_num, {}, link)
+                    #link.setNoCut()
+                    #rtr.addLink(link,"port%d"%port,self.host_link_latency)
                     nic_num = nic_num + 1
                     port = port + 1
 
