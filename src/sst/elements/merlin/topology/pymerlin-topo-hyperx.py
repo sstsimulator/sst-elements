@@ -101,13 +101,13 @@ class topoHyperX(Topology):
         return self.getRouterNameForLocation(self._idToLoc(rtr_id))
         
     def getRouterNameForLocation(self,location):
-        return "%srtr_%s"%(self._prefix,self._formatShape(location))
+        return "rtr_%s"%(self._formatShape(location))
     
     def findRouterByLocation(self,location):
         return sst.findComponentByName(self.getRouterNameForLocation(location))
         
     
-    def build(self, endpoint):
+    def _build_impl(self, endpoint):
         if self.host_link_latency is None:
             self.host_link_latency = self.link_latency
 

@@ -30,7 +30,7 @@ using namespace SST::Merlin;
 
 
 void
-RouteToGroup::init_write(const std::string& basename, int group_id, global_route_mode_t route_mode,
+RouteToGroup::init_write(std::string basename, int group_id, global_route_mode_t route_mode,
                          const dgnflyParams& params, const std::vector<int64_t>& global_link_map,
                          bool config_failed_links, const std::vector<FailedLink>& failed_links_vec)
 {
@@ -120,7 +120,7 @@ RouteToGroup::init_write(const std::string& basename, int group_id, global_route
 }
 
 void
-RouteToGroup::init(const std::string& basename, int group_id, global_route_mode_t route_mode,
+RouteToGroup::init(std::string basename, int group_id, global_route_mode_t route_mode,
                    const dgnflyParams& params, bool config_failed_links)
 {
     data.initialize(basename+"group_to_global_port");
@@ -240,6 +240,9 @@ topo_dragonfly::topo_dragonfly(ComponentId_t cid, Params &p, int num_ports, int 
     params.n = p.find<uint32_t>("intergroup_links");
     params.m = p.find<uint32_t>("intragroup_links", 1);
 
+    std::string prefix = p.find<std::string>("network_name","network");
+    prefix += "_";
+
     global_start = params.p + ((params.a - 1) * params.m);
 
     group_id = rtr_id / params.a;
@@ -278,11 +281,11 @@ topo_dragonfly::topo_dragonfly(ComponentId_t cid, Params &p, int num_ports, int 
 
         std::vector<FailedLink> failed_links;
         p.find_array<FailedLink>("failed_links", failed_links);
-        group_to_global_port.init_write("network_", group_id, global_route_mode, params, global_link_map,
+        group_to_global_port.init_write(prefix, group_id, global_route_mode, params, global_link_map,
                                         config_failed_links, failed_links);
     }
     else {
-        group_to_global_port.init("network_", group_id, global_route_mode, params, config_failed_links);
+        group_to_global_port.init(prefix, group_id, global_route_mode, params, config_failed_links);
     }
 
     // Setup the routing algorithms

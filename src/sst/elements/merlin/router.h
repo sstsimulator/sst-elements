@@ -486,6 +486,11 @@ public:
     // Parameters are:  num_ports, id, num_vns
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::Topology, int, int, int)
 
+    SST_ELI_DOCUMENT_PARAMS(
+        {"network_name",      "Name of the network.  Required if two networks of the same topology are used in the same simulation; primarily use to namespace global shared object used by the topology."}
+    )
+
+
     enum PortState {R2R, R2N, UNCONNECTED, FAILED};
     Topology(ComponentId_t cid) : SubComponent(cid), output(getSimulationOutput()) {}
     virtual ~Topology() {}

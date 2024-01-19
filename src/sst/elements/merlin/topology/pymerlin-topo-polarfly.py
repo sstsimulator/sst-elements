@@ -419,7 +419,7 @@ class topoPolarFly(Topology):
                 print( " ".join(str(e) for e in node) + " ", file=f)
         
 
-    def build(self, endpoint):
+    def _build_impl(self, endpoint):
         if self._check_first_build():
             sst.addGlobalParams("params_%s"%self._instance_name, self._getGroupParams("main"))
 
