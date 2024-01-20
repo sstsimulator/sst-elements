@@ -86,6 +86,9 @@ class testcase_merlin_Component(SSTTestCase):
     def test_merlin_dragon_128_fl(self):
         self.merlin_test_template("dragon_128_test_fl")
 
+    def test_merlin_dragon_128_deferred(self):
+        self.merlin_test_template("dragon_128_test_deferred")
+
 
     @unittest.skipIf(not(('sympy.polys.galoistools' in sys.modules) and ('sympy.polys.domains' in sys.modules)), "Polarfly construction requires sympy")
     def test_merlin_polarfly_455(self):

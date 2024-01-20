@@ -610,7 +610,7 @@ class topoPolarStar(Topology):
         return adj_ps
     
     
-    def build(self, endpoint):
+    def _build_impl(self, endpoint):
 
         if self._check_first_build():
             sst.addGlobalParams("params_%s"%self._instance_name, self._getGroupParams("main"))

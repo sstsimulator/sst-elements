@@ -28,7 +28,7 @@ class TestJob(Job):
     def getName(self):
         return "TestJob"
 
-    def build(self, nID, extraKeys):
+    def build(self, nID, extraKeys, link = None):
         nic = sst.Component("testNic_%d"%nID, "merlin.test_nic")
         self._applyStatisticsSettings(nic)
         nic.addParams(self._getGroupParams("main"))
@@ -38,9 +38,8 @@ class TestJob(Job):
         nic.addParam("id", id)
 
         #  Add the linkcontrol
-        networkif, port_name = self.network_interface.build(nic,"networkIF",0,self.job_id,self.size,id,True)
-
-        return (networkif,port_name)
+        return NetworkInterface._instanceNetworkInterfaceBackCompat(
+            self.network_interface,nic,"networkIF",0,self.job_id,self.size,id,True,link)
 
 
 class OfferedLoadJob(Job):

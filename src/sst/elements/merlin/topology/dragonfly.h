@@ -139,12 +139,11 @@ private:
 public:
     RouteToGroup() {}
 
-    // void init(SharedRegion* sr, size_t g, size_t r);
-    void init_write(const std::string& basename, int group_id, global_route_mode_t route_mode,
+    void init_write(std::string basename, int group_id, global_route_mode_t route_mode,
                     const dgnflyParams& params, const std::vector<int64_t>& global_link_map,
                     bool config_failed_links, const std::vector<FailedLink>& failed_links);
 
-    void init(const std::string& basename, int group_id, global_route_mode_t route_mode,
+    void init(std::string basename, int group_id, global_route_mode_t route_mode,
               const dgnflyParams& params, bool config_failed_links);
 
     const RouterPortPair& getRouterPortPair(int group, int route_number) const;
@@ -200,6 +199,7 @@ public:
         {"dragonfly.global_link_map",       "Array specifying connectivity of global links in each dragonfly group."},
         {"dragonfly.global_route_mode",     "Mode for intepreting global link map [absolute (default) | relative].","absolute"},
 
+        {"network_name",          "Name of the network", "network"},
         {"hosts_per_router",      "Number of hosts connected to each router."},
         {"routers_per_group",     "Number of links used to connect to routers in same group."},
         {"intergroup_per_router", "Number of links per router connected to other groups."},
