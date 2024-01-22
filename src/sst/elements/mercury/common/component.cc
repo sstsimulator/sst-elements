@@ -20,9 +20,6 @@ namespace Hg {
 
 static int _self_id_(-1);
 
-template<> SST::TimeConverter*  HgBase<SST::Component>::time_converter_ = nullptr;
-template<> SST::TimeConverter*  HgBase<SST::SubComponent>::time_converter_ = nullptr;
-
 template<> int HgBase<SST::Component>::self_id() {
     ++_self_id_;
     return _self_id_;

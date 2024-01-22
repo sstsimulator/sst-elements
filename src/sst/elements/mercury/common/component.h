@@ -102,6 +102,9 @@ private:
   SST::Link* self_link_;
 };
 
+template <typename CoreBase>
+SST::TimeConverter* HgBase<CoreBase>::time_converter_ = nullptr;
+
 class Component : public HgBase<SST::Component>
 {
 protected:
