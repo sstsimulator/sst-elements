@@ -42,8 +42,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#pragma once
-
 #include <mercury/common/event_link.h>
 
 #define connect_str_case(x) case x: return #x

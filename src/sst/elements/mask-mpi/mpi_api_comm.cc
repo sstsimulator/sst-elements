@@ -55,6 +55,7 @@ Questions? Contact sst-macro-help@sandia.gov
 //  mpi_api_debug(sprockit::dbg::mpi, "%s(%s) start", #fxn, commStr(comm).c_str())
 
 #define StartCommCall(fxn,comm)
+#undef FinishMPICall
 #define FinishMPICall(fxn)
 
 namespace SST::MASKMPI {

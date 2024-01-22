@@ -263,8 +263,8 @@ DagCollectiveActor::sendEagerMessage(Action* ac)
   uint64_t num_bytes;
   void* buf = getSendBuffer(ac, num_bytes);
 
-  output.output("Rank %s, collective %s(%p) sending eager message to %d on tag=%d offset=%d num_bytes=%lu",
-    rankStr().c_str(), toString().c_str(), this, ac->partner, tag_, ac->offset, num_bytes);
+  output.output("Rank %s, collective %s(%p) sending eager message to %d on tag=%d offset=%d num_bytes=%llu",
+    rankStr().c_str(), toString().c_str(), this, ac->partner, tag_, ac->offset, (long long unsigned int) num_bytes);
 
   /*auto* msg =*/ my_api_->smsgSend<CollectiveWorkMessage>(ac->phys_partner, num_bytes, buf,
                                               cq_id_, cq_id_, Message::collective, engine_->smsgQos(),
@@ -668,7 +668,7 @@ DagCollectiveActor::nextRoundReadyToPut(
   Action* ac, CollectiveWorkMessage* header)
 {
   output.output("Rank %s, collective %s ready to put for round=%d tag=%d from rank %d",
-    rankStr().c_str(), toString().c_str(), header, header->round(), tag_, header->domSender());
+    rankStr().c_str(), toString().c_str(), header->round(), tag_, header->domSender());
 
   header->reverse();
 

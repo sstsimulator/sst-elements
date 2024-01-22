@@ -51,8 +51,6 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <sst/core/params.h>
 //#include <mercury/common/null_buffer.h>
 
-#pragma once
-
 namespace SST::MASKMPI {
 
 RendezvousProtocol::RendezvousProtocol(SST::Params& params, MpiQueue* queue) :
