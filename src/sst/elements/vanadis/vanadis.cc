@@ -244,8 +244,6 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
         output->fatal(CALL_INFO, -1, "Error - unable to load the rocc interface (rocc subcomponent)\n");
     }
 
-    rocc->setRegisterFiles(&register_files);
-
     uint16_t fu_id = 0;
 
     const uint16_t int_arith_units  = params.find<uint16_t>("integer_arith_units", 2);
@@ -709,7 +707,14 @@ VANADIS_COMPONENT::performExecute(const uint64_t cycle)
     // Tick the load/store queue
     lsq->tick((uint64_t)cycle);
 
-    // Tick the RoCC command queue
+    // Tick the RoCC accelerator
+    if (!(rocc->isBusy())) {
+        RoCCResponse* resp = rocc->respond();
+        VanadisInstruction* ins = rocc_queue.front();
+        register_files[ins->getHWThread()]->setIntReg<uint64_t>(resp->rd, resp->rd_val);
+        ins->markExecuted();
+        rocc_queue.pop_front();
+    }
     rocc->tick((uint64_t)cycle);
 
     return 0;
@@ -1120,7 +1125,13 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
         output->verbose(CALL_INFO, 16, 0, "issuing rocc instruction\n");
         if ( !rocc->RoCCFull() ) {
             output->verbose(CALL_INFO, 16, 0, "pushing to RoCC queue\n");
-            rocc->push((VanadisRoCCInstruction*)ins);
+            VanadisRegisterFile* regFile = register_files[ins->getHWThread()];
+            uint64_t rs1_val = regFile->getIntReg<int64_t>(ins->getPhysIntRegIn(0));
+            uint64_t rs2_val = regFile->getIntReg<int64_t>(ins->getPhysIntRegIn(1));
+            VanadisRoCCInstruction* vrocc_inst = (VanadisRoCCInstruction*)ins;
+            RoCCInstruction* rocc_inst = new RoCCInstruction(vrocc_inst->func7, vrocc_inst->rd, vrocc_inst->xs1, vrocc_inst->xs2, vrocc_inst->xd);
+            rocc->push(new RoCCCommand(rocc_inst, rs1_val, rs2_val));
+            rocc_queue.push_back(ins);
             allocated_fu = true;
         }
         break;

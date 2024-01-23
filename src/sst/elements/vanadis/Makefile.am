@@ -244,8 +244,7 @@ os/syscall/writev.h \
 os/resp/voscallresp.h \
 os/resp/vosexitresp.h \
 rocc/vroccinterface.h \
-rocc/vbasicrocc.h \
-rocc/vroccanalog.h 
+rocc/vbasicrocc.h
 
 
 EXTRA_DIST = \

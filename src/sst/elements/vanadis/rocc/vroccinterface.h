@@ -19,9 +19,6 @@
 #include <sst/core/output.h>
 #include <sst/core/subcomponent.h>
 
-#include "inst/regfile.h"
-#include "inst/vrocc.h"
-
 #include <cinttypes>
 #include <cstdint>
 #include <vector>
@@ -29,6 +26,51 @@
 
 namespace SST {
 namespace Vanadis {
+
+class RoCCInstruction 
+{
+public:
+    RoCCInstruction(uint32_t func_code7, uint8_t rd, const bool xs1, const bool xs2, const bool xd) {
+        this->func7 = func_code7;
+        this->rd = rd;
+        this->xs1 = xs1;
+        this->xs2 = xs2;
+        this->xd = xd;
+    }
+    ~RoCCInstruction() {}
+
+    uint8_t func7;
+    uint8_t rd;
+    bool xs1;
+    bool xs2;
+    bool xd;
+};
+
+class RoCCCommand
+{
+public:
+    RoCCCommand(RoCCInstruction* inst, uint64_t rs1, uint64_t rs2) {
+        this->inst = inst;
+        this->rs1 = rs1;
+        this->rs2 = rs2;
+    }
+    ~RoCCCommand() {}
+    RoCCInstruction* inst;
+    uint64_t rs1;
+    uint64_t rs2;
+};
+
+class RoCCResponse
+{
+public:
+    RoCCResponse(uint8_t rd, uint64_t rd_val) {
+        this->rd = rd;
+        this->rd_val = rd_val;
+    }
+    ~RoCCResponse() {}
+    uint8_t rd;
+    uint64_t rd_val;
+};
 
 class VanadisRoCCInterface : public SST::SubComponent {
 public:
@@ -40,56 +82,21 @@ public:
 
     VanadisRoCCInterface(ComponentId_t id, Params& params) : SubComponent(id) {
         output = new SST::Output("[RoCC @t]: ", 0, 0xFFFFFFFF, SST::Output::STDOUT);
-        registerFiles = nullptr;
 
         stat_rocc_issued = registerStatistic<uint64_t>("roccs_issued", "1");
     }
 
     virtual ~VanadisRoCCInterface() {delete output;}
 
-    void setRegisterFiles(std::vector<VanadisRegisterFile*>* reg_f) {
-        assert(reg_f != nullptr);
-
-        registerFiles = reg_f;
-    }
-
     virtual bool RoCCFull() = 0;
+    virtual bool isBusy() = 0;
     virtual size_t roccQueueSize() = 0;
-    virtual void push(VanadisRoCCInstruction* rocc_me) = 0;
+    virtual void push(RoCCCommand* rocc_me) = 0;
+    virtual RoCCResponse* respond() = 0;
     virtual void tick(uint64_t cycle) = 0;
 
     virtual void init(unsigned int phase) = 0;
-
-protected:
-
-    class RoCCCommand
-    {
-        public:
-        RoCCCommand(VanadisRoCCInstruction* inst, uint64_t rs1, uint64_t rs2) {
-            this->inst = inst;
-            this->rs1 = rs1;
-            this->rs2 = rs2;
-        }
-        ~RoCCCommand() {}
-        VanadisRoCCInstruction* inst;
-        uint64_t rs1;
-        uint64_t rs2;
-    };
-
-    class RoCCResponse
-    {
-        public:
-        RoCCResponse(uint8_t rd, uint64_t rd_val) {
-            this->rd = rd;
-            this->rd_val = rd_val;
-        }
-        ~RoCCResponse() {}
-        uint8_t rd;
-        uint64_t rd_val;
-    };
     
-    std::vector<VanadisRegisterFile*>* registerFiles;
-
     SST::Output* output;
 
     Statistic<uint64_t>* stat_rocc_issued;
