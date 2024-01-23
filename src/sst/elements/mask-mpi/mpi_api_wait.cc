@@ -50,7 +50,9 @@ Questions? Contact sst-macro-help@sandia.gov
 //#include <sstmac/software/process/ftq_scope.h>
 #include <cassert>
 
+#undef StartMPICall
 #define StartMPICall(fxn)
+#undef FinishMPICall
 #define FinishMPICall(fxn)
 
 namespace SST::MASKMPI {

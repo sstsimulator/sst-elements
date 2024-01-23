@@ -60,6 +60,7 @@ Questions? Contact sst-macro-help@sandia.gov
 //  StartMPICall(fxn)
 #define start_pt2pt_call(fxn, count, type, partner, tag, comm)
 #define start_Ipt2pt_call(fxn,count,type,partner,tag,comm,reqPtr)
+#undef FinishMPICall
 #define FinishMPICall(fxn)
 
 namespace SST::MASKMPI {
