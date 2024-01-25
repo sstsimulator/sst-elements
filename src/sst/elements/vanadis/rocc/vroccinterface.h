@@ -81,7 +81,7 @@ public:
     SST_ELI_DOCUMENT_STATISTICS({ "roccs_issued", "Count number of rocc instructions that are issued", "operations", 1 })
 
     VanadisRoCCInterface(ComponentId_t id, Params& params) : SubComponent(id) {
-        output = new SST::Output("[RoCC @t]: ", 0, 0xFFFFFFFF, SST::Output::STDOUT);
+        output = new SST::Output("[RoCC @t]: ", 2, 0xFFFFFFFF, SST::Output::STDOUT);
 
         stat_rocc_issued = registerStatistic<uint64_t>("roccs_issued", "1");
     }

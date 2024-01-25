@@ -64,7 +64,7 @@ public:
 
         std_mem_handlers = new VanadisRoCCBasic::StandardMemHandlers(this, output);
 
-        busy = true;
+        busy = false;
 
         memInterface = loadUserSubComponent<Interfaces::StandardMem>(
             "memory_interface", ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, getTimeConverter("1ps"),
@@ -93,7 +93,11 @@ public:
         roccCmd_q.push_back( rocc_me );
     }
 
-    RoCCResponse* respond() override { return curr_resp; }
+    RoCCResponse* respond() override { 
+        RoCCResponse* temp = curr_resp;
+        curr_resp = NULL;
+        return temp; 
+    }
 
     // initialize subcomponents and parameterizable data structures
     void init(unsigned int phase) override { 
@@ -112,26 +116,26 @@ public:
             busy = true; // start processing something
             curr_cmd = roccCmd_q.front(); // grab the command to process
 
-            output->verbose(CALL_INFO, 16, 0, "decoding func7 of RoCC inst\n");
+            output->verbose(CALL_INFO, 2, 0, "decoding func7 of RoCC inst\n");
             switch (curr_cmd->inst->func7) { 
                 case 0x0:
                 {
-                    output->verbose(CALL_INFO, 16, 0, "performing RoCC ADD\n");
+                    output->verbose(CALL_INFO, 2, 0, "performing RoCC ADD\n");
                     performADD();
                 } break;
                 case 0x1: // basic load
                 {
-                    output->verbose(CALL_INFO, 16, 0, "issuing load\n");
+                    output->verbose(CALL_INFO, 2, 0, "issuing load\n");
                     issueLoad();
                 } break;
                 case 0x2: // basic store
                 {
-                    output->verbose(CALL_INFO, 16, 0, "issuing store\n");
+                    output->verbose(CALL_INFO, 2, 0, "issuing store\n");
                     issueStore();
                 } break;
                 default: 
                 {
-                    output->verbose(CALL_INFO, 16, 0, "ERROR: unrecognized RoCC func7\n");
+                    output->verbose(CALL_INFO, 2, 0, "ERROR: unrecognized RoCC func7\n");
                 } break;
             }
         }
@@ -172,7 +176,7 @@ public:
     // turn off busy bit so host knows this accelerator is no longer busy
     // send RoCC response back to host
     void completeRoCC(uint64_t rd_val) {
-        output->verbose(CALL_INFO, 16, 0, "Finalize RoCC command w/ rd %" PRIu16 ", rd_val %" PRIu64 " \n", curr_cmd->inst->rd, rd_val);
+        output->verbose(CALL_INFO, 2, 0, "Finalize RoCC command w/ rd %" PRIu16 ", rd_val %" PRIu64 " \n", curr_cmd->inst->rd, rd_val);
         roccCmd_q.pop_front();
         busy = false;
         curr_resp = new RoCCResponse(curr_cmd->inst->rd, rd_val);
@@ -188,12 +192,12 @@ public:
         virtual ~StandardMemHandlers() {}
 
         virtual void handle(StandardMem::ReadResp* ev) {
-            out->verbose(CALL_INFO, 16, 0, "-> handle read-response (virt-addr: 0x%llx)\n", ev->vAddr);
+            out->verbose(CALL_INFO, 2, 0, "-> handle read-response (virt-addr: 0x%llx)\n", ev->vAddr);
             RoCCCommand* rocc_cmd = rocc->curr_cmd; // need to grab the instruction that generated the read request
             // so that we know where to store the read response results
 
             if ( ev->getFail() ) { 
-                out->verbose(CALL_INFO, 16, 0, "RoCC load failed, sending error code 1\n");
+                out->verbose(CALL_INFO, 2, 0, "RoCC load failed, sending error code 1\n");
                 rocc->completeRoCC(1);
             }
             
@@ -210,7 +214,7 @@ public:
             switch (ev->getAllFlags()) { // treat read response data differently based on who issued it (flags)
                 default:
                 {
-                    rocc->output->verbose(CALL_INFO, 16, 0, "ERROR: unrecognized read response flag\n");
+                    rocc->output->verbose(CALL_INFO, 2, 0, "ERROR: unrecognized read response flag\n");
                 } break;
             }
 
@@ -222,9 +226,9 @@ public:
         virtual void handle(StandardMem::WriteResp* ev) {
             // write is much simpler because we aren't handling any reponse data
             // just need to make sure it went through properly
-            out->verbose(CALL_INFO, 16, 0, "-> handle write-response (virt-addr: 0x%llx)\n", ev->vAddr);
+            out->verbose(CALL_INFO, 2, 0, "-> handle write-response (virt-addr: 0x%llx)\n", ev->vAddr);
             if ( ev->getFail() ) { 
-                out->verbose(CALL_INFO, 16, 0, "RoCC store failed, responding with error code 1\n");
+                out->verbose(CALL_INFO, 2, 0, "RoCC store failed, responding with error code 1\n");
                 rocc->completeRoCC(1);
             }
             
@@ -237,13 +241,13 @@ public:
     };
 
     void processIncomingDataCacheEvent(StandardMem::Request* ev) {
-        output->verbose(CALL_INFO, 16, 0, "received incoming data cache request -> processIncomingDataCacheEvent()\n");
+        output->verbose(CALL_INFO, 2, 0, "received incoming data cache request -> processIncomingDataCacheEvent()\n");
 
         assert(ev != nullptr);
         assert(std_mem_handlers != nullptr);
 
         ev->handle(std_mem_handlers);
-        output->verbose(CALL_INFO, 16, 0, "completed pass off to incoming handlers\n");
+        output->verbose(CALL_INFO, 2, 0, "completed pass off to incoming handlers\n");
     }
 
     // takes the vector of 8bit chunks and converts it into single uint64_t value
