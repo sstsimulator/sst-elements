@@ -123,12 +123,17 @@ public:
                     output->verbose(CALL_INFO, 2, 0, "performing RoCC ADD\n");
                     performADD();
                 } break;
-                case 0x1: // basic load
+                case 0x1:
+                {
+                    output->verbose(CALL_INFO, 2, 0, "performing RoCC SRAI\n");
+                    performSRAI();
+                } break;
+                case 0x2: // basic load
                 {
                     output->verbose(CALL_INFO, 2, 0, "issuing load\n");
                     issueLoad();
                 } break;
-                case 0x2: // basic store
+                case 0x3: // basic store
                 {
                     output->verbose(CALL_INFO, 2, 0, "issuing store\n");
                     issueStore();
@@ -143,8 +148,18 @@ public:
 
     // writes value of rs1 into rs2
     void performADD() {
-        output->verbose(CALL_INFO, 9, 0, "EXECUTE ADD w/ rs1: %llx, rs2: %llx, result: %llx + %llx", curr_cmd->rs1, curr_cmd->rs2, curr_cmd->rs1 + curr_cmd->rs2);
+        output->verbose(CALL_INFO, 2, 0, "EXECUTE ADD w/ rs1: %llx, rs2: %llx, result: %llx + %llx", curr_cmd->rs1, curr_cmd->rs2, curr_cmd->rs1 + curr_cmd->rs2);
         completeRoCC(curr_cmd->rs1 + curr_cmd->rs2);
+        return;
+    }
+
+    // writes value of rs1 into rs2
+    void performSRAI() {
+        uint64_t src_1 = curr_cmd->rs1;
+        uint64_t shamt = curr_cmd->rs2;
+        uint64_t result = src_1 >> shamt;
+        output->verbose(CALL_INFO, 2, 0, "EXECUTE RoCC SRAI w/ rs1: %llx, shamt: %llx, result: %llx + %llx", src_1, shamt, result);
+        completeRoCC(result);
         return;
     }
 
