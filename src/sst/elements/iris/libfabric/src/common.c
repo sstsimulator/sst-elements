@@ -33,7 +33,7 @@
  * SOFTWARE.
  */
 
-#include "config.h"
+//#include "config.h"
 
 #include <complex.h>
 #include <stdio.h>

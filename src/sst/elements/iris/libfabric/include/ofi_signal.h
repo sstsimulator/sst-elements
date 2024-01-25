@@ -34,7 +34,7 @@
 #ifndef _OFI_SIGNAL_H_
 #define _OFI_SIGNAL_H_
 
-#include "config.h"
+//#include "config.h"
 
 #include <unistd.h>
 #include <errno.h>

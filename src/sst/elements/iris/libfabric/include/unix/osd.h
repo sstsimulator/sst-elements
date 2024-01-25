@@ -33,7 +33,7 @@
 #ifndef _FI_UNIX_OSD_H_
 #define _FI_UNIX_OSD_H_
 
-#include "config.h"
+//#include "config.h"
 
 #include <stdlib.h>
 #include <unistd.h>

@@ -34,7 +34,7 @@
 #ifndef _OFI_IOV_H_
 #define _OFI_IOV_H_
 
-#include "config.h"
+//#include "config.h"
 
 #include <ofi.h>
 #include <stdbool.h>

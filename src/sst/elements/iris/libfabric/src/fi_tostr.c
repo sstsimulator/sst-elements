@@ -31,7 +31,7 @@
  * SOFTWARE.
  */
 
-#include "config.h"
+#include <libfabric_config.h>
 
 #include <stdio.h>
 #include <stdlib.h>

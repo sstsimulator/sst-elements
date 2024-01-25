@@ -34,7 +34,7 @@
 #ifndef _OFI_PROV_H_
 #define _OFI_PROV_H_
 
-#include "config.h"
+//#include "config.h"
 
 #include <rdma/providers/fi_prov.h>
 

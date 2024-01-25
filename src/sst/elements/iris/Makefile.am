@@ -2,7 +2,7 @@
 #
 #
 
-#SUBDIRS = libfabric
+SUBDIRS = libfabric
 
 AM_CPPFLAGS += \
 	$(MPI_CPPFLAGS) \

@@ -35,7 +35,7 @@
 #ifndef _OFI_LIST_H_
 #define _OFI_LIST_H_
 
-#include "config.h"
+//#include "config.h"
 
 #include <sys/types.h>
 #include <stdlib.h>
