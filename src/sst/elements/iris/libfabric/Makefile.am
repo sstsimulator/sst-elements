@@ -31,6 +31,7 @@ sumi_sources = \
 sumi_headers = \
   prov/sumi/include/fi_ext_sumi.h \
   prov/sumi/include/fi_ext_sumi.h \
+  prov/sumi/include/sumi_fabric.hpp \
   prov/sumi/include/sumi_prov.h \
   prov/sumi/include/sumi_av.h \
   prov/sumi/include/sumi_ep.h \
@@ -59,7 +60,6 @@ common_sources = \
   src/iov.c \
   src/shared/ofi_str.c \
   src/abi_1_0.c \
-  src/unix/osd.c \
   src/enosys.c \
   src/fabric.c \
   src/fasthash.c \
@@ -134,7 +134,8 @@ libfabric_headers = \
   include/uthash.h \
   include/ofi_prov.h \
   include/rdma/providers/fi_log.h \
-  include/rdma/providers/fi_prov.h 
+  include/rdma/providers/fi_prov.h \
+  prov/hook/include/hook_prov.h
 
 rdmainclude_headers = \
   prov/sumi/include/fi_ext_sumi.h \
@@ -161,6 +162,21 @@ nodist_rdmainclude_headers = \
   prov/sumi/include/rdma/fi_direct_eq.h \
   prov/sumi/include/rdma/fi_direct_trigger.h \
   prov/sumi/include/rdma/fi_direct.h
+
+if SST_COMPILE_OSX
+  common_sources += \
+    src/unix/osd.c \
+    include/osx/osd.h \
+    include/unix/osd.h
+else
+  common_sources += \
+    src/unix/osd.c \
+    src/linux/osd.c \
+    src/linux/rdpmc.c \
+    include/linux/rdpmc.h \
+    include/linux/osd.h \
+    include/unix/osd.h
+endif
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libfabric.la
