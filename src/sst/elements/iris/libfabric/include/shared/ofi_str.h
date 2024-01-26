@@ -36,7 +36,7 @@
 
 #include <string.h>
 
-#include "config.h"
+//#include "config.h"
 
 #ifdef __cplusplus
 extern "C" {

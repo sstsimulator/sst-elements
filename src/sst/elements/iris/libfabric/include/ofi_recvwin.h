@@ -39,7 +39,7 @@
 #if !defined(FI_RECVWIN_H)
 #define FI_RECVWIN_H
 
-#include "config.h"
+//#include "config.h"
 
 #include <assert.h>
 #include <stdlib.h>

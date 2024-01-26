@@ -14,7 +14,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include "config.h"
+//#include "config.h"
 
 /* Ring 3 RDPMC support */
 #include <unistd.h>

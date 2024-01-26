@@ -33,7 +33,7 @@
 #ifndef _OFI_PERF_H_
 #define _OFI_PERF_H_
 
-#include "config.h"
+//#include "config.h"
 
 #include <assert.h>
 #include <string.h>

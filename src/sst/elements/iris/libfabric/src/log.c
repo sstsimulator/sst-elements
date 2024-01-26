@@ -38,8 +38,9 @@
 
 #include <rdma/fi_errno.h>
 
-#include "ofi.h"
+#include <libfabric_config.h>
 
+#include "ofi.h"
 
 static const char * const log_subsys[] = {
 	[FI_LOG_CORE] = "core",

@@ -33,7 +33,7 @@
 #ifndef _OFI_ATOMIC_H_
 #define _OFI_ATOMIC_H_
 
-#include "config.h"
+//#include "config.h"
 
 #include "ofi.h"
 

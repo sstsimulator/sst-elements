@@ -35,7 +35,7 @@
 #ifndef _OFI_INDEXER_H_
 #define _OFI_INDEXER_H_
 
-#include "config.h"
+//#include "config.h"
 
 #include <sys/types.h>
 

@@ -33,7 +33,7 @@
 #ifndef _OFI_SHM_H_
 #define _OFI_SHM_H_
 
-#include "config.h"
+//#include "config.h"
 
 #include <stdint.h>
 #include <stddef.h>
