@@ -35,7 +35,7 @@
 #ifndef _OFI_H_
 #define _OFI_H_
 
-#include "config.h"
+//#include "config.h"
 
 #include <assert.h>
 #include <pthread.h>

@@ -33,7 +33,7 @@
  * SOFTWARE.
  */
 
-#include "config.h"
+//#include "config.h"
 
 #include <complex.h>
 #include <stdio.h>
@@ -366,7 +366,9 @@ static uint32_t ofi_addr_format(const char *str)
 	char fmt[16];
 	int ret;
 
-	ret = sscanf(str, "%16[^:]://", fmt);
+        char fmt_temp[17];
+	ret = sscanf(str, "%16[^:]://", fmt_temp);
+        memcpy(fmt,fmt_temp,16);
 	if (ret != 1)
 		return FI_FORMAT_UNSPEC;
 
@@ -471,7 +473,9 @@ static int ofi_str_to_efa(const char *str, void **addr, size_t *len)
 		return -FI_ENOMEM;
 	qpn = (uint16_t *)*addr + 8;
 
-	ret = sscanf(str, "%*[^:]://[%64[^]]]:%" SCNu16, gid, qpn);
+        char gid_temp[65];
+	ret = sscanf(str, "%*[^:]://[%64[^]]]:%" SCNu16, gid_temp, qpn);
+        memcpy(gid,gid_temp,INET6_ADDRSTRLEN);
 	if (ret < 1)
 		goto err;
 
@@ -499,11 +503,14 @@ static int ofi_str_to_sin(const char *str, void **addr, size_t *len)
 	if (ret == 1)
 		goto match_port;
 
-	ret = sscanf(str, "%*[^:]://%64[^:]:%" SCNu16, ip, &sin->sin_port);
+        char ip_temp[65];
+	ret = sscanf(str, "%*[^:]://%64[^:]:%" SCNu16, ip_temp, &sin->sin_port);
+        memcpy(ip,ip_temp,64);
 	if (ret == 2)
 		goto match_ip;
 
-	ret = sscanf(str, "%*[^:]://%64[^:/]", ip);
+	ret = sscanf(str, "%*[^:]://%64[^:/]", ip_temp);
+        memcpy(ip,ip_temp,64);
 	if (ret == 1)
 		goto match_ip;
 
@@ -544,11 +551,14 @@ static int ofi_str_to_sin6(const char *str, void **addr, size_t *len)
 	if (ret == 1)
 		goto match_port;
 
-	ret = sscanf(str, "%*[^:]://[%64[^]]]:%" SCNu16, ip, &sin6->sin6_port);
+        char ip_temp[65];
+	ret = sscanf(str, "%*[^:]://[%64[^]]]:%" SCNu16, ip_temp, &sin6->sin6_port);
+        memcpy(ip,ip_temp,64);
 	if (ret == 2)
 		goto match_ip;
 
-	ret = sscanf(str, "%*[^:]://[%64[^]]", ip);
+	ret = sscanf(str, "%*[^:]://[%64[^]]", ip_temp);
+        memcpy(ip,ip_temp,64);
 	if (ret == 1)
 		goto match_ip;
 

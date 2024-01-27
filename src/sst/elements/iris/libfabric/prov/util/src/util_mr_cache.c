@@ -33,7 +33,7 @@
  * SOFTWARE.
  */
 
-#include <config.h>
+//#include <config.h>
 #include <stdlib.h>
 #include <ofi_util.h>
 #include <ofi_iov.h>

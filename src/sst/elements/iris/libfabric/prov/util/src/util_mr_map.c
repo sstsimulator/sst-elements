@@ -29,7 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <config.h>
+//#include <config.h>
 #include <stdlib.h>
 #include <ofi_enosys.h>
 #include <ofi_util.h>

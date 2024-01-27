@@ -34,9 +34,9 @@
 #ifndef _OFI_MR_H_
 #define _OFI_MR_H_
 
-#if HAVE_CONFIG_H
-#  include <config.h>
-#endif /* HAVE_CONFIG_H */
+//#if HAVE_CONFIG_H
+//#  include <config.h>
+//#endif /* HAVE_CONFIG_H */
 
 #include <inttypes.h>
 #include <stdbool.h>

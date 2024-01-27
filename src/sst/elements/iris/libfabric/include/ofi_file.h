@@ -33,7 +33,7 @@
 #ifndef _OFI_FILE_H_
 #define _OFI_FILE_H_
 
-#include "config.h"
+//#include "config.h"
 
 #include <assert.h>
 #include <stdlib.h>

@@ -2,41 +2,53 @@
 #
 #
 
-sstmac_sources = \
-  prov/sstmac/src/sstmac_av.cc \
-  prov/sstmac/src/sstmac_cm.cc \
-  prov/sstmac/src/sstmac_cntr.cc \
-  prov/sstmac/src/sstmac_cq.cc \
-  prov/sstmac/src/sstmac_dom.cc \
-  prov/sstmac/src/sstmac_ep.cc \
-  prov/sstmac/src/sstmac_eq.cc \
-  prov/sstmac/src/sstmac_fabric.cc \
-  prov/sstmac/src/sstmac_mr.cc \
-  prov/sstmac/src/sstmac_poll.cc \
-  prov/sstmac/src/sstmac_sep.cc \
-  prov/sstmac/src/sstmac_wait.cc \
-  prov/sstmac/src/sstmac_sumi.cpp
-        
-sstmac_headers = \
-  prov/sstmac/include/fi_ext_sstmac.h \
-  prov/sstmac/include/fi_ext_sstmac.h \
-  prov/sstmac/include/sstmac.h \
-  prov/sstmac/include/sstmac_av.h \
-  prov/sstmac/include/sstmac_ep.h \
-  prov/sstmac/include/sstmac_poll.h \
-  prov/sstmac/include/sstmac_wait.h
+AM_CPPFLAGS += \
+        $(MPI_CPPFLAGS) \
+        -I$(top_srcdir)/src/sst/elements/iris \
+        -I$(top_srcdir)/src/sst/elements/iris/libfabric \
+        -I$(top_srcdir)/src/sst/elements/iris/libfabric/include \
+        -I$(top_srcdir)/src/sst/elements/iris/libfabric/prov/sumi/include \
+        -I$(top_srcdir)/src/sst/elements/iris/libfabric/prov/sumi/include/rdma \
+        -I$(top_srcdir)/src/sst/elements/iris/libfabric/prov/hook/include \
+        -I$(top_srcdir)/src/sst/elements/mercury \
+        -I$(top_srcdir)/src/sst/elements
 
-sstmac_rdma_headers = \
-  prov/sstmac/include/rdma/fi_direct.h \
-  prov/sstmac/include/rdma/fi_direct_atomic.h \
-  prov/sstmac/include/rdma/fi_direct_atomic_def.h \
-  prov/sstmac/include/rdma/fi_direct_cm.h \
-  prov/sstmac/include/rdma/fi_direct_domain.h \
-  prov/sstmac/include/rdma/fi_direct_endpoint.h \
-  prov/sstmac/include/rdma/fi_direct_eq.h \
-  prov/sstmac/include/rdma/fi_direct_rma.h \
-  prov/sstmac/include/rdma/fi_direct_tagged.h \
-  prov/sstmac/include/rdma/fi_direct_trigger.h
+sumi_sources = \
+  prov/sumi/src/sumi_av.cc \
+  prov/sumi/src/sumi_cm.cc \
+  prov/sumi/src/sumi_cntr.cc \
+  prov/sumi/src/sumi_cq.cc \
+  prov/sumi/src/sumi_dom.cc \
+  prov/sumi/src/sumi_ep.cc \
+  prov/sumi/src/sumi_eq.cc \
+  prov/sumi/src/sumi_fabric.cc \
+  prov/sumi/src/sumi_mr.cc \
+  prov/sumi/src/sumi_poll.cc \
+  prov/sumi/src/sumi_sep.cc \
+  prov/sumi/src/sumi_wait.cc \
+  prov/sumi/src/sumi_prov.cpp
+        
+sumi_headers = \
+  prov/sumi/include/fi_ext_sumi.h \
+  prov/sumi/include/fi_ext_sumi.h \
+  prov/sumi/include/sumi_fabric.hpp \
+  prov/sumi/include/sumi_prov.h \
+  prov/sumi/include/sumi_av.h \
+  prov/sumi/include/sumi_ep.h \
+  prov/sumi/include/sumi_poll.h \
+  prov/sumi/include/sumi_wait.h
+
+sumi_rdma_headers = \
+  prov/sumi/include/rdma/fi_direct.h \
+  prov/sumi/include/rdma/fi_direct_atomic.h \
+  prov/sumi/include/rdma/fi_direct_atomic_def.h \
+  prov/sumi/include/rdma/fi_direct_cm.h \
+  prov/sumi/include/rdma/fi_direct_domain.h \
+  prov/sumi/include/rdma/fi_direct_endpoint.h \
+  prov/sumi/include/rdma/fi_direct_eq.h \
+  prov/sumi/include/rdma/fi_direct_rma.h \
+  prov/sumi/include/rdma/fi_direct_tagged.h \
+  prov/sumi/include/rdma/fi_direct_trigger.h
 
 common_sources = \
   src/log.c \
@@ -48,7 +60,6 @@ common_sources = \
   src/iov.c \
   src/shared/ofi_str.c \
   src/abi_1_0.c \
-  src/unix/osd.c \
   src/enosys.c \
   src/fabric.c \
   src/fasthash.c \
@@ -90,6 +101,7 @@ libfabric_sources = \
   prov/hook/src/hook_eq.c
 
 libfabric_headers = \
+  libfabric_config.h \
   include/ofi.h \
   include/ofi_abi.h \
   include/ofi_atom.h \
@@ -122,10 +134,11 @@ libfabric_headers = \
   include/uthash.h \
   include/ofi_prov.h \
   include/rdma/providers/fi_log.h \
-  include/rdma/providers/fi_prov.h 
+  include/rdma/providers/fi_prov.h \
+  prov/hook/include/hook_prov.h
 
 rdmainclude_headers = \
-  prov/sstmac/include/fi_ext_sstmac.h \
+  prov/sumi/include/fi_ext_sumi.h \
   include/rdma/fabric.h \
   include/rdma/fi_atomic.h \
   include/rdma/fi_cm.h \
@@ -139,25 +152,40 @@ rdmainclude_headers = \
   include/rdma/fi_trigger.h
 
 nodist_rdmainclude_headers = \
-  prov/sstmac/include/rdma/fi_direct_domain.h \
-  prov/sstmac/include/rdma/fi_direct_endpoint.h \
-  prov/sstmac/include/rdma/fi_direct_tagged.h \
-  prov/sstmac/include/rdma/fi_direct_rma.h \
-  prov/sstmac/include/rdma/fi_direct_atomic_def.h \
-  prov/sstmac/include/rdma/fi_direct_atomic.h \
-  prov/sstmac/include/rdma/fi_direct_cm.h \
-  prov/sstmac/include/rdma/fi_direct_eq.h \
-  prov/sstmac/include/rdma/fi_direct_trigger.h \
-  prov/sstmac/include/rdma/fi_direct.h
+  prov/sumi/include/rdma/fi_direct_domain.h \
+  prov/sumi/include/rdma/fi_direct_endpoint.h \
+  prov/sumi/include/rdma/fi_direct_tagged.h \
+  prov/sumi/include/rdma/fi_direct_rma.h \
+  prov/sumi/include/rdma/fi_direct_atomic_def.h \
+  prov/sumi/include/rdma/fi_direct_atomic.h \
+  prov/sumi/include/rdma/fi_direct_cm.h \
+  prov/sumi/include/rdma/fi_direct_eq.h \
+  prov/sumi/include/rdma/fi_direct_trigger.h \
+  prov/sumi/include/rdma/fi_direct.h
 
-#compdir = $(pkglibdir)
-#comp_LTLIBRARIES = libfabric.la
-#libfabric_la_SOURCES = \
-#  $(sstmac_sources) \
-#  $(sstmac_headers) \
-#  $(sstmac_rdma_headers) \
-#  $(common_sources) \
-#  $(libfabric_sources) \
-#  $(libfabric_headers) \
-#  $(rdmainclude_headers) \
-#  $(nodist_rdmainclude_headers)
+if SST_COMPILE_OSX
+  common_sources += \
+    src/unix/osd.c \
+    include/osx/osd.h \
+    include/unix/osd.h
+else
+  common_sources += \
+    src/unix/osd.c \
+    src/linux/osd.c \
+    src/linux/rdpmc.c \
+    include/linux/rdpmc.h \
+    include/linux/osd.h \
+    include/unix/osd.h
+endif
+
+compdir = $(pkglibdir)
+comp_LTLIBRARIES = libfabric.la
+libfabric_la_SOURCES = \
+  $(sumi_sources) \
+  $(sumi_headers) \
+  $(sumi_rdma_headers) \
+  $(common_sources) \
+  $(libfabric_sources) \
+  $(libfabric_headers) \
+  $(rdmainclude_headers) \
+  $(nodist_rdmainclude_headers)

@@ -35,7 +35,7 @@
 #ifndef FI_LOG_H
 #define FI_LOG_H
 
-#include "config.h"
+//#include "config.h"
 
 #include <rdma/fabric.h>
 #include <rdma/providers/fi_prov.h>

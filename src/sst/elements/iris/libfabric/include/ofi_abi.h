@@ -33,7 +33,7 @@
 #ifndef _OFI_ABI_H_
 #define _OFI_ABI_H_
 
-#include "config.h"
+//#include "config.h"
 
 #include <ofi_osd.h>
 
