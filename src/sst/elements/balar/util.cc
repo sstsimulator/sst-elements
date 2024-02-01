@@ -91,6 +91,12 @@ namespace BalarComponent {
             case GPU_MAX_BLOCK_RET:
                 str = new string("GPU_MAX_BLOCK_RET");
                 break;
+            case GPU_PARAM_CONFIG:
+                str = new string("GPU_PARAM_CONFIG");
+                break;
+            case GPU_PARAM_CONFIG_RET:
+                str = new string("GPU_PARAM_CONFIG_RET");
+                break;
             default:
                 str = new string("Unknown cuda calls");
                 break;

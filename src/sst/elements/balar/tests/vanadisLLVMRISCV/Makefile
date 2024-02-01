@@ -13,6 +13,7 @@ RISCV_CXX := $(wildcard $(RISCV_TOOLCHAIN_INSTALL_PATH)/riscv64-unknown-linux-gn
 
 # Clang flags
 CXX_FLAGS_RISCV_LINUX := --gcc-toolchain=$(RISCV_TOOLCHAIN_INSTALL_PATH) --sysroot=$(RISCV_SYSROOT) -I$(RISCV_CXX)/ -I$(RISCV_SYSROOT)/usr/include -I$(RISCV_CXX)/riscv64-unknown-linux-gnu --target=riscv64 -march=rv64gc
+CXX_FLAGS_CUDA := --cuda-gpu-arch=$(GPU_ARCH) --cuda-path=$(CUDA_INSTALL_PATH) -L$(CUDA_INSTALL_PATH)/lib64 -lcudart -ldl -lrt -pthread
 CXX_FLAGS_RISCV_CUDA := --cuda-gpu-arch=$(GPU_ARCH) --cuda-path=$(CUDA_INSTALL_PATH) -L. -Wl,-static -l$(CUSTOM_CUDA_LIB) -L$(CUDA_INSTALL_PATH)/lib64 -Wl,-static -ldl -lrt -pthread
 CXX_FLAGS_CUDA_WRAPPER := -include __clang_cuda_runtime_wrapper.h
 
@@ -39,8 +40,11 @@ vanadis_cuda: $(CUSTOM_CUDA_LIB_SRC) test_vanadis_envs
 	$(RISCV_PREFIX)gcc -shared -o lib$(CUSTOM_CUDA_LIB).so $(CUSTOM_CUDA_LIB_SRC:.cc=.o)
 	$(RISCV_PREFIX)ar rcs lib$(CUSTOM_CUDA_LIB).a $(CUSTOM_CUDA_LIB_SRC:.cc=.o)
 
-vecadd: vecadd.cu test_vanadis_envs test_llvm_env vanadis_cuda
+vecadd: vecadd.cu test_vanadis_envs test_llvm_env vanadis_cuda vecadd_normal
 	$(CLANG_PREFIX)clang++ $< -o $@ $(CXX_FLAGS_RISCV_CUDA) $(CXX_FLAGS_RISCV_LINUX) $(CXX_FLAGS_CUDA_WRAPPER)
+
+vecadd_normal: vecadd.cu
+	$(CLANG_PREFIX)clang++ $< -o $@ $(CXX_FLAGS_CUDA) $(CXX_FLAGS_CUDA_WRAPPER)
 
 clean:
 	rm -f lib$(CUSTOM_CUDA_LIB).so lib$(CUSTOM_CUDA_LIB).a $(CUSTOM_CUDA_LIB_SRC:.cc=.o) vecadd helloworld

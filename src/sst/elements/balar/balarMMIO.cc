@@ -43,6 +43,11 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
     // Initialize registers
     last_packet = nullptr;
 
+    // CUDA executable path, if exists, overrides path from Balar packet when registering fatbin
+    cudaExecutable = params.find<std::string>("cuda_executable", "", found);
+    if (found)
+        out.verbose(CALL_INFO, 1, 0, "Use CUDA executable at %s for __cudaRegisterFatbin", cudaExecutable.c_str());
+
     // Memory address
     mmio_addr = params.find<uint64_t>("base_addr", 0);
     dma_addr = params.find<uint64_t>("dma_addr", 0);
@@ -405,7 +410,11 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::ReadResp* re
             switch (packet->cuda_call_id) {
                 case GPU_REG_FAT_BINARY: 
                     balar->cuda_ret.cuda_error = cudaSuccess;
-                    balar->cuda_ret.fat_cubin_handle = (uint64_t) __cudaRegisterFatBinarySST(packet->register_fatbin.file_name);
+                    // Overwrite filename if given CUDA program path from config script
+                    if (balar->cudaExecutable.empty())
+                        balar->cuda_ret.fat_cubin_handle = (uint64_t) __cudaRegisterFatBinarySST(packet->register_fatbin.file_name);
+                    else
+                        balar->cuda_ret.fat_cubin_handle = (uint64_t) __cudaRegisterFatBinarySST((char *)balar->cudaExecutable.c_str());
                     break;
                 case GPU_REG_FUNCTION: 
                     // hostFun should be a fixed pointer value to each kernel function 
@@ -483,7 +492,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::ReadResp* re
                             balar->cuda_ret.cudamemcpy.size = packet->cuda_memcpy.count;
                             balar->cuda_ret.cudamemcpy.kind = packet->cuda_memcpy.kind;
                         } else {
-                            out->fatal(CALL_INFO, -1, "%s: unsupported memcpy kind!\n", balar->getName().c_str());
+                            out->fatal(CALL_INFO, -1, "%s: unsupported memcpy kind! Get: %d\n", balar->getName().c_str(), packet->cuda_memcpy.kind);
                         }
                     } else {
                         balar->cuda_ret.cuda_error = cudaMemcpy(
@@ -516,7 +525,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::ReadResp* re
                             gridDim, 
                             blockDim, 
                             packet->configure_call.sharedMem, 
-                            packet->configure_call.stream
+                            (cudaStream_t) packet->configure_call.stream
                         );
                     }
                     break;
@@ -560,12 +569,19 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::ReadResp* re
                     break;
                 case GPU_MAX_BLOCK: 
                     balar->cuda_ret.cuda_error = cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(
-                        packet->max_active_block.numBlock,
-                        packet->max_active_block.hostFunc,
+                        (int *) (packet->max_active_block.numBlock),
+                        (const char *) (packet->max_active_block.hostFunc),
                         packet->max_active_block.blockSize,
                         packet->max_active_block.dynamicSMemSize,
                         packet->max_active_block.flags
                     );
+                    break;
+                case GPU_PARAM_CONFIG: {
+                        std::tuple<cudaError_t, size_t, unsigned> res = SST_cudaGetParamConfig(packet->cudaparamconfig.hostFun, packet->cudaparamconfig.index);
+                        balar->cuda_ret.cuda_error = std::get<0>(res);
+                        balar->cuda_ret.cudaparamconfig.size = std::get<1>(res);
+                        balar->cuda_ret.cudaparamconfig.alignment = std::get<2>(res);
+                    }
                     break;
                 default:
                     out->fatal(CALL_INFO, -1, "Received unknown GPU enum API: %d\n", packet->cuda_call_id);

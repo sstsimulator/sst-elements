@@ -528,7 +528,7 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
                     pack.cuda_memcpy.dst = *dptr;
                     pack.cuda_memcpy.src = (uint64_t) real_data;
                     pack.cuda_memcpy.count = size;
-                    pack.cuda_memcpy.payload = real_data;
+                    pack.cuda_memcpy.payload = (uint64_t) real_data;
 
                     // Create request
                     req = cpu->createGPUReqFromPacket(pack);   
@@ -542,7 +542,7 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
                     pack.cuda_memcpy.dst = (uint64_t) buf;
                     pack.cuda_memcpy.src = (uint64_t) *dptr;
                     pack.cuda_memcpy.count = size;
-                    pack.cuda_memcpy.payload = real_data;
+                    pack.cuda_memcpy.payload = (uint64_t) real_data;
 
                     // Create request
                     req = cpu->createGPUReqFromPacket(pack);   
@@ -585,7 +585,7 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
                 config_call_pack.configure_call.bdy = bdy;
                 config_call_pack.configure_call.bdz = bdz;
                 config_call_pack.configure_call.sharedMem = sharedMem;
-                config_call_pack.configure_call.stream = stream;
+                config_call_pack.configure_call.stream = (uint64_t) stream;
                 Interfaces::StandardMem::Request* config_call_req = cpu->createGPUReqFromPacket(config_call_pack);
 
 

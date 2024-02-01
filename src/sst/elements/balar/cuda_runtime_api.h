@@ -43,7 +43,7 @@ __host__ cudaError_t CUDARTAPI cudaConfigureCallSST(dim3 gridDim, dim3 blockDim,
 
 __host__ cudaError_t CUDARTAPI cudaConfigureCall(dim3 gridDim, dim3 blockDim, size_t sharedMem, cudaStream_t stream );
 
-__host__ cudaError_t CUDARTAPI cudaSetupArgumentSST(uint64_t arg, uint8_t value[8], size_t size, size_t offset);
+__host__ cudaError_t CUDARTAPI cudaSetupArgumentSST(uint64_t arg, uint8_t value[200], size_t size, size_t offset);
 
 __host__ cudaError_t CUDARTAPI cudaLaunchSST(uint64_t func);
 
@@ -76,3 +76,5 @@ cudaError_t CUDARTAPI cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(
  void SST_gpgpusim_numcores_equal_check(unsigned sst_numcores);
 
 }
+
+std::tuple<cudaError_t, size_t, unsigned> SST_cudaGetParamConfig(uint64_t hostFun, unsigned index);
