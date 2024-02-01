@@ -71,7 +71,7 @@ public:
         {"mmio_size",               "(uint) Size of the MMIO memory range (Bytes)", "512"},
         {"dma_addr",                "(uint) Starting addr mapped to the DMA Engine", "512"},
         {"separate_mem_iface",      "(bool) Whether need to separate mmio_iface and mem_iface, set to true on case of TLB", "true"},
-    
+        {"cuda_executable",         "(string) CUDA executable file path to extract PTX info", ""},
     )
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( 
         {"mmio_iface", "Command packet MMIO interface", "SST::Interfaces::StandardMem"},
@@ -151,6 +151,9 @@ protected:
     virtual void emergencyShutdown() {};
 
 private:
+
+    // CUDA executable path, overwrites BalarCudaCallPacket_t.register_fatbin.file_name
+    std::string cudaExecutable;
 
     // Last cuda call info
     // Return value from last cuda function call

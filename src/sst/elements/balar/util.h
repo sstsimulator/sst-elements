@@ -51,6 +51,8 @@ namespace BalarComponent {
         GPU_REG_VAR_RET = 20,
         GPU_MAX_BLOCK = 21,
         GPU_MAX_BLOCK_RET = 22,
+        GPU_PARAM_CONFIG,
+        GPU_PARAM_CONFIG_RET,
     };
 
     
@@ -83,27 +85,27 @@ namespace BalarComponent {
             struct {
                 uint64_t dst;
                 uint64_t src;
-                size_t count;
+                uint64_t count;
+                uint64_t payload;   // A pointer, but need to be 64-bit
                 enum cudaMemcpyKind kind;
-                volatile uint8_t *payload;
             } cuda_memcpy;
 
             struct {
-                unsigned int gdx;
-                unsigned int gdy;
-                unsigned int gdz;
-                unsigned int bdx;
-                unsigned int bdy;
-                unsigned int bdz;
-                size_t sharedMem;
-                cudaStream_t stream;
+                uint64_t sharedMem;
+                uint64_t stream;
+                uint32_t gdx;
+                uint32_t gdy;
+                uint32_t gdz;
+                uint32_t bdx;
+                uint32_t bdy;
+                uint32_t bdz;
             } configure_call;
 
             struct {
                 uint64_t arg;
-                uint8_t value[8];
                 size_t size;
                 size_t offset;
+                uint8_t value[200];
             } setup_argument;
 
             struct {
@@ -126,12 +128,16 @@ namespace BalarComponent {
             } register_var;
 
             struct {
-                int *numBlock;
-                const char *hostFunc;
-                int blockSize;
                 size_t dynamicSMemSize;
-                unsigned int flags;
+                uint64_t numBlock;
+                uint64_t hostFunc;
+                int32_t blockSize;
+                uint32_t flags;
             } max_active_block;
+            struct {
+                uint64_t hostFun;
+                unsigned index; // Argument index
+            } cudaparamconfig;
         };
     } BalarCudaCallPacket_t;
 
@@ -151,6 +157,10 @@ namespace BalarComponent {
                 size_t      size;
                 enum cudaMemcpyKind kind;
             } cudamemcpy;
+            struct {
+                size_t size;
+                unsigned alignment;
+            } cudaparamconfig;
         };
     } BalarCudaCallReturnPacket_t;
 
@@ -167,17 +177,17 @@ namespace BalarComponent {
         size_t len = buffer->size();
 
         // Allocate enough space
-        buffer->resize(len + sizeof(*pack_ptr));
+        buffer->resize(len + sizeof(T));
 
         // Copy the packet to buffer end
-        std::copy(ptr, ptr + sizeof(*pack_ptr), buffer->data() + len);
+        std::copy(ptr, ptr + sizeof(T), buffer->data() + len);
         return buffer;
     }
 
     template <typename T>
     T* decode_balar_packet(vector<uint8_t> *buffer) {
         T* pack_ptr = new T();
-        size_t len = sizeof(*pack_ptr);
+        size_t len = sizeof(T);
 
         // Match with type of buffer
         uint8_t* ptr = reinterpret_cast<uint8_t*>(pack_ptr);

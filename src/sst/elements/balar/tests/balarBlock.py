@@ -49,6 +49,7 @@ class Builder():
             "mmio_size": balar_mmio_size,
             "dma_addr": dma_mmio_addr,
             "separate_mem_iface": separate_mem_iface,
+            "cuda_executable": os.getenv("BALAR_CUDA_EXE_PATH", "")
         })
         balar.addParams(gpuconfig.getGPUConfig())
 
