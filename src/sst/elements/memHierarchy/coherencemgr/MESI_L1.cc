@@ -1273,6 +1273,7 @@ void MESIL1::cleanUpAfterRequest(MemEvent * event, bool inMSHR) {
     
     /* Remove from MSHR */
     if (inMSHR) {
+        if (event->isPrefetch() && event->getRqstr() == cachename_) outstandingPrefetches_--;
         mshr_->removeFront(addr);
     }
 
@@ -1308,8 +1309,10 @@ void MESIL1::cleanUpAfterResponse(MemEvent* event, bool inMSHR) {
         req = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
     mshr_->removeFront(addr); // delete req after this since debug might print the event it's removing
     delete event;
-    if (req)
+    if (req) {
+        if (req->isPrefetch() && req->getRqstr() == cachename_) outstandingPrefetches_--;
         delete req;
+    }
 
     /* Replay any waiting events */
     if (mshr_->exists(addr)) {
