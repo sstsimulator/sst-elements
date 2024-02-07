@@ -2687,6 +2687,7 @@ void MESISharNoninclusive::cleanUpEvent(MemEvent* event, bool inMSHR) {
 
     /* Remove from MSHR */
     if (inMSHR) {
+        if (event->isPrefetch() && event->getRqstr() == cachename_) outstandingPrefetches_--;
         mshr_->removeFront(addr);
     }
 
@@ -2732,8 +2733,10 @@ void MESISharNoninclusive::cleanUpAfterResponse(MemEvent* event, bool inMSHR) {
     mshr_->removeFront(addr);
     delete event;
 
-    if (req)
+    if (req) {
+        if (req->isPrefetch() && req->getRqstr() == cachename_) outstandingPrefetches_--;
         delete req;
+    }
 
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
