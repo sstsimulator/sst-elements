@@ -28,8 +28,6 @@
 #include <queue>
 #include <limits>
 
-#define VANADIS_RISCV_FUNC7_MASK  0xFE000000
-
 using namespace SST::Interfaces;
 
 namespace SST {
