@@ -1122,15 +1122,9 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
         break;
 
     case INST_ROCC:
-        output->verbose(CALL_INFO, 16, 0, "issuing rocc instruction\n");
+        output->verbose(CALL_INFO, 16, 0, "allocating rocc instruction\n");
         if ( !rocc->RoCCFull() ) {
             output->verbose(CALL_INFO, 16, 0, "pushing to RoCC queue\n");
-            VanadisRegisterFile* regFile = register_files[ins->getHWThread()];
-            uint64_t rs1_val = regFile->getIntReg<int64_t>(ins->getPhysIntRegIn(0));
-            uint64_t rs2_val = regFile->getIntReg<int64_t>(ins->getPhysIntRegIn(1));
-            VanadisRoCCInstruction* vrocc_inst = (VanadisRoCCInstruction*)ins;
-            RoCCInstruction* rocc_inst = new RoCCInstruction(vrocc_inst->func7, vrocc_inst->rd, vrocc_inst->xs1, vrocc_inst->xs2, vrocc_inst->xd);
-            rocc->push(new RoCCCommand(rocc_inst, rs1_val, rs2_val));
             rocc_queue.push_back(ins);
             allocated_fu = true;
         }
@@ -1683,6 +1677,18 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
             isa_table->incFPWrite(ins_isa_reg);
 
             ins->setPhysFPRegOut(i, out_reg);
+        }
+    }
+
+    if (ins->getInstFuncType() == INST_ROCC) {
+        output->verbose(CALL_INFO, 16, 0, "issuing rocc instruction\n");
+        if ( !rocc->RoCCFull() ) {
+            VanadisRegisterFile* regFile = register_files[ins->getHWThread()];
+            uint64_t rs1_val = regFile->getIntReg<int64_t>(ins->getPhysIntRegIn(0));
+            uint64_t rs2_val = regFile->getIntReg<int64_t>(ins->getPhysIntRegIn(1));
+            VanadisRoCCInstruction* vrocc_inst = (VanadisRoCCInstruction*)ins;
+            RoCCInstruction* rocc_inst = new RoCCInstruction(vrocc_inst->func7, vrocc_inst->rd, vrocc_inst->xs1, vrocc_inst->xs2, vrocc_inst->xd);
+            rocc->push(new RoCCCommand(rocc_inst, rs1_val, rs2_val));
         }
     }
 
