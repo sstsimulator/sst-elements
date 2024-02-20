@@ -25,6 +25,7 @@
 #include "computeArray.h"
 
 #include <vector>
+#include <string>
 
 namespace SST {
 namespace Golem {
@@ -47,7 +48,8 @@ public:
         {"arrayInputSize",     "Length of input vector. Implies array rows."},
         {"arrayOutputSize",    "Length of output vector. Implies array columns."},
         {"inputOperandSize",   "Size of input operand in bytes.", "4"},
-        {"outputOperandSize",  "Size of output operand in bytes.", "4"}
+        {"outputOperandSize",  "Size of output operand in bytes.", "4"},
+        {"CrossSimJSON",       "Path to CrossSim JSON."}
     )
 
     CrossSimComputeArray(ComponentId_t id, Params& params, 
@@ -68,6 +70,7 @@ public:
         size = params.find<uint64_t>("arrayInputSize");
         numArrays = params.find<uint64_t>("numArrays", 1);
         inputOperandSize = params.find<uint64_t>("inputOperandSize", 1);
+        CrossSimJSON = params.find<std::string>("CrossSimJSON", std::string());
     }
 
     virtual void init(unsigned int phase) override {
@@ -115,7 +118,14 @@ public:
             PyErr_Print();
         }
 
-        crossSim_params = PyObject_CallFunction(paramsConstructor, NULL);
+        if (CrossSimJSON.empty()) {
+            crossSim_params = PyObject_CallFunction(paramsConstructor, NULL);
+	} else {
+            PyObject* paramsConstructorJSON = PyObject_GetAttrString(paramsConstructor, "from_json");
+            PyObject* jsonArgs = Py_BuildValue("(s)", CrossSimJSON.c_str());
+            crossSim_params = PyObject_CallObject(paramsConstructorJSON, jsonArgs);
+        }
+
         if (!crossSim_params) {
             std::cout << "Call to Parameters constructor failed" << std::endl;
             PyErr_Print();
@@ -228,7 +238,7 @@ public:
 	int len = PyArray_SIZE(npArrayOut);
 	std::copy(cArrayOut, cArrayOut + len, outVec.begin());
 		
-        std::cout << "CrossSim MVM: " << std::endl;
+        std::cout << "CrossSim MVM on array " << arrayID << ":" << std::endl;
 	for (int i = 0; i < size; i++) {
 		std::cout << outVec[i] << " ";
 	}
@@ -246,6 +256,7 @@ protected:
 
     uint64_t size; // dimensions of matrix and length of input and output vectors
     uint64_t inputOperandSize; // size of operand in each entry in bytes
+    std::string CrossSimJSON;
 
     // bunch of C++/Python conversion variables
     PyObject* crossSim;

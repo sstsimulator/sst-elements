@@ -19,8 +19,8 @@
 #include <sst/core/output.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/interfaces/stdMem.h>
-#include "computeArray.h"
-#include "arrayEvent.h"
+#include <sst/elements/golem/computeArray.h>
+#include <sst/elements/golem/arrayEvent.h>
 #include <sst/elements/vanadis/rocc/vroccinterface.h>
 
 #include <cinttypes>
@@ -215,7 +215,6 @@ public:
                 } break;
                 default: 
                 {
-		    std::cout << "CAm: " << curr_cmd->inst->func7 << std::endl;
                     output->verbose(CALL_INFO, 2, 0, "ERROR: unrecognized RoCC func7\n");
                 } break;
             }
@@ -231,7 +230,6 @@ public:
 	uint64_t matrix_size = arrayInputSize * arrayInputSize * inputOperandSize;
 //        load_req = new StandardMem::Read(curr_cmd->rs1, matrix_size, load_matrix_flag, curr_cmd->rs1, curr_cmd->inst->ins_address, curr_cmd->inst->hw_thr);
         load_req = new StandardMem::Read(curr_cmd->rs1, matrix_size, load_matrix_flag, curr_cmd->rs1, 0, 0);
-	std::cout << "Read Request: " << load_req->getString() << std::endl;
         output->verbose(CALL_INFO, 9, 0, "----> Read Req: physAddr: %llx, size: %llx, vAddr: %llx, inst ptr: %llx, tid: %llx\n", 
                         curr_cmd->rs1, matrix_size, curr_cmd->rs1, 0, 0);
 //                        curr_cmd->rs1, matrix_size, curr_cmd->rs1, curr_cmd->inst->ins_address, curr_cmd->inst->hw_thr);
@@ -338,9 +336,6 @@ public:
         virtual ~StandardMemHandlers() {}
 
         virtual void handle(StandardMem::ReadResp* ev) {
-
-	    std::cout << "Read Response: " << ev->getString() << std::endl;
-            
             out->verbose(CALL_INFO, 2, 0, "-> handle read-response (virt-addr: 0x%llx)\n", ev->vAddr);
             SST::Vanadis::RoCCCommand* rocc_cmd = rocc->curr_cmd; // need to grab the instruction that generated the read request
 
@@ -358,15 +353,6 @@ public:
             for (auto i = 0; i < reg_width; ++i) {
                 register_value.at(reg_offset + addr_offset + i) = ev->data[i];
             }
-
-	    uint32_t flag = ev->getAllFlags();
-            std::cout << "Flags: "
-		      << std::setfill('0') 
-		      << std::setw(8) 
-		      << std::uppercase 
-		      << std::hex 
-		      << (0xFFFFFFFF & flag) 
-		      << std::endl;
 
             uint64_t rs2 = rocc_cmd->rs2;
             switch (ev->getAllFlags()) { // treat read response data differently based on who issued it (flags)
@@ -400,7 +386,6 @@ public:
 
                 default:
                 {
-		    std::cout << "CAM: " <<  ev->getAllFlags() << std::endl;
                     rocc->output->verbose(CALL_INFO, 2, 0, "ERROR: unrecognized read response flag\n");
                 } break;
             }
