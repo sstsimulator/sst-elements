@@ -36,11 +36,11 @@ helloworld: helloworld.c test_llvm_env
 	$(CLANG_PREFIX)clang -static -mno-relax $(CXX_FLAGS_RISCV_LINUX) $< -o $@
 
 vanadis_cuda: $(CUSTOM_CUDA_LIB_SRC) test_vanadis_envs
-	$(RISCV_PREFIX)gcc -c -static -I$(CUDA_INSTALL_PATH)/include -I. -fpic $<
+	$(RISCV_PREFIX)gcc -c -static -I$(CUDA_INSTALL_PATH)/include -I. -DBALAR_CUDA_VERSION=\"libcudart_vanadis.a.$(shell echo $$CUDA_VERSION_NUMBER | cut -c 1-2)\" -fpic $<
 	$(RISCV_PREFIX)gcc -shared -o lib$(CUSTOM_CUDA_LIB).so $(CUSTOM_CUDA_LIB_SRC:.cc=.o)
 	$(RISCV_PREFIX)ar rcs lib$(CUSTOM_CUDA_LIB).a $(CUSTOM_CUDA_LIB_SRC:.cc=.o)
 
-vecadd: vecadd.cu test_vanadis_envs test_llvm_env vanadis_cuda vecadd_normal
+vecadd: vecadd.cu test_vanadis_envs test_llvm_env vanadis_cuda
 	$(CLANG_PREFIX)clang++ $< -o $@ $(CXX_FLAGS_RISCV_CUDA) $(CXX_FLAGS_RISCV_LINUX) $(CXX_FLAGS_CUDA_WRAPPER)
 
 vecadd_normal: vecadd.cu

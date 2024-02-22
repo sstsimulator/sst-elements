@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <iostream>
 
 // CUDA kernel. Each thread takes care of one element of c
 __global__ void vecAdd(double *a, double *b, double *c, int n)
@@ -31,7 +32,7 @@ __global__ void vecAdd(double *a, double *b, double *c, int n)
 int main()
 {
     // Size of vectors
-    int n = 131072;
+    int n = 16384;
 
     // Host input vectors
     double *h_a;
@@ -88,7 +89,7 @@ int main()
     for(i = 0; i < n; i++)
         sum += h_c[i];
     printf("final result: %.5f\n", sum / n);
-
+    fflush(stdout);
     // Release device memory
     cudaFree(d_a);
     cudaFree(d_b);
