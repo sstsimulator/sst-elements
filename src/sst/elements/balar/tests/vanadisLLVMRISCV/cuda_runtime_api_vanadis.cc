@@ -16,6 +16,12 @@
 #include "cuda_runtime_api.h"
 #include "balar_vanadis.h"
 
+// Encode version information here
+#ifndef BALAR_CUDA_VERSION
+#define BALAR_CUDA_VERSION "11.0"
+#endif
+static const char *version = BALAR_CUDA_VERSION;
+
 extern "C" {
     #include <unistd.h>
     #include <sys/syscall.h>
