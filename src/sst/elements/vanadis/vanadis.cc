@@ -575,7 +575,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
                                     CALL_INFO, 8, VANADIS_DBG_ISSUE_FLG, "%d: ----> Issued for: %s / 0x%llx / status: %d\n",
                                     ins->getHWThread(), instPrintBuffer, ins->getInstructionAddress(), status);
                                 if ( print_rob ) {
-                                    printRob(i,rob[i]);
+                                    //printRob(i,rob[i]);
                                 }
                             }
 #endif
@@ -744,7 +744,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
 
 #ifdef VANADIS_BUILD_DEBUG
     if ( output->getVerboseLevel() >= 9 ) {
-        printRob( rob_num, rob );
+        //printrob( rob_num, rob );
     }
 #endif
 
@@ -864,7 +864,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
                     "(new addr: 0x%llx)\n",
                     pipeline_reset_addr);
                 if ( print_rob ) {
-                    printRob(rob_num,rob);
+                    //printrob(rob_num,rob);
                 }
                 }
 #endif
@@ -917,7 +917,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
 
                 delete[] inst_asm_buffer;
                 if ( print_rob ) {
-                    printRob(rob_num,rob);
+                    //printrob(rob_num,rob);
                 }
             }
 #endif
@@ -1684,6 +1684,7 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
         output->verbose(CALL_INFO, 16, 0, "issuing rocc instruction\n");
         if ( !rocc->RoCCFull() ) {
             VanadisRegisterFile* regFile = register_files[ins->getHWThread()];
+            regFile->print(output);
             uint64_t rs1_val = regFile->getIntReg<int64_t>(ins->getPhysIntRegIn(0));
             uint64_t rs2_val = regFile->getIntReg<int64_t>(ins->getPhysIntRegIn(1));
             VanadisRoCCInstruction* vrocc_inst = (VanadisRoCCInstruction*)ins;

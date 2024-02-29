@@ -146,7 +146,7 @@ public:
 
     // writes value of rs1 into rs2
     void performADD() {
-        output->verbose(CALL_INFO, 2, 0, "EXECUTE ADD w/ rs1: %llx, rs2: %llx, result: %llx", curr_cmd->rs1, curr_cmd->rs2, curr_cmd->rs1 + curr_cmd->rs2);
+        output->verbose(CALL_INFO, 2, 0, "EXECUTE RoCC ADD w/ rs1: %llx, rs2: %llx, result: %llx", curr_cmd->rs1, curr_cmd->rs2, curr_cmd->rs1 + curr_cmd->rs2);
         completeRoCC(curr_cmd->rs1 + curr_cmd->rs2);
         return;
     }
