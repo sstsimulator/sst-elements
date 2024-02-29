@@ -98,7 +98,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 
         memMgr = new MirandaMemoryManager(out, pageSize, pageCount, policy);
 
-        reqGen = loadUserSubComponent<RequestGenerator>("generator");
+        reqGen = loadUserSubComponent<RequestGenerator>("generator", ComponentInfo::INSERT_STATS);
         if (reqGen) {
             out->verbose(CALL_INFO, 1, 0, "Generator loaded successfully.\n");
 	    registerAsPrimaryComponent();
