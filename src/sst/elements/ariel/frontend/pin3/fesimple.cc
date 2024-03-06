@@ -402,12 +402,13 @@ VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr, ADD
     tunnel->writeMessage(thr, ac);
 }
 
-VOID WriteStartInstructionMarker(UINT32 thr, ADDRINT ip, UINT32 simdOpWidth)
+VOID WriteStartInstructionMarker(UINT32 thr, ADDRINT ip, UINT32 instClass, UINT32 simdOpWidth)
 {
     ArielCommand ac;
     ac.command = ARIEL_START_INSTRUCTION;
     ac.instPtr = (uint64_t) ip;
     ac.inst.simdElemCount = simdOpWidth;
+    ac.inst.instClass = instClass;
     tunnel->writeMessage(thr, ac);
 }
 
@@ -426,7 +427,7 @@ VOID WriteInstructionReadWrite(THREADID thr, ADDRINT* readAddr, UINT32 readSize,
 
     if(enable_output) {
         if(thr < core_count) {
-            WriteStartInstructionMarker( thr, ip, simdOpWidth);
+            WriteStartInstructionMarker( thr, ip, instClass, simdOpWidth);
             WriteInstructionRead(  readAddr,  readSize,  thr, ip, instClass, simdOpWidth );
             WriteInstructionWrite( writeAddr, writeSize, thr, ip, instClass, simdOpWidth );
             WriteEndInstructionMarker( thr, ip );
@@ -441,7 +442,7 @@ VOID WriteInstructionReadOnly(THREADID thr, ADDRINT* readAddr, UINT32 readSize, 
     if(enable_output) {
         if(thr < core_count) {
             if (first)
-                WriteStartInstructionMarker(thr, ip, simdOpWidth);
+                WriteStartInstructionMarker(thr, ip, instClass, simdOpWidth);
             WriteInstructionRead(  readAddr,  readSize,  thr, ip, instClass, simdOpWidth );
             if (last)
                 WriteEndInstructionMarker(thr, ip);
@@ -469,7 +470,7 @@ VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSiz
     if(enable_output) {
         if(thr < core_count) {
             if (first)
-                WriteStartInstructionMarker(thr, ip, simdOpWidth);
+                WriteStartInstructionMarker(thr, ip, instClass, simdOpWidth);
             WriteInstructionWrite(writeAddr, writeSize,  thr, ip, instClass, simdOpWidth);
             if (last)
                 WriteEndInstructionMarker(thr, ip);
