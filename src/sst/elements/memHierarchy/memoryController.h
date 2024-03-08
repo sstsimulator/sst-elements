@@ -140,6 +140,9 @@ protected:
     void writeData( MemEvent* );
     void readData( MemEvent* );
 
+    std::string checkpointDir_;
+    enum { NO_CHECKPOINT, CHECKPOINT_LOAD, CHECKPOINT_SAVE }  checkpoint_;
+
     size_t memSize_;
 
     bool clockOn_;

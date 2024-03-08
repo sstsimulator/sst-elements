@@ -77,6 +77,7 @@ public:
         OSFutexDbg("Futex::%s() found addr=%#" PRIx64 " syscall=%p\n", addr,syscall );
         return syscall;
     }
+    bool isEmpty() { return m_futexMap.empty(); } 
 
 private:
     std::map< uint64_t, std::deque<VanadisSyscall* > > m_futexMap;

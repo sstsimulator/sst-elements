@@ -105,6 +105,7 @@
 #define VANADIS_SYSCALL_RISCV64_MADVISE 233
 #define VANADIS_SYSCALL_RISCV64_PRLIMIT 261
 #define VANADIS_SYSCALL_RISCV64_GETRANDOM 278
+#define VANADIS_SYSCALL_RISCV64_CHECKPOINT 500 
 
 #define VANADIS_SYSCALL_RISCV_RET_REG 10
 
@@ -134,9 +135,15 @@ public:
         InstallRISCV64FuncPtr( GETRANDOM );
         InstallRISCV64FuncPtr( FSTATAT );
         InstallRISCV64FuncPtr( LSEEK );
+        InstallRISCV64FuncPtr( CHECKPOINT );
     }
 
     virtual ~VanadisRISCV64OSHandler2() {}
+
+    VanadisSyscallEvent* CHECKPOINT( int hw_thr ) {
+        output->verbose(CALL_INFO, 8, 0, "checkpoint()\n");
+        return new VanadisSyscallCheckpointEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B );
+    }
 
     VanadisSyscallEvent* CLONE( int hw_thr ) {
         uint64_t flags          = getArgRegister(0);

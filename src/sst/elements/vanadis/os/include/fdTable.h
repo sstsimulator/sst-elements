@@ -81,6 +81,7 @@ public:
         }
     }
 
+
     ~FileDescriptor() {
         if ( -1 != fd ) {
             close(fd);
@@ -104,6 +105,29 @@ public:
 
     int getFileDescriptor() {
         return fd;
+    }
+
+    FileDescriptor( SST::Output* output, FILE* fp ) {
+        char str[80];
+        assert( 1 == fscanf(fp,"path: %s\n",str) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"path: %s\n",str );
+        path = str;
+
+        assert( 1 == fscanf(fp,"fd: %d\n", &fd) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"fd: %d\n", fd);
+
+        assert( 1 == fscanf(fp,"flags: %d\n", &flags ) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"flags: %d\n", flags );
+
+        assert( 1 == fscanf(fp,"mode: %d\n", &mode) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"mode: %d\n", mode);
+    }
+
+    void checkpoint( FILE* fp) {
+        fprintf(fp, "path: %s\n", path.c_str() );
+        fprintf(fp, "fd: %d\n", fd );
+        fprintf(fp, "flags: %d\n", flags );
+        fprintf(fp, "mode: %d\n", mode );
     }
 
 protected:
@@ -206,6 +230,53 @@ public:
             return "";
         }
         return iter->second->getPath();
+    }
+
+    FileDescriptorTable( SST::Output* output, FILE* fp ) {
+        char* tmp = nullptr;
+        size_t num = 0;
+        getline( &tmp, &num, fp );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",tmp);
+        assert( 0 == strcmp(tmp,"#FileDescriptorTable start\n") );
+        free(tmp);
+
+        assert( 1 == fscanf(fp,"m_refCnt: %d\n",&m_refCnt) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_refCnt: %d\n",m_refCnt);
+
+        assert( 1 ==fscanf(fp,"m_maxFD: %d\n",&m_maxFD) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_maxFD: %d\n",m_maxFD);
+
+        size_t size;
+        assert( 1 == fscanf(fp,"m_fileDescriptors.size(): %zu\n",&size) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_fileDescriptors.size(): %zu\n",size);
+
+        for ( auto i = 0; i < size; i++ ) {
+            int fd;
+            assert( 1 == fscanf(fp,"fd: %d\n", &fd ) );
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"fd: %d\n", fd );
+            m_fileDescriptors[fd] = new FileDescriptor(output, fp); 
+        }
+
+        tmp = nullptr;
+        num = 0;
+        getline( &tmp, &num, fp );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",tmp);
+        assert( 0 == strcmp(tmp,"#FileDescriptorTable end\n") );
+        free(tmp);
+    }
+
+    void checkpoint( FILE* fp ) {
+        fprintf(fp,"#FileDescriptorTable start\n");
+        fprintf(fp,"m_refCnt: %d\n",m_refCnt);
+        fprintf(fp,"m_maxFD: %d\n",m_maxFD);
+
+        fprintf(fp,"m_fileDescriptors.size(): %zu\n",m_fileDescriptors.size());
+
+        for ( auto & x : m_fileDescriptors ) {
+            fprintf(fp,"fd: %d\n",x.first);
+            x.second->checkpoint(fp);
+        }
+        fprintf(fp,"#FileDescriptorTable end\n");
     }
 private:
 
