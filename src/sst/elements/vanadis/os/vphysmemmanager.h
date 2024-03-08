@@ -23,11 +23,12 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "vanadisDbgFlags.h"
+
 #define FOUR_KB 4096
 #define TWO_MB ( 1024*1024*2)
 #define ONE_GB ( 1024*1024*1024)
     
-
 class PhysMemManager {
   public:
     class BitMap {
@@ -66,6 +67,30 @@ class PhysMemManager {
         void setBits( int start, int numBits ) {
             assert(0);
         }
+
+        void checkpoint( FILE* fp ) {
+            fprintf(fp,"BitMap size: %d\n",m_bitMap.size());
+            for ( auto i = 0; i < m_bitMap.size(); i++ ) {
+                if ( m_bitMap[i] ) {
+                    fprintf(fp,"%d %#018" PRIx64 "\n",i,m_bitMap[i]);
+                }
+            }
+        }
+
+        void checkpointLoad( SST::Output* output, FILE* fp ) {
+            int size;
+            assert( 1 == fscanf(fp,"BitMap size: %d\n",&size) );
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"BitMap size: %d\n",size);
+            m_bitMap.resize(size,0);
+            int index;
+            uint64_t value;
+            while ( 2 == fscanf( fp, "%d %" PRIx64 "\n", &index, &value ) ) {
+                output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%d %#018" PRIx64 "\n",index,value);
+                m_bitMap[index] = value;
+            }
+        }
+
+      private:
 
       private:
         std::vector<uint64_t> m_bitMap;
@@ -109,6 +134,27 @@ class PhysMemManager {
         } else {
             assert(0);
         }
+    }
+
+    void checkpoint( SST::Output* output, std::string dir ) {
+        std::stringstream filename;
+        filename << dir << "/" << "PhysMemManager";
+        auto fp = fopen(filename.str().c_str(),"w+");
+
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"PhysMemManager %s\n", filename.str().c_str());
+
+        fprintf(fp,"m_numAllocated %d\n",m_numAllocated);
+        m_bitMap.checkpoint(fp);
+    }
+    void checkpointLoad( SST::Output* output , std::string dir ) {
+        std::stringstream filename;
+        filename << dir << "/" << "PhysMemManager";
+        auto fp = fopen(filename.str().c_str(),"r");
+        assert(fp);
+
+        assert( 1 == fscanf(fp,"m_numAllocated %d\n",&m_numAllocated) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_numAllocated %d\n",m_numAllocated);
+        m_bitMap.checkpointLoad(output,fp);
     }
 
   private:

@@ -125,6 +125,7 @@ vinsbundle.h \
 vinsloader.h \
 \
 os/vappruntimememory.h \
+os/vcheckpointreq.h \
 os/vcpuos.h \
 os/vcpuos2.h \
 os/vdumpregsreq.h \
@@ -158,6 +159,7 @@ os/include/virtMemMap.h \
 os/callev/voscallaccessev.h \
 os/callev/voscallall.h \
 os/callev/voscallbrk.h \
+os/callev/voscallcheckpoint.h \
 os/callev/voscallclone.h \
 os/callev/voscallclose.h \
 os/callev/voscallexitgrp.h \
@@ -196,6 +198,7 @@ os/callev/voscallwritev.h \
 \
 os/syscall/access.h \
 os/syscall/brk.h \
+os/syscall/checkpoint.h \
 os/syscall/clone.cc \
 os/syscall/clone.h \
 os/syscall/close.h \
