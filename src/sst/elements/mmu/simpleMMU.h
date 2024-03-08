@@ -22,6 +22,7 @@
 
 namespace SST {
 
+#define MMU_DBG_CHECKPOINT (1<<0)
 namespace MMU_Lib {
 
 class SimpleMMU : public MMU {
@@ -43,6 +44,8 @@ class SimpleMMU : public MMU {
     )
 
     SimpleMMU(SST::ComponentId_t id, SST::Params& params);
+    void checkpoint( std::string );
+    void checkpointLoad( std::string );
 
     virtual void removeWrite( unsigned pid );
     virtual void map( unsigned pid, uint32_t vpn, std::vector<uint32_t>& ppns, int pageSize, uint64_t flags );
@@ -100,6 +103,22 @@ class SimpleMMU : public MMU {
 
     class PageTable {
       public:
+        PageTable() {}
+        PageTable( SST::Output* output, FILE* fp ) {
+            int size;
+
+            assert( 1 == fscanf( fp, "pteMap.size() %d\n", &size ) );
+            output->debug(CALL_INFO_LONG,1,MMU_DBG_CHECKPOINT,"pteMap.size() %d\n",size);
+            for ( auto i = 0; i < size; i++ ) {
+                uint32_t vpn;
+                uint32_t ppn;
+                uint32_t perms;
+                assert( 3 == fscanf( fp, "vpn: %d, ppn: %d, perms: %x\n", &vpn, &ppn, &perms ) );
+                output->debug(CALL_INFO_LONG,1,MMU_DBG_CHECKPOINT,"vpn: %d, ppn: %d, perms: %x\n", vpn, ppn, perms );
+                pteMap[vpn] = PTE( ppn, perms );
+            }
+        }
+
         void add( uint32_t vpn, PTE pte ) { 
             pteMap[vpn] = pte;
         }
@@ -121,6 +140,12 @@ class SimpleMMU : public MMU {
         void print( const std::string str) {
             for ( auto& kv : pteMap ) {
                 printf("PageTabl::%s() %s vpn=%d ppn=%d perm=%#x\n",__func__,str.c_str(),kv.first,kv.second.ppn,kv.second.perms);
+            }
+        }
+        void checkpoint( FILE* fp ) {
+            fprintf(fp,"pteMap.size() %zu\n",pteMap.size());
+            for ( auto & x : pteMap ) {
+                fprintf(fp,"vpn: %d, ppn: %d, perms: %#lx \n", x.first,x.second.ppn,x.second.perms );
             }
         }
       private:

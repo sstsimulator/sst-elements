@@ -161,3 +161,65 @@ int SimpleMMU::getPerms( unsigned pid, uint32_t vpn ) {
     return  pte->perms; 
 }
 
+void SimpleMMU::checkpoint( std::string dir ) {
+
+    std::stringstream filename;
+    filename << dir << "/" << getName();
+    auto fp = fopen(filename.str().c_str(),"w+");
+
+    m_dbg.debug(CALL_INFO_LONG,1,MMU_DBG_CHECKPOINT,"Checkpoint component `%s` %s\n",getName().c_str(), filename.str().c_str());
+
+    fprintf(fp,"m_pageTableMap.size() %zu\n",m_pageTableMap.size());
+    for ( auto & x : m_pageTableMap ) {
+        auto pageTable = x.second;
+        fprintf(fp,"pid: %i\n",x.first);
+        pageTable->checkpoint( fp );
+    }
+
+    fprintf(fp,"m_coreToPid.size() %zu\n", m_coreToPid.size());
+    for ( auto core = 0; core < m_coreToPid.size(); core++ ) {
+        auto& x = m_coreToPid[core];
+        fprintf(fp,"core: %d, numPids: %d\n",core,x.size());
+        for ( auto j = 0; j < x.size(); j++ ) {
+            fprintf(fp,"%d ",x[j]);
+        }
+        fprintf(fp,"\n");
+    }
+}
+
+void SimpleMMU::checkpointLoad( std::string dir ) {
+    std::stringstream filename;
+    filename << dir << "/" << getName();
+    auto fp = fopen(filename.str().c_str(),"r");
+    assert(fp);
+
+    m_dbg.debug(CALL_INFO_LONG,1,MMU_DBG_CHECKPOINT,"Checkpoint load component `%s` %s\n",getName().c_str(), filename.str().c_str());
+
+    int size;
+    assert( 1 == fscanf( fp, "m_pageTableMap.size() %d\n",&size) );
+    m_dbg.debug(CALL_INFO_LONG,1,MMU_DBG_CHECKPOINT,"m_pageTableMap.size() %d\n",size);
+    for ( auto i = 0; i < size; i++ ) {
+        int pid;
+        assert( 1 == fscanf( fp, "pid: %d\n",&pid) );
+        m_dbg.debug(CALL_INFO_LONG,1,MMU_DBG_CHECKPOINT,"pid: %d\n",pid);
+        m_pageTableMap[pid] = new PageTable( &m_dbg, fp );
+    }
+
+    assert( 1 == fscanf( fp, "m_coreToPid.size() %d\n", &size) );
+    m_dbg.debug(CALL_INFO_LONG,1,MMU_DBG_CHECKPOINT,"m_coreToPid.size() %d\n",size );
+
+    m_coreToPid.resize( size );
+    for ( auto core = 0; core < m_coreToPid.size(); core++ ) {
+        int x, numPids;
+        assert( 2 == fscanf( fp, "core: %d, numPids: %d\n", &x, &numPids) );
+        m_dbg.debug(CALL_INFO_LONG,1,MMU_DBG_CHECKPOINT, "core: %d, numPids: %d\n", x, numPids);
+        m_coreToPid[core].resize( numPids );
+        for ( auto i = 0; i < numPids; i++ ) {
+            int pid;
+            assert( 1 == fscanf(fp,"%d ",&pid) );
+            m_dbg.debug(CALL_INFO_LONG,1,MMU_DBG_CHECKPOINT,"%d ",pid);
+            m_coreToPid[core][i] =  pid;
+        }
+        m_dbg.debug(CALL_INFO_LONG,1,MMU_DBG_CHECKPOINT,"\n");
+    }
+}
