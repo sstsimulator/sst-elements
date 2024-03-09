@@ -39,6 +39,10 @@ class Page {
         ppn = mem->allocPage( PhysMemManager::PageSize::FourKB ); 
         PageDbg("ppn=%d\n",ppn);
     }
+
+    Page( PhysMemManager* mem, int ppn, int refCnt ) : mem(mem), ppn(ppn), refCnt(1) {
+    }
+
     ~Page() {
         PageDbg("ppn=%d\n",ppn);
         assert( 0 == refCnt );
@@ -62,6 +66,13 @@ class Page {
         --refCnt;
         PageDbg("ppn=%d refCnt=%d\n",ppn,refCnt);
         return refCnt;
+    }
+
+    std::string checkpoint() {
+        std::stringstream ss;
+        ss << "ppn: " << ppn;
+        ss << ", refCnt: " << refCnt;
+        return ss.str();
     }
 
   private:

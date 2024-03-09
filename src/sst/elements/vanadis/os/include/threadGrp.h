@@ -28,7 +28,7 @@ class ProcessInfo;
 
 class ThreadGrp {
 public:
-    size_t size() { return m_numThreads; }
+    size_t size() { return m_group.size(); } 
 
     void add( ProcessInfo* thread, int tid ) {
 
@@ -36,15 +36,12 @@ public:
             assert( m_group[tid] == nullptr );
         }
 
-        m_group[tid] = thread ;
-        ++m_numThreads;
+        m_group[tid] = thread;
     }
 
     void remove( int tid ) {
         assert ( m_group.find( tid ) != m_group.end() );
-        m_group[tid] = nullptr;
-
-        --m_numThreads;
+        m_group.erase(tid);
     }
 
     std::map<int,ProcessInfo*>& getThreadList() {
@@ -53,7 +50,6 @@ public:
 
 private:
     std::map<int,ProcessInfo*> m_group;
-    size_t m_numThreads;
 };
 
 }
