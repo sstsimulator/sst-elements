@@ -8,6 +8,7 @@ AC_DEFUN([SST_CORE_CHECK_INSTALL], [
 
   SST_CONFIG_TOOL=""
   SST_REGISTER_TOOL=""
+  SST_SNIPPETS_TOOL=""
 
   AS_IF( [test x"$with_sst_core" = "x/bin"],
 	 [AC_MSG_ERROR([User undefined path while using --with-sst-core], [1])],
@@ -30,6 +31,13 @@ AC_DEFUN([SST_CORE_CHECK_INSTALL], [
   AS_IF([test -x "$SST_REGISTER_TOOL"],
 	[AC_MSG_RESULT([found $SST_REGISTER_TOOL])],
 	[AC_MSG_ERROR([Unable to find sst-register in $with_sst_core], [1])])
+
+  AC_PATH_PROG([SST_SNIPPETS_TOOL], [sst-snippets.py], [], [$with_sst_core])
+
+  AC_MSG_CHECKING([for sst-snippets.py tool available])
+  AS_IF([test -x "$SST_SNIPPETS_TOOL"],
+        [AC_MSG_RESULT([found $SST_SNIPPETS_TOOL])],
+        [AC_MSG_ERROR([Unable to find sst-snippets.py in $with_sst_core], [1])])
 
   SST_CC=`$SST_CONFIG_TOOL --CC`
   SST_CXX=`$SST_CONFIG_TOOL --CXX`
@@ -65,6 +73,7 @@ AC_DEFUN([SST_CORE_CHECK_INSTALL], [
 
   AC_SUBST([SST_CONFIG_TOOL])
   AC_SUBST([SST_REGISTER_TOOL])
+  AC_SUBST([SST_SNIPPETS_TOOL])
   AC_SUBST([SST_PREFIX])
 
   AM_CONDITIONAL([SST_ENABLE_PREVIEW_BUILD], [test "x$SST_PREVIEW_BUILD" = "xyes"])
