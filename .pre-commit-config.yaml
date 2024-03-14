@@ -1,0 +1,16 @@
+---
+fail_fast: false
+repos:
+  - repo: meta
+    hooks:
+      - id: check-hooks-apply
+      - id: check-useless-excludes
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: "v4.5.0"
+    hooks:
+      - id: check-case-conflict
+      - id: check-merge-conflict
+  - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
+    rev: "v1.6.26.11"
+    hooks:
+      - id: actionlint
