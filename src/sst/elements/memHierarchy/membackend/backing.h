@@ -89,6 +89,7 @@ private:
     size_t m_offset;
 };
 
+#define CHECKPOINT_DBG 0
 class BackingMalloc : public Backing {
 public:
     BackingMalloc(size_t size, bool init = false ) : m_init(init) {
@@ -126,7 +127,7 @@ public:
             auto length = ( sizeof(uint8_t) * m_allocUnit ) / sizeof(uint64_t);
 
             for ( auto i = 0; i < length ; i++ ) {
-#if 0
+#if CHECKPOINT_DBG 
                 if ( i % 8  == 0 ) {
                     printf("\n%#lx ",addr + i*8);
                 }
@@ -141,7 +142,7 @@ public:
     }
 
     void set( Addr addr, uint8_t value ) {
-#if 0
+#if CHECKPOINT_DBG 
         printf("%s addr=%#lx\n",__func__,addr);
 #endif
         Addr bAddr = addr >> m_shift;
@@ -158,12 +159,12 @@ public:
 
         allocIfNeeded(bAddr);
 
-#if 0
+#if CHECKPOINT_DBG 
         printf("%s() addr=%#lx size=%zu ",__func__,addr,size);
 #endif
         while (dataOffset != size) {
             m_buffer[bAddr][offset] = data[dataOffset];
-#if 0
+#if CHECKPOINT_DBG 
             printf("%#x ",data[dataOffset]);
 #endif
             offset++;
@@ -175,13 +176,13 @@ public:
                 allocIfNeeded(bAddr);
             }
         }
-#if 0
+#if CHECKPOINT_DBG 
         printf("\n");
 #endif
     }
 
     void get (Addr addr, size_t size, std::vector<uint8_t> &data) {
-#if 0
+#if CHECKPOINT_DBG 
         printf("%s() addr=%#lx size=%zu ",__func__,addr,size);
 #endif
         Addr bAddr = addr >> m_shift;
@@ -204,7 +205,7 @@ public:
                 allocIfNeeded(bAddr);
             }
         }
-#if 0
+#if CHECKPOINT_DBG 
         for ( auto i = 0; i < size; i++ ) {
             printf("%x ",data[i]);
         }

@@ -493,10 +493,11 @@ void VanadisNodeOSComponent::handleIncomingMemory(StandardMem::Request* ev) {
             }
         } else {
 //            output->fatal(CALL_INFO, -1, "Error - received StandardMem response that does not belong to a core\n");
-            --m_x;
-            if ( m_x == 0 ) {
-            primaryComponentOKToEndSim();
+            m_flushPages.pop_front();
+            if ( m_flushPages.empty() ) {
+                primaryComponentOKToEndSim();
             }
+
         }
     } else if (lookup_result != m_memRespMap.end()) {
         handleIncomingMemory( lookup_result->second, ev );
@@ -603,21 +604,30 @@ VanadisNodeOSComponent::handleIncomingSyscall(SST::Event* ev) {
                 output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"checkoint \n");
              //   primaryComponentOKToEndSim();
 
-                StandardMem::Request* req = new SST::Interfaces::StandardMem::FlushAddr( 0x2bc0, 64, true, 5, 0 );
-                mem_if->send(req);
-                req = new SST::Interfaces::StandardMem::FlushAddr( 0x163c0, 64, true, 5, 0 );
-                mem_if->send(req);
-                req = new SST::Interfaces::StandardMem::FlushAddr( 0x16400, 64, true, 5, 0 );
-                mem_if->send(req);
-                req = new SST::Interfaces::StandardMem::FlushAddr( 0x90c0, 64, true, 5, 0 );
-                mem_if->send(req);
-                req = new SST::Interfaces::StandardMem::FlushAddr( 0x2c80, 64, true, 5, 0 );
-                mem_if->send(req);
-                req = new SST::Interfaces::StandardMem::FlushAddr( 0x2c00, 64, true, 5, 0 );
-                mem_if->send(req);
-                req = new SST::Interfaces::StandardMem::FlushAddr( 0x1b00, 64, true, 5, 0 );
-                mem_if->send(req);
-                m_x=7;
+                m_flushPages.push_back( 0x2bc0 );
+                m_flushPages.push_back( 0x163c0 );
+                m_flushPages.push_back( 0x16400 );
+                m_flushPages.push_back( 0x90c0 );
+                m_flushPages.push_back( 0x2c80 );
+                m_flushPages.push_back( 0x2c00 );
+                m_flushPages.push_back( 0x1b00 );
+                
+                m_flushPages.push_back( 0x1b000 );
+                m_flushPages.push_back( 0x2b80 );
+                m_flushPages.push_back( 0x2980 );
+                m_flushPages.push_back( 0x2a00 );
+                m_flushPages.push_back( 0x2940 );
+                m_flushPages.push_back( 0x2900 );
+                m_flushPages.push_back( 0x3f80 );
+                m_flushPages.push_back( 0x2800 );
+                m_flushPages.push_back( 0x29c0 );
+                m_flushPages.push_back( 0x28c0 );
+
+                for ( auto & x : m_flushPages ) {
+                    printf("%#lx\n",x);
+                    StandardMem::Request* req = new SST::Interfaces::StandardMem::FlushAddr( x, 64, true, 5, 0 );
+                    mem_if->send(req);
+                }
             } else {
                 output->fatal(CALL_INFO, -1,
                       "Error - received an event in the OS, but cannot cast it to "
