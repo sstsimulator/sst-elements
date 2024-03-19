@@ -6,6 +6,13 @@ mh_debug=0
 dbgAddr="0"
 stopDbg="0"
 
+checkpointDir = ""
+checkpoint = ""
+
+#checkpointDir = "checkpoint0"
+#checkpoint = "load"
+#checkpoint = "save"
+
 pythonDebug=False
 
 vanadis_isa = os.getenv("VANADIS_ISA", "MIPS")
@@ -47,6 +54,7 @@ exe = "hello-world"
 #exe = "openmp2"
 #exe = "uname"
 #exe = "mem-test"
+#exe = "checkpoint"
 
 physMemSize = "4GiB"
 
@@ -133,6 +141,8 @@ osParams = {
     "page_size"  : 4096,
     "physMemSize" : physMemSize,
     "useMMU" : True,
+    "checkpointDir" : checkpointDir,
+    "checkpoint" : checkpoint
 }
 
 
@@ -205,7 +215,8 @@ memCtrlParams = {
       "addr_range_end": 0xffffffff,
       "debug_level" : mh_debug_level,
       "debug" : mh_debug,
-
+      "checkpointDir" : checkpointDir,
+      "checkpoint" : checkpoint
 }
 
 memParams = {
@@ -260,6 +271,8 @@ cpuParams = {
     "start_verbose_when_issue_address": dbgAddr,
     "stop_verbose_when_retire_address": stopDbg,
     "print_rob" : False,
+    "checkpointDir" : checkpointDir,
+    "checkpoint" : checkpoint
 }
 
 lsqParams = {

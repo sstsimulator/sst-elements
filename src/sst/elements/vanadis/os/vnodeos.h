@@ -400,7 +400,7 @@ private:
 
     void checkpoint( std::string dir );
     int checkpointLoad( std::string dir );
-    int m_x;
+    std::deque<uint64_t> m_flushPages;
 };
 
 } // namespace Vanadis
