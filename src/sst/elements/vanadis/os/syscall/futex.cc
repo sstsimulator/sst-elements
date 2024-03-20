@@ -16,7 +16,9 @@
 #include <sst_config.h>
 
 #include "os/syscall/futex.h"
+#include "os/callev/voscallfutex.h"
 #include "os/vnodeos.h"
+#include "os/voscallev.h"
 
 #define FUTEX_WAIT      0
 #define FUTEX_WAKE      1
@@ -119,9 +121,14 @@ VanadisFutexSyscall::VanadisFutexSyscall( VanadisNodeOSComponent* os, SST::Link*
     }
 }
 
-void VanadisFutexSyscall::wakeWaiter(VanadisSyscallFutexEvent* event, VanadisSyscall* syscall)
+void VanadisFutexSyscall::wakeWaiter(VanadisSyscallFutexEvent* event) const
 {
-    assert(syscall);
+    auto syscall = m_process->findFutex(event->getAddr());
+    if( !syscall )
+    {
+        m_output->fatal(CALL_INFO, 1, "syscall should not be null here. "
+                        "wakeWaiter() should not be called when no threads are waiting.\n");
+    }
     m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
                       "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 " found waiter, wakeup tid=%d\n",
                       m_process->gettid(), event->getAddr(),syscall->getTid());
@@ -129,57 +136,30 @@ void VanadisFutexSyscall::wakeWaiter(VanadisSyscallFutexEvent* event, VanadisSys
     delete syscall;
 }
 
-int VanadisFutexSyscall::wakeWaiters(VanadisSyscallFutexEvent* event, VanadisSyscall*syscall)
+int VanadisFutexSyscall::getNumWaiters(VanadisSyscallFutexEvent* event) const
 {
-    assert(syscall);
-    int numWoken{0};
-    do
+    auto numWaiters = m_process->futexGetNumWaiters(event->getAddr());
+    if( numWaiters == 0 )
     {
-        wakeWaiter(event, syscall);
-        numWoken++;
-        syscall = m_process->findFutex(event->getAddr());
-    } while(syscall);
-    return numWoken;
+        m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
+                          "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 " no waiter\n", m_process->gettid(), event->getAddr());
+    }
+    return numWaiters;
+}
+
+int VanadisFutexSyscall::wakeWaiters(VanadisSyscallFutexEvent* event) const
+{
+    auto numWaiters = getNumWaiters(event);
+    for(int curWaiter=0;curWaiter<numWaiters;curWaiter++)
+    {
+        wakeWaiter(event);
+    }
+    return numWaiters;
 }
 
 void VanadisFutexSyscall::futexWake(VanadisSyscallFutexEvent* event)
 {
-    auto numWaiters = m_process->futexGetNumWaiters(event->getAddr());
-    auto syscall = m_process->findFutex(event->getAddr());
-
-    m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
-                      "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 " syscall %" PRIx64 " numWaiters %u\n",
-                      m_process->gettid(), event->getAddr(), (uint64_t)syscall, numWaiters);
-
-//    auto numWaiters = m_process->futexGetNumWaiters(event->getAddr());
-    int numWoken{0};
-    if(!syscall)
-    {
-        m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
-                          "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 " no waiter\n", m_process->gettid(), event->getAddr());
-    }
-    else
-    {
-        numWoken = wakeWaiters(event, syscall);
-    }
-    setReturnSuccess(numWoken);
-
-    /*
-    VanadisSyscall* syscall = m_process->findFutex( event->getAddr() );
-    if ( syscall ) {
-        m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
-                          "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 " found waiter, wakeup tid=%d\n",
-                          m_process->gettid(), event->getAddr(),syscall->getTid());
-        dynamic_cast<VanadisFutexSyscall*>( syscall )->wakeup();
-        delete syscall;
-        setReturnSuccess(1);
-    } else {
-        m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
-                          "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 " no waiter\n", m_process->gettid(), event->getAddr());
-        setReturnSuccess(0);
-    }
-    */
-
+    setReturnSuccess(wakeWaiters(event));
 }
 
 void VanadisFutexSyscall::wakeup() 
