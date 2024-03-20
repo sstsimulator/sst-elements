@@ -78,12 +78,24 @@ clock = "2GHz"
 
 # Balar builder
 balarBuilder = balarBlock.Builder()
-balar, balar_mmio_iface, balar_mmio_testcpu_addr = balarBuilder.buildTestCPU(cfgFile, verbosity)
+balar_mmio_iface, balar_mmio_testcpu_addr, dma_mem_if, dma_mmio_if = balarBuilder.buildTestCPU(cfgFile, verbosity)
 
 mmio_nic = balar_mmio_iface.setSubComponent("memlink", "memHierarchy.MemNIC")
 mmio_nic.addParams({"group": mmio_group,
                     "sources": mmio_src,
                     "destinations": mmio_dst,
+                    "network_bw": network_bw})
+
+# DMA's mem_iface like a core
+dma_mem_nic = dma_mem_if.setSubComponent("memlink", "memHierarchy.MemNIC")
+dma_mem_nic.addParams({"group": core_group,
+                    "destinations": core_dst,
+                    "network_bw": network_bw})
+
+# DMA's mmio_iface like memory
+dma_mmio_nic = dma_mmio_if.setSubComponent("memlink", "memHierarchy.MemNIC")
+dma_mmio_nic.addParams({"group": memory_group,
+                    "sources": memory_src,
                     "network_bw": network_bw})
 
 # Test CPU components and mem hierachy
@@ -111,7 +123,7 @@ chiprtr.addParams({
     "xbar_bw": "1GB/s",
     "id": "0",
     "input_buf_size": "1KB",
-    "num_ports": "4",
+    "num_ports": "5",
     "flit_size": "72B",
     "output_buf_size": "1KB",
     "link_bw": "1GB/s",
@@ -141,6 +153,8 @@ memory.addParams({
 #          cpu/cpu_nic
 #                 |
 #  balar ----  chiprtr ---- mem_nic/mem/
+#                 |
+#                dma
 #
 link_cpu_rtr = sst.Link("link_cpu")
 link_cpu_rtr.connect((cpu_nic, "port", "1000ps"), (chiprtr, "port0", "1000ps"))
@@ -148,8 +162,14 @@ link_cpu_rtr.connect((cpu_nic, "port", "1000ps"), (chiprtr, "port0", "1000ps"))
 link_mmio_rtr = sst.Link("link_mmio")
 link_mmio_rtr.connect((mmio_nic, "port", "500ps"), (chiprtr, "port1", "500ps"))
 
+link_mmio_rtr = sst.Link("link_dma_mem")
+link_mmio_rtr.connect((dma_mem_nic, "port", "500ps"), (chiprtr, "port2", "500ps"))
+
+link_mmio_rtr = sst.Link("link_dma_mmio")
+link_mmio_rtr.connect((dma_mmio_nic, "port", "500ps"), (chiprtr, "port3", "500ps"))
+
 link_mem_rtr = sst.Link("link_mem")
-link_mem_rtr.connect((mem_nic, "port", "1000ps"), (chiprtr, "port2", "1000ps"))
+link_mem_rtr.connect((mem_nic, "port", "1000ps"), (chiprtr, "port4", "1000ps"))
 
 # ===========================================================
 # Enable statistics

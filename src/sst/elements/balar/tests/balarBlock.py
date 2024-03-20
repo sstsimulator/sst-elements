@@ -12,7 +12,8 @@ clock = "2GHz"
 balar_mmio_testcpu_addr = 4096
 balar_mmio_vanadis_addr = 0x80100000
 balar_mmio_size = 1024
-dma_mmio_addr = balar_mmio_vanadis_addr + balar_mmio_size
+dma_mmio_vanadis_addr = balar_mmio_vanadis_addr + balar_mmio_size
+dma_mmio_testcpu_addr = balar_mmio_testcpu_addr + balar_mmio_size
 dma_mmio_size = 512
 debug_params = {"debug": 0, "debug_level": 0}
 
@@ -22,7 +23,7 @@ class Builder():
     def __init__(self):
         pass
 
-    def build(self, cfgFile, balar_addr, separate_mem_iface=True, verbosity=0):
+    def build(self, cfgFile, balar_addr, dma_addr, verbosity=0):
         """
             Build configuration for Balar and its memory hierarchy
 
@@ -47,8 +48,7 @@ class Builder():
             "clock": clock,
             "base_addr": balar_addr,
             "mmio_size": balar_mmio_size,
-            "dma_addr": dma_mmio_addr,
-            "separate_mem_iface": separate_mem_iface,
+            "dma_addr": dma_addr,
             "cuda_executable": os.getenv("BALAR_CUDA_EXE_PATH", "")
         })
         balar.addParams(gpuconfig.getGPUConfig())
@@ -243,39 +243,59 @@ class Builder():
         return balar, balar_mmio_iface
     
     def buildTestCPU(self, cfgFile, verbosity=0):
-        balar, balar_mmio_iface = self.build(cfgFile, balar_mmio_testcpu_addr, separate_mem_iface=False, verbosity=verbosity)
-
-        return balar, balar_mmio_iface, balar_mmio_testcpu_addr
-
-    def buildVanadisIntegration(self, cfgFile, verbosity=0):
-        """
-            Build balar for vanadis integration, include balarTLB and dmaEngine for cudaMemcpy
-           
-            Overall connection:
-            BalarMMIO <--mem_iface--> BalarTLBBus <--mem_iface--> dmaEngine
-                                         |
-            BalarTLB <-------------------|
+        """Build balar for testcpu integration
 
         Args:
-            cfgFile (str): gpgpusim configuration path 
-            statFile (str): SST stat file path
-            statLevel (str): stat level
+            cfgFile (_type_): _description_
+            verbosity (int, optional): _description_. Defaults to 0.
+
+        Args:
+            cfgFile (str): gpgpusim configuration path
             verbosity (int, optional): Verbosity of balar component. Defaults to 0.
 
         Returns:
-            balarTLB and balar, dmaEngine mmio interfaces
+            balar mmio interface, balar_mmio_testcpu_addr, dmaEngine mem and mmio interfaces
         """
-        balar, balar_mmio_iface = self.build(cfgFile, balar_mmio_vanadis_addr, separate_mem_iface=True, verbosity=verbosity)
-
-        # Set mem interface
-        balar_mem_iface = balar.setSubComponent("mem_iface", "memHierarchy.standardInterface")
+        # Balar
+        _, balar_mmio_iface = self.build(cfgFile, balar_mmio_testcpu_addr, dma_mmio_testcpu_addr, verbosity=verbosity)
 
         # DMA engine
         dma = sst.Component("dmaEngine", "balar.dmaEngine")
         dma.addParams({
             "verbose": verbosity,
             "clock": clock,
-            "mmio_addr": dma_mmio_addr,
+            "mmio_addr": dma_mmio_testcpu_addr,
+            "mmio_size": dma_mmio_size,
+        })
+        dma_mmio_if = dma.setSubComponent("mmio_iface", "memHierarchy.standardInterface")
+        dma_mem_if = dma.setSubComponent("mem_iface", "memHierarchy.standardInterface")
+
+        return balar_mmio_iface, balar_mmio_testcpu_addr, dma_mem_if, dma_mmio_if
+
+    def buildVanadisIntegration(self, cfgFile, verbosity=0):
+        """
+            Build balar for vanadis integration, include balarTLB and dmaEngine for cudaMemcpy
+           
+            Overall connection:
+                                   BalarTLBBus <--mem_iface--> dmaEngine
+                                         |
+            BalarTLB <-------------------|
+
+        Args:
+            cfgFile (str): gpgpusim configuration path
+            verbosity (int, optional): Verbosity of balar component. Defaults to 0.
+
+        Returns:
+            balarTLB and balar, dmaEngine mmio interfaces
+        """
+        _, balar_mmio_iface = self.build(cfgFile, balar_mmio_vanadis_addr, dma_mmio_vanadis_addr, verbosity=verbosity)
+
+        # DMA engine
+        dma = sst.Component("dmaEngine", "balar.dmaEngine")
+        dma.addParams({
+            "verbose": verbosity,
+            "clock": clock,
+            "mmio_addr": dma_mmio_vanadis_addr,
             "mmio_size": dma_mmio_size,
         })
         dma_mmio_if = dma.setSubComponent("mmio_iface", "memHierarchy.standardInterface")
@@ -298,19 +318,8 @@ class Builder():
         balarTlb = balarTlbWrapper.setSubComponent("tlb", "mmu.simpleTLB")
         balarTlb.addParams(balarTlbParams)
 
-        # BalarBus for sharing TLB between DMA and Balar
-        balarBus = sst.Component("balarBus", "memHierarchy.Bus")
-        balarBus.addParams({
-            "bus_frequency": "4GHz",
-            "drain_bus": "1"
-        })
-
-        # Connect the data links for Balar and dmaEngine here to TLB
-        connect("balarBus_balarTlb_link", balar_mem_iface, "port",
-                balarBus, "high_network_0", "1ns")
-        connect("dmaEngine_balarBus_link", dma_mem_if, "port", 
-                balarBus, "high_network_1", "1ns")
-        connect("balar_balarBus_link", balarBus, "low_network_0",
+        # Connect the data link for dmaEngine to TLB
+        connect("balar_balarBus_link", dma_mem_if, "port",
                 balarTlbWrapper, "cpu_if", "1ns")
         
         # mem_iface replaced by TLB, keep mmio_iface
