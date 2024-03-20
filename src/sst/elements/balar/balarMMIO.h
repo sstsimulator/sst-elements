@@ -70,12 +70,10 @@ public:
         {"gpu_cores",               "(uint) Number of GPU cores", "1"},
         {"mmio_size",               "(uint) Size of the MMIO memory range (Bytes)", "512"},
         {"dma_addr",                "(uint) Starting addr mapped to the DMA Engine", "512"},
-        {"separate_mem_iface",      "(bool) Whether need to separate mmio_iface and mem_iface, set to true on case of TLB", "true"},
         {"cuda_executable",         "(string) CUDA executable file path to extract PTX info", ""},
     )
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( 
         {"mmio_iface", "Command packet MMIO interface", "SST::Interfaces::StandardMem"},
-        {"mem_iface", "Memory data packet interface", "SST::Interfaces::StandardMem"},
     )
     SST_ELI_DOCUMENT_PORTS(
         {"requestLink%(num_cores)d", "Handle CUDA API calls", {} },
@@ -117,11 +115,12 @@ protected:
 
         BalarHandlers(BalarMMIO* balar, SST::Output* out) : StandardMem::RequestHandler(out), balar(balar) {}
         virtual ~BalarHandlers() {}
-        // These two handle read/write from `mmio_iface` and issue read/write of CUDA packets via `mem_iface`
+        // These two handle read/write from `mmio_iface` and issue read/write of CUDA packets via `mmio_iface` to DMA engine
         virtual void handle(StandardMem::Read* read) override;
         virtual void handle(StandardMem::Write* write) override;
-        // These two handle response from `mem_iface` and send response back to cpu via `mmio_iface`
+        // Handler for previous read is currently not used
         virtual void handle(StandardMem::ReadResp* resp) override;
+        // Handle responses from DMA engine command (R/W cuda packets and cuda memcpy)
         virtual void handle(StandardMem::WriteResp* resp) override;
 
         // Converter for testing purpose
@@ -160,7 +159,7 @@ private:
     BalarCudaCallReturnPacket_t cuda_ret;
 
     // Last cuda function call packet
-    BalarCudaCallPacket_t *last_packet;
+    BalarCudaCallPacket_t last_packet;
     Addr packet_scratch_mem_addr;
 
     // Response to a blocked API request (like cudaMemcpy)
@@ -192,12 +191,8 @@ private:
 
     virtual bool clockTic( SST::Cycle_t );
 
-    // Whether to have separate mmio and mem interface
-    bool separate_mem_iface;
     // The command mmio interface into the memory system
     StandardMem* mmio_iface;
-    // The data interface
-    StandardMem* mem_iface;
 
     // Copy from original balar
     BalarMMIO(const BalarMMIO&); // do not implement
