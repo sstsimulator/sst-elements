@@ -12,3 +12,6 @@ _app_cuda_version_*
 gpgpu_inst_stats.txt
 *.dot
 *.png
+*.objdump
+stderr-*
+stdout-*
