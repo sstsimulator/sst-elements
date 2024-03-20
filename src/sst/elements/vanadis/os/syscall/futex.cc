@@ -144,6 +144,12 @@ int VanadisFutexSyscall::getNumWaiters(VanadisSyscallFutexEvent* event) const
         m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
                           "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 " no waiter\n", m_process->gettid(), event->getAddr());
     }
+    else
+    {
+        m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
+                          "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 " %u waiters\n", m_process->gettid(), event->getAddr(), numWaiters);
+
+    }
     return numWaiters;
 }
 
