@@ -40,7 +40,7 @@ public:
     std::vector<uint8_t> m_buffer;
     int m_numWokeup;
     void futexWake(VanadisSyscallFutexEvent* event);
-    void wakeWaiters(VanadisSyscallFutexEvent* event);
+    int wakeWaiters(VanadisSyscallFutexEvent* event, VanadisSyscall*syscall);
     void wakeWaiter(VanadisSyscallFutexEvent* event, VanadisSyscall* syscall);
 };
 
