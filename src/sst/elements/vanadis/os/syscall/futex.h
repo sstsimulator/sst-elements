@@ -43,7 +43,7 @@ public:
     void futexWake(VanadisSyscallFutexEvent* event);
     int wakeWaiters(VanadisSyscallFutexEvent* event) const;
     void wakeWaiter(VanadisSyscallFutexEvent* event) const;
-    int getNumWaiters(VanadisSyscallFutexEvent* event) const;
+    int getNumWaitersToWake(VanadisSyscallFutexEvent* event) const;
 };
 
 } // namespace Vanadis

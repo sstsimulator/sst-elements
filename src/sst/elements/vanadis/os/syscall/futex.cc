@@ -60,7 +60,7 @@ VanadisFutexSyscall::VanadisFutexSyscall( VanadisNodeOSComponent* os, SST::Link*
 {
     m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
             "[syscall-futex] addr=%#" PRIx64 " op=%#x val=%#" PRIx32 " timeAddr=%#" PRIx64 " callStackAddr=%#" PRIx64 
-            " addr2=%#" PRIx64 " val3=%#x, \n", 
+            " addr2=%#" PRIx64 " val3=%#x, \n",
             event->getAddr(), event->getOp(), event->getVal(), event->getTimeAddr(), event->getStackPtr(), event->getAddr2(), event->getVal3() );
 
     m_op = event->getOp();
@@ -136,9 +136,10 @@ void VanadisFutexSyscall::wakeWaiter(VanadisSyscallFutexEvent* event) const
     delete syscall;
 }
 
-int VanadisFutexSyscall::getNumWaiters(VanadisSyscallFutexEvent* event) const
+int VanadisFutexSyscall::getNumWaitersToWake(VanadisSyscallFutexEvent* event) const
 {
-    auto numWaiters = m_process->futexGetNumWaiters(event->getAddr());
+    uint32_t numWaiters = m_process->futexGetNumWaiters(event->getAddr());
+    uint32_t numWaitersToWake = std::min(numWaiters, event->getVal());
     if( numWaiters == 0 )
     {
         m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
@@ -147,15 +148,17 @@ int VanadisFutexSyscall::getNumWaiters(VanadisSyscallFutexEvent* event) const
     else
     {
         m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
-                          "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 " %u waiters\n", m_process->gettid(), event->getAddr(), numWaiters);
+                          "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 " %u waiters, "
+                          " val is %u, will wake %u threads \n", 
+                          m_process->gettid(), event->getAddr(), numWaiters, event->getVal(), numWaitersToWake);
 
     }
-    return numWaiters;
+    return numWaitersToWake;
 }
 
 int VanadisFutexSyscall::wakeWaiters(VanadisSyscallFutexEvent* event) const
 {
-    auto numWaiters = getNumWaiters(event);
+    auto numWaiters = getNumWaitersToWake(event);
     for(int curWaiter=0;curWaiter<numWaiters;curWaiter++)
     {
         wakeWaiter(event);
