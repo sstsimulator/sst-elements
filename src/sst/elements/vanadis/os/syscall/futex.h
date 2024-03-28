@@ -39,6 +39,11 @@ public:
     int m_op;
     std::vector<uint8_t> m_buffer;
     int m_numWokeup;
+
+    void futexWake(VanadisSyscallFutexEvent* event);
+    int wakeWaiters(VanadisSyscallFutexEvent* event) const;
+    void wakeWaiter(VanadisSyscallFutexEvent* event) const;
+    int getNumWaitersToWake(VanadisSyscallFutexEvent* event) const;
 };
 
 } // namespace Vanadis
