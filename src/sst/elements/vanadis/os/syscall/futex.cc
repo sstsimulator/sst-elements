@@ -16,7 +16,9 @@
 #include <sst_config.h>
 
 #include "os/syscall/futex.h"
+#include "os/callev/voscallfutex.h"
 #include "os/vnodeos.h"
+#include "os/voscallev.h"
 
 #define FUTEX_WAIT      0
 #define FUTEX_WAKE      1
@@ -58,7 +60,7 @@ VanadisFutexSyscall::VanadisFutexSyscall( VanadisNodeOSComponent* os, SST::Link*
 {
     m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
             "[syscall-futex] addr=%#" PRIx64 " op=%#x val=%#" PRIx32 " timeAddr=%#" PRIx64 " callStackAddr=%#" PRIx64 
-            " addr2=%#" PRIx64 " val3=%#x, \n", 
+            " addr2=%#" PRIx64 " val3=%#x, \n",
             event->getAddr(), event->getOp(), event->getVal(), event->getTimeAddr(), event->getStackPtr(), event->getAddr2(), event->getVal3() );
 
     m_op = event->getOp();
@@ -77,22 +79,7 @@ VanadisFutexSyscall::VanadisFutexSyscall( VanadisNodeOSComponent* os, SST::Link*
     switch ( m_op ) {
       case FUTEX_WAKE:
         {
-            m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
-                "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 "\n", process->gettid(), event->getAddr());
-
-            VanadisSyscall* syscall = m_process->findFutex( event->getAddr() );
-            if ( syscall ) {
-                m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
-                    "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 " found waiter, wakeup tid=%d\n",
-                    process->gettid(), event->getAddr(),syscall->getTid());
-                dynamic_cast<VanadisFutexSyscall*>( syscall )->wakeup();
-                delete syscall;
-                setReturnSuccess(1);
-            } else {
-                m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
-                    "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 " no waiter\n", process->gettid(), event->getAddr());
-                setReturnSuccess(0);
-            }
+            futexWake(event); 
         } break;
 
       case FUTEX_WAIT_BITSET:
@@ -132,6 +119,56 @@ VanadisFutexSyscall::VanadisFutexSyscall( VanadisNodeOSComponent* os, SST::Link*
       default:
         assert(0);
     }
+}
+
+void VanadisFutexSyscall::wakeWaiter(VanadisSyscallFutexEvent* event) const
+{
+    auto syscall = m_process->findFutex(event->getAddr());
+    if( !syscall )
+    {
+        m_output->fatal(CALL_INFO, 1, "syscall should not be null here. "
+                        "wakeWaiter() should not be called when no threads are waiting.\n");
+    }
+    m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
+                      "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 " found waiter, wakeup tid=%d\n",
+                      m_process->gettid(), event->getAddr(),syscall->getTid());
+    dynamic_cast<VanadisFutexSyscall*>( syscall )->wakeup();
+    delete syscall;
+}
+
+int VanadisFutexSyscall::getNumWaitersToWake(VanadisSyscallFutexEvent* event) const
+{
+    uint32_t numWaiters = m_process->futexGetNumWaiters(event->getAddr());
+    uint32_t numWaitersToWake = std::min(numWaiters, event->getVal());
+    if( numWaiters == 0 )
+    {
+        m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
+                          "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 " no waiter\n", m_process->gettid(), event->getAddr());
+    }
+    else
+    {
+        m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
+                          "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 " %u waiters, "
+                          " val is %u, will wake %u threads \n", 
+                          m_process->gettid(), event->getAddr(), numWaiters, event->getVal(), numWaitersToWake);
+
+    }
+    return numWaitersToWake;
+}
+
+int VanadisFutexSyscall::wakeWaiters(VanadisSyscallFutexEvent* event) const
+{
+    auto numWaiters = getNumWaitersToWake(event);
+    for(int curWaiter=0;curWaiter<numWaiters;curWaiter++)
+    {
+        wakeWaiter(event);
+    }
+    return numWaiters;
+}
+
+void VanadisFutexSyscall::futexWake(VanadisSyscallFutexEvent* event)
+{
+    setReturnSuccess(wakeWaiters(event));
 }
 
 void VanadisFutexSyscall::wakeup() 
