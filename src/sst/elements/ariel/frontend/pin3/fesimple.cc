@@ -33,6 +33,12 @@
 #include "builtin_types.h"
 #endif
 
+#if __has_include(<mpi.h>)
+#include <mpi.h>
+#define HAVE_MPI_H
+#endif
+
+
 // TODO add check for PinCRT compatible libz and try to pick that up
 /*#ifdef HAVE_PINCRT_LIBZ
 
@@ -130,10 +136,14 @@ GpuDataTunnel *tunnelD = NULL;
 
 // Time function interception
 struct timeval offset_tv;
+int timer_initialized = 0;
 #if !defined(__APPLE__)
 struct timespec offset_tp_mono;
 struct timespec offset_tp_real;
 #endif
+
+// MPI
+int api_mpi_init_used = 0;
 
 /****************************************************************/
 /********************** SHADOW STACK ****************************/
@@ -367,6 +377,7 @@ VOID WriteInstructionRead(ADDRINT* address, UINT32 readSize, THREADID thr, ADDRI
     ac.inst.instClass = instClass;
     ac.inst.simdElemCount = simdOpWidth;
 
+    //printf("fesimple.cc: patrick: writing end instuction marker\n");
     tunnel->writeMessage(thr, ac);
 }
 
@@ -409,6 +420,7 @@ VOID WriteStartInstructionMarker(UINT32 thr, ADDRINT ip, UINT32 instClass, UINT3
     ac.instPtr = (uint64_t) ip;
     ac.inst.simdElemCount = simdOpWidth;
     ac.inst.instClass = instClass;
+    //printf("fesimple.cc: patrick: writing start instuction marker\n");
     tunnel->writeMessage(thr, ac);
 }
 
@@ -417,6 +429,7 @@ VOID WriteEndInstructionMarker(UINT32 thr, ADDRINT ip)
     ArielCommand ac;
     ac.command = ARIEL_END_INSTRUCTION;
     ac.instPtr = (uint64_t) ip;
+    //printf("fesimple.cc: patrick: writing end instuction marker\n");
     tunnel->writeMessage(thr, ac);
 }
 
@@ -665,6 +678,57 @@ void mapped_ariel_enable()
     }
 
     // Setup timers to count start time + elapsed simulated time
+    // Only do this the first time Ariel is enabled
+    if (!timer_initialized) {
+        timer_initialized = 1;
+        struct timeval tvsim;
+        gettimeofday(&offset_tv, NULL);
+        tunnel->getTime(&tvsim);
+        offset_tv.tv_sec -= tvsim.tv_sec;
+        offset_tv.tv_usec -= tvsim.tv_usec;
+#if ! defined(__APPLE__)
+        struct timespec tpsim;
+        tunnel->getTimeNs(&tpsim);
+        offset_tp_mono.tv_sec = tvsim.tv_sec - tpsim.tv_sec;
+        offset_tp_mono.tv_nsec = (tvsim.tv_usec * 1000) - tpsim.tv_nsec;
+        offset_tp_real.tv_sec = tvsim.tv_sec - tpsim.tv_sec;
+        offset_tp_real.tv_nsec = (tvsim.tv_usec * 1000) - tpsim.tv_nsec;
+#endif
+    /* ENABLE */
+    }
+    enable_output = true;
+
+    /* UNLOCK */
+    PIN_ReleaseLock(&mainLock);
+
+    fprintf(stderr, "ARIEL: Enabling memory and instruction tracing from program control at simulated Ariel cycle %" PRIu64 ".\n",
+            tunnel->getCycles());
+    fflush(stdout);
+    fflush(stderr);
+}
+
+/* Intercept ariel_disable() in application & start simulating instructions */
+void mapped_ariel_disable()
+{
+
+    // Note
+    // By adding clock offset calculation, this function now has visible side-effects when called more than once
+    // In most cases won't matter -> ariel_disable() called once or close together in time so offsets will stabilize quickly
+    // In some cases could cause a big jump in time in the middle of simulation -> ariel_disable() left in app but mode is always-on
+    // So, update ariel_disable & offsets in lock & don't update if already enabled
+
+    /* LOCK */
+    THREADID thr = PIN_ThreadId();
+    PIN_GetLock(&mainLock, thr);
+
+    if (!enable_output) {
+        PIN_ReleaseLock(&mainLock);
+        return;
+    }
+
+    // TODO: I just copied these timers from enable. Need to figure out what to do with them here
+    // so that we can re-enable properly later.
+    // Setup timers to count start time + elapsed simulated time
     struct timeval tvsim;
     gettimeofday(&offset_tv, NULL);
     tunnel->getTime(&tvsim);
@@ -678,13 +742,13 @@ void mapped_ariel_enable()
     offset_tp_real.tv_sec = tvsim.tv_sec - tpsim.tv_sec;
     offset_tp_real.tv_nsec = (tvsim.tv_usec * 1000) - tpsim.tv_nsec;
 #endif
-    /* ENABLE */
-    enable_output = true;
+    /* DISABLE */
+    enable_output = false;
 
     /* UNLOCK */
     PIN_ReleaseLock(&mainLock);
 
-    fprintf(stderr, "ARIEL: Enabling memory and instruction tracing from program control at simulated Ariel cycle %" PRIu64 ".\n",
+    fprintf(stderr, "ARIEL: Disabling memory and instruction tracing from program control at simulated Ariel cycle %" PRIu64 ".\n",
             tunnel->getCycles());
     fflush(stdout);
     fflush(stderr);
@@ -785,6 +849,18 @@ void mapped_ariel_fence(void *virtualAddress)
     ADDRINT ip = IARG_INST_PTR;
 
     WriteFenceInstructionMarker(thr, ip);
+}
+
+void mapped_api_mpi_init() {
+    api_mpi_init_used = 1;
+}
+
+int check_for_api_mpi_init() {
+    if (!api_mpi_init_used && !getenv("ARIEL_DISABLE_MPI_INIT_CHECK")) {
+        fprintf(stderr, "Error: fesimple.cc: The Ariel API verion of MPI_Init_{thread} was not used, which can result in errors when used in conjunction with OpenMP. Please link against the Ariel API (included in this distribution at src/sst/elements/ariel/api) or disable this message by setting the environment variable `ARIEL_DISABLE_MPI_INIT_CHECK`\n");
+        exit(1);
+    }
+    return 0;
 }
 
 int ariel_mlm_memcpy(void* dest, void* source, size_t size) {
@@ -1664,6 +1740,11 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
             enable_output = false;
         }
         return;
+    } else if (RTN_Name(rtn) == "ariel_disable" || RTN_Name(rtn) == "_ariel_disable" || RTN_Name(rtn) == "__arielfort_MOD_ariel_disable") {
+        fprintf(stderr,"Identified routine: ariel_disable, replacing with Ariel equivalent...\n");
+        RTN_Replace(rtn, (AFUNPTR) mapped_ariel_disable);
+        fprintf(stderr,"Replacement complete.\n");
+        return;
     } else if (RTN_Name(rtn) == "gettimeofday" || RTN_Name(rtn) == "_gettimeofday") {
         fprintf(stderr,"Identified routine: gettimeofday, replacing with Ariel equivalent...\n");
         RTN_Replace(rtn, (AFUNPTR) mapped_gettimeofday);
@@ -1673,6 +1754,24 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
         fprintf(stderr, "Identified routine: ariel_cycles, replacing with Ariel equivalent..\n");
         RTN_Replace(rtn, (AFUNPTR) mapped_ariel_cycles);
         fprintf(stderr, "Replacement complete\n");
+        return;
+    } else if (RTN_Name(rtn) == "MPI_Init" || RTN_Name(rtn) == "_MPI_Init") {
+        fprintf(stderr, "Identified routine: MPI_Init. Instrumenting.\n");
+        RTN_Open(rtn);
+        RTN_InsertCall(rtn, IPOINT_AFTER, (AFUNPTR) check_for_api_mpi_init, IARG_END);
+        RTN_Close(rtn);
+        fprintf(stderr, "Instrumentation complete\n");
+    } else if (RTN_Name(rtn) == "MPI_Init_thread" || RTN_Name(rtn) == "_MPI_Init_thread") {
+        fprintf(stderr, "Identified routine: MPI_Init_thread. Instrumenting.\n");
+        RTN_Open(rtn);
+        RTN_InsertCall(rtn, IPOINT_AFTER, (AFUNPTR) check_for_api_mpi_init, IARG_END);
+        RTN_Close(rtn);
+        fprintf(stderr, "Instrumentation complete\n");
+    } else if (RTN_Name(rtn) == "api_mpi_init" || RTN_Name(rtn) == "_api_mpi_init") {
+        fprintf(stderr, "Replacing api_mpi_init with mapped_api_mpi_init.\n");
+        RTN_Replace(rtn, (AFUNPTR) mapped_api_mpi_init);
+        fprintf(stderr, "Replacement complete\n");
+        return;
         return;
 #if ! defined(__APPLE__)
     } else if (RTN_Name(rtn) == "clock_gettime" || RTN_Name(rtn) == "_clock_gettime" ||
@@ -1836,6 +1935,11 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
     }
 }
 
+void fork_disable_child_output(THREADID threadid, const CONTEXT *ctx, VOID *v) {
+    fprintf(stderr, "Warning: fesimple cannot trace forked processes. Disabling Pin for pid %d\n", getpid());
+    PIN_Detach();
+}
+
 void loadFastMemLocations()
 {
     std::ifstream infile(UseMallocMap.Value().c_str());
@@ -1913,6 +2017,7 @@ int main(int argc, char *argv[])
 // Pin version specific tunnel attach
     tunnelmgr = new SST::Core::Interprocess::MMAPChild_Pin3<ArielTunnel>(SSTNamedPipe.Value());
     tunnel = tunnelmgr->getTunnel();
+    //printf("fesimple.cc: patrick : got tunnel, %s\n", SSTNamedPipe.Value().c_str());
 #ifdef HAVE_CUDA
     tunnelRmgr = new SST::Core::Interprocess::MMAPChild_Pin3<GpuReturnTunnel>(SSTNamedPipe2.Value());
     tunnelDmgr = new SST::Core::Interprocess::MMAPChild_Pin3<GpuDataTunnel>(SSTNamedPipe3.Value());
@@ -1997,6 +2102,9 @@ int main(int argc, char *argv[])
             toFast.push_back(mallocFlagInfo(false, 0, 0, 0));
         }
     }
+
+    // Fork callback
+    PIN_AddForkFunction(FPOINT_AFTER_IN_CHILD, (FORK_CALLBACK) fork_disable_child_output, NULL);
 
     fprintf(stderr, "ARIEL: Starting program.\n");
     fflush(stdout);

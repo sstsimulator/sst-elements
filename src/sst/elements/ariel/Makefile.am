@@ -76,6 +76,8 @@ EXTRA_DIST = \
 	frontend/simple/examples/stream/tests/refFiles/test_Ariel_runstreamNB.out \
 	frontend/simple/examples/stream/tests/refFiles/test_Ariel_runstreamSt.out \
 	tests/testsuite_default_Ariel.py \
+	tests/testsuite_testio_Ariel.py \
+	tests/testsuite_mpi_Ariel.py \
 	tests/testopenMP/ompmybarrier/ompmybarrier.c \
 	tests/testopenMP/ompmybarrier/Makefile
 
@@ -104,6 +106,7 @@ libariel_la_CPPFLAGS = \
 	-DARIEL_TRACE_LIB=$(libdir)/sst \
         -DARIEL_TOOL_DIR="$(libexecdir)" \
 	-DPINTOOL_EXECUTABLE="$(PINTOOL_RUNTIME)" \
+	-DMPILAUNCHER_EXECUTABLE="$(CURDIR)/mpi/mpilauncher" \
 	$(AM_CPPFLAGS) $(CPPFLAGS)
 
 sstdir = $(includedir)/sst/elements/ariel
