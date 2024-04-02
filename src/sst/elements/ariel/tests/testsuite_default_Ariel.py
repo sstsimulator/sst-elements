@@ -157,8 +157,9 @@ class testcase_Ariel(SSTTestCase):
         line_count_diff = abs(num_ref_lines - num_out_lines - num_err_lines)
         log_debug("Line Count diff = {0}".format(line_count_diff))
 
-        if line_count_diff > 15:
-            self.assertFalse(line_count_diff > 15, "Line count between output file {0} does not match Reference File {1}; They contain {2} different lines".format(outfile, reffile, line_count_diff))
+        delta = 15
+        if line_count_diff > delta:
+            self.assertFalse(line_count_diff > 15, f"Test stdout ({outfile}) and stderr ({errfile}) contain {num_out_lines}+{num_err_lines}={num_out_lines+num_err_lines} lines. Expected this to be within {delta} of the reference file ({reffile}), which has {num_ref_lines} lines, but the difference is {line_count_diff} lines.")
 
 #######################
 
