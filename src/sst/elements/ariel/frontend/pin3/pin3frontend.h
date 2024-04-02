@@ -64,6 +64,10 @@ class Pin3Frontend : public ArielFrontend {
         {"appstderrappend", "If appstderr is set, set this to 1 to append the file intead of overwriting", "0"},
         {"launchparamcount", "Number of parameters supplied for the launch tool", "0" },
         {"launchparam%(launchparamcount)d", "Set the parameter to the launcher", "" },
+        {"mpimode", "Whether to use <mpilauncher> to to launch <launcher> in order to trace MPI-enabled applications.", "0"},
+        {"mpilauncher", "Specify a launcher to be used for MPI executables in conjuction with <launcher>", STRINGIZE(MPILAUNCHER_EXECUTABLE)},
+        {"mpiranks", "Number of ranks to be launched by <mpilauncher>. Only <mpitracerank> will be traced by <launcher>.", "1" },
+        {"mpitracerank", "Rank to be traced by <launcher>.", "0" },
         {"envparamcount", "Number of environment parameters to supply to the Ariel executable, default=-1 (use SST environment)", "-1"},
         {"envparamname%(envparamcount)d", "Sets the environment parameter name", ""},
         {"envparamval%(envparamcount)d", "Sets the environment parameter value", ""},
@@ -114,6 +118,12 @@ class Pin3Frontend : public ArielFrontend {
 
         std::string appLauncher;
         redirect_info_t redirect_info;
+
+        int mpimode;
+        std::string mpilauncher;
+        int mpiranks;
+        int mpitracerank;
+        bool use_mpilauncher;
 
 
         char **execute_args;
