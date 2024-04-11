@@ -83,40 +83,39 @@ public:
 #ifdef VANADIS_BUILD_DEBUG
         if ( output->getVerboseLevel() >= 16 ) {
             output->verbose(
-                CALL_INFO, 16, 0, "Execute: 0x%llx %s\n", getInstructionAddress(), getInstCode());
+                CALL_INFO, 16, 0, "Execute: 0x%" PRI_ADDR " %s\n", getInstructionAddress(), getInstCode());
         }
 #endif
+        clear_IEEE754_except();
 
-        if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
-            const fp_format src_1  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
-            const fp_format src_2  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3]);
+        if ( sizeof(fp_format) >= regFile->getFPRegWidth() ) {
+
+            fp_format src_1,src_2;
+            READ_2FP_REGS;
+
             const fp_format result = src_1 + src_2;
 
             performFlagChecks<fp_format>(result);
 
-            if ( output->getVerboseLevel() >= 16 ) {
-                std::ostringstream ss; 
-                ss << "---> " << src_1 << " + " << src_2 << " = " << result;
-                output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
-            }
+            WRITE_FP_REGS;
 
-            fractureToRegisters<fp_format>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], result);
+        } else {
+
+            const uint64_t src_1 = regFile->getFPReg<uint64_t>(phys_fp_regs_in[0]);
+            const uint64_t src_2 = regFile->getFPReg<uint64_t>(phys_fp_regs_in[1]);
+
+            assert( isNaN_boxed( src_1 ) );
+            assert( isNaN_boxed( src_2 ) );
+
+            auto tmp = int64To<float>(src_1) + int64To<float>(src_2);
+            performFlagChecks<float>(tmp);
+
+            const uint64_t result = 0xffffffff00000000 | convertTo<int64_t>(tmp);
+
+            regFile->setFPReg<uint64_t>(phys_fp_regs_out[0], result);
         }
-        else {
-            const fp_format src_1  = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
-            const fp_format src_2  = regFile->getFPReg<fp_format>(phys_fp_regs_in[1]);
-            const fp_format result = src_1 + src_2;
 
-            performFlagChecks<fp_format>(result);
-
-            if ( output->getVerboseLevel() >= 16 ) {
-                std::ostringstream ss; 
-                ss << "---> " << src_1 << " + " << src_2 << " = " << result;
-                output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
-            }
-
-            regFile->setFPReg<fp_format>(phys_fp_regs_out[0], result);
-        }
+        check_IEEE754_except();
 
         markExecuted();
     }

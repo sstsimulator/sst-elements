@@ -197,6 +197,8 @@ private:
 
     Translator *translator;
 
+    SimpleNetwork::Handler<Bridge, uint8_t>* sendNotify[2];
+
     void configureNIC(uint8_t id, SST::Params &params)
     {
         dbg.debug(CALL_INFO, 2, 0, "Initializing network interface %d\n", id);
@@ -220,9 +222,9 @@ private:
         //         1, /* should be num VN */
         //         params.find<SST::UnitAlgebra>("network_input_buffer_size", SST::UnitAlgebra("1KiB")),
         //         params.find<SST::UnitAlgebra>("network_output_buffer_size", SST::UnitAlgebra("1KiB")));
-
+        
         nic.nic->setNotifyOnReceive(new SimpleNetwork::Handler<Bridge, uint8_t>(this, &Bridge::handleIncoming, id));
-        nic.nic->setNotifyOnSend(new SimpleNetwork::Handler<Bridge, uint8_t>(this, &Bridge::spaceAvailable, id));
+        sendNotify[id] = new SimpleNetwork::Handler<Bridge, uint8_t>(this, &Bridge::spaceAvailable, id);
 
         nic.stat_recv = registerStatistic<uint64_t>("pkts_received_net" + std::to_string(id));
         nic.stat_send = registerStatistic<uint64_t>("pkts_sent_net" + std::to_string(id));
@@ -247,6 +249,7 @@ private:
             } else {
                 /* We failed to send. */
                 outNIC.sendQueue.push_back(res);
+                outNIC.nic->setNotifyOnSend(sendNotify[id^1]);
             }
         }
         return true;
@@ -261,7 +264,7 @@ private:
                 nic.sendQueue.pop_front();
             } else {
                 /* Not enough room yet.  */
-                break;
+                return true;
             }
         }
         return false;

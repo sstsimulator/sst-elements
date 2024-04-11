@@ -18,7 +18,7 @@
 
 #include <sst/core/params.h>
 #include <sst/core/eli/elementinfo.h>
-#include <operating_system/libraries/api.h>
+#include <mercury/operating_system/libraries/api.h>
 
 namespace SST {
 namespace Hg {
@@ -31,7 +31,7 @@ public:
     API,
     systemAPI,
     "hg",
-    "system",
+    "systemAPI",
     SST_ELI_ELEMENT_VERSION(1,0,0),
     "provides the Hg system API")
 

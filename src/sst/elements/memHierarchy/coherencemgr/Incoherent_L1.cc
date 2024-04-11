@@ -637,11 +637,31 @@ MemEventStatus IncoherentL1::processCacheMiss(MemEvent * event, L1CacheLine * li
  * Allocate a new MSHR entry
  */
 MemEventStatus IncoherentL1::allocateMSHR(MemEvent * event, bool fwdReq, int pos) {
+    // Screen prefetches first to ensure limits are not exceeeded:
+    //      - Maximum number of outstanding prefetches
+    //      - MSHR too full to accept prefetches
+    if (event->isPrefetch() && event->getRqstr() == cachename_) {
+        if (dropPrefetchLevel_ <= mshr_->getSize()) {
+            eventDI.action = "Reject";
+            eventDI.reason = "Prefetch drop level";
+            return MemEventStatus::Reject;
+        }
+        if (maxOutstandingPrefetch_ <= outstandingPrefetches_) {
+            eventDI.action = "Reject";
+            eventDI.reason = "Max outstanding prefetches";
+            return MemEventStatus::Reject;
+        }
+    }
+    
     int insert_pos = mshr_->insertEvent(event->getBaseAddr(), event, pos, fwdReq, false);
     if (insert_pos == -1)
         return MemEventStatus::Reject; // MSHR is full
-    else if (insert_pos != 0)
+    else if (insert_pos != 0) {
+        if (event->isPrefetch()) outstandingPrefetches_++;
         return MemEventStatus::Stall;
+    }
+
+    if (event->isPrefetch()) outstandingPrefetches_++;
 
     return MemEventStatus::OK;
 }

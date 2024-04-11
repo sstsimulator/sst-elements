@@ -113,7 +113,7 @@ void PyMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > 
 
 //     std::string fileName = "deepmind/strassen2x2_clay.csv";
 //     std::string fileName = "deepmind/strassen_6x7_rect_gap1.csv";
-    std::string fileName = "hpca23/generic_solution.csv";
+    std::string fileName = "ipdps24/generic_solution.csv";
     output_->verbose(CALL_INFO, 1, 0, "Mapping Application Using: %s\n", fileName.c_str());
 
     std::list< HardwareNode* > node_list;

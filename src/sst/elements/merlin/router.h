@@ -163,7 +163,7 @@ public:
     }
 
     virtual void print(const std::string& header, Output &out) const  override {
-        out.output("%s RtrEvent to be delivered at %" PRIu64 " with priority %d. src = %lld (logical: %lld), dest = %lld\n",
+        out.output("%s RtrEvent to be delivered at %" PRI_SIMTIME " with priority %d. src = %" PRI_NID " (logical: %" PRI_NID "), dest = %" PRI_NID "\n",
                    header.c_str(), getDeliveryTime(), getPriority(), trusted_src, request->src, request->dest);
         if ( request->inspectPayload() != NULL) request->inspectPayload()->print("  -> ", out);
     }
@@ -485,6 +485,11 @@ public:
 
     // Parameters are:  num_ports, id, num_vns
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::Topology, int, int, int)
+
+    SST_ELI_DOCUMENT_PARAMS(
+        {"network_name",      "Name of the network.  Required if two networks of the same topology are used in the same simulation; primarily use to namespace global shared object used by the topology."}
+    )
+
 
     enum PortState {R2R, R2N, UNCONNECTED, FAILED};
     Topology(ComponentId_t cid) : SubComponent(cid), output(getSimulationOutput()) {}

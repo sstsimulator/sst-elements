@@ -25,14 +25,15 @@
 namespace SST {
 namespace Vanadis {
 
+template<bool SetFRM, bool SetFFLAGS >
 class VanadisFPFlagsSetInstruction : public VanadisFloatingPointInstruction
 {
 public:
     VanadisFPFlagsSetInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
-        VanadisFloatingPointFlags* fpflags, const uint16_t src_1) :
+        VanadisFloatingPointFlags* fpflags, const uint16_t src_1, int mode) :
         VanadisFloatingPointInstruction(
-            addr, hw_thr, isa_opts, fpflags, 1, 0, 1, 0, 0, 0, 0, 0)
+            addr, hw_thr, isa_opts, fpflags, 1, 0, 1, 0, 0, 0, 0, 0), mode(mode)
     {
 		isa_int_regs_in[0] = src_1;
     }
@@ -57,37 +58,19 @@ public:
 			const uint64_t mask_in = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
 
 			if(output->getVerboseLevel() >= 16) {
-				output->verbose(CALL_INFO, 16, 0, "Execute: 0x%llx %s in-reg: %" PRIu16 " / phys: %" PRIu16 " -> mask = %" PRIu64 " (0x%llx)\n",
+				output->verbose(CALL_INFO, 16, 0, "Execute: 0x%" PRI_ADDR " %s in-reg: %" PRIu16 " / phys: %" PRIu16 " -> mask = %" PRIu64 " (0x%" PRI_ADDR ")\n",
 					getInstructionAddress(), getInstCode(), isa_int_regs_in[0], phys_int_regs_in[0], mask_in, mask_in);
 			}
 
-			if( (mask_in & 0x1) != 0 ) {
-				fpflags.setInexact();
-			}
-
-			if( (mask_in & 0x2) != 0 ) {
-				fpflags.setUnderflow();
-			}
-
-			if( (mask_in & 0x4) != 0 ) {
-				fpflags.setOverflow();
-			}
-
-			if( (mask_in & 0x8) != 0 ) {
-				fpflags.setDivZero();
-			}
-
-			if( (mask_in & 0x10) != 0 ) {
-				fpflags.setInvalidOp();
-			}
-
-			set_fp_flags = true;
+			updateFP_flags<SetFRM,SetFFLAGS>( mask_in, mode );
 
 			markExecuted();
 		} else {
-			output->verbose(CALL_INFO, 16, 0, "not front of ROB for ins: 0x%llx %s\n", getInstructionAddress(), getInstCode());
+			output->verbose(CALL_INFO, 16, 0, "not front of ROB for ins: 0x%" PRI_ADDR " %s\n", getInstructionAddress(), getInstCode());
 		}
     }
+protected:
+    const int mode;
 };
 
 } // namespace Vanadis

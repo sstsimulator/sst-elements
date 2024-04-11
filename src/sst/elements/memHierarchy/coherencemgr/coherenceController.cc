@@ -640,13 +640,15 @@ MemEventStatus CoherenceController::allocateMSHR(MemEvent * event, bool fwdReq, 
             eventDI.action = "Stall";
             eventDI.reason = "MSHR conflict";
         }
-        if (event->isPrefetch())
+        if (event->isPrefetch() && event->getRqstr() == cachename_) {
             outstandingPrefetches_++;
+        }
         return MemEventStatus::Stall;
     }
 
-    if (event->isPrefetch())
+    if (event->isPrefetch() && event->getRqstr() == cachename_) {
         outstandingPrefetches_++;
+    }
     return MemEventStatus::OK;
 }
 

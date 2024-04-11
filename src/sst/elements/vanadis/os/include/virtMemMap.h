@@ -44,13 +44,81 @@ namespace Vanadis {
 
 namespace OS {
 
-struct MemoryBacking {
-    MemoryBacking( VanadisELFInfo* elfInfo = nullptr ) : elfInfo( elfInfo ), dev(nullptr) {}
-    MemoryBacking( Device* dev ) : elfInfo( nullptr ), dev(dev) {}
+class MemoryBacking {
+public:
+    MemoryBacking( VanadisELFInfo* elfInfo = nullptr ) : elfInfo( elfInfo ), dev(nullptr), dataStartAddr(0) {}
+    MemoryBacking( Device* dev ) : elfInfo( nullptr ), dev(dev), dataStartAddr(0) {}
     VanadisELFInfo* elfInfo;
     Device* dev;
     std::vector<uint8_t> data;
     uint64_t dataStartAddr;
+
+    MemoryBacking( SST::Output* output, FILE* fp, VanadisELFInfo* elf ) {
+        char* tmp = nullptr;
+        size_t num = 0;
+        getline( &tmp, &num, fp );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",tmp);
+        assert( 0 == strcmp(tmp,"#MemoryBacking start\n") );
+        free(tmp);
+
+        char str[80];
+        assert( 1 == fscanf(fp,"backing: %s\n",str) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"backing: %s\n",str);
+
+        if ( 0 == strcmp( str, "elf" ) ) {
+            assert ( 1 == fscanf(fp,"elf: %s\n", str ) );
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"elf: %s\n",str);
+            assert( 0 == strcmp( str, elf->getBinaryPath() ) );
+            elfInfo = elf;
+        } else if ( 0 == strcmp( str, "data" ) ) {
+            assert ( 1 == fscanf(fp,"dataStartAddr: %" PRIx64 "\n",&dataStartAddr) ); 
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"dataStartAddr: %#" PRIx64 "\n",dataStartAddr );
+            size_t size;
+            assert( 1 == fscanf(fp,"size: %zu\n", &size ) );
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"size: %zu\n", size );
+            data.resize(size);
+            std::stringstream ss;
+            ss << std::hex;
+            for ( auto i = 0; i < size; i++ ) {
+                uint64_t value;
+                assert( 1 == fscanf(fp,"%" PRIx64 ",", &value) );
+                data[i] = value;
+                ss << "0x" << value << ",";
+            }
+            fscanf(fp,"\n" );
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s\n",ss.str().c_str());
+
+        } else {
+            assert(0);
+        }
+
+        tmp = nullptr;
+        num = 0;
+        getline( &tmp, &num, fp );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",tmp);
+        assert( 0 == strcmp(tmp,"#MemoryBacking end\n") );
+        free(tmp);
+    }
+
+    void checkpoint( FILE* fp ) {
+        fprintf(fp,"#MemoryBacking start\n");
+        if ( elfInfo ) {
+            fprintf(fp,"backing: elf\n");
+            fprintf(fp,"elf: %s\n",elfInfo->getBinaryPath());
+        } else if ( data.size() ) {
+            fprintf(fp,"backing: data\n");
+            fprintf(fp,"dataStartAddr: %#" PRIx64 "\n",dataStartAddr);
+            auto ptr = (uint64_t*) data.data();
+            fprintf(fp,"size: %zu\n", data.size()/sizeof(uint64_t) );
+            for ( auto i = 0; i < data.size()/sizeof(uint64_t); i++ ) {
+                fprintf(fp,"%#" PRIx64 ",",ptr[i]);
+            }
+            fprintf(fp,"\n");
+        } else {
+            assert(0);
+        }
+        fprintf(fp,"#MemoryBacking end\n");
+    }
 };
 
 struct MemoryRegion {
@@ -64,8 +132,11 @@ struct MemoryRegion {
     ~MemoryRegion() {
         for ( auto kv: m_virtToPhysMap) { 
             auto page = kv.second;
-            if ( 0 == page->decRefCnt() ) {
-                delete page;
+            // don't delete text pages because they are in the page cache
+            if ( name.compare("text" ) ) {
+                if ( 0 == page->decRefCnt() ) {
+                    delete page;
+                }
             }
         }
     }
@@ -109,8 +180,80 @@ struct MemoryRegion {
         }
         return data;
     }
+    
+    void checkpoint( FILE* fp ) {
+        fprintf(fp,"#MemoryRegion start\n");
+        fprintf(fp,"name: %s\n",name.c_str());
+        fprintf(fp,"addr: %#" PRIx64 "\n",addr);
+        fprintf(fp,"length: %zu\n",length);
+        fprintf(fp,"perms: %#" PRIx32 "\n",perms);
+        if ( backing ) {
+            fprintf(fp,"backing: yes\n");
+            backing->checkpoint( fp );
+        } else {
+            fprintf(fp,"backing: no\n");
+        }
+
+        fprintf(fp,"m_virtToPhysMap.size() %zu\n",m_virtToPhysMap.size());
+        for ( auto & x : m_virtToPhysMap ) {
+            fprintf(fp,"vpn: %d, %s\n", x.first, x.second->checkpoint().c_str() );
+        }
+        fprintf(fp,"#MemoryRegion end\n");
+    }
+
+    MemoryRegion( SST::Output* output, FILE* fp, PhysMemManager* memManager, VanadisELFInfo* elfInfo ) : backing(nullptr) {
+        char* tmp = nullptr;
+        size_t num = 0;
+        getline( &tmp, &num, fp );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",tmp);
+        assert( 0 == strcmp(tmp,"#MemoryRegion start\n"));
+        free(tmp);
+
+        char str[80];
+        assert( 1 == fscanf(fp,"name: %s\n",str));
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"name: %s\n",str);
+        name = str; 
+
+        assert( 1 == fscanf(fp,"addr: %" PRIx64 "\n",&addr) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"addr: %#" PRIx64 "\n",addr);
+
+        assert( 1 == fscanf(fp,"length: %zu\n",&length) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"length: %zu\n",length);
+
+        assert( 1 == fscanf(fp,"perms: %" PRIx32 "\n",&perms) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"perms: %#" PRIx32 "\n",perms);
+
+        assert( 1 == fscanf(fp,"backing: %s\n", str) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"backing: %s\n", str );
+        if ( 0 == strcmp( str, "yes" ) ) {
+            backing = new MemoryBacking( output, fp, elfInfo );
+        }
+
+        size_t size;
+        assert( 1 == fscanf(fp,"m_virtToPhysMap.size() %zu\n",&size) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_virtToPhysMap.size() %zu\n",size);
+
+        for ( auto i = 0; i < size; i++ ) {
+            int vpn,ppn,refCnt;
+            assert( 3 == fscanf(fp,"vpn: %d, ppn: %d, refCnt: %d\n", &vpn, &ppn, &refCnt ) );
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"vpn: %d, ppn: %d, refCnt: %d\n", vpn, ppn, refCnt );
+            m_virtToPhysMap[vpn] = new OS::Page( memManager, ppn, refCnt );
+        }
+
+        tmp = nullptr;
+        num = 0;
+        getline( &tmp, &num, fp );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",tmp);
+        assert( 0 == strcmp(tmp,"#MemoryRegion end\n"));
+        free(tmp);
+    }
 
     MemoryBacking* backing; 
+    OS::Page* getPage( int vpn ) {
+        auto iter = m_virtToPhysMap.find( vpn );
+        assert( iter != m_virtToPhysMap.end() );
+        return iter->second;
+    }
 
   private:
     std::map<unsigned, OS::Page* > m_virtToPhysMap;
@@ -187,6 +330,20 @@ public:
         return nullptr;
     }
 
+    MemoryRegion* findRegion( std::string name ) {
+        VirtMemDbg("name=%s\n", name.c_str() );
+        auto iter = m_regionMap.begin();
+        for ( ; iter != m_regionMap.end(); ++iter ) {
+            auto region = iter->second; 
+            VirtMemDbg("region %s [%#" PRIx64 " - %#" PRIx64 "] length=%zu perms=%#x\n",
+                    region->name.c_str(),region->addr,region->addr+region->length, region->length,region->perms);
+            if ( 0 == strcmp( name.c_str(), region->name.c_str() ) ) { 
+                return region;
+            }
+        } 
+        return nullptr;
+    }
+
     void mprotect( uint64_t addr, size_t length, int prot ) {
         VirtMemDbg("addr=%#" PRIx64 " length=%zu prot=%#x\n", addr, length, prot );
         auto* region = findRegion( addr );
@@ -243,7 +400,7 @@ public:
     }
 
     uint64_t mmap( size_t length, uint32_t perms, Device* dev ) {
-        std::string name;
+        std::string name("mmap");
         MemoryBacking* backing = nullptr;
         if ( dev ) {
             backing = new MemoryBacking( dev );
@@ -301,6 +458,53 @@ public:
         assert( brk < m_heapRegion->addr + m_heapRegion->length );
         m_brk = brk;
         return true;
+    }
+
+    void checkpoint( FILE* fp ) {
+        fprintf(fp,"#VirtMemMap start\n");
+        fprintf(fp,"m_brk: %#" PRIx64 "\n",m_brk);    
+        fprintf(fp,"m_refCnt: %d\n",m_refCnt);    
+        fprintf(fp,"m_regionMap.size() %zu\n",m_regionMap.size());    
+
+        for ( auto & x : m_regionMap ) {
+            fprintf(fp,"addr: %#" PRIx64 "\n",x.first);    
+            x.second->checkpoint(fp);
+        }
+        fprintf(fp,"#VirtMemMap end\n");
+    }
+
+    VirtMemMap( SST::Output* output, FILE* fp, PhysMemManager* memManager, VanadisELFInfo* elfInfo) {
+        char* str = nullptr;
+        size_t num = 0;
+        getline( &str, &num, fp );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",str);
+        assert( 0 == strcmp(str,"#VirtMemMap start\n"));
+        free(str);
+
+        uint64_t foo;
+        assert( 1 == fscanf(fp,"m_brk: %" PRIx64 "\n",&foo));    
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_brk: %#" PRIx64"\n",foo);    
+
+        assert( 1 == fscanf(fp,"m_refCnt: %d\n",&m_refCnt));    
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_refCnt: %d\n",m_refCnt);    
+
+        size_t size;
+        assert( 1 == fscanf(fp,"m_regionMap.size() %zu\n",&size));    
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_regionMap.size() %zu\n",size);    
+        for ( auto i = 0; i < size; i++ ) {
+            uint64_t addr;
+            assert( 1 == fscanf(fp,"addr: %" PRIx64 "\n",&addr));    
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"addr: %#" PRIx64 "\n",addr);    
+
+            m_regionMap[addr] = new MemoryRegion( output, fp, memManager, elfInfo );
+        }
+
+        str = nullptr;
+        num = 0;
+        getline( &str, &num, fp );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",str);
+        assert( 0 == strcmp(str,"#VirtMemMap end\n"));
+        free(str);
     }
 
 private:

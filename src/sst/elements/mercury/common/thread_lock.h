@@ -18,7 +18,7 @@
 #include <sst_element_config.h>
 #include <thread>
 
-#ifdef SSTMAC_PTHREAD_MACRO_H
+#ifdef SST_HG_PTHREAD_MACRO_H
 #error sstmacro thread_lock.h should never be used with pthread.h replacement headers
 #endif
 

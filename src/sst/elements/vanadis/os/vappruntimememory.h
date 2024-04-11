@@ -81,7 +81,8 @@ class AppRuntimeMemory64 : public AppRuntimeMemory<uint64_t> {
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Application runtime memory loader for 64b OS",
         SST::Vanadis::AppRuntimeMemory64
-    ) 
+    )
+
     AppRuntimeMemory64( Params& params ) : 
         AppRuntimeMemory<uint64_t>( params ) {}
 };
@@ -165,7 +166,6 @@ uint64_t AppRuntimeMemory<Type>::configureStack(  Output* output, int page_size,
     for ( uint32_t arg = 0; arg < arg_count; ++arg ) {
         snprintf(arg_name, 32, "arg%" PRIu32 "", arg);
         std::string arg_value = params.find<std::string>(arg_name, "");
-
         if ( "" == arg_value ) {
             if ( 0 == arg ) {
                 arg_value = elf_info->getBinaryPathShort();
@@ -380,7 +380,7 @@ uint64_t AppRuntimeMemory<Type>::configureStack(  Output* output, int page_size,
             (uint32_t)aux_data_block.size());
     output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_APP_INIT, "---> Aux entry count:                    %d\n", aux_entry_count);
     output->verbose(
-            CALL_INFO, 16, VANADIS_OS_DBG_APP_INIT, "-> Setting SP to (not-aligned):          %" PRIu64 " / 0x%0llx\n", start_stack_address,
+            CALL_INFO, 16, VANADIS_OS_DBG_APP_INIT, "-> Setting SP to (not-aligned):          %" PRIu64 " / 0x%0" PRI_ADDR "\n", start_stack_address,
             start_stack_address);
 
     uint64_t arg_env_space_needed = 1 + arg_count + 1 + env_count + 1 + aux_entry_count;
@@ -394,7 +394,7 @@ uint64_t AppRuntimeMemory<Type>::configureStack(  Output* output, int page_size,
     output->verbose(
             CALL_INFO, 16, VANADIS_OS_DBG_APP_INIT,
             "Aligning stack address to 64 bytes (%" PRIu64 " - %" PRIu64 " - padding: %" PRIu64 " = %" PRIu64
-            " / 0x%0llx)\n",
+            " / 0x%0" PRI_ADDR ")\n",
             start_stack_address, (uint64_t)arg_env_space_and_data_needed, padding_needed, aligned_start_stack_address,
             aligned_start_stack_address);
 
@@ -408,7 +408,7 @@ uint64_t AppRuntimeMemory<Type>::configureStack(  Output* output, int page_size,
 
     for ( size_t i = 0; i < arg_start_offsets.size(); ++i ) {
         output->verbose(
-                CALL_INFO, 16, VANADIS_OS_DBG_APP_INIT, "--> Setting arg%" PRIu32 " to point to address %" PRIu64 " / 0x%llx\n", (uint32_t)i,
+                CALL_INFO, 16, VANADIS_OS_DBG_APP_INIT, "--> Setting arg%" PRIu32 " to point to address %" PRIu64 " / 0x%" PRI_ADDR "\n", (uint32_t)i,
                 arg_env_data_start + arg_start_offsets[i], arg_env_data_start + arg_start_offsets[i]);
         vanadis_vec_copy_in<Type>(stack_data, (Type)(arg_env_data_start + arg_start_offsets[i]));
     }
@@ -417,7 +417,7 @@ uint64_t AppRuntimeMemory<Type>::configureStack(  Output* output, int page_size,
 
     for ( size_t i = 0; i < env_start_offsets.size(); ++i ) {
         output->verbose(
-                CALL_INFO, 16, VANADIS_OS_DBG_APP_INIT, "--> Setting env%" PRIu32 " to point to address %" PRIu64 " / 0x%llx\n", (uint32_t)i,
+                CALL_INFO, 16, VANADIS_OS_DBG_APP_INIT, "--> Setting env%" PRIu32 " to point to address %" PRIu64 " / 0x%" PRI_ADDR "\n", (uint32_t)i,
                 arg_env_data_start + arg_data_block.size() + env_start_offsets[i],
                 arg_env_data_start + arg_data_block.size() + env_start_offsets[i]);
 
@@ -444,7 +444,7 @@ uint64_t AppRuntimeMemory<Type>::configureStack(  Output* output, int page_size,
     }
 
     output->verbose(
-            CALL_INFO, 16, VANADIS_OS_DBG_APP_INIT, "-> Pushing %" PRIu64 " bytes to the start of stack (0x%llx) via memory init event..\n",
+            CALL_INFO, 16, VANADIS_OS_DBG_APP_INIT, "-> Pushing %" PRIu64 " bytes to the start of stack (0x%" PRI_ADDR ") via memory init event..\n",
             (uint64_t)stack_data.size(), start_stack_address);
 
 #if 0  // PHDR

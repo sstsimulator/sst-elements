@@ -13,9 +13,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <components/operating_system.h>
-#include <operating_system/libraries/unblock_event.h>
-#include <operating_system/process/thread.h>
+#include <mercury/components/operating_system.h>
+#include <mercury/operating_system/libraries/unblock_event.h>
+#include <mercury/operating_system/process/thread.h>
 
 namespace SST {
 namespace Hg {

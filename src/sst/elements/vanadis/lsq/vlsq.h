@@ -41,7 +41,11 @@ class VanadisLoadStoreQueue : public SST::SubComponent {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Vanadis::VanadisLoadStoreQueue, int, int)
 
-    SST_ELI_DOCUMENT_PARAMS({ "verbose", "Set the verbosity of output for the LSQ", "0" }, )
+    SST_ELI_DOCUMENT_PARAMS({ "verbose", "Set the verbosity of output for the LSQ", "0" }, 
+                            { "verboseMask", "Mask bits for masking output", "-1" },
+                            { "dbgInsAddrs", "Comma-separated list of instruction addresses to debug", ""},
+                            { "dbgAddrs", "Comma-separated list of addresses to debug", ""},
+            )
 
     SST_ELI_DOCUMENT_STATISTICS({ "bytes_read", "Count all the bytes read for data operations", "bytes", 1 },
                                 { "bytes_stored", "Count all the bytes written for data operations", "bytes", 1 },
@@ -62,7 +66,6 @@ public:
         std::string prefix = "[lsq " + getName() + " !t]: ";
         output = new SST::Output(prefix, verbosity, mask, SST::Output::STDOUT);
 
-        address_mask = params.find<uint64_t>("address_mask", 0xFFFFFFFFFFFFFFFF);
         setDbgInsAddrs( params.find<std::string>("dbgInsAddrs", "") );
         setDbgAddrs( params.find<std::string>("dbgAddrs", "") );
         
@@ -167,7 +170,6 @@ protected:
     std::deque<uint64_t> m_dbgAddrs;
     int core_id;
     int hw_threads;
-    uint64_t address_mask;
     std::vector<VanadisRegisterFile*>* registerFiles;
     SST::Output* output;
 

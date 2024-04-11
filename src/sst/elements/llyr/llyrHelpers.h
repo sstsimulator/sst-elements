@@ -437,7 +437,6 @@ inline HardwareNode* process_node_row(const std::vector< std::string >& row)
 {
     HardwareNode* hardwareNode = new HardwareNode;
 
-
     // TODO: figure out lists of lists
     hardwareNode->pe_id_ = std::string(row[1]);
     hardwareNode->job_id_ = std::string(row[2]);

@@ -15,13 +15,12 @@
 
 #pragma once
 
-#include <sst_element_config.h>
 #include <sst/core/component.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/link.h>
 #include <sst/core/timeLord.h>
-#include <common/events.h>
-#include <common/timestamp.h>
+#include <mercury/common/events.h>
+#include <mercury/common/timestamp.h>
 #include <cstdint>
 
 namespace SST {
@@ -102,6 +101,9 @@ private:
  int nthread_;
   SST::Link* self_link_;
 };
+
+template <typename CoreBase>
+SST::TimeConverter* HgBase<CoreBase>::time_converter_ = nullptr;
 
 class Component : public HgBase<SST::Component>
 {

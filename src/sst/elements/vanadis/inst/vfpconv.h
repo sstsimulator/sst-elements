@@ -133,13 +133,14 @@ public:
         if(output->getVerboseLevel() >= 16) {
             output->verbose(
                 CALL_INFO, 16, 0,
-                "Execute: 0x%llx %s fp-dest isa: %" PRIu16 " phys: %" PRIu16 " <- fp-src: isa: %" PRIu16 " phys: %" PRIu16
+                "Execute: 0x%" PRI_ADDR " %s fp-dest isa: %" PRIu16 " phys: %" PRIu16 " <- fp-src: isa: %" PRIu16 " phys: %" PRIu16
                 "\n",
                 getInstructionAddress(), getInstCode(), isa_fp_regs_out[0], phys_fp_regs_out[0], isa_fp_regs_in[0],
                 phys_fp_regs_in[0]);
         }
 #endif
 
+        // This code is currenty structured MIPS else RISCV and other ISA's may not work
         if ( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) {
             if ( sizeof(src_format) == 8 ) {
                 if ( sizeof(dest_format) == 8 ) {
@@ -170,11 +171,38 @@ public:
                     performFlagChecks<dest_format>(fp_v);
                 }
             }
-        }
-        else {
-            const src_format fp_v = regFile->getFPReg<src_format>(phys_fp_regs_in[0]);
-            regFile->setFPReg<dest_format>(phys_fp_regs_out[0], static_cast<dest_format>(fp_v));
 
+        } else {
+
+            const src_format fp_v = regFile->getFPReg<src_format>(phys_fp_regs_in[0]);
+
+            if( isNaN( fp_v ) ) {
+                regFile->setFPReg<dest_format>(phys_fp_regs_out[0], NaN<dest_format>());
+            } else {
+                if ( 8 == regFile->getFPRegWidth() ) {
+
+                    if constexpr (std::is_same_v<src_format,float>) {
+                        if constexpr (std::is_same_v<dest_format,double>) {
+                            regFile->setFPReg<dest_format>(phys_fp_regs_out[0], static_cast<dest_format>(fp_v));
+                        } else {
+                            assert(0);
+                        }
+                    } else if constexpr (std::is_same_v<src_format,double>) {
+                        if constexpr (std::is_same_v<dest_format,float>) {
+                            dest_format tmp = static_cast<dest_format>(fp_v);
+                            uint64_t result = 0xffffffff00000000 | convertTo<uint32_t>(tmp);
+                            regFile->setFPReg<uint64_t>(phys_fp_regs_out[0], result);
+                        } else {
+                            assert(0);
+                        }
+                    } else {
+                        assert(0);
+                    }
+                    
+                } else {
+                    assert(0);
+                }
+            }
             performFlagChecks<dest_format>(fp_v);
         }
 

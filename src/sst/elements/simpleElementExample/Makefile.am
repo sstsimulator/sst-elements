@@ -73,6 +73,9 @@ install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     simpleElementExample=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      simpleElementExample=$(abs_srcdir)/tests
 
+.PHONY: snippets
+snippets:
+	$(SST_SNIPPETS_TOOL) $(abs_srcdir)/sst-snippets.json
 
-
-
+clean-local:
+	-rm -rf snippets

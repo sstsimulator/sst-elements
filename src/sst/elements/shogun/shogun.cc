@@ -288,7 +288,7 @@ void ShogunComponent::handleIncoming(SST::Event* event)
         const int src_port = incomingShogunEv->getPayload()->src;
 
         if (inputQueues[src_port]->full()) {
-            output->fatal(CALL_INFO, 4, 0, "Error: recv event for port %" PRIi32 " but queues are full\n", src_port);
+            output->fatal(CALL_INFO, -1, "Error: recv event for port %" PRIi32 " but queues are full\n", src_port);
         }
 
         output->verbose(CALL_INFO, 4, 0, "-> recv from %" PRIi32 " dest: %" PRId64 "\n",

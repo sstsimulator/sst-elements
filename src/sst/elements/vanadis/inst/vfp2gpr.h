@@ -23,7 +23,7 @@
 namespace SST {
 namespace Vanadis {
 
-template <typename fp_format, typename gpr_format>
+template <typename fp_format, typename gpr_format, bool is_bitwise>
 class VanadisFP2GPRInstruction : public VanadisFloatingPointInstruction
 {
 public:
@@ -80,24 +80,84 @@ public:
         if(output->getVerboseLevel() >= 16) {
             output->verbose(
                 CALL_INFO, 16, 0,
-                "Execute: 0x%llx %s int-dest isa: %" PRIu16 " phys: %" PRIu16 " <- fp-src: isa: %" PRIu16 " phys: %" PRIu16
+                "Execute: 0x%" PRI_ADDR " %s int-dest isa: %" PRIu16 " phys: %" PRIu16 " <- fp-src: isa: %" PRIu16 " phys: %" PRIu16
                 "\n",
                 getInstructionAddress(), getInstCode(), isa_int_regs_out[0], phys_int_regs_out[0], isa_fp_regs_in[0],
                 phys_fp_regs_in[0]);
         }
 #endif
-        if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
-            const fp_format fp_v = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
-            regFile->setIntReg<gpr_format>(phys_int_regs_out[0], static_cast<gpr_format>(fp_v));
-            performFlagChecks<fp_format>(fp_v);
+        if constexpr ( is_bitwise ) {
+            bitwise_convert( output, regFile );
+        } else {
+            convert( output, regFile );
         }
-        else {
-            const fp_format fp_v = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
-            regFile->setIntReg<gpr_format>(phys_int_regs_out[0], static_cast<gpr_format>(fp_v));
-            performFlagChecks<fp_format>(fp_v);
+        markExecuted();
+    }
+
+    void bitwise_convert( SST::Output* output, VanadisRegisterFile* regFile)
+    { 
+        if  constexpr ( std::is_floating_point<gpr_format>::value ) {
+            assert(0);
         }
 
-        markExecuted();
+        uint64_t fp_v;
+        if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
+            fp_v = combineFromRegisters<uint64_t>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
+        } else {
+            if ( 8 == regFile->getFPRegWidth() ) {
+                fp_v = regFile->getFPReg<uint64_t>(phys_fp_regs_in[0]);
+            } else {
+                fp_v = regFile->getFPReg<uint32_t>(phys_fp_regs_in[0]);
+            }
+        }
+
+        if constexpr ( std::is_same_v<gpr_format,uint32_t> ) {
+
+            if ( isSignBitSet( static_cast<uint32_t>(fp_v) ) ) {
+                fp_v |= 0xffffffff00000000;
+            } else {
+                fp_v &= 0x00000000ffffffff;
+            }
+        }
+
+        regFile->setIntReg<uint64_t>(phys_int_regs_out[0], fp_v);
+    }
+
+    void convert( SST::Output* output, VanadisRegisterFile* regFile)
+    { 
+        uint64_t reg_v_int;
+        gpr_format result;
+        if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
+            reg_v_int = combineFromRegisters<uint64_t>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
+        } else {
+            if ( 8 == regFile->getFPRegWidth() ) {
+                reg_v_int = regFile->getFPReg<uint64_t>(phys_fp_regs_in[0]);
+            } else {
+                reg_v_int = regFile->getFPReg<uint32_t>(phys_fp_regs_in[0]);
+            }
+        }
+
+        auto fp_v = *(fp_format*) &reg_v_int;
+
+        if ( UNLIKELY( isInf(fp_v) || isNaN(fp_v) ) ) {
+            result = getMaxInt<gpr_format>();
+        } else if ( UNLIKELY( fp_v - 1.0 >= getMaxInt<gpr_format>() ) ) {
+            fpflags.setInvalidOp();
+            update_fp_flags = true;
+            result = getMaxInt<gpr_format>();
+        } else if ( UNLIKELY( fp_v + 1.0 <= getMinInt<gpr_format>() ) ) {
+            fpflags.setInvalidOp();
+            update_fp_flags = true;
+            result = getMinInt<gpr_format>();
+        } else { 
+            result = fp_v;
+            if ( fp_v != result ) {
+                fpflags.setInexact();
+                update_fp_flags = true;
+            }
+        }
+
+        regFile->setIntReg<gpr_format>(phys_int_regs_out[0], result);
     }
 };
 

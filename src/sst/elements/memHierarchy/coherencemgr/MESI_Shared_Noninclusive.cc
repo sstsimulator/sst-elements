@@ -168,7 +168,7 @@ bool MESISharNoninclusive::handleGetS(MemEvent* event, bool inMSHR) {
                 }
             } else if (data || mshr_->hasData(addr)) {
                 recordLatencyType(event->getID(), LatType::HIT);
-                if (tag->hasSharers()) {
+                if (tag->hasSharers() || !protocol_) {
                     respcmd = Command::GetSResp;
                     tag->addSharer(event->getSrc());
                 } else {
@@ -304,6 +304,9 @@ bool MESISharNoninclusive::handleGetX(MemEvent * event, bool inMSHR) {
                     stat_hits->addData(1);
                 }
                 tag->setOwner(event->getSrc());
+                if (state != M) {
+                    tag->setState(M);
+                }
                 if (tag->isSharer(event->getSrc())) {
                     tag->removeSharer(event->getSrc());
                     sendTime = sendResponseUp(event, nullptr, inMSHR, tag->getTimestamp(), Command::GetXResp);
@@ -2684,6 +2687,7 @@ void MESISharNoninclusive::cleanUpEvent(MemEvent* event, bool inMSHR) {
 
     /* Remove from MSHR */
     if (inMSHR) {
+        if (event->isPrefetch() && event->getRqstr() == cachename_) outstandingPrefetches_--;
         mshr_->removeFront(addr);
     }
 
@@ -2729,8 +2733,10 @@ void MESISharNoninclusive::cleanUpAfterResponse(MemEvent* event, bool inMSHR) {
     mshr_->removeFront(addr);
     delete event;
 
-    if (req)
+    if (req) {
+        if (req->isPrefetch() && req->getRqstr() == cachename_) outstandingPrefetches_--;
         delete req;
+    }
 
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
@@ -3200,6 +3206,12 @@ void MESISharNoninclusive::printLine(Addr addr) {
     }
 }
 
+void MESISharNoninclusive::printStatus(Output &out) {
+    out.output("    Directory Array\n");
+    dirArray_->printCacheArray(out);
+    out.output("    Data Array\n");
+    dataArray_->printCacheArray(out);
+}
 
 void MESISharNoninclusive::recordLatency(Command cmd, int type, uint64_t latency) {
     if (type == -1)

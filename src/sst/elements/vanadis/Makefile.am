@@ -45,6 +45,7 @@ inst/vfence.h \
 inst/vfp2fp.h \
 inst/vfp2gpr.h \
 inst/vfpadd.h \
+inst/vfpclass.h \
 inst/vfpmadd.h \
 inst/vfpmsub.h \
 inst/vfpconv.h \
@@ -69,6 +70,7 @@ inst/vjr.h \
 inst/vjump.h \
 inst/vload.h \
 inst/vmemflagtype.h \
+inst/vmin.h \
 inst/vmipsfpscmp.h \
 inst/vmod.h \
 inst/vmovci.h \
@@ -124,6 +126,7 @@ vinsbundle.h \
 vinsloader.h \
 \
 os/vappruntimememory.h \
+os/vcheckpointreq.h \
 os/vcpuos.h \
 os/vcpuos2.h \
 os/vdumpregsreq.h \
@@ -157,6 +160,7 @@ os/include/virtMemMap.h \
 os/callev/voscallaccessev.h \
 os/callev/voscallall.h \
 os/callev/voscallbrk.h \
+os/callev/voscallcheckpoint.h \
 os/callev/voscallclone.h \
 os/callev/voscallclose.h \
 os/callev/voscallexitgrp.h \
@@ -195,6 +199,7 @@ os/callev/voscallwritev.h \
 \
 os/syscall/access.h \
 os/syscall/brk.h \
+os/syscall/checkpoint.h \
 os/syscall/clone.cc \
 os/syscall/clone.h \
 os/syscall/close.h \
@@ -557,7 +562,12 @@ EXTRA_DIST = \
 \
 	tests/basic_vanadis.py \
 	tests/no_rtr_vanadis.py \
-	tests/testsuite_default_vanadis.py
+	tests/testsuite_default_vanadis.py \
+\
+	tests/riscv-tests/patch.txt \
+	tests/riscv-tests/README \
+	tests/riscv-tests/run-riscv-tests \
+	tests/riscv-tests/run-riscv-tests.out
 
 libvanadis_la_SOURCES = \
 	vanadis.cc \

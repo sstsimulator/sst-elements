@@ -129,7 +129,7 @@ public:
     {
 #ifdef VANADIS_BUILD_DEBUG
         output->verbose(
-            CALL_INFO, 16, 0, "Execute: 0x%llx %s (%s, %s)\n", getInstructionAddress(), getInstCode(),
+            CALL_INFO, 16, 0, "Execute: 0x%" PRI_ADDR " %s (%s, %s)\n", getInstructionAddress(), getInstCode(),
             convertCompareTypeToString(compare_type), (sizeof(fp_format) == 8) ? "64b" : "32b");
 #endif
         const bool compare_result = performCompare(output, regFile);

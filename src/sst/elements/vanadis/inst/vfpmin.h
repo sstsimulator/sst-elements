@@ -23,7 +23,7 @@
 namespace SST {
 namespace Vanadis {
 
-template <typename fp_format>
+template <typename fp_format, bool is_min >
 class VanadisFPMinimumInstruction : public VanadisFloatingPointInstruction
 {
 public:
@@ -93,7 +93,7 @@ public:
 #ifdef VANADIS_BUILD_DEBUG
         if ( output->getVerboseLevel() >= 16 ) {
             output->verbose(
-                CALL_INFO, 16, 0, "Execute: (addr=0x%llx) %s\n", getInstructionAddress(),
+                CALL_INFO, 16, 0, "Execute: (addr=0x%" PRI_ADDR ") %s\n", getInstructionAddress(),
                 getInstCode());
         }
 #endif
@@ -101,26 +101,44 @@ public:
         if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
             const fp_format src_1  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
             const fp_format src_2  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3]);
-            const fp_format result = src_1 < src_2 ? src_1 : src_2;
+            
+            fp_format result;
+            if constexpr  ( is_min ) {
+                result = src_1 < src_2 ? src_1 : src_2;
+            } else {
+                result = src_1 > src_2 ? src_1 : src_2;
+            }
 
             performFlagChecks<fp_format>(result);
-
-            if(output->getVerboseLevel() >= 16) {
-                output->verbose(CALL_INFO, 16, 0, "---> min( %f , %f ) = %f\n", src_1, src_2, result);
-            }
 
             fractureToRegisters<fp_format>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], result);
         }
         else {
             const fp_format src_1  = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
             const fp_format src_2  = regFile->getFPReg<fp_format>(phys_fp_regs_in[1]);
-            const fp_format result = src_1 < src_2 ? src_1 : src_2;
+
+            fp_format result;
+            if constexpr  ( is_min ) {
+                if ( UNLIKELY( ( src_1 == -0.0 && src_2 == 0.0 ) || ( src_1 == 0.0 && src_2 == -0.0 ) ) ) {
+                    result = -0.0;
+                } else {
+                    result = src_1 < src_2 ? src_1 : src_2;
+                } 
+            } else {
+                if ( UNLIKELY( ( src_1 == -0.0 && src_2 == 0.0 ) || ( src_1 == 0.0 && src_2 == -0.0 ) ) ) {
+                    result = 0.0;
+                } else if ( UNLIKELY( isNaN( src_1 ) && isNaN( src_2 ) ) ) {
+                    result = NaN<fp_format>(); 
+                } else if ( UNLIKELY( isNaNs( src_1 ) ) ) {
+                    result = src_2;
+                    fpflags.setInvalidOp();
+                    update_fp_flags = true;
+                } else {
+                    result = src_1 > src_2 ? src_1 : src_2;
+                }
+            }
 
             performFlagChecks<fp_format>(result);
-
-            if(output->getVerboseLevel() >= 16) {
-                output->verbose(CALL_INFO, 16, 0, "---> min( %f , %f ) = %f\n", src_1, src_2, result);
-            }
 
             regFile->setFPReg<fp_format>(phys_fp_regs_out[0], result);
         }

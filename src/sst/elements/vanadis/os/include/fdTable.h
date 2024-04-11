@@ -59,17 +59,21 @@ public:
         //printf("%s() %s oldfd=%d flags=%#x mode=%#x newfd=%d\n",__func__,path.c_str(), obj.fd,flags,buf.st_mode,fd);
     }
 
-    FileDescriptor(std::string& file_path, int flags, mode_t mode) : path(file_path)
+    FileDescriptor(std::string& file_path, int flags, mode_t mode, bool lazy) : path(file_path), flags(flags), mode(mode)
     {
-        fd = open(file_path.c_str(), flags, mode );
-        if ( -1 == fd ) {
-            printf("%s() FAILED: %s flags=%#x mode=%#x\n",__func__,path.c_str(),flags,mode);
-            throw errno;
+        if ( ! lazy ) {
+            fd = open(file_path.c_str(), flags, mode );
+            if ( -1 == fd ) {
+                printf("%s() FAILED: %s flags=%#x mode=%#x\n",__func__,path.c_str(),flags,mode);
+                throw errno;
+            }
+        } else {
+            fd = -1;
         }
         //printf("%s() %s flags=%#x mode=%#x fd=%d\n",__func__,path.c_str(),flags,mode,fd);
     }
 
-    FileDescriptor(std::string& file_path, int dirfd, int flags, mode_t mode) : path(file_path)
+    FileDescriptor(std::string& file_path, int dirfd, int flags, mode_t mode) : path(file_path), fd( -1 )
     {
         fd = openat(dirfd, file_path.c_str(), flags, mode );
         if ( -1 == fd ) {
@@ -77,8 +81,22 @@ public:
         }
     }
 
+
     ~FileDescriptor() {
-        close(fd);
+        if ( -1 != fd ) {
+            close(fd);
+        }
+    }
+
+    int openLate() {
+        fd = open(path.c_str(), flags, mode );
+        if ( -1 == fd ) {
+            printf("%s() FAILED: %s flags=%#x mode=%#x\n",__func__,path.c_str(),flags,mode);
+            throw errno;
+        } else {
+            printf("%s() %s flags=%#x mode=%#x\n",__func__,path.c_str(),flags,mode);
+        }
+        return fd;
     }
 
     std::string getPath() const {
@@ -89,9 +107,34 @@ public:
         return fd;
     }
 
+    FileDescriptor( SST::Output* output, FILE* fp ) {
+        char str[80];
+        assert( 1 == fscanf(fp,"path: %s\n",str) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"path: %s\n",str );
+        path = str;
+
+        assert( 1 == fscanf(fp,"fd: %d\n", &fd) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"fd: %d\n", fd);
+
+        assert( 1 == fscanf(fp,"flags: %d\n", &flags ) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"flags: %d\n", flags );
+
+        assert( 1 == fscanf(fp,"mode: %d\n", &mode) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"mode: %d\n", mode);
+    }
+
+    void checkpoint( FILE* fp) {
+        fprintf(fp, "path: %s\n", path.c_str() );
+        fprintf(fp, "fd: %d\n", fd );
+        fprintf(fp, "flags: %d\n", flags );
+        fprintf(fp, "mode: %d\n", mode );
+    }
+
 protected:
     std::string path;
     int fd;
+    int flags;
+    mode_t mode;
 };
 
 class FileDescriptorTable {
@@ -137,7 +180,8 @@ public:
         }
         if ( fd >= 0 ) {
             try {
-                m_fileDescriptors[fd] = new FileDescriptor(file_path,flags,mode); 
+        //        m_fileDescriptors[fd] = new FileDescriptor(file_path,flags,mode, fd <= 2 );
+                m_fileDescriptors[fd] = new FileDescriptor(file_path,flags,mode, false );
             } catch ( int err ) {
                 fd = -err;
             }
@@ -173,7 +217,11 @@ public:
         if (iter == m_fileDescriptors.end()) {
             return -1;
         }
-        return iter->second->getFileDescriptor();
+        auto fd = iter->second->getFileDescriptor();
+        if ( -1 == fd ) {
+            fd = iter->second->openLate();
+        }
+        return fd;
     }
 
     std::string getPath( uint32_t handle ) {
@@ -182,6 +230,53 @@ public:
             return "";
         }
         return iter->second->getPath();
+    }
+
+    FileDescriptorTable( SST::Output* output, FILE* fp ) {
+        char* tmp = nullptr;
+        size_t num = 0;
+        getline( &tmp, &num, fp );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",tmp);
+        assert( 0 == strcmp(tmp,"#FileDescriptorTable start\n") );
+        free(tmp);
+
+        assert( 1 == fscanf(fp,"m_refCnt: %d\n",&m_refCnt) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_refCnt: %d\n",m_refCnt);
+
+        assert( 1 ==fscanf(fp,"m_maxFD: %d\n",&m_maxFD) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_maxFD: %d\n",m_maxFD);
+
+        size_t size;
+        assert( 1 == fscanf(fp,"m_fileDescriptors.size(): %zu\n",&size) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_fileDescriptors.size(): %zu\n",size);
+
+        for ( auto i = 0; i < size; i++ ) {
+            int fd;
+            assert( 1 == fscanf(fp,"fd: %d\n", &fd ) );
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"fd: %d\n", fd );
+            m_fileDescriptors[fd] = new FileDescriptor(output, fp); 
+        }
+
+        tmp = nullptr;
+        num = 0;
+        getline( &tmp, &num, fp );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",tmp);
+        assert( 0 == strcmp(tmp,"#FileDescriptorTable end\n") );
+        free(tmp);
+    }
+
+    void checkpoint( FILE* fp ) {
+        fprintf(fp,"#FileDescriptorTable start\n");
+        fprintf(fp,"m_refCnt: %d\n",m_refCnt);
+        fprintf(fp,"m_maxFD: %d\n",m_maxFD);
+
+        fprintf(fp,"m_fileDescriptors.size(): %zu\n",m_fileDescriptors.size());
+
+        for ( auto & x : m_fileDescriptors ) {
+            fprintf(fp,"fd: %d\n",x.first);
+            x.second->checkpoint(fp);
+        }
+        fprintf(fp,"#FileDescriptorTable end\n");
     }
 private:
 

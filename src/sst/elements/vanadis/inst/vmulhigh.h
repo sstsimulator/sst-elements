@@ -69,7 +69,7 @@ public:
         if(output->getVerboseLevel() >= 16) {
             output->verbose(
                 CALL_INFO, 16, 0,
-                "Execute: 0x%llx %s phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
+                "Execute: 0x%" PRI_ADDR " %s phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
                 " / in=%" PRIu16 ", %" PRIu16 "\n",
                 getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1],
                 isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);

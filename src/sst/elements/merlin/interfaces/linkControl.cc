@@ -509,7 +509,7 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
 
 void LinkControl::sendUntimedData(SST::Interfaces::SimpleNetwork::Request* req)
 {
-    if ( use_nid_map ) {
+    if ( use_nid_map && req->dest != SimpleNetwork::INIT_BROADCAST_ADDR ) {
         req->dest = nid_map[req->dest];
     }
     rtr_link->sendUntimedData(new RtrEvent(req,id,0));

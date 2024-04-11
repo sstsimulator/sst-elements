@@ -46,10 +46,24 @@ public:
     SST_ELI_REGISTER_COMPONENT(VanadisNodeOSComponent, "vanadis", "VanadisNodeOS", SST_ELI_ELEMENT_VERSION(1, 0, 0),
                                "Vanadis Generic Operating System Component", COMPONENT_CATEGORY_PROCESSOR)
 
-    SST_ELI_DOCUMENT_PARAMS({ "verbose", "Set the output verbosity, 0 is no output, higher is more." },
-                            { "cores", "Number of cores that can request OS services via a link." },
-                            { "stdout", "File path to place stdout" }, { "stderr", "File path to place stderr" },
-                            { "stdin", "File path to place stdin" })
+    SST_ELI_DOCUMENT_PARAMS({ "cores", "Number of cores that can request OS services via a link.", NULL },
+                            { "dbgLevel", "Debug level (verbosity) for OS debug output", "0" }, 
+                            { "dbgMask", "Mask for debug output", "0" }, 
+                            { "node_id", "If specificied as > 0, this id will be used to tag stdout/stderr files.", "-1" },
+                            { "hardwareThreadCount", "Number of hardware threads pert core", "1" },
+                            { "osStartTimeNano", "'Epoch' time added to simulation time for syscalls like gettimeofday", "1000000000"},
+                            { "program_header_address", "Program header address", "0x60000000" },
+                            { "processDebugLevel", "Debug level (verbosity) for process debug output", "0" },
+                            { "physMemSize", "Size of available physical memory in bytes, with units. Ex: 2GiB", NULL },
+                            { "page_size", "Size of a page, in bytes", "4096" },
+                            { "useMMU", "Whether an MMU subcomponent is being used.", "False" },
+                            { "process%(processnum)d.env_count", "Number of environment variables to pass to the process", "0"},
+                            { "process%(processnum)d.env%(argnum)d", "Environment variable to pass to the process. Example: 'OMPNUMTHREADS=64'. 'argnum' should be contiguous starting at 0 and ending at env_count-1", ""},
+                            { "proccess%(processnum)d.exe", "Name of executable, including path", NULL},
+                            { "process%(processnum)d.argc", "Number of arguments to the executable (including arg0)", "1"},
+                            { "process%(processnum)d.arg0", "Name of the executable (path not needed)", NULL},
+                            { "process%(processnum)d.arg%(argnum)d", "Arguments for the executable. Each argument should be specified in a separate parameter and 'argnum' should be contigous starting at 1 to argc-1", ""},
+                            )
 
     SST_ELI_DOCUMENT_PORTS({ "core%(cores)d", "Connects to a CPU core", {} })
 
@@ -134,6 +148,7 @@ private:
 
     virtual void init(unsigned int phase);
     void setup();
+    void finish();
     void handleIncomingSyscall(SST::Event* ev);
     VanadisSyscall* handleIncomingSyscall( OS::ProcessInfo*, VanadisSyscallEvent*, SST::Link* core_link );
     void processSyscallPost( VanadisSyscall* syscall );
@@ -234,6 +249,14 @@ private:
         void clearSyscall( ) { assert(m_syscall); m_syscall = nullptr; }
         OS::ProcessInfo* getProcess() { return m_processInfo; }
         VanadisSyscall* getSyscall() { return m_syscall; }
+        void checkpoint( FILE* fp ) {
+            if ( m_processInfo ) {
+                fprintf(fp,"pid,tid: %d,%d\n",m_processInfo->getpid(),m_processInfo->gettid());
+            } else {
+                fprintf(fp,"pid,tid: %d,%d\n",-1,-1);
+            }
+            assert( nullptr == m_syscall );
+        }
       private:
         OS::ProcessInfo* m_processInfo;
         VanadisSyscall* m_syscall;
@@ -248,6 +271,16 @@ private:
 
         OS::ProcessInfo* getProcess( unsigned hwThread ) { return m_hwThreadMap.at(hwThread).getProcess(); }
         VanadisSyscall* getSyscall( unsigned hwThread ) { return m_hwThreadMap.at(hwThread).getSyscall(); }
+
+        void checkpoint( FILE* fp ) {
+            fprintf(fp, "m_hwThreadMap.size(): %d\n",m_hwThreadMap.size());
+            for ( auto i = 0; i < m_hwThreadMap.size(); i++ ) {
+                fprintf(fp, "hwThread: %d\n",i);
+                m_hwThreadMap[i].checkpoint( fp );
+            }
+        }
+        void checkpointLoad( FILE* fp ) {
+        }
       private:
         std::vector< HardwareThreadInfo > m_hwThreadMap;
     };
@@ -361,6 +394,13 @@ private:
         output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_PAGE_FAULT,"ppn=%d\n",page->getPPN());
         return page;
     }
+
+    std::string m_checkpointDir;
+    enum { NO_CHECKPOINT, CHECKPOINT_LOAD, CHECKPOINT_SAVE }  m_checkpoint;
+
+    void checkpoint( std::string dir );
+    int checkpointLoad( std::string dir );
+    std::deque<uint64_t> m_flushPages;
 };
 
 } // namespace Vanadis

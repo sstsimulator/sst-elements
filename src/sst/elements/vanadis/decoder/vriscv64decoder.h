@@ -49,21 +49,19 @@ public:
       SST_ELI_ELEMENT_VERSION(1, 0, 0),
       "Implements a RISCV64-compatible decoder for Vanadis CPU processing.",
       SST::Vanadis::VanadisDecoder)
+
     SST_ELI_DOCUMENT_PARAMS(
       {"decode_max_ins_per_cycle", "Maximum number of instructions that can be "
-                                   "decoded and issued per cycle"},
-      {"uop_cache_entries", "Number of micro-op cache entries, this "
-                            "corresponds to ISA-level instruction counts."},
-      {"predecode_cache_entries",
-       "Number of cache lines that a cached prior to decoding (these support "
-       "loading from cache prior to decode)"},
+                                   "decoded and issued per cycle", "2"},
       {"halt_on_decode_fault",
-		"Fatal error if a decode fault occurs, used for debugging and not recommmended default is 0 (false)", "0"})
+		"Fatal error if a decode fault occurs, used for debugging and not recommmended default is 0 (false)", "0"},
+      { "entry_point", "Starting instruction pointer; if not specified (set to 0), "
+                      "falls back to the core's ELF reader to discover", "0"})
 
     VanadisRISCV64Decoder(ComponentId_t id, Params& params) : VanadisDecoder(id, params)
     {
         // we need TWO additional registers for AMO microcode operations, RISC-V has 32 + 2 int for our micro-code.
-        options = new VanadisDecoderOptions(static_cast<uint16_t>(0), 34, 32, 2, VANADIS_REGISTER_MODE_FP64);
+        options = new VanadisDecoderOptions(static_cast<uint16_t>(0), 35, 32, 2, VANADIS_REGISTER_MODE_FP64);
         max_decodes_per_cycle = params.find<uint16_t>("decode_max_ins_per_cycle", 2);
 
         // See if we get an entry point the sub-component says we have to use
@@ -72,6 +70,7 @@ public:
         setInstructionPointer(params.find<uint64_t>("entry_point", 0));
 
         fatal_decode_fault = params.find<bool>("halt_on_decode_fault", false);
+
     }
 
     ~VanadisRISCV64Decoder() {}
@@ -86,7 +85,7 @@ public:
 	VanadisRegisterFile* regFile, const uint64_t start_stack_address ) override {
 
         output->verbose(
-            CALL_INFO, 16, 0, "-> Setting SP to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", start_stack_address,
+            CALL_INFO, 16, 0, "-> Setting SP to (64B-aligned):          %" PRIu64 " / 0x%0" PRI_ADDR "\n", start_stack_address,
             start_stack_address);
 
         // Per RISCV Assembly Programemr's handbook, register x2 is for stack
@@ -101,7 +100,7 @@ public:
 
     void setArg1Register( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) override {
         output->verbose(
-            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting argument 1 register to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting argument 1 register to (64B-aligned):          %" PRIu64 " / 0x%0" PRI_ADDR "\n", value,
             value);
         const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(10);
         output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> argument 1 (r10) maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
@@ -111,7 +110,7 @@ public:
 
     virtual void setReturnRegister( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) override {
         output->verbose(
-            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting register 10 to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting register 10 to (64B-aligned):          %" PRIu64 " / 0x%0" PRI_ADDR "\n", value,
             value);
         const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(10);
         output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> r10 maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
@@ -121,7 +120,7 @@ public:
 
     virtual void setThreadPointer( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) override {
         output->verbose(
-            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting thread pointer to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting thread pointer to (64B-aligned):          %" PRIu64 " / 0x%0" PRI_ADDR "\n", value,
             value);
         const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(4);
         output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Thread Pointer (r4) maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
@@ -144,7 +143,7 @@ public:
                     // We have the instruction in our micro-op cache
                     if(output->getVerboseLevel() >= 16) {
                         output->verbose(
-                            CALL_INFO, 16, 0, "---> Found uop bundle for ip=0x%llx, loading from cache...\n", ip);
+                            CALL_INFO, 16, 0, "---> Found uop bundle for ip=0x%" PRI_ADDR ", loading from cache...\n", ip);
                     }
                     stat_uop_hit->addData(1);
 
@@ -176,8 +175,8 @@ public:
                                     if(output->getVerboseLevel() >= 16) {
                                         output->verbose(
                                             CALL_INFO, 16, 0,
-                                            "----> contains a branch: 0x%llx / predicted "
-                                            "(found in predictor): 0x%llx\n",
+                                            "----> contains a branch: 0x%" PRI_ADDR " / predicted "
+                                            "(found in predictor): 0x%" PRI_ADDR "\n",
                                             ip, predicted_address);
                                     }
 
@@ -192,8 +191,8 @@ public:
                                     if(output->getVerboseLevel() >= 16) {
                                         output->verbose(
                                             CALL_INFO, 16, 0,
-                                            "----> contains a branch: 0x%llx / predicted "
-                                            "(not-found in predictor): 0x%llx, pc-increment: %" PRIu64 "\n",
+                                            "----> contains a branch: 0x%" PRI_ADDR " / predicted "
+                                            "(not-found in predictor): 0x%" PRI_ADDR ", pc-increment: %" PRIu64 "\n",
                                             ip, ip + 4, bundle->pcIncrement());
                                     }
 
@@ -210,7 +209,7 @@ public:
                         // already found a predicted target addeess to decode
                         if(output->getVerboseLevel() >= 16) {
                             output->verbose(
-                                CALL_INFO, 16, 0, "----> branch? %s, ip=0x%llx + inc=%" PRIu64 " = new-ip=0x%llx\n",
+                                CALL_INFO, 16, 0, "----> branch? %s, ip=0x%" PRI_ADDR " + inc=%" PRIu64 " = new-ip=0x%" PRI_ADDR "\n",
                                 bundle_has_branch ? "yes" : "no", ip, bundle_has_branch ? 0 : bundle->pcIncrement(),
                                 bundle_has_branch ? ip : ip + bundle->pcIncrement());
                         }
@@ -229,7 +228,7 @@ public:
                         output->verbose(
                             CALL_INFO, 16, 0,
                             "---> uop not found, but is located in the predecode "
-                            "i0-icache (ip=0x%llx)\n",
+                            "i0-icache (ip=0x%" PRI_ADDR ")\n",
                             ip);
                     }
 
@@ -242,7 +241,7 @@ public:
                         ins_loader->getPredecodeBytes(output, ip, (uint8_t*)&temp_ins, sizeof(temp_ins));
 
                     if ( predecode_bytes ) {
-                        output->verbose(CALL_INFO, 16, 0, "---> performing a decode for ip=0x%llx\n", ip);
+                        output->verbose(CALL_INFO, 16, 0, "---> performing a decode for ip=0x%" PRI_ADDR "\n", ip);
                         decode(output, ip, temp_ins, decoded_bundle);
 
                         if(output->getVerboseLevel() >= 16) {
@@ -254,7 +253,7 @@ public:
                         ins_loader->cacheDecodedBundle(decoded_bundle);
 
                         if ( 0 == decoded_bundle->getInstructionCount() ) {
-                            output->fatal(CALL_INFO, -1, "Error - bundle at: 0x%llx generates no micro-ops.\n", ip);
+                            output->fatal(CALL_INFO, -1, "Error - bundle at: 0x%" PRI_ADDR " generates no micro-ops.\n", ip);
                         }
 
                         // Exit this cycle because results saved to cache are available next
@@ -264,7 +263,7 @@ public:
                     else {
                         output->fatal(
                             CALL_INFO, -1,
-                            "Error - predecoded bytes for 0x%llu found, but "
+                            "Error - predecoded bytes for 0x%" PRIu64 " found, but "
                             "retrieval of bytes failed.\n",
                             ip);
                     }
@@ -276,7 +275,7 @@ public:
                         output->verbose(
                             CALL_INFO, 16, 0,
                             "---> microop bundle and pre-decoded bytes are not found for "
-                            "0x%llx, requested read for cache line (line=%" PRIu64 ")\n",
+                            "0x%" PRI_ADDR ", requested read for cache line (line=%" PRIu64 ")\n",
                             ip, ins_loader->getCacheLineWidth());
                     }
                     ins_loader->requestLoadAt(output, ip, 4);
@@ -295,7 +294,7 @@ public:
         }
 
         if(output->getVerboseLevel() >= 16) {
-            output->verbose(CALL_INFO, 16, 0, "---> cycle is completed, ip=0x%llx\n", ip);
+            output->verbose(CALL_INFO, 16, 0, "---> cycle is completed, ip=0x%" PRI_ADDR "\n", ip);
         }
     }
 
@@ -308,7 +307,7 @@ protected:
 
     void decode(SST::Output* output, const uint64_t ins_address, const uint32_t ins, VanadisInstructionBundle* bundle)
     {
-        output->verbose(CALL_INFO, 16, 0, "[decode] -> addr: 0x%llx / ins: 0x%08x\n", ins_address, ins);
+        output->verbose(CALL_INFO, 16, 0, "[decode] -> addr: 0x%" PRI_ADDR " / ins: 0x%08x\n", ins_address, ins);
         output->verbose(CALL_INFO, 16, 0, "[decode] -> ins-bytes: 0x%08x\n", ins);
 
         // We are supposed to have 16b packets for RISCV instructions, if we don't then mark fault
@@ -481,7 +480,7 @@ protected:
                     output->verbose(
                         CALL_INFO, 16, 0,
                         "----> STORE width: %" PRIu32 " bytes == (1 << %" PRIu32 ") %" PRIu16 " -> memory[ %" PRIu16
-                        " + %" PRId64 " / (0x%llx)]\n",
+                        " + %" PRId64 " / (0x%" PRI_ADDR ")]\n",
                         store_bytes, func_code3, rs2, rs1, simm64, simm64);
 
                     bundle->addInstruction(new VanadisStoreInstruction(
@@ -675,7 +674,12 @@ protected:
                     case 1:
                     {
                         // MULH
-                        // NOT SURE WHAT THIS IS?
+                        output->verbose(
+                            CALL_INFO, 16, 0, "-------> MULH %" PRIu16 " <- %" PRIu16 " + %" PRIu16 "\n", rd, rs1, rs2);
+
+                        bundle->addInstruction(
+                            new VanadisMultiplyHighInstruction<int64_t,int64_t>( ins_address, hw_thr, options, rd, rs1, rs2));
+                        decode_fault = false;
                     } break;
                     };
                 } break;
@@ -696,7 +700,12 @@ protected:
                     case 1:
                     {
                         // MULHSU
-                        // NOT SURE WHAT THIS IS?
+                        output->verbose(
+                            CALL_INFO, 16, 0, "-------> MULHSU %" PRIu16 " <- %" PRIu16 " + %" PRIu16 "\n", rd, rs1, rs2);
+
+                        bundle->addInstruction(
+                            new VanadisMultiplyHighInstruction<int64_t,uint64_t>( ins_address, hw_thr, options, rd, rs1, rs2));
+                        decode_fault = false;
                     } break;
                     };
                 } break;
@@ -716,7 +725,7 @@ protected:
                     } break;
                     case 0x1:
                     {
-                        // MULHU mul und place in upper XLEN bits, unsigned 
+                        // MULHU mul und place in upper XLEN bits, unsigned
                         // need to check the register order
                         output->verbose(
                             CALL_INFO, 16, 0, "-------> MULHU %" PRIu16 " <- %" PRIu16 " + %" PRIu16 "\n", rd, rs1, rs2);
@@ -940,7 +949,7 @@ protected:
 
                 output->verbose(
                     CALL_INFO, 16, 0,
-                    "-----> JAL link-reg: %" PRIu16 " / jump-address: 0x%llx + %" PRId64 " = 0x%llx\n", rd, ins_address,
+                    "-----> JAL link-reg: %" PRIu16 " / jump-address: 0x%" PRI_ADDR " + %" PRId64 " = 0x%" PRI_ADDR "\n", rd, ins_address,
                     simm64, jump_to);
 
                 bundle->addInstruction(new VanadisJumpLinkInstruction(
@@ -1036,104 +1045,101 @@ protected:
                     uint32_t func_code12 = (ins & 0xFFF00000);
 
                     switch ( func_code12 ) {
-                    case 0x0:
+                    case 0x0: // SCALL
                     {
                         output->verbose(CALL_INFO, 16, 0, "------> ECALL/SYSCALL\n");
 						bundle->addInstruction(new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
                         bundle->addInstruction(new VanadisSysCallInstruction(ins_address, hw_thr, options));
                         decode_fault = false;
                     } break;
+                    case 0x1: // SBREAK
+                    {
+                        printf("%#lx %#lx SBREAK\n",ins_address,ins);
+                        assert(0);
+                    } break;
+                    } 
+                } else { 
+                    // CSRRW(I) atomic reaad/write
+                    // CSRRS(I) atomic read and set bits
+                    // CSRRC(I) atomic read and clear bit
+                    output->verbose(
+                            CALL_INFO, 16, 0, "-----> %s: ins: 0x%" PRI_ADDR " / %#" PRIx64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", 
+                                        getCSR_name(func_code).c_str(),ins_address, uimm64, rd, rs1);
+
+                    switch ( uimm64 ) 
+                    {
+                        case 0x1: // FSFLAGS
+                        {
+                            output->verbose( CALL_INFO, 16, 0, "----->  FFLAGS: %" PRIu64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", uimm64, rd, rs1);
+
+                            if ( ! ( ( 0x1 == func_code || 0x3 == func_code ) && 0 == rd ) ) {
+                                bundle->addInstruction(new VanadisFPFlagsReadInstruction<false, false, true>(ins_address, hw_thr, options, fpflags, rd));
+                            }
+                            if ( ! ( 0x2 == func_code && rs1 == 0 ) ) {
+                                if ( func_code & 0x4 ) {
+                                    bundle->addInstruction(
+                                       new VanadisFPFlagsSetImmInstruction<false,true>(ins_address, hw_thr, options, fpflags, static_cast<uint64_t>(rs1), func_code & 0x3));
+                                } else {
+                                    bundle->addInstruction(
+                                        new VanadisFPFlagsSetInstruction<false,true>(ins_address, hw_thr, options, fpflags, rs1, func_code & 0x3 ));
+                                }
+                            }
+                            decode_fault = false;
+                        } break;
+                        case 0x2: // FSRM
+                        {
+                            output->verbose( CALL_INFO, 16, 0, "----->  FRM: %" PRIu64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", uimm64, rd, rs1);
+
+                            if ( ! ( ( 0x1 == func_code || 0x3 == func_code ) && 0 == rd ) ) {
+                                bundle->addInstruction(new VanadisFPFlagsReadInstruction<true, false, false>(ins_address, hw_thr, options, fpflags, rd));
+                            }
+                            if ( ! ( 0x2 == func_code && rs1 == 0 ) ) {
+                                 if ( func_code & 0x4 ) {
+                                    bundle->addInstruction(
+                                        new VanadisFPFlagsSetImmInstruction<true,false>(ins_address, hw_thr, options, fpflags, static_cast<uint64_t>(rs1), func_code & 0x3));
+                                } else {
+                                    bundle->addInstruction(
+                                        new VanadisFPFlagsSetInstruction<true,false>(ins_address, hw_thr, options, fpflags, rs1, func_code & 0x3));
+                                }
+                            }
+                            decode_fault = false;
+                        } break;
+                        case 0x3: // FCSR
+                        {
+                            output->verbose( CALL_INFO, 16, 0, "-----> FCSR: %" PRIu64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", uimm64, rd, rs1);
+
+                            if ( ! ( ( 0x1 == func_code || 0x3 == func_code ) && 0 == rd ) ) {
+                                bundle->addInstruction(new VanadisFPFlagsReadInstruction<true, true, true>(ins_address, hw_thr, options, fpflags, rd));
+                            } 
+                            if ( ! ( 0x2 == func_code && rs1 == 0 ) ) {
+                                if ( func_code & 0x4 ) {
+                                    bundle->addInstruction(
+                                        new VanadisFPFlagsSetImmInstruction<true,true>(ins_address, hw_thr, options, fpflags, static_cast<uint64_t>(rs1), func_code & 0x3));
+                                } else {
+                                    bundle->addInstruction(
+                                        new VanadisFPFlagsSetInstruction<true,true>(ins_address, hw_thr, options, fpflags, rs1, func_code & 0x3));
+                                }
+                            }
+                            decode_fault = false;
+                      } break;
+                      default:
+                      {
+                        uint64_t csrNum = uimm64 & 0xfff;
+                        switch ( csrNum ) {
+                            case 0xc00:
+                            {
+                                if ( 0 == rs1 ) {
+                                    auto thread_call = std::bind(&VanadisRISCV64Decoder::getCycleCount, this);
+                                    bundle->addInstruction( new VanadisSetRegisterByCallInstruction<int64_t>( ins_address, hw_thr, options, rd, thread_call));
+                                    decode_fault = false;
+                                }
+                            } break;
+                        }
+
+                      } break;
                     }
                 }
-                else {
-                    switch ( func_code ) {
-                    case 0x1:
-                    {
-                        // CSRRW
-                        output->verbose(
-                            CALL_INFO, 16, 0, "-----> CSRRW CSR: ins: 0x%llx / %" PRIu64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", ins_address, uimm64, rd, rs1);
-
-                        // Switch based on the CSR being read
-                        switch ( uimm64 ) {
-                        case 0x1:
-                        {
-                            // Pseudoinstructions FSFLAGS; csrrw x0, fflags rs  
-                            output->verbose( CALL_INFO, 16, 0, "-----> FSFLAGS: %" PRIu64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", uimm64, rd, rs1);
-
-                            // CSSRW x0, clear the flags
-							bundle->addInstruction(new VanadisFPFlagsSetInstruction(ins_address, hw_thr, options, fpflags, rd));
-                            // FFLAGS rs, write the flags 
-							bundle->addInstruction(new VanadisFPFlagsSetInstruction(ins_address, hw_thr, options, fpflags, rs1));
-                            decode_fault = false;
-                        } break;
-                        default: assert(0);
-                        }
-                    } break;
-                    case 0x2:
-                    {
-                        // CSRRS
-                        output->verbose(
-                            CALL_INFO, 16, 0, "-----> CSRRS CSR: ins: 0x%llx / %" PRIu64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", ins_address, uimm64, rd, rs1);
-                        // ignore for now?
-
-                        // Switch based on the CSR being read
-                        switch ( uimm64 ) {
-                        case 0x1:
-                        {
-                            // Pseudoinstructions FRFLAGS; csrrs rd, fflags x0  
-                            output->verbose( CALL_INFO, 16, 0, "-----> FRFLAGS: %" PRIu64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", uimm64, rd, rs1);
-
-                            // CSRRS rd ; put fpflags in rd
-							bundle->addInstruction(new VanadisFPFlagsReadInstruction<true, true, true>(ins_address, hw_thr, options, fpflags, rd));
-                            // FFLAGS x0 ; zero fp fpflags
-							bundle->addInstruction(new VanadisFPFlagsSetInstruction(ins_address, hw_thr, options, fpflags, rs1));
-
-                            decode_fault = false;
-                        } break;
-                        case 0x2:
-                        {
-                            // Floating point rounding mode is being read (frrm instruction)
-                            output->verbose(
-                                CALL_INFO, 16, 0,
-                                "-------> Mapping read rounding-mode register.\n");
-
-										bundle->addInstruction(new VanadisFPFlagsReadInstruction<true, false, false>(ins_address, hw_thr, options, fpflags, rd));
-                              decode_fault = false;
-                        } break;
-                        case 0xfffffffffffffc00:
-                        {
-                            auto thread_call = std::bind(&VanadisRISCV64Decoder::getCycleCount, this);
-
-                            // Read the cycle count
-                            output->verbose( CALL_INFO, 16, 0, "-------> RDCYCLE, read the cycle count\n");
-
-                            bundle->addInstruction(
-                                new VanadisSetRegisterByCallInstruction<int64_t>(
-                                    ins_address, hw_thr, options, rd, thread_call));
-                            decode_fault = false;
-                        } break;
-                        }
-                    } break;
-                    case 0x6:
-                    {
-                        // CSRRSI
-                        output->verbose(
-                            CALL_INFO, 16, 0,
-                            "-----> CSRRS CSRRSI: ins: 0x%llx / %" PRIu64 " / reg: %" PRIu16 " / UIMMM: %" PRIu16 "\n", ins_address, uimm64, rd, rs1);
-
-                        if ( 0 == rd ) {
-										switch(uimm64) {
-									   case 1: {
-											// CSR register 1 maps to floating point flags
-											bundle->addInstruction(new VanadisFPFlagsSetImmInstruction(ins_address, hw_thr, options, fpflags, static_cast<uint64_t>(rs1)));
-      	                        decode_fault = false;
-											} break;
-										}
-                        }
-                    } break;
-                    }
-                }
-            } break;
+            } break; // end of  0x73:
             case 0x3B:
             {
                 // 64b integer arithmetic-W
@@ -1263,13 +1269,19 @@ protected:
             } break;
 				case 0xF:
 			   {
-					// Fence operations
-					// For now, we conduct a heavy fence
-				   // could optimize this to be more efficient
-					output->verbose(CALL_INFO, 16, 0, "----> FENCE\n");
-					bundle->addInstruction(
-	                             	new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
-               decode_fault = false;
+                    processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
+                    switch ( func_code3 ) {
+                        case 0x0:
+                        {
+					        // Fence operations
+					        // For now, we conduct a heavy fence
+				            // could optimize this to be more efficient
+					        output->verbose(CALL_INFO, 16, 0, "----> FENCE\n");
+					        bundle->addInstruction(
+								    new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
+                            decode_fault = false;
+                        } break;
+                    }
 				} break;
             case 0x2F:
             {
@@ -1293,70 +1305,32 @@ protected:
                     break;
                 }
 
+
+#define AMO_W 0x2
+#define AMO_D 0x3
+
+#define LR 0x2
+#define SC 0x3
+#define AMO_SWAP 0x1
+#define AMO_ADD  0x0
+#define AMO_XOR  0x4 
+#define AMO_AND  0xc
+#define AMO_OR   0x8
+#define AMO_MIN  0x10
+#define AMO_MAX  0x14
+#define AMO_MINU 0x18
+#define AMO_MAXU 0x1c
+
                 // need to mask out AQ and RL bits, these are used for deciding on fence operations
-                switch ( (func_code7 & 0x7C) ) {
-                case 0x0:
-                {
-                    if(LIKELY(op_width != 0)) {
-                        // AMO.ADD
-                        output->verbose(CALL_INFO, 16, 0, 
-                            "-----> AMOADD 0x%llx / thr: %" PRIu32 " / %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16 
-                            " / width: %" PRIu32 " / aq: %s / rl: %s\n",
-                            ins_address, hw_thr, rd, rs1, rs2, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
+                auto amo_op = (func_code7 & 0x7C) >> 2;
 
-                        if(LIKELY(perform_aq)) {
-                            bundle->addInstruction(new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
-                        }
-
-                        // implement a micro-op sequence for AMOADD
-                        // (r1) -> r32
-                        bundle->addInstruction(new VanadisLoadInstruction(
-                                    ins_address, hw_thr, options, rs1, 0, 32, op_width,
-                                    true, MEM_TRANSACTION_LLSC_LOAD,
-                                    LOAD_INT_REGISTER));
-
-                        // r32 + rs2 -> r32
-                        bundle->addInstruction(
-                            new VanadisAddInstruction<int64_t>(
-                                ins_address, hw_thr, options, 32, 32, rs2));
-
-                        // r32 -> (rs1) and place success code in r33
-                        // 0 is a success, 1 is a failure
-                        bundle->addInstruction(new VanadisStoreConditionalInstruction(
-                                ins_address, hw_thr, options, rs1, 0, 32, /* success code */ 33, op_width,
-                                STORE_INT_REGISTER, 0, 1));
-
-                        // r32 - rs2 -> r32
-                        bundle->addInstruction(
-                            new VanadisSubInstruction<int64_t>(
-                                ins_address, hw_thr, options, 32, 32, rs2, true));
-
-                        // conditionally copy the loaded value into rd IF the store-conditional was successful
-                        // copy r32 into rd if r33 == 0
-                        bundle->addInstruction(new VanadisConditionalMoveImmInstruction<int64_t, int64_t, REG_COMPARE_EQ>(
-                                ins_address, hw_thr, options, rd, 32, 33, 0
-                        ));
-
-                        // branch back to this instruction address IF r33 == 1 (which means the store failed)
-                        bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<int64_t, REG_COMPARE_EQ>(
-                            ins_address, hw_thr, options, 4, 33, 1,
-                            /* offset is 0 so we replay this instruction */ 0, VANADIS_NO_DELAY_SLOT
-                        ));
-
-                        if(LIKELY(perform_rl)) {
-                            bundle->addInstruction(new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
-                        }
-
-                        decode_fault = false;
-                    }
-                } break;
-
-                case 0x4:
+                switch ( amo_op ) {
+                case AMO_SWAP:
                 {
                     if(LIKELY(op_width != 0)) {
                         // AMO.SWAP
-                        output->verbose(CALL_INFO, 16, 0, 
-                            "-----> AMOSWAP 0x%llx / thr: %" PRIu32 " / %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16 
+                        output->verbose(CALL_INFO, 16, 0,
+                            "-----> AMOSWAP 0x%" PRI_ADDR " / thr: %" PRIu32 " / %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16
                             " / width: %" PRIu32 " / aq: %s / rl: %s\n",
                             ins_address, hw_thr, rd, rs1, rs2, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
 
@@ -1366,19 +1340,19 @@ protected:
 
                         // implement a micro-op sequence for AMOSWAP (yuck)
                         bundle->addInstruction(new VanadisLoadInstruction(
-                                    ins_address, hw_thr, options, rs1, 0, /* place in r32 */ 32, op_width, 
+                                    ins_address, hw_thr, options, rs1, 0, /* place in r34 */ 34, op_width,
                                     true, MEM_TRANSACTION_LLSC_LOAD,
                                     LOAD_INT_REGISTER));
 
-                        // 0 is a success, 1 is a failure 
+                        // 0 is a success, 1 is a failure
                         bundle->addInstruction(new VanadisStoreConditionalInstruction(
-                                ins_address, hw_thr, options, rs1, 0, rs2, /* place in r33 */ 33, op_width, 
+                                ins_address, hw_thr, options, rs1, 0, rs2, /* place in r33 */ 33, op_width,
                                 STORE_INT_REGISTER, 0, 1));
 
                         // conditionally copy the loaded value into rd IF the store-conditional was successful
                         // copy r32 into rd if r33 == 0
                         bundle->addInstruction(new VanadisConditionalMoveImmInstruction<int64_t, int64_t, REG_COMPARE_EQ>(
-                                ins_address, hw_thr, options, rd, 32, 33, 0
+                                ins_address, hw_thr, options, rd, 34, 33, 0
                         ));
 
                         // branch back to this instruction address IF r33 == 1 (which means the store failed)
@@ -1394,13 +1368,109 @@ protected:
                         decode_fault = false;
                     }
                 } break;
-                case 0x8:
+                case AMO_ADD:
+                case AMO_XOR:
+                case AMO_OR:
+                case AMO_AND:
+                case AMO_MIN:
+                case AMO_MAX:
+                case AMO_MINU:
+                case AMO_MAXU:
+                {
+                    if(LIKELY(op_width != 0)) {
+                        output->verbose(CALL_INFO, 16, 0,
+                            "-----> %s.%s 0x%llx / thr: %" PRIu32 " / %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16
+                            " / width: %" PRIu32 " / aq: %s / rl: %s\n",
+                            getAMO_name(amo_op).c_str(), getAMO_type( func_code3 ).c_str(),
+                            ins_address, hw_thr, rd, rs1, rs2, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
+
+                        if(LIKELY(perform_aq)) {
+                            bundle->addInstruction(new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
+                        }
+
+                        // (r1) -> rd
+                        bundle->addInstruction(new VanadisLoadInstruction(
+                                    ins_address, hw_thr, options, rs1, 0, 34, op_width,
+                                    true, MEM_TRANSACTION_LLSC_LOAD,
+                                    LOAD_INT_REGISTER));
+
+                        // r34 OP rs2 => r32
+                        switch( amo_op ) { 
+                        case AMO_ADD:
+                            bundle->addInstruction( new VanadisAddInstruction<int64_t>( ins_address, hw_thr, options, 32, 34, rs2));
+                            break;
+                        case AMO_XOR:
+                            bundle->addInstruction( new VanadisXorInstruction( ins_address, hw_thr, options, 32, 34, rs2)); 
+                            break;
+                        case AMO_OR:
+                            bundle->addInstruction( new VanadisOrInstruction( ins_address, hw_thr, options, 32, 34, rs2)); 
+                            break;
+                        case AMO_AND:
+                            bundle->addInstruction( new VanadisAndInstruction( ins_address, hw_thr, options, 32, 34, rs2));
+                            break;
+                        case AMO_MIN:
+                            if ( AMO_W == func_code3 ) {
+                                bundle->addInstruction( new VanadisMinInstruction<int32_t,true>( ins_address, hw_thr, options, 32, 34, rs2));
+                            } else {
+                                bundle->addInstruction( new VanadisMinInstruction<int64_t,true>( ins_address, hw_thr, options, 32, 34, rs2));
+                            }
+                            break;
+                        case AMO_MAX:
+                            if ( AMO_W == func_code3 ) {
+                                bundle->addInstruction( new VanadisMinInstruction<int32_t,false>( ins_address, hw_thr, options, 32, 34, rs2));
+                            } else {
+                                bundle->addInstruction( new VanadisMinInstruction<int64_t,false>( ins_address, hw_thr, options, 32, 34, rs2));
+                            }
+                            break;
+                        case AMO_MINU:
+                            if ( AMO_W == func_code3 ) {
+                                bundle->addInstruction( new VanadisMinInstruction<uint32_t,true>( ins_address, hw_thr, options, 32, 34, rs2));
+                            } else {
+                                bundle->addInstruction( new VanadisMinInstruction<uint64_t,true>( ins_address, hw_thr, options, 32, 34, rs2));
+                            }
+                            break;
+                        case AMO_MAXU:
+                            if ( AMO_W == func_code3 ) {
+                                bundle->addInstruction( new VanadisMinInstruction<uint32_t,false>( ins_address, hw_thr, options, 32, 34, rs2));
+                            } else {
+                                bundle->addInstruction( new VanadisMinInstruction<uint64_t,false>( ins_address, hw_thr, options, 32, 34, rs2));
+                            }
+                            break;
+                        default: assert(0);
+                        }
+
+                        // r32 -> (rs1) and place success code in r33
+                        // 0 is a success, 1 is a failure
+                        bundle->addInstruction(new VanadisStoreConditionalInstruction(
+                                ins_address, hw_thr, options, rs1, 0, 32, /* success code */ 33, op_width,
+                                STORE_INT_REGISTER, 0, 1));
+
+                        // conditionally copy the loaded value into rd IF the store-conditional was successful
+                        // copy r34 into rd if r33 == 0
+                        bundle->addInstruction(new VanadisConditionalMoveImmInstruction<int64_t, int64_t, REG_COMPARE_EQ>(
+                                ins_address, hw_thr, options, rd, 34, 33, 0
+                        ));
+
+                        // branch back to this instruction address IF r33 == 1 (which means the store failed)
+                        bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<int64_t, REG_COMPARE_EQ>(
+                            ins_address, hw_thr, options, 4, 33, 1,
+                            /* offset is 0 so we replay this instruction */ 0, VANADIS_NO_DELAY_SLOT
+                        ));
+
+                        if(LIKELY(perform_rl)) {
+                            bundle->addInstruction(new VanadisFenceInstruction(ins_address, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
+                        }
+
+                        decode_fault = false;
+                    }
+                } break;
+                case LR:
                 {
                     if ( rs2 == 0 ) {
                         // LR.?.AQ.RL
                         if(LIKELY(op_width != 0)) {
                             output->verbose(
-                                CALL_INFO, 16, 0, "-----> LR 0x%llx / thr: %" PRIu32 " / (LLSC_LOAD) %" PRIu16 " <- memory[ %" PRIu16 " ] / width: %" PRIu32 " / aq: %s / rl: %s\n",
+                                CALL_INFO, 16, 0, "-----> LR 0x%" PRI_ADDR " / thr: %" PRIu32 " / (LLSC_LOAD) %" PRIu16 " <- memory[ %" PRIu16 " ] / width: %" PRIu32 " / aq: %s / rl: %s\n",
                                     ins_address, hw_thr, rd, rs1, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
 
                             if(LIKELY(perform_aq)) {
@@ -1422,12 +1492,12 @@ protected:
                         // ?
                     }
                 } break;
-                case 0xC:
+                case SC:
                 {
                     if(LIKELY(op_width != 0)) {
                         output->verbose(
                             CALL_INFO, 16, 0,
-                            "-----> SC 0x%llx / thr: %" PRIu32 " / (LLSC_STORE) %" PRIu16 " -> memory[ %" PRIu16 " ] / result: %" PRIu16 " / width: %" PRIu32 " / aq: %s / rl: %s\n",
+                            "-----> SC 0x%" PRI_ADDR " / thr: %" PRIu32 " / (LLSC_STORE) %" PRIu16 " -> memory[ %" PRIu16 " ] / result: %" PRIu16 " / width: %" PRIu32 " / aq: %s / rl: %s\n",
                             ins_address, hw_thr, rs2, rs1, rd, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");
 
                         if(LIKELY(perform_aq)) {
@@ -1460,14 +1530,14 @@ protected:
 							output->verbose(CALL_INFO, 16, 0, "-------> FSW imm=%" PRId64 " / rs1: %" PRIu16 " / rs2: %" PRIu16 "\n", simm64, rs1, rs2);
 							bundle->addInstruction(new VanadisStoreInstruction(
                         ins_address, hw_thr, options, rs1, simm64, rs2, 4, MEM_TRANSACTION_NONE, STORE_FP_REGISTER));
-                    	decode_fault = false;
+                        decode_fault = false;
 						} break;
 					case 0x3:
 						{
 							output->verbose(CALL_INFO, 16, 0, "-------> FSD imm=%" PRId64 " / rs1: %" PRIu16 " / rs2: %" PRIu16 "\n", simm64, rs1, rs2);
 							bundle->addInstruction(new VanadisStoreInstruction(
                         ins_address, hw_thr, options, rs1, simm64, rs2, 8, MEM_TRANSACTION_NONE, STORE_FP_REGISTER));
-                    	decode_fault = false;
+                        decode_fault = false;
 						} break;
 					}
             } break;
@@ -1483,6 +1553,11 @@ protected:
                 case 44:
                 {
                     //FSQRT.S
+                    output->verbose(
+                        CALL_INFO, 16, 0, "-----> FSQRT.S %" PRIu16 " <- %" PRIu16 "\n", rd, rs1);
+                    bundle->addInstruction(
+                        new VanadisFPSquareRootInstruction<float>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                    decode_fault = false;
                 } break;
                 case 45:
                 {
@@ -1633,15 +1708,49 @@ protected:
                         ins_address, hw_thr, options, fpflags, rd, rs1, rs2));
                     decode_fault = false;
                 } break;
+                case 20:
+                {
+                    switch ( func_code3 ) { 
+                        case 0:
+                        {
+                            output->verbose(
+                                CALL_INFO, 16, 0, "---> FMIN.S %" PRIu16 " <- %" PRIu16 " / %" PRIu16 "\n", rd, rs1, rs2);
+                            bundle->addInstruction(new VanadisFPMinimumInstruction<float,true>(
+                                ins_address, hw_thr, options, fpflags, rd, rs1, rs2));
+                            decode_fault = false;
+                        } break;
+                        case 1:
+                        {
+                            output->verbose(
+                                CALL_INFO, 16, 0, "---> FMAX.S %" PRIu16 " <- %" PRIu16 " / %" PRIu16 "\n", rd, rs1, rs2);
+                            bundle->addInstruction(new VanadisFPMinimumInstruction<float,false>(
+                                ins_address, hw_thr, options, fpflags, rd, rs1, rs2));
+                            decode_fault = false;
+                        } break;
+                    }
+                } break;
                 case 21:
                 {
-                    output->verbose(
-                        CALL_INFO, 16, 0, "---> FMIN.D %" PRIu16 " <- %" PRIu16 " / %" PRIu16 "\n", rd, rs1, rs2);
-                    bundle->addInstruction(new VanadisFPMinimumInstruction<double>(
-                        ins_address, hw_thr, options, fpflags, rd, rs1, rs2));
-                    decode_fault = false;
+                    switch ( func_code3 ) { 
+                        case 0:
+                        {
+                            output->verbose(
+                                CALL_INFO, 16, 0, "---> FMIN.D %" PRIu16 " <- %" PRIu16 " / %" PRIu16 "\n", rd, rs1, rs2);
+                            bundle->addInstruction(new VanadisFPMinimumInstruction<double,true>(
+                                ins_address, hw_thr, options, fpflags, rd, rs1, rs2));
+                            decode_fault = false;
+                        } break;
+                        case 1:
+                        {
+                            output->verbose(
+                                CALL_INFO, 16, 0, "---> FMAX.D %" PRIu16 " <- %" PRIu16 " / %" PRIu16 "\n", rd, rs1, rs2);
+                            bundle->addInstruction(new VanadisFPMinimumInstruction<double,false>(
+                                ins_address, hw_thr, options, fpflags, rd, rs1, rs2));
+                            decode_fault = false;
+                        } break;
+                    }
                 } break;
-				    case 32:
+					case 32:
                     {
                       processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
 
@@ -1650,7 +1759,7 @@ protected:
                       switch ( rs2 ) {
                         case 1:
                         {
-                            // double to float 
+                            // double to float
                             output->verbose(CALL_INFO, 16, 0, "-----> FCVT.S.D %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                             bundle->addInstruction(
                                 new VanadisFPConvertInstruction<double,float>(ins_address, hw_thr, options, fpflags, rd, rs1));
@@ -1695,7 +1804,7 @@ protected:
                         // int32 to float
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.S.W %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
-                            new VanadisGPR2FPInstruction<int32_t, float>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                            new VanadisGPR2FPInstruction<int32_t, float, false>(ins_address, hw_thr, options, fpflags, rd, rs1));
                         decode_fault = false;
                     } break;
                     case 1:
@@ -1703,7 +1812,15 @@ protected:
                         // uint32 to float
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.S.WU %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
-                            new VanadisGPR2FPInstruction<uint32_t, float>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                            new VanadisGPR2FPInstruction<uint32_t, float, false>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                        decode_fault = false;
+                    } break;
+                    case 2:
+                    {
+                        // int64 to float
+                        output->verbose(CALL_INFO, 16, 0, "-----> FCVT.S.L %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
+                        bundle->addInstruction(
+                            new VanadisGPR2FPInstruction<int64_t, float, false>(ins_address, hw_thr, options, fpflags, rd, rs1));
                         decode_fault = false;
                     } break;
                     case 3:
@@ -1711,7 +1828,7 @@ protected:
                         // uint64 to float
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.S.LU %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
-                            new VanadisGPR2FPInstruction<uint64_t, float>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                            new VanadisGPR2FPInstruction<uint64_t, float, false>(ins_address, hw_thr, options, fpflags, rd, rs1));
                         decode_fault = false;
                     } break;
                     }
@@ -1730,7 +1847,31 @@ protected:
                         // float to int32
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.W.S %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
-                            new VanadisFP2GPRInstruction<float, int32_t>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                            new VanadisFP2GPRInstruction<float, int32_t, false>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                        decode_fault = false;
+                    } break;
+                    case 1:
+                    {
+                        // float to uint32
+                        output->verbose(CALL_INFO, 16, 0, "-----> FCVT.WU.S %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
+                        bundle->addInstruction(
+                            new VanadisFP2GPRInstruction<float, uint32_t, false>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                        decode_fault = false;
+                    } break;
+                    case 2:
+                    {
+                        // float to int64
+                        output->verbose(CALL_INFO, 16, 0, "-----> FCVT.L.S %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
+                        bundle->addInstruction(
+                            new VanadisFP2GPRInstruction<float, int64_t, false>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                        decode_fault = false;
+                    } break;
+                    case 3:
+                    {
+                        // float to uint64
+                        output->verbose(CALL_INFO, 16, 0, "-----> FCVT.L.S %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
+                        bundle->addInstruction(
+                            new VanadisFP2GPRInstruction<float, uint64_t, false>(ins_address, hw_thr, options, fpflags, rd, rs1));
                         decode_fault = false;
                     } break;
                     }
@@ -1749,7 +1890,7 @@ protected:
                         // double to int32
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.W.D %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
-                            new VanadisFP2GPRInstruction<double, int32_t>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                            new VanadisFP2GPRInstruction<double, int32_t, false>(ins_address, hw_thr, options, fpflags, rd, rs1));
                         decode_fault = false;
                     } break;
                     case 1:
@@ -1757,7 +1898,7 @@ protected:
                         // double to uint32
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.WU.D %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
-                            new VanadisFP2GPRInstruction<double, uint32_t>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                            new VanadisFP2GPRInstruction<double, uint32_t, false>(ins_address, hw_thr, options, fpflags, rd, rs1));
                         decode_fault = false;
                     } break;
                     case 2:
@@ -1765,17 +1906,17 @@ protected:
                         // double to int64
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.L.D %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
-                            new VanadisFP2GPRInstruction<double, int64_t>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                            new VanadisFP2GPRInstruction<double, int64_t, false>(ins_address, hw_thr, options, fpflags, rd, rs1));
                         decode_fault = false;
-                    }
+                    }break;
                     case 3:
                     {
                         // double to uint64
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.LU.D %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
-                            new VanadisFP2GPRInstruction<double, uint64_t>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                            new VanadisFP2GPRInstruction<double, uint64_t, false>(ins_address, hw_thr, options, fpflags, rd, rs1));
                         decode_fault = false;
-                    }
+                    }break;
                     }
                 } break;
                 case 105:
@@ -1793,7 +1934,7 @@ protected:
                         // int32 to double
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.D.W %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
-                            new VanadisGPR2FPInstruction<int32_t, double>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                            new VanadisGPR2FPInstruction<int32_t, double, false>(ins_address, hw_thr, options, fpflags, rd, rs1));
                         decode_fault = false;
                     } break;
                     case 1:
@@ -1801,7 +1942,7 @@ protected:
                         // uint32 to double
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.D.WU %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
-                            new VanadisGPR2FPInstruction<uint32_t, double>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                            new VanadisGPR2FPInstruction<uint32_t, double, false>(ins_address, hw_thr, options, fpflags, rd, rs1));
                         decode_fault = false;
                     } break;
                     case 2:
@@ -1809,20 +1950,20 @@ protected:
                         // int64 to double
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.D.L %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
-                            new VanadisGPR2FPInstruction<int64_t, double>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                            new VanadisGPR2FPInstruction<int64_t, double, false>(ins_address, hw_thr, options, fpflags, rd, rs1));
                         decode_fault = false;
-                    }
+                    } break;
                     case 3:
                     {
                         // uint64 to double
                         output->verbose(CALL_INFO, 16, 0, "-----> FCVT.D.LU %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
                         bundle->addInstruction(
-                            new VanadisGPR2FPInstruction<uint64_t, double>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                            new VanadisGPR2FPInstruction<uint64_t, double, false>(ins_address, hw_thr, options, fpflags, rd, rs1));
                         decode_fault = false;
-                    }
+                    } break;
                     }
                 } break;
-				 case 112:
+				 case 0x70:
 				 {
                     processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
 
@@ -1836,15 +1977,22 @@ protected:
                     {
 						switch(func_code3) {
 							case 0: {
-	                            output->verbose(CALL_INFO, 16, 0, "-----> FMV.X.W %" PRIu16 " <- %" PRIu16 "\n", rd, rs1);
+								output->verbose(CALL_INFO, 16, 0, "-----> FMV.X.W %" PRIu16 " <- %" PRIu16 "\n", rd, rs1);
                                 bundle->addInstruction(
-                                new VanadisFP2GPRInstruction<int32_t, int32_t>(ins_address, hw_thr, options, fpflags, rd, rs1));
-         	                    decode_fault = false;
+                                new VanadisFP2GPRInstruction<uint32_t, uint32_t, true>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                                decode_fault = false;
 							} break;
+                            case 1:
+                            {
+								output->verbose(CALL_INFO, 16, 0, "-----> FCLASS.S %" PRIu16 " <- %" PRIu16 "\n", rd, rs1);
+                                bundle->addInstruction(
+                                new VanadisFPClassInstruction<uint64_t,float>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                                decode_fault = false;
+                            } break;
 						}
                     } break;
                    }
-			    } break;
+				} break;
 				 case 120:
 				 {
                     processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
@@ -1859,15 +2007,15 @@ protected:
                     {
 								switch(func_code3) {
 								case 0: {
-	                        output->verbose(CALL_INFO, 16, 0, "-----> FMV.W.X %" PRIu16 " <- %" PRIu16 "\n", rd, rs1);
-   	                     bundle->addInstruction(
-      	                      new VanadisGPR2FPInstruction<int32_t, int32_t>(ins_address, hw_thr, options, fpflags, rd, rs1));
-         	               decode_fault = false;
+							output->verbose(CALL_INFO, 16, 0, "-----> FMV.W.X %" PRIu16 " <- %" PRIu16 "\n", rd, rs1);
+                         bundle->addInstruction(
+                              new VanadisGPR2FPInstruction<uint32_t, uint32_t, true>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                           decode_fault = false;
 								} break;
 								}
                     } break;
                    }
-			    } break;
+				} break;
                 case 0x50:
                 {
                     switch ( func_code3 ) {
@@ -1937,11 +2085,21 @@ protected:
                     processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
 
                     if ( 0 == rs2 ) {
-                        if ( 0 == func_code3 ) {
+                        switch( func_code3 ) {
+                        case 0:
+                        {
                             output->verbose(CALL_INFO, 16, 0, "-----> FMV.X.D %" PRIu16 " <- %" PRIu16 "\n", rd, rs1);
                             bundle->addInstruction(
-                                new VanadisFP2GPRInstruction<int64_t, int64_t>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                                new VanadisFP2GPRInstruction<uint64_t, uint64_t, true>(ins_address, hw_thr, options, fpflags, rd, rs1));
                             decode_fault = false;
+                        } break;
+                        case 1:
+                        {
+                            output->verbose(CALL_INFO, 16, 0, "-----> FCLASS.D %" PRIu16 " <- %" PRIu16 "\n", rd, rs1);
+                            bundle->addInstruction(
+                            new VanadisFPClassInstruction<uint64_t,double>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                            decode_fault = false;
+                        } break;
                         }
                     }
                 } break;
@@ -1953,7 +2111,7 @@ protected:
                         if ( 0 == func_code3 ) {
                             output->verbose(CALL_INFO, 16, 0, "-----> FMV.D.X %" PRIu16 " <- %" PRIu16 "\n", rd, rs1);
                             bundle->addInstruction(
-                                new VanadisGPR2FPInstruction<int64_t, int64_t>(ins_address, hw_thr, options, fpflags, rd, rs1));
+                                new VanadisGPR2FPInstruction<uint64_t, uint64_t, true>(ins_address, hw_thr, options, fpflags, rd, rs1));
                             decode_fault = false;
                         }
                     }
@@ -1973,7 +2131,7 @@ protected:
                         output->verbose(
                             CALL_INFO, 16, 0, "-----> FMADD.S %" PRIu16 " <- ( %" PRIu16 " *  %" PRIu16 " ) + %" PRIu16 "\n", rd, rs1, rs2, rs3);
                         bundle->addInstruction(
-                            new VanadisFPFusedMultiplyAddInstruction<float>(ins_address, hw_thr, options, fpflags, rd, rs1, rs2, rs3 ));
+                            new VanadisFPFusedMultiplyAddInstruction<float,false>(ins_address, hw_thr, options, fpflags, rd, rs1, rs2, rs3 ));
                         decode_fault = false;
                     } break;
                     case 1:
@@ -1982,7 +2140,7 @@ protected:
                         output->verbose(
                             CALL_INFO, 16, 0, "-----> FMADD.D %" PRIu16 " <- ( %" PRIu16 " *  %" PRIu16 " ) + %" PRIu16 "\n", rd, rs1, rs2, rs3);
                         bundle->addInstruction(
-                            new VanadisFPFusedMultiplyAddInstruction<double>(ins_address, hw_thr, options, fpflags, rd, rs1, rs2, rs3 ));
+                            new VanadisFPFusedMultiplyAddInstruction<double,false>(ins_address, hw_thr, options, fpflags, rd, rs1, rs2, rs3 ));
                         decode_fault = false;
                     } break;
                 }
@@ -1996,6 +2154,15 @@ protected:
                 rs3 = func_code7 >> 2;
 
                 switch( fmt ) {
+                    case 0:
+                    {
+                        // FMSUB.S
+                        output->verbose(
+                            CALL_INFO, 16, 0, "-----> FMSUB.S %" PRIu16 " <- ( %" PRIu16 " *  %" PRIu16 " ) -  %" PRIu16 "\n", rd, rs1, rs2, rs3);
+                        bundle->addInstruction(
+                            new VanadisFPFusedMultiplySubInstruction<float,false>(ins_address, hw_thr, options, fpflags, rd, rs1, rs2, rs3 ));
+                        decode_fault = false;
+                    } break;
                     case 1:
                     {
                         // FMSUB.D
@@ -2017,6 +2184,15 @@ protected:
                 output->verbose(CALL_INFO, 16, 0, "-----> fmt: %" PRIu32 " rs3: %" PRIu32 "\n", fmt, rs3);
 
                 switch( fmt ) {
+                    case 0:
+                    {
+                        // FNMSUB.S
+                        output->verbose(
+                            CALL_INFO, 16, 0, "-----> FNMSUB.S %" PRIu16 " <- ( - %" PRIu16 " *  %" PRIu16 " ) -  %" PRIu16 "\n", rd, rs1, rs2, rs3);
+                        bundle->addInstruction(
+                            new VanadisFPFusedMultiplySubInstruction<float,true>(ins_address, hw_thr, options, fpflags, rd, rs1, rs2, rs3 ));
+                        decode_fault = false;
+                    } break;
                     case 1:
                     {
                         // FNMSUB.D
@@ -2030,7 +2206,33 @@ protected:
             } break;
             case 0x4F:
             {
-                // FNMADD
+                uint32_t fmt;
+                processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
+                fmt = func_code7 & 0x3;
+                rs3 = func_code7 >> 2;
+
+                output->verbose(CALL_INFO, 16, 0, "-----> fmt: %" PRIu32 " rs3: %" PRIu32 "\n", fmt, rs3);
+
+                switch( fmt ) {
+                    case 0:
+                    {
+                        // FNMADD.S
+                        output->verbose(
+                            CALL_INFO, 16, 0, "-----> FNMADD.S %" PRIu16 " <- ( - %" PRIu16 " *  %" PRIu16 " ) -  %" PRIu16 "\n", rd, rs1, rs2, rs3);
+                        bundle->addInstruction(
+                            new VanadisFPFusedMultiplyAddInstruction<float,true>(ins_address, hw_thr, options, fpflags, rd, rs1, rs2, rs3 ));
+                        decode_fault = false;
+                    } break;
+                    case 1:
+                    {
+                        // FNMADD.D
+                        output->verbose(
+                            CALL_INFO, 16, 0, "-----> FNMADD.D %" PRIu16 " <- ( - %" PRIu16 " *  %" PRIu16 " ) -  %" PRIu16 "\n", rd, rs1, rs2, rs3);
+                        bundle->addInstruction(
+                            new VanadisFPFusedMultiplyAddInstruction<double,true>(ins_address, hw_thr, options, fpflags, rd, rs1, rs2, rs3 ));
+                        decode_fault = false;
+                    } break;
+                }
             } break;
             default:
             {
@@ -2341,7 +2543,7 @@ protected:
                         uint16_t rvc_rs1 = expand_rvc_int_register(extract_rs1_rvc(ins));
 
                         output->verbose(
-                            CALL_INFO, 16, 0, "--------> RVC SRLI %" PRIu16 " = %" PRIu16 " >> %" PRIu64 " (0x%llx)\n",
+                            CALL_INFO, 16, 0, "--------> RVC SRLI %" PRIu16 " = %" PRIu16 " >> %" PRIu64 " (0x%" PRI_ADDR ")\n",
                             rvc_rs1, rvc_rs1, shift_by, shift_by);
                         bundle->addInstruction(
                             new VanadisShiftRightLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
@@ -2359,7 +2561,7 @@ protected:
                         uint16_t rvc_rs1 = expand_rvc_int_register(extract_rs1_rvc(ins));
 
                         output->verbose(
-                            CALL_INFO, 16, 0, "--------> RVC SRAI %" PRIu16 " = %" PRIu16 " >> %" PRIu64 " (0x%llx)\n",
+                            CALL_INFO, 16, 0, "--------> RVC SRAI %" PRIu16 " = %" PRIu16 " >> %" PRIu64 " (0x%" PRI_ADDR ")\n",
                             rvc_rs1, rvc_rs1, shift_by, shift_by);
                         bundle->addInstruction(
                             new VanadisShiftRightArithmeticImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
@@ -2379,7 +2581,7 @@ protected:
                         uint16_t rvc_rs1 = expand_rvc_int_register(extract_rs1_rvc(ins));
 
                         output->verbose(
-                            CALL_INFO, 16, 0, "--------> RVC ANDI %" PRIu16 " = %" PRIu16 " & %" PRIu64 " (0x%llx)\n",
+                            CALL_INFO, 16, 0, "--------> RVC ANDI %" PRIu16 " = %" PRIu16 " & %" PRIu64 " (0x%" PRI_ADDR ")\n",
                             rvc_rs1, rvc_rs1, imm, imm);
 
                         bundle->addInstruction(
@@ -2514,7 +2716,7 @@ protected:
                     const uint64_t jump_target = static_cast<uint64_t>(pc_i64 + imm_final);
 
                     output->verbose(
-                        CALL_INFO, 16, 0, "----> decode RVC JUMP pc=0x%llx + imm=%" PRId64 " = 0x%llx\n", ins_address,
+                        CALL_INFO, 16, 0, "----> decode RVC JUMP pc=0x%" PRI_ADDR " + imm=%" PRId64 " = 0x%" PRI_ADDR "\n", ins_address,
                         imm_final, jump_target);
 
                     bundle->addInstruction(new VanadisJumpInstruction(
@@ -2537,7 +2739,7 @@ protected:
                     if ( imm_8 != 0 ) { imm_final |= 0xFFFFFFFFFFFFFE00; }
 
                     output->verbose(
-                        CALL_INFO, 16, 0, "----> decode RVC BEQZ %" PRIu16 " jump to: 0x%llx + 0x%llx = 0x%llx\n",
+                        CALL_INFO, 16, 0, "----> decode RVC BEQZ %" PRIu16 " jump to: 0x%" PRI_ADDR " + 0x%" PRI_ADDR " = 0x%" PRI_ADDR "\n",
                         rvc_rs1, ins_address, imm_final, ins_address + imm_final);
 
                     bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<
@@ -2561,7 +2763,7 @@ protected:
                     if ( imm_8 != 0 ) { imm_final |= 0xFFFFFFFFFFFFFE00; }
 
                     output->verbose(
-                        CALL_INFO, 16, 0, "----> decode RVC BNEZ %" PRIu16 " jump to: 0x%llx + 0x%llx = 0x%llx\n",
+                        CALL_INFO, 16, 0, "----> decode RVC BNEZ %" PRIu16 " jump to: 0x%" PRI_ADDR " + 0x%" PRI_ADDR " = 0x%" PRI_ADDR "\n",
                         rvc_rs1, ins_address, imm_final, ins_address + imm_final);
 
                     bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<
@@ -2819,8 +3021,8 @@ protected:
             if ( fatal_decode_fault ) {
                 output->fatal(
                     CALL_INFO, -1,
-                    "[decode] -> decode fault detected at 0x%llx / inst: 0x%llx / thr: %" PRIu32 ", set to fatal on detect\n",
-                    ins_address, ins, hw_thr);
+                    "[decode] -> decode fault detected at 0x%" PRI_ADDR " / thr: %" PRIu32 ", set to fatal on detect\n",
+                    ins_address, hw_thr);
             }
             bundle->addInstruction(new VanadisInstructionDecodeFault(ins_address, hw_thr, options));
         }
@@ -2856,6 +3058,38 @@ protected:
         const uint64_t uimm_8  = ((ins & 0x400) >> 2);
 
         return (uimm_76 | uimm_54 | uimm_8);
+    }
+
+    std::string getAMO_type( int type ) {
+        switch( type ) {
+            case AMO_W: return "W";
+            case AMO_D: return "D";
+            default: return "???";
+        }
+    }
+    std::string getAMO_name( int amo_op ) {
+        switch( amo_op ) {
+            case AMO_ADD: return "AMOADD";
+            case AMO_XOR: return "AMOXOR";
+            case AMO_OR: return "AMOOR";
+            case AMO_AND: return "AMOAND";
+            case AMO_MIN: return "AMOMIN";
+            case AMO_MAX: return "AMOMAX";
+            case AMO_MINU: return "AMOMINU";
+            case AMO_MAXU: return "AMPOMAXU";
+            default: return "???";
+        }
+    }
+    std::string getCSR_name( int func_code ) {
+        switch( func_code ) {
+            case 0x1: return "CSRRW";
+            case 0x2: return "CSRRS";
+            case 0x3: return "CSRRC";
+            case 0x5: return "CSRRWI";
+            case 0x6: return "CSRRSI";
+            case 0x7: return "CSRRCI";
+            default: return "Unknown instruction";
+        }
     }
 
     uint64_t extract_nzuimm_rcv(const uint32_t ins) const

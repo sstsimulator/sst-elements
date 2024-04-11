@@ -117,7 +117,7 @@ public:
 
         for (auto q_itr = pending_execute.begin(); q_itr != pending_execute.end(); q_itr++) {
             VanadisFunctionalUnitInsRecord* q_front = pending_execute.front();
-            output->verbose(CALL_INFO, 16, 0, "----> func-unit: %" PRIu16 " %" PRIu16 " entries / entry: %" PRIu16 " / %s / 0x%llx / cycles: %" PRIu16 " out of %" PRIu16 "\n",
+            output->verbose(CALL_INFO, 16, 0, "----> func-unit: %" PRIu16 " %" PRIu16 " entries / entry: %" PRIu16 " / %s / 0x%" PRI_ADDR " / cycles: %" PRIu16 " out of %" PRIu16 "\n",
                 fu_id, (uint16_t) pending_execute.size(), index++, q_front->getInstruction()->getInstCode(),
                 q_front->getInstruction()->getInstructionAddress(), q_front->getCycles(), latency);
         }

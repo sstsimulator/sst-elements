@@ -50,7 +50,7 @@ public:
     void printToBuffer(char* buffer, size_t buffer_size) override
     {
         snprintf(
-            buffer, buffer_size, "%s (ins-addr: 0x%llx, %s)", getInstCode(), getInstructionAddress(),
+            buffer, buffer_size, "%s (ins-addr: 0x%" PRI_ADDR ", %s)", getInstCode(), getInstructionAddress(),
             fault_msg.c_str());
     }
 

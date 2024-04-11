@@ -45,7 +45,7 @@ public:
         snprintf(
             buffer, buffer_size,
             "XORI    %5" PRIu16 " <- %5" PRIu16 " ^ imm=%" PRIu64 " (phys: %5" PRIu16 " <- %5" PRIu16 " ^ %" PRIu64
-            " (0x%llx))",
+            " (0x%" PRI_ADDR "))",
             isa_int_regs_out[0], isa_int_regs_in[0], imm_value, phys_int_regs_out[0], phys_int_regs_in[0], imm_value,
             imm_value);
     }
@@ -56,7 +56,7 @@ public:
         output->verbose(
             CALL_INFO, 16, 0,
             "Execute: (addr=%p) XORI phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRIu64
-            " / (0x%llx) , isa: out=%" PRIu16 " / in=%" PRIu16 "\n",
+            " / (0x%" PRI_ADDR ") , isa: out=%" PRIu16 " / in=%" PRIu16 "\n",
             (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value, imm_value,
             isa_int_regs_out[0], isa_int_regs_in[0]);
 #endif

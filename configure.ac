@@ -58,6 +58,8 @@ AS_IF([test "x$use_picky" = "xyes"],
 AM_CFLAGS="$AM_CFLAGS $WARNFLAGS"
 AM_CXXFLAGS="$AM_CXXFLAGS $WARNFLAGS"
 
+AM_EXTRA_RECURSIVE_TARGETS([snippets])
+
 AC_MSG_CHECKING([for SST-Elements Git Branch, Head SHA and Commit Count])
 if test -d ".git" ; then
     SSTELEMENTS_GIT_BRANCH=`git rev-parse --abbrev-ref HEAD`

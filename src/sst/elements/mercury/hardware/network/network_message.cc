@@ -13,10 +13,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <common/null_buffer.h>
-#include <common/errors.h>
-#include <common/serializable.h>
-#include <hardware/network/network_message.h>
+#include <mercury/common/null_buffer.h>
+#include <mercury/common/errors.h>
+#include <mercury/common/serializable.h>
+#include <mercury/hardware/network/network_message.h>
 
 #define enumcase(x) case x: return #x;
 

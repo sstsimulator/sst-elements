@@ -95,7 +95,7 @@ registerCompareValues(VanadisRegisterCompareType compareType, VanadisRegisterFil
                         (compare_result ? "true" : "false"));
     } break;
     default: {
-        output->verbose(CALL_INFO, 16, 0, "-----> Unknown comparison operation at instruction: 0x%llx\n",
+        output->verbose(CALL_INFO, 16, 0, "-----> Unknown comparison operation at instruction: 0x%" PRI_ADDR "\n",
                         ins->getInstructionAddress());
         ins->flagError();
     } break;
@@ -145,7 +145,7 @@ registerCompareValues(VanadisRegisterFile* regFile, VanadisInstruction* ins,
                         (compare_result ? "true" : "false"));
     } break;
     default: {
-        output->verbose(CALL_INFO, 16, 0, "-----> Unknown comparison operation at instruction: 0x%llx\n",
+        output->verbose(CALL_INFO, 16, 0, "-----> Unknown comparison operation at instruction: 0x%" PRI_ADDR "\n",
                         ins->getInstructionAddress());
         ins->flagError();
     } break;

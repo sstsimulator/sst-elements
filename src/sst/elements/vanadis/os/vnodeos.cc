@@ -19,6 +19,9 @@
 
 #include <functional>
 
+#include "vanadisDbgFlags.h"
+
+#include "os/vcheckpointreq.h"
 #include "os/vgetthreadstate.h"
 #include "os/resp/voscallresp.h"
 #include "os/resp/vosexitresp.h"
@@ -37,16 +40,34 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
 
     const uint32_t verbosity = params.find<uint32_t>("dbgLevel", 0);
     const uint32_t mask = params.find<uint32_t>("dbgMask", 0);
-    auto node = params.find<uint32_t>("nodeId", 0);
 
+    auto node = params.find<int>("node_id", 0); // Read as default 0 instead of -1 for tagging output only
     char* outputPrefix = (char*)malloc(sizeof(char) * 256);
     snprintf(outputPrefix, sizeof(char)*256, "[node%d-os]:@p():@l ", node);
 
     output = new SST::Output(outputPrefix, verbosity, mask, Output::STDOUT);
     free(outputPrefix);
 
+    m_checkpointDir = params.find<std::string>("checkpointDir", "");
+    auto tmp = params.find<std::string>("checkpoint", "");
+    if ( ! tmp.empty() ) {
+        assert( ! m_checkpointDir.empty() );
+        if ( 0 == tmp.compare( "load" ) ) {
+            m_checkpoint = CHECKPOINT_LOAD;
+        } else if ( 0 == tmp.compare( "save" ) ) {
+            m_checkpoint = CHECKPOINT_SAVE;
+        } else {
+            assert(0);
+        }
+    } else {
+        m_checkpoint = NO_CHECKPOINT;
+    }
     const uint32_t core_count = params.find<uint32_t>("cores", 0);
     const uint32_t hardwareThreadCount = params.find<uint32_t>("hardwareThreadCount", 1);
+    
+    if (core_count == 0) {
+        output->fatal(CALL_INFO, -1, "Missing parameter (%s): 'cores' must be specified and at least 1.\n", getName().c_str());
+    }
 
     for ( int i = 0; i < core_count; i++ ) {
         for ( int j = 0; j < hardwareThreadCount; j++ ) {
@@ -91,9 +112,13 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
         // we don't use it
     }
 
-    m_nodeNum = params.find<int>("nodeNum", -1);
+    m_nodeNum = params.find<int>("node_id", -1);
+
+    m_coreInfoMap.resize( core_count, hardwareThreadCount ); 
 
     int numProcess = 0;
+
+if ( CHECKPOINT_LOAD != m_checkpoint ) {
     while( 1 ) {
         std::string name("process" + std::to_string(numProcess) );
         Params tmp = params.get_scoped_params(name);
@@ -123,6 +148,10 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
         }
     }
 
+} else {
+    numProcess = checkpointLoad(m_checkpointDir);
+}
+
     // make sure we have a thread for each process
     assert( m_availHwThreads.size() >= m_threadMap.size() );
 
@@ -145,16 +174,6 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
 
     char* port_name_buffer = new char[128];
 
-    uint64_t heap_start = params.find<uint64_t>("heap_start", 0);
-    uint64_t heap_end = params.find<uint64_t>("heap_end", 0);
-    int heap_verbose = params.find<int>("heap_verbose", 0);
-
-    output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_INIT, "-> configuring mmap page range start: 0x%llx\n", heap_start);
-    output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_INIT, "-> configuring mmap page range end:   0x%llx\n", heap_end);
-    output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_INIT, "-> implies:                           %" PRIu64 " pages\n", (heap_end - heap_start) / m_pageSize);
-    output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_INIT, "-> configuring mmap page size:        %d bytes\n", m_pageSize);
-
-    m_coreInfoMap.resize( core_count, hardwareThreadCount ); 
 
     for (uint32_t i = 0; i < core_count; ++i) {
         snprintf(port_name_buffer, 128, "core%" PRIu32 "", i);
@@ -175,7 +194,6 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
     delete[] port_name_buffer;
 
     m_deviceList[-1000] = new OS::Device( "/dev/rdmaNic", 0x80000000, 1048576 );
-
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
@@ -204,6 +222,9 @@ VanadisNodeOSComponent::init(unsigned int phase) {
 
 void
 VanadisNodeOSComponent::setup() {
+
+    if ( CHECKPOINT_LOAD == m_checkpoint ) return;
+
     // start all of the processes
     for ( const auto kv : m_threadMap ) {
         OS::HwThreadID* tmp = m_availHwThreads.front();
@@ -214,6 +235,243 @@ VanadisNodeOSComponent::setup() {
         startProcess( *tmp, kv.second ); 
         delete tmp;
     }
+}
+
+void
+VanadisNodeOSComponent::finish() {
+
+    
+    if ( CHECKPOINT_SAVE == m_checkpoint ) {
+        if ( UNLIKELY( ! m_checkpointDir.empty() ) ) {
+            checkpoint( m_checkpointDir );
+        }
+    }
+}
+        
+void
+VanadisNodeOSComponent::checkpoint( std::string dir ) 
+{
+    std::stringstream filename;
+    filename << dir << "/" << getName();
+    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"Checkpoint component `%s` %s\n",getName().c_str(), filename.str().c_str());
+
+    auto fp = fopen(filename.str().c_str(),"w+");
+    assert(fp);
+
+    m_mmu->checkpoint( dir );
+    m_physMemMgr->checkpoint( output, dir );
+
+    // dump ELF map
+    fprintf(fp,"m_elfMap.size() %zu\n",m_elfMap.size());
+    for ( auto & x : m_elfMap ) {
+        fprintf(fp,"%s %s\n",x.first.c_str(), x.second->getBinaryPath() );
+    }
+
+    // dump the processes
+    fprintf(fp,"m_threadMap.size() %zu\n", m_threadMap.size());
+    for ( auto & x : m_threadMap ) {
+        // only alow one process
+        assert( 100 == x.second->getpid() );
+        fprintf(fp,"thread: %d, pid: %d %s\n",x.first,x.second->getpid(), x.second->getElfInfo()->getBinaryPath());
+        if ( x.second->getpid() == x.second->gettid() ) {
+            x.second->checkpoint( output, dir );
+        }
+    }
+
+    fprintf(fp, "m_coreInfoMap.size() %zu\n",m_coreInfoMap.size());
+    for ( auto i = 0; i < m_coreInfoMap.size(); i++ ) {
+        fprintf(fp, "core: %d\n",i);
+        m_coreInfoMap[i].checkpoint(fp);
+    }
+
+    fprintf(fp,"m_elfPageCache.size() %zu\n",m_elfPageCache.size());
+    for ( auto & x : m_elfPageCache ) {
+        auto& pageMap = x.second;
+        fprintf(fp,"filename: %s\n",x.first->getBinaryPath());
+        fprintf(fp,"pageMap.size(): %zu\n",pageMap.size());
+        for ( auto & y : pageMap ) {
+            fprintf(fp,"vpn: %d, ppn: %d, refCnt: %d\n",y.first,y.second->getPPN(), y.second->getRefCnt());
+        }
+    }
+
+    fprintf(fp,"m_availHwThreads.size() %zu\n",m_availHwThreads.size());
+    while ( !m_availHwThreads.empty() ) {
+        auto x = m_availHwThreads.front();
+        fprintf(fp,"core: %d, hwThread: %d\n",x->core,x->hwThread);
+        m_availHwThreads.pop();
+    }
+
+    fprintf(fp,"m_processDebugLevel: %d\n",m_processDebugLevel);
+    fprintf(fp,"m_pageSize: %d\n",m_pageSize);
+    fprintf(fp,"m_pageSize: %d\n",m_pageSize);
+    fprintf(fp,"m_phdr_address: %#" PRIx64 "\n",m_phdr_address);
+    fprintf(fp,"m_stack_top: %#" PRIx64 "\n",m_stack_top);
+    fprintf(fp,"m_nodeNum: %d\n",m_nodeNum);
+    fprintf(fp,"m_osStartTimeNano: %lu\n",m_osStartTimeNano);
+    fprintf(fp,"m_currentTid: %d\n",m_currentTid);
+
+    assert( m_pendingFault.empty() );
+    assert( m_blockMemoryWriteReqQ.empty() );
+    assert( m_memRespMap.empty() );
+}
+
+int VanadisNodeOSComponent::checkpointLoad( std::string dir ) 
+{
+    size_t size; 
+    int numProcess = 0;
+    std::stringstream filename;
+    filename << m_checkpointDir << "/" << getName();
+    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"Checkpoint component `%s` %s\n",getName().c_str(), filename.str().c_str());
+
+    auto fp = fopen(filename.str().c_str(),"r");
+    assert(fp);
+
+    m_mmu->checkpointLoad( dir );
+    m_physMemMgr->checkpointLoad( output, dir );
+
+    // load ELF map
+    assert( 1 == fscanf(fp,"m_elfMap.size() %zu\n",&size) );
+    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_elfMap.size() %zu\n",size);
+    for ( auto i = 0; i < size; i++ ) {
+        char key[80], value[80];
+        assert( 2 == fscanf(fp,"%s %s\n",key, value ) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s %s\n",key,value);
+
+        VanadisELFInfo* elfInfo = readBinaryELFInfo(output, key);
+        // readBinaryELFInfo does not return if fatal error is encountered
+        if ( elfInfo->isDynamicExecutable() ) {
+            output->fatal( CALL_INFO, -1, "--> error - exe %s is not staticlly linked\n",key);
+        }
+        m_elfMap[key] = elfInfo;
+    }
+
+    // create processes
+    assert( 1 == fscanf(fp,"m_threadMap.size() %zu\n", &size) );
+    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_threadMap.size() %zu\n", size);
+
+    std::map<int,OS::ProcessInfo*> processMap;
+    std::map<int,int> threadToProcessMap;
+    for ( auto i = 0; i < size; i++ ) {
+        int tid, pid;
+        char str[80];
+        assert( 3 == fscanf(fp,"thread: %d, pid: %d %s\n",&tid,&pid,str ) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"thread: %d, pid: %d %s\n",tid,pid, str);
+        if ( tid == pid ) { 
+            m_threadMap[tid] = new OS::ProcessInfo( output, dir, m_mmu, m_physMemMgr, m_nodeNum, tid, m_elfMap[str], m_processDebugLevel, m_pageSize );
+            processMap[pid] = m_threadMap[tid];
+        } else {
+            m_threadMap[tid] = new OS::ProcessInfo;
+            threadToProcessMap[tid] = pid;
+        }
+    }
+
+    for ( auto & x : threadToProcessMap ) {
+        auto tid = x.first;
+        auto pid = x.second;
+
+        *m_threadMap[tid ] = *processMap[ pid ];
+
+        m_threadMap[tid]->settid(tid);
+
+        processMap[ pid ]->addThread( m_threadMap[ tid ] );
+    }
+
+    // m_coreInfoMap.size() 1
+    assert( 1 == fscanf(fp,"m_coreInfoMap.size() %d\n",&size) );
+    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_coreInfoMap.size() %d\n",size);
+    assert( size == m_coreInfoMap.size() );
+    
+    for ( auto i = 0; i < m_coreInfoMap.size(); i++ ) {
+
+        int core;
+        assert( 1 == fscanf(fp, "core: %d\n",&core) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"core: %d\n",core);
+        assert( core == i );
+
+        assert( 1 == fscanf(fp,"m_hwThreadMap.size(): %d\n",&size) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_hwThreadMap.size(): %d\n",size);
+    
+        for ( auto j = 0; j < size; j++ ) {
+            int hwThread;
+            // hwThread: 0
+            assert( 1 == fscanf(fp, "hwThread: %d\n",&hwThread) );
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"hwThread: %d\n",hwThread);
+            assert( hwThread == j );
+            int pid,tid;
+            assert ( 2 == fscanf(fp, "pid,tid: %d, %d\n",&pid,&tid) );
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"pid,tid: %d %d\n",pid,tid);
+            if ( -1 != pid ) { 
+                setProcess( i, j, m_threadMap[tid] );
+            }
+        }
+    }
+
+    assert ( 1 == fscanf(fp,"m_elfPageCache.size() %zu\n",&size) );
+    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_elfPageCache.size() %zu\n",size);
+    for ( auto i = 0; i < size; i++ ) {
+        char str [80];
+        assert( 1 == fscanf(fp,"filename: %s\n",str));
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"filename: %s\n",str);
+
+        auto & pageMap = m_elfPageCache[ m_elfMap[str] ];
+
+        size_t size2;
+        assert( 1 == fscanf(fp,"pageMap.size(): %zu\n", &size2 ) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"pageMap.size(): %zu\n",size2);
+
+        for ( auto j = 0; j < size2; j++ ) {
+            int vpn,ppn,refCnt;
+            assert( 3 == fscanf(fp,"vpn: %d, ppn: %d, refCnt: %d\n",&vpn, &ppn, &refCnt ) );
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"vpn: %d, ppn: %d, refCnt: %d\n",vpn,ppn,refCnt);
+            
+            auto region = m_threadMap[100]->findMemRegion("text");
+
+            assert( region->backing && region->backing->elfInfo );
+            assert( 0 == strcmp( str, region->backing->elfInfo->getBinaryPath() ) );
+
+            auto page = region->getPage( vpn );
+
+            assert( refCnt == page->getRefCnt() ); 
+            assert( ppn == page->getPPN() );
+            m_elfPageCache[m_elfMap[str]][vpn] = page;
+        }
+    }
+
+    assert( 1 == fscanf(fp,"m_availHwThreads.size() %zu\n",&size) );
+    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_availHwThreads.size() %zu\n",size);
+    for ( auto i = 0; i < size; i++ ) {
+        int core, hwThread;
+        assert( 2 == fscanf(fp,"core: %d, hwThread: %d\n",&core,&hwThread) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"core: %d, hwThread: %d\n",core,hwThread);
+        m_availHwThreads.push(new OS::HwThreadID(core,hwThread));
+    }
+
+    assert( 1 == fscanf(fp,"m_processDebugLevel: %d\n",&m_processDebugLevel) );
+    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_processDebugLevel: %d\n",m_processDebugLevel);
+
+    assert( 1 == fscanf(fp,"m_pageSize: %d\n",&m_pageSize) );
+    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_pageSize: %d\n",m_pageSize);
+
+    assert( 1 == fscanf(fp,"m_pageSize: %d\n",&m_pageSize) );
+    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_pageSize: %d\n",m_pageSize);
+
+    assert( 1 == fscanf(fp,"m_phdr_address: %" PRIx64 "\n",&m_phdr_address) );
+    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_phdr_address: %#lx\n",m_phdr_address);
+
+    assert( 1 == fscanf(fp,"m_stack_top: %" PRIx64 "\n",&m_stack_top) );
+    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_stack_top: %#lx\n",m_stack_top);
+
+    assert( 1 == fscanf(fp,"m_nodeNum: %d\n",&m_nodeNum) );
+    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_nodeNum: %d\n",m_nodeNum);
+
+    assert( 1 == fscanf(fp,"m_osStartTimeNano: %lu\n",&m_osStartTimeNano) );
+    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_osStartTimeNano: %lu\n",m_osStartTimeNano);
+
+    assert( 1 == fscanf(fp,"m_currentTid: %d\n",&m_currentTid) );
+    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_currentTid: %d\n",m_currentTid);
+
+//    exit(0);
+    return m_threadMap.size();
 }
 
 void VanadisNodeOSComponent::handleIncomingMemory(StandardMem::Request* ev) {
@@ -234,7 +492,12 @@ void VanadisNodeOSComponent::handleIncomingMemory(StandardMem::Request* ev) {
                 output->fatal(CALL_INFO, -1, "Error - received StandardMem response that does not match PageWrite request\n");
             }
         } else {
-            output->fatal(CALL_INFO, -1, "Error - received StandardMem response that does not belong to a core\n");
+//            output->fatal(CALL_INFO, -1, "Error - received StandardMem response that does not belong to a core\n");
+            m_flushPages.pop_front();
+            if ( m_flushPages.empty() ) {
+                primaryComponentOKToEndSim();
+            }
+
         }
     } else if (lookup_result != m_memRespMap.end()) {
         handleIncomingMemory( lookup_result->second, ev );
@@ -335,20 +598,52 @@ VanadisNodeOSComponent::handleIncomingSyscall(SST::Event* ev) {
             syscall->handleEvent( event );
             processSyscallPost( syscall );
         } else {
-            output->fatal(CALL_INFO, -1,
+
+            VanadisCheckpointResp* resp = dynamic_cast< VanadisCheckpointResp*>(ev);
+            if ( nullptr != resp ) {
+                output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"checkoint \n");
+             //   primaryComponentOKToEndSim();
+
+                m_flushPages.push_back( 0x2bc0 );
+                m_flushPages.push_back( 0x163c0 );
+                m_flushPages.push_back( 0x16400 );
+                m_flushPages.push_back( 0x90c0 );
+                m_flushPages.push_back( 0x2c80 );
+                m_flushPages.push_back( 0x2c00 );
+                m_flushPages.push_back( 0x1b00 );
+                
+                m_flushPages.push_back( 0x1b000 );
+                m_flushPages.push_back( 0x2b80 );
+                m_flushPages.push_back( 0x2980 );
+                m_flushPages.push_back( 0x2a00 );
+                m_flushPages.push_back( 0x2940 );
+                m_flushPages.push_back( 0x2900 );
+                m_flushPages.push_back( 0x3f80 );
+                m_flushPages.push_back( 0x2800 );
+                m_flushPages.push_back( 0x29c0 );
+                m_flushPages.push_back( 0x28c0 );
+
+                for ( auto & x : m_flushPages ) {
+                    printf("%#lx\n",x);
+                    StandardMem::Request* req = new SST::Interfaces::StandardMem::FlushAddr( x, 64, true, 5, 0 );
+                    mem_if->send(req);
+                }
+            } else {
+                output->fatal(CALL_INFO, -1,
                       "Error - received an event in the OS, but cannot cast it to "
                       "a system-call event.\n");
+            }
         }
     } else {
-	auto process = m_coreInfoMap.at(sys_ev->getCoreID()).getProcess( sys_ev->getThreadID() );
-	if ( process ) {
-		auto syscall = handleIncomingSyscall( process, sys_ev, core_links[ sys_ev->getCoreID() ] );
+	    auto process = m_coreInfoMap.at(sys_ev->getCoreID()).getProcess( sys_ev->getThreadID() );
+	    if ( process ) {
+		    auto syscall = handleIncomingSyscall( process, sys_ev, core_links[ sys_ev->getCoreID() ] );
 
-		processSyscallPost( syscall );
-	} else {
-		printf("no active process for core %d, hwthread %d\n", sys_ev->getCoreID(), sys_ev->getThreadID() );
-		delete ev;
-	}
+		    processSyscallPost( syscall );
+	    } else {
+		    printf("no active process for core %d, hwthread %d\n", sys_ev->getCoreID(), sys_ev->getThreadID() );
+		    delete ev;
+	    }
     } 
 }
 

@@ -56,7 +56,7 @@ nic::nic(ComponentId_t cid, Params& params) :
 
     num_msg = params.find<int>("num_messages",10);
 
-    send_untimed_bcast = params.find<bool>("send_untimed_data","false");
+    send_untimed_bcast = params.find<bool>("send_untimed_bcast","false");
 
     UnitAlgebra message_size = params.find<std::string>("message_size","64b");
     if ( message_size.hasUnits("B") ) message_size  *= UnitAlgebra("8b/B");
@@ -222,7 +222,7 @@ nic::init_complete(unsigned int phase) {
                 init_broadcast_count++;
             }
             else {
-                if ( req->dest != net_id ) output.output("%d: received event with dest %lld and src %lld\n",net_id,req->dest,req->src);
+                if ( req->dest != net_id ) output.output("%d: received event with dest %" PRI_NID " and src %" PRI_NID "\n",net_id,req->dest,req->src);
                 init_count++;
             }
             delete req;

@@ -28,11 +28,9 @@ VanadisForkSyscall::VanadisForkSyscall( VanadisNodeOSComponent* os, SST::Link* c
     // get a new hwThread to run the new process on
     m_threadID = m_os->allocHwThread();
 
-    if ( 0 == m_threadID ) {
+    if ( nullptr == m_threadID ) {
         m_output->fatal(CALL_INFO, -1, "Error: fork, out of hardware threads for new process\n");
     }
-
-    assert( m_os->getMMU() );
 
     // do this before we create the child becuase the child gets a copy of this the parents page table
     // and we want the child to fault on write as well
@@ -74,7 +72,7 @@ void VanadisForkSyscall::handleEvent( VanadisCoreEvent* ev )
     req->setFpRegs( resp->fpRegs );
 
 #if 0 // debug
-    printf("thread=%d instPtr=%llx\n",resp->getThread(), resp->getInstPtr() );
+    printf("thread=%d instPtr=%" PRI_ADDR "\n",resp->getThread(), resp->getInstPtr() );
     for ( int i = 0; i < resp->intRegs.size(); i++ ) {
         printf("int r%d %" PRIx64 "\n",i,resp->intRegs[i]);
     }

@@ -1,5 +1,6 @@
 import os
 import sst
+import sys
 
 debug_addr = 0x6280
 stdMem_debug = 0
@@ -7,14 +8,20 @@ stdMem_debug = 0
 debugPython=False
 
 physMemSize = "4GiB"
-full_exe_name= os.getenv("RDMANIC_EXE", "./app/rdma/msg" )
+full_exe_name= os.getenv("RDMANIC_EXE", "./app/rdma/riscv64/msg" )
 exe_name= full_exe_name.split("/")[-1]
 
 coherence_protocol="MESI"
     
 cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "2.3GHz")
 os_verbosity = os.getenv("VANADIS_OS_VERBOSE", 0)
-               
+
+app_args = (exe_name + " " + os.getenv("VANADIS_EXE_ARGS", "" )).split()
+
+# MUSL libc uses this in localtime, if we don't set TZ=UTC we 
+# can get different results on different systems
+app_env = ("TZ=UTC " + os.getenv("VANADIS_EXE_ENV", "" )).split()
+
 class Builder:
     def __init__(self):
                 pass
@@ -25,37 +32,40 @@ class Builder:
 
         self.nodeOS = sst.Component(self.prefix + ".os", "vanadis.VanadisNodeOS")
         self.nodeOS.addParams({
-            "nodeId": nodeId,
+            "node_id": nodeId,
             "dbgLevel" : os_verbosity,
             "dbgMask" : -1,
             "cores" : 1,
-            "nodeNum" : nodeId,
             "hardwareThreadCount" : 1,
-            "heap_start" : 512 * 1024 * 1024,
-            "heap_end"   : (2 * 1024 * 1024 * 1024) - 4096,
             "page_size"  : 4096,
-            "heap_verbose" : 0, #verbosity
-            "process0.env_count" : 3,
-            # MUSL libc uses this in localtime, if we don't set it we 
-            # can get different results on different systems
-            "process0.env0" : "TZ=UTC",
-            # for mvapich runtime
-            "process0.env1" : "PMI_SIZE=" + str(numNodes),
-            "process0.env2" : "PMI_RANK=" + str(nodeId),
-            "process0.exe" : full_exe_name,
-            "process0.arg0" : exe_name,
             "physMemSize" : physMemSize,
+            "process0.exe" : full_exe_name,
             "useMMU" : True,
         })
 
-        if os.getenv("RDMANIC_IMB",False):
-            self.nodeOS.addParams({
-                "process0.argc" : 5,
-                "process0.arg1" : "-iter",
-                "process0.arg2" : "1",
-                "process0.arg3" : "-msglen",
-                "process0.arg4" : "msglen.txt",
-            })
+        cnt = 0
+        for value in app_args:
+            key= "process0.arg" + str(cnt);
+            self.nodeOS.addParam( key, value )
+            cnt += 1
+
+        self.nodeOS.addParam( "process0.argc", cnt )
+
+        cnt = 0
+        for value in app_env:
+            key= "process0.env" + str(cnt);
+            self.nodeOS.addParam( key, value )
+            cnt += 1
+
+
+        # for mvapich runtime
+        self.nodeOS.addParam(  "process0.env" + str(cnt), "PMI_SIZE=" + str(numNodes) )
+        cnt += 1
+
+        self.nodeOS.addParam(  "process0.env" + str(cnt), "PMI_RANK=" + str(nodeId) )
+        cnt += 1
+
+        self.nodeOS.addParam( "process0.env_count", cnt )
 
         self.mmu = self.nodeOS.setSubComponent( "mmu", "mmu.simpleMMU" )
 

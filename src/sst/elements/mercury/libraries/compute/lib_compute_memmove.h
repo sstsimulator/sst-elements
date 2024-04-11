@@ -13,13 +13,12 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef SSTMAC_SOFTWARE_LIBRARIES_COMPUTE_LIB_COMPUTE_MEMMOVE_H_INCLUDED
-#define SSTMAC_SOFTWARE_LIBRARIES_COMPUTE_LIB_COMPUTE_MEMMOVE_H_INCLUDED
+#pragma once
 
-#include <sstmac/software/libraries/compute/lib_compute_inst.h>
+#include <mercury/libraries/compute/lib_compute_inst.h>
 
-namespace sstmac {
-namespace sw {
+namespace SST {
+namespace Hg {
 
 class LibComputeMemmove :
   public LibComputeInst
@@ -57,6 +56,4 @@ class LibComputeMemmove :
 };
 
 }
-} //end of namespace sstmac
-
-#endif
+} //end of namespace

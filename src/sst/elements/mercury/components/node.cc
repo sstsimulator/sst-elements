@@ -13,10 +13,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <components/node.h>
-#include <components/operating_system.h>
-#include <operating_system/launch/app_launch_request.h>
-#include <operating_system/process/app.h>
+#include <mercury/components/node.h>
+#include <mercury/components/operating_system.h>
+#include <mercury/operating_system/launch/app_launch_request.h>
+#include <mercury/operating_system/process/app.h>
 
 namespace SST {
 namespace Hg {
@@ -25,7 +25,7 @@ extern template class  HgBase<SST::Component>;
 extern template SST::TimeConverter* HgBase<SST::Component>::time_converter_;
 
 Node::Node(ComponentId_t id, Params &params)
-    : SST::Hg::Component(id) {
+    : SST::Hg::Component(id), nic_(0) {
 
   my_addr_ = getId();
   unsigned int verbose = params.find<unsigned int>("verbose",0);
@@ -35,8 +35,21 @@ Node::Node(ComponentId_t id, Params &params)
   os_ =  loadUserSubComponent<OperatingSystem>("os_slot", SST::ComponentInfo::SHARE_NONE, this);
   assert(os_);
 
-  // currently unused (but needs to be there or multithread termination breaks)
-  netLink_ = configureLink("network");
+  out_->debug(CALL_INFO, 1, 0, "loading hg.NIC\n");
+  link_control_ = loadUserSubComponent<SST::Interfaces::SimpleNetwork>("link_control_slot", SST::ComponentInfo::SHARE_NONE,1);
+  if (link_control_) {
+    out_->debug(CALL_INFO, 1, 0, "loading hg.NIC\n");
+    nic_ = loadUserSubComponent<NIC>("nic_slot", SST::ComponentInfo::SHARE_NONE, this);
+    assert(nic_);
+    nic_->set_link_control(link_control_);
+  }
+  else {
+    // assume basic tests
+    // (unused but needs to be there or multithread termination breaks)
+    netLink_ = configureLink("network");
+  }
+
+
 
   int ncores_ = params.find<std::int32_t>("ncores", 1);
   int nsockets_ = params.find<std::int32_t>("nsockets",1);
@@ -47,10 +60,25 @@ Node::Node(ComponentId_t id, Params &params)
 }
 
 void
+Node::init(unsigned int phase)
+{
+  SST::Component::init(phase);
+  os_->init(phase);
+  if (nic_) nic_->init(phase);
+}
+
+void
 Node::setup()
 {
   SST::Component::setup();
   os_->setup();
+  if (nic_) nic_->setup();
+}
+
+void
+Node::handle(Request* req)
+{
+  os_->handleRequest(req);
 }
 
 } // namespace Hg

@@ -309,7 +309,7 @@ int rdma_read_comp( CompQueueId cqId, RdmaCompletion* buf, int blocking ) {
 	dbgPrint("tailIndexAddr=%p index=%d\n",s_compQ[cqId].tailIndexAddr,s_compQ[cqId].tailIndex);
  	*s_compQ[cqId].tailIndexAddr = s_compQ[cqId].tailIndex;
 
-	return 0;
+	return 1;
 }
 
 

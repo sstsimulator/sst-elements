@@ -60,6 +60,7 @@
 #define RISCV_O_TMPFILE     020200000 
 #endif
 
+#define RISCV_MAP_STACK 0x20000
 #define RISCV_MAP_ANONYMOUS 0x20
 #define RISCV_MAP_PRIVATE 0x2
 #define RISCV_MAP_FIXED 0x10
@@ -104,6 +105,7 @@
 #define VANADIS_SYSCALL_RISCV64_MADVISE 233
 #define VANADIS_SYSCALL_RISCV64_PRLIMIT 261
 #define VANADIS_SYSCALL_RISCV64_GETRANDOM 278
+#define VANADIS_SYSCALL_RISCV64_CHECKPOINT 500 
 
 #define VANADIS_SYSCALL_RISCV_RET_REG 10
 
@@ -133,9 +135,15 @@ public:
         InstallRISCV64FuncPtr( GETRANDOM );
         InstallRISCV64FuncPtr( FSTATAT );
         InstallRISCV64FuncPtr( LSEEK );
+        InstallRISCV64FuncPtr( CHECKPOINT );
     }
 
     virtual ~VanadisRISCV64OSHandler2() {}
+
+    VanadisSyscallEvent* CHECKPOINT( int hw_thr ) {
+        output->verbose(CALL_INFO, 8, 0, "checkpoint()\n");
+        return new VanadisSyscallCheckpointEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B );
+    }
 
     VanadisSyscallEvent* CLONE( int hw_thr ) {
         uint64_t flags          = getArgRegister(0);
@@ -144,16 +152,11 @@ public:
         int64_t  tls            = getArgRegister(3);
         int64_t  ctid           = getArgRegister(4);
 
-        if ( flags == RISCV_SIGCHLD ) {
-            output->verbose(CALL_INFO, 8, 0,"clone( flags = RISCV_SIGCHLD )\n");
-            return new VanadisSyscallForkEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B);
-        } else { 
-            output->verbose(CALL_INFO, 8, 0,
+        output->verbose(CALL_INFO, 8, 0,
                     "clone( %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ")\n",
                     instPtr,threadStack,flags,ptid,tls,ctid);
-            return new VanadisSyscallCloneEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, instPtr,
+        return new VanadisSyscallCloneEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, instPtr,
                     threadStack, flags, ptid, tls, ctid );
-        }
     }
 
     VanadisSyscallEvent* GETRANDOM( int hw_thr ) {
@@ -206,15 +209,14 @@ public:
         int32_t  op             = getArgRegister(1);
         uint32_t val            = getArgRegister(2);
         uint64_t timeout_addr   = getArgRegister(3);
-        uint64_t val2           = getArgRegister(4);
-        uint64_t addr2          = getArgRegister(5);
-        uint64_t val3           = getArgRegister(6);
+        uint64_t addr2          = getArgRegister(4);
+        uint32_t val3           = getArgRegister(5);
 
         output->verbose(CALL_INFO, 8, 0,
-                            "futex( %#" PRIx64 ", %" PRId32 ", %" PRIu32 ", %" PRIu64 ", %" PRIu64 " %" PRIu64 " %" PRIu64 " )\n",
-                            addr, op, val, timeout_addr, val2, addr2, val3);
+                            "futex( %#" PRIx64 ", %" PRIx32 ", %" PRIx32 ", %" PRIx64 ", %" PRIx64 ", %" PRIu32 " )\n",
+                            addr, op, val, timeout_addr, addr2, val3);
 
-        return new VanadisSyscallFutexEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, addr, op, val, timeout_addr, val2, addr2, val3 );
+        return new VanadisSyscallFutexEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, addr, op, val, timeout_addr, addr2, val3 );
     }
 
     VanadisSyscallEvent* SET_ROBUST_LIST( int hw_thr ) {
@@ -243,6 +245,10 @@ public:
             return nullptr;
         } else {
 
+            // ignore this flag
+            if ( map_flags & RISCV_MAP_STACK ) {
+                map_flags &= ~RISCV_MAP_STACK;
+            }
             if ( map_flags & RISCV_MAP_ANONYMOUS ) {
                 hostFlags |= MAP_ANONYMOUS; 
                 map_flags &= ~RISCV_MAP_ANONYMOUS;
@@ -254,7 +260,7 @@ public:
             assert( map_flags == 0 );
 
             output->verbose(CALL_INFO, 8, 0,
-                        "mmap2( 0x%llx, %" PRIu64 ", %" PRId32 ", %" PRId32 ", %d, %" PRIu64 ")\n",
+                        "mmap2( 0x%" PRI_ADDR ", %" PRIu64 ", %" PRId32 ", %" PRId32 ", %d, %" PRIu64 ")\n",
                         map_addr, map_len, map_prot, map_flags, fd, offset );
 
             return new VanadisSyscallMemoryMapEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B,
@@ -267,7 +273,7 @@ public:
         uint64_t time_addr  = getArgRegister( 1 );
 
         output->verbose(CALL_INFO, 8, 0,
-                            "clock_gettime64( %" PRId64 ", 0x%llx )\n", clk_type, time_addr);
+                            "clock_gettime64( %" PRId64 ", 0x%" PRI_ADDR " )\n", clk_type, time_addr);
 
         return new VanadisSyscallGetTime64Event(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, clk_type, time_addr);
     }
@@ -279,10 +285,10 @@ public:
         int32_t  signal_set_size    = getArgRegister( 3 );
 
         output->verbose(CALL_INFO, 8, 0,
-                            "rt_sigprocmask( %" PRId32 ", 0x%llx, 0x%llx, %" PRId32 ")\n",
+                            "rt_sigprocmask( %" PRId32 ", 0x%" PRI_ADDR ", 0x%" PRI_ADDR ", %" PRId32 ")\n",
                             how, signal_set_in, signal_set_out, signal_set_size);
 
-        printf("Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implmented return success\n");
+        printf("Warning: VANADIS_SYSCALL_RISCV_RT_SIGPROCMASK not implemented return success\n");
 
         recvSyscallResp(new VanadisSyscallResponse(0));
         return nullptr;
@@ -305,7 +311,7 @@ public:
         uint64_t offset   = getArgRegister(1);
         int32_t whence   = getArgRegister(2);
 
-        output->verbose(CALL_INFO, 8, 0, "lseek( %" PRIdXX ", %" PRIdXX", %" PRIdXX " )\n", fd, offset, whence);
+        output->verbose(CALL_INFO, 8, 0, "lseek( %" PRId32 ", %" PRIu64 ", %" PRId32 " )\n", fd, offset, whence);
         return new VanadisSyscallLseekEvent(core_id, hw_thr, BitType, fd, offset, whence);
     }
 

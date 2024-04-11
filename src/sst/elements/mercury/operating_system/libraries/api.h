@@ -17,14 +17,15 @@
 
 #include <sst/core/event.h>
 #include <sst/core/subcomponent.h>
-#include <common/factory.h>
-#include <common/component.h>
-#include <common/events.h>
-#include <operating_system/process/software_id.h>
-#include <operating_system/process/app_fwd.h>
-#include <operating_system/process/thread_fwd.h>
-#include <common/timestamp.h>
-#include <common/node_address.h>
+//#include <mercury/common/factory.h>
+#include <sst/core/eli/elementbuilder.h>
+#include <mercury/common/component.h>
+#include <mercury/common/events.h>
+#include <mercury/operating_system/process/software_id.h>
+#include <mercury/operating_system/process/app_fwd.h>
+#include <mercury/operating_system/process/thread_fwd.h>
+#include <mercury/common/timestamp.h>
+#include <mercury/common/node_address.h>
 #include <sys/time.h>
 
 namespace SST {

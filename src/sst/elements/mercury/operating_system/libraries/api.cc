@@ -14,14 +14,14 @@
 // distribution.
 
 #include <sst/core/params.h>
-#include <components/operating_system.h>
+#include <mercury/components/operating_system.h>
 //#include <libraries/compute/lib_compute_memmove.h>
-#include <operating_system/process/thread.h>
-#include <operating_system/process/app.h>
-#include <operating_system/libraries/api.h>
-#include <hardware/common/flow.h>
+#include <mercury/operating_system/process/thread.h>
+#include <mercury/operating_system/process/app.h>
+#include <mercury/operating_system/libraries/api.h>
+#include <mercury/hardware/common/flow.h>
 //#include <sstmac/common/sstmac_env.h>
-#include <common/thread_lock.h>
+#include <mercury/common/thread_lock.h>
 //#include <sprockit/keyword_registration.h>
 
 namespace SST {

@@ -21,7 +21,6 @@
 using namespace std;
 using namespace SST;
 using namespace SST::MemHierarchy;
-using namespace SST::Interfaces;
 using namespace SST::CACHETRACER;
 
 /*

@@ -78,7 +78,8 @@ public:
         {"verbose",     "(uint) Output verbosity for warnings/errors. 0[fatal error only], 1[warnings], 2[full state dump on fatal error]", "1"},
         {"debug",       "(uint) Where to send debug output. Options: 0[none], 1[stdout], 2[stderr], 3[file]", "0"},
         {"debug_level", "(uint) Debugging level: 0 to 10. Must configure sst-core with '--enable-debug'. 1=info, 2-10=debug output", "0"},
-        {"port",        "(string) port name to use for interfacing to the memory system. This must be provided if this subcomponent is being loaded anonymously. Otherwise this should not be specified and either the 'port' port should be connected or the 'memlink' subcomponent slot should be filled"}
+        {"port",        "(string) port name to use for interfacing to the memory system. This must be provided if this subcomponent is being loaded anonymously. Otherwise this should not be specified and either the 'port' port should be connected or the 'memlink' subcomponent slot should be filled"},
+        {"noncacheable_regions", "(string) vector of (start, end) address pairs for noncacheable address ranges. Vector format should be [start0, end0, start1, end1, ...].", "[]"}
     )
 
     SST_ELI_DOCUMENT_PORTS( {"port", "Port to memory hierarchy (caches/memory/etc.). Required if subcomponent slot not filled or if 'port' parameter not provided.", {}} )

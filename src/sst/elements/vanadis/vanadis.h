@@ -32,6 +32,7 @@
 
 #include "os/vgetthreadstate.h"
 #include "os/vdumpregsreq.h"
+#include "os/vcheckpointreq.h"
 
 #include <array>
 #include <limits>
@@ -112,33 +113,44 @@ public:
 
     SST_ELI_DOCUMENT_PARAMS(
         { "verbose", "Set the level of output verbosity, 0 is no output, higher "
-                     "is more output" },
-        { "max_cycles", "Maximum number of cycles to execute" },
-        { "reorder_slots", "Number of slots in the reorder buffer" }, { "core_id", "Identifier for this core" },
-        { "hardware_threads", "Number of hardware threads in this core" },
-        { "physical_integer_registers", "Number of physical integer registers per hardware thread" },
-        { "physical_fp_registers", "Number of physical floating point registers per hardware thread" },
-        { "integer_arith_units", "Number of integer arithemetic units" },
-        { "integer_arith_cycles", "Cycles per instruction for integer arithmetic" },
-        { "integer_div_units", "Number of integer division units" },
-        { "integer_div_cycles", "Cycles per instruction for integer division" },
-        { "fp_arith_units", "Number of floating point arithmetic units" },
-        { "fp_arith_cycles", "Cycles per floating point arithmetic" },
-        { "fp_div_units", "Number of floating point division units" },
-        { "fp_div_cycles", "Cycles per floating point division" }, { "load_units", "Number of memory load units" },
-        { "store_units", "Number of memory store units" },
-        { "max_loads_per_cycle", "Maximum number of loads that can issue to the cache per cycle" },
-        { "max_stores_per_cycle", "Maximum number of stores that can issue to the cache per cycle" },
-        { "branch_units", "Number of branch units" }, { "special_units", "Number of special instruction units" },
-        { "issues_per_cycle", "Number of instruction issues per cycle" },
-        { "fetches_per_cycle", "Number of instruction fetches per cycle" },
-        { "retires_per_cycle", "Number of instruction retires per cycle" },
-        { "decodes_per_cycle", "Number of instruction decodes per cycle" },
-        { "print_retire_tables", "Print registers during retirement step (default is yes)" },
-        { "print_issue_tables", "Print registers during issue step (default is yes)" },
-        { "print_int_reg", "Print integer registers true/false, auto set to true if verbose > 16" },
+                     "is more output", "0" },
+        { "dbg_mask", "Mask for output. Default is to not mask anything out (0) and defer to 'verbose'.", "0"},
+        { "start_verbose_when_issue_address", "Set verbose to 0 until the specified instruction "
+                                        "address is issued, then set to 'verbose' parameter", ""},
+        { "stop_verbose_when_retire_address", "When the specified instruction "
+                                        "address is retired, set verbose to 0", ""},
+        { "pause_when_retire_address", "If specified, the simulation will stop when this address is retired.", "0"},
+        { "pipeline_trace_file", "If specified, a trace of the pipeline activity will be generated to this file.", ""},
+        { "max_cycle", "Maximum number of cycles to execute. The core will halt after this many cycles." , "std::numeric_limits<uint64_t>::max()"},
+        { "node_id", "Identifier for the node this core belongs to. Each node in the system needs a unique ID between 0 and (number of nodes) - 1. Used to tag output.", "0"},
+        { "core_id", "Identifier for this core. Each core in the system needs a unique ID between 0 and (number of cores) - 1.", 0 },
+        { "hardware_threads", "Number of hardware threads in this core", "1" },
+        { "clock", "Core clock frequency", "1GHz" },
+        { "reorder_slots", "Number of slots in the reorder buffer", "64"}, 
+        { "physical_integer_registers", "Number of physical integer registers per hardware thread", "128" },
+        { "physical_fp_registers", "Number of physical floating point registers per hardware thread", "128" },
+        { "integer_arith_units", "Number of integer arithemetic units", "2" },
+        { "integer_arith_cycles", "Cycles per instruction for integer arithmetic", "2" },
+        { "integer_div_units", "Number of integer division units", "1" },
+        { "integer_div_cycles", "Cycles per instruction for integer division", "4" },
+        { "fp_arith_units", "Number of floating point arithmetic units", "2" },
+        { "fp_arith_cycles", "Cycles per floating point arithmetic", "8" },
+        { "fp_div_units", "Number of floating point division units", "1" },
+        { "fp_div_cycles", "Cycles per floating point division", "80" }, 
+        { "branch_units", "Number of branch units", "1" }, 
+        { "branch_unit_cycles", "Cycles per branch", "int_arith_cycles"},
+        { "issues_per_cycle", "Number of instruction issues per cycle", "2" },
+        { "fetches_per_cycle", "Number of instruction fetches per cycle", "2" },
+        { "retires_per_cycle", "Number of instruction retires per cycle", "2" },
+        { "decodes_per_cycle", "Number of instruction decodes per cycle", "2" },
+        { "dcache_line_width", "Width of a line for the data cache, in bytes. (Currently not used but may be in the future).", "64"},
+        { "icache_line_width", "Width of a line for the instruction cache, in bytes", "64"},
+        { "print_retire_tables", "Print registers during retirement step (default is yes)", "true" },
+        { "print_issue_tables", "Print registers during issue step (default is yes)", "true" },
+        { "print_int_reg", "Print integer registers true/false, auto set to true if verbose > 16", "false" },
         { "print_fp_reg", "Print floating-point registers true/false, auto set to "
-                          "true if verbose > 16" })
+                          "true if verbose > 16", "false" },
+        { "print_rob", "Print reorder buffer state during issue and retire", "true"} )
 
     SST_ELI_DOCUMENT_STATISTICS(
         { "cycles", "Number of cycles the core executed", "cycles", 1 },
@@ -350,6 +362,12 @@ private:
     std::vector<VanadisFloatingPointFlags*> fp_flags;
 
     SST::Link* os_link;
+
+    bool* m_checkpointing;
+    std::string m_checkpointDir;
+    enum { NO_CHECKPOINT, CHECKPOINT_LOAD, CHECKPOINT_SAVE } m_checkpoint;
+    void checkpoint(FILE*);
+    void checkpointLoad(FILE*);
 };
 
 } // namespace Vanadis

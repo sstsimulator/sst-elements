@@ -117,6 +117,9 @@
 #include "inst/vfpflagsset.h"
 #include "inst/vfpflagsread.h"
 
+#include "inst/vfpclass.h"
+#include "inst/vmin.h"
+
 // RoCC Custom
 #include "inst/vrocc.h"
 

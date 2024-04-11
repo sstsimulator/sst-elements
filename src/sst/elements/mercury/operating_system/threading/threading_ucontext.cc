@@ -15,7 +15,7 @@
 
 #include <sstmac_config.h>
 
-#ifdef SSTMAC_HAVE_UCONTEXT
+#ifdef SST_HG_HAVE_UCONTEXT
 
 #include <sstmac/software/process/thread_info.h>
 #include <sstmac/software/threading/threading_interface.h>
@@ -31,7 +31,7 @@ class ThreadingUContext : public ThreadContext
   SST_ELI_REGISTER_DERIVED(
     ThreadContext,
     ThreadingUContext,
-    "macro",
+    "hg",
     "ucontext",
     SST_ELI_ELEMENT_VERSION(1,0,0),
     "uses ucontext for portable linux context switching")

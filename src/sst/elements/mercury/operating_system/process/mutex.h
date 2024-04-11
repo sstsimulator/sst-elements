@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <operating_system/process/thread.h>
+#include <mercury/operating_system/process/thread.h>
 
 #include <list>
 #include <map>

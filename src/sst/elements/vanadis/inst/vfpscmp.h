@@ -121,14 +121,35 @@ public:
 
     bool performCompare(SST::Output* output, VanadisRegisterFile* regFile)
     {
-        const fp_format left_value =
-            ((8 == sizeof(fp_format)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))
-                ? combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1])
-                : regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
-        const fp_format right_value =
-            ((8 == sizeof(fp_format)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))
-                ? combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3])
-                : regFile->getFPReg<fp_format>(phys_fp_regs_in[1]);
+        uint64_t left_value_int;
+        uint64_t right_value_int;
+
+        if ( ( 8 == sizeof(fp_format)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode())){
+            left_value_int = combineFromRegisters<uint64_t>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
+            right_value_int =combineFromRegisters<uint64_t>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3]);
+        } else {
+            if ( 8 == regFile->getFPRegWidth() ) {
+                left_value_int = regFile->getFPReg<uint64_t>(phys_fp_regs_in[0]);
+                right_value_int = regFile->getFPReg<uint64_t>(phys_fp_regs_in[1]);
+            } else {
+                left_value_int = regFile->getFPReg<uint32_t>(phys_fp_regs_in[0]);
+                right_value_int = regFile->getFPReg<uint32_t>(phys_fp_regs_in[1]);
+            }
+        }
+
+        if constexpr (std::is_same_v<fp_format,float>) {
+            if ( 8 == regFile->getFPRegWidth() ) {
+                // if the upper 32 bits are not all 1's then these NaN
+                if ( ! ( isNaN_boxed( left_value_int ) && isNaN_boxed( right_value_int ) ) ) {
+                    fpflags.setInvalidOp();
+                    update_fp_flags = true;
+                    return 0;
+                }
+            }
+        }
+
+        auto left_value = *(fp_format*) & left_value_int; 
+        auto right_value = *(fp_format*) & right_value_int; 
 
         // assuming these are signalling comparison units
         // check both units for NaN
@@ -137,12 +158,27 @@ public:
 
         switch ( compare_type ) {
         case REG_COMPARE_EQ:
+            if ( UNLIKELY( isNaNs( left_value ) || isNaNs( right_value ) ) ) {
+                fpflags.setInvalidOp();
+                update_fp_flags = true;
+            }
             return (left_value == right_value);
         case REG_COMPARE_NEQ:
             return (left_value != right_value);
         case REG_COMPARE_LT:
+            if ( UNLIKELY( isNaN( left_value ) || isNaN( right_value ) || isNaNs( left_value ) || isNaNs( right_value ) ) )
+            {
+
+                fpflags.setInvalidOp();
+                update_fp_flags = true;
+            }
             return (left_value < right_value);
         case REG_COMPARE_LTE:
+            if ( UNLIKELY( isNaN( left_value ) || isNaN( right_value ) || isNaNs( left_value ) || isNaNs( right_value ) ) )
+            {
+                fpflags.setInvalidOp();
+                update_fp_flags = true;
+            }
             return (left_value <= right_value);
         case REG_COMPARE_GT:
             return (left_value > right_value);
@@ -159,7 +195,7 @@ public:
 #ifdef VANADIS_BUILD_DEBUG
         if ( output->getVerboseLevel() >= 16 ) {
             output->verbose(
-                CALL_INFO, 16, 0, "Execute: (addr=0x%llx) %s (%s)\n", getInstructionAddress(),
+                CALL_INFO, 16, 0, "Execute: (addr=0x%" PRI_ADDR ") %s (%s)\n", getInstructionAddress(),
                 getInstCode(), convertCompareTypeToString(compare_type));
         }
 #endif

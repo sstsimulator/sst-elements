@@ -123,7 +123,7 @@ public:
             }
 
             if(output_verbosity >= 16) {
-                output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ---> hit (addr=0x%llx), caching line in predecoder.\n",
+                output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ---> hit (addr=0x%" PRI_ADDR "), caching line in predecoder.\n",
                             resp->pAddr);
             }
 
@@ -159,7 +159,7 @@ public:
 
         if(output_verbosity >= 16) {
         output->verbose(CALL_INFO, 16, VANADIS_DBG_INS_LDR_FLG,
-                        "[fill-decode]: ins-addr: 0x%llx line-offset: %" PRIu64 " line-start=%" PRIu64 " / 0x%llx\n",
+                        "[fill-decode]: ins-addr: 0x%" PRI_ADDR " line-offset: %" PRIu64 " line-start=%" PRIu64 " / 0x%" PRI_ADDR "\n",
                         addr, inst_line_offset, cache_line_start, cache_line_start);
         }
 
@@ -282,7 +282,7 @@ public:
 
         do {
             output->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG,
-                            "[ins-loader] ---> issue ins-load line-start: 0x%llx, line-len: %" PRIu64
+                            "[ins-loader] ---> issue ins-load line-start: 0x%" PRI_ADDR ", line-len: %" PRIu64
                             " read-len=%" PRIu64 " \n",
                             line_start, line_start_offset, cache_line_width);
 
@@ -290,7 +290,7 @@ public:
 					// line is already in the cache, touch to make sure it is kept in LRU
 					predecode_cache->touch(line_start);
 
-					output->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ----> line (start-addr: 0x%llx) is already in pre-decode cache, updated LRU priority\n",
+					output->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ----> line (start-addr: 0x%" PRI_ADDR ") is already in pre-decode cache, updated LRU priority\n",
 						line_start);
 				} else {
 	            bool found_pending_load = false;
@@ -303,7 +303,7 @@ public:
 	            }
 
 	            if (!found_pending_load) {
-						output->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ----> creating a load for line at 0x%llx, len=%" PRIu64 "\n",
+						output->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "[ins-loader] ----> creating a load for line at 0x%" PRI_ADDR ", len=%" PRIu64 "\n",
 							line_start, cache_line_width);
 
 	                SST::Interfaces::StandardMem::Read* req_line = new SST::Interfaces::StandardMem::Read(
@@ -349,7 +349,7 @@ private:
 	void printPendingLoads(SST::Output* output) {
 		output->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "[ins-loader]: Pending loads table\n");
 		for( auto next_load : pending_loads ) {
-			output->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "[ins-loader]:   load: 0x%llx / size %" PRIu64 "\n",
+			output->verbose(CALL_INFO, 8, VANADIS_DBG_INS_LDR_FLG, "[ins-loader]:   load: 0x%" PRI_ADDR " / size %" PRIu64 "\n",
 				next_load.second->pAddr, next_load.second->size);
 		}
 	}

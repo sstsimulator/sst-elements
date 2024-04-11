@@ -186,6 +186,14 @@ public:
     }
 
     /** Get brief print of the event */
+    virtual std::string toString() const override {
+        std::string cmdStr(CommandString[(int)cmd_]);
+        std::ostringstream idstring;
+        idstring << "<" << eventID_.first << "," << eventID_.second << "> ";
+        return idstring.str() + cmdStr + " Src: " + src_ + " Dst: " + dst_ + " Tid: " + std::to_string(tid_);
+    }
+    
+    /** Get brief print of the event */
     virtual std::string getBriefString() {
         std::string cmdStr(CommandString[(int)cmd_]);
         std::ostringstream idstring;

@@ -16,6 +16,7 @@
 #pragma once
 
 #include <sst/core/event.h>
+#include <mercury/common/timestamp.h>
 #include <cstdint>
 #include <tuple>
 
@@ -47,13 +48,13 @@ class ExecutionEvent : public Event
     {
     }
 
-  //  Timestamp time() const {
-  //    return time_;
-  //  }
+    Timestamp time() const {
+      return time_;
+    }
 
-  //  void setTime(const Timestamp& t) {
-  //    time_ = t;
-  //  }
+    void setTime(const Timestamp& t) {
+      time_ = t;
+    }
 
     void setSeqnum(uint32_t seqnum) {
       seqnum_ = seqnum;
@@ -72,7 +73,7 @@ class ExecutionEvent : public Event
     }
 
    protected:
-  //  Timestamp time_;
+    Timestamp time_;
     uint32_t linkId_;
     /** A unique sequence number from the source */
     uint32_t seqnum_;

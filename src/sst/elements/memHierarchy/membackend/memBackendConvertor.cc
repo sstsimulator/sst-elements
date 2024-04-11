@@ -148,8 +148,7 @@ bool MemBackendConvertor::clock(Cycle_t cycle) {
  */
 void MemBackendConvertor::turnClockOn(Cycle_t cycle) {
     Cycle_t cyclesOff = cycle - m_cycleCount;
-    for (Cycle_t i = 0; i < cyclesOff; i++)
-        stat_outstandingReqs->addData( m_pendingRequests.size() );
+    stat_outstandingReqs->addDataNTimes( cyclesOff, m_pendingRequests.size() );
     m_cycleCount = cycle;
     m_clockOn = true;
 }
@@ -233,8 +232,7 @@ void MemBackendConvertor::finish(Cycle_t endCycle) {
     // stat_outstandingReqs may vary slightly in parallel & serial
     if (endCycle > m_cycleCount) {
         Cycle_t cyclesOff = endCycle - m_cycleCount;
-        for (Cycle_t i = 0; i < cyclesOff; i++)
-            stat_outstandingReqs->addData( m_pendingRequests.size() );
+        stat_outstandingReqs->addDataNTimes( cyclesOff, m_pendingRequests.size() );
         m_cycleCount = endCycle;
     }
     stat_totalCycles->addData(m_cycleCount);

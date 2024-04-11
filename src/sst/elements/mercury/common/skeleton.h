@@ -43,7 +43,7 @@ typedef int (*empty_main_fxn)();
 extern "C" {
 #endif
 
-//double sstmac_sim_time();
+//double sst_hg_sim_time();
 
 #ifdef __cplusplus
 }
@@ -161,7 +161,7 @@ class Params;
 #endif
 
 //#include <sstmac/software/process/global.h>
-#include <operating_system/libraries/api_fwd.h>
+#include <mercury/operating_system/libraries/api_fwd.h>
 /* end C++ */
 #else
 /* need for C */
@@ -201,15 +201,15 @@ extern "C" {
 extern int ssthg_global_stacksize;
 //extern char* static_init_glbls_segment;
 //extern char* static_init_tls_segment;
-//void sstmac_init_global_space(void* ptr, int size, int offset, bool tls);
-//void sstmac_advance_time(const char* param_name);
-//void sstmac_blocking_call(int condition, double timeout, const char* api);
+//void sst_hg_init_global_space(void* ptr, int size, int offset, bool tls);
+//void sst_hg_advance_time(const char* param_name);
+void sst_hg_blocking_call(int condition, double timeout, const char* api);
 
 #ifdef __cplusplus
 }
 #endif
 
 //#include <sstmac/skeleton_tls.h>
-#include <common/null_buffer.h>
+#include <mercury/common/null_buffer.h>
 
 

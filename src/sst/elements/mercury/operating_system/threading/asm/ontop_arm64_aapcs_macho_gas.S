@@ -38,9 +38,9 @@
  *******************************************************/
 
 .text
-.global _sstmac_ontop_fcontext
+.global _sst_hg_ontop_fcontext
 .balign 16
-_sstmac_ontop_fcontext:
+_sst_hg_ontop_fcontext:
     # prepare stack for GP + FPU
     sub  sp, sp, #0x70
 
@@ -78,5 +78,5 @@ _sstmac_ontop_fcontext:
     # restore stack from GP + FPU
     add  sp, sp, #0x70
 
-    # jump to sstmac_ontop-function
+    # jump to sst_hg_ontop-function
     ret x2

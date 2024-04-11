@@ -16,6 +16,7 @@
 #include <sst_config.h>
 
 #include "os/syscall/exit.h"
+#include "os/syscall/futex.h"
 #include "os/vnodeos.h"
 #include "os/vgetthreadstate.h"
 #include "os/resp/vosexitresp.h"
@@ -30,7 +31,11 @@ VanadisExitSyscall::VanadisExitSyscall( VanadisNodeOSComponent* os, SST::Link* c
     if ( m_os->getNodeNum() >= 0 ) {
         printf("node=%d pid=%d tid=%d has exited\n", m_os->getNodeNum(), process->getpid(), process->gettid());
     } else {
-        printf("pid=%d tid=%d has exited\n", process->getpid(), process->gettid());
+        if ( event->getExitCode() > 0 ) {
+            printf("pid=%d tid=%d has exited with code %d, Failed\n", process->getpid(), process->gettid(),event->getExitCode());
+        } else {
+            printf("pid=%d tid=%d has exited\n", process->getpid(), process->gettid());
+        }
     }
 
     uint64_t tid_addr = process->getTidAddress();
@@ -45,8 +50,20 @@ VanadisExitSyscall::VanadisExitSyscall( VanadisNodeOSComponent* os, SST::Link* c
 }
 
 void VanadisExitSyscall::memReqIsDone(bool) {
-    m_os->removeThread( getEvent<VanadisSyscallExitEvent*>()->getCoreID(),getEvent<VanadisSyscallExitEvent*>()->getThreadID(), m_process->gettid() );
 
+    auto event = getEvent<VanadisSyscallCloneEvent*>();
+
+    auto syscall = m_process->findFutex( m_process->getTidAddress());
+    if ( syscall ) {
+        m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,
+            "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 " found waiter, wakeup tid=%d\n",
+            m_process->gettid(), m_process->getTidAddress(), syscall->getTid());
+        dynamic_cast<VanadisFutexSyscall*>( syscall )->wakeup();
+        delete syscall;
+    }
+
+    m_os->removeThread( event->getCoreID(),event->getThreadID(), m_process->gettid() );
     m_output->verbose(CALL_INFO, 16, 0, "[syscall-exit] %s() called\n",__func__ );
+
     setReturnExited();
 }

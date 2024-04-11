@@ -628,8 +628,10 @@ bool Incoherent::handleEviction(Addr addr, PrivateCacheLine* &line, dbgin &diStr
 void Incoherent::cleanUpAfterRequest(MemEvent * event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
 
-    if (inMSHR)
+    if (inMSHR) {
+        if (event->isPrefetch() && event->getRqstr() == cachename_) outstandingPrefetches_--;
         mshr_->removeFront(addr);
+    }
 
     delete event;
 
@@ -649,9 +651,10 @@ void Incoherent::cleanUpAfterResponse(MemEvent * event) {
     mshr_->removeFront(addr);
     delete event;
 
-    if (req)
+    if (req) {
+        if (req->isPrefetch() && req->getRqstr() == cachename_) outstandingPrefetches_--;
         delete req;
-
+    }
     retry(addr);
 }
 

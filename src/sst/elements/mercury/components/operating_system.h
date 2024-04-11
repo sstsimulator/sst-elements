@@ -15,22 +15,24 @@
 
 #pragma once
 
-#include <common/component.h>
+#include <mercury/common/component.h>
 
 #include <sst/core/link.h>
 
-#include <common/factory.h>
-#include <components/node_fwd.h>
-#include <operating_system/threading/threading_interface.h>
-#include <operating_system/launch/app_launcher_fwd.h>
-#include <operating_system/launch/app_launch_request.h>
-#include <operating_system/process/app.h>
-#include <operating_system/process/thread.h>
-#include <operating_system/process/thread_info.h>
-#include <operating_system/process/mutex.h>
-#include <operating_system/process/tls.h>
-#include <operating_system/process/compute_scheduler.h>
-#include <operating_system/libraries/library.h>
+//#include <mercury/common/factory.h>
+#include <sst/core/eli/elementbuilder.h>
+#include <mercury/components/node_fwd.h>
+#include <mercury/operating_system/threading/threading_interface.h>
+#include <mercury/operating_system/launch/app_launcher_fwd.h>
+#include <mercury/operating_system/launch/app_launch_request.h>
+#include <mercury/operating_system/process/app.h>
+#include <mercury/operating_system/process/thread.h>
+#include <mercury/operating_system/process/thread_info.h>
+#include <mercury/operating_system/process/mutex.h>
+#include <mercury/operating_system/process/tls.h>
+#include <mercury/operating_system/process/compute_scheduler.h>
+#include <mercury/operating_system/libraries/library.h>
+#include <mercury/hardware/network/network_message.h>
 
 #include <cstdint>
 #include <memory>
@@ -46,6 +48,9 @@ class OperatingSystem : public SST::Hg::SubComponent {
 
 public:
 
+  SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::OperatingSystem,
+                                    SST::Hg::Node*)
+
   SST_ELI_REGISTER_SUBCOMPONENT(
     OperatingSystem,
     "hg",
@@ -54,9 +59,6 @@ public:
     "Mercury Operating System",
     SST::Hg::OperatingSystem
   )
-
-  SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::OperatingSystem,
-                                    SST::Hg::Node*)
 
   OperatingSystem(SST::ComponentId_t id, SST::Params& params, Node* parent);
 
@@ -75,6 +77,10 @@ public:
     return sst_hg_global_stacksize;
   }
 
+  std::function<void(NetworkMessage*)> nicDataIoctl();
+
+  std::function<void(NetworkMessage*)> nicCtrlIoctl();
+
   /**
    * @brief block Block the currently running thread context.
    * This must be called from an application thread, NOT the DES thread
@@ -83,6 +89,8 @@ public:
    * @return
    */
   void block();
+
+  void blockTimeout(TimeDelta delay);
 
   void startApp(App* theapp, const std::string&  /*unique_name*/);
   void startThread(Thread* t);
@@ -97,7 +105,7 @@ public:
   }
 
   static inline OperatingSystem*& staticOsThreadContext(){
-//  #if SSTMAC_USE_MULTITHREAD
+//  #if SST_HG_USE_MULTITHREAD
     int thr = ThreadInfo::currentPhysicalThreadId();
     return active_os_[thr];
 //  #else
@@ -106,7 +114,7 @@ public:
   }
 
   inline OperatingSystem*& activeOs() {
-//#if SSTMAC_USE_MULTITHREAD
+//#if SST_HG_USE_MULTITHREAD
   return active_os_[threadId()];
 //#else
 //  return active_os_;
@@ -162,7 +170,7 @@ public:
 //  std::map<int, condition_t> conditions_;
 //  std::map<int, mutex_t> mutexes_;
 
-  //#if SSTMAC_USE_MULTITHREAD
+  //#if SST_HG_USE_MULTITHREAD
     static std::vector<OperatingSystem*> active_os_;
   //#else
   //  static OperatingSystem* active_os_;

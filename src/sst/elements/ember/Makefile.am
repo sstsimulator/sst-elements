@@ -98,6 +98,8 @@ libember_la_SOURCES = \
 	mpi/motifs/emberhalo2d.cc  \
 	mpi/motifs/emberhalo2dNBR.h  \
 	mpi/motifs/emberhalo2dNBR.cc  \
+        mpi/motifs/emberhotspots.h \
+        mpi/motifs/emberhotspots.cc \
 	mpi/motifs/embersweep2d.h  \
 	mpi/motifs/embersweep2d.cc  \
 	mpi/motifs/embernull.h \
@@ -326,7 +328,7 @@ libember_la_SOURCES += \
 libember_la_LIBADD = \
 	$(OTF2_LDFLAGS) \
 	$(OTF2_LIBS)
-
+	-lotf2
 endif
 
 install-exec-hook:

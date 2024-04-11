@@ -67,6 +67,21 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     // Output for debug
     dbg.init("", dlevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
 
+    checkpointDir_ = params.find<std::string>("checkpointDir", "");
+    auto tmp = params.find<std::string>("checkpoint", "");
+    if ( ! tmp.empty() ) {
+        assert( ! checkpointDir_.empty() );
+        if ( 0 == tmp.compare("load") ) {
+            checkpoint_ = CHECKPOINT_LOAD;
+        } else if ( 0 == tmp.compare("save") ) {
+            checkpoint_ = CHECKPOINT_SAVE;
+        } else {
+            assert(0);
+        }
+    } else {
+        checkpoint_ = NO_CHECKPOINT;
+    }
+
     bool initBacking = params.find<bool>("initBacking", false);
 
     // Debug address
@@ -310,7 +325,16 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
                 out.fatal(CALL_INFO, -1, "%s, Error - unable to create backing store. Exception thrown is %d.\n", getName().c_str(), e);
         }
     } else if (backingType == "malloc") {
-        backing_ = new Backend::BackingMalloc(sizeBytes,initBacking);
+        if ( CHECKPOINT_LOAD == checkpoint_ ) {
+            stringstream filename;
+            filename << checkpointDir_ << "/" << getName();
+            //printf("%s\n",filename.str().c_str());
+            auto fp = fopen(filename.str().c_str(),"r");
+            assert(fp);
+            backing_ = new Backend::BackingMalloc(fp);
+        } else {
+            backing_ = new Backend::BackingMalloc(sizeBytes,initBacking);
+        }
     }
 
     /* Custom command handler */
@@ -579,6 +603,15 @@ void MemController::finish(void) {
     cycle--;
     memBackendConvertor_->finish(cycle);
     link_->finish();
+    if ( CHECKPOINT_SAVE ==  checkpoint_ ) {
+        stringstream filename;
+        filename << checkpointDir_ << "/" << getName();
+        auto fp = fopen(filename.str().c_str(),"w+");
+        assert(fp);
+        printf("Checkpoint component `%s` %s\n",getName().c_str(), filename.str().c_str());
+        backing_->dump( fp );
+        fclose( fp );
+    }
 }
 
 void MemController::writeData(MemEvent* event) {

@@ -84,12 +84,12 @@ public:
 #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16) {
             output->verbose(
-                CALL_INFO, 16, 0, "[execute-partload]: reg[%5" PRIu16 "]: %" PRIu64 " / 0x%llx\n", phys_int_regs_in[0],
+                CALL_INFO, 16, 0, "[execute-partload]: reg[%5" PRIu16 "]: %" PRIu64 " / 0x%" PRI_ADDR "\n", phys_int_regs_in[0],
                 mem_addr_reg_val, mem_addr_reg_val);
             output->verbose(
-                CALL_INFO, 16, 0, "[execute-partload]: offset           : %" PRIu64 " / 0x%llx\n", offset, offset);
+                CALL_INFO, 16, 0, "[execute-partload]: offset           : %" PRIu64 " / 0x%" PRI_ADDR "\n", offset, offset);
             output->verbose(
-                CALL_INFO, 16, 0, "[execute-partload]: (add)            : %" PRIu64 " / 0x%llx\n",
+                CALL_INFO, 16, 0, "[execute-partload]: (add)            : %" PRIu64 " / 0x%" PRI_ADDR "\n",
                 (mem_addr_reg_val + offset), (mem_addr_reg_val + offset));
         }
 #endif
@@ -102,7 +102,7 @@ public:
             output->verbose(
                 CALL_INFO, 16, 0, "[execute-partload]: (lower/upper load ? %s)\n", is_load_lower ? "lower" : "upper");
             output->verbose(
-                CALL_INFO, 16, 0, "[execute-partload]: load-addr: %" PRIu64 " / 0x%0llx / load-width: %" PRIu16 "\n",
+                CALL_INFO, 16, 0, "[execute-partload]: load-addr: %" PRIu64 " / 0x%0" PRI_ADDR " / load-width: %" PRIu16 "\n",
                 (*out_addr), (*out_addr), (*width));
             output->verbose(CALL_INFO, 16, 0, "[execute-partload]: register-offset: %" PRIu16 "\n", register_offset);
         }

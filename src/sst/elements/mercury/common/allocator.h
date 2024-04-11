@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <common/thread_safe_new.h>
+#include <mercury/common/thread_safe_new.h>
 #include <vector>
 #include <cstdint>
 #include <cstddef>
@@ -100,7 +100,7 @@ class allocator
 
 };
 
-#if SSTMAC_CUSTOM_NEW
+#if SST_HG_CUSTOM_NEW
 template <class T>
 class threadSafeAllocator
 {

@@ -17,10 +17,11 @@
 
 #include <sst/core/params.h>
 #include <sst/core/eli/elementinfo.h>
-#include <common/factory.h>
-#include <hardware/common/flow.h>
-#include <components/operating_system_fwd.h>
-#include <operating_system/process/thread_fwd.h>
+//#include <mercury/common/factory.h>
+#include <sst/core/eli/elementbuilder.h>
+#include <mercury/hardware/common/flow.h>
+#include <mercury/components/operating_system_fwd.h>
+#include <mercury/operating_system/process/thread_fwd.h>
 //#include <sprockit/debug.h>
 
 //DeclareDebugSlot(compute_scheduler)

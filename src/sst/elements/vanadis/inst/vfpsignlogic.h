@@ -70,6 +70,15 @@ public:
         }
     }
 
+    const char* getSignOpStr( VanadisFPSignLogicOperation op ) {
+        switch ( op ) {
+            case VanadisFPSignLogicOperation::SIGN_COPY: return "COPY";
+            case VanadisFPSignLogicOperation::SIGN_NEG: return "NEG";
+            case VanadisFPSignLogicOperation::SIGN_XOR: return "XOR";
+        }
+        assert(0);
+    }
+
     void printToBuffer(char* buffer, size_t buffer_size) override
     {
         snprintf(
@@ -79,58 +88,111 @@ public:
             phys_fp_regs_in[1]);
     }
 
+    template <typename T>
+    T signInject( T src1, T src2, VanadisFPSignLogicOperation op ) {
+
+        if constexpr ( std::is_same_v<T,uint64_t> || std::is_same_v<T,uint32_t>) {
+            switch( op ) {
+                case VanadisFPSignLogicOperation::SIGN_COPY:
+                    if ( isSignBitSet(src2) ) {
+                        src1 = setSignBit(src1);
+                    } else {
+                        src1 = clearSignBit(src1);
+                    }
+                    break;
+                case VanadisFPSignLogicOperation::SIGN_NEG:
+                    if ( isSignBitSet(src2) ) {
+                        src1 = clearSignBit(src1);
+                    } else {
+                        src1 = setSignBit(src1);
+                    }
+                    break;
+                case VanadisFPSignLogicOperation::SIGN_XOR:
+                    if ( isSignBitSet(src1) ^ isSignBitSet(src2) ) {
+                        src1 = setSignBit(src1);
+                    } else {
+                        src1 = clearSignBit(src1);
+                    }
+                    break;
+            }
+        } else {
+            assert(0);
+        }
+        return src1;
+    }
+
+
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16 ) {
             if((8 == sizeof(fp_format)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode())) {
-                output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%llx) %s / isa-in: { %" PRIu16 ", %" PRIu16 " } / { %" PRIu16 ", %" PRIu16 " } -> isa-out: { %" PRIu16 ", %" PRIu16 " }\n", 
-                    getInstructionAddress(), getInstCode(), phys_fp_regs_in[0], phys_fp_regs_in[1], 
+                output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%" PRI_ADDR ") %s / isa-in: { %" PRIu16 ", %" PRIu16 " } / { %" PRIu16 ", %" PRIu16 " } -> isa-out: { %" PRIu16 ", %" PRIu16 " }\n",
+                    getInstructionAddress(), getInstCode(), phys_fp_regs_in[0], phys_fp_regs_in[1],
                     phys_fp_regs_in[2], phys_fp_regs_in[3], phys_fp_regs_out[0], phys_fp_regs_out[1]);
             } else {
-                output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%llx) %s / isa-in: %" PRIu16 " / %" PRIu16 " -> isa-out: %" PRIu16 "\n", 
+                output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%" PRI_ADDR ") %s / isa-in: %" PRIu16 " / %" PRIu16 " -> isa-out: %" PRIu16 "\n",
                     getInstructionAddress(), getInstCode(), phys_fp_regs_in[0], phys_fp_regs_in[1], phys_fp_regs_out[0]);
             }
 		}
 #endif
 
-        fp_format src_1 = ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode())) ?
-			combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]) : regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
-        fp_format src_2 = ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode())) ?
-			combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3]) : regFile->getFPReg<fp_format>(phys_fp_regs_in[1]);
+        uint64_t src_1; 
+        uint64_t src_2; 
+        if ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))  {
+			src_1 = combineFromRegisters<uint64_t>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
+			src_2 = combineFromRegisters<uint64_t>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3]);
+        } else {
+            if ( 8 == regFile->getFPRegWidth() )  {
+                src_1 = regFile->getFPReg<uint64_t>(phys_fp_regs_in[0]);
+                src_2 = regFile->getFPReg<uint64_t>(phys_fp_regs_in[1]);
+            } else {
+                src_1 = regFile->getFPReg<uint32_t>(phys_fp_regs_in[0]);
+                src_2 = regFile->getFPReg<uint32_t>(phys_fp_regs_in[1]);
+            }
+        }
 
-		  fp_format result;
+        uint64_t result;
 
-		  const bool src_1_neg = std::signbit(src_1);
-        const bool src_2_neg = std::signbit(src_2);
+        if constexpr (std::is_same_v<fp_format,double> ) {
 
-		  switch(sign_op) {
-		  case VanadisFPSignLogicOperation::SIGN_COPY:
-            {
-					result = std::copysign(src_1, src_2);
-            } break;
-            case VanadisFPSignLogicOperation::SIGN_XOR:
-       	    {
-					if(src_2_neg) {
-						result = src_1_neg ? (-src_1) : src_1;
-					} else {
-						result = src_1_neg ? src_1 : (-src_1);
-					}
-            } break;
-            case VanadisFPSignLogicOperation::SIGN_NEG:
-            {
-					result = -std::copysign(src_1, src_2);
-            } break;
-		  }
+            result = signInject( src_1, src_2, sign_op );
 
-		  // Set any fp flag updates that we need
-		  performFlagChecks<fp_format>(result);
+        } else if constexpr (std::is_same_v<fp_format,float> ) {
 
-		  if((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode())) {
-				fractureToRegisters<fp_format>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], result);
-		  } else {
-				regFile->setFPReg<fp_format>(phys_fp_regs_out[0], result);
-		  }
+            if ( 8 == regFile->getFPRegWidth() ) {
+                result = 0xffffffff00000000;
+                if ( isNaN_boxed(src_1) ) {
+                    if ( 0 != src_2 && isNaN_boxed(src_2) ) {
+                        result |= signInject( static_cast<uint32_t>(src_1), static_cast<uint32_t>(src_2), sign_op );
+                    } else {
+                        result |= signInject( static_cast<uint32_t>(src_1), NaN<uint32_t>(), sign_op );
+                    }
+                } else {
+                    if ( 0 != src_2 && isNaN_boxed(src_2) ) {
+                        result |= signInject( NaN<uint32_t>(), static_cast<uint32_t>(src_2), sign_op );
+                    } else {
+                        result |= signInject( NaN<uint32_t>(), NaN<uint32_t>(), sign_op );
+                    }
+                }
+            } else {
+                assert(0);
+            }
+        } else {
+            assert(0);
+        }
+
+        // Sign-injection instructions do not set floating-point exception flags
+
+        if ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode())) {
+            fractureToRegisters<uint64_t>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], result);
+        } else {
+            if ( 8 == regFile->getFPRegWidth() ) {
+				regFile->setFPReg<uint64_t>(phys_fp_regs_out[0], result);
+            } else {
+				regFile->setFPReg<uint32_t>(phys_fp_regs_out[0], static_cast<uint32_t>(result));
+            }
+        }
 
         markExecuted();
     }

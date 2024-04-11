@@ -187,6 +187,7 @@ EXTRA_DIST = \
 	tests/testBackendTimingDRAM-3.py \
 	tests/testBackendTimingDRAM-4.py \
 	tests/testBackendVaultSim.py \
+	tests/testCoherenceDomains.py \
 	tests/testCustomCmdGoblin-1.py \
 	tests/testCustomCmdGoblin-2.py \
 	tests/testCustomCmdGoblin-3.py \
@@ -241,6 +242,7 @@ EXTRA_DIST = \
 	tests/refFiles/test_memHA_BackendTimingDRAM_3.out \
 	tests/refFiles/test_memHA_BackendTimingDRAM_4.out \
 	tests/refFiles/test_memHA_BackendVaultSim.out \
+	tests/refFiles/test_memHA_CoherenceDomains.out \
 	tests/refFiles/test_memHA_CustomCmdGoblin_1.out \
 	tests/refFiles/test_memHA_CustomCmdGoblin_2.out \
 	tests/refFiles/test_memHA_CustomCmdGoblin_3.out \

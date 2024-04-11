@@ -16,8 +16,8 @@
 #pragma once
 
 #include <sst/core/event.h>
-#include <common/node_address.h>
-#include <hardware/common/flow_fwd.h>
+#include <mercury/common/node_address.h>
+#include <mercury/hardware/common/flow_fwd.h>
 //# include <sprockit/printable.h>
 
 namespace SST {

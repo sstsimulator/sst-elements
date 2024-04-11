@@ -69,18 +69,17 @@ public:
                                           "SST::Vanadis::VanadisCPUOSHandler" },
                                         { "branch_unit", "Branch prediction unit", "SST::Vanadis::VanadisBranchUnit" })
 
-    SST_ELI_DOCUMENT_PARAMS({ "decode_q_len", "Number of entries in the decoded, but pending issue queue" },
-                            { "icache_line_width", "Number of bytes in an icache line" },
+    SST_ELI_DOCUMENT_PARAMS(
+            //{ "decode_q_len", "Number of entries in the decoded, but pending issue queue" },
+                            { "icache_line_width", "Number of bytes in an icache line", "64"},
                             { "uop_cache_entries",
                               "Number of instructions to cache in the micro-op cache (this is full "
-                              "instructions, not microops but usually 1:1 ratio" },
+                              "instructions, not microops but usually 1:1 ratio", "128" },
                             { "predecode_cache_entries",
                               "Number of cache lines to store in the local L0 cache for instructions "
-                              "pending decoding." },
+                              "pending decoding.", "4" },
                             { "loader_mode",
-                              "Operation of the loader, 0 = LRU (more accurate), 1 = INFINITE cache (faster simulation)"},
-                            { "branch_predictor_entries", "Number of entries in the branch predictor, "
-                                                          "an entry is a branch instruction address" })
+                              "Operation of the loader, 0 = LRU (more accurate), 1 = INFINITE cache (faster simulation)", "0"})
 
     SST_ELI_DOCUMENT_STATISTICS( 
 				VANADIS_DECODER_ELI_STATISTICS
@@ -108,6 +107,9 @@ public:
             break;
         case 1:
             ins_loader->setLoaderMode(VanadisInstructionLoaderMode::INFINITE_CACHE_MODE);
+            break;
+        default:
+            ins_loader->setLoaderMode(VanadisInstructionLoaderMode::LRU_CACHE_MODE);
             break;
         }
 
@@ -202,7 +204,7 @@ public:
     {
         ip = newIP;
 
-        output->verbose(CALL_INFO, 16, 0, "[decoder] -> clear decode-q and set new ip: 0x%llx\n", newIP);
+        output->verbose(CALL_INFO, 16, 0, "[decoder] -> clear decode-q and set new ip: 0x%" PRI_ADDR "\n", newIP);
 
         // Clear out the decode queue, need to restart
         // decoded_q->clear();

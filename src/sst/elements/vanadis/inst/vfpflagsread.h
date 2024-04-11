@@ -60,7 +60,7 @@ public:
 		  	uint64_t flags_out = 0;
 
 			if(copy_round_mode) {
-					flags_out = convertRoundingToInteger(fpflags.getRoundingMode());
+					flags_out = convertRoundingToInteger(pipeline_fpflags->getRoundingMode());
 
 					if(shift_round_mode) {
 						flags_out <<= 5;
@@ -68,15 +68,15 @@ public:
 			}
 
 			if(copy_fp_flags) {
-				flags_out |= fpflags.inexact() ? 0x1 : 0x0;
-				flags_out |= fpflags.underflow() ? 0x2 : 0x0;
-				flags_out |= fpflags.overflow() ? 0x4 : 0x0;
-				flags_out |= fpflags.divZero() ? 0x8 : 0x0;
-				flags_out |= fpflags.invalidOp() ? 0x10 : 0x0;
+				flags_out |= pipeline_fpflags->inexact() ? 0x1 : 0x0;
+				flags_out |= pipeline_fpflags->underflow() ? 0x2 : 0x0;
+				flags_out |= pipeline_fpflags->overflow() ? 0x4 : 0x0;
+				flags_out |= pipeline_fpflags->divZero() ? 0x8 : 0x0;
+				flags_out |= pipeline_fpflags->invalidOp() ? 0x10 : 0x0;
 			}
 
 			if(output->getVerboseLevel() >= 16) {
-				output->verbose(CALL_INFO, 16, 0, "Execute: 0x%llx %s out-reg: %" PRIu16 " / out-mask: 0x%llx / copy_round: %c / shift_round: %c / copy_fp: %c\n",
+				output->verbose(CALL_INFO, 16, 0, "Execute: 0x%" PRI_ADDR " %s out-reg: %" PRIu16 " / out-mask: 0x%" PRI_ADDR " / copy_round: %c / shift_round: %c / copy_fp: %c\n",
 						getInstructionAddress(), getInstCode(), phys_int_regs_out[0], flags_out,
 						copy_round_mode ? 'y' : 'n', shift_round_mode ? 'y' : 'n', copy_fp_flags ? 'y' : 'n');
 			}

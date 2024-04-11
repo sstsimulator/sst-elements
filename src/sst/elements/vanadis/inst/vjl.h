@@ -44,7 +44,7 @@ public:
 
     void printToBuffer(char* buffer, size_t buffer_size) override
     {
-        snprintf(buffer, buffer_size, "JL      %" PRIu64 " (0x%llx)", takenAddress, takenAddress);
+        snprintf(buffer, buffer_size, "JL      %" PRIu64 " (0x%" PRI_ADDR ")", takenAddress, takenAddress);
     }
 
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
@@ -55,7 +55,7 @@ public:
         if(output->getVerboseLevel() >= 16) {
             output->verbose(
                 CALL_INFO, 16, 0,
-                "Execute: JL jump-to: %" PRIu64 " / 0x%llx / link: %" PRIu16 " phys: %" PRIu16 " v: %" PRIu64 "/ 0x%llx\n",
+                "Execute: JL jump-to: %" PRIu64 " / 0x%" PRI_ADDR " / link: %" PRIu16 " phys: %" PRIu16 " v: %" PRIu64 "/ 0x%" PRI_ADDR "\n",
                 takenAddress, takenAddress, isa_int_regs_out[0], phys_int_regs_out[0], link_value, link_value);
         }
 #endif

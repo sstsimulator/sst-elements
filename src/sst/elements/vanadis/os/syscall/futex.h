@@ -27,11 +27,11 @@ public:
     VanadisFutexSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallFutexEvent* event );
     ~VanadisFutexSyscall() {}
 
+    void wakeup();
  private:  
 
     enum State { ReadAddr, ReadArgs } m_state;
     void memReqIsDone(bool);
-    void wakeup();
     void finish( uint32_t val2, uint64_t addr2 );
 
     uint32_t m_val;
@@ -39,6 +39,11 @@ public:
     int m_op;
     std::vector<uint8_t> m_buffer;
     int m_numWokeup;
+
+    void futexWake(VanadisSyscallFutexEvent* event);
+    int wakeWaiters(VanadisSyscallFutexEvent* event) const;
+    void wakeWaiter(VanadisSyscallFutexEvent* event) const;
+    int getNumWaitersToWake(VanadisSyscallFutexEvent* event) const;
 };
 
 } // namespace Vanadis

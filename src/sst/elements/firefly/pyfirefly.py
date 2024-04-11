@@ -108,7 +108,7 @@ class BasicNicConfiguration(TemplateBase):
             "rxMatchDelay_ns", "txDelay_ns",
             "hostReadDelay_ns",
             "tracedPkt", "tracedNode",
-            "maxSendMachineQsize", "maxRecvMachineQSize",
+            "maxSendMachineQsize", "maxRecvMachineQsize",
             "numSendMachines", "numRecvNicUnits",
             "messageSendAlignment", "nicAllocationPolicy",
             "packetOverhead", "packetSize",

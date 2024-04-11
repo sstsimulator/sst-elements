@@ -13,10 +13,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <components/operating_system.h>
-#include <operating_system/process/simple_compute_scheduler.h>
-#include <operating_system/process/thread.h>
-//#include <operating_system/process/sstmac_config.h>
+#include <mercury/components/operating_system.h>
+#include <mercury/operating_system/process/simple_compute_scheduler.h>
+#include <mercury/operating_system/process/thread.h>
+//#include <mercury/operating_system/process/sstmac_config.h>
 
 namespace SST {
 namespace Hg {
@@ -27,7 +27,7 @@ extern template class  HgBase<SST::SubComponent>;
 void
 SimpleComputeScheduler::reserveCores(int ncores, Thread* thr)
 {
-//#if SSTMAC_SANITY_CHECK
+//#if SST_HG_SANITY_CHECK
 //  if (ncore_active_ > ncores_){
 //    spkt_abort_printf(
 //      "simple_compute_scheduler::reserve_core: %d cores active, only %d cores total",
@@ -45,7 +45,7 @@ SimpleComputeScheduler::reserveCores(int ncores, Thread* thr)
     //reset the core check to make sure we have what we need
     total_cores_needed = ncores + ncore_active_;
   }
-//#if SSTMAC_SANITY_CHECK
+//#if SST_HG_SANITY_CHECK
 //  if (ncores > (ncores_ - ncore_active_)){
 //    spkt_abort_printf(
 //      "simple_compute_scheduler::reserve_core: %d cores free, but needed %d for thread %d",

@@ -58,7 +58,7 @@ public:
         if(output->getVerboseLevel() >= 16) {
             output->verbose(
                 CALL_INFO, 16, 0,
-                "Execute: (addr=0x%llx) BFP%c isa-in: %" PRIu16 ", / phys-in: %" PRIu16 " / offset: %" PRId64 "\n",
+                "Execute: (addr=0x%" PRI_ADDR ") BFP%c isa-in: %" PRIu16 ", / phys-in: %" PRIu16 " / offset: %" PRId64 "\n",
                 getInstructionAddress(), branch_on_true ? 'T' : 'F', isa_fp_regs_in[0], phys_fp_regs_in[0], offset);
         }
 #endif
@@ -72,13 +72,13 @@ public:
             takenAddress = (uint64_t)(((int64_t)getInstructionAddress()) + offset);
 
             output->verbose(
-                CALL_INFO, 16, 0, "-----> taken-address: 0x%llx + %" PRId64 " = 0x%llx\n", getInstructionAddress(),
+                CALL_INFO, 16, 0, "-----> taken-address: 0x%" PRI_ADDR " + %" PRId64 " = 0x%" PRI_ADDR "\n", getInstructionAddress(),
                 offset, takenAddress);
         }
         else {
             takenAddress = calculateStandardNotTakenAddress();
 
-            output->verbose(CALL_INFO, 16, 0, "-----> not-taken-address: 0x%llx\n", takenAddress);
+            output->verbose(CALL_INFO, 16, 0, "-----> not-taken-address: 0x%" PRI_ADDR "\n", takenAddress);
         }
 
         markExecuted();

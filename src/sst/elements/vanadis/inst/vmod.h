@@ -78,24 +78,22 @@ public:
         } 
 #endif
 
-		const gpr_format src_1 = regFile->getIntReg<int64_t>(phys_int_regs_in[0]);
-		const gpr_format src_2 = regFile->getIntReg<int64_t>(phys_int_regs_in[1]);
+        const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in[0]);
+        const gpr_format src_2 = regFile->getIntReg<gpr_format>(phys_int_regs_in[1]);
 
-		if( 0 == src_2 ) {
-			if(std::is_signed<gpr_format>::value) {
-				regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1, true);
-			} else {
-				regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1, false);
-			}
-		} else {
-			if(std::is_signed<gpr_format>::value) {
-				regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1 % src_2, true);
-			} else {
-				regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1 % src_2, false);
-			}
-		}
+        if ( 0 == src_2 ) {
+            regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1, true);
+        } else if ( -1 == src_2 ) {
+            if constexpr (std::is_signed<gpr_format>::value) {
+                regFile->setIntReg<gpr_format>(phys_int_regs_out[0], 0, true);
+            } else {
+                regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1 % src_2, true);
+            }
+        } else {
+            regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1 % src_2, true);
+        }
 
-      markExecuted();
+        markExecuted();
     }
 };
 

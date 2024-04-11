@@ -15,15 +15,17 @@
 
 #pragma once
 
-#include <components/operating_system_fwd.h>
-#include <operating_system/launch/app_launch_request.h>
-#include <operating_system/process/app.h>
-#include <operating_system/process/app_id.h>
+#include <mercury/components/operating_system_fwd.h>
+#include <mercury/operating_system/launch/app_launch_request.h>
+#include <mercury/operating_system/process/app.h>
+#include <mercury/operating_system/process/app_id.h>
 
 #include <unordered_map>
 
 namespace SST {
 namespace Hg {
+
+static int app_rank_;
 
 /**
  * A launcher that can be cooperatively scheduled by a very naive scheduler.

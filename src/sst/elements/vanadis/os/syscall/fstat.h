@@ -67,7 +67,7 @@ public:
     VanadisFstatSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallFstatEvent* event )
         : VanadisSyscall( os, coreLink, process, event, "fstat" ) 
     {
-	    m_output->verbose(CALL_INFO, 16, 0, "-> call is fstat( %d, 0x%0llx )\n", event->getFileHandle(), event->getStructAddress());
+	    m_output->verbose(CALL_INFO, 16, 0, "-> call is fstat( %d, 0x%0" PRI_ADDR " )\n", event->getFileHandle(), event->getStructAddress());
 
         setReturnFail(-LINUX_EINVAL);
 
