@@ -94,6 +94,7 @@ RdmaNic::SendStream::~SendStream() {
 
 	if ( -1 != m_sendEntry->getCqId() ) {
     	RdmaCompletion comp;
+        bzero(&comp, sizeof(comp));
     	comp.context = m_sendEntry->getContext();
     	m_nic.writeCompletionToHost( m_sendEntry->getThread(), m_sendEntry->getCqId(), comp );
 	}

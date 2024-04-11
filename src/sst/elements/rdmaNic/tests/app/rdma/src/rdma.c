@@ -74,9 +74,9 @@ void rdma_init( void ) {
 }
 
 NicCmd* allocCmd() {
+#if USE_STATIC_CMDS
 	NicCmd* cmd = NULL;
 	NicResp* resp;
-#if USE_STATIC_CMDS
 	for ( int i = 0; i< USE_STATIC_CMDS; i++ ) {
 		if ( 0 == _cmds[i].respAddr ) {
 			resp = _resp + i;

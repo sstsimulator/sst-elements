@@ -280,6 +280,8 @@ private:
     std::vector<VanadisDecoder*>                            thread_decoders;
     std::vector<const VanadisDecoderOptions*>               isa_options;
 
+    std::deque<VanadisInstruction*> rocc_queue;
+
     std::vector<VanadisFunctionalUnit*> fu_int_arith;
     std::vector<VanadisFunctionalUnit*> fu_int_div;
     std::vector<VanadisFunctionalUnit*> fu_branch;

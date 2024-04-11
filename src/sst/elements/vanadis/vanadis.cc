@@ -38,7 +38,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     max_cycle = params.find<uint64_t>("max_cycle", std::numeric_limits<uint64_t>::max());
 
     auto nodeId = params.find<int32_t>("nodeId", 0);
-    const int32_t dbg_mask = params.find<int32_t>("dbg_mask", 0);
+    const int32_t dbg_mask = params.find<int32_t>("dbg_mask", 0x0);
     const int32_t verbosity = params.find<int32_t>("verbose", 0);
     core_id                 = params.find<uint32_t>("core_id", 0);
 
@@ -242,11 +242,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     rocc = loadUserSubComponent<SST::Vanadis::VanadisRoCCInterface>("rocc");
 
     if ( nullptr == rocc ) {
-        output->verbose(CALL_INFO, 8, 0, "no RoCC interface subcomponent loaded\n");
-        has_rocc = false;
-    } else {
-        has_rocc = true;
-        rocc->setRegisterFiles(&register_files);
+        output->fatal(CALL_INFO, -1, "Error - unable to load the rocc interface (rocc subcomponent)\n");
     }
 
     uint16_t fu_id = 0;
@@ -580,7 +576,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
                                     CALL_INFO, 8, VANADIS_DBG_ISSUE_FLG, "%d: ----> Issued for: %s / 0x%llx / status: %d\n",
                                     ins->getHWThread(), instPrintBuffer, ins->getInstructionAddress(), status);
                                 if ( print_rob ) {
-                                    printRob(i,rob[i]);
+                                    //printRob(i,rob[i]);
                                 }
                             }
 #endif
@@ -712,8 +708,15 @@ VANADIS_COMPONENT::performExecute(const uint64_t cycle)
     // Tick the load/store queue
     lsq->tick((uint64_t)cycle);
 
-    // Tick the RoCC command queue
-    if (has_rocc) rocc->tick((uint64_t)cycle);
+    // Tick the RoCC accelerator
+    RoCCResponse* resp;
+    if (!(rocc->isBusy()) && (resp = rocc->respond())) {
+        VanadisInstruction* ins = rocc_queue.front();
+        register_files[ins->getHWThread()]->setIntReg<uint64_t>(resp->rd, resp->rd_val);
+        ins->markExecuted();
+        rocc_queue.pop_front();
+    }
+    rocc->tick((uint64_t)cycle);
 
     return 0;
 }
@@ -742,7 +745,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
 
 #ifdef VANADIS_BUILD_DEBUG
     if ( output->getVerboseLevel() >= 9 ) {
-        printRob( rob_num, rob );
+        //printrob( rob_num, rob );
     }
 #endif
 
@@ -862,7 +865,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
                     "(new addr: 0x%llx)\n",
                     pipeline_reset_addr);
                 if ( print_rob ) {
-                    printRob(rob_num,rob);
+                    //printrob(rob_num,rob);
                 }
                 }
 #endif
@@ -915,7 +918,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
 
                 delete[] inst_asm_buffer;
                 if ( print_rob ) {
-                    printRob(rob_num,rob);
+                    //printrob(rob_num,rob);
                 }
             }
 #endif
@@ -1120,10 +1123,10 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
         break;
 
     case INST_ROCC:
-        output->verbose(CALL_INFO, 16, 0, "issuing rocc instruction\n");
+        output->verbose(CALL_INFO, 16, 0, "allocating rocc instruction\n");
         if ( !rocc->RoCCFull() ) {
             output->verbose(CALL_INFO, 16, 0, "pushing to RoCC queue\n");
-            rocc->push((VanadisRoCCInstruction*)ins);
+            rocc_queue.push_back(ins);
             allocated_fu = true;
         }
         break;
@@ -1675,6 +1678,19 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
             isa_table->incFPWrite(ins_isa_reg);
 
             ins->setPhysFPRegOut(i, out_reg);
+        }
+    }
+
+    if (ins->getInstFuncType() == INST_ROCC) {
+        output->verbose(CALL_INFO, 16, 0, "issuing rocc instruction\n");
+        if ( !rocc->RoCCFull() ) {
+            VanadisRegisterFile* regFile = register_files[ins->getHWThread()];
+            regFile->print(output);
+            uint64_t rs1_val = regFile->getIntReg<int64_t>(ins->getPhysIntRegIn(0));
+            uint64_t rs2_val = regFile->getIntReg<int64_t>(ins->getPhysIntRegIn(1));
+            VanadisRoCCInstruction* vrocc_inst = (VanadisRoCCInstruction*)ins;
+            RoCCInstruction* rocc_inst = new RoCCInstruction(vrocc_inst->func7, vrocc_inst->rd, vrocc_inst->xs1, vrocc_inst->xs2, vrocc_inst->xd);
+            rocc->push(new RoCCCommand(rocc_inst, rs1_val, rs2_val));
         }
     }
 

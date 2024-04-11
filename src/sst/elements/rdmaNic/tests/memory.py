@@ -56,12 +56,12 @@ class Builder:
             "clock" : cpu_clock,
             "backend.mem_size" : "4GiB",
             "backing" : "malloc",
+            "initBacking" : 1,
             "addr_range_start" : "0x0",
             "addr_range_end" : "0x7fffffff",
             "debug" : mc_debug,
             "debug_level" : 11,
             "debug_addr" : debug_addr,
-            "initBacking": 1,
         })
 
         memToDir = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")

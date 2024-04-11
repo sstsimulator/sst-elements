@@ -23,6 +23,7 @@ exe = "hello-world-cpp-rocc"
 #exe = "read-write"
 #exe = "unlink"
 #exe = "unlinkat"
+#exe = "lseek"
 
 #testDir = "basic-math"
 #exe = "sqrt-double"
@@ -361,7 +362,7 @@ class CPU_Builder:
         cpu_lsq.addParams(lsqParams)
         cpu_lsq.enableAllStatistics()
 
-        cpu_rocc = cpu.setSubComponent( "rocc", "vanadis.VanadisRoCCBasic")
+        cpu_rocc = cpu.setSubComponent( "rocc", "roccer.RoCCBasic")
         cpu_rocc.addParams(roccParams)
         cpu_rocc.enableAllStatistics()
 

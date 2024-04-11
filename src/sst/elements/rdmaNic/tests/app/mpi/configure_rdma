@@ -1,0 +1,22 @@
+ARCH=riscv64
+RDMA_NIC_DIR=`realpath ../../../../..`
+
+../configure \
+--prefix=`pwd`/install \
+--host=riscv64-linux-musl \
+--with-device=ch3:rdma \
+--enable-fortran=no \
+--enable-romio=no \
+--enable-threads=no \
+--enable-hybrid=no \
+--enable-rsh=yes \
+--enable-shared=no \
+--enable-static=yes \
+--with-pmi=vanadis \
+--with-pm=none \
+--enable-threads=single \
+CFLAGS="-I${RDMA_NIC_DIR}/tests/app/rdma/include -I${RDMA_NIC_DIR}" \
+CXXFLAGS="-I${RDMA_NIC_DIR}/tests/app/rdma/include -I${RDMA_NIC_DIR}" \
+LDFLAGS="-L${RDMA_NIC_DIR}/tests/app/rdma/${ARCH}" \
+LIBS=-lrdma \
+host_alias=riscv64-linux-musl

@@ -273,7 +273,7 @@ class _AttributeManager(object):
             return self._vars[key].value
         else:
             if self._passthrough_target:
-                self._passthrough_target.__getattr__(key,value)
+                return self._passthrough_target.__getattr__(key)
             else:
                 raise KeyError("%r has no attribute %r"%(self.__getErrorReportClass(),self.__getErrorReportName(key)))
 

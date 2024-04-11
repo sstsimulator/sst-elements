@@ -22,6 +22,8 @@
   These are header file only classes, so need to be included here to
   get compiled.
  */
+#include "bridge.h"
+
 #include "hr_router/xbar_arb_rr.h"
 #include "hr_router/xbar_arb_lru.h"
 #include "hr_router/xbar_arb_age.h"

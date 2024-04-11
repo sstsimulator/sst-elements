@@ -4,6 +4,8 @@
 #include "inst/vinst.h"
 #include "inst/vrocc.h"
 
+#include "rocc/vroccinterface.h"
+
 #include <cstdio>
 
 namespace SST {
@@ -24,7 +26,12 @@ public:
         isa_int_regs_in[1] = rs2;
         isa_int_regs_out[0] = rd;
         
-        func7 = func_code7;
+        this->func7 = func_code7;
+        this->rd = rd;
+        this->xs1 = xs1;
+        this->xs2 = xs2;
+        this->xd = xd;
+
     }
 
     VanadisRoCCInstruction* clone() { return new VanadisRoCCInstruction(*this); }
@@ -42,12 +49,11 @@ public:
         markExecuted(); 
     }
 
-    virtual void getRegisterValues(SST::Output* output, VanadisRegisterFile* regFile, uint64_t* rs1, uint64_t* rs2) {
-        (*rs1) = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
-		(*rs2) = regFile->getIntReg<uint64_t>(phys_int_regs_in[1]);
-    }
-
     uint8_t func7;
+    uint8_t rd;
+    bool xs1;
+    bool xs2;
+    bool xd;
 };
 
 } // namespace Vanadis

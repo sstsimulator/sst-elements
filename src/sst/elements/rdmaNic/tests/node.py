@@ -29,7 +29,7 @@ class Endpoint():
 
         # build the Vanadis OS, it returns
         # OS cache
-        osCache = osBuilder.build( nodeId, 0 )
+        osCache = osBuilder.build( self.numNodes, nodeId, 0 )
 
         # connect OS L1 to Memory 
         #memBuilder.connect( "OS_L1", port, osCache, 1, dest="2" ) 

@@ -27,12 +27,12 @@ enum VanadisFunctionalUnitType {
     INST_LOAD,
     INST_STORE,
     INST_BRANCH,
-    INST_ROCC,
     INST_SPECIAL,
     INST_SYSCALL,
     INST_FENCE,
     INST_NOOP,
-    INST_FAULT
+    INST_FAULT,
+    INST_ROCC
 };
 
 inline const char*

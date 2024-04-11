@@ -26,52 +26,70 @@ def build_vanadis_test_matrix():
     vanadis_test_matrix = []
     testlist = []
 
-    arch_list = ["mipsel","riscv64"]
-
+    # basic-io
     location="small/basic-io"
-    io_tests = ["hello-world","hello-world-cpp","printf-check","openat","read-write","unlink","unlinkat"]
-    #io_tests = []
-    for test in io_tests:
+
+    arch_list = ["riscv64"]
+    tests = ["lseek"]
+    for test in tests:
         for arch in arch_list:
             testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 300])
 
+    arch_list = ["mipsel","riscv64"]
+    tests = ["hello-world","hello-world-cpp","printf-check","openat","read-write","unlink","unlinkat","fread-fwrite"]
+    #tests = []
+    for test in tests:
+        for arch in arch_list:
+            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 300])
+
+
+    # basic-math
     location="small/basic-math"
-    math_tests = ["sqrt-double","sqrt-float"]
-    #math_tests = []
-    for test in math_tests:
+    tests = ["sqrt-double","sqrt-float"]
+    #tests = []
+    for test in tests:
         for arch in arch_list:
             testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 300])
 
+    # basic-ops
     location="small/basic-ops"
-    ops_tests = ["test-branch","test-shift"]
-    #ops_tests = []
-    for test in ops_tests:
+    tests = ["test-branch","test-shift"]
+    #tests = []
+    for test in tests:
         for arch in arch_list:
             testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 300])
 
-
+    # misc 
     location="small/misc"
-    misc_tests = ["stream","gettime","splitLoad","mt-dgemm","stream-fortran","uname"]
-    #misc_tests =[]
-    for test in misc_tests:
+    tests = ["stream","gettime","splitLoad","mt-dgemm","stream-fortran","uname"]
+    #tests = []
+    for test in tests:
         for arch in arch_list:
             testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 300])
 
-    misc_tests = ["fork","clone","pthread"]
-    #misc_tests =[]
-    for test in misc_tests:
+    tests = ["fork","clone","pthread"]
+    #tests = []
+    for test in tests:
         for arch in arch_list:
             testlist.append(["basic_vanadis.py", location, test, arch, 2,1, "gold1", 300])
             testlist.append(["basic_vanadis.py", location, test, arch, 1,2, "gold2", 300])
 
-    misc_tests = ["openmp"]
-    #misc_tests =[]
-    for test in misc_tests:
+    tests = ["openmp"]
+    #tests = []
+    for test in tests:
         for arch in arch_list:
             testlist.append(["basic_vanadis.py", location, test,arch, 4,1, "4core", 300])
             testlist.append(["basic_vanadis.py", location, test,arch, 1,4, "4thread", 300])
             testlist.append(["basic_vanadis.py", location, test,arch, 2,2, "2core-2thread", 300])
 
+    tests = ["openmp2"]
+    #tests = []
+    arch_list = ["riscv64"]
+    for test in tests:
+        for arch in arch_list:
+            testlist.append(["basic_vanadis.py", location, test,arch, 16,1, "16core", 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1,32, "32thread", 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 4,8, "4core-8thread", 300])
 
     # Process each line and crack up into an index, hash, options and sdl file
     for testnum, test_info in enumerate(testlist):

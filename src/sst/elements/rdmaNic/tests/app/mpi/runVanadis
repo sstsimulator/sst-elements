@@ -1,0 +1,15 @@
+
+RDMA_NIC_DIR=`realpath ../../..`
+
+export RDMANIC_EXE="$RDMA_NIC_DIR/tests/app/mpi/IMB/src_c/IMB-MPI1"
+export RDMANIC_IMB="True"
+
+
+if [ ! -e  msglen.txt ]
+then
+    ln -s ../../msglen.txt .
+fi
+
+export PYTHONPATH=../..
+
+time sst -n 1 ../../runVanadis.py

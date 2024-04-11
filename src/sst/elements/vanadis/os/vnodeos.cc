@@ -37,7 +37,13 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
 
     const uint32_t verbosity = params.find<uint32_t>("dbgLevel", 0);
     const uint32_t mask = params.find<uint32_t>("dbgMask", 0);
-    output = new SST::Output("[node-os]:@p():@l ", verbosity, mask, SST::Output::STDOUT);
+    auto node = params.find<uint32_t>("nodeId", 0);
+
+    char* outputPrefix = (char*)malloc(sizeof(char) * 256);
+    snprintf(outputPrefix, sizeof(char)*256, "[node%d-os]:@p():@l ", node);
+
+    output = new SST::Output(outputPrefix, verbosity, mask, Output::STDOUT);
+    free(outputPrefix);
 
     const uint32_t core_count = params.find<uint32_t>("cores", 0);
     const uint32_t hardwareThreadCount = params.find<uint32_t>("hardwareThreadCount", 1);
