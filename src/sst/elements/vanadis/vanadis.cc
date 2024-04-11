@@ -600,7 +600,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
                                     CALL_INFO, 8, VANADIS_DBG_ISSUE_FLG, "%d: ----> Issued for: %s / 0x%" PRI_ADDR " / status: %d\n",
                                     ins->getHWThread(), instPrintBuffer, ins->getInstructionAddress(), status);
                                 if ( print_rob ) {
-                                    //printRob(i,rob[i]);
+                                    printRob(i,rob[i]);
                                 }
                             }
 #endif
@@ -769,7 +769,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
 
 #ifdef VANADIS_BUILD_DEBUG
     if ( output->getVerboseLevel() >= 9 ) {
-        //printrob( rob_num, rob );
+        printRob( rob_num, rob );
     }
 #endif
 
@@ -889,7 +889,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
                     "(new addr: 0x%" PRI_ADDR ")\n",
                     pipeline_reset_addr);
                 if ( print_rob ) {
-                    //printrob(rob_num,rob);
+                    printRob(rob_num,rob);
                 }
                 }
 #endif
@@ -942,7 +942,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
 
                 delete[] inst_asm_buffer;
                 if ( print_rob ) {
-                    //printrob(rob_num,rob);
+                    printRob(rob_num,rob);
                 }
             }
 #endif
