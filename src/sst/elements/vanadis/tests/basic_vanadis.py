@@ -31,6 +31,7 @@ exe = "hello-world"
 #exe = "fread-fwrite"
 #exe = "unlink"
 #exe = "unlinkat"
+#exe = "lseek"
 
 #testDir = "basic-math"
 #exe = "sqrt-double"
@@ -584,3 +585,4 @@ for cpu in range(numCpus):
     # connect cpu L2 to router
     link_l2cache_2_rtr = sst.Link(prefix + ".link_l2cache_2_rtr")
     link_l2cache_2_rtr.connect( l2cache, (comp_chiprtr, "port" + str(cpu), "1ns") )
+    
