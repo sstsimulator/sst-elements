@@ -369,6 +369,9 @@ class CPU_Builder:
         # CPU.lsq mem interface which connects to D-cache 
         cpuDcacheIf = cpu_lsq.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
 
+        # CPU.rocc mem interface which connects to D-cache
+        roccDcacheIf = cpu_rocc.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
+
         # CPU.mem interface for I-cache
         cpuIcacheIf = cpu.setSubComponent( "mem_interface_inst", "memHierarchy.standardInterface" )
 
@@ -428,6 +431,13 @@ class CPU_Builder:
         link_lsq_l1dcache_link = sst.Link(prefix+".link_cpu_dbus_link")
         link_lsq_l1dcache_link.connect( (cpuDcacheIf, "port", "1ns"), (processor_bus, "high_network_0", "1ns") )
         link_lsq_l1dcache_link.setNoCut()
+
+        # RoCC (data) -> processor_bus
+        link_rocc_l1dcache_link = sst.Link(prefix+".link_rocc_dbus_link")
+
+        link_rocc_l1dcache_link.connect( (roccDcacheIf, "port", "1ns"),
+                                        (processor_bus, "high_network_1", "1ns"))
+        link_rocc_l1dcache_link.setNoCut()
 
         # processor_bus -> L1 cache
         link_bus_l1cache_link = sst.Link(prefix+".link_bus_l1cache_link")
