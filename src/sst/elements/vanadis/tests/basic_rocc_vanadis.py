@@ -14,15 +14,16 @@ isa="riscv64"
 
 loader_mode = os.getenv("VANADIS_LOADER_MODE", "0")
 
-testDir="mvm"
+testDir="basic-io"
 #exe = "hello-world"
 #exe = "hello-world-cpp"
-exe = "mvm"
+exe = "hello-world-cpp-rocc"
 #exe = "openat"
 #exe = "printf-check"
 #exe = "read-write"
 #exe = "unlink"
 #exe = "unlinkat"
+#exe = "lseek"
 
 #testDir = "basic-math"
 #exe = "sqrt-double"
@@ -58,7 +59,7 @@ sst.setProgramOption("stop-at", "0 ns")
 sst.setStatisticLoadLevel(4)
 sst.setStatisticOutput("sst.statOutputConsole")
 
-full_exe_name = os.getenv("VANADIS_EXE", "./tests/small/" + testDir + "/" + exe)
+full_exe_name = os.getenv("VANADIS_EXE", "./tests/small/" + testDir + "/" + exe +  "/" + isa + "/" + exe)
 exe_name= full_exe_name.split("/")[-1]
 
 verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
@@ -271,28 +272,9 @@ lsqParams = {
 
 roccParams = {
     "clock" : cpu_clock,
-    "verbose" : 4,
-    "max_instructions" : 8,
+    "verbose" : verbosity,
+    "max_instructions" : 8
 }
-
-arrayParams = {
-    "arrayLatency" : "100ns",
-    "clock" : cpu_clock,
-    "max_instructions" : 8,
-    "verbose" : 20,
-    "mmioAddr" : 0,
-}
-
-roccarrayParams = {
-    "numArrays" : 2,
-    "arrayInputSize" : 3,
-    "arrayOutputSize" : 3,
-    "inputOperandSize" : 4,
-    "outputOperandSize" : 4
-}
-
-roccParams.update(roccarrayParams)
-arrayParams.update(roccarrayParams)
 
 l1dcacheParams = {
     "access_latency_cycles" : "2",
@@ -380,20 +362,12 @@ class CPU_Builder:
         cpu_lsq.addParams(lsqParams)
         cpu_lsq.enableAllStatistics()
 
-        cpu_rocc = cpu.setSubComponent( "rocc", "golem.VanadisRoCCAnalog")
+        cpu_rocc = cpu.setSubComponent( "rocc", "vanadis.VanadisRoCCBasic")
         cpu_rocc.addParams(roccParams)
         cpu_rocc.enableAllStatistics()
 
         # CPU.lsq mem interface which connects to D-cache 
         cpuDcacheIf = cpu_lsq.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
-
-        # CPU.rocc compute array 
-        computeArray = cpu_rocc.setSubComponent( "array", "golem.ManualMVMComputeArray" )
-#        computeArray = cpu_rocc.setSubComponent( "array", "golem.CrossSimComputeArray" )
-        computeArray.addParams(arrayParams)
-
-        # CPU.rocc mem interface which connects to D-cache 
-        roccDcacheIf = cpu_rocc.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
 
         # CPU.mem interface for I-cache
         cpuIcacheIf = cpu.setSubComponent( "mem_interface_inst", "memHierarchy.standardInterface" )
@@ -454,11 +428,6 @@ class CPU_Builder:
         link_lsq_l1dcache_link = sst.Link(prefix+".link_cpu_dbus_link")
         link_lsq_l1dcache_link.connect( (cpuDcacheIf, "port", "1ns"), (processor_bus, "high_network_0", "1ns") )
         link_lsq_l1dcache_link.setNoCut()
-
-        # RoCC (data) -> processor_bus
-        link_rocc_l1dcache_link = sst.Link(prefix+".link_rocc_dbus_link")
-        link_rocc_l1dcache_link.connect( (roccDcacheIf, "port", "1ns"), (processor_bus, "high_network_1", "1ns") )
-        link_rocc_l1dcache_link.setNoCut()
 
         # processor_bus -> L1 cache
         link_bus_l1cache_link = sst.Link(prefix+".link_bus_l1cache_link")
@@ -623,4 +592,3 @@ for cpu in range(numCpus):
     # connect cpu L2 to router
     link_l2cache_2_rtr = sst.Link(prefix + ".link_l2cache_2_rtr")
     link_l2cache_2_rtr.connect( l2cache, (comp_chiprtr, "port" + str(cpu), "1ns") )
-
