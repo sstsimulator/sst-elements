@@ -362,7 +362,7 @@ class CPU_Builder:
         cpu_lsq.addParams(lsqParams)
         cpu_lsq.enableAllStatistics()
 
-        cpu_rocc = cpu.setSubComponent( "rocc", "roccer.RoCCBasic")
+        cpu_rocc = cpu.setSubComponent( "rocc", "vanadis.VanadisRoCCBasic")
         cpu_rocc.addParams(roccParams)
         cpu_rocc.enableAllStatistics()
 
