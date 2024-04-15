@@ -266,8 +266,9 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     rocc = loadUserSubComponent<SST::Vanadis::VanadisRoCCInterface>("rocc");
 
     if ( nullptr == rocc ) {
-        output->fatal(CALL_INFO, -1, "Error - unable to load the rocc interface (rocc subcomponent)\n");
-    }
+        has_rocc = false;
+        output->verbose(CALL_INFO, 8, 0, "Error - unable to load the rocc interface (rocc subcomponent)\n");
+    } else { has_rocc = true; }
 
     uint16_t fu_id = 0;
 
@@ -733,14 +734,16 @@ VANADIS_COMPONENT::performExecute(const uint64_t cycle)
     lsq->tick((uint64_t)cycle);
 
     // Tick the RoCC accelerator
-    RoCCResponse* resp;
-    if (!(rocc->isBusy()) && (resp = rocc->respond())) {
-        VanadisInstruction* ins = rocc_queue.front();
-        register_files[ins->getHWThread()]->setIntReg<uint64_t>(resp->rd, resp->rd_val);
-        ins->markExecuted();
-        rocc_queue.pop_front();
+    if (has_rocc) {
+        RoCCResponse* resp;
+        if (!(rocc->isBusy()) && (resp = rocc->respond())) {
+            VanadisInstruction* ins = rocc_queue.front();
+            register_files[ins->getHWThread()]->setIntReg<uint64_t>(resp->rd, resp->rd_val);
+            ins->markExecuted();
+            rocc_queue.pop_front();
+        }
+        rocc->tick((uint64_t)cycle);
     }
-    rocc->tick((uint64_t)cycle);
 
     return 0;
 }

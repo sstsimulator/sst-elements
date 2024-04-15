@@ -56,6 +56,7 @@ public:
         UnitAlgebra clock = params.find<UnitAlgebra>("clock", "1GHz");
 
         busy = false;
+        curr_resp = NULL;
 
         memInterface = loadUserSubComponent<Interfaces::StandardMem>(
             "memory_interface", ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, getTimeConverter("1ps"),
