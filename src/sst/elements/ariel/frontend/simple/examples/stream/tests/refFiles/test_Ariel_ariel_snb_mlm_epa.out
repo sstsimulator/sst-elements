@@ -1,0 +1,79 @@
+Configuring Ariel processor model (8 cores)...
+Configuring ring network...
+Configuring core and memory controller group 0...
+Creating active core 0 in group 0
+Creating active core 1 in group 0
+Creating L3 cache block: 0 in group: 0
+Creating L3 cache block: 1 in group: 0
+Creating L3 cache block: 2 in group: 0
+Creating L3 cache block: 3 in group: 0
+Creating L3 cache block: 4 in group: 0
+Configuring core and memory controller group 1...
+Creating active core 0 in group 1
+Creating active core 1 in group 1
+Creating L3 cache block: 0 in group: 1
+Creating L3 cache block: 1 in group: 1
+Creating L3 cache block: 2 in group: 1
+Creating L3 cache block: 3 in group: 1
+Creating L3 cache block: 4 in group: 1
+Configuring core and memory controller group 2...
+Creating active core 0 in group 2
+Creating active core 1 in group 2
+Creating L3 cache block: 0 in group: 2
+Creating L3 cache block: 1 in group: 2
+Creating L3 cache block: 2 in group: 2
+Creating L3 cache block: 3 in group: 2
+Creating L3 cache block: 4 in group: 2
+Configuring core and memory controller group 3...
+Creating active core 0 in group 3
+Creating active core 1 in group 3
+Creating L3 cache block: 0 in group: 3
+Creating L3 cache block: 1 in group: 3
+Creating L3 cache block: 2 in group: 3
+Creating L3 cache block: 3 in group: 3
+Creating L3 cache block: 4 in group: 3
+Completed configuring the SST Sandy Bridge model
+ArielComponent[arielcpu.cc:37:ArielCPU] Creating Ariel component...
+ArielComponent[arielcpu.cc:43:ArielCPU] Configuring for 8 cores...
+ArielComponent[arielcpu.cc:46:ArielCPU] Configuring for check addresses = no
+ArielComponent[arielcpu.cc:120:ArielCPU] Loaded memory manager: A0:memmgr
+ArielComponent[arielcpu.cc:134:ArielCPU] Memory manager construction is completed.
+ArielComponent[arielcpu.cc:159:ArielCPU] Registering ArielCPU clock at 2660MHz
+ArielComponent[arielcpu.cc:163:ArielCPU] Clocks registered.
+ArielComponent[arielcpu.cc:165:ArielCPU] Creating core to cache links...
+ArielComponent[arielcpu.cc:167:ArielCPU] Creating processor cores and cache links...
+ArielComponent[arielcpu.cc:169:ArielCPU] Configuring cores and cache links...
+ArielComponent[arielcpu.cc:209:ArielCPU] Completed initialization of the Ariel RTL Link.
+ArielComponent[arielcpu.cc:209:ArielCPU] Completed initialization of the Ariel RTL Link.
+ArielComponent[arielcpu.cc:209:ArielCPU] Completed initialization of the Ariel RTL Link.
+ArielComponent[arielcpu.cc:209:ArielCPU] Completed initialization of the Ariel RTL Link.
+ArielComponent[arielcpu.cc:209:ArielCPU] Completed initialization of the Ariel RTL Link.
+ArielComponent[arielcpu.cc:209:ArielCPU] Completed initialization of the Ariel RTL Link.
+ArielComponent[arielcpu.cc:209:ArielCPU] Completed initialization of the Ariel RTL Link.
+ArielComponent[arielcpu.cc:209:ArielCPU] Completed initialization of the Ariel RTL Link.
+ArielComponent[arielcpu.cc:219:ArielCPU] Completed initialization of the Ariel CPU.
+[Metasim-r0] SamplingMethod:	AccessLimit 0 SampleOn 1000000 SampleOff 10000000
+CORE ID: 0 PROCESSED AN EXIT EVENT
+ArielComponent[arielcpu.cc:237:finish] Ariel Processor Information:
+ArielComponent[arielcpu.cc:238:finish] Completed at: 2955 nanoseconds.
+ArielComponent[arielcpu.cc:239:finish] Ariel Component Statistics (By Core)
+
+Ariel Memory Management Statistics:
+---------------------------------------------------------------------
+Page Table Sizes:
+- Demand map entries at level 0         10
+- Demand map entries at level 1         0
+Page Table Coverages:
+- Demand bytes at level 0              40960
+- Demand bytes at level 1              0
+Simulation is complete, simulated time: 2.95574 us
+EPAFrontend[arielfrontendcommon.cc:126:parseCommonSubComponentParams] Model specifies that there are 0 application arguments
+EPAFrontend[frontend/epa/epafrontend.cc:39:EPAFrontend] Completed processing application arguments.
+EPAFrontend[frontend/epa/epafrontend.cc:46:EPAFrontend] Base pipe name: /sst_shmem_1147280-0-1804289383
+EPAFrontend[frontend/epa/epafrontend.cc:59:EPAFrontend] Completed initialization of the Ariel CPU.
+EPAFrontend[arielfrontendcommon.cc:52:init] Launching...
+EPAFrontend[frontend/epa/epafrontend.cc:91:forkChildProcess] Executing command: /home/allysonc/workspaces/SST/sst-elements/src/sst/elements/ariel/tests/testopenMP/ompmybarrier/ompmybarrier.arielinst
+EPAFrontend[frontend/epa/epafrontend.cc:140:forkChildProcess] ACC: Parent returning from fork
+EPAFrontend[arielfrontendcommon.cc:58:init] Waiting for child to attach.
+EPAFrontend[frontend/epa/epafrontend.cc:196:forkChildProcess] Launching executable: /home/allysonc/workspaces/SST/sst-elements/src/sst/elements/ariel/tests/testopenMP/ompmybarrier/ompmybarrier.arielinst...
+EPAFrontend[arielfrontendcommon.cc:60:init] Child has attached!

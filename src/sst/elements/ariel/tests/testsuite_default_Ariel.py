@@ -4,6 +4,24 @@ from sst_unittest import *
 from sst_unittest_support import *
 import os
 
+##############################################
+# EPA Frontend Functions not yet in sst-core #
+##############################################
+def is_EPAX_loaded() -> bool:
+    # Check if arm-based epa tool is available
+    epaxdir_found = False
+    epax_path = os.environ.get('EPAX_ROOT')
+    if epax_path is not None:
+        epaxdir_found = os.path.isdir(epax_path)
+    return epaxdir_found
+
+def is_PEBIL_loaded() -> bool:
+    # Check if x86-based epa tool is available
+    pebildir_found = False
+    pebil_path = os.environ.get('PEBIL_ROOT')
+    if pebil_path is not None:
+        pebildir_found = os.path.isdir(pebil_path)
+    return pebildir_found
 
 class testcase_Ariel(SSTTestCase):
 
@@ -17,42 +35,78 @@ class testcase_Ariel(SSTTestCase):
         super(type(self), self).tearDown()
 
 #####
-    pin_loaded = testing_is_PIN_loaded()
 
-    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
-    def test_Ariel_runstream(self):
+    pin_loaded = testing_is_PIN_loaded()
+    epax_loaded = is_EPAX_loaded()
+    pebil_loaded = is_PEBIL_loaded()
+    epa_loaded = epax_loaded or pebil_loaded
+
+    @unittest.skipIf(not pin_loaded, "Ariel: PIN tests require PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
+    def test_Ariel_runstream_pin(self):
         self.ariel_Template("runstream")
 
-    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
-    def test_Ariel_testSt(self):
+    @unittest.skipIf(not epa_loaded, "Ariel: EPA tests require PEBIL or EPAX, but Env Var 'PEBIL_ROOT' or 'EPAX_ROOT' is not found or path does not exist.")
+    def test_Ariel_runstream_epa(self):
+        self.ariel_Template("runstream", frontend="epa")
+
+    @unittest.skipIf(not pin_loaded, "Ariel: PIN tests require PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
+    def test_Ariel_testSt_pin(self):
         self.ariel_Template("runstreamSt")
 
-    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
-    def test_Ariel_testNB(self):
+    @unittest.skipIf(not epa_loaded, "Ariel: EPA tests require PEBIL or EPAX, but Env Var 'PEBIL_ROOT' or 'EPAX_ROOT' is not found or path does not exist.")
+    def test_Ariel_testSt_epa(self):
+        self.ariel_Template("runstreamSt", frontend="epa")
+
+    @unittest.skipIf(not pin_loaded, "Ariel: PIN tests require PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
+    def test_Ariel_testNB_pin(self):
         self.ariel_Template("runstreamNB")
 
-    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
-    def test_Ariel_memH_test(self):
+    @unittest.skipIf(not epa_loaded, "Ariel: EPA tests require PEBIL or EPAX, but Env Var 'PEBIL_ROOT' or 'EPAX_ROOT' is not found or path does not exist.")
+    def test_Ariel_testNB_epa(self):
+        self.ariel_Template("runstreamNB", frontend="epa")
+
+    @unittest.skipIf(not pin_loaded, "Ariel: PIN tests require PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
+    def test_Ariel_memH_test_pin(self):
         self.ariel_Template("memHstream")
 
-    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
+    @unittest.skipIf(not epa_loaded, "Ariel: EPA tests require PEBIL or EPAX, but Env Var 'PEBIL_ROOT' or 'EPAX_ROOT' is not found or path does not exist.")
+    def test_Ariel_memH_test_epa(self):
+        self.ariel_Template("memHstream", frontend="epa")
+
+    @unittest.skipIf(not pin_loaded, "Ariel: PIN tests require PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
     @unittest.skipIf(host_os_get_distribution_type() == OS_DIST_OSX, "Ariel: Open MP is not supported on OSX.")
-    def test_Ariel_test_ivb(self):
+    def test_Ariel_test_ivb_pin(self):
         self.ariel_Template("ariel_ivb")
 
-    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
+    @unittest.skipIf(not epa_loaded, "Ariel: EPA tests require PEBIL or EPAX, but Env Var 'PEBIL_ROOT' or 'EPAX_ROOT' is not found or path does not exist.")
+    @unittest.skipIf(host_os_get_distribution_type() == OS_DIST_OSX, "Ariel: Open MP is not supported on OSX.")
+    def test_Ariel_test_ivb_epa(self):
+        self.ariel_Template("ariel_ivb", frontend="epa")
+
+    @unittest.skipIf(not pin_loaded, "Ariel: PIN tests require PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
     @unittest.skipIf(host_os_get_distribution_type() == OS_DIST_OSX, "Ariel: Open MP is not supported on OSX.")
     @unittest.skipIf(testing_check_get_num_ranks() > 1, "Ariel: test_Ariel_test_snb skipped if ranks > 1 - Sandy Bridge test is incompatible with Multi-Rank.")
-    def test_Ariel_test_snb(self):
+    def test_Ariel_test_snb_pin(self):
         self.ariel_Template("ariel_snb")
 
-    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
+    @unittest.skipIf(not epa_loaded, "Ariel: EPA tests require PEBIL or EPAX, but Env Var 'PEBIL_ROOT' or 'EPAX_ROOT' is not found or path does not exist.")
+    @unittest.skipIf(host_os_get_distribution_type() == OS_DIST_OSX, "Ariel: Open MP is not supported on OSX.")
+    @unittest.skipIf(testing_check_get_num_ranks() > 1, "Ariel: test_Ariel_test_snb skipped if ranks > 1 - Sandy Bridge test is incompatible with Multi-Rank.")
+    def test_Ariel_test_snb_epa(self):
+        self.ariel_Template("ariel_snb", frontend="epa")
+
+    @unittest.skipIf(not pin_loaded, "Ariel: PIN tests require PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
     @unittest.skipIf(testing_check_get_num_ranks() > 1, "Ariel: test_Ariel_test_snb_mlm skipped if ranks > 1 - Sandy Bridge test is incompatible with Multi-Rank.")
-    def test_Ariel_test_snb_mlm(self):
+    def test_Ariel_test_snb_mlm_pin(self):
         self.ariel_Template("ariel_snb_mlm", app="stream_mlm")
+
+    @unittest.skipIf(not epa_loaded, "Ariel: EPA tests require PEBIL or EPAX, but Env Var 'PEBIL_ROOT' or 'EPAX_ROOT' is not found or path does not exist.")
+    @unittest.skipIf(testing_check_get_num_ranks() > 1, "Ariel: test_Ariel_test_snb_mlm skipped if ranks > 1 - Sandy Bridge test is incompatible with Multi-Rank.")
+    def test_Ariel_test_snb_mlm_epa(self):
+        self.ariel_Template("ariel_snb_mlm", app="stream_mlm", frontend="epa")
 #####
 
-    def ariel_Template(self, testcase, app="", testtimeout=480):
+    def ariel_Template(self, testcase, app="", testtimeout=480, frontend="pin"):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
@@ -68,6 +122,12 @@ class testcase_Ariel(SSTTestCase):
         Ariel_ompmybarrier_app = "{0}/ompmybarrier".format(ArielElementompmybarrierDir)
         Ariel_test_stream_mlm_app = "{0}/stream_mlm".format(ArielElementStreamDir)
         sst_elements_parent_dir = os.path.abspath("{0}/../../../../../".format(ArielElementDir))
+
+        # If epa frontend, use instrumented application
+        if frontend == "epa":
+            Ariel_test_stream_app = Ariel_test_stream_app + ".arielinst"
+            Ariel_ompmybarrier_app = Ariel_ompmybarrier_app + ".arielinst"
+            Ariel_test_stream_mlm_app = Ariel_test_stream_mlm_app + ".arielinst"
 
         # Set the Path to the stream applications
         os.environ["ARIEL_TEST_STREAM_APP"] = Ariel_test_stream_app
@@ -87,8 +147,11 @@ class testcase_Ariel(SSTTestCase):
         else:
             os.environ["OMP_EXE"] = app # Probably will fail unless this path is correctly set, but will give a useful error message
 
+        # Set the frontend (epa or pin)
+        os.environ["ARIEL_TEST_FRONTEND"] = frontend
+
         # Set the various file paths
-        testDataFileName=("test_Ariel_{0}".format(testcase))
+        testDataFileName=("test_Ariel_{0}_{1}".format(testcase, frontend))
         sdlfile = "{0}/{1}.py".format(ArielElementStreamDir, testcase)
         reffile = "{0}/tests/refFiles/{1}.out".format(ArielElementStreamDir, testDataFileName)
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
@@ -96,6 +159,7 @@ class testcase_Ariel(SSTTestCase):
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
 
         log_debug("testcase = {0}".format(testcase))
+        log_debug("frontend = {0}".format(frontend))
         log_debug("sdl file = {0}".format(sdlfile))
         log_debug("ref file = {0}".format(reffile))
         log_debug("out file = {0}".format(outfile))
@@ -173,7 +237,6 @@ class testcase_Ariel(SSTTestCase):
         if rtn1.result() != 0:
             log_debug("Ariel {0} Make returned non-zero exit code. Error:\n{1}".format(self.ArielElementStreamDir, rtn1.error()))
 
-
         # Now build the ompmybarrier binary
         cmd = "make"
         rtn2 = OSCommand(cmd, set_cwd=self.ArielElementompmybarrierDir).run()
@@ -186,3 +249,59 @@ class testcase_Ariel(SSTTestCase):
         self.assertTrue(rtn1.result() == 0, "stream apps failed to compile.\nResult was {0}.\nStandard out was:\n{1}\nStandard err was:\n{2}".format(rtn1.result(), rtn1.output(), rtn1.error()))
         self.assertTrue(rtn2.result() == 0, "ompmybarrier.c failed to compile")
 
+
+        # Everything compiled OK. Check if we need to check for epa binaries
+        epax_loaded = is_EPAX_loaded()
+        pebil_loaded = is_PEBIL_loaded()
+        epa_loaded = epax_loaded or pebil_loaded
+
+        if not epa_loaded:
+            return
+
+        # If doing epa frontend tests, check if stream is instrumented.
+        # If not, instrument it
+        if (not os.path.exists(self.ArielElementStreamDir + "/stream.arielinst")):
+            # Instrument with pebil
+            if (pebil_loaded):
+                cmd = "pebil --tool ArielIntercept --app stream --inp +"
+                rtn3 = OSCommand(cmd, set_cwd=self.ArielElementStreamDir).run()
+                log_debug("Ariel stream pebil result = {0}; output =\n{1}".format(rtn3.result(), rtn3.output()))
+                if rtn3.result() != 0:
+                    log_debug("Ariel {0} pebil returned non-zero exit code. Error:\n{1}".format(self.ArielElementStreamDir, rtn3.error()))
+            # Instrument with epax
+            else:
+                self.assertTrue(False, "epax commands not implemented yet")
+            # Check that everything instrumented OK
+            self.assertTrue(rtn3.result() == 0, "stream app failed to instrument.\nResult was {0}.\nStandard out was:\n{1}\nStandard err was:\n{2}".format(rtn3.result(), rtn3.output(), rtn3.error()))
+
+        # If doing epa frontend tests, check if stream_mlm is instrumented.
+        # If not, instrument it
+        if (not os.path.exists(self.ArielElementStreamDir + "/stream_mlm.arielinst")):
+            # Instrument with pebil
+            if (pebil_loaded):
+                cmd = "pebil --tool ArielIntercept --app stream_mlm --inp +"
+                rtn4 = OSCommand(cmd, set_cwd=self.ArielElementStreamDir).run()
+                log_debug("Ariel stream pebil result = {0}; output =\n{1}".format(rtn4.result(), rtn4.output()))
+                if rtn4.result() != 0:
+                    log_debug("Ariel {0} pebil returned non-zero exit code. Error:\n{1}".format(self.ArielElementStreamDir, rtn4.error()))
+            # Instrument with epax
+            else:
+                self.assertTrue(False, "epax commands not implemented yet")
+            # Check that everything instrumented OK
+            self.assertTrue(rtn4.result() == 0, "stream_mlm app failed to instrument.\nResult was {0}.\nStandard out was:\n{1}\nStandard err was:\n{2}".format(rtn4.result(), rtn4.output(), rtn4.error()))
+
+        # If doing epa frontend tests, check if ompmybarrier is instrumented.
+        # If not, instrument it
+        if (not os.path.exists(self.ArielElementompmybarrierDir + "/ompmybarrier.arielinst")):
+            # Instrument with pebil
+            if (pebil_loaded):
+                cmd = "pebil --tool ArielIntercept --app ompmybarrier --inp + --threaded"
+                rtn5 = OSCommand(cmd, set_cwd=self.ArielElementompmybarrierDir).run()
+                log_debug("Ariel stream pebil result = {0}; output =\n{1}".format(rtn5.result(), rtn5.output()))
+                if rtn5.result() != 0:
+                    log_debug("Ariel {0} pebil returned non-zero exit code. Error:\n{1}".format(self.ArielElementompmybarrierDir, rtnr.error()))
+            # Instrument with epax
+            else:
+                self.assertTrue(False, "epax commands not implemented yet")
+            # Check that everything instrumented OK
+            self.assertTrue(rtn5.result() == 0, "ompmybarrier failed to instrument")
