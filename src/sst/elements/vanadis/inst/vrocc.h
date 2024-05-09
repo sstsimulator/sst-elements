@@ -32,11 +32,38 @@ public:
         this->xs2 = xs2;
         this->xd = xd;
 
+        switch (accelerator_id) {
+            case 0:
+                this->funcType = INST_ROCC0;
+                this->instCode = "RoCC0";
+                break;
+
+            case 1:
+                this->funcType = INST_ROCC1;
+                this->instCode = "RoCC1";
+                break;
+
+            case 2:
+                this->funcType = INST_ROCC2;
+                this->instCode = "RoCC2";
+                break;
+            
+            case 3:
+                this->funcType = INST_ROCC3;
+                this->instCode = "RoCC3";
+                break;
+            
+            default:
+                this->funcType = INST_ROCC0;
+                this->instCode = "RoCC0";
+                break;
+        }
+
     }
 
     VanadisRoCCInstruction* clone() { return new VanadisRoCCInstruction(*this); }
 
-    virtual VanadisFunctionalUnitType getInstFuncType() const { return INST_ROCC; }
+    virtual VanadisFunctionalUnitType getInstFuncType() const { return funcType; }
 
     virtual const char* getInstCode() const { return "RoCC"; }
 
@@ -49,6 +76,8 @@ public:
         markExecuted(); 
     }
 
+    std::string instCode;
+    VanadisFunctionalUnitType funcType;
     uint8_t func7;
     uint8_t rd;
     bool xs1;

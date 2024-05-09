@@ -456,7 +456,7 @@ protected:
             } break;
             case 0xb:
             {
-                // custom encoding space for RoCC instructions
+                // custom encoding space for RoCC0 instructions
                 // space derived from custom-0 in table 19.1 of RISC-V Manual
                 processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
                 output->verbose(
@@ -491,7 +491,7 @@ protected:
             } break;
             case 0x2b:
             {
-                // custom encoding space for RoCC instructions
+                // custom encoding space for RoCC1 instructions
                 // space derived from custom-1 in table 19.1 of RISC-V Manual
                 processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
                 output->verbose(
@@ -1156,7 +1156,7 @@ protected:
             } break; // end of  0x73:
             case 0x7b:
             {
-                // custom encoding space for RoCC instructions
+                // custom encoding space for RoCC3 instructions
                 // space derived from custom-3 in table 19.1 of RISC-V Manual
                 processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
                 output->verbose(
@@ -2148,7 +2148,7 @@ protected:
             } break;
             case 0x5b:
             {
-                // custom encoding space for RoCC instructions
+                // custom encoding space for RoCC2 instructions
                 // space derived from custom-2 in table 19.1 of RISC-V Manual
                 processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
                 output->verbose(
