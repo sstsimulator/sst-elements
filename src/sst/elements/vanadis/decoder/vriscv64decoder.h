@@ -462,10 +462,10 @@ protected:
                 output->verbose(
                         CALL_INFO, 16, 0, "----> RoCC w/ accelerator id: %" PRIu8 ", rd: %" PRIu16 ", rs1: %" PRIu16
                         ", rs2: %" PRIu16 ", and func7: %" PRIu32 "\n", 
-                        (op_code & 0x70), rd, rs1, rs2, func_code7);
+                        0, rd, rs1, rs2, func_code7);
                 bundle->addInstruction(new VanadisRoCCInstruction(
                     ins_address, hw_thr, options, rs1, rs2, rd, func_code3 & 0x1, func_code3 & 0x2, 
-                    func_code3 & 0x4, func_code7, op_code & 0x70));
+                    func_code3 & 0x4, func_code7, 0));
                 decode_fault = false;
             } break;
             case 0x23:
@@ -497,10 +497,10 @@ protected:
                 output->verbose(
                         CALL_INFO, 16, 0, "----> RoCC w/ accelerator id: %" PRIu8 ", rd: %" PRIu16 ", rs1: %" PRIu16
                         ", rs2: %" PRIu16 ", and func7: %" PRIu32 "\n", 
-                        (op_code & 0x70), rd, rs1, rs2, func_code7);
+                        1, rd, rs1, rs2, func_code7);
                 bundle->addInstruction(new VanadisRoCCInstruction(
                     ins_address, hw_thr, options, rs1, rs2, rd, func_code3 & 0x1, func_code3 & 0x2, 
-                    func_code3 & 0x4, func_code7, op_code & 0x70));
+                    func_code3 & 0x4, func_code7, 1));
                 decode_fault = false;
             } break;
             case 0x13:
@@ -1162,10 +1162,10 @@ protected:
                 output->verbose(
                         CALL_INFO, 16, 0, "----> RoCC w/ accelerator id: %" PRIu8 ", rd: %" PRIu16 ", rs1: %" PRIu16
                         ", rs2: %" PRIu16 ", and func7: %" PRIu32 "\n", 
-                        (op_code & 0x70), rd, rs1, rs2, func_code7);
+                        3, rd, rs1, rs2, func_code7);
                 bundle->addInstruction(new VanadisRoCCInstruction(
                     ins_address, hw_thr, options, rs1, rs2, rd, func_code3 & 0x1, func_code3 & 0x2, 
-                    func_code3 & 0x4, func_code7, op_code & 0x70));
+                    func_code3 & 0x4, func_code7, 3));
                 decode_fault = false;
             } break;
             case 0x3B:
@@ -2154,10 +2154,10 @@ protected:
                 output->verbose(
                         CALL_INFO, 16, 0, "----> RoCC w/ accelerator id: %" PRIu8 ", rd: %" PRIu16 ", rs1: %" PRIu16
                         ", rs2: %" PRIu16 ", and func7: %" PRIu32 "\n", 
-                        (op_code & 0x70), rd, rs1, rs2, func_code7);
+                        2, rd, rs1, rs2, func_code7);
                 bundle->addInstruction(new VanadisRoCCInstruction(
                     ins_address, hw_thr, options, rs1, rs2, rd, func_code3 & 0x1, func_code3 & 0x2, 
-                    func_code3 & 0x4, func_code7, op_code & 0x70));
+                    func_code3 & 0x4, func_code7, 2));
                 decode_fault = false;
             } break;
             case 0x43:

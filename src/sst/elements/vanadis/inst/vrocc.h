@@ -65,18 +65,18 @@ public:
 
     virtual VanadisFunctionalUnitType getInstFuncType() const { return funcType; }
 
-    virtual const char* getInstCode() const { return "RoCC"; }
+    virtual const char* getInstCode() const { return instCode; }
 
     virtual void printToBuffer(char* buffer, size_t buffer_size)
     {
-        snprintf(buffer, buffer_size, "RoCC");
+        snprintf(buffer, buffer_size, instCode);
     }
 
     virtual void execute(SST::Output* output, VanadisRegisterFile* regFile) {
         markExecuted(); 
     }
 
-    std::string instCode;
+    char* instCode;
     VanadisFunctionalUnitType funcType;
     uint8_t func7;
     uint8_t rd;
