@@ -21,20 +21,13 @@ class testcase_mask_mpi(SSTTestCase):
 #####
 
     def test_testme(self):
-        lib_dir = subprocess.run(["sst-config", "SST_ELEMENT_LIBRARY", "SST_ELEMENT_LIBRARY_LIBDIR"],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        lib_dir = lib_dir.stdout.rstrip().decode()
-        tests_dir = subprocess.run(["sst-config", "SST_ELEMENT_TESTS", "mercury"],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        tests_dir = tests_dir.stdout.rstrip().decode()
-        sst_lib_path = lib_dir + ":" + tests_dir
+        testdir = self.get_testsuite_dir()
 
         paths = os.environ.get("SST_LIB_PATH")
         if paths is None:
-            os.environ["SST_LIB_PATH"] = sst_lib_path
+            os.environ["SST_LIB_PATH"] = testdir
         else:
-            os.environ["SST_LIB_PATH"] = paths + ":" + sst_lib_path
+            os.environ["SST_LIB_PATH"] = paths + ":" + testdir
 
         self.mask_mpi_template("test_sendrecv")
 

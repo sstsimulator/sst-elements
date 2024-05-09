@@ -9,13 +9,6 @@ from sst_unittest_support import *
 
 class testcase_hg(SSTTestCase):
 
-#    @classmethod
-#    def setUpClass(cls):
-#        hg_dir = subprocess.run(["sst-config", "SST_ELEMENT_TESTS", "mercury"],
-#                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-#        build_sh = hg_dir.stdout.rstrip().decode() + "/build.sh"
-#        subprocess.run(build_sh)
-
     def setUp(self):
         super(testcase_hg, self).setUp()
         # Put test based setup code here. it is called once before every test
@@ -27,20 +20,13 @@ class testcase_hg(SSTTestCase):
 #####
 
     def test_testme(self):
-        lib_dir = subprocess.run(["sst-config", "SST_ELEMENT_LIBRARY", "SST_ELEMENT_LIBRARY_LIBDIR"],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        lib_dir = lib_dir.stdout.rstrip().decode()
-        tests_dir = subprocess.run(["sst-config", "SST_ELEMENT_TESTS", "mercury"],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        tests_dir = tests_dir.stdout.rstrip().decode()
-        sst_lib_path = lib_dir + ":" + tests_dir
+        testdir = self.get_testsuite_dir()
 
         paths = os.environ.get("SST_LIB_PATH")
         if paths is None:
-            os.environ["SST_LIB_PATH"] = sst_lib_path
+            os.environ["SST_LIB_PATH"] = testdir
         else:
-            os.environ["SST_LIB_PATH"] = paths + ":" + sst_lib_path
+            os.environ["SST_LIB_PATH"] = paths + ":" + testdir
 
         self.simple_components_template("ostest")
 
