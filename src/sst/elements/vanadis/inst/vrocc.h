@@ -54,9 +54,6 @@ public:
                 break;
             
             default:
-                this->funcType = INST_ROCC0;
-                this->instCode = "RoCC0";
-                break;
         }
 
     }
