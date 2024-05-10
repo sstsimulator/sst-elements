@@ -171,7 +171,7 @@ class _AttributeManager(object):
     def _addFormattedVariable(self,var,dictionary=None,prefix=None,callback=None):
         if "%d" in var:
             # Switch out the %d with \d+ (the regex version)
-            var = var.replace("%d","\d+")
+            var = var.replace("%d",r"\d+")
 
         if not var in self._format_vars:
             self._format_vars[var] = _member_formatted_info()
