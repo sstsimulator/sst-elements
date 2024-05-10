@@ -79,10 +79,6 @@ libmemHierarchy_la_SOURCES = \
 	scratchpad.cc \
 	coherencemgr/coherenceController.h \
 	coherencemgr/coherenceController.cc \
-	memHierarchyInterface.cc \
-	memHierarchyInterface.h \
-	memHierarchyScratchInterface.cc \
-	memHierarchyScratchInterface.h \
 	standardInterface.cc \
 	standardInterface.h \
 	coherencemgr/MESI_L1.h \
@@ -334,8 +330,6 @@ nobase_sst_HEADERS = \
 	memNICFour.h \
 	memLink.h \
 	memLinkBase.h \
-	memHierarchyInterface.h \
-	memHierarchyScratchInterface.h \
 	customcmd/customCmdMemory.h \
 	membackend/backing.h \
 	membackend/memBackend.h \
