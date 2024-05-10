@@ -20,15 +20,14 @@ class testcase_mask_mpi(SSTTestCase):
 
 #####
 
-    def test_testme(self):
+    def test_sendrecv(self):
         testdir = self.get_testsuite_dir()
-
-        paths = os.environ.get("SST_LIB_PATH")
-        if paths is None:
-            os.environ["SST_LIB_PATH"] = testdir
+        libdir = sstsimulator_conf_get_value_str("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR")
+        path = os.environ.get("SST_LIB_PATH")
+        if path is None or path == "":
+            os.environ["SST_LIB_PATH"] = libdir
         else:
-            os.environ["SST_LIB_PATH"] = paths + ":" + testdir
-
+            os.environ["SST_LIB_PATH"] = path + ":" + libdir
         self.mask_mpi_template("test_sendrecv")
 
 #####
