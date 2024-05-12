@@ -54,11 +54,6 @@ ShogunNIC::~ShogunNIC()
     delete output;
 }
 
-void ShogunNIC::sendInitData(SimpleNetwork::Request* req)
-{
-    sendUntimedData(req);
-}
-
 void ShogunNIC::sendUntimedData(SimpleNetwork::Request* req)
 {
     output->verbose(CALL_INFO, 8, 0, "Send init-data called.\n");
@@ -70,11 +65,6 @@ void ShogunNIC::sendUntimedData(SimpleNetwork::Request* req)
     link->sendUntimedData(ev);
 
     output->verbose(CALL_INFO, 8, 0, "Send init-data completed.\n");
-}
-
-SimpleNetwork::Request* ShogunNIC::recvInitData()
-{
-    return recvUntimedData();
 }
 
 SimpleNetwork::Request* ShogunNIC::recvUntimedData()

@@ -3,6 +3,7 @@
 from sst_unittest import *
 from sst_unittest_support import *
 import os.path
+import re
 
 ################################################################################
 # Code to support a single instance module initialize, must be called setUp method
@@ -283,7 +284,7 @@ class testcase_memHierarchy_memHA(SSTTestCase):
     # Currently handles console output format only and integer statistic formats
     # Stats are parsed into [component_name, stat_name, sum, sumSQ, count, min, max]
     def _is_stat(self, line):
-        cons_accum = re.compile(' ([\w.]+)\.(\w+) : Accumulator : Sum.(\w+) = (\d+); SumSQ.\w+ = (\d+); Count.\w+ = (\d+); Min.\w+ = (\d+); Max.\w+ = (\d+);')
+        cons_accum = re.compile(r' ([\w.]+)\.(\w+) : Accumulator : Sum.(\w+) = (\d+); SumSQ.\w+ = (\d+); Count.\w+ = (\d+); Min.\w+ = (\d+); Max.\w+ = (\d+);')
         m = cons_accum.match(line)
         if m == None:
             return None

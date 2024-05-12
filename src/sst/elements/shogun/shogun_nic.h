@@ -57,16 +57,12 @@ namespace Shogun {
      		* Sends a network request during the init() phase
      	*/
         void sendUntimedData(Request* req) override;
-        // Remove sendInitData() for SST 14
-        void sendInitData(Request* req) override;
 
         /**
      		* Receive any data during the init() phase.
      		* @see SST::Link::recvInitData()
      	*/
         Request* recvUntimedData() override;
-        // Remove recvInitData() for SST 14
-        Request* recvInitData() override;
 
 
         /**
