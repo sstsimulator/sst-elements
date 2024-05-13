@@ -362,15 +362,22 @@ class CPU_Builder:
         cpu_lsq.addParams(lsqParams)
         cpu_lsq.enableAllStatistics()
 
-        cpu_rocc = cpu.setSubComponent( "rocc0", "vanadis.VanadisRoCCBasic")
-        cpu_rocc.addParams(roccParams)
-        cpu_rocc.enableAllStatistics()
+        cpu_rocc0 = cpu.setSubComponent( "rocc0", "vanadis.VanadisRoCCBasic")
+        cpu_rocc0.addParams(roccParams)
+        cpu_rocc0.enableAllStatistics()
+
+        cpu_rocc1 = cpu.setSubComponent( "rocc1", "vanadis.VanadisRoCCBasic")
+        cpu_rocc1.addParams(roccParams)
+        cpu_rocc1.enableAllStatistics()
 
         # CPU.lsq mem interface which connects to D-cache 
         cpuDcacheIf = cpu_lsq.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
 
         # CPU.rocc mem interface which connects to D-cache
-        roccDcacheIf = cpu_rocc.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
+        rocc0DcacheIf = cpu_rocc0.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
+
+        # CPU.rocc mem interface which connects to D-cache
+        rocc1DcacheIf = cpu_rocc1.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
 
         # CPU.mem interface for I-cache
         cpuIcacheIf = cpu.setSubComponent( "mem_interface_inst", "memHierarchy.standardInterface" )
@@ -416,7 +423,7 @@ class CPU_Builder:
         dtlbWrapper = sst.Component(prefix+".dtlb", "mmu.tlb_wrapper")
         dtlbWrapper.addParams(tlbWrapperParams)
 #        dtlbWrapper.addParam( "debug_level", 0)
-        dtlb = dtlbWrapper.setSubComponent("tlb", "mmu." + tlbType );
+        dtlb = dtlbWrapper.setSubComponent("tlb", "mmu." + tlbType )
         dtlb.addParams(tlbParams)
 
         # CPU instruction TLB
@@ -433,11 +440,18 @@ class CPU_Builder:
         link_lsq_l1dcache_link.setNoCut()
 
         # RoCC (data) -> processor_bus
-        link_rocc_l1dcache_link = sst.Link(prefix+".link_rocc_dbus_link")
+        link_rocc0_l1dcache_link = sst.Link(prefix+".link_rocc0_dbus_link")
 
-        link_rocc_l1dcache_link.connect( (roccDcacheIf, "port", "1ns"),
+        link_rocc0_l1dcache_link.connect( (rocc0DcacheIf, "port", "1ns"),
                                         (processor_bus, "high_network_1", "1ns"))
-        link_rocc_l1dcache_link.setNoCut()
+        link_rocc0_l1dcache_link.setNoCut()
+
+        # RoCC (data) -> processor_bus
+        link_rocc1_l1dcache_link = sst.Link(prefix+".link_rocc1_dbus_link")
+
+        link_rocc1_l1dcache_link.connect( (rocc1DcacheIf, "port", "1ns"),
+                                        (processor_bus, "high_network_2", "1ns"))
+        link_rocc1_l1dcache_link.setNoCut()
 
         # processor_bus -> L1 cache
         link_bus_l1cache_link = sst.Link(prefix+".link_bus_l1cache_link")
