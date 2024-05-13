@@ -456,16 +456,16 @@ protected:
             } break;
             case 0xb:
             {
-                // custom encoding space for RoCC instructions
+                // custom encoding space for RoCC0 instructions
                 // space derived from custom-0 in table 19.1 of RISC-V Manual
                 processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
                 output->verbose(
                         CALL_INFO, 16, 0, "----> RoCC w/ accelerator id: %" PRIu8 ", rd: %" PRIu16 ", rs1: %" PRIu16
                         ", rs2: %" PRIu16 ", and func7: %" PRIu32 "\n", 
-                        (op_code & 0x70), rd, rs1, rs2, func_code7);
+                        0, rd, rs1, rs2, func_code7);
                 bundle->addInstruction(new VanadisRoCCInstruction(
                     ins_address, hw_thr, options, rs1, rs2, rd, func_code3 & 0x1, func_code3 & 0x2, 
-                    func_code3 & 0x4, func_code7, op_code & 0x70));
+                    func_code3 & 0x4, func_code7, 0));
                 decode_fault = false;
             } break;
             case 0x23:
@@ -488,6 +488,20 @@ protected:
                         STORE_INT_REGISTER));
                     decode_fault = false;
                 }
+            } break;
+            case 0x2b:
+            {
+                // custom encoding space for RoCC1 instructions
+                // space derived from custom-1 in table 19.1 of RISC-V Manual
+                processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
+                output->verbose(
+                        CALL_INFO, 16, 0, "----> RoCC w/ accelerator id: %" PRIu8 ", rd: %" PRIu16 ", rs1: %" PRIu16
+                        ", rs2: %" PRIu16 ", and func7: %" PRIu32 "\n", 
+                        1, rd, rs1, rs2, func_code7);
+                bundle->addInstruction(new VanadisRoCCInstruction(
+                    ins_address, hw_thr, options, rs1, rs2, rd, func_code3 & 0x1, func_code3 & 0x2, 
+                    func_code3 & 0x4, func_code7, 1));
+                decode_fault = false;
             } break;
             case 0x13:
             {
@@ -1140,6 +1154,20 @@ protected:
                     }
                 }
             } break; // end of  0x73:
+            case 0x7b:
+            {
+                // custom encoding space for RoCC3 instructions
+                // space derived from custom-3 in table 19.1 of RISC-V Manual
+                processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
+                output->verbose(
+                        CALL_INFO, 16, 0, "----> RoCC w/ accelerator id: %" PRIu8 ", rd: %" PRIu16 ", rs1: %" PRIu16
+                        ", rs2: %" PRIu16 ", and func7: %" PRIu32 "\n", 
+                        3, rd, rs1, rs2, func_code7);
+                bundle->addInstruction(new VanadisRoCCInstruction(
+                    ins_address, hw_thr, options, rs1, rs2, rd, func_code3 & 0x1, func_code3 & 0x2, 
+                    func_code3 & 0x4, func_code7, 3));
+                decode_fault = false;
+            } break;
             case 0x3B:
             {
                 // 64b integer arithmetic-W
@@ -2117,6 +2145,20 @@ protected:
                     }
                 } break;
                 }
+            } break;
+            case 0x5b:
+            {
+                // custom encoding space for RoCC2 instructions
+                // space derived from custom-2 in table 19.1 of RISC-V Manual
+                processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
+                output->verbose(
+                        CALL_INFO, 16, 0, "----> RoCC w/ accelerator id: %" PRIu8 ", rd: %" PRIu16 ", rs1: %" PRIu16
+                        ", rs2: %" PRIu16 ", and func7: %" PRIu32 "\n", 
+                        2, rd, rs1, rs2, func_code7);
+                bundle->addInstruction(new VanadisRoCCInstruction(
+                    ins_address, hw_thr, options, rs1, rs2, rd, func_code3 & 0x1, func_code3 & 0x2, 
+                    func_code3 & 0x4, func_code7, 2));
+                decode_fault = false;
             } break;
             case 0x43:
             {

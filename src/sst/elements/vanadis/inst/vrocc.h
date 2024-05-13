@@ -32,23 +32,50 @@ public:
         this->xs2 = xs2;
         this->xd = xd;
 
+        switch (accelerator_id) {
+            case 0:
+                this->funcType = INST_ROCC0;
+                this->instCode = "RoCC0";
+                break;
+
+            case 1:
+                this->funcType = INST_ROCC1;
+                this->instCode = "RoCC1";
+                break;
+
+            case 2:
+                this->funcType = INST_ROCC2;
+                this->instCode = "RoCC2";
+                break;
+            
+            case 3:
+                this->funcType = INST_ROCC3;
+                this->instCode = "RoCC3";
+                break;
+            
+            default:
+                break;
+        }
+
     }
 
     VanadisRoCCInstruction* clone() { return new VanadisRoCCInstruction(*this); }
 
-    virtual VanadisFunctionalUnitType getInstFuncType() const { return INST_ROCC; }
+    virtual VanadisFunctionalUnitType getInstFuncType() const { return funcType; }
 
-    virtual const char* getInstCode() const { return "RoCC"; }
+    virtual const char* getInstCode() const { return instCode; }
 
     virtual void printToBuffer(char* buffer, size_t buffer_size)
     {
-        snprintf(buffer, buffer_size, "RoCC");
+        snprintf(buffer, buffer_size, instCode);
     }
 
     virtual void execute(SST::Output* output, VanadisRegisterFile* regFile) {
         markExecuted(); 
     }
 
+    char* instCode;
+    VanadisFunctionalUnitType funcType;
     uint8_t func7;
     uint8_t rd;
     bool xs1;
