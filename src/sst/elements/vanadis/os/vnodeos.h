@@ -273,7 +273,7 @@ private:
         VanadisSyscall* getSyscall( unsigned hwThread ) { return m_hwThreadMap.at(hwThread).getSyscall(); }
 
         void checkpoint( FILE* fp ) {
-            fprintf(fp, "m_hwThreadMap.size(): %d\n",m_hwThreadMap.size());
+            fprintf(fp, "m_hwThreadMap.size(): %zu\n",m_hwThreadMap.size());
             for ( auto i = 0; i < m_hwThreadMap.size(); i++ ) {
                 fprintf(fp, "hwThread: %d\n",i);
                 m_hwThreadMap[i].checkpoint( fp );

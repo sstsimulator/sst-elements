@@ -1229,7 +1229,7 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
         // if all theads have halted
         if ( ! should_process ) {
             lsq->tick((uint64_t)cycle);
-            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT, "checkpointing store=%d load=%d\n", lsq->storeSize(), lsq->loadSize());
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT, "checkpointing store=%zu load=%zu\n", lsq->storeSize(), lsq->loadSize());
             if ( 0 == lsq->storeSize() && 0 == lsq->loadSize() ) {
                 output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"checkingpoint core %d all threads have halted\n",core_id);
                 VanadisCheckpointResp* resp = new VanadisCheckpointResp( core_id );

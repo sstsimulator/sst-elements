@@ -377,8 +377,8 @@ int VanadisNodeOSComponent::checkpointLoad( std::string dir )
     }
 
     // m_coreInfoMap.size() 1
-    assert( 1 == fscanf(fp,"m_coreInfoMap.size() %d\n",&size) );
-    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_coreInfoMap.size() %d\n",size);
+    assert( 1 == fscanf(fp,"m_coreInfoMap.size() %zd\n",&size) );
+    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_coreInfoMap.size() %zu\n",size);
     assert( size == m_coreInfoMap.size() );
     
     for ( auto i = 0; i < m_coreInfoMap.size(); i++ ) {
@@ -388,8 +388,8 @@ int VanadisNodeOSComponent::checkpointLoad( std::string dir )
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"core: %d\n",core);
         assert( core == i );
 
-        assert( 1 == fscanf(fp,"m_hwThreadMap.size(): %d\n",&size) );
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_hwThreadMap.size(): %d\n",size);
+        assert( 1 == fscanf(fp,"m_hwThreadMap.size(): %zd\n",&size) );
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_hwThreadMap.size(): %zu\n",size);
     
         for ( auto j = 0; j < size; j++ ) {
             int hwThread;
