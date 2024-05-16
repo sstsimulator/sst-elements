@@ -244,7 +244,7 @@ class ProcessInfo {
         fprintf(fp,"m_gid: %d\n",m_gid);
         fprintf(fp,"m_core: %d\n",m_core);
         fprintf(fp,"m_hwThread: %d\n",m_hwThread);
-        fprintf(fp,"m_tidAddress: %#lx\n",m_tidAddress);
+        fprintf(fp,"m_tidAddress: %#llx\n",m_tidAddress);
 
         m_virtMemMap->checkpoint(fp);
         m_fileTable->checkpoint(fp);
