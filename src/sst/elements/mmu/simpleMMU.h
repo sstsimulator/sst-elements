@@ -145,7 +145,7 @@ class SimpleMMU : public MMU {
         void checkpoint( FILE* fp ) {
             fprintf(fp,"pteMap.size() %zu\n",pteMap.size());
             for ( auto & x : pteMap ) {
-                fprintf(fp,"vpn: %d, ppn: %d, perms: %#lx \n", x.first,x.second.ppn,x.second.perms );
+                fprintf(fp,"vpn: %d, ppn: %d, perms: %d \n", x.first,x.second.ppn,x.second.perms );
             }
         }
       private:

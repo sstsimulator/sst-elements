@@ -2173,8 +2173,8 @@ VANADIS_COMPONENT::checkpoint(FILE* fp )
         fprintf(fp,"Hardware thread: %d\n",i);
         if ( m_checkpointing[i] ) {
             fprintf(fp,"active: yes\n");
-            fprintf(fp,"rob[0] %#lx %s\n", rob[i]->peekAt(0)->getInstructionAddress(), rob[i]->peekAt(0)->getInstCode()  );
-            fprintf(fp,"rob[1] %#lx %s\n", rob[i]->peekAt(1)->getInstructionAddress(), rob[i]->peekAt(1)->getInstCode() );
+            fprintf(fp,"rob[0] %#llx %s\n", rob[i]->peekAt(0)->getInstructionAddress(), rob[i]->peekAt(0)->getInstCode()  );
+            fprintf(fp,"rob[1] %#llx %s\n", rob[i]->peekAt(1)->getInstructionAddress(), rob[i]->peekAt(1)->getInstCode() );
 
             auto isa_table = retire_isa_tables[i];
             auto reg_file = register_files[i];
@@ -2220,12 +2220,12 @@ VANADIS_COMPONENT::checkpointLoad(FILE* fp)
 
             uint64_t startAddr;
             char str1[40],str2[40];
-            assert( 3 == fscanf(fp,"%s %" PRIx64 " %s\n",&str1,&value,str2) ); 
+            assert( 3 == fscanf(fp,"%s %" PRIx64 " %s\n",str1,&value,str2) ); 
             startAddr = value + 4;
             output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s %#" PRIx64 " %s\n",str1,value,str2 );
             output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"set thread %d start address %#" PRIx64 "\n",hw_thr,startAddr);
 
-            assert( 3 == fscanf(fp,"%s %" PRIx64 " %s\n",&str1,&value,str2) ); 
+            assert( 3 == fscanf(fp,"%s %" PRIx64 " %s\n",str1,&value,str2) ); 
             output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s %#" PRIx64 " %s\n",str1,value,str2 );
 
             assert( 1 == fscanf(fp,"tlsPtr: %" PRIx64 "\n",&value) );

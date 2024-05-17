@@ -307,7 +307,7 @@ VanadisNodeOSComponent::checkpoint( std::string dir )
     fprintf(fp,"m_phdr_address: %#" PRIx64 "\n",m_phdr_address);
     fprintf(fp,"m_stack_top: %#" PRIx64 "\n",m_stack_top);
     fprintf(fp,"m_nodeNum: %d\n",m_nodeNum);
-    fprintf(fp,"m_osStartTimeNano: %lu\n",m_osStartTimeNano);
+    fprintf(fp,"m_osStartTimeNano: %llu\n",m_osStartTimeNano);
     fprintf(fp,"m_currentTid: %d\n",m_currentTid);
 
     assert( m_pendingFault.empty() );
@@ -456,16 +456,16 @@ int VanadisNodeOSComponent::checkpointLoad( std::string dir )
     output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_pageSize: %d\n",m_pageSize);
 
     assert( 1 == fscanf(fp,"m_phdr_address: %" PRIx64 "\n",&m_phdr_address) );
-    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_phdr_address: %#lx\n",m_phdr_address);
+    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_phdr_address: %#llx\n",m_phdr_address);
 
     assert( 1 == fscanf(fp,"m_stack_top: %" PRIx64 "\n",&m_stack_top) );
-    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_stack_top: %#lx\n",m_stack_top);
+    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_stack_top: %#llx\n",m_stack_top);
 
     assert( 1 == fscanf(fp,"m_nodeNum: %d\n",&m_nodeNum) );
     output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_nodeNum: %d\n",m_nodeNum);
 
-    assert( 1 == fscanf(fp,"m_osStartTimeNano: %lu\n",&m_osStartTimeNano) );
-    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_osStartTimeNano: %lu\n",m_osStartTimeNano);
+    assert( 1 == fscanf(fp,"m_osStartTimeNano: %llu\n",&m_osStartTimeNano) );
+    output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_osStartTimeNano: %llu\n",m_osStartTimeNano);
 
     assert( 1 == fscanf(fp,"m_currentTid: %d\n",&m_currentTid) );
     output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_currentTid: %d\n",m_currentTid);
@@ -624,7 +624,7 @@ VanadisNodeOSComponent::handleIncomingSyscall(SST::Event* ev) {
                 m_flushPages.push_back( 0x28c0 );
 
                 for ( auto & x : m_flushPages ) {
-                    printf("%#lx\n",x);
+                    printf("%#llx\n",x);
                     StandardMem::Request* req = new SST::Interfaces::StandardMem::FlushAddr( x, 64, true, 5, 0 );
                     mem_if->send(req);
                 }

@@ -179,7 +179,7 @@ void SimpleMMU::checkpoint( std::string dir ) {
     fprintf(fp,"m_coreToPid.size() %zu\n", m_coreToPid.size());
     for ( auto core = 0; core < m_coreToPid.size(); core++ ) {
         auto& x = m_coreToPid[core];
-        fprintf(fp,"core: %d, numPids: %d\n",core,x.size());
+        fprintf(fp,"core: %d, numPids: %zu\n",core,x.size());
         for ( auto j = 0; j < x.size(); j++ ) {
             fprintf(fp,"%d ",x[j]);
         }
