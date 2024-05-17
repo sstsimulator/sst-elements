@@ -120,4 +120,7 @@
 #include "inst/vfpclass.h"
 #include "inst/vmin.h"
 
+// RoCC Custom
+#include "inst/vrocc.h"
+
 #endif
