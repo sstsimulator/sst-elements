@@ -22,6 +22,7 @@
 //#include <mercury/common/factory.h>
 #include <sst/core/eli/elementbuilder.h>
 #include <mercury/components/node_fwd.h>
+#include <mercury/common/unique_id.h>
 #include <mercury/operating_system/threading/threading_interface.h>
 #include <mercury/operating_system/launch/app_launcher_fwd.h>
 #include <mercury/operating_system/launch/app_launch_request.h>
@@ -129,6 +130,10 @@ public:
     return staticOsThreadContext();
   }
 
+  UniqueEventId allocateUniqueId() {
+    return next_outgoing_id_++;
+  }
+
  private:
 
   void initThreading(SST::Params& params);
@@ -144,6 +149,7 @@ public:
   /// to this context on every context switch.
   ThreadContext *des_context_;
 
+  int nranks_;
   Node* node_;
   Thread* active_thread_;
   Thread* blocked_thread_;
@@ -164,6 +170,7 @@ public:
   std::map<std::string, std::list<Request*>> pending_library_request_;
 
   NodeId my_addr_;
+  UniqueEventId next_outgoing_id_;
 
 //  int next_condition_;
 //  int next_mutex_;
@@ -231,6 +238,20 @@ public:
   void releaseCores(int ncore, Thread* thr) {
     compute_sched_->releaseCores(ncore,thr);
   }
+
+//  NodeId rankToNode(int rank) {
+//    return NodeId( rank_mapper_->mapRank(rank) );
+//  }
+
+  void set_nranks(int32_t ranks) {
+    nranks_ = ranks;
+  }
+
+  int32_t nranks() {
+    return nranks_;
+  }
+
+//  SST::Ember::EmberRankMap*	rank_mapper_;
 
 //
 // LIBRARIES

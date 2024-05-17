@@ -31,6 +31,7 @@ libsumi_la_SOURCES = \
   sumi/gatherv.cc \
   sumi/message.cc \
   sumi/monitor.cc \
+  sumi/rank_mapper.cc \
   sumi/reduce.cc \
   sumi/reduce_scatter.cc \
   sumi/scan.cc \
@@ -66,6 +67,7 @@ nobase_library_include_HEADERS = \
   sumi/network_id.h \
   sumi/null_buffer.h \
   sumi/options.h \
+  sumi/rank_mapper.h \
   sumi/reduce.h \
   sumi/reduce_scatter.h \
   sumi/scan.h \
