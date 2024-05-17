@@ -27,7 +27,7 @@ extern template SST::TimeConverter* HgBase<SST::Component>::time_converter_;
 Node::Node(ComponentId_t id, Params &params)
     : SST::Hg::Component(id), nic_(0) {
 
-  my_addr_ = getId();
+  my_addr_ = params.find<unsigned int>("logicalID",-1);
   unsigned int verbose = params.find<unsigned int>("verbose",0);
   out_ = std::unique_ptr<SST::Output>(new SST::Output(sprintf("Node%d:",my_addr_), verbose, 0, Output::STDOUT));
 
@@ -49,7 +49,8 @@ Node::Node(ComponentId_t id, Params &params)
     netLink_ = configureLink("network");
   }
 
-
+  unsigned int nranks = params.find<unsigned int>("nranks",-1);
+  os_->set_nranks(nranks);
 
   int ncores_ = params.find<std::int32_t>("ncores", 1);
   int nsockets_ = params.find<std::int32_t>("nsockets",1);

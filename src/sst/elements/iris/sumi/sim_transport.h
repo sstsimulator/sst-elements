@@ -46,13 +46,21 @@ Questions? Contact sst-macro-help@sandia.gov
 
 //#include <sstmac/common/stats/stat_spyplot_fwd.h>
 //#include <sstmac/common/event_scheduler_fwd.h>
-#include <output.h>
-#include <mercury/operating_system/libraries/api.h>
 //#include <sstmac/software/launch/task_mapping.h>
+
+#include <output.h>
+
+#include <sst/core/eli/elementbuilder.h>
+
+#include <mercury/operating_system/libraries/api.h>
 #include <mercury/operating_system/libraries/service.h>
 #include <mercury/operating_system/process/progress_queue.h>
 #include <mercury/hardware/network/network_message_fwd.h>
 #include <mercury/components/node_fwd.h>
+#include <mercury/components/operating_system.h>
+#include <mercury/common/errors.h>
+#include <mercury/common/factory.h>
+#include <mercury/common/util.h>
 
 #include <iris/sumi/message_fwd.h>
 #include <iris/sumi/collective.h>
@@ -63,12 +71,6 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <iris/sumi/comm_functions.h>
 #include <iris/sumi/options.h>
 #include <iris/sumi/communicator_fwd.h>
-
-#include <mercury/common/errors.h>
-#include <mercury/common/factory.h>
-#include <sst/core/eli/elementbuilder.h>
-#include <mercury/common/util.h>
-
 #include <iris/sumi/null_buffer.h>
 
 #include <unordered_map>
@@ -121,9 +123,13 @@ class SimTransport : public Transport, public SST::Hg::API {
   Output output;
 
   SST::Hg::NodeId rankToNode(int rank) const override {
-    // FIXME
-    //return rank_mapper_->rankToNode(rank);
+
+    // Use logical IDs and let merlin remap
     return SST::Hg::NodeId(rank);
+
+    // other ways it might work some day
+    //return rank_mapper_->rankToNode(rank);
+    //return os_->rankToNode(rank);
   }
 
   /**
@@ -303,8 +309,6 @@ class SimTransport : public Transport, public SST::Hg::API {
 
   SST::Hg::App* parent_app_;
 
-  //SST::Hg::TaskMapping::ptr rank_mapper_;
-
   DefaultProgressQueue default_progress_queue_;
 
   std::function<void(SST::Hg::NetworkMessage*)> nic_ioctl_;
@@ -315,6 +319,8 @@ class SimTransport : public Transport, public SST::Hg::API {
   bool pragma_block_set_;
 
   double pragma_timeout_;
+
+  SST::Hg::OperatingSystem* os_;
 
   void drop(Message*){}
 };

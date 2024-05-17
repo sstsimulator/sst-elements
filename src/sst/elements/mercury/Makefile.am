@@ -105,6 +105,7 @@ nobase_library_include_HEADERS = \
   common/printable.h \
   common/allocator.h \
   common/request_fwd.h \
+  common/unique_id.h \
   common/util.h \
   common/request.h \
   common/null_buffer.h \
@@ -123,7 +124,6 @@ nobase_library_include_HEADERS = \
   hardware/network/network_message_fwd.h \
   hardware/common/recv_cq.h \
   hardware/common/flow_fwd.h \
-  hardware/common/unique_id.h \
   hardware/common/packet.h \
   hardware/common/flow.h \
   hardware/common/packet_fwd.h \

@@ -21,12 +21,12 @@ from sst.merlin.base import *
 from sst.merlin import *
 
 class HgJob(Job):
-    def __init__(self, job_id, num_nodes, numCores = 1, nicsPerNode = 1):
-        Job.__init__(self,job_id,num_nodes * nicsPerNode)
+    def __init__(self, job_id, numNodes, numCores = 1, nicsPerNode = 1):
+        Job.__init__(self,job_id,numNodes * nicsPerNode)
         self._declareClassVariables(["_numCores","_nicsPerNode","node","nic","os","_params","_numNodes"])
         self._numCores = numCores
         self._nicsPerNode = nicsPerNode
-        self._numNodes = num_nodes
+        self._numNodes = numNodes
         self.node = HgNode()
         self.os = HgOS()
 
@@ -35,15 +35,13 @@ class HgJob(Job):
 
 
     def build(self, nodeID, extraKeys):
-        node = self.node.build(nodeID)
+        logical_id = self._nid_map[nodeID]
+        node = self.node.build(nodeID,logical_id,self._numNodes * self._numCores)
         os = self.os.build(node,"os_slot") 
         nic = node.setSubComponent("nic_slot", "hg.nic")
 
         # Build NetworkInterface
-        # FIXME
-        #logical_id = self._nid_map[nodeID]
-        logical_id = 0
-        networkif, port_name = self.network_interface.build(node,"link_control_slot",0,self.job_id,self.size,logical_id,False)
+        networkif, port_name = self.network_interface.build(node,"link_control_slot",0,self.job_id,self.size,logical_id,True)
 
         return (networkif, port_name)
 
@@ -52,8 +50,11 @@ class HgNode(TemplateBase):
     def __init__(self):
         TemplateBase.__init__(self)
 
-    def build(self,nID):
-        node = sst.Component("node" + str(nID), "hg.node")
+    def build(self,nid,lid,nranks):
+        node = sst.Component("node" + str(nid), "hg.node")
+        node.addParam("nodeID", nid)
+        node.addParam("logicalID", lid)
+        node.addParam("nranks", nranks)
         return node
 
 class HgOS(TemplateBase):

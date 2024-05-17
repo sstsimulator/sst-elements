@@ -79,7 +79,7 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
     active_os_.resize(num_ranks.thread);
   }
 
-  my_addr_ = node_ ? node_->addr() : 0;
+  my_addr_ = node_->addr();
   //auto os_params = params.get_scoped_params("operating_system");
   //params.print_all_params(std::cerr);
   unsigned int verbose = params.find<unsigned int>("verbose",0);

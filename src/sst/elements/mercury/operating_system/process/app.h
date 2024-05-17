@@ -114,6 +114,8 @@ class App : public Thread
 
   int setenv(const std::string& name, const std::string& value, int overwrite);
 
+  OperatingSystem* os() {return os_;}
+
   /**
    * Let a parent application know about the existence of a subthread
    * If thread does not have an initialized ID, a unique ID is allocated for the thread
@@ -228,7 +230,7 @@ class App : public Thread
     dlcloseCheck(aid());
   }
 
- OperatingSystem* os_;
+  OperatingSystem* os_;
 
   char* allocateDataSegment(bool tls);
 

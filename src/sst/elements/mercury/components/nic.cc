@@ -88,8 +88,8 @@ NIC::NIC(uint32_t id, SST::Params& params, Node* parent) :
   SST::Hg::SubComponent(id),
 //NIC::NIC(uint32_t id, SST::Params& params, Node* parent) :
 //    ConnectableSubcomponent(id, "nic", parent),
-  parent_(parent), 
-  my_addr_(parent->addr()-1),
+  parent_(parent),
+  my_addr_(parent->os()->addr()),
 //  logp_link_(nullptr),
 //  spy_bytes_(nullptr),
 //  xmit_flows_(nullptr),
@@ -200,8 +200,8 @@ NIC::incomingPacket(int vn){
     auto* payload = myreq->takePayload();
     MessageEvent* ev = payload ? static_cast<MessageEvent*>(payload) : nullptr;
     Flow* flow = cq_.recv(myreq->flow_id, bytes, ev ? ev->msg() : nullptr);
-//    nic_debug("receiving packet of size %d for flow %lu on vn %d: %s",
-//             (myreq->size_in_bits/8), myreq->flow_id, vn, (flow ? flow->toString().c_str() : "no flow"));
+    // printf("Rank %d receiving packet of size %d for flow %lu on vn %d: %s",
+    //         my_addr_,(myreq->size_in_bits/8), myreq->flow_id, vn, (flow ? flow->toString().c_str() : "no flow"));
     if (flow){
       auto* msg = static_cast<NetworkMessage*>(flow);
 //      nic_debug("fully received message %s", msg->toString().c_str());

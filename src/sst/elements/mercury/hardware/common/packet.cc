@@ -14,8 +14,8 @@
 // distribution.
 
 #include <sst/core/event.h>
+#include <mercury/common/unique_id.h>
 #include <mercury/hardware/common/packet.h>
-#include <mercury/hardware/common/unique_id.h>
 #include <mercury/hardware/common/flow.h>
 
 namespace SST {
