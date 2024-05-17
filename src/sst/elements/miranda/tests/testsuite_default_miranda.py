@@ -42,6 +42,7 @@ class testcase_miranda_Component(SSTTestCase):
         super(type(self), self).tearDown()
 
 #####
+    Spatter_missing = not sst_elements_config_include_file_get_value_int("HAVE_SPATTER", default=0, disable_warning=True)
 
     @unittest.skipIf(testing_check_get_num_ranks() > 1, "miranda: test_miranda_singlestream skipped if ranks > 1")
     @unittest.skipIf(testing_check_get_num_threads() > 1, "miranda: test_miranda_singlestream skipped if threads > 1")
@@ -71,9 +72,14 @@ class testcase_miranda_Component(SSTTestCase):
     def test_miranda_gupsgen(self):
         self.miranda_test_template("gupsgen")
 
+    @unittest.skipIf(Spatter_missing, "test_miranda_spatterbench test: Requires Spatter, but Spatter is not found in build configuration.")
+    def test_miranda_spatterbench(self):
+        model_options = "-pUNIFORM:8:1 -l" + str(2**16)
+        self.miranda_test_template("spatterbench", otherargs="--model-options=\"{0}\"".format(model_options))
+
 #####
 
-    def miranda_test_template(self, testcase, testtimeout=240):
+    def miranda_test_template(self, testcase, otherargs="", testtimeout=240):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
@@ -88,7 +94,7 @@ class testcase_miranda_Component(SSTTestCase):
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
 
-        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
+        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, other_args=otherargs, timeout_sec=testtimeout)
 
         testing_remove_component_warning_from_file(outfile)
 
