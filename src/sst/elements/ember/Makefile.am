@@ -37,6 +37,8 @@ libember_la_SOURCES = \
 	embermotiflog.h \
 	embermotiflog.cc \
 	embermemoryev.h \
+	agile-io-consumer/agile-io-consumer.h \
+	agile-io-consumer/agile-io-consumer.cc \
 	libs/emberLib.h \
 	libs/misc.h \
 	libs/miscEvents/emberGetNodeNumEvent.h \
