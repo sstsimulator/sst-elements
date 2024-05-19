@@ -1037,7 +1037,7 @@ protected:
                     } break;
                     case 0x1: // SBREAK
                     {
-                        printf("%#lx %#lx SBREAK\n",ins_address,ins);
+                        printf("%#llx %#x SBREAK\n",ins_address,ins);
                         assert(0);
                     } break;
                     } 

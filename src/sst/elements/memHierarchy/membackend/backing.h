@@ -107,7 +107,9 @@ public:
         char str[80];
         fscanf(fp,"Number-of-pages: %d\n", &num );
         fscanf(fp,"m_allocUnit: %d\n", &m_allocUnit );
-        fscanf(fp,"m_init: %d\n",  &m_init );
+        int tmpInit;
+        fscanf(fp,"m_init: %d\n",  &tmpInit );
+        m_init = tmpInit;
         fscanf(fp,"m_shift: %d\n",  &m_shift );
         printf("Number-of-pages: %d\n",num);
         printf("m_allocUnit: %d\n",m_allocUnit);
@@ -222,13 +224,13 @@ public:
 
 
     void dump( FILE* fp ) {
-        fprintf(fp,"Number-of-pages: %d\n",m_buffer.size());
+        fprintf(fp,"Number-of-pages: %zu\n",m_buffer.size());
         fprintf(fp,"m_allocUnit: %d\n",m_allocUnit);
         fprintf(fp,"m_init: %d\n",m_init);
         fprintf(fp,"m_shift: %d\n",m_shift);
 
         for ( auto const& x : m_buffer ) {
-            fprintf(fp,"addr: %#lx\n",x.first << m_shift);
+            fprintf(fp,"addr: %#llx\n",x.first << m_shift);
             auto length = sizeof(uint8_t)*m_allocUnit;
             length /= sizeof(uint64_t);
             auto ptr = (uint64_t*) x.second;
