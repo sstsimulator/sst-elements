@@ -41,7 +41,8 @@ class MemNICBase : public MemLinkBase {
 #define MEMNICBASE_ELI_PARAMS MEMLINKBASE_ELI_PARAMS, \
         { "group",                       "(int) Group ID. See params 'sources' and 'destinations'. If not specified, the parent component will guess.", "1"},\
         { "sources",                     "(comma-separated list of ints) List of group IDs that serve as sources for this component. If not specified, defaults to 'group - 1'.", "group-1"},\
-        { "destinations",                "(comma-separated list of ints) List of group IDs that serve as destinations for this component. If not specified, defaults to 'group + 1'.", "group+1"}
+        { "destinations",                "(comma-separated list of ints) List of group IDs that serve as destinations for this component. If not specified, defaults to 'group + 1'.", "group+1"},\
+        { "range_check",                 "(int) Enable initial check for overlapping memory ranges. 0=Disabled 1=Enabled", "1"}
 
         SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::MemHierarchy::MemNICBase, SST::MemHierarchy::MemLinkBase)
 
@@ -402,30 +403,33 @@ class MemNICBase : public MemLinkBase {
                 }
             }
             destEndpointInfo = newDests;
-            
-            int stopAfter = 20; // This is error checking, if it takes too long, stop
-            for (auto et = destEndpointInfo.begin(); et != destEndpointInfo.end(); et++) {
-                for (auto it = std::next(et,1); it != destEndpointInfo.end(); it++) {
-                    if (it->name == et->name) continue; // Not a problem
-                    if ((it->region).doesIntersect(et->region)) {
-                        dbg.fatal(CALL_INFO, -1, "%s, Error: Found destinations on the network with overlapping address regions. Cannot generate routing table."
-                                "\n  Destination 1: %s\n  Destination 2: %s\n", 
-                                getName().c_str(), it->toString().c_str(), et->toString().c_str());
+
+            // This algorithm can take an extremely long time for some memory configurations.
+            if (range_check > 0) {
+                int stopAfter = 20; // This is error checking, if it takes too long, stop
+                for (auto et = destEndpointInfo.begin(); et != destEndpointInfo.end(); et++) {
+                    for (auto it = std::next(et,1); it != destEndpointInfo.end(); it++) {
+                        if (it->name == et->name) continue; // Not a problem
+                        if ((it->region).doesIntersect(et->region)) {
+                            dbg.fatal(CALL_INFO, -1, "%s, Error: Found destinations on the network with overlapping address regions. Cannot generate routing table."
+                                    "\n  Destination 1: %s\n  Destination 2: %s\n", 
+                                    getName().c_str(), it->toString().c_str(), et->toString().c_str());
+                        }
+                        stopAfter--;
+                        if (stopAfter == 0) {
+                            stopAfter = -1;
+                            break;
+                        }
                     }
-                    stopAfter--;
-                    if (stopAfter == 0) {
+                    if (stopAfter <= 0) {
                         stopAfter = -1;
                         break;
                     }
                 }
-                if (stopAfter <= 0) {
-                    stopAfter = -1;
-                    break;
-                }
+                if (stopAfter == -1)
+                    dbg.debug(_L2_, "%s, Notice: Too many regions to complete error check for overlapping destination regions. Checked first 20 pairs. To disable this check set range_check parameter to 0\n",
+                            getName().c_str());
             }
-            if (stopAfter == -1)
-                dbg.debug(_L2_, "%s, Notice: Too many regions to complete error check for overlapping destination regions. Checked first 20 pairs.\n",
-                        getName().c_str());
 
             for (auto it = networkAddressMap.begin(); it != networkAddressMap.end(); it++) {
                 dbg.debug(_L10_, "    Address: %s -> %" PRIu64 "\n", it->first.c_str(), it->second);
@@ -536,6 +540,7 @@ class MemNICBase : public MemLinkBase {
 
         // Other parameters
         std::unordered_set<uint32_t> sourceIDs, destIDs; // IDs which this endpoint cares about
+        uint32_t range_check = true; // Enable overlapping range check
 
     private:
 
@@ -561,6 +566,10 @@ class MemNICBase : public MemLinkBase {
                 params.find_array<uint32_t>("destinations", dstArr);
                 destIDs = std::unordered_set<uint32_t>(dstArr.begin(), dstArr.end());
             }
+            
+            // range_check current is off(0) or on(1) but is using a uint32_t to 
+            // allow for future selection of different algorithms.
+            range_check=params.find<uint32_t>("range_check", 1);
 
             std::stringstream sources, destinations;
             uint32_t id;
