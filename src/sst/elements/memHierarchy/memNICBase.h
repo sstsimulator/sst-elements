@@ -402,7 +402,35 @@ class MemNICBase : public MemLinkBase {
                 }
             }
             destEndpointInfo = newDests;
-            
+
+// TODO add parameter to disable and/or allow for algorithm selection.
+// Issue: Algorithm time depends on the size of the interleave. For very
+// large sizes the algorithm times out. For an 8 node system this can take
+// 20 minutes of wall time.
+// 
+// Simply overriding the setup() function is ugly because it requires
+// copying all the setup() code and modifying it (as opposed providing additional
+// functionality and calling MemNICBase::setup() ). There may be problems with 
+// private member access as well (not sure)
+
+// Proposal 1: Full user control
+//   params
+//    { "range_check",  "(int) Perform address range overlap check", "1" },
+//   subcomponent
+//    { "range_checker", "memory consistency checks performed during setup()""}
+//   The code below would be move to a overlapChecker object and loaded as the default.
+
+// Proposal 2: Keep internal to SST elements
+//   { "range_check_mode",  "(int) Select method for checking overlapping ranges during setup"
+//                          " 0:None 1:Long 2:Fast}
+//   The fast algorithm could be designed to do a coarse sampling based on the interleave parameters
+//   and the number of nodes which gaurantees a predictably short time to complete.
+
+// Proposal 3: The bare minimum
+//  Just implement the enabled/disable parameter (and someone work on improving the algorithm)
+
+#define RANGE_CHECK_OK 0
+#if RANGE_CHECK_OK
             int stopAfter = 20; // This is error checking, if it takes too long, stop
             for (auto et = destEndpointInfo.begin(); et != destEndpointInfo.end(); et++) {
                 for (auto it = std::next(et,1); it != destEndpointInfo.end(); it++) {
@@ -426,6 +454,7 @@ class MemNICBase : public MemLinkBase {
             if (stopAfter == -1)
                 dbg.debug(_L2_, "%s, Notice: Too many regions to complete error check for overlapping destination regions. Checked first 20 pairs.\n",
                         getName().c_str());
+#endif
 
             for (auto it = networkAddressMap.begin(); it != networkAddressMap.end(); it++) {
                 dbg.debug(_L10_, "    Address: %s -> %" PRIu64 "\n", it->first.c_str(), it->second);
