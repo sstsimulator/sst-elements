@@ -16,6 +16,16 @@ coherence_protocol="MESI"
     
 cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "2.3GHz")
 os_verbosity = os.getenv("VANADIS_OS_VERBOSE", 0)
+
+def addParamsPrefix(prefix, params):
+    # print( prefix )
+    ret = {}
+    for key, value in params.items():
+        # print( key, value )
+        ret[ prefix + "." + key] = value
+
+    # print( ret )
+    return ret
                
 class Builder:
     def __init__(self):
@@ -26,7 +36,32 @@ class Builder:
         self.prefix = 'node' + str(nodeId)
 
         self.nodeOS = sst.Component(self.prefix + ".os", "vanadis.VanadisNodeOS")
-        self.nodeOS.addParams({
+
+        # Setup executable arguments
+        app_args = os.getenv("VANADIS_EXE_ARGS", "")
+        app_params = {}
+        if app_args != "":
+            app_args_list = app_args.split(" ")
+            # We have a plus 1 because the executable name is arg0
+            app_args_count = len( app_args_list ) + 1
+
+            app_params["process0.argc"] = app_args_count
+
+            if (os_verbosity > 0):
+                print("Identified " + str(app_args_count) + " application arguments, adding to input parameters.")
+            arg_start = 1
+            for next_arg in app_args_list:
+                if (os_verbosity > 0):
+                    print("process0.arg" + str(arg_start) + " = " + next_arg)
+                app_params["process0.arg" + str(arg_start)] = next_arg
+                arg_start = arg_start + 1
+        else:
+            app_params["process0.argc"] = 1
+            if (os_verbosity > 0):
+                print("No application arguments found, continuing with argc=1")
+        
+        # Setup process
+        process = {
             "nodeId": nodeId,
             "dbgLevel" : os_verbosity,
             "dbgMask" : -1,
@@ -48,7 +83,14 @@ class Builder:
             "process0.arg0" : exe_name,
             "physMemSize" : physMemSize,
             "useMMU" : True,
-        })
+        }
+
+        process.update(app_params)
+
+        print(process)
+
+        # Add process
+        self.nodeOS.addParams(process)
 
         self.mmu = self.nodeOS.setSubComponent( "mmu", "mmu.simpleMMU" )
 
