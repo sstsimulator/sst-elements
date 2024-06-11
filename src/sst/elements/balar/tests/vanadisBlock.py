@@ -92,25 +92,6 @@ class Vanadis_Builder:
         })
         cpu.enableAllStatistics()
 
-        app_args = os.getenv("VANADIS_EXE_ARGS", "")
-
-        if app_args != "":
-            app_args_list = app_args.split(" ")
-            # We have a plus 1 because the executable name is arg0
-            app_args_count = len( app_args_list ) + 1
-            cpu.addParams({ "app.argc" : app_args_count })
-            if (verbosity > 0):
-                print( "Identified " + str(app_args_count) + " application arguments, adding to input parameters." )
-            arg_start = 1
-            for next_arg in app_args_list:
-                if (verbosity > 0):
-                    print( "arg" + str(arg_start) + " = " + next_arg )
-                cpu.addParams({ "app.arg" + str(arg_start) : next_arg })
-                arg_start = arg_start + 1
-        else:
-            if (verbosity > 0):
-                print( "No application arguments found, continuing with argc=0" )
-
         decode = cpu.setSubComponent( "decoder0", "vanadis.Vanadis" + vanadis_isa + "Decoder" )
 
         decode.addParams({
