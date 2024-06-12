@@ -100,29 +100,34 @@ bool DMAEngine::tick(SST::Cycle_t x) {
         // Perform DMA copy
 
         // Make a request
+        // Handle unaligned case
+        uint32_t actual_transfer_size = dma_ctrl_regs.transfer_size;
+        if (dma_ctrl_regs.data_size < dma_ctrl_regs.transfer_size)
+            actual_transfer_size = dma_ctrl_regs.data_size;
+
         if (dma_ctrl_regs.dir == SIM_TO_SST) {
             // Easy, from simulator memory to SST memory
             // First prepare the data transfer block
-            std::vector<uint8_t> data(dma_ctrl_regs.transfer_size);
-            for (uint32_t i = 0; i < dma_ctrl_regs.transfer_size; i++) {
+            std::vector<uint8_t> data(actual_transfer_size);
+            for (uint32_t i = 0; i < actual_transfer_size; i++) {
                 data[i] = *(dma_ctrl_regs.simulator_mem_addr);
                 dma_ctrl_regs.simulator_mem_addr++;
             }
 
             StandardMem::Write* req = new StandardMem::Write(
-                dma_ctrl_regs.sst_mem_addr, dma_ctrl_regs.transfer_size, 
+                dma_ctrl_regs.sst_mem_addr, actual_transfer_size, 
                 data, false);
 
 
             // Reduce the total data_size for record
-            dma_ctrl_regs.data_size -= dma_ctrl_regs.transfer_size;
+            dma_ctrl_regs.data_size -= actual_transfer_size;
 
             // If we are done, change the status to WAITING_DONE
             if (dma_ctrl_regs.data_size == 0) {
                 dma_ctrl_regs.status = DMA_WAITING_DONE;
             } else {
                 // Increase the SST mem space address for next copy
-                dma_ctrl_regs.sst_mem_addr += dma_ctrl_regs.transfer_size;
+                dma_ctrl_regs.sst_mem_addr += actual_transfer_size;
             }
 
             // Send the copy request to memory system
@@ -130,10 +135,10 @@ bool DMAEngine::tick(SST::Cycle_t x) {
         } else if (dma_ctrl_regs.dir == SST_TO_SIM) {
             // Need to first read it and get copy done inside readresp handler
             StandardMem::Read* req = new StandardMem::Read(
-                dma_ctrl_regs.sst_mem_addr, dma_ctrl_regs.transfer_size);
+                dma_ctrl_regs.sst_mem_addr, actual_transfer_size);
 
             // Decrease the data size
-            dma_ctrl_regs.data_size -= dma_ctrl_regs.transfer_size;
+            dma_ctrl_regs.data_size -= actual_transfer_size;
 
             // If we are done, change the status to WAITING_DONE
             if (dma_ctrl_regs.data_size == 0) {
@@ -141,8 +146,8 @@ bool DMAEngine::tick(SST::Cycle_t x) {
             } else {
                 // Increase the SST mem space address and simulator mem space addr
                 // for next copy
-                dma_ctrl_regs.sst_mem_addr += dma_ctrl_regs.transfer_size;
-                dma_ctrl_regs.simulator_mem_addr += dma_ctrl_regs.transfer_size;
+                dma_ctrl_regs.sst_mem_addr += actual_transfer_size;
+                dma_ctrl_regs.simulator_mem_addr += actual_transfer_size;
             }
 
             // Send the read request
@@ -217,7 +222,7 @@ void DMAEngine::DMAHandlers::handle(StandardMem::Write* write) {
         DMAEngineControlRegisters* reg_ptr = decode_balar_packet<DMAEngineControlRegisters>(&(write->data)); 
         
         if (reg_ptr->data_size % reg_ptr->transfer_size != 0) {
-            out->fatal(CALL_INFO, -1, "%s: invalid DMA config!\n", dma->getName().c_str());
+            out->verbose(_INFO_, "%s: unaligned DMA transfer config! Data size: %lld Transfer size: %u\n", dma->getName().c_str(), reg_ptr->data_size, reg_ptr->transfer_size);
         }
         
         dma->dma_ctrl_regs.simulator_mem_addr = reg_ptr->simulator_mem_addr;
