@@ -34,7 +34,9 @@ libmiranda_la_SOURCES = \
 	generators/copygen.h \
 	generators/customcmd_opcode.h \
 	generators/streambench_customcmd.h \
-	generators/streambench_customcmd.cc
+	generators/streambench_customcmd.cc \
+	generators/gemmgen.h \
+	generators/gemmgen.cc
 
 EXTRA_DIST = \
 	tests/testsuite_default_miranda.py \
