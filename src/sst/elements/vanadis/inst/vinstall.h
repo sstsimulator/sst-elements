@@ -120,4 +120,8 @@
 #include "inst/vfpclass.h"
 #include "inst/vmin.h"
 
+// Zicntr
+#include "inst/vzicntr.h"
+#include "inst/vzicntr_readcounter.h"
+
 #endif
