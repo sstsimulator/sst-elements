@@ -128,14 +128,12 @@ public:
     }
 
 
-    void tick(SST::Output* output, uint64_t cycle) override
+    void tick(SST::Output* output, uint64_t) override
     {
         if(output->getVerboseLevel() >= 16) {
             output->verbose(CALL_INFO, 16, 0, "-> Decode step for thr: %" PRIu32 "\n", hw_thr);
             output->verbose(CALL_INFO, 16, 0, "---> Max decodes per cycle: %" PRIu16 "\n", max_decodes_per_cycle);
         }
-
-        cycle_count = cycle;
 
         for ( uint16_t i = 0; i < max_decodes_per_cycle; ++i ) {
             if ( ! thread_rob->full() ) {
@@ -1107,16 +1105,29 @@ protected:
                       } break;
                       default:
                       {
+                        using namespace Zicntr;
                         uint64_t csrNum = uimm64 & 0xfff;
                         switch ( csrNum ) {
-                            case 0xc00:
-                            {
-                                if ( 0 == rs1 ) {
-                                    auto thread_call = std::bind(&VanadisRISCV64Decoder::getCycleCount, this);
-                                    bundle->addInstruction( new VanadisSetRegisterByCallInstruction<int64_t>( ins_address, hw_thr, options, rd, thread_call));
-                                    decode_fault = false;
-                                }
-                            } break;
+                            case 0xc00: // RDCYCLE
+                                bundle->addInstruction( new VanadisReadCounterInstruction( CYCLE, ins_address, hw_thr, options, rd ) );
+                                decode_fault = 0 != rs1;
+                                break;
+                            
+                            case 0xc01: // RDTIME
+                                bundle->addInstruction( new VanadisReadCounterInstruction( TIME, ins_address, hw_thr, options, rd ) );
+                                decode_fault = 0 != rs1;
+                                break;
+                            
+                            case 0xc02: // RDINSTRET
+                                bundle->addInstruction( new VanadisReadCounterInstruction( INSTRET, ins_address, hw_thr, options, rd ) );
+                                decode_fault = 0 != rs1;
+                                break;
+
+                            case 0xc80: // RDCYCLEH                            
+                            case 0xc81: // RDTIMEH                            
+                            case 0xc82: // RDINSTRETH
+                                output->verbose( CALL_INFO, 16, 0, "riscv64 does not support Zicntr [H] suffix" );
+                                break;
                         }
 
                       } break;

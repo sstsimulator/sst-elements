@@ -959,6 +959,11 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
 
             ins_retired_this_cycle++;
 
+            // Concurrent RDINSTRET operations in Execute will see this
+            // instruction included in its count. I'm not sure if that's proper,
+            // but it seems like a reasonable option.
+            register_files.at(rob_num)->incrementCounter(Zicntr::INSTRET);
+            
             if ( perform_delay_cleanup ) {
 
                 VanadisInstruction* delay_ins = rob->pop();
@@ -1299,7 +1304,7 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
         if ( cnt ) {
             auto thr = m_curRetireHwThread;
             rc[thr] = performRetire(thr, rob[thr], cycle);
-
+            
             ++m_curRetireHwThread;
             m_curRetireHwThread %= hw_threads;
             cnt = hw_threads;
@@ -1417,6 +1422,11 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
 #endif
 
     current_cycle++;
+    for (VanadisRegisterFile* reg : register_files) {
+        assert(reg);
+        reg->incrementCounter(Zicntr::CYCLE);
+        reg->incrementCounter(Zicntr::TIME);
+    }
 
     uint64_t used_phys_int = 0;
     uint64_t used_phys_fp  = 0;
