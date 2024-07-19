@@ -210,9 +210,9 @@ if __name__ == "__main__":
          )
 
 # Enable statistics                                                                
-sst.setStatisticLoadLevel(7)
-sst.setStatisticOutput("sst.statOutputConsole")
-for a in componentlist:
-    sst.enableAllStatisticsForComponentType(a)
+# sst.setStatisticLoadLevel(7)
+# sst.setStatisticOutput("sst.statOutputConsole")
+# for a in componentlist:
+#     sst.enableAllStatisticsForComponentType(a)
 
 # EOF
