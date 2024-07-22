@@ -377,7 +377,6 @@ VOID WriteInstructionRead(ADDRINT* address, UINT32 readSize, THREADID thr, ADDRI
     ac.inst.instClass = instClass;
     ac.inst.simdElemCount = simdOpWidth;
 
-    //printf("fesimple.cc: patrick: writing end instuction marker\n");
     tunnel->writeMessage(thr, ac);
 }
 
@@ -420,7 +419,6 @@ VOID WriteStartInstructionMarker(UINT32 thr, ADDRINT ip, UINT32 instClass, UINT3
     ac.instPtr = (uint64_t) ip;
     ac.inst.simdElemCount = simdOpWidth;
     ac.inst.instClass = instClass;
-    //printf("fesimple.cc: patrick: writing start instuction marker\n");
     tunnel->writeMessage(thr, ac);
 }
 
@@ -429,7 +427,6 @@ VOID WriteEndInstructionMarker(UINT32 thr, ADDRINT ip)
     ArielCommand ac;
     ac.command = ARIEL_END_INSTRUCTION;
     ac.instPtr = (uint64_t) ip;
-    //printf("fesimple.cc: patrick: writing end instuction marker\n");
     tunnel->writeMessage(thr, ac);
 }
 
@@ -662,11 +659,19 @@ VOID InstrumentInstruction(INS ins, VOID *v)
 void mapped_ariel_enable()
 {
 
-    // Note
-    // By adding clock offset calculation, this function now has visible side-effects when called more than once
-    // In most cases won't matter -> ariel_enable() called once or close together in time so offsets will stabilize quickly
-    // In some cases could cause a big jump in time in the middle of simulation -> ariel_enable() left in app but mode is always-on
-    // So, update ariel_enable & offsets in lock & don't update if already enabled
+    // Notes
+    // (1) After the first time ariel_enable is called, gettimeofday and clock_gettime will
+    // return simulation time instead of real time. In order to ensure monotonicity of the
+    // clock, the first time ariel_enable is called, we store the real time, and have
+    // gettimeofday and clock_gettime return the simulation time offset from that point.
+    // Furthermore, even if ariel_disable is called, we continue to return the simulation
+    // time, again to ensure monotonicity.
+    //
+    // (2) In some cases, switching to simulation time could cause a big jump in time in the
+    // middle of simulation.
+    //
+    // (3) One should not try to reason about gettimeofday and clock_gettime calls made
+    // in different enabled regions.
 
     /* LOCK */
     THREADID thr = PIN_ThreadId();
@@ -707,16 +712,9 @@ void mapped_ariel_enable()
     fflush(stderr);
 }
 
-/* Intercept ariel_disable() in application & start simulating instructions */
+/* Intercept ariel_disable() in application & stop simulating instructions */
 void mapped_ariel_disable()
 {
-
-    // Note
-    // By adding clock offset calculation, this function now has visible side-effects when called more than once
-    // In most cases won't matter -> ariel_disable() called once or close together in time so offsets will stabilize quickly
-    // In some cases could cause a big jump in time in the middle of simulation -> ariel_disable() left in app but mode is always-on
-    // So, update ariel_disable & offsets in lock & don't update if already enabled
-
     /* LOCK */
     THREADID thr = PIN_ThreadId();
     PIN_GetLock(&mainLock, thr);
@@ -726,22 +724,6 @@ void mapped_ariel_disable()
         return;
     }
 
-    // TODO: I just copied these timers from enable. Need to figure out what to do with them here
-    // so that we can re-enable properly later.
-    // Setup timers to count start time + elapsed simulated time
-    struct timeval tvsim;
-    gettimeofday(&offset_tv, NULL);
-    tunnel->getTime(&tvsim);
-    offset_tv.tv_sec -= tvsim.tv_sec;
-    offset_tv.tv_usec -= tvsim.tv_usec;
-#if ! defined(__APPLE__)
-    struct timespec tpsim;
-    tunnel->getTimeNs(&tpsim);
-    offset_tp_mono.tv_sec = tvsim.tv_sec - tpsim.tv_sec;
-    offset_tp_mono.tv_nsec = (tvsim.tv_usec * 1000) - tpsim.tv_nsec;
-    offset_tp_real.tv_sec = tvsim.tv_sec - tpsim.tv_sec;
-    offset_tp_real.tv_nsec = (tvsim.tv_usec * 1000) - tpsim.tv_nsec;
-#endif
     /* DISABLE */
     enable_output = false;
 
@@ -762,13 +744,16 @@ uint64_t mapped_ariel_cycles()
 
 /*
  * Override gettimeofday to return simulated time
- * If ariel_enable is false, returns system gettimeofday value
- * If ariel_enable is true, returns system gettimeofday when ariel was enabled + elapsed simulated time since ariel was enabled
+ * If timer_initialized is false, returns system gettimeofday value
+ * If timer_initialized is true, returns system gettimeofday when ariel was enabled + elapsed simulated time since ariel was *first* enabled
+ * See notes in mapped_ariel_enable.
  */
 int mapped_gettimeofday(struct timeval *tp, void *tzp)
 {
-    // Return 'real' time if simulation not enabled
-    if (!enable_output) {
+    // Return 'real' time if ariel_enable has not been called yet,
+    // otherwise return the sim time, offset by the real time
+    // ariel_enable was called to ensure monotonicity.
+    if (!timer_initialized) {
        return gettimeofday(tp, NULL);
     }
 
@@ -781,14 +766,15 @@ int mapped_gettimeofday(struct timeval *tp, void *tzp)
 
 /*
  * Override clock_gettime to return simulated time
- * If ariel_enable is false, returns actual clock_gettime value
- * If ariel_enable is true, returns elapsed simulated time since ariel was enabled + clock_gettime(CLOCK_MONOTONIC) from
- * when ariel was enabled
+ * If timer_initialized is false, returns actual clock_gettime value
+ * If timer_initialized is true, returns elapsed simulated time since ariel was enabled + clock_gettime(CLOCK_MONOTONIC) from
+ * when ariel was *first* enabled
+ * See notes in mapped_ariel_enable.
  */
 #if ! defined(__APPLE__)
 int mapped_clockgettime(clockid_t clock, struct timespec *tp)
 {
-    if (!enable_output) {
+    if (!timer_initialized) {
         struct timeval tv;
         int retval = gettimeofday(&tv, NULL);
         tp->tv_sec = tv.tv_sec;
@@ -2017,7 +2003,6 @@ int main(int argc, char *argv[])
 // Pin version specific tunnel attach
     tunnelmgr = new SST::Core::Interprocess::MMAPChild_Pin3<ArielTunnel>(SSTNamedPipe.Value());
     tunnel = tunnelmgr->getTunnel();
-    //printf("fesimple.cc: patrick : got tunnel, %s\n", SSTNamedPipe.Value().c_str());
 #ifdef HAVE_CUDA
     tunnelRmgr = new SST::Core::Interprocess::MMAPChild_Pin3<GpuReturnTunnel>(SSTNamedPipe2.Value());
     tunnelDmgr = new SST::Core::Interprocess::MMAPChild_Pin3<GpuDataTunnel>(SSTNamedPipe3.Value());
