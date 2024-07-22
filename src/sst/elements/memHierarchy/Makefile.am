@@ -253,6 +253,7 @@ EXTRA_DIST = \
 	tests/refFiles/test_memHA_Noninclusive_1.out \
 	tests/refFiles/test_memHA_Noninclusive_2.out \
 	tests/refFiles/test_memHA_PrefetchParams.out \
+	tests/refFiles/test_memHA_RangeCheck.out \
 	tests/refFiles/test_memHA_ScratchCache_1.out \
 	tests/refFiles/test_memHA_ScratchCache_2.out \
 	tests/refFiles/test_memHA_ScratchCache_3.out \
