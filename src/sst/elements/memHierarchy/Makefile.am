@@ -198,6 +198,7 @@ EXTRA_DIST = \
 	tests/testNoninclusive-2.py \
 	tests/testPrefetchParams.py \
 	tests/testThroughputThrottling.py \
+	tests/testRangeCheck.py \
 	tests/testScratchCache-1.py \
 	tests/testScratchCache-2.py \
 	tests/testScratchCache-3.py \
