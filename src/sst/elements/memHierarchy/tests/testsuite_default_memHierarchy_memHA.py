@@ -187,6 +187,9 @@ class testcase_memHierarchy_memHA(SSTTestCase):
     
     def test_memHA_StdMem_mmio3(self):
         self.memHA_Template("StdMem_mmio3")
+
+    def test_memHA_RangeCheck(self):
+        self.memHA_Template("RangeCheck", testtimeout=60)
 #####
 
     def memHA_Template(self, testcase,

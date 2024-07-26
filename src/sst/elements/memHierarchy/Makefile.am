@@ -198,6 +198,7 @@ EXTRA_DIST = \
 	tests/testNoninclusive-2.py \
 	tests/testPrefetchParams.py \
 	tests/testThroughputThrottling.py \
+	tests/testRangeCheck.py \
 	tests/testScratchCache-1.py \
 	tests/testScratchCache-2.py \
 	tests/testScratchCache-3.py \
@@ -253,6 +254,7 @@ EXTRA_DIST = \
 	tests/refFiles/test_memHA_Noninclusive_1.out \
 	tests/refFiles/test_memHA_Noninclusive_2.out \
 	tests/refFiles/test_memHA_PrefetchParams.out \
+	tests/refFiles/test_memHA_RangeCheck.out \
 	tests/refFiles/test_memHA_ScratchCache_1.out \
 	tests/refFiles/test_memHA_ScratchCache_2.out \
 	tests/refFiles/test_memHA_ScratchCache_3.out \
