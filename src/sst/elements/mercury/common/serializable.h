@@ -16,9 +16,8 @@
 #pragma once
 
 #include <sst/core/serialization/serializer_fwd.h>
-#include <sst/core/serialization/serializable.h>
-#include <sst/core/serialization/serialize_serializable.h>
 #include <sst/core/serialization/serializer.h>
+#include <sst/core/serialization/serializable.h>
 
 #define START_SERIALIZATION_NAMESPACE namespace SST { namespace Core { namespace Serialization {
 #define END_SERIALIZATION_NAMESPACE } } }
