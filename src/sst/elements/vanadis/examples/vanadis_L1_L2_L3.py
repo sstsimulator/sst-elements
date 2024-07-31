@@ -1,4 +1,5 @@
 import sst
+from mhlib import componentlist
 
 verbose = 2
 
@@ -8,4 +9,48 @@ DEBUG_L3 = 0
 DEBUG_MEM = 0
 DEBUG_LEVEL = 10
 
-cpu = sst.Component("core", "memHierarchy.standardCPU")
+cpu = sst.Component("core", "memHierarchy.standardCPU") # if this is a parameter, it determines whether this should be in memh or vanadis
+cpu.addParams({
+    "memFreq": 2,
+    "memSize": "4KiB",
+    "verbose": 0,
+    "clock": "3.5GHz",
+    "rngseed": 111,
+    "maxOutstanding": 16,
+    "opCount": 2500,
+    "reqsPerIssue": 3,
+    "write_freq": 36,
+    "read_freq": 60,
+    "llsc_Freq": 4
+})
+iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
+
+l1cache = sst.Component("l1cache.msi", "memHierarchy.Cache")
+l1cache.setParams({
+    "access_latency_cycles" : "3",
+    "cache_frequency" : "3.5Ghz",
+    "replacement_policy" : "lru",
+    "coherence_protocol" : "MSI",
+    "associativity" : "4",
+    "cache_line_size" : "64",
+    "debug" : DEBUG_L1,
+    "debug_level" : DEBUG_LEVEL,
+    "verbose" : verbose,
+    "L1" : "1",
+    "cache_size" : "2KiB"
+})
+
+memctrl = sst.Component("memory", "memHierarchy.MemController")
+memctrl.addParams({
+    "debug" : DEBUG_MEM,
+    "debug_level" : DEBUG_LEVEL,
+    "clock" : "1GHz",
+    "verbose" : verbose,
+    "addr_range_end" : 512*1024*1024-1,
+})
+
+memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
+memory.addParams({
+    "access_time" : "1000ns",
+    "mem_size" : "512MiB"
+})
