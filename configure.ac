@@ -21,6 +21,7 @@ m4_include([config/sst_elements_include.m4])
 
 AM_PROG_AS
 
+SST_CHECK_ARIEL_MPI([], [AC_MSG_ERROR([Can't enable Ariel MPI])])
 AC_PROG_CC
 AM_PROG_CC_C_O
 m4_if(m4_defn([AC_AUTOCONF_VERSION]), 2.71,, m4_defn([AC_AUTOCONF_VERSION]), 2.70,, [AC_PROG_CC_C99])
@@ -44,6 +45,7 @@ AC_CACHE_SAVE
 SST_CORE_CHECK_INSTALL()
 
 SST_CHECK_OSX()
+
 
 SST_CHECK_SPINLOCK()
 
