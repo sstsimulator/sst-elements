@@ -111,6 +111,13 @@ int main(int argc, char* argv[]) {
 
     fprintf(output, "Rank %d partial sum is %ld, total sum is %d\n", rank, sum, tot);
 
+    if (output != stdout) {
+        int ret = fclose(output);
+        if (ret) {
+            perror("reduce.cc: Error closing output file");
+        }
+    }
+
     MPI_Barrier(MPI_COMM_WORLD);
     if (rank == 0) {
 #if DEBUG
