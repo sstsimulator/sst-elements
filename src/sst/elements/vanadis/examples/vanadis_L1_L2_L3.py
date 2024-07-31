@@ -54,3 +54,18 @@ memory.addParams({
     "access_time" : "1000ns",
     "mem_size" : "512MiB"
 })
+
+
+
+# Enable statistics
+sst.setStatisticLoadLevel(7)
+sst.setStatisticOutput("sst.statOutputConsole")
+for a in componentlist:
+    sst.enableAllStatisticsForComponentType(a)
+
+
+# Define the simulation links
+link_cpu_cache_link = sst.Link("link_cpu_cache_link")
+link_cpu_cache_link.connect( (iface, "port", "1000ps"), (l1cache, "high_network_0", "1000ps") )
+link_mem_bus_link = sst.Link("link_mem_bus_link")
+link_mem_bus_link.connect( (l1cache, "low_network_0", "50ps"), (memctrl, "direct_link", "50ps") )
