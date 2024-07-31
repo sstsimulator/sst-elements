@@ -83,50 +83,64 @@ class testcase_Ariel(SSTTestCase):
     using_osx = host_os_is_osx()
     osx_error_msg = "Ariel: OpenMP is not supported on macOS"
 
+    # TODO: This is hacky. What is the correct way to get the test script location?
+    testsuite_dir = os.path.dirname(__file__)
+    mpilauncher_exists = os.path.isfile(testsuite_dir + '/../mpi/mpilauncher')
+    mpi_error_msg = f"Ariel: The mpilauncher executable was not found"
+
+    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     def test_Ariel_mpi_hello_01(self):
         self.ariel_Template(threads=1, ranks=1)
 
+    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     def test_Ariel_mpi_hello_02(self):
         self.ariel_Template(threads=1, ranks=2)
 
+    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     @unittest.skipIf(using_osx, osx_error_msg)
     def test_Ariel_mpi_hello_03(self):
         self.ariel_Template(threads=2, ranks=1)
 
+    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     def test_Ariel_mpi_hello_04(self):
         self.ariel_Template(threads=1, ranks=2, tracerank=1)
 
+    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     @unittest.skipIf(using_osx, osx_error_msg)
     def test_Ariel_mpi_hello_05(self):
         self.ariel_Template(threads=2, ranks=3, tracerank=1)
 
+    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     @unittest.skipIf(using_osx, osx_error_msg)
     def test_Ariel_mpi_hello_06(self):
         self.ariel_Template(threads=2, ranks=2)
 
+    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     def test_Ariel_mpi_reduce_01(self):
         self.ariel_Template(threads=1, ranks=1, program="reduce")
 
+    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     @unittest.skipIf(using_osx, osx_error_msg)
     def test_Ariel_mpi_reduce_02(self):
         self.ariel_Template(threads=2, ranks=2, program="reduce")
 
+    @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
     @unittest.skipIf(not pin_loaded, pin_error_msg)
     @unittest.skipIf(multi_rank, multi_rank_error_msg)
     @unittest.skipIf(using_osx, osx_error_msg)
