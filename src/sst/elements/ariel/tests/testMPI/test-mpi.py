@@ -2,6 +2,7 @@ import sst
 import sys
 import os
 import argparse
+import pathlib
 
 parser = argparse.ArgumentParser(
     prog=f'sst [sst-args] test-mpi.py --',
@@ -44,17 +45,27 @@ bus     = sst.Component("bus", "memHierarchy.Bus")
 #########################################################################
 ## Set component parameters and fill subcomponent slots
 #########################################################################
+# The test executable are located in a directory with all of the other
+# files that need to be compiled with MPI enabled
+exe = f'../../mpi/{args.program}'
+
 # 2.4GHz cores. One for each omp thread
 core.addParams({
     "clock"        : "2.4GHz",
     "verbose"      : 1,
-    "executable"   : f"./{args.program}",
+    "executable"   : exe,
     "arielmode"    : 0, # Disable tracing at start
     "corecount"    : ncores,
     "mpimode"      : 1,
     "mpiranks"     : mpiranks,
     "mpitracerank" : tracerank,
 })
+
+# This should be detected in Ariel but checking here allows us to fail
+# the test faster
+if not pathlib.Path(exe).exists():
+    print(f'test-mpi.py: Error: executable {exe} does not exist')
+    sys.exit(1)
 
 # Set the size of the reduce vector and optionally set the output file
 if args.program == "reduce":

@@ -211,13 +211,7 @@ class testcase_Ariel(SSTTestCase):
         self.ArielElementDir = os.path.abspath("{0}/../".format(test_path))
         self.ArielElementTestMPIDir = "{0}/tests/testMPI".format(self.ArielElementDir)
 
-        # Build the Ariel API library with mpicc
-        ArielApiDir = "{0}/api".format(self.ArielElementDir)
-        cmd = "make clean"
-        OSCommand(cmd, set_cwd=ArielApiDir).run()
-        cmd = "CC=mpicc make"
-        rtn0 = OSCommand(cmd, set_cwd=ArielApiDir).run()
-        log_debug("Ariel api/libarielapi.so Make result = {0}; output =\n{1}".format(rtn0.result(), rtn0.output()))
+        # Apps may need this. TODO: verify
         os.environ["ARIELAPI"] =  ArielApiDir
 
         # Build the test mpi programs
