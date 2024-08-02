@@ -45,8 +45,9 @@ class testcase_Ariel(SSTTestCase):
     @unittest.skipIf(testing_check_get_num_ranks() > 1, "Ariel: test_Ariel_test_snb skipped if ranks > 1 - Sandy Bridge test is incompatible with Multi-Rank.")
     def test_Ariel_test_snb(self):
         self.ariel_Template("ariel_snb")
-    
+
     @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
+    @unittest.skipIf(testing_check_get_num_ranks() > 1, "Ariel: test_Ariel_test_snb_mlm skipped if ranks > 1 - Sandy Bridge test is incompatible with Multi-Rank.")
     def test_Ariel_test_snb_mlm(self):
         self.ariel_Template("ariel_snb_mlm", app="stream_mlm")
 #####
