@@ -1,7 +1,11 @@
+if SST_USE_ARIEL_MPI
 CC=$(ARIEL_MPICC)
 CXX=$(ARIEL_MPICXX)
+# ffopenmp only needed to detect when MPI+OpenMP is used improperly
 CFLAGS+=$(ARIEL_CFLAGS) -fopenmp
 CXXFLAGS+=$(ARIEL_CXXFLAGS) -fopenmp
+endif
+
 AM_CPPFLAGS += -I../api $(MPI_CPPFLAGS) $(ARIEL_CFLAGS)
 bin_PROGRAMS = hello reduce mpilauncher fakepin
 
