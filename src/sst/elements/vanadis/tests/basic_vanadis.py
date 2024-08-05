@@ -145,7 +145,6 @@ osParams = {
     "checkpoint" : checkpoint
 }
 
-
 processList = ( 
     ( 1, {
         "env_count" : 1,
@@ -153,10 +152,6 @@ processList = (
         "exe" : full_exe_name,
         "arg0" : exe_name,
     } ),
-    #( 1, {
-    #    "env_count" : 2, "env0" : "HOME=/home/sdhammo", "env1" : "NEWHOME=/home/sdhammo2", "argc" : 1, "exe" : "./tests/small/basic-io/hello-world/mipsel/hello-world",  
-        #"exe" : "./tests/small/basic-io/read-write/mipsel/read-write",  
-    #} ),
 )
 
 processList[0][1].update(app_params)

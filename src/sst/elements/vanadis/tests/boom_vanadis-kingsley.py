@@ -16,14 +16,16 @@ isa="riscv64"
 
 loader_mode = os.getenv("VANADIS_LOADER_MODE", "0")
 
-#testDir="basic-io"
-#exe = "hello-world"
+testDir="basic-io"
+exe = "hello-world"
 #exe = "hello-world-cpp"
 #exe = "openat"
 #exe = "printf-check"
 #exe = "read-write"
+#exe = "fread-fwrite"
 #exe = "unlink"
 #exe = "unlinkat"
+#exe = "lseek"
 
 #testDir = "basic-math"
 #exe = "sqrt-double"
@@ -33,9 +35,9 @@ loader_mode = os.getenv("VANADIS_LOADER_MODE", "0")
 #exe = "test-branch"
 #exe = "test-shift"
 
-testDir = "misc"
+#testDir = "misc"
 #exe = "mt-dgemm"
-exe = "stream"
+#exe = "stream"
 #exe = "stream-fortran"
 #exe = "gettime"
 #exe = "splitLoad"
@@ -43,7 +45,10 @@ exe = "stream"
 #exe = "clone"
 #exe = "pthread"
 #exe = "openmp"
+#exe = "openmp2"
 #exe = "uname"
+#exe = "mem-test"
+#exe = "checkpoint"
 
 physMemSize = "4GiB"
 
@@ -171,23 +176,20 @@ osParams = {
     "page_size"  : 4096,
     "physMemSize" : physMemSize,
     "useMMU" : True,
+    "checkpointDir" : checkpointDir,
+    "checkpoint" : checkpoint
 }
-
 
 processList = (
     ( 1, {
         "env_count" : 1,
-        "env0" : "OMP_NUM_THREADS={}".format(numCpus),
+        "env0" : "OMP_NUM_THREADS={}".format(numCpus*numThreads),
         "exe" : full_exe_name,
         "arg0" : exe_name,
     } ),
-    #( 1, {
-    #    "env_count" : 2, "env0" : "HOME=/home/sdhammo", "env1" : "NEWHOME=/home/sdhammo2", "argc" : 1, "exe" : "./tests/small/basic-io/hello-world/mipsel/hello-world",
-        #"exe" : "./tests/small/basic-io/read-write/mipsel/read-write",
-    #} ),
 )
 
-procssList[0][1].update(app_params)
+processList[0][1].update(app_params)
 
 osl1cacheParams = {
     "access_latency_cycles" : "2",
