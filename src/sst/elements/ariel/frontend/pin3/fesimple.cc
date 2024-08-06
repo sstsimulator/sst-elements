@@ -1922,7 +1922,9 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
 }
 
 void fork_disable_child_output(THREADID threadid, const CONTEXT *ctx, VOID *v) {
+#ifdef ARIEL_DEBUG
     fprintf(stderr, "Warning: fesimple cannot trace forked processes. Disabling Pin for pid %d\n", getpid());
+#endif
     PIN_Detach();
 }
 
