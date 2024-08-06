@@ -3,14 +3,6 @@
 from sst_unittest import *
 from sst_unittest_support import *
 
-################################################################################
-# Code to support a single instance module initialize, must be called setUp method
-
-module_init = 0
-module_sema = threading.Semaphore()
-
-
-################################################################################
 
 class testcase_cacheTracer_Component(SSTTestCase):
 
