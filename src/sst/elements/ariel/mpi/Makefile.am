@@ -1,20 +1,13 @@
-if SST_USE_ARIEL_MPI
-CC=$(ARIEL_MPICC)
-CXX=$(ARIEL_MPICXX)
-# ffopenmp only needed to detect when MPI+OpenMP is used improperly
-CFLAGS+=$(ARIEL_CFLAGS) -fopenmp
-CXXFLAGS+=$(ARIEL_CXXFLAGS) -fopenmp
-endif
+all-local: mpilauncher
 
-AM_CPPFLAGS += -I../api $(MPI_CPPFLAGS) $(ARIEL_CFLAGS)
-bin_PROGRAMS = hello reduce mpilauncher fakepin
+mpilauncher:
+	 $(ARIEL_MPICXX) mpilauncher.cc -o mpilauncher
+fakepin:
+	 $(ARIEL_MPICXX) fakepin.cc -o fakepin
+hello:
+	 $(ARIEL_MPICXX) hello.cc -o hello -I../api -L../api -larielapi -fopenmp
+reduce:
+	 $(ARIEL_MPICXX) reduce.cc -o reduce -I../api -L../api -larielapi -fopenmp
 
-mpilauncher_SOURCES = mpilauncher.cc
-hello_SOURCES = hello.cc
-reduce_SOURCES = reduce.cc
-fakepin_SOURCES = fakepin.cc
-
-hello_LDADD = ../api/libarielapi.la $(MPI_LIBS) $(MPILIBS)
-reduce_LDADD = ../api/libarielapi.la $(MPI_LIBS) $(MPILIBS)
-
-AM_DEFAULT_VERBOSITY = 1
+clean-local:
+	rm -f mpilauncher fakepin
