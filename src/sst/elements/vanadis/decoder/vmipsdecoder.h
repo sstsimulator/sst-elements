@@ -430,12 +430,10 @@ public:
         stat_decode_cop1_eq   = registerStatistic<uint64_t>("ins_decode_cop1_eq", "1");
     }
 
-    virtual void tick(SST::Output* output, uint64_t cycle)
+    virtual void tick(SST::Output* output, uint64_t)
     {
         output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Decode step for thr: %" PRIu32 "\n", hw_thr);
         output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "---> Max decodes per cycle: %" PRIu16 "\n", max_decodes_per_cycle);
-
-        cycle_count = cycle;
 
         ins_loader->printStatus(output);
 
