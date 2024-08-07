@@ -6,31 +6,12 @@ from sst_unittest_support import *
 import os
 import shutil
 
-################################################################################
-# Code to support a single instance module initialize, must be called setUp method
-
-module_init = 0
-module_sema = threading.Semaphore()
-
-def initializeTestModule_SingleInstance(class_inst):
-    global module_init
-    global module_sema
-
-    module_sema.acquire()
-    if module_init != 1:
-        # Put your single instance Init Code Here
-        class_inst._setupbalarTestFiles()
-        module_init = 1
-
-    module_sema.release()
-
-################################################################################
 
 class testcase_balar(SSTTestCase):
 
     def setUp(self):
         super(type(self), self).setUp()
-        initializeTestModule_SingleInstance(self)
+        self._setupbalarTestFiles()
 
     def tearDown(self):
         # Put test based teardown code here. it is called once after every test
