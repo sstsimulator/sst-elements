@@ -1,4 +1,4 @@
-SUBDIRS = api
+SUBDIRS = api frontend
 if SST_USE_ARIEL_MPI
 SUBDIRS += mpi
 endif

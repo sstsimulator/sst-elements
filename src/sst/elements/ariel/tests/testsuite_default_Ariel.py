@@ -177,16 +177,16 @@ class testcase_Ariel(SSTTestCase):
         self.ArielElementompmybarrierDir = "{0}/testopenMP/ompmybarrier".format(test_path)
 
         # Build the Ariel API library
-        ArielApiDir = "{0}/api".format(self.ArielElementDir)
-        cmd = "make"
-        rtn0 = OSCommand(cmd, set_cwd=ArielApiDir).run()
-        log_debug("Ariel api/libarielapi.so Make result = {0}; output =\n{1}".format(rtn0.result(), rtn0.output()))
-        os.environ["ARIELAPI"] =  ArielApiDir
+        #ArielApiDir = "{0}/api".format(self.ArielElementDir)
+        #cmd = "make"
+        #rtn0 = OSCommand(cmd, set_cwd=ArielApiDir).run()
+        #log_debug("Ariel api/libarielapi.so Make result = {0}; output =\n{1}".format(rtn0.result(), rtn0.output()))
+        #os.environ["ARIELAPI"] =  ArielApiDir
 
         # Now build the Ariel stream example
-        cmd = "make all"
-        rtn1 = OSCommand(cmd, set_cwd=self.ArielElementStreamDir).run()
-        log_debug("Ariel frontend/simple/examples/Makefile Make result = {0}; output =\n{1}".format(rtn1.result(), rtn1.output()))
+        #cmd = "make all"
+        #rtn1 = OSCommand(cmd, set_cwd=self.ArielElementStreamDir).run()
+        #log_debug("Ariel frontend/simple/examples/Makefile Make result = {0}; output =\n{1}".format(rtn1.result(), rtn1.output()))
 
         # Now build the ompmybarrier binary
         cmd = "make"
