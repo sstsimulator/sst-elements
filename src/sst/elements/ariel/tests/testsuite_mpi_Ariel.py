@@ -159,6 +159,7 @@ class testcase_Ariel(SSTTestCase):
         # Set paths
         ArielElementDir = os.path.abspath("{0}/../".format(test_path))
         ArielElementAPIDir = "{0}/api".format(ArielElementDir)
+        ArielElementMPIDir = "{0}/mpi".format(ArielElementDir)
         ArielElementTestMPIDir = "{0}/tests/testMPI".format(ArielElementDir)
 
         libpath = os.environ.get("LD_LIBRARY_PATH")
@@ -211,7 +212,6 @@ class testcase_Ariel(SSTTestCase):
             self.assert_nonzero_stat(statfile, f"core.read_requests.{i}")
             self.assert_nonzero_stat(statfile, f"cache_{i}.CacheMisses")
 
-
 #######################
 
     def _setup_ariel_test_files(self):
@@ -221,19 +221,21 @@ class testcase_Ariel(SSTTestCase):
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
 
+
         # Set the paths to the various directories
         self.ArielElementDir = os.path.abspath("{0}/../".format(test_path))
         self.ArielElementTestMPIDir = "{0}/tests/testMPI".format(self.ArielElementDir)
+        self.ArielElementAPIDir = "{0}/api".format(self.ArielElementDir)
 
-        # Apps may need this. TODO: verify
-        os.environ["ARIELAPI"] =  ArielApiDir
+        # In case the user has not put the lib directory on their LD_LIBRARY_PATH
+        os.environ["ARIELAPI"] = self.ArielElementAPIDir
 
         # Build the test mpi programs
         cmd = "make"
         rtn1 = OSCommand(cmd, set_cwd=self.ArielElementTestMPIDir).run()
-        log_debug("Ariel ariel/tests/testMPI make result = {1}; output =\n{2}".format(ArielElementTestMPIDir, rtn1.result(), rtn1.output()))
+        log_debug("Ariel tests/testMPI `make` result = {1}; output =\n{2}".format(ArielElementTestMPIDir, rtn1.result(), rtn1.output()))
 
         # Check that everything compiled OK
         self.assertTrue(rtn0.result() == 0, "libarielapi failed to compile")
-        self.assertTrue(rtn1.result() == 0, "mpi test binaries failed to compile")
+        self.assertTrue(rtn1.result() == 0, "MPI test binaries failed to compile")
 

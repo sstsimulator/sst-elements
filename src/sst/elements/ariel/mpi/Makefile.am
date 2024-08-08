@@ -1,4 +1,4 @@
-all-local: mpilauncher fakepin hello reduce
+all-local: mpilauncher
 
 mpilauncher:
 	 $(ARIEL_MPICXX) mpilauncher.cc -o mpilauncher
@@ -10,4 +10,4 @@ reduce:
 	 $(ARIEL_MPICXX) reduce.cc -o reduce -I../api -L../api -larielapi -fopenmp
 
 clean-local:
-	rm -f mpilauncher fakepin hello reduce
+	rm -f mpilauncher fakepin
