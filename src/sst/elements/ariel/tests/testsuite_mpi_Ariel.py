@@ -233,9 +233,8 @@ class testcase_Ariel(SSTTestCase):
         # Build the test mpi programs
         cmd = "make"
         rtn1 = OSCommand(cmd, set_cwd=self.ArielElementTestMPIDir).run()
-        log_debug("Ariel tests/testMPI `make` result = {1}; output =\n{2}".format(ArielElementTestMPIDir, rtn1.result(), rtn1.output()))
+        log_debug("Ariel tests/testMPI `make` result = {1}; output =\n{2}".format(self.ArielElementTestMPIDir, rtn1.result(), rtn1.output()))
 
         # Check that everything compiled OK
-        self.assertTrue(rtn0.result() == 0, "libarielapi failed to compile")
         self.assertTrue(rtn1.result() == 0, "MPI test binaries failed to compile")
 
