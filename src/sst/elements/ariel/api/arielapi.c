@@ -17,9 +17,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
-#if __has_include(<mpi.h>)
+#if ENABLE_ARIEL_MPI
 #include <mpi.h>
-#define HAVE_MPI_H
 #endif
 
 /* These definitions are replaced during simulation */
@@ -63,7 +62,7 @@ void omp_parallel_region() {
         }
     }
 #else
-    printf("ERROR: libarielapi.c: libarielapi was compiled without OpenMP enabled\n");
+    printf("ERROR: arielapi.c: libarielapi was compiled without OpenMP enabled\n");
     exit(1);
 #endif
 }
@@ -78,14 +77,14 @@ int _api_mpi_init() {
 // Custom version of MPI_Init. We override the normal version in order to call an
 // OpenMP parallel region to ensure threads are numbered properly by the frontend.
 int MPI_Init(int *argc, char ***argv) {
-#ifdef HAVE_MPI_H
+#ifdef ENABLE_ARIEL_MPI
     // Communicate to the frontend that we have replaced the nomal MPI_Init with
     // the one in the Ariel API
     _api_mpi_init();
     omp_parallel_region();
     return PMPI_Init(argc, argv);
 #else
-    printf("Error: arielapi.c: MPI_Init called in arielapi.c but this file was compiled without MPI. Please recompile the API with `CC=mpicc make`.\n");
+    printf("Error: arielapi.c: MPI_Init called in arielapi.c but this file was compiled without MPI. Please recompile the API with `CC=mpicc make`12341234.\n");
     exit(1);
 #endif
 }
@@ -93,14 +92,14 @@ int MPI_Init(int *argc, char ***argv) {
 // Custom version of MPI_Init_thread. We override the normal verison in order to call an
 // OpenMP parallel region to ensure threads are numbered properly by the frontend.
 int MPI_Init_thread(int *argc, char ***argv, int required, int *provided) {
-#ifdef HAVE_MPI_H
+#ifdef ENABLE_ARIEL_MPI
     // Communicate to the frontend that we have replaced the nomal MPI_Init_thread with
     // the one in the Ariel API
     _api_mpi_init();
     omp_parallel_region();
     return PMPI_Init_thread(argc, argv, required, provided);
 #else
-    printf("Error: arielapi.c: MPI_Init_thread called in arielapi.c but this file was compiled without MPI. Please recompile the API with `CC=mpicc make`.\n");
+    printf("Error: arielapi.c: MPI_Init_thread called in arielapi.c but this file was compiled without MPI. Please recompile the API with `CC=mpicc make`123123.\n");
     exit(1);
 #endif
 }

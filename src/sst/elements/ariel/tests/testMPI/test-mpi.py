@@ -45,9 +45,7 @@ bus     = sst.Component("bus", "memHierarchy.Bus")
 #########################################################################
 ## Set component parameters and fill subcomponent slots
 #########################################################################
-# The test executable are located in a directory with all of the other
-# files that need to be compiled with MPI enabled
-exe = f'../../mpi/{args.program}'
+exe = f'./{args.program}'
 
 # 2.4GHz cores. One for each omp thread
 core.addParams({

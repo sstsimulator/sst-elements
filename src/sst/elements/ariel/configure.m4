@@ -16,9 +16,13 @@ AC_DEFUN([SST_ariel_CONFIG], [
 
   AC_SUBST([ARIEL_MPICC])
   AC_SUBST([ARIEL_MPICXX])
+  AC_SUBST([ARIEL_MPI_CFLAGS])
+  AC_SUBST([ARIEL_MPI_LIBS])
 
   AC_CONFIG_FILES([src/sst/elements/ariel/api/Makefile])
   AC_CONFIG_FILES([src/sst/elements/ariel/mpi/Makefile])
+  AC_CONFIG_FILES([src/sst/elements/ariel/tests/testMPI/Makefile])
+  AC_CONFIG_FILES([src/sst/elements/ariel/frontend/simple/examples/stream/Makefile])
 
   AS_IF([test "$sst_check_ariel" = "yes"], [$1], [$2])
 ])

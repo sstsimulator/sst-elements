@@ -205,7 +205,7 @@ class testcase_Ariel(SSTTestCase):
         # Build the testio binary
         cmd = "make testio"
         rtn1 = OSCommand(cmd, set_cwd=self.ArielElementTestIODir).run()
-        log_debug("Ariel ariel/tests/testIO make result = {1}; output =\n{2}".format(ArielElementTestIODir, rtn1.result(), rtn1.output()))
+        log_debug("Ariel ariel/tests/testIO make result = {1}; output =\n{2}".format(self.ArielElementTestIODir, rtn1.result(), rtn1.output()))
 
         # Check that everything compiled OK
         self.assertTrue(rtn0.result() == 0, "libarielapi failed to compile")

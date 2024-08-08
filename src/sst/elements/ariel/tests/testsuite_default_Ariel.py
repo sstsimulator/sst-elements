@@ -149,14 +149,14 @@ class testcase_Ariel(SSTTestCase):
         self.ArielElementompmybarrierDir = "{0}/testopenMP/ompmybarrier".format(test_path)
 
         # Build the Ariel API library
-        ArielApiDir = "{0}/api".format(self.ArielElementDir)
-        cmd = "make"
-        rtn0 = OSCommand(cmd, set_cwd=ArielApiDir).run()
-        log_debug("Ariel api/libarielapi.so Make result = {0}; output =\n{1}".format(rtn0.result(), rtn0.output()))
-        os.environ["ARIELAPI"] =  ArielApiDir
+        #ArielApiDir = "{0}/api".format(self.ArielElementDir)
+        #cmd = "make"
+        #rtn0 = OSCommand(cmd, set_cwd=ArielApiDir).run()
+        #log_debug("Ariel api/libarielapi.so Make result = {0}; output =\n{1}".format(rtn0.result(), rtn0.output()))
+        #os.environ["ARIELAPI"] =  ArielApiDir
 
         # Now build the Ariel stream example
-        cmd = "make all"
+        cmd = "make"
         rtn1 = OSCommand(cmd, set_cwd=self.ArielElementStreamDir).run()
         log_debug("Ariel frontend/simple/examples/Makefile Make result = {0}; output =\n{1}".format(rtn1.result(), rtn1.output()))
 
@@ -166,7 +166,7 @@ class testcase_Ariel(SSTTestCase):
         log_debug("Ariel ompmybarrier Make result = {0}; output =\n{1}".format(rtn2.result(), rtn2.output()))
         
         # Check that everything compiled OK
-        self.assertTrue(rtn0.result() == 0, "libarielapi failed to compile")
+        #self.assertTrue(rtn0.result() == 0, "libarielapi failed to compile")
         self.assertTrue(rtn1.result() == 0, "stream apps failed to compile")
         self.assertTrue(rtn2.result() == 0, "ompmybarrier.c failed to compile")
     
