@@ -10,38 +10,15 @@ USE_TAR_TRACES = False
 WITH_TIMINGDRAM = True
 NO_TIMINGDRAM = False
 
-################################################################################
-# Code to support a single instance module initialize, must be called setUp method
-
-module_init = 0
-module_sema = threading.Semaphore()
-
-def initializeTestModule_SingleInstance(class_inst):
-    global module_init
-    global module_sema
-
-    module_sema.acquire()
-    if module_init != 1:
-        try:
-            # Put your single instance Init Code Here
-            class_inst._setup_prospero_test_dirs()
-            class_inst._create_prospero_PIN_trace_files()
-            class_inst._download_prospero_TAR_trace_files()
-        except:
-            pass
-        module_init = 1
-    module_sema.release()
-
-################################################################################
-################################################################################
-################################################################################
 
 class testcase_prospero(SSTTestCase):
 
     def setUp(self):
         super(type(self), self).setUp()
-        initializeTestModule_SingleInstance(self)
         # Put test based setup code here. it is called once before every test
+        self._setup_prospero_test_dirs()
+        self._create_prospero_PIN_trace_files()
+        self._download_prospero_TAR_trace_files()
 
     def tearDown(self):
         # Put test based teardown code here. it is called once after every test
