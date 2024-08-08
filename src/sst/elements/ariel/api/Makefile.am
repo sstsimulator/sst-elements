@@ -1,10 +1,8 @@
 if SST_USE_ARIEL_MPI
 CFLAGS+=-fopenmp $(ARIEL_MPI_CFLAGS)
 CC_LOCAL = $(ARIEL_MPICC)
-#CXX_LOCAL = $(ARIEL_MPICXX)
 else
 CC_LOCAL = $(CC)
-#CXX_LOCAL = $(CXX)
 endif
 
 all-local: libarielapi.so libarielapi.a
