@@ -176,26 +176,41 @@ class testcase_Ariel(SSTTestCase):
         self.ArielElementStreamDir = "{0}/frontend/simple/examples/stream".format(self.ArielElementDir)
         self.ArielElementompmybarrierDir = "{0}/testopenMP/ompmybarrier".format(test_path)
 
-        # Build the Ariel API library
+        # Add the API directory to LD_LIBRARY_PATH
+        # It is set in the Makefile but we set it here as well
+        # to support out-of-source builds
         #ArielApiDir = "{0}/api".format(self.ArielElementDir)
-        #cmd = "make"
-        #rtn0 = OSCommand(cmd, set_cwd=ArielApiDir).run()
-        #log_debug("Ariel api/libarielapi.so Make result = {0}; output =\n{1}".format(rtn0.result(), rtn0.output()))
-        #os.environ["ARIELAPI"] =  ArielApiDir
+        ElementsBuildDir = sstsimulator_conf_get_value_str("SST_ELEMENT_LIBRARY", "SST_ELEMENT_LIBRARY_BUILDDIR")
+        ArielApiDir = "{0}/src/sst/elements/ariel/api".format(ElementsBuildDir)
+        current_ld_library_path = os.environ.get("LD_LIBRARY_PATH", "")
+
+        OSCommand("make", set_cwd=ArielApiDir).run()
+        OSCommand("cp {0}/libarielapi.so {1}/libarielapi.so".format(ArielApiDir,self.ArielElementStreamDir)).run()
+
+        if current_ld_library_path != "":
+            new_ld_library_path = f"{current_ld_library_path}:{ArielApiDir}"
+        else:
+            new_ld_library_path = ArielApiDir
+
+        os.environ["LD_LIBRARY_PATH"] = new_ld_library_path
 
         # Now build the Ariel stream example
         cmd = "make"
         rtn1 = OSCommand(cmd, set_cwd=self.ArielElementStreamDir).run()
-        log_debug("Ariel frontend/simple/examples/Makefile Make result = {0}; output =\n{1}".format(rtn1.result(), rtn1.output()))
+        log_debug("Ariel stream Make result = {0}; output =\n{1}".format(rtn1.result(), rtn1.output()))
+        if rtn1.result() != 0:
+            log_debug("Ariel {0} Make returned non-zero exit code. Error:\n{1}".format(self.ArielElementStreamDir, rtn1.error()))
+
 
         # Now build the ompmybarrier binary
         cmd = "make"
         rtn2 = OSCommand(cmd, set_cwd=self.ArielElementompmybarrierDir).run()
         log_debug("Ariel ompmybarrier Make result = {0}; output =\n{1}".format(rtn2.result(), rtn2.output()))
-        
+        if rtn2.result() != 0:
+            log_debug("Ariel {0} Make returned non-zero exit code. Error:\n{1}".format(self.ArielElementompmybarrierDir, rtn2.error()))
+
         # Check that everything compiled OK
         #self.assertTrue(rtn0.result() == 0, "libarielapi failed to compile")
-        self.assertTrue(rtn1.result() == 0, "stream apps failed to compile")
+        self.assertTrue(rtn1.result() == 0, "stream apps failed to compile.\nResult was {0}.\nStandard out was:\n{1}\nStandard err was:\n{2}".format(rtn1.result(), rtn1.output(), rtn1.error()))
         self.assertTrue(rtn2.result() == 0, "ompmybarrier.c failed to compile")
-    
 

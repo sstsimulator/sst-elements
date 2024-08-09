@@ -1,5 +1,4 @@
 SSTARIEL: Function profiling is disabled.
-SSTARIEL: Function profiling is disabled.
 Allocating arrays of size 2000 elements.
 Done allocating arrays.
 Perfoming the fast_c compute loop...
@@ -12,16 +11,16 @@ CORE ID: 0 PROCESSED AN EXIT EVENT
 Ariel Memory Management Statistics:
 ---------------------------------------------------------------------
 Page Table Sizes:
-- Map entries         964
+- Map entries         435
 Page Table Coverages:
-- Bytes               3948544
- a0.read_requests.0 : Accumulator : Sum.u64 = 3593749; SumSQ.u64 = 3593749; Count.u64 = 3593749; Min.u64 = 1; Max.u64 = 1; 
- a0.write_requests.0 : Accumulator : Sum.u64 = 1828914; SumSQ.u64 = 1828914; Count.u64 = 1828914; Min.u64 = 1; Max.u64 = 1; 
- a0.instruction_count.0 : Accumulator : Sum.u64 = 14027723; SumSQ.u64 = 14027723; Count.u64 = 14027723; Min.u64 = 1; Max.u64 = 1; 
- a0.cycles.0 : Accumulator : Sum.u64 = 83831179; SumSQ.u64 = 83831179; Count.u64 = 83831179; Min.u64 = 1; Max.u64 = 1; 
- l1cache.CacheHits : Accumulator : Sum.u64 = 5365821; SumSQ.u64 = 5365821; Count.u64 = 5365821; Min.u64 = 1; Max.u64 = 1; 
- l1cache.CacheMisses : Accumulator : Sum.u64 = 62888; SumSQ.u64 = 62888; Count.u64 = 62888; Min.u64 = 1; Max.u64 = 1; 
-Simulation is complete, simulated time: 83.8312 ms
+- Bytes               1781760
+ a0.read_requests.0 : Accumulator : Sum.u64 = 745139; SumSQ.u64 = 745139; Count.u64 = 745139; Min.u64 = 1; Max.u64 = 1; 
+ a0.write_requests.0 : Accumulator : Sum.u64 = 298976; SumSQ.u64 = 298976; Count.u64 = 298976; Min.u64 = 1; Max.u64 = 1; 
+ a0.instruction_count.0 : Accumulator : Sum.u64 = 3236674; SumSQ.u64 = 3236674; Count.u64 = 3236674; Min.u64 = 1; Max.u64 = 1; 
+ a0.cycles.0 : Accumulator : Sum.u64 = 32280634; SumSQ.u64 = 32280634; Count.u64 = 32280634; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.CacheHits : Accumulator : Sum.u64 = 1022715; SumSQ.u64 = 1022715; Count.u64 = 1022715; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.CacheMisses : Accumulator : Sum.u64 = 22152; SumSQ.u64 = 22152; Count.u64 = 22152; Min.u64 = 1; Max.u64 = 1; 
+Simulation is complete, simulated time: 32.2806 ms
 ARIEL-SST: Did not find ARIEL_OVERRIDE_POOL in the environment, no override applies.
 ARIEL-SST PIN tool activating with 1 threads
 ARIEL: Default memory pool set to 0
@@ -29,30 +28,5 @@ ARIEL: Tool is configured to begin with profiling immediately.
 ARIEL: Starting program.
 Identified routine: clock_gettime, replacing with Ariel equivalent...
 Replacement complete.
-Identified routine: clock_gettime, replacing with Ariel equivalent...
-Replacement complete.
-ARIEL-SST: Did not find ARIEL_OVERRIDE_POOL in the environment, no override applies.
-ARIEL-SST PIN tool activating with 1 threads
-ARIEL: Default memory pool set to 0
-ARIEL: Tool is configured to begin with profiling immediately.
-ARIEL: Starting program.
-Identified routine: clock_gettime, replacing with Ariel equivalent...
-Replacement complete.
-Identified routine: ariel_enable, replacing with Ariel equivalent...
-Replacement complete.
-Identified routine: ariel_disable, replacing with Ariel equivalent...
-Replacement complete.
-Identified routine: ariel_fence, replacing with Ariel equivalent..
-Replacement complete
-Identified routine: ariel_cycles, replacing with Ariel equivalent..
-Replacement complete
-Identified routine: ariel_output_stats, replacing with Ariel equivalent..
-Replacement complete
-Replacing api_mpi_init with mapped_api_mpi_init.
-Replacement complete
-Identified routine: MPI_Init. Instrumenting.
-Instrumentation complete
-Identified routine: MPI_Init_thread. Instrumenting.
-Instrumentation complete
 Identified routine: clock_gettime, replacing with Ariel equivalent...
 Replacement complete.

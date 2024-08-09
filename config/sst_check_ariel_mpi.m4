@@ -40,12 +40,10 @@ AC_DEFUN([SST_CHECK_ARIEL_MPI], [
   dnl will save them in new variables.
   ARIEL_MPICC=$MPICC
   ARIEL_MPICXX=$MPICXX
-  ARIEL_MPI_CFLAGS=$($MPICC -showme:compile)
-  ARIEL_MPI_LIBS=$($MPICC -showme:link)
-  dnl ARIEL_MPI_CFLAGS=$MPICC
-  dnl ARIEL_MPI_LIBS=$MPICXX
-  AC_MSG_NOTICE([-> Patrick <- ARIEL_MPI_CFLAGS is $ARIEL_MPI_CFLAGS])
-  AC_MSG_NOTICE([-> Patrick <- ARIEL_MPI_LIBS is $ARIEL_MPI_LIBS])
+  AS_IF([test "$sst_check_ariel_mpi_happy" = "yes"], [
+    ARIEL_MPI_CFLAGS=$($MPICC -showme:compile)
+    ARIEL_MPI_LIBS=$($MPICC -showme:link)
+    ])
 
   AS_IF([test "$sst_check_ariel_mpi_happy" = "yes"], [
     AC_DEFINE([ENABLE_ARIEL_MPI], [1], [Enable Ariel MPI features])

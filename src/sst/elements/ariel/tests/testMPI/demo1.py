@@ -39,7 +39,7 @@ core.addParams({
 
 if mpi_mode:
     core.addParams({
-        "mpilauncher": "./mpilauncher",
+        "mpimode" : 1,
         "mpiranks": mpiranks,
         "mpitracerank" : 0,
     })

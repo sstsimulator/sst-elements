@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
-#if ENABLE_ARIEL_MPI
+#ifdef ENABLE_ARIEL_MPI
 #include <mpi.h>
 #endif
 
@@ -84,7 +84,7 @@ int MPI_Init(int *argc, char ***argv) {
     omp_parallel_region();
     return PMPI_Init(argc, argv);
 #else
-    printf("Error: arielapi.c: MPI_Init called in arielapi.c but this file was compiled without MPI. Please recompile the API with `CC=mpicc make`12341234.\n");
+    printf("Error: arielapi.c: MPI_Init called in arielapi.c but this file was compiled without MPI.\n");
     exit(1);
 #endif
 }
