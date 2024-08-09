@@ -26,7 +26,7 @@ class testcase_Ariel(SSTTestCase):
 
     pin_loaded = testing_is_PIN_loaded()
 
-    pin_error_msg = "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist."
+    pin_error_msg = "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist."
 
     # This is not an exhausitve list of tests, but it covers most of the options.
 
@@ -205,7 +205,7 @@ class testcase_Ariel(SSTTestCase):
         # Build the testio binary
         cmd = "make testio"
         rtn1 = OSCommand(cmd, set_cwd=self.ArielElementTestIODir).run()
-        log_debug("Ariel ariel/tests/testIO make result = {1}; output =\n{2}".format(ArielElementTestIODir, rtn1.result(), rtn1.output()))
+        log_debug("Ariel ariel/tests/testIO make result = {1}; output =\n{2}".format(self.ArielElementTestIODir, rtn1.result(), rtn1.output()))
 
         # Check that everything compiled OK
         self.assertTrue(rtn0.result() == 0, "libarielapi failed to compile")

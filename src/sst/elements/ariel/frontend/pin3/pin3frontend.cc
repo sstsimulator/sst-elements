@@ -123,22 +123,88 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
     output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name3.c_str());
 #endif
 
+    // MPI Launcher options
+    mpimode = params.find<int>("mpimode", 0);
+    if (mpimode) {
+        mpilauncher = params.find<std::string>("mpilauncher",  ARIEL_STRINGIZE(MPILAUNCHER_EXECUTABLE));
+        mpiranks = params.find<int>("mpiranks", 1);
+        mpitracerank = params.find<int>("mpitracerank", 0);
+    }
+
+    // MPI Launcher error checking
+    if (mpimode == 1) {
+        if (mpilauncher.compare("") == 0) {
+            output->fatal(CALL_INFO, -1, "mpimode=1 was specified but parameter `mpilauncher` is an empty string");
+        }
+        if (redirect_info.stdin_file.compare("") != 0 || redirect_info.stdout_file.compare("") != 0 || redirect_info.stderr_file.compare("") != 0)  {
+            output->fatal(CALL_INFO, -1, "Using an MPI launcher and redirected I/O is not supported.\n");
+        }
+#ifdef HAVE_CUDA
+        output->fatal(CALL_INFO, -1, "Using an MPI launcher and CUDA is not supported.\n");
+#endif
+        if (mpiranks < 1) {
+            output->fatal(CALL_INFO, -1, "You must specify a positive number for `mpiranks` when using an MPI launhcer. Got %d.\n", mpiranks);
+        }
+        if (mpitracerank < 0 || mpitracerank >= mpiranks) {
+            output->fatal(CALL_INFO, -1, "The value of `mpitracerank` must be in [0,mpiranks) Got %d.\n", mpitracerank);
+        }
+
+    }
+
+    if (mpimode == 1) {
+        output->verbose(CALL_INFO, 1, 0, "Ariel-MPI: MPI launcher: %s\n", mpilauncher.c_str());
+        output->verbose(CALL_INFO, 1, 0, "Ariel-MPI: MPI ranks: %d\n", mpiranks);
+        output->verbose(CALL_INFO, 1, 0, "Ariel-MPI: MPI trace rank: %d\n", mpitracerank);
+    }
+
+
     appLauncher = params.find<std::string>("launcher", PINTOOL_EXECUTABLE);
 
     const uint32_t launch_param_count = (uint32_t) params.find<uint32_t>("launchparamcount", 0);
     const uint32_t pin_arg_count = 37 + launch_param_count;
 
-    execute_args = (char**) malloc(sizeof(char*) * (pin_arg_count + app_argc));
+    uint32_t mpi_args = 0;
+    if (mpimode == 1) {
+        // We need one argument for the launcher, one for the number of ranks,
+        // and one for the rank to trace
+        mpi_args = 3;
+    }
+
+    execute_args = (char**) malloc(sizeof(char*) * (mpi_args + pin_arg_count + app_argc));
+    uint32_t arg = 0; // Track current arg
+
+    if (mpimode == 1) {
+        // Prepend mpilauncher to execute_args
+        output->verbose(CALL_INFO, 1, 0, "Processing mpilauncher arguments...\n");
+        std::string mpiranks_str = std::to_string(mpiranks);
+        std::string mpitracerank_str = std::to_string(mpitracerank);
+
+        size_t mpilauncher_size = sizeof(char) * (mpilauncher.size() + 2);
+        execute_args[arg] = (char*) malloc(mpilauncher_size);
+        snprintf(execute_args[arg], mpilauncher_size, "%s", mpilauncher.c_str());
+        arg++;
+
+        size_t mpiranks_str_size = sizeof(char) * (mpiranks_str.size() + 2);
+        execute_args[arg] = (char*) malloc(mpiranks_str_size);
+        snprintf(execute_args[arg], mpiranks_str_size, "%s", mpiranks_str.c_str());
+        arg++;
+
+        size_t mpitracerank_str_size = sizeof(char) * (mpitracerank_str.size() + 2);
+        execute_args[arg] = (char*) malloc(mpitracerank_str_size);
+        snprintf(execute_args[arg], mpitracerank_str_size, "%s", mpitracerank_str.c_str());
+        arg++;
+    }
 
     const uint32_t profileFunctions = (uint32_t) params.find<uint32_t>("profilefunctions", 0);
 
     output->verbose(CALL_INFO, 1, 0, "Processing application arguments...\n");
 
-    uint32_t arg = 0;
     size_t execute_args_size = sizeof(char) * (appLauncher.size() + 2);
-    execute_args[0] = (char*) malloc(execute_args_size);
-    snprintf(execute_args[0], execute_args_size, "%s", appLauncher.c_str());
+    execute_args[arg] = (char*) malloc(execute_args_size);
+    snprintf(execute_args[arg], execute_args_size, "%s", appLauncher.c_str());
     arg++;
+
+
 
 #if 0
     execute_args[arg++] = const_cast<char*>("-pause_tool");
@@ -282,7 +348,12 @@ void Pin3Frontend::init(unsigned int phase)
         // Init the child_pid = 0, this prevents problems in emergencyShutdown()
         // if forkPINChild() calls fatal (i.e. the child_pid would not be set)
         child_pid = 0;
-        child_pid = forkPINChild(appLauncher.c_str(), execute_args, execute_env, redirect_info);
+        if (mpimode == 1) {
+            // Ariel will fork the MPI launcher which will itself fork pin
+            child_pid = forkPINChild(mpilauncher.c_str(), execute_args, execute_env, redirect_info);
+        } else {
+            child_pid = forkPINChild(appLauncher.c_str(), execute_args, execute_env, redirect_info);
+        }
         output->verbose(CALL_INFO, 1, 0, "Returned from launching PIN.  Waiting for child to attach.\n");
 
         tunnel->waitForChild();
@@ -295,7 +366,7 @@ void Pin3Frontend::finish() {
     // may still be executing. It will become a zombie if we do not
     // kill it.
     if (child_pid != 0) {
-        kill(child_pid, SIGKILL);
+        kill(child_pid, SIGTERM);
     }
 }
 

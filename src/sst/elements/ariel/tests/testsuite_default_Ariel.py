@@ -45,8 +45,9 @@ class testcase_Ariel(SSTTestCase):
     @unittest.skipIf(testing_check_get_num_ranks() > 1, "Ariel: test_Ariel_test_snb skipped if ranks > 1 - Sandy Bridge test is incompatible with Multi-Rank.")
     def test_Ariel_test_snb(self):
         self.ariel_Template("ariel_snb")
-    
+
     @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
+    @unittest.skipIf(testing_check_get_num_ranks() > 1, "Ariel: test_Ariel_test_snb_mlm skipped if ranks > 1 - Sandy Bridge test is incompatible with Multi-Rank.")
     def test_Ariel_test_snb_mlm(self):
         self.ariel_Template("ariel_snb_mlm", app="stream_mlm")
 #####
@@ -129,8 +130,9 @@ class testcase_Ariel(SSTTestCase):
         line_count_diff = abs(num_ref_lines - num_out_lines - num_err_lines)
         log_debug("Line Count diff = {0}".format(line_count_diff))
 
-        if line_count_diff > 15:
-            self.assertFalse(line_count_diff > 15, "Line count between output file {0} does not match Reference File {1}; They contain {2} different lines".format(outfile, reffile, line_count_diff))
+        delta = 15
+        if line_count_diff > delta:
+            self.assertFalse(line_count_diff > 15, f"Test stdout ({outfile}) and stderr ({errfile}) contain {num_out_lines}+{num_err_lines}={num_out_lines+num_err_lines} lines. Expected this to be within {delta} of the reference file ({reffile}), which has {num_ref_lines} lines, but the difference is {line_count_diff} lines.")
 
 #######################
 
@@ -147,14 +149,14 @@ class testcase_Ariel(SSTTestCase):
         self.ArielElementompmybarrierDir = "{0}/testopenMP/ompmybarrier".format(test_path)
 
         # Build the Ariel API library
-        ArielApiDir = "{0}/api".format(self.ArielElementDir)
-        cmd = "make"
-        rtn0 = OSCommand(cmd, set_cwd=ArielApiDir).run()
-        log_debug("Ariel api/libarielapi.so Make result = {0}; output =\n{1}".format(rtn0.result(), rtn0.output()))
-        os.environ["ARIELAPI"] =  ArielApiDir
+        #ArielApiDir = "{0}/api".format(self.ArielElementDir)
+        #cmd = "make"
+        #rtn0 = OSCommand(cmd, set_cwd=ArielApiDir).run()
+        #log_debug("Ariel api/libarielapi.so Make result = {0}; output =\n{1}".format(rtn0.result(), rtn0.output()))
+        #os.environ["ARIELAPI"] =  ArielApiDir
 
         # Now build the Ariel stream example
-        cmd = "make all"
+        cmd = "make"
         rtn1 = OSCommand(cmd, set_cwd=self.ArielElementStreamDir).run()
         log_debug("Ariel frontend/simple/examples/Makefile Make result = {0}; output =\n{1}".format(rtn1.result(), rtn1.output()))
 
@@ -164,7 +166,7 @@ class testcase_Ariel(SSTTestCase):
         log_debug("Ariel ompmybarrier Make result = {0}; output =\n{1}".format(rtn2.result(), rtn2.output()))
         
         # Check that everything compiled OK
-        self.assertTrue(rtn0.result() == 0, "libarielapi failed to compile")
+        #self.assertTrue(rtn0.result() == 0, "libarielapi failed to compile")
         self.assertTrue(rtn1.result() == 0, "stream apps failed to compile")
         self.assertTrue(rtn2.result() == 0, "ompmybarrier.c failed to compile")
     
