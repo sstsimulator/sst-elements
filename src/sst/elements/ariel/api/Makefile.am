@@ -1,20 +1,21 @@
 if SST_USE_ARIEL_MPI
-CFLAGS+=-fopenmp $(ARIEL_MPI_CFLAGS)
 CC_LOCAL = $(ARIEL_MPICC)
+CFLAGS_LOCAL = -fopenmp $(ARIEL_MPI_CFLAGS)
 else
 CC_LOCAL = $(CC)
+CFLAGS_LOCAL =
 endif
 
 all-local: libarielapi.so libarielapi.a
 
 libarielapi.so: arielapi.c arielapi.h
-	$(CC_LOCAL) -DENABLE_ARIEL_MPI $(AM_CFLAGS) $(ARIEL_MPI_CFLAGS) -fPIC -shared -o libarielapi.so arielapi.c -fopenmp
+	$(CC_LOCAL) $(CFLAGS_LOCAL) -fPIC -shared -o libarielapi.so arielapi.c
 
 arielapi.o: arielapi.c arielapi.h
-	$(CC_LOCAL) -DENABLE_ARIEL_MPI $(AM_CFLAGS) $(ARIEL_MPI_CFLAGS) -c -o arielapi.o arielapi.c -fopenmp
+	$(CC_LOCAL) $(CFLAGS_LOCAL) -c -o arielapi.o arielapi.c
 
 libarielapi.a: arielapi.o
 	ar rcs $@ $^
 
 clean-local:
-	rm arielapi.o libarielapi.a libarielapi.so
+	rm -f arielapi.o libarielapi.a libarielapi.so
