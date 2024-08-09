@@ -57,7 +57,6 @@ libariel_la_SOURCES = \
 EXTRA_DIST = \
 	api/arielapi.c \
 	api/arielapi.h \
-	api/Makefile \
 	frontend/pin3/fesimple.cc \
 	frontend/simple/fesimple.cc \
 	frontend/simple/examples/multicore.py \
@@ -83,7 +82,8 @@ EXTRA_DIST = \
 	tests/testsuite_testio_Ariel.py \
 	tests/testsuite_mpi_Ariel.py \
 	tests/testopenMP/ompmybarrier/ompmybarrier.c \
-	tests/testopenMP/ompmybarrier/Makefile
+	tests/testopenMP/ompmybarrier/Makefile \
+	tests/testMPI/Makefile
 
 libariel_la_LDFLAGS = -module -avoid-version
 libariel_la_LIBADD = $(SHM_LIB)

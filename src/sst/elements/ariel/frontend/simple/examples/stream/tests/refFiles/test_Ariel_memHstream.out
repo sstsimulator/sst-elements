@@ -1,5 +1,4 @@
 SSTARIEL: Function profiling is disabled.
-SSTARIEL: Function profiling is disabled.
 Allocating arrays of size 2000 elements.
 Done allocating arrays.
 Perfoming the fast_c compute loop...
@@ -24,10 +23,10 @@ CORE ID: 0 PROCESSED AN EXIT EVENT
 Ariel Memory Management Statistics:
 ---------------------------------------------------------------------
 Page Table Sizes:
-- Map entries         964
+- Map entries         316
 Page Table Coverages:
-- Bytes               3948544
-Simulation is complete, simulated time: 30.2185 ms
+- Bytes               1294336
+Simulation is complete, simulated time: 7.21297 ms
 ARIEL-SST: Did not find ARIEL_OVERRIDE_POOL in the environment, no override applies.
 ARIEL-SST PIN tool activating with 8 threads
 ARIEL: Default memory pool set to 0
@@ -35,33 +34,6 @@ ARIEL: Tool is configured to begin with profiling immediately.
 ARIEL: Starting program.
 Identified routine: clock_gettime, replacing with Ariel equivalent...
 Replacement complete.
-Identified routine: malloc/_malloc, replacing with Ariel equivalent...
-Identified routine: free/_free, replacing with Ariel equivalent...
-Identified routine: clock_gettime, replacing with Ariel equivalent...
-Replacement complete.
-ARIEL-SST: Did not find ARIEL_OVERRIDE_POOL in the environment, no override applies.
-ARIEL-SST PIN tool activating with 8 threads
-ARIEL: Default memory pool set to 0
-ARIEL: Tool is configured to begin with profiling immediately.
-ARIEL: Starting program.
-Identified routine: clock_gettime, replacing with Ariel equivalent...
-Replacement complete.
-Identified routine: ariel_enable, replacing with Ariel equivalent...
-Replacement complete.
-Identified routine: ariel_disable, replacing with Ariel equivalent...
-Replacement complete.
-Identified routine: ariel_fence, replacing with Ariel equivalent..
-Replacement complete
-Identified routine: ariel_cycles, replacing with Ariel equivalent..
-Replacement complete
-Identified routine: ariel_output_stats, replacing with Ariel equivalent..
-Replacement complete
-Replacing api_mpi_init with mapped_api_mpi_init.
-Replacement complete
-Identified routine: MPI_Init. Instrumenting.
-Instrumentation complete
-Identified routine: MPI_Init_thread. Instrumenting.
-Instrumentation complete
 Identified routine: malloc/_malloc, replacing with Ariel equivalent...
 Identified routine: free/_free, replacing with Ariel equivalent...
 Identified routine: clock_gettime, replacing with Ariel equivalent...
