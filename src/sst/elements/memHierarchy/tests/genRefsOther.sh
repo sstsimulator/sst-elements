@@ -17,7 +17,11 @@ sst ../../miranda/tests/inorderstream.py > ../../miranda/tests/refFiles/test_mir
 sst ../../miranda/tests/randomgen.py > ../../miranda/tests/refFiles/test_miranda_randomgen.out &
 sst ../../miranda/tests/revsinglestream.py > ../../miranda/tests/refFiles/test_miranda_revsinglestream.out &
 sst ../../miranda/tests/singlestream.py > ../../miranda/tests/refFiles/test_miranda_singlestream.out &
-sst ../../miranda/tests/spatterbench.py -- -pUNIFORM:8:1 -l$((2**16)) > ../../miranda/tests/refFiles/test_miranda_spatterbench.out &
+sst ../../miranda/tests/spatterbench.py -- -pUNIFORM:8:1 -kgather -l$((2**16)) > ../../miranda/tests/refFiles/test_miranda_spatterbench_gather.out &
+sst ../../miranda/tests/spatterbench.py -- -pUNIFORM:8:1 -kscatter -l$((2**16)) > ../../miranda/tests/refFiles/test_miranda_spatterbench_scatter.out &
+sst ../../miranda/tests/spatterbench.py -- -gUNIFORM:8:1 -uUNIFORM:8:1 -ksg -l$((2**16)) > ../../miranda/tests/refFiles/test_miranda_spatterbench_sg.out &
+sst ../../miranda/tests/spatterbench.py -- -pUNIFORM:8:1 -uUNIFORM:8:1 -kmultiscatter -l$((2**16)) > ../../miranda/tests/refFiles/test_miranda_spatterbench_multiscatter.out &
+sst ../../miranda/tests/spatterbench.py -- -pUNIFORM:8:1 -gUNIFORM:8:1 -kmultigather -l$((2**16)) > ../../miranda/tests/refFiles/test_miranda_spatterbench_multigather.out &
 sst ../../miranda/tests/stencil3dbench.py > ../../miranda/tests/refFiles/test_miranda_stencil3dbench.out &
 wait
 
