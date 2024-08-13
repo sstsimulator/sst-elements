@@ -49,8 +49,11 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
         { "verbose",             "Sets the verbosity of the output", "0" },
         { "args",                "Sets the arguments to describe Spatter pattern(s)", "" },
+        { "datawidth",           "Sets the width of the memory operation", "8" },
+        { "start_source",        "Sets the start address of the source array", "0" },
+        { "start_target",        "Sets the start address of the target array", "0" },
         { "warmup_runs",         "Sets the number of warm-up runs", "10" },
-        { "only_warmup_first",   "Only warm-up before first config", "0" },
+        { "only_warmup_first",   "Only the first config will use warm-up runs", "0" }
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -75,15 +78,19 @@ private:
     void multiGather();
     void multiScatter();
 
+    uint32_t datawidth;
+    uint32_t startSource;
+    uint32_t startTarget;
     uint32_t warmupRuns;
-    uint32_t reqLength;
-    size_t configIdx;
-    size_t countIdx;
+
     size_t patternIdx;
+    size_t countIdx;
     size_t warmupIdx;
-    bool configFin;
-    bool warmupFin;
+    size_t configIdx;
+
     bool warmupAll;
+    bool warmupFin;
+    bool configFin;
 
     Statistic<uint64_t>* statReadBytes;
     Statistic<uint64_t>* statWriteBytes;
@@ -91,9 +98,10 @@ private:
     Statistic<uint64_t>* statCycles;
 
     MirandaRequestQueue<GeneratorRequest*>* queue;
+
     Output* out;
 
-    Spatter::ClArgs configList;
+    Spatter::ClArgs cl;
 };
 
 }

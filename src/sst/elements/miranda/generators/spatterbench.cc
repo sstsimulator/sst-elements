@@ -32,24 +32,22 @@ void SpatterBenchGenerator::build(Params& params)
     const std::string args = "./Spatter " + params.find<std::string>("args", "");
 
     char **argv = nullptr;
-    int argc    = 0;
-    int res     = 0;
+    int argc = 0;
+    int res  = 0;
 
     out = new Output("SpatterBenchGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
 
+    datawidth  = params.find<uint32_t>("datawidth", 8);
     warmupRuns = params.find<uint32_t>("warmup_runs", 10);
-    reqLength  = sizeof(size_t);
-    configIdx  = 0;
-    countIdx   = 0;
-    patternIdx = 0;
-    warmupIdx  = 0;
-    configFin  = false;
-    warmupFin  = (0 == warmupRuns);
-    warmupAll  = !params.find<bool>("only_warmup_first", false);
 
-    if (0 > warmupRuns) {
-        out->fatal(CALL_INFO, -1, "Value for warmup_runs must be greater than or equal to zero\n");
-    }
+    patternIdx = 0;
+    countIdx   = 0;
+    warmupIdx  = 0;
+    configIdx  = 0;
+
+    warmupAll = !params.find<bool>("only_warmup_first", false);
+    warmupFin = (0 == warmupRuns);
+    configFin = false;
 
     statReadBytes  = registerStatistic<uint64_t>( "total_bytes_read" );
     statWriteBytes = registerStatistic<uint64_t>( "total_bytes_write" );
@@ -60,7 +58,7 @@ void SpatterBenchGenerator::build(Params& params)
     countArgs(args, argc);
     tokenizeArgs(args, argc, &argv);
 
-    res = Spatter::parse_input(argc, argv, configList);
+    res = Spatter::parse_input(argc, argv, cl);
 
 
     // The allocated memory is no longer needed.
@@ -71,14 +69,31 @@ void SpatterBenchGenerator::build(Params& params)
 
 
     if (0 != res) {
-        out->fatal(CALL_INFO, -1, "Failed to parse provided arguments\n");
-    } else {
-        // Output the specified arguments for each run-configuration.
-        std::ostringstream oss;
-        oss << configList;
-        out->output("\n%s", oss.str().c_str());
+        out->fatal(CALL_INFO, -1, "Error: failed to parse provided arguments.\n");
     }
 
+    startSource = params.find<uint32_t>("start_source", 0);
+    startTarget = params.find<uint32_t>("start_target", std::max(cl.sparse_size, cl.sparse_gather_size));
+
+    if (startTarget > startSource) {
+        if (startTarget <= (startSource + std::max(cl.sparse_size, cl.sparse_gather_size) - 1)) {
+            out->verbose(CALL_INFO, 0, 0, "Warning: source and target arrays will overlap.\n");
+        }
+    } else if (startSource < startTarget){
+        if (startSource <= (startTarget + std::max(cl.dense_size, cl.sparse_scatter_size) - 1)) {
+            out->verbose(CALL_INFO, 0, 0, "Warning: source and target arrays will overlap.\n");
+        }
+    } else {
+        out->verbose(CALL_INFO, 0, 0, "Warning: source and target arrays will overlap.\n");
+    }
+
+
+    // Output the specified arguments for each run-configuration.
+    std::ostringstream oss;
+    oss << cl;
+    out->output("\n%s", oss.str().c_str());
+
+    // Output the header for the Spatter statistics.
     out->output("\n%-15s", "config");
     out->output("%-15s",   "bytes");
     out->output("%-15s",   "time(s)");
@@ -95,7 +110,7 @@ SpatterBenchGenerator::~SpatterBenchGenerator()
 void SpatterBenchGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q)
 {
     if (!configFin) {
-        const Spatter::ConfigurationBase *config = configList.configs[configIdx].get();
+        const Spatter::ConfigurationBase *config = cl.configs[configIdx].get();
         queue = q;
 
         if (0 == config->kernel.compare("gather")) {
@@ -109,7 +124,7 @@ void SpatterBenchGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q)
         } else if (0 == config->kernel.compare("multiscatter")) {
             multiScatter();
         } else {
-            out->fatal(CALL_INFO, -1, "Invalid kernel: %s\n", config->kernel.c_str());
+            out->fatal(CALL_INFO, -1, "Error: invalid kernel.\n");
         }
 
         updateIndices();
@@ -119,8 +134,8 @@ void SpatterBenchGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q)
 bool SpatterBenchGenerator::isFinished()
 {
     if (configFin && warmupFin) {
-        const Spatter::ConfigurationBase *prevConfig = configList.configs[configIdx-1].get();
-        uint64_t expectedBytes = getPatternSize(prevConfig) * prevConfig->count * reqLength;
+        const Spatter::ConfigurationBase *prevConfig = cl.configs[configIdx-1].get();
+        uint64_t expectedBytes = getPatternSize(prevConfig) * prevConfig->count * datawidth;
         uint64_t recordedBytes = calcBytes(prevConfig);
 
         if (0 == prevConfig->kernel.compare("sg")) {
@@ -158,7 +173,7 @@ bool SpatterBenchGenerator::isFinished()
         }
     }
 
-    return (configIdx == configList.configs.size());
+    return (configIdx == cl.configs.size());
 }
 
 void SpatterBenchGenerator::completed()
@@ -222,11 +237,11 @@ uint64_t SpatterBenchGenerator::calcBytes(const Spatter::ConfigurationBase *conf
     uint64_t numBytes = 0;
 
     if ((0 == config->kernel.compare("gather")) || (0 == config->kernel.compare("multigather"))) {
-        numBytes = statReadBytes->getCollectionCount() * reqLength;
+        numBytes = statReadBytes->getCollectionCount() * datawidth;
     } else if ((0 == config->kernel.compare("scatter")) || (0 == config->kernel.compare("multiscatter"))) {
-        numBytes = statWriteBytes->getCollectionCount() * reqLength;
+        numBytes = statWriteBytes->getCollectionCount() * datawidth;
     } else if (0 == config->kernel.compare("sg")) {
-        numBytes = (statWriteBytes->getCollectionCount() + statReadBytes->getCollectionCount()) * reqLength;
+        numBytes = (statWriteBytes->getCollectionCount() + statReadBytes->getCollectionCount()) * datawidth;
     }
 
     return numBytes;
@@ -262,7 +277,7 @@ size_t SpatterBenchGenerator::getPatternSize(const Spatter::ConfigurationBase *c
    */
 void SpatterBenchGenerator::updateIndices()
 {
-    const Spatter::ConfigurationBase *config = configList.configs[configIdx].get();
+    const Spatter::ConfigurationBase *config = cl.configs[configIdx].get();
     size_t patternSize = getPatternSize(config);
 
     if (patternIdx == (patternSize - 1)) {
@@ -296,7 +311,7 @@ void SpatterBenchGenerator::updateIndices()
    */
 void SpatterBenchGenerator::outputStats()
 {
-    const Spatter::ConfigurationBase *config = configList.configs[configIdx-1].get();
+    const Spatter::ConfigurationBase *config = cl.configs[configIdx-1].get();
     uint64_t statBytes = calcBytes(config);
 
     double latencySeconds;
@@ -325,14 +340,13 @@ void SpatterBenchGenerator::outputStats()
    */
 void SpatterBenchGenerator::gather()
 {
-    const Spatter::ConfigurationBase *config = configList.configs[configIdx].get();
+    const Spatter::ConfigurationBase *config = cl.configs[configIdx].get();
 
-    // The source buffer (sparse) ranges from 0 to (sparse.size() - 1).
-    uint64_t startSrc  = 0;
-    uint64_t srcOffset = config->pattern[patternIdx] + config->delta * countIdx;
+    uint64_t sourceOffset = config->pattern[patternIdx] + config->delta * countIdx;
+    uint64_t sourceAddr = startSource + sourceOffset;
 
-    out->verbose(CALL_INFO, 8, 0, "Issuing READ request for address %" PRIu64 "\n", startSrc + srcOffset);
-    queue->push_back(new MemoryOpRequest((startSrc + srcOffset), reqLength, READ));
+    out->verbose(CALL_INFO, 8, 0, "Issuing READ request for address %" PRIu64 "\n", sourceAddr);
+    queue->push_back(new MemoryOpRequest(sourceAddr, datawidth, READ));
 }
 
 /**
@@ -341,14 +355,13 @@ void SpatterBenchGenerator::gather()
    */
 void SpatterBenchGenerator::scatter()
 {
-    const Spatter::ConfigurationBase *config = configList.configs[configIdx].get();
+    const Spatter::ConfigurationBase *config = cl.configs[configIdx].get();
 
-    // The destination (sparse) buffer ranges from sparse.size() to (dense.size() - 1).
-    uint64_t startDst  = config->sparse.size();
-    uint64_t dstOffset = config->pattern[patternIdx] + config->delta * countIdx;
+    uint64_t targetOffset = config->pattern[patternIdx] + config->delta * countIdx;
+    uint64_t targetAddr = startTarget + targetOffset;
 
-    out->verbose(CALL_INFO, 8, 0, "Issuing WRITE request for address %" PRIu64 "\n", startDst + dstOffset);
-    queue->push_back(new MemoryOpRequest(startDst + dstOffset, reqLength, WRITE));
+    out->verbose(CALL_INFO, 8, 0, "Issuing WRITE request for address %" PRIu64 "\n", targetAddr);
+    queue->push_back(new MemoryOpRequest(targetAddr, datawidth, WRITE));
 }
 
 /**
@@ -357,25 +370,23 @@ void SpatterBenchGenerator::scatter()
    */
 void SpatterBenchGenerator::scatterGather()
 {
-    const Spatter::ConfigurationBase *config = configList.configs[configIdx].get();
+    const Spatter::ConfigurationBase *config = cl.configs[configIdx].get();
 
-    // The source (sparse_gather) buffer ranges from 0 to (sparse_gather.size() - 1).
-    uint64_t startSrc  = 0;
-    uint64_t srcOffset = config->pattern_gather[patternIdx] + config->delta_gather * countIdx;
+    uint64_t sourceOffset = config->pattern_gather[patternIdx] + config->delta_gather * countIdx;
+    uint64_t sourceAddr = startSource + sourceOffset;
 
-    // The destination (sparse_scatter) buffer ranges from sparse_gather.size() to (sparse_scatter.size() - 1).
-    uint64_t startDst  = config->sparse_gather.size();
-    uint64_t dstOffset = config->pattern_scatter[patternIdx] + config->delta_scatter * countIdx;
+    uint64_t targetOffset = config->pattern_scatter[patternIdx] + config->delta_scatter * countIdx;
+    uint64_t targetAddr = startTarget + targetOffset;
 
-    MemoryOpRequest* readReq  = new MemoryOpRequest(startSrc + srcOffset, reqLength, READ);
-    MemoryOpRequest* writeReq = new MemoryOpRequest(startDst + dstOffset, reqLength, WRITE);
+    MemoryOpRequest* readReq  = new MemoryOpRequest(sourceAddr, datawidth, READ);
+    MemoryOpRequest* writeReq = new MemoryOpRequest(targetAddr, datawidth, WRITE);
 
     writeReq->addDependency(readReq->getRequestID());
 
-    out->verbose(CALL_INFO, 8, 0, "Issuing READ request for address %" PRIu64 "\n", startSrc + srcOffset);
+    out->verbose(CALL_INFO, 8, 0, "Issuing READ request for address %" PRIu64 "\n", sourceAddr);
     queue->push_back(readReq);
 
-    out->verbose(CALL_INFO, 8, 0, "Issuing WRITE request for address %" PRIu64 "\n", startDst + dstOffset);
+    out->verbose(CALL_INFO, 8, 0, "Issuing WRITE request for address %" PRIu64 "\n", targetAddr);
     queue->push_back(writeReq);
 }
 
@@ -385,14 +396,13 @@ void SpatterBenchGenerator::scatterGather()
    */
 void SpatterBenchGenerator::multiGather()
 {
-    const Spatter::ConfigurationBase *config = configList.configs[configIdx].get();
+    const Spatter::ConfigurationBase *config = cl.configs[configIdx].get();
 
-    // The source (sparse) buffer ranges from 0 to (sparse.size() - 1).
-    uint64_t startSrc  = 0;
-    uint64_t srcOffset = config->pattern[config->pattern_gather[patternIdx]] + config->delta * countIdx;
+    uint64_t sourceOffset = config->pattern[config->pattern_gather[patternIdx]] + config->delta * countIdx;
+    uint64_t sourceAddr = startSource + sourceOffset;
 
-    out->verbose(CALL_INFO, 8, 0, "Issuing READ request for address %" PRIu64 "\n", startSrc + srcOffset);
-    queue->push_back(new MemoryOpRequest(startSrc + srcOffset, reqLength, READ));
+    out->verbose(CALL_INFO, 8, 0, "Issuing READ request for address %" PRIu64 "\n", sourceAddr);
+    queue->push_back(new MemoryOpRequest(sourceAddr, datawidth, READ));
 }
 
 /**
@@ -401,12 +411,11 @@ void SpatterBenchGenerator::multiGather()
    */
 void SpatterBenchGenerator::multiScatter()
 {
-    const Spatter::ConfigurationBase *config = configList.configs[configIdx].get();
+    const Spatter::ConfigurationBase *config = cl.configs[configIdx].get();
 
-    // The destination (sparse) buffer ranges from dense.size() to (sparse.size() - 1).
-    uint64_t startDst  = config->dense.size();
-    uint64_t dstOffset = config->pattern[config->pattern_scatter[patternIdx]] + config->delta * countIdx;
+    uint64_t targetOffset = config->pattern[config->pattern_scatter[patternIdx]] + config->delta * countIdx;
+    uint64_t targetAddr = startTarget + targetOffset;
 
-    out->verbose(CALL_INFO, 8, 0, "Issuing WRITE request for address %" PRIu64 "\n", startDst + dstOffset);
-    queue->push_back(new MemoryOpRequest(startDst + dstOffset, reqLength, WRITE));
+    out->verbose(CALL_INFO, 8, 0, "Issuing WRITE request for address %" PRIu64 "\n", targetAddr);
+    queue->push_back(new MemoryOpRequest(targetAddr, datawidth, WRITE));
 }
