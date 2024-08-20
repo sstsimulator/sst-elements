@@ -12,6 +12,7 @@ comp_LTLIBRARIES = libbalar.la
 
 libbalar_la_SOURCES = \
 	balar_event.h \
+	balar_packet.h \
 	cuda_runtime_api.h \
 	util.cc \
 	util.h \
@@ -39,6 +40,11 @@ EXTRA_DIST = \
 	tests/vanadisHandshake/cuda_runtime_api.c \
 	tests/vanadisHandshake/cuda_runtime_api.h \
 	tests/vanadisHandshake/Makefile \
+	tests/vanadisLLVMRISCV/balar_vanadis.h \
+	tests/vanadisLLVMRISCV/cuda_runtime_api_vanadis.cc \
+	tests/vanadisLLVMRISCV/helloworld.c \
+	tests/vanadisLLVMRISCV/vecadd.cu \
+	tests/vanadisLLVMRISCV/Makefile \
 	tests/refFiles/test_gpgpu_vectorAdd.out
 
 libbalar_la_LDFLAGS = \
