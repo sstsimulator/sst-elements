@@ -23,7 +23,7 @@ all: helloworld vecadd
 
 test_llvm_env:
 ifeq ($(LLVM_INSTALL_PATH),)
-	$(error env CLANG_INSTALL_PATH is not set)
+	$(error env LLVM_INSTALL_PATH is not set)
 endif
 
 test_vanadis_envs:

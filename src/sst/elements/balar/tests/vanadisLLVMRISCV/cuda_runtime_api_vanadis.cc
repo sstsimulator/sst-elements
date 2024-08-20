@@ -21,6 +21,7 @@
 #define BALAR_CUDA_VERSION "11.0"
 #endif
 static const char *version = BALAR_CUDA_VERSION;
+static cudaError_t g_last_error;
 
 extern "C" {
     #include <unistd.h>
@@ -60,6 +61,8 @@ cudaError_t cudaMalloc(void **devPtr, uint64_t size) {
     }
 
     *devPtr = (void *)response_packet_ptr->cudamalloc.malloc_addr;
+
+    g_last_error = response_packet_ptr->cuda_error;
     return response_packet_ptr->cuda_error;
 }
 
@@ -118,6 +121,7 @@ cudaError_t cudaMemcpy(void *dst, const void *src, size_t count, enum cudaMemcpy
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
     
+    g_last_error = response_packet_ptr->cuda_error;
     return response_packet_ptr->cuda_error;
 }
 
@@ -162,18 +166,20 @@ cudaError_t cudaConfigureCall(dim3 gridDim, dim3 blockDim, uint64_t sharedMem) {
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
     
+    g_last_error = response_packet_ptr->cuda_error;
     return response_packet_ptr->cuda_error;
 }
 
 // Weili: Need to refer to GPGPU-Sim libcuda for these 
 // https://github.com/accel-sim/gpgpu-sim_distribution/blob/a0c12f5d63504c67c8bdfb1a6cc689b4ab7867a6/libcuda/cuda_runtime_api.cc#L577
 cudaError_t __cudaPopCallConfiguration(dim3 *gridDim, dim3 *blockDim, size_t *sharedMem, void *stream) {
+    g_last_error = cudaSuccess;
 	return cudaSuccess;
 }
 unsigned CUDARTAPI __cudaPushCallConfiguration(dim3 gridDim, dim3 blockDim,
                                                size_t sharedMem,
                                                void *stream) {
-	cudaConfigureCall(gridDim, blockDim, sharedMem);
+	g_last_error = cudaConfigureCall(gridDim, blockDim, sharedMem);
     return 0;
 }
 
@@ -223,6 +229,7 @@ cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[200], uint64_t size, u
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
     
+    g_last_error = response_packet_ptr->cuda_error;
     return response_packet_ptr->cuda_error;
 }
 
@@ -284,8 +291,8 @@ __host__ cudaError_t CUDARTAPI cudaLaunchKernel(const void *hostFun,
         }
     }
 
-    cudaLaunch((uint64_t) hostFun);
-    return cudaSuccess;
+    g_last_error = cudaLaunch((uint64_t) hostFun);
+    return g_last_error;
 }
 
 cudaError_t cudaLaunch(uint64_t func) {
@@ -312,7 +319,8 @@ cudaError_t cudaLaunch(uint64_t func) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
-    
+
+    g_last_error = response_packet_ptr->cuda_error;
     return response_packet_ptr->cuda_error;
 }
 
@@ -361,6 +369,7 @@ unsigned int __cudaRegisterFatBinary(void *fatCubin) {
         fflush(stdout);
     }
     
+    g_last_error = response_packet_ptr->cuda_error;
     return response_packet_ptr->fat_cubin_handle;
 }
 
@@ -410,11 +419,95 @@ void __cudaRegisterFunction(
         fflush(stdout);
     }
     
+    g_last_error = response_packet_ptr->cuda_error;
     return;
 }
 
-// Added CUDA calls that do nothing, just to make clang happy
-// TODO Need to maintian a g_last_cudaError variable in case some program access last error?
+// TODO Need to fix these
+__host__ cudaError_t CUDARTAPI cudaThreadSynchronize(void) {
+
+}
+
+__host__ cudaError_t CUDARTAPI cudaGetLastError(void) {
+    return g_last_error;
+}
+
+__host__ const char *CUDARTAPI cudaGetErrorString(cudaError_t error) {
+  if (error == cudaSuccess) return "no error";
+  char buf[1024];
+  snprintf(buf, 1024, "<<GPGPU-Sim PTX: there was an error (code = %d)>>",
+           error);
+  return strdup(buf);
+}
+
+// TODO
+__host__ cudaError_t CUDARTAPI cudaMemset(void *mem, int c, size_t count) {
+
+}
+
+// TODO
+// __host__ cudaError_t CUDARTAPI cudaMemcpyToSymbol(
+//     const char *symbol, const void *src, size_t count, size_t offset,
+//     enum cudaMemcpyKind kind) {
+// }
+
+// TODO
+void __cudaRegisterVar(
+    void **fatCubinHandle,
+    char *hostVar,           // pointer to...something
+    char *deviceAddress,     // name of variable
+    const char *deviceName,  // name of variable (same as above)
+    int ext, int size, int constant, int global) {
+
+}
+
+// TODO
+__host__ cudaError_t CUDARTAPI cudaGetDeviceCount(int *count) {
+
+}
+
+// TODO
+__host__ cudaError_t CUDARTAPI cudaSetDevice(int device) {
+
+}
+
+__host__ struct cudaChannelFormatDesc CUDARTAPI cudaCreateChannelDesc(
+    int x, int y, int z, int w, enum cudaChannelFormatKind f) {
+  struct cudaChannelFormatDesc dummy;
+  dummy.x = x;
+  dummy.y = y;
+  dummy.z = z;
+  dummy.w = w;
+  dummy.f = f;
+  return dummy;
+}
+
+// TODO
+void __cudaRegisterTexture(
+    void **fatCubinHandle, const struct textureReference *hostVar,
+    const void **deviceAddress, const char *deviceName, int dim, int norm,
+    int ext) {
+
+}
+
+// TODO
+__host__ cudaError_t CUDARTAPI cudaBindTexture(
+    size_t *offset, const struct textureReference *texref, const void *devPtr,
+    const struct cudaChannelFormatDesc *desc, size_t size) {
+
+}
+
+__host__ cudaError_t CUDARTAPI cudaFreeHost(void *ptr) {
+  free(ptr);
+  return cudaSuccess;
+}
+
+// TODO: A bit tricky as GPGPUSim needs to track the malloc size as well
+__host__ cudaError_t CUDARTAPI cudaMallocHost(void **ptr, size_t size) {
+
+}
+
+// Added these CUDA calls that do nothing, just to make clang happy
 void CUDARTAPI __cudaRegisterFatBinaryEnd( void **fatCubinHandle ) {
 	return;
 }
