@@ -15,6 +15,9 @@
 
 #include "cuda_runtime_api.h"
 #include "balar_vanadis.h"
+#include "../../balar_packet.h"
+
+using namespace SST::BalarComponent;
 
 // Encode version information here
 #ifndef BALAR_CUDA_VERSION
@@ -36,7 +39,7 @@ cudaError_t cudaMalloc(void **devPtr, uint64_t size) {
     call_packet_ptr->isSSTmem = true;
     call_packet_ptr->cuda_call_id = GPU_MALLOC;
     call_packet_ptr->cuda_malloc.size = size;
-    call_packet_ptr->cuda_malloc.devPtr = (Addr_t)devPtr;
+    call_packet_ptr->cuda_malloc.devPtr = devPtr;
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Malloc Packet address: %p\n", call_packet_ptr);
