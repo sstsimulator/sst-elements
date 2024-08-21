@@ -671,17 +671,17 @@ void MSHR::setDataDirty(Addr addr, bool dirty) {
 void MSHR::printDebug(uint32_t lev, std::string action, Addr addr, std::string reason) {
     if (lev == 10) {
         if (reason.empty())
-            d_->debug(_L10_, "M: %-41" PRIu64 " %-25s MSHR:%-8s 0x%-16" PRIx64 " Sz: %-6d\n",
+            d_->debug(_L10_, "M: %-20" PRIu64 " -                    %-25s MSHR:%-8s 0x%-16" PRIx64 " Sz: %-6d\n",
                     getCurrentSimCycle(), ownerName_.c_str(), action.c_str(), addr, size_);
         else
-            d_->debug(_L10_, "M: %-41" PRIu64 " %-25s MSHR:%-8s 0x%-16" PRIx64 " Sz: %-6d (%s)\n",
+            d_->debug(_L10_, "M: %-20" PRIu64 " -                    %-25s MSHR:%-8s 0x%-16" PRIx64 " Sz: %-6d (%s)\n",
                     getCurrentSimCycle(), ownerName_.c_str(), action.c_str(), addr, size_, reason.c_str());
     } else {
         if (reason.empty())
-            d_->debug(_L20_, "M: %-41" PRIu64 " %-25s MSHR:%-8s 0x%-16" PRIx64 " Sz: %-6d\n",
+            d_->debug(_L20_, "M: %-41" PRIu64 " -                    %-25s MSHR:%-8s 0x%-16" PRIx64 " Sz: %-6d\n",
                     getCurrentSimCycle(), ownerName_.c_str(), action.c_str(), addr, size_);
         else
-            d_->debug(_L20_, "M: %-41" PRIu64 " %-25s MSHR:%-8s 0x%-16" PRIx64 " Sz: %-6d (%s)\n",
+            d_->debug(_L20_, "M: %-41" PRIu64 " -                    %-25s MSHR:%-8s 0x%-16" PRIx64 " Sz: %-6d (%s)\n",
                     getCurrentSimCycle(), ownerName_.c_str(), action.c_str(), addr, size_, reason.c_str());
     }
 }

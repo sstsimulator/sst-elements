@@ -153,11 +153,11 @@ void MemNICFour::send(MemEventBase *ev) {
 
     if (is_debug_event(ev)) {
         std::string netstr = "data";
-        if (net == REQ) netstr = "req";
-        else if (net == ACK) netstr = "ack";
-        else if (net == FWD) netstr = "fwd";
-        dbg.debug(_L9_, "%s, memNIC adding to %s send queue: dst: %" PRIu64 ", bits: %zu, cmd: %s\n",
-                getName().c_str(), netstr.c_str(), req->dest, req->size_in_bits, CommandString[(int)ev->getCmd()]);
+        if (net == REQ) netstr = "req ";
+        else if (net == ACK) netstr = "ack ";
+        else if (net == FWD) netstr = "fwd ";
+        dbg.debug(_L5_, "N: %-40" PRI_NID "  %-20s Enqueue:%s  Dst: %" PRI_NID ", bits: %zu, (%s)\n",
+            getCurrentSimCycle(), getName().c_str(), netstr.c_str(), req->dest, req->size_in_bits, ev->getBriefString().c_str());
     }
     sendQueue[net].push(req);
     if (sendQueue[net].size() == 1) { /* Send this cycle if we're not already stalled */

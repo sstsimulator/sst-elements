@@ -1336,12 +1336,13 @@ bool MESIInclusive::handleGetSResp(MemEvent * event, bool inMSHR) {
 
     if (localPrefetch) {
         line->setPrefetch(true);
+        if (is_debug_event(event))
+            eventDI.action = "Done";
     } else {
         line->addSharer(req->getSrc());
         Addr offset = req->getAddr() - req->getBaseAddr();
         uint64_t sendTime = sendResponseUp(req, line->getData(), true, line->getTimestamp());
         line->setTimestamp(sendTime-1);
-
     }
 
     cleanUpAfterResponse(event, inMSHR);
