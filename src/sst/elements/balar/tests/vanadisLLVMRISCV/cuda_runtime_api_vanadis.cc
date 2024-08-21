@@ -26,6 +26,14 @@ using namespace SST::BalarComponent;
 static const char *version = BALAR_CUDA_VERSION;
 static cudaError_t g_last_error;
 
+#if !defined(__dv)
+#if defined(__cplusplus)
+#define __dv(v) = v
+#else /* __cplusplus */
+#define __dv(v)
+#endif /* __cplusplus */
+#endif /* !__dv */
+
 extern "C" {
     #include <unistd.h>
     #include <sys/syscall.h>
@@ -126,6 +134,13 @@ cudaError_t cudaMemcpy(void *dst, const void *src, size_t count, enum cudaMemcpy
     
     g_last_error = response_packet_ptr->cuda_error;
     return response_packet_ptr->cuda_error;
+}
+
+// TODO How to handle this memcpy?
+__host__ cudaError_t CUDARTAPI cudaMemcpyToSymbol(
+    const char *symbol, const void *src, size_t count, size_t offset __dv(0),
+    enum cudaMemcpyKind kind __dv(cudaMemcpyHostToDevice)) {
+
 }
 
 extern "C" {
@@ -426,9 +441,32 @@ void __cudaRegisterFunction(
     return;
 }
 
-// TODO Need to fix these
 __host__ cudaError_t CUDARTAPI cudaThreadSynchronize(void) {
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("Start thread sync\n");
+    }
 
+    BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
+    call_packet_ptr->isSSTmem = true;
+    call_packet_ptr->cuda_call_id = GPU_THREAD_SYNC;
+
+    // Vanadis write with 4B chunk, thus use uint32_t to pass
+    // the pointer to the balar packet
+    __sync_synchronize();
+    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
+    __sync_synchronize();
+
+    // Read from GPU will return the address to the cuda return packet
+    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
+    __sync_synchronize();
+
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("CUDA API ID: %d with error: %d\n", 
+                response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+    }
+
+    g_last_error = response_packet_ptr->cuda_error;
+    return response_packet_ptr->cuda_error;
 }
 
 __host__ cudaError_t CUDARTAPI cudaGetLastError(void) {
@@ -443,35 +481,136 @@ __host__ const char *CUDARTAPI cudaGetErrorString(cudaError_t error) {
   return strdup(buf);
 }
 
-// TODO
 __host__ cudaError_t CUDARTAPI cudaMemset(void *mem, int c, size_t count) {
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("Start cudaMemset, setting 0x%llx to %c for %lld bytes\n", mem, c, count);
+    }
 
+    BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
+    call_packet_ptr->isSSTmem = true;
+    call_packet_ptr->cuda_call_id = GPU_MEMSET;
+    call_packet_ptr->cudamemset.mem = mem;
+    call_packet_ptr->cudamemset.c = c;
+    call_packet_ptr->cudamemset.count = count;
+
+    // Vanadis write with 4B chunk, thus use uint32_t to pass
+    // the pointer to the balar packet
+    __sync_synchronize();
+    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
+    __sync_synchronize();
+
+    // Read from GPU will return the address to the cuda return packet
+    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
+    __sync_synchronize();
+
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("CUDA API ID: %d with error: %d\n", 
+                response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+    }
+
+    g_last_error = response_packet_ptr->cuda_error;
+    return response_packet_ptr->cuda_error;
 }
 
-// TODO
-// __host__ cudaError_t CUDARTAPI cudaMemcpyToSymbol(
-//     const char *symbol, const void *src, size_t count, size_t offset,
-//     enum cudaMemcpyKind kind) {
-// }
-
-// TODO
+// TODO Will there be a problem with the deviceName passed as a pointer?
 void __cudaRegisterVar(
     void **fatCubinHandle,
     char *hostVar,           // pointer to...something
     char *deviceAddress,     // name of variable
     const char *deviceName,  // name of variable (same as above)
     int ext, int size, int constant, int global) {
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("Start registering var\n");
+    }
 
+    BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
+    call_packet_ptr->isSSTmem = true;
+    call_packet_ptr->cuda_call_id = GPU_REG_VAR;
+    call_packet_ptr->register_var.fatCubinHandle = fatCubinHandle; 
+    call_packet_ptr->register_var.hostVar = hostVar;
+    call_packet_ptr->register_var.deviceAddress = deviceAddress;
+    call_packet_ptr->register_var.deviceName = deviceName;
+    call_packet_ptr->register_var.ext = ext;
+    call_packet_ptr->register_var.size = size;
+    call_packet_ptr->register_var.constant = constant;
+    call_packet_ptr->register_var.global = global;
+
+    // Vanadis write with 4B chunk, thus use uint32_t to pass
+    // the pointer to the balar packet
+    __sync_synchronize();
+    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
+    __sync_synchronize();
+
+    // Read from GPU will return the address to the cuda return packet
+    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
+    __sync_synchronize();
+
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("CUDA API ID: %d with error: %d\n", 
+                response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+    }
+
+    g_last_error = response_packet_ptr->cuda_error;
 }
 
-// TODO
 __host__ cudaError_t CUDARTAPI cudaGetDeviceCount(int *count) {
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("Start get device count\n");
+    }
 
+    BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
+    call_packet_ptr->isSSTmem = true;
+    call_packet_ptr->cuda_call_id = GPU_GET_DEVICE_COUNT;
+
+    // Vanadis write with 4B chunk, thus use uint32_t to pass
+    // the pointer to the balar packet
+    __sync_synchronize();
+    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
+    __sync_synchronize();
+
+    // Read from GPU will return the address to the cuda return packet
+    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
+    __sync_synchronize();
+
+    // Store count back
+    *count = response_packet_ptr->cudagetdevicecount.count;
+
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("CUDA API ID: %d with error: %d\n", 
+                response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+    }
+
+    g_last_error = response_packet_ptr->cuda_error;
+    return response_packet_ptr->cuda_error;
 }
 
-// TODO
 __host__ cudaError_t CUDARTAPI cudaSetDevice(int device) {
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("Start get device count\n");
+    }
 
+    BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
+    call_packet_ptr->isSSTmem = true;
+    call_packet_ptr->cuda_call_id = GPU_SET_DEVICE;
+    call_packet_ptr->cudasetdevice.device = device;
+
+    // Vanadis write with 4B chunk, thus use uint32_t to pass
+    // the pointer to the balar packet
+    __sync_synchronize();
+    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
+    __sync_synchronize();
+
+    // Read from GPU will return the address to the cuda return packet
+    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
+    __sync_synchronize();
+
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("CUDA API ID: %d with error: %d\n", 
+                response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+    }
+
+    g_last_error = response_packet_ptr->cuda_error;
+    return response_packet_ptr->cuda_error;
 }
 
 __host__ struct cudaChannelFormatDesc CUDARTAPI cudaCreateChannelDesc(
@@ -485,19 +624,80 @@ __host__ struct cudaChannelFormatDesc CUDARTAPI cudaCreateChannelDesc(
   return dummy;
 }
 
-// TODO
+// TODO Will there be a problem with deviceName passed as a pointer?
+// TODO Will there be a problem with the textureReference pointer? Should pass by value?
 void __cudaRegisterTexture(
     void **fatCubinHandle, const struct textureReference *hostVar,
     const void **deviceAddress, const char *deviceName, int dim, int norm,
     int ext) {
 
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("Start register texture\n");
+    }
+
+    BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
+    call_packet_ptr->isSSTmem = true;
+    call_packet_ptr->cuda_call_id = GPU_REG_TEXTURE;
+    call_packet_ptr->cudaregtexture.fatCubinHandle = fatCubinHandle;
+    call_packet_ptr->cudaregtexture.hostVar = hostVar;
+    call_packet_ptr->cudaregtexture.deviceAddress = deviceAddress;
+    call_packet_ptr->cudaregtexture.deviceName = deviceName;
+    call_packet_ptr->cudaregtexture.dim = dim;
+    call_packet_ptr->cudaregtexture.norm = norm;
+    call_packet_ptr->cudaregtexture.ext = ext;
+
+    // Vanadis write with 4B chunk, thus use uint32_t to pass
+    // the pointer to the balar packet
+    __sync_synchronize();
+    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
+    __sync_synchronize();
+
+    // Read from GPU will return the address to the cuda return packet
+    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
+    __sync_synchronize();
+
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("CUDA API ID: %d with error: %d\n", 
+                response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+    }
+
+    g_last_error = response_packet_ptr->cuda_error;
 }
 
-// TODO
+// TODO Will there be a problem with the textureReference pointer? Should pass by value?
 __host__ cudaError_t CUDARTAPI cudaBindTexture(
     size_t *offset, const struct textureReference *texref, const void *devPtr,
-    const struct cudaChannelFormatDesc *desc, size_t size) {
+    const struct cudaChannelFormatDesc *desc, size_t size __dv(UINT_MAX)) {
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("Start bind texture\n");
+    }
 
+    BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
+    call_packet_ptr->isSSTmem = true;
+    call_packet_ptr->cuda_call_id = GPU_SET_DEVICE;
+    call_packet_ptr->cudabindtexture.offset = offset;
+    call_packet_ptr->cudabindtexture.texref = texref;
+    call_packet_ptr->cudabindtexture.devPtr = devPtr;
+    call_packet_ptr->cudabindtexture.desc = desc;
+    call_packet_ptr->cudabindtexture.size = size;
+
+    // Vanadis write with 4B chunk, thus use uint32_t to pass
+    // the pointer to the balar packet
+    __sync_synchronize();
+    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
+    __sync_synchronize();
+
+    // Read from GPU will return the address to the cuda return packet
+    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
+    __sync_synchronize();
+
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("CUDA API ID: %d with error: %d\n", 
+                response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+    }
+
+    g_last_error = response_packet_ptr->cuda_error;
+    return response_packet_ptr->cuda_error;
 }
 
 __host__ cudaError_t CUDARTAPI cudaFreeHost(void *ptr) {
@@ -505,9 +705,38 @@ __host__ cudaError_t CUDARTAPI cudaFreeHost(void *ptr) {
   return cudaSuccess;
 }
 
-// TODO: A bit tricky as GPGPUSim needs to track the malloc size as well
+// A bit tricky as GPGPUSim needs to track the malloc size as well
 __host__ cudaError_t CUDARTAPI cudaMallocHost(void **ptr, size_t size) {
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("Start cuda malloc host with size %lld\n", size);
+    }
 
+    // Actual malloc done in vanadis, just need to tell GPGPU-Sim about the
+    // malloc addr and size info
+    *ptr = malloc(size);
+    
+    BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
+    call_packet_ptr->isSSTmem = true;
+    call_packet_ptr->cuda_call_id = GPU_MALLOC_HOST;
+    call_packet_ptr->cudamallochost.addr = *ptr;
+    call_packet_ptr->cudamallochost.size = size;
+
+    // Vanadis write with 4B chunk, thus use uint32_t to pass
+    // the pointer to the balar packet
+    __sync_synchronize();
+    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
+    __sync_synchronize();
+
+    // Read from GPU will return the address to the cuda return packet
+    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
+    __sync_synchronize();
+
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("CUDA API ID: %d with error: %d\n", 
+                response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+    }
+
+    g_last_error = response_packet_ptr->cuda_error;
 }
 
 // Added these CUDA calls that do nothing, just to make clang happy
