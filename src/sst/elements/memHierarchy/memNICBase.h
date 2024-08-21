@@ -482,8 +482,8 @@ class MemNICBase : public MemLinkBase {
 
 #ifdef __SST_DEBUG_OUTPUT__
                     if (!debugEvStr.empty() && doDebug) {
-                        dbg.debug(_L9_, "%s (memNICBase), Sending message %s to dst addr %" PRIu64 "\n",
-                                getName().c_str(), debugEvStr.c_str(), dst);
+                        dbg.debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s), Dst: %" PRIu64 "\n",
+                                getCurrentSimCycle(), 0, getName().c_str(), debugEvStr.c_str(), dst);
                     }
 #endif
                     queue->pop();
