@@ -672,8 +672,10 @@ bool MESISharNoninclusive::handlePutS(MemEvent * event, bool inMSHR) {
         case M_Inv:
         case SM_Inv:
             removeSharerViaInv(event, tag, data, true);
-            if (mshr_->decrementAcksNeeded(addr))
+            if (mshr_->decrementAcksNeeded(addr)) {
                 tag->setState(NextState[state]);
+                retry(addr);
+            }
             sendWritebackAck(event);
             if (inMSHR || !mshr_->getProfiled(addr)) {
                 stat_eventState[(int)Command::PutS][state]->addData(1);
