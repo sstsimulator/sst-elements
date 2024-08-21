@@ -49,6 +49,28 @@ namespace BalarComponent {
         GPU_MAX_BLOCK_RET = 22,
         GPU_PARAM_CONFIG,
         GPU_PARAM_CONFIG_RET,
+        GPU_THREAD_SYNC,
+        GPU_THREAD_SYNC_RET,
+        GPU_GET_ERROR_STRING,
+        GPU_GET_ERROR_STRING_RET,
+        GPU_MEMSET,
+        GPU_MEMSET_RET,
+        GPU_MEMCPY_TO_SYMBOL,
+        GPU_MEMCPY_TO_SYMBOL_RET,
+        GPU_SET_DEVICE,
+        GPU_SET_DEVICE_RET,
+        GPU_CREATE_CHANNEL_DESC,
+        GPU_CREATE_CHANNEL_DESC_RET,
+        GPU_BIND_TEXTURE,
+        GPU_BIND_TEXTURE_RET,
+        GPU_REG_TEXTURE,
+        GPU_REG_TEXTURE_RET,
+        GPU_GET_DEVICE_COUNT,
+        GPU_GET_DEVICE_COUNT_RET,
+        GPU_FREE_HOST,
+        GPU_FREE_HOST_RET,
+        GPU_MALLOC_HOST,
+        GPU_MALLOC_HOST_RET,
     };
 
     // Future: Make this into a class with additional serialization methods?
@@ -133,6 +155,37 @@ namespace BalarComponent {
                 uint64_t hostFun;
                 unsigned index; // Argument index
             } cudaparamconfig;
+            struct {
+                void *mem;
+                int c;
+                size_t count;
+            } cudamemset;
+            struct {
+                int device;
+            } cudasetdevice;
+
+            struct {
+                void **fatCubinHandle;
+                const struct textureReference *hostVar;
+                const void **deviceAddress;
+                const char *deviceName;
+                int dim;
+                int norm;
+                int ext;
+            } cudaregtexture;
+
+            struct {
+                size_t *offset;
+                const struct textureReference *texref;
+                const void *devPtr;
+                const struct cudaChannelFormatDesc *desc;
+                size_t size;
+            } cudabindtexture;
+
+            struct {
+                void *addr;
+                size_t size;
+            } cudamallochost;
         };
     } BalarCudaCallPacket_t;
 
@@ -156,6 +209,9 @@ namespace BalarComponent {
                 size_t size;
                 unsigned alignment;
             } cudaparamconfig;
+            struct {
+                int count;
+            } cudagetdevicecount;
         };
     } BalarCudaCallReturnPacket_t;
 }

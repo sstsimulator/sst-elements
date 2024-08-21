@@ -26,6 +26,9 @@ extern "C"{
 
 uint64_t cudaMallocSST(void **devPtr, size_t size);
 
+// `addr` is passed by value
+__host__ cudaError_t CUDARTAPI cudaMallocHostSST(void *addr, size_t size);
+
 unsigned CUDARTAPI __cudaRegisterFatBinarySST(char file_name[256]);
 
 void CUDARTAPI __cudaRegisterFunctionSST(
@@ -33,7 +36,6 @@ void CUDARTAPI __cudaRegisterFunctionSST(
     uint64_t hostFun,
     char deviceFun[256]
 );
-
 
 __host__ cudaError_t CUDARTAPI cudaMemcpySST(uint64_t dst, uint64_t src, size_t count, enum cudaMemcpyKind kind, uint8_t *payload);
 
@@ -69,6 +71,23 @@ cudaError_t CUDARTAPI cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(
         size_t dynamicSMemSize,
         unsigned int flags);
 
+__host__ cudaError_t CUDARTAPI cudaThreadSynchronize(void);
+
+__host__ cudaError_t CUDARTAPI cudaMemset(void *mem, int c, size_t count);
+
+__host__ cudaError_t CUDARTAPI cudaGetDeviceCount(int *count);
+
+__host__ cudaError_t CUDARTAPI cudaSetDevice(int device);
+
+void __cudaRegisterTexture(
+    void **fatCubinHandle, const struct textureReference *hostVar,
+    const void **deviceAddress, const char *deviceName, int dim, int norm,
+    int ext);
+
+__host__ cudaError_t CUDARTAPI cudaBindTexture(
+    size_t *offset, const struct textureReference *texref, const void *devPtr,
+    const struct cudaChannelFormatDesc *desc, size_t size);
+
  void SST_receive_mem_reply(unsigned core_id,  void* mem_req);
 
  bool SST_gpu_core_cycle();
@@ -78,3 +97,4 @@ cudaError_t CUDARTAPI cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(
 }
 
 std::tuple<cudaError_t, size_t, unsigned> SST_cudaGetParamConfig(uint64_t hostFun, unsigned index);
+

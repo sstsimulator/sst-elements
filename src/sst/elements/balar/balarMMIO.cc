@@ -603,6 +603,60 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
                         balar->cuda_ret.cudaparamconfig.alignment = std::get<2>(res);
                     }
                     break;
+                case GPU_THREAD_SYNC: {
+                        balar->cuda_ret.cuda_error = cudaThreadSynchronize();
+                    }
+                    break;
+                case GPU_MEMSET: {
+                        balar->cuda_ret.cuda_error = cudaMemset(
+                            packet->cudamemset.mem,
+                            packet->cudamemset.c,
+                            packet->cudamemset.count
+                        );
+                    }
+                    break;
+                case GPU_GET_DEVICE_COUNT: {
+                        balar->cuda_ret.cuda_error = cudaGetDeviceCount(
+                            &(balar->cuda_ret.cudagetdevicecount.count)
+                        );
+                    }
+                    break;
+                case GPU_SET_DEVICE: {
+                        balar->cuda_ret.cuda_error = cudaSetDevice(
+                            packet->cudasetdevice.device
+                        );
+                    }
+                    break;
+                case GPU_REG_TEXTURE: {
+                        balar->cuda_ret.cuda_error = cudaSuccess;
+                        __cudaRegisterTexture(
+                            packet->cudaregtexture.fatCubinHandle,
+                            packet->cudaregtexture.hostVar,
+                            packet->cudaregtexture.deviceAddress,
+                            packet->cudaregtexture.deviceName,
+                            packet->cudaregtexture.dim,
+                            packet->cudaregtexture.norm,
+                            packet->cudaregtexture.ext
+                        );
+                    }
+                    break;
+                case GPU_BIND_TEXTURE: {
+                        balar->cuda_ret.cuda_error = cudaBindTexture(
+                            packet->cudabindtexture.offset,
+                            packet->cudabindtexture.texref,
+                            packet->cudabindtexture.devPtr,
+                            packet->cudabindtexture.desc,
+                            packet->cudabindtexture.size
+                        );
+                    }
+                    break;
+                case GPU_MALLOC_HOST: {
+                        balar->cuda_ret.cuda_error = cudaMallocHostSST(
+                            packet->cudamallochost.addr,
+                            packet->cudamallochost.size
+                        );
+                    }
+                    break;
                 default:
                     out->fatal(CALL_INFO, -1, "Received unknown GPU enum API: %d\n", packet->cuda_call_id);
                     break;
