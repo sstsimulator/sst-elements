@@ -177,6 +177,7 @@ bool DMAEngine::tick(SST::Cycle_t x) {
         // Do nothing and wait since we dont have any task to do
         return false;
     }
+    return true;
 }
 
 void DMAEngine::handleEvent(StandardMem::Request* req) {
@@ -222,7 +223,7 @@ void DMAEngine::DMAHandlers::handle(StandardMem::Write* write) {
         DMAEngineControlRegisters* reg_ptr = decode_balar_packet<DMAEngineControlRegisters>(&(write->data)); 
         
         if (reg_ptr->data_size % reg_ptr->transfer_size != 0) {
-            out->verbose(_INFO_, "%s: unaligned DMA transfer config! Data size: %lld Transfer size: %u\n", dma->getName().c_str(), reg_ptr->data_size, reg_ptr->transfer_size);
+            out->verbose(_INFO_, "%s: unaligned DMA transfer config! Data size: %ld Transfer size: %u\n", dma->getName().c_str(), reg_ptr->data_size, reg_ptr->transfer_size);
         }
         
         dma->dma_ctrl_regs.simulator_mem_addr = reg_ptr->simulator_mem_addr;

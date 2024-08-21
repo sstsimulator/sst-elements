@@ -155,7 +155,7 @@ void BalarMMIO::send_read_request_SST(unsigned core_id, uint64_t address, uint64
     numPendingCacheTransPerCore[core_id]++;
     gpu_to_cache_links[core_id]->send(req);
 
-    out.verbose(CALL_INFO, 1, 0, "Sent a read request with id (%d) to addr %llx\n", req->getID(), req->pAddr);
+    out.verbose(CALL_INFO, 1, 0, "Sent a read request with id (%ld) to addr %lx\n", req->getID(), req->pAddr);
 }
 
 /**
@@ -176,7 +176,7 @@ void BalarMMIO::send_write_request_SST(unsigned core_id, uint64_t address, uint6
     gpuCachePendingTransactions->insert(std::pair<StandardMem::Request::id_t, cache_req_params>(req->getID(), cache_req_params(core_id, mem_req, req)));
     numPendingCacheTransPerCore[core_id]++;
     gpu_to_cache_links[core_id]->send(req);
-    out.verbose(CALL_INFO, 1, 0, "Sent a write request with id (%d) to addr: %llx\n", req->getID(), req->pAddr);
+    out.verbose(CALL_INFO, 1, 0, "Sent a write request with id (%ld) to addr: %lx\n", req->getID(), req->pAddr);
 }
 
 void BalarMMIO::SST_callback_memcpy_H2D_done() {
@@ -264,7 +264,7 @@ void BalarMMIO::handleGPUCache(SST::Interfaces::StandardMem::Request* req) {
         SST_receive_mem_reply(req_params.core_id,  req_params.mem_fetch_pointer);
         delete req;
     } else {
-        out.fatal(CALL_INFO, -1, "GPU Cache Request (%d) not found!\n", req_id);
+        out.fatal(CALL_INFO, -1, "GPU Cache Request (%ld) not found!\n", req_id);
     }
 }
 
@@ -313,7 +313,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::Write* write
     balar->requests[dma_req->getID()] = std::make_pair(balar->getCurrentSimTime(), cmdString);
 
     // Log this write
-    out->verbose(_INFO_, "%s: receiving incoming write with scratch mem address: 0x%llx, issuing read to this address\n", balar->getName().c_str(), balar->packet_scratch_mem_addr);
+    out->verbose(_INFO_, "%s: receiving incoming write with scratch mem address: 0x%lx, issuing read to this address\n", balar->getName().c_str(), balar->packet_scratch_mem_addr);
 
     // Now send the DMA command to read
     balar->mmio_iface->send(dma_req);
@@ -357,7 +357,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::Read* read) 
     balar->requests[dma_req->getID()] = std::make_pair(balar->getCurrentSimTime(), cmdString);
 
     // Log this read
-    out->verbose(_INFO_, "%s: receiving incoming read, writing cuda return packet to scratch mem address: 0x%llx\n", balar->getName().c_str(), balar->packet_scratch_mem_addr);
+    out->verbose(_INFO_, "%s: receiving incoming read, writing cuda return packet to scratch mem address: 0x%lx\n", balar->getName().c_str(), balar->packet_scratch_mem_addr);
 
     // Now send the DMA command to copy return packet to SST cache/mem system
     balar->mmio_iface->send(dma_req);
@@ -373,13 +373,13 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::ReadResp* re
     // Classify the read request type
     std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = balar->requests.find(resp->getID());
     if (balar->requests.end() == i) {
-        out->fatal(_INFO_, "Event (%" PRIx64 ") not found!\n", resp->getID());
+        out->fatal(_INFO_, "Event (%ld) not found!\n", resp->getID());
     } else {
         std::string request_type = (i)->second.second;
-        out->verbose(_INFO_, "%s: get response from read request (%d) with type: %s\n", balar->getName().c_str(), resp->getID(), request_type.c_str());
+        out->verbose(_INFO_, "%s: get response from read request (%ld) with type: %s\n", balar->getName().c_str(), resp->getID(), request_type.c_str());
 
         // Unknown cmdstring, abort
-        out->fatal(CALL_INFO, -1, "%s: Unknown read request (%" PRIx64 "): %s!\n", balar->getName().c_str(), resp->getID(), request_type.c_str());
+        out->fatal(CALL_INFO, -1, "%s: Unknown read request (%ld): %s!\n", balar->getName().c_str(), resp->getID(), request_type.c_str());
 
         // Delete the request 
         balar->requests.erase(i);
@@ -398,10 +398,10 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::ReadResp* re
 void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* resp) {
     std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = balar->requests.find(resp->getID());
     if (balar->requests.end() == i ) {
-        out->fatal(_INFO_, "Event (%" PRIx64 ") not found!\n", resp->getID());
+        out->fatal(_INFO_, "Event (%ld) not found!\n", resp->getID());
     } else {
         std::string request_type = (i)->second.second;
-        out->verbose(_INFO_, "%s: get response from write request (%d) with type: %s\n", balar->getName().c_str(), resp->getID(), request_type.c_str());
+        out->verbose(_INFO_, "%s: get response from write request (%ld) with type: %s\n", balar->getName().c_str(), resp->getID(), request_type.c_str());
 
         // Dispatch based on request type
         if (request_type.compare("Read_cuda_packet") == 0) {
