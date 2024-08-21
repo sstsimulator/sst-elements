@@ -117,6 +117,7 @@ cd ..
 # Set up environment vars to LLVM and RISCV GCC
 export LLVM_INSTALL_PATH=$(pwd)/llvm-install
 export RISCV_TOOLCHAIN_INSTALL_PATH=$(pwd)/riscv-gnu-install
+export GPU_ARCH=sm_70
 ```
 
 #### Compiling CUDA for Balar + Vanadis
@@ -151,7 +152,7 @@ After successful compilation and installation of SST core and SST elements (with
 
 ```bash
 # cd into balar
-cd $SST_ELEMENTS_HOME/src/sst/balar
+cd SST_ELEMENTS_SRC/src/sst/elements/balar
 
 # balar tests
 cd tests/
@@ -181,7 +182,7 @@ The CUDA executable should be passed in `VANADIS_EXE` and `BALAR_CUDA_EXE_PATH`.
 
 ```bash
 # cd into balar tests
-cd $SST_ELEMENTS_HOME/src/sst/balar/tests/
+cd SST_ELEMENTS_SRC/src/sst/elements/balar/tests/
 
 # Compile test programs
 make -C vanadisLLVMRISCV
@@ -198,6 +199,9 @@ VANADIS_EXE=./vanadisLLVMRISCV/vecadd VANADIS_ISA=RISCV64 BALAR_CUDA_EXE_PATH=./
 Here is an example on running Rodinia 2.0 BFS with SampleGraph.txt input using CUDA 11.7. For different CUDA version, the binary path will differ in terms of version number.
 
 ```bash
+# Let GPU app knows about the custom CUDA lib
+export SST_CUSTOM_CUDA_LIB_PATH=SST_ELEMENTS_SRC/src/sst/elements/balar/tests/vanadisLLVMRISCV
+
 # Make Rodinia 2.0
 cd gpu-app-collection
 make rodinia_2.0-ft -i -j -C ./src
@@ -205,7 +209,7 @@ make data -C ./src
 cd ..
 
 # Run BFS with sample graph input
-cd $SST_ELEMENTS_HOME/src/sst/balar/tests
+cd SST_ELEMENTS_SRC/src/sst/elements/balar/tests
 VANADIS_EXE=$GPUAPPS_ROOT/bin/11.7/release/bfs-rodinia-2.0-ft \
 VANADIS_EXE_ARGS=$GPUAPPS_ROOT/data_dirs/cuda/rodinia/2.0-ft/bfs-rodinia-2.0-ft/data/SampleGraph.txt \
 VANADIS_ISA=RISCV64 \
