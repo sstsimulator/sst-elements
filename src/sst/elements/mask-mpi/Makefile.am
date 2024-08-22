@@ -87,8 +87,9 @@ EXTRA_DIST = \
  tests/testsuite_default_mask_mpi.py \
  tests/platform_file_mask_mpi_test.py \
  tests/test_alltoall.py \
- tests/test_sendrecv.py \
  tests/test_reduce.py \
+ tests/test_sendrecv.py \
+ tests/refFiles/test_reduce.out \
  tests/refFiles/test_sendrecv.out
 
 libmask_mpi_la_LDFLAGS = -module -avoid-version
