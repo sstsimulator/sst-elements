@@ -327,7 +327,7 @@ libember_la_SOURCES += \
 
 libember_la_LIBADD = \
 	$(OTF2_LDFLAGS) \
-	$(OTF2_LIBS)
+	$(OTF2_LIBS) \
 	-lotf2
 endif
 
