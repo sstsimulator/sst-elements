@@ -298,8 +298,8 @@ static OTF2_CallbackCode EmberOTF2MPICollectiveEnd(
 		break;
 
 	case OTF2_COLLECTIVE_OP_BCAST:
-		gen->verbose( CALL_INFO, 4, 0, "Trace::Bcast, Root=%" PRIu32 ", Size=%" PRIu64 "\n", root, sizeSent );
-		gen->bcast( *(gen->getEventQueue()), 0, sizeSent, CHAR, static_cast<int>(root),
+		gen->verbose( CALL_INFO, 4, 0, "Trace::Bcast, Root=%" PRIu32 ", Size=%" PRIu64 "\n", root, sizeReceived );
+		gen->bcast( *(gen->getEventQueue()), 0, sizeReceived, CHAR, static_cast<int>(root),
 			GroupWorld);
 		break;
 
