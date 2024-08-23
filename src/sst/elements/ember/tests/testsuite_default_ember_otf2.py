@@ -8,7 +8,7 @@ import os
 
 class testcase_EmberOTF2(SSTTestCase):
 
-    otf2_support = sstsimulator_conf_get_value_bool("SST_ELEMENT_DEPENDENCIES", "otf2", default=False)
+    otf2_support = sst_elements_config_include_file_get_value_int("HAVE_OTF2", 0, True) > 0
 
     def setUp(self):
         super(type(self), self).setUp()
@@ -23,7 +23,7 @@ class testcase_EmberOTF2(SSTTestCase):
 
     @unittest.skipIf(not otf2_support, "Ember: Requires OTF2, but sst-elements was not compiled with OTF2 support.")
     def test_Ember_OTF2(self):
-        otherargs = '--exit-after=10s --model-options \'--topo=fattree --shape=4,4:1 --cmdLine=\"Init\" --cmdLine=\"OTF2 tracePrefix={0}\" --cmdLine=\"Fini\" \' '
+        otherargs = '--exit-after=20s --model-options \'--topo=fattree --shape=4,4:1 --cmdLine=\"Init\" --cmdLine=\"OTF2 tracePrefix={0}\" --cmdLine=\"Fini\" \' '
         self.Ember_test_template("test_emberotf2", otherargs = otherargs, testoutput = True)
 
 #####

@@ -346,11 +346,6 @@ endif
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     ember=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      ember=$(abs_srcdir)/tests
-if EMBER_HAVE_OTF2
-	$(SST_REGISTER_TOOL) SST_ELEMENT_DEPENDENCIES	otf2=true
-else
-	$(SST_REGISTER_TOOL) SST_ELEMENT_DEPENDENCIES	otf2=false
-endif
 
 BUILT_SOURCES = \
 	pyember.inc
