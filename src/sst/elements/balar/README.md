@@ -117,6 +117,7 @@ cd ..
 # Set up environment vars to LLVM and RISCV GCC
 export LLVM_INSTALL_PATH=$(pwd)/llvm-install
 export RISCV_TOOLCHAIN_INSTALL_PATH=$(pwd)/riscv-gnu-install
+# Match with the GPU config file we have
 export GPU_ARCH=sm_70
 ```
 
