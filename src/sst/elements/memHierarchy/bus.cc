@@ -38,7 +38,7 @@ using namespace SST::MemHierarchy;
 const Bus::key_t Bus::ANY_KEY = std::pair<uint64_t, int>((uint64_t)-1, -1);
 
 Bus::Bus(ComponentId_t id, Params& params) : Component(id) {
-	configureParameters(params);
+    configureParameters(params);
     configureLinks();
     idleCount_ = 0;
     busOn_ = true;
@@ -76,7 +76,7 @@ bool Bus::clockTick(Cycle_t time) {
         eventQueue_.pop();
         idleCount_ = 0;
 
-        if (drain_ == 0 )
+        if (!drain_ )
             break;
     }
 
@@ -146,7 +146,7 @@ void Bus::configureLinks() {
     std::string linkprefix = "high_network_";
     std::string linkname = linkprefix + "0";
     while (isPortConnected(linkname)) {
-        link = configureLink(linkname, "50 ps", new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
+        link = configureLink(linkname, new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
         if (!link)
             dbg_.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), linkname.c_str());
         highNetPorts_.push_back(link);
@@ -188,10 +188,10 @@ void Bus::configureParameters(SST::Params& params) {
     busFrequency_ = params.find<std::string>("bus_frequency", "Invalid");
     broadcast_    = params.find<bool>("broadcast", 0);
     fanout_       = params.find<bool>("fanout", 0);  /* TODO:  Fanout: Only send messages to lower level caches */
-    drain_        = params.find<bool>("drain_bus", 0);
+    drain_        = params.find<bool>("drain_bus", false);
 
     if (busFrequency_ == "Invalid") dbg_.fatal(CALL_INFO, -1, "Bus Frequency was not specified\n");
-
+    
      /* Multiply Frequency times two.  This is because an SST Bus components has
         2 SST Links (highNEt & LowNet) and thus it takes a least 2 cycles for any
         transaction (a real bus should be allowed to have 1 cycle latency).  To overcome

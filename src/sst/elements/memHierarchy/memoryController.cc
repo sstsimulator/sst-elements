@@ -566,7 +566,7 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
     }
     
     if (is_debug_event(resp)) {
-        Debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Resp    (%s)\n",
+        Debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
                 getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), resp->getVerboseString(dlevel).c_str());
     }
 
@@ -618,7 +618,7 @@ void MemController::writeData(MemEvent* event) {
     if (event->getCmd() == Command::PutM) { /* Write request to memory */
         Addr addr = event->queryFlag(MemEvent::F_NONCACHEABLE) ? event->getAddr() : event->getBaseAddr();
         if (is_debug_event(event)) { 
-            Debug(_L8_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
+            Debug(_L8_, "S: Update backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
             printDataValue(addr, &(event->getPayload()), true);
         }
 
@@ -630,7 +630,7 @@ void MemController::writeData(MemEvent* event) {
     if (event->getCmd() == Command::Write) {
         Addr addr = event->getAddr();
         if (is_debug_event(event)) { 
-            Debug(_L8_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
+            Debug(_L8_, "S: Update backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
             printDataValue(addr, &(event->getPayload()), true);
         }
         
