@@ -24,7 +24,6 @@ using namespace SST::BalarComponent;
 #define BALAR_CUDA_VERSION "11.0"
 #endif
 static const char *version = BALAR_CUDA_VERSION;
-static cudaError_t g_last_error;
 
 #if !defined(__dv)
 #if defined(__cplusplus)
@@ -41,6 +40,45 @@ extern "C" {
     #include <stdlib.h>
 }
 
+// Map and protect balar's address
+extern "C" void __vanadisMapBalar() {
+    #ifdef SYS_mmap2
+        g_balarBaseAddr = (Addr_t*) syscall(SYS_mmap2, 0, 0, PROT_WRITE|PROT_READ, 0, -2000, 0);
+    #else
+        g_balarBaseAddr = (Addr_t*) syscall(SYS_mmap, 0, 0, PROT_WRITE|PROT_READ, 0, -2000, 0);
+    #endif
+
+    // Protect whole page for balar
+    mprotect(g_balarBaseAddr, 4096, PROT_NONE);
+
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("Mapping balar to address: %x\n", g_balarBaseAddr);
+        fflush(stdout);
+    }
+}
+
+extern "C" BalarCudaCallReturnPacket_t * makeCudaCall(BalarCudaCallPacket_t * call_packet_ptr) {
+    // Make cuda call
+    __sync_synchronize();
+    mprotect(g_balarBaseAddr, 4096, PROT_READ|PROT_WRITE);
+    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
+    __sync_synchronize();
+
+    // Read from GPU will return the address to the cuda return packet
+    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
+    mprotect(g_balarBaseAddr, 4096, PROT_NONE);
+    __sync_synchronize();
+
+    return response_packet_ptr;
+}
+
+extern "C" BalarCudaCallReturnPacket_t * readLastCudaStatus() {
+    __sync_synchronize();
+    BalarCudaCallReturnPacket_t * response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
+    __sync_synchronize();
+    return response_packet_ptr;
+}
+
 cudaError_t cudaMalloc(void **devPtr, uint64_t size) {
     // Send request to GPU
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
@@ -54,16 +92,9 @@ cudaError_t cudaMalloc(void **devPtr, uint64_t size) {
         printf("Malloc Packet size: %lu\n", size);
         printf("Malloc Packet devptr: %p\n", devPtr);
     }
-
-    // Vanadis write with 4B chunk, thus use uint32_t to pass
-    // the pointer to the balar packet
-    __sync_synchronize();
-    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
-    __sync_synchronize();
     
-    // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
-    __sync_synchronize();
+    // Make cuda call
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\nMalloc addr: %lu Dev addr: %lu\n", 
@@ -73,7 +104,6 @@ cudaError_t cudaMalloc(void **devPtr, uint64_t size) {
 
     *devPtr = (void *)response_packet_ptr->cudamalloc.malloc_addr;
 
-    g_last_error = response_packet_ptr->cuda_error;
     return response_packet_ptr->cuda_error;
 }
 
@@ -102,37 +132,26 @@ cudaError_t cudaMemcpy(void *dst, const void *src, size_t count, enum cudaMemcpy
         fflush(stdout);
     }
 
-    // Vanadis write with 4B chunk, thus use uint32_t to pass
-    // the pointer to the balar packet
-    __sync_synchronize();
-    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
-    __sync_synchronize();
+    // Make cuda call
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
 
-    // Read from GPU will return the address to the cuda return packet
     // Make the memcpy sync with balar so that CPU will
     // issue another write/read to balar only if the previous memcpy is done
-    BalarCudaCallReturnPacket_t *response_packet_ptr;
-
-    while (1) {
+    while (!(response_packet_ptr->is_cuda_call_done)) {
         int wait = 0;
-        response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
-        if (response_packet_ptr->is_cuda_call_done)
-            break;
+        response_packet_ptr = readLastCudaStatus();
         wait++;
 
         // if (wait % 10 == 0) {
         //     printf("Waited %d times\n", wait);
         // }
     }
-    __sync_synchronize();
-
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
     
-    g_last_error = response_packet_ptr->cuda_error;
     return response_packet_ptr->cuda_error;
 }
 
@@ -169,35 +188,26 @@ cudaError_t cudaConfigureCall(dim3 gridDim, dim3 blockDim, uint64_t sharedMem) {
         printf("Block Dim: x(%d) y(%d) z(%d)\n", blockDim.x, blockDim.y, blockDim.z);
     }
 
-    // Vanadis write with 4B chunk, thus use uint32_t to pass
-    // the pointer to the balar packet
-    __sync_synchronize();
-    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
-    __sync_synchronize();
-    
-    // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
-    __sync_synchronize();
+    // Make cuda call
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
     
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
     
-    g_last_error = response_packet_ptr->cuda_error;
     return response_packet_ptr->cuda_error;
 }
 
 // Weili: Need to refer to GPGPU-Sim libcuda for these 
 // https://github.com/accel-sim/gpgpu-sim_distribution/blob/a0c12f5d63504c67c8bdfb1a6cc689b4ab7867a6/libcuda/cuda_runtime_api.cc#L577
 cudaError_t __cudaPopCallConfiguration(dim3 *gridDim, dim3 *blockDim, size_t *sharedMem, void *stream) {
-    g_last_error = cudaSuccess;
 	return cudaSuccess;
 }
 unsigned CUDARTAPI __cudaPushCallConfiguration(dim3 gridDim, dim3 blockDim,
                                                size_t sharedMem,
                                                void *stream) {
-	g_last_error = cudaConfigureCall(gridDim, blockDim, sharedMem);
+	cudaConfigureCall(gridDim, blockDim, sharedMem);
     return 0;
 }
 
@@ -232,22 +242,14 @@ cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[200], uint64_t size, u
         }
     }
 
-    // Vanadis write with 4B chunk, thus use uint32_t to pass
-    // the pointer to the balar packet
-    __sync_synchronize();
-    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
-    __sync_synchronize();
-
-    // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
-    __sync_synchronize();
+    // Make cuda call
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
-    
-    g_last_error = response_packet_ptr->cuda_error;
+
     return response_packet_ptr->cuda_error;
 }
 
@@ -262,13 +264,8 @@ BalarCudaCallReturnPacket_t __balarGetParamInfo(uint64_t hostFunc, unsigned inde
     call_packet_ptr->cudaparamconfig.hostFun = hostFunc;
     call_packet_ptr->cudaparamconfig.index = index;
 
-    __sync_synchronize();
-    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
-    __sync_synchronize();
-
-    // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
-    __sync_synchronize();
+    // Make cuda call
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
@@ -309,8 +306,7 @@ __host__ cudaError_t CUDARTAPI cudaLaunchKernel(const void *hostFun,
         }
     }
 
-    g_last_error = cudaLaunch((uint64_t) hostFun);
-    return g_last_error;
+    return cudaLaunch((uint64_t) hostFun);
 }
 
 cudaError_t cudaLaunch(uint64_t func) {
@@ -323,36 +319,15 @@ cudaError_t cudaLaunch(uint64_t func) {
     call_packet_ptr->cuda_call_id = GPU_LAUNCH;
     call_packet_ptr->cuda_launch.func = func;
 
-    // Vanadis write with 4B chunk, thus use uint32_t to pass
-    // the pointer to the balar packet
-    __sync_synchronize();
-    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
-    __sync_synchronize();
-
-    // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
-    __sync_synchronize();
+    // Make cuda call
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
 
-    g_last_error = response_packet_ptr->cuda_error;
     return response_packet_ptr->cuda_error;
-}
-
-void __vanadisMapBalar() {
-    #ifdef SYS_mmap2
-        g_balarBaseAddr = (Addr_t*) syscall(SYS_mmap2, 0, 0, PROT_WRITE|PROT_READ, 0, -2000, 0);
-    #else
-        g_balarBaseAddr = (Addr_t*) syscall(SYS_mmap, 0, 0, PROT_WRITE|PROT_READ, 0, -2000, 0);
-    #endif
-
-    if (g_debug_level >= LOG_LEVEL_DEBUG) {
-        printf("Mapping balar to address: %x\n", g_balarBaseAddr);
-        fflush(stdout);
-    }
 }
 
 // With LLVM compiler, need to pass the executable path in config script by setting 
@@ -370,15 +345,8 @@ unsigned int __cudaRegisterFatBinary(void *fatCubin) {
     call_packet_ptr->isSSTmem = true;
     call_packet_ptr->cuda_call_id = GPU_REG_FAT_BINARY;
 
-    // Vanadis write with 4B chunk, thus use uint32_t to pass
-    // the pointer to the balar packet
-    __sync_synchronize();
-    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
-    __sync_synchronize();
-
-    // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
-    __sync_synchronize();
+    // Make cuda call
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d and fatbin handle %d\n", 
@@ -386,8 +354,7 @@ unsigned int __cudaRegisterFatBinary(void *fatCubin) {
                 response_packet_ptr->fat_cubin_handle);
         fflush(stdout);
     }
-    
-    g_last_error = response_packet_ptr->cuda_error;
+
     return response_packet_ptr->fat_cubin_handle;
 }
 
@@ -421,23 +388,15 @@ void __cudaRegisterFunction(
         fflush(stdout);
     }
 
-    // Vanadis write with 4B chunk, thus use uint32_t to pass
-    // the pointer to the balar packet
-    __sync_synchronize();
-    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
-    __sync_synchronize();
-
-    // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
-    __sync_synchronize();
+    // Make cuda call
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
         fflush(stdout);
     }
-    
-    g_last_error = response_packet_ptr->cuda_error;
+
     return;
 }
 
@@ -450,27 +409,20 @@ __host__ cudaError_t CUDARTAPI cudaThreadSynchronize(void) {
     call_packet_ptr->isSSTmem = true;
     call_packet_ptr->cuda_call_id = GPU_THREAD_SYNC;
 
-    // Vanadis write with 4B chunk, thus use uint32_t to pass
-    // the pointer to the balar packet
-    __sync_synchronize();
-    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
-    __sync_synchronize();
-
-    // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
-    __sync_synchronize();
+    // Make cuda call
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
 
-    g_last_error = response_packet_ptr->cuda_error;
     return response_packet_ptr->cuda_error;
 }
 
 __host__ cudaError_t CUDARTAPI cudaGetLastError(void) {
-    return g_last_error;
+    BalarCudaCallReturnPacket_t *last = readLastCudaStatus();
+    return last->cuda_error;
 }
 
 __host__ const char *CUDARTAPI cudaGetErrorString(cudaError_t error) {
@@ -493,22 +445,14 @@ __host__ cudaError_t CUDARTAPI cudaMemset(void *mem, int c, size_t count) {
     call_packet_ptr->cudamemset.c = c;
     call_packet_ptr->cudamemset.count = count;
 
-    // Vanadis write with 4B chunk, thus use uint32_t to pass
-    // the pointer to the balar packet
-    __sync_synchronize();
-    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
-    __sync_synchronize();
-
-    // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
-    __sync_synchronize();
+    // Make cuda call
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
 
-    g_last_error = response_packet_ptr->cuda_error;
     return response_packet_ptr->cuda_error;
 }
 
@@ -535,22 +479,13 @@ void __cudaRegisterVar(
     call_packet_ptr->register_var.constant = constant;
     call_packet_ptr->register_var.global = global;
 
-    // Vanadis write with 4B chunk, thus use uint32_t to pass
-    // the pointer to the balar packet
-    __sync_synchronize();
-    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
-    __sync_synchronize();
-
-    // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
-    __sync_synchronize();
+    // Make cuda call
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
-
-    g_last_error = response_packet_ptr->cuda_error;
 }
 
 __host__ cudaError_t CUDARTAPI cudaGetDeviceCount(int *count) {
@@ -562,15 +497,8 @@ __host__ cudaError_t CUDARTAPI cudaGetDeviceCount(int *count) {
     call_packet_ptr->isSSTmem = true;
     call_packet_ptr->cuda_call_id = GPU_GET_DEVICE_COUNT;
 
-    // Vanadis write with 4B chunk, thus use uint32_t to pass
-    // the pointer to the balar packet
-    __sync_synchronize();
-    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
-    __sync_synchronize();
-
-    // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
-    __sync_synchronize();
+    // Make cuda call
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
 
     // Store count back
     *count = response_packet_ptr->cudagetdevicecount.count;
@@ -580,7 +508,6 @@ __host__ cudaError_t CUDARTAPI cudaGetDeviceCount(int *count) {
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
 
-    g_last_error = response_packet_ptr->cuda_error;
     return response_packet_ptr->cuda_error;
 }
 
@@ -594,22 +521,14 @@ __host__ cudaError_t CUDARTAPI cudaSetDevice(int device) {
     call_packet_ptr->cuda_call_id = GPU_SET_DEVICE;
     call_packet_ptr->cudasetdevice.device = device;
 
-    // Vanadis write with 4B chunk, thus use uint32_t to pass
-    // the pointer to the balar packet
-    __sync_synchronize();
-    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
-    __sync_synchronize();
-
-    // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
-    __sync_synchronize();
+    // Make cuda call
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
 
-    g_last_error = response_packet_ptr->cuda_error;
     return response_packet_ptr->cuda_error;
 }
 
@@ -646,28 +565,19 @@ void __cudaRegisterTexture(
     call_packet_ptr->cudaregtexture.norm = norm;
     call_packet_ptr->cudaregtexture.ext = ext;
 
-    // Vanadis write with 4B chunk, thus use uint32_t to pass
-    // the pointer to the balar packet
-    __sync_synchronize();
-    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
-    __sync_synchronize();
-
-    // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
-    __sync_synchronize();
+    // Make cuda call
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
-
-    g_last_error = response_packet_ptr->cuda_error;
 }
 
 // TODO Will there be a problem with the textureReference pointer? Should pass by value?
 __host__ cudaError_t CUDARTAPI cudaBindTexture(
     size_t *offset, const struct textureReference *texref, const void *devPtr,
-    const struct cudaChannelFormatDesc *desc, size_t size __dv(UINT_MAX)) {
+    const struct cudaChannelFormatDesc *desc, size_t size) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start bind texture\n");
     }
@@ -681,22 +591,14 @@ __host__ cudaError_t CUDARTAPI cudaBindTexture(
     call_packet_ptr->cudabindtexture.desc = desc;
     call_packet_ptr->cudabindtexture.size = size;
 
-    // Vanadis write with 4B chunk, thus use uint32_t to pass
-    // the pointer to the balar packet
-    __sync_synchronize();
-    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
-    __sync_synchronize();
-
-    // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
-    __sync_synchronize();
+    // Make cuda call
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
 
-    g_last_error = response_packet_ptr->cuda_error;
     return response_packet_ptr->cuda_error;
 }
 
@@ -721,22 +623,13 @@ __host__ cudaError_t CUDARTAPI cudaMallocHost(void **ptr, size_t size) {
     call_packet_ptr->cudamallochost.addr = *ptr;
     call_packet_ptr->cudamallochost.size = size;
 
-    // Vanadis write with 4B chunk, thus use uint32_t to pass
-    // the pointer to the balar packet
-    __sync_synchronize();
-    *g_balarBaseAddr = (Addr_t) call_packet_ptr;
-    __sync_synchronize();
-
-    // Read from GPU will return the address to the cuda return packet
-    BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
-    __sync_synchronize();
+    // Make cuda call
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
-
-    g_last_error = response_packet_ptr->cuda_error;
 }
 
 // Added these CUDA calls that do nothing, just to make clang happy
