@@ -40,16 +40,14 @@ extern "C" {
     #include <stdlib.h>
 }
 
-// Map and protect balar's address
-extern "C" void __vanadisMapBalar() {
+// Map balar's address with some memory protection bits
+extern "C" void __vanadisMapBalar(int prot) {
+    // Default to restrict access til we make a cuda call
     #ifdef SYS_mmap2
-        g_balarBaseAddr = (Addr_t*) syscall(SYS_mmap2, 0, 0, PROT_WRITE|PROT_READ, 0, -2000, 0);
+        g_balarBaseAddr = (Addr_t*) syscall(SYS_mmap2, 0, 0, prot, 0, -2000, 0);
     #else
-        g_balarBaseAddr = (Addr_t*) syscall(SYS_mmap, 0, 0, PROT_WRITE|PROT_READ, 0, -2000, 0);
+        g_balarBaseAddr = (Addr_t*) syscall(SYS_mmap, 0, 0, prot, 0, -2000, 0);
     #endif
-
-    // Protect whole page for balar
-    mprotect(g_balarBaseAddr, 4096, PROT_NONE);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Mapping balar to address: %x\n", g_balarBaseAddr);
@@ -57,16 +55,21 @@ extern "C" void __vanadisMapBalar() {
     }
 }
 
+// unmap balar's address
+extern "C" void __vanadisUnmapBalar() {
+    munmap(g_balarBaseAddr, 4096);
+}
+
 extern "C" BalarCudaCallReturnPacket_t * makeCudaCall(BalarCudaCallPacket_t * call_packet_ptr) {
     // Make cuda call
     __sync_synchronize();
-    mprotect(g_balarBaseAddr, 4096, PROT_READ|PROT_WRITE);
+    __vanadisMapBalar(PROT_READ|PROT_WRITE);
     *g_balarBaseAddr = (Addr_t) call_packet_ptr;
     __sync_synchronize();
 
     // Read from GPU will return the address to the cuda return packet
     BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
-    mprotect(g_balarBaseAddr, 4096, PROT_NONE);
+    __vanadisUnmapBalar();
     __sync_synchronize();
 
     return response_packet_ptr;
@@ -74,7 +77,9 @@ extern "C" BalarCudaCallReturnPacket_t * makeCudaCall(BalarCudaCallPacket_t * ca
 
 extern "C" BalarCudaCallReturnPacket_t * readLastCudaStatus() {
     __sync_synchronize();
+    __vanadisMapBalar(PROT_READ|PROT_WRITE);
     BalarCudaCallReturnPacket_t * response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
+    __vanadisUnmapBalar();
     __sync_synchronize();
     return response_packet_ptr;
 }
@@ -337,9 +342,6 @@ unsigned int __cudaRegisterFatBinary(void *fatCubin) {
         printf("Registering fat binary\n");
         fflush(stdout);
     }
-
-    if (g_balarBaseAddr == (Addr_t *)-1)
-        __vanadisMapBalar();
 
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
