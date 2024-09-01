@@ -252,7 +252,7 @@ void DMAEngine::DMAHandlers::handle(StandardMem::ReadResp* resp) {
     uint8_t * offseted_ptr = dma->dma_ctrl_regs.simulator_mem_addr - offset;
 
     // Perform copy from response
-    for (uint32_t i = 0; i < dma->dma_ctrl_regs.transfer_size; i++) {
+    for (uint32_t i = 0; i < resp->size; i++) {
         *offseted_ptr = resp->data[i];
         offseted_ptr++;
     }
