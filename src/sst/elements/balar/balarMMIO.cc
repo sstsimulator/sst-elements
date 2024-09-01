@@ -278,8 +278,12 @@ void BalarMMIO::handleGPUCache(SST::Interfaces::StandardMem::Request* req) {
  * @param write 
  */
 void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::Write* write) {
+    out->verbose(_INFO_, "%s: receiving incoming write (%ld) to vaddr: %llx and paddr: %llx with size %lld\n", balar->getName().c_str(), write->getID(), write->vAddr, write->pAddr, write->size);
+
     // Save this write instance as we will need it to make response
     // when finish calling GPGPUSim after getting readresp
+    if (balar->pending_write != nullptr)
+        out->fatal(CALL_INFO, -1, "%s: Getting overlapping writes to balar! Incoming (%ld) Existing (%ld)!\n", balar->getName().c_str(), write->getID(), balar->pending_write->getID());
     balar->pending_write = write;
 
     // The write data is a scratch memory address to the real cuda call packet
@@ -329,10 +333,14 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::Write* write
  * @param read 
  */
 void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::Read* read) {
+    out->verbose(_INFO_, "%s: receiving incoming read (%ld) to vaddr: %llx and paddr: %llx with size %lld\n", balar->getName().c_str(), read->getID(), read->vAddr, read->pAddr, read->size);
+
     out->verbose(_INFO_, "Handling Read for return value for a %s request\n", gpu_api_to_string(balar->cuda_ret.cuda_call_id)->c_str());
 
     // Save this write instance as we will need it to make response
     // when finish writing return packet to memory
+    if (balar->pending_read != nullptr)
+        out->fatal(CALL_INFO, -1, "%s: Getting overlapping reads to balar! Incoming (%ld) Existing (%ld)!\n", balar->getName().c_str(), read->getID(), balar->pending_read->getID());
     balar->pending_read = read;
 
     DMAEngine::DMAEngineControlRegisters dma_registers;
@@ -370,6 +378,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::Read* read) 
  * @param resp 
  */
 void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::ReadResp* resp) {
+    out->verbose(_INFO_, "%s: receiving incoming readresp (%ld) to vaddr: %llx and paddr: %llx with size %lld\n", balar->getName().c_str(), resp->getID(), resp->vAddr, resp->pAddr, resp->size);
     // Classify the read request type
     std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = balar->requests.find(resp->getID());
     if (balar->requests.end() == i) {
@@ -396,6 +405,8 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::ReadResp* re
  * @param resp 
  */
 void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* resp) {
+    out->verbose(_INFO_, "%s: receiving incoming writeresp (%ld) to vaddr: %llx and paddr: %llx with size %lld\n", balar->getName().c_str(), resp->getID(), resp->vAddr, resp->pAddr, resp->size);
+
     std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = balar->requests.find(resp->getID());
     if (balar->requests.end() == i ) {
         out->fatal(_INFO_, "Event (%ld) not found!\n", resp->getID());
@@ -674,6 +685,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
                     out->verbose(CALL_INFO, 1, 0, "Handling a non-blocking request: %s\n", gpu_api_to_string(packet->cuda_call_id)->c_str());
                 }
             }
+            balar->pending_write = nullptr;
             delete write;
             delete resp;
         } else if (request_type.compare("Write_cuda_ret") == 0) {
@@ -683,11 +695,17 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
             StandardMem::ReadResp* read_resp = static_cast<StandardMem::ReadResp*>(read->makeResponse());
 
             // Return the scratch memory address as the read result
+            out->verbose(_INFO_, "%s: handling previous read request (%ld) for CUDA return packet to vaddr: %llx and paddr: %llx with size %lld, returning the address of the packet: %lx\n", balar->getName().c_str(), read->getID(), read->vAddr, read->pAddr, read->size, balar->packet_scratch_mem_addr);
+
             vector<uint8_t> payload;
             UInt64ToData(balar->packet_scratch_mem_addr, &payload);
             payload.resize(read->size, 0);
             read_resp->data = payload;
             balar->mmio_iface->send(read_resp);
+
+
+            // Clean pending read
+            balar->pending_read = nullptr;
             delete read;
             delete resp;
         } else if (request_type.compare("Issue_DMA_memcpy_D2H") == 0) {
@@ -697,6 +715,8 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
             // Since we get this request only after all data have been copied into host memory
 
             // Free temp buffer to hold memcpyD2H data
+            out->verbose(_INFO_, "%s: done with a memcpyD2H\n", balar->getName().c_str());
+
             free(balar->memcpyD2H_dst);
             balar->memcpyD2H_dst = NULL;
             balar->mmio_iface->send(balar->blocked_response);
@@ -732,11 +752,12 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
             out->verbose(CALL_INFO, 1, 0, "Handling a blocking request: %s\n", gpu_api_to_string(packet->cuda_call_id)->c_str());
 
             // Delete requests as we don't need them anymore
+            balar->pending_write = nullptr;
             delete write;
             delete resp;
         } else {
             // Unknown cmdstring, abort
-            out->fatal(CALL_INFO, -1, "%s: Unknown write request (%" PRIx64 "): %s!\n", balar->getName().c_str(), resp->getID(), request_type.c_str());
+            out->fatal(CALL_INFO, -1, "%s: Unknown write request (%ld): %s!\n", balar->getName().c_str(), resp->getID(), request_type.c_str());
         }
         // Delete the request 
         balar->requests.erase(i);

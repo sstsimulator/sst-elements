@@ -170,8 +170,8 @@ private:
     // packet within SST memory
     // As well as writeresp when we finish writing
     // CUDA return packet
-    StandardMem::Write* pending_write;
-    StandardMem::Read* pending_read;
+    StandardMem::Write* pending_write = nullptr;
+    StandardMem::Read* pending_read = nullptr;
 
     // Requests sent in this class
     std::map<Interfaces::StandardMem::Request::id_t, std::pair<SimTime_t, std::string>> requests;
