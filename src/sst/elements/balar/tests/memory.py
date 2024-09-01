@@ -91,7 +91,7 @@ class Builder:
         memNIC.addParams({
             "group" : group,
             "network_bw" : "25GB/s",
-            "debug": 0,
+            "debug": stdMem_debug,
             "debug_level": 10,
         })
         if source:
