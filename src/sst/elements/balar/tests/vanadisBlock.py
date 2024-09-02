@@ -126,7 +126,8 @@ class Vanadis_Builder:
             "load_store_entries" : lsq_entries,
             "fault_non_written_loads_after" : 0,
             "check_memory_loads" : "no",
-            "allow_speculated_operations": "no"
+            "allow_speculated_operations": "no",
+            # "dbgAddrs": "0x1000",
         })
         cpu_lsq.enableAllStatistics()
 
