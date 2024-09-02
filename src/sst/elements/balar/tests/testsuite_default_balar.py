@@ -7,6 +7,8 @@ import os
 import shutil
 
 
+# TODO: Create multiple classes of test? Quick test, short, and long test should be separated?
+# TODO: Check rodinia's result against reference files for functional correctness
 class testcase_balar(SSTTestCase):
 
     def setUp(self):
@@ -27,50 +29,83 @@ class testcase_balar(SSTTestCase):
     found_mem_pools_config = sst_core_config_include_file_get_value_str("USE_MEMPOOL", default="", disable_warning=True) != ""
     found_mpi_config = sst_core_config_include_file_get_value_str("SST_CONFIG_HAVE_MPI", default="", disable_warning=True) != ""
 
-    # @unittest.skipIf(missing_cuda_root, "test_balar_runvecadd test: Requires missing environment variable CUDA_ROOT.")
-    @unittest.skipIf(missing_cuda_install_path, "test_balar_runvecadd test: Requires missing environment variable CUDA_INSTALL_PATH.")
-    @unittest.skipIf(missing_gpgpusim_root, "test_balar_runvecadd test: Requires missing environment variable GPGPUSIM_ROOT.")
-    @unittest.skipIf(found_mem_pools_config, "test_balar_runvecadd test: Found mem-pools configured in core, test requires core to be built using --disable-mem-pools.")
-    @unittest.skipIf(found_mpi_config, "test_balar_runvecadd test: Found mpi configured in core, test requires core to be built using --disable-mpi.")
+    def compose_decorators(*decs):
+        def composed(f):
+            for dec in reversed(decs):
+                f = dec(f)
+            return f
+        return composed
+    
+    def balar_basic_unittest(test):
+        def wrapper(*args):
+            self = args[0]
+            return self.compose_decorators(
+                unittest.skipIf(self.missing_cuda_install_path, "test_balar_runvecadd test: Requires missing environment variable CUDA_INSTALL_PATH."),
+                unittest.skipIf(self.missing_gpgpusim_root, "test_balar_runvecadd test: Requires missing environment variable GPGPUSIM_ROOT."),
+                unittest.skipIf(self.found_mem_pools_config, "test_balar_runvecadd test: Found mem-pools configured in core, test requires core to be built using --disable-mem-pools."),
+                unittest.skipIf(self.found_mpi_config, "test_balar_runvecadd test: Found mpi configured in core, test requires core to be built using --disable-mpi."),
+                test(*args)
+            )
+        return wrapper
+
+    def balar_gpuapp_unittest(test):
+        def wrapper(*args):
+            self = args[0]
+            return self.compose_decorators(
+                self.balar_basic_unittest,
+                unittest.skipIf(self.missing_gpu_app_collection_root, "test_balar_clang test: Requires missing environment variable GPUAPPS_ROOT."),
+                test(*args)
+            )
+        return wrapper
+
+    @balar_basic_unittest
     def test_balar_runvecadd_testcpu(self):
         self.balar_testcpu_template("vectorAdd")
 
-    @unittest.skipIf(missing_cuda_install_path, "test_balar_runvecadd test: Requires missing environment variable CUDA_INSTALL_PATH.")
-    @unittest.skipIf(missing_gpgpusim_root, "test_balar_runvecadd test: Requires missing environment variable GPGPUSIM_ROOT.")
-    @unittest.skipIf(found_mem_pools_config, "test_balar_runvecadd test: Found mem-pools configured in core, test requires core to be built using --disable-mem-pools.")
-    @unittest.skipIf(found_mpi_config, "test_balar_runvecadd test: Found mpi configured in core, test requires core to be built using --disable-mpi.")
+    @balar_basic_unittest
     def test_balar_runvecadd_vanadis(self):
         self.balar_vanadis_template("vanadisHandshake")
 
-    @unittest.skipIf(missing_cuda_install_path, "balar_vanadis_clang test: Requires missing environment variable CUDA_INSTALL_PATH.")
-    @unittest.skipIf(missing_gpgpusim_root, "balar_vanadis_clang test: Requires missing environment variable GPGPUSIM_ROOT.")
-    @unittest.skipIf(found_mem_pools_config, "balar_vanadis_clang test: Found mem-pools configured in core, test requires core to be built using --disable-mem-pools.")
-    @unittest.skipIf(found_mpi_config, "balar_vanadis_clang test: Found mpi configured in core, test requires core to be built using --disable-mpi.")
+    @balar_basic_unittest
     def test_balar_vanadis_clang_helloworld(self):
         self.balar_vanadis_clang_template("helloworld")
     
-    @unittest.skipIf(missing_cuda_install_path, "balar_vanadis_clang test: Requires missing environment variable CUDA_INSTALL_PATH.")
-    @unittest.skipIf(missing_gpgpusim_root, "balar_vanadis_clang test: Requires missing environment variable GPGPUSIM_ROOT.")
-    @unittest.skipIf(found_mem_pools_config, "balar_vanadis_clang test: Found mem-pools configured in core, test requires core to be built using --disable-mem-pools.")
-    @unittest.skipIf(found_mpi_config, "balar_vanadis_clang test: Found mpi configured in core, test requires core to be built using --disable-mpi.")
+    @balar_basic_unittest
     def test_balar_vanadis_clang_vecadd(self):
         self.balar_vanadis_clang_template("vecadd")
 
-    @unittest.skipIf(missing_cuda_install_path, "balar_vanadis_clang test: Requires missing environment variable CUDA_INSTALL_PATH.")
-    @unittest.skipIf(missing_gpgpusim_root, "balar_vanadis_clang test: Requires missing environment variable GPGPUSIM_ROOT.")
-    @unittest.skipIf(missing_gpu_app_collection_root, "test_balar_clang test: Requires missing environment variable GPUAPPS_ROOT.")
-    @unittest.skipIf(found_mem_pools_config, "balar_vanadis_clang test: Found mem-pools configured in core, test requires core to be built using --disable-mem-pools.")
-    @unittest.skipIf(found_mpi_config, "balar_vanadis_clang test: Found mpi configured in core, test requires core to be built using --disable-mpi.")
+    @balar_gpuapp_unittest
+    def test_balar_vanadis_clang_rodinia_20_backprop_short(self):
+        self.balar_vanadis_clang_template("rodinia-2.0-backprop-short")
+
+    @balar_gpuapp_unittest
+    def test_balar_vanadis_clang_rodinia_20_backprop_1024(self):
+        self.balar_vanadis_clang_template("rodinia-2.0-backprop-1024", 1800)
+
+    @balar_gpuapp_unittest
+    def test_balar_vanadis_clang_rodinia_20_backprop_2048(self):
+        self.balar_vanadis_clang_template("rodinia-2.0-backprop-2048", 3600)
+
+    @balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_bfs_SampleGraph(self):
         self.balar_vanadis_clang_template("rodinia-2.0-bfs-SampleGraph")
+    
+    @balar_gpuapp_unittest
+    def test_balar_vanadis_clang_rodinia_20_bfs_graph4096(self):
+        self.balar_vanadis_clang_template("rodinia-2.0-bfs-graph4096", 3600)
 
-    @unittest.skipIf(missing_cuda_install_path, "balar_vanadis_clang test: Requires missing environment variable CUDA_INSTALL_PATH.")
-    @unittest.skipIf(missing_gpgpusim_root, "balar_vanadis_clang test: Requires missing environment variable GPGPUSIM_ROOT.")
-    @unittest.skipIf(found_mem_pools_config, "balar_vanadis_clang test: Found mem-pools configured in core, test requires core to be built using --disable-mem-pools.")
-    @unittest.skipIf(missing_gpu_app_collection_root, "test_balar_clang test: Requires missing environment variable GPUAPPS_ROOT.")
-    @unittest.skipIf(found_mpi_config, "balar_vanadis_clang test: Found mpi configured in core, test requires core to be built using --disable-mpi.")
+    @balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_lud_64(self):
         self.balar_vanadis_clang_template("rodinia-2.0-lud-64", 1200)
+
+    @balar_gpuapp_unittest
+    def test_balar_vanadis_clang_rodinia_20_lud_256(self):
+        self.balar_vanadis_clang_template("rodinia-2.0-lud-256", 4800)
+    
+    @balar_gpuapp_unittest
+    def test_balar_vanadis_clang_rodinia_20_nw_128_10(self):
+        self.balar_vanadis_clang_template("rodinia-2.0-nw-128-10", 1200)
+
 ####
 
     def balar_testcpu_template(self, testcase, testtimeout=400):
@@ -231,15 +266,28 @@ class testcase_balar(SSTTestCase):
             "helloworld": ["./vanadisLLVMRISCV/helloworld", ""],
             "vecadd": ["./vanadisLLVMRISCV/vecadd", ""],
             # Rodinia 2.0
+            ## Backprop
+            "rodinia-2.0-backprop-short": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/backprop-rodinia-2.0-ft", f"256"],
+            "rodinia-2.0-backprop-1024": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/backprop-rodinia-2.0-ft", f"1024"],
+            "rodinia-2.0-backprop-2048": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/backprop-rodinia-2.0-ft", f"2048"],
+            "rodinia-2.0-backprop-4096": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/backprop-rodinia-2.0-ft", f"4096"],
+            "rodinia-2.0-backprop-8192": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/backprop-rodinia-2.0-ft", f"8192"],
+
             ## BFS
             "rodinia-2.0-bfs-SampleGraph": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/bfs-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/bfs-rodinia-2.0-ft/data/SampleGraph.txt"],
-            # "rodinia-2.0-bfs-graph4096": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/bfs-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/bfs-rodinia-2.0-ft/data/graph4096.txt"],
-            # "rodinia-2.0-bfs-graph65536": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/bfs-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/bfs-rodinia-2.0-ft/data/graph65536.txt"],
+            "rodinia-2.0-bfs-graph4096": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/bfs-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/bfs-rodinia-2.0-ft/data/graph4096.txt"],
+            "rodinia-2.0-bfs-graph65536": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/bfs-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/bfs-rodinia-2.0-ft/data/graph65536.txt"],
+
             ## LUD
             "rodinia-2.0-lud-64": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/lud-rodinia-2.0-ft", f"-i {gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/lud-rodinia-2.0-ft/data/64.dat"],
             "rodinia-2.0-lud-256": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/lud-rodinia-2.0-ft", f"-i {gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/lud-rodinia-2.0-ft/data/256.dat"],
-            # "rodinia-2.0-lud-512": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/lud-rodinia-2.0-ft", f"-i {gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/lud-rodinia-2.0-ft/data/512.dat"],
-            # "rodinia-2.0-lud-2048": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/lud-rodinia-2.0-ft", f"-i {gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/lud-rodinia-2.0-ft/data/2048.dat"],
+            "rodinia-2.0-lud-512": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/lud-rodinia-2.0-ft", f"-i {gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/lud-rodinia-2.0-ft/data/512.dat"],
+            "rodinia-2.0-lud-2048": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/lud-rodinia-2.0-ft", f"-i {gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/lud-rodinia-2.0-ft/data/2048.dat"],
+
+            ## NW
+            "rodinia-2.0-nw-128-10": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/nw-rodinia-2.0-ft", f"128 10"],
+            "rodinia-2.0-nw-256-10": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/nw-rodinia-2.0-ft", f"256 10"],
+            "rodinia-2.0-nw-512-10": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/nw-rodinia-2.0-ft", f"512 10"],
         }
 
         # Get gpu apps executable and args
@@ -338,6 +386,8 @@ class testcase_balar(SSTTestCase):
         os_symlink_file(test_path, self.testbalarDir, "memory.py")
         os_symlink_file(test_path, self.testbalarDir, "vanadisBlock.py")
         os_symlink_file(test_path, self.testbalarDir, "vanadisOS.py")
+        # Copy the shared packet definition files from balar src
+        os_symlink_file(self.balarElementDir, tmpdir, "balar_packet.h")
 
         # Create a simlink of each file in the balar/tests/vectorAdd directory
         for f in os.listdir(self.balarElementVectorAddTestDir):
@@ -369,7 +419,6 @@ class testcase_balar(SSTTestCase):
         log_debug("Balar vanadisLLVM Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
         self.assertTrue(rtn.result() == 0, "vanadisLLVM executables and lib failed to compile")
 
-        # TODO Build GPU Apps in its own directory
         # Let GPU app knows we are building for SST integration
         if not self.missing_gpu_app_collection_root:
             # Compile rodinia 2.0
