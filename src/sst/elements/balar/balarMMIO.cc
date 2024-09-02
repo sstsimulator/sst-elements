@@ -695,7 +695,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
             StandardMem::ReadResp* read_resp = static_cast<StandardMem::ReadResp*>(read->makeResponse());
 
             // Return the scratch memory address as the read result
-            out->verbose(_INFO_, "%s: handling previous read request (%ld) for CUDA return packet to vaddr: %llx and paddr: %llx with size %lld, returning the address of the packet: %lx\n", balar->getName().c_str(), read->getID(), read->vAddr, read->pAddr, read->size, balar->packet_scratch_mem_addr);
+            out->verbose(_INFO_, "%s: handling previous read request (%ld) for CUDA return packet to vaddr: %llx and paddr: %llx with size %lld at inst: %llx, returning the address of the packet: %lx\n", balar->getName().c_str(), read->getID(), read->vAddr, read->pAddr, read->size, read->iPtr, balar->packet_scratch_mem_addr);
 
             vector<uint8_t> payload;
             UInt64ToData(balar->packet_scratch_mem_addr, &payload);
