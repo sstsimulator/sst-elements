@@ -116,7 +116,7 @@ bool DMAEngine::tick(SST::Cycle_t x) {
 
             StandardMem::Write* req = new StandardMem::Write(
                 dma_ctrl_regs.sst_mem_addr, actual_transfer_size, 
-                data, false);
+                data, false, 0, dma_ctrl_regs.sst_mem_addr);
 
 
             // Reduce the total data_size for record
@@ -131,11 +131,12 @@ bool DMAEngine::tick(SST::Cycle_t x) {
             }
 
             // Send the copy request to memory system
+            out.verbose(_INFO_, "%s: copy from simulator to SST mem space, writing vaddr: %llx paddr: %llx size: %d!\n", this->getName().c_str(), req->vAddr, req->pAddr, req->size);
             mem_iface->send(req);
         } else if (dma_ctrl_regs.dir == SST_TO_SIM) {
             // Need to first read it and get copy done inside readresp handler
             StandardMem::Read* req = new StandardMem::Read(
-                dma_ctrl_regs.sst_mem_addr, actual_transfer_size);
+                dma_ctrl_regs.sst_mem_addr, actual_transfer_size, 0, dma_ctrl_regs.sst_mem_addr);
 
             // Decrease the data size
             dma_ctrl_regs.data_size -= actual_transfer_size;
@@ -151,6 +152,8 @@ bool DMAEngine::tick(SST::Cycle_t x) {
             }
 
             // Send the read request
+            out.verbose(_INFO_, "%s: copy from SST to simulator mem space, reading vaddr: %llx paddr: %llx size: %d!\n", this->getName().c_str(), req->vAddr, req->pAddr, req->size);
+
             mem_iface->send(req);
         } else {
             out.fatal(CALL_INFO, -1, "%s: invalid DMA copy direction!\n", this->getName().c_str());
@@ -246,6 +249,8 @@ void DMAEngine::DMAHandlers::handle(StandardMem::Write* write) {
  * @param read 
  */
 void DMAEngine::DMAHandlers::handle(StandardMem::ReadResp* resp) {
+    dma->out.verbose(_INFO_, "%s: readresp from SST mem space, reading vaddr: %llx paddr: %llx size: %d!\n", dma->getName().c_str(), resp->vAddr, resp->pAddr, resp->size);
+
     // Find the simulator buffer pointer value by offset
     // of the sst mem space addr
     size_t offset = (dma->dma_ctrl_regs.sst_mem_addr - (resp->pAddr));
@@ -273,6 +278,7 @@ void DMAEngine::DMAHandlers::handle(StandardMem::ReadResp* resp) {
  * @param write 
  */
 void DMAEngine::DMAHandlers::handle(StandardMem::WriteResp* resp) {
+    dma->out.verbose(_INFO_, "%s: writeresp from SST mem space, reading vaddr: %llx paddr: %llx size: %d!\n", dma->getName().c_str(), resp->vAddr, resp->pAddr, resp->size);
     // Check if this is the last copy
     // Assuming the requests sent to memory are completed in order
     if (resp->pAddr == dma->dma_ctrl_regs.sst_mem_addr && 
