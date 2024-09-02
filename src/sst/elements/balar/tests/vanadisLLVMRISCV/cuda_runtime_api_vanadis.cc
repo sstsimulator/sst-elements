@@ -38,49 +38,123 @@ extern "C" {
     #include <sys/syscall.h>
     #include <sys/mman.h>
     #include <stdlib.h>
-}
 
-// Map balar's address with some memory protection bits
-extern "C" void __vanadisMapBalar(int prot) {
-    // Default to restrict access til we make a cuda call
-    #ifdef SYS_mmap2
-        g_balarBaseAddr = (Addr_t*) syscall(SYS_mmap2, 0, 0, prot, 0, -2000, 0);
-    #else
-        g_balarBaseAddr = (Addr_t*) syscall(SYS_mmap, 0, 0, prot, 0, -2000, 0);
-    #endif
-
-    if (g_debug_level >= LOG_LEVEL_DEBUG) {
-        printf("Mapping balar to address: %x\n", g_balarBaseAddr);
-        fflush(stdout);
+    inline __attribute__((always_inline)) void __vanadisFence() {
+        asm volatile ("fence");
     }
-}
 
-// unmap balar's address
-extern "C" void __vanadisUnmapBalar() {
-    munmap(g_balarBaseAddr, 4096);
+    // Map balar's address with some memory protection bits
+    // Use inline syscall to avoid unexpected speculative 
+    // loads to balar's address
+    inline __attribute__((always_inline)) void __vanadisMapBalar(int prot) {
+        // Default to restrict access til we make a cuda call
+        __vanadisFence();
+        int syscall_num;
+        #ifdef SYS_mmap2
+            syscall_num = SYS_mmap2;
+        #else
+            syscall_num = SYS_mmap;
+        #endif
+        // #ifdef SYS_mmap2
+        //     g_balarBaseAddr = (Addr_t*) syscall(SYS_mmap2, 0, 0, prot, 0, -2000, 0);
+        // #else
+        //     g_balarBaseAddr = (Addr_t*) syscall(SYS_mmap, 0, 0, prot, 0, -2000, 0);
+        // #endif
+        // mmap
+        asm volatile (
+            "add sp, sp, -56\n\t" // Reserve some stack space for storing ecall regs
+            "sd a0, 48(sp)\n\t"   // Save regs
+            "sd a1, 40(sp)\n\t"
+            "sd a2, 32(sp)\n\t"
+            "sd a3, 24(sp)\n\t"
+            "sd a4, 16(sp)\n\t"
+            "sd a5, 8(sp)\n\t"
+            "sd a7, 0(sp)\n\t"
+            // Begin mmap syscall
+            "li a0, 0\n\t"        // addr: 0
+            "li a1, 0\n\t"        // length: 0
+            "mv a2, %1\n\t"       // prot: prot
+            "li a3, 0\n\t"        // flags: 0
+            "li a4, -2000\n\t"    // fd: balar's fd in vanadis
+            "li a5, 0\n\t"        // offset: 0
+            "mv a7, %2\n\t"       // syscall: SYS_mmap
+            "ecall\n\t"           // perform syscall
+            "sd a0, %0\n\t"       // store mmap address
+            "ld a0, 48(sp)\n\t"   // Restore saved regs
+            "ld a1, 40(sp)\n\t"
+            "ld a2, 32(sp)\n\t"
+            "ld a3, 24(sp)\n\t"
+            "ld a4, 16(sp)\n\t"
+            "ld a5, 8(sp)\n\t"
+            "ld a7, 0(sp)\n\t"
+            "add sp, sp, 56\n\t"  // Restore stack pointer
+            : "=m" (g_balarBaseAddr)
+            : "r" (prot), "r" (syscall_num)
+            : "a0", "a1", "a2", "a3", "a4", "a5", "a7", "memory"
+        );
+        __vanadisFence();
+    }
+
+    // unmap balar's address
+    inline __attribute__((always_inline)) void __vanadisUnmapBalar() {
+        __vanadisFence();
+        // munmap(g_balarBaseAddr, 4096);
+        int syscall_num = SYS_munmap;
+        asm volatile (
+            "add sp, sp, -56\n\t" // Reserve some stack space for storing ecall regs
+            "sd a0, 48(sp)\n\t"   // Save regs
+            "sd a1, 40(sp)\n\t"
+            "sd a2, 32(sp)\n\t"
+            "sd a3, 24(sp)\n\t"
+            "sd a4, 16(sp)\n\t"
+            "sd a5, 8(sp)\n\t"
+            "sd a7, 0(sp)\n\t"
+            // Begin mmap syscall
+            "mv a0, %0\n\t"       // addr: g_balarBaseAddr
+            "li a1, 4096\n\t"     // length: 0
+            "li a2, 0\n\t"        // unused
+            "li a3, 0\n\t"        // unused
+            "li a4, 0\n\t"        // unused
+            "li a5, 0\n\t"        // unused
+            "mv a7, %1\n\t"       // syscall: SYS_mumap
+            "ecall\n\t"           // perform syscall
+            "ld a0, 48(sp)\n\t"   // Restore saved regs
+            "ld a1, 40(sp)\n\t"
+            "ld a2, 32(sp)\n\t"
+            "ld a3, 24(sp)\n\t"
+            "ld a4, 16(sp)\n\t"
+            "ld a5, 8(sp)\n\t"
+            "ld a7, 0(sp)\n\t"
+            "add sp, sp, 56\n\t"  // Restore stack pointer
+            :
+            : "r" (g_balarBaseAddr), "r" (syscall_num)
+            : "a0", "a1", "a2", "a3", "a4", "a5", "a7", "memory"
+        );
+        __vanadisFence();
+    }
 }
 
 extern "C" BalarCudaCallReturnPacket_t * makeCudaCall(BalarCudaCallPacket_t * call_packet_ptr) {
     // Make cuda call
-    __sync_synchronize();
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("Making CUDA API Call ID: %d\n", 
+                call_packet_ptr->cuda_call_id);
+    }
     __vanadisMapBalar(PROT_READ|PROT_WRITE);
     *g_balarBaseAddr = (Addr_t) call_packet_ptr;
-    __sync_synchronize();
+    __vanadisFence();
 
     // Read from GPU will return the address to the cuda return packet
     BalarCudaCallReturnPacket_t *response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
     __vanadisUnmapBalar();
-    __sync_synchronize();
 
     return response_packet_ptr;
 }
 
 extern "C" BalarCudaCallReturnPacket_t * readLastCudaStatus() {
-    __sync_synchronize();
     __vanadisMapBalar(PROT_READ|PROT_WRITE);
     BalarCudaCallReturnPacket_t * response_packet_ptr = (BalarCudaCallReturnPacket_t *)*g_balarBaseAddr;
     __vanadisUnmapBalar();
-    __sync_synchronize();
     return response_packet_ptr;
 }
 
@@ -102,7 +176,7 @@ cudaError_t cudaMalloc(void **devPtr, uint64_t size) {
     BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
-        printf("CUDA API ID: %d with error: %d\nMalloc addr: %lu Dev addr: %lu\n", 
+        printf("CUDA API ID: %d with error: %d\nMalloc addr: %lx Dev addr: %lx\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error,
                 response_packet_ptr->cudamalloc.malloc_addr, response_packet_ptr->cudamalloc.devptr_addr);
     }
