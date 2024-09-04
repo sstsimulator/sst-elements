@@ -4,11 +4,10 @@ import sst
 
 coherence_protocol="MESI"
 
-vanadis_isa = os.getenv("VANADIS_ISA", "MIPS")
-isa="mipsel"
-# TODO Weili: create different ISA version of CUDA program
-# vanadis_isa = os.getenv("VANADIS_ISA", "RISCV64")
-# isa="riscv64"
+# vanadis_isa = os.getenv("VANADIS_ISA", "MIPS")
+# isa="mipsel"
+vanadis_isa = os.getenv("VANADIS_ISA", "RISCV64")
+isa="riscv64"
 
 #physMemSize = "4GiB"
 
