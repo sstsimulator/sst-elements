@@ -1,4 +1,4 @@
-PREFIX := mipsel-linux-musl-
+PREFIX := $(RISCV_TOOLCHAIN_INSTALL_PATH)/bin/riscv64-unknown-linux-gnu-
 CC     := $(PREFIX)gcc
 CFLAGS := -I. -static -O3
 OBJDUMPFLAGS := -Mno-aliases -Mnumeric --disassemble-all --disassemble-zeroes -S
