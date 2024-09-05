@@ -332,12 +332,14 @@ SimTransport::memcopy(void* dst, void* src, uint64_t bytes)
   if (isNonNullBuffer(dst) && isNonNullBuffer(src)){
     ::memcpy(dst, src, bytes);
   }
+  //FIXME
   //api_parent_app_->computeBlockMemcpy(bytes);
 }
 
 void
 SimTransport::memcopyDelay(uint64_t bytes)
 {
+  //FIXME
   //api_parent_app_->computeBlockMemcpy(bytes);
 }
 
@@ -360,6 +362,7 @@ SimTransport::nidlist() const
 void
 SimTransport::compute(SST::Hg::TimeDelta t)
 {
+  //FIXME
   //api_parent_app_->compute(t);
 }
 
@@ -753,47 +756,62 @@ CollectiveDoneMessage*
 CollectiveEngine::alltoall(void *dst, void *src, int nelems, int type_size, int tag,
                             int cq_id, Communicator* comm)
 {
-//  auto* msg = skipCollective(Collective::alltoall, cq_id, comm, dst, src, nelems, type_size, tag);
-//  if (msg) return msg;
+  auto* msg = skipCollective(Collective::alltoall, cq_id, comm, dst, src, nelems, type_size, tag);
+  if (msg) {
+    return msg;
+  }
 
-//  if (!comm) comm = global_domain_;
+  if (!comm) comm = global_domain_;
 
-//  //FIXME
-//  auto* fact = AllToAllCollective::getBuilderLibrary("macro");
-//  auto* builder = fact->getBuilder(alltoall_type_);
-//  if (!builder){
-//    sst_hg_abort_printf("invalid alltoall type requested: %s", allgather_type_.c_str());
-//  }
+  if (comm->smpComm() && comm->smpBalanced()){
+    int smpSize = comm->smpComm()->nproc();
+    void* intraDst = dst ? new char[nelems*type_size*smpSize] : nullptr;
+    int intra_tag = 1<<28 | tag;
 
-//  if (comm->smpComm() && comm->smpBalanced()){
-//    int smpSize = comm->smpComm()->nproc();
-//    void* intraDst = dst ? new char[nelems*type_size*smpSize] : nullptr;
-//    int intra_tag = 1<<28 | tag;
-
-//    BtreeGather* intra = new BtreeGather(this, 0, intraDst, src, smpSize*nelems,
-//                                         type_size, intra_tag, cq_id, comm->smpComm());
-//    DagCollective* prev;
-//    if (comm->ownerComm()){
-//      int inter_tag = 2<<28 | tag;
-//      AllToAllCollective* inter = builder->create(this, dst, intraDst, smpSize*nelems,
-//                                                  type_size, inter_tag, cq_id, comm->ownerComm());
-//      intra->setSubsequent(inter);
-//      prev = inter;
-//    } else {
-//      prev = intra;
-//    }
-//    int bcast_tag = 3<<28 | tag;
-//    auto* bcast = new BinaryTreeBcastCollective(this, 0, dst, comm->nproc()*nelems,
-//                                                type_size, bcast_tag, cq_id, comm->smpComm());
-//    prev->setSubsequent(bcast);
-//    auto* final = new DoNothingCollective(this, tag, cq_id, comm);
-//    bcast->setSubsequent(final);
-//    return startCollective(intra);
-//  } else {
-//    AllToAllCollective* coll = builder->create(this, dst, src, nelems, type_size, tag, cq_id, comm);
-//    return startCollective(coll);
-//  }
-  sst_hg_abort_printf("unimplemented\n");
+    BtreeGather* intra = new BtreeGather(this, 0, intraDst, src, smpSize*nelems,
+                                         type_size, intra_tag, cq_id, comm->smpComm());
+    DagCollective* prev;
+    if (comm->ownerComm()){
+      int inter_tag = 2<<28 | tag;
+      AllToAllCollective* inter;
+      if (alltoall_type_ == "bruck") {
+        inter = (AllToAllCollective*) new BruckAlltoallCollective(this, dst, intraDst,
+                                                             smpSize*nelems, type_size, inter_tag, cq_id, comm->ownerComm());
+      }
+      else if (alltoall_type_ == "direct") {
+        inter = (AllToAllCollective*) new DirectAlltoallCollective(this, dst, intraDst, smpSize*nelems,
+                                                              type_size, inter_tag, cq_id, comm->ownerComm());
+      }
+      else {
+        sst_hg_abort_printf("unrecognized alltoall type");
+      }
+      intra->setSubsequent(inter);
+      prev = inter;
+    } else {
+      std::cerr << "prev = intra = " << intra << std::endl;
+      prev = intra;
+    }
+    int bcast_tag = 3<<28 | tag;
+    auto* bcast = new BinaryTreeBcastCollective(this, 0, dst, comm->nproc()*nelems,
+                                                type_size, bcast_tag, cq_id, comm->smpComm());
+    prev->setSubsequent(bcast);
+    auto* final = new DoNothingCollective(this, tag, cq_id, comm);
+    bcast->setSubsequent(final);
+    return startCollective(intra);
+  } else {
+    AllToAllCollective* coll;
+    if (alltoall_type_ == "bruck") {
+      coll = (AllToAllCollective*) new BruckAlltoallCollective(this, dst, src, nelems, type_size, tag, cq_id, comm);
+    }
+    else if (alltoall_type_ == "direct") {
+      coll = (AllToAllCollective*) new DirectAlltoallCollective(this, dst, src, nelems,
+                                                            type_size, tag, cq_id, comm);
+    }
+    else {
+      sst_hg_abort_printf("unrecognized alltoall type");
+    }
+    return startCollective(coll);
+  }
   return nullptr;
 }
 
@@ -813,56 +831,71 @@ CollectiveDoneMessage*
 CollectiveEngine::allgather(void *dst, void *src, int nelems, int type_size, int tag,
                              int cq_id, Communicator* comm)
 {
-// auto* msg = skipCollective(Collective::allgather, cq_id, comm, dst, src, nelems, type_size, tag);
-// if (msg) return msg;
+  auto* msg = skipCollective(Collective::allgather, cq_id, comm, dst, src, nelems, type_size, tag);
+  if (msg) return msg;
 
-//  if (!comm) comm = global_domain_;
+  if (!comm) comm = global_domain_;
 
-//  //FIXME
-//  auto* fact = AllgatherCollective::getBuilderLibrary("macro");
-//  if (!fact){
-//    sst_hg_abort_printf("No allgather collective algorithms registered!");
-//  }
+  if (comm->smpComm() && comm->smpBalanced()){
+    int smpSize = comm->smpComm()->nproc();
+    void* intraDst = dst ? new char[nelems*type_size*smpSize] : nullptr;
 
-//  auto* builder = fact->getBuilder(allgather_type_);
-//  if (!builder){
-//    sst_hg_abort_printf("invalid allgather type requested: %s", allgather_type_.c_str());
-//  }
+    int intra_tag = 1<<28 | tag;
 
-//  if (comm->smpComm() && comm->smpBalanced()){
-//    int smpSize = comm->smpComm()->nproc();
-//    void* intraDst = dst ? new char[nelems*type_size*smpSize] : nullptr;
+    AllgatherCollective* intra;
+    if (allgather_type_ == "bruck") {
+      intra = (AllgatherCollective*) new BruckAllgatherCollective(this, intraDst, src, nelems, type_size,
+                                                                intra_tag, cq_id, comm->smpComm());
+    }
+    else if (allgather_type_ == "ring") {
+      intra = (AllgatherCollective*) new RingAllgatherCollective(this, intraDst, src, nelems, type_size,
+                                                                intra_tag, cq_id, comm->smpComm());
+    }
+    else {
+      sst_hg_abort_printf("unrecognized allgather type");
+    }
 
-//    int intra_tag = 1<<28 | tag;
-
-
-
-//    AllgatherCollective* intra = builder->create(this, intraDst, src, nelems,
-//                                                 type_size, intra_tag, cq_id, comm->smpComm());
-
-//    DagCollective* prev;
-//    if (comm->ownerComm()){
-//      int inter_tag = 2<<28 | tag;
-
-//      AllgatherCollective* inter = builder->create(this, dst, intraDst, smpSize*nelems, type_size,
-//                                                   inter_tag, cq_id, comm->ownerComm());
-//      intra->setSubsequent(inter);
-//      prev = inter;
-//    } else {
-//      prev = intra;
-//    }
-//    int bcast_tag = 3<<28 | tag;
-//    auto* bcast = new BinaryTreeBcastCollective(this, 0, dst, comm->nproc()*nelems,
-//                                                type_size, bcast_tag, cq_id, comm->smpComm());
-//    prev->setSubsequent(bcast);
-//    auto* final = new DoNothingCollective(this, tag, cq_id, comm);
-//    bcast->setSubsequent(final);
-//    return startCollective(intra);
-//  } else {
-//    AllgatherCollective* coll = builder->create(this, dst, src, nelems, type_size, tag, cq_id, comm);
-//    return startCollective(coll);
-//  }
-  sst_hg_abort_printf("unimplemented\n");
+    DagCollective* prev;
+    if (comm->ownerComm()){
+      int inter_tag = 2<<28 | tag;
+      AllgatherCollective* inter;
+      if (allgather_type_ == "bruck") {
+        intra = (AllgatherCollective*) new BruckAllgatherCollective(this, dst, intraDst, smpSize*nelems, type_size,
+                                                                  inter_tag, cq_id, comm->ownerComm());
+      }
+      else if (allgather_type_ == "ring") {
+        intra = (AllgatherCollective*) new RingAllgatherCollective(this, dst, intraDst, smpSize*nelems, type_size,
+                                                                 inter_tag, cq_id, comm->ownerComm());
+      }
+      else {
+        sst_hg_abort_printf("unrecognized allgather type");
+      }
+      intra->setSubsequent(inter);
+      prev = inter;
+    } else {
+      prev = intra;
+    }
+    int bcast_tag = 3<<28 | tag;
+    auto* bcast = new BinaryTreeBcastCollective(this, 0, dst, comm->nproc()*nelems,
+                                                type_size, bcast_tag, cq_id, comm->smpComm());
+    prev->setSubsequent(bcast);
+    auto* final = new DoNothingCollective(this, tag, cq_id, comm);
+    bcast->setSubsequent(final);
+    return startCollective(intra);
+  }
+  else {
+    AllgatherCollective* coll;
+    if (allgather_type_ == "bruck") {
+      coll = (AllgatherCollective*) new BruckAllgatherCollective(this, dst, src, nelems, type_size, tag, cq_id, comm);
+    }
+    else if (allgather_type_ == "ring") {
+      coll = (AllgatherCollective*) new RingAllgatherCollective(this, dst, src, nelems, type_size, tag, cq_id, comm);
+    }
+    else {
+      sst_hg_abort_printf("unrecognized allgather type");
+    }
+    return startCollective(coll);
+  }
   return nullptr;
 }
 
