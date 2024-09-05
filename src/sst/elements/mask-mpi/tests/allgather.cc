@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
-#define ssthg_app_name alltoall
+#define ssthg_app_name allgather
 
 #include <stddef.h>
 #include <stdio.h>
@@ -59,13 +59,8 @@ int main(int argc, char* argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    int* values = new int[size];
-    for(int i = 0; i < size; i++) {
-      values[i] = rank;
-    }
-
     int* recv_values = new int[size];
-    MPI_Alltoall(values, 1, MPI_INT, recv_values, 1, MPI_INT, MPI_COMM_WORLD);
+    MPI_Allgather(&rank, 1, MPI_INT, recv_values, size, MPI_INT, MPI_COMM_WORLD);
     if(rank == 0) {
       for(int i = 0; i < size; ++i) {
         printf("recv_values[%d]=%d\n",i, recv_values[i]);
