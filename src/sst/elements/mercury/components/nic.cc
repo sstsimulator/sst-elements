@@ -198,17 +198,21 @@ NIC::incomingPacket(int vn){
     MyRequest* myreq = static_cast<MyRequest*>(req);
     auto bytes = myreq->size_in_bits/8;
     auto* payload = myreq->takePayload();
-    MessageEvent* ev = payload ? static_cast<MessageEvent*>(payload) : nullptr;
-    Flow* flow = cq_.recv(myreq->flow_id, bytes, ev ? ev->msg() : nullptr);
-    // printf("Rank %d receiving packet of size %d for flow %lu on vn %d: %s",
-    //         my_addr_,(myreq->size_in_bits/8), myreq->flow_id, vn, (flow ? flow->toString().c_str() : "no flow"));
+    //MessageEvent* ev = payload ? static_cast<MessageEvent*>(payload) : nullptr;
+    auto* incoming_msg = payload ? static_cast<NetworkMessage*>(payload) : nullptr;
+    //Flow* flow = cq_.recv(myreq->flow_id, bytes, ev ? ev->msg() : nullptr);
+    Flow* flow = cq_.recv(myreq->flow_id, bytes, incoming_msg);
+    //printf("Rank %d receiving packet of size %d for flow %lu on vn %d: %s",
+    //        my_addr_,(myreq->size_in_bits/8), (uint64_t) myreq->flow_id, vn, (flow ? flow->toString().c_str() : "no flow"));
     if (flow){
       auto* msg = static_cast<NetworkMessage*>(flow);
 //      nic_debug("fully received message %s", msg->toString().c_str());
       recvMessage(msg);
     }
     delete myreq;
-    if (ev) delete ev;
+    //if (ev) delete ev;
+    //FIXME: need to figure out ownership and who deletes what here
+    //if (incoming_msg) delete incoming_msg;
     req = link_control_->recv(vn);
   }
   return true; //keep me active
@@ -278,7 +282,8 @@ NIC::sendWhatYouCan(int vn, Pending& p) {
       } else {
         ack_queue_[vn].push(nullptr);
       }
-      req->givePayload(new MessageEvent(p.payload));
+      //req->givePayload(new MessageEvent(p.payload));
+      req->givePayload(p.payload);
     } else {
       ack_queue_[vn].push(nullptr);
       req->givePayload(nullptr);

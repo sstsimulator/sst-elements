@@ -21,7 +21,7 @@
 namespace SST {
 namespace Hg {
 
-class Request : public serializable, public printable {
+class Request : public Event {
 };
 
 } // end namespace Hg
