@@ -117,7 +117,6 @@ class SumiServer :
 
   void registerProc(int rank, SimTransport* proc){
     int app_id = proc->sid().app_;
-    output.output("SumiServer registering rank %d for app %d", rank, app_id);
     SimTransport*& slot = procs_[app_id][rank];
     if (slot){
       sst_hg_abort_printf("SumiServer: already registered rank %d for app %d on node %d",
@@ -223,18 +222,19 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Compo
   //the server is what takes on the specified libname
   completion_queues_(1),
 //  spy_bytes_(nullptr),
-  parent_app_(parent),
   default_progress_queue_(parent->os()),
   nic_ioctl_(parent->os()->nicDataIoctl()),
   qos_analysis_(nullptr),
   pragma_block_set_(false),
-  pragma_timeout_(-1)
+  pragma_timeout_(-1),
+  os_(parent->os())
 {
   completion_queues_[0] = std::bind(&DefaultProgressQueue::incoming,
                                     &default_progress_queue_, 0, std::placeholders::_1);
   null_completion_notify_ = std::bind(&SimTransport::drop, this, std::placeholders::_1);
-  rank_ = sid().task_;
-  auto* server_lib = parent_->os()->lib(server_libname_);
+  //rank_ = sid().task_;
+  rank_ = os_->addr();
+  auto* server_lib = parent->os()->lib(server_libname_);
   SumiServer* server;
   // only do one server per app per node
   if (server_lib == nullptr) {
@@ -253,9 +253,8 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Compo
   pin_delay_ = rdma_pin_latency_.ticks() || rdma_page_delay_.ticks();
   page_size_ = params.find<SST::UnitAlgebra>("rdma_page_size", "4096").getRoundedValue();
 
-//  rank_mapper_ = sstmac::sw::TaskMapping::globalMapping(sid().app_);
-//  nproc_ = rank_mapper_->nproc();
-  nproc_ = 2;
+  output.output("%d", sid().app_);
+  nproc_ = os_->nranks();
 
   auto qos_params = params.get_scoped_params("qos");
   auto qos_name = qos_params.find<std::string>("name", "null");
@@ -263,7 +262,7 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Compo
 
   server->registerProc(rank_, this);
 
-//  if (!engine_) engine_ = new CollectiveEngine(params, this);
+  if (!engine_) engine_ = new CollectiveEngine(params, this);
 
   smp_optimize_ = params.find<bool>("smp_optimize", false);
 }
@@ -286,10 +285,10 @@ void
 SimTransport::init()
 {
   if (smp_optimize_){
-//    engine_->barrier(-1, Message::default_cq);
-//    engine_->blockUntilNext(Message::default_cq);
+   engine_->barrier(-1, Message::default_cq);
+   engine_->blockUntilNext(Message::default_cq);
 
-    SumiServer* server = safe_cast(SumiServer, parent_->os()->lib(server_libname_));
+    SumiServer* server = safe_cast(SumiServer, api_parent_app_->os()->lib(server_libname_));
     auto& map = server->getProcs(sid().app_);
     if (map.size() > 1){ //enable smp optimizations
       for (auto& pair : map){
@@ -308,11 +307,11 @@ SimTransport::finish()
 
 SimTransport::~SimTransport()
 {
-  SumiServer* server = safe_cast(SumiServer, parent_->os()->lib(server_libname_));
+  SumiServer* server = safe_cast(SumiServer, api_parent_app_->os()->lib(server_libname_));
   bool del = server->unregisterProc(rank_, this);
   if (del) delete server;
 
-  //if (engine_) delete engine_;
+  if (engine_) delete engine_;
 
   //if (spy_bytes_) delete spy_bytes_;
   //if (spy_num_messages_) delete spy_num_messages_;
@@ -333,13 +332,13 @@ SimTransport::memcopy(void* dst, void* src, uint64_t bytes)
   if (isNonNullBuffer(dst) && isNonNullBuffer(src)){
     ::memcpy(dst, src, bytes);
   }
-  //parent_->computeBlockMemcpy(bytes);
+  //api_parent_app_->computeBlockMemcpy(bytes);
 }
 
 void
 SimTransport::memcopyDelay(uint64_t bytes)
 {
-  //parent_->computeBlockMemcpy(bytes);
+  //api_parent_app_->computeBlockMemcpy(bytes);
 }
 
 void
@@ -355,14 +354,13 @@ SimTransport::nidlist() const
   //the types are the same size and the bits can be
   //interpreted correctly
   //return (int*) rank_mapper_->rankToNode().data();
-  sst_hg_abort_printf("nidlist unimplemented\n");
   return nullptr;
 }
 
 void
 SimTransport::compute(SST::Hg::TimeDelta t)
 {
-  //parent_->compute(t);
+  //api_parent_app_->compute(t);
 }
 
 
@@ -372,7 +370,7 @@ SimTransport::send(Message* m)
 //  int qos = qos_analysis_->selectQoS(m);
 //  m->setQoS(qos);
 //  if (!m->started()){
-//    m->setTimeStarted(parent_app_->now());
+//    m->setTimeStarted(api_parent_app_->now());
 //  }
 
 //  if (spy_bytes_){
@@ -402,21 +400,21 @@ SimTransport::send(Message* m)
         }
       } else {
         if (post_header_delay_.ticks()) {
-          //parent_->compute(post_header_delay_);
+          //api_parent_app_->compute(post_header_delay_);
         }
         nic_ioctl_(m);
       }
       break;
     case SST::Hg::NetworkMessage::posted_send:
       if (post_header_delay_.ticks()) {
-        //parent_->compute(post_header_delay_);
+        //api_parent_app_->compute(post_header_delay_);
       }
       nic_ioctl_(m);
       break;
     case SST::Hg::NetworkMessage::rdma_get_request:
     case SST::Hg::NetworkMessage::rdma_put_payload:
       if (post_rdma_delay_.ticks()) {
-        //parent_->compute(post_rdma_delay_);
+        //api_parent_app_->compute(post_rdma_delay_);
       }
       nic_ioctl_(m);
       break;
@@ -478,9 +476,7 @@ SimTransport::rdmaPutResponse(Message* m, uint64_t payload_bytes,
 uint64_t
 SimTransport::allocateFlowId()
 {
-  //return parent_->os()->node()->allocateUniqueId();
-  // FIXME
-  return 0;
+  return api_parent_app_->os()->allocateUniqueId();
 }
 
 void
@@ -488,7 +484,7 @@ SimTransport::incomingMessage(Message *msg)
 {
 //#if SSTMAC_COMM_DELAY_STATS
 //  if (msg){
-//    msg->setTimeArrived(parent_app_->now());
+//    msg->setTimeArrived(api_parent_app_->now());
 //  }
 //#endif
   msg->writeSyncValue();
@@ -511,9 +507,7 @@ SimTransport::incomingMessage(Message *msg)
 SST::Hg::Timestamp
 SimTransport::now() const
 {
-  //return parent_app_->now();
-  //FIXME
-  return SST::Hg::Timestamp(0);
+  return api_parent_app_->now();
 }
 
 void*

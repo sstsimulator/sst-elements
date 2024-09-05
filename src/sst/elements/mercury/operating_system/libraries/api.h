@@ -45,7 +45,7 @@ class API
   NodeId addr() const;
 
   App* parent() const {
-    return parent_;
+    return api_parent_app_;
   }
 
   Thread* activeThread();
@@ -78,8 +78,7 @@ class API
 
  protected:
   API(SST::Params& params, App* parent, SST::Component* comp);
-
-  App* parent_;
+  App* api_parent_app_;
 
 };
 

@@ -17,7 +17,7 @@
 
 #include <sstream>
 #include <stdint.h>
-#include <mercury/hardware/common/unique_id.h>
+#include <mercury/common/unique_id.h>
 
 namespace SST {
 namespace Hg {
