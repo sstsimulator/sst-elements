@@ -138,20 +138,19 @@ class NIC : public SST::Hg::SubComponent
     Timestamp start;
   };
 
-  struct MessageEvent : public Event {
-    NotSerializable(MessageEvent)
-    MessageEvent(NetworkMessage* msg) :
-      msg_(msg)
-    {
-    }
-
-    NetworkMessage* msg() const {
-      return msg_;
-    }
-
-   private:
-    NetworkMessage*  msg_;
-  };
+//  struct MessageEvent : public Event {
+//    MessageEvent(NetworkMessage* msg) :
+//      msg_(msg)
+//    {
+//    }
+//
+//    NetworkMessage* msg() const {
+//      return msg_;
+//    }
+//
+//   private:
+//    NetworkMessage*  msg_;
+//  };
 
 private:
   struct Pending {

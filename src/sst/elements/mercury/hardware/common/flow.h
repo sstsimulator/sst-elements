@@ -55,7 +55,7 @@ class Flow : public Request
   void
   serialize_order(Core::Serialization::serializer& ser) override
   {
-    //Event::serialize_order(ser);
+    Event::serialize_order(ser);
     ser & flow_id_;
     ser & byte_length_;
     ser & libname_;

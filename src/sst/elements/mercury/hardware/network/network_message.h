@@ -147,7 +147,11 @@ class NetworkMessage : public Flow
 
   bool isMetadata() const;
 
-  virtual NetworkMessage* cloneInjectionAck() const = 0;
+  //virtual NetworkMessage* cloneInjectionAck() const = 0;
+  virtual NetworkMessage* cloneInjectionAck() const {
+    sst_hg_abort_printf("cloneInjectionAck should be overriden\n");
+    return nullptr;
+  }
 
   void nicReverse(type_t newtype);
 
