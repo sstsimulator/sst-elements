@@ -39,11 +39,10 @@ def read_arguments():
 def setup_config_params(config_file_list, override_list):
     l_params = {}
     for l_configFileEntry in config_file_list:
-        l_configFile = open(l_configFileEntry, 'r')
-        for l_line in l_configFile:
-            l_tokens = l_line.split()
-            #print (l_tokens[0], ": ", l_tokens[1])
-            l_params[l_tokens[0]] = l_tokens[1]
+        with open(l_configFileEntry) as l_configFile:
+            for l_line in l_configFile:
+                l_tokens = l_line.split()
+                l_params[l_tokens[0]] = l_tokens[1]
 
     for override in override_list:
         l_tokens = override.split("=")
