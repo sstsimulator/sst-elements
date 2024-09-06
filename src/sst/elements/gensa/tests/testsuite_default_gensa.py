@@ -69,6 +69,7 @@ class testcase_gensa_Component(SSTTestCase):
         if not self.checkColumn(o, "13", [1,1,1,0]): cmp_result = False
         if not self.checkColumn(o, "14", [1,1,0,0]): cmp_result = False
         self.assertTrue(cmp_result, "Output file {0}/out does not contain expected spike pattern".format(outdir))
+        o.close()
 
     def checkColumn(self, o, index, pattern):
         c = o.getColumn(index)

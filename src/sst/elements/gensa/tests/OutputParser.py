@@ -101,7 +101,8 @@ class OutputParser:
         self.rows         = 0
 
     def close(self):
-        if self.inFile: self.inFile.close()
+        if self.inFile is not None:
+            self.inFile.close()
         self.inFile = None
         self.columns = []
 
@@ -175,7 +176,9 @@ class OutputParser:
                 if c < count: column.values.append(column.value)
                 else:         column.values.append(defaultValue)  # Because the structure is not sparse, we must fill out every row.
                 c += 1
-        if len(self.columns) == 0: return  # failed to read any input, not even a header row
+        if len(self.columns) == 0:
+            self.close()
+            return  # failed to read any input, not even a header row
 
         # If there is a separate columns file, open and parse it.
         columnFileName = fileName + ".columns"
