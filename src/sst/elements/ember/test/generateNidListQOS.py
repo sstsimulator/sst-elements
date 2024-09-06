@@ -30,7 +30,7 @@ def _random_linear( args ):
     global _nids
     size = int(args[0])
 
-    if len(args) is 2 :
+    if len(args) == 2:
         random.seed(int(args[1]))
     
     random.shuffle(_nids)
@@ -150,7 +150,7 @@ def generate( args ):
     global _apps
     _apps.append(app)
 
-    if len(_nids) is 0 :
+    if not len(_nids):
         _finalize_qos_config(total_nodes)
     
     return ','.join(str(num) for num in nid_list)
