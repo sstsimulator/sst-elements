@@ -706,6 +706,7 @@ __host__ cudaError_t CUDARTAPI cudaMallocHost(void **ptr, size_t size) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
     }
+    return response_packet_ptr->cuda_error;
 }
 
 // Added these CUDA calls that do nothing, just to make clang happy
