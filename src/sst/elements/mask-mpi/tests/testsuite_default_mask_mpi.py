@@ -30,6 +30,36 @@ class testcase_mask_mpi(SSTTestCase):
             os.environ["SST_LIB_PATH"] = path + ":" + libdir
         self.mask_mpi_template("test_sendrecv")
 
+    def test_reduce(self):
+        testdir = self.get_testsuite_dir()
+        libdir = sstsimulator_conf_get_value_str("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR")
+        path = os.environ.get("SST_LIB_PATH")
+        if path is None or path == "":
+            os.environ["SST_LIB_PATH"] = libdir
+        else:
+            os.environ["SST_LIB_PATH"] = path + ":" + libdir
+        self.mask_mpi_template("test_reduce")
+
+    def test_alltoall(self):
+        testdir = self.get_testsuite_dir()
+        libdir = sstsimulator_conf_get_value_str("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR")
+        path = os.environ.get("SST_LIB_PATH")
+        if path is None or path == "":
+            os.environ["SST_LIB_PATH"] = libdir
+        else:
+            os.environ["SST_LIB_PATH"] = path + ":" + libdir
+        self.mask_mpi_template("test_alltoall")
+
+    def test_allgather(self):
+        testdir = self.get_testsuite_dir()
+        libdir = sstsimulator_conf_get_value_str("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR")
+        path = os.environ.get("SST_LIB_PATH")
+        if path is None or path == "":
+            os.environ["SST_LIB_PATH"] = libdir
+        else:
+            os.environ["SST_LIB_PATH"] = path + ":" + libdir
+        self.mask_mpi_template("test_allgather")
+
 #####
 
     def mask_mpi_template(self, testcase, striptotail=0):
