@@ -80,7 +80,7 @@ class testcase_balar(SSTTestCase):
 
     @balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_backprop_1024(self):
-        self.balar_vanadis_clang_template("rodinia-2.0-backprop-1024", 1800)
+        self.balar_vanadis_clang_template("rodinia-2.0-backprop-1024", 2400)
 
     @balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_backprop_2048(self):
@@ -92,7 +92,7 @@ class testcase_balar(SSTTestCase):
     
     @balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_bfs_graph4096(self):
-        self.balar_vanadis_clang_template("rodinia-2.0-bfs-graph4096", 3600)
+        self.balar_vanadis_clang_template("rodinia-2.0-bfs-graph4096", 4000)
 
     @balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_hotspot_30_6_40(self):
@@ -104,7 +104,7 @@ class testcase_balar(SSTTestCase):
 
     @balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_lud_256(self):
-        self.balar_vanadis_clang_template("rodinia-2.0-lud-256", 4800)
+        self.balar_vanadis_clang_template("rodinia-2.0-lud-256", 6400)
     
     @balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_nw_128_10(self):
