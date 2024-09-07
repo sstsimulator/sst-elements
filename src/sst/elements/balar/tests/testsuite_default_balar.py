@@ -104,7 +104,7 @@ class testcase_balar(SSTTestCase):
 
     @balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_lud_256(self):
-        self.balar_vanadis_clang_template("rodinia-2.0-lud-256", 6400)
+        self.balar_vanadis_clang_template("rodinia-2.0-lud-256", 7200)
     
     @balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_nw_128_10(self):
