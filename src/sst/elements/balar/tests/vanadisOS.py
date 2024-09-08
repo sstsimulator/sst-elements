@@ -1,6 +1,7 @@
 # Copied from rdmaNIC tests
 import os
 import sst
+from utils import get_opt
 
 debug_addr = 0x6280
 stdMem_debug = 0
@@ -8,9 +9,6 @@ stdMem_debug = 0
 debugPython=False
 
 physMemSize = "4GiB"
-exe = "vanadisHandshake"
-full_exe_name = os.getenv("VANADIS_EXE", "./vanadisHandshake/" + exe)
-exe_name = full_exe_name.split("/")[-1]
 
 coherence_protocol="MESI"
     
@@ -28,17 +26,20 @@ def addParamsPrefix(prefix, params):
     return ret
                
 class Builder:
-    def __init__(self):
-        pass
+    def __init__(self, args={}):
+        self.args = args
 
     def build( self, numNodes, nodeId, cpuId ):
+        exe = "vanadisHandshake"
+        full_exe_name = get_opt(self.args, "VANADIS_EXE", "vanadis_binary", "./vanadisHandshake/" + exe)
+        exe_name = full_exe_name.split("/")[-1]
 
         self.prefix = 'node' + str(nodeId)
 
         self.nodeOS = sst.Component(self.prefix + ".os", "vanadis.VanadisNodeOS")
 
         # Setup executable arguments
-        app_args = os.getenv("VANADIS_EXE_ARGS", "")
+        app_args = get_opt(self.args, "VANADIS_EXE_ARGS", "vanadis_args")
         app_params = {}
         if app_args != "":
             app_args_list = app_args.split(" ")

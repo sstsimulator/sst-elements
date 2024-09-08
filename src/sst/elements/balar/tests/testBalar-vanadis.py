@@ -7,32 +7,17 @@
 
 import sst
 import argparse
-from utils import connect
+from utils import *
 
 # Arguments
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    "-c", "--config", help="specify configuration file", required=True)
-parser.add_argument("-v", "--verbosity",
-                    help="specify verbosity of balar", type=int, default=0)
-parser.add_argument("-s", "--statfile",
-                    help="statistics file", default="./stats.out")
-parser.add_argument("-l", "--statlevel",
-                    help="statistics level", type=int, default=16)
-parser.add_argument(
-    "-x", "--binary", help="specify input cuda binary", default="")
-parser.add_argument("-a", "--arguments",
-                    help="colon sep binary arguments", default="")
+args =  vars(balarTestParser.parse_args())
 
-
-args = parser.parse_args()
-
-verbosity = args.verbosity
-cfgFile = args.config
-statFile = args.statfile
-statLevel = args.statlevel
-binaryFile = args.binary
-binaryArgs = args.arguments
+verbosity = args["balar_verbosity"]
+cfgFile = args["config"]
+statFile = args["statfile"]
+statLevel = args["statlevel"]
+traceFile = args["trace"]
+binaryFile = args["cuda_binary"]
 
 # ===========================================================
 # Begin configuring Balar and Vanadis
@@ -71,10 +56,10 @@ import balarBlock
 nodeId = 0
 numNodes = 1
 
-cpuBuilder = cpuBlock.Vanadis_Builder()
+cpuBuilder = cpuBlock.Vanadis_Builder(args)
 memBuilder = memory.Builder()
-osBuilder = vanadisOS.Builder()
-balarBuilder = balarBlock.Builder()
+osBuilder = vanadisOS.Builder(args)
+balarBuilder = balarBlock.Builder(args)
 
 # ===========================================================
 # Building phase
