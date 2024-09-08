@@ -20,8 +20,8 @@ debug_params = {"debug": 0, "debug_level": 0}
 class Builder():
     """BalarMMIO and GPU memory hierarchy builder
     """
-    def __init__(self):
-        pass
+    def __init__(self, args={}):
+        self.args = args
 
     def build(self, cfgFile, balar_addr, dma_addr, verbosity=0):
         """
@@ -49,7 +49,7 @@ class Builder():
             "base_addr": balar_addr,
             "mmio_size": balar_mmio_size,
             "dma_addr": dma_addr,
-            "cuda_executable": os.getenv("BALAR_CUDA_EXE_PATH", "")
+            "cuda_executable": get_opt(self.args, "BALAR_CUDA_EXE_PATH", "cuda_binary")
         })
         balar.addParams(gpuconfig.getGPUConfig())
 

@@ -6,18 +6,48 @@ from sst_unittest_support import *
 import os
 import shutil
 
+################################################################################
+# Code to support a single instance module initialize, must be called setUp method
+
+module_init = 0
+module_sema = threading.Semaphore()
+
+def initializeTestModule_SingleInstance(class_inst):
+    global module_init
+    global module_sema
+
+    module_sema.acquire()
+    if module_init != 1:
+        # Put your single instance Init Code Here
+        print("Initializing balar test files...")
+        class_inst._setupbalarTestFiles()
+        # Unset 
+        log_debug("Unsetting env vars: VANADIS_EXE VANADIS_ARGS")
+        os.environ["VANADIS_EXE"] = ""
+        os.environ["VANADIS_ARGS"] = ""
+        module_init = 1
+
+    module_sema.release()
+
+################################################################################
 
 # TODO: Create multiple classes of test? Quick test, short, and long test should be separated?
 # TODO: Check rodinia's result against reference files for functional correctness
-class testcase_balar(SSTTestCase):
+class BalarTestCase(SSTTestCase):
+
+    def initializeClass(self, testName):
+        super().initializeClass(testName)
+        # Put test based setup code here. it is called before testing starts
+        # NOTE: This method is called once for every test
 
     def setUp(self):
-        super(type(self), self).setUp()
-        self._setupbalarTestFiles()
+        super().setUp()
+        self._setupbalarVarEnv()
+        initializeTestModule_SingleInstance(self)
 
     def tearDown(self):
         # Put test based teardown code here. it is called once after every test
-        super(type(self), self).tearDown()
+        super().tearDown()
 
 #####
     # missing_cuda_root = os.getenv("CUDA_ROOT") == None
@@ -58,65 +88,65 @@ class testcase_balar(SSTTestCase):
             )
         return wrapper
 
-    @balar_basic_unittest
-    def test_balar_runvecadd_testcpu(self):
-        self.balar_testcpu_template("vectorAdd")
+    # @balar_basic_unittest
+    # def test_balar_runvecadd_testcpu(self):
+    #     self.balar_testcpu_template("vectorAdd")
 
-    @balar_basic_unittest
-    def test_balar_runvecadd_vanadis(self):
-        self.balar_vanadis_template("vanadisHandshake")
+    # @balar_basic_unittest
+    # def test_balar_runvecadd_vanadis(self):
+    #     self.balar_vanadis_template("vanadisHandshake")
 
-    @balar_basic_unittest
-    def test_balar_vanadis_clang_helloworld(self):
-        self.balar_vanadis_clang_template("helloworld")
+    # @balar_basic_unittest
+    # def test_balar_vanadis_clang_helloworld(self):
+    #     self.balar_vanadis_clang_template("helloworld")
     
-    @balar_basic_unittest
-    def test_balar_vanadis_clang_vecadd(self):
-        self.balar_vanadis_clang_template("vecadd")
+    # @balar_basic_unittest
+    # def test_balar_vanadis_clang_vecadd(self):
+    #     self.balar_vanadis_clang_template("vecadd")
 
-    @balar_gpuapp_unittest
-    def test_balar_vanadis_clang_rodinia_20_backprop_short(self):
-        self.balar_vanadis_clang_template("rodinia-2.0-backprop-short")
+    # @balar_gpuapp_unittest
+    # def test_balar_vanadis_clang_rodinia_20_backprop_short(self):
+    #     self.balar_vanadis_clang_template("rodinia-2.0-backprop-short")
 
-    @balar_gpuapp_unittest
-    def test_balar_vanadis_clang_rodinia_20_backprop_1024(self):
-        self.balar_vanadis_clang_template("rodinia-2.0-backprop-1024", 2400)
+    # @balar_gpuapp_unittest
+    # def test_balar_vanadis_clang_rodinia_20_backprop_1024(self):
+    #     self.balar_vanadis_clang_template("rodinia-2.0-backprop-1024", 2400)
 
-    @balar_gpuapp_unittest
-    def test_balar_vanadis_clang_rodinia_20_backprop_2048(self):
-        self.balar_vanadis_clang_template("rodinia-2.0-backprop-2048", 3600)
+    # @balar_gpuapp_unittest
+    # def test_balar_vanadis_clang_rodinia_20_backprop_2048(self):
+    #     self.balar_vanadis_clang_template("rodinia-2.0-backprop-2048", 3600)
 
-    @balar_gpuapp_unittest
-    def test_balar_vanadis_clang_rodinia_20_bfs_SampleGraph(self):
-        self.balar_vanadis_clang_template("rodinia-2.0-bfs-SampleGraph")
+    # @balar_gpuapp_unittest
+    # def test_balar_vanadis_clang_rodinia_20_bfs_SampleGraph(self):
+    #     self.balar_vanadis_clang_template("rodinia-2.0-bfs-SampleGraph")
     
-    @balar_gpuapp_unittest
-    def test_balar_vanadis_clang_rodinia_20_bfs_graph4096(self):
-        self.balar_vanadis_clang_template("rodinia-2.0-bfs-graph4096", 4000)
+    # @balar_gpuapp_unittest
+    # def test_balar_vanadis_clang_rodinia_20_bfs_graph4096(self):
+    #     self.balar_vanadis_clang_template("rodinia-2.0-bfs-graph4096", 4000)
 
-    @balar_gpuapp_unittest
-    def test_balar_vanadis_clang_rodinia_20_hotspot_30_6_40(self):
-        self.balar_vanadis_clang_template("rodinia-2.0-hotspot-30-6-40", 1200)
+    # @balar_gpuapp_unittest
+    # def test_balar_vanadis_clang_rodinia_20_hotspot_30_6_40(self):
+    #     self.balar_vanadis_clang_template("rodinia-2.0-hotspot-30-6-40", 1200)
 
-    @balar_gpuapp_unittest
-    def test_balar_vanadis_clang_rodinia_20_lud_64(self):
-        self.balar_vanadis_clang_template("rodinia-2.0-lud-64", 1200)
+    # @balar_gpuapp_unittest
+    # def test_balar_vanadis_clang_rodinia_20_lud_64(self):
+    #     self.balar_vanadis_clang_template("rodinia-2.0-lud-64", 1200)
 
-    @balar_gpuapp_unittest
-    def test_balar_vanadis_clang_rodinia_20_lud_256(self):
-        self.balar_vanadis_clang_template("rodinia-2.0-lud-256", 7200)
+    # @balar_gpuapp_unittest
+    # def test_balar_vanadis_clang_rodinia_20_lud_256(self):
+    #     self.balar_vanadis_clang_template("rodinia-2.0-lud-256", 7200)
     
-    @balar_gpuapp_unittest
-    def test_balar_vanadis_clang_rodinia_20_nw_128_10(self):
-        self.balar_vanadis_clang_template("rodinia-2.0-nw-128-10", 1200)
+    # @balar_gpuapp_unittest
+    # def test_balar_vanadis_clang_rodinia_20_nw_128_10(self):
+    #     self.balar_vanadis_clang_template("rodinia-2.0-nw-128-10", 1200)
 
-    @balar_gpuapp_unittest
-    def test_balar_vanadis_clang_rodinia_20_pathfinder_1000_20_5(self):
-        self.balar_vanadis_clang_template("rodinia-2.0-pathfinder-1000-20-5", 1500)
+    # @balar_gpuapp_unittest
+    # def test_balar_vanadis_clang_rodinia_20_pathfinder_1000_20_5(self):
+    #     self.balar_vanadis_clang_template("rodinia-2.0-pathfinder-1000-20-5", 1500)
 
-    @balar_gpuapp_unittest
-    def test_balar_vanadis_clang_rodinia_20_srad_v2_128x128(self):
-        self.balar_vanadis_clang_template("rodinia-2.0-srad_v2-128x128", 40 * 60)
+    # @balar_gpuapp_unittest
+    # def test_balar_vanadis_clang_rodinia_20_srad_v2_128x128(self):
+    #     self.balar_vanadis_clang_template("rodinia-2.0-srad_v2-128x128", 40 * 60)
 
 ####
 
@@ -165,9 +195,12 @@ class testcase_balar(SSTTestCase):
         otherargs = '--model-options=\"-c {0} -s {1} -x {2} -t {3}"'.format(gpuMemCfgfile, statsfile, vecAddBinary, vecAddTrace)
 
         # Run SST
-        self.run_sst(sdlfile, outfile, errfile, set_cwd=self.testbalarDir,
+        # Unset BALAR_CUDA_EXE_PATH so that we will use the path
+        # in the __cudaRegisterFatbin function call
+        cmd = self.run_sst(sdlfile, outfile, errfile, set_cwd=self.testbalarDir,
                      other_args=otherargs,
                      timeout_sec=testtimeout)
+        log_debug("cmd = {0}".format(cmd))
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
@@ -228,14 +261,14 @@ class testcase_balar(SSTTestCase):
         log_debug("testbalarDir = {0}".format(self.testbalarDir))
 
         gpuMemCfgfile = "{0}/gpu-v100-mem.cfg".format(self.testbalarDir)
-        otherargs = '--model-options=\"-c {0} -s {1}"'.format(gpuMemCfgfile, statsfile)
+        otherargs = '--model-options=\"-c {0} -s {1} --vanadis-binary {2}"'.format(gpuMemCfgfile, statsfile, "./vanadisHandshake/vanadisHandshake")
 
-        # Run SST        
-        os.environ["VANADIS_EXE"] = "./vanadisHandshake/vanadisHandshake"
+        # Run SST
         os.environ["VANADIS_ISA"] = "RISCV64"
-        self.run_sst(sdlfile, outfile, errfile, set_cwd=self.testbalarDir,
-                     other_args=otherargs,
-                     timeout_sec=testtimeout)
+        cmd = self.run_sst(sdlfile, outfile, errfile, set_cwd=self.testbalarDir,
+                           other_args=otherargs,
+                           timeout_sec=testtimeout)
+        log_debug("cmd = {0}".format(cmd))
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
@@ -346,16 +379,14 @@ class testcase_balar(SSTTestCase):
         log_debug("testbalarDir = {0}".format(self.testbalarDir))
 
         gpuMemCfgfile = "{0}/gpu-v100-mem.cfg".format(self.testbalarDir)
-        otherargs = '--model-options=\"-c {0} -s {1}"'.format(gpuMemCfgfile, statsfile)
+        otherargs = '--model-options=\"-c {0} -s {1} --vanadis-binary {2} --vanadis-args \\"{3}\\" --cuda-binary {4}"'.format(gpuMemCfgfile, statsfile, exe, args, exe)
 
         # Run SST
-        os.environ["VANADIS_EXE"] = exe
-        os.environ["VANADIS_EXE_ARGS"] = args
         os.environ["VANADIS_ISA"] = "RISCV64"
-        os.environ["BALAR_CUDA_EXE_PATH"] = exe
-        self.run_sst(sdlfile, outfile, errfile, set_cwd=self.testbalarDir,
-                     other_args=otherargs,
-                     timeout_sec=testtimeout)
+        cmd = self.run_sst(sdlfile, outfile, errfile, set_cwd=self.testbalarDir,
+                           other_args=otherargs,
+                           timeout_sec=testtimeout)
+        print("cmd = {0}".format(cmd))
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
@@ -385,15 +416,6 @@ class testcase_balar(SSTTestCase):
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
-
-        self.balarElementDir = os.path.abspath("{0}/../".format(test_path))
-        self.balarElementVectorAddTestDir = os.path.abspath("{0}/vectorAdd".format(test_path))
-        self.balarElementVanadisHandshakeTestDir = os.path.abspath("{0}/vanadisHandshake".format(test_path))
-        self.balarElementLLVMVanadisTestDir = os.path.abspath("{0}/vanadisLLVMRISCV".format(test_path))
-        self.testbalarDir = "{0}/test_balar".format(tmpdir)
-        self.testbalarVectorAddDir = "{0}/vectorAdd".format(self.testbalarDir)
-        self.testbalarVanadisHandshakeDir = "{0}/vanadisHandshake".format(self.testbalarDir)
-        self.testbalarLLVMVanadisDir = "{0}/vanadisLLVMRISCV".format(self.testbalarDir)
 
         # Create a clean version of the testbalar Directory
         if os.path.isdir(self.testbalarDir):
@@ -464,9 +486,25 @@ class testcase_balar(SSTTestCase):
         else:
             log_debug("Missing GPU App collection, skipping compilation for it")
 
+    def _setupbalarVarEnv(self):
         # Figure out path to NVCC and set NVCC_PATH in the OS ENV
         # NOTE: In sst-gpgpusim, the setup_environment script sets the NVCC_PATH
         #       but does not export it to to the OS Env.  So we need to do it here
+        log_debug("_setupbalarVarEnv() Running")
+
+        test_path = self.get_testsuite_dir()
+        outdir = self.get_test_output_run_dir()
+        tmpdir = self.get_test_output_tmp_dir()
+
+        self.balarElementDir = os.path.abspath("{0}/../".format(test_path))
+        self.balarElementVectorAddTestDir = os.path.abspath("{0}/vectorAdd".format(test_path))
+        self.balarElementVanadisHandshakeTestDir = os.path.abspath("{0}/vanadisHandshake".format(test_path))
+        self.balarElementLLVMVanadisTestDir = os.path.abspath("{0}/vanadisLLVMRISCV".format(test_path))
+        self.testbalarDir = "{0}/test_balar".format(tmpdir)
+        self.testbalarVectorAddDir = "{0}/vectorAdd".format(self.testbalarDir)
+        self.testbalarVanadisHandshakeDir = "{0}/vanadisHandshake".format(self.testbalarDir)
+        self.testbalarLLVMVanadisDir = "{0}/vanadisLLVMRISCV".format(self.testbalarDir)
+
         cmd = "which nvcc"
         rtn = OSCommand(cmd).run()
         log_debug("which nvcc result = {0}; output = {1}".format(rtn.result(), rtn.output()))

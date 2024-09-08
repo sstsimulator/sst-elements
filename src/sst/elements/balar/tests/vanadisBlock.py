@@ -1,6 +1,7 @@
 # Copied from rdmaNIC tests
 import os
 import sst
+from utils import get_opt
 
 coherence_protocol="MESI"
 
@@ -61,8 +62,8 @@ tlbWrapperParams = {
 }
 
 class Vanadis_Builder:
-    def __init__(self):
-        pass
+    def __init__(self, args={}):
+        self.args = args
 
     def build( self, nodeId, cpuId ):
 

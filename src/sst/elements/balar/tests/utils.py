@@ -1,10 +1,47 @@
 import sst
 import os
+import argparse
 try:
     import ConfigParser
 except ImportError:
     import configparser as ConfigParser
 
+# Balar argument parser
+# Overwrite by env variables
+balarTestParser = argparse.ArgumentParser()
+balarTestParser.add_argument(
+    "-c", "--config", help="Specify balar memory system configuration file", required=True)
+balarTestParser.add_argument("-s", "--statfile",
+                    help="Statistics file output path", default="./stats.out")
+balarTestParser.add_argument("-l", "--statlevel",
+                    help="Statistics level", type=int, default=16)
+
+balarTestParser.add_argument(
+    "-x", "--cuda-binary", help="Balar CUDA binary path. Should be ignored if the path in __cudaRegisterFatBinary is correct, otherwise need to provide it.", default="")
+
+# Trace testcpu related configuration
+balarTestParser.add_argument(
+    "-t", "--trace", help="CUDA api calls trace file path", default="cuda_calls.trace")
+
+# Vanadis related configuration
+balarTestParser.add_argument(
+    "--vanadis-binary", help="Vanadis binary path", default="")
+balarTestParser.add_argument("--vanadis-args",
+                    help="Vanadis binary arguments", default="")
+
+# Verbosity config
+balarTestParser.add_argument("-v", "--balar-verbosity",
+                    help="Specify verbosity of balar", type=int, default=0)
+
+def get_opt(args, envname, argname:dict, env_default=""):
+    env = os.getenv(envname, env_default)
+    if not env:
+        return args.get(argname, "")
+    else:
+        return env
+    
+
+# GPU Memory system config
 ddr4 = 2666 # Alternative is 2400
 ddr_clock = "1333MHz" if ddr4 == 2666 else "1200MHz"
 ddr_tCL = 19 if ddr4 == 2666 else 17
