@@ -1,5 +1,8 @@
+import os
 import sst
-from mhlib import componentlist
+
+mh_debug_level=10
+mh_debug=0
 
 verbose = 2
 
@@ -26,7 +29,7 @@ cpu.addParams({
 iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 
 l1cache = sst.Component("l1cache.msi", "memHierarchy.Cache")
-l1cache.setParams({
+l1cache.addParams({
     "access_latency_cycles" : "3",
     "cache_frequency" : "3.5Ghz",
     "replacement_policy" : "lru",
@@ -55,14 +58,29 @@ memory.addParams({
     "mem_size" : "512MiB"
 })
 
+cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "2.3GHz")
+protocol="MESI"
 
+l2cacheParams = {
+    "access_latency_cycles" : "14",
+    "cache_frequency" : cpu_clock,
+    "replacement_policy" : "lru",
+    "coherence_protocol" : protocol,
+    "associativity" : "16",
+    "cache_line_size" : "64",
+    "cache_size" : "1MB",
+    "mshr_latency_cycles": 3,
+    "debug" : mh_debug,
+    "debug_level" : mh_debug_level,
+}
+
+l3cacheParams = {
+    
+}
 
 # Enable statistics
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
-for a in componentlist:
-    sst.enableAllStatisticsForComponentType(a)
-
 
 # Define the simulation links
 link_cpu_cache_link = sst.Link("link_cpu_cache_link")
