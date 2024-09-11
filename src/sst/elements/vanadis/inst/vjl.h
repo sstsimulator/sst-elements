@@ -24,13 +24,14 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisJumpLinkInstruction : public VanadisSpeculatedInstruction
+class VanadisJumpLinkInstruction : public virtual VanadisSpeculatedInstruction
 {
 
 public:
     VanadisJumpLinkInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint64_t ins_width,
         const uint16_t link_reg, const uint64_t pc, const VanadisDelaySlotRequirement delayT) :
+        VanadisInstruction(addr, hw_thr, isa_opts, 0, 1, 0, 1, 0, 0, 0, 0),
         VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 0, 1, 0, 1, 0, 0, 0, 0, delayT)
     {
 
@@ -47,22 +48,117 @@ public:
         snprintf(buffer, buffer_size, "JL      %" PRIu64 " (0x%" PRI_ADDR ")", takenAddress, takenAddress);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+                uint64_t link_val, uint16_t phys_int_regs_out0, uint64_t takenAddr)
+    {
+        #ifdef VANADIS_BUILD_DEBUG
+        if(output->getVerboseLevel() >= verboselevel) 
+        {
+            output->verbose(
+                CALL_INFO, verboselevel, 0,
+                "hw_thr=%d sw_thr = %d JumpExecute: 0x%" PRI_ADDR " JL jump-to: %" PRIu64 " / 0x%" PRI_ADDR " / link: %" PRIu16 " phys: %" PRIu16 " v: %" PRIu64 "/ 0x%" PRI_ADDR "\n",
+                getHWThread(),sw_thr, getInstructionAddress(),takenAddr, takenAddr,
+                 isa_int_regs_out[0], phys_int_regs_out0, link_val, link_val);
+        }
+        #endif
+    }
+
+    void instOp(VanadisRegisterFile* regFile,uint16_t phys_int_regs_out0, uint64_t link_val)
+    {
+        regFile->setIntReg<uint64_t>(phys_int_regs_out0, link_val);
+    }
+
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
         const uint64_t link_value = calculateStandardNotTakenAddress();
-
-#ifdef VANADIS_BUILD_DEBUG
-        if(output->getVerboseLevel() >= 16) {
-            output->verbose(
-                CALL_INFO, 16, 0,
-                "Execute: JL jump-to: %" PRIu64 " / 0x%" PRI_ADDR " / link: %" PRIu16 " phys: %" PRIu16 " v: %" PRIu64 "/ 0x%" PRI_ADDR "\n",
-                takenAddress, takenAddress, isa_int_regs_out[0], phys_int_regs_out[0], link_value, link_value);
-        }
-#endif
-        regFile->setIntReg<uint64_t>(phys_int_regs_out[0], link_value);
-
+        uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
+        log(output, 16, 65355, link_value, phys_int_regs_out_0, takenAddress);
+        instOp(regFile, phys_int_regs_out_0, link_value );
         markExecuted();
     }
+};
+
+
+
+class VanadisSIMTJumpLinkInstruction : public VanadisSIMTInstruction, public VanadisJumpLinkInstruction
+{
+
+public:
+    VanadisSIMTJumpLinkInstruction(
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, 
+        const uint64_t ins_width,
+        const uint16_t link_reg, const uint64_t pc, const VanadisDelaySlotRequirement delayT) :
+        VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 0, 1, 0, 1, 0, 0, 0, 0, delayT),
+        VanadisJumpLinkInstruction(addr, hw_thr, isa_opts, ins_width, link_reg, pc, delayT),
+        VanadisSIMTInstruction(addr, hw_thr, isa_opts, 0, 1, 0, 1, 0, 0, 0, 0),
+        VanadisInstruction(addr, hw_thr, isa_opts, 0, 1, 0, 1, 0, 0, 0, 0)
+    {
+
+        this->isa_int_regs_out[0] = link_reg;
+        this->takenAddress        = pc;
+    }
+
+    VanadisSIMTJumpLinkInstruction* clone() override { return new VanadisSIMTJumpLinkInstruction(*this); }
+
+
+    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+        const uint64_t link_value = calculateStandardNotTakenAddress();
+        uint16_t phys_int_regs_out_0 = VanadisSIMTInstruction::getPhysIntRegOut(0,VanadisSIMTInstruction::sw_thread);
+        this->log(output, 16, VanadisSIMTInstruction::sw_thread, 
+                        link_value,phys_int_regs_out_0,takenAddress);
+        this->instOp(regFile, phys_int_regs_out_0, link_value);
+    }
+
+    // void printMyType()
+    // {
+    //     printf("I am SIMTJumpLink\n");
+    // }
+
+    // uint16_t getPhysFPRegIn(uint16_t index, uint16_t sw_thr) { return VanadisSIMTInstruction::phys_fp_regs_in_simt[sw_thr][index]; }
+    // uint16_t getPhysFPRegOut(uint16_t index, uint16_t sw_thr) { return VanadisSIMTInstruction::phys_fp_regs_out_simt[sw_thr][index]; }
+    // uint16_t getPhysIntRegIn(uint16_t index, uint16_t sw_thr){ 
+    //     // printf("I am in SIMTJumpLink getPhysIntRegIn sw_thr=%d\n", sw_thr);
+    //     return VanadisSIMTInstruction::phys_int_regs_in_simt[sw_thr][index]; }
+    // uint16_t getPhysIntRegOut(uint16_t index, uint16_t sw_thr){ 
+    //     // printf("I am in SIMTJumpLink getPhysIntRegOut sw_thr=%d\n", sw_thr);
+    //     return VanadisSIMTInstruction::phys_int_regs_out_simt[sw_thr][index]; }
+
+    // bool getIsSIMT() const { return true; }
+
+    // void setPhysIntRegIn(const uint16_t index, const uint16_t reg, uint16_t sw_thr) 
+    // {
+    //     printf("I am in setPhyIntRegIn SIMTInst sw_thr=%d\n", sw_thr);
+    //     VanadisSIMTInstruction::setPhysIntRegIn(index, reg, sw_thr);
+    // }
+    
+    // void setPhysIntRegOut(const uint16_t index, const uint16_t reg, uint16_t sw_thr) 
+    // { 
+    //     // phys_int_regs_out_simt[sw_thr][index]=reg; 
+    //     // if(sw_thr==hw_thread)
+    //     //     VanadisInstruction::setPhysIntRegOut(index, reg);
+    //     VanadisSIMTInstruction::setPhysIntRegOut(index, reg, sw_thr);
+    // }
+    
+    // void setPhysFPRegIn(const uint16_t index, const uint16_t reg, uint16_t sw_thr) 
+    // { 
+    //     VanadisSIMTInstruction::phys_fp_regs_in_simt[sw_thr][index]= reg;
+    //     if(sw_thr==hw_thread)
+    //         VanadisInstruction::setPhysFPRegIn(index, reg);
+    // }
+    
+    // void setPhysFPRegOut(const uint16_t index, const uint16_t reg, uint16_t sw_thr) 
+    // { 
+    //     VanadisSIMTInstruction::phys_fp_regs_out_simt[sw_thr][index] =reg; 
+    //     if(sw_thr==hw_thread)
+    //         VanadisInstruction::setPhysFPRegOut(index, reg);
+    // }
+
+    // uint16_t getNumStores()
+    // {
+    //     printf("VanadisSIMTInstruction getNumStores()\n");
+    //     return 0;
+    // }
 };
 
 } // namespace Vanadis

@@ -22,7 +22,7 @@ namespace SST {
 namespace Vanadis {
 
 template<typename gpr_format>
-class VanadisDivideInstruction : public VanadisInstruction
+class VanadisDivideInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisDivideInstruction(
@@ -65,24 +65,14 @@ public:
             phys_int_regs_in[0], phys_int_regs_in[1]);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void instOp(VanadisRegisterFile* regFile, uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0,
+                uint16_t phys_int_regs_in_1)
     {
-#ifdef VANADIS_BUILD_DEBUG
-        if(output->getVerboseLevel() >= 16) {
-            output->verbose(
-                CALL_INFO, 16, 0,
-                "Execute: 0x%" PRI_ADDR " %s phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
-                " / in=%" PRIu16 ", %" PRIu16 "\n",
-                getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0],
-                phys_int_regs_in[1], isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);
-        }
-#endif
-
-        const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in[0]);
-        const gpr_format src_2 = regFile->getIntReg<gpr_format>(phys_int_regs_in[1]);
+        const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in_0);
+        const gpr_format src_2 = regFile->getIntReg<gpr_format>(phys_int_regs_in_1);
 
         if ( ( UNLIKELY( 0 == src_2 ) ) ) {
-            regFile->setIntReg<gpr_format>(phys_int_regs_out[0], -1);
+            regFile->setIntReg<gpr_format>(phys_int_regs_out_0, -1);
 
             auto str = getenv("VANADIS_NO_FAULT");
             if ( nullptr == str ) {
@@ -94,26 +84,79 @@ public:
                 if ( 8 == regFile->getIntRegWidth() ) {
                     if constexpr ( std::is_same_v<gpr_format,int32_t> ) {
                         if ( (1<< 31) == src_1 && -1 == src_2 ) {
-                            regFile->setIntReg<gpr_format>(phys_int_regs_out[0], 1 << 31);
+                            regFile->setIntReg<gpr_format>(phys_int_regs_out_0, 1 << 31);
                         } else {
-                            regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1 / src_2);
+                            regFile->setIntReg<gpr_format>(phys_int_regs_out_0, src_1 / src_2);
                         }
                     } else if constexpr ( std::is_same_v<gpr_format,int64_t> ) {
                         if ( ((uint64_t)1<< 63) == src_1 && -1 == src_2 ) {
-                            regFile->setIntReg<gpr_format>(phys_int_regs_out[0], (uint64_t) 1 << 63);
+                            regFile->setIntReg<gpr_format>(phys_int_regs_out_0, (uint64_t) 1 << 63);
                         } else {
-                            regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1 / src_2);
+                            regFile->setIntReg<gpr_format>(phys_int_regs_out_0, src_1 / src_2);
                         }
                     } else {
                         assert(0);
                     }
                 }
             } else {
-                regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1 / src_2);
+                regFile->setIntReg<gpr_format>(phys_int_regs_out_0, src_1 / src_2);
             }
 		}
+    }
 
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+        uint16_t phys_int_regs_out_0 = phys_int_regs_out[0];
+        uint16_t phys_int_regs_in_0 = phys_int_regs_in[0];
+        uint16_t phys_int_regs_in_1 = phys_int_regs_in[1];
+        log(output, 16, 65535, phys_int_regs_out_0,phys_int_regs_in_0,
+                phys_int_regs_in_1);
+        instOp(regFile, phys_int_regs_out_0,phys_int_regs_in_0,
+                phys_int_regs_in_1);
         markExecuted();
+    }
+};
+
+
+template<typename gpr_format>
+class VanadisSIMTDivideInstruction : public VanadisSIMTInstruction, public VanadisDivideInstruction<gpr_format>
+{
+public:
+    VanadisSIMTDivideInstruction(
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
+        const uint16_t src_1, const uint16_t src_2) :
+        VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
+        VanadisSIMTInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
+        VanadisDivideInstruction<gpr_format>(addr, hw_thr, isa_opts, dest, src_1, src_2)
+    {
+
+        // isa_int_regs_in[0]  = src_1;
+        // isa_int_regs_in[1]  = src_2;
+        // isa_int_regs_out[0] = dest;
+    }
+
+    VanadisSIMTDivideInstruction* clone() override { return new VanadisSIMTDivideInstruction(*this); }
+
+    
+    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+        if(!trapsError())
+        {
+            uint16_t phys_int_regs_out_0 =getPhysIntRegOut(0, VanadisSIMTInstruction::sw_thread);
+            uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0, VanadisSIMTInstruction::sw_thread);
+            uint16_t phys_int_regs_in_1 = getPhysIntRegIn(1, VanadisSIMTInstruction::sw_thread);
+        
+            this->log(output, 16, VanadisSIMTInstruction::sw_thread, phys_int_regs_out_0,phys_int_regs_in_0,
+                phys_int_regs_in_1);
+            this->instOp(regFile, phys_int_regs_out_0,phys_int_regs_in_0,
+                    phys_int_regs_in_1);
+        }
+        else
+        {
+            output->verbose(CALL_INFO, 16, 0,
+                "hw_thr=%d sw_thr = %d Execute: (addr=%p) DIV traperror found true\n", getHWThread(), VanadisSIMTInstruction::sw_thread, (void*)getInstructionAddress());
+        }
+        
     }
 };
 

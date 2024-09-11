@@ -25,6 +25,7 @@
 namespace SST {
 namespace Vanadis {
 
+// What to do for SIMT version?
 template<bool SetFRM, bool SetFFLAGS>
 class VanadisFPFlagsSetImmInstruction : public VanadisFloatingPointInstruction
 {
@@ -32,6 +33,8 @@ public:
     VanadisFPFlagsSetImmInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
         VanadisFloatingPointFlags* fpflags, const uint64_t imm, int mode) :
+        VanadisInstruction(
+            addr, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0),
         VanadisFloatingPointInstruction(
             addr, hw_thr, isa_opts, fpflags, 0, 0, 0, 0, 0, 0, 0, 0),
 			   imm_value(imm), mode(mode)
@@ -51,15 +54,28 @@ public:
 					getInstCode(), imm_value);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr)
+    {
+        if(output->getVerboseLevel() >= verboselevel) {
+				output->verbose(CALL_INFO, verboselevel, 0, "hw_thr=%d sw_thr = %d Execute: 0x%" PRI_ADDR " %s FPFLAGS <- mask = %" PRIu64 " (0x%" PRI_ADDR ")\n",
+					getHWThread(),sw_thr, getInstructionAddress(), getInstCode(), imm_value, imm_value);
+			}
+    }
+
+
+
+
+    void instOp()
+    {
+			updateFP_flags<SetFRM,SetFFLAGS>( imm_value, mode );
+    }
+
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 		if(checkFrontOfROB()) {
-			if(output->getVerboseLevel() >= 16) {
-				output->verbose(CALL_INFO, 16, 0, "Execute: 0x%" PRI_ADDR " %s FPFLAGS <- mask = %" PRIu64 " (0x%" PRI_ADDR ")\n",
-					getInstructionAddress(), getInstCode(), imm_value, imm_value);
-			}
+			log(output, 16, 65535);
 
-			updateFP_flags<SetFRM,SetFFLAGS>( imm_value, mode );
+			instOp();
             
 			markExecuted();
 		}
@@ -70,6 +86,38 @@ protected:
     const int mode;
 
 };
+
+template<bool SetFRM, bool SetFFLAGS>
+class VanadisSIMTFPFlagsSetImmInstruction : public VanadisSIMTInstruction, public VanadisFPFlagsSetImmInstruction<SetFRM, SetFFLAGS>
+{
+public:
+    VanadisSIMTFPFlagsSetImmInstruction(
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
+        VanadisFloatingPointFlags* fpflags, const uint64_t imm, int mode) :
+        VanadisInstruction(
+            addr, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0),
+        VanadisSIMTInstruction(
+            addr, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0),
+        VanadisFPFlagsSetImmInstruction<SetFRM, SetFFLAGS>(
+            addr, hw_thr, isa_opts, fpflags, imm, mode)
+    {
+        ;
+    }
+
+    VanadisSIMTFPFlagsSetImmInstruction*  clone() override { return new VanadisSIMTFPFlagsSetImmInstruction(*this); }
+
+    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+		if(checkFrontOfROB()) {
+			VanadisFPFlagsSetImmInstruction<SetFRM, SetFFLAGS>::log(output, 16, VanadisSIMTInstruction::sw_thread);
+			VanadisFPFlagsSetImmInstruction<SetFRM, SetFFLAGS>::instOp();
+
+		}
+    }
+
+
+};
+
 
 } // namespace Vanadis
 } // namespace SST

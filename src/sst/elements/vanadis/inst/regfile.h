@@ -1,8 +1,8 @@
-// Copyright 2009-2024 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2024, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -23,7 +23,7 @@
 #include <cstring>
 #include <sst/core/output.h>
 #include <sst/core/sst_types.h>
-
+#include "simt/simt_data_structure.h"
 namespace SST {
 namespace Vanadis {
 
@@ -32,26 +32,53 @@ class VanadisRegisterFile
 
 public:
     VanadisRegisterFile(
-        const uint32_t thr, const VanadisDecoderOptions* decoder_ots, const uint16_t int_regs, const uint16_t fp_regs,
-        const VanadisFPRegisterMode fp_rmode) :
+        const uint32_t thr, const VanadisDecoderOptions* decoder_ots, 
+        const uint16_t int_regs, const uint16_t fp_regs,
+        const VanadisFPRegisterMode fp_rmode, SST::Output* logger, bool simt) :
         hw_thread(thr),
         count_int_regs(int_regs),
         count_fp_regs(fp_regs),
         decoder_opts(decoder_ots),
         fp_reg_mode(fp_rmode),
 		int_reg_width(8),
-		fp_reg_width( (fp_rmode == VANADIS_REGISTER_MODE_FP32) ? 4 : 8 )
+		fp_reg_width( (fp_rmode == VANADIS_REGISTER_MODE_FP32) ? 4 : 8),
+        isSIMT(simt)
     {
         // Registers are always 64-bits
-        int_reg_storage = new char[int_reg_width * count_int_regs];
-        fp_reg_storage = new char[fp_reg_width * count_fp_regs];
-
+       if (isSIMT) {
+            int_reg_storage = new char[int_reg_width * count_int_regs * WARP_SIZE];
+            fp_reg_storage = new char[fp_reg_width * count_fp_regs * WARP_SIZE];
+        }
+        else {
+            int_reg_storage = new char[int_reg_width * count_int_regs];
+            fp_reg_storage = new char[fp_reg_width * count_fp_regs];
+        }
+        
         init();
+
+        target_tid = 0;
+        output = logger;
+
+        fpRegWidth_per_thread = fp_reg_width * count_fp_regs;
+        intRegWidth_per_thread = int_reg_width * count_int_regs;
+
+        uint64_t tot_size_int = int_reg_width * count_int_regs * WARP_SIZE;
+        uint64_t tot_size_fp = fp_reg_width * count_fp_regs * WARP_SIZE;
+        output->verbose(CALL_INFO, 16, 0, 
+        "Registers initialized: int_reg_width=%d fp_reg_width=%d count_int_regs=%d count_fp_regs=%d WARP_SIZE=%d total_size(int)=%d, total_size(fp)=%d\n",
+        int_reg_width, fp_reg_width, count_int_regs, count_fp_regs, WARP_SIZE, tot_size_int, tot_size_fp);
+
     }
 
     void init( ) {
-        std::memset(int_reg_storage, 0, (int_reg_width * count_int_regs));
-        std::memset(fp_reg_storage, 0, (fp_reg_width * count_fp_regs));
+        if (isSIMT) {
+            std::memset(int_reg_storage, 0, (int_reg_width * WARP_SIZE * count_int_regs));
+            std::memset(fp_reg_storage, 0, (fp_reg_width * WARP_SIZE * count_fp_regs));
+        }
+        else {
+            std::memset(int_reg_storage, 0, (int_reg_width * count_int_regs));
+            std::memset(fp_reg_storage, 0, (fp_reg_width * count_fp_regs));
+        }
     }
 
     ~VanadisRegisterFile()
@@ -70,11 +97,32 @@ public:
         return fp_reg_width;
     }
 
+    uint16_t getTID() {
+        return target_tid;
+    }
+
+    void setTID(uint16_t tid) {
+        target_tid = tid;
+    }
+
+    void resetTID(){
+        target_tid = 0; // reset to default setting
+    }
+
     void copyFromRegister(uint16_t reg, uint32_t offset, uint8_t* values, uint32_t len, bool is_fp) {
         if(is_fp) {
-            copyFromFPRegister(reg, offset, values, len);
+            // for (uint32_t t=0; t<WARP_SIZE; t++)
+            { // TODO: Remove this loop once the VANADIS SIMT pipeline is done
+                // target_tid = t;
+                copyFromFPRegister(reg, offset, values, len); 
+            }
+            
         } else {
+            // for (uint32_t t=0; t<WARP_SIZE; t++)
+            { // TODO: Remove this loop once the VANADIS SIMT pipeline is done
+                // target_tid = t;
             copyFromIntRegister(reg, offset, values, len);
+            }
         }
     }
 
@@ -82,61 +130,99 @@ public:
         assert(reg < count_fp_regs);
         assert((offset + len) <= fp_reg_width);
 
-        uint8_t* reg_ptr = (uint8_t*) &fp_reg_storage[reg * fp_reg_width];
+        int index = get_reg_index(reg,1);
+        uint8_t* reg_ptr = (uint8_t*) &fp_reg_storage[index];
+        output->verbose(CALL_INFO, 16, 0, "CopyFromFPReg: reg=%d fp_reg_width=%d target_tid=%d WARP_SIZE=%d count_fp_regs=%d index = %d\n",
+        reg, fp_reg_width,target_tid, WARP_SIZE, count_fp_regs, index);
 
         for(auto i = 0; i < len; ++i) {
             values[i] = reg_ptr[offset + i];
+            printf("reg[%d][%d]=%d\n",reg, offset + i,reg_ptr[offset+i]);
         }
+        
+        
     }
 
     void copyFromIntRegister(uint16_t reg, uint32_t offset, uint8_t* values, uint32_t len) {
         assert(reg < count_int_regs);
         assert((offset + len) <= int_reg_width);
-
-        uint8_t* reg_ptr = (uint8_t*) &int_reg_storage[reg * int_reg_width];
+        
+        int index = get_reg_index(reg, 0);
+        uint8_t* reg_ptr = (uint8_t*) &int_reg_storage[index];
+        output->verbose(CALL_INFO, 16, 0, "CopyFromIntReg: reg=%d int_reg_width=%d target_tid=%d WARP_SIZE=%d count_int_regs=%d index= %d len=%d\n",
+        reg, int_reg_width, target_tid, WARP_SIZE, count_int_regs, index, len);
 
         for(auto i = 0; i < len; ++i) {
             values[i] = reg_ptr[offset + i];
+            printf("reg[%d][%d]=%d\n",reg, offset + i,values[i]);
         }
+        
     }
 
     void copyToRegister(uint16_t reg, uint32_t offset, uint8_t* values, uint32_t len, bool is_fp) {
         if(is_fp) {
-            copyToFPRegister(reg, offset, values, len);
+            for (uint32_t t=0; t<WARP_SIZE; t++)
+            {
+                target_tid = t;
+                copyToFPRegister(reg, offset, values, len);
+            }
+            
         } else {
+            for (uint32_t t=0; t<WARP_SIZE; t++)
+            {
+                target_tid = t;
             copyToIntRegister(reg, offset, values, len);
+            }
         }
+
     }
 
     void copyToIntRegister(uint16_t reg, uint32_t offset, uint8_t* values, uint32_t len) {
         assert((offset + len) <= int_reg_width);
         assert(reg < count_int_regs);
-
-        uint8_t* reg_ptr = (uint8_t*) &int_reg_storage[reg * int_reg_width];
+        
+        int index = get_reg_index(reg, 0);
+        uint8_t* reg_ptr = (uint8_t*) &int_reg_storage[index];
         for(auto i = 0; i < len; ++i) {
             reg_ptr[offset + i] = values[i];
+            printf("reg[%d][%d]=%d\n",reg, offset + i,values[i]);
         }
+
+        output->verbose(CALL_INFO, 16, 0, "CopyToIntReg: reg=%d int_reg_width=%d target_tid=%d WARP_SIZE=%d count_int_regs=%d index= %d\n",
+        reg, int_reg_width, target_tid, WARP_SIZE, count_int_regs, index);
     }
 
     void copyToFPRegister(uint16_t reg, uint32_t offset, uint8_t* values, uint32_t len) {
         assert((offset + len) <= fp_reg_width);
         assert(reg < count_fp_regs);
 
-        uint8_t* reg_ptr = (uint8_t*) &fp_reg_storage[reg * fp_reg_width];
+        int index = get_reg_index(reg, 1);
+        uint8_t* reg_ptr = (uint8_t*) &fp_reg_storage[index];
+        output->verbose(CALL_INFO, 16, 0, "CopyToFPReg: reg=%d fp_reg_width=%d target_tid=%d WARP_SIZE=%d count_fp_regs=%d index = %d\n",
+        reg, fp_reg_width,target_tid, WARP_SIZE, count_fp_regs, index);
         for(auto i = 0; i < len; ++i) {
             reg_ptr[offset + i] = values[i];
+            printf("reg[%d][%d]=%d\n",reg, offset + i,values[i]);
         }
+        output->verbose(CALL_INFO, 16, 0, "CopyToFPReg: done\n");
     }
 
     template <typename T>
     T getIntReg(const uint16_t reg)
     {
+        // output->verbose(CALL_INFO, 0, 0,"Segfault test0-1\n");
         assert(reg < count_int_regs);
+        // output->verbose(CALL_INFO, 0, 0,"Segfault test0.2\n");
         assert(sizeof(T) <= int_reg_width);
+        // output->verbose(CALL_INFO, 0, 0,"Segfault test0.3\n");
 
-        if ( reg != decoder_opts->getRegisterIgnoreWrites() ) {
-            char* reg_start   = &int_reg_storage[reg * int_reg_width];
+        if ( reg != decoder_opts->getRegisterIgnoreWrites() ) 
+        {
+            int index = get_reg_index(reg, 0);
+            char* reg_start = &int_reg_storage[index];
             T*    reg_start_T = (T*)reg_start;
+            // output->verbose(CALL_INFO, 16, 0, "getIntReg: reg=%d int_reg_width=%d target_tid=%d WARP_SIZE=%d count_int_regs=%d index=%d\n",
+            // reg, int_reg_width, target_tid, WARP_SIZE, count_int_regs, index);
             return *(reg_start_T);
         }
         else {
@@ -150,8 +236,11 @@ public:
         assert(reg < count_fp_regs);
         assert(sizeof(T) <= fp_reg_width);
 
-        char* reg_start   = &fp_reg_storage[reg * fp_reg_width];
+        int index = get_reg_index(reg, 1);
+        char* reg_start   = &fp_reg_storage[index];
         T*    reg_start_T = (T*)reg_start;
+        // output->verbose(CALL_INFO, 16, 0, "getFPReg: reg=%d fp_reg_width=%d target_tid=%d WARP_SIZE=%d count_fp_regs=%d index = %d\n",
+        // reg, fp_reg_width,target_tid, WARP_SIZE, count_fp_regs, index);
         return *(reg_start_T);
     }
 
@@ -161,7 +250,8 @@ public:
         assert(reg < count_int_regs);
 
         if ( LIKELY(reg != decoder_opts->getRegisterIgnoreWrites()) ) {
-            T*    reg_ptr_t = (T*)(&int_reg_storage[int_reg_width * reg]);
+            int index = get_reg_index(reg, 0);
+            T*    reg_ptr_t = (T*)(&int_reg_storage[index]);
             char* reg_ptr_c = (char*)(reg_ptr_t);
 
             reg_ptr_t[0] = val;
@@ -172,6 +262,8 @@ public:
                 &reg_ptr_c[sizeof(T)],
                 sign_extend ? ((val & (static_cast<T>(1) << (sizeof(T) * 8 - 1))) == 0) ? 0x00 : 0xFF : 0x00,
                 int_reg_width - sizeof(T));
+            output->verbose(CALL_INFO, 16, 0, "setIntReg: reg=%d tid=%d, val=%d \n",
+            reg, hw_thread,val);
         }
     }
 
@@ -182,18 +274,24 @@ public:
         assert(sizeof(T) <= fp_reg_width);
 
         uint8_t* val_ptr = (uint8_t*) &val;
-
+        int index = get_reg_index(reg, 1);
+        output->verbose(CALL_INFO, 16, 0, "setFPReg: reg=%d tid=%d, val=%d \n",
+            reg, hw_thread,val);
         for(auto i = 0; i < sizeof(T); ++i) {
-            fp_reg_storage[fp_reg_width * reg + i] = val_ptr[i];
+            fp_reg_storage[index + i] = val_ptr[i];
+            printf("reg[%d][%d]=%d\n",reg, index + i,val_ptr[i]);
         }
 
         // Pad with extra zeros if needed
         for(auto i = sizeof(T); i < fp_reg_width; ++i) {
-            fp_reg_storage[fp_reg_width * reg + i] = 0;
+            fp_reg_storage[index + i] = 0;
+            printf("reg[%d][%d]=%d\n",reg, index + i,0);
         }
     }
 
     uint32_t getHWThread() const { return hw_thread; }
+    uint16_t getThreadCount() const { return threadCount; }
+    void setThreadCount(uint16_t threads) { threadCount= threads; }
     uint16_t countIntRegs() const { return count_int_regs; }
     uint16_t countFPRegs() const { return count_fp_regs; }
 
@@ -216,13 +314,15 @@ private:
     char* getIntReg(const uint16_t reg)
     {
         assert(reg < count_int_regs);
-        return int_reg_storage + (int_reg_width * reg);
+        int index = get_reg_index(reg, 0);
+        return int_reg_storage + (index);
     }
 
     char* getFPReg(const uint16_t reg)
     {
         assert(reg < count_fp_regs);
-        return fp_reg_storage + (fp_reg_width * reg);
+        int index = get_reg_index(reg, 1);
+        return fp_reg_storage + (index);
     }
 
     void printRegister(SST::Output* output, bool isInt, uint16_t reg, int level = 8)
@@ -251,7 +351,35 @@ private:
         output->verbose(CALL_INFO, level, 0, "R[%5" PRIu16 "]: %s\n", reg, val_string);
         delete[] val_string;
     }
-
+    
+    int get_reg_index(uint16_t reg, bool is_fp)
+    {
+        int index = 0;
+        if(is_fp)
+        {
+            if(isSIMT)
+            {
+                index = target_tid * fpRegWidth_per_thread + fp_reg_width * reg;
+            }
+            else
+            {
+                index = fp_reg_width * reg;
+            }
+        }
+        else
+        {
+            if(isSIMT)
+            {
+                index = target_tid * intRegWidth_per_thread + int_reg_width * reg;
+            }
+            else
+            {
+                index = fp_reg_width * reg;
+            }
+        }
+        return index;
+        
+    }
     const uint32_t               hw_thread;
     const uint16_t               count_int_regs;
     const uint16_t               count_fp_regs;
@@ -263,6 +391,13 @@ private:
     VanadisFPRegisterMode fp_reg_mode;
     const uint32_t              fp_reg_width;
     const uint32_t              int_reg_width;
+    uint16_t target_tid;
+    int fpRegWidth_per_thread;
+    int intRegWidth_per_thread;
+    SST::Output* output;
+    const bool                   isSIMT;
+    uint16_t threadCount;
+
 };
 
 } // namespace Vanadis

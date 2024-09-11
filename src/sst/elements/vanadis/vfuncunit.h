@@ -22,6 +22,7 @@
 #include <deque>
 
 #include "inst/vinst.h"
+#include "simt/refactor_support.h"
 
 namespace SST {
 namespace Vanadis {
@@ -73,23 +74,35 @@ public:
     uint16_t getUnitID() const { return fu_id; }
 
     void tick(const uint64_t cycle, SST::Output* output, std::vector<VanadisRegisterFile*>& regFile) {
+        int k_in=0;
         for(auto q_itr = pending_execute.begin(); q_itr != pending_execute.end();) {
             VanadisFunctionalUnitInsRecord* q_item = (*q_itr);
 
-            if(q_item->readyToExecute()) {
+            if(q_item->readyToExecute()) 
+            {
                 VanadisInstruction* inner_ins = q_item->getInstruction();
-                inner_ins->execute(output, regFile[inner_ins->getHWThread()]);
 
-                if(LIKELY(inner_ins->completedExecution())) {
+                // VanadisSIMTInstruction* inner_ins2 = dynamic_cast<VanadisSIMTInstruction*>(inner_ins);
+                output->verbose(CALL_INFO, 16, 0, "FuncUnit: Exe InstCode: %s IP: 0x%" PRI_ADDR " SIMT: %s\n", 
+                                    inner_ins->getInstCode(), inner_ins->getInstructionAddress(), 
+                                    (inner_ins->getIsSIMT()==true)? "True" : "False");
+                inner_ins->execute(output, regFile);
+
+                if(LIKELY(inner_ins->completedExecution())) 
+                {
                     // Delete the record entry for functional unit if the instruction marked itself executed
                     delete q_item;
 
                     // ready to execute, remove from pending queue
                     q_itr = pending_execute.erase(q_itr);
-                } else {
+                } 
+                else 
+                {
                     q_itr++;
                 }
-            } else {
+            } 
+            else 
+            {
                 q_item->tick();
                 q_itr++;
             }

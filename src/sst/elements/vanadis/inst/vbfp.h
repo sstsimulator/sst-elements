@@ -21,13 +21,14 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisBranchFPInstruction : public VanadisSpeculatedInstruction
+class VanadisBranchFPInstruction : public virtual VanadisSpeculatedInstruction
 {
 public:
     VanadisBranchFPInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint64_t ins_width,
         const uint16_t cond_reg, const int64_t offst, const bool branch_true,
         const VanadisDelaySlotRequirement delayT) :
+        VanadisInstruction(addr, hw_thr, isa_opts, 0, 0, 0, 0, 1, 0, 1, 0),
         VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 0, 0, 0, 0, 1, 0, 1, 0, delayT),
         branch_on_true(branch_true),
         offset(offst)
@@ -45,6 +46,18 @@ public:
         }
     }
 
+    void log(SST::Output* output, int verboselevel, uint32_t sw_thr, bool compare_result, uint16_t phys_fp_regs_in_0)
+    {
+        #ifdef VANADIS_BUILD_DEBUG
+        if(output->getVerboseLevel() >= verboselevel) {
+            output->verbose(
+                CALL_INFO, verboselevel, 0,
+                "hw_thr=%d sw_thr = %d Execute: (addr=0x%" PRI_ADDR ") BFP%c isa-in: %" PRIu16 ", / phys-in: %" PRIu16 " / offset: %" PRId64 " -----> Taken? %c branch addr= 0x%" PRI_ADDR " \n",
+                getHWThread(),sw_thr, getInstructionAddress(), branch_on_true ? 'T' : 'F', isa_fp_regs_in[0], phys_fp_regs_in_0, offset, (compare_result==true) ? 'Y' : 'N', takenAddress);
+        }
+        #endif
+    }
+
     void printToBuffer(char* buffer, size_t buffer_size) override
     {
         snprintf(
@@ -52,41 +65,59 @@ public:
             branch_on_true ? 'T' : 'F', isa_fp_regs_in[0], phys_fp_regs_in[0], offset);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void instOp(VanadisRegisterFile* regFile, const uint16_t phys_fp_regs_in_0, bool* compare_result)
     {
-#ifdef VANADIS_BUILD_DEBUG
-        if(output->getVerboseLevel() >= 16) {
-            output->verbose(
-                CALL_INFO, 16, 0,
-                "Execute: (addr=0x%" PRI_ADDR ") BFP%c isa-in: %" PRIu16 ", / phys-in: %" PRIu16 " / offset: %" PRId64 "\n",
-                getInstructionAddress(), branch_on_true ? 'T' : 'F', isa_fp_regs_in[0], phys_fp_regs_in[0], offset);
-        }
-#endif
-        const uint16_t fp_cond_reg = phys_fp_regs_in[0];
-        uint32_t       fp_cond_val = regFile->getFPReg<uint32_t>(fp_cond_reg);
+        uint32_t       fp_cond_val = regFile->getFPReg<uint32_t>(phys_fp_regs_in_0);
 
         // is the CC code set on the compare bit in the status register?
-        const bool compare_result = ((fp_cond_val & 0x800000) == (branch_on_true ? 0x800000 : 0));
+        *compare_result = ((fp_cond_val & 0x800000) == (branch_on_true ? 0x800000 : 0));
 
-        if ( compare_result ) {
+        if ( *compare_result ) {
             takenAddress = (uint64_t)(((int64_t)getInstructionAddress()) + offset);
-
-            output->verbose(
-                CALL_INFO, 16, 0, "-----> taken-address: 0x%" PRI_ADDR " + %" PRId64 " = 0x%" PRI_ADDR "\n", getInstructionAddress(),
-                offset, takenAddress);
         }
         else {
             takenAddress = calculateStandardNotTakenAddress();
-
-            output->verbose(CALL_INFO, 16, 0, "-----> not-taken-address: 0x%" PRI_ADDR "\n", takenAddress);
         }
+    }
 
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+        const uint16_t fp_cond_reg = phys_fp_regs_in[0];
+        bool compare_result = false;
+        instOp(regFile, fp_cond_reg, &compare_result);
+        log(output, 16, 65535,compare_result,fp_cond_reg);
         markExecuted();
     }
 
 protected:
     const int64_t offset;
     const bool    branch_on_true;
+};
+
+class VanadisSIMTBranchFPInstruction : public VanadisSIMTInstruction, public VanadisBranchFPInstruction
+{
+public:
+    VanadisSIMTBranchFPInstruction(
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint64_t ins_width,
+        const uint16_t cond_reg, const int64_t offst, const bool branch_true,
+        const VanadisDelaySlotRequirement delayT) :
+        VanadisInstruction(addr, hw_thr, isa_opts, 0, 0, 0, 0, 1, 0, 1, 0),
+        VanadisSIMTInstruction(addr, hw_thr, isa_opts, 0, 0, 0, 0, 1, 0, 1, 0),
+        VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 0, 0, 0, 0, 1, 0, 1, 0, delayT),
+        VanadisBranchFPInstruction(addr, hw_thr, isa_opts, ins_width, cond_reg, offst, branch_true, delayT)
+    {
+        // isa_fp_regs_in[0] = cond_reg; 
+    }
+
+    VanadisSIMTBranchFPInstruction* clone() override { return new VanadisSIMTBranchFPInstruction(*this); }
+
+    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+        const uint16_t fp_cond_reg = getPhysFPRegIn(0, VanadisSIMTInstruction::sw_thread);
+        bool compare_result = false;
+        instOp(regFile,fp_cond_reg, &compare_result);
+        log(output, 16, 65535,compare_result,fp_cond_reg);
+    }
 };
 
 } // namespace Vanadis

@@ -21,7 +21,7 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisSysCallInstruction : public VanadisInstruction
+class VanadisSysCallInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisSysCallInstruction(const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts) :
@@ -55,19 +55,47 @@ public:
             isa_options->getISASysCallCodeReg(), phys_int_regs_in[isa_options->getISASysCallCodeReg()]);
     }
 
-    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile)
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
         const uint64_t code_reg_ptr = regFile->getIntReg<uint64_t>(isa_options->getISASysCallCodeReg());
-#ifdef VANADIS_BUILD_DEBUG
+        #ifdef VANADIS_BUILD_DEBUG
         output->verbose(
             CALL_INFO, 16, 0, "Execute: (addr=0x%0" PRI_ADDR ") SYSCALL (isa: %" PRIu16 ", os-code: %" PRIu64 ")\n",
             getInstructionAddress(), isa_options->getISASysCallCodeReg(), code_reg_ptr);
-#endif
+        #endif
         markExecuted();
     }
 
     virtual bool performIntRegisterRecovery() const { return false; }
     virtual bool performFPRegisterRecovery() const { return false; }
+};
+
+
+class VanadisSIMTSysCallInstruction : public VanadisSIMTInstruction, public VanadisSysCallInstruction
+{
+public:
+    VanadisSIMTSysCallInstruction(const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts) :
+        VanadisInstruction(
+            addr, hw_thr, isa_opts, isa_opts->countISAIntRegisters(), isa_opts->countISAIntRegisters(),
+            isa_opts->countISAIntRegisters(), isa_opts->countISAIntRegisters(), isa_opts->countISAFPRegisters(),
+            isa_opts->countISAFPRegisters(), isa_opts->countISAFPRegisters(), isa_opts->countISAFPRegisters()),
+        VanadisSIMTInstruction(
+            addr, hw_thr, isa_opts, isa_opts->countISAIntRegisters(), isa_opts->countISAIntRegisters(),
+            isa_opts->countISAIntRegisters(), isa_opts->countISAIntRegisters(), isa_opts->countISAFPRegisters(),
+            isa_opts->countISAFPRegisters(), isa_opts->countISAFPRegisters(), isa_opts->countISAFPRegisters()),
+        VanadisSysCallInstruction(addr, hw_thr, isa_opts)
+    {
+
+        ;
+    }
+
+    VanadisSIMTSysCallInstruction* clone() { return new VanadisSIMTSysCallInstruction(*this); }
+
+    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+        VanadisSysCallInstruction::scalarExecute(output, regFile);
+    }
+
 };
 
 } // namespace Vanadis

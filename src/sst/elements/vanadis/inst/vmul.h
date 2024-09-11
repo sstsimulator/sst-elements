@@ -22,7 +22,7 @@ namespace SST {
 namespace Vanadis {
 
 template<typename gpr_format>
-class VanadisMultiplyInstruction : public VanadisInstruction
+class VanadisMultiplyInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisMultiplyInstruction(
@@ -65,26 +65,32 @@ public:
             phys_int_regs_in[1]);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void instOp(VanadisRegisterFile* regFile, 
+                            uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0, 
+                            uint16_t phys_int_regs_in_1) override
     {
-#ifdef VANADIS_BUILD_DEBUG
-        if(output->getVerboseLevel() >= 16) {
-            output->verbose(
-                CALL_INFO, 16, 0,
-                "Execute: 0x%" PRI_ADDR " %s phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
-                " / in=%" PRIu16 ", %" PRIu16 "\n",
-                getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1],
-                isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);
-        }
-#endif
-
-		  const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in[0]);
-		  const gpr_format src_2 = regFile->getIntReg<gpr_format>(phys_int_regs_in[1]);
-
-		  regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1 * src_2);
-
-        markExecuted();
+		  const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in_0);
+		  const gpr_format src_2 = regFile->getIntReg<gpr_format>(phys_int_regs_in_1);
+		  regFile->setIntReg<gpr_format>(phys_int_regs_out_0, src_1 * src_2);
     }
+};
+
+template<typename gpr_format>
+class VanadisSIMTMultiplyInstruction : public VanadisSIMTInstruction, public VanadisMultiplyInstruction<gpr_format>
+{
+public:
+    VanadisSIMTMultiplyInstruction(
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
+        const uint16_t src_1, const uint16_t src_2) :
+        VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
+        VanadisSIMTInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
+        VanadisMultiplyInstruction<gpr_format>(addr, hw_thr, isa_opts, dest, src_1, src_2)
+    {
+        ;
+    }
+
+    VanadisSIMTMultiplyInstruction* clone() override { return new VanadisSIMTMultiplyInstruction(*this); }
+
 };
 
 } // namespace Vanadis

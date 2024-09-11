@@ -24,13 +24,14 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisJumpInstruction : public VanadisSpeculatedInstruction
+class VanadisJumpInstruction : public virtual VanadisSpeculatedInstruction
 {
 
 public:
     VanadisJumpInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint64_t ins_width,
         const uint64_t pc, const VanadisDelaySlotRequirement delayT) :
+        VanadisInstruction(addr, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0),
         VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 0, 0, 0, 0, 0, 0, 0, 0, delayT)
     {
 
@@ -46,7 +47,30 @@ public:
         snprintf(buffer, buffer_size, "JUMP    %" PRIu64 " / 0x%" PRI_ADDR "", takenAddress, takenAddress);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override { markExecuted(); }
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override { markExecuted(); }
+};
+
+class VanadisSIMTJumpInstruction: public VanadisSIMTInstruction, public VanadisJumpInstruction
+{
+    public:
+    VanadisSIMTJumpInstruction(
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint64_t ins_width,
+        const uint64_t pc, const VanadisDelaySlotRequirement delayT) :
+        VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 0, 0, 0, 0, 0, 0, 0, 0, delayT),
+        VanadisJumpInstruction(addr, hw_thr, isa_opts, ins_width, pc, delayT),
+        VanadisInstruction(addr, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0),
+        VanadisSIMTInstruction(addr, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0)
+        {
+            this->takenAddress = pc;
+        }
+
+    VanadisSIMTJumpInstruction* clone() override { return new VanadisSIMTJumpInstruction(*this); }
+
+    // TODO: SIMT stack support? Execute ovveride?
+    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override { markExecuted(); }
+
+        
+
 };
 
 } // namespace Vanadis

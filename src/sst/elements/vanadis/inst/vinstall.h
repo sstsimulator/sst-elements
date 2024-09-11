@@ -16,6 +16,9 @@
 #ifndef _H_VANADIS_INST_ALL
 #define _H_VANADIS_INST_ALL
 
+// #include "inst/execute/vExecuteAddSIMTScalar.h"
+#include "inst/vinst.h"
+
 // Arithmetic operations
 #include "inst/vadd.h"
 #include "inst/vaddi.h"
@@ -119,5 +122,6 @@
 
 #include "inst/vfpclass.h"
 #include "inst/vmin.h"
+
 
 #endif

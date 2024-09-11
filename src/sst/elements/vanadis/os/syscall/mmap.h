@@ -84,7 +84,7 @@ public:
         uint64_t length = event->getAllocationLength();
         int64_t protect = event->getProtectionFlags();
         int64_t flags = event->getAllocationFlags();
-        m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-mmap] fd=%d offset=%" PRIu32 "\n", tmp[0],tmp[1]);
+        m_output->verbose(CALL_INFO, 0, 0, "mmap memReqIsDone [syscall-mmap] fd=%d offset=%" PRIu32 "\n", tmp[0],tmp[1]);
 
         mmap( address, length, protect, flags, tmp[0], tmp[1] );
     }

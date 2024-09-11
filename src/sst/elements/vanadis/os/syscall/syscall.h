@@ -249,7 +249,7 @@ private:
     template <class Type>
     Type getEvent() { return static_cast<Type>(m_event); }           
     virtual bool handleMemResp( StandardMem::Request* req ) { delete req; return false; };
-    virtual void memReqIsDone( bool ) {};
+    virtual void memReqIsDone( bool v ) {printf("Virtual VanadisSysCall memReqIsDone %d\n",v );};
 
     void sendNeedThreadState() { 
         m_coreLink->send( new VanadisGetThreadStateReq( m_event->getThreadID() ) );
@@ -300,33 +300,33 @@ private:
 };
 
 inline void VanadisSyscall::readString( uint64_t addr, std::string& str ) {
-    m_output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL_MEM,"addr=%#" PRIx64 "\n",addr);
+    m_output->verbose(CALL_INFO, 0, 0,"addr=%#" PRIx64 "\n",addr);
     assert(nullptr == m_memHandler);
     m_memHandler = new ReadStringHandler( this, m_output, addr, str );
 }
 
 inline void VanadisSyscall::readMemory( uint64_t addr, std::vector<uint8_t>& buffer, bool lock ) {
-    m_output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL_MEM,"addr=%#" PRIx64 " length=%zu\n", addr, buffer.size() );
+    m_output->verbose(CALL_INFO, 0, 0,"addr=%#" PRIx64 " length=%zu\n", addr, buffer.size() );
     assert(nullptr == m_memHandler);
     m_memHandler = new ReadMemoryHandler( this, m_output, addr, buffer, lock );
 }
 
 inline void VanadisSyscall::writeMemory( uint64_t addr, std::vector<uint8_t>& buffer, OS::ProcessInfo* process ) {
-    m_output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL_MEM,"addr=%#" PRIx64 " length=%zu\n", addr, buffer.size() );
+    m_output->verbose(CALL_INFO, 0, 0,"writeMemory addr=%#" PRIx64 " length=%zu\n", addr, buffer.size() );
     assert(nullptr == m_memHandler);
     m_memHandler = new WriteMemoryHandler( this, m_output, addr, buffer, false, process );
 }
 
 inline void VanadisSyscall::writeMemory( uint64_t addr, std::vector<uint8_t>& buffer, bool lock ) {
-    m_output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL_MEM,"addr=%#" PRIx64 " length=%zu\n", addr, buffer.size() );
+    m_output->verbose(CALL_INFO, 0, 0,"writeMemory addr=%#" PRIx64 " length=%zu\n", addr, buffer.size() );
     assert(nullptr == m_memHandler);
     m_memHandler = new WriteMemoryHandler( this, m_output, addr, buffer, lock );
 }
 
 inline bool VanadisSyscall::handleMemRespBase( StandardMem::Request* req )
 {
-    m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL_MEM, "recv memory event (%s)\n", req->getString().c_str());
-    m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL_MEM,"m_pendingMem.size() %zu\n",m_pendingMem.size());
+    m_output->verbose(CALL_INFO, 0, 0, "recv memory event (%s)\n", req->getString().c_str(), req->getID());
+    m_output->verbose(CALL_INFO, 0, 0,"m_pendingMem.size() %zu\n",m_pendingMem.size());
 
     auto find_event = m_pendingMem.find(req->getID());
 
@@ -334,18 +334,19 @@ inline bool VanadisSyscall::handleMemRespBase( StandardMem::Request* req )
     m_pendingMem.erase(find_event);
 
     if ( m_memHandler ) {
-        m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL_MEM,"call mem handler\n");
+        m_output->verbose(CALL_INFO, 0, 0,"call mem handler\n");
         req->handle(m_memHandler); 
         if ( m_memHandler->isDone() ) {
-            m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL_MEM,"mem handler done\n");
+            m_output->verbose(CALL_INFO, 0, 0,"mem handler done\n");
             delete m_memHandler;
             m_memHandler = nullptr;
+            printf("Calling memReqIsDone from VanadisSyscall::handleMemRespBase ID: %d\n", req->getID());
             memReqIsDone( req->getFail() );
         }
     }
 
     if ( handleMemResp( req ) || ( m_complete && (m_pendingMem.size() == 0) )) {
-        m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL_MEM,"done\n");
+        m_output->verbose(CALL_INFO, 0, 0,"handleMemRespBase done\n");
         return true;
     }
 

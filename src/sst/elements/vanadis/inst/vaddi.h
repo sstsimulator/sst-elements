@@ -23,7 +23,7 @@ namespace SST {
 namespace Vanadis {
 
 template<typename gpr_format>
-class VanadisAddImmInstruction : public VanadisInstruction
+class VanadisAddImmInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisAddImmInstruction(
@@ -65,34 +65,77 @@ public:
 
         strncpy( buffer, ss.str().c_str(), buffer_size );
     }
-
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+                uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0) override
     {
-        const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in[0]);
-        const gpr_format result = src_1 + imm_value;
+        #ifdef VANADIS_BUILD_DEBUG
+        if(output->getVerboseLevel() >= verboselevel) {
 
-#ifdef VANADIS_BUILD_DEBUG
-        if(output->getVerboseLevel() >= 16) {
             std::ostringstream ss;
-
-            ss << "Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
-            ss << " phys: out=" <<  phys_int_regs_out[0] << " in=" << phys_int_regs_in[0];
+            ss << "hw_thr="<<getHWThread()<<" sw_thr=" <<sw_thr;
+            ss << " Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
+            ss << " phys: out=" <<  phys_int_regs_out_0 << " in=" << phys_int_regs_in_0;
             ss << " imm=" << imm_value;
             ss << ", isa: out=" <<  isa_int_regs_out[0]  << " in=" << isa_int_regs_in[0];
-            ss << " (" << src_1 << " + " <<   imm_value << " = " <<  result << ")"; 
-
-            output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
+            output->verbose( CALL_INFO, verboselevel, 0, "%s\n", ss.str().c_str());
         }
-#endif
-
-		regFile->setIntReg<gpr_format>(phys_int_regs_out[0], result);
-
-      markExecuted();
+        #endif
     }
 
+    void instOp(VanadisRegisterFile* regFile, 
+        uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0) override
+    {
+        src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in_0);
+        result = src_1 + imm_value;
+		regFile->setIntReg<gpr_format>(phys_int_regs_out_0, result);
+    }
+
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+        uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0);
+        uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
+        instOp(regFile, phys_int_regs_out_0, phys_int_regs_in_0);
+        log(output, 16, 65535, phys_int_regs_out_0, phys_int_regs_in_0);
+        markExecuted();
+    }
+protected:
+gpr_format result;
+gpr_format src_1;
 private:
     const gpr_format imm_value;
+    
 };
+
+template<typename gpr_format>
+class VanadisSIMTAddImmInstruction : public VanadisSIMTInstruction, public VanadisAddImmInstruction<gpr_format>
+{
+public:
+    VanadisSIMTAddImmInstruction(const uint64_t addr, const uint32_t hw_thr, 
+    const VanadisDecoderOptions* isa_opts, const uint16_t dest,
+        const uint16_t src_1, const gpr_format immediate) :
+        VanadisInstruction(addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0),
+        VanadisSIMTInstruction(addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0),
+        VanadisAddImmInstruction<gpr_format>(addr, hw_thr, isa_opts, dest, src_1, immediate)
+    {
+        ;
+    }
+
+    VanadisSIMTAddImmInstruction* clone() override { return new VanadisSIMTAddImmInstruction(*this); }
+
+
+    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+        uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0,VanadisSIMTInstruction::sw_thread);
+        uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0,VanadisSIMTInstruction::sw_thread);
+        instOp(regFile, phys_int_regs_out_0, phys_int_regs_in_0);
+        log(output, 16, VanadisSIMTInstruction::sw_thread, phys_int_regs_out_0, phys_int_regs_in_0);
+    }
+
+// private:
+    // const gpr_format imm_value;
+};
+
 
 } // namespace Vanadis
 } // namespace SST

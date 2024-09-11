@@ -21,7 +21,7 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisAndImmInstruction : public VanadisInstruction
+class VanadisAndImmInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisAndImmInstruction(
@@ -47,26 +47,69 @@ public:
             isa_int_regs_out[0], isa_int_regs_in[0], imm_value, phys_int_regs_out[0], phys_int_regs_in[0], imm_value);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void instOp(VanadisRegisterFile* regFile, uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0) override
     {
-#ifdef VANADIS_BUILD_DEBUG
-        if(output->getVerboseLevel() >= 16) {
-            output->verbose(
-                CALL_INFO, 16, 0,
-                "Execute: (addr=%p) ANDI phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRIu64 ", isa: out=%" PRIu16
-                " / in=%" PRIu16 "\n",
-                (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value, isa_int_regs_out[0],
-                isa_int_regs_in[0]);
-        }
-#endif
-        const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
-        regFile->setIntReg<uint64_t>(phys_int_regs_out[0], (src_1 & imm_value));
+        const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in_0);
+        regFile->setIntReg<uint64_t>(phys_int_regs_out_0, (src_1 & imm_value));
+    }
 
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+                uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0) override
+    {
+        #ifdef VANADIS_BUILD_DEBUG
+        if(output->getVerboseLevel() >= verboselevel) {
+
+            std::ostringstream ss;
+            ss << "hw_thr="<<getHWThread()<<" sw_thr=" <<sw_thr;
+            ss << " Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
+            ss << " phys: out=" <<  phys_int_regs_out_0 << " in=" << phys_int_regs_in_0;
+            ss << " imm=" << imm_value;
+            ss << ", isa: out=" <<  isa_int_regs_out[0]  << " in=" << isa_int_regs_in[0];
+            output->verbose( CALL_INFO, verboselevel, 0, "%s\n", ss.str().c_str());
+        }
+        #endif
+    }
+
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    { 
+        uint16_t phys_int_regs_out_0 = phys_int_regs_out[0];
+        uint16_t phys_int_regs_in_0 = phys_int_regs_in[0];     
+        log(output, 16, 65535, phys_int_regs_out_0,phys_int_regs_in_0);
+        instOp(regFile, phys_int_regs_out_0,phys_int_regs_in_0);
         markExecuted();
     }
 
 private:
     const uint64_t imm_value;
+};
+
+
+class VanadisSIMTAndImmInstruction : public VanadisSIMTInstruction, public VanadisAndImmInstruction
+{
+public:
+    VanadisSIMTAndImmInstruction(
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
+        const uint16_t src_1, const uint64_t immediate) :
+        VanadisInstruction(addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0),
+        VanadisSIMTInstruction(addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0),
+        VanadisAndImmInstruction(addr, hw_thr, isa_opts, dest, src_1, immediate)
+    {
+        ;
+
+        // isa_int_regs_in[0]  = src_1;
+        // isa_int_regs_out[0] = dest;
+    }
+
+    VanadisSIMTAndImmInstruction* clone() override { return new VanadisSIMTAndImmInstruction(*this); }
+
+    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+        uint16_t phys_int_regs_out_0 =getPhysIntRegOut(0, VanadisSIMTInstruction::sw_thread);
+        uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0, VanadisSIMTInstruction::sw_thread);  
+        log(output, 16, VanadisSIMTInstruction::sw_thread, phys_int_regs_out_0,phys_int_regs_in_0);
+        instOp(regFile, phys_int_regs_out_0,phys_int_regs_in_0);
+    }
+
 };
 
 } // namespace Vanadis

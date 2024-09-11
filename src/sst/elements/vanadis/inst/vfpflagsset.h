@@ -32,6 +32,8 @@ public:
     VanadisFPFlagsSetInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
         VanadisFloatingPointFlags* fpflags, const uint16_t src_1, int mode) :
+        VanadisInstruction(
+            addr, hw_thr, isa_opts, 1, 0, 1, 0, 0, 0, 0, 0),
         VanadisFloatingPointInstruction(
             addr, hw_thr, isa_opts, fpflags, 1, 0, 1, 0, 0, 0, 0, 0), mode(mode)
     {
@@ -52,25 +54,69 @@ public:
 					getInstCode(), isa_int_regs_in[0], phys_int_regs_in[0]);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+                            uint16_t phys_int_regs_in_0, uint64_t mask_in)
+    {
+        if(output->getVerboseLevel() >= verboselevel) {
+				output->verbose(CALL_INFO, verboselevel, 0, "hw_thr=%d sw_thr = %d Execute: 0x%" PRI_ADDR " %s in-reg: %" PRIu16 " / phys: %" PRIu16 " -> mask = %" PRIu64 " (0x%" PRI_ADDR ")\n",
+					getHWThread(),sw_thr, getInstructionAddress(), getInstCode(), isa_int_regs_in[0], phys_int_regs_in_0, mask_in, mask_in);
+			}
+    }
+    
+    void instOp(VanadisRegisterFile* regFile, uint16_t phys_int_regs_in_0, uint64_t* mask_in)
+    {
+        *mask_in = regFile->getIntReg<uint64_t>(phys_int_regs_in_0);    
+		updateFP_flags<SetFRM,SetFFLAGS>( *mask_in, mode );
+    }
+
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 		if(checkFrontOfROB()) {
-			const uint64_t mask_in = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
-
-			if(output->getVerboseLevel() >= 16) {
-				output->verbose(CALL_INFO, 16, 0, "Execute: 0x%" PRI_ADDR " %s in-reg: %" PRIu16 " / phys: %" PRIu16 " -> mask = %" PRIu64 " (0x%" PRI_ADDR ")\n",
-					getInstructionAddress(), getInstCode(), isa_int_regs_in[0], phys_int_regs_in[0], mask_in, mask_in);
-			}
-
-			updateFP_flags<SetFRM,SetFFLAGS>( mask_in, mode );
-
+            uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0);
+            uint64_t mask_in = 0;
+			instOp(regFile, phys_int_regs_in_0, &mask_in);
+            log(output, 16, 65535, phys_int_regs_in_0, mask_in);
 			markExecuted();
 		} else {
-			output->verbose(CALL_INFO, 16, 0, "not front of ROB for ins: 0x%" PRI_ADDR " %s\n", getInstructionAddress(), getInstCode());
+			output->verbose(CALL_INFO, 16, 0, "hw_thr=%d, sw_thr=%d, not front of ROB for ins: 0x%" PRI_ADDR " %s\n", getHWThread(), 65535,  getInstructionAddress(), getInstCode());
 		}
     }
 protected:
     const int mode;
+};
+
+
+
+template<bool SetFRM, bool SetFFLAGS >
+class VanadisSIMTFPFlagsSetInstruction : public VanadisSIMTInstruction, public VanadisFPFlagsSetInstruction<SetFRM, SetFFLAGS>
+{
+public:
+    VanadisSIMTFPFlagsSetInstruction(
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
+        VanadisFloatingPointFlags* fpflags, const uint16_t src_1, int mode) :
+        VanadisInstruction(
+            addr, hw_thr, isa_opts, 1, 0, 1, 0, 0, 0, 0, 0),
+        VanadisSIMTInstruction(
+            addr, hw_thr, isa_opts, 1, 0, 1, 0, 0, 0, 0, 0),
+        VanadisFPFlagsSetInstruction<SetFRM, SetFFLAGS>(
+            addr, hw_thr, isa_opts, fpflags, src_1, mode)
+    {
+        ;
+    }
+
+    VanadisSIMTFPFlagsSetInstruction*  clone() override { return new VanadisSIMTFPFlagsSetInstruction(*this); }
+    
+    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+		if(checkFrontOfROB()) {
+            uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0, VanadisSIMTInstruction::sw_thread);
+            uint64_t mask_in = 0;
+			VanadisFPFlagsSetInstruction<SetFRM, SetFFLAGS>::instOp(regFile, phys_int_regs_in_0, &mask_in);
+            VanadisFPFlagsSetInstruction<SetFRM, SetFFLAGS>::log(output, 16, VanadisSIMTInstruction::sw_thread, phys_int_regs_in_0, mask_in);
+		} else {
+			output->verbose(CALL_INFO, 16, 0, "hw_thr=%d, sw_thr=%d, not front of ROB for ins: 0x%" PRI_ADDR " %s\n", getHWThread(), VanadisSIMTInstruction::sw_thread,  getInstructionAddress(), getInstCode());
+		}
+    }
 };
 
 } // namespace Vanadis

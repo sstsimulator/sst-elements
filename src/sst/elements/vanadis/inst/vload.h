@@ -27,7 +27,7 @@ namespace Vanadis {
 
 enum VanadisLoadRegisterType { LOAD_INT_REGISTER, LOAD_FP_REGISTER };
 
-class VanadisLoadInstruction : public VanadisInstruction
+class VanadisLoadInstruction : public virtual VanadisInstruction
 {
 
 public:
@@ -60,6 +60,7 @@ public:
             isa_fp_regs_out[0] = tgtReg;
         } break;
         }
+       
     }
 
     VanadisLoadInstruction* clone() { return new VanadisLoadInstruction(*this); }
@@ -100,7 +101,7 @@ public:
         }
     }
 
-    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile) { markExecuted(); }
+    virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) { markExecuted(); }
 
     virtual VanadisMemoryTransaction getTransactionType() const { return memAccessType; }
 
@@ -139,12 +140,18 @@ public:
     virtual void
     computeLoadAddress(SST::Output* output, VanadisRegisterFile* regFile, uint64_t* out_addr, uint16_t* width)
     {
-        uint64_t mem_addr_reg_val = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
+        int64_t tmp_val;
+        uint64_t mem_addr_reg_val;
+        uint16_t target_tid = 0;
+
+
+        mem_addr_reg_val = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
 
         switch ( regType ) {
         case LOAD_INT_REGISTER:
         {
-            if(output->getVerboseLevel() >= 16) {
+            // if(output->getVerboseLevel() >= 16) 
+            {
                 output->verbose(
                     CALL_INFO, 16, 0,
                     "Execute: (0x%" PRI_ADDR ") LOAD addr-reg: %" PRIu16 " phys: %" PRIu16 " / offset: %" PRId64
@@ -166,8 +173,9 @@ public:
         } break;
         }
 
-#ifdef VANADIS_BUILD_DEBUG
-        if(output->getVerboseLevel() >= 16) {
+        #ifdef VANADIS_BUILD_DEBUG
+        // if(output->getVerboseLevel() >= 16) 
+        {
             output->verbose(
                 CALL_INFO, 16, 0, "[execute-load]: transaction-type:  %s / ins: 0x%" PRI_ADDR "\n",
                 getTransactionTypeString(memAccessType), getInstructionAddress());
@@ -178,13 +186,21 @@ public:
             output->verbose(
                 CALL_INFO, 16, 0, "[execute-load]: (add)            : %" PRIu64 "\n", (mem_addr_reg_val + offset));
         }
-#endif
-        int64_t tmp_val = regFile->getIntReg<int64_t>(phys_int_regs_in[0]);
+        #endif
+
+        tmp_val = regFile->getIntReg<int64_t>(phys_int_regs_in[0]);
 
         (*out_addr) = (uint64_t)(tmp_val + offset);
         (*width)    = load_width;
+        
+    }
+    
+    void markExecuted() 
+    { 
+        hasExecuted = true;
     }
 
+    
     virtual uint16_t getLoadWidth() const { return load_width; }
 
     VanadisLoadRegisterType getValueRegisterType() const { return regType; }
@@ -197,6 +213,113 @@ protected:
     const int64_t            offset;
     const uint16_t           load_width;
     VanadisLoadRegisterType  regType;
+
+};
+
+class VanadisSIMTLoadInstruction : public VanadisSIMTInstruction, public VanadisLoadInstruction
+{
+public:
+    VanadisSIMTLoadInstruction(
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t memAddrReg,
+        const int64_t offst, const uint16_t tgtReg, const uint16_t load_bytes, const bool extend_sign,
+        const VanadisMemoryTransaction accessT, VanadisLoadRegisterType regT) :
+        VanadisInstruction( addr, hw_thr, isa_opts, 
+            1, regT == LOAD_INT_REGISTER ? 1 : 0, 
+            1, regT == LOAD_INT_REGISTER ? 1 : 0,
+            0, regT == LOAD_FP_REGISTER ? 1 : 0, 
+            0, regT == LOAD_FP_REGISTER ? 1 : 0),
+        VanadisSIMTInstruction( addr, hw_thr, isa_opts, 
+            1, regT == LOAD_INT_REGISTER ? 1 : 0, 
+            1, regT == LOAD_INT_REGISTER ? 1 : 0,
+            0, regT == LOAD_FP_REGISTER ? 1 : 0, 
+            0, regT == LOAD_FP_REGISTER ? 1 : 0),
+        VanadisLoadInstruction(addr, hw_thr, isa_opts, memAddrReg, offst, tgtReg, load_bytes, extend_sign, accessT, regT)
+        {
+             numLoads = 0;
+        }
+
+    VanadisSIMTLoadInstruction* clone() { return new VanadisSIMTLoadInstruction(*this); }
+
+    uint16_t getNumLoads() { return numLoads;}
+    
+    void incrementNumLoads() { numLoads+=1;}
+    
+    void setNumLoads(uint16_t num_loads){ numLoads = num_loads;}
+
+    virtual void computeLoadAddress(SST::Output* output, VanadisRegisterFile* regFile, uint64_t* out_addr, uint16_t* width)
+    {
+        int64_t tmp_val;
+        uint64_t mem_addr_reg_val;
+        uint16_t target_tid = 0;
+
+        target_tid = regFile->getTID(); 
+        // printf("target_tid = %d\n", target_tid); 
+        // fflush(stdout);
+
+        mem_addr_reg_val = regFile->getIntReg<uint64_t>(phys_int_regs_in_simt[target_tid][0]);
+
+        switch ( regType ) {
+        case LOAD_INT_REGISTER:
+        {
+            // if(output->getVerboseLevel() >= 16) 
+            {
+                output->verbose(
+                    CALL_INFO, 16, 0,
+                    "Execute SIMT: (0x%" PRI_ADDR ") LOAD addr-reg: %" PRIu16 " phys: %" PRIu16 " / offset: %" PRId64
+                    " / target: %" PRIu16 " phys: %" PRIu16 "\n",
+                    getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in_simt[target_tid][0], offset, isa_int_regs_out[0],
+                    phys_int_regs_out_simt[target_tid][0]);
+            }
+        } break;
+        case LOAD_FP_REGISTER:
+        {
+            if(output->getVerboseLevel() >= 16) {
+                output->verbose(
+                    CALL_INFO, 16, 0,
+                    "Execute SIMT: (0x%" PRI_ADDR ") LOAD addr-reg: %" PRIu16 " phys: %" PRIu16 " / offset: %" PRId64
+                    " / target: %" PRIu16 " phys: %" PRIu16 "\n",
+                    getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in_simt[target_tid][0], offset, isa_fp_regs_out[0],
+                    phys_fp_regs_out_simt[target_tid][0]);
+            }
+        } break;
+        }
+
+        #ifdef VANADIS_BUILD_DEBUG
+        // if(output->getVerboseLevel() >= 16) 
+        {
+            output->verbose(
+                CALL_INFO, 16, 0, "[execute-load-simt]: transaction-type:  %s / ins: 0x%" PRI_ADDR "\n",
+                getTransactionTypeString(memAccessType), getInstructionAddress());
+            output->verbose(
+                CALL_INFO, 16, 0, "[execute-load-simt]: reg[%5" PRIu16 "]:       %" PRIu64 "\n", phys_int_regs_in_simt[target_tid][0],
+                mem_addr_reg_val);
+            output->verbose(CALL_INFO, 16, 0, "[execute-load-simt]: offset           : %" PRId64 "\n", offset);
+            output->verbose(
+                CALL_INFO, 16, 0, "[execute-load-simt]: (add)            : %" PRIu64 "\n", (mem_addr_reg_val + offset));
+        }
+        #endif
+
+        tmp_val = regFile->getIntReg<int64_t>(phys_int_regs_in_simt[target_tid][0]);
+
+        (*out_addr) = (uint64_t)(tmp_val + offset);
+        (*width)    = load_width;
+        
+    }
+    
+    void markExecuted() 
+    { 
+        numLoads-=1;
+        if(numLoads<=0) 
+        {
+            hasExecuted = true; 
+            numLoads=0;
+        }
+
+    }
+    
+protected:
+    uint16_t numLoads;
+
 };
 
 } // namespace Vanadis

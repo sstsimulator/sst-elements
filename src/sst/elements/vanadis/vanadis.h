@@ -41,6 +41,10 @@
 #include <sst/core/output.h>
 #include <sst/core/params.h>
 
+#include "simt/vsimtinst.h"
+#include "simt/warp.h"
+
+
 namespace SST {
 namespace Vanadis {
 
@@ -148,7 +152,8 @@ public:
         { "print_int_reg", "Print integer registers true/false, auto set to true if verbose > 16", "false" },
         { "print_fp_reg", "Print floating-point registers true/false, auto set to "
                           "true if verbose > 16", "false" },
-        { "print_rob", "Print reorder buffer state during issue and retire", "true"} )
+        { "print_rob", "Print reorder buffer state during issue and retire", "true"},
+        { "enable_simt", "Implement SIMT pipeline for multithread kernels", "false"}  )
 
     SST_ELI_DOCUMENT_STATISTICS(
         { "cycles", "Number of cycles the core executed", "cycles", 1 },
@@ -199,7 +204,9 @@ public:
     void recvOSEvent(SST::Event* ev);
 
     void handleMisspeculate(const uint32_t hw_thr, const uint64_t new_ip);
+    void handleMisspeculate_SIMT(const uint64_t new_ip);
     void clearROBMisspeculate(const uint32_t hw_thr);
+    void clearROBMisspeculate_SIMT(const uint32_t warp_id); // TODO: fix warpid
     void clearFuncUnit(const uint32_t hw_thr, std::vector<VanadisFunctionalUnit*>& unit);
 
     void syscallReturn(uint32_t thr);
@@ -209,6 +216,9 @@ public:
     void startThreadClone( VanadisStartThreadCloneReq* req );
     void getThreadState( VanadisGetThreadStateReq* req );
     void dumpRegs( VanadisDumpRegsReq* req );
+
+    // SIMT: Only release simt threads once all threads have been cloned
+    uint32_t arrived_thread;
 
 private:
 #ifdef VANADIS_BUILD_DEBUG
@@ -228,6 +238,14 @@ private:
     int assignRegistersToInstruction(
         const uint16_t int_reg_count, const uint16_t fp_reg_count, VanadisInstruction* ins,
         VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs, VanadisISATable* isa_table);
+    
+    // int assignRegistersToInstruction(
+    //     const uint16_t int_reg_count, const uint16_t fp_reg_count, VanadisInstruction* ins,
+    //     VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs, VanadisISATable* isa_table, uint16_t sw_thr);
+
+    int assignRegistersToInstruction(
+        const uint16_t int_reg_count, const uint16_t fp_reg_count, VanadisSIMTInstruction* ins,
+        VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs, VanadisISATable* isa_table, uint16_t sw_thr);
 
     int checkInstructionResources(
         VanadisInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs,
@@ -236,6 +254,13 @@ private:
     int recoverRetiredRegisters(
         VanadisInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs,
         VanadisISATable* issue_isa_table, VanadisISATable* retire_isa_table);
+    
+    int recoverRetiredRegisters(
+        VanadisInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs,
+        VanadisISATable* issue_isa_table, VanadisISATable* retire_isa_table, uint16_t sw_thr);
+    int recoverRetiredRegisters(
+        VanadisSIMTInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs,
+        VanadisISATable* issue_isa_table, VanadisISATable* retire_isa_table, uint16_t sw_thr);
 
     int  performFetch(const uint64_t cycle);
     int  performDecode(const uint64_t cycle);
@@ -245,7 +270,8 @@ private:
     int  allocateFunctionalUnit(VanadisInstruction* ins);
     bool mapInstructiontoFunctionalUnit(VanadisInstruction* ins, std::vector<VanadisFunctionalUnit*>& functional_units);
     void printRob(int rob_num, VanadisCircularQueue<VanadisInstruction*>* rob);
-
+    // bool judgeIns(VanadisInstruction* ins);
+    
     bool checkVerboseAddr( uint64_t addr ) {
         for ( auto& it : start_verbose_when_issue_address ) {
             if ( it == addr ) return true;
@@ -286,8 +312,15 @@ private:
     uint32_t m_curIssueHwThread;
 
     std::vector<VanadisCircularQueue<VanadisInstruction*>*> rob;
+    std::vector<VanadisCircularQueue<VanadisInstruction*>*> v_warp_rob;
     std::vector<VanadisDecoder*>                            thread_decoders;
+    std::vector<VanadisDecoder*>                            simt_decoders;
     std::vector<const VanadisDecoderOptions*>               isa_options;
+
+    // SIMT structures
+    std::vector<thread_info*> simt_threads;
+    std::vector<warp*> m_warps;
+    uint32_t num_warps;
 
     std::vector<VanadisFunctionalUnit*> fu_int_arith;
     std::vector<VanadisFunctionalUnit*> fu_int_div;
@@ -298,6 +331,8 @@ private:
     std::vector<VanadisRegisterFile*>  register_files;
     VanadisRegisterStack* int_register_stack;
     VanadisRegisterStack* fp_register_stack;
+    VanadisRegisterStack* int_register_stack_simt;
+    VanadisRegisterStack* fp_register_stack_simt;
 
     std::vector<VanadisISATable*> issue_isa_tables;
     std::vector<VanadisISATable*> retire_isa_tables;
@@ -318,6 +353,7 @@ private:
     bool  print_issue_tables;
     bool  print_retire_tables;
     bool  print_rob;
+    bool enable_simt;
 
     char*    instPrintBuffer;
     uint64_t nextInsID;
@@ -352,6 +388,7 @@ private:
     uint64_t stop_verbose_when_retire_address;
 
     std::vector<VanadisFloatingPointFlags*> fp_flags;
+    std::vector<VanadisStartThreadCloneReq*> cloneReqs;
 
     SST::Link* os_link;
 
@@ -360,6 +397,7 @@ private:
     enum { NO_CHECKPOINT, CHECKPOINT_LOAD, CHECKPOINT_SAVE } m_checkpoint;
     void checkpoint(FILE*);
     void checkpointLoad(FILE*);
+    bool simt_warp_start;
 };
 
 } // namespace Vanadis

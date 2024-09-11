@@ -67,7 +67,7 @@ namespace Vanadis {
         regFile->setFPReg<fp_format>(phys_fp_regs_out[0], result); \
     }
 
-class VanadisFloatingPointInstruction : public VanadisInstruction
+class VanadisFloatingPointInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisFloatingPointInstruction(

@@ -32,7 +32,9 @@ public:
     VanadisFPFlagsReadInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
         VanadisFloatingPointFlags* fpflags, const uint16_t dest) :
-        VanadisFloatingPointInstruction(
+        VanadisInstruction(
+            addr, hw_thr, isa_opts, 0, 1, 0, 1, 0, 0, 0, 0),
+		VanadisFloatingPointInstruction(
             addr, hw_thr, isa_opts, fpflags, 0, 1, 0, 1, 0, 0, 0, 0)
     {
 			static_assert( !((copy_round_mode && (!shift_round_mode)) && copy_fp_flags), "Cannot copy round, not shift and copy FP flags\n");
@@ -54,39 +56,85 @@ public:
 					getInstCode(), isa_int_regs_out[0], phys_int_regs_out[0]);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
-    {
-		if(checkFrontOfROB()) {
-		  	uint64_t flags_out = 0;
-
-			if(copy_round_mode) {
-					flags_out = convertRoundingToInteger(pipeline_fpflags->getRoundingMode());
-
-					if(shift_round_mode) {
-						flags_out <<= 5;
-					}
-			}
-
-			if(copy_fp_flags) {
-				flags_out |= pipeline_fpflags->inexact() ? 0x1 : 0x0;
-				flags_out |= pipeline_fpflags->underflow() ? 0x2 : 0x0;
-				flags_out |= pipeline_fpflags->overflow() ? 0x4 : 0x0;
-				flags_out |= pipeline_fpflags->divZero() ? 0x8 : 0x0;
-				flags_out |= pipeline_fpflags->invalidOp() ? 0x10 : 0x0;
-			}
-
-			if(output->getVerboseLevel() >= 16) {
-				output->verbose(CALL_INFO, 16, 0, "Execute: 0x%" PRI_ADDR " %s out-reg: %" PRIu16 " / out-mask: 0x%" PRI_ADDR " / copy_round: %c / shift_round: %c / copy_fp: %c\n",
-						getInstructionAddress(), getInstCode(), phys_int_regs_out[0], flags_out,
+	void log(SST::Output* output, int verboselevel, uint16_t sw_thr, uint64_t flags_out, uint16_t phys_int_regs_out_0 )
+	{
+		if(output->getVerboseLevel() >= verboselevel) {
+				output->verbose(CALL_INFO, verboselevel, 0, "hw_thr=%d sw_thr = %d Execute: 0x%" PRI_ADDR " %s out-reg: %" PRIu16 " / out-mask: 0x%" PRI_ADDR " / copy_round: %c / shift_round: %c / copy_fp: %c\n",
+						getHWThread(),sw_thr, getInstructionAddress(), getInstCode(), phys_int_regs_out_0, flags_out,
 						copy_round_mode ? 'y' : 'n', shift_round_mode ? 'y' : 'n', copy_fp_flags ? 'y' : 'n');
 			}
+	}
 
-			regFile->setIntReg<uint64_t>(phys_int_regs_out[0], flags_out);
+	void instOp( VanadisRegisterFile* regFile, uint64_t* flags_out, uint16_t phys_int_regs_out_0)
+	{
+		
 
+		if(copy_round_mode) 
+		{
+				*flags_out = convertRoundingToInteger(pipeline_fpflags->getRoundingMode());
+
+				if(shift_round_mode) {
+					*flags_out <<= 5;
+				}
+		}
+
+		if(copy_fp_flags) {
+			*flags_out |= pipeline_fpflags->inexact() ? 0x1 : 0x0;
+			*flags_out |= pipeline_fpflags->underflow() ? 0x2 : 0x0;
+			*flags_out |= pipeline_fpflags->overflow() ? 0x4 : 0x0;
+			*flags_out |= pipeline_fpflags->divZero() ? 0x8 : 0x0;
+			*flags_out |= pipeline_fpflags->invalidOp() ? 0x10 : 0x0;
+		}
+		regFile->setIntReg<uint64_t>(phys_int_regs_out_0, *flags_out);
+	}
+
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+		if(checkFrontOfROB()) 
+		{
+		  	uint64_t flags_out = 0;
+			uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
+			instOp(regFile, &flags_out, phys_int_regs_out_0);
+			log(output, 16, 65535, flags_out, phys_int_regs_out_0);
 			markExecuted();
 		}
     }
 };
+
+
+template<bool copy_round_mode, bool shift_round_mode, bool copy_fp_flags>
+class VanadisSIMTFPFlagsReadInstruction : public VanadisSIMTInstruction, public VanadisFPFlagsReadInstruction<copy_round_mode, shift_round_mode, copy_fp_flags>
+{
+public:
+    VanadisSIMTFPFlagsReadInstruction(
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
+        VanadisFloatingPointFlags* fpflags, const uint16_t dest) :
+        VanadisInstruction(
+            addr, hw_thr, isa_opts, 0, 1, 0, 1, 0, 0, 0, 0),
+		VanadisSIMTInstruction(
+            addr, hw_thr, isa_opts, 0, 1, 0, 1, 0, 0, 0, 0),
+		VanadisFPFlagsReadInstruction<copy_round_mode, shift_round_mode, copy_fp_flags>(
+            addr, hw_thr, isa_opts, fpflags, dest)
+    {
+		;
+    }
+
+    VanadisSIMTFPFlagsReadInstruction*  clone() override { return new VanadisSIMTFPFlagsReadInstruction(*this); }
+
+    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+		if(checkFrontOfROB()) 
+		{
+		  	uint64_t flags_out = 0;
+			uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0, VanadisSIMTInstruction::sw_thread);
+			VanadisFPFlagsReadInstruction<copy_round_mode, shift_round_mode, copy_fp_flags>::instOp(regFile, &flags_out, phys_int_regs_out_0);
+			VanadisFPFlagsReadInstruction<copy_round_mode, shift_round_mode, copy_fp_flags>::log(output, 16, VanadisSIMTInstruction::sw_thread, flags_out, phys_int_regs_out_0);
+		}
+    }
+};
+
+
+
 
 } // namespace Vanadis
 } // namespace SST

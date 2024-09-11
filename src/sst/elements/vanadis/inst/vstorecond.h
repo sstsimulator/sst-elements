@@ -21,14 +21,19 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisStoreConditionalInstruction : public VanadisStoreInstruction
+class VanadisStoreConditionalInstruction : public virtual VanadisStoreInstruction
 {
-
 public:
     VanadisStoreConditionalInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t memAddrReg,
         const int64_t offset, const uint16_t valueReg, const uint16_t condResultReg, const uint16_t store_width,
         VanadisStoreRegisterType reg_type) :
+        VanadisInstruction(
+            addr, hw_thr, isa_opts, 
+            reg_type == STORE_INT_REGISTER ? 2 : 1, 1,
+            reg_type == STORE_INT_REGISTER ? 2 : 1, 1,
+            reg_type == STORE_FP_REGISTER ? 1 : 0, 0,
+            reg_type == STORE_FP_REGISTER ? 1 : 0, 0),
         VanadisStoreInstruction(
             addr, hw_thr, isa_opts, memAddrReg, offset, valueReg, store_width, MEM_TRANSACTION_LLSC_STORE, reg_type),
             value_success(1), value_failure(0)
@@ -40,6 +45,12 @@ public:
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t memAddrReg,
         const int64_t offset, const uint16_t valueReg, const uint16_t condResultReg, const uint16_t store_width,
         VanadisStoreRegisterType reg_type, int64_t successValue, int64_t failureValue) :
+        VanadisInstruction(
+            addr, hw_thr, isa_opts, 
+            reg_type == STORE_INT_REGISTER ? 2 : 1, 1,
+            reg_type == STORE_INT_REGISTER ? 2 : 1, 1,
+            reg_type == STORE_FP_REGISTER ? 1 : 0, 0,
+            reg_type == STORE_FP_REGISTER ? 1 : 0, 0),
         VanadisStoreInstruction(
             addr, hw_thr, isa_opts, memAddrReg, offset, valueReg, store_width, MEM_TRANSACTION_LLSC_STORE, reg_type),
             value_success(successValue), value_failure(failureValue)
@@ -48,9 +59,11 @@ public:
     }
 
     VanadisStoreConditionalInstruction(const VanadisStoreConditionalInstruction& copy_me) :
-        VanadisStoreInstruction(copy_me), value_success(copy_me.value_success),
-        value_failure(copy_me.value_failure) {
-    }
+        VanadisInstruction(copy_me),VanadisStoreInstruction(copy_me), value_success(copy_me.value_success),
+        value_failure(copy_me.value_failure) 
+        {
+            ;
+        }
 
     VanadisStoreConditionalInstruction* clone() { 
         return new VanadisStoreConditionalInstruction(*this); 
@@ -65,6 +78,87 @@ protected:
 
 };
 
+
+class VanadisSIMTStoreConditionalInstruction : public VanadisSIMTStoreInstruction, public VanadisStoreConditionalInstruction
+{
+public:
+    VanadisSIMTStoreConditionalInstruction(const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t memAddrReg,
+        const int64_t offset, const uint16_t valueReg, const uint16_t condResultReg, const uint16_t store_width,
+        VanadisStoreRegisterType reg_type) :
+        VanadisInstruction( addr, hw_thr, isa_opts, 
+            reg_type == STORE_INT_REGISTER ? 2 : 1, 1,
+            reg_type == STORE_INT_REGISTER ? 2 : 1, 1,
+            reg_type == STORE_FP_REGISTER ? 1 : 0, 0,
+            reg_type == STORE_FP_REGISTER ? 1 : 0, 0),
+        // VanadisSIMTInstruction( addr, hw_thr, isa_opts, 
+        //     reg_type == STORE_INT_REGISTER ? 2 : 1, 1,
+        //     reg_type == STORE_INT_REGISTER ? 2 : 1, 1,
+        //     reg_type == STORE_FP_REGISTER ? 1 : 0, 0,
+        //     reg_type == STORE_FP_REGISTER ? 1 : 0, 0),
+        VanadisSIMTStoreInstruction(
+            addr, hw_thr, isa_opts, memAddrReg, offset, valueReg, store_width, MEM_TRANSACTION_LLSC_STORE, reg_type),
+        VanadisStoreInstruction(addr, hw_thr, isa_opts, memAddrReg, offset, valueReg, store_width, MEM_TRANSACTION_LLSC_STORE, reg_type),
+        VanadisStoreConditionalInstruction( addr, hw_thr, isa_opts, memAddrReg, offset, valueReg, condResultReg, store_width, reg_type)
+        {
+            ;
+        }
+    
+    VanadisSIMTStoreConditionalInstruction(const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t memAddrReg,
+        const int64_t offset, const uint16_t valueReg, const uint16_t condResultReg, const uint16_t store_width,
+        VanadisStoreRegisterType reg_type, int64_t successValue, int64_t failureValue) :
+        VanadisInstruction(addr, hw_thr, isa_opts, 
+            reg_type == STORE_INT_REGISTER ? 2 : 1, 1,
+            reg_type == STORE_INT_REGISTER ? 2 : 1, 1,
+            reg_type == STORE_FP_REGISTER ? 1 : 0, 0,
+            reg_type == STORE_FP_REGISTER ? 1 : 0, 0),
+        // VanadisSIMTInstruction(addr, hw_thr, isa_opts, 
+        //     reg_type == STORE_INT_REGISTER ? 2 : 1, 1,
+        //     reg_type == STORE_INT_REGISTER ? 2 : 1, 1,
+        //     reg_type == STORE_FP_REGISTER ? 1 : 0, 0,
+        //     reg_type == STORE_FP_REGISTER ? 1 : 0, 0),
+        VanadisStoreInstruction(addr, hw_thr, isa_opts, memAddrReg, offset, valueReg, store_width, MEM_TRANSACTION_LLSC_STORE, reg_type),
+        VanadisSIMTStoreInstruction(addr, hw_thr, isa_opts, memAddrReg, offset, valueReg, store_width, MEM_TRANSACTION_LLSC_STORE, reg_type),
+        VanadisStoreConditionalInstruction( addr, hw_thr, isa_opts, memAddrReg, offset, valueReg, condResultReg, store_width, reg_type, successValue, failureValue)
+        {
+            ;
+        }
+        
+        VanadisSIMTStoreConditionalInstruction* clone() { 
+        return new VanadisSIMTStoreConditionalInstruction(*this); 
+        }
+
+        VanadisSIMTStoreConditionalInstruction(const VanadisSIMTStoreConditionalInstruction& copy_me) :
+        VanadisInstruction(copy_me),VanadisStoreInstruction(copy_me), VanadisSIMTStoreInstruction(copy_me), VanadisStoreConditionalInstruction(copy_me)
+        {
+            ;
+        }
+
+        void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+        {
+            VanadisSIMTStoreInstruction::execute(output, regFile);
+        }
+
+        VanadisFunctionalUnitType getInstFuncType() const override { return INST_STORE; }
+
+        const char* getInstCode() const override
+        {
+            return VanadisStoreInstruction::getInstCode();
+        }
+
+        void printToBuffer(char* buffer, size_t buffer_size) override
+        {
+            VanadisStoreInstruction::printToBuffer(buffer, buffer_size);
+        }
+
+        void markExecuted() override
+        {
+            VanadisSIMTStoreInstruction::markExecuted();
+        }
+
+};
+
+
+    
 } // namespace Vanadis
 } // namespace SST
 

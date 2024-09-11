@@ -13,7 +13,7 @@ checkpoint = ""
 #checkpoint = "load"
 #checkpoint = "save"
 
-pythonDebug=False
+pythonDebug=True #False
 
 vanadis_isa = os.getenv("VANADIS_ISA", "MIPS")
 isa="mipsel"
@@ -72,7 +72,10 @@ sst.setStatisticOutput("sst.statOutputConsole")
 full_exe_name = os.getenv("VANADIS_EXE", "./small/" + testDir + "/" + exe +  "/" + isa + "/" + exe )
 exe_name= full_exe_name.split("/")[-1]
 
-verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
+exe = "pthread_array_floatarith"
+full_exe_name = os.getenv("VANADIS_EXE", "./riscv/" + exe)
+exe_name= full_exe_name.split("/")[-1]
+verbosity = int(os.getenv("VANADIS_VERBOSE", 16))
 os_verbosity = os.getenv("VANADIS_OS_VERBOSE", verbosity)
 pipe_trace_file = os.getenv("VANADIS_PIPE_TRACE", "")
 lsq_ld_entries = os.getenv("VANADIS_LSQ_LD_ENTRIES", 16)
@@ -92,14 +95,23 @@ branch_arith_cycles = int(os.getenv("VANADIS_BRANCH_ARITH_CYCLES", 2))
 cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "2.3GHz")
 
 numCpus = int(os.getenv("VANADIS_NUM_CORES", 1))
-numThreads = int(os.getenv("VANADIS_NUM_HW_THREADS", 1))
+numThreads = int(os.getenv("VANADIS_NUM_HW_THREADS", 5))
 
+# TODO: change this to env variable
+warp_size = 4
+
+if (numThreads % warp_size != 0):
+    num_warps = numThreads // warp_size + 1
+else:
+    num_warps = numThreads // warp_size
+print("numThreads:", numThreads)
+print("num_warps:",num_warps)
 vanadis_cpu_type = "vanadis."
 vanadis_cpu_type += os.getenv("VANADIS_CPU_ELEMENT_NAME","dbg_VanadisCPU")
 
 if (verbosity > 0):
     print("Verbosity: " + str(verbosity) + " -> loading Vanadis CPU type: " + vanadis_cpu_type)
-    print("Auto-clock syscalls: " + str(auto_clock_sys))
+    # print("Auto-clock syscalls: " + str(auto_clock_sys))
 # vanadis_cpu_type = "vanadisdbg.VanadisCPU"
 
 app_args = os.getenv("VANADIS_EXE_ARGS", "")
@@ -137,13 +149,14 @@ osParams = {
     "dbgLevel" : os_verbosity,
     "dbgMask" : 8,
     "cores" : numCpus,
-    "hardwareThreadCount" : numThreads,
+    "hardwareThreadCount" : numThreads+num_warps,
     "page_size"  : 4096,
     "physMemSize" : physMemSize,
     "useMMU" : True,
     "checkpointDir" : checkpointDir,
     "checkpoint" : checkpoint
 }
+
 
 processList = ( 
     ( 1, {
@@ -152,6 +165,10 @@ processList = (
         "exe" : full_exe_name,
         "arg0" : exe_name,
     } ),
+    #( 1, {
+    #    "env_count" : 2, "env0" : "HOME=/home/sdhammo", "env1" : "NEWHOME=/home/sdhammo2", "argc" : 1, "exe" : "./tests/small/basic-io/hello-world/mipsel/hello-world",  
+        #"exe" : "./tests/small/basic-io/read-write/mipsel/read-write",  
+    #} ),
 )
 
 processList[0][1].update(app_params)
@@ -172,7 +189,7 @@ osl1cacheParams = {
 mmuParams = {
     "debug_level": 0,
     "num_cores": numCpus,
-    "num_threads": numThreads,
+    "num_threads": numThreads+num_warps,
     "page_size": 4096,
 }
 
@@ -223,7 +240,7 @@ memParams = {
 tlbParams = {
     "debug_level": 0,
     "hitLatency": 1,
-    "num_hardware_threads": numThreads,
+    "num_hardware_threads": numThreads+num_warps,
     "num_tlb_entries_per_thread": 64,
     "tlb_set_size": 4,
 }
@@ -248,8 +265,8 @@ cpuParams = {
     "clock" : cpu_clock,
     "verbose" : verbosity,
     "hardware_threads": numThreads,
-    "physical_fp_registers" : 168 * numThreads,
-    "physical_integer_registers" : 180 * numThreads,
+    "physical_fp_registers" : 168 * (numThreads+num_warps),
+    "physical_integer_registers" : 180 * (numThreads+num_warps),
     "integer_arith_cycles" : integer_arith_cycles,
     "integer_arith_units" : integer_arith_units,
     "fp_arith_cycles" : fp_arith_cycles,
@@ -267,7 +284,8 @@ cpuParams = {
     "stop_verbose_when_retire_address": stopDbg,
     "print_rob" : False,
     "checkpointDir" : checkpointDir,
-    "checkpoint" : checkpoint
+    "checkpoint" : checkpoint,
+    "enable_simt": True
 }
 
 lsqParams = {
@@ -343,7 +361,7 @@ class CPU_Builder:
         cpu.enableAllStatistics()
 
         # CPU.decoder
-        for n in range(numThreads):
+        for n in range(numThreads+num_warps):
             decode     = cpu.setSubComponent( "decoder"+str(n), vanadis_decoder )
             decode.addParams( decoderParams )
 
@@ -359,7 +377,8 @@ class CPU_Builder:
             branch_pred.enableAllStatistics()
 
         # CPU.lsq
-        cpu_lsq = cpu.setSubComponent( "lsq", "vanadis.VanadisBasicLoadStoreQueue" )
+        # cpu_lsq = cpu.setSubComponent( "lsq", "vanadis.VanadisBasicLoadStoreQueue" )
+        cpu_lsq = cpu.setSubComponent( "lsq", "vanadis.VanadisBasicLoadStoreQueueSIMT" )
         cpu_lsq.addParams(lsqParams)
         cpu_lsq.enableAllStatistics()
 

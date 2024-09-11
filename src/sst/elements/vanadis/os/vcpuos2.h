@@ -111,19 +111,19 @@ public:
 
         const uint64_t os_code = getOsCode();
 
-        output->verbose(CALL_INFO, 8, 0, "core=%d hw_thr=%d syscall-ins: %#" PRIx64 ", link-reg: %#" PRIx64", os_code=%" PRIu64 "\n",
-                        core_id, hw_thr, syscallIns->getInstructionAddress(), call_link_value, os_code);
+        output->verbose(CALL_INFO, 0, 0, "core=%d hw_thr=%d syscall-ins: %#" PRIx64 ", link-reg: %#" PRIx64", os_code=%" PRIu64 ", linkReg=(%d,%d), OsCodeReg=(%d,%d)\n",
+                        core_id, hw_thr, syscallIns->getInstructionAddress(), call_link_value, os_code, LinkReg, isaTable->getIntPhysReg(LinkReg), OsCodeReg, isaTable->getIntPhysReg(OsCodeReg));
         VanadisSyscallEvent* call_ev = nullptr;
 
         if ( m_functionMap.find( os_code ) != m_functionMap.end() ) {
-            call_ev = m_functionMap[os_code]( hw_thr );
+            call_ev = m_functionMap[os_code]( hw_thr ); // TODO_Anu: will the functionmap have entries for the sub threads != super thread?
         } else {
             output->fatal(CALL_INFO, -1, "Error: unknown code %" PRIu64 " (ins: %#" PRIx64 ", link-reg: %#" PRIx64 ")\n",
                 os_code, syscallIns->getInstructionAddress(), call_link_value);
         }
 
         if (nullptr != call_ev) {
-            output->verbose(CALL_INFO, 9, 0, "Sending event to operating system...\n");
+            output->verbose(CALL_INFO, 0, 0, "Sending event to operating system...\n");
             sendSyscallEvent(call_ev);
             return std::make_tuple(false,flushLSQ);
         } else {
@@ -283,11 +283,11 @@ protected:
         T1 path_addr   = getArgRegister( 1 );
         T1 flags       = getArgRegister( 2 );
 
-#ifdef SST_COMPILE_MACOSX
+        #ifdef SST_COMPILE_MACOSX
         if (  VANADIS_AT_FDCWD == dirFd ) {
             dirFd = AT_FDCWD;
         }
-#endif
+        #endif
         output->verbose(CALL_INFO, 8, 0, "unlinkat( %" PRIdXX ", %" PRIdXX ", %#" PRIxXX" )\n",dirFd,path_addr,flags);
 
         return new VanadisSyscallUnlinkatEvent(core_id, hw_thr, BitType, dirFd,path_addr,flags);
@@ -307,11 +307,11 @@ protected:
         T1 flags      = getArgRegister(2);
         T1 mode       = getArgRegister(3);
 
-#ifdef SST_COMPILE_MACOSX
+        #ifdef SST_COMPILE_MACOSX
         if (  VANADIS_AT_FDCWD == dirfd ) {
             dirfd = AT_FDCWD;
         }
-#endif
+        #endif
         output->verbose(CALL_INFO, 8, 0, "openat( %" PRIuXX ", %#" PRIxXX ", %#" PRIxXX ", %#" PRIxXX ")\n", dirfd, path_ptr, flags, mode );
         return new VanadisSyscallOpenatEvent(core_id, hw_thr, BitType, dirfd, path_ptr, convertFlags(flags), mode);
     }

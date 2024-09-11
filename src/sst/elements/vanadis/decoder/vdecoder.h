@@ -28,6 +28,7 @@
 #include "velf/velfinfo.h"
 #include "vinsloader.h"
 #include "vfpflags.h"
+// #include "simt/simt_data_structure.h"
 
 #include <cinttypes>
 #include <cstdint>
@@ -130,6 +131,8 @@ public:
         stat_decode_fault     = registerStatistic<uint64_t>("decode_faults", "1");
         stat_ins_bytes_loaded = registerStatistic<uint64_t>("ins_bytes_loaded", "1");
         stat_uop_delayed_rob_full = registerStatistic<uint64_t>("uop_delayed_rob_full", "1");
+
+        implement_simt=false;
     }
 
     virtual ~VanadisDecoder()
@@ -233,6 +236,20 @@ public:
 
     virtual VanadisCPUOSHandler* getOSHandler() { return os_handler; }
 
+    void setSIMT()
+    {
+        implement_simt=true;
+    }
+
+    void resetSIMT()
+    {
+        implement_simt=false;
+    }
+
+    bool getIsSIMT() {return implement_simt; }
+
+
+
 protected:
     virtual void clearDecoderAfterMisspeculate(SST::Output* output) {};
 
@@ -243,6 +260,8 @@ protected:
 
     uint64_t tls_ptr;
     uint64_t cycle_count;
+    
+    bool implement_simt;
 
     bool                                       wantDelegatedLoad;
     VanadisCircularQueue<VanadisInstruction*>* thread_rob;
@@ -265,6 +284,7 @@ protected:
     Statistic<uint64_t>* stat_uop_generated;
     Statistic<uint64_t>* stat_ins_bytes_loaded;
 };
+
 
 } // namespace Vanadis
 } // namespace SST

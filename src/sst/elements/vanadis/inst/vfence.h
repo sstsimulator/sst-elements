@@ -23,7 +23,7 @@ namespace Vanadis {
 
 enum VanadisFenceType { VANADIS_LOAD_FENCE, VANADIS_STORE_FENCE, VANADIS_LOAD_STORE_FENCE };
 
-class VanadisFenceInstruction : public VanadisInstruction
+class VanadisFenceInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisFenceInstruction(
@@ -34,7 +34,7 @@ public:
         fence = fenceT;
     }
 
-    virtual VanadisFenceInstruction* clone() { return new VanadisFenceInstruction(*this); }
+    VanadisFenceInstruction* clone() { return new VanadisFenceInstruction(*this); }
 
     bool createsLoadFence() const { return (fence == VANADIS_LOAD_FENCE) || (fence == VANADIS_LOAD_STORE_FENCE); }
 
@@ -55,6 +55,25 @@ public:
 
 protected:
     VanadisFenceType fence;
+};
+
+class VanadisSIMTFenceInstruction : public VanadisSIMTInstruction, public VanadisFenceInstruction
+{
+public:
+    VanadisSIMTFenceInstruction(
+        const uint64_t address, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
+        const VanadisFenceType fenceT) :
+        VanadisInstruction(address, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0),
+        VanadisSIMTInstruction(address, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0),
+        VanadisFenceInstruction(address, hw_thr, isa_opts, fenceT)
+
+    {
+        // fence = fenceT;
+    }
+
+    VanadisSIMTFenceInstruction* clone() { return new VanadisSIMTFenceInstruction(*this); }
+
+    void execute(SST::Output* output, VanadisRegisterFile* regFile) override {} 
 };
 
 } // namespace Vanadis

@@ -22,7 +22,7 @@ namespace SST {
 namespace Vanadis {
 
 template <typename gpr_format, bool is_min>
-class VanadisMinInstruction : public VanadisInstruction
+class VanadisMinInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisMinInstruction(
@@ -57,19 +57,56 @@ public:
             phys_int_regs_in[0], phys_int_regs_in[1]);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void instOp(VanadisRegisterFile* regFile, 
+        uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0, 
+        uint16_t phys_int_regs_in_1)
     {
-        const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in[0]);
-	    const gpr_format src_2 = regFile->getIntReg<gpr_format>(phys_int_regs_in[1]);
+        const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in_0);
+	    const gpr_format src_2 = regFile->getIntReg<gpr_format>(phys_int_regs_in_1);
 
         if constexpr ( is_min ) {
-            regFile->setIntReg<gpr_format>(phys_int_regs_out[0], std::min(src_1,src_2));
+            regFile->setIntReg<gpr_format>(phys_int_regs_out_0, std::min(src_1,src_2));
         } else {
-            regFile->setIntReg<gpr_format>(phys_int_regs_out[0], std::max(src_1,src_2));
+            regFile->setIntReg<gpr_format>(phys_int_regs_out_0, std::max(src_1,src_2));
         }
+    }
 
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+        uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
+        uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0);
+        uint16_t phys_int_regs_in_1 = getPhysIntRegIn(1);
+        log(output, 16, 65535,phys_int_regs_out_0,phys_int_regs_in_0,phys_int_regs_in_1);
+        instOp(regFile,phys_int_regs_out_0, phys_int_regs_in_0, phys_int_regs_in_1);
         markExecuted();
     }
+};
+
+
+template <typename gpr_format, bool is_min>
+class VanadisSIMTMinInstruction : public VanadisSIMTInstruction, public VanadisMinInstruction<gpr_format, is_min> 
+{
+public:
+    VanadisSIMTMinInstruction(
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
+        const uint16_t src_1, const uint16_t src_2) :
+        VanadisMinInstruction<gpr_format,is_min>(addr, hw_thr, isa_opts, dest, src_1, src_2),
+        VanadisSIMTInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
+        VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0)
+    {
+        ;
+    }
+
+    VanadisSIMTMinInstruction*    clone() override { return new VanadisSIMTMinInstruction(*this); }
+
+    // void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    // {
+    //     uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0,VanadisSIMTInstruction::sw_thread);
+    //     uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0,VanadisSIMTInstruction::sw_thread);
+    //     uint16_t phys_int_regs_in_1 = getPhysIntRegIn(1,VanadisSIMTInstruction::sw_thread);
+    //     log(output, 16,VanadisSIMTInstruction::sw_thread,phys_int_regs_out_0,phys_int_regs_in_0,phys_int_regs_in_1);
+    //     this->instOp(regFile,phys_int_regs_out_0, phys_int_regs_in_0, phys_int_regs_in_1);
+    // }
 };
 
 } // namespace Vanadis

@@ -22,7 +22,7 @@ namespace SST {
 namespace Vanadis {
 
 template< typename gpr_format_1, typename gpr_format_2 >
-class VanadisMultiplyHighInstruction : public VanadisInstruction
+class VanadisMultiplyHighInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisMultiplyHighInstruction(
@@ -41,6 +41,7 @@ public:
     VanadisMultiplyHighInstruction* clone() override { return new VanadisMultiplyHighInstruction(*this); }
 
     VanadisFunctionalUnitType getInstFuncType() const override { return INST_INT_ARITH; }
+    
     const char*               getInstCode() const override
     {
         if( std::is_signed<gpr_format_1>::value && std::is_signed<gpr_format_2>::value ) {
@@ -63,44 +64,53 @@ public:
             phys_int_regs_in[1]);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void instOp(VanadisRegisterFile* regFile, 
+                            uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0, 
+                            uint16_t phys_int_regs_in_1) override
     {
-#ifdef VANADIS_BUILD_DEBUG
-        if(output->getVerboseLevel() >= 16) {
-            output->verbose(
-                CALL_INFO, 16, 0,
-                "Execute: 0x%" PRI_ADDR " %s phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
-                " / in=%" PRIu16 ", %" PRIu16 "\n",
-                getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1],
-                isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);
-        }
-#endif
 
         uint64_t result;
 
         // "MULH";
         if ( std::is_signed<gpr_format_1>::value && std::is_signed<gpr_format_2>::value ) {
-            const __int128_t src_1 = regFile->getIntReg<gpr_format_1>(phys_int_regs_in[0]);
-            const __int128_t src_2 = regFile->getIntReg<gpr_format_2>(phys_int_regs_in[1]);
+            const __int128_t src_1 = regFile->getIntReg<gpr_format_1>(phys_int_regs_in_0);
+            const __int128_t src_2 = regFile->getIntReg<gpr_format_2>(phys_int_regs_in_1);
             result = ( ( src_1 * src_2 ) >> (8 * sizeof(gpr_format_1)) );
         // "MULHU";
         } else if ( ! std::is_signed<gpr_format_1>::value && ! std::is_signed<gpr_format_2>::value ) {
-            const __uint128_t src_1 = regFile->getIntReg<gpr_format_1>(phys_int_regs_in[0]);
-            const __uint128_t src_2 = regFile->getIntReg<gpr_format_2>(phys_int_regs_in[1]);
+            const __uint128_t src_1 = regFile->getIntReg<gpr_format_1>(phys_int_regs_in_0);
+            const __uint128_t src_2 = regFile->getIntReg<gpr_format_2>(phys_int_regs_in_1);
             result = ( ( src_1 * src_2 ) >> (8 * sizeof(gpr_format_1)) );
         // "MULHSU";
         } else if ( std::is_signed<gpr_format_1>::value && ! std::is_signed<gpr_format_2>::value ) {
-            const __int128_t src_1 = regFile->getIntReg<gpr_format_1>(phys_int_regs_in[0]);
-            const __uint128_t src_2 = regFile->getIntReg<gpr_format_2>(phys_int_regs_in[1]);
+            const __int128_t src_1 = regFile->getIntReg<gpr_format_1>(phys_int_regs_in_0);
+            const __uint128_t src_2 = regFile->getIntReg<gpr_format_2>(phys_int_regs_in_1);
             result = ( ( src_1 * src_2 ) >> (8 * sizeof(gpr_format_1)) );
         } else {
             assert(0);
         }
         
-        regFile->setIntReg<uint64_t>( phys_int_regs_out[0], result );
-
-        markExecuted();
+        regFile->setIntReg<uint64_t>( phys_int_regs_out_0, result );
     }
+};
+
+
+template< typename gpr_format_1, typename gpr_format_2 >
+class VanadisSIMTMultiplyHighInstruction : public VanadisSIMTInstruction, public VanadisMultiplyHighInstruction <gpr_format_1, gpr_format_2>
+{
+public:
+    VanadisSIMTMultiplyHighInstruction(
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
+        const uint16_t src_1, const uint16_t src_2) :
+        VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
+        VanadisSIMTInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
+        VanadisMultiplyHighInstruction<gpr_format_1, gpr_format_2>(addr, hw_thr, isa_opts, dest, src_1, src_2)
+    {
+        ;
+    }
+
+    VanadisSIMTMultiplyHighInstruction* clone() override { return new VanadisSIMTMultiplyHighInstruction(*this); }
+
 };
 
 } // namespace Vanadis

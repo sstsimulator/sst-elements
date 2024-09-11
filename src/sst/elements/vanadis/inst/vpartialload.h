@@ -27,8 +27,12 @@ public:
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t memAddrReg,
         const int64_t offst, const uint16_t tgtReg, const uint16_t load_bytes, const bool extend_sign,
         const bool isLowerLoad, VanadisLoadRegisterType regT) :
-        VanadisLoadInstruction(
-            addr, hw_thr, isa_opts, memAddrReg, offst, tgtReg, load_bytes, extend_sign, MEM_TRANSACTION_NONE, regT),
+        VanadisInstruction( addr, hw_thr, isa_opts, 
+            1, regT == LOAD_INT_REGISTER ? 1 : 0, 
+            1, regT == LOAD_INT_REGISTER ? 1 : 0,
+            0, regT == LOAD_FP_REGISTER ? 1 : 0, 
+            0, regT == LOAD_FP_REGISTER ? 1 : 0),
+        VanadisLoadInstruction(addr, hw_thr, isa_opts, memAddrReg, offst, tgtReg, load_bytes, extend_sign, MEM_TRANSACTION_NONE, regT),
         is_load_lower(isLowerLoad)
     {
 
@@ -81,7 +85,7 @@ public:
     void computeLoadAddress(SST::Output* output, VanadisRegisterFile* regFile, uint64_t* out_addr, uint16_t* width)
     {
         const uint64_t mem_addr_reg_val = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
-#ifdef VANADIS_BUILD_DEBUG
+        #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16) {
             output->verbose(
                 CALL_INFO, 16, 0, "[execute-partload]: reg[%5" PRIu16 "]: %" PRIu64 " / 0x%" PRI_ADDR "\n", phys_int_regs_in[0],
@@ -92,11 +96,11 @@ public:
                 CALL_INFO, 16, 0, "[execute-partload]: (add)            : %" PRIu64 " / 0x%" PRI_ADDR "\n",
                 (mem_addr_reg_val + offset), (mem_addr_reg_val + offset));
         }
-#endif
+        #endif
 
         computeLoadAddress(regFile, out_addr, width);
 
-#ifdef VANADIS_BUILD_DEBUG
+        #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16) {
             output->verbose(CALL_INFO, 16, 0, "[execute-partload]: full width: %" PRIu16 "\n", load_width);
             output->verbose(
@@ -106,7 +110,7 @@ public:
                 (*out_addr), (*out_addr), (*width));
             output->verbose(CALL_INFO, 16, 0, "[execute-partload]: register-offset: %" PRIu16 "\n", register_offset);
         }
-#endif
+        #endif
     }
 
     uint16_t getLoadWidth() const { return load_width; }
