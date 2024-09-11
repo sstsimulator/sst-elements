@@ -39,6 +39,7 @@ class Builder:
         self.nodeOS = sst.Component(self.prefix + ".os", "vanadis.VanadisNodeOS")
 
         # Setup executable arguments
+        # print(self.args["vanadis_args"])
         app_args = get_opt(self.args, "VANADIS_EXE_ARGS", "vanadis_args")
         app_params = {}
         if app_args != "":

@@ -31,7 +31,6 @@ def initializeTestModule_SingleInstance(class_inst):
 
 ################################################################################
 
-# TODO: Create multiple classes of test? Quick test, short, and long test should be separated?
 # TODO: Check rodinia's result against reference files for functional correctness
 class BalarTestCase(SSTTestCase):
 
@@ -379,14 +378,13 @@ class BalarTestCase(SSTTestCase):
         log_debug("testbalarDir = {0}".format(self.testbalarDir))
 
         gpuMemCfgfile = "{0}/gpu-v100-mem.cfg".format(self.testbalarDir)
-        otherargs = '--model-options=\"-c {0} -s {1} --vanadis-binary {2} --vanadis-args \\"{3}\\" --cuda-binary {4}"'.format(gpuMemCfgfile, statsfile, exe, args, exe)
+        otherargs = '--model-options=\"-c {0} -s {1} --vanadis-binary {2} --vanadis-args=\\"{3}\\" --cuda-binary {4}\"'.format(gpuMemCfgfile, statsfile, exe, args, exe)
 
         # Run SST
         os.environ["VANADIS_ISA"] = "RISCV64"
         cmd = self.run_sst(sdlfile, outfile, errfile, set_cwd=self.testbalarDir,
                            other_args=otherargs,
                            timeout_sec=testtimeout)
-        print("cmd = {0}".format(cmd))
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
