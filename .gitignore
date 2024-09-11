@@ -19,3 +19,11 @@ tags
 .DS_Store
 *.pdf
 *.dot
+vanadis_orig/
+vanadis/tests/riscv/
+vanadis/past_tests/
+vanadis/old_ref/
+vanadis/simt/
+.vscode/
+vanadis/tests/logs/
+*.txt
