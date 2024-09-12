@@ -2,6 +2,7 @@
 
 from sst_unittest import *
 from sst_unittest_support import *
+import test_engine_globals
 
 import os
 import shutil
@@ -410,7 +411,9 @@ class BalarTestCase(SSTTestCase):
     def _setupbalarTestFiles(self):
         # NOTE: This routine is called a single time at module startup, so it
         #       may have some redunant
-        log_debug("_setupbalarTestFiles() Running")
+        
+        nthreads = test_engine_globals.TESTENGINE_THREADLIMIT
+        log_debug(f"_setupbalarTestFiles() Running, make with {nthreads}")
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
@@ -471,7 +474,8 @@ class BalarTestCase(SSTTestCase):
             os.environ["SST_CUSTOM_CUDA_LIB_PATH"] = self.testbalarLLVMVanadisDir
 
             # Build rodinia
-            cmd_compile = "make rodinia_2.0-ft -i -j -C ./src"
+            # Use the same amount of concurrent run to compile rodinia
+            cmd_compile = f"make rodinia_2.0-ft -i -j{nthreads} -C ./src"
             rtn = OSCommand(cmd_compile, set_cwd=os.environ["GPUAPPS_ROOT"]).run()
             log_debug("Balar vanadisLLVM GPU App rodinia 2.0 Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
             self.assertTrue(rtn.result() == 0, "vanadisLLVM GPU app rodinia 2.0 benchmark failed to compile")
