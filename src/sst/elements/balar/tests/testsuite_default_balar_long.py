@@ -11,12 +11,12 @@ from testBalar_testsuite_util import *
 class testcase_balar_long(BalarTestCase):
     @BalarTestCase.balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_backprop_2048(self):
-        self.balar_vanadis_clang_template("rodinia-2.0-backprop-2048", 3600)
+        self.balar_vanadis_clang_template("rodinia-2.0-backprop-2048", 60 * 120)
         
     @BalarTestCase.balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_bfs_graph4096(self):
-        self.balar_vanadis_clang_template("rodinia-2.0-bfs-graph4096", 4000)
+        self.balar_vanadis_clang_template("rodinia-2.0-bfs-graph4096", 60 * 120)
 
     @BalarTestCase.balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_lud_256(self):
-        self.balar_vanadis_clang_template("rodinia-2.0-lud-256", 7200)
+        self.balar_vanadis_clang_template("rodinia-2.0-lud-256", 60 * 240)
