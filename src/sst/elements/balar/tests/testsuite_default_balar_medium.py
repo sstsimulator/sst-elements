@@ -28,7 +28,3 @@ class testcase_balar_medium(BalarTestCase):
     @BalarTestCase.balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_pathfinder_1000_20_5(self):
         self.balar_vanadis_clang_template("rodinia-2.0-pathfinder-1000-20-5", 3000)
-
-    @BalarTestCase.balar_gpuapp_unittest
-    def test_balar_vanadis_clang_rodinia_20_srad_v2_128x128(self):
-        self.balar_vanadis_clang_template("rodinia-2.0-srad_v2-128x128", 80 * 60)

@@ -20,3 +20,7 @@ class testcase_balar_long(BalarTestCase):
     @BalarTestCase.balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_lud_256(self):
         self.balar_vanadis_clang_template("rodinia-2.0-lud-256", 60 * 240)
+    
+    @BalarTestCase.balar_gpuapp_unittest
+    def test_balar_vanadis_clang_rodinia_20_srad_v2_128x128(self):
+        self.balar_vanadis_clang_template("rodinia-2.0-srad_v2-128x128", 80 * 60)
