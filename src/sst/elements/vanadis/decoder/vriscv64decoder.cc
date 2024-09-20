@@ -16,5 +16,6 @@
 
 #include <sst_config.h>
 
+#include "decoder/vriscv64gdb.h"
 #include "decoder/vriscv64decoder.h"
 

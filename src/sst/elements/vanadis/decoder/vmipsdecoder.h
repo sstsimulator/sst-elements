@@ -2068,11 +2068,10 @@ protected:
 
                     switch ( rd ) {
                     case 29:
-                        auto thread_call = std::bind(&VanadisMIPSDecoder::getThreadLocalStoragePointer, this);
-
                         bundle->addInstruction(
                             new VanadisSetRegisterByCallInstruction<int32_t>(
-                                ins_addr, hw_thr, options, target_reg, thread_call));
+                                ins_addr, hw_thr, options, target_reg,
+                                &VanadisMIPSDecoder::getThreadLocalStoragePointer_stub, (void *)this));
                         insertDecodeFault = false;
                         break;
                     }

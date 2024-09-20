@@ -207,6 +207,8 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
         retire_isa_tables[i]->reset(issue_isa_tables[i]);
 
         halted_masks[i] = true;
+
+        thread_decoders[i]->register_pipeline( output );
     }
 
     delete[] decoder_name;
@@ -1211,6 +1213,10 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
         return true;
     }
 
+    for ( uint32_t i = 0; i < hw_threads; ++i ) {
+        thread_decoders[i]->gdb_tick();
+    }
+
 #ifdef VANADIS_BUILD_DEBUG
     const auto output_verbosity = output->getVerboseLevel();
 #endif
@@ -2180,7 +2186,7 @@ VANADIS_COMPONENT::checkpoint(FILE* fp )
             auto reg_file = register_files[i];
             auto thr_decoder = thread_decoders[i];
 
-            uint64_t tlsPtr = thread_decoders[i]->getThreadLocalStoragePointer();
+            uint64_t tlsPtr = *(uint64_t *)thread_decoders[i]->getThreadLocalStoragePointer();
             fprintf(fp,"tlsPtr: %#" PRIx64 "\n",tlsPtr);
             for ( int i = 0; i < isa_table->getNumIntRegs(); i++ ) {
                 uint64_t val = reg_file->getIntReg<uint64_t>( isa_table->getIntPhysReg( i ) );
@@ -2263,7 +2269,7 @@ void VANADIS_COMPONENT::getThreadState( VanadisGetThreadStateReq* req )
     auto isa_table = retire_isa_tables[hw_thr];
     auto reg_file = register_files[hw_thr];
     uint64_t instPtr = rob[hw_thr]->peek()->getInstructionAddress();
-    uint64_t tlsPtr = thread_decoders[hw_thr]->getThreadLocalStoragePointer();
+    uint64_t tlsPtr = *(uint64_t *)thread_decoders[hw_thr]->getThreadLocalStoragePointer();
 
     output->verbose(CALL_INFO, 8, 0,"get thread state, hw_th=%d instPtr=%#" PRIx64 " tlsPtr=%#" PRIx64 "\n",hw_thr,instPtr,tlsPtr);
 

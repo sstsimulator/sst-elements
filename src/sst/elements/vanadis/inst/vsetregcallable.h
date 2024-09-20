@@ -26,13 +26,11 @@ namespace Vanadis {
 template<typename reg_format>
 class VanadisSetRegisterByCallInstruction : public VanadisInstruction
 {
-    typedef std::function<reg_format()> SetRegisterCallable;
-
 public:
     VanadisSetRegisterByCallInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
-        SetRegisterCallable call) :
-        VanadisInstruction(addr, hw_thr, isa_opts, 0, 1, 0, 1, 0, 0, 0, 0), call_func(call)
+        void * (* call)(void *), void * arg_input) :
+        VanadisInstruction(addr, hw_thr, isa_opts, 0, 1, 0, 1, 0, 0, 0, 0), call_func(call), arg_in(arg_input)
     {
         isa_int_regs_out[0] = dest;
     }
@@ -50,7 +48,7 @@ public:
 
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
-        const reg_format reg_value = call_func();
+        const reg_format reg_value = *(reg_format *)((*call_func)( arg_in ));
 
 #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16) {
@@ -75,7 +73,8 @@ public:
     }
 
 private:
-    SetRegisterCallable call_func;
+    void * (* call_func)(void *);
+    void * arg_in;
 };
 
 } // namespace Vanadis

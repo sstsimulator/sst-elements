@@ -49,7 +49,7 @@ public:
       SST_ELI_ELEMENT_VERSION(1, 0, 0),
       "Implements a RISCV64-compatible decoder for Vanadis CPU processing.",
       SST::Vanadis::VanadisDecoder)
-
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS({ "gdb_unit", "GDB Server for Vanadis", "SST::Vanadis::VanadisRISCV64GDB" })
     SST_ELI_DOCUMENT_PARAMS(
       {"decode_max_ins_per_cycle", "Maximum number of instructions that can be "
                                    "decoded and issued per cycle", "2"},
@@ -71,6 +71,7 @@ public:
 
         fatal_decode_fault = params.find<bool>("halt_on_decode_fault", false);
 
+        gdb = loadUserSubComponent<SST::Vanadis::VanadisRISCV64GDB>("gdb_unit");
     }
 
     ~VanadisRISCV64Decoder() {}
@@ -127,6 +128,66 @@ public:
         regFile->setIntReg(sp_phys_reg, value);
     }
 
+    void gdb_tick() {
+        if ( gdb != nullptr ) {
+            gdb->tick();
+        }
+    }
+
+    void register_pipeline( SST::Output* output_p ) {
+        if ( gdb != nullptr ) {
+            gdb->register_pipeline( output_p, this );
+        }
+    }
+
+    bool is_rob_empty() {
+        return thread_rob->size() == 0;
+    }
+
+    void instruction_to_rob( SST::Output* output, VanadisInstruction* next_ins, bool * bundle_has_branch, VanadisInstructionBundle* bundle ) {
+        // Note: Caller must confirm there is space in the rob before calling
+        // Note: last 2 arguments not used if instruction is not a branch
+        if ( next_ins->getInstFuncType() == INST_BRANCH ) {
+            VanadisSpeculatedInstruction* next_spec_ins =
+                dynamic_cast<VanadisSpeculatedInstruction*>(next_ins);
+
+            if ( branch_predictor->contains(ip) ) {
+                // We have an address predicton from the branching unit
+                const uint64_t predicted_address = branch_predictor->predictAddress(ip);
+                next_spec_ins->setSpeculatedAddress(predicted_address);
+
+                if(output->getVerboseLevel() >= 16) {
+                    output->verbose(
+                        CALL_INFO, 16, 0,
+                        "----> contains a branch: 0x%" PRI_ADDR " / predicted "
+                        "(found in predictor): 0x%" PRI_ADDR "\n",
+                        ip, predicted_address);
+                }
+
+                ip                = predicted_address;
+                *bundle_has_branch = true;
+            }
+            else {
+                // We don't have an address prediction
+                // so just speculate that we are going to drop through to the
+                // next instruction as we aren't sure where this will go yet
+
+                if(output->getVerboseLevel() >= 16) {
+                    output->verbose(
+                        CALL_INFO, 16, 0,
+                        "----> contains a branch: 0x%" PRI_ADDR " / predicted "
+                        "(not-found in predictor): 0x%" PRI_ADDR ", pc-increment: %" PRIu64 "\n",
+                        ip, ip + 4, bundle->pcIncrement());
+                }
+
+                ip += bundle->pcIncrement();
+                next_spec_ins->setSpeculatedAddress(ip);
+                *bundle_has_branch = true;
+            }
+        }
+
+        thread_rob->push(next_ins->clone());
+    }
 
     void tick(SST::Output* output, uint64_t cycle) override
     {
@@ -145,6 +206,12 @@ public:
                         output->verbose(
                             CALL_INFO, 16, 0, "---> Found uop bundle for ip=0x%" PRI_ADDR ", loading from cache...\n", ip);
                     }
+
+                    if ( gdb != nullptr && gdb->should_stall(ip) ) {
+                        // We are stopped at a breakpoint, so stall this cycle
+                        break;
+                    }
+
                     stat_uop_hit->addData(1);
 
                     VanadisInstructionBundle* bundle = ins_loader->getBundleAt(ip);
@@ -163,46 +230,7 @@ public:
                         for ( uint32_t i = 0; i < bundle->getInstructionCount(); ++i ) {
                             VanadisInstruction* next_ins = bundle->getInstructionByIndex(i);
 
-                            if ( next_ins->getInstFuncType() == INST_BRANCH ) {
-                                VanadisSpeculatedInstruction* next_spec_ins =
-                                    dynamic_cast<VanadisSpeculatedInstruction*>(next_ins);
-
-                                if ( branch_predictor->contains(ip) ) {
-                                    // We have an address predicton from the branching unit
-                                    const uint64_t predicted_address = branch_predictor->predictAddress(ip);
-                                    next_spec_ins->setSpeculatedAddress(predicted_address);
-
-                                    if(output->getVerboseLevel() >= 16) {
-                                        output->verbose(
-                                            CALL_INFO, 16, 0,
-                                            "----> contains a branch: 0x%" PRI_ADDR " / predicted "
-                                            "(found in predictor): 0x%" PRI_ADDR "\n",
-                                            ip, predicted_address);
-                                    }
-
-                                    ip                = predicted_address;
-                                    bundle_has_branch = true;
-                                }
-                                else {
-                                    // We don't have an address prediction
-                                    // so just speculate that we are going to drop through to the
-                                    // next instruction as we aren't sure where this will go yet
-
-                                    if(output->getVerboseLevel() >= 16) {
-                                        output->verbose(
-                                            CALL_INFO, 16, 0,
-                                            "----> contains a branch: 0x%" PRI_ADDR " / predicted "
-                                            "(not-found in predictor): 0x%" PRI_ADDR ", pc-increment: %" PRIu64 "\n",
-                                            ip, ip + 4, bundle->pcIncrement());
-                                    }
-
-                                    ip += bundle->pcIncrement();
-                                    next_spec_ins->setSpeculatedAddress(ip);
-                                    bundle_has_branch = true;
-                                }
-                            }
-
-                            thread_rob->push(next_ins->clone());
+                            instruction_to_rob( output, next_ins, &bundle_has_branch, bundle );
                         }
 
                         // Move to the next address, if we had a branch we should have
@@ -304,6 +332,7 @@ protected:
     uint16_t                     icache_max_bytes_per_cycle;
     uint16_t                     max_decodes_per_cycle;
     uint16_t                     decode_buffer_max_entries;
+    VanadisRISCV64GDB*           gdb;
 
     void decode(SST::Output* output, const uint64_t ins_address, const uint32_t ins, VanadisInstructionBundle* bundle)
     {
@@ -1112,8 +1141,10 @@ protected:
                             case 0xc00:
                             {
                                 if ( 0 == rs1 ) {
-                                    auto thread_call = std::bind(&VanadisRISCV64Decoder::getCycleCount, this);
-                                    bundle->addInstruction( new VanadisSetRegisterByCallInstruction<int64_t>( ins_address, hw_thr, options, rd, thread_call));
+                                    bundle->addInstruction(
+                                        new VanadisSetRegisterByCallInstruction<int64_t>(
+                                            ins_address, hw_thr, options, rd,
+                                            &VanadisRISCV64Decoder::getCycleCount_stub, (void *)this));
                                     decode_fault = false;
                                 }
                             } break;
