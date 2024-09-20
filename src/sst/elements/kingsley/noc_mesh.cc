@@ -1066,6 +1066,7 @@ noc_mesh::init(unsigned int phase)
             if ( ports[i] != NULL ) {
                 credit_event* cr_ev = static_cast<credit_event*>(ports[i]->recvUntimedData());
                 port_credits[i] += cr_ev->credits;
+		delete cr_ev;
             }
         }
         init_state = 11;
