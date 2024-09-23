@@ -118,6 +118,9 @@ BalarMMIO::BalarMMIO(ComponentId_t id, Params &params) : SST::Component(id) {
     }
 
     g_balarmmio_component = this;
+
+    // Initial values
+    has_blocked_response = false;
 }
 
 void BalarMMIO::init(unsigned int phase) {
@@ -180,6 +183,7 @@ void BalarMMIO::send_write_request_SST(unsigned core_id, uint64_t address, uint6
 }
 
 void BalarMMIO::SST_callback_memcpy_H2D_done() {
+    out.verbose(CALL_INFO, 1, 0, "Prepare memcpyD2H writes\n");
     if (last_packet.isSSTmem) {
         // Safely free the source data buffer
         free(memcpyH2D_dst);
@@ -191,6 +195,7 @@ void BalarMMIO::SST_callback_memcpy_H2D_done() {
     
     // Send blocked response
     mmio_iface->send(blocked_response);
+    has_blocked_response = false;
 }
 
 void BalarMMIO::SST_callback_memcpy_D2H_done() {
@@ -231,6 +236,17 @@ void BalarMMIO::SST_callback_memcpy_D2H_done() {
     } else {
         // Not SST mem space copying, just return
         mmio_iface->send(blocked_response);
+        has_blocked_response = false;
+    }
+}
+
+void BalarMMIO::SST_callback_cudaThreadSynchronize_done() {
+    if (has_blocked_response) {
+        mmio_iface->send(blocked_response);
+        has_blocked_response = false;
+
+        // Mark the CUDA call as done
+        cuda_ret.is_cuda_call_done = true;
     }
 }
 
@@ -419,7 +435,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
             // This is a response to a request we send to cache
             // to read the cuda packet
             // Whether the request is blocking or not
-            bool is_blocked = false;
+            balar->has_blocked_response = false;
 
             // Our write instance from CUDA API Call
             StandardMem::Write* write = balar->pending_write;
@@ -428,13 +444,13 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
             // simulator space pointer we passed to DMA engine
             BalarCudaCallPacket_t * packet = &(balar->last_packet);
 
-            out->verbose(_INFO_, "Handling CUDA API Call. Enum is %s\n", gpu_api_to_string(packet->cuda_call_id)->c_str());
+            out->verbose(_INFO_, "Handling CUDA API Call (%d). Enum is %s\n", packet->cuda_call_id, gpu_api_to_string(packet->cuda_call_id)->c_str());
 
             // Save the call type for return packet
             balar->cuda_ret.cuda_call_id = packet->cuda_call_id;
 
             // Most of the CUDA api will return immediately
-            // except for memcpy and kernel launch
+            // except for memcpy and threadsync
             balar->cuda_ret.is_cuda_call_done = true;
 
             // The following are for non-SST memspace
@@ -456,7 +472,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
                 case GPU_MEMCPY: 
                     // Handle a special case where we have a memcpy
                     // within SST memory space
-                    is_blocked = true;
+                    balar->has_blocked_response = true;
                     if (packet->isSSTmem) {
                         // With SST memory/vanadis, we should sync for it to complete
                         balar->cuda_ret.is_cuda_call_done = false;
@@ -615,7 +631,19 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
                     }
                     break;
                 case GPU_THREAD_SYNC: {
-                        balar->cuda_ret.cuda_error = cudaThreadSynchronize();
+                        // Should always succeed
+                        balar->cuda_ret.cuda_error = cudaSuccess;
+                        cudaError_t result = cudaThreadSynchronizeSST();
+                        
+                        // Check if need to make this a blocked response
+                        // if so, mark this and defer the completion
+                        // after GPGPU-Sim notifies us it is done with
+                        // cudaThreadSynchronize()
+                        if (result != cudaSuccess) {
+                            balar->has_blocked_response = true;
+                            // Mark this so that vanadis can poll for completion
+                            balar->cuda_ret.is_cuda_call_done = false;
+                        }
                     }
                     break;
                 case GPU_MEMSET: {
@@ -675,7 +703,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
 
             // Send response (ack) to the CUDA API Cuda request if needed
             if (!(write->posted)) {
-                if (is_blocked) {
+                if (balar->has_blocked_response) {
                     // Save blocked req's response and send later
                     balar->blocked_response = write->makeResponse();
                     out->verbose(CALL_INFO, 1, 0, "Handling a blocking request: %s\n", gpu_api_to_string(packet->cuda_call_id)->c_str());
@@ -720,6 +748,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
             free(balar->memcpyD2H_dst);
             balar->memcpyD2H_dst = NULL;
             balar->mmio_iface->send(balar->blocked_response);
+            balar->has_blocked_response = false;
             
             // Assert that this memcpy is done so that the vanadis CPU will
             // able to sync properly
@@ -827,4 +856,9 @@ extern void SST_callback_memcpy_H2D_done() {
 extern void SST_callback_memcpy_D2H_done() {
     assert(g_balarmmio_component);
     g_balarmmio_component->SST_callback_memcpy_D2H_done();
+}
+
+extern void SST_callback_cudaThreadSynchronize_done() {
+    assert(g_balarmmio_component);
+    g_balarmmio_component->SST_callback_cudaThreadSynchronize_done();
 }

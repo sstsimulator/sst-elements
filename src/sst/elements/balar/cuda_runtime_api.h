@@ -71,7 +71,7 @@ cudaError_t CUDARTAPI cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(
         size_t dynamicSMemSize,
         unsigned int flags);
 
-__host__ cudaError_t CUDARTAPI cudaThreadSynchronize(void);
+__host__ cudaError_t CUDARTAPI cudaThreadSynchronizeSST(void);
 
 __host__ cudaError_t CUDARTAPI cudaMemset(void *mem, int c, size_t count);
 
