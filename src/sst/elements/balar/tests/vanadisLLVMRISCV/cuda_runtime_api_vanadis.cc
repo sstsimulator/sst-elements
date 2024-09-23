@@ -488,6 +488,13 @@ __host__ cudaError_t CUDARTAPI cudaThreadSynchronize(void) {
     // Make cuda call
     BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
 
+    // Wait for threadsync to complete
+    while (!(response_packet_ptr->is_cuda_call_done)) {
+        int wait = 0;
+        response_packet_ptr = readLastCudaStatus();
+        wait++;
+    }
+
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);

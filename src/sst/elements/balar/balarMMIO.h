@@ -94,6 +94,11 @@ public:
     void send_write_request_SST(unsigned core_id, uint64_t address, uint64_t size, void* mem_req);
     void SST_callback_memcpy_H2D_done();
     void SST_callback_memcpy_D2H_done();
+    /**
+     * @brief Callback that notifies cudaThreadSynchronize is done
+     * 
+     */
+    void SST_callback_cudaThreadSynchronize_done();
 
     uint32_t mmio_size;
 
@@ -162,6 +167,8 @@ private:
     BalarCudaCallPacket_t last_packet;
     Addr packet_scratch_mem_addr;
 
+    // Indicator that the blocked response is valid
+    bool has_blocked_response;
     // Response to a blocked API request (like cudaMemcpy)
     StandardMem::Request* blocked_response;
 
