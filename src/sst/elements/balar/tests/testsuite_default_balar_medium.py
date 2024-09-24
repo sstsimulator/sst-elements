@@ -26,5 +26,9 @@ class testcase_balar_medium(BalarTestCase):
         self.balar_vanadis_clang_template("rodinia-2.0-nw-128-10", 2400)
 
     @BalarTestCase.balar_gpuapp_unittest
+    def test_balar_vanadis_clang_rodinia_20_nn_4_3_30_90(self):
+        self.balar_vanadis_clang_template("rodinia-2.0-nn-4-3-30-90", 2400)
+
+    @BalarTestCase.balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_pathfinder_1000_20_5(self):
         self.balar_vanadis_clang_template("rodinia-2.0-pathfinder-1000-20-5", 3000)
