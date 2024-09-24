@@ -94,6 +94,9 @@ public:
     void send_write_request_SST(unsigned core_id, uint64_t address, uint64_t size, void* mem_req);
     void SST_callback_memcpy_H2D_done();
     void SST_callback_memcpy_D2H_done();
+    void SST_callback_memcpy_to_symbol_done();
+    void SST_callback_memcpy_from_symbol_done();
+
     /**
      * @brief Callback that notifies cudaThreadSynchronize is done
      * 
