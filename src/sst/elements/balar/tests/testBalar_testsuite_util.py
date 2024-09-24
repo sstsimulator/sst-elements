@@ -88,66 +88,6 @@ class BalarTestCase(SSTTestCase):
             )
         return wrapper
 
-    # @balar_basic_unittest
-    # def test_balar_runvecadd_testcpu(self):
-    #     self.balar_testcpu_template("vectorAdd")
-
-    # @balar_basic_unittest
-    # def test_balar_runvecadd_vanadis(self):
-    #     self.balar_vanadis_template("vanadisHandshake")
-
-    # @balar_basic_unittest
-    # def test_balar_vanadis_clang_helloworld(self):
-    #     self.balar_vanadis_clang_template("helloworld")
-    
-    # @balar_basic_unittest
-    # def test_balar_vanadis_clang_vecadd(self):
-    #     self.balar_vanadis_clang_template("vecadd")
-
-    # @balar_gpuapp_unittest
-    # def test_balar_vanadis_clang_rodinia_20_backprop_short(self):
-    #     self.balar_vanadis_clang_template("rodinia-2.0-backprop-short")
-
-    # @balar_gpuapp_unittest
-    # def test_balar_vanadis_clang_rodinia_20_backprop_1024(self):
-    #     self.balar_vanadis_clang_template("rodinia-2.0-backprop-1024", 2400)
-
-    # @balar_gpuapp_unittest
-    # def test_balar_vanadis_clang_rodinia_20_backprop_2048(self):
-    #     self.balar_vanadis_clang_template("rodinia-2.0-backprop-2048", 3600)
-
-    # @balar_gpuapp_unittest
-    # def test_balar_vanadis_clang_rodinia_20_bfs_SampleGraph(self):
-    #     self.balar_vanadis_clang_template("rodinia-2.0-bfs-SampleGraph")
-    
-    # @balar_gpuapp_unittest
-    # def test_balar_vanadis_clang_rodinia_20_bfs_graph4096(self):
-    #     self.balar_vanadis_clang_template("rodinia-2.0-bfs-graph4096", 4000)
-
-    # @balar_gpuapp_unittest
-    # def test_balar_vanadis_clang_rodinia_20_hotspot_30_6_40(self):
-    #     self.balar_vanadis_clang_template("rodinia-2.0-hotspot-30-6-40", 1200)
-
-    # @balar_gpuapp_unittest
-    # def test_balar_vanadis_clang_rodinia_20_lud_64(self):
-    #     self.balar_vanadis_clang_template("rodinia-2.0-lud-64", 1200)
-
-    # @balar_gpuapp_unittest
-    # def test_balar_vanadis_clang_rodinia_20_lud_256(self):
-    #     self.balar_vanadis_clang_template("rodinia-2.0-lud-256", 7200)
-    
-    # @balar_gpuapp_unittest
-    # def test_balar_vanadis_clang_rodinia_20_nw_128_10(self):
-    #     self.balar_vanadis_clang_template("rodinia-2.0-nw-128-10", 1200)
-
-    # @balar_gpuapp_unittest
-    # def test_balar_vanadis_clang_rodinia_20_pathfinder_1000_20_5(self):
-    #     self.balar_vanadis_clang_template("rodinia-2.0-pathfinder-1000-20-5", 1500)
-
-    # @balar_gpuapp_unittest
-    # def test_balar_vanadis_clang_rodinia_20_srad_v2_128x128(self):
-    #     self.balar_vanadis_clang_template("rodinia-2.0-srad_v2-128x128", 40 * 60)
-
 ####
 
     def balar_testcpu_template(self, testcase, testtimeout=400):
@@ -304,62 +244,77 @@ class BalarTestCase(SSTTestCase):
         gpu_app_collection_root = os.getenv("GPUAPPS_ROOT")
 
         # Test cases dispatch dict
-        # Tag: [EXE_PATH, EXE_args]
+        # Tag: [EXE_PATH, DATA_DIR, EXE_args]
         # TODO Build a function for this? Better way to sort this, like a json?
         # TODO Should put testcase config in a separate config file and the unittest should just read the file and perform testing?
         testcases = {
-            "helloworld": ["./vanadisLLVMRISCV/helloworld", ""],
-            "vecadd": ["./vanadisLLVMRISCV/vecadd", ""],
+            "helloworld": ["./vanadisLLVMRISCV/helloworld", "", ""],
+            "vecadd": ["./vanadisLLVMRISCV/vecadd", "", ""],
             # Rodinia 2.0
             ## Backprop
-            "rodinia-2.0-backprop-short": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/backprop-rodinia-2.0-ft", f"256"],
-            "rodinia-2.0-backprop-1024": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/backprop-rodinia-2.0-ft", f"1024"],
-            "rodinia-2.0-backprop-2048": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/backprop-rodinia-2.0-ft", f"2048"],
-            "rodinia-2.0-backprop-4096": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/backprop-rodinia-2.0-ft", f"4096"],
-            "rodinia-2.0-backprop-8192": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/backprop-rodinia-2.0-ft", f"8192"],
+            "rodinia-2.0-backprop-short": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/backprop-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/backprop-rodinia-2.0-ft", f"256"],
+            "rodinia-2.0-backprop-1024": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/backprop-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/backprop-rodinia-2.0-ft", f"1024"],
+            "rodinia-2.0-backprop-2048": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/backprop-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/backprop-rodinia-2.0-ft", f"2048"],
+            "rodinia-2.0-backprop-4096": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/backprop-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/backprop-rodinia-2.0-ft", f"4096"],
+            "rodinia-2.0-backprop-8192": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/backprop-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/backprop-rodinia-2.0-ft", f"8192"],
 
             ## BFS
-            "rodinia-2.0-bfs-SampleGraph": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/bfs-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/bfs-rodinia-2.0-ft/data/SampleGraph.txt"],
-            "rodinia-2.0-bfs-graph4096": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/bfs-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/bfs-rodinia-2.0-ft/data/graph4096.txt"],
-            "rodinia-2.0-bfs-graph65536": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/bfs-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/bfs-rodinia-2.0-ft/data/graph65536.txt"],
+            "rodinia-2.0-bfs-SampleGraph": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/bfs-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/bfs-rodinia-2.0-ft/", "./data/SampleGraph.txt"],
+            "rodinia-2.0-bfs-graph4096": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/bfs-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/bfs-rodinia-2.0-ft/", "./data/graph4096.txt"],
+            "rodinia-2.0-bfs-graph65536": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/bfs-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/bfs-rodinia-2.0-ft/", "./data/graph65536.txt"],
 
             ## Hotspot
-            "rodinia-2.0-hotspot-30-6-40": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/hotspot-rodinia-2.0-ft", f"30 6 40 {gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/hotspot-rodinia-2.0-ft/data/result_30_6_40.txt {gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/hotspot-rodinia-2.0-ft/data/temp.dat {gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/hotspot-rodinia-2.0-ft/data/power.dat"],
+            "rodinia-2.0-hotspot-30-6-40": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/hotspot-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/hotspot-rodinia-2.0-ft/", f"30 6 40 ./data/result_30_6_40.txt ./data/temp.dat ./data/power.dat"],
 
             ## LUD
-            "rodinia-2.0-lud-64": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/lud-rodinia-2.0-ft", f"-i {gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/lud-rodinia-2.0-ft/data/64.dat"],
-            "rodinia-2.0-lud-256": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/lud-rodinia-2.0-ft", f"-i {gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/lud-rodinia-2.0-ft/data/256.dat"],
-            "rodinia-2.0-lud-512": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/lud-rodinia-2.0-ft", f"-i {gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/lud-rodinia-2.0-ft/data/512.dat"],
-            "rodinia-2.0-lud-2048": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/lud-rodinia-2.0-ft", f"-i {gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/lud-rodinia-2.0-ft/data/2048.dat"],
+            "rodinia-2.0-lud-64": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/lud-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/lud-rodinia-2.0-ft", f"-i ./data/64.dat"],
+            "rodinia-2.0-lud-256": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/lud-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/lud-rodinia-2.0-ft", f"-i ./data/256.dat"],
+            "rodinia-2.0-lud-512": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/lud-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/lud-rodinia-2.0-ft", f"-i ./data/512.dat"],
+            "rodinia-2.0-lud-2048": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/lud-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/lud-rodinia-2.0-ft", f"-i ./data/2048.dat"],
 
             ## NN
-            "rodinia-2.0-nn-4-3-30-90": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/nn-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/nn-rodinia-2.0-ft/data/filelist_4 3 30 90 {gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/nn-rodinia-2.0-ft/data/filelist_4_3_30_90-result.txt"],
+            "rodinia-2.0-nn-4-3-30-90": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/nn-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/nn-rodinia-2.0-ft", f"./data/filelist_4 3 30 90 ./data/filelist_4_3_30_90-result.txt"],
 
             ## NW
-            "rodinia-2.0-nw-128-10": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/nw-rodinia-2.0-ft", f"128 10"],
-            "rodinia-2.0-nw-256-10": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/nw-rodinia-2.0-ft", f"256 10"],
-            "rodinia-2.0-nw-512-10": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/nw-rodinia-2.0-ft", f"512 10"],
+            "rodinia-2.0-nw-128-10": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/nw-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/nw-rodinia-2.0-ft", f"128 10"],
+            "rodinia-2.0-nw-256-10": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/nw-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/nw-rodinia-2.0-ft", f"256 10"],
+            "rodinia-2.0-nw-512-10": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/nw-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/nw-rodinia-2.0-ft", f"512 10"],
 
             ## Pathfinder
-            "rodinia-2.0-pathfinder-1000-20-5": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/pathfinder-rodinia-2.0-ft", f"1000 20 5 {gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/pathfinder-rodinia-2.0-ft/data/result_1000_20_5.txt"],
+            "rodinia-2.0-pathfinder-1000-20-5": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/pathfinder-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/pathfinder-rodinia-2.0-ft", f"1000 20 5 ./data/result_1000_20_5.txt"],
 
             ## Srad_v2
-            "rodinia-2.0-srad_v2-128x128": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/srad_v2-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/srad_v2-rodinia-2.0-ft/data/matrix128x128.txt 0 127 0 127 .5 2 {gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/srad_v2-rodinia-2.0-ft/data/result_matrix128x128_1_150_1_100_.5_2.txt"],
-
+            "rodinia-2.0-srad_v2-128x128": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/srad_v2-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/srad_v2-rodinia-2.0-ft", f"./data/matrix128x128.txt 0 127 0 127 .5 2 ./data/result_matrix128x128_1_150_1_100_.5_2.txt"],
+            
+            ## Streamcluster
+            "rodinia-2.0-streamcluster-3_6_16_1024_1024_100_none_1": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/streamcluster-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/streamcluster-rodinia-2.0-ft", f"3 6 16 1024 1024 100 none output.txt 1 ./data/result_3_6_16_1024_1024_100_none_1.txt"]
         }
 
         # Get gpu apps executable and args
-        exe, args = testcases[testcase]
+        exe, data_dir, args = testcases[testcase]
 
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
-        self.balarElementDir = os.path.abspath("{0}/../".format(test_path))
-        self.balarElementVanadisHandshakeTestDir = os.path.abspath("{0}/vanadisHandshake".format(test_path))
-        self.testbalarDir = "{0}/test_balar".format(tmpdir)
-        self.testbalarVanadisHandshakeDir = "{0}/vanadisHandshake".format(self.testbalarDir)
+        # Create testcase dir and link its data dir from
+        # gpu app collection
+        testcase_dir = self.testbalarDir
+        if data_dir != "":
+            testcase_dir = f"{self.testbalarDir}/{testcase}"
+            testcase_data_dir = f"{testcase_dir}/data"
+            os.makedirs(testcase_dir)
+            os_symlink_dir(f"{data_dir}/data", testcase_data_dir)
+            
+            # Also link config files as we are changing the cwd to here
+            os_symlink_file(self.testbalarDir, testcase_dir, "gpu-v100-mem.cfg")
+            os_symlink_file(self.testbalarDir, testcase_dir, "gpgpusim.config")
+            os_symlink_file(self.testbalarDir, testcase_dir, "utils.py")
+            os_symlink_file(self.testbalarDir, testcase_dir, "balarBlock.py")
+            os_symlink_file(self.testbalarDir, testcase_dir, "memory.py")
+            os_symlink_file(self.testbalarDir, testcase_dir, "vanadisBlock.py")
+            os_symlink_file(self.testbalarDir, testcase_dir, "vanadisOS.py")
 
         # Set the various file paths
         testDataFileName="test_gpgpu_{0}".format(testcase)
@@ -383,7 +338,7 @@ class BalarTestCase(SSTTestCase):
 
         # Run SST
         os.environ["VANADIS_ISA"] = "RISCV64"
-        cmd = self.run_sst(sdlfile, outfile, errfile, set_cwd=self.testbalarDir,
+        cmd = self.run_sst(sdlfile, outfile, errfile, set_cwd=testcase_dir,
                            other_args=otherargs,
                            timeout_sec=testtimeout)
 
