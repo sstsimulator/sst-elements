@@ -57,6 +57,8 @@ namespace BalarComponent {
         GPU_MEMSET_RET,
         GPU_MEMCPY_TO_SYMBOL,
         GPU_MEMCPY_TO_SYMBOL_RET,
+        GPU_MEMCPY_FROM_SYMBOL,
+        GPU_MEMCPY_FROM_SYMBOL_RET,
         GPU_SET_DEVICE,
         GPU_SET_DEVICE_RET,
         GPU_CREATE_CHANNEL_DESC,
@@ -108,6 +110,22 @@ namespace BalarComponent {
             } cuda_memcpy;
 
             struct {
+                char symbol[256];
+                uint64_t src;
+                uint64_t count;
+                uint64_t offset;
+                enum cudaMemcpyKind kind;
+            } cuda_memcpy_to_symbol;
+
+            struct {
+                char symbol[256];
+                uint64_t dst;
+                uint64_t count;
+                uint64_t offset;
+                enum cudaMemcpyKind kind;
+            } cuda_memcpy_from_symbol;
+
+            struct {
                 uint64_t sharedMem;
                 uint64_t stream;
                 uint32_t gdx;
@@ -137,7 +155,7 @@ namespace BalarComponent {
                 void **fatCubinHandle;
                 char *hostVar; //pointer to...something
                 char *deviceAddress; //name of variable
-                const char *deviceName; //name of variable
+                char deviceName[256]; //name of variable
                 int32_t ext;
                 int32_t size;
                 int32_t constant;

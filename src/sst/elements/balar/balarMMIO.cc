@@ -183,7 +183,7 @@ void BalarMMIO::send_write_request_SST(unsigned core_id, uint64_t address, uint6
 }
 
 void BalarMMIO::SST_callback_memcpy_H2D_done() {
-    out.verbose(CALL_INFO, 1, 0, "Prepare memcpyD2H writes\n");
+    out.verbose(CALL_INFO, 1, 0, "Prepare memcpyH2D finish off\n");
     if (last_packet.isSSTmem) {
         // Safely free the source data buffer
         free(memcpyH2D_dst);
@@ -232,6 +232,64 @@ void BalarMMIO::SST_callback_memcpy_D2H_done() {
         // Send to dma via mmio_iface since it is also an MMIO device connected
         // on the same NIC
         out.verbose(CALL_INFO, 1, 0, "Sending Issue_DMA_memcpy_D2H request to DMA\n");
+        mmio_iface->send(dma_req);
+    } else {
+        // Not SST mem space copying, just return
+        mmio_iface->send(blocked_response);
+        has_blocked_response = false;
+    }
+}
+
+void BalarMMIO::SST_callback_memcpy_to_symbol_done() {
+    out.verbose(CALL_INFO, 1, 0, "Prepare memcpyToSymbol finish off\n");
+    if (last_packet.isSSTmem) {
+        // Safely free the source data buffer
+        free(memcpyH2D_dst);
+        memcpyH2D_dst = NULL;
+
+        // Mark the CUDA call as done
+        cuda_ret.is_cuda_call_done = true;
+    }
+    
+    // Send blocked response
+    mmio_iface->send(blocked_response);
+    has_blocked_response = false;
+}
+
+void BalarMMIO::SST_callback_memcpy_from_symbol_done() {
+    // Use DMA engine to send the copy from Simulator to SST memspace
+    // Should wait for the memcpy to complete
+    // as memcpy is blocking
+    // Prepare a request to write the dst data to CPU
+    out.verbose(CALL_INFO, 1, 0, "Prepare memcpyFromSymbol writes\n");
+    BalarCudaCallPacket_t * packet = &last_packet;
+    Addr dstAddr = packet->cuda_memcpy.dst;
+
+    if (packet->isSSTmem) {
+        std::string cmdString = "Issue_DMA_memcpy_from_symbol";
+        // Prepare DMA config
+
+        DMAEngine::DMAEngineControlRegisters dma_registers;
+        dma_registers.sst_mem_addr = dstAddr;
+        dma_registers.simulator_mem_addr = memcpyD2H_dst;
+        dma_registers.data_size = packet->cuda_memcpy_from_symbol.count;
+        dma_registers.transfer_size = 4;    // 4 bytes per transfer
+        dma_registers.dir = DMAEngine::DMA_DIR::SIM_TO_SST; // From SST memspace to simulator memspace
+
+        // Send the DMA request to DMA engine
+        std::vector<uint8_t> * payload_ptr = encode_balar_packet<DMAEngine::DMAEngineControlRegisters>(&dma_registers);
+        StandardMem::Request* dma_req = new StandardMem::Write(
+            dma_addr, 
+            sizeof(DMAEngine::DMAEngineControlRegisters), 
+            *payload_ptr);
+        delete payload_ptr;
+
+        // Record in hashmap
+        requests[dma_req->getID()] = std::make_pair(getCurrentSimTime(), cmdString);
+
+        // Send to dma via mmio_iface since it is also an MMIO device connected
+        // on the same NIC
+        out.verbose(CALL_INFO, 1, 0, "Sending Issue_DMA_memcpy_from_symbol request to DMA\n");
         mmio_iface->send(dma_req);
     } else {
         // Not SST mem space copying, just return
@@ -556,6 +614,80 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
                         balar->cuda_ret.cudamemcpy.kind = packet->cuda_memcpy.kind;
                     }
                     break;
+                case GPU_MEMCPY_TO_SYMBOL: 
+                    // TODO: Copy from host to device basically
+                    balar->has_blocked_response = true;
+                    if (packet->isSSTmem) {
+                        // With SST memory/vanadis, we should sync for it to complete
+                        balar->cuda_ret.is_cuda_call_done = false;
+
+                        // Create a buffer to hold the data to be read from
+                        // Vanadis's memory space
+                        size_t data_size = packet->cuda_memcpy_to_symbol.count;
+                        
+                        // Reusing memcpyH2D_dst member
+                        balar->memcpyH2D_dst = (uint8_t *) calloc(data_size, sizeof(uint8_t));
+
+                        DMAEngine::DMAEngineControlRegisters dma_registers;
+                        dma_registers.sst_mem_addr = packet->cuda_memcpy_to_symbol.src;
+                        dma_registers.simulator_mem_addr = balar->memcpyH2D_dst;
+                        dma_registers.data_size = data_size;
+                        dma_registers.transfer_size = 4;    // 4 bytes per transfer
+                        dma_registers.dir = DMAEngine::DMA_DIR::SST_TO_SIM; // From SST memspace to simulator memspace
+                        
+                        // Handle the cmdString in Writeresp handler 
+                        std::string cmdString = "Issue_DMA_memcpy_to_symbol";
+
+                        // Send the DMA request to DMA engine
+                        std::vector<uint8_t> * payload_ptr = encode_balar_packet<DMAEngine::DMAEngineControlRegisters>(&dma_registers);
+                        StandardMem::Request* dma_req = new StandardMem::Write(
+                            balar->dma_addr, 
+                            sizeof(DMAEngine::DMAEngineControlRegisters), 
+                            *payload_ptr);
+                        delete payload_ptr;
+
+                        // Record this request for later reference
+                        balar->requests[dma_req->getID()] = std::make_pair(balar->getCurrentSimTime(), cmdString);
+
+                        // Send the DMA request to the engine
+                        // Since we used MMIO for DMA engine, one interface is enough
+                        balar->mmio_iface->send(dma_req);
+
+                        // Delete the request 
+                        balar->requests.erase(i);
+
+                        // Delete the resp
+                        delete resp;
+                        return;
+                    } else {
+                        // CPU using same memory space as simulator
+                        // Can directly call API without reading via DMA
+                        balar->cuda_ret.cuda_error = cudaMemcpyToSymbol(
+                                packet->cuda_memcpy_to_symbol.symbol,
+                                (const void *) packet->cuda_memcpy_to_symbol.src,
+                                packet->cuda_memcpy_to_symbol.count,
+                                packet->cuda_memcpy_to_symbol.offset,
+                                packet->cuda_memcpy_to_symbol.kind);
+                    }
+                    break;
+                case GPU_MEMCPY_FROM_SYMBOL: 
+                    if (packet->isSSTmem) {
+                        balar->memcpyD2H_dst = (uint8_t *) calloc(packet->cuda_memcpy_from_symbol.count, sizeof(uint8_t));
+                        balar->cuda_ret.cuda_error = cudaMemcpyFromSymbol(
+                                (void *)  balar->memcpyD2H_dst,
+                                packet->cuda_memcpy_from_symbol.symbol,
+                                packet->cuda_memcpy_from_symbol.count,
+                                packet->cuda_memcpy_from_symbol.offset,
+                                packet->cuda_memcpy_from_symbol.kind);
+                    } else {
+                        balar->cuda_ret.cuda_error = cudaMemcpyFromSymbol(
+                                (void *) packet->cuda_memcpy_from_symbol.dst,
+                                packet->cuda_memcpy_from_symbol.symbol,
+                                packet->cuda_memcpy_from_symbol.count,
+                                packet->cuda_memcpy_from_symbol.offset,
+                                packet->cuda_memcpy_from_symbol.kind);
+                    }
+                    break;
                 case GPU_CONFIG_CALL: 
                     {
                         // Brackets for var visibity issue, see 
@@ -606,7 +738,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
                     __cudaRegisterVar(
                         packet->register_var.fatCubinHandle,
                         packet->register_var.hostVar,
-                        packet->register_var.deviceAddress,
+                        packet->register_var.deviceName,
                         packet->register_var.deviceName,
                         packet->register_var.ext,
                         packet->register_var.size,
@@ -784,6 +916,42 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
             balar->pending_write = nullptr;
             delete write;
             delete resp;
+        } else if (request_type.compare("Issue_DMA_memcpy_to_symbol") == 0) {
+            // Similar as memcpyH2D
+            BalarCudaCallPacket_t * packet = &(balar->last_packet);
+            StandardMem::Write* write = balar->pending_write;
+
+            // Call GPGPU-Sim with copied data
+            // TODO: Passed symbol is empty, need to check with Vanadis side
+            balar->cuda_ret.cuda_error = cudaMemcpyToSymbol(
+                    packet->cuda_memcpy_to_symbol.symbol,
+                    (const void*) balar->memcpyH2D_dst,
+                    packet->cuda_memcpy_to_symbol.count,
+                    packet->cuda_memcpy_to_symbol.offset,
+                    packet->cuda_memcpy_to_symbol.kind);
+
+            // Save blocked req's response and send later (in SST_callback_memcpy_to_symbol_done()), since it is a memcpy
+            balar->blocked_response = write->makeResponse();
+            out->verbose(CALL_INFO, 1, 0, "Handling a blocking request: %s\n", gpu_api_to_string(packet->cuda_call_id)->c_str());
+
+            // Delete requests as we don't need them anymore
+            balar->pending_write = nullptr;
+            delete write;
+            delete resp;
+        } else if (request_type.compare("Issue_DMA_memcpy_from_symbol") == 0) {
+            // Free temp buffer to hold memcpyFromSymbol data
+            out->verbose(_INFO_, "%s: done with a memcpyFromSymbol\n", balar->getName().c_str());
+
+            free(balar->memcpyD2H_dst);
+            balar->memcpyD2H_dst = NULL;
+            balar->mmio_iface->send(balar->blocked_response);
+            balar->has_blocked_response = false;
+            
+            // Assert that this memcpy is done so that the vanadis CPU will
+            // able to sync properly
+            balar->cuda_ret.is_cuda_call_done = true;
+
+            delete resp;
         } else {
             // Unknown cmdstring, abort
             out->fatal(CALL_INFO, -1, "%s: Unknown write request (%ld): %s!\n", balar->getName().c_str(), resp->getID(), request_type.c_str());
@@ -856,6 +1024,16 @@ extern void SST_callback_memcpy_H2D_done() {
 extern void SST_callback_memcpy_D2H_done() {
     assert(g_balarmmio_component);
     g_balarmmio_component->SST_callback_memcpy_D2H_done();
+}
+
+extern void SST_callback_memcpy_to_symbol_done() {
+    assert(g_balarmmio_component);
+    g_balarmmio_component->SST_callback_memcpy_to_symbol_done();
+}
+
+extern void SST_callback_memcpy_from_symbol_done() {
+    assert(g_balarmmio_component);
+    g_balarmmio_component->SST_callback_memcpy_from_symbol_done();
 }
 
 extern void SST_callback_cudaThreadSynchronize_done() {

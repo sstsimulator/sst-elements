@@ -234,11 +234,96 @@ cudaError_t cudaMemcpy(void *dst, const void *src, size_t count, enum cudaMemcpy
     return response_packet_ptr->cuda_error;
 }
 
-// TODO How to handle this memcpy?
 __host__ cudaError_t CUDARTAPI cudaMemcpyToSymbol(
-    const char *symbol, const void *src, size_t count, size_t offset __dv(0),
-    enum cudaMemcpyKind kind __dv(cudaMemcpyHostToDevice)) {
+    const void *symbol, const void *src, size_t count, size_t offset,
+    enum cudaMemcpyKind kind) {
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("MemcpyToSymbol dst: %s\n", symbol);
+    }
+    BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
+    call_packet_ptr->isSSTmem = true;
+    call_packet_ptr->cuda_call_id = GPU_MEMCPY_TO_SYMBOL;
 
+    // Pass the symbol name by value
+    strncpy(call_packet_ptr->cuda_memcpy_to_symbol.symbol, (char *) symbol, strlen((char *) symbol));
+    call_packet_ptr->cuda_memcpy_to_symbol.symbol[strlen((char *) symbol)] = '\0';
+    call_packet_ptr->cuda_memcpy_to_symbol.src = (uint64_t) src;
+    call_packet_ptr->cuda_memcpy_to_symbol.count = (uint64_t) count;
+    call_packet_ptr->cuda_memcpy_to_symbol.offset = (uint64_t) offset;
+    call_packet_ptr->cuda_memcpy_to_symbol.kind = kind;
+
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("MemcpyToSymbol Packet address: %p\n", call_packet_ptr);
+        printf("MemcpyToSymbol kind: %d\n", (uint8_t) (call_packet_ptr->cuda_memcpy.kind));
+        printf("MemcpyToSymbol size: %ld\n", count);
+        printf("MemcpyToSymbol src: %p\n", src);
+        printf("MemcpyToSymbol symbol: %s\n", symbol);
+        fflush(stdout);
+    }
+
+    // Make cuda call
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
+
+    // Make the memcpy sync with balar so that CPU will
+    // issue another write/read to balar only if the previous memcpy is done
+    while (!(response_packet_ptr->is_cuda_call_done)) {
+        int wait = 0;
+        response_packet_ptr = readLastCudaStatus();
+        wait++;
+    }
+
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("CUDA API ID: %d with error: %d\n", 
+                response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+    }
+    
+    return response_packet_ptr->cuda_error;
+}
+
+__host__ cudaError_t CUDARTAPI cudaMemcpyFromSymbol(
+    void *dst, const void *symbol, size_t count, size_t offset,
+    enum cudaMemcpyKind kind) {
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("MemcpyFromSymbol symbol: %s\n", symbol);
+    }
+    BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
+    call_packet_ptr->isSSTmem = true;
+    call_packet_ptr->cuda_call_id = GPU_MEMCPY_FROM_SYMBOL;
+
+    // Pass the symbol name by value
+    strncpy(call_packet_ptr->cuda_memcpy_from_symbol.symbol, (char *) symbol, strlen((char *) symbol));
+    call_packet_ptr->cuda_memcpy_from_symbol.symbol[strlen((char *) symbol)] = '\0';
+    call_packet_ptr->cuda_memcpy_from_symbol.dst = (uint64_t) dst;
+    call_packet_ptr->cuda_memcpy_from_symbol.count = (uint64_t) count;
+    call_packet_ptr->cuda_memcpy_from_symbol.offset = (uint64_t) offset;
+    call_packet_ptr->cuda_memcpy_from_symbol.kind = kind;
+
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("MemcpyFromSymbol Packet address: %p\n", call_packet_ptr);
+        printf("MemcpyFromSymbol kind: %d\n", (uint8_t) (call_packet_ptr->cuda_memcpy.kind));
+        printf("MemcpyFromSymbol size: %ld\n", count);
+        printf("MemcpyFromSymbol dst: %p\n", dst);
+        printf("MemcpyFromSymbol symbol: %s\n", symbol);
+        fflush(stdout);
+    }
+
+    // Make cuda call
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
+
+    // Make the memcpy sync with balar so that CPU will
+    // issue another write/read to balar only if the previous memcpy is done
+    while (!(response_packet_ptr->is_cuda_call_done)) {
+        int wait = 0;
+        response_packet_ptr = readLastCudaStatus();
+        wait++;
+    }
+
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("CUDA API ID: %d with error: %d\n", 
+                response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+    }
+    
+    return response_packet_ptr->cuda_error;
 }
 
 extern "C" {
@@ -539,7 +624,12 @@ __host__ cudaError_t CUDARTAPI cudaMemset(void *mem, int c, size_t count) {
     return response_packet_ptr->cuda_error;
 }
 
-// TODO Will there be a problem with the deviceName passed as a pointer?
+// Weili: There might be an issue with passing deviceName directly.
+// As its value is a pointer in Vanadis memory space and this value
+// will be used to instantiate std::string.
+// Which should cause issue if that Vanadis's address is invalid 
+// in simulator memory space.
+// So we use a fixed size buffer in the packet to pass by value
 void __cudaRegisterVar(
     void **fatCubinHandle,
     char *hostVar,           // pointer to...something
@@ -548,6 +638,9 @@ void __cudaRegisterVar(
     int ext, int size, int constant, int global) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start registering var\n");
+        printf("HostVar 0x%Lx\n", hostVar);
+        printf("deviceAddress 0x%Lx\n", deviceAddress);
+        printf("deviceName %s\n", deviceName);
     }
 
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
@@ -556,7 +649,10 @@ void __cudaRegisterVar(
     call_packet_ptr->register_var.fatCubinHandle = fatCubinHandle; 
     call_packet_ptr->register_var.hostVar = hostVar;
     call_packet_ptr->register_var.deviceAddress = deviceAddress;
-    call_packet_ptr->register_var.deviceName = deviceName;
+    // Copy from char pointer to the array so we don't need to access
+    // Vanadis's memory space for this value.
+    strncpy(call_packet_ptr->register_var.deviceName, deviceName, strlen(deviceName));
+    call_packet_ptr->register_var.deviceName[strlen(deviceName)] = '\0';
     call_packet_ptr->register_var.ext = ext;
     call_packet_ptr->register_var.size = size;
     call_packet_ptr->register_var.constant = constant;
@@ -667,7 +763,7 @@ __host__ cudaError_t CUDARTAPI cudaBindTexture(
 
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_SET_DEVICE;
+    call_packet_ptr->cuda_call_id = GPU_BIND_TEXTURE;
     call_packet_ptr->cudabindtexture.offset = offset;
     call_packet_ptr->cudabindtexture.texref = texref;
     call_packet_ptr->cudabindtexture.devPtr = devPtr;
