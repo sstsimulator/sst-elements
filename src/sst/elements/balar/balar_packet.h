@@ -110,7 +110,7 @@ namespace BalarComponent {
             } cuda_memcpy;
 
             struct {
-                char symbol[256];
+                uint64_t symbol;
                 uint64_t src;
                 uint64_t count;
                 uint64_t offset;
@@ -118,7 +118,7 @@ namespace BalarComponent {
             } cuda_memcpy_to_symbol;
 
             struct {
-                char symbol[256];
+                uint64_t symbol;
                 uint64_t dst;
                 uint64_t count;
                 uint64_t offset;

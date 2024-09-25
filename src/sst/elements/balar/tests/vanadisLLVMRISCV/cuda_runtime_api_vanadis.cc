@@ -245,8 +245,7 @@ __host__ cudaError_t CUDARTAPI cudaMemcpyToSymbol(
     call_packet_ptr->cuda_call_id = GPU_MEMCPY_TO_SYMBOL;
 
     // Pass the symbol name by value
-    strncpy(call_packet_ptr->cuda_memcpy_to_symbol.symbol, (char *) symbol, strlen((char *) symbol));
-    call_packet_ptr->cuda_memcpy_to_symbol.symbol[strlen((char *) symbol)] = '\0';
+    call_packet_ptr->cuda_memcpy_to_symbol.symbol = (uint64_t) symbol;
     call_packet_ptr->cuda_memcpy_to_symbol.src = (uint64_t) src;
     call_packet_ptr->cuda_memcpy_to_symbol.count = (uint64_t) count;
     call_packet_ptr->cuda_memcpy_to_symbol.offset = (uint64_t) offset;
@@ -291,8 +290,7 @@ __host__ cudaError_t CUDARTAPI cudaMemcpyFromSymbol(
     call_packet_ptr->cuda_call_id = GPU_MEMCPY_FROM_SYMBOL;
 
     // Pass the symbol name by value
-    strncpy(call_packet_ptr->cuda_memcpy_from_symbol.symbol, (char *) symbol, strlen((char *) symbol));
-    call_packet_ptr->cuda_memcpy_from_symbol.symbol[strlen((char *) symbol)] = '\0';
+    call_packet_ptr->cuda_memcpy_from_symbol.symbol = (uint64_t) symbol;
     call_packet_ptr->cuda_memcpy_from_symbol.dst = (uint64_t) dst;
     call_packet_ptr->cuda_memcpy_from_symbol.count = (uint64_t) count;
     call_packet_ptr->cuda_memcpy_from_symbol.offset = (uint64_t) offset;
