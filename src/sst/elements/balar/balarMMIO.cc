@@ -663,7 +663,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
                         // CPU using same memory space as simulator
                         // Can directly call API without reading via DMA
                         balar->cuda_ret.cuda_error = cudaMemcpyToSymbol(
-                                packet->cuda_memcpy_to_symbol.symbol,
+                                (const char *) packet->cuda_memcpy_to_symbol.symbol,
                                 (const void *) packet->cuda_memcpy_to_symbol.src,
                                 packet->cuda_memcpy_to_symbol.count,
                                 packet->cuda_memcpy_to_symbol.offset,
@@ -675,14 +675,14 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
                         balar->memcpyD2H_dst = (uint8_t *) calloc(packet->cuda_memcpy_from_symbol.count, sizeof(uint8_t));
                         balar->cuda_ret.cuda_error = cudaMemcpyFromSymbol(
                                 (void *)  balar->memcpyD2H_dst,
-                                packet->cuda_memcpy_from_symbol.symbol,
+                                (const char *) packet->cuda_memcpy_from_symbol.symbol,
                                 packet->cuda_memcpy_from_symbol.count,
                                 packet->cuda_memcpy_from_symbol.offset,
                                 packet->cuda_memcpy_from_symbol.kind);
                     } else {
                         balar->cuda_ret.cuda_error = cudaMemcpyFromSymbol(
                                 (void *) packet->cuda_memcpy_from_symbol.dst,
-                                packet->cuda_memcpy_from_symbol.symbol,
+                                (const char *) packet->cuda_memcpy_from_symbol.symbol,
                                 packet->cuda_memcpy_from_symbol.count,
                                 packet->cuda_memcpy_from_symbol.offset,
                                 packet->cuda_memcpy_from_symbol.kind);
@@ -924,7 +924,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
             // Call GPGPU-Sim with copied data
             // TODO: Passed symbol is empty, need to check with Vanadis side
             balar->cuda_ret.cuda_error = cudaMemcpyToSymbol(
-                    packet->cuda_memcpy_to_symbol.symbol,
+                    (const char *) packet->cuda_memcpy_to_symbol.symbol,
                     (const void*) balar->memcpyH2D_dst,
                     packet->cuda_memcpy_to_symbol.count,
                     packet->cuda_memcpy_to_symbol.offset,

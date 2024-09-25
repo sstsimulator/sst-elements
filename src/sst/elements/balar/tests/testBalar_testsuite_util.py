@@ -263,6 +263,9 @@ class BalarTestCase(SSTTestCase):
             "rodinia-2.0-bfs-graph4096": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/bfs-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/bfs-rodinia-2.0-ft/", "./data/graph4096.txt"],
             "rodinia-2.0-bfs-graph65536": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/bfs-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/bfs-rodinia-2.0-ft/", "./data/graph65536.txt"],
 
+            ## Heartwall
+            "rodinia-2.0-heartwall-1": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/heartwall-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/heartwall-rodinia-2.0-ft/", f"./data/test.avi 1 ./data/result-1.txt"],
+            
             ## Hotspot
             "rodinia-2.0-hotspot-30-6-40": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/hotspot-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/hotspot-rodinia-2.0-ft/", f"30 6 40 ./data/result_30_6_40.txt ./data/temp.dat ./data/power.dat"],
 
