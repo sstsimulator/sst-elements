@@ -1,5 +1,9 @@
+SUBDIRS = api
+if SST_USE_ARIEL_MPI
+SUBDIRS += mpi
+endif
+
 AM_CPPFLAGS += \
-        $(MPI_CPPFLAGS) \
 	-I$(top_srcdir)/src
 
 if HAVE_SET_PTRACER
@@ -53,7 +57,6 @@ libariel_la_SOURCES = \
 EXTRA_DIST = \
 	api/arielapi.c \
 	api/arielapi.h \
-	api/Makefile \
 	frontend/pin3/fesimple.cc \
 	frontend/simple/fesimple.cc \
 	frontend/simple/examples/multicore.py \
@@ -76,8 +79,11 @@ EXTRA_DIST = \
 	frontend/simple/examples/stream/tests/refFiles/test_Ariel_runstreamNB.out \
 	frontend/simple/examples/stream/tests/refFiles/test_Ariel_runstreamSt.out \
 	tests/testsuite_default_Ariel.py \
+	tests/testsuite_testio_Ariel.py \
+	tests/testsuite_mpi_Ariel.py \
 	tests/testopenMP/ompmybarrier/ompmybarrier.c \
-	tests/testopenMP/ompmybarrier/Makefile
+	tests/testopenMP/ompmybarrier/Makefile \
+	tests/testMPI/Makefile
 
 libariel_la_LDFLAGS = -module -avoid-version
 libariel_la_LIBADD = $(SHM_LIB)
@@ -102,8 +108,9 @@ endif
 
 libariel_la_CPPFLAGS = \
 	-DARIEL_TRACE_LIB=$(libdir)/sst \
-        -DARIEL_TOOL_DIR="$(libexecdir)" \
+	-DARIEL_TOOL_DIR="$(libexecdir)" \
 	-DPINTOOL_EXECUTABLE="$(PINTOOL_RUNTIME)" \
+	-DMPILAUNCHER_EXECUTABLE="$(CURDIR)/mpi/mpilauncher" \
 	$(AM_CPPFLAGS) $(CPPFLAGS)
 
 sstdir = $(includedir)/sst/elements/ariel

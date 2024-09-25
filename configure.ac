@@ -41,6 +41,8 @@ LTDL_INIT([recursive])
 
 AC_CACHE_SAVE
 
+SST_CHECK_ARIEL_MPI([], [AC_MSG_ERROR([Can't enable Ariel MPI])])
+
 SST_CORE_CHECK_INSTALL()
 
 SST_CHECK_OSX()
