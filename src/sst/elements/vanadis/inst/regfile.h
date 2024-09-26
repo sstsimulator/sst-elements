@@ -64,9 +64,9 @@ public:
 
         uint64_t tot_size_int = int_reg_width * count_int_regs * WARP_SIZE;
         uint64_t tot_size_fp = fp_reg_width * count_fp_regs * WARP_SIZE;
-        output->verbose(CALL_INFO, 16, 0, 
-        "Registers initialized: int_reg_width=%d fp_reg_width=%d count_int_regs=%d count_fp_regs=%d WARP_SIZE=%d total_size(int)=%d, total_size(fp)=%d\n",
-        int_reg_width, fp_reg_width, count_int_regs, count_fp_regs, WARP_SIZE, tot_size_int, tot_size_fp);
+        // output->verbose(CALL_INFO, 16, 0, 
+        // "Registers initialized: int_reg_width=%d fp_reg_width=%d count_int_regs=%d count_fp_regs=%d WARP_SIZE=%d total_size(int)=%d, total_size(fp)=%d\n",
+        // int_reg_width, fp_reg_width, count_int_regs, count_fp_regs, WARP_SIZE, tot_size_int, tot_size_fp);
 
     }
 
@@ -132,12 +132,12 @@ public:
 
         int index = get_reg_index(reg,1);
         uint8_t* reg_ptr = (uint8_t*) &fp_reg_storage[index];
-        output->verbose(CALL_INFO, 16, 0, "CopyFromFPReg: reg=%d fp_reg_width=%d target_tid=%d WARP_SIZE=%d count_fp_regs=%d index = %d\n",
-        reg, fp_reg_width,target_tid, WARP_SIZE, count_fp_regs, index);
+        // output->verbose(CALL_INFO, 16, 0, "CopyFromFPReg: reg=%d fp_reg_width=%d target_tid=%d WARP_SIZE=%d count_fp_regs=%d index = %d\n",
+        // reg, fp_reg_width,target_tid, WARP_SIZE, count_fp_regs, index);
 
         for(auto i = 0; i < len; ++i) {
             values[i] = reg_ptr[offset + i];
-            printf("reg[%d][%d]=%d\n",reg, offset + i,reg_ptr[offset+i]);
+            // printf("reg[%d][%d]=%d\n",reg, offset + i,reg_ptr[offset+i]);
         }
         
         
@@ -149,12 +149,12 @@ public:
         
         int index = get_reg_index(reg, 0);
         uint8_t* reg_ptr = (uint8_t*) &int_reg_storage[index];
-        output->verbose(CALL_INFO, 16, 0, "CopyFromIntReg: reg=%d int_reg_width=%d target_tid=%d WARP_SIZE=%d count_int_regs=%d index= %d len=%d\n",
-        reg, int_reg_width, target_tid, WARP_SIZE, count_int_regs, index, len);
+        // output->verbose(CALL_INFO, 16, 0, "CopyFromIntReg: reg=%d int_reg_width=%d target_tid=%d WARP_SIZE=%d count_int_regs=%d index= %d len=%d\n",
+        // reg, int_reg_width, target_tid, WARP_SIZE, count_int_regs, index, len);
 
         for(auto i = 0; i < len; ++i) {
             values[i] = reg_ptr[offset + i];
-            printf("reg[%d][%d]=%d\n",reg, offset + i,values[i]);
+            // printf("reg[%d][%d]=%d\n",reg, offset + i,values[i]);
         }
         
     }
@@ -185,11 +185,11 @@ public:
         uint8_t* reg_ptr = (uint8_t*) &int_reg_storage[index];
         for(auto i = 0; i < len; ++i) {
             reg_ptr[offset + i] = values[i];
-            printf("reg[%d][%d]=%d\n",reg, offset + i,values[i]);
+            // printf("reg[%d][%d]=%d\n",reg, offset + i,values[i]);
         }
 
-        output->verbose(CALL_INFO, 16, 0, "CopyToIntReg: reg=%d int_reg_width=%d target_tid=%d WARP_SIZE=%d count_int_regs=%d index= %d\n",
-        reg, int_reg_width, target_tid, WARP_SIZE, count_int_regs, index);
+        // output->verbose(CALL_INFO, 16, 0, "CopyToIntReg: reg=%d int_reg_width=%d target_tid=%d WARP_SIZE=%d count_int_regs=%d index= %d\n",
+        // reg, int_reg_width, target_tid, WARP_SIZE, count_int_regs, index);
     }
 
     void copyToFPRegister(uint16_t reg, uint32_t offset, uint8_t* values, uint32_t len) {
@@ -198,31 +198,32 @@ public:
 
         int index = get_reg_index(reg, 1);
         uint8_t* reg_ptr = (uint8_t*) &fp_reg_storage[index];
-        output->verbose(CALL_INFO, 16, 0, "CopyToFPReg: reg=%d fp_reg_width=%d target_tid=%d WARP_SIZE=%d count_fp_regs=%d index = %d\n",
-        reg, fp_reg_width,target_tid, WARP_SIZE, count_fp_regs, index);
+        // output->verbose(CALL_INFO, 16, 0, "CopyToFPReg: reg=%d fp_reg_width=%d target_tid=%d WARP_SIZE=%d count_fp_regs=%d index = %d\n",
+        // reg, fp_reg_width,target_tid, WARP_SIZE, count_fp_regs, index);
         for(auto i = 0; i < len; ++i) {
             reg_ptr[offset + i] = values[i];
-            printf("reg[%d][%d]=%d\n",reg, offset + i,values[i]);
+            // printf("reg[%d][%d]=%d\n",reg, offset + i,values[i]);
         }
-        output->verbose(CALL_INFO, 16, 0, "CopyToFPReg: done\n");
+        // output->verbose(CALL_INFO, 16, 0, "CopyToFPReg: done\n");
     }
 
     template <typename T>
     T getIntReg(const uint16_t reg)
     {
-        // output->verbose(CALL_INFO, 0, 0,"Segfault test0-1\n");
         assert(reg < count_int_regs);
-        // output->verbose(CALL_INFO, 0, 0,"Segfault test0.2\n");
         assert(sizeof(T) <= int_reg_width);
-        // output->verbose(CALL_INFO, 0, 0,"Segfault test0.3\n");
 
         if ( reg != decoder_opts->getRegisterIgnoreWrites() ) 
         {
             int index = get_reg_index(reg, 0);
             char* reg_start = &int_reg_storage[index];
             T*    reg_start_T = (T*)reg_start;
-            // output->verbose(CALL_INFO, 16, 0, "getIntReg: reg=%d int_reg_width=%d target_tid=%d WARP_SIZE=%d count_int_regs=%d index=%d\n",
-            // reg, int_reg_width, target_tid, WARP_SIZE, count_int_regs, index);
+            
+            // printf("getIntReg: reg=%d\n",reg);
+            // for(auto i = 0; i < 64; ++i) {
+            //     printf("reg[%d][%d]=%d\n",reg, i,reg_start[i]);
+            // }
+            // printf("getIntReg: reg=%d done\n",reg);
             return *(reg_start_T);
         }
         else {
@@ -233,12 +234,20 @@ public:
     template <typename T>
     T getFPReg(const uint16_t reg)
     {
+        output->verbose(CALL_INFO, 16, 0, "getFPReg: reg=%d tid=%d, fpregwidth=%d \n",
+            reg, hw_thread, fp_reg_width);
         assert(reg < count_fp_regs);
         assert(sizeof(T) <= fp_reg_width);
 
         int index = get_reg_index(reg, 1);
         char* reg_start   = &fp_reg_storage[index];
         T*    reg_start_T = (T*)reg_start;
+
+        // printf("getFPReg: reg=%d\n",reg);
+        //     for(auto i = 0; i < 64; ++i) {
+        //         printf("reg[%d][%d]=%d\n",reg, i,reg_start[i]);
+        //     }
+        //     printf("getFPReg: reg=%d done\n",reg);
         // output->verbose(CALL_INFO, 16, 0, "getFPReg: reg=%d fp_reg_width=%d target_tid=%d WARP_SIZE=%d count_fp_regs=%d index = %d\n",
         // reg, fp_reg_width,target_tid, WARP_SIZE, count_fp_regs, index);
         return *(reg_start_T);
@@ -262,7 +271,7 @@ public:
                 &reg_ptr_c[sizeof(T)],
                 sign_extend ? ((val & (static_cast<T>(1) << (sizeof(T) * 8 - 1))) == 0) ? 0x00 : 0xFF : 0x00,
                 int_reg_width - sizeof(T));
-            output->verbose(CALL_INFO, 16, 0, "setIntReg: reg=%d tid=%d, val=%d \n",
+            output->verbose(CALL_INFO, 16, 0, "setIntReg: reg=%d tid=%d, val=%lu \n",
             reg, hw_thread,val);
         }
     }
@@ -270,22 +279,24 @@ public:
     template <typename T>
     void setFPReg(const uint16_t reg, const T val)
     {
+        output->verbose(CALL_INFO, 16, 0, "setFPReg: reg=%d tid=%d, val=%lu \n",
+            reg, hw_thread,val);
         assert(reg < count_fp_regs);
         assert(sizeof(T) <= fp_reg_width);
 
         uint8_t* val_ptr = (uint8_t*) &val;
         int index = get_reg_index(reg, 1);
-        output->verbose(CALL_INFO, 16, 0, "setFPReg: reg=%d tid=%d, val=%d \n",
+        output->verbose(CALL_INFO, 16, 0, "setFPReg: reg=%d tid=%d, val=%lu \n",
             reg, hw_thread,val);
         for(auto i = 0; i < sizeof(T); ++i) {
             fp_reg_storage[index + i] = val_ptr[i];
-            printf("reg[%d][%d]=%d\n",reg, index + i,val_ptr[i]);
+            // printf("reg[%d][%d]=%d\n",reg, index + i,val_ptr[i]);
         }
 
         // Pad with extra zeros if needed
         for(auto i = sizeof(T); i < fp_reg_width; ++i) {
             fp_reg_storage[index + i] = 0;
-            printf("reg[%d][%d]=%d\n",reg, index + i,0);
+            // printf("reg[%d][%d]=%d\n",reg, index + i,0);
         }
     }
 
@@ -374,7 +385,7 @@ private:
             }
             else
             {
-                index = fp_reg_width * reg;
+                index = int_reg_width * reg;
             }
         }
         return index;

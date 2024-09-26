@@ -200,17 +200,17 @@ public:
                                     uint16_t phys_fp_regs_in_1, uint16_t compare_result)
     {
         #ifdef VANADIS_BUILD_DEBUG
-        if ( output->getVerboseLevel() >= 16 ) {
+        if ( output->getVerboseLevel() >= verboselevel ) {
             output->verbose(
-                CALL_INFO, 16, 0, "hw_thr=%d sw_thr = %d Execute: (addr=0x%" PRI_ADDR ") %s (%s) phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
-                    " / in=%" PRIu16 ", %" PRIu16 ", %" PRIu16 "  result: %s\n", getHWThread(),sw_thr, getInstructionAddress(), getInstCode(), 
+                CALL_INFO, verboselevel, 0, "hw_thr=%d sw_thr = %d Execute: (addr=0x%" PRI_ADDR ") %s (%s) phys: out=%" PRIu16 " / in=%" PRIu16 ", %" PRIu16 " isa: out=%" PRIu16
+                    " / in=%" PRIu16 ", %" PRIu16 ", result: %s\n", getHWThread(),sw_thr, getInstructionAddress(), getInstCode(), 
                     convertCompareTypeToString(compare_type), phys_fp_regs_out_0, phys_fp_regs_in_0,
                     phys_fp_regs_in_1, isa_fp_regs_out[0], isa_fp_regs_in[0], isa_fp_regs_in[1], compare_result ? "true" : "false");
         }
         #endif
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
         uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
         uint16_t phys_fp_regs_in_0 = getPhysFPRegIn(0);
@@ -257,7 +257,7 @@ public:
 
     VanadisSIMTFPSetRegCompareInstruction* clone() override { return new VanadisSIMTFPSetRegCompareInstruction(*this); }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
         uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0, VanadisSIMTInstruction::sw_thread);
         uint16_t phys_fp_regs_in_0 = getPhysFPRegIn(0, VanadisSIMTInstruction::sw_thread);

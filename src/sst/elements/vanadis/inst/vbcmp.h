@@ -73,7 +73,7 @@ public:
                             uint16_t phys_int_regs_in_0,uint16_t phys_int_regs_in_1) 
                                     
     {
-        printf("I am in BCMP log\n");
+        // printf("I am in BCMP log\n");
         #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= verboselevel) {
             std::ostringstream ss;

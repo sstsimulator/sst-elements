@@ -103,17 +103,19 @@ public:
          if ( sizeof(fp_format) >= regFile->getFPRegWidth() ) 
          {
                 fp_format src_1,src_2;
-                src_1  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1); 
-                src_2  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in_2, phys_fp_regs_in_3);
+            READ_2FP_REGS(phys_fp_regs_in_0,phys_fp_regs_in_1,phys_fp_regs_in_2, phys_fp_regs_in_3);
 
-                const fp_format result = src_1 / src_2;
+            performDivFlagChecks<fp_format>(src_2);
+            
+            const fp_format result = src_1 / src_2;
 
-                performFlagChecks(result);
-                performFlagChecks<fp_format>(result);
-
-                fractureToRegisters<fp_format>(regFile, phys_fp_regs_out_0, phys_fp_regs_out_1, result);
+            performFlagChecks(result);
+            
+            performFlagChecks<fp_format>(result);
+            
+            WRITE_FP_REGS(phys_fp_regs_out_0, phys_fp_regs_out_1);
         }
-        else
+        else 
         {
             const uint64_t src_1 = regFile->getFPReg<uint64_t>(phys_fp_regs_in_0);
             const uint64_t src_2 = regFile->getFPReg<uint64_t>(phys_fp_regs_in_1);
@@ -130,27 +132,12 @@ public:
             const uint64_t result = 0xffffffff00000000 | convertTo<int64_t>(tmp);\
             regFile->setFPReg<uint64_t>(phys_fp_regs_out_0, result);
         }
+
         check_IEEE754_except();
     }
 
     void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
-        // #ifdef VANADIS_BUILD_DEBUG
-        // // if ( output->getVerboseLevel() >= 16 ) {
-        // //     char* int_register_buffer = new char[256];
-        // //     char* fp_register_buffer  = new char[256];
-
-        // //     writeIntRegs(int_register_buffer, 256);
-        // //     writeFPRegs(fp_register_buffer, 256);
-
-        // //     output->verbose(
-        // //         CALL_INFO, 16, 0, "Execute: (addr=0x%" PRI_ADDR ") %s int: %s / fp: %s\n", getInstructionAddress(),
-        // //         getInstCode(), int_register_buffer, fp_register_buffer);
-
-        // //     delete[] int_register_buffer;
-        // //     delete[] fp_register_buffer;
-        // // }
-        // #endif
         uint16_t phys_fp_regs_out_0 = getPhysFPRegOut(0);
         uint16_t phys_fp_regs_in_0 = getPhysFPRegIn(0);
         uint16_t phys_fp_regs_in_1 = getPhysFPRegIn(1);
@@ -158,7 +145,7 @@ public:
         uint16_t phys_fp_regs_in_3 = 0;
         uint16_t phys_fp_regs_out_1 = 0;
         log(output, 16, 65535, phys_fp_regs_out_0, phys_fp_regs_in_0, phys_fp_regs_in_1);
-        if ( sizeof(fp_format) >= regFile->getFPRegWidth() ) 
+        if ( sizeof(fp_format) > regFile->getFPRegWidth() ) 
         {
             phys_fp_regs_in_2 = getPhysFPRegIn(2);
             phys_fp_regs_in_3 = getPhysFPRegIn(3);
@@ -211,30 +198,14 @@ public:
     
     void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
-        // #ifdef VANADIS_BUILD_DEBUG
-        // // if ( output->getVerboseLevel() >= 16 ) {
-        // //     char* int_register_buffer = new char[256];
-        // //     char* fp_register_buffer  = new char[256];
-
-        // //     writeIntRegs(int_register_buffer, 256);
-        // //     writeFPRegs(fp_register_buffer, 256);
-
-        // //     output->verbose(
-        // //         CALL_INFO, 16, 0, "Execute: (addr=0x%" PRI_ADDR ") %s int: %s / fp: %s\n", getInstructionAddress(),
-        // //         getInstCode(), int_register_buffer, fp_register_buffer);
-
-        // //     delete[] int_register_buffer;
-        // //     delete[] fp_register_buffer;
-        // // }
-        // #endif
         uint16_t phys_fp_regs_out_0 = getPhysFPRegOut(0, VanadisSIMTInstruction::sw_thread);
         uint16_t phys_fp_regs_in_0 = getPhysFPRegIn(0, VanadisSIMTInstruction::sw_thread);
         uint16_t phys_fp_regs_in_1 = getPhysFPRegIn(1, VanadisSIMTInstruction::sw_thread);
         uint16_t phys_fp_regs_in_2 = 0;
         uint16_t phys_fp_regs_in_3 = 0;
         uint16_t phys_fp_regs_out_1 = 0;
-        log(output, 16, VanadisSIMTInstruction::sw_thread, phys_fp_regs_out_0, phys_fp_regs_in_0, phys_fp_regs_in_1);
-        if ( sizeof(fp_format) >= regFile->getFPRegWidth() ) 
+        
+        if ( sizeof(fp_format) > regFile->getFPRegWidth() ) 
         {
             phys_fp_regs_in_2 = getPhysFPRegIn(2, VanadisSIMTInstruction::sw_thread);
             phys_fp_regs_in_3 = getPhysFPRegIn(3, VanadisSIMTInstruction::sw_thread);
@@ -242,6 +213,7 @@ public:
         }
         VanadisFPDivideInstruction<fp_format>::instOp(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1, 
                                                             phys_fp_regs_in_2, phys_fp_regs_in_3, phys_fp_regs_out_0,phys_fp_regs_out_1);
+        log(output, 16, VanadisSIMTInstruction::sw_thread, phys_fp_regs_out_0, phys_fp_regs_in_0, phys_fp_regs_in_1);
     }
 };
 

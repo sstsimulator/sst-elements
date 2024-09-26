@@ -100,10 +100,10 @@ public:
 
     void memReqIsDone(bool) {
         if ( ReadIoVecTable == m_state ) {
-            m_output->verbose(CALL_INFO, 0, 0, "[syscall-%s] read ioVecTable complete\n", getName().c_str());
+            m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "[syscall-%s] read ioVecTable complete\n", getName().c_str());
             m_state = IoVecTransfer;
             for ( int i =0; i < getEvent<VanadisSyscallIoVecEvent*>()->getIOVecCount(); i++ ) {
-                m_output->verbose(CALL_INFO, 0, 0, "[syscall-%s] addr=%#" PRIx64 " length=%zu\n",
+                m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "[syscall-%s] addr=%#" PRIx64 " length=%zu\n",
                     getName().c_str(), m_ioVecTable->getAddr(i),m_ioVecTable->getLength(i));
             }
             if ( findNonZeroIoVec() )  {

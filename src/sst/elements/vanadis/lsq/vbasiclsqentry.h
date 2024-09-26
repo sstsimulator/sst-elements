@@ -54,7 +54,7 @@ public:
     {
         if(i>=sw_thrs.size())
         {
-            printf("VanadisBasicLoadStoreEntry getCoalescedSwThr index error\n");
+            // printf("VanadisBasicLoadStoreEntry getCoalescedSwThr index error\n");
             return 0;
         }
         return sw_thrs[i];
@@ -226,12 +226,12 @@ class VanadisBasicLoadPendingEntry : public VanadisBasicLoadEntry {
         }
 
         void addRequest(StandardMem::Request::id_t req) {
-            printf("Load add request req=%d\n", req);
+            // printf("Load add request req=%d\n", req);
             requests.push_back(req);
         }
 
         void addRequest(StandardMem::Request::id_t req, uint32_t sw_thr) {
-            printf("SIMT Load add request req=%d sw_thr=%d\n", req, sw_thr);
+            // printf("SIMT Load add request req=%d sw_thr=%d\n", req, sw_thr);
             requests.push_back(req);
             setSWThr(sw_thr);
         }
@@ -258,7 +258,7 @@ class VanadisBasicLoadPendingEntry : public VanadisBasicLoadEntry {
                     return;
                 }
             }
-            printf("load_entry RemoveRequest: request not found\n");
+            // printf("load_entry RemoveRequest: request not found\n");
         }
 
         uint64_t getLoadAddress() const {

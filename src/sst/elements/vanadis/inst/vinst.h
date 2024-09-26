@@ -285,7 +285,7 @@ class VanadisInstruction
 
         // common
         uint16_t countISAIntRegIn() const { 
-            // printf("I am in countISAIntRegIn() %d\n", count_isa_int_reg_in);
+            // // printf("I am in countISAIntRegIn() %d\n", count_isa_int_reg_in);
             return count_isa_int_reg_in; }
         uint16_t countISAIntRegOut() const { return count_isa_int_reg_out; }
         uint16_t countISAFPRegIn() const { return count_isa_fp_reg_in; }
@@ -294,7 +294,7 @@ class VanadisInstruction
         uint16_t getPhysIntRegIn(const uint16_t index) const { return phys_int_regs_in[index]; }
         uint16_t getPhysIntRegOut(const uint16_t index) const { return phys_int_regs_out[index]; }
         uint16_t getISAIntRegIn(const uint16_t index) const { 
-            // printf("getISAIntRegIn len(isa_int_regs_in)=%d\n", isa_int_regs_in[index]);
+            // // printf("getISAIntRegIn len(isa_int_regs_in)=%d\n", isa_int_regs_in[index]);
             return isa_int_regs_in[index]; 
             }
         uint16_t getISAIntRegOut(const uint16_t index) const { return isa_int_regs_out[index]; }
@@ -339,27 +339,22 @@ class VanadisInstruction
         virtual VanadisFunctionalUnitType getInstFuncType() const = 0;
        
 
-        virtual void                      execute(SST::Output* output, VanadisRegisterFile* regFile) 
-        {
-            printf("VanadisInstruction Execute\n");
-            scalarExecute(output, regFile);
-        }
         virtual void instOp(VanadisRegisterFile* regFile, 
                             uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0, 
                             uint16_t phys_int_regs_in_1)
         {
-            printf("VanadisInstruction instOp\n");
+            printf("VanadisInstruction instOp virtual function\n");
         }
 
         virtual void instOp(VanadisRegisterFile* regFile, 
                                 uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0)
         {
-             printf("VanadisInstruction instOp immediate version\n");
+             printf("VanadisInstruction instOp virtual function: immediate version\n");
         }
         
         virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile)
         {
-            printf("VanadisInstruction scalarExecute\n");
+            // printf("VanadisInstruction scalarExecute\n");
             uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
             uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0);
             uint16_t phys_int_regs_in_1 = getPhysIntRegIn(1);
@@ -394,7 +389,7 @@ class VanadisInstruction
                             uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0,
                                     uint16_t phys_int_regs_in_1)
         {
-            printf("I am in VINST log\n");
+            // printf("I am in VINST log\n");
             #ifdef VANADIS_BUILD_DEBUG
             if(output->getVerboseLevel() >= verboselevel) {
                 std::string instcode = getInstCode();
@@ -464,7 +459,7 @@ class VanadisInstruction
         // different
         uint16_t getNumStores()
         {
-            printf("VanadisInstruction getNumStores()\n");
+            // printf("VanadisInstruction getNumStores()\n");
             return 0;
         }
         
@@ -560,56 +555,57 @@ class VanadisSIMTInstruction : public virtual VanadisInstruction
         }
 
         uint16_t getPhysFPRegIn(uint16_t index, uint16_t sw_thr) { 
-            printf("I am in getPhysFPRegIn SIMTInst\n");
+            // printf("I am in getPhysFPRegIn SIMTInst\n");
             if(phys_fp_regs_in_simt.size()==0)
             {
-                printf("phys_fp_regs_in_simt is empty SIMTInst\n");
+                // printf("phys_fp_regs_in_simt is empty SIMTInst\n");
             }
 
             if(phys_fp_regs_in_simt[sw_thr].size()==0)
             {
-                printf("phys_fp_regs_in_simt[%d] is empty SIMTInst\n", sw_thr);
+                // printf("phys_fp_regs_in_simt[%d] is empty SIMTInst\n", sw_thr);
             }
             return phys_fp_regs_in_simt[sw_thr][index]; 
             }
+            
         uint16_t getPhysFPRegOut(uint16_t index, uint16_t sw_thr) { 
-            printf("I am in getPhysFPRegOut SIMTInst\n");
+            // printf("I am in getPhysFPRegOut SIMTInst\n");
             if(phys_fp_regs_out_simt.size()==0)
             {
-                printf("phys_fp_regs_out_simt is empty SIMTInst\n");
+                // printf("phys_fp_regs_out_simt is empty SIMTInst\n");
             }
 
             if(phys_fp_regs_out_simt[sw_thr].size()==0)
             {
-                printf("phys_fp_regs_out_simt[%d] is empty SIMTInst\n", sw_thr);
+                // printf("phys_fp_regs_out_simt[%d] is empty SIMTInst\n", sw_thr);
             }
             return phys_fp_regs_out_simt[sw_thr][index]; 
             }
         uint16_t getPhysIntRegIn(uint16_t index, uint16_t sw_thr)
             {
-                printf("I am in getPhyIntRegIn SIMTInst\n");
+                // printf("I am in getPhyIntRegIn SIMTInst\n");
                 if(phys_int_regs_in_simt.size()==0)
                 {
-                    printf("phys_int_regs_in_simt is empty SIMTInst\n");
+                    // printf("phys_int_regs_in_simt is empty SIMTInst\n");
                 }
 
                 if(phys_int_regs_in_simt[sw_thr].size()==0)
                 {
-                    printf("phys_int_regs_in_simt[%d] is empty SIMTInst\n", sw_thr);
+                    // printf("phys_int_regs_in_simt[%d] is empty SIMTInst\n", sw_thr);
                 }  
                 return phys_int_regs_in_simt[sw_thr][index]; 
             }
             
         uint16_t getPhysIntRegOut(uint16_t index, uint16_t sw_thr){ 
-            printf("I am in getPhyIntRegOut SIMTInst\n");
+            // printf("I am in getPhyIntRegOut SIMTInst\n");
             if(phys_int_regs_out_simt.size()==0)
             {
-                printf("phys_int_regs_out_simt is empty SIMTInst\n");
+                // printf("phys_int_regs_out_simt is empty SIMTInst\n");
             }
 
             if(phys_int_regs_out_simt[sw_thr].size()==0)
             {
-                printf("phys_int_regs_out_simt[%d] is empty SIMTInst\n", sw_thr);
+                // printf("phys_int_regs_out_simt[%d] is empty SIMTInst\n", sw_thr);
             }
             return phys_int_regs_out_simt[sw_thr][index]; }
 
@@ -617,15 +613,15 @@ class VanadisSIMTInstruction : public virtual VanadisInstruction
 
         void setPhysIntRegIn(const uint16_t index, const uint16_t reg, uint16_t sw_thr) 
         {
-            printf("I am in setPhyIntRegIn SIMTInst\n");
+            // printf("I am in setPhyIntRegIn SIMTInst\n");
             if(phys_int_regs_in_simt.size()==0)
             {
-                printf("phys_int_regs_in_simt is empty SIMTInst\n");
+                // printf("phys_int_regs_in_simt is empty SIMTInst\n");
             }
 
             if(phys_int_regs_in_simt[sw_thr].size()==0)
             {
-                printf("phys_int_regs_in_simt[%d] is empty SIMTInst\n", sw_thr);
+                // printf("phys_int_regs_in_simt[%d] is empty SIMTInst\n", sw_thr);
             }
             phys_int_regs_in_simt[sw_thr][index]= reg; 
             if(sw_thr==hw_thread)
@@ -634,7 +630,7 @@ class VanadisSIMTInstruction : public virtual VanadisInstruction
         
         void setPhysIntRegOut(const uint16_t index, const uint16_t reg, uint16_t sw_thr) 
         { 
-            printf("I am in setPhyIntRegOut SIMTInst\n");
+            // printf("I am in setPhyIntRegOut SIMTInst\n");
             phys_int_regs_out_simt[sw_thr][index]=reg; 
             if(sw_thr==hw_thread)
                 VanadisInstruction::setPhysIntRegOut(index, reg);
@@ -642,7 +638,7 @@ class VanadisSIMTInstruction : public virtual VanadisInstruction
         
         void setPhysFPRegIn(const uint16_t index, const uint16_t reg, uint16_t sw_thr) 
         { 
-            printf("I am in setPhyFPRegIn SIMTInst\n");
+            // printf("I am in setPhyFPRegIn SIMTInst\n");
             phys_fp_regs_in_simt[sw_thr][index]= reg;
             if(sw_thr==hw_thread)
                 VanadisInstruction::setPhysFPRegIn(index, reg);
@@ -650,7 +646,7 @@ class VanadisSIMTInstruction : public virtual VanadisInstruction
         
         void setPhysFPRegOut(const uint16_t index, const uint16_t reg, uint16_t sw_thr) 
         { 
-            printf("I am in setPhyFPRegOut SIMTInst\n");
+            // printf("I am in setPhyFPRegOut SIMTInst\n");
             phys_fp_regs_out_simt[sw_thr][index] =reg; 
             if(sw_thr==hw_thread)
                 VanadisInstruction::setPhysFPRegOut(index, reg);
@@ -706,42 +702,17 @@ class VanadisSIMTInstruction : public virtual VanadisInstruction
 
         uint16_t getNumStores()
         {
-            printf("VanadisSIMTInstruction getNumStores()\n");
+            // printf("VanadisSIMTInstruction getNumStores()\n");
             return 0;
         }
 
         void setSWThread(uint32_t thr) { sw_thread=thr;}
         uint32_t getSWThread() {return sw_thread;}
-
-        virtual void execute(SST::Output* output) //, std::vector<VanadisRegisterFile*>& regFiles)
-        {
-            // printf("I am in VanadisInstruction::execute no regfile\n");
-            for(uint16_t t = 0; t < (WARP_SIZE); t++)
-            {
-                // if((t+sw_thr)>=regFile->getThreadCount())
-                // {
-                //     break;
-                // }
-                if((t+hw_thread) >= 5)
-                {
-                    break;
-                }
-                setSWThread(t+hw_thread);
-                this->execute(output, SST::Vanadis::core_regFiles[t]);
-
-            }
-            this->markExecuted();
-        }
-
         
-        virtual void                      execute(SST::Output* output, VanadisRegisterFile* regFile) override
-        {
-            simtExecute(output, regFile);
-        }
 
         virtual void                      execute(SST::Output* output, std::vector<VanadisRegisterFile*>& regFiles) override
         {
-            printf("I am in VanadisInstruction::execute regFiles\n");
+            // printf("I am in VanadisInstruction::execute regFiles\n");
             for(uint16_t t = 0; t < (WARP_SIZE); t++)
             {
                 // if((t+sw_thr)>=regFile->getThreadCount())
@@ -762,7 +733,7 @@ class VanadisSIMTInstruction : public virtual VanadisInstruction
 
         virtual void simtExecute(SST::Output* output, VanadisRegisterFile* regFile)
         {
-            // printf("virtual simtExecute\n");
+            // // printf("virtual simtExecute\n");
             uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0,sw_thread);
             uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0,sw_thread);
             uint16_t phys_int_regs_in_1 = getPhysIntRegIn(1,sw_thread);

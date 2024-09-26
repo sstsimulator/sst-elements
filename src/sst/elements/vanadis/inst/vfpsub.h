@@ -103,28 +103,26 @@ public:
         clear_IEEE754_except();
 
         if ( sizeof(fp_format) >= regFile->getFPRegWidth() ) {
-            printf("FPSub intOp if\n");
 
             fp_format src_1,src_2,result;
-            src_1  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1); 
-            src_2  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in_2, phys_fp_regs_in_3);
+            READ_2FP_REGS(phys_fp_regs_in_0,phys_fp_regs_in_1,phys_fp_regs_in_2, phys_fp_regs_in_3);
 
             if ( UNLIKELY( ! std::isfinite( src_1 ) || ! std::isfinite( src_2 ) ) ) {
                 result = NaN<fp_format>();
                 fpflags.setInvalidOp();
                 update_fp_flags = true;
-                printf("FPSUB: src infinite src=%x %x\n", src_1, src_2);
             } else {
                 result = src_1 - src_2;
-                printf("FPSUB: src finite result=%x-%x=%x \n", src_1, src_2, result);
             }
 
             performFlagChecks<fp_format>(result);
 
-            fractureToRegisters<fp_format>(regFile, phys_fp_regs_out_0, phys_fp_regs_out_1, result);
+            WRITE_FP_REGS(phys_fp_regs_out_0, phys_fp_regs_out_1);
 
-        } else {
-            printf("FPSub intOp else\n");
+        } 
+        else
+        {
+            // printf("FPSub intOp else\n");
             const uint64_t src_1  = regFile->getFPReg<uint64_t>(phys_fp_regs_in_0);
             const uint64_t src_2  = regFile->getFPReg<uint64_t>(phys_fp_regs_in_1);
             uint64_t result;
@@ -139,17 +137,19 @@ public:
                 result = NaN<uint32_t>();
                 fpflags.setInvalidOp();
                 update_fp_flags = true;
-                printf("FPSUB: src infinite src=%x %x\n", src_1, src_2);
+                // printf("FPSUB: src infinite src=%x %x\n", src_1, src_2);
             } else {
                 auto tmp = fp_1 - fp_2;
                 performFlagChecks<float>(tmp);
                 result = convertTo<int64_t>(tmp);
-                printf("FPSUB: src finite result=%x-%x=%x \n", src_1, src_2, result);
+                // printf("FPSUB: src finite result=%x-%x=%x \n", src_1, src_2, result);
             }
             result |= 0xffffffff00000000;
 
             regFile->setFPReg<uint64_t>(phys_fp_regs_out_0, result);
         }
+            
+        
         check_IEEE754_except();
     }
     void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
@@ -164,7 +164,7 @@ public:
         uint16_t phys_fp_regs_in_3 = 0;
         
         
-        if ( sizeof(fp_format) >= regFile->getFPRegWidth() ) 
+        if ( sizeof(fp_format) > regFile->getFPRegWidth() ) 
         {
             phys_fp_regs_in_2 = getPhysFPRegIn(2);
             phys_fp_regs_in_3 = getPhysFPRegIn(3);
@@ -218,7 +218,7 @@ public:
         uint16_t phys_fp_regs_in_3 = 0;
         
         
-        if ( sizeof(fp_format) >= regFile->getFPRegWidth() ) 
+        if ( sizeof(fp_format) > regFile->getFPRegWidth() ) 
         {
             phys_fp_regs_in_2 = getPhysFPRegIn(2,VanadisSIMTInstruction::sw_thread);
             phys_fp_regs_in_3 = getPhysFPRegIn(3,VanadisSIMTInstruction::sw_thread);

@@ -65,7 +65,7 @@ public:
             isa_int_regs_in[1], phys_int_regs_out[0], phys_int_regs_out[1], phys_int_regs_in[0], phys_int_regs_in[1]);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
         #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16) {

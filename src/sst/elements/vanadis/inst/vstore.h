@@ -126,7 +126,7 @@ public:
         }
     }
 
-    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
         if ( memAccessType != MEM_TRANSACTION_LLSC_STORE ) { markExecuted(); }
     }
@@ -182,7 +182,7 @@ public:
 
     virtual void markExecuted() 
     { 
-        printf("Store ins Scalar:(addr=0x%" PRI_ADDR ") markExecuted()\n", getInstructionAddress());
+        // printf("Store ins Scalar:(addr=0x%" PRI_ADDR ") markExecuted()\n", getInstructionAddress());
         hasExecuted = true;
     }
 
@@ -225,16 +225,16 @@ public:
 
     void markExecuted() override
     {
-        printf("Store ins SIMT:(addr=0x%" PRI_ADDR ") markExecuted() SIMT numStores_counter:%d\n", getInstructionAddress(), numStores_counter);
+        // printf("Store ins SIMT:(addr=0x%" PRI_ADDR ") markExecuted() SIMT numStores_counter:%d\n", getInstructionAddress(), numStores_counter);
         numStores_counter-=1;
         if(numStores_counter<=0) 
         {
             hasExecuted = true; 
             numStores_counter=0;
-            printf("Store ins:(addr=0x%" PRI_ADDR ") markExecuted() success\n", getInstructionAddress());
+            // printf("Store ins:(addr=0x%" PRI_ADDR ") markExecuted() success\n", getInstructionAddress());
         }
-        else
-            printf("Store ins:(addr=0x%" PRI_ADDR ") markExecuted() failed SIMT numStores_counter:%d\n", getInstructionAddress(), numStores_counter);
+        // else
+            // printf("Store ins:(addr=0x%" PRI_ADDR ") markExecuted() failed SIMT numStores_counter:%d\n", getInstructionAddress(), numStores_counter);
     }
     
     virtual void computeStoreAddress(SST::Output* output, VanadisRegisterFile* reg, uint64_t* store_addr, uint16_t* op_width) override
@@ -244,7 +244,7 @@ public:
 
         
         target_tid = reg->getTID();
-        printf("Store SIMT target_tid = %d\n", target_tid); 
+        // printf("Store SIMT target_tid = %d\n", target_tid); 
         fflush(stdout);
 
         reg_tmp = reg->getIntReg<int64_t>(phys_int_regs_in_simt[target_tid][0]);
@@ -275,9 +275,9 @@ public:
     }
 
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
-        printf("SIMTStore execute(regfile)\n");
+        // printf("SIMTStore execute(regfile)\n");
         if ( memAccessType != MEM_TRANSACTION_LLSC_STORE ) { markExecuted(); }
     }
 

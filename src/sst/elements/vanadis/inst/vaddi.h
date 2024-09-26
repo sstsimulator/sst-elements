@@ -86,9 +86,12 @@ public:
     void instOp(VanadisRegisterFile* regFile, 
         uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0) override
     {
-        src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in_0);
-        result = src_1 + imm_value;
+        const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in_0);
+        // printf("\n\nADDI32 src_1=%lld\n\n",src_1);
+        const gpr_format result = src_1 + imm_value;
+        // printf("\n\nADDI32 result=src_1+imm_value=%lld=%lld+%lld\n\n",result, src_1,imm_value);
 		regFile->setIntReg<gpr_format>(phys_int_regs_out_0, result);
+        
     }
 
     void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
@@ -99,9 +102,6 @@ public:
         log(output, 16, 65535, phys_int_regs_out_0, phys_int_regs_in_0);
         markExecuted();
     }
-protected:
-gpr_format result;
-gpr_format src_1;
 private:
     const gpr_format imm_value;
     

@@ -65,23 +65,14 @@ class VanadisAddInstruction : public virtual VanadisInstruction
         uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0, 
         uint16_t phys_int_regs_in_1)
         {
-            printf("I am in ADD scalarins scalarExecute\n");
+            // printf("I am in ADD scalarins scalarExecute\n");
             const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in_0);
             const gpr_format src_2 = regFile->getIntReg<gpr_format>(phys_int_regs_in_1);
             // add(src_1, src_2);
             regFile->setIntReg<gpr_format>(phys_int_regs_out_0,src_1+src_2);
         }
 
-        // void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
-        // {
-        //     printf("I am in ADD scalarins execute\n");
-        //     uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
-        //     uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0);
-        //     uint16_t phys_int_regs_in_1 = getPhysIntRegIn(1);
-        //     log(output, 16, 65535,phys_int_regs_out_0,phys_int_regs_in_0,phys_int_regs_in_1);
-        //     instOp(regFile,phys_int_regs_out_0, phys_int_regs_in_0, phys_int_regs_in_1);
-        //     markExecuted();
-        // }
+        
 };
 
 template <typename gpr_format>
@@ -103,76 +94,7 @@ class VanadisSIMTAddInstruction : public VanadisSIMTInstruction, public VanadisA
 
         VanadisSIMTAddInstruction*    clone() override { return new VanadisSIMTAddInstruction(*this); }
 
-        // void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
-        // {
-        //     uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0,VanadisSIMTInstruction::sw_thread);
-        //     uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0,VanadisSIMTInstruction::sw_thread);
-        //     uint16_t phys_int_regs_in_1 = getPhysIntRegIn(1,VanadisSIMTInstruction::sw_thread);
-        //     this->log(output, 16, VanadisSIMTInstruction::sw_thread, phys_int_regs_out_0, phys_int_regs_in_0, phys_int_regs_in_1);
-        //     this->instOp(regFile,phys_int_regs_out_0, phys_int_regs_in_0, phys_int_regs_in_1);
-        // }
-
-        // void printMyType()
-        // {
-        //     printf("I am SIMTAdd\n");
-        // }
-
-        // uint16_t getPhysFPRegIn(uint16_t index, uint16_t sw_thr) { return VanadisSIMTInstruction::phys_fp_regs_in_simt[sw_thr][index]; }
-        // uint16_t getPhysFPRegOut(uint16_t index, uint16_t sw_thr) { return VanadisSIMTInstruction::phys_fp_regs_out_simt[sw_thr][index]; }
-        // uint16_t getPhysIntRegIn(uint16_t index, uint16_t sw_thr){ 
-        //     printf("I am in SIMTAdd getPhysIntRegIn sw_thr=%d\n", sw_thr);
-        //     return VanadisSIMTInstruction::phys_int_regs_in_simt[sw_thr][index]; }
-        // uint16_t getPhysIntRegOut(uint16_t index, uint16_t sw_thr){ 
-        //     printf("I am in SIMTAdd getPhysIntRegOut sw_thr=%d\n", sw_thr);
-        //     return VanadisSIMTInstruction::phys_int_regs_out_simt[sw_thr][index]; }
-
-        // bool getIsSIMT() const { return true; }
-
-        // void setPhysIntRegIn(const uint16_t index, const uint16_t reg, uint16_t sw_thr) 
-        // {
-        //     printf("I am in setPhyIntRegIn SIMTInst sw_thr=%d\n", sw_thr);
-        //     // if(phys_int_regs_in_simt.size()==0)
-        //     // {
-        //     //     printf("phys_int_regs_in_simt is empty SIMTInst\n");
-        //     // }
-
-        //     // if(phys_int_regs_in_simt[sw_thr].size()==0)
-        //     // {
-        //     //     printf("phys_int_regs_in_simt[%d] is empty SIMTInst\n", sw_thr);
-        //     // }
-        //     // phys_int_regs_in_simt[sw_thr][index]= reg; 
-        //     // if(sw_thr==hw_thread)
-        //     //     VanadisInstruction::setPhysIntRegIn(index, reg);
-        //     VanadisSIMTInstruction::setPhysIntRegIn(index, reg, sw_thr);
-        // }
         
-        // void setPhysIntRegOut(const uint16_t index, const uint16_t reg, uint16_t sw_thr) 
-        // { 
-        //     // phys_int_regs_out_simt[sw_thr][index]=reg; 
-        //     // if(sw_thr==hw_thread)
-        //     //     VanadisInstruction::setPhysIntRegOut(index, reg);
-        //     VanadisSIMTInstruction::setPhysIntRegOut(index, reg, sw_thr);
-        // }
-        
-        // void setPhysFPRegIn(const uint16_t index, const uint16_t reg, uint16_t sw_thr) 
-        // { 
-        //     VanadisSIMTInstruction::phys_fp_regs_in_simt[sw_thr][index]= reg;
-        //     if(sw_thr==hw_thread)
-        //         VanadisInstruction::setPhysFPRegIn(index, reg);
-        // }
-        
-        // void setPhysFPRegOut(const uint16_t index, const uint16_t reg, uint16_t sw_thr) 
-        // { 
-        //     VanadisSIMTInstruction::phys_fp_regs_out_simt[sw_thr][index] =reg; 
-        //     if(sw_thr==hw_thread)
-        //         VanadisInstruction::setPhysFPRegOut(index, reg);
-        // }
-
-        // uint16_t getNumStores()
-        // {
-        //     printf("VanadisSIMTInstruction getNumStores()\n");
-        //     return 0;
-        // }
 
 };
 

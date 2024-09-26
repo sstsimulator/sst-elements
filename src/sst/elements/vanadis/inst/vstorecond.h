@@ -133,9 +133,9 @@ public:
             ;
         }
 
-        void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+        void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
         {
-            VanadisSIMTStoreInstruction::execute(output, regFile);
+            VanadisSIMTStoreInstruction::scalarExecute(output, regFile);
         }
 
         VanadisFunctionalUnitType getInstFuncType() const override { return INST_STORE; }

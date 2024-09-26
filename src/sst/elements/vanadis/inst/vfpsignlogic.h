@@ -135,7 +135,7 @@ public:
         #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= verboselevel ) 
         {
-            if((8 == sizeof(fp_format)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode())) 
+            if((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode())) 
             {
                 output->verbose(CALL_INFO, verboselevel, 0, "hw_thr=%d sw_thr = %d Execute: (addr=0x%" PRI_ADDR ") %s / phys-in: { %" PRIu16 ", %" PRIu16 " } / { %" PRIu16 ", %" PRIu16 " } -> phys-out: { %" PRIu16 ", %" PRIu16 " }\n",
                     getHWThread(),sw_thr, getInstructionAddress(), getInstCode(), phys_fp_regs_in_0, phys_fp_regs_in_1,
@@ -156,7 +156,7 @@ public:
     {
         uint64_t src_1; 
         uint64_t src_2; 
-        if ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))  
+        if ((sizeof(fp_format)==8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))  
         {            
 			src_1 = combineFromRegisters<uint64_t>(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1);
 			src_2 = combineFromRegisters<uint64_t>(regFile, phys_fp_regs_in_2, phys_fp_regs_in_3);
@@ -233,6 +233,7 @@ public:
         }
         log(output, 16, 65535, phys_fp_regs_in_0,phys_fp_regs_in_1,phys_fp_regs_in_2,phys_fp_regs_in_3,phys_fp_regs_out_0,phys_fp_regs_out_1);
         instOp(regFile,phys_fp_regs_in_0, phys_fp_regs_in_1,phys_fp_regs_in_2,phys_fp_regs_in_3,phys_fp_regs_out_0,phys_fp_regs_out_1);
+        markExecuted();
     }
 };
 

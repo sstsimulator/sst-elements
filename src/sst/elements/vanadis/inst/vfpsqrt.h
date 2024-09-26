@@ -77,14 +77,16 @@ public:
         }
     }
 
-    void instOp(VanadisRegisterFile* regFile, uint16_t phys_fp_regs_in_0, 
+    void instOp(VanadisRegisterFile* regFile,uint16_t phys_fp_regs_in_0, 
                         uint16_t phys_fp_regs_in_1, uint16_t phys_fp_regs_out_0,uint16_t phys_fp_regs_out_1)
     {
         clear_IEEE754_except();
 
         if ( sizeof(fp_format) >= regFile->getFPRegWidth() ) {
 
-            fp_format src_1= combineFromRegisters<fp_format>(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1);
+            fp_format src_1;
+            READ_FP_REG(phys_fp_regs_in_0,phys_fp_regs_in_1);
+
             fp_format result = std::sqrt(src_1);
             performFlagChecks<fp_format>(result);
 
@@ -92,29 +94,29 @@ public:
                 result = NaN<fp_format>();
             }   
 
-            fractureToRegisters<fp_format>(regFile, phys_fp_regs_out_0, phys_fp_regs_out_1, result);
+            WRITE_FP_REGS(phys_fp_regs_out_0, phys_fp_regs_out_1);
 
-        } else {
+        } else
+            {
+                uint64_t src_1  = regFile->getFPReg<uint64_t>(phys_fp_regs_in_0);
 
-            uint64_t src_1  = regFile->getFPReg<uint64_t>(phys_fp_regs_in_0);
+                assert( isNaN_boxed( src_1 ) );
 
-            assert( isNaN_boxed( src_1 ) );
+                float tmp = std::sqrt( int64To<float>(src_1) );
 
-            float tmp = std::sqrt( int64To<float>(src_1) );
+                performFlagChecks<float>(tmp);
 
-            performFlagChecks<float>(tmp);
+                uint64_t result = 0xffffffff00000000;
 
-            uint64_t result = 0xffffffff00000000;
-
-            if ( UNLIKELY( isNaN(tmp) ) ) {
-                float i = NaN<float>();
-                result |= *(uint32_t*) &i;
-            } else {
-                result |= *(uint32_t*) &tmp;
+                if ( UNLIKELY( isNaN(tmp) ) ) {
+                    float i = NaN<float>();
+                    result |= *(uint32_t*) &i;
+                } else {
+                    result |= *(uint32_t*) &tmp;
+                }
+                
+                regFile->setFPReg<uint64_t>(phys_fp_regs_out_0, result);
             }
-            
-            regFile->setFPReg<uint64_t>(phys_fp_regs_out_0, result);
-        }
 
         check_IEEE754_except();
     }
@@ -138,14 +140,14 @@ public:
         uint16_t phys_fp_regs_in_0 = getPhysFPRegIn(0);
         uint16_t phys_fp_regs_in_1 = 0;
         uint16_t phys_fp_regs_out_1 = 0;
-        if ( sizeof(fp_format) >= regFile->getFPRegWidth() ) 
+        if ( sizeof(fp_format) > regFile->getFPRegWidth() ) 
         {
             phys_fp_regs_in_1 = getPhysFPRegIn(1);
             phys_fp_regs_out_1 = getPhysFPRegOut(1);
         }
         log(output,16, 65535, phys_fp_regs_in_0,phys_fp_regs_out_0);
-        instOp(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1,
-                        phys_fp_regs_out_0,phys_fp_regs_out_1);
+        instOp(regFile, phys_fp_regs_in_0, 
+                        phys_fp_regs_in_1, phys_fp_regs_out_0,phys_fp_regs_out_1);
 
         markExecuted();
     }
@@ -184,14 +186,14 @@ public:
         uint16_t phys_fp_regs_in_0 = getPhysFPRegIn(0, VanadisSIMTInstruction::sw_thread);
         uint16_t phys_fp_regs_in_1 = 0;
         uint16_t phys_fp_regs_out_1 = 0;
-        if ( sizeof(fp_format) >= regFile->getFPRegWidth() ) 
+        if ( sizeof(fp_format) > regFile->getFPRegWidth() ) 
         {
             phys_fp_regs_in_1 = getPhysFPRegIn(1, VanadisSIMTInstruction::sw_thread);
             phys_fp_regs_out_1 = getPhysFPRegOut(1, VanadisSIMTInstruction::sw_thread);
         }
         VanadisFPSquareRootInstruction<fp_format>::log(output,16, VanadisSIMTInstruction::sw_thread, phys_fp_regs_in_0,phys_fp_regs_out_0);
-        VanadisFPSquareRootInstruction<fp_format>::instOp(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1,
-                        phys_fp_regs_out_0,phys_fp_regs_out_1);
+        VanadisFPSquareRootInstruction<fp_format>::instOp(regFile, phys_fp_regs_in_0, 
+                        phys_fp_regs_in_1, phys_fp_regs_out_0,phys_fp_regs_out_1);
     }
 };
 
