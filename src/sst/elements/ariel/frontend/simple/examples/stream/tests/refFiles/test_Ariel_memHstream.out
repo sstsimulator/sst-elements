@@ -1,41 +1,40 @@
 SSTARIEL: Function profiling is disabled.
-ARIEL-SST: Did not find ARIEL_OVERRIDE_POOL in the environment, no override applies.
-ARIEL-SST PIN tool activating with 8 threads
-ARIEL: Default memory pool set to 0
-ARIEL: Tool is configured to begin with profiling immediately.
-ARIEL: Starting program.
-Identified routine: malloc/_malloc, replacing with Ariel equivalent...
-Identified routine: malloc/_malloc, replacing with Ariel equivalent...
-Identified routine: free/_free, replacing with Ariel equivalent...
-0:TimingDRAM::build():54:mc=0: number of channels: 1
-0:TimingDRAM::build():55:mc=0: address mapper:     memHierarchy.simpleAddrMapper
-0:TimingDRAM:Channel:Channel():111:mc=0:chan=0: max pending trans: 32
-0:TimingDRAM:Channel:Channel():112:mc=0:chan=0: number of ranks:   2
-0:TimingDRAM:Rank:Rank():219:mc=0:chan=0:rank=0: number of banks: 8
-0:TimingDRAM:Bank:Bank():285:mc=0:chan=0:rank=0:bank=0: CL:           10
-0:TimingDRAM:Bank:Bank():286:mc=0:chan=0:rank=0:bank=0: CL_WR:        12
-0:TimingDRAM:Bank:Bank():287:mc=0:chan=0:rank=0:bank=0: RCD:          10
-0:TimingDRAM:Bank:Bank():288:mc=0:chan=0:rank=0:bank=0: TRP:          14
-0:TimingDRAM:Bank:Bank():289:mc=0:chan=0:rank=0:bank=0: dataCycles:   2
-0:TimingDRAM:Bank:Bank():290:mc=0:chan=0:rank=0:bank=0: transactionQ: memHierarchy.reorderTransactionQ
-0:TimingDRAM:Bank:Bank():291:mc=0:chan=0:rank=0:bank=0: pagePolicy:   memHierarchy.simplePagePolicy
-Identified routine: malloc/_malloc, replacing with Ariel equivalent...
-Identified routine: free/_free, replacing with Ariel equivalent...
-Identified routine: malloc/_malloc, replacing with Ariel equivalent...
-Identified routine: clock_gettime, replacing with Ariel equivalent...
-Replacement complete.
 Allocating arrays of size 2000 elements.
 Done allocating arrays.
 Perfoming the fast_c compute loop...
 Sum of arrays is: 6999500.000000
 Freeing arrays...
 Done.
+0:TimingDRAM::TimingDRAM():52:mc=0: number of channels: 1
+0:TimingDRAM::TimingDRAM():53:mc=0: address mapper:     memHierarchy.simpleAddrMapper
+0:TimingDRAM:Channel:Channel():111:mc=0:chan=0: max pending trans: 32
+0:TimingDRAM:Channel:Channel():112:mc=0:chan=0: number of ranks:   2
+0:TimingDRAM:Rank:Rank():221:mc=0:chan=0:rank=0: number of banks: 8
+0:TimingDRAM:Bank:Bank():289:mc=0:chan=0:rank=0:bank=0: CL:           10
+0:TimingDRAM:Bank:Bank():290:mc=0:chan=0:rank=0:bank=0: CL_WR:        12
+0:TimingDRAM:Bank:Bank():291:mc=0:chan=0:rank=0:bank=0: RCD:          10
+0:TimingDRAM:Bank:Bank():292:mc=0:chan=0:rank=0:bank=0: TRP:          14
+0:TimingDRAM:Bank:Bank():293:mc=0:chan=0:rank=0:bank=0: dataCycles:   2
+0:TimingDRAM:Bank:Bank():294:mc=0:chan=0:rank=0:bank=0: transactionQ: memHierarchy.reorderTransactionQ
+0:TimingDRAM:Bank:Bank():295:mc=0:chan=0:rank=0:bank=0: pagePolicy:   memHierarchy.simplePagePolicy
+memory, WARNING: Memories no longer inherit address regions from directories and no region parameters (addr_range_start, addr_range_end, interleave_size, interleave_step) were detected. All addresses will map to this memory: if this is intended, you may ignore this warning or set addr_range_start to 0 in your input deck to eliminate this warning.
 CORE ID: 0 PROCESSED AN EXIT EVENT
 
 Ariel Memory Management Statistics:
 ---------------------------------------------------------------------
 Page Table Sizes:
-- Map entries         251
+- Map entries         316
 Page Table Coverages:
-- Bytes               1028096
-Simulation is complete, simulated time: 2.27996 ms
+- Bytes               1294336
+Simulation is complete, simulated time: 7.21297 ms
+ARIEL-SST: Did not find ARIEL_OVERRIDE_POOL in the environment, no override applies.
+ARIEL-SST PIN tool activating with 8 threads
+ARIEL: Default memory pool set to 0
+ARIEL: Tool is configured to begin with profiling immediately.
+ARIEL: Starting program.
+Identified routine: clock_gettime, replacing with Ariel equivalent...
+Replacement complete.
+Identified routine: malloc/_malloc, replacing with Ariel equivalent...
+Identified routine: free/_free, replacing with Ariel equivalent...
+Identified routine: clock_gettime, replacing with Ariel equivalent...
+Replacement complete.

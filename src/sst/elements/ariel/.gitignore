@@ -1,3 +1,8 @@
 fesimple.so
 fesimple.dylib.dSYM
 fesimple.dylib
+tests/testIO/rank_0_thread_0
+tests/testMPI/rank_0_thread_0
+tests/testopenMP/ompmybarrier/ompmybarrier
+frontend/simple/malloc.txt
+api/*.a

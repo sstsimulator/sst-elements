@@ -33,6 +33,12 @@
 #include "builtin_types.h"
 #endif
 
+#if __has_include(<mpi.h>)
+#include <mpi.h>
+#define HAVE_MPI_H
+#endif
+
+
 // TODO add check for PinCRT compatible libz and try to pick that up
 /*#ifdef HAVE_PINCRT_LIBZ
 
@@ -130,10 +136,14 @@ GpuDataTunnel *tunnelD = NULL;
 
 // Time function interception
 struct timeval offset_tv;
+int timer_initialized = 0;
 #if !defined(__APPLE__)
 struct timespec offset_tp_mono;
 struct timespec offset_tp_real;
 #endif
+
+// MPI
+int api_mpi_init_used = 0;
 
 /****************************************************************/
 /********************** SHADOW STACK ****************************/
@@ -649,11 +659,19 @@ VOID InstrumentInstruction(INS ins, VOID *v)
 void mapped_ariel_enable()
 {
 
-    // Note
-    // By adding clock offset calculation, this function now has visible side-effects when called more than once
-    // In most cases won't matter -> ariel_enable() called once or close together in time so offsets will stabilize quickly
-    // In some cases could cause a big jump in time in the middle of simulation -> ariel_enable() left in app but mode is always-on
-    // So, update ariel_enable & offsets in lock & don't update if already enabled
+    // Notes
+    // (1) After the first time ariel_enable is called, gettimeofday and clock_gettime will
+    // return simulation time instead of real time. In order to ensure monotonicity of the
+    // clock, the first time ariel_enable is called, we store the real time, and have
+    // gettimeofday and clock_gettime return the simulation time offset from that point.
+    // Furthermore, even if ariel_disable is called, we continue to return the simulation
+    // time, again to ensure monotonicity.
+    //
+    // (2) In some cases, switching to simulation time could cause a big jump in time in the
+    // middle of simulation.
+    //
+    // (3) One should not try to reason about gettimeofday and clock_gettime calls made
+    // in different enabled regions.
 
     /* LOCK */
     THREADID thr = PIN_ThreadId();
@@ -665,26 +683,54 @@ void mapped_ariel_enable()
     }
 
     // Setup timers to count start time + elapsed simulated time
-    struct timeval tvsim;
-    gettimeofday(&offset_tv, NULL);
-    tunnel->getTime(&tvsim);
-    offset_tv.tv_sec -= tvsim.tv_sec;
-    offset_tv.tv_usec -= tvsim.tv_usec;
+    // Only do this the first time Ariel is enabled
+    if (!timer_initialized) {
+        timer_initialized = 1;
+        struct timeval tvsim;
+        gettimeofday(&offset_tv, NULL);
+        tunnel->getTime(&tvsim);
+        offset_tv.tv_sec -= tvsim.tv_sec;
+        offset_tv.tv_usec -= tvsim.tv_usec;
 #if ! defined(__APPLE__)
-    struct timespec tpsim;
-    tunnel->getTimeNs(&tpsim);
-    offset_tp_mono.tv_sec = tvsim.tv_sec - tpsim.tv_sec;
-    offset_tp_mono.tv_nsec = (tvsim.tv_usec * 1000) - tpsim.tv_nsec;
-    offset_tp_real.tv_sec = tvsim.tv_sec - tpsim.tv_sec;
-    offset_tp_real.tv_nsec = (tvsim.tv_usec * 1000) - tpsim.tv_nsec;
+        struct timespec tpsim;
+        tunnel->getTimeNs(&tpsim);
+        offset_tp_mono.tv_sec = tvsim.tv_sec - tpsim.tv_sec;
+        offset_tp_mono.tv_nsec = (tvsim.tv_usec * 1000) - tpsim.tv_nsec;
+        offset_tp_real.tv_sec = tvsim.tv_sec - tpsim.tv_sec;
+        offset_tp_real.tv_nsec = (tvsim.tv_usec * 1000) - tpsim.tv_nsec;
 #endif
     /* ENABLE */
+    }
     enable_output = true;
 
     /* UNLOCK */
     PIN_ReleaseLock(&mainLock);
 
     fprintf(stderr, "ARIEL: Enabling memory and instruction tracing from program control at simulated Ariel cycle %" PRIu64 ".\n",
+            tunnel->getCycles());
+    fflush(stdout);
+    fflush(stderr);
+}
+
+/* Intercept ariel_disable() in application & stop simulating instructions */
+void mapped_ariel_disable()
+{
+    /* LOCK */
+    THREADID thr = PIN_ThreadId();
+    PIN_GetLock(&mainLock, thr);
+
+    if (!enable_output) {
+        PIN_ReleaseLock(&mainLock);
+        return;
+    }
+
+    /* DISABLE */
+    enable_output = false;
+
+    /* UNLOCK */
+    PIN_ReleaseLock(&mainLock);
+
+    fprintf(stderr, "ARIEL: Disabling memory and instruction tracing from program control at simulated Ariel cycle %" PRIu64 ".\n",
             tunnel->getCycles());
     fflush(stdout);
     fflush(stderr);
@@ -698,13 +744,16 @@ uint64_t mapped_ariel_cycles()
 
 /*
  * Override gettimeofday to return simulated time
- * If ariel_enable is false, returns system gettimeofday value
- * If ariel_enable is true, returns system gettimeofday when ariel was enabled + elapsed simulated time since ariel was enabled
+ * If timer_initialized is false, returns system gettimeofday value
+ * If timer_initialized is true, returns system gettimeofday when ariel was enabled + elapsed simulated time since ariel was *first* enabled
+ * See notes in mapped_ariel_enable.
  */
 int mapped_gettimeofday(struct timeval *tp, void *tzp)
 {
-    // Return 'real' time if simulation not enabled
-    if (!enable_output) {
+    // Return 'real' time if ariel_enable has not been called yet,
+    // otherwise return the sim time, offset by the real time
+    // ariel_enable was called to ensure monotonicity.
+    if (!timer_initialized) {
        return gettimeofday(tp, NULL);
     }
 
@@ -717,14 +766,15 @@ int mapped_gettimeofday(struct timeval *tp, void *tzp)
 
 /*
  * Override clock_gettime to return simulated time
- * If ariel_enable is false, returns actual clock_gettime value
- * If ariel_enable is true, returns elapsed simulated time since ariel was enabled + clock_gettime(CLOCK_MONOTONIC) from
- * when ariel was enabled
+ * If timer_initialized is false, returns actual clock_gettime value
+ * If timer_initialized is true, returns elapsed simulated time since ariel was enabled + clock_gettime(CLOCK_MONOTONIC) from
+ * when ariel was *first* enabled
+ * See notes in mapped_ariel_enable.
  */
 #if ! defined(__APPLE__)
 int mapped_clockgettime(clockid_t clock, struct timespec *tp)
 {
-    if (!enable_output) {
+    if (!timer_initialized) {
         struct timeval tv;
         int retval = gettimeofday(&tv, NULL);
         tp->tv_sec = tv.tv_sec;
@@ -785,6 +835,18 @@ void mapped_ariel_fence(void *virtualAddress)
     ADDRINT ip = IARG_INST_PTR;
 
     WriteFenceInstructionMarker(thr, ip);
+}
+
+void mapped_api_mpi_init() {
+    api_mpi_init_used = 1;
+}
+
+int check_for_api_mpi_init() {
+    if (!api_mpi_init_used && !getenv("ARIEL_DISABLE_MPI_INIT_CHECK")) {
+        fprintf(stderr, "Error: fesimple.cc: The Ariel API verion of MPI_Init_{thread} was not used, which can result in errors when used in conjunction with OpenMP. Please link against the Ariel API (included in this distribution at src/sst/elements/ariel/api) or disable this message by setting the environment variable `ARIEL_DISABLE_MPI_INIT_CHECK`\n");
+        exit(1);
+    }
+    return 0;
 }
 
 int ariel_mlm_memcpy(void* dest, void* source, size_t size) {
@@ -1664,6 +1726,11 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
             enable_output = false;
         }
         return;
+    } else if (RTN_Name(rtn) == "ariel_disable" || RTN_Name(rtn) == "_ariel_disable" || RTN_Name(rtn) == "__arielfort_MOD_ariel_disable") {
+        fprintf(stderr,"Identified routine: ariel_disable, replacing with Ariel equivalent...\n");
+        RTN_Replace(rtn, (AFUNPTR) mapped_ariel_disable);
+        fprintf(stderr,"Replacement complete.\n");
+        return;
     } else if (RTN_Name(rtn) == "gettimeofday" || RTN_Name(rtn) == "_gettimeofday") {
         fprintf(stderr,"Identified routine: gettimeofday, replacing with Ariel equivalent...\n");
         RTN_Replace(rtn, (AFUNPTR) mapped_gettimeofday);
@@ -1673,6 +1740,24 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
         fprintf(stderr, "Identified routine: ariel_cycles, replacing with Ariel equivalent..\n");
         RTN_Replace(rtn, (AFUNPTR) mapped_ariel_cycles);
         fprintf(stderr, "Replacement complete\n");
+        return;
+    } else if (RTN_Name(rtn) == "MPI_Init" || RTN_Name(rtn) == "_MPI_Init") {
+        fprintf(stderr, "Identified routine: MPI_Init. Instrumenting.\n");
+        RTN_Open(rtn);
+        RTN_InsertCall(rtn, IPOINT_AFTER, (AFUNPTR) check_for_api_mpi_init, IARG_END);
+        RTN_Close(rtn);
+        fprintf(stderr, "Instrumentation complete\n");
+    } else if (RTN_Name(rtn) == "MPI_Init_thread" || RTN_Name(rtn) == "_MPI_Init_thread") {
+        fprintf(stderr, "Identified routine: MPI_Init_thread. Instrumenting.\n");
+        RTN_Open(rtn);
+        RTN_InsertCall(rtn, IPOINT_AFTER, (AFUNPTR) check_for_api_mpi_init, IARG_END);
+        RTN_Close(rtn);
+        fprintf(stderr, "Instrumentation complete\n");
+    } else if (RTN_Name(rtn) == "api_mpi_init" || RTN_Name(rtn) == "_api_mpi_init") {
+        fprintf(stderr, "Replacing api_mpi_init with mapped_api_mpi_init.\n");
+        RTN_Replace(rtn, (AFUNPTR) mapped_api_mpi_init);
+        fprintf(stderr, "Replacement complete\n");
+        return;
         return;
 #if ! defined(__APPLE__)
     } else if (RTN_Name(rtn) == "clock_gettime" || RTN_Name(rtn) == "_clock_gettime" ||
@@ -1836,6 +1921,13 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
     }
 }
 
+void fork_disable_child_output(THREADID threadid, const CONTEXT *ctx, VOID *v) {
+#ifdef ARIEL_DEBUG
+    fprintf(stderr, "Warning: fesimple cannot trace forked processes. Disabling Pin for pid %d\n", getpid());
+#endif
+    PIN_Detach();
+}
+
 void loadFastMemLocations()
 {
     std::ifstream infile(UseMallocMap.Value().c_str());
@@ -1997,6 +2089,9 @@ int main(int argc, char *argv[])
             toFast.push_back(mallocFlagInfo(false, 0, 0, 0));
         }
     }
+
+    // Fork callback
+    PIN_AddForkFunction(FPOINT_AFTER_IN_CHILD, (FORK_CALLBACK) fork_disable_child_output, NULL);
 
     fprintf(stderr, "ARIEL: Starting program.\n");
     fflush(stdout);
