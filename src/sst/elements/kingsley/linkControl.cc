@@ -209,6 +209,7 @@ void LinkControl::init(unsigned int phase)
             in_ret_credits[i] = inbuf_size.getRoundedValue() /flit_size;
         }
 
+        delete ev;
         init_state = 2;
         break;
     }
@@ -218,6 +219,7 @@ void LinkControl::init(unsigned int phase)
         if ( NULL == ev ) break;
         init_ev = static_cast<NocInitEvent*>(ev);
         id = init_ev->int_value;
+	delete ev;
 
         // Send credit event to router
         credit_event* cr_ev = new credit_event(0,inbuf_size.getRoundedValue() / flit_size);

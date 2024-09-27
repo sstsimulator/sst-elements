@@ -364,7 +364,10 @@ class MemNICBase : public MemLinkBase {
                         dbg.debug(_L10_, "\tInserting in initQueue\n");
                         mre->putEvent(ev); // If we did not delete the Event, give it back to the MemRtrEvent
                         initQueue.push(mre);
-                    }
+                    } else {
+			delete mre;
+			delete ev;
+		    }
                 }
                 delete req;
             }

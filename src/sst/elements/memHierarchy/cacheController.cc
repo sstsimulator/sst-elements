@@ -173,11 +173,14 @@ bool Cache::clockTick(Cycle_t time) {
         if (accepted != maxRequestsPerCycle_ && processEvent(prefetchBuffer_.front(), false)) {
             accepted++;
             // Accepted prefetches are profiled in the coherence manager
+	    prefetchBuffer_.pop();
         } else {
             statPrefetchDrop->addData(1);
             coherenceMgr_->removeRequestRecord(prefetchBuffer_.front()->getID());
+	    MemEventBase* ev = prefetchBuffer_.front();
+	    prefetchBuffer_.pop();
+	    delete ev;
         }
-        prefetchBuffer_.pop();
     }
 
     // Push any events that need to be retried next cycle onto the retry buffer
