@@ -186,6 +186,9 @@ private:
     // Requests sent in this class
     std::map<Interfaces::StandardMem::Request::id_t, std::pair<SimTime_t, std::string>> requests;
 
+    // CUDA API management related
+    // Mapping from Vanadis's texture pointer to the pointer of copy in simulator memspace
+    std::map<uint64_t, struct textureReference *> cudaTextureMapping;
 
     struct cache_req_params {
         cache_req_params( unsigned m_core_id,  void* mem_fetch, StandardMem::Request* req) {

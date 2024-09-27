@@ -720,8 +720,6 @@ __host__ struct cudaChannelFormatDesc CUDARTAPI cudaCreateChannelDesc(
   return dummy;
 }
 
-// TODO Will there be a problem with deviceName passed as a pointer?
-// TODO Will there be a problem with the textureReference pointer? Should pass by value?
 void __cudaRegisterTexture(
     void **fatCubinHandle, const struct textureReference *hostVar,
     const void **deviceAddress, const char *deviceName, int dim, int norm,
@@ -735,9 +733,11 @@ void __cudaRegisterTexture(
     call_packet_ptr->isSSTmem = true;
     call_packet_ptr->cuda_call_id = GPU_REG_TEXTURE;
     call_packet_ptr->cudaregtexture.fatCubinHandle = fatCubinHandle;
-    call_packet_ptr->cudaregtexture.hostVar = hostVar;
+    call_packet_ptr->cudaregtexture.hostVar_ptr = (uint64_t) hostVar;
+    call_packet_ptr->cudaregtexture.texRef = *hostVar;
     call_packet_ptr->cudaregtexture.deviceAddress = deviceAddress;
-    call_packet_ptr->cudaregtexture.deviceName = deviceName;
+    strncpy(call_packet_ptr->cudaregtexture.deviceName, deviceName, strlen(deviceName));
+    call_packet_ptr->cudaregtexture.deviceName[strlen(deviceName)] = '\0';
     call_packet_ptr->cudaregtexture.dim = dim;
     call_packet_ptr->cudaregtexture.norm = norm;
     call_packet_ptr->cudaregtexture.ext = ext;
@@ -751,9 +751,8 @@ void __cudaRegisterTexture(
     }
 }
 
-// TODO Will there be a problem with the textureReference pointer? Should pass by value?
 __host__ cudaError_t CUDARTAPI cudaBindTexture(
-    size_t *offset, const struct textureReference *texref, const void *devPtr,
+    size_t *offset, const struct textureReference *hostVar, const void *devPtr,
     const struct cudaChannelFormatDesc *desc, size_t size) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start bind texture\n");
@@ -763,9 +762,10 @@ __host__ cudaError_t CUDARTAPI cudaBindTexture(
     call_packet_ptr->isSSTmem = true;
     call_packet_ptr->cuda_call_id = GPU_BIND_TEXTURE;
     call_packet_ptr->cudabindtexture.offset = offset;
-    call_packet_ptr->cudabindtexture.texref = texref;
+    call_packet_ptr->cudabindtexture.hostVar_ptr = (uint64_t) hostVar;
+    call_packet_ptr->cudabindtexture.texRef = *hostVar;
     call_packet_ptr->cudabindtexture.devPtr = devPtr;
-    call_packet_ptr->cudabindtexture.desc = desc;
+    call_packet_ptr->cudabindtexture.desc_struct = *desc;
     call_packet_ptr->cudabindtexture.size = size;
 
     // Make cuda call
