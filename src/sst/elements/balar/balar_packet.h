@@ -182,11 +182,13 @@ namespace BalarComponent {
                 int device;
             } cudasetdevice;
 
+            // Pass struct directly so we can create a copy
             struct {
                 void **fatCubinHandle;
-                const struct textureReference *hostVar;
+                uint64_t hostVar_ptr;
+                struct textureReference texRef;
                 const void **deviceAddress;
-                const char *deviceName;
+                char deviceName[256];
                 int dim;
                 int norm;
                 int ext;
@@ -194,9 +196,10 @@ namespace BalarComponent {
 
             struct {
                 size_t *offset;
-                const struct textureReference *texref;
+                uint64_t hostVar_ptr;
+                struct textureReference texRef;
                 const void *devPtr;
-                const struct cudaChannelFormatDesc *desc;
+                struct cudaChannelFormatDesc desc_struct;
                 size_t size;
             } cudabindtexture;
 

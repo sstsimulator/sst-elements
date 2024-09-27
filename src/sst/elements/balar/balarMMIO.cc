@@ -799,10 +799,16 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
                     }
                     break;
                 case GPU_REG_TEXTURE: {
+                        // Allocate a textureReference for GPGPU-Sim to access
+                        struct textureReference *textureRef = (struct textureReference *) malloc(sizeof(struct textureReference));
+                        balar->cudaTextureMapping[packet->cudaregtexture.hostVar_ptr] = textureRef;
+                        // Copy textureReference
+                        *textureRef = packet->cudaregtexture.texRef;
+
                         balar->cuda_ret.cuda_error = cudaSuccess;
                         __cudaRegisterTexture(
                             packet->cudaregtexture.fatCubinHandle,
-                            packet->cudaregtexture.hostVar,
+                            textureRef,
                             packet->cudaregtexture.deviceAddress,
                             packet->cudaregtexture.deviceName,
                             packet->cudaregtexture.dim,
@@ -812,11 +818,15 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
                     }
                     break;
                 case GPU_BIND_TEXTURE: {
+                        // Access our saved textureRef and copy from Vanadis's packet
+                        struct textureReference *textureRef = balar->cudaTextureMapping.at(packet->cudabindtexture.hostVar_ptr);
+                        *textureRef = packet->cudabindtexture.texRef;
+
                         balar->cuda_ret.cuda_error = cudaBindTexture(
                             packet->cudabindtexture.offset,
-                            packet->cudabindtexture.texref,
+                            textureRef,
                             packet->cudabindtexture.devPtr,
-                            packet->cudabindtexture.desc,
+                            &(packet->cudabindtexture.desc_struct),
                             packet->cudabindtexture.size
                         );
                     }
