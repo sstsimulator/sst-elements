@@ -100,6 +100,11 @@ public:
     // Event handler, called when an event is received on either link
     void handleEvent(SST::Event* ev);
 
+// Serialization
+    basicSubComponent_Component();
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::simpleElementExample::basicSubComponent_Component)
+
 private:
    
     // SST Output object, for printing, error messages, etc.

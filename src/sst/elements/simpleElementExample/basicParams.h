@@ -125,6 +125,11 @@ public:
             int value;
     };
 
+// Serialization
+    basicParams();
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::simpleElementExample::basicParams)
+
 private:
    
     // Clock handler

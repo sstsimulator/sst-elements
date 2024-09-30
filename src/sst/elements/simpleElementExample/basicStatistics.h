@@ -95,6 +95,11 @@ public:
     // Destructor
     ~basicStatistics();
 
+// Serialization
+    basicStatistics();
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::simpleElementExample::basicStatistics)
+
 private:
     // Clock handler, called on each clock cycle
     virtual bool clockTic(SST::Cycle_t);

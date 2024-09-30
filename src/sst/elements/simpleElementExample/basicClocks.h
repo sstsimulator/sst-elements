@@ -40,6 +40,7 @@
  */
 
 #include <sst/core/component.h>
+#include <sst/core/timeConverter.h>
 
 namespace SST {
 namespace simpleElementExample {
@@ -91,6 +92,11 @@ public:
     
     // Destructor
     ~basicClocks();
+
+// Serialization
+    basicClocks();
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::simpleElementExample::basicClocks)
 
 private:
    
