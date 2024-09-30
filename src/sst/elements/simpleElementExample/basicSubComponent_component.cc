@@ -39,8 +39,8 @@ basicSubComponent_Component::basicSubComponent_Component(ComponentId_t id, Param
             "Error: The parameter 'value' is a required parameter and was not found in the input configuration\n");
 
     // Configure our links to call our event handler when an event arrives
-    leftLink = configureLink("left", new Event::Handler<basicSubComponent_Component>(this, &basicSubComponent_Component::handleEvent));
-    rightLink = configureLink("right", new Event::Handler<basicSubComponent_Component>(this, &basicSubComponent_Component::handleEvent));
+    leftLink = configureLink("left", new Event::Handler2<basicSubComponent_Component, &basicSubComponent_Component::handleEvent>(this));
+    rightLink = configureLink("right", new Event::Handler2<basicSubComponent_Component, &basicSubComponent_Component::handleEvent>(this));
 
     // Check that the links were configured correctly
     sst_assert(leftLink, CALL_INFO, -1, 
@@ -146,4 +146,24 @@ void basicSubComponent_Component::handleEvent(SST::Event* ev)
         /* Forward the event */
         leftLink->send(event);
     }
+}
+
+/*
+ * Default constructor
+*/
+basicSubComponent_Component::basicSubComponent_Component() : Component() {}
+
+/*
+ * Serialization function
+*/
+void basicSubComponent_Component::serialize_order(SST::Core::Serialization::serializer& ser) {
+    Component::serialize_order(ser);
+
+    SST_SER(out);
+    SST_SER(value);
+
+    SST_SER(leftLink);
+    SST_SER(rightLink);
+
+    SST_SER(computeUnit);
 }

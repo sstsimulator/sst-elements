@@ -63,7 +63,7 @@ basicLinks::basicLinks(ComponentId_t id, Params& params) : Component(id) {
     primaryComponentDoNotEndSim();
 
     //set our clock. The simulator will call 'clockTic' at a 1GHz frequency
-    registerClock("1GHz", new Clock::Handler<basicLinks>(this, &basicLinks::clockTic));
+    registerClock("1GHz", new Clock::Handler2<basicLinks, &basicLinks::clockTic>(this));
 
     // This simulation will end when we have sent 'eventsToSend' events and received a 'LAST' event on every link
     lastEventReceived = 0;
@@ -77,7 +77,7 @@ basicLinks::basicLinks(ComponentId_t id, Params& params) : Component(id) {
      */
     
     // 1. These links share
-    linkHandler = configureLink("port_handler", new Event::Handler<basicLinks>(this, &basicLinks::handleEvent));
+    linkHandler = configureLink("port_handler", new Event::Handler2<basicLinks, &basicLinks::handleEvent>(this));
     sst_assert(linkHandler, CALL_INFO, -1, "Error in %s: Link configuration for 'port_handler' failed\n", getName().c_str());
 
 
@@ -88,7 +88,7 @@ basicLinks::basicLinks(ComponentId_t id, Params& params) : Component(id) {
     std::string linkname = linkprefix + "0";
     int portnum = 0;
     while (isPortConnected(linkname)) {
-        SST::Link* link = configureLink(linkname, new Event::Handler<basicLinks, int>(this, &basicLinks::handleEventWithID, portnum));
+        SST::Link* link = configureLink(linkname, new Event::Handler2<basicLinks, &basicLinks::handleEventWithID, int>(this, portnum));
         
         if (!link)
             out->fatal(CALL_INFO, -1, "Error in %s: unable to configure link %s\n", getName().c_str(), linkname.c_str());
@@ -277,4 +277,28 @@ bool basicLinks::clockTic( Cycle_t cycleCount)
 
     // Return false to indicate the clock handler should not be disabled
     return false;
+}
+
+/*
+ * Default constructor
+*/
+basicLinks::basicLinks() : Component() {}
+
+/*
+ * Serialization function
+*/
+void basicLinks::serialize_order(SST::Core::Serialization::serializer& ser) {
+    Component::serialize_order(ser);
+
+    SST_SER(eventsToSend);
+    SST_SER(eventSize);
+    SST_SER(lastEventReceived);
+    SST_SER(rng);
+    SST_SER(out);
+    SST_SER(linkHandler);
+    SST_SER(linkPolled);
+    SST_SER(linkVector);
+    SST_SER(stat_portHandler);
+    SST_SER(stat_portPolled);
+    SST_SER(stat_portVector);
 }
