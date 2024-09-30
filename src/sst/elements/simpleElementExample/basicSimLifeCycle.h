@@ -138,6 +138,10 @@ public:
     // Event handler, called when an event is received
     void handleEvent(SST::Event *ev);
 
+// Serialization
+    basicSimLifeCycle();
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::simpleElementExample::basicSimLifeCycle)
 
 // SSTSnippet::component-header::start
 private:

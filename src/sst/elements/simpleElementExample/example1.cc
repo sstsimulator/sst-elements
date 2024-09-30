@@ -64,14 +64,14 @@ example1::example1(ComponentId_t id, Params& params) : Component(id) {
 
     // configure our link with a callback function that will be called whenever an event arrives
     // Callback function is optional, if not provided then component must poll the link
-    link = configureLink("port", new Event::Handler<example1>(this, &example1::handleEvent));
+    link = configureLink("port", new Event::Handler2<example1, &example1::handleEvent>(this));
 
     // Make sure we successfully configured the links
     // Failure usually means the user didn't connect the port in the input file
     sst_assert(link, CALL_INFO, -1, "Error in %s: Link configuration failed\n", getName().c_str());
 
     //set our clock. The simulator will call 'clockTic' at a 1GHz frequency
-    registerClock("1GHz", new Clock::Handler<example1>(this, &example1::clockTic));
+    registerClock("1GHz", new Clock::Handler2<example1, &example1::clockTic>(this));
 
     // This simulation will end when we have sent 'eventsToSend' events and received a 'LAST' event
     lastEventReceived = false;
@@ -160,4 +160,24 @@ bool example1::clockTic( Cycle_t cycleCount)
 
     // Return false to indicate the clock handler should not be disabled
     return false;
+}
+
+/*
+ * Default constructor
+*/
+example1::example1() : Component() {}
+
+/*
+ * Serialization function
+*/
+void example1::serialize_order(SST::Core::Serialization::serializer& ser) {
+    Component::serialize_order(ser);
+
+    SST_SER(eventsToSend);
+    SST_SER(eventSize);
+    SST_SER(lastEventReceived);
+    SST_SER(bytesReceived);
+    SST_SER(rng);
+    SST_SER(out);
+    SST_SER(link);
 }

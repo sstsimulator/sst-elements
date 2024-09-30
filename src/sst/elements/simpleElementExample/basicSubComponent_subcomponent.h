@@ -58,7 +58,10 @@ public:
     // These are the two functions described in the comment above
     virtual int compute( int num ) =0;
     virtual std::string compute( std::string comp) =0;
-    
+
+    // Serialization
+    basicSubComponentAPI();
+    ImplementVirtualSerializable(SST::simpleElementExample::basicSubComponentAPI);
 };
 
 /*****************************************************************************************************/
@@ -86,6 +89,7 @@ public:
 
     int compute( int num) override;
     std::string compute( std::string comp ) override;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
 
 private:
     int amount;
@@ -115,6 +119,7 @@ public:
 
     int compute( int num) override;
     std::string compute( std::string comp ) override;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
 
 private:
     int amount;
@@ -142,6 +147,7 @@ public:
 
     int compute( int num) override;
     std::string compute( std::string comp ) override;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
 
 private:
     int amount;
@@ -169,6 +175,7 @@ public:
 
     int compute( int num) override;
     std::string compute( std::string comp ) override;
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
 
 private:
     int amount;
