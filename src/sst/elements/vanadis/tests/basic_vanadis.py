@@ -279,7 +279,7 @@ cpuParams = {
     "print_rob" : False,
     "checkpointDir" : checkpointDir,
     "checkpoint" : checkpoint,
-    "enable_simt": False
+    "enable_simt": False # for future use
 }
 
 lsqParams = {

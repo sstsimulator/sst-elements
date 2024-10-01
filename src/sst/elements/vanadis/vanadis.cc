@@ -25,17 +25,10 @@
 #include <sst/core/output.h>
 #include <vector>
 
-#include "simt/vsimtinst.h"
-#include "simt/thread.h"
-#include "simt/simt_data_structure.h"
-#include "simt/refactor_support.h"
-
 using namespace SST::Vanadis;
 using namespace std;
 
-bool exit_simt = false;
 
-std::vector<int> count_refactored_ins(88,0);
 
 VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params) : Component(id), current_cycle(0),
     m_curRetireHwThread(0), m_curIssueHwThread(0), m_checkpointing(nullptr), arrived_thread(0)
@@ -43,7 +36,6 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     instPrintBuffer = new char[1024];
     pipelineTrace   = nullptr;
-    simt_warp_start = false;
     max_cycle = params.find<uint64_t>("max_cycle", std::numeric_limits<uint64_t>::max());
 
     bool found;
@@ -108,7 +100,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     print_issue_tables  = params.find<bool>("print_issue_tables", true);
     print_rob  = params.find<bool>("print_rob", true);
 
-    enable_simt = params.find<bool>("enable_simt", false);
+    enable_simt = params.find<bool>("enable_simt", false); // for future use
 
     const uint16_t int_reg_count = params.find<uint16_t>("physical_integer_registers", 128);
     const uint16_t fp_reg_count  = params.find<uint16_t>("physical_fp_registers", 128);
@@ -141,11 +133,6 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
         fp_flags.push_back(new VanadisFloatingPointFlags());
         thr_decoder->setFPFlags(fp_flags[i]);
-        if(enable_simt & (i!=0)) // thread0= host code, do not implement SIMT mode
-            thr_decoder->setSIMT();
-
-        //     thr_decoder->setHardwareThread( i );
-
         output->verbose(
             CALL_INFO, 8, 0, "Loading decoder%" PRIu32 ": %s.\n", i,
             (nullptr == thr_decoder) ? "failed" : "successful");
@@ -268,10 +255,6 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     for ( uint32_t i = 0; i < thread_decoders.size(); ++i ) {
         output->verbose(CALL_INFO, 8, 0, "Configuring thread instruction cache interface (thread %" PRIu32 ")\n", i);
         thread_decoders[i]->getInstructionLoader()->setMemoryInterface(memInstInterface);
-    }
-    for ( uint32_t i = 0; i < simt_decoders.size(); ++i ) {
-        output->verbose(CALL_INFO, 8, 0, "Configuring thread instruction cache interface (thread %" PRIu32 ")\n", i+hw_threads);
-        simt_decoders[i]->getInstructionLoader()->setMemoryInterface(memInstInterface);
     }
 
     lsq = loadUserSubComponent<SST::Vanadis::VanadisLoadStoreQueue>("lsq", ComponentInfo::SHARE_NONE, core_id, hw_threads);
@@ -478,7 +461,6 @@ VANADIS_COMPONENT::setHalt(uint32_t thr, int64_t halt_code)
 
 
             if ( all_halted ) {
-                exit_simt = true;
                 output->verbose(
                     CALL_INFO, 2, 0,
                     "-> all threads on core are halted, tell core we can "
@@ -554,9 +536,6 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
         {
             VanadisInstruction* ins = thr_rob->peekAt(j);
             
-            // printf("Issue ins?\n");
-            // printf("Issue ins? %s %d\n", ins->getInstCode(), ins->getIsSIMT());
-            // printf("Issue ins? %d\n",ins->completedIssue());
             if ( ! ins->completedIssue() ) 
             {
                 // printf("Issue: Not issued\n");
@@ -572,10 +551,9 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
                     }
                 }
                 #endif
-                // printf("Issue: Resource Check\n");
                 const int resource_check = checkInstructionResources(
                     ins, int_register_stack, fp_register_stack, issue_isa_tables[i]);
-                // printf("%s %d\n", ins->getInstCode(), ins->getIsSIMT());
+                
                 #ifdef VANADIS_BUILD_DEBUG
                 if ( output_verbosity >= 8 ) 
                 {
@@ -600,20 +578,16 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
                             // must be issued to the LSQ in order to maintain memory ordering
                             // semantics
                             allocate_fu = 1;
-                            // printf("unallocated memory op seen\n");
+                            
                         } else {
-                            // printf("allocateFU1\n");
+                            
                             allocate_fu = allocateFunctionalUnit(ins);
-                            // printf("allocateFU1 done\n");
-                            // printf("%s %d\n", ins->getInstCode(), ins->getIsSIMT());
+                            
                         }
                     } 
                     else 
                     {
-                        // printf("allocateFU2\n");
                         allocate_fu = allocateFunctionalUnit(ins);
-                        // printf("allocateFU2 done\n");
-                        // printf("%s %d\n", ins->getInstCode(), ins->getIsSIMT());
                     }
 
                     #ifdef VANADIS_BUILD_DEBUG
@@ -633,7 +607,6 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
                             status = assignRegistersToInstruction(
                                 thread_decoders[i]->countISAIntReg(), thread_decoders[i]->countISAFPReg(), ins,
                                 int_register_stack, fp_register_stack, issue_isa_tables[i]);
-                            // printf("%s %d\n", ins->getInstCode(), ins->getIsSIMT());
                         #ifdef VANADIS_BUILD_DEBUG
                             if ( checkVerboseAddr( ins->getInstructionAddress() ) ) 
                             {
@@ -2072,13 +2045,6 @@ VANADIS_COMPONENT::handleIncomingInstCacheEvent(StandardMem::Request* ev)
         }
     }
 
-    for ( VanadisDecoder* next_decoder : simt_decoders ) {
-        if ( next_decoder->acceptCacheResponse(output, ev) ) {
-            hit = true;
-            break;
-        }
-    }
-
     if ( hit ) { output->verbose(CALL_INFO, 16, 0, "---> Successful hit in hardware-thread decoders.\n"); }
 
     delete ev;
@@ -2105,14 +2071,7 @@ VANADIS_COMPONENT::handleMisspeculate(const uint32_t hw_thr, const uint64_t new_
 
     // Reset the ISA table to get correct ISA to physical mappings
     issue_isa_tables[hw_thr]->reset(retire_isa_tables[hw_thr]);
-
-    // Notify the decoder we need a clear and reset to new instruction pointer
-    if (hw_thr >= hw_threads) {
-        simt_decoders[hw_thr-hw_threads]->setInstructionPointerAfterMisspeculate(output, new_ip);
-    }
-    else {
-        thread_decoders[hw_thr]->setInstructionPointerAfterMisspeculate(output, new_ip);
-    }
+    thread_decoders[hw_thr]->setInstructionPointerAfterMisspeculate(output, new_ip);
 
     #ifdef VANADIS_BUILD_DEBUG
     // if(output->getVerboseLevel() >= 8)
@@ -2334,47 +2293,10 @@ void VANADIS_COMPONENT::startThreadClone( VanadisStartThreadCloneReq* req )
     thr_decoder->setStackPointer( output, isa_table, reg_file, req->getStackAddr() );
     thr_decoder->setThreadLocalStoragePointer( req->getTlsAddr() );
     thr_decoder->setThreadPointer( output, isa_table, reg_file, req->getTlsAddr() );
-
-    if (enable_simt)
-    {
-        arrived_thread++;
-        if (arrived_thread % WARP_SIZE == 0 || arrived_thread == (hw_threads - 1)) 
-        {
-            int warpid = 0;
-            if (arrived_thread % WARP_SIZE == 0) 
-            {
-                warpid = arrived_thread / WARP_SIZE - 1;
-            }
-            else 
-            {
-                warpid = arrived_thread / WARP_SIZE;
-            }
-
-            int superThreadID = warpid*WARP_SIZE+1;
-            halted_masks[superThreadID] = false; // we are starting the Thr 1 when we have recieved enough pthread_create calls
-            // register_files[hw_thr]->
-            output->verbose(CALL_INFO, 16, 0,
-                        "startThreadClone arrivedthrad pass HandleMissspeculate %d %d %d.\n", hw_thr,superThreadID, WARP_SIZE);
-            // handleMisspeculate(hw_threads+warpid, req->getInstPtr());
-            handleMisspeculate(superThreadID, req->getInstPtr());
-            for (uint32_t sw_thr=superThreadID+1; sw_thr < superThreadID+WARP_SIZE; sw_thr++)
-            {
-                if(sw_thr>=hw_threads)
-                {
-                    break;
-                }
-                handleMisspeculate(sw_thr, req->getInstPtr());
-            }
-        }
-        }
-    else
-    {
-        halted_masks[hw_thr]            = false;
-    }
-
-    output->verbose(
-                    CALL_INFO, 16, 0,
-                    "startThreadClone arrivedthrad fail HandleMissspeculate %d.\n", hw_thr);
+    
+    halted_masks[hw_thr]            = false;
+    
+    output->verbose(CALL_INFO, 16, 0, "startThreadClone arrivedthrad fail HandleMissspeculate %d.\n", hw_thr);
     handleMisspeculate( hw_thr, req->getInstPtr() );
     cloneReqs.push_back(req);
 }
