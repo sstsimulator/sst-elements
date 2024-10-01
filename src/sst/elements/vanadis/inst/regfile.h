@@ -41,8 +41,7 @@ public:
         decoder_opts(decoder_ots),
         fp_reg_mode(fp_rmode),
 		int_reg_width(8),
-		fp_reg_width( (fp_rmode == VANADIS_REGISTER_MODE_FP32) ? 4 : 8),
-        isSIMT(simt)
+		fp_reg_width( (fp_rmode == VANADIS_REGISTER_MODE_FP32) ? 4 : 8)
     {
         // Registers are always 64-bits
        
@@ -50,8 +49,6 @@ public:
         fp_reg_storage = new char[fp_reg_width * count_fp_regs];
         
         init();
-
-        target_tid = 0;
         output = logger;
 
         fpRegWidth_per_thread = fp_reg_width * count_fp_regs;
@@ -85,18 +82,10 @@ public:
 
     void copyFromRegister(uint16_t reg, uint32_t offset, uint8_t* values, uint32_t len, bool is_fp) {
         if(is_fp) {
-            // for (uint32_t t=0; t<WARP_SIZE; t++)
-            { // TODO: Remove this loop once the VANADIS SIMT pipeline is done
-                // target_tid = t;
-                copyFromFPRegister(reg, offset, values, len); 
-            }
-            
-        } else {
-            // for (uint32_t t=0; t<WARP_SIZE; t++)
-            { // TODO: Remove this loop once the VANADIS SIMT pipeline is done
-                // target_tid = t;
+            copyFromFPRegister(reg, offset, values, len); 
+        } 
+        else {
             copyFromIntRegister(reg, offset, values, len);
-            }
         }
     }
 
@@ -131,24 +120,6 @@ public:
             // printf("reg[%d][%d]=%d\n",reg, offset + i,values[i]);
         }
         
-    }
-
-    void copyToRegister(uint16_t reg, uint32_t offset, uint8_t* values, uint32_t len, bool is_fp) {
-        if(is_fp) {
-            for (uint32_t t=0; t<WARP_SIZE; t++)
-            {
-                target_tid = t;
-                copyToFPRegister(reg, offset, values, len);
-            }
-            
-        } else {
-            for (uint32_t t=0; t<WARP_SIZE; t++)
-            {
-                target_tid = t;
-            copyToIntRegister(reg, offset, values, len);
-            }
-        }
-
     }
 
     void copyToIntRegister(uint16_t reg, uint32_t offset, uint8_t* values, uint32_t len) {
@@ -340,15 +311,11 @@ private:
     int get_reg_index(uint16_t reg, bool is_fp)
     {
         int index = 0;
-        if(is_fp)
-        {
+        if(is_fp) {
             index = fp_reg_width * reg;
-
         }
-        else
-        {
+        else {
             index = int_reg_width * reg;
-
         }
         return index;
         

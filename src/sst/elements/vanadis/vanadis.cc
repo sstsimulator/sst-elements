@@ -223,77 +223,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
         retire_isa_tables[i]->reset(issue_isa_tables[i]);
 
         halted_masks[i] = true;
-
-        // simt_threads.push_back(new thread_info(i, 0, i/WARP_SIZE)); // TODO: what's the starting pc?
     }
-
-    // SIMT initialization
-    // output->verbose(CALL_INFO, 16, 0, "Warp inintialization for SIMT.\n");
-    // printf("num_warps: %u hw_threads:%u\n", num_warps, hw_threads);
-    // for ( uint32_t i = 0; i < num_warps; ++i ) {
-    //     snprintf(decoder_name, 64, "decoder%" PRIu32 "", i+hw_threads);
-        
-    //     VanadisDecoder* warp_decoder = loadUserSubComponent<SST::Vanadis::VanadisDecoder>(decoder_name);
-    //     v_warp_rob.push_back(new VanadisCircularQueue<VanadisInstruction*>(rob_count));
-        
-    //     warp_decoder->setHardwareThread(hw_threads+i);  // SIMT starts from the last thread
-
-    //     simt_decoders.push_back(warp_decoder);
-    //     simt_decoders[i]->setThreadROB(v_warp_rob[i]);
-    //     fp_flags.push_back(new VanadisFloatingPointFlags());
-    //     simt_decoders[i]->setFPFlags(fp_flags[i+hw_threads]);
-    //     simt_decoders[i]->getOSHandler()->setOS_link(os_link);
-    //     simt_decoders[i]->setInsCacheLineWidth(iCacheLineWidth);
-        
-    //     isa_options.push_back(simt_decoders[i]->getDecoderOptions());
-
-    //     register_files.push_back(new VanadisRegisterFile(
-    //         i+hw_threads, simt_decoders[i]->getDecoderOptions(), int_reg_count, fp_reg_count, warp_decoder->getFPRegisterMode(), output, 
-    //         false));
-
-    //     bitset<WARP_SIZE> mask;
-    //     if (hw_threads / WARP_SIZE > i) {
-    //         mask = bitset<WARP_SIZE>(0xffffffff);
-    //     }
-    //     else {
-    //         int num_threads = hw_threads % WARP_SIZE;
-    //         uint32_t temp = 1;
-    //         for (int j = 1; j < num_threads; j++) {
-    //             temp = (temp << 1) + 1;
-    //         }
-    //         mask = bitset<WARP_SIZE>(temp);
-    //     }
-    //     m_warps.push_back(new warp(i, mask, new VanadisISATable( "issue",
-    //         thread_decoders[0]->getDecoderOptions(), thread_decoders[0]->countISAIntReg(),
-    //         thread_decoders[0]->countISAFPReg()), new VanadisISATable( "retire",
-    //         thread_decoders[0]->getDecoderOptions(), thread_decoders[0]->countISAIntReg(),
-    //         thread_decoders[0]->countISAFPReg()))); // TODO: Add rr tables and reset, check the # regs used per thread in config file
-
-    //     issue_isa_tables.push_back(new VanadisISATable( "issue",
-    //         simt_decoders[i]->getDecoderOptions(), simt_decoders[i]->countISAIntReg(),
-    //         simt_decoders[i]->countISAFPReg()));
-
-    //     for ( uint16_t j = 0; j < simt_decoders[i]->countISAIntReg(); ++j ) {
-    //         issue_isa_tables[i+hw_threads]->setIntPhysReg(j, int_register_stack->pop());
-    //     }
-
-    //     for ( uint16_t j = 0; j < simt_decoders[i]->countISAFPReg(); ++j ) {
-    //         issue_isa_tables[i+hw_threads]->setFPPhysReg(j, fp_register_stack->pop());
-    //     }
-
-    //     retire_isa_tables.push_back(new VanadisISATable( "retire",
-    //         simt_decoders[i]->getDecoderOptions(), simt_decoders[i]->countISAIntReg(),
-    //         simt_decoders[i]->countISAFPReg()));
-    //     retire_isa_tables[i+hw_threads]->reset(issue_isa_tables[i+hw_threads]);
-
-    //     simt_decoders[i]->getOSHandler()->setCoreID(core_id);
-    //     simt_decoders[i]->getOSHandler()->setHWThread(i+hw_threads);
-    //     simt_decoders[i]->getOSHandler()->setRegisterFile(register_files[i+hw_threads]);
-    //     simt_decoders[i]->getOSHandler()->setISATable(retire_isa_tables[i+hw_threads]);
-
-    //     halted_masks[hw_threads+i] = true;
-    // }
-
     delete[] decoder_name;
 
     uint16_t max_int_regs = 0;
@@ -345,7 +275,6 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     }
 
     lsq = loadUserSubComponent<SST::Vanadis::VanadisLoadStoreQueue>("lsq", ComponentInfo::SHARE_NONE, core_id, hw_threads);
-    // lsq = loadUserSubComponent<SST::Vanadis::VanadisBasicLoadStoreQueueSIMT>("lsq", ComponentInfo::SHARE_NONE, core_id, hw_threads);
     if ( nullptr == lsq ) {
         output->fatal(CALL_INFO, -1, "Error - unable to load the load-store queue (lsq subcomponent)\n");
     }
@@ -605,8 +534,6 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
     bool      issued_an_ins    = false;
 
     auto i = hwThr;
-    bool isSIMT = judgeThr(hwThr) & enable_simt;
-    // printf("performIssue hw_thr=%d isSIMT=%d\n",i, isSIMT);
 
     if ( LIKELY(! halted_masks[i] )) {
         #ifdef VANADIS_BUILD_DEBUG
@@ -626,17 +553,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
         for ( auto j = rob_start; j < rob_size; ++j ) 
         {
             VanadisInstruction* ins = thr_rob->peekAt(j);
-            if(isSIMT)
-            {
-                // printf("Is this the bug? dynamic_cast =%s\n", ins->getInstCode());
-                ins = dynamic_cast<VanadisSIMTInstruction*>(ins);
-                // printf("Issue: Done with dynamic_cast\n");
-                if ( nullptr == ins ) {
-                        output->fatal(
-                            CALL_INFO, -1,
-                            "Error: ins cannot be converted to an SIMT instruction %s 0x%" PRI_ADDR " thread=%d.\n", thr_rob->peekAt(j)->getInstCode(), thr_rob->peekAt(j)->getInstructionAddress(), hwThr);
-                    }
-            }
+            
             // printf("Issue ins?\n");
             // printf("Issue ins? %s %d\n", ins->getInstCode(), ins->getIsSIMT());
             // printf("Issue ins? %d\n",ins->completedIssue());
@@ -712,34 +629,11 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
                     if ( 0 == allocate_fu ) 
                     {
                         int status = 0;
-                        if (isSIMT) 
-                        {
-                            output->verbose(CALL_INFO, 16, 0, "Incoming thread %" PRIu32 " is SIMT, switching to SIMT issue logic.\n", i);
-                            
-                            for (uint16_t sw_thr = i; sw_thr<=i+WARP_SIZE; sw_thr++)
-                            {
-                                if(status!=0)
-                                {
-                                    output->fatal(CALL_INFO,-1, "(SIMT) Assigning Registers Failed sw_thr=%d\n", sw_thr);
-                                }
-                                if(sw_thr>= hw_threads)
-                                {
-                                    break;
-                                }
-                                
-                                status = assignRegistersToInstruction(thread_decoders[sw_thr]->countISAIntReg(), thread_decoders[sw_thr]->countISAFPReg(), dynamic_cast<VanadisSIMTInstruction*>(ins),
-                                int_register_stack, fp_register_stack, issue_isa_tables[sw_thr],sw_thr);
-                                output->verbose(CALL_INFO, 16, 0, "(SIMT) Assigning registers for sw_thr %" PRIu32 " sucessful? %d \n", sw_thr, status);
-                            }
-                        }
-                        else 
-                        {
+                        
                             status = assignRegistersToInstruction(
                                 thread_decoders[i]->countISAIntReg(), thread_decoders[i]->countISAFPReg(), ins,
                                 int_register_stack, fp_register_stack, issue_isa_tables[i]);
                             // printf("%s %d\n", ins->getInstCode(), ins->getIsSIMT());
-                        }
-
                         #ifdef VANADIS_BUILD_DEBUG
                             if ( checkVerboseAddr( ins->getInstructionAddress() ) ) 
                             {
@@ -952,15 +846,10 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
     VanadisInstruction* rob_front              = rob->peek();
     bool                perform_pipeline_clear = false;
     const uint32_t      ins_thread             = rob->peekAt(0)->getHWThread();
-    bool isSIMT = rob->peekAt(0)->getIsSIMT();
-    // if((ins_thread % WARP_SIZE)==1)
-    // {
-    //     isSIMT=true;
-    // }
+
     VanadisDecoder* thr_decoder;
     thr_decoder = thread_decoders[ins_thread];
     
-
     // Instruction is flagging error, print out and halt
     if ( UNLIKELY(rob_front->trapsError()) ) {
         output->verbose(CALL_INFO, 16, 0, "Error has been detected in retired instruction. Retired "
@@ -969,16 +858,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
         retire_isa_tables[rob_front->getHWThread()]->print(
             output, register_files[ins_thread], print_int_reg, print_fp_reg, 0);
 
-        if(isSIMT)
-        {
-            for(uint16_t sw_thr=ins_thread+1; sw_thr<= ins_thread+WARP_SIZE; sw_thr++)
-            {
-                if(sw_thr>=hw_threads)
-                    break;
-                retire_isa_tables[sw_thr]->print(
-                        output, register_files[ins_thread], print_int_reg, print_fp_reg, 0);
-            }
-        }
+        
 
         char* inst_asm_buffer = new char[32768];
         rob_front->printToBuffer(inst_asm_buffer, 32768);
@@ -1148,57 +1028,19 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
 			}
 
             output->verbose(CALL_INFO, 16, VANADIS_DBG_RETIRE_FLG, "------> recovering retired registers thr: %d.\n", ins_thread);
-            if(isSIMT)
-            {
-                int k_in=0;
-                VanadisSIMTInstruction* ins = dynamic_cast<VanadisSIMTInstruction*>(rob_front);
-                recoverRetiredRegisters(ins, int_register_stack, fp_register_stack,issue_isa_tables[ins_thread], retire_isa_tables[ins_thread],ins_thread);
-                for(uint16_t sw_thr=ins_thread+1; sw_thr<= ins_thread+WARP_SIZE; sw_thr++)
-                {
 
-                    if(sw_thr>=hw_threads)
-                        break;
-                    output->verbose(CALL_INFO, 16, VANADIS_DBG_RETIRE_FLG, "------> recovering retired registers thr: %d.\n", sw_thr);
-                    recoverRetiredRegisters(ins, int_register_stack, fp_register_stack,
-                            issue_isa_tables[sw_thr], retire_isa_tables[sw_thr],sw_thr);
-                }                
-            }
-            else
-            {
-                recoverRetiredRegisters(rob_front, int_register_stack, fp_register_stack,issue_isa_tables[ins_thread], retire_isa_tables[ins_thread]);
-            }
+            recoverRetiredRegisters(rob_front, int_register_stack, fp_register_stack,issue_isa_tables[ins_thread], retire_isa_tables[ins_thread]);
+
             #ifdef VANADIS_BUILD_DEBUG
                 if(output->getVerboseLevel() >= 8) {
                     if(print_retire_tables) 
                     {
                         retire_isa_tables[ins_thread]->print(output, register_files[ins_thread], print_int_reg, print_fp_reg, output->getVerboseLevel());
-
-                        if(isSIMT)
-                        {
-                            for(uint16_t sw_thr=ins_thread+1; sw_thr<= ins_thread+WARP_SIZE; sw_thr++)
-                            {
-                                if(sw_thr>=hw_threads)
-                                    break;
-                                output->verbose(CALL_INFO, 16, VANADIS_DBG_RETIRE_FLG, "------> Printing retire_isa_tables thr: %d.\n", sw_thr);
-                                retire_isa_tables[sw_thr]->print(output, register_files[sw_thr], print_int_reg, print_fp_reg, output->getVerboseLevel());
-                            }
-                        }
                     }
                     if(print_issue_tables) 
                     {
 
                         issue_isa_tables[ins_thread]->print(output, register_files[ins_thread], print_int_reg, print_fp_reg, output->getVerboseLevel());
-
-                        if(isSIMT)
-                        {
-                            for(uint16_t sw_thr=ins_thread+1; sw_thr<= ins_thread+WARP_SIZE; sw_thr++)
-                            {
-                                if(sw_thr>=hw_threads)
-                                    break;
-                                output->verbose(CALL_INFO, 16, VANADIS_DBG_RETIRE_FLG, "------> Printing issue_isa_tables thr: %d.\n", sw_thr);
-                                issue_isa_tables[sw_thr]->print(output, register_files[sw_thr], print_int_reg, print_fp_reg, output->getVerboseLevel());
-                            }
-                        }
                     }
                 }
                 if(output->getVerboseLevel() >= 16) {
@@ -1304,19 +1146,6 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
                         ins_thread, pipeline_reset_addr);
                 #endif
                 handleMisspeculate(ins_thread, pipeline_reset_addr);
-                if(isSIMT)
-                        {
-                            for(uint16_t sw_thr=ins_thread+1; sw_thr<= ins_thread+WARP_SIZE; sw_thr++)
-                            {
-                                if(sw_thr>=hw_threads)
-                                    break;
-                                output->verbose(CALL_INFO, 16, VANADIS_DBG_RETIRE_FLG, "----> perform a pipeline clear thread %" PRIu32 ", reset to address: 0x%" PRI_ADDR "\n",
-                                                                sw_thr, pipeline_reset_addr);
-                                handleMisspeculate(sw_thr, pipeline_reset_addr);
-                                
-                            }
-                        }
-
                 stat_branch_mispredicts->addData(1);
             }
 
@@ -1453,17 +1282,7 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
     case INST_LOAD:
         if ( !lsq->loadFull() ) {
             stat_loads_issued->addData(1);
-            if(ins->getIsSIMT())
-            {
-                // printf("LSQ simt push\n");
-                lsq->push(dynamic_cast<VanadisSIMTLoadInstruction*>(ins));
-            }
-            else
-            {
-                // printf("LSQ scalar push\n");
-                lsq->push(dynamic_cast<VanadisLoadInstruction*>(ins));
-            }
-                
+            lsq->push(dynamic_cast<VanadisLoadInstruction*>(ins)); 
             allocated_fu = true;
         }
         break;
@@ -1472,17 +1291,7 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
         // printf("Inside allocateFU INST_STORE \n");
         if ( !lsq->storeFull() ) {
             stat_stores_issued->addData(1);
-            if(ins->getIsSIMT())
-            {
-                // printf("LSQ simt push\n");
-                lsq->push(dynamic_cast<VanadisSIMTStoreInstruction*>(ins));
-            }
-            else
-            {
-                // printf("LSQ scalar push\n");
-                lsq->push(dynamic_cast<VanadisStoreInstruction*>(ins));
-            }
-                
+            lsq->push(dynamic_cast<VanadisStoreInstruction*>(ins));
             allocated_fu = true;
         }
         break;
@@ -2050,175 +1859,6 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
     return 0;
 }
 
-
-int
-VANADIS_COMPONENT::assignRegistersToInstruction(
-    const uint16_t int_reg_count, const uint16_t fp_reg_count, VanadisSIMTInstruction* ins, VanadisRegisterStack* int_regs,
-    VanadisRegisterStack* fp_regs, VanadisISATable* isa_table, uint16_t sw_thr)
-{
-
-    // PROCESS INPUT REGISTERS
-    // ///////////////////////////////////////////////////////
-
-    // Set the current ISA registers required for input
-    // uint16_t* phys_int_regs_in;
-    // count_phys_int_reg_in
-    // std::memset(phys_int_regs_in, 0, count_phys_int_reg_in * sizeof( uint16_t ));
-    // printf("Where is the bug\n");
-    printf("SIMT refactor ins count_regs =%d, %d\n", ins->countISAIntRegIn(), ins->countISAFPRegIn());
-    for ( uint16_t i = 0; i < ins->countISAIntRegIn(); ++i ) 
-    {
-        if ( ins->getISAIntRegIn(i) >= int_reg_count ) 
-        {
-            output->fatal(
-                CALL_INFO, -1, "(SIMT)Error: ins request in-int-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
-                ins->getISAIntRegIn(i), int_reg_count); // TODO_Anu: does this need to be SIMT supported? ISA registers don't change b/w threads if its the same instruction
-        }
-
-        const uint16_t isa_reg_in = ins->getISAIntRegIn(i);
-        const uint16_t phys_reg_in = isa_table->getIntPhysReg(isa_reg_in);
-
-        #ifdef VANADIS_BUILD_DEBUG
-        if(output->getVerboseLevel() >= 16) {
-            output->verbose(CALL_INFO, 16, 0, "----->(SIMT) creating ins-addr: 0x%" PRI_ADDR " int reg-in for isa: %" PRIu16 " will mapped to phys: %" PRIu16 "\n",
-                ins->getInstructionAddress(), isa_reg_in, phys_reg_in);
-        }
-        #endif
-
-        ins->setPhysIntRegIn(i, phys_reg_in, sw_thr);
-        // phys_int_regs_in[i] = phys_reg_in;
-        output->verbose(CALL_INFO, 16, 0, "----->(SIMT) Set PhysIntReg done ins-addr: 0x%" PRI_ADDR " int reg-in for isa: %" PRIu16 " will mapped to phys: %" PRIu16 "\n",
-        ins->getInstructionAddress(), isa_reg_in, phys_reg_in);
-        isa_table->incIntRead(isa_reg_in);
-
-    }
-    // ins->setPhysIntRegIn(phys_int_regs_in, sw_thr);
-
-    // uint16_t* phys_fp_regs_in;
-    for ( uint16_t i = 0; i < ins->countISAFPRegIn(); ++i ) {
-        if ( ins->getISAFPRegIn(i) >= fp_reg_count ) {
-            output->fatal(
-                CALL_INFO, -1, "(SIMT)Error: ins request in-fp-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
-                ins->getISAFPRegIn(i), fp_reg_count);
-        }
-
-        const uint16_t isa_reg_in = ins->getISAFPRegIn(i);
-        const uint16_t phys_reg_in = isa_table->getFPPhysReg(isa_reg_in);
-
-        #ifdef VANADIS_BUILD_DEBUG
-        if(output->getVerboseLevel() >= 16) {
-            output->verbose(CALL_INFO, 16, 0, "----->(SIMT) creating ins-addr: 0x%" PRI_ADDR " fp reg-in for isa: %" PRIu16 " will mapped to phys: %" PRIu16 "\n",
-                ins->getInstructionAddress(), isa_reg_in, phys_reg_in);
-        }
-        #endif
-
-        ins->setPhysFPRegIn(i, phys_reg_in, sw_thr);
-        // phys_fp_regs_in[i] = phys_reg_in;
-        output->verbose(CALL_INFO, 16, 0, "----->(SIMT) Set PhysFPReg done ins-addr: 0x%" PRI_ADDR " int reg-in for isa: %" PRIu16 " will mapped to phys: %" PRIu16 "\n",
-        ins->getInstructionAddress(), isa_reg_in, phys_reg_in);
-        isa_table->incFPRead(isa_reg_in);
-    }
-    // ins->setPhysFPRegIn(phys_int_regs_in, sw_thr);
-    // PROCESS OUTPUT REGISTERS
-    // ///////////////////////////////////////////////////////
-
-    // SYSCALLs have special handling because they request *every* register to
-    // lock up the pipeline. We just give them full access to the register file
-    // without requiring anything from the register file (otherwise we exhaust
-    // registers). This REQUIRES that SYSCALL doesn't muck with the registers
-    // itself at execute and relies on the OS handlers, otherwise this is not
-    // out-of-order compliant (since mis-predicts would corrupt the register file
-    // contents
-    if ( UNLIKELY(INST_SYSCALL == ins->getInstFuncType()) ) {
-        for ( uint16_t i = 0; i < ins->countISAIntRegOut(); ++i ) {
-            if ( UNLIKELY(ins->getISAIntRegOut(i) >= int_reg_count) ) {
-                output->fatal(
-                    CALL_INFO, -1,
-                    "Error: ins request out-int-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
-                    ins->getISAIntRegOut(i), int_reg_count);
-            }
-
-            const uint16_t ins_isa_reg = ins->getISAIntRegOut(i);
-            const uint16_t out_reg     = isa_table->getIntPhysReg(ins_isa_reg);
-
-            ins->setPhysIntRegOut(i, out_reg,sw_thr);
-            isa_table->incIntWrite(ins_isa_reg);
-        }
-
-        // Set current ISA registers required for output
-        for ( uint16_t i = 0; i < ins->countISAFPRegOut(); ++i ) {
-            if ( UNLIKELY(ins->getISAFPRegOut(i) >= fp_reg_count) ) {
-                output->fatal(
-                    CALL_INFO, -1,
-                    "Error: ins request out-fp-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
-                    ins->getISAFPRegOut(i), fp_reg_count);
-            }
-
-            const uint16_t ins_isa_reg = ins->getISAFPRegOut(i);
-            const uint16_t out_reg     = isa_table->getFPPhysReg(ins_isa_reg);
-
-            ins->setPhysFPRegOut(i, out_reg, sw_thr);
-            isa_table->incFPWrite(ins_isa_reg);
-        }
-    }
-    else {
-        // Set current ISA registers required for output
-        for ( uint16_t i = 0; i < ins->countISAIntRegOut(); ++i ) {
-            const uint16_t ins_isa_reg    = ins->getISAIntRegOut(i);
-
-            if ( UNLIKELY(ins_isa_reg >= int_reg_count) ) {
-                output->fatal(
-                    CALL_INFO, -1,
-                    "Error: ins request out-int-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
-                    ins_isa_reg, int_reg_count);
-            }
-
-            const uint16_t out_reg        = int_regs->pop();
-
-            #ifdef VANADIS_BUILD_DEBUG
-            if(output->getVerboseLevel() >= 16) {
-                output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%" PRI_ADDR " int reg-out for isa: %" PRIu16 " output will map to phys: %" PRIu16 "\n",
-                    ins->getInstructionAddress(), ins_isa_reg, out_reg);
-            }
-            #endif
-
-            isa_table->setIntPhysReg(ins_isa_reg, out_reg);
-            isa_table->incIntWrite(ins_isa_reg);
-
-            ins->setPhysIntRegOut(i, out_reg,sw_thr);
-        }
-
-        // Set current ISA registers required for output
-        for ( uint16_t i = 0; i < ins->countISAFPRegOut(); ++i ) {
-            const uint16_t ins_isa_reg = ins->getISAFPRegOut(i);
-
-            if ( UNLIKELY(ins_isa_reg >= fp_reg_count) ) {
-                output->fatal(
-                    CALL_INFO, -1,
-                    "Error: ins request out-fp-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
-                    ins_isa_reg, fp_reg_count);
-            }
-
-            const uint16_t out_reg     = fp_regs->pop();
-
-            #ifdef VANADIS_BUILD_DEBUG
-            if(output->getVerboseLevel() >= 16) {
-                output->verbose(CALL_INFO, 16, 0, "-----> creating ins-addr: 0x%" PRI_ADDR " fp reg-out for isa: %" PRIu16 " output will map to phys: %" PRIu16 "\n",
-                    ins->getInstructionAddress(), ins_isa_reg, out_reg);
-            }
-            #endif
-
-            isa_table->setFPPhysReg(ins_isa_reg, out_reg);
-            isa_table->incFPWrite(ins_isa_reg);
-
-            ins->setPhysFPRegOut(i, out_reg, sw_thr);
-        }
-    }
-
-    return 0;
-}
-
-
 int
 VANADIS_COMPONENT::recoverRetiredRegisters(
     VanadisInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs,
@@ -2316,101 +1956,6 @@ VANADIS_COMPONENT::recoverRetiredRegisters(
 }
 
 
-int
-VANADIS_COMPONENT::recoverRetiredRegisters(
-    VanadisSIMTInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs,
-    VanadisISATable* issue_isa_table, VanadisISATable* retire_isa_table, uint16_t sw_thr)
-{
-    std::vector<uint16_t> recovered_phys_reg_int;
-    std::vector<uint16_t> recovered_phys_reg_fp;
-
-    const uint16_t count_int_reg_in = ins->countISAIntRegIn();
-    for ( uint16_t i = 0; i < count_int_reg_in; ++i ) {
-        const uint16_t isa_reg = ins->getISAIntRegIn(i);
-        issue_isa_table->decIntRead(isa_reg);
-    }
-
-    const uint16_t count_fp_reg_in = ins->countISAFPRegIn();
-    for ( uint16_t i = 0; i < count_fp_reg_in; ++i ) {
-        const uint16_t isa_reg = ins->getISAFPRegIn(i);
-        issue_isa_table->decFPRead(isa_reg);
-    }
-
-    const uint16_t count_int_reg_out = ins->countISAIntRegOut();
-    if ( ins->performIntRegisterRecovery() ) {
-        for ( uint16_t i = 0; i < count_int_reg_out; ++i ) {
-            const uint16_t isa_reg      = ins->getISAIntRegOut(i);
-
-            // We are about to set a new physical register to hold the ISA value
-            // so recover the current holder ready to be issued further up.
-            const uint16_t cur_phys_reg = retire_isa_table->getIntPhysReg(isa_reg);
-
-            issue_isa_table->decIntWrite(isa_reg);
-
-            recovered_phys_reg_int.push_back(cur_phys_reg);
-
-            // Set the ISA register in the retirement table to point
-            // to the physical register used by this instruction
-            retire_isa_table->setIntPhysReg(isa_reg, ins->getPhysIntRegOut(i,sw_thr));
-        }
-    }
-    else {
-        #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(CALL_INFO, 16, 0, "-> instruction bypasses integer register recovery\n");
-        #endif
-        for ( uint16_t i = 0; i < count_int_reg_out; ++i ) {
-            const uint16_t isa_reg      = ins->getISAIntRegOut(i);
-            const uint16_t cur_phys_reg = retire_isa_table->getIntPhysReg(isa_reg);
-
-            issue_isa_table->decIntWrite(isa_reg);
-        }
-    }
-
-    const uint16_t count_fp_reg_out = ins->countISAFPRegOut();
-    if ( ins->performFPRegisterRecovery() ) {
-        for ( uint16_t i = 0; i < count_fp_reg_out; ++i ) {
-            const uint16_t isa_reg      = ins->getISAFPRegOut(i);
-            const uint16_t cur_phys_reg = retire_isa_table->getFPPhysReg(isa_reg);
-
-            issue_isa_table->decFPWrite(isa_reg);
-
-            recovered_phys_reg_fp.push_back(cur_phys_reg);
-
-            // Set the ISA register in the retirement table to point
-            // to the physical register used by this instruction
-            retire_isa_table->setFPPhysReg(isa_reg, ins->getPhysFPRegOut(i, sw_thr));
-        }
-    }
-    else {
-        #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(CALL_INFO, 16, 0, "-> instruction bypasses fp register recovery\n");
-        #endif
-        for ( uint16_t i = 0; i < count_fp_reg_out; ++i ) {
-            const uint16_t isa_reg      = ins->getISAFPRegOut(i);
-            const uint16_t cur_phys_reg = retire_isa_table->getFPPhysReg(isa_reg);
-
-            issue_isa_table->decFPWrite(isa_reg);
-        }
-    }
-
-    #ifdef VANADIS_BUILD_DEBUG
-    if(output->getVerboseLevel() >= 16) {
-        output->verbose(
-            CALL_INFO, 16, 0, "Recovering: %d int-reg and %d fp-reg\n", (int)recovered_phys_reg_int.size(),
-            (int)recovered_phys_reg_fp.size());
-    }
-    #endif
-
-    for ( uint16_t next_reg : recovered_phys_reg_int ) {
-        int_regs->push(next_reg);
-    }
-
-    for ( uint16_t next_reg : recovered_phys_reg_fp ) {
-        fp_regs->push(next_reg);
-    }
-
-    return 0;
-}
 
 void
 VANADIS_COMPONENT::setup()

@@ -238,14 +238,6 @@ private:
     int assignRegistersToInstruction(
         const uint16_t int_reg_count, const uint16_t fp_reg_count, VanadisInstruction* ins,
         VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs, VanadisISATable* isa_table);
-    
-    // int assignRegistersToInstruction(
-    //     const uint16_t int_reg_count, const uint16_t fp_reg_count, VanadisInstruction* ins,
-    //     VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs, VanadisISATable* isa_table, uint16_t sw_thr);
-
-    int assignRegistersToInstruction(
-        const uint16_t int_reg_count, const uint16_t fp_reg_count, VanadisSIMTInstruction* ins,
-        VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs, VanadisISATable* isa_table, uint16_t sw_thr);
 
     int checkInstructionResources(
         VanadisInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs,
@@ -257,9 +249,6 @@ private:
     
     int recoverRetiredRegisters(
         VanadisInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs,
-        VanadisISATable* issue_isa_table, VanadisISATable* retire_isa_table, uint16_t sw_thr);
-    int recoverRetiredRegisters(
-        VanadisSIMTInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs,
         VanadisISATable* issue_isa_table, VanadisISATable* retire_isa_table, uint16_t sw_thr);
 
     int  performFetch(const uint64_t cycle);
