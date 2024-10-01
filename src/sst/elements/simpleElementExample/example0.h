@@ -88,6 +88,11 @@ public:
     // Destructor
     ~example0();
 
+// Serialization
+    example0();
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::simpleElementExample::example0)
+
 private:
     // Event handler, called when an event is received on our link
     void handleEvent(SST::Event *ev);

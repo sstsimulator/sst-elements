@@ -91,7 +91,7 @@ basicParams::basicParams(ComponentId_t id, Params& params) : Component(id) {
     primaryComponentDoNotEndSim();
 
     // Register a clock
-    registerClock("1MHz", new Clock::Handler<basicParams>(this, &basicParams::tick));
+    registerClock("1MHz", new Clock::Handler2<basicParams, &basicParams::tick>(this));
 
 }
 
@@ -119,3 +119,16 @@ bool basicParams::tick( Cycle_t cycles)
     return false;
 }
 
+/*
+ * Default constructor
+*/
+basicParams::basicParams() : Component() {}
+
+/*
+ * Serialization function
+*/
+void basicParams::serialize_order(SST::Core::Serialization::serializer& ser) {
+    Component::serialize_order(ser);
+
+    SST_SER(out);
+}
