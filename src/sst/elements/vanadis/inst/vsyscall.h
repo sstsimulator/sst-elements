@@ -70,34 +70,6 @@ public:
     virtual bool performFPRegisterRecovery() const { return false; }
 };
 
-
-class VanadisSIMTSysCallInstruction : public VanadisSIMTInstruction, public VanadisSysCallInstruction
-{
-public:
-    VanadisSIMTSysCallInstruction(const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts) :
-        VanadisInstruction(
-            addr, hw_thr, isa_opts, isa_opts->countISAIntRegisters(), isa_opts->countISAIntRegisters(),
-            isa_opts->countISAIntRegisters(), isa_opts->countISAIntRegisters(), isa_opts->countISAFPRegisters(),
-            isa_opts->countISAFPRegisters(), isa_opts->countISAFPRegisters(), isa_opts->countISAFPRegisters()),
-        VanadisSIMTInstruction(
-            addr, hw_thr, isa_opts, isa_opts->countISAIntRegisters(), isa_opts->countISAIntRegisters(),
-            isa_opts->countISAIntRegisters(), isa_opts->countISAIntRegisters(), isa_opts->countISAFPRegisters(),
-            isa_opts->countISAFPRegisters(), isa_opts->countISAFPRegisters(), isa_opts->countISAFPRegisters()),
-        VanadisSysCallInstruction(addr, hw_thr, isa_opts)
-    {
-
-        ;
-    }
-
-    VanadisSIMTSysCallInstruction* clone() { return new VanadisSIMTSysCallInstruction(*this); }
-
-    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
-    {
-        VanadisSysCallInstruction::scalarExecute(output, regFile);
-    }
-
-};
-
 } // namespace Vanadis
 } // namespace SST
 

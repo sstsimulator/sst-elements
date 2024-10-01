@@ -57,24 +57,7 @@ protected:
     VanadisFenceType fence;
 };
 
-class VanadisSIMTFenceInstruction : public VanadisSIMTInstruction, public VanadisFenceInstruction
-{
-public:
-    VanadisSIMTFenceInstruction(
-        const uint64_t address, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
-        const VanadisFenceType fenceT) :
-        VanadisInstruction(address, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0),
-        VanadisSIMTInstruction(address, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0),
-        VanadisFenceInstruction(address, hw_thr, isa_opts, fenceT)
 
-    {
-        // fence = fenceT;
-    }
-
-    VanadisSIMTFenceInstruction* clone() { return new VanadisSIMTFenceInstruction(*this); }
-
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override {} 
-};
 
 } // namespace Vanadis
 } // namespace SST

@@ -120,36 +120,6 @@ protected:
 };
 
 
-template <typename register_format, VanadisRegisterCompareType compare_type>
-class VanadisSIMTBranchRegCompareInstruction : public VanadisSIMTInstruction, public VanadisBranchRegCompareInstruction<register_format, compare_type>
-{
-public:
-    VanadisSIMTBranchRegCompareInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint64_t ins_width,
-        const uint16_t src_1, const uint16_t src_2, const int64_t offst, const VanadisDelaySlotRequirement delayT) :
-        VanadisInstruction(addr, hw_thr, isa_opts, 2, 0, 2, 0, 0, 0, 0, 0),
-        VanadisSIMTInstruction(addr, hw_thr, isa_opts, 2, 0, 2, 0, 0, 0, 0, 0),
-        VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 2, 0, 2, 0, 0, 0, 0, 0, delayT),
-        VanadisBranchRegCompareInstruction<register_format, compare_type>(addr, hw_thr, isa_opts, ins_width, src_1, src_2, offst, delayT)
-    {
-        ;
-        // isa_int_regs_in[0] = src_1;
-        // isa_int_regs_in[1] = src_2;
-    }
-
-    VanadisSIMTBranchRegCompareInstruction* clone() override { return new VanadisSIMTBranchRegCompareInstruction(*this); }
-    
-
-    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
-    {
-        uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0, VanadisSIMTInstruction::sw_thread);
-        uint16_t phys_int_regs_in_1 = getPhysIntRegIn(1, VanadisSIMTInstruction::sw_thread);
-        bool compare_result = false;
-        VanadisBranchRegCompareInstruction<register_format, compare_type>::instOp(output, regFile, phys_int_regs_in_0, phys_int_regs_in_1,&compare_result);
-        VanadisBranchRegCompareInstruction<register_format, compare_type>::log(output, 16, VanadisSIMTInstruction::sw_thread, compare_result,phys_int_regs_in_0,phys_int_regs_in_1);
-    }
-
-};
 
 } // namespace Vanadis
 } // namespace SST

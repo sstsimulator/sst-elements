@@ -181,44 +181,6 @@ public:
 };
 
 
-// template <VanadisRegisterFormat int_register_format, VanadisRegisterFormat fp_register_format>
-template <typename gpr_format, typename fp_format, bool is_bitwise >
-class VanadisSIMTGPR2FPInstruction : public VanadisSIMTInstruction, public VanadisGPR2FPInstruction<gpr_format, fp_format, is_bitwise>
-{
-public:
-    VanadisSIMTGPR2FPInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, VanadisFloatingPointFlags* fpflags, const uint16_t fp_dest,
-        const uint16_t int_src) :
-        VanadisInstruction(
-            addr, hw_thr, isa_opts, 1, 0, 1, 0, 0,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1, 0,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1),
-        VanadisSIMTInstruction(
-            addr, hw_thr, isa_opts, 1, 0, 1, 0, 0,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1, 0,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1),
-        VanadisGPR2FPInstruction<gpr_format, fp_format, is_bitwise>(addr, hw_thr, isa_opts, fpflags, fp_dest, int_src)
-    {
-        ;
-    }
-
-    VanadisSIMTGPR2FPInstruction* clone() override { return new VanadisSIMTGPR2FPInstruction(*this); }
-    
-    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
-    {
-        uint16_t phys_fp_regs_out_0 = getPhysFPRegOut(0, VanadisSIMTInstruction::sw_thread);
-        uint16_t phys_fp_regs_out_1 = 0;
-        uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0, VanadisSIMTInstruction::sw_thread);
-        if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) 
-        {
-            phys_fp_regs_out_1 = getPhysFPRegOut(1, VanadisSIMTInstruction::sw_thread);
-        }
-        
-        VanadisGPR2FPInstruction<gpr_format, fp_format, is_bitwise>::instOp(regFile, phys_fp_regs_out_0, phys_fp_regs_out_1, phys_int_regs_in_0);
-        VanadisGPR2FPInstruction<gpr_format, fp_format, is_bitwise>::log(output,16, VanadisSIMTInstruction::sw_thread, phys_fp_regs_out_0,phys_int_regs_in_0);
-    }
-};
-
 } // namespace Vanadis
 } // namespace SST
 

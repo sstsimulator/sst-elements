@@ -96,34 +96,6 @@ protected:
 };
 
 
-template<typename compare_type, typename reg_type, VanadisRegisterCompareType compare_op>
-class VanadisSIMTConditionalMoveImmInstruction : public VanadisSIMTInstruction, public VanadisConditionalMoveImmInstruction<compare_type, reg_type, compare_op>
-{
-public:
-    VanadisSIMTConditionalMoveImmInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
-        const uint16_t src_1, const uint16_t src_2, const compare_type imm_value) :
-        VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
-        VanadisSIMTInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
-        VanadisConditionalMoveImmInstruction<compare_type, reg_type, compare_op>(addr, hw_thr, isa_opts, dest, src_1, src_2, imm_value)
-    {
-        // isa_int_regs_in[0]  = src_1;
-        // isa_int_regs_in[1]  = src_2;
-        // isa_int_regs_out[0] = dest;
-    }
-
-    VanadisSIMTConditionalMoveImmInstruction* clone() override { return new VanadisSIMTConditionalMoveImmInstruction(*this); }
-
-    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
-    {
-       uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0, VanadisSIMTInstruction::sw_thread);
-        uint16_t phys_int_regs_in_1 = getPhysIntRegIn(1, VanadisSIMTInstruction::sw_thread);
-        uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0, VanadisSIMTInstruction::sw_thread);
-        bool compare_result = false;
-        VanadisConditionalMoveImmInstruction<compare_type, reg_type, compare_op>::instOp(output,regFile, phys_int_regs_out_0,phys_int_regs_in_0, phys_int_regs_in_1,&compare_result);
-        VanadisConditionalMoveImmInstruction<compare_type, reg_type, compare_op>::log(output, 16, VanadisSIMTInstruction::sw_thread, phys_int_regs_out_0,phys_int_regs_in_0,phys_int_regs_in_1,compare_result);
-    }
-};
 
 } // namespace Vanadis
 } // namespace SST

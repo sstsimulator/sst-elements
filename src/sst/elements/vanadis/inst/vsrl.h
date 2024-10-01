@@ -86,24 +86,6 @@ public:
     }
 };
 
-template <VanadisRegisterFormat register_format>
-class VanadisSIMTShiftRightLogicalInstruction : public VanadisSIMTInstruction, public VanadisShiftRightLogicalInstruction<register_format>
-{
-public:
-    VanadisSIMTShiftRightLogicalInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
-        const uint16_t src_1, const uint16_t src_2) :
-        VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
-        VanadisSIMTInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
-        VanadisShiftRightLogicalInstruction<register_format>(addr, hw_thr, isa_opts, dest, src_1, src_2)
-    {
-        ;
-    }
-
-    VanadisSIMTShiftRightLogicalInstruction* clone() override { return new VanadisSIMTShiftRightLogicalInstruction(*this); }
-
-};
-
 } // namespace Vanadis
 } // namespace SST
 

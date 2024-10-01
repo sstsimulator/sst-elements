@@ -94,31 +94,7 @@ protected:
     const bool    branch_on_true;
 };
 
-class VanadisSIMTBranchFPInstruction : public VanadisSIMTInstruction, public VanadisBranchFPInstruction
-{
-public:
-    VanadisSIMTBranchFPInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint64_t ins_width,
-        const uint16_t cond_reg, const int64_t offst, const bool branch_true,
-        const VanadisDelaySlotRequirement delayT) :
-        VanadisInstruction(addr, hw_thr, isa_opts, 0, 0, 0, 0, 1, 0, 1, 0),
-        VanadisSIMTInstruction(addr, hw_thr, isa_opts, 0, 0, 0, 0, 1, 0, 1, 0),
-        VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 0, 0, 0, 0, 1, 0, 1, 0, delayT),
-        VanadisBranchFPInstruction(addr, hw_thr, isa_opts, ins_width, cond_reg, offst, branch_true, delayT)
-    {
-        // isa_fp_regs_in[0] = cond_reg; 
-    }
 
-    VanadisSIMTBranchFPInstruction* clone() override { return new VanadisSIMTBranchFPInstruction(*this); }
-
-    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
-    {
-        const uint16_t fp_cond_reg = getPhysFPRegIn(0, VanadisSIMTInstruction::sw_thread);
-        bool compare_result = false;
-        instOp(regFile,fp_cond_reg, &compare_result);
-        log(output, 16, 65535,compare_result,fp_cond_reg);
-    }
-};
 
 } // namespace Vanadis
 } // namespace SST

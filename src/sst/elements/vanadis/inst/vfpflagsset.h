@@ -85,40 +85,6 @@ protected:
     const int mode;
 };
 
-
-
-template<bool SetFRM, bool SetFFLAGS >
-class VanadisSIMTFPFlagsSetInstruction : public VanadisSIMTInstruction, public VanadisFPFlagsSetInstruction<SetFRM, SetFFLAGS>
-{
-public:
-    VanadisSIMTFPFlagsSetInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
-        VanadisFloatingPointFlags* fpflags, const uint16_t src_1, int mode) :
-        VanadisInstruction(
-            addr, hw_thr, isa_opts, 1, 0, 1, 0, 0, 0, 0, 0),
-        VanadisSIMTInstruction(
-            addr, hw_thr, isa_opts, 1, 0, 1, 0, 0, 0, 0, 0),
-        VanadisFPFlagsSetInstruction<SetFRM, SetFFLAGS>(
-            addr, hw_thr, isa_opts, fpflags, src_1, mode)
-    {
-        ;
-    }
-
-    VanadisSIMTFPFlagsSetInstruction*  clone() override { return new VanadisSIMTFPFlagsSetInstruction(*this); }
-    
-    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
-    {
-		if(checkFrontOfROB()) {
-            uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0, VanadisSIMTInstruction::sw_thread);
-            uint64_t mask_in = 0;
-			VanadisFPFlagsSetInstruction<SetFRM, SetFFLAGS>::instOp(regFile, phys_int_regs_in_0, &mask_in);
-            VanadisFPFlagsSetInstruction<SetFRM, SetFFLAGS>::log(output, 16, VanadisSIMTInstruction::sw_thread, phys_int_regs_in_0, mask_in);
-		} else {
-			output->verbose(CALL_INFO, 16, 0, "hw_thr=%d, sw_thr=%d, not front of ROB for ins: 0x%" PRI_ADDR " %s\n", getHWThread(), VanadisSIMTInstruction::sw_thread,  getInstructionAddress(), getInstCode());
-		}
-    }
-};
-
 } // namespace Vanadis
 } // namespace SST
 

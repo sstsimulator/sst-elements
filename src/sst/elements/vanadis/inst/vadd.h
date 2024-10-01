@@ -75,28 +75,7 @@ class VanadisAddInstruction : public virtual VanadisInstruction
         
 };
 
-template <typename gpr_format>
-class VanadisSIMTAddInstruction : public VanadisSIMTInstruction, public VanadisAddInstruction<gpr_format>
-{
-    public:
-        VanadisSIMTAddInstruction(const uint64_t addr, const uint32_t hw_thr, 
-            const VanadisDecoderOptions* isa_opts, const uint16_t dest,
-            const uint16_t src_1, const uint16_t src_2) :
-            VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
-            VanadisSIMTInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0), 
-            VanadisAddInstruction<gpr_format>(addr, hw_thr, isa_opts,dest, src_1, src_2)
-        {
 
-            this->isa_int_regs_in[0]  = src_1;
-            this->isa_int_regs_in[1]  = src_2;
-            this->isa_int_regs_out[0] = dest;
-        }
-
-        VanadisSIMTAddInstruction*    clone() override { return new VanadisSIMTAddInstruction(*this); }
-
-        
-
-};
 
 
 } // namespace Vanadis

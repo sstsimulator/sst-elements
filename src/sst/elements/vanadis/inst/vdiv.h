@@ -118,47 +118,6 @@ public:
 };
 
 
-template<typename gpr_format>
-class VanadisSIMTDivideInstruction : public VanadisSIMTInstruction, public VanadisDivideInstruction<gpr_format>
-{
-public:
-    VanadisSIMTDivideInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
-        const uint16_t src_1, const uint16_t src_2) :
-        VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
-        VanadisSIMTInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
-        VanadisDivideInstruction<gpr_format>(addr, hw_thr, isa_opts, dest, src_1, src_2)
-    {
-
-        // isa_int_regs_in[0]  = src_1;
-        // isa_int_regs_in[1]  = src_2;
-        // isa_int_regs_out[0] = dest;
-    }
-
-    VanadisSIMTDivideInstruction* clone() override { return new VanadisSIMTDivideInstruction(*this); }
-
-    
-    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
-    {
-        if(!trapsError())
-        {
-            uint16_t phys_int_regs_out_0 =getPhysIntRegOut(0, VanadisSIMTInstruction::sw_thread);
-            uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0, VanadisSIMTInstruction::sw_thread);
-            uint16_t phys_int_regs_in_1 = getPhysIntRegIn(1, VanadisSIMTInstruction::sw_thread);
-        
-            this->log(output, 16, VanadisSIMTInstruction::sw_thread, phys_int_regs_out_0,phys_int_regs_in_0,
-                phys_int_regs_in_1);
-            this->instOp(regFile, phys_int_regs_out_0,phys_int_regs_in_0,
-                    phys_int_regs_in_1);
-        }
-        else
-        {
-            output->verbose(CALL_INFO, 16, 0,
-                "hw_thr=%d sw_thr = %d Execute: (addr=%p) DIV traperror found true\n", getHWThread(), VanadisSIMTInstruction::sw_thread, (void*)getInstructionAddress());
-        }
-        
-    }
-};
 
 } // namespace Vanadis
 } // namespace SST

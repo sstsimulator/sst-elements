@@ -71,24 +71,6 @@ protected:
 };
 
 
-template <typename gpr_format>
-class VanadisSIMTSubInstruction : public VanadisSIMTInstruction, public VanadisSubInstruction<gpr_format>
-{
-public:
-    VanadisSIMTSubInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
-        const uint16_t src_1, const uint16_t src_2, bool trapOverflw) :
-        VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
-        VanadisSIMTInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
-        VanadisSubInstruction<gpr_format>(addr, hw_thr, isa_opts, dest, src_1, src_2, trapOverflw)
-    {
-        ;
-    }
-
-    VanadisSIMTSubInstruction*    clone() override { return new VanadisSIMTSubInstruction(*this); }
-
-};
-
 } // namespace Vanadis
 } // namespace SST
 

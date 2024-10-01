@@ -87,38 +87,6 @@ protected:
 
 };
 
-template<bool SetFRM, bool SetFFLAGS>
-class VanadisSIMTFPFlagsSetImmInstruction : public VanadisSIMTInstruction, public VanadisFPFlagsSetImmInstruction<SetFRM, SetFFLAGS>
-{
-public:
-    VanadisSIMTFPFlagsSetImmInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
-        VanadisFloatingPointFlags* fpflags, const uint64_t imm, int mode) :
-        VanadisInstruction(
-            addr, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0),
-        VanadisSIMTInstruction(
-            addr, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0),
-        VanadisFPFlagsSetImmInstruction<SetFRM, SetFFLAGS>(
-            addr, hw_thr, isa_opts, fpflags, imm, mode)
-    {
-        ;
-    }
-
-    VanadisSIMTFPFlagsSetImmInstruction*  clone() override { return new VanadisSIMTFPFlagsSetImmInstruction(*this); }
-
-    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
-    {
-		if(checkFrontOfROB()) {
-			VanadisFPFlagsSetImmInstruction<SetFRM, SetFFLAGS>::log(output, 16, VanadisSIMTInstruction::sw_thread);
-			VanadisFPFlagsSetImmInstruction<SetFRM, SetFFLAGS>::instOp();
-
-		}
-    }
-
-
-};
-
-
 } // namespace Vanadis
 } // namespace SST
 

@@ -60,24 +60,6 @@ public:
     }
 };
 
-
-class VanadisSIMTOrInstruction : public VanadisSIMTInstruction, public VanadisOrInstruction
-{
-public:
-    VanadisSIMTOrInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
-        const uint16_t src_1, const uint16_t src_2) :
-        VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
-        VanadisSIMTInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
-        VanadisOrInstruction(addr, hw_thr, isa_opts, dest, src_1, src_2)
-    {
-        ;
-    }
-
-    virtual VanadisSIMTOrInstruction* clone() { return new VanadisSIMTOrInstruction(*this); }
-
-};
-
 } // namespace Vanadis
 } // namespace SST
 

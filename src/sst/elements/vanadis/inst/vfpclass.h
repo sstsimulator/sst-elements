@@ -145,39 +145,6 @@ public:
     }
 };
 
-template <typename gpr_format, typename fp_format>
-class VanadisSIMTFPClassInstruction : public VanadisSIMTInstruction, public VanadisFPClassInstruction<gpr_format, fp_format>
-{
-public:
-    VanadisSIMTFPClassInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, VanadisFloatingPointFlags* fpflags,
-            const uint16_t int_dest, const uint16_t fp_src ) :
-        VanadisInstruction(
-            addr, hw_thr, isa_opts, 0, 1, 0, 1,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1, 0,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1, 0),
-        VanadisSIMTInstruction(
-            addr, hw_thr, isa_opts, 0, 1, 0, 1,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1, 0,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1, 0),
-        VanadisFPClassInstruction<gpr_format, fp_format>(addr, hw_thr, isa_opts, fpflags, int_dest, fp_src)
-    {
-
-        ;
-    }
-
-    VanadisSIMTFPClassInstruction* clone() override { return new VanadisSIMTFPClassInstruction(*this); }
-
-    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
-    {
-        uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0, VanadisSIMTInstruction::sw_thread);
-        uint16_t phys_fp_regs_in_0 = getPhysFPRegIn(0, VanadisSIMTInstruction::sw_thread);
-        uint16_t phys_fp_regs_in_1 = getPhysFPRegIn(1, VanadisSIMTInstruction::sw_thread);
-        log(output, 16, VanadisSIMTInstruction::sw_thread, phys_int_regs_out_0, phys_fp_regs_in_0, phys_fp_regs_in_1);
-        this->instOp(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1, phys_int_regs_out_0);
-    }
-};
-
 } // namespace Vanadis
 } // namespace SST
 

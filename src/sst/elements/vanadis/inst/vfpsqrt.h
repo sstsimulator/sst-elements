@@ -154,49 +154,6 @@ public:
 };
 
 
-template <typename fp_format>
-class VanadisSIMTFPSquareRootInstruction : public VanadisSIMTInstruction, public VanadisFPSquareRootInstruction<fp_format>
-{
-public:
-    VanadisSIMTFPSquareRootInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
-        VanadisFloatingPointFlags* fpflags, const uint16_t dest, const uint16_t src_1) :
-        VanadisInstruction(
-            addr, hw_thr, isa_opts, 0, 0, 0, 0,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1),
-        VanadisSIMTInstruction(
-            addr, hw_thr, isa_opts, 0, 0, 0, 0,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1),
-        VanadisFPSquareRootInstruction<fp_format>(addr, hw_thr, isa_opts, fpflags, dest, src_1)
-    {
-        ;
-    }
-
-    VanadisSIMTFPSquareRootInstruction* clone() override { return new VanadisSIMTFPSquareRootInstruction(*this); }
-
-    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
-    {
-        uint16_t phys_fp_regs_out_0 = getPhysFPRegOut(0, VanadisSIMTInstruction::sw_thread);
-        uint16_t phys_fp_regs_in_0 = getPhysFPRegIn(0, VanadisSIMTInstruction::sw_thread);
-        uint16_t phys_fp_regs_in_1 = 0;
-        uint16_t phys_fp_regs_out_1 = 0;
-        if ( sizeof(fp_format) > regFile->getFPRegWidth() ) 
-        {
-            phys_fp_regs_in_1 = getPhysFPRegIn(1, VanadisSIMTInstruction::sw_thread);
-            phys_fp_regs_out_1 = getPhysFPRegOut(1, VanadisSIMTInstruction::sw_thread);
-        }
-        VanadisFPSquareRootInstruction<fp_format>::log(output,16, VanadisSIMTInstruction::sw_thread, phys_fp_regs_in_0,phys_fp_regs_out_0);
-        VanadisFPSquareRootInstruction<fp_format>::instOp(regFile, phys_fp_regs_in_0, 
-                        phys_fp_regs_in_1, phys_fp_regs_out_0,phys_fp_regs_out_1);
-    }
-};
-
 } // namespace Vanadis
 } // namespace SST
 

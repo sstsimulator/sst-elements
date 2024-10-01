@@ -45,14 +45,9 @@ public:
         isSIMT(simt)
     {
         // Registers are always 64-bits
-       if (isSIMT) {
-            int_reg_storage = new char[int_reg_width * count_int_regs * WARP_SIZE];
-            fp_reg_storage = new char[fp_reg_width * count_fp_regs * WARP_SIZE];
-        }
-        else {
-            int_reg_storage = new char[int_reg_width * count_int_regs];
-            fp_reg_storage = new char[fp_reg_width * count_fp_regs];
-        }
+       
+        int_reg_storage = new char[int_reg_width * count_int_regs];
+        fp_reg_storage = new char[fp_reg_width * count_fp_regs];
         
         init();
 
@@ -64,21 +59,12 @@ public:
 
         uint64_t tot_size_int = int_reg_width * count_int_regs * WARP_SIZE;
         uint64_t tot_size_fp = fp_reg_width * count_fp_regs * WARP_SIZE;
-        // output->verbose(CALL_INFO, 16, 0, 
-        // "Registers initialized: int_reg_width=%d fp_reg_width=%d count_int_regs=%d count_fp_regs=%d WARP_SIZE=%d total_size(int)=%d, total_size(fp)=%d\n",
-        // int_reg_width, fp_reg_width, count_int_regs, count_fp_regs, WARP_SIZE, tot_size_int, tot_size_fp);
 
     }
 
     void init( ) {
-        if (isSIMT) {
-            std::memset(int_reg_storage, 0, (int_reg_width * WARP_SIZE * count_int_regs));
-            std::memset(fp_reg_storage, 0, (fp_reg_width * WARP_SIZE * count_fp_regs));
-        }
-        else {
-            std::memset(int_reg_storage, 0, (int_reg_width * count_int_regs));
-            std::memset(fp_reg_storage, 0, (fp_reg_width * count_fp_regs));
-        }
+        std::memset(int_reg_storage, 0, (int_reg_width * count_int_regs));
+        std::memset(fp_reg_storage, 0, (fp_reg_width * count_fp_regs));
     }
 
     ~VanadisRegisterFile()
@@ -95,18 +81,6 @@ public:
 
     uint32_t getFPRegWidth() const {
         return fp_reg_width;
-    }
-
-    uint16_t getTID() {
-        return target_tid;
-    }
-
-    void setTID(uint16_t tid) {
-        target_tid = tid;
-    }
-
-    void resetTID(){
-        target_tid = 0; // reset to default setting
     }
 
     void copyFromRegister(uint16_t reg, uint32_t offset, uint8_t* values, uint32_t len, bool is_fp) {
@@ -368,25 +342,13 @@ private:
         int index = 0;
         if(is_fp)
         {
-            if(isSIMT)
-            {
-                index = target_tid * fpRegWidth_per_thread + fp_reg_width * reg;
-            }
-            else
-            {
-                index = fp_reg_width * reg;
-            }
+            index = fp_reg_width * reg;
+
         }
         else
         {
-            if(isSIMT)
-            {
-                index = target_tid * intRegWidth_per_thread + int_reg_width * reg;
-            }
-            else
-            {
-                index = int_reg_width * reg;
-            }
+            index = int_reg_width * reg;
+
         }
         return index;
         
@@ -402,11 +364,10 @@ private:
     VanadisFPRegisterMode fp_reg_mode;
     const uint32_t              fp_reg_width;
     const uint32_t              int_reg_width;
-    uint16_t target_tid;
+
     int fpRegWidth_per_thread;
     int intRegWidth_per_thread;
     SST::Output* output;
-    const bool                   isSIMT;
     uint16_t threadCount;
 
 };

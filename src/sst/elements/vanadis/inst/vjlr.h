@@ -99,39 +99,6 @@ protected:
     int64_t imm;
 };
 
-
-class VanadisSIMTJumpRegLinkInstruction : public VanadisSIMTInstruction, public VanadisJumpRegLinkInstruction
-{
-
-public:
-    VanadisSIMTJumpRegLinkInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint64_t ins_width,
-        const uint16_t returnAddrReg, const uint16_t jumpToAddrReg, const int64_t imm_jump,
-        const VanadisDelaySlotRequirement delayT) :
-        VanadisJumpRegLinkInstruction(addr, hw_thr, isa_opts, ins_width, returnAddrReg,jumpToAddrReg, imm_jump,delayT),
-        VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 1, 1, 1, 1, 0, 0, 0, 0, delayT),
-        VanadisSIMTInstruction(addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0),
-        VanadisInstruction(addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0)
-    {
-
-        this->isa_int_regs_in[0]  = jumpToAddrReg;
-        this->isa_int_regs_out[0] = returnAddrReg;
-    }
-
-    VanadisSIMTJumpRegLinkInstruction* clone() { return new VanadisSIMTJumpRegLinkInstruction(*this); }
-
-    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
-    {
-        uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0, sw_thread);
-        uint16_t phys_int_regs_out_0 =  getPhysIntRegOut(0, sw_thread);;
-        uint64_t link_value = 0;
-        uint64_t jump_to = 0; 
-        
-        this->instOp(regFile, phys_int_regs_out_0, phys_int_regs_in_0, &jump_to, &link_value);
-        this->log(output,16, sw_thread,phys_int_regs_out_0,phys_int_regs_in_0, jump_to, link_value);
-    }
-};
-
 } // namespace Vanadis
 } // namespace SST
 

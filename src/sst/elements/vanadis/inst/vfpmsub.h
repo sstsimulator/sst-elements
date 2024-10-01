@@ -197,59 +197,6 @@ public:
 };
 
 
-template <typename fp_format, bool rs1_is_neg >
-class VanadisSIMTFPFusedMultiplySubInstruction : public VanadisSIMTInstruction, public VanadisFPFusedMultiplySubInstruction<fp_format, rs1_is_neg>
-{
-public:
-    VanadisSIMTFPFusedMultiplySubInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
-        VanadisFloatingPointFlags* fpflags, const uint16_t dest, const uint16_t src_1, const uint16_t src_2, const uint64_t src_3) :
-        VanadisInstruction(
-            addr, hw_thr, isa_opts, 0, 0, 0, 0,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 6 : 3,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 3 : 1,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 6 : 3,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 3 : 1),
-        VanadisSIMTInstruction(
-            addr, hw_thr, isa_opts, 0, 0, 0, 0,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 6 : 3,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 3 : 1,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 6 : 3,
-            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 3 : 1),
-        VanadisFPFusedMultiplySubInstruction<fp_format, rs1_is_neg>(addr, hw_thr, isa_opts, fpflags, dest, src_1, src_2, src_3)
-    {
-        ;
-    }
-
-    VanadisSIMTFPFusedMultiplySubInstruction*  clone() override { return new VanadisSIMTFPFusedMultiplySubInstruction(*this); }
-
-    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
-    {
-        uint16_t phys_fp_regs_out_0 = getPhysFPRegOut(0,VanadisSIMTInstruction::sw_thread);
-        uint16_t phys_fp_regs_out_1 = 0;
-        uint16_t phys_fp_regs_in_0 = getPhysFPRegIn(0,VanadisSIMTInstruction::sw_thread);
-        uint16_t phys_fp_regs_in_1 = getPhysFPRegIn(1,VanadisSIMTInstruction::sw_thread);
-        uint16_t phys_fp_regs_in_2 = getPhysFPRegIn(2,VanadisSIMTInstruction::sw_thread);
-        uint16_t phys_fp_regs_in_3 = 0;
-        uint16_t phys_fp_regs_in_4 = 0;
-        uint16_t phys_fp_regs_in_5 = 0;
-        if ( sizeof(fp_format) > regFile->getFPRegWidth() ) 
-        {
-            phys_fp_regs_in_3 = getPhysFPRegIn(3,VanadisSIMTInstruction::sw_thread);
-            phys_fp_regs_in_4 = getPhysFPRegIn(4,VanadisSIMTInstruction::sw_thread);
-            phys_fp_regs_in_5 = getPhysFPRegIn(5,VanadisSIMTInstruction::sw_thread);
-            phys_fp_regs_out_1 = getPhysFPRegOut(1,VanadisSIMTInstruction::sw_thread);
-        } 
-        VanadisFPFusedMultiplySubInstruction<fp_format, rs1_is_neg>::log(output, 16, VanadisSIMTInstruction::sw_thread,phys_fp_regs_in_0,phys_fp_regs_in_1,phys_fp_regs_in_2,phys_fp_regs_out_0);
-        VanadisFPFusedMultiplySubInstruction<fp_format, rs1_is_neg>::instOp(regFile,phys_fp_regs_in_0, 
-                        phys_fp_regs_in_1, phys_fp_regs_in_2, 
-                        phys_fp_regs_in_3, phys_fp_regs_in_4, 
-                        phys_fp_regs_in_5, phys_fp_regs_out_0, phys_fp_regs_out_1);
-    }
-};
-
-
-
 } // namespace Vanadis
 } // namespace SST
 

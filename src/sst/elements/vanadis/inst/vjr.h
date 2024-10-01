@@ -78,30 +78,6 @@ public:
     }
 };
 
-class VanadisSIMTJumpRegInstruction : public VanadisSIMTInstruction, public VanadisJumpRegInstruction
-{
-    public:
-        VanadisSIMTJumpRegInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint64_t ins_width,
-        const uint16_t jump_to_reg, const VanadisDelaySlotRequirement delayT) :
-        VanadisJumpRegInstruction(addr, hw_thr, isa_opts, ins_width, jump_to_reg, delayT),
-        VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 1, 0, 1, 0, 0, 0, 0, 0, delayT),
-        VanadisInstruction(addr, hw_thr, isa_opts, 1, 0, 1, 0, 0, 0, 0, 0),
-        VanadisSIMTInstruction(addr, hw_thr, isa_opts, 1, 0, 1, 0, 0, 0, 0, 0)
-    {
-        this->isa_int_regs_in[0] = jump_to_reg;
-    }
-
-    VanadisSIMTJumpRegInstruction* clone() { return new VanadisSIMTJumpRegInstruction(*this); }
-
-    virtual void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
-    {
-        // uint32_t sw_thr = VanadisSIMTInstruction::sw_thread;
-        this->instOp(regFile, getPhysIntRegIn(0,sw_thread));
-        this->log(output, 16, VanadisSIMTInstruction::sw_thread, getPhysIntRegIn(0,sw_thread));        
-    }
-};
-
 } // namespace Vanadis
 } // namespace SST
 

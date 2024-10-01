@@ -90,31 +90,6 @@ private:
     uint64_t imm_value;
 };
 
-class VanadisSIMTOrImmInstruction : public VanadisSIMTInstruction, public VanadisOrImmInstruction
-{
-public:
-    VanadisSIMTOrImmInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
-        const uint16_t src_1, const uint64_t immediate) :
-        VanadisInstruction(addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0),
-        VanadisSIMTInstruction(addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0),
-        VanadisOrImmInstruction(addr, hw_thr, isa_opts, dest, src_1, immediate)
-    {
-        ;
-    }
-
-    VanadisSIMTOrImmInstruction* clone() { return new VanadisSIMTOrImmInstruction(*this); }
-
-    virtual void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
-    {
-        
-        uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0, VanadisSIMTInstruction::sw_thread);
-        uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0, VanadisSIMTInstruction::sw_thread);
-        instOp(regFile,phys_int_regs_out_0, phys_int_regs_in_0);
-        log(output, 16, VanadisSIMTInstruction::sw_thread,phys_int_regs_out_0,phys_int_regs_in_0,0);
-    }
-
-};
 
 } // namespace Vanadis
 } // namespace SST

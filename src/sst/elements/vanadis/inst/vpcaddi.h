@@ -95,29 +95,6 @@ private:
 };
 
 
-template <typename gpr_format>
-class VanadisSIMTPCAddImmInstruction : public VanadisSIMTInstruction, public VanadisPCAddImmInstruction<gpr_format>
-{
-public:
-    VanadisSIMTPCAddImmInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
-        const gpr_format immediate) :
-        VanadisInstruction(addr, hw_thr, isa_opts, 0, 1, 0, 1, 0, 0, 0, 0),
-        VanadisSIMTInstruction(addr, hw_thr, isa_opts, 0, 1, 0, 1, 0, 0, 0, 0),
-        VanadisPCAddImmInstruction<gpr_format>(addr, hw_thr, isa_opts, dest, immediate)
-    {
-        ;
-    }
-
-    VanadisSIMTPCAddImmInstruction* clone() override { return new VanadisSIMTPCAddImmInstruction(*this); }
-
-    void simtExecute(SST::Output* output, VanadisRegisterFile* regFile) override
-    {
-        uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0, VanadisSIMTInstruction::sw_thread);
-        VanadisPCAddImmInstruction<gpr_format>::instOp(regFile, phys_int_regs_out_0);
-        VanadisPCAddImmInstruction<gpr_format>::log(output, 16, VanadisSIMTInstruction::sw_thread, phys_int_regs_out_0);
-    }
-};
 } // namespace Vanadis
 } // namespace SST
 
