@@ -48,7 +48,7 @@ public:
     uint64_t getInstructionAddress() const { return ins->getInstructionAddress(); }
 
     uint32_t getSWThr() { return sw_thr; }
-    void setSWThr(uint32_t thr) { sw_thr = thr; } // TODO: Is this neeeded now we have the colesced threads array?
+    void setSWThr(uint32_t thr) { sw_thr = thr; }
     void addThr(uint16_t thr) {sw_thrs.push_back(thr);}
     uint16_t getCoalescedSwThr(int i) 
     {
@@ -226,12 +226,10 @@ class VanadisBasicLoadPendingEntry : public VanadisBasicLoadEntry {
         }
 
         void addRequest(StandardMem::Request::id_t req) {
-            // printf("Load add request req=%d\n", req);
             requests.push_back(req);
         }
 
         void addRequest(StandardMem::Request::id_t req, uint32_t sw_thr) {
-            // printf("SIMT Load add request req=%d sw_thr=%d\n", req, sw_thr);
             requests.push_back(req);
             setSWThr(sw_thr);
         }

@@ -22,7 +22,7 @@
 #include <deque>
 
 #include "inst/vinst.h"
-#include "simt/refactor_support.h"
+
 
 namespace SST {
 namespace Vanadis {
@@ -81,11 +81,6 @@ public:
             if(q_item->readyToExecute()) 
             {
                 VanadisInstruction* inner_ins = q_item->getInstruction();
-
-                // VanadisSIMTInstruction* inner_ins2 = dynamic_cast<VanadisSIMTInstruction*>(inner_ins);
-                output->verbose(CALL_INFO, 16, 0, "FuncUnit: Exe InstCode: %s IP: 0x%" PRI_ADDR " SIMT: %s\n", 
-                                    inner_ins->getInstCode(), inner_ins->getInstructionAddress(), 
-                                    (inner_ins->getIsSIMT()==true)? "True" : "False");
                 inner_ins->execute(output, regFile);
 
                 if(LIKELY(inner_ins->completedExecution())) 

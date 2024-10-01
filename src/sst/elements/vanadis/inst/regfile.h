@@ -23,7 +23,7 @@
 #include <cstring>
 #include <sst/core/output.h>
 #include <sst/core/sst_types.h>
-#include "simt/simt_data_structure.h"
+
 namespace SST {
 namespace Vanadis {
 
@@ -34,7 +34,7 @@ public:
     VanadisRegisterFile(
         const uint32_t thr, const VanadisDecoderOptions* decoder_ots, 
         const uint16_t int_regs, const uint16_t fp_regs,
-        const VanadisFPRegisterMode fp_rmode, SST::Output* logger, bool simt) :
+        const VanadisFPRegisterMode fp_rmode, SST::Output* logger) :
         hw_thread(thr),
         count_int_regs(int_regs),
         count_fp_regs(fp_regs),
@@ -53,9 +53,6 @@ public:
 
         fpRegWidth_per_thread = fp_reg_width * count_fp_regs;
         intRegWidth_per_thread = int_reg_width * count_int_regs;
-
-        uint64_t tot_size_int = int_reg_width * count_int_regs * WARP_SIZE;
-        uint64_t tot_size_fp = fp_reg_width * count_fp_regs * WARP_SIZE;
 
     }
 

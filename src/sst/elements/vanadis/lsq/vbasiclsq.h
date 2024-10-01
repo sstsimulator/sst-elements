@@ -25,9 +25,6 @@
 #include "util/vsignx.h"
 #include "inst/vstorecond.h"
 
-#include "simt/vsimtinst.h"
-#include "simt/thread.h"
-
 #include <cassert>
 #include <cinttypes>
 #include <cstdint>
@@ -564,7 +561,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                                 delete store_entry;
                                 delete ev;
                             } break;
-                            case MEM_TRANSACTION_LOCK: // TODO_Anu: What happens in SIMT?
+                            case MEM_TRANSACTION_LOCK: 
                             {
                                 store_ins->markExecuted();
                                 lsq->stores_pending[thr].erase(lsq->stores_pending[thr].begin());
@@ -1156,9 +1153,8 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
         }
 
         bool load_process(uint32_t sw_thr,VanadisLoadInstruction* load_ins, 
-                        std::vector<uint64_t>& load_address_simt, std::vector<uint16_t>& load_width_simt )
-        {      
-            // registerFiles->at(sw_thr)->setTID(sw_thr); // reference for load instruction when calculating load address;
+                        std::vector<uint64_t>& load_addresses, std::vector<uint16_t>& load_widths )
+        {
             VanadisRegisterFile* hw_thr_reg = registerFiles->at(sw_thr);
             uint64_t load_address = 0;
             uint16_t load_width   = 0;
@@ -1174,8 +1170,8 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                     output->verbose(CALL_INFO, 16, 0, "---> load ins: 0x%" PRI_ADDR " / hw_thr: %" PRIu32 "sw_thr: %" PRIu32 " traps error, will not process and allow pipeline to handle \n",
                         load_ins->getInstructionAddress(), load_ins->getHWThread(), sw_thr);
                     // load_ins->setNumLoads(0);
-                    load_address_simt.clear();
-                    load_width_simt.clear();
+                    load_addresses.clear();
+                    load_widths.clear();
                     return true;
                 }
             }
@@ -1214,8 +1210,8 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                     {
                         output->verbose(CALL_INFO, 16, 0, "---> issue LLSC/LOCK LOAD possible sw_thr=%d\n", sw_thr);
                         // issueLoad(load_ins, load_address, load_width);
-                        load_address_simt.push_back(load_address);
-                        load_width_simt.push_back(load_width);
+                        load_addresses.push_back(load_address);
+                        load_widths.push_back(load_width);
                     }
                 } 
                 else 
@@ -1223,8 +1219,8 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                     // We are good to issue with all checks completed!
                     // issueLoad(load_ins, load_address, load_width);
                     output->verbose(CALL_INFO, 16, 0, "--> issue LOAD possible sw_thr=%d\n", sw_thr);
-                    load_address_simt.push_back(load_address);
-                    load_width_simt.push_back(load_width);
+                    load_addresses.push_back(load_address);
+                    load_widths.push_back(load_width);
                 }
             }
             return true;
@@ -1238,7 +1234,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
             uint64_t store_address = 0;
             uint16_t store_width  = 0;
             *trap_error = 0;
-            output->verbose(CALL_INFO, 16, 0, "_SIMT --> computeStoreAddress for sw_thr: %" PRIu32 "\n",sw_thr);
+            output->verbose(CALL_INFO, 16, 0, "--> computeStoreAddress for sw_thr: %" PRIu32 "\n",sw_thr);
             store_ins->computeStoreAddress(output, hw_thr_reg, &store_address, &store_width);
             if(store_ins->trapsError()) 
             {

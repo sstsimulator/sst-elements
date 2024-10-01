@@ -17,7 +17,6 @@
 #define _H_VANADIS_ADD
 
 #include "inst/vinst.h"
-// #include "inst/execute/vExecuteAddSIMTScalar.h"
 
 namespace SST {
 namespace Vanadis {

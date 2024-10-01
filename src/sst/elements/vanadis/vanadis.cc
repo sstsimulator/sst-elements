@@ -31,7 +31,7 @@ using namespace std;
 
 
 VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params) : Component(id), current_cycle(0),
-    m_curRetireHwThread(0), m_curIssueHwThread(0), m_checkpointing(nullptr), arrived_thread(0)
+    m_curRetireHwThread(0), m_curIssueHwThread(0), m_checkpointing(nullptr)
 {
 
     instPrintBuffer = new char[1024];
@@ -86,8 +86,6 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     output->verbose(CALL_INFO, 2, 0, "-> I-Cache Line Width:       %" PRIu64 " bytes\n", iCacheLineWidth);
 
     hw_threads = params.find<uint32_t>("hardware_threads", 1);
-    num_warps = (hw_threads % WARP_SIZE) ? (hw_threads / WARP_SIZE + 1) : (hw_threads / WARP_SIZE);
-
     if (hw_threads == 0) {
         output->fatal(CALL_INFO, -1, "Incorrect parameter (%s): 'hardware_threads' cannot be 0. Fix parameter in the input file\n", getName().c_str());
     }
@@ -182,8 +180,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
             thread_decoders[i]->getISAName(), thread_decoders[i]->countISAIntReg(),
             thread_decoders[i]->countISAFPReg());
 
-        register_files.push_back(new VanadisRegisterFile(
-            i, thread_decoders[i]->getDecoderOptions(), int_reg_count, fp_reg_count, thr_decoder->getFPRegisterMode(), output, false));
+        register_files.push_back(new VanadisRegisterFile( i, thread_decoders[i]->getDecoderOptions(), int_reg_count, fp_reg_count, thr_decoder->getFPRegisterMode(), output));
         core_regFiles.push_back(register_files[i]);
         output->verbose(
             CALL_INFO, 8, 0, "Reorder buffer set to %" PRIu32 " entries, these are shared by all threads.\n",
@@ -1045,20 +1042,7 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
                 recoverRetiredRegisters(
                     delay_ins, int_register_stack, fp_register_stack, issue_isa_tables[delay_ins->getHWThread()],
                     retire_isa_tables[delay_ins->getHWThread()]);
-                uint16_t delay_thr = delay_ins->getHWThread();
-                
-                if((delay_thr % WARP_SIZE)==1)
-                {
-                    for(uint16_t sw_thr=delay_thr+1; sw_thr<= delay_thr+WARP_SIZE; sw_thr++)
-                    {
-
-                        if(sw_thr>=hw_threads)
-                            break;
-                        output->verbose(CALL_INFO, 16, VANADIS_DBG_RETIRE_FLG, "------> Delay Cleanup recovering retired registers thr: %d.\n", sw_thr);
-                        recoverRetiredRegisters(delay_ins, int_register_stack, fp_register_stack, issue_isa_tables[sw_thr],
-                                retire_isa_tables[sw_thr]);
-                    }
-                }
+                output->verbose(CALL_INFO, 16, VANADIS_DBG_RETIRE_FLG, "------> Delay Cleanup recovering retired registers thr: %d.\n", delay_ins->getHWThread());
 
                 #ifdef VANADIS_BUILD_DEBUG
 				if(output->getVerboseLevel() >= 16) {
@@ -1073,18 +1057,8 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
             #ifdef VANADIS_BUILD_DEBUG
             if ( output->getVerboseLevel() > 0 ) {
                 if(print_retire_tables) {
-                    retire_isa_tables[rob_front->getHWThread()]->print(
-                        output, register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg);
-                    if((rob_front->getHWThread() % WARP_SIZE)==1)
-                    {
-                        for(uint16_t sw_thr=rob_front->getHWThread()+1; sw_thr<= rob_front->getHWThread()+WARP_SIZE; sw_thr++)
-                        {
-                            if(sw_thr>=hw_threads)
-                                break;
-                            output->verbose(CALL_INFO, 16, VANADIS_DBG_RETIRE_FLG, "------> Printing retire_isa_tables thr: %d.\n", sw_thr);
-                            retire_isa_tables[sw_thr]->print(output, register_files[sw_thr], print_int_reg, print_fp_reg, output->getVerboseLevel());
-                        }
-                    }
+                    output->verbose(CALL_INFO, 16, VANADIS_DBG_RETIRE_FLG, "------> Printing retire_isa_tables thr: %d.\n", rob_front->getHWThread());
+                    retire_isa_tables[rob_front->getHWThread()]->print(output, register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg);
                 }
             }
             #endif

@@ -41,9 +41,6 @@
 #include <sst/core/output.h>
 #include <sst/core/params.h>
 
-#include "simt/vsimtinst.h"
-#include "simt/warp.h"
-
 
 namespace SST {
 namespace Vanadis {
@@ -204,9 +201,8 @@ public:
     void recvOSEvent(SST::Event* ev);
 
     void handleMisspeculate(const uint32_t hw_thr, const uint64_t new_ip);
-    void handleMisspeculate_SIMT(const uint64_t new_ip);
     void clearROBMisspeculate(const uint32_t hw_thr);
-    void clearROBMisspeculate_SIMT(const uint32_t warp_id); // TODO: fix warpid
+    
     void clearFuncUnit(const uint32_t hw_thr, std::vector<VanadisFunctionalUnit*>& unit);
 
     void syscallReturn(uint32_t thr);
@@ -216,9 +212,6 @@ public:
     void startThreadClone( VanadisStartThreadCloneReq* req );
     void getThreadState( VanadisGetThreadStateReq* req );
     void dumpRegs( VanadisDumpRegsReq* req );
-
-    // SIMT: Only release simt threads once all threads have been cloned
-    uint32_t arrived_thread;
 
 private:
 #ifdef VANADIS_BUILD_DEBUG
@@ -303,13 +296,7 @@ private:
     std::vector<VanadisCircularQueue<VanadisInstruction*>*> rob;
     std::vector<VanadisCircularQueue<VanadisInstruction*>*> v_warp_rob;
     std::vector<VanadisDecoder*>                            thread_decoders;
-    std::vector<VanadisDecoder*>                            simt_decoders;
     std::vector<const VanadisDecoderOptions*>               isa_options;
-
-    // SIMT structures
-    std::vector<thread_info*> simt_threads;
-    std::vector<warp*> m_warps;
-    uint32_t num_warps;
 
     std::vector<VanadisFunctionalUnit*> fu_int_arith;
     std::vector<VanadisFunctionalUnit*> fu_int_div;
@@ -320,8 +307,6 @@ private:
     std::vector<VanadisRegisterFile*>  register_files;
     VanadisRegisterStack* int_register_stack;
     VanadisRegisterStack* fp_register_stack;
-    VanadisRegisterStack* int_register_stack_simt;
-    VanadisRegisterStack* fp_register_stack_simt;
 
     std::vector<VanadisISATable*> issue_isa_tables;
     std::vector<VanadisISATable*> retire_isa_tables;
@@ -342,7 +327,7 @@ private:
     bool  print_issue_tables;
     bool  print_retire_tables;
     bool  print_rob;
-    bool enable_simt;
+    bool enable_simt; //for future use
 
     char*    instPrintBuffer;
     uint64_t nextInsID;
@@ -386,7 +371,6 @@ private:
     enum { NO_CHECKPOINT, CHECKPOINT_LOAD, CHECKPOINT_SAVE } m_checkpoint;
     void checkpoint(FILE*);
     void checkpointLoad(FILE*);
-    bool simt_warp_start;
 };
 
 } // namespace Vanadis

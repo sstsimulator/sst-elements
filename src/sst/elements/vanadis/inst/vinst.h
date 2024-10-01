@@ -21,13 +21,13 @@
 #include "inst/regstack.h"
 #include "inst/vinsttype.h"
 #include "inst/vregfmt.h"
-// #include "inst/execute/vExecute.h"
+
 #include <cstring>
 #include <map>
 #include <sst/core/output.h>
 #include <string>
 #include <sstream>
-// #include <simt/simt_data_structure.h>
+
 
 
 namespace SST {
@@ -82,7 +82,6 @@ class VanadisInstruction
             enduOpGroup           = false;
             isFrontOfROB          = false;
             hasROBSlot            = false;
-            isSIMT                = false;
             sw_thread = hw_thr;
         }
 
@@ -117,7 +116,6 @@ class VanadisInstruction
             enduOpGroup           = copy_me.enduOpGroup;
             isFrontOfROB          = false;
             hasROBSlot            = false;
-            isSIMT                = copy_me.isSIMT;
             sw_thread             = copy_me.sw_thread;
 
             phys_int_regs_in  = (count_phys_int_reg_in > 0) ? new uint16_t[count_phys_int_reg_in] : nullptr;
@@ -277,26 +275,21 @@ class VanadisInstruction
             index_so_far += snprintf(&buffer[index_so_far], max_buff_size - index_so_far, " }");
         }
 
-        // common 
+        
         uint16_t countPhysIntRegIn() const { return count_phys_int_reg_in; }
         uint16_t countPhysIntRegOut() const { return count_phys_int_reg_out; }
         uint16_t countPhysFPRegIn() const { return count_phys_fp_reg_in; }
         uint16_t countPhysFPRegOut() const { return count_phys_fp_reg_out; }
 
-        // common
-        uint16_t countISAIntRegIn() const { 
-            // // printf("I am in countISAIntRegIn() %d\n", count_isa_int_reg_in);
-            return count_isa_int_reg_in; }
+        
+        uint16_t countISAIntRegIn() const { return count_isa_int_reg_in; }
         uint16_t countISAIntRegOut() const { return count_isa_int_reg_out; }
         uint16_t countISAFPRegIn() const { return count_isa_fp_reg_in; }
         uint16_t countISAFPRegOut() const { return count_isa_fp_reg_out; }
 
         uint16_t getPhysIntRegIn(const uint16_t index) const { return phys_int_regs_in[index]; }
         uint16_t getPhysIntRegOut(const uint16_t index) const { return phys_int_regs_out[index]; }
-        uint16_t getISAIntRegIn(const uint16_t index) const { 
-            // // printf("getISAIntRegIn len(isa_int_regs_in)=%d\n", isa_int_regs_in[index]);
-            return isa_int_regs_in[index]; 
-            }
+        uint16_t getISAIntRegIn(const uint16_t index) const { return isa_int_regs_in[index]; }
         uint16_t getISAIntRegOut(const uint16_t index) const { return isa_int_regs_out[index]; }
 
 
@@ -310,27 +303,17 @@ class VanadisInstruction
         void setPhysFPRegIn(const uint16_t index, const uint16_t reg) { phys_fp_regs_in[index] = reg; }
         void setPhysFPRegOut(const uint16_t index, const uint16_t reg) { phys_fp_regs_out[index] = reg; }
 
-        // different
-       
-        // same
         virtual VanadisInstruction* clone() = 0;
-        // same
+
         void markEndOfMicroOpGroup() { enduOpGroup = true; }
         bool endsMicroOpGroup() const { return enduOpGroup; }
         bool trapsError() const { return trapError; }
 
-        // same
         uint64_t getInstructionAddress() const { return ins_address; }
         uint32_t getHWThread() const { return hw_thread; }
-        
-        // same
+
         void setSWThread(uint32_t thr) { sw_thread=thr;}
         uint32_t getSWThread() {return sw_thread;}
-        // same
-        // virtual const char* getInstCode() const
-        // {
-        //     return "INST";
-        // }
 
         virtual const char* getInstCode() const = 0 ;
         
@@ -354,7 +337,6 @@ class VanadisInstruction
         
         virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile)
         {
-            // printf("VanadisInstruction scalarExecute\n");
             uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
             uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0);
             uint16_t phys_int_regs_in_1 = getPhysIntRegIn(1);
@@ -389,7 +371,6 @@ class VanadisInstruction
                             uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0,
                                     uint16_t phys_int_regs_in_1)
         {
-            // printf("I am in VINST log\n");
             #ifdef VANADIS_BUILD_DEBUG
             if(output->getVerboseLevel() >= verboselevel) {
                 std::string instcode = getInstCode();
@@ -454,12 +435,8 @@ class VanadisInstruction
             }
         }
 
-        virtual bool getIsSIMT() { return false; } 
-
-        // different
         uint16_t getNumStores()
         {
-            // printf("VanadisInstruction getNumStores()\n");
             return 0;
         }
         
@@ -486,28 +463,15 @@ class VanadisInstruction
         bool hasIssued;
         bool enduOpGroup;
         bool isFrontOfROB;
-        bool hasROBSlot;
-
-        bool isSIMT;
-        
+        bool hasROBSlot;        
 
         const VanadisDecoderOptions* isa_options;
-        // std::vector<VanadisRegisterFile*>* registerFiles;
-
         uint32_t sw_thread;
-        // std::vector<uint64_t> addresses_ldst;
-
-        // std::vector<std::vector<uint16_t>> phys_int_regs_in_simt;
-        // std::vector<std::vector<uint16_t>> phys_int_regs_out_simt;
-        // std::vector<std::vector<uint16_t>> phys_fp_regs_out_simt;
-        // std::vector<std::vector<uint16_t>> phys_fp_regs_in_simt;
-
         uint16_t* isa_int_regs_in;
         uint16_t* isa_int_regs_out;
         uint16_t* isa_fp_regs_in;
         uint16_t* isa_fp_regs_out;
 
-        // different
         uint16_t* phys_int_regs_in;
         uint16_t* phys_int_regs_out;
         uint16_t* phys_fp_regs_in;

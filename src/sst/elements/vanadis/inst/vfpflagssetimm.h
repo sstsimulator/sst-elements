@@ -25,7 +25,7 @@
 namespace SST {
 namespace Vanadis {
 
-// What to do for SIMT version?
+
 template<bool SetFRM, bool SetFFLAGS>
 class VanadisFPFlagsSetImmInstruction : public VanadisFloatingPointInstruction
 {
