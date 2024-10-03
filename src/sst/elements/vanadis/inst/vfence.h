@@ -23,7 +23,7 @@ namespace Vanadis {
 
 enum VanadisFenceType { VANADIS_LOAD_FENCE, VANADIS_STORE_FENCE, VANADIS_LOAD_STORE_FENCE };
 
-class VanadisFenceInstruction : public VanadisInstruction
+class VanadisFenceInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisFenceInstruction(
@@ -34,7 +34,7 @@ public:
         fence = fenceT;
     }
 
-    virtual VanadisFenceInstruction* clone() { return new VanadisFenceInstruction(*this); }
+    VanadisFenceInstruction* clone() { return new VanadisFenceInstruction(*this); }
 
     bool createsLoadFence() const { return (fence == VANADIS_LOAD_FENCE) || (fence == VANADIS_LOAD_STORE_FENCE); }
 
@@ -56,6 +56,8 @@ public:
 protected:
     VanadisFenceType fence;
 };
+
+
 
 } // namespace Vanadis
 } // namespace SST

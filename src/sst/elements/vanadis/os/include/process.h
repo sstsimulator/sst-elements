@@ -205,9 +205,9 @@ class ProcessInfo {
             output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s %s\n",key.c_str(),value.c_str());
             m_params.insert(key.substr(pos1).c_str(),value.substr(pos2).c_str());
         }
-#if 0
+    #if 0
         m_params.print_all_params( std::cout );
-#endif
+    #endif
     }
 
     ~ProcessInfo() {
@@ -249,7 +249,7 @@ class ProcessInfo {
         m_virtMemMap->checkpoint(fp);
         m_fileTable->checkpoint(fp);
 
-#if 0
+        #if 0
         fprintf(fp,"#ThreadGrp start\n");
 
         auto tmp = m_threadGrp->getThreadList(); 
@@ -259,7 +259,7 @@ class ProcessInfo {
             fprintf(fp,"tid: %d\n", x.first );
         }
         fprintf(fp,"#ThreadGrp end\n");
-#endif
+        #endif
 
         assert( m_futex->isEmpty() );
         
@@ -316,37 +316,42 @@ class ProcessInfo {
 
 
     void addFutexWait( uint64_t addr, VanadisSyscall* syscall ) {
-        m_dbg.verbose(CALL_INFO,1,0,"addr=%#" PRIx64 "\n",addr);
+        m_dbg.verbose(CALL_INFO,0,0,"addr=%#" PRIx64 "\n",addr);
         m_futex->addWait( addr, syscall );
     }
 
     VanadisSyscall* findFutex( uint64_t addr ) {
-        m_dbg.verbose(CALL_INFO,1,0,"addr=%#" PRIx64 "\n",addr);
+        m_dbg.verbose(CALL_INFO,0,0,"addr=%#" PRIx64 "\n",addr);
+        // printf("findFutex call addr=%#" PRIx64 "\n",addr);
         return m_futex->findWait( addr );
     }
 
     int futexGetNumWaiters( uint64_t addr ) {
-        m_dbg.verbose(CALL_INFO,1,0,"addr=%#" PRIx64 "\n",addr);
+        m_dbg.verbose(CALL_INFO,0,0,"addr=%#" PRIx64 "\n",addr);
         return m_futex->getNumWaiters( addr );
     }
 
     void mapVirtToPage( unsigned vpn, OS::Page* page ) {
-        m_dbg.verbose(CALL_INFO,1,0,"vpn=%d ppn=%d virtAddr=%#" PRIx64 "\n", vpn, page->getPPN(), (uint64_t) vpn << m_pageShift );
+        m_dbg.verbose(CALL_INFO,1,VANADIS_OS_DBG_VIRT2PHYS,"vpn=%d ppn=%d virtAddr=%#" PRIx64 "\n", vpn, page->getPPN(), (uint64_t) vpn << m_pageShift );
         auto region = findMemRegion( vpn << m_pageShift );
         assert( region );
         region->mapVirtToPhys( vpn, page );
     }
 
     uint64_t virtToPhys( uint64_t virtAddr) {
+
         uint32_t vpn = virtAddr >> m_pageShift;
 
         auto region = findMemRegion(virtAddr);
+
         if ( nullptr == region ) {
             m_dbg.fatal(CALL_INFO, -1, "Error: can't find memory region for addr %#" PRIx64 "\n", virtAddr);
         }
-        
+
         uint32_t ppn = m_mmu->virtToPhys( getpid(), vpn );
+
         if ( -1 == ppn ) {
+
             return -1;
         }
         uint64_t physAddr = ppn << m_pageShift | virtAddr & ( (1<<m_pageShift) - 1 );
@@ -486,6 +491,7 @@ class ProcessInfo {
     FileDescriptorTable*    m_fileTable;
     ThreadGrp*              m_threadGrp;
     Futex*                  m_futex;
+    SST::Output* m_output;
 };
 
 }

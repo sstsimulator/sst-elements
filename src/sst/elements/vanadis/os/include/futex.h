@@ -36,7 +36,7 @@ namespace OS {
 class Futex {
 public:
     void addWait( uint64_t addr, VanadisSyscall* syscall ) {
-        OSFutexDbg("Futex::%s() addr=%#" PRIx64 " syscall=%p\n", addr,syscall );
+        // OSFutexDbg("Futex::%s() addr=%#" PRIx64 " syscall=%p\n", addr,syscall );
 
         auto& tmp = m_futexMap[addr]; 
 
@@ -45,27 +45,33 @@ public:
         }
 
         tmp.push_back( syscall );
-        OSFutexDbg("Futex::%s() %p %zu\n",this,tmp.size());
+        // OSFutexDbg("Futex::%s() %p %zu\n",this,tmp.size());
     }
 
-    size_t getNumWaiters( uint64_t addr ) {
-        OSFutexDbg("Futex::%s() addr=%#" PRIx64 "\n", addr );
-        if ( m_futexMap.find( addr ) == m_futexMap.end() ) {
+    size_t getNumWaiters( uint64_t addr ) 
+    {
+        printf("OS::Futex getNumWaiters find addr (map is empty? %d) addr=%#" PRIx64 " \n",isEmpty(), addr);
+        // OSFutexDbg("Futex::%s() addr=%#" PRIx64 "\n", addr );
+        if ( m_futexMap.find( addr ) == m_futexMap.end() ) 
+        {
+            printf("OS::Futex getNumWaiters waiters not found, returning 0\n");
             return 0;
         }
+        printf("OS::Futex getNumWaiters waiters found\n");
         auto& tmp = m_futexMap[addr]; 
-        OSFutexDbg("Futex::%s() %p %zu\n",this,tmp.size());
+        // OSFutexDbg("Futex::%s() %p %zu\n",this,tmp.size());
+        printf("OS::Futex futexmap[%d].size()= %zu\n",addr,tmp.size());
         return tmp.size();
     }
     VanadisSyscall* findWait( uint64_t addr ) {
-        OSFutexDbg("Futex::%s() addr=%#" PRIx64 "\n", addr );
+        // OSFutexDbg("Futex::%s() addr=%#" PRIx64 "\n", addr );
         if (  m_futexMap.find( addr ) == m_futexMap.end() ) {
             return nullptr;
         }
         
         auto& tmp = m_futexMap[addr]; 
 
-        OSFutexDbg("Futex::%s() %p %zu\n",this,tmp.size());
+        // OSFutexDbg("Futex::%s() %p %zu\n",this,tmp.size());
         assert( ! tmp.empty() );
 
         auto syscall = tmp.front();
@@ -74,7 +80,7 @@ public:
         if ( tmp.empty() ) {
             m_futexMap.erase( addr );
         }
-        OSFutexDbg("Futex::%s() found addr=%#" PRIx64 " syscall=%p\n", addr,syscall );
+        // OSFutexDbg("Futex::%s() found addr=%#" PRIx64 " syscall=%p\n", addr,syscall );
         return syscall;
     }
     bool isEmpty() { return m_futexMap.empty(); } 

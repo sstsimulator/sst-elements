@@ -22,7 +22,7 @@ namespace SST {
 namespace Vanadis {
 
 template <typename gpr_format>
-class VanadisSubInstruction : public VanadisInstruction
+class VanadisSubInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisSubInstruction(
@@ -47,6 +47,15 @@ public:
         }
     }
 
+    void instOp(VanadisRegisterFile* regFile, 
+        uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0, 
+        uint16_t phys_int_regs_in_1) override
+    {
+        const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in_0);
+        const gpr_format src_2 = regFile->getIntReg<gpr_format>(phys_int_regs_in_1);
+        result = src_1 - src_2;
+        regFile->setIntReg<gpr_format>(phys_int_regs_out_0, result);
+    }
     void printToBuffer(char* buffer, size_t buffer_size) override
     {
         snprintf(
@@ -56,28 +65,11 @@ public:
             phys_int_regs_in[0], phys_int_regs_in[1]);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
-    {
-#ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: (addr=%p) %s phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
-            " / in=%" PRIu16 ", %" PRIu16 "\n",
-            (void*)getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0],
-            phys_int_regs_in[1], isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);
-#endif
-        const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in[0]);
-        const gpr_format src_2 = regFile->getIntReg<gpr_format>(phys_int_regs_in[1]);
-
-        const gpr_format result = src_1 - src_2;
-        regFile->setIntReg<gpr_format>(phys_int_regs_out[0], result);
-
-        markExecuted();
-    }
-
 protected:
     const bool trapOverflow;
+    gpr_format result;
 };
+
 
 } // namespace Vanadis
 } // namespace SST

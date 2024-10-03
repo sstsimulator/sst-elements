@@ -590,10 +590,11 @@ VanadisNodeOSComponent::handleIncomingSyscall(SST::Event* ev) {
     VanadisSyscallEvent* sys_ev = dynamic_cast<VanadisSyscallEvent*>(ev);
 
     if (nullptr == sys_ev) {
-        
+        output->verbose(CALL_INFO, 16, 0,"Syscall event conversion failed\n");
         VanadisCoreEvent* event = dynamic_cast<VanadisCoreEvent*>(ev);
 
         if ( nullptr != event ) { 
+            output->verbose(CALL_INFO, 16, 0,"Non-Syscall event handle\n");
             auto syscall = getSyscall( event->getCore(), event->getThread() );
             syscall->handleEvent( event );
             processSyscallPost( syscall );
@@ -637,11 +638,12 @@ VanadisNodeOSComponent::handleIncomingSyscall(SST::Event* ev) {
     } else {
 	    auto process = m_coreInfoMap.at(sys_ev->getCoreID()).getProcess( sys_ev->getThreadID() );
 	    if ( process ) {
+            output->verbose(CALL_INFO, 16, 0,"calling syscall handler for core %d, hwthread %d\n", sys_ev->getCoreID(), sys_ev->getThreadID() );
 		    auto syscall = handleIncomingSyscall( process, sys_ev, core_links[ sys_ev->getCoreID() ] );
 
 		    processSyscallPost( syscall );
 	    } else {
-		    printf("no active process for core %d, hwthread %d\n", sys_ev->getCoreID(), sys_ev->getThreadID() );
+		    output->verbose(CALL_INFO, 16, 0,"no active process for core %d, hwthread %d\n", sys_ev->getCoreID(), sys_ev->getThreadID() );
 		    delete ev;
 	    }
     } 
@@ -651,18 +653,18 @@ void VanadisNodeOSComponent::processSyscallPost( VanadisSyscall* syscall ) {
 
     auto core = syscall->getCoreId();
     auto hwThread = syscall->getThreadId();
-    output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"syscall '%s' for core %d\n",syscall->getName().c_str(),core);
+    output->verbose(CALL_INFO, 16, 0,"syscall '%s' for core %d\n",syscall->getName().c_str(),core);
 
     if ( syscall->isComplete() ) {
-        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,"syscall '%s' for core %d has finished\n",syscall->getName().c_str(),core);
+        output->verbose(CALL_INFO, 16, 0,"syscall '%s' for core %d has finished\n",syscall->getName().c_str(),core);
         delete syscall;
 
     } else {
-        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"syscall '%s' for core %d get memory reqeust\n",syscall->getName().c_str(),core);
+        output->verbose(CALL_INFO, 16, 0,"syscall '%s' for core %d get memory reqeust\n",syscall->getName().c_str(),core);
         auto ev = syscall->getMemoryRequest();
 
         if ( ev ) {
-            output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"syscall '%s' for core %d has a memory request\n",syscall->getName().c_str(),core);
+            output->verbose(CALL_INFO, 16, 0,"syscall '%s' for core %d has a memory request\n",syscall->getName().c_str(),core);
             sendMemoryEvent(syscall, ev );
         } else if ( syscall->causedPageFault() ) {
             uint64_t virtAddr;
@@ -670,7 +672,7 @@ void VanadisNodeOSComponent::processSyscallPost( VanadisSyscall* syscall ) {
             std::tie( virtAddr, isWrite) = syscall->getPageFault();
             processOsPageFault( syscall, virtAddr, isWrite );
         } else {
-            output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"syscall '%s' for core %d is blocked\n",syscall->getName().c_str(),core);
+            output->verbose(CALL_INFO, 16, 0,"syscall '%s' for core %d is blocked\n",syscall->getName().c_str(),core);
         }
     }
 }

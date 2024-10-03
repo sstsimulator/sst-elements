@@ -24,7 +24,7 @@ namespace Vanadis {
 
 enum VanadisStoreRegisterType { STORE_INT_REGISTER, STORE_FP_REGISTER };
 
-class VanadisStoreInstruction : public VanadisInstruction
+class VanadisStoreInstruction : public virtual VanadisInstruction
 {
 
 public:
@@ -67,17 +67,18 @@ public:
             if ( MEM_TRANSACTION_LLSC_STORE == accessT ) { isa_fp_regs_out[0] = valueReg; }
         } break;
         }
+        
     }
 
     VanadisStoreInstruction* clone() { return new VanadisStoreInstruction(*this); }
 
     virtual bool isPartialStore() { return false; }
 
-    virtual VanadisMemoryTransaction getTransactionType() const { return memAccessType; }
+    VanadisMemoryTransaction getTransactionType() const  { return memAccessType; }
 
     virtual VanadisFunctionalUnitType getInstFuncType() const { return INST_STORE; }
 
-    virtual const char* getInstCode() const
+    virtual const char* getInstCode() const override
     {
         switch ( memAccessType ) {
         case MEM_TRANSACTION_LLSC_STORE:
@@ -97,11 +98,11 @@ public:
             }
         }
         }
-
+        
         return "STOREUNK";
     }
 
-    virtual void printToBuffer(char* buffer, size_t buffer_size)
+    virtual void printToBuffer(char* buffer, size_t buffer_size) override
     {
         switch ( regType ) {
         case STORE_INT_REGISTER:
@@ -125,15 +126,18 @@ public:
         }
     }
 
-    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile)
+    virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
         if ( memAccessType != MEM_TRANSACTION_LLSC_STORE ) { markExecuted(); }
     }
 
-    virtual void
-    computeStoreAddress(SST::Output* output, VanadisRegisterFile* reg, uint64_t* store_addr, uint16_t* op_width)
+    virtual void computeStoreAddress(SST::Output* output, VanadisRegisterFile* reg, uint64_t* store_addr, uint16_t* op_width)
     {
-        const int64_t reg_tmp = reg->getIntReg<int64_t>(phys_int_regs_in[0]);
+        int64_t reg_tmp;
+        uint16_t target_tid = 0;
+
+       
+        reg_tmp = reg->getIntReg<int64_t>(phys_int_regs_in[0]);
 
         (*store_addr) = (uint64_t)(reg_tmp + offset);
         (*op_width)   = store_width;
@@ -157,7 +161,7 @@ public:
                 getInstructionAddress(), phys_int_regs_in[0], phys_fp_regs_in[0], offset, store_width, (*store_addr),
                 (*store_addr));
         } break;
-        }
+        }        
     }
 
     uint16_t getStoreWidth() const { return store_width; }
@@ -176,6 +180,13 @@ public:
         assert(0); // stop compiler "warning: control reaches end of non-void function [-Wreturn-type]"
     }
 
+    virtual void markExecuted() 
+    { 
+        // printf("Store ins Scalar:(addr=0x%" PRI_ADDR ") markExecuted()\n", getInstructionAddress());
+        hasExecuted = true;
+    }
+
+    
     VanadisStoreRegisterType getValueRegisterType() const { return regType; }
 
 protected:

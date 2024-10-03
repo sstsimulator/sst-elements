@@ -23,7 +23,7 @@ namespace SST {
 namespace Vanadis {
 
 template <VanadisRegisterFormat register_format>
-class VanadisShiftRightLogicalInstruction : public VanadisInstruction
+class VanadisShiftRightLogicalInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisShiftRightLogicalInstruction(
@@ -50,41 +50,32 @@ public:
             phys_int_regs_in[1]);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void instOp(VanadisRegisterFile* regFile, 
+                            uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0, 
+                            uint16_t phys_int_regs_in_1) override
     {
-#ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: (addr=%p) SRL phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
-            " / in=%" PRIu16 ", %" PRIu16 "\n",
-            (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1],
-            isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);
-#endif
         switch ( register_format ) {
         case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
         {
-            const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
-            const uint64_t src_2 = regFile->getIntReg<uint64_t>(phys_int_regs_in[1]);
+            const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in_0);
+            const uint64_t src_2 = regFile->getIntReg<uint64_t>(phys_int_regs_in_1);
 
             if ( 0 == src_2 ) {
-                const uint32_t src_1_32 = regFile->getIntReg<uint32_t>(phys_int_regs_in[0]);
-                regFile->setIntReg<uint32_t>(phys_int_regs_out[0], src_1_32);
+                const uint32_t src_1_32 = regFile->getIntReg<uint32_t>(phys_int_regs_in_0);
+                regFile->setIntReg<uint32_t>(phys_int_regs_out_0, src_1_32);
             }
             else {
-                regFile->setIntReg<uint64_t>(phys_int_regs_out[0], src_1 >> src_2);
+                regFile->setIntReg<uint64_t>(phys_int_regs_out_0, src_1 >> src_2);
             }
         } break;
         case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
         {
-            const uint32_t src_1 = regFile->getIntReg<uint32_t>(phys_int_regs_in[0]);
-            const uint32_t src_2 = regFile->getIntReg<uint32_t>(phys_int_regs_in[1]) & 0x1F;
-            //                                const uint32_t src_2 =
-            //                                regFile->getIntReg<uint32_t>(
-            //                                phys_int_regs_in[1] );
+            const uint32_t src_1 = regFile->getIntReg<uint32_t>(phys_int_regs_in_0);
+            const uint32_t src_2 = regFile->getIntReg<uint32_t>(phys_int_regs_in_1) & 0x1F;
 
-            if ( 0 == src_2 ) { regFile->setIntReg<uint32_t>(phys_int_regs_out[0], src_1); }
+            if ( 0 == src_2 ) { regFile->setIntReg<uint32_t>(phys_int_regs_out_0, src_1); }
             else {
-                regFile->setIntReg<uint32_t>(phys_int_regs_out[0], src_1 >> src_2);
+                regFile->setIntReg<uint32_t>(phys_int_regs_out_0, src_1 >> src_2);
             }
         } break;
         default:
@@ -92,8 +83,6 @@ public:
             flagError();
         } break;
         }
-
-        markExecuted();
     }
 };
 

@@ -65,9 +65,9 @@ public:
             isa_int_regs_in[1], phys_int_regs_out[0], phys_int_regs_out[1], phys_int_regs_in[0], phys_int_regs_in[1]);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
-#ifdef VANADIS_BUILD_DEBUG
+        #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16) {
             output->verbose(
                 CALL_INFO, 16, 0,
@@ -77,7 +77,7 @@ public:
                 isa_int_regs_in[0], isa_int_regs_in[1], phys_int_regs_out[0], phys_int_regs_out[1], phys_int_regs_in[0],
                 phys_int_regs_in[1]);
         }
-#endif
+        #endif
 
 		const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in[0]);
 		const gpr_format src_2 = regFile->getIntReg<gpr_format>(phys_int_regs_in[1]);
