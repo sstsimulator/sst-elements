@@ -22,7 +22,7 @@ namespace SST {
 namespace Vanadis {
 
 template <typename register_format>
-class VanadisAddImmUnsignedInstruction : public VanadisInstruction
+class VanadisAddImmUnsignedInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisAddImmUnsignedInstruction(
@@ -56,32 +56,39 @@ public:
             isa_int_regs_out[0], isa_int_regs_in[0], imm_value, phys_int_regs_out[0], phys_int_regs_in[0], imm_value);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void instOp(VanadisRegisterFile* regFile,uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0)
     {
-#ifdef VANADIS_BUILD_DEBUG
-        if(output->getVerboseLevel() >= 16) {
-            output->verbose(
-                CALL_INFO, 16, 0,
-                "Execute: (addr=%p) ADDIU phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16
-                " / in=%" PRIu16 "\n",
-                (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value, isa_int_regs_out[0],
-                isa_int_regs_in[0]);
-        }
-#endif
+        const register_format src_1 = regFile->getIntReg<register_format>(phys_int_regs_in_0);
+        result = src_1 + imm_value;
+        regFile->setIntReg<register_format>(phys_int_regs_out_0, result, false);
+    }
 
-        if( std::is_same<register_format, uint64_t>::value || std::is_same<register_format, uint32_t>::value ) {
-            const register_format src_1 = regFile->getIntReg<register_format>(phys_int_regs_in[0]);
-            regFile->setIntReg<register_format>(phys_int_regs_out[0], src_1 + imm_value, false);
-        } else {
+
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+        if( std::is_same<register_format, uint64_t>::value || std::is_same<register_format, uint32_t>::value ) 
+        {
+            uint16_t phys_int_regs_out_0 = phys_int_regs_out[0];
+            uint16_t phys_int_regs_in_0 = phys_int_regs_in[0];
+            instOp(regFile,phys_int_regs_out_0,phys_int_regs_in_0);
+            log(output, 16, 65535, phys_int_regs_out_0,phys_int_regs_in_0,0);
+        } 
+        else 
+        {
             flagError();
+            output->verbose(CALL_INFO, 16, 0, "hw_thr=%d sw_thr = %d Execute: (addr=%p) ADDIU setting traperror = true\n", getHWThread(), 65535, (void*)getInstructionAddress());
         }
-
         markExecuted();
     }
+
+protected:
+    register_format result;
 
 private:
     const register_format imm_value;
 };
+
+
 
 } // namespace Vanadis
 } // namespace SST

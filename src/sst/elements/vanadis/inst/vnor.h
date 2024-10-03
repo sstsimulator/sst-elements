@@ -49,25 +49,14 @@ public:
             isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1], phys_int_regs_out[0], phys_int_regs_in[0],
             phys_int_regs_in[1]);
     }
-
-    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile)
+    virtual void instOp(VanadisRegisterFile* regFile, 
+                            uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0, 
+                            uint16_t phys_int_regs_in_1) override
     {
-#ifdef VANADIS_BUILD_DEBUG
-        if(output->getVerboseLevel() >= 16) {
-            output->verbose(
-                CALL_INFO, 16, 0,
-                "Execute: (addr=%p) NOR phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
-                " / in=%" PRIu16 ", %" PRIu16 "\n",
-                (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1],
-                isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);
-        }
-#endif
-        uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
-        uint64_t src_2 = regFile->getIntReg<uint64_t>(phys_int_regs_in[1]);
+        uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in_0);
+        uint64_t src_2 = regFile->getIntReg<uint64_t>(phys_int_regs_in_1);
 
-        regFile->setIntReg<uint64_t>(phys_int_regs_out[0], ~((src_1) | (src_2)));
-
-        markExecuted();
+        regFile->setIntReg<uint64_t>(phys_int_regs_out_0, ~((src_1) | (src_2)));
     }
 };
 
