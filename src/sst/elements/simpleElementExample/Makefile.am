@@ -39,6 +39,7 @@ endif
 EXTRA_DIST = \
     README \
     tests/testsuite_default_simpleComponents.py \
+	tests/basicCheckpoint.py \
     tests/basicClocks.py \
     tests/basicParams.py \
     tests/basicStatistics1.py \
