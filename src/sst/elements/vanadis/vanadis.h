@@ -252,7 +252,6 @@ private:
     int  allocateFunctionalUnit(VanadisInstruction* ins);
     bool mapInstructiontoFunctionalUnit(VanadisInstruction* ins, std::vector<VanadisFunctionalUnit*>& functional_units);
     void printRob(int rob_num, VanadisCircularQueue<VanadisInstruction*>* rob);
-    // bool judgeIns(VanadisInstruction* ins);
     
     bool checkVerboseAddr( uint64_t addr ) {
         for ( auto& it : start_verbose_when_issue_address ) {

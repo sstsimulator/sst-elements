@@ -64,10 +64,8 @@ class VanadisAddInstruction : public virtual VanadisInstruction
         uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0, 
         uint16_t phys_int_regs_in_1)
         {
-            // printf("I am in ADD scalarins scalarExecute\n");
             const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in_0);
             const gpr_format src_2 = regFile->getIntReg<gpr_format>(phys_int_regs_in_1);
-            // add(src_1, src_2);
             regFile->setIntReg<gpr_format>(phys_int_regs_out_0,src_1+src_2);
         }
 

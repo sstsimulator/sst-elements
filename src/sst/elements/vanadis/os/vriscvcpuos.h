@@ -317,9 +317,9 @@ public:
 
 
     void recvSyscallResp( VanadisSyscallResponse* os_resp ) {
-        output->verbose(CALL_INFO, 0, 0, "return-code: %" PRId64 " (success: %3s)\n",
+        output->verbose(CALL_INFO, 8, 0, "return-code: %" PRId64 " (success: %3s)\n",
                             os_resp->getReturnCode(), os_resp->isSuccessful() ? "yes" : "no");
-        output->verbose(CALL_INFO, 0, 0, "issuing call-backs to clear syscall ROB stops...\n");
+        output->verbose(CALL_INFO, 8, 0, "issuing call-backs to clear syscall ROB stops...\n");
 
         // Set up the return code (according to ABI, this goes in r10)
         const uint16_t rc_reg = isaTable->getIntPhysReg( VANADIS_SYSCALL_RISCV_RET_REG );

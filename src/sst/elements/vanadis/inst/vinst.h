@@ -32,7 +32,6 @@
 
 namespace SST {
 namespace Vanadis {
-static std::vector<VanadisRegisterFile*> core_regFiles;
 class VanadisInstruction
 {
     public:
@@ -326,13 +325,13 @@ class VanadisInstruction
                             uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0, 
                             uint16_t phys_int_regs_in_1)
         {
-            printf("VanadisInstruction instOp virtual function\n");
+            ;
         }
 
         virtual void instOp(VanadisRegisterFile* regFile, 
                                 uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0)
         {
-             printf("VanadisInstruction instOp virtual function: immediate version\n");
+            ;
         }
         
         virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile)

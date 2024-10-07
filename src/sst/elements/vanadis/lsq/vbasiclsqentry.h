@@ -54,7 +54,6 @@ public:
     {
         if(i>=sw_thrs.size())
         {
-            // printf("VanadisBasicLoadStoreEntry getCoalescedSwThr index error\n");
             return 0;
         }
         return sw_thrs[i];
@@ -256,7 +255,6 @@ class VanadisBasicLoadPendingEntry : public VanadisBasicLoadEntry {
                     return;
                 }
             }
-            // printf("load_entry RemoveRequest: request not found\n");
         }
 
         uint64_t getLoadAddress() const {

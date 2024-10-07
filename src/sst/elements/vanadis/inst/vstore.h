@@ -182,7 +182,6 @@ public:
 
     virtual void markExecuted() 
     { 
-        // printf("Store ins Scalar:(addr=0x%" PRI_ADDR ") markExecuted()\n", getInstructionAddress());
         hasExecuted = true;
     }
 
