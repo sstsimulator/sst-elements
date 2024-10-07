@@ -1,4 +1,4 @@
-// Copyright 2009-2023 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -32,8 +32,7 @@ class VanadisRegisterFile
 
 public:
     VanadisRegisterFile(
-        const uint32_t thr, const VanadisDecoderOptions* decoder_ots, 
-        const uint16_t int_regs, const uint16_t fp_regs,
+        const uint32_t thr, const VanadisDecoderOptions* decoder_ots, const uint16_t int_regs, const uint16_t fp_regs, 
         const VanadisFPRegisterMode fp_rmode, SST::Output* logger) :
         hw_thread(thr),
         count_int_regs(int_regs),
@@ -41,7 +40,7 @@ public:
         decoder_opts(decoder_ots),
         fp_reg_mode(fp_rmode),
 		int_reg_width(8),
-		fp_reg_width( (fp_rmode == VANADIS_REGISTER_MODE_FP32) ? 4 : 8)
+		fp_reg_width( (fp_rmode == VANADIS_REGISTER_MODE_FP32) ? 4 : 8 )
     {
         // Registers are always 64-bits
        
@@ -155,8 +154,6 @@ public:
     template <typename T>
     T getFPReg(const uint16_t reg)
     {
-        output->verbose(CALL_INFO, 16, 0, "getFPReg: reg=%d tid=%d, fpregwidth=%d \n",
-            reg, hw_thread, fp_reg_width);
         assert(reg < count_fp_regs);
         assert(sizeof(T) <= fp_reg_width);
 
