@@ -42,7 +42,8 @@ public:
     	)
 
 	SST_ELI_DOCUMENT_PARAMS(
-        	{   "arg.tracePrefix",       "Sets the location of the trace",  "" }
+        	{   "arg.tracePrefix",       "Sets the location of the trace" },
+        	{   "arg.addCompute",        "Add compute time to try to match trace timestamps",  "false" }
 	)
 
 	SST_ELI_DOCUMENT_STATISTICS(
@@ -69,9 +70,20 @@ public:
 	        { "time-Commcreate", "Time spent in Commcreate event", "ns", 0},
     	)
 
-	void setCurrentTime( const OTF2_TimeStamp t ) {
+	void setTimerResolution(uint64_t timerResolution) {
+		m_timerResolution = timerResolution;
+	}
+
+	uint64_t getTimerResolution() {
+		return m_timerResolution;
+	}
+
+	void setCurrentTime( const OTF2_TimeStamp t, bool addCompute ) {
 		verbose( CALL_INFO, 4, 0, "Setting current timestamp to %" PRIu64 "\n", t );
 
+		if (addCompute && m_addCompute) {
+			compute(*eventQ, (t-currentTime)*1e9/m_timerResolution);
+		}
 		currentTime = t;
 	}
 
@@ -82,17 +94,33 @@ public:
 	std::queue<EmberEvent*>* getEventQueue() {
 		return eventQ;
 	}
-    
+
+	int getSize() {
+		return m_size;
+	}
+
+	void set_inMPI(bool m) {
+		m_inMPI = m;
+	}
+
+	bool get_inMPI() {
+		return m_inMPI;
+	}
+
+    void compute(Queue& q, uint64_t time);
     void send(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group); 
     void isend(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group, MessageRequest* req);
     void recv(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID src, uint32_t tag, Communicator group, MessageResponse* resp );
-    // void irecv(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID src, uint32_t tag, Communicator group,MessageResponse* resp );
+    void irecv(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID src, uint32_t tag, Communicator group,MessageRequest* req );
     void wait(Queue& q, MessageRequest* req, MessageResponse* resp);
     void barrier(Queue& q, Communicator comm);
     void bcast(Queue& q, const Hermes::MemAddr& mydata, uint32_t count, PayloadDataType dtype, int root, Communicator group);
     void allreduce( Queue& q, const Hermes::MemAddr& mydata, const Hermes::MemAddr& result, uint32_t count, PayloadDataType dtype, ReductionOperation op, Communicator group );    
     void reduce(Queue& q, const Hermes::MemAddr& mydata, const Hermes::MemAddr& result, uint32_t count, PayloadDataType dtype, ReductionOperation op, int root,Communicator group );
-	
+    void scatter(Queue& q, const Hermes::MemAddr& mydata, uint32_t count_send, PayloadDataType dtype_send, const Hermes::MemAddr& result, uint32_t count_recv, PayloadDataType dtype_recv, int root, Communicator group);
+    void allgather(Queue& q, const Hermes::MemAddr& mydata, uint32_t count_send, PayloadDataType dtype_send, const Hermes::MemAddr& result, uint32_t count_recv, PayloadDataType dtype_recv, Communicator group);
+    void alltoall(Queue& q, const Hermes::MemAddr& mydata, uint32_t count_send, PayloadDataType dtype_send, const Hermes::MemAddr& result, uint32_t count_recv, PayloadDataType dtype_recv, Communicator group);
+
     void setEventQueue( std::queue<EmberEvent*>* newQ ) {
 		eventQ = newQ;
 	}
@@ -121,6 +149,7 @@ public:
 private:
 	OTF2_DefReader* traceLocalDefReader;
 	OTF2_GlobalDefReader* traceGlobalDefReader;
+	OTF2_GlobalDefReaderCallbacks* traceGlobalDefCallbacks;
 	OTF2_GlobalEvtReader* traceGlobalEvtReader;
 	OTF2_GlobalEvtReaderCallbacks* traceGlobalEvtCallbacks;
 	OTF2_DefReaderCallbacks* traceLocalCallbacks;
@@ -138,6 +167,11 @@ private:
 
 	std::queue<EmberEvent*>* eventQ;
 	std::unordered_map<uint64_t, MessageRequest*> requestMap;
+
+	uint64_t m_size;
+	uint64_t m_timerResolution;
+	bool m_inMPI;
+	bool m_addCompute;
 };
 
 }
