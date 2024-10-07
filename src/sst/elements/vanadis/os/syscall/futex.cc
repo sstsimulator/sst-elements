@@ -123,7 +123,6 @@ VanadisFutexSyscall::VanadisFutexSyscall( VanadisNodeOSComponent* os, SST::Link*
 
 void VanadisFutexSyscall::wakeWaiter(VanadisSyscallFutexEvent* event) const
 {
-    printf("Calling findFutex from wakeWaiter\n");
     auto syscall = m_process->findFutex(event->getAddr());
     if( !syscall )
     {
@@ -278,7 +277,6 @@ void VanadisFutexSyscall::finish( uint32_t val2, uint64_t addr2 )
     m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "[syscall-futex] FUTEX_REQUEUE numWaiters %d\n",numWaiters);
 
     for ( int i = 0; i < val2 && i < numWaiters; i++ ) { 
-        printf("findFutex called from VanadisFutexSyscall::finish \n");
         VanadisSyscall* syscall = m_process->findFutex( getEvent<VanadisSyscallFutexEvent*>()->getAddr() );
         if ( syscall ) {
             m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"[syscall-futex] FUTEX_REQUEUE tid=%d addr=%#" PRIx64 " move to %#" PRIx64 "\n",m_process->gettid(),

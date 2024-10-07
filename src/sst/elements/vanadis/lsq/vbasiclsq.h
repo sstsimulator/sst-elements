@@ -671,12 +671,8 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
         virtual void getStoreTarget(VanadisBasicStorePendingEntry* store_entry, 
             VanadisStoreInstruction* store_ins, uint16_t* target_thread, uint16_t* reg)
         {
-            // printf("(Scalar) getStoreTarget\n");
             uint16_t thr = store_entry->getHWThread();
-            // printf("print1\n");
             uint16_t regtmp = (store_ins->getValueRegisterType() == STORE_FP_REGISTER) ? store_ins->getPhysFPRegIn(0) : store_ins->getPhysIntRegIn(1);
-            // printf("print2\n");
-
             *target_thread = thr;
             *reg = regtmp;
 
@@ -695,7 +691,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
 
             #ifdef VANADIS_BUILD_DEBUG
             if ( isDbgInsAddr( store_ins->getInstructionAddress() ) || isDbgAddr( store_address ) ) {
-                // printf("%s() ins_addr=%#" PRIx64 " store_address=%#" PRIx64 "\n",__func__,store_ins->getInstructionAddress(), store_address);
+                printf("%s() ins_addr=%#" PRIx64 " store_address=%#" PRIx64 "\n",__func__,store_ins->getInstructionAddress(), store_address);
             }
             #endif
 
@@ -854,7 +850,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
 
             #ifdef VANADIS_BUILD_DEBUG
             if ( isDbgInsAddr( load_ins->getInstructionAddress() ) || isDbgAddr( load_address ) ) {
-                // printf("%s() ins_addr=%#" PRIx64 " load_address=%#" PRIx64 " \n",__func__,load_ins->getInstructionAddress(), load_address);
+                printf("%s() ins_addr=%#" PRIx64 " load_address=%#" PRIx64 " \n",__func__,load_ins->getInstructionAddress(), load_address);
             }
             #endif
             // do we need to perform a split load (which loads from two cache lines)?

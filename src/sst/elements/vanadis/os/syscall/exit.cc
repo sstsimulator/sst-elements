@@ -44,12 +44,8 @@ VanadisExitSyscall::VanadisExitSyscall( VanadisNodeOSComponent* os, SST::Link* c
         m_buffer.resize(sizeof(uint32_t));
         *((uint32_t*)m_buffer.data()) = 0;
         writeMemory( tid_addr, m_buffer );
-        m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "[syscall-exit] core %d thread %d process %d writeMemory() called \n",event->getCoreID(), event->getThreadID(), process->getpid() );
     } else {
-        m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "[syscall-exit] core %d thread %d process %d memReqIsDone(true) called \n",event->getCoreID(), event->getThreadID(), process->getpid() );
-        printf("[syscall-exit] core %d thread %d process %d memReqIsDone(true) called \n",event->getCoreID(), event->getThreadID(), process->getpid());
         memReqIsDone(true);
-        
     }
 }
 
@@ -64,12 +60,6 @@ void VanadisExitSyscall::memReqIsDone(bool) {
             m_process->gettid(), m_process->getTidAddress(), syscall->getTid());
         dynamic_cast<VanadisFutexSyscall*>( syscall )->wakeup();
         delete syscall;
-    }
-    else
-    {
-        m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,
-            "[syscall-exit] FUTEX_WAKE tid=%d addr=%#" PRIx64 " no waiter found\n",
-            m_process->gettid(), m_process->getTidAddress());
     }
 
     m_os->removeThread( event->getCoreID(),event->getThreadID(), m_process->gettid() );

@@ -122,7 +122,6 @@ public:
         } 
         else
         {
-            // printf("FPSub intOp else\n");
             const uint64_t src_1  = regFile->getFPReg<uint64_t>(phys_fp_regs_in_0);
             const uint64_t src_2  = regFile->getFPReg<uint64_t>(phys_fp_regs_in_1);
             uint64_t result;
@@ -137,12 +136,10 @@ public:
                 result = NaN<uint32_t>();
                 fpflags.setInvalidOp();
                 update_fp_flags = true;
-                // printf("FPSUB: src infinite src=%x %x\n", src_1, src_2);
             } else {
                 auto tmp = fp_1 - fp_2;
                 performFlagChecks<float>(tmp);
                 result = convertTo<int64_t>(tmp);
-                // printf("FPSUB: src finite result=%x-%x=%x \n", src_1, src_2, result);
             }
             result |= 0xffffffff00000000;
 

@@ -181,7 +181,6 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
             thread_decoders[i]->countISAFPReg());
 
         register_files.push_back(new VanadisRegisterFile( i, thread_decoders[i]->getDecoderOptions(), int_reg_count, fp_reg_count, thr_decoder->getFPRegisterMode(), output));
-        core_regFiles.push_back(register_files[i]);
         output->verbose(
             CALL_INFO, 8, 0, "Reorder buffer set to %" PRIu32 " entries, these are shared by all threads.\n",
             rob_count);
@@ -435,19 +434,16 @@ VANADIS_COMPONENT::setHalt(uint32_t thr, int64_t halt_code)
     output->verbose(
         CALL_INFO, 2, 0, "-> Receive halt request on thread %" PRIu32 " / code: %" PRId64 "\n", thr, halt_code);
 
-    // if ( thr >= hw_threads ) {
-    //     // Incorrect thread, ignore? error?
-    // }
-    // else {
+    if ( thr >= hw_threads ) {
+        // Incorrect thread, ignore? error?
+    }
+    else {
         switch ( halt_code ) {
         default:
         {
             halted_masks[thr] = true;
 
             // Reset address to zero
-            output->verbose(
-                    CALL_INFO, 2, 0,
-                    "Resetting to Zero\n");
             handleMisspeculate(thr, 0);
 
             bool all_halted = true;
@@ -455,7 +451,6 @@ VANADIS_COMPONENT::setHalt(uint32_t thr, int64_t halt_code)
             for ( uint32_t i = 0; i < hw_threads; ++i ) {
                 all_halted = all_halted & halted_masks[i];
             }
-
 
             if ( all_halted ) {
                 output->verbose(
@@ -466,7 +461,7 @@ VANADIS_COMPONENT::setHalt(uint32_t thr, int64_t halt_code)
             }
         } break;
         }
-    // }
+    }
 }
 
 int
@@ -490,7 +485,7 @@ VANADIS_COMPONENT::performDecode(const uint64_t cycle)
         const int64_t decoded_cycle    = (rob_after_decode - rob_before_decode);
         ins_decoded_this_cycle += (decoded_cycle > 0) ? static_cast<uint64_t>(decoded_cycle) : 0;
     }
-    return 0;
+        return 0;
 }
 
 void
@@ -535,7 +530,6 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
             
             if ( ! ins->completedIssue() ) 
             {
-                // printf("Issue: Not issued\n");
                 #ifdef VANADIS_BUILD_DEBUG
                 if ( output_verbosity >= 8 ) 
                 {
@@ -616,7 +610,6 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
                                     CALL_INFO, 8, 0, "%d: ----> Issued for: %s / 0x%" PRI_ADDR " / status: %d\n",
                                     ins->getHWThread(), instPrintBuffer, ins->getInstructionAddress(), status);
                                 if ( print_rob && i != 0) {
-                                    // printf("issue rob thr %u\n", i);
                                     printRob(i,thr_rob);
                                 }
                             }
@@ -632,7 +625,6 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
                             // we have seen a memory operation which is not issued, downstream operations
                             // cannot issue yet to maintain ordering
                             unallocated_memory_op_seen = true;
-                            // printf("unallocated memory op seen\n");
                         }
                     }
                 } 
@@ -663,20 +655,16 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
                     tmp_not_issued_fp_reg_read[i][ins->getISAFPRegIn(k)] = 1;
                 }
             }
-            // printf("Is this the bug? collect int reg\n");
             // Collect up all integer registers we write to
             for ( auto k = 0; k < ins->countISAIntRegOut(); ++k ) {
                 tmp_int_reg_write[i][ins->getISAIntRegOut(k)] = 1;
             }
-            // printf("Is this the bug? collect fp reg\n");
             // Collect up all fp registers we write to
             for ( auto k = 0; k < ins->countISAFPRegOut(); ++k ) {
                 tmp_fp_reg_write[i][ins->getISAFPRegOut(k)] = 1;
             }
-            // printf("Is this the bug? collect done\n");
             // We issued an instruction this cycle, so exit
             if ( issued_an_ins ) {
-                // printf("Is this the bug? issue ins, rob_start rewrite\n");
                 // tell the caller where we got this from
                 rob_start = j;
                 break;
@@ -688,7 +676,6 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
         #ifdef VANADIS_BUILD_DEBUG
         if ( (output_verbosity >= 8) && issued_an_ins ) {
             if(print_issue_tables) {
-                // printf("Is this the bug? print isa tables\n");
                 issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg, output_verbosity );
             }
         }
@@ -705,7 +692,6 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
 
     // if we issued an instruction tell the caller we want to be called again
     // (return 0)
-    // printf("Where is the bug? Issue return\n");
     return issued_an_ins ? 0 : 1;
 }
 
@@ -771,7 +757,6 @@ VANADIS_COMPONENT::performExecute(const uint64_t cycle)
 
 void VANADIS_COMPONENT::printRob(int rob_num, VanadisCircularQueue<VanadisInstruction*>* rob)
 {
-    // printf("I am here 2\n");
     if (((uint32_t)rob->size())>0)
     {
         output->verbose(CALL_INFO, 8, 0, "%d: -- ROB: %" PRIu32 " out of %" PRIu32 " entries:\n", rob_num, (uint32_t)rob->size(),
@@ -803,7 +788,6 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
 
     #ifdef VANADIS_BUILD_DEBUG
     if ( output->getVerboseLevel() >= 8 ) {
-        // printf("I am here 1 robnum=%d\n", rob_num);
         printRob( rob_num, rob );
     }
     #endif
@@ -1118,9 +1102,6 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
                     }
 
                     #ifdef VANADIS_BUILD_DEBUG
-                    // printf("[syscall] -> calling OS handler in decode engine "
-                    //     "(ins-addr: 0x%0" PRI_ADDR ")...\n",
-                    //     the_syscall_ins->getInstructionAddress());
                     output->verbose(
                         CALL_INFO, 16, 0,
                         "[syscall] -> calling OS handler in decode engine for thr %d "
@@ -1218,7 +1199,6 @@ VANADIS_COMPONENT::mapInstructiontoFunctionalUnit(
 int
 VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
 {
-    // printf("Inside allocateFU\n");
     bool allocated_fu = false;
 
     switch ( ins->getInstFuncType() ) {
@@ -1235,7 +1215,6 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
         break;
 
     case INST_STORE:
-        // printf("Inside allocateFU INST_STORE \n");
         if ( !lsq->storeFull() ) {
             stat_stores_issued->addData(1);
             lsq->push(dynamic_cast<VanadisStoreInstruction*>(ins));
@@ -2067,12 +2046,7 @@ void
 VANADIS_COMPONENT::clearROBMisspeculate(const uint32_t hw_thr)
 {
     VanadisCircularQueue<VanadisInstruction*>* thr_rob;
-    if (hw_thr >= hw_threads) {
-        thr_rob = v_warp_rob[hw_thr-hw_threads];
-    }
-    else {
-        thr_rob = rob[hw_thr];
-    }
+    thr_rob = rob[hw_thr];
     stat_rob_cleared_entries->addData(thr_rob->size());
 
     // Delete all the instructions which we aren't going to process
@@ -2092,12 +2066,8 @@ void
 VANADIS_COMPONENT::syscallReturn(uint32_t thr)
 {
     VanadisCircularQueue<VanadisInstruction*>* thr_rob;
-    if (thr >= hw_threads) {
-        thr_rob = v_warp_rob[thr-hw_threads];
-    }
-    else {
-        thr_rob = rob[thr];
-    }
+    thr_rob = rob[thr];
+    
     if ( thr_rob->empty() ) {
         output->fatal(CALL_INFO, -1, "Error - syscall return called on thread: %" PRIu32 " but ROB is empty.\n", thr);
     }
@@ -2161,31 +2131,26 @@ void VANADIS_COMPONENT::recvOSEvent(SST::Event* ev) {
 
         VanadisStartThreadFirstReq* os_req = dynamic_cast<VanadisStartThreadFirstReq*>(ev);
         if ( nullptr != os_req ) {
-            printf("hw_thr in os: %d Start\n", os_req->getThread());
             startThread( os_req->getThread(), os_req->getStackAddr(), os_req->getInstPtr() );
         } else {
 
             VanadisStartThreadForkReq* req = dynamic_cast<VanadisStartThreadForkReq*>(ev);
             if ( nullptr != req ) {
-                printf("hw_thr in os: %d Fork\n", req->getThread());
                 startThreadFork( req );
             } else {
 
                 VanadisGetThreadStateReq* req = dynamic_cast<VanadisGetThreadStateReq*>(ev);
                 if ( nullptr != req ) {
-                    printf("hw_thr in os: %d State\n", req->getThread());
                     getThreadState( req );
                 } else {
 
                     VanadisStartThreadCloneReq* req = dynamic_cast<VanadisStartThreadCloneReq*>(ev);
                     if ( nullptr != req ) {
-                        printf("hw_thr in os: %d Clone\n", req->getThread());
                         startThreadClone( req );
                     } else {
 
                         VanadisExitResponse* os_exit = dynamic_cast<VanadisExitResponse*>(ev);
                         if ( nullptr != os_exit ) {
-                            printf("hw_thr in os: %d exit\n", req->getThread());
                             output->verbose(CALL_INFO, 16, 0,
                                 "received an exit command from the operating system for hw_thr %d "
                                 "(return-code: %" PRId64 " )\n",
@@ -2197,7 +2162,6 @@ void VANADIS_COMPONENT::recvOSEvent(SST::Event* ev) {
 
                             VanadisDumpRegsReq* req = dynamic_cast<VanadisDumpRegsReq*>(ev);
                             if (nullptr != req ) {
-                                printf("hw_thr in os: %d DumpRegs\n", req->getThread());
                                 dumpRegs(req);
                             } else {
                                 VanadisCheckpointReq* req = dynamic_cast<VanadisCheckpointReq*>(ev);

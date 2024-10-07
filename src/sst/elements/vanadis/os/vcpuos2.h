@@ -297,8 +297,8 @@ protected:
     VanadisSyscallEvent* CLOSE( int hw_thr ) {
         T1 file = getArgRegister(0);
 
-        // output->verbose(CALL_INFO, 16, 0, "close( %" PRIuXX " )\n", file);
-        printf("close( %" PRIuXX " )\n", file);
+        output->verbose(CALL_INFO, 16, 0, "close( %" PRIuXX " )\n", file);
+
 
        return new VanadisSyscallCloseEvent(core_id, hw_thr, BitType, file);
     }
