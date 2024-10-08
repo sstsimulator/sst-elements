@@ -327,6 +327,7 @@ void basicSimLifeCycle::serialize_order(SST::Core::Serialization::serializer& se
     switch ( ser.mode() ) {
         case SST::Core::Serialization::serializer::SIZER:
         case SST::Core::Serialization::serializer::PACK:
+            break;
         case SST::Core::Serialization::serializer::UNPACK:
         {
             //Reinitialize iter from neighbors
