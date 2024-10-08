@@ -11,9 +11,8 @@ params = {
 }
 basicParam.addParams(params)
 
-# Run example 0
 component0 = sst.Component("c0", "simpleElementExample.example0")
-component1 = sst.Component("c1", "simpleElementExample.example0")
+component1 = sst.Component("c1", "simpleElementExample.example1")
 
 params = {
         "eventsToSend" : 50,    # Required parameter, error if not provided
@@ -25,15 +24,6 @@ component1.addParams(params)
 link = sst.Link("component_link0")
 link.connect( (component0, "port", "1ns"), (component1, "port", "1ns") )
 
-# Run example 1
-component2 = sst.Component("c2", "simpleElementExample.example1")
-component3 = sst.Component("c3", "simpleElementExample.example1")
-
-component2.addParams(params)
-component3.addParams(params)
-
-link = sst.Link("component_link1")
-link.connect( (component2, "port", "1ns"), (component3, "port", "1ns") )
 
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole") 
