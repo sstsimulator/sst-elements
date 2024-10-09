@@ -12,6 +12,9 @@ DEBUG_L3 = 0
 DEBUG_MEM = 0
 DEBUG_LEVEL = 10
 
+cpu_clock = "2.3GHz"
+protocol="MESI"
+
 cpu = sst.Component("core", "memHierarchy.standardCPU") # if this is a parameter, it determines whether this should be in memh or vanadis
 cpu.addParams({
     "memFreq": 2,    
@@ -116,7 +119,8 @@ bus_l2_cache_link = sst.Link("cpul1l2cache.bus_l2_cache_link")
 bus_l2_cache_link.connect((l1_l2_cache_bus, "port", "1ns"), (l2_cache_to_l1_caches, "port", "1ns"))
 bus_l2_cache_link.setNoCut()
 
-l3cacheParams = {
+l3cache = sst.Component("l3cache.msi", "vanadis.Cache'")
+l3cache.addparams({
     "access_latency_cycles" : "20",
     "cache_frequency" : cpu_clock,
     "replacement_policy" : "lru",
@@ -127,10 +131,7 @@ l3cacheParams = {
     "mshr_latency_cycles" : 5,
     "debug" : mh_debug,
     "debug_level" : mh_debug_level
-}
-
-l3cache = sst.Component("l2cache.msi", "vanadis.Cache'")
-l3cache.addparams(l3cacheParams)
+})
 
 busParams = { 
     "bus_frequency" : cpu_clock, 
@@ -144,15 +145,3 @@ l2memLinkParams = {
 # Enable statistics
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
-
-# Define the simulation links
-link_cpu_l1cache_link = sst.Link("link_cpu_l1cache_link")
-link_cpu_l1cache_link.connect( (iface, "port", "1000ps"), (l1cache, "high_network_0", "1000ps") )
-link_mem_bus_l1cache = sst.Link("link_mem_bus_l1cache")
-link_mem_bus_l1cache.connect( (l1cache, "low_network_0", "50ps"), (memctrl, "direct_link", "50ps") )
-
-# Link the l2cache to the CPU interface
-link_cpu_l2cache_link = sst.Link("link_cpu_l2cache_link")
-link_cpu_l2cache_link.connect((iface, "port", "1ns"), (l2cache, "port", "1ns"))
-link_mem_bus_l2cache = sst.Link("link_mem_bus_l2cache")
-link_mem_bus_l2cache.connect( (l2cache, ) );
