@@ -337,5 +337,8 @@ void basicSimLifeCycle::serialize_order(SST::Core::Serialization::serializer& se
 
             break;
         }
+        case SST::Core::Serialization::serializer::MAP:
+            // Mapping mode not supported
+            break;
     }
 }

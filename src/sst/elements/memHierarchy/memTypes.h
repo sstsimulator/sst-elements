@@ -229,7 +229,7 @@ static const std::string NONE = "None";
 enum class MemEventStatus { OK, Stall, Reject };
 
 /* Define an address region by start/end & interleaving */
-class MemRegion : public SST::Core::Serialization::serializable, SST::Core::Serialization::serializable_type<MemRegion> {
+class MemRegion : public SST::Core::Serialization::serializable {
 public:
     SST::MemHierarchy::Addr start;             // First address that is part of the region
     SST::MemHierarchy::Addr end;               // Last address that is part of the region
