@@ -91,7 +91,7 @@ l2_cache.addParams({
     "debug_level" : mh_debug_level,
 })
 
-l2_cache_to_l1_caches = l2_cache.setSubComponenet("cpulink", "memHierarchy.MemLink")
+l2_cache_to_l1_caches = l2_cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l2_cache_to_memory = l2_cache.setSubComponent("memlink", "memHierarchy.MemNIC")
 l2_cache_to_memory.addParams({ 
     "group" : 1,
@@ -119,8 +119,10 @@ bus_l2_cache_link = sst.Link("cpul1l2cache.bus_l2_cache_link")
 bus_l2_cache_link.connect((l1_l2_cache_bus, "port", "1ns"), (l2_cache_to_l1_caches, "port", "1ns"))
 bus_l2_cache_link.setNoCut()
 
-l3cache = sst.Component("l3cache.msi", "vanadis.Cache'")
-l3cache.addparams({
+l2_cache_to_l3_cache = l2_cache.setSubComponent("memlink", "memHierarch.Cache")
+
+l3_cache = sst.Component("l3cache.msi", "vanadis.Cache'")
+l3_cache.addParams({
     "access_latency_cycles" : "20",
     "cache_frequency" : cpu_clock,
     "replacement_policy" : "lru",
@@ -133,14 +135,28 @@ l3cache.addparams({
     "debug_level" : mh_debug_level
 })
 
-busParams = { 
-    "bus_frequency" : cpu_clock, 
-}
-
-l2memLinkParams = { 
+l3_cache_to_l2_cache = l3_cache.setSubComponent("cpulink", "memHierarchy.MemLink")
+l3_cache_to_memory = l3_cache.setSubComponent("memlink", "memHierarchy.MemNIC")
+l3_cache_to_memory.addParams({
     "group" : 1,
     "network_bw" : "25GB/s" 
-}
+})
+
+# L2 to L3 bus
+l2_l3_cache_bus = l3_cache.setSubComponent("l2_l3_cache.bus", "memHierarchyBus")
+l2_l3_cache_bus.addParams({
+    "bus_frequency": cpu_clock
+})
+
+# l2 -> bus
+l2_cache_to_l3_cache_link = sst.Link("cpul1l2cache.l2_cache_to_l3_cache_link")
+l2_cache_to_l3_cache_link.connect((l2_cache_to_l3_cache, "port", "1ns"), (l2_l3_cache_bus, "high_network_0", "1ns"))
+l2_cache_to_l3_cache_link.setNoCut()
+
+bus_l3_cache_link = sst.Link("cpul2l2cache.bus_l3_cache_link")
+bus_l3_cache_link.connect((l2_l3_cache_bus, "port", "1ns"), (l3_cache_to_l2_cache, "port", "1ns"))
+bus_l3_cache_link.setNoCut()
+
 
 # Enable statistics
 sst.setStatisticLoadLevel(7)
