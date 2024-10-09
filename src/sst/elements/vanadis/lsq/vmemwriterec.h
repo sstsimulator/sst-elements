@@ -29,7 +29,7 @@ public:
         // Round up the next highest number of lines unless we evenly divide
         uint64_t lines = (memory_size / 64) + ((memory_size % 64) == 0 ? 0 : 1);
 
-        // printf("creating a memory record with size: %" PRIu64 " = %" PRIu64 " lines.\n", memory_size, lines);
+        printf("creating a memory record with size: %" PRIu64 " = %" PRIu64 " lines.\n", memory_size, lines);
 
         // Zero out the memory - nothing written at start
         for (uint64_t i = 0; i < lines; ++i) {

@@ -196,7 +196,7 @@ public:
     }
 
     void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
-                            uint16_t phys_fp_regs_out_0,uint16_t phys_fp_regs_in_0,
+                            uint16_t phys_int_regs_out_0,uint16_t phys_fp_regs_in_0,
                                     uint16_t phys_fp_regs_in_1, uint16_t compare_result)
     {
         #ifdef VANADIS_BUILD_DEBUG
@@ -204,8 +204,8 @@ public:
             output->verbose(
                 CALL_INFO, verboselevel, 0, "hw_thr=%d sw_thr = %d Execute: (addr=0x%" PRI_ADDR ") %s (%s) phys: out=%" PRIu16 " / in=%" PRIu16 ", %" PRIu16 " isa: out=%" PRIu16
                     " / in=%" PRIu16 ", %" PRIu16 ", result: %s\n", getHWThread(),sw_thr, getInstructionAddress(), getInstCode(), 
-                    convertCompareTypeToString(compare_type), phys_fp_regs_out_0, phys_fp_regs_in_0,
-                    phys_fp_regs_in_1, isa_fp_regs_out[0], isa_fp_regs_in[0], isa_fp_regs_in[1], compare_result ? "true" : "false");
+                    convertCompareTypeToString(compare_type), phys_int_regs_out_0, phys_fp_regs_in_0,
+                    phys_fp_regs_in_1, isa_int_regs_out[0], isa_fp_regs_in[0], isa_fp_regs_in[1], compare_result ? "true" : "false");
         }
         #endif
     }
@@ -223,13 +223,11 @@ public:
             phys_fp_regs_in_2 = getPhysFPRegIn(2);
             phys_fp_regs_in_3 = getPhysFPRegIn(3);
         }
-        
-        
+                
         const bool compare_result = performCompare(output, regFile,phys_fp_regs_in_0, phys_fp_regs_in_1, phys_fp_regs_in_2,
                                                     phys_fp_regs_in_3);
         regFile->setIntReg<uint64_t>(phys_int_regs_out_0, compare_result ? 1 : 0);
-        log(output, 16,65535, phys_int_regs_out_0, phys_fp_regs_in_0,
-                                    phys_fp_regs_in_1, compare_result);
+        log(output, 16,65535, phys_int_regs_out_0, phys_fp_regs_in_0, phys_fp_regs_in_1, compare_result);
         markExecuted();
     }
 };
