@@ -4,7 +4,7 @@ import os
 
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
-sst.setProgramOption("stopAtCycle", "5s")
+sst.setProgramOption("stop-at", "5s")
 
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "prospero.prosperoCPU")

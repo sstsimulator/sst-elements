@@ -328,7 +328,7 @@ def doPIM(pimNum, prevRtr):
 
 # Define SST core options
 sst.setProgramOption("partitioner", "self")
-#sst.setProgramOption("stopAtCycle", "2000 us")
+#sst.setProgramOption("stop-at", "2000 us")
 
 #if needed, create the ariel component
 if useAriel:

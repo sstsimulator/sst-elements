@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -82,18 +82,8 @@ public:
     {
 #ifdef VANADIS_BUILD_DEBUG
         if ( output->getVerboseLevel() >= 16 ) {
-            char* int_register_buffer = new char[256];
-            char* fp_register_buffer  = new char[256];
-
-            writeIntRegs(int_register_buffer, 256);
-            writeFPRegs(fp_register_buffer, 256);
-
             output->verbose(
-                CALL_INFO, 16, 0, "Execute: 0x%llx %s int: %s / fp: %s\n", getInstructionAddress(), getInstCode(),
-                int_register_buffer, fp_register_buffer);
-
-            delete[] int_register_buffer;
-            delete[] fp_register_buffer;
+                CALL_INFO, 16, 0, "Execute: 0x%llx %s\n", getInstructionAddress(), getInstCode());
         }
 #endif
 
@@ -105,8 +95,11 @@ public:
             performFlagChecks<fp_format>(result);
 
             if ( output->getVerboseLevel() >= 16 ) {
-                output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, result);
+                std::ostringstream ss; 
+                ss << "---> " << src_1 << " + " << src_2 << " = " << result;
+                output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
             }
+
             fractureToRegisters<fp_format>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], result);
         }
         else {
@@ -117,7 +110,9 @@ public:
             performFlagChecks<fp_format>(result);
 
             if ( output->getVerboseLevel() >= 16 ) {
-                output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, result);
+                std::ostringstream ss; 
+                ss << "---> " << src_1 << " + " << src_2 << " = " << result;
+                output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
             }
 
             regFile->setFPReg<fp_format>(phys_fp_regs_out[0], result);

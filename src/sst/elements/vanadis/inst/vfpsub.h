@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -91,35 +91,42 @@ public:
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
-        char* int_register_buffer = new char[256];
-        char* fp_register_buffer  = new char[256];
-
-        writeIntRegs(int_register_buffer, 256);
-        writeFPRegs(fp_register_buffer, 256);
-
-        output->verbose(
-            CALL_INFO, 16, 0, "Execute: (addr=0x%llx) %s int: %s / fp: %s\n", getInstructionAddress(), getInstCode(),
-            int_register_buffer, fp_register_buffer);
-
-        delete[] int_register_buffer;
-        delete[] fp_register_buffer;
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(
+                CALL_INFO, 16, 0, "Execute: (addr=0x%llx) %s\n", getInstructionAddress(), getInstCode());
+        }
 #endif
 
         if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
             const fp_format src_1 = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
             const fp_format src_2 = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3]);
+            const fp_format result = src_1 - src_2;
 
-            output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, (src_1 - src_2));
+            performFlagChecks<fp_format>(result);
 
-            fractureToRegisters<fp_format>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], src_1 - src_2);
+            if(output->getVerboseLevel() >= 16) {
+                std::ostringstream ss;
+                ss << "---> " << src_1 << " + " << src_2 << " = " << result;
+                output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
+            }
+
+            fractureToRegisters<fp_format>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], result);
         }
         else {
             const fp_format src_1 = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
             const fp_format src_2 = regFile->getFPReg<fp_format>(phys_fp_regs_in[1]);
 
-            output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, (src_1 - src_2));
+            const fp_format result = src_1 - src_2;
 
-            regFile->setFPReg<fp_format>(phys_fp_regs_out[0], (src_1) - (src_2));
+            performFlagChecks<fp_format>(result);
+
+            if(output->getVerboseLevel() >= 16) {
+                std::ostringstream ss;
+                ss << "---> " << src_1 << " + " << src_2 << " = " << result;
+                output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
+            }
+
+            regFile->setFPReg<fp_format>(phys_fp_regs_out[0], result);
         }
 
         markExecuted();

@@ -1,0 +1,16 @@
+&buf=0x7fffee10
+alignedPtr=0x7fffee80
+bufPtr=0x7fffee7c
+i=1 intPtr=0x7fffee7d
+buf+1 deadbeef
+i=2 intPtr=0x7fffee7e
+buf+2 deadbeef
+i=3 intPtr=0x7fffee7f
+buf+3 deadbeef
+bufPtr=0x7fffee7c
+i=1 longPtr=0x7fffee7d
+buf+1 12345678
+i=2 longPtr=0x7fffee7e
+buf+2 12345678
+i=3 longPtr=0x7fffee7f
+buf+3 12345678

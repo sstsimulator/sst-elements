@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,6 +26,7 @@
 #include "inst/vmul.h"
 #include "inst/vmuli.h"
 #include "inst/vmulsplit.h"
+#include "inst/vmulhigh.h"
 #include "inst/vsub.h"
 
 // Logical operations
@@ -71,6 +72,9 @@
 #include "inst/vstore.h"
 #include "inst/vstorecond.h"
 
+// Conditional move instructions
+#include "inst/vcimov.h"
+
 // Fence Instructions
 #include "inst/vfence.h"
 
@@ -94,8 +98,12 @@
 
 // FP Arith
 #include "inst/vfpadd.h"
+#include "inst/vfpmadd.h"
+#include "inst/vfpmsub.h"
 #include "inst/vfpdiv.h"
 #include "inst/vfpmul.h"
+#include "inst/vfpmin.h"
+#include "inst/vfpsqrt.h"
 #include "inst/vfpscmp.h"
 #include "inst/vfpsignlogic.h"
 #include "inst/vfpsub.h"

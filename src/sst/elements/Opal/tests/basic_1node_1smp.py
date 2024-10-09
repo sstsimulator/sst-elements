@@ -3,7 +3,6 @@ import sst
 
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
-sst.setProgramOption("stopAtCycle", "0 ns")
 
 # Tell SST what statistics handling we want
 sst.setStatisticLoadLevel(4)

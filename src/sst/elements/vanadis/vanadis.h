@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,6 +27,9 @@
 #include "velf/velfinfo.h"
 #include "vfpflags.h"
 #include "vfuncunit.h"
+
+#include "os/vgetthreadstate.h"
+#include "os/vdumpregsreq.h"
 
 #include <array>
 #include <limits>
@@ -162,7 +165,7 @@ public:
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         { "lsq", "Load-Store Queue for Memory Access", "SST::Vanadis::VanadisLoadStoreQueue" },
         { "mem_interface_inst", "Interface to memory system for instructions", "SST::Interfaces::StandardMem" },
-        { "decoder%(hardware_threads)d", "Instruction decoder for a hardware thread", "SST::Vanadis::VanadisDecoder" })
+    )
 
 #ifdef VANADIS_BUILD_DEBUG
     VanadisDebugComponent(SST::ComponentId_t id, SST::Params& params);
@@ -185,12 +188,15 @@ public:
 
     void handleMisspeculate(const uint32_t hw_thr, const uint64_t new_ip);
     void clearROBMisspeculate(const uint32_t hw_thr);
-    void resetRegisterStacks(const uint32_t hw_thr);
     void clearFuncUnit(const uint32_t hw_thr, std::vector<VanadisFunctionalUnit*>& unit);
 
     void syscallReturn(uint32_t thr);
     void setHalt(uint32_t thr, int64_t halt_code);
     void startThread(int thr, uint64_t stackStart, uint64_t instructionPointer );
+    void startThreadFork( VanadisStartThreadForkReq* req );
+    void startThreadClone( VanadisStartThreadCloneReq* req );
+    void getThreadState( VanadisGetThreadStateReq* req );
+    void dumpRegs( VanadisDumpRegsReq* req );
 
 private:
 #ifdef VANADIS_BUILD_DEBUG
@@ -221,11 +227,36 @@ private:
 
     int  performFetch(const uint64_t cycle);
     int  performDecode(const uint64_t cycle);
-    int  performIssue(const uint64_t cycle, uint32_t& rob_start, bool& unallocated_memory_op_seen);
+    int  performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_start, int& unallocated_memory_op_seen);
     int  performExecute(const uint64_t cycle);
-    int  performRetire(VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle);
+    int  performRetire(int rob_num, VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle);
     int  allocateFunctionalUnit(VanadisInstruction* ins);
     bool mapInstructiontoFunctionalUnit(VanadisInstruction* ins, std::vector<VanadisFunctionalUnit*>& functional_units);
+    void printRob(int rob_num, VanadisCircularQueue<VanadisInstruction*>* rob);
+
+    bool checkVerboseAddr( uint64_t addr ) {
+        for ( auto& it : start_verbose_when_issue_address ) {
+            if ( it == addr ) return true;
+        }
+        return false;
+    }
+
+    void setVerboseWhenIssueAddress( std::string addrs ) {
+        while ( ! addrs.empty() ) {
+            auto pos = addrs.find(',');
+            std::string addr;
+            if ( pos == std::string::npos ) {
+                addr = addrs;
+                addrs.clear();
+            } else  {
+                addr = addrs.substr(0,pos);
+                addrs = addrs.substr(pos+1);
+            }
+            start_verbose_when_issue_address.push_back(  strtol( addr.c_str(), NULL , 16 ) );
+        }
+    }
+
+    void resetHwThread(uint32_t thr);
 
     SST::Output* output;
 
@@ -239,6 +270,9 @@ private:
     uint32_t issues_per_cycle;
     uint32_t retires_per_cycle;
 
+    uint32_t m_curRetireHwThread;
+    uint32_t m_curIssueHwThread;
+
     std::vector<VanadisCircularQueue<VanadisInstruction*>*> rob;
     std::vector<VanadisDecoder*>                            thread_decoders;
     std::vector<const VanadisDecoderOptions*>               isa_options;
@@ -250,16 +284,16 @@ private:
     std::vector<VanadisFunctionalUnit*> fu_fp_div;
 
     std::vector<VanadisRegisterFile*>  register_files;
-    std::vector<VanadisRegisterStack*> int_register_stacks;
-    std::vector<VanadisRegisterStack*> fp_register_stacks;
+    VanadisRegisterStack* int_register_stack;
+    VanadisRegisterStack* fp_register_stack;
 
     std::vector<VanadisISATable*> issue_isa_tables;
     std::vector<VanadisISATable*> retire_isa_tables;
 
-    std::vector<bool> tmp_not_issued_int_reg_read;
-    std::vector<bool> tmp_int_reg_write;
-    std::vector<bool> tmp_not_issued_fp_reg_read;
-    std::vector<bool> tmp_fp_reg_write;
+    std::vector<uint8_t*> tmp_not_issued_int_reg_read;
+    std::vector<uint8_t*> tmp_int_reg_write;
+    std::vector<uint8_t*> tmp_not_issued_fp_reg_read;
+    std::vector<uint8_t*> tmp_fp_reg_write;
 
     std::list<VanadisInsCacheLoadRecord*>* icache_load_records;
 
@@ -271,6 +305,7 @@ private:
     bool  print_fp_reg;
     bool  print_issue_tables;
     bool  print_retire_tables;
+    bool  print_rob;
 
     char*    instPrintBuffer;
     uint64_t nextInsID;
@@ -301,7 +336,8 @@ private:
     uint32_t ins_decoded_this_cycle;
 
     uint64_t pause_on_retire_address;
-    uint64_t start_verbose_when_issue_address;
+    std::deque<uint64_t> start_verbose_when_issue_address;
+    uint64_t stop_verbose_when_retire_address;
 
     std::vector<VanadisFloatingPointFlags*> fp_flags;
 

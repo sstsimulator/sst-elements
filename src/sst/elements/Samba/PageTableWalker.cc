@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -101,7 +101,7 @@ PageTableWalker::PageTableWalker(ComponentId_t id, int tlb_id, PageTableWalker *
     os_page_size = ((uint32_t) params.find<uint32_t>("os_page_size", 4));
 
 	char* subID = (char*) malloc(sizeof(char) * 32);
-	sprintf(subID, "Core%d_PTWC", tlb_id);
+	snprintf(subID, sizeof(char)*32, "Core%d_PTWC", tlb_id);
 
 
 

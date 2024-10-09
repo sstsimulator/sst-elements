@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -47,19 +47,21 @@ public:
     virtual void printToBuffer(char* buffer, size_t buffer_size)
     {
         snprintf(
-            buffer, buffer_size, "JLR     link-reg: %" PRIu16 " addr-reg: %" PRIu16 " + %" PRIu64 "\n",
+            buffer, buffer_size, "JLR     link-reg: %" PRIu16 " addr-reg: %" PRIu16 " + %" PRIu64 "",
             isa_int_regs_out[0], isa_int_regs_in[0], imm);
     }
 
     virtual void execute(SST::Output* output, VanadisRegisterFile* regFile)
     {
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: addr=(0x%0llx) JLR isa-link: %" PRIu16 " isa-addr: %" PRIu16 " + %" PRIu64 " phys-link: %" PRIu16
-            " phys-addr: %" PRIu16 "\n",
-            getInstructionAddress(), isa_int_regs_out[0], isa_int_regs_in[0], imm, phys_int_regs_out[0],
-            phys_int_regs_in[0]);
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(
+                CALL_INFO, 16, 0,
+                "Execute: addr=(0x%0llx) JLR isa-link: %" PRIu16 " isa-addr: %" PRIu16 " + %" PRIu64 " phys-link: %" PRIu16
+                " phys-addr: %" PRIu16 "\n",
+                getInstructionAddress(), isa_int_regs_out[0], isa_int_regs_in[0], imm, phys_int_regs_out[0],
+                phys_int_regs_in[0]);
+        }
 #endif
         const uint64_t jump_to    = static_cast<uint64_t>(regFile->getIntReg<int64_t>(phys_int_regs_in[0]) + imm);
         const uint64_t link_value = calculateStandardNotTakenAddress();

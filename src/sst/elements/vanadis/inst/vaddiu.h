@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,17 +21,16 @@
 namespace SST {
 namespace Vanadis {
 
-template <VanadisRegisterFormat register_format>
+template <typename register_format>
 class VanadisAddImmUnsignedInstruction : public VanadisInstruction
 {
 public:
     VanadisAddImmUnsignedInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
-        const uint16_t src_1, const uint64_t immediate) :
+        const uint16_t src_1, const register_format immediate) :
         VanadisInstruction(addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0),
         imm_value(immediate)
     {
-
         isa_int_regs_in[0]  = src_1;
         isa_int_regs_out[0] = dest;
     }
@@ -39,7 +38,15 @@ public:
     VanadisAddImmUnsignedInstruction* clone() override { return new VanadisAddImmUnsignedInstruction(*this); }
     VanadisFunctionalUnitType         getInstFuncType() const override { return INST_INT_ARITH; }
 
-    const char* getInstCode() const override { return "ADDIU"; }
+    const char* getInstCode() const override {
+        if(sizeof(register_format) == 4) {
+            return "ADDIU32";
+        } else if( sizeof(register_format) == 8) {
+            return "ADDIU64"; 
+        } else {
+            return "ADDIUERR"; 
+        }
+    }
 
     void printToBuffer(char* buffer, size_t buffer_size) override
     {
@@ -52,23 +59,20 @@ public:
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: (addr=%p) ADDIU phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16
-            " / in=%" PRIu16 "\n",
-            (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value, isa_int_regs_out[0],
-            isa_int_regs_in[0]);
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(
+                CALL_INFO, 16, 0,
+                "Execute: (addr=%p) ADDIU phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16
+                " / in=%" PRIu16 "\n",
+                (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value, isa_int_regs_out[0],
+                isa_int_regs_in[0]);
+        }
 #endif
 
-        if ( VanadisRegisterFormat::VANADIS_FORMAT_INT64 == register_format ) {
-            const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
-            regFile->setIntReg<uint64_t>(phys_int_regs_out[0], src_1 + imm_value, false);
-        }
-        else if ( VanadisRegisterFormat::VANADIS_FORMAT_INT32 == register_format ) {
-            const uint32_t src_1 = regFile->getIntReg<uint32_t>(phys_int_regs_in[0]);
-            regFile->setIntReg<uint32_t>(phys_int_regs_out[0], src_1 + imm_value, false);
-        }
-        else {
+        if( std::is_same<register_format, uint64_t>::value || std::is_same<register_format, uint32_t>::value ) {
+            const register_format src_1 = regFile->getIntReg<register_format>(phys_int_regs_in[0]);
+            regFile->setIntReg<register_format>(phys_int_regs_out[0], src_1 + imm_value, false);
+        } else {
             flagError();
         }
 
@@ -76,7 +80,7 @@ public:
     }
 
 private:
-    const uint64_t imm_value;
+    const register_format imm_value;
 };
 
 } // namespace Vanadis

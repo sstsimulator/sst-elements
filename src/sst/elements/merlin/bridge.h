@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -117,11 +117,11 @@ public:
             Nic_t &otherNic = interfaces[i^1];
 
 
-            while ( SimpleNetwork::Request *req = nic.nic->recvInitData() ) {
+            while ( SimpleNetwork::Request *req = nic.nic->recvUntimedData() ) {
                 dbg.debug(CALL_INFO, 2, 0, "Received init phase event on interface %d\n", i);
                 SimpleNetwork::Request *res = translator->initTranslate(req, i);
                 if ( res ) {
-                    otherNic.nic->sendInitData(res);
+                    otherNic.nic->sendUntimedData(res);
                 }
             }
         }

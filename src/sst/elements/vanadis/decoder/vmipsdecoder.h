@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -22,6 +22,7 @@
 #include "inst/vinstall.h"
 #include "os/vmipscpuos.h"
 #include "util/vdatacopy.h"
+#include "util/vsignx.h"
 #include "vinsloader.h"
 
 #include <list>
@@ -74,6 +75,7 @@
 #define MIPS_SPEC_OP_MASK_LW     0x8C000000
 #define MIPS_SPEC_OP_MASK_LWL    0x88000000
 #define MIPS_SPEC_OP_MASK_LWR    0x98000000
+#define MIPS_SPEC_OP_MASK_LH     0x84000000
 #define MIPS_SPEC_OP_MASK_LHU    0x94000000
 #define MIPS_SPEC_OP_MASK_SB     0xA0000000
 #define MIPS_SPEC_OP_MASK_SC     0xE0000000
@@ -159,6 +161,7 @@
 #define MIPS_SPEC_COP_MASK_CMP_LT  0x3C
 #define MIPS_SPEC_COP_MASK_CMP_LTE 0x3E
 #define MIPS_SPEC_COP_MASK_CMP_EQ  0x32
+#define MIPS_SPEC_COP_MASK_CMP_ULT 0x35
 
 #define MIPS_INC_DECODE_STAT(stat_name) (stat_name)->addData(1);
 
@@ -168,7 +171,7 @@ namespace Vanadis {
 class VanadisMIPSDecoder : public VanadisDecoder
 {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(VanadisMIPSDecoder, "vanadis", "VanadisMIPSDecoder",
+    SST_ELI_REGISTER_SUBCOMPONENT(VanadisMIPSDecoder, "vanadis", "VanadisMIPSDecoder",
                                           SST_ELI_ELEMENT_VERSION(1, 0, 0),
                                           "Implements a MIPS-compatible decoder for Vanadis CPU processing.",
                                           SST::Vanadis::VanadisDecoder)
@@ -226,6 +229,7 @@ public:
      { "ins_decode_lb", "Count number of instructions decoded", "ins", 1 },
      { "ins_decode_lbu", "Count number of instructions decoded", "ins", 1 },
      { "ins_decode_lhu", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_lh", "Count number of instructions decoded", "ins", 1 },
      { "ins_decode_lw", "Count number of instructions decoded", "ins", 1 },
      { "ins_decode_lfp32", "Count number of instructions decoded", "ins", 1 },
      { "ins_decode_ll", "Count number of instructions decoded", "ins", 1 },
@@ -263,6 +267,7 @@ public:
      { "ins_decode_cop1_cvtd", "Count number of instructions decoded", "ins", 1 },
      { "ins_decode_cop1_cvtw", "Count number of instructions decoded", "ins", 1 },
      { "ins_decode_cop1_lt", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_cop1_ult", "Count number of instructions decoded", "ins", 1 },
      { "ins_decode_cop1_lte", "Count number of instructions decoded", "ins", 1 },
      { "ins_decode_cop1_eq", "Count number of instructions decoded", "ins", 1 }
 			       )
@@ -306,6 +311,40 @@ public:
         regFile->setIntReg(sp_phys_reg, start_stack_address);
     }
 
+    void setArg1Register( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+        output->verbose(
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting argument 1 register to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            value);
+        const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(4);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> argument 1 (r4) maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        regFile->setIntReg(sp_phys_reg, value);
+    }
+
+    virtual void setFuncPointer( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+        output->verbose(
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting register 25 to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            value);
+        const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(25);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> r25 maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        regFile->setIntReg(sp_phys_reg, value);
+    }
+    virtual void setReturnRegister( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+        output->verbose(
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting register 2 to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            value);
+        const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(2);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> r2 maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        regFile->setIntReg(sp_phys_reg, value);
+    }
+
+    virtual void setSuccessRegister( SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile, const uint64_t value ) {
+        output->verbose(
+            CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Setting register 7 to (64B-aligned):          %" PRIu64 " / 0x%0llx\n", value,
+            value);
+        const int16_t sp_phys_reg = isa_tbl->getIntPhysReg(7);
+        output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> r7 maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+        regFile->setIntReg(sp_phys_reg, value);
+    }
 
     void initStatistics( ) {
         stat_decode_add       = registerStatistic<uint64_t>("ins_decode_add", "1");
@@ -351,6 +390,7 @@ public:
         stat_decode_lb        = registerStatistic<uint64_t>("ins_decode_lb", "1");
         stat_decode_lbu       = registerStatistic<uint64_t>("ins_decode_lbu", "1");
         stat_decode_lhu       = registerStatistic<uint64_t>("ins_decode_lhu", "1");
+        stat_decode_lh        = registerStatistic<uint64_t>("ins_decode_lh", "1");
         stat_decode_lw        = registerStatistic<uint64_t>("ins_decode_lw", "1");
         stat_decode_lfp32     = registerStatistic<uint64_t>("ins_decode_lfp32", "1");
         stat_decode_ll        = registerStatistic<uint64_t>("ins_decode_ll", "1");
@@ -388,6 +428,7 @@ public:
         stat_decode_cop1_cvtd = registerStatistic<uint64_t>("ins_decode_cop1_cvtd", "1");
         stat_decode_cop1_cvtw = registerStatistic<uint64_t>("ins_decode_cop1_cvtw", "1");
         stat_decode_cop1_lt   = registerStatistic<uint64_t>("ins_decode_cop1_lt", "1");
+        stat_decode_cop1_ult  = registerStatistic<uint64_t>("ins_decode_cop1_ult", "1");
         stat_decode_cop1_lte  = registerStatistic<uint64_t>("ins_decode_cop1_lte", "1");
         stat_decode_cop1_eq   = registerStatistic<uint64_t>("ins_decode_cop1_eq", "1");
     }
@@ -396,6 +437,8 @@ public:
     {
         output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "-> Decode step for thr: %" PRIu32 "\n", hw_thr);
         output->verbose(CALL_INFO, 16, VANADIS_DBG_DECODER_FLG, "---> Max decodes per cycle: %" PRIu16 "\n", max_decodes_per_cycle);
+
+        cycle_count = cycle;
 
         ins_loader->printStatus(output);
 
@@ -576,6 +619,7 @@ public:
                                     CALL_INFO, 16, VANADIS_DBG_DECODER_FLG,
                                     "---> --> micro-op for branch and delay exceed "
                                     "decode-q space. Cannot issue this cycle.\n");
+                                stat_uop_delayed_rob_full->addData(1);
                                 break;
                             }
                         }
@@ -613,6 +657,7 @@ public:
                                 (uint32_t)(thread_rob->capacity() - thread_rob->size()));
                             // We don't have enough space, so we have to stop and wait for
                             // more entries to free up.
+                            stat_uop_delayed_rob_full->addData(1);
                             break;
                         }
                     }
@@ -906,7 +951,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_MULT:
                         {
                             bundle->addInstruction(
-                                new VanadisMultiplySplitInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
+                                new VanadisMultiplySplitInstruction<int32_t>(
                                     ins_addr, hw_thr, options, MIPS_REG_LO, MIPS_REG_HI, rs, rt));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_mult);
@@ -915,7 +960,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_MULTU:
                         {
                             bundle->addInstruction(
-                                new VanadisMultiplySplitInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, false>(
+                                new VanadisMultiplySplitInstruction<uint32_t>(
                                     ins_addr, hw_thr, options, MIPS_REG_LO, MIPS_REG_HI, rs, rt));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_multu);
@@ -948,7 +993,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_SLT:
                         {
                             bundle->addInstruction(new VanadisSetRegCompareInstruction<
-                                                   REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
+                                                   REG_COMPARE_LT, int32_t>(
                                 ins_addr, hw_thr, options, rd, rs, rt));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_slt);
@@ -957,7 +1002,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_SLTU:
                         {
                             bundle->addInstruction(new VanadisSetRegCompareInstruction<
-                                                   REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT32, false>(
+                                                   REG_COMPARE_LT, uint32_t>(
                                 ins_addr, hw_thr, options, rd, rs, rt));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_sltu);
@@ -984,7 +1029,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_SUB:
                         {
                             bundle->addInstruction(
-                                new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                                new VanadisSubInstruction<int32_t>(
                                     ins_addr, hw_thr, options, rd, rs, rt, true));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_sub);
@@ -993,7 +1038,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_SUBU:
                         {
                             bundle->addInstruction(
-                                new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                                new VanadisSubInstruction<int32_t>(
                                     ins_addr, hw_thr, options, rd, rs, rt, false));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_subu);
@@ -1034,7 +1079,7 @@ protected:
                             rd, rt, shf_amnt);
 
                         bundle->addInstruction(
-                            new VanadisShiftLeftLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                            new VanadisShiftLeftLogicalImmInstruction<uint32_t>(
                                 ins_addr, hw_thr, options, rd, rt, shf_amnt));
                         insertDecodeFault = false;
                         MIPS_INC_DECODE_STAT(stat_decode_sll);
@@ -1196,6 +1241,20 @@ protected:
                 MIPS_INC_DECODE_STAT(stat_decode_lhu);
             } break;
 
+            case MIPS_SPEC_OP_MASK_LH:
+            {
+                const int64_t imm_value_64 = vanadis_sign_extend_offset_16(next_ins);
+
+                //				output->verbose(CALL_INFO, 16, 0,
+                //"[decoder/LH]: -> reg: %" PRIu16 " <- base: %" PRIu16 " + offset=%"
+                // PRId64 "\n", 					rt, rs, imm_value_64);
+                bundle->addInstruction(new VanadisLoadInstruction(
+                    ins_addr, hw_thr, options, rs, imm_value_64, rt, 2, true, MEM_TRANSACTION_NONE,
+                    LOAD_INT_REGISTER));
+                insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_lh);
+            } break;
+
             case MIPS_SPEC_OP_MASK_SB:
             {
                 const int64_t imm_value_64 = vanadis_sign_extend_offset_16(next_ins);
@@ -1269,7 +1328,7 @@ protected:
                 //"[decoder/SC]: -> reg: %" PRIu16 " -> base: %" PRIu16 " + offset=%"
                 // PRId64 "\n", 					rt, rs, imm_value_64);
                 bundle->addInstruction(new VanadisStoreConditionalInstruction(
-                    ins_addr, hw_thr, options, rs, imm_value_64, rt, rt, 4, STORE_INT_REGISTER));
+                    ins_addr, hw_thr, options, rs, imm_value_64, rt, rt, 4, STORE_INT_REGISTER, 1, 0));
                 //                bundle->addInstruction(new VanadisStoreInstruction(
                 //                    ins_addr, hw_thr, options, rs, imm_value_64, rt, 4, MEM_TRANSACTION_LLSC_STORE,
                 //                    STORE_INT_REGISTER));
@@ -1298,9 +1357,8 @@ protected:
                 } break;
                 case MIPS_SPEC_OP_MASK_BGEZAL:
                 {
-                    bundle->addInstruction(new VanadisBranchRegCompareImmLinkInstruction<
-                                           VanadisRegisterFormat::VANADIS_FORMAT_INT32, REG_COMPARE_GTE>(
-                        ins_addr, hw_thr, options, 4, rs, 0, offset_value_64 + 4, (uint16_t)31,
+                    bundle->addInstruction(new VanadisBranchRegCompareImmLinkInstruction<int32_t, REG_COMPARE_GTE>(
+                        ins_addr, hw_thr, options, 4, rs, 0, offset_value_64 + 4, (uint16_t) 31,
                         VANADIS_SINGLE_DELAY_SLOT));
                     insertDecodeFault = false;
                     MIPS_INC_DECODE_STAT(stat_decode_bgezal);
@@ -1350,8 +1408,7 @@ protected:
                 //"[decoder/BEQ]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64
                 //"\n",
                 //                                        rt, rs, imm_value_64 );
-                bundle->addInstruction(new VanadisBranchRegCompareInstruction<
-                                       VanadisRegisterFormat::VANADIS_FORMAT_INT32, REG_COMPARE_EQ, true>(
+                bundle->addInstruction(new VanadisBranchRegCompareInstruction<int32_t, REG_COMPARE_EQ>(
                     ins_addr, hw_thr, options, 4, rt, rs, imm_value_64 + 4, VANADIS_SINGLE_DELAY_SLOT));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_beq);
@@ -1393,8 +1450,7 @@ protected:
                 //"[decoder/BNE]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64
                 //"\n",
                 //                                        rt, rs, imm_value_64 );
-                bundle->addInstruction(new VanadisBranchRegCompareInstruction<
-                                       VanadisRegisterFormat::VANADIS_FORMAT_INT32, REG_COMPARE_NEQ, true>(
+                bundle->addInstruction(new VanadisBranchRegCompareInstruction<int32_t, REG_COMPARE_NEQ>(
                     ins_addr, hw_thr, options, 4, rt, rs, imm_value_64 + 4, VANADIS_SINGLE_DELAY_SLOT));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_bne);
@@ -1409,7 +1465,7 @@ protected:
                 //"\n",
                 //                                        rt, rs, imm_value_64 );
                 bundle->addInstruction(new VanadisSetRegCompareImmInstruction<
-                                       REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
+                                       REG_COMPARE_LT, int32_t>(
                     ins_addr, hw_thr, options, rt, rs, imm_value_64));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_slti);
@@ -1424,7 +1480,7 @@ protected:
                 //"\n",
                 //                                        rt, rs, imm_value_64 );
                 bundle->addInstruction(new VanadisSetRegCompareImmInstruction<
-                                       REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT32, false>(
+                                       REG_COMPARE_LT, uint32_t>(
                     ins_addr, hw_thr, options, rt, rs, imm_value_64));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_sltiu);
@@ -1836,6 +1892,7 @@ protected:
 
                     break;
 
+                    case MIPS_SPEC_COP_MASK_CMP_ULT:
                     case MIPS_SPEC_COP_MASK_CMP_LT:
                     case MIPS_SPEC_COP_MASK_CMP_LTE:
                     case MIPS_SPEC_COP_MASK_CMP_EQ:
@@ -1903,6 +1960,15 @@ protected:
 
                                 bundle->addInstruction(
                                     new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_LTE, double>(
+                                        ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
+                                insertDecodeFault = false;
+
+                                break;
+                            case 0x5:
+                                MIPS_INC_DECODE_STAT(stat_decode_cop1_ult);
+
+                                bundle->addInstruction(
+                                    new VanadisMIPSFPSetRegCompareInstruction<REG_COMPARE_ULT, double>(
                                         ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
 
@@ -2093,6 +2159,7 @@ protected:
     Statistic<uint64_t>* stat_decode_lb;
     Statistic<uint64_t>* stat_decode_lbu;
     Statistic<uint64_t>* stat_decode_lhu;
+    Statistic<uint64_t>* stat_decode_lh;
     Statistic<uint64_t>* stat_decode_lw;
     Statistic<uint64_t>* stat_decode_lfp32;
     Statistic<uint64_t>* stat_decode_ll;
@@ -2130,6 +2197,7 @@ protected:
     Statistic<uint64_t>* stat_decode_cop1_cvtd;
     Statistic<uint64_t>* stat_decode_cop1_cvtw;
     Statistic<uint64_t>* stat_decode_cop1_lt;
+    Statistic<uint64_t>* stat_decode_cop1_ult;
     Statistic<uint64_t>* stat_decode_cop1_lte;
     Statistic<uint64_t>* stat_decode_cop1_eq;
 };

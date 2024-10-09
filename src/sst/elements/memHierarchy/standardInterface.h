@@ -1,9 +1,9 @@
 // -*- mode: c++ -*-
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -71,7 +71,7 @@ public:
     friend class MemEventConverter;
 
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(StandardInterface, "memHierarchy", "standardInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(StandardInterface, "memHierarchy", "standardInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Interface to memory hierarchy between endpoint and cache. Converts StandardMem requests into MemEventBases.", SST::Interfaces::StandardMem)
     
     SST_ELI_DOCUMENT_PARAMS( 

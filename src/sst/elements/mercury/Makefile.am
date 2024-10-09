@@ -5,6 +5,9 @@
 AM_CPPFLAGS += \
 	$(MPI_CPPFLAGS)
 
+# unpleasant hack to make vintage automake (e.g. 1.13.4) work
+AM_LIBTOOLFLAGS = --tag=CXX
+
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libhg.la libsystemapi.la
 libhg_la_SOURCES = \
@@ -39,6 +42,7 @@ libhg_la_SOURCES = \
 #  threading/threading_pth.cc \
 #  threading/threading_ucontext.cc
 
+if SST_COMPILE_OSX
 if SST_HG_X86
   libhg_la_SOURCES += \
     operating_system/threading/asm/make_x86_64_sysv_macho_gas.S \
@@ -50,6 +54,20 @@ if SST_HG_A64
     operating_system/threading/asm/make_arm64_aapcs_macho_gas.S \
     operating_system/threading/asm/jump_arm64_aapcs_macho_gas.S \
     operating_system/threading/asm/ontop_arm64_aapcs_macho_gas.S
+endif
+else
+if SST_HG_X86
+  libhg_la_SOURCES += \
+    operating_system/threading/asm/make_x86_64_sysv_elf_gas.S \
+    operating_system/threading/asm/jump_x86_64_sysv_elf_gas.S \
+    operating_system/threading/asm/ontop_x86_64_sysv_elf_gas.S
+endif
+if SST_HG_A64
+  libhg_la_SOURCES += \
+    operating_system/threading/asm/make_arm64_aapcs_elf_gas.S \
+    operating_system/threading/asm/jump_arm64_aapcs_elf_gas.S \
+    operating_system/threading/asm/ontop_arm64_aapcs_elf_gas.S
+endif
 endif
 
 libsystemapi_la_SOURCES = \

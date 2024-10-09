@@ -1,19 +1,20 @@
 import os
 import sst
 
-map = "0x0:0x80000000:0x80000000"
+#map = "0x0:0x80000000:0x80000000"
 
 coherence_protocol="MESI"
-#coherence_protocol="MSI"
 
+#physMemSize = "4GiB"
+
+l2_debug = 0
 cache_debug = 0
 stdMem_debug = 0
 
-debug_addr=0x7ffffb80
-debug_start_time = 26760650595 
-#debug_start_time = 0
+debug_level=11
+debug_addr=0x6280
 
-executable="./app/rdma/msg"
+debugPython=False
 
 verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
 os_verbosity = os.getenv("VANADIS_OS_VERBOSE", 0)
@@ -37,212 +38,218 @@ vanadis_cpu_type = "vanadis.dbg_VanadisCPU"
 #vanadis_cpu_type = "vanadis.VanadisCPU"
 
 if (verbosity > 0):
-	print( "Verbosity (" + str(verbosity) + ") is non-zero, using debug version of Vanadis." )
-	vanadis_cpu_type = "vanadisdbg.VanadisCPU"
+    print( "Verbosity (" + str(verbosity) + ") is non-zero, using debug version of Vanadis." )
+    vanadis_cpu_type = "vanadisdbg.VanadisCPU"
 
-print( "Verbosity: " + str(verbosity) + " -> loading Vanadis CPU type: " + vanadis_cpu_type )
+if (verbosity > 0):
+    print( "Verbosity: " + str(verbosity) + " -> loading Vanadis CPU type: " + vanadis_cpu_type )
 
+tlbParams = {
+    "debug_level": 0,
+    "hitLatency": 10,
+    "num_hardware_threads": 1,
+    "num_tlb_entries_per_thread": 64,
+    "tlb_set_size": 4,
+}
+
+tlbWrapperParams = {
+    "debug_level": 0,
+}
 
 class Vanadis_Builder:
-	def __init__(self):
-		pass
+    def __init__(self):
+        pass
 
-	def build( self, nodeId, cpuId ):
+    def build( self, nodeId, cpuId ):
 
-		print( "nodeId {} cpuID={}".format( nodeId, cpuId ) )
+        if debugPython:
+            print( "nodeId {} cpuID={}".format( nodeId, cpuId ) )
 
-		prefix = 'node' + str(nodeId) + '.cpu' + str( cpuId ) 
-		v_cpu_0 = sst.Component(prefix, vanadis_cpu_type)
-		v_cpu_0.addParams({
-			   "clock" : cpu_clock,
-			   "verbose" : verbosity,
-			   "physical_fp_registers" : 168,
-			   "physical_int_registers" : 180,
-			   "integer_arith_cycles" : integer_arith_cycles,
-			   "integer_arith_units" : integer_arith_units,
-			   "fp_arith_cycles" : fp_arith_cycles,
-			   "fp_arith_units" : fp_arith_units,
-			   "branch_unit_cycles" : branch_arith_cycles,
-			   "print_int_reg" : 1,
-			   "pipeline_trace_file" : pipe_trace_file,
-			   "reorder_slots" : rob_slots,
-			   "decodes_per_cycle" : decodes_per_cycle,
-			   "issues_per_cycle" :  issues_per_cycle,
-			   "retires_per_cycle" : retires_per_cycle,
-			   "pause_when_retire_address" : os.getenv("VANADIS_HALT_AT_ADDRESS", 0)
-		})
+        prefix = 'node' + str(nodeId) + '.cpu' + str( cpuId ) 
+        cpu = sst.Component(prefix, vanadis_cpu_type)
+        cpu.addParams({
+            "clock" : cpu_clock,
+            "verbose" : verbosity,
+            "physical_fp_registers" : 168,
+            "physical_int_registers" : 180,
+            "integer_arith_cycles" : integer_arith_cycles,
+            "integer_arith_units" : integer_arith_units,
+            "fp_arith_cycles" : fp_arith_cycles,
+            "fp_arith_units" : fp_arith_units,
+            "branch_unit_cycles" : branch_arith_cycles,
+            "print_int_reg" : 1,
+            "pipeline_trace_file" : pipe_trace_file,
+            "reorder_slots" : rob_slots,
+            "decodes_per_cycle" : decodes_per_cycle,
+            "issues_per_cycle" :  issues_per_cycle,
+            "retires_per_cycle" : retires_per_cycle,
+            "pause_when_retire_address" : os.getenv("VANADIS_HALT_AT_ADDRESS", 0)
+        })
 
-		app_args = os.getenv("VANADIS_EXE_ARGS", "")
+        app_args = os.getenv("VANADIS_EXE_ARGS", "")
 
-		if app_args != "":
-			app_args_list = app_args.split(" ")
-			# We have a plus 1 because the executable name is arg0
-			app_args_count = len( app_args_list ) + 1
-			v_cpu_0.addParams({ "app.argc" : app_args_count })
-			print( "Identified " + str(app_args_count) + " application arguments, adding to input parameters." )
-			arg_start = 1
-			for next_arg in app_args_list:
-				print( "arg" + str(arg_start) + " = " + next_arg )
-				v_cpu_0.addParams({ "app.arg" + str(arg_start) : next_arg })
-				arg_start = arg_start + 1
-		else:
-			print( "No application arguments found, continuing with argc=0" )
+        if app_args != "":
+            app_args_list = app_args.split(" ")
+            # We have a plus 1 because the executable name is arg0
+            app_args_count = len( app_args_list ) + 1
+            cpu.addParams({ "app.argc" : app_args_count })
+            if (verbosity > 0):
+                print( "Identified " + str(app_args_count) + " application arguments, adding to input parameters." )
+            arg_start = 1
+            for next_arg in app_args_list:
+                if (verbosity > 0):
+                    print( "arg" + str(arg_start) + " = " + next_arg )
+                cpu.addParams({ "app.arg" + str(arg_start) : next_arg })
+                arg_start = arg_start + 1
+        else:
+            if (verbosity > 0):
+                print( "No application arguments found, continuing with argc=0" )
 
-		decode0     = v_cpu_0.setSubComponent( "decoder0", "vanadis.VanadisMIPSDecoder" )
-		os_hdlr     = decode0.setSubComponent( "os_handler", "vanadis.VanadisMIPSOSHandler" )
-		branch_pred = decode0.setSubComponent( "branch_unit", "vanadis.VanadisBasicBranchUnit")
+        decode = cpu.setSubComponent( "decoder0", "vanadis.VanadisMIPSDecoder" )
 
-		decode0.addParams({
-			"uop_cache_entries" : 1536,
-			"predecode_cache_entries" : 4
-		})
+        decode.addParams({
+            "uop_cache_entries" : 1536,
+            "predecode_cache_entries" : 4
+        })
 
-		os_hdlr.addParams({
-			"verbose" : os_verbosity,
-			"brk_zero_memory" : "yes"
-		})
+        os_hdlr = decode.setSubComponent( "os_handler", "vanadis.VanadisMIPSOSHandler" )
+        os_hdlr.addParams({
+            "verbose" : os_verbosity,
+            "brk_zero_memory" : "yes"
+        })
 
-		branch_pred.addParams({
-			"branch_entries" : 32
-		})
+        branch_pred = decode.setSubComponent( "branch_unit", "vanadis.VanadisBasicBranchUnit")
+        branch_pred.addParams({
+            "branch_entries" : 32
+        })
 
-		icache_if = v_cpu_0.setSubComponent( "mem_interface_inst", "memHierarchy.standardInterface" )
-		icache_if.addParam("coreId",cpuId)
-		icache_if.addParams({
-			  "debug" : stdMem_debug,
-			  "debug_level" : 11,
-			  "debug_start_time": debug_start_time,
-		})
+        icache_if = cpu.setSubComponent( "mem_interface_inst", "memHierarchy.standardInterface" )
+        icache_if.addParam("coreId",cpuId)
+        icache_if.addParams({
+            "debug" : stdMem_debug,
+            "debug_level" : 11,
+        })
 
-		v_cpu_0_lsq = v_cpu_0.setSubComponent( "lsq", "vanadis.VanadisBasicLoadStoreQueue" )
-		v_cpu_0_lsq.addParams({
-			"verbose" : verbosity,
-			"address_mask" : 0xFFFFFFFF,
-			"load_store_entries" : lsq_entries,
-			"fault_non_written_loads_after" : 0,
-			"check_memory_loads" : "no",
-			"allow_speculated_operations": "no"
-		})
+        cpu_lsq = cpu.setSubComponent( "lsq", "vanadis.VanadisBasicLoadStoreQueue" )
+        cpu_lsq.addParams({
+            "verbose" : verbosity,
+            "address_mask" : 0xFFFFFFFF,
+            "load_store_entries" : lsq_entries,
+            "fault_non_written_loads_after" : 0,
+            "check_memory_loads" : "no",
+            "allow_speculated_operations": "no"
+        })
 
-		dcache_if = v_cpu_0_lsq.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
-		dcache_if.addParam("coreId",cpuId)
-		dcache_if.addParams( {
-			  "debug" : stdMem_debug,
-			  "debug_level" : 11,
-			  "debug_start_time": debug_start_time,
-		})
+        dcache_if = cpu_lsq.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
+        dcache_if.addParam("coreId",cpuId)
+        dcache_if.addParams( {
+            "debug" : stdMem_debug,
+            "debug_level" : 11,
+        })
 		
+        # L1 D-Cache
+        l1cache = sst.Component(prefix + ".l1dcache", "memHierarchy.Cache")
+        l1cache.addParams({
+            "access_latency_cycles" : "2",
+            "cache_frequency" : cpu_clock,
+            "replacement_policy" : "lru",
+            "coherence_protocol" : coherence_protocol,
+            "associativity" : "8",
+            "cache_line_size" : "64",
+            "cache_size" : "32 KB",
+            "L1" : "1",
+            "debug_level" : debug_level,
+            "debug" : cache_debug,
+            "debug_addr" : debug_addr,
+        })
 
-		node_os = sst.Component(prefix + ".os", "vanadis.VanadisNodeOS")
-		node_os.addParams({
-			"verbose" : os_verbosity,
-			"cores" : 1,
-			"heap_start" : 512 * 1024 * 1024,
-			"heap_end"   : (2 * 1024 * 1024 * 1024) - 4096,
-			"page_size"  : 4096,
-			"heap_verbose" : 0, #verbosity
-	        "executable" : os.getenv("VANADIS_EXE", executable),
-		    "app.argc" : 4,
-            "app.arg0" : "IMB",
-            "app.arg1" : "PingPong",
-            "app.arg2" : "-iter",
-            "app.arg3" : "3",
-            "app.env_count" : 1,
-            "app.env0" : "HOME=/home/sdhammo",
-            "app.env1" : "VANADIS_THREAD_NUM=0",
-		})
+        l1dcache_2_cpu     = l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
+        l1dcache_2_l2cache = l1cache.setSubComponent("memlink", "memHierarchy.MemLink")
 
-		node_os_mem_if = node_os.setSubComponent( "mem_interface", "memHierarchy.standardInterface" )
-		node_os_mem_if.addParam("coreId",cpuId)
-		node_os_mem_if.addParams({
-			  "debug" : stdMem_debug,
-			  "debug_level" : 11,
-			  "debug_start_time": debug_start_time,
-		})
+        # L1 I-Cache
+        l1icache = sst.Component(prefix + ".l1icache", "memHierarchy.Cache")
+        l1icache.addParams({
+            "access_latency_cycles" : "2",
+            "cache_frequency" : cpu_clock,
+            "replacement_policy" : "lru",
+            "coherence_protocol" : coherence_protocol,
+            "associativity" : "8",
+            "cache_line_size" : "64",
+            "cache_size" : "32 KB",
+            #"prefetcher" : "cassini.NextBlockPrefetcher",
+            #"prefetcher.reach" : 1,
+            "L1" : "1",
+            "debug_level" : debug_level,
+            "debug" : cache_debug,
+            "debug_addr" : debug_addr,
+        })
 
-		os_l1dcache = sst.Component(prefix + ".node_os.l1dcache", "memHierarchy.Cache")
-		os_l1dcache.addParams({
-			  "access_latency_cycles" : "2",
-			  "cache_frequency" : cpu_clock,
-			  "replacement_policy" : "lru",
-			  "coherence_protocol" : coherence_protocol,
-			  "associativity" : "8",
-			  "cache_line_size" : "64",
-			  "cache_size" : "32 KB",
-			  "L1" : "1",
-            "debug_mask" : 1<<3 | 1<<5,
-            "debug_level" : "20",
-			  "debug" : cache_debug,
-			  "debug_start_time": debug_start_time,
-			"debug_addr" : debug_addr,
-		})
+        # Bus
+        cache_bus = sst.Component(prefix + ".bus", "memHierarchy.Bus")
+        cache_bus.addParams({
+            "bus_frequency" : cpu_clock,
+        })
 
-		cpu0_l1dcache = sst.Component(prefix + ".l1dcache", "memHierarchy.Cache")
-		cpu0_l1dcache.addParams({
-			  "access_latency_cycles" : "2",
-			  "cache_frequency" : cpu_clock,
-			  "replacement_policy" : "lru",
-			  "coherence_protocol" : coherence_protocol,
-			  "associativity" : "8",
-			  "cache_line_size" : "64",
-			  "cache_size" : "32 KB",
-			  "L1" : "1",
-            "debug_mask" : 1<<3 | 1<<5,
-            "debug_level" : "20",
-			  "debug" : cache_debug,
-			  "debug_start_time": debug_start_time,
-			"debug_addr" : debug_addr,
-		})
+        # L2 D-Cache
+        l2cache = sst.Component(prefix + ".l2cache", "memHierarchy.Cache")
+        l2cache.addParams({
+            "access_latency_cycles" : "14",
+            "cache_frequency" : cpu_clock,
+            "replacement_policy" : "lru",
+            "coherence_protocol" : coherence_protocol,
+            "associativity" : "16",
+            "cache_line_size" : "64",
+            "mshr_latency_cycles" : 3,
+            "cache_size" : "1MB",
+            "debug": l2_debug,
+            "debug_level" : debug_level,
+            "debug_addr" : debug_addr,
+        })
 
-		l1dcache_2_cpu     = cpu0_l1dcache.setSubComponent("cpulink", "memHierarchy.MemLink")
-		l1dcache_2_l2cache = cpu0_l1dcache.setSubComponent("memlink", "memHierarchy.MemLink")
+        l2cache_2_cpu = l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 
-		cpu0_l1icache = sst.Component(prefix + ".l1icache", "memHierarchy.Cache")
-		cpu0_l1icache.addParams({
-			  "access_latency_cycles" : "2",
-			  "cache_frequency" : cpu_clock,
-			  "replacement_policy" : "lru",
-			  "coherence_protocol" : coherence_protocol,
-			  "associativity" : "8",
-			  "cache_line_size" : "64",
-			  "cache_size" : "32 KB",
-			  #"prefetcher" : "cassini.NextBlockPrefetcher",
-			  #"prefetcher.reach" : 1,
-			  "L1" : "1",
-            "debug_mask" : 1<<3 | 1<<5,
-            "debug_level" : "20",
-			  "debug" : cache_debug,
-			  "debug_start_time": debug_start_time,
-			"debug_addr" : debug_addr,
-		})
+        # CPU D-TLB
+        dtlbWrapper = sst.Component(prefix+".dtlb", "mmu.tlb_wrapper")
+        dtlbWrapper.addParams(tlbWrapperParams)
+        dtlb = dtlbWrapper.setSubComponent("tlb", "mmu.simpleTLB" );
+        dtlb.addParams(tlbParams)
 
-		cache_bus = sst.Component(prefix + ".bus", "memHierarchy.Bus")
-		cache_bus.addParams({
-			  "bus_frequency" : cpu_clock,
-		})
+        # CPU I-TLB
+        itlbWrapper = sst.Component(prefix+".itlb", "mmu.tlb_wrapper")
+        itlbWrapper.addParams(tlbWrapperParams)
+        itlbWrapper.addParam("exe",True)
+        itlb = itlbWrapper.setSubComponent("tlb", "mmu.simpleTLB" );
+        itlb.addParams(tlbParams)
 
-		l1icache_2_cpu     = cpu0_l1icache.setSubComponent("cpulink", "memHierarchy.MemLink")
-		l1icache_2_l2cache = cpu0_l1icache.setSubComponent("memlink", "memHierarchy.MemLink")
+        # CPU (data) -> D-TLB
+        link = sst.Link(prefix+".link_cpu_dtlb")
+        link.connect( (dcache_if, "port", "1ns"), (dtlbWrapper, "cpu_if", "1ns") )
 
-		link_cpu0_l1dcache_link = sst.Link(prefix+".link_cpu0_l1dcache")
-		link_cpu0_l1dcache_link.connect( (dcache_if, "port", "1ns"), (l1dcache_2_cpu, "port", "1ns") )
+        # CPU (instruction) -> I-TLB
+        link = sst.Link(prefix+".link_cpu_itlb")
+        link.connect( (icache_if, "port", "1ns"), (itlbWrapper, "cpu_if", "1ns") )
 
-		link_cpu0_l1icache_link = sst.Link(prefix + ".link_cpu0_l1icache")
-		link_cpu0_l1icache_link.connect( (icache_if, "port", "1ns"), (l1icache_2_cpu, "port", "1ns") )
+        l1icache_2_cpu     = l1icache.setSubComponent("cpulink", "memHierarchy.MemLink")
+        l1icache_2_l2cache = l1icache.setSubComponent("memlink", "memHierarchy.MemLink")
 
-		link_os_l1dcache_link = sst.Link(prefix + ".link_os_l1dcache")
-		link_os_l1dcache_link.connect( (node_os_mem_if, "port", "1ns"), (os_l1dcache, "high_network_0", "1ns") )
+        # D-TLB -> D-L1 
+        link = sst.Link(prefix+".link_l1cache")
+        link.connect( (dtlbWrapper, "cache_if", "1ns"), (l1dcache_2_cpu, "port", "1ns") )
 
-		link_l1dcache_l2cache_link = sst.Link(prefix + ".link_l1dcache_l2cache")
-		link_l1dcache_l2cache_link.connect( (l1dcache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_0", "1ns") )
+        # I-TLB -> I-L1 
+        link = sst.Link(prefix+".link_l1icache")
+        link.connect( (itlbWrapper, "cache_if", "1ns"), (l1icache_2_cpu, "port", "1ns") )
 
-		link_l1icache_l2cache_link = sst.Link(prefix + ".link_l1icache_l2cache")
-		link_l1icache_l2cache_link.connect( (l1icache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_1", "1ns") )
+        # L1 I-Cache to bus
+        link = sst.Link(prefix + ".link_l1dcache_l2cache")
+        link.connect( (l1dcache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_0", "1ns") )
 
-		link_os_l1dcache_l2cache_link = sst.Link(prefix + ".link_os_l1dcache_l2cache")
-		link_os_l1dcache_l2cache_link.connect( (os_l1dcache, "low_network_0", "1ns"), (cache_bus, "high_network_2", "1ns") )
+        # L1 D-Cache to bus
+        link = sst.Link(prefix + ".link_l1icache_l2cache")
+        link.connect( (l1icache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_1", "1ns") )
 
-		link_core0_os_link = sst.Link(prefix + ".link_core0_os")
-		link_core0_os_link.connect( (v_cpu_0, "os_link", "5ns"), (node_os, "core0", "5ns") )
+        # BUS to L2 cache
+        link = sst.Link(prefix+".link_bus_l2cache")
+        link.connect( (cache_bus, "low_network_0", "1ns"), (l2cache_2_cpu, "port", "1ns") )
 
-		return (cache_bus, "low_network_0", "1ns")
+        return cpu, l2cache, dtlb, itlb

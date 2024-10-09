@@ -6,7 +6,7 @@
 AC_INIT([SST Elements Library],[-dev],[sst@sandia.gov])
 
 AC_PREREQ([2.59])
-AC_COPYRIGHT([Copyright National Technology and Engineering Solutions of Sandia (NTESS), 2004-2022])
+AC_COPYRIGHT([Copyright National Technology and Engineering Solutions of Sandia (NTESS), 2004-2023])
 
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([config])
@@ -128,15 +128,9 @@ printf "%38s : %s\n" "Preprocessor Options" "$AM_CPPFLAGS $CPPFLAGS"
 printf "%38s : %s\n" "C Compiler Options" "$AM_CFLAGS $CFLAGS"
 printf "%38s : %s\n" "C++ Compiler Options" "$AM_CXXFLAGS $CXXFLAGS"
 
-if test "x$found_cxx1y" = "xyes"; then
-printf "%38s : %s\n" "C++ Standard Compliance" "C++1Y/14"
-else
-printf "%38s : %s\n" "C++ Standard Compliance" "C++11"
-fi
+printf "%38s : %s\n" "C++ Standard Compliance" "C++17"
 
 printf "%38s : %s\n" "Linker Options" "$AM_LDFLAGS $LDFLAGS"
-printf "%38s : %s\n" "Boost Library Preprocessor" "$BOOST_CPPFLAGS"
-printf "%38s : %s\n" "Boost Library Linker Options" "$BOOST_LDFLAGS"
 echo ""
 echo "-------------------------------------------------------"
 echo "Configuration Information (Found Dependencies):"

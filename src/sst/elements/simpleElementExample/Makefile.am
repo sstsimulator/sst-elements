@@ -20,7 +20,15 @@ libsimpleElementExample_la_SOURCES = \
      	basicClocks.h \
      	basicClocks.cc \
 	basicParams.h \
-	basicParams.cc
+	basicParams.cc \
+	basicSimLifeCycleEvent.h \
+	basicSimLifeCycle.h \
+	basicSimLifeCycle.cc \
+	basicSubComponentEvent.h \
+	basicSubComponent_component.h \
+	basicSubComponent_component.cc \
+	basicSubComponent_subcomponent.h \
+	basicSubComponent_subcomponent.cc
 
 deprecated_libsimpleElementExample_sources =
 
@@ -37,14 +45,19 @@ EXTRA_DIST = \
     tests/example0.py \
     tests/example1.py \
     tests/basicLinks.py \
+    tests/basicSimLifeCycle.py \
     tests/basicStatistics0.py \
     tests/basicStatistics2.py \
+    tests/basicSubComponent.py \
     tests/refFiles/basicClocks.out \
     tests/refFiles/basicLinks.out \
     tests/refFiles/basicParams.out \
+    tests/refFiles/basicSimLifeCycle.out \
+    tests/refFiles/basicSimLifeCycle_verbose.out \
     tests/refFiles/basicStatistics0.out \
     tests/refFiles/basicStatistics1.out \
     tests/refFiles/basicStatistics2.out \
+    tests/refFiles/basicSubComponent.out \
     tests/refFiles/example0.out \
     tests/refFiles/example1.out
 

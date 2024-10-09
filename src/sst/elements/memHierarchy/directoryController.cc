@@ -1,8 +1,8 @@
-// Copyright 2013-2022 NTESS. Under the terms
+// Copyright 2013-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2022, NTESS
+// Copyright (c) 2013-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -384,8 +384,10 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
         if (maxRequestsPerCycle != 0 && requestsThisCycle == maxRequestsPerCycle) {
             break;
         }
+#ifdef __SST_DEBUG_OUTPUT__
         dbg.debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Retry   (%s)\n",
                 getCurrentSimCycle(), timestamp, getName().c_str(), (*it)->getVerboseString(dlevel).c_str());
+#endif
         
         if (processPacket(*it, true)) {
             requestsThisCycle++;
@@ -400,8 +402,10 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
         if (maxRequestsPerCycle != 0 && requestsThisCycle == maxRequestsPerCycle)
             break;
 
+#ifdef __SST_DEBUG_OUTPUT__
         dbg.debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
                 getCurrentSimCycle(), timestamp, getName().c_str(), (*it)->getVerboseString(dlevel).c_str());
+#endif
 
         if (processPacket(*it, false)) {
             requestsThisCycle++;
@@ -640,12 +644,12 @@ void DirectoryController::init(unsigned int phase) {
     // InitData: Name, NULLCMD, Endpoint type, inclusive of all upper levels, will send writeback acks, line size
     if (!phase) {
         if (cpuLink != memLink)
-            cpuLink->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Directory, true, true, false, cacheLineSize, true));
-        memLink->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Directory, true, true, false, cacheLineSize, true));
+            cpuLink->sendUntimedData(new MemEventInitCoherence(getName(), Endpoint::Directory, true, true, false, cacheLineSize, true));
+        memLink->sendUntimedData(new MemEventInitCoherence(getName(), Endpoint::Directory, true, true, false, cacheLineSize, true));
     }
 
     /* Pass data on to memory */
-    while(MemEventInit *ev = cpuLink->recvInitData()) {
+    while(MemEventInit *ev = cpuLink->recvUntimedData()) {
         if (ev->getCmd() == Command::NULLCMD) {
             dbg.debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
                 getName().c_str(), ev->getVerboseString(dlevel).c_str());
@@ -659,7 +663,7 @@ void DirectoryController::init(unsigned int phase) {
             } else if (ev->getInitCmd() == MemEventInit::InitCommand::Endpoint) {
                 MemEventInit * mEv = ev->clone();
                 mEv->setSrc(getName());
-                memLink->sendInitData(mEv);
+                memLink->sendUntimedData(mEv);
             }
             delete ev;
         } else {
@@ -668,7 +672,7 @@ void DirectoryController::init(unsigned int phase) {
             if (isRequestAddressValid(ev->getAddr())){
                 dbg.debug(_L10_, "I: %-20s   Event:SendInitData    %" PRIx64 "\n",
                         getName().c_str(), ev->getAddr());
-                memLink->sendInitData(ev, false);
+                memLink->sendUntimedData(ev, false);
             } else
                 delete ev;
 
@@ -678,7 +682,7 @@ void DirectoryController::init(unsigned int phase) {
 
     SST::Event * ev;
     if (cpuLink != memLink) {
-        while ((ev = memLink->recvInitData())) {
+        while ((ev = memLink->recvUntimedData())) {
             MemEventInit * initEv = dynamic_cast<MemEventInit*>(ev);
             if (initEv && initEv->getCmd() == Command::NULLCMD) {
                 dbg.debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
@@ -691,7 +695,7 @@ void DirectoryController::init(unsigned int phase) {
                 } else if (initEv->getInitCmd() == MemEventInit::InitCommand::Endpoint) {
                     MemEventInit * mEv = initEv->clone();
                     mEv->setSrc(getName());
-                    cpuLink->sendInitData(mEv);
+                    cpuLink->sendUntimedData(mEv);
                 }
             }
             delete ev;

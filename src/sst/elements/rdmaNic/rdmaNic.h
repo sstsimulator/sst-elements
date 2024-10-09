@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,10 +21,9 @@
 
 #include <sst/core/component.h>
 #include <sst/core/event.h>
+#include <sst/core/componentExtension.h>
 
 #include <sst/core/interfaces/stdMem.h>
-
-#include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 
 #include "rdmaNicHostInterface.h"
@@ -242,7 +241,6 @@ class RdmaNic : public SST::Component {
 	NetworkQueue* m_networkQ;
 	RecvEngine* m_recvEngine;
 	SendEngine* m_sendEngine;
-	bool m_useDmaCache;
 
 	Barrier* m_barrier;
 
@@ -258,7 +256,7 @@ class RdmaNic : public SST::Component {
 	int getNetPktMtuLen() { return m_netPktMtuLen; }
 
 	Addr_t calcCompQueueTailAddress( int thread, int cqId ) {
-		Addr_t addr = m_ioBaseAddr + m_perPeTotalMemSize * thread; 
+		Addr_t addr = m_perPeTotalMemSize * thread; 
 		addr += m_perPeReqQueueMemSize;
 		addr += sizeof( QueueIndex ) * cqId;
 		return addr;
@@ -278,7 +276,9 @@ class RdmaNic : public SST::Component {
 		case RdmaRecv: return "RdmaRecv";
 		case RdmaFini: return "RdmaFini";
 		case RdmaCreateRQ: return "RdmaCreateRQ";
+		case RdmaDestroyRQ: return "RdmaDestroyRQ";
 		case RdmaCreateCQ: return "RdmaCreateCQ";
+		case RdmaDestroyCQ: return "RdmaDestroyCQ";
 		case RdmaMemRgnReg: return "RdmaMemRgnReg";
 		case RdmaMemRgnUnreg: return "RdmaMemRgnUnreg";
 		case RdmaMemWrite: return "RdmaMemWrite";

@@ -100,7 +100,7 @@ class testcase_memHierarchy_memHA(SSTTestCase):
 
     @skip_on_sstsimulator_conf_empty_str("GOBLIN_HMCSIM", "LIBDIR", "GOBLIN_HMCSIM is not included as part of this build")
     def test_memHA_BackendGoblinHMC(self):
-        self.memHA_Template("BackendGoblinHMC")
+        self.memHA_Template("BackendGoblinHMC", testtimeout=400)
 
     @skip_on_sstsimulator_conf_empty_str("DRAMSIM3", "LIBDIR", "DRAMSIM3 is not included as part of this build")
     def test_memHA_BackendDramsim3(self):

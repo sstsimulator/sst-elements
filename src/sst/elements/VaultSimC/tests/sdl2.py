@@ -3,7 +3,7 @@ import sst
 
 # Define SST core options
 sst.setProgramOption("timebase", "1 ps")
-sst.setProgramOption("stopAtCycle", "50us")
+sst.setProgramOption("stop-at", "50us")
 
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "VaultSimC.cpu")

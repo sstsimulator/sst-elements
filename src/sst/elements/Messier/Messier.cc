@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -157,10 +157,11 @@ Messier::Messier(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 
 	char* link_buffer = (char*) malloc(sizeof(char) * 256);
+        size_t buffer_size = sizeof(char) * 256;
 
 //	m_memChan = configureLink( "bus", "1 ns" );
 
-	sprintf(link_buffer, "bus");
+	snprintf(link_buffer, buffer_size, "bus");
 
 
        //m_memChan = configureLink(link_buffer, "0ps", new Event::Handler<TLBhierarchy>(TLB[i], &TLBhierarchy::handleEvent_CPU));
@@ -177,7 +178,7 @@ Messier::Messier(SST::ComponentId_t id, SST::Params& params): Component(id) {
         m_memChan = configureLink(link_buffer, "1ns", new Event::Handler<NVM_DIMM>(DIMM, &NVM_DIMM::handleRequest));
 
 
-	sprintf(link_buffer, "event_bus");
+	snprintf(link_buffer, buffer_size, "event_bus");
 
         event_link = configureSelfLink(link_buffer, "1ns", new Event::Handler<NVM_DIMM>(DIMM, &NVM_DIMM::handleEvent));
 

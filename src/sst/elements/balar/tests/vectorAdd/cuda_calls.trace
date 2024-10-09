@@ -1,0 +1,10 @@
+CUDA memalloc: dptr: dptr-0, size: 524288
+CUDA memalloc: dptr: dptr-1, size: 524288
+CUDA memalloc: dptr: dptr-2, size: 524288
+CUDA memcpyH2D detected: device_ptr: dptr-0, host_ptr: 0x7f33c2241010, size: 524288, data_file: cuMemcpyH2D-0-524288.data, addr: 0x7f3397c00000
+CUDA memcpyH2D detected: device_ptr: dptr-1, host_ptr: 0x7f33c21c0010, size: 524288, data_file: cuMemcpyH2D-1-524288.data, addr: 0x7f3397c80000
+CUDA cu kernel launch detected: name: vecAdd, ptx_name: _Z6vecAddPiS_S_i, funcptr: 0x560947101890, gdx: 512, gdy: 1, gdz: 1, bdx: 256, bdy: 1, bdz: 1, sharedBytes: 0, CUstream: (nil), args: dptr-0/8/dptr-1/8/dptr-2/8/131072/4/
+CUDA memcpyD2H detected: host_ptr: 0x7f33c213f010, device_ptr: dptr-2, size: 524288, data_file: cuMemcpyD2H-0-524288.data
+CUDA free detected: dptr: dptr-0
+CUDA free detected: dptr: dptr-1
+CUDA free detected: dptr: dptr-2

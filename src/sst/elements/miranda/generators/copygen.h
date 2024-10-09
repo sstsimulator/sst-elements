@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -83,21 +83,21 @@ public:
 
     void completed() {}
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
-            CopyGenerator,
-       	    "miranda",
-            "CopyGenerator",
-            SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        CopyGenerator,
+        "miranda",
+        "CopyGenerator",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
    	    "Creates a single copy of stream of reads/writes replicating an array copy pattern",
-       	    SST::Miranda::RequestGenerator
+        SST::Miranda::RequestGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
 	    { "read_start_address",  "Sets the start read address for this generator", "0" },
-    	    { "write_start_address", "Sets the start target address for writes for the generator", "1024" },
-    	    { "request_size",        "Sets the size of each request in bytes", "8" },
-    	    { "request_count",       "Sets the number of items to be copied", "128" },
-    	    { "verbose",             "Sets the verbosity of the output", "0" }
+        { "write_start_address", "Sets the start target address for writes for the generator", "1024" },
+        { "request_size",        "Sets the size of each request in bytes", "8" },
+        { "request_count",       "Sets the number of items to be copied", "128" },
+        { "verbose",             "Sets the verbosity of the output", "0" }
     )
 
 private:

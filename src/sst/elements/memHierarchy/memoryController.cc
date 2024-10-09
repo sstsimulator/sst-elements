@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -162,15 +162,16 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         //lists->createAll<CacheListener>(listeners_, false, ComponentInfo::SHARE_NONE);
     } else { // Manually load via the old way of doing it
         const uint32_t listenerCount  = params.find<uint32_t>("listenercount", 0);
-        char* nextListenerName   = (char*) malloc(sizeof(char) * 64);
-        char* nextListenerParams = (char*) malloc(sizeof(char) * 64);
+        size_t bufferSize = sizeof(char) * 64;
+        char* nextListenerName   = (char*) malloc(bufferSize);
+        char* nextListenerParams = (char*) malloc(bufferSize);
 
         for (uint32_t i = 0; i < listenerCount; ++i) {
-            sprintf(nextListenerName, "listener%" PRIu32, i);
+            snprintf(nextListenerName, bufferSize, "listener%" PRIu32, i);
             string listenerMod     = params.find<std::string>(nextListenerName, "");
 
             if (listenerMod != "") {
-                sprintf(nextListenerParams, "listener%" PRIu32 "", i);
+                snprintf(nextListenerParams, bufferSize, "listener%" PRIu32 "", i);
                 Params listenerParams = params.get_scoped_params(nextListenerParams);
 
                 CacheListener* loadedListener = loadAnonymousSubComponent<CacheListener>(listenerMod, "listener", i, ComponentInfo::INSERT_STATS, listenerParams);
@@ -558,11 +559,11 @@ void MemController::init(unsigned int phase) {
 
     if (!phase) {
         /* Announce our presence on link */
-        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), false));
-        link_->sendInitData(new MemEventInitEndpoint(getName().c_str(), Endpoint::Memory, region_, true));
+        link_->sendUntimedData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), false));
+        link_->sendUntimedData(new MemEventInitEndpoint(getName().c_str(), Endpoint::Memory, region_, true));
     }
 
-    while (MemEventInit *ev = link_->recvInitData()) {
+    while (MemEventInit *ev = link_->recvUntimedData()) {
         processInitEvent(ev);
     }
 }
@@ -574,11 +575,9 @@ void MemController::setup(void) {
 
 
 void MemController::finish(void) {
-    if (!clockOn_) {
-        Cycle_t cycle = turnClockOn();
-        memBackendConvertor_->turnClockOn(cycle);
-    }
-    memBackendConvertor_->finish();
+    Cycle_t cycle = getNextClockCycle(clockTimeBase_); // Get finish time
+    cycle--;
+    memBackendConvertor_->finish(cycle);
     link_->finish();
 }
 

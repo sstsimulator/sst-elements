@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2022 NTESS. Under the terms
+# Copyright 2009-2023 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2022, NTESS
+# Copyright (c) 2009-2023, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -21,15 +21,8 @@ import copy
 import re
 from collections import deque
 
-# importlib didn't exist until 2.7, so if we're running on 2.6, then
-# import statement will fail.
-try:
-    from importlib import import_module
-except ImportError:
-    # We must be using 2.6, use the old module import code.
-    def import_module(filename):
-        return __import__( filename, fromlist=[''] )
-
+# Need import_module to load platform files
+from importlib import import_module
 
 class PlatformDefinition:
 
@@ -55,7 +48,7 @@ class PlatformDefinition:
 
     @classmethod
     def loadPlatformFile(cls,name):
-        import_module(name)
+        return import_module(name)
 
     @classmethod
     def getClassType(cls,key):
@@ -645,7 +638,7 @@ class Topology(TemplateBase):
     def getNumNodes(self):
         pass
     def getRouterNameForId(self,rtr_id):
-        return "%srtr.%d"%(self._prefix,rtr_id)
+        return "%srtr%d"%(self._prefix,rtr_id)
     def findRouterById(self,rtr_id):
         return sst.findComponentByName(self.getRouterNameForId(rtr_id))
     def _instanceRouter(self,radix,rtr_id):

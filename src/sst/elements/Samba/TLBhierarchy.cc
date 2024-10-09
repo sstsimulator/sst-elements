@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -37,7 +37,7 @@ TLBhierarchy::TLBhierarchy(ComponentId_t id, int tlb_id) : ComponentExtension(id
 	coreID=tlb_id;
 
 	char* subID = (char*) malloc(sizeof(char) * 32);
-	sprintf(subID, "%" PRIu32, coreID);
+	snprintf(subID, sizeof(char)*32, "%" PRIu32, coreID);
 
 }
 
@@ -101,7 +101,7 @@ TLBhierarchy::TLBhierarchy(ComponentId_t id, int tlb_id, int Levels, Params& par
 	ptw_confined  = ((uint32_t) params.find<uint32_t>("ptw_confined", 0));
 
 	char* subID = (char*) malloc(sizeof(char) * 32);
-	sprintf(subID, "%" PRIu32, coreID);
+	snprintf(subID, sizeof(char)*32, "%" PRIu32, coreID);
 
 	PTW = loadComponentExtension<PageTableWalker>(coreID, nullptr, 0, params);
 

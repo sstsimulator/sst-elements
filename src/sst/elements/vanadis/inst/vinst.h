@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -18,6 +18,7 @@
 
 #include "decoder/visaopts.h"
 #include "inst/regfile.h"
+#include "inst/regstack.h"
 #include "inst/vinsttype.h"
 #include "inst/vregfmt.h"
 
@@ -47,35 +48,33 @@ public:
         count_isa_fp_reg_in(c_isa_fp_reg_in),
         count_isa_fp_reg_out(c_isa_fp_reg_out)
     {
-
         phys_int_regs_in = (count_phys_int_reg_in > 0) ? new uint16_t[count_phys_int_reg_in] : nullptr;
-        std::memset(phys_int_regs_in, 0, count_phys_int_reg_in);
+        std::memset(phys_int_regs_in, 0, count_phys_int_reg_in * sizeof( uint16_t ));
 
         phys_int_regs_out = (count_phys_int_reg_out > 0) ? new uint16_t[count_phys_int_reg_out] : nullptr;
-        std::memset(phys_int_regs_out, 0, count_phys_int_reg_out);
-
+        std::memset(phys_int_regs_out, 0, count_phys_int_reg_out * sizeof( uint16_t ) );
+  
         isa_int_regs_in = (count_isa_int_reg_in > 0) ? new uint16_t[count_isa_int_reg_in] : nullptr;
-        std::memset(isa_int_regs_in, 0, count_isa_int_reg_in);
-
+        std::memset(isa_int_regs_in, 0, count_isa_int_reg_in * sizeof( uint16_t ));
+ 
         isa_int_regs_out = (count_isa_int_reg_out > 0) ? new uint16_t[count_isa_int_reg_out] : nullptr;
-        std::memset(isa_int_regs_out, 0, count_isa_int_reg_out);
+        std::memset(isa_int_regs_out, 0, count_isa_int_reg_out * sizeof( uint16_t ) );
 
         phys_fp_regs_in = (count_phys_fp_reg_in > 0) ? new uint16_t[count_phys_fp_reg_in] : nullptr;
-        std::memset(phys_fp_regs_in, 0, count_phys_fp_reg_in);
+        std::memset(phys_fp_regs_in, 0, count_phys_fp_reg_in * sizeof( uint16_t ));
 
         phys_fp_regs_out = (count_phys_fp_reg_out > 0) ? new uint16_t[count_phys_fp_reg_out] : nullptr;
-        std::memset(phys_fp_regs_out, 0, count_phys_fp_reg_out);
+        std::memset(phys_fp_regs_out, 0, count_phys_fp_reg_out * sizeof( uint16_t ));
 
         isa_fp_regs_in = (count_isa_fp_reg_in > 0) ? new uint16_t[count_isa_fp_reg_in] : nullptr;
-        std::memset(isa_fp_regs_in, 0, count_isa_fp_reg_in);
+        std::memset(isa_fp_regs_in, 0, count_isa_fp_reg_in * sizeof( uint16_t ) );
 
         isa_fp_regs_out = (count_isa_fp_reg_out > 0) ? new uint16_t[count_isa_fp_reg_out] : nullptr;
-        std::memset(isa_fp_regs_out, 0, count_isa_fp_reg_out);
-
+        std::memset(isa_fp_regs_out, 0, count_isa_fp_reg_out * sizeof( uint16_t ));
+  
         trapError             = false;
         hasExecuted           = false;
         hasIssued             = false;
-        hasRegistersAllocated = false;
         enduOpGroup           = false;
         isFrontOfROB          = false;
         hasROBSlot            = false;
@@ -106,11 +105,9 @@ public:
         count_isa_fp_reg_in(copy_me.count_isa_fp_reg_in),
         count_isa_fp_reg_out(copy_me.count_isa_fp_reg_out)
     {
-
         trapError             = copy_me.trapError;
         hasExecuted           = copy_me.hasExecuted;
         hasIssued             = copy_me.hasIssued;
-        hasRegistersAllocated = copy_me.hasRegistersAllocated;
         enduOpGroup           = copy_me.enduOpGroup;
         isFrontOfROB          = false;
         hasROBSlot            = false;
@@ -272,23 +269,13 @@ public:
 
     uint16_t countPhysIntRegIn() const { return count_phys_int_reg_in; }
     uint16_t countPhysIntRegOut() const { return count_phys_int_reg_out; }
-    uint16_t countISAIntRegIn() const { return count_isa_int_reg_in; }
-    uint16_t countISAIntRegOut() const { return count_isa_int_reg_out; }
-
     uint16_t countPhysFPRegIn() const { return count_phys_fp_reg_in; }
     uint16_t countPhysFPRegOut() const { return count_phys_fp_reg_out; }
+
+    uint16_t countISAIntRegIn() const { return count_isa_int_reg_in; }
+    uint16_t countISAIntRegOut() const { return count_isa_int_reg_out; }
     uint16_t countISAFPRegIn() const { return count_isa_fp_reg_in; }
     uint16_t countISAFPRegOut() const { return count_isa_fp_reg_out; }
-
-    uint16_t* getPhysIntRegIn() { return phys_int_regs_in; }
-    uint16_t* getPhysIntRegOut() { return phys_int_regs_out; }
-    uint16_t* getISAIntRegIn() { return isa_int_regs_in; }
-    uint16_t* getISAIntRegOut() { return isa_int_regs_out; }
-
-    uint16_t* getPhysFPRegIn() { return phys_fp_regs_in; }
-    uint16_t* getPhysFPRegOut() { return phys_fp_regs_out; }
-    uint16_t* getISAFPRegIn() { return isa_fp_regs_in; }
-    uint16_t* getISAFPRegOut() { return isa_fp_regs_out; }
 
     uint16_t getPhysIntRegIn(const uint16_t index) const { return phys_int_regs_in[index]; }
     uint16_t getPhysIntRegOut(const uint16_t index) const { return phys_int_regs_out[index]; }
@@ -301,9 +288,14 @@ public:
     uint16_t getISAFPRegOut(const uint16_t index) const { return isa_fp_regs_out[index]; }
 
     void setPhysIntRegIn(const uint16_t index, const uint16_t reg) { phys_int_regs_in[index] = reg; }
-    void setPhysIntRegOut(const uint16_t index, const uint16_t reg) { phys_int_regs_out[index] = reg; }
+    void setPhysIntRegOut(const uint16_t index, const uint16_t reg) { 
+        phys_int_regs_out[index] = reg;
+    }
+
     void setPhysFPRegIn(const uint16_t index, const uint16_t reg) { phys_fp_regs_in[index] = reg; }
-    void setPhysFPRegOut(const uint16_t index, const uint16_t reg) { phys_fp_regs_out[index] = reg; }
+    void setPhysFPRegOut(const uint16_t index, const uint16_t reg) { 
+        phys_fp_regs_out[index] = reg;
+    }
 
     virtual VanadisInstruction* clone() = 0;
 
@@ -327,13 +319,11 @@ public:
 
     bool completedExecution() const { return hasExecuted; }
     bool completedIssue() const { return hasIssued; }
-    bool completedRegisterAllocation() const { return hasRegistersAllocated; }
 
     void markExecuted() { hasExecuted = true; }
     void markIssued() { hasIssued = true; }
-    void markRegistersAllocated() { hasRegistersAllocated = true; }
 
-    bool checkFrontOfROB() { return isFrontOfROB; }
+    bool checkFrontOfROB() const { return isFrontOfROB; }
     void markFrontOfROB() { isFrontOfROB = true; }
 
     bool hasROBSlotIssued() const { return hasROBSlot; }
@@ -344,40 +334,47 @@ public:
     void flagError() { trapError = true; }
 
     virtual bool performIntRegisterRecovery() const { return true; }
-
     virtual bool performFPRegisterRecovery() const { return true; }
 
-	 virtual bool updatesFPFlags() const { return false; }
-    virtual void performFPFlagsUpdate() const {}
+	virtual bool updatesFPFlags() const { return false; }
+    virtual void updateFPFlags() {}
+
+    virtual void returnOutRegs( VanadisRegisterStack* int_stack, VanadisRegisterStack* fp_stack ) {
+        for ( auto i = 0; i < countPhysIntRegOut(); i++ ) {
+            int_stack->push( getPhysIntRegOut(i) );
+        }
+        for ( auto i = 0; i < countPhysFPRegOut(); i++ ) {
+            fp_stack->push( getPhysFPRegOut(i) );
+        }
+    }
 
 protected:
     const uint64_t ins_address;
     const uint32_t hw_thread;
 
-    uint16_t count_phys_int_reg_in;
-    uint16_t count_phys_int_reg_out;
     uint16_t count_isa_int_reg_in;
     uint16_t count_isa_int_reg_out;
-
-    uint16_t count_phys_fp_reg_in;
-    uint16_t count_phys_fp_reg_out;
     uint16_t count_isa_fp_reg_in;
     uint16_t count_isa_fp_reg_out;
 
-    uint16_t* phys_int_regs_in;
-    uint16_t* phys_int_regs_out;
     uint16_t* isa_int_regs_in;
     uint16_t* isa_int_regs_out;
-
-    uint16_t* phys_fp_regs_in;
-    uint16_t* phys_fp_regs_out;
     uint16_t* isa_fp_regs_in;
     uint16_t* isa_fp_regs_out;
+
+    uint16_t count_phys_int_reg_in;
+    uint16_t count_phys_int_reg_out;
+    uint16_t count_phys_fp_reg_in;
+    uint16_t count_phys_fp_reg_out;
+
+    uint16_t* phys_int_regs_in;
+    uint16_t* phys_int_regs_out;
+    uint16_t* phys_fp_regs_in;
+    uint16_t* phys_fp_regs_out;
 
     bool trapError;
     bool hasExecuted;
     bool hasIssued;
-    bool hasRegistersAllocated;
     bool enduOpGroup;
     bool isFrontOfROB;
     bool hasROBSlot;

@@ -53,14 +53,14 @@ class testcase_Samba_Component(SSTTestCase):
         self.Samba_test_template("gupsgen_mmu_three_levels")
 
     def test_Samba_stencil3dbench_mmu(self):
-        self.Samba_test_template("stencil3dbench_mmu", testtimeout=120)
+        self.Samba_test_template("stencil3dbench_mmu", testtimeout=240)
 
     def test_Samba_streambench_mmu(self):
         self.Samba_test_template("streambench_mmu")
 
 #####
 
-    def Samba_test_template(self, testcase, testtimeout=60):
+    def Samba_test_template(self, testcase, testtimeout=120):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()

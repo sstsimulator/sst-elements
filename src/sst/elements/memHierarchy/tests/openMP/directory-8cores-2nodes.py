@@ -7,7 +7,7 @@ Executable = os.getenv('OMP_EXE', "ompbarrier/ompbarrier.x")
 
 # Define SST core options
 sst.setProgramOption("timebase", "1 ps")
-sst.setProgramOption("stopAtCycle", "100ms")
+sst.setProgramOption("stop-at", "100ms")
 
 # Define the simulation components
 ariel_cpus = sst.Component("cpus", "ariel.ariel")

@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -209,32 +209,32 @@ void Bus::init(unsigned int phase) {
     SST::Event *ev;
 
     for (int i = 0; i < numHighNetPorts_; i++) {
-        while ((ev = highNetPorts_[i]->recvInitData())) {
+        while ((ev = highNetPorts_[i]->recvUntimedData())) {
             MemEventInit* memEvent = dynamic_cast<MemEventInit*>(ev);
 
             if (memEvent && memEvent->getCmd() == Command::NULLCMD) {
                 dbg_.debug(_L10_, "bus %s broadcasting upper event to lower ports (%d): %s\n", getName().c_str(), numLowNetPorts_, memEvent->getVerboseString().c_str());
                 mapNodeEntry(memEvent->getSrc(), highNetPorts_[i]);
                 for (int k = 0; k < numLowNetPorts_; k++)
-                    lowNetPorts_[k]->sendInitData(memEvent->clone());
+                    lowNetPorts_[k]->sendUntimedData(memEvent->clone());
             } else if (memEvent) {
                 dbg_.debug(_L10_, "bus %s broadcasting upper event to lower ports (%d): %s\n", getName().c_str(), numLowNetPorts_, memEvent->getVerboseString().c_str());
                 for (int k = 0; k < numLowNetPorts_; k++)
-                    lowNetPorts_[k]->sendInitData(memEvent->clone());
+                    lowNetPorts_[k]->sendUntimedData(memEvent->clone());
             }
             delete memEvent;
         }
     }
 
     for (int i = 0; i < numLowNetPorts_; i++) {
-        while ((ev = lowNetPorts_[i]->recvInitData())) {
+        while ((ev = lowNetPorts_[i]->recvUntimedData())) {
             MemEventInit* memEvent = dynamic_cast<MemEventInit*>(ev);
             if (!memEvent) delete memEvent;
             else if (memEvent->getCmd() == Command::NULLCMD) {
                 dbg_.debug(_L10_, "bus %s broadcasting lower event to upper ports (%d): %s\n", getName().c_str(), numHighNetPorts_, memEvent->getVerboseString().c_str());
                 mapNodeEntry(memEvent->getSrc(), lowNetPorts_[i]);
                 for (int i = 0; i < numHighNetPorts_; i++) {
-                    highNetPorts_[i]->sendInitData(memEvent->clone());
+                    highNetPorts_[i]->sendUntimedData(memEvent->clone());
                 }
                 delete memEvent;
             }

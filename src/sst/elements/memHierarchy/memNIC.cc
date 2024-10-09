@@ -1,8 +1,8 @@
-// Copyright 2013-2022 NTESS. Under the terms
+// Copyright 2013-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2022, NTESS
+// Copyright (c) 2013-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -41,13 +41,13 @@ MemNIC::MemNIC(ComponentId_t id, Params &params, TimeConverter* tc) : MemNICBase
     if (!link_control) {
         Params netparams;
         netparams.insert("port_name", params.find<std::string>("port", "port"));
-        netparams.insert("in_buf_size", params.find<std::string>("network_input_buffer_size", "1KiB"));
-        netparams.insert("out_buf_size", params.find<std::string>("network_output_buffer_size", "1KiB"));
+        netparams.insert("input_buf_size", params.find<std::string>("network_input_buffer_size", "1KiB"));
+        netparams.insert("output_buf_size", params.find<std::string>("network_output_buffer_size", "1KiB"));
         netparams.insert("link_bw", params.find<std::string>("network_bw", "80GiB/s"));
         std::string link_control_class = params.find<std::string>("network_link_control", "merlin.linkcontrol");
 
         if (link_control_class != "merlin.linkcontrol")
-            dbg.output("%s, Warning: use of the 'network_link_control' parameter is deprecated in favor of specifying a named 'linkcontrol' subcomponent in the input configuration.\n",
+          dbg.fatal(CALL_INFO, -1, "%s, Error: use of the 'network_link_control' parameter is no longer supported. Please specify a named 'linkcontrol' subcomponent in the input configuration.\n",
                     getName().c_str());
 
         link_control = loadAnonymousSubComponent<SimpleNetwork>(link_control_class, "linkcontrol", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, netparams, 1);

@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -164,6 +164,11 @@ int rdma_create_cq( ) {
 
 	NicResp* resp = getResp(cmd);
 	waitResp( resp );
+
+	// the NIC returns addresses that are relative to the start of it's address space
+	// which is mapped into a virtual address space the process uses to talk to the NIC
+	// add the start of the virtual address space
+	resp->data.createCQ.tailIndexAddr += getNicBase();
 
 	int retval = resp->retval; 
 	dbgPrint("retval=%d tailIndexPtr=%#x\n",retval,resp->data.createCQ.tailIndexAddr);

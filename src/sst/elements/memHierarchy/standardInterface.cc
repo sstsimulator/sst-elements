@@ -1,9 +1,9 @@
 // -*- mode: c++ -*-
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -92,7 +92,7 @@ void StandardInterface::init(unsigned int phase) {
         
         /* Broadcast our name, type, and coherence configuration parameters on link */
         MemEventInitCoherence * event = new MemEventInitCoherence(getName(), epType, false, false, 0, false);
-        link_->sendInitData(event);
+        link_->sendUntimedData(event);
 
         /* 
          * If we are addressable (MMIO), broadcast that info across the system 
@@ -100,11 +100,11 @@ void StandardInterface::init(unsigned int phase) {
          */
         if (epType == Endpoint::MMIO) {
             MemEventInitEndpoint * epEv = new MemEventInitEndpoint(getName().c_str(), epType, region, false);
-            link_->sendInitData(epEv);
+            link_->sendUntimedData(epEv);
         }
     }
 
-    while (SST::Event * ev = link_->recvInitData()) {
+    while (SST::Event * ev = link_->recvUntimedData()) {
         MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
         if (memEvent) {
             if (memEvent->getCmd() == Command::NULLCMD) {
@@ -137,7 +137,7 @@ void StandardInterface::init(unsigned int phase) {
 
     if (initDone_) { // Drain send queue
         while (!initSendQueue_.empty()) {
-            link_->sendInitData(initSendQueue_.front(), false);
+            link_->sendUntimedData(initSendQueue_.front(), false);
             initSendQueue_.pop();
         }
     }
@@ -174,7 +174,7 @@ void StandardInterface::sendUntimedData(StandardMem::Request *req) {
     
     MemEventInit *me = new MemEventInit(getName(), Command::Write, wr->pAddr, wr->data);
     if (initDone_)
-        link_->sendInitData(me, false);
+        link_->sendUntimedData(me, false);
     else
         initSendQueue_.push(me);
 }

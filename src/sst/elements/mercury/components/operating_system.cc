@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -25,6 +25,7 @@
 #include <operating_system/process/thread_id.h>
 #include <operating_system/threading/stack_alloc.h>
 #include <stdlib.h>
+#include <sys/mman.h>
 
 extern "C" void* sst_hg_nullptr = nullptr;
 extern "C" void* sst_hg_nullptr_send = nullptr;
@@ -35,6 +36,8 @@ static uintptr_t sst_hg_nullptr_range = 0;
 namespace SST {
 namespace Hg {
 
+extern template class  HgBase<SST::Component>;
+extern template class  HgBase<SST::SubComponent>;
 extern template SST::TimeConverter* HgBase<SST::SubComponent>::time_converter_;
 
 OperatingSystem* OperatingSystem::active_os_ = nullptr;
@@ -69,7 +72,7 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
   auto os_params = params.get_scoped_params("OperatingSystem");
   os_params.print_all_params(std::cerr);
   unsigned int verbose = os_params.find<unsigned int>("verbose",0);
-  out_ = std::make_unique<SST::Output>(sprintf("Node%d:OperatingSystem:", my_addr_), verbose, 0, Output::STDOUT);
+  out_ = std::unique_ptr<SST::Output>(new SST::Output(sprintf("Node%d:OperatingSystem:", my_addr_), verbose, 0, Output::STDOUT));
   out_->debug(CALL_INFO, 1, 0, "constructing\n");
 
   if (sst_hg_nullptr == nullptr){
@@ -285,17 +288,17 @@ OperatingSystem::completeActiveThread()
   Thread* thr_todelete = active_thread_;
 
   //if any threads waiting on the join, unblock them
-  out_->debug(CALL_INFO, 1, 0, "completing thread %ld\n", thr_todelete->threadId());
+  out_->debug(CALL_INFO, 1, 0, "completing thread %d\n", thr_todelete->threadId());
   while (!thr_todelete->joiners_.empty()) {
       Thread* blocker = thr_todelete->joiners_.front();
-      out_->debug(CALL_INFO, 1, 0, "thread %ld is unblocking joiner %p\n",
+      out_->debug(CALL_INFO, 1, 0, "thread %d is unblocking joiner %p\n",
                   thr_todelete->threadId(), blocker);
       unblock(blocker);
       //to_awake_.push(thr_todelete->joiners_.front());
       thr_todelete->joiners_.pop();
     }
   active_thread_ = nullptr;  
-  out_->debug(CALL_INFO, 1, 0, "completing context for %ld\n", thr_todelete->threadId());
+  out_->debug(CALL_INFO, 1, 0, "completing context for %d\n", thr_todelete->threadId());
   thr_todelete->context()->completeContext(des_context_);
 }
 

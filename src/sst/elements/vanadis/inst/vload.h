@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -108,7 +108,7 @@ public:
             snprintf(
                 buffer, buffer_size,
                 "LOAD (%s, %" PRIu16 " bytes)  %5" PRIu16 " <- memory[ %5" PRIu16 " + %" PRId64
-                " (0x%llx) (phys: %5" PRIu16 " <- memory[%5" PRIu16 " + %" PRId64 " (0x%llx)])\n",
+                " (0x%llx) (phys: %5" PRIu16 " <- memory[%5" PRIu16 " + %" PRId64 " (0x%llx)])",
                 getTransactionTypeString(memAccessType), load_width, isa_int_regs_out[0], isa_int_regs_in[0], offset,
                 offset, phys_int_regs_out[0], phys_int_regs_in[0], offset, offset);
         } break;
@@ -117,7 +117,7 @@ public:
             snprintf(
                 buffer, buffer_size,
                 "LOADFP (%s, %" PRIu16 " bytes)  %5" PRIu16 " <- memory[ %5" PRIu16 " + %" PRId64
-                " (0x%llx) (phys: %5" PRIu16 " <- memory[%5" PRIu16 " + %" PRId64 " (0x%llx)])\n",
+                " (0x%llx) (phys: %5" PRIu16 " <- memory[%5" PRIu16 " + %" PRId64 " (0x%llx)])",
                 getTransactionTypeString(memAccessType), load_width, isa_fp_regs_out[0], isa_int_regs_in[0], offset,
                 offset, phys_fp_regs_out[0], phys_int_regs_in[0], offset, offset);
         } break;
@@ -140,34 +140,40 @@ public:
         switch ( regType ) {
         case LOAD_INT_REGISTER:
         {
-            output->verbose(
-                CALL_INFO, 16, 0,
-                "Execute: (0x%llx) LOAD addr-reg: %" PRIu16 " phys: %" PRIu16 " / offset: %" PRId64
-                " / target: %" PRIu16 " phys: %" PRIu16 "\n",
-                getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0], offset, isa_int_regs_out[0],
-                phys_int_regs_out[0]);
+            if(output->getVerboseLevel() >= 16) {
+                output->verbose(
+                    CALL_INFO, 16, 0,
+                    "Execute: (0x%llx) LOAD addr-reg: %" PRIu16 " phys: %" PRIu16 " / offset: %" PRId64
+                    " / target: %" PRIu16 " phys: %" PRIu16 "\n",
+                    getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0], offset, isa_int_regs_out[0],
+                    phys_int_regs_out[0]);
+            }
         } break;
         case LOAD_FP_REGISTER:
         {
-            output->verbose(
-                CALL_INFO, 16, 0,
-                "Execute: (0x%llx) LOAD addr-reg: %" PRIu16 " phys: %" PRIu16 " / offset: %" PRId64
-                " / target: %" PRIu16 " phys: %" PRIu16 "\n",
-                getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0], offset, isa_fp_regs_out[0],
-                phys_fp_regs_out[0]);
+            if(output->getVerboseLevel() >= 16) {
+                output->verbose(
+                    CALL_INFO, 16, 0,
+                    "Execute: (0x%llx) LOAD addr-reg: %" PRIu16 " phys: %" PRIu16 " / offset: %" PRId64
+                    " / target: %" PRIu16 " phys: %" PRIu16 "\n",
+                    getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0], offset, isa_fp_regs_out[0],
+                    phys_fp_regs_out[0]);
+            }
         } break;
         }
 
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0, "[execute-load]: transaction-type:  %s / ins: 0x%llx\n",
-            getTransactionTypeString(memAccessType), getInstructionAddress());
-        output->verbose(
-            CALL_INFO, 16, 0, "[execute-load]: reg[%5" PRIu16 "]:       %" PRIu64 "\n", phys_int_regs_in[0],
-            mem_addr_reg_val);
-        output->verbose(CALL_INFO, 16, 0, "[execute-load]: offset           : %" PRId64 "\n", offset);
-        output->verbose(
-            CALL_INFO, 16, 0, "[execute-load]: (add)            : %" PRIu64 "\n", (mem_addr_reg_val + offset));
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(
+                CALL_INFO, 16, 0, "[execute-load]: transaction-type:  %s / ins: 0x%llx\n",
+                getTransactionTypeString(memAccessType), getInstructionAddress());
+            output->verbose(
+                CALL_INFO, 16, 0, "[execute-load]: reg[%5" PRIu16 "]:       %" PRIu64 "\n", phys_int_regs_in[0],
+                mem_addr_reg_val);
+            output->verbose(CALL_INFO, 16, 0, "[execute-load]: offset           : %" PRId64 "\n", offset);
+            output->verbose(
+                CALL_INFO, 16, 0, "[execute-load]: (add)            : %" PRIu64 "\n", (mem_addr_reg_val + offset));
+        }
 #endif
         int64_t tmp_val = regFile->getIntReg<int64_t>(phys_int_regs_in[0]);
 

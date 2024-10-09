@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -185,7 +185,7 @@ public:
     bool isLoadLink() { return cmd_ == Command::GetS && queryFlag(MemEventBase::F_LLSC); }
 
     void setStoreConditional() { setFlag(MemEventBase::F_LLSC); }
-    bool isStoreConditional() { return cmd_ == Command::GetX && queryFlag(MemEventBase::F_LLSC); }
+    bool isStoreConditional() { return (cmd_ == Command::GetX || cmd_ == Command::Write) && queryFlag(MemEventBase::F_LLSC); }
 
     void setFail() { setFlag(MemEventBase::F_FAIL); }
     void setSuccess(bool b) { b ? clearFlag(MemEventBase::F_FAIL) : setFlag(MemEventBase::F_FAIL); }

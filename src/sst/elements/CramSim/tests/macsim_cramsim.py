@@ -59,7 +59,6 @@ macsim_params_file = "params.in"
 
 # Define SST Program Options:
 sst.setProgramOption("timebase", "1ps")
-#sst.setProgramOption("stopAtCycle", "0 ns")
 
 
 # Define the SST Components:

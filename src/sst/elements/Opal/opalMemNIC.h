@@ -1,8 +1,8 @@
-// Copyright 2013-2022 NTESS. Under the terms
+// Copyright 2013-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2022, NTESS
+// Copyright (c) 2013-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -41,7 +41,7 @@ public:
     { "min_packet_size",            "Size of packet with a payload (e.g., control message size)", "8B"}
 
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(OpalMemNIC, "Opal", "OpalMemNIC", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(OpalMemNIC, "Opal", "OpalMemNIC", SST_ELI_ELEMENT_VERSION(1,0,0),
             "MemNIC for Opal multi-node configurations", SST::MemHierarchy::MemLinkBase)
 
     SST_ELI_DOCUMENT_PARAMS( OPAL_MEMNIC_ELI_PARAMS )

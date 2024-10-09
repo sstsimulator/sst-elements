@@ -68,20 +68,38 @@ class testcase_GNA_Component(SSTTestCase):
 
         testing_remove_component_warning_from_file(outfile)
 
-        # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
-        #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
-        #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
-        #       TESTS & RESULT FILES ARE STILL VALID
-
         # Perform the tests
+
+        #   Check if any output to stderr
         if os_test_file(errfile, "-s"):
             log_testing_note("GNA test {0} has a Non-Empty Error File {1}".format(testDataFileName, errfile))
 
-        cmp_result = testing_compare_sorted_diff(testcase, outfile, reffile)
-        if (cmp_result == False):
-            diffdata = testing_get_diff_data(testcase)
-            log_failure(diffdata)
-        self.assertTrue(cmp_result, "Output file {0} does not match Reference File {1}".format(outfile, reffile))
+        #   Check if spiking pattern exactly matches expected values
+        cmp_result = True
+        import OutputParser
+        from OutputParser import OutputParser
+        o = OutputParser()
+        o.parse(outdir + "/out")
+        if not self.checkColumn(o,  "0", [1,1,0,0]): cmp_result = False
+        if not self.checkColumn(o,  "1", [1,1,1,0]): cmp_result = False
+        if not self.checkColumn(o,  "2", [0,1,0,0]): cmp_result = False
+        if not self.checkColumn(o,  "3", [0,0,1,0]): cmp_result = False
+        if not self.checkColumn(o,  "4", [1,0,0,0]): cmp_result = False
+        if not self.checkColumn(o,  "5", [0,1,0,0]): cmp_result = False
+        if not self.checkColumn(o,  "6", [0,0,0,1]): cmp_result = False
+        if not self.checkColumn(o,  "7", [0,0,1,0]): cmp_result = False
+        if not self.checkColumn(o,  "8", [0,0,0,1]): cmp_result = False
+        if not self.checkColumn(o,  "9", [0,1,0,0]): cmp_result = False
+        if not self.checkColumn(o, "10", [1,0,0,0]): cmp_result = False
+        if not self.checkColumn(o, "11", [0,0,1,0]): cmp_result = False
+        if not self.checkColumn(o, "12", [0,1,0,0]): cmp_result = False
+        if not self.checkColumn(o, "13", [1,1,1,0]): cmp_result = False
+        if not self.checkColumn(o, "14", [1,1,0,0]): cmp_result = False
+        self.assertTrue(cmp_result, "Output file {0}/out does not contain expected spike pattern".format(outdir))
 
-
+    def checkColumn(self, o, index, pattern):
+        c = o.getColumn(index)
+        for r in range(4):
+            if c.get(r) != pattern[r]: return False
+        return True
 

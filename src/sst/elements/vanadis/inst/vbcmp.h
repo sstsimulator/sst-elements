@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -23,7 +23,7 @@
 namespace SST {
 namespace Vanadis {
 
-template <VanadisRegisterFormat register_format, VanadisRegisterCompareType compare_type, bool perform_signed>
+template <typename register_format, VanadisRegisterCompareType compare_type>
 class VanadisBranchRegCompareInstruction : public VanadisSpeculatedInstruction
 {
 public:
@@ -63,7 +63,7 @@ public:
         snprintf(
             buffer, buffer_size,
             "BCMP (%s) isa-in: %" PRIu16 ", %" PRIu16 " / phys-in: %" PRIu16 ", %" PRIu16 " offset: %" PRId64
-            " = 0x%llx\n",
+            " = 0x%llx",
             convertCompareTypeToString(compare_type), isa_int_regs_in[0], isa_int_regs_in[1], phys_int_regs_in[0],
             phys_int_regs_in[1], offset, getInstructionAddress() + offset);
     }
@@ -71,43 +71,20 @@ public:
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: (addr=0x%0llx) BCMP (%s) isa-in: %" PRIu16 ", %" PRIu16 " / phys-in: %" PRIu16 ", %" PRIu16
-            " offset: %" PRId64 " = 0x%llx\n",
-            getInstructionAddress(), convertCompareTypeToString(compare_type), isa_int_regs_in[0], isa_int_regs_in[1],
-            phys_int_regs_in[0], phys_int_regs_in[1], offset, getInstructionAddress() + offset);
+        if(output->getVerboseLevel() >= 16) {
+            std::ostringstream ss;
+            ss << "Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
+            ss << "(" << convertCompareTypeToString(compare_type) << ")"; 
+            ss << " isa-in: " << isa_int_regs_in[0] << ", " << isa_int_regs_in[1];
+            ss << " / phys-in: " << phys_int_regs_in[0] << ", " << phys_int_regs_in[1];
+            ss << " offset: " <<  offset << " = " << getInstructionAddress() + offset ;
+            output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
+        }
 #endif
         bool compare_result = false;
 
-        switch ( register_format ) {
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
-        {
-            if ( perform_signed ) {
-                compare_result = registerCompare<compare_type, int64_t>(
-                    regFile, this, output, phys_int_regs_in[0], phys_int_regs_in[1]);
-            }
-            else {
-                compare_result = registerCompare<compare_type, uint64_t>(
-                    regFile, this, output, phys_int_regs_in[0], phys_int_regs_in[1]);
-            }
-        } break;
-        case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
-        {
-            if ( perform_signed ) {
-                compare_result = registerCompare<compare_type, int32_t>(
-                    regFile, this, output, phys_int_regs_in[0], phys_int_regs_in[1]);
-            }
-            else {
-                compare_result = registerCompare<compare_type, uint32_t>(
-                    regFile, this, output, phys_int_regs_in[0], phys_int_regs_in[1]);
-            }
-        } break;
-        default:
-        {
-            flagError();
-        } break;
-        }
+        compare_result = registerCompare<compare_type, register_format>(
+            regFile, this, output, phys_int_regs_in[0], phys_int_regs_in[1]);
 
         if ( compare_result ) {
             takenAddress = (uint64_t)(((int64_t)getInstructionAddress()) + offset);

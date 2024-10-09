@@ -3,7 +3,7 @@ import sst
 
 # Define SST core options
 sst.setProgramOption("timebase", "1 ps")
-sst.setProgramOption("stopAtCycle", "50us")
+sst.setProgramOption("stop-at", "50us")
 
 #enable stat output
 sst.setStatisticLoadLevel(7)   

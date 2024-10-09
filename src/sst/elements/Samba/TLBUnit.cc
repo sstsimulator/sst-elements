@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -85,7 +85,7 @@ TLB::TLB(ComponentId_t id, int tlb_id, TLB * Next_level, int Level, SST::Params&
     // === Init statistics
 
 	char* subID = (char*) malloc(sizeof(char) * 32);
-	sprintf(subID, "Core%d_L%d", tlb_id,level);
+	snprintf(subID, 32, "Core%d_L%d", tlb_id,level);
 
 	// The stats that will appear, not that these stats are going to be part of the Samba unit
 	statTLBHits =       registerStatistic<uint64_t>( "tlb_hits",      subID);

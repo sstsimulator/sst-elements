@@ -3,7 +3,6 @@ import sst
 
 # Define SST Program Options:
 sst.setProgramOption("timebase", "1 ps")
-sst.setProgramOption("stopAtCycle", "0 ns")
 
 # Define the global parameter sets:
 sst.addGlobalParams("ctrl_params_FireflyHades_6", {

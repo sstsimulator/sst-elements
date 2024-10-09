@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -53,16 +53,22 @@ public:
         const reg_format reg_value = call_func();
 
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: (addr=0x%0llx) SETREG phys: out=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16 "\n",
-            getInstructionAddress(), phys_int_regs_out[0], reg_value, isa_int_regs_out[0]);
+        if(output->getVerboseLevel() >= 16) {
+            std::ostringstream ss;
+            ss << "Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
+            ss << " phys: out= " << phys_int_regs_out[0]  << " imm=" << reg_value << ", isa: out=" << isa_int_regs_out[0];  
+            output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
+        }
 #endif
 
 		regFile->setIntReg<reg_format>(phys_int_regs_out[0], reg_value);
 
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(CALL_INFO, 16, 0, "Result-reg %" PRIu16 ": %" PRId64 "\n", phys_int_regs_out[0], reg_value);
+        if(output->getVerboseLevel() >= 16) {
+            std::ostringstream ss;
+            ss << "Result-reg " << phys_int_regs_out[0]  << ": " << reg_value; 
+            output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
+        }
 #endif
 
         markExecuted();

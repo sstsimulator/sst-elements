@@ -63,7 +63,7 @@ g_params = setup_config_params(g_config_file, g_overrided_list)
 
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
-#sst.setProgramOption("stopAtCycle", "21000us")
+#sst.setProgramOption("stop-at", "21000us")
 
 
 

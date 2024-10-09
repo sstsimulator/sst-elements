@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -216,10 +216,10 @@ internal_router_event* topo_fattree::process_input(RtrEvent* ev)
     return ire;
 }
 
-void topo_fattree::routeInitData(int inPort, internal_router_event* ev, std::vector<int> &outPorts)
+void topo_fattree::routeUntimedData(int inPort, internal_router_event* ev, std::vector<int> &outPorts)
 {
 
-    if ( ev->getDest() == INIT_BROADCAST_ADDR ) {
+    if ( ev->getDest() == UNTIMED_BROADCAST_ADDR ) {
         // Send to all my downports except the one it came from
         for ( int i = 0; i < down_ports; i++ ) {
             if ( i != inPort ) outPorts.push_back(i);
@@ -238,7 +238,7 @@ void topo_fattree::routeInitData(int inPort, internal_router_event* ev, std::vec
 }
 
 
-internal_router_event* topo_fattree::process_InitData_input(RtrEvent* ev)
+internal_router_event* topo_fattree::process_UntimedData_input(RtrEvent* ev)
 {
     return new internal_router_event(ev);
 }

@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -18,6 +18,7 @@ class NicCmdEntry {
     NicCmdEntry( RdmaNic& nic, int thread, NicCmd* tmp ) : 
         m_nic(nic), m_thread(thread), m_cmd( new NicCmd ), m_respAddr(tmp->respAddr) 
     {
+        bzero( &m_resp.data, sizeof( m_resp.data ) );
         m_resp.retval = 0; 
 		*m_cmd = *tmp;
     } 

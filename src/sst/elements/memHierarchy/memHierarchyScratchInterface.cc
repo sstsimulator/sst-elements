@@ -1,9 +1,9 @@
 // -*- mode: c++ -*-
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -65,12 +65,12 @@ void MemHierarchyScratchInterface::init(unsigned int phase) {
         region.end = (uint64_t) - 1;
         region.interleaveStep = 0;
         region.interleaveSize = 0;
-        link_->sendInitData(new MemEventInitRegion(getName(), region, false));
+        link_->sendUntimedData(new MemEventInitRegion(getName(), region, false));
         // Name, NULLCMD, Endpoint type, inclusive of all upper levels, will send writeback acks, line size
-        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::CPU, false, false, 0, false));
+        link_->sendUntimedData(new MemEventInitCoherence(getName(), Endpoint::CPU, false, false, 0, false));
     }
 
-    while (SST::Event * ev = link_->recvInitData()) {
+    while (SST::Event * ev = link_->recvUntimedData()) {
         MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
         if (memEvent) {
             if (memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
@@ -87,7 +87,7 @@ void MemHierarchyScratchInterface::init(unsigned int phase) {
 
     if (initDone_) {
         while (!initSendQueue_.empty()) {
-            link_->sendInitData(initSendQueue_.front());
+            link_->sendUntimedData(initSendQueue_.front());
             initSendQueue_.pop();
         }
     }
@@ -96,7 +96,7 @@ void MemHierarchyScratchInterface::init(unsigned int phase) {
 void MemHierarchyScratchInterface::sendInitData(SimpleMem::Request *req) {
     MemEventInit * event = new MemEventInit(getName(), Command::GetX, req->addrs[0], req->data);
     if (initDone_)
-        link_->sendInitData(event);
+        link_->sendUntimedData(event);
     else
         initSendQueue_.push(event);
 }

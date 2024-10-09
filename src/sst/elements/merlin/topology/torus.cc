@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -158,9 +158,9 @@ topo_torus::process_input(RtrEvent* ev)
 }
 
 
-void topo_torus::routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts)
+void topo_torus::routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts)
 {
-    if ( ev->getDest() == INIT_BROADCAST_ADDR ) {
+    if ( ev->getDest() == UNTIMED_BROADCAST_ADDR ) {
         /* For broadcast, use dest_loc as src_loc */
         topo_torus_event *tt_ev = static_cast<topo_torus_event*>(ev);
         /*
@@ -196,11 +196,11 @@ void topo_torus::routeInitData(int port, internal_router_event* ev, std::vector<
 }
 
 
-internal_router_event* topo_torus::process_InitData_input(RtrEvent* ev)
+internal_router_event* topo_torus::process_UntimedData_input(RtrEvent* ev)
 {
     topo_torus_event* tt_ev = new topo_torus_event(dimensions);
     tt_ev->setEncapsulatedEvent(ev);
-    if ( tt_ev->getDest() == INIT_BROADCAST_ADDR ) {
+    if ( tt_ev->getDest() == UNTIMED_BROADCAST_ADDR ) {
         /* For broadcast, use dest_loc as src_loc */
         for ( int i = 0 ; i < dimensions ; i++ ) {
             tt_ev->dest_loc[i] = id_loc[i];

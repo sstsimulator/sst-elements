@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -39,13 +39,14 @@ enum SerranoStandardOp {
 class SerranoBasicUnit : public SerranoCoarseUnit {
 
 public:
-	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+	SST_ELI_REGISTER_SUBCOMPONENT(
 		SST::Serrano::SerranoBasicUnit,
 		"serrano",
 		"SerranoBasicUnit",
 		SST_ELI_ELEMENT_VERSION(1, 0, 0),
 		"Basic coarse-grained functional unit for simple operations",
-		SST::Serrano::SerranoCoarseUnit )
+		SST::Serrano::SerranoCoarseUnit
+    )
 
 	SST_ELI_DOCUMENT_PARAMS()
 	SST_ELI_DOCUMENT_STATISTICS()				

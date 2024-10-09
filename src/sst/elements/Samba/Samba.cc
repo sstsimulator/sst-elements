@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -77,12 +77,14 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 	char* link_buffer2 = (char*) malloc(sizeof(char) * 256);
 
 	char* link_buffer3 = (char*) malloc(sizeof(char) * 256);
+        
+        size_t buffer_size = sizeof(char) * 256;
 
 	std::cout<<"Before initialization "<<std::endl;
 	for(uint32_t i = 0; i < core_count; ++i) {
-		sprintf(link_buffer, "cpu_to_mmu%" PRIu32, i);
+		snprintf(link_buffer, buffer_size, "cpu_to_mmu%" PRIu32, i);
 
-		sprintf(link_buffer2, "mmu_to_cache%" PRIu32, i);
+		snprintf(link_buffer2, buffer_size, "mmu_to_cache%" PRIu32, i);
 
 
 
@@ -98,7 +100,7 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 		mmu_to_cache[i] = link;
 
 
-		sprintf(link_buffer3, "ptw_to_mem%" PRIu32, i);
+		snprintf(link_buffer3, buffer_size, "ptw_to_mem%" PRIu32, i);
 		SST::Link * link3;
 
 		if(self==0)
@@ -115,7 +117,7 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 			pageFaultHandler->registerPageFaultHandler(i, new PageFaultHandler::PageFaultHandlerInterface<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvPageFaultResp));
 			TLB[i]->getPTW()->setPageFaultHandler(pageFaultHandler);
 
-			sprintf(link_buffer, "event_bus%" PRIu32, i);
+			snprintf(link_buffer, buffer_size, "event_bus%" PRIu32, i);
 
 			event_link = configureSelfLink(link_buffer, "1ns", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::handleEvent));
 
@@ -162,17 +164,17 @@ void Samba::init(unsigned int phase) {
 	 */
 	for (uint32_t i = 0; i < core_count; i++) {
 		SST::Event * ev;
-		while ((ev = cpu_to_mmu[i]->recvInitData())) {
-			mmu_to_cache[i]->sendInitData(ev);
+		while ((ev = cpu_to_mmu[i]->recvUntimedData())) {
+			mmu_to_cache[i]->sendUntimedData(ev);
 		}
 
-		while ((ev = mmu_to_cache[i]->recvInitData())) {
+		while ((ev = mmu_to_cache[i]->recvUntimedData())) {
 			SST::MemHierarchy::MemEventInit * mEv = dynamic_cast<SST::MemHierarchy::MemEventInit*>(ev);
 			if (mEv && mEv->getInitCmd() == SST::MemHierarchy::MemEventInit::InitCommand::Coherence) {
 				SST::MemHierarchy::MemEventInitCoherence * mEvC = static_cast<SST::MemHierarchy::MemEventInitCoherence*>(mEv);
 				TLB[i]->setLineSize(mEvC->getLineSize());
 			}
-			cpu_to_mmu[i]->sendInitData(ev);
+			cpu_to_mmu[i]->sendUntimedData(ev);
 		}
 	}
 

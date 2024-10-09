@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -40,16 +40,18 @@ public:
     virtual void printToBuffer(char* buffer, size_t buffer_size)
     {
         snprintf(
-            buffer, buffer_size, "JR   isa-in: %" PRIu16 " / phys-in: %" PRIu16 "\n", isa_int_regs_in[0],
+            buffer, buffer_size, "JR   isa-in: %" PRIu16 " / phys-in: %" PRIu16 "", isa_int_regs_in[0],
             phys_int_regs_in[0]);
     }
 
     virtual void execute(SST::Output* output, VanadisRegisterFile* regFile)
     {
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) JR   isa-in: %" PRIu16 " / phys-in: %" PRIu16 "\n",
-            getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0]);
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(
+                CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) JR   isa-in: %" PRIu16 " / phys-in: %" PRIu16 "\n",
+                getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0]);
+        }
 #endif
         takenAddress = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
 

@@ -3,7 +3,7 @@ import sst
 
 # Define SST core options
 sst.setProgramOption("timebase", "1 ps")
-sst.setProgramOption("stopAtCycle", "10000s")
+sst.setProgramOption("stop-at", "10000s")
 
 # Constants shared across components
 tile_clk_mhz = 1

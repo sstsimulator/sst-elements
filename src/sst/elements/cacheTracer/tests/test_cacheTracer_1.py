@@ -8,7 +8,7 @@
 import sst
 
 # Define SST core options
-sst.setProgramOption("stopAtCycle", "1ms")
+sst.setProgramOption("stop-at", "1ms")
 
 #define simulation components
 comp_cpu = sst.Component("cpu0", "memHierarchy.standardCPU")

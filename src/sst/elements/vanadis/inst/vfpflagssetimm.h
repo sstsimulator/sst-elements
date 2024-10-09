@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -32,15 +32,9 @@ public:
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
         VanadisFloatingPointFlags* fpflags, const uint64_t imm) :
         VanadisFloatingPointInstruction(
-            addr, hw_thr, isa_opts, fpflags, 0, 0, 0, 0,
-				isa_opts->countISAFPRegisters(), isa_opts->countISAFPRegisters(), isa_opts->countISAFPRegisters(), isa_opts->countISAFPRegisters()),
+            addr, hw_thr, isa_opts, fpflags, 0, 0, 0, 0, 0, 0, 0, 0),
 			   imm_value(imm)
-    {
-		for( uint16_t i = 0; i < isa_opts->countISAFPRegisters(); ++i) {
-			isa_fp_regs_in[i]  = i;
-			isa_fp_regs_out[i] = i;
-		}
-    }
+    {}
 
     VanadisFPFlagsSetImmInstruction*  clone() override { return new VanadisFPFlagsSetImmInstruction(*this); }
     VanadisFunctionalUnitType getInstFuncType() const override { return INST_FP_ARITH; }
@@ -58,32 +52,36 @@ public:
 
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
-		  output->verbose(CALL_INFO, 16, 0, "Execute: 0x%llx FPFLAGS <- mask = %" PRIu64 " (0x%llx)\n",
-				getInstructionAddress(), imm_value, imm_value);
+		if(checkFrontOfROB()) {
+			if(output->getVerboseLevel() >= 16) {
+				output->verbose(CALL_INFO, 16, 0, "Execute: 0x%llx %s FPFLAGS <- mask = %" PRIu64 " (0x%llx)\n",
+					getInstructionAddress(), getInstCode(), imm_value, imm_value);
+			}
 
-		  if( (imm_value & 0x1) != 0 ) {
+			if( (imm_value & 0x1) != 0 ) {
 				fpflags.setInexact();
-		  }
+			}
 
-		  if( (imm_value & 0x2) != 0 ) {
+			if( (imm_value & 0x2) != 0 ) {
 				fpflags.setUnderflow();
-		  }
+			}
 
-		  if( (imm_value & 0x4) != 0 ) {
+			if( (imm_value & 0x4) != 0 ) {
 				fpflags.setOverflow();
-		  }
+			}
 
-		  if( (imm_value & 0x8) != 0 ) {
+			if( (imm_value & 0x8) != 0 ) {
 				fpflags.setDivZero();
-		  }
+			}
 
-		  if( (imm_value & 0x10) != 0 ) {
+			if( (imm_value & 0x10) != 0 ) {
 				fpflags.setInvalidOp();
-		  }
+			}
 
-		  update_fp_flags = true;
+			set_fp_flags = true;
 
-        markExecuted();
+			markExecuted();
+		}
     }
 
 protected:

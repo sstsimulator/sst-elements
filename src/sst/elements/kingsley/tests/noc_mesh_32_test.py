@@ -2,7 +2,7 @@
 import sst
 
 sst.setProgramOption("timebase", "1ps")
-#sst.setProgramOption("stopAtCycle", "1000ns")
+#sst.setProgramOption("stop-at", "1000ns")
 
 x_size = 4
 y_size = 4

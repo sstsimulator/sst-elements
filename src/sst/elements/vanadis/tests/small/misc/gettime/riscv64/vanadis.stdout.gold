@@ -1,0 +1,2 @@
+sizeof(tv_sec)=8, sizeof(tv_nsec)=8
+tv_sec=1, tv_nsec=103899

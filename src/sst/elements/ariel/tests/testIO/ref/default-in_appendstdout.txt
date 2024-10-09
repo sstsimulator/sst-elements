@@ -1,0 +1,2 @@
+We will append to this file.
+STDOUT: This is the default output of the testio program.

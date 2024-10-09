@@ -1,8 +1,8 @@
-// Copyright 2013-2022 NTESS. Under the terms
+// Copyright 2013-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2022, NTESS
+// Copyright (c) 2013-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -176,16 +176,6 @@ void ReorderLinkControl::sendUntimedData(SST::Interfaces::SimpleNetwork::Request
 SST::Interfaces::SimpleNetwork::Request* ReorderLinkControl::recvUntimedData()
 {
     return link_control->recvUntimedData();
-}
-
-void ReorderLinkControl::sendInitData(SST::Interfaces::SimpleNetwork::Request* req)
-{
-    link_control->sendInitData(req);
-}
-
-SST::Interfaces::SimpleNetwork::Request* ReorderLinkControl::recvInitData()
-{
-    return link_control->recvInitData();
 }
 
 

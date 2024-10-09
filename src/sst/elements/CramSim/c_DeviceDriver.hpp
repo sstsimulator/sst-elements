@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -63,7 +63,7 @@ public:
 
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::CramSim::c_DeviceDriver, Output*, std::function<void(c_BankCommand*)>)
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         c_DeviceDriver,
         "CramSim",
         "c_DeviceDriver",

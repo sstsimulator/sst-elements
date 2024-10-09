@@ -1,9 +1,15 @@
 #!/bin/bash
-COMPILE="clang++ -fPIC -std=c++11 -I/Users/jpkenny/install/sst-core-devel/include -I/Users/jpkenny/src/sst-elements-hgmerge/src/sst/elements/mercury -I/Users/jpkenny/install/sst-elements-hgmerge/include/sst/elements/hg -g -O0 -c testme.cc"
-echo $COMPILE
-$COMPILE
-LINK="clang++ -shared -Wl,-undefined -Wl,dynamic_lookup -o testme testme.o"
-echo $LINK
-$LINK
+CXX=$(sst-config --CXX)
+ELEMENT_CXXFLAGS=$(sst-config --ELEMENT_CXXFLAGS)
+ELEMENT_LDFLAGS=$(sst-config --ELEMENT_LDFLAGS)
+INCLUDE_DIR=$(sst-config --includedir)
+INCLUDE_DIR+="/sst/elements/hg"
+SST_ELEMENT_LIBRARY_BUILDDIR=$(sst-config SST_ELEMENT_LIBRARY SST_ELEMENT_LIBRARY_BUILDDIR)
+SST_ELEMENT_LIBRARY_BUILDDIR+="/src"
 
-#clang++ -shared -Wl,-undefined -Wl,dynamic_lookup -L/Users/jpkenny/install/sst-elements-opsys/lib/sst-elements-library -lhg -o testme testme.o
+COMPILE="$CXX $ELEMENT_CXXFLAGS -I$INCLUDE_DIR -I$SST_ELEMENT_LIBRARY_BUILDDIR -g -O0 -c testme.cc"
+echo "$COMPILE"
+$COMPILE
+LINK="$CXX $ELEMENT_LDFLAGS -o testme testme.o"
+echo "$LINK"
+$LINK

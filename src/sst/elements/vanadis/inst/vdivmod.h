@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -68,13 +68,15 @@ public:
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: 0x%llx %s q: %" PRIu16 " r: %" PRIu16 " <- %" PRIu16 " \\ %" PRIu16 " (phys: q: %" PRIu16
-            " r: %" PRIu16 " %" PRIu16 " %" PRIu16 ")\n",
-            getInstructionAddress(), getInstCode(), isa_int_regs_out[0], isa_int_regs_out[1],
-            isa_int_regs_in[0], isa_int_regs_in[1], phys_int_regs_out[0], phys_int_regs_out[1], phys_int_regs_in[0],
-            phys_int_regs_in[1]);
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(
+                CALL_INFO, 16, 0,
+                "Execute: 0x%llx %s q: %" PRIu16 " r: %" PRIu16 " <- %" PRIu16 " \\ %" PRIu16 " (phys: q: %" PRIu16
+                " r: %" PRIu16 " %" PRIu16 " %" PRIu16 ")\n",
+                getInstructionAddress(), getInstCode(), isa_int_regs_out[0], isa_int_regs_out[1],
+                isa_int_regs_in[0], isa_int_regs_in[1], phys_int_regs_out[0], phys_int_regs_out[1], phys_int_regs_in[0],
+                phys_int_regs_in[1]);
+        }
 #endif
 
 		const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in[0]);

@@ -2,7 +2,7 @@ import sst
 import os
 
 # Define SST core options
-sst.setProgramOption("stopAtCycle", "100000ns")
+sst.setProgramOption("stop-at", "100000ns")
 
 # Define the simulation components
 cpu_params = {

@@ -1,0 +1,2 @@
+STDOUT: This file is used to test Ariel IO redirection functionality.
+STDOUT: This is the second line in the file.

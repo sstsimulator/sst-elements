@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -43,27 +43,33 @@ public:
             address, hw_thr, isa_opts, c_phys_int_reg_in, c_phys_int_reg_out, c_isa_int_reg_in, c_isa_int_reg_out,
             c_phys_fp_reg_in, c_phys_fp_reg_out, c_isa_fp_reg_in, c_isa_fp_reg_out),
         pipeline_fpflags(fp_flags),
-        update_fp_flags(false)
+        update_fp_flags(false), set_fp_flags(false)
     {}
 
     VanadisFloatingPointInstruction(const VanadisFloatingPointInstruction& copy_me) :
         VanadisInstruction(copy_me),
         update_fp_flags(copy_me.update_fp_flags),
+        set_fp_flags(copy_me.set_fp_flags),
         fpflags(copy_me.fpflags),
-		  pipeline_fpflags(copy_me.pipeline_fpflags)
+		pipeline_fpflags(copy_me.pipeline_fpflags)
     {}
 
-    virtual bool updatesFPFlags() const { return update_fp_flags; }
-    virtual void performFPFlagsUpdate() const {
-		pipeline_fpflags->copy(fpflags);
-	 }
+    virtual bool updatesFPFlags() const override { return update_fp_flags || set_fp_flags; }
+    virtual void updateFPFlags() override {
+        if(LIKELY(update_fp_flags)) {
+            pipeline_fpflags->update(fpflags);
+        } else if(UNLIKELY(set_fp_flags)) {
+            pipeline_fpflags->set(fpflags);
+        }
+    }
 
 protected:
     bool                       update_fp_flags;
-	 VanadisFloatingPointFlags* pipeline_fpflags;
+    bool                       set_fp_flags;
+	VanadisFloatingPointFlags* pipeline_fpflags;
     VanadisFloatingPointFlags  fpflags;
 
-	 template<typename T>
+	template<typename T>
     void performFlagChecks(const T value) {
 		if(std::fpclassify(value) == FP_INFINITE) {
 			fpflags.setOverflow();

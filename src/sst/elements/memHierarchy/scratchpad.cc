@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2023 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2023, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -295,12 +295,12 @@ void Scratchpad::init(unsigned int phase) {
 
     // Send initial info out
     if (!phase) {
-        linkDown_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Scratchpad, true, true, scratchLineSize_, true));
-        if (linkUp_ != linkDown_) linkUp_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Scratchpad, true, true, scratchLineSize_, true));
+        linkDown_->sendUntimedData(new MemEventInitCoherence(getName(), Endpoint::Scratchpad, true, true, scratchLineSize_, true));
+        if (linkUp_ != linkDown_) linkUp_->sendUntimedData(new MemEventInitCoherence(getName(), Endpoint::Scratchpad, true, true, scratchLineSize_, true));
     }
 
     // Handle incoming events
-    while (MemEventInit *initEv = linkUp_->recvInitData()) {
+    while (MemEventInit *initEv = linkUp_->recvUntimedData()) {
         if (initEv->getCmd() == Command::NULLCMD) {
 #ifdef __SST_DEBUG_OUTPUT__
             dbg.debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
@@ -320,12 +320,12 @@ void Scratchpad::init(unsigned int phase) {
         } else { // Not a NULLCMD
             MemEventInit * memRequest = new MemEventInit(getName(), initEv->getCmd(), initEv->getAddr() - remoteAddrOffset_, initEv->getPayload());
             memRequest->setDst(linkDown_->getTargetDestination(memRequest->getAddr()));
-            linkDown_->sendInitData(memRequest);
+            linkDown_->sendUntimedData(memRequest);
         }
         delete initEv;
     }
     // Handle incoming events
-    while (MemEventInit *initEv = linkDown_->recvInitData()) {
+    while (MemEventInit *initEv = linkDown_->recvUntimedData()) {
         if (initEv->getCmd() == Command::NULLCMD) {
             dbg.debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
                     getName().c_str(), initEv->getVerboseString(dlevel).c_str());

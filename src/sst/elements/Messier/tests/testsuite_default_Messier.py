@@ -60,7 +60,7 @@ class testcase_Messier_Component(SSTTestCase):
 
 #####
 
-    def Messier_test_template(self, testcase, testtimeout=240):
+    def Messier_test_template(self, testcase, testtimeout=480):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
