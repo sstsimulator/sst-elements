@@ -956,13 +956,13 @@ VANADIS_COMPONENT::performRetire(int rob_num, VanadisCircularQueue<VanadisInstru
             rob->pop();
 
             #ifdef VANADIS_BUILD_DEBUG
-            if ( output->getVerboseLevel() >= 8 ) 
+            if ( output->getVerboseLevel() >= 0 ) 
             {
                 char* inst_asm_buffer = new char[32768];
                 rob_front->printToBuffer(inst_asm_buffer, 32768);
 
                 output->verbose(
-                    CALL_INFO, 8, 0, "%d: ----> Retire: 0x%0" PRI_ADDR " / %s\n", rob_front->getHWThread(), rob_front->getInstructionAddress(),
+                    CALL_INFO, 16, 0, "%d: ----> Retire: 0x%0" PRI_ADDR " / %s\n", rob_front->getHWThread(), rob_front->getInstructionAddress(),
                     inst_asm_buffer);
 
                 delete[] inst_asm_buffer;
@@ -1350,7 +1350,7 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle)
         if ( zero_reg < isa_options[i]->countISAIntRegisters() ) {
             VanadisISATable* thr_issue_table = issue_isa_tables[i];
             const uint16_t   zero_phys_reg   = thr_issue_table->getIntPhysReg(zero_reg);
-            register_files[i]->setIntReg<uint64_t>(zero_phys_reg, 0);
+            register_files[i]->setIntReg2<uint64_t>(zero_phys_reg, 0);
         }
     }
 
@@ -2212,7 +2212,7 @@ void VANADIS_COMPONENT::startThreadClone( VanadisStartThreadCloneReq* req )
         #if 0
         printf("%s() %d %#lx\n",__func__,i,req->getIntRegs()[i]);
         #endif
-        reg_file->setIntReg<uint64_t>(isa_table->getIntPhysReg(i), req->getIntRegs()[i]);
+        reg_file->setIntReg2<uint64_t>(isa_table->getIntPhysReg(i), req->getIntRegs()[i]);
     }
     for ( int i = 0; i < req->getFpRegs().size(); i++ )
     {
@@ -2255,7 +2255,7 @@ void VANADIS_COMPONENT::startThreadFork( VanadisStartThreadForkReq* req )
         #if 0
         printf("%s() %d %#lx\n",__func__,i,req->getIntRegs()[i]);
         #endif
-        reg_file->setIntReg<uint64_t>(isa_table->getIntPhysReg(i), req->getIntRegs()[i]);
+        reg_file->setIntReg2<uint64_t>(isa_table->getIntPhysReg(i), req->getIntRegs()[i]);
     }
 
     thr_decoder->setReturnRegister( output, isa_table, reg_file, 0 );
@@ -2348,7 +2348,7 @@ VANADIS_COMPONENT::checkpointLoad(FILE* fp)
                 int reg;
                 assert( 3 == fscanf(fp,"%s %d %" PRIx64 "\n",str1,&reg,&value) ); 
                 output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"INT %d %" PRIx64 "\n",reg,value);
-                reg_file->setIntReg<uint64_t>(isa_table->getIntPhysReg(i), value);
+                reg_file->setIntReg2<uint64_t>(isa_table->getIntPhysReg(i), value);
             }
             for ( int i = 0; i < 32; i++ ) {
                 int reg;

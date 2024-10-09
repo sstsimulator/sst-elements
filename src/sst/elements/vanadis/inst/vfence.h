@@ -49,7 +49,7 @@ public:
 
     virtual VanadisFunctionalUnitType getInstFuncType() const { return INST_FENCE; }
 
-    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile) {}
+    virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override {}
 
     virtual void print(SST::Output* output) { output->verbose(CALL_INFO, 8, 0, "%s", getInstCode()); }
 

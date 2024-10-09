@@ -99,8 +99,7 @@ public:
                         uint16_t phys_fp_regs_in_3, 
                         uint16_t phys_fp_regs_out_0,uint16_t phys_fp_regs_out_1)
     {
-        clear_IEEE754_except();
-         if ( sizeof(fp_format) >= regFile->getFPRegWidth() ) 
+         if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) 
          {
                 fp_format src_1,src_2;
                 src_1  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1); 
@@ -150,7 +149,6 @@ public:
 
             regFile->setFPReg<fp_format>(phys_fp_regs_out_0, result);
         }
-        check_IEEE754_except();
     }
 
     void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
@@ -170,7 +168,7 @@ public:
             phys_fp_regs_out_1 = getPhysFPRegOut(1);
         }
         instOp(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1, 
-        phys_fp_regs_in_2, phys_fp_regs_in_3,
+                        phys_fp_regs_in_2, phys_fp_regs_in_3,
                         phys_fp_regs_out_0,phys_fp_regs_out_1);
         markExecuted();
     }

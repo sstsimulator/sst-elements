@@ -94,10 +94,10 @@ public:
         
         const gpr_format v    = regFile->getIntReg<gpr_format>(phys_int_regs_in_0);
         uint64_t result;
+        
 
         if constexpr ( std::is_same_v<fp_format,uint64_t> && std::is_same_v<gpr_format,uint64_t> ) {
             result = v;
-
         } else if constexpr ( std::is_same_v<fp_format,uint32_t> && std::is_same_v<gpr_format,uint32_t> ) {
             if ( 8 == regFile->getFPRegWidth() ) {
                 result = 0xffffffff00000000 | v ;
@@ -125,28 +125,20 @@ public:
     {
        
         const gpr_format v       = regFile->getIntReg<gpr_format>(phys_int_regs_in_0);
-        
         const fp_format  result  = static_cast<fp_format>(v);
         
-        if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) 
-        {
+        if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
             fractureToRegisters<fp_format>(regFile, phys_fp_regs_out_0, phys_fp_regs_out_1, result);
-        } 
-        else 
-        {
+        } else {
             if( 8 == regFile->getFPRegWidth() && 4 == sizeof(fp_format) ) {
-                
                 uint64_t tmp = 0xffffffff00000000 | convertTo<uint64_t>(result); 
-                
                 regFile->setFPReg<uint64_t>(phys_fp_regs_out_0, tmp);
-            } else {
-                
+            } else {                
                 regFile->setFPReg<fp_format>(phys_fp_regs_out_0, result);
             }
         }
 
         if (UNLIKELY(isa_int_regs_in[0] != isa_options->getRegisterIgnoreWrites())) {
-            
             performFlagChecks<fp_format>(result);
         }
        
@@ -159,8 +151,7 @@ public:
         
         if constexpr ( is_bitwise ) {
             bitwise_convert(regFile,phys_fp_regs_out_0, phys_fp_regs_out_1, phys_int_regs_in_0 );
-        } else {
-            
+        } else {            
             convert(regFile,phys_fp_regs_out_0, phys_fp_regs_out_1, phys_int_regs_in_0 );
         }
 

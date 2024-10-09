@@ -70,7 +70,7 @@ public:
     uint16_t getMemoryAddressRegister() const { return phys_int_regs_in[0]; }
     uint16_t getTargetRegister() const { return phys_int_regs_in[1]; }
 
-    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile) { markExecuted(); }
+    virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override { markExecuted(); }
 
     virtual void printToBuffer(char* buffer, size_t buffer_size)
     {

@@ -347,7 +347,7 @@ inline void VanadisSyscall::writeMemory( uint64_t addr, std::vector<uint8_t>& bu
 
 inline bool VanadisSyscall::handleMemRespBase( StandardMem::Request* req )
 {
-    m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "recv memory event (%s)\n", req->getString().c_str(), req->getID());
+    m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "recv memory event (%s)\n", req->getString().c_str());
     m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"m_pendingMem.size() %zu\n",m_pendingMem.size());
 
     auto find_event = m_pendingMem.find(req->getID());

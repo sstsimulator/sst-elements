@@ -59,7 +59,7 @@ public:
             isa_int_regs_in[1], isa_int_regs_in[0], offset, phys_int_regs_in[1], phys_int_regs_in[0], offset);
     }
 
-    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile) { markExecuted(); }
+    virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override { markExecuted(); }
 
     virtual void
     computeStoreAddress(SST::Output* output, VanadisRegisterFile* reg, uint64_t* store_addr, uint16_t* op_width)

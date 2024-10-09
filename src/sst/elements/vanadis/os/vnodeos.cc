@@ -590,11 +590,9 @@ VanadisNodeOSComponent::handleIncomingSyscall(SST::Event* ev) {
     VanadisSyscallEvent* sys_ev = dynamic_cast<VanadisSyscallEvent*>(ev);
 
     if (nullptr == sys_ev) {
-        output->verbose(CALL_INFO, 16, 0,"Syscall event conversion failed\n");
         VanadisCoreEvent* event = dynamic_cast<VanadisCoreEvent*>(ev);
 
         if ( nullptr != event ) { 
-            output->verbose(CALL_INFO, 16, 0,"Non-Syscall event handle\n");
             auto syscall = getSyscall( event->getCore(), event->getThread() );
             syscall->handleEvent( event );
             processSyscallPost( syscall );
@@ -602,7 +600,7 @@ VanadisNodeOSComponent::handleIncomingSyscall(SST::Event* ev) {
 
             VanadisCheckpointResp* resp = dynamic_cast< VanadisCheckpointResp*>(ev);
             if ( nullptr != resp ) {
-                output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"checkoint \n");
+                output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"checkpoint \n");
              //   primaryComponentOKToEndSim();
 
                 m_flushPages.push_back( 0x2bc0 );
@@ -638,12 +636,11 @@ VanadisNodeOSComponent::handleIncomingSyscall(SST::Event* ev) {
     } else {
 	    auto process = m_coreInfoMap.at(sys_ev->getCoreID()).getProcess( sys_ev->getThreadID() );
 	    if ( process ) {
-            output->verbose(CALL_INFO, 16, 0,"calling syscall handler for core %d, hwthread %d\n", sys_ev->getCoreID(), sys_ev->getThreadID() );
 		    auto syscall = handleIncomingSyscall( process, sys_ev, core_links[ sys_ev->getCoreID() ] );
 
 		    processSyscallPost( syscall );
 	    } else {
-		    output->verbose(CALL_INFO, 16, 0,"no active process for core %d, hwthread %d\n", sys_ev->getCoreID(), sys_ev->getThreadID() );
+		    printf("no active process for core %d, hwthread %d\n", sys_ev->getCoreID(), sys_ev->getThreadID() );
 		    delete ev;
 	    }
     } 
