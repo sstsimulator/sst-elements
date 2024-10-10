@@ -55,6 +55,7 @@ exe = "hello-world"
 #exe = "uname"
 #exe = "mem-test"
 #exe = "checkpoint"
+#exe = "zicntr"
 
 physMemSize = "4GiB"
 

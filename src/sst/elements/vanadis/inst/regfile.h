@@ -52,6 +52,7 @@ public:
     void init( ) {
         std::memset(int_reg_storage, 0, (int_reg_width * count_int_regs));
         std::memset(fp_reg_storage, 0, (fp_reg_width * count_fp_regs));
+        std::fill_n(counters, sizeof(counters), 0);
     }
 
     ~VanadisRegisterFile()
@@ -212,6 +213,18 @@ public:
         }
     }
 
+    void incrementCounter(int i, uint64_t n = 1)
+    {
+        assert(0 <= i and i < sizeof(counters));
+        counters[i] += n;
+    }
+
+    uint64_t getCounter(int i) const
+    {
+        assert(0 <= i and i < sizeof(counters));
+        return counters[i];
+    }
+
 private:
     char* getIntReg(const uint16_t reg)
     {
@@ -263,6 +276,9 @@ private:
     VanadisFPRegisterMode fp_reg_mode;
     const uint32_t              fp_reg_width;
     const uint32_t              int_reg_width;
+
+    // Counters from 8 https://github.com/riscv/riscv-isa-manual/releases/download/riscv-isa-release-f797123-2024-06-27/riscv-unprivileged.pdf
+    uint64_t counters[32];
 };
 
 } // namespace Vanadis
