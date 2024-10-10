@@ -85,6 +85,7 @@
 #include "inst/vnop.h"
 #include "inst/vsetreg.h"
 #include "inst/vsetregcallable.h"
+#include "inst/vgetregcallable.h"
 #include "inst/vsyscall.h"
 
 // int-reg move

@@ -214,8 +214,18 @@ public:
 
     void setThreadLocalStoragePointer(uint64_t new_tls) { tls_ptr = new_tls; }
 
-    uint64_t getThreadLocalStoragePointer() const { return tls_ptr; }
-    uint64_t getCycleCount() const { return cycle_count; }
+    static void * getThreadLocalStoragePointer_stub( void * arg_input ) {
+        VanadisDecoder * me = (VanadisDecoder *)arg_input;
+        return me->getThreadLocalStoragePointer( );
+    }
+
+    void * getThreadLocalStoragePointer() { return (void *)&tls_ptr; }
+        static void * getCycleCount_stub( void * arg_input ) {
+        VanadisDecoder * me = (VanadisDecoder *)arg_input;
+        return me->getCycleCount( );
+    }
+
+    void * getCycleCount() { return (void *)&cycle_count; }
 
     // VanadisCircularQueue<VanadisInstruction*>* getDecodedQueue() { return
     // decoded_q; }
@@ -232,6 +242,10 @@ public:
     VanadisBranchUnit*        getBranchPredictor() { return branch_predictor; }
 
     virtual VanadisCPUOSHandler* getOSHandler() { return os_handler; }
+    virtual void gdb_tick() {}
+    virtual void register_pipeline( SST::Output* ) {}
+    virtual bool is_rob_empty( ) { return false; }
+    virtual void instruction_to_rob( SST::Output*, VanadisInstruction*, bool *, VanadisInstructionBundle* ) {}
 
 protected:
     virtual void clearDecoderAfterMisspeculate(SST::Output* output) {};
