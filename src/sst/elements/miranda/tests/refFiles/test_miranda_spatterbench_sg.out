@@ -1,0 +1,9 @@
+
+Run Configurations
+[ {'id': 0, 'kernel': 'sg', 'pattern': [], 'pattern-gather': [0, 1, 2, 3, 4, 5, 6, 7], 'pattern-scatter': [0, 1, 2, 3, 4, 5, 6, 7], 'delta': 8, 'delta-gather': 8, 'delta-scatter': 8, 'count': 65536, 'wrap': 1, 'threads': 1} ]
+
+
+config         bytes          time(s)        bw(MB/s)       cycles         time(s)/cycles 
+0              8388608        0.00116326     7211.27        1761300        6.60458e-10    
+
+Simulation is complete, simulated time: 9.68618 ms
