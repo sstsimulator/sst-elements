@@ -24,7 +24,7 @@ namespace SST {
 namespace Vanadis {
 
 template<typename compare_type, typename reg_type, VanadisRegisterCompareType compare_op>
-class VanadisConditionalMoveImmInstruction : public VanadisInstruction
+class VanadisConditionalMoveImmInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisConditionalMoveImmInstruction(
@@ -53,32 +53,49 @@ public:
             phys_int_regs_in[1], imm);
     }
 
-    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile)
+    virtual void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+                            uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0,
+                                    uint16_t phys_int_regs_in_1, bool compare_result)
     {
-#ifdef VANADIS_BUILD_DEBUG
-        if(output->getVerboseLevel() >= 16) {
+         #ifdef VANADIS_BUILD_DEBUG
+        if(output->getVerboseLevel() >= verboselevel) {
             output->verbose(
-                CALL_INFO, 16, 0,
-                "Execute: CMOVI    inst: 0x%" PRI_ADDR " / %5" PRIu16 " <- %" PRIu16 " if %" PRIu16 " == %" PRId64 " { %" PRIu16 " <- %" PRIu16 " if %" PRIu16 " == %" PRId64 " }\n",
-                getInstructionAddress(), isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1], imm,
-                phys_int_regs_out[0], phys_int_regs_in[0],
-                phys_int_regs_in[1], imm);
+                CALL_INFO, verboselevel, 0,
+                "hw_thr=%d sw_thr = %d Execute: CMOVI    inst: 0x%" PRI_ADDR " / %5" PRIu16 " <- %" PRIu16 " if %" PRIu16 " == %" PRId64 " { %" PRIu16 " <- %" PRIu16 " if %" PRIu16 " == %" PRId64 " } Result: Moved? %c\n",
+                getHWThread(),sw_thr, getInstructionAddress(), isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1], 
+                imm, phys_int_regs_out_0, phys_int_regs_in_0, phys_int_regs_in_1, imm, (compare_result==true) ? 'Y' : 'N');
         }
-#endif
-        const reg_type src_1 = regFile->getIntReg<reg_type>(phys_int_regs_in[0]);
-        const bool compare_result = registerCompareImm<compare_op, compare_type>(
-            regFile, this, output, phys_int_regs_in[1], imm);
+        #endif
+    }
 
-        if(compare_result) {
-            regFile->setIntReg<reg_type>(phys_int_regs_out[0], src_1);
+    void instOp(SST::Output* output,VanadisRegisterFile* regFile, uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0,
+                                    uint16_t phys_int_regs_in_1, bool * compare_result)
+    {
+        const reg_type src_1 = regFile->getIntReg<reg_type>(phys_int_regs_in_0);
+        *compare_result = registerCompareImm<compare_op, compare_type>(
+            regFile, this, output, phys_int_regs_in_1, imm);
+
+        if(*compare_result) {
+            regFile->setIntReg<reg_type>(phys_int_regs_out_0, src_1);
         }
+    }
 
+    virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile)
+    {
+       uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0);
+        uint16_t phys_int_regs_in_1 = getPhysIntRegIn(1);
+        uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
+        bool compare_result = false;
+        instOp(output,regFile, phys_int_regs_out_0,phys_int_regs_in_0, phys_int_regs_in_1,&compare_result);
+        log(output, 16, 65535, phys_int_regs_out_0,phys_int_regs_in_0,phys_int_regs_in_1,compare_result);
         markExecuted();
     }
 
 protected:
     const compare_type imm;
 };
+
+
 
 } // namespace Vanadis
 } // namespace SST

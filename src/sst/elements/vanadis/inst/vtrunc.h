@@ -46,15 +46,15 @@ public:
             getInstCode(), isa_int_regs_out[0], isa_int_regs_in[0], phys_int_regs_out[0], phys_int_regs_in[0]);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
-#ifdef VANADIS_BUILD_DEBUG
+        #ifdef VANADIS_BUILD_DEBUG
         output->verbose(
             CALL_INFO, 16, 0,
             "Execute: (addr=%p) %s phys: out=%" PRIu16 " in=%" PRIu16 ", isa: out=%" PRIu16 " / in=%" PRIu16 "\n",
             (void*)getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0],
             isa_int_regs_out[0], isa_int_regs_in[0]);
-#endif
+        #endif
         switch ( input_format ) {
         case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
         {

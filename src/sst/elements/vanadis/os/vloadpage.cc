@@ -51,7 +51,7 @@ void loadPages( SST::Output* output, SST::Interfaces::StandardMem* mem_if, MMU_L
         std::vector< uint8_t > pageBuffer( buffer.begin() + offset, buffer.begin() + offset + page_size );
 #endif
 
-        printf( "pageVirtAddr=%#" PRIx64 " physPageNum=%d physAddr=%#" PRIx64 "\n", pageVirtAddr, physPageNum, physAddr );
+        
         output->verbose( CALL_INFO, 2, 0, "pageVirtAddr=%#" PRIx64 " physPageNum=%d physAddr=%#" PRIx64 "\n", pageVirtAddr, physPageNum, physAddr );
 
 #if 1

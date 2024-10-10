@@ -22,7 +22,7 @@ namespace SST {
 namespace Vanadis {
 
 template<typename gpr_format>
-class VanadisModuloInstruction : public VanadisInstruction
+class VanadisModuloInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisModuloInstruction(
@@ -65,37 +65,27 @@ public:
             phys_int_regs_in[0], phys_int_regs_in[1]);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void instOp(VanadisRegisterFile* regFile, 
+        uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0, 
+        uint16_t phys_int_regs_in_1) override
     {
-#ifdef VANADIS_BUILD_DEBUG
-        if(output->getVerboseLevel() >= 16) {
-            output->verbose(
-                CALL_INFO, 16, 0,
-                "Execute: %#" PRIx64 " %s phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
-                " / in=%" PRIu16 ", %" PRIu16 "\n",
-                getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0],
-                phys_int_regs_in[1], isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);
-        } 
-#endif
-
-        const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in[0]);
-        const gpr_format src_2 = regFile->getIntReg<gpr_format>(phys_int_regs_in[1]);
+        const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in_0);
+        const gpr_format src_2 = regFile->getIntReg<gpr_format>(phys_int_regs_in_1);
 
         if ( 0 == src_2 ) {
-            regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1, true);
+            regFile->setIntReg<gpr_format>(phys_int_regs_out_0, src_1, true);
         } else if ( -1 == src_2 ) {
             if constexpr (std::is_signed<gpr_format>::value) {
-                regFile->setIntReg<gpr_format>(phys_int_regs_out[0], 0, true);
+                regFile->setIntReg<gpr_format>(phys_int_regs_out_0, 0, true);
             } else {
-                regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1 % src_2, true);
+                regFile->setIntReg<gpr_format>(phys_int_regs_out_0, src_1 % src_2, true);
             }
         } else {
-            regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1 % src_2, true);
+            regFile->setIntReg<gpr_format>(phys_int_regs_out_0, src_1 % src_2, true);
         }
-
-        markExecuted();
     }
 };
+
 
 } // namespace Vanadis
 } // namespace SST

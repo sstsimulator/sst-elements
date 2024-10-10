@@ -33,41 +33,41 @@
 namespace SST {
 namespace Vanadis {
 
-#define READ_FP_REG \
+#define READ_FP_REG(phys_fp_regs_in_0,phys_fp_regs_in_1) \
     if ( sizeof(fp_format) > regFile->getFPRegWidth() ) { \
-        src_1  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]); \
+        src_1  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1); \
     } else { \
-        src_1  = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]); \
+        src_1  = regFile->getFPReg<fp_format>(phys_fp_regs_in_0); \
     }
 
-#define READ_2FP_REGS \
+#define READ_2FP_REGS(phys_fp_regs_in_0,phys_fp_regs_in_1,phys_fp_regs_in_2, phys_fp_regs_in_3) \
     if ( sizeof(fp_format) > regFile->getFPRegWidth() ) { \
-        src_1  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]); \
-        src_2  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3]); \
+        src_1  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1); \
+        src_2  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in_2, phys_fp_regs_in_3); \
     } else { \
-        src_1  = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]); \
-        src_2  = regFile->getFPReg<fp_format>(phys_fp_regs_in[1]); \
+        src_1  = regFile->getFPReg<fp_format>(phys_fp_regs_in_0); \
+        src_2  = regFile->getFPReg<fp_format>(phys_fp_regs_in_1); \
     }
 
-#define READ_3FP_REGS \
+#define READ_3FP_REGS(phys_fp_regs_in_0,phys_fp_regs_in_1,phys_fp_regs_in_2, phys_fp_regs_in_3,phys_fp_regs_in_4, phys_fp_regs_in_5)  \
     if ( sizeof(fp_format) > regFile->getFPRegWidth() ) { \
-        src_1  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]); \
-        src_2  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3]); \
-        src_3  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[4], phys_fp_regs_in[5]); \
+        src_1  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1); \
+        src_2  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in_2, phys_fp_regs_in_3); \
+        src_3  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in_4, phys_fp_regs_in_5); \
     } else { \
-        src_1  = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]); \
-        src_2  = regFile->getFPReg<fp_format>(phys_fp_regs_in[1]); \
-        src_3  = regFile->getFPReg<fp_format>(phys_fp_regs_in[2]); \
+        src_1  = regFile->getFPReg<fp_format>(phys_fp_regs_in_0); \
+        src_2  = regFile->getFPReg<fp_format>(phys_fp_regs_in_1); \
+        src_3  = regFile->getFPReg<fp_format>(phys_fp_regs_in_2); \
     }
 
-#define WRITE_FP_REGS \
+#define WRITE_FP_REGS(phys_fp_regs_out_0, phys_fp_regs_out_1) \
     if ( sizeof(fp_format) > regFile->getFPRegWidth() ) { \
-        fractureToRegisters<fp_format>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], result);\
+        fractureToRegisters<fp_format>(regFile, phys_fp_regs_out_0, phys_fp_regs_out_1, result);\
     } else { \
-        regFile->setFPReg<fp_format>(phys_fp_regs_out[0], result); \
+        regFile->setFPReg<fp_format>(phys_fp_regs_out_0, result); \
     }
 
-class VanadisFloatingPointInstruction : public VanadisInstruction
+class VanadisFloatingPointInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisFloatingPointInstruction(
@@ -80,7 +80,7 @@ public:
             c_phys_fp_reg_in, c_phys_fp_reg_out, c_isa_fp_reg_in, c_isa_fp_reg_out),
         pipeline_fpflags(fp_flags),
         update_fp_flags(false), set_fp_flags(false), m_set_rm(false), m_update_rm(false)
-    {}
+    {  }
 
     VanadisFloatingPointInstruction(const VanadisFloatingPointInstruction& copy_me) :
         VanadisInstruction(copy_me),
@@ -90,7 +90,7 @@ public:
 		pipeline_fpflags(copy_me.pipeline_fpflags),
         m_set_rm(copy_me.m_set_rm),
         m_update_rm(copy_me.m_update_rm)
-    {}
+    {    }
 
     virtual bool updatesFPFlags() const override { 
         return update_fp_flags || set_fp_flags || m_set_rm | m_update_rm; 
@@ -115,7 +115,6 @@ protected:
     bool                       set_fp_flags;
     bool                       m_set_rm;
     bool                       m_update_rm;
-
 	VanadisFloatingPointFlags* pipeline_fpflags;
     VanadisFloatingPointFlags  fpflags;
 

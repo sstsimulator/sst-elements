@@ -55,7 +55,7 @@ public:
     }
 
     VanadisFunctionalUnitType getInstFuncType() const override { return INST_FAULT; }
-    void                      execute(SST::Output* output, VanadisRegisterFile* regFile) override {}
+    void                      scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override {}
 
 protected:
     std::string fault_msg;

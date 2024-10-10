@@ -23,7 +23,7 @@ namespace SST {
 namespace Vanadis {
 
 template <typename register_format>
-class VanadisShiftLeftLogicalImmInstruction : public VanadisInstruction
+class VanadisShiftLeftLogicalImmInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisShiftLeftLogicalImmInstruction(
@@ -60,21 +60,28 @@ public:
 
         strncpy( buffer, ss.str().c_str(), buffer_size );
     }
-
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+                uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0) override
     {
-#ifdef VANADIS_BUILD_DEBUG
-        if(output->getVerboseLevel() >= 16) {
+        #ifdef VANADIS_BUILD_DEBUG
+        if(output->getVerboseLevel() >= verboselevel) {
 
             std::ostringstream ss;
-            ss << "Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
-            ss << " phys: out=" <<  phys_int_regs_out[0] << " in=" << phys_int_regs_in[0];
+            ss << "hw_thr="<<getHWThread()<<" sw_thr=" <<sw_thr;
+            ss << " Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
+            ss << " phys: out=" <<  phys_int_regs_out_0 << " in=" << phys_int_regs_in_0;
             ss << " imm=" << imm_value;
             ss << ", isa: out=" <<  isa_int_regs_out[0]  << " in=" << isa_int_regs_in[0];
-
-            output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
+            output->verbose( CALL_INFO, verboselevel, 0, "%s\n", ss.str().c_str());
         }
-#endif
+        #endif
+    }
+
+    void instOp(VanadisRegisterFile* regFile, 
+                                uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0) override
+    {
+        
         if constexpr ( sizeof( register_format ) == 4 ) {
             // imm cannot be 0 for RV32 or for RV64 when working on 32 bit values
             if ( UNLIKELY( 0 == imm_value ) ) {
@@ -85,9 +92,16 @@ public:
             }
         }
 
-        const register_format src_1 = regFile->getIntReg<register_format>(phys_int_regs_in[0]);
-        regFile->setIntReg<register_format>(phys_int_regs_out[0], src_1 << imm_value);
+        const register_format src_1 = regFile->getIntReg<register_format>(phys_int_regs_in_0);
+        regFile->setIntReg<register_format>(phys_int_regs_out_0, src_1 << imm_value);
+    }
 
+    virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile)
+    {
+        uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
+        uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0);
+        log(output, 16, 65535,phys_int_regs_out_0,phys_int_regs_in_0);
+        instOp(regFile,phys_int_regs_out_0, phys_int_regs_in_0);
         markExecuted();
     }
 

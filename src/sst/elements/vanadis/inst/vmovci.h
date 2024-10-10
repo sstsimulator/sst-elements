@@ -72,16 +72,16 @@ public:
             static_cast<uint64_t>(imm_value), phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1]);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
-#ifdef VANADIS_BUILD_DEBUG
+        #ifdef VANADIS_BUILD_DEBUG
         output->verbose(
             CALL_INFO, 16, 0,
             "%8s %5" PRIu16 " <- %5" PRIu16 " (compare-reg: %5" PRIu16 " imm: %" PRIu64 ") (phys: %5" PRIu16
             " <- %5" PRIu16 " compare-reg: %5" PRIu16 ")",
             getInstCode(), isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1],
             static_cast<uint64_t>(imm_value), phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1]);
-#endif
+        #endif
         const T reg_value      = regFile->getIntReg<T>(phys_int_regs_in[0]);
         const T compare_check  = regFile->getIntReg<T>(phys_int_regs_in[1]);
         bool    compare_result = false;

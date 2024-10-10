@@ -36,7 +36,7 @@ public:
 
     virtual void printToBuffer(char* buffer, size_t buffer_size) { snprintf(buffer, buffer_size, "NOP"); }
 
-    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile) { markExecuted(); }
+    virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override { markExecuted(); }
 };
 
 } // namespace Vanadis

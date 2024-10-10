@@ -206,7 +206,7 @@ private:
 
     void handleIncomingMemory( VanadisSyscall* syscall, StandardMem::Request* req ) {
 
-        output->verbose(CALL_INFO, 8, VANADIS_OS_DBG_SYSCALL_MEM,"\n");
+        output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"handleIncomingMemory\n");
         syscall->handleMemRespBase( req );
 
         processSyscallPost( syscall ); 
