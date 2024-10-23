@@ -44,8 +44,11 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #pragma once
 
-#include <mercury/common/component.h>
 #include <sst/core/event.h>
+#include <sst/core/eli/elementbuilder.h>
+#include <sst/core/interfaces/simpleNetwork.h>
+
+#include <mercury/common/component.h>
 #include <mercury/common/thread_safe_new.h>
 #include <mercury/common/node_address.h>
 #include <mercury/common/timestamp.h>
@@ -65,10 +68,8 @@ Questions? Contact sst-macro-help@sandia.gov
 //#include <sstmac/hardware/topology/topology_fwd.h>
 //#include <sprockit/debug.h>
 //#include <mercury/common/factory.h>
-#include <sst/core/eli/elementbuilder.h>
 #include <mercury/common/event_handler.h>
 #include <mercury/hardware/network/network_message.h>
-#include <sst/core/interfaces/simpleNetwork.h>
 
 #include <vector>
 #include <queue>
@@ -124,18 +125,22 @@ class NIC : public SST::Hg::SubComponent
     SST::Hg::NIC
   )
 
-//  SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-//      {"link_control_slot", "Slot for a link control", "SST::Interfaces::SimpleNetwork" }
-//  )
-
   typedef enum {
     Injection,
     LogP
   } Port;
 
-  struct MyRequest : public SST::Interfaces::SimpleNetwork::Request {
+  // struct MyRequest : public SST::Interfaces::SimpleNetwork::Request {
+  //   uint64_t flow_id;
+  //   Timestamp start;
+  // };
+
+  class FlowTracker : public Event {
+private:
     uint64_t flow_id;
-    Timestamp start;
+public:
+    FlowTracker(uint64_t id) : flow_id(id) {}
+    uint64_t id() const {return flow_id;}
   };
 
 //  struct MessageEvent : public Event {

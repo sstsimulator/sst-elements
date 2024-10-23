@@ -405,26 +405,35 @@ SimTransport::send(Message* m)
         if (post_header_delay_.ticks()) {
           //api_parent_app_->compute(post_header_delay_);
         }
-        nic_ioctl_(m);
+        //nic_ioctl_(m);
+        send_packets(m);
       }
       break;
     case SST::Hg::NetworkMessage::posted_send:
       if (post_header_delay_.ticks()) {
         //api_parent_app_->compute(post_header_delay_);
       }
-      nic_ioctl_(m);
+      //nic_ioctl_(m);
+      send_packets(m);
       break;
     case SST::Hg::NetworkMessage::rdma_get_request:
     case SST::Hg::NetworkMessage::rdma_put_payload:
       if (post_rdma_delay_.ticks()) {
         //api_parent_app_->compute(post_rdma_delay_);
       }
-      nic_ioctl_(m);
+      //nic_ioctl_(m);
+      send_packets(m);
       break;
     default:
       sst_hg_abort_printf("attempting to initiate send with invalid type %d",
                         m->type())
   }
+}
+
+void
+SimTransport::send_packets(Message* m)
+{
+  nic_ioctl_(m);
 }
 
 void
@@ -479,7 +488,9 @@ SimTransport::rdmaPutResponse(Message* m, uint64_t payload_bytes,
 uint64_t
 SimTransport::allocateFlowId()
 {
-  return api_parent_app_->os()->allocateUniqueId();
+  auto id = api_parent_app_->os()->allocateUniqueId().msg_num;
+  return id;
+  //return api_parent_app_->os()->allocateUniqueId();
 }
 
 void

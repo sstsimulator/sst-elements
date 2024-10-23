@@ -59,15 +59,17 @@ int main(int argc, char* argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    int* values = new int[size];
-    for(int i = 0; i < size; i++) {
+    int problem_factor = 128;
+    int problem_size = size * problem_factor;
+    int* values = new int[problem_size];
+    for(int i = 0; i < problem_size; i++) {
       values[i] = rank;
     }
 
-    int* recv_values = new int[size];
-    MPI_Alltoall(values, 1, MPI_INT, recv_values, 1, MPI_INT, MPI_COMM_WORLD);
+    int* recv_values = new int[problem_size];
+    MPI_Alltoall(values, problem_factor, MPI_INT, recv_values, problem_factor, MPI_INT, MPI_COMM_WORLD);
     if(rank == 0) {
-      for(int i = 0; i < size; ++i) {
+      for(int i = 0; i < problem_size; ++i) {
         printf("recv_values[%d]=%d\n",i, recv_values[i]);
       }
     }

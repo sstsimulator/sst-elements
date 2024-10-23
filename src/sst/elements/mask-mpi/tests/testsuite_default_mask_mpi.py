@@ -60,6 +60,16 @@ class testcase_mask_mpi(SSTTestCase):
             os.environ["SST_LIB_PATH"] = path + ":" + libdir
         self.mask_mpi_template("test_allgather")
 
+    def test_halo3d26(self):
+        testdir = self.get_testsuite_dir()
+        libdir = sstsimulator_conf_get_value_str("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR")
+        path = os.environ.get("SST_LIB_PATH")
+        if path is None or path == "":
+            os.environ["SST_LIB_PATH"] = libdir
+        else:
+            os.environ["SST_LIB_PATH"] = path + ":" + libdir
+        self.mask_mpi_template("test_halo3d26")
+
 #####
 
     def mask_mpi_template(self, testcase, striptotail=0):
