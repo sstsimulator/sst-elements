@@ -2,7 +2,7 @@
 #
 #
 
-comp_LTLIBRARIES = libmask_mpi.la sendrecv.la reduce.la alltoall.la allgather.la
+comp_LTLIBRARIES = libmask_mpi.la sendrecv.la reduce.la alltoall.la allgather.la halo3d26.la
 
 compdir = $(pkglibdir)
 
@@ -83,6 +83,7 @@ sendrecv_la_SOURCES = tests/sendrecv.cc
 reduce_la_SOURCES = tests/reduce.cc
 alltoall_la_SOURCES = tests/alltoall.cc
 allgather_la_SOURCES = tests/allgather.cc
+halo3d26_la_SOURCES = skeletons/halo3d-26.cc
 
 EXTRA_DIST = \
  tests/testsuite_default_mask_mpi.py \
@@ -91,16 +92,19 @@ EXTRA_DIST = \
  tests/test_sendrecv.py \
  tests/test_alltoall.py \
  tests/test_allgather.py \
+ tests/test_halo3d26.py \
  tests/refFiles/test_reduce.out \
  tests/refFiles/test_sendrecv.out \
  tests/refFiles/test_alltoall.out \
- tests/refFiles/test_allgather.out
+ tests/refFiles/test_allgather.out \
+ tests/refFiles/test_halo3d26.out
 
 libmask_mpi_la_LDFLAGS = -module -avoid-version
 sendrecv_la_LDFLAGS = -module -avoid-version
 reduce_la_LDFLAGS = -module -avoid-version
 alltoall_la_LDFLAGS = -module -avoid-version
 allgather_la_LDFLAGS = -module -avoid-version
+halo3d26_la_LDFLAGS = -module -avoid-version
 
 install-exec-hook: 
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     mask-mpi=$(abs_srcdir)

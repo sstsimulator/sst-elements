@@ -131,7 +131,8 @@ public:
   }
 
   UniqueEventId allocateUniqueId() {
-    return next_outgoing_id_++;
+    next_outgoing_id_.msg_num++;
+    return next_outgoing_id_;
   }
 
  private:
