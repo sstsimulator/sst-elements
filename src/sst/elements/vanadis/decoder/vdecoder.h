@@ -29,6 +29,7 @@
 #include "vinsloader.h"
 #include "vfpflags.h"
 
+
 #include <cinttypes>
 #include <cstdint>
 #include <sst/core/interfaces/stdMem.h>
@@ -265,6 +266,7 @@ protected:
     Statistic<uint64_t>* stat_uop_generated;
     Statistic<uint64_t>* stat_ins_bytes_loaded;
 };
+
 
 } // namespace Vanadis
 } // namespace SST

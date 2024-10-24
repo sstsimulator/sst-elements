@@ -66,9 +66,9 @@ public:
 
         const bool is_marked = (line_value & bit_value) != 0;
 
-        printf("check-address: 0x%" PRI_ADDR " / line: %" PRIu64 " / offset: %" PRIu64
-               " / value: 0x%" PRI_ADDR " / bit_value: 0x%" PRI_ADDR " / marked: %3s\n",
-               byte_addr, line, line_offset, line_value, bit_value, is_marked ? "yes" : "no");
+        // printf("check-address: 0x%" PRI_ADDR " / line: %" PRIu64 " / offset: %" PRIu64
+        //        " / value: 0x%" PRI_ADDR " / bit_value: 0x%" PRI_ADDR " / marked: %3s\n",
+        //        byte_addr, line, line_offset, line_value, bit_value, is_marked ? "yes" : "no");
 
         return is_marked;
     }

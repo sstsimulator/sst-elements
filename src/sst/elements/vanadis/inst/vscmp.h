@@ -24,7 +24,7 @@ namespace SST {
 namespace Vanadis {
 
 template <VanadisRegisterCompareType compare_type, typename register_format>
-class VanadisSetRegCompareInstruction : public VanadisInstruction
+class VanadisSetRegCompareInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisSetRegCompareInstruction(
@@ -64,28 +64,29 @@ public:
             isa_int_regs_in[0], isa_int_regs_in[1], phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1]);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void instOp(SST::Output* output,VanadisRegisterFile* regFile, 
+                            uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0, 
+                            uint16_t phys_int_regs_in_1)
     {
-#ifdef VANADIS_BUILD_DEBUG
-        if(output->getVerboseLevel() >= 16) {
-            std::ostringstream ss;
-            ss << "Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
-            ss << " (op: " << convertCompareTypeToString(compare_type); 
-            ss << " isa-out: " << isa_int_regs_out[0] << " isa-in: " << isa_int_regs_in[0] << ", " << isa_int_regs_in[1];
-            ss << " / phys-out: " << phys_int_regs_out[0] << " phys-in: " << phys_int_regs_in[0] << ", " << phys_int_regs_in[1];
-            output->verbose( CALL_INFO, 16, 0, "%s\n", ss.str().c_str());
-        }
-#endif
+        
         const bool compare_result = registerCompare<compare_type, register_format>(
-                    regFile, this, output, phys_int_regs_in[0], phys_int_regs_in[1]);
-
-        const uint16_t result_reg = phys_int_regs_out[0];
+                    regFile, this, output, phys_int_regs_in_0, phys_int_regs_in_1);
         // always write result in unsigned 64b so we completely set register
-        regFile->setIntReg<uint64_t>(result_reg, compare_result ? 1 : 0);
+        regFile->setIntReg<uint64_t>(phys_int_regs_out_0, compare_result ? 1 : 0);
+    }
 
+    virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile)
+    {
+        
+        uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
+        uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0);
+        uint16_t phys_int_regs_in_1 = getPhysIntRegIn(1);
+        log(output, 16, 65535,phys_int_regs_out_0,phys_int_regs_in_0,phys_int_regs_in_1);
+        instOp(output, regFile,phys_int_regs_out_0, phys_int_regs_in_0, phys_int_regs_in_1);
         markExecuted();
     }
 };
+
 
 } // namespace Vanadis
 } // namespace SST

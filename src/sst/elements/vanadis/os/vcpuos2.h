@@ -83,7 +83,7 @@ public:
     typedef std::function<VanadisSyscallEvent*(int)> FuncPtr;
 
     void install( int opCode, FuncPtr funcPtr ) {
-        output->verbose(CALL_INFO, 8, 0, " opCode %d \n", opCode);
+        output->verbose(CALL_INFO, 16, 0, " opCode %d \n", opCode);
 
         assert( m_functionMap.find( opCode ) == m_functionMap.end() );
 
@@ -92,7 +92,7 @@ public:
 
     void install( int opCode, VanadisSyscallOp syscall ) {
 
-        output->verbose(CALL_INFO, 8, 0, " opCode %d -> syscall %d\n", opCode,syscall);
+        output->verbose(CALL_INFO, 16, 0, " opCode %d -> syscall %d\n", opCode,syscall);
 
         assert( m_functionMap.find( opCode ) == m_functionMap.end() );
 
@@ -111,22 +111,23 @@ public:
 
         const uint64_t os_code = getOsCode();
 
-        output->verbose(CALL_INFO, 8, 0, "core=%d hw_thr=%d syscall-ins: %#" PRIx64 ", link-reg: %#" PRIx64", os_code=%" PRIu64 "\n",
-                        core_id, hw_thr, syscallIns->getInstructionAddress(), call_link_value, os_code);
+        output->verbose(CALL_INFO, 16, 0, "core=%d hw_thr=%d syscall-ins: %#" PRIx64 ", link-reg: %#" PRIx64", os_code=%" PRIu64 ", linkReg=(%d,%d), OsCodeReg=(%d,%d)\n",
+                        core_id, hw_thr, syscallIns->getInstructionAddress(), call_link_value, os_code, LinkReg, isaTable->getIntPhysReg(LinkReg), OsCodeReg, isaTable->getIntPhysReg(OsCodeReg));
         VanadisSyscallEvent* call_ev = nullptr;
 
         if ( m_functionMap.find( os_code ) != m_functionMap.end() ) {
-            call_ev = m_functionMap[os_code]( hw_thr );
+            call_ev = m_functionMap[os_code]( hw_thr ); // TODO_Anu: will the functionmap have entries for the sub threads != super thread?
         } else {
             output->fatal(CALL_INFO, -1, "Error: unknown code %" PRIu64 " (ins: %#" PRIx64 ", link-reg: %#" PRIx64 ")\n",
                 os_code, syscallIns->getInstructionAddress(), call_link_value);
         }
 
         if (nullptr != call_ev) {
-            output->verbose(CALL_INFO, 9, 0, "Sending event to operating system...\n");
+            output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "Sending event to operating system...\n");
             sendSyscallEvent(call_ev);
             return std::make_tuple(false,flushLSQ);
         } else {
+            // printf("Returning Syscall return True\n");
             return std::make_tuple(true,flushLSQ);
         }
     }
@@ -137,7 +138,7 @@ protected:
         T1  pid = getArgRegister( 0 );
         T1  sig = getArgRegister( 1 );
 
-        output->verbose(CALL_INFO, 8, 0, "kill( %" PRIdXX", %" PRIdXX"  )\n",pid,sig);
+        output->verbose(CALL_INFO, 16, 0, "kill( %" PRIdXX", %" PRIdXX"  )\n",pid,sig);
 
         return new VanadisSyscallKillEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, pid, sig );
     }
@@ -147,7 +148,7 @@ protected:
         T1 advise_len     = getArgRegister( 1 );
         T1 advise_advice  = getArgRegister( 2 );
 
-        output->verbose(CALL_INFO, 8, 0,
+        output->verbose(CALL_INFO, 16, 0,
                             "madvise( %#" PRIxXX ", %" PRIuXX ", %" PRIuXX " )\n", advise_addr, advise_len, advise_advice);
 
         printf("Warning: VANADIS_SYSCALL_%s_%s not implemented returning success\n",m_isaName,__func__);
@@ -160,7 +161,7 @@ protected:
         T1 file_handle    = getArgRegister(0);
         T1 addr           = getArgRegister(1);
 
-        output->verbose(CALL_INFO, 8, 0, "fstat( %" PRIdXX ", %" PRIuXX " )\n", file_handle, addr);
+        output->verbose(CALL_INFO, 16, 0, "fstat( %" PRIdXX ", %" PRIuXX " )\n", file_handle, addr);
 
         return new VanadisSyscallFstatEvent(core_id, hw_thr, BitType, file_handle, addr);
     }
@@ -170,7 +171,7 @@ protected:
         T1 cpusetsize = getArgRegister(1);
         T1 maskAddr   = getArgRegister(2);
 
-        output->verbose(CALL_INFO, 8, 0,
+        output->verbose(CALL_INFO, 16, 0,
                             "sched_getaffinity( %" PRIdXX ", %" PRIdXX", %#" PRIxXX " )\n", pid, cpusetsize, maskAddr );
 
         return new VanadisSyscallGetaffinityEvent(core_id, hw_thr, BitType, pid, cpusetsize, maskAddr );
@@ -203,7 +204,7 @@ protected:
         T1 set_out    = getArgRegister(2);
         T1 set_size   = getArgRegister(3);
 
-        output->verbose(CALL_INFO, 8, 0, "rt_sigprocmask( %" PRIdXX ", %#" PRIxXX ", %#" PRIxXX ", %" PRIdXX ")\n", how, set_in, set_out, set_size);
+        output->verbose(CALL_INFO, 16, 0, "rt_sigprocmask( %" PRIdXX ", %#" PRIxXX ", %#" PRIxXX ", %" PRIdXX ")\n", how, set_in, set_out, set_size);
         printf("Warning: VANADIS_SYSCALL_%s_%s not implemented returning success\n",m_isaName,__func__);
 
         recvSyscallResp(new VanadisSyscallResponse(0));
@@ -214,7 +215,7 @@ protected:
         T1 addr   = getArgRegister(0);
         T1 len    = getArgRegister(1);
 
-        output->verbose(CALL_INFO, 8, 0, "unmap( %#" PRIxXX", %" PRIuXX " )\n", addr, len);
+        output->verbose(CALL_INFO, 16, 0, "unmap( %#" PRIxXX", %" PRIuXX " )\n", addr, len);
 
         if ((0 == addr)) {
             recvSyscallResp(new VanadisSyscallResponse(-22));
@@ -229,34 +230,34 @@ protected:
         T1 iovec_ptr   = getArgRegister(1);
         T1 iovec_count = getArgRegister(2);
 
-        output->verbose(CALL_INFO, 8, 0, "readv( %" PRIdXX ", %#" PRIxXX", %" PRIdXX " )\n", fd, iovec_ptr, iovec_count);
+        output->verbose(CALL_INFO, 16, 0, "readv( %" PRIdXX ", %#" PRIxXX", %" PRIdXX " )\n", fd, iovec_ptr, iovec_count);
         return new VanadisSyscallReadvEvent(core_id, hw_thr, BitType, fd, iovec_ptr, iovec_count);
     }
 
     VanadisSyscallEvent* EXIT( int hw_thr ) {
         T1 code = getArgRegister(0);
 
-        output->verbose(CALL_INFO, 8, 0, "exit( %" PRIdXX " )\n", code);
+        output->verbose(CALL_INFO, 16, 0, "exit( %" PRIdXX " )\n", code);
         flushLSQ = true;
         return new VanadisSyscallExitEvent(core_id, hw_thr, BitType, code);
     }
 
     VanadisSyscallEvent* GETPID( int hw_thr ) {
-        output->verbose(CALL_INFO, 8, 0, "getpid()\n");
+        output->verbose(CALL_INFO, 16, 0, "getpid()\n");
         return new VanadisSyscallGetxEvent(core_id, hw_thr, BitType,SYSCALL_OP_GETPID);
     }
 
     VanadisSyscallEvent* GETPGID( int hw_thr ) {
-        output->verbose(CALL_INFO, 8, 0, "getpgid()\n");
+        output->verbose(CALL_INFO, 16, 0, "getpgid()\n");
         return new VanadisSyscallGetxEvent(core_id, hw_thr, BitType,SYSCALL_OP_GETPGID);
     }
     VanadisSyscallEvent* GETPPID( int hw_thr ) {
-        output->verbose(CALL_INFO, 8, 0, "getppid()\n");
+        output->verbose(CALL_INFO, 16, 0, "getppid()\n");
         return new VanadisSyscallGetxEvent(core_id, hw_thr, BitType,SYSCALL_OP_GETPPID);
     }
 
     VanadisSyscallEvent* GETTID( int hw_thr ) {
-        output->verbose(CALL_INFO, 8, 0, "gettid()\n");
+        output->verbose(CALL_INFO, 16, 0, "gettid()\n");
         return new VanadisSyscallGetxEvent(core_id, hw_thr, BitType,SYSCALL_OP_GETTID);
     }
 
@@ -265,7 +266,7 @@ protected:
         T1 buff_ptr = getArgRegister(1);
         T1 count    = getArgRegister(2);
 
-        output->verbose(CALL_INFO, 8, 0, "read( %" PRIdXX ", %#" PRIxXX ", %#" PRIxXX ")\n", fd, buff_ptr, count );
+        output->verbose(CALL_INFO, 16, 0, "read( %" PRIdXX ", %#" PRIxXX ", %#" PRIxXX ")\n", fd, buff_ptr, count );
         return new VanadisSyscallReadEvent(core_id, hw_thr, BitType, fd, buff_ptr, count);
     }
 
@@ -274,7 +275,7 @@ protected:
         T1 buff   = getArgRegister(1);
         T1 count  = getArgRegister(2);
 
-        output->verbose(CALL_INFO, 8, 0, "write( %" PRIdXX ", %#" PRIxXX ", %" PRIuXX " )\n", fd, buff, count);
+        output->verbose(CALL_INFO, 16, 0, "write( %" PRIdXX ", %#" PRIxXX ", %" PRIuXX " )\n", fd, buff, count);
         return new VanadisSyscallWriteEvent(core_id, hw_thr, BitType, fd, buff, count);
     }
 
@@ -283,12 +284,12 @@ protected:
         T1 path_addr   = getArgRegister( 1 );
         T1 flags       = getArgRegister( 2 );
 
-#ifdef SST_COMPILE_MACOSX
+        #ifdef SST_COMPILE_MACOSX
         if (  VANADIS_AT_FDCWD == dirFd ) {
             dirFd = AT_FDCWD;
         }
-#endif
-        output->verbose(CALL_INFO, 8, 0, "unlinkat( %" PRIdXX ", %" PRIdXX ", %#" PRIxXX" )\n",dirFd,path_addr,flags);
+        #endif
+        output->verbose(CALL_INFO, 16, 0, "unlinkat( %" PRIdXX ", %" PRIdXX ", %#" PRIxXX" )\n",dirFd,path_addr,flags);
 
         return new VanadisSyscallUnlinkatEvent(core_id, hw_thr, BitType, dirFd,path_addr,flags);
     }
@@ -296,7 +297,8 @@ protected:
     VanadisSyscallEvent* CLOSE( int hw_thr ) {
         T1 file = getArgRegister(0);
 
-        output->verbose(CALL_INFO, 8, 0, "close( %" PRIuXX " )\n", file);
+        output->verbose(CALL_INFO, 16, 0, "close( %" PRIuXX " )\n", file);
+
 
        return new VanadisSyscallCloseEvent(core_id, hw_thr, BitType, file);
     }
@@ -307,19 +309,20 @@ protected:
         T1 flags      = getArgRegister(2);
         T1 mode       = getArgRegister(3);
 
-#ifdef SST_COMPILE_MACOSX
+        #ifdef SST_COMPILE_MACOSX
         if (  VANADIS_AT_FDCWD == dirfd ) {
             dirfd = AT_FDCWD;
         }
-#endif
-        output->verbose(CALL_INFO, 8, 0, "openat( %" PRIuXX ", %#" PRIxXX ", %#" PRIxXX ", %#" PRIxXX ")\n", dirfd, path_ptr, flags, mode );
+        #endif
+        output->verbose(CALL_INFO, 16, 0, "openat( %" PRIuXX ", %#" PRIxXX ", %#" PRIxXX ", %#" PRIxXX ")\n", dirfd, path_ptr, flags, mode );
         return new VanadisSyscallOpenatEvent(core_id, hw_thr, BitType, dirfd, path_ptr, convertFlags(flags), mode);
     }
 
     VanadisSyscallEvent* BRK( int hw_thr ) {
         T1 newBrk = getArgRegister(0);
 
-        output->verbose(CALL_INFO, 8, 0, "brk( value: %" PRIuXX " )\n", newBrk);
+        output->verbose(CALL_INFO, 16, 0, "brk( value: %" PRIuXX " )\n", newBrk);
+        
         return new VanadisSyscallBRKEvent(core_id, hw_thr, BitType, newBrk );
     }
 
@@ -327,31 +330,29 @@ protected:
         T1 writev_fd          = getArgRegister( 0 );
         T1 writev_iovec_ptr   = getArgRegister( 1 );
         T1 writev_iovec_count = getArgRegister( 2 );
-
-        output->verbose(CALL_INFO, 8, 0,
-                            "writev( %" PRIdXX ", %#" PRIxXX ", %" PRIdXX " )\n", writev_fd, writev_iovec_ptr, writev_iovec_count);
         return new VanadisSyscallWritevEvent(core_id, hw_thr, BitType, writev_fd, writev_iovec_ptr, writev_iovec_count);
     } 
 
     VanadisSyscallEvent* SET_TID_ADDRESS( int hw_thr ) {
         T1 addr = getArgRegister( 0 );
 
-        output->verbose(CALL_INFO, 8, 0, "set_tid_address( %#" PRIxXX " )\n", addr);
+        output->verbose(CALL_INFO, 16, 0, "set_tid_address( %#" PRIxXX " )\n", addr);
+        
         return new VanadisSyscallSetTidAddressEvent(core_id, hw_thr, BitType, addr);
     }
 
     VanadisSyscallEvent* UNAME( int hw_thr ) {
         T1 addr = getArgRegister(0);
 
-        output->verbose(CALL_INFO, 8, 0, "uname( %#" PRIxXX ")\n",addr);
-
+        output->verbose(CALL_INFO, 16, 0, "uname( %#" PRIxXX ")\n",addr);
         return new VanadisSyscallUnameEvent(core_id, hw_thr, BitType, addr);
     }
 
     VanadisSyscallEvent* EXIT_GROUP( int hw_thr ) {
         T1 exit_code = getArgRegister( 0 );
 
-        output->verbose(CALL_INFO, 8, 0, "exit_group( %" PRIdXX " )\n", exit_code);
+        output->verbose(CALL_INFO, 16, 0, "exit_group( %" PRIdXX " )\n", exit_code);
+        
         flushLSQ=true;
 
         return new VanadisSyscallExitGroupEvent(core_id, hw_thr, BitType, exit_code);
@@ -372,10 +373,10 @@ protected:
 
         T1 io_driver = ((io_req)&0xFF00) >> 8;
 
-        output->verbose(CALL_INFO, 8, 0,
+        output->verbose(CALL_INFO, 16, 0,
                             "ioctl( %" PRIdXX ", %" PRIuXX " / %#" PRIxXX ", %" PRIuXX " / %#" PRIxXX " )\n",
                             fd, io_req, io_req, ptr, ptr);
-        output->verbose(CALL_INFO, 9, 0,
+        output->verbose(CALL_INFO, 16, 0,
                           "-> R: %c W: %c / size: %" PRIuXX " / op: %" PRIuXX " / drv: %" PRIuXX "\n",
                             is_read ? 'y' : 'n', is_write ? 'y' : 'n', data_size, io_op, io_driver);
 

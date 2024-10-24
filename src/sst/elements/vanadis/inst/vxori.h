@@ -21,7 +21,7 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisXorImmInstruction : public VanadisInstruction
+class VanadisXorImmInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisXorImmInstruction(
@@ -50,19 +50,36 @@ public:
             imm_value);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    virtual void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+                uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0) override
     {
-#ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: (addr=%p) XORI phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRIu64
-            " / (0x%" PRI_ADDR ") , isa: out=%" PRIu16 " / in=%" PRIu16 "\n",
-            (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value, imm_value,
-            isa_int_regs_out[0], isa_int_regs_in[0]);
-#endif
-        const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
-        regFile->setIntReg<uint64_t>(phys_int_regs_out[0], (src_1) ^ imm_value);
+        #ifdef VANADIS_BUILD_DEBUG
+        if(output->getVerboseLevel() >= verboselevel) {
 
+            std::ostringstream ss;
+            ss << "hw_thr="<<getHWThread()<<" sw_thr=" <<sw_thr;
+            ss << " Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
+            ss << " phys: out=" <<  phys_int_regs_out_0 << " in=" << phys_int_regs_in_0;
+            ss << " imm=" << imm_value;
+            ss << ", isa: out=" <<  isa_int_regs_out[0]  << " in=" << isa_int_regs_in[0];
+            output->verbose( CALL_INFO, verboselevel, 0, "%s\n", ss.str().c_str());
+        }
+        #endif
+    }
+
+    void instOp(VanadisRegisterFile* regFile, 
+                                uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0) override
+    {
+        const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in_0);
+        regFile->setIntReg<uint64_t>(phys_int_regs_out_0, (src_1) ^ imm_value);
+    }
+
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+        uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0);
+        uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
+        instOp(regFile, phys_int_regs_out_0, phys_int_regs_in_0);
+        log(output, 16, 65535, phys_int_regs_out_0, phys_int_regs_in_0);
         markExecuted();
     }
 
