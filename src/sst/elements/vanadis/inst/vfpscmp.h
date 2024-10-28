@@ -31,6 +31,10 @@ public:
     VanadisFPSetRegCompareInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
         VanadisFloatingPointFlags* fpflags, const uint16_t dest, const uint16_t src_1, const uint16_t src_2) :
+        VanadisInstruction(
+            addr, hw_thr, isa_opts, 0, 1, 0, 1,
+            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 4 : 2, 0,
+            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 4 : 2, 0),
         VanadisFloatingPointInstruction(
             addr, hw_thr, isa_opts, fpflags, 0, 1, 0, 1,
             ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 4 : 2, 0,
@@ -119,21 +123,22 @@ public:
             phys_int_regs_out[0], phys_fp_regs_in[0], phys_fp_regs_in[1]);
     }
 
-    bool performCompare(SST::Output* output, VanadisRegisterFile* regFile)
+    bool performCompare(SST::Output* output, VanadisRegisterFile* regFile, uint16_t phys_fp_regs_in_0,
+                        uint16_t phys_fp_regs_in_1,uint16_t phys_fp_regs_in_2,uint16_t phys_fp_regs_in_3)
     {
         uint64_t left_value_int;
         uint64_t right_value_int;
 
         if ( ( 8 == sizeof(fp_format)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode())){
-            left_value_int = combineFromRegisters<uint64_t>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
-            right_value_int =combineFromRegisters<uint64_t>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3]);
+            left_value_int = combineFromRegisters<uint64_t>(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1);
+            right_value_int =combineFromRegisters<uint64_t>(regFile, phys_fp_regs_in_2, phys_fp_regs_in_3);
         } else {
             if ( 8 == regFile->getFPRegWidth() ) {
-                left_value_int = regFile->getFPReg<uint64_t>(phys_fp_regs_in[0]);
-                right_value_int = regFile->getFPReg<uint64_t>(phys_fp_regs_in[1]);
+                left_value_int = regFile->getFPReg<uint64_t>(phys_fp_regs_in_0);
+                right_value_int = regFile->getFPReg<uint64_t>(phys_fp_regs_in_1);
             } else {
-                left_value_int = regFile->getFPReg<uint32_t>(phys_fp_regs_in[0]);
-                right_value_int = regFile->getFPReg<uint32_t>(phys_fp_regs_in[1]);
+                left_value_int = regFile->getFPReg<uint32_t>(phys_fp_regs_in_0);
+                right_value_int = regFile->getFPReg<uint32_t>(phys_fp_regs_in_1);
             }
         }
 
@@ -190,25 +195,43 @@ public:
         }
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+                            uint16_t phys_int_regs_out_0,uint16_t phys_fp_regs_in_0,
+                                    uint16_t phys_fp_regs_in_1, uint16_t compare_result)
     {
-#ifdef VANADIS_BUILD_DEBUG
-        if ( output->getVerboseLevel() >= 16 ) {
+        #ifdef VANADIS_BUILD_DEBUG
+        if ( output->getVerboseLevel() >= verboselevel ) {
             output->verbose(
-                CALL_INFO, 16, 0, "Execute: (addr=0x%" PRI_ADDR ") %s (%s)\n", getInstructionAddress(),
-                getInstCode(), convertCompareTypeToString(compare_type));
+                CALL_INFO, verboselevel, 0, "hw_thr=%d sw_thr = %d Execute: (addr=0x%" PRI_ADDR ") %s (%s) phys: out=%" PRIu16 " / in=%" PRIu16 ", %" PRIu16 " isa: out=%" PRIu16
+                    " / in=%" PRIu16 ", %" PRIu16 ", result: %s\n", getHWThread(),sw_thr, getInstructionAddress(), getInstCode(), 
+                    convertCompareTypeToString(compare_type), phys_int_regs_out_0, phys_fp_regs_in_0,
+                    phys_fp_regs_in_1, isa_int_regs_out[0], isa_fp_regs_in[0], isa_fp_regs_in[1], compare_result ? "true" : "false");
         }
-#endif
-        const bool compare_result = performCompare(output, regFile);
-        regFile->setIntReg<uint64_t>(phys_int_regs_out[0], compare_result ? 1 : 0);
+        #endif
+    }
 
-        if ( output->getVerboseLevel() >= 16 ) {
-            output->verbose(CALL_INFO, 16, 0, "---> result: %s\n", compare_result ? "true" : "false");
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+        uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
+        uint16_t phys_fp_regs_in_0 = getPhysFPRegIn(0);
+        uint16_t phys_fp_regs_in_1 = getPhysFPRegIn(1);
+        uint16_t phys_fp_regs_in_2 = 0;
+        uint16_t phys_fp_regs_in_3 = 0;
+        
+        if ( ( 8 == sizeof(fp_format)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))
+        {
+            phys_fp_regs_in_2 = getPhysFPRegIn(2);
+            phys_fp_regs_in_3 = getPhysFPRegIn(3);
         }
-
+                
+        const bool compare_result = performCompare(output, regFile,phys_fp_regs_in_0, phys_fp_regs_in_1, phys_fp_regs_in_2,
+                                                    phys_fp_regs_in_3);
+        regFile->setIntReg<uint64_t>(phys_int_regs_out_0, compare_result ? 1 : 0);
+        log(output, 16,65535, phys_int_regs_out_0, phys_fp_regs_in_0, phys_fp_regs_in_1, compare_result);
         markExecuted();
     }
 };
+
 
 } // namespace Vanadis
 } // namespace SST

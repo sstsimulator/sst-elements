@@ -27,7 +27,7 @@ namespace Vanadis {
 
 enum VanadisLoadRegisterType { LOAD_INT_REGISTER, LOAD_FP_REGISTER };
 
-class VanadisLoadInstruction : public VanadisInstruction
+class VanadisLoadInstruction : public virtual VanadisInstruction
 {
 
 public:
@@ -60,6 +60,7 @@ public:
             isa_fp_regs_out[0] = tgtReg;
         } break;
         }
+       
     }
 
     VanadisLoadInstruction* clone() { return new VanadisLoadInstruction(*this); }
@@ -100,7 +101,7 @@ public:
         }
     }
 
-    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile) { markExecuted(); }
+    virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) { markExecuted(); }
 
     virtual VanadisMemoryTransaction getTransactionType() const { return memAccessType; }
 
@@ -139,12 +140,18 @@ public:
     virtual void
     computeLoadAddress(SST::Output* output, VanadisRegisterFile* regFile, uint64_t* out_addr, uint16_t* width)
     {
-        uint64_t mem_addr_reg_val = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
+        int64_t tmp_val;
+        uint64_t mem_addr_reg_val;
+        uint16_t target_tid = 0;
+
+
+        mem_addr_reg_val = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
 
         switch ( regType ) {
         case LOAD_INT_REGISTER:
         {
-            if(output->getVerboseLevel() >= 16) {
+            // if(output->getVerboseLevel() >= 16) 
+            {
                 output->verbose(
                     CALL_INFO, 16, 0,
                     "Execute: (0x%" PRI_ADDR ") LOAD addr-reg: %" PRIu16 " phys: %" PRIu16 " / offset: %" PRId64
@@ -166,8 +173,9 @@ public:
         } break;
         }
 
-#ifdef VANADIS_BUILD_DEBUG
-        if(output->getVerboseLevel() >= 16) {
+        #ifdef VANADIS_BUILD_DEBUG
+        // if(output->getVerboseLevel() >= 16) 
+        {
             output->verbose(
                 CALL_INFO, 16, 0, "[execute-load]: transaction-type:  %s / ins: 0x%" PRI_ADDR "\n",
                 getTransactionTypeString(memAccessType), getInstructionAddress());
@@ -178,13 +186,21 @@ public:
             output->verbose(
                 CALL_INFO, 16, 0, "[execute-load]: (add)            : %" PRIu64 "\n", (mem_addr_reg_val + offset));
         }
-#endif
-        int64_t tmp_val = regFile->getIntReg<int64_t>(phys_int_regs_in[0]);
+        #endif
+
+        tmp_val = regFile->getIntReg<int64_t>(phys_int_regs_in[0]);
 
         (*out_addr) = (uint64_t)(tmp_val + offset);
         (*width)    = load_width;
+        
+    }
+    
+    void markExecuted() 
+    { 
+        hasExecuted = true;
     }
 
+    
     virtual uint16_t getLoadWidth() const { return load_width; }
 
     VanadisLoadRegisterType getValueRegisterType() const { return regType; }
@@ -197,6 +213,7 @@ protected:
     const int64_t            offset;
     const uint16_t           load_width;
     VanadisLoadRegisterType  regType;
+
 };
 
 } // namespace Vanadis

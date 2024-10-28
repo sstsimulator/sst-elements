@@ -72,14 +72,21 @@ private:
         StandardMem::Request* generateMemReq() override {
             uint64_t length;
             if ( m_str.empty() ) {
+                
                 length = vanadis_line_remainder( getAddress(), 64 );
+                
             } else {
+                
                 length = 64;
+                
             }
             auto physAddr = obj->virtToPhys( getAddress(), false );
+            
             if ( -1 == physAddr ) {
+                
                 return nullptr;
             } else {
+                
                 return new StandardMem::Read( physAddr, length);
             }
         } 
@@ -133,18 +140,26 @@ private:
             m_offset += req->size; 
         }
         StandardMem::Request* generateMemReq() override {
+
             auto length = calcLength();
+
             auto virtAddr = getAddress();
+
             auto physAddr = obj->virtToPhys( virtAddr, false );
+
             if ( -1 == physAddr ) {
+
                 return nullptr;
             } else {
 
                 if ( m_lock ) {
+
                     auto req =  new StandardMem::LoadLink( physAddr, length, 0, virtAddr, 0, 0 );
+                    
                     obj->m_output->verbose(CALL_INFO, 16, 0, " %s\n",req->getString().c_str());
                     return req;
                 } else {
+
                     auto req =  new StandardMem::Read( physAddr, length, 0, virtAddr, 0, 0 );
                     obj->m_output->verbose(CALL_INFO, 16, 0, " %s\n",req->getString().c_str());
                     return req;
@@ -163,6 +178,7 @@ private:
         }
 
         StandardMem::Request* generateMemReq() override {
+
             uint64_t length = calcLength();
 
             std::vector<uint8_t> payload( length );
@@ -228,11 +244,17 @@ private:
         m_output->verbose(CALL_INFO, 16, 0,"\n");
         StandardMem::Request* req = nullptr;
         if ( m_memHandler ) {
+
             req = m_memHandler->generateMemReq();
+
             if ( req ) {
+
                 m_pendingMem.insert(req->getID());
+
             }
+
         }
+
         return req;
     }
 
@@ -300,33 +322,33 @@ private:
 };
 
 inline void VanadisSyscall::readString( uint64_t addr, std::string& str ) {
-    m_output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL_MEM,"addr=%#" PRIx64 "\n",addr);
+    m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"addr=%#" PRIx64 "\n",addr);
     assert(nullptr == m_memHandler);
     m_memHandler = new ReadStringHandler( this, m_output, addr, str );
 }
 
 inline void VanadisSyscall::readMemory( uint64_t addr, std::vector<uint8_t>& buffer, bool lock ) {
-    m_output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL_MEM,"addr=%#" PRIx64 " length=%zu\n", addr, buffer.size() );
+    m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"addr=%#" PRIx64 " length=%zu\n", addr, buffer.size() );
     assert(nullptr == m_memHandler);
     m_memHandler = new ReadMemoryHandler( this, m_output, addr, buffer, lock );
 }
 
 inline void VanadisSyscall::writeMemory( uint64_t addr, std::vector<uint8_t>& buffer, OS::ProcessInfo* process ) {
-    m_output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL_MEM,"addr=%#" PRIx64 " length=%zu\n", addr, buffer.size() );
+    m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"writeMemory addr=%#" PRIx64 " length=%zu\n", addr, buffer.size() );
     assert(nullptr == m_memHandler);
     m_memHandler = new WriteMemoryHandler( this, m_output, addr, buffer, false, process );
 }
 
 inline void VanadisSyscall::writeMemory( uint64_t addr, std::vector<uint8_t>& buffer, bool lock ) {
-    m_output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL_MEM,"addr=%#" PRIx64 " length=%zu\n", addr, buffer.size() );
+    m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"writeMemory addr=%#" PRIx64 " length=%zu\n", addr, buffer.size() );
     assert(nullptr == m_memHandler);
     m_memHandler = new WriteMemoryHandler( this, m_output, addr, buffer, lock );
 }
 
 inline bool VanadisSyscall::handleMemRespBase( StandardMem::Request* req )
 {
-    m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL_MEM, "recv memory event (%s)\n", req->getString().c_str());
-    m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL_MEM,"m_pendingMem.size() %zu\n",m_pendingMem.size());
+    m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "recv memory event (%s)\n", req->getString().c_str());
+    m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"m_pendingMem.size() %zu\n",m_pendingMem.size());
 
     auto find_event = m_pendingMem.find(req->getID());
 
@@ -334,10 +356,10 @@ inline bool VanadisSyscall::handleMemRespBase( StandardMem::Request* req )
     m_pendingMem.erase(find_event);
 
     if ( m_memHandler ) {
-        m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL_MEM,"call mem handler\n");
+
         req->handle(m_memHandler); 
         if ( m_memHandler->isDone() ) {
-            m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL_MEM,"mem handler done\n");
+
             delete m_memHandler;
             m_memHandler = nullptr;
             memReqIsDone( req->getFail() );
@@ -345,7 +367,6 @@ inline bool VanadisSyscall::handleMemRespBase( StandardMem::Request* req )
     }
 
     if ( handleMemResp( req ) || ( m_complete && (m_pendingMem.size() == 0) )) {
-        m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL_MEM,"done\n");
         return true;
     }
 

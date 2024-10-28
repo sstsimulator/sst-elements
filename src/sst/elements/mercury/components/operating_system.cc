@@ -80,6 +80,8 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
   }
 
   my_addr_ = node_->addr();
+  next_outgoing_id_.src_node = my_addr_;
+  next_outgoing_id_.msg_num = 0;
   //auto os_params = params.get_scoped_params("operating_system");
   //params.print_all_params(std::cerr);
   unsigned int verbose = params.find<unsigned int>("verbose",0);

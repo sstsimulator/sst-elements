@@ -30,8 +30,8 @@
 #include <vector>
 #include <queue>
 
-#define VANADIS_DBG_LSQ_STORE_FLG  (1<<0)
-#define VANADIS_DBG_LSQ_LOAD_FLG  (1<<1)
+#define VANADIS_DBG_LSQ_STORE_FLG 0 // (1<<0)
+#define VANADIS_DBG_LSQ_LOAD_FLG  0 //(1<<1)
 
 namespace SST {
 namespace Vanadis {

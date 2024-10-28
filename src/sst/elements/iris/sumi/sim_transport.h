@@ -277,6 +277,7 @@ class SimTransport : public Transport, public SST::Hg::API {
 
  private:      
   void send(Message* m) override;
+  void send_packets(Message* m);
 
   uint64_t allocateFlowId() override;
 
