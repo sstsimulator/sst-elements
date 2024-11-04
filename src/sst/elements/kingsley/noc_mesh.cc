@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -568,7 +568,7 @@ noc_mesh::init(unsigned int phase)
                 edge_status |=  ( 1 << i );
             }
             else {
-                ev = ports[i]->recvInitData();
+                ev = ports[i]->recvUntimedData();
                 if ( ev != NULL ) {
                     nie = static_cast<NocInitEvent*>(ev);
                     if ( nie->command == NocInitEvent::REPORT_ENDPOINT ) {
@@ -601,12 +601,12 @@ noc_mesh::init(unsigned int phase)
             nie = new NocInitEvent();
             nie->command = NocInitEvent::SUM_ENDPOINTS;
             nie->int_value = endpoint_start;
-            ports[west_port]->sendInitData(nie);
+            ports[west_port]->sendUntimedData(nie);
             if ( edge_status & south_mask ) { // southeast corner
                 nie = new NocInitEvent();
                 nie->command = NocInitEvent::COMPUTE_X_SIZE;
                 nie->int_value = 1;
-                ports[west_port]->sendInitData(nie);
+                ports[west_port]->sendUntimedData(nie);
                 init_state = 7;
             }
             else {
@@ -631,7 +631,7 @@ noc_mesh::init(unsigned int phase)
                 nie = new NocInitEvent();
                 nie->command = NocInitEvent::REPORT_FLIT_SIZE;
                 nie->ua_value = UnitAlgebra("1b") * flit_size;
-                ports[i]->sendInitData(nie);
+                ports[i]->sendUntimedData(nie);
             }
         }
         break;
@@ -639,18 +639,18 @@ noc_mesh::init(unsigned int phase)
     case 2:
         // Look for events coming in on east link and increment and
         // pass to west link
-        ev = ports[east_port]->recvInitData();
+        ev = ports[east_port]->recvUntimedData();
         if ( NULL == ev ) break;
         nie = static_cast<NocInitEvent*>(ev);
         if ( nie->command == NocInitEvent::SUM_ENDPOINTS ) {
             nie->int_value += endpoint_start;
-            ports[west_port]->sendInitData(nie);
+            ports[west_port]->sendUntimedData(nie);
             if ( edge_status & south_mask ) { // southern row also computing x_size
-                ev = ports[east_port]->recvInitData();
+                ev = ports[east_port]->recvUntimedData();
                 nie = static_cast<NocInitEvent*>(ev);
                 if ( nie->command == NocInitEvent::COMPUTE_X_SIZE ) {
                     nie->int_value++;
-                    ports[west_port]->sendInitData(nie);
+                    ports[west_port]->sendUntimedData(nie);
                 }
                 else {
                     // unexpected event type
@@ -666,7 +666,7 @@ noc_mesh::init(unsigned int phase)
     case 3:
         // Western edge waiting for endpoint count and x_size
         // (southern corner only)
-        ev = ports[east_port]->recvInitData();
+        ev = ports[east_port]->recvUntimedData();
         if ( NULL == ev ) break;
 
         nie = static_cast<NocInitEvent*>(ev);
@@ -683,7 +683,7 @@ noc_mesh::init(unsigned int phase)
 
         // If south western router (router 0), compute x_size
         if ( edge_status & south_mask ) {
-            ev = ports[east_port]->recvInitData();
+            ev = ports[east_port]->recvUntimedData();
             if ( NULL == ev ) {} // should have had an event
             nie = static_cast<NocInitEvent*>(ev);
             if ( nie->command == NocInitEvent::COMPUTE_X_SIZE ) {
@@ -701,34 +701,34 @@ noc_mesh::init(unsigned int phase)
             nie = new NocInitEvent();
             nie->command = NocInitEvent::SUM_ENDPOINTS;
             nie->int_value = total_endpoints;
-            ports[south_port]->sendInitData(nie);
+            ports[south_port]->sendUntimedData(nie);
 
             nie = new NocInitEvent();
             nie->command = NocInitEvent::COMPUTE_Y_SIZE;
             nie->int_value = 1;
-            ports[south_port]->sendInitData(nie);
+            ports[south_port]->sendUntimedData(nie);
             init_state = 6;
         }
         break;
     case 4:
         // Read from north port, increment and send to south port
-        ev = ports[north_port]->recvInitData();
+        ev = ports[north_port]->recvUntimedData();
         if ( NULL == ev ) break;
         nie = static_cast<NocInitEvent*>(ev);
         if ( nie->command == NocInitEvent::SUM_ENDPOINTS ) {
             nie->int_value += total_endpoints;
-            ports[south_port]->sendInitData(nie);
+            ports[south_port]->sendUntimedData(nie);
         }
         else {
             // Unexpected event type
         }
 
-        ev = ports[north_port]->recvInitData();
+        ev = ports[north_port]->recvUntimedData();
         if ( NULL == ev ) {} // should be an event
         nie = static_cast<NocInitEvent*>(ev);
         if ( nie->command == NocInitEvent::COMPUTE_Y_SIZE ) {
             nie->int_value++;
-            ports[south_port]->sendInitData(nie);
+            ports[south_port]->sendUntimedData(nie);
         }
         else {
             // Unexpected event type
@@ -741,7 +741,7 @@ noc_mesh::init(unsigned int phase)
 
         // Temporarily need to hold row_endpoints
         int row_endpoints = total_endpoints;
-        ev = ports[north_port]->recvInitData();
+        ev = ports[north_port]->recvUntimedData();
         if ( NULL == ev ) break;
         nie = static_cast<NocInitEvent*>(ev);
         if ( nie->command == NocInitEvent::SUM_ENDPOINTS ) {
@@ -752,7 +752,7 @@ noc_mesh::init(unsigned int phase)
             // Unexpected event type
         }
 
-        ev = ports[north_port]->recvInitData();
+        ev = ports[north_port]->recvUntimedData();
         if ( NULL == ev ) {} // should have been an event
         nie = static_cast<NocInitEvent*>(ev);
         if ( nie->command == NocInitEvent::COMPUTE_Y_SIZE ) {
@@ -772,50 +772,50 @@ noc_mesh::init(unsigned int phase)
         nie = new NocInitEvent();
         nie->command = NocInitEvent::COMPUTE_ENDPOINT_START;
         nie->int_value = row_endpoints;
-        ports[north_port]->sendInitData(nie);
+        ports[north_port]->sendUntimedData(nie);
 
         nie = new NocInitEvent();
         nie->command = NocInitEvent::COMPUTE_ENDPOINT_START;
         nie->int_value = endpoint_start;
         endpoint_start = 0;
-        ports[east_port]->sendInitData(nie);
+        ports[east_port]->sendUntimedData(nie);
 
         nie = new NocInitEvent();
         nie->command = NocInitEvent::BROADCAST_TOTAL_ENDPOINTS;
         nie->int_value = total_endpoints;
-        ports[east_port]->sendInitData(nie->clone());
-        ports[north_port]->sendInitData(nie);
+        ports[east_port]->sendUntimedData(nie->clone());
+        ports[north_port]->sendUntimedData(nie);
 
         nie = new NocInitEvent();
         nie->command = NocInitEvent::BROADCAST_X_SIZE;
         nie->int_value = x_size;
-        ports[east_port]->sendInitData(nie->clone());
-        ports[north_port]->sendInitData(nie);
+        ports[east_port]->sendUntimedData(nie->clone());
+        ports[north_port]->sendUntimedData(nie);
 
         nie = new NocInitEvent();
         nie->command = NocInitEvent::BROADCAST_Y_SIZE;
         nie->int_value = y_size;
-        ports[east_port]->sendInitData(nie->clone());
-        ports[north_port]->sendInitData(nie);
+        ports[east_port]->sendUntimedData(nie->clone());
+        ports[north_port]->sendUntimedData(nie);
 
         nie = new NocInitEvent();
         nie->command = NocInitEvent::COMPUTE_X_POS;
         nie->int_value = my_x;
-        ports[east_port]->sendInitData(nie->clone());
-        ports[north_port]->sendInitData(nie);
+        ports[east_port]->sendUntimedData(nie->clone());
+        ports[north_port]->sendUntimedData(nie);
 
         nie = new NocInitEvent();
         nie->command = NocInitEvent::COMPUTE_Y_POS;
         nie->int_value = my_y;
-        ports[east_port]->sendInitData(nie->clone());
-        ports[north_port]->sendInitData(nie);
+        ports[east_port]->sendUntimedData(nie->clone());
+        ports[north_port]->sendUntimedData(nie);
 
         init_state = 8;
         init_count = (x_size - 2 - my_x) + (y_size - 2 - my_y) - 1;
         break;
     }
     case 6:
-        ev = ports[south_port]->recvInitData();
+        ev = ports[south_port]->recvUntimedData();
         if ( NULL == ev ) break;
 
         nie = static_cast<NocInitEvent*>(ev);
@@ -832,52 +832,52 @@ noc_mesh::init(unsigned int phase)
                 // Add the row endpoints (stored in total_endpoints to
                 // what we got and send north
                 nie2->int_value += total_endpoints;
-                ports[north_port]->sendInitData(nie2);
+                ports[north_port]->sendUntimedData(nie2);
             }
             nie->int_value += my_ep;
-            ports[east_port]->sendInitData(nie);
+            ports[east_port]->sendUntimedData(nie);
         }
 
-        ev = ports[south_port]->recvInitData();
+        ev = ports[south_port]->recvUntimedData();
         nie = static_cast<NocInitEvent*>(ev);
         // Get all the info and do the appropriate things with it
         if ( nie->command == NocInitEvent::BROADCAST_TOTAL_ENDPOINTS ) {
             total_endpoints = nie->int_value;
-            if ( !( edge_status & north_mask) ) ports[north_port]->sendInitData(nie->clone());
-            ports[east_port]->sendInitData(nie);
+            if ( !( edge_status & north_mask) ) ports[north_port]->sendUntimedData(nie->clone());
+            ports[east_port]->sendUntimedData(nie);
         }
 
-        ev = ports[south_port]->recvInitData();
+        ev = ports[south_port]->recvUntimedData();
         nie = static_cast<NocInitEvent*>(ev);
         if ( nie->command == NocInitEvent::BROADCAST_X_SIZE ) {
             x_size = nie->int_value;
-            if ( !( edge_status & north_mask) ) ports[north_port]->sendInitData(nie->clone());
-            ports[east_port]->sendInitData(nie);
+            if ( !( edge_status & north_mask) ) ports[north_port]->sendUntimedData(nie->clone());
+            ports[east_port]->sendUntimedData(nie);
         }
 
-        ev = ports[south_port]->recvInitData();
+        ev = ports[south_port]->recvUntimedData();
         nie = static_cast<NocInitEvent*>(ev);
         if ( nie->command == NocInitEvent::BROADCAST_Y_SIZE ) {
             y_size = nie->int_value;
-            if ( !( edge_status & north_mask) ) ports[north_port]->sendInitData(nie->clone());
-            ports[east_port]->sendInitData(nie);
+            if ( !( edge_status & north_mask) ) ports[north_port]->sendUntimedData(nie->clone());
+            ports[east_port]->sendUntimedData(nie);
         }
 
-        ev = ports[south_port]->recvInitData();
+        ev = ports[south_port]->recvUntimedData();
         nie = static_cast<NocInitEvent*>(ev);
         if ( nie->command == NocInitEvent::COMPUTE_X_POS ) {
             my_x = nie->int_value;
-            if ( !( edge_status & north_mask) ) ports[north_port]->sendInitData(nie->clone());
-            ports[east_port]->sendInitData(nie);
+            if ( !( edge_status & north_mask) ) ports[north_port]->sendUntimedData(nie->clone());
+            ports[east_port]->sendUntimedData(nie);
         }
 
-        ev = ports[south_port]->recvInitData();
+        ev = ports[south_port]->recvUntimedData();
         nie = static_cast<NocInitEvent*>(ev);
         if ( nie->command == NocInitEvent::COMPUTE_Y_POS ) {
             my_y = nie->int_value + 1;
             nie->int_value++;
-            if ( !( edge_status & north_mask) ) ports[north_port]->sendInitData(nie->clone());
-            ports[east_port]->sendInitData(nie);
+            if ( !( edge_status & north_mask) ) ports[north_port]->sendUntimedData(nie->clone());
+            ports[east_port]->sendUntimedData(nie);
         }
 
         init_count = (x_size - 2 - my_x) + (y_size - 2 - my_y) - 1;
@@ -885,7 +885,7 @@ noc_mesh::init(unsigned int phase)
         break;
 
     case 7:
-        ev = ports[west_port]->recvInitData();
+        ev = ports[west_port]->recvUntimedData();
         if ( NULL == ev ) break;
 
         nie = static_cast<NocInitEvent*>(ev);
@@ -898,48 +898,48 @@ noc_mesh::init(unsigned int phase)
             endpoint_start = nie->int_value;
 
             nie->int_value += my_ep;
-            if ( !( edge_status & east_mask) ) ports[east_port]->sendInitData(nie);
+            if ( !( edge_status & east_mask) ) ports[east_port]->sendUntimedData(nie);
             else delete nie;
         }
 
-        ev = ports[west_port]->recvInitData();
+        ev = ports[west_port]->recvUntimedData();
         nie = static_cast<NocInitEvent*>(ev);
         if ( nie->command == NocInitEvent::BROADCAST_TOTAL_ENDPOINTS ) {
             total_endpoints = nie->int_value;
-            if ( !( edge_status & east_mask) ) ports[east_port]->sendInitData(nie);
+            if ( !( edge_status & east_mask) ) ports[east_port]->sendUntimedData(nie);
             else delete nie;
         }
 
-        ev = ports[west_port]->recvInitData();
+        ev = ports[west_port]->recvUntimedData();
         nie = static_cast<NocInitEvent*>(ev);
         if ( nie->command == NocInitEvent::BROADCAST_X_SIZE ) {
             x_size = nie->int_value;
-            if ( !( edge_status & east_mask) ) ports[east_port]->sendInitData(nie);
+            if ( !( edge_status & east_mask) ) ports[east_port]->sendUntimedData(nie);
             else delete nie;
         }
 
-        ev = ports[west_port]->recvInitData();
+        ev = ports[west_port]->recvUntimedData();
         nie = static_cast<NocInitEvent*>(ev);
         if ( nie->command == NocInitEvent::BROADCAST_Y_SIZE ) {
             y_size = nie->int_value;
-            if ( !( edge_status & east_mask) ) ports[east_port]->sendInitData(nie);
+            if ( !( edge_status & east_mask) ) ports[east_port]->sendUntimedData(nie);
             else delete nie;
         }
 
-        ev = ports[west_port]->recvInitData();
+        ev = ports[west_port]->recvUntimedData();
         nie = static_cast<NocInitEvent*>(ev);
         if ( nie->command == NocInitEvent::COMPUTE_X_POS ) {
             my_x = nie->int_value + 1;
             nie->int_value++;
-            if ( !( edge_status & east_mask) ) ports[east_port]->sendInitData(nie);
+            if ( !( edge_status & east_mask) ) ports[east_port]->sendUntimedData(nie);
             else delete nie;
         }
 
-        ev = ports[west_port]->recvInitData();
+        ev = ports[west_port]->recvUntimedData();
         nie = static_cast<NocInitEvent*>(ev);
         if ( nie->command == NocInitEvent::COMPUTE_Y_POS ) {
             my_y = nie->int_value;
-            if ( !( edge_status & east_mask) ) ports[east_port]->sendInitData(nie);
+            if ( !( edge_status & east_mask) ) ports[east_port]->sendUntimedData(nie);
             else delete nie;
         }
 
@@ -1042,7 +1042,7 @@ noc_mesh::init(unsigned int phase)
             nie = new NocInitEvent();
             nie->command = NocInitEvent::REPORT_ENDPOINT_ID;
             nie->int_value = i.first;
-            ports[i.second]->sendInitData(nie);
+            ports[i.second]->sendUntimedData(nie);
         }
         break;
     }
@@ -1052,7 +1052,7 @@ noc_mesh::init(unsigned int phase)
         for ( int i = 0; i < local_port_start + local_ports; ++i ) {
             if ( ports[i] != NULL ) {
                 credit_event* cr_ev = new credit_event(0,input_buf_size/flit_size);
-                ports[i]->sendInitData(cr_ev);
+                ports[i]->sendUntimedData(cr_ev);
             }
         }
 
@@ -1064,8 +1064,9 @@ noc_mesh::init(unsigned int phase)
         // Receive credits
         for ( int i = 0; i < local_port_start + local_ports; ++i ) {
             if ( ports[i] != NULL ) {
-                credit_event* cr_ev = static_cast<credit_event*>(ports[i]->recvInitData());
+                credit_event* cr_ev = static_cast<credit_event*>(ports[i]->recvUntimedData());
                 port_credits[i] += cr_ev->credits;
+		delete cr_ev;
             }
         }
         init_state = 11;
@@ -1077,7 +1078,7 @@ noc_mesh::init(unsigned int phase)
             if ( ports[i] != NULL ) {
                 bool endpoint = (1 << i) & endpoint_locations;
                 while ( true ) { // Go until there are no more events
-                    Event* ev = ports[i]->recvInitData();
+                    Event* ev = ports[i]->recvUntimedData();
                     if ( NULL == ev ) break;
 
                     noc_mesh_event* nme;
@@ -1116,7 +1117,7 @@ noc_mesh::init(unsigned int phase)
                             // No need to send east if this is the
                             // eastern edge
                             if ( !(edge_status & east_mask) ) {
-                                ports[east_port]->sendInitData(nme->clone());
+                                ports[east_port]->sendUntimedData(nme->clone());
                             }
                         }
 
@@ -1126,7 +1127,7 @@ noc_mesh::init(unsigned int phase)
                             // No need to send east if this is the
                             // eastern edge
                             if ( !(edge_status & west_mask) ) {
-                                ports[west_port]->sendInitData(nme->clone());
+                                ports[west_port]->sendUntimedData(nme->clone());
                             }
                         }
 
@@ -1138,7 +1139,7 @@ noc_mesh::init(unsigned int phase)
                             // No need to send north if this is the
                             // northern edge
                             if ( !(edge_status & north_mask) ) {
-                                ports[north_port]->sendInitData(nme->clone());
+                                ports[north_port]->sendUntimedData(nme->clone());
                             }
                         }
 
@@ -1150,7 +1151,7 @@ noc_mesh::init(unsigned int phase)
                             // No need to send south if this is the
                             // southern edge
                             if ( !(edge_status & south_mask) ) {
-                                ports[south_port]->sendInitData(nme->clone());
+                                ports[south_port]->sendUntimedData(nme->clone());
                             }
                         }
 
@@ -1163,11 +1164,11 @@ noc_mesh::init(unsigned int phase)
                             if ( endpoint && ( i == j ) ) continue;  // No need to send back to src
                             if ( (1 << j) & endpoint_locations ) {
                                 if (!sent) {
-                                    ports[j]->sendInitData(packet);
+                                    ports[j]->sendUntimedData(packet);
                                     sent = true;
                                 }
                                 else {
-                                    ports[j]->sendInitData(packet->clone());
+                                    ports[j]->sendUntimedData(packet->clone());
                                 }
                             }
                         }
@@ -1177,12 +1178,12 @@ noc_mesh::init(unsigned int phase)
                     else { // Not a broadcast
                         route(nme);
                         if ( (1 << nme->next_port) & endpoint_locations ) {
-                            ports[nme->next_port]->sendInitData(nme->encap_ev);
+                            ports[nme->next_port]->sendUntimedData(nme->encap_ev);
                             nme->encap_ev = NULL;
                             delete nme;
                         }
                         else {
-                            ports[nme->next_port]->sendInitData(nme);
+                            ports[nme->next_port]->sendUntimedData(nme);
                         }
                     }
                 }
@@ -1205,7 +1206,7 @@ noc_mesh::complete(unsigned int phase)
         if ( ports[i] != NULL ) {
             bool endpoint = (1 << i) & endpoint_locations;
             while ( true ) { // Go until there are no more events
-                Event* ev = ports[i]->recvInitData();
+                Event* ev = ports[i]->recvUntimedData();
                 if ( NULL == ev ) break;
 
                 noc_mesh_event* nme;
@@ -1244,7 +1245,7 @@ noc_mesh::complete(unsigned int phase)
                         // No need to send east if this is the
                         // eastern edge
                         if ( !(edge_status & east_mask) ) {
-                            ports[east_port]->sendInitData(nme->clone());
+                            ports[east_port]->sendUntimedData(nme->clone());
                         }
                     }
 
@@ -1254,7 +1255,7 @@ noc_mesh::complete(unsigned int phase)
                         // No need to send east if this is the
                         // eastern edge
                         if ( !(edge_status & west_mask) ) {
-                            ports[west_port]->sendInitData(nme->clone());
+                            ports[west_port]->sendUntimedData(nme->clone());
                         }
                     }
 
@@ -1266,7 +1267,7 @@ noc_mesh::complete(unsigned int phase)
                         // No need to send north if this is the
                         // northern edge
                         if ( !(edge_status & north_mask) ) {
-                            ports[north_port]->sendInitData(nme->clone());
+                            ports[north_port]->sendUntimedData(nme->clone());
                         }
                     }
 
@@ -1278,7 +1279,7 @@ noc_mesh::complete(unsigned int phase)
                         // No need to send south if this is the
                         // southern edge
                         if ( !(edge_status & south_mask) ) {
-                            ports[south_port]->sendInitData(nme->clone());
+                            ports[south_port]->sendUntimedData(nme->clone());
                         }
                     }
 
@@ -1291,11 +1292,11 @@ noc_mesh::complete(unsigned int phase)
                         if ( endpoint && ( i == j ) ) continue;  // No need to send back to src
                         if ( (1 << j) & endpoint_locations ) {
                             if (!sent) {
-                                ports[j]->sendInitData(packet);
+                                ports[j]->sendUntimedData(packet);
                                 sent = true;
                             }
                             else {
-                                ports[j]->sendInitData(packet->clone());
+                                ports[j]->sendUntimedData(packet->clone());
                             }
                         }
                     }
@@ -1305,12 +1306,12 @@ noc_mesh::complete(unsigned int phase)
                 else { // Not a broadcast
                     route(nme);
                     if ( (1 << nme->next_port) & endpoint_locations ) {
-                        ports[nme->next_port]->sendInitData(nme->encap_ev);
+                        ports[nme->next_port]->sendUntimedData(nme->encap_ev);
                         nme->encap_ev = NULL;
                         delete nme;
                     }
                     else {
-                        ports[nme->next_port]->sendInitData(nme);
+                        ports[nme->next_port]->sendUntimedData(nme);
                     }
                 }
             }
@@ -1355,7 +1356,7 @@ noc_mesh::printStatus(Output& out)
             }
             else {
                 noc_mesh_event* event = port_queues[pinfo.second].front();
-                out.output("      src = %lld, dest = %lld, next_port = %d, flits = %d\n",
+                out.output("      src = %" PRI_NID ", dest = %" PRI_NID ", next_port = %d, flits = %d\n",
                            event->encap_ev->request->src, event->encap_ev->request->dest,
                            event->next_port, event->encap_ev->getSizeInFlits());
             }

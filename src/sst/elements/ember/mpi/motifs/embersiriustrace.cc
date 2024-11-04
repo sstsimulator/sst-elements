@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -33,7 +33,7 @@ EmberSIRIUSTraceGenerator::EmberSIRIUSTraceGenerator(SST::ComponentId_t id,
 		fatal(CALL_INFO, -1, "Error: trace prefix is empty, no way to load a trace!\n");
 	} else {
 		char* full_trace = (char*) malloc( sizeof(char) * PATH_MAX );
-		sprintf(full_trace, "%s.%d", trace_prefix.c_str(), rank());
+		snprintf(full_trace, sizeof(char)*PATH_MAX, "%s.%d", trace_prefix.c_str(), rank());
 
 		trace_file = fopen(full_trace, "rb");
 

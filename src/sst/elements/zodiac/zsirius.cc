@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -98,7 +98,7 @@ void ZodiacSiriusTraceReader::setup() {
     eventQ = new std::queue<ZodiacEvent*>();
 
     char trace_name[trace_file.length() + 20];
-    sprintf(trace_name, "%s.%d", trace_file.c_str(), rank);
+    snprintf(trace_name, trace_file.length() + 20, "%s.%d", trace_file.c_str(), rank);
 
     printf("Opening trace file: %s\n", trace_name);
     trace = new SiriusReader(trace_name, rank, 64, eventQ, verbosityLevel);
@@ -113,7 +113,7 @@ void ZodiacSiriusTraceReader::setup() {
     }
 
     char logPrefix[512];
-    sprintf(logPrefix, "@t:%d:ZSirius::@p:@l: ", rank);
+    snprintf(logPrefix, 512, "@t:%d:ZSirius::@p:@l: ", rank);
     string logPrefixStr = logPrefix;
     zOut.setPrefix(logPrefixStr);
 

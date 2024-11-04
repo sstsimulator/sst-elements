@@ -50,6 +50,10 @@ libmerlin_la_SOURCES = \
 	topology/singlerouter.cc \
 	topology/hyperx.h \
 	topology/hyperx.cc \
+	topology/polarfly.cc \
+	topology/polarfly.h \
+	topology/polarstar.cc \
+	topology/polarstar.h \
 	hr_router/hr_router.h \
 	hr_router/hr_router.cc \
 	hr_router/xbar_arb_age.h \
@@ -83,6 +87,8 @@ libmerlin_la_SOURCES = \
 	interfaces/pymerlin-interface.py \
 	target_generator/pymerlin-targetgen.py \
 	topology/pymerlin-topo-dragonfly.py \
+	topology/pymerlin-topo-polarfly.py \
+	topology/pymerlin-topo-polarstar.py \
 	topology/pymerlin-topo-hyperx.py \
 	topology/pymerlin-topo-fattree.py \
 	topology/pymerlin-topo-mesh.py
@@ -101,17 +107,23 @@ EXTRA_DIST = \
 	tests/dragon_128_platform_test.py \
 	tests/dragon_128_platform_test_cm.py \
 	tests/platform_file_dragon_128.py \
+	tests/dragon_128_test_deferred.py \
+	tests/polarfly_455_test.py \
+	tests/polarstar_504_test.py \
 	tests/refFiles/test_merlin_dragon_128_platform_test.out \
 	tests/refFiles/test_merlin_dragon_128_platform_test_cm.out \
 	tests/refFiles/test_merlin_dragon_128_test.out \
 	tests/refFiles/test_merlin_dragon_128_test_fl.out \
+	tests/refFiles/test_merlin_dragon_128_test_deferred.out \
 	tests/refFiles/test_merlin_dragon_72_test.out \
 	tests/refFiles/test_merlin_fattree_128_test.out \
 	tests/refFiles/test_merlin_fattree_256_test.out \
 	tests/refFiles/test_merlin_hyperx_128_test.out \
 	tests/refFiles/test_merlin_torus_128_test.out \
 	tests/refFiles/test_merlin_torus_5_trafficgen.out \
-	tests/refFiles/test_merlin_torus_64_test.out
+	tests/refFiles/test_merlin_torus_64_test.out \
+	tests/refFiles/test_merlin_polarfly_455_test.out \
+	tests/refFiles/test_merlin_polarstar_504_test.out
 
 sstdir = $(includedir)/sst/elements/merlin
 nobase_sst_HEADERS = \
@@ -127,6 +139,8 @@ BUILT_SOURCES = \
 	interfaces/pymerlin-interface.inc \
 	target_generator/pymerlin-targetgen.inc \
 	topology/pymerlin-topo-dragonfly.inc \
+	topology/pymerlin-topo-polarfly.inc \
+	topology/pymerlin-topo-polarstar.inc \
 	topology/pymerlin-topo-hyperx.inc \
 	topology/pymerlin-topo-fattree.inc \
 	topology/pymerlin-topo-mesh.inc

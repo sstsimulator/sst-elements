@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2022 NTESS. Under the terms
+# Copyright 2009-2024 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2022, NTESS
+# Copyright (c) 2009-2024, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -101,12 +101,12 @@ class _topoMeshBase(Topology):
         return self.getRouterNameForLocation(self._idToLoc(rtr_id))
         
     def getRouterNameForLocation(self,location):
-        return "%srtr_%s"%(self._prefix,self._formatShape(location))
+        return "rtr_%s"%(self._formatShape(location))
     
     def findRouterByLocation(self,location):
         return sst.findComponentByName(self.getRouterNameForLocation(location))
         
-    def build(self, endpoint):
+    def _build_impl(self, endpoint):
         if self.host_link_latency is None:
             self.host_link_latency = self.link_latency
         
@@ -228,9 +228,9 @@ class topoSingle(Topology):
         return self.num_ports
 
     def getRouterNameForId(self,rtr_id):
-        return "%srouter"%self._prefix
+        return "router"
         
-    def build(self, endpoint):
+    def _build_impl(self, endpoint):
         rtr = self._instanceRouter(self.num_ports,0)
 
         topo = rtr.setSubComponent(self.router.getTopologySlotName(),"merlin.singlerouter",0)
@@ -240,7 +240,7 @@ class topoSingle(Topology):
         for l in range(self.num_ports):
             (ep, portname) = endpoint.build(l, {})
             if ep:
-                link = sst.Link("link:%d"%l)
+                link = sst.Link("link%d"%l)
                 if self.bundleEndpoints:
                     link.setNoCut()
                 link.connect( (ep, portname, self.link_latency), (rtr, "port%d"%l, self.link_latency) )

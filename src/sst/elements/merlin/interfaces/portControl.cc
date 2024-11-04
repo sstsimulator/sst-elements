@@ -1,8 +1,8 @@
-// Copyright 2013-2022 NTESS. Under the terms
+// Copyright 2013-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2022, NTESS
+// Copyright (c) 2013-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -632,38 +632,38 @@ PortControl::init(unsigned int phase) {
         init_ev->command = RtrInitEvent::REPORT_BW;
         init_ev->ua_value = link_bw;
 
-        port_link->sendInitData(init_ev);
+        port_link->sendUntimedData(init_ev);
 
         // If this is a host port, send the endpoint ID to the LinkControl
         if ( topo->isHostPort(port_number) ) {
             init_ev = new RtrInitEvent();
             init_ev->command = RtrInitEvent::REPORT_FLIT_SIZE;
             init_ev->ua_value = flit_size;
-            port_link->sendInitData(init_ev);
+            port_link->sendUntimedData(init_ev);
 
             RtrInitEvent* ev = new RtrInitEvent();
             ev->command = RtrInitEvent::REPORT_ID;
             ev->int_value = topo->getEndpointID(port_number);
-            port_link->sendInitData(ev);
+            port_link->sendUntimedData(ev);
         }
         else {
             // Report router ID and port number to other side of link
             init_ev = new RtrInitEvent();
             init_ev->command = RtrInitEvent::REPORT_ID;
             init_ev->int_value = rtr_id;
-            port_link->sendInitData(init_ev);
+            port_link->sendUntimedData(init_ev);
 
             init_ev = new RtrInitEvent();
             init_ev->command = RtrInitEvent::REPORT_PORT;
             init_ev->int_value = port_number;
-            port_link->sendInitData(init_ev);
+            port_link->sendUntimedData(init_ev);
         }
         break;
     case 1:
         {
         // Get the link speed from the other side.  Actual link speed
         // will be the minumum the two sides
-        ev = port_link->recvInitData();
+        ev = port_link->recvUntimedData();
         init_ev = checkInitProtocol(ev, RtrInitEvent::REPORT_BW, CALL_INFO);
         if ( link_bw > init_ev->ua_value ) link_bw = init_ev->ua_value;
 
@@ -677,7 +677,7 @@ PortControl::init(unsigned int phase) {
         // Get initialization event from endpoint, but only if I am a host port
         if ( topo->isHostPort(port_number) ) {
             // Number of VNs used by the endpoint
-            ev = port_link->recvInitData();
+            ev = port_link->recvUntimedData();
             init_ev = checkInitProtocol(ev, RtrInitEvent::REQUEST_VNS, CALL_INFO);
             int req_vns = init_ev->int_value;
             if ( num_vns == -1 ) num_vns = req_vns;
@@ -694,7 +694,7 @@ PortControl::init(unsigned int phase) {
             init_ev = new RtrInitEvent();
             init_ev->command = RtrInitEvent::REQUEST_VNS;
             init_ev->int_value = num_vns;
-            port_link->sendInitData(init_ev);
+            port_link->sendUntimedData(init_ev);
 
             for ( int i = 0; i < req_vns; ++i ) {
                 init_ev = new RtrInitEvent();
@@ -713,18 +713,18 @@ PortControl::init(unsigned int phase) {
                         }
                     }
                 }
-                port_link->sendInitData(init_ev);
+                port_link->sendUntimedData(init_ev);
             }
 
         } else {
             // If not a host port, the other side sent us their rtr_id
             // and port_number
-            ev = port_link->recvInitData();
+            ev = port_link->recvUntimedData();
             init_ev = checkInitProtocol(ev, RtrInitEvent::REPORT_ID, CALL_INFO);
             remote_rtr_id = init_ev->int_value;
             delete init_ev;
 
-            ev = port_link->recvInitData();
+            ev = port_link->recvUntimedData();
             init_ev = checkInitProtocol(ev, RtrInitEvent::REPORT_PORT, CALL_INFO);
             remote_port_number = init_ev->int_value;
             delete init_ev;
@@ -745,7 +745,7 @@ PortControl::init(unsigned int phase) {
                 int curr_vc = 0;
                 // Send credits to host, but only once for each VN
                 for ( int i = 0; i < num_vns; ++i ) {
-                    port_link->sendInitData(new credit_event(i,port_ret_credits[curr_vc]));
+                    port_link->sendUntimedData(new credit_event(i,port_ret_credits[curr_vc]));
                     curr_vc += vcs_per_vn[i];
                 }
                 // Set all return credits to zero
@@ -761,7 +761,7 @@ PortControl::init(unsigned int phase) {
             // ready to receive credits, send the credit events.
             if ( remote_rdy_for_credits ) {
                 for ( int i = 0; i < num_vcs; i++ ) {
-                    port_link->sendInitData(new credit_event(i,port_ret_credits[i]));
+                    port_link->sendUntimedData(new credit_event(i,port_ret_credits[i]));
                     port_ret_credits[i] = 0;
                 }
                 // Make sure we only send the credits once
@@ -770,7 +770,7 @@ PortControl::init(unsigned int phase) {
         }
 
         // Need to recv the credits sent from the other side
-        while ( ( ev = port_link->recvInitData() ) != NULL ) {
+        while ( ( ev = port_link->recvUntimedData() ) != NULL ) {
             credit_event* ce = dynamic_cast<credit_event*>(ev);
             if ( ce != NULL ) {
                 if ( ce->vc >= num_vcs ) {
@@ -800,28 +800,16 @@ PortControl::complete(unsigned int phase) {
     Event *ev;
 
     // Need to get all the init events
-    while ( ( ev = port_link->recvInitData() ) != NULL ) {
+    while ( ( ev = port_link->recvUntimedData() ) != NULL ) {
         init_events.push_back(ev);
     }
-}
-
-void
-PortControl::sendInitData(Event *ev)
-{
-    sendUntimedData(ev);
-}
-
-Event*
-PortControl::recvInitData()
-{
-    return recvUntimedData();
 }
 
 void
 PortControl::sendUntimedData(Event *ev)
 {
     if ( connected ) {
-        port_link->sendInitData(ev);
+        port_link->sendUntimedData(ev);
     }
 }
 

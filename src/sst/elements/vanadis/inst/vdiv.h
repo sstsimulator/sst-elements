@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -22,7 +22,7 @@ namespace SST {
 namespace Vanadis {
 
 template<typename gpr_format>
-class VanadisDivideInstruction : public VanadisInstruction
+class VanadisDivideInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisDivideInstruction(
@@ -65,29 +65,59 @@ public:
             phys_int_regs_in[0], phys_int_regs_in[1]);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void instOp(VanadisRegisterFile* regFile, uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0,
+                uint16_t phys_int_regs_in_1)
     {
-#ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: 0x%llx %s phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
-            " / in=%" PRIu16 ", %" PRIu16 "\n",
-            getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0],
-            phys_int_regs_in[1], isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);
-#endif
+        const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in_0);
+        const gpr_format src_2 = regFile->getIntReg<gpr_format>(phys_int_regs_in_1);
 
-		const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in[0]);
-		const gpr_format src_2 = regFile->getIntReg<gpr_format>(phys_int_regs_in[1]);
+        if ( ( UNLIKELY( 0 == src_2 ) ) ) {
+            regFile->setIntReg<gpr_format>(phys_int_regs_out_0, -1);
 
-	   if(0 == src_2) {
-			flagError();
-		} else {
-			regFile->setIntReg<gpr_format>(phys_int_regs_out[0], src_1 / src_2);
+            auto str = getenv("VANADIS_NO_FAULT");
+            if ( nullptr == str ) {
+                flagError();
+            }
+
+        } else {
+            if constexpr (std::is_signed<gpr_format>::value) {
+                if ( 8 == regFile->getIntRegWidth() ) {
+                    if constexpr ( std::is_same_v<gpr_format,int32_t> ) {
+                        if ( (1<< 31) == src_1 && -1 == src_2 ) {
+                            regFile->setIntReg<gpr_format>(phys_int_regs_out_0, 1 << 31);
+                        } else {
+                            regFile->setIntReg<gpr_format>(phys_int_regs_out_0, src_1 / src_2);
+                        }
+                    } else if constexpr ( std::is_same_v<gpr_format,int64_t> ) {
+                        if ( ((uint64_t)1<< 63) == src_1 && -1 == src_2 ) {
+                            regFile->setIntReg<gpr_format>(phys_int_regs_out_0, (uint64_t) 1 << 63);
+                        } else {
+                            regFile->setIntReg<gpr_format>(phys_int_regs_out_0, src_1 / src_2);
+                        }
+                    } else {
+                        assert(0);
+                    }
+                }
+            } else {
+                regFile->setIntReg<gpr_format>(phys_int_regs_out_0, src_1 / src_2);
+            }
 		}
+    }
 
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+        uint16_t phys_int_regs_out_0 = phys_int_regs_out[0];
+        uint16_t phys_int_regs_in_0 = phys_int_regs_in[0];
+        uint16_t phys_int_regs_in_1 = phys_int_regs_in[1];
+        log(output, 16, 65535, phys_int_regs_out_0,phys_int_regs_in_0,
+                phys_int_regs_in_1);
+        instOp(regFile, phys_int_regs_out_0,phys_int_regs_in_0,
+                phys_int_regs_in_1);
         markExecuted();
     }
 };
+
+
 
 } // namespace Vanadis
 } // namespace SST

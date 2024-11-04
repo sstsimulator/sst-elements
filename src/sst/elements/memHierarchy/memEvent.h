@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -180,12 +180,15 @@ public:
     /** Increments the number of retries */
     void incrementRetries() { retries_++; }
     int getRetries() { return retries_; }
+    
+    void setReadLock() { setFlag(MemEventBase::F_LOCKED); }
+    bool isReadLock() { return cmd_ == Command::GetSX && queryFlag(MemEventBase::F_LOCKED); }
 
     void setLoadLink() { setFlag(MemEventBase::F_LLSC); }
-    bool isLoadLink() { return cmd_ == Command::GetS && queryFlag(MemEventBase::F_LLSC); }
+    bool isLoadLink() { return cmd_ == Command::GetSX && queryFlag(MemEventBase::F_LLSC); }
 
     void setStoreConditional() { setFlag(MemEventBase::F_LLSC); }
-    bool isStoreConditional() { return cmd_ == Command::GetX && queryFlag(MemEventBase::F_LLSC); }
+    bool isStoreConditional() { return (cmd_ == Command::GetX || cmd_ == Command::Write) && queryFlag(MemEventBase::F_LLSC); }
 
     void setFail() { setFlag(MemEventBase::F_FAIL); }
     void setSuccess(bool b) { b ? clearFlag(MemEventBase::F_FAIL) : setFlag(MemEventBase::F_FAIL); }
@@ -274,6 +277,16 @@ public:
         str << std::dec << " Size: " << size_;
         str << " Prf: " << (prefetch_ ? "T" : "F");
         return MemEventBase::getVerboseString(level) + str.str();
+    }
+
+    virtual std::string toString() const override {
+        std::ostringstream str;
+        if (addr_ != baseAddr_)
+            str << std::hex << " Addr: 0x" << baseAddr_ << "/0x" << addr_;
+        else
+            str << std::hex << " Addr: 0x" << baseAddr_;
+        str << std::dec << " Size: " << size_;
+        return MemEventBase::toString() + str.str();
     }
 
     virtual std::string getBriefString() override {

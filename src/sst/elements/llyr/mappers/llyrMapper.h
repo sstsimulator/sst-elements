@@ -1,13 +1,13 @@
-// Copyright 2013-2022 NTESS. Under the terms
+// Copyright 2013-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2022, NTESS
+// Copyright (c) 2013-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -22,6 +22,7 @@
 #include "../graph/graph.h"
 #include "../lsQueue.h"
 #include "../llyrTypes.h"
+#include "../llyrHelpers.h"
 #include "pes/peList.h"
 
 namespace SST {
@@ -42,7 +43,7 @@ public:
 
     void addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< ProcessingElement* > &graphOut,
                   LlyrConfig* llyr_config);
-    void addNode(opType op_binding, std::string *arguments, uint32_t nodeNum, LlyrGraph< ProcessingElement* > &graphOut,
+    void addNode(opType op_binding, QueueArgMap* arguments, uint32_t nodeNum, LlyrGraph< ProcessingElement* > &graphOut,
                  LlyrConfig* llyr_config);
 };
 
@@ -58,6 +59,8 @@ void LlyrMapper::addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< Process
 
     if( op_binding == LD ) {
         tempPE = new LoadProcessingElement( LD, nodeNum, llyr_config );
+    } else if( op_binding == ALLOCA ) {
+        tempPE = new LoadProcessingElement( ALLOCA, nodeNum, llyr_config );
     } else if( op_binding == ST ) {
         tempPE = new StoreProcessingElement( ST, nodeNum, llyr_config );
     } else if( op_binding == AND ) {
@@ -126,10 +129,22 @@ void LlyrMapper::addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< Process
         tempPE = new DummyProcessingElement( DUMMY, nodeNum, llyr_config );
     } else if( op_binding == BUFFER ) {
         tempPE = new ControlProcessingElement( BUFFER, nodeNum, llyr_config );
+    } else if( op_binding == REPEATER ) {
+        tempPE = new ControlProcessingElement( REPEATER, nodeNum, llyr_config );
+    } else if( op_binding == ROZ ) {
+        tempPE = new ControlProcessingElement( ROZ, nodeNum, llyr_config );
+    } else if( op_binding == ROO ) {
+        tempPE = new ControlProcessingElement( ROO, nodeNum, llyr_config );
+    } else if( op_binding == ONEONAND ) {
+        tempPE = new ControlProcessingElement( ONEONAND, nodeNum, llyr_config );
+    } else if( op_binding == GATED_ONE ) {
+        tempPE = new ControlProcessingElement( GATED_ONE, nodeNum, llyr_config );
+    } else if( op_binding == MERGE ) {
+        tempPE = new ControlProcessingElement( MERGE, nodeNum, llyr_config );
     } else if( op_binding == SEL ) {
         tempPE = new ControlProcessingElement( SEL, nodeNum, llyr_config );
-    } else if( op_binding == RTR ) {
-        tempPE = new ControlProcessingElement( RTR, nodeNum, llyr_config );
+    } else if( op_binding == ROUTE ) {
+        tempPE = new ControlProcessingElement( ROUTE, nodeNum, llyr_config );
     } else if( op_binding == RET ) {
         tempPE = new ControlProcessingElement( RET, nodeNum, llyr_config );
     } else {
@@ -141,7 +156,7 @@ void LlyrMapper::addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< Process
 
 }// addNode
 
-void LlyrMapper::addNode(opType op_binding, std::string *arguments, uint32_t nodeNum, LlyrGraph< ProcessingElement* > &graphOut,
+void LlyrMapper::addNode(opType op_binding, QueueArgMap* arguments, uint32_t nodeNum, LlyrGraph< ProcessingElement* > &graphOut,
                          LlyrConfig* llyr_config)
 {
     ProcessingElement* tempPE;
@@ -159,6 +174,22 @@ void LlyrMapper::addNode(opType op_binding, std::string *arguments, uint32_t nod
         tempPE = new AdvStoreProcessingElement( STADDR, nodeNum, llyr_config, arguments );
     } else if( op_binding == STREAM_ST ) {
         tempPE = new AdvStoreProcessingElement( STREAM_ST, nodeNum, llyr_config, arguments );
+    } else if( op_binding == AND_IMM ) {
+        tempPE = new LogicConstProcessingElement( AND_IMM, nodeNum, llyr_config, arguments );
+    } else if( op_binding == OR_IMM ) {
+        tempPE = new LogicConstProcessingElement( OR_IMM, nodeNum, llyr_config, arguments );
+    } else if( op_binding == EQ_IMM ) {
+        tempPE = new LogicConstProcessingElement( EQ_IMM, nodeNum, llyr_config, arguments );
+    } else if( op_binding == UGT_IMM ) {
+        tempPE = new LogicConstProcessingElement( UGT_IMM, nodeNum, llyr_config, arguments );
+    } else if( op_binding == UGE_IMM ) {
+        tempPE = new LogicConstProcessingElement( UGE_IMM, nodeNum, llyr_config, arguments );
+    } else if( op_binding == ULE_IMM ) {
+        tempPE = new LogicConstProcessingElement( ULE_IMM, nodeNum, llyr_config, arguments );
+    } else if( op_binding == SGT_IMM ) {
+        tempPE = new LogicConstProcessingElement( SGT_IMM, nodeNum, llyr_config, arguments );
+    } else if( op_binding == SLT_IMM ) {
+        tempPE = new LogicConstProcessingElement( SLT_IMM, nodeNum, llyr_config, arguments );
     } else if( op_binding == ADDCONST ) {
         tempPE = new IntConstProcessingElement( ADDCONST, nodeNum, llyr_config, arguments );
     } else if( op_binding == SUBCONST ) {
@@ -169,6 +200,18 @@ void LlyrMapper::addNode(opType op_binding, std::string *arguments, uint32_t nod
         tempPE = new IntConstProcessingElement( DIVCONST, nodeNum, llyr_config, arguments );
     } else if( op_binding == REMCONST ) {
         tempPE = new IntConstProcessingElement( REMCONST, nodeNum, llyr_config, arguments );
+    } else if( op_binding == INC ) {
+        tempPE = new AdvIntProcessingElement( INC, nodeNum, llyr_config, arguments );
+    } else if( op_binding == INC_RST ) {
+        tempPE = new AdvIntProcessingElement( INC_RST, nodeNum, llyr_config, arguments );
+    } else if( op_binding == ACC ) {
+        tempPE = new AdvIntProcessingElement( ACC, nodeNum, llyr_config, arguments );
+    } else if( op_binding == ROS ) {
+        tempPE = new ControlConstProcessingElement( ROS, nodeNum, llyr_config, arguments );
+    } else if( op_binding == RNE ) {
+        tempPE = new ControlConstProcessingElement( RNE, nodeNum, llyr_config, arguments );
+    } else if( op_binding == FILTER ) {
+        tempPE = new ControlConstProcessingElement( FILTER, nodeNum, llyr_config, arguments );
     } else {
         output_->fatal(CALL_INFO, -1, "Error: Unable to find specified operation\n");
         exit(0);

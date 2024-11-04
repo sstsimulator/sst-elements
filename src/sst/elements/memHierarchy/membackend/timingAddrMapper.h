@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -54,8 +54,8 @@ class AddrMapper : public SST::Module {
 class SimpleAddrMapper : public AddrMapper {
   public:
 /* Element Library Info */
-    SST_ELI_REGISTER_MODULE_DERIVED(SimpleAddrMapper, "memHierarchy", "simpleAddrMapper", SST_ELI_ELEMENT_VERSION(1,0,0),
-                                    "Simple address mapper", SST::MemHierarchy::TimingDRAM_NS::AddrMapper)
+    SST_ELI_REGISTER_MODULE(SimpleAddrMapper, "memHierarchy", "simpleAddrMapper", SST_ELI_ELEMENT_VERSION(1,0,0),
+                            "Simple address mapper", SST::MemHierarchy::TimingDRAM_NS::AddrMapper)
 
 /* Begin class definition */
     SimpleAddrMapper( Params &params ) :
@@ -126,8 +126,8 @@ class SimpleAddrMapper : public AddrMapper {
 class RoundRobinAddrMapper: public AddrMapper {
 public:
     /* Element Library Info */
-    SST_ELI_REGISTER_MODULE_DERIVED(RoundRobinAddrMapper, "memHierarchy", "roundRobinAddrMapper", SST_ELI_ELEMENT_VERSION(1,0,0),
-                                    "Round-robin address mapper", SST::MemHierarchy::TimingDRAM_NS::AddrMapper)
+    SST_ELI_REGISTER_MODULE(RoundRobinAddrMapper, "memHierarchy", "roundRobinAddrMapper", SST_ELI_ELEMENT_VERSION(1,0,0),
+                            "Round-robin address mapper", SST::MemHierarchy::TimingDRAM_NS::AddrMapper)
 
     SST_ELI_DOCUMENT_PARAMS(
             {"interleave_size", "(string) Granularity of interleaving in bytes (B). SI ok.", "64B"},
@@ -202,8 +202,8 @@ private:
 class SandyBridgeAddrMapper : public AddrMapper {
   public:
 /* Element Library Info */
-    SST_ELI_REGISTER_MODULE_DERIVED(SandyBridgeAddrMapper, "memHierarchy", "sandyBridgeAddrMapper", SST_ELI_ELEMENT_VERSION(1,0,0),
-                                    "Sandy Bridge address mapper", SST::MemHierarchy::TimingDRAM_NS::AddrMapper)
+    SST_ELI_REGISTER_MODULE(SandyBridgeAddrMapper, "memHierarchy", "sandyBridgeAddrMapper", SST_ELI_ELEMENT_VERSION(1,0,0),
+                            "Sandy Bridge address mapper", SST::MemHierarchy::TimingDRAM_NS::AddrMapper)
 
 /* Begin class definition */
     SandyBridgeAddrMapper( Params &params ) : AddrMapper()

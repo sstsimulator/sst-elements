@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2022 NTESS. Under the terms
+# Copyright 2009-2024 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2022, NTESS
+# Copyright (c) 2009-2024, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -101,13 +101,13 @@ class topoHyperX(Topology):
         return self.getRouterNameForLocation(self._idToLoc(rtr_id))
         
     def getRouterNameForLocation(self,location):
-        return "%srtr_%s"%(self._prefix,self._formatShape(location))
+        return "rtr_%s"%(self._formatShape(location))
     
     def findRouterByLocation(self,location):
         return sst.findComponentByName(self.getRouterNameForLocation(location))
         
     
-    def build(self, endpoint):
+    def _build_impl(self, endpoint):
         if self.host_link_latency is None:
             self.host_link_latency = self.link_latency
 

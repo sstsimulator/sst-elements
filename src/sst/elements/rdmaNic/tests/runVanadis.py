@@ -1,13 +1,15 @@
 import sst
 from sst.merlin import *
 
-#import shmemMultiNode 
-#import latestV3 as node
-import oneRtrV4 as node
+import node as node
+import os
+
+debugPython=False
 
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
-sst.setProgramOption("stopAtCycle", "0 ns")
+
+# Tell SST what statistics handling we want
 
 networkParams = {
     "packetSize" : "2048B",
@@ -36,26 +38,33 @@ sst.merlin._params["input_latency"] = networkParams['input_latency']
 sst.merlin._params["output_latency"] = networkParams['output_latency']
 sst.merlin._params["input_buf_size"] = networkParams['input_buf_size']
 sst.merlin._params["output_buf_size"] = networkParams['output_buf_size']
-sst.merlin._params["num_dims"] = "1"
-sst.merlin._params["torus.shape"] = "2"
-sst.merlin._params["torus.width"] = "1"
-#sst.merlin._params["num_dims"] = "3"
-#sst.merlin._params["torus:shape"] = "1x2"
-#sst.merlin._params["torus:width"] = "1x1"
+
+sst.merlin._params["num_dims"] = os.getenv("RDMANIC_NETWORK_NUM_DIMS", "2" ) 
+sst.merlin._params["torus.width"] = os.getenv("RDMANIC_NETWORK_WIDTH", "1x1" )
+sst.merlin._params["torus.shape"] = os.getenv("RDMANIC_NETWORK_SHAPE", "2x1" )
+
+
 sst.merlin._params["torus.local_ports"] = "1"
 
 topo = topoTorus()
 topo.prepParams()
 
-ep = node.Endpoint( 2 )
+ep = node.Endpoint( int( os.getenv("RDMANIC_NUMNODES", 2) ) )
 
 def setNode( nodeId ):
     return ep;
+if debugPython:
+    print( 'call topo.setEndPointFunc()' )
 
-print( 'call topo.setEndPointFunc()' )
 topo.setEndPointFunc( setNode )
-print( 'call topo.build()' )
+
+if debugPython:
+    print( 'call topo.build()' )
+
 topo.build()
+
+sst.setStatisticLoadLevel(4)
+sst.setStatisticOutput("sst.statOutputConsole")
 
 # Enable SST Statistics Outputs for this simulation
 #sst.setStatisticLoadLevel(16)

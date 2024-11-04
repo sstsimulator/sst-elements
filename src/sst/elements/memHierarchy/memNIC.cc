@@ -1,8 +1,8 @@
-// Copyright 2013-2022 NTESS. Under the terms
+// Copyright 2013-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2022, NTESS
+// Copyright (c) 2013-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -41,13 +41,13 @@ MemNIC::MemNIC(ComponentId_t id, Params &params, TimeConverter* tc) : MemNICBase
     if (!link_control) {
         Params netparams;
         netparams.insert("port_name", params.find<std::string>("port", "port"));
-        netparams.insert("in_buf_size", params.find<std::string>("network_input_buffer_size", "1KiB"));
-        netparams.insert("out_buf_size", params.find<std::string>("network_output_buffer_size", "1KiB"));
+        netparams.insert("input_buf_size", params.find<std::string>("network_input_buffer_size", "1KiB"));
+        netparams.insert("output_buf_size", params.find<std::string>("network_output_buffer_size", "1KiB"));
         netparams.insert("link_bw", params.find<std::string>("network_bw", "80GiB/s"));
         std::string link_control_class = params.find<std::string>("network_link_control", "merlin.linkcontrol");
 
         if (link_control_class != "merlin.linkcontrol")
-            dbg.output("%s, Warning: use of the 'network_link_control' parameter is deprecated in favor of specifying a named 'linkcontrol' subcomponent in the input configuration.\n",
+          dbg.fatal(CALL_INFO, -1, "%s, Error: use of the 'network_link_control' parameter is no longer supported. Please specify a named 'linkcontrol' subcomponent in the input configuration.\n",
                     getName().c_str());
 
         link_control = loadAnonymousSubComponent<SimpleNetwork>(link_control_class, "linkcontrol", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, netparams, 1);
@@ -83,7 +83,7 @@ bool MemNIC::clock(SimTime_t cycle) {
 bool MemNIC::recvNotify(int) {
     MemRtrEvent * mre = doRecv(link_control);
     if (mre) {
-        MemEventBase* ev = mre->event;
+        MemEventBase* ev = mre->takeEvent();
         delete mre;
         if (ev) {
             if (is_debug_event(ev)) {
@@ -107,7 +107,7 @@ void MemNIC::send(MemEventBase *ev) {
     req->vn = 0;
 
     if (is_debug_event(ev)) {
-        dbg.debug(_L5_, "N: %-40" PRIu64 "  %-20s Enqueue       Dst: %lld, bits: %zu, (%s)\n", 
+        dbg.debug(_L5_, "N: %-40" PRI_NID "  %-20s Enqueue       Dst: %" PRI_NID ", bits: %zu, (%s)\n",
             getCurrentSimCycle(), getName().c_str(), req->dest, req->size_in_bits, ev->getBriefString().c_str());
     }
 
@@ -136,7 +136,7 @@ void MemNIC::printStatus(Output &out) {
     // Since this is just debug/fatal we're just going to read out the queue & re-populate it
     std::queue<SST::Interfaces::SimpleNetwork::Request*> tmpQ;
     while (!sendQueue.empty()) {
-        MemEventBase * ev = static_cast<MemRtrEvent*>(sendQueue.front()->inspectPayload())->event;
+        MemEventBase * ev = static_cast<MemRtrEvent*>(sendQueue.front()->inspectPayload())->inspectEvent();
         out.output("      %s\n", ev->getVerboseString(out.getVerboseLevel()).c_str());
         tmpQ.push(sendQueue.front());
         sendQueue.pop();
@@ -151,7 +151,7 @@ void MemNIC::emergencyShutdownDebug(Output &out) {
     out.output(" Draining link control...\n");
     MemRtrEvent * mre = doRecv(link_control);
     while (mre != nullptr) {
-        MemEventBase * ev = mre->event;
+        MemEventBase * ev = mre->takeEvent();
         delete mre;
         if (ev) {
             out.output("      Undelivered message: %s\n", ev->getVerboseString(out.getVerboseLevel()).c_str());

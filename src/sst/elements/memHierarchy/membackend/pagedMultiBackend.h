@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -41,12 +41,12 @@ struct pageInfo {
     typedef pageList_t::iterator pageListIter;
 
     uint64_t pageAddr;
-    uint touched; // how many times it is touched in quanta (used in LFU)
+    uint32_t touched; // how many times it is touched in quanta (used in LFU)
     pageListIter listEntry;
     bool inFast;
     SimTime_t lastTouch; // used in mrpuLRU
     uint64_t lastRef; // used in scan detection
-    uint scanLeng; // number of consecutive unit-1-stride accesses
+    uint32_t scanLeng; // number of consecutive unit-1-stride accesses
     SimTime_t pageDelay; // time when page will be in fast mem
 
     typedef enum {NONE, FtoS, StoF} swapDir_t;
@@ -148,7 +148,7 @@ struct pageInfo {
 class pagedMultiMemory : public DRAMSimMemory {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(pagedMultiMemory, "memHierarchy", "pagedMulti", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(pagedMultiMemory, "memHierarchy", "pagedMulti", SST_ELI_ELEMENT_VERSION(1,0,0),
             "DRAMSim-driven memory timings with a fixed timing multi-levle memory using paging", SST::MemHierarchy::SimpleMemBackend)
 
     SST_ELI_DOCUMENT_PARAMS( DRAMSIM_ELI_PARAMS,
@@ -283,12 +283,12 @@ public:
 
     typedef map<uint64_t, pageInfo> pageMap_t;
     pageMap_t pageMap;
-    uint maxFastPages;
-    uint pageShift;
-    uint pagesInFast;
-    uint lastMin;
-    uint threshold;
-    uint scanThreshold;
+    uint32_t maxFastPages;
+    uint32_t pageShift;
+    uint32_t pagesInFast;
+    uint32_t lastMin;
+    uint32_t threshold;
+    uint32_t scanThreshold;
     SimTime_t transferDelay;
     SimTime_t minAccTime;
     bool collectStats;

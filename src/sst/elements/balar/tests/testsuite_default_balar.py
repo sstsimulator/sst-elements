@@ -6,64 +6,42 @@ from sst_unittest_support import *
 import os
 import shutil
 
-################################################################################
-# Code to support a single instance module initialize, must be called setUp method
-
-module_init = 0
-module_sema = threading.Semaphore()
-
-def initializeTestModule_SingleInstance(class_inst):
-    global module_init
-    global module_sema
-
-    module_sema.acquire()
-    if module_init != 1:
-        # Put your single instance Init Code Here
-        class_inst._setupbalarTestFiles()
-        module_init = 1
-
-    module_sema.release()
-
-################################################################################
 
 class testcase_balar(SSTTestCase):
 
-    def initializeClass(self, testName):
-        super(type(self), self).initializeClass(testName)
-        # Put test based setup code here. it is called before testing starts
-        # NOTE: This method is called once for every test
-
     def setUp(self):
         super(type(self), self).setUp()
-        initializeTestModule_SingleInstance(self)
+        self._setupbalarTestFiles()
 
     def tearDown(self):
         # Put test based teardown code here. it is called once after every test
         super(type(self), self).tearDown()
 
 #####
-    pin_loaded = testing_is_PIN_loaded()
-    pin3_used = testing_is_PIN3_used()
-    missing_cuda_root = os.getenv("CUDA_ROOT") == None
+    # missing_cuda_root = os.getenv("CUDA_ROOT") == None
     missing_cuda_install_path = os.getenv("CUDA_INSTALL_PATH") == None
     missing_gpgpusim_root = os.getenv("GPGPUSIM_ROOT") == None
     found_mem_pools_config = sst_core_config_include_file_get_value_str("USE_MEMPOOL", default="", disable_warning=True) != ""
     found_mpi_config = sst_core_config_include_file_get_value_str("SST_CONFIG_HAVE_MPI", default="", disable_warning=True) != ""
 
-    @unittest.skipIf(not pin_loaded, "test_balar_runvecadd: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
-    @unittest.skipIf(pin3_used, "test_balar_runvecadd test: Requires PIN2, but PIN3 is COMPILED.")
-    @unittest.skipIf(missing_cuda_root, "test_balar_runvecadd test: Requires missing environment variable CUDA_ROOT.")
+    # @unittest.skipIf(missing_cuda_root, "test_balar_runvecadd test: Requires missing environment variable CUDA_ROOT.")
     @unittest.skipIf(missing_cuda_install_path, "test_balar_runvecadd test: Requires missing environment variable CUDA_INSTALL_PATH.")
     @unittest.skipIf(missing_gpgpusim_root, "test_balar_runvecadd test: Requires missing environment variable GPGPUSIM_ROOT.")
     @unittest.skipIf(found_mem_pools_config, "test_balar_runvecadd test: Found mem-pools configured in core, test requires core to be built using --disable-mem-pools.")
     @unittest.skipIf(found_mpi_config, "test_balar_runvecadd test: Found mpi configured in core, test requires core to be built using --disable-mpi.")
 
-    def test_balar_runvecadd(self):
-        self.balar_test_template("vectorAdd")
+    def test_balar_runvecadd_testcpu(self):
+        self.balar_testcpu_template("vectorAdd")
 
 ####
 
-    def balar_test_template(self, testcase, testtimeout=400):
+    def balar_testcpu_template(self, testcase, testtimeout=400):
+        """Balar testcase template with trace-driven mode
+
+        Args:
+            testcase (str): testcase name
+            testtimeout (int, optional): testcase timeout. Defaults to 400.
+        """
         # Have to test for NVCC_PATH inside of the test as decorated skips happen
         # before init of testsuite
         missing_nvcc_path = os.getenv("NVCC_PATH") == None
@@ -86,8 +64,9 @@ class testcase_balar(SSTTestCase):
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         statsfile = "{0}/{1}.stats_out".format(outdir, testDataFileName)
-        mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
-        sdlfile = "{0}/cuda-test.py".format(test_path, testcase)
+        sdlfile = "{0}/testBalar-testcpu.py".format(test_path)
+        vecAddBinary = "{0}/vectorAdd".format(self.testbalarVectorAddDir)
+        vecAddTrace = "{0}/cuda_calls.trace".format(self.testbalarVectorAddDir)
 
         log_debug("testcase = {0}".format(testcase))
         log_debug("sdl file = {0}".format(sdlfile))
@@ -97,12 +76,12 @@ class testcase_balar(SSTTestCase):
         log_debug("stats file = {0}".format(statsfile))
         log_debug("testbalarDir = {0}".format(self.testbalarDir))
 
-        arielcfgfile = "{0}/ariel-gpu-v100.cfg".format(self.testbalarDir)
-        otherargs = '--model-options=\"-c {0} -s {1}"'.format(arielcfgfile, statsfile)
+        gpuMemCfgfile = "{0}/gpu-v100-mem.cfg".format(self.testbalarDir)
+        otherargs = '--model-options=\"-c {0} -s {1} -x {2} -t {3}"'.format(gpuMemCfgfile, statsfile, vecAddBinary, vecAddTrace)
 
         # Run SST
         self.run_sst(sdlfile, outfile, errfile, set_cwd=self.testbalarDir,
-                     mpi_out_files=mpioutfiles, other_args=otherargs,
+                     other_args=otherargs,
                      timeout_sec=testtimeout)
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
@@ -146,7 +125,7 @@ class testcase_balar(SSTTestCase):
         os.makedirs(self.testbalarVectorAddDir)
 
         # Create a simlink of required test files balar/tests directory
-        os_symlink_file(test_path, self.testbalarDir, "ariel-gpu-v100.cfg")
+        os_symlink_file(test_path, self.testbalarDir, "gpu-v100-mem.cfg")
         os_symlink_file(test_path, self.testbalarDir, "gpgpusim.config")
         os_symlink_file(test_path, self.testbalarDir, "utils.py")
 

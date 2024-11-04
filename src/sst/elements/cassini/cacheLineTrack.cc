@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -81,7 +81,7 @@ void cacheLineTrack::notifyAccess(const CacheListenerNotification& notify) {
             auto iter = cacheLines.find(cacheAddr);
             if (iter == cacheLines.end()) {
                 // insert a new one
-                SimTime_t now = getSimulation()->getCurrentSimCycle();
+                SimTime_t now = getCurrentSimCycle();
                 iter = (cacheLines.insert({cacheAddr, lineTrack(now)})).first;
             }
             // update
@@ -105,7 +105,7 @@ void cacheLineTrack::notifyAccess(const CacheListenerNotification& notify) {
                 // record it
                 rdHisto->addData(log2_64(iter->second.reads));
                 wrHisto->addData(log2_64(iter->second.writes));
-                SimTime_t now = getSimulation()->getCurrentSimCycle();
+                SimTime_t now = getCurrentSimCycle();
                 ageHisto->addData(log2_64(now - iter->second.entered));
                 unsigned int touched = iter->second.touched.count();
                 useHisto->addData(touched);

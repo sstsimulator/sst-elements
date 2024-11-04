@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -176,4 +176,12 @@ void ArielMemoryManagerSimple::printTable() {
 
     	output->output("---------------------------------------------------------------------\n");
 
+}
+
+void ArielMemoryManagerSimple::get_page_info(std::unordered_map<uint64_t, uint64_t>* pagetable, std::deque<uint64_t>* freepages, uint64_t& pagesize) {
+    memcpy((void*)pagetable, (void*)(&pageTable), sizeof(pageTable));
+    memcpy((void*)freepages, (void*)(&freePages), sizeof(freePages)); 
+    pagesize = pageSize;
+
+    return;
 }

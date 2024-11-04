@@ -1,0 +1,2 @@
+main() pid=100 tid=100 ppid=0 pgid=100
+parent: new child=101

@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -91,7 +91,7 @@ basicParams::basicParams(ComponentId_t id, Params& params) : Component(id) {
     primaryComponentDoNotEndSim();
 
     // Register a clock
-    registerClock("1MHz", new Clock::Handler<basicParams>(this, &basicParams::tick));
+    registerClock("1MHz", new Clock::Handler2<basicParams, &basicParams::tick>(this));
 
 }
 
@@ -119,3 +119,16 @@ bool basicParams::tick( Cycle_t cycles)
     return false;
 }
 
+/*
+ * Default constructor
+*/
+basicParams::basicParams() : Component() {}
+
+/*
+ * Serialization function
+*/
+void basicParams::serialize_order(SST::Core::Serialization::serializer& ser) {
+    Component::serialize_order(ser);
+
+    SST_SER(out);
+}

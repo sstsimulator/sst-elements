@@ -1,8 +1,8 @@
-// Copyright 2013-2022 NTESS. Under the terms
+// Copyright 2013-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2022, NTESS
+// Copyright (c) 2013-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -150,21 +150,21 @@ void MultiThreadL1::init(unsigned int phase) {
 
     // Pass CPU events to memory hierarchy, generally these are memory initialization
     for (int i = 0; i < threadLinks.size(); i++) {
-        while ((ev = threadLinks[i]->recvInitData()) != NULL) {
+        while ((ev = threadLinks[i]->recvUntimedData()) != NULL) {
             MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
             if (memEvent) {
-                cacheLink->sendInitData(memEvent->clone());
+                cacheLink->sendUntimedData(memEvent->clone());
             }
             delete ev;
         }
     }
 
     // Broadcast L1 events to connected CPUs
-    while ((ev = cacheLink->recvInitData()) != NULL) {
+    while ((ev = cacheLink->recvUntimedData()) != NULL) {
         MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
         if (memEvent) {
             for (int i = 0; i < threadLinks.size(); i++) {
-                threadLinks[i]->sendInitData(memEvent->clone());
+                threadLinks[i]->sendUntimedData(memEvent->clone());
             }
         }
         delete ev;

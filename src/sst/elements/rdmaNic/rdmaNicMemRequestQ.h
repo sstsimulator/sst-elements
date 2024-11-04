@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -13,7 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-    class MemRequestQ {
+    class MemRequestQ : public ComponentExtension {
 
         struct SrcChannel {
             SrcChannel( int maxSrcQsize ) : maxSrcQsize(maxSrcQsize), pendingCnts(0) {}
@@ -28,7 +28,7 @@
         };
 
       public:
-        MemRequestQ( RdmaNic* nic, int maxPending, int maxSrcQsize, int numSrcs ) : 
+        MemRequestQ(ComponentId_t cid, RdmaNic* nic, int maxPending, int maxSrcQsize, int numSrcs ) : ComponentExtension(cid), 
             m_nic(nic), m_maxPending(maxPending), m_curSrc(0), m_reqSrcQs(numSrcs,maxSrcQsize), m_pendingPair(NULL,NULL)
         {}
 
@@ -62,28 +62,28 @@
 
 			Interfaces::StandardMem::Request* stdMemReq;
             std::vector<uint8_t> payload;
-            req->reqTime=Simulation::getSimulation()->getCurrentSimCycle();
+            req->reqTime=getCurrentSimCycle();
 
             switch ( req->m_op ) {
               case MemRequest::Read:
                 Nic().dbg.debug(CALL_INFO,1,DBG_MEMEVENT_FLAG,"read addr=%#" PRIx64 " dataSize=%d\n",req->addr,req->dataSize);
-				stdMemReq = new StandardMem::Read(req->addr, req->dataSize, 0, 0, 0, req->id);
+				stdMemReq = new StandardMem::Read(req->addr, req->dataSize, 0, req->addr );
                 break;
 
               case MemRequest::Write:
 
                 if ( req->buf.empty() ) {
-                    Nic().dbg.debug(CALL_INFO,1,DBG_MEMEVENT_FLAG,"write addr=%#" PRIx64 " data=%llu dataSize=%d\n",
+                    Nic().dbg.debug(CALL_INFO,1,DBG_MEMEVENT_FLAG,"write addr=%#" PRIx64 " data=%" PRIu64 " dataSize=%d\n",
                                     req->addr,req->data,req->dataSize);
                     for ( int i = 0; i < req->dataSize; i++ ) {
                         payload.push_back( (req->data >> i*8) & 0xff );
 						//printf("%x ", (req->data >> i*8) & 0xff  );
                     }
 					//printf("\n");
-					stdMemReq = new StandardMem::Write(req->addr, req->dataSize, payload);
+					stdMemReq = new StandardMem::Write(req->addr, req->dataSize, payload, false, 0, req->addr);
                 } else {
                     Nic().dbg.debug(CALL_INFO,1,DBG_MEMEVENT_FLAG,"write addr=%#" PRIx64 " dataSize=%d\n",req->addr,req->dataSize);
-					stdMemReq = new StandardMem::Write(req->addr, req->dataSize, req->buf);
+					stdMemReq = new StandardMem::Write(req->addr, req->dataSize, req->buf, false, 0, req->addr );
 #if 0
                     for ( int i = 0; i < req->dataSize/4; i++ ) {
 						for ( int j = 3; j >=0; j-- ) {
@@ -132,7 +132,7 @@
 
         void write( int srcNum, uint64_t addr, int dataSize, uint64_t data, MemRequest::Callback* callback = NULL ) {
 			assert( ! full(srcNum) );
-            Nic().dbg.debug(CALL_INFO,1,DBG_X_FLAG,"srcNum=%d addr=%#" PRIx64 " data=%llu dataSize=%d\n",srcNum,addr,data,dataSize);
+            Nic().dbg.debug(CALL_INFO,1,DBG_X_FLAG,"srcNum=%d addr=%#" PRIx64 " data=%" PRIu64 " dataSize=%d\n",srcNum,addr,data,dataSize);
             m_reqSrcQs[srcNum].queue.push( new MemRequest( srcNum, addr, dataSize, data, callback ) );
         }
 

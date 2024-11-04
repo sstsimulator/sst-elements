@@ -1,0 +1,42 @@
+
+RDMA_NIC_DIR=`realpath ../../..`
+
+#export RDMANIC_EXE="$RDMA_NIC_DIR/tests/app/mpi/riscv64/IMB-MPI1"
+#export RDMANIC_EXE="/home/mjleven/benchmarks/hpcg/bin/xhpcg"
+export RDMANIC_EXE="$RDMA_NIC_DIR/tests/app/mpi/IMB/src_c/IMB-MPI1"
+#export RDMANIC_EXE="$RDMA_NIC_DIR/tests/app/mpi/IMB/src_c/mpi_test"
+export RDMANIC_IMB="True"
+
+X=2
+Y=2
+Z=1
+
+export RDMANIC_NETWORK_NUM_DIMS="3"
+export RDMANIC_NETWORK_WIDTH="1x1x1"
+export RDMANIC_NETWORK_SHAPE=${X}x${Y}x${Z}
+
+export RDMANIC_NUMNODES=$((X * Y * Z))
+
+export VANADIS_EXE_ARGS="-iter 1 -npmin $RDMANIC_NUMNODES -msglen msglen.txt Barrier"
+export VANADIS_EXE_ENV="RDMA_NIC_NUM_POSTED_RECV=128 RDMA_NIC_COMP_Q_SIZE=256"
+
+echo "shape:" $RDMANIC_NETWORK_SHAPE
+echo "numNodes:" $RDMANIC_NUMNODES
+
+if [ ! -e  msglen.txt ]
+then
+    ln -s ../../msglen.txt .
+fi
+
+export PYTHONPATH=../..
+
+numRanks=32
+if [ ${RDMANIC_NUMNODES} -lt 32 ]
+then
+    numRanks=${RDMANIC_NUMNODES}
+fi
+
+echo $numRanks
+
+#time sst --print-timing-info -n $numRanks ../../runVanadis.py
+time mpirun -n $numRanks sst --print-timing-info ../../runVanadis.py

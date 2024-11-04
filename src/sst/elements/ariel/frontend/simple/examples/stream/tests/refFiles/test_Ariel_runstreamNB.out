@@ -5,18 +5,28 @@ Perfoming the fast_c compute loop...
 Sum of arrays is: 6999500.000000
 Freeing arrays...
 Done.
+memory, WARNING: Memories no longer inherit address regions from directories and no region parameters (addr_range_start, addr_range_end, interleave_size, interleave_step) were detected. All addresses will map to this memory: if this is intended, you may ignore this warning or set addr_range_start to 0 in your input deck to eliminate this warning.
 CORE ID: 0 PROCESSED AN EXIT EVENT
 
 Ariel Memory Management Statistics:
 ---------------------------------------------------------------------
 Page Table Sizes:
-- Map entries         375
+- Map entries         436
 Page Table Coverages:
-- Bytes               1536000
- a0.read_requests.0 : Accumulator : Sum.u64 = 358751; SumSQ.u64 = 358751; Count.u64 = 358751; Min.u64 = 1; Max.u64 = 1; 
- a0.write_requests.0 : Accumulator : Sum.u64 = 163938; SumSQ.u64 = 163938; Count.u64 = 163938; Min.u64 = 1; Max.u64 = 1; 
- a0.instruction_count.0 : Accumulator : Sum.u64 = 1509429; SumSQ.u64 = 1509429; Count.u64 = 1509429; Min.u64 = 1; Max.u64 = 1; 
- a0.cycles.0 : Accumulator : Sum.u64 = 17352092; SumSQ.u64 = 17352092; Count.u64 = 17352092; Min.u64 = 1; Max.u64 = 1; 
- l1cache.CacheHits : Accumulator : Sum.u64 = 509580; SumSQ.u64 = 509580; Count.u64 = 509580; Min.u64 = 1; Max.u64 = 1; 
- l1cache.CacheMisses : Accumulator : Sum.u64 = 13257; SumSQ.u64 = 13257; Count.u64 = 13257; Min.u64 = 1; Max.u64 = 1; 
-Simulation is complete, simulated time: 17.3521 ms
+- Bytes               1785856
+ a0.read_requests.0 : Accumulator : Sum.u64 = 745139; SumSQ.u64 = 745139; Count.u64 = 745139; Min.u64 = 1; Max.u64 = 1; 
+ a0.write_requests.0 : Accumulator : Sum.u64 = 298976; SumSQ.u64 = 298976; Count.u64 = 298976; Min.u64 = 1; Max.u64 = 1; 
+ a0.instruction_count.0 : Accumulator : Sum.u64 = 3236674; SumSQ.u64 = 3236674; Count.u64 = 3236674; Min.u64 = 1; Max.u64 = 1; 
+ a0.cycles.0 : Accumulator : Sum.u64 = 32282169; SumSQ.u64 = 32282169; Count.u64 = 32282169; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.CacheHits : Accumulator : Sum.u64 = 1022748; SumSQ.u64 = 1022748; Count.u64 = 1022748; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.CacheMisses : Accumulator : Sum.u64 = 22174; SumSQ.u64 = 22174; Count.u64 = 22174; Min.u64 = 1; Max.u64 = 1; 
+Simulation is complete, simulated time: 32.2822 ms
+ARIEL-SST: Did not find ARIEL_OVERRIDE_POOL in the environment, no override applies.
+ARIEL-SST PIN tool activating with 1 threads
+ARIEL: Default memory pool set to 0
+ARIEL: Tool is configured to begin with profiling immediately.
+ARIEL: Starting program.
+Identified routine: clock_gettime, replacing with Ariel equivalent...
+Replacement complete.
+Identified routine: clock_gettime, replacing with Ariel equivalent...
+Replacement complete.

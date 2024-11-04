@@ -3,41 +3,16 @@
 from sst_unittest import *
 from sst_unittest_support import *
 import os.path
+import re
 
-################################################################################
-# Code to support a single instance module initialize, must be called setUp method
 
-module_init = 0
-module_sema = threading.Semaphore()
-
-def initializeTestModule_SingleInstance(class_inst):
-    global module_init
-    global module_sema
-
-    module_sema.acquire()
-    if module_init != 1:
-        try:
-            # Put your single instance Init Code Here
-            pass
-        except:
-            pass
-        module_init = 1
-    module_sema.release()
-
-################################################################################
 ################################################################################
 ################################################################################
 
 class testcase_memHierarchy_memHA(SSTTestCase):
 
-    def initializeClass(self, testName):
-        super(type(self), self).initializeClass(testName)
-        # Put test based setup code here. it is called before testing starts
-        # NOTE: This method is called once for every test
-
     def setUp(self):
         super(type(self), self).setUp()
-        initializeTestModule_SingleInstance(self)
         # Put test based setup code here. it is called once before every test
 
     def tearDown(self):
@@ -97,10 +72,13 @@ class testcase_memHierarchy_memHA(SSTTestCase):
 
     def test_memHA_ThroughputThrottling(self):
         self.memHA_Template("ThroughputThrottling")
+    
+    def test_memHA_CoherenceDomains(self):
+        self.memHA_Template("CoherenceDomains")
 
     @skip_on_sstsimulator_conf_empty_str("GOBLIN_HMCSIM", "LIBDIR", "GOBLIN_HMCSIM is not included as part of this build")
     def test_memHA_BackendGoblinHMC(self):
-        self.memHA_Template("BackendGoblinHMC")
+        self.memHA_Template("BackendGoblinHMC", testtimeout=400)
 
     @skip_on_sstsimulator_conf_empty_str("DRAMSIM3", "LIBDIR", "DRAMSIM3 is not included as part of this build")
     def test_memHA_BackendDramsim3(self):
@@ -183,6 +161,9 @@ class testcase_memHierarchy_memHA(SSTTestCase):
     
     def test_memHA_StdMem_mmio3(self):
         self.memHA_Template("StdMem_mmio3")
+
+    def test_memHA_RangeCheck(self):
+        self.memHA_Template("RangeCheck", testtimeout=60)
 #####
 
     def memHA_Template(self, testcase,
@@ -280,7 +261,7 @@ class testcase_memHierarchy_memHA(SSTTestCase):
     # Currently handles console output format only and integer statistic formats
     # Stats are parsed into [component_name, stat_name, sum, sumSQ, count, min, max]
     def _is_stat(self, line):
-        cons_accum = re.compile(' ([\w.]+)\.(\w+) : Accumulator : Sum.(\w+) = (\d+); SumSQ.\w+ = (\d+); Count.\w+ = (\d+); Min.\w+ = (\d+); Max.\w+ = (\d+);')
+        cons_accum = re.compile(r' ([\w.]+)\.(\w+) : Accumulator : Sum.(\w+) = (\d+); SumSQ.\w+ = (\d+); Count.\w+ = (\d+); Min.\w+ = (\d+); Max.\w+ = (\d+);')
         m = cons_accum.match(line)
         if m == None:
             return None

@@ -1,13 +1,13 @@
-// Copyright 2013-2022 NTESS. Under the terms
+// Copyright 2013-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2022, NTESS
+// Copyright (c) 2013-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -56,6 +56,7 @@ public:
 
     void printGraph();
     void printDot( std::string fileName );
+    void printDotHardware( std::string fileName );
 
     uint32_t outEdges( uint32_t vertexId );
     uint32_t numVertices() const;
@@ -68,6 +69,7 @@ public:
 
     Vertex<T>* getVertex( uint32_t vertexNum ) const;
     void setVertex( uint32_t vertexNum, const Vertex<T> &vertex );
+    bool testVertex( uint32_t vertexNum ) const;
 
     std::map< uint32_t, Vertex<T> >* getVertexMap( void ) const;
 
@@ -185,6 +187,38 @@ void LlyrGraph<T>::printDot( std::string fileName )
 }
 
 template<class T>
+void LlyrGraph<T>::printDotHardware( std::string fileName )
+{
+    std::ofstream outputFile(fileName.c_str(), std::ios::trunc);         //open a file for writing (truncate the current contents)
+    if ( !outputFile )                                                   //check to be sure file is open
+        std::cerr << "Error opening file.";
+
+    outputFile << "digraph G {" << "\n";
+
+    typename std::map< uint32_t, Vertex<T> >::iterator vertexIterator;
+    for(vertexIterator = vertex_map_->begin(); vertexIterator != vertex_map_->end(); ++vertexIterator) {
+        outputFile << vertexIterator->first << "[label=\"";
+        outputFile << getOpString(vertexIterator->second.getValue()->getOpBinding());
+        outputFile << " - " << vertexIterator->first;
+        outputFile << "\"];\n";
+    }
+
+    for(vertexIterator = vertex_map_->begin(); vertexIterator != vertex_map_->end(); ++vertexIterator) {
+        std::vector< Edge* >* adjacencyList = vertexIterator->second.getAdjacencyList();
+
+        for( auto it = adjacencyList->begin(); it != adjacencyList->end(); ++it ) {
+            outputFile << vertexIterator->first;
+            outputFile << "->";
+            outputFile << (*it)->getDestination();
+            outputFile << "\n";
+        }
+    }
+
+    outputFile << "}";
+    outputFile.close();
+}
+
+template<class T>
 uint32_t LlyrGraph<T>::outEdges(uint32_t vertexId)
 {
     return vertex_map_->at(vertexId).adjacencyList_->size();
@@ -280,6 +314,16 @@ template<class T>
 void LlyrGraph<T>::setVertex( uint32_t vertexNum, const Vertex<T> &vertex )
 {
     vertex_map_->at(vertexNum) = vertex;
+}
+
+template<class T>
+bool LlyrGraph<T>::testVertex( uint32_t vertexNum ) const
+{
+    if( vertex_map_->find(vertexNum) == vertex_map_->end() ) {
+        return 0;
+    } else {
+        return 1;
+    }
 }
 
 template<class T>

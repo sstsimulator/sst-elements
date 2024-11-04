@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,22 +27,22 @@ namespace Prospero {
 class ProsperoTextTraceReader : public ProsperoTraceReader {
 
 public:
-        ProsperoTextTraceReader( ComponentId_t id, Params& params, Output* out );
-        ~ProsperoTextTraceReader();
-        ProsperoTraceEntry* readNextEntry();
+    ProsperoTextTraceReader( ComponentId_t id, Params& params, Output* out );
+    ~ProsperoTextTraceReader();
+    ProsperoTraceEntry* readNextEntry();
 
-	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
-               	ProsperoTextTraceReader,
-               	"prospero",
-               	"ProsperoTextTraceReader",
-               	SST_ELI_ELEMENT_VERSION(1,0,0),
-               	"Text Trace Reader",
-	       	SST::Prospero::ProsperoTraceReader
-	)
+	SST_ELI_REGISTER_SUBCOMPONENT(
+        ProsperoTextTraceReader,
+        "prospero",
+        "ProsperoTextTraceReader",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Text Trace Reader",
+        SST::Prospero::ProsperoTraceReader
+    )
 
-       	SST_ELI_DOCUMENT_PARAMS(
-               	{ "file", "Sets the file for the trace reader to use", "" }
-       	)
+    SST_ELI_DOCUMENT_PARAMS(
+        { "file", "Sets the file for the trace reader to use", "" }
+    )
 
 private:
 	FILE* traceInput;

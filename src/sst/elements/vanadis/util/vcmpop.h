@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -95,7 +95,7 @@ registerCompareValues(VanadisRegisterCompareType compareType, VanadisRegisterFil
                         (compare_result ? "true" : "false"));
     } break;
     default: {
-        output->verbose(CALL_INFO, 16, 0, "-----> Unknown comparison operation at instruction: 0x%llx\n",
+        output->verbose(CALL_INFO, 16, 0, "-----> Unknown comparison operation at instruction: 0x%" PRI_ADDR "\n",
                         ins->getInstructionAddress());
         ins->flagError();
     } break;
@@ -145,7 +145,7 @@ registerCompareValues(VanadisRegisterFile* regFile, VanadisInstruction* ins,
                         (compare_result ? "true" : "false"));
     } break;
     default: {
-        output->verbose(CALL_INFO, 16, 0, "-----> Unknown comparison operation at instruction: 0x%llx\n",
+        output->verbose(CALL_INFO, 16, 0, "-----> Unknown comparison operation at instruction: 0x%" PRI_ADDR "\n",
                         ins->getInstructionAddress());
         ins->flagError();
     } break;

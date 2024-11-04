@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,8 +27,12 @@ public:
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t memAddrReg,
         const int64_t offst, const uint16_t tgtReg, const uint16_t load_bytes, const bool extend_sign,
         const bool isLowerLoad, VanadisLoadRegisterType regT) :
-        VanadisLoadInstruction(
-            addr, hw_thr, isa_opts, memAddrReg, offst, tgtReg, load_bytes, extend_sign, MEM_TRANSACTION_NONE, regT),
+        VanadisInstruction( addr, hw_thr, isa_opts, 
+            1, regT == LOAD_INT_REGISTER ? 1 : 0, 
+            1, regT == LOAD_INT_REGISTER ? 1 : 0,
+            0, regT == LOAD_FP_REGISTER ? 1 : 0, 
+            0, regT == LOAD_FP_REGISTER ? 1 : 0),
+        VanadisLoadInstruction(addr, hw_thr, isa_opts, memAddrReg, offst, tgtReg, load_bytes, extend_sign, MEM_TRANSACTION_NONE, regT),
         is_load_lower(isLowerLoad)
     {
 
@@ -66,7 +70,7 @@ public:
     uint16_t getMemoryAddressRegister() const { return phys_int_regs_in[0]; }
     uint16_t getTargetRegister() const { return phys_int_regs_in[1]; }
 
-    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile) { markExecuted(); }
+    virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override { markExecuted(); }
 
     virtual void printToBuffer(char* buffer, size_t buffer_size)
     {
@@ -81,28 +85,32 @@ public:
     void computeLoadAddress(SST::Output* output, VanadisRegisterFile* regFile, uint64_t* out_addr, uint16_t* width)
     {
         const uint64_t mem_addr_reg_val = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
-#ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0, "[execute-partload]: reg[%5" PRIu16 "]: %" PRIu64 " / 0x%llx\n", phys_int_regs_in[0],
-            mem_addr_reg_val, mem_addr_reg_val);
-        output->verbose(
-            CALL_INFO, 16, 0, "[execute-partload]: offset           : %" PRIu64 " / 0x%llx\n", offset, offset);
-        output->verbose(
-            CALL_INFO, 16, 0, "[execute-partload]: (add)            : %" PRIu64 " / 0x%llx\n",
-            (mem_addr_reg_val + offset), (mem_addr_reg_val + offset));
-#endif
+        #ifdef VANADIS_BUILD_DEBUG
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(
+                CALL_INFO, 16, 0, "[execute-partload]: reg[%5" PRIu16 "]: %" PRIu64 " / 0x%" PRI_ADDR "\n", phys_int_regs_in[0],
+                mem_addr_reg_val, mem_addr_reg_val);
+            output->verbose(
+                CALL_INFO, 16, 0, "[execute-partload]: offset           : %" PRIu64 " / 0x%" PRI_ADDR "\n", offset, offset);
+            output->verbose(
+                CALL_INFO, 16, 0, "[execute-partload]: (add)            : %" PRIu64 " / 0x%" PRI_ADDR "\n",
+                (mem_addr_reg_val + offset), (mem_addr_reg_val + offset));
+        }
+        #endif
 
         computeLoadAddress(regFile, out_addr, width);
 
-#ifdef VANADIS_BUILD_DEBUG
-        output->verbose(CALL_INFO, 16, 0, "[execute-partload]: full width: %" PRIu16 "\n", load_width);
-        output->verbose(
-            CALL_INFO, 16, 0, "[execute-partload]: (lower/upper load ? %s)\n", is_load_lower ? "lower" : "upper");
-        output->verbose(
-            CALL_INFO, 16, 0, "[execute-partload]: load-addr: %" PRIu64 " / 0x%0llx / load-width: %" PRIu16 "\n",
-            (*out_addr), (*out_addr), (*width));
-        output->verbose(CALL_INFO, 16, 0, "[execute-partload]: register-offset: %" PRIu16 "\n", register_offset);
-#endif
+        #ifdef VANADIS_BUILD_DEBUG
+        if(output->getVerboseLevel() >= 16) {
+            output->verbose(CALL_INFO, 16, 0, "[execute-partload]: full width: %" PRIu16 "\n", load_width);
+            output->verbose(
+                CALL_INFO, 16, 0, "[execute-partload]: (lower/upper load ? %s)\n", is_load_lower ? "lower" : "upper");
+            output->verbose(
+                CALL_INFO, 16, 0, "[execute-partload]: load-addr: %" PRIu64 " / 0x%0" PRI_ADDR " / load-width: %" PRIu16 "\n",
+                (*out_addr), (*out_addr), (*width));
+            output->verbose(CALL_INFO, 16, 0, "[execute-partload]: register-offset: %" PRIu16 "\n", register_offset);
+        }
+        #endif
     }
 
     uint16_t getLoadWidth() const { return load_width; }

@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -33,13 +33,14 @@ class topo_singlerouter: public Topology {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         topo_singlerouter,
         "merlin",
         "singlerouter",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Simple, single-router topology object",
-        SST::Merlin::Topology)
+        SST::Merlin::Topology
+    )
 
 
 private:
@@ -53,8 +54,8 @@ public:
     virtual void route_packet(int port, int vc, internal_router_event* ev);
     virtual internal_router_event* process_input(RtrEvent* ev);
 
-    virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts);
-    virtual internal_router_event* process_InitData_input(RtrEvent* ev);
+    virtual void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts);
+    virtual internal_router_event* process_UntimedData_input(RtrEvent* ev);
 
     virtual PortState getPortState(int port) const;
 

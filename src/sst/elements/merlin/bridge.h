@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -117,11 +117,11 @@ public:
             Nic_t &otherNic = interfaces[i^1];
 
 
-            while ( SimpleNetwork::Request *req = nic.nic->recvInitData() ) {
+            while ( SimpleNetwork::Request *req = nic.nic->recvUntimedData() ) {
                 dbg.debug(CALL_INFO, 2, 0, "Received init phase event on interface %d\n", i);
                 SimpleNetwork::Request *res = translator->initTranslate(req, i);
                 if ( res ) {
-                    otherNic.nic->sendInitData(res);
+                    otherNic.nic->sendUntimedData(res);
                 }
             }
         }
@@ -197,32 +197,38 @@ private:
 
     Translator *translator;
 
+    SimpleNetwork::Handler<Bridge, uint8_t>* sendNotify[2];
+
     void configureNIC(uint8_t id, SST::Params &params)
     {
         dbg.debug(CALL_INFO, 2, 0, "Initializing network interface %d\n", id);
         Nic_t &nic = interfaces[id];
 
-        Params if_params;
+        SubComponentSlotInfo *info = getSubComponentSlotInfo("networkIF");
+        if (info) {
+            int maxSlot = info->getMaxPopulatedSlotNumber();
+            if (maxSlot > 1) {
+                dbg.fatal(CALL_INFO, 1,
+                          "May only specify slots 0 and 1 for 'networkIF'; maximum slot given: %d.\n",
+                          maxSlot);
+            }
+        }
+        if (!info || !info->isPopulated(id)) {
+            Params if_params;
+            if_params.insert("link_bw",params.find<std::string>("network_bw","80GiB/s"));
+            if_params.insert("input_buf_size",params.find<std::string>("network_input_buffer_size", "1KiB"));
+            if_params.insert("output_buf_size",params.find<std::string>("network_output_buffer_size", "1KiB"));
+            if_params.insert("port_name","network" + std::to_string(id));
 
-        if_params.insert("link_bw",params.find<std::string>("network_bw","80GiB/s"));
-        if_params.insert("input_buf_size",params.find<std::string>("network_input_buffer_size", "1KiB"));
-        if_params.insert("output_buf_size",params.find<std::string>("network_output_buffer_size", "1KiB"));
-        if_params.insert("port_name","network" + std::to_string(id));
-
-        nic.nic = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>
-            ("merlin.linkcontrol", "networkIF", id,
-             ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, 1 /* vns */);
-
-
-        // nic.nic = (SimpleNetwork*)loadSubComponent("merlin.linkcontrol", this, params);
-        // nic.nic->initialize( "network" + std::to_string(id),
-        //         params.find<SST::UnitAlgebra>("network_bw", SST::UnitAlgebra("80GiB/s")),
-        //         1, /* should be num VN */
-        //         params.find<SST::UnitAlgebra>("network_input_buffer_size", SST::UnitAlgebra("1KiB")),
-        //         params.find<SST::UnitAlgebra>("network_output_buffer_size", SST::UnitAlgebra("1KiB")));
+            nic.nic = loadAnonymousSubComponent<SimpleNetwork>
+                ("merlin.linkcontrol", "networkIF", id,
+                 ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, 1 /* vns */);
+        } else {
+            nic.nic = info->create<SimpleNetwork>(id, ComponentInfo::SHARE_PORTS, 1 /* vns */);
+        }
 
         nic.nic->setNotifyOnReceive(new SimpleNetwork::Handler<Bridge, uint8_t>(this, &Bridge::handleIncoming, id));
-        nic.nic->setNotifyOnSend(new SimpleNetwork::Handler<Bridge, uint8_t>(this, &Bridge::spaceAvailable, id));
+        sendNotify[id] = new SimpleNetwork::Handler<Bridge, uint8_t>(this, &Bridge::spaceAvailable, id);
 
         nic.stat_recv = registerStatistic<uint64_t>("pkts_received_net" + std::to_string(id));
         nic.stat_send = registerStatistic<uint64_t>("pkts_sent_net" + std::to_string(id));
@@ -247,6 +253,7 @@ private:
             } else {
                 /* We failed to send. */
                 outNIC.sendQueue.push_back(res);
+                outNIC.nic->setNotifyOnSend(sendNotify[id^1]);
             }
         }
         return true;
@@ -261,7 +268,7 @@ private:
                 nic.sendQueue.pop_front();
             } else {
                 /* Not enough room yet.  */
-                break;
+                return true;
             }
         }
         return false;

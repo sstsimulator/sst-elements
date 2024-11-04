@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -30,13 +30,14 @@ class TestNetworkInspector : public SimpleNetwork::NetworkInspector {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         TestNetworkInspector,
         "merlin",
         "test_network_inspector",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Used to test NetworkInspector functionality.  Duplicates send_packet_count in hr_router.",
-        SST::Interfaces::SimpleNetwork::NetworkInspector)
+        SST::Interfaces::SimpleNetwork::NetworkInspector
+    )
 
     SST_ELI_DOCUMENT_STATISTICS(
         { "test_count", "Count number of packets sent on link", "packets", 1}

@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -24,7 +24,7 @@ RdmaNic::SendStream::SendStream( RdmaNic& nic, SendEntry* entry ) : m_nic(nic), 
 		m_sendEntry(entry), m_streamSeqNum(0), m_streamId( nic.generateStreamId() ), m_maxQueueSize(16), readId(0), curReadId(0)
 {
     m_callback = new MemRequest::Callback;
-    *m_callback = std::bind( &RdmaNic::SendStream::readResp, this, m_sendEntry->getThread(), std::placeholders::_1 );
+    *m_callback = std::bind( &RdmaNic::SendStream::readResp, this, m_sendEntry->getThread(), std::placeholders::_1, std::placeholders::_2 );
    	m_pkt = new RdmaNicNetworkEvent();
 
 	StreamHdr* hdr = entry->getStreamHdr();
@@ -68,11 +68,11 @@ RdmaNic::SendStream::SendStream( RdmaNic& nic, SendEntry* entry ) : m_nic(nic), 
 }
 
 
-void RdmaNic::SendStream::readResp( int thread, StandardMem::Request* req ) 
+void RdmaNic::SendStream::readResp( int thread, StandardMem::Request* req, int id ) 
 {
 	StandardMem::ReadResp* resp = dynamic_cast<StandardMem::ReadResp*>(req);
-    m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"thread=%d numReadsPending=%d resp=%p pAddr=%" PRIx64 " size=%" PRIu64 " tid=%d\n",
-		thread,m_numReadsPending,resp,resp->pAddr,resp->size,resp->tid);
+    m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"thread=%d numReadsPending=%d resp=%p pAddr=%" PRIx64 " size=%" PRIu64 " id=%d\n",
+		thread,m_numReadsPending,resp,resp->pAddr,resp->size,id);
 
     assert( resp->size == resp->data.size() );
 #if 0
@@ -87,13 +87,14 @@ void RdmaNic::SendStream::readResp( int thread, StandardMem::Request* req )
 		resp->data.erase( resp->data.begin() + resp->size, resp->data.end() );
 	}
 #endif
-    m_respMap[resp->tid] =resp;
+    m_respMap[id] =resp;
 }
 
 RdmaNic::SendStream::~SendStream() {
 
 	if ( -1 != m_sendEntry->getCqId() ) {
     	RdmaCompletion comp;
+        bzero(&comp, sizeof(comp));
     	comp.context = m_sendEntry->getContext();
     	m_nic.writeCompletionToHost( m_sendEntry->getThread(), m_sendEntry->getCqId(), comp );
 	}

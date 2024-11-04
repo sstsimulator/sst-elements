@@ -1,8 +1,8 @@
-// Copyright 2013-2022 NTESS. Under the terms
+// Copyright 2013-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2022, NTESS
+// Copyright (c) 2013-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -38,7 +38,7 @@ namespace MemHierarchy {
 class DefCustomCmdMemHandler : public CustomCmdMemHandler {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(DefCustomCmdMemHandler, "memHierarchy", "defCustomCmdHandler", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT(DefCustomCmdMemHandler, "memHierarchy", "defCustomCmdHandler", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Default, custom command handler that copies custom data to backend", SST::MemHierarchy::CustomCmdMemHandler)
 
 /* Begin class defintion */

@@ -1,13 +1,13 @@
-// Copyright 2013-2022 NTESS. Under the terms
+// Copyright 2013-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2022, NTESS
+// Copyright (c) 2013-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -64,13 +64,17 @@ public:
         { "queue_depth",    "Number of buffer elements", "256" },
         { "arith_latency",  "Number of clock ticks for ARITH operations", "1" },
         { "int_latency",    "Number of clock ticks for INT operations", "1" },
-        { "fp_latency",     "Number of clock ticks for FP OTHER operations", "4" },
-        { "fp_mul_latency", "Number of clock ticks for FP MUL operations", "4" },
-        { "fp_div_latency", "Number of clock ticks for FP DIV operations", "4" }
+        { "int_div_latency","Number of clock ticks for INT DIV operations", "4" },
+        { "fp_latency",     "Number of clock ticks for FP operations", "4" },
+        { "fp_mul_latency", "Number of clock ticks for FP MUL operations", "8" },
+        { "fp_div_latency", "Number of clock ticks for FP DIV operations", "40" },
+        { "complex_latency", "Number of clock ticks for COMPLEX operations", "80" }
     )
 
     ///TODO
     SST_ELI_DOCUMENT_STATISTICS(
+        { "cycles_zero_events",  "Number of cycles where there were no events to process, no data tokens", "cycles", 1 },
+        { "cycles_events",       "Number of cycles where events needed to be processed", "cycles", 1 },
     )
 
     SST_ELI_DOCUMENT_PORTS(
@@ -163,4 +167,4 @@ private:
 } // namespace LLyr
 } // namespace SST
 
-#endif /* _LLYR_H */
+#endif // _LLYR_H

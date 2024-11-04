@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -12,8 +12,6 @@
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
-
-typedef uint32_t Addr_t;
 
 typedef Addr_t Context;
 typedef int QueueIndex;
@@ -100,9 +98,9 @@ typedef struct __attribute__((aligned(64))) {
 
 typedef struct __attribute__((aligned(64))) {
 	uint32_t numThreads;
-	uint32_t reqQueueAddress;
-	uint32_t reqQueueHeadIndexAddress;
+	Addr_t reqQueueAddress;
 	uint32_t reqQueueSize;
+	Addr_t compQueuesAddress;
 
 	uint32_t nodeId;
 	uint32_t numNodes;
@@ -110,8 +108,8 @@ typedef struct __attribute__((aligned(64))) {
 } NicQueueInfo;
 
 typedef struct __attribute__((aligned(64))) {
-	uint32_t respAddress;
-	uint32_t reqQueueTailIndexAddress;
+	Addr_t respAddress;
+	Addr_t reqQueueTailIndexAddress;
 
 } HostQueueInfo;
 

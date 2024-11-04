@@ -1,8 +1,8 @@
-// Copyright 2013-2022 NTESS. Under the terms
+// Copyright 2013-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2022, NTESS
+// Copyright (c) 2013-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -153,11 +153,11 @@ void MemNICFour::send(MemEventBase *ev) {
 
     if (is_debug_event(ev)) {
         std::string netstr = "data";
-        if (net == REQ) netstr = "req";
-        else if (net == ACK) netstr = "ack";
-        else if (net == FWD) netstr = "fwd";
-        dbg.debug(_L9_, "%s, memNIC adding to %s send queue: dst: %" PRIu64 ", bits: %zu, cmd: %s\n",
-                getName().c_str(), netstr.c_str(), req->dest, req->size_in_bits, CommandString[(int)ev->getCmd()]);
+        if (net == REQ) netstr = "req ";
+        else if (net == ACK) netstr = "ack ";
+        else if (net == FWD) netstr = "fwd ";
+        dbg.debug(_L5_, "N: %-40" PRI_NID "  %-20s Enqueue:%s  Dst: %" PRI_NID ", bits: %zu, (%s)\n",
+            getCurrentSimCycle(), getName().c_str(), netstr.c_str(), req->dest, req->size_in_bits, ev->getBriefString().c_str());
     }
     sendQueue[net].push(req);
     if (sendQueue[net].size() == 1) { /* Send this cycle if we're not already stalled */
@@ -238,7 +238,7 @@ void MemNICFour::doRecv(SimpleNetwork::Request * req, NetType net) {
 }
 
 void MemNICFour::recvNotify(OrderedMemRtrEvent* mre) {
-    MemEventBase * me = static_cast<MemEventBase*>(mre->event);
+    MemEventBase * me = static_cast<MemEventBase*>(mre->takeEvent());
     delete mre;
 
     if (!me) return;

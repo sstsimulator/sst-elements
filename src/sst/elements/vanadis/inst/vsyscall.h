@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,7 +21,7 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisSysCallInstruction : public VanadisInstruction
+class VanadisSysCallInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisSysCallInstruction(const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts) :
@@ -55,19 +55,18 @@ public:
             isa_options->getISASysCallCodeReg(), phys_int_regs_in[isa_options->getISASysCallCodeReg()]);
     }
 
-    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile)
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
         const uint64_t code_reg_ptr = regFile->getIntReg<uint64_t>(isa_options->getISASysCallCodeReg());
-#ifdef VANADIS_BUILD_DEBUG
+        #ifdef VANADIS_BUILD_DEBUG
         output->verbose(
-            CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) SYSCALL (isa: %" PRIu16 ", os-code: %" PRIu64 ")\n",
+            CALL_INFO, 16, 0, "Execute: (addr=0x%0" PRI_ADDR ") SYSCALL (isa: %" PRIu16 ", os-code: %" PRIu64 ")\n",
             getInstructionAddress(), isa_options->getISASysCallCodeReg(), code_reg_ptr);
-#endif
+        #endif
         markExecuted();
     }
 
     virtual bool performIntRegisterRecovery() const { return false; }
-
     virtual bool performFPRegisterRecovery() const { return false; }
 };
 

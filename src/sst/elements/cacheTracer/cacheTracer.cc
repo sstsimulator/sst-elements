@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,7 +21,6 @@
 using namespace std;
 using namespace SST;
 using namespace SST::MemHierarchy;
-using namespace SST::Interfaces;
 using namespace SST::CACHETRACER;
 
 /*
@@ -58,7 +57,7 @@ cacheTracer::cacheTracer( ComponentId_t id, Params& params ): Component( id ) {
     } else {
         out->debug(CALL_INFO, 1, 0, "Tracing is Enabled, prefix is set to %s\n", tracePrefix.c_str());
         char* traceFilePath = (char*) malloc( sizeof(char) * (tracePrefix.size()+ 20) );
-        sprintf(traceFilePath, "%s", tracePrefix.c_str());
+        snprintf(traceFilePath, (tracePrefix.size()+ 20), "%s", tracePrefix.c_str());
         out->output("Writing trace to file: %s\n", traceFilePath);
         traceFile = fopen(traceFilePath, "wt");
         free(traceFilePath);
@@ -72,7 +71,7 @@ cacheTracer::cacheTracer( ComponentId_t id, Params& params ): Component( id ) {
     } else {
         out->debug(CALL_INFO, 1, 0, "Stats are directed to file %s\n", statsPrefix.c_str());
         char* statFilePath = (char*) malloc( sizeof(char) * (statsPrefix.size()+20) );
-        sprintf(statFilePath, "%s", statsPrefix.c_str());
+        snprintf(statFilePath, (statsPrefix.size()+20), "%s", statsPrefix.c_str());
         out->output("Writing stats to file: %s\n", statFilePath);
         statsFile = fopen(statFilePath,"wt");
         free(statFilePath);
@@ -102,11 +101,11 @@ cacheTracer::~cacheTracer() {}
 
 void cacheTracer::init(unsigned int phase) {
     // Since cacheTracer can sit between memH components, it needs to forward init events
-    while (SST::Event * ev = northBus->recvInitData()) {
-        southBus->sendInitData(ev);
+    while (SST::Event * ev = northBus->recvUntimedData()) {
+        southBus->sendUntimedData(ev);
     }
-    while (SST::Event * ev = southBus->recvInitData()) {
-        northBus->sendInitData(ev);
+    while (SST::Event * ev = southBus->recvUntimedData()) {
+        northBus->sendUntimedData(ev);
     }
 }
 

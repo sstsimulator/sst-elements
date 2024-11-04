@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -25,22 +25,20 @@
 namespace SST {
 namespace Vanadis {
 
+
+template<bool SetFRM, bool SetFFLAGS>
 class VanadisFPFlagsSetImmInstruction : public VanadisFloatingPointInstruction
 {
 public:
     VanadisFPFlagsSetImmInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
-        VanadisFloatingPointFlags* fpflags, const uint64_t imm) :
+        VanadisFloatingPointFlags* fpflags, const uint64_t imm, int mode) :
+        VanadisInstruction(
+            addr, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0),
         VanadisFloatingPointInstruction(
-            addr, hw_thr, isa_opts, fpflags, 0, 0, 0, 0,
-				isa_opts->countISAFPRegisters(), isa_opts->countISAFPRegisters(), isa_opts->countISAFPRegisters(), isa_opts->countISAFPRegisters()),
-			   imm_value(imm)
-    {
-		for( uint16_t i = 0; i < isa_opts->countISAFPRegisters(); ++i) {
-			isa_fp_regs_in[i]  = i;
-			isa_fp_regs_out[i] = i;
-		}
-    }
+            addr, hw_thr, isa_opts, fpflags, 0, 0, 0, 0, 0, 0, 0, 0),
+			   imm_value(imm), mode(mode)
+    {}
 
     VanadisFPFlagsSetImmInstruction*  clone() override { return new VanadisFPFlagsSetImmInstruction(*this); }
     VanadisFunctionalUnitType getInstFuncType() const override { return INST_FP_ARITH; }
@@ -56,38 +54,36 @@ public:
 					getInstCode(), imm_value);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr)
     {
-		  output->verbose(CALL_INFO, 16, 0, "Execute: 0x%llx FPFLAGS <- mask = %" PRIu64 " (0x%llx)\n",
-				getInstructionAddress(), imm_value, imm_value);
+        if(output->getVerboseLevel() >= verboselevel) {
+				output->verbose(CALL_INFO, verboselevel, 0, "hw_thr=%d sw_thr = %d Execute: 0x%" PRI_ADDR " %s FPFLAGS <- mask = %" PRIu64 " (0x%" PRI_ADDR ")\n",
+					getHWThread(),sw_thr, getInstructionAddress(), getInstCode(), imm_value, imm_value);
+			}
+    }
 
-		  if( (imm_value & 0x1) != 0 ) {
-				fpflags.setInexact();
-		  }
 
-		  if( (imm_value & 0x2) != 0 ) {
-				fpflags.setUnderflow();
-		  }
 
-		  if( (imm_value & 0x4) != 0 ) {
-				fpflags.setOverflow();
-		  }
 
-		  if( (imm_value & 0x8) != 0 ) {
-				fpflags.setDivZero();
-		  }
+    void instOp()
+    {
+			updateFP_flags<SetFRM,SetFFLAGS>( imm_value, mode );
+    }
 
-		  if( (imm_value & 0x10) != 0 ) {
-				fpflags.setInvalidOp();
-		  }
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+		if(checkFrontOfROB()) {
+			log(output, 16, 65535);
 
-		  update_fp_flags = true;
-
-        markExecuted();
+			instOp();
+            
+			markExecuted();
+		}
     }
 
 protected:
 	const uint64_t imm_value;
+    const int mode;
 
 };
 

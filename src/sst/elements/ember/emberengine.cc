@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -191,12 +191,13 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 		params.insert("_enginePtr", std::to_string( reinterpret_cast<uint64_t>( this ) ), true);
 
 		gen = loadAnonymousSubComponent<EmberGenerator>( gentype, "", 0, ComponentInfo::SHARE_NONE, params );
-		gen->setup();
 
 		if(NULL == gen) {
 			output.fatal(CALL_INFO, -1, "Error: Could not load the "
                     "generator %s for Ember\n", gentype.c_str());
 		}
+
+                gen->setup();
 	}
 
 	// Make sure we don't stop the simulation until we are ready

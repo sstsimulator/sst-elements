@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -401,11 +401,13 @@ VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr, ADD
     tunnel->writeMessage(thr, ac);
 }
 
-VOID WriteStartInstructionMarker(UINT32 thr, ADDRINT ip)
+VOID WriteStartInstructionMarker(UINT32 thr, ADDRINT ip, UINT32 instClass, UINT32 simdOpWidth)
 {
     ArielCommand ac;
     ac.command = ARIEL_START_INSTRUCTION;
     ac.instPtr = (uint64_t) ip;
+    ac.inst.instClass = instClass;
+    ac.inst.simdElemWidth = simdOpWidth;
     tunnel->writeMessage(thr, ac);
 }
 
@@ -424,7 +426,7 @@ VOID WriteInstructionReadWrite(THREADID thr, ADDRINT* readAddr, UINT32 readSize,
 
     if(enable_output) {
         if(thr < core_count) {
-            WriteStartInstructionMarker( thr, ip );
+            WriteStartInstructionMarker( thr, ip, instClass, simdOpWidth );
             WriteInstructionRead(  readAddr,  readSize,  thr, ip, instClass, simdOpWidth );
             WriteInstructionWrite( writeAddr, writeSize, thr, ip, instClass, simdOpWidth );
             WriteEndInstructionMarker( thr, ip );
@@ -438,7 +440,7 @@ VOID WriteInstructionReadOnly(THREADID thr, ADDRINT* readAddr, UINT32 readSize, 
 
     if(enable_output) {
         if(thr < core_count) {
-            WriteStartInstructionMarker(thr, ip);
+            WriteStartInstructionMarker(thr, ip, instClass, simdOpWidth);
             WriteInstructionRead(  readAddr,  readSize,  thr, ip, instClass, simdOpWidth );
             WriteEndInstructionMarker(thr, ip);
         }
@@ -464,7 +466,7 @@ VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSiz
 
     if(enable_output) {
         if(thr < core_count) {
-            WriteStartInstructionMarker(thr, ip);
+            WriteStartInstructionMarker(thr, ip, instClass, simdOpWidth);
             WriteInstructionWrite(writeAddr, writeSize,  thr, ip, instClass, simdOpWidth);
             WriteEndInstructionMarker(thr, ip);
         }

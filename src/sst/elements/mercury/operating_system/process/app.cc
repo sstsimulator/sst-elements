@@ -1,46 +1,17 @@
-/**
-Copyright 2009-2021 National Technology and Engineering Solutions of Sandia, 
-LLC (NTESS).  Under the terms of Contract DE-NA-0003525, the U.S.  Government 
-retains certain rights in this software.
-
-Sandia National Laboratories is a multimission laboratory managed and operated
-by National Technology and Engineering Solutions of Sandia, LLC., a wholly 
-owned subsidiary of Honeywell International, Inc., for the U.S. Department of 
-Energy's National Nuclear Security Administration under contract DE-NA0003525.
-
-Copyright (c) 2009-2021, NTESS
-
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, 
-are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-
-    * Redistributions in binary form must reproduce the above
-      copyright notice, this list of conditions and the following
-      disclaimer in the documentation and/or other materials provided
-      with the distribution.
-
-    * Neither the name of the copyright holder nor the names of its
-      contributors may be used to endorse or promote products derived
-      from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-Questions? Contact sst-macro-help@sandia.gov
-*/
+// Copyright 2009-2024 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2024, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// of the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
@@ -48,31 +19,31 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #include <sst/core/params.h>
 
-#include <common/factory.h>
-#include <common/output.h>
-#include <common/util.h>
-#include <common/errors.h>
-#include <common/hg_printf.h>
-#include <components/node.h>
+#include <mercury/common/factory.h>
+#include <sst/core/eli/elementbuilder.h>
+#include <mercury/common/output.h>
+#include <mercury/common/util.h>
+#include <mercury/common/errors.h>
+#include <mercury/common/hg_printf.h>
+#include <mercury/components/node.h>
 //#include <sstmac/software/libraries/compute/lib_compute_inst.h>
 //#include <sstmac/software/libraries/compute/lib_compute_time.h>
 //#include <sstmac/software/libraries/compute/lib_compute_memmove.h>
-#include <operating_system/process/app.h>
+#include <mercury/operating_system/process/app.h>
 //#include <sstmac/software/api/api.h>
 //#include <sstmac/software/process/backtrace.h>
 //#include <sstmac/common/sstmac_env.h>
 //#include <sstmac/dumpi_util/dumpi_meta.h>
 //#include <sstmac/software/launch/job_launcher.h>
 //#include <sstmac/software/launch/launch_event.h>
-#include <operating_system/threading/thread_lock.h>
+#include <mercury/operating_system/threading/thread_lock.h>
 //#include <sstmac/common/sstmac_env.h>
 //#include <sstmac/dumpi_util/dumpi_meta.h>
 //#include <sprockit/statics.h>
 //#include <sstmac/software/api/api.h>
 //#include <sstmac/main/sstmac.h>
-#include <operating_system/process/loadlib.h>
-#include <components/operating_system.h>
-
+#include <mercury/operating_system/process/loadlib.h>
+#include <mercury/components/operating_system.h>
 #include <inttypes.h>
 #include <dlfcn.h>
 
@@ -89,13 +60,13 @@ Questions? Contact sst-macro-help@sandia.gov
 
 //MakeDebugSlot(app_compute);
 
-void sstmac_app_loaded(int /*aid*/){}
+void sst_hg_app_loaded(int /*aid*/){}
 
-extern "C" FILE* sstmac_stdout(){
+extern "C" FILE* sst_hg_stdout(){
   return SST::Hg::Thread::current()->parentApp()->stdOutFile();
 }
 
-extern "C" FILE* sstmac_stderr(){
+extern "C" FILE* sst_hg_stderr(){
   return SST::Hg::Thread::current()->parentApp()->stdErrFile();
 }
 
@@ -182,13 +153,15 @@ App::unlockDlopen_API(std::string api_name)
 void
 App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
 {
-  // check params for apis
+  //params.print_all_params(std::cerr);
   std::vector<std::string> apis;
   if (params.contains("apis")){
-    params.find_array("apis", apis);
+    params.find_array<std::string>("apis", apis);
+//    for (auto i: apis)
+//      std::cerr << i << std::endl;
   }
   else {
-    apis.push_back("system:libsystemapi.so");
+    apis.push_back("systemAPI:libsystemapi.so");
   }
 
   // parse apis and dlopen the libraries
@@ -204,7 +177,7 @@ App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
       file = str.substr(pos + 1);
     }
 
-    std::cerr << "loading " << name.c_str() << "API\n";
+    //std::cerr << "loading " << name.c_str() << " API from " << file.c_str() << "\n";;
     dlopen_lock.lock();
     dlopen_entry& entry = api_dlopens_[name];
     entry.name = file;
@@ -221,7 +194,7 @@ App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
   if (params.contains("exe")){
     dlopen_lock.lock();
     std::string libname = params.find<std::string>("exe");
-    std::cerr << libname << std::endl;
+    //std::cerr << libname << std::endl;
     dlopen_entry& entry = exe_dlopens_[aid];
     entry.name = libname;
     if (entry.refcount == 0 || !entry.loaded){
@@ -242,7 +215,7 @@ App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
     }
 
     ++entry.refcount;
-    sstmac_app_loaded(aid);
+    sst_hg_app_loaded(aid);
     dlopen_lock.unlock();
   }
   else {
@@ -300,13 +273,14 @@ App::App(SST::Params& params, SoftwareId sid,
   Thread(params, sid, os),
   params_(params),
 //  compute_lib_(nullptr),
+  os_(os),
   next_tls_key_(0),
   min_op_cutoff_(0),
   globals_storage_(nullptr),
   notify_(true),
   rc_(0)
 {
-  out_ = std::make_unique<Output>(sprintf("application%d:", sid.app_), 1, 0, Output::STDOUT);
+  out_ = std::unique_ptr<SST::Output>(new SST::Output(sprintf("application%d:", sid.app_), 1, 0, Output::STDOUT));
   out_->debug(CALL_INFO, 1, 0, "constructing");
 
   //globals_storage_ = allocateDataSegment(false); //not tls
@@ -345,7 +319,7 @@ App::App(SST::Params& params, SoftwareId sid,
   } else {
 //    apis.push_back("mpi");
 //    apis.push_back("sumi:mpi");
-      apis.push_back("system");
+      apis.push_back("systemAPI:libsystemapi.so");
   }
 
   for (auto& str : apis){
@@ -356,23 +330,25 @@ App::App(SST::Params& params, SoftwareId sid,
       name = str;
       alias = str;
     } else {
-      alias = str.substr(0, pos);
-      name = str.substr(pos + 1);
+      name = str.substr(0, pos);
+      alias = str.substr(pos + 1);
     }
 
-    out_->debug(CALL_INFO, 1, 0, "checking %sAPI", name.c_str());
+    out_->debug(CALL_INFO, 1, 0, "checking %s API", name.c_str());
 
-    auto iter = apis_.find(name);
-    if (iter == apis_.end()){
-      out_->debug(CALL_INFO, 1, 0, "loading %sAPI", name.c_str());
-      SST::Params api_params = params.get_scoped_params(name);
-      //SST::Component* comp = dynamic_cast<SST::Component*>(os->node());
-      //if(!comp) sst_hg_abort_printf("APP can't dyncast to SST::Component*");
-      API* api = SST::Hg::create<API>(
-          "hg", name, api_params, this, os->node());
-      apis_[name] = api;
+    if (name != "SimTransport") {
+      auto iter = apis_.find(name);
+      if (iter == apis_.end()){
+        out_->debug(CALL_INFO, 1, 0, "loading %s API", name.c_str());
+        SST::Params api_params = params.get_scoped_params(name);
+        //SST::Component* comp = dynamic_cast<SST::Component*>(os->node());
+        //if(!comp) sst_hg_abort_printf("APP can't dyncast to SST::Component*");
+        API* api = SST::Hg::create<API>(
+              "hg", name, api_params, this, os->node());
+        apis_[name] = api;
+      }
+      apis_[alias] = apis_[name];
     }
-    apis_[alias] = apis_[name];
   }
 
   std::string stdout_str = params.find<std::string>("stdout", "stdout");
@@ -529,17 +505,19 @@ App::cleanup()
   Thread::cleanup();
 }
 
-//void
-//App::sleep(TimeDelta time)
-//{
-//  computeLib()->sleep(time);
-//}
+void
+App::sleep(TimeDelta time)
+{
+  os_->blockTimeout(time);
+  //computeLib()->sleep(time);
+}
 
-//void
-//App::compute(TimeDelta time)
-//{
-//  computeLib()->compute(time);
-//}
+void
+App::compute(TimeDelta time)
+{
+  os_->blockTimeout(time);
+  //computeLib()->compute(time);
+}
 
 //void
 //App::computeInst(ComputeEvent* cmsg)
@@ -600,11 +578,11 @@ App::getParams()
 //}
 
 API*
-App::getPrebuiltApi(const std::string &name)
+App::getAPI(const std::string &name)
 {
   auto iter = apis_.find(name);
   if (iter == apis_.end()){
-    sst_hg_abort_printf("API %s was not included in launch params for app %d",
+    sst_hg_abort_printf("API %s not found for app %d",
                 name.c_str(), aid());
   }
   return iter->second;
@@ -768,12 +746,12 @@ UserAppCxxFullMain::aliasMains()
     //std::cerr << "have main_fxns_\n";
     for (auto& pair : *main_fxns_){
     auto* builder = lib->getBuilder("UserAppCxxFullMain");
-    //std::cerr << "adding " << pair.first << " builder\n";
+    //std::cerr << "adding " << pair.first << " builder " << builder << "\n";
     lib->addBuilder(pair.first, builder);
     }
   }
   else {
-      //std::cerr << "no main_fxns_\n";
+      std::cerr << "no main_fxns_\n";
     }
   lock.unlock();
 }
@@ -874,7 +852,7 @@ UserAppCxxEmptyMain::UserAppCxxEmptyMain(SST::Params& params, SoftwareId sid,
 void
 UserAppCxxEmptyMain::registerMainFxn(const char *name, App::empty_main_fxn fxn)
 {
-  std::cerr << "registering empty main " << name << "\n";
+  //std::cerr << "registering empty main " << name << "\n";
   if (empty_main_fxns_){ //already cleared static init
     (*empty_main_fxns_)[name] = fxn;
   } else { 
@@ -884,17 +862,6 @@ UserAppCxxEmptyMain::registerMainFxn(const char *name, App::empty_main_fxn fxn)
 
     (*empty_main_fxns_init_)[name] = fxn;
   }
-
-#if 0
-  auto* lib = App::getBuilderLibrary("macro");
-#if SSTMAC_INTEGRATED_SST_CORE
-  using builder_t = SST::ELI::DerivedBuilder<App,UserAppCxxFullMain,SST::Params&,SoftwareId,OperatingSystem*>;
-  lib->addBuilder(name, new builder_t);
-#else
-  using builder_t = sprockit::DerivedBuilder<App,UserAppCxxFullMain,SST::Params&,SoftwareId,OperatingSystem*>;
-  lib->addBuilder(name, std::unique_ptr<builder_t>(new builder_t));
-#endif
-#endif
 }
 
 int

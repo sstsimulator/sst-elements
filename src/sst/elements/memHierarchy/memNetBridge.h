@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -23,6 +23,7 @@
 #include <sst/core/output.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 
+#include <sst/elements/memHierarchy/memTypes.h>
 #include <sst/elements/merlin/bridge.h>
 
 #include <map>
@@ -35,7 +36,7 @@ using SST::Interfaces::SimpleNetwork;
 class MemNetBridge : public SST::Merlin::Bridge::Translator {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         MemNetBridge,
         "memHierarchy",
         "MemNetBridge",
@@ -58,7 +59,10 @@ public:
     SimpleNetwork::Request* initTranslate(SimpleNetwork::Request* req, uint8_t fromNetwork);
 
 private:
+    // Debug
     Output dbg;
+    std::set<Addr> DEBUG_ADDR;
+    int dlevel;
 
     typedef std::map<std::string, SimpleNetwork::nid_t> addrMap_t;
     typedef std::map<std::string, uint64_t> imreMap_t;

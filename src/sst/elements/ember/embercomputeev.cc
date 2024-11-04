@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -37,7 +37,7 @@ uint32_t EmberComputeEvent::getNanoSecondDelay() {
 
 std::string EmberComputeEvent::getPrintableString() {
 	char buffer[64];
-	sprintf(buffer, "Compute Event (Delay=%" PRIu32 "ns)", nanoSecDelay);
+	snprintf(buffer, 64, "Compute Event (Delay=%" PRIu32 "ns)", nanoSecDelay);
 	std::string bufferStr = buffer;
 
 	return bufferStr;

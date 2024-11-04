@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -18,7 +18,7 @@
 #include <sst/core/link.h>
 #include "sst/elements/memHierarchy/util.h"
 #include "membackend/vaultSimBackend.h"
-#include "sst/elements/VaultSimC/memReqEvent.h"
+#include "sst/elements/vaultsim/memReqEvent.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;

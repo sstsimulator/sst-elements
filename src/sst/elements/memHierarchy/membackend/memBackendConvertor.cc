@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -148,8 +148,7 @@ bool MemBackendConvertor::clock(Cycle_t cycle) {
  */
 void MemBackendConvertor::turnClockOn(Cycle_t cycle) {
     Cycle_t cyclesOff = cycle - m_cycleCount;
-    for (Cycle_t i = 0; i < cyclesOff; i++)
-        stat_outstandingReqs->addData( m_pendingRequests.size() );
+    stat_outstandingReqs->addDataNTimes( cyclesOff, m_pendingRequests.size() );
     m_cycleCount = cycle;
     m_clockOn = true;
 }
@@ -226,7 +225,16 @@ void MemBackendConvertor::sendResponse( SST::Event::id_type id, uint32_t flags )
 
 }
 
-void MemBackendConvertor::finish(void) {
+void MemBackendConvertor::finish(Cycle_t endCycle) {
+    // endCycle can be less than m_cycleCount in parallel simulations
+    // because the simulation end isn't detected until a sync interval boundary
+    // and endCycle is adjusted to the actual (not detected) end time
+    // stat_outstandingReqs may vary slightly in parallel & serial
+    if (endCycle > m_cycleCount) {
+        Cycle_t cyclesOff = endCycle - m_cycleCount;
+        stat_outstandingReqs->addDataNTimes( cyclesOff, m_pendingRequests.size() );
+        m_cycleCount = endCycle;
+    }
     stat_totalCycles->addData(m_cycleCount);
     m_backend->finish();
 }

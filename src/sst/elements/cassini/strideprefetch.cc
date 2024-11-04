@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -180,7 +180,7 @@ StridePrefetcher::StridePrefetcher(ComponentId_t id, Params& params) : CacheList
     verbosity = params.find<int>("verbose", 0);
 
     char* new_prefix = (char*) malloc(sizeof(char) * 128);
-    sprintf(new_prefix, "StridePrefetcher[%s | @f:@p:@l] ", getName().c_str());
+    snprintf(new_prefix, sizeof(char)*128, "StridePrefetcher[%s | @f:@p:@l] ", getName().c_str());
     output = new Output(new_prefix, verbosity, 0, Output::STDOUT);
     free(new_prefix);
 

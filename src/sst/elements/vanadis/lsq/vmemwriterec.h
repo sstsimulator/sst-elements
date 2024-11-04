@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -49,8 +49,8 @@ public:
 
         line_value = (line_value | bit_update);
 
-        // printf("mark-address: 0x%llx / line: %" PRIu64 " / offset: %" PRIu64 " /
-        // before 0x%llx / after 0x%llx\n", byte_addr, 	line, line_offset,
+        // printf("mark-address: 0x%" PRI_ADDR " / line: %" PRIu64 " / offset: %" PRIu64 " /
+        // before 0x%" PRI_ADDR " / after 0x%" PRI_ADDR "\n", byte_addr, 	line, line_offset,
         // memory_state[line], line_value);
 
         memory_state[line] = line_value;
@@ -66,9 +66,9 @@ public:
 
         const bool is_marked = (line_value & bit_value) != 0;
 
-        printf("check-address: 0x%llx / line: %" PRIu64 " / offset: %" PRIu64
-               " / value: 0x%llx / bit_value: 0x%llx / marked: %3s\n",
-               byte_addr, line, line_offset, line_value, bit_value, is_marked ? "yes" : "no");
+        // printf("check-address: 0x%" PRI_ADDR " / line: %" PRIu64 " / offset: %" PRIu64
+        //        " / value: 0x%" PRI_ADDR " / bit_value: 0x%" PRI_ADDR " / marked: %3s\n",
+        //        byte_addr, line, line_offset, line_value, bit_value, is_marked ? "yes" : "no");
 
         return is_marked;
     }

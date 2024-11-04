@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -16,6 +16,9 @@
 #ifndef _H_VANADIS_INST_ALL
 #define _H_VANADIS_INST_ALL
 
+
+#include "inst/vinst.h"
+
 // Arithmetic operations
 #include "inst/vadd.h"
 #include "inst/vaddi.h"
@@ -26,6 +29,7 @@
 #include "inst/vmul.h"
 #include "inst/vmuli.h"
 #include "inst/vmulsplit.h"
+#include "inst/vmulhigh.h"
 #include "inst/vsub.h"
 
 // Logical operations
@@ -71,6 +75,9 @@
 #include "inst/vstore.h"
 #include "inst/vstorecond.h"
 
+// Conditional move instructions
+#include "inst/vcimov.h"
+
 // Fence Instructions
 #include "inst/vfence.h"
 
@@ -94,8 +101,12 @@
 
 // FP Arith
 #include "inst/vfpadd.h"
+#include "inst/vfpmadd.h"
+#include "inst/vfpmsub.h"
 #include "inst/vfpdiv.h"
 #include "inst/vfpmul.h"
+#include "inst/vfpmin.h"
+#include "inst/vfpsqrt.h"
 #include "inst/vfpscmp.h"
 #include "inst/vfpsignlogic.h"
 #include "inst/vfpsub.h"
@@ -108,5 +119,9 @@
 #include "inst/vfpflagssetimm.h"
 #include "inst/vfpflagsset.h"
 #include "inst/vfpflagsread.h"
+
+#include "inst/vfpclass.h"
+#include "inst/vmin.h"
+
 
 #endif

@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <fcntl.h>
 
 #include <time.h>
 
@@ -49,13 +50,14 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
     core_count = cores;
 
     /////////////////////////////////////////////////////////////////////////////////////
-
-    char* tool_path = (char*) malloc(sizeof(char) * 1024);
+    
+    size_t tool_path_size = sizeof(char) * 1024;
+    char* tool_path = (char*) malloc(tool_path_size);
 
 #ifdef SST_COMPILE_MACOSX
-    sprintf(tool_path, "%s/fesimple.dylib", ARIEL_STRINGIZE(ARIEL_TOOL_DIR));
+    snprintf(tool_path, tool_path_size, "%s/fesimple.dylib", ARIEL_STRINGIZE(ARIEL_TOOL_DIR));
 #else
-    sprintf(tool_path, "%s/fesimple.so", ARIEL_STRINGIZE(ARIEL_TOOL_DIR));
+    snprintf(tool_path, tool_path_size, "%s/fesimple.so", ARIEL_STRINGIZE(ARIEL_TOOL_DIR));
 #endif
 
     std::string ariel_tool = params.find<std::string>("arieltool", tool_path);
@@ -69,6 +71,12 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
     if("" == executable) {
         output->fatal(CALL_INFO, -1, "The input deck did not specify an executable to be run against PIN\n");
     }
+
+    redirect_info.stdin_file = params.find<std::string>("appstdin", "");
+    redirect_info.stdout_file = params.find<std::string>("appstdout", "");
+    redirect_info.stderr_file = params.find<std::string>("appstderr", "");
+    redirect_info.stdoutappend = params.find<std::uint32_t>("appstdoutappend", "0");
+    redirect_info.stderrappend = params.find<std::uint32_t>("appstderrappend", "0");
 
     uint32_t app_argc = (uint32_t) params.find<uint32_t>("appargcount", 0);
     output->verbose(CALL_INFO, 1, 0, "Model specifies that there are %" PRIu32 " application arguments\n", app_argc);
@@ -115,21 +123,88 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
     output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name3.c_str());
 #endif
 
+    // MPI Launcher options
+    mpimode = params.find<int>("mpimode", 0);
+    if (mpimode) {
+        mpilauncher = params.find<std::string>("mpilauncher",  ARIEL_STRINGIZE(MPILAUNCHER_EXECUTABLE));
+        mpiranks = params.find<int>("mpiranks", 1);
+        mpitracerank = params.find<int>("mpitracerank", 0);
+    }
+
+    // MPI Launcher error checking
+    if (mpimode == 1) {
+        if (mpilauncher.compare("") == 0) {
+            output->fatal(CALL_INFO, -1, "mpimode=1 was specified but parameter `mpilauncher` is an empty string");
+        }
+        if (redirect_info.stdin_file.compare("") != 0 || redirect_info.stdout_file.compare("") != 0 || redirect_info.stderr_file.compare("") != 0)  {
+            output->fatal(CALL_INFO, -1, "Using an MPI launcher and redirected I/O is not supported.\n");
+        }
+#ifdef HAVE_CUDA
+        output->fatal(CALL_INFO, -1, "Using an MPI launcher and CUDA is not supported.\n");
+#endif
+        if (mpiranks < 1) {
+            output->fatal(CALL_INFO, -1, "You must specify a positive number for `mpiranks` when using an MPI launhcer. Got %d.\n", mpiranks);
+        }
+        if (mpitracerank < 0 || mpitracerank >= mpiranks) {
+            output->fatal(CALL_INFO, -1, "The value of `mpitracerank` must be in [0,mpiranks) Got %d.\n", mpitracerank);
+        }
+
+    }
+
+    if (mpimode == 1) {
+        output->verbose(CALL_INFO, 1, 0, "Ariel-MPI: MPI launcher: %s\n", mpilauncher.c_str());
+        output->verbose(CALL_INFO, 1, 0, "Ariel-MPI: MPI ranks: %d\n", mpiranks);
+        output->verbose(CALL_INFO, 1, 0, "Ariel-MPI: MPI trace rank: %d\n", mpitracerank);
+    }
+
+
     appLauncher = params.find<std::string>("launcher", PINTOOL_EXECUTABLE);
 
     const uint32_t launch_param_count = (uint32_t) params.find<uint32_t>("launchparamcount", 0);
     const uint32_t pin_arg_count = 37 + launch_param_count;
 
-    execute_args = (char**) malloc(sizeof(char*) * (pin_arg_count + app_argc));
+    uint32_t mpi_args = 0;
+    if (mpimode == 1) {
+        // We need one argument for the launcher, one for the number of ranks,
+        // and one for the rank to trace
+        mpi_args = 3;
+    }
+
+    execute_args = (char**) malloc(sizeof(char*) * (mpi_args + pin_arg_count + app_argc));
+    uint32_t arg = 0; // Track current arg
+
+    if (mpimode == 1) {
+        // Prepend mpilauncher to execute_args
+        output->verbose(CALL_INFO, 1, 0, "Processing mpilauncher arguments...\n");
+        std::string mpiranks_str = std::to_string(mpiranks);
+        std::string mpitracerank_str = std::to_string(mpitracerank);
+
+        size_t mpilauncher_size = sizeof(char) * (mpilauncher.size() + 2);
+        execute_args[arg] = (char*) malloc(mpilauncher_size);
+        snprintf(execute_args[arg], mpilauncher_size, "%s", mpilauncher.c_str());
+        arg++;
+
+        size_t mpiranks_str_size = sizeof(char) * (mpiranks_str.size() + 2);
+        execute_args[arg] = (char*) malloc(mpiranks_str_size);
+        snprintf(execute_args[arg], mpiranks_str_size, "%s", mpiranks_str.c_str());
+        arg++;
+
+        size_t mpitracerank_str_size = sizeof(char) * (mpitracerank_str.size() + 2);
+        execute_args[arg] = (char*) malloc(mpitracerank_str_size);
+        snprintf(execute_args[arg], mpitracerank_str_size, "%s", mpitracerank_str.c_str());
+        arg++;
+    }
 
     const uint32_t profileFunctions = (uint32_t) params.find<uint32_t>("profilefunctions", 0);
 
     output->verbose(CALL_INFO, 1, 0, "Processing application arguments...\n");
 
-    uint32_t arg = 0;
-    execute_args[0] = (char*) malloc(sizeof(char) * (appLauncher.size() + 2));
-    sprintf(execute_args[0], "%s", appLauncher.c_str());
+    size_t execute_args_size = sizeof(char) * (appLauncher.size() + 2);
+    execute_args[arg] = (char*) malloc(execute_args_size);
+    snprintf(execute_args[arg], execute_args_size, "%s", appLauncher.c_str());
     arg++;
+
+
 
 #if 0
     execute_args[arg++] = const_cast<char*>("-pause_tool");
@@ -143,10 +218,11 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
 
     execute_args[arg++] = const_cast<char*>("-follow_execv");
 
-    char* param_name_buffer = (char*) malloc(sizeof(char) * 512);
+    size_t param_name_buffer_size = sizeof(char) * 512;
+    char* param_name_buffer = (char*) malloc(param_name_buffer_size);
 
     for(uint32_t aa = 0; aa < launch_param_count; aa++) {
-        sprintf(param_name_buffer, "launchparam%" PRIu32, aa);
+        snprintf(param_name_buffer, param_name_buffer_size, "launchparam%" PRIu32, aa);
         std::string launch_p = params.find<std::string>(param_name_buffer, "");
 
         if("" == launch_p) {
@@ -171,10 +247,12 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
     } else {
         execute_args[arg++] = const_cast<char*>("1");
     }
+    
+    size_t buff8size = sizeof(char)*8;
 
     execute_args[arg++] = const_cast<char*>("-E");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[arg-1], "%d", instrument_instructions);
+    execute_args[arg++] = (char*) malloc(buff8size);
+    snprintf(execute_args[arg-1], buff8size, "%d", instrument_instructions);
     execute_args[arg++] = const_cast<char*>("-p");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (shmem_region_name.length() + 1));
     strcpy(execute_args[arg-1], shmem_region_name.c_str());
@@ -187,37 +265,37 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
     strcpy(execute_args[arg-1], shmem_region_name3.c_str());
 #endif
     execute_args[arg++] = const_cast<char*>("-v");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[arg-1], "%d", verbosity);
+    execute_args[arg++] = (char*) malloc(buff8size);
+    snprintf(execute_args[arg-1], buff8size, "%d", verbosity);
     execute_args[arg++] = const_cast<char*>("-t");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[arg-1], "%" PRIu32, profileFunctions);
+    execute_args[arg++] = (char*) malloc(buff8size);
+    snprintf(execute_args[arg-1], buff8size, "%" PRIu32, profileFunctions);
     execute_args[arg++] = const_cast<char*>("-c");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[arg-1], "%" PRIu32, core_count);
+    execute_args[arg++] = (char*) malloc(buff8size);
+    snprintf(execute_args[arg-1], buff8size, "%" PRIu32, core_count);
     execute_args[arg++] = const_cast<char*>("-s");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[arg-1], "%" PRIu32, pin_startup_mode);
+    execute_args[arg++] = (char*) malloc(buff8size);
+    snprintf(execute_args[arg-1], buff8size, "%" PRIu32, pin_startup_mode);
     execute_args[arg++] = const_cast<char*>("-m");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[arg-1], "%" PRIu32, intercept_mem_allocations);
+    execute_args[arg++] = (char*) malloc(buff8size);
+    snprintf(execute_args[arg-1], buff8size, "%" PRIu32, intercept_mem_allocations);
     execute_args[arg++] = const_cast<char*>("-k");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[arg-1], "%" PRIu32, keep_malloc_stack_trace);
+    execute_args[arg++] = (char*) malloc(buff8size);
+    snprintf(execute_args[arg-1], buff8size, "%" PRIu32, keep_malloc_stack_trace);
     if (malloc_map_filename != "") {
         execute_args[arg++] = const_cast<char*>("-u");
         execute_args[arg++] = (char*) malloc(sizeof(char) * (malloc_map_filename.size() + 1));
         strcpy(execute_args[arg-1], malloc_map_filename.c_str());
     }
     execute_args[arg++] = const_cast<char*>("-d");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[arg-1], "%" PRIu32, defMemPool);
+    execute_args[arg++] = (char*) malloc(buff8size);
+    snprintf(execute_args[arg-1], buff8size, "%" PRIu32, defMemPool);
     execute_args[arg++] = const_cast<char*>("--");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (executable.size() + 1));
     strcpy(execute_args[arg-1], executable.c_str());
     char* argv_buffer = (char*) malloc(sizeof(char) * 256);
     for(uint32_t aa = 0; aa < app_argc ; ++aa) {
-        sprintf(argv_buffer, "apparg%" PRIu32, aa);
+        snprintf(argv_buffer, sizeof(char)*256, "apparg%" PRIu32, aa);
         std::string argv_i = params.find<std::string>(argv_buffer, "");
 
         output->verbose(CALL_INFO, 1, 0, "Found application argument %" PRIu32 " (%s) = %s\n",
@@ -234,7 +312,7 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
         char* env_name_buffer = (char*) malloc(sizeof(char) * 256);
 
         for(int32_t next_env_param = 0; next_env_param < pin_env_count; next_env_param++) {
-                sprintf(env_name_buffer, "envparamname%" PRId32 , next_env_param);
+                snprintf(env_name_buffer, sizeof(char)*256, "envparamname%" PRId32 , next_env_param);
 
                 std::string env_name = params.find<std::string>(env_name_buffer, "");
 
@@ -243,7 +321,7 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
                             env_name_buffer);
                 }
 
-                sprintf(env_name_buffer, "envparamval%" PRId32, next_env_param);
+                snprintf(env_name_buffer, sizeof(char)*256, "envparamval%" PRId32, next_env_param);
 
                 std::string env_value = params.find<std::string>(env_name_buffer, "");
 
@@ -270,7 +348,12 @@ void Pin3Frontend::init(unsigned int phase)
         // Init the child_pid = 0, this prevents problems in emergencyShutdown()
         // if forkPINChild() calls fatal (i.e. the child_pid would not be set)
         child_pid = 0;
-        child_pid = forkPINChild(appLauncher.c_str(), execute_args, execute_env);
+        if (mpimode == 1) {
+            // Ariel will fork the MPI launcher which will itself fork pin
+            child_pid = forkPINChild(mpilauncher.c_str(), execute_args, execute_env, redirect_info);
+        } else {
+            child_pid = forkPINChild(appLauncher.c_str(), execute_args, execute_env, redirect_info);
+        }
         output->verbose(CALL_INFO, 1, 0, "Returned from launching PIN.  Waiting for child to attach.\n");
 
         tunnel->waitForChild();
@@ -278,7 +361,14 @@ void Pin3Frontend::init(unsigned int phase)
     }
 }
 
-void Pin3Frontend::finish() { }
+void Pin3Frontend::finish() {
+    // If the simulation ended early, e.g. by using --stop-at, the child
+    // may still be executing. It will become a zombie if we do not
+    // kill it.
+    if (child_pid != 0) {
+        kill(child_pid, SIGTERM);
+    }
+}
 
 ArielTunnel* Pin3Frontend::getTunnel() {
     return tunnel;
@@ -294,7 +384,7 @@ GpuDataTunnel* Pin3Frontend::getDataTunnel() {
 }
 #endif
 
-int Pin3Frontend::forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env) {
+int Pin3Frontend::forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env, redirect_info_t redirect_info) {
     // If user only wants to init the simulation then we do NOT fork the binary
     if(isSimulationRunModeInit())
         return 0;
@@ -378,6 +468,33 @@ int Pin3Frontend::forkPINChild(const char* app, char** args, std::map<std::strin
     }
         return (int) the_child;
     } else {
+        //Do I/O redirection before exec
+        if ("" != redirect_info.stdin_file){
+            output->verbose(CALL_INFO, 1, 0, "Redirecting child stdin from file %s\n", redirect_info.stdin_file.c_str());
+            if (!freopen(redirect_info.stdin_file.c_str(), "r", stdin)) {
+                output->fatal(CALL_INFO, 1, 0, "Failed to redirect stdin\n");
+            }
+        }
+        if ("" != redirect_info.stdout_file){
+            output->verbose(CALL_INFO, 1, 0, "Redirecting child stdout to file %s\n", redirect_info.stdout_file.c_str());
+            std::string mode = "w+";
+            if (redirect_info.stdoutappend) {
+                mode = "a+";
+            }
+            if (!freopen(redirect_info.stdout_file.c_str(), mode.c_str(), stdout)) {
+                output->fatal(CALL_INFO, 1, 0, "Failed to redirect stdout\n");
+            }
+        }
+        if ("" != redirect_info.stderr_file){
+            output->verbose(CALL_INFO, 1, 0, "Redirecting child stderr from file %s\n", redirect_info.stderr_file.c_str());
+            std::string mode = "w+";
+            if (redirect_info.stderrappend) {
+                mode = "a+";
+            }
+            if (!freopen(redirect_info.stderr_file.c_str(), mode.c_str(), stderr)) {
+                output->fatal(CALL_INFO, 1, 0, "Failed to redirect stderr\n");
+            }
+        }
         output->verbose(CALL_INFO, 1, 0, "Launching executable: %s...\n", app);
 
         if(0 == app_env.size()) {
@@ -408,13 +525,13 @@ int Pin3Frontend::forkPINChild(const char* app, char** args, std::map<std::strin
             uint32_t next_env_cp_index = 0;
 
             for(auto env_itr = app_env.begin(); env_itr != app_env.end(); env_itr++) {
-                char* execute_env_nv_pair = (char*) malloc(sizeof(char) * (2 +
-                        env_itr->first.size() + env_itr->second.size()));
-
+                size_t nv_pair_size = sizeof(char) * (2 + env_itr->first.size() + env_itr->second.size());
+                char* execute_env_nv_pair = (char*) malloc(nv_pair_size);
+                
                 output->verbose(CALL_INFO, 2, 0, "Env: %s=%s\n",
                         env_itr->first.c_str(), env_itr->second.c_str());
 
-                sprintf(execute_env_nv_pair, "%s=%s", env_itr->first.c_str(),
+                snprintf(execute_env_nv_pair, nv_pair_size, "%s=%s", env_itr->first.c_str(),
                         env_itr->second.c_str());
 
                 execute_env_cp[next_env_cp_index] = execute_env_nv_pair;

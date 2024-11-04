@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -22,7 +22,7 @@ namespace SST {
 namespace Vanadis {
 
 template <typename gpr_format>
-class VanadisPCAddImmInstruction : public VanadisInstruction
+class VanadisPCAddImmInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisPCAddImmInstruction(
@@ -57,31 +57,43 @@ public:
     {
         snprintf(
             buffer, buffer_size,
-            "%s %5" PRIu16 " <- 0x%llx + imm=%" PRId64 " (phys: %5" PRIu16 " <- 0x%llx + %" PRId64 ") = 0x%llx",
+            "%s %5" PRIu16 " <- 0x%" PRI_ADDR " + imm=%" PRId64 " (phys: %5" PRIu16 " <- 0x%" PRI_ADDR " + %" PRId64 ") = 0x%" PRI_ADDR "",
             getInstCode(), isa_int_regs_out[0], getInstructionAddress(), imm_value, phys_int_regs_out[0], getInstructionAddress(),
             imm_value, getInstructionAddress() + imm_value);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+                            uint16_t phys_int_regs_out_0)
     {
-#ifdef VANADIS_BUILD_DEBUG
+        #ifdef VANADIS_BUILD_DEBUG
         output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: 0x%llx %s phys: out=%" PRIu16 " in=0x%llx / imm=%" PRId64 ", isa: out=%" PRIu16
-            " = 0x%llx\n",
-            getInstructionAddress(), getInstCode(), phys_int_regs_out[0], getInstructionAddress(), imm_value,
+            CALL_INFO, verboselevel, 0,
+            "hw_thr=%d sw_thr = %d Execute: 0x%" PRI_ADDR " %s phys: out=%" PRIu16 " in=0x%" PRI_ADDR " / imm=%" PRId64 ", isa: out=%" PRIu16
+            " = 0x%" PRI_ADDR "\n",
+            getHWThread(),sw_thr,getInstructionAddress(), getInstCode(), phys_int_regs_out_0, getInstructionAddress(), imm_value,
             isa_int_regs_out[0], (static_cast<int64_t>(getInstructionAddress()) + imm_value));
-#endif
+        #endif
+    }
 
+    void instOp(VanadisRegisterFile* regFile, uint16_t phys_int_regs_out_0)
+    {
 		const gpr_format pc = static_cast<gpr_format>(getInstructionAddress());
-		regFile->setIntReg<gpr_format>(phys_int_regs_out[0], pc + imm_value);
+		regFile->setIntReg<gpr_format>(phys_int_regs_out_0, (pc + imm_value) & 0xffffffff);
+    }
 
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+        
+        uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
+        instOp(regFile, phys_int_regs_out_0);
+        log(output, 16, 65535, phys_int_regs_out_0);
         markExecuted();
     }
 
 private:
     const gpr_format imm_value;
 };
+
 
 } // namespace Vanadis
 } // namespace SST

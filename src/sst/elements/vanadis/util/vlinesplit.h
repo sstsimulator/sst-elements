@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -19,7 +19,7 @@
 namespace SST {
 namespace Vanadis {
 
-uint64_t
+static uint64_t
 vanadis_line_remainder(const uint64_t start, const uint64_t line_length) {
     if (64 == line_length) {
         return line_length - (start & (uint64_t)63);

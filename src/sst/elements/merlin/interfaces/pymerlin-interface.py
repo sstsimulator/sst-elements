@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2022 NTESS. Under the terms
+# Copyright 2009-2024 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2022, NTESS
+# Copyright (c) 2009-2024, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -26,7 +26,7 @@ class LinkControl(NetworkInterface):
         self._subscribeToPlatformParamSet("network_interface")
 
     # returns subcomp, port_name
-    def build(self,comp,slot,slot_num,job_id,job_size,logical_nid,use_nid_remap = False):
+    def build(self,comp,slot,slot_num,job_id,job_size,logical_nid,use_nid_remap = False, link=None):
         if self._check_first_build():
             set_name = "params_%s"%self._instance_name
             sst.addGlobalParams(set_name, self._getGroupParams("params"))
@@ -39,7 +39,12 @@ class LinkControl(NetworkInterface):
         self._applyStatisticsSettings(sub)
         sub.addGlobalParamSet("params_%s"%self._instance_name)
         sub.addParam("logical_nid",logical_nid)
-        return sub,"rtr_port"
+
+        if link:
+            sub.addLink(link, "rtr_port");
+            return True
+        else:
+            return sub,"rtr_port"
 
 
 class ReorderLinkControl(NetworkInterface):
@@ -62,11 +67,14 @@ class ReorderLinkControl(NetworkInterface):
     def setNetworkInterface(self,interface):
         self.network_interface = interface
 
-    def build(self,comp,slot,slot_num,job_id,job_size,nid,use_nid_map = False):
+    def build(self,comp,slot,slot_num,job_id,job_size,nid,use_nid_map = False, link = None):
         sub = comp.setSubComponent(slot,"merlin.reorderlinkcontrol",slot_num)
         #self._applyStatisticsSettings(sub)
         #sub.addParams(self._params)
-        return self.network_interface.build(sub,"networkIF",0,job_id,job_size,nid,use_nid_map)
+
+        return NetworkInterface._instanceNetworkInterfaceBackCompat(
+            self.network_interface,sub,"networkIF",0,job_id,job_size,nid,use_nid_map,link)
+
 
     # Functions to enable statistics
     def enableAllStatistics(self,stat_params,apply_to_children=False):

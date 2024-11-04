@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -15,12 +15,14 @@
 
 #pragma once
 
-#include <common/component.h>
+#include <mercury/common/component.h>
 
 #include <sst/core/timeConverter.h>
 #include <sst/core/link.h>
-#include <components/operating_system_fwd.h>
-#include <common/node_address.h>
+#include <mercury/components/operating_system_fwd.h>
+#include <mercury/components/nic.h>
+#include <mercury/common/request_fwd.h>
+#include <mercury/common/node_address.h>
 #include <cstdint>
 #include <memory>
 
@@ -47,31 +49,19 @@ public:
       COMPONENT_CATEGORY_UNCATEGORIZED // Category
   )
 
-  SST_ELI_DOCUMENT_PARAMS({"eventsToSend",
-                           "How many events this component should send.", NULL},
-                          {"eventSize",
-                           "Payload size for each event, in bytes.", "16"})
+  SST_ELI_DOCUMENT_PARAMS({"verbose",
+                           "Output verbose level", 0},
+                          )
 
   SST_ELI_DOCUMENT_PORTS(
-      {"detailed%(num_vNics)d", "Port connected to the detailed model", {}},
-      {"nic", "Port connected to the nic", {}},
-      {"loop", "Port connected to the loopBack", {}},
-      {"memoryHeap", "Port connected to the memory heap", {}},
+      {"network", "Dummy network port to connect nodes for testing", {} },
   )
 
-  SST_ELI_DOCUMENT_STATISTICS(
-      {"EventSizeReceived", "Records the payload size of each event received",
-       "bytes", 1})
-
   SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-      {"OS_SLOT", "The operating system", "hg.node"}
+      {"os_slot", "The operating system", "hg.operating_system"},
+      {"nic_slot", "The nic", "hg.nic"},
+      {"link_control_slot", "Slot for a link control", "SST::Interfaces::SimpleNetwork" }
       )
-
-  enum {
-    NIC_SLOT,
-    MEMORY_SLOT,
-    OS_SLOT
-  } SubcomponentSlots;
 
   Node(SST::ComponentId_t id, SST::Params &params);
 
@@ -82,22 +72,35 @@ public:
     return my_addr_;
   }
 
+  void init(unsigned int phase) override;
+
   void setup() override;
+
+  void endSim() {
+    primaryComponentOKToEndSim();
+  }
+
+  SST::Hg::OperatingSystem* os() const {
+    return os_;
+  }
 
   int ncores() { return ncores_; }
   int nsockets() { return nsockets_; }
 
+  void handle(Request* req);
+
+  SST::Hg::NIC* nic() { return nic_; }
+
 private:
 
+  SST::Hg::NIC* nic_;
   SST::Hg::OperatingSystem* os_;
-
+  SST::Interfaces::SimpleNetwork* link_control_;
+  SST::Link* netLink_;
   std::unique_ptr<SST::Output> out_;
-
   NodeId my_addr_;
   int ncores_;
   int nsockets_;
-
-  //sw::AppLauncher* app_launcher_;
 };
 
 } // namespace Hg

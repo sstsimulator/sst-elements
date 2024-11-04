@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -25,18 +25,22 @@ namespace Vanadis {
 class VanadisSyscallBRKEvent : public VanadisSyscallEvent {
 public:
     VanadisSyscallBRKEvent() : VanadisSyscallEvent() {}
-    VanadisSyscallBRKEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t newBrkAddr, bool zero_mem = false)
-        : VanadisSyscallEvent(core, thr, bittype), newBrk(newBrkAddr), zero_memory(zero_mem) {}
+    VanadisSyscallBRKEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t newBrkAddr)
+        : VanadisSyscallEvent(core, thr, bittype), newBrk(newBrkAddr) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_BRK; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_BRK; }
 
     uint64_t getUpdatedBRK() const { return newBrk; }
 
-    bool requestZeroMemory() const { return zero_memory; }
-
 private:
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& newBrk;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallBRKEvent);
+
     uint64_t newBrk;
-    bool zero_memory;
 };
 
 } // namespace Vanadis

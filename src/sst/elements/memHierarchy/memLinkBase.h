@@ -1,8 +1,8 @@
-// Copyright 2013-2022 NTESS. Under the terms
+// Copyright 2013-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2022, NTESS
+// Copyright (c) 2013-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -146,8 +146,21 @@ public:
     virtual void emergencyShutdownDebug(Output &out) { }
 
     /* Send and receive functions for MemLink */
+    [[deprecated("sendInitData() has been deprecated and will be removed in SST 14.  Please use sendUntimedData().")]]
     virtual void sendInitData(MemEventInit * ev, bool broadcast = true) =0;
+    virtual void sendUntimedData(MemEventInit * ev, bool broadcast = true) {
+        DISABLE_WARN_DEPRECATED_DECLARATION
+        sendInitData(ev,broadcast);
+        REENABLE_WARNING
+    }
+    [[deprecated("recvInitData() has been deprecated and will be removed in SST 14.  Please use recvUntimedData().")]]
     virtual MemEventInit* recvInitData() =0;
+    virtual MemEventInit* recvUntimedData() {
+        DISABLE_WARN_DEPRECATED_DECLARATION
+        auto ret = recvInitData();
+        REENABLE_WARNING
+        return ret;
+    }
     virtual void send(MemEventBase * ev) =0;
 
     /*

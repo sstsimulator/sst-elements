@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -16,11 +16,16 @@
 #ifndef _BASE_H
 #define _BASE_H
 
+#include <stdint.h>
+
+typedef ADDR_TYPE Addr_t;
+
 #include <rdmaNicHostInterface.h>
 void writeCmd( NicCmd* cmd );
 void base_init();
 int base_n_pes(); 
 int base_my_pe();
 void base_make_progress();
+Addr_t getCompQueueInfoAddress();
 
 #endif

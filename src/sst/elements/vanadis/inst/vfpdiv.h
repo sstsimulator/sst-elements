@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -30,6 +30,12 @@ public:
     VanadisFPDivideInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
         VanadisFloatingPointFlags* fpflags, const uint16_t dest, const uint16_t src_1, const uint16_t src_2) :
+        VanadisInstruction(
+            addr, hw_thr, isa_opts, 0, 0, 0, 0,
+            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 4 : 2,
+            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1,
+            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 4 : 2,
+            ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1),
         VanadisFloatingPointInstruction(
             addr, hw_thr, isa_opts, fpflags, 0, 0, 0, 0,
             ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 4 : 2,
@@ -88,54 +94,66 @@ public:
             phys_fp_regs_in[0], phys_fp_regs_in[1]);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void instOp(VanadisRegisterFile* regFile, uint16_t phys_fp_regs_in_0, 
+                        uint16_t phys_fp_regs_in_1, uint16_t phys_fp_regs_in_2, 
+                        uint16_t phys_fp_regs_in_3,
+                        uint16_t phys_fp_regs_out_0,uint16_t phys_fp_regs_out_1)
     {
-#ifdef VANADIS_BUILD_DEBUG
-        if ( output->getVerboseLevel() >= 16 ) {
-            char* int_register_buffer = new char[256];
-            char* fp_register_buffer  = new char[256];
-
-            writeIntRegs(int_register_buffer, 256);
-            writeFPRegs(fp_register_buffer, 256);
-
-            output->verbose(
-                CALL_INFO, 16, 0, "Execute: (addr=0x%llx) %s int: %s / fp: %s\n", getInstructionAddress(),
-                getInstCode(), int_register_buffer, fp_register_buffer);
-
-            delete[] int_register_buffer;
-            delete[] fp_register_buffer;
-        }
-#endif
-
-        if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
-            const fp_format src_1  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
-            const fp_format src_2  = combineFromRegisters<fp_format>(regFile, phys_fp_regs_in[2], phys_fp_regs_in[3]);
-            const fp_format result = src_1 / src_2;
+        clear_IEEE754_except();
+         if ( sizeof(fp_format) >= regFile->getFPRegWidth() ) 
+         {
+                fp_format src_1,src_2;
+            READ_2FP_REGS(phys_fp_regs_in_0,phys_fp_regs_in_1,phys_fp_regs_in_2, phys_fp_regs_in_3);
 
             performDivFlagChecks<fp_format>(src_2);
-            performFlagChecks<fp_format>(result);
-
-            if ( output->getVerboseLevel() >= 16 ) {
-                output->verbose(CALL_INFO, 16, 0, "---> %f / %f = %f\n", src_1, src_2, result);
-            }
-
-            fractureToRegisters<fp_format>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], result);
-        }
-        else {
-            const fp_format src_1  = regFile->getFPReg<fp_format>(phys_fp_regs_in[0]);
-            const fp_format src_2  = regFile->getFPReg<fp_format>(phys_fp_regs_in[1]);
+            
             const fp_format result = src_1 / src_2;
 
-            performDivFlagChecks<fp_format>(src_2);
+            performFlagChecks(result);
+            
             performFlagChecks<fp_format>(result);
+            
+            WRITE_FP_REGS(phys_fp_regs_out_0, phys_fp_regs_out_1);
+        }
+        else 
+        {
+            const uint64_t src_1 = regFile->getFPReg<uint64_t>(phys_fp_regs_in_0);
+            const uint64_t src_2 = regFile->getFPReg<uint64_t>(phys_fp_regs_in_1);
+            assert( isNaN_boxed( src_1 ) );
+            assert( isNaN_boxed( src_2 ) );
+            float fp_1 = int64To<float>(src_1);
+            float fp_2 = int64To<float>(src_2);
+            performDivFlagChecks(fp_2);
+            
+            float tmp = fp_1 / fp_2;
 
-            if ( output->getVerboseLevel() >= 16 ) {
-                output->verbose(CALL_INFO, 16, 0, "---> %f / %f = %f\n", src_1, src_2, result);
-            }
-
-            regFile->setFPReg<fp_format>(phys_fp_regs_out[0], result);
+            performFlagChecks<float>(tmp);
+            
+            const uint64_t result = 0xffffffff00000000 | convertTo<int64_t>(tmp);\
+            regFile->setFPReg<uint64_t>(phys_fp_regs_out_0, result);
         }
 
+        check_IEEE754_except();
+    }
+
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+        uint16_t phys_fp_regs_out_0 = getPhysFPRegOut(0);
+        uint16_t phys_fp_regs_in_0 = getPhysFPRegIn(0);
+        uint16_t phys_fp_regs_in_1 = getPhysFPRegIn(1);
+        uint16_t phys_fp_regs_in_2 = 0;
+        uint16_t phys_fp_regs_in_3 = 0;
+        uint16_t phys_fp_regs_out_1 = 0;
+        log(output, 16, 65535, phys_fp_regs_out_0, phys_fp_regs_in_0, phys_fp_regs_in_1);
+        if ( sizeof(fp_format) > regFile->getFPRegWidth() ) 
+        {
+            phys_fp_regs_in_2 = getPhysFPRegIn(2);
+            phys_fp_regs_in_3 = getPhysFPRegIn(3);
+            phys_fp_regs_out_1 = getPhysFPRegOut(1);
+        }
+        instOp(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1, 
+        phys_fp_regs_in_2, phys_fp_regs_in_3,
+                        phys_fp_regs_out_0,phys_fp_regs_out_1);
         markExecuted();
     }
 
@@ -148,6 +166,8 @@ public:
         }
     }
 };
+
+
 
 } // namespace Vanadis
 } // namespace SST

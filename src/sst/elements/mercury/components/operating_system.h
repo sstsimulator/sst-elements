@@ -1,13 +1,13 @@
-// Copyright 2009-2021 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2021, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -15,21 +15,25 @@
 
 #pragma once
 
-#include <common/component.h>
+#include <mercury/common/component.h>
 
 #include <sst/core/link.h>
 
-#include <common/factory.h>
-#include <components/node_fwd.h>
-#include <operating_system/threading/threading_interface.h>
-#include <operating_system/launch/app_launcher_fwd.h>
-#include <operating_system/launch/app_launch_request.h>
-#include <operating_system/process/app.h>
-#include <operating_system/process/thread.h>
-#include <operating_system/process/mutex.h>
-#include <operating_system/process/tls.h>
-#include <operating_system/process/compute_scheduler.h>
-#include <operating_system/libraries/library.h>
+//#include <mercury/common/factory.h>
+#include <sst/core/eli/elementbuilder.h>
+#include <mercury/components/node_fwd.h>
+#include <mercury/common/unique_id.h>
+#include <mercury/operating_system/threading/threading_interface.h>
+#include <mercury/operating_system/launch/app_launcher_fwd.h>
+#include <mercury/operating_system/launch/app_launch_request.h>
+#include <mercury/operating_system/process/app.h>
+#include <mercury/operating_system/process/thread.h>
+#include <mercury/operating_system/process/thread_info.h>
+#include <mercury/operating_system/process/mutex.h>
+#include <mercury/operating_system/process/tls.h>
+#include <mercury/operating_system/process/compute_scheduler.h>
+#include <mercury/operating_system/libraries/library.h>
+#include <mercury/hardware/network/network_message.h>
 
 #include <cstdint>
 #include <memory>
@@ -45,7 +49,10 @@ class OperatingSystem : public SST::Hg::SubComponent {
 
 public:
 
-  SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+  SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::OperatingSystem,
+                                    SST::Hg::Node*)
+
+  SST_ELI_REGISTER_SUBCOMPONENT(
     OperatingSystem,
     "hg",
     "operating_system",
@@ -53,9 +60,6 @@ public:
     "Mercury Operating System",
     SST::Hg::OperatingSystem
   )
-
-  SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::OperatingSystem,
-                                    SST::Hg::Node*)
 
   OperatingSystem(SST::ComponentId_t id, SST::Params& params, Node* parent);
 
@@ -74,6 +78,10 @@ public:
     return sst_hg_global_stacksize;
   }
 
+  std::function<void(NetworkMessage*)> nicDataIoctl();
+
+  std::function<void(NetworkMessage*)> nicCtrlIoctl();
+
   /**
    * @brief block Block the currently running thread context.
    * This must be called from an application thread, NOT the DES thread
@@ -82,6 +90,8 @@ public:
    * @return
    */
   void block();
+
+  void blockTimeout(TimeDelta delay);
 
   void startApp(App* theapp, const std::string&  /*unique_name*/);
   void startThread(Thread* t);
@@ -96,20 +106,20 @@ public:
   }
 
   static inline OperatingSystem*& staticOsThreadContext(){
-  #if SSTMAC_USE_MULTITHREAD
+//  #if SST_HG_USE_MULTITHREAD
     int thr = ThreadInfo::currentPhysicalThreadId();
     return active_os_[thr];
-  #else
-    return active_os_;
-  #endif
+//  #else
+//    return active_os_;
+//  #endif
   }
 
   inline OperatingSystem*& activeOs() {
-#if SSTMAC_USE_MULTITHREAD
+//#if SST_HG_USE_MULTITHREAD
   return active_os_[threadId()];
-#else
-  return active_os_;
-#endif
+//#else
+//  return active_os_;
+//#endif
   }
 
   Thread* activeThread() const {
@@ -118,6 +128,11 @@ public:
 
   static OperatingSystem* currentOs(){
     return staticOsThreadContext();
+  }
+
+  UniqueEventId allocateUniqueId() {
+    next_outgoing_id_.msg_num++;
+    return next_outgoing_id_;
   }
 
  private:
@@ -135,6 +150,7 @@ public:
   /// to this context on every context switch.
   ThreadContext *des_context_;
 
+  int nranks_;
   Node* node_;
   Thread* active_thread_;
   Thread* blocked_thread_;
@@ -155,17 +171,18 @@ public:
   std::map<std::string, std::list<Request*>> pending_library_request_;
 
   NodeId my_addr_;
+  UniqueEventId next_outgoing_id_;
 
 //  int next_condition_;
 //  int next_mutex_;
 //  std::map<int, condition_t> conditions_;
 //  std::map<int, mutex_t> mutexes_;
 
-#if SSTMAC_USE_MULTITHREAD
-  static std::vector<OperatingSystem*> active_os_;
-#else
-  static OperatingSystem* active_os_;
-#endif
+  //#if SST_HG_USE_MULTITHREAD
+    static std::vector<OperatingSystem*> active_os_;
+  //#else
+  //  static OperatingSystem* active_os_;
+  //#endif
 
  public:
   static SST::TimeConverter* timeConverter() {
@@ -222,6 +239,20 @@ public:
   void releaseCores(int ncore, Thread* thr) {
     compute_sched_->releaseCores(ncore,thr);
   }
+
+//  NodeId rankToNode(int rank) {
+//    return NodeId( rank_mapper_->mapRank(rank) );
+//  }
+
+  void set_nranks(int32_t ranks) {
+    nranks_ = ranks;
+  }
+
+  int32_t nranks() {
+    return nranks_;
+  }
+
+//  SST::Ember::EmberRankMap*	rank_mapper_;
 
 //
 // LIBRARIES

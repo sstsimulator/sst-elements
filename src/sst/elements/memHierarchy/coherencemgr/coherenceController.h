@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -155,6 +155,9 @@ public:
     /* Call through to cache array to configure banking/slicing */
     virtual void setSliceAware(uint64_t interleaveSize, uint64_t interleaveStep) = 0;
 
+    /* Register callback to enable the cache's clock if needed */
+    void registerClockEnableFunction(std::function<void()> fcn) { reenableClock_ = fcn; }
+    
     /* Setup debug info (cache-wide) */
     void setDebug(std::set<Addr> debugAddr) { DEBUG_ADDR = debugAddr; }
 
@@ -205,8 +208,10 @@ protected:
 
     struct dbgin {
         SST::Event::id_type id;
+        uint32_t thr;
+        bool hasThr;
         Command cmd;
-        bool prefetch;
+        std::string mod; // Command modifier
         Addr addr;
         State oldst;
         State newst;
@@ -214,10 +219,17 @@ protected:
         std::string reason;
         std::string verboseline;
 
-        void prefill(SST::Event::id_type i, Command c, bool p, Addr a, State o) {
+        void prefill(SST::Event::id_type i, Command c, std::string m, Addr a, State o) {
+            prefill(i, 0, c, m, a, o);
+            hasThr = false;
+        }
+
+        void prefill(SST::Event::id_type i, uint32_t t, Command c, std::string m, Addr a, State o) {
             id = i;
+            thr = t;
+            hasThr = true;
             cmd = c;
-            prefetch = p;
+            mod = m;
             addr = a;
             oldst = o;
             newst = o;
@@ -301,6 +313,8 @@ protected:
 
     std::map<SST::Event::id_type, LatencyStat> startTimes_;
 
+    /* When internally monitoring a timeout period, a coherence controller may need to re-enable the cache's clock */
+    std::function<void()> reenableClock_;
 
     /* Add a new event to the outgoing command queue towards memory */
     virtual void addToOutgoingQueue(Response& resp);

@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,7 +21,7 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisXorInstruction : public VanadisInstruction
+class VanadisXorInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisXorInstruction(
@@ -50,22 +50,13 @@ public:
             phys_int_regs_in[1]);
     }
 
-    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile)
+    virtual void instOp(VanadisRegisterFile* regFile, 
+                            uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0, 
+                            uint16_t phys_int_regs_in_1) override
     {
-#ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: (addr=%p) OR phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
-            " / in=%" PRIu16 ", %" PRIu16 "\n",
-            (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1],
-            isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);
-#endif
-        const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
-        const uint64_t src_2 = regFile->getIntReg<uint64_t>(phys_int_regs_in[1]);
-
-        regFile->setIntReg<uint64_t>(phys_int_regs_out[0], (src_1) ^ (src_2));
-
-        markExecuted();
+        const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in_0);
+        const uint64_t src_2 = regFile->getIntReg<uint64_t>(phys_int_regs_in_1);
+        regFile->setIntReg<uint64_t>(phys_int_regs_out_0, (src_1) ^ (src_2));
     }
 };
 

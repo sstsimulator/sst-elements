@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,14 +27,14 @@ namespace Vanadis {
 class VanadisBasicBranchUnit : public VanadisBranchUnit {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(VanadisBasicBranchUnit, "vanadis", "VanadisBasicBranchUnit",
+    SST_ELI_REGISTER_SUBCOMPONENT(VanadisBasicBranchUnit, "vanadis", "VanadisBasicBranchUnit",
                                           SST_ELI_ELEMENT_VERSION(1, 0, 0),
                                           "Implements basic branch prediction capability that stores the last "
                                           "branch direction in a cache",
                                           SST::Vanadis::VanadisBranchUnit)
 
     SST_ELI_DOCUMENT_PARAMS({ "branch_entries", "Sets the number of entries in the underlying cache "
-                                                "of branch directions" })
+                                                "of branch directions", "64" })
 
     SST_ELI_DOCUMENT_STATISTICS({ "branch_cache_hit",
                                   "Counts the number of times a speculated "

@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -47,7 +47,7 @@ int main( int argc, char* argv[] ) {
 		Pid pid = 0;
 	if ( myNode == 0 ) {
 		addr[0] = 0;
-		printf("%s() 0, read local mem, addr=%x\n",__func__,(int)addr);
+		printf("%s() 0, read local mem, addr=%p\n",__func__,addr);
 		while ( addr[0] == 0 );
 		printf("%s() 0, read local mem, value %x\n",__func__,addr[0]);
 
@@ -55,7 +55,7 @@ int main( int argc, char* argv[] ) {
 		volatile int tmp = 0;
 		
 		printf("%s() 0, addr of tmp  %p\n",__func__,&tmp);
-		rdma_memory_read( key, node, pid, 0, (void*) &tmp, sizeof(tmp), cq, (int)NULL ); 	
+		rdma_memory_read( key, node, pid, 0, (void*) &tmp, sizeof(tmp), cq, 0 ); 	
 	
 		while ( tmp == 0 );
 		printf("%s() 0, read far mem value %x\n",__func__,tmp);
@@ -68,7 +68,7 @@ int main( int argc, char* argv[] ) {
 		int tmp=0x1234abcd;
 			
 		Node node = 0; 
-		rdma_memory_write( key, node, pid, 0, &tmp, sizeof(tmp), cq, (int)NULL ); 	
+		rdma_memory_write( key, node, pid, 0, &tmp, sizeof(tmp), cq, 0 ); 	
 		while ( addr[0] == 0 );
 		printf("%s() 1, read local mem, value %x\n",__func__,addr[0]);
 	}

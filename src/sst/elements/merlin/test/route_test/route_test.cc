@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -94,11 +94,11 @@ route_test::init(unsigned int phase) {
             SimpleNetwork::Request* req =
                 new SimpleNetwork::Request(SimpleNetwork::INIT_BROADCAST_ADDR, id,
                                            0, true, true);
-            link_control->sendInitData(req);
+            link_control->sendUntimedData(req);
         }
     }
     else {
-        SimpleNetwork::Request* req = link_control->recvInitData();
+        SimpleNetwork::Request* req = link_control->recvUntimedData();
         if ( req != NULL ) {
             // std::cout << "ROUTE_TEST " << id << " Received an init event in phase " << phase << "!" << std::endl;
             delete req;

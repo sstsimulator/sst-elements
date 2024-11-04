@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -58,11 +58,11 @@ void CoherentMemController::init(unsigned int phase) {
     /* Inherit region from our source(s) */
     if (!phase) {
         /* Announce our presence on link */
-        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), true));
-        link_->sendInitData(new MemEventInitEndpoint(getName(), Endpoint::Memory, region_, true));
+        link_->sendUntimedData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), true));
+        link_->sendUntimedData(new MemEventInitEndpoint(getName(), Endpoint::Memory, region_, true));
     }
 
-    while (MemEventInit *ev = link_->recvInitData()) {
+    while (MemEventInit *ev = link_->recvUntimedData()) {
         processInitEvent(ev);
     }
 }

@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -151,22 +151,22 @@ private:
     MirandaMemoryManager* memMgr;
 
     uint32_t maxRequestsPending[OPCOUNT];
-    uint32_t requestsPending[OPCOUNT];
-    uint32_t reqMaxPerCycle;
-    uint64_t cacheLine;
-    uint32_t maxOpLookup;
+	uint32_t requestsPending[OPCOUNT];
+	uint32_t reqMaxPerCycle;
+	uint64_t cacheLine;
+	uint32_t maxOpLookup;
 
     Statistic<uint64_t>* statReqs[OPCOUNT];
-    Statistic<uint64_t>* statSplitReqs[OPCOUNT];
-    Statistic<uint64_t>* statCyclesWithIssue;
-    Statistic<uint64_t>* statMaxIssuePerCycle;
-    Statistic<uint64_t>* statCyclesWithoutIssue;
-    Statistic<uint64_t>* statBytes[OPCOUNT];
-    Statistic<uint64_t>* statReqLatency;
-    Statistic<uint64_t>* statTime;
-    Statistic<uint64_t>* statCyclesHitFence;
-    Statistic<uint64_t>* statCyclesHitReorderLimit;
-    Statistic<uint64_t>* statCycles;
+	Statistic<uint64_t>* statSplitReqs[OPCOUNT];
+	Statistic<uint64_t>* statCyclesWithIssue;
+	Statistic<uint64_t>* statMaxIssuePerCycle;
+	Statistic<uint64_t>* statCyclesWithoutIssue;
+	Statistic<uint64_t>* statBytes[OPCOUNT];
+	Statistic<uint64_t>* statReqLatency;
+	Statistic<uint64_t>* statTime;
+	Statistic<uint64_t>* statCyclesHitFence;
+	Statistic<uint64_t>* statCyclesHitReorderLimit;
+	Statistic<uint64_t>* statCycles;
 };
 
 }

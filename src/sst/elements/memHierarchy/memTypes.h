@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -18,6 +18,7 @@
 
 #include <sst/core/sst_types.h>
 #include <limits>
+#include <numeric>
 
 #include <sst/core/eli/elibase.h>   // For ElementInfoStatistic
 #include <sst/core/serialization/serializable.h> // For serializable MemRegion
@@ -48,8 +49,9 @@ enum class MemEventType { Cache, Move, Custom };                    // For parsi
     /* Requests */ \
     X(GetS,             GetSResp,       Request,    Request,        1, 0,   Cache)   /* Read:  Request to get cache line in S state */\
     X(GetX,             GetXResp,       Request,    Request,        1, 0,   Cache)   /* Write: Request to get cache line in M state */\
-    X(GetSX,            GetSResp,       Request,    Request,        1, 0,   Cache)   /* Read:  Request to get cache line in M state with a LOCK flag. Invalidates will block until LOCK flag is lifted */\
-                                                                        /*        GetSX sets the LOCK, GetX removes the LOCK  */\
+    X(GetSX,            GetXResp,       Request,    Request,        1, 0,   Cache)   /* Read:  Request to get cache line in exclusive (E or M) state.*/\
+                                                                        /*        Flag = F_LOCKED: GetSX sets the LOCK, GetX removes the LOCK  */\
+                                                                        /*        Flag = F_LLSC: GetSX sets the load-link state, GetX becomes a conditonal write */\
     X(Write,            WriteResp,      Request,    Request,        1, 0,   Cache)   /* Write: Request to write a cache line (does not return the line) */\
     X(FlushLine,        FlushLineResp,  Request,    Request,        1, 0,   Cache)   /* Request to flush a cache line */\
     X(FlushLineInv,     FlushLineResp,  Request,    Request,        1, 0,   Cache)   /* Request to flush and invalidate a cache line */\
@@ -227,7 +229,7 @@ static const std::string NONE = "None";
 enum class MemEventStatus { OK, Stall, Reject };
 
 /* Define an address region by start/end & interleaving */
-class MemRegion : public SST::Core::Serialization::serializable, SST::Core::Serialization::serializable_type<MemRegion> {
+class MemRegion : public SST::Core::Serialization::serializable {
 public:
     SST::MemHierarchy::Addr start;             // First address that is part of the region
     SST::MemHierarchy::Addr end;               // Last address that is part of the region
@@ -258,15 +260,6 @@ public:
         return false;
     }
 
-    // Move into util if helpful elsewhere
-    // TODO replace with std function when Core moves to C++17 
-    // a > b
-    uint64_t gcd(const uint64_t a, const uint64_t b) const {
-        if (b == 0)
-            return a;
-        return gcd(b, a % b);
-    }
-
     // TODO clean this up to something more succinct
     // We need to compute the set intersection of this MemRegion with MemRegion 'o'
     // The intersection may not be describable as a single MemRegion, so a set is returned
@@ -283,7 +276,7 @@ public:
         }
 
         // Easy case, no interleaving
-        if (interleaveSize == 0 && o.interleaveStep == 0) {
+        if (interleaveSize == 0 && o.interleaveSize == 0) {
             MemRegion reg;
             reg.start = std::max(start, o.start);
             reg.end = std::min(end, o.end);
@@ -293,20 +286,58 @@ public:
             return regions;
         }
        
-        // Otherwise, compute LCM of interleaveStep & o.interleaveStep
-        uint64_t lcm; 
-        if (interleaveStep == o.interleaveStep) {
-            lcm = interleaveStep;
-        } else if (interleaveStep > o.interleaveStep) {
-            lcm = (interleaveStep / gcd(interleaveStep, o.interleaveStep)) * o.interleaveStep;
-        } else {
-            lcm = (interleaveStep / gcd(o.interleaveStep, interleaveStep)) * o.interleaveStep;
+        // One is interleaved, other is not
+        if (interleaveSize == 0) {
+            MemRegion reg;
+            reg.end = std::min(end, o.end);
+            if (start > o.start) {
+                uint64_t tmp = start - o.start;
+                tmp = tmp / o.interleaveStep;
+                tmp = (tmp + 1) * o.interleaveStep + o.start;
+                if (tmp > reg.end) return regions;
+                reg.start = tmp;
+            } else {
+                reg.start = o.start;
+            }
+            if ((reg.end - reg.start) <= o.interleaveStep) {
+                reg.interleaveSize = 0;
+                reg.interleaveStep = 0;
+                reg.end = std::min(reg.end, reg.start + o.interleaveSize);
+            } else {
+                reg.interleaveSize = o.interleaveSize;
+                reg.interleaveStep = o.interleaveStep;
+            }
+            regions.insert(reg);
+            return regions;
+        } else if (o.interleaveSize == 0) {
+            MemRegion reg;
+            reg.end = std::min(end, o.end);
+            if (o.start > start) {
+                uint64_t tmp = o.start - start;
+                tmp = tmp / interleaveStep;
+                tmp = (tmp + 1) * interleaveStep + start;
+                if (tmp > reg.end) return regions;
+                reg.start = tmp;
+            } else {
+                reg.start = start;
+            }
+            if ((reg.end - reg.start) <= interleaveStep) {
+                reg.interleaveSize = 0;
+                reg.interleaveStep = 0;
+                reg.end = std::min(reg.end, reg.start + interleaveSize);
+            } else {
+                reg.interleaveSize = interleaveSize;
+                reg.interleaveStep = interleaveStep;
+            }
+            regions.insert(reg);
+            return regions;
         }
 
         // Check interval from max(start, o.start) to lcm + max(start, o.start)
         // for overlap
         // If overlap, add a region with (start_overlap, min(end, o.end), 1, lcm)
         //  Consecutive regions can be merged
+        uint64_t lcm = std::lcm(interleaveStep, o.interleaveStep); 
         uint64_t check_start = std::max(start, o.start);
         uint64_t check_end = check_start + lcm;
         uint64_t region_start = check_start;
@@ -350,23 +381,14 @@ public:
             return true;
         }
 
-        // Easy case, no interleaving
-        if (interleaveSize == 0 && o.interleaveStep == 0) {
+        // No interleaving
+        if (interleaveStep == 0 && o.interleaveStep == 0) {
             return true;
-        }
-       
-        // Otherwise, compute LCM of interleaveStep & o.interleaveStep
-        uint64_t lcm; 
-        if (interleaveStep == o.interleaveStep) {
-            lcm = interleaveStep;
-        } else if (interleaveStep > o.interleaveStep) {
-            lcm = (interleaveStep / gcd(interleaveStep, o.interleaveStep)) * o.interleaveStep;
-        } else {
-            lcm = (interleaveStep / gcd(o.interleaveStep, interleaveStep)) * o.interleaveStep;
         }
 
         // Check interval from max(start, o.start) to lcm + max(start, o.start)
         // for overlap
+        uint64_t lcm = std::lcm(interleaveStep, o.interleaveStep); 
         uint64_t check_start = std::max(start, o.start);
         uint64_t check_end = check_start + lcm;
         for (uint64_t i = check_start; i < check_end; i++) {

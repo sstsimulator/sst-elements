@@ -3,43 +3,26 @@
 from sst_unittest import *
 from sst_unittest_support import *
 
-################################################################################
-# Code to support a single instance module initialize, must be called setUp method
+try:
+    from sympy.polys.domains import ZZ
+except:
+    pass
+try:
+    from sympy.polys.galoistools import (gf_irreducible_p, gf_add, gf_mul, gf_rem)
+except:
+    pass
 
-module_init = 0
-module_sema = threading.Semaphore()
-
-def initializeTestModule_SingleInstance(class_inst):
-    global module_init
-    global module_sema
-
-    module_sema.acquire()
-    if module_init != 1:
-        try:
-            # Put your single instance Init Code Here
-            pass
-        except:
-            pass
-        module_init = 1
-    module_sema.release()
-
-################################################################################
 
 class testcase_merlin_Component(SSTTestCase):
 
-    def initializeClass(self, testName):
-        super(type(self), self).initializeClass(testName)
-        # Put test based setup code here. it is called before testing starts
-        # NOTE: This method is called once for every test
-
     def setUp(self):
         super(type(self), self).setUp()
-        initializeTestModule_SingleInstance(self)
         # Put test based setup code here. it is called once before every test
 
     def tearDown(self):
         # Put test based teardown code here. it is called once after every test
         super(type(self), self).tearDown()
+
 
 #####
 
@@ -75,6 +58,18 @@ class testcase_merlin_Component(SSTTestCase):
 
     def test_merlin_dragon_128_fl(self):
         self.merlin_test_template("dragon_128_test_fl")
+
+    def test_merlin_dragon_128_deferred(self):
+        self.merlin_test_template("dragon_128_test_deferred")
+
+
+    @unittest.skipIf(not(('sympy.polys.galoistools' in sys.modules) and ('sympy.polys.domains' in sys.modules)), "Polarfly construction requires sympy")
+    def test_merlin_polarfly_455(self):
+        self.merlin_test_template("polarfly_455_test")
+
+    @unittest.skipIf(not(('sympy.polys.galoistools' in sys.modules) and ('sympy.polys.domains' in sys.modules)), "Polarstar construction requires sympy")
+    def test_merlin_polarstar_504(self):
+        self.merlin_test_template("polarstar_504_test")
 
 
 #####

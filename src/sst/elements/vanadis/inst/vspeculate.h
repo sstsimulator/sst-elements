@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -24,7 +24,7 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisSpeculatedInstruction : public VanadisInstruction
+class VanadisSpeculatedInstruction : public virtual VanadisInstruction
 {
 
 public:
@@ -51,6 +51,7 @@ public:
     virtual uint64_t getSpeculatedAddress() const { return speculatedAddress; }
     virtual void     setSpeculatedAddress(const uint64_t spec_ad) { speculatedAddress = spec_ad; }
     virtual uint64_t getTakenAddress() const { return takenAddress; }
+    void setTakenAddress(uint64_t addr) { takenAddress = addr; }
     virtual bool     isSpeculated() const { return true; }
 
     virtual VanadisFunctionalUnitType getInstFuncType() const { return INST_BRANCH; }

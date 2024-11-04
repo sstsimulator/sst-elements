@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -53,13 +53,13 @@ public:
     void notifyAccess(const CacheListenerNotification& notify);
     void registerResponseCallback(Event::HandlerBase *handler);
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         cacheLineTrack,
-            "cassini",
-            "cacheLineTrack",
-            SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Tracks cacheline usage before eviction",
-            SST::MemHierarchy::CacheListener
+        "cassini",
+        "cacheLineTrack",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Tracks cacheline usage before eviction",
+        SST::MemHierarchy::CacheListener
     )
 
     SST_ELI_DOCUMENT_PARAMS(

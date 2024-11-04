@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,6 +28,10 @@
 #include "vfpflags.h"
 #include "vfuncunit.h"
 
+#include "os/vgetthreadstate.h"
+#include "os/vdumpregsreq.h"
+#include "os/vcheckpointreq.h"
+
 #include <array>
 #include <limits>
 #include <set>
@@ -36,6 +40,7 @@
 #include <sst/core/link.h>
 #include <sst/core/output.h>
 #include <sst/core/params.h>
+
 
 namespace SST {
 namespace Vanadis {
@@ -107,33 +112,45 @@ public:
 
     SST_ELI_DOCUMENT_PARAMS(
         { "verbose", "Set the level of output verbosity, 0 is no output, higher "
-                     "is more output" },
-        { "max_cycles", "Maximum number of cycles to execute" },
-        { "reorder_slots", "Number of slots in the reorder buffer" }, { "core_id", "Identifier for this core" },
-        { "hardware_threads", "Number of hardware threads in this core" },
-        { "physical_integer_registers", "Number of physical integer registers per hardware thread" },
-        { "physical_fp_registers", "Number of physical floating point registers per hardware thread" },
-        { "integer_arith_units", "Number of integer arithemetic units" },
-        { "integer_arith_cycles", "Cycles per instruction for integer arithmetic" },
-        { "integer_div_units", "Number of integer division units" },
-        { "integer_div_cycles", "Cycles per instruction for integer division" },
-        { "fp_arith_units", "Number of floating point arithmetic units" },
-        { "fp_arith_cycles", "Cycles per floating point arithmetic" },
-        { "fp_div_units", "Number of floating point division units" },
-        { "fp_div_cycles", "Cycles per floating point division" }, { "load_units", "Number of memory load units" },
-        { "store_units", "Number of memory store units" },
-        { "max_loads_per_cycle", "Maximum number of loads that can issue to the cache per cycle" },
-        { "max_stores_per_cycle", "Maximum number of stores that can issue to the cache per cycle" },
-        { "branch_units", "Number of branch units" }, { "special_units", "Number of special instruction units" },
-        { "issues_per_cycle", "Number of instruction issues per cycle" },
-        { "fetches_per_cycle", "Number of instruction fetches per cycle" },
-        { "retires_per_cycle", "Number of instruction retires per cycle" },
-        { "decodes_per_cycle", "Number of instruction decodes per cycle" },
-        { "print_retire_tables", "Print registers during retirement step (default is yes)" },
-        { "print_issue_tables", "Print registers during issue step (default is yes)" },
-        { "print_int_reg", "Print integer registers true/false, auto set to true if verbose > 16" },
+                     "is more output", "0" },
+        { "dbg_mask", "Mask for output. Default is to not mask anything out (0) and defer to 'verbose'.", "0"},
+        { "start_verbose_when_issue_address", "Set verbose to 0 until the specified instruction "
+                                        "address is issued, then set to 'verbose' parameter", ""},
+        { "stop_verbose_when_retire_address", "When the specified instruction "
+                                        "address is retired, set verbose to 0", ""},
+        { "pause_when_retire_address", "If specified, the simulation will stop when this address is retired.", "0"},
+        { "pipeline_trace_file", "If specified, a trace of the pipeline activity will be generated to this file.", ""},
+        { "max_cycle", "Maximum number of cycles to execute. The core will halt after this many cycles." , "std::numeric_limits<uint64_t>::max()"},
+        { "node_id", "Identifier for the node this core belongs to. Each node in the system needs a unique ID between 0 and (number of nodes) - 1. Used to tag output.", "0"},
+        { "core_id", "Identifier for this core. Each core in the system needs a unique ID between 0 and (number of cores) - 1.", 0 },
+        { "hardware_threads", "Number of hardware threads in this core", "1" },
+        { "clock", "Core clock frequency", "1GHz" },
+        { "reorder_slots", "Number of slots in the reorder buffer", "64"}, 
+        { "physical_integer_registers", "Number of physical integer registers per hardware thread", "128" },
+        { "physical_fp_registers", "Number of physical floating point registers per hardware thread", "128" },
+        { "integer_arith_units", "Number of integer arithemetic units", "2" },
+        { "integer_arith_cycles", "Cycles per instruction for integer arithmetic", "2" },
+        { "integer_div_units", "Number of integer division units", "1" },
+        { "integer_div_cycles", "Cycles per instruction for integer division", "4" },
+        { "fp_arith_units", "Number of floating point arithmetic units", "2" },
+        { "fp_arith_cycles", "Cycles per floating point arithmetic", "8" },
+        { "fp_div_units", "Number of floating point division units", "1" },
+        { "fp_div_cycles", "Cycles per floating point division", "80" }, 
+        { "branch_units", "Number of branch units", "1" }, 
+        { "branch_unit_cycles", "Cycles per branch", "int_arith_cycles"},
+        { "issues_per_cycle", "Number of instruction issues per cycle", "2" },
+        { "fetches_per_cycle", "Number of instruction fetches per cycle", "2" },
+        { "retires_per_cycle", "Number of instruction retires per cycle", "2" },
+        { "decodes_per_cycle", "Number of instruction decodes per cycle", "2" },
+        { "dcache_line_width", "Width of a line for the data cache, in bytes. (Currently not used but may be in the future).", "64"},
+        { "icache_line_width", "Width of a line for the instruction cache, in bytes", "64"},
+        { "print_retire_tables", "Print registers during retirement step (default is yes)", "true" },
+        { "print_issue_tables", "Print registers during issue step (default is yes)", "true" },
+        { "print_int_reg", "Print integer registers true/false, auto set to true if verbose > 16", "false" },
         { "print_fp_reg", "Print floating-point registers true/false, auto set to "
-                          "true if verbose > 16" })
+                          "true if verbose > 16", "false" },
+        { "print_rob", "Print reorder buffer state during issue and retire", "true"},
+        { "enable_simt", "Implement SIMT pipeline for multithread kernels", "false"}  )
 
     SST_ELI_DOCUMENT_STATISTICS(
         { "cycles", "Number of cycles the core executed", "cycles", 1 },
@@ -162,7 +179,7 @@ public:
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         { "lsq", "Load-Store Queue for Memory Access", "SST::Vanadis::VanadisLoadStoreQueue" },
         { "mem_interface_inst", "Interface to memory system for instructions", "SST::Interfaces::StandardMem" },
-        { "decoder%(hardware_threads)d", "Instruction decoder for a hardware thread", "SST::Vanadis::VanadisDecoder" })
+    )
 
 #ifdef VANADIS_BUILD_DEBUG
     VanadisDebugComponent(SST::ComponentId_t id, SST::Params& params);
@@ -185,12 +202,16 @@ public:
 
     void handleMisspeculate(const uint32_t hw_thr, const uint64_t new_ip);
     void clearROBMisspeculate(const uint32_t hw_thr);
-    void resetRegisterStacks(const uint32_t hw_thr);
+    
     void clearFuncUnit(const uint32_t hw_thr, std::vector<VanadisFunctionalUnit*>& unit);
 
     void syscallReturn(uint32_t thr);
     void setHalt(uint32_t thr, int64_t halt_code);
     void startThread(int thr, uint64_t stackStart, uint64_t instructionPointer );
+    void startThreadFork( VanadisStartThreadForkReq* req );
+    void startThreadClone( VanadisStartThreadCloneReq* req );
+    void getThreadState( VanadisGetThreadStateReq* req );
+    void dumpRegs( VanadisDumpRegsReq* req );
 
 private:
 #ifdef VANADIS_BUILD_DEBUG
@@ -218,14 +239,43 @@ private:
     int recoverRetiredRegisters(
         VanadisInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs,
         VanadisISATable* issue_isa_table, VanadisISATable* retire_isa_table);
+    
+    int recoverRetiredRegisters(
+        VanadisInstruction* ins, VanadisRegisterStack* int_regs, VanadisRegisterStack* fp_regs,
+        VanadisISATable* issue_isa_table, VanadisISATable* retire_isa_table, uint16_t sw_thr);
 
     int  performFetch(const uint64_t cycle);
     int  performDecode(const uint64_t cycle);
-    int  performIssue(const uint64_t cycle, uint32_t& rob_start, bool& unallocated_memory_op_seen);
+    int  performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_start, int& unallocated_memory_op_seen);
     int  performExecute(const uint64_t cycle);
-    int  performRetire(VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle);
+    int  performRetire(int rob_num, VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle);
     int  allocateFunctionalUnit(VanadisInstruction* ins);
     bool mapInstructiontoFunctionalUnit(VanadisInstruction* ins, std::vector<VanadisFunctionalUnit*>& functional_units);
+    void printRob(int rob_num, VanadisCircularQueue<VanadisInstruction*>* rob);
+    
+    bool checkVerboseAddr( uint64_t addr ) {
+        for ( auto& it : start_verbose_when_issue_address ) {
+            if ( it == addr ) return true;
+        }
+        return false;
+    }
+
+    void setVerboseWhenIssueAddress( std::string addrs ) {
+        while ( ! addrs.empty() ) {
+            auto pos = addrs.find(',');
+            std::string addr;
+            if ( pos == std::string::npos ) {
+                addr = addrs;
+                addrs.clear();
+            } else  {
+                addr = addrs.substr(0,pos);
+                addrs = addrs.substr(pos+1);
+            }
+            start_verbose_when_issue_address.push_back(  strtol( addr.c_str(), NULL , 16 ) );
+        }
+    }
+
+    void resetHwThread(uint32_t thr);
 
     SST::Output* output;
 
@@ -239,7 +289,11 @@ private:
     uint32_t issues_per_cycle;
     uint32_t retires_per_cycle;
 
+    uint32_t m_curRetireHwThread;
+    uint32_t m_curIssueHwThread;
+
     std::vector<VanadisCircularQueue<VanadisInstruction*>*> rob;
+    std::vector<VanadisCircularQueue<VanadisInstruction*>*> v_warp_rob;
     std::vector<VanadisDecoder*>                            thread_decoders;
     std::vector<const VanadisDecoderOptions*>               isa_options;
 
@@ -250,16 +304,16 @@ private:
     std::vector<VanadisFunctionalUnit*> fu_fp_div;
 
     std::vector<VanadisRegisterFile*>  register_files;
-    std::vector<VanadisRegisterStack*> int_register_stacks;
-    std::vector<VanadisRegisterStack*> fp_register_stacks;
+    VanadisRegisterStack* int_register_stack;
+    VanadisRegisterStack* fp_register_stack;
 
     std::vector<VanadisISATable*> issue_isa_tables;
     std::vector<VanadisISATable*> retire_isa_tables;
 
-    std::vector<bool> tmp_not_issued_int_reg_read;
-    std::vector<bool> tmp_int_reg_write;
-    std::vector<bool> tmp_not_issued_fp_reg_read;
-    std::vector<bool> tmp_fp_reg_write;
+    std::vector<uint8_t*> tmp_not_issued_int_reg_read;
+    std::vector<uint8_t*> tmp_int_reg_write;
+    std::vector<uint8_t*> tmp_not_issued_fp_reg_read;
+    std::vector<uint8_t*> tmp_fp_reg_write;
 
     std::list<VanadisInsCacheLoadRecord*>* icache_load_records;
 
@@ -271,6 +325,8 @@ private:
     bool  print_fp_reg;
     bool  print_issue_tables;
     bool  print_retire_tables;
+    bool  print_rob;
+    bool enable_simt; //for future use
 
     char*    instPrintBuffer;
     uint64_t nextInsID;
@@ -301,11 +357,19 @@ private:
     uint32_t ins_decoded_this_cycle;
 
     uint64_t pause_on_retire_address;
-    uint64_t start_verbose_when_issue_address;
+    std::deque<uint64_t> start_verbose_when_issue_address;
+    uint64_t stop_verbose_when_retire_address;
 
     std::vector<VanadisFloatingPointFlags*> fp_flags;
+    std::vector<VanadisStartThreadCloneReq*> cloneReqs;
 
     SST::Link* os_link;
+
+    bool* m_checkpointing;
+    std::string m_checkpointDir;
+    enum { NO_CHECKPOINT, CHECKPOINT_LOAD, CHECKPOINT_SAVE } m_checkpoint;
+    void checkpoint(FILE*);
+    void checkpointLoad(FILE*);
 };
 
 } // namespace Vanadis

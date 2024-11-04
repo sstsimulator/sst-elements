@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -564,10 +564,10 @@ void MemCacheController::init(unsigned int phase) {
     /* Inherit region from our source(s) */
     if (!phase) {
         /* Announce our presence on link */
-        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), false));
+        link_->sendUntimedData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), false));
     }
 
-    while (MemEventInit *ev = link_->recvInitData()) {
+    while (MemEventInit *ev = link_->recvUntimedData()) {
         processInitEvent(ev);
     }
 }
@@ -580,11 +580,8 @@ void MemCacheController::setup(void) {
 
 
 void MemCacheController::finish(void) {
-    if (!clockOn_) {
-        Cycle_t cycle = turnClockOn();
-        memBackendConvertor_->turnClockOn(cycle);
-    }
-    memBackendConvertor_->finish();
+    Cycle_t cycle = getNextClockCycle(clockTimeBase_);
+    memBackendConvertor_->finish(cycle);
     link_->finish();
 }
 
@@ -673,7 +670,7 @@ void MemCacheController::processInitEvent( MemEventInit* me ) {
         MemEventInit * mEv = me->clone();
         mEv->setSrc(getName());
         mEv->setDst(link_->getTargetDestination(mEv->getRoutingAddress()));
-        link_->sendInitData(mEv);
+        link_->sendUntimedData(mEv);
     }
     delete me;
 }

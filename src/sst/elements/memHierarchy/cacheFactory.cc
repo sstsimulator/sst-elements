@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -144,6 +144,7 @@ void Cache::createCoherenceManager(Params &params) {
     coherenceParams.insert("protocol", mesi);   // Not used by all managers
     coherenceParams.insert("inclusive", inclusive); // Not used by all managers
     coherenceParams.insert("snoop_l1_invalidations", params.find<std::string>("snoop_l1_invalidations", "false")); // Not used by all managers
+    coherenceParams.insert("llsc_block_cycles", params.find<std::string>("llsc_block_cycles", "0")); // Not used by all managers
     coherenceParams.insert("request_link_width", params.find<std::string>("request_link_width", "0B"));
     coherenceParams.insert("response_link_width", params.find<std::string>("response_link_width", "0B"));
     coherenceParams.insert("min_packet_size", params.find<std::string>("min_packet_size", "8B"));
@@ -154,7 +155,7 @@ void Cache::createCoherenceManager(Params &params) {
     coherenceParams.insert("dlines", params.find<std::string>("noninclusive_directory_entries", "0"));
     coherenceParams.insert("dassoc", params.find<std::string>("noninclusive_directory_associativity", "0"));
     coherenceParams.insert("drpolicy", params.find<std::string>("noninclusive_directory_repl", "lru"));
-
+    coherenceParams.insert("cache_frequency", params.find<std::string>("cache_frequency", "")); // Not used by all managers, already error checked
     bool prefetch = (statPrefetchRequest != nullptr);
 
     if (!L1) {
@@ -205,7 +206,7 @@ void Cache::createCoherenceManager(Params &params) {
     coherenceMgr_->setCacheListener(listeners_, dropPrefetchLevel, maxOutstandingPrefetch);
     coherenceMgr_->setDebug(DEBUG_ADDR);
     coherenceMgr_->setSliceAware(region_.interleaveSize, region_.interleaveStep);
-
+    coherenceMgr_->registerClockEnableFunction(std::bind(&Cache::turnClockOn, this));
 }
 
 

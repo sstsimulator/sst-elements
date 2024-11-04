@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,11 +27,17 @@ public:
     VanadisSyscallCloseEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, int32_t file_id)
         : VanadisSyscallEvent(core, thr, bittype), close_file_descriptor(file_id) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_CLOSE; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_CLOSE; }
 
     int32_t getFileDescriptor() const { return close_file_descriptor; }
 
 private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& close_file_descriptor;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallCloseEvent);
+
     int32_t close_file_descriptor;
 };
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -30,6 +30,11 @@ public:
     VanadisFPConvertInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, VanadisFloatingPointFlags* fpflags, const uint16_t fp_dest,
         const uint16_t fp_src) :
+        VanadisInstruction(addr, hw_thr, isa_opts, 0, 0, 0, 0,
+            ((sizeof(src_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1,
+            ((sizeof(dest_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1,
+            ((sizeof(src_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1,
+            ((sizeof(dest_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1),
         VanadisFloatingPointInstruction(
             addr, hw_thr, isa_opts, fpflags, 0, 0, 0, 0,
             ((sizeof(src_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1,
@@ -127,48 +132,136 @@ public:
             getInstCode(), isa_fp_regs_out[0], phys_fp_regs_out[0], isa_fp_regs_in[0], phys_fp_regs_in[0]);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+                            uint16_t phys_fp_regs_out_0,uint16_t phys_fp_regs_in_0)
     {
-#ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: 0x%llx %s fp-dest isa: %" PRIu16 " phys: %" PRIu16 " <- fp-src: isa: %" PRIu16 " phys: %" PRIu16
-            "\n",
-            getInstructionAddress(), getInstCode(), isa_fp_regs_out[0], phys_fp_regs_out[0], isa_fp_regs_in[0],
-            phys_fp_regs_in[0]);
-#endif
+        #ifdef VANADIS_BUILD_DEBUG
+        if(output->getVerboseLevel() >= verboselevel) {
+            output->verbose(
+                CALL_INFO, verboselevel, 0,
+                "hw_thr=%d sw_thr = %d Execute: 0x%" PRI_ADDR " %s fp-dest isa: %" PRIu16 " phys: %" PRIu16 " <- fp-src: isa: %" PRIu16 " phys: %" PRIu16
+                "\n",
+                getHWThread(),sw_thr, getInstructionAddress(), getInstCode(), isa_fp_regs_out[0], phys_fp_regs_out_0, isa_fp_regs_in[0],
+                phys_fp_regs_in_0);
+        }
+        #endif
+    }
 
-        if ( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) {
-            if ( sizeof(src_format) == 8 ) {
-                if ( sizeof(dest_format) == 8 ) {
+    void instOp(VanadisRegisterFile* regFile, uint16_t phys_fp_regs_in_0, uint16_t phys_fp_regs_in_1,
+                        uint16_t phys_fp_regs_out_0,uint16_t phys_fp_regs_out_1)
+    {
+        // This code is currenty structured MIPS else RISCV and other ISA's may not work
+        if ( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) 
+        {
+            if ( sizeof(src_format) == 8 ) 
+            {
+                if ( sizeof(dest_format) == 8 ) 
+                {
                     const src_format fp_v =
-                        combineFromRegisters<src_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
+                        combineFromRegisters<src_format>(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1);
                     fractureToRegisters<dest_format>(
-                        regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], static_cast<dest_format>(fp_v));
+                        regFile, phys_fp_regs_out_0, phys_fp_regs_out_1, static_cast<dest_format>(fp_v));
+
+                    performFlagChecks<dest_format>(fp_v);
                 }
-                else {
+                else 
+                {
                     const src_format fp_v =
-                        combineFromRegisters<src_format>(regFile, phys_fp_regs_in[0], phys_fp_regs_in[1]);
-                    regFile->setFPReg<dest_format>(phys_fp_regs_out[0], static_cast<dest_format>(fp_v));
+                        combineFromRegisters<src_format>(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1);
+                    regFile->setFPReg<dest_format>(phys_fp_regs_out_0, static_cast<dest_format>(fp_v));
+                    performFlagChecks<dest_format>(fp_v);
                 }
             }
-            else {
-                if ( sizeof(dest_format) == 8 ) {
-                    const src_format fp_v = regFile->getFPReg<src_format>(phys_fp_regs_in[0]);
+            else 
+            {
+                if ( sizeof(dest_format) == 8 ) 
+                {
+                    const src_format fp_v = regFile->getFPReg<src_format>(phys_fp_regs_in_0);
                     fractureToRegisters<dest_format>(
-                        regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], static_cast<dest_format>(fp_v));
+                        regFile, phys_fp_regs_out_0, phys_fp_regs_out_1, static_cast<dest_format>(fp_v));
+                    performFlagChecks<dest_format>(fp_v);
                 }
-                else {
-                    const src_format fp_v = regFile->getFPReg<src_format>(phys_fp_regs_in[0]);
-                    regFile->setFPReg<dest_format>(phys_fp_regs_out[0], static_cast<dest_format>(fp_v));
+                else 
+                {
+                    const src_format fp_v = regFile->getFPReg<src_format>(phys_fp_regs_in_0);
+                    regFile->setFPReg<dest_format>(phys_fp_regs_out_0, static_cast<dest_format>(fp_v));
+                    performFlagChecks<dest_format>(fp_v);
                 }
             }
-        }
-        else {
-            const src_format fp_v = regFile->getFPReg<src_format>(phys_fp_regs_in[0]);
-            regFile->setFPReg<dest_format>(phys_fp_regs_out[0], static_cast<dest_format>(fp_v));
-        }
+        } 
+        else 
+        {
+            const src_format fp_v = regFile->getFPReg<src_format>(phys_fp_regs_in_0);
 
+            if( isNaN( fp_v ) ) 
+            {
+                regFile->setFPReg<dest_format>(phys_fp_regs_out_0, NaN<dest_format>());
+            } 
+            else 
+            {
+                if ( 8 == regFile->getFPRegWidth() ) 
+                {
+
+                    if constexpr (std::is_same_v<src_format,float>) 
+                    {
+                        if constexpr (std::is_same_v<dest_format,double>) 
+                        {
+                            regFile->setFPReg<dest_format>(phys_fp_regs_out_0, static_cast<dest_format>(fp_v));
+                        } 
+                        else 
+                        {
+                            assert(0);
+                        }
+                    } 
+                    else if constexpr (std::is_same_v<src_format,double>) 
+                    {
+                        if constexpr (std::is_same_v<dest_format,float>) 
+                        {
+                            dest_format tmp = static_cast<dest_format>(fp_v);
+                            uint64_t result = 0xffffffff00000000 | convertTo<uint32_t>(tmp);
+                            regFile->setFPReg<uint64_t>(phys_fp_regs_out_0, result);
+                        } 
+                        else 
+                        {
+                            assert(0);
+                        }
+                    } 
+                    else 
+                    {
+                        assert(0);
+                    }
+                    
+                } 
+                else 
+                {
+                    assert(0);
+                }
+            }
+            performFlagChecks<dest_format>(fp_v);
+        }
+    }
+
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
+        uint16_t phys_fp_regs_out_0 = getPhysFPRegOut(0);
+        uint16_t phys_fp_regs_in_0 = getPhysFPRegIn(0);
+        uint16_t phys_fp_regs_in_1 = 0;
+        uint16_t phys_fp_regs_out_1 = 0;
+        log(output, 16, 65535, phys_fp_regs_out_0, phys_fp_regs_in_0);
+
+        if ( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) 
+        {
+            if ( sizeof(src_format) == 8 ) 
+            {
+                phys_fp_regs_in_1 = getPhysFPRegIn(1);
+            }
+            if ( sizeof(dest_format) == 8 ) 
+            {
+                phys_fp_regs_out_1 = getPhysFPRegOut(1);
+            }
+        }
+        instOp(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1, 
+                        phys_fp_regs_out_0, phys_fp_regs_out_1);
         markExecuted();
     }
 };

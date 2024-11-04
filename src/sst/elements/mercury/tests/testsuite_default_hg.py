@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import subprocess
 
 from sst_unittest import *
 from sst_unittest_support import *
@@ -9,38 +10,24 @@ from sst_unittest_support import *
 class testcase_hg(SSTTestCase):
 
     def setUp(self):
-        super(type(self), self).setUp()
+        super(testcase_hg, self).setUp()
         # Put test based setup code here. it is called once before every test
 
     def tearDown(self):
         # Put test based teardown code here. it is called once after every test
-        super(type(self), self).tearDown()
+        super(testcase_hg, self).tearDown()
 
 #####
 
-    def test_node(self):
-        self.simple_components_template("example1")
-
-    def test_basic_clocks(self):
-        self.simple_components_template("basicClocks")
-
-    def test_basic_links(self):
-        self.simple_components_template("basicLinks")
-
-    def test_basic_params(self):
-        self.simple_components_template("basicParams")
-
-    def test_basic_statistics_0(self):
-        self.simple_components_template("basicStatistics0")
-
-    def test_basic_statistics_1(self):
-        self.simple_components_template("basicStatistics1")
-
-    def test_basic_statistics_2(self):
-        self.simple_components_template("basicStatistics2")
-
-    #def test_simple_rng_component_marsaglia(self):
-    #    self.simple_components_template("simpleRNGComponent_marsaglia", striptotail=1)
+    def test_testme(self):
+        testdir = self.get_testsuite_dir()
+        libdir = sstsimulator_conf_get_value_str("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR")
+        path = os.environ.get("SST_LIB_PATH")
+        if path is None or path == "":
+            os.environ["SST_LIB_PATH"] = libdir
+        else:
+            os.environ["SST_LIB_PATH"] = path + ":" + libdir
+        self.simple_components_template("ostest")
 
 #####
 

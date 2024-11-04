@@ -1,9 +1,9 @@
 
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -128,7 +128,7 @@ void RdmaNic::RecvEngine::processMsgHdr( RdmaNicNetworkEvent* pkt )
 					nic.getName().c_str(), rqId, hdr->payloadLength, entry->getPayloadLength() );
 	}
 	Addr_t destAddr = entry->getAddr();
-	nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"key=%#x rqId=%d destAddr=%#x\n", hdr->data.msgKey, rqId, destAddr );
+	nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"key=%#x rqId=%d destAddr=%#" PRIx64 "\n", hdr->data.msgKey, rqId, destAddr );
 
 	m_recvStreamMap[ calcNodeStreamId( pkt->getSrcNode(), pkt->getStreamId() ) ] = new RecvStream( nic, destAddr, hdr->payloadLength, entry );
 
@@ -148,7 +148,7 @@ void RdmaNic::RecvEngine::processWriteHdr( RdmaNicNetworkEvent* pkt )
 // FIXME check for length violation
 
 	Addr_t destAddr = entry->getAddr() + hdr->data.rdma.offset;
-    nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"destAddr=%x\n", destAddr );
+    nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"destAddr=%#" PRIx64 "\n", destAddr );
 	m_recvStreamMap[ calcNodeStreamId( pkt->getSrcNode(), pkt->getStreamId() ) ] = new RecvStream( nic, destAddr, hdr->payloadLength, entry );
 }
 
@@ -219,6 +219,7 @@ RdmaNic::RecvStream::~RecvStream() {
     	nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cqId=%d\n",recvEntry->getCqId());
 		if ( -1 != recvEntry->getCqId() ) {
     		RdmaCompletion comp;
+            bzero( &comp, sizeof(comp));
     		comp.context = recvEntry->getContext();
     		nic.writeCompletionToHost( recvEntry->getThread(), recvEntry->getCqId(), comp );
 		}
@@ -248,7 +249,7 @@ bool RdmaNic::RecvStream::process() {
 	auto pkt = pktQ.front();
 	Addr_t addr = destAddr + offset;
     int len = calcLen( addr, pkt->getData().size(), 64 );
-    nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"destAddr=%#x len=%d\n",addr,len);
+    nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"destAddr=%#" PRIx64 " len=%d\n",addr,len);
     nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"%s\n",getDataStr(pkt->getData(),len).c_str());
 
 	if ( len ) {

@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -39,9 +39,9 @@ class topo_dragonfly_event;
 
 
 /* Assumed connectivity of each router:
- * ports [0, p-1]:      Hosts
- * ports [p, p+a-2]:    Intra-group
- * ports [p+a-1, k-1]:  Inter-group
+ * ports [0, p - 1]:           Hosts
+ * ports [p, p + (a-1)m - 1]:  Intra-group
+ * ports [p + (a-1)m, k - 1]:  Inter-group
  */
 
 struct dgnflyParams {
@@ -51,6 +51,7 @@ struct dgnflyParams {
     uint32_t h;  /* # of ports / router to connect to other groups */
     uint32_t g;  /* # of Groups */
     uint32_t n;  /* # of links between groups in a pair */
+    uint32_t m;  /* # of links between each pair of routers in a group */
 };
 
 enum global_route_mode_t { ABSOLUTE, RELATIVE };
@@ -127,7 +128,7 @@ private:
     // const uint8_t* link_counts;
     Shared::SharedArray<uint8_t> link_counts;
     size_t groups;  // Number of groups
-    size_t routers; // Number of routers per groupt
+    size_t routers; // Number of routers per group
     size_t slices;  // number of links between each pair of groups
     size_t links;   // number global links per router
     int gid;        // group id
@@ -138,12 +139,11 @@ private:
 public:
     RouteToGroup() {}
 
-    // void init(SharedRegion* sr, size_t g, size_t r);
-    void init_write(const std::string& basename, int group_id, global_route_mode_t route_mode,
+    void init_write(std::string basename, int group_id, global_route_mode_t route_mode,
                     const dgnflyParams& params, const std::vector<int64_t>& global_link_map,
                     bool config_failed_links, const std::vector<FailedLink>& failed_links);
 
-    void init(const std::string& basename, int group_id, global_route_mode_t route_mode,
+    void init(std::string basename, int group_id, global_route_mode_t route_mode,
               const dgnflyParams& params, bool config_failed_links);
 
     const RouterPortPair& getRouterPortPair(int group, int route_number) const;
@@ -177,13 +177,14 @@ class topo_dragonfly: public Topology {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         topo_dragonfly,
         "merlin",
         "dragonfly",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Dragonfly topology object.  Implements a dragonfly with a single all to all pattern within the group.",
-        SST::Merlin::Topology)
+        SST::Merlin::Topology
+    )
 
     SST_ELI_DOCUMENT_PARAMS(
         // Parameters needed for use with old merlin python module
@@ -191,16 +192,19 @@ public:
         {"dragonfly.routers_per_group",     "Number of links used to connect to routers in same group."},
         {"dragonfly.intergroup_per_router", "Number of links per router connected to other groups."},
         {"dragonfly.intergroup_links",      "Number of links between each pair of groups."},
+        {"dragonfly.intragroup_links",      "Number of links between each pair of routers in a group."},
         {"dragonfly.num_groups",            "Number of groups in network."},
         {"dragonfly.algorithm",             "Routing algorithm to use [minmal (default) | valiant].", "minimal"},
         {"dragonfly.adaptive_threshold",    "Threshold to use when make adaptive routing decisions.", "2.0"},
         {"dragonfly.global_link_map",       "Array specifying connectivity of global links in each dragonfly group."},
         {"dragonfly.global_route_mode",     "Mode for intepreting global link map [absolute (default) | relative].","absolute"},
 
+        {"network_name",          "Name of the network", "network"},
         {"hosts_per_router",      "Number of hosts connected to each router."},
         {"routers_per_group",     "Number of links used to connect to routers in same group."},
         {"intergroup_per_router", "Number of links per router connected to other groups."},
         {"intergroup_links",      "Number of links between each pair of groups."},
+        {"intragroup_links",      "Number of links between each pair of of routers in a group."},
         {"num_groups",            "Number of groups in network."},
         {"algorithm",             "Routing algorithm to use [minmal (default) | valiant].", "minimal"},
         {"adaptive_threshold",    "Threshold to use when make adaptive routing decisions.", "2.0"},
@@ -236,6 +240,7 @@ public:
     int const* output_queue_lengths;
     int num_vcs;
     int num_vns;
+    uint32_t global_start;
 
     global_route_mode_t global_route_mode;
 
@@ -260,8 +265,8 @@ public:
     virtual PortState getPortState(int port) const;
     virtual std::string getPortLogicalGroup(int port) const;
 
-    virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts);
-    virtual internal_router_event* process_InitData_input(RtrEvent* ev);
+    virtual void routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts);
+    virtual internal_router_event* process_UntimedData_input(RtrEvent* ev);
 
     virtual void getVCsPerVN(std::vector<int>& vcs_per_vn) {
         for ( int i = 0; i < num_vns; ++i ) {
@@ -277,8 +282,8 @@ public:
 private:
     void idToLocation(int id, dgnflyAddr *location);
     int32_t router_to_group(uint32_t group);
-    int32_t port_for_router(uint32_t router);
-    int32_t port_for_group(uint32_t group, uint32_t global_slice, int id = -1);
+    int32_t port_for_router(uint32_t router, int local_slice);
+    int32_t port_for_group(uint32_t group, uint32_t global_slice, uint32_t local_slice);
     int32_t port_for_group_init(uint32_t group, uint32_t global_slice);
     int32_t hops_to_router(uint32_t group, uint32_t router, uint32_t slice);
 
@@ -300,7 +305,6 @@ private:
     void route_ugal(int port, int vc, internal_router_event* ev);
     void route_mina(int port, int vc, internal_router_event* ev);
 
-
 };
 
 
@@ -313,10 +317,11 @@ public:
     topo_dragonfly::dgnflyAddr dest;
     uint16_t global_slice;
     uint16_t global_slice_shadow;
+    uint16_t local_slice;
 
     topo_dragonfly_event() { }
     topo_dragonfly_event(const topo_dragonfly::dgnflyAddr &dest) :
-        dest(dest), global_slice(0)
+        dest(dest), global_slice(0), local_slice(0)
         {}
     ~topo_dragonfly_event() { }
 
@@ -335,6 +340,7 @@ public:
         ser & dest.host;
         ser & global_slice;
         ser & global_slice_shadow;
+        ser & local_slice;
     }
 
 private:

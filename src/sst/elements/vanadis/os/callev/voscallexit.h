@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,11 +27,17 @@ public:
     VanadisSyscallExitEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t rc)
         : VanadisSyscallEvent(core, thr, bittype), return_code(rc) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_EXIT; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_EXIT; }
 
     uint64_t getExitCode() const { return return_code; }
 
 private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& return_code;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallExitEvent);
+
     uint64_t return_code;
 };
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -15,7 +15,7 @@
 
     struct MemRequest {
 
-        typedef std::function<void(Interfaces::StandardMem::Request*)> Callback;
+        typedef std::function<void(Interfaces::StandardMem::Request*, int )> Callback;
         
         enum Op { Write, Read, Fence } m_op;
         MemRequest( int src, uint64_t addr, int dataSize, uint8_t* data, Callback* callback = NULL  ) : 
@@ -36,7 +36,7 @@
 
         virtual void handleResponse( Interfaces::StandardMem::Request* resp ) { 
             if ( callback ) {
-                (*callback)( resp );
+                (*callback)( resp, id );
             } else {
                 delete resp; 
             }

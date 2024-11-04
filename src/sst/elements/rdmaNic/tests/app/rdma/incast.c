@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -18,6 +18,7 @@
 #include <rdma.h>
 #include <unistd.h>
 #include <strings.h>
+#include <inttypes.h>
 
 //#define BUF_SIZE 250000
 #define BUF_SIZE 10
@@ -60,7 +61,7 @@ int main( int argc, char* argv[] ) {
 		for ( int i = 0; i < numNodes -1; i++ ) {
 			RdmaCompletion comp;
 			rdma_read_comp( msgCq, &comp, 1 );
-			printf("got a message in buffer %#x\n",comp.context);
+			printf("got a message in buffer %#" PRIxBITS "\n",comp.context);
 #if VALIDATE
 			uint32_t* buf = (uint32_t*) comp.context;
 			for ( int i = 0; i < BUF_SIZE; i++ ) {

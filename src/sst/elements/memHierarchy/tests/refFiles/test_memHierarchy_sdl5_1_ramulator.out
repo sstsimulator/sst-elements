@@ -1005,7 +1005,7 @@ l3cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to
  n1.l2cache.AckPut_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n1.l2cache.MSHR_occupancy : Accumulator : Sum.u64 = 1007462; SumSQ.u64 = 15881696; Count.u64 = 66681; Min.u64 = 0; Max.u64 = 25; 
  n1.l2cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l3cache.default_stat : Accumulator : Sum.u64 = 21; SumSQ.u64 = 21; Count.u64 = 21; Min.u64 = 1; Max.u64 = 1; 
  l3cache.evict_I : Accumulator : Sum.u64 = 15; SumSQ.u64 = 15; Count.u64 = 15; Min.u64 = 1; Max.u64 = 1; 
  l3cache.evict_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1021,10 +1021,10 @@ l3cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to
  l3cache.evict_SBInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 7; SumSQ.u64 = 7; Count.u64 = 7; Min.u64 = 1; Max.u64 = 1; 
  l3cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 7; SumSQ.u64 = 7; Count.u64 = 7; Min.u64 = 1; Max.u64 = 1; 
- l3cache.stateEvent_GetS_M : Accumulator : Sum.u64 = 702; SumSQ.u64 = 702; Count.u64 = 702; Min.u64 = 1; Max.u64 = 1; 
+ l3cache.stateEvent_GetS_M : Accumulator : Sum.u64 = 701; SumSQ.u64 = 701; Count.u64 = 701; Min.u64 = 1; Max.u64 = 1; 
  l3cache.stateEvent_GetX_I : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; Min.u64 = 1; Max.u64 = 1; 
  l3cache.stateEvent_GetX_S : Accumulator : Sum.u64 = 7; SumSQ.u64 = 7; Count.u64 = 7; Min.u64 = 1; Max.u64 = 1; 
- l3cache.stateEvent_GetX_M : Accumulator : Sum.u64 = 1765; SumSQ.u64 = 1765; Count.u64 = 1765; Min.u64 = 1; Max.u64 = 1; 
+ l3cache.stateEvent_GetX_M : Accumulator : Sum.u64 = 1759; SumSQ.u64 = 1759; Count.u64 = 1759; Min.u64 = 1; Max.u64 = 1; 
  l3cache.stateEvent_GetSX_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.stateEvent_GetSX_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.stateEvent_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1093,9 +1093,9 @@ l3cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to
  l3cache.stateEvent_ForceInv_MInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.stateEvent_ForceInv_IB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.stateEvent_ForceInv_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache.stateEvent_FetchResp_MInv : Accumulator : Sum.u64 = 1065; SumSQ.u64 = 1065; Count.u64 = 1065; Min.u64 = 1; Max.u64 = 1; 
- l3cache.stateEvent_FetchXResp_MInvX : Accumulator : Sum.u64 = 702; SumSQ.u64 = 702; Count.u64 = 702; Min.u64 = 1; Max.u64 = 1; 
- l3cache.stateEvent_AckInv_MInv : Accumulator : Sum.u64 = 707; SumSQ.u64 = 707; Count.u64 = 707; Min.u64 = 1; Max.u64 = 1; 
+ l3cache.stateEvent_FetchResp_MInv : Accumulator : Sum.u64 = 1059; SumSQ.u64 = 1059; Count.u64 = 1059; Min.u64 = 1; Max.u64 = 1; 
+ l3cache.stateEvent_FetchXResp_MInvX : Accumulator : Sum.u64 = 701; SumSQ.u64 = 701; Count.u64 = 701; Min.u64 = 1; Max.u64 = 1; 
+ l3cache.stateEvent_AckInv_MInv : Accumulator : Sum.u64 = 700; SumSQ.u64 = 700; Count.u64 = 700; Min.u64 = 1; Max.u64 = 1; 
  l3cache.stateEvent_AckInv_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.stateEvent_AckInv_SMInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.stateEvent_AckInv_SBInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

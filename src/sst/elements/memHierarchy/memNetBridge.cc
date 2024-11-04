@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -23,13 +23,30 @@ using namespace SST::MemHierarchy;
 using SST::Merlin::Bridge;
 using SST::Interfaces::SimpleNetwork;
 
+/* Debug macros */
+#ifdef __SST_DEBUG_OUTPUT__ /* From sst-core, enable with --enable-debug */
+#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
+#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
+#else
+#define is_debug_addr(addr) false
+#define is_debug_event(ev) false
+#endif
 
 MemNetBridge::MemNetBridge(SST::ComponentId_t id, SST::Params &params, Merlin::Bridge* bridge) :
     Bridge::Translator(id, params, bridge)
 {
-    int debugLevel = params.find<int>("debug_level", 0);
-    dbg.init("@t:Bridge::@p():@l " + getName() + ": ",
-            debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
+    /* Create debug output */
+    dlevel = params.find<int>("debug_level", 0);
+    int debugLoc = params.find<int>("debug", 0);
+    dbg.init("", dlevel, 0, (Output::output_location_t)debugLoc);
+
+    // Filter debug by address
+    std::vector<uint64_t> addrArray;
+    params.find_array<uint64_t>("debug_addr", addrArray);
+    for (std::vector<uint64_t>::iterator it = addrArray.begin(); it != addrArray.end(); it++) {
+        DEBUG_ADDR.insert(*it);
+    }
+
 }
 
 MemNetBridge::~MemNetBridge()
@@ -60,15 +77,28 @@ void MemNetBridge::finish(void)
 
 SimpleNetwork::Request* MemNetBridge::initTranslate(SimpleNetwork::Request *req, uint8_t fromNet)
 {
+
     dbg.debug(CALL_INFO, 2, 0, "Received init phase event on interface %d\n", fromNet);
     Event *payload = req->inspectPayload();
     MemNIC::InitMemRtrEvent *imre = dynamic_cast<MemNIC::InitMemRtrEvent*>(payload);
     if ( imre ) {
+        /* This is broadcast, intercept the name->address map and store for later translation */
+        dbg.debug(_L10_, "%s received IMRE init message on interface %d: %s\n", getName().c_str(), fromNet, imre->toString().c_str());
         networks[fromNet].map[imre->info.name] = imre->info.addr;
         imre->info.addr = getAddrForNetwork(fromNet^1);
     } else if ( req->dest != SimpleNetwork::INIT_BROADCAST_ADDR ) {
-        /* TODO */
-        dbg.fatal(CALL_INFO, 1, "I should't crash here.   This is a TODO\n");
+        /* This is a point-to-point message, needs to be routed to the correct destination on the other network */
+        MemNIC::MemRtrEvent* mre = dynamic_cast<MemNIC::MemRtrEvent*>(payload);
+        if (mre) {
+            dbg.debug(_L10_, "%s received init message on interface %d: %s\n", getName().c_str(), fromNet, mre->toString().c_str());
+            Net_t &outNet = networks[fromNet^1];
+
+            SimpleNetwork::nid_t tgt = getAddrFor(outNet, mre->inspectEvent()->getDst());
+            req->src = getAddrForNetwork(fromNet^1);
+            req->dest = tgt;
+        } else {
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Bridge received an unexpected message type during init\n", getName().c_str());
+        }
     }
     req->vn = 0;
     return req;
@@ -86,7 +116,9 @@ SimpleNetwork::Request* MemNetBridge::translate(SimpleNetwork::Request *req, uin
 
     SimpleNetwork::nid_t tgt;
     if ( mre->hasClientData() ) {
-        tgt = getAddrFor(outNet, mre->event->getDst());
+        tgt = getAddrFor(outNet, mre->inspectEvent()->getDst());
+        dbg.debug(_L5_, "E: %-40" PRIu64 " %-21s Bridge:Tx     %d to %" PRI_NID ": (%s)\n",
+                getCurrentSimCycle(), getName().c_str(), fromNet, tgt, mre->toString().c_str());
     } else {
         MemNIC::InitMemRtrEvent *imre = static_cast<MemNIC::InitMemRtrEvent*>(mre);
         imre->info.addr = getAddrForNetwork(fromNet^1);

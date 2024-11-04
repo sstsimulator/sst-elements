@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -52,7 +52,7 @@ void autoCalculateRanks() {
 	char* nameBuffer = (char*) malloc(sizeof(char) * 128);
 
 	while(continueChecking) {
-		sprintf(nameBuffer, "ember-%d.spy", ranks);
+		snprintf(nameBuffer, sizeof(char)*128, "ember-%d.spy", ranks);
 		FILE* checkFile = fopen(nameBuffer, "rt");
 
 		if(NULL == checkFile) {
@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
 	char* lineBuffer = (char*) malloc(sizeof(char) * 1024);
 
 	for(int i = 0; i < ranks; ++i) {
-		sprintf(spynameBuffer, "ember-%d.spy", i);
+		snprintf(spynameBuffer, sizeof(char)*256, "ember-%d.spy", i);
 
 		if(verbose) {
 			printf("Processing rank %d (%s)...\n", i, spynameBuffer);

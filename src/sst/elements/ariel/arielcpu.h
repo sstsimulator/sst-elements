@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -56,8 +56,17 @@ class ArielCPU : public SST::Component {
         {"arieltool", "Path to the Ariel PIN-tool shared library", ""},
         {"launcher", "Specify the launcher to be used for instrumentation, default is path to PIN", STRINGIZE(PINTOOL_EXECUTABLE)},
         {"executable", "Executable to trace", ""},
+        {"appstdin", "Specify a file to use for the program's stdin", ""},
+        {"appstdout", "Specify a file to use for the program's stdeout", ""},
+        {"appstderr", "Specify a file to use for the program's stderr", ""},
+        {"appstdoutappend", "If appstdout is set, set this to 1 to append the file intead of overwriting", "0"},
+        {"appstderrappend", "If appstderr is set, set this to 1 to append the file intead of overwriting", "0"},
         {"launchparamcount", "Number of parameters supplied for the launch tool", "0" },
         {"launchparam%(launchparamcount)d", "Set the parameter to the launcher", "" },
+        {"mpimode", "Whether to use <mpilauncher> to to launch <launcher> in order to trace MPI-enabled applications.", "0"},
+        {"mpilauncher", "Specify a launcher to be used for MPI executables in conjuction with <launcher>", STRINGIZE(MPILAUNCHER_EXECUTABLE)},
+        {"mpiranks", "Number of ranks to be launched by <mpilauncher>. Only <mpitracerank> will be traced by <launcher>.", "1" },
+        {"mpitracerank", "Rank to be traced by <launcher>.", "0" },
         {"envparamcount", "Number of environment parameters to supply to the Ariel executable, default=-1 (use SST environment)", "-1"},
         {"envparamname%(envparamcount)d", "Sets the environment parameter name", ""},
         {"envparamval%(envparamcount)d", "Sets the environment parameter value", ""},
@@ -76,7 +85,8 @@ class ArielCPU : public SST::Component {
         {"gpu_enabled", "If enabled, gpu links will be set up", "0"})
 
     SST_ELI_DOCUMENT_PORTS( {"cache_link_%(corecount)d", "Each core's link to its cache", {}},
-       {"gpu_link_%(corecount)d", "Each core's link to the GPU", {}})
+       {"gpu_link_%(corecount)d", "Each core's link to the GPU", {}},
+       {"rtl_link_%(corecount)d", "Each core's link to the RTL", {}})
 
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -123,6 +133,7 @@ class ArielCPU : public SST::Component {
         std::vector<ArielCore*> cpu_cores;
         std::vector<Interfaces::StandardMem*> cpu_to_cache_links;
         std::vector<SST::Link*> cpu_to_gpu_links;
+        std::vector<SST::Link*> cpu_to_rtl_links;
 
         uint32_t core_count;
 

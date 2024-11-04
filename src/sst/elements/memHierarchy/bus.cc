@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -38,7 +38,7 @@ using namespace SST::MemHierarchy;
 const Bus::key_t Bus::ANY_KEY = std::pair<uint64_t, int>((uint64_t)-1, -1);
 
 Bus::Bus(ComponentId_t id, Params& params) : Component(id) {
-	configureParameters(params);
+    configureParameters(params);
     configureLinks();
     idleCount_ = 0;
     busOn_ = true;
@@ -76,7 +76,7 @@ bool Bus::clockTick(Cycle_t time) {
         eventQueue_.pop();
         idleCount_ = 0;
 
-        if (drain_ == 0 )
+        if (!drain_ )
             break;
     }
 
@@ -146,7 +146,7 @@ void Bus::configureLinks() {
     std::string linkprefix = "high_network_";
     std::string linkname = linkprefix + "0";
     while (isPortConnected(linkname)) {
-        link = configureLink(linkname, "50 ps", new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
+        link = configureLink(linkname, new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
         if (!link)
             dbg_.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), linkname.c_str());
         highNetPorts_.push_back(link);
@@ -188,10 +188,10 @@ void Bus::configureParameters(SST::Params& params) {
     busFrequency_ = params.find<std::string>("bus_frequency", "Invalid");
     broadcast_    = params.find<bool>("broadcast", 0);
     fanout_       = params.find<bool>("fanout", 0);  /* TODO:  Fanout: Only send messages to lower level caches */
-    drain_        = params.find<bool>("drain_bus", 0);
+    drain_        = params.find<bool>("drain_bus", false);
 
     if (busFrequency_ == "Invalid") dbg_.fatal(CALL_INFO, -1, "Bus Frequency was not specified\n");
-
+    
      /* Multiply Frequency times two.  This is because an SST Bus components has
         2 SST Links (highNEt & LowNet) and thus it takes a least 2 cycles for any
         transaction (a real bus should be allowed to have 1 cycle latency).  To overcome
@@ -209,32 +209,32 @@ void Bus::init(unsigned int phase) {
     SST::Event *ev;
 
     for (int i = 0; i < numHighNetPorts_; i++) {
-        while ((ev = highNetPorts_[i]->recvInitData())) {
+        while ((ev = highNetPorts_[i]->recvUntimedData())) {
             MemEventInit* memEvent = dynamic_cast<MemEventInit*>(ev);
 
             if (memEvent && memEvent->getCmd() == Command::NULLCMD) {
                 dbg_.debug(_L10_, "bus %s broadcasting upper event to lower ports (%d): %s\n", getName().c_str(), numLowNetPorts_, memEvent->getVerboseString().c_str());
                 mapNodeEntry(memEvent->getSrc(), highNetPorts_[i]);
                 for (int k = 0; k < numLowNetPorts_; k++)
-                    lowNetPorts_[k]->sendInitData(memEvent->clone());
+                    lowNetPorts_[k]->sendUntimedData(memEvent->clone());
             } else if (memEvent) {
                 dbg_.debug(_L10_, "bus %s broadcasting upper event to lower ports (%d): %s\n", getName().c_str(), numLowNetPorts_, memEvent->getVerboseString().c_str());
                 for (int k = 0; k < numLowNetPorts_; k++)
-                    lowNetPorts_[k]->sendInitData(memEvent->clone());
+                    lowNetPorts_[k]->sendUntimedData(memEvent->clone());
             }
             delete memEvent;
         }
     }
 
     for (int i = 0; i < numLowNetPorts_; i++) {
-        while ((ev = lowNetPorts_[i]->recvInitData())) {
+        while ((ev = lowNetPorts_[i]->recvUntimedData())) {
             MemEventInit* memEvent = dynamic_cast<MemEventInit*>(ev);
             if (!memEvent) delete memEvent;
             else if (memEvent->getCmd() == Command::NULLCMD) {
                 dbg_.debug(_L10_, "bus %s broadcasting lower event to upper ports (%d): %s\n", getName().c_str(), numHighNetPorts_, memEvent->getVerboseString().c_str());
                 mapNodeEntry(memEvent->getSrc(), lowNetPorts_[i]);
                 for (int i = 0; i < numHighNetPorts_; i++) {
-                    highNetPorts_[i]->sendInitData(memEvent->clone());
+                    highNetPorts_[i]->sendUntimedData(memEvent->clone());
                 }
                 delete memEvent;
             }

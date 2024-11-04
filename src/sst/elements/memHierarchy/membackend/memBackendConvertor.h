@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -156,7 +156,7 @@ class MemBackendConvertor : public SubComponent {
   public:
 
     MemBackendConvertor(ComponentId_t id, Params& params, MemBackend* backend, uint32_t request_width);
-    void finish(void);
+    void finish(Cycle_t endCycle);
     virtual size_t getMemSize();
     virtual bool clock( Cycle_t cycle );
     virtual void turnClockOff();

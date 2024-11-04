@@ -1,8 +1,8 @@
-// Copyright 2013-2022 NTESS. Under the terms
+// Copyright 2013-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2022, NTESS
+// Copyright (c) 2013-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -18,6 +18,8 @@
 
 #include "group.h"
 #include "sst/elements/hermes/msgapi.h"
+
+#include <cstdint>
 
 using namespace Hermes;
 
@@ -81,10 +83,38 @@ class Info {
         switch( type ) {
         case MP::CHAR:
             return sizeof( char );
+        case MP::SIGNED_CHAR:
+            return sizeof( signed char );
+        case MP::UNSIGNED_CHAR:
+            return sizeof( unsigned char );
         case MP::INT:
             return sizeof( int );
         case MP::LONG:
             return sizeof( long );
+        case MP::LONG_LONG:
+            return sizeof( long long );
+        case MP::UNSIGNED_INT:
+            return sizeof( unsigned int );
+        case MP::UNSIGNED_LONG:
+            return sizeof( unsigned long );
+        case MP::UNSIGNED_LONG_LONG:
+            return sizeof( unsigned long long );
+        case MP::INT8_T:
+            return sizeof( std::int8_t );
+        case MP::INT16_T:
+            return sizeof( std::int16_t );
+        case MP::INT32_T:
+            return sizeof( std::int32_t );
+        case MP::INT64_T:
+            return sizeof( std::int64_t );
+        case MP::UINT8_T:
+            return sizeof( std::uint8_t );
+        case MP::UINT16_T:
+            return sizeof( std::uint16_t );
+        case MP::UINT32_T:
+            return sizeof( std::uint32_t );
+        case MP::UINT64_T:
+            return sizeof( std::uint64_t );
         case MP::DOUBLE:
             return sizeof( double);
         case MP::FLOAT:

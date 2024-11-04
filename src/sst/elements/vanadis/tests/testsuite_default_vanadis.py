@@ -3,10 +3,16 @@
 from sst_unittest import *
 from sst_unittest_support import *
 from sst_unittest_parameterized import parameterized
+import subprocess
 
 module_init = 0
 module_sema = threading.Semaphore()
 vanadis_test_matrix = []
+
+MakeTests = False
+#MakeTests = True
+updateFiles = False
+#updateFiles = True
 
 ################################################################################
 # NOTES:
@@ -20,19 +26,70 @@ def build_vanadis_test_matrix():
     vanadis_test_matrix = []
     testlist = []
 
-    # Add the SDL file, test dir compiled elf file, and test run timeout to create the testlist
-    testlist.append(["basic_vanadis.py", "small/basic-io", "hello-world",     "mipsel", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-io", "hello-world",     "riscv64", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-io", "hello-world-cpp", "mipsel", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-io", "printf-check",    "mipsel", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-io", "openat",          "mipsel", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-io", "unlink",          "mipsel", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-io", "unlinkat",        "mipsel", 120])
-    testlist.append(["basic_vanadis.py", "small/basic-math", "sqrt-double",   "mipsel", 300])
-    testlist.append(["basic_vanadis.py", "small/basic-math", "sqrt-float",    "mipsel", 300])
-    testlist.append(["basic_vanadis.py", "small/basic-ops", "test-branch",    "mipsel", 300])
-    testlist.append(["basic_vanadis.py", "small/basic-ops", "test-shift",     "mipsel",300])
-    testlist.append(["basic_vanadis.py", "small/misc", "stream",     "mipsel", 120])
+    # basic-io
+    location="small/basic-io"
+
+    arch_list = ["riscv64"]
+    tests = ["lseek"]
+    for test in tests:
+        for arch in arch_list:
+            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 300])
+
+    arch_list = ["mipsel","riscv64"]
+    tests = ["hello-world","hello-world-cpp","printf-check","openat","read-write","unlink","unlinkat","fread-fwrite"]
+    #tests = []
+    for test in tests:
+        for arch in arch_list:
+            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 300])
+
+
+    # basic-math
+    location="small/basic-math"
+    tests = ["sqrt-double","sqrt-float"]
+    #tests = []
+    for test in tests:
+        for arch in arch_list:
+            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 300])
+
+    # basic-ops
+    location="small/basic-ops"
+    tests = ["test-branch","test-shift"]
+    #tests = []
+    for test in tests:
+        for arch in arch_list:
+            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 300])
+
+    # misc 
+    location="small/misc"
+    tests = ["stream","gettime","splitLoad","mt-dgemm","stream-fortran","uname"]
+    #tests = []
+    for test in tests:
+        for arch in arch_list:
+            testlist.append(["basic_vanadis.py", location, test,arch, 1, 1, "", 300])
+
+    tests = ["fork","clone","pthread"]
+    #tests = []
+    for test in tests:
+        for arch in arch_list:
+            testlist.append(["basic_vanadis.py", location, test, arch, 2,1, "gold1", 300])
+            testlist.append(["basic_vanadis.py", location, test, arch, 1,2, "gold2", 300])
+
+    tests = ["openmp"]
+    #tests = []
+    for test in tests:
+        for arch in arch_list:
+            testlist.append(["basic_vanadis.py", location, test,arch, 4,1, "4core", 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1,4, "4thread", 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 2,2, "2core-2thread", 300])
+
+    tests = ["openmp2"]
+    #tests = []
+    arch_list = ["riscv64"]
+    for test in tests:
+        for arch in arch_list:
+            testlist.append(["basic_vanadis.py", location, test,arch, 16,1, "16core", 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 1,32, "32thread", 300])
+            testlist.append(["basic_vanadis.py", location, test,arch, 4,8, "4core-8thread", 300])
 
     # Process each line and crack up into an index, hash, options and sdl file
     for testnum, test_info in enumerate(testlist):
@@ -42,11 +99,14 @@ def build_vanadis_test_matrix():
         elftestdir = test_info[1]
         elffile = test_info[2]
         isa = test_info[3]
-        timeout_sec = test_info[4]
-        testname = "{0}_{1}_{2}".format(elftestdir.replace("/", "_"), elffile,isa)
+        numCores = test_info[4]
+        numHwThreads = test_info[5]
+        goldfiledir = test_info[6]
+        timeout_sec = test_info[7]
+        testname = "{0}_{1}_{2}_{3}".format(elftestdir.replace("/", "_"), elffile,isa,goldfiledir)
 
         # Build the test_data structure
-        test_data = (testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec)
+        test_data = (testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, goldfiledir, timeout_sec )
         vanadis_test_matrix.append(test_data)
 
 ################################################################################
@@ -64,36 +124,13 @@ def gen_custom_name(testcase_func, param_num, param):
         parameterized.to_safe_name(str(param.args[1])))
     return testcasename
 
-################################################################################
-# Code to support a single instance module initialize, must be called setUp method
-
-def initializeTestModule_SingleInstance(class_inst):
-    global module_init
-    global module_sema
-
-    module_sema.acquire()
-    if module_init != 1:
-        try:
-            # Put your single instance Init Code Here
-            class_inst._setupTests()
-        except:
-            pass
-        module_init = 1
-    module_sema.release()
-
-################################################################################
 
 class testcase_vanadis(SSTTestCase):
 
-    def initializeClass(self, testName):
-        super(type(self), self).initializeClass(testName)
-        # Put test based setup code here. it is called before testing starts
-        # NOTE: This method is called once for every test
-
     def setUp(self):
         super(type(self), self).setUp()
-        initializeTestModule_SingleInstance(self)
         # Put test based setup code here. it is called once before every test
+        self._setupTests()
 
     def tearDown(self):
         # Put test based teardown code here. it is called once after every test
@@ -102,19 +139,20 @@ class testcase_vanadis(SSTTestCase):
 #####
 
     @parameterized.expand(vanadis_test_matrix, name_func=gen_custom_name)
-    def test_vanadis_short_tests(self, testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec):
+    def test_vanadis_short_tests(self, testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, goldfiledir, timeout_sec):
         self._checkSkipConditions( isa )
 
-        self.makeTest( testname, isa, elftestdir, elffile )
+        if MakeTests:
+            self.makeTest( testname, isa, elftestdir, elffile )
         log_debug("Running Vanadis test #{0} ({1}): elffile={4} in dir {3}, isa {5}; using sdl={2}".format(testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec))
-        self.vanadis_test_template(testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec)
+        self.vanadis_test_template(testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, goldfiledir, timeout_sec )
 
 #####
 
-    def vanadis_test_template(self, testnum, testname, sdlfile, elftestdir, elffile, isa, testtimeout=120):
+    def vanadis_test_template(self, testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, goldfiledir, testtimeout=120):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
-        outdir = "{0}/vanadis_tests/{1}/{2}/{3}".format(self.get_test_output_run_dir(), elftestdir,elffile,isa)
+        outdir = "{0}/vanadis_tests/{1}/{2}/{3}/{4}".format(self.get_test_output_run_dir(), elftestdir,elffile,isa,goldfiledir)
         tmpdir = self.get_test_output_tmp_dir()
         os.makedirs(outdir)
 
@@ -124,12 +162,17 @@ class testcase_vanadis(SSTTestCase):
         sst_outfile = "{0}/{1}.out".format(outdir, testDataFileName)
         sst_errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
-        ref_sst_outfile = "{0}/{1}/{2}/{3}/sst.stdout.gold".format(test_path, elftestdir, elffile, isa)
-        ref_sst_errfile = "{0}/{1}/{2}/{3}/sst.stderr.gold".format(test_path, elftestdir, elffile, isa)
-        ref_os_outfile = "{0}/{1}/{2}/{3}/vanadis.stdout.gold".format(test_path, elftestdir, elffile, isa)
-        ref_os_errfile = "{0}/{1}/{2}/{3}/vanadis.stderr.gold".format(test_path, elftestdir, elffile, isa)
-        os_outfile = "{0}/stdout-os".format(outdir)
-        os_errfile = "{0}/stderr-os".format(outdir)
+
+        if len(goldfiledir):
+            goldfiledir = goldfiledir + "/"
+
+        ref_sst_outfile = "{0}/{1}/{2}/{3}/{4}sst.stdout.gold".format(test_path, elftestdir, elffile, isa, goldfiledir)
+        ref_sst_errfile = "{0}/{1}/{2}/{3}/{4}sst.stderr.gold".format(test_path, elftestdir, elffile, isa, goldfiledir)
+        ref_os_outfile = "{0}/{1}/{2}/{3}/{4}vanadis.stdout.gold".format(test_path, elftestdir, elffile, isa, goldfiledir)
+        ref_os_errfile = "{0}/{1}/{2}/{3}/{4}vanadis.stderr.gold".format(test_path, elftestdir, elffile, isa, goldfiledir)
+        # 100 is the pid
+        os_outfile = "{0}/stdout-100".format(outdir)
+        os_errfile = "{0}/stderr-100".format(outdir)
 
         # Set the Vanadis EXE path
         testfilepath = "{0}/{1}/{2}/{3}/{2}".format(test_path, elftestdir, elffile, isa )
@@ -138,6 +181,9 @@ class testcase_vanadis(SSTTestCase):
             os.environ['VANADIS_ISA'] = "MIPS"
         else:
             os.environ['VANADIS_ISA'] = "RISCV64"
+
+        os.environ['VANADIS_NUM_CORES'] = str(numCores)
+        os.environ['VANADIS_NUM_HW_THREADS'] = str(numHwThreads)
 
         testfile_exists = os.path.exists(testfilepath) and os.path.isfile(testfilepath)
         self.assertTrue(testfile_exists, "Vanadis test {0} does not exist".format(testfilepath))
@@ -149,19 +195,23 @@ class testcase_vanadis(SSTTestCase):
         if os_test_file(sst_errfile, "-s"):
             log_testing_note("vanadis test {0} has a Non-Empty Error File {1}".format(testDataFileName, sst_errfile))
 
-        # Verify that a stdout-os and stderr-os files were generated by the Vanadis run
+        # Verify that a stdout-* and stderr-* files were generated by the Vanadis run
         os_outfileexists = os.path.exists(os_outfile) and os.path.isfile(os_outfile)
         os_errfileexists = os.path.exists(os_errfile) and os.path.isfile(os_errfile)
         self.assertTrue(os_outfileexists, "Vanadis test outfile-os not found in directory {0}".format(outdir))
         self.assertTrue(os_errfileexists, "Vanadis test errfile-os not found in directory {0}".format(outdir))
 
-        #print( "cp", sst_outfile, ref_sst_outfile )
         if ( os.path.exists( ref_sst_outfile ) ):
             cmp_result = testing_compare_filtered_diff(testname, sst_outfile, ref_sst_outfile ,filters=[StartsWithFilter(" v0.instructions_issued.1")])
             if (cmp_result == False):
                 diffdata = testing_get_diff_data(testname)
                 log_failure(oscmd)
                 log_failure(diffdata)
+
+                if updateFiles:
+                    print("Updating gold file ",sst_outfile, "->" ,ref_sst_outfile)
+                    subprocess.call( [ "cp", sst_outfile, ref_sst_outfile ] )
+
             self.assertTrue(cmp_result, "Vanadis output file {0} does not match reference output file {1}".format(sst_outfile, ref_sst_outfile))
         else:
             log_testing_note("vanadis test {0} SST gold file does not exist, did not compare".format(testDataFileName))
@@ -171,6 +221,11 @@ class testcase_vanadis(SSTTestCase):
             diffdata = testing_get_diff_data(testname)
             log_failure(oscmd)
             log_failure(diffdata)
+
+            if updateFiles:
+                print("Updating sst file ",os_outfile, "->" ,ref_os_outfile)
+                subprocess.call( [ "cp", os_outfile, ref_os_outfile ] )
+
         self.assertTrue(cmp_result, "Vanadis os output file {0} does not match reference output file {1}".format(os_outfile, ref_os_outfile))
 
         cmp_result = testing_compare_diff(testname, os_errfile, ref_os_errfile)
@@ -178,6 +233,11 @@ class testcase_vanadis(SSTTestCase):
             diffdata = testing_get_diff_data(testname)
             log_failure(oscmd)
             log_failure(diffdata)
+
+            if updateFiles:
+                print("Updating sst file ",os_errfile, "->" ,ref_os_errfile)
+                subprocess.call( [ "cp", os_errfile, ref_os_errfile ] )
+
         self.assertTrue(cmp_result, "Vanadis os error file {0} does not match reference error file {1}".format(os_outfile, ref_os_outfile))
 
         # DEVELOPER NOTE: In the future, we may want to compare the SST output (statisics) vs some reference file
@@ -187,8 +247,9 @@ class testcase_vanadis(SSTTestCase):
 
     def _checkSkipConditions(self,isa):
         # Check to see if the musl compiler is missing
-        if self._is_musl_compiler_available(isa) == False:
-            self.skipTest("Vanadis Skipping Test - musl compiler not available")
+        if MakeTests:
+            if self._is_musl_compiler_available(isa) == False:
+                self.skipTest("Vanadis Skipping Test - musl compiler not available")
 
         if testing_check_get_num_ranks() > 1:
             self.skipTest("Vanadis Skipping Test - ranks > 1 not supported")

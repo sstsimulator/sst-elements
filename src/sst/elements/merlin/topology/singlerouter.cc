@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -51,9 +51,9 @@ topo_singlerouter::process_input(RtrEvent* ev)
 }
 
 
-void topo_singlerouter::routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts)
+void topo_singlerouter::routeUntimedData(int port, internal_router_event* ev, std::vector<int> &outPorts)
 {
-    if ( ev->getDest() == INIT_BROADCAST_ADDR ) {
+    if ( ev->getDest() == UNTIMED_BROADCAST_ADDR ) {
         for ( int i = 0 ; i < num_ports ; i++ ) {
             if ( i != port )
                 outPorts.push_back(i);
@@ -66,7 +66,7 @@ void topo_singlerouter::routeInitData(int port, internal_router_event* ev, std::
 }
 
 
-internal_router_event* topo_singlerouter::process_InitData_input(RtrEvent* ev)
+internal_router_event* topo_singlerouter::process_UntimedData_input(RtrEvent* ev)
 {
     return new internal_router_event(ev);
 }

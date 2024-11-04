@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -20,7 +20,11 @@
 #include <sst/core/link.h>
 #include <sst/core/subcomponent.h>
 
+#include <sys/fcntl.h>
+#include <sys/mman.h>
+
 #include <functional>
+#include <tuple>
 
 #include "inst/isatable.h"
 #include "inst/regfile.h"
@@ -41,7 +45,7 @@ public:
     VanadisCPUOSHandler(ComponentId_t id, Params& params) : SubComponent(id) {
 
         const uint32_t verbosity = params.find<uint32_t>("verbose", 0);
-        output = new SST::Output("[os]: ", verbosity, 0, Output::STDOUT);
+        output = new SST::Output("[os_hdlr]:@p() ", verbosity, 1, Output::STDOUT);
 
         regFile = nullptr;
         isaTable = nullptr;
@@ -49,7 +53,6 @@ public:
 
         hw_thr = 0;
         core_id = 0;
-        tid = 0;
     }
 
     virtual ~VanadisCPUOSHandler() { delete output; }
@@ -61,20 +64,20 @@ public:
     void setRegisterFile(VanadisRegisterFile* newFile) { regFile = newFile; }
     void setISATable(VanadisISATable* newTable) { isaTable = newTable; }
 
-    virtual bool handleSysCall(VanadisSysCallInstruction* syscallIns) = 0;
+    virtual std::tuple<bool,bool> handleSysCall(VanadisSysCallInstruction* syscallIns) = 0;
     virtual void recvSyscallResp( VanadisSyscallResponse* os_resp ) = 0;
-
-    void setThreadID(int64_t new_tid) { tid = new_tid; }
-    int64_t getThreadID() const { return tid; }
 
     void setOS_link( SST::Link* link ) {
         os_link = link;
     } 
 
-
 protected:
 
     void sendSyscallEvent( VanadisSyscallEvent* ev ) {
+        os_link->send( ev );
+    }
+
+    void sendEvent( Event* ev ) {
         os_link->send( ev );
     }
 
@@ -86,7 +89,6 @@ protected:
     VanadisISATable* isaTable;
 
     uint64_t* tls_address;
-    int64_t tid;
 
 private:
     SST::Link* os_link;

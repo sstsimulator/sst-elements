@@ -1,8 +1,8 @@
-// Copyright 2013-2022 NTESS. Under the terms
+// Copyright 2013-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2022, NTESS
+// Copyright (c) 2013-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -62,7 +62,7 @@ void VirtNic::init( unsigned int phase )
 
     if ( 1 == phase ) {
         NicInitEvent* ev =
-                        static_cast<NicInitEvent*>(m_toNicLink->recvInitData());
+                        static_cast<NicInitEvent*>(m_toNicLink->recvUntimedData());
         assert( ev );
         m_realNicId = ev->node;
         m_coreId = ev->vNic;

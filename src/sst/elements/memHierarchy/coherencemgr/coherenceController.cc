@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -103,8 +103,9 @@ CoherenceController::CoherenceController(ComponentId_t id, Params &params, Param
     // Initialize event debug info (eventDI/evictDI)
     evictDI.id.first = 0;
     evictDI.id.second = 0;
+    evictDI.thr = 0;
     evictDI.cmd = Command::NULLCMD;
-    evictDI.prefetch = false;
+    evictDI.mod = "";
     evictDI.oldst = I;
     evictDI.newst = I;
     evictDI.action = "";
@@ -112,8 +113,9 @@ CoherenceController::CoherenceController(ComponentId_t id, Params &params, Param
     evictDI.verboseline = "";
     eventDI.id.first = 0;
     eventDI.id.second = 0;
+    eventDI.thr = 0;
     eventDI.cmd = Command::NULLCMD;
-    eventDI.prefetch = false;
+    eventDI.mod = "";
     eventDI.oldst = I;
     eventDI.newst = I;
     eventDI.action = "";
@@ -638,13 +640,15 @@ MemEventStatus CoherenceController::allocateMSHR(MemEvent * event, bool fwdReq, 
             eventDI.action = "Stall";
             eventDI.reason = "MSHR conflict";
         }
-        if (event->isPrefetch())
+        if (event->isPrefetch() && event->getRqstr() == cachename_) {
             outstandingPrefetches_++;
+        }
         return MemEventStatus::Stall;
     }
 
-    if (event->isPrefetch())
+    if (event->isPrefetch() && event->getRqstr() == cachename_) {
         outstandingPrefetches_++;
+    }
     return MemEventStatus::OK;
 }
 
@@ -667,17 +671,22 @@ void CoherenceController::printDebugInfo(dbgin * diStruct) {
         return;
 
     std::string cmd = CommandString[(int)diStruct->cmd];
-    if (diStruct->prefetch)
-        cmd += "-pref";
+    cmd += diStruct->mod;
 
     std::stringstream id;
     id << "<" << diStruct->id.first << "," << diStruct->id.second << ">";
 
     stringstream reas;
     reas << "(" << diStruct->reason << ")";
+    
+    stringstream thr;
+    if (diStruct->hasThr)
+        thr << diStruct->thr;
+    else 
+        thr << "";
 
-    debug->debug(_L5_, "C: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 " %-15s %-6s %-6s %-10s %-15s",
-            getCurrentSimCycle(), timestamp_, cachename_.c_str(), cmd.c_str(), diStruct->addr,
+    debug->debug(_L5_, "C: %-20" PRIu64 " %-20" PRIu64 " %-20s %-4s %-13s 0x%-16" PRIx64 " %-15s %-6s %-6s %-10s %-15s",
+            getCurrentSimCycle(), timestamp_, cachename_.c_str(), thr.str().c_str(), cmd.c_str(), diStruct->addr,
             id.str().c_str(), StateString[diStruct->oldst], StateString[diStruct->newst], diStruct->action.c_str(), reas.str().c_str());
 
     debug->debug(_L6_, " %s", diStruct->verboseline.c_str());
@@ -690,7 +699,7 @@ void CoherenceController::printDebugAlloc(bool alloc, Addr addr, std::string not
 
     std::string action = alloc ? "Alloc" : "Dealloc";
 
-    debug->debug(_L5_, "C: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 "",
+    debug->debug(_L5_, "C: %-20" PRIu64 " %-20" PRIu64 " %-25s %-13s 0x%-16" PRIx64 "",
             getCurrentSimCycle(), timestamp_, cachename_.c_str(), action.c_str(), addr);
 
     if (note != "")

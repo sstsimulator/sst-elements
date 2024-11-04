@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -24,13 +24,14 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisJumpInstruction : public VanadisSpeculatedInstruction
+class VanadisJumpInstruction : public virtual VanadisSpeculatedInstruction
 {
 
 public:
     VanadisJumpInstruction(
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint64_t ins_width,
         const uint64_t pc, const VanadisDelaySlotRequirement delayT) :
+        VanadisInstruction(addr, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0),
         VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 0, 0, 0, 0, 0, 0, 0, 0, delayT)
     {
 
@@ -43,10 +44,10 @@ public:
 
     void printToBuffer(char* buffer, size_t buffer_size) override
     {
-        snprintf(buffer, buffer_size, "JUMP    %" PRIu64 " / 0x%llx", takenAddress, takenAddress);
+        snprintf(buffer, buffer_size, "JUMP    %" PRIu64 " / 0x%" PRI_ADDR "", takenAddress, takenAddress);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override { markExecuted(); }
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override { markExecuted(); }
 };
 
 } // namespace Vanadis

@@ -1,13 +1,13 @@
-// Copyright 2013-2022 NTESS. Under the terms
+// Copyright 2013-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2022, NTESS
+// Copyright (c) 2013-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
@@ -62,7 +62,7 @@ protected:
 
 private:
 
-};
+}; // LSEntry
 
 class LSQueue
 {
@@ -74,12 +74,14 @@ public:
         sprintf(prefix, "[t=@t][LSQueue]: ");
         output_ = new SST::Output(prefix, 0, 0, Output::STDOUT);
     }
+
     LSQueue(const LSQueue &copy)
     {
         output_ = copy.output_;
         memory_queue_ = copy.memory_queue_;
         pending_ = copy.pending_;
     }
+
     ~LSQueue() {}
 
     uint32_t getNumEntries() const { return memory_queue_.size(); }
@@ -147,9 +149,7 @@ public:
         }
     }
 
-
 protected:
-
 
 private:
     SST::Output* output_;
@@ -157,10 +157,9 @@ private:
     std::queue< StandardMem::Request::id_t > memory_queue_;
     std::map< StandardMem::Request::id_t, LSEntry* > pending_;
 
-};
-
+}; // LSQueue
 
 }
 }
 
-#endif
+#endif // _LLYR_LSQ

@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -32,7 +32,7 @@ public:
 	~EmberOTF2Generator();
     	bool generate( std::queue<EmberEvent*>& evQ );
 
-	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+	SST_ELI_REGISTER_SUBCOMPONENT(
         	EmberOTF2Generator,
         	"ember",
          	"OTF2Motif",
@@ -42,7 +42,8 @@ public:
     	)
 
 	SST_ELI_DOCUMENT_PARAMS(
-        	{   "arg.tracePrefix",       "Sets the location of the trace",  "" }
+        	{   "arg.tracePrefix",       "Sets the location of the trace" },
+        	{   "arg.addCompute",        "Add compute time to try to match trace timestamps",  "false" }
 	)
 
 	SST_ELI_DOCUMENT_STATISTICS(
@@ -69,9 +70,20 @@ public:
 	        { "time-Commcreate", "Time spent in Commcreate event", "ns", 0},
     	)
 
-	void setCurrentTime( const OTF2_TimeStamp t ) {
+	void setTimerResolution(uint64_t timerResolution) {
+		m_timerResolution = timerResolution;
+	}
+
+	uint64_t getTimerResolution() {
+		return m_timerResolution;
+	}
+
+	void setCurrentTime( const OTF2_TimeStamp t, bool addCompute ) {
 		verbose( CALL_INFO, 4, 0, "Setting current timestamp to %" PRIu64 "\n", t );
 
+		if (addCompute && m_addCompute) {
+			compute(*eventQ, (t-currentTime)*1e9/m_timerResolution);
+		}
 		currentTime = t;
 	}
 
@@ -83,7 +95,33 @@ public:
 		return eventQ;
 	}
 
-	void setEventQueue( std::queue<EmberEvent*>* newQ ) {
+	int getSize() {
+		return m_size;
+	}
+
+	void set_inMPI(bool m) {
+		m_inMPI = m;
+	}
+
+	bool get_inMPI() {
+		return m_inMPI;
+	}
+
+    void compute(Queue& q, uint64_t time);
+    void send(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group); 
+    void isend(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group, MessageRequest* req);
+    void recv(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID src, uint32_t tag, Communicator group, MessageResponse* resp );
+    void irecv(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID src, uint32_t tag, Communicator group,MessageRequest* req );
+    void wait(Queue& q, MessageRequest* req, MessageResponse* resp);
+    void barrier(Queue& q, Communicator comm);
+    void bcast(Queue& q, const Hermes::MemAddr& mydata, uint32_t count, PayloadDataType dtype, int root, Communicator group);
+    void allreduce( Queue& q, const Hermes::MemAddr& mydata, const Hermes::MemAddr& result, uint32_t count, PayloadDataType dtype, ReductionOperation op, Communicator group );    
+    void reduce(Queue& q, const Hermes::MemAddr& mydata, const Hermes::MemAddr& result, uint32_t count, PayloadDataType dtype, ReductionOperation op, int root,Communicator group );
+    void scatter(Queue& q, const Hermes::MemAddr& mydata, uint32_t count_send, PayloadDataType dtype_send, const Hermes::MemAddr& result, uint32_t count_recv, PayloadDataType dtype_recv, int root, Communicator group);
+    void allgather(Queue& q, const Hermes::MemAddr& mydata, uint32_t count_send, PayloadDataType dtype_send, const Hermes::MemAddr& result, uint32_t count_recv, PayloadDataType dtype_recv, Communicator group);
+    void alltoall(Queue& q, const Hermes::MemAddr& mydata, uint32_t count_send, PayloadDataType dtype_send, const Hermes::MemAddr& result, uint32_t count_recv, PayloadDataType dtype_recv, Communicator group);
+
+    void setEventQueue( std::queue<EmberEvent*>* newQ ) {
 		eventQ = newQ;
 	}
 
@@ -99,7 +137,7 @@ public:
 			verbose(CALL_INFO, 4, 0, "Request: %20" PRIu64 "\n", reqItr->first );
 		}
 	}
-
+ 
 	PayloadDataType extractDataTypeFromAttributeList( OTF2_AttributeList* attr ) {
 		uint32_t attributeCount = OTF2_AttributeList_GetNumberOfElements(attr);
 		verbose( CALL_INFO, 16, 0, "Attribute list on rank: %" PRIu32 " contains %" PRIu32 " attributes\n",
@@ -111,6 +149,7 @@ public:
 private:
 	OTF2_DefReader* traceLocalDefReader;
 	OTF2_GlobalDefReader* traceGlobalDefReader;
+	OTF2_GlobalDefReaderCallbacks* traceGlobalDefCallbacks;
 	OTF2_GlobalEvtReader* traceGlobalEvtReader;
 	OTF2_GlobalEvtReaderCallbacks* traceGlobalEvtCallbacks;
 	OTF2_DefReaderCallbacks* traceLocalCallbacks;
@@ -128,6 +167,11 @@ private:
 
 	std::queue<EmberEvent*>* eventQ;
 	std::unordered_map<uint64_t, MessageRequest*> requestMap;
+
+	uint64_t m_size;
+	uint64_t m_timerResolution;
+	bool m_inMPI;
+	bool m_addCompute;
 };
 
 }

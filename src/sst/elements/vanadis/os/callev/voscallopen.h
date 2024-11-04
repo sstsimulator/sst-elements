@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,13 +27,21 @@ public:
     VanadisSyscallOpenEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t path_ptr, uint64_t flags, uint64_t mode)
         : VanadisSyscallEvent(core, thr, bittype), open_path_ptr(path_ptr), open_flags(flags), open_mode(mode) {}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_OPEN; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_OPEN; }
 
     uint64_t getPathPointer() const { return open_path_ptr; }
     uint64_t getFlags() const { return open_flags; }
     uint64_t getMode() const { return open_mode; }
 
 private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& open_path_ptr;
+        ser& open_flags;
+        ser& open_mode;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallOpenEvent);
+
     uint64_t open_path_ptr;
     uint64_t open_flags;
     uint64_t open_mode;

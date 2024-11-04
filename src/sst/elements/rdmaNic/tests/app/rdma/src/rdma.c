@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,7 +27,7 @@
 #define dbgPrint(fmt, ARGS...) \
         do { if (DEBUG) fprintf(stdout, "%s():%d: " fmt, __func__,__LINE__, ##ARGS); } while (0) 
 
-typedef uint32_t* IndexPtr;
+typedef Addr_t* IndexPtr;
 
 typedef struct {
 	RdmaCompletion data[RDMA_COMP_Q_SIZE];
@@ -74,9 +74,9 @@ void rdma_init( void ) {
 }
 
 NicCmd* allocCmd() {
+#if USE_STATIC_CMDS
 	NicCmd* cmd = NULL;
 	NicResp* resp;
-#if USE_STATIC_CMDS
 	for ( int i = 0; i< USE_STATIC_CMDS; i++ ) {
 		if ( 0 == _cmds[i].respAddr ) {
 			resp = _resp + i;
@@ -165,8 +165,10 @@ int rdma_create_cq( ) {
 	NicResp* resp = getResp(cmd);
 	waitResp( resp );
 
+	resp->data.createCQ.tailIndexAddr = getCompQueueInfoAddress();
+
 	int retval = resp->retval; 
-	dbgPrint("retval=%d tailIndexPtr=%#x\n",retval,resp->data.createCQ.tailIndexAddr);
+	dbgPrint("retval=%d tailIndexPtr=%#" PRIxBITS "\n",retval,resp->data.createCQ.tailIndexAddr);
 	assert( retval < NUM_COMP_Q ); 
 	assert( s_compQ[retval].tailIndexAddr == (IndexPtr) NULL );
 	s_compQ[retval].tailIndexAddr = (IndexPtr) resp->data.createCQ.tailIndexAddr; 
@@ -243,7 +245,7 @@ int rdma_send_post( void* buf, size_t len, Node destNode, Pid destPid, RecvQueue
 
 	NicCmd* cmd = allocCmd();
 	
-	dbgPrint("ptr=%p len=%zu destNode=%d destPid=%d cmdbuf=%p context=%#x\n", buf,len,destNode,destPid,cmd,context);
+	dbgPrint("ptr=%p len=%zu destNode=%d destPid=%d cmdbuf=%p context=%#" PRIxBITS "\n", buf,len,destNode,destPid,cmd,context);
 
 	cmd->type = RdmaSend;
 	cmd->data.send.pe = destPid;
@@ -270,7 +272,7 @@ int rdma_recv_post( void* buf, size_t len, RecvQueueId rqId, Context context )
 {
 	NicCmd* cmd = allocCmd();
 	
-	dbgPrint("buf=%p len=%zu rqId=%d context=%#x\n", buf,len,rqId,context);
+	dbgPrint("buf=%p len=%zu rqId=%d context=%#" PRIxBITS "\n", buf,len,rqId,context);
 
 	cmd->type = RdmaRecv;
 	cmd->data.recv.addr = (Addr_t)buf;
@@ -300,13 +302,14 @@ int rdma_read_comp( CompQueueId cqId, RdmaCompletion* buf, int blocking ) {
 	dbgPrint("got completion cqId=%d head=%d tail=%d \n",cqId, s_compQ[cqId].headIndex,s_compQ[cqId].tailIndex );
 	//RdmaCompletion* comp = &s_compQ[cqId].data[s_compQ[cqId].tailIndex];
 	memcpy( buf , &s_compQ[cqId].data[s_compQ[cqId].tailIndex], sizeof(*buf) );
-	dbgPrint("context=%x\n",buf->context);
+	dbgPrint("context=%#" PRIxBITS "\n",buf->context);
 
 	++s_compQ[cqId].tailIndex;
 	s_compQ[cqId].tailIndex %= s_compQ[cqId].num;
+	dbgPrint("tailIndexAddr=%p index=%d\n",s_compQ[cqId].tailIndexAddr,s_compQ[cqId].tailIndex);
  	*s_compQ[cqId].tailIndexAddr = s_compQ[cqId].tailIndex;
 
-	return 0;
+	return 1;
 }
 
 
@@ -358,7 +361,7 @@ int rdma_memory_write( MemRgnKey key, Node node, Pid pid, size_t offset, void* s
 {
 	NicCmd* cmd = allocCmd();
 	
-	dbgPrint("key=%#x offset=%d length=%zu cqId=%d\n", key, offset, length, id );
+	dbgPrint("key=%#x offset=%" PRIuBITS " length=%zu cqId=%d\n", key, offset, length, id );
 
 	cmd->type = RdmaMemWrite;
 	cmd->data.write.key = key;
@@ -386,7 +389,7 @@ int rdma_memory_read( MemRgnKey key, Node node, Pid pid, size_t offset, void* de
 {
 	NicCmd* cmd = allocCmd();
 	
-	dbgPrint("key=%#x destBuffer=%p offset=%d length=%zu cqId=%d\n",key, destBuffer, offset, length, id );
+	dbgPrint("key=%#x destBuffer=%p offset=%" PRIuBITS " length=%zu cqId=%d\n",key, destBuffer, offset, length, id );
 
 	cmd->type = RdmaMemRead;
 	cmd->data.read.key = key;

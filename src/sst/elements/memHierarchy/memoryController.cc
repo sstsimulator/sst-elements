@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -66,6 +66,21 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
     // Output for debug
     dbg.init("", dlevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
+
+    checkpointDir_ = params.find<std::string>("checkpointDir", "");
+    auto tmp = params.find<std::string>("checkpoint", "");
+    if ( ! tmp.empty() ) {
+        assert( ! checkpointDir_.empty() );
+        if ( 0 == tmp.compare("load") ) {
+            checkpoint_ = CHECKPOINT_LOAD;
+        } else if ( 0 == tmp.compare("save") ) {
+            checkpoint_ = CHECKPOINT_SAVE;
+        } else {
+            assert(0);
+        }
+    } else {
+        checkpoint_ = NO_CHECKPOINT;
+    }
 
     bool initBacking = params.find<bool>("initBacking", false);
 
@@ -162,15 +177,16 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         //lists->createAll<CacheListener>(listeners_, false, ComponentInfo::SHARE_NONE);
     } else { // Manually load via the old way of doing it
         const uint32_t listenerCount  = params.find<uint32_t>("listenercount", 0);
-        char* nextListenerName   = (char*) malloc(sizeof(char) * 64);
-        char* nextListenerParams = (char*) malloc(sizeof(char) * 64);
+        size_t bufferSize = sizeof(char) * 64;
+        char* nextListenerName   = (char*) malloc(bufferSize);
+        char* nextListenerParams = (char*) malloc(bufferSize);
 
         for (uint32_t i = 0; i < listenerCount; ++i) {
-            sprintf(nextListenerName, "listener%" PRIu32, i);
+            snprintf(nextListenerName, bufferSize, "listener%" PRIu32, i);
             string listenerMod     = params.find<std::string>(nextListenerName, "");
 
             if (listenerMod != "") {
-                sprintf(nextListenerParams, "listener%" PRIu32 "", i);
+                snprintf(nextListenerParams, bufferSize, "listener%" PRIu32 "", i);
                 Params listenerParams = params.get_scoped_params(nextListenerParams);
 
                 CacheListener* loadedListener = loadAnonymousSubComponent<CacheListener>(listenerMod, "listener", i, ComponentInfo::INSERT_STATS, listenerParams);
@@ -309,7 +325,16 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
                 out.fatal(CALL_INFO, -1, "%s, Error - unable to create backing store. Exception thrown is %d.\n", getName().c_str(), e);
         }
     } else if (backingType == "malloc") {
-        backing_ = new Backend::BackingMalloc(sizeBytes,initBacking);
+        if ( CHECKPOINT_LOAD == checkpoint_ ) {
+            stringstream filename;
+            filename << checkpointDir_ << "/" << getName();
+            //printf("%s\n",filename.str().c_str());
+            auto fp = fopen(filename.str().c_str(),"r");
+            assert(fp);
+            backing_ = new Backend::BackingMalloc(fp);
+        } else {
+            backing_ = new Backend::BackingMalloc(sizeBytes,initBacking);
+        }
     }
 
     /* Custom command handler */
@@ -541,7 +566,7 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
     }
     
     if (is_debug_event(resp)) {
-        Debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Resp    (%s)\n",
+        Debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
                 getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), resp->getVerboseString(dlevel).c_str());
     }
 
@@ -558,11 +583,11 @@ void MemController::init(unsigned int phase) {
 
     if (!phase) {
         /* Announce our presence on link */
-        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), false));
-        link_->sendInitData(new MemEventInitEndpoint(getName().c_str(), Endpoint::Memory, region_, true));
+        link_->sendUntimedData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), false));
+        link_->sendUntimedData(new MemEventInitEndpoint(getName().c_str(), Endpoint::Memory, region_, true));
     }
 
-    while (MemEventInit *ev = link_->recvInitData()) {
+    while (MemEventInit *ev = link_->recvUntimedData()) {
         processInitEvent(ev);
     }
 }
@@ -574,19 +599,26 @@ void MemController::setup(void) {
 
 
 void MemController::finish(void) {
-    if (!clockOn_) {
-        Cycle_t cycle = turnClockOn();
-        memBackendConvertor_->turnClockOn(cycle);
-    }
-    memBackendConvertor_->finish();
+    Cycle_t cycle = getNextClockCycle(clockTimeBase_); // Get finish time
+    cycle--;
+    memBackendConvertor_->finish(cycle);
     link_->finish();
+    if ( CHECKPOINT_SAVE ==  checkpoint_ ) {
+        stringstream filename;
+        filename << checkpointDir_ << "/" << getName();
+        auto fp = fopen(filename.str().c_str(),"w+");
+        assert(fp);
+        printf("Checkpoint component `%s` %s\n",getName().c_str(), filename.str().c_str());
+        backing_->dump( fp );
+        fclose( fp );
+    }
 }
 
 void MemController::writeData(MemEvent* event) {
     if (event->getCmd() == Command::PutM) { /* Write request to memory */
         Addr addr = event->queryFlag(MemEvent::F_NONCACHEABLE) ? event->getAddr() : event->getBaseAddr();
         if (is_debug_event(event)) { 
-            Debug(_L8_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
+            Debug(_L8_, "S: Update backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
             printDataValue(addr, &(event->getPayload()), true);
         }
 
@@ -598,7 +630,7 @@ void MemController::writeData(MemEvent* event) {
     if (event->getCmd() == Command::Write) {
         Addr addr = event->getAddr();
         if (is_debug_event(event)) { 
-            Debug(_L8_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
+            Debug(_L8_, "S: Update backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
             printDataValue(addr, &(event->getPayload()), true);
         }
         

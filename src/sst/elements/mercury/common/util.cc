@@ -1,64 +1,38 @@
-/**
-Copyright 2009-2021 National Technology and Engineering Solutions of Sandia, 
-LLC (NTESS).  Under the terms of Contract DE-NA-0003525, the U.S.  Government 
-retains certain rights in this software.
+// Copyright 2009-2024 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2024, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// of the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
-Sandia National Laboratories is a multimission laboratory managed and operated
-by National Technology and Engineering Solutions of Sandia, LLC., a wholly 
-owned subsidiary of Honeywell International, Inc., for the U.S. Department of 
-Energy's National Nuclear Security Administration under contract DE-NA0003525.
-
-Copyright (c) 2009-2021, NTESS
-
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, 
-are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-
-    * Redistributions in binary form must reproduce the above
-      copyright notice, this list of conditions and the following
-      disclaimer in the documentation and/or other materials provided
-      with the distribution.
-
-    * Neither the name of the copyright holder nor the names of its
-      contributors may be used to endorse or promote products derived
-      from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-Questions? Contact sst-macro-help@sandia.gov
-*/
-
-#include <common/util.h>
-#include <components/operating_system.h>
-#include <operating_system/process/app.h>
+#include <mercury/common/util.h>
+#include <mercury/components/operating_system.h>
+#include <mercury/operating_system/process/app.h>
 //#include <sstmac/null_buffer.h>
 
 #include <cstring>
+
+extern template class  SST::Hg::HgBase<SST::Component>;
+extern template class  SST::Hg::HgBase<SST::SubComponent>;
 
 typedef int (*main_fxn)(int,char**);
 typedef int (*empty_main_fxn)();
 
 //extern "C" double
-//sstmac_now(){
+//sst_hg_now(){
 //  return sstmac::sw::OperatingSystem::currentOs()->now().sec();
 //}
 
 //extern "C" void
-//sstmac_sleep_precise(double secs){
+//sst_hg_sleep_precise(double secs){
 //  sstmac::sw::OperatingSystem::currentOs()->sleep(sstmac::TimeDelta(secs));
 //}
 
@@ -123,7 +97,7 @@ extern "C" int ssthg_atexit(void (* /*fxn*/)(void))
 }
 
 //extern "C"
-//int sstmac_gethostname(char* name, size_t len)
+//int sst_hg_gethostname(char* name, size_t len)
 //{
 //  std::string sst_name = sstmac::sw::OperatingSystem::currentOs()->hostname();
 //  if (sst_name.size() > len){
@@ -135,13 +109,13 @@ extern "C" int ssthg_atexit(void (* /*fxn*/)(void))
 //}
 
 //extern "C"
-//long sstmac_gethostid()
+//long sst_hg_gethostid()
 //{
 //  return sstmac::sw::OperatingSystem::currentOs()->addr();
 //}
 
 //extern "C"
-//void sstmac_free(void* ptr){
+//void sst_hg_free(void* ptr){
 //#ifdef free
 //#error #sstmac free macro should not be defined in util.cc - refactor needed
 //#endif
@@ -151,7 +125,7 @@ extern "C" int ssthg_atexit(void (* /*fxn*/)(void))
 #include <unordered_map>
 
 //extern "C"
-//void sstmac_advance_time(const char* param_name)
+//void sst_hg_advance_time(const char* param_name)
 //{
 //  sstmac::sw::Thread* thr = sstmac::sw::OperatingSystem::currentThread();
 //  sstmac::sw::App* parent = thr->parentApp();

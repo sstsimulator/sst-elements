@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -25,7 +25,7 @@ class VanadisExitResponse : public SST::Event {
 
 public:
     VanadisExitResponse() : SST::Event(), hw_thr(-1), return_code(0) {}
-    VanadisExitResponse(int64_t rc) : SST::Event(), hw_thr(-1), return_code(rc) {}
+    VanadisExitResponse(int64_t rc, int thr = -1) : SST::Event(), hw_thr(thr), return_code(rc) {}
     ~VanadisExitResponse() {}
 
     int64_t getReturnCode() const { return return_code; }

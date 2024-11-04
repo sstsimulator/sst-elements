@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -50,12 +50,12 @@ public:
     void printToBuffer(char* buffer, size_t buffer_size) override
     {
         snprintf(
-            buffer, buffer_size, "%s (ins-addr: 0x%llx, %s)", getInstCode(), getInstructionAddress(),
+            buffer, buffer_size, "%s (ins-addr: 0x%" PRI_ADDR ", %s)", getInstCode(), getInstructionAddress(),
             fault_msg.c_str());
     }
 
     VanadisFunctionalUnitType getInstFuncType() const override { return INST_FAULT; }
-    void                      execute(SST::Output* output, VanadisRegisterFile* regFile) override {}
+    void                      scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override {}
 
 protected:
     std::string fault_msg;

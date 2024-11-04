@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -48,13 +48,14 @@ class LinkControl : public SST::Interfaces::SimpleNetwork {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         LinkControl,
         "merlin",
         "linkcontrol",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Link Control module for building Merlin-enabled NICs",
-        SST::Interfaces::SimpleNetwork)
+        SST::Interfaces::SimpleNetwork
+    )
 
     SST_ELI_DOCUMENT_PARAMS(
         {"port_name",          "Port name to connect to.  Only used when loaded anonymously",""},
@@ -240,9 +241,6 @@ public:
     // Returns true if there is an event in the input buffer and false
     // otherwise.
     bool requestToReceive( int vn ) { return ! input_queues[vn].empty(); }
-
-    void sendInitData(SST::Interfaces::SimpleNetwork::Request* ev);
-    SST::Interfaces::SimpleNetwork::Request* recvInitData();
 
     void sendUntimedData(SST::Interfaces::SimpleNetwork::Request* ev);
     SST::Interfaces::SimpleNetwork::Request* recvUntimedData();

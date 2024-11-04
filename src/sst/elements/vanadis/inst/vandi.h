@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,7 +21,7 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisAndImmInstruction : public VanadisInstruction
+class VanadisAndImmInstruction : public virtual VanadisInstruction
 {
 public:
     VanadisAndImmInstruction(
@@ -47,25 +47,44 @@ public:
             isa_int_regs_out[0], isa_int_regs_in[0], imm_value, phys_int_regs_out[0], phys_int_regs_in[0], imm_value);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    void instOp(VanadisRegisterFile* regFile, uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0) override
     {
-#ifdef VANADIS_BUILD_DEBUG
-        output->verbose(
-            CALL_INFO, 16, 0,
-            "Execute: (addr=%p) ANDI phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRIu64 ", isa: out=%" PRIu16
-            " / in=%" PRIu16 "\n",
-            (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value, isa_int_regs_out[0],
-            isa_int_regs_in[0]);
-#endif
-        const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
-        regFile->setIntReg<uint64_t>(phys_int_regs_out[0], (src_1 & imm_value));
+        const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in_0);
+        regFile->setIntReg<uint64_t>(phys_int_regs_out_0, (src_1 & imm_value));
+    }
 
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+                uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0) override
+    {
+        #ifdef VANADIS_BUILD_DEBUG
+        if(output->getVerboseLevel() >= verboselevel) {
+
+            std::ostringstream ss;
+            ss << "hw_thr="<<getHWThread()<<" sw_thr=" <<sw_thr;
+            ss << " Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
+            ss << " phys: out=" <<  phys_int_regs_out_0 << " in=" << phys_int_regs_in_0;
+            ss << " imm=" << imm_value;
+            ss << ", isa: out=" <<  isa_int_regs_out[0]  << " in=" << isa_int_regs_in[0];
+            output->verbose( CALL_INFO, verboselevel, 0, "%s\n", ss.str().c_str());
+        }
+        #endif
+    }
+
+    void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
+    { 
+        uint16_t phys_int_regs_out_0 = phys_int_regs_out[0];
+        uint16_t phys_int_regs_in_0 = phys_int_regs_in[0];     
+        log(output, 16, 65535, phys_int_regs_out_0,phys_int_regs_in_0);
+        instOp(regFile, phys_int_regs_out_0,phys_int_regs_in_0);
         markExecuted();
     }
 
 private:
     const uint64_t imm_value;
 };
+
+
+
 
 } // namespace Vanadis
 } // namespace SST

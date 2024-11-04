@@ -1,8 +1,8 @@
-// Copyright 2013-2022 NTESS. Under the terms
+// Copyright 2013-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2022, NTESS
+// Copyright (c) 2013-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -45,11 +45,11 @@ void MemLink::init(unsigned int phase) {
     if (!phase) {
         MemEventInitRegion * ev = new MemEventInitRegion(info.name, info.region, false);
         dbg.debug(_L10_, "%s sending region init message: %s\n", getName().c_str(), ev->getVerboseString().c_str());
-        link->sendInitData(ev);
+        link->sendUntimedData(ev);
     }
 
     SST::Event * ev;
-    while ((ev = link->recvInitData())) {
+    while ((ev = link->recvUntimedData())) {
         MemEventInit * mEv = static_cast<MemEventInit*>(ev);
         if (mEv) {
             if (mEv->getInitCmd() == MemEventInit::InitCommand::Region) {
@@ -93,7 +93,7 @@ void MemLink::init(unsigned int phase) {
         if (dst != "") {
             dbg.debug(_L10_, "%s sending init message: %s\n", getName().c_str(), (*it)->getVerboseString().c_str());
             (*it)->setDst(dst);
-            link->sendInitData(*it);
+            link->sendUntimedData(*it);
             it = initSendQ.erase(it);
         } else {
             it++;
@@ -133,7 +133,7 @@ void MemLink::sendInitData(MemEventInit * event, bool broadcast) {
         event->setDst(dst);
     }
     dbg.debug(_L10_, "%s sending init message: %s\n", getName().c_str(), event->getVerboseString().c_str());
-    link->sendInitData(event);
+    link->sendUntimedData(event);
 }
 
 /**

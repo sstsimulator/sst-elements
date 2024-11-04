@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -45,7 +45,7 @@ bool IncoherentL1::handleGetS(MemEvent* event, bool inMSHR){
     vector<uint8_t> data;
 
     if (is_debug_addr(addr)) {
-        eventDI.prefill(event->getID(), Command::GetS, localPrefetch, addr, state);
+        eventDI.prefill(event->getID(), Command::GetS, (localPrefetch ? "-pref" : ""), addr, state);
         eventDI.reason = "hit";
     }
 
@@ -55,8 +55,14 @@ bool IncoherentL1::handleGetS(MemEvent* event, bool inMSHR){
 
             if (status == MemEventStatus::OK) { // Both MSHR insert & cache line allocation succeeded
                 line = cacheArray_->lookup(addr, false);
-                recordLatencyType(event->getID(), LatType::MISS);
-                eventProfileAndNotify(event, I, NotifyAccessType::READ, NotifyResultType::MISS, true, inMSHR);
+                if (!mshr_->getProfiled(addr)) {
+                    recordLatencyType(event->getID(), LatType::MISS);
+                    stat_eventState[(int)Command::GetS][I]->addData(1);
+                    stat_miss[0][inMSHR]->addData(1);
+                    stat_misses->addData(1);
+                    notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
+                    mshr_->setProfiled(addr);
+                }
                 sendTime = forwardMessage(event, lineSize_, 0, nullptr);
                 line->setState(IM);
                 line->setTimestamp(sendTime);
@@ -69,7 +75,13 @@ bool IncoherentL1::handleGetS(MemEvent* event, bool inMSHR){
             break;
         case E:
         case M:
-            eventProfileAndNotify(event, state, NotifyAccessType::READ, NotifyResultType::HIT, inMSHR, inMSHR);
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                recordLatencyType(event->getID(), LatType::HIT);
+                stat_eventState[(int)Command::GetS][state]->addData(1);
+                stat_hit[0][inMSHR]->addData(1);
+                stat_hits->addData(1);
+                notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
+            }
             if (localPrefetch) {
                 recordPrefetchResult(line, statPrefetchRedundant);
                 cleanUpAfterRequest(event, inMSHR);
@@ -80,7 +92,7 @@ bool IncoherentL1::handleGetS(MemEvent* event, bool inMSHR){
             recordLatencyType(event->getID(), LatType::HIT);
 
             if (event->isLoadLink())
-                line->atomicStart();
+                line->atomicStart(timestamp_ + llscBlockCycles_, event->getThreadID());
 
             data.assign(line->getData()->begin() + (event->getAddr() - event->getBaseAddr()), line->getData()->begin() + (event->getAddr() - event->getBaseAddr() + event->getSize()));
             sendTime = sendResponseUp(event, &data, inMSHR, line->getTimestamp());
@@ -118,7 +130,7 @@ bool IncoherentL1::handleGetX(MemEvent* event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_addr(addr))
-        eventDI.prefill(event->getID(), Command::GetX, false, addr, state);
+        eventDI.prefill(event->getID(), Command::GetX, (event->isStoreConditional() ? "-SC" : ""), addr, state);
 
     MemEventStatus status = MemEventStatus::OK;
     bool success = true;
@@ -168,7 +180,7 @@ bool IncoherentL1::handleGetX(MemEvent* event, bool inMSHR) {
             }
 
             // Handle
-            if (!event->isStoreConditional() || line->isAtomic()) { /* Don't write on a non-atomic SC */
+            if (!event->isStoreConditional() || line->isAtomic(event->getThreadID())) { /* Don't write on a non-atomic SC */
                 line->setData(event->getPayload(), event->getAddr() - event->getBaseAddr());
                 line->atomicEnd();
                 if (is_debug_addr(addr))
@@ -214,7 +226,7 @@ bool IncoherentL1::handleGetSX(MemEvent* event, bool inMSHR) {
     std::vector<uint8_t> data;
 
     if (is_debug_addr(addr))
-        eventDI.prefill(event->getID(), Command::GetSX, false, addr, state);
+        eventDI.prefill(event->getID(), Command::GetSX, (event->isLoadLink() ? "-LL" : ""), addr, state);
 
     switch (state) {
         case I:
@@ -222,8 +234,14 @@ bool IncoherentL1::handleGetSX(MemEvent* event, bool inMSHR) {
             if (status == MemEventStatus::OK) { // Both MSHR insert & cache line allocation succeeded
                 line = cacheArray_->lookup(addr, false);
                 // Profile
-                eventProfileAndNotify(event, I, NotifyAccessType::READ, NotifyResultType::MISS, true, inMSHR);
-                recordLatencyType(event->getID(), LatType::MISS);
+                if (!mshr_->getProfiled(addr)) {
+                    notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
+                    stat_eventState[(int)Command::GetSX][I]->addData(1);
+                    stat_miss[2][inMSHR]->addData(1);
+                    stat_misses->addData(1);
+                    recordLatencyType(event->getID(), LatType::MISS);
+                    mshr_->setProfiled(addr);
+                }
                 // Handle
                 sendTime = forwardMessage(event, lineSize_, 0, nullptr);
                 line->setState(IM);
@@ -239,9 +257,14 @@ bool IncoherentL1::handleGetSX(MemEvent* event, bool inMSHR) {
             line->setState(M);
         case M:
             // Profile
-            eventProfileAndNotify(event, state, NotifyAccessType::READ, NotifyResultType::HIT, inMSHR, inMSHR);
             recordPrefetchResult(line, statPrefetchHit);
-            recordLatencyType(event->getID(), LatType::HIT);
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
+                recordLatencyType(event->getID(), LatType::HIT);
+                stat_eventState[(int)Command::GetSX][state]->addData(1);
+                stat_hit[2][inMSHR]->addData(1);
+                stat_hits->addData(1);
+            }
             // Handle
             line->incLock();
             std::copy(line->getData()->begin() + (event->getAddr() - event->getBaseAddr()), line->getData()->begin() + (event->getAddr() - event->getBaseAddr())  + event->getSize(), data.begin());
@@ -275,7 +298,7 @@ bool IncoherentL1::handleFlushLine(MemEvent* event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_addr(addr))
-        eventDI.prefill(event->getID(), Command::FlushLine, false, addr, state);
+        eventDI.prefill(event->getID(), Command::FlushLine, "", addr, state);
 
     if (!inMSHR && mshr_->exists(addr)) {
         return (allocateMSHR(event, false) == MemEventStatus::Reject) ? false : true;
@@ -284,7 +307,7 @@ bool IncoherentL1::handleFlushLine(MemEvent* event, bool inMSHR) {
     // At this point, state must be stable
 
     /* Flush fails if line is locked */
-    if (state != I && line->isLocked()) {
+    if (state != I && line->isLocked(timestamp_)) {
         if (!inMSHR || !mshr_->getProfiled(addr)) {
             stat_eventState[(int)Command::FlushLine][state]->addData(1);
         }
@@ -334,14 +357,14 @@ bool IncoherentL1::handleFlushLineInv(MemEvent* event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_addr(addr))
-        eventDI.prefill(event->getID(), Command::FlushLineInv, false, addr, state);
+        eventDI.prefill(event->getID(), Command::FlushLineInv, "", addr, state);
 
     if (!inMSHR && mshr_->exists(addr)) {
         return (allocateMSHR(event, false) == MemEventStatus::Reject) ? false : true;
     }
 
     /* Flush fails if line is locked */
-    if (state != I && line->isLocked()) {
+    if (state != I && line->isLocked(timestamp_)) {
         stat_eventState[(int)Command::FlushLineInv][state]->addData(1);
         sendResponseUp(event, nullptr, inMSHR, line->getTimestamp(), false);
         recordLatencyType(event->getID(), LatType::MISS);
@@ -391,7 +414,7 @@ bool IncoherentL1::handleGetSResp(MemEvent * event, bool inMSHR) {
     bool localPrefetch = req->isPrefetch() && (req->getRqstr() == cachename_);
 
    if (is_debug_addr(addr))
-        eventDI.prefill(event->getID(), Command::GetSResp, localPrefetch, addr, state);
+        eventDI.prefill(event->getID(), Command::GetSResp, (localPrefetch ? "-pref" : ""), addr, state);
 
     // Update line
     line->setData(event->getPayload(), 0);
@@ -400,7 +423,7 @@ bool IncoherentL1::handleGetSResp(MemEvent * event, bool inMSHR) {
         printDataValue(addr, line->getData(), false);
     
     if (req->isLoadLink())
-        line->atomicStart();
+        line->atomicStart(timestamp_ + llscBlockCycles_, req->getThreadID());
 
     if (is_debug_addr(addr))
         printDataValue(addr, line->getData(), true);
@@ -440,7 +463,7 @@ bool IncoherentL1::handleGetXResp(MemEvent * event, bool inMSHR) {
     }
     
     if (is_debug_addr(addr))
-        eventDI.prefill(event->getID(), Command::GetXResp, false, addr, state);
+        eventDI.prefill(event->getID(), Command::GetXResp, "", addr, state);
 
     req->setMemFlags(event->getMemFlags());
 
@@ -457,7 +480,7 @@ bool IncoherentL1::handleGetXResp(MemEvent * event, bool inMSHR) {
     std::vector<uint8_t> data;
     bool success = true;
     if (req->getCmd() == Command::GetX || req->getCmd() == Command::Write) {
-        if (!req->isStoreConditional() || line->isAtomic()) {
+        if (!req->isStoreConditional() || line->isAtomic(req->getThreadID())) {
             line->setData(req->getPayload(), offset);
             if (is_debug_addr(line->getAddr()))
                 printDataValue(line->getAddr(), line->getData(), true);
@@ -497,7 +520,7 @@ bool IncoherentL1::handleFlushLineResp(MemEvent * event, bool inMSHR) {
     stat_eventState[(int)Command::FlushLineResp][state]->addData(1);
 
     if (is_debug_addr(addr))
-        eventDI.prefill(event->getID(), Command::FlushLineResp, false, addr, state);
+        eventDI.prefill(event->getID(), Command::FlushLineResp, "", addr, state);
 
     MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
 
@@ -539,7 +562,7 @@ bool IncoherentL1::handleNULLCMD(MemEvent* event, bool inMSHR) {
     bool evicted = handleEviction(newAddr, line);
 
     if (is_debug_addr(newAddr)) {
-        eventDI.prefill(event->getID(), Command::NULLCMD, false, line->getAddr(), evictDI.oldst);
+        eventDI.prefill(event->getID(), Command::NULLCMD, "", line->getAddr(), evictDI.oldst);
         eventDI.newst = line->getState();
         eventDI.verboseline = line->getString();
     }
@@ -585,7 +608,7 @@ bool IncoherentL1::handleNACK(MemEvent* event, bool inMSHR) {
     State state = line ? line->getState() : I;
 
     if (is_debug_addr(event->getBaseAddr()))
-        eventDI.prefill(event->getID(), Command::NACK, false, event->getBaseAddr(), state);
+        eventDI.prefill(event->getID(), Command::NACK, "", event->getBaseAddr(), state);
 
     delete event;
     resendEvent(nackedEvent, false); // resend this down (since we're an L1)
@@ -614,11 +637,31 @@ MemEventStatus IncoherentL1::processCacheMiss(MemEvent * event, L1CacheLine * li
  * Allocate a new MSHR entry
  */
 MemEventStatus IncoherentL1::allocateMSHR(MemEvent * event, bool fwdReq, int pos) {
+    // Screen prefetches first to ensure limits are not exceeeded:
+    //      - Maximum number of outstanding prefetches
+    //      - MSHR too full to accept prefetches
+    if (event->isPrefetch() && event->getRqstr() == cachename_) {
+        if (dropPrefetchLevel_ <= mshr_->getSize()) {
+            eventDI.action = "Reject";
+            eventDI.reason = "Prefetch drop level";
+            return MemEventStatus::Reject;
+        }
+        if (maxOutstandingPrefetch_ <= outstandingPrefetches_) {
+            eventDI.action = "Reject";
+            eventDI.reason = "Max outstanding prefetches";
+            return MemEventStatus::Reject;
+        }
+    }
+    
     int insert_pos = mshr_->insertEvent(event->getBaseAddr(), event, pos, fwdReq, false);
     if (insert_pos == -1)
         return MemEventStatus::Reject; // MSHR is full
-    else if (insert_pos != 0)
+    else if (insert_pos != 0) {
+        if (event->isPrefetch()) outstandingPrefetches_++;
         return MemEventStatus::Stall;
+    }
+
+    if (event->isPrefetch()) outstandingPrefetches_++;
 
     return MemEventStatus::OK;
 }
@@ -656,7 +699,7 @@ bool IncoherentL1::handleEviction(Addr addr, L1CacheLine*& line) {
         evictDI.oldst = line->getState();
 
     /* L1s can have locked cache lines */
-    if (line->isLocked()) {
+    if (line->isLocked(timestamp_)) {
         if (is_debug_addr(line->getAddr()))
             printDebugAlloc(false, line->getAddr(), "InProg, line locked");
         return false;
@@ -923,22 +966,6 @@ void IncoherentL1::recordPrefetchResult(L1CacheLine * line, Statistic<uint64_t> 
     if (line->getPrefetch()) {
         stat->addData(1);
         line->setPrefetch(false);
-    }
-}
-
-void IncoherentL1::eventProfileAndNotify(MemEvent * event, State state, NotifyAccessType type, NotifyResultType result, bool inMSHR, bool stalled) {
-    if (!inMSHR || !mshr_->getProfiled(event->getBaseAddr())) {
-        stat_eventState[(int)event->getCmd()][state]->addData(1); // profile
-        if (result == NotifyResultType::MISS) {
-            stat_misses->addData(1);
-            stat_miss[(int)event->getCmd()][(int)stalled]->addData(1);
-        } else {
-            stat_hits->addData(1);
-            stat_hit[(int)event->getCmd()][(int)stalled]->addData(1);
-        }
-        notifyListenerOfAccess(event, type, result);
-        if (inMSHR)
-            mshr_->setProfiled(event->getBaseAddr());
     }
 }
 

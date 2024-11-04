@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -25,13 +25,14 @@ namespace Serrano {
 class SerranoIteratorUnit : public SerranoCoarseUnit {
 
 public:
-	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+	SST_ELI_REGISTER_SUBCOMPONENT(
 		SST::Serrano::SerranoIteratorUnit,
 		"serrano",
 		"SerranoIteratorUnit",
 		SST_ELI_ELEMENT_VERSION(1, 0, 0),
 		"Performs iteration-like behavior",
-		SST::Serrano::SerranoCoarseUnit )
+		SST::Serrano::SerranoCoarseUnit
+    )
 
 	SST_ELI_DOCUMENT_PARAMS(
 		{ "start", "Value to start iterating at."      },

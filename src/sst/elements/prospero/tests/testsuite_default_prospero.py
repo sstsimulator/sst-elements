@@ -10,43 +10,15 @@ USE_TAR_TRACES = False
 WITH_TIMINGDRAM = True
 NO_TIMINGDRAM = False
 
-################################################################################
-# Code to support a single instance module initialize, must be called setUp method
-
-module_init = 0
-module_sema = threading.Semaphore()
-
-def initializeTestModule_SingleInstance(class_inst):
-    global module_init
-    global module_sema
-
-    module_sema.acquire()
-    if module_init != 1:
-        try:
-            # Put your single instance Init Code Here
-            class_inst._setup_prospero_test_dirs()
-            class_inst._create_prospero_PIN_trace_files()
-            class_inst._download_prospero_TAR_trace_files()
-        except:
-            pass
-        module_init = 1
-    module_sema.release()
-
-################################################################################
-################################################################################
-################################################################################
 
 class testcase_prospero(SSTTestCase):
 
-    def initializeClass(self, testName):
-        super(type(self), self).initializeClass(testName)
-        # Put test based setup code here. it is called before testing starts
-        # NOTE: This method is called once for every test
-
     def setUp(self):
         super(type(self), self).setUp()
-        initializeTestModule_SingleInstance(self)
         # Put test based setup code here. it is called once before every test
+        self._setup_prospero_test_dirs()
+        self._create_prospero_PIN_trace_files()
+        self._download_prospero_TAR_trace_files()
 
     def tearDown(self):
         # Put test based teardown code here. it is called once after every test
@@ -76,18 +48,6 @@ class testcase_prospero(SSTTestCase):
 
     def test_prospero_binary_withtimingdram_using_TAR_traces(self):
         self.prospero_test_template("binary", WITH_TIMINGDRAM, USE_TAR_TRACES)
-
-    @unittest.skipIf(libz_missing, "test_prospero_compressed_using_PIN_traces test: Requires LIBZ, but LIBZ is not found in build configuration.")
-    @unittest.skipIf(not pin_loaded, "test_prospero_compressed_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
-    @unittest.skipIf(pin3_used, "test_prospero_compressed_using_PIN_traces test: Requires PIN2, but PIN3 is COMPILED.")
-    def test_prospero_compressed_using_PIN_traces(self):
-        self.prospero_test_template("compressed", NO_TIMINGDRAM, USE_PIN_TRACES)
-
-    @unittest.skipIf(libz_missing, "test_prospero_compressed_withtimingdram_using_PIN_traces test: Requires LIBZ, but LIBZ is not found in build configuration.")
-    @unittest.skipIf(not pin_loaded, "test_prospero_compressed_withtimingdram_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
-    @unittest.skipIf(pin3_used, "test_prospero_compressed_withtimingdram_using_PIN_traces test: Requires PIN2, but PIN3 is COMPILED.")
-    def test_prospero_compressed_withtimingdram_using_PIN_traces(self):
-        self.prospero_test_template("compressed", WITH_TIMINGDRAM, USE_PIN_TRACES)
 
     @unittest.skipIf(not pin_loaded, "test_prospero_text_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_prospero_text_using_PIN_traces(self):
@@ -283,14 +243,6 @@ class testcase_prospero(SSTTestCase):
             rtn = OSCommand(cmd, set_cwd=targetdir).run()
             log_debug("Prospero build binary Traces result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
             self.assertTrue(rtn.result() == 0, "Binary Traces failed to compile")
-
-            # Now build the Compressed traces (ONLY ON PIN2)
-            if testing_is_PIN2_used():
-                cmd = "{0} -ifeellucky -t 1 -f compressed -o sstprospero -- ./array".format(filepath_sst_prospero_trace_app)
-                log_debug("Prospero compressed Traces build cmd = {0}".format(cmd))
-                rtn = OSCommand(cmd, set_cwd=targetdir).run()
-                log_debug("Prospero build compressed Traces result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
-                self.assertTrue(rtn.result() == 0, "Compressed Traces failed to compile")
 
 ####
 

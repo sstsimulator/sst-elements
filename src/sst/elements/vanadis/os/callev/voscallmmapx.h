@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -35,7 +35,7 @@ public:
 		isAnon = (alloc_flags & 0x800) != 0;
 	}
 
-    VanadisSyscallOp getOperation() { return SYSCALL_OP_MMAPX; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_MMAPX; }
 
     uint64_t getAllocationAddress() const { return address; }
     uint64_t getAllocationLength() const { return length; }
@@ -53,6 +53,19 @@ public:
     uint64_t getOffsetUnits() const { return offset_units; }
 
 private:
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        VanadisSyscallEvent::serialize_order(ser);
+        ser& address;
+        ser& length;
+        ser& page_prot;
+        ser& alloc_flags;
+        ser& fd;
+        ser& offset;
+        ser& offset_units;
+        ser& isAnon;
+    }
+    ImplementSerializable(SST::Vanadis::VanadisSyscallMemoryMapExtEvent);
+
     uint64_t address;
     uint64_t length;
     int64_t page_prot;

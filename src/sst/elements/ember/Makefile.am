@@ -100,6 +100,8 @@ libember_la_SOURCES = \
 	mpi/motifs/emberhalo2d.cc  \
 	mpi/motifs/emberhalo2dNBR.h  \
 	mpi/motifs/emberhalo2dNBR.cc  \
+        mpi/motifs/emberhotspots.h \
+        mpi/motifs/emberhotspots.cc \
 	mpi/motifs/embersweep2d.h  \
 	mpi/motifs/embersweep2d.cc  \
 	mpi/motifs/embernull.h \
@@ -177,10 +179,14 @@ libember_la_SOURCES = \
 	mpi/motifs/embersiriustrace.cc \
 	mpi/motifs/emberrandomgen.h \
 	mpi/motifs/emberrandomgen.cc \
+        mpi/motifs/embertricount.h \
+        mpi/motifs/embertricount.cc \
 	mpi/motifs/emberunstructured.h \
 	mpi/motifs/emberunstructured.cc \
 	mpi/motifs/emberNtoM.h \
 	mpi/motifs/emberNtoM.cc \
+	mpi/motifs/emberBFS.h \
+	mpi/motifs/emberBFS.cc \
 	libs/emberShmemLib.h \
 	libs/shmem/emberFamEvent.h \
 	libs/shmem/emberFamAddEv.h \
@@ -253,10 +259,11 @@ libember_la_SOURCES = \
 	pyember.py
 
 
-bin_PROGRAMS = sst-spygen sst-meshconvert
+bin_PROGRAMS = sst-spygen sst-meshconvert embertricount_setup
 
 sst_spygen_SOURCES = tools/spygen/spygen.cc
 sst_meshconvert_SOURCES = tools/meshconverter/meshconverter.cc
+embertricount_setup_SOURCES = tools/embertricount/embertricount_setup.cc
 
 libember_la_LDFLAGS = -module -avoid-version
 
@@ -294,6 +301,7 @@ EXTRA_DIST = \
 	test/generateNidListInterval.py \
 	test/generateNidListRandom.py \
 	tests/testsuite_default_ember_nightly.py \
+	tests/testsuite_default_ember_otf2.py \
 	tests/testsuite_default_ember_sweep.py \
 	tests/testsuite_default_ember_qos.py \
 	tests/testsuite_default_ember_ESshmem.py \
@@ -305,9 +313,20 @@ EXTRA_DIST = \
 	tests/refFiles/ESshmem_cumulative.out \
 	tests/refFiles/test_EmberSweep.out \
 	tests/refFiles/test_embernightly.out \
+	tests/refFiles/test_emberotf2.out \
 	tests/refFiles/test_qos-dragonfly.out \
 	tests/refFiles/test_qos-fattree.out \
-	tests/refFiles/test_qos-hyperx.out
+	tests/refFiles/test_qos-hyperx.out \
+	tests/addFiles/test_emberotf2/traces.otf2 \
+	tests/addFiles/test_emberotf2/traces.def \
+	tests/addFiles/test_emberotf2/traces/0.def \
+	tests/addFiles/test_emberotf2/traces/0.evt \
+	tests/addFiles/test_emberotf2/traces/1.def \
+	tests/addFiles/test_emberotf2/traces/1.evt \
+	tests/addFiles/test_emberotf2/traces/2.def \
+	tests/addFiles/test_emberotf2/traces/2.evt \
+	tests/addFiles/test_emberotf2/traces/3.def \
+	tests/addFiles/test_emberotf2/traces/3.evt
 
 if USE_EMBER_CONTEXTS
 libember_la_SOURCES += \
@@ -322,8 +341,8 @@ libember_la_SOURCES += \
 
 libember_la_LIBADD = \
 	$(OTF2_LDFLAGS) \
-	$(OTF2_LIBS)
-
+	$(OTF2_LIBS) \
+	-lotf2
 endif
 
 install-exec-hook:

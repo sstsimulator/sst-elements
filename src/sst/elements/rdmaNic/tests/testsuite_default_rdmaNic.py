@@ -21,7 +21,15 @@ def build_rdmaNic_test_matrix():
     testlist = []
 
     # Add the SDL file, test dir compiled elf file, and test run timeout to create the testlist
-    testlist.append(["runVanadis.py", "app/rdma", "msg", 120])
+    testlist.append(["runVanadis.py", "app/rdma", "msg", "riscv64", {}, 120])
+    testlist.append(["runVanadis.py", "app/mpi", "IMB-MPI1", "riscv64", 
+    {
+        'VANADIS_EXE_ARGS':"-iter 1 -msglen msglen.txt",
+        'RDMANIC_IMB':'True',
+        'RDMANIC_NETWORK_SHAPE':'2x1',
+        'RDMANIC_NUMNODES':'2'
+    },
+    300 ])
 
     # Process each line and crack up into an index, hash, options and sdl file
     for testnum, test_info in enumerate(testlist):
@@ -30,11 +38,14 @@ def build_rdmaNic_test_matrix():
         sdlfile = test_info[0]
         elftestdir = test_info[1]
         elffile = test_info[2]
-        timeout_sec = test_info[3]
+        arch = test_info[3]
+        env = test_info[4]
+        timeout_sec = test_info[5]
         testname = "{0}_{1}".format(elftestdir.replace("/", "_"), elffile)
 
+
         # Build the test_data structure
-        test_data = (testnum, testname, sdlfile, elftestdir, elffile, timeout_sec)
+        test_data = (testnum, testname, sdlfile, elftestdir, elffile, arch, env, timeout_sec)
         rdmaNic_test_matrix.append(test_data)
 
 ################################################################################
@@ -52,36 +63,13 @@ def gen_custom_name(testcase_func, param_num, param):
         parameterized.to_safe_name(str(param.args[1])))
     return testcasename
 
-################################################################################
-# Code to support a single instance module initialize, must be called setUp method
-
-def initializeTestModule_SingleInstance(class_inst):
-    global module_init
-    global module_sema
-
-    module_sema.acquire()
-    if module_init != 1:
-        try:
-            # Put your single instance Init Code Here
-            class_inst._setupRdmaNicTestFiles()
-        except:
-            pass
-        module_init = 1
-    module_sema.release()
-
-################################################################################
 
 class testcase_rdmaNic(SSTTestCase):
 
-    def initializeClass(self, testName):
-        super(type(self), self).initializeClass(testName)
-        # Put test based setup code here. it is called before testing starts
-        # NOTE: This method is called once for every test
-
     def setUp(self):
         super(type(self), self).setUp()
-        initializeTestModule_SingleInstance(self)
         # Put test based setup code here. it is called once before every test
+        self._setupRdmaNicTestFiles()
 
     def tearDown(self):
         # Put test based teardown code here. it is called once after every test
@@ -90,15 +78,15 @@ class testcase_rdmaNic(SSTTestCase):
 #####
 
     @parameterized.expand(rdmaNic_test_matrix, name_func=gen_custom_name)
-    def test_rdmaNic_short_tests(self, testnum, testname, sdlfile, elftestdir, elffile, timeout_sec):
+    def test_rdmaNic_short_tests(self, testnum, testname, sdlfile, elftestdir, elffile, arch, env, timeout_sec):
         self._checkSkipConditions()
 
-        log_debug("Running RdmaNic test #{0} ({1}): elffile={4} in dir {3}; using sdl={2}".format(testnum, testname, sdlfile, elftestdir, elffile, timeout_sec))
-        self.rdmaNic_test_template(testnum, testname, sdlfile, elftestdir, elffile, timeout_sec)
+        log_debug("Running RdmaNic test #{0} ({1}): elffile={4} in dir {3}; using sdl={2}".format(testnum, testname, sdlfile, elftestdir, elffile, env, timeout_sec))
+        self.rdmaNic_test_template(testnum, testname, sdlfile, elftestdir, elffile, arch, env, timeout_sec)
 
 #####
 
-    def rdmaNic_test_template(self, testnum, testname, sdlfile, elftestdir, elffile, testtimeout=120):
+    def rdmaNic_test_template(self, testnum, testname, sdlfile, elftestdir, elffile, arch, env, testtimeout=120):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = "{0}/rdmaNic_tests/{1}/{2}".format(self.get_test_output_run_dir(), elftestdir,elffile)
@@ -111,26 +99,33 @@ class testcase_rdmaNic(SSTTestCase):
 
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
-        ref_outfile = "{0}/{1}/{2}.out.gold".format(test_path, elftestdir, elffile)
-        ref_errfile = "{0}/{1}/{2}.err.gold".format(test_path, elftestdir, elffile)
+        ref_outfile = "{0}/{1}/{2}/{3}.out.gold".format(test_path, elftestdir, arch, elffile)
+        ref_errfile = "{0}/{1}/{2}/{3}.err.gold".format(test_path, elftestdir, arch, elffile)
 
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
 
-        node0_os_outfile = "{0}/stdout-node0.cpu0.os".format(test_path)
-        node0_os_errfile = "{0}/stderr-node0.cpu0.os".format(test_path)
-        ref_node0_os_outfile = "{0}/{1}/{2}.stdout-node0.cpu0.os.gold".format(test_path, elftestdir, elffile)
-        ref_node0_os_errfile = "{0}/{1}/{2}.stderr-node0.cpu0.os.gold".format(test_path, elftestdir, elffile)
+        node0_os_outfile = "{0}/stdout-0-100".format(test_path)
+        node0_os_errfile = "{0}/stderr-0-100".format(test_path)
+        ref_node0_os_outfile = "{0}/{1}/{2}/{3}.stdout-node0.cpu0.os.gold".format(test_path, elftestdir, arch, elffile)
+        ref_node0_os_errfile = "{0}/{1}/{2}/{3}.stderr-node0.cpu0.os.gold".format(test_path, elftestdir, arch, elffile)
 
-        node1_os_outfile = "{0}/stdout-node1.cpu0.os".format(test_path)
-        node1_os_errfile = "{0}/stderr-node1.cpu0.os".format(test_path)
-        ref_node1_os_outfile = "{0}/{1}/{2}.stdout-node1.cpu0.os.gold".format(test_path, elftestdir, elffile)
-        ref_node1_os_errfile = "{0}/{1}/{2}.stderr-node1.cpu0.os.gold".format(test_path, elftestdir, elffile)
+        node1_os_outfile = "{0}/stdout-1-100".format(test_path)
+        node1_os_errfile = "{0}/stderr-1-100".format(test_path)
+        ref_node1_os_outfile = "{0}/{1}/{2}/{3}.stdout-node1.cpu0.os.gold".format(test_path, elftestdir, arch, elffile)
+        ref_node1_os_errfile = "{0}/{1}/{2}/{3}.stderr-node1.cpu0.os.gold".format(test_path, elftestdir, arch, elffile)
 
         # Set the RdmaNic EXE path
-        testfilepath = "{0}/{1}/{2}".format(test_path, elftestdir, elffile)
-        os.environ['VANADIS_EXE'] = testfilepath
+        testfilepath = "{0}/{1}/{2}/{3}".format(test_path, elftestdir, arch, elffile)
+
+        for key, value in env.items():
+            os.environ[key]=value
+
+        os.environ['RDMANIC_EXE'] = testfilepath
 
         oscmd = self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, set_cwd=test_path, timeout_sec=testtimeout)
+
+        for key, value in env.items():
+            os.unsetenv( key )
 
         # Perform the tests
         # Verify that the errfile from SST is empty

@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -249,7 +249,7 @@ OfferedLoad::handle_receives(int vn)
 {
     SimpleNetwork::Request* req = link_if->recv(vn);
     if ( req->dest != id ) {
-        out.fatal(CALL_INFO,-1,"Endpoint %d received a packet intended for %lld\n",id,req->dest);
+        out.fatal(CALL_INFO,-1,"Endpoint %d received a packet intended for %" PRI_NID "\n",id,req->dest);
     }
     if ( req != NULL ) {
         SimTime_t current_time = getCurrentSimTime(base_tc);

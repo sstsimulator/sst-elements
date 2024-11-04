@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2022 NTESS. Under the terms
+# Copyright 2009-2024 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2022, NTESS
+# Copyright (c) 2009-2024, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -24,11 +24,12 @@ class topoDragonFly(Topology):
     def __init__(self):
         Topology.__init__(self)
         self._declareClassVariables(["link_latency","host_link_latency","global_link_map"])
-        self._declareParams("main",["hosts_per_router","routers_per_group","intergroup_links","num_groups",
-                                    "algorithm","adaptive_threshold","global_routes","config_failed_links",
-                                    "failed_links"])
+        self._declareParams("main",["hosts_per_router","routers_per_group","intergroup_links","intragroup_links",
+                                    "num_groups","algorithm","adaptive_threshold","global_routes",
+                                    "config_failed_links","failed_links"])
         self.global_routes = "absolute"
         self._subscribeToPlatformParamSet("topology")
+        self.intragroup_links = 1
 
     def getName(self):
         return "Dragonfly"
@@ -37,11 +38,12 @@ class topoDragonFly(Topology):
     def getNumNodes(self):
         return self.num_groups * self.routers_per_group * self.hosts_per_router
 
-    def setShape(self,hosts_per_router, router_per_group, intergroup_links, num_groups):
+    def setShape(self,hosts_per_router, router_per_group, intergroup_links, num_groups, intragroup_links = 1):
         self.hosts_per_router = hosts_per_router
         self.routers_per_group = routers_per_group
         self.intergroup_links = intergroup_links
         self.num_groups = num_groups
+        self.intragroup_links = intragroup_links
 
 
     def setRoutingModeAbsolute(self):
@@ -56,16 +58,16 @@ class topoDragonFly(Topology):
         return self.getRouterNameForLocation(rtr_id // self.routers_per_group, rtr_id % self.routers_per_group)
 
     def getRouterNameForLocation(self,group,rtr):
-        return "%srtr_G%dR%d"%(self._prefix,group,rtr)
+        return "rtr_G%dR%d"%(group,rtr)
 
     def findRouterByLocation(self,group,rtr):
         return sst.findComponentByName(self.getRouterNameForLocation(group,rtr))
 
 
-    def build(self, endpoint):
+    def _build_impl(self, endpoint):
         if self._check_first_build():
             sst.addGlobalParams("params_%s"%self._instance_name, self._getGroupParams("main"))
-
+            sst.addGlobalParam("params_%s"%self._instance_name, "network_name", self.network_name)
 
         if self.host_link_latency is None:
             self.host_link_latency = self.link_latency
@@ -78,7 +80,7 @@ class topoDragonFly(Topology):
 
         empty_ports = intergroup_per_router * self.routers_per_group - total_intergroup_links
 
-        num_ports = self.routers_per_group - 1 + self.hosts_per_router + intergroup_per_router
+        num_ports = ((self.routers_per_group - 1) * self.intragroup_links) + self.hosts_per_router + intergroup_per_router
 
 
         links = dict()
@@ -147,8 +149,7 @@ class topoDragonFly(Topology):
             src = min(dest_grp, g)
             dest = max(dest_grp, g)
 
-            #getLink("link:g%dg%dr%d"%(g, src, dst)), "port%d"%port, self.params["link_lat"])
-            return getLink("%sglobal_link_g%dg%dr%d"%(self._prefix,src,dest,link_num))
+            return getLink("global_link_g%dg%dr%d"%(src,dest,link_num))
 
         #########################
 
@@ -174,14 +175,11 @@ class topoDragonFly(Topology):
 
                 port = 0
                 for p in range(self.hosts_per_router):
-                    #(nic, port_name) = endpoint.build(nic_num, {"num_peers":num_peers})
-                    (nic, port_name) = endpoint.build(nic_num, {})
-                    if nic:
-                        link = sst.Link("link_g%dr%dh%d"%(g, r, p))
-                        #network_interface.build(nic,slot,0,link,self.host_link_latency)
-                        link.connect( (nic, port_name, self.host_link_latency), (rtr, "port%d"%port, self.host_link_latency) )
-                        #link.setNoCut()
-                        #rtr.addLink(link,"port%d"%port,self.host_link_latency)
+                    link = sst.Link("link_g%dr%dh%d"%(g, r, p), self.host_link_latency)
+
+                    Buildable._instanceBuildableBackCompat(endpoint, rtr, "port%d"%port, nic_num, {}, link)
+                    #link.setNoCut()
+                    #rtr.addLink(link,"port%d"%port,self.host_link_latency)
                     nic_num = nic_num + 1
                     port = port + 1
 
@@ -189,8 +187,9 @@ class topoDragonFly(Topology):
                     if p != r:
                         src = min(p,r)
                         dst = max(p,r)
-                        rtr.addLink(getLink("link_g%dr%dr%d"%(g, src, dst)), "port%d"%port, self.link_latency)
-                        port = port + 1
+                        for s in range(self.intragroup_links):
+                            rtr.addLink(getLink("link_g%dr%dr%ds%d"%(g, src, dst, s)), "port%d"%port, self.link_latency)
+                            port = port + 1
 
                 for p in range(igpr):
                     link = getGlobalLink(g,r,p)

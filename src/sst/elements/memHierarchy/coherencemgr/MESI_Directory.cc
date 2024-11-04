@@ -1,8 +1,8 @@
-// Copyright 2013-2022 NTESS. Under the terms
+// Copyright 2013-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2022, NTESS
+// Copyright (c) 2013-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -1506,16 +1506,16 @@ bool MESIDirectory::isRequestAddressValid(Addr addr){
 const char* MESIDirectory::printDirectoryEntryStatus(Addr baseAddr){
     DirEntry *entry = getDirEntry(baseAddr);
     if(!entry){
-        sprintf(dirEntStatus, "[Not Created]");
+        snprintf(dirEntStatus, 1024, "[Not Created]");
     } else {
         uint32_t refs = entry->countRefs();
 
-        if(0 == refs) sprintf(dirEntStatus, "[Noncacheable]");
+        if(0 == refs) snprintf(dirEntStatus, 1024, "[Noncacheable]");
         else if(entry->isDirty()){
             uint32_t owner = entry->findOwner();
-            sprintf(dirEntStatus, "[owned by %s]", nodeid_to_name[owner].c_str());
+            snprintf(dirEntStatus, 1024, "[owned by %s]", nodeid_to_name[owner].c_str());
         }
-        else sprintf(dirEntStatus, "[Shared by %u]", refs);
+        else snprintf(dirEntStatus, 1024, "[Shared by %u]", refs);
 
 
     }

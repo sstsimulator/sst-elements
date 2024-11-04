@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -48,7 +48,7 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
     const int32_t verbosity = params.find<uint32_t>("verbose", 0);
 
     char prefix[256];
-    sprintf(prefix, "[t=@t][%s]: ", getName().c_str());
+    snprintf(prefix, 256, "[t=@t][%s]: ", getName().c_str());
     output = new SST::Output(prefix, verbosity, 0, Output::STDOUT);
     arb->setOutput(output);
 
@@ -70,7 +70,7 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
     char* linkName = new char[256];
 
     for (int32_t i = 0; i < port_count; ++i) {
-        sprintf(linkName, "port%" PRIi32, i);
+        snprintf(linkName, 256, "port%" PRIi32, i);
         output->verbose(CALL_INFO, 1, 0, "Configuring port %s ...\n", linkName);
 
         links[i] = configureLink(linkName, new Event::Handler<ShogunComponent>(this, &ShogunComponent::handleIncoming));
@@ -288,7 +288,7 @@ void ShogunComponent::handleIncoming(SST::Event* event)
         const int src_port = incomingShogunEv->getPayload()->src;
 
         if (inputQueues[src_port]->full()) {
-            output->fatal(CALL_INFO, 4, 0, "Error: recv event for port %" PRIi32 " but queues are full\n", src_port);
+            output->fatal(CALL_INFO, -1, "Error: recv event for port %" PRIi32 " but queues are full\n", src_port);
         }
 
         output->verbose(CALL_INFO, 4, 0, "-> recv from %" PRIi32 " dest: %" PRId64 "\n",

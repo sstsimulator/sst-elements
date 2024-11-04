@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -22,6 +22,8 @@
   These are header file only classes, so need to be included here to
   get compiled.
  */
+#include "bridge.h"
+
 #include "hr_router/xbar_arb_rr.h"
 #include "hr_router/xbar_arb_lru.h"
 #include "hr_router/xbar_arb_age.h"
@@ -79,6 +81,15 @@ char pymerlin_topo_mesh[] = {
 #include "topology/pymerlin-topo-mesh.inc"
     0x00};
 
+char pymerlin_topo_polarfly[] = {
+#include "topology/pymerlin-topo-polarfly.inc"
+    0x00};
+
+char pymerlin_topo_polarstar[] = {
+#include "topology/pymerlin-topo-polarstar.inc"
+    0x00};
+
+
 class MerlinPyModule : public SSTElementPythonModule {
 public:
     MerlinPyModule(std::string library) :
@@ -94,6 +105,8 @@ public:
         primary_module->addSubModule("topology",pymerlin_topo_hyperx,"topology/pymerlin-topo-hyperx.py");
         primary_module->addSubModule("topology",pymerlin_topo_fattree,"topology/pymerlin-topo-fattree.py");
         primary_module->addSubModule("topology",pymerlin_topo_mesh,"topology/pymerlin-topo-mesh.py");
+        primary_module->addSubModule("topology",pymerlin_topo_polarfly,"topology/pymerlin-topo-polarfly.py");
+        primary_module->addSubModule("topology",pymerlin_topo_polarstar,"topology/pymerlin-topo-polarstar.py");
     }
 
     SST_ELI_REGISTER_PYTHON_MODULE(

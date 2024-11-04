@@ -1,0 +1,10 @@
+EMBER: using param directory: paramFiles
+EMBER: platform: default
+EMBER: network: topology=fattree shape=4,4:1
+EMBER: numNodes=4 numNics=4
+EMBER: network: BW=4GB/s pktSize=2048B flitSize=8B
+EMBER: Job=0, nidList='0-3'
+EMBER: Motif='Init'
+EMBER: Motif='OTF2 tracePrefix=bcast.otf2'
+EMBER: Motif='Fini'
+Simulation is complete, simulated time: 13.942 us

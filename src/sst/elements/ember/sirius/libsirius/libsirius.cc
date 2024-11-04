@@ -1,8 +1,8 @@
-// Copyright 2009-2022 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2022, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -194,7 +194,7 @@ extern "C" int MPI_Init(int* argc, char** argv[]) {
 	}
 
 	char buffer[1024];
-	sprintf(buffer, "%s-%d.stf.%d", (*argv)[0], sirius_npes, sirius_rank);
+	snprintf(buffer, 1024, "%s-%d.stf.%d", (*argv)[0], sirius_npes, sirius_rank);
 
 	trace_dump = fopen(buffer, "wb");
 
@@ -203,7 +203,7 @@ extern "C" int MPI_Init(int* argc, char** argv[]) {
 
 	if(sirius_rank == 0) {
 		char buffer_meta[512];
-		sprintf(buffer_meta, "%s-%d.meta",
+		snprintf(buffer_meta, 512, "%s-%d.meta",
 			(*argv)[0], sirius_npes);
 		FILE* meta_file = fopen(buffer_meta, "wt");
 
