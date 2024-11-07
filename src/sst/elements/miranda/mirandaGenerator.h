@@ -180,12 +180,13 @@ public:
 		const uint64_t cLength,
 		const ReqOperation cOpType) :
 		GeneratorRequest(),
-		addr(cAddr), length(cLength), op(cOpType) {}
+		addr(cAddr), length(cLength), op(cOpType)
+	{ assert (op == READ || op == WRITE); }
+
 	~MemoryOpRequest() {}
 	ReqOperation getOperation() const { return op; }
 	bool isRead() const { return op == READ; }
 	bool isWrite() const { return op == WRITE; }
-        bool isCustom() const { return op == CUSTOM; }
 	uint64_t getAddress() const { return addr; }
 	uint64_t getLength() const { return length; }
 
