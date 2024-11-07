@@ -19,7 +19,6 @@
 #include <mercury/libraries/compute/compute_event.h>
 #include <mercury/operating_system/process/thread.h>
 #include <mercury/libraries/compute/lib_compute_memmove.h>
-//#include <sstmac/software/process/backtrace.h>
 
 namespace SST {
 namespace Hg {
@@ -65,5 +64,5 @@ LibComputeTime::sleep(TimeDelta time)
   os_->sleep(time);
 }
 
-}
-} //end of namespace
+} // end namespace Hg
+} // end namespace SST

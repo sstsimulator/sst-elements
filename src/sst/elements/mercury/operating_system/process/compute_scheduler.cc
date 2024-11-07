@@ -17,8 +17,6 @@
 #include <mercury/operating_system/process/compute_scheduler.h>
 #include <mercury/operating_system/process/thread.h>
 
-//RegisterDebugSlot(compute_scheduler, "Print all debug information related to the OS compute scheduler");
-
 namespace SST {
 namespace Hg {
 

@@ -168,12 +168,6 @@ class Thread
     return os_;
   }
 
-//  void collectStats(Timestamp start, TimeDelta elapsed);
-
-//  const int* backtrace() const {
-//    return backtrace_;
-//  }
-
   virtual bool isMainThread() const {
     return false;
   }
@@ -201,12 +195,6 @@ class Thread
   void incrementBlockCounter() {
     ++block_counter_;
   }
-
-//  void appendBacktrace(int fxnId);
-
-//  void popBacktrace();
-
-//  void recordLastBacktrace(int nfxn);
 
   void initThread(const SST::Params& params, int phyiscal_thread_id,
     ThreadContext* tocopy, void *stack, int stacksize,
@@ -281,46 +269,6 @@ class Thread
   void computeDetailed(uint64_t flops, uint64_t intops,
                         uint64_t bytes, int nthread=use_omp_num_threads);
 
-//  int ompGetThreadNum() const {
-//    auto& active = omp_contexts_.back();
-//    return active.id;
-//  }
-
-//  int ompGetNumThreads() const {
-//    auto& active = omp_contexts_.back();
-//    return active.num_threads;
-//  }
-
-//  int ompGetMaxThreads() const {
-//    auto& active = omp_contexts_.back();
-//    return active.max_num_subthreads;
-//  }
-
-//  int ompGetAncestorThreadNum() const {
-//    auto& active = omp_contexts_.back();
-//    return active.parent_id;
-//  }
-
-//  void ompSetNumThreads(int thr) {
-//    auto& active = omp_contexts_.back();
-//    active.requested_num_subthreads = thr;
-//  }
-
-//  int ompGetLevel() const {
-//    auto& active = omp_contexts_.back();
-//    return active.level;
-//  }
-
-//  int ompInParallel() {
-//    auto& active = omp_contexts_.back();
-//    bool parallel = active.level > 0;
-//    return parallel ? 1 : 0;
-//  }
-
-//  template <class T> static T* getCurrentApi(){
-//    return current()->getApi<T>();
-//  }
-
   void* getTlsValue(long thekey) const;
 
   void setTlsValue(long thekey, void* ptr);
@@ -330,20 +278,6 @@ class Thread
   void startAPICall();
 
   void endAPICall();
-
-//  void setTag(const FTQTag& t){
-//    ftag_ = t;
-//  }
-
-//  const FTQTag& tag() const {
-//    return ftag_;
-//  }
-
-//  void spawnOmpParallel();
-
-//  CallGraph* callGraph() const {
-//    return callGraph_;
-//  }
 
  protected:
   Thread(SST::Params& params,
@@ -389,16 +323,12 @@ class Thread
 
   ProcessContext p_txt_;
 
-//  FTQTag ftag_;
-
   SoftwareId sid_;
 
 //  HostTimer* host_timer_;
 
  private:
   API* getAppApi(const std::string& name) const;
-
-//  CallGraphTrace backtrace_; //each function is labeled by unique integer
 
   int last_bt_collect_nfxn_;
 
@@ -429,11 +359,6 @@ class Thread
   detach_t detach_state_;
 
   std::list<omp_context> omp_contexts_;
-
-//  CallGraph* callGraph_;
-
-//  FTQCalendar* ftq_trace_;
-
 };
 
 } // end namespace Hg

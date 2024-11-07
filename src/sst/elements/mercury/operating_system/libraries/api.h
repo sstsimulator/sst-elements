@@ -17,7 +17,6 @@
 
 #include <sst/core/event.h>
 #include <sst/core/subcomponent.h>
-//#include <mercury/common/factory.h>
 #include <sst/core/eli/elementbuilder.h>
 #include <mercury/common/component.h>
 #include <mercury/common/events.h>

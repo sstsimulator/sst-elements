@@ -19,11 +19,6 @@
 #include <mercury/libraries/compute/compute_event_fwd.h>
 #include <mercury/operating_system/process/software_id.h>
 #include <stdint.h>
-//#include <sstmac/common/stats/ftq_tag.h>
-
-//these are the default instruction labels
-
-//DeclareDebugSlot(lib_compute_inst);
 
 namespace SST {
 namespace Hg {

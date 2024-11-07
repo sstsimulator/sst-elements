@@ -13,15 +13,12 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef sst_hg_software_process_OPERATING_SYSTEM_FWD_H
-#define sst_hg_software_process_OPERATING_SYSTEM_FWD_H
+#pragma once
 
 namespace SST {
 namespace Hg {
 
 class OperatingSystem;
 
-}
-}
-
-#endif // OPERATING_SYSTEM_FWD_H
+} // namespace Hg
+} // namespace SST

@@ -25,7 +25,6 @@ if __name__ == "__main__":
     platform = PlatformDefinition.getCurrentPlatform()
 
     platform.addParamSet("operating_system", {
-        "verbose" : "0",
         "app1.name" : "sendrecv",
         "app1.exe"  : "sendrecv.so",
         "app1.apis" : ["systemAPI:libsystemapi.so", "SimTransport:libsumi.so", "MpiApi:libmask_mpi.so"],
