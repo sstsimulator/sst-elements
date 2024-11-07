@@ -18,5 +18,5 @@
 namespace SST {
 namespace Hg {
 
-}
-}
+} // end namespace Hg
+} // end namespace SST

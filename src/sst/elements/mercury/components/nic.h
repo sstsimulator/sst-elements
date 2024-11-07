@@ -1,85 +1,41 @@
-/**
-Copyright 2009-2024 National Technology and Engineering Solutions of Sandia,
-LLC (NTESS).  Under the terms of Contract DE-NA-0003525, the U.S. Government
-retains certain rights in this software.
-
-Sandia National Laboratories is a multimission laboratory managed and operated
-by National Technology and Engineering Solutions of Sandia, LLC., a wholly
-owned subsidiary of Honeywell International, Inc., for the U.S. Department of
-Energy's National Nuclear Security Administration under contract DE-NA0003525.
-
-Copyright (c) 2009-2024, NTESS
-
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, 
-are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-
-    * Redistributions in binary form must reproduce the above
-      copyright notice, this list of conditions and the following
-      disclaimer in the documentation and/or other materials provided
-      with the distribution.
-
-    * Neither the name of the copyright holder nor the names of its
-      contributors may be used to endorse or promote products derived
-      from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-Questions? Contact sst-macro-help@sandia.gov
-*/
+// Copyright 2009-2024 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2024, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// of the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #pragma once
+
+#include <mercury/common/component.h>
 
 #include <sst/core/event.h>
 #include <sst/core/eli/elementbuilder.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 
-#include <mercury/common/component.h>
 #include <mercury/common/thread_safe_new.h>
 #include <mercury/common/node_address.h>
 #include <mercury/common/timestamp.h>
+#include <mercury/common/event_handler.h>
 #include <mercury/components/node_fwd.h>
-//#include <sstmac/hardware/common/failable.h>
+#include <mercury/components/operating_system_fwd.h>
 #include <mercury/common/connection.h>
 #include <mercury/hardware/common/packet_fwd.h>
 #include <mercury/hardware/common/recv_cq.h>
-#include <mercury/hardware/network/network_message_fwd.h>
-//#include <sstmac/hardware/logp/logp_switch_fwd.h>
-//#include <sstmac/common/stats/stat_spyplot_fwd.h>
-//#include <sstmac/common/stats/stat_histogram_fwd.h>
 #include <mercury/hardware/common/flow_fwd.h>
-#include <mercury/hardware/network/network_message_fwd.h>
-#include <mercury/components/operating_system_fwd.h>
-//#include <mercury/operating_system/process/progress_queue.h>
-//#include <sstmac/hardware/topology/topology_fwd.h>
-//#include <sprockit/debug.h>
-//#include <mercury/common/factory.h>
-#include <mercury/common/event_handler.h>
 #include <mercury/hardware/network/network_message.h>
 
 #include <vector>
 #include <queue>
 #include <functional>
-
-//DeclareDebugSlot(nic);
-
-//#define nic_debug(...) \
-//  debug_printf(sprockit::dbg::nic, "NIC on node %d: %s", \
-//    int(addr()), sprockit::sprintf(__VA_ARGS__).c_str())
 
 namespace SST {
 namespace Hg {
@@ -109,7 +65,6 @@ class NicEvent :
  * the process (ppid) involved.
  */
 class NIC : public SST::Hg::SubComponent
-//class NIC : public ConnectableComponent
 {
  public:
 
@@ -130,11 +85,6 @@ class NIC : public SST::Hg::SubComponent
     LogP
   } Port;
 
-  // struct MyRequest : public SST::Interfaces::SimpleNetwork::Request {
-  //   uint64_t flow_id;
-  //   Timestamp start;
-  // };
-
   class FlowTracker : public Event {
 private:
     uint64_t flow_id;
@@ -142,20 +92,6 @@ public:
     FlowTracker(uint64_t id) : flow_id(id) {}
     uint64_t id() const {return flow_id;}
   };
-
-//  struct MessageEvent : public Event {
-//    MessageEvent(NetworkMessage* msg) :
-//      msg_(msg)
-//    {
-//    }
-//
-//    NetworkMessage* msg() const {
-//      return msg_;
-//    }
-//
-//   private:
-//    NetworkMessage*  msg_;
-//  };
 
 private:
   struct Pending {
@@ -210,10 +146,6 @@ public:
   void set_link_control(SST::Interfaces::SimpleNetwork* link_control) {
       link_control_ = link_control;
   }
-
-//  Topology* topology() const {
-//    return top_;
-//  }
 
   /**
    * @brief injectSend Perform an operation on the NIC.
@@ -282,20 +214,9 @@ public:
 
  protected:
 
-  void configureLogPLinks();
-
-  void configureLinks();
-
   Node* parent() const {
     return parent_;
   }
-
-  /**
-    Start the message sending and inject it into the network
-    This performs all model-specific work
-    @param payload The network message to send
-  */
-  //virtual void doSend(NetworkMessage* payload) = 0;
 
   bool negligibleSize(int bytes) const {
     return bytes <= negligibleSize_;
@@ -306,13 +227,9 @@ protected:
   Node* parent_;
   NodeId my_addr_;
   EventLink::ptr logp_link_;
-  //Topology* top_;
 
  private:
 
-  //StatSpyplot<int,uint64_t>* spy_bytes_;
-  //Statistic<uint64_t>* xmit_flows_;
-  //sw::SingleProgressQueue<NetworkMessage> queue_;
   SST::Interfaces::SimpleNetwork* link_control_;
   std::vector<std::queue<Pending>> pending_;
   std::vector<std::queue<NetworkMessage*>> ack_queue_;
@@ -320,6 +237,7 @@ protected:
   RecvCQ cq_;
   int vns_;
   int test_size_;
+  std::unique_ptr<SST::Output> out_;
 
  protected:
   SST::Hg::OperatingSystem* os_;
@@ -336,49 +254,6 @@ protected:
 
   void finishMemcpy(NetworkMessage* msg);
 };
-
-//class NullNIC : public NIC
-//{
-// public:
-
-//  SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
-//    NullNIC,
-//    "hg",
-//    "null_nic",
-//    SST_ELI_ELEMENT_VERSION(1,0,0),
-//    "implements a nic that models nothing - stand-in only",
-//    SST::Hg::NIC
-//          )
-
-////  SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
-////    NullNIC,
-////    "hg",
-////    "nullnic",
-////    SST_ELI_ELEMENT_VERSION(0,0,1),
-////    "Mercury Null NIC",
-////    SST::Hg::NIC
-////  )
-
-//  NullNIC(uint32_t id, SST::Params& params, SST::Hg::SimpleNode* parent) :
-//      NIC(id, params, parent)
-//  {
-//  }
-
-//  std::string toString() const override { return "null nic"; }
-//  //std::string toString() const { return "null nic"; }
-
-////  void connectOutput(int, int, EventLink::ptr&&) override {}
-
-////  void connectInput(int, int, EventLink::ptr&&) override {}
-
-////  SST::Event::HandlerBase* payloadHandler(int) override { return nullptr; }
-
-////  SST::Event::HandlerBase* creditHandler(int) override { return nullptr; }
-
-//  SST::Event::HandlerBase* payloadHandler(int) { return nullptr; }
-
-//  SST::Event::HandlerBase* creditHandler(int) { return nullptr; }
-//};
 
 } // end of namespace Hg
 } // end of namespace SST

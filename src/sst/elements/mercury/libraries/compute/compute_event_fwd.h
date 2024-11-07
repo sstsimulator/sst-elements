@@ -20,7 +20,5 @@ namespace Hg {
 
 class ComputeEvent;
 
-} }
-
-
-#endif // COMPUTE_MESSAGE_FWD_H
+} // end namespace Hg
+} // end namespace SST

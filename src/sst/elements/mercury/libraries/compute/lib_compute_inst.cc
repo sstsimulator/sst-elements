@@ -18,12 +18,6 @@
 #include <mercury/libraries/compute/lib_compute_inst.h>
 #include <mercury/libraries/compute/compute_event.h>
 #include <mercury/operating_system/process/thread.h>
-//#include <sstmac/software/process/backtrace.h>
-//#include <mercury/common/event_callback.h>
-//#include <sstmac/common/stats/ftq.h>
-//#include <sstmac/software/process/ftq_scope.h>
-
-//RegisterDebugSlot(lib_compute_inst);
 
 namespace SST {
 namespace Hg {

@@ -18,7 +18,6 @@
 #include <sst/core/params.h>
 
 #include <mercury/common/component.h>
-//#include <mercury/common/factory.h>
 #include <sst/core/eli/elementbuilder.h>
 #include <mercury/components/operating_system.h>
 #include <mercury/operating_system/process/thread.h>
@@ -72,21 +71,6 @@ class App : public Thread
   void sleep(TimeDelta time);
 
   void compute(TimeDelta time);
-
-//  void computeInst(ComputeEvent* cmsg);
-
-//  void computeLoop(uint64_t num_loops,
-//    int nflops_per_loop,
-//    int nintops_per_loop,
-//    int bytes_per_loop);
-
-//  void computeBlockRead(uint64_t bytes);
-
-//  void computeBlockWrite(uint64_t bytes);
-
-//  void computeBlockMemcpy(uint64_t bytes);
-
-//  LibComputeMemmove* computeLib();
 
   ~App() override;
 
@@ -236,7 +220,6 @@ class App : public Thread
 
   void computeDetailed(uint64_t flops, uint64_t intops, uint64_t bytes, int nthread);
 
-//  LibComputeMemmove* compute_lib_;
   std::string unique_name_;
 
   int next_tls_key_;

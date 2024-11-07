@@ -4,6 +4,14 @@ from sst.merlin.base import *
 platdef = PlatformDefinition("platform_mask_mpi_test")
 PlatformDefinition.registerPlatformDefinition(platdef)
 
+platdef.addParamSet("node",{
+    "verbose" : "0",
+})
+
+platdef.addParamSet("nic",{
+    "verbose" : "0",
+})
+
 platdef.addParamSet("operating_system",{
     "verbose" : "0",
 })
@@ -19,7 +27,6 @@ platdef.addParamSet("network_interface",{
     "output_buf_size" : "16kB"
 })
 
-#platdef.addClassType("network_interface","sst.merlin.interface.LinkControl")
 platdef.addClassType("network_interface","sst.merlin.interface.ReorderLinkControl")
 
 platdef.addParamSet("router",{

@@ -20,8 +20,6 @@
 #include <mercury/libraries/compute/compute_event.h>
 #include <mercury/operating_system/process/thread.h>
 #include <mercury/libraries/compute/lib_compute_memmove.h>
-//#include <sstmac/common/event_callback.h>
-//#include <sstmac/software/process/backtrace.h>
 
 namespace SST {
 namespace Hg {
@@ -43,9 +41,6 @@ LibComputeMemmove::LibComputeMemmove(SST::Params& params,
 void
 LibComputeMemmove::doAccess(uint64_t bytes)
 {
-  //if (bytes == 0){
-  //  return;
-  //}
   uint64_t num_loops = bytes / access_width_bytes_;
   int nflops = 0;
   int nintops = 1; //memmove instruction
@@ -74,5 +69,5 @@ LibComputeMemmove::copy(uint64_t bytes)
 }
 
 
-}
-} //end of namespace
+} // end namespace Hg
+} // end namespace SST

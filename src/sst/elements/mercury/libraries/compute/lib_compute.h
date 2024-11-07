@@ -47,5 +47,5 @@ class LibCompute :
 
 };
 
-}
-}
+} // end namespace Hg
+} // end namespace SST
