@@ -16,7 +16,6 @@
 #include <mercury/components/operating_system.h>
 #include <mercury/operating_system/process/simple_compute_scheduler.h>
 #include <mercury/operating_system/process/thread.h>
-//#include <mercury/operating_system/process/sstmac_config.h>
 
 namespace SST {
 namespace Hg {

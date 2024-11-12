@@ -39,5 +39,5 @@ class lib_hybrid_compute :
 
 };
 
-}
-} //end of namespace
+} // end namespace Hg
+} // end namespace SST

@@ -19,7 +19,6 @@
 
 #include <sst/core/link.h>
 
-//#include <mercury/common/factory.h>
 #include <sst/core/eli/elementbuilder.h>
 #include <mercury/components/node_fwd.h>
 #include <mercury/common/unique_id.h>
@@ -42,8 +41,6 @@ namespace SST {
 namespace Hg {
 
 extern template SST::TimeConverter* HgBase<SST::SubComponent>::time_converter_;
-
-//static std::string _tick_spacing_string_("1ps");
 
 class OperatingSystem : public SST::Hg::SubComponent {
 
@@ -150,6 +147,7 @@ public:
   /// to this context on every context switch.
   ThreadContext *des_context_;
 
+  unsigned int verbose_;
   int nranks_;
   Node* node_;
   Thread* active_thread_;
@@ -188,8 +186,6 @@ public:
   static SST::TimeConverter* timeConverter() {
     return time_converter_;
   }
-// protected:
-//  static SST::TimeConverter* time_converter_;
 
  public:
 
@@ -240,10 +236,6 @@ public:
     compute_sched_->releaseCores(ncore,thr);
   }
 
-//  NodeId rankToNode(int rank) {
-//    return NodeId( rank_mapper_->mapRank(rank) );
-//  }
-
   void set_nranks(int32_t ranks) {
     nranks_ = ranks;
   }
@@ -251,8 +243,6 @@ public:
   int32_t nranks() {
     return nranks_;
   }
-
-//  SST::Ember::EmberRankMap*	rank_mapper_;
 
 //
 // LIBRARIES

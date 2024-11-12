@@ -16,24 +16,8 @@
 #pragma once
 
 #ifdef __cplusplus
-
 #include <mercury/common/errors.h>
 #include <mercury/operating_system/process/task_id.h>
-//#include <sprockit/spkt_string.h>
-//#include <sprockit/debug.h>
-
-/** Automatically inherit the errors */
-//using sprockit::IllformedError;
-//using sprockit::InputError;
-//using sprockit::InvalidKeyError;
-//using sprockit::IOError;
-//using sprockit::IteratorError;
-//using sprockit::LibraryError;
-//using sprockit::MemoryError;
-//using sprockit::NullError;
-//using sprockit::OSError;
-//using sprockit::RangeError;
-//using sprockit::SpktError;
 #endif
 
 namespace SST::Hg {

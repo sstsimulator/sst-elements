@@ -19,10 +19,6 @@
 #include <mercury/operating_system/process/tls.h>
 #include <mercury/operating_system/threading/thread_lock.h>
 #include <mercury/operating_system/threading/stack_alloc.h>
-//#include <process/global.h>
-//#include <mercury/common/sstmac_config.h>
-//#include <sprockit/thread_safe_new.h>
-//#include <sstmac/skeleton_tls.h>
 
 #include <iostream>
 #include <string.h>

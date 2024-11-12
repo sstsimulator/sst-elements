@@ -18,14 +18,9 @@
 #include <mercury/common/output.h>
 #include <mercury/components/node.h>
 #include <mercury/components/operating_system.h>
-//#include <sstmac/common/stats/ftq.h>
 #include <mercury/operating_system/process/thread.h>
 #include <mercury/operating_system/process/thread_info.h>
 #include <mercury/operating_system/process/app.h>
-//#include <sstmac/software/libraries/library.h>
-//#include <sstmac/software/libraries/compute/compute_event.h>
-//#include <sstmac/software/api/api.h>
-//#include <sstmac/common/sst_event.h>
 
 #include <iostream>
 #include <exception>
@@ -35,10 +30,6 @@
 #include <stdlib.h>
 #include <cstdlib>
 #include <stdio.h>
-
-//#include <unusedvariablemacro.h>
-
-//MakeDebugSlot(host_compute)
 
 using namespace std;
 
@@ -170,11 +161,6 @@ Thread::Thread(SST::Params& params, SoftwareId sid, OperatingSystem* os) :
 {
   //make all cores possible active
   cpumask_ = ~(cpumask_);
-
-  //auto* ftq_stat = os->node()->registerMultiStatistic<int,uint64_t,uint64_t>(params, "ftq", subname);
-  //this will either be a null stat or an ftq stat
-  //the rest of the code will do null checks on the variable before dumping traces
-  //ftq_trace_ = dynamic_cast<FTQCalendar*>(ftq_stat)
 }
 
 void
@@ -199,8 +185,6 @@ Thread::endAPICall()
 uint32_t
 Thread::initId()
 {
-  //abort("aborting Thread::initID\n");
-  //thread id not yet initialized
   if (thread_id_ == Thread::main_thread)
     thread_id_ = THREAD_ID_CNT++;
   //I have not yet been assigned a process context (address space)
@@ -231,39 +215,10 @@ Thread::setTlsValue(long thekey, void *ptr)
   tls_values_[thekey] = ptr;
 }
 
-//void
-//Thread::appendBacktrace(int  /*id*/)
-//{
-//#if SST_HG_HAVE_CALL_GRAPH
-//  backtrace_[bt_nfxn_] = id;
-//  bt_nfxn_++;
-//#else
-//  sprockit::abort("did not compile with call graph support");
-//#endif
-//}
-
-//void
-//Thread::popBacktrace()
-//{
-//  --bt_nfxn_;
-//  last_bt_collect_nfxn_ = std::min(last_bt_collect_nfxn_, bt_nfxn_);
-//}
-
-//void
-//Thread::recordLastBacktrace(int nfxn)
-//{
-//  last_bt_collect_nfxn_ = nfxn;
-//}
-
 void
 Thread::spawn(Thread* thr)
 {
-//  abort("abort Thread::spawn\n");
   thr->parent_app_ = parentApp();
-//  if (host_timer_){
-//    thr->host_timer_ = new HostTimer;
-//    thr->host_timer_->start();
-//  }
   os_->startThread(thr);
 }
 
@@ -285,74 +240,12 @@ Thread::~Thread()
   //if (host_timer_) delete host_timer_;
 }
 
-//void
-//Thread::spawnOmpParallel()
-//{
-//  spkt_abort_printf("unimplemented: spawn_omp_parallel");
-//  omp_context& active = omp_contexts_.back();
-//  active.subthreads.resize(active.requested_num_subthreads);
-//  // App* parent = parentApp();
-//  // for (int i=1; i < active.requested_num_subthreads; ++i){
-//  //   thread* thr = new thread(params, parent->sid(), os_);
-//  //   thr->setOmpParentContext(active);
-//  //   startThread(thr);
-//  //   active.subthreads[i] = thr;
-//  // }
-//  //and finally have this thread enter the region as thread 0
-//  setOmpParentContext(0, active);
-//}
-
-//void
-//Thread::setOmpParentContext(int id, const omp_context& context)
-//{
-//  omp_contexts_.emplace_back();
-//  omp_context& active = omp_contexts_.back();
-//  active.level = context.level + 1;
-//  active.num_threads = context.requested_num_subthreads;
-//  active.max_num_subthreads = active.requested_num_subthreads =
-//      context.max_num_subthreads / context.requested_num_subthreads;
-//  active.id = id;
-//  active.parent_id = context.id;
-//}
-
-//void
-//Thread::computeDetailed(uint64_t flops, uint64_t nintops, uint64_t bytes, int nthread)
-//{
-//  omp_context& active = omp_contexts_.back();
-//  int used_nthread = nthread == use_omp_num_threads ? active.num_threads : nthread;
-//  parentApp()->computeDetailed(flops, nintops, bytes, used_nthread);
-//}
-
-//void
-//Thread::collectStats(
-//     Timestamp start,
-//     TimeDelta elapsed)
-//{
-//#if !SSTMAC_INTEGRATED_SST_CORE
-//#if SST_HG_HAVE_CALL_GRAPH
-//  if (callGraph_) {
-//    callGraph_->collect(elapsed.ticks(), this);
-//  }
-//#endif
-//  if (ftq_trace_){
-//    ftq_trace_->addData(ftag_.id(), start.time.ticks(), elapsed.ticks());
-//  }
-//#endif
-//}
-
 void
 Thread::startThread(Thread* thr)
 {
   thr->p_txt_ = p_txt_;
   os_->startThread(thr);
 }
-
-//void
-//Thread::setCpumask(uint64_t cpumask)
-//{
-//  cpumask_ = cpumask;
-//  os_->reassignCores(this);
-//}
 
 void
 Thread::join()
@@ -370,96 +263,3 @@ Thread::join()
 
 } // end namespace Hg
 } // end namespace SST
-
-//#include <sstmac/software/process/std_thread.h>
-//#include <sstmac/software/process/std_mutex.h>
-
-//namespace sstmac {
-//namespace sw {
-
-//class stdThread : public Thread {
-// public:
-//  stdThread(std_thread_base* base,
-//            Thread* parent) :
-//    Thread(parent->parentApp()->params(),
-//           SoftwareId(parent->aid(), parent->tid(), -1),
-//           parent->os()),
-//    base_(base)
-//  {
-//    parent_app_ = parent->parentApp();
-//    //std threads need to be joinable
-//    setDetachState(JOINABLE);
-//  }
-
-//  void run() override {
-//    base_->run();
-//  }
-
-// private:
-//  std_thread_base* base_;
-//};
-
-//int start_std_thread(std_thread_base* base)
-//{
-//  Thread* parent = OperatingSystem::currentThread();
-//  stdThread* thr = new stdThread(base, parent);
-//  base->setOwner(thr);
-//  parent->os()->startThread(thr);
-//  return thr->threadId();
-//}
-
-//void join_std_thread(std_thread_base *thr)
-//{
-//  thr->owner()->join();
-//}
-
-
-//stdMutex::stdMutex()
-//{
-//  parent_app_ = OperatingSystem::currentThread()->parentApp();
-//  id_ = parent_app_->allocateMutex();
-//}
-
-//void stdMutex::lock()
-//{
-//  mutex_t* mut = parent_app_->getMutex(id_);
-//  if (mut == nullptr){
-//    spkt_abort_printf("error: bad mutex id for std::mutex: %d", id_);
-//  } else if (mut->locked) {
-//    mut->waiters.push_back(OperatingSystem::currentThread());
-//    parent_app_->os()->block();
-//  } else {
-//    mut->locked = true;
-//  }
-//}
-
-//stdMutex::~stdMutex()
-//{
-//  parent_app_->eraseMutex(id_);
-//}
-
-//void stdMutex::unlock()
-//{
-//  mutex_t* mut = parent_app_->getMutex(id_);
-//  if (mut == nullptr || !mut->locked){
-//    return;
-//  } else if (!mut->waiters.empty()){
-//    Thread* blocker = mut->waiters.front();
-//    mut->waiters.pop_front();
-//    parent_app_->os()->unblock(blocker);
-//  } else {
-//    mut->locked = false;
-//  }
-//}
-
-//bool stdMutex::try_lock()
-//{
-//  mutex_t* mut = parent_app_->getMutex(id_);
-//  if (mut == nullptr){
-//    return false;
-//  } else if (mut->locked){
-//    return false;
-//  } else {
-//    return true;
-//  }
-//}

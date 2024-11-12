@@ -13,6 +13,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+// There's a reasonable chance that we'll want the globals/TLS support eventually,
+// so I'm leaving that sst-macro code here for now -- JPK
+
 #pragma once
 
 #define SSTPP_QUOTE(name) #name

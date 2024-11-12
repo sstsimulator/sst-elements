@@ -50,5 +50,5 @@ class LibComputeTime :
 
 };
 
-}
-} //end of namespace
+} // end namespace Hg
+} // end namespace SST
