@@ -91,6 +91,8 @@ public:
 
   SST::Hg::NIC* nic() { return nic_; }
 
+  std::string toString() { return sprintf("HgNode%d:",my_addr_); }
+
 private:
 
   SST::Hg::NIC* nic_;

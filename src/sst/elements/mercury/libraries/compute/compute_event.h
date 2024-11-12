@@ -19,12 +19,8 @@
 #include <mercury/common/timestamp.h>
 #include <mercury/hardware/common/flow.h>
 #include <mercury/common/thread_safe_new.h>
-//#include <mercury/hardware/memory/memory_id.h>
-//#include <mercury/typedefs.h>
 #include <type_traits>
 #include <stdint.h>
-
-//DeclareDebugSlot(compute_intensity);
 
 namespace SST {
 namespace Hg {
@@ -106,5 +102,5 @@ struct basic_instructions_st
 typedef ComputeEvent_impl<TimeDelta> TimedComputeEvent;
 typedef ComputeEvent_impl<basic_instructions_st> BasicComputeEvent;
 
-}
-}  // end of namespace
+} // end namespace Hg
+} // end namespace SST

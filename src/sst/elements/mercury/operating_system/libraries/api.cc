@@ -15,14 +15,11 @@
 
 #include <sst/core/params.h>
 #include <mercury/components/operating_system.h>
-//#include <libraries/compute/lib_compute_memmove.h>
 #include <mercury/operating_system/process/thread.h>
 #include <mercury/operating_system/process/app.h>
 #include <mercury/operating_system/libraries/api.h>
 #include <mercury/hardware/common/flow.h>
-//#include <sstmac/common/sstmac_env.h>
 #include <mercury/common/thread_lock.h>
-//#include <sprockit/keyword_registration.h>
 
 namespace SST {
 namespace Hg {
@@ -66,18 +63,11 @@ API::activeThread()
 void
 API::startAPICall()
 {
-//  if (host_timer_){
-//    host_timer_->start();
-//  }
   activeThread()->startAPICall();
 }
 void
 API::endAPICall()
 {
-//  if (host_timer_) {
-//    double time = host_timer_->stamp();
-//    api_parent_app_->compute(TimeDelta(time));
-//  }
   activeThread()->endAPICall();
 }
 
