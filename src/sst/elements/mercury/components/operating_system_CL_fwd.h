@@ -13,5 +13,12 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <mercury/common/errors.h>
-#include <mercury/libraries/compute/compute_event.h>
+#pragma once
+
+namespace SST {
+namespace Hg {
+
+class OperatingSystemCL;
+
+} // namespace Hg
+} // namespace SST

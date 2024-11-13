@@ -45,7 +45,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #pragma once
 
 #include <sst/core/params.h>
-#include <mercury/operating_system/libraries/api.h>
+#include <mercury/operating_system/libraries/library.h>
 #include <mercury/operating_system/process/software_id.h>
 #include <mercury/operating_system/process/app_id.h>
 #include <mercury/common/timestamp.h>

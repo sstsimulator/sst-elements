@@ -164,7 +164,7 @@ Thread::Thread(SST::Params& params, SoftwareId sid, OperatingSystem* os) :
 }
 
 void
-Thread::startAPICall()
+Thread::startLibraryCall()
 {
 //  if (host_timer_){
 //    double duration = host_timer_->stamp();
@@ -175,7 +175,7 @@ Thread::startAPICall()
 }
 
 void
-Thread::endAPICall()
+Thread::endLibraryCall()
 {
 //  if (host_timer_){
 //    host_timer_->start();
@@ -194,10 +194,10 @@ Thread::initId()
   return thread_id_;
 }
 
-API*
-Thread::getAppApi(const std::string &name) const
+Library*
+Thread::getAppLibrary(const std::string &name) const
 {
-  return parentApp()->getAPI(name);
+  return parentApp()->getLibrary(name);
 }
 
 void*

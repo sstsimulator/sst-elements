@@ -19,7 +19,6 @@ namespace SST {
 namespace Hg {
 
 class Library;
-class library_builder;
 
 } // end namespace Hg
 } // end namespace SST

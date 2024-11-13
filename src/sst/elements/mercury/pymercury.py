@@ -50,13 +50,21 @@ class HgNode(TemplateBase):
 
     def __init__(self):
         TemplateBase.__init__(self)
-        self._declareParams("params",["verbose",])
+        self._declareParams("params",["name",
+                                      "verbose",
+                                      "negligible_compute_bytes",
+                                      "parallelism",
+                                      "frequency",
+                                      "flow_mtu",
+                                      "channel_bandwidth",
+                                      "num_channels",
+                                     ])
         self._subscribeToPlatformParamSet("node")
 
     def build(self,nid,lid,nranks):
         if self._check_first_build():
             sst.addGlobalParams("params_%s"%self._instance_name, self._getGroupParams("params"))
-        node = sst.Component("node" + str(nid), "hg.node")
+        node = sst.Component("node" + str(nid), self.name)
         node.addGlobalParamSet("params_%s"%self._instance_name)
         node.addParam("nodeID", nid)
         node.addParam("logicalID", lid)
@@ -80,13 +88,31 @@ class HgOS(TemplateBase):
 
     def __init__(self):
         TemplateBase.__init__(self)
-        self._declareParams("params",["verbose",])
-        self._declareParamsWithUserPrefix("params","app1",["name","exe","apis","verbose"],"app1.")
+        self._declareParams("params",["name",
+                                      "verbose",
+                                      "ncores",
+                                      "nsockets",
+                                     ])
+        self._declareParamsWithUserPrefix("params","app1",
+                                          ["name",
+                                           "exe",
+                                           "libraries",
+                                           "verbose",
+                                           "post_rdma_delay",
+                                           "post_header_delay",
+                                           "poll_delay",
+                                           "rdma_pin_latency",
+                                           "rdma_page_delay",
+                                           "rdma_page_size",
+                                           "compute_library_access_width",
+                                           "compute_library_loop_overhead",
+                                          ],
+                                          "app1.")
         self._subscribeToPlatformParamSet("operating_system")        
 
     def build(self,comp,slot):
         if self._check_first_build():
             sst.addGlobalParams("params_%s"%self._instance_name, self._getGroupParams("params"))
-        sub = comp.setSubComponent(slot,"hg.operating_system")
+        sub = comp.setSubComponent(slot,self.name)
         sub.addGlobalParamSet("params_%s"%self._instance_name)
         return sub 

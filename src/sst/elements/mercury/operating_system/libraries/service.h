@@ -16,13 +16,13 @@
 #pragma once
 
 #include <mercury/components/operating_system_fwd.h>
-#include <mercury/operating_system/libraries/library.h>
+#include <mercury/operating_system/libraries/event_library.h>
 
 namespace SST {
 namespace Hg {
 
 class Service :
-  public Library
+  public EventLibrary
 {
 
  public:
@@ -30,11 +30,11 @@ class Service :
 
  protected:
   Service(const std::string& libname, SoftwareId sid, OperatingSystem* os) :
-    Library(libname, sid, os)
+    EventLibrary(libname, sid, os)
   {}
 
   Service(const char* prefix, SoftwareId sid, OperatingSystem* os) :
-    Library(prefix, sid, os)
+    EventLibrary(prefix, sid, os)
   {}
 
   ~Service() override{}
