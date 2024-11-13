@@ -112,7 +112,7 @@ MpiApi::commSize(MPI_Comm comm, int *size)
 {
   StartCommCall(MPI_Comm_size,comm);
   *size = getComm(comm)->size();
-  endAPICall();
+  endLibraryCall();
   return MPI_SUCCESS;
 }
 

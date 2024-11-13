@@ -16,7 +16,7 @@
 #include <mercury/components/nic.h>
 #include <sst/core/params.h>
 #include <mercury/common/util.h>
-#include <mercury/components/node.h>
+#include <mercury/components/node_base.h>
 #include <mercury/components/operating_system.h>
 #include <mercury/hardware/network/network_message.h>
 
@@ -34,7 +34,7 @@ NicEvent::serialize_order(serializer &ser)
   ser & msg_;
 }
 
-NIC::NIC(uint32_t id, SST::Params& params, Node* parent) :
+NIC::NIC(uint32_t id, SST::Params& params, NodeBase* parent) :
   SST::Hg::SubComponent(id),
   parent_(parent),
   my_addr_(parent->os()->addr()),
@@ -404,7 +404,7 @@ NIC::internodeSend(NetworkMessage* netmsg)
 void
 NIC::sendToNode(NetworkMessage* payload)
 {
-  auto forward_ev = newCallback(parent_, &Node::handle, payload);
+  auto forward_ev = newCallback(parent_, &NodeBase::handle, payload);
   parent_->sendExecutionEventNow(forward_ev);
 }
 

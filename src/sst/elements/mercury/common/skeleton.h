@@ -164,7 +164,7 @@ class Params;
 #endif
 
 //#include <sstmac/software/process/global.h>
-#include <mercury/operating_system/libraries/api_fwd.h>
+#include <mercury/operating_system/libraries/library_fwd.h>
 /* end C++ */
 #else
 /* need for C */

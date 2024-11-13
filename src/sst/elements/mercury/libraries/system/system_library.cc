@@ -13,14 +13,13 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <libraries/system/system_api.h>
+#include <libraries/system/system_library.h>
 #include <mercury/common/timestamp.h>
 #include <mercury/common/thread_safe_new.h>
 #include <mercury/components/operating_system.h>
 #include <mercury/operating_system/process/thread.h>
 #include <mercury/operating_system/process/app.h>
 #include <mercury/operating_system/libraries/unblock_event.h>
-//#include <sstmac/skeleton.h>
 
 namespace SST {
 namespace Hg {
@@ -30,20 +29,19 @@ extern template SST::TimeConverter* HgBase<SST::SubComponent>::time_converter_;
 
 using os = OperatingSystem;
 
-systemAPI::systemAPI(SST::Params& params, App* app,
-                     SST::Component* comp) :
-  API(params,app,comp)
+SystemLibrary::SystemLibrary(SST::Params& params, App* app) :
+  Library(params,app)
 { }
 
 double
-systemAPI::ssthg_block()
+SystemLibrary::ssthg_block()
 {
   os::currentOs()->block();
   return os::currentOs()->now().sec();
 }
 
 unsigned int
-systemAPI::ssthg_sleep(unsigned int secs){
+SystemLibrary::ssthg_sleep(unsigned int secs){
     os* cos = os::currentOs();
     Thread* t = cos->activeThread();
     UnblockEvent* ev = new UnblockEvent(cos, t);

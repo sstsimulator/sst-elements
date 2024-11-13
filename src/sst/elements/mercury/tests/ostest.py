@@ -1,10 +1,10 @@
 import sst
 import sst.hg
 
-node0 = sst.Component("Node0", "hg.node")
-node1 = sst.Component("Node1", "hg.node")
-os0 = node0.setSubComponent("os_slot", "hg.operating_system")
-os1 = node1.setSubComponent("os_slot", "hg.operating_system")
+node0 = sst.Component("Node0", "hg.Node")
+node1 = sst.Component("Node1", "hg.Node")
+os0 = node0.setSubComponent("os_slot", "hg.OperatingSystem")
+os1 = node1.setSubComponent("os_slot", "hg.OperatingSystem")
 
 link0 = sst.Link("link0")
 link0.connect( (node0,"network","1ns"), (node1,"network","1ns") )

@@ -15,10 +15,19 @@
 
 #pragma once
 
+#include <mercury/operating_system/process/thread_fwd.h>
+
 namespace SST {
 namespace Hg {
 
-class API;
+class ComputeSchedulerAPI
+{
+public:
+  virtual int ncores() const = 0;
+  virtual int nsockets() const = 0;
+  virtual void reserveCores(int ncore, Thread *thr) = 0;
+  virtual void releaseCores(int ncore, Thread *thr) = 0;
+};
 
 } // end namespace Hg
 } // end namespace SST

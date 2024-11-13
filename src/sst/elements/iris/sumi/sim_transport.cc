@@ -1,49 +1,20 @@
-/**
-Copyright 2009-2024 National Technology and Engineering Solutions of Sandia,
-LLC (NTESS).  Under the terms of Contract DE-NA-0003525, the U.S. Government
-retains certain rights in this software.
+// Copyright 2009-2024 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2024, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// of the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
-Sandia National Laboratories is a multimission laboratory managed and operated
-by National Technology and Engineering Solutions of Sandia, LLC., a wholly
-owned subsidiary of Honeywell International, Inc., for the U.S. Department of
-Energy's National Nuclear Security Administration under contract DE-NA0003525.
-
-Copyright (c) 2009-2024, NTESS
-
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, 
-are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-
-    * Redistributions in binary form must reproduce the above
-      copyright notice, this list of conditions and the following
-      disclaimer in the documentation and/or other materials provided
-      with the distribution.
-
-    * Neither the name of the copyright holder nor the names of its
-      contributors may be used to endorse or promote products derived
-      from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-Questions? Contact sst-macro-help@sandia.gov
-*/
-
-#include <output.h>
-#include <cstring>
+#include <sst/core/params.h>
+#include <sst/core/event.h>
 #include <iris/sumi/transport.h>
 #include <iris/sumi/allreduce.h>
 #include <iris/sumi/reduce_scatter.h>
@@ -59,41 +30,21 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <iris/sumi/gatherv.h>
 #include <iris/sumi/scatterv.h>
 #include <iris/sumi/scan.h>
-#include <mercury/common/stl_string.h>
-#include <sst/core/params.h>
-//#include <sprockit/keyword_registration.h>
-#include <mercury/common/component.h>
-#include <mercury/common/util.h>
-//#include <sstmac/common/stats/stat_spyplot.h>
-#include <mercury/common/request.h>
-#include <mercury/operating_system/libraries/api.h>
-#include <mercury/common/errors.h>
-
-//RegisterKeywords(
-//{ "lazy_watch", "whether failure notifications can be receive without active pinging" },
-//{ "eager_cutoff", "what message size in bytes to switch from eager to rendezvous" },
-//{ "use_put_protocol", "whether to use a put or get protocol for pt2pt sends" },
-//{ "algorithm", "the specific algorithm to use for a given collecitve" },
-//{ "comm_sync_stats", "whether to track synchronization stats for communication" },
-//{ "smp_single_copy_size", "the minimum size of message for single-copy protocol" },
-//{ "max_eager_msg_size", "the maximum size for using eager pt2pt protocol" },
-//{ "max_vshort_msg_size", "the maximum size for mailbox protocol" },
-//{ "post_rdma_delay", "the time it takes to post an RDMA operation" },
-//{ "post_header_delay", "the time it takes to send an eager message" },
-//{ "poll_delay", "the time it takes to poll for an incoming message" },
-//{ "rdma_pin_latency", "the latency for each RDMA pin information" },
-//{ "rdma_page_delay", "the per-page delay for RDMA pinning" },
-//);
-
-#include <sst/core/event.h>
 #include <iris/sumi/sim_transport.h>
 #include <iris/sumi/message.h>
-#include <mercury/operating_system/process/app.h>
+#include <mercury/common/stl_string.h>
+#include <mercury/common/component.h>
+#include <mercury/common/util.h>
+#include <mercury/common/request.h>
+#include <mercury/common/errors.h>
+#include <mercury/common/output.h>
 #include <mercury/components/operating_system.h>
-#include <mercury/operating_system/launch/app_launcher.h>
 #include <mercury/components/node.h>
-//#include <sstmac/common/runtime.h>
-//#include <sstmac/common/stats/stat_spyplot.h>
+#include <mercury/operating_system/libraries/library.h>
+#include <mercury/operating_system/process/app.h>
+#include <mercury/operating_system/launch/app_launcher.h>
+
+#include <cstring>
 
 using SST::Hg::TimeDelta;
 
@@ -181,7 +132,7 @@ class SumiServer :
 
 Transport* Transport::get()
 {
-  return SST::Hg::OperatingSystem::currentThread()->getApi<sumi::SimTransport>("sumi");
+  return SST::Hg::OperatingSystem::currentThread()->getLibrary<sumi::SimTransport>("sumi");
 }
 
 Transport::~Transport()
@@ -215,13 +166,12 @@ Transport::logMessageDelay(Message * /*msg*/, uint64_t /*bytes*/, int /*stage*/,
 //  last_collection_ = now();
 //}
 
-SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Component* comp) :
+SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent) :
   //the name of the transport itself should be mapped to a unique name
   Transport("sumi", parent->sid(), parent->os()->addr()),
-  API(params, parent, comp),
+  Library(params, parent),
   //the server is what takes on the specified libname
   completion_queues_(1),
-//  spy_bytes_(nullptr),
   default_progress_queue_(parent->os()),
   nic_ioctl_(parent->os()->nicDataIoctl()),
   qos_analysis_(nullptr),
@@ -229,12 +179,15 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Compo
   pragma_timeout_(-1),
   os_(parent->os())
 {
+  unsigned int verbose = params.find<unsigned int>("verbose", 0);
+  out_ = std::unique_ptr<SST::Output>(
+      new SST::Output("sumi::SimTransport:", verbose, 0, Output::STDOUT));
+
   completion_queues_[0] = std::bind(&DefaultProgressQueue::incoming,
                                     &default_progress_queue_, 0, std::placeholders::_1);
   null_completion_notify_ = std::bind(&SimTransport::drop, this, std::placeholders::_1);
-  //rank_ = sid().task_;
   rank_ = os_->addr();
-  auto* server_lib = parent->os()->lib(server_libname_);
+  auto* server_lib = parent->os()->eventLibrary(server_libname_);
   SumiServer* server;
   // only do one server per app per node
   if (server_lib == nullptr) {
@@ -252,7 +205,7 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Compo
   rdma_page_delay_ = TimeDelta(params.find<SST::UnitAlgebra>("rdma_page_delay", "0s").getValue().toDouble());
   pin_delay_ = rdma_pin_latency_.ticks() || rdma_page_delay_.ticks();
   page_size_ = params.find<SST::UnitAlgebra>("rdma_page_size", "4096").getRoundedValue();
-
+  
   output.output("%d", sid().app_);
   nproc_ = os_->nranks();
 
@@ -260,11 +213,15 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Compo
   auto qos_name = qos_params.find<std::string>("name", "null");
   qos_analysis_ = SST::Hg::create<QoSAnalysis>("macro", qos_name, qos_params);
 
+  out_->debug(CALL_INFO, 1, 0,
+              "registering proc %d\n", rank_);
   server->registerProc(rank_, this);
 
   if (!engine_) engine_ = new CollectiveEngine(params, this);
 
   smp_optimize_ = params.find<bool>("smp_optimize", false);
+
+  compute_api_ =  dynamic_cast<SST::Hg::ComputeAPI*>(api_parent_app_->getLibrary("ComputeLibrary"));
 }
 
 void
@@ -288,7 +245,7 @@ SimTransport::init()
    engine_->barrier(-1, Message::default_cq);
    engine_->blockUntilNext(Message::default_cq);
 
-    SumiServer* server = safe_cast(SumiServer, api_parent_app_->os()->lib(server_libname_));
+    SumiServer* server = safe_cast(SumiServer, api_parent_app_->os()->eventLibrary(server_libname_));
     auto& map = server->getProcs(sid().app_);
     if (map.size() > 1){ //enable smp optimizations
       for (auto& pair : map){
@@ -307,14 +264,11 @@ SimTransport::finish()
 
 SimTransport::~SimTransport()
 {
-  SumiServer* server = safe_cast(SumiServer, api_parent_app_->os()->lib(server_libname_));
+  SumiServer* server = safe_cast(SumiServer, api_parent_app_->os()->eventLibrary(server_libname_));
   bool del = server->unregisterProc(rank_, this);
   if (del) delete server;
 
   if (engine_) delete engine_;
-
-  //if (spy_bytes_) delete spy_bytes_;
-  //if (spy_num_messages_) delete spy_num_messages_;
 }
 
 void
@@ -332,15 +286,13 @@ SimTransport::memcopy(void* dst, void* src, uint64_t bytes)
   if (isNonNullBuffer(dst) && isNonNullBuffer(src)){
     ::memcpy(dst, src, bytes);
   }
-  //FIXME
-  //api_parent_app_->computeBlockMemcpy(bytes);
+  compute_api_->computeBlockMemcpy(bytes);
 }
 
 void
 SimTransport::memcopyDelay(uint64_t bytes)
 {
-  //FIXME
-  //api_parent_app_->computeBlockMemcpy(bytes);
+  compute_api_->computeBlockMemcpy(bytes);
 }
 
 void
@@ -356,39 +308,20 @@ SimTransport::nidlist() const
   //the types are the same size and the bits can be
   //interpreted correctly
   //return (int*) rank_mapper_->rankToNode().data();
+  sst_hg_abort_printf("sumi_transport::nidList unimplemented");
   return nullptr;
 }
 
 void
 SimTransport::compute(SST::Hg::TimeDelta t)
 {
-  //FIXME
-  //api_parent_app_->compute(t);
+  compute_api_->compute(t);
 }
 
 
 void
 SimTransport::send(Message* m)
 {
-//  int qos = qos_analysis_->selectQoS(m);
-//  m->setQoS(qos);
-//  if (!m->started()){
-//    m->setTimeStarted(api_parent_app_->now());
-//  }
-
-//  if (spy_bytes_){
-//    switch(m->sstmac::hw::NetworkMessage::type()){
-//    case sstmac::hw::NetworkMessage::smsg_send:
-//    case sstmac::hw::NetworkMessage::posted_send:
-//    case sstmac::hw::NetworkMessage::rdma_get_request:
-//    case sstmac::hw::NetworkMessage::rdma_put_payload:
-//      spy_bytes_->addData(m->recver(), m->payloadBytes());
-//      break;
-//    default:
-//      break;
-//    }
-//  }
-
   switch(m->SST::Hg::NetworkMessage::type()){
     case SST::Hg::NetworkMessage::smsg_send:
       if (m->recver() == rank_){
@@ -403,37 +336,28 @@ SimTransport::send(Message* m)
         }
       } else {
         if (post_header_delay_.ticks()) {
-          //api_parent_app_->compute(post_header_delay_);
+          compute_api_->compute(post_header_delay_);
         }
-        //nic_ioctl_(m);
-        send_packets(m);
+        nic_ioctl_(m);
       }
       break;
     case SST::Hg::NetworkMessage::posted_send:
       if (post_header_delay_.ticks()) {
-        //api_parent_app_->compute(post_header_delay_);
+        compute_api_->compute(post_header_delay_);
       }
-      //nic_ioctl_(m);
-      send_packets(m);
+      nic_ioctl_(m);
       break;
     case SST::Hg::NetworkMessage::rdma_get_request:
     case SST::Hg::NetworkMessage::rdma_put_payload:
       if (post_rdma_delay_.ticks()) {
-        //api_parent_app_->compute(post_rdma_delay_);
+        compute_api_->compute(post_rdma_delay_);
       }
-      //nic_ioctl_(m);
-      send_packets(m);
+      nic_ioctl_(m);
       break;
     default:
       sst_hg_abort_printf("attempting to initiate send with invalid type %d",
                         m->type())
   }
-}
-
-void
-SimTransport::send_packets(Message* m)
-{
-  nic_ioctl_(m);
 }
 
 void
@@ -490,17 +414,11 @@ SimTransport::allocateFlowId()
 {
   auto id = api_parent_app_->os()->allocateUniqueId().msg_num;
   return id;
-  //return api_parent_app_->os()->allocateUniqueId();
 }
 
 void
 SimTransport::incomingMessage(Message *msg)
 {
-//#if SSTMAC_COMM_DELAY_STATS
-//  if (msg){
-//    msg->setTimeArrived(api_parent_app_->now());
-//  }
-//#endif
   msg->writeSyncValue();
   int cq = msg->isNicAck() ? msg->sendCQ() : msg->recvCQ();
   if (cq != Message::no_ack){
@@ -1173,11 +1091,11 @@ class PatternQoSAnalysis : public QoSAnalysis
   SST::Hg::TimeDelta allowedDelay_;
 };
 
-extern "C" void sst_hg_blocking_call(int condition, double timeout, const char* api_name)
+extern "C" void sst_hg_blocking_call(int condition, double timeout, const char* lib_name)
 {
   SST::Hg::Thread* t = SST::Hg::OperatingSystem::currentThread();
-  auto* api = t->getApi<sumi::SimTransport>(api_name);
-  api->setPragmaBlocking(condition, timeout);
+  auto* lib = t->getLibrary<sumi::SimTransport>(lib_name);
+  lib->setPragmaBlocking(condition, timeout);
 }
 
 

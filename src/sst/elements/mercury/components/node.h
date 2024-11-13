@@ -17,6 +17,7 @@
 
 #include <mercury/common/component.h>
 
+#include <mercury/components/node_base.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/link.h>
 #include <mercury/components/operating_system_fwd.h>
@@ -30,7 +31,7 @@ namespace SST {
 namespace Hg {
 
 // Components inherit from SST::Component
-class Node : public SST::Hg::Component {
+class Node : public NodeBase {
 public:
   /*
    *  SST Registration macros register Components with the SST Core and
@@ -40,69 +41,17 @@ public:
    */
   // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
   SST_ELI_REGISTER_COMPONENT(
-      Node,      // Component class
+      SST::Hg::Node,      // Component class
       "hg", // Component library (for Python/library lookup)
-      "node",    // Component name (for Python/library lookup)
+      "Node",    // Component name (for Python/library lookup)
       SST_ELI_ELEMENT_VERSION(
           0, 0, 1),   // Version of the component (not related to SST version)
-      "Mercury Node", // Description
-      COMPONENT_CATEGORY_UNCATEGORIZED // Category
+      "Simple Mercury node", // Description
+      COMPONENT_CATEGORY_UNCATEGORIZED, // Category
+      SST::Hg::NodeBase
   )
-
-  SST_ELI_DOCUMENT_PARAMS({"verbose",
-                           "Output verbose level", 0},
-                          )
-
-  SST_ELI_DOCUMENT_PORTS(
-      {"network", "Dummy network port to connect nodes for testing", {} },
-  )
-
-  SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-      {"os_slot", "The operating system", "hg.operating_system"},
-      {"nic_slot", "The nic", "hg.nic"},
-      {"link_control_slot", "Slot for a link control", "SST::Interfaces::SimpleNetwork" }
-      )
 
   Node(SST::ComponentId_t id, SST::Params &params);
-
-  /**
-   @return  A unique integer identifier
-  */
-  NodeId addr() const {
-    return my_addr_;
-  }
-
-  void init(unsigned int phase) override;
-
-  void setup() override;
-
-  void endSim() {
-    primaryComponentOKToEndSim();
-  }
-
-  SST::Hg::OperatingSystem* os() const {
-    return os_;
-  }
-
-  int ncores() { return ncores_; }
-  int nsockets() { return nsockets_; }
-
-  void handle(Request* req);
-
-  SST::Hg::NIC* nic() { return nic_; }
-
-  std::string toString() { return sprintf("HgNode%d:",my_addr_); }
-
-private:
-
-  SST::Hg::NIC* nic_;
-  SST::Hg::OperatingSystem* os_;
-  SST::Interfaces::SimpleNetwork* link_control_;
-  SST::Link* netLink_;
-  std::unique_ptr<SST::Output> out_;
-  NodeId my_addr_;
-  int ncores_;
-  int nsockets_;
 };
 
 } // namespace Hg

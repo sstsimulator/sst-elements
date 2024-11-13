@@ -15,16 +15,17 @@
 
 #pragma once
 
-#include <sst/core/params.h>
+#include <sst/core/event.h>
+#include <sst/core/subcomponent.h>
+#include <sst/core/eli/elementbuilder.h>
+#include <mercury/common/component.h>
 #include <mercury/common/events.h>
-#include <mercury/common/request_fwd.h>
-#include <mercury/common/node_address.h>
-#include <mercury/components/operating_system_fwd.h>
 #include <mercury/operating_system/process/software_id.h>
-#include <mercury/operating_system/libraries/library_fwd.h>
-#include <mercury/common/hg_printf.h>
-#include <map>
-
+#include <mercury/operating_system/process/app_fwd.h>
+#include <mercury/operating_system/process/thread_fwd.h>
+#include <mercury/common/timestamp.h>
+#include <mercury/common/node_address.h>
+#include <sys/time.h>
 
 namespace SST {
 namespace Hg {
@@ -32,70 +33,56 @@ namespace Hg {
 class Library
 {
  public:
-  std::string toString() const {
-    return libname_;
-  }
-
-  const std::string& libName() const {
-    return libname_;
-  }
-
-  virtual void incomingEvent(Event* ev) = 0;
-
-  virtual void incomingRequest(Request* req) = 0;
-
-  OperatingSystem* os() const {
-    return os_;
-  }
-
-  SoftwareId sid() const {
-    return sid_;
-  }
-
-  int aid() const {
-    return sid_.app_;
-  }
-
-  NodeId addr() const {
-    return addr_;
-  }
+  SST_ELI_DECLARE_BASE(Library)
+  SST_ELI_DECLARE_DEFAULT_INFO()
+  SST_ELI_DECLARE_CTOR(SST::Params&,SST::Hg::App*)
 
   virtual ~Library();
 
+  SoftwareId sid() const;
+
+  NodeId addr() const;
+
+  App* parent() const {
+    return api_parent_app_;
+  }
+
+  Thread* activeThread();
+
+  virtual void init(){}
+
+  virtual void finish(){}
+
+  Timestamp now() const;
+
+  void schedule(Timestamp t, ExecutionEvent* ev);
+
+  void scheduleDelay(TimeDelta t, ExecutionEvent* ev);
+
+  /**
+   * @brief start_api_call
+   * Enter a call such as MPI_Send. Any perf counters or time counters
+   * collected since the last API call can then advance time or
+   * increment statistics.
+   */
+  void startLibraryCall();
+
+  /**
+   * @brief end_api_call
+   * Exit a call such as MPI_Send. Perf counters or time counters
+   * collected since the last API call can then clear counters for
+   * the next time window.
+   */
+  void endLibraryCall();
+
  protected:
-  Library(const std::string& libname, SoftwareId sid, OperatingSystem* os);
-
-  Library(const char* prefix, SoftwareId sid, OperatingSystem* os) :
-    Library(standardLibname(prefix, sid), sid, os)
-  {
-  }
-
-  static std::string standardLibname(const char* prefix, SoftwareId sid){
-    return standardLibname(prefix, sid.app_, sid.task_);
-  }
-
-  static std::string standardLibname(const char* prefix, AppId aid, TaskId tid){
-    std::string app_prefix = standardAppPrefix(prefix, aid);
-    return standardAppLibname(app_prefix.c_str(), tid);
-  }
-
-  static std::string standardAppLibname(const char* prefix, TaskId tid){
-    return SST::Hg::sprintf("%s-%d", prefix, tid);
-  }
-
-  static std::string standardAppPrefix(const char* prefix, AppId aid){
-    return SST::Hg::sprintf("%s-%d", prefix, aid);
-  }
-
- protected:
-  OperatingSystem* os_;
-  SoftwareId sid_;
-  NodeId addr_;
-
- private:
-  std::string libname_;
+  Library(SST::Params& params, App* parent);
+  App* api_parent_app_;
 
 };
+
+void apiLock();
+void apiUnlock();
 
 } // end namespace Hg
 } // end namespace SST

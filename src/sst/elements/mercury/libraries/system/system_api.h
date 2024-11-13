@@ -16,31 +16,15 @@
 
 #pragma once
 
-#include <sst/core/params.h>
-#include <sst/core/eli/elementinfo.h>
-#include <mercury/operating_system/libraries/api.h>
-
 namespace SST {
 namespace Hg {
 
-class systemAPI : public SST::Hg::API {
+class SystemAPI {
 
 public:
 
-  SST_ELI_REGISTER_DERIVED(
-    API,
-    systemAPI,
-    "hg",
-    "systemAPI",
-    SST_ELI_ELEMENT_VERSION(1,0,0),
-    "provides the Hg system API")
-
-systemAPI(SST::Params& params, App* app, SST::Component* comp);
-
-virtual ~systemAPI() { }
-
 /** Block and return the time when unblocked */
-double ssthg_block();
+virtual double ssthg_block() = 0;
 
 /**
  * @brief sleep SST virtual equivalent of Linux sleep

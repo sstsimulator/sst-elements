@@ -52,7 +52,7 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #include <sst/core/eli/elementbuilder.h>
 
-#include <mercury/operating_system/libraries/api.h>
+#include <mercury/operating_system/libraries/library.h>
 #include <mercury/operating_system/libraries/service.h>
 #include <mercury/operating_system/process/progress_queue.h>
 #include <mercury/hardware/network/network_message_fwd.h>
@@ -61,6 +61,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mercury/common/errors.h>
 #include <mercury/common/factory.h>
 #include <mercury/common/util.h>
+#include <mercury/libraries/compute/compute_api.h>
 
 #include <iris/sumi/message_fwd.h>
 #include <iris/sumi/collective.h>
@@ -95,20 +96,20 @@ class QoSAnalysis {
 
 };
 
-class SimTransport : public Transport, public SST::Hg::API {
+class SimTransport : public Transport, public SST::Hg::Library {
 
  public:
   SST_ELI_REGISTER_DERIVED(
-    API,
+    Library,
     SimTransport,
     "hg",
     "SimTransport",
     SST_ELI_ELEMENT_VERSION(1,0,0),
-    "provides the SUMI transport API")
+    "implements the SUMI transport API")
 
   using DefaultProgressQueue = SST::Hg::MultiProgressQueue<Message>;
 
-  SimTransport(SST::Params& params, SST::Hg::App* parent, SST::Component* comp);
+  SimTransport(SST::Params& params, SST::Hg::App* parent);
 
   SST::Hg::SoftwareId sid() const {
     return Transport::sid();
@@ -324,6 +325,10 @@ class SimTransport : public Transport, public SST::Hg::API {
   SST::Hg::OperatingSystem* os_;
 
   void drop(Message*){}
+
+  std::unique_ptr<SST::Output> out_;
+
+  SST::Hg::ComputeAPI* compute_api_;
 };
 
 

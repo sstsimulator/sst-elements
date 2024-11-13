@@ -28,7 +28,10 @@ if __name__ == "__main__":
         "verbose" : "0",
         "app1.name" : "reduce",
         "app1.exe"  : "reduce.so",
-        "app1.apis" : ["systemAPI:libsystemapi.so", "SimTransport:libsumi.so", "MpiApi:libmask_mpi.so"],
+        "app1.libraries" : ["SystemLibrary:libsystemlibrary.so",
+                            "ComputeLibrary:libcomputelibrary.so",
+                            "SimTransport:libsumi.so",
+                            "MpiApi:libmask_mpi.so"],
     })
 
     topo = topoSingle()
