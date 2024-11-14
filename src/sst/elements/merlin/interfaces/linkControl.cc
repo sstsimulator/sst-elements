@@ -443,7 +443,11 @@ bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
     int flits = ev->getSizeInFlits();
 
     // Check to see if there are enough credits to send
-    if ( out_handle.credits < flits ) return false;
+    if ( out_handle.credits < flits ) {
+        ev->takeRequest();
+        delete ev;
+        return false;
+    }
 
     // Update the credits
     out_handle.credits -= flits;
