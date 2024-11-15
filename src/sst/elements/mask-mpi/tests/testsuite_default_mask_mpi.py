@@ -22,7 +22,7 @@ class testcase_mask_mpi(SSTTestCase):
 
     def test_sendrecv(self):
         testdir = self.get_testsuite_dir()
-        libdir = sstsimulator_conf_get_value_str("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR")
+        libdir = sstsimulator_conf_get_value("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR",str)
         path = os.environ.get("SST_LIB_PATH")
         if path is None or path == "":
             os.environ["SST_LIB_PATH"] = libdir
@@ -32,7 +32,7 @@ class testcase_mask_mpi(SSTTestCase):
 
     def test_reduce(self):
         testdir = self.get_testsuite_dir()
-        libdir = sstsimulator_conf_get_value_str("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR")
+        libdir = sstsimulator_conf_get_value("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR",str)
         path = os.environ.get("SST_LIB_PATH")
         if path is None or path == "":
             os.environ["SST_LIB_PATH"] = libdir
@@ -42,7 +42,7 @@ class testcase_mask_mpi(SSTTestCase):
 
     def test_alltoall(self):
         testdir = self.get_testsuite_dir()
-        libdir = sstsimulator_conf_get_value_str("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR")
+        libdir = sstsimulator_conf_get_value("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR",str)
         path = os.environ.get("SST_LIB_PATH")
         if path is None or path == "":
             os.environ["SST_LIB_PATH"] = libdir
@@ -52,7 +52,7 @@ class testcase_mask_mpi(SSTTestCase):
 
     def test_allgather(self):
         testdir = self.get_testsuite_dir()
-        libdir = sstsimulator_conf_get_value_str("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR")
+        libdir = sstsimulator_conf_get_value("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR",str)
         path = os.environ.get("SST_LIB_PATH")
         if path is None or path == "":
             os.environ["SST_LIB_PATH"] = libdir
@@ -62,7 +62,7 @@ class testcase_mask_mpi(SSTTestCase):
 
     def test_halo3d26(self):
         testdir = self.get_testsuite_dir()
-        libdir = sstsimulator_conf_get_value_str("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR")
+        libdir = sstsimulator_conf_get_value("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR",str)
         path = os.environ.get("SST_LIB_PATH")
         if path is None or path == "":
             os.environ["SST_LIB_PATH"] = libdir

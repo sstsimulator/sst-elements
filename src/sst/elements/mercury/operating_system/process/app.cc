@@ -26,39 +26,12 @@
 #include <mercury/common/errors.h>
 #include <mercury/common/hg_printf.h>
 #include <mercury/components/node.h>
-//#include <sstmac/software/libraries/compute/lib_compute_inst.h>
-//#include <sstmac/software/libraries/compute/lib_compute_time.h>
-//#include <sstmac/software/libraries/compute/lib_compute_memmove.h>
 #include <mercury/operating_system/process/app.h>
-//#include <sstmac/software/api/api.h>
-//#include <sstmac/software/process/backtrace.h>
-//#include <sstmac/common/sstmac_env.h>
-//#include <sstmac/dumpi_util/dumpi_meta.h>
-//#include <sstmac/software/launch/job_launcher.h>
-//#include <sstmac/software/launch/launch_event.h>
 #include <mercury/operating_system/threading/thread_lock.h>
-//#include <sstmac/common/sstmac_env.h>
-//#include <sstmac/dumpi_util/dumpi_meta.h>
-//#include <sprockit/statics.h>
-//#include <sstmac/software/api/api.h>
-//#include <sstmac/main/sstmac.h>
 #include <mercury/operating_system/process/loadlib.h>
 #include <mercury/components/operating_system.h>
 #include <inttypes.h>
 #include <dlfcn.h>
-
-//static sprockit::NeedDeletestatics<sstmac::sw::UserAppCxxFullMain> del_app_statics;
-
-//RegisterKeywords(
-// { "host_compute_timer", "whether to use the time elapsed on the host machine in compute modeling" },
-// { "min_op_cutoff", "the minimum number of operations in a compute before detailed modeling is perfromed" },
-// { "notify", "whether the app should send completion notifications to job root" },
-// { "globals_size", "the size of the global variable segment to allocate" },
-// { "OMP_NUM_THREADS", "environment variable for configuring openmp" },
-// { "exe", "an optional exe .so file to load for this app" },
-//);
-
-//MakeDebugSlot(app_compute);
 
 void sst_hg_app_loaded(int /*aid*/){}
 
@@ -153,12 +126,9 @@ App::unlockDlopen_API(std::string api_name)
 void
 App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
 {
-  //params.print_all_params(std::cerr);
   std::vector<std::string> apis;
   if (params.contains("apis")){
     params.find_array<std::string>("apis", apis);
-//    for (auto i: apis)
-//      std::cerr << i << std::endl;
   }
   else {
     apis.push_back("systemAPI:libsystemapi.so");
@@ -177,7 +147,6 @@ App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
       file = str.substr(pos + 1);
     }
 
-    //std::cerr << "loading " << name.c_str() << " API from " << file.c_str() << "\n";;
     dlopen_lock.lock();
     dlopen_entry& entry = api_dlopens_[name];
     entry.name = file;
@@ -194,7 +163,6 @@ App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
   if (params.contains("exe")){
     dlopen_lock.lock();
     std::string libname = params.find<std::string>("exe");
-    //std::cerr << libname << std::endl;
     dlopen_entry& entry = exe_dlopens_[aid];
     entry.name = libname;
     if (entry.refcount == 0 || !entry.loaded){
@@ -280,45 +248,26 @@ App::App(SST::Params& params, SoftwareId sid,
   notify_(true),
   rc_(0)
 {
-  out_ = std::unique_ptr<SST::Output>(new SST::Output(sprintf("application%d:", sid.app_), 1, 0, Output::STDOUT));
-  out_->debug(CALL_INFO, 1, 0, "constructing");
+  unsigned int verbose = params.find<unsigned int>("verbose", 0);
+  out_ = std::unique_ptr<SST::Output>(
+      new SST::Output("app:", verbose, 0, Output::STDOUT));
 
   //globals_storage_ = allocateDataSegment(false); //not tls
   min_op_cutoff_ = params.find<long>("min_op_cutoff", 1000);
-//  bool host_compute = params.find<bool>("host_compute_timer", false);
-//  if (host_compute){
-//    host_timer_ = new HostTimer;
-//  }
 
   notify_ = params.find<bool>("notify", true);
 
   SST::Params env_params = params.get_scoped_params("env");
-//  omp_contexts_.emplace_back();
-//  omp_context& active = omp_contexts_.back();
-//  active.max_num_subthreads = active.requested_num_subthreads =
-//    env_params.find<int>("OMP_NUM_THREADS", 1);
-//  active.level = 0;
-//  active.num_threads = 1;
 
   std::set<std::string> keys = env_params.getKeys();
   for (auto& key : keys){
     env_[key] = env_params.find<std::string>(key);
   }
 
-//  for (auto iter=os->env_begin(); iter != os->env_end(); ++iter){
-//    auto my_iter = env_.find(iter->first);
-//    if (my_iter == env_.end()){
-//      //don't overwrite - app env taks precedence
-//      env_[iter->first] = iter->second;
-//    }
-//  }
-
   std::vector<std::string> apis;
   if (params.contains("apis")){
     params.find_array("apis", apis);
   } else {
-//    apis.push_back("mpi");
-//    apis.push_back("sumi:mpi");
       apis.push_back("systemAPI:libsystemapi.so");
   }
 
@@ -334,15 +283,13 @@ App::App(SST::Params& params, SoftwareId sid,
       alias = str.substr(pos + 1);
     }
 
-    out_->debug(CALL_INFO, 1, 0, "checking %s API", name.c_str());
+    out_->debug(CALL_INFO, 1, 0, "checking %s API\n", name.c_str());
 
     if (name != "SimTransport") {
       auto iter = apis_.find(name);
       if (iter == apis_.end()){
-        out_->debug(CALL_INFO, 1, 0, "loading %s API", name.c_str());
+        out_->debug(CALL_INFO, 1, 0, "loading %s API\n", name.c_str());
         SST::Params api_params = params.get_scoped_params(name);
-        //SST::Component* comp = dynamic_cast<SST::Component*>(os->node());
-        //if(!comp) sst_hg_abort_printf("APP can't dyncast to SST::Component*");
         API* api = SST::Hg::create<API>(
               "hg", name, api_params, this, os->node());
         apis_[name] = api;
@@ -411,9 +358,6 @@ App::App(SST::Params& params, SoftwareId sid,
 
 App::~App()
 {
-  /** These get deleted by unregister */
-  //sprockit::delete_vals(apis_);
-//  if (compute_lib_) delete compute_lib_;
   if (globals_storage_) delete[] globals_storage_;
 }
 
@@ -477,15 +421,6 @@ App::getenv(const std::string &name) const
   return my_buf;
 }
 
-//LibComputeMemmove*
-//App::computeLib()
-//{
-//  if(!compute_lib_) {
-//    compute_lib_ = new LibComputeMemmove(params_, sid_, os_);
-//  }
-//  return compute_lib_;
-//}
-
 void
 App::deleteStatics()
 {
@@ -519,63 +454,11 @@ App::compute(TimeDelta time)
   //computeLib()->compute(time);
 }
 
-//void
-//App::computeInst(ComputeEvent* cmsg)
-//{
-//  computeLib()->computeInst(cmsg);
-//}
-
-//void
-//App::computeLoop(uint64_t num_loops,
-//  int nflops_per_loop,
-//  int nintops_per_loop,
-//  int bytes_per_loop)
-//{
-//  computeLib()->LibComputeInst::computeLoop(
-//          num_loops, nflops_per_loop, nintops_per_loop, bytes_per_loop);
-//}
-
-//void
-//App::computeDetailed(uint64_t flops, uint64_t nintops, uint64_t bytes, int nthread)
-//{
-//  static const uint64_t overflow = 18006744072479883520ull;
-//  if (flops > overflow || bytes > overflow){
-//    spkt_abort_printf("flops/byte counts for compute overflowed");
-//  }
-//  if ((flops+nintops) < min_op_cutoff_){
-//    return;
-//  }
-
-//  debug_printf(sprockit::dbg::app_compute,
-//               "Rank %d for app %d: detailed compute for flops=%" PRIu64 " intops=%" PRIu64 " bytes=%" PRIu64,
-//               sid_.task_, sid_.app_, flops, nintops, bytes);
-
-//  computeLib()->computeDetailed(flops, nintops, bytes, nthread);
-//}
-
-//void
-//App::computeBlockRead(uint64_t bytes)
-//{
-//  computeLib()->read(bytes);
-//}
-
-//void
-//App::computeBlockWrite(uint64_t bytes)
-//{
-//  computeLib()->write(bytes);
-//}
-
 SST::Params
 App::getParams()
 {
   return OperatingSystem::currentThread()->parentApp()->params();
 }
-
-//void
-//App::computeBlockMemcpy(uint64_t bytes)
-//{
-//  computeLib()->copy(bytes);
-//}
 
 API*
 App::getAPI(const std::string &name)
@@ -732,7 +615,6 @@ UserAppCxxFullMain::UserAppCxxFullMain(SST::Params& params, SoftwareId sid,
 void
 UserAppCxxFullMain::aliasMains()
 {
-  //std::cerr << "UserAppCxxFullMain::aliasMains()\n";
   static thread_lock lock;
   lock.lock();
   if (!main_fxns_){
@@ -740,13 +622,9 @@ UserAppCxxFullMain::aliasMains()
     main_fxns_init_ = nullptr;
   }
   auto* lib = App::getBuilderLibrary("hg");
-  //std::cerr << "lib: " << lib << "\n";
-  //std::cerr << "got Builder Library\n";
   if (main_fxns_){
-    //std::cerr << "have main_fxns_\n";
     for (auto& pair : *main_fxns_){
     auto* builder = lib->getBuilder("UserAppCxxFullMain");
-    //std::cerr << "adding " << pair.first << " builder " << builder << "\n";
     lib->addBuilder(pair.first, builder);
     }
   }
@@ -759,7 +637,6 @@ UserAppCxxFullMain::aliasMains()
 void
 UserAppCxxFullMain::registerMainFxn(const char *name, App::main_fxn fxn)
 {
-  //std::cerr << "registering full main " << name << "\n";
   if (main_fxns_){  //already passed static init
     (*main_fxns_)[name] = fxn; 
   } else {
@@ -852,7 +729,6 @@ UserAppCxxEmptyMain::UserAppCxxEmptyMain(SST::Params& params, SoftwareId sid,
 void
 UserAppCxxEmptyMain::registerMainFxn(const char *name, App::empty_main_fxn fxn)
 {
-  //std::cerr << "registering empty main " << name << "\n";
   if (empty_main_fxns_){ //already cleared static init
     (*empty_main_fxns_)[name] = fxn;
   } else { 
@@ -870,25 +746,5 @@ UserAppCxxEmptyMain::skeletonMain()
   return (*fxn_)();
 }
 
-//void computeTime(double tsec)
-//{
-//  Thread* t = OperatingSystem::currentThread();
-//  App* a = safe_cast(App, t,
-//     "cannot cast current thread to app in compute_time function");
-//  a->compute(TimeDelta(tsec));
-//}
-
-}
-}
-
-namespace sstmac {
-
-std::ostream& cout_wrapper(){
-  return std::cout;
-}
-
-std::ostream& cerr_wrapper(){
-  return std::cerr;
-}
-
-}
+} // end of namespace Hg
+} // end of namespace SST

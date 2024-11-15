@@ -73,8 +73,6 @@ void* loadExternLibrary(const std::string& libname, const std::string& searchPat
                       libname.c_str(), searchPath.c_str());
   }
 
-  //std::cerr << "Loading external library " << fullpath << std::endl;
-
   // This is a little weird, but always try the last path - if we
   // didn't succeed in the stat, we'll get a file not found error
   // from dlopen, which is a useful error message for the user.

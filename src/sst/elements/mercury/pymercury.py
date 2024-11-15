@@ -29,6 +29,7 @@ class HgJob(Job):
         self._numNodes = numNodes
         self.node = HgNode()
         self.os = HgOS()
+        self.nic = HgNIC()
 
     def getName(self):
         return "HgJob"
@@ -38,7 +39,7 @@ class HgJob(Job):
         logical_id = self._nid_map[nodeID]
         node = self.node.build(nodeID,logical_id,self._numNodes * self._numCores)
         os = self.os.build(node,"os_slot") 
-        nic = node.setSubComponent("nic_slot", "hg.nic")
+        nic = self.nic.build(node,"nic_slot")
 
         # Build NetworkInterface
         networkif, port_name = self.network_interface.build(node,"link_control_slot",0,self.job_id,self.size,logical_id,True)
@@ -49,20 +50,38 @@ class HgNode(TemplateBase):
 
     def __init__(self):
         TemplateBase.__init__(self)
+        self._declareParams("params",["verbose",])
+        self._subscribeToPlatformParamSet("node")
 
     def build(self,nid,lid,nranks):
+        if self._check_first_build():
+            sst.addGlobalParams("params_%s"%self._instance_name, self._getGroupParams("params"))
         node = sst.Component("node" + str(nid), "hg.node")
+        node.addGlobalParamSet("params_%s"%self._instance_name)
         node.addParam("nodeID", nid)
         node.addParam("logicalID", lid)
         node.addParam("nranks", nranks)
         return node
+
+class HgNIC(TemplateBase):
+    def __init__(self):
+        TemplateBase.__init__(self)
+        self._declareParams("params",["verbose",])
+        self._subscribeToPlatformParamSet("nic")
+
+    def build(self,comp,slot):
+        if self._check_first_build():
+            sst.addGlobalParams("params_%s"%self._instance_name, self._getGroupParams("params"))
+        nic = comp.setSubComponent(slot,"hg.nic")
+        nic.addGlobalParamSet("params_%s"%self._instance_name)
+        return nic
 
 class HgOS(TemplateBase):
 
     def __init__(self):
         TemplateBase.__init__(self)
         self._declareParams("params",["verbose",])
-        self._declareParamsWithUserPrefix("params","app1",["name","exe","apis"],"app1.")
+        self._declareParamsWithUserPrefix("params","app1",["name","exe","apis","verbose"],"app1.")
         self._subscribeToPlatformParamSet("operating_system")        
 
     def build(self,comp,slot):

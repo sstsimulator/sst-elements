@@ -1,81 +1,31 @@
-/**
-Copyright 2009-2024 National Technology and Engineering Solutions of Sandia,
-LLC (NTESS).  Under the terms of Contract DE-NA-0003525, the U.S. Government
-retains certain rights in this software.
-
-Sandia National Laboratories is a multimission laboratory managed and operated
-by National Technology and Engineering Solutions of Sandia, LLC., a wholly
-owned subsidiary of Honeywell International, Inc., for the U.S. Department of
-Energy's National Nuclear Security Administration under contract DE-NA0003525.
-
-Copyright (c) 2009-2024, NTESS
-
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, 
-are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-
-    * Redistributions in binary form must reproduce the above
-      copyright notice, this list of conditions and the following
-      disclaimer in the documentation and/or other materials provided
-      with the distribution.
-
-    * Neither the name of the copyright holder nor the names of its
-      contributors may be used to endorse or promote products derived
-      from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-Questions? Contact sst-macro-help@sandia.gov
-*/
+// Copyright 2009-2024 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2024, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// of the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #include <mercury/components/nic.h>
-//#include <sstmac/hardware/interconnect/interconnect.h>
-#include <mercury/hardware/network/network_message.h>
+#include <sst/core/params.h>
+#include <mercury/common/util.h>
 #include <mercury/components/node.h>
 #include <mercury/components/operating_system.h>
-//#include <sstmac/common/event_manager.h>
-//#include <sstmac/common/event_callback.h>
-//#include <sstmac/common/stats/stat_spyplot.h>
-//#include <sstmac/hardware/memory/memory_model.h>
-//#include <sstmac/hardware/topology/topology.h>
-//#include <sprockit/statics.h>
-#include <sst/core/params.h>
-//#include <sprockit/keyword_registration.h>
-#include <mercury/common/util.h>
+#include <mercury/hardware/network/network_message.h>
 
-//RegisterDebugSlot(nic);
-
-//RegisterNamespaces("nic", "message_sizes", "traffic_matrix",
-//                   "message_size_histogram", "injection", "bytes");
-
-//RegisterKeywords(
-//{ "nic_name", "DEPRECATED: the type of NIC to use on the node" },
-//{ "network_spyplot", "DEPRECATED: the file root of all stats showing traffic matrix" },
-//{ "post_latency", "the latency of the NIC posting messages" },
-//);
-
-#define DEFAULT_NEGLIGIBLE_SIZE 256
+#include <sstream>
 
 static std::string _tick_spacing_string_("1ps");
 
 namespace SST {
 namespace Hg {
-
-//static sprockit::NeedDeletestatics<NIC> del_statics;
 
 void
 NicEvent::serialize_order(serializer &ser)
@@ -86,38 +36,24 @@ NicEvent::serialize_order(serializer &ser)
 
 NIC::NIC(uint32_t id, SST::Params& params, Node* parent) :
   SST::Hg::SubComponent(id),
-//NIC::NIC(uint32_t id, SST::Params& params, Node* parent) :
-//    ConnectableSubcomponent(id, "nic", parent),
   parent_(parent),
   my_addr_(parent->os()->addr()),
-//  logp_link_(nullptr),
-//  spy_bytes_(nullptr),
-//  xmit_flows_(nullptr),
-//  queue_(parent->os()),
   os_(parent->os())
 {
-  negligibleSize_ = params.find<int>("negligible_size", DEFAULT_NEGLIGIBLE_SIZE);
-  //top_ = Topology::staticTopology(params);
-
-  std::string subname = SST::Hg::sprintf("NIC.%d", my_addr_);
-//  auto* spy = registerMultiStatistic<int,uint64_t>(params, "spy_bytes", subname);
-//  //this might be a null statistic, dynamic cast to check
-//  //no calls are made to this statistic unless it is non-null
-//  //nullness checks are deferred to other places
-//  spy_bytes_ = dynamic_cast<StatSpyplot<int,uint64_t>*>(spy);
-
-//  xmit_flows_ = registerStatistic<uint64_t>(params, "xmit_flows", subname);
-
-  int slot_id = 0;
+  unsigned int verbose = params.find<unsigned int>("verbose", 0);
+  out_ = std::unique_ptr<SST::Output>(
+      new SST::Output(toString(), verbose, 0, Output::STDOUT));
 
   pending_.resize(1);
   ack_queue_.resize(1);
+
+  // FIXME needs to be a parameter
   mtu_ = 2048;
 }
 
 std::string
 NIC::toString() {
-  return sprintf("mercury nic(%d)", int(addr()));
+  return sprintf("Node%d:HgNIC:", int(addr()));
 }
 
 void
@@ -198,31 +134,11 @@ NIC::incomingPacket(int vn){
       if (flow == nullptr) sst_hg_abort_printf("couldn't get a flow\n");
       auto* msg = static_cast<NetworkMessage*>(flow);
       if (msg == nullptr) sst_hg_abort_printf("couldn't cast flow to message\n");
-      //printf("fully received message %s\n", msg->toString().c_str());
+      out_->debug(CALL_INFO, 1, 0, "fully received message %s",
+                  msg->toString().c_str());
       recvMessage(msg);
     }
     req = link_control_->recv(vn);
-
-    // //printf("incoming flow %d\n",req->flow_id);
-    // MyRequest* myreq = static_cast<MyRequest*>(req);
-    // auto bytes = myreq->size_in_bits/8;
-    // auto* payload = myreq->takePayload();
-    // //MessageEvent* ev = payload ? static_cast<MessageEvent*>(payload) : nullptr;
-    // auto* incoming_msg = payload ? static_cast<NetworkMessage*>(payload) : nullptr;
-    // //Flow* flow = cq_.recv(myreq->flow_id, bytes, ev ? ev->msg() : nullptr);
-    // Flow* flow = cq_.recv(myreq->flow_id, bytes, incoming_msg);
-    // printf("Rank %d receiving packet of size %d for flow %lu on vn %d: %s\n",
-    //        my_addr_,(myreq->size_in_bits/8), (uint64_t) myreq->flow_id, vn, (flow ? flow->toString().c_str() : "no flow"));
-    // if (flow){
-    //   auto* msg = static_cast<NetworkMessage*>(flow);
-    //   printf("fully received message %s\n", msg->toString().c_str());
-    //   recvMessage(msg);
-    // }
-    // delete myreq;
-    // //if (ev) delete ev;
-    // //FIXME: need to figure out ownership and who deletes what here
-    // //if (incoming_msg) delete incoming_msg;
-    // req = link_control_->recv(vn);
   }
   return true; //keep me active
 }
@@ -251,11 +167,8 @@ NIC::payloadHandler(int  /*port*/) {
 
 void
 NIC::inject(int vn, NetworkMessage* payload){
-  if (payload->byteLength() == 0){
-    //spkt_abort_printf("Got zero-sized message: %s", payload->toString().c_str());
-  }
   pending_[vn].emplace(payload);
-  //nic_debug("sending message on vn %d: %s", vn, payload->toString().c_str());
+  out_->debug(CALL_INFO, 1, 0, "sending message on vn %d: %s", vn, payload->toString().c_str());
   sendWhatYouCan(vn);
 }
 
@@ -275,18 +188,11 @@ NIC::sendWhatYouCan(int vn) {
 
 bool
 NIC::sendWhatYouCan(int vn, Pending& p) {
-  //if (!p.bytesLeft) sst_hg_abort_printf("zero send abort\n");
   int seqnum = 0;
   uint64_t next_bytes = std::min(uint64_t(mtu_), p.bytesLeft);
   uint32_t next_bits = next_bytes * 8; //this is fine for 32-bits
   while (link_control_->spaceToSend(vn, next_bits)){
 
-    // auto* req = new MyRequest;
-    // req->head = p.bytesLeft == p.payload->byteLength();
-    // p.bytesLeft -= next_bytes;
-    // req->tail = p.bytesLeft == 0;
-    // req->flow_id = p.payload->flowId();
-    // req->start = now();
     auto* req = new SST::Interfaces::SimpleNetwork::Request;
     req->head = p.bytesLeft == p.payload->byteLength();
     p.bytesLeft -= next_bytes;
@@ -311,9 +217,9 @@ NIC::sendWhatYouCan(int vn, Pending& p) {
     req->size_in_bits = next_bits;
     req->vn = 0;
 
-    // printf("injecting request of size %" PRIu64 " on vn %d: head? %d tail? %d -> %s\n",
-    //           next_bytes, vn, req->head, req->tail,
-    //           p.payload->toString().c_str());
+   out_->debug(CALL_INFO, 1, 0, "injecting request of size %" PRIu64 " on vn %d: head? %d tail? %d -> %s\n",
+              next_bytes, vn, req->head, req->tail,
+              p.payload->toString().c_str());
     link_control_->send(req, vn);
 
     next_bytes = std::min(uint64_t(mtu_), p.bytesLeft);
@@ -321,27 +227,6 @@ NIC::sendWhatYouCan(int vn, Pending& p) {
     if (next_bytes == 0) return true;
   }
   return false;
-}
-
-//void
-//NIC::configureLogPLinks()
-//{
-//  initInputLink(addr(), hw::NIC::LogP);
-//  initOutputLink(hw::NIC::LogP, addr());
-//}
-
-void
-NIC::configureLinks()
-{
-  //set up LogP management/shortcut network
-//  configureLogPLinks();
-
-//  std::vector<Topology::InjectionPort> ports;
-//  top_->injectionPorts(addr(), ports);
-//  for (Topology::InjectionPort& port : ports){
-//    initOutputLink(port.ep_port, port.switch_port);
-//    initInputLink(port.switch_port, port.ep_port);
-//  }
 }
 
 NIC::~NIC()
@@ -357,7 +242,7 @@ NIC::mtlHandler() const
 void
 NIC::mtlHandle(Event *ev)
 {
-//  nic_debug("MTL handle");
+  out_->debug(CALL_INFO, 1, 0, "MTL handle");
   NicEvent* nev = static_cast<NicEvent*>(ev);
   NetworkMessage* msg = nev->msg();
   delete nev;
@@ -373,7 +258,6 @@ std::function<void(NetworkMessage*)>
 NIC::ctrlIoctl()
 {
   auto f = [=](NetworkMessage* msg){
-    //this->sendManagerMsg(msg);
     this->injectSend(msg);
   };
   return f;
@@ -399,15 +283,14 @@ NIC::injectSend(NetworkMessage* netmsg)
 void
 NIC::recvMessage(NetworkMessage* netmsg)
 {
-  // printf("handling %s:%lu of type %s from node %d while running\n",
-  //        netmsg->toString().c_str(),
-  //        (unsigned long) netmsg->flowId(),
-  //        NetworkMessage::tostr(netmsg->type()),
-  //        int(netmsg->fromaddr()));
+  out_->debug(CALL_INFO, 1, 0, "handling %s:%lu of type %s from node %d while running\n",
+         netmsg->toString().c_str(),
+         (unsigned long) netmsg->flowId(),
+         NetworkMessage::tostr(netmsg->type()),
+         int(netmsg->fromaddr()));
 
   switch (netmsg->type()) {
     case NetworkMessage::rdma_get_request: {
-    // sst_hg_abort_printf("case NetworkMessage::rdma_get_request unimplemented\n");
      netmsg->nicReverse(NetworkMessage::rdma_get_payload);
      netmsg->putOnWire();
      internodeSend(netmsg);
@@ -450,7 +333,8 @@ NIC::ackSend(NetworkMessage* payload)
 {
   if (payload->needsAck()){
     NetworkMessage* ack = payload->cloneInjectionAck();
-//    nic_debug("acking payload %s", payload->toString().c_str());
+    out_->debug(CALL_INFO, 1, 0, "acking payload %s",
+                payload->toString().c_str());
     sendToNode(ack);
   }
 }
@@ -458,7 +342,8 @@ NIC::ackSend(NetworkMessage* payload)
 void
 NIC::intranodeSend(NetworkMessage* payload)
 {
-//  nic_debug("intranode send payload %s", payload->toString().c_str());
+  out_->debug(CALL_INFO, 1, 0, "intranode send payload %s",
+              payload->toString().c_str());
 
   switch(payload->type())
   {
@@ -492,63 +377,29 @@ NIC::finishMemcpy(NetworkMessage* payload)
   sendToNode(payload);
 }
 
-void
-NIC::recordMessage(NetworkMessage* netmsg)
-{
-//  nic_debug("sending message %lu of size %ld of type %s to node %d: "
-//      "netid=%lu for %s",
-//      netmsg->flowId(),
-//      netmsg->byteLength(),
-//      NetworkMessage::tostr(netmsg->type()),
-//      int(netmsg->toaddr()),
-//      netmsg->flowId(), netmsg->toString().c_str());
+void 
+NIC::recordMessage(NetworkMessage *netmsg) {
 
-  if (netmsg->type() == NetworkMessage::null_netmsg_type){
-    //assume this is a simple payload
+  std::ostringstream debug_stream;
+  debug_stream << "sending message " << netmsg->flowId() << " of size "
+               << netmsg->byteLength() << " of type "
+               << NetworkMessage::tostr(netmsg->type()) << " to node "
+               << netmsg->toaddr() << ": netid=" << netmsg->flowId() << " for "
+               << netmsg->toString();
+  out_->debug(CALL_INFO, 1, 0, "%s", debug_stream.str().c_str());
+
+  if (netmsg->type() == NetworkMessage::null_netmsg_type) {
+    // assume this is a simple payload
     netmsg->setType(NetworkMessage::smsg_send);
   }
-
-//  if (spy_bytes_){
-//    spy_bytes_->addData(netmsg->toaddr(), netmsg->byteLength());
-//  }
-//  xmit_flows_->addData(netmsg->byteLength());
 }
 
 void
 NIC::internodeSend(NetworkMessage* netmsg)
 {
-//  if (netmsg->toaddr() >= top_->numNodes()){
-//    sst_hg_abort_printf("Got bad destination %d on NIC %d for %s",
-//                      int(netmsg->toaddr()), int(addr()), netmsg->toString().c_str());
-//  }
-
   recordMessage(netmsg);
-//  nic_debug("internode send payload %llu of size %d %s",
-//    netmsg->flowId(), int(netmsg->byteLength()), netmsg->toString().c_str());
-  //we might not have a logp overlay network
-//  if (negligibleSize(netmsg->byteLength())){
-//    sendManagerMsg(netmsg);
-//  } else {
-//    doSend(netmsg);
-//  }
   doSend(netmsg);
 }
-
-//void
-//NIC::sendManagerMsg(NetworkMessage* msg)
-//{
-//  if (msg->toaddr() == my_addr_){
-//    intranodeSend(msg);
-//  } else {
-//#if SST_HG_SANITY_CHECK
-//    if (!logp_link_){
-//      spkt_abort_printf("NIC %d does not have LogP link", addr());
-//    }
-//#endif
-//    logp_link_->send(new NicEvent(msg));
-//    ackSend(msg);
-//  }
-//}
 
 void
 NIC::sendToNode(NetworkMessage* payload)
