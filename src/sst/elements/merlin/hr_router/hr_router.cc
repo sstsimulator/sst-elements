@@ -245,10 +245,27 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     pc_params.insert("oql_track_port", params.find<std::string>("oql_track_port","false"));
     pc_params.insert("oql_track_remote", params.find<std::string>("oql_track_remote","false"));
 
+    SubComponentSlotInfo *pc_info = getSubComponentSlotInfo("portcontrol");
+    if ( pc_info ) {
+        int max_slot = pc_info->getMaxPopulatedSlotNumber();
+        if ( max_slot > num_ports ) {
+            merlin_abort.fatal(
+                CALL_INFO, 1,
+                "hr_router has %d ports but portcontrol uses slot %d\n",
+                num_ports, max_slot);
+        }
+    }
+
     for ( int i = 0; i < num_ports; i++ ) {
         in_port_busy[i] = 0;
         out_port_busy[i] = 0;
         progress_vcs[i] = -1;
+
+        if ( pc_info && pc_info->isPopulated(i) ) {
+            ports[i] = pc_info->create<PortInterface>
+                (i, ComponentInfo::SHARE_PORTS | ComponentInfo::SHARE_STATS | ComponentInfo::INSERT_STATS, this, id, i, topo);
+            continue;
+        }
 
         std::stringstream port_name;
         port_name << "port";
