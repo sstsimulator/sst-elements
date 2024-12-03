@@ -1,0 +1,47 @@
+
+AC_DEFUN([SST_CHECK_RAMULATOR], [
+  AC_ARG_WITH([ramulator2],
+    [AS_HELP_STRING([--with-ramulator2@<:@=DIR@:>@],
+      [Use Ramulator library installed in optionally specified DIR])])
+
+  sst_check_ramulator2_happy="yes"
+  AS_IF([test "$with_ramulator2" = "no"], [sst_check_ramulator2_happy="no"])
+
+  CXXFLAGS_saved="$CXXFLAGS"
+  CPPFLAGS_saved="$CPPFLAGS"
+  LDFLAGS_saved="$LDFLAGS"
+  LIBS_saved="$LIBS"
+
+  AS_IF([test ! -z "$with_ramulator2" -a "$with_ramulator2" != "yes"],
+    [RAMULATOR2_CPPFLAGS="-I$with_ramulator2/src -DRAMULATOR2 -DHAVE_RAMULATOR2"
+     CPPFLAGS="$RAMULATOR2_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
+     CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
+     RAMULATOR2_LDFLAGS="-L$with_ramulator2"
+     RAMULATOR2_LIBDIR="$with_ramulator2"
+     LDFLAGS="$RAMULATOR2_LDFLAGS $AM_LDFLAGS $LDFLAGS"],
+    [RAMULATOR2_CPPFLAGS=
+     RAMULATOR2_LDFLAGS=
+     RAMULATOR2_LIBDIR=])
+
+  AC_LANG_PUSH(C++)
+  AC_CHECK_HEADERS([Gem5Wrapper.h], [], [sst_check_ramulator2_happy="no"])
+  AC_CHECK_LIB([ramulator2], [libramulator2_is_present],
+    [RAMULATOR2_LIB="-lramulator2"], [sst_check_ramulator2_happy="no"])
+  AC_LANG_POP(C++)
+
+  CXXFLAGS="$CXXFLAGS_saved"
+  CPPFLAGS="$CPPFLAGS_saved"
+  LDFLAGS="$LDFLAGS_saved"
+  LIBS="$LIBS_saved"
+
+  AC_SUBST([RAMULATOR2_CPPFLAGS])
+  AC_SUBST([RAMULATOR2_LDFLAGS])
+  AC_SUBST([RAMULATOR2_LIB])
+  AC_SUBST([RAMULATOR2_LIBDIR])
+  AM_CONDITIONAL([HAVE_RAMULATOR2], [test "$sst_check_ramulator2_happy" = "yes"])
+  AS_IF([test "$sst_check_ramulator2_happy" = "yes"],
+        [AC_DEFINE([HAVE_RAMULATOR2], [1], [Set to 1 if Ramulator2 was found])])
+  AC_DEFINE_UNQUOTED([RAMULATOR2_LIBDIR], ["$RAMULATOR2_LIBDIR"], [Path to Ramulator2 library])
+
+  AS_IF([test "$sst_check_ramulator2_happy" = "yes"], [$1], [$2])
+])
