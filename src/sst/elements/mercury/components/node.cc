@@ -25,17 +25,14 @@ extern template class  HgBase<SST::Component>;
 extern template SST::TimeConverter* HgBase<SST::Component>::time_converter_;
 
 Node::Node(ComponentId_t id, Params &params)
-    : SST::Hg::Component(id), nic_(0) {
-  my_addr_ = params.find<unsigned int>("logicalID",-1);
-  unsigned int verbose = params.find<unsigned int>("verbose",0);
-  out_ = std::unique_ptr<SST::Output>(new SST::Output(sprintf("Node%d:",my_addr_), verbose, 0, Output::STDOUT));
-
-  out_->debug(CALL_INFO, 1, 0, "loading hg.operatingsystem\n");
-  os_ =  loadUserSubComponent<OperatingSystem>("os_slot", SST::ComponentInfo::SHARE_NONE, this);
+    : SST::Hg::NodeBase(id,params) {
+  out_->debug(CALL_INFO, 1, 0, "loading hg.operating_system\n");
+  os_ = loadUserSubComponent<OperatingSystem>(
+      "os_slot", SST::ComponentInfo::SHARE_NONE, this);
   assert(os_);
 
-  out_->debug(CALL_INFO, 1, 0, "loading hg.NIC\n");
-  link_control_ = loadUserSubComponent<SST::Interfaces::SimpleNetwork>("link_control_slot", SST::ComponentInfo::SHARE_NONE,1);
+  link_control_ = loadUserSubComponent<SST::Interfaces::SimpleNetwork>(
+      "link_control_slot", SST::ComponentInfo::SHARE_NONE, 1);
   if (link_control_) {
     out_->debug(CALL_INFO, 1, 0, "loading hg.NIC\n");
     nic_ = loadUserSubComponent<NIC>("nic_slot", SST::ComponentInfo::SHARE_NONE, this);
@@ -48,37 +45,8 @@ Node::Node(ComponentId_t id, Params &params)
     netLink_ = configureLink("network");
   }
 
-  unsigned int nranks = params.find<unsigned int>("nranks",-1);
+  unsigned int nranks = params.find<unsigned int>("nranks", -1);
   os_->set_nranks(nranks);
-
-  int ncores_ = params.find<std::int32_t>("ncores", 1);
-  int nsockets_ = params.find<std::int32_t>("nsockets",1);
-
-  // Tell the simulation not to end until we're ready
-  registerAsPrimaryComponent();
-  primaryComponentDoNotEndSim();
-}
-
-void
-Node::init(unsigned int phase)
-{
-  SST::Component::init(phase);
-  os_->init(phase);
-  if (nic_) nic_->init(phase);
-}
-
-void
-Node::setup()
-{
-  SST::Component::setup();
-  os_->setup();
-  if (nic_) nic_->setup();
-}
-
-void
-Node::handle(Request* req)
-{
-  os_->handleRequest(req);
 }
 
 } // namespace Hg

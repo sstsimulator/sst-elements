@@ -45,8 +45,8 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <sst/core/params.h>
 #include <mercury/common/factory.h>
 #include <mercury/components/operating_system_fwd.h>
+#include <mercury/operating_system/libraries/event_library.h>
 #include <mercury/operating_system/libraries/library.h>
-#include <mercury/operating_system/libraries/api.h>
 #include <mercury/operating_system/process/software_id.h>
 #include <iris/sumi/message_fwd.h>
 #include <iris/sumi/sim_transport.h>
@@ -82,14 +82,14 @@ class MpiApi : public SST::Iris::sumi::SimTransport
 //  friend class OTF2Writer;
  public:
   SST_ELI_REGISTER_DERIVED(
-    SST::Hg::API,
+    SST::Hg::Library,
     MpiApi,
     "hg",
     "MpiApi",
     SST_ELI_ELEMENT_VERSION(1,0,0),
-    "provides the MPI transport API")
+    "implements the MPI transport API")
 
-  MpiApi(SST::Params& params, SST::Hg::App* app, SST::Component* comp);
+  MpiApi(SST::Params& params, SST::Hg::App* app);
 
   static void deleteStatics();
 
@@ -897,7 +897,7 @@ MpiApi* mask_mpi();
 #define _StartMPICall_(fxn) \
   CallGraphAppend(fxn); \
   sstmac::sw::FTQScope scope(activeThread(), mpi_tag); \
-  startAPICall()
+  startLibraryCall()
 
 
 #define StartMPICall(fxn) \
@@ -906,7 +906,7 @@ MpiApi* mask_mpi();
 #define FinishMPICall(fxn) \
   mpi_api_debug(sprockit::dbg::mpi, #fxn " finished"); \
   finishCurrentMpiCall(); \
-  endAPICall()
+  endLibraryCall()
 
 #define mpi_api_debug(flags, ...) \
   mpi_debug(commWorld()->rank(), flags, __VA_ARGS__)

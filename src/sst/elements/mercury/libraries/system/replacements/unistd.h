@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <libraries/system/system_api.h>
+#include <libraries/system/system_library.h>
 #include_next <unistd.h>
 
 #ifndef HOST_NAME_MAX
@@ -23,7 +23,7 @@
 #endif
 
 #ifndef SSTHG_NO_REPLACEMENTS
-#define sleep       SST::Hg::systemAPI::ssthg_sleep
+#define sleep       SST::Hg::SystemLibrary::ssthg_sleep
 #endif
 
 #define gethostname ssthg_gethostname

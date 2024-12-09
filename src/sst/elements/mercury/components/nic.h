@@ -21,12 +21,12 @@
 #include <sst/core/eli/elementbuilder.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 
+#include <mercury/components/node_base_fwd.h>
+#include <mercury/components/operating_system_fwd.h>
 #include <mercury/common/thread_safe_new.h>
 #include <mercury/common/node_address.h>
 #include <mercury/common/timestamp.h>
 #include <mercury/common/event_handler.h>
-#include <mercury/components/node_fwd.h>
-#include <mercury/components/operating_system_fwd.h>
 #include <mercury/common/connection.h>
 #include <mercury/hardware/common/packet_fwd.h>
 #include <mercury/hardware/common/recv_cq.h>
@@ -69,7 +69,7 @@ class NIC : public SST::Hg::SubComponent
  public:
 
   SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::NIC,
-                                    SST::Hg::Node*)
+                                    SST::Hg::NodeBase*)
 
   SST_ELI_REGISTER_SUBCOMPONENT(
     NIC,
@@ -210,11 +210,11 @@ public:
   }
 
  public:
-  NIC(uint32_t id, SST::Params& params, SST::Hg::Node* parent);
+  NIC(uint32_t id, SST::Params& params, SST::Hg::NodeBase* parent);
 
  protected:
 
-  Node* parent() const {
+  SST::Hg::NodeBase* parent() const {
     return parent_;
   }
 
@@ -224,7 +224,7 @@ public:
 
 protected:
   int negligibleSize_;
-  Node* parent_;
+  SST::Hg::NodeBase* parent_;
   NodeId my_addr_;
   EventLink::ptr logp_link_;
 

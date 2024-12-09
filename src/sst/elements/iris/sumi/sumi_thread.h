@@ -45,6 +45,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #pragma once
 
 #include <mercury/operating_system/process/app.h>
+#include <mercury/libraries/compute/compute_api.h>
 
 namespace SST::Iris::sumi {
 
@@ -55,6 +56,8 @@ class SumiThread :
   static uint64_t num_threads_;
 
   virtual void run() = 0;
+
+  SST::Hg::ComputeAPI* compute_api_;
 
  public:
   SumiThread(SST::Params& params, SST::Hg::SoftwareId sid,

@@ -53,6 +53,7 @@ SumiThread::SumiThread(SST::Params& params, SST::Hg::SoftwareId sid,
                          SST::Hg::OperatingSystem* os) :
   Thread(params, sid, os)
 {
+  compute_api_ = dynamic_cast<SST::Hg::ComputeAPI*>(parent_app_->getLibrary("ComputeLibrary"));
 }
 
 void
@@ -64,7 +65,7 @@ SumiThread::start()
 void
 SumiThread::compute(double sec)
 {
-  parent_app_->compute(SST::Hg::TimeDelta(sec));
+  compute_api_->compute(SST::Hg::TimeDelta(sec));
 }
 
 }

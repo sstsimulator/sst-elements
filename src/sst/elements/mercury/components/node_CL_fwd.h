@@ -18,7 +18,7 @@
 namespace SST {
 namespace Hg {
 
-class ComputeScheduler;
+class NodeCL;
 
-} // end namespace Hg
-} // end namespace SST
+}
+}

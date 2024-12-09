@@ -13,12 +13,13 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <mercury/components/operating_system.h>
-#include <mercury/operating_system/process/compute_scheduler.h>
-#include <mercury/operating_system/process/thread.h>
+#pragma once
 
 namespace SST {
 namespace Hg {
+
+class EventLibrary;
+class library_builder;
 
 } // end namespace Hg
 } // end namespace SST

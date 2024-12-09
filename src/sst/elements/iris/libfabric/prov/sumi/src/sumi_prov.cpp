@@ -14,14 +14,14 @@
 // distribution.
 
 #include <sumi_fabric.hpp>
-#include <mercury/operating_system/libraries/api.h>
+#include <mercury/operating_system/libraries/library.h>
 #include <mercury/components/operating_system.h>
 #include <mercury/operating_system/process/thread.h>
 
 FabricTransport* sumi_fabric()
 {
   SST::Hg::Thread* t = SST::Hg::OperatingSystem::currentThread();
-  FabricTransport* tp = t->getApi<FabricTransport>("libfabric");
+  FabricTransport* tp = t->getLibrary<FabricTransport>("libfabric");
   if (!tp->inited())
     tp->init();
   return tp;

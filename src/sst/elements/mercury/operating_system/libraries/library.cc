@@ -13,44 +13,85 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <sst/core/params.h>
 #include <mercury/components/operating_system.h>
+#include <mercury/operating_system/process/thread.h>
+#include <mercury/operating_system/process/app.h>
 #include <mercury/operating_system/libraries/library.h>
+#include <mercury/hardware/common/flow.h>
+#include <mercury/common/thread_lock.h>
 
 namespace SST {
 namespace Hg {
 
 extern template class  HgBase<SST::Component>;
 extern template class  HgBase<SST::SubComponent>;
+extern template SST::TimeConverter* HgBase<SST::SubComponent>::time_converter_;
 
-Library::Library(const std::string& libname, SoftwareId sid, OperatingSystem* os) :
-  os_(os),
-  sid_(sid), 
-  addr_(os->addr()),
-  libname_(libname) 
-{
-  os_->registerLib(this);
+static thread_lock the_api_lock;
+
+void
+apiLock() {
+  the_api_lock.lock();
+}
+
+void
+apiUnlock() {
+  the_api_lock.unlock();
 }
 
 Library::~Library()
 {
-  os_->unregisterLib(this);
+}
+
+SST::Hg::SoftwareId
+Library::sid() const {
+  return api_parent_app_->sid();
+}
+
+NodeId
+Library::addr() const {
+  return api_parent_app_->os()->addr();
+}
+
+Thread*
+Library::activeThread()
+{
+  return api_parent_app_->os()->activeThread();
 }
 
 void
-Library::incomingEvent(Event*  /*ev*/)
+Library::startLibraryCall()
 {
-  sst_hg_throw_printf(SST::Hg::UnimplementedError,
-    "%s::incomingEvent: this library should only block, never receive incoming",
-     toString().c_str());
+  activeThread()->startLibraryCall();
+}
+void
+Library::endLibraryCall()
+{
+  activeThread()->endLibraryCall();
+}
+
+Timestamp
+Library::now() const 
+{
+  return api_parent_app_->os()->now();
 }
 
 void
-Library::incomingRequest(Request*  /*ev*/)
+Library::schedule(Timestamp t, ExecutionEvent* ev)
 {
-  sst_hg_throw_printf(SST::Hg::UnimplementedError,
-    "%s::incomingRequest: this library should only block, never receive incoming",
-     toString().c_str());
+  api_parent_app_->os()->sendExecutionEvent(t, ev);
 }
+
+void
+Library::scheduleDelay(TimeDelta t, ExecutionEvent* ev)
+{
+  api_parent_app_->os()->sendDelayedExecutionEvent(t, ev);
+}
+
+Library::Library(SST::Params & params, App *parent) :
+  api_parent_app_(parent)
+{ }
 
 } // end namespace Hg
 } // end namespace SST
