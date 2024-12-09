@@ -286,7 +286,7 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
                            "bits (b) or bytes (B): %s\n",flit_size.toStringBestSI().c_str());
     }
     if ( flit_size.hasUnits("B") ) {
-        flit_size *= UnitAlgebra("8b");
+        flit_size *= UnitAlgebra("8b/B");
     }
 
     std::string output_latency_timebase = params.find<std::string>("output_latency","0ns");
