@@ -133,7 +133,6 @@ nobase_library_include_HEADERS = \
   components/node_CL.h \
   components/node_CL_fwd.h \
   components/operating_system_base.h \
-  components/operating_system_fwd.h \
   components/operating_system.h \
   components/operating_system_fwd.h \
   components/operating_system_CL.h \
