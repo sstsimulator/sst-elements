@@ -100,65 +100,63 @@ host_triplet = @host@
 
 @HAVE_RAMULATOR_TRUE@am__append_4 = membackend/ramulatorBackend.h
 @HAVE_RAMULATOR_TRUE@am__append_5 = $(RAMULATOR_CPPFLAGS) -DHAVE_LIBRAMULATOR
-
-@HAVE_RAMULATOR2_TRUE@am__append_1 = $(RAMULATOR2_LDFLAGS)
-@HAVE_RAMULATOR2_TRUE@am__append_2 = $(RAMULATOR2_LIB)
-@HAVE_RAMULATOR2_TRUE@am__append_3 = membackend/ramulator2Backend.cc \
+@HAVE_RAMULATOR2_TRUE@am__append_6 = $(RAMULATOR2_LDFLAGS)
+@HAVE_RAMULATOR2_TRUE@am__append_7 = $(RAMULATOR2_LIB)
+@HAVE_RAMULATOR2_TRUE@am__append_8 = membackend/ramulator2Backend.cc \
 @HAVE_RAMULATOR2_TRUE@	membackend/ramulator2Backend.h
 
-@HAVE_RAMULATOR2_TRUE@am__append_4 = membackend/ramulator2Backend.h
-@HAVE_RAMULATOR2_TRUE@am__append_5 = $(RAMULATOR2_CPPFLAGS) -DHAVE_LIBRAMULATOR2
-
-@HAVE_DRAMSIM_TRUE@am__append_6 = $(DRAMSIM_LDFLAGS)
-@HAVE_DRAMSIM_TRUE@am__append_7 = $(DRAMSIM_LIB)
-@HAVE_DRAMSIM_TRUE@am__append_8 = membackend/dramSimBackend.cc \
+@HAVE_RAMULATOR2_TRUE@am__append_9 = membackend/ramulator2Backend.h
+@HAVE_RAMULATOR2_TRUE@am__append_10 = $(RAMULATOR2_CPPFLAGS) -DHAVE_LIBRAMULATOR2
+@HAVE_DRAMSIM_TRUE@am__append_11 = $(DRAMSIM_LDFLAGS)
+@HAVE_DRAMSIM_TRUE@am__append_12 = $(DRAMSIM_LIB)
+@HAVE_DRAMSIM_TRUE@am__append_13 = membackend/dramSimBackend.cc \
 @HAVE_DRAMSIM_TRUE@	membackend/dramSimBackend.h \
 @HAVE_DRAMSIM_TRUE@	membackend/pagedMultiBackend.cc \
 @HAVE_DRAMSIM_TRUE@	membackend/pagedMultiBackend.h
-@HAVE_DRAMSIM_TRUE@am__append_9 = membackend/dramSimBackend.h \
+@HAVE_DRAMSIM_TRUE@am__append_14 = membackend/dramSimBackend.h \
 @HAVE_DRAMSIM_TRUE@	membackend/pagedMultiBackend.h
-@HAVE_DRAMSIM_TRUE@am__append_10 = $(DRAMSIM_CPPFLAGS) -DHAVE_LIBDRAMSIM
-@HAVE_DRAMSIM3_TRUE@am__append_11 = $(DRAMSIM3_LDFLAGS)
-@HAVE_DRAMSIM3_TRUE@am__append_12 = $(DRAMSIM3_LIB)
-@HAVE_DRAMSIM3_TRUE@am__append_13 = membackend/dramSim3Backend.cc \
+@HAVE_DRAMSIM_TRUE@am__append_15 = $(DRAMSIM_CPPFLAGS) -DHAVE_LIBDRAMSIM
+@HAVE_DRAMSIM3_TRUE@am__append_16 = $(DRAMSIM3_LDFLAGS)
+@HAVE_DRAMSIM3_TRUE@am__append_17 = $(DRAMSIM3_LIB)
+@HAVE_DRAMSIM3_TRUE@am__append_18 = membackend/dramSim3Backend.cc \
 @HAVE_DRAMSIM3_TRUE@	membackend/dramSim3Backend.h
 
-@HAVE_DRAMSIM3_TRUE@am__append_14 = membackend/dramSim3Backend.h
-@HAVE_DRAMSIM3_TRUE@am__append_15 = $(DRAMSIM3_CPPFLAGS) -DHAVE_LIBDRAMSIM3
-@HAVE_HBMDRAMSIM_TRUE@am__append_16 = $(HBMDRAMSIM_LDFLAGS)
-@HAVE_HBMDRAMSIM_TRUE@am__append_17 = $(HBMDRAMSIM_LIB)
-@HAVE_HBMDRAMSIM_TRUE@am__append_18 = membackend/HBMdramSimBackend.cc \
+@HAVE_DRAMSIM3_TRUE@am__append_19 = membackend/dramSim3Backend.h
+@HAVE_DRAMSIM3_TRUE@am__append_20 = $(DRAMSIM3_CPPFLAGS) -DHAVE_LIBDRAMSIM3
+@HAVE_HBMDRAMSIM_TRUE@am__append_21 = $(HBMDRAMSIM_LDFLAGS)
+@HAVE_HBMDRAMSIM_TRUE@am__append_22 = $(HBMDRAMSIM_LIB)
+@HAVE_HBMDRAMSIM_TRUE@am__append_23 = membackend/HBMdramSimBackend.cc \
 @HAVE_HBMDRAMSIM_TRUE@	membackend/HBMdramSimBackend.h \
 @HAVE_HBMDRAMSIM_TRUE@	membackend/HBMpagedMultiBackend.cc \
 @HAVE_HBMDRAMSIM_TRUE@	membackend/HBMpagedMultiBackend.h
-@HAVE_HBMDRAMSIM_TRUE@am__append_19 = membackend/HBMdramSimBackend.h \
+@HAVE_HBMDRAMSIM_TRUE@am__append_24 = membackend/HBMdramSimBackend.h \
 @HAVE_HBMDRAMSIM_TRUE@	membackend/HBMpagedMultiBackend.h
-@HAVE_HBMDRAMSIM_TRUE@am__append_20 = $(HBMDRAMSIM_CPPFLAGS) -DHAVE_LIBHBMDRAMSIM
-@HAVE_HYBRIDSIM_TRUE@am__append_21 = $(HYBRIDSIM_LDFLAGS)
-@HAVE_HYBRIDSIM_TRUE@am__append_22 = $(HYBRIDSIM_LIB)
-@HAVE_HYBRIDSIM_TRUE@am__append_23 = membackend/hybridSimBackend.cc \
+@HAVE_HBMDRAMSIM_TRUE@am__append_25 = $(HBMDRAMSIM_CPPFLAGS) -DHAVE_LIBHBMDRAMSIM
+@HAVE_HYBRIDSIM_TRUE@am__append_26 = $(HYBRIDSIM_LDFLAGS)
+@HAVE_HYBRIDSIM_TRUE@am__append_27 = $(HYBRIDSIM_LIB)
+@HAVE_HYBRIDSIM_TRUE@am__append_28 = membackend/hybridSimBackend.cc \
 @HAVE_HYBRIDSIM_TRUE@	membackend/hybridSimBackend.h
 
-@HAVE_HYBRIDSIM_TRUE@am__append_24 = membackend/hybridSimBackend.h
-@HAVE_HYBRIDSIM_TRUE@am__append_25 = $(HYBRIDSIM_CPPFLAGS) -DHAVE_LIBHYBRIDSIM
-@USE_LIBZ_TRUE@am__append_26 = $(LIBZ_LDFLAGS)
-@USE_LIBZ_TRUE@am__append_27 = $(LIBZ_LIB)
-@USE_LIBZ_TRUE@am__append_28 = $(LIBZ_CPPFLAGS)
-@USE_GOBLIN_HMCSIM_TRUE@am__append_29 = \
+@HAVE_HYBRIDSIM_TRUE@am__append_29 = membackend/hybridSimBackend.h
+@HAVE_HYBRIDSIM_TRUE@am__append_30 = $(HYBRIDSIM_CPPFLAGS) -DHAVE_LIBHYBRIDSIM
+@USE_LIBZ_TRUE@am__append_31 = $(LIBZ_LDFLAGS)
+@USE_LIBZ_TRUE@am__append_32 = $(LIBZ_LIB)
+@USE_LIBZ_TRUE@am__append_33 = $(LIBZ_CPPFLAGS)
+@USE_GOBLIN_HMCSIM_TRUE@am__append_34 = \
 @USE_GOBLIN_HMCSIM_TRUE@	membackend/goblinHMCBackend.cc \
 @USE_GOBLIN_HMCSIM_TRUE@	membackend/goblinHMCBackend.h
 
-@USE_GOBLIN_HMCSIM_TRUE@am__append_30 = membackend/goblinHMCBackend.h
-@USE_GOBLIN_HMCSIM_TRUE@am__append_31 = $(GOBLIN_HMCSIM_LDFLAGS)
-@USE_GOBLIN_HMCSIM_TRUE@am__append_32 = $(GOBLIN_HMCSIM_LIB)
-@USE_GOBLIN_HMCSIM_TRUE@am__append_33 = $(GOBLIN_HMCSIM_CPPFLAGS) -DHAVE_GOBLIN_HMCSIM
-@HAVE_FDSIM_TRUE@am__append_34 = \
+@USE_GOBLIN_HMCSIM_TRUE@am__append_35 = membackend/goblinHMCBackend.h
+@USE_GOBLIN_HMCSIM_TRUE@am__append_36 = $(GOBLIN_HMCSIM_LDFLAGS)
+@USE_GOBLIN_HMCSIM_TRUE@am__append_37 = $(GOBLIN_HMCSIM_LIB)
+@USE_GOBLIN_HMCSIM_TRUE@am__append_38 = $(GOBLIN_HMCSIM_CPPFLAGS) -DHAVE_GOBLIN_HMCSIM
+@HAVE_FDSIM_TRUE@am__append_39 = \
 @HAVE_FDSIM_TRUE@	membackend/flashSimBackend.cc \
 @HAVE_FDSIM_TRUE@	membackend/flashSimBackend.h
 
-@HAVE_FDSIM_TRUE@am__append_35 = $(FDSIM_LDFLAGS)
-@HAVE_FDSIM_TRUE@am__append_36 = $(FDSIM_LIB)
-@HAVE_FDSIM_TRUE@am__append_37 = $(FDSIM_CPPFLAGS) $(FDSIM_CXXFLAGS) -DHAVE_LIBFDSIM
+@HAVE_FDSIM_TRUE@am__append_40 = $(FDSIM_LDFLAGS)
+@HAVE_FDSIM_TRUE@am__append_41 = $(FDSIM_LIB)
+@HAVE_FDSIM_TRUE@am__append_42 = $(FDSIM_CPPFLAGS) $(FDSIM_CXXFLAGS) -DHAVE_LIBFDSIM
 subdir = src/sst/elements/memHierarchy
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/acx_mpi.m4 \
@@ -248,19 +246,19 @@ am__installdirs = "$(DESTDIR)$(compdir)" "$(DESTDIR)$(sstdir)"
 LTLIBRARIES = $(comp_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 @HAVE_RAMULATOR_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
-@HAVE_RAMULATOR2_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
-@HAVE_DRAMSIM_TRUE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1)
-@HAVE_DRAMSIM3_TRUE@am__DEPENDENCIES_4 = $(am__DEPENDENCIES_1)
-@HAVE_HBMDRAMSIM_TRUE@am__DEPENDENCIES_5 = $(am__DEPENDENCIES_1)
-@HAVE_HYBRIDSIM_TRUE@am__DEPENDENCIES_6 = $(am__DEPENDENCIES_1)
-@USE_LIBZ_TRUE@am__DEPENDENCIES_7 = $(am__DEPENDENCIES_1)
-@USE_GOBLIN_HMCSIM_TRUE@am__DEPENDENCIES_8 = $(am__DEPENDENCIES_1)
-@HAVE_FDSIM_TRUE@am__DEPENDENCIES_9 = $(am__DEPENDENCIES_1)
+@HAVE_RAMULATOR2_TRUE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1)
+@HAVE_DRAMSIM_TRUE@am__DEPENDENCIES_4 = $(am__DEPENDENCIES_1)
+@HAVE_DRAMSIM3_TRUE@am__DEPENDENCIES_5 = $(am__DEPENDENCIES_1)
+@HAVE_HBMDRAMSIM_TRUE@am__DEPENDENCIES_6 = $(am__DEPENDENCIES_1)
+@HAVE_HYBRIDSIM_TRUE@am__DEPENDENCIES_7 = $(am__DEPENDENCIES_1)
+@USE_LIBZ_TRUE@am__DEPENDENCIES_8 = $(am__DEPENDENCIES_1)
+@USE_GOBLIN_HMCSIM_TRUE@am__DEPENDENCIES_9 = $(am__DEPENDENCIES_1)
+@HAVE_FDSIM_TRUE@am__DEPENDENCIES_10 = $(am__DEPENDENCIES_1)
 libmemHierarchy_la_DEPENDENCIES = $(am__DEPENDENCIES_2) \
 	$(am__DEPENDENCIES_3) $(am__DEPENDENCIES_4) \
 	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_6) \
 	$(am__DEPENDENCIES_7) $(am__DEPENDENCIES_8) \
-	$(am__DEPENDENCIES_9)
+	$(am__DEPENDENCIES_9) $(am__DEPENDENCIES_10)
 am__libmemHierarchy_la_SOURCES_DIST = hash.h cacheListener.h \
 	cacheController.h cacheController.cc cacheFactory.cc \
 	replacementManager.h bus.h bus.cc memoryController.h \
@@ -334,16 +332,16 @@ am__libmemHierarchy_la_SOURCES_DIST = hash.h cacheListener.h \
 	membackend/flashSimBackend.cc membackend/flashSimBackend.h
 am__dirstamp = $(am__leading_dot)dirstamp
 @HAVE_RAMULATOR_TRUE@am__objects_1 = membackend/ramulatorBackend.lo
-@HAVE_RAMULATOR2_TRUE@am__objects_1 = membackend/ramulator2Backend.lo
-@HAVE_DRAMSIM_TRUE@am__objects_2 = membackend/dramSimBackend.lo \
+@HAVE_RAMULATOR2_TRUE@am__objects_2 = membackend/ramulator2Backend.lo
+@HAVE_DRAMSIM_TRUE@am__objects_3 = membackend/dramSimBackend.lo \
 @HAVE_DRAMSIM_TRUE@	membackend/pagedMultiBackend.lo
-@HAVE_DRAMSIM3_TRUE@am__objects_3 = membackend/dramSim3Backend.lo
-@HAVE_HBMDRAMSIM_TRUE@am__objects_4 = membackend/HBMdramSimBackend.lo \
+@HAVE_DRAMSIM3_TRUE@am__objects_4 = membackend/dramSim3Backend.lo
+@HAVE_HBMDRAMSIM_TRUE@am__objects_5 = membackend/HBMdramSimBackend.lo \
 @HAVE_HBMDRAMSIM_TRUE@	membackend/HBMpagedMultiBackend.lo
-@HAVE_HYBRIDSIM_TRUE@am__objects_5 = membackend/hybridSimBackend.lo
-@USE_GOBLIN_HMCSIM_TRUE@am__objects_6 =  \
+@HAVE_HYBRIDSIM_TRUE@am__objects_6 = membackend/hybridSimBackend.lo
+@USE_GOBLIN_HMCSIM_TRUE@am__objects_7 =  \
 @USE_GOBLIN_HMCSIM_TRUE@	membackend/goblinHMCBackend.lo
-@HAVE_FDSIM_TRUE@am__objects_7 = membackend/flashSimBackend.lo
+@HAVE_FDSIM_TRUE@am__objects_8 = membackend/flashSimBackend.lo
 am_libmemHierarchy_la_OBJECTS = cacheController.lo cacheFactory.lo \
 	bus.lo memoryController.lo memoryCacheController.lo \
 	coherentMemoryController.lo membackend/timingDRAMBackend.lo \
@@ -372,7 +370,7 @@ am_libmemHierarchy_la_OBJECTS = cacheController.lo cacheFactory.lo \
 	Sieve/broadcastShim.lo Sieve/memmgr_sieve.lo memNetBridge.lo \
 	testcpu/standardMMIO.lo $(am__objects_1) $(am__objects_2) \
 	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
-	$(am__objects_6) $(am__objects_7)
+	$(am__objects_6) $(am__objects_7) $(am__objects_8)
 libmemHierarchy_la_OBJECTS = $(am_libmemHierarchy_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -434,8 +432,8 @@ am__depfiles_remade = ./$(DEPDIR)/bus.Plo \
 	membackend/$(DEPDIR)/hybridSimBackend.Plo \
 	membackend/$(DEPDIR)/memBackendConvertor.Plo \
 	membackend/$(DEPDIR)/pagedMultiBackend.Plo \
-	membackend/$(DEPDIR)/ramulatorBackend.Plo \
 	membackend/$(DEPDIR)/ramulator2Backend.Plo \
+	membackend/$(DEPDIR)/ramulatorBackend.Plo \
 	membackend/$(DEPDIR)/requestReorderByRow.Plo \
 	membackend/$(DEPDIR)/requestReorderSimple.Plo \
 	membackend/$(DEPDIR)/scratchBackendConvertor.Plo \
@@ -510,9 +508,9 @@ am__nobase_sst_HEADERS_DIST = memEventBase.h memEvent.h memNICBase.h \
 	membackend/simpleMemScratchBackendConvertor.h \
 	memoryController.h coherentMemoryController.h cacheListener.h \
 	bus.h util.h memTypes.h membackend/ramulatorBackend.h \
-	bus.h util.h memTypes.h membackend/ramulator2Backend.h \
-	membackend/dramSimBackend.h membackend/pagedMultiBackend.h \
-	membackend/dramSim3Backend.h membackend/HBMdramSimBackend.h \
+	membackend/ramulator2Backend.h membackend/dramSimBackend.h \
+	membackend/pagedMultiBackend.h membackend/dramSim3Backend.h \
+	membackend/HBMdramSimBackend.h \
 	membackend/HBMpagedMultiBackend.h \
 	membackend/hybridSimBackend.h membackend/goblinHMCBackend.h
 HEADERS = $(nobase_sst_HEADERS)
@@ -543,8 +541,8 @@ AMTAR = @AMTAR@
 AM_CFLAGS = @AM_CFLAGS@
 AM_CPPFLAGS = @AM_CPPFLAGS@ $(MPI_CPPFLAGS) -I$(top_srcdir)/src \
 	$(am__append_5) $(am__append_10) $(am__append_15) \
-	$(am__append_20) $(am__append_25) $(am__append_28) \
-	$(am__append_33) $(am__append_37) $(HMC_FLAG)
+	$(am__append_20) $(am__append_25) $(am__append_30) \
+	$(am__append_33) $(am__append_38) $(am__append_42) $(HMC_FLAG)
 AM_CXXFLAGS = @AM_CXXFLAGS@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AM_LDFLAGS = @AM_LDFLAGS@
@@ -698,14 +696,14 @@ PINTOOL_DIR = @PINTOOL_DIR@
 PINTOOL_LDFLAGS = @PINTOOL_LDFLAGS@
 PINTOOL_PATH = @PINTOOL_PATH@
 PINTOOL_RUNTIME = @PINTOOL_RUNTIME@
-RAMULATOR_CPPFLAGS = @RAMULATOR_CPPFLAGS@
-RAMULATOR_LDFLAGS = @RAMULATOR_LDFLAGS@
-RAMULATOR_LIB = @RAMULATOR_LIB@
-RAMULATOR_LIBDIR = @RAMULATOR_LIBDIR@
 RAMULATOR2_CPPFLAGS = @RAMULATOR2_CPPFLAGS@
 RAMULATOR2_LDFLAGS = @RAMULATOR2_LDFLAGS@
 RAMULATOR2_LIB = @RAMULATOR2_LIB@
 RAMULATOR2_LIBDIR = @RAMULATOR2_LIBDIR@
+RAMULATOR_CPPFLAGS = @RAMULATOR_CPPFLAGS@
+RAMULATOR_LDFLAGS = @RAMULATOR_LDFLAGS@
+RAMULATOR_LIB = @RAMULATOR_LIB@
+RAMULATOR_LIBDIR = @RAMULATOR_LIBDIR@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
@@ -844,8 +842,8 @@ libmemHierarchy_la_SOURCES = hash.h cacheListener.h cacheController.h \
 	Sieve/memmgr_sieve.cc Sieve/memmgr_sieve.h memNetBridge.h \
 	memNetBridge.cc testcpu/standardMMIO.h testcpu/standardMMIO.cc \
 	$(am__append_3) $(am__append_8) $(am__append_13) \
-	$(am__append_18) $(am__append_23) $(am__append_29) \
-	$(am__append_34)
+	$(am__append_18) $(am__append_23) $(am__append_28) \
+	$(am__append_34) $(am__append_39)
 EXTRA_DIST = \
 	tests/testsuite_default_memHierarchy_hybridsim.py \
 	tests/testsuite_default_memHierarchy_memHA.py \
@@ -886,8 +884,6 @@ EXTRA_DIST = \
 	tests/test_hybridsim.py \
 	tests/sdl4-2-ramulator.py \
 	tests/sdl5-1-ramulator.py \
-	# TODO tests/sdl4-2-ramulator2.py \
-	# TODO tests/sdl5-1-ramulator2.py \
 	tests/testBackendChaining.py \
 	tests/testBackendDelayBuffer.py \
 	tests/testBackendDramsim3.py \
@@ -937,7 +933,6 @@ EXTRA_DIST = \
 	tests/system.ini \
 	tests/DDR4_8Gb_x16_3200.ini \
 	tests/ramulator-ddr3.cfg \
-	# TODO tests/ramulator2-ddr3.cfg \
 	tests/ddr_device.ini \
 	tests/ddr_system.ini \
 	tests/hbm_device.ini \
@@ -998,10 +993,8 @@ EXTRA_DIST = \
 	tests/refFiles/test_memHierarchy_sdl4_1.out \
 	tests/refFiles/test_memHierarchy_sdl4_2.out \
 	tests/refFiles/test_memHierarchy_sdl4_2_ramulator.out \
-	# TODO tests/refFiles/test_memHierarchy_sdl4_2_ramulator2.out \
 	tests/refFiles/test_memHierarchy_sdl5_1.out \
 	tests/refFiles/test_memHierarchy_sdl5_1_ramulator.out \
-	# TODO tests/refFiles/test_memHierarchy_sdl5_1_ramulator2.out \
 	tests/refFiles/test_memHierarchy_sdl8_1.out \
 	tests/refFiles/test_memHierarchy_sdl8_3.out \
 	tests/refFiles/test_memHierarchy_sdl8_4.out \
@@ -1065,14 +1058,15 @@ nobase_sst_HEADERS = memEventBase.h memEvent.h memNICBase.h memNIC.h \
 	memoryController.h coherentMemoryController.h cacheListener.h \
 	bus.h util.h memTypes.h $(am__append_4) $(am__append_9) \
 	$(am__append_14) $(am__append_19) $(am__append_24) \
-	$(am__append_30)
+	$(am__append_29) $(am__append_35)
 libmemHierarchy_la_LDFLAGS = -module -avoid-version $(am__append_1) \
 	$(am__append_6) $(am__append_11) $(am__append_16) \
 	$(am__append_21) $(am__append_26) $(am__append_31) \
-	$(am__append_35)
+	$(am__append_36) $(am__append_40)
 libmemHierarchy_la_LIBADD = $(am__append_2) $(am__append_7) \
 	$(am__append_12) $(am__append_17) $(am__append_22) \
-	$(am__append_27) $(am__append_32) $(am__append_36)
+	$(am__append_27) $(am__append_32) $(am__append_37) \
+	$(am__append_41)
 all: all-am
 
 .SUFFIXES:
@@ -1241,7 +1235,7 @@ testcpu/standardMMIO.lo: testcpu/$(am__dirstamp) \
 membackend/ramulatorBackend.lo: membackend/$(am__dirstamp) \
 	membackend/$(DEPDIR)/$(am__dirstamp)
 membackend/ramulator2Backend.lo: membackend/$(am__dirstamp) \
-	membackend/$(DEPDIR)/$(am__dirstamp)	
+	membackend/$(DEPDIR)/$(am__dirstamp)
 membackend/dramSimBackend.lo: membackend/$(am__dirstamp) \
 	membackend/$(DEPDIR)/$(am__dirstamp)
 membackend/pagedMultiBackend.lo: membackend/$(am__dirstamp) \
@@ -1321,8 +1315,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@membackend/$(DEPDIR)/hybridSimBackend.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@membackend/$(DEPDIR)/memBackendConvertor.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@membackend/$(DEPDIR)/pagedMultiBackend.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@membackend/$(DEPDIR)/ramulatorBackend.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@membackend/$(DEPDIR)/ramulator2Backend.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@membackend/$(DEPDIR)/ramulatorBackend.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@membackend/$(DEPDIR)/requestReorderByRow.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@membackend/$(DEPDIR)/requestReorderSimple.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@membackend/$(DEPDIR)/scratchBackendConvertor.Plo@am__quote@ # am--include-marker
@@ -1585,8 +1579,8 @@ distclean: distclean-am
 	-rm -f membackend/$(DEPDIR)/hybridSimBackend.Plo
 	-rm -f membackend/$(DEPDIR)/memBackendConvertor.Plo
 	-rm -f membackend/$(DEPDIR)/pagedMultiBackend.Plo
-	-rm -f membackend/$(DEPDIR)/ramulatorBackend.Plo
 	-rm -f membackend/$(DEPDIR)/ramulator2Backend.Plo
+	-rm -f membackend/$(DEPDIR)/ramulatorBackend.Plo
 	-rm -f membackend/$(DEPDIR)/requestReorderByRow.Plo
 	-rm -f membackend/$(DEPDIR)/requestReorderSimple.Plo
 	-rm -f membackend/$(DEPDIR)/scratchBackendConvertor.Plo
@@ -1690,8 +1684,8 @@ maintainer-clean: maintainer-clean-am
 	-rm -f membackend/$(DEPDIR)/hybridSimBackend.Plo
 	-rm -f membackend/$(DEPDIR)/memBackendConvertor.Plo
 	-rm -f membackend/$(DEPDIR)/pagedMultiBackend.Plo
-	-rm -f membackend/$(DEPDIR)/ramulatorBackend.Plo
 	-rm -f membackend/$(DEPDIR)/ramulator2Backend.Plo
+	-rm -f membackend/$(DEPDIR)/ramulatorBackend.Plo
 	-rm -f membackend/$(DEPDIR)/requestReorderByRow.Plo
 	-rm -f membackend/$(DEPDIR)/requestReorderSimple.Plo
 	-rm -f membackend/$(DEPDIR)/scratchBackendConvertor.Plo
@@ -1759,7 +1753,6 @@ install-exec-hook:
 	$(SST_REGISTER_TOOL) FDSIM LIBDIR=$(FDSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) GOBLIN_HMCSIM LIBDIR=$(GOBLIN_HMCSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) RAMULATOR LIBDIR=$(RAMULATOR_LIBDIR)
-	$(SST_REGISTER_TOOL) RAMULATOR LIBDIR=$(RAMULATOR2_LIBDIR)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     memHierarchy=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      memHierarchy=$(abs_srcdir)/tests
 
