@@ -154,11 +154,7 @@ CollectiveDoneMessage* comm_barrier(int tag, int cq_id, Communicator* comm = nul
 
 Message* comm_poll();
 
-void compute(double sec);
-
 void sleep_hires(double sec);
-
-void sleepUntil(double sec);
 
 /**
  * Every node has exactly the same notion of time - universal, global clock.

@@ -105,18 +105,17 @@ class FabricTransport : public SST::Iris::sumi::SimTransport {
 
  public:
   SST_ELI_REGISTER_DERIVED(
-    API,
+    Library,
     FabricTransport,
     "macro",
     "libfabric",
     SST_ELI_ELEMENT_VERSION(1,0,0),
-    "provides the libfabric transport API")
+    "implements the libfabric transport API")
 
   public:
     FabricTransport(SST::Params& params,
-                    SST::Hg::App* parent,
-                    SST::Component* comp) :
-      SST::Iris::sumi::SimTransport(params, parent, comp),
+                    SST::Hg::App* parent) :
+      SST::Iris::sumi::SimTransport(params, parent),
       inited_(false)
   {
   }

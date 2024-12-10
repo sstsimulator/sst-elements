@@ -28,7 +28,10 @@ if __name__ == "__main__":
         "verbose" : "0",
         "app1.name" : "allgather",
         "app1.exe"  : "allgather.so",
-        "app1.apis" : ["systemAPI:libsystemapi.so", "SimTransport:libsumi.so", "MpiApi:libmask_mpi.so"],
+        "app1.libraries" : ["SystemLibrary:libsystemlibrary.so",
+                            "ComputeLibrary:libcomputelibrary.so",
+                            "SimTransport:libsumi.so",
+                            "MpiApi:libmask_mpi.so"],
     })
 
     topo = topoSingle()

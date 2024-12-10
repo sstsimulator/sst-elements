@@ -32,8 +32,8 @@ namespace Hg {
 //
 // Static variables.
 //
-TimeDelta::tick_t TimeDelta::ASEC_PER_TICK = 100;
-TimeDelta::tick_t TimeDelta::one_femtosecond = 1000/TimeDelta::ASEC_PER_TICK;
+TimeDelta::tick_t TimeDelta::ASEC_PER_TICK = 1000000;
+//TimeDelta::tick_t TimeDelta::one_femtosecond = 1000/TimeDelta::ASEC_PER_TICK;
 //TimeDelta::tick_t TimeDelta::one_picosecond = TimeDelta::one_femtosecond * 1000;
 TimeDelta::tick_t TimeDelta::one_picosecond = 1;
 TimeDelta::tick_t TimeDelta::one_nanosecond = TimeDelta::one_picosecond * 1000;
@@ -46,10 +46,10 @@ double TimeDelta::ms_per_tick = 1.0/TimeDelta::one_millisecond;
 double TimeDelta::us_per_tick = 1.0/TimeDelta::one_microsecond;
 double TimeDelta::ns_per_tick = 1.0/TimeDelta::one_nanosecond;
 double TimeDelta::ps_per_tick = 1.0/TimeDelta::one_picosecond;
-double TimeDelta::fs_per_tick = 1.0/TimeDelta::one_femtosecond;
+//double TimeDelta::fs_per_tick = 1.0/TimeDelta::one_femtosecond;
 double TimeDelta::max_time_;
 
-static std::string _tick_spacing_string_("100as");
+static std::string _tick_spacing_string_("1ps");
 
 
 void TimeDelta::initStamps(tick_t tick_spacing)
@@ -62,8 +62,9 @@ void TimeDelta::initStamps(tick_t tick_spacing)
   std::stringstream ss;
   ss << tick_spacing << " as";
   _tick_spacing_string_ = ss.str();
-  one_femtosecond = 1000/ASEC_PER_TICK;
-  one_picosecond = 1000*one_femtosecond;
+  //one_femtosecond = 1000/ASEC_PER_TICK;
+  //one_picosecond = 1000*one_femtosecond;
+  one_picosecond = 1;
   one_nanosecond = 1000 * one_picosecond;
   one_microsecond = 1000 * one_nanosecond;
   one_millisecond = 1000 * one_microsecond;
@@ -74,7 +75,7 @@ void TimeDelta::initStamps(tick_t tick_spacing)
   us_per_tick = 1.0/one_microsecond;
   ns_per_tick = 1.0/one_nanosecond;
   ps_per_tick = 1.0/one_picosecond;
-  fs_per_tick = 1.0/one_femtosecond;
+  //fs_per_tick = 1.0/one_femtosecond;
   max_time_ = std::numeric_limits<tick_t>::max() / one_second;
 }
 

@@ -18,10 +18,7 @@
 namespace SST {
 namespace Hg {
 
-class LibComputeMemmove;
-class LibComputeSleep;
-class LibComputeTime;
-class LibComputeInst;
-class LibComputeLoops;
+class NodeBase;
 
-} }
+}
+}

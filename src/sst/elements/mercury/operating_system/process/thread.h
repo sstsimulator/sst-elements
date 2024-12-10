@@ -22,7 +22,7 @@
 #include <mercury/operating_system/process/process_context.h>
 #include <mercury/operating_system/process/software_id.h>
 #include <mercury/operating_system/process/app_fwd.h>
-#include <mercury/operating_system/libraries/api.h>
+#include <mercury/operating_system/libraries/library.h>
 #include <mercury/operating_system/threading/threading_interface.h>
 
 #include <queue>
@@ -68,11 +68,11 @@ class Thread
 
   static Thread* current();
 
-  template <class T> T* getApi(const std::string& name) {
-    API* a = getAppApi(name);
+  template <class T> T* getLibrary(const std::string& name) {
+    Library* a = getAppLibrary(name);
     T* casted = dynamic_cast<T*>(a);
     if (!casted) {
-      sst_hg_abort_printf("Failed to cast API to correct type for %s: got %s",
+      sst_hg_abort_printf("Failed to cast Library to correct type for %s: got %s",
                         name.c_str(), typeid(a).name());
     }
     return casted;
@@ -266,8 +266,8 @@ class Thread
     return active_cores_.size();
   }
 
-  void computeDetailed(uint64_t flops, uint64_t intops,
-                        uint64_t bytes, int nthread=use_omp_num_threads);
+  // void computeDetailed(uint64_t flops, uint64_t intops,
+  //                       uint64_t bytes, int nthread=use_omp_num_threads);
 
   void* getTlsValue(long thekey) const;
 
@@ -275,9 +275,9 @@ class Thread
 
   Timestamp now();
 
-  void startAPICall();
+  void startLibraryCall();
 
-  void endAPICall();
+  void endLibraryCall();
 
  protected:
   Thread(SST::Params& params,
@@ -328,7 +328,7 @@ class Thread
 //  HostTimer* host_timer_;
 
  private:
-  API* getAppApi(const std::string& name) const;
+  SST::Hg::Library* getAppLibrary(const std::string& name) const;
 
   int last_bt_collect_nfxn_;
 

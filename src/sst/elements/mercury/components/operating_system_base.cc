@@ -13,10 +13,14 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <mercury/libraries/compute/lib_compute.h>
+#include <mercury/components/operating_system_base.h>
 
 namespace SST {
 namespace Hg {
 
-} // end namespace Hg
-} // end namespace SST
+OperatingSystemBase::OperatingSystemBase(ComponentId_t id, SST::Params &params)
+    : SubComponent(id) {
+    }
+
+} // namespace Hg
+} // namespace SST

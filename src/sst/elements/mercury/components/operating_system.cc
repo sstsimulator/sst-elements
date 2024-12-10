@@ -19,6 +19,7 @@
 #include <mercury/common/factory.h>
 #include <mercury/common/request.h>
 #include <mercury/components/node.h>
+#include <mercury/components/node_CL.h>
 #include <mercury/operating_system/launch/app_launcher.h>
 #include <mercury/operating_system/libraries/unblock_event.h>
 #include <mercury/operating_system/process/app.h>
@@ -65,13 +66,15 @@ protected:
   Thread* thr_;
 };
 
-OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Node* parent) :
-  SST::Hg::SubComponent(id),
+OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, NodeBase* parent) :
+  OperatingSystemBase(id,params),
   node_(parent),
   des_context_(nullptr),
   next_condition_(0),
   next_mutex_(0)
 {
+  TimeDelta::initStamps(TimeDelta::ASEC_PER_TICK);
+
   if (active_os_.size() == 0){
     RankInfo num_ranks = getNumRanks();
     active_os_.resize(num_ranks.thread);
@@ -80,7 +83,7 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
   my_addr_ = node_->addr();
   next_outgoing_id_.src_node = my_addr_;
   next_outgoing_id_.msg_num = 0;
-  verbose_ = params.find<unsigned int>("verbose", 0);
+  verbose_ = params.find<unsigned int>("verbose", 1);
   out_ = std::unique_ptr<SST::Output>(
       new SST::Output(sprintf("Node%d:HgOperatingSystem:", my_addr_), verbose_, 0,
                       Output::STDOUT));
@@ -114,10 +117,10 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
   app_launcher_ = new AppLauncher(this);
   addLaunchRequests(params);
 
-  compute_sched_ = SST::Hg::create<ComputeScheduler>(
-        "hg", params.find<std::string>("compute_scheduler", "simple"),
-        params, this, node_ ? node_->ncores() : 1, node_ ? node_->nsockets()
-        : 1);
+  // compute_sched_ = SST::Hg::create<ComputeScheduler>(
+  //       "hg", params.find<std::string>("compute_scheduler", "simple"),
+  //       params, this, node_ ? node_->ncores() : 1, node_ ? node_->nsockets()
+  //       : 1);
 
   StackAlloc::init(params);
   initThreading(params);
@@ -138,8 +141,6 @@ OperatingSystem::~OperatingSystem()
     des_context_->destroyContext();
     delete des_context_;
   }
-  if (compute_sched_)
-    delete compute_sched_;
 }
 
 void
@@ -379,13 +380,6 @@ OperatingSystem::block()
 }
 
 void
-OperatingSystem::blockTimeout(TimeDelta delay)
-{
-  sendDelayedExecutionEvent(delay, new TimeoutEvent(this, active_thread_));
-  block();
-}
-
-void
 OperatingSystem::unblock(Thread* thr)
 {
   if (thr->isCanceled()){
@@ -395,6 +389,13 @@ OperatingSystem::unblock(Thread* thr)
     } else {
       switchToThread(thr);
     }
+}
+
+void
+OperatingSystem::blockTimeout(TimeDelta delay)
+{
+  sendDelayedExecutionEvent(delay, new TimeoutEvent(this, active_thread_));
+  block();
 }
 
 Thread*
@@ -474,14 +475,14 @@ OperatingSystem::getCondition(int id)
 // LIBRARIES
 //
 
-Library*
-OperatingSystem::currentLibrary(const std::string &name)
-{
-  return currentOs()->lib(name);
-}
+// Library*
+// OperatingSystem::currentEventLibrary(const std::string &name)
+// {
+//   return currentOs()->eventLibrary(name);
+// }
 
-Library*
-OperatingSystem::lib(const std::string& name) const
+EventLibrary*
+OperatingSystem::eventLibrary(const std::string& name) const
 {
   auto it = libs_.find(name);
   if (it == libs_.end()) {
@@ -492,7 +493,7 @@ OperatingSystem::lib(const std::string& name) const
 }
 
 void
-OperatingSystem::registerLib(Library* lib)
+OperatingSystem::registerEventLib(EventLibrary* lib)
 {
 #if SST_HG_SANITY_CHECK
   if (lib->libName() == "") {
@@ -511,14 +512,14 @@ OperatingSystem::registerLib(Library* lib)
     for (Request *req : reqs) {
       out_->debug(CALL_INFO, 1, 0, "delivering delayed event to lib %s: %s\n",
                     lib->libName().c_str(), toString(req).c_str());
-      sendExecutionEventNow(newCallback(lib, &Library::incomingRequest, req));
+      sendExecutionEventNow(newCallback(lib, &EventLibrary::incomingRequest, req));
     }
     pending_library_request_.erase(iter);
   }
 }
 
 void 
-OperatingSystem::unregisterLib(Library *lib) {
+OperatingSystem::unregisterEventLib(EventLibrary *lib) {
   out_->debug(CALL_INFO, 1, 0, "unregistering lib %s\n",
                 lib->libName().c_str());
   int &refcount = lib_refcounts_[lib];
@@ -534,17 +535,17 @@ OperatingSystem::unregisterLib(Library *lib) {
 }
 
 bool
-OperatingSystem::handleLibraryRequest(const std::string& name, Request* req)
+OperatingSystem::handleEventLibraryRequest(const std::string& name, Request* req)
 {
   auto it = libs_.find(name);
   bool found = it != libs_.end();
   if (found){
-    Library* lib = it->second;
-    out_->debug(CALL_INFO, 1, 0, "delivering message to lib %s:%p: %s\n",
+    EventLibrary* lib = it->second;
+    out_->debug(CALL_INFO, 1, 0, "delivering message to event lib %s:%p: %s\n",
                   name.c_str(), lib, toString(req).c_str());
     lib->incomingRequest(req);
   } else {
-    out_->debug(CALL_INFO, 1, 0, "unable to deliver message to lib %s: %s\n",
+    out_->debug(CALL_INFO, 1, 0, "unable to deliver message to event lib %s: %s\n",
                   name.c_str(), toString(req).c_str());
   }
   return found;
@@ -561,7 +562,7 @@ OperatingSystem::handleRequest(Request* req)
                 toString(req).c_str());
   }
 
-  bool found = handleLibraryRequest(libmsg->libname(), req);
+  bool found = handleEventLibraryRequest(libmsg->libname(), req);
   if (!found) {
     out_->debug(CALL_INFO, 1, 0, "delaying event to lib %s: %s",
                 libmsg->libname().c_str(), libmsg->toString().c_str());

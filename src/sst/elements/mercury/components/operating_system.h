@@ -20,19 +20,8 @@
 #include <sst/core/link.h>
 
 #include <sst/core/eli/elementbuilder.h>
+#include <mercury/components/operating_system_base.h>
 #include <mercury/components/node_fwd.h>
-#include <mercury/common/unique_id.h>
-#include <mercury/operating_system/threading/threading_interface.h>
-#include <mercury/operating_system/launch/app_launcher_fwd.h>
-#include <mercury/operating_system/launch/app_launch_request.h>
-#include <mercury/operating_system/process/app.h>
-#include <mercury/operating_system/process/thread.h>
-#include <mercury/operating_system/process/thread_info.h>
-#include <mercury/operating_system/process/mutex.h>
-#include <mercury/operating_system/process/tls.h>
-#include <mercury/operating_system/process/compute_scheduler.h>
-#include <mercury/operating_system/libraries/library.h>
-#include <mercury/hardware/network/network_message.h>
 
 #include <cstdint>
 #include <memory>
@@ -42,42 +31,41 @@ namespace Hg {
 
 extern template SST::TimeConverter* HgBase<SST::SubComponent>::time_converter_;
 
-class OperatingSystem : public SST::Hg::SubComponent {
+class OperatingSystem : public SST::Hg::OperatingSystemBase {
 
 public:
-
-  SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::OperatingSystem,
-                                    SST::Hg::Node*)
+ 
+  SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::Hg::OperatingSystem, SST::Hg::OperatingSystemBase, SST::Hg::NodeBase*)
 
   SST_ELI_REGISTER_SUBCOMPONENT(
-    OperatingSystem,
+    SST::Hg::OperatingSystem,
     "hg",
-    "operating_system",
+    "OperatingSystem",
     SST_ELI_ELEMENT_VERSION(0,0,1),
     "Mercury Operating System",
     SST::Hg::OperatingSystem
   )
 
-  OperatingSystem(SST::ComponentId_t id, SST::Params& params, Node* parent);
+  OperatingSystem(SST::ComponentId_t id, SST::Params& params, NodeBase* parent);
 
-  virtual ~OperatingSystem();
+  ~OperatingSystem();
 
   void setup() override;
 
-  void handleEvent(SST::Event *ev);
+  void handleEvent(SST::Event *ev) override;
 
-  bool clockTic(SST::Cycle_t) {
+  bool clockTic(SST::Cycle_t) override {
     //noop
     return true;
   }
 
-  static size_t stacksize(){
+  static size_t stacksize() {
     return sst_hg_global_stacksize;
   }
 
-  std::function<void(NetworkMessage*)> nicDataIoctl();
+  std::function<void(NetworkMessage*)> nicDataIoctl() override;
 
-  std::function<void(NetworkMessage*)> nicCtrlIoctl();
+  std::function<void(NetworkMessage*)> nicCtrlIoctl() override;
 
   /**
    * @brief block Block the currently running thread context.
@@ -86,17 +74,21 @@ public:
    *                     for later unblocking
    * @return
    */
-  void block();
+  void block() override;
 
-  void blockTimeout(TimeDelta delay);
+  void unblock(Thread* thr) override;
 
-  void startApp(App* theapp, const std::string&  /*unique_name*/);
-  void startThread(Thread* t);
-  void joinThread(Thread* t);
-  void scheduleThreadDeletion(Thread* thr);
-  void switchToThread(Thread* tothread);
-  void unblock(Thread* thr);
-  void completeActiveThread();
+
+  void blockTimeout(TimeDelta delay) override;
+  // void sleep(TimeDelta time);
+  // void compute(TimeDelta time);
+
+  void startApp(App* theapp, const std::string&  /*unique_name*/) override;
+  void startThread(Thread* t) override;
+  void joinThread(Thread* t) override;
+  void scheduleThreadDeletion(Thread* thr) override;
+  void switchToThread(Thread* tothread) override;
+  void completeActiveThread() override;
 
   static Thread* currentThread(){
     return staticOsThreadContext()->activeThread();
@@ -119,7 +111,7 @@ public:
 //#endif
   }
 
-  Thread* activeThread() const {
+  Thread* activeThread() const override {
     return active_thread_;
   }
 
@@ -127,10 +119,16 @@ public:
     return staticOsThreadContext();
   }
 
-  UniqueEventId allocateUniqueId() {
+  UniqueEventId allocateUniqueId() override {
     next_outgoing_id_.msg_num++;
     return next_outgoing_id_;
   }
+
+protected:
+
+  Thread* active_thread_;
+  SST::Hg::NodeBase* node_;
+  std::map<std::string, Library*> internal_apis_;
 
  private:
 
@@ -149,8 +147,6 @@ public:
 
   unsigned int verbose_;
   int nranks_;
-  Node* node_;
-  Thread* active_thread_;
   Thread* blocked_thread_;
   int next_condition_;
   int next_mutex_;
@@ -162,10 +158,9 @@ public:
   std::unique_ptr<SST::Output> out_;
   AppLauncher* app_launcher_;
   std::map<uint32_t, Thread*> running_threads_;
-  ComputeScheduler* compute_sched_;
 
-  std::unordered_map<std::string, Library*> libs_;
-  std::unordered_map<Library*, int> lib_refcounts_;
+  std::unordered_map<std::string, EventLibrary*> libs_;
+  std::unordered_map<EventLibrary*, int> lib_refcounts_;
   std::map<std::string, std::list<Request*>> pending_library_request_;
 
   NodeId my_addr_;
@@ -189,13 +184,13 @@ public:
 
  public:
 
-  Node* node() const {
+  NodeBase* node() const override {
     return node_;
   }
 
-  Thread* getThread(uint32_t threadId) const;
+  Thread* getThread(uint32_t threadId) const override;
 
-  NodeId addr() const {
+  NodeId addr() const override {
     return my_addr_;
   }
 
@@ -203,62 +198,46 @@ public:
    * Allocate a unique ID for a mutex variable
    * @return The unique ID
    */
-  int allocateMutex();
+  int allocateMutex() override;
 
   /**
    * Fetch a mutex object corresponding to their ID
    * @param id
    * @return The mutex object corresponding to the ID. Return NULL if no mutex is found.
    */
-  mutex_t* getMutex(int id);
+  mutex_t* getMutex(int id) override;
 
-  bool eraseMutex(int id);
+  bool eraseMutex(int id) override;
 
-  int allocateCondition();
+  int allocateCondition() override;
 
-  bool eraseCondition(int id);
+  bool eraseCondition(int id) override;
 
-  condition_t* getCondition(int id);
+  condition_t* getCondition(int id) override;
 
-  int ncores() const {
-    return compute_sched_->ncores();
-  }
-
-  int nsockets() const {
-    return compute_sched_->nsockets();
-  }
-
-  void reserveCores(int ncore, Thread* thr) {
-    compute_sched_->reserveCores(ncore,thr);
-  }
-
-  void releaseCores(int ncore, Thread* thr) {
-    compute_sched_->releaseCores(ncore,thr);
-  }
-
-  void set_nranks(int32_t ranks) {
+  void set_nranks(int32_t ranks) override {
     nranks_ = ranks;
   }
 
-  int32_t nranks() {
+  int32_t nranks() override {
     return nranks_;
   }
 
 //
-// LIBRARIES
+// EVENT LIBRARIES
 //
 
-  Library* currentLibrary(const std::string &name);
+  // Library* currentEventLibrary(const std::string &name);
 
-  Library* lib(const std::string& name) const;
+  EventLibrary* eventLibrary(const std::string& name) const override;
 
-  void registerLib(Library* lib);
+  void registerEventLib(EventLibrary* lib) override;
 
-  void unregisterLib(Library* lib);
+  void unregisterEventLib(EventLibrary* lib) override;
 
-  bool handleLibraryRequest(const std::string& name, Request* req);
+  bool handleEventLibraryRequest(const std::string& name, Request* req) override;
 
-  void handleRequest(Request* req);
+  void handleRequest(Request* req) override;
 
 };
 
