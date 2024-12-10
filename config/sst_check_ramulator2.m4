@@ -1,8 +1,8 @@
 
-AC_DEFUN([SST_CHECK_RAMULATOR], [
+AC_DEFUN([SST_CHECK_RAMULATOR2], [
   AC_ARG_WITH([ramulator2],
     [AS_HELP_STRING([--with-ramulator2@<:@=DIR@:>@],
-      [Use Ramulator library installed in optionally specified DIR])])
+      [Use Ramulator2 library installed in optionally specified DIR])])
 
   sst_check_ramulator2_happy="yes"
   AS_IF([test "$with_ramulator2" = "no"], [sst_check_ramulator2_happy="no"])
@@ -13,7 +13,7 @@ AC_DEFUN([SST_CHECK_RAMULATOR], [
   LIBS_saved="$LIBS"
 
   AS_IF([test ! -z "$with_ramulator2" -a "$with_ramulator2" != "yes"],
-    [RAMULATOR2_CPPFLAGS="-I$with_ramulator2/src -DRAMULATOR2 -DHAVE_RAMULATOR2"
+    [RAMULATOR2_CPPFLAGS="-I$with_ramulator2/src/ -DRAMULATOR2 -DHAVE_RAMULATOR2"
      CPPFLAGS="$RAMULATOR2_CPPFLAGS $AM_CPPFLAGS $CPPFLAGS"
      CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
      RAMULATOR2_LDFLAGS="-L$with_ramulator2"

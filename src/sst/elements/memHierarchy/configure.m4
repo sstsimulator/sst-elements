@@ -8,7 +8,7 @@ AC_DEFUN([SST_memHierarchy_CONFIG], [
   # Use global Ramulator check
   SST_CHECK_RAMULATOR([],[],[AC_MSG_ERROR([Ramulator requested but could not be found])])
 
-  # Use global Ramulator check
+  # Use global Ramulator2 check
   SST_CHECK_RAMULATOR2([],[],[AC_MSG_ERROR([Ramulator2 requested but could not be found])])
 
   # Use global DRAMSim check
