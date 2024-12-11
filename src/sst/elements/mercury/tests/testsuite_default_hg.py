@@ -21,7 +21,7 @@ class testcase_hg(SSTTestCase):
 
     def test_testme(self):
         testdir = self.get_testsuite_dir()
-        libdir = sstsimulator_conf_get_value_str("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR")
+        libdir = sstsimulator_conf_get_value("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR", str)
         path = os.environ.get("SST_LIB_PATH")
         if path is None or path == "":
             os.environ["SST_LIB_PATH"] = libdir

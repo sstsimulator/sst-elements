@@ -36,12 +36,12 @@ class testcase_Ariel(SSTTestCase):
         self.ariel_Template("memHstream")
 
     @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
-    @unittest.skipIf(host_os_is_osx(), "Ariel: Open MP is not supported on OSX.")
+    @unittest.skipIf(host_os_get_distribution_type() == OS_DIST_OSX, "Ariel: Open MP is not supported on OSX.")
     def test_Ariel_test_ivb(self):
         self.ariel_Template("ariel_ivb")
 
     @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist.")
-    @unittest.skipIf(host_os_is_osx(), "Ariel: Open MP is not supported on OSX.")
+    @unittest.skipIf(host_os_get_distribution_type() == OS_DIST_OSX, "Ariel: Open MP is not supported on OSX.")
     @unittest.skipIf(testing_check_get_num_ranks() > 1, "Ariel: test_Ariel_test_snb skipped if ranks > 1 - Sandy Bridge test is incompatible with Multi-Rank.")
     def test_Ariel_test_snb(self):
         self.ariel_Template("ariel_snb")
@@ -152,7 +152,7 @@ class testcase_Ariel(SSTTestCase):
         # It is set in the Makefile but we set it here as well
         # to support out-of-source builds
         #ArielApiDir = "{0}/api".format(self.ArielElementDir)
-        ElementsBuildDir = sstsimulator_conf_get_value_str("SST_ELEMENT_LIBRARY", "SST_ELEMENT_LIBRARY_BUILDDIR")
+        ElementsBuildDir = sstsimulator_conf_get_value("SST_ELEMENT_LIBRARY", "SST_ELEMENT_LIBRARY_BUILDDIR", str)
         ArielApiDir = "{0}/src/sst/elements/ariel/api".format(ElementsBuildDir)
         current_ld_library_path = os.environ.get("LD_LIBRARY_PATH", "")
 
