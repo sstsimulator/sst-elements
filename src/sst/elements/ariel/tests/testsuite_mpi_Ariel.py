@@ -80,7 +80,7 @@ class testcase_Ariel(SSTTestCase):
     multi_rank = testing_check_get_num_ranks() > 1
     multi_rank_error_msg = "Ariel: Ariel MPI tests are not compatible with multi-rank sst runs."
 
-    using_osx = host_os_is_osx()
+    using_osx = host_os_get_distribution_type() == OS_DIST_OSX
     osx_error_msg = "Ariel: OpenMP is not supported on macOS"
 
     # TODO: This is hacky. What is the correct way to get the test script location?

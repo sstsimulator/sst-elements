@@ -21,7 +21,7 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
 
 #####
     pin_compiled = testing_is_PIN_Compiled()
-    pin_version_valid = testing_is_PIN2_used() | testing_is_PIN3_used()
+    pin_version_valid = testing_is_PIN3_used()
     pin_loaded = testing_is_PIN_loaded()
 
     @unittest.skipIf(not pin_compiled, "memHSieve: Requires PIN, but PinTool is not compiled with Elements. In sst_element_config.h PINTOOL_EXECUTABLE={0}".format(pin_exec_path))
@@ -34,7 +34,6 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
 
     def memHSieve_Template(self, testcase, testtimeout=360):
 
-        pin2defined = testing_is_PIN2_used()
         pin3defined = testing_is_PIN3_used()
 
         # Get the path to the test files
