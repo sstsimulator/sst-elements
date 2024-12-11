@@ -16,7 +16,7 @@ def _random( args ):
     global _nids
     size = int(args[0])
 
-    if len(args) is 2 :
+    if len(args) == 2:
         random.seed(int(args[1]))
     
     random.shuffle(_nids)
