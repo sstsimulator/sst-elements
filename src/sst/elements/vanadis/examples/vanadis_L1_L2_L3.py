@@ -41,9 +41,9 @@ node_os_mmu.addParams({
     "page_size": 4096
 })
 
+
 # connect the node to it's memory
 node_memory_interface = node_os.setSubComponent("mem_interface", "memHierarchy.standardInterface")
-
 
 os_cache = sst.Component("node_os.cache", "memHierarchy.Cache")
 os_cache.addParams({
@@ -124,6 +124,44 @@ l1_d_cache.addParams({
 
 cpu_l1_d_cache_link = l1_d_cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l1_d_cache_l2_cache_link = l1_d_cache.setSubComponent("memlink", "memHierarchy.MemLink")
+
+# dtlbWrapper = sst.Component("dtlb", "mmu.tlb_wrapper")
+# dtlbWrapper.addParams({
+#     "debug_lebel": 0
+# })
+
+# dtlb = dtlbWrapper.setSubcomponent("tlb", "mmu.simpleTLB")
+# dtlb.addParams({
+#     "debug_level": 0,
+#     "hitLatency": 1,
+#     "num_hardware_threads": 1,
+#     "num_tlb_entries_per_thread": 64,
+#     "tlb_set_size": 4
+# })
+
+# itlbWrapper = sst.Component("itlb", "mmu.tlb_wrapper")
+# itlbWrapper.addParams({
+#     "debug_level": 0,
+#     "exe": True
+# })
+
+# itlb = itlbWrapper.setSubComponent("tlb", "mmu.simpleTLB")
+# itlb.addParams({
+#     "debug_level": 0,
+#     "hitLatency": 1,
+#     "num_hardware_threads": 1,
+#     "num_tlb_entries_per_thread": 64,
+#     "tlb_set_size": 4
+# })
+
+# # connect the CPU to the TLB
+# cpu_dtlb_link = sst.Link("cpu_dtlb_link")
+# cpu_dtlb_link.connect((d_cache_interface, "port", "1ns"), (dtlbWrapper, "cpu_if", "1ns"))
+# cpu_dtlb_link.setNoCut()
+
+# # connect data TLB to L1 D cache
+# cput_l1dcache_link = sst.Link("cpu_l1dcache_link")
+# cpu_l1dcache_link.connect((dtlbWrapper, "cache_if", "1ns"), (cpu_l1_d_cache_link, "port", "1ns"))
 
 l1_i_cache = sst.Component("nodeCPU.l1icache", "memHierarchy.Cache")
 l1_i_cache.addParams({
@@ -242,8 +280,14 @@ l3_cache_mem_controller = l3_cache.setSubComponent("memlink", "memHierarchy.MemL
 
 mem_controller = sst.Component("memory", "memHierarchy.MemController")
 mem_controller.addParams({
-      "mem_size" : "4GiB",
-      "access_time" : "1 ns"
+    "clock" : cpu_clock,
+    "backend.mem_size" : "4GiB",
+    "backing" : "malloc",
+    "initBacking": 1,
+    "addr_range_start": 0,
+    "addr_range_end": 0xffffffff,
+    "debug_level" : mh_debug_level,
+    "debug" : mh_debug,
 })
 
 l3_cache_l2_cache_link = sst.Link("nodeCPU.l2_cache_l3_cache_link")
@@ -251,8 +295,17 @@ l3_cache_l2_cache_link.connect((l2_cache_l3_cache_link, "port", "1ns"), (l3_cach
 l3_cache_l2_cache_link.setNoCut()
 
 l3_cache_mem_controller_link = sst.Link("nodeCPU.l3_cache_mem_controller_link")
-l3_cache_mem_controller_link.connect((l3_cache_mem_controller, "port", "1ns"), (mem_controller, "port", "1ns"))
+l3_cache_mem_controller_link.connect((l3_cache_mem_controller, "port", "1ns"), (mem_controller, "direct_link", "1ns"))
 l3_cache_mem_controller_link.setNoCut()
+
+mmu_dtlb_link = sst.Link("mmu_dtlb_link")
+mmu_dtlb_link.connect((node_os_mmu, "core0.dtlb", "1ns"), (data_tlb, "mmu", "1ns"))
+
+mmu_itlb_link = sst.Link("mmu_itlb_link")
+mmu_itlb_link.connect((node_os_mmu, "core0.itlb", "1ns"), (instruction_tlb, "mmu", "1ns"))
+
+core_os_link = sst.Link("core_os_link")
+core_os_link.connect((cpu, "os_link", "5ns"), (node_os, "core0", "5ns"))
 
 # Enable statistics
 sst.setStatisticLoadLevel(7)
