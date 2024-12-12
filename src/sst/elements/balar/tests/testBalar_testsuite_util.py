@@ -32,7 +32,6 @@ def initializeTestModule_SingleInstance(class_inst):
 
 ################################################################################
 
-# TODO: Check rodinia's result against reference files for functional correctness
 class BalarTestCase(SSTTestCase):
 
     def initializeClass(self, testName):
@@ -245,8 +244,6 @@ class BalarTestCase(SSTTestCase):
 
         # Test cases dispatch dict
         # Tag: [EXE_PATH, DATA_DIR, EXE_args]
-        # TODO Build a function for this? Better way to sort this, like a json?
-        # TODO Should put testcase config in a separate config file and the unittest should just read the file and perform testing?
         testcases = {
             "helloworld": ["./vanadisLLVMRISCV/helloworld", "", ""],
             "vecadd": ["./vanadisLLVMRISCV/vecadd", "", ""],
