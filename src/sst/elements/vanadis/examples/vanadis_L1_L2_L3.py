@@ -26,10 +26,10 @@ node_os.addParams({
     "page_size": 4096,
     "physMemSize": "4GiB",
     "useMMU": True,
-    "process1.env_count": 1,
-    "process1.env0": "OMP_NUM_THREADS=1",
-    "process1.exe": "../tests/small/basic-io/hello-world/riscv64/hello-world",
-    "process1.arg0": "hello-world"
+    "process0.env_count": 1,
+    "process0.env0": "OMP_NUM_THREADS=1",
+    "process0.exe": "../tests/small/basic-io/hello-world/riscv64/hello-world",
+    "process0.arg0": "hello-world"
 })
 
 # create the MMU for the node's OS
