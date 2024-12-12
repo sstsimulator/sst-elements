@@ -24,11 +24,14 @@ libbalar_la_SOURCES = \
 	testcpu/balarTestCPU.cc
 
 EXTRA_DIST = \
+	tests/gpgpusim.config \
 	tests/gpu-v100-mem.cfg \
+	tests/testBalar_testsuite_util.py \
 	tests/testBalar-vanadis.py \
 	tests/testBalar-testcpu.py \
-	tests/gpgpusim.config \
-	tests/testsuite_default_balar.py \
+	tests/testsuite_default_balar_long.py \
+	tests/testsuite_default_balar_medium.py \
+	tests/testsuite_default_balar_simple.py \
 	tests/utils.py \
 	tests/balarBlock.py \
 	tests/memory.py \
@@ -45,6 +48,23 @@ EXTRA_DIST = \
 	tests/vanadisLLVMRISCV/helloworld.c \
 	tests/vanadisLLVMRISCV/vecadd.cu \
 	tests/vanadisLLVMRISCV/Makefile \
+	tests/refFiles/test_gpgpu_helloworld.out \
+	tests/refFiles/test_gpgpu_rodinia-2.0-backprop-1024.out \
+	tests/refFiles/test_gpgpu_rodinia-2.0-backprop-2048.out \
+	tests/refFiles/test_gpgpu_rodinia-2.0-backprop-short.out \
+	tests/refFiles/test_gpgpu_rodinia-2.0-bfs-graph4096.out \
+	tests/refFiles/test_gpgpu_rodinia-2.0-bfs-SampleGraph.out \
+	tests/refFiles/test_gpgpu_rodinia-2.0-heartwall-1.out \
+	tests/refFiles/test_gpgpu_rodinia-2.0-hotspot-30-6-40.out \
+	tests/refFiles/test_gpgpu_rodinia-2.0-lud-64.out \
+	tests/refFiles/test_gpgpu_rodinia-2.0-lud-256.out \
+	tests/refFiles/test_gpgpu_rodinia-2.0-nn-4-3-30-90.out \
+	tests/refFiles/test_gpgpu_rodinia-2.0-nw-128-10.out \
+	tests/refFiles/test_gpgpu_rodinia-2.0-pathfinder-1000-20-5.out \
+	tests/refFiles/test_gpgpu_rodinia-2.0-srad_v2-128x128.out \
+	tests/refFiles/test_gpgpu_rodinia-2.0-streamcluster-3_6_16_1024_1024_100_none_1.out \
+	tests/refFiles/test_gpgpu_vanadisHandshake.out \
+	tests/refFiles/test_gpgpu_vecadd.out \
 	tests/refFiles/test_gpgpu_vectorAdd.out
 
 libbalar_la_LDFLAGS = \
