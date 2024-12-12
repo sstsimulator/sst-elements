@@ -257,8 +257,6 @@ void __vanadisMapBalar();
 
 unsigned int __cudaRegisterFatBinary(char file_name[256]);
 
-// TODO: How to get the deviceFun name automatically?
-// TODO: Requires parsing the binary?
 void __cudaRegisterFunction(
     uint64_t fatCubinHandle,
     uint64_t hostFun,

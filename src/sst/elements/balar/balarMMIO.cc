@@ -614,8 +614,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
                         balar->cuda_ret.cudamemcpy.kind = packet->cuda_memcpy.kind;
                     }
                     break;
-                case GPU_MEMCPY_TO_SYMBOL: 
-                    // TODO: Copy from host to device basically
+                case GPU_MEMCPY_TO_SYMBOL:
                     balar->has_blocked_response = true;
                     if (packet->isSSTmem) {
                         // With SST memory/vanadis, we should sync for it to complete
@@ -932,7 +931,6 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
             StandardMem::Write* write = balar->pending_write;
 
             // Call GPGPU-Sim with copied data
-            // TODO: Passed symbol is empty, need to check with Vanadis side
             balar->cuda_ret.cuda_error = cudaMemcpyToSymbol(
                     (const char *) packet->cuda_memcpy_to_symbol.symbol,
                     (const void*) balar->memcpyH2D_dst,
