@@ -9,14 +9,18 @@ import tempfile
 
 
 class testcase_cramSim_Component(SSTTestCase):
+    download_file = None
 
     def setUp(self):
         super(type(self), self).setUp()
+        if self.__class__.download_file is None:
+            self.skipTest("File not downloaded!")
         self._setupcramSimTestFiles()
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.download_file = None
         cls.downloadFiles()
 
     @classmethod
