@@ -8,7 +8,7 @@ import os
 
 class testcase_EmberOTF2(SSTTestCase):
 
-    otf2_support = sst_elements_config_include_file_get_value_int("HAVE_OTF2", 0, True) > 0
+    otf2_support = sst_elements_config_include_file_get_value("HAVE_OTF2", int, 0, True) > 0
 
     def setUp(self):
         super(type(self), self).setUp()
