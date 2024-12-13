@@ -142,8 +142,13 @@ SST::Link* Bus::lookupNode(const std::string& name) {
 }
 
 void Bus::configureLinks() {
+    std::string linkprefix = "highlink";
+    if (isPortConnected("high_network_0")) {
+        dbg_.output("%s, DEPRECATION WARNING: The 'high_network_%%d' ports on MemHierarchy Buses have been renamed to 'highlink%%d'. MemHierarchy port names are being standardized. The 'high_network_%%d' ports will be removed in SST 16.\n", getName().c_str());
+        linkprefix = "high_network_"; 
+    }
+    
     SST::Link* link;
-    std::string linkprefix = "high_network_";
     std::string linkname = linkprefix + "0";
     while (isPortConnected(linkname)) {
         link = configureLink(linkname, new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
@@ -153,11 +158,15 @@ void Bus::configureLinks() {
         numHighNetPorts_++;
         linkname = linkprefix + std::to_string(numHighNetPorts_);
     }
-
-    linkprefix = "low_network_";
+    
+    linkprefix = "lowlink";
+    if (isPortConnected("low_network_0")) {
+        dbg_.output("%s, DEPRECATION WARNING: The 'low_network_%%d' ports on MemHierarchy Buses have been renamed to 'lowlink%%d'. MemHierarchy port names are being standardized. The 'low_network_%%d' ports will be removed in SST 16.\n", getName().c_str());
+        linkprefix = "low_network_"; 
+    }
     linkname = linkprefix + "0";
     while (isPortConnected(linkname)) {
-        link = configureLink(linkname, "50 ps", new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
+        link = configureLink(linkname, new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
         if (!link)
             dbg_.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), linkname.c_str());
         lowNetPorts_.push_back(link);
@@ -215,8 +224,25 @@ void Bus::init(unsigned int phase) {
             if (memEvent && memEvent->getCmd() == Command::NULLCMD) {
                 dbg_.debug(_L10_, "bus %s broadcasting upper event to lower ports (%d): %s\n", getName().c_str(), numLowNetPorts_, memEvent->getVerboseString().c_str());
                 mapNodeEntry(memEvent->getSrc(), highNetPorts_[i]);
-                for (int k = 0; k < numLowNetPorts_; k++)
-                    lowNetPorts_[k]->sendUntimedData(memEvent->clone());
+                
+                if (memEvent->getInitCmd() == MemEventInit::InitCommand::Region) {
+                    MemEventInitRegion * mEvReg = static_cast<MemEventInitRegion*>(memEvent);
+                    mEvReg->setGroup(MemEventInitRegion::ReachableGroup::Source);
+
+                    for (int k = 0; k < numLowNetPorts_; k++) {
+                        lowNetPorts_[k]->sendUntimedData(memEvent->clone());
+                    }
+
+                    mEvReg->setGroup(MemEventInitRegion::ReachableGroup::Peer);
+                    for (int k = 0; k < numHighNetPorts_; k++) {
+                        if (k == i) continue;
+                        highNetPorts_[k]->sendUntimedData(memEvent->clone());
+                    }
+                } else {
+                    for (int k = 0; k < numLowNetPorts_; k++) {
+                        lowNetPorts_[k]->sendUntimedData(memEvent->clone()); 
+                    }
+                }
             } else if (memEvent) {
                 dbg_.debug(_L10_, "bus %s broadcasting upper event to lower ports (%d): %s\n", getName().c_str(), numLowNetPorts_, memEvent->getVerboseString().c_str());
                 for (int k = 0; k < numLowNetPorts_; k++)
@@ -233,8 +259,24 @@ void Bus::init(unsigned int phase) {
             else if (memEvent->getCmd() == Command::NULLCMD) {
                 dbg_.debug(_L10_, "bus %s broadcasting lower event to upper ports (%d): %s\n", getName().c_str(), numHighNetPorts_, memEvent->getVerboseString().c_str());
                 mapNodeEntry(memEvent->getSrc(), lowNetPorts_[i]);
-                for (int i = 0; i < numHighNetPorts_; i++) {
-                    highNetPorts_[i]->sendUntimedData(memEvent->clone());
+                
+                if (memEvent->getInitCmd() == MemEventInit::InitCommand::Region) {
+                    MemEventInitRegion * mEvReg = static_cast<MemEventInitRegion*>(memEvent);
+                    mEvReg->setGroup(MemEventInitRegion::ReachableGroup::Dest);
+
+                    for (int k = 0; k < numHighNetPorts_; k++) {
+                        highNetPorts_[k]->sendUntimedData(memEvent->clone());
+                    }
+
+                    mEvReg->setGroup(MemEventInitRegion::ReachableGroup::Peer);
+                    for (int k = 0; k < numLowNetPorts_; k++) {
+                        if (k == i) continue;
+                        lowNetPorts_[k]->sendUntimedData(memEvent->clone());
+                    }
+                } else {
+                    for (int i = 0; i < numHighNetPorts_; i++) {
+                        highNetPorts_[i]->sendUntimedData(memEvent->clone());
+                    }
                 }
                 delete memEvent;
             }

@@ -126,10 +126,17 @@ MemCacheController::MemCacheController(ComponentId_t id, Params &params) : Compo
 
     bool found;
 
-    link_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, clockTimeBase_);
+
+    link_ = loadUserSubComponent<MemLinkBase>("highlink", ComponentInfo::SHARE_NONE, clockTimeBase_);
+    if (!link_) {
+        link_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, clockTimeBase_);
+        if (link_) {
+            out.output("%s, DEPRECATION WARNING: The 'cpulink' subcomponent slot has been renamed to 'highlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
+        }
+    }
 
     if (!link_) {
-        out.fatal(CALL_INFO,-1,"%s, Error: No link handler loaded into 'cpulink' subcomponent slot.\n", getName().c_str());
+        out.fatal(CALL_INFO,-1,"%s, Error: No link handler loaded into 'highlink' subcomponent slot.\n", getName().c_str());
     }
 
     clockLink_ = link_->isClocked();

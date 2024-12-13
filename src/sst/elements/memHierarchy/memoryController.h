@@ -61,11 +61,12 @@ public:
 
     SST_ELI_DOCUMENT_PARAMS( MEMCONTROLLER_ELI_PARAMS )
 
-#define MEMCONTROLLER_ELI_PORTS {"direct_link", "Direct connection to a cache/directory controller", {"memHierarchy.MemEventBase"} },\
-            {"network",     "Network connection to a cache/directory controller; also request network for split networks", {"memHierarchy.MemRtrEvent"} },\
-            {"network_ack", "For split networks, ack/response network connection to a cache/directory controller", {"memHierarchy.MemRtrEvent"} },\
-            {"network_fwd", "For split networks, forward request network connection to a cache/directory controller", {"memHierarchy.MemRtrEvent"} },\
-            {"network_data","For split networks, data network connection to a cache/directory controller", {"memHierarchy.MemRtrEvent"} },\
+#define MEMCONTROLLER_ELI_PORTS {"highlink", "Direct connection to another memHierarchy component or subcomponent. If a network port is needed, fill the 'highlink' subcomponent slot instead.", {"memHierarchy.MemEventBase"} },\
+            {"direct_link", "DEPRECATED: Use 'highlink' subcomponent or port instead. Direct connection to a cache/directory controller", {"memHierarchy.MemEventBase"} },\
+            {"network",     "DEPRECATED: Set 'highlink' subcomponent slot to memHierarchy.MemNIC or memHierarchy.MemNICFour instead. Network connection to a cache/directory controller; also request network for split networks", {"memHierarchy.MemRtrEvent"} },\
+            {"network_ack", "DEPRECATED: Set 'highlink' subcomponent slot to memHierarchy.MemNICFour instead. For split networks, ack/response network connection to a cache/directory controller", {"memHierarchy.MemRtrEvent"} },\
+            {"network_fwd", "DEPRECATED: Set 'highlink' subcomponent slot to memHierarchy.MemNICFour instead. For split networks, forward request network connection to a cache/directory controller", {"memHierarchy.MemRtrEvent"} },\
+            {"network_data","DEPRECATED: Set 'highlink' subcomponent slot to memHierarchy.MemNICFour instead. For split networks, data network connection to a cache/directory controller", {"memHierarchy.MemRtrEvent"} },\
             {"cube_link",   "DEPRECATED. Use named subcomponents and their links instead.", {"sst.Event"} }
 
     SST_ELI_DOCUMENT_PORTS( MEMCONTROLLER_ELI_PORTS )
@@ -74,7 +75,8 @@ public:
 #define MEMCONTROLLER_ELI_SUBCOMPONENTSLOTS {"backend", "Backend memory model to use for timing. Defaults to simpleMem", "SST::MemHierarchy::MemBackend"},\
             {"customCmdHandler", "Optional handler for custom command types", "SST::MemHierarchy::CustomCmdMemHandler"}, \
             {"listener", "Optional listeners to gather statistics, create traces, etc. Multiple listeners supported.", "SST::MemHierarchy::CacheListener"}, \
-            {"cpulink", "CPU-side link manager (e.g., to caches/cpu). Defaults to MemLink.", "SST::MemHierarchy::MemLinkBase"}
+            {"highlink", "CPU-side port manager (e.g., link to caches/cpu). If used, do not connect the 'highlink' port and connect the subcomponent's port(s) instead. Defaults to 'memHierarchy.MemLink' if the 'highlink' port is used instead.", "SST::MemHierarchy.MemLinkBase"},\
+            {"cpulink", "DEPRECATED: Renamed to 'highlink' for naming consistency. CPU-side link manager (e.g., to caches/cpu). Defaults to MemLink.", "SST::MemHierarchy::MemLinkBase"}
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( MEMCONTROLLER_ELI_SUBCOMPONENTSLOTS )
 

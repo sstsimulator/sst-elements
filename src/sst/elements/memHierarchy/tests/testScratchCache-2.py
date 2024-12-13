@@ -63,8 +63,7 @@ comp_scratch0.addParams({
 scratch0_conv = comp_scratch0.setSubComponent("backendConvertor", "memHierarchy.simpleMemScratchBackendConvertor")
 scratch0_back = scratch0_conv.setSubComponent("backend", "memHierarchy.simpleMem")
 scratch0_back.addParam("access_time", "10ns")
-scratchlink0 = comp_scratch0.setSubComponent("cpulink", "memHierarchy.MemLink")
-scratchnic0 = comp_scratch0.setSubComponent("memlink", "memHierarchy.MemNIC")
+scratchnic0 = comp_scratch0.setSubComponent("lowlink", "memHierarchy.MemNIC")
 scratchnic0.addParams({
     "network_bw" : "50GB/s",
     "group" : 0,
@@ -124,8 +123,7 @@ comp_scratch1.addParams({
 scratch1_conv = comp_scratch1.setSubComponent("backendConvertor", "memHierarchy.simpleMemScratchBackendConvertor")
 scratch1_back = scratch1_conv.setSubComponent("backend", "memHierarchy.simpleMem")
 scratch1_back.addParam("access_time", "10ns")
-scratchlink1 = comp_scratch1.setSubComponent("cpulink", "memHierarchy.MemLink")
-scratchnic1 = comp_scratch1.setSubComponent("memlink", "memHierarchy.MemNIC")
+scratchnic1 = comp_scratch1.setSubComponent("lowlink", "memHierarchy.MemNIC")
 scratchnic1.addParams({
     "network_bw" : "50GB/s",
     "group" : 0,
@@ -159,7 +157,7 @@ memory0.addParams({
     "access_time" : "50ns",
     "mem_size" : "512MiB"
 })
-memnic0 = memctrl0.setSubComponent("cpulink", "memHierarchy.MemNIC")
+memnic0 = memctrl0.setSubComponent("highlink", "memHierarchy.MemNIC")
 memnic0.addParams({
     "network_bw" : "50GB/s",
     "group" : 1,
@@ -180,7 +178,7 @@ memory1.addParams({
     "access_time" : "50ns",
     "mem_size" : "512MiB"
 })
-memnic1 = memctrl1.setSubComponent("cpulink", "memHierarchy.MemNIC")
+memnic1 = memctrl1.setSubComponent("highlink", "memHierarchy.MemNIC")
 memnic1.addParams({
     "network_bw" : "50GB/s",
     "group" : 1,
@@ -195,17 +193,17 @@ for a in componentlist:
 
 # Define the simulation links
 link_cpu0_l1 = sst.Link("link_cpu0_l1")
-link_cpu0_l1.connect( (iface0, "port", "100ps"), (comp_l1_0, "high_network_0", "100ps") )
+link_cpu0_l1.connect( (iface0, "lowlink", "100ps"), (comp_l1_0, "highlink", "100ps") )
 link_cpu1_l1 = sst.Link("link_cpu1_l1")
-link_cpu1_l1.connect( (iface1, "port", "100ps"), (comp_l1_1, "high_network_0", "100ps") )
+link_cpu1_l1.connect( (iface1, "lowlink", "100ps"), (comp_l1_1, "highlink", "100ps") )
 link_l1_l2_0 = sst.Link("link_l1_l2_0")
-link_l1_l2_0.connect( (comp_l1_0, "low_network_0", "100ps"), (comp_l2_0, "high_network_0", "100ps") )
+link_l1_l2_0.connect( (comp_l1_0, "lowlink", "100ps"), (comp_l2_0, "highlink", "100ps") )
 link_l1_l2_1 = sst.Link("link_l1_l2_1")
-link_l1_l2_1.connect( (comp_l1_1, "low_network_0", "100ps"), (comp_l2_1, "high_network_0", "100ps") )
+link_l1_l2_1.connect( (comp_l1_1, "lowlink", "100ps"), (comp_l2_1, "highlink", "100ps") )
 link_l2_scratch0 = sst.Link("link_cpu0_scratch0")
-link_l2_scratch0.connect( (comp_l2_0, "low_network_0", "100ps"), (scratchlink0, "port", "100ps") )
+link_l2_scratch0.connect( (comp_l2_0, "lowlink", "100ps"), (comp_scratch0, "highlink", "100ps") )
 link_l2_scratch1 = sst.Link("link_cpu1_scratch1")
-link_l2_scratch1.connect( (comp_l2_1, "low_network_0", "100ps"), (scratchlink1, "port", "100ps") )
+link_l2_scratch1.connect( (comp_l2_1, "lowlink", "100ps"), (comp_scratch1, "highlink", "100ps") )
 link_scratch0_net = sst.Link("link_scratch0_net")
 link_scratch0_net.connect( (scratchnic0, "port", "100ps"), (comp_net, "port0", "100ps") )
 link_scratch1_net = sst.Link("link_scratch1_net")

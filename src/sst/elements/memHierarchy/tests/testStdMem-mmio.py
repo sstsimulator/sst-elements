@@ -44,7 +44,7 @@ cpu.addParams({
 })
 iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 iface.addParams(debug_params)
-cpu_nic = iface.setSubComponent("memlink", "memHierarchy.MemNIC")
+cpu_nic = iface.setSubComponent("lowlink", "memHierarchy.MemNIC")
 cpu_nic.addParams({"group" : core_group, 
                    "destinations" : core_dst,
                    "network_bw" : network_bw})
@@ -65,7 +65,7 @@ l1cache.addParams({
       "debug" : DEBUG_L1,
       "debug_level" : DEBUG_LEVEL
 })
-l1_nic = l1cache.setSubComponent("cpulink", "memHierarchy.MemNIC")
+l1_nic = l1cache.setSubComponent("highlink", "memHierarchy.MemNIC")
 l1_nic.addParams({ "group" : l1_group, 
                    "sources" : l1_src,
                    "destinations" : l1_dst,
@@ -80,7 +80,7 @@ mmio.addParams({
 })
 mmio_iface = mmio.setSubComponent("iface", "memHierarchy.standardInterface")
 #mmio_iface.addParams(debug_params)
-mmio_nic = mmio_iface.setSubComponent("memlink", "memHierarchy.MemNIC")
+mmio_nic = mmio_iface.setSubComponent("lowlink", "memHierarchy.MemNIC")
 mmio_nic.addParams({"group" : mmio_group, 
                     "sources" : mmio_src,
                     "destinations" : mmio_dst,
@@ -107,7 +107,7 @@ memctrl.addParams({
     "clock" : "1GHz",
     "addr_range_end" : mmio_addr - 1,
 })
-mem_nic = memctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
+mem_nic = memctrl.setSubComponent("highlink", "memHierarchy.MemNIC")
 mem_nic.addParams({"group" : memory_group, 
                    "sources" : "[1,2]", # Group 1 = L1, Group 2 = MMIO
                    "network_bw" : network_bw})

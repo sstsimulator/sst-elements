@@ -199,7 +199,7 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
         if (!localPrefetch)
             sendNACK(event);
         else
-            return false;
+            return false; /* Cannot NACK a prefetch, this will cause controller to drop it */
     }
 
     return true;
@@ -582,6 +582,213 @@ bool MESIInclusive::handleFlushLineInv(MemEvent * event, bool inMSHR) {
 
     if (status == MemEventStatus::Reject)
         sendNACK(event);
+
+    return true;
+}
+
+/*
+ *  1 source -> always send
+ *  2+ sources + peers -> only the min peer sends
+ *  2+ sources + no peers -> always send
+ *
+ * 1. Flush Manager contacts *all* coherence entities and forces a transition to flush
+ *  -> as soon as contacted, L1s do flush. They DO NOT transition out of flush state when done
+ *  -> Private cache -> flush when ack received.
+ *  -> Shared cache -> forward flush 
+ */
+bool MESIInclusive::handleFlushAll(MemEvent * event, bool inMSHR) {
+    eventDI.prefill(event->getID(), Command::FlushAll, "", 0, State::NP);
+        
+    if (!flush_manager_) {
+        if (!inMSHR) {
+            MemEventStatus status = mshr_->insertFlush(event, false, true);
+            if (status == MemEventStatus::Reject) {
+                sendNACK(event);
+                return true;
+            } else if (status == MemEventStatus::Stall) {
+                eventDI.action = "Stall";
+                // Don't forward if there's already a waiting FlushAll so we don't risk re-ordering
+                return true;
+            }
+        }
+        // Forward flush to flush manager
+        MemEvent* flush = new MemEvent(*event); // Copy event for forwarding
+        flush->setDst(flush_dest_);
+        forwardByDestination(flush, timestamp_ + mshrLatency_);
+        eventDI.action = "Forward";
+        return true;
+    }
+
+    if (!inMSHR) {
+        MemEventStatus status = mshr_->insertFlush(event, false);
+        if (status == MemEventStatus::Reject) { /* No room for flush in MSHR */
+            sendNACK(event);
+            return true;
+        } else if (status == MemEventStatus::Stall) { /* Stall for current flush */
+            eventDI.action = "Stall";
+            eventDI.reason = "Flush in progress";
+            return true;
+        }
+    }
+    
+    switch (flush_state_) {
+        case FlushState::Ready:
+        {
+            /* Forward requests up (and, if flush manager to peers as well), transition to FlushState::Forward */
+            // Broadcast ForwardFlush to all sources
+            // Broadcast ForwardFlush to all peers (if flush_manager)
+            //      Wait for Ack from all sources & peers -> retry when count == 0
+            int count = broadcastMemEventToSources(Command::ForwardFlush, event, timestamp_ + 1);
+            mshr_->incrementFlushCount(count);
+            flush_state_ = FlushState::Forward;
+            eventDI.action = "Begin";
+            break;
+        }
+        case FlushState::Forward:
+        case FlushState::Drain: // Unused state in this coherence protocol, fall-thru with Forward
+        {
+            /* Have received all acks, do local flush and have all peers flush as well */
+            int count = broadcastMemEventToPeers(Command::ForwardFlush, event, timestamp_ + 1);
+
+            for (auto it : *cacheArray_) {
+                if (it->getState() == I) continue;
+                if (it->getState() == S || it->getState() == E || it->getState() == M) {
+                        MemEvent * ev = new MemEvent(cachename_, it->getAddr(), it->getAddr(), Command::NULLCMD);
+                        retryBuffer_.push_back(ev);
+                        count++;
+                    } else {
+                        debug->fatal(CALL_INFO, -1, "%s, Error: Attempting to flush a cache line that is in a transient state '%s'. Addr = 0x%" PRIx64 ". Event: %s. Time: %" PRIu64 "ns\n",
+                            cachename_.c_str(), StateString[it->getState()], it->getAddr(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    }
+            }
+            if (count > 0) {
+                mshr_->incrementFlushCount(count);
+                eventDI.action = "Flush";
+                flush_state_ = FlushState::Invalidate;
+                break;
+            } /* else fall-thru */
+        }
+        case FlushState::Invalidate:
+            /* Have finished invalidating */
+            // Unblock/respond to sources & peers
+            sendResponseUp(event, nullptr, true, timestamp_);
+            broadcastMemEventToSources(Command::UnblockFlush, event, timestamp_ + 1);
+            mshr_->removeFlush();
+            delete event;
+            if (mshr_->getFlush() != nullptr) {
+                retryBuffer_.push_back(mshr_->getFlush());
+            }
+            flush_state_ = FlushState::Ready;
+            break;
+    }
+
+    return true;
+}
+
+
+bool MESIInclusive::handleForwardFlush(MemEvent * event, bool inMSHR) {
+    /* Flushes are ordered by the FlushManager and coordinated by the FlushHelper at each level 
+     * of the hierarchy. Only one cache in a set of distributed caches is the FlushHelper; 
+     * whereas private caches and monolithic shared caches are the FlushHelper.
+     * 
+     * If FlushHelper - propagate Flush upwards and notify peers when done
+     * If not FlushHelper - wait to be contacted by FlushHelper before flushing locally
+     */
+    eventDI.prefill(event->getID(), Command::ForwardFlush, "", 0, State::NP);
+
+    if (!inMSHR) {
+        MemEventStatus status = mshr_->insertFlush(event, true);
+        if (status == MemEventStatus::Reject) { /* No room for flush in MSHR */
+            sendNACK(event);
+            return true;
+        }
+    }
+
+    if ( flush_helper_ ) {
+        switch (flush_state_) {
+            case FlushState::Ready:
+            {
+                int count = broadcastMemEventToSources(Command::ForwardFlush, event, timestamp_ + 1);
+                flush_state_ = FlushState::Forward;
+                mshr_->incrementFlushCount(count);
+                eventDI.action = "Begin";
+                break;
+            }
+            case FlushState::Drain: // Unused state in this coherence protocol, fall-thru with Forward
+            case FlushState::Forward:
+            {
+                /* Have received all acks, do local flush and have all peers flush as well */
+                int count = broadcastMemEventToPeers(Command::ForwardFlush, event, timestamp_ + 1);
+                mshr_->incrementFlushCount(count);
+                bool evictionNeeded = (count != 0);
+                for (auto it : *cacheArray_) {
+                    if (it->getState() == I) continue;
+                    if (it->getState() == S || it->getState() == E || it->getState() == M) {
+                        MemEvent * ev = new MemEvent(cachename_, it->getAddr(), it->getAddr(), Command::NULLCMD);
+                        retryBuffer_.push_back(ev);
+                        evictionNeeded = true;
+                        mshr_->incrementFlushCount();
+                    } else {
+                        debug->fatal(CALL_INFO, -1, "%s, Error: Attempting to flush a cache line that is in a transient state '%s'. Addr = 0x%" PRIx64 ". Event: %s. Time: %" PRIu64 "ns\n",
+                            cachename_.c_str(), StateString[it->getState()], it->getAddr(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    }
+                }
+                if (evictionNeeded) {
+                    eventDI.action = "Flush";
+                    flush_state_ = FlushState::Invalidate;
+                    break;
+                } /* else fall-thru */
+            }
+            case FlushState::Invalidate:
+                /* All blocks written back and peers have ack'd - respond */
+                sendResponseDown(event, nullptr, false, false);
+                mshr_->removeFlush();
+                delete event;
+                flush_state_ = FlushState::Ready;
+                break;
+        } /* End switch */
+        return true;
+    
+    /* Not the flush helper; Event is from flush helper */
+    } else if ( isPeer(event->getSrc()) ) {
+        bool evictionNeeded = false;
+        for (auto it : *cacheArray_) {
+            if (it->getState() == I) continue;
+            if (it->getState() == S || it->getState() == E || it->getState() == M) {
+                MemEvent * ev = new MemEvent(cachename_, it->getAddr(), it->getAddr(), Command::NULLCMD);
+                retryBuffer_.push_back(ev);
+                evictionNeeded = true;
+                mshr_->incrementFlushCount();
+            } else {
+                debug->fatal(CALL_INFO, -1, "%s, Error: Attempting to flush a cache line that is in a transient state '%s'. Addr = 0x%" PRIx64 ". Event: %s. Time: %" PRIu64 "ns\n",
+                    cachename_.c_str(), StateString[it->getState()], it->getAddr(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+            }
+        }
+        if (evictionNeeded) {
+            eventDI.action = "Flush";
+            flush_state_ = FlushState::Invalidate;
+        } else {
+            sendResponseUp(event, nullptr, true, timestamp_);
+            mshr_->removeFlush();
+            delete event;
+            flush_state_ = FlushState::Forward; 
+            /* A bit backwards from flush helper/manager - here Forward means OK to execute another ForwardFlush */
+            if ( mshr_->getFlush() != nullptr ) {
+                retryBuffer_.push_back(mshr_->getFlush());
+            }
+        }
+    
+    /* Already handled ForwardFlush from flush helper/manager, retire ForwardFlush from peer */
+    } else if (flush_state_ == FlushState::Forward) { 
+        if (inMSHR) mshr_->removeFlush();
+        sendResponseDown(event, nullptr, false, false);
+        delete event;
+        flush_state_ = FlushState::Ready;
+        return true;            
+    }
+    /* Remaining case: This is a peer to the flush helper/manager and event is not from the helper/manager 
+     * Wait until we've handled the event from peer helper/manager before handling this event
+     */
 
     return true;
 }
@@ -1478,6 +1685,27 @@ bool MESIInclusive::handleFlushLineResp(MemEvent * event, bool inMSHR) {
 }
 
 
+bool MESIInclusive::handleFlushAllResp(MemEvent * event, bool inMSHR) {
+    eventDI.prefill(event->getID(), Command::FlushAllResp, "", 0, State::NP);
+
+    MemEvent* flush_request = static_cast<MemEvent*>(mshr_->getFlush());
+    mshr_->removeFlush(); // Remove FlushAll
+
+    eventDI.action = "Respond";
+
+    sendResponseUp(flush_request, nullptr, true, timestamp_);
+
+    delete flush_request;
+    delete event;
+
+    if (mshr_->getFlush() != nullptr) {
+        retryBuffer_.push_back(mshr_->getFlush());
+    }
+
+    return true;
+}
+
+
 bool MESIInclusive::handleFetchResp(MemEvent * event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
     SharedCacheLine * line = cacheArray_->lookup(addr, false);
@@ -1553,6 +1781,30 @@ bool MESIInclusive::handleFetchXResp(MemEvent * event, bool inMSHR) {
     }
 
     delete event;
+    return true;
+}
+
+
+bool MESIInclusive::handleAckFlush(MemEvent * event, bool inMSHR) {
+    eventDI.prefill(event->getID(), Command::AckFlush, "", 0, State::NP);
+    
+    mshr_->decrementFlushCount();
+    if (mshr_->getFlushCount() == 0) {
+        retryBuffer_.push_back(mshr_->getFlush());
+    }
+
+    delete event;
+    return true;
+}
+
+bool MESIInclusive::handleUnblockFlush(MemEvent * event, bool inMSHR) {
+    eventDI.prefill(event->getID(), Command::UnblockFlush, "", 0, State::NP);
+
+    if (flush_helper_) {
+        broadcastMemEventToSources(Command::UnblockFlush, event, timestamp_ + 1);
+    }
+    delete event;
+
     return true;
 }
 
@@ -1657,15 +1909,23 @@ bool MESIInclusive::handleNULLCMD(MemEvent* event, bool inMSHR) {
     if (evicted) {
         notifyListenerOfEvict(line->getAddr(), lineSize_, event->getInstructionPointer());
         cacheArray_->deallocate(line);
-        retryBuffer_.push_back(mshr_->getFrontEvent(newAddr));
-        mshr_->addPendingRetry(newAddr);
-        if (mshr_->removeEvictPointer(oldAddr, newAddr))
-            retry(oldAddr);
-        if (is_debug_addr(newAddr)) {
-            eventDI.action = "Retry";
-            std::stringstream reason;
-            reason << "0x" << std::hex << newAddr;
-            eventDI.reason = reason.str();
+
+        if (oldAddr != newAddr) { /* Reallocating a line to a new address */
+            retryBuffer_.push_back(mshr_->getFrontEvent(newAddr));
+            mshr_->addPendingRetry(newAddr);
+            if (mshr_->removeEvictPointer(oldAddr, newAddr))
+                retry(oldAddr);
+            if (is_debug_addr(newAddr)) {
+                eventDI.action = "Retry";
+                std::stringstream reason;
+                reason << "0x" << std::hex << newAddr;
+                eventDI.reason = reason.str();
+            }
+        } else { /* Deallocating a line for a cache flush */
+            mshr_->decrementFlushCount();
+            if (mshr_->getFlushCount() == 0) {
+                retryBuffer_.push_back(mshr_->getFlush());
+            }
         }
     } else { // Check if we're waiting for a new address
         if (is_debug_addr(newAddr)) {
@@ -1711,17 +1971,23 @@ bool MESIInclusive::handleNACK(MemEvent * event, bool inMSHR) {
         case Command::PutS:
         case Command::PutE:
         case Command::PutM:
+        case Command::FlushAll:
             resendEvent(nackedEvent, false); // Resend towards memory
             break;
         /* These *probably* need to get retried but need to handle races with Invs */
         case Command::FlushLine:
             resendEvent(nackedEvent, false);
             break;
+        /* These always need to get retried */
+        case Command::ForwardFlush:
+            resendEvent(nackedEvent, true);
+            break;
         /* These get retried unless there's been a race with an eviction/writeback */
         case Command::FetchInv:
         case Command::FetchInvX:
         case Command::Inv:
         case Command::ForceInv:
+
             if (responses.find(addr) != responses.end()
                     && responses.find(addr)->second.find(nackedEvent->getDst()) != responses.find(addr)->second.end()
                     && responses.find(addr)->second.find(nackedEvent->getDst())->second == nackedEvent->getID()) {

@@ -62,15 +62,14 @@ for x in range(cores):
         "debug" : DEBUG_L1,
         "debug_level" : 10,
     })
-    l1toC = l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-    l1NIC = l1cache.setSubComponent("memlink", "memHierarchy.MemNIC")
+    l1NIC = l1cache.setSubComponent("lowlink", "memHierarchy.MemNIC")
     l1NIC.addParams({
         "group" : 1,
         "network_bw" : network_bw,
     })
 
     cpu_l1_link = sst.Link("link_cpu_cache_" + str(x))
-    cpu_l1_link.connect ( (iface, "port", "500ps"), (l1toC, "port", "500ps") )
+    cpu_l1_link.connect ( (iface, "lowlink", "500ps"), (l1cache, "highlink", "500ps") )
 
     l1_network_link = sst.Link("link_l1_network_" + str(x))
     l1_network_link.connect( (l1NIC, "port", "100ps"), (comp_network, "port" + str(x), "100ps") )
@@ -94,7 +93,7 @@ for x in range(caches):
         "debug_level" : 10,
         "verbose" : 2,
     })
-    l2NIC = l2cache.setSubComponent("cpulink", "memHierarchy.MemNIC")
+    l2NIC = l2cache.setSubComponent("highlink", "memHierarchy.MemNIC")
     l2NIC.addParams({
         "group" : 2,
         "network_bw" : network_bw,
@@ -120,7 +119,7 @@ for x in range(memories):
         "addr_range_start" : x*64,
         "addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
     })
-    dirNIC = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
+    dirNIC = dirctrl.setSubComponent("highlink", "memHierarchy.MemNIC")
     dirNIC.addParams({
         "group" : 3,
         "network_bw" : network_bw,
@@ -142,7 +141,7 @@ for x in range(memories):
         "addr_range_start" : x*64,
         "addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
     })
-    memNIC = memctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
+    memNIC = memctrl.setSubComponent("highlink", "memHierarchy.MemNIC")
     memNIC.addParams({
         "group" : 4,
         "network_bw" : network_bw,

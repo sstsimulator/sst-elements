@@ -99,8 +99,10 @@ public:
     /* Remote endpoint info management */
     virtual std::set<EndpointInfo>* getSources();
     virtual std::set<EndpointInfo>* getDests();
+    virtual std::set<EndpointInfo>* getPeers();
     virtual bool isDest(std::string UNUSED(str));
     virtual bool isSource(std::string UNUSED(str));
+    virtual bool isPeer(std::string str);
     virtual std::string findTargetDestination(Addr addr);
     virtual std::string getTargetDestination(Addr addr);
     virtual bool isReachable(std::string dst);
@@ -122,15 +124,17 @@ protected:
     void addEndpoint(EndpointInfo info);
 
     // Link
-    SST::Link* link;
+    SST::Link* link_;
 
     // Data structures
-    std::set<EndpointInfo> remotes;             // Tracks remotes immediately accessible on the other side of our link
-    std::set<EndpointInfo> endpoints;           // Tracks endpoints in the system with info on how to get there
-    std::set<std::string> remoteNames;          // Tracks remote names for faster lookup than iteratinv via remotes
+    std::set<EndpointInfo> remotes_;            // Tracks remotes (source or dest) immediately accessible on the other side of our link
+    std::set<EndpointInfo> peers_;              // Tracks peers immediately accessible on the other side of our link
+    std::set<EndpointInfo> endpoints_;          // Tracks endpoints in the system with info on how to get there
+    std::set<std::string> reachable_names_;     // Tracks reachable names for faster lookup than iterating via remotes/peers
+    std::set<std::string> peer_names_;          // Tracks peer names for faster lookup than iterating via peers
     
     // For events that require destination names during init
-    std::set<MemEventInit*> initSendQ;
+    std::set<MemEventInit*> init_send_queue_;
 
 private:
 

@@ -19,6 +19,7 @@
 #include <sst/core/stringize.h>
 #include <sst/core/params.h>
 #include <string>
+#include <limits>
 
 using namespace std;
 
@@ -49,18 +50,11 @@ namespace MemHierarchy {
 #define _L11_ CALL_INFO,11,0    //Data values
 #define _L20_ CALL_INFO,20,0    //Debug at function call granularity
 
-// Type conversions - TODO are these used anywhere?
-const unsigned int kibi = 1024;
-const unsigned int mebi = kibi * 1024;
-const unsigned int gibi = mebi * 1024;
-const unsigned int tebi = gibi * 1024;
-const unsigned int pebi = tebi * 1024;
-const unsigned int exbi = pebi * 1024;
-
 typedef uint64_t Addr;
 #ifndef PRI_ADDR
 #define PRI_ADDR PRIx64
 #endif
+#define NO_ADDR std::numeric_limits<uint64_t>::max();
 
 // Event attributes
 /*

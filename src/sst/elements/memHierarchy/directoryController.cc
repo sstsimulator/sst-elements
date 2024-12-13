@@ -45,13 +45,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     dbg.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
 
     // Detect deprecated parameters and warn/fatal
-    // Currently deprecated - network_num_vc
     bool found;
     out.init("", params.find<int>("verbose", 1), 0, Output::STDOUT);
-    params.find<int>("network_num_vc", 0, found);
-    if (found) {
-        out.output("%s, ** Found deprecated parameter: network_num_vc ** MemHierarchy does not use multiple virtual channels. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
-    }
 
     // Debug address
     std::vector<Addr> addrArr;
@@ -129,32 +124,58 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
      *  the MCs their own region. We cannot error check from the parameters...
      */
 
-    cpuLink = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, defaultTimeBase);
-    memLink = loadUserSubComponent<MemLinkBase>("memlink", ComponentInfo::SHARE_NONE, defaultTimeBase);
-    if (cpuLink || memLink) {
-        if (!cpuLink) {
-            cpuLink = memLink;
-            memLink = nullptr;
+    upLink = loadUserSubComponent<MemLinkBase>("highlink", ComponentInfo::SHARE_NONE, defaultTimeBase);
+    if (!upLink) {
+        upLink = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, defaultTimeBase);
+        if (upLink) {
+            out.output("%s, DEPRECATION WARNING: The 'cpulink' subcomponent slot has been renamed to 'highlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
+        }
+
+        if (!upLink && isPortConnected("highlink")) {
+            Params p;
+            p.insert("port", "highlink");
+            upLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, p, defaultTimeBase);
+        }
+    }
+
+    downLink = loadUserSubComponent<MemLinkBase>("lowlink", ComponentInfo::SHARE_NONE, defaultTimeBase);
+    if (!downLink) {
+        downLink = loadUserSubComponent<MemLinkBase>("memlink", ComponentInfo::SHARE_NONE, defaultTimeBase);
+        if (downLink) {
+            out.output("%s, DEPRECATION WARNING: The 'memlink' subcomponent slot has been renamed to 'lowlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
+        }
+        
+        if (!downLink && isPortConnected("lowlink")) {
+            Params p;
+            p.insert("port", "lowlink");
+            downLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, p, defaultTimeBase);
+        }
+    }
+
+    if (upLink || downLink) {
+        if (!upLink) {
+            upLink = downLink;
+            downLink = nullptr;
         }
         if (gotRegion) {
-            cpuLink->setRegion(region);
+            upLink->setRegion(region);
         } else {
-            if (cpuLink->getRegion() != region) {
-                out.output(CALL_INFO, "%s, Warning: getting region parameters (addr_range_start/end, interleave_step/size) from link subcomponent."
-                        " In the future this will not be supported and region parameters should be declared in the directory's parameters instead.\n", getName().c_str());
+            if (upLink->getRegion() != region) {
+                out.output(CALL_INFO, "%s, DEPRECATION WARNING: getting region parameters (addr_range_start/end, interleave_step/size) from link subcomponent."
+                        " In SST 16 this will not be supported and region parameters should be declared in the directory's parameters instead.\n", getName().c_str());
             }
-            region = cpuLink->getRegion();
+            region = upLink->getRegion();
         }
 
-        if (memLink)
-            memLink->setRegion(region);
+        if (downLink)
+            downLink->setRegion(region);
 
-        cpuLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
-        if (!memLink) {
+        upLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+        if (!downLink) {
             if (params.find<std::string>("net_memory_name", "") != "")
                 dbg.fatal(CALL_INFO, -1, "%s, Error: parameter 'net_memory_name' is no longer supported. Memory and directory components should specify their own address regions (address_range_start/end, interleave_step/size) and mapping will be inferred from that. Remove this parameter from your input deck to eliminate this error.\n", getName().c_str());
         } else {
-            memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+            downLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
         }
     } else {
         /* Set up links/network to cache & memory the old way -> and fixup params accordingly */
@@ -175,6 +196,10 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         nicParams.insert("destinations", std::to_string(cl + 1), false);
 
         // Determine which ports are connected
+        // Acceptable port configurations are
+        // 1. network (memory optional)
+        // 2. network, network_ack, network_fwd, network_data (memory optional)
+        // 3. cpulink + memlink
         unsigned int portCount = 1;
         if (isPortConnected("network_ack")) portCount++;
         if (isPortConnected("network_fwd")) portCount++;
@@ -184,40 +209,60 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             nicParams.insert("ack.port", "network_ack");
             nicParams.insert("fwd.port", "network_fwd");
             nicParams.insert("data.port", "network_data");
-            cpuLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, defaultTimeBase);
-        } else {
+            upLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, defaultTimeBase);
+            out.output("%s, DEPRECATION WARNING: The 'network', 'network_ack', 'network_fwd', and 'network_data' ports are deprecated. Instead, in your input file, fill the directory's 'highlink' subcomponent slot with 'memHierarchy.MemNICFour'.\n", getName().c_str());
+
+        } else if (isPortConnected("network")) {
             nicParams.insert("port", "network");
-            cpuLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, defaultTimeBase);
+            upLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, defaultTimeBase);
+            out.output("%s, DEPRECATION WARNING: The 'network' port is deprecated. Instead, in your input file, fill the directory's 'highlink' subcomponent slot with 'memHierarchy.MemNIC'.\n", getName().c_str());
+        } else if (isPortConnected("highlink")) {
+            Params linkParams;
+            linkParams.insert("port", "highlink");
+            upLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams, defaultTimeBase);
+        } else {
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Either this component's 'highlink' port must be connected OR the 'highlink' subcomponent slot must be filled\n", getName().c_str());
         }
 
-        cpuLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+        upLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
 
         if (isPortConnected("memory")) {
             Params memParams = params.get_scoped_params("memlink");
             memParams.insert("port", "memory");
-            memParams.insert("latency", "1ns");
+            memParams.insert("latency", "1ns"); // Leaving this here since this port is deprecated but it should not be here. Instead use the link latency.
             memParams.insert("addr_range_start", std::to_string(region.start), false);
             memParams.insert("addr_range_end", std::to_string(region.end), false);
             memParams.insert("interleave_size", ilSize, false);
             memParams.insert("interleave_step", ilStep, false);
-            memLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memParams, defaultTimeBase);
-            memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
-            if (!memLink) {
+            downLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memParams, defaultTimeBase);
+            if (!downLink) {
                 dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
             }
+            downLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+            out.output("%s, DEPRECATION WARNING: The 'memory' port is deprecated. Use the 'lowlink' port instead.\n", getName().c_str());
+        } else if (isPortConnected("lowlink")) {
+            Params memParams;
+            memParams.insert("port", "lowlink");
+            memParams.insert("addr_range_start", std::to_string(region.start), false);
+            memParams.insert("addr_range_end", std::to_string(region.end), false);
+            memParams.insert("interleave_size", ilSize, false);
+            memParams.insert("interleave_step", ilStep, false);
+            downLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memParams, defaultTimeBase);
+            if (!downLink) {
+                dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
+            }
+            downLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
         } else {
-            if (params.find<std::string>("net_memory_name", "") != "")
-                dbg.fatal(CALL_INFO, -1, "%s, Error: parameter 'net_memory_name' is no longer supported. Memory and directory components should specify their own address regions (address_range_start/end, interleave_step/size) and mapping will be inferred from that. Remove this parameter from your input deck to eliminate this error.\n", getName().c_str());
-
-            memLink = nullptr;
+            // No downLink, traffic to/from memory will use the upLink
+            downLink = nullptr;
         }
     }
 
-    if (memLink)
-        clockMemLink = memLink->isClocked();
+    if (downLink)
+        clockDownLink = downLink->isClocked();
     else
-        clockMemLink = false;
-    clockCpuLink = cpuLink->isClocked();
+        clockDownLink = false;
+    clockUpLink = upLink->isClocked();
 
     // Requests per cycle
     maxRequestsPerCycle = params.find<int>("max_requests_per_cycle", 0);
@@ -258,8 +303,10 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_eventRecv[(int)Command::ForceInv]      = registerStatistic<uint64_t>("ForceInv_recv");
     stat_eventRecv[(int)Command::FetchInv]      = registerStatistic<uint64_t>("FetchInv_recv");
     stat_eventRecv[(int)Command::AckInv]        = registerStatistic<uint64_t>("AckInv_recv");
+    stat_eventRecv[(int)Command::AckFlush]      = registerStatistic<uint64_t>("AckFlush_recv");
     stat_eventRecv[(int)Command::FlushLine]     = registerStatistic<uint64_t>("FlushLine_recv");
     stat_eventRecv[(int)Command::FlushLineInv]  = registerStatistic<uint64_t>("FlushLineInv_recv");
+    stat_eventRecv[(int)Command::FlushAll]      = registerStatistic<uint64_t>("FlushAll_recv");
     stat_eventRecv[(int)Command::FlushLineResp] = registerStatistic<uint64_t>("FlushLineResp_recv");
     stat_noncacheRecv[(int)Command::GetS]       = registerStatistic<uint64_t>("GetS_uncache_recv");
     stat_noncacheRecv[(int)Command::Write]      = registerStatistic<uint64_t>("Write_uncache_recv");
@@ -279,6 +326,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_eventSent[(int)Command::FetchInv]      = registerStatistic<uint64_t>("eventSent_FetchInv");
     stat_eventSent[(int)Command::FetchInvX]     = registerStatistic<uint64_t>("eventSent_FetchInvX");
     stat_eventSent[(int)Command::ForceInv]      = registerStatistic<uint64_t>("eventSent_ForceInv");
+    stat_eventSent[(int)Command::ForwardFlush]  = registerStatistic<uint64_t>("eventSent_ForwardFlush");
     stat_eventSent[(int)Command::NACK]          = registerStatistic<uint64_t>("eventSent_NACK");
     stat_eventSent[(int)Command::GetSResp]      = registerStatistic<uint64_t>("eventSent_GetSResp");
     stat_eventSent[(int)Command::GetXResp]      = registerStatistic<uint64_t>("eventSent_GetXResp");
@@ -289,6 +337,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_eventSent[(int)Command::FlushLine]     = registerStatistic<uint64_t>("eventSent_FlushLine");
     stat_eventSent[(int)Command::FlushLineInv]  = registerStatistic<uint64_t>("eventSent_FlushLineInv");
     stat_eventSent[(int)Command::FlushLineResp] = registerStatistic<uint64_t>("eventSent_FlushLineResp");
+    stat_eventSent[(int)Command::FlushAllResp]  = registerStatistic<uint64_t>("eventSent_FlushAllResp");
+    stat_eventSent[(int)Command::UnblockFlush]  = registerStatistic<uint64_t>("eventSent_UnblockFlush");
     // Memory writes from directory
     stat_dirEntryReads              = registerStatistic<uint64_t>("eventSent_read_directory_entry");
     stat_dirEntryWrites             = registerStatistic<uint64_t>("eventSent_write_directory_entry");
@@ -296,8 +346,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 
     // Coherence part
 
-    if (!memLink)
-        memLink = cpuLink;
+    if (!downLink)
+        downLink = upLink;
 
     // TODO implement the cache properly using the cacheArray
     entryCacheMaxSize = params.find<uint64_t>("entry_cache_size", 32768);
@@ -316,6 +366,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     /* Get latencies */
     accessLatency   = params.find<uint64_t>("access_latency_cycles", 0);
     mshrLatency     = params.find<uint64_t>("mshr_latency_cycles", 0);
+
+    flush_state_ = FlushState::Ready;
 }
 
 
@@ -368,10 +420,10 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
     sendOutgoingEvents();
 
     bool idle = true;
-    if (clockCpuLink)
-        idle &= cpuLink->clock();
-    if (clockMemLink)
-        idle &= memLink->clock();
+    if (clockUpLink)
+        idle &= upLink->clock();
+    if (clockDownLink)
+        idle &= downLink->clock();
 
     int requestsThisCycle = 0;
 
@@ -436,7 +488,7 @@ bool DirectoryController::processPacket(MemEvent * ev, bool replay) {
 
     if(! isRequestAddressValid(ev->getAddr()) ) {
 	dbg.fatal(CALL_INFO, -1, "%s, Error: Request address is not valid. Event: %s. Time = %" PRIu64 "ns.\nRegion is %s\n",
-                getName().c_str(), ev->getVerboseString(dlevel).c_str(), getCurrentSimTimeNano(), cpuLink->getRegion().toString().c_str());
+                getName().c_str(), ev->getVerboseString(dlevel).c_str(), getCurrentSimTimeNano(), upLink->getRegion().toString().c_str());
     }
 
     Addr addr = ev->getBaseAddr();
@@ -496,6 +548,9 @@ bool DirectoryController::processPacket(MemEvent * ev, bool replay) {
         case Command::FlushLine:
             retval = handleFlushLine(ev, replay);
             break;
+        case Command::FlushAll:
+            retval = handleFlushAll(ev, replay);
+            break;
         case Command::FetchInv:
             retval = handleFetchInv(ev, replay);
             break;
@@ -513,6 +568,9 @@ bool DirectoryController::processPacket(MemEvent * ev, bool replay) {
             break;
         case Command::FlushLineResp:
             retval = handleFlushLineResp(ev, replay);
+            break;
+        case Command::AckFlush:
+            retval = handleAckFlush(ev, replay);
             break;
         case Command::AckInv:
             retval = handleAckInv(ev, replay);
@@ -589,14 +647,14 @@ void DirectoryController::printStatus(Output &statusOut) {
         mshr->printStatus(statusOut);
     }
 
-    if (cpuLink) {
+    if (upLink) {
         statusOut.output("  NIC Status: ");
-        cpuLink->printStatus(statusOut);
+        upLink->printStatus(statusOut);
     }
 
-    if (memLink != cpuLink) {
+    if (downLink != upLink) {
         statusOut.output("  Memory Link Status: ");
-        memLink->printStatus(statusOut);
+        downLink->printStatus(statusOut);
     }
 
     statusOut.output("  Directory entries:\n");
@@ -613,13 +671,13 @@ void DirectoryController::emergencyShutdown() {
             out.setOutputLocation(Output::STDERR);
         printStatus(out);
         out.output("   Checking for unreceived events on network link:\n");
-        cpuLink->emergencyShutdownDebug(out);
+        upLink->emergencyShutdownDebug(out);
     }
 }
 
 
 bool DirectoryController::isRequestAddressValid(Addr addr){
-    return cpuLink->isRequestAddressValid(addr);
+    return upLink->isRequestAddressValid(addr);
 }
 
 
@@ -634,20 +692,20 @@ void DirectoryController::turnClockOn() {
 
 void DirectoryController::init(unsigned int phase) {
 
-    cpuLink->init(phase);
-    if (cpuLink != memLink) memLink->init(phase);
+    upLink->init(phase);
+    if (upLink != downLink) downLink->init(phase);
 
 
     // Must happen after network init or merlin croaks
     // InitData: Name, NULLCMD, Endpoint type, inclusive of all upper levels, will send writeback acks, line size
     if (!phase) {
-        if (cpuLink != memLink)
-            cpuLink->sendUntimedData(new MemEventInitCoherence(getName(), Endpoint::Directory, true, true, false, cacheLineSize, true));
-        memLink->sendUntimedData(new MemEventInitCoherence(getName(), Endpoint::Directory, true, true, false, cacheLineSize, true));
+        if (upLink != downLink)
+            upLink->sendUntimedData(new MemEventInitCoherence(getName(), Endpoint::Directory, true, true, false, cacheLineSize, true));
+        downLink->sendUntimedData(new MemEventInitCoherence(getName(), Endpoint::Directory, true, true, false, cacheLineSize, true));
     }
 
     /* Pass data on to memory */
-    while(MemEventInit *ev = cpuLink->recvUntimedData()) {
+    while(MemEventInit *ev = upLink->recvUntimedData()) {
         if (ev->getCmd() == Command::NULLCMD) {
             dbg.debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
                 getName().c_str(), ev->getVerboseString(dlevel).c_str());
@@ -655,13 +713,13 @@ void DirectoryController::init(unsigned int phase) {
                 MemEventInitCoherence * mEv = static_cast<MemEventInitCoherence*>(ev);
                 if (mEv->getType() == Endpoint::Scratchpad)
                     waitWBAck = true;
-                if (!(mEv->getTracksPresence()) && cpuLink->isSource(mEv->getSrc())) {
+                if (!(mEv->getTracksPresence()) && upLink->isSource(mEv->getSrc())) {
                     incoherentSrc.insert(mEv->getSrc());
                 }
             } else if (ev->getInitCmd() == MemEventInit::InitCommand::Endpoint) {
                 MemEventInit * mEv = ev->clone();
                 mEv->setSrc(getName());
-                memLink->sendUntimedData(mEv);
+                downLink->sendUntimedData(mEv);
             }
             delete ev;
         } else {
@@ -670,7 +728,7 @@ void DirectoryController::init(unsigned int phase) {
             if (isRequestAddressValid(ev->getAddr())){
                 dbg.debug(_L10_, "I: %-20s   Event:SendInitData    %" PRIx64 "\n",
                         getName().c_str(), ev->getAddr());
-                memLink->sendUntimedData(ev, false);
+                downLink->sendUntimedData(ev, false);
             } else
                 delete ev;
 
@@ -679,8 +737,8 @@ void DirectoryController::init(unsigned int phase) {
     }
 
     SST::Event * ev;
-    if (cpuLink != memLink) {
-        while ((ev = memLink->recvUntimedData())) {
+    if (upLink != downLink) {
+        while ((ev = downLink->recvUntimedData())) {
             MemEventInit * initEv = dynamic_cast<MemEventInit*>(ev);
             if (initEv && initEv->getCmd() == Command::NULLCMD) {
                 dbg.debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
@@ -693,7 +751,7 @@ void DirectoryController::init(unsigned int phase) {
                 } else if (initEv->getInitCmd() == MemEventInit::InitCommand::Endpoint) {
                     MemEventInit * mEv = initEv->clone();
                     mEv->setSrc(getName());
-                    cpuLink->sendUntimedData(mEv);
+                    upLink->sendUntimedData(mEv);
                 }
             }
             delete ev;
@@ -704,16 +762,25 @@ void DirectoryController::init(unsigned int phase) {
 
 
 void DirectoryController::finish(void){
-    cpuLink->finish();
+    upLink->finish();
 }
 
 
 
 void DirectoryController::setup(void){
-    cpuLink->setup();
-    if (cpuLink != memLink)
-        memLink->setup();
-    //MemLinkBase * mem = memLink ? memLink : network;
+    upLink->setup();
+    if (upLink != downLink)
+        downLink->setup();
+
+    auto peers = upLink->getPeers();
+    MemLinkBase::EndpointInfo min = upLink->getEndpointInfo();
+    bool isFlushManager = true;
+    for (auto it = peers->begin(); it != peers->end(); it++) {
+        if (*it < min) {
+            isFlushManager = false;
+            min = *it;
+        }
+    }
 }
 
 
@@ -1289,6 +1356,68 @@ bool DirectoryController::handleFlushLineInv(MemEvent* event, bool inMSHR) {
     if (is_debug_addr(addr)) {
         eventDI.newst = entry->getState();
         eventDI.verboseline = entry->getString();
+    }
+
+    return true;
+}
+
+bool DirectoryController::handleFlushAll(MemEvent * event, bool inMSHR) {
+    eventDI.prefill(event->getID(), Command::FlushAll, false, 0, State::NP);
+    /* If directory receives a FlushAll, it is the flush manager
+     * The cache flushes will be sufficient to flush data to memory
+     * so the directory only needs to order FlushAll requests
+     */
+    if (!inMSHR) {
+        MemEventStatus status = mshr->insertFlush(event, false);
+        if (status == MemEventStatus::Reject) {
+            sendNACK(event);
+            return true;
+        } else if (status == MemEventStatus::Stall) {
+            eventDI.action = "Stall";
+            eventDI.reason = "Flush in progress";
+            return true;
+        }
+    }
+    
+    switch (flush_state_) {
+        case FlushState::Ready:
+        {
+            /* Broadcast request up, transition to FlushState::Forward */
+            std::set<MemLinkBase::EndpointInfo>* sources = upLink->getSources();
+            for (auto it = sources->begin(); it != sources->end(); it++) {
+                MemEvent* bcast_event = new MemEvent(getName(), Command::ForwardFlush);
+                bcast_event->copyMetadata(event);
+                bcast_event->setSrc(getName());
+                bcast_event->setDst(it->name);
+                forwardByDestination(bcast_event, timestamp + mshrLatency);
+            }
+            mshr->incrementFlushCount(sources->size());
+            flush_state_ = FlushState::Forward;
+            eventDI.action = "Begin";
+            break;
+        }
+        case FlushState::Forward:
+        {
+            /* Have received all acks, signal that flush is done */
+            sendResponse(event);
+            std::set<MemLinkBase::EndpointInfo>* sources = upLink->getSources();
+            for (auto it = sources->begin(); it != sources->end(); it++) {
+                MemEvent* bcast_event = new MemEvent(getName(), Command::UnblockFlush);
+                bcast_event->copyMetadata(event);
+                bcast_event->setSrc(getName());
+                bcast_event->setDst(it->name);
+                forwardByDestination(bcast_event, timestamp + mshrLatency);
+            }
+            mshr->removeFlush();
+            delete event;
+            if (mshr->getFlush() != nullptr) {
+                retryBuffer.push_back(static_cast<MemEvent*>(mshr->getFlush()));
+            }
+            flush_state_ = FlushState::Ready;
+            break;
+        }
+        default:
+            break;
     }
 
     return true;
@@ -1932,6 +2061,18 @@ bool DirectoryController::handleFlushLineResp(MemEvent * event, bool inMSHR) {
     return true;
 }
 
+bool DirectoryController::handleAckFlush(MemEvent* event, bool inMSHR) {
+    eventDI.prefill(event->getID(), Command::AckFlush, "", 0, State::NP);
+    
+    mshr->decrementFlushCount();
+    if (mshr->getFlushCount() == 0) {
+        retryBuffer.push_back(static_cast<MemEvent*>(mshr->getFlush()));
+    }
+
+    delete event;
+    return true;
+}
+
 bool DirectoryController::handleAckPut(MemEvent* event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
     DirEntry* entry = getDirEntry(addr);
@@ -2094,6 +2235,7 @@ bool DirectoryController::handleNACK(MemEvent* event, bool inMSHR) {
         case Command::PutM:
         case Command::FlushLine:
         case Command::FlushLineInv:
+        case Command::ForwardFlush:
             // Always retry
             break;
         case Command::FetchInv:
@@ -2315,7 +2457,7 @@ void DirectoryController::sendEntryToMemory(DirEntry *entry) {
     me->setFlag(MemEventBase::F_NORESPONSE);
 
     uint64_t deliveryTime = timestamp + accessLatency;
-    me->setDst(memLink->getTargetDestination(0));
+    me->setDst(downLink->getTargetDestination(0));
     memMsgQueue.insert(std::make_pair(deliveryTime, MemMsg(me, true)));
 }
 
@@ -2505,7 +2647,7 @@ void DirectoryController::sendOutgoingEvents() {
             startTimes.erase(ev->getResponseToID());
         }
         stat_eventSent[(int)ev->getCmd()]->addData(1);
-        cpuLink->send(ev);
+        upLink->send(ev);
         cpuMsgQueue.erase(cpuMsgQueue.begin());
     }
 
@@ -2525,7 +2667,7 @@ void DirectoryController::sendOutgoingEvents() {
         } else {
             stat_eventSent[(int)ev->getCmd()]->addData(1);
         }
-        memLink->send(ev);
+        downLink->send(ev);
         memMsgQueue.erase(memMsgQueue.begin());
     }
 
@@ -2535,18 +2677,18 @@ void DirectoryController::sendOutgoingEvents() {
  * dirAccess has default value of false
  */
 void DirectoryController::forwardByAddress(MemEventBase * ev, Cycle_t ts, bool dirAccess) {
-    std::string dst = memLink->findTargetDestination(ev->getRoutingAddress());
+    std::string dst = downLink->findTargetDestination(ev->getRoutingAddress());
     if (dst != "") { /* Common case */
         ev->setDst(dst);
         memMsgQueue.insert(std::make_pair(ts, MemMsg(ev, dirAccess)));
     } else {
-        dst = cpuLink->findTargetDestination(ev->getRoutingAddress());
+        dst = upLink->findTargetDestination(ev->getRoutingAddress());
         if (dst != "") {
             ev->setDst(dst);
             cpuMsgQueue.insert(std::make_pair(ts, ev));
         } else {
-            std::string availableDests = "cpulink:\n" + cpuLink->getAvailableDestinationsAsString();
-            if (cpuLink != memLink) availableDests = availableDests + "memlink:\n" + memLink->getAvailableDestinationsAsString();
+            std::string availableDests = "highlink:\n" + upLink->getAvailableDestinationsAsString();
+            if (upLink != downLink) availableDests = availableDests + "lowlink:\n" + downLink->getAvailableDestinationsAsString();
             out.fatal(CALL_INFO, -1, "%s, Error: Unable to find destination for address 0x%" PRIx64 ". Event: %s\nKnown Destinations: %s\n",
                     getName().c_str(), ev->getRoutingAddress(), ev->getVerboseString(dlevel).c_str(), availableDests.c_str());
         }
@@ -2557,9 +2699,9 @@ void DirectoryController::forwardByAddress(MemEventBase * ev, Cycle_t ts, bool d
  * dirAccess has default value of false
  */
 void DirectoryController::forwardByDestination(MemEventBase* ev, Cycle_t ts, bool dirAccess) {
-    if (cpuLink->isReachable(ev->getDst())) {
+    if (upLink->isReachable(ev->getDst())) {
         cpuMsgQueue.insert(std::make_pair(ts, ev));
-    } else if (memLink->isReachable(ev->getDst())) {
+    } else if (downLink->isReachable(ev->getDst())) {
         memMsgQueue.insert(std::make_pair(ts, MemMsg(ev, dirAccess)));
     } else {
         out.fatal(CALL_INFO, -1, "%s, Error: Destination %s appears unreachable on both links. Event: %s\n",

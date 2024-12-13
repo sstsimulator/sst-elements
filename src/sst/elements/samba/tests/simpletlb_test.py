@@ -79,7 +79,7 @@ comp_tlb.addParams({
 #link_cpu_mmu_link.connect( (comp_cpu, "cache_link", "50ps"), (mmu, "cpu_to_mmu0", "50ps") )
 #
 #link_mmu_cache_link = sst.Link("link_mmu_cache_link")
-#link_mmu_cache_link.connect( (mmu, "mmu_to_cache0", "50ps"), (comp_l1cache, "high_network_0", "50ps") )
+#link_mmu_cache_link.connect( (mmu, "mmu_to_cache0", "50ps"), (comp_l1cache, "highlink", "50ps") )
 
 def makeLink(name, portA, portB):
     'ports should be tuple like `(component, "port_name", "50ps")`'
@@ -91,12 +91,12 @@ makeLink("link_cpu_tlb",
         (comp_cpu, "cache_link", "50ps"), (comp_tlb, "high_network", "50ps"))
 
 makeLink("link_tlb_l1cache",
-        (comp_tlb, "low_network", "50ps"), (comp_l1cache, "high_network_0", "50ps"))
+        (comp_tlb, "low_network", "50ps"), (comp_l1cache, "highlink", "50ps"))
 
 
 ##===== Alternately, self-loop the TLB and connect cpu to cache
 #makeLink("link_cpu_l1cache",
-#        (comp_cpu, "cache_link", "50ps"), (comp_l1cache, "high_network_0", "50ps"))
+#        (comp_cpu, "cache_link", "50ps"), (comp_l1cache, "highlink", "50ps"))
 #
 #makeLink("linkself_tlb",
 #        (comp_tlb, "link_high", "50ps"), (comp_tlb, "link_low", "50ps"))
@@ -104,5 +104,5 @@ makeLink("link_tlb_l1cache",
 
 # === CPU to mem
 makeLink("link_l1cache_membus",
-        (comp_l1cache, "low_network_0", "50ps"), (comp_memctrl, "direct_link", "50ps"))
+        (comp_l1cache, "lowlink", "50ps"), (comp_memctrl, "highlink", "50ps"))
 

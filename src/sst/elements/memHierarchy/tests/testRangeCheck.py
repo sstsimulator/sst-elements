@@ -57,7 +57,7 @@ class CPU():
         })
         # connect CPU to L1
         self.link_cpu_l1 = sst.Link(f"link_cpu_l1_{cpu_num}")
-        self.link_cpu_l1.connect( (self.comp, "cache_link", "1ns"), (self.l1, "high_network_0", "1ns") )
+        self.link_cpu_l1.connect( (self.comp, "cache_link", "1ns"), (self.l1, "highlink", "1ns") )
 
 
 class CPU_COMPLEX():
@@ -89,11 +89,8 @@ class CPU_COMPLEX():
             "mshr_latency_cycles" : 16
         })
 
-        # L2 Cache interface to cpu bus
-        self.cpulink = self.l2cache.setSubComponent("cpulink","memHierarchy.MemLink")
-
         # L2 Cache interface to nic
-        self.nic = self.l2cache.setSubComponent("memlink","memHierarchy.MemNIC")
+        self.nic = self.l2cache.setSubComponent("lowlink","memHierarchy.MemNIC")
         self.nic.addParams({
             "group" : cpu_group,
             "network_bw" : "8800GiB/s",
@@ -105,16 +102,16 @@ class CPU_COMPLEX():
         # Connect cpubus to L2
         self.link_cpubus_l2 = sst.Link("link_cpubus_l2")
         self.link_cpubus_l2.connect(
-            (self.cpubus, "low_network_0", "1ns"),
-            (self.cpulink, "port", "1ns") )
+            (self.cpubus, "lowlink0", "1ns"),
+            (self.l2cache, "highlink", "1ns") )
 
         # Connect CPUs (L1) to cpubus
         self.link_l1_cpubus = []
         for i in range(NUM_CPUS):
             self.link_l1_cpubus.append(sst.Link(f"link_l1_{i}_cpubus"))
             self.link_l1_cpubus[i].connect(
-                (self.cpu[i].l1, "low_network_0",  "1ns"),
-                (self.cpubus, f"high_network_{i}", "1ns")
+                (self.cpu[i].l1, "lowlink",  "1ns"),
+                (self.cpubus, f"highlink{i}", "1ns")
             )
 
 class NODE():
@@ -160,7 +157,7 @@ class NODE():
         })
 
         # The memory controller NIC
-        self.memNIC = self.memctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
+        self.memNIC = self.memctrl.setSubComponent("highlink", "memHierarchy.MemNIC")
         self.memNIC.addParams({
             "group" : node_group,
             "sources" : [cpu_group, node_group],

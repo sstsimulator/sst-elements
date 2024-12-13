@@ -134,13 +134,13 @@ def doQuad(quad, cores, rtr, rtrPort, netAddr):
             portName = "cache_link_" + str(coreCtr.nextPort())
             arielL1Link.connect((ariel, portName,
                                  busLat), 
-                                (l1id, "high_network_0", busLat))
+                                (l1id, "highlink", busLat))
         else:
             coreL1Link = sst.Link("core_cache_link_%d"%core)
             coreL1Link.connect((coreObj, "mem_link", busLat),
-                               (l1id, "high_network_0", busLat))
+                               (l1id, "highlink", busLat))
         membusLink = sst.Link("cache_bus_link_%d"%core)
-        membusLink.connect((l1id, "low_network_0", busLat), (bus, "high_network_%d"%x, busLat))
+        membusLink.connect((l1id, "lowlink", busLat), (bus, "highlink%d"%x, busLat))
 
     #make the L2 for the quad cluster
     l2 = sst.Component("l2cache_nid%d"%netAddr, "memHierarchy.Cache")
@@ -154,15 +154,20 @@ def doQuad(quad, cores, rtr, rtrPort, netAddr):
         "access_latency_cycles": 23,
         "mshr_num_entries" : 4096, #64,   # TODO: Cesar will update
         "L1": 0,
-        "network_bw": coreNetBW,
         "debug_level" : 6,
         "debug": memDebug
         })
     l2.addParams(l2PrefetchParams)
+    l2_nic = l2.setSubComponent("lowlink", "memHierarchy.MemNIC")
+    l2_nic.addParams({
+        "network_bw" : coreNetBW,
+        "group" : 1,
+        })
+
     link = sst.Link("l2cache_%d_link"%quad)
-    link.connect((l2, "high_network_0", busLat), (bus, "low_network_0", busLat))
+    link.connect((l2, "highlink", busLat), (bus, "lowlink0", busLat))
     link = sst.Link("l2cache_%d_netlink"%quad)
-    link.connect((l2, "directory", netLat), (rtr, "port%d"%(rtrPort), netLat))
+    link.connect((l2_nic, "port", netLat), (rtr, "port%d"%(rtrPort), netLat))
 
     sst.popNamePrefix()
 
@@ -217,11 +222,17 @@ def doFakeDC(rtr, nextPort, netAddr, dcNum):
             "clock": memclock,
             "debug": memDebug,
             })
+    dc_nic = dc.setSubComponent("highlink", "memHierarchy.MemNIC")
+    dc_nic.addParams({
+        "network_bw" : memNetBW,
+        "group" : 2,
+        })
+
     #wire up
     memLink = sst.Link("fake_mem%d_link"%dcNum)
-    memLink.connect((memctrl, "direct_link", busLat), (dc, "memory", busLat))
+    memLink.connect((memctrl, "highlink", busLat), (dc, "lowlink", busLat))
     netLink = sst.Link("fake_dc%d_netlink"%dcNum)
-    netLink.connect((dc, "network", netLat), (rtr, "port%d"%(nextPort), netLat))
+    netLink.connect((dc_nic, "port", netLat), (rtr, "port%d"%(nextPort), netLat))
 
 def doDC(rtr, nextPort, netAddr, dcNum):
     start_pos = (dcNum * interleave_size);
@@ -259,11 +270,16 @@ def doDC(rtr, nextPort, netAddr, dcNum):
             "clock": memclock,
             "debug": memDebug,
             })
+    dc_nic = dc.setSubComponent("highlink", "memHierarchy.MemNIC")
+    dc_nic.addParams({
+        "network_bw" : memNetBW,
+        "group" : 2,
+        })
     #wire up
     memLink = sst.Link("mem%d_link"%dcNum)
-    memLink.connect((memctrl, "direct_link", busLat), (dc, "memory", busLat))
+    memLink.connect((memctrl, "highlink", busLat), (dc, "lowlink", busLat))
     netLink = sst.Link("dc%d_netlink"%dcNum)
-    netLink.connect((dc, "network", netLat), (rtr, "port%d"%(nextPort), netLat))
+    netLink.connect((dc_nic, "port", netLat), (rtr, "port%d"%(nextPort), netLat))
 
 def doCPU(): 
     sst.pushNamePrefix("cpu")

@@ -106,8 +106,8 @@ link_nvm_bus_link.connect( (messier_inst, "bus", "50ps"), (nvm_memory_backend, "
 
 # Define the simulation links
 link_cpu_cache_link = sst.Link("link_cpu_cache_link")
-link_cpu_cache_link.connect( (comp_cpu, "cache_link", "1000ps"), (comp_l1cache, "high_network_0", "1000ps") )
+link_cpu_cache_link.connect( (comp_cpu, "cache_link", "1000ps"), (comp_l1cache, "highlink", "1000ps") )
 link_cpu_cache_link.setNoCut()
 
 link_mem_bus_link = sst.Link("link_mem_bus_link")
-link_mem_bus_link.connect( (comp_l1cache, "low_network_0", "50ps"), (nvm_memory, "direct_link", "50ps") )
+link_mem_bus_link.connect( (comp_l1cache, "lowlink", "50ps"), (nvm_memory, "highlink", "50ps") )

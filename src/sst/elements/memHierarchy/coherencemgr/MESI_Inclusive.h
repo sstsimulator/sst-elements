@@ -70,7 +70,12 @@ public:
         {"eventSent_NACK",          "Number of NACKs sent", "events", 2},
         {"eventSent_FlushLine",     "Number of FlushLine requests sent", "events", 2},
         {"eventSent_FlushLineInv",  "Number of FlushLineInv requests sent", "events", 2},
+        {"eventSent_FlushAll",      "Number of FlushAll requests sent", "events", 2},
+        {"eventSent_ForwardFlush",  "Number of ForwardFlush requests sent", "events", 2},
+        {"eventSent_AckFlush",      "Number of AckFlush requests sent", "events", 2},
+        {"eventSent_UnblockFlush",  "Number of UnblockFlush requests sent", "events", 2},
         {"eventSent_FlushLineResp", "Number of FlushLineResp responses sent", "events", 2},
+        {"eventSent_FlushAllResp",  "Number of FlushAllResp responses sent", "events", 2},
         {"eventSent_Put",           "Number of Put requests sent", "events", 6},
         {"eventSent_Get",           "Number of Get requests sent", "events", 6},
         {"eventSent_AckMove",       "Number of AckMove responses sent", "events", 6},
@@ -230,6 +235,7 @@ public:
         {"latency_GetSX_upgrade",   "Latency for read-exclusive misses, block present but in Shared state (includes invs in S)", "cycles", 1},
         {"latency_FlushLine",       "Latency for flush requests", "cycles", 1},
         {"latency_FlushLineInv",    "Latency for flush+invalidate requests", "cycles", 1},
+        {"latency_FlushAll",        "Latency for flush+all requests", "cycles", 1},
         /* Track what happens to prefetched blocks */
         {"prefetch_useful",         "Prefetched block had a subsequent hit (useful prefetch)", "count", 2},
         {"prefetch_evict",          "Prefetched block was evicted/flushed before being accessed", "count", 2},
@@ -252,6 +258,8 @@ public:
             protocolState_ = E;
         else
             protocolState_ = S;
+        
+        flush_state_ = FlushState::Ready;
 
         // Cache Array
         uint64_t lines = params.find<uint64_t>("lines");
@@ -371,8 +379,11 @@ public:
         stat_eventSent[(int)Command::Write]         = registerStatistic<uint64_t>("eventSent_Write");
         stat_eventSent[(int)Command::PutS]          = registerStatistic<uint64_t>("eventSent_PutS");
         stat_eventSent[(int)Command::PutM]          = registerStatistic<uint64_t>("eventSent_PutM");
+        stat_eventSent[(int)Command::AckPut]        = registerStatistic<uint64_t>("eventSent_AckPut");
         stat_eventSent[(int)Command::FlushLine]     = registerStatistic<uint64_t>("eventSent_FlushLine");
         stat_eventSent[(int)Command::FlushLineInv]  = registerStatistic<uint64_t>("eventSent_FlushLineInv");
+        stat_eventSent[(int)Command::FlushAll]      = registerStatistic<uint64_t>("eventSent_FlushAll");
+        stat_eventSent[(int)Command::ForwardFlush]  = registerStatistic<uint64_t>("eventSent_ForwardFlush");
         stat_eventSent[(int)Command::FetchResp]     = registerStatistic<uint64_t>("eventSent_FetchResp");
         stat_eventSent[(int)Command::FetchXResp]    = registerStatistic<uint64_t>("eventSent_FetchXResp");
         stat_eventSent[(int)Command::AckInv]        = registerStatistic<uint64_t>("eventSent_AckInv");
@@ -381,6 +392,9 @@ public:
         stat_eventSent[(int)Command::GetXResp]      = registerStatistic<uint64_t>("eventSent_GetXResp");
         stat_eventSent[(int)Command::WriteResp]     = registerStatistic<uint64_t>("eventSent_WriteResp");
         stat_eventSent[(int)Command::FlushLineResp] = registerStatistic<uint64_t>("eventSent_FlushLineResp");
+        stat_eventSent[(int)Command::FlushAllResp]  = registerStatistic<uint64_t>("eventSent_FlushAllResp");
+        stat_eventSent[(int)Command::AckFlush]      = registerStatistic<uint64_t>("eventSent_AckFlush");
+        stat_eventSent[(int)Command::UnblockFlush]  = registerStatistic<uint64_t>("eventSent_UnblockFlush");
         stat_eventSent[(int)Command::Fetch]         = registerStatistic<uint64_t>("eventSent_Fetch");
         stat_eventSent[(int)Command::FetchInv]      = registerStatistic<uint64_t>("eventSent_FetchInv");
         stat_eventSent[(int)Command::ForceInv]      = registerStatistic<uint64_t>("eventSent_ForceInv");
@@ -405,6 +419,7 @@ public:
         stat_latencyGetSX[LatType::UPGRADE]  = registerStatistic<uint64_t>("latency_GetSX_upgrade");
         stat_latencyFlushLine       = registerStatistic<uint64_t>("latency_FlushLine");
         stat_latencyFlushLineInv    = registerStatistic<uint64_t>("latency_FlushLineInv");
+        stat_latencyFlushAll        = registerStatistic<uint64_t>("latency_FlushAll");
         stat_hit[0][0] = registerStatistic<uint64_t>("GetSHit_Arrival");
         stat_hit[1][0] = registerStatistic<uint64_t>("GetXHit_Arrival");
         stat_hit[2][0] = registerStatistic<uint64_t>("GetSXHit_Arrival");
@@ -481,6 +496,8 @@ public:
     virtual bool handleGetSX(MemEvent * event, bool inMSHR);
     virtual bool handleFlushLine(MemEvent * event, bool inMSHR);
     virtual bool handleFlushLineInv(MemEvent * event, bool inMSHR);
+    virtual bool handleFlushAll(MemEvent * event, bool inMSHR);
+    virtual bool handleForwardFlush(MemEvent * event, bool inMSHR);
     virtual bool handlePutS(MemEvent * event, bool inMSHR);
     virtual bool handlePutX(MemEvent * event, bool inMSHR);
     virtual bool handlePutE(MemEvent * event, bool inMSHR);
@@ -493,10 +510,13 @@ public:
     virtual bool handleGetSResp(MemEvent * event, bool inMSHR);
     virtual bool handleGetXResp(MemEvent * event, bool inMSHR);
     virtual bool handleFlushLineResp(MemEvent * event, bool inMSHR);
+    virtual bool handleFlushAllResp(MemEvent * event, bool inMSHR);
     virtual bool handleFetchResp(MemEvent * event, bool inMSHR);
     virtual bool handleFetchXResp(MemEvent * event, bool inMSHR);
     virtual bool handleAckInv(MemEvent * event, bool inMSHR);
     virtual bool handleAckPut(MemEvent * event, bool inMSHR);
+    virtual bool handleAckFlush(MemEvent * event, bool inMSHR);
+    virtual bool handleUnblockFlush(MemEvent * event, bool inMSHR);
     virtual bool handleNACK(MemEvent * event, bool inMSHR);
     virtual bool handleNULLCMD(MemEvent * event, bool inMSHR);
 
@@ -514,6 +534,8 @@ public:
             Command::Write,
             Command::FlushLine,
             Command::FlushLineInv,
+            Command::FlushAll,
+            Command::ForwardFlush,
             Command::PutS,
             Command::PutE,
             Command::PutX,
@@ -528,10 +550,13 @@ public:
             Command::GetXResp,
             Command::WriteResp,
             Command::FlushLineResp,
+            Command::FlushAllResp,
             Command::FetchResp,
             Command::FetchXResp,
             Command::AckInv,
             Command::AckPut,
+            Command::AckFlush,
+            Command::UnblockFlush,
             Command::NACK };
         return cmds;
     }
@@ -594,6 +619,8 @@ private:
     bool protocol_;             // True for MESI, false for MSI
 
     std::map<Addr, std::map<std::string, MemEvent::id_type> > responses;
+    
+    FlushState flush_state_;
 
     /* Statistics */
     Statistic<uint64_t>* stat_latencyGetS[3]; // HIT, MISS, INV
@@ -601,6 +628,7 @@ private:
     Statistic<uint64_t>* stat_latencyGetSX[4];
     Statistic<uint64_t>* stat_latencyFlushLine;
     Statistic<uint64_t>* stat_latencyFlushLineInv;
+    Statistic<uint64_t>* stat_latencyFlushAll;
     Statistic<uint64_t>* stat_hit[3][2];
     Statistic<uint64_t>* stat_miss[3][2];
     Statistic<uint64_t>* stat_hits;

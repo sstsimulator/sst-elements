@@ -37,7 +37,7 @@ memory.addParams({
 })
 
 link_core_memory = sst.Link("link_core_memory")
-link_core_memory.connect( (core, "mem_link", "50ps"), (memoryController, "direct_link", "50ps") )
+link_core_memory.connect( (core, "mem_link", "50ps"), (memoryController, "highlink", "50ps") )
 link_core_memory.setNoCut()  # put memory on same partition with core
 
 msg_size        = "8B"

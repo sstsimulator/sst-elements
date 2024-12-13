@@ -60,8 +60,10 @@ public:
             {"debug_addr",          "(comma separated uints) Address(es) to be debugged. Leave empty for all, otherwise specify one or more comma separated values. Start and end string with brackets", ""} )
 
     SST_ELI_DOCUMENT_PORTS(
-            {"low_network_%(low_network_ports)d", "Ports connected to lower level caches (closer to main memory)", {"memHierarchy.MemEventBase"} },
-            {"high_network_%(high_network_ports)d", "Ports connected to higher level caches (closer to CPU)", {"memHierarchy.MemEventBase"} } )
+            {"low_network_%(low_network_ports)d", "DEPRECATED. Use 'lowlink\%d' instead. Ports connected to lower level caches (closer to main memory)", {"memHierarchy.MemEventBase"} },
+            {"high_network_%(high_network_ports)d", "DEPRECATED. Use 'highlink\%d' instead. Ports connected to higher level caches (closer to processor)", {"memHierarchy.MemEventBase"} },
+            {"lowlink%(lowlink_ports)d", "Ports connected to components on the lower/memory side of the bus (i.e., lower level caches, directories, memory, etc.)", {"memHierarchy.MemEventBase"} },
+            {"highlink%(highlink_ports)d", "Ports connected to components on the upper/processor side of the bus (i.e., upper level caches, processors, etc.)", {"memHierarchy.MemEventBase"} } )
 
 /* Class definition */
 

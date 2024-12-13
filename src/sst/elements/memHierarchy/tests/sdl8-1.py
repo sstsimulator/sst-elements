@@ -38,8 +38,6 @@ l1cache.addParams({
       "debug_level" : 10,
       "verbose" : 2,
 })
-l1ToC = l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-l1Tol2 = l1cache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 l2cache = sst.Component("l2cache.msi.inclus", "memHierarchy.Cache")
 l2cache.addParams({
@@ -54,8 +52,6 @@ l2cache.addParams({
       "debug_level" : 10,
       "verbose" : 2,
 })
-l2Tol1 = l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-l2Tol3 = l2cache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 l3cache = sst.Component("l3cache.msi.inclus", "memHierarchy.Cache")
 l3cache.addParams({
@@ -70,8 +66,9 @@ l3cache.addParams({
       "debug_level" : 10,
       "verbose" : 2,
 })
-l3Tol2 = l3cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-l3NIC = l3cache.setSubComponent("memlink", "memHierarchy.MemNIC")
+
+# Must use subcomponent slot instead of lowlink port since l3 connects to a network
+l3NIC = l3cache.setSubComponent("lowlink", "memHierarchy.MemNIC")
 l3NIC.addParams({
       #"debug" : 1,
       #"debug_level" : 10,
@@ -103,7 +100,7 @@ dirctrl.addParams({
       "addr_range_start" : "0x0",
       "verbose" : 2,
 })
-dirNIC = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
+dirNIC = dirctrl.setSubComponent("highlink", "memHierarchy.MemNIC")
 dirNIC.addParams({
       "network_bw" : "25GB/s",
       "group" : 2,
@@ -111,7 +108,6 @@ dirNIC.addParams({
       #"debug" : 1,
       #"debug_level" : 10,
 })
-dirMemLink = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink") # Not on a network, just a direct link
 
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
@@ -121,7 +117,7 @@ memctrl.addParams({
     "verbose" : 2,
     "addr_range_end" : 512*1024*1024-1,
 })
-memToDir = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
+
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
 memory.addParams({
       "access_time" : "100 ns",
@@ -136,13 +132,13 @@ for a in componentlist:
 
 # Define the simulation links
 link_cpu_l1cache = sst.Link("link_cpu_l1cache")
-link_cpu_l1cache.connect( (iface, "port", "1000ps"), (l1ToC, "port", "1000ps") )
+link_cpu_l1cache.connect( (iface, "lowlink", "1000ps"), (l1cache, "highlink", "1000ps") )
 
 link_l1cache_l2cache = sst.Link("link_l1cache_l2cache")
-link_l1cache_l2cache.connect( (l1Tol2, "port", "10000ps"), (l2Tol1, "port", "10000ps") )
+link_l1cache_l2cache.connect( (l1cache, "lowlink", "10000ps"), (l2cache, "highlink", "10000ps") )
 
 link_l2cache_l3cache = sst.Link("link_l2cache_l3cache")
-link_l2cache_l3cache.connect( (l2Tol3, "port", "10000ps"), (l3Tol2, "port", "10000ps") )
+link_l2cache_l3cache.connect( (l2cache, "lowlink", "10000ps"), (l3cache, "highlink", "10000ps") )
 
 link_cache_net = sst.Link("link_cache_net")
 link_cache_net.connect( (l3NIC, "port", "10000ps"), (chiprtr, "port1", "2000ps") )
@@ -151,5 +147,5 @@ link_dir_net = sst.Link("link_dir_net")
 link_dir_net.connect( (chiprtr, "port0", "2000ps"), (dirNIC, "port", "2000ps") )
 
 link_dir_mem = sst.Link("link_dir_mem")
-link_dir_mem.connect( (dirMemLink, "port", "10000ps"), (memToDir, "port", "10000ps") )
+link_dir_mem.connect( (dirctrl, "lowlink", "10000ps"), (memctrl, "highlink", "10000ps") )
 

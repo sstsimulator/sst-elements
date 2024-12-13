@@ -131,7 +131,7 @@ void logicLayer::init(unsigned int phase) {
                 SST::MemHierarchy::Addr addr = me->getAddr();
                 for (int i = 0; i < numNewEv; ++i) {
                     // make new event
-                    MemEvent *newEv = new MemEvent(this, addr,
+                    MemEvent *newEv = new MemEvent(getName(), addr,
                                                     me->getBaseAddr(),
                                                     me->getCmd());
                     // set size and payload

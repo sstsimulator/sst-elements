@@ -36,10 +36,6 @@ l1cache.addParams({
       "cache_size" : "2KiB"
 })
 
-# Explicitly set the link subcomponents instead of having cache figure them out based on connected port names
-l1toC = l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-l1toM = l1cache.setSubComponent("memlink", "memHierarchy.MemLink")
-
 # Memory controller
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
@@ -50,7 +46,6 @@ memctrl.addParams({
     "debug_level" : DEBUG_LEVEL,
     "addr_range_end" : 512*1024*1024-1,
 })
-Mtol1 = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
 
 # Memory model
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
@@ -68,7 +63,7 @@ for a in componentlist:
 
 # Define the simulation links
 link_cpu_cache_link = sst.Link("link_cpu_cache_link")
-link_cpu_cache_link.connect( (iface, "port", "100ps"), (l1toC, "port", "100ps") )
-link_mem_bus_link = sst.Link("link_mem_bus_link")
-link_mem_bus_link.connect( (l1toM, "port", "50ps"), (Mtol1, "port", "50ps") )
+link_cpu_cache_link.connect( (iface, "lowlink", "100ps"), (l1cache, "highlink", "100ps") )
+link_mem_cache_link = sst.Link("link_mem_cache_link")
+link_mem_cache_link.connect( (memctrl, "highlink", "50ps"), (l1cache, "lowlink", "50ps") )
 

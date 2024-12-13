@@ -431,19 +431,9 @@ class CPU_Builder:
         cpu_l1dcache = sst.Component(prefix + ".l1dcache", "memHierarchy.Cache")
         cpu_l1dcache.addParams( l1dcacheParams )
 
-        # L1 I-cache to cpu interface
-        l1dcache_2_cpu     = cpu_l1dcache.setSubComponent("cpulink", "memHierarchy.MemLink")
-        # L1 I-cache to L2 interface
-        l1dcache_2_l2cache = cpu_l1dcache.setSubComponent("memlink", "memHierarchy.MemLink")
-
         # L2 I-cache
         cpu_l1icache = sst.Component( prefix + ".l1icache", "memHierarchy.Cache")
         cpu_l1icache.addParams( l1icacheParams )
-
-        # L1 I-iache to cpu interface
-        l1icache_2_cpu     = cpu_l1icache.setSubComponent("cpulink", "memHierarchy.MemLink")
-        # L1 I-cache to L2 interface
-        l1icache_2_l2cache = cpu_l1icache.setSubComponent("memlink", "memHierarchy.MemLink")
 
         # L2 cache
         cpu_l2cache = sst.Component(prefix + ".l2cache", "memHierarchy.Cache")
@@ -451,11 +441,8 @@ class CPU_Builder:
         l2pre = cpu_l2cache.setSubComponent("prefetcher", "cassini.StridePrefetcher")
         l2pre.addParams(l2_prefetch_params)
 
-        # L2 cache cpu interface
-        l2cache_2_l1caches = cpu_l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-
         # L2 cache mem interface
-        l2cache_2_mem = cpu_l2cache.setSubComponent("memlink", "memHierarchy.MemNICFour")
+        l2cache_2_mem = cpu_l2cache.setSubComponent("lowlink", "memHierarchy.MemNICFour")
         l2cache_2_mem.addParams( l2memLinkParams )
         l2data = l2cache_2_mem.setSubComponent("data", "kingsley.linkcontrol")
         l2req  = l2cache_2_mem.setSubComponent("req", "kingsley.linkcontrol")
@@ -487,37 +474,37 @@ class CPU_Builder:
 
         # CPU (data) -> TLB -> Cache
         link_cpu_dtlb_link = sst.Link(prefix+".link_cpu_dtlb_link")
-        link_cpu_dtlb_link.connect( (cpuDcacheIf, "port", "1ns"), (dtlbWrapper, "cpu_if", "1ns") )
+        link_cpu_dtlb_link.connect( (cpuDcacheIf, "lowlink", "1ns"), (dtlbWrapper, "cpu_if", "1ns") )
         link_cpu_dtlb_link.setNoCut()
 
         # data TLB -> data L1
         link_cpu_l1dcache_link = sst.Link(prefix+".link_cpu_l1dcache_link")
-        link_cpu_l1dcache_link.connect( (dtlbWrapper, "cache_if", "1ns"), (l1dcache_2_cpu, "port", "1ns") )
+        link_cpu_l1dcache_link.connect( (dtlbWrapper, "cache_if", "1ns"), (cpu_l1dcache, "highlink", "1ns") )
         link_cpu_l1dcache_link.setNoCut()
 
         # CPU (instruction) -> TLB -> Cache
         link_cpu_itlb_link = sst.Link(prefix+".link_cpu_itlb_link")
-        link_cpu_itlb_link.connect( (cpuIcacheIf, "port", "1ns"), (itlbWrapper, "cpu_if", "1ns") )
+        link_cpu_itlb_link.connect( (cpuIcacheIf, "lowlink", "1ns"), (itlbWrapper, "cpu_if", "1ns") )
         link_cpu_itlb_link.setNoCut()
 
         # instruction TLB -> instruction L1
         link_cpu_l1icache_link = sst.Link(prefix+".link_cpu_l1icache_link")
-        link_cpu_l1icache_link.connect( (itlbWrapper, "cache_if", "1ns"), (l1icache_2_cpu, "port", "1ns") )
+        link_cpu_l1icache_link.connect( (itlbWrapper, "cache_if", "1ns"), (cpu_l1icache, "highlink", "1ns") )
         link_cpu_l1icache_link.setNoCut();
 
         # data L1 -> bus
         link_l1dcache_l2cache_link = sst.Link(prefix+".link_l1dcache_l2cache_link")
-        link_l1dcache_l2cache_link.connect( (l1dcache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_0", "1ns") )
+        link_l1dcache_l2cache_link.connect( (cpu_l1dcache, "lowlink", "1ns"), (cache_bus, "highlink0", "1ns") )
         link_l1dcache_l2cache_link.setNoCut()
 
         # instruction L1 -> bus
         link_l1icache_l2cache_link = sst.Link(prefix+".link_l1icache_l2cache_link")
-        link_l1icache_l2cache_link.connect( (l1icache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_1", "1ns") )
+        link_l1icache_l2cache_link.connect( (cpu_l1icache, "lowlink", "1ns"), (cache_bus, "highlink1", "1ns") )
         link_l1icache_l2cache_link.setNoCut()
 
         # BUS to L2 cache
         link_bus_l2cache_link = sst.Link(prefix+".link_bus_l2cache_link")
-        link_bus_l2cache_link.connect( (cache_bus, "low_network_0", "1ns"), (l2cache_2_l1caches, "port", "1ns") )
+        link_bus_l2cache_link.connect( (cache_bus, "lowlink0", "1ns"), (cpu_l2cache, "highlink", "1ns") )
         link_bus_l2cache_link.setNoCut()
 
         return (cpu, "os_link", "5ns"), (dtlb, "mmu", "1ns"), (itlb, "mmu", "1ns"), \
@@ -560,8 +547,7 @@ node_os_mem_if = node_os.setSubComponent( "mem_interface", "memHierarchy.standar
 # node OS l1 data cache
 os_cache = sst.Component("node_os.cache", "memHierarchy.Cache")
 os_cache.addParams(osl1cacheParams)
-os_cache_2_cpu = os_cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-os_cache_2_mem = os_cache.setSubComponent("memlink", "memHierarchy.MemNICFour")
+os_cache_2_mem = os_cache.setSubComponent("lowlink", "memHierarchy.MemNICFour")
 os_cache_2_mem.addParams( l2memLinkParams )
 os_data = os_cache_2_mem.setSubComponent("data", "kingsley.linkcontrol")
 os_req = os_cache_2_mem.setSubComponent("req", "kingsley.linkcontrol")
@@ -596,7 +582,7 @@ class MemBuilder:
             "addr_range_end" :  1024*1024*1024 - ((numMemories - memID) * 64) + 63,
         })
 
-        memNIC = memctrl.setSubComponent("cpulink", "memHierarchy.MemNICFour")
+        memNIC = memctrl.setSubComponent("highlink", "memHierarchy.MemNICFour")
         memNIC.addParams({
             "group" : 3,
             "debug_level" : mh_debug_level,
@@ -643,7 +629,7 @@ class DCBuilder:
         })
 
         # node directory controller port to cpu
-        dirNIC = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNICFour")
+        dirNIC = dirctrl.setSubComponent("highlink", "memHierarchy.MemNICFour")
         dirNIC.addParams({
             "group" : 2,
             "debug" : mh_debug,
@@ -669,8 +655,8 @@ class DCBuilder:
 
 # ostlb -> os l1 cache
 link_os_cache_link = sst.Link("link_os_cache_link")
-#link_os_cache_link.connect( (ostlbWrapper, "cache_if", "1ns"), (os_cache_2_cpu, "port", "1ns") )
-link_os_cache_link.connect( (node_os_mem_if, "port", "1ns"), (os_cache_2_cpu, "port", "1ns") )
+#link_os_cache_link.connect( (ostlbWrapper, "cache_if", "1ns"), (os_cache, "highlink", "1ns") )
+link_os_cache_link.connect( (node_os_mem_if, "lowlink", "1ns"), (os_cache, "highlink", "1ns") )
 link_os_cache_link.setNoCut()
 
 def is_on_top_row(index):
