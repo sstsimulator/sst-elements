@@ -480,7 +480,6 @@ bool MESISharNoninclusive::handleFlushLine(MemEvent* event, bool inMSHR) {
     return true;
 }
 
-
 /* Flush a line from cache & invalidate it */
 bool MESISharNoninclusive::handleFlushLineInv(MemEvent* event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
@@ -618,6 +617,229 @@ bool MESISharNoninclusive::handleFlushLineInv(MemEvent* event, bool inMSHR) {
 }
 
 
+bool MESISharNoninclusive::handleFlushAll(MemEvent* event, bool inMSHR) {
+    eventDI.prefill(event->getID(), Command::FlushAll, "", 0, State::NP);
+    
+    if (!flush_manager_) {
+        if (!inMSHR) {
+            MemEventStatus status = mshr_->insertFlush(event, false, true);
+            if (status == MemEventStatus::Reject) {
+                sendNACK(event);
+                return true;
+            } else if (status == MemEventStatus::Stall) {
+                eventDI.action = "Stall";
+                // Don't forward if there's already a waiting FlushAll so we don't risk re-ordering
+                return true;
+            }
+        }
+        // Forward flush to flush manager
+        MemEvent* flush = new MemEvent(*event); // Copy event for forwarding
+        flush->setDst(flush_dest_);
+        forwardByDestination(flush, timestamp_ + mshrLatency_);
+        eventDI.action = "Forward";
+        return true;
+    }
+
+    if (!inMSHR) {
+        MemEventStatus status = mshr_->insertFlush(event, false);
+        if (status == MemEventStatus::Reject) { /* No room for flush in MSHR */
+            sendNACK(event);
+            return true;
+        } else if (status == MemEventStatus::Stall) { /* Stall for current flush */
+            eventDI.action = "Stall";
+            eventDI.reason = "Flush in progress";
+            return true;
+        }
+    }
+    
+    switch (flush_state_) {
+        case FlushState::Ready:
+        {
+            /* Forward requests up (and, if flush manager to peers as well), transition to FlushState::Forward */
+            // Broadcast ForwardFlush to all sources
+            // Broadcast ForwardFlush to all peers (if flush_manager)
+            //      Wait for Ack from all sources & peers -> retry when count == 0
+            int count = broadcastMemEventToSources(Command::ForwardFlush, event, timestamp_ + 1);
+            mshr_->incrementFlushCount(count);
+            flush_state_ = FlushState::Forward;
+            eventDI.action = "Begin";
+            break;
+        }
+        case FlushState::Forward:
+        {
+            int count = broadcastMemEventToPeers(Command::ForwardFlush, event, timestamp_ + 1);
+            mshr_->incrementFlushCount(count);
+
+            if (mshr_->getSize() != mshr_->getFlushSize()) {
+                mshr_->incrementFlushCount(mshr_->getSize() - mshr_->getFlushSize());
+                eventDI.action = "Drain";
+                flush_state_ = FlushState::Drain;
+                break;
+            } /* else fall-thru */
+        }
+        case FlushState::Drain:
+        {
+            /* Have received all acks and drained MSHR if needed, do local flush */
+            /* OK if peers have not all ack'd yet */
+            for (auto it : *dirArray_) {
+                if (it->getState() == I) continue;
+                if (it->getState() == S || it->getState() == E || it->getState() == M) {
+                        MemEvent * ev = new MemEvent(cachename_, it->getAddr(), it->getAddr(), Command::NULLCMD);
+                        retryBuffer_.push_back(ev);
+                        mshr_->incrementFlushCount();
+                } else {
+                    debug->fatal(CALL_INFO, -1, "%s, Error: Attempting to flush a cache line that is in a transient state '%s'. Addr = 0x%" PRIx64 ". Event: %s. Time: %" PRIu64 "ns\n",
+                            cachename_.c_str(), StateString[it->getState()], it->getAddr(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                }
+            }
+            if (mshr_->getFlushCount() != 0) {
+                eventDI.action = "Flush";
+                flush_state_ = FlushState::Invalidate;
+                break;
+            } /* else fall-thru */
+        }
+        case FlushState::Invalidate:
+            /* Have finished invalidating and all peers have flushed */
+            // Unblock/respond to sources & peers
+            sendResponseUp(event, nullptr, true, timestamp_);
+            broadcastMemEventToSources(Command::UnblockFlush, event, timestamp_ + 1);
+            mshr_->removeFlush();
+            delete event;
+            if (mshr_->getFlush() != nullptr) {
+                retryBuffer_.push_back(mshr_->getFlush());
+            }
+            flush_state_ = FlushState::Ready;
+            break;
+    }
+
+    return true;
+
+
+}
+
+bool MESISharNoninclusive::handleForwardFlush(MemEvent* event, bool inMSHR) {
+    /* Flushes are ordered by the FlushManager and coordinated by the FlushHelper at each level 
+     * of the hierarchy. Only one cache in a set of distributed caches is the FlushHelper; 
+     * whereas private caches and monolithic shared caches are the FlushHelper.
+     * 
+     * If FlushHelper - propagate Flush upwards and notify peers when done
+     * If not FlushHelper - wait to be contacted by FlushHelper before flushing locally
+     */
+    eventDI.prefill(event->getID(), Command::ForwardFlush, "", 0, State::NP);
+
+    if (!inMSHR) {
+        MemEventStatus status = mshr_->insertFlush(event, true);
+        if (status == MemEventStatus::Reject) { /* No room for flush in MSHR */
+            sendNACK(event);
+            return true;
+        }
+    }
+
+    if ( flush_helper_ ) {
+        switch (flush_state_) {
+            case FlushState::Ready:
+            {
+                int count = broadcastMemEventToSources(Command::ForwardFlush, event, timestamp_ + 1);
+                flush_state_ = FlushState::Forward;
+                mshr_->incrementFlushCount(count);
+                eventDI.action = "Begin";
+                break;
+            }
+            case FlushState::Forward:
+            {
+                int count = broadcastMemEventToPeers(Command::ForwardFlush, event, timestamp_ + 1);
+                mshr_->incrementFlushCount(count);
+
+                if (mshr_->getSize() != mshr_->getFlushSize()) {
+                    mshr_->incrementFlushCount(mshr_->getSize() - mshr_->getFlushSize());
+                    eventDI.action = "Drain";
+                    flush_state_ = FlushState::Drain;
+                    break;
+                } /* else fall-thru */
+            }
+            case FlushState::Drain:
+            {
+                /* Have received all acks and drained MSHR if needed, do local flush */
+                /* OK if peers have not all ack'd yet */
+                for (auto it : *dirArray_) {
+                    if (it->getState() == I) continue;
+                    if (it->getState() == S || it->getState() == E || it->getState() == M) {
+                        MemEvent * ev = new MemEvent(cachename_, it->getAddr(), it->getAddr(), Command::NULLCMD);
+                        retryBuffer_.push_back(ev);
+                        mshr_->incrementFlushCount();
+                    } else {
+                        debug->fatal(CALL_INFO, -1, "%s, Error: Attempting to flush a cache line that is in a transient state '%s'. Addr = 0x%" PRIx64 ". Event: %s. Time: %" PRIu64 "ns\n",
+                                cachename_.c_str(), StateString[it->getState()], it->getAddr(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    }
+                }
+                if (mshr_->getFlushCount()) {
+                    eventDI.action = "Flush";
+                    flush_state_ = FlushState::Invalidate;
+                    break;
+                } /* else fall-thru */
+            }
+            case FlushState::Invalidate:
+                /* All blocks written back and peers have ack'd - respond */
+                sendResponseDown(event, nullptr, false, false);
+                mshr_->removeFlush();
+                delete event;
+                flush_state_ = FlushState::Ready;
+                break;
+        } /* End switch */
+        return true;
+    
+    /* Not the flush helper; Event is from flush helper */
+    } else if ( isPeer(event->getSrc()) ) {
+        if (mshr_->getSize() != mshr_->getFlushSize()) { // Drain outstanding Put* before invalidating cache
+            mshr_->incrementFlushCount(mshr_->getSize() - mshr_->getFlushSize());
+            eventDI.action = "Drain";
+            flush_state_ = FlushState::Drain;
+            
+        } else {
+            bool evictionNeeded = false;
+            for (auto it : *dirArray_) {
+                if (it->getState() == I) continue;
+                if (it->getState() == S || it->getState() == E || it->getState() == M) {
+                    MemEvent * ev = new MemEvent(cachename_, it->getAddr(), it->getAddr(), Command::NULLCMD);
+                    retryBuffer_.push_back(ev);
+                    evictionNeeded = true;
+                    mshr_->incrementFlushCount();
+                } else {
+                    debug->fatal(CALL_INFO, -1, "%s, Error: Attempting to flush a cache line that is in a transient state '%s'. Addr = 0x%" PRIx64 ". Event: %s. Time: %" PRIu64 "ns\n",
+                        cachename_.c_str(), StateString[it->getState()], it->getAddr(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                }
+            }
+            if (evictionNeeded) {
+                eventDI.action = "Flush";
+                flush_state_ = FlushState::Invalidate;
+            } else {
+                sendResponseUp(event, nullptr, true, timestamp_);
+                mshr_->removeFlush();
+                delete event;
+                flush_state_ = FlushState::Forward; 
+                /* A bit backwards from flush helper/manager - here Forward means OK to execute another ForwardFlush */
+                if ( mshr_->getFlush() != nullptr ) {
+                    retryBuffer_.push_back(mshr_->getFlush());
+                }
+            }
+        }
+    
+    /* Already handled ForwardFlush from flush helper/manager, retire ForwardFlush from peer */
+    } else if (flush_state_ == FlushState::Forward) { 
+        if (inMSHR) mshr_->removeFlush();
+        sendResponseDown(event, nullptr, false, false);
+        delete event;
+        flush_state_ = FlushState::Ready;
+        return true;            
+    }
+    /* Remaining case: This is a peer to the flush helper/manager and event is not from the helper/manager 
+     * Wait until we've handled the event from peer helper/manager before handling this event
+     */
+
+    return true;
+}
+
+
 bool MESISharNoninclusive::handlePutS(MemEvent * event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
     DirectoryLine * tag = dirArray_->lookup(addr, false);
@@ -646,7 +868,7 @@ bool MESISharNoninclusive::handlePutS(MemEvent * event, bool inMSHR) {
                 status = processDataMiss(event, tag, data, true);
                 if (status != MemEventStatus::OK) {
                     if (!mshr_->getProfiled(addr)) {
-                        stat_eventState[(int)Command::PutS][I]->addData(1);
+                        stat_eventState[(int)Command::PutS][state]->addData(1);
                         mshr_->setProfiled(addr);
                     }
                     if (state == S) tag->setState(SA);
@@ -661,7 +883,7 @@ bool MESISharNoninclusive::handlePutS(MemEvent * event, bool inMSHR) {
                 inMSHR = true;
             }
             if (!inMSHR || !mshr_->getProfiled(addr)) {
-                stat_eventState[(int)Command::PutS][I]->addData(1);
+                stat_eventState[(int)Command::PutS][state]->addData(1);
             }
             tag->removeSharer(event->getSrc());
             sendWritebackAck(event);
@@ -672,15 +894,17 @@ bool MESISharNoninclusive::handlePutS(MemEvent * event, bool inMSHR) {
         case M_Inv:
         case SM_Inv:
             removeSharerViaInv(event, tag, data, true);
-            if (mshr_->decrementAcksNeeded(addr)) {
-                tag->setState(NextState[state]);
-                retry(addr);
-            }
             sendWritebackAck(event);
             if (inMSHR || !mshr_->getProfiled(addr)) {
                 stat_eventState[(int)Command::PutS][state]->addData(1);
             }
-            cleanUpAfterRequest(event, inMSHR);
+            if (mshr_->decrementAcksNeeded(addr)) {
+                tag->setState(NextState[state]);
+                retry(addr);
+                cleanUpEvent(event, inMSHR);
+            } else {
+                cleanUpAfterRequest(event, inMSHR);
+            }
             break;
         case S_B:
         case E_B:
@@ -831,7 +1055,6 @@ bool MESISharNoninclusive::handlePutE(MemEvent * event, bool inMSHR) {
         case E_Inv:
         case M_Inv:
             tag->removeOwner();
-            mshr_->decrementAcksNeeded(addr);
             if (!data && !mshr_->hasData(addr))
                 mshr_->setData(addr, event->getPayload());
             responses.find(addr)->second.erase(event->getSrc());
@@ -839,7 +1062,14 @@ bool MESISharNoninclusive::handlePutE(MemEvent * event, bool inMSHR) {
                 responses.erase(addr);
             sendWritebackAck(event);
             tag->setState(NextState[state]);
-            cleanUpAfterRequest(event, inMSHR);
+            
+            if (mshr_->decrementAcksNeeded(addr)) {
+                retry(addr);
+                cleanUpEvent(event, inMSHR);
+            } else {
+                cleanUpAfterRequest(event, inMSHR);
+            }
+
             if (!inMSHR || !mshr_->getProfiled(addr)) {
                 stat_eventState[(int)Command::PutE][state]->addData(1);
             }
@@ -879,9 +1109,16 @@ bool MESISharNoninclusive::handlePutM(MemEvent * event, bool inMSHR) {
         case E:
         case M:
             if (!data) { // Need to allocate line
-                status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false, -1);
-                if (status != MemEventStatus::OK)
+                status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false, -1); // In case we need to stall dataline allocation
+                if (status == MemEventStatus::Reject) {
                     break;
+                } else if (status == MemEventStatus::Stall) {
+                    if (is_debug_event(event)) {
+                        eventDI.action = "Stall";
+                        eventDI.reason = "MSHR conflict";
+                    }
+                    break;
+                }
                 if (!inMSHR || !mshr_->getProfiled(addr)) {
                     stat_eventState[(int)Command::PutM][state]->addData(1);
                     mshr_->setProfiled(addr);
@@ -889,16 +1126,20 @@ bool MESISharNoninclusive::handlePutM(MemEvent * event, bool inMSHR) {
                 status = processDataMiss(event, tag, data, true);
                 if (status != MemEventStatus::OK) {
                     tag->setState(MA);
+                    if (is_debug_event(event)) {
+                        eventDI.action = "Stall";
+                        eventDI.reason = "Data line miss";
+                    }
                     break;
                 }
-                data = dataArray_->lookup(addr, true);
-                data->setData(event->getPayload(), 0);
-                if (is_debug_addr(addr))
-                    printDataValue(addr, &(event->getPayload()), true);
                 inMSHR = true;
             } else if (!inMSHR || !mshr_->getProfiled(addr)) {
                 stat_eventState[(int)Command::PutM][state]->addData(1);
             }
+            if (is_debug_addr(addr))
+                printDataValue(addr, &(event->getPayload()), true);
+            data = dataArray_->lookup(addr, true);
+            data->setData(event->getPayload(), 0);
             if (is_debug_event(event))
                 eventDI.reason = "hit";
 
@@ -909,6 +1150,7 @@ bool MESISharNoninclusive::handlePutM(MemEvent * event, bool inMSHR) {
             break;
         case E_InvX:
         case M_InvX:
+        {
             tag->removeOwner();
             mshr_->decrementAcksNeeded(addr);
             responses.find(addr)->second.erase(event->getSrc());
@@ -937,18 +1179,19 @@ bool MESISharNoninclusive::handlePutM(MemEvent * event, bool inMSHR) {
                     status = allocateMSHR(event, false, 2); // Retry the waiting event and waiting forward request, then handle this replacement
                 else
                     status = allocateMSHR(event, false, 1); // Retry the waiting event, then handle this replacement
-
-                retry(addr);
             }
+            retry(addr);
             break;
+        }
         case E_Inv:
         case M_Inv:
             if (!inMSHR || !mshr_->getProfiled(addr)) {
                 stat_eventState[(int)Command::PutM][state]->addData(1);
             }
-            // Handle the coherence state part and buffer the data in the MSHR, we won't need a line because we're either losing the data or one of our children wants it
+            // Handle the coherence state part and buffer the data in the MSHR.
+            // We won't need a line because we're either deallocating the data or one of our children wants it
             tag->removeOwner();
-            mshr_->decrementAcksNeeded(addr);
+
             if (!data && !mshr_->hasData(addr))
                 mshr_->setData(addr, event->getPayload());
             responses.find(addr)->second.erase(event->getSrc());
@@ -956,7 +1199,13 @@ bool MESISharNoninclusive::handlePutM(MemEvent * event, bool inMSHR) {
                 responses.erase(addr);
             sendWritebackAck(event);
             tag->setState(M);
-            cleanUpAfterRequest(event, inMSHR);
+
+            if (mshr_->decrementAcksNeeded(addr)) {
+                retry(addr);
+                cleanUpEvent(event, inMSHR);
+            } else {
+                cleanUpAfterRequest(event, inMSHR);
+            }
             break;
         default:
             debug->fatal(CALL_INFO,-1,"%s, Error: Received PutM in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
@@ -1198,14 +1447,16 @@ bool MESISharNoninclusive::handleInv(MemEvent * event, bool inMSHR) {
             delete event;
             break;
         case S:
-            if (tag->hasSharers() && !inMSHR)
+            if (tag->hasSharers() && !inMSHR) {
                 status = allocateMSHR(event, true, 0);
+                inMSHR = status != MemEventStatus::Reject; 
+            }
 
             if (status == MemEventStatus::OK) {
-                if (!mshr_->getProfiled(addr)) {
+                if (!inMSHR || !mshr_->getProfiled(addr)) {
                     recordPrefetchResult(tag, statPrefetchInv);
                     stat_eventState[(int)Command::Inv][state]->addData(1);
-                    mshr_->setProfiled(addr);
+                    if (inMSHR) mshr_->setProfiled(addr);
                 }
 
                 if (tag->hasSharers()) {
@@ -2029,6 +2280,27 @@ bool MESISharNoninclusive::handleFlushLineResp(MemEvent * event, bool inMSHR) {
 }
 
 
+bool MESISharNoninclusive::handleFlushAllResp(MemEvent * event, bool inMSHR) {
+    eventDI.prefill(event->getID(), Command::FlushAllResp, "", 0, State::NP);
+
+    MemEvent* flush_request = static_cast<MemEvent*>(mshr_->getFlush());
+    mshr_->removeFlush(); // Remove FlushAll
+
+    eventDI.action = "Respond";
+
+    sendResponseUp(flush_request, nullptr, true, timestamp_);
+
+    delete flush_request;
+    delete event;
+
+    if (mshr_->getFlush() != nullptr) {
+        retryBuffer_.push_back(mshr_->getFlush());
+    }
+
+    return true;
+}
+
+
 bool MESISharNoninclusive::handleFetchResp(MemEvent * event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
     DirectoryLine * tag = dirArray_->lookup(addr, false);
@@ -2173,6 +2445,31 @@ bool MESISharNoninclusive::handleFetchXResp(MemEvent * event, bool inMSHR) {
 }
 
 
+bool MESISharNoninclusive::handleAckFlush(MemEvent* event, bool inMSHR) {
+    eventDI.prefill(event->getID(), Command::AckFlush, "", 0, State::NP);
+    
+    mshr_->decrementFlushCount();
+    if (mshr_->getFlushCount() == 0) {
+        retryBuffer_.push_back(mshr_->getFlush());
+    }
+
+    delete event;
+    return true;
+}
+
+
+bool MESISharNoninclusive::handleUnblockFlush(MemEvent * event, bool inMSHR) {
+    eventDI.prefill(event->getID(), Command::UnblockFlush, "", 0, State::NP);
+
+    if (flush_helper_) {
+        broadcastMemEventToSources(Command::UnblockFlush, event, timestamp_ + 1);
+    }
+    delete event;
+
+    return true;
+}
+
+
 bool MESISharNoninclusive::handleAckInv(MemEvent * event, bool inMSHR) {
     Addr addr = event->getAddr();
     DirectoryLine * tag = dirArray_->lookup(addr, false);
@@ -2236,17 +2533,21 @@ bool MESISharNoninclusive::handleNULLCMD(MemEvent* event, bool inMSHR) {
     Addr newAddr = event->getBaseAddr();
 
     // Is this a data eviction or directory eviction?
-    bool dirEvict = evictionType_.find(std::make_pair(oldAddr,newAddr))->second;
+    bool dirEvict = oldAddr != newAddr ? evictionType_.find(std::make_pair(oldAddr,newAddr))->second : false;
     bool evicted;
 
     // Tag/directory array eviction
     if (dirEvict) {
         DirectoryLine * tag = dirArray_->lookup(oldAddr, false);
-        if (is_debug_event(event)) {
-            eventDI.prefill(event->getID(), Command::NULLCMD, "", oldAddr, evictDI.oldst);
-        }
 
         evicted = handleDirEviction(newAddr, tag);
+
+        if (is_debug_addr(newAddr) || is_debug_addr(evictDI.addr)) {
+            eventDI.prefill(event->getID(), Command::NULLCMD, "", evictDI.addr, evictDI.oldst);
+            eventDI.newst = tag->getState();
+            eventDI.verboseline = tag->getString();
+        }
+
         if (evicted) {
             notifyListenerOfEvict(tag->getAddr(), lineSize_, event->getInstructionPointer());
             retryBuffer_.push_back(mshr_->getFrontEvent(newAddr));
@@ -2279,16 +2580,19 @@ bool MESISharNoninclusive::handleNULLCMD(MemEvent* event, bool inMSHR) {
                 }
             }
         }
+    } else {
     // Data array eviction
-    // Races can mean that this eviction is no longer neccessary but we can't tell if we haven't started the eviction
+    // Races can mean that this eviction is no longer necessary but we can't tell if we haven't started the eviction
     // or if we're finishing. So finish it, but only replace if we currently need an eviction
     // (the event waiting for eviction now and the one that triggered this eviction might not be the same)
-    } else {
         DirectoryLine * tag = dirArray_->lookup(newAddr, false);
         DataLine * data = dataArray_->lookup(oldAddr, false);
         evicted = handleDataEviction(newAddr, data);
-        if (is_debug_event(event)) {
-            eventDI.prefill(event->getID(), Command::NULLCMD, "", data->getAddr(), evictDI.oldst);
+
+        if (is_debug_addr(newAddr) || is_debug_addr(evictDI.addr)) {
+            eventDI.prefill(event->getID(), Command::NULLCMD, "", evictDI.addr, evictDI.oldst);
+            eventDI.newst = data ? data->getState() : I;
+            eventDI.verboseline = data ? data->getString() : "";
         }
         if (evicted) {
             if (tag && (tag->getState() == IA || tag->getState() == SA || tag->getState() == EA || tag->getState() == MA)) {
@@ -2310,15 +2614,22 @@ bool MESISharNoninclusive::handleNULLCMD(MemEvent* event, bool inMSHR) {
             } else {
                 dataArray_->deallocate(data);
             }
-
-            if (mshr_->removeEvictPointer(oldAddr, newAddr))
-                retry(oldAddr);
-            evictionType_.erase(std::make_pair(oldAddr, newAddr));
-
-            if (is_debug_event(event)) {
-                eventDI.action = "Retry";
-                eventDI.newst = data->getState();
+            if (oldAddr != newAddr) {
+                if (mshr_->removeEvictPointer(oldAddr, newAddr))
+                    retry(oldAddr);
+                evictionType_.erase(std::make_pair(oldAddr, newAddr));
+                if (is_debug_event(event)) {
+                    eventDI.action = "Retry";
+                    eventDI.newst = tag->getState();
+                }
+            } else {
+                mshr_->decrementFlushCount();
+                if (mshr_->getFlushCount() == 0) {
+                    retryBuffer_.push_back(mshr_->getFlush());
+                    eventDI.action = "Retry";
+                }
             }
+
         } else {
             if (is_debug_event(event)) {
                 eventDI.action = "Stall";
@@ -2371,6 +2682,7 @@ bool MESISharNoninclusive::handleNACK(MemEvent* event, bool inMSHR) {
         case Command::PutS:
         case Command::PutE:
         case Command::PutM:
+        case Command::FlushAll:
             resendEvent(nackedEvent, false); // Resend towards memory
             break;
         case Command::FetchInv:
@@ -2390,6 +2702,9 @@ bool MESISharNoninclusive::handleNACK(MemEvent* event, bool inMSHR) {
                     eventDI.action = "Drop";
                 delete nackedEvent;
             }
+            break;
+        case Command::ForwardFlush:
+            resendEvent(nackedEvent, true); // Resend towards CPU
             break;
         default:
             debug->fatal(CALL_INFO,-1,"%s, Error: Received NACK with unhandled command type. Event: %s. Time = %" PRIu64 "ns\n",
@@ -2483,8 +2798,10 @@ bool MESISharNoninclusive::handleDirEviction(Addr addr, DirectoryLine*& tag) {
         tag = dirArray_->findReplacementCandidate(addr);
     State state = tag->getState();
 
-    if (is_debug_addr(tag->getAddr()))
+    if (is_debug_addr(tag->getAddr())) {
         evictDI.oldst = tag->getState();
+        evictDI.addr = tag->getAddr();
+    }
 
     stat_evict[state]->addData(1);
 
@@ -2602,8 +2919,10 @@ bool MESISharNoninclusive::handleDataEviction(Addr addr, DataLine *&data) {
         data = dataArray_->findReplacementCandidate(addr);
     State state = data->getState();
 
-    if (is_debug_addr(data->getAddr()))
+    if (is_debug_addr(data->getAddr())) {
         evictDI.oldst = data->getState();
+        evictDI.addr = data->getAddr();
+    }
 
     DirectoryLine* tag;
 
@@ -2628,6 +2947,7 @@ bool MESISharNoninclusive::handleDataEviction(Addr addr, DataLine *&data) {
                 } else if (is_debug_addr(data->getAddr())) {
                     printDebugAlloc(false, data->getAddr(), "Data, Drop");
                 }
+                dataArray_->deallocate(data);
                 return true;
             }
         case E:
@@ -2648,6 +2968,8 @@ bool MESISharNoninclusive::handleDataEviction(Addr addr, DataLine *&data) {
                 } else if (is_debug_addr(data->getAddr())) {
                     printDebugAlloc(false, data->getAddr(), "Data, Drop");
                 }
+                dataArray_->deallocate(data);
+
                 return true;
             }
         case M:
@@ -2668,6 +2990,7 @@ bool MESISharNoninclusive::handleDataEviction(Addr addr, DataLine *&data) {
                 } else if (is_debug_addr(data->getAddr())) {
                     printDebugAlloc(false, data->getAddr(), "Data, Drop");
                 }
+                dataArray_->deallocate(data);
                 return true;
             }
         default:
@@ -2691,6 +3014,13 @@ void MESISharNoninclusive::cleanUpEvent(MemEvent* event, bool inMSHR) {
     if (inMSHR) {
         if (event->isPrefetch() && event->getRqstr() == cachename_) outstandingPrefetches_--;
         mshr_->removeFront(addr);
+
+        if (flush_state_ == FlushState::Drain) {
+            mshr_->decrementFlushCount();
+            if (mshr_->getFlushCount() == 0) {
+                retryBuffer_.push_back(mshr_->getFlush());
+            }
+        }
     }
 
     delete event;

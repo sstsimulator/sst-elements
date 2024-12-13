@@ -45,19 +45,21 @@ for next_core_id in range(config.total_cores):
 
     l2 = sst.Component("l2cache_%d"%(next_core_id), "memHierarchy.Cache")
     l2.addParams(config.getL2Params())
+    l2_nic = l2.setSubComponent("lowlink", "memHierarchy.MemNIC")
+    l2_nic.addParam("group", 1)
 
     connect("cpu_cache_link_%d"%next_core_id,
-            iface, "port",
-            l1, "high_network_0",
+            iface, "lowlink",
+            l1, "highlink",
             config.ring_latency).setNoCut()
 
     connect("l2cache_%d_link"%next_core_id,
-            l1, "low_network_0",
-            l2, "high_network_0",
+            l1, "lowlink",
+            l2, "highlink",
             config.ring_latency).setNoCut()
 
     connect("l2_ring_link_%d"%next_core_id,
-            l2, "directory",
+            l2_nic, "port",
             router, "port%d"%next_core_id,
             config.ring_latency)
 
@@ -69,14 +71,16 @@ memory.addParams(config.getMemParams())
 
 dc = sst.Component("dc", "memHierarchy.DirectoryController")
 dc.addParams(config.getDCParams(0))
+dc_nic = dc.setSubComponent("highlink", "memHierarchy.MemNIC")
+dc_nic.addParam("group", 2)
 
 connect("mem_link_0",
-        memctrl, "direct_link",
-        dc, "memory",
+        memctrl, "highlink",
+        dc, "lowlink",
         config.ring_latency)
 
 connect("dc_link_0",
-        dc, "network",
+        dc_nic, "port",
         router, "port%d"%config.total_cores,
         config.ring_latency)
 

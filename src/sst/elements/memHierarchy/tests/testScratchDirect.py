@@ -60,6 +60,6 @@ for a in componentlist:
 
 # Define the simulation links
 link_cpu_scratch = sst.Link("link_cpu_scratch")
-link_cpu_scratch.connect( (iface, "port", "1000ps"), (comp_scratch, "cpu", "1000ps") )
+link_cpu_scratch.connect( (iface, "lowlink", "1000ps"), (comp_scratch, "highlink", "1000ps") )
 link_scratch_mem = sst.Link("link_scratch_mem")
-link_scratch_mem.connect( (comp_scratch, "memory", "100ps"), (memctrl, "direct_link", "100ps") )
+link_scratch_mem.connect( (comp_scratch, "lowlink", "100ps"), (memctrl, "highlink", "100ps") )

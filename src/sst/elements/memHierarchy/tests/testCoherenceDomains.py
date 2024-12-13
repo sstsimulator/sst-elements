@@ -48,8 +48,7 @@ node0_l1cache0.addParams({
       "debug" : DEBUG_L1 | DEBUG_CORE0 | DEBUG_NODE0,
       "debug_level" : 10,
 })
-node0_l1cache0_to_core = node0_l1cache0.setSubComponent("cpulink", "memHierarchy.MemLink")
-node0_l1cache0_to_network = node0_l1cache0.setSubComponent("memlink", "memHierarchy.MemNIC")
+node0_l1cache0_to_network = node0_l1cache0.setSubComponent("lowlink", "memHierarchy.MemNIC")
 node0_l1cache0_to_network.addParams({
     "group" : 0,
     "network_bw" : "25GB/s",
@@ -89,8 +88,7 @@ node0_l1cache1.addParams({
       "debug" : DEBUG_L1 | DEBUG_CORE1 | DEBUG_NODE0,
       "debug_level" : 10,
 })
-node0_l1cache1_to_core = node0_l1cache1.setSubComponent("cpulink", "memHierarchy.MemLink")
-node0_l1cache1_to_network = node0_l1cache1.setSubComponent("memlink", "memHierarchy.MemNIC")
+node0_l1cache1_to_network = node0_l1cache1.setSubComponent("lowlink", "memHierarchy.MemNIC")
 node0_l1cache1_to_network.addParams({
     "group" : 0,
     "network_bw" : "25GB/s",
@@ -130,8 +128,7 @@ node1_l1cache0.addParams({
       "debug" : DEBUG_L1 | DEBUG_CORE0 | DEBUG_NODE1,
       "debug_level" : 10,
 })
-node1_l1cache0_to_core = node1_l1cache0.setSubComponent("cpulink", "memHierarchy.MemLink")
-node1_l1cache0_to_network = node1_l1cache0.setSubComponent("memlink", "memHierarchy.MemNIC")
+node1_l1cache0_to_network = node1_l1cache0.setSubComponent("lowlink", "memHierarchy.MemNIC")
 node1_l1cache0_to_network.addParams({
     "group" : 0,
     "network_bw" : "25GB/s",
@@ -170,8 +167,7 @@ node1_l1cache1.addParams({
       "debug" : DEBUG_L1 | DEBUG_CORE1 | DEBUG_NODE0,
       "debug_level" : 10,
 })
-node1_l1cache1_to_core = node1_l1cache1.setSubComponent("cpulink", "memHierarchy.MemLink")
-node1_l1cache1_to_network = node1_l1cache1.setSubComponent("memlink", "memHierarchy.MemNIC")
+node1_l1cache1_to_network = node1_l1cache1.setSubComponent("lowlink", "memHierarchy.MemNIC")
 node1_l1cache1_to_network.addParams({
     "group" : 0,
     "network_bw" : "25GB/s",
@@ -237,10 +233,10 @@ node1_dc1.addParams({
       "addr_range_start" : 75*1024,
 })
 # Create and parameterize memNIC for each dir
-node0_dc0_to_network = node0_dc0.setSubComponent("cpulink", "memHierarchy.MemNIC")
-node0_dc1_to_network = node0_dc1.setSubComponent("cpulink", "memHierarchy.MemNIC")
-node1_dc0_to_network = node1_dc0.setSubComponent("cpulink", "memHierarchy.MemNIC")
-node1_dc1_to_network = node1_dc1.setSubComponent("cpulink", "memHierarchy.MemNIC")
+node0_dc0_to_network = node0_dc0.setSubComponent("highlink", "memHierarchy.MemNIC")
+node0_dc1_to_network = node0_dc1.setSubComponent("highlink", "memHierarchy.MemNIC")
+node1_dc0_to_network = node1_dc0.setSubComponent("highlink", "memHierarchy.MemNIC")
+node1_dc1_to_network = node1_dc1.setSubComponent("highlink", "memHierarchy.MemNIC")
 node0_dc0_to_network.addParams({
       "network_bw" : "25GB/s",
       "group" : 1,
@@ -257,11 +253,6 @@ node1_dc1_to_network.addParams({
       "network_bw" : "25GB/s",
       "group" : 1,
 })
-# Create memlink (to memory controller) for each dir
-node0_dc0_to_memory = node0_dc0.setSubComponent("memlink", "memHierarchy.MemLink")
-node0_dc1_to_memory = node0_dc1.setSubComponent("memlink", "memHierarchy.MemLink")
-node1_dc0_to_memory = node1_dc0.setSubComponent("memlink", "memHierarchy.MemLink")
-node1_dc1_to_memory = node1_dc1.setSubComponent("memlink", "memHierarchy.MemLink")
 
 # Memory controllers
 node0_mc0 = sst.Component("n0.memory0", "memHierarchy.MemController")
@@ -312,11 +303,6 @@ node0_mem1.addParams( { "access_time" : "100 ns", "mem_size" : "50KiB" } )
 node1_mem0.addParams( { "access_time" : "100 ns", "mem_size" : "50KiB" } )
 node1_mem1.addParams( { "access_time" : "100 ns", "mem_size" : "50KiB" } )
 
-# Create memlink (to directories) for each memory controller
-node0_mem0_to_dc = node0_mc0.setSubComponent("cpulink", "memHierarchy.MemLink")
-node0_mem1_to_dc = node0_mc1.setSubComponent("cpulink", "memHierarchy.MemLink")
-node1_mem0_to_dc = node1_mc0.setSubComponent("cpulink", "memHierarchy.MemLink")
-node1_mem1_to_dc = node1_mc1.setSubComponent("cpulink", "memHierarchy.MemLink")
 
 ####################
 # Enable statistics
@@ -337,10 +323,10 @@ link_node0_core0 = sst.Link("link_n0_core0")
 link_node0_core1 = sst.Link("link_n0_core1")
 link_node1_core0 = sst.Link("link_n1_core0")
 link_node1_core1 = sst.Link("link_n1_core1")
-link_node0_core0.connect( (node0_core0_iface, "port", "1000ps"), (node0_l1cache0_to_core, "port", "1000ps") )
-link_node0_core1.connect( (node0_core1_iface, "port", "1000ps"), (node0_l1cache1_to_core, "port", "1000ps") )
-link_node1_core0.connect( (node1_core0_iface, "port", "1000ps"), (node1_l1cache0_to_core, "port", "1000ps") )
-link_node1_core1.connect( (node1_core1_iface, "port", "1000ps"), (node1_l1cache1_to_core, "port", "1000ps") )
+link_node0_core0.connect( (node0_core0_iface, "lowlink", "1000ps"), (node0_l1cache0, "highlink", "1000ps") )
+link_node0_core1.connect( (node0_core1_iface, "lowlink", "1000ps"), (node0_l1cache1, "highlink", "1000ps") )
+link_node1_core0.connect( (node1_core0_iface, "lowlink", "1000ps"), (node1_l1cache0, "highlink", "1000ps") )
+link_node1_core1.connect( (node1_core1_iface, "lowlink", "1000ps"), (node1_l1cache1, "highlink", "1000ps") )
 
 
 # L1s to network
@@ -368,10 +354,10 @@ link_node0_dc0_mc0 = sst.Link("link_n0_dc0_m0")
 link_node0_dc1_mc1 = sst.Link("link_n0_dc1_m1")
 link_node1_dc0_mc0 = sst.Link("link_n1_dc0_m0")
 link_node1_dc1_mc1 = sst.Link("link_n1_dc1_m1")
-link_node0_dc0_mc0.connect( (node0_dc0_to_memory, "port", "1000ps"), (node0_mem0_to_dc, "port", "1000ps") )
-link_node0_dc1_mc1.connect( (node0_dc1_to_memory, "port", "1000ps"), (node0_mem1_to_dc, "port", "1000ps") )
-link_node1_dc0_mc0.connect( (node1_dc0_to_memory, "port", "1000ps"), (node1_mem0_to_dc, "port", "1000ps") )
-link_node1_dc1_mc1.connect( (node1_dc1_to_memory, "port", "1000ps"), (node1_mem1_to_dc, "port", "1000ps") )
+link_node0_dc0_mc0.connect( (node0_dc0, "lowlink", "1000ps"), (node0_mc0, "highlink", "1000ps") )
+link_node0_dc1_mc1.connect( (node0_dc1, "lowlink", "1000ps"), (node0_mc1, "highlink", "1000ps") )
+link_node1_dc0_mc0.connect( (node1_dc0, "lowlink", "1000ps"), (node1_mc0, "highlink", "1000ps") )
+link_node1_dc1_mc1.connect( (node1_dc1, "lowlink", "1000ps"), (node1_mc1, "highlink", "1000ps") )
 
 
 

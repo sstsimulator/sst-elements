@@ -76,6 +76,10 @@ enum class MemEventType { Cache, Move, Custom };                    // For parsi
     X(FetchInvX,        FetchXResp,     Request,    ForwardRequest, 0, 0,   Cache)   /* Other read request to owner:   Downgrade cache line to O/S (Remove exclusivity) */\
     X(FetchResp,        NULLCMD,        Response,   Data,           1, 0,   Cache)   /* response to a Fetch, FetchInv or FetchInvX request */\
     X(FetchXResp,       NULLCMD,        Response,   Data,           1, 0,   Cache)   /* response to a FetchInvX request - indicates a shared copy of the line was kept */\
+    /* Flush orchestration */\
+    X(ForwardFlush,     AckFlush,       Request,    ForwardRequest, 0, 0,   Cache)   /* Forwarded request to flush an entire cache */\
+    X(AckFlush,         NULLCMD,        Response,   Ack,            0, 0,   Cache)   /* Acknowledge that cache is flushed */\
+    X(UnblockFlush,     NULLCMD,        Response,   Ack,            0, 0,   Cache)   /* Confirm that flush is complete and it is safe to unblock cache */\
     /* Others */\
     X(NACK,             NULLCMD,        Response,   Ack,            1, 0,   Cache)   /* NACK response to a message */\
     X(AckInv,           NULLCMD,        Response,   Ack,            1, 0,   Cache)   /* Acknowledgement response to an invalidation request */\
@@ -227,6 +231,9 @@ static const std::string NONE = "None";
 
 // Define status types used internally to classify event handling resutls
 enum class MemEventStatus { OK, Stall, Reject };
+
+// Define global cache state used to manage cache flushes
+enum class FlushState { Ready, Drain, Forward, Invalidate };
 
 /* Define an address region by start/end & interleaving */
 class MemRegion : public SST::Core::Serialization::serializable {

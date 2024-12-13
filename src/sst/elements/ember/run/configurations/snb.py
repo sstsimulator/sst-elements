@@ -53,26 +53,27 @@ def _configureL1L2(prefix, id, l1_params, l1_prefetch_params, l2_params, l2_pref
     name = prefix + "l2cache_" + id
     #print 'create', name
     l2 = sst.Component(name, "memHierarchy.Cache")
-    l2.addParams({ 
-        "network_address" : network_id })
     l2.addParams(l2_params)
     l2.addParams(l2_prefetch_params)
+    l2_nic = l2.setSubComponent("lowlink", "memHierarchy.MemNIC")
+    l2_nic.addParam("group",1)
+    l2_nic.addParams("network_bw" : l2_params["network_bw"])
 
     name = prefix + "l2cache_" + id+ "_link"
     #print 'create', name
     l2_core_link = sst.Link(name)
-    l2_core_link.connect((l1, "low_network_0", ring_latency), (l2, "high_network_0", ring_latency))
+    l2_core_link.connect((l1, "lowlink", ring_latency), (l2, "highink", ring_latency))
 
     name = prefix + "l2_ring_link_" + id
 
     #print 'create', name
     l2_ring_link = sst.Link(name)
-    l2_ring_link.connect((l2, "cache", ring_latency), (rtr, "port2", ring_latency))
+    l2_ring_link.connect((l2_nic, "port", ring_latency), (rtr, "port2", ring_latency))
     return l1
 
 
 #ariel_cache_link = sst.Link("ariel_cache_link_" + str(next_core_id))
-#ariel_cache_link.connect( (ariel, "cache_link_" + str(next_core_id), ring_latency), (l1, "high_network_0", ring_latency) )
+#ariel_cache_link.connect( (ariel, "cache_link_" + str(next_core_id), ring_latency), (l1, "highlink", ring_latency) )
 
 def _configureL3( prefix, id, l3_params, network_id, ring_latency, rtr ):
 
@@ -83,14 +84,16 @@ def _configureL3( prefix, id, l3_params, network_id, ring_latency, rtr ):
     l3cache.addParams(l3_params)
 
     l3cache.addParams({
-        "network_address" : network_id,
         "slice_id" : id
     })
+    l3_nic = l3cache.setSubComponent("highlink", "memHierarchy.MemNIC")
+    l3_nic.addParam("group",2)
+    l3_nic.addParams("network_bw" : l3_params["network_bw"])
 
     name = prefix + "l3_ring_link_" + id
     #print 'create', name
     l3_ring_link = sst.Link(name)
-    l3_ring_link.connect( (l3cache, "directory", ring_latency), (rtr, "port2", ring_latency) )
+    l3_ring_link.connect( (l3_nic, "port", ring_latency), (rtr, "port2", ring_latency) )
 
 
 
@@ -105,21 +108,23 @@ def _configureMemCtrl( prefix, id, dc_params, mem_params, start_addr, end_addr, 
     #print 'create' , name
     dc = sst.Component(name, "memHierarchy.DirectoryController")
     dc.addParams({
-        "network_address" : network_id,
         "addr_range_start" : start_addr,
         "addr_range_end" : end_addr,
     })
     dc.addParams(dc_params)
+    dc_nic = dc.setSubComponent("highlink", "memHierarchy.MemNIC")
+    dc_nic.addParam("group",2)
+    dc_nic.addParams("network_bw" : dc_params["network_bw"])
 
     name = prefix + "mem_link_" + id
     #print 'create', name
     memLink = sst.Link(name)
-    memLink.connect((mem, "direct_link", ring_latency), (dc, "memory", ring_latency))
+    memLink.connect((mem, "highlink", ring_latency), (dc, "lowlink", ring_latency))
 
     name = prefix + "dc_ring_link_" + id
     #print 'create', name
     netLink = sst.Link(name)
-    netLink.connect((dc, "network", ring_latency), (rtr, "port2", ring_latency))
+    netLink.connect((dc_nic, "port", ring_latency), (rtr, "port2", ring_latency))
 
 
 def _configCache( prefix, 

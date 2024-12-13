@@ -183,7 +183,7 @@ void Sieve::init(unsigned int phase) {
         MemRegion region;
         region.setDefault();
         for (int i = 0; i < cpuLinkCount_; i++) {
-            cpuLinks_[i]->sendUntimedData(new MemEventInitRegion(getName(), region ,false));
+            cpuLinks_[i]->sendUntimedData(new MemEventInitRegion(getName(), region , MemEventInitRegion::ReachableGroup::Dest));
         }
     }
 

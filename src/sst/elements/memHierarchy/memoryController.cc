@@ -97,20 +97,6 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     // Check for deprecated parameters and warn/fatal
     // Currently deprecated - network_num_vc, statistic, direct_link
     bool found;
-    params.find<int>("statistics", 0, found);
-    if (found) {
-        out.output("%s, **WARNING** ** Found deprecated parameter: statistics **  memHierarchy statistics have been moved to the Statistics API. Please see sst-info to view available statistics and update your input deck accordingly.\nNO statistics will be printed otherwise! Remove this parameter from your deck to eliminate this message.\n", getName().c_str());
-    }
-
-    params.find<int>("network_num_vc", 0, found);
-    if (found) {
-        out.output("%s, ** Found deprecated parameter: network_num_vc ** MemHierarchy does not use multiple virtual channels. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
-    }
-
-    params.find<int>("direct_link", 0, found);
-    if (found) {
-        out.output("%s, ** Found deprecated parameter: direct_link ** The value of this parameter is now auto-detected by the link configuration in your input deck. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
-    }
 
     /* Clock Handler */
     std::string clockfreq = params.find<std::string>("clock");
@@ -234,18 +220,32 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     region_.interleaveSize = UnitAlgebra(ilSize).getRoundedValue();
     region_.interleaveStep = UnitAlgebra(ilStep).getRoundedValue();
 
-    link_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, clockTimeBase_);
+    link_ = loadUserSubComponent<MemLinkBase>("highlink", ComponentInfo::SHARE_NONE, clockTimeBase_);
+    if (!link_) {
+        link_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, clockTimeBase_);
+        if (link_) {
+            out.output("%s, DEPRECATION WARNING: The 'cpulink' subcomponent slot has been renamed to 'highlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
+        }
+    }
 
     if (!link_ && isPortConnected("direct_link")) {
         Params linkParams = params.get_scoped_params("cpulink");
         linkParams.insert("port", "direct_link");
         linkParams.insert("latency", link_lat, false);
-        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams, clockTimeBase_);
+        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams, clockTimeBase_);
+        out.output("%s, WARNING: To standardize port names across memHierarchy elements, the MemController's port 'direct_link' has been renamed to 'highlink'. The 'direct_link' port will be removed in SST 16.\n", getName().c_str());
+    } else if (!link_ && isPortConnected("highlink")) {
+        Params linkParams = params.get_scoped_params("highlink");
+        linkParams.insert("port", "highlink");
+        linkParams.insert("latency", link_lat, false);
+        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams, clockTimeBase_);
     } else if (!link_) {
 
         if (!isPortConnected("network")) {
-            out.fatal(CALL_INFO,-1,"%s, Error: No connected port detected. Connect 'direct_link' or 'network' port.\n", getName().c_str());
+            out.fatal(CALL_INFO,-1,"%s, Error: No connected port detected. Connect 'highlink' port, or if this memory is on a network, fill the 'highlink' subcomponent slot with memHierarchy.MemNIC or memHierarchy.MemNICFour.\n", getName().c_str());
         }
+
+        out.output("%s, WARNING: Use of the network* ports in MemController is deprecated. Instead, fill this component's 'highlink' subcomponent slot with memHierarchy.MemNIC or memHierarchy.MemNICFour\n", getName().c_str());
 
         Params nicParams = params.get_scoped_params("memNIC");
         nicParams.insert("group", "4", false);
@@ -255,10 +255,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
             nicParams.insert("ack.port", "network_ack");
             nicParams.insert("fwd.port", "network_fwd");
             nicParams.insert("data.port", "network_data");
-            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, clockTimeBase_);
+            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, clockTimeBase_);
         } else {
             nicParams.insert("port", "network");
-            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, clockTimeBase_);
+            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "highlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, clockTimeBase_);
         }
     }
 
@@ -456,6 +456,18 @@ void MemController::handleEvent(SST::Event* event) {
                 }
                 memBackendConvertor_->handleMemEvent( ev );
 
+            }
+            break;
+        case Command::FlushAll:
+            {
+                MemEvent * resp = ev->makeResponse();
+
+                if (is_debug_event(resp)) {
+                    Debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
+                        getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), resp->getVerboseString(dlevel).c_str());
+                }
+                link_->send( resp );
+                delete ev;
             }
             break;
 

@@ -46,7 +46,7 @@ for x in range(0, corecount):
         "L1" : 1,
     } )
     ariel_l1d_link = sst.Link("cpu_cache_link_" + str(x))
-    ariel_l1d_link.connect( (ariel, "cache_link_" + str(x), "50ps"), (l1d, "high_network_0", "50ps") )
+    ariel_l1d_link.connect( (ariel, "cache_link_" + str(x), "50ps"), (l1d, "highlink", "50ps") )
 
     # Private L2s
     # 128KB, 8-way set associative, 64B line, 5 cycle access
@@ -63,10 +63,10 @@ for x in range(0, corecount):
     })
 	
     l1d_l2_link = sst.Link("l1_l2_link_" + str(x))
-    l1d_l2_link.connect( (l1d, "low_network_0", "50ps"), (l2, "high_network_0", "50ps") )
+    l1d_l2_link.connect( (l1d, "lowlink", "50ps"), (l2, "highlink", "50ps") )
 
     l2_bus_link = sst.Link("l2_bus_link_" + str(x))
-    l2_bus_link.connect( (l2, "low_network_0", "50ps"), (membus, "high_network_" + str(x), "50ps") )
+    l2_bus_link.connect( (l2, "lowlink", "50ps"), (membus, "highlink" + str(x), "50ps") )
 
 # Shared L3
 # 1MB*cores, 16-way set associative, 64B line, 15 cycle access
@@ -83,7 +83,7 @@ l3.addParams( {
 } )
 
 l3_bus_link = sst.Link("l3_bus_link")
-l3_bus_link.connect( (l3, "high_network_0", "50ps"), (membus, "low_network_0", "50ps") )
+l3_bus_link.connect( (l3, "highlink", "50ps"), (membus, "lowlink0", "50ps") )
 
 # Memory/Controller
 # Using "simpleMem" memory model
@@ -97,6 +97,6 @@ memory.addParams({
 })
 
 memory_bus_link = sst.Link("memory_bus_link")
-memory_bus_link.connect( (l3, "low_network_0", "50ps"), (memctrl, "direct_link", "50ps") )
+memory_bus_link.connect( (l3, "lowlink", "50ps"), (memctrl, "highlink", "50ps") )
 
 print("Done configuring SST model")

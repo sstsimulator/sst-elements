@@ -75,6 +75,7 @@ standardCPU::standardCPU(ComponentId_t id, Params& params) :
     unsigned writef = params.find<unsigned>("write_freq", 75);
     unsigned flushf = params.find<unsigned>("flush_freq", 0);
     unsigned flushinvf = params.find<unsigned>("flushinv_freq", 0);
+    unsigned flushcachef = params.find<unsigned>("flushcache_freq", 0);
     unsigned customf = params.find<unsigned>("custom_freq", 0);
     unsigned llscf = params.find<unsigned>("llsc_freq", 0);
     unsigned mmiof = params.find<unsigned>("mmio_freq", 0);
@@ -83,17 +84,18 @@ standardCPU::standardCPU(ComponentId_t id, Params& params) :
         out.fatal(CALL_INFO, -1, "%s, Error: mmio_freq is > 0 but no mmio device has been specified via mmio_addr\n", getName().c_str());
     }
 
-    high_mark = readf + writef + flushf + flushinvf + customf + llscf + mmiof; /* Numbers less than this and above other marks indicate read */
+    high_mark = readf + writef + flushf + flushinvf + flushcachef + customf + llscf + mmiof; /* Numbers less than this and above other marks indicate read */
     if (high_mark == 0) {
         out.fatal(CALL_INFO, -1, "%s, Error: The input doesn't indicate a frequency for any command type.\n", getName().c_str());
     }
     write_mark = writef;    /* Numbers less than this indicate write */
     flush_mark = write_mark + flushf; /* Numbers less than this indicate flush */
     flushinv_mark = flush_mark + flushinvf; /* Numbers less than this indicate flush-inv */
-    custom_mark = flushinv_mark + customf; /* Numbers less than this indicate flush */
+    flushcache_mark = flushinv_mark + flushcachef; /* Numbers less than this indicate flush-cache */
+    custom_mark = flushcache_mark + customf; /* Numbers less than this indicate flush */
     llsc_mark = custom_mark + llscf; /* Numbers less than this indicate LL-SC */
     mmio_mark = llsc_mark + mmiof; /* Numbers less than this indicate MMIO read or write */
-
+    
     noncacheableRangeStart = params.find<uint64_t>("noncacheableRangeStart", 0);
     noncacheableRangeEnd = params.find<uint64_t>("noncacheableRangeEnd", 0);
     noncacheableSize = noncacheableRangeEnd - noncacheableRangeStart;
@@ -133,6 +135,9 @@ standardCPU::standardCPU(ComponentId_t id, Params& params) :
     if (flushinvf != 0) {
         num_flushinvs_issued = registerStatistic<uint64_t>("flushinvs");
     }
+    if (flushcachef != 0) {
+        num_flushcache_issued = registerStatistic<uint64_t>("flushcaches");
+    }
     if (customf != 0) {
         num_custom_issued = registerStatistic<uint64_t>("customReqs");
     }
@@ -161,7 +166,10 @@ void standardCPU::handleEvent(StandardMem::Request *req)
 {
     std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = requests.find(req->getID());
     if ( requests.end() == i ) {
-        out.fatal(CALL_INFO, -1, "Event (%" PRIx64 ") not found!\n", req->getID());
+        out.output("%s, Error, Event (%" PRIu64 ") for request (%s) not found\n", getName().c_str(), req->getID(), req->getString().c_str());
+        for (const auto& [key, value] : requests)
+            out.output("\t%" PRIu64 " %s, %" PRIu64 "\n", key, value.second.c_str(), value.first);
+        out.fatal(CALL_INFO, -1, "%s, Error: Event (%" PRIu64 ") not found!\n", getName().c_str(), req->getID());
     } else {
         SimTime_t et = getCurrentSimTime() - i->second.first;
         if (i->second.second == "StoreConditional" && req->getSuccess())
@@ -210,7 +218,7 @@ bool standardCPU::clockTic( Cycle_t )
                 if (ll_issued) {
                     req = createSC();
                     cmdString = "StoreConditional";
-                }else if (instNum < write_mark) {
+                } else if (instNum < write_mark) {
                     req = createWrite(addr);
                     cmdString = "Write";
                 } else if (instNum < flush_mark) {
@@ -219,6 +227,9 @@ bool standardCPU::clockTic( Cycle_t )
                 } else if (instNum < flushinv_mark) {
                     req = createFlushInv(addr);
                     cmdString = "FlushInv";
+                } else if (instNum < flushcache_mark) {
+                    req = createFlushCache();
+                    cmdString = "FlushCache";
                 } else if (instNum < custom_mark) {
                 } else if (instNum < llsc_mark) {
                     req = createLL(addr);
@@ -310,6 +321,13 @@ StandardMem::Request* standardCPU::createFlushInv(Addr addr) {
     StandardMem::Request* req = new Interfaces::StandardMem::FlushAddr(addr, lineSize, true, 10);
     num_flushinvs_issued->addData(1);
     out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued FlushAddrInv for address 0x%" PRIx64 "\n", getName().c_str(), ops,  addr);
+    return req;
+}
+
+StandardMem::Request* standardCPU::createFlushCache() {
+    StandardMem::Request* req = new Interfaces::StandardMem::FlushCache();
+    num_flushcache_issued->addData(1);
+    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued FlushCache\n", getName().c_str(), ops);
     return req;
 }
 

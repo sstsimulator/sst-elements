@@ -86,8 +86,7 @@ comp_l2_0.addParams({
     "associativity" : 8,
     "replacement_policy" : "mru",
 })
-l2_link_0 = comp_l2_0.setSubComponent("cpulink", "memHierarchy.MemLink")
-l2_nic_0 = comp_l2_0.setSubComponent("memlink", "memHierarchy.MemNIC")
+l2_nic_0 = comp_l2_0.setSubComponent("lowlink", "memHierarchy.MemNIC")
 l2_nic_0.addParams({
     "network_bw" : "80GiB/s",
     "group" : 1,
@@ -162,8 +161,7 @@ comp_l2_1.addParams({
     "associativity" : 8,
     "replacement_policy" : "nmru",
 })
-l2_link_1 = comp_l2_1.setSubComponent("cpulink", "memHierarchy.MemLink")
-l2_nic_1 = comp_l2_1.setSubComponent("memlink", "memHierarchy.MemNIC")
+l2_nic_1 = comp_l2_1.setSubComponent("lowlink", "memHierarchy.MemNIC")
 l2_nic_1.addParams({
     "network_bw" : "80GiB/s",
     "group" : 1,
@@ -177,7 +175,7 @@ comp_dir.addParams({
     "coherence_protocol" : "MESI",
     "addr_range_start" : 0,
 })
-dir_nic = comp_dir.setSubComponent("cpulink", "memHierarchy.MemNIC")
+dir_nic = comp_dir.setSubComponent("highlink", "memHierarchy.MemNIC")
 dir_nic.addParams({
     "network_bw" : "80GiB/s",
     "group" : 2,
@@ -196,7 +194,7 @@ scratch.addParams({
 conv = scratch.setSubComponent("backendConvertor", "memHierarchy.simpleMemScratchBackendConvertor")
 scratch_backend = conv.setSubComponent("backend", "memHierarchy.simpleMem")
 scratch_backend.addParam("access_time", "10ns")
-scratch_nic = scratch.setSubComponent("cpulink", "memHierarchy.MemNIC")
+scratch_nic = scratch.setSubComponent("highlink", "memHierarchy.MemNIC")
 scratch_nic.addParams({
     "network_bw" : "50GB/s",
     "group" : 3,
@@ -227,7 +225,7 @@ memctrl0.addParams({
     "interleave_step" : "256B",
 })
 
-memnic0 = memctrl0.setSubComponent("cpulink", "memHierarchy.MemNIC")
+memnic0 = memctrl0.setSubComponent("highlink", "memHierarchy.MemNIC")
 memnic0.addParams({
     "network_bw" : "50GB/s",
     "group" : 4,
@@ -251,7 +249,7 @@ memctrl1.addParams({
     "interleave_step" : "256B",
 })
 
-memnic1 = memctrl1.setSubComponent("cpulink", "memHierarchy.MemNIC")
+memnic1 = memctrl1.setSubComponent("highlink", "memHierarchy.MemNIC")
 memnic1.addParams({
     "network_bw" : "50GB/s",
     "group" : 4,
@@ -285,34 +283,34 @@ for a in componentlist:
 
 # Define the simulation links
 link_cpu0_l1 = sst.Link("link_cpu0_l1")
-link_cpu0_l1.connect( (iface0, "port", "100ps"), (comp_l1_0, "high_network_0", "100ps") )
+link_cpu0_l1.connect( (iface0, "lowlink", "100ps"), (comp_l1_0, "highlink", "100ps") )
 
 link_cpu1_l1 = sst.Link("link_cpu1_l1")
-link_cpu1_l1.connect( (iface1, "port", "100ps"), (comp_l1_1, "high_network_0", "100ps") )
+link_cpu1_l1.connect( (iface1, "lowlink", "100ps"), (comp_l1_1, "highlink", "100ps") )
 
 link_cpu2_l1 = sst.Link("link_cpu2_l1")
-link_cpu2_l1.connect( (iface2, "port", "100ps"), (comp_l1_2, "high_network_0", "100ps") )
+link_cpu2_l1.connect( (iface2, "lowlink", "100ps"), (comp_l1_2, "highlink", "100ps") )
 
 link_cpu3_l1 = sst.Link("link_cpu3_l1")
-link_cpu3_l1.connect( (iface3, "port", "100ps"), (comp_l1_3, "high_network_0", "100ps") )
+link_cpu3_l1.connect( (iface3, "lowlink", "100ps"), (comp_l1_3, "highlink", "100ps") )
 
 link_cpu0_bus = sst.Link("link_cpu0_bus")
-link_cpu0_bus.connect( (comp_l1_0, "low_network_0", "100ps"), (comp_bus_0, "high_network_0", "100ps") )
+link_cpu0_bus.connect( (comp_l1_0, "lowlink", "100ps"), (comp_bus_0, "highlink0", "100ps") )
 
 link_cpu1_bus = sst.Link("link_cpu1_bus")
-link_cpu1_bus.connect( (comp_l1_1, "low_network_0", "100ps"), (comp_bus_0, "high_network_1", "100ps") )
+link_cpu1_bus.connect( (comp_l1_1, "lowlink", "100ps"), (comp_bus_0, "highlink1", "100ps") )
 
 link_cpu2_bus = sst.Link("link_cpu2_bus")
-link_cpu2_bus.connect( (comp_l1_2, "low_network_0", "100ps"), (comp_bus_1, "high_network_0", "100ps") )
+link_cpu2_bus.connect( (comp_l1_2, "lowlink", "100ps"), (comp_bus_1, "highlink0", "100ps") )
 
 link_cpu3_bus = sst.Link("link_cpu3_bus")
-link_cpu3_bus.connect( (comp_l1_3, "low_network_0", "100ps"), (comp_bus_1, "high_network_1", "100ps") )
+link_cpu3_bus.connect( (comp_l1_3, "lowlink", "100ps"), (comp_bus_1, "highlink1", "100ps") )
 
 link_bus_l2_0 = sst.Link("link_bus_l2_0")
-link_bus_l2_0.connect( (comp_bus_0, "low_network_0", "100ps"), (l2_link_0, "port", "100ps") )
+link_bus_l2_0.connect( (comp_bus_0, "lowlink0", "100ps"), (comp_l2_0, "highlink", "100ps") )
 
 link_bus_l2_1 = sst.Link("link_bus_l2_1")
-link_bus_l2_1.connect( (comp_bus_1, "low_network_0", "100ps"), (l2_link_1, "port", "100ps") )
+link_bus_l2_1.connect( (comp_bus_1, "lowlink0", "100ps"), (comp_l2_1, "highlink", "100ps") )
 
 link_l2_net0 = sst.Link("link_l2_net_0")
 link_l2_net0.connect( (l2_nic_0, "port", "100ps"), (comp_net, "port0", "100ps") )

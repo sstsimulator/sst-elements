@@ -67,10 +67,17 @@ Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
     maxRequestsPerCycle_        = params.find<int>("max_requests_per_cycle",-1);
     string packetSize           = params.find<std::string>("min_packet_size", "8B");
 
-    UnitAlgebra packetSize_ua(packetSize);
-    if (!packetSize_ua.hasUnits("B")) {
-        out_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packetSize.c_str());
+    try {
+        UnitAlgebra packetSize_ua(packetSize);
+        
+        if (!packetSize_ua.hasUnits("B")) {
+            out_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packetSize.c_str());
+        }
+    } catch (UnitAlgebra::UnitAlgebraException& exc) {
+        out_->fatal(CALL_INFO, -1, "%s, Invalid param: Exception occurred while parsing 'min_packet_size'. '%s'\n", getName().c_str(), exc.what());
     }
+
+
 
     if (maxRequestsPerCycle_ == 0) {
         maxRequestsPerCycle_ = -1;  // Simplify compare
@@ -212,26 +219,48 @@ void Cache::createCoherenceManager(Params &params) {
 
 /*
  *  Configure links to components above (closer to CPU) and below (closer to memory)
- *  Check for connected ports to determine which links to use
- *  Valid port combos:
- *      high_network_0 & low_network_%d : connected to core/cache/bus above and cache/bus below
- *      high_network_0 & cache          : connected to core/cache/bus above and network talking to a cache below
- *      high_network_0 & directory      : connected to core/cache/bus above and network talking to a directory below
- *      directory                       : connected to a network talking to a cache above and a directory below (single network connection)
- *      cache & low_network_0           : connected to network above talking to a cache and core/cache/bus below
+ *  Check for connected ports or port managers
+ * 
+ * Complicated because of so many deprecations. Will be simpler as of SST 16 when deprecated
+ * names are removed.
  */
 void Cache::configureLinks(Params &params, TimeConverter* tc) {
-    linkUp_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, tc);
-    if (linkUp_)
+    bool highlink = isPortConnected("highlink");
+    bool lowlink = isPortConnected("lowlink");
+    
+    linkUp_ = loadUserSubComponent<MemLinkBase>("highlink", ComponentInfo::SHARE_NONE, tc);
+    if (!linkUp_) {
+        linkUp_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, tc);
+        if (linkUp_) {
+            out_->output("%s, DEPRECATION WARNING: The 'cpulink' subcomponent slot has been renamed to 'highlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
+        } else if (highlink) {
+            Params p;
+            p.insert("port", "highlink");
+            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, p, tc);
+        }
+    }
+    if (linkUp_) {
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
+    } 
 
-    linkDown_ = loadUserSubComponent<MemLinkBase>("memlink", ComponentInfo::SHARE_NONE, tc);
-    if (linkDown_)
+    linkDown_ = loadUserSubComponent<MemLinkBase>("lowlink", ComponentInfo::SHARE_NONE, tc);
+    if (!linkDown_) {
+        linkDown_ = loadUserSubComponent<MemLinkBase>("memlink", ComponentInfo::SHARE_NONE, tc);
+        if (linkDown_) {
+            out_->output("%s, DEPRECATION WARNING: The 'memlink' subcomponent slot has been renamed to 'lowlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
+        } else if (lowlink) {
+            Params p;
+            p.insert("port", "lowlink");
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, p, tc);
+        }
+    }
+    if (linkDown_) {
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
+    }
 
     if (linkUp_ || linkDown_) {
         if (!linkUp_ || !linkDown_)
-            out_->verbose(_L3_, "%s, Detected user defined subcomponent for either the cpu or mem link but not both. Assuming this component has just one link.\n", getName().c_str());
+            out_->verbose(_L3_, "%s, Detected use of either the highlink or lowlink but not both. Assuming this component has just one link.\n", getName().c_str());
         if (!linkUp_)
             linkUp_ = linkDown_;
         if (!linkDown_)
@@ -267,16 +296,27 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
         std::string istep = params.find<std::string>("interleave_step", "0B", found);
         gotRegion |= found;
 
-        if (!UnitAlgebra(isize).hasUnits("B")) {
-            out_->fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
-                    getName().c_str(), isize.c_str());
+        try {
+            UnitAlgebra isize_ua = UnitAlgebra(isize);
+            if (!isize_ua.hasUnits("B")) {
+                out_->fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
+                        getName().c_str(), isize.c_str());
+            }
+            region_.interleaveSize = isize_ua.getRoundedValue();
+        } catch (UnitAlgebra::UnitAlgebraException& exc) {
+            out_->fatal(CALL_INFO, -1, "%s, Invalid param: Exception occurred while parsing 'interleave_size'. '%s'\n", getName().c_str(), exc.what());
         }
-        if (!UnitAlgebra(istep).hasUnits("B")) {
-            out_->fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
-                    getName().c_str(), istep.c_str());
+
+        try {
+            UnitAlgebra istep_ua = UnitAlgebra(istep);
+            if (!istep_ua.hasUnits("B")) {
+                out_->fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
+                        getName().c_str(), istep.c_str());
+            }
+            region_.interleaveStep = istep_ua.getRoundedValue();
+        } catch (UnitAlgebra::UnitAlgebraException& exc) {
+            out_->fatal(CALL_INFO, -1, "%s, Invalid param: Exception occurred while parsing 'interleave_step'. '%s'\n", getName().c_str(), exc.what());
         }
-        region_.interleaveSize = UnitAlgebra(isize).getRoundedValue();
-        region_.interleaveStep = UnitAlgebra(istep).getRoundedValue();
 
         if (!gotRegion && sliceCount > 1) {
             gotRegion = true;
@@ -316,41 +356,59 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
     }
 
 
+    // This is the "old" path for figuring out how the cache is connected to other components
+    // To update a python input file: 
+    //      (1) Add the subcomponent load line for the port(s) below 
+    //      (2) Connect the subcomponent's ports instead of the cache's ports 
+    //
+    // Old Port         | New method (put this in python, replace 'cache' with the component instance)
+    // =====================
+    // high_network_0   | cache.loadSubComponent("highlink", "memHierarchy.MemLink") OR connect 'highlink' port
+    // low_network_0    | cache.loadSubComponent("lowlink", "memHierarchy.MemLink") OR connect 'lowlink' port
+    // cache            | cache.loadSubComponent("highlink", "memHierarchy.MemNIC")
+    // directory        | cache.loadSubComponent("lowlink", "memHierarchy.MemNIC")
+    // cache, cache_ack, cache_fwd, cache_data  | cache.loadSubComponent("highlink", "memHierarchy.MemNICFour")
+    // directory, directory_ack, directory_fwd, directory_data | cache.loadSubComponent("lowlink", "memHierarchy.MemNICFour")
+    //
     bool highNetExists  = false;    // high_network_0 is connected -> direct link toward CPU (to bus or directly to other component)
     bool lowCacheExists = false;    // cache is connected -> direct link towards memory to cache
     bool lowDirExists   = false;    // directory is connected -> network link towards memory to directory
-    bool lowNetExists   = false;    // low_network_%d port(s) are connected -> direct link towards memory (to bus or other component)
+    bool lowNetExists   = false;    // low_network_0 port is connected -> direct link towards memory (or to bus or other component)
 
     highNetExists   = isPortConnected("high_network_0");
     lowCacheExists  = isPortConnected("cache");
     lowDirExists    = isPortConnected("directory");
     lowNetExists    = isPortConnected("low_network_0");
+    
+    out_->output("%s, DEPRECATION WARNING: The following ports on MemHierarchy Caches are deprecated: high_network_0, cache, directory, low_network_0. MemHierarchy port names are being standardized. To connect to a non-network component, use the 'highlink' and/or 'lowlink' ports or fill the subcomponent slots of the same name with 'memHierarchy.MemLink'. To connect to a network component, fill the 'highlink' and/or 'lowlink' subcomponent slots with 'memHierarchy.MemNIC' or 'memHierarchy.MemNICFour'. When using the subcomponent slots, do not connect this cache's ports and instead connect the subcomponent's port(s). The high_network_0, low_network_0, cache, and directory ports will be removed in future versions of SST.\n", getName().c_str());
 
     /* Check for valid port combos */
     if (highNetExists) {
-        if (!lowCacheExists && !lowDirExists && !lowNetExists)
-            out_->fatal(CALL_INFO,-1,"%s, Error: no connected low ports detected. Please connect one of 'cache' or 'directory' or connect N components to 'low_network_n' where n is in the range 0 to N-1\n",
+        if (!lowCacheExists && !lowDirExists && !lowNetExists) {
+            out_->fatal(CALL_INFO,-1,"%s, Error: no connected low ports detected. Please connect 'lowlink'\n",
                     getName().c_str());
+        }
         if ((lowCacheExists && (lowDirExists || lowNetExists)) || (lowDirExists && lowNetExists))
-            out_->fatal(CALL_INFO,-1,"%s, Error: multiple connected low port types detected. Please only connect one of 'cache', 'directory', or connect N components to 'low_network_n' where n is in the range 0 to N-1\n",
+            out_->fatal(CALL_INFO,-1,"%s, Error: multiple connected low port types detected. Please only connect one of 'lowlink' or fill the 'lowlink' subcomponent slot. To connect to multiple other components, use a bus or network.\n",
                     getName().c_str());
         if (isPortConnected("high_network_1"))
             out_->fatal(CALL_INFO,-1,"%s, Error: multiple connected high ports detected. Use the 'Bus' component to connect multiple entities to port 'high_network_0' (e.g., connect 2 L1s to a bus and connect the bus to the L2)\n",
                     getName().c_str());
     } else {
         if (!lowCacheExists && !lowDirExists)
-            out_->fatal(CALL_INFO,-1,"%s, Error: no connected ports detected. Valid ports are high_network_0, cache, directory, and low_network_n\n",
+            out_->fatal(CALL_INFO,-1,"%s, Error: no connected ports detected. Valid ports are highlink and lowlink or alternately, the highlink and lowlink subcomponent slots can be filled with an appropriate subcomponent such as memHierarchy.MemLink\n",
                     getName().c_str());
     }
+
     region_.start = 0;
     region_.end = region_.REGION_MAX;
     region_.interleaveSize = 0;
     region_.interleaveStep = 0;
 
-    // Fix up parameters for creating NIC - eventually we'll stop doing this
+    // Fix up parameters for creating NIC - eventually we'll stop doing this - at SST 16 when the old config path goes away
     bool found;
     if (fixupParam(params, "network_bw", "memNIC.network_bw"))
-        out_->output(CALL_INFO, "Note (%s): Changed 'network_bw' to 'memNIC.network_bw' in params. Change your input file to remove this notice.\n", getName().c_str());
+        out_->output(CALL_INFO, "Note (%s): Changed 'network_bw' to 'kemNIC.network_bw' in params. Change your input file to remove this notice.\n", getName().c_str());
     if (fixupParam(params, "network_input_buffer_size", "memNIC.network_input_buffer_size"))
         out_->output(CALL_INFO, "Note (%s): Changed 'network_input_buffer_size' to 'memNIC.network_input_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
     if (fixupParam(params, "network_output_buffer_size", "memNIC.network_output_buffer_size"))
@@ -367,28 +425,28 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
     nicParams.insert("shared_memory", opalShMem);
     nicParams.insert("local_memory_size", opalSize);
 
-    Params memlink = params.get_scoped_params("memlink");
-    memlink.insert("port", "low_network_0");
-    memlink.insert("node", opalNode);
-    memlink.insert("shared_memory", opalShMem);
-    memlink.insert("local_memory_size", opalSize);
+    Params memlinkParams = params.get_scoped_params("memlink");
+    memlinkParams.insert("port", "low_network_0");
+    memlinkParams.insert("node", opalNode);
+    memlinkParams.insert("shared_memory", opalShMem);
+    memlinkParams.insert("local_memory_size", opalSize);
 
-    Params cpulink = params.get_scoped_params("cpulink");
-    cpulink.insert("port", "high_network_0");
-    cpulink.insert("node", opalNode);
-    cpulink.insert("shared_memory", opalShMem);
-    cpulink.insert("local_memory_size", opalSize);
+    Params cpulinkParams = params.get_scoped_params("cpulink");
+    cpulinkParams.insert("port", "high_network_0");
+    cpulinkParams.insert("node", opalNode);
+    cpulinkParams.insert("shared_memory", opalShMem);
+    cpulinkParams.insert("local_memory_size", opalSize);
 
     /* Finally configure the links */
     if (highNetExists && lowNetExists) {
 
         dbg_->debug(_INFO_,"Configuring cache with a direct link above and below\n");
 
-        linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, memlink, tc);
+        linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, memlinkParams, tc);
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
 
 
-        linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, cpulink, tc);
+        linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, cpulinkParams, tc);
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
         clockUpLink_ = clockDownLink_ = false;
         /* Region given to each should be identical so doesn't matter which we pull but force them to be identical */
@@ -403,6 +461,7 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
         if (!found) nicParams.insert("group", "1");
 
         if (isPortConnected("cache_ack") && isPortConnected("cache_fwd") && isPortConnected("cache_data")) {
+            dbg_->output("%s, WARNING: Use of the cache* ports is deprecated. Instead, place a 'memHierarchy.MemNICFour' subcomponent in this cache's 'highlink' subcomponent slot and connect the subcomponent's ports. These ports will be removed in SST 16.0.\n", getName().c_str()); 
             nicParams.find<std::string>("req.port", "", found);
             if (!found) nicParams.insert("req.port", "cache");
             nicParams.find<std::string>("ack.port", "", found);
@@ -411,17 +470,17 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
             if (!found) nicParams.insert("fwd.port", "cache_fwd");
             nicParams.find<std::string>("data.port", "", found);
             if (!found) nicParams.insert("data.port", "cache_data");
-            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "memlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams, tc);
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "lowlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams, tc);
         } else {
             nicParams.find<std::string>("port", "", found);
             if (!found) nicParams.insert("port", "cache");
-            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "memlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams, tc);
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "lowlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams, tc);
         }
 
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
 
         // Configure high link
-        linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, cpulink, tc);
+        linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, cpulinkParams, tc);
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
         clockDownLink_ = true;
         clockUpLink_ = false;
@@ -444,17 +503,17 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
             if (!found) nicParams.insert("fwd.port", "cache_fwd");
             nicParams.find<std::string>("data.port", "", found);
             if (!found) nicParams.insert("data.port", "cache_data");
-            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams, tc);
+            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "highlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams, tc);
         } else {
             nicParams.find<std::string>("port", "", found);
             if (!found) nicParams.insert("port", "cache");
-            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams, tc);
+            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "highlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams, tc);
         }
 
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
 
         // Configure high link
-        linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, memlink, tc);
+        linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, memlinkParams, tc);
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
         clockUpLink_ = true;
         clockDownLink_ = false;
@@ -479,17 +538,17 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
             if (!found) nicParams.insert("fwd.port", "directory_fwd");
             nicParams.find<std::string>("data.port", "", found);
             if (!found) nicParams.insert("data.port", "directory_data");
-            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "memlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams, tc);
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "lowlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams, tc);
         } else {
             nicParams.find<std::string>("port", "", found);
             if (!found) nicParams.insert("port", "directory");
-            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "memlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams, tc);
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "lowlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams, tc);
         }
         // Configure low link
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
 
         // Configure high link
-        linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, cpulink, tc);
+        linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, cpulinkParams, tc);
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
         clockDownLink_ = true;
         clockUpLink_ = false;
@@ -498,7 +557,7 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
         linkUp_->setRegion(region_);
 
     } else {    // lowDirExists
-
+        
         dbg_->debug(_INFO_, "Configuring cache with a network to talk to both a cache above and a directory below\n");
 
         nicParams.find<std::string>("group", "", found);
@@ -554,11 +613,11 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
             if (!found) nicParams.insert("fwd.port", "directory_fwd");
             nicParams.find<std::string>("data.port", "", found);
             if (!found) nicParams.insert("data.port", "directory_data");
-            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams, tc);
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "highlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams, tc);
         } else {
             nicParams.find<std::string>("port", "", found);
             if (!found) nicParams.insert("port", "directory");
-            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams, tc);
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "highlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams, tc);
         }
 
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
@@ -697,12 +756,17 @@ void Cache::createCacheArray(Params &params) {
     /* Fix up parameters */
     fixByteUnits(sizeStr);
 
-    UnitAlgebra ua(sizeStr);
-    if (!ua.hasUnits("B")) {
-        out_->fatal(CALL_INFO, -1, "%s, Invalid param: cache_size - must have units of bytes(B). Ex: '32KiB'. SI units are ok. You specified '%s'.", getName().c_str(), sizeStr.c_str());
-    }
+    uint64_t cacheSize;
+    try {
+        UnitAlgebra ua(sizeStr);
+        if (!ua.hasUnits("B")) {
+            out_->fatal(CALL_INFO, -1, "%s, Invalid param: cache_size - must have units of bytes(B). Ex: '32KiB'. SI units are ok. You specified '%s'.", getName().c_str(), sizeStr.c_str());
+        }
+        cacheSize = ua.getRoundedValue();
 
-    uint64_t cacheSize = ua.getRoundedValue();
+    } catch (UnitAlgebra::UnitAlgebraException& exc) {
+        out_->fatal(CALL_INFO, -1, "%s, Invalid param: Exception occurred while parsing 'cache_size'. '%s'\n", getName().c_str(), exc.what());
+    }
 
     if (lineSize_ > cacheSize)
         out_->fatal(CALL_INFO, -1, "%s, Invalid param combo: cache_line_size cannot be greater than cache_size. You specified: cache_size = '%s', cache_line_size = '%" PRIu64 "'\n",

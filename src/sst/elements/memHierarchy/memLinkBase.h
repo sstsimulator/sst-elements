@@ -72,6 +72,9 @@ public:
             return str.str();
         }
     };
+    
+    // Identifiers that can be attached to init messages to detect memory system topology
+    enum class ReachableGroup{Source, Dest, Peer, Unknown};
 
     /* Constructor */
     MemLinkBase(ComponentId_t id, Params &params, TimeConverter* tc) : SubComponent(id) {
@@ -100,8 +103,7 @@ public:
         string ilStep = params.find<std::string>("interleave_step", "0B", found);
         foundany |= found;
         if (foundany) {
-            dbg.output("%s, Warning: Region parameters given to link managers (addr_range_start/end, interleave_size/step) will be overwritten if the component sets them; specify region via component to eliminate this message\n",
-                    getName().c_str());
+            dbg.output("%s, Warning: The region parameters (addr_range_start, addr_range_end, interleave_size, interleave_step) are deprecated in MemLink and MemNIC. Give these parameters to the component instead to eliminate this message\n", getName().c_str());
         }
 
         // Ensure SI units are power-2 not power-10 - for backward compability
@@ -184,9 +186,11 @@ public:
     /* Functions for managing source/destination information */
     virtual std::set<EndpointInfo>* getSources() =0;
     virtual std::set<EndpointInfo>* getDests() =0;
+    virtual std::set<EndpointInfo>* getPeers() =0; // If peers are reachable via this link, may be empty if no peers or not reachable
 
     virtual bool isDest(std::string UNUSED(str)) =0;    /* Check whether a component is a destination on this link. May be slow (for init() only) */
-    virtual bool isSource(std::string UNUSED(str)) =0;  /* Check whether a component is a soruce on this link. May be slow (for init() only) */
+    virtual bool isSource(std::string UNUSED(str)) =0;  /* Check whether a component is a source on this link. May be slow (for init() only) */
+    virtual bool isPeer(std::string UNUSED(str)) =0;    /* Check whether a component is a peer on this link. May be slow (for init() only) */
     virtual bool isReachable(std::string dst) =0;       /* Check whether a component is reachable on this link. Should be fast - used during simulation */
 
     MemRegion getRegion() { return info.region; }

@@ -93,8 +93,7 @@ for x in range(cores):
         "debug_level" : DEBUG_LEVEL,
     })
     l2cache.setSubComponent("prefetcher", "cassini.NextBlockPrefetcher")
-    l2tol1 = l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-    l2nic = l2cache.setSubComponent("memlink", "memHierarchy.MemNIC")
+    l2nic = l2cache.setSubComponent("lowlink", "memHierarchy.MemNIC")
     l2nic.addParams({
         "group" : 1,
         "min_packet_size" : "10B", # control message size
@@ -104,10 +103,10 @@ for x in range(cores):
     })
 
     cpu_l1_link = sst.Link("link_cpu_cache_" + str(x))
-    cpu_l1_link.connect ( (iface, "port", "500ps"), (l1cache, "high_network_0", "500ps") )
+    cpu_l1_link.connect ( (iface, "lowlink", "500ps"), (l1cache, "highlink", "500ps") )
     
     l1_l2_link = sst.Link("link_l1_l2_" + str(x))
-    l1_l2_link.connect( (l1cache, "low_network_0", "100ps"), (l2tol1, "port", "100ps") )
+    l1_l2_link.connect( (l1cache, "lowlink", "100ps"), (l2cache, "highlink", "100ps") )
 
     l2_network_link = sst.Link("link_l2_network_" + str(x))
     l2_network_link.connect( (l2nic, "port", "100ps"), (network, "port" + str(x), "100ps") )
@@ -133,7 +132,7 @@ for x in range(caches):
         "debug" : DEBUG_L3,
         "debug_level" : DEBUG_LEVEL,
     })
-    l3nic = l3cache.setSubComponent("cpulink", "memHierarchy.MemNIC")
+    l3nic = l3cache.setSubComponent("highlink", "memHierarchy.MemNIC")
     l3nic.addParams({
         "group" : 2,
         "min_packet_size" : "4B", # control message size
@@ -160,8 +159,7 @@ for x in range(memories):
         "debug" : DEBUG_DIR,
         "debug_level" : DEBUG_LEVEL,
     })
-    dirtoM = directory.setSubComponent("memlink", "memHierarchy.MemLink")
-    dirnic = directory.setSubComponent("cpulink", "memHierarchy.MemNIC")
+    dirnic = directory.setSubComponent("highlink", "memHierarchy.MemNIC")
     dirnic.addParams({
         "group" : 3,
         "network_bw" : network_bw,
@@ -198,7 +196,7 @@ for x in range(memories):
     link_directory_network.connect( (dirnic, "port", "100ps"), (network, "port" + str(portid), "100ps") )
     
     link_directory_memory_network = sst.Link("link_directory_memory_" + str(x))
-    link_directory_memory_network.connect( (dirtoM, "port", "400ps"), (memctrl, "direct_link", "400ps") )
+    link_directory_memory_network.connect( (directory, "lowlink", "400ps"), (memctrl, "highlink", "400ps") )
 
 # Enable statistics
 sst.setStatisticLoadLevel(7)

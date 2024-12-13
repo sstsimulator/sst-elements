@@ -1,0 +1,21 @@
+ core.pendCycle : Accumulator : Sum.u64 = 8497068; SumSQ.u64 = 135686772; Count.u64 = 532512; Min.u64 = 0; Max.u64 = 16; 
+ core.reads : Accumulator : Sum.u64 = 1430; SumSQ.u64 = 1430; Count.u64 = 1430; Min.u64 = 1; Max.u64 = 1; 
+ core.writes : Accumulator : Sum.u64 = 833; SumSQ.u64 = 833; Count.u64 = 833; Min.u64 = 1; Max.u64 = 1; 
+ core.flushcaches : Accumulator : Sum.u64 = 73; SumSQ.u64 = 73; Count.u64 = 73; Min.u64 = 1; Max.u64 = 1; 
+ core.llsc : Accumulator : Sum.u64 = 82; SumSQ.u64 = 82; Count.u64 = 82; Min.u64 = 1; Max.u64 = 1; 
+ core.llsc_success : Accumulator : Sum.u64 = 82; SumSQ.u64 = 82; Count.u64 = 82; Min.u64 = 1; Max.u64 = 1; 
+ memory.requests_received_GetS : Accumulator : Sum.u64 = 1430; SumSQ.u64 = 1430; Count.u64 = 1430; Min.u64 = 1; Max.u64 = 1; 
+ memory.requests_received_GetSX : Accumulator : Sum.u64 = 82; SumSQ.u64 = 82; Count.u64 = 82; Min.u64 = 1; Max.u64 = 1; 
+ memory.requests_received_GetX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ memory.requests_received_Write : Accumulator : Sum.u64 = 915; SumSQ.u64 = 915; Count.u64 = 915; Min.u64 = 1; Max.u64 = 1; 
+ memory.requests_received_PutM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ memory.outstanding_requests : Accumulator : Sum.u64 = 2429863; SumSQ.u64 = 38797151; Count.u64 = 152298; Min.u64 = 1; Max.u64 = 16; 
+ memory.latency_GetS : Accumulator : Sum.u64 = 1431691; SumSQ.u64 = 1433384637; Count.u64 = 1430; Min.u64 = 1001; Max.u64 = 1013; 
+ memory.latency_GetSX : Accumulator : Sum.u64 = 82092; SumSQ.u64 = 82184112; Count.u64 = 82; Min.u64 = 1001; Max.u64 = 1002; 
+ memory.latency_GetX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ memory.latency_Write : Accumulator : Sum.u64 = 916080; SumSQ.u64 = 917161788; Count.u64 = 915; Min.u64 = 1001; Max.u64 = 1013; 
+ memory.latency_PutM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ memory.cycles_with_issue : Accumulator : Sum.u64 = 2427; SumSQ.u64 = 2427; Count.u64 = 2427; Min.u64 = 1; Max.u64 = 1; 
+ memory.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ memory.total_cycles : Accumulator : Sum.u64 = 152298; SumSQ.u64 = 23194680804; Count.u64 = 1; Min.u64 = 152298; Max.u64 = 152298; 
+Simulation is complete, simulated time: 152.298 us

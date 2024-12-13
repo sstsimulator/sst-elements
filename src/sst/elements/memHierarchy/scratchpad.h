@@ -55,9 +55,11 @@ public:
             {"debug_level",         "(uint) Debug verbosity level. Between 0 and 10", "0"} )
 
     SST_ELI_DOCUMENT_PORTS(
-            {"cpu", "Link to cpu/cache on the cpu side", {"memHierarchy.MemEventBase"}},
-            {"memory", "Direct link to a memory or bus", {"memHierarchy.MemEventBase"}},
-            {"network", "Network link to memory", {"memHierarchy.MemRtrEvent"}} )
+            {"highlink", "Link to a processor/cache/etc. on the upper/towards-processor side", {"memHierarchy.MemEventBase"}},
+            {"lowlink",  "Link to a cache/memoryetc. on the lower/towards-memory side", {"memHierarchy.MemEventBase"}},
+            {"cpu",      "DEPRECATED: Use 'highlink' instead. Link to cpu/cache on the cpu side", {"memHierarchy.MemEventBase"}},
+            {"memory",   "DEPRECATED: Use 'lowlink' instead. Direct link to a memory or bus", {"memHierarchy.MemEventBase"}},
+            {"network",  "DEPRECATED: Fill the 'lowlink' subcomponent slot with memHierarchy.MemNIC or memHierarchy.MemNICFour instead. Network link to memory", {"memHierarchy.MemRtrEvent"}} )
 
     SST_ELI_DOCUMENT_STATISTICS(
             {"request_received_scratch_read",   "Number of scratchpad reads received from CPU", "count", 1},
@@ -71,8 +73,10 @@ public:
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"backendConvertor", "Convertor to interface to memory timing model (backend)", "SST::MemHierarchy::ScratchBackendConvertor" },
-            {"cpulink", "CPU-side link manager", "SST::MemHierarchy::MemLinkBase"},
-            {"memlink", "Memory-side link manager", "SST::MemHierarchy::MemLinkBase"} )
+            {"highlink", "Port manager on the upper/processor-side (i.e., where requests typically come from). If you use this subcomponent slot, you do not need to connect the scratchpad's highlink port. Do connect this subcomponent's ports instead. For scratchpads with a single link, use this subcomponent slot only.", "SST::MemHierarchy::MemLinkBase"},
+            {"lowlink", "Port manager on the lower/memory side (i.e., where requests should be sent to). If you use this subcomponent slot, you do not need to connect the scratchpad's lowlink port. Do connect this subcomponent's ports instead. For scratchpads with a single link, use the 'highlink' subcomponent slot only.", "SST::MemHierarchy::MemLinkBase"},
+            {"cpulink", "DEPRECATED: Renamed to 'highlink'. CPU-side link manager", "SST::MemHierarchy::MemLinkBase"},
+            {"memlink", "DEPRECATED: Renamed to 'lowlink'. Memory-side link manager", "SST::MemHierarchy::MemLinkBase"} )
 
 /* Begin class defintion */
     Scratchpad(ComponentId_t id, Params &params);

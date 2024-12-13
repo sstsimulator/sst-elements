@@ -1139,17 +1139,17 @@ core: 1 Issued MMIO Write for address 0x400 with payload -31081
 Handle Read. Returning 816130624
 Handle Write. Squared is 966028561
 StandardCPU: Test Completed Successfuly
- core:memory:memlink.packet_latency : Accumulator : Sum.u64 = 142568; SumSQ.u64 = 24100456; Count.u64 = 956; Min.u64 = 71; Max.u64 = 359; 
- core:memory:memlink.send_bit_count : Accumulator : Sum.u64 = 87168; SumSQ.u64 = 7802880; Count.u64 = 1000; Min.u64 = 64; Max.u64 = 96; 
- core:memory:memlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- core:memory:memlink.idle_time : Accumulator : Sum.u64 = 789000; SumSQ.u64 = 76906500000; Count.u64 = 9; Min.u64 = 71000; Max.u64 = 144000; 
+ core:memory:lowlink.packet_latency : Accumulator : Sum.u64 = 142568; SumSQ.u64 = 24100456; Count.u64 = 956; Min.u64 = 71; Max.u64 = 359; 
+ core:memory:lowlink.send_bit_count : Accumulator : Sum.u64 = 87168; SumSQ.u64 = 7802880; Count.u64 = 1000; Min.u64 = 64; Max.u64 = 96; 
+ core:memory:lowlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ core:memory:lowlink.idle_time : Accumulator : Sum.u64 = 789000; SumSQ.u64 = 76906500000; Count.u64 = 9; Min.u64 = 71000; Max.u64 = 144000; 
  core.pendCycle : Accumulator : Sum.u64 = 1454681; SumSQ.u64 = 14480683; Count.u64 = 146739; Min.u64 = 0; Max.u64 = 10; 
  core.reads : Accumulator : Sum.u64 = 208; SumSQ.u64 = 208; Count.u64 = 208; Min.u64 = 1; Max.u64 = 1; 
  core.writes : Accumulator : Sum.u64 = 652; SumSQ.u64 = 652; Count.u64 = 652; Min.u64 = 1; Max.u64 = 1; 
- l1cache:cpulink.packet_latency : Accumulator : Sum.u64 = 340763; SumSQ.u64 = 135350911; Count.u64 = 876; Min.u64 = 43; Max.u64 = 573; 
- l1cache:cpulink.send_bit_count : Accumulator : Sum.u64 = 83584; SumSQ.u64 = 7991296; Count.u64 = 876; Min.u64 = 64; Max.u64 = 96; 
- l1cache:cpulink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache:cpulink.idle_time : Accumulator : Sum.u64 = 5860500; SumSQ.u64 = 583843250000; Count.u64 = 69; Min.u64 = 70500; Max.u64 = 217000; 
+ l1cache:highlink.packet_latency : Accumulator : Sum.u64 = 340763; SumSQ.u64 = 135350911; Count.u64 = 876; Min.u64 = 43; Max.u64 = 573; 
+ l1cache:highlink.send_bit_count : Accumulator : Sum.u64 = 83584; SumSQ.u64 = 7991296; Count.u64 = 876; Min.u64 = 64; Max.u64 = 96; 
+ l1cache:highlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache:highlink.idle_time : Accumulator : Sum.u64 = 5860500; SumSQ.u64 = 583843250000; Count.u64 = 69; Min.u64 = 70500; Max.u64 = 217000; 
  l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
@@ -1217,13 +1217,16 @@ StandardCPU: Test Completed Successfuly
  l1cache.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_FlushLine : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.eventSent_FlushAll : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_FetchResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_FetchXResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_AckInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.eventSent_AckFlush : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_GetSResp : Accumulator : Sum.u64 = 208; SumSQ.u64 = 208; Count.u64 = 208; Min.u64 = 1; Max.u64 = 1; 
  l1cache.eventSent_GetXResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_WriteResp : Accumulator : Sum.u64 = 652; SumSQ.u64 = 652; Count.u64 = 652; Min.u64 = 1; Max.u64 = 1; 
  l1cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.eventSent_FlushAllResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_Put : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_Get : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_AckMove : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1231,7 +1234,7 @@ StandardCPU: Test Completed Successfuly
  l1cache.eventSent_CustomResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.evict_I : Accumulator : Sum.u64 = 15; SumSQ.u64 = 15; Count.u64 = 15; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.evict_I : Accumulator : Sum.u64 = 16; SumSQ.u64 = 16; Count.u64 = 16; Min.u64 = 1; Max.u64 = 1; 
  l1cache.evict_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.evict_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.evict_IS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1250,6 +1253,7 @@ StandardCPU: Test Completed Successfuly
  l1cache.latency_FlushLine_fail : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.latency_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.latency_FlushLineInv_fail : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.latency_FlushAll : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.GetSHit_Arrival : Accumulator : Sum.u64 = 198; SumSQ.u64 = 198; Count.u64 = 198; Min.u64 = 1; Max.u64 = 1; 
  l1cache.GetXHit_Arrival : Accumulator : Sum.u64 = 644; SumSQ.u64 = 644; Count.u64 = 644; Min.u64 = 1; Max.u64 = 1; 
  l1cache.GetSXHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1287,22 +1291,26 @@ StandardCPU: Test Completed Successfuly
  l1cache.Write_recv : Accumulator : Sum.u64 = 652; SumSQ.u64 = 652; Count.u64 = 652; Min.u64 = 1; Max.u64 = 1; 
  l1cache.FlushLine_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.FlushLineInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.FlushAll_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.GetSResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.GetXResp_recv : Accumulator : Sum.u64 = 16; SumSQ.u64 = 16; Count.u64 = 16; Min.u64 = 1; Max.u64 = 1; 
  l1cache.FlushLineResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.FlushAllResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.ForceInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.Fetch_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.FetchInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.FetchInvX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.ForwardFlush_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.UnblockFlush_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.AckPut_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.MSHR_occupancy : Accumulator : Sum.u64 = 17714; SumSQ.u64 = 49976; Count.u64 = 146739; Min.u64 = 0; Max.u64 = 5; 
  l1cache.Bank_conflicts : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- mmio:iface:memlink.packet_latency : Accumulator : Sum.u64 = 57331; SumSQ.u64 = 23982447; Count.u64 = 140; Min.u64 = 144; Max.u64 = 644; 
- mmio:iface:memlink.send_bit_count : Accumulator : Sum.u64 = 9216; SumSQ.u64 = 884736; Count.u64 = 96; Min.u64 = 96; Max.u64 = 96; 
- mmio:iface:memlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- mmio:iface:memlink.idle_time : Accumulator : Sum.u64 = 41904500; SumSQ.u64 = 38341152250000; Count.u64 = 83; Min.u64 = 72000; Max.u64 = 2160000; 
+ mmio:iface:lowlink.packet_latency : Accumulator : Sum.u64 = 57331; SumSQ.u64 = 23982447; Count.u64 = 140; Min.u64 = 144; Max.u64 = 644; 
+ mmio:iface:lowlink.send_bit_count : Accumulator : Sum.u64 = 9216; SumSQ.u64 = 884736; Count.u64 = 96; Min.u64 = 96; Max.u64 = 96; 
+ mmio:iface:lowlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ mmio:iface:lowlink.idle_time : Accumulator : Sum.u64 = 41904500; SumSQ.u64 = 38341152250000; Count.u64 = 83; Min.u64 = 72000; Max.u64 = 2160000; 
  memory.requests_received_GetS : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
  memory.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory.requests_received_GetX : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
@@ -1317,8 +1325,8 @@ StandardCPU: Test Completed Successfuly
  memory.cycles_with_issue : Accumulator : Sum.u64 = 16; SumSQ.u64 = 16; Count.u64 = 16; Min.u64 = 1; Max.u64 = 1; 
  memory.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory.total_cycles : Accumulator : Sum.u64 = 73369; SumSQ.u64 = 5383010161; Count.u64 = 1; Min.u64 = 73369; Max.u64 = 73369; 
- memory:cpulink.packet_latency : Accumulator : Sum.u64 = 2649; SumSQ.u64 = 497967; Count.u64 = 16; Min.u64 = 71; Max.u64 = 287; 
- memory:cpulink.send_bit_count : Accumulator : Sum.u64 = 9216; SumSQ.u64 = 5308416; Count.u64 = 16; Min.u64 = 576; Max.u64 = 576; 
- memory:cpulink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- memory:cpulink.idle_time : Accumulator : Sum.u64 = 70891500; SumSQ.u64 = 4569827188250000; Count.u64 = 12; Min.u64 = 43000; Max.u64 = 67579500; 
+ memory:highlink.packet_latency : Accumulator : Sum.u64 = 2649; SumSQ.u64 = 497967; Count.u64 = 16; Min.u64 = 71; Max.u64 = 287; 
+ memory:highlink.send_bit_count : Accumulator : Sum.u64 = 9216; SumSQ.u64 = 5308416; Count.u64 = 16; Min.u64 = 576; Max.u64 = 576; 
+ memory:highlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ memory:highlink.idle_time : Accumulator : Sum.u64 = 70891500; SumSQ.u64 = 4569827188250000; Count.u64 = 12; Min.u64 = 43000; Max.u64 = 67579500; 
 Simulation is complete, simulated time: 73.3695 us

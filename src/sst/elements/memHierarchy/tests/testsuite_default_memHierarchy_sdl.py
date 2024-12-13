@@ -18,27 +18,21 @@ class testcase_memHierarchy_sdl(SSTTestCase):
 #####
 
     def test_memHierarchy_sdl_1(self):
-        #  sdl-1   Simple CPU + 1 level cache + Memory
         self.memHierarchy_Template("sdl-1")
 
     def test_memHierarchy_sdl_2(self):
-        #  sdl-2  Simple CPU + 1 level cache + DRAMSim Memory
         self.memHierarchy_Template("sdl-2")
 
     def test_memHierarchy_sdl_3(self):
-        #  sdl-3  Simple CPU + 1 level cache + DRAMSim Memory (alternate block size)
         self.memHierarchy_Template("sdl-3")
 
     def test_memHierarchy_sdl2_1(self):
-        #  sdl2-1  Simple CPU + 2 levels cache + Memory
         self.memHierarchy_Template("sdl2-1")
 
     def test_memHierarchy_sdl3_1(self):
-        #  sdl3-1  2 Simple CPUs + 2 levels cache + Memory
         self.memHierarchy_Template("sdl3-1")
 
     def test_memHierarchy_sdl3_2(self):
-        #  sdl3-2  2 Simple CPUs + 2 levels cache + DRAMSim Memory
         self.memHierarchy_Template("sdl3-2")
 
     def test_memHierarchy_sdl3_3(self):
@@ -48,18 +42,10 @@ class testcase_memHierarchy_sdl(SSTTestCase):
         self.memHierarchy_Template("sdl4-1")
 
     def test_memHierarchy_sdl4_2(self):
-        self.memHierarchy_Template("sdl4-2", ignore_err_file=True)
-
-    @skip_on_sstsimulator_conf_empty_str("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
-    def test_memHierarchy_sdl4_2_ramulator(self):
-        self.memHierarchy_Template("sdl4-2-ramulator")
+        self.memHierarchy_Template("sdl4-2")
 
     def test_memHierarchy_sdl5_1(self):
-        self.memHierarchy_Template("sdl5-1", ignore_err_file=True)
-
-    @skip_on_sstsimulator_conf_empty_str("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
-    def test_memHierarchy_sdl5_1_ramulator(self):
-        self.memHierarchy_Template("sdl5-1-ramulator")
+        self.memHierarchy_Template("sdl5-1")
 
     def test_memHierarchy_sdl8_1(self):
         self.memHierarchy_Template("sdl8-1")
@@ -84,7 +70,7 @@ class testcase_memHierarchy_sdl(SSTTestCase):
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
-        # Some tweeking of file names are due to inconsistencys with testcase name
+        # Some tweeking of file names are due to inconsistencies with testcase name
         testcasename_sdl = testcase.replace("_MC", "")
         testcasename_out = testcase.replace("-", "_")
 

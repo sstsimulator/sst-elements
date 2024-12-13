@@ -35,6 +35,7 @@ namespace SST { namespace MemHierarchy {
  * - getString() for debug
  * - getAddr() for identifiying a line
  * - getReplacementInfo() for returning the information that a replacement policy might need
+ * - allocated() to determine whether the line is currently allocated/valid
  */
 
 
@@ -52,17 +53,20 @@ class DirectoryLine {
         bool wasPrefetch_;
 
     public:
-        DirectoryLine(uint32_t size, unsigned int index) : index_(index), addr_(0), state_(I), lastSendTimestamp_(0), wasPrefetch_(false) {
+        DirectoryLine(uint32_t size, unsigned int index) : index_(index) {
             info_ = new CoherenceReplacementInfo(index, I, false, false);
+            reset();
         }
         virtual ~DirectoryLine() { }
 
         void reset() {
+            addr_ = NO_ADDR;
             state_ = I;
             sharers_.clear();
             owner_ = "";
             lastSendTimestamp_ = 0;
             wasPrefetch_ = false;
+            info_->reset();
         }
 
         // Index
@@ -115,6 +119,9 @@ class DirectoryLine {
         // Replacement
         ReplacementInfo* getReplacementInfo() { return info_; }
 
+        // Validity
+        bool allocated() { return state_ != I; }
+
         // String-ify for debugging
         std::string getString() {
             std::ostringstream str;
@@ -138,14 +145,17 @@ class DataLine {
         DirectoryLine* tag_;
         CoherenceReplacementInfo* info_;
     public:
-        DataLine(uint8_t size, unsigned int index) : index_(index), addr_(0), tag_(nullptr) {
+        DataLine(uint8_t size, unsigned int index) : index_(index) {
             data_.resize(size);
             info_ = new CoherenceReplacementInfo(index, I, false, false);
+            reset();
         }
         virtual ~DataLine() { }
 
         void reset() {
+            addr_ = NO_ADDR;
             tag_ = nullptr;
+            info_->reset();
         }
 
         // Index
@@ -169,7 +179,10 @@ class DataLine {
         }
 
         // Replacement
-        ReplacementInfo* getReplacementInfo() { return tag_ ? tag_->getReplacementInfo() : info_; }
+        ReplacementInfo* getReplacementInfo() { return (tag_ != nullptr ? tag_->getReplacementInfo() : info_); }
+
+        // Validity
+        bool allocated() { return tag_ != nullptr; }
 
         // String-ify for debugging
         std::string getString() {
@@ -193,12 +206,14 @@ class CacheLine {
 
         virtual void updateReplacement() = 0;
     public:
-        CacheLine(uint32_t size, unsigned int index) : index_(index), addr_(0), state_(I), lastSendTimestamp_(0), wasPrefetch_(false) {
+        CacheLine(uint32_t size, unsigned int index) : index_(index) {
+            reset();
             data_.resize(size);
         }
         virtual ~CacheLine() { }
 
         void reset() {
+            addr_ = NO_ADDR;
             state_ = I;
             lastSendTimestamp_ = 0;
             wasPrefetch_ = false;
@@ -231,6 +246,9 @@ class CacheLine {
 
         virtual ReplacementInfo* getReplacementInfo() = 0;
 
+        // Validity
+        bool allocated() { return state_ != I; }
+
         // String-ify for debugging
         std::string getString() {
             std::ostringstream str;
@@ -243,22 +261,22 @@ class CacheLine {
 /* With atomic/lock flags for L1 caches */
 class L1CacheLine : public CacheLine {
     private:
-        bool LLSC_;           /* True if LL has been issued and no intervening accesses have occured */
+        bool LLSC_;           /* True if LL has been issued and no intervening accesses have occurred */
         Cycle_t LLSCTime_;    /* For caches that guarantee forward progress on LLSC, LLSC temporarily locks the line. This is the time that the LLSC lock will be released */
         std::set<uint32_t> LLSCTidBuf_; /* Track hardware thread IDs that have LL'd this line*/
                                         /* This is stored in the line rather than in a separate cache-side map to make lookup & maintenance faster (esp. on non-atomic accesses) */
                                         /* TODO add ability to limit outstanding LLSCs per thread and/or overall (requires a cache-side structure to track global cache state) */
         unsigned int userLock_;     /* Count number of lock operations to the line */
         bool eventsWaitingForLock_; /* Number of events in the queue waiting for the lock */
-        ReplacementInfo * info;     /* Replacement info - depends on replacement algorithm */
+        ReplacementInfo * info_;     /* Replacement info - depends on replacement algorithm */
     protected:
-        void updateReplacement() { info->setState(state_); }
+        void updateReplacement() { info_->setState(state_); }
     public:
-        L1CacheLine(uint32_t size, unsigned int index) : LLSC_(false), LLSCTime_(0), userLock_(0), eventsWaitingForLock_(false), CacheLine(size, index) {
-            info = new ReplacementInfo(index, I);
+        L1CacheLine(uint32_t size, unsigned int index) : CacheLine(size, index), LLSC_(false), LLSCTime_(0), userLock_(0), eventsWaitingForLock_(false) {
+            info_ = new ReplacementInfo(index, I);
         }
         virtual ~L1CacheLine() { 
-            delete info;
+            delete info_;
         }
 
         void reset() {
@@ -268,6 +286,7 @@ class L1CacheLine : public CacheLine {
             LLSCTidBuf_.clear();
             userLock_ = 0;
             eventsWaitingForLock_ = false;
+            info_->setState(getState());
         }
 
         // LLSC
@@ -300,7 +319,7 @@ class L1CacheLine : public CacheLine {
         bool getEventsWaitingForLock() { return eventsWaitingForLock_; }
         void setEventsWaitingForLock(bool eventsWaiting) { eventsWaitingForLock_ = eventsWaiting; }
 
-        ReplacementInfo * getReplacementInfo() { return info; }
+        ReplacementInfo * getReplacementInfo() { return info_; }
 
         // String-ify for debugging
         std::string getString() {
@@ -322,22 +341,23 @@ class SharedCacheLine : public CacheLine {
     private:
         std::set<std::string> sharers_;
         std::string owner_;
-        CoherenceReplacementInfo * info;
+        CoherenceReplacementInfo * info_;
     protected:
-        virtual void updateReplacement() { info->setState(state_); }
+        virtual void updateReplacement() { info_->setState(state_); }
     public:
-        SharedCacheLine(uint32_t size, unsigned int index) : owner_(""), CacheLine(size, index) {
-            info = new CoherenceReplacementInfo(index, I, false, false);
+        SharedCacheLine(uint32_t size, unsigned int index) : CacheLine(size, index), owner_("") {
+            info_ = new CoherenceReplacementInfo(index, I, false, false);
         }
 
         virtual ~SharedCacheLine() { 
-             delete info;
+             delete info_;
         }
 
         void reset() {
             CacheLine::reset();
             sharers_.clear();
             owner_ = "";
+            info_->reset();
         }
 
         // Sharers
@@ -348,11 +368,11 @@ class SharedCacheLine : public CacheLine {
         bool hasOtherSharers(std::string shr) { return !(sharers_.empty() || (sharers_.size() == 1 && sharers_.find(shr) != sharers_.end())); }
         void addSharer(std::string s) {
             sharers_.insert(s);
-            info->setShared(true);
+            info_->setShared(true);
         }
         void removeSharer(std::string s) {
             sharers_.erase(s);
-            info->setShared(!sharers_.empty());
+            info_->setShared(!sharers_.empty());
         }
 
         // Owner
@@ -360,15 +380,15 @@ class SharedCacheLine : public CacheLine {
         bool hasOwner() { return !owner_.empty(); }
         void setOwner(std::string owner) {
             owner_ = owner;
-            info->setOwned(true);
+            info_->setOwned(true);
         }
         void removeOwner() {
             owner_.clear();
-            info->setOwned(false);
+            info_->setOwned(false);
         }
 
         // Replacement
-        ReplacementInfo * getReplacementInfo() { return info; }
+        ReplacementInfo * getReplacementInfo() { return info_; }
 
         // String-ify for debugging
         std::string getString() {
@@ -387,41 +407,42 @@ class SharedCacheLine : public CacheLine {
 /* With flags indicating whether block is cached abov efor private caches */
 class PrivateCacheLine : public CacheLine {
     private:
-        bool shared;
-        bool owned;
-        CoherenceReplacementInfo * info;
+        bool shared_;
+        bool owned_;
+        CoherenceReplacementInfo * info_;
     protected:
-        virtual void updateReplacement() { info->setState(state_); }
+        virtual void updateReplacement() { info_->setState(state_); }
     public:
-        PrivateCacheLine(uint32_t size, unsigned int index) : shared(false), owned(false), CacheLine(size, index) {
-            info = new CoherenceReplacementInfo(index, I, false, false);
+        PrivateCacheLine(uint32_t size, unsigned int index) : CacheLine(size, index), shared_(false), owned_(false) {
+            info_ = new CoherenceReplacementInfo(index, I, false, false);
         }
 
         virtual ~PrivateCacheLine() { }
 
         void reset() {
             CacheLine::reset();
-            shared = false;
-            owned = false;
+            shared_ = false;
+            owned_ = false;
+            info_->reset();
         }
 
         // Shared
-        bool getShared() { return shared; }
-        void setShared(bool s) { shared = s; info->setShared(s);}
+        bool getShared() { return shared_; }
+        void setShared(bool s) { shared_ = s; info_->setShared(s);}
 
         // Owned
-        bool getOwned() { return owned; }
-        void setOwned(bool o) { owned = o; info->setOwned(o); }
+        bool getOwned() { return owned_; }
+        void setOwned(bool o) { owned_ = o; info_->setOwned(o); }
 
         // Replacement
-        ReplacementInfo * getReplacementInfo() { return info; }
+        ReplacementInfo * getReplacementInfo() { return info_; }
 
         // String-ify for debugging
         std::string getString() {
             std::string str = "O: ";
-            str += owned ? "Yes" : "No";
+            str += owned_ ? "Yes" : "No";
             str += " S: ";
-            str += shared ? "Yes" : "No";
+            str += shared_ ? "Yes" : "No";
             return str;
         }
 };

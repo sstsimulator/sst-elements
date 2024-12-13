@@ -89,6 +89,23 @@ class CacheArray {
         void setSliceAware(Addr size, Addr step);
         void setBanked(unsigned int numBanks);
         void printCacheArray(Output &out);
+
+    /**** Cache iterators */
+        struct cache_itr {
+            public:
+                cache_itr(const CacheArray<T>* c, unsigned idx) : cache_(c), idx_(idx) {}
+                bool operator!=(const cache_itr& rhs) const { return idx_ != rhs.idx_; }
+                bool operator==(const cache_itr& rhs) const { return idx_ == rhs.idx_; }
+                const cache_itr& operator++() { ++idx_; return *this; }
+                const cache_itr& operator--() { --idx_; return *this; }
+                const T* operator*() const { return cache_->lines_[idx_]; }
+                T* operator*() { return cache_->lines_[idx_]; }
+            private:
+                const CacheArray<T>* cache_;
+                unsigned idx_;
+        };
+        cache_itr begin() const { return cache_itr(this, 0); }
+        cache_itr end() const { return cache_itr(this, numLines_); }
 };
 
 /************* Function definitions *****************/

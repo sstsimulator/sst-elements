@@ -219,8 +219,6 @@ cpu0_l1dcache.addParams({
       "debug_level" : 10,
       "debug_addr" : dbg_addr, 
 })
-l1dcache_2_cpu     = cpu0_l1dcache.setSubComponent("cpulink", "memHierarchy.MemLink")
-l1dcache_2_l2cache = cpu0_l1dcache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 cpu0_l1icache = sst.Component("cpu0.l1icache", "memHierarchy.Cache")
 cpu0_l1icache.addParams({
@@ -238,8 +236,6 @@ cpu0_l1icache.addParams({
       "debug_level" : 10,
       "debug_addr" : dbg_addr, 
 })
-l1icache_2_cpu     = cpu0_l1icache.setSubComponent("cpulink", "memHierarchy.MemLink")
-l1icache_2_l2cache = cpu0_l1icache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 cpu0_l2cache = sst.Component("l2cache", "memHierarchy.Cache")
 cpu0_l2cache.addParams({
@@ -254,8 +250,6 @@ cpu0_l2cache.addParams({
       "debug_level" : 10,
       "debug_addr" : dbg_addr, 
 })
-l2cache_2_l1caches = cpu0_l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-l2cache_2_mem = cpu0_l2cache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 cache_bus = sst.Component("bus", "memHierarchy.Bus")
 cache_bus.addParams({
@@ -275,7 +269,6 @@ dirctrl.addParams({
       "debug_addr" : dbg_addr, 
 })
 dirtoM = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
-dirtoCPU = dirctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
 
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
@@ -289,7 +282,6 @@ memctrl.addParams({
       "debug_level" : 10,
       "debug_addr" : dbg_addr, 
 })
-memToDir = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
 
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
 memory.addParams({
@@ -304,32 +296,32 @@ v_cpu_0_lsq.enableAllStatistics()
 branch_pred.enableAllStatistics()
 
 link_cpu0_l1dcache_link = sst.Link("link_cpu0_l1dcache_link")
-link_cpu0_l1dcache_link.connect( (dcache_if, "port", "1ns"), (l1dcache_2_cpu, "port", "1ns") )
+link_cpu0_l1dcache_link.connect( (dcache_if, "lowlink", "1ns"), (cpu0_l1dcache, "highlink", "1ns") )
 
 link_cpu0_l1icache_link = sst.Link("link_cpu0_l1icache_link")
-link_cpu0_l1icache_link.connect( (icache_if, "port", "1ns"), (l1icache_2_cpu, "port", "1ns") )
+link_cpu0_l1icache_link.connect( (icache_if, "lowlink", "1ns"), (cpu0_l1icache, "highlink", "1ns") )
 
 link_os_l1dcache_link = sst.Link("link_os_l1dcache_link")
-link_os_l1dcache_link.connect( (node_os_mem_if, "port", "1ns"), (os_l1dcache, "high_network_0", "1ns") )
+link_os_l1dcache_link.connect( (node_os_mem_if, "lowlink", "1ns"), (os_l1dcache, "highlink", "1ns") )
 
 link_l1dcache_l2cache_link = sst.Link("link_l1dcache_l2cache_link")
-link_l1dcache_l2cache_link.connect( (l1dcache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_0", "1ns") )
+link_l1dcache_l2cache_link.connect( (cpu0_l1dcache, "lowlink", "1ns"), (cache_bus, "highlink0", "1ns") )
 
 link_l1icache_l2cache_link = sst.Link("link_l1icache_l2cache_link")
-link_l1icache_l2cache_link.connect( (l1icache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_1", "1ns") )
+link_l1icache_l2cache_link.connect( (cpu0_l1icache, "lowlink", "1ns"), (cache_bus, "highlink1", "1ns") )
 
 link_os_l1dcache_l2cache_link = sst.Link("link_os_l1dcache_l2cache_link")
-link_os_l1dcache_l2cache_link.connect( (os_l1dcache, "low_network_0", "1ns"), (cache_bus, "high_network_2", "1ns") )
+link_os_l1dcache_l2cache_link.connect( (os_l1dcache, "lowlink", "1ns"), (cache_bus, "highlink2", "1ns") )
 
 link_bus_l2cache_link = sst.Link("link_bus_l2cache_link")
-link_bus_l2cache_link.connect( (cache_bus, "low_network_0", "1ns"), (l2cache_2_l1caches, "port", "1ns") )
+link_bus_l2cache_link.connect( (cache_bus, "lowlink0", "1ns"), (cpu0_l2cache, "highlink", "1ns") )
 
 
 link_l2cache_2_dir = sst.Link("link_l2cache_2_dir")
-link_l2cache_2_dir.connect( (dirtoCPU, "port", "1ns"), (l2cache_2_mem, "port", "1ns") )
+link_l2cache_2_dir.connect( (dirctrl, "highlink", "1ns"), (cpu0_l2cache, "lowlink", "1ns") )
 
 link_dir_2_mem = sst.Link("link_dir_2_mem")
-link_dir_2_mem.connect( (dirtoM, "port", "1ns"), (memToDir, "port", "1ns") )
+link_dir_2_mem.connect( (dirctrl, "lowlink", "1ns"), (memctrl, "highlink", "1ns") )
 
 link_core0_os_link = sst.Link("link_core0_os_link")
 link_core0_os_link.connect( (v_cpu_0, "os_link", "5ns"), (node_os, "core0", "5ns") )
