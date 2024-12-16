@@ -24,9 +24,9 @@ AC_DEFUN([SST_CHECK_RAMULATOR2], [
      RAMULATOR2_LIBDIR=])
 
   AC_LANG_PUSH(C++)
-  AC_CHECK_HEADERS([Gem5Wrapper.h], [], [sst_check_ramulator2_happy="no"])
-  AC_CHECK_LIB([ramulator2], [libramulator2_is_present],
-    [RAMULATOR2_LIB="-lramulator2"], [sst_check_ramulator2_happy="no"])
+  AC_CHECK_HEADERS([base/base.h base/request.h base/config.h frontend/frontend.h memory_system/memory_system.h], [], [sst_check_ramulator2_happy="no"])
+  AC_CHECK_FILE([$with_ramulator2/libramulator.so], #[_ZZN4YAML3Exp3TagEvE1e],
+    [sst_check_ramulator2_happy="yes"], [sst_check_ramulator2_happy="no"])
   AC_LANG_POP(C++)
 
   CXXFLAGS="$CXXFLAGS_saved"
