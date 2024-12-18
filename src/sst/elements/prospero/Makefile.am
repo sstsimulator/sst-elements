@@ -22,11 +22,8 @@ libprospero_la_SOURCES = \
 
 EXTRA_DIST = \
         tests/array/trace-binary.py \
-        tests/array/trace-binary-withdramsim.py \
         tests/array/trace-compressed.py \
-        tests/array/trace-compressed-withdramsim.py \
         tests/array/trace-text.py \
-        tests/array/trace-text-withdramsim.py \
         tests/array/trace-common.py \
         tests/array/array.c \
         tests/array/Makefile \
