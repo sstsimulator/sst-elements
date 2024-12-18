@@ -36,10 +36,13 @@
 #define LOG_LEVEL_WARNING 10
 #define LOG_LEVEL_ERROR 0
 
+// Depends on arch, mips use uint32_t, riscv get uint64_t
+typedef ADDR_TYPE Addr_t;
+
 // Global mmio gpu address
-static uint32_t* g_gpu = (uint32_t*) 0xFFFF1000;
-static uint8_t g_scratch_mem[512];
-static int32_t g_debug_level = LOG_LEVEL_WARNING;
+static Addr_t* g_balarBaseAddr = (Addr_t*) 0;
+static uint8_t g_scratch_mem[1024];
+static int32_t g_debug_level = LOG_LEVEL_ERROR;
 
 enum GpuApi_t {
     GPU_REG_FAT_BINARY = 1,
@@ -64,6 +67,8 @@ enum GpuApi_t {
     GPU_REG_VAR_RET = 20,
     GPU_MAX_BLOCK = 21,
     GPU_MAX_BLOCK_RET = 22,
+    GPU_PARAM_CONFIG,
+    GPU_PARAM_CONFIG_RET,
 };
 
 enum cudaMemcpyKind
@@ -157,26 +162,26 @@ typedef struct BalarCudaCallPacket {
             uint64_t dst;
             uint64_t src;
             uint64_t count;
-            enum cudaMemcpyKind kind;
             uint64_t payload;   // A pointer, but need to be 64-bit
+            enum cudaMemcpyKind kind;
         } cuda_memcpy;
 
         struct {
+            uint64_t sharedMem;
+            uint64_t stream;
             uint32_t gdx;
             uint32_t gdy;
             uint32_t gdz;
             uint32_t bdx;
             uint32_t bdy;
             uint32_t bdz;
-            uint64_t sharedMem;
-            uint64_t stream;
         } configure_call;
 
         struct {
             uint64_t arg;
-            uint8_t value[8];
             uint64_t size;
             uint64_t offset;
+            uint8_t value[200];
         } setup_argument;
 
         struct {
@@ -199,12 +204,16 @@ typedef struct BalarCudaCallPacket {
         } register_var;
 
         struct {
+            size_t dynamicSMemSize;
             uint64_t numBlock;
             uint64_t hostFunc;
             int32_t blockSize;
-            size_t dynamicSMemSize;
             uint32_t flags;
         } max_active_block;
+        struct {
+            uint64_t hostFun;
+            unsigned index; // Argument index
+        } cudaparamconfig;
     };
 } BalarCudaCallPacket_t;
 
@@ -224,6 +233,10 @@ typedef struct BalarCudaCallReturnPacket {
             uint64_t      size;
             enum cudaMemcpyKind kind;
         } cudamemcpy;
+        struct {
+            size_t size;
+            unsigned alignment;
+        } cudaparamconfig;
     };
 } BalarCudaCallReturnPacket_t;
 
@@ -235,14 +248,15 @@ cudaError_t cudaMemcpy(uint64_t dst, uint64_t src, uint64_t count, enum cudaMemc
 cudaError_t cudaConfigureCall(dim3 gridDim, dim3 blockDim, uint64_t sharedMem);
 
 // Cuda Setup argument
-cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[8], uint64_t size, uint64_t offset);
+cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[200], uint64_t size, uint64_t offset);
 
 cudaError_t cudaLaunch(uint64_t func);
 
+// Use syscall to map balar to virtual memory space in vanadis
+void __vanadisMapBalar();
+
 unsigned int __cudaRegisterFatBinary(char file_name[256]);
 
-// TODO: How to get the deviceFun name automatically?
-// TODO: Requires parsing the binary?
 void __cudaRegisterFunction(
     uint64_t fatCubinHandle,
     uint64_t hostFun,
