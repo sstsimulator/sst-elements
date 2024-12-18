@@ -42,11 +42,11 @@ class BasicDetailedModel(DetailedModel):
 
             link = sst.Link( name + "cpu_l1_link")
             link.setNoCut();
-            link.connect( ( cpu, "cache_link", "100ps" ) , (l1,"high_network_0","1000ps") )
+            link.connect( ( cpu, "cache_link", "100ps" ) , (l1,"highlink","1000ps") )
 
             link = sst.Link( name + "l1_bus_link")
             link.setNoCut();
-            link.connect( ( l1, "low_network_0", "50ps" ) , (bus,"high_network_" + str(i+2),"1000ps") )
+            link.connect( ( l1, "lowlink", "50ps" ) , (bus,"highlink" + str(i+2),"1000ps") )
 
             link = sst.Link( name + "src_link" )
             link.setNoCut();
@@ -66,15 +66,15 @@ class BasicDetailedModel(DetailedModel):
 
         link = sst.Link( name + "cpu_l1_link")
         link.setNoCut();
-        link.connect( ( cpu, "cache_link", "100ps" ) , (l1,"high_network_0","1000ps") )
+        link.connect( ( cpu, "cache_link", "100ps" ) , (l1,"highlink","1000ps") )
 
         link = sst.Link( name + "l1_bus_link")
         link.setNoCut();
         if op == 'read':
-            link.connect( ( l1, "low_network_0", "50ps" ) , (bus,"high_network_0","1000ps") )
+            link.connect( ( l1, "lowlink", "50ps" ) , (bus,"highlink0","1000ps") )
 
         if op == 'write':
-            link.connect( ( l1, "low_network_0", "50ps" ) , (bus,"high_network_1","1000ps") )
+            link.connect( ( l1, "lowlink", "50ps" ) , (bus,"highlink1","1000ps") )
 
         link = sst.Link( name + "src_link" )
         link.setNoCut();
@@ -108,11 +108,11 @@ class BasicDetailedModel(DetailedModel):
 
         link = sst.Link( prefix + "bus_l2_link")
         link.setNoCut();
-        link.connect( (bus, "low_network_0", "50ps"), (l2, "high_network_0", "50ps") )
+        link.connect( (bus, "lowlink0", "50ps"), (l2, "highlink", "50ps") )
 
         link = sst.Link( prefix + "l2_mem_link")
         link.setNoCut();
-        link.connect( (l2, "low_network_0", "50ps"), (memory, "direct_link", "50ps") )
+        link.connect( (l2, "lowlink", "50ps"), (memory, "highlink", "50ps") )
 
         for i in range(numCores):
             name = prefix + "core" + str(i) + "_"

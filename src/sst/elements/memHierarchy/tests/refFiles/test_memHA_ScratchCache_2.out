@@ -1,7 +1,11 @@
 l2_0: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
 l2_1: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-ScratchCPU core0 Finished after 1000 issued memory events, 1000 returned, 3773 cycles
+memory0, Notice: memory controller's region is larger than the backend's mem_size, controller is limiting accessible memory to mem_size
+Region: start=0, end=18446744073709551615, interleaveStep=256, interleaveSize=128. MemSize: 536870912B
+memory1, Notice: memory controller's region is larger than the backend's mem_size, controller is limiting accessible memory to mem_size
+Region: start=128, end=18446744073709551615, interleaveStep=256, interleaveSize=128. MemSize: 536870912B
 ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 cycles
+ScratchCPU core0 Finished after 1000 issued memory events, 1000 returned, 3773 cycles
  l1_0.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.stateEvent_GetS_I : Accumulator : Sum.u64 = 163; SumSQ.u64 = 163; Count.u64 = 163; Min.u64 = 1; Max.u64 = 1; 
  l1_0.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -69,13 +73,16 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  l1_0.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.eventSent_FlushLine : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.eventSent_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1_0.eventSent_FlushAll : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.eventSent_FetchResp : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
  l1_0.eventSent_FetchXResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.eventSent_AckInv : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 10; Min.u64 = 1; Max.u64 = 1; 
+ l1_0.eventSent_AckFlush : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.eventSent_GetSResp : Accumulator : Sum.u64 = 318; SumSQ.u64 = 318; Count.u64 = 318; Min.u64 = 1; Max.u64 = 1; 
  l1_0.eventSent_GetXResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.eventSent_WriteResp : Accumulator : Sum.u64 = 362; SumSQ.u64 = 362; Count.u64 = 362; Min.u64 = 1; Max.u64 = 1; 
  l1_0.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1_0.eventSent_FlushAllResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.eventSent_Put : Accumulator : Sum.u64 = 161; SumSQ.u64 = 161; Count.u64 = 161; Min.u64 = 1; Max.u64 = 1; 
  l1_0.eventSent_Get : Accumulator : Sum.u64 = 159; SumSQ.u64 = 159; Count.u64 = 159; Min.u64 = 1; Max.u64 = 1; 
  l1_0.eventSent_AckMove : Accumulator : Sum.u64 = 320; SumSQ.u64 = 320; Count.u64 = 320; Min.u64 = 1; Max.u64 = 1; 
@@ -102,6 +109,7 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  l1_0.latency_FlushLine_fail : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.latency_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.latency_FlushLineInv_fail : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1_0.latency_FlushAll : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.GetSHit_Arrival : Accumulator : Sum.u64 = 5; SumSQ.u64 = 5; Count.u64 = 5; Min.u64 = 1; Max.u64 = 1; 
  l1_0.GetXHit_Arrival : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; Min.u64 = 1; Max.u64 = 1; 
  l1_0.GetSXHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -148,14 +156,18 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  l1_0.Write_recv : Accumulator : Sum.u64 = 177; SumSQ.u64 = 177; Count.u64 = 177; Min.u64 = 1; Max.u64 = 1; 
  l1_0.FlushLine_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.FlushLineInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1_0.FlushAll_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.GetSResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.GetXResp_recv : Accumulator : Sum.u64 = 337; SumSQ.u64 = 337; Count.u64 = 337; Min.u64 = 1; Max.u64 = 1; 
  l1_0.FlushLineResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1_0.FlushAllResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.ForceInv_recv : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 10; Min.u64 = 1; Max.u64 = 1; 
  l1_0.Fetch_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.FetchInv_recv : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
  l1_0.FetchInvX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1_0.ForwardFlush_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1_0.UnblockFlush_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.AckPut_recv : Accumulator : Sum.u64 = 260; SumSQ.u64 = 260; Count.u64 = 260; Min.u64 = 1; Max.u64 = 1; 
  l1_0.MSHR_occupancy : Accumulator : Sum.u64 = 10399; SumSQ.u64 = 37627; Count.u64 = 3963; Min.u64 = 0; Max.u64 = 8; 
@@ -251,6 +263,11 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  l2_0.eventSent_PutX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_0.eventSent_FlushLine : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_0.eventSent_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2_0.eventSent_FlushAll : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2_0.eventSent_FlushAllResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2_0.eventSent_ForwardFlush : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2_0.eventSent_UnblockFlush : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2_0.eventSent_AckFlush : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_0.eventSent_FetchResp : Accumulator : Sum.u64 = 14; SumSQ.u64 = 14; Count.u64 = 14; Min.u64 = 1; Max.u64 = 1; 
  l2_0.eventSent_FetchXResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_0.eventSent_AckInv : Accumulator : Sum.u64 = 22; SumSQ.u64 = 22; Count.u64 = 22; Min.u64 = 1; Max.u64 = 1; 
@@ -349,10 +366,12 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  l2_0.Write_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_0.FlushLine_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_0.FlushLineInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2_0.FlushAll_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_0.GetSResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_0.GetXResp_recv : Accumulator : Sum.u64 = 307; SumSQ.u64 = 307; Count.u64 = 307; Min.u64 = 1; Max.u64 = 1; 
  l2_0.WriteResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_0.FlushLineResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2_0.FlushAllResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_0.PutS_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_0.PutM_recv : Accumulator : Sum.u64 = 141; SumSQ.u64 = 141; Count.u64 = 141; Min.u64 = 1; Max.u64 = 1; 
  l2_0.PutE_recv : Accumulator : Sum.u64 = 119; SumSQ.u64 = 119; Count.u64 = 119; Min.u64 = 1; Max.u64 = 1; 
@@ -364,6 +383,9 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  l2_0.FetchInvX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_0.FetchResp_recv : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
  l2_0.FetchXResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2_0.ForwardFlush_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2_0.AckFlush_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2_0.UnblockFlush_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_0.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_0.AckInv_recv : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 10; Min.u64 = 1; Max.u64 = 1; 
  l2_0.AckPut_recv : Accumulator : Sum.u64 = 15; SumSQ.u64 = 15; Count.u64 = 15; Min.u64 = 1; Max.u64 = 1; 
@@ -388,10 +410,10 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  scratch0.request_received_scratch_put : Accumulator : Sum.u64 = 161; SumSQ.u64 = 161; Count.u64 = 161; Min.u64 = 1; Max.u64 = 1; 
  scratch0.request_issued_scratch_read : Accumulator : Sum.u64 = 473; SumSQ.u64 = 473; Count.u64 = 473; Min.u64 = 1; Max.u64 = 1; 
  scratch0.request_issued_scratch_write : Accumulator : Sum.u64 = 194; SumSQ.u64 = 194; Count.u64 = 194; Min.u64 = 1; Max.u64 = 1; 
- scratch0:memlink.packet_latency : Accumulator : Sum.u64 = 737; SumSQ.u64 = 2053; Count.u64 = 309; Min.u64 = 0; Max.u64 = 8; 
- scratch0:memlink.send_bit_count : Accumulator : Sum.u64 = 123296; SumSQ.u64 = 64100608; Count.u64 = 655; Min.u64 = 64; Max.u64 = 1088; 
- scratch0:memlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- scratch0:memlink.idle_time : Accumulator : Sum.u64 = 607420; SumSQ.u64 = 2261936400; Count.u64 = 237; Min.u64 = 80; Max.u64 = 12000; 
+ scratch0:lowlink.packet_latency : Accumulator : Sum.u64 = 737; SumSQ.u64 = 2053; Count.u64 = 309; Min.u64 = 0; Max.u64 = 8; 
+ scratch0:lowlink.send_bit_count : Accumulator : Sum.u64 = 123296; SumSQ.u64 = 64100608; Count.u64 = 655; Min.u64 = 64; Max.u64 = 1088; 
+ scratch0:lowlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ scratch0:lowlink.idle_time : Accumulator : Sum.u64 = 607420; SumSQ.u64 = 2261936400; Count.u64 = 237; Min.u64 = 80; Max.u64 = 12000; 
  l1_1.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.stateEvent_GetS_I : Accumulator : Sum.u64 = 163; SumSQ.u64 = 163; Count.u64 = 163; Min.u64 = 1; Max.u64 = 1; 
  l1_1.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -459,13 +481,16 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  l1_1.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.eventSent_FlushLine : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.eventSent_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1_1.eventSent_FlushAll : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.eventSent_FetchResp : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; Min.u64 = 1; Max.u64 = 1; 
  l1_1.eventSent_FetchXResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.eventSent_AckInv : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 10; Min.u64 = 1; Max.u64 = 1; 
+ l1_1.eventSent_AckFlush : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.eventSent_GetSResp : Accumulator : Sum.u64 = 333; SumSQ.u64 = 333; Count.u64 = 333; Min.u64 = 1; Max.u64 = 1; 
  l1_1.eventSent_GetXResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.eventSent_WriteResp : Accumulator : Sum.u64 = 347; SumSQ.u64 = 347; Count.u64 = 347; Min.u64 = 1; Max.u64 = 1; 
  l1_1.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1_1.eventSent_FlushAllResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.eventSent_Put : Accumulator : Sum.u64 = 171; SumSQ.u64 = 171; Count.u64 = 171; Min.u64 = 1; Max.u64 = 1; 
  l1_1.eventSent_Get : Accumulator : Sum.u64 = 149; SumSQ.u64 = 149; Count.u64 = 149; Min.u64 = 1; Max.u64 = 1; 
  l1_1.eventSent_AckMove : Accumulator : Sum.u64 = 320; SumSQ.u64 = 320; Count.u64 = 320; Min.u64 = 1; Max.u64 = 1; 
@@ -492,6 +517,7 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  l1_1.latency_FlushLine_fail : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.latency_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.latency_FlushLineInv_fail : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1_1.latency_FlushAll : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.GetSHit_Arrival : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
  l1_1.GetXHit_Arrival : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 10; Min.u64 = 1; Max.u64 = 1; 
  l1_1.GetSXHit_Arrival : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -538,14 +564,18 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  l1_1.Write_recv : Accumulator : Sum.u64 = 190; SumSQ.u64 = 190; Count.u64 = 190; Min.u64 = 1; Max.u64 = 1; 
  l1_1.FlushLine_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.FlushLineInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1_1.FlushAll_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.GetSResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.GetXResp_recv : Accumulator : Sum.u64 = 343; SumSQ.u64 = 343; Count.u64 = 343; Min.u64 = 1; Max.u64 = 1; 
  l1_1.FlushLineResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1_1.FlushAllResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.ForceInv_recv : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 10; Min.u64 = 1; Max.u64 = 1; 
  l1_1.Fetch_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.FetchInv_recv : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 10; Min.u64 = 1; Max.u64 = 1; 
  l1_1.FetchInvX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1_1.ForwardFlush_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1_1.UnblockFlush_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.AckPut_recv : Accumulator : Sum.u64 = 260; SumSQ.u64 = 260; Count.u64 = 260; Min.u64 = 1; Max.u64 = 1; 
  l1_1.MSHR_occupancy : Accumulator : Sum.u64 = 11842; SumSQ.u64 = 46766; Count.u64 = 3963; Min.u64 = 0; Max.u64 = 8; 
@@ -641,6 +671,11 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  l2_1.eventSent_PutX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_1.eventSent_FlushLine : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_1.eventSent_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2_1.eventSent_FlushAll : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2_1.eventSent_FlushAllResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2_1.eventSent_ForwardFlush : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2_1.eventSent_UnblockFlush : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2_1.eventSent_AckFlush : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_1.eventSent_FetchResp : Accumulator : Sum.u64 = 30; SumSQ.u64 = 30; Count.u64 = 30; Min.u64 = 1; Max.u64 = 1; 
  l2_1.eventSent_FetchXResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_1.eventSent_AckInv : Accumulator : Sum.u64 = 30; SumSQ.u64 = 30; Count.u64 = 30; Min.u64 = 1; Max.u64 = 1; 
@@ -739,10 +774,12 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  l2_1.Write_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_1.FlushLine_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_1.FlushLineInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2_1.FlushAll_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_1.GetSResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_1.GetXResp_recv : Accumulator : Sum.u64 = 315; SumSQ.u64 = 315; Count.u64 = 315; Min.u64 = 1; Max.u64 = 1; 
  l2_1.WriteResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_1.FlushLineResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2_1.FlushAllResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_1.PutS_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_1.PutM_recv : Accumulator : Sum.u64 = 148; SumSQ.u64 = 148; Count.u64 = 148; Min.u64 = 1; Max.u64 = 1; 
  l2_1.PutE_recv : Accumulator : Sum.u64 = 112; SumSQ.u64 = 112; Count.u64 = 112; Min.u64 = 1; Max.u64 = 1; 
@@ -754,6 +791,9 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  l2_1.FetchInvX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_1.FetchResp_recv : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; Min.u64 = 1; Max.u64 = 1; 
  l2_1.FetchXResp_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2_1.ForwardFlush_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2_1.AckFlush_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2_1.UnblockFlush_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_1.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2_1.AckInv_recv : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 10; Min.u64 = 1; Max.u64 = 1; 
  l2_1.AckPut_recv : Accumulator : Sum.u64 = 20; SumSQ.u64 = 20; Count.u64 = 20; Min.u64 = 1; Max.u64 = 1; 
@@ -778,10 +818,10 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  scratch1.request_received_scratch_put : Accumulator : Sum.u64 = 171; SumSQ.u64 = 171; Count.u64 = 171; Min.u64 = 1; Max.u64 = 1; 
  scratch1.request_issued_scratch_read : Accumulator : Sum.u64 = 480; SumSQ.u64 = 480; Count.u64 = 480; Min.u64 = 1; Max.u64 = 1; 
  scratch1.request_issued_scratch_write : Accumulator : Sum.u64 = 196; SumSQ.u64 = 196; Count.u64 = 196; Min.u64 = 1; Max.u64 = 1; 
- scratch1:memlink.packet_latency : Accumulator : Sum.u64 = 740; SumSQ.u64 = 2058; Count.u64 = 310; Min.u64 = 0; Max.u64 = 6; 
- scratch1:memlink.send_bit_count : Accumulator : Sum.u64 = 123672; SumSQ.u64 = 70887872; Count.u64 = 638; Min.u64 = 64; Max.u64 = 1088; 
- scratch1:memlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- scratch1:memlink.idle_time : Accumulator : Sum.u64 = 663060; SumSQ.u64 = 3110570800; Count.u64 = 228; Min.u64 = 80; Max.u64 = 16400; 
+ scratch1:lowlink.packet_latency : Accumulator : Sum.u64 = 740; SumSQ.u64 = 2058; Count.u64 = 310; Min.u64 = 0; Max.u64 = 6; 
+ scratch1:lowlink.send_bit_count : Accumulator : Sum.u64 = 123672; SumSQ.u64 = 70887872; Count.u64 = 638; Min.u64 = 64; Max.u64 = 1088; 
+ scratch1:lowlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ scratch1:lowlink.idle_time : Accumulator : Sum.u64 = 663060; SumSQ.u64 = 3110570800; Count.u64 = 228; Min.u64 = 80; Max.u64 = 16400; 
  memory0.requests_received_GetS : Accumulator : Sum.u64 = 309; SumSQ.u64 = 309; Count.u64 = 309; Min.u64 = 1; Max.u64 = 1; 
  memory0.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory0.requests_received_GetX : Accumulator : Sum.u64 = 189; SumSQ.u64 = 189; Count.u64 = 189; Min.u64 = 1; Max.u64 = 1; 
@@ -796,10 +836,10 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  memory0.cycles_with_issue : Accumulator : Sum.u64 = 743; SumSQ.u64 = 743; Count.u64 = 743; Min.u64 = 1; Max.u64 = 1; 
  memory0.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory0.total_cycles : Accumulator : Sum.u64 = 1981; SumSQ.u64 = 3924361; Count.u64 = 1; Min.u64 = 1981; Max.u64 = 1981; 
- memory0:cpulink.packet_latency : Accumulator : Sum.u64 = 2195; SumSQ.u64 = 10131; Count.u64 = 662; Min.u64 = 0; Max.u64 = 14; 
- memory0:cpulink.send_bit_count : Accumulator : Sum.u64 = 100176; SumSQ.u64 = 67532928; Count.u64 = 309; Min.u64 = 72; Max.u64 = 1088; 
- memory0:cpulink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- memory0:cpulink.idle_time : Accumulator : Sum.u64 = 503800; SumSQ.u64 = 2759550400; Count.u64 = 214; Min.u64 = 20; Max.u64 = 24120; 
+ memory0:highlink.packet_latency : Accumulator : Sum.u64 = 2195; SumSQ.u64 = 10131; Count.u64 = 662; Min.u64 = 0; Max.u64 = 14; 
+ memory0:highlink.send_bit_count : Accumulator : Sum.u64 = 100176; SumSQ.u64 = 67532928; Count.u64 = 309; Min.u64 = 72; Max.u64 = 1088; 
+ memory0:highlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ memory0:highlink.idle_time : Accumulator : Sum.u64 = 503800; SumSQ.u64 = 2759550400; Count.u64 = 214; Min.u64 = 20; Max.u64 = 24120; 
  memory1.requests_received_GetS : Accumulator : Sum.u64 = 310; SumSQ.u64 = 310; Count.u64 = 310; Min.u64 = 1; Max.u64 = 1; 
  memory1.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory1.requests_received_GetX : Accumulator : Sum.u64 = 143; SumSQ.u64 = 143; Count.u64 = 143; Min.u64 = 1; Max.u64 = 1; 
@@ -814,8 +854,8 @@ ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 c
  memory1.cycles_with_issue : Accumulator : Sum.u64 = 708; SumSQ.u64 = 708; Count.u64 = 708; Min.u64 = 1; Max.u64 = 1; 
  memory1.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory1.total_cycles : Accumulator : Sum.u64 = 1981; SumSQ.u64 = 3924361; Count.u64 = 1; Min.u64 = 1981; Max.u64 = 1981; 
- memory1:cpulink.packet_latency : Accumulator : Sum.u64 = 2113; SumSQ.u64 = 10193; Count.u64 = 631; Min.u64 = 0; Max.u64 = 14; 
- memory1:cpulink.send_bit_count : Accumulator : Sum.u64 = 106296; SumSQ.u64 = 72365760; Count.u64 = 310; Min.u64 = 72; Max.u64 = 1088; 
- memory1:cpulink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- memory1:cpulink.idle_time : Accumulator : Sum.u64 = 525920; SumSQ.u64 = 3265421600; Count.u64 = 219; Min.u64 = 20; Max.u64 = 36120; 
+ memory1:highlink.packet_latency : Accumulator : Sum.u64 = 2113; SumSQ.u64 = 10193; Count.u64 = 631; Min.u64 = 0; Max.u64 = 14; 
+ memory1:highlink.send_bit_count : Accumulator : Sum.u64 = 106296; SumSQ.u64 = 72365760; Count.u64 = 310; Min.u64 = 72; Max.u64 = 1088; 
+ memory1:highlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ memory1:highlink.idle_time : Accumulator : Sum.u64 = 525920; SumSQ.u64 = 3265421600; Count.u64 = 219; Min.u64 = 20; Max.u64 = 36120; 
 Simulation is complete, simulated time: 1.9815 us

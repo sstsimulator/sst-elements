@@ -19,7 +19,7 @@ cpu.addParams({
 })
 iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 iface.addParams(debug_params)
-cpu_nic = iface.setSubComponent("memlink", "memHierarchy.MemNIC")
+cpu_nic = iface.setSubComponent("lowlink", "memHierarchy.MemNIC")
 cpu_nic.addParams({"group" : 0, "network_bw" : "25GB/s"})
 #cpu_nic.addParams(debug_params)
 
@@ -36,7 +36,7 @@ l1cache.addParams({
       "debug" : DEBUG_L1,
       "debug_level" : DEBUG_LEVEL
 })
-l1_nic = l1cache.setSubComponent("cpulink", "memHierarchy.MemNIC")
+l1_nic = l1cache.setSubComponent("highlink", "memHierarchy.MemNIC")
 l1_nic.addParams({"group" : 1, "network_bw" : "25GB/s"})
 #l1_nic.addParams(debug_params)
 
@@ -60,7 +60,7 @@ memctrl.addParams({
     "clock" : "1GHz",
     "addr_range_end" : 512*1024*1024-1,
 })
-mem_nic = memctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
+mem_nic = memctrl.setSubComponent("highlink", "memHierarchy.MemNIC")
 mem_nic.addParams({"group" : 2, "network_bw" : "25GB/s"})
 #mem_nic.addParams(debug_params)
 

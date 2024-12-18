@@ -91,17 +91,17 @@ memory.addParams({
 # Define the simulation links
 cpu0_cache_link = sst.Link("cpu0_cache_link")
 cpu1_cache_link = sst.Link("cpu1_cache_link")
-cpu0_cache_link.connect( (cpu0, "cache_link", "1000ps"), (l1cache0, "high_network_0", "1000ps") )
-cpu1_cache_link.connect( (cpu1, "cache_link", "1000ps"), (l1cache1, "high_network_0", "1000ps") )
+cpu0_cache_link.connect( (cpu0, "cache_link", "1000ps"), (l1cache0, "highlink", "1000ps") )
+cpu1_cache_link.connect( (cpu1, "cache_link", "1000ps"), (l1cache1, "highlink", "1000ps") )
 cpu0_cache_link.setNoCut()
 cpu1_cache_link.setNoCut()
 
 l1cache0_bus_link = sst.Link("l1cache0_bus_link")
 l1cache1_bus_link = sst.Link("l1cache1_bus_link")
-l1cache0_bus_link.connect( (l1cache0, "low_network_0", "50ps"), (bus, "high_network_0", "50ps") )
-l1cache1_bus_link.connect( (l1cache1, "low_network_0", "50ps"), (bus, "high_network_1", "50ps") )
+l1cache0_bus_link.connect( (l1cache0, "lowlink", "50ps"), (bus, "highlink", "50ps") )
+l1cache1_bus_link.connect( (l1cache1, "lowlink", "50ps"), (bus, "high_network_1", "50ps") )
 bus_l2cache_link = sst.Link("bus_l2cache_link")
-bus_l2cache_link.connect( (bus, "low_network_0", "50ps"), (l2cache, "high_network_0", "50ps") )
+bus_l2cache_link.connect( (bus, "lowlink", "50ps"), (l2cache, "highlink", "50ps") )
 
 link_mem_bus_link = sst.Link("link_mem_bus_link")
-link_mem_bus_link.connect( (l2cache, "low_network_0", "50ps"), (comp_memctrl, "direct_link", "50ps") )
+link_mem_bus_link.connect( (l2cache, "lowlink", "50ps"), (comp_memctrl, "highlink", "50ps") )

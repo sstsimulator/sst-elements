@@ -444,24 +444,32 @@ public:
 
 class MemEventInitRegion : public MemEventInit {
 public:
-    MemEventInitRegion(std::string src, MemRegion region, bool setRegion) :
-        MemEventInit(src, InitCommand::Region), region_(region), setRegion_(setRegion) { }
+    
+    enum class ReachableGroup { Source, Dest, Peer, Unknown };
+
+    MemEventInitRegion(std::string src, MemRegion region, ReachableGroup group = ReachableGroup::Unknown) :
+        MemEventInit(src, InitCommand::Region), region_(region), group_(group) { }
 
     MemRegion getRegion() { return region_; }
-
-    bool getSetRegion() { return setRegion_; }
+    
+    ReachableGroup getGroup() { return group_; }
+    void setGroup(ReachableGroup group) { group_ = group; }
 
     virtual MemEventInitRegion* clone(void) override {
         return new MemEventInitRegion(*this);
     }
 
     virtual std::string getVerboseString(int level = 1) override {
-        return MemEventInit::getVerboseString(level) + region_.toString() + " SetRegion: " + (setRegion_ ? "T" : "F");
+        std::string groupstr = "Unknown";
+        if (group_ == ReachableGroup::Source) groupstr = "Source";
+        else if (group_ == ReachableGroup::Dest) groupstr = "Dest";
+        else if (group_ == ReachableGroup::Peer) groupstr = "Peer";
+        return MemEventInit::getVerboseString(level) + region_.toString() + " Group: " + groupstr.c_str();
     }
 
 private:
     MemRegion region_;  // MemRegion for source
-    bool setRegion_;    // Whether this is a push to set the destination's region or not
+    ReachableGroup group_; // Whether sent from a source/dest/peer or something else (unknown)
 
     MemEventInitRegion() {} // For serialization only
 
@@ -472,7 +480,7 @@ public:
         ser & region_.end;
         ser & region_.interleaveStep;
         ser & region_.interleaveSize;
-        ser & setRegion_;
+        ser & group_;
     }
 
     ImplementSerializable(SST::MemHierarchy::MemEventInitRegion);

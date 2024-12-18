@@ -25,6 +25,7 @@ cpu.addParams({
     "llsc_freq" : 4,   # 4% LLSC
 })
 iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
+#iface.addParams({"debug" : 1, "debug_level" : 10})
 
 l1cache = sst.Component("l1cache.msi", "memHierarchy.Cache")
 l1cache.addParams({
@@ -65,6 +66,6 @@ for a in componentlist:
 
 # Define the simulation links
 link_cpu_cache_link = sst.Link("link_cpu_cache_link")
-link_cpu_cache_link.connect( (iface, "port", "1000ps"), (l1cache, "high_network_0", "1000ps") )
-link_mem_bus_link = sst.Link("link_mem_bus_link")
-link_mem_bus_link.connect( (l1cache, "low_network_0", "50ps"), (memctrl, "direct_link", "50ps") )
+link_cpu_cache_link.connect( (iface, "lowlink", "1000ps"), (l1cache, "highlink", "1000ps") )
+link_cache_mem_link = sst.Link("link_cache_mem_link")
+link_cache_mem_link.connect( (l1cache, "lowlink", "50ps"), (memctrl, "highlink", "50ps") )

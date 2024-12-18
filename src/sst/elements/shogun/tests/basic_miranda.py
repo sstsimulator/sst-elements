@@ -49,10 +49,9 @@ comp_l1cache0.addParams({
       "verbose" : 0
 })
 pref0 = comp_l1cache0.setSubComponent("prefetcher", "cassini.StridePrefetcher")
-l1c0_cpulink = comp_l1cache0.setSubComponent("cpulink", "memHierarchy.MemLink")
-l1c0_memlink = comp_l1cache0.setSubComponent("memlink", "memHierarchy.MemNIC")
-l1c0_memlink.addParams({ "group" : 2 })
-l1c0_linkctrl = l1c0_memlink.setSubComponent("linkcontrol", "shogun.ShogunNIC")
+l1c0_lowlink = comp_l1cache0.setSubComponent("lowlink", "memHierarchy.MemNIC")
+l1c0_lowlink.addParams({ "group" : 2 })
+l1c0_linkctrl = l1c0_lowlink.setSubComponent("linkcontrol", "shogun.ShogunNIC")
 
 comp_l1cache1 = sst.Component("l1cache1", "memHierarchy.Cache")
 comp_l1cache1.addParams({
@@ -67,10 +66,9 @@ comp_l1cache1.addParams({
       "cache_size" : "8KB",
 })
 pref1 = comp_l1cache1.setSubComponent("prefetcher", "cassini.StridePrefetcher")
-l1c1_cpulink = comp_l1cache1.setSubComponent("cpulink", "memHierarchy.MemLink")
-l1c1_memlink = comp_l1cache1.setSubComponent("memlink", "memHierarchy.MemNIC")
-l1c1_memlink.addParams({ "group" : 2 })
-l1c1_linkctrl = l1c1_memlink.setSubComponent("linkcontrol", "shogun.ShogunNIC")
+l1c1_lowlink = comp_l1cache1.setSubComponent("lowlink", "memHierarchy.MemNIC")
+l1c1_lowlink.addParams({ "group" : 2 })
+l1c1_linkctrl = l1c1_lowlink.setSubComponent("linkcontrol", "shogun.ShogunNIC")
 
 # Enable statistics outputs
 comp_l1cache0.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
@@ -122,14 +120,13 @@ comp_dirctrl0.addParams({
       "interleave_step" : "128B",
 })
 
-dc0_cpulink = comp_dirctrl0.setSubComponent("cpulink", "memHierarchy.MemNIC")
-dc0_memlink = comp_dirctrl0.setSubComponent("memlink", "memHierarchy.MemLink")
-dc0_cpulink.addParams({ 
+dc0_highlink = comp_dirctrl0.setSubComponent("highlink", "memHierarchy.MemNIC")
+dc0_highlink.addParams({ 
     "group" : 3,
     "debug" : 0,
     "debug_level" : 10,
 })
-dc0_linkctrl = dc0_cpulink.setSubComponent("linkcontrol", "shogun.ShogunNIC")
+dc0_linkctrl = dc0_highlink.setSubComponent("linkcontrol", "shogun.ShogunNIC")
 
 comp_dirctrl1 = sst.Component("dirctrl1", "memHierarchy.DirectoryController")
 comp_dirctrl1.addParams({
@@ -141,14 +138,13 @@ comp_dirctrl1.addParams({
       "interleave_step" : "128B",
 })
 
-dc1_cpulink = comp_dirctrl1.setSubComponent("cpulink", "memHierarchy.MemNIC")
-dc1_memlink = comp_dirctrl1.setSubComponent("memlink", "memHierarchy.MemLink")
-dc1_cpulink.addParams({ 
+dc1_highlink = comp_dirctrl1.setSubComponent("highlink", "memHierarchy.MemNIC")
+dc1_highlink.addParams({ 
     "group" : 3,
     "debug" : 0,
     "debug_level" : 10,
 })
-dc1_linkctrl = dc1_cpulink.setSubComponent("linkcontrol", "shogun.ShogunNIC")
+dc1_linkctrl = dc1_highlink.setSubComponent("linkcontrol", "shogun.ShogunNIC")
 
 shogun_xbar = sst.Component("shogunxbar", "shogun.ShogunXBar")
 shogun_xbar.addParams({
@@ -161,11 +157,11 @@ shogun_xbar.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 
 # Define the simulation links
 link_cpu_cache_link0 = sst.Link("link_cpu_cache_link0")
-link_cpu_cache_link0.connect( (comp_cpu0, "cache_link", "100ps"), (l1c0_cpulink, "port", "100ps") )
+link_cpu_cache_link0.connect( (comp_cpu0, "cache_link", "100ps"), (comp_l1cache0, "highlink", "100ps") )
 link_cpu_cache_link0.setNoCut()
 
 link_cpu_cache_link1 = sst.Link("link_cpu_cache_link1")
-link_cpu_cache_link1.connect( (comp_cpu1, "cache_link", "100ps"), (l1c1_cpulink, "port", "100ps") )
+link_cpu_cache_link1.connect( (comp_cpu1, "cache_link", "100ps"), (comp_l1cache1, "highlink", "100ps") )
 link_cpu_cache_link1.setNoCut()
 
 xbar_cpu0_link = sst.Link("xbar_cpu0_link")
@@ -175,13 +171,13 @@ xbar_cpu1_link = sst.Link("xbar_cpu1_link")
 xbar_cpu1_link.connect( (shogun_xbar, "port1", "100ps"), (l1c1_linkctrl, "port", "100ps") )
 
 dir0_mem0_link = sst.Link("dir0_mem0_link")
-dir0_mem0_link.connect( (dc0_memlink, "port", "500ps"), (comp_memctrl0, "direct_link", "50ps") )
+dir0_mem0_link.connect( (comp_dirctrl0, "lowlink", "500ps"), (comp_memctrl0, "highlink", "50ps") )
 
 dir0_net_link = sst.Link("dir0_net_link")
 dir0_net_link.connect( (shogun_xbar, "port2", "100ps"), (dc0_linkctrl, "port", "200ps") )
 
 dir1_mem1_link = sst.Link("dir1_mem1_link")
-dir1_mem1_link.connect( (dc1_memlink, "port", "500ps"), (comp_memctrl1, "direct_link", "50ps") )
+dir1_mem1_link.connect( (comp_dirctrl1, "lowlink", "500ps"), (comp_memctrl1, "highlink", "50ps") )
 
 dir1_net_link = sst.Link("dir1_net_link")
 dir1_net_link.connect( (shogun_xbar, "port3", "100ps"), (dc1_linkctrl, "port", "200ps") )

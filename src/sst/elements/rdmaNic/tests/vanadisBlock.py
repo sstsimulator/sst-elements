@@ -154,8 +154,8 @@ class Vanadis_Builder:
         })
 		
         # L1 D-Cache
-        l1cache = sst.Component(prefix + ".l1dcache", "memHierarchy.Cache")
-        l1cache.addParams({
+        l1dcache = sst.Component(prefix + ".l1dcache", "memHierarchy.Cache")
+        l1dcache.addParams({
             "access_latency_cycles" : "2",
             "cache_frequency" : cpu_clock,
             "replacement_policy" : "lru",
@@ -168,9 +168,6 @@ class Vanadis_Builder:
             "debug" : cache_debug,
             "debug_addr" : debug_addr,
         })
-
-        l1dcache_2_cpu     = l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-        l1dcache_2_l2cache = l1cache.setSubComponent("memlink", "memHierarchy.MemLink")
 
         # L1 I-Cache
         l1icache = sst.Component(prefix + ".l1icache", "memHierarchy.Cache")
@@ -212,8 +209,6 @@ class Vanadis_Builder:
             "debug_addr" : debug_addr,
         })
 
-        l2cache_2_cpu = l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-
         # CPU D-TLB
         dtlbWrapper = sst.Component(prefix+".dtlb", "mmu.tlb_wrapper")
         dtlbWrapper.addParams(tlbWrapperParams)
@@ -229,33 +224,30 @@ class Vanadis_Builder:
 
         # CPU (data) -> D-TLB
         link = sst.Link(prefix+".link_cpu_dtlb")
-        link.connect( (dcache_if, "port", "1ns"), (dtlbWrapper, "cpu_if", "1ns") )
+        link.connect( (dcache_if, "lowlink", "1ns"), (dtlbWrapper, "cpu_if", "1ns") )
 
         # CPU (instruction) -> I-TLB
         link = sst.Link(prefix+".link_cpu_itlb")
-        link.connect( (icache_if, "port", "1ns"), (itlbWrapper, "cpu_if", "1ns") )
-
-        l1icache_2_cpu     = l1icache.setSubComponent("cpulink", "memHierarchy.MemLink")
-        l1icache_2_l2cache = l1icache.setSubComponent("memlink", "memHierarchy.MemLink")
+        link.connect( (icache_if, "lowlink", "1ns"), (itlbWrapper, "cpu_if", "1ns") )
 
         # D-TLB -> D-L1 
         link = sst.Link(prefix+".link_l1cache")
-        link.connect( (dtlbWrapper, "cache_if", "1ns"), (l1dcache_2_cpu, "port", "1ns") )
+        link.connect( (dtlbWrapper, "cache_if", "1ns"), (l1dcache, "highlink", "1ns") )
 
         # I-TLB -> I-L1 
         link = sst.Link(prefix+".link_l1icache")
-        link.connect( (itlbWrapper, "cache_if", "1ns"), (l1icache_2_cpu, "port", "1ns") )
+        link.connect( (itlbWrapper, "cache_if", "1ns"), (l1icache, "highlink", "1ns") )
 
         # L1 I-Cache to bus
         link = sst.Link(prefix + ".link_l1dcache_l2cache")
-        link.connect( (l1dcache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_0", "1ns") )
+        link.connect( (l1dcache, "lowlink", "1ns"), (cache_bus, "highlink0", "1ns") )
 
         # L1 D-Cache to bus
         link = sst.Link(prefix + ".link_l1icache_l2cache")
-        link.connect( (l1icache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_1", "1ns") )
+        link.connect( (l1icache, "lowlink", "1ns"), (cache_bus, "highlink1", "1ns") )
 
         # BUS to L2 cache
         link = sst.Link(prefix+".link_bus_l2cache")
-        link.connect( (cache_bus, "low_network_0", "1ns"), (l2cache_2_cpu, "port", "1ns") )
+        link.connect( (cache_bus, "lowlink0", "1ns"), (l2cache, "highlink", "1ns") )
 
         return cpu, l2cache, dtlb, itlb

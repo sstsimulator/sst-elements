@@ -66,7 +66,10 @@ public:
         {"eventSent_NACK",          "Number of NACKs sent ", "events", 2},
         {"eventSent_FlushLine",     "Number of FlushLine requests sent", "events", 2},
         {"eventSent_FlushLineInv",  "Number of FlushLineInv requests sent", "events", 2},
+        {"eventSent_FlushAll",      "Number of FlushAll requests sent", "events", 2},
         {"eventSent_FlushLineResp", "Number of FlushLineResp responses sent", "events", 2},
+        {"eventSent_FlushAllResp",  "Number of FlushAllResp responses sent", "events", 2},
+        {"eventSent_AckFlush",      "Number of AckFlush responses sent", "events", 2},
         {"eventSent_Put",           "Number of Put requests sent", "events", 6},
         {"eventSent_Get",           "Number of Get requests sent", "events", 6},
         {"eventSent_AckMove",       "Number of AckMove responses sent", "events", 6},
@@ -164,6 +167,7 @@ public:
         {"latency_FlushLine_fail",      "Latency for Flush requests that failed (e.g., line was locked)", "cycles", 2},
         {"latency_FlushLineInv",        "Latency for Flush and Invalidate requests", "cycles", 2},
         {"latency_FlushLineInv_fail",   "Latency for Flush and Invalidate requests that failed (e.g., line was locked)", "cycles", 2},
+        {"latency_FlushAll",            "Latency for FlushAll (full cache) requests", "cycles", 2},
         /* Track what happens to prefetched blocks */
         {"prefetch_useful",         "Prefetched block had a subsequent hit (useful prefetch)", "count", 2},
         {"prefetch_evict",          "Prefetched block was evicted/flushed before being accessed", "count", 2},
@@ -200,6 +204,11 @@ public:
             protocolReadState_ = S; // State to transition to when a GetXResp/clean is received in response to a read (GetS)
             protocolExclState_ = M; // State to transition to on a Read-exclusive/read-for-ownership
         }
+
+        isFlushing_ = false;
+        flushDrain_ = false;
+        flush_complete_timestamp_ = 0;
+
         // Cache Array
         uint64_t lines = params.find<uint64_t>("lines", 0);
         uint64_t assoc = params.find<uint64_t>("associativity", 0);
@@ -276,13 +285,16 @@ public:
         stat_eventSent[(int)Command::NACK] =            registerStatistic<uint64_t>("eventSent_NACK");
         stat_eventSent[(int)Command::FlushLine] =       registerStatistic<uint64_t>("eventSent_FlushLine");
         stat_eventSent[(int)Command::FlushLineInv] =    registerStatistic<uint64_t>("eventSent_FlushLineInv");
+        stat_eventSent[(int)Command::FlushAll] =         registerStatistic<uint64_t>("eventSent_FlushAll");
         stat_eventSent[(int)Command::FetchResp] =       registerStatistic<uint64_t>("eventSent_FetchResp");
         stat_eventSent[(int)Command::FetchXResp] =      registerStatistic<uint64_t>("eventSent_FetchXResp");
         stat_eventSent[(int)Command::AckInv] =          registerStatistic<uint64_t>("eventSent_AckInv");
+        stat_eventSent[(int)Command::AckFlush] =        registerStatistic<uint64_t>("eventSent_AckFlush");
         stat_eventSent[(int)Command::GetSResp] =        registerStatistic<uint64_t>("eventSent_GetSResp");
         stat_eventSent[(int)Command::GetXResp] =        registerStatistic<uint64_t>("eventSent_GetXResp");
         stat_eventSent[(int)Command::WriteResp] =       registerStatistic<uint64_t>("eventSent_WriteResp");
         stat_eventSent[(int)Command::FlushLineResp] =   registerStatistic<uint64_t>("eventSent_FlushLineResp");
+        stat_eventSent[(int)Command::FlushAllResp] =    registerStatistic<uint64_t>("eventSent_FlushAllResp");
         stat_eventSent[(int)Command::Put]           = registerStatistic<uint64_t>("eventSent_Put");
         stat_eventSent[(int)Command::Get]           = registerStatistic<uint64_t>("eventSent_Get");
         stat_eventSent[(int)Command::AckMove]       = registerStatistic<uint64_t>("eventSent_AckMove");
@@ -310,6 +322,7 @@ public:
         stat_latencyFlushLine[LatType::MISS]    = registerStatistic<uint64_t>("latency_FlushLine_fail");
         stat_latencyFlushLineInv[LatType::HIT]  = registerStatistic<uint64_t>("latency_FlushLineInv");
         stat_latencyFlushLineInv[LatType::MISS] = registerStatistic<uint64_t>("latency_FlushLineInv_fail");
+        stat_latencyFlushAll                    = registerStatistic<uint64_t>("latency_FlushAll");
         stat_hit[0][0] = registerStatistic<uint64_t>("GetSHit_Arrival");
         stat_hit[1][0] = registerStatistic<uint64_t>("GetXHit_Arrival");
         stat_hit[2][0] = registerStatistic<uint64_t>("GetSXHit_Arrival");
@@ -371,6 +384,8 @@ public:
     bool handleGetSX(MemEvent * event, bool inMSHR);
     bool handleFlushLine(MemEvent * event, bool inMSHR);
     bool handleFlushLineInv(MemEvent * event, bool inMSHR);
+    bool handleFlushAll(MemEvent * event, bool inMSHR);
+    bool handleForwardFlush(MemEvent * event, bool inMSHR);
     bool handleFetch(MemEvent * event, bool inMSHR);
     bool handleInv(MemEvent * event, bool inMSHR);
     bool handleForceInv(MemEvent * event, bool inMSHR);
@@ -379,6 +394,8 @@ public:
     bool handleGetSResp(MemEvent * event, bool inMSHR);
     bool handleGetXResp(MemEvent * event, bool inMSHR);
     bool handleFlushLineResp(MemEvent * event, bool inMSHR);
+    bool handleFlushAllResp(MemEvent * event, bool inMSHR);
+    bool handleUnblockFlush(MemEvent * event, bool inMSHR);
     bool handleAckPut(MemEvent * event, bool inMSHR);
     bool handleNULLCMD(MemEvent * event, bool inMSHR);
     bool handleNACK(MemEvent * event, bool inMSHR);
@@ -410,9 +427,10 @@ private:
     MemEventStatus processCacheMiss(MemEvent * event, L1CacheLine * line, bool inMSHR);
     MemEventStatus checkMSHRCollision(MemEvent* event, bool inMSHR);
     L1CacheLine* allocateLine(MemEvent * event, L1CacheLine * line);
-    bool handleEviction(Addr addr, L1CacheLine *& line);
+    bool handleEviction(Addr addr, L1CacheLine *& line, bool flush);
     void cleanUpAfterRequest(MemEvent * event, bool inMSHR);
     void cleanUpAfterResponse(MemEvent * event, bool inMSHR);
+    void cleanUpAfterFlush(MemEvent * req, MemEvent * resp = nullptr, bool inMSHR = true);
     void retry(Addr addr);
     void handleLoadLinkExpiration(SST::Event* ev);
 
@@ -420,7 +438,7 @@ private:
     uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t time, bool success = true);
     void sendResponseDown(MemEvent * event, L1CacheLine * line, bool data);
     void forwardFlush(MemEvent * event, L1CacheLine * line, bool evict);
-    void sendWriteback(Command cmd, L1CacheLine * line, bool dirty);
+    void sendWriteback(Command cmd, L1CacheLine * line, bool dirty, bool flush);
     void snoopInvalidation(MemEvent * event, L1CacheLine * line);
     void forwardByAddress(MemEventBase* ev, Cycle_t timestamp);
     void forwardByDestination(MemEventBase* ev, Cycle_t timestamp);
@@ -432,7 +450,10 @@ private:
 
     /** Miscellaneous */
     void printLine(Addr addr);
-
+    
+    bool isFlushing_;
+    bool flushDrain_;
+    Cycle_t flush_complete_timestamp_;
     bool snoopL1Invs_;
     State protocolReadState_;   // E for MESI, S for MSI
     State protocolExclState_;   // E for MESI, M for MSI
@@ -448,6 +469,7 @@ private:
     Statistic<uint64_t>* stat_latencyGetSX[4];
     Statistic<uint64_t>* stat_latencyFlushLine[2];
     Statistic<uint64_t>* stat_latencyFlushLineInv[2];
+    Statistic<uint64_t>* stat_latencyFlushAll;
     Statistic<uint64_t>* stat_hit[3][2];
     Statistic<uint64_t>* stat_miss[3][2];
     Statistic<uint64_t>* stat_hits;

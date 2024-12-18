@@ -95,16 +95,13 @@ class Builder:
         tlb = tlbWrapper.setSubComponent("tlb", "mmu.simpleTLB" );
         tlb.addParams(tlbParams)
 
-        # Cache to CPU interface
-        dmaCacheToCpu = dmaCache.setSubComponent("cpulink", "memHierarchy.MemLink")
-
         # NIC DMA -> TLB
         link = sst.Link(prefix+".link_cpu_dtlb")
-        link.connect( (dmaIf, "port", "1ns"), (tlbWrapper, "cpu_if", "1ns") )
+        link.connect( (dmaIf, "lowlink", "1ns"), (tlbWrapper, "cpu_if", "1ns") )
 
         # NIC DMA TLB -> cache
         link = sst.Link(prefix+".link_cpu_l1dcache")
-        link.connect( (tlbWrapper, "cache_if", "1ns"), (dmaCacheToCpu, "port", "1ns") )
+        link.connect( (tlbWrapper, "cache_if", "1ns"), (dmaCache, "highlink", "1ns") )
 	
         # NIC internode interface 
         netLink = nic.setSubComponent( "rtrLink", "merlin.linkcontrol" )

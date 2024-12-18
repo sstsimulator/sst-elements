@@ -64,7 +64,7 @@ public:
         {"output_buf_size",    "Size of output buffers specified in b or B (can include SI prefix)."},
         // {"network_inspectors", "Comma separated list of network inspectors to put on output ports.", ""},
         {"job_id",             "ID of the job this enpoint is part of.", "" },
-        {"Job_size",           "Number of nodes in the job this endpoint is part of.",""},
+        {"job_size",           "Number of nodes in the job this endpoint is part of.",""},
         {"logical_nid",        "My logical NID", "" },
         {"use_nid_remap",      "If true, will remap logical nids in job to physical ids", "false" },
         {"nid_map_name",       "Base name of shared region where my NID map will be located.  If empty, no NID map will be used.",""},

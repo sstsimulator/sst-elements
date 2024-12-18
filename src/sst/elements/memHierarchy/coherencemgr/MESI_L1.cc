@@ -58,10 +58,15 @@ bool MESIL1::handleGetS(MemEvent * event, bool inMSHR) {
         eventDI.reason = "hit";
     }
 
+    if (isFlushing_ && !inMSHR) {
+        eventDI.action = "Reject";
+        eventDI.reason = "Cache flush in progress";
+        return false;
+    }
+
     switch (state) {
         case I: /* Miss */
             status = processCacheMiss(event, line, inMSHR); // Attempt to allocate an MSHR entry and/or line
-
             if (status == MemEventStatus::OK) {
                 line = cacheArray_->lookup(addr, false);
                 //eventProfileAndNotify(event, I, NotifyAccessType::READ, NotifyResultType::MISS, true, LatType::MISS);
@@ -151,6 +156,13 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
 
     if (inMSHR)
         mshr_->removePendingRetry(addr);
+
+    // Any event other than an unlock or store-conditional needs to stall for a cache flush
+    if (isFlushing_ && !inMSHR && !event->isStoreConditional() && !event->queryFlag(MemEvent::F_LOCKED)) {
+        eventDI.action = "Reject";
+        eventDI.reason = "Cache flush in progress";
+        return false;
+    }
 
     /* Special case - if this is the last coherence level (e.g., just mem below),
      * can upgrade without forwarding request */
@@ -296,6 +308,12 @@ bool MESIL1::handleGetSX(MemEvent* event, bool inMSHR) {
 
     if (is_debug_addr(addr))
         eventDI.prefill(event->getID(), event->getThreadID(), Command::GetSX, (event->isLoadLink() ? "-LL" : ""), addr, state);
+    
+    if (isFlushing_ && !inMSHR) {
+        eventDI.action = "Reject";
+        eventDI.reason = "Cache flush in progress";
+        return false;
+    }
 
     /* Special case - if this is the last coherence level (e.g., just mem below),
      * can upgrade without forwarding request */
@@ -400,6 +418,12 @@ bool MESIL1::handleFlushLine(MemEvent* event, bool inMSHR) {
 
     if (is_debug_addr(addr))
         eventDI.prefill(event->getID(), event->getThreadID(), Command::FlushLine, "", addr, state);
+    
+    if (isFlushing_ && !inMSHR) {
+        eventDI.action = "Reject";
+        eventDI.reason = "Cache flush in progress";
+        return false;
+    }
 
     if (!inMSHR && mshr_->exists(addr)) {
         return (allocateMSHR(event, false) == MemEventStatus::Reject) ? false : true;
@@ -460,6 +484,12 @@ bool MESIL1::handleFlushLineInv(MemEvent* event, bool inMSHR) {
 
     if (is_debug_addr(addr))
         eventDI.prefill(event->getID(), event->getThreadID(), Command::FlushLineInv, "", addr, state);
+    
+    if (isFlushing_ && !inMSHR) {
+        eventDI.action = "Reject";
+        eventDI.reason = "Cache flush in progress";
+        return false;
+    }
 
     if (!inMSHR && mshr_->exists(addr)) {
         return (allocateMSHR(event, false) != MemEventStatus::Reject);
@@ -514,6 +544,176 @@ bool MESIL1::handleFlushLineInv(MemEvent* event, bool inMSHR) {
     }
     return true;
 }
+
+
+bool MESIL1::handleFlushAll(MemEvent* event, bool inMSHR) {
+    eventDI.prefill(event->getID(), Command::FlushAll, "", 0, State::NP);
+    
+    // A core shouldn't send another FlushAll while one is outstanding but just in case
+    if (!inMSHR) {
+        if (isFlushing_) {
+            eventDI.action = "Reject";
+            eventDI.reason = "Flush in progress";
+            return false;
+        }
+
+        if (mshr_->insertFlush(event, false) == MemEventStatus::Reject) {
+            return false;
+        }
+        
+        isFlushing_ = true;
+        if (!flush_manager_) {
+            // Forward flush to flush manager
+            MemEvent* flush = new MemEvent(*event); // Copy event for forwarding
+            flush->setDst(flush_dest_);
+            forwardByDestination(flush, timestamp_ + mshrLatency_); // Time to insert event in MSHR
+            eventDI.action = "forward";
+            return true;
+        }
+    }
+
+    if (!flush_manager_) {
+        debug->fatal(CALL_INFO, -1, "%s, ERROR: Trying to retry a flushall but not the flush manager...\n", getName().c_str());
+    }
+    
+    if (mshr_->getFlushSize() != mshr_->getSize()) { /* Wait for MSHR to drain */
+        eventDI.action = "Drain MSHR";
+        flushDrain_ = true;
+        return true;
+    }
+    
+    flushDrain_ = false;
+
+    bool success = true;
+    bool evictionNeeded = false;
+    for (auto it : *cacheArray_) {
+        if (it->isLocked(timestamp_)) {
+            success = false; // No good, should not have issued a FlushAll between a lock/unlock!
+            evictionNeeded = false;
+            break;
+        }
+
+        switch (it->getState()) {
+            case I:
+                break;
+            case S:
+            case E:
+            case M:
+                {
+                MemEvent * ev = new MemEvent(cachename_, it->getAddr(), it->getAddr(), Command::NULLCMD);
+                retryBuffer_.push_back(ev);
+                evictionNeeded = true;
+                mshr_->incrementFlushCount();
+                break;
+                }
+        default:
+            debug->fatal(CALL_INFO, -1, "%s, Error: Attempting to flush a cache line that is in a transient state '%s'. Addr = 0x%" PRIx64 ". Event: %s. Time: %" PRIu64 "ns\n",
+                cachename_.c_str(), StateString[it->getState()], it->getAddr(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+            break;
+        }
+    }
+
+    if (!evictionNeeded) {
+        isFlushing_ = false;
+        sendResponseUp(event, nullptr, true, timestamp_, success);
+        cleanUpAfterFlush(event); // Remove FlushAll
+        eventDI.action = "Respond";
+    } else {
+        eventDI.action = "Flush";
+    }
+
+    return true;
+}
+
+
+bool MESIL1::handleForwardFlush(MemEvent* event, bool inMSHR) {
+    eventDI.prefill(event->getID(), Command::ForwardFlush, "", 0, State::NP);
+    MemEventStatus status = MemEventStatus::OK;
+
+    if (!inMSHR) {
+        status = mshr_->insertFlush(event, true);
+        if (status == MemEventStatus::Reject) {
+            return false; /* No room for flush in MSHR */
+        } else if (status == MemEventStatus::Stall) {
+            eventDI.action = "Stall";
+            eventDI.reason = "Flush in progress";
+            return true;
+        }
+    }
+    isFlushing_ = true;
+
+    if (mshr_->getFlushSize() != mshr_->getSize()) { /* Wait for MSHR to drain */
+        eventDI.action = "Drain MSHR";
+        flushDrain_ = true;
+        return true;
+    }
+
+    flushDrain_ = false;
+
+    bool success = true;
+    bool evictionNeeded = false;
+    for (auto it : *cacheArray_) {
+        if (it->isLocked(timestamp_)) {
+            // Retry in a few cycles
+            success = false;
+            continue;
+        }
+
+        switch (it->getState()) {
+            case I:
+                break;
+            case S:
+            case E:
+            case M:
+                {
+                MemEvent * ev = new MemEvent(cachename_, it->getAddr(), it->getAddr(), Command::NULLCMD);
+                retryBuffer_.push_back(ev);
+                evictionNeeded = true;
+                mshr_->incrementFlushCount();
+                break;
+                }
+            default:
+                debug->fatal(CALL_INFO, -1, "%s, Error: Attempting to flush a cache line that is in a transient state '%s'. Addr = 0x%" PRIx64 ". Event: %s, Time: %" PRIu64 "ns\n",
+                    cachename_.c_str(), StateString[it->getState()], it->getAddr(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                break;
+        }
+    }
+
+    if (evictionNeeded) {
+        // if unsuccessful that is OK, we'll retry when the evictions complete
+        eventDI.action = "Flush";
+    } else if (!success) { // No choice but to keep retrying until the unlock occurs
+        retryBuffer_.push_back(event);
+        eventDI.action = "Retry";
+    } else {
+        MemEvent * responseEvent = event->makeResponse();
+        uint64_t deliverTime = std::max(timestamp_ + tagLatency_, flush_complete_timestamp_ + 1);
+        forwardByDestination(responseEvent, deliverTime);
+        eventDI.action = "Respond";
+        
+        mshr_->removeFlush(); // Remove ForwardFlush
+        delete event;
+
+        MemEventBase* next_flush = mshr_->getFlush();
+        if (next_flush != nullptr && next_flush->getCmd() == Command::ForwardFlush) {
+            retryBuffer_.push_back(next_flush);
+        }
+    }
+
+    return true;
+}
+
+
+bool MESIL1::handleUnblockFlush(MemEvent* event, bool inMSHR) {
+    eventDI.prefill(event->getID(), Command::UnblockFlush, "", 0, State::NP);
+
+    if (mshr_->getFlush() == nullptr)
+        isFlushing_ = false;
+    delete event;
+
+    return true;
+}
+
 
 bool MESIL1::handleFetch(MemEvent* event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
@@ -1021,6 +1221,26 @@ bool MESIL1::handleFlushLineResp(MemEvent * event, bool inMSHR) {
 }
 
 
+bool MESIL1::handleFlushAllResp(MemEvent * event, bool inMSHR) {
+    MemEvent* flush_req = static_cast<MemEvent*>(mshr_->getFlush());
+    mshr_->removeFlush(); // Remove FlushAll
+
+    eventDI.prefill(event->getID(), flush_req->getThreadID(), Command::FlushAllResp, "", 0, State::NP);
+    eventDI.action = "Respond";
+
+    sendResponseUp(flush_req, nullptr, true, timestamp_);
+
+    delete flush_req;
+    delete event;
+
+    if (mshr_->getFlush() != nullptr) {
+        retryBuffer_.push_back(mshr_->getFlush());
+    }
+
+    return true;
+}
+
+
 bool MESIL1::handleAckPut(MemEvent * event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
     L1CacheLine * line = cacheArray_->lookup(addr, false);
@@ -1037,14 +1257,14 @@ bool MESIL1::handleAckPut(MemEvent * event, bool inMSHR) {
 }
 
 
-/* We're using NULLCMD to signal an internally generated event - in thsi case an eviction */
+/* We're using NULLCMD to signal an internally generated event - in this case an eviction */
 bool MESIL1::handleNULLCMD(MemEvent * event, bool inMSHR) {
     Addr oldAddr = event->getAddr();
     Addr newAddr = event->getBaseAddr();
 
     L1CacheLine * line = cacheArray_->lookup(oldAddr, false);
 
-    bool evicted = handleEviction(newAddr, line);
+    bool evicted = handleEviction(newAddr, line, oldAddr == newAddr);
 
     if (is_debug_addr(newAddr)) {
         eventDI.prefill(event->getID(), Command::NULLCMD, "", line->getAddr(), evictDI.oldst);
@@ -1055,15 +1275,23 @@ bool MESIL1::handleNULLCMD(MemEvent * event, bool inMSHR) {
     if (evicted) {
         notifyListenerOfEvict(line->getAddr(), lineSize_, event->getInstructionPointer());
         cacheArray_->deallocate(line);
-        retryBuffer_.push_back(mshr_->getFrontEvent(newAddr));
-        mshr_->addPendingRetry(newAddr);
-        if (mshr_->removeEvictPointer(oldAddr, newAddr))
-            retry(oldAddr);
-        if (is_debug_addr(newAddr)) {
-            eventDI.action = "Retry";
-            std::stringstream reason;
-            reason << "0x" << std::hex << newAddr;
-            eventDI.reason = reason.str();
+
+        if (oldAddr != newAddr) { /* Reallocating a line to a new address */
+            retryBuffer_.push_back(mshr_->getFrontEvent(newAddr));
+            mshr_->addPendingRetry(newAddr);
+            if (mshr_->removeEvictPointer(oldAddr, newAddr))
+                retry(oldAddr);
+            if (is_debug_addr(newAddr)) {
+                eventDI.action = "Retry";
+                std::stringstream reason;
+                reason << "0x" << std::hex << newAddr;
+                eventDI.reason = reason.str();
+            }
+        } else { /* Deallocating a line for a cache flush */
+            mshr_->decrementFlushCount();
+            if (mshr_->getFlushCount() == 0) {
+                retryBuffer_.push_back(mshr_->getFlush());
+            }
         }
     } else { // Could be stalling for a new address or locked line
         if (is_debug_addr(newAddr)) {
@@ -1161,7 +1389,7 @@ MemEventStatus MESIL1::checkMSHRCollision(MemEvent* event, bool inMSHR) {
  * Allocate a new cache line
  */
 L1CacheLine* MESIL1::allocateLine(MemEvent* event, L1CacheLine* line) {
-    bool evicted = handleEviction(event->getBaseAddr(), line);
+    bool evicted = handleEviction(event->getBaseAddr(), line, false);
 
     if (evicted) {
         notifyListenerOfEvict(line->getAddr(), lineSize_, event->getInstructionPointer());
@@ -1185,7 +1413,7 @@ L1CacheLine* MESIL1::allocateLine(MemEvent* event, L1CacheLine* line) {
  * Evict a cacheline
  * Return whether successful and return line pointer via input parameters
  */
-bool MESIL1::handleEviction(Addr addr, L1CacheLine*& line) {
+bool MESIL1::handleEviction(Addr addr, L1CacheLine*& line, bool flush) {
     if (!line) {
         line = cacheArray_->findReplacementCandidate(addr);
     }
@@ -1210,7 +1438,7 @@ bool MESIL1::handleEviction(Addr addr, L1CacheLine*& line) {
         case S:
             if (!mshr_->getPendingRetries(line->getAddr())) {
                 if (!silentEvictClean_) {
-                    sendWriteback(Command::PutS, line, false);
+                    sendWriteback(Command::PutS, line, false, flush);
                     if (recvWritebackAck_) {
                         mshr_->insertWriteback(line->getAddr(), false);
                     }
@@ -1225,7 +1453,7 @@ bool MESIL1::handleEviction(Addr addr, L1CacheLine*& line) {
         case E:
             if (!mshr_->getPendingRetries(line->getAddr())) {
                 if (!silentEvictClean_) {
-                    sendWriteback(Command::PutE, line, false);
+                    sendWriteback(Command::PutE, line, false, flush);
                     if (recvWritebackAck_) {
                         mshr_->insertWriteback(line->getAddr(), false);
                     }
@@ -1239,7 +1467,7 @@ bool MESIL1::handleEviction(Addr addr, L1CacheLine*& line) {
             }
         case M:
             if (!mshr_->getPendingRetries(line->getAddr())) {
-                sendWriteback(Command::PutM, line, true);
+                sendWriteback(Command::PutM, line, true, flush);
                 if (recvWritebackAck_)
                     mshr_->insertWriteback(line->getAddr(), false);
                 if (is_debug_addr(line->getAddr()))
@@ -1278,7 +1506,7 @@ void MESIL1::cleanUpAfterRequest(MemEvent * event, bool inMSHR) {
     }
 
     delete event;
-
+    
     /* Replay any waiting events */
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
@@ -1295,6 +1523,8 @@ void MESIL1::cleanUpAfterRequest(MemEvent * event, bool inMSHR) {
                 }
             }
         }
+    } else if (isFlushing_ && flushDrain_ &&  mshr_->getSize() == mshr_->getFlushSize()) {
+        retryBuffer_.push_back(mshr_->getFlush());
     }
 }
 
@@ -1328,6 +1558,23 @@ void MESIL1::cleanUpAfterResponse(MemEvent* event, bool inMSHR) {
                 retryBuffer_.push_back(ev);
             }
         }
+    } else if (isFlushing_ && flushDrain_ && mshr_->getSize() == mshr_->getFlushSize()) {
+        retryBuffer_.push_back(mshr_->getFlush());
+    }
+}
+
+
+/* Clean up MSHR state after a FlushAll or ForwardFlush completes */
+void MESIL1::cleanUpAfterFlush(MemEvent* req, MemEvent* resp, bool inMSHR) {
+    if (inMSHR) mshr_->removeFlush();
+
+    delete req;
+    if (resp) delete resp;
+
+    if (mshr_->getFlush() != nullptr) {
+        retryBuffer_.push_back(mshr_->getFlush());
+    } else {
+        isFlushing_ = false;
     }
 }
 
@@ -1466,7 +1713,7 @@ void MESIL1::forwardFlush(MemEvent* event, L1CacheLine* line, bool evict) {
  * Send a writeback
  * Latency: cache access + tag to read data that is being written back and update coherence state
  */
-void MESIL1::sendWriteback(Command cmd, L1CacheLine * line, bool dirty) {
+void MESIL1::sendWriteback(Command cmd, L1CacheLine * line, bool dirty, bool flush) {
     MemEvent* writeback = new MemEvent(cachename_, line->getAddr(), line->getAddr(), cmd);
     writeback->setSize(lineSize_);
 
@@ -1483,12 +1730,20 @@ void MESIL1::sendWriteback(Command cmd, L1CacheLine * line, bool dirty) {
         latency = accessLatency_;
     }
 
+
     writeback->setRqstr(cachename_);
 
     uint64_t baseTime = (timestamp_ > line->getTimestamp()) ? timestamp_ : line->getTimestamp();
     uint64_t deliveryTime = baseTime + latency;
     forwardByAddress(writeback, deliveryTime);
     line->setTimestamp(deliveryTime-1);
+
+    // If a full cache flush, we need to order flush w.r.t. *all* evictions
+    if (flush && deliveryTime > flush_complete_timestamp_) {
+        flush_complete_timestamp_ = deliveryTime;
+    }
+        
+
 }
 
 
@@ -1585,6 +1840,8 @@ std::set<Command> MESIL1::getValidReceiveEvents() {
     cmds.insert(Command::GetSX);
     cmds.insert(Command::FlushLine);
     cmds.insert(Command::FlushLineInv);
+    cmds.insert(Command::FlushAll);
+    cmds.insert(Command::ForwardFlush);
     cmds.insert(Command::Inv);
     cmds.insert(Command::ForceInv);
     cmds.insert(Command::Fetch);
@@ -1594,6 +1851,8 @@ std::set<Command> MESIL1::getValidReceiveEvents() {
     cmds.insert(Command::GetSResp);
     cmds.insert(Command::GetXResp);
     cmds.insert(Command::FlushLineResp);
+    cmds.insert(Command::FlushAllResp);
+    cmds.insert(Command::UnblockFlush);
     cmds.insert(Command::AckPut);
     cmds.insert(Command::NACK );
 

@@ -84,9 +84,9 @@ bus_mem = sst.Link("bus_to_memory")
 #########################################################################
 ## Connect components with the links
 #########################################################################
-[core_cache[i].connect( (core, "cache_link_"+str(i), "100ps"), (cache[i], "high_network_0", "100ps") ) for i in range(ncores)]
-[cache_bus[i].connect( (cache[i], "low_network_0", "100ps"), (bus, "high_network_"+str(i), "100ps") ) for i in range(ncores)]
-bus_mem.connect( (bus, "low_network_0", "100ps"), (memctrl, "direct_link", "100ps") )
+[core_cache[i].connect( (core, "cache_link_"+str(i), "100ps"), (cache[i], "highlink", "100ps") ) for i in range(ncores)]
+[cache_bus[i].connect( (cache[i], "lowlink", "100ps"), (bus, "highlink"+str(i), "100ps") ) for i in range(ncores)]
+bus_mem.connect( (bus, "lowlink0", "100ps"), (memctrl, "highlink", "100ps") )
 
 sst.setStatisticOutput("sst.statoutputtxt")
 

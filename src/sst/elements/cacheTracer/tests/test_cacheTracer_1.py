@@ -78,14 +78,14 @@ comp_tracer.addParams({
 
 # define the simulation links
 link_cpu_tracer = sst.Link("link_cpu_tracer")
-link_cpu_tracer.connect((iface, "port", "100ps"), (comp_tracer, "northBus", "100ps"))
+link_cpu_tracer.connect((iface, "lowlink", "100ps"), (comp_tracer, "northBus", "100ps"))
 
 link_tracer_l1cache = sst.Link("link_tracer_l1cache")
-link_tracer_l1cache.connect((comp_tracer, "southBus", "100ps"), (comp_l1cache, "high_network_0", "100ps"))
+link_tracer_l1cache.connect((comp_tracer, "southBus", "100ps"), (comp_l1cache, "highlink", "100ps"))
 
 link_l1cache_l2cache = sst.Link("link_l1cache_l2cache")
-link_l1cache_l2cache.connect((comp_l1cache, "low_network_0", "100ps"), (comp_l2cache, "high_network_0", "100ps"))
+link_l1cache_l2cache.connect((comp_l1cache, "lowlink", "100ps"), (comp_l2cache, "highlink", "100ps"))
 
 link_l2cache_mem = sst.Link("link_l2cache_mem")
-link_l2cache_mem.connect((comp_l2cache, "low_network_0", "100ps"), (comp_memory, "direct_link", "100ps"))
+link_l2cache_mem.connect((comp_l2cache, "lowlink", "100ps"), (comp_memory, "highlink", "100ps"))
 

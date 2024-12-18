@@ -223,22 +223,22 @@ for node in range(nodes):
 
 		l1 = sst.Component("node"+str(node)+"_l1cache_" + str(next_core), "memHierarchy.Cache")
 		l1.addParams(l1_params)
-		l1_cpulink = l1.setSubComponent("cpulink", "memHierarchy.MemLink")
-		l1_memlink = l1.setSubComponent("memlink", "memHierarchy.MemLink")
-		l1_cpulink.addParams(link_params)
-		l1_memlink.addParams(link_params)
-		l1_cpulink.addParams({"node": node,})
-		l1_memlink.addParams({"node": node,})
+		l1_highlink = l1.setSubComponent("highlink", "memHierarchy.MemLink")
+		l1_lowlink = l1.setSubComponent("lowlink", "memHierarchy.MemLink")
+		l1_highlink.addParams(link_params)
+		l1_lowlink.addParams(link_params)
+		l1_highlink.addParams({"node": node,})
+		l1_lowlink.addParams({"node": node,})
 
 		l2 = sst.Component("node"+str(node)+"_l2cache_" + str(next_core), "memHierarchy.Cache")
 		l2.addParams(l2_params)
-		l2_cpulink = l2.setSubComponent("cpulink", "memHierarchy.MemLink")
-		l2_memlink = l2.setSubComponent("memlink", "Opal.OpalMemNIC")
-		l2_cpulink.addParams(link_params)
-		l2_memlink.addParams(nic_params)
-		l2_cpulink.addParams({ "node" : node})
-		l2_memlink.addParams({ "node" : node})
-		l2_memlink.addParams({ "group" : 1})
+		l2_highlink = l2.setSubComponent("highlink", "memHierarchy.MemLink")
+		l2_lowlink = l2.setSubComponent("lowlink", "Opal.OpalMemNIC")
+		l2_highlink.addParams(link_params)
+		l2_lowlink.addParams(nic_params)
+		l2_highlink.addParams({ "node" : node})
+		l2_lowlink.addParams({ "node" : node})
+		l2_lowlink.addParams({ "group" : 1})
 
 		arielMMULink = sst.Link("node"+str(node)+"_cpu_mmu_link_" + str(next_core))
 		MMUCacheLink = sst.Link("node"+str(node)+"_mmu_cache_link_" + str(next_core))
@@ -249,20 +249,20 @@ for node in range(nodes):
 		if next_core < cores//2:
 			arielMMULink.connect((ariel, "cache_link_%d"%next_core, "300ps"), (mmu, "cpu_to_mmu%d"%next_core, "300ps"))
 			ArielOpalLink.connect((memmgr, "opal_link_%d"%next_core, "300ps"), (opal, "coreLink%d"%(next_core + node*(cores//2)), "300ps"))
-			MMUCacheLink.connect((mmu, "mmu_to_cache%d"%next_core, "300ps"), (l1_cpulink, "port", "300ps"))
+			MMUCacheLink.connect((mmu, "mmu_to_cache%d"%next_core, "300ps"), (l1_highlink, "port", "300ps"))
 			PTWOpalLink.connect( (pagefaulthandler, "opal_link_%d"%next_core, "300ps"), (opal, "mmuLink%d"%(next_core + node*(cores//2)), "300ps") )
 		else:
-			PTWMemLink.connect((mmu, "ptw_to_mem%d"%(next_core-cores//2), "300ps"), (l1_cpulink, "port", "300ps"))
+			PTWMemLink.connect((mmu, "ptw_to_mem%d"%(next_core-cores//2), "300ps"), (l1_highlink, "port", "300ps"))
 
 		l2_core_link = sst.Link("node"+str(node)+"_l2cache_" + str(next_core) + "_link")
-		l2_core_link.connect((l1_memlink, "port", "300ps"), (l2_cpulink, "port", "300ps"))				
+		l2_core_link.connect((l1_lowlink, "port", "300ps"), (l2_highlink, "port", "300ps"))				
 
 		l2_ring_link = sst.Link("node"+str(node)+"_l2_ring_link_" + str(next_core))
-		l2_ring_link.connect((l2_memlink, "port", "300ps"), (internal_network.rtr, "port%d"%(internal_network.getNextPort()), "300ps"))
+		l2_ring_link.connect((l2_lowlink, "port", "300ps"), (internal_network.rtr, "port%d"%(internal_network.getNextPort()), "300ps"))
 
 	l3cache = sst.Component("node"+str(node)+"_l3cache", "memHierarchy.Cache")
 	l3cache.addParams(l3_params)
-	l3_link = l3cache.setSubComponent("cpulink", "Opal.OpalMemNIC")
+	l3_link = l3cache.setSubComponent("highlink", "Opal.OpalMemNIC")
 	l3cache.addParams({ "slice_id" : 0 })
 	l3_link.addParams(nic_params)
 	l3_link.addParams({
@@ -301,7 +301,7 @@ for node in range(nodes):
 		"backend.channel.rank.bank.transactionQ" : "memHierarchy.fifoTransactionQ",
 		"backend.channel.rank.bank.pagePolicy.close" : 1,
 	})
-	mem_link = mem.setSubComponent("cpulink", "memHierarchy.MemLink")
+	mem_link = mem.setSubComponent("highlink", "memHierarchy.MemLink")
 	mem_link.addParams({
 	    "shared_memory": 1,
 	    "node" : 0
@@ -315,11 +315,11 @@ for node in range(nodes):
 		#"debug_level" : 10,
 	})
 
-	dc_cpulink = dc.setSubComponent("cpulink", "Opal.OpalMemNIC")
-	dc_memlink = dc.setSubComponent("memlink", "memHierarchy.MemLink")
-	dc_memlink.addParams(link_params)
-	dc_cpulink.addParams(nic_params)
-	dc_cpulink.addParams({
+	dc_highlink = dc.setSubComponent("highlink", "Opal.OpalMemNIC")
+	dc_lowlink = dc.setSubComponent("lowlink", "memHierarchy.MemLink")
+	dc_lowlink.addParams(link_params)
+	dc_highlink.addParams(nic_params)
+	dc_highlink.addParams({
 		"node" : node,
 		"group" : 3,
 		"addr_range_start" : 0,
@@ -330,10 +330,10 @@ for node in range(nodes):
 	})
 
 	memLink = sst.Link("node"+str(node)+"_mem_link")
-	memLink.connect((mem_link, "port", "300ps"), (dc_memlink, "port", "300ps"))
+	memLink.connect((mem_link, "port", "300ps"), (dc_lowlink, "port", "300ps"))
 
 	netLink = sst.Link("node"+str(node)+"_dc_link")
-	netLink.connect((dc_cpulink, "port", "300ps"), (internal_network.rtr, "port%d"%(internal_network.getNextPort()), "300ps"))
+	netLink.connect((dc_highlink, "port", "300ps"), (internal_network.rtr, "port%d"%(internal_network.getNextPort()), "300ps"))
 
 	internal_network_map[str(node)] = internal_network
 
@@ -359,7 +359,7 @@ ext_memory.addParams({
     "clock"                     : clock,
 })
 
-ext_mem_link = ext_mem.setSubComponent("cpulink", "memHierarchy.MemLink")
+ext_mem_link = ext_mem.setSubComponent("highlink", "memHierarchy.MemLink")
 ext_mem_link.addParams({ "node" : 9999, }) ## does not belong to any node 
 
 ext_dc = sst.Component("ExtMemDc", "memHierarchy.DirectoryController")
@@ -367,9 +367,9 @@ ext_dc.addParams({
 	"entry_cache_size": 256*1024*1024, #Entry cache size of mem/blocksize
 	"clock": "1GHz",
 })
-ext_dc_cpulink = ext_dc.setSubComponent("cpulink", "Opal.OpalMemNIC")
-ext_dc_memlink = ext_dc.setSubComponent("memlink", "memHierarchy.MemLink")
-ext_dc_cpulink.addParams({
+ext_dc_highlink = ext_dc.setSubComponent("highlink", "Opal.OpalMemNIC")
+ext_dc_lowlink = ext_dc.setSubComponent("lowlink", "memHierarchy.MemLink")
+ext_dc_highlink.addParams({
 	"network_bw": "80GiB/s",
 	"addr_range_start" : (local_memory_capacity*1024*1024),
 	"addr_range_end" : (local_memory_capacity*1024*1024) + (shared_memory_capacity*1024*1024) -1,
@@ -399,10 +399,10 @@ link_nvm_bus_link = sst.Link("External_mem_nvm_link")
 link_nvm_bus_link.connect( (messier, "bus", "50ps"), (ext_memory, "nvm_link", "50ps") )
 
 extmemLink = sst.Link("External_mem_dc_link")
-extmemLink.connect( (ext_dc_memlink, "port", "500ps"), (ext_mem_link, "port", "500ps") )
+extmemLink.connect( (ext_dc_lowlink, "port", "500ps"), (ext_mem_link, "port", "500ps") )
 
 ext_dcLink = sst.Link("External_mem_link")
-ext_dcLink.connect( (ext_dc_cpulink, "port", "500ps"), (external_network.rtr, "port%d"%port, "500ps") )
+ext_dcLink.connect( (ext_dc_highlink, "port", "500ps"), (external_network.rtr, "port%d"%port, "500ps") )
 
 
 

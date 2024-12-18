@@ -202,7 +202,7 @@ class DDRBuilder:
         membk.addParams({ "mem_size" : str(self.mem_capacity // 4) + "B" })
         membk.addParams(ddr_backend_params)
         
-        memNIC = mem.setSubComponent("cpulink", "memHierarchy.MemNICFour")
+        memNIC = mem.setSubComponent("highlink", "memHierarchy.MemNICFour")
         memNIC.addParams(ddr_nic_params)
         memdata = memNIC.setSubComponent("data", "kingsley.linkcontrol")
         memreq = memNIC.setSubComponent("req", "kingsley.linkcontrol")
@@ -258,7 +258,7 @@ class DDRDCBuilder:
             "interleave_size" : "64B",
         })
         # Create NIC on to interface to NoC from directory
-        dcNIC = dc.setSubComponent("cpulink", "memHierarchy.MemNICFour")
+        dcNIC = dc.setSubComponent("highlink", "memHierarchy.MemNICFour")
         dcNIC.addParams(dc_nic_params)
         dcdata = dcNIC.setSubComponent("data", "kingsley.linkcontrol")
         dcreq = dcNIC.setSubComponent("req", "kingsley.linkcontrol")
@@ -289,10 +289,8 @@ class TileBuilder:
         # l2 prefetcher
         l2pre = tileL2cache.setSubComponent("prefetcher", "cassini.StridePrefetcher")
         l2pre.addParams(l2_prefetch_params)
-        # l2 bus link
-        l2tol1 = tileL2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
         # l2 NIC
-        l2NIC = tileL2cache.setSubComponent("memlink", "memHierarchy.MemNICFour")
+        l2NIC = tileL2cache.setSubComponent("lowlink", "memHierarchy.MemNICFour")
         l2data = l2NIC.setSubComponent("data", "kingsley.linkcontrol")
         l2req = l2NIC.setSubComponent("req", "kingsley.linkcontrol")
         l2fwd = l2NIC.setSubComponent("fwd", "kingsley.linkcontrol")
@@ -308,8 +306,8 @@ class TileBuilder:
         l2bus.addParams({ "bus_frequency" : core_clock })
 
         l2busLink = sst.Link("l2bus_link_" + str(self.next_tile_id))
-        l2busLink.connect( (l2bus, "low_network_0", mesh_link_latency),
-            (l2tol1, "port", mesh_link_latency))
+        l2busLink.connect( (l2bus, "lowlink0", mesh_link_latency),
+            (tileL2cache, "highlink", mesh_link_latency))
         l2busLink.setNoCut()
 
         self.next_tile_id = self.next_tile_id + 1
@@ -351,23 +349,23 @@ class TileBuilder:
             })
 
         # Thread 0
-        leftSMTCPUlink0 = sst.Link("smt_cpu_" + str(self.next_core_id))
-        leftSMTCPUlink0.connect( (mirandaL0, "cache_link", mesh_link_latency), (leftSMT, "thread0", mesh_link_latency) )
+        leftSMThighlink0 = sst.Link("smt_cpu_" + str(self.next_core_id))
+        leftSMThighlink0.connect( (mirandaL0, "cache_link", mesh_link_latency), (leftSMT, "thread0", mesh_link_latency) )
         # Thread 1
-        leftSMTCPUlink1 = sst.Link("smt_cpu_" + str(self.next_core_id + 18))
-        leftSMTCPUlink1.connect( (mirandaL1, "cache_link", mesh_link_latency), (leftSMT, "thread1", mesh_link_latency) )
+        leftSMThighlink1 = sst.Link("smt_cpu_" + str(self.next_core_id + 18))
+        leftSMThighlink1.connect( (mirandaL1, "cache_link", mesh_link_latency), (leftSMT, "thread1", mesh_link_latency) )
         # SMT Shim <-> L1
         leftSMTL1link = sst.Link("l1cache_smt_" + str(self.next_core_id))
-        leftSMTL1link.connect( (leftSMT, "cache", mesh_link_latency), (tileLeftL1, "high_network_0", mesh_link_latency) )
+        leftSMTL1link.connect( (leftSMT, "cache", mesh_link_latency), (tileLeftL1, "highlink", mesh_link_latency) )
 
-        leftSMTCPUlink0.setNoCut()
-        leftSMTCPUlink1.setNoCut()
+        leftSMThighlink0.setNoCut()
+        leftSMThighlink1.setNoCut()
         leftSMTL1link.setNoCut()
 
 
         leftL1L2link = sst.Link("l1cache_link_" + str(self.next_core_id))
-        leftL1L2link.connect( (l2bus, "high_network_0", mesh_link_latency),
-            (tileLeftL1, "low_network_0", mesh_link_latency))
+        leftL1L2link.connect( (l2bus, "highlink0", mesh_link_latency),
+            (tileLeftL1, "lowlink", mesh_link_latency))
         leftL1L2link.setNoCut()
 
         self.next_core_id = self.next_core_id + 1
@@ -409,22 +407,22 @@ class TileBuilder:
             })
 
         # Thread 0
-        rightSMTCPUlink0 = sst.Link("smt_cpu_" + str(self.next_core_id))
-        rightSMTCPUlink0.connect( (mirandaR0, "cache_link", mesh_link_latency), (rightSMT, "thread0", mesh_link_latency) )
+        rightSMThighlink0 = sst.Link("smt_cpu_" + str(self.next_core_id))
+        rightSMThighlink0.connect( (mirandaR0, "cache_link", mesh_link_latency), (rightSMT, "thread0", mesh_link_latency) )
         # Thread 1
-        rightSMTCPUlink1 = sst.Link("smt_cpu_" + str(self.next_core_id + 18))
-        rightSMTCPUlink1.connect( (mirandaR1, "cache_link", mesh_link_latency), (rightSMT, "thread1", mesh_link_latency) )
+        rightSMThighlink1 = sst.Link("smt_cpu_" + str(self.next_core_id + 18))
+        rightSMThighlink1.connect( (mirandaR1, "cache_link", mesh_link_latency), (rightSMT, "thread1", mesh_link_latency) )
         # SMT Shim <-> L1
         rightSMTL1link = sst.Link("l1cache_smt_" + str(self.next_core_id))
-        rightSMTL1link.connect( (rightSMT, "cache", mesh_link_latency), (tileRightL1, "high_network_0", mesh_link_latency) )
+        rightSMTL1link.connect( (rightSMT, "cache", mesh_link_latency), (tileRightL1, "highlink", mesh_link_latency) )
 
-        rightSMTCPUlink0.setNoCut()
-        rightSMTCPUlink1.setNoCut()
+        rightSMThighlink0.setNoCut()
+        rightSMThighlink1.setNoCut()
         rightSMTL1link.setNoCut()
 
         rightL1L2link = sst.Link("l1cache_link_" + str(self.next_core_id))
-        rightL1L2link.connect( (l2bus, "high_network_1", mesh_link_latency),
-                        (tileRightL1, "low_network_0", mesh_link_latency))
+        rightL1L2link.connect( (l2bus, "highlink1", mesh_link_latency),
+                        (tileRightL1, "lowlink", mesh_link_latency))
         rightL1L2link.setNoCut()
 
         self.next_core_id = self.next_core_id + 1

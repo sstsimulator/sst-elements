@@ -57,6 +57,8 @@ void Cache::handleEvent(SST::Event * ev) {
     }
     
     eventBuffer_.push_back(event);
+    //printf("DBG: %s, inserted <%" PRIu64 ", %d>, size=%zu\n", getName().c_str(), event->getID().first, event->getID().second, eventBuffer_.size()); 
+
 }
 
 /* 
@@ -150,6 +152,7 @@ bool Cache::clockTick(Cycle_t time) {
     while (it != eventBuffer_.end()) {
         if (accepted == maxRequestsPerCycle_)
             break;
+        Event::id_type id = (*it)->getID();
         Command cmd = (*it)->getCmd();
         if (is_debug_event((*it))) {
             dbg_->debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
@@ -160,8 +163,10 @@ bool Cache::clockTick(Cycle_t time) {
             accepted++;
             statRecvEvents->addData(1);
             it = eventBuffer_.erase(it);
+            //printf("DBG: %s, erased <%" PRIu64 ", %d>, it=%d, size=%zu\n", getName().c_str(), id.first, id.second, it == eventBuffer_.end(), eventBuffer_.size()); 
         } else {
             it++;
+            //printf("DBG: %s, left <%" PRIu64 ", %d>, it=%d, size=%zu\n", getName().c_str(), id.first, id.second, it == eventBuffer_.end(), eventBuffer_.size()); 
         }
     }
     while (!prefetchBuffer_.empty()) {
@@ -230,7 +235,7 @@ void Cache::turnClockOff() {
  *
  *   Returns: whether event was accepted/can be popped off event queue
  */
-bool Cache::processEvent(MemEventBase* ev, bool inMSHR) {
+bool Cache::processEvent(MemEventBase* ev, bool retry) {
     // Global noncacheable request flag
     if (allNoncacheableRequests_) {
         ev->setFlag(MemEvent::F_NONCACHEABLE);
@@ -263,79 +268,94 @@ bool Cache::processEvent(MemEventBase* ev, bool inMSHR) {
 
     switch (event->getCmd()) {
         case Command::GetS:
-            accepted = coherenceMgr_->handleGetS(event, inMSHR);
+            accepted = coherenceMgr_->handleGetS(event, retry);
             break;
         case Command::GetX:
-            accepted = coherenceMgr_->handleGetX(event, inMSHR);
+            accepted = coherenceMgr_->handleGetX(event, retry);
             break;
         case Command::Write:
-            accepted = coherenceMgr_->handleWrite(event, inMSHR);
+            accepted = coherenceMgr_->handleWrite(event, retry);
             break;
         case Command::GetSX:
-            accepted = coherenceMgr_->handleGetSX(event, inMSHR);
+            accepted = coherenceMgr_->handleGetSX(event, retry);
             break;
         case Command::FlushLine:
-            accepted = coherenceMgr_->handleFlushLine(event, inMSHR);
+            accepted = coherenceMgr_->handleFlushLine(event, retry);
             break;
         case Command::FlushLineInv:
-            accepted = coherenceMgr_->handleFlushLineInv(event, inMSHR);
+            accepted = coherenceMgr_->handleFlushLineInv(event, retry);
+            break;
+        case Command::FlushAll:
+            accepted = coherenceMgr_->handleFlushAll(event, retry);
             break;
         case Command::GetSResp:
-            accepted = coherenceMgr_->handleGetSResp(event, inMSHR);
+            accepted = coherenceMgr_->handleGetSResp(event, retry);
             break;
         case Command::WriteResp:
-            accepted = coherenceMgr_->handleWriteResp(event, inMSHR);
+            accepted = coherenceMgr_->handleWriteResp(event, retry);
             break;
         case Command::GetXResp:
-            accepted = coherenceMgr_->handleGetXResp(event, inMSHR);
+            accepted = coherenceMgr_->handleGetXResp(event, retry);
             break;
         case Command::FlushLineResp:
-            accepted = coherenceMgr_->handleFlushLineResp(event, inMSHR);
+            accepted = coherenceMgr_->handleFlushLineResp(event, retry);
+            break;
+        case Command::FlushAllResp:
+            accepted = coherenceMgr_->handleFlushAllResp(event, retry);
             break;
         case Command::PutS:
-            accepted = coherenceMgr_->handlePutS(event, inMSHR);
+            accepted = coherenceMgr_->handlePutS(event, retry);
             break;
         case Command::PutX:
-            accepted = coherenceMgr_->handlePutX(event, inMSHR);
+            accepted = coherenceMgr_->handlePutX(event, retry);
             break;
         case Command::PutE:
-            accepted = coherenceMgr_->handlePutE(event, inMSHR);
+            accepted = coherenceMgr_->handlePutE(event, retry);
             break;
         case Command::PutM:
-            accepted = coherenceMgr_->handlePutM(event, inMSHR);
+            accepted = coherenceMgr_->handlePutM(event, retry);
             break;
         case Command::FetchInv:
-            accepted = coherenceMgr_->handleFetchInv(event, inMSHR);
+            accepted = coherenceMgr_->handleFetchInv(event, retry);
             break;
         case Command::FetchInvX:
-            accepted = coherenceMgr_->handleFetchInvX(event, inMSHR);
+            accepted = coherenceMgr_->handleFetchInvX(event, retry);
             break;
         case Command::ForceInv:
-            accepted = coherenceMgr_->handleForceInv(event, inMSHR);
+            accepted = coherenceMgr_->handleForceInv(event, retry);
             break;
         case Command::Inv:
-            accepted = coherenceMgr_->handleInv(event, inMSHR);
+            accepted = coherenceMgr_->handleInv(event, retry);
             break;
         case Command::Fetch:
-            accepted = coherenceMgr_->handleFetch(event, inMSHR);
+            accepted = coherenceMgr_->handleFetch(event, retry);
             break;
         case Command::FetchResp:
-            accepted = coherenceMgr_->handleFetchResp(event, inMSHR);
+            accepted = coherenceMgr_->handleFetchResp(event, retry);
             break;
         case Command::FetchXResp:
-            accepted = coherenceMgr_->handleFetchXResp(event, inMSHR);
+            accepted = coherenceMgr_->handleFetchXResp(event, retry);
             break;
         case Command::AckInv:
-            accepted = coherenceMgr_->handleAckInv(event, inMSHR);
+            accepted = coherenceMgr_->handleAckInv(event, retry);
             break;
         case Command::AckPut:
-            accepted = coherenceMgr_->handleAckPut(event, inMSHR);
+            accepted = coherenceMgr_->handleAckPut(event, retry);
+            break;
+        case Command::ForwardFlush:
+            accepted = coherenceMgr_->handleForwardFlush(event, retry);
+            break;
+        case Command::AckFlush:
+            accepted = coherenceMgr_->handleAckFlush(event, retry);
+            break;
+        case Command::UnblockFlush:
+            accepted = coherenceMgr_->handleUnblockFlush(event, retry);
             break;
         case Command::NACK:
-            accepted = coherenceMgr_->handleNACK(event, inMSHR);
+            accepted = coherenceMgr_->handleNACK(event, retry);
             break;
         case Command::NULLCMD:
-            accepted = coherenceMgr_->handleNULLCMD(event, inMSHR);
+            accepted = coherenceMgr_->handleNULLCMD(event, retry);
             break;
         default:
             out_->fatal(CALL_INFO, -1, "%s, Error: Received an unsupported command. Event: %s. Time = %" PRIu64 "ns.\n",
@@ -528,6 +548,7 @@ void Cache::setup() {
     // Enqueue the first wakeup event to check for deadlock
     if (timeout_ != 0)
         timeoutSelfLink_->send(1, nullptr);
+    coherenceMgr_->setup();
 }
 
 
