@@ -51,8 +51,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
             {"bus_frequency",       "(string) Bus clock frequency"},
             {"broadcast",           "(bool) If set, messages are broadcast to all other ports", "0"},
-            {"fanout",              "(bool) If set, messages from the high network are replicated and sent to all low network ports", "0"},
-            {"bus_latency_cycles",  "(uint) Bus latency in cycles", "0"},
             {"idle_max",            "(uint) Bus temporarily turns off clock after this number of idle cycles", "6"},
             {"drain_bus",           "(bool) Drain bus on every cycle", "0"},
             {"debug",               "(uint) Output location for debug statements. Requires core configuration flag '--enable-debug'. --0[None], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
@@ -98,20 +96,16 @@ private:
 
     Output                          dbg_;
     std::set<Addr>                  DEBUG_ADDR;
-    int                             numHighNetPorts_;
-    int                             numLowNetPorts_;
+    int                             numHighPorts_;
+    int                             numLowPorts_;
     uint64_t                        idleCount_;
-    uint64_t                        latency_;
     uint64_t                        idleMax_;
-    bool                            fanout_;
     bool                            broadcast_;
     bool                            busOn_;
     bool                            drain_;
     Clock::Handler<Bus>*            clockHandler_;
     TimeConverter*                  defaultTimeBase_;
 
-    std::string                     busFrequency_;
-    std::string                     bus_latency_cycles_;
     std::vector<SST::Link*>         highNetPorts_;
     std::vector<SST::Link*>         lowNetPorts_;
     std::map<string,SST::Link*>     nameMap_;
