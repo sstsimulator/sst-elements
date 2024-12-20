@@ -28,7 +28,7 @@ mem_(mem), nodeCL_(node)
 
   double parallelism = params.find<double>("parallelism", 1.0);
 
-  freq_ = params.find<SST::UnitAlgebra>("frequency", "2.1 GHz").getValue().toDouble();
+  freq_ = params.find<SST::UnitAlgebra>("frequency", "2.0 GHz").getValue().toDouble();
   mem_freq_ = freq_;
 
   tflop_ = TimeDelta(1.0 / freq_ / parallelism);

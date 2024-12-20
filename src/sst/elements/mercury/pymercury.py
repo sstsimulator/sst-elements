@@ -74,7 +74,9 @@ class HgNode(TemplateBase):
 class HgNIC(TemplateBase):
     def __init__(self):
         TemplateBase.__init__(self)
-        self._declareParams("params",["verbose",])
+        self._declareParams("params",["verbose",
+                                      "mtu",
+                                     ])
         self._subscribeToPlatformParamSet("nic")
 
     def build(self,comp,slot):
@@ -104,6 +106,9 @@ class HgOS(TemplateBase):
                                            "rdma_pin_latency",
                                            "rdma_page_delay",
                                            "rdma_page_size",
+                                           "max_vshort_msg_size",
+                                           "max_eager_msg_size",
+                                           "use_put_window",
                                            "compute_library_access_width",
                                            "compute_library_loop_overhead",
                                           ],
