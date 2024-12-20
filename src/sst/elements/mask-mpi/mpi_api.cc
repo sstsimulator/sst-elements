@@ -188,12 +188,13 @@ MpiApi::~MpiApi()
     delete comm;
   }
 
-  //people can be sloppy cleaning up requests
-  //clean up for them
-  for (auto& pair : req_map_){
-    MpiRequest* req = pair.second;
-    delete req;
-  }
+  // This causes a "pointer being freed was not allocated" error
+  // //people can be sloppy cleaning up requests
+  // //clean up for them
+  // for (auto& pair : req_map_){
+  //   MpiRequest* req = pair.second;
+  //   delete req;
+  // }
 
   if (qos_analysis_) delete qos_analysis_;
 }

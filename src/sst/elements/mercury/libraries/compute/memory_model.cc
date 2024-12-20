@@ -30,7 +30,7 @@ MemoryModel::MemoryModel(SST::Params &params, NodeCL* parent) :
 {
   flow_mtu_ = params.find<SST::UnitAlgebra>("flow_mtu", "512").getRoundedValue();
 
-  auto max_bw = params.find<SST::UnitAlgebra>("channel_bandwidth", "10.0 GB/s");
+  auto max_bw = params.find<SST::UnitAlgebra>("channel_bandwidth", "12.0 GB/s");
   channel_byte_delay_ = TimeDelta(max_bw.getValue().inverse().toDouble());
 
   int num_channels = params.find<int>("num_channels",4);

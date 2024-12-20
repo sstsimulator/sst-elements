@@ -204,7 +204,7 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent) :
   rdma_pin_latency_ = TimeDelta(params.find<SST::UnitAlgebra>("rdma_pin_latency", "0s").getValue().toDouble());
   rdma_page_delay_ = TimeDelta(params.find<SST::UnitAlgebra>("rdma_page_delay", "0s").getValue().toDouble());
   pin_delay_ = rdma_pin_latency_.ticks() || rdma_page_delay_.ticks();
-  page_size_ = params.find<SST::UnitAlgebra>("rdma_page_size", "4096").getRoundedValue();
+  page_size_ = params.find<SST::UnitAlgebra>("rdma_page_size", "4096 B").getRoundedValue();
   
   output.output("%d", sid().app_);
   nproc_ = os_->nranks();
