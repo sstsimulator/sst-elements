@@ -17,6 +17,7 @@ platdef.addParamSet("node",{
 
 platdef.addParamSet("nic",{
     "verbose" : "0",
+    "mtu"     : "4096 B",
 })
 
 platdef.addParamSet("operating_system",{
@@ -30,21 +31,21 @@ platdef.addParamSet("topology",{
 })
 
 platdef.addParamSet("network_interface",{
-    "link_bw" : "12 GB/s",
-    "input_buf_size" : "16kB",
-    "output_buf_size" : "16kB"
+    "link_bw" : "11.25 GB/s",
+    "input_buf_size" : "32kB",
+    "output_buf_size" : "32kB"
 })
 
 platdef.addClassType("network_interface","sst.merlin.interface.ReorderLinkControl")
 
 platdef.addParamSet("router",{
-    "link_bw" : "12 GB/s",
+    "link_bw" : "11.25 GB/s",
     "flit_size" : "8B",
     "xbar_bw" : "50GB/s",
     "input_latency" : "20ns",
     "output_latency" : "20ns",
-    "input_buf_size" : "16kB",
-    "output_buf_size" : "16kB",
+    "input_buf_size" : "32kB",
+    "output_buf_size" : "32kB",
     "num_vns" : 1,
     "xbar_arb" : "merlin.xbar_arb_lru",
 })
@@ -52,12 +53,15 @@ platdef.addParamSet("router",{
 platdef.addParamSet("operating_system", {
     "ncores" : "24",
     "nsockets" : "4",
-    "app1.post_rdma_delay" : "88us",
-    "app1.post_header_delay" : "0.36us",
+    "app1.post_rdma_delay" : "1.5us",
+    "app1.post_header_delay" : "0.5us",
     "app1.poll_delay" : "0us",
     "app1.rdma_pin_latency" : "5.43us",
     "app1.rdma_page_delay" : "50.50ns",
     "app1.rdma_page_size" : "4096",
+    "app1.max_vshort_msg_size" : "4096 B",
+    "app1.max_eager_msg_size" : "32768 B",
+    "app1.use_put_window" : "false",
     "app1.compute_library_access_width" : "64",
     "app1.compute_library_loop_overhead" : "1.0",
 })

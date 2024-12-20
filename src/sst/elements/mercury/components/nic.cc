@@ -48,7 +48,8 @@ NIC::NIC(uint32_t id, SST::Params& params, NodeBase* parent) :
   ack_queue_.resize(1);
 
   // FIXME needs to be a parameter
-  mtu_ = 2048;
+  mtu_ = params.find<unsigned int>("mtu", 4096);
+  out_->debug(CALL_INFO, 1, 0, "setting mtu to %d\n", mtu_);
 }
 
 std::string
@@ -188,7 +189,6 @@ NIC::sendWhatYouCan(int vn) {
 
 bool
 NIC::sendWhatYouCan(int vn, Pending& p) {
-  int seqnum = 0;
   uint64_t next_bytes = std::min(uint64_t(mtu_), p.bytesLeft);
   uint32_t next_bits = next_bytes * 8; //this is fine for 32-bits
   while (link_control_->spaceToSend(vn, next_bits)){
