@@ -175,11 +175,11 @@ def genMemHierarchy(cores):
         ## SST Links
         # Ariel -> L1(PRIVATE) -> L2(PRIVATE)  -> L3 (SHARED) -> DRAM 
         ArielL1Link = sst.Link("cpu_cache_%d"%core)
-        ArielL1Link.connect((ariel, "cache_link_%d"%core, busLat), (l1, "high_network_0", busLat))
+        ArielL1Link.connect((ariel, "cache_link_%d"%core, busLat), (l1, "highlink", busLat))
         L1L2Link = sst.Link("l1_l2_%d"%core)
-        L1L2Link.connect((l1, "low_network_0", busLat), (l2, "high_network_0", busLat))
+        L1L2Link.connect((l1, "lowlink", busLat), (l2, "highlink", busLat))
         L2MembusLink = sst.Link("l2_membus_%d"%core)
-        L2MembusLink.connect((l2, "low_network_0", busLat), (membus, "high_network_%d"%core, busLat))
+        L2MembusLink.connect((l2, "lowlink", busLat), (membus, "highlink%d"%core, busLat))
    
 
     l3 = sst.Component("L3cache", "memHierarchy.Cache")
@@ -199,9 +199,9 @@ def genMemHierarchy(cores):
   
     # Bus to L3 and L3 <-> MM
     BusL3Link = sst.Link("bus_L3")
-    BusL3Link.connect((membus, "low_network_0", busLat), (l3, "high_network_0", busLat))
+    BusL3Link.connect((membus, "lowlink0", busLat), (l3, "highlink", busLat))
     L3MemCtrlLink = sst.Link("L3MemCtrl")
-    L3MemCtrlLink.connect((l3, "low_network_0", busLat), (memory, "direct_link", busLat))
+    L3MemCtrlLink.connect((l3, "lowlink", busLat), (memory, "highlink", busLat))
 
     # txn gen --> memHierarchy Bridge
     comp_memhBridge = sst.Component("memh_bridge", "cramSim.c_MemhBridge")

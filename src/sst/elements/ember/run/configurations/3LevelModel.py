@@ -43,11 +43,11 @@ class BasicDetailedModel(DetailedModel):
 
             link = sst.Link( name + "cpu_l1_link")
             link.setNoCut();
-            link.connect( ( cpu, "cache_link", "100ps" ) , (l1,"high_network_0","1000ps") )
+            link.connect( ( cpu, "cache_link", "100ps" ) , (l1,"highlink","1000ps") )
 
             link = sst.Link( name + "l1_bus_link")
             link.setNoCut();
-            link.connect( ( l1, "low_network_0", "50ps" ) , (bus,"high_network_" + str(i),"1000ps") )
+            link.connect( ( l1, "lowlink", "50ps" ) , (bus,"highlink" + str(i),"1000ps") )
 
             link = sst.Link( name + "src_link" )
             link.setNoCut();
@@ -68,11 +68,11 @@ class BasicDetailedModel(DetailedModel):
 
         link = sst.Link( name + "cpu_l1_link")
         link.setNoCut();
-        link.connect( ( cpu, "cache_link", "100ps" ) , (l1,"high_network_0","1000ps") )
+        link.connect( ( cpu, "cache_link", "100ps" ) , (l1,"highlink","1000ps") )
 
         link = sst.Link( name + "l1_bus_link")
         link.setNoCut();
-        link.connect( ( l1, "low_network_0", "50ps" ) , (bus,"high_network_" + str(num),"1000ps") )
+        link.connect( ( l1, "lowlink", "50ps" ) , (bus,"highlink" + str(num),"1000ps") )
 
         link = sst.Link( name + "src_link" )
         link.setNoCut();
@@ -102,7 +102,7 @@ class BasicDetailedModel(DetailedModel):
         # Connect L3 to Memory
         link = sst.Link( prefix + "l3_mem_link")
         link.setNoCut();
-        link.connect( (l3, "low_network_0", "50ps"), (memory, "direct_link", "50ps") )
+        link.connect( (l3, "lowlink", "50ps"), (memory, "highlink", "50ps") )
 
 
         # Create L2
@@ -112,7 +112,7 @@ class BasicDetailedModel(DetailedModel):
         # Connect L2 to L3
         link = sst.Link( prefix + "l2_l3_link")
         link.setNoCut();
-        link.connect( (l2, "low_network_0", "50ps"), (l3, "high_network_0", "50ps") )
+        link.connect( (l2, "lowlink", "50ps"), (l3, "highlink", "50ps") )
 
         # Create Bus
         bus = sst.Component( prefix + "bus", "memHierarchy.Bus")
@@ -121,7 +121,7 @@ class BasicDetailedModel(DetailedModel):
         # Connect Bus to L2
         link = sst.Link( prefix + "bus_l2_link")
         link.setNoCut();
-        link.connect( (bus, "low_network_0", "50ps"), (l2, "high_network_0", "50ps") )
+        link.connect( (bus, "lowlink0", "50ps"), (l2, "highlink", "50ps") )
 
         for i in range(ransPerNode):
             name = prefix + "core" + str(i) + "_"

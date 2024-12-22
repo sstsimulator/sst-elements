@@ -48,8 +48,7 @@ class Builder:
             "debug_level" : 11,
             "debug_addr" : debug_addr,
         })
-        dirtoMemLink = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
-        self.connect( "Dirctrl", numPorts, dirctrl, group, linkType="cpulink" ) 
+        self.connect( "Dirctrl", numPorts, dirctrl, group, linkType="highlink" ) 
 
         memctrl = sst.Component(self.prefix + ".memory", "memHierarchy.MemController")
         memctrl.addParams({
@@ -64,8 +63,6 @@ class Builder:
             "debug_addr" : debug_addr,
         })
 
-        memToDir = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
-
         memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
         memory.addParams({
             "mem_size" : "2GiB",
@@ -75,9 +72,9 @@ class Builder:
         })
 
         link = sst.Link(self.prefix + ".link_dir_mem")
-        link.connect( (dirtoMemLink, "port", "1ns"), (memToDir, "port", "1ns") )
+        link.connect( (dirctrl, "lowlink", "1ns"), (memctrl, "highlink", "1ns") )
 
-    def connect( self, name, port, comp, group=None, source=None, dest=None, linkType="memlink"  ):
+    def connect( self, name, port, comp, group=None, source=None, dest=None, linkType="lowlink"  ):
 
         assert group
         assert port < self.numPorts

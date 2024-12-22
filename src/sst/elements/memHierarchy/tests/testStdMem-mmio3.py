@@ -46,7 +46,7 @@ cpu.addParams({
 cpu_iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 cpu_iface.addParams(debug_params)
 
-cpu_link = cpu_iface.setSubComponent("memlink", "memHierarchy.MemLink")
+cpu_link = cpu_iface.setSubComponent("lowlink", "memHierarchy.MemLink")
 cpu_link.addParams(debug_params)
 
 cpu_l1cache = sst.Component("cpu_l1cache", "memHierarchy.Cache")
@@ -62,9 +62,9 @@ cpu_l1cache.addParams({
       "debug" : DEBUG_L1,
       "debug_level" : DEBUG_LEVEL
 })
-cpu_l1_link = cpu_l1cache.setSubComponent("cpulink", "memHierarchy.MemLink") # Non-network link
+cpu_l1_link = cpu_l1cache.setSubComponent("highlink", "memHierarchy.MemLink") # Non-network link
 cpu_l1_link.addParams(debug_params)
-cpu_l1_nic = cpu_l1cache.setSubComponent("memlink", "memHierarchy.MemNIC")   # Network link
+cpu_l1_nic = cpu_l1cache.setSubComponent("lowlink", "memHierarchy.MemNIC")   # Network link
 cpu_l1_nic.addParams({ "group" : core_group, 
                    "destinations" : l1_dst,
                    "network_bw" : network_bw})
@@ -81,7 +81,7 @@ mmio.addParams({
 mmio_iface = mmio.setSubComponent("iface", "memHierarchy.standardInterface")
 mmio_iface.addParams(debug_params)
 
-mmio_link = mmio_iface.setSubComponent("memlink", "memHierarchy.MemLink")
+mmio_link = mmio_iface.setSubComponent("lowlink", "memHierarchy.MemLink")
 mmio_link.addParams(debug_params)
 
 mmio_l1cache = sst.Component("mmio_l1", "memHierarchy.Cache")
@@ -98,9 +98,9 @@ mmio_l1cache.addParams({
       "debug_level" : DEBUG_LEVEL
 })
 
-mmio_l1_link = mmio_l1cache.setSubComponent("cpulink", "memHierarchy.MemLink") # Non-network link from device to device's L1
+mmio_l1_link = mmio_l1cache.setSubComponent("highlink", "memHierarchy.MemLink") # Non-network link from device to device's L1
 mmio_l1_link.addParams(debug_params)
-mmio_l1_nic = mmio_l1cache.setSubComponent("memlink", "memHierarchy.MemNIC") # Network link
+mmio_l1_nic = mmio_l1cache.setSubComponent("lowlink", "memHierarchy.MemNIC") # Network link
 
 mmio_l1_nic.addParams({"group" : mmio_group, 
                     "sources" : mmio_src,
@@ -118,7 +118,7 @@ dir.addParams({
       "debug_level" : 10,
 })
 
-dir_nic = dir.setSubComponent("cpulink", "memHierarchy.MemNIC")
+dir_nic = dir.setSubComponent("highlink", "memHierarchy.MemNIC")
 dir_nic.addParams({
       "group" : dir_group,
       "sources" : dir_src,
@@ -143,7 +143,7 @@ memory.addParams({
       "mem_size" : "512MiB"
 })
 
-mem_nic = memctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
+mem_nic = memctrl.setSubComponent("highlink", "memHierarchy.MemNIC")
 mem_nic.addParams(debug_params)
 mem_nic.addParams({
     "group" : mem_group,
@@ -178,19 +178,19 @@ for a in componentlist:
 #                     |
 #  mmio/l1/mmio_l1_nic - chiprtr - dir_nic/dir/mem
 #
-# Connect CPU to CPU L1 via the CPU's interface and the L1's cpulink handler
+# Connect CPU to CPU L1 via the CPU's interface and the L1's highlink handler
 link_cpu_l1 = sst.Link("link_cpu")
 link_cpu_l1.connect( (cpu_link, "port", "1000ps"), (cpu_l1_link, "port", "1000ps") )
 
-# Connect the CPU L1 to the network via the L1's memlink NIC handler
+# Connect the CPU L1 to the network via the L1's lowlink NIC handler
 link_core_rtr = sst.Link("link_core")
 link_core_rtr.connect( (cpu_l1_nic, "port", '1000ps'), (chiprtr, "port0", "1000ps") )
 
-# Connect MMIO to MMIO L1 via the MMIO's interface and the L1's cpulink handler
+# Connect MMIO to MMIO L1 via the MMIO's interface and the L1's highlink handler
 link_mmio_l1 = sst.Link("link_mmio")
 link_mmio_l1.connect( (mmio_link, "port", "500ps"), (mmio_l1_link, "port", "500ps") )
 
-# Connect the MMIO L1 to the network via the L1's memlink NIC handler
+# Connect the MMIO L1 to the network via the L1's lowlink NIC handler
 link_device_rtr = sst.Link("link_device")
 link_device_rtr.connect( (mmio_l1_nic, "port", "500ps"), (chiprtr, "port1", "500ps"))
 

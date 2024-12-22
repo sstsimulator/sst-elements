@@ -81,10 +81,10 @@ memory.addParams({
 })
 
 cpu_cache_link = sst.Link("cpu_cache_link")
-cpu_cache_link.connect( (ariel, "cache_link_0", "50ps"), (l1cache, "high_network_0", "50ps") )
+cpu_cache_link.connect( (ariel, "cache_link_0", "50ps"), (l1cache, "highlink", "50ps") )
 
 memory_link = sst.Link("mem_bus_link")
-memory_link.connect( (l1cache, "low_network_0", "50ps"), (memctrl, "direct_link", "50ps") )
+memory_link.connect( (l1cache, "lowlink", "50ps"), (memctrl, "highlink", "50ps") )
 
 
 # Set the Statistic Load Level; Statistics with Enable Levels (set in

@@ -40,51 +40,33 @@ using namespace std;
  */
 class MemEvent : public MemEventBase  {
 public:
-
-    /****** Old calls will now throw deprecated warnings since parent pointer is not available *************/
-    /** Creates a new MemEvent - Generic */
-    MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd) : MemEventBase(src->getName(), cmd) {
-        initialize();
-        addr_ = addr;
-        baseAddr_ = baseAddr;
-    }
-
-    /** MemEvent constructor - Reads */
-    MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd, uint32_t size) : MemEventBase(src->getName(), cmd) {
-        initialize();
-        addr_ = addr;
-        baseAddr_ = baseAddr;
-        size_ = size;
-    }
-
-    /** MemEvent constructor - Writes */
-    MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd, std::vector<uint8_t>& data) : MemEventBase(src->getName(), cmd) {
-        initialize();
-        addr_ = addr;
-        baseAddr_ = baseAddr;
-        setPayload(data); // Also sets size_ field
-    }
-
-    /************ New calls - use these! *****************/
+    
+    /* Constructor - Coherence control */
     MemEvent(std::string src, Addr addr, Addr baseAddr, Command cmd) : MemEventBase(src, cmd) {
         initialize();
         addr_ = addr;
         baseAddr_ = baseAddr;
     }
+    /* Constructor - Events that request data */
     MemEvent(std::string src, Addr addr, Addr baseAddr, Command cmd, uint32_t size) : MemEventBase(src, cmd) {
         initialize();
         addr_ = addr;
         baseAddr_ = baseAddr;
         size_ = size;
     }
+    /* Constructor - Events that carry data */
     MemEvent(std::string src, Addr addr, Addr baseAddr, Command cmd, std::vector<uint8_t>& data) : MemEventBase(src, cmd) {
         initialize();
         addr_ = addr;
         baseAddr_ = baseAddr;
         setPayload(data);
     }
-
-
+    /* Constructor - Events that are not routed by address */
+    MemEvent(std::string src, Command cmd) : MemEventBase(src, cmd) {
+        initialize();
+        addr_ = 0;
+        baseAddr_ = 0;
+    }
 
     /** Create a new MemEvent instance, pre-configured to act as a NACK response */
     MemEvent* makeNACKResponse(MemEvent* NACKedEvent) {

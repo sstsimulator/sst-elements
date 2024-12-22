@@ -167,8 +167,7 @@ l3cache.addParams({
       "debug_level" : DEBUG_LEVEL
 })
 
-l3tol2 = l3cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-l3NIC = l3cache.setSubComponent("memlink", "memHierarchy.MemNIC")
+l3NIC = l3cache.setSubComponent("lowlink", "memHierarchy.MemNIC")
 l3NIC.addParams({
     "network_bw" : "40GB/s",
     "input_buffer_size" : "2KiB",
@@ -198,8 +197,7 @@ dirctrl.addParams({
     "addr_range_end" : "0x1F000000",
     "addr_range_start" : "0x0",
 })
-dirNIC = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
-dirtoM = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
+dirNIC = dirctrl.setSubComponent("highlink", "memHierarchy.MemNIC")
 dirNIC.addParams({
     "network_bw" : "40GB/s",
     "input_buffer_size" : "2KiB",
@@ -250,34 +248,34 @@ for a in componentlist:
 
 # Define the simulation links
 link_c0_l1cache = sst.Link("link_c0_l1cache")
-link_c0_l1cache.connect( (iface0, "port", "100ps"), (c0_l1cache, "high_network_0", "100ps") )
+link_c0_l1cache.connect( (iface0, "lowlink", "100ps"), (c0_l1cache, "highlink", "100ps") )
 link_c0L1cache_bus = sst.Link("link_c0L1cache_bus")
-link_c0L1cache_bus.connect( (c0_l1cache, "low_network_0", "200ps"), (n0_bus, "high_network_0", "200ps") )
+link_c0L1cache_bus.connect( (c0_l1cache, "lowlink", "200ps"), (n0_bus, "highlink0", "200ps") )
 link_c1_l1cache = sst.Link("link_c1_l1cache")
-link_c1_l1cache.connect( (iface1, "port", "100ps"), (c1_l1cache, "high_network_0", "100ps") )
+link_c1_l1cache.connect( (iface1, "lowlink", "100ps"), (c1_l1cache, "highlink", "100ps") )
 link_c1L1cache_bus = sst.Link("link_c1L1cache_bus")
-link_c1L1cache_bus.connect( (c1_l1cache, "low_network_0", "100ps"), (n0_bus, "high_network_1", "200ps") )
+link_c1L1cache_bus.connect( (c1_l1cache, "lowlink", "100ps"), (n0_bus, "highlink1", "200ps") )
 link_bus_n0L2cache = sst.Link("link_bus_n0L2cache")
-link_bus_n0L2cache.connect( (n0_bus, "low_network_0", "200ps"), (n0_l2cache, "high_network_0", "200ps") )
+link_bus_n0L2cache.connect( (n0_bus, "lowlink0", "200ps"), (n0_l2cache, "highlink", "200ps") )
 link_n0L2cache_bus = sst.Link("link_n0L2cache_bus")
-link_n0L2cache_bus.connect( (n0_l2cache, "low_network_0", "200ps"), (n2_bus, "high_network_0", "200ps") )
+link_n0L2cache_bus.connect( (n0_l2cache, "lowlink", "200ps"), (n2_bus, "highlink0", "200ps") )
 link_c2_l1cache = sst.Link("link_c2_l1cache")
-link_c2_l1cache.connect( (iface2, "port", "100ps"), (c2_l1cache, "high_network_0", "100ps") )
+link_c2_l1cache.connect( (iface2, "lowlink", "100ps"), (c2_l1cache, "highlink", "100ps") )
 link_c2L1cache_bus = sst.Link("link_c2L1cache_bus")
-link_c2L1cache_bus.connect( (c2_l1cache, "low_network_0", "200ps"), (n1_bus, "high_network_0", "200ps") )
+link_c2L1cache_bus.connect( (c2_l1cache, "lowlink", "200ps"), (n1_bus, "highlink0", "200ps") )
 link_c3_l1cache = sst.Link("link_c3_l1cache")
-link_c3_l1cache.connect( (iface3, "port", "100ps"), (c3_l1cache, "high_network_0", "100ps") )
+link_c3_l1cache.connect( (iface3, "lowlink", "100ps"), (c3_l1cache, "highlink", "100ps") )
 link_c3L1cache_bus = sst.Link("link_c3L1cache_bus")
-link_c3L1cache_bus.connect( (c3_l1cache, "low_network_0", "200ps"), (n1_bus, "high_network_1", "200ps") )
+link_c3L1cache_bus.connect( (c3_l1cache, "lowlink", "200ps"), (n1_bus, "highlink1", "200ps") )
 link_bus_n1L2cache = sst.Link("link_bus_n1L2cache")
-link_bus_n1L2cache.connect( (n1_bus, "low_network_0", "200ps"), (n1_l2cache, "high_network_0", "200ps") )
+link_bus_n1L2cache.connect( (n1_bus, "lowlink0", "200ps"), (n1_l2cache, "highlink", "200ps") )
 link_n1L2cache_bus = sst.Link("link_n1L2cache_bus")
-link_n1L2cache_bus.connect( (n1_l2cache, "low_network_0", "200ps"), (n2_bus, "high_network_1", "200ps") )
+link_n1L2cache_bus.connect( (n1_l2cache, "lowlink", "200ps"), (n2_bus, "highlink1", "200ps") )
 link_bus_l3cache = sst.Link("link_bus_l3cache")
-link_bus_l3cache.connect( (n2_bus, "low_network_0", "200ps"), (l3tol2, "port", "200ps") )
+link_bus_l3cache.connect( (n2_bus, "lowlink0", "200ps"), (l3cache, "highlink", "200ps") )
 link_cache_net_0 = sst.Link("link_cache_net_0")
 link_cache_net_0.connect( (l3NIC, "port", "200ps"), (network, "port1", "150ps") )
 link_dir_net_0 = sst.Link("link_dir_net_0")
 link_dir_net_0.connect( (network, "port0", "150ps"), (dirNIC, "port", "150ps") )
 link_dir_mem_link = sst.Link("link_dir_mem_link")
-link_dir_mem_link.connect( (dirtoM, "port", "200ps"), (memctrl, "direct_link", "200ps") )
+link_dir_mem_link.connect( (dirctrl, "lowlink", "200ps"), (memctrl, "highlink", "200ps") )

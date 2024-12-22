@@ -62,7 +62,8 @@ public:
 #define MEMCACHE_ELI_SUBCOMPONENTSLOTS {"backend", "Memory controller and/or memory timing model.", "SST::MemHierarchy::MemBackend"},\
             {"backendConvertor", "Convertor to translate incoming memory events for the backend. Loaded automatically based on backend type.", "SST::MemHierarchy::MemBackendConvertor"},\
             {"listener", "Optional listeners to gather statistics, create traces, etc. Multiple listeners supported.", "SST::MemHierarchy::CacheListener"}, \
-            {"cpulink", "CPU-side link manager (e.g., to caches/cpu)", "SST::MemHierarchy::MemLinkBase"}
+            {"highlink", "CPU-side port manager (e.g., link to caches/cpu). If used, do not connect the 'highlink' port and connect the highlink subcomponent's port(s) instead.", "SST::MemHierarchy.MemLinkBase"},\
+            {"cpulink", "DEPRECATED: Renamed to 'highlink' for naming consistency. CPU-side link manager (e.g., to caches/cpu). Defaults to MemLink.", "SST::MemHierarchy::MemLinkBase"}
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( MEMCACHE_ELI_SUBCOMPONENTSLOTS )
 

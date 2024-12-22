@@ -37,10 +37,6 @@ l1cache.addParams({
 # Replacement policy - can declare here or as a parameter (only if part of memHierarchy's core set of policies and using default parameters)
 l1cache.setSubComponent("replacement", "memHierarchy.replacement.mru")
 
-# Links to core & mem
-l1toC = l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-l1toM = l1cache.setSubComponent("memlink", "memHierarchy.MemLink")
-
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
     "debug" : "0",
@@ -48,7 +44,6 @@ memctrl.addParams({
     "request_width" : "64",
     "addr_range_end" : 512*1024*1024-1,
 })
-mtol1 = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
 
 memory = memctrl.setSubComponent("backend", "memHierarchy.timingDRAM")
 memory.addParams({
@@ -86,6 +81,6 @@ for a in componentlist:
 
 # Define the simulation links
 link_cpu_cache = sst.Link("link_cpu_cache")
-link_cpu_cache.connect( (iface, "port", "1000ps"), (l1toC, "port", "1000ps") )
-link_mem_bus = sst.Link("link_mem_bus")
-link_mem_bus.connect( (l1toM, "port", "50ps"), (mtol1, "port", "50ps") )
+link_cpu_cache.connect( (iface, "lowlink", "1000ps"), (l1cache, "highlink", "1000ps") )
+link_mem_cache = sst.Link("link_mem_cache")
+link_mem_cache.connect( (memctrl, "highlink", "50ps"), (l1cache, "lowlink", "50ps") )

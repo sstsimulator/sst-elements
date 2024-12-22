@@ -105,8 +105,7 @@ l3cache.addParams({
       "debug_level" : 10,
       "debug" : 0,
 })
-l3tol2 = l3cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-l3NIC = l3cache.setSubComponent("memlink", "memHierarchy.MemNIC")
+l3NIC = l3cache.setSubComponent("lowlink", "memHierarchy.MemNIC")
 l3NIC.addParams({
     "network_bw" : netBW,
     "group" : 1,
@@ -136,8 +135,7 @@ dirctrl0.addParams({
     "interleave_size" : "64B",
     "interleave_step" : "128B",
 })
-dirtoM0 = dirctrl0.setSubComponent("memlink", "memHierarchy.MemLink")
-dirNIC0 = dirctrl0.setSubComponent("cpulink", "memHierarchy.MemNIC")
+dirNIC0 = dirctrl0.setSubComponent("highlink", "memHierarchy.MemNIC")
 dirNIC0.addParams({
     "group" : 2,
     "network_bw" : netBW,
@@ -155,8 +153,7 @@ dirctrl1.addParams({
     "interleave_size" : "64B",
     "interleave_step" : "128B",
 })
-dirtoM1 = dirctrl1.setSubComponent("memlink", "memHierarchy.MemLink")
-dirNIC1 = dirctrl1.setSubComponent("cpulink", "memHierarchy.MemNIC")
+dirNIC1 = dirctrl1.setSubComponent("highlink", "memHierarchy.MemNIC")
 dirNIC1.addParams({
     "group" : 2,
     "network_bw" : netBW,
@@ -174,7 +171,6 @@ memctrl1.addParams({
     "interleave_size" : "64B",
     "interleave_step" : "128B",
 })
-memtoD1 = memctrl1.setSubComponent("cpulink", "memHierarchy.MemLink")
 memory1 = memctrl1.setSubComponent("backend", "memHierarchy.dramsim")
 memory1.addParams({
     "mem_size" : "512MiB",
@@ -193,7 +189,6 @@ memctrl0.addParams({
     "interleave_size" : "64B",
     "interleave_step" : "128B",
 })
-memtoD0 = memctrl0.setSubComponent("cpulink", "memHierarchy.MemLink")
 memory0 = memctrl0.setSubComponent("backend", "memHierarchy.HBMDRAMSimMemory")
 memory0.addParams({
     "mem_size" : "512MiB",
@@ -209,38 +204,38 @@ for a in componentlist:
 
 # Define the simulation links
 link_c0_l1cache = sst.Link("link_c0_l1cache")
-link_c0_l1cache.connect( (iface0, "port", "100ps"), (c0_l1cache, "high_network_0", "100ps") )
+link_c0_l1cache.connect( (iface0, "lowlink", "100ps"), (c0_l1cache, "highlink", "100ps") )
 link_c0L1cache_bus = sst.Link("link_c0L1cache_bus")
-link_c0L1cache_bus.connect( (c0_l1cache, "low_network_0", "500ps"), (n0_bus, "high_network_0", "500ps") )
+link_c0L1cache_bus.connect( (c0_l1cache, "lowlink", "500ps"), (n0_bus, "highlink0", "500ps") )
 link_c1_l1cache = sst.Link("link_c1_l1cache")
-link_c1_l1cache.connect( (iface1, "port", "100ps"), (c1_l1cache, "high_network_0", "100ps") )
+link_c1_l1cache.connect( (iface1, "lowlink", "100ps"), (c1_l1cache, "highlink", "100ps") )
 link_c1L1cache_bus = sst.Link("link_c1L1cache_bus")
-link_c1L1cache_bus.connect( (c1_l1cache, "low_network_0", "500ps"), (n0_bus, "high_network_1", "500ps") )
+link_c1L1cache_bus.connect( (c1_l1cache, "lowlink", "500ps"), (n0_bus, "highlink1", "500ps") )
 link_bus_n0L2cache = sst.Link("link_bus_n0L2cache")
-link_bus_n0L2cache.connect( (n0_bus, "low_network_0", "500ps"), (n0_l2cache, "high_network_0", "500ps") )
+link_bus_n0L2cache.connect( (n0_bus, "lowlink0", "500ps"), (n0_l2cache, "highlink", "500ps") )
 link_n0L2cache_bus = sst.Link("link_n0L2cache_bus")
-link_n0L2cache_bus.connect( (n0_l2cache, "low_network_0", "500ps"), (n2_bus, "high_network_0", "500ps") )
+link_n0L2cache_bus.connect( (n0_l2cache, "lowlink", "500ps"), (n2_bus, "highlink0", "500ps") )
 link_c2_l1cache = sst.Link("link_c2_l1cache")
-link_c2_l1cache.connect( (iface2, "port", "100ps"), (c2_l1cache, "high_network_0", "100ps") )
+link_c2_l1cache.connect( (iface2, "lowlink", "100ps"), (c2_l1cache, "highlink", "100ps") )
 link_c2L1cache_bus = sst.Link("link_c2L1cache_bus")
-link_c2L1cache_bus.connect( (c2_l1cache, "low_network_0", "500ps"), (n1_bus, "high_network_0", "500ps") )
+link_c2L1cache_bus.connect( (c2_l1cache, "lowlink", "500ps"), (n1_bus, "highlink0", "500ps") )
 link_c3_l1cache = sst.Link("link_c3_l1cache")
-link_c3_l1cache.connect( (iface3, "port", "100ps"), (c3_l1cache, "high_network_0", "100ps") )
+link_c3_l1cache.connect( (iface3, "lowlink", "100ps"), (c3_l1cache, "highlink", "100ps") )
 link_c3L1cache_bus = sst.Link("link_c3L1cache_bus")
-link_c3L1cache_bus.connect( (c3_l1cache, "low_network_0", "500ps"), (n1_bus, "high_network_1", "500ps") )
+link_c3L1cache_bus.connect( (c3_l1cache, "lowlink", "500ps"), (n1_bus, "highlink1", "500ps") )
 link_bus_n1L2cache = sst.Link("link_bus_n1L2cache")
-link_bus_n1L2cache.connect( (n1_bus, "low_network_0", "500ps"), (n1_l2cache, "high_network_0", "500ps") )
+link_bus_n1L2cache.connect( (n1_bus, "lowlink0", "500ps"), (n1_l2cache, "highlink", "500ps") )
 link_n1L2cache_bus = sst.Link("link_n1L2cache_bus")
-link_n1L2cache_bus.connect( (n1_l2cache, "low_network_0", "500ps"), (n2_bus, "high_network_1", "500ps") )
+link_n1L2cache_bus.connect( (n1_l2cache, "lowlink", "500ps"), (n2_bus, "highlink1", "500ps") )
 link_bus_l3cache = sst.Link("link_bus_l3cache")
-link_bus_l3cache.connect( (n2_bus, "low_network_0", "500ps"), (l3tol2, "port", "500ps") )
+link_bus_l3cache.connect( (n2_bus, "lowlink0", "500ps"), (l3cache, "highlink", "500ps") )
 link_cache_net_0 = sst.Link("link_cache_net_0")
 link_cache_net_0.connect( (l3NIC, "port", "500ps"), (network, "port2", "500ps") )
 link_dir_net_0 = sst.Link("link_dir_net_0")
 link_dir_net_0.connect( (network, "port0", "200ps"), (dirNIC0, "port", "200ps") )
 link_dir0_mem_link = sst.Link("link_dir0_mem_link")
-link_dir0_mem_link.connect( (dirtoM0, "port", "500ps"), (memtoD0, "port", "500ps") )
+link_dir0_mem_link.connect( (dirctrl0, "lowlink", "500ps"), (memctrl0, "highlink", "500ps") )
 link_dir_net_1 = sst.Link("link_dir_net_1")
 link_dir_net_1.connect( (network, "port1", "200ps"), (dirNIC1, "port", "200ps") )
 link_dir1_mem_link = sst.Link("link_dir1_mem_link")
-link_dir1_mem_link.connect( (dirtoM1, "port", "500ps"), (memtoD1, "port", "500ps") )
+link_dir1_mem_link.connect( (dirctrl1, "lowlink", "500ps"), (memctrl1, "highlink", "500ps") )

@@ -57,6 +57,7 @@ public:
         {"read_freq",               "(uint) Relative read frequency", "75"},
         {"flush_freq",              "(uint) Relative flush frequency", "0"},
         {"flushinv_freq",           "(uint) Relative flush-inv frequency", "0"},
+        {"flushcache_freq",         "(uint) Relative frequency to flush the entire cache", "0"},
         {"custom_freq",             "(uint) Relative custom op frequency", "0"},
         {"llsc_freq",               "(uint) Relative LLSC frequency", "0"},
         {"mmio_addr",               "(uint) Base address of the test MMIO component. 0 means not present.", "0"},
@@ -68,8 +69,9 @@ public:
         {"pendCycle", "Number of pending requests per cycle", "count", 1},
         {"reads", "Number of reads issued (including noncacheable)", "count", 1},
         {"writes", "Number of writes issued (including noncacheable)", "count", 1},
-        {"flushes", "Number of flushes issued", "count", 1},
-        {"flushinvs", "Number of flush-invs issued", "count", 1},
+        {"flushes", "Number of line flushes issued", "count", 1},
+        {"flushinvs", "Number of line flush-invs issued", "count", 1},
+        {"flushcaches", "Number of cache flushes issued", "count", 1},
         {"customReqs", "Number of custom requests issued", "count", 1},
         {"llsc", "Number of LL-SC pairs issued", "count", 1},
         {"llsc_success", "Number of successful LLSC pairs issued", "count", 1},
@@ -102,6 +104,7 @@ private:
     unsigned write_mark;
     unsigned flush_mark;
     unsigned flushinv_mark;
+    unsigned flushcache_mark;
     unsigned custom_mark;
     unsigned llsc_mark;
     unsigned mmio_mark;
@@ -112,6 +115,7 @@ private:
     Statistic<uint64_t>* num_reads_issued;
     Statistic<uint64_t>* num_writes_issued;
     Statistic<uint64_t>* num_flushes_issued;
+    Statistic<uint64_t>* num_flushcache_issued;
     Statistic<uint64_t>* num_flushinvs_issued;
     Statistic<uint64_t>* num_custom_issued;
     Statistic<uint64_t>* num_llsc_issued;
@@ -136,6 +140,7 @@ private:
     Interfaces::StandardMem::Request* createRead(Addr addr);
     Interfaces::StandardMem::Request* createFlush(Addr addr);
     Interfaces::StandardMem::Request* createFlushInv(Addr addr);
+    Interfaces::StandardMem::Request* createFlushCache();
     Interfaces::StandardMem::Request* createLL(Addr addr);
     Interfaces::StandardMem::Request* createSC();
     Interfaces::StandardMem::Request* createMMIOWrite();

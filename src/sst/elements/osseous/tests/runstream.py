@@ -74,16 +74,16 @@ membus.addParams( { "bus_frequency" : clock,
 } )
 
 cpu_cache_link = sst.Link("cpu_cache_link")
-cpu_cache_link.connect( (ariel, "cache_link_0", "50ps"), (l1cpucache, "high_network_0", "50ps") )
+cpu_cache_link.connect( (ariel, "cache_link_0", "50ps"), (l1cpucache, "highlink", "50ps") )
 
 rtl_cache_link = sst.Link("rtl_cache_link")
-rtl_cache_link.connect( (rtl, "RtlCacheLink", "50ps"), (l1rtlcache, "high_network_0", "50ps") )
+rtl_cache_link.connect( (rtl, "RtlCacheLink", "50ps"), (l1rtlcache, "highlink", "50ps") )
 
 l1cpu_bus_link = sst.Link("l1cpu_bus_link")
-l1cpu_bus_link.connect( (l1cpucache, "low_network_0", "50ps"), (membus, "high_network_0", "50ps") )
+l1cpu_bus_link.connect( (l1cpucache, "lowlink", "50ps"), (membus, "highlink0", "50ps") )
 
 l1rtl_bus_link = sst.Link("l1rtl_bus_link")
-l1rtl_bus_link.connect( (l1rtlcache, "low_network_0", "50ps"), (membus, "high_network_1", "50ps") )
+l1rtl_bus_link.connect( (l1rtlcache, "lowlink", "50ps"), (membus, "highlink1", "50ps") )
 
 # Shared L2
 # 1MB*cores, 16-way set associative, 64B line, 15 cycle access
@@ -100,7 +100,7 @@ l2.addParams( {
 } )
 
 l2_bus_link = sst.Link("l2_bus_link")
-l2_bus_link.connect( (l2, "high_network_0", "50ps"), (membus, "low_network_0", "50ps") )
+l2_bus_link.connect( (l2, "highlink", "50ps"), (membus, "lowlink0", "50ps") )
 
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
@@ -117,7 +117,7 @@ cpu_rtl_link = sst.Link("cpu_rtl_link")
 cpu_rtl_link.connect( (ariel, "rtl_link_0", "50ps"), (rtl, "ArielRtllink", "50ps") )
 
 memory_link = sst.Link("mem_bus_link")
-memory_link.connect( (l2, "low_network_0", "50ps"), (memctrl, "direct_link", "50ps") )
+memory_link.connect( (l2, "lowlink", "50ps"), (memctrl, "highlink", "50ps") )
 
 # Set the Statistic Load Level; Statistics with Enable Levels (set in
 # elementInfoStatistic) lower or equal to the load can be enabled (default = 0)

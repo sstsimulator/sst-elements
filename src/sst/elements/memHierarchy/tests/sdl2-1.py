@@ -74,8 +74,8 @@ for a in componentlist:
 
 # Define the simulation links
 link_cpu_l1cache = sst.Link("link_cpu_l1cache_link")
-link_cpu_l1cache.connect( (iface, "port", "1000ps"), (l1cache, "high_network_0", "1000ps") )
+link_cpu_l1cache.connect( (iface, "lowlink", "1000ps"), (l1cache, "highlink", "1000ps") )
 link_l1cache_l2cache = sst.Link("link_l1cache_l2cache_link")
-link_l1cache_l2cache.connect( (l1cache, "low_network_0", "10000ps"), (l2cache, "high_network_0", "1000ps") )
-link_mem_bus = sst.Link("link_mem_bus_link")
-link_mem_bus.connect( (l2cache, "low_network_0", "10000ps"), (memctrl, "direct_link", "10000ps") )
+link_l1cache_l2cache.connect( (l1cache, "lowlink", "10000ps"), (l2cache, "highlink", "1000ps") )
+link_mem_cache = sst.Link("link_mem_cache_link")
+link_mem_cache.connect( (l2cache, "lowlink", "10000ps"), (memctrl, "highlink", "10000ps") )

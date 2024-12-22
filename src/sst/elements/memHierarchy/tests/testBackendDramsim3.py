@@ -32,8 +32,7 @@ l3cache.addParams({
       "debug" : "0",
       "verbose" : 2,
 })
-l3tol2 = l3cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-l3NIC = l3cache.setSubComponent("memlink", "memHierarchy.MemNIC")
+l3NIC = l3cache.setSubComponent("lowlink", "memHierarchy.MemNIC")
 l3NIC.addParams({
     "group" : 1,
     "etwork_bw" : "25GB/s",
@@ -79,13 +78,13 @@ for i in range(0,8):
 
     # Connect
     link_cpu_l1 = sst.Link("link_cpu_l1_" + str(i))
-    link_cpu_l1.connect( (iface, "port", "500ps"), (l1cache, "high_network_0", "500ps") )
+    link_cpu_l1.connect( (iface, "lowlink", "500ps"), (l1cache, "highlink", "500ps") )
 
     link_l1_l2 = sst.Link("link_l1_l2_" + str(i))
-    link_l1_l2.connect( (l1cache, "low_network_0", "500ps"), (l2cache, "high_network_0", "500ps") )
+    link_l1_l2.connect( (l1cache, "lowlink", "500ps"), (l2cache, "highlink", "500ps") )
 
     link_l2_bus = sst.Link("link_l2_bus_" + str(i))
-    link_l2_bus.connect( (l2cache, "low_network_0", "1000ps"), (bus, "high_network_" + str(i), "1000ps") )
+    link_l2_bus.connect( (l2cache, "lowlink", "1000ps"), (bus, "highlink" + str(i), "1000ps") )
 
 
 network = sst.Component("network", "merlin.hr_router")
@@ -109,8 +108,7 @@ dirctrl.addParams({
     "addr_range_end" : "0x1F000000",
     "addr_range_start" : "0x0"
 })
-dirtoM = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
-dirNIC = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
+dirNIC = dirctrl.setSubComponent("highlink", "memHierarchy.MemNIC")
 dirNIC.addParams({
     "group" : 2,
     "network_bw" : "25GB/s",
@@ -133,14 +131,14 @@ memory.addParams({
 
 # Do lower memory hierarchy links
 link_bus_l3 = sst.Link("link_bus_l3")
-link_bus_l3.connect( (bus, "low_network_0", "500ps"), (l3tol2, "port", "500ps") )
+link_bus_l3.connect( (bus, "lowlink0", "500ps"), (l3cache, "highlink", "500ps") )
 
 link_l3_net = sst.Link("link_l3_net")
 link_l3_net.connect( (l3NIC, "port", "10000ps"), (network, "port1", "2000ps") )
 link_dir_net = sst.Link("link_dir_net")
 link_dir_net.connect( (network, "port0", "2000ps"), (dirNIC, "port", "2000ps") )
 link_dir_mem = sst.Link("link_dir_mem")
-link_dir_mem.connect( (dirtoM, "port", "10000ps"), (memctrl, "direct_link", "10000ps") )
+link_dir_mem.connect( (dirctrl, "lowlink", "10000ps"), (memctrl, "highlink", "10000ps") )
 
 # Enable statistics
 sst.setStatisticLoadLevel(7)

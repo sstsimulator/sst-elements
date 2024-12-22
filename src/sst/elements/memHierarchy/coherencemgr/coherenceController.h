@@ -65,6 +65,8 @@ public:
     virtual bool handlePutM(MemEvent * event, bool inMSHR);
     virtual bool handleFlushLine(MemEvent * event, bool inMSHR);
     virtual bool handleFlushLineInv(MemEvent * event, bool inMSHR);
+    virtual bool handleFlushAll(MemEvent * event, bool inMSHR);
+    virtual bool handleForwardFlush(MemEvent * event, bool inMSHR);
     virtual bool handleFetch(MemEvent * event, bool inMSHR);
     virtual bool handleInv(MemEvent * event, bool inMSHR);
     virtual bool handleFetchInvX(MemEvent * event, bool inMSHR);
@@ -74,8 +76,11 @@ public:
     virtual bool handleGetXResp(MemEvent * event, bool inMSHR);
     virtual bool handleWriteResp(MemEvent * event, bool inMSHR);
     virtual bool handleFlushLineResp(MemEvent * event, bool inMSHR);
+    virtual bool handleFlushAllResp(MemEvent * event, bool inMSHR);
     virtual bool handleAckPut(MemEvent * event, bool inMSHR);
     virtual bool handleAckInv(MemEvent * event, bool inMSHR);
+    virtual bool handleAckFlush(MemEvent * event, bool inMSHR);
+    virtual bool handleUnblockFlush(MemEvent * event, bool inMSHR);
     virtual bool handleFetchResp(MemEvent * event, bool inMSHR);
     virtual bool handleFetchXResp(MemEvent * event, bool inMSHR);
     virtual bool handleNACK(MemEvent * event, bool inMSHR);
@@ -96,9 +101,12 @@ public:
     virtual void forwardByDestination(MemEventBase * event);             // Send time will be 1 + timestamp_
     virtual void forwardByDestination(MemEventBase * event, Cycle_t ts); // ts specifies the send time
     
+    /* Broadcast an event to a group of components */
+    int broadcastMemEventToSources(Command cmd, MemEvent* metadata, Cycle_t ts);
+    int broadcastMemEventToPeers(Command cmd, MemEvent* metadata, Cycle_t ts);
+
     /* Send a NACK event */
     void sendNACK(MemEvent * event);
-
 
     /*********************************************************************************
      * Miscellaneous functions used by parent
@@ -117,6 +125,9 @@ public:
     /*********************************************************************************
      * Initialization/finish functions used by parent
      *********************************************************************************/
+
+    /* Setup function from BaseComponent API */
+    virtual void setup() override; 
 
     /*
      * Get the InitCoherenceEvent
@@ -182,7 +193,7 @@ public:
     virtual void recordMiss(SST::Event::id_type id);
 
     // Called by owner during printStatus/emergencyShutdown
-    virtual void printStatus(Output &out);
+    virtual void printStatus(Output &out) override;
 
 protected:
 
@@ -199,6 +210,9 @@ protected:
 
     /* Insert event into MSHR */
     MemEventStatus allocateMSHR(MemEvent * event, bool fwdReq, int pos = -1, bool stallEvict = false);
+
+    /* Insight into link status */
+    bool isPeer(std::string name);
 
     /* Statistics */
     virtual void recordLatencyType(SST::Event::id_type id, int latencytype);
@@ -288,6 +302,9 @@ protected:
     bool recvWritebackAck_;     // Whether we should expect writeback acks
     bool sendWritebackAck_;     // Whether we should send writeback acks
     bool lastLevel_;            // Whether we are the lowest coherence level and should not send coherence messages down
+    bool flush_manager_;        // Whether this cache will manage (order) FlushAll events - one per system, may be a directory
+    bool flush_helper_;         // Whether this cache will locally manage (order) FlushAll events - one per shared group of caches
+    std::string flush_dest_;    // Destination for FlushAll requests
 
     /* Response structure - used for outgoing event queues */
     struct Response {

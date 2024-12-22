@@ -65,10 +65,10 @@ sst.enableAllStatisticsForAllComponents({"type":"sst.AccumulatorStatistic"})
 
 # Define the simulation links
 link_df_cache_link = sst.Link("link_cpu_cache_link")
-link_df_cache_link.connect( (iface, "port", "1ps"), (df_l1cache, "high_network_0", "1ps") )
+link_df_cache_link.connect( (iface, "lowlink", "1ps"), (df_l1cache, "highlink", "1ps") )
 link_df_cache_link.setNoCut()
 
 link_mem_bus_link = sst.Link("link_mem_bus_link")
-link_mem_bus_link.connect( (df_l1cache, "low_network_0", "5ps"), (df_memory, "direct_link", "5ps") )
+link_mem_bus_link.connect( (df_l1cache, "lowlink", "5ps"), (df_memory, "highlink", "5ps") )
 
 

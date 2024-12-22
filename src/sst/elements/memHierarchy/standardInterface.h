@@ -47,18 +47,18 @@ class MemEvent;
  *  This subcomponent translates a standard event type (StandardMem::Request) into an internal MemHierarchy event type. 
  *  It can be loaded by components to provide an interface into the memory system.
  *  
- *  - If this subcomponent is loaded anonymously, the component loading it must connect a port and pass that port name via the "port" parameter. 
+ *  - If this subcomponent is loaded anonymously, the component loading it must connect a port and pass that port name to this subcomponent via the "port" parameter. 
  *    The loading component must share that port with the subcomponent (via SHARE_PORTS flag). Anonymous loading does not support a SimpleNetwork connection.
  *  - If this subcomponent is not loaded anonymously, the subcomponent can connect either directly to a memHierarchy component (default) or to a SimpleNetwork interface such as Merlin or Kingsley
  *  - Ways to connect
  *      - Options to connect directly to another memHierarchy component (pick ONE):
  *          a. Load this subcomponent anonymously with the SHARE_PORTS flag and set the "port" parameter to a connected port owned by the parent component
  *          b. Load this subcomponent explicitly in the input file and connect the 'port' port to either a memHierarchy component's port, 
- *             or to a MemLink subcomponent belonging to a memHierarchy component. Do not use the "port" parameter or fill the "memlink" subcomponent slot.
- *          c. Load this subcomponent explicitly in the input file and fill the memlink subcomponent slot with "memHierarchy.MemLink". 
- *             Connect the memlink subcomponent's port. Do not connect this subcomponent's port or use the "port" parameter.
+ *             or to a MemLink subcomponent belonging to a memHierarchy component. Do not use the "port" parameter or fill the "lowlink" subcomponent slot.
+ *          c. Load this subcomponent explicitly in the input file and fill the lowlink subcomponent slot with "memHierarchy.MemLink". 
+ *             Connect the lowlink subcomponent's port. Do not connect this subcomponent's port or use the "port" parameter.
  *      - To connect over a network
- *          - Load a MemNIC (e.g., MemNIC, MemNICFour) into the "memlink" subcomponent and parameterize appropriately. Do not connect the "port" port or use the "port" parameter.
+ *          - Load a MemNIC (e.g., MemNIC, MemNICFour) into the "lowlink" subcomponent and parameterize appropriately. Do not connect the "port" port or use the "port" parameter.
  * 
  * Notes on using this interface
  *  - The parent component MUST call init(), setup(), and finish() on this subcomponent during each of SST's respective phases. In particular, failing to call init() will lead to errors.
@@ -78,14 +78,18 @@ public:
         {"verbose",     "(uint) Output verbosity for warnings/errors. 0[fatal error only], 1[warnings], 2[full state dump on fatal error]", "1"},
         {"debug",       "(uint) Where to send debug output. Options: 0[none], 1[stdout], 2[stderr], 3[file]", "0"},
         {"debug_level", "(uint) Debugging level: 0 to 10. Must configure sst-core with '--enable-debug'. 1=info, 2-10=debug output", "0"},
-        {"port",        "(string) port name to use for interfacing to the memory system. This must be provided if this subcomponent is being loaded anonymously. Otherwise this should not be specified and either the 'port' port should be connected or the 'memlink' subcomponent slot should be filled"},
+        {"port",        "(string) port name to use for interfacing to the memory system. This must be provided if this subcomponent is being loaded anonymously. Otherwise this should not be specified and either the 'lowlink' port should be connected or the 'lowlink' subcomponent slot should be filled"},
         {"noncacheable_regions", "(string) vector of (start, end) address pairs for noncacheable address ranges. Vector format should be [start0, end0, start1, end1, ...].", "[]"}
     )
 
-    SST_ELI_DOCUMENT_PORTS( {"port", "Port to memory hierarchy (caches/memory/etc.). Required if subcomponent slot not filled or if 'port' parameter not provided.", {}} )
+    SST_ELI_DOCUMENT_PORTS( 
+        {"lowlink", "Port to memory hierarchy (caches/memory/etc.). Required if 'lowlink' subcomponent slot not filled or if 'lowlink' parameter not provided to this interface.", {}},
+        {"port", "DEPRECATED: Renamed to 'lowlink'. Port to memory hierarchy (caches/memory/etc.). Required if subcomponent slot not filled or if 'port' parameter not provided.", {}} 
+    )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-        {"memlink", "Link manager, optional - if not filled this subcompoonent's port should be connected", "SST::MemHierarchy::MemLinkBase"})
+        {"lowlink", "Port manager for link to memory system. This slot must be used if the StandardInterface links to a network (do not connect the StandardInterface's 'port' in this case). Otherwise, either this slot or the StandardInterface's 'port' port may be used to connect to the memory system.", "SST::MemHierarchy::MemLinkBase"},
+        {"memlink", "DEPRECATED: Renamed to 'lowlink'. Port manager, optional - if not filled this subcomponent's port should be connected", "SST::MemHierarchy::MemLinkBase"})
 
 /* Begin class definition */
     StandardInterface(SST::ComponentId_t id, Params &params, TimeConverter* time, HandlerBase* handler = NULL);
@@ -139,6 +143,7 @@ protected:
         virtual SST::Event* convert(StandardMem::Write* req) override;
         virtual SST::Event* convert(StandardMem::WriteResp* req) override;
         virtual SST::Event* convert(StandardMem::FlushAddr* req) override;
+        virtual SST::Event* convert(StandardMem::FlushCache* req) override;
         virtual SST::Event* convert(StandardMem::FlushResp* req) override;
         virtual SST::Event* convert(StandardMem::ReadLock* req) override;
         virtual SST::Event* convert(StandardMem::WriteUnlock* req) override;
@@ -171,6 +176,7 @@ private:
     StandardMem::Request* convertResponseGetSResp(StandardMem::Request* req, MemEventBase* meb);
     StandardMem::Request* convertResponseWriteResp(StandardMem::Request* req, MemEventBase* meb);
     StandardMem::Request* convertResponseFlushResp(StandardMem::Request* req, MemEventBase* meb);
+    StandardMem::Request* convertResponseFlushAllResp(StandardMem::Request* req, MemEventBase* meb);
     StandardMem::Request* convertResponseAckMove(StandardMem::Request* req, MemEventBase* meb);
     StandardMem::Request* convertResponseCustomResp(StandardMem::Request* req, MemEventBase* meb);
     StandardMem::Request* convertRequestInv(MemEventBase* req);

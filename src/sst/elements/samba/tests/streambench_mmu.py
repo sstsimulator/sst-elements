@@ -85,7 +85,7 @@ link_mmu_cache_link = sst.Link("link_mmu_cache_link")
 arielMMULink = sst.Link("cpu_mmu_link_" + str(next_core_id))
                 MMUCacheLink = sst.Link("mmu_cache_link_" + str(next_core_id))
                 arielMMULink.connect((ariel, "cache_link_%d"%next_core_id, ring_latency), (mmu, "cpu_to_mmu%d"%next_core_id, ring_latency))
-                MMUCacheLink.connect((mmu, "mmu_to_cache%d"%next_core_id, ring_latency), (l1, "high_network_0", ring_latency))
+                MMUCacheLink.connect((mmu, "mmu_to_cache%d"%next_core_id, ring_latency), (l1, "highlink", ring_latency))
                 arielMMULink.setNoCut()
                 MMUCacheLink.setNoCut()
 '''
@@ -94,11 +94,11 @@ arielMMULink = sst.Link("cpu_mmu_link_" + str(next_core_id))
 link_cpu_mmu_link.connect( (comp_cpu, "cache_link", "50ps"), (mmu, "cpu_to_mmu0", "50ps") )
 link_cpu_mmu_link.setNoCut()
 
-link_mmu_cache_link.connect( (mmu, "mmu_to_cache0", "50ps"), (comp_l1cache, "high_network_0", "50ps") )
+link_mmu_cache_link.connect( (mmu, "mmu_to_cache0", "50ps"), (comp_l1cache, "highlink", "50ps") )
 link_mmu_cache_link.setNoCut()
 
 
 
 link_mem_bus_link = sst.Link("link_mem_bus_link")
-link_mem_bus_link.connect( (comp_l1cache, "low_network_0", "50ps"), (comp_memory, "direct_link", "50ps") )
+link_mem_bus_link.connect( (comp_l1cache, "lowlink", "50ps"), (comp_memory, "highlink", "50ps") )
                                                                                                              

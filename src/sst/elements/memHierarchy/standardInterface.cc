@@ -50,16 +50,34 @@ StandardInterface::StandardInterface(SST::ComponentId_t id, Params &params, Time
     // Handler - if nullptr then polling will be assumed
     recvHandler_ = handler;
 
-    link_ = loadUserSubComponent<MemLinkBase>("memlink", ComponentInfo::SHARE_NONE, getDefaultTimeBase());
+    link_ = loadUserSubComponent<MemLinkBase>("lowlink", ComponentInfo::SHARE_NONE, getDefaultTimeBase());
+    if (!link_) {
+        link_ = loadUserSubComponent<MemLinkBase>("memlink", ComponentInfo::SHARE_NONE, getDefaultTimeBase());
+        if (link_) {
+            output.output("%s, DEPRECATION WARNING: The StandardInterface's 'memlink' subcomponent slot has been renamed to 'lowlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
+        }
+    }
     if (!link_) {
         // Default is a regular non-network link on port 'port'
+        std::string port = "";
+        if (isPortConnected("lowlink")) port = "lowlink";
+        else if (isPortConnected("port")) {
+            port = "port";
+            output.output("%s, DEPRECATION WARNING: The StandardInterface's port named 'port' has been renamed to 'lowlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
+        }
+        else port = params.find<std::string>("port", "");
+
+        if (port == "") {
+            output.fatal(CALL_INFO, -1, "%s, Error: Unable to configure link. Three options: (1) Fill the 'lowlink' subcomponent slot and connect the subcomponent's port(s). (2) Connect this interface's 'lowlink' port. (3) Connect this interface's parent component's port and pass its name as a parameter to this interface.\n", getName().c_str());
+        }
+
         Params lparams;
-        lparams.insert("port", params.find<std::string>("port", "port"));
-        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "link", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, lparams, getDefaultTimeBase());
+        lparams.insert("port", port);
+        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, lparams, getDefaultTimeBase());
     }
 
     if (!link_)
-        output.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port 'port'\n", getName().c_str());
+        output.fatal(CALL_INFO, -1, "%s, Error: unable to configure link. Three options: (1) Fill the 'lowlink' subcomponent slot and connect the subcomponent's port(s). (2) Connect this interface's 'lowlink' port. (3) Connect this interface's parent component's port and pass its name as a parameter to this interface.\n", getName().c_str());
     
     link_->setRecvHandler( new SST::Event::Handler<StandardInterface>(this, &StandardInterface::receive));
     link_->setName(getName());
@@ -104,7 +122,7 @@ void StandardInterface::init(unsigned int phase) {
         /* Broadcast our name, type, and coherence configuration parameters on link */
         MemEventInitCoherence * event = new MemEventInitCoherence(getName(), epType, false, false, 0, false);
         link_->sendUntimedData(event);
-
+        
         /* 
          * If we are addressable (MMIO), broadcast that info across the system 
          * For now, treat all MMIO regions as noncacheable
@@ -249,6 +267,9 @@ void StandardInterface::receive(SST::Event* ev) {
                 break;
             case Command::FlushLineResp:
                 deliverReq = convertResponseFlushResp(origReq, me);
+                break;
+            case Command::FlushAllResp:
+                deliverReq = convertResponseFlushAllResp(origReq, me);
                 break;
             case Command::AckMove:
                 deliverReq = convertResponseAckMove(origReq, me);
@@ -421,6 +442,17 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::FlushAddr
         iface->output.fatal(CALL_INFO, -1, "%s, Error: Received noncacheable flush request. This combination is not supported.\n",
             iface->getName().c_str());
 #endif
+    return flush;
+}
+
+SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::FlushCache* req) {
+    MemEvent* flush = new MemEvent(iface->getName(), Command::FlushAll);
+    flush->setRqstr(iface->getName());
+    flush->setThreadID(req->tid);
+    std::string dst = iface->link_->getDests()->begin()->name;
+    flush->setDst(dst);
+    flush->setVirtualAddress(0); /* Not routed by address, will be 0 */
+    flush->setInstructionPointer(req->iPtr);
     return flush;
 }
 
@@ -602,6 +634,16 @@ StandardMem::Request* StandardInterface::convertResponseWriteResp(StandardMem::R
 }
 
 StandardMem::Request* StandardInterface::convertResponseFlushResp(StandardMem::Request* req, MemEventBase* meb) {
+    MemEvent* me = static_cast<MemEvent*>(meb);
+    StandardMem::Request* resp = req->makeResponse();
+    if (!me->success()) {
+        resp->setFail();
+        resp->unsetSuccess();
+    }
+    return resp;
+}
+
+StandardMem::Request* StandardInterface::convertResponseFlushAllResp(StandardMem::Request* req, MemEventBase* meb) {
     MemEvent* me = static_cast<MemEvent*>(meb);
     StandardMem::Request* resp = req->makeResponse();
     if (!me->success()) {

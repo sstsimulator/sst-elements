@@ -198,11 +198,19 @@ class MemNICBase : public MemLinkBase {
             return false;
         }
 
+        virtual bool isPeer(std::string str) {
+            for (std::set<EndpointInfo>::iterator it = peerEndpointInfo.begin(); it != peerEndpointInfo.end(); it++) {
+                if (it->name == str) return true;
+            }
+            return false;
+        }
+        
         virtual bool isClocked() { return true; } // Tell parent to trigger our clock
 
         virtual std::set<EndpointInfo>* getSources() { return &sourceEndpointInfo; }
         virtual std::set<EndpointInfo>* getDests() { return &destEndpointInfo; }
-        
+        virtual std::set<EndpointInfo>* getPeers() { return &peerEndpointInfo; }
+
         virtual std::string findTargetDestination(Addr addr) {
             for (std::set<EndpointInfo>::const_iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
                 if (it->region.contains(addr)) return it->name;
@@ -249,6 +257,10 @@ class MemNICBase : public MemLinkBase {
             reachableNames.insert(info.name);
         }
 
+        virtual void addPeer(EndpointInfo info) {
+            peerEndpointInfo.insert(info);
+        }
+
         virtual void addEndpoint(EndpointInfo info) { endpointInfo.insert(info); }
 
         virtual InitMemRtrEvent* createInitMemRtrEvent() {
@@ -267,6 +279,10 @@ class MemNICBase : public MemLinkBase {
                 addDest(imre->info);
                 dbg.debug(_L10_, "%s (memNICBase) received dest imre. Name: %s, Addr: %" PRIu64 ", ID: %" PRIu32 ", start: %" PRIu64 ", end: %" PRIu64 ", size: %" PRIu64 ", step: %" PRIu64 "\n",
                         getName().c_str(), imre->info.name.c_str(), imre->info.addr, imre->info.id, imre->info.region.start, imre->info.region.end, imre->info.region.interleaveSize, imre->info.region.interleaveStep);
+            }
+
+            if (imre->info.id == info.id) {
+                addPeer(imre->info);
             }
         }
 
@@ -364,10 +380,7 @@ class MemNICBase : public MemLinkBase {
                         dbg.debug(_L10_, "\tInserting in initQueue\n");
                         mre->putEvent(ev); // If we did not delete the Event, give it back to the MemRtrEvent
                         initQueue.push(mre);
-                    } else {
-			delete mre;
-			delete ev;
-		    }
+                    }
                 }
                 delete req;
             }
@@ -440,9 +453,15 @@ class MemNICBase : public MemLinkBase {
             for (auto it = sourceEndpointInfo.begin(); it != sourceEndpointInfo.end(); it++) {
                 dbg.debug(_L10_, "    Source: %s\n", it->toString().c_str()); 
             }
+            if (sourceEndpointInfo.empty()) dbg.debug(_L10_, "    Source: NONE\n");
             for (std::set<EndpointInfo>::const_iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
                 dbg.debug(_L10_, "    Dest: %s\n", it->toString().c_str()); 
             }
+            if (destEndpointInfo.empty()) dbg.debug(_L10_, "    Dest: NONE\n");
+            for (auto it = peerEndpointInfo.begin(); it != peerEndpointInfo.end(); it++) {
+                dbg.debug(_L10_, "    Peer: %s\n", it->toString().c_str());
+            }
+            if (peerEndpointInfo.empty()) dbg.debug(_L10_, "    Peer: NONE\n");
             for (auto it = endpointInfo.begin(); it != endpointInfo.end(); it++) {
                 dbg.debug(_L10_, "    Endpoint: %s\n", it->toString().c_str()); 
             }
@@ -490,7 +509,7 @@ class MemNICBase : public MemLinkBase {
 #ifdef __SST_DEBUG_OUTPUT__
                     if (!debugEvStr.empty() && doDebug) {
                         dbg.debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s), Dst: %" PRIu64 "\n",
-                                getCurrentSimCycle(), 0, getName().c_str(), debugEvStr.c_str(), dst);
+                                getCurrentSimCycle(), 0ULL, getName().c_str(), debugEvStr.c_str(), dst);
                     }
 #endif
                     queue->pop();
@@ -520,6 +539,9 @@ class MemNICBase : public MemLinkBase {
                     if (destIDs.find(imre->info.id) != destIDs.end()) {
                         addDest(imre->info);
                     }
+                    if (imre->info.id == info.id) {
+                        addPeer(imre->info);
+                    }
                     delete imre;
                 }
             }
@@ -533,6 +555,7 @@ class MemNICBase : public MemLinkBase {
         std::unordered_map<std::string,uint64_t> networkAddressMap; // Map of name -> address for each network endpoint
         std::set<EndpointInfo> sourceEndpointInfo;
         std::set<EndpointInfo> destEndpointInfo;
+        std::set<EndpointInfo> peerEndpointInfo;
         std::set<EndpointInfo> endpointInfo;
         std::set<std::string> reachableNames;
 

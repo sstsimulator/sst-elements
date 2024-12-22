@@ -31,7 +31,7 @@ class testcase_memHierarchy_hybridsim(SSTTestCase):
 
         # Set the Path of the HybridSim Lib into the Env so that the SDL file
         # can pull it
-        lib_dir = sstsimulator_conf_get_value_str("HYBRIDSIM", "LIBDIR", "LIBDIR_UNDEFINED")
+        lib_dir = sstsimulator_conf_get_value("HYBRIDSIM", "LIBDIR", str, "LIBDIR_UNDEFINED")
         os.environ['SST_HYBRIDSIM_LIB_DIR'] = lib_dir
 
         # Set the various file paths

@@ -95,6 +95,14 @@ class testcase_memHierarchy_memHA(SSTTestCase):
     @skip_on_sstsimulator_conf_empty_str("GOBLIN_HMCSIM", "LIBDIR", "GOBLIN_HMCSIM is not included as part of this build")
     def test_memHA_CustomCmdGoblin_3(self):
         self.memHA_Template("CustomCmdGoblin_3")
+    
+    @skip_on_sstsimulator_conf_empty_str("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
+    def test_memHierarchy_BackendRamulator_1(self):
+        self.memHA_Template("BackendRamulator_1")
+
+    @skip_on_sstsimulator_conf_empty_str("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
+    def test_memHierarchy_BackendRamulator_2(self):
+        self.memHA_Template("BackendRamulator_2")
 
     def test_memHA_BackendTimingDRAM_1(self):
         self.memHA_Template("BackendTimingDRAM_1")

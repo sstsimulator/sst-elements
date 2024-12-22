@@ -16,7 +16,6 @@
 /*
  * File:   directoryController.h
  * Author: Branden Moore / Caesar De la Paz III
- * Email:  bjmoor@sandia.gov / caesar.sst@gmail.com
  */
 
 #ifndef _MEMHIERARCHY_DIRCONTROLLER_H_
@@ -69,18 +68,22 @@ public:
             {"interleave_step",         "Distance between interleaved chunks. E.g., to interleave 8B chunks among 3 directories, set size=8B, step=24B", "0B"},
             {"node",					"Node number in multinode environment"},
             /* Old parameters - deprecated or moved */
-            {"network_num_vc",          "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"}, // Remove SST 9.0
-            {"network_address",         "DEPRECATD - Now auto-detected by link control", ""},   // Remove SST 9.0
-            {"network_bw",                  "MOVED. Now a member of the MemNIC/MemLink subcomponent.", "80GiB/s"}, // Remove SST 9.0
-            {"network_input_buffer_size",   "MOVED. Now a member of the MemNIC/MemLink subcomponent.", "1KiB"}, // Remove SST 9.0
-            {"network_output_buffer_size",  "MOVED. Now a member of the MemNIC/MemLink subcomponent.", "1KiB"}) // Remove SST 9.0
+            {"network_bw",                  "MOVED. Now a member of the MemNIC subcomponent.", "80GiB/s"}, // Remove SST 9.0
+            {"network_input_buffer_size",   "MOVED. Now a member of the MemNIC subcomponent.", "1KiB"}, // Remove SST 9.0
+            {"network_output_buffer_size",  "MOVED. Now a member of the MemNIC subcomponent.", "1KiB"}) // Remove SST 9.0
 
     SST_ELI_DOCUMENT_PORTS(
-            {"memory",      "Link to memory controller", { "memHierarchy.MemEventBase" } },
-            {"network",     "Link to network; doubles as request network for split networks", { "memHierarchy.MemRtrEvent" } },
-            {"network_ack", "For split networks, link to response/ack network",     { "memHierarchy.MemRtrEvent" } },
-            {"network_fwd", "For split networks, link to forward request network",  { "memHierarchy.MemRtrEvent" } },
-            {"network_data","For split networks, link to data network",             { "memHierarchy.MemRtrEvent" } })
+            {"highlink",    "Non-network upper/CPU-side link (i.e., link towards the core/accelerator/etc.). This port loads the 'memHierarchy.MemLink' manager. "
+                            "To connect to a network component or to use non-default parameters on the MemLink subcomponent, fill the 'highlink' subcomponent slot instead of connecting this port.", {"memHierarchy.MemEventBase"} },
+            {"lowlink",     "Non-network lower/memory-side link (i.e., link towards memory). This port loads the 'memHierarchy.MemLink' manager. "
+                            "To connect to a network component or use non-default parameters on the MemLink subcomponent, fill the 'lowlink' subcomponent slot instead of connecting this port.", {"memHierarchy.MemEventBase"} },
+            {"network",     "DEPRECATED. Fill 'lowlink' subcomponent slot with 'memHierarchy.MemNIC' or 'memHierarchy.MemNICFour' instead and connect that subcomponent's ports. Network CPU-side link (i.e., link towards the core/accelerator/etc.). This port loads the 'memHierarchy.MemNIC' manager. If the 'lowlink' or deprecated 'memory' port is not filled, traffic to memory will also route through this port. Doubles as request network for split networks.", { "memHierarchy.MemRtrEvent" } },
+            {"memory",      "DEPRECATED. Use 'lowlink' port or fill 'lowlink' subcomponent slot instead. Link to memory controller", { "memHierarchy.MemEventBase" } },
+            {"network_ack", "DEPRECATED. Fill 'highlink' subcomponent slot with 'memHierarchy.MemNICFour' instead. For split networks, link to response/ack network",     { "memHierarchy.MemRtrEvent" } },
+            {"network_fwd", "DEPRECATED. Fill 'highlink' subcomponent slot with 'memHierarchy.MemNICFour' instead. For split networks, link to forward request network",  { "memHierarchy.MemRtrEvent" } },
+            {"network_data","DEPRECATED. Fill 'highlink' subcomponent slot with 'memHierarchy.MemNICFour' instead. For split networks, link to data network",             { "memHierarchy.MemRtrEvent" } },
+            )
+
 
     SST_ELI_DOCUMENT_STATISTICS(
             {"replacement_request_latency", "Total latency in ns of all replacement (put*) requests handled",   "nanoseconds",  1},
@@ -104,8 +107,10 @@ public:
             {"FetchResp_recv",      "Event received: FetchResp (response to FetchInv/Fetch)", "count", 2},
             {"FetchXResp_recv",     "Event received: FetchXResp (response to FetchInvX)", "count", 2},
             {"AckInv_recv",         "Event received: AckInv (response to Inv/FetchInv/ForceInv)", "count", 2},
+            {"AckFlush_recv",       "Event received: AckFlush (response to ForwardFlush)", "count", 2},
             {"FlushLine_recv",      "Event received: FlushLine (flush, don't invalidate)", "count", 2},
             {"FlushLineInv_recv",   "Event received: FlushLineInv (flush and invalidate)", "count", 2},
+            {"FlushAll_recv",       "Event received: FlushAll (full cache flush)", "count", 2},
             {"FlushLineResp_recv",  "Event received: FlushLineResp (response to FlushLine/Inv)", "count", 2},
             {"NACK_recv",           "Event received: NACK", "count", 2},
             {"GetS_uncache_recv",   "Noncacheable Event: GetS received", "count", 4},
@@ -128,22 +133,27 @@ public:
             {"eventSent_FetchInv",      "Event sent: FetchInv", "count", 2},
             {"eventSent_FetchInvX",     "Event sent: FetchInvX","count", 2},
             {"eventSent_ForceInv",      "Event sent: ForceInv", "count", 2},
+            {"eventSent_ForwardFlush",  "Event sent: ForwardFlush", "count", 2},
             {"eventSent_NACK",          "Event sent: NACK", "count", 2},
             {"eventSent_GetSResp",      "Event sent: GetSResp (shared data response)", "count", 1},
             {"eventSent_GetXResp",      "Event sent: GetXResp (exclusive data response)", "count", 1},
-            {"eventSent_WriteResp",      "Event sent: WriteResp (write ack)", "count", 1},
+            {"eventSent_WriteResp",     "Event sent: WriteResp (write ack)", "count", 1},
             {"eventSent_FetchResp",     "Event sent: FetchResp", "count", 2},
             {"eventSent_AckInv",        "Event sent: AckInv", "count", 2},
             {"eventSent_AckPut",        "Event sent: AckPut", "count", 2},
             {"eventSent_FlushLine",     "Event sent: FlushLine", "count", 2},
             {"eventSent_FlushLineInv",  "Event sent: FlushLineInv", "count", 2},
             {"eventSent_FlushLineResp", "Event sent: FlushLineResp", "count", 2},
+            {"eventSent_FlushAllResp",  "Event sent: FlushAllResp", "count", 2},
+            {"eventSent_UnblockFlush",  "Event sent: UnblockFlush", "count", 2},
             {"MSHR_occupancy",          "Number of events in MSHR each cycle",  "events",       1},
             {"default_stat",            "Default statistic. If not 0 then a statistic is missing", "", 1})
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-            {"cpulink", "CPU-side link manager, for single-link directories, use this one only", "SST::MemHierarchy::MemLinkBase"},
-            {"memlink", "Memory-side link manager", "SST::MemHierarchy::MemLinkBase"} )
+            {"highlink", "Port manager on the upper/processor-side (i.e., where requests typically come from). If you use this subcomponent slot, you do not need to connect the directory's highlink port. Do connect this subcomponent's ports instead. For directories with a single link, use this subcomponent slot only.", "SST::MemHierarchy::MemLinkBase"},
+            {"lowlink", "Port manager on the lower/memory side. If you use this subcomponent slot, you do not need to connect the directory's lowlink port. Do connect the subcomponent's ports instead. For directories with a single link, use the 'highlink' subcomponent slot only.", "SST::MemHierarchy::MemLinkBase"},
+            {"cpulink", "DEPRECATED. Renamed to 'highlink'. CPU-side port manager, for single-link directories, use this one only", "SST::MemHierarchy::MemLinkBase"},
+            {"memlink", "DEPRECATD. Renamed to 'lowlink'. Memory-side port manager", "SST::MemHierarchy::MemLinkBase"} )
 
 /* Begin class definition */
 private:
@@ -192,11 +202,11 @@ private:
     std::set<Addr> addrsThisCycle;
 
     /* Network connections */
-    MemLinkBase*    memLink;
-    MemLinkBase*    cpuLink;
-    string          memoryName; // if connected to mem via network, this should be the name of the memory we own - param is memory_name
-    bool clockMemLink;
-    bool clockCpuLink;
+    MemLinkBase*    downLink;
+    MemLinkBase*    upLink;
+
+    bool clockUpLink;
+    bool clockDownLink;
 
     bool isRequestAddressValid(Addr addr);
 
@@ -245,12 +255,14 @@ public:
     bool handlePutX(MemEvent* event, bool inMSHR);
     bool handleFlushLine(MemEvent* event, bool inMSHR);
     bool handleFlushLineInv(MemEvent* event, bool inMSHR);
+    bool handleFlushAll(MemEvent* event, bool inMSHR);
     bool handleFetchInv(MemEvent* event, bool inMSHR);
     bool handleForceInv(MemEvent* event, bool inMSHR);
     bool handleGetSResp(MemEvent* event, bool inMSHR);
     bool handleGetXResp(MemEvent* event, bool inMSHR);
     bool handleWriteResp(MemEvent* event, bool inMSHR);
     bool handleFlushLineResp(MemEvent* event, bool inMSHR);
+    bool handleAckFlush(MemEvent* event, bool inMSHR);
     bool handleAckPut(MemEvent* event, bool inMSHR);
     bool handleAckInv(MemEvent* event, bool inMSHR);
     bool handleFetchResp(MemEvent* event, bool inMSHR);
@@ -292,11 +304,11 @@ private:
     } eventDI, evictDI;
 
     struct DirEntry {
-	bool                cached;         // whether block is cached or not
+        bool                cached;         // whether block is cached or not
         Addr                addr;           // block address
         State               state;          // state
         std::list<DirEntry*>::iterator cacheIter;
-	std::set<std::string> sharers;      // set of sharers for block
+        std::set<std::string> sharers;      // set of sharers for block
         std::string         owner;          // Owner of block
 
         DirEntry(Addr a) {
@@ -419,6 +431,8 @@ private:
 
     uint64_t accessLatency;
     uint64_t mshrLatency;
+
+    FlushState flush_state_;
 
     std::map<Addr, std::map<std::string, MemEvent::id_type> > responses;
     
