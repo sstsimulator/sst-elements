@@ -184,7 +184,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
                  tunnelR, tunnelD,
 #endif
                  i, maxPendingTransCore, output, maxIssuesPerCycle, maxCoreQueueLen,
-                 cacheLineSize, memmgr, perform_checks, params));
+                 cacheLineSize, memmgr, perform_checks, params, timeconverter));
 
         // Set max number of instructions
         cpu_cores[i]->setMaxInsts(max_insts);
