@@ -22,14 +22,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
 
-/* Debug macros */
-#ifdef __SST_DEBUG_OUTPUT__ /* From sst-core, enable with --enable-debug */
-#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
-#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
-#else
-#define is_debug_addr(addr) false
-#define is_debug_event(ev) false
-#endif
+/* Debug macros included from util.h */
 
 /* Constructor */
 
@@ -151,7 +144,7 @@ void MemNICFour::send(MemEventBase *ev) {
     req->size_in_bits = getSizeInBits(ev, net);
     req->givePayload(omre);
 
-    if (is_debug_event(ev)) {
+    if (mem_h_is_debug_event(ev)) {
         std::string netstr = "data";
         if (net == REQ) netstr = "req ";
         else if (net == ACK) netstr = "ack ";
@@ -243,7 +236,7 @@ void MemNICFour::recvNotify(OrderedMemRtrEvent* mre) {
 
     if (!me) return;
 
-    if (is_debug_event(me)) {
+    if (mem_h_is_debug_event(me)) {
         dbg.debug(_L3_, "%s, memNIC notify parent: src: %s. cmd: %s\n",
                 getName().c_str(), me->getSrc().c_str(), CommandString[(int)me->getCmd()]);
     }

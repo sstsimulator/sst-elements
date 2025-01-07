@@ -27,6 +27,8 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
+/* Debug macros included from util.h */
+
 /**************************************************************************
  * Handlers for various links
  * linkUp/down -> handleEvent()
@@ -50,7 +52,7 @@ void Cache::handleEvent(SST::Event * ev) {
     } else {
         statCacheRecv[(int)event->getCmd()]->addData(1);
     }
-    if (is_debug_event((event))) {
+    if (mem_h_is_debug_event((event))) {
         dbg_->debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Recv    (%s)\n",
                 getCurrentSimCycle(), timestamp_, getName().c_str(), event->getVerboseString().c_str());
         fflush(stdout);
@@ -130,7 +132,7 @@ bool Cache::clockTick(Cycle_t time) {
     while (it != retryBuffer_.end()) {
         if (accepted == maxRequestsPerCycle_)
             break;
-        if (is_debug_event((*it))) {
+        if (mem_h_is_debug_event((*it))) {
             dbg_->debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Retry   (%s)\n",
                     getCurrentSimCycle(), timestamp_, getName().c_str(), (*it)->getVerboseString().c_str());
             fflush(stdout);
@@ -154,7 +156,7 @@ bool Cache::clockTick(Cycle_t time) {
             break;
         Event::id_type id = (*it)->getID();
         Command cmd = (*it)->getCmd();
-        if (is_debug_event((*it))) {
+        if (mem_h_is_debug_event((*it))) {
             dbg_->debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
                     getCurrentSimCycle(), timestamp_, getName().c_str(), (*it)->getVerboseString().c_str());
             fflush(stdout);
@@ -170,7 +172,7 @@ bool Cache::clockTick(Cycle_t time) {
         }
     }
     while (!prefetchBuffer_.empty()) {
-        if (is_debug_event(prefetchBuffer_.front())) {
+        if (mem_h_is_debug_event(prefetchBuffer_.front())) {
             dbg_->debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Pref    (%s)\n",
                     getCurrentSimCycle(), timestamp_, getName().c_str(), prefetchBuffer_.front()->getVerboseString().c_str());
             fflush(stdout);
@@ -253,7 +255,7 @@ bool Cache::processEvent(MemEventBase* ev, bool retry) {
 
     /* Arbitrate cache access - bank/link. Reject request on failure */
     if (!arbitrateAccess(addr)) { // Disallow multiple requests to same line and/or bank in a single cycle
-        if (is_debug_addr(addr)) {
+        if (mem_h_is_debug_addr(addr)) {
             std::stringstream id;
             id << "<" << event->getID().first << "," << event->getID().second << ">";
             dbg_->debug(_L5_, "A: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 " %-15s %-6s %-6s %-10s %-15s\n",
@@ -263,7 +265,7 @@ bool Cache::processEvent(MemEventBase* ev, bool retry) {
         return false;
     }
 
-    bool dbgevent = is_debug_event(event);
+    bool dbgevent = mem_h_is_debug_event(event);
     bool accepted = false;
 
     switch (event->getCmd()) {

@@ -21,6 +21,8 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
+/* Debug macros included from util.h */
+
 MSHR::MSHR(ComponentId_t cid, Output* debug, int maxSize, string cacheName, std::set<Addr> debugAddr) :
     ComponentExtension(cid)
 {
@@ -97,12 +99,12 @@ void MSHR::removeEntry(Addr addr, size_t index) {
     if (entry->getType() == MSHREntryType::Event)
         size_--;
 
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         printDebug(10, "Remove", addr, (*entry).getString().c_str());
 
     reg->entries_.erase(entry);
     if (reg->entries_.empty()) {
-        if (is_debug_addr(addr))
+        if (mem_h_is_debug_addr(addr))
             printDebug(10, "Erase", addr, "");
             //dbg_->debug(_L10_, "M: %-41" PRIu64 " %-20s Erase        0x%-16" PRIx64 " %-10d\n",
             //        getCurrentSimCycle(), owner_name_.c_str(), addr, size_);
@@ -120,18 +122,18 @@ void MSHR::removeFront(Addr addr) {
         dbg_->fatal(CALL_INFO, -1, "%s, Error: MSHR::removeFront(0x%" PRIx64 "). Entry list is empty.\n", owner_name_.c_str(), addr);
     }
 
-   // if (is_debug_addr(addr))
-   //     dbg_->debug(_L10_, "    MSHR::removeFront(0x%" PRIx64 ", %s)\n", addr, reg->entries_.front().getString().c_str());
+   // if (mem_h_is_debug_addr(addr))
+   //     d_->debug(_L10_, "    MSHR::removeFront(0x%" PRIx64 ", %s)\n", addr, reg->entries.front().getString().c_str());
 
     if (getFrontType(addr) == MSHREntryType::Event)
         size_--;
 
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         printDebug(10, "RemFr", addr, (reg->entries_.front()).getString().c_str());
 
     reg->entries_.pop_front();
     if (reg->entries_.empty()) {
-        if (is_debug_addr(addr))
+        if (mem_h_is_debug_addr(addr))
             printDebug(10, "Erase", addr, "");
             //dbg_->debug(_L10_, "    MSHR: erasing 0x%" PRIx64 " from MSHR\n", addr);
         mshr_.erase(addr);
@@ -139,8 +141,8 @@ void MSHR::removeFront(Addr addr) {
 }
 
 MSHREntryType MSHR::getEntryType(Addr addr, size_t index) {
-    //if (is_debug_addr(addr))
-    //    dbg_->debug(_L20_, "    MSHR::getEntryType(0x%" PRIx64 ", %zu)\n", addr, index);
+    //if (mem_h_is_debug_addr(addr))
+    //    d_->debug(_L20_, "    MSHR::getEntryType(0x%" PRIx64 ", %zu)\n", addr, index);
     if (mshr_.find(addr) == mshr_.end()) {
         dbg_->fatal(CALL_INFO, -1, "%s, Error: MSHR::getEntryType(0x%" PRIx64 ", %zu). Address doesn't exist in MSHR.\n", owner_name_.c_str(), addr, index);
     }
@@ -153,8 +155,8 @@ MSHREntryType MSHR::getEntryType(Addr addr, size_t index) {
 }
 
 MSHREntryType MSHR::getFrontType(Addr addr) {
-    //if (is_debug_addr(addr))
-    //    dbg_->debug(_L20_, "    MSHR::getFrontType(0x%" PRIx64 ")\n", addr);
+    //if (mem_h_is_debug_addr(addr))
+    //    d_->debug(_L20_, "    MSHR::getFrontType(0x%" PRIx64 ")\n", addr);
     if (mshr_.find(addr) == mshr_.end()) {
         dbg_->fatal(CALL_INFO, -1, "%s, Error: MSHR::getFrontType(0x%" PRIx64 "). Address doesn't exist in MSHR.\n", owner_name_.c_str(), addr);
     }
@@ -165,8 +167,8 @@ MSHREntryType MSHR::getFrontType(Addr addr) {
 }
 
 MemEventBase* MSHR::getEntryEvent(Addr addr, size_t index) {
-    //if (is_debug_addr(addr))
-    //    dbg_->debug(_L20_, "    MSHR::getEntryEvent(0x%" PRIx64 ", %zu)\n", addr, index);
+    //if (mem_h_is_debug_addr(addr))
+    //    d_->debug(_L20_, "    MSHR::getEntryEvent(0x%" PRIx64 ", %zu)\n", addr, index);
 
     if (mshr_.find(addr) == mshr_.end() || mshr_.find(addr)->second.entries_.size() <= index)
         return nullptr;
@@ -180,8 +182,8 @@ MemEventBase* MSHR::getEntryEvent(Addr addr, size_t index) {
 
 
 MemEventBase* MSHR::getFrontEvent(Addr addr) {
-    //if (is_debug_addr(addr))
-    //    dbg_->debug(_L20_, "    MSHR::getFrontEvent(0x%" PRIx64 ")\n", addr);
+    //if (mem_h_is_debug_addr(addr))
+    //    d_->debug(_L20_, "    MSHR::getFrontEvent(0x%" PRIx64 ")\n", addr);
     if (getFrontType(addr) != MSHREntryType::Event) {
         return nullptr;
     }
@@ -189,8 +191,8 @@ MemEventBase* MSHR::getFrontEvent(Addr addr) {
 }
 
 MemEventBase* MSHR::getFirstEventEntry(Addr addr, Command cmd) {
-//    if (is_debug_addr(addr))
-//        dbg_->debug(_L20_, "    MSHR::getFirstEventEntry(0x%" PRIx64 ", %s)\n", addr, CommandString[(int)cmd]);
+//    if (mem_h_is_debug_addr(addr))
+//        d_->debug(_L20_, "    MSHR::getFirstEventEntry(0x%" PRIx64 ", %s)\n", addr, CommandString[(int)cmd]);
 
     if (mshr_.find(addr) == mshr_.end())
         return nullptr;
@@ -230,7 +232,7 @@ bool MSHR::removeEvictPointer(Addr addr, Addr addrPtr) {
     if (getFrontType(addr) == MSHREntryType::Event)
         dbg_->fatal(CALL_INFO, -1, "%s, Error: MSHR::removeEvictPointer(0x%" PRIx64 ", 0x%" PRIx64 "). Front entry type is not Evict or Writeback.\n", owner_name_.c_str(), addr, addrPtr);
 
-    if (is_debug_addr(addr) || is_debug_addr(addrPtr)) {
+    if (mem_h_is_debug_addr(addr) || mem_h_is_debug_addr(addrPtr)) {
         stringstream reason;
         reason << "to 0x" << std::hex << addrPtr;
         printDebug(10, "RemPtr", addr, reason.str());
@@ -269,7 +271,7 @@ bool MSHR::pendingWritebackIsDowngrade(Addr addr) {
 
 int MSHR::insertEvent(Addr addr, MemEventBase* event, int pos, bool fwdRequest, bool stallEvict) {
     if ((size_ == max_size_) || (!fwdRequest && (size_ == max_size_-1))) {
-        if (is_debug_addr(addr)) {
+        if (mem_h_is_debug_addr(addr)) {
             stringstream reason;
             reason << "<" << event->getID().first << "," << event->getID().second << "> FAILED " << (fwdRequest ? "fwd, " : "") << "maxsz: " << max_size_;
             printDebug(10, "InsEv", addr, reason.str());
@@ -285,7 +287,7 @@ int MSHR::insertEvent(Addr addr, MemEventBase* event, int pos, bool fwdRequest, 
         reg.entries_.push_back(MSHREntry(event, stallEvict, getCurrentSimCycle()));
 
         mshr_.insert(std::make_pair(addr, reg));
-        if (is_debug_addr(addr)) {
+        if (mem_h_is_debug_addr(addr)) {
             stringstream reason;
             reason << "<" << event->getID().first << "," << event->getID().second << ">, pos=0";
             printDebug(10, "InsEv", addr, reason.str());
@@ -296,7 +298,7 @@ int MSHR::insertEvent(Addr addr, MemEventBase* event, int pos, bool fwdRequest, 
     } else {
         if (pos == -1 || pos > mshr_.find(addr)->second.entries_.size()) {
             mshr_.find(addr)->second.entries_.push_back(MSHREntry(event, stallEvict, getCurrentSimCycle()));
-            if (is_debug_addr(addr)) {
+            if (mem_h_is_debug_addr(addr)) {
                 stringstream reason;
                 reason << "<" << event->getID().first << "," << event->getID().second << ">, pos=" << (mshr_.find(addr)->second.entries_.size() - 1);
                 printDebug(10, "InsEv", addr, reason.str());
@@ -306,7 +308,7 @@ int MSHR::insertEvent(Addr addr, MemEventBase* event, int pos, bool fwdRequest, 
             std::list<MSHREntry>::iterator it = mshr_.find(addr)->second.entries_.begin();
             std::advance(it, pos);
             mshr_.find(addr)->second.entries_.insert(it, MSHREntry(event, stallEvict, getCurrentSimCycle()));
-            if (is_debug_addr(addr)) {
+            if (mem_h_is_debug_addr(addr)) {
                 stringstream reason;
                 reason << "<" << event->getID().first << "," << event->getID().second << ">, pos=" << pos;
                 printDebug(10, "InsEv", addr, reason.str());
@@ -328,7 +330,7 @@ int MSHR::insertEventIfConflict(Addr addr, MemEventBase* event) {
         return 0;
     
     if (size_ == max_size_-1) { /* Assuming fwdEvent == false */
-        if (is_debug_addr(addr)) {
+        if (mem_h_is_debug_addr(addr)) {
             stringstream reason;
             reason << "<" << event->getID().first << "," << event->getID().second << "> FAILED " << "maxsz: " << max_size_;
             printDebug(10, "InsEv", addr, reason.str());
@@ -337,7 +339,7 @@ int MSHR::insertEventIfConflict(Addr addr, MemEventBase* event) {
     }
     size_++;
     mshr_.find(addr)->second.entries_.push_back(MSHREntry(event, false, getCurrentSimCycle()));
-    if (is_debug_addr(addr)) {
+    if (mem_h_is_debug_addr(addr)) {
         stringstream reason;
         reason << "<" << event->getID().first << "," << event->getID().second << ">, pos=" << (mshr_.find(addr)->second.entries_.size() - 1);
         printDebug(10, "InsEv", addr, reason.str());
@@ -346,7 +348,7 @@ int MSHR::insertEventIfConflict(Addr addr, MemEventBase* event) {
 }
 
 MemEventBase* MSHR::swapFrontEvent(Addr addr, MemEventBase* event) {
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         printDebug(10, "SwpEv", addr, "");
 
     if (mshr_.find(addr)->second.entries_.empty())
@@ -369,17 +371,17 @@ void MSHR::moveEntryToFront(Addr addr, unsigned int index) {
 
     MSHREntry tmpEntry = *entry;
 
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         printDebug(10, "MvEnt", addr, entry->getString());
     reg->entries_.erase(entry);
     reg->entries_.push_front(tmpEntry);
 }
 
 bool MSHR::insertWriteback(Addr addr, bool downgrade) {
-//    if (is_debug_addr(addr))
-//        dbg_->debug(_L10_, "    MSHR::insertWriteback(0x%" PRIx64 ")\n", addr);
+//    if (mem_h_is_debug_addr(addr))
+//        d_->debug(_L10_, "    MSHR::insertWriteback(0x%" PRIx64 ")\n", addr);
 
-    if (is_debug_addr(addr)) {
+    if (mem_h_is_debug_addr(addr)) {
         stringstream reason;
         reason << "Downgrade: " << (downgrade ? "T" : "F");
         printDebug(10, "InsWB", addr, reason.str());
@@ -398,10 +400,10 @@ bool MSHR::insertWriteback(Addr addr, bool downgrade) {
 
 
 bool MSHR::insertEviction(Addr oldAddr, Addr newAddr) {
-//    if (is_debug_addr(oldAddr) || is_debug_addr(newAddr))
-//        dbg_->debug(_L10_, "    MSHR::insertEviction(0x%" PRIx64 ", 0x%" PRIx64 ")\n", oldAddr, newAddr);
+//    if (mem_h_is_debug_addr(oldAddr) || mem_h_is_debug_addr(newAddr))
+//        d_->debug(_L10_, "    MSHR::insertEviction(0x%" PRIx64 ", 0x%" PRIx64 ")\n", oldAddr, newAddr);
 
-    if (is_debug_addr(oldAddr) || is_debug_addr(newAddr)) {
+    if (mem_h_is_debug_addr(oldAddr) || mem_h_is_debug_addr(newAddr)) {
         stringstream reason;
         reason << "to 0x" << std::hex << newAddr;
         printDebug(10, "InsPtr", oldAddr, reason.str());
@@ -463,7 +465,7 @@ int MSHR::getFlushCount() {
 }
 
 void MSHR::addPendingRetry(Addr addr) {
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         printDebug(20, "IncRetry", addr, "");
 
     if (mshr_.find(addr) == mshr_.end()) {
@@ -473,7 +475,7 @@ void MSHR::addPendingRetry(Addr addr) {
 }
 
 void MSHR::removePendingRetry(Addr addr) {
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         printDebug(20, "DecRetry", addr, "");
 
     if (mshr_.find(addr) == mshr_.end()) {
@@ -491,9 +493,9 @@ uint32_t MSHR::getPendingRetries(Addr addr) {
 
 
 void MSHR::setInProgress(Addr addr, bool value) {
-//    if (is_debug_addr(addr))
-//        dbg_->debug(_L10_, "    MSHR::setInProgress(0x%" PRIx64 ")\n", addr);
-    if (is_debug_addr(addr))
+//    if (mem_h_is_debug_addr(addr))
+//        d_->debug(_L10_, "    MSHR::setInProgress(0x%" PRIx64 ")\n", addr);
+    if (mem_h_is_debug_addr(addr))
         printDebug(20, "InProg", addr, "");
 
     if (mshr_.find(addr) == mshr_.end()) {
@@ -516,7 +518,7 @@ bool MSHR::getInProgress(Addr addr) {
 }
 
 void MSHR::setStalledForEvict(Addr addr, bool set) {
-    if (is_debug_addr(addr)) {
+    if (mem_h_is_debug_addr(addr)) {
         if (set)
             printDebug(20, "Stall", addr, "");
         else
@@ -543,7 +545,7 @@ bool MSHR::getStalledForEvict(Addr addr) {
 }
 
 void MSHR::setProfiled(Addr addr) {
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         printDebug(20, "Profile", addr, "");
 
     if (mshr_.find(addr) == mshr_.end()) {
@@ -556,8 +558,8 @@ void MSHR::setProfiled(Addr addr) {
 }
 
 bool MSHR::getProfiled(Addr addr) {
-//    if (is_debug_addr(addr))
-//        dbg_->debug(_L20_, "    MSHR::getProfiled(0x%" PRIx64 "\n", addr);
+//    if (mem_h_is_debug_addr(addr))
+//        d_->debug(_L20_, "    MSHR::getProfiled(0x%" PRIx64 "\n", addr);
     if (mshr_.find(addr) == mshr_.end()) {
         dbg_->fatal(CALL_INFO, -1, "%s, Error: MSHR::getProfiled(0x%" PRIx64 "). Address does not exist in MSHR.\n", owner_name_.c_str(), addr);
     }
@@ -581,7 +583,7 @@ bool MSHR::getProfiled(Addr addr, SST::Event::id_type id) {
 }
 
 void MSHR::setProfiled(Addr addr, SST::Event::id_type id) {
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         printDebug(20, "Profile", addr, "");
 
     if (mshr_.find(addr) == mshr_.end()) {
@@ -620,15 +622,15 @@ MSHREntry* MSHR::getOldestEntry() {
 }
 
 void MSHR::incrementAcksNeeded(Addr addr) {
-   // if (is_debug_addr(addr))
-   //     dbg_->debug(_L10_, "    MSHR::incrementAcksNeeded(0x%" PRIx64 ")\n", addr);
+   // if (mem_h_is_debug_addr(addr))
+   //     d_->debug(_L10_, "    MSHR::incrementAcksNeeded(0x%" PRIx64 ")\n", addr);
     if (mshr_.find(addr) == mshr_.end()) {
         MSHRRegister reg;
         mshr_.insert(std::make_pair(addr, reg));
     }
     mshr_.find(addr)->second.acks_needed_++;
 
-    if (is_debug_addr(addr)) {
+    if (mem_h_is_debug_addr(addr)) {
         std::stringstream reason;
         reason << mshr_.find(addr)->second.acks_needed_ << " acks";
         printDebug(10, "IncAck", addr, reason.str());
@@ -637,8 +639,8 @@ void MSHR::incrementAcksNeeded(Addr addr) {
 
 /* Decrement acks needed and return if we're done waiting (acks_needed_ == 0) */
 bool MSHR::decrementAcksNeeded(Addr addr) {
-   // if (is_debug_addr(addr))
-   //     dbg_->debug(_L10_, "    MSHR::decrementAcksNeeded(0x%" PRIx64 ")\n", addr);
+   // if (mem_h_is_debug_addr(addr))
+   //     d_->debug(_L10_, "    MSHR::decrementAcksNeeded(0x%" PRIx64 ")\n", addr);
     if (mshr_.find(addr) == mshr_.end()) {
         dbg_->fatal(CALL_INFO, -1, "%s, Error: MSHR::decrementAcksNeeded(0x%" PRIx64 "). Address does not exist in MSHR.\n", owner_name_.c_str(), addr);
     }
@@ -647,7 +649,7 @@ bool MSHR::decrementAcksNeeded(Addr addr) {
     }
     mshr_.find(addr)->second.acks_needed_--;
 
-    if (is_debug_addr(addr)) {
+    if (mem_h_is_debug_addr(addr)) {
         std::stringstream reason;
         reason << mshr_.find(addr)->second.acks_needed_ << " acks";
         printDebug(10, "DecAck", addr, reason.str());
@@ -657,8 +659,8 @@ bool MSHR::decrementAcksNeeded(Addr addr) {
 }
 
 uint32_t MSHR::getAcksNeeded(Addr addr) {
-//    if (is_debug_addr(addr))
-//        dbg_->debug(_L20_, "    MSHR::getAcksNeeded(0x%" PRIx64 ")\n", addr);
+//    if (mem_h_is_debug_addr(addr))
+//        d_->debug(_L20_, "    MSHR::getAcksNeeded(0x%" PRIx64 ")\n", addr);
     if (mshr_.find(addr) == mshr_.end()) {
         return 0;
     }
@@ -666,13 +668,13 @@ uint32_t MSHR::getAcksNeeded(Addr addr) {
 }
 
 void MSHR::setData(Addr addr, vector<uint8_t>& data, bool dirty) {
-//    if (is_debug_addr(addr))
-//        dbg_->debug(_L10_, "    MSHR::setData(0x%" PRIx64 ")\n", addr);
+//    if (mem_h_is_debug_addr(addr))
+//        d_->debug(_L10_, "    MSHR::setData(0x%" PRIx64 ")\n", addr);
     if (mshr_.find(addr) == mshr_.end()) {
         dbg_->fatal(CALL_INFO, -1, "%s, Error: MSHR::setData(0x%" PRIx64 "). Address does not exist in MSHR.\n", owner_name_.c_str(), addr);
     }
 
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         printDebug(10, "SetData", addr, (dirty ? "Dirty" : "Clean"));
 
     mshr_.find(addr)->second.data_buffer_ = data;
@@ -680,9 +682,9 @@ void MSHR::setData(Addr addr, vector<uint8_t>& data, bool dirty) {
 }
 
 void MSHR::clearData(Addr addr) {
-//    if (is_debug_addr(addr))
-//        dbg_->debug(_L10_, "    MSHR::clearData(0x%" PRIx64 ")\n", addr);
-    if (is_debug_addr(addr))
+//    if (mem_h_is_debug_addr(addr))
+//        d_->debug(_L10_, "    MSHR::clearData(0x%" PRIx64 ")\n", addr);
+    if (mem_h_is_debug_addr(addr))
         printDebug(10, "ClrData", addr, "");
 
     mshr_.find(addr)->second.data_buffer_.clear();
@@ -690,8 +692,8 @@ void MSHR::clearData(Addr addr) {
 }
 
 vector<uint8_t>& MSHR::getData(Addr addr) {
-//    if (is_debug_addr(addr))
-//        dbg_->debug(_L20_, "    MSHR::getData(0x%" PRIx64 ")\n", addr);
+//    if (mem_h_is_debug_addr(addr))
+//        d_->debug(_L20_, "    MSHR::getData(0x%" PRIx64 ")\n", addr);
     if (mshr_.find(addr) == mshr_.end()) {
         dbg_->fatal(CALL_INFO, -1, "%s, Error: MSHR::getData(0x%" PRIx64 "). Address does not exist in MSHR.\n", owner_name_.c_str(), addr);
     }
@@ -705,8 +707,8 @@ bool MSHR::hasData(Addr addr) {
 }
 
 bool MSHR::getDataDirty(Addr addr) {
-//    if (is_debug_addr(addr))
-//        dbg_->debug(_L20_, "    MSHR::getDataDirty(0x%" PRIx64 ")\n", addr);
+//    if (mem_h_is_debug_addr(addr))
+//        d_->debug(_L20_, "    MSHR::getDataDirty(0x%" PRIx64 ")\n", addr);
     if (mshr_.find(addr) == mshr_.end()) {
         dbg_->fatal(CALL_INFO, -1, "%s, Error: MSHR::getDataDirty(0x%" PRIx64 "). Address does not exist in MSHR.\n", owner_name_.c_str(), addr);
     }
@@ -714,10 +716,10 @@ bool MSHR::getDataDirty(Addr addr) {
 }
 
 void MSHR::setDataDirty(Addr addr, bool dirty) {
-//    if (is_debug_addr(addr))
-//        dbg_->debug(_L10_, "    MSHR::setDataDirty(0x%" PRIx64 ")\n", addr);
+//    if (mem_h_is_debug_addr(addr))
+//        d_->debug(_L10_, "    MSHR::setDataDirty(0x%" PRIx64 ")\n", addr);
 
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         printDebug(20, "SetDirt", addr, (dirty ? "Dirty" : "Clean"));
 
     if (mshr_.find(addr) == mshr_.end()) {
