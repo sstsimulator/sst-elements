@@ -28,7 +28,7 @@ node_os.addParams({
     "useMMU": True,
     "process0.env_count": 1,
     "process0.env0": "OMP_NUM_THREADS=1",
-    "process0.exe": "../tests/small/basic-io/hello-world/riscv64/hello-world",
+    "process0.exe": "/home/skinkea/sst/sst-elements/sst-elements-src/src/sst/elements/vanadis/tests/small/basic-io/hello-world/riscv64/hello-world",
     "process0.arg0": "hello-world"
 })
 
@@ -65,6 +65,10 @@ os_cache_mem_link.addParams({
     "group" : 1,
     "network_bw" : "25GB/s" 
 })
+
+os_cache_link = sst.Link("os_cache_link")
+os_cache_link.connect((node_memory_interface, "port", "1ns"), (os_cache_cpu_link, "port", "1ns"))
+os_cache_link.setNoCut()
 
 cpu = sst.Component("nodeCPU", "vanadis.dbg_VanadisCPU") # if this is a parameter, it determines whether this should be in memh or vanadis
 cpu.addParams({
@@ -124,44 +128,6 @@ l1_d_cache.addParams({
 
 cpu_l1_d_cache_link = l1_d_cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l1_d_cache_l2_cache_link = l1_d_cache.setSubComponent("memlink", "memHierarchy.MemLink")
-
-# dtlbWrapper = sst.Component("dtlb", "mmu.tlb_wrapper")
-# dtlbWrapper.addParams({
-#     "debug_lebel": 0
-# })
-
-# dtlb = dtlbWrapper.setSubcomponent("tlb", "mmu.simpleTLB")
-# dtlb.addParams({
-#     "debug_level": 0,
-#     "hitLatency": 1,
-#     "num_hardware_threads": 1,
-#     "num_tlb_entries_per_thread": 64,
-#     "tlb_set_size": 4
-# })
-
-# itlbWrapper = sst.Component("itlb", "mmu.tlb_wrapper")
-# itlbWrapper.addParams({
-#     "debug_level": 0,
-#     "exe": True
-# })
-
-# itlb = itlbWrapper.setSubComponent("tlb", "mmu.simpleTLB")
-# itlb.addParams({
-#     "debug_level": 0,
-#     "hitLatency": 1,
-#     "num_hardware_threads": 1,
-#     "num_tlb_entries_per_thread": 64,
-#     "tlb_set_size": 4
-# })
-
-# # connect the CPU to the TLB
-# cpu_dtlb_link = sst.Link("cpu_dtlb_link")
-# cpu_dtlb_link.connect((d_cache_interface, "port", "1ns"), (dtlbWrapper, "cpu_if", "1ns"))
-# cpu_dtlb_link.setNoCut()
-
-# # connect data TLB to L1 D cache
-# cput_l1dcache_link = sst.Link("cpu_l1dcache_link")
-# cpu_l1dcache_link.connect((dtlbWrapper, "cache_if", "1ns"), (cpu_l1_d_cache_link, "port", "1ns"))
 
 l1_i_cache = sst.Component("nodeCPU.l1icache", "memHierarchy.Cache")
 l1_i_cache.addParams({
