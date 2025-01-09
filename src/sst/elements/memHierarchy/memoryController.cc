@@ -453,8 +453,8 @@ void MemController::handleEvent(SST::Event* event) {
             {
                 MemEvent * resp = ev->makeResponse();
 
-                if (is_debug_event(resp)) {
-                    Debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
+                if (mem_h_is_debug_event(resp)) {
+                    mem_h_Debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
                         getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), resp->getVerboseString(dlevel).c_str());
                 }
                 link_->send( resp );
