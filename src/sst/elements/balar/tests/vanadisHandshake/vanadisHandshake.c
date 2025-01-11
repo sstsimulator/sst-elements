@@ -13,15 +13,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-/**
- * @file vanadisHandshake.c
- * @author Weili An (an107@purdue.edu)
- * @brief A simple program to test balar and vanadis with vectorAdd using MMAP
- * @version 0.2
- * @date 2024-01-11
- * 
- */
-
 #include "cuda_runtime_api.h"
 
 #include <stdio.h>
