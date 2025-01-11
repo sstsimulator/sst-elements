@@ -13,15 +13,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-/**
- * @file cuda_runtime_api.h
- * @author Weili An (an107@purdue.edu)
- * @brief Test lib header for vanadis calling CUDA api
- * @version 0.1
- * @date 2022-09-22
- * 
- */
-
 #ifndef __BALAR_VANADIS_H__
 #define __BALAR_VANADIS_H__
 

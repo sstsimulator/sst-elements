@@ -13,17 +13,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-/**
- * @file dmaEngine.cc
- * @author Weili An (an107@purdue.edu)
- * @brief A DMA engine component to copy data from SST memspace to
- *        simulator memspace and vice versa
- * @version 0.1
- * @date 2022-10-18
- * 
- * 
- */
-
 #include <sst_config.h>
 #include "dmaEngine.h"
 #include "util.h"
