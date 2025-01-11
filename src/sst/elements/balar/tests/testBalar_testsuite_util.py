@@ -55,8 +55,6 @@ class BalarTestCase(SSTTestCase):
     missing_riscv_cuda_clang_path = os.getenv("LLVM_INSTALL_PATH") == None
     missing_riscv_gcc_path = os.getenv("RISCV_TOOLCHAIN_INSTALL_PATH") == None
     missing_gpu_app_collection_root = os.getenv("GPUAPPS_ROOT") == None
-    found_mem_pools_config = sst_core_config_include_file_get_value_str("USE_MEMPOOL", default="", disable_warning=True) != ""
-    found_mpi_config = sst_core_config_include_file_get_value_str("SST_CONFIG_HAVE_MPI", default="", disable_warning=True) != ""
 
     def compose_decorators(*decs):
         def composed(f):
@@ -71,8 +69,6 @@ class BalarTestCase(SSTTestCase):
             return self.compose_decorators(
                 unittest.skipIf(self.missing_cuda_install_path, "test_balar_runvecadd test: Requires missing environment variable CUDA_INSTALL_PATH."),
                 unittest.skipIf(self.missing_gpgpusim_root, "test_balar_runvecadd test: Requires missing environment variable GPGPUSIM_ROOT."),
-                unittest.skipIf(self.found_mem_pools_config, "test_balar_runvecadd test: Found mem-pools configured in core, test requires core to be built using --disable-mem-pools."),
-                unittest.skipIf(self.found_mpi_config, "test_balar_runvecadd test: Found mpi configured in core, test requires core to be built using --disable-mpi."),
                 test(*args)
             )
         return wrapper

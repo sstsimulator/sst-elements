@@ -17,7 +17,7 @@ The following components are needed to run Balar:
 
 #### [`sst-core`](https://github.com/sstsimulator/sst-core)
 
-- Use `./configure --prefix=$SST_CORE_HOME --disable-mpi --disable-mem-pools` for sst-core config
+- Use `./configure --prefix=$SST_CORE_HOME` for sst-core config
 
 #### [`sst-elements`](https://github.com/sstsimulator/sst-elements)
 
