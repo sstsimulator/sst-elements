@@ -14,6 +14,7 @@
 // distribution.
 
 #include "cuda_runtime_api.h"
+#include "../../balar_consts.h"
 #include <sys/syscall.h>
 #include <sys/mman.h>
 
@@ -149,7 +150,7 @@ cudaError_t cudaConfigureCall(dim3 gridDim, dim3 blockDim, uint64_t sharedMem) {
 }
 
 // Cuda Setup argument
-cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[200], uint64_t size, uint64_t offset) {
+cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[BALAR_CUDA_MAX_ARG_SIZE], uint64_t size, uint64_t offset) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start setup argument:\n");
         printf("Size: %d offset: %d\n", size, offset);
@@ -238,7 +239,7 @@ void __vanadisMapBalar() {
     }
 }
 
-unsigned int __cudaRegisterFatBinary(char file_name[256]) {
+unsigned int __cudaRegisterFatBinary(char file_name[BALAR_CUDA_MAX_FILE_NAME]) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Registering fat binary: %s\n", file_name);
         fflush(stdout);
@@ -274,7 +275,7 @@ unsigned int __cudaRegisterFatBinary(char file_name[256]) {
 void __cudaRegisterFunction(
     uint64_t fatCubinHandle,
     uint64_t hostFun,
-    char deviceFun[256]
+    char deviceFun[BALAR_CUDA_MAX_KERNEL_NAME]
 ) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Registering kernel function:\n");

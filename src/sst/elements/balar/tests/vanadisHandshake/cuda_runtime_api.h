@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "../../balar_consts.h"
 
 #define LOG_LEVEL_INFO 20
 #define LOG_LEVEL_DEBUG 15
@@ -140,13 +141,13 @@ typedef struct BalarCudaCallPacket {
         } cuda_malloc;
 
         struct {
-            char file_name[256];
+            char file_name[BALAR_CUDA_MAX_FILE_NAME];
         } register_fatbin;
 
         struct {
             uint64_t fatCubinHandle;
             uint64_t hostFun;
-            char deviceFun[256];
+            char deviceFun[BALAR_CUDA_MAX_KERNEL_NAME];
         } register_function;
         
         struct {
@@ -172,7 +173,7 @@ typedef struct BalarCudaCallPacket {
             uint64_t arg;
             uint64_t size;
             uint64_t offset;
-            uint8_t value[200];
+            uint8_t value[BALAR_CUDA_MAX_ARG_SIZE];
         } setup_argument;
 
         struct {
@@ -239,19 +240,19 @@ cudaError_t cudaMemcpy(uint64_t dst, uint64_t src, uint64_t count, enum cudaMemc
 cudaError_t cudaConfigureCall(dim3 gridDim, dim3 blockDim, uint64_t sharedMem);
 
 // Cuda Setup argument
-cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[200], uint64_t size, uint64_t offset);
+cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[BALAR_CUDA_MAX_ARG_SIZE], uint64_t size, uint64_t offset);
 
 cudaError_t cudaLaunch(uint64_t func);
 
 // Use syscall to map balar to virtual memory space in vanadis
 void __vanadisMapBalar();
 
-unsigned int __cudaRegisterFatBinary(char file_name[256]);
+unsigned int __cudaRegisterFatBinary(char file_name[BALAR_CUDA_MAX_FILE_NAME]);
 
 void __cudaRegisterFunction(
     uint64_t fatCubinHandle,
     uint64_t hostFun,
-    char deviceFun[256]
+    char deviceFun[BALAR_CUDA_MAX_KERNEL_NAME]
 );
 
 

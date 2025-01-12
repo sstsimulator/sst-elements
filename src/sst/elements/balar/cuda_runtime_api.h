@@ -21,6 +21,7 @@
 #define __dv(v)
 #endif /* __cplusplus */
 #endif /* !__dv */
+#include "balar_consts.h"
 
 extern "C"{
 
@@ -29,12 +30,12 @@ uint64_t cudaMallocSST(void **devPtr, size_t size);
 // `addr` is passed by value
 __host__ cudaError_t CUDARTAPI cudaMallocHostSST(void *addr, size_t size);
 
-unsigned CUDARTAPI __cudaRegisterFatBinarySST(char file_name[256]);
+unsigned CUDARTAPI __cudaRegisterFatBinarySST(char file_name[BALAR_CUDA_MAX_FILE_NAME]);
 
 void CUDARTAPI __cudaRegisterFunctionSST(
     uint64_t fatCubinHandle,
     uint64_t hostFun,
-    char deviceFun[256]
+    char deviceFun[BALAR_CUDA_MAX_KERNEL_NAME]
 );
 
 __host__ cudaError_t CUDARTAPI cudaMemcpySST(uint64_t dst, uint64_t src, size_t count, enum cudaMemcpyKind kind, uint8_t *payload);
@@ -49,7 +50,7 @@ __host__ cudaError_t CUDARTAPI cudaConfigureCallSST(dim3 gridDim, dim3 blockDim,
 
 __host__ cudaError_t CUDARTAPI cudaConfigureCall(dim3 gridDim, dim3 blockDim, size_t sharedMem, cudaStream_t stream );
 
-__host__ cudaError_t CUDARTAPI cudaSetupArgumentSST(uint64_t arg, uint8_t value[200], size_t size, size_t offset);
+__host__ cudaError_t CUDARTAPI cudaSetupArgumentSST(uint64_t arg, uint8_t value[BALAR_CUDA_MAX_ARG_SIZE], size_t size, size_t offset);
 
 __host__ cudaError_t CUDARTAPI cudaLaunchSST(uint64_t func);
 

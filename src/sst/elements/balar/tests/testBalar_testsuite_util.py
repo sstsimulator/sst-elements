@@ -387,6 +387,7 @@ class BalarTestCase(SSTTestCase):
         os_symlink_file(test_path, self.testbalarDir, "vanadisOS.py")
         # Copy the shared packet definition files from balar src
         os_symlink_file(self.balarElementDir, tmpdir, "balar_packet.h")
+        os_symlink_file(self.balarElementDir, tmpdir, "balar_consts.h")
 
         # Create a simlink of each file in the balar/tests/vectorAdd directory
         for f in os.listdir(self.balarElementVectorAddTestDir):
