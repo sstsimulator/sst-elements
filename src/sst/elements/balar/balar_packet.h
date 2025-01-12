@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "balar_consts.h"
 
 namespace SST {
 namespace BalarComponent {
@@ -92,13 +93,13 @@ namespace BalarComponent {
             } cuda_malloc;
 
             struct {
-                char file_name[256];
+                char file_name[BALAR_CUDA_MAX_FILE_NAME];
             } register_fatbin;
 
             struct {
                 uint64_t fatCubinHandle;
                 uint64_t hostFun;
-                char deviceFun[256];
+                char deviceFun[BALAR_CUDA_MAX_KERNEL_NAME];
             } register_function;
             
             struct {
@@ -140,7 +141,7 @@ namespace BalarComponent {
                 uint64_t arg;
                 uint64_t size;
                 uint64_t offset;
-                uint8_t value[200];
+                uint8_t value[BALAR_CUDA_MAX_ARG_SIZE];
             } setup_argument;
 
             struct {
@@ -155,7 +156,7 @@ namespace BalarComponent {
                 void **fatCubinHandle;
                 char *hostVar; //pointer to...something
                 char *deviceAddress; //name of variable
-                char deviceName[256]; //name of variable
+                char deviceName[BALAR_CUDA_MAX_DEV_VAR_NAME]; //name of variable
                 int32_t ext;
                 int32_t size;
                 int32_t constant;
@@ -188,7 +189,7 @@ namespace BalarComponent {
                 uint64_t hostVar_ptr;
                 struct textureReference texRef;
                 const void **deviceAddress;
-                char deviceName[256];
+                char deviceName[BALAR_CUDA_MAX_DEV_VAR_NAME];
                 int dim;
                 int norm;
                 int ext;

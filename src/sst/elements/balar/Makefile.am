@@ -16,6 +16,7 @@ libbalar_la_SOURCES = \
 	cuda_runtime_api.h \
 	util.cc \
 	util.h \
+	balar_consts.h \
 	balarMMIO.cc \
 	balarMMIO.h \
 	dmaEngine.cc \

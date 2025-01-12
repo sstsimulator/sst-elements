@@ -16,6 +16,7 @@
 #include "cuda_runtime_api.h"
 #include "balar_vanadis.h"
 #include "../../balar_packet.h"
+#include "../../balar_consts.h"
 
 using namespace SST::BalarComponent;
 
@@ -374,7 +375,7 @@ unsigned CUDARTAPI __cudaPushCallConfiguration(dim3 gridDim, dim3 blockDim,
 }
 
 // Cuda Setup argument
-cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[200], uint64_t size, uint64_t offset) {
+cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[BALAR_CUDA_MAX_ARG_SIZE], uint64_t size, uint64_t offset) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start setup argument:\n");
         printf("Size: %d offset: %d\n", size, offset);
@@ -459,9 +460,9 @@ __host__ cudaError_t CUDARTAPI cudaLaunchKernel(const void *hostFun,
             // How to pass argument? All use the value[8]
             // as cudaSetupArgument will make a copy of its content
             // so that GPGPU-Sim will know both the constant and pointer pass to the kernel
-            uint8_t value[200];
-            if (ret.cudaparamconfig.size > 200) {
-                printf("CUDA function argument size(%d) exceeds %d bytes limit!\n", ret.cudaparamconfig.size, 200);
+            uint8_t value[BALAR_CUDA_MAX_ARG_SIZE];
+            if (ret.cudaparamconfig.size > BALAR_CUDA_MAX_ARG_SIZE) {
+                printf("CUDA function argument size(%d) exceeds %d bytes limit!\n", ret.cudaparamconfig.size, BALAR_CUDA_MAX_ARG_SIZE);
             }
             memcpy(value, args[index], ret.cudaparamconfig.size);
             cudaSetupArgument((uint64_t) NULL, value, ret.cudaparamconfig.size, ret.cudaparamconfig.alignment);
@@ -520,7 +521,7 @@ unsigned int __cudaRegisterFatBinary(void *fatCubin) {
 void __cudaRegisterFunction(
     uint64_t fatCubinHandle,
     uint64_t hostFun,
-    char deviceFun[256]
+    char deviceFun[BALAR_CUDA_MAX_KERNEL_NAME]
 ) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Registering kernel function:\n");
