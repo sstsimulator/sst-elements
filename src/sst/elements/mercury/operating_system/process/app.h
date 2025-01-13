@@ -36,6 +36,71 @@
 namespace SST {
 namespace Hg {
 
+class GlobalVariableContext {
+ public:
+  void init();
+
+  ~GlobalVariableContext();
+
+  int append(const int size, const char* name);
+
+  int globalsSize() {
+    return stackOffset;
+  }
+
+  int allocSize() {
+    return allocSize_;
+  }
+
+  void setAllocSize(int sz){
+    allocSize_ = sz;
+  }
+
+  void* globalInit() {
+    return globalInits;
+  }
+
+  void addActiveSegment(void* globals){
+    activeGlobalMaps_.insert(globals);
+  }
+
+  void removeActiveSegment(void* globals){
+    activeGlobalMaps_.erase(globals);
+  }
+
+  void initGlobalSpace(void* ptr, int size, int offset);
+
+  void callInitFxns(void* globals);
+
+  void unregisterInitFxn(int offset){
+    initFxns.erase(offset);
+  }
+
+  void registerInitFxn(int offset, std::function<void(void*)>&& fxn);
+
+ private:
+  int stackOffset;
+  char* globalInits;
+  int allocSize_;
+  //these should be ordered by the offset in the data segment
+  //this ensures as much as possible that global variables
+  //are initialized in the same order in SST/macro as they would be in the real app
+  std::map<int, std::function<void(void*)>> initFxns;
+
+ private:
+  std::unordered_set<void*> activeGlobalMaps_;
+
+};
+
+class GlobalVariable {
+ public:
+  static int init(const int size, const char* name, bool tls = false);
+
+  static GlobalVariableContext glblCtx;
+  static GlobalVariableContext tlsCtx;
+  static bool inited;
+};
+
 /**
  * The app derived class adds to the thread base class by providing
  * facilities to allow applications to simulate computation.
@@ -160,9 +225,9 @@ class App : public Thread
     return globals_storage_;
   }
 
-//  void* newTlsStorage() {
-//    return allocateDataSegment(true);
-//  }
+ void* newTlsStorage() {
+   return allocateDataSegment(true);
+ }
 
   const std::string& uniqueName() const {
     return unique_name_;
