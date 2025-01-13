@@ -75,27 +75,37 @@ App::allocateTlsKey(destructor_fxn fxn)
   return next;
 }
 
-//static char* get_data_segment(SST::Params& params,
-//                             const char* param_name, GlobalVariableContext& ctx)
-//{
-//  int allocSize = ctx.allocSize();
-//  if (params.contains(param_name)){
-//    allocSize = params.find<int>(param_name);
-//    if (ctx.allocSize() != allocSize){
-//      ctx.setAllocSize(allocSize);
-//    }
-//  }
-//  if (allocSize != 0){
-//    char* segment = new char[allocSize];
-//    ::memcpy(segment, ctx.globalInit(), ctx.globalsSize());
-//    return segment;
-//  } else {
-//    return nullptr;
-//  }
-//}
+static char* get_data_segment(SST::Params& params,
+                            const char* param_name, GlobalVariableContext& ctx)
+{
+ int allocSize = ctx.allocSize();
+ if (params.contains(param_name)){
+   allocSize = params.find<int>(param_name);
+   if (ctx.allocSize() != allocSize){
+     ctx.setAllocSize(allocSize);
+   }
+ }
+ if (allocSize != 0){
+   char* segment = new char[allocSize];
+   ::memcpy(segment, ctx.globalInit(), ctx.globalsSize());
+   return segment;
+ } else {
+   return nullptr;
+ }
+}
 
 
 static thread_lock dlopen_lock;
+
+void
+GlobalVariableContext::callInitFxns(void *globals)
+{
+  for (auto& pair : initFxns){
+    int offset = pair.first;
+    char* ptr = ((char*)globals) + offset;
+    (pair.second)(ptr);
+  }
+}
 
 void
 App::lockDlopen(int aid)
@@ -226,15 +236,15 @@ App::dlcloseCheck_Library(std::string api_name)
   dlopen_lock.unlock();
 }
 
-//char*
-//App::allocateDataSegment(bool tls)
-//{
-//  if (tls){
-//    return get_data_segment(params_, "tls_size", GlobalVariable::tlsCtx);
-//  } else {
-//    return get_data_segment(params_, "globals_size", GlobalVariable::glblCtx);
-//  }
-//}
+char*
+App::allocateDataSegment(bool tls)
+{
+ if (tls){
+   return get_data_segment(params_, "tls_size", GlobalVariable::tlsCtx);
+ } else {
+   return get_data_segment(params_, "globals_size", GlobalVariable::glblCtx);
+ }
+}
 
 App::App(SST::Params& params, SoftwareId sid,
          OperatingSystem* os) :
