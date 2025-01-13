@@ -54,7 +54,7 @@ public:
     virtual void finish();
 
 protected:
-
+    std::function<void(Ramulator::Request&)> callBackFunc;
     std::string config_path;
     Ramulator::IFrontEnd* ramulator2_frontend;
     Ramulator::IMemorySystem* ramulator2_memorysystem;

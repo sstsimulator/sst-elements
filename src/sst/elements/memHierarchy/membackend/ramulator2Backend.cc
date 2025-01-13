@@ -31,53 +31,47 @@ ramulator2Memory::ramulator2Memory(ComponentId_t id, Params &params) :
     if (config_path == NO_STRING_DEFINED) {
         output->fatal(CALL_INFO, -1, "Ramulator2 Backend must define a 'configFile' file parameter\n");
     }
+    
     YAML::Node config = Ramulator::Config::parse_config_file(config_path, {});
     ramulator2_frontend = Ramulator::Factory::create_frontend(config);
     ramulator2_memorysystem = Ramulator::Factory::create_memory_system(config);
 
-    configs.set_core_num(1); // this is from the ramulator code and even there it had a "?"... do I keep it?
-
     ramulator2_frontend->connect_memory_system(ramulator2_memorysystem);
     ramulator2_memorysystem->connect_frontend(ramulator2_frontend);
 
-    output->output(CALL_INFO, "Instantiated Ramulator2 from config file %s\n", ramulator2Cfg.c_str());
+    output->output(CALL_INFO, "Instantiated Ramulator2 from config file %s\n", config_path);
 }
 
 bool ramulator2Memory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes){
-    Ramulator::Request::Type reqType = (isWrite) ? Ramulator::Request::Type::Write 
-                                        : Ramulator::Request::Type::Read;
-    bool enqueue_success = ramulator2_frontend->receive_external_requests(reqType, addr, reqId, 
-    [this](Ramulator::Request& req) {
-      // your read request callback 
-    });
+    bool enqueue_success;
+    // handle write request
+    if (isWrite) {
+        // TODO: make sure SST::MemHierarchy::Addr being uint64 is not a problem (Ramulator equiv is a int64)
+        Ramulator::Request req(addr, Ramulator::Request::Type::Write, reqId, callBackFunc);
 
-    if (!enqueue_success) {
-        // error?
+        enqueue_success = ramulator2_frontend->receive_external_requests(Ramulator::Request::Type::Write, addr, reqId,
+        [this, reqId](Ramulator::Request& req) {
+            // write request callback
+            this->writes.insert(reqId);
+        });
+    } else {
+        // handle read request
+        Ramulator::Request req(addr, Ramulator::Request::Type::Read, reqId, callBackFunc);
+
+        enqueue_success = ramulator2_frontend->receive_external_requests(Ramulator::Request::Type::Read, addr, reqId,
+        [this, addr, reqId](Ramulator::Request& req) {
+            // read request callback
+            this->dramReqs[addr].push_back(reqId);
+        });
     }
-    /*
-
-    ramulator::Request request(addr,
-                               type,
-                               callBackFunc,
-                               0);  /* context or core ID. ? */
-    */
-    bool ok = memSystem->send(request);
 #ifdef __SST_DEBUG_OUTPUT__
-    output->debug(_L10_, "Ramulator2Backend: Attempting to issue %s request for %" PRIx64 ". Accepted: %d\n", (isWrite ? "WRITE" : "READ"), addr, ok);
+    output->debug(_L10_, "Ramulator2Backend: Attempting to issue %s request for %" PRIx64 ". Accepted: %d\n", (isWrite ? "WRITE" : "READ"), addr, enqueue_success);
 #endif
-    if(!ok) return false;
-
-    // save this DRAM Request
-    if (isWrite)
-        writes.insert(reqId);
-    else
-        dramReqs[addr].push_back(reqId);
-
-    return ok;
+    return enqueue_success;
 }
 
 bool ramulator2Memory::clock(Cycle_t cycle){
-    memSystem->tick();
+    ramulator2_memorysystem->tick();
     // Ack writes since ramulator won't
     while (!writes.empty()) {
         handleMemResponse(*writes.begin());
@@ -92,7 +86,7 @@ void ramulator2Memory::finish(){
 }
 
 
-void ramulator2Memory::ramulator2Done(ramulator::Request& ramReq) {
+void ramulator2Memory::ramulator2Done(Ramulator::Request& ramReq) {
     uint64_t addr = ramReq.addr;
     std::deque<ReqId> &reqs = dramReqs[addr];
 

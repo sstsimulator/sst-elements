@@ -848,6 +848,7 @@ EXTRA_DIST = \
 	tests/testsuite_default_memHierarchy_hybridsim.py \
 	tests/testsuite_default_memHierarchy_memHA.py \
 	tests/testsuite_default_memHierarchy_sdl.py \
+	tests/testsuite_default_memHierarchy_coherence.py \
 	tests/testsuite_default_memHierarchy_memHSieve.py \
 	tests/testsuite_sweep_memHierarchy_dir3LevelSweep.py \
 	tests/testsuite_sweep_memHierarchy_dirSweep.py \
@@ -882,8 +883,10 @@ EXTRA_DIST = \
 	tests/sdl9-1.py \
 	tests/sdl9-2.py \
 	tests/test_hybridsim.py \
-	tests/sdl4-2-ramulator.py \
-	tests/sdl5-1-ramulator.py \
+	tests/test_coherence_1core.py \
+	tests/test_coherence_2core_3level.py \
+	tests/test_coherence_4core_5level.py \
+	tests/test_coherence_1core.py \
 	tests/testBackendChaining.py \
 	tests/testBackendDelayBuffer.py \
 	tests/testBackendDramsim3.py \
@@ -891,6 +894,8 @@ EXTRA_DIST = \
 	tests/testBackendHBMDramsim.py \
 	tests/testBackendHBMPagedMulti.py \
 	tests/testBackendPagedMulti.py \
+	tests/testBackendRamulator-1.py \
+	tests/testBackendRamulator-2.py \
 	tests/testBackendReorderRow.py \
 	tests/testBackendReorderSimple.py \
 	tests/testBackendSimpleDRAM-1.py \
@@ -947,6 +952,8 @@ EXTRA_DIST = \
 	tests/refFiles/test_memHA_BackendHBMDramsim.out \
 	tests/refFiles/test_memHA_BackendHBMPagedMulti.out \
 	tests/refFiles/test_memHA_BackendPagedMulti.out \
+	tests/refFiles/test_memHA_BackendRamulator_1.out \
+	tests/refFiles/test_memHA_BackendRamulator_2.out \
 	tests/refFiles/test_memHA_BackendReorderRow.out \
 	tests/refFiles/test_memHA_BackendReorderSimple.out \
 	tests/refFiles/test_memHA_BackendSimpleDRAM_1.out \
@@ -986,15 +993,36 @@ EXTRA_DIST = \
 	tests/refFiles/test_memHA_StdMem_mmio.out \
 	tests/refFiles/test_memHA_StdMem_noninclusive.out \
 	tests/refFiles/test_memHA_ThroughputThrottling.out \
+	tests/refFiles/test_memHierarchy_coherence_1core_case0_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_1core_case1_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_1core_case2_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_1core_case3_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_1core_case4_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_1core_case5_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_1core_case6_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case0_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case1_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case2_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case3_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case4_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case5_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case6_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case7_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case8_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case9_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case10_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case11_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_4core_5level_case0_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_4core_5level_case1_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_4core_5level_case2_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_4core_5level_case3_mesi.out \
 	tests/refFiles/test_memHierarchy_sdl2_1.out \
 	tests/refFiles/test_memHierarchy_sdl3_1.out \
 	tests/refFiles/test_memHierarchy_sdl3_2.out \
 	tests/refFiles/test_memHierarchy_sdl3_3.out \
 	tests/refFiles/test_memHierarchy_sdl4_1.out \
 	tests/refFiles/test_memHierarchy_sdl4_2.out \
-	tests/refFiles/test_memHierarchy_sdl4_2_ramulator.out \
 	tests/refFiles/test_memHierarchy_sdl5_1.out \
-	tests/refFiles/test_memHierarchy_sdl5_1_ramulator.out \
 	tests/refFiles/test_memHierarchy_sdl8_1.out \
 	tests/refFiles/test_memHierarchy_sdl8_3.out \
 	tests/refFiles/test_memHierarchy_sdl8_4.out \
