@@ -152,9 +152,6 @@ class ArielCore : public ComponentExtension {
         void setGpuLink(Link* gpulink);
 #endif
 
-        void updateStats(StandardMem::Request* req, uint64_t start);
-        void updateStats(StandardMem::ReadResp* req, uint64_t start);
-        void updateStats(StandardMem::WriteResp* req, uint64_t start);
         void handleEvent(StandardMem::Request* event);
         void handleReadRequest(ArielReadEvent* wEv);
         void handleWriteRequest(ArielWriteEvent* wEv);
@@ -245,8 +242,6 @@ class ArielCore : public ComponentExtension {
 #endif
 
         std::unordered_map<StandardMem::Request::id_t, RequestInfo>* pendingTransactions;
-        //std::unordered_map<StandardMem::Request::id_t, StandardMem::Request*>* pendingTransactions;
-        //std::unordered_map<StandardMem::Request::id_t, uint64_t>* startTimes;
         uint32_t maxIssuePerCycle;
         uint32_t maxQLength;
         uint64_t cacheLineSize;
