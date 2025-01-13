@@ -19,6 +19,9 @@ CXX_FLAGS_CUDA := --cuda-gpu-arch=$(GPU_ARCH) --cuda-path=$(CUDA_INSTALL_PATH) -
 CXX_FLAGS_RISCV_CUDA := -static --cuda-gpu-arch=$(GPU_ARCH) --cuda-path=$(CUDA_INSTALL_PATH) -L. -Wl,-static -l$(CUSTOM_CUDA_LIB) -L$(CUDA_INSTALL_PATH)/lib64 -Wl,-static -ldl -lrt -pthread
 CXX_FLAGS_CUDA_WRAPPER := -include __clang_cuda_runtime_wrapper.h
 
+# CUDA samples flags
+CUDA_SAMPLES_FLAGS := -I./cudaSamplesCommon
+
 all: helloworld vecadd
 
 test_llvm_env:
@@ -48,5 +51,9 @@ vecadd: vecadd.cu test_vanadis_envs test_llvm_env vanadis_cuda
 vecadd_normal: vecadd.cu
 	$(CLANG_PREFIX)clang++ $< -o $@ $(CXX_FLAGS_CUDA_WRAPPER) $(CXX_FLAGS_CUDA) 
 
+# From CUDA samples
+simpleStreams: simpleStreams.cu test_vanadis_envs test_llvm_env vanadis_cuda
+	$(CLANG_PREFIX)clang++ $< -o $@ $(CUDA_SAMPLES_FLAGS) $(CXX_FLAGS_RISCV_CUDA) $(CXX_FLAGS_CUDA_WRAPPER) $(CXX_FLAGS_RISCV_LINUX)
+
 clean:
-	rm -f lib$(CUSTOM_CUDA_LIB).so lib$(CUSTOM_CUDA_LIB).a $(CUSTOM_CUDA_LIB_SRC:.cc=.o) vecadd helloworld
+	rm -f lib$(CUSTOM_CUDA_LIB).so lib$(CUSTOM_CUDA_LIB).a $(CUSTOM_CUDA_LIB_SRC:.cc=.o) vecadd helloworld simpleStreams
