@@ -27,53 +27,41 @@ namespace SST {
 namespace BalarComponent {
     enum GpuApi_t {
         GPU_REG_FAT_BINARY = 1,
-        GPU_REG_FAT_BINARY_RET = 2,
-        GPU_REG_FUNCTION = 3,
-        GPU_REG_FUNCTION_RET = 4,
-        GPU_MEMCPY = 5,
-        GPU_MEMCPY_RET = 6,
-        GPU_CONFIG_CALL = 7,
-        GPU_CONFIG_CALL_RET = 8,
-        GPU_SET_ARG = 9,
-        GPU_SET_ARG_RET = 10,
-        GPU_LAUNCH = 11,
-        GPU_LAUNCH_RET = 12,
-        GPU_FREE = 13,
-        GPU_FREE_RET = 14,
-        GPU_GET_LAST_ERROR = 15,
-        GPU_GET_LAST_ERROR_RET = 16,
-        GPU_MALLOC = 17,
-        GPU_MALLOC_RET = 18,
-        GPU_REG_VAR = 19,
-        GPU_REG_VAR_RET = 20,
-        GPU_MAX_BLOCK = 21,
-        GPU_MAX_BLOCK_RET = 22,
+        GPU_REG_FUNCTION,
+        GPU_MEMCPY,
+        GPU_CONFIG_CALL,
+        GPU_SET_ARG,
+        GPU_LAUNCH,
+        GPU_FREE,
+        GPU_GET_LAST_ERROR,
+        GPU_MALLOC,
+        GPU_REG_VAR,
+        GPU_MAX_BLOCK,
         GPU_PARAM_CONFIG,
-        GPU_PARAM_CONFIG_RET,
         GPU_THREAD_SYNC,
-        GPU_THREAD_SYNC_RET,
         GPU_GET_ERROR_STRING,
-        GPU_GET_ERROR_STRING_RET,
         GPU_MEMSET,
-        GPU_MEMSET_RET,
         GPU_MEMCPY_TO_SYMBOL,
-        GPU_MEMCPY_TO_SYMBOL_RET,
         GPU_MEMCPY_FROM_SYMBOL,
-        GPU_MEMCPY_FROM_SYMBOL_RET,
         GPU_SET_DEVICE,
-        GPU_SET_DEVICE_RET,
         GPU_CREATE_CHANNEL_DESC,
-        GPU_CREATE_CHANNEL_DESC_RET,
         GPU_BIND_TEXTURE,
-        GPU_BIND_TEXTURE_RET,
         GPU_REG_TEXTURE,
-        GPU_REG_TEXTURE_RET,
         GPU_GET_DEVICE_COUNT,
-        GPU_GET_DEVICE_COUNT_RET,
         GPU_FREE_HOST,
-        GPU_FREE_HOST_RET,
         GPU_MALLOC_HOST,
-        GPU_MALLOC_HOST_RET,
+        GPU_MEMCPY_ASYNC,
+        GPU_GET_DEVICE_PROPERTIES,
+        GPU_SET_DEVICE_FLAGS,
+        GPU_STREAM_CREATE,
+        GPU_STREAM_DESTROY,
+        GPU_EVENT_CREATE,
+        GPU_EVENT_CREATE_WITH_FLAGS,
+        GPU_EVENT_RECORD,
+        GPU_EVENT_SYNCHRONIZE,
+        GPU_EVENT_ELAPSED_TIME,
+        GPU_EVENT_DESTROY,
+        GPU_DEVICE_GET_ATTRIBUTE,
     };
 
     // Future: Make this into a class with additional serialization methods?
@@ -109,6 +97,15 @@ namespace BalarComponent {
                 uint64_t payload;   // A pointer, but need to be 64-bit
                 enum cudaMemcpyKind kind;
             } cuda_memcpy;
+
+            struct {
+                uint64_t dst;
+                uint64_t src;
+                uint64_t count;
+                uint64_t payload;   // A pointer, but need to be 64-bit
+                enum cudaMemcpyKind kind;
+                cudaStream_t stream;
+            } cudaMemcpyAsync;
 
             struct {
                 uint64_t symbol;
@@ -208,6 +205,45 @@ namespace BalarComponent {
                 void *addr;
                 size_t size;
             } cudamallochost;
+
+            struct {
+                int device;
+            } cudaGetDeviceProperties;
+
+            struct {
+                unsigned int flags;
+            } cudaSetDeviceFlags;
+
+            struct {
+                cudaStream_t stream;
+            } cudaStreamDestroy;
+
+            struct {
+                unsigned int flags;
+            } cudaEventCreateWithFlags;
+
+            struct {
+                cudaEvent_t event;
+                cudaStream_t stream;
+            } cudaEventRecord;
+
+            struct {
+                cudaEvent_t event;
+            } cudaEventSynchronize;
+
+            struct {
+                cudaEvent_t start;
+                cudaEvent_t end;
+            } cudaEventElapsedTime;
+
+            struct {
+                cudaEvent_t event;
+            } cudaEventDestroy;
+
+            struct {
+                cudaDeviceAttr attr;
+                int device;
+            } cudaDeviceGetAttribute;
         };
     } BalarCudaCallPacket_t;
 
@@ -234,6 +270,24 @@ namespace BalarComponent {
             struct {
                 int count;
             } cudagetdevicecount;
+            struct {
+                struct cudaDeviceProp prop;
+            } cudaGetDeviceProperties;
+            struct {
+                cudaStream_t stream;
+            } cudaStreamCreate;
+            struct {
+                cudaStream_t event;
+            } cudaEventCreate;
+            struct {
+                cudaEvent_t event;
+            } cudaEventCreateWithFlags;
+            struct {
+                float ms;
+            } cudaEventElapsedTime;
+            struct {
+                int value;
+            } cudaDeviceGetAttribute;
         };
     } BalarCudaCallReturnPacket_t;
 }

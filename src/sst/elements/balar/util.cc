@@ -28,74 +28,110 @@ namespace BalarComponent {
             case GPU_REG_FAT_BINARY:
                 str = new string("GPU_REG_FAT_BINARY");
                 break;
-            case GPU_REG_FAT_BINARY_RET:
-                str = new string("GPU_REG_FAT_BINARY_RET");
-                break;
             case GPU_REG_FUNCTION:
                 str = new string("GPU_REG_FUNCTION");
-                break;
-            case GPU_REG_FUNCTION_RET:
-                str = new string("GPU_REG_FUNCTION_RET");
                 break;
             case GPU_MEMCPY:
                 str = new string("GPU_MEMCPY");
                 break;
-            case GPU_MEMCPY_RET:
-                str = new string("GPU_MEMCPY_RET");
-                break;
             case GPU_CONFIG_CALL:
                 str = new string("GPU_CONFIG_CALL");
-                break;
-            case GPU_CONFIG_CALL_RET:
-                str = new string("GPU_CONFIG_CALL_RET");
                 break;
             case GPU_SET_ARG:
                 str = new string("GPU_SET_ARG");
                 break;
-            case GPU_SET_ARG_RET:
-                str = new string("GPU_SET_ARG_RET");
-                break;
             case GPU_LAUNCH:
                 str = new string("GPU_LAUNCH");
-                break;
-            case GPU_LAUNCH_RET:
-                str = new string("GPU_LAUNCH_RET");
                 break;
             case GPU_FREE:
                 str = new string("GPU_FREE");
                 break;
-            case GPU_FREE_RET:
-                str = new string("GPU_FREE_RET");
-                break;
             case GPU_GET_LAST_ERROR:
                 str = new string("GPU_GET_LAST_ERROR");
-                break;
-            case GPU_GET_LAST_ERROR_RET:
-                str = new string("GPU_GET_LAST_ERROR_RET");
                 break;
             case GPU_MALLOC:
                 str = new string("GPU_MALLOC");
                 break;
-            case GPU_MALLOC_RET:
-                str = new string("GPU_MALLOC_RET");
-                break;
             case GPU_REG_VAR:
                 str = new string("GPU_REG_VAR");
-                break;
-            case GPU_REG_VAR_RET:
-                str = new string("GPU_REG_VAR_RET");
                 break;
             case GPU_MAX_BLOCK:
                 str = new string("GPU_MAX_BLOCK");
                 break;
-            case GPU_MAX_BLOCK_RET:
-                str = new string("GPU_MAX_BLOCK_RET");
-                break;
             case GPU_PARAM_CONFIG:
                 str = new string("GPU_PARAM_CONFIG");
                 break;
-            case GPU_PARAM_CONFIG_RET:
-                str = new string("GPU_PARAM_CONFIG_RET");
+            case GPU_THREAD_SYNC:
+                str = new string("GPU_THREAD_SYNC");
+                break;
+            case GPU_GET_ERROR_STRING:
+                str = new string("GPU_GET_ERROR_STRING");
+                break;
+            case GPU_MEMSET:
+                str = new string("GPU_MEMSET");
+                break;
+            case GPU_MEMCPY_TO_SYMBOL:
+                str = new string("GPU_MEMCPY_TO_SYMBOL");
+                break;
+            case GPU_MEMCPY_FROM_SYMBOL:
+                str = new string("GPU_MEMCPY_FROM_SYMBOL");
+                break;
+            case GPU_SET_DEVICE:
+                str = new string("GPU_SET_DEVICE");
+                break;
+            case GPU_CREATE_CHANNEL_DESC:
+                str = new string("GPU_CREATE_CHANNEL_DESC");
+                break;
+            case GPU_BIND_TEXTURE:
+                str = new string("GPU_BIND_TEXTURE");
+                break;
+            case GPU_REG_TEXTURE:
+                str = new string("GPU_REG_TEXTURE");
+                break;
+            case GPU_GET_DEVICE_COUNT:
+                str = new string("GPU_GET_DEVICE_COUNT");
+                break;
+            case GPU_FREE_HOST:
+                str = new string("GPU_FREE_HOST");
+                break;
+            case GPU_MALLOC_HOST:
+                str = new string("GPU_MALLOC_HOST");
+                break;
+            case GPU_MEMCPY_ASYNC:
+                str = new string("GPU_MEMCPY_ASYNC");
+                break;
+            case GPU_GET_DEVICE_PROPERTIES:
+                str = new string("GPU_GET_DEVICE_PROPERTIES");
+                break;
+            case GPU_SET_DEVICE_FLAGS:
+                str = new string("GPU_SET_DEVICE_FLAGS");
+                break;
+            case GPU_STREAM_CREATE:
+                str = new string("GPU_STREAM_CREATE");
+                break;
+            case GPU_STREAM_DESTROY:
+                str = new string("GPU_STREAM_DESTROY");
+                break;
+            case GPU_EVENT_CREATE:
+                str = new string("GPU_EVENT_CREATE");
+                break;
+            case GPU_EVENT_CREATE_WITH_FLAGS:
+                str = new string("GPU_EVENT_CREATE_WITH_FLAGS");
+                break;
+            case GPU_EVENT_RECORD:
+                str = new string("GPU_EVENT_RECORD");
+                break;
+            case GPU_EVENT_SYNCHRONIZE:
+                str = new string("GPU_EVENT_SYNCHRONIZE");
+                break;
+            case GPU_EVENT_ELAPSED_TIME:
+                str = new string("GPU_EVENT_ELAPSED_TIME");
+                break;
+            case GPU_EVENT_DESTROY:
+                str = new string("GPU_EVENT_DESTROY");
+                break;
+            case GPU_DEVICE_GET_ATTRIBUTE:
+                str = new string("GPU_DEVICE_GET_ATTRIBUTE");
                 break;
             default:
                 str = new string("Unknown cuda calls");

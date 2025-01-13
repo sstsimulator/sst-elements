@@ -600,6 +600,12 @@ __host__ const char *CUDARTAPI cudaGetErrorString(cudaError_t error) {
   return strdup(buf);
 }
 
+__host__ const char*CUDARTAPI cudaGetErrorName(cudaError_t error) {
+  if (error == cudaSuccess) 
+    return "cudaSuccess";
+  return "cudaError";
+}
+
 __host__ cudaError_t CUDARTAPI cudaMemset(void *mem, int c, size_t count) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start cudaMemset, setting 0x%llx to %c for %lld bytes\n", mem, c, count);
