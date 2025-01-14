@@ -19,6 +19,22 @@ AM_CPPFLAGS += $(PINTOOL_CPPFLAGS)
 endif
 endif
 
+# Common flags
+PIN_CPPFLAGS = -g \
+	-Wall \
+	-Werror \
+	-Wno-unknown-pragmas \
+	-D__PIN__=1 -DPIN_CRT=1 \
+	-fno-stack-protector \
+	-fno-exceptions \
+	-funwind-tables \
+	-fasynchronous-unwind-tables \
+	-fno-rtti \
+        -DTARGET_IA32E \
+	-DHOST_IA32E \
+	-fPIC \
+	-DTARGET_LINUX
+
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libariel.la
 libariel_la_SOURCES = \
@@ -85,7 +101,11 @@ EXTRA_DIST = \
 	tests/testopenMP/ompmybarrier/Makefile \
 	tests/testMPI/Makefile
 
-libariel_la_LDFLAGS = -module -avoid-version
+libariel_la_LDFLAGS = = \
+	-module \
+	-avoid-version \
+	$(AM_LDFLAGS) 
+
 libariel_la_LIBADD = $(SHM_LIB)
 
 if USE_LIBZ
@@ -102,16 +122,13 @@ libariel_la_SOURCES += frontend/pin3/pin3frontend.h \
 endif
 endif
 
-if USE_CUDA
-AM_CPPFLAGS += $(CUDA_CPPFLAGS)
-endif
-
 libariel_la_CPPFLAGS = \
 	-DARIEL_TRACE_LIB=$(libdir)/sst \
 	-DARIEL_TOOL_DIR="$(libexecdir)" \
 	-DPINTOOL_EXECUTABLE="$(PINTOOL_RUNTIME)" \
 	-DMPILAUNCHER_EXECUTABLE="$(CURDIR)/mpi/mpilauncher" \
-	$(AM_CPPFLAGS) $(CPPFLAGS)
+	$(AM_CPPFLAGS) \
+	$(CPPFLAGS)
 
 sstdir = $(includedir)/sst/elements/ariel
 nobase_sst_HEADERS = \
@@ -134,7 +151,7 @@ if HAVE_PIN325
 fesimple.so : fesimple.o
 	$(CXX) -shared -Wl,--hash-style=sysv \
 	    $(PINTOOL_DIR)/intel64/runtime/pincrt/crtbeginS.o \
-	    -Wl,-Bsymbolic -Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver -fabi-version=2 \
+	    -Wl,-Bsymbolic -Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
 	    -o fesimple.so fesimple.o \
 	    -L$(PINTOOL_DIR)/intel64/runtime/pincrt \
 	    -L$(PINTOOL_DIR)/intel64/lib \
@@ -144,10 +161,8 @@ fesimple.so : fesimple.o
 	    -lpindwarf -ldl-dynamic -nostdlib -lc++ -lc++abi -lm-dynamic -lc-dynamic -lunwind-dynamic
 
 fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
-	$(CXX) -g -Wall -Werror -Wno-unknown-pragmas -D__PIN__=1 -DPIN_CRT=1 \
-	    -fno-stack-protector -fno-exceptions -funwind-tables -fasynchronous-unwind-tables -fno-rtti \
-	    -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX -fabi-version=2 \
-	    $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(CXX) \
+	    $(PIN_CPPFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) \
 	    -I$(top_srcdir)/src/sst/elements/ariel \
 	    -I$(PINTOOL_DIR)/source/include/pin \
 	    -I$(PINTOOL_DIR)/source/include/pin/gen \
@@ -168,7 +183,7 @@ if HAVE_PIN324
 fesimple.so : fesimple.o
 	$(CXX) -shared -Wl,--hash-style=sysv \
 	    $(PINTOOL_DIR)/intel64/runtime/pincrt/crtbeginS.o \
-	    -Wl,-Bsymbolic -Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver -fabi-version=2 \
+	    -Wl,-Bsymbolic -Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
 	    -o fesimple.so fesimple.o \
 	    -L$(PINTOOL_DIR)/intel64/runtime/pincrt \
 	    -L$(PINTOOL_DIR)/intel64/lib \
@@ -178,10 +193,8 @@ fesimple.so : fesimple.o
 	    -lpin3dwarf -ldl-dynamic -nostdlib -lc++ -lc++abi -lm-dynamic -lc-dynamic -lunwind-dynamic
 
 fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
-	$(CXX) -g -Wall -Werror -Wno-unknown-pragmas -D__PIN__=1 -DPIN_CRT=1 \
-	    -fno-stack-protector -fno-exceptions -funwind-tables -fasynchronous-unwind-tables -fno-rtti \
-	    -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX -fabi-version=2 \
-	    $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(CXX) \
+	    $(PIN_CPPFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) \
 	    -I$(top_srcdir)/src/sst/elements/ariel \
 	    -I$(PINTOOL_DIR)/source/include/pin \
 	    -I$(PINTOOL_DIR)/source/include/pin/gen \
@@ -200,7 +213,7 @@ else
 fesimple.so : fesimple.o
 	$(CXX) -shared -Wl,--hash-style=sysv \
 	    $(PINTOOL_DIR)/intel64/runtime/pincrt/crtbeginS.o \
-	    -Wl,-Bsymbolic -Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver -fabi-version=2 \
+	    -Wl,-Bsymbolic -Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
 	    -o fesimple.so fesimple.o \
 	    -L$(PINTOOL_DIR)/intel64/runtime/pincrt \
 	    -L$(PINTOOL_DIR)/intel64/lib \
@@ -210,10 +223,8 @@ fesimple.so : fesimple.o
 	    -lpin3dwarf -ldl-dynamic -nostdlib -lstlport-dynamic -lm-dynamic -lc-dynamic -lunwind-dynamic
 
 fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
-	$(CXX) -g -Wall -Werror -Wno-unknown-pragmas -D__PIN__=1 -DPIN_CRT=1 \
-	    -fno-stack-protector -fno-exceptions -funwind-tables -fasynchronous-unwind-tables -fno-rtti \
-	    -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX -fabi-version=2 \
-	    $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(CXX) \
+	    $(PIN_CPPFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) \
 	    -I$(top_srcdir)/src/sst/elements/ariel \
 	    -I$(PINTOOL_DIR)/source/include/pin \
 	    -I$(PINTOOL_DIR)/source/include/pin/gen \
@@ -251,13 +262,11 @@ fesimple.so : fesimple.o
 	    -L$(PINTOOL_DIR)/intel64/lib-ext \
 	    -L$(PINTOOL_DIR)/intel64/runtime/glibc \
 	    -L$(PINTOOL_DIR)/extras/xed-intel64/lib \
-	    $(CUDA_LIBS) \
-	    -ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB) $(CUDA_LDFLAGS)
+	    -ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB) 
 
 fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc
 	$(CXX) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) \
 	    $(LIBZ_CPPFLAGS) \
-	    $(CUDA_CPPFLAGS) \
 	    -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX \
 	    -I./ \
 	    -I$(PINTOOL_DIR)/source/include/pin \
