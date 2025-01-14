@@ -165,10 +165,10 @@ memctrl.addParams({
     "addr_range_end" : 512*1024*1024-1,
 })
 
-memory = memctrl.setSubComponent("backend", "memHierarchy.ramulator")
+memory = memctrl.setSubComponent("backend", "memHierarchy.ramulator2")
 memory.addParams({
       "mem_size" : "512MiB",
-      "configFile" : "ramulator-ddr3.cfg",
+      "configFile" : "ramulator2-ddr4.cfg",
 })
 
 # Enable statistics
