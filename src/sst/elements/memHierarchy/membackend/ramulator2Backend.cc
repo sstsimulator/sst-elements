@@ -17,6 +17,7 @@
 #include <sst_config.h>
 #include "sst/elements/memHierarchy/util.h"
 #include "membackend/ramulator2Backend.h"
+#include "base/config.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -50,18 +51,18 @@ bool ramulator2Memory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsign
         Ramulator::Request req(addr, Ramulator::Request::Type::Write, reqId, callBackFunc);
 
         enqueue_success = ramulator2_frontend->receive_external_requests(Ramulator::Request::Type::Write, addr, reqId,
-        [this, reqId](Ramulator::Request& req) {
+        [this](Ramulator::Request& req) {
             // write request callback
-            this->writes.insert(reqId);
+            this->writes.insert(req.source_id);
         });
     } else {
         // handle read request
         Ramulator::Request req(addr, Ramulator::Request::Type::Read, reqId, callBackFunc);
 
         enqueue_success = ramulator2_frontend->receive_external_requests(Ramulator::Request::Type::Read, addr, reqId,
-        [this, addr, reqId](Ramulator::Request& req) {
+        [this](Ramulator::Request& req) {
             // read request callback
-            this->dramReqs[addr].push_back(reqId);
+            this->dramReqs[req.addr].push_back(req.source_id);
         });
     }
 #ifdef __SST_DEBUG_OUTPUT__

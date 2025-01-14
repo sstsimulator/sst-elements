@@ -22,7 +22,6 @@
 
 #include "base/base.h"
 #include "base/request.h"
-#include "base/config.h"
 #include "frontend/frontend.h"
 #include "memory_system/memory_system.h"
 
