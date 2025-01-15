@@ -60,6 +60,11 @@ using namespace SST;
 using namespace SST::Interfaces;
 using namespace SST::ArielComponent;
 
+struct RequestInfo {
+        StandardMem::Request *req;
+        uint64_t start;
+};
+
 namespace SST {
 namespace ArielComponent {
 
@@ -73,7 +78,8 @@ class ArielCore : public ComponentExtension {
 #endif
             uint32_t thisCoreID, uint32_t maxPendTans, Output* out,
             uint32_t maxIssuePerCyc, uint32_t maxQLen, uint64_t cacheLineSz,
-            ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params);
+            ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params,
+            TimeConverter *timeconverter);
         ~ArielCore();
 
         bool isCoreHalted() const;
@@ -226,6 +232,7 @@ class ArielCore : public ComponentExtension {
         ArielTunnel *tunnel;
         StdMemHandler* stdMemHandlers;
         Link* RtlLink;
+        TimeConverter *timeconverter; // TimeConverter for the associated ArielCPU
 
 #ifdef HAVE_CUDA
         Link* GpuLink;
@@ -234,7 +241,7 @@ class ArielCore : public ComponentExtension {
         std::unordered_map<StandardMem::Request::id_t, StandardMem::Request*>* pendingGpuTransactions;
 #endif
 
-        std::unordered_map<StandardMem::Request::id_t, StandardMem::Request*>* pendingTransactions;
+        std::unordered_map<StandardMem::Request::id_t, RequestInfo>* pendingTransactions;
         uint32_t maxIssuePerCycle;
         uint32_t maxQLength;
         uint64_t cacheLineSize;
@@ -257,6 +264,8 @@ class ArielCore : public ComponentExtension {
 
         Statistic<uint64_t>* statReadRequests;
         Statistic<uint64_t>* statWriteRequests;
+        Statistic<uint64_t>* statReadLatency;
+        Statistic<uint64_t>* statWriteLatency;
         Statistic<uint64_t>* statFlushRequests;
         Statistic<uint64_t>* statFenceRequests;
         Statistic<uint64_t>* statReadRequestSizes;
