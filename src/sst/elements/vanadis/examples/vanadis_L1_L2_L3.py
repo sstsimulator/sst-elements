@@ -11,8 +11,6 @@ checkpoint = ""
 
 pythonDebug=False
 
-vanadis_isa = os.getenv("VANADIS_ISA", "MIPS")
-isa="mipsel"
 vanadis_isa = os.getenv("VANADIS_ISA", "RISCV64")
 isa="riscv64"
 
@@ -34,7 +32,8 @@ sst.setProgramOption("stop-at", "0 ns")
 sst.setStatisticLoadLevel(4)
 sst.setStatisticOutput("sst.statOutputConsole")
 
-full_exe_name = os.getenv("VANADIS_EXE", "./small/" + testDir + "/" + exe +  "/" + isa + "/" + exe )
+# full_exe_name = os.getenv("VANADIS_EXE", "./small/" + testDir + "/" + exe +  "/" + isa + "/" + exe )
+full_exe_name = "/home/skinkea/sst/sst-elements/sst-elements-src/src/sst/elements/vanadis/tests/small/basic-io/hello-world/riscv64/hello-world"
 exe_name= full_exe_name.split("/")[-1]
 
 verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
@@ -62,32 +61,10 @@ numThreads = int(os.getenv("VANADIS_NUM_HW_THREADS", 1))
 vanadis_cpu_type = "vanadis."
 vanadis_cpu_type += os.getenv("VANADIS_CPU_ELEMENT_NAME","dbg_VanadisCPU")
 
-app_args = os.getenv("VANADIS_EXE_ARGS", "")
-
-app_params = {}
-if app_args != "":
-    app_args_list = app_args.split(" ")
-    # We have a plus 1 because the executable name is arg0
-    app_args_count = len( app_args_list ) + 1
-
-    app_params["argc"] = app_args_count
-
-    if (verbosity > 0):
-        print("Identified " + str(app_args_count) + " application arguments, adding to input parameters.")
-    arg_start = 1
-    for next_arg in app_args_list:
-        if (verbosity > 0):
-            print("arg" + str(arg_start) + " = " + next_arg)
-        app_params["arg" + str(arg_start)] = next_arg
-        arg_start = arg_start + 1
-else:
-    app_params["argc"] = 1
-    if (verbosity > 0):
-        print("No application arguments found, continuing with argc=1")
+app_params = {"argc": 1}
 
 vanadis_decoder = "vanadis.Vanadis" + vanadis_isa + "Decoder"
 vanadis_os_hdlr = "vanadis.Vanadis" + vanadis_isa + "OSHandler"
-
 
 protocol="MESI"
 
@@ -105,7 +82,7 @@ osParams = {
     "checkpoint" : checkpoint
 }
 
-
+# Define the application the CPU will run in this simulation and the number of threads it will use
 processList = ( 
     ( 1, {
         "env_count" : 1,
@@ -117,6 +94,7 @@ processList = (
 
 processList[0][1].update(app_params)
 
+# Define the parameters for the components defined below in the model.
 osl1cacheParams = {
     "access_latency_cycles" : "2",
     "cache_frequency" : cpu_clock,
@@ -287,36 +265,35 @@ l2memLinkParams = {
     "network_bw" : "25GB/s" 
 }
 
+# The parameters for processes are sub-parameters, and need to be keyed differently. 
+# This function accomplishes prefixing the keys.
 def addParamsPrefix(prefix,params):
-    #print( prefix )
     ret = {}
     for key, value in params.items():
-        #print( key, value )
         ret[ prefix + "." + key] = value
 
-    #print( ret )
     return ret
 
-# node OS
+# Define the operating system for the node being modeled.
 node_os = sst.Component("os", "vanadis.VanadisNodeOS")
 node_os.addParams(osParams)
 
+# Create the parameters for the processes on the node. The process parameters were created above, but 
+# to be successfully be applied, they need to be prefixed in the node_os params correctly
 num=0
 for i,process in processList: 
-    #print( process )
     for y in range(i):
-        #print( "process", num )
         node_os.addParams( addParamsPrefix( "process" + str(num), process ) )
         num+=1
 
-# node OS MMU
+# Define the MMU for the node OS
 node_os_mmu = node_os.setSubComponent( "mmu", "mmu." + mmuType )
 node_os_mmu.addParams(mmuParams)
 
-# node OS memory interface to L1 data cache
+# Create the memory interface from the OS to the cache
 node_os_mem_if = node_os.setSubComponent( "mem_interface", "memHierarchy.standardInterface" )
 
-# node OS l1 data cache
+# Create an L1 data cache for the node OS
 os_cache = sst.Component("node_os.cache", "memHierarchy.Cache")
 os_cache.addParams(osl1cacheParams)
 os_cache_2_cpu = os_cache.setSubComponent("cpulink", "memHierarchy.MemLink")
@@ -332,9 +309,10 @@ comp_chiprtr.setSubComponent("topology","merlin.singlerouter")
 dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 dirctrl.addParams(dirCtrlParams)
 
-# node directory controller port to memory 
+# Define how the directory controller will connect to memory
 dirtoM = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
-# node directory controller port to cpu 
+
+# Define how the directory controller will connect to the CPU
 dirNIC = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
 dirNIC.addParams(dirNicParams)
 
@@ -361,7 +339,6 @@ link_dir_2_mem.setNoCut()
 
 # ostlb -> os l1 cache
 link_os_cache_link = sst.Link("link_os_cache_link")
-#link_os_cache_link.connect( (ostlbWrapper, "cache_if", "1ns"), (os_cache_2_cpu, "port", "1ns") )
 link_os_cache_link.connect( (node_os_mem_if, "port", "1ns"), (os_cache_2_cpu, "port", "1ns") )
 link_os_cache_link.setNoCut()
 
@@ -369,7 +346,7 @@ os_cache_2_rtr = sst.Link("os_cache_2_rtr")
 os_cache_2_rtr.connect( (os_cache_2_mem, "port", "1ns"), (comp_chiprtr, "port"+str(numCpus+1), "1ns") )
 os_cache_2_rtr.setNoCut()
 
-# build all CPUs
+# Build a CPU for the Node
 nodeId = 0
 
 prefix="node" + str(nodeId) + ".cpu0"
@@ -454,7 +431,7 @@ l3cache_2_l2cache = cpu_l3cache.setSubComponent("cpulink", "memHierarchy.MemLink
 # L2 cache mem interface
 l3cache_2_mem = cpu_l3cache.setSubComponent("memlink", "memHierarchy.MemNIC")
 l3cache_2_mem.addParams({ 
-    "group" : 3,
+    "group" : 1,
     "network_bw" : "25GB/s" 
 })
 
