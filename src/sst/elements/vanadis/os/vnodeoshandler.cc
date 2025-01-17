@@ -56,9 +56,9 @@
 #include "os/syscall/fstatat.h"
 #include "os/syscall/statx.h"
 #include "os/syscall/getaffinity.h"
+#include "os/syscall/setaffinity.h"
 #include "os/syscall/prlimit.h"
 #include "os/syscall/schedyield.h"
-#include "os/syscall/schedsetaffinity.h"
 
 using namespace SST::Vanadis;
 
@@ -100,11 +100,11 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
         case SYSCALL_OP_SCHED_GETAFFINITY: {
             syscall = new VanadisGetaffinitySyscall( this, coreLink, process, convertEvent<VanadisSyscallGetaffinityEvent*>( "getaffinity", sys_ev ) );
         } break;
-        case SYSCALL_OP_SCHED_YIELD: {
-            syscall = new VanadisSchedYieldSyscall( this, coreLink, process, convertEvent<VanadisSyscallSchedYieldEvent*>("sched_yield", sys_ev) );
-        } break;
         case SYSCALL_OP_SCHED_SETAFFINITY: {
-            syscall = new VanadisSchedSetAffinitySyscall( this, coreLink, process, convertEvent<VanadisSyscallSchedSetAffinityEvent*>("sched_setaffinity", sys_ev) );
+            syscall = new VanadisSetaffinitySyscall( this, coreLink, process, convertEvent<VanadisSyscallSetaffinityEvent*>( "setaffinity", sys_ev) );
+        } break;
+        case SYSCALL_OP_SCHED_YIELD: {
+            syscall = new VanadisSchedYieldSyscall( this, coreLink, process, convertEvent<VanadisSyscallSchedYieldEvent*>( "sched_yield", sys_ev) );
         } break;
         case SYSCALL_OP_FORK: {
             syscall = new VanadisForkSyscall( this, coreLink, process, convertEvent<VanadisSyscallForkEvent*>( "fork", sys_ev ) );

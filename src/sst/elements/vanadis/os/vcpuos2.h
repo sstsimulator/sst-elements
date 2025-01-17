@@ -179,6 +179,18 @@ protected:
 
         return new VanadisSyscallGetaffinityEvent(core_id, hw_thr, BitType, pid, cpusetsize, maskAddr );
     }
+
+    VanadisSyscallEvent* SCHED_SETAFFINITY(int hw_thr) {
+        T1 pid        = getArgRegister(0);
+        T1 cpusetsize = getArgRegister(1);
+        T1 maskAddr   = getArgRegister(2);
+
+        output->verbose(CALL_INFO, 16, 0,
+                            "sched_getaffinity( %" PRIdXX ", %" PRIdXX", %#" PRIxXX " )\n", pid, cpusetsize, maskAddr );
+
+        return new VanadisSyscallSetaffinityEvent(core_id, hw_thr, BitType, pid, cpusetsize, maskAddr);
+    }
+
     VanadisSyscallEvent* MPROTECT( int hw_thr ) {
         T1 addr   = getArgRegister(0);
         T1 len    = getArgRegister(1);
@@ -196,20 +208,8 @@ protected:
     }
 
     VanadisSyscallEvent* SCHED_YIELD(int hw_thr) {
-        output->verbose(CALL_INFO, 0, 0, "sched_yield()\n");
+        output->verbose(CALL_INFO, 16, 0, "sched_yield()\n");
         return new VanadisSyscallSchedYieldEvent(core_id, hw_thr, BitType);
-    }
-
-    VanadisSyscallEvent* SCHED_SETAFFINITY(int hw_thr) {
-        T1 pid        = getArgRegister(0);
-        T1 cpusetsize = getArgRegister(1);
-        T1 maskAddr   = getArgRegister(2);
-
-        output->verbose(CALL_INFO, 0, 0,
-            "sched_setaffinity( pid=%" PRIdXX ", cpusetsize=%" PRIdXX ", mask=%#" PRIxXX " )\n",
-            pid, cpusetsize, maskAddr
-        );
-        return new VanadisSyscallSchedSetAffinityEvent(core_id, hw_thr, BitType, pid, cpusetsize, maskAddr);
     }
 
     VanadisSyscallEvent* RT_SIGACTION( int hw_thr ) {
