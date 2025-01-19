@@ -35,8 +35,19 @@ public:
                                       event->getPid(), event->getCpusetsize(), event->getMaskAddr());
 
         // Load the CPU mask from memory
+         // Validate cpusetsize
+        if (event->getCpusetsize() < sizeof(uint64_t)) {
+            setReturnFail(LINUX_EINVAL);
+            return;
+        }
+
+        // Load the CPU mask from memory
         m_mask.resize(event->getCpusetsize(), 0);
         readMemory(event->getMaskAddr(), m_mask);
+
+        process->setAffinity(m_mask);
+        os->updateProcessAffinity(process->getpid());
+        setReturnSuccess(0);
     }
 
     void memReqIsDone(bool success) override {
@@ -44,7 +55,6 @@ public:
         if (!success) {
             setReturnFail(LINUX_EBADF);
         } else {
-            // Otherwise, just succeed
             setReturnSuccess(0);
         }
     }

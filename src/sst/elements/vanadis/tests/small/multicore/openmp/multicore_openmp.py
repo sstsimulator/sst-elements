@@ -53,7 +53,7 @@ auto_clock_sys = "no"
 cpu_clock = "2.3GHz"
 
 # Force exactly 2 cores (numCpus=2), each with 1 thread (numThreads=1)
-numCpus = 2
+numCpus = 3
 numThreads = 1
 
 vanadis_cpu_type = "vanadis.dbg_VanadisCPU"
