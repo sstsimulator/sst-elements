@@ -110,7 +110,7 @@ class testcase_memH_openMP_openMP(SSTTestCase):
                     # Grep the ref file for the count of this line occuring
                     cmd = 'grep -c "{0}" {1}'.format(testline, reffile)
                     rtn = OSCommand(cmd).run()
-                    self.assertEquals(rtn.result(), 0, "openMP openMP Test failed running cmdline {0} - grepping reffile {1}".format(cmd, reffile))
+                    self.assertEqual(rtn.result(), 0, "openMP openMP Test failed running cmdline {0} - grepping reffile {1}".format(cmd, reffile))
                     refcount = int(rtn.output())
 
                     # Grep the out file for the count of this line occuring
@@ -124,7 +124,7 @@ class testcase_memH_openMP_openMP(SSTTestCase):
                     log_debug("Testline='{0}'; refcount={1}; outcount={2}".format(testline, refcount, outcount))
 
                     # Compare the count
-                    self.assertEquals(outcount, refcount, "openMP openMP testing line '{0}': outfile count = {1} does not match reffile count = {2}".format(testline, outcount, refcount))
+                    self.assertEqual(outcount, refcount, "openMP openMP testing line '{0}': outfile count = {1} does not match reffile count = {2}".format(testline, outcount, refcount))
 
 ###############################################
 
