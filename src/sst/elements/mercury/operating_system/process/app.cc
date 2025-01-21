@@ -97,6 +97,22 @@ static char* get_data_segment(SST::Params& params,
 
 static thread_lock dlopen_lock;
 
+GlobalVariableContext GlobalVariable::glblCtx;
+GlobalVariableContext GlobalVariable::tlsCtx;
+bool GlobalVariable::inited = false;
+
+int
+GlobalVariable::init(const int size, const char* name, bool tls)
+{
+  if (!inited){
+    tlsCtx.init();
+    glblCtx.init();
+    inited = true;
+  }
+  if (tls) return tlsCtx.append(size, name);
+  else return glblCtx.append(size, name);
+}
+
 void
 GlobalVariableContext::callInitFxns(void *globals)
 {
@@ -104,6 +120,14 @@ GlobalVariableContext::callInitFxns(void *globals)
     int offset = pair.first;
     char* ptr = ((char*)globals) + offset;
     (pair.second)(ptr);
+  }
+}
+
+GlobalVariableContext::~GlobalVariableContext()
+{
+  if (globalInits){
+    delete[] globalInits;
+    globalInits = nullptr;
   }
 }
 
@@ -262,7 +286,7 @@ App::App(SST::Params& params, SoftwareId sid,
   out_ = std::unique_ptr<SST::Output>(
       new SST::Output("app:", verbose, 0, Output::STDOUT));
 
-  //globals_storage_ = allocateDataSegment(false); //not tls
+  globals_storage_ = allocateDataSegment(false); //not tls
   min_op_cutoff_ = params.find<long>("min_op_cutoff", 1000);
 
   notify_ = params.find<bool>("notify", true);
