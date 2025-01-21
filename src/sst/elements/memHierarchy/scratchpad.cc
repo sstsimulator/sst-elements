@@ -161,7 +161,8 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
             memoryFile.clear();
         }
         try {
-            backing_ = new Backend::BackingMMAP( memoryFile, scratch_->getMemSize() );
+            // TODO fix to match memory controller
+            backing_ = new Backend::BackingMMAP( memoryFile, memoryFile, scratch_->getMemSize() );
         }
         catch ( int e) {
             if (e == 1)

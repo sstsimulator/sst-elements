@@ -57,7 +57,6 @@ public:
             {"cache_line_size",         "Size of a cache line [aka cache block] in bytes.", "64"},
             {"coherence_protocol",      "Coherence protocol.  Supported --MESI, MSI--", "MESI"},
             {"mshr_num_entries",        "Number of MSHRs. Set to -1 for almost unlimited number.", "-1"},
-            {"net_memory_name",         "For directories connected to a memory over the network: name of the memory this directory owns", ""},
             {"access_latency_cycles",   "Latency of directory access in cycles", "0"},
             {"mshr_latency_cycles",     "Latency of mshr access in cycles", "0"},
             {"max_requests_per_cycle",  "Maximum number of requests to process per cycle (0 or negative is unlimited)", "0"},
@@ -202,11 +201,11 @@ private:
     std::set<Addr> addrsThisCycle;
 
     /* Network connections */
-    MemLinkBase*    downLink;
-    MemLinkBase*    upLink;
+    MemLinkBase*    linkDown_;
+    MemLinkBase*    linkUp_;
 
-    bool clockUpLink;
-    bool clockDownLink;
+    bool clockLinkUp_;
+    bool clockLinkDown_;
 
     bool isRequestAddressValid(Addr addr);
 
@@ -224,9 +223,11 @@ private:
 public:
     DirectoryController(ComponentId_t id, Params &params);
     ~DirectoryController();
-    void setup(void);
     void init(unsigned int phase);
+    void setup(void);
+    void complete(unsigned int phase);
     void finish(void);
+
 
     /** Debug - triggered by output.fatal() or SIGUSR2 */
     virtual void printStatus(Output &out);
@@ -402,6 +403,8 @@ private:
     void sendAckPut(MemEvent* event);
     void sendNACK(MemEvent* event);
     
+    void processCompleteEvent(MemEventInit* event);
+
     MSHR * mshr;
     std::unordered_map<Addr, DirEntry*> directory; // Master list of all directory entries, including noncached ones
 

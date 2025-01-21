@@ -18,8 +18,10 @@
 
 #include <sst/core/stringize.h>
 #include <sst/core/params.h>
-#include <string>
+
+#include <iomanip>
 #include <limits>
+#include <string>
 
 using namespace std;
 
@@ -46,7 +48,7 @@ namespace MemHierarchy {
 #define _L7_ CALL_INFO,7,0      //Additional detail
 #define _L8_ CALL_INFO,8,0      //Additional detail
 #define _L9_ CALL_INFO,9,0      //Additional detail
-#define _L10_ CALL_INFO,10,0    //Initialization phase
+#define _L10_ CALL_INFO,10,0    //Untimed phases
 #define _L11_ CALL_INFO,11,0    //Data values
 #define _L20_ CALL_INFO,20,0    //Debug at function call granularity
 
@@ -82,6 +84,15 @@ inline int log2Of(int x){
 
 inline bool isPowerOfTwo(unsigned int x) {
     return !(x & (x-1));
+}
+
+inline std::string getDataString(std::vector<uint8_t>* data) {
+    std::stringstream value;
+    value << std::hex << std::setfill('0');
+    for (unsigned int i = 0; i < data->size(); i++) {
+        value << std::hex << std::setw(2) << (int)data->at(i);
+    }
+    return value.str();
 }
 
 /*

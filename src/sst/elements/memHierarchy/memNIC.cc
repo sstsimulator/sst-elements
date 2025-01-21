@@ -66,6 +66,11 @@ void MemNIC::init(unsigned int phase) {
     MemNICBase::nicInit(link_control, phase);
 }
 
+void MemNIC::complete(unsigned int phase) {
+    link_control->complete(phase);
+    MemNICBase::nicComplete(link_control, phase);
+}
+
 /*
  * Called by parent on a clock
  * Returns whether anything sent this cycle
@@ -118,6 +123,11 @@ void MemNIC::send(MemEventBase *ev) {
         drainQueue(&sendQueue, link_control);
     if (sendQueue.size() == 1) /* Attempt again in 1 cycle */
         reregisterClock(clockTC, clockHandler);
+}
+
+
+void MemNIC::sendUntimedData(MemEventInit* ev, bool broadcast, bool lookup_dst) {
+    MemNICBase::sendUntimedData(ev, broadcast, lookup_dst, link_control);
 }
 
 

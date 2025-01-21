@@ -450,6 +450,8 @@ private:
 
     /** Miscellaneous */
     void printLine(Addr addr);
+    void beginCompleteStage() override;
+    void processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink) override;
     
     bool isFlushing_;
     bool flushDrain_;

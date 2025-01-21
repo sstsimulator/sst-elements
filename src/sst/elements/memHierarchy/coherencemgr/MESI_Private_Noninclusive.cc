@@ -64,7 +64,7 @@ bool MESIPrivNoninclusive::handleGetS(MemEvent* event, bool inMSHR) {
                     mshr_->setProfiled(addr);
                 }
                 recordLatencyType(event->getID(), LatType::MISS);
-                sendTime = forwardMessage(event, event->getSize(), 0, nullptr);
+                sendTime = forwardMessage(event, lineSize_, 0, nullptr);
                 mshr_->setInProgress(addr);
 
                 if (is_debug_event(event))
@@ -158,7 +158,7 @@ bool MESIPrivNoninclusive::handleGetX(MemEvent* event, bool inMSHR) {
                     notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
                     mshr_->setProfiled(addr);
                 }
-                sendTime = forwardMessage(event, event->getSize(), 0, nullptr);
+                sendTime = forwardMessage(event, lineSize_, 0, nullptr);
                 mshr_->setInProgress(addr);
                 if (state == S) {
                     recordLatencyType(event->getID(), LatType::UPGRADE);
@@ -661,27 +661,33 @@ bool MESIPrivNoninclusive::handlePutS(MemEvent * event, bool inMSHR) {
 
     switch (state) {
         case I:
-            if (!inMSHR && mshr_->exists(addr)) { // Raced with something; must be an Inv/Fetch since there can only be one cache above us
-                mshr_->setData(addr, event->getPayload(), false);
-                responses.erase(addr);
-                mshr_->decrementAcksNeeded(addr);
-                if (mshr_->getFrontType(addr) == MSHREntryType::Event && mshr_->getFrontEvent(addr)->getCmd() == Command::Fetch) {
-                    status = allocateLine(event, line, false);
-                    if (status == MemEventStatus::OK) {
-                        line->setState(S);
-                        line->setData(event->getPayload(), 0);
-                        if (is_debug_addr(addr))
-                            printDataValue(line->getAddr(), line->getData(), true);
-                        mshr_->clearData(addr);
-                        sendWritebackAck(event);
-                        cleanUpAfterRequest(event, inMSHR);
-                        break;
-                    }
-                } else { // Inv of some sort
+            if (!inMSHR && mshr_->exists(addr)) { // Raced with something; Inv/Fetch or a local replacement
+                if (mshr_->getFrontType(addr) == MSHREntryType::Writeback) {
+                    // Clean data so OK to drop this request
                     sendWritebackAck(event);
                     delete event;
+                } else {
+                    mshr_->setData(addr, event->getPayload(), false);
+                    responses.erase(addr);
+                    mshr_->decrementAcksNeeded(addr);
+                    if (mshr_->getFrontType(addr) == MSHREntryType::Event && mshr_->getFrontEvent(addr)->getCmd() == Command::Fetch) {
+                        status = allocateLine(event, line, false);
+                        if (status == MemEventStatus::OK) {
+                            line->setState(S);
+                            line->setData(event->getPayload(), 0);
+                            if (is_debug_addr(addr))
+                                printDataValue(line->getAddr(), line->getData(), true);
+                            mshr_->clearData(addr);
+                            sendWritebackAck(event);
+                            cleanUpAfterRequest(event, inMSHR);
+                            break;
+                        }
+                    } else { // Inv of some sort
+                        sendWritebackAck(event);
+                        delete event;
+                    }
+                    retry(addr);
                 }
-                retry(addr);
             } else {
                 status = allocateLine(event, line, inMSHR);
                 if (status == MemEventStatus::OK) {
@@ -1045,7 +1051,7 @@ bool MESIPrivNoninclusive::handleFetch(MemEvent * event, bool inMSHR) {
     switch (state) {
         case I:
             if (mshr_->hasData(addr)) {
-                sendResponseDown(event, event->getSize(), &(mshr_->getData(addr)), mshr_->getDataDirty(addr));
+                sendResponseDown(event, lineSize_, &(mshr_->getData(addr)), mshr_->getDataDirty(addr));
                 cleanUpAfterRequest(event, inMSHR);
             } else if (!inMSHR && mshr_->exists(addr)) {
                 if (mshr_->getFrontType(addr) == MSHREntryType::Writeback || mshr_->getFrontEvent(addr)->getCmd() == Command::FlushLineInv) {  // Raced with eviction
@@ -1056,24 +1062,24 @@ bool MESIPrivNoninclusive::handleFetch(MemEvent * event, bool inMSHR) {
                     delete event;
                 } else if (mshr_->getFrontEvent(addr)->getCmd() == Command::PutS) { // Raced with replacement
                     MemEvent* put = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
-                    sendResponseDown(event, event->getSize(), &(put->getPayload()), false);
+                    sendResponseDown(event, lineSize_, &(put->getPayload()), false);
                     delete event;
                 } else { // Raced with GetX or FlushLine
                     status = allocateMSHR(event, true, 0);
-                    sendFwdRequest(event, Command::Fetch, upperCacheName_, event->getSize(), 0, inMSHR);
+                    sendFwdRequest(event, Command::Fetch, upperCacheName_, lineSize_, 0, inMSHR);
                 }
             } else {
                 if (!inMSHR)
                     status = allocateMSHR(event, true, 0);
                 if (status == MemEventStatus::OK)
-                    sendFwdRequest(event, Command::Fetch, upperCacheName_, event->getSize(), 0, inMSHR);
+                    sendFwdRequest(event, Command::Fetch, upperCacheName_, lineSize_, 0, inMSHR);
             }
             break;
         case S:
         case SM:
         case S_B:
         case S_Inv:
-            sendResponseDown(event, event->getSize(), line->getData(), false);
+            sendResponseDown(event, lineSize_, line->getData(), false);
             cleanUpAfterRequest(event, inMSHR);
             break;
         case I_B:
@@ -1132,7 +1138,7 @@ bool MESIPrivNoninclusive::handleInv(MemEvent * event, bool inMSHR) {
                 delete event;
             } else if (mshr_->exists(addr) && mshr_->getFrontEvent(addr)->getCmd() == Command::PutS) {
                 // Handle Inv
-                sendResponseDown(event, event->getSize(), nullptr, false);
+                sendResponseDown(event, lineSize_, nullptr, false);
                 if (mshr_->hasData(addr)) mshr_->clearData(addr);
                 // Drop PutS
                 sendWritebackAck(static_cast<MemEvent*>(mshr_->getFrontEvent(addr)));
@@ -1143,14 +1149,14 @@ bool MESIPrivNoninclusive::handleInv(MemEvent * event, bool inMSHR) {
                 cleanUpAfterRequest(event, inMSHR);
             } else if (mshr_->exists(addr) && mshr_->hasData(addr)) { // Race with Put (replay)
                 // Handle Inv
-                sendResponseDown(event, event->getSize(), nullptr, false);
+                sendResponseDown(event, lineSize_, nullptr, false);
                 if (mshr_->hasData(addr)) mshr_->clearData(addr);
                 // Clean up
                 cleanUpAfterRequest(event, inMSHR);
             } else {
                 status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 0);
                 if (status == MemEventStatus::OK) {
-                    sendFwdRequest(event, Command::Inv, upperCacheName_, event->getSize(), 0, inMSHR);
+                    sendFwdRequest(event, Command::Inv, upperCacheName_, lineSize_, 0, inMSHR);
                 }
             }
             break;
@@ -1187,12 +1193,12 @@ bool MESIPrivNoninclusive::handleInv(MemEvent * event, bool inMSHR) {
         if (line->getShared()) {
             status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 0);
             if (status == MemEventStatus::OK) {
-                uint64_t sendTime = sendFwdRequest(event, Command::Inv, upperCacheName_, event->getSize(), line->getTimestamp(), inMSHR);
+                uint64_t sendTime = sendFwdRequest(event, Command::Inv, upperCacheName_, lineSize_, line->getTimestamp(), inMSHR);
                 line->setState(state1);
                 line->setTimestamp(sendTime);
             }
         } else {
-            sendResponseDown(event, event->getSize(), line->getData(), false);
+            sendResponseDown(event, lineSize_, line->getData(), false);
             line->setState(state2);
             if (mshr_->hasData(addr))
                 mshr_->clearData(addr);
@@ -1236,7 +1242,7 @@ bool MESIPrivNoninclusive::handleForceInv(MemEvent * event, bool inMSHR) {
                 if (entry) {
                     if (entry->getCmd() == Command::PutS) {
                         // Handle ForceInv
-                        sendResponseDown(event, event->getSize(), nullptr, false);
+                        sendResponseDown(event, lineSize_, nullptr, false);
                         if (mshr_->hasData(addr)) mshr_->clearData(addr);
                         // Drop PutS
                         sendWritebackAck(static_cast<MemEvent*>(entry));
@@ -1245,7 +1251,7 @@ bool MESIPrivNoninclusive::handleForceInv(MemEvent * event, bool inMSHR) {
                         break;
                     } else if (entry->getCmd() == Command::FlushLineInv) {
                         // Handle ForceInv
-                        sendResponseDown(event, event->getSize(), nullptr, false);
+                        sendResponseDown(event, lineSize_, nullptr, false);
                         if (mshr_->hasData(addr)) mshr_->clearData(addr);
                         // Drop evict part of Flush if needed
                         MemEvent* flush = static_cast<MemEvent*>(entry);
@@ -1267,17 +1273,17 @@ bool MESIPrivNoninclusive::handleForceInv(MemEvent * event, bool inMSHR) {
                 sendWritebackAck(put);
                 mshr_->setData(addr, put->getPayload(), put->getDirty());
                 delete put;
-                sendFwdRequest(event, Command::ForceInv, upperCacheName_, event->getSize(), 0, inMSHR);
+                sendFwdRequest(event, Command::ForceInv, upperCacheName_, lineSize_, 0, inMSHR);
             } else if (mshr_->exists(addr) && (CommandWriteback[(int)mshr_->getFrontEvent(addr)->getCmd()])) {
                 if (mshr_->hasData(addr)) mshr_->clearData(addr);
                 sendWritebackAck(static_cast<MemEvent*>(mshr_->getFrontEvent(addr)));
                 delete mshr_->getFrontEvent(addr);
                 mshr_->removeFront(addr);
-                sendResponseDown(event, event->getSize(), nullptr, false);
+                sendResponseDown(event, lineSize_, nullptr, false);
             } else {
                 status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 0);
                 if (status == MemEventStatus::OK) {
-                    sendFwdRequest(event, Command::ForceInv, upperCacheName_, event->getSize(), 0, inMSHR);
+                    sendFwdRequest(event, Command::ForceInv, upperCacheName_, lineSize_, 0, inMSHR);
                 }
             }
             break;
@@ -1336,13 +1342,13 @@ bool MESIPrivNoninclusive::handleForceInv(MemEvent * event, bool inMSHR) {
             if (!inMSHR)
                 status = allocateMSHR(event, true, 0);
             if (status == MemEventStatus::OK) {
-                uint64_t sendTime = sendFwdRequest(event, Command::ForceInv, upperCacheName_, event->getSize(), 0, inMSHR);
+                uint64_t sendTime = sendFwdRequest(event, Command::ForceInv, upperCacheName_, lineSize_, 0, inMSHR);
                 line->setTimestamp(sendTime);
                 line->setState(state1);
                 status = MemEventStatus::Stall;
             }
         } else {
-            sendResponseDown(event, event->getSize(), nullptr, false);
+            sendResponseDown(event, lineSize_, nullptr, false);
             line->setState(state2);
             cleanUpAfterRequest(event, inMSHR);
         }
@@ -1382,7 +1388,7 @@ bool MESIPrivNoninclusive::handleFetchInv(MemEvent * event, bool inMSHR){
     switch (state) {
         case I:
             if (inMSHR && mshr_->hasData(addr)) { // Replay
-                sendResponseDown(event, event->getSize(), &(mshr_->getData(addr)), mshr_->getDataDirty(addr));
+                sendResponseDown(event, lineSize_, &(mshr_->getData(addr)), mshr_->getDataDirty(addr));
                 mshr_->clearData(addr);
                 cleanUpAfterRequest(event, inMSHR);
             } else if (mshr_->pendingWritebackIsDowngrade(addr)) { // Resolve races with pending evictions from upper level caches
@@ -1396,7 +1402,7 @@ bool MESIPrivNoninclusive::handleFetchInv(MemEvent * event, bool inMSHR){
                 if (entry) {
                     if (entry->getCmd() == Command::PutS) {
                         // Return AckInv
-                        sendResponseDown(event, event->getSize(), &(static_cast<MemEvent*>(entry)->getPayload()), false);
+                        sendResponseDown(event, lineSize_, &(static_cast<MemEvent*>(entry)->getPayload()), false);
                         delete event;
                         // Drop PutS
                         if (mshr_->hasData(addr)) mshr_->clearData(addr);
@@ -1406,7 +1412,7 @@ bool MESIPrivNoninclusive::handleFetchInv(MemEvent * event, bool inMSHR){
                         break;
                     } else if (entry->getCmd() == Command::FlushLineInv) {
                         // Handle FetchInv
-                        sendResponseDown(event, event->getSize(), &(static_cast<MemEvent*>(entry)->getPayload()), false);
+                        sendResponseDown(event, lineSize_, &(static_cast<MemEvent*>(entry)->getPayload()), false);
                         if (mshr_->hasData(addr)) mshr_->clearData(addr);
                         // Drop evict part of Flush if needed
                         MemEvent* flush = static_cast<MemEvent*>(entry);
@@ -1430,7 +1436,7 @@ bool MESIPrivNoninclusive::handleFetchInv(MemEvent * event, bool inMSHR){
                 sendWritebackAck(put);
                 mshr_->setData(addr, put->getPayload(), put->getDirty());
                 delete put;
-                sendFwdRequest(event, Command::FetchInv, upperCacheName_, event->getSize(), 0, inMSHR);
+                sendFwdRequest(event, Command::FetchInv, upperCacheName_, lineSize_, 0, inMSHR);
             } else if (mshr_->exists(addr) && (CommandWriteback[(int)mshr_->getFrontEvent(addr)->getCmd()])) {
                 MemEvent * put = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
                 sendWritebackAck(put);
@@ -1441,7 +1447,7 @@ bool MESIPrivNoninclusive::handleFetchInv(MemEvent * event, bool inMSHR){
             } else {
                 status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 0);
                 if (status == MemEventStatus::OK) {
-                    sendFwdRequest(event, Command::FetchInv, upperCacheName_, event->getSize(), 0, inMSHR);
+                    sendFwdRequest(event, Command::FetchInv, upperCacheName_, lineSize_, 0, inMSHR);
                 }
             }
             break;
@@ -1487,12 +1493,12 @@ bool MESIPrivNoninclusive::handleFetchInv(MemEvent * event, bool inMSHR){
         if (line->getShared() || line->getOwned()) {
             status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 0);
             if (status == MemEventStatus::OK) {
-                uint64_t sendTime = sendFwdRequest(event, Command::FetchInv, upperCacheName_, event->getSize(), 0, inMSHR);
+                uint64_t sendTime = sendFwdRequest(event, Command::FetchInv, upperCacheName_, lineSize_, 0, inMSHR);
                 line->setTimestamp(sendTime);
                 line->setState(state1);
             }
         } else {
-            sendResponseDown(event, event->getSize(), line->getData(), state == M);
+            sendResponseDown(event, lineSize_, line->getData(), state == M);
             line->setState(state2);
             cleanUpAfterRequest(event, inMSHR);
         }
@@ -1528,7 +1534,7 @@ bool MESIPrivNoninclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
     switch (state) {
         case I:
             if (inMSHR && mshr_->hasData(addr)) { // Replay
-                sendResponseDown(event, event->getSize(), &(mshr_->getData(addr)), mshr_->getDataDirty(addr));
+                sendResponseDown(event, lineSize_, &(mshr_->getData(addr)), mshr_->getDataDirty(addr));
                 mshr_->clearData(addr);
                 cleanUpAfterRequest(event, inMSHR);
                 break;
@@ -1567,7 +1573,7 @@ bool MESIPrivNoninclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
             if (!inMSHR)
                 status = allocateMSHR(event, true, 0);
             if (status == MemEventStatus::OK) {
-                sendFwdRequest(event, Command::FetchInvX, upperCacheName_, event->getSize(), 0, inMSHR);
+                sendFwdRequest(event, Command::FetchInvX, upperCacheName_, lineSize_, 0, inMSHR);
             }
             break;
         case E:
@@ -1583,7 +1589,7 @@ bool MESIPrivNoninclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
                 }
                 break;
             }
-            sendResponseDown(event, event->getSize(), line->getData(), state == M);
+            sendResponseDown(event, lineSize_, line->getData(), state == M);
             line->setState(S);
             cleanUpAfterRequest(event, inMSHR);
             break;
@@ -1899,9 +1905,9 @@ bool MESIPrivNoninclusive::handleAckInv(MemEvent * event, bool inMSHR) {
             {
             MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
             if (mshr_->hasData(addr) && req->getCmd() == Command::FetchInv)
-                sendResponseDown(req, req->getSize(), &(mshr_->getData(addr)), mshr_->getDataDirty(addr));
+                sendResponseDown(req, lineSize_, &(mshr_->getData(addr)), mshr_->getDataDirty(addr));
             else
-                sendResponseDown(req, req->getSize(), nullptr, false);
+                sendResponseDown(req, lineSize_, nullptr, false);
             cleanUpAfterResponse(event, inMSHR);
             return true;
             }
@@ -2203,7 +2209,8 @@ bool MESIPrivNoninclusive::handleEviction(Addr addr, PrivateCacheLine*& line, db
         case M:
             if (!mshr_->getPendingRetries(line->getAddr())) {
                 if (line->getShared()) {
-                    uint64_t sendTime = sendWriteback(line->getAddr(), lineSize_, Command::PutX, line->getData(), true, line->getTimestamp());
+                    Command cmd = lastLevel_ ? Command::PutM : Command::PutX;
+                    uint64_t sendTime = sendWriteback(line->getAddr(), lineSize_, cmd, line->getData(), true, line->getTimestamp());
                     line->setTimestamp(sendTime-1);
                     if (!lastLevel_) {
                         mshr_->insertWriteback(line->getAddr(), true);
@@ -2616,3 +2623,81 @@ void MESIPrivNoninclusive::recordLatency(Command cmd, int type, uint64_t latency
     }
 }
 
+/***********************************************************************************************************
+ * Cache flush at simulation shutdown
+ ***********************************************************************************************************/
+void MESIPrivNoninclusive::beginCompleteStage() {
+    flush_state_ = FlushState::Ready;
+    shutdown_flush_counter_ = 0;
+}
+
+void MESIPrivNoninclusive::processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink) {
+    if (event->getInitCmd() == MemEventInit::InitCommand::Flush) {
+        MemEventUntimedFlush* flush = static_cast<MemEventUntimedFlush*>(event);
+
+        if ( flush->request() ) {
+            if ( flush_state_ == FlushState::Ready ) {
+                flush_state_ = FlushState::Invalidate;
+                std::set<MemLinkBase::EndpointInfo>* src = highlink->getSources();
+                shutdown_flush_counter_ += src->size();
+                for (auto it = src->begin(); it != src->end(); it++) {
+                    MemEventUntimedFlush* forward = new MemEventUntimedFlush(getName());
+                    forward->setDst(it->name);
+                    highlink->sendUntimedData(forward, false, false);
+                }
+            }
+            if (shutdown_flush_counter_ != 0) {
+                delete event;
+                return;
+            }
+        } else {
+            shutdown_flush_counter_--;
+            if (shutdown_flush_counter_ != 0) {
+                delete event;
+                return;
+            }
+        }
+
+        // Ready to flush - all other caches above hae already flushed
+        for (auto it : *cacheArray_) {
+            // Only flush dirty data, no need to fix coherence state
+            switch (it->getState()) {
+                case I:
+                case S:
+                case E:
+                    break;
+                case M:
+                    {
+                    MemEventInit * ev = new MemEventInit(cachename_, Command::Write, it->getAddr(), *(it->getData()));
+                    lowlink->sendUntimedData(ev, false, true); // Don't broadcast, route by addr
+                    break;
+                    }
+            default:
+                // TODO handle case where sim ends and state is not stable
+                std::string valstr = getDataString(it->getData());
+                debug->output("%s, NOTICE: Unable to flush cache line that is in transient state '%s'. Addr = 0x%" PRIx64 ". Value = %s\n",
+                    cachename_.c_str(), StateString[it->getState()], it->getAddr(), valstr.c_str());
+                break;
+            };
+        }
+
+        if (!flush_manager_) {
+            std::set<MemLinkBase::EndpointInfo>* dst = lowlink->getDests();
+            for (auto it = dst->begin(); it != dst->end(); it++) {
+                MemEventUntimedFlush* response = new MemEventUntimedFlush(getName(), false);
+                response->setDst(it->name);
+                lowlink->sendUntimedData(response, false, false);
+            }
+        }
+        delete event;
+    } else if (event->getCmd() == Command::Write ) {
+        event->setSrc(getName());
+        lowlink->sendUntimedData(event, false, true);
+
+        // Invalidate local line so we don't flush it
+        PrivateCacheLine * line = cacheArray_->lookup(event->getAddr(), false);
+        if (line) line->setState(I);
+    } else {
+        delete event; // Nothing for now
+    }
+}

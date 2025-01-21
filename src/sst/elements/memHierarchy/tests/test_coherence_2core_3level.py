@@ -26,15 +26,23 @@ from mhlib import Bus
 DEBUG_L1 = 0
 DEBUG_L2 = 0
 DEBUG_L3 = 0
+DEBUG_BUS = 0
 DEBUG_MEM = 0
+DEBUG_LEVEL = 11
 
 option = 0;
-if len(sys.argv) != 5:
-   print("Argument count is incorrect. Required: <test_case> <random_seed0> <random_seed1> <coherence_protocol>")
+if len(sys.argv) < 6:
+   print("Argument count is incorrect. Required: <test_case> <random_seed0> <random_seed1> <coherence_protocol> <enable_llsc>")
+   sys.exit(-1)
 
 option = int(sys.argv[1])
 seeds = [int(sys.argv[2]), int(sys.argv[3])]
 protocol = sys.argv[4]
+llsc = sys.argv[5] == "yes"
+
+outdir = ""
+if len(sys.argv) >= 7:
+    outdir = sys.argv[6]
 
 cpu_params = {
     "memFreq" : 1,
@@ -52,9 +60,10 @@ cpu0.addParams({
     "rngseed" : seeds[0],
     "write_freq" : 38, # 38% writes
     "read_freq" : 58,  # 58% reads
-    "llsc_freq" : 2,   # 2% LLSC
     "flushcache_freq" : 2, # 2% FlushAll
 })
+if llsc:
+    cpu0.addParam("llsc_freq", 2)   # 2% LLSC
 cpu0_iface = cpu0.setSubComponent("memory", "memHierarchy.standardInterface")
 
 # Core 1
@@ -64,9 +73,10 @@ cpu1.addParams({
     "rngseed" : seeds[1],
     "write_freq" : 34, # 34% writes
     "read_freq" : 62,  # 62% reads
-    "llsc_freq" : 1,   # 2% LLSC
     "flushcache_freq" : 3,
 })
+if llsc:
+    cpu1.addParam("llsc_freq", 1)   # 2% LLSC
 cpu1_iface = cpu1.setSubComponent("memory", "memHierarchy.standardInterface")
 
 # L1s
@@ -78,7 +88,7 @@ l1cache_params = {
       "associativity" : 4,
       "mshr_num_entries" : 8,
       "cache_line_size" : "64",
-      "debug_level" : "10",
+      "debug_level" : DEBUG_LEVEL,
       "debug" : DEBUG_L1,
       "L1" : "1",
       "cache_size" : "1 KiB"
@@ -98,9 +108,13 @@ link1_cpu_l1.connect( (cpu1_iface, "lowlink", "100ps"), (l1cache1, "highlink", "
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
     "debug" : DEBUG_MEM,
-    "debug_level" : 10,
+    "debug_level" : DEBUG_LEVEL,
     "clock" : "1GHz",
     "addr_range_end" : 512*1024*1024-1,
+    "backing" : "malloc",
+    "backing_size_unit" : "1KiB",
+    "backing_init_zero" : True,
+    "backing_out_file" : "{}/test_memHierarchy_coherence_2core_3level_case{}_{}.malloc".format(outdir, option, protocol),
 })
 
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
@@ -132,7 +146,7 @@ l3cache_noninclusive_shared_params = {
     "noninclusive_directory_associativity" : 4
 }
 
-bus_params = {"bus_frequency" : "3GHz"}
+bus_params = {"bus_frequency" : "3GHz", "debug" : DEBUG_BUS, "debug_level" : DEBUG_LEVEL}
 
 
 #########################
@@ -147,7 +161,7 @@ l2cache_base_params = {
     "associativity" : "8",
     "mshr_num_entries" : 16,
     "cache_line_size" : "64",
-    "debug_level" : "10",
+    "debug_level" : DEBUG_LEVEL,
     "debug" : DEBUG_L2,
 }
 l2cache_size_full = {"cache_size" : "4KiB"} # Single (shared) inclusive cache
@@ -273,7 +287,7 @@ l3cache_base_params = {
     "associativity" : "12",
     "cache_line_size" : "64",
     "mshr_num_entries" : 32,
-    "debug_level" : "10",
+    "debug_level" : DEBUG_LEVEL,
     "debug" : DEBUG_L2,
 }
 
@@ -369,7 +383,7 @@ elif option == 6 or option == 11:   ##  directory/single
         "access_latency_cycles" : 1,
         "mshr_latency_cycles" : 1,
         "max_requests_per_cycle" : 2,
-        "debug_level" : "10",
+        "debug_level" : DEBUG_LEVEL,
         "debug" : DEBUG_L3,
     })
     
@@ -416,7 +430,7 @@ elif option == 8: ##  8. directory/distributed
         "access_latency_cycles" : 1,
         "mshr_latency_cycles" : 1,
         "max_requests_per_cycle" : 2,
-        "debug_level" : "10",
+        "debug_level" : DEBUG_LEVEL,
         "debug" : DEBUG_L3,
         "interleave_step" : "256B",
         "interleave_size" : "128B", # interleave 128B chunks (2 cachelines)

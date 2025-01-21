@@ -23,16 +23,22 @@ verbose = 2
 DEBUG_L1 = 0
 DEBUG_L2 = 0
 DEBUG_MEM = 0
-DEBUG_LEVEL = 10
+DEBUG_LEVEL = 11
 
 option = 0
 
-if len(sys.argv) != 4:
-    print("Argument count is incorrect. Required: <test_case> <random_seed> <coherence_protocol>")
+if len(sys.argv) < 5:
+    print("Argument count is incorrect. Required: <test_case> <random_seed> <coherence_protocol> <enable_llsc>")
+    exit(0)
 
 option = int(sys.argv[1])
 cpu_seed = int(sys.argv[2])
 protocol = sys.argv[3]
+llsc = sys.argv[4] == "yes"
+
+outdir = ""
+if len(sys.argv) >= 6:
+    outdir = sys.argv[5]
 
 cpu = sst.Component("core", "memHierarchy.standardCPU")
 cpu.addParams({
@@ -46,9 +52,11 @@ cpu.addParams({
     "reqsPerIssue" : 3,
     "write_freq" : 36, # 36% writes
     "read_freq" : 58,  # 60% reads
-    "llsc_freq" : 3,   # 3% LLSC
     "flushcache_freq" : 3
 })
+if llsc:
+    cpu.addParam("llsc_freq", 3)   # 3% LLSC
+
 iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
 
 if option != 6:
@@ -79,6 +87,10 @@ memctrl.addParams({
     "clock" : "1GHz",
     "verbose" : verbose,
     "addr_range_end" : 512*1024*1024-1,
+    "backing" : "malloc",
+    "backing_size_unit" : "1KiB",
+    "backing_init_zero" : True,
+    "backing_out_file" : "{}/test_memHierarchy_coherence_1core_case{}_{}.malloc".format(outdir, option, protocol),
 })
 
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")

@@ -137,6 +137,7 @@ public:
     virtual void setRecvHandler(Event::HandlerBase * handler) { recvHandler = handler; }
     virtual bool isClocked() { return false; }
     virtual void init(unsigned int UNUSED(phase)) { }
+    virtual void complete(unsigned int UNUSED(phase)) { }
     virtual void finish() { }
     virtual void setup() { }
 
@@ -148,21 +149,8 @@ public:
     virtual void emergencyShutdownDebug(Output &out) { }
 
     /* Send and receive functions for MemLink */
-    [[deprecated("sendInitData() has been deprecated and will be removed in SST 14.  Please use sendUntimedData().")]]
-    virtual void sendInitData(MemEventInit * ev, bool broadcast = true) =0;
-    virtual void sendUntimedData(MemEventInit * ev, bool broadcast = true) {
-        DISABLE_WARN_DEPRECATED_DECLARATION
-        sendInitData(ev,broadcast);
-        REENABLE_WARNING
-    }
-    [[deprecated("recvInitData() has been deprecated and will be removed in SST 14.  Please use recvUntimedData().")]]
-    virtual MemEventInit* recvInitData() =0;
-    virtual MemEventInit* recvUntimedData() {
-        DISABLE_WARN_DEPRECATED_DECLARATION
-        auto ret = recvInitData();
-        REENABLE_WARNING
-        return ret;
-    }
+    virtual void sendUntimedData(MemEventInit * ev, bool broadcast = true, bool lookup_dst = true) =0;
+    virtual MemEventInit* recvUntimedData() =0;
     virtual void send(MemEventBase * ev) =0;
 
     /*
@@ -218,7 +206,7 @@ protected:
     SST::Event::HandlerBase * recvHandler; // Event handler to call when an event is received
 
     // Data structures
-    std::queue<MemEventInit*> initReceiveQ;     // queue for messages received during init
+    std::queue<MemEventInit*> untimed_receive_queue_;     // queue for messages received during init/complete
 
 private:
 

@@ -467,7 +467,7 @@ void Cache::init(unsigned int phase) {
 
         while(MemEventInit *event = linkDown_->recvUntimedData()) {
             if (event->getCmd() == Command::NULLCMD) {
-                dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
+                dbg_->debug(_L10_, "U: %-20s   Event:Untimed   (%s)\n",
                         getName().c_str(), event->getVerboseString().c_str());
             }
             /* If event is from one of our destinations, update parameters - link only returns events from destinations */
@@ -495,7 +495,7 @@ void Cache::init(unsigned int phase) {
 
     while (MemEventInit * memEvent = linkUp_->recvUntimedData()) {
         if (memEvent->getCmd() == Command::NULLCMD) {
-            dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
+            dbg_->debug(_L10_, "U: %-20s   Event:Untimed   (%s)\n",
                     getName().c_str(), memEvent->getVerboseString().c_str());
             if (memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
                 coherenceMgr_->hasUpperLevelCacheName(memEvent->getSrc());
@@ -507,18 +507,18 @@ void Cache::init(unsigned int phase) {
                 linkDown_->sendUntimedData(mEv);
             }
         } else {
-            dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
+            dbg_->debug(_L10_, "U: %-20s   Event:Untimed   (%s)\n",
                     getName().c_str(), memEvent->getVerboseString().c_str());
             MemEventInit * mEv = memEvent->clone();
             mEv->setSrc(getName());
-            linkDown_->sendUntimedData(mEv, false);
+            linkDown_->sendUntimedData(mEv, false, true);
         }
         delete memEvent;
     }
 
     while (MemEventInit * memEvent = linkDown_->recvUntimedData()) {
         if (memEvent->getCmd() == Command::NULLCMD) {
-            dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
+            dbg_->debug(_L10_, "U: %-20s   Event:Untimed   (%s)\n",
                     getName().c_str(), memEvent->getVerboseString().c_str());
 
             if (linkDown_->isDest(memEvent->getSrc()) && memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
@@ -551,6 +551,39 @@ void Cache::setup() {
     coherenceMgr_->setup();
 }
 
+void Cache::complete(unsigned int phase) {
+    if ( phase == 0 ) {
+        coherenceMgr_->beginCompleteStage();
+    }
+
+    // Case: 1 link
+    if (linkUp_ == linkDown_) {
+        linkDown_->complete(phase);
+
+        while(MemEventInit *event = linkDown_->recvUntimedData()) {
+            dbg_->debug(_L10_, "U: %-20s   Event:Untimed   (%s)\n",
+                    getName().c_str(), event->getVerboseString().c_str());
+            coherenceMgr_->processCompleteEvent(event, linkUp_, linkDown_);
+        }
+        return;
+    }
+
+    // Case: 2 links
+    linkUp_->complete(phase);
+    linkDown_->complete(phase);
+
+    while (MemEventInit * event = linkUp_->recvUntimedData()) {
+        dbg_->debug(_L10_, "U: %-20s   Event:Untimed   (%s)\n",
+                getName().c_str(), event->getVerboseString().c_str());
+        coherenceMgr_->processCompleteEvent(event, linkUp_, linkDown_);
+    }
+
+    while (MemEventInit * event = linkDown_->recvUntimedData()) {
+        dbg_->debug(_L10_, "U: %-20s   Event:Untimed   (%s)\n",
+                getName().c_str(), event->getVerboseString().c_str());
+        coherenceMgr_->processCompleteEvent(event, linkUp_, linkDown_);
+    }
+}
 
 void Cache::finish() {
     if (!clockIsOn_) { // Correct statistics

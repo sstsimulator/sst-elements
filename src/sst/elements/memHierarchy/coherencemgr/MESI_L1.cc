@@ -1873,3 +1873,44 @@ void MESIL1::printStatus(Output &out) {
     cacheArray_->printCacheArray(out);
 }
 
+void MESIL1::beginCompleteStage() {
+    isFlushing_ = false;
+}
+
+void MESIL1::processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink) {
+    if (event->getInitCmd() == MemEventInit::InitCommand::Flush) {
+        if (isFlushing_) { // Already in progress, ignore
+            delete event; 
+            return;
+        }
+
+        isFlushing_ = true;
+        for (auto it : *cacheArray_) {
+            // Only flush dirty data, no need to fix coherence state
+            switch (it->getState()) {
+                case I:
+                case S:
+                case E:
+                    break;
+                case M:
+                    {
+                    MemEventInit * ev = new MemEventInit(cachename_, Command::Write, it->getAddr(), *(it->getData()));
+                    lowlink->sendUntimedData(ev, false, true); // Don't broadcast, route by addr
+                    break;
+                    }
+            default:
+                // TODO handle case where sim ends and state is not stable
+                std::string valstr = getDataString(it->getData());
+                debug->output("%s, NOTICE: Unable to flush cache line that is in transient state '%s'. Addr = 0x%" PRIx64 ". Value = %s\n",
+                    cachename_.c_str(), StateString[it->getState()], it->getAddr(), valstr.c_str());
+                break;
+            };
+        }
+
+        if (!flush_manager_) { /* There's another cache/dir level below us; let it know we're done */
+            MemEventUntimedFlush* response = new MemEventUntimedFlush(getName(), false);
+            lowlink->sendUntimedData(response, true);
+        }
+    }
+    delete event; // Nothing for now
+}
