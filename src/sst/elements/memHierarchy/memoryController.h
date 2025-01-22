@@ -38,12 +38,15 @@ public:
     SST_ELI_REGISTER_COMPONENT(MemController, "memHierarchy", "MemController", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Memory controller, interfaces to a main memory model for timing", COMPONENT_CATEGORY_MEMORY)
 
-#define MEMCONTROLLER_ELI_PARAMS {"backend.mem_size",    "(string) Size of physical memory. NEW REQUIREMENT: must include units in 'B' (SI ok). Simple fix: add 'MiB' to old value.", NULL},\
+#define MEMCONTROLLER_ELI_PARAMS {"backend.mem_size",    "(string) Size of physical memory. Must include units in 'B' (SI prefixes ok).", NULL},\
             {"clock",               "(string) Clock frequency of controller", NULL},\
-            {"backendConvertor",    "(string) Backend convertor to load", "memHierarchy.simpleMembackendConvertor"},\
+            {"addr_range_start",    "(uint) Lowest address handled by this memory.", "0"},\
+            {"addr_range_end",      "(uint) Highest address handled by this memory.", "uint64_t-1"},\
+            {"interleave_size",     "(string) Size of interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},\
+            {"interleave_step",     "(string) Distance between starting addresses of interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},\
+            {"backendConvertor",    "(string) Backend convertor to load. In most cases, you will not need to change this parameter.", "memHierarchy.simpleMembackendConvertor"},\
             {"backend",             "(string) Backend memory model to use for timing.  Defaults to simpleMem", "memHierarchy.simpleMem"},\
-            {"request_width",       "(uint) Max request width to the backend", "64"},\
-            {"trace_file",          "(string) File name (optional) of a trace-file to generate.", ""},\
+            {"request_width",       "(uint) Max request width to the backend in bytes", "64"},\
             {"verbose",             "(uint) Output verbosity for warnings/errors. 0[fatal error only], 1[warnings], 2[full state dump on fatal error]","1"},\
             {"debug_level",         "(uint) Debugging level: 0 to 10. Must configure sst-core with '--enable-debug'. 1=info, 2-10=debug output", "0"},\
             {"debug",               "(uint) 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},\
@@ -52,12 +55,12 @@ public:
             {"listener%(listenercount)d", "(string) Loads a listener module into the controller", ""},\
             {"backing",             "(string) Type of backing store to use. Options: 'none' - no backing store (only use if simulation does not require correct memory values), 'malloc', or 'mmap'", "mmap"},\
             {"backing_size_unit",   "(string) For 'malloc' backing stores, malloc granularity", "1MiB"},\
-            {"memory_file",         "(string) Optional backing-store file to pre-load memory, or store resulting state", "N/A"},\
-            {"addr_range_start",    "(uint) Lowest address handled by this memory.", "0"},\
-            {"addr_range_end",      "(uint) Highest address handled by this memory.", "uint64_t-1"},\
-            {"interleave_size",     "(string) Size of interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},\
-            {"interleave_step",     "(string) Distance between interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},\
-            {"customCmdMemHandler", "(string) Name of the custom command handler to load", ""}
+            {"backing_init_zero",   "(string) For 'malloc' backing stores, whether to initialize memory values to 0", "false"},\
+            {"memory_file",         "(string) DEPRECATED: Use 'backing_in_file' and/or 'backing_out_file' instead. Optional backing-store file to pre-load memory and/or store resulting state. If file does not exist, the backing-store will create it.", "N/A"},\
+            {"backing_in_file",     "(string) An optional file to pre-load memory contents from.", ""},\
+            {"backing_out_file",    "(string) An optional file to write out memory contents to. Setting this will also trigger a flush of cache contents prior to writing the file. May be the same as 'backing_in_file'.", ""},\
+            {"customCmdMemHandler", "(string) Name of the custom command handler to load", ""},\
+            {"test_mode",           "(bool) Testing mode, generates output for testing only", "false"}
 
     SST_ELI_DOCUMENT_PARAMS( MEMCONTROLLER_ELI_PARAMS )
 
@@ -76,7 +79,7 @@ public:
             {"customCmdHandler", "Optional handler for custom command types", "SST::MemHierarchy::CustomCmdMemHandler"}, \
             {"listener", "Optional listeners to gather statistics, create traces, etc. Multiple listeners supported.", "SST::MemHierarchy::CacheListener"}, \
             {"highlink", "CPU-side port manager (e.g., link to caches/cpu). If used, do not connect the 'highlink' port and connect the subcomponent's port(s) instead. Defaults to 'memHierarchy.MemLink' if the 'highlink' port is used instead.", "SST::MemHierarchy.MemLinkBase"},\
-            {"cpulink", "DEPRECATED: Renamed to 'highlink' for naming consistency. CPU-side link manager (e.g., to caches/cpu). Defaults to MemLink.", "SST::MemHierarchy::MemLinkBase"}
+            {"cpulink", "DEPRECATED: Renamed to 'highlink' for naming consistency. CPU-side link manager (e.g., towards caches/cpu). A common setting for network connections is 'memHierarchy.MemNIC'.", "SST::MemHierarchy::MemLinkBase"}
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( MEMCONTROLLER_ELI_SUBCOMPONENTSLOTS )
 
@@ -84,9 +87,10 @@ public:
     typedef uint64_t ReqId;
 
     MemController(ComponentId_t id, Params &params);
-    virtual void init(unsigned int);
-    virtual void setup();
-    void finish();
+    virtual void init(unsigned int phase) override;
+    virtual void setup() override;
+    virtual void complete(unsigned int phase) override;
+    void finish() override;
 
     virtual void handleMemResponse( SST::Event::id_type id, uint32_t flags );
 
@@ -128,7 +132,9 @@ protected:
     int dlevel;
 
     MemBackendConvertor*    memBackendConvertor_;
+    
     Backend::Backing*       backing_;
+    std::string backing_outfile_;
 
     MemLinkBase* link_;         // Link to the rest of memHierarchy
     bool clockLink_;            // Flag - should we call clock() on this link or not
@@ -170,6 +176,8 @@ private:
     std::map<SST::Event::id_type, MemEventBase*> outstandingEvents_; // For sending responses. Expect backend to respond to ALL requests so that we know the execution order
 
     void handleCustomEvent(MemEventBase* ev);
+
+    bool test_;
 };
 
 }}

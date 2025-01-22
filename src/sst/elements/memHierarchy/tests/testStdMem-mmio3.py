@@ -108,17 +108,18 @@ mmio_l1_nic.addParams({"group" : mmio_group,
                     "network_bw" : network_bw })
 mmio_l1_nic.addParams(debug_params)
 
-dir = sst.Component("directory", "memHierarchy.DirectoryController")
-dir.addParams({
+dirctrl = sst.Component("directory", "memHierarchy.DirectoryController")
+dirctrl.addParams({
       "clock" : clock,
       "entry_cache_size" : 16384,
       "mshr_num_entries" : 16,
+      "coherence_protocol" : "MSI",
       "addr_range_end" : mmio_addr - 1,
       "debug" : DEBUG_DIR,
       "debug_level" : 10,
 })
 
-dir_nic = dir.setSubComponent("highlink", "memHierarchy.MemNIC")
+dir_nic = dirctrl.setSubComponent("highlink", "memHierarchy.MemNIC")
 dir_nic.addParams({
       "group" : dir_group,
       "sources" : dir_src,

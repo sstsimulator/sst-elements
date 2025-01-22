@@ -189,6 +189,10 @@ void StandardInterface::setup() {
     link_->setup();
 }
 
+void StandardInterface::complete(unsigned int phase) {
+    link_->complete(phase);
+}
+
 void StandardInterface::finish() { }
 
 /* Writes are allowed during init() but nothing else */
@@ -217,6 +221,10 @@ void StandardInterface::send(StandardMem::Request* req) {
     MemEventBase *me = static_cast<MemEventBase*>(req->convert(converter_));
 #ifdef __SST_DEBUG_OUTPUT__
       debug.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Convert   EventID: <%" PRIu64", %" PRIu32 "> (%s)\n", getCurrentSimCycle(), getName().c_str(), me->getID().first, me->getID().second, req->getString().c_str());
+      if (me->getCmd() == Command::Write) {
+        MemEvent* mev = static_cast<MemEvent*>(me);
+        debug.debug(_L11_, "V: %-40" PRIu64 " %-20s  WRITE         0x%-16" PRIx64 "              B: %-3zu   %s\n", getCurrentSimCycle(), getName().c_str(), mev->getAddr(), mev->getSize(), getDataString(&(mev->getPayload())).c_str() );
+      }
     fflush(stdout);
 #endif
 

@@ -254,18 +254,18 @@ struct memEventCmp {
 };
 
 /*
- * Init event type
+ * Untimed event type
  */
 
 class MemEventInit : public MemEventBase  {
 public:
 
-    enum class InitCommand { Region, Data, Coherence, Endpoint };
+    enum class InitCommand { Region, Data, Coherence, Endpoint, Flush };
 
-    /* Init event */
+    /* Untimed event */
     MemEventInit(std::string src, InitCommand cmd) : MemEventBase(src, Command::NULLCMD), initCmd_(cmd) { }
 
-    /* Init events for initializing memory contents */
+    /* Events for initializing memory contents and/or writing back data from caches */
     MemEventInit(std::string src, Command cmd, Addr addr, std::vector<uint8_t> &data) :
         MemEventBase(src, cmd), initCmd_(InitCommand::Data), addr_(addr), payload_(data) { }
 
@@ -285,6 +285,7 @@ public:
         else if (initCmd_ == InitCommand::Data) str = " InitCmd: Data";
         else if (initCmd_ == InitCommand::Coherence) str = " InitCmd: Coherence";
         else if (initCmd_ == InitCommand::Endpoint) str = " InitCmd: Endpoint";
+        else if (initCmd_ == InitCommand::Flush) str = " InitCmd: Flush";
         else str = " InitCmd: Unknown command";
 
         return MemEventBase::getVerboseString(level) + str;
@@ -484,6 +485,37 @@ public:
     }
 
     ImplementSerializable(SST::MemHierarchy::MemEventInitRegion);
+};
+
+class MemEventUntimedFlush : public MemEventInit {
+public:
+    
+    MemEventUntimedFlush(std::string src, bool request = true ) :
+        MemEventInit(src, InitCommand::Flush), request_(request) { }
+
+    virtual MemEventUntimedFlush* clone(void) override {
+        return new MemEventUntimedFlush(*this);
+    }
+
+    virtual std::string getVerboseString(int level = 1) override {
+        return MemEventInit::getVerboseString(level) + (request_ ? "Request" : "Response");
+    }
+
+    bool request() { return request_; }
+    void setRequest(bool request) { request_ = request; }
+
+private:
+    MemEventUntimedFlush() {} // For serialization only
+
+    bool request_; // True=request; False=response
+
+public:
+    void serialize_order(SST::Core::Serialization::serializer &ser) override {
+        MemEventInit::serialize_order(ser);
+        ser & request_;
+    }
+
+    ImplementSerializable(SST::MemHierarchy::MemEventUntimedFlush);
 };
 
 

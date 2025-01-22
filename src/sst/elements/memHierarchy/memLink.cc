@@ -96,9 +96,9 @@ void MemLink::init(unsigned int phase) {
                     ep_info.region = it->first;
                     addEndpoint(ep_info);
                 }
-                initReceiveQ.push(mEv); // Our component will forward on all its other ports
+                untimed_receive_queue_.push(mEv); // Our component will forward on all its other ports
             } else {
-                initReceiveQ.push(mEv);
+                untimed_receive_queue_.push(mEv);
             }
         } else
             delete ev;
@@ -148,12 +148,22 @@ void MemLink::setup() {
     }
 }
 
+void MemLink::complete(unsigned int phase) {
+    
+    // Receive events
+    SST::Event * ev;
+    while ((ev = link_->recvUntimedData())) {
+        MemEventInit * mEv = static_cast<MemEventInit*>(ev);
+        untimed_receive_queue_.push(mEv);
+    }
+}
 
 /**
- * send init data
+ * send untimed data
  */
-void MemLink::sendInitData(MemEventInit * event, bool broadcast) {
-    if (!broadcast) {
+void MemLink::sendUntimedData(MemEventInit * event, bool broadcast, bool lookup_dst) {
+    
+    if (!broadcast && lookup_dst) {
         std::string dst = findTargetDestination(event->getRoutingAddress());
         if (dst == "") {
             /* Stall this until address is known */
@@ -162,18 +172,18 @@ void MemLink::sendInitData(MemEventInit * event, bool broadcast) {
         }
         event->setDst(dst);
     }
-    dbg.debug(_L10_, "%s sending init message: %s\n", getName().c_str(), event->getVerboseString().c_str());
+    dbg.debug(_L10_, "%s sending untimed message: %s\n", getName().c_str(), event->getVerboseString().c_str());
     link_->sendUntimedData(event);
 }
 
 /**
- * receive init data
+ * receive untimed data
  */
-MemEventInit * MemLink::recvInitData() {
+MemEventInit * MemLink::recvUntimedData() {
     MemEventInit * me = nullptr;
-    if (!initReceiveQ.empty()) {
-        me = initReceiveQ.front();
-        initReceiveQ.pop();
+    if (!untimed_receive_queue_.empty()) {
+        me = untimed_receive_queue_.front();
+        untimed_receive_queue_.pop();
     }
     return me;
 }

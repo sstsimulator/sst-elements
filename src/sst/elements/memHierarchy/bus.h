@@ -71,6 +71,7 @@ public:
 
     Bus(SST::ComponentId_t id, SST::Params& params);
     virtual void init(unsigned int phase);
+    virtual void complete(unsigned int phase);
 
 private:
 

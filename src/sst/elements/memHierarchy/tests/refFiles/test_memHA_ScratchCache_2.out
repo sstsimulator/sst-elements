@@ -4,8 +4,8 @@ memory0, Notice: memory controller's region is larger than the backend's mem_siz
 Region: start=0, end=18446744073709551615, interleaveStep=256, interleaveSize=128. MemSize: 536870912B
 memory1, Notice: memory controller's region is larger than the backend's mem_size, controller is limiting accessible memory to mem_size
 Region: start=128, end=18446744073709551615, interleaveStep=256, interleaveSize=128. MemSize: 536870912B
-ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 cycles
 ScratchCPU core0 Finished after 1000 issued memory events, 1000 returned, 3773 cycles
+ScratchCPU core1 Finished after 1000 issued memory events, 1000 returned, 3963 cycles
  l1_0.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.stateEvent_GetS_I : Accumulator : Sum.u64 = 163; SumSQ.u64 = 163; Count.u64 = 163; Min.u64 = 1; Max.u64 = 1; 
  l1_0.stateEvent_GetS_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

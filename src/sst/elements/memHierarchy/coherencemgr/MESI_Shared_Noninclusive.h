@@ -295,6 +295,7 @@ public:
         dirArray_->setBanked(params.find<uint64_t>("banks", 0));
 
         flush_state_ = FlushState::Ready;
+        shutdown_flush_counter_ = 0;
 
         /* Statistics */
         stat_evict[I] =         registerStatistic<uint64_t>("evict_I");
@@ -614,7 +615,7 @@ private:
 
     /** Invalidate sharers and/or owner; returns either the new line timestamp (or 0 if no invalidation) or a bool indicating whether anything was invalidated */
     bool invalidateExceptRequestor(MemEvent * event, DirectoryLine * line, bool inMSHR, bool needData);
-    bool invalidateAll(MemEvent * event, DirectoryLine * line, bool inMSHR, Command cmd = Command::NULLCMD);
+    bool invalidateAll(MemEvent * event, DirectoryLine * line, bool inMSHR, bool needData);
     uint64_t invalidateSharer(std::string shr, MemEvent * event, DirectoryLine * line, bool inMSHR, Command cmd = Command::Inv);
     void invalidateSharers(MemEvent * event, DirectoryLine * line, bool inMSHR, bool needData, Command cmd);
     bool invalidateOwner(MemEvent * event, DirectoryLine * line, bool inMSHR, Command cmd = Command::FetchInv);
@@ -648,6 +649,8 @@ private:
 /* Miscellaneous */
     void printLine(Addr addr);
     void printStatus(Output &out) override;
+    void beginCompleteStage() override;
+    void processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink) override;
 
 /* Statistics */
     void recordLatency(Command cmd, int type, uint64_t latency) override;
@@ -666,6 +669,7 @@ private:
     std::map<std::pair<Addr,Addr>, bool> evictionType_;
 
     FlushState flush_state_;
+    int shutdown_flush_counter_;
 
 /* Statistics */
     Statistic<uint64_t>* stat_latencyGetS[3];

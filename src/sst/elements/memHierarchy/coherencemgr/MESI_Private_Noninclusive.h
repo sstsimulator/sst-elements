@@ -238,6 +238,7 @@ public:
         cacheArray_->setBanked(params.find<uint64_t>("banks", 0));
 
         flush_state_ = FlushState::Ready;
+        shutdown_flush_counter_ = 0;
 
         stat_evict[I] =      registerStatistic<uint64_t>("evict_I");
         stat_evict[S] =      registerStatistic<uint64_t>("evict_S");
@@ -539,6 +540,8 @@ private:
 
 /* Miscellaneous */
     void printLine(Addr addr);
+    void beginCompleteStage() override;
+    void processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink) override;
 
 /* Statistics */
     void recordLatency(Command cmd, int type, uint64_t latency) override;
@@ -548,6 +551,7 @@ private:
     bool protocol_;  // True for MESI, false for MSI
     State protocolState_;
     FlushState flush_state_;
+    int shutdown_flush_counter_;
 
     std::string upperCacheName_; // Private so only one
 

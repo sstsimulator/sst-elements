@@ -19,3 +19,7 @@ tags
 .DS_Store
 *.pdf
 *.dot
+*.vscode
+*.inc
+*.so
+sst_test_outputs/

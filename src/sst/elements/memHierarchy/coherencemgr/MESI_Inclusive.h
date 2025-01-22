@@ -261,6 +261,8 @@ public:
         
         flush_state_ = FlushState::Ready;
 
+        shutdown_flush_counter_ = 0;
+
         // Cache Array
         uint64_t lines = params.find<uint64_t>("lines");
         uint64_t assoc = params.find<uint64_t>("associativity");
@@ -612,6 +614,9 @@ private:
     void recordLatency(Command cmd, int type, uint64_t latency);
 
     void printLine(Addr addr);
+    
+    void beginCompleteStage() override;
+    void processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink) override;
 
 /* Variables */
     CacheArray<SharedCacheLine> * cacheArray_;
@@ -621,6 +626,8 @@ private:
     std::map<Addr, std::map<std::string, MemEvent::id_type> > responses;
     
     FlushState flush_state_;
+
+    int shutdown_flush_counter_;
 
     /* Statistics */
     Statistic<uint64_t>* stat_latencyGetS[3]; // HIT, MISS, INV

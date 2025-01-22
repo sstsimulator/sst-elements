@@ -23,12 +23,18 @@ DEBUG_DC = 0
 DEBUG_MEM = 0
 
 option = 0;
-if len(sys.argv) != 7:
-    print("Argument count is incorrect. Required: <test_case> <random_seed0> <random_seed1> <random_seed2> <random_seed3> <coherence_protocol>")
-    
+if len(sys.argv) < 8:
+    print("Argument count is incorrect. Required: <test_case> <random_seed0> <random_seed1> <random_seed2> <random_seed3> <coherence_protocol> <enable_llsc>")
+    exit(0)
+
 option = int(sys.argv[1])
 seeds = [int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5])]
 protocol = sys.argv[6]
+llsc = sys.argv[7] == "yes"
+
+outdir = ""
+if len(sys.argv) >= 9:
+    outdir = sys.argv[8]
 
 cpu_params = {
     "memFreq" : 1,
@@ -46,9 +52,11 @@ cpu0.addParams({
     "rngseed" : seeds[0],
     "write_freq" : 38, # 38% writes
     "read_freq" : 59,  # 59% reads
-    "llsc_freq" : 2,   # 2% LLSC
     "flushcache_freq" : 1, # 2% FlushAll
 })
+if llsc:
+    cpu0.addParam("llsc_freq", 2)   # 2% LLSC
+
 cpu0_iface = cpu0.setSubComponent("memory", "memHierarchy.standardInterface")
 
 # Core 1
@@ -58,9 +66,10 @@ cpu1.addParams({
     "rngseed" : seeds[1],
     "write_freq" : 34, # 34% writes
     "read_freq" : 62,  # 62% reads
-    "llsc_freq" : 1,   # 2% LLSC
     "flushcache_freq" : 3,
 })
+if llsc:
+    cpu1.addParam("llsc_freq", 1)   # 1% LLSC
 cpu1_iface = cpu1.setSubComponent("memory", "memHierarchy.standardInterface")
 
 # Core 2
@@ -70,9 +79,10 @@ cpu2.addParams({
     "rngseed" : seeds[2],
     "write_freq" : 43, # 43% writes
     "read_freq" : 54,  # 54% reads
-    "llsc_freq" : 2,   # 2% LLSC
     "flushcache_freq" : 1,
 })
+if llsc:
+    cpu2.addParam("llsc_freq", 2)   # 2% LLSC
 cpu2_iface = cpu2.setSubComponent("memory", "memHierarchy.standardInterface")
 
 # Core 3
@@ -82,9 +92,10 @@ cpu3.addParams({
     "rngseed" : seeds[3],
     "write_freq" : 33, # 33% writes
     "read_freq" : 64,  # 64% reads
-    "llsc_freq" : 1,   # 1% LLSC
     "flushcache_freq" : 2,
 })
+if llsc:
+    cpu3.addParam("llsc_freq", 1)   # 1% LLSC
 cpu3_iface = cpu3.setSubComponent("memory", "memHierarchy.standardInterface")
 
 
@@ -128,6 +139,10 @@ memctrl.addParams({
     "debug_level" : 10,
     "clock" : "1GHz",
     "addr_range_end" : 512*1024*1024-1,
+    "backing" : "malloc",
+    "backing_size_unit" : "1KiB",
+    "backing_init_zero" : True,
+    "backing_out_file" : "{}/test_memHierarchy_coherence_4core_5level_case{}_{}.malloc".format(outdir, option, protocol),
 })
 
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")

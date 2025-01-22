@@ -7,6 +7,13 @@ from mhlib import componentlist
 # Lower latencies
 # DelayBuffer backend 
 
+DEBUG_L1 = 0
+DEBUG_L2 = 0
+DEBUG_L3 = 0
+DEBUG_DIR = 0
+DEBUG_MEM = 0
+DEBUG_LEVEL = 10
+
 cpu_params = {
     "memFreq" : 20,
     "clock" : "2GHz",
@@ -24,7 +31,7 @@ cpu0 = sst.Component("core0", "memHierarchy.standardCPU")
 iface0 = cpu0.setSubComponent("memory", "memHierarchy.standardInterface")
 cpu0.addParams(cpu_params)
 cpu0.addParams({
-    "rngseed" : "1",
+    "rngseed" : "10",
 })
 c0_l1cache = sst.Component("l1cache0.mesi", "memHierarchy.Cache")
 c0_l1cache.addParams({
@@ -36,13 +43,14 @@ c0_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : "0"
+      "debug" : DEBUG_L1,
+      "debug_level" : DEBUG_LEVEL,
 })
 cpu1 = sst.Component("core1", "memHierarchy.standardCPU")
 iface1 = cpu1.setSubComponent("memory", "memHierarchy.standardInterface")
 cpu1.addParams(cpu_params)
 cpu1.addParams({
-    "rngseed" : "301",
+    "rngseed" : "20",
 })
 c1_l1cache = sst.Component("l1cache.mesi", "memHierarchy.Cache")
 c1_l1cache.addParams({
@@ -54,7 +62,8 @@ c1_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : "0"
+      "debug" : DEBUG_L1,
+      "debug_level" : DEBUG_LEVEL,
 })
 n0_bus = sst.Component("bus0", "memHierarchy.Bus")
 n0_bus.addParams({
@@ -69,13 +78,14 @@ n0_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
-      "debug" : "0"
+      "debug" : DEBUG_L2,
+      "debug_level" : DEBUG_LEVEL,
 })
 cpu2 = sst.Component("core2", "memHierarchy.standardCPU")
 iface2 = cpu2.setSubComponent("memory", "memHierarchy.standardInterface")
 cpu2.addParams(cpu_params)
 cpu2.addParams({
-    "rngseed" : "501",
+    "rngseed" : "30",
 })
 c2_l1cache = sst.Component("l1cache2.mesi", "memHierarchy.Cache")
 c2_l1cache.addParams({
@@ -87,13 +97,14 @@ c2_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : "0"
+      "debug" : DEBUG_L1,
+      "debug_level" : DEBUG_LEVEL,
 })
 cpu3 = sst.Component("core3", "memHierarchy.standardCPU")
 iface3 = cpu3.setSubComponent("memory", "memHierarchy.standardInterface")
 cpu3.addParams(cpu_params)
 cpu3.addParams({
-    "rngseed" : "701",
+    "rngseed" : "40",
 })
 c3_l1cache = sst.Component("l1cache3.mesi", "memHierarchy.Cache")
 c3_l1cache.addParams({
@@ -105,7 +116,8 @@ c3_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : "0"
+      "debug" : DEBUG_L1,
+      "debug_level" : DEBUG_LEVEL,
 })
 n1_bus = sst.Component("bus1", "memHierarchy.Bus")
 n1_bus.addParams({
@@ -120,7 +132,8 @@ n1_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
-      "debug" : "0"
+      "debug" : DEBUG_L2,
+      "debug_level" : DEBUG_LEVEL,
 })
 n2_bus = sst.Component("bus2", "memHierarchy.Bus")
 n2_bus.addParams({
@@ -135,7 +148,8 @@ l3cache.addParams({
       "associativity" : "16",
       "cache_line_size" : "64",
       "cache_size" : "64 KB",
-      "debug" : "0",
+      "debug" : DEBUG_L3,
+      "debug_level" : DEBUG_LEVEL,
 })
 l3NIC = l3cache.setSubComponent("lowlink", "memHierarchy.MemNIC")
 l3NIC.addParams({
@@ -157,7 +171,8 @@ network.setSubComponent("topology","merlin.singlerouter")
 dirctrl = sst.Component("directory.mesi", "memHierarchy.DirectoryController")
 dirctrl.addParams({
     "coherence_protocol" : "MESI",
-    "debug" : "0",
+    "debug" : DEBUG_DIR,
+    "debug_level" : DEBUG_LEVEL,
     "entry_cache_size" : "16384",
     "addr_range_end" : "0x1F000000",
     "addr_range_start" : "0x0"
@@ -172,6 +187,8 @@ memctrl.addParams({
     "clock" : "500MHz",
     "backing" : "none",
     "addr_range_end" : 512*1024*1024-1,
+    "debug" : DEBUG_MEM,
+    "debug_level" : DEBUG_LEVEL
 })
 memory = memctrl.setSubComponent("backend", "memHierarchy.HBMpagedMultiMemory")
 memory.addParams({

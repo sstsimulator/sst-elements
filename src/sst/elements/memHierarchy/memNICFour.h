@@ -106,12 +106,14 @@ public:
     size_t getSizeInBits(MemEventBase * ev, NetType net);
 
     /* Initialization and finish */
-    void init(unsigned int phase);
-    void finish() {
+    void init(unsigned int phase) override;
+    void setup() override;
+    void complete(unsigned int phase) override;
+    void finish() override {
         for (int i = 0; i < 4; i++)
             link_control[i]->finish();
     }
-    void setup();
+    void sendUntimedData(MemEventInit* ev, bool broadcast = true, bool lookup_dst = true) override;
 
     /* Internal clock function to handle buffered events */
     bool clock(Cycle_t cycle);

@@ -408,7 +408,7 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
     // Fix up parameters for creating NIC - eventually we'll stop doing this - at SST 16 when the old config path goes away
     bool found;
     if (fixupParam(params, "network_bw", "memNIC.network_bw"))
-        out_->output(CALL_INFO, "Note (%s): Changed 'network_bw' to 'kemNIC.network_bw' in params. Change your input file to remove this notice.\n", getName().c_str());
+        out_->output(CALL_INFO, "Note (%s): Changed 'network_bw' to 'memNIC.network_bw' in params. Change your input file to remove this notice.\n", getName().c_str());
     if (fixupParam(params, "network_input_buffer_size", "memNIC.network_input_buffer_size"))
         out_->output(CALL_INFO, "Note (%s): Changed 'network_input_buffer_size' to 'memNIC.network_input_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
     if (fixupParam(params, "network_output_buffer_size", "memNIC.network_output_buffer_size"))

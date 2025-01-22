@@ -517,8 +517,8 @@ void CoherenceController::processInitCoherenceEvent(MemEventInitCoherence* event
     if (!source && (event->getTracksPresence() || lastLevel_))
         silentEvictClean_ = false;
 
-    // The component below us is noninclusive, therefore we need to write back data when evicting clean blocks
-    if (!source && !event->getInclusive())
+    // The component below us does not neccessarily keep a copy of data, therefore we need to write back data when evicting clean blocks
+    if ((!source && !event->getInclusive()) || (!source && event->getType() == Endpoint::Directory))
         writebackCleanBlocks_ = true;
 
     // The component below us will send writeback acks, we should wait for them
@@ -572,6 +572,13 @@ void CoherenceController::setup() {
         }
         flush_dest_ = min.name;
     }
+}
+
+void CoherenceController::processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink) {
+    if (event->getInitCmd() == MemEventInit::InitCommand::Flush) {
+        debug->output("Complete Event (%s): %s\n", getName().c_str(), event->getVerboseString().c_str());
+    }
+    delete event; // Nothing for now
 }
 
 /* Retry buffer */

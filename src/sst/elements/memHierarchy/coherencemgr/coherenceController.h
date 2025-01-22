@@ -138,6 +138,12 @@ public:
     /* Parse an incoming InitCoherence event */
     virtual void processInitCoherenceEvent(MemEventInitCoherence * event, bool source);
 
+    /* Prepare for complete stage - called at complete phase=0 */
+    virtual void beginCompleteStage() {}
+    
+    /* Parse an incoming Complete (quiesce, checkpoint, etc. ) event */
+    virtual void processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink);
+
     /* Some managers care, others don't */
     virtual void hasUpperLevelCacheName(std::string cachename) {}
 
@@ -346,6 +352,9 @@ protected:
     std::string getSrc();
 
     std::set<std::string> cpus; // If connected to CPUs or other endpoints (e.g., accelerator), list of CPU names in case we need to broadcast something
+
+    void sendUntimedDataUp(MemEventInit* event);
+    void sendUnitmedDataDown(MemEventInit* event, bool broadcast);
 
 private:
     /* Outgoing event queues - events are stalled here to account for access latencies */
