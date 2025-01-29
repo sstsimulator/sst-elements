@@ -77,9 +77,9 @@ class _topoMeshBase(Topology):
 
 
     def setShape(self,shape,width,local_ports):
-        this.shape = shape
-        this.width = width
-        this.local_ports = local_ports
+        self.shape = shape
+        self.width = width
+        self.local_ports = local_ports
         
     def _formatShape(self, arr):
         return 'x'.join([str(x) for x in arr])
