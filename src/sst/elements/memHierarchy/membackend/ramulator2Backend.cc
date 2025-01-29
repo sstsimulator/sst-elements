@@ -44,27 +44,21 @@ ramulator2Memory::ramulator2Memory(ComponentId_t id, Params &params) :
 }
 
 bool ramulator2Memory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes){
-    bool enqueue_success;
-    // handle write request
-    if (isWrite) {
-        // TODO: make sure SST::MemHierarchy::Addr being uint64 is not a problem (Ramulator equiv is a int64)
-        Ramulator::Request req(addr, Ramulator::Request::Type::Write, reqId, callBackFunc);
-
-        enqueue_success = ramulator2_frontend->receive_external_requests(Ramulator::Request::Type::Write, addr, reqId,
-        [this](Ramulator::Request& req) {
+    // create request type variable
+    auto req_type = isWrite ? Ramulator::Request::Type::Write : Ramulator::Request::Type::Read;
+    // build Request for Ramulator
+    Ramulator::Request req(addr, req_type, reqId, callBackFunc);
+    // send request
+    bool enqueue_success = ramulator2_frontend->receive_external_requests(req_type, addr, reqId,
+    [this](Ramulator::Request& req) {
+        if (req.type_id == Ramulator::Request::Type::Write) {
             // write request callback
             this->writes.insert(req.source_id);
-        });
-    } else {
-        // handle read request
-        Ramulator::Request req(addr, Ramulator::Request::Type::Read, reqId, callBackFunc);
-
-        enqueue_success = ramulator2_frontend->receive_external_requests(Ramulator::Request::Type::Read, addr, reqId,
-        [this](Ramulator::Request& req) {
+        } else {
             // read request callback
             this->dramReqs[req.addr].push_back(req.source_id);
-        });
-    }
+        }
+    });
 #ifdef __SST_DEBUG_OUTPUT__
     output->debug(_L10_, "Ramulator2Backend: Attempting to issue %s request for %" PRIx64 ". Accepted: %d\n", (isWrite ? "WRITE" : "READ"), addr, enqueue_success);
 #endif
