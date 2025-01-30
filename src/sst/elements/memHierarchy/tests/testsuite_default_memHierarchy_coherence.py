@@ -152,8 +152,8 @@ class testcase_memHierarchy_coherence(SSTTestCase):
             log_failure(diffdata)
             self.assertTrue(filesAreTheSame, "Output file {0} does not pass check against the Reference File {1} ".format(outfile, reffile))
         
-        value_outfile = "{}/{}.malloc".format(outdir, test_name)
-        value_reffile = "{}/refFiles/{}.malloc".format(test_path, test_name)
+        value_outfile = "{}/{}.malloc.mem".format(outdir, test_name)
+        value_reffile = "{}/refFiles/{}.malloc.mem".format(test_path, test_name)
         valueCheck = filecmp.cmp(value_outfile, value_reffile)
 
         self.assertTrue(valueCheck, "Output data value file {0} does not pass check against the reference file {1} ".format(value_outfile, value_reffile))
