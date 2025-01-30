@@ -59,8 +59,8 @@ public:
             {"memory_file",         "(string) DEPRECATED: Use 'backing_in_file' and/or 'backing_out_file' instead. Optional backing-store file to pre-load memory and/or store resulting state. If file does not exist, the backing-store will create it.", "N/A"},\
             {"backing_in_file",     "(string) An optional file to pre-load memory contents from.", ""},\
             {"backing_out_file",    "(string) An optional file to write out memory contents to. Setting this will also trigger a flush of cache contents prior to writing the file. May be the same as 'backing_in_file'.", ""},\
-            {"customCmdMemHandler", "(string) Name of the custom command handler to load", ""},\
-            {"test_mode",           "(bool) Testing mode, generates output for testing only", "false"}
+            {"backing_out_screen",  "(bool) Write out memory contents to screen at end of simulation. Setting this will also trigger a flush of cache contents prior to writing to screen.", "false"},\
+            {"customCmdMemHandler", "(string) Name of the custom command handler to load", ""}
 
     SST_ELI_DOCUMENT_PARAMS( MEMCONTROLLER_ELI_PARAMS )
 
@@ -177,7 +177,7 @@ private:
 
     void handleCustomEvent(MemEventBase* ev);
 
-    bool test_;
+    bool backing_outscreen_;
 };
 
 }}

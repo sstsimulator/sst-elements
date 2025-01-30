@@ -4,7 +4,7 @@ from sst_unittest import *
 from sst_unittest_support import *
 import os.path
 import re
-
+import filecmp
 
 ################################################################################
 ################################################################################
@@ -154,7 +154,7 @@ class testcase_memHierarchy_coherence(SSTTestCase):
         
         value_outfile = "{}/{}.malloc".format(outdir, test_name)
         value_reffile = "{}/refFiles/{}.malloc".format(test_path, test_name)
-        valueCheck = testing_compare_diff(test_name, value_outfile, value_reffile)
+        valueCheck = filecmp.cmp(value_outfile, value_reffile)
 
         self.assertTrue(valueCheck, "Output data value file {0} does not pass check against the reference file {1} ".format(value_outfile, value_reffile))
 

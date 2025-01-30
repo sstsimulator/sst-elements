@@ -111,7 +111,7 @@ public:
     virtual bool isReachable(std::string dst);
 
     /* Send and receive functions for MemLink */
-    virtual void sendUntimedData(MemEventInit * ev, bool broadcast = true, bool lookup_dst = true);
+    virtual void sendUntimedData(MemEventInit * ev, bool broadcast, bool lookup_dst);
     virtual MemEventInit* recvUntimedData();
     virtual void send(MemEventBase * ev);
     virtual MemEventBase * recv();

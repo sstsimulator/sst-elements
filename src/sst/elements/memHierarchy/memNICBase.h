@@ -156,31 +156,17 @@ class MemNICBase : public MemLinkBase {
 
             MemRtrEvent * mre = new MemRtrEvent(ev);
             SST::Interfaces::SimpleNetwork::Request* req = new SST::Interfaces::SimpleNetwork::Request();
-            req->dest = SST::Interfaces::SimpleNetwork::INIT_BROADCAST_ADDR;
+            if (broadcast) {
+                req->dest = SST::Interfaces::SimpleNetwork::INIT_BROADCAST_ADDR;
+            } else {
+                req->dest = lookupNetworkAddress(ev->getDst());
+            }
             req->givePayload(mre);
             if (!linkcontrol->isNetworkInitialized()) {
                 untimed_send_queue_.push(req);
             } else {
                 linkcontrol->sendUntimedData(req);
             }
-        }
-
-        // Send untimed data and queue locally. Requires either child class or loading component to drain queue.
-        virtual void sendUntimedData(MemEventInit* ev, bool broadcast = true, bool lookup_dst = true) override {
-            if (!broadcast && lookup_dst) {
-                std::string dst = findTargetDestination(ev->getRoutingAddress());
-                if (dst == "") {
-                    // Hold this request until we know the right address
-                    initWaitForDst.insert(ev);
-                    return;
-                }
-                ev->setDst(dst);
-            }
-            MemRtrEvent * mre = new MemRtrEvent(ev);
-            SST::Interfaces::SimpleNetwork::Request* req = new SST::Interfaces::SimpleNetwork::Request();
-            req->dest = SST::Interfaces::SimpleNetwork::INIT_BROADCAST_ADDR;
-            req->givePayload(mre);
-            untimed_send_queue_.push(req);
         }
 
         virtual MemEventInit* recvUntimedData() {
@@ -387,7 +373,6 @@ class MemNICBase : public MemLinkBase {
                             untimed_receive_queue_.push(mre); // Our component will forward on all its other ports
                         }
                     } else if ((ev->getCmd() == Command::NULLCMD && (isSource(ev->getSrc()) || isDest(ev->getSrc()))) || ev->getDst() == info.name) {
-                        dbg.debug(_L10_, "\tInserting in untimed_receive_queue_\n");
                         mre->putEvent(ev); // If we did not delete the Event, give it back to the MemRtrEvent
                         untimed_receive_queue_.push(mre);
                     }
@@ -411,12 +396,10 @@ class MemNICBase : public MemLinkBase {
                     /*
                      * Expected events: Flush (from dst or src) or writeback/data (from src)
                      */
-                    if (ev->getInitCmd() == MemEventInit::InitCommand::Flush) {
-                        if (!isDest(ev->getSrc())) { // Broadcast Flush not intended for us
-                            delete ev;
-                            delete mre;
-                            continue;
-                        }
+                    if (ev->getInitCmd() == MemEventInit::InitCommand::Flush && !isDest(ev->getSrc())) { // Broadcast Flush not intended for us
+                        delete ev;
+                        delete mre;
+                        continue;
                     }
                     mre->putEvent(ev);
                     untimed_receive_queue_.push(mre); // deliver event

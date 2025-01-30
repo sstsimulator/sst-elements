@@ -94,6 +94,8 @@ public:
 
     virtual std::string findTargetDestination(MemHierarchy::Addr addr);
 
+    virtual void sendUntimedData(MemHierarchy::MemEventInit* ev, bool broadcast, bool lookup_dst);
+
 protected:
     virtual MemHierarchy::MemNICBase::InitMemRtrEvent* createInitMemRtrEvent();
     virtual void processInitMemRtrEvent(MemHierarchy::MemNICBase::InitMemRtrEvent* ev);

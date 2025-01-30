@@ -93,7 +93,7 @@ public:
     void setup() override { link_control->setup(); MemNICBase::setup(); }
     void complete(unsigned int phase) override;
     void finish() override { link_control->finish(); }
-    void sendUntimedData(MemEventInit* ev, bool broadcast = true, bool lookup_dst = true) override;
+    void sendUntimedData(MemEventInit* ev, bool broadcast, bool lookup_dst) override;
 
     /* Debug */
     void printStatus(Output &out) override;

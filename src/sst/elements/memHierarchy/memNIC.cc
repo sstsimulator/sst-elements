@@ -126,7 +126,7 @@ void MemNIC::send(MemEventBase *ev) {
 }
 
 
-void MemNIC::sendUntimedData(MemEventInit* ev, bool broadcast, bool lookup_dst) {
+void MemNIC::sendUntimedData(MemEventInit* ev, bool broadcast = true, bool lookup_dst = true) {
     MemNICBase::sendUntimedData(ev, broadcast, lookup_dst, link_control);
 }
 

@@ -161,7 +161,7 @@ void MemLink::complete(unsigned int phase) {
 /**
  * send untimed data
  */
-void MemLink::sendUntimedData(MemEventInit * event, bool broadcast, bool lookup_dst) {
+void MemLink::sendUntimedData(MemEventInit * event, bool broadcast = true, bool lookup_dst = true) {
     
     if (!broadcast && lookup_dst) {
         std::string dst = findTargetDestination(event->getRoutingAddress());

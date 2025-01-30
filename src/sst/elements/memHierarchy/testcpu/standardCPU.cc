@@ -150,11 +150,19 @@ standardCPU::standardCPU(ComponentId_t id, Params& params) :
         stat_num_llsc_success_ = registerStatistic<uint64_t>("llsc_success");
     }
     ll_issued_ = false;
+
+    init_write_count_ = params.find<uint64_t>("test_init", 0);
 }
 
 void standardCPU::init(unsigned int phase)
 {
     memory_->init(phase);
+
+    while (init_write_count_ != 0) {
+        StandardMem::Addr addr = rng_.generateNextUInt64();
+        memory_->sendUntimedData( createWrite(addr) );
+        init_write_count_--;
+    }
 }
 
 void standardCPU::setup() {
@@ -205,13 +213,6 @@ bool standardCPU::clockTic( Cycle_t )
             for (int i = 0; i < reqsToSend; i++) {
 
                 StandardMem::Addr addr = rng_.generateNextUInt64();
-
-                std::vector<uint8_t> data;
-                data.resize(4);
-                data[0] = (addr >> 24) & 0xff;
-                data[1] = (addr >> 16) & 0xff;
-                data[2] = (addr >>  8) & 0xff;
-                data[3] = (addr >>  0) & 0xff;
                 
                 uint32_t instNum = rng_.generateNextUInt32() % high_mark_;
                 uint64_t size = 4;

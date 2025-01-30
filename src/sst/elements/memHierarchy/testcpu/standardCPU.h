@@ -63,7 +63,8 @@ public:
         {"mmio_addr",               "(uint) Base address of the test MMIO component. 0 means not present.", "0"},
         {"noncacheableRangeStart",  "(uint) Beginning of range of addresses that are noncacheable.", "0x0"},
         {"noncacheableRangeEnd",    "(uint) End of range of addresses that are noncacheable.", "0x0"},
-        {"addressoffset",           "(uint) Apply an offset to a calculated address to check for non-alignment issues", "0"} )
+        {"addressoffset",           "(uint) Apply an offset to a calculated address to check for non-alignment issues", "0"},
+        {"test_init",               "(uint) Number of write messages to initialize memory with", "0"} )
 
     SST_ELI_DOCUMENT_STATISTICS( 
         {"pendCycle", "Number of pending requests per cycle", "count", 1},
@@ -111,6 +112,7 @@ private:
     uint32_t max_reqs_per_issue_;
     uint64_t noncacheable_range_start_, noncacheable_range_end_, noncacheable_size_;
     uint64_t clock_ticks_;
+    uint64_t init_write_count_;
     Statistic<uint64_t>* stat_requests_pending_per_cycle_;
     Statistic<uint64_t>* stat_num_reads_issued_;
     Statistic<uint64_t>* stat_num_writes_issued_;

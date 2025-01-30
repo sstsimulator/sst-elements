@@ -43,10 +43,11 @@ public:
     // Get the 'size' bytes ad 'addr' and put them in the vector 'data'
     virtual void get( Addr addr, size_t size, std::vector<uint8_t>& data ) = 0;
     // Dump contents of backing to the file named by 'outfile'
-    virtual void dump( std::string outfile ) = 0;
+    virtual void printToFile( std::string outfile ) = 0;
 
     // Print contents of backing to stdout (testing purposes)
-    virtual void test() = 0;
+    virtual void printToScreen(Addr addr_offset, Addr addr_start, Addr addr_interleave_size, Addr addr_interleave_step) = 0;
+
 };
 
 /*
@@ -66,9 +67,14 @@ public:
         int fd = -1;
         if ( mmapfile != "" ) {
             int fd_flags = O_RDWR | O_CREAT;
-            if (mmapfile != infile) fd_flags |= O_TRUNC; // Overwrite output file if it exists
+            if (mmapfile != infile) 
+                fd_flags |= O_TRUNC; // Overwrite output file if it exists
             fd = open(mmapfile.c_str(), fd_flags, S_IRUSR | S_IWUSR);
-            if (fd < 0) { printf("Error: fd=%d, %s\n", fd, strerror(errno)); throw 1; }
+            if (fd < 0) { 
+                Output out("", 1, 0, Output::STDOUT);
+                out.output("Error: fd=%d, %s\n", fd, strerror(errno)); 
+                throw 1; 
+            }
             ftruncate(fd, size); // Extend file to needed size
         } else {
             flags |= MAP_ANON;
@@ -120,25 +126,42 @@ public:
             data[i] = buffer_[addr + i];
     }
     
-    void dump( std::string UNUSED(outfile) ) { }
+    void printToFile( std::string UNUSED(outfile) ) { }
 
     /* For testing only, print contents to stdout in plaintext */
-    void test() {
-        printf("Backing TEST...dumping memory contents to stdout\n");
-        printf("buffer size: %zu\n", size_);
-        printf("offset_: %zu\n",offset_);
-
+    void printToScreen(Addr addr_offset, Addr addr_start, Addr addr_interleave_size, Addr addr_interleave_step) {
+        Output out("", 1, 0, Output::STDOUT);
+        out.output("==================================================================================================\n");
+        out.output("Printing contents of mmap'd memory backing buffer\n");
+        out.output("Buffer size: %d\n", size_);
+        out.output("Starting index: %zu\n",offset_);
+        out.output("==================================================================================================\n");
+        out.output("Address    | Value (hex)\n");
+        out.output("--------------------------------------------------------------------------------------------------\n");
+        
         // Print in 64B words, regardless of line size
         for (size_t line = offset_; line < size_; line+= 64) {
-            printf("%#-10llx | ", line);
+
+            // Convert local (contiguous) address to global so output is easier to read
+            Addr global_addr = line - addr_offset;
+            if (addr_interleave_size == 0) {
+                global_addr += addr_start;
+            } else {
+                Addr tmp = global_addr % addr_interleave_size;
+                global_addr -= tmp;
+                global_addr = global_addr / addr_interleave_size;
+                global_addr = global_addr * addr_interleave_step + tmp + addr_start;
+            }
+            out.output("%#-10llx | ", global_addr);
+            
             std::stringstream value;
             for (size_t byte = 0; byte < 64; byte++) {
+                if (byte % 8 == 0 && byte != 0) value << " ";
                 value << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(buffer_[line+byte]);
             }
-            printf("%s ", value.str().c_str());
-
-            if (line % 8 == 0) printf("\n");
+            out.output("%s\n", value.str().c_str());
         }
+        out.output("==================================================================================================\n");
     }
 
 private:
@@ -147,7 +170,10 @@ private:
     size_t offset_;
 };
 
-
+/*
+ * Throws:
+ * 1: Unable to open infile
+ */
 class BackingMalloc : public Backing {
 public:
     BackingMalloc( size_t size, bool init = false ) : init_(init) {
@@ -160,30 +186,21 @@ public:
         shift_ = log2Of(alloc_unit_);
     }
 
-    BackingMalloc( FILE* infile ) {
-        int num; 
-        fscanf(infile,"Number-of-pages: %d\n", &num );
-        fscanf(infile,"alloc_unit_: %d\n", &alloc_unit_ );
-        int tmpInit;
-        fscanf(infile,"init_: %d\n",  &tmpInit );
-        init_ = tmpInit;
-        fscanf(infile,"shift_: %d\n",  &shift_ );
+    BackingMalloc( std::string infile ) {
+        auto fp = fopen(infile.c_str(),"rb");
+        if (!fp) throw 1;
+
+        size_t buffer_size;
+        fread(&buffer_size, sizeof(size_t), 1, fp);
+        fread(&alloc_unit_, sizeof(unsigned int), 1, fp);
+        fread(&shift_, sizeof(unsigned int), 1, fp);
+        fread(&init_, sizeof(bool), 1, fp);
         Addr addr;
-        while ( 1 == fscanf(infile,"addr: %" PRIx64 "\n",&addr) ) {
-            Addr bAddr = addr >> shift_;
-
-            assert( buffer_.find( bAddr )  == buffer_.end() );
-
-            auto buf = (uint8_t*) malloc( alloc_unit_ );
-            buffer_[ bAddr ] = buf;
-            auto ptr = (uint64_t*) buffer_[bAddr];
-            auto length = ( sizeof(uint8_t) * alloc_unit_ ) / sizeof(uint64_t);
-
-            for ( auto i = 0; i < length ; i++ ) {
-                uint64_t data;
-                assert( 1 == fscanf(infile,"%" PRIx64 " ",&data) ); 
-                ptr[i] = data;
-            }
+        for ( size_t i = 0; i < buffer_size; i++ ) {
+            auto buf = (uint8_t*) malloc( alloc_unit_);
+            fread(&addr, sizeof(addr), 1, fp);
+            fread(buf, sizeof(uint8_t), alloc_unit_, fp);
+            buffer_[addr] = buf;
         }
     }
 
@@ -246,49 +263,60 @@ public:
     }
 
 
-    void dump( std::string outfile ) {
-        auto fp = fopen(outfile.c_str(),"w+");
+    void printToFile( std::string outfile ) {
+        auto fp = fopen(outfile.c_str(),"wb+");
         if (!fp) { throw 1; }
-        
-        fprintf(fp,"Number-of-pages: %zu\n",buffer_.size());
-        fprintf(fp,"alloc_unit_: %d\n",alloc_unit_);
-        fprintf(fp,"init_: %d\n",init_);
-        fprintf(fp,"shift_: %d\n",shift_);
+        size_t count = buffer_.size();
+        fwrite(&count, sizeof(count), 1, fp);
+        fwrite(&alloc_unit_, sizeof(alloc_unit_), 1, fp);
+        fwrite(&shift_, sizeof(shift_), 1, fp);
+        fwrite(&init_, sizeof(init_), 1, fp);
 
         for ( auto const& x : buffer_ ) {
-            fprintf(fp,"addr: %#llx\n",x.first << shift_);
-            auto length = sizeof(uint8_t)*alloc_unit_;
-            length /= sizeof(uint64_t);
-            auto ptr = (uint64_t*) x.second;
-            for ( auto i = 0; i < length ; i++ ) {
-                fprintf(fp,"%#" PRIx64 "",ptr[i]); 
-                if ( i + 1 < length ) {
-                    fprintf(fp," ");
-                }
-            }
-            fprintf(fp,"\n");
+            fwrite(&(x.first), sizeof(Addr), 1, fp);
+            fwrite(x.second, sizeof(uint8_t), alloc_unit_, fp);
         }
     }
 
-    void test() {
-        printf("Number-of-pages: %zu\n",buffer_.size());
-        printf("alloc_unit_: %d\n",alloc_unit_);
-        printf("init_: %d\n",init_);
-        printf("shift_: %d\n",shift_);
-
+    void printToScreen(Addr addr_offset, Addr addr_start, Addr addr_interleave_size, Addr addr_interleave_step) {
+        Output out("", 1, 0, Output::STDOUT);
+        out.output("==================================================================================================\n");
+        out.output("Printing contents of dynamically allocated memory backing buffer\n");
+        out.output("Number of buffer chunks: %zu\n", buffer_.size());
+        out.output("Chunk size: %d B\n", alloc_unit_);
+        out.output("==================================================================================================\n");
+        out.output("Address    | Value (hex)\n");
+        out.output("--------------------------------------------------------------------------------------------------\n");
+        Addr output_unit = (alloc_unit_ % 64 == 0) ? 64 : (alloc_unit_ % 32 == 0) ? 32 : alloc_unit_;
+        Addr units_per_buffer = alloc_unit_ / output_unit;
+        
         for ( auto const& x : buffer_ ) {
-            printf("addr: %#llx\n",x.first << shift_);
-            auto length = sizeof(uint8_t)*alloc_unit_;
-            length /= sizeof(uint64_t);
-            auto ptr = (uint64_t*) x.second;
-            for ( auto i = 0; i < length ; i++ ) {
-                printf("%#" PRIx64 "",ptr[i]); 
-                if ( i + 1 < length ) {
-                    printf(" ");
+            Addr local_addr = x.first << shift_;
+            uint8_t* value_ptr = x.second;
+            for (Addr line = 0; line < units_per_buffer; line++) {
+                Addr global_addr = local_addr - addr_offset;
+                if (addr_interleave_size == 0) {
+                    global_addr += addr_start;
+                } else {
+                    Addr tmp = global_addr % addr_interleave_size;
+                    global_addr -= tmp;
+                    global_addr = global_addr / addr_interleave_size;
+                    global_addr = global_addr * addr_interleave_step + tmp + addr_start;
                 }
+                out.output("%#-10llx | ",global_addr);
+
+                // Print output_unit # bytes, with a space between every 8 for readability
+                std::stringstream value;
+                for (size_t byte = 0; byte < output_unit; byte++) {
+                    if (byte % 8 == 0 && byte != 0) value << " ";
+                    value << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(*(value_ptr));
+                    value_ptr++;
+                }
+                out.output("%s\n", value.str().c_str());
+                local_addr += output_unit;
             }
-            printf("\n");
         }
+        out.output("==================================================================================================\n");
     }
 
 private:

@@ -131,6 +131,7 @@ EXTRA_DIST = \
 	tests/testsuite_default_memHierarchy_hybridsim.py \
 	tests/testsuite_default_memHierarchy_memHA.py \
 	tests/testsuite_default_memHierarchy_sdl.py \
+	tests/testsuite_default_memHierarchy_memory.py \
 	tests/testsuite_default_memHierarchy_coherence.py \
 	tests/testsuite_default_memHierarchy_memHSieve.py \
 	tests/testsuite_sweep_memHierarchy_dir3LevelSweep.py \
@@ -170,6 +171,7 @@ EXTRA_DIST = \
 	tests/test_coherence_2core_3level.py \
 	tests/test_coherence_4core_5level.py \
 	tests/test_coherence_1core.py \
+	tests/test_backing.py \
 	tests/testBackendChaining.py \
 	tests/testBackendDelayBuffer.py \
 	tests/testBackendDramsim3.py \
@@ -277,28 +279,55 @@ EXTRA_DIST = \
 	tests/refFiles/test_memHA_StdMem_noninclusive.out \
 	tests/refFiles/test_memHA_ThroughputThrottling.out \
 	tests/refFiles/test_memHierarchy_coherence_1core_case0_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_1core_case0_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_1core_case1_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_1core_case1_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_1core_case2_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_1core_case2_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_1core_case3_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_1core_case3_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_1core_case4_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_1core_case4_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_1core_case5_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_1core_case5_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_1core_case6_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_1core_case6_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_2core_3level_case0_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case0_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_2core_3level_case1_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case1_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_2core_3level_case2_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case2_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_2core_3level_case3_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case3_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_2core_3level_case4_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case4_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_2core_3level_case5_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case5_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_2core_3level_case6_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case6_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_2core_3level_case7_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case7_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_2core_3level_case8_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case8_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_2core_3level_case9_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case9_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_2core_3level_case10_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case10_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_2core_3level_case11_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_2core_3level_case11_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_4core_5level_case0_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_4core_5level_case0_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_4core_5level_case1_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_4core_5level_case1_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_4core_5level_case2_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_4core_5level_case2_mesi.malloc.mem \
 	tests/refFiles/test_memHierarchy_coherence_4core_5level_case3_mesi.out \
+	tests/refFiles/test_memHierarchy_coherence_4core_5level_case3_mesi.malloc.mem \
+	tests/refFiles/test_memHierarchy_memory_backing_out.malloc.mem \
+	tests/refFiles/test_memHierarchy_memory_backing_out.mmap.mem \
+	tests/refFiles/test_memHierarchy_memory_backing_2_mmap_inout.mmap.mem \
+	tests/refFiles/test_memHierarchy_memory_backing_5_mmap_init.malloc.mem \
 	tests/refFiles/test_memHierarchy_sdl2_1.out \
 	tests/refFiles/test_memHierarchy_sdl3_1.out \
 	tests/refFiles/test_memHierarchy_sdl3_2.out \

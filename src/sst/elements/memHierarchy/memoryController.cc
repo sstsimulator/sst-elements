@@ -107,7 +107,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     clockTimeBase_ = registerClock(clockfreq, clockHandler_);
     clockOn_ = true;
 
-    test_ = params.find<bool>("test_mode", false);
+    backing_outscreen_ = params.find<bool>("backing_out_screen", false);
 
     string link_lat         = params.find<std::string>("direct_link_latency", "10 ns");
 
@@ -334,16 +334,20 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         }
     } else if ( backingType == "malloc" ) {
         if ( infile != "" ) {
-            auto fp = fopen(infile.c_str(),"r");
-            sst_assert(fp, CALL_INFO, -1, "%s, ERROR: Unable to open 'backing_in_file'. Does file exist? Filename='%s'\n", getName().c_str(), infile.c_str());
-            backing_ = new Backend::BackingMalloc(fp);
-            fclose(fp);
+            try {
+                backing_ = new Backend::BackingMalloc(infile);
+            } catch (int e) {
+                if ( e == 1 ) {
+                    out.fatal(CALL_INFO, -1, "%s, ERROR: Unable to open 'backing_in_file'. Does file exist? Filename='%s'\n", getName().c_str(), infile.c_str());
+                } else 
+                    out.fatal(CALL_INFO, -1, "%s, ERROR: Unable to create backing store. Exception thrown is %d.\n", getName().c_str(), e);
+            }
         } else {
             backing_ = new Backend::BackingMalloc(sizeBytes,initBacking);
         }
         // Test outfile to find issues before simulation begins
         if ( backing_outfile_ != "" ) {
-            auto fp = fopen(backing_outfile_.c_str(),"w+");
+            auto fp = fopen(backing_outfile_.c_str(),"wb+");
             sst_assert(fp, CALL_INFO, -1, "%s, ERROR: Unable to open 'backing_out_file'. Is filepath accessible? Filename='%s'\n", getName().c_str());
             fclose(fp);
         }
@@ -629,7 +633,7 @@ void MemController::complete(unsigned int phase) {
     link_->complete(phase);
 
     // Initiate flush here if configured to do so
-    if (!phase && (backing_outfile_ != "" || test_)) {
+    if (!phase && (backing_outfile_ != "" || backing_outscreen_)) {
         MemEventUntimedFlush* flush = new MemEventUntimedFlush(getName());
         Debug(_L10_, "U: %-20s   Event:Untimed   (%s)\n", getName().c_str(), flush->getVerboseString().c_str());
         link_->sendUntimedData(flush, true); /* Broadcast to all sources */
@@ -647,13 +651,13 @@ void MemController::finish(void) {
     link_->finish();
     if ( backing_outfile_ != "" ) {
         try { 
-            backing_->dump(backing_outfile_);
+            backing_->printToFile(backing_outfile_);
         } catch (int e) { // Don't fatal so late in simulation
             out.output("%s, WARNING: Unable to open file '%s' provided by parameter 'backing_out_file' to write memory contents. Memory contents will not be written.\n", getName().c_str(), backing_outfile_.c_str());
         }
     }
-    if (test_) {
-        backing_->test();
+    if (backing_outscreen_) {
+        backing_->printToScreen(privateMemOffset_, region_.start, region_.interleaveSize, region_.interleaveStep);
     }
 }
 
@@ -768,11 +772,13 @@ Addr MemController::translateToGlobal(Addr addr) {
 void MemController::processInitEvent( MemEventInit* me ) {
     /* Push data to memory */
     if (Command::Write == me->getCmd()) {
-        me->setAddr(translateToLocal(me->getAddr()));
-        Addr addr = me->getAddr();
-        Debug(_L10_, "U: %-20s   Event:Write     (%s)\n", getName().c_str(), me->getVerboseString().c_str());
-        if ( isRequestAddressValid(addr) && backing_ ) {
+        if ( isRequestAddressValid(me->getAddr()) && backing_ ) {
+            me->setAddr(translateToLocal(me->getAddr()));
+            Addr addr = me->getAddr();
+            Debug(_L10_, "U: %-20s   Event:Write     (%s)\n", getName().c_str(), me->getVerboseString().c_str());
             backing_->set(addr, me->getPayload().size(), me->getPayload());
+        } else {
+            Debug(_L10_, "U: %-20s   Event:Write     (%s) IGNORE\n", getName().c_str(), me->getVerboseString().c_str());
         }
     } else if (Command::NULLCMD == me->getCmd()) {
         Debug(_L10_, "U: %-20s   Event:Untimed   (%s)\n", getName().c_str(), me->getVerboseString().c_str());

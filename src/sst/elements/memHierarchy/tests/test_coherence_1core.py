@@ -90,7 +90,7 @@ memctrl.addParams({
     "backing" : "malloc",
     "backing_size_unit" : "1KiB",
     "backing_init_zero" : True,
-    "backing_out_file" : "{}/test_memHierarchy_coherence_1core_case{}_{}.malloc".format(outdir, option, protocol),
+    "backing_out_file" : "{}/test_memHierarchy_coherence_1core_case{}_{}.malloc.mem".format(outdir, option, protocol),
 })
 
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")

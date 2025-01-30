@@ -558,6 +558,10 @@ bool MESIL1::handleFlushAll(MemEvent* event, bool inMSHR) {
         }
 
         if (mshr_->insertFlush(event, false) == MemEventStatus::Reject) {
+            if (is_debug_event(event)) {
+                eventDI.action = "Reject";
+                eventDI.reason = "MSHR full";
+            }
             return false;
         }
         
@@ -633,6 +637,10 @@ bool MESIL1::handleForwardFlush(MemEvent* event, bool inMSHR) {
     if (!inMSHR) {
         status = mshr_->insertFlush(event, true);
         if (status == MemEventStatus::Reject) {
+            if (is_debug_event(event)) {
+                eventDI.action = "Reject";
+                eventDI.reason = "MSHR full";
+            }
             return false; /* No room for flush in MSHR */
         } else if (status == MemEventStatus::Stall) {
             eventDI.action = "Stall";
