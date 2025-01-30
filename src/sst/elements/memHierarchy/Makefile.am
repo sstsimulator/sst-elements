@@ -327,7 +327,7 @@ EXTRA_DIST = \
 	tests/refFiles/test_memHierarchy_memory_backing_out.malloc.mem \
 	tests/refFiles/test_memHierarchy_memory_backing_out.mmap.mem \
 	tests/refFiles/test_memHierarchy_memory_backing_2_mmap_inout.mmap.mem \
-	tests/refFiles/test_memHierarchy_memory_backing_5_mmap_init.malloc.mem \
+	tests/refFiles/test_memHierarchy_memory_backing_5_init.malloc.mem \
 	tests/refFiles/test_memHierarchy_sdl2_1.out \
 	tests/refFiles/test_memHierarchy_sdl3_1.out \
 	tests/refFiles/test_memHierarchy_sdl3_2.out \
