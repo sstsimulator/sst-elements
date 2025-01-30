@@ -27,6 +27,8 @@
 #include "velf/velfinfo.h"
 #include "vfpflags.h"
 #include "vfuncunit.h"
+#include "rocc/vroccinterface.h"
+#include "rocc/vbasicrocc.h"
 
 #include "os/vgetthreadstate.h"
 #include "os/vdumpregsreq.h"
@@ -178,6 +180,10 @@ public:
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         { "lsq", "Load-Store Queue for Memory Access", "SST::Vanadis::VanadisLoadStoreQueue" },
+        { "rocc0", "RoCC accelerator interface", "SST::Vanadis::VanadisRoCCInterface" },
+        { "rocc1", "RoCC accelerator interface", "SST::Vanadis::VanadisRoCCInterface" },
+        { "rocc2", "RoCC accelerator interface", "SST::Vanadis::VanadisRoCCInterface" },
+        { "rocc3", "RoCC accelerator interface", "SST::Vanadis::VanadisRoCCInterface" },
         { "mem_interface_inst", "Interface to memory system for instructions", "SST::Interfaces::StandardMem" },
     )
 
@@ -297,6 +303,11 @@ private:
     std::vector<VanadisDecoder*>                            thread_decoders;
     std::vector<const VanadisDecoderOptions*>               isa_options;
 
+    std::deque<VanadisInstruction*> rocc0_queue;
+    std::deque<VanadisInstruction*> rocc1_queue;
+    std::deque<VanadisInstruction*> rocc2_queue;
+    std::deque<VanadisInstruction*> rocc3_queue;
+
     std::vector<VanadisFunctionalUnit*> fu_int_arith;
     std::vector<VanadisFunctionalUnit*> fu_int_div;
     std::vector<VanadisFunctionalUnit*> fu_branch;
@@ -319,6 +330,15 @@ private:
 
     VanadisLoadStoreQueue* lsq;
     StandardMem*           memInstInterface;
+
+    VanadisRoCCInterface* rocc0;
+    bool has_rocc0;
+    VanadisRoCCInterface* rocc1;
+    bool has_rocc1;
+    VanadisRoCCInterface* rocc2;
+    bool has_rocc2;
+    VanadisRoCCInterface* rocc3;
+    bool has_rocc3;
 
     bool* halted_masks;
     bool  print_int_reg;
