@@ -49,8 +49,8 @@ namespace Vanadis {
         FUNC( arg, READV ); \
         FUNC( arg, RT_SIGACTION ); \
         FUNC( arg, RT_SIGPROCMASK ); \
-        FUNC( arg, SCHED_SETAFFINITY ); \
         FUNC( arg, SCHED_GETAFFINITY ); \
+        FUNC( arg, SCHED_SETAFFINITY ); \
         FUNC( arg, SCHED_YIELD ); \
         FUNC( arg, SET_TID_ADDRESS ); \
         FUNC( arg, UNAME ); \

@@ -1,3 +1,18 @@
+// Copyright 2009-2025 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2025, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// of the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
 #include <sched.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,12 +33,12 @@ void bind_thread_to_cpu(int cpu_id) {
 }
 
 int main() {
-    omp_set_num_threads(3); // Set number of threads (2 threads per core * 2 cores)
+    omp_set_num_threads(3); // Set number of threads
 
     #pragma omp parallel
     {
         int thread_id = omp_get_thread_num();
-        int cpu_id = thread_id; // Assign 2 threads to each core
+        int cpu_id = thread_id; // Assign 1 threads to each core
 
         bind_thread_to_cpu(cpu_id);
 

@@ -186,6 +186,8 @@ os/callev/voscallread.h \
 os/callev/voscallreadlinkat.h \
 os/callev/voscallreadlink.h \
 os/callev/voscallreadv.h \
+os/callev/voscallschedyield.h \
+os/callev/voscallsetaffinity.h \
 os/callev/voscallsetrobustlist.h \
 os/callev/voscallsettidaddr.h \
 os/callev/voscallstatx.h \
@@ -212,6 +214,8 @@ os/syscall/fstatat.h \
 os/syscall/fstat.h \
 os/syscall/futex.cc \
 os/syscall/futex.h \
+os/syscall/getaffinity.h \
+os/syscall/getcpu.h \
 os/syscall/getpgid.h \
 os/syscall/getpid.h \
 os/syscall/getppid.h \
@@ -233,6 +237,8 @@ os/syscall/read.h \
 os/syscall/readlinkat.h \
 os/syscall/readlink.h \
 os/syscall/readv.h \
+os/syscall/schedyield.h \
+os/syscall/setaffinity.h \
 os/syscall/setrobustlist.h \
 os/syscall/settidaddress.h \
 os/syscall/statx.h \
@@ -564,7 +570,14 @@ EXTRA_DIST = \
 	tests/riscv-tests/patch.txt \
 	tests/riscv-tests/README \
 	tests/riscv-tests/run-riscv-tests \
-	tests/riscv-tests/run-riscv-tests.out
+	tests/riscv-tests/run-riscv-tests.out \
+\
+	tests/multicore/openmp/Makefile \
+	tests/multicore/openmp/openmp_example.cpp \
+	tests/multicore/openmp/riscv64/openmp_example \
+	tests/multicore/openmp/riscv64/sst.stdout.gold \
+	tests/multicore/openmp/riscv64/vanadis.stdout.gold \
+	tests/multicore/openmp/riscv64/vanadis.stderr.gold
 
 libvanadis_la_SOURCES = \
 	vanadis.cc \
