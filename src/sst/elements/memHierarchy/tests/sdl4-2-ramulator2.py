@@ -1,5 +1,6 @@
 import sst
 from mhlib import componentlist
+debug_mem=1
 
 # Define the simulation components
 cpu0 = sst.Component("core0", "memHierarchy.standardCPU")
@@ -10,7 +11,7 @@ cpu0.addParams({
     "clock" : "2GHz",
     "rngseed" : 989,
     "maxOutstanding" : 64,
-    "opCount" : 3000,
+    "opCount" : 10,
     "reqsPerIssue" : 4,
     "write_freq" : 25, # 25% writes
     "read_freq" : 75,  # 75% reads
@@ -26,7 +27,8 @@ c0_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : "0"
+      "debug" : "0",
+      "debug_level" : "10"
 })
 cpu1 = sst.Component("core1", "memHierarchy.standardCPU")
 cpu1.addParams({
@@ -36,7 +38,7 @@ cpu1.addParams({
     "clock" : "2GHz",
     "rngseed" : 987,
     "maxOutstanding" : 64,
-    "opCount" : 3000,
+    "opCount" : 10,
     "reqsPerIssue" : 4,
     "write_freq" : 25, # 25% writes
     "read_freq" : 75,  # 75% reads
@@ -52,7 +54,8 @@ c1_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : "0"
+      "debug" : "0",
+      "debug_level" : "10"
 })
 bus = sst.Component("bus", "memHierarchy.Bus")
 bus.addParams({
@@ -67,11 +70,13 @@ l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
-      "debug" : "0"
+      "debug" : "0",
+      "debug_level" : "10"
 })
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
     "debug" : "0",
+    "debug_level" : "10",
     "clock" : "1GHz",
     "addr_range_end" : 512*1024*1024-1,
 })

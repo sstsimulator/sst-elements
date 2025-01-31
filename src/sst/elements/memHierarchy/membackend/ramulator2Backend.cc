@@ -81,6 +81,7 @@ void ramulator2Memory::finish(){
 }
 
 
+// TODO: Figure out why callback isn't ACKing SST events
 void ramulator2Memory::ramulator2Done(Ramulator::Request& ramReq) {
     uint64_t addr = ramReq.addr;
     std::deque<ReqId> &reqs = dramReqs[addr];
