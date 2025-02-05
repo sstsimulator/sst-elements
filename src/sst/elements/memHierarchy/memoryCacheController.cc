@@ -165,7 +165,8 @@ MemCacheController::MemCacheController(ComponentId_t id, Params &params) : Compo
             memoryFile.clear();
         }
         try {
-            backing_ = new Backend::BackingMMAP( memoryFile, memBackendConvertor_->getMemSize() );
+            // TODO update to match memoryController
+            backing_ = new Backend::BackingMMAP( memoryFile, memoryFile, memBackendConvertor_->getMemSize() );
         }
         catch ( int e) {
             if (e == 1)

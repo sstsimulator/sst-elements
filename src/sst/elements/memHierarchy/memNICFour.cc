@@ -102,6 +102,15 @@ void MemNICFour::setup() {
     }
 }
 
+void MemNICFour::complete(unsigned int phase) {
+    link_control[REQ]->complete(phase);
+    link_control[ACK]->complete(phase);
+    link_control[FWD]->complete(phase);
+    link_control[DATA]->complete(phase);
+
+    MemNICBase::nicComplete(link_control[DATA], phase);
+}
+
 
 bool MemNICFour::clock(Cycle_t cycle) {
     // Attempt send on each network
@@ -162,6 +171,9 @@ void MemNICFour::send(MemEventBase *ev) {
     }
 }
 
+void MemNICFour::sendUntimedData(MemEventInit* ev, bool broadcast, bool lookup_dst) {
+    MemNICBase::sendUntimedData(ev, broadcast, lookup_dst, link_control[DATA]);
+}
 
 /*
  * Event handler called by link control on event receive

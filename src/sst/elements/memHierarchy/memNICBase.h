@@ -140,16 +140,11 @@ class MemNICBase : public MemLinkBase {
                 ImplementSerializable(SST::MemHierarchy::MemNICBase::InitMemRtrEvent);
         };
 
-        // Init functions
-        virtual void sendUntimedData(MemEventInit* ev, bool broadcast = true) {
-            DISABLE_WARN_DEPRECATED_DECLARATION
-            sendInitData(ev, broadcast);
-            REENABLE_WARNING
-        }
-
-        [[deprecated("sendInitData() has been deprecated and will be removed in SST 14.  Please use sendUntimedData().")]]
-        virtual void sendInitData(MemEventInit * ev, bool broadcast = true) {
-            if (!broadcast) {
+        // Init/complete functions
+        // Send untimed data immediately if possible
+        void sendUntimedData(MemEventInit* ev, bool broadcast, bool lookup_dst, 
+                SST::Interfaces::SimpleNetwork * linkcontrol) {
+            if (!broadcast && lookup_dst) {
                 std::string dst = findTargetDestination(ev->getRoutingAddress());
                 if (dst == "") {
                     // Hold this request until we know the right address
@@ -158,25 +153,26 @@ class MemNICBase : public MemLinkBase {
                 }
                 ev->setDst(dst);
             }
+
             MemRtrEvent * mre = new MemRtrEvent(ev);
             SST::Interfaces::SimpleNetwork::Request* req = new SST::Interfaces::SimpleNetwork::Request();
-            req->dest = SST::Interfaces::SimpleNetwork::INIT_BROADCAST_ADDR;
+            if (broadcast) {
+                req->dest = SST::Interfaces::SimpleNetwork::INIT_BROADCAST_ADDR;
+            } else {
+                req->dest = lookupNetworkAddress(ev->getDst());
+            }
             req->givePayload(mre);
-            initSendQueue.push(req);
+            if (!linkcontrol->isNetworkInitialized()) {
+                untimed_send_queue_.push(req);
+            } else {
+                linkcontrol->sendUntimedData(req);
+            }
         }
 
         virtual MemEventInit* recvUntimedData() {
-            DISABLE_WARN_DEPRECATED_DECLARATION
-            auto ret = recvInitData();
-            REENABLE_WARNING
-                return ret;
-        }
-    
-        [[deprecated("recvInitData() has been deprecated and will be removed in SST 14.  Please use recvUntimedData().")]]
-        virtual MemEventInit* recvInitData() {
-            if (initQueue.size()) {
-                MemRtrEvent * mre = initQueue.front();
-                initQueue.pop();
+            if (untimed_receive_queue_.size()) {
+                MemRtrEvent * mre = untimed_receive_queue_.front();
+                untimed_receive_queue_.pop();
                 MemEventInit * ev = static_cast<MemEventInit*>(mre->takeEvent());
                 delete mre;
                 return ev;
@@ -292,9 +288,9 @@ class MemNICBase : public MemLinkBase {
 
             // After we've set up network and exchanged params, drain the send queue
             if (networkReady && initMsgSent) {
-                while (!initSendQueue.empty()) {
-                    linkcontrol->sendUntimedData(initSendQueue.front());
-                    initSendQueue.pop();
+                while (!untimed_send_queue_.empty()) {
+                    linkcontrol->sendUntimedData(untimed_send_queue_.front());
+                    untimed_send_queue_.pop();
                 }
 
                 for (auto it = initWaitForDst.begin(); it != initWaitForDst.end();) {
@@ -374,13 +370,39 @@ class MemNICBase : public MemLinkBase {
                                 addEndpoint(epInfo);
                             }
                             mre->putEvent(ev); // If we did not delete the Event, give it back to the MemRtrEvent
-                            initQueue.push(mre); // Our component will forward on all its other ports
+                            untimed_receive_queue_.push(mre); // Our component will forward on all its other ports
                         }
                     } else if ((ev->getCmd() == Command::NULLCMD && (isSource(ev->getSrc()) || isDest(ev->getSrc()))) || ev->getDst() == info.name) {
-                        dbg.debug(_L10_, "\tInserting in initQueue\n");
                         mre->putEvent(ev); // If we did not delete the Event, give it back to the MemRtrEvent
-                        initQueue.push(mre);
+                        untimed_receive_queue_.push(mre);
                     }
+                }
+                delete req;
+            }
+        }
+
+        /* NIC complete so that subclasses don't have to do this. Subclasses should call this during complete() */
+        virtual void nicComplete(SST::Interfaces::SimpleNetwork * linkcontrol, unsigned int phase) {
+            /* Drain untimed messages into untimed_recv_queue_ */
+            SST::Interfaces::SimpleNetwork::Request * req;
+            while ((req = linkcontrol->recvUntimedData()) != nullptr) {
+                Event * payload = req->takePayload();
+                MemRtrEvent * mre = dynamic_cast<MemRtrEvent*>(payload);
+                
+                if (mre) {
+                    MemEventInit *ev = static_cast<MemEventInit*>(mre->takeEvent()); // mre no longer has a copy of its event
+                    dbg.debug(_L10_, "%s (memNICBase) received mre during complete. %s\n", getName().c_str(), ev->getVerboseString(dlevel).c_str());
+                    
+                    /*
+                     * Expected events: Flush (from dst or src) or writeback/data (from src)
+                     */
+                    if (ev->getInitCmd() == MemEventInit::InitCommand::Flush && !isDest(ev->getSrc())) { // Broadcast Flush not intended for us
+                        delete ev;
+                        delete mre;
+                        continue;
+                    }
+                    mre->putEvent(ev);
+                    untimed_receive_queue_.push(mre); // deliver event
                 }
                 delete req;
             }
@@ -559,10 +581,10 @@ class MemNICBase : public MemLinkBase {
         std::set<EndpointInfo> endpointInfo;
         std::set<std::string> reachableNames;
 
-        // Init queues
-        std::queue<MemRtrEvent*> initQueue; // Queue for received init events
-        std::queue<SST::Interfaces::SimpleNetwork::Request*> initSendQueue; // Queue of events waiting to be sent after network (linkcontrol) initializes
-        std::set<MemEventInit*> initWaitForDst; // Set of events with unknown destinations    
+        // Untimed and init event queues
+        std::queue<MemRtrEvent*> untimed_receive_queue_; // Queue for received untimed events
+        std::queue<SST::Interfaces::SimpleNetwork::Request*> untimed_send_queue_; // Queue of events waiting to be sent after network (linkcontrol) initializes
+        std::set<MemEventInit*> initWaitForDst; // Set of events with unknown destinations - only possible during init() stage
 
         // Other parameters
         std::unordered_set<uint32_t> sourceIDs, destIDs; // IDs which this endpoint cares about

@@ -184,7 +184,6 @@ void Bus::configureParameters(SST::Params& params) {
     int debugLevel = params.find<int>("debug_level", 0);
 
     dbg_.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
-    if (debugLevel < 0 || debugLevel > 10)     dbg_.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
 
     std::vector<Addr> addrArr;
     params.find_array<Addr>("debug_addr", addrArr);
@@ -288,3 +287,37 @@ void Bus::init(unsigned int phase) {
     }
 }
 
+
+void Bus::complete(unsigned int phase) {
+    SST::Event *ev;
+
+    /* Exchange events from high to low */
+    for (int i = 0; i < numHighPorts_; i++) {
+        while ((ev = highNetPorts_[i]->recvUntimedData())) {
+            MemEventInit* event = dynamic_cast<MemEventInit*>(ev);
+            dbg_.debug(_L10_, "I: %-20s   Event:Init      (%s)\n", getName().c_str(), event->getVerboseString().c_str());
+            if (event->getDst() == "None") { // Broadcast
+                for (int k = 0; k < numLowPorts_; k++)
+                    lowNetPorts_[k]->sendUntimedData(event->clone());
+            } else {
+                SST::Link* dstLink = lookupNode(event->getDst());
+                dstLink->sendUntimedData(event);
+            }
+        }
+    }
+
+    /* Exchange events from low to high */
+    for (int i = 0; i < numLowPorts_; i++) {
+        while ((ev = lowNetPorts_[i]->recvUntimedData())) {
+            MemEventInit* event = dynamic_cast<MemEventInit*>(ev);
+            dbg_.debug(_L10_, "I: %-20s   Event:Init      (%s)\n", getName().c_str(), event->getVerboseString().c_str());
+            if (event->getDst() == "None") { //braodcast
+                for (int k = 0; k < numHighPorts_; k++)
+                    highNetPorts_[k]->sendUntimedData(event->clone());
+            } else {
+                SST::Link* dstLink = lookupNode(event->getDst());
+                dstLink->sendUntimedData(event);
+            }
+        }
+    }
+}
