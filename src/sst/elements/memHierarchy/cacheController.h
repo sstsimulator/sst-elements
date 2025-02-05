@@ -188,9 +188,10 @@ public:
     ~Cache() { }
 
     /** Component API - pre- and post-simulation */
-    virtual void init(unsigned int);
-    virtual void setup(void);
-    virtual void finish(void);
+    virtual void init(unsigned int phase) override;
+    virtual void setup(void) override;
+    virtual void complete(unsigned int phase) override;
+    virtual void finish(void) override;
 
     /** Component API - debug and fatal */
     void printStatus(Output & out); // Called on SIGUSR2

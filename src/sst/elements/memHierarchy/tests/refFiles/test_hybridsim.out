@@ -2,4 +2,4 @@ l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to
 got to save state in nvdimm 
 save file was state/nvdimm_restore.txt
 NVDIMM is saving the used table, dirty table and address map 
-Simulation is complete, simulated time: 12.2825 us
+Simulation is complete, simulated time: 9.37 us

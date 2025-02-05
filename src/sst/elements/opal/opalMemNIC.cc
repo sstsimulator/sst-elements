@@ -77,6 +77,10 @@ void OpalMemNIC::send(MemHierarchy::MemEventBase * ev) {
     sendQueue.push(req);
 }
 
+void OpalMemNIC::sendUntimedData(MemHierarchy::MemEventInit* ev, bool broadcast = true, bool lookup_dst = true) {
+    MemNICBase::sendUntimedData(ev, broadcast, lookup_dst, link_control);
+}
+
 
 /* Add 'node' to InitMemRtrEvent */
 MemHierarchy::MemNICBase::InitMemRtrEvent * OpalMemNIC::createInitMemRtrEvent() {

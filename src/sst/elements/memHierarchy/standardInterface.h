@@ -110,6 +110,7 @@ public:
     // SST simulation life cycle hooks - parent must call these
     void init(unsigned int phase) override;
     void setup() override;
+    void complete(unsigned int phase) override;
     void finish() override;
 
     /* End API to Parent */

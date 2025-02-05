@@ -76,7 +76,7 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
                     recordLatencyType(event->getID(), LatType::MISS);
                     mshr_->setProfiled(addr);
                 }
-                sendTime = forwardMessage(event, event->getSize(), 0, nullptr);
+                sendTime = forwardMessage(event, lineSize_, 0, nullptr);
                 line->setState(IS);
                 line->setTimestamp(sendTime);
                 mshr_->setInProgress(addr);
@@ -2612,3 +2612,77 @@ void MESIInclusive::printStatus(Output &out) {
     cacheArray_->printCacheArray(out);
 }
 
+
+/***********************************************************************************************************
+ * Cache flush at simulation shutdown
+ ***********************************************************************************************************/
+void MESIInclusive::beginCompleteStage() {
+    shutdown_flush_counter_ = 0;
+    flush_state_ = FlushState::Ready;
+}
+
+void MESIInclusive::processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink) {
+    if (event->getInitCmd() == MemEventInit::InitCommand::Flush) {
+        MemEventUntimedFlush* flush = static_cast<MemEventUntimedFlush*>(event);
+
+        if ( flush->request() ) {
+            if ( flush_state_ == FlushState::Ready ) {
+                flush_state_ = FlushState::Invalidate;
+                std::set<MemLinkBase::EndpointInfo>* src = highlink->getSources();
+                shutdown_flush_counter_ += src->size(); // In case distances are nonuniform and we start getting acks before request
+                for (auto it = src->begin(); it != src->end(); it++) {
+                    MemEventUntimedFlush* forward = new MemEventUntimedFlush(getName());
+                    forward->setDst(it->name);
+                    highlink->sendUntimedData(forward, false, false);
+                }
+            }
+            if (shutdown_flush_counter_ != 0) {
+                delete event;
+                return;
+            }
+        } else {
+            shutdown_flush_counter_--;
+            if (shutdown_flush_counter_ != 0) {
+                delete event;
+                return;
+            }
+        }
+
+        // Ready to flush - all other caches above hae already flushed
+        for (auto it : *cacheArray_) {
+            // Only flush dirty data, no need to fix coherence state
+            switch (it->getState()) {
+                case I:
+                case S:
+                case E:
+                    break;
+                case M:
+                    {
+                    MemEventInit * ev = new MemEventInit(cachename_, Command::Write, it->getAddr(), *(it->getData()));
+                    lowlink->sendUntimedData(ev, false, true); // Don't broadcast, route by addr
+                    break;
+                    }
+            default:
+                // TODO handle case where sim ends and state is not stable
+                std::string valstr = getDataString(it->getData());
+                debug->output("%s, NOTICE: Unable to flush cache line that is in transient state '%s'. Addr = 0x%" PRIx64 ". Value = %s\n",
+                    cachename_.c_str(), StateString[it->getState()], it->getAddr(), valstr.c_str());
+                break;
+            };
+        }
+
+        if (!flush_manager_) {
+            std::set<MemLinkBase::EndpointInfo>* dst = lowlink->getDests();
+            for (auto it = dst->begin(); it != dst->end(); it++) {
+                MemEventUntimedFlush* response = new MemEventUntimedFlush(getName(), false);
+                response->setDst(it->name);
+                lowlink->sendUntimedData(response, false, false);
+            }
+        }
+    } else if (event->getCmd() == Command::Write ) {
+        SharedCacheLine * line = cacheArray_->lookup(event->getAddr(), false);
+        line->setData(event->getPayload(), 0);
+        line->setState(M); // Force a writeback of this data
+    }
+    delete event; // Nothing for now
+}
