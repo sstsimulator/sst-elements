@@ -13,12 +13,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-/*
-        OTF2_GlobalDefReader* traceGlobalDefReader;
-        OTF2_GlobalDefReaderCallbacks* traceGlobalCallbacks;
-     	OTF2_Reader* traceReader;
-*/
-
 #include <sst_config.h>
 
 #include "emberotf2.h"
@@ -393,13 +387,40 @@ static OTF2_CallbackCode EmberOTF2RegisterLocation( void* userData,
 	return OTF2_CALLBACK_SUCCESS;
 }
 
+static OTF2_CallbackCode EmberOTF2GlobalString( void* userData,
+    OTF2_StringRef stringRef,
+    const char* string ) {
+
+    assert( userData );
+    assert( string );
+
+    EmberOTF2Generator* gen = reinterpret_cast<EmberOTF2Generator*>( userData );
+    uint64_t stringId = static_cast<uint64_t>( stringRef );
+
+    auto& globalStrings = gen->getGlobalStringDefs();
+    auto p = globalStrings.emplace( std::make_pair(stringId, std::string(string)) );
+
+    if ( !p.second ) {
+        gen->verbose( CALL_INFO, 16, 0,
+              "Duplicate global string definition: [%lu] \"%s\"\n",
+              stringId, string );
+    }
+    else {
+        gen->verbose( CALL_INFO, 4, 0, "Trace::GlobalString [%lu] \"%s\"\n",
+            stringId, string );
+    }
+
+    return OTF2_CALLBACK_SUCCESS;
+}
+
 EmberOTF2Generator::EmberOTF2Generator(SST::ComponentId_t id, Params& params) :
 	EmberMessagePassingGenerator(id, params, "OTF2"),
 	traceLocationCount(0), currentLocation(0), currentTime(0), m_timerResolution(0), m_inMPI(false)
 {
-	m_size = size();
-	std::string tracePrefix = params.find<std::string>("arg.tracePrefix", "");
-	m_addCompute = params.find<bool>("arg.addCompute", false);
+    m_size = size();
+    std::string tracePrefix = params.find<std::string>("arg.tracePrefix", "");
+    m_addCompute = params.find<bool>("arg.addCompute", false);
+    m_readGlobalStrings = params.find<bool>("arg.readGlobalStringDefinitions", false);
 
 	if( "" == tracePrefix ) {
 		fatal( CALL_INFO, -1, "Error: no trace was specified by the \"tracePrefix\" parameter.\n" );
@@ -469,18 +490,26 @@ EmberOTF2Generator::EmberOTF2Generator(SST::ComponentId_t id, Params& params) :
 	OTF2_GlobalEvtReaderCallbacks_Delete( traceGlobalEvtCallbacks );
 */
 
-	traceGlobalDefCallbacks = OTF2_GlobalDefReaderCallbacks_New();
-	OTF2_GlobalDefReaderCallbacks_SetClockPropertiesCallback( traceGlobalDefCallbacks, EmberOTF2ClockProperties );
-	uint64_t globalDefinitions = 0;
-	OTF2_Reader_GetNumberOfGlobalDefinitions( traceReader, &globalDefinitions );
-	verbose( CALL_INFO, 1, 0, "There are: %" PRIu64 " global definitions.\n", globalDefinitions );
+    traceGlobalDefCallbacks = OTF2_GlobalDefReaderCallbacks_New();
 
-	traceGlobalDefReader = OTF2_Reader_GetGlobalDefReader( traceReader );
-	OTF2_GlobalDefReader_SetCallbacks( traceGlobalDefReader, traceGlobalDefCallbacks, this );
+    OTF2_GlobalDefReaderCallbacks_SetClockPropertiesCallback( traceGlobalDefCallbacks,
+        EmberOTF2ClockProperties );
 
-	if( NULL == traceGlobalDefReader ) {
-		fatal( CALL_INFO, -1, "Error: unable to create a global definition reader.\n");
-	}
+    if (m_readGlobalStrings) {
+        OTF2_GlobalDefReaderCallbacks_SetStringCallback( traceGlobalDefCallbacks,
+            EmberOTF2GlobalString );
+    }
+
+    uint64_t globalDefinitions = 0;
+    OTF2_Reader_GetNumberOfGlobalDefinitions( traceReader, &globalDefinitions );
+    verbose( CALL_INFO, 1, 0, "There are: %" PRIu64 " global definitions.\n", globalDefinitions );
+
+    traceGlobalDefReader = OTF2_Reader_GetGlobalDefReader( traceReader );
+
+    OTF2_GlobalDefReader_SetCallbacks( traceGlobalDefReader, traceGlobalDefCallbacks, this );
+    if ( NULL == traceGlobalDefReader ) {
+        fatal( CALL_INFO, -1, "Error: unable to create a global definition reader.\n");
+    }
 
 	uint64_t globalDefinitionsRead = 0;
 	OTF2_Reader_ReadAllGlobalDefinitions( traceReader, traceGlobalDefReader, &globalDefinitionsRead );
