@@ -13,17 +13,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-/**
- * @file dmaEngine.cc
- * @author Weili An (an107@purdue.edu)
- * @brief A DMA engine component to copy data from SST memspace to
- *        simulator memspace and vice versa
- * @version 0.1
- * @date 2022-10-18
- * 
- * 
- */
-
 #ifndef BALAR_DMA_ENGINE_H
 #define BALAR_DMA_ENGINE_H
 
@@ -57,7 +46,8 @@ public:
         {"mmio_size",               "(uint) Size of the MMIO memory range (Bytes)", "512"},
     )
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( 
-        {"iface", "Interface into interconnect", "SST::Interfaces::StandardMem"},
+        {"mmio_iface", "Command packet MMIO interface", "SST::Interfaces::StandardMem"},
+        {"mem_iface", "Memory data packet interface", "SST::Interfaces::StandardMem"},
     )
 
     DMAEngine(ComponentId_t id, Params &params);
@@ -150,8 +140,10 @@ private:
     Addr mmio_addr;
     uint32_t mmio_size;
 
-    /* Interconnect interfaces */
-    StandardMem* iface;
+    /* Command MMIO interface */
+    StandardMem* mmio_iface;
+    /* Memory access interface */
+    StandardMem* mem_iface;
 
     /* Handlers */
     DMAHandlers* handlers;
