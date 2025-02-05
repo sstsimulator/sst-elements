@@ -572,12 +572,12 @@ EXTRA_DIST = \
 	tests/riscv-tests/run-riscv-tests \
 	tests/riscv-tests/run-riscv-tests.out \
 \
-	tests/multicore/openmp/Makefile \
-	tests/multicore/openmp/openmp_example.cpp \
-	tests/multicore/openmp/riscv64/openmp_example \
-	tests/multicore/openmp/riscv64/sst.stdout.gold \
-	tests/multicore/openmp/riscv64/vanadis.stdout.gold \
-	tests/multicore/openmp/riscv64/vanadis.stderr.gold
+	tests/small/multicore/openmp/Makefile \
+	tests/small/multicore/openmp/openmp.cpp \
+	tests/small/multicore/openmp/riscv64/openmp \
+	tests/small/multicore/openmp/riscv64/3core/sst.stdout.gold \
+	tests/small/multicore/openmp/riscv64/3core/vanadis.stdout.gold \
+	tests/small/multicore/openmp/riscv64/3core/vanadis.stderr.gold
 
 libvanadis_la_SOURCES = \
 	vanadis.cc \
