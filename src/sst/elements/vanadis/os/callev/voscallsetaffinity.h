@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _H_VANADIS_SYSCALL_SCHED_GET_AFFINITY
-#define _H_VANADIS_SYSCALL_SCHED_GET_AFFINITY
+#ifndef _H_VANADIS_SYSCALL_SCHED_SET_AFFINITY
+#define _H_VANADIS_SYSCALL_SCHED_SET_AFFINITY
 
 #include "os/voscallev.h"
 #include "os/vosbittype.h"
@@ -22,13 +22,13 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisSyscallGetaffinityEvent : public VanadisSyscallEvent {
+class VanadisSyscallSetaffinityEvent : public VanadisSyscallEvent {
 public:
-    VanadisSyscallGetaffinityEvent() : VanadisSyscallEvent() {} 
-    VanadisSyscallGetaffinityEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, int64_t pid, int64_t cpusetsize, uint64_t maskAddr ) 
-        : VanadisSyscallEvent(core, thr, bittype), pid(pid), cpusetsize(cpusetsize), maskAddr(maskAddr) {} 
+    VanadisSyscallSetaffinityEvent() : VanadisSyscallEvent() {}
+    VanadisSyscallSetaffinityEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, int64_t pid, int64_t cpusetsize, uint64_t maskAddr )
+      : VanadisSyscallEvent(core, thr, bittype), pid(pid), cpusetsize(cpusetsize), maskAddr(maskAddr) {}
 
-    VanadisSyscallOp getOperation() override { return SYSCALL_OP_SCHED_GETAFFINITY; }
+    VanadisSyscallOp getOperation() override { return SYSCALL_OP_SCHED_SETAFFINITY; }
 
     int64_t getPid() const { return pid; }
     int64_t getCpusetsize() const { return cpusetsize; }
@@ -42,7 +42,7 @@ private:
         ser& cpusetsize;
         ser& maskAddr;
     }
-    ImplementSerializable(SST::Vanadis::VanadisSyscallGetaffinityEvent);
+    ImplementSerializable(SST::Vanadis::VanadisSyscallSetaffinityEvent);
 
     int64_t pid;
     int64_t cpusetsize;

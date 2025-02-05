@@ -13,22 +13,27 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _H_VANADIS_OS_SYSCALL_GETPID
-#define _H_VANADIS_OS_SYSCALL_GETPID
+#ifndef _H_VANADIS_OS_SYSCALL_SCHED_YIELD
+#define _H_VANADIS_OS_SYSCALL_SCHED_YIELD
 
 #include "os/syscall/syscall.h"
-#include "os/callev/voscallgetx.h"
+#include "os/callev/voscallschedyield.h"
 
 namespace SST {
 namespace Vanadis {
 
-class VanadisGetpidSyscall : public VanadisSyscall {
+class VanadisSchedYieldSyscall : public VanadisSyscall {
 public:
-    VanadisGetpidSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallGetxEvent* event )
-        : VanadisSyscall( os, coreLink, process, event, "getpid" ) 
+    VanadisSchedYieldSyscall(
+        VanadisNodeOSComponent* os, SST::Link* coreLink, 
+        OS::ProcessInfo* process,
+        VanadisSyscallSchedYieldEvent* event)
+    : VanadisSyscall(os, coreLink, process, event, "sched_yield") 
     {
-        m_output->verbose(CALL_INFO, 16, 0, "[syscall-getpid] pid=%d\n",process->getpid());
-        setReturnSuccess(process->getpid());
+        // No arguments to decode
+        m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
+            "[syscall-sched_yield] -> sched_yield()\n");
+        setReturnSuccess(0);
     }
 };
 

@@ -38,9 +38,22 @@ typedef struct cpu_set_t { unsigned long __bits[128/sizeof(long)]; } cpu_set_t;
 #endif
         assert( 0 == event->getPid() );
         // for now set every CPU available for scheduling
-        payload.resize( sizeof(uint64_t) * 128/sizeof(uint64_t) , 0xff );
-        //auto cpu_set = (uint64_t*) payload.data();
-        writeMemory( event->getMaskAddr(), payload );
+        int num_cores = os->getCoreCount();
+
+        // Resize payload to represent 128 bits (16 bytes)
+        payload.resize(sizeof(uint64_t) * (128 / sizeof(uint64_t)), 0x00);
+
+        // Set the first 'num_cores' bits to 1
+        uint64_t* cpu_set = reinterpret_cast<uint64_t*>(payload.data());
+        for (int i = 0; i < num_cores; i++) {
+            int element_index = i / 64;    // Determine which uint64_t element
+            int bit_position = i % 64;    // Determine the bit position within the element
+            cpu_set[element_index] |= (1ULL << bit_position); // Set the bit to 1
+        }
+
+        // Write the updated payload to memory
+        writeMemory(event->getMaskAddr(), payload);
+
     }
 
     void memReqIsDone(bool) {
