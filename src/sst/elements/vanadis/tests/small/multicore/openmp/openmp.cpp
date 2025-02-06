@@ -42,7 +42,12 @@ int main() {
 
         bind_thread_to_cpu(cpu_id);
 
-        printf("Thread %d bound to CPU %d\n", thread_id, sched_getcpu());
+        for (int i = 0; i < 3; i++) {
+            if (thread_id == i) {
+                printf("Thread %d bound to CPU %d\n", thread_id, sched_getcpu());
+            }
+            #pragma omp barrier
+        }
     }
 
     return 0;
