@@ -25,6 +25,8 @@
 namespace SST {
 namespace Ember {
 
+using TraceStringDefinitions = std::unordered_map<uint64_t, std::string>;
+
 class EmberOTF2Generator : public EmberMessagePassingGenerator {
 
 public:
@@ -146,32 +148,38 @@ public:
 		return CHAR;
 	}
 
+    TraceStringDefinitions& getGlobalStringDefs() {
+        return globalStringDefs;
+    }
+
 private:
-	OTF2_DefReader* traceLocalDefReader;
-	OTF2_GlobalDefReader* traceGlobalDefReader;
-	OTF2_GlobalDefReaderCallbacks* traceGlobalDefCallbacks;
-	OTF2_GlobalEvtReader* traceGlobalEvtReader;
-	OTF2_GlobalEvtReaderCallbacks* traceGlobalEvtCallbacks;
-	OTF2_DefReaderCallbacks* traceLocalCallbacks;
-	OTF2_EvtReaderCallbacks* traceLocalEvtCallbacks;
-     	OTF2_Reader* traceReader;
-	OTF2_EvtReader* traceEvtReader;
+    OTF2_DefReader* traceLocalDefReader;
+    OTF2_GlobalDefReader* traceGlobalDefReader;
+    OTF2_GlobalDefReaderCallbacks* traceGlobalDefCallbacks;
+    OTF2_GlobalEvtReader* traceGlobalEvtReader;
+    OTF2_GlobalEvtReaderCallbacks* traceGlobalEvtCallbacks;
+    OTF2_DefReaderCallbacks* traceLocalCallbacks;
+    OTF2_EvtReaderCallbacks* traceLocalEvtCallbacks;
+    OTF2_Reader* traceReader;
+    OTF2_EvtReader* traceEvtReader;
 
-	OTF2_TimeStamp currentTime;
+    OTF2_TimeStamp currentTime;
 
-	std::vector<uint64_t> traceLocations;
-	uint64_t traceLocationCount;
-	uint64_t currentLocation;
+    std::vector<uint64_t> traceLocations;
+    uint64_t traceLocationCount;
+    uint64_t currentLocation;
 
-	bool traceOpenedDefFiles;
+    bool traceOpenedDefFiles;
+    TraceStringDefinitions globalStringDefs;
 
-	std::queue<EmberEvent*>* eventQ;
-	std::unordered_map<uint64_t, MessageRequest*> requestMap;
+    std::queue<EmberEvent*>* eventQ;
+    std::unordered_map<uint64_t, MessageRequest*> requestMap;
 
-	uint64_t m_size;
-	uint64_t m_timerResolution;
-	bool m_inMPI;
-	bool m_addCompute;
+    uint64_t m_size;
+    uint64_t m_timerResolution;
+    bool m_inMPI;
+    bool m_addCompute;
+    bool m_readGlobalStrings;
 };
 
 }
