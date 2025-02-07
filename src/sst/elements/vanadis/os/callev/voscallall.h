@@ -17,7 +17,9 @@
 #define _H_VANADIS_CALL_ALL
 
 #include "os/callev/voscallaccessev.h"
+#include "os/callev/voscallsetaffinity.h"
 #include "os/callev/voscallgetaffinity.h"
+#include "os/callev/voscallschedyield.h"
 #include "os/callev/voscallcheckpoint.h"
 #include "os/callev/voscallbrk.h"
 #include "os/callev/voscallclose.h"

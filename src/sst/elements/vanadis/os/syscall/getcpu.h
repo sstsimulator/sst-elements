@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _H_VANADIS_OS_SYSCALL_GETPID
-#define _H_VANADIS_OS_SYSCALL_GETPID
+#ifndef _H_VANADIS_OS_SYSCALL_GETCPU
+#define _H_VANADIS_OS_SYSCALL_GETCPU
 
 #include "os/syscall/syscall.h"
 #include "os/callev/voscallgetx.h"
@@ -22,13 +22,13 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisGetpidSyscall : public VanadisSyscall {
+class VanadisGetcpuSyscall : public VanadisSyscall {
 public:
-    VanadisGetpidSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallGetxEvent* event )
-        : VanadisSyscall( os, coreLink, process, event, "getpid" ) 
+    VanadisGetcpuSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallGetxEvent* event )
+        : VanadisSyscall( os, coreLink, process, event, "getcpu" ) 
     {
-        m_output->verbose(CALL_INFO, 16, 0, "[syscall-getpid] pid=%d\n",process->getpid());
-        setReturnSuccess(process->getpid());
+        m_output->verbose(CALL_INFO, 16, 0, "[syscall-getcpu] cpu=%d\n",process->getCore());
+        setReturnSuccess(process->getCore());
     }
 };
 
