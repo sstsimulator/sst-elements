@@ -93,8 +93,11 @@ public:
     virtual ~MemLink() { }
 
     /* Initialization functions for parent */
-    virtual void init(unsigned int phase);
-    virtual void setup();
+    virtual void init(unsigned int phase) override;
+    virtual void setup() override;
+
+    /* Shutdown functions for parent */
+    virtual void complete(unsigned int UNUSED(phase)) override;
 
     /* Remote endpoint info management */
     virtual std::set<EndpointInfo>* getSources();
@@ -108,8 +111,8 @@ public:
     virtual bool isReachable(std::string dst);
 
     /* Send and receive functions for MemLink */
-    virtual void sendInitData(MemEventInit * ev, bool broadcast = true);
-    virtual MemEventInit* recvInitData();
+    virtual void sendUntimedData(MemEventInit * ev, bool broadcast, bool lookup_dst);
+    virtual MemEventInit* recvUntimedData();
     virtual void send(MemEventBase * ev);
     virtual MemEventBase * recv();
 

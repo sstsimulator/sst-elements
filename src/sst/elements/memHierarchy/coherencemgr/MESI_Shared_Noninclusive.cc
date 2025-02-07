@@ -1188,12 +1188,14 @@ bool MESISharNoninclusive::handlePutM(MemEvent * event, bool inMSHR) {
             if (!inMSHR || !mshr_->getProfiled(addr)) {
                 stat_eventState[(int)Command::PutM][state]->addData(1);
             }
-            // Handle the coherence state part and buffer the data in the MSHR.
-            // We won't need a line because we're either deallocating the data or one of our children wants it
+            // Handle the coherence state part and buffer the data in the MSHR or dataline if we have it
+            // We won't need to allocate a line because we're either deallocating the data or one of our children wants it
             tag->removeOwner();
 
-            if (!data && !mshr_->hasData(addr))
+            if (!data)
                 mshr_->setData(addr, event->getPayload());
+            else
+                data->setData(event->getPayload(), 0);
             responses.find(addr)->second.erase(event->getSrc());
             if (responses.find(addr)->second.empty())
                 responses.erase(addr);
@@ -2150,17 +2152,17 @@ bool MESISharNoninclusive::handleGetXResp(MemEvent * event, bool inMSHR) {
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::GetXResp, (localPrefetch ? "-pref" : ""), addr, state);
 
-    if (data) {
-        data->setData(event->getPayload(), 0);
-        if (is_debug_addr(addr))
-            printDataValue(addr, &(event->getPayload()), true);
-    }
-
     stat_eventState[(int)Command::GetXResp][state]->addData(1);
 
     switch (state) {
         case IS:
         {
+            // Update line if we have it locally
+            if (data) {
+                data->setData(event->getPayload(), 0);
+                if (is_debug_addr(addr))
+                    printDataValue(addr, &(event->getPayload()), true);
+            }
             // Update state
             if (event->getDirty())
                 tag->setState(M);
@@ -2187,18 +2189,24 @@ bool MESISharNoninclusive::handleGetXResp(MemEvent * event, bool inMSHR) {
             break;
         }
         case IM:
+            if (data) {
+                data->setData(event->getPayload(), 0);
+                if (is_debug_addr(addr))
+                    printDataValue(addr, &(event->getPayload()), true);
+            } // fall-thru
         case SM:
         {
             tag->setState(M);
             tag->setOwner(req->getSrc());
             uint64_t sendTime = 0;
+
             if (tag->isSharer(req->getSrc())) {
                 tag->removeSharer(req->getSrc());
                 sendTime = sendResponseUp(req, nullptr, true, tag->getTimestamp(), Command::GetXResp);
-            } else if (event->getPayloadSize() != 0) {
-                sendTime = sendResponseUp(req, &(event->getPayload()), true, tag->getTimestamp(), Command::GetXResp);
             } else {
-                sendTime = sendResponseUp(req, &(mshr_->getData(addr)), true, tag->getTimestamp(), Command::GetXResp);
+                // Data could come from an allocated data line, mshr (prior Fetch for ex.) or this event
+                MemEventBase::dataVec* value = data ? data->getData() : (event->getPayloadSize() != 0 ? &(event->getPayload()) : &(mshr_->getData(addr)));
+                sendTime = sendResponseUp(req, value, true, tag->getTimestamp(), Command::GetXResp);
             }
             tag->setTimestamp(sendTime - 1);
 
@@ -2211,8 +2219,15 @@ bool MESISharNoninclusive::handleGetXResp(MemEvent * event, bool inMSHR) {
         case SM_Inv:
             tag->setState(M_Inv);
             mshr_->setInProgress(addr, false);
-            if (!data && event->getPayloadSize() != 0)
-                mshr_->setData(addr, event->getPayload());
+            if (event->getPayloadSize() != 0) {
+                if (data) {
+                    data->setData(event->getPayload(), 0);
+                } else {
+                    mshr_->setData(addr, event->getPayload());
+                }
+                if (is_debug_addr(addr))
+                    printDataValue(addr, &(event->getPayload()), true);
+            }
             if (is_debug_event(event)) {
                 eventDI.action = "Stall";
                 eventDI.reason = "Acks needed";
@@ -2322,7 +2337,7 @@ bool MESISharNoninclusive::handleFetchResp(MemEvent * event, bool inMSHR) {
     if (data)
         data->setData(event->getPayload(), 0);
     else
-        mshr_->setData(addr, event->getPayload());
+        mshr_->setData(addr, event->getPayload(), event->getDirty());
     
     if (is_debug_addr(addr))
         printDataValue(addr, &(event->getPayload()), true);
@@ -2331,11 +2346,14 @@ bool MESISharNoninclusive::handleFetchResp(MemEvent * event, bool inMSHR) {
 
     switch (state) {
         case S_D:
-        case E_D:
         case M_D:
         case SM_D:
         case SB_D:
             tag->setState(NextState[state]); // S or E or M or SM or S_B
+            retry(addr);
+            break;
+        case E_D:
+            event->getDirty() ? tag->setState(M) : tag->setState(E);
             retry(addr);
             break;
         case S_Inv:
@@ -2358,7 +2376,7 @@ bool MESISharNoninclusive::handleFetchResp(MemEvent * event, bool inMSHR) {
         case M_InvX:
             tag->removeOwner();
             tag->addSharer(event->getSrc());
-            tag->setState(NextState[state]); // E or M
+            event->getDirty() ? tag->setState(M) : tag->setState(NextState[state]); // E or M
             retry(addr);
             break;
         case E_Inv:
@@ -2368,7 +2386,7 @@ bool MESISharNoninclusive::handleFetchResp(MemEvent * event, bool inMSHR) {
             else
                 tag->removeSharer(event->getSrc());
             if (done) {
-                tag->setState(NextState[state]);    // E or M
+                event->getDirty() ? tag->setState(M) : tag->setState(NextState[state]);    // E or M
                 retry(addr);
             }
             break;
@@ -2426,7 +2444,7 @@ bool MESISharNoninclusive::handleFetchXResp(MemEvent * event, bool inMSHR) {
     if (data)
         data->setData(event->getPayload(), 0);
     else
-        mshr_->setData(addr, event->getPayload());
+        mshr_->setData(addr, event->getPayload(), event->getDirty());
     
     if (is_debug_addr(addr))
         printDataValue(addr, &(event->getPayload()), true);
@@ -2796,6 +2814,10 @@ DirectoryLine* MESISharNoninclusive::allocateDirLine(MemEvent * event, Directory
 bool MESISharNoninclusive::handleDirEviction(Addr addr, DirectoryLine*& tag) {
     if (!tag)
         tag = dirArray_->findReplacementCandidate(addr);
+    
+    DataLine* data = dataArray_->lookup(tag->getAddr(), false);
+    if (data && data->getTag() != tag) data = nullptr; // Dataline not valid 
+
     State state = tag->getState();
 
     if (is_debug_addr(tag->getAddr())) {
@@ -2807,14 +2829,12 @@ bool MESISharNoninclusive::handleDirEviction(Addr addr, DirectoryLine*& tag) {
 
     bool evict = false;
     bool wbSent = false;
-    DataLine * data;
     switch (state) {
         case I:
             return true;
         case S:
             if (!mshr_->getPendingRetries(tag->getAddr())) {
-                data = dataArray_->lookup(tag->getAddr(), false);
-                if (invalidateAll(nullptr, tag, false)) {
+                if (invalidateAll(nullptr, tag, false, data != nullptr ? false : true)) {
                     evict = false;
                     tag->setState(S_Inv);
                     if (is_debug_addr(tag->getAddr()))
@@ -2842,8 +2862,7 @@ bool MESISharNoninclusive::handleDirEviction(Addr addr, DirectoryLine*& tag) {
             }
         case E:
             if (!mshr_->getPendingRetries(tag->getAddr())) {
-                data = dataArray_->lookup(tag->getAddr(), false);
-                if (invalidateAll(nullptr, tag, false)) {
+                if (invalidateAll(nullptr, tag, false, data != nullptr ? false : true)) {
                     evict = false;
                     tag->setState(E_Inv);
                     if (is_debug_addr(tag->getAddr()))
@@ -2872,7 +2891,7 @@ bool MESISharNoninclusive::handleDirEviction(Addr addr, DirectoryLine*& tag) {
             }
         case M:
             if (!mshr_->getPendingRetries(tag->getAddr())) {
-                if (invalidateAll(nullptr, tag, false)) {
+                if (invalidateAll(nullptr, tag, false, data != nullptr ? false : true)) {
                     evict = false;
                     tag->setState(M_Inv);
                     if (is_debug_addr(tag->getAddr()))
@@ -2880,7 +2899,6 @@ bool MESISharNoninclusive::handleDirEviction(Addr addr, DirectoryLine*& tag) {
                 } else {
                     if (is_debug_addr(tag->getAddr()))
                         printDebugAlloc(false, tag->getAddr(), "Dir, Writeback");
-                    data = dataArray_->lookup(tag->getAddr(), false);
                     if (data) {
                         sendWritebackFromCache(Command::PutM, tag, data, true);
                        if (is_debug_addr(data->getAddr()))
@@ -2980,7 +2998,7 @@ bool MESISharNoninclusive::handleDataEviction(Addr addr, DataLine *&data) {
                         printDebugAlloc(false, tag->getAddr(), "Dir, Writeback");
                         printDebugAlloc(false, data->getAddr(), "Data");
                     }
-                    sendWritebackFromCache(Command::PutM, tag, data, false);
+                    sendWritebackFromCache(Command::PutM, tag, data, true);
                     if (recvWritebackAck_)
                         mshr_->insertWriteback(tag->getAddr(), false);
                     recordPrefetchResult(tag, statPrefetchEvict);
@@ -3275,7 +3293,7 @@ uint64_t MESISharNoninclusive::sendFetch(Command cmd, MemEvent * event, std::str
     MemEvent * fetch = new MemEvent(cachename_, addr, addr, cmd);
     fetch->copyMetadata(event);
     fetch->setDst(dst);
-    fetch->setSize(event->getSize());
+    fetch->setSize(lineSize_);
 
     mshr_->incrementAcksNeeded(addr);
 
@@ -3324,15 +3342,19 @@ bool MESISharNoninclusive::invalidateExceptRequestor(MemEvent * event, Directory
 }
 
 
-bool MESISharNoninclusive::invalidateAll(MemEvent * event, DirectoryLine * tag, bool inMSHR, Command cmd) {
+bool MESISharNoninclusive::invalidateAll(MemEvent * event, DirectoryLine * tag, bool inMSHR, bool needData) {
     uint64_t deliveryTime = 0;
-    if (invalidateOwner(event, tag, inMSHR, (cmd == Command::NULLCMD ? Command::FetchInv : cmd))) {
+    if (invalidateOwner(event, tag, inMSHR, Command::FetchInv)) {
         return true;
     } else {
-        if (cmd == Command::NULLCMD)
-            cmd = Command::Inv;
+        bool data_requested = !needData;
         for (std::set<std::string>::iterator it = tag->getSharers()->begin(); it != tag->getSharers()->end(); it++) {
-            deliveryTime = invalidateSharer(*it, event, tag, inMSHR, cmd);
+            if (!data_requested) {
+                deliveryTime = invalidateSharer(*it, event, tag, inMSHR, Command::FetchInv);
+                data_requested = true;
+            } else {
+                deliveryTime = invalidateSharer(*it, event, tag, inMSHR, Command::Inv);
+            }
         }
         if (deliveryTime != 0) {
             tag->setTimestamp(deliveryTime);
@@ -3569,3 +3591,97 @@ void MESISharNoninclusive::recordLatency(Command cmd, int type, uint64_t latency
             break;
     }
 }
+
+
+/***********************************************************************************************************
+ * Cache flush at simulation shutdown
+ ***********************************************************************************************************/
+void MESISharNoninclusive::beginCompleteStage() {
+    flush_state_ = FlushState::Ready;
+    shutdown_flush_counter_ = 0;
+}
+
+void MESISharNoninclusive::processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink) {
+    if (event->getInitCmd() == MemEventInit::InitCommand::Flush) {
+        MemEventUntimedFlush* flush = static_cast<MemEventUntimedFlush*>(event);
+
+        if ( flush->request() ) {
+            if ( flush_state_ == FlushState::Ready ) {
+                flush_state_ = FlushState::Invalidate;
+                std::set<MemLinkBase::EndpointInfo>* src = highlink->getSources();
+                shutdown_flush_counter_ += src->size();
+                for (auto it = src->begin(); it != src->end(); it++) {
+                    MemEventUntimedFlush* forward = new MemEventUntimedFlush(getName());
+                    forward->setDst(it->name);
+                    highlink->sendUntimedData(forward, false, false);
+                }
+            }
+            if (shutdown_flush_counter_ != 0) {
+                delete event;
+                return;
+            }
+        } else {
+            shutdown_flush_counter_--;
+            if (shutdown_flush_counter_ != 0) {
+                delete event;
+                return;
+            }
+        }
+
+        // Ready to flush - all other caches above hae already flushed
+        for (auto it : *dataArray_) {
+            // Only flush dirty data, no need to fix coherence state
+            switch (it->getState()) {
+                case I:
+                case S:
+                case E:
+                    break;
+                case M:
+                    {
+                    // Double check dataline is actually valid
+                    if (it->getTag() != dirArray_->lookup(it->getAddr(), false)) {
+                        break;
+                    }
+
+                    // Flush if valid
+                    MemEventInit * ev = new MemEventInit(cachename_, Command::Write, it->getAddr(), *(it->getData()));
+                    lowlink->sendUntimedData(ev, false, true); // Don't broadcast, route by addr
+                    break;
+                    }
+            default:
+                // TODO handle case where sim ends and state is not stable
+                std::string valstr = getDataString(it->getData());
+                debug->output("%s, NOTICE: Unable to flush cache line that is in transient state '%s'. Addr = 0x%" PRIx64 ". Value = %s\n",
+                    cachename_.c_str(), StateString[it->getState()], it->getAddr(), valstr.c_str());
+                break;
+            };
+        }
+
+        if (!flush_manager_) {
+            std::set<MemLinkBase::EndpointInfo>* dst = lowlink->getDests();
+            for (auto it = dst->begin(); it != dst->end(); it++) {
+                MemEventUntimedFlush* response = new MemEventUntimedFlush(getName(), false);
+                response->setDst(it->name);
+                lowlink->sendUntimedData(response, false, false);
+            }
+        }
+        delete event;
+    } else if (event->getCmd() == Command::Write ) {
+        Addr addr = event->getAddr();
+        DirectoryLine * tag = dirArray_->lookup(addr, false);
+        DataLine * data = dataArray_->lookup(addr, true);
+        if (data && data->getTag() != tag) data = nullptr;
+
+        if (!data) {
+            event->setSrc(getName());
+            lowlink->sendUntimedData(event, false, true);
+        } else {
+            data->setData(event->getPayload(), 0);
+            delete event;
+            tag->setState(M); // Make sure data gets flushed
+        }
+    } else {
+        delete event; // Nothing for now
+    }
+}
+

@@ -4,7 +4,7 @@ from sst_unittest import *
 from sst_unittest_support import *
 import os.path
 import re
-
+import filecmp
 
 ################################################################################
 ################################################################################
@@ -55,28 +55,28 @@ class testcase_memHierarchy_coherence(SSTTestCase):
     def test_coherence_two_core_case3_mesi(self):
         self.memHA_Template("2core_3level", 3, [2315, 4623], "mesi")
     
-    def test_coherence_two_core_case4(self):
+    def test_coherence_two_core_case4_mesi(self):
         self.memHA_Template("2core_3level", 4, [235, 157], "mesi")
     
-    def test_coherence_two_core_case5(self):
+    def test_coherence_two_core_case5_mesi(self):
         self.memHA_Template("2core_3level", 5, [653, 5674], "mesi")
     
-    def test_coherence_two_core_case6(self):
+    def test_coherence_two_core_case6_mesi(self):
         self.memHA_Template("2core_3level", 6, [573, 1736], "mesi")
     
-    def test_coherence_two_core_case7(self):
+    def test_coherence_two_core_case7_mesi(self):
         self.memHA_Template("2core_3level", 7, [3475, 9774], "mesi")
     
-    def test_coherence_two_core_case8(self):
+    def test_coherence_two_core_case8_mesi(self):
         self.memHA_Template("2core_3level", 8, [475, 4632], "mesi")
     
-    def test_coherence_two_core_case9(self):
+    def test_coherence_two_core_case9_mesi(self):
         self.memHA_Template("2core_3level", 9, [583, 173], "mesi")
 
-    def test_coherence_two_core_case10(self):
+    def test_coherence_two_core_case10_mesi(self):
         self.memHA_Template("2core_3level", 10, [183, 586], "mesi")
 
-    def test_coherence_two_core_case11(self):
+    def test_coherence_two_core_case11_mesi(self):
         self.memHA_Template("2core_3level", 11, [86, 68], "mesi")
     
     def test_coherence_four_core_case0_mesi(self):
@@ -93,7 +93,7 @@ class testcase_memHierarchy_coherence(SSTTestCase):
 #####
 
     def memHA_Template(self, testcase, testnum, cpu_seeds, protocol,
-                       ignore_err_file=False, testtimeout=240):
+                       llsc="yes", ignore_err_file=False, testtimeout=240):
         
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
@@ -113,7 +113,8 @@ class testcase_memHierarchy_coherence(SSTTestCase):
         args = '--model-options="{0}'.format(testnum)
         for x in cpu_seeds:
             args = args + " " + str(x)
-        args = args + " " + protocol + '"'
+        args = args + " " + protocol + " " + llsc + " " + outdir + '"'
+        
 
         ## Output only in debug mode
         log_debug("testcase = {0}".format(test_name))
@@ -150,6 +151,12 @@ class testcase_memHierarchy_coherence(SSTTestCase):
             diffdata = self._prettyPrintDiffs(statDiffs, othDiffs)
             log_failure(diffdata)
             self.assertTrue(filesAreTheSame, "Output file {0} does not pass check against the Reference File {1} ".format(outfile, reffile))
+        
+        value_outfile = "{}/{}.malloc.mem".format(outdir, test_name)
+        value_reffile = "{}/refFiles/{}.malloc.mem".format(test_path, test_name)
+        valueCheck = filecmp.cmp(value_outfile, value_reffile)
+
+        self.assertTrue(valueCheck, "Output data value file {0} does not pass check against the reference file {1} ".format(value_outfile, value_reffile))
 
 ###
     # Remove lines containing any string found in 'remove_strs' from in_file
