@@ -26,6 +26,7 @@
 #include "os/syscall/settidaddress.h"
 #include "os/syscall/setrobustlist.h"
 #include "os/syscall/mprotect.h"
+#include "os/syscall/getcpu.h"
 #include "os/syscall/getpid.h"
 #include "os/syscall/gettid.h"
 #include "os/syscall/getppid.h"
@@ -55,7 +56,9 @@
 #include "os/syscall/fstatat.h"
 #include "os/syscall/statx.h"
 #include "os/syscall/getaffinity.h"
+#include "os/syscall/setaffinity.h"
 #include "os/syscall/prlimit.h"
+#include "os/syscall/schedyield.h"
 
 using namespace SST::Vanadis;
 
@@ -97,6 +100,12 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
         case SYSCALL_OP_SCHED_GETAFFINITY: {
             syscall = new VanadisGetaffinitySyscall( this, coreLink, process, convertEvent<VanadisSyscallGetaffinityEvent*>( "getaffinity", sys_ev ) );
         } break;
+        case SYSCALL_OP_SCHED_SETAFFINITY: {
+            syscall = new VanadisSetaffinitySyscall( this, coreLink, process, convertEvent<VanadisSyscallSetaffinityEvent*>( "setaffinity", sys_ev) );
+        } break;
+        case SYSCALL_OP_SCHED_YIELD: {
+            syscall = new VanadisSchedYieldSyscall( this, coreLink, process, convertEvent<VanadisSyscallSchedYieldEvent*>( "sched_yield", sys_ev) );
+        } break;
         case SYSCALL_OP_FORK: {
             syscall = new VanadisForkSyscall( this, coreLink, process, convertEvent<VanadisSyscallForkEvent*>( "fork", sys_ev ) );
         } break;
@@ -114,6 +123,9 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
         } break;
         case SYSCALL_OP_EXIT_GROUP: {
             syscall = new VanadisExitGroupSyscall( this, coreLink, process, convertEvent<VanadisSyscallExitGroupEvent*>( "exitgroup", sys_ev ) );
+        } break;
+        case SYSCALL_OP_GETCPU: {
+            syscall = new VanadisGetcpuSyscall( this, coreLink, process, convertEvent<VanadisSyscallGetxEvent*>( "getcpu", sys_ev ) );
         } break;
         case SYSCALL_OP_GETPID: {
             syscall = new VanadisGetpidSyscall( this, coreLink, process, convertEvent<VanadisSyscallGetxEvent*>( "getpid", sys_ev ) );
