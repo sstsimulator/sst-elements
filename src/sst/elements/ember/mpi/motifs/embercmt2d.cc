@@ -63,10 +63,7 @@ EmberCMT2DGenerator::EmberCMT2DGenerator(SST::ComponentId_t id, Params& params) 
 
     	x_xferSize = eltSize*eltSize*my*mz;
     	y_xferSize = eltSize*eltSize*mx*mz;
-
-        configure();
 }
-
 
 void EmberCMT2DGenerator::configure()
 {
@@ -124,10 +121,7 @@ void EmberCMT2DGenerator::configure()
     		(sendx_neg ? "Y" : "N"), x_neg,
     		(sendy_pos ? "Y" : "N"), y_pos,
     		(sendy_neg ? "Y" : "N"), y_neg  );
-
 }
-
-
 
 bool EmberCMT2DGenerator::generate( std::queue<EmberEvent*>& evQ)
 {

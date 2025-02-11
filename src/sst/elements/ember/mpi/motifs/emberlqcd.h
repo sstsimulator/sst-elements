@@ -101,10 +101,10 @@ public:
     )
 
 public:
-	EmberLQCDGenerator(SST::ComponentId_t, Params& params);
+	EmberLQCDGenerator( SST::ComponentId_t, Params& params );
 	~EmberLQCDGenerator() {}
-	void configure();
-	bool generate( std::queue<EmberEvent*>& evQ );
+	void configure() override;
+	bool generate( std::queue<EmberEvent*>& evQ ) override;
 
 private:
     int get_node_index(int x, int y, int z, int t);

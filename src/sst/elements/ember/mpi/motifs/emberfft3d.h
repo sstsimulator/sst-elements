@@ -76,8 +76,8 @@ public:
 public:
 	EmberFFT3DGenerator(SST::ComponentId_t, Params& params);
 	~EmberFFT3DGenerator() {}
-	void configure();
-	bool generate( std::queue<EmberEvent*>& evQ );
+	void configure() override;
+	bool generate( std::queue<EmberEvent*>& evQ ) override;
 
 private:
 

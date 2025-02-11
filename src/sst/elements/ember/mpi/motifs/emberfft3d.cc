@@ -54,8 +54,6 @@ EmberFFT3DGenerator::EmberFFT3DGenerator(SST::ComponentId_t id, Params& params) 
     m_transCostPer[3] = params.find<float>("arg.bwd_fft1",1);
     m_transCostPer[4] = params.find<float>("arg.bwd_fft2",1);
     m_transCostPer[5] = params.find<float>("arg.bwd_fft3",1);
-
-	configure();
 }
 
 void EmberFFT3DGenerator::configure()

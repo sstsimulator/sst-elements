@@ -66,9 +66,9 @@ public:
     )
 
 public:
-	EmberSweep2DGenerator(SST::ComponentId_t, Params& params);
-	void configure();
-    bool generate( std::queue<EmberEvent*>& evQ );
+    EmberSweep2DGenerator( SST::ComponentId_t, Params& params );
+    void configure() override;
+    bool generate( std::queue<EmberEvent*>& evQ ) override;
 
 private:
 	uint32_t m_loopIndex;

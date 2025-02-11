@@ -59,15 +59,10 @@ EmberCMTCRGenerator::EmberCMTCRGenerator(SST::ComponentId_t id, Params& params) 
     m_stddev = params.find("arg.nsComputeStddev", (m_mean*0.05));
 
 	xferSize = eltSize*eltSize*nelt;
-
-	configure();
 }
-
-
 
 void EmberCMTCRGenerator::configure()
 {
-
 	if( (px * py *pz) != (signed)size() ) {
 		fatal(CALL_INFO, -1, "Error: CMTCR motif checked processor decomposition: %" \
 			PRIu32 "x%" PRIu32 "x%" PRIu32 " != MPI World %" PRIu32 "\n",

@@ -41,8 +41,6 @@ EmberNASLUGenerator::EmberNASLUGenerator(SST::ComponentId_t id, Params& params) 
 
 	// Check K-blocking factor is acceptable for dividing the Nz dimension
 	assert(nz % nzblock == 0);
-
-	configure();
 }
 
 void EmberNASLUGenerator::configure()

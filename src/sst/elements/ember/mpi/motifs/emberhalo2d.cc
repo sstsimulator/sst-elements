@@ -49,8 +49,6 @@ EmberHalo2DGenerator::EmberHalo2DGenerator(SST::ComponentId_t id, Params& params
 	sendSouth = false;
 
 	messageCount = 0;
-
-	configure();
 }
 
 void EmberHalo2DGenerator::configure()

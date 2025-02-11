@@ -35,17 +35,15 @@ Ember3DCommDoublingGenerator::Ember3DCommDoublingGenerator(SST::ComponentId_t id
 	computeBetweenSteps = (uint32_t) params.find("arg.compute_at_step", 2000);
 
 	requests = (MessageRequest*) malloc(sizeof(MessageRequest) * 52);
-
-	configure();
 }
 
 void Ember3DCommDoublingGenerator::configure()
 {
-	if((peX * peY * peZ) != (unsigned) size()) {
-		fatal(CALL_INFO, -1, "Processor decomposition of %" PRIu32 "x%" PRIu32 "x%" PRIu32 " != rank count of %" PRIu32 "\n",
-			peX, peY, peZ, size());
+    if ( ( peX * peY * peZ ) != (unsigned)size() ) {
+        fatal( CALL_INFO, -1, "Processor decomposition of %" PRIu32 "x%" PRIu32 "x%" PRIu32 ""
+                              " != rank count of %" PRIu32 "\n",
+                              peX, peY, peZ, size() );
 	}
-
 }
 
 int32_t Ember3DCommDoublingGenerator::power3(const uint32_t expon) {

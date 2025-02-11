@@ -47,8 +47,6 @@ EmberHalo2DNBRGenerator::EmberHalo2DNBRGenerator(SST::ComponentId_t id, Params& 
 	sendSouth = false;
 
 	messageCount = 0;
-
-	configure();
 }
 
 void EmberHalo2DNBRGenerator::completed(const SST::Output* output, uint64_t) {

@@ -78,10 +78,10 @@ public:
 
 
 public:
-	EmberHalo3DSVGenerator(SST::ComponentId_t, Params& params);
-	~EmberHalo3DSVGenerator() {}
-	void configure();
-    bool generate( std::queue<EmberEvent*>& evQ );
+    EmberHalo3DSVGenerator( SST::ComponentId_t, Params& params );
+    ~EmberHalo3DSVGenerator() {}
+    void configure() override;
+    bool generate( std::queue<EmberEvent*>& evQ ) override;
 
 private:
 	uint32_t m_loopIndex;

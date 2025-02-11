@@ -28,12 +28,10 @@ EmberUnstructuredGenerator::EmberUnstructuredGenerator(SST::ComponentId_t id, Pa
 	items_per_cell = (uint32_t) params.find<uint32_t>("arg.fields_per_cell", 1);
 	sizeof_cell = (uint32_t) params.find<uint32_t>("arg.datatype_width", 8);
 	iterations = (uint32_t) params.find<uint32_t>("arg.iterations", 1);
-	nsCompute  = (uint64_t) params.find<uint64_t>("arg.computetime", 0);
+	nsCompute = (uint64_t) params.find<uint64_t>("arg.computetime", 0);
 
-    jobId        = (int) params.find<int>("_jobId"); //NetworkSim
-	configure();
+    jobId = (int) params.find<int>("_jobId"); //NetworkSim
 }
-
 
 void EmberUnstructuredGenerator::configure()
 {

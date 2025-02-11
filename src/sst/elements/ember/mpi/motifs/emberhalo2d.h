@@ -70,10 +70,10 @@ public:
 
 
 public:
-	EmberHalo2DGenerator(SST::ComponentId_t id, Params& params);
-	void configure();
-    bool generate( std::queue<EmberEvent*>& evQ);
-	void completed(const SST::Output* output, uint64_t );
+    EmberHalo2DGenerator( SST::ComponentId_t id, Params& params );
+    void configure() override;
+    bool generate( std::queue<EmberEvent*>& evQ ) override;
+    void completed( const SST::Output* output, uint64_t ) override;
 
 private:
 	uint32_t m_loopIndex;

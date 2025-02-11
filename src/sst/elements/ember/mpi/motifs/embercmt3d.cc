@@ -68,10 +68,7 @@ EmberCMT3DGenerator::EmberCMT3DGenerator(SST::ComponentId_t id, Params& params) 
     	x_xferSize = eltSize*eltSize*my*mz;
     	y_xferSize = eltSize*eltSize*mx*mz;
     	z_xferSize = eltSize*eltSize*mx*my;
-
-        configure();
 }
-
 
 void EmberCMT3DGenerator::configure()
 {

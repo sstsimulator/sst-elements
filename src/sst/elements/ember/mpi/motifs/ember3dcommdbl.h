@@ -68,11 +68,11 @@ public:
     )
 
 public:
-	Ember3DCommDoublingGenerator(SST::ComponentId_t, Params& params);
-	~Ember3DCommDoublingGenerator() {}
-	void configure();
-    bool generate( std::queue<EmberEvent*>& evQ );
-	int32_t power3(const uint32_t expon);
+    Ember3DCommDoublingGenerator( SST::ComponentId_t, Params& params );
+    ~Ember3DCommDoublingGenerator() {}
+    void configure() override;
+    bool generate( std::queue<EmberEvent*>& evQ ) override;
+    int32_t power3( const uint32_t expon );
 
 private:
 	uint32_t phase;

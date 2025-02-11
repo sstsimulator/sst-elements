@@ -66,10 +66,10 @@ public:
 
 
 public:
-	EmberUnstructuredGenerator(SST::ComponentId_t, Params& params);
+	EmberUnstructuredGenerator( SST::ComponentId_t, Params& params );
 	~EmberUnstructuredGenerator() {}
-	void configure();
-	bool generate( std::queue<EmberEvent*>& evQ );
+	void configure() override;
+	bool generate( std::queue<EmberEvent*>& evQ ) override;
 
 private:
 	std::string graphFile;

@@ -73,10 +73,10 @@ public:
 
 
 public:
-	EmberCMT1DGenerator(SST::ComponentId_t, Params& params);
+    EmberCMT1DGenerator(SST::ComponentId_t, Params& params);
 //	~EmberCMT1DGenerator();
-    void configure();
-	bool generate( std::queue<EmberEvent*>& evQ);
+    void configure() override;
+    bool generate( std::queue<EmberEvent*>& evQ ) override;
 
 private:
 

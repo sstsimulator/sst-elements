@@ -30,9 +30,13 @@ using TraceStringDefinitions = std::unordered_map<uint64_t, std::string>;
 class EmberOTF2Generator : public EmberMessagePassingGenerator {
 
 public:
-	EmberOTF2Generator(SST::ComponentId_t, Params& params);
-	~EmberOTF2Generator();
-    	bool generate( std::queue<EmberEvent*>& evQ );
+    EmberOTF2Generator(SST::ComponentId_t, Params& params);
+
+    ~EmberOTF2Generator();
+
+    void configure() override;
+
+    bool generate( std::queue<EmberEvent*>& evQ ) override;
 
 	SST_ELI_REGISTER_SUBCOMPONENT(
         	EmberOTF2Generator,

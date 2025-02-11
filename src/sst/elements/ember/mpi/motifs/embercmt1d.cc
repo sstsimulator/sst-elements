@@ -54,10 +54,7 @@ EmberCMT1DGenerator::EmberCMT1DGenerator(SST::ComponentId_t id, Params& params) 
         m_stddev = params.find("arg.nsComputeStddev", (m_mean*0.05));
 
     	xferSize = eltSize*eltSize;
-
-    	configure();
 }
-
 
 void EmberCMT1DGenerator::configure()
 {

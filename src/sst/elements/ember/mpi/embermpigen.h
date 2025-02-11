@@ -71,7 +71,11 @@ public:
 	EmberMessagePassingGenerator( ComponentId_t id, Params& params, std::string name = "" );
 	~EmberMessagePassingGenerator();
 
-    virtual void completed( const SST::Output* output, uint64_t time ) {
+    virtual void configure() override
+    { }
+
+    virtual void completed( const SST::Output* output, uint64_t time ) override
+    {
 		mpi().completed(output,time,getMotifName(),getMotifNum());
 	};
 

@@ -71,9 +71,9 @@ public:
 
 
 public:
-	EmberNASLUGenerator(SST::ComponentId_t, Params& params);
-	void configure();
-    bool generate( std::queue<EmberEvent*>& evQ );
+    EmberNASLUGenerator( SST::ComponentId_t, Params& params );
+    void configure() override;
+    bool generate( std::queue<EmberEvent*>& evQ ) override;
 
 private:
 	uint32_t m_loopIndex;

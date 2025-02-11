@@ -131,31 +131,33 @@ private:
     typedef std::map< std::string, ApiInfo* > ApiMap;
 
     ApiMap createApiMap( Hermes::OS* os, SST::Component*, SST::Params );
-    EmberGenerator* initMotif( SST::Params, const ApiMap&,
-					int jobId, int motifNum, Hermes::NodePerf* nodePerf );
 
-	int         m_jobId;
-	uint32_t    currentMotif;
+    EmberGenerator* createMotif( SST::Params, const ApiMap&, int jobId,
+                                 int motifNum, Hermes::NodePerf* nodePerf );
+
+    int         m_jobId;
+    int         m_currentMotif;
+    int         m_numMotifs;
     bool        m_motifDone;
     ApiMap      m_apiMap;
-	Output      output;
+    Output      output;
 
-	std::queue<EmberEvent*> evQueue;
+    std::queue<EmberEvent*> evQueue;
 
     Hermes::NodePerf*   m_nodePerf;
-	EmberGenerator*     m_generator;
-	SST::Link*          selfEventLink;
-	SST::TimeConverter* nanoTimeConverter;
-	EmberMotifLog*      m_motifLogger;
+    EmberGenerator*     m_generator;
+    SST::Link*          selfEventLink;
+    SST::TimeConverter* nanoTimeConverter;
+    EmberMotifLog*      m_motifLogger;
 
-	std::vector<SST::Params> motifParams;
-	Thornhill::DetailedCompute* m_detailedCompute;
-	Thornhill::MemoryHeapLink*  m_memHeapLink;
+    std::vector<EmberGenerator*> m_motifs;
 
-	EmberEngine();			    		// For serialization
-	EmberEngine(const EmberEngine&);    // Do not implement
-	void operator=(const EmberEngine&); // Do not implement
+    Thornhill::DetailedCompute* m_detailedCompute;
+    Thornhill::MemoryHeapLink*  m_memHeapLink;
 
+    EmberEngine();			    		// For serialization
+    EmberEngine(const EmberEngine&);    // Do not implement
+    void operator=(const EmberEngine&); // Do not implement
 };
 
 }

@@ -107,19 +107,29 @@ namespace Ember {
 class EmberShmemGenerator : public EmberGenerator {
 
 public:
+    EmberShmemGenerator( ComponentId_t, Params& params, std::string name = "" );
 
-	EmberShmemGenerator( ComponentId_t, Params& params, std::string name ="");
-	~EmberShmemGenerator() {}
-    virtual void completed( const SST::Output*, uint64_t time ) {}
-	virtual void setup();
+    ~EmberShmemGenerator()
+    { }
+
+    virtual void completed( const SST::Output*, uint64_t time )
+    { }
+
+    virtual void setup();
+
+    virtual void configure()
+    { }
 
 protected:
-	EmberShmemLib& shmem() { return *m_shmem; };
+    EmberShmemLib& shmem()
+    {
+        return *m_shmem;
+    };
 
-	EmberMiscLib* m_miscLib;
+    EmberMiscLib* m_miscLib;
 
 private:
-	EmberShmemLib* m_shmem;
+    EmberShmemLib* m_shmem;
 };
 
 }

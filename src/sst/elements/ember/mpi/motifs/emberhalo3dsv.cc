@@ -59,8 +59,6 @@ EmberHalo3DSVGenerator::EmberHalo3DSVGenerator(SST::ComponentId_t id, Params& pa
 	y_up   = -1;
 	z_down = -1;
 	z_up   = -1;
-
-	configure();
 }
 
 void EmberHalo3DSVGenerator::configure()

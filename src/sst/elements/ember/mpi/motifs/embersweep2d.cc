@@ -36,8 +36,6 @@ EmberSweep2DGenerator::EmberSweep2DGenerator(SST::ComponentId_t id, Params& para
 
 	// Check K-blocking factor is acceptable for dividing the Nz dimension
 	assert(ny % y_block == 0);
-
-	configure();
 }
 
 void EmberSweep2DGenerator::configure()

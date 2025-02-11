@@ -70,19 +70,20 @@ public:
 
 
 public:
-	EmberTrafficGenGenerator(SST::ComponentId_t, Params& params);
-    bool generate( std::queue<EmberEvent*>& evQ);
-    bool generate_plusOne( std::queue<EmberEvent*>& evQ);
-    bool primary( ) {
+	EmberTrafficGenGenerator( SST::ComponentId_t, Params& params );
+    bool generate( std::queue<EmberEvent*>& evQ ) override;
+    bool generate_plusOne( std::queue<EmberEvent*>& evQ );
+    bool primary() override
+    {
         if (m_pattern == "plusOne")
             return false;
         return true;
     }
-    void configure();
+    void configure() override;
     void configure_plusOne();
 
     // extended patterns
-    bool generate_random( std::queue<EmberEvent*>& evQ);
+    bool generate_random( std::queue<EmberEvent*>& evQ );
     void recv_data();
     void send_data();
     void wait_for_any();

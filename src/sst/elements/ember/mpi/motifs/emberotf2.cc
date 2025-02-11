@@ -31,6 +31,7 @@ static OTF2_CallbackCode EmberOTF2ClockProperties(
 
 	return OTF2_CALLBACK_SUCCESS;
 }
+
 static OTF2_CallbackCode EmberOTF2StartProgram(
 	OTF2_LocationRef locationID,
 	OTF2_TimeStamp time,
@@ -59,7 +60,6 @@ static OTF2_CallbackCode EmberOTF2EndProgram(
 
 	return OTF2_CALLBACK_SUCCESS;
 }
-
 
 static OTF2_CallbackCode EmberOTF2LeaveRegion(
 	OTF2_LocationRef location,
@@ -417,78 +417,88 @@ EmberOTF2Generator::EmberOTF2Generator(SST::ComponentId_t id, Params& params) :
 	EmberMessagePassingGenerator(id, params, "OTF2"),
 	traceLocationCount(0), currentLocation(0), currentTime(0), m_timerResolution(0), m_inMPI(false)
 {
-    m_size = size();
+    // Part of the OTF2Motif initialization is done during the configure() step that should
+    // happen (called by the EmberEngine), after the Init motif executes
+    // and sets a proper rank and size in the EmberMpiLib.
+    m_size = 0;
+
+    // Here in the constructor, only read the config parameters and create a trace reader.
+
     std::string tracePrefix = params.find<std::string>("arg.tracePrefix", "");
     m_addCompute = params.find<bool>("arg.addCompute", false);
     m_readGlobalStrings = params.find<bool>("arg.readGlobalStringDefinitions", false);
 
-	if( "" == tracePrefix ) {
+	if ( "" == tracePrefix ) {
 		fatal( CALL_INFO, -1, "Error: no trace was specified by the \"tracePrefix\" parameter.\n" );
 	}
 
 	verbose( CALL_INFO, 2, 0, "Opening: %s as trace prefix...\n", tracePrefix.c_str() );
-
 	traceReader = OTF2_Reader_Open( tracePrefix.c_str() );
 
-	if( NULL == traceReader ) {
+	if ( nullptr == traceReader ) {
 		fatal( CALL_INFO, -1, "Error: unable to load trace at: %s\n", tracePrefix.c_str() );
 	} else {
 		verbose( CALL_INFO, 2, 0, "Trace open was successful.\n" );
 	}
+}
 
-	OTF2_Reader_SetSerialCollectiveCallbacks( traceReader );
+void EmberOTF2Generator::configure() {
 
-	OTF2_Reader_GetNumberOfLocations( traceReader, &traceLocationCount );
-	verbose( CALL_INFO, 2, 0, "Found %" PRIu64 " locations, motif is rank %" PRIu64 ".\n", traceLocationCount,
-		static_cast<uint64_t>(rank()) );
+    m_size = size();
 
-	if( m_size != traceLocationCount ) {
-		verbose(CALL_INFO, 1, 0, "Error: trace contains %" PRIu64 " locations, but the simulation has %" PRIu64 " ranks.\n",
-			traceLocationCount, m_size);
-	}
+    OTF2_Reader_SetSerialCollectiveCallbacks( traceReader );
 
-	// Open up all the event files
-	// OTF2_Reader_OpenEvtFiles( traceReader );
+    OTF2_Reader_GetNumberOfLocations( traceReader, &traceLocationCount );
+    verbose( CALL_INFO, 2, 0, "Found %" PRIu64 " locations, motif is rank %" PRIu64 ".\n",
+             traceLocationCount, static_cast<uint64_t>( rank() ) );
 
-	// Get my local definition reader
-	// traceLocalDefReader = OTF2_Reader_GetDefReader( traceReader, static_cast<OTF2_LocationRef>( rank() ) );
-	// traceLocalCallbacks = OTF2_DefReaderCallbacks_New();
+    if ( m_size != traceLocationCount ) {
+        verbose( CALL_INFO, 1, 0, "Error: trace contains %" PRIu64 " locations, but the simulation has %" PRIu64 " ranks.\n",
+                 traceLocationCount, m_size);
+    }
 
-/*
-	OTF2_DefReader
+    // Open up all the event files
+    // OTF2_Reader_OpenEvtFiles( traceReader );
 
-	OTF2_GlobalDefReaderCallbacks_SetLocationCallback( traceGlobalCallbacks, &EmberOTF2RegisterLocation );
-	OTF2_Reader_RegisterGlobalDefCallbacks( traceReader, traceGlobalDefReader, traceGlobalCallbacks, &traceLocations );
+    // Get my local definition reader
+    // traceLocalDefReader = OTF2_Reader_GetDefReader( traceReader, static_cast<OTF2_LocationRef>( rank() ) );
+    // traceLocalCallbacks = OTF2_DefReaderCallbacks_New();
 
-	if( OTF2_SUCCESS != OTF2_Reader_OpenDefFiles( traceReader) ) {
-		fatal(CALL_INFO, -1, "Error - OTF2 is unable to open definition files.\n");
-	}
+    /*
+    OTF2_DefReader
 
-	OTF2_Reader_OpenEvtFiles( traceReader );
+    OTF2_GlobalDefReaderCallbacks_SetLocationCallback( traceGlobalCallbacks, &EmberOTF2RegisterLocation );
+    OTF2_Reader_RegisterGlobalDefCallbacks( traceReader, traceGlobalDefReader, traceGlobalCallbacks, &traceLocations );
 
-	for( int i = 0; i < traceLocations.size(); ++i ) {
-		verbose(CALL_INFO, 2, 0, "Processing location %" PRIu64 "...\n", currentLocation );
+    if( OTF2_SUCCESS != OTF2_Reader_OpenDefFiles( traceReader) ) {
+        fatal(CALL_INFO, -1, "Error - OTF2 is unable to open definition files.\n");
+    }
 
-		OTF2_DefReader* traceDefReader = OTF2_Reader_GetDefReader( traceReader, traceLocations[i] );
+    OTF2_Reader_OpenEvtFiles( traceReader );
 
-		if( NULL != traceDefReader ) {
-			uint64_t defRead = 0;
-			OTF2_Reader_ReadAllLocalDefinitions( traceReader, traceDefReader, &defRead );
-			OTF2_Reader_CloseDefReader( traceReader, traceDefReader );
-		}
+    for ( int i = 0; i < traceLocations.size(); ++i ) {
+        verbose(CALL_INFO, 2, 0, "Processing location %" PRIu64 "...\n", currentLocation );
 
-		OTF2_EvtReader* traceEventReader = OTF2_Reader_GetEvtReader( traceReader, traceLocations[i] );
-	}
+        OTF2_DefReader* traceDefReader = OTF2_Reader_GetDefReader( traceReader, traceLocations[i] );
 
-	OTF2_Reader_CloseDefFiles( traceReader );
+        if ( NULL != traceDefReader ) {
+            uint64_t defRead = 0;
+            OTF2_Reader_ReadAllLocalDefinitions( traceReader, traceDefReader, &defRead );
+            OTF2_Reader_CloseDefReader( traceReader, traceDefReader );
+        }
 
-	traceEvtReader = OTF2_Reader_GetGlobalEvtReader( traceReader );
+        OTF2_EvtReader* traceEventReader = OTF2_Reader_GetEvtReader( traceReader, traceLocations[i] );
+    }
 
-	OTF2_GlobalEvtReaderCallbacks* traceGlobalEvtCallbacks = OTF2_GlobalEvtReaderCallbacks_New();
-	OTF2_Reader_RegisterGlobalEvtCallbacks( traceReader, traceEvtReader, traceGlobalEvtCallbacks, NULL );
+    OTF2_Reader_CloseDefFiles( traceReader );
 
-	OTF2_GlobalEvtReaderCallbacks_Delete( traceGlobalEvtCallbacks );
-*/
+    traceEvtReader = OTF2_Reader_GetGlobalEvtReader( traceReader );
+
+    OTF2_GlobalEvtReaderCallbacks* traceGlobalEvtCallbacks = OTF2_GlobalEvtReaderCallbacks_New();
+    OTF2_Reader_RegisterGlobalEvtCallbacks( traceReader, traceEvtReader, traceGlobalEvtCallbacks, NULL );
+
+    OTF2_GlobalEvtReaderCallbacks_Delete( traceGlobalEvtCallbacks );
+    */
 
     traceGlobalDefCallbacks = OTF2_GlobalDefReaderCallbacks_New();
 
@@ -507,85 +517,82 @@ EmberOTF2Generator::EmberOTF2Generator(SST::ComponentId_t id, Params& params) :
     traceGlobalDefReader = OTF2_Reader_GetGlobalDefReader( traceReader );
 
     OTF2_GlobalDefReader_SetCallbacks( traceGlobalDefReader, traceGlobalDefCallbacks, this );
-    if ( NULL == traceGlobalDefReader ) {
-        fatal( CALL_INFO, -1, "Error: unable to create a global definition reader.\n");
+    if ( nullptr == traceGlobalDefReader ) {
+        fatal( CALL_INFO, -1, "Error: unable to create a global definition reader.\n" );
     }
 
-	uint64_t globalDefinitionsRead = 0;
-	OTF2_Reader_ReadAllGlobalDefinitions( traceReader, traceGlobalDefReader, &globalDefinitionsRead );
-	verbose( CALL_INFO, 1, 0, "Read %" PRIu64 " global definitions from trace on rank %d\n",
-		globalDefinitionsRead, rank() );
+    uint64_t globalDefinitionsRead = 0;
+    OTF2_Reader_ReadAllGlobalDefinitions( traceReader, traceGlobalDefReader, &globalDefinitionsRead );
+    verbose( CALL_INFO, 1, 0, "Read %" PRIu64 " global definitions from trace on rank %d\n",
+             globalDefinitionsRead, rank() );
 
-	if (getTimerResolution() == 0) {
-		fatal( CALL_INFO, -1, "Error: timer resolution was not successfully set from global definitions\n");
-	}
+    if ( getTimerResolution() == 0 ) {
+        fatal( CALL_INFO, -1, "Error: timer resolution was not successfully set from global definitions\n");
+    }
 
-	traceOpenedDefFiles = OTF2_Reader_OpenDefFiles( traceReader );
+    traceOpenedDefFiles = OTF2_Reader_OpenDefFiles( traceReader );
 
-	if( traceOpenedDefFiles ) {
-		verbose( CALL_INFO, 2, 0, "Successfully opened event files.\n");
-	} else {
-		verbose( CALL_INFO, 2, 0, "Did not open event files, this is optional so will ignore.\n" );
-	}
+    if ( traceOpenedDefFiles ) {
+        verbose( CALL_INFO, 2, 0, "Successfully opened event files.\n" );
+    } else {
+        verbose( CALL_INFO, 2, 0, "Did not open event files, this is optional so will ignore.\n" );
+    }
 
-	if( OTF2_SUCCESS != OTF2_Reader_OpenEvtFiles( traceReader ) ) {
-		fatal( CALL_INFO, -1, "Error: unable to open event files.\n");
-	}
+    if ( OTF2_SUCCESS != OTF2_Reader_OpenEvtFiles( traceReader ) ) {
+        fatal( CALL_INFO, -1, "Error: unable to open event files.\n" );
+    }
 
-	// Select only the location of the rank represented by this motif
-	if( OTF2_SUCCESS != OTF2_Reader_SelectLocation( traceReader, static_cast<uint64_t>(rank()) ) ) {
-		fatal( CALL_INFO, -1, "Error: unable to select location %d\n", rank() );
-	}
+    // Select only the location of the rank represented by this motif
+    if( OTF2_SUCCESS != OTF2_Reader_SelectLocation( traceReader, static_cast<uint64_t>(rank()) ) ) {
+        fatal( CALL_INFO, -1, "Error: unable to select location %d\n", rank() );
+    }
 
-	///////////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-	if( traceOpenedDefFiles ) {
-		traceLocalDefReader = OTF2_Reader_GetDefReader( traceReader, static_cast<uint64_t>(rank()) );
+    if ( traceOpenedDefFiles ) {
+        traceLocalDefReader = OTF2_Reader_GetDefReader( traceReader, static_cast<uint64_t>( rank() ) );
+        if ( nullptr == traceLocalDefReader ) {
+            fatal( CALL_INFO, -1, "Error: unable to open a local definition reader on rank %d\n", rank() );
+        } else {
+            verbose( CALL_INFO, 1, 0, "Opened local definition reader on rank %d\n", rank() );
+        }
 
-		if( NULL == traceLocalDefReader ) {
-			fatal( CALL_INFO, -1, "Error: unable to open a local definition reader on rank %d\n", rank() );
-		} else {
-			verbose( CALL_INFO, 1, 0, "Opened local definition reader on rank %d\n", rank() );
-		}
+        uint64_t localDefs = 0;
+        OTF2_Reader_ReadAllLocalDefinitions( traceReader, traceLocalDefReader, &localDefs );
+        OTF2_Reader_CloseDefReader( traceReader, traceLocalDefReader );
+    }
 
-		uint64_t localDefs = 0;
-		OTF2_Reader_ReadAllLocalDefinitions( traceReader, traceLocalDefReader, &localDefs );
+    traceEvtReader = OTF2_Reader_GetEvtReader( traceReader, static_cast<uint64_t>( rank() ) );
+    if ( nullptr == traceEvtReader ) {
+        fatal( CALL_INFO, -1, "Error: unable to open a local trace event reader.\n" );
+    }
 
-		OTF2_Reader_CloseDefReader( traceReader, traceLocalDefReader );
-	}
+    if ( traceOpenedDefFiles ) {
+        OTF2_Reader_CloseDefFiles( traceReader );
+    }
 
-	traceEvtReader = OTF2_Reader_GetEvtReader( traceReader, static_cast<uint64_t>( rank() ) );
+    verbose( CALL_INFO, 1, 0, "Registering callbacks...\n" );
 
-	if( NULL == traceEvtReader ) {
-		fatal( CALL_INFO, -1, "Error: unable to open a local trace event reader.\n" );
-	}
+    traceGlobalEvtCallbacks = OTF2_GlobalEvtReaderCallbacks_New();
 
-	if( traceOpenedDefFiles ) {
-		OTF2_Reader_CloseDefFiles( traceReader );
-	}
+    OTF2_GlobalEvtReaderCallbacks_SetProgramBeginCallback( traceGlobalEvtCallbacks, EmberOTF2StartProgram );
+    OTF2_GlobalEvtReaderCallbacks_SetProgramEndCallback( traceGlobalEvtCallbacks, EmberOTF2EndProgram );
+    OTF2_GlobalEvtReaderCallbacks_SetMpiSendCallback( traceGlobalEvtCallbacks, EmberOTF2MPISend );
+    OTF2_GlobalEvtReaderCallbacks_SetMpiRecvCallback( traceGlobalEvtCallbacks, EmberOTF2MPIRecv );
+    OTF2_GlobalEvtReaderCallbacks_SetMpiIsendCallback( traceGlobalEvtCallbacks, EmberOTF2MPIISend );
+    OTF2_GlobalEvtReaderCallbacks_SetMpiIrecvCallback( traceGlobalEvtCallbacks, EmberOTF2MPIIRecv );
+    OTF2_GlobalEvtReaderCallbacks_SetMpiIrecvRequestCallback( traceGlobalEvtCallbacks, EmberOTF2MPIIRecvRequest );
+    OTF2_GlobalEvtReaderCallbacks_SetMpiIsendCompleteCallback( traceGlobalEvtCallbacks, EmberOTF2MPIISendComplete );
+    OTF2_GlobalEvtReaderCallbacks_SetLeaveCallback( traceGlobalEvtCallbacks, EmberOTF2LeaveRegion );
+    OTF2_GlobalEvtReaderCallbacks_SetMpiCollectiveBeginCallback( traceGlobalEvtCallbacks, EmberOTF2MPICollectiveBegin );
+    OTF2_GlobalEvtReaderCallbacks_SetMpiCollectiveEndCallback( traceGlobalEvtCallbacks, EmberOTF2MPICollectiveEnd );
 
-	verbose( CALL_INFO, 1, 0, "Registering callbacks...\n" );
-
-	traceGlobalEvtCallbacks = OTF2_GlobalEvtReaderCallbacks_New();
-
-	OTF2_GlobalEvtReaderCallbacks_SetProgramBeginCallback( traceGlobalEvtCallbacks, EmberOTF2StartProgram );
-	OTF2_GlobalEvtReaderCallbacks_SetProgramEndCallback( traceGlobalEvtCallbacks, EmberOTF2EndProgram );
-	OTF2_GlobalEvtReaderCallbacks_SetMpiSendCallback( traceGlobalEvtCallbacks, EmberOTF2MPISend );
-	OTF2_GlobalEvtReaderCallbacks_SetMpiRecvCallback( traceGlobalEvtCallbacks, EmberOTF2MPIRecv );
-	OTF2_GlobalEvtReaderCallbacks_SetMpiIsendCallback( traceGlobalEvtCallbacks, EmberOTF2MPIISend );
-	OTF2_GlobalEvtReaderCallbacks_SetMpiIrecvCallback( traceGlobalEvtCallbacks, EmberOTF2MPIIRecv );
-	OTF2_GlobalEvtReaderCallbacks_SetMpiIrecvRequestCallback( traceGlobalEvtCallbacks, EmberOTF2MPIIRecvRequest );
-	OTF2_GlobalEvtReaderCallbacks_SetMpiIsendCompleteCallback( traceGlobalEvtCallbacks, EmberOTF2MPIISendComplete );
-	OTF2_GlobalEvtReaderCallbacks_SetLeaveCallback( traceGlobalEvtCallbacks, EmberOTF2LeaveRegion );
-	OTF2_GlobalEvtReaderCallbacks_SetMpiCollectiveBeginCallback( traceGlobalEvtCallbacks, EmberOTF2MPICollectiveBegin );
-	OTF2_GlobalEvtReaderCallbacks_SetMpiCollectiveEndCallback( traceGlobalEvtCallbacks, EmberOTF2MPICollectiveEnd );
-
-	traceGlobalEvtReader = OTF2_Reader_GetGlobalEvtReader( traceReader );
-
-	OTF2_GlobalEvtReader_SetCallbacks( traceGlobalEvtReader, traceGlobalEvtCallbacks, this );
+    traceGlobalEvtReader = OTF2_Reader_GetGlobalEvtReader( traceReader );
+    OTF2_GlobalEvtReader_SetCallbacks( traceGlobalEvtReader, traceGlobalEvtCallbacks, this );
 }
 
 bool EmberOTF2Generator::generate( std::queue<EmberEvent*>& evQ ) {
+
 	setEventQueue( &evQ );
 
 	uint64_t eventsRead = 0;
@@ -650,7 +657,6 @@ bool EmberOTF2Generator::generate( std::queue<EmberEvent*>& evQ ) {
 
 EmberOTF2Generator::~EmberOTF2Generator() {
 	verbose( CALL_INFO, 1, 0, "Completed generator, closing down trace handlers." );
-
 //	OTF2_Reader_CloseGlobalEvtReader( traceReader, traceEvtReader );
 	OTF2_Reader_CloseEvtFiles( traceReader );
 	OTF2_Reader_Close( traceReader );

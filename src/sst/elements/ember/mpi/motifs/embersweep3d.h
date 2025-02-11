@@ -75,9 +75,9 @@ public:
 
 
 public:
-	EmberSweep3DGenerator(SST::ComponentId_t id, Params& params);
-	void configure();
-    bool generate( std::queue<EmberEvent*>& evQ );
+    EmberSweep3DGenerator( SST::ComponentId_t id, Params& params );
+    void configure() override;
+    bool generate( std::queue<EmberEvent*>& evQ ) override;
 
 private:
     uint32_t m_loopIndex;
