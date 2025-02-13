@@ -53,9 +53,9 @@ public:
     MemBackend();
 
     MemBackend(ComponentId_t id, Params &params) : SubComponent(id) { 
-        uint32_t output_location = params.find<uint32_t>("debug",0);
+        uint32_t output_location = params.find<uint32_t>("debug", 0);
         if (output_location == 0) {
-            params.find<uint32_t>("debug_location",0);
+            params.find<uint32_t>("debug_location", 0);
         }
     	output = new SST::Output("@t:MemoryBackend[@p:@l]: ",
                 params.find<uint32_t>("debug_level", 0),
