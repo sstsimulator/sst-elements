@@ -59,6 +59,7 @@ bool ramulator2Memory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsign
             this->dramReqs[req.addr].push_back(req.source_id);
         }
     });
+// TODO: why isn't this output when debug mode is active?
 #ifdef __SST_DEBUG_OUTPUT__
     output->debug(_L10_, "Ramulator2Backend: Attempting to issue %s request for %" PRIx64 ". Accepted: %d\n", (isWrite ? "WRITE" : "READ"), addr, enqueue_success);
 #endif
@@ -80,8 +81,7 @@ void ramulator2Memory::finish(){
     ramulator2_memorysystem->finalize();
 }
 
-
-// TODO: Figure out why callback isn't ACKing SST events
+// TODO: why isn't this ACKing?
 void ramulator2Memory::ramulator2Done(Ramulator::Request& ramReq) {
     uint64_t addr = ramReq.addr;
     std::deque<ReqId> &reqs = dramReqs[addr];

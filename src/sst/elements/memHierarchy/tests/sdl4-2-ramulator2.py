@@ -27,7 +27,7 @@ c0_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : "0",
+      "debug" : "1",
       "debug_level" : "10"
 })
 cpu1 = sst.Component("core1", "memHierarchy.standardCPU")
@@ -54,7 +54,7 @@ c1_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : "0",
+      "debug" : "1",
       "debug_level" : "10"
 })
 bus = sst.Component("bus", "memHierarchy.Bus")
@@ -70,21 +70,24 @@ l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
-      "debug" : "0",
+      "debug" : "1",
       "debug_level" : "10"
 })
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
-    "debug" : "0",
+    "debug" : "1",
     "debug_level" : "10",
     "clock" : "1GHz",
     "addr_range_end" : 512*1024*1024-1,
+    "debug_level" : "10"
 })
 
 memory = memctrl.setSubComponent("backend", "memHierarchy.ramulator2")
 memory.addParams({
       "mem_size" : "512MiB",
       "configFile" : "ramulator2-ddr4.cfg",
+      "debug_level" : "10",
+      "debug" : "1"
 })
 
 # Enable statistics
