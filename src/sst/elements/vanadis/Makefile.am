@@ -560,6 +560,13 @@ EXTRA_DIST = \
 	tests/small/misc/hpcg/mipsel/hpcg \
 	tests/small/misc/hpcg/riscv64/hpcg \
 \
+	tests/small/rocc/basic-rocc/Makefile \
+	tests/small/rocc/basic-rocc/basic-rocc.c \
+	tests/small/rocc/basic-rocc/riscv64/basic-rocc \
+	tests/small/rocc/basic-rocc/riscv64/2rocc/sst.stdout.gold \
+	tests/small/rocc/basic-rocc/riscv64/2rocc/vanadis.stdout.gold \
+	tests/small/rocc/basic-rocc/riscv64/2rocc/vanadis.stderr.gold \
+\
 	tests/basic_vanadis.py \
 	tests/no_rtr_vanadis.py \
 	tests/testsuite_default_vanadis.py \
