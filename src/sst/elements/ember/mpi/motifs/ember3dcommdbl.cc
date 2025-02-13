@@ -39,6 +39,8 @@ Ember3DCommDoublingGenerator::Ember3DCommDoublingGenerator(SST::ComponentId_t id
 
 void Ember3DCommDoublingGenerator::configure()
 {
+    EmberMessagePassingGenerator::configure();
+
     if ( ( peX * peY * peZ ) != (unsigned)size() ) {
         fatal( CALL_INFO, -1, "Processor decomposition of %" PRIu32 "x%" PRIu32 "x%" PRIu32 ""
                               " != rank count of %" PRIu32 "\n",

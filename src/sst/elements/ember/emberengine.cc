@@ -17,7 +17,6 @@
 #include "sst_config.h"
 #include <sst/core/timeLord.h>
 
-
 #include "emberengine.h"
 #include "embergen.h"
 #include "embermotiflog.h"
@@ -38,6 +37,7 @@ EmberEngine::EmberEngine( SST::ComponentId_t id, SST::Params& params ) :
     uint32_t verbosity = (uint32_t) params.find( "verbose", 1 );
     uint32_t mask = (uint32_t) params.find( "verboseMask", 0 );
     m_jobId = params.find( "jobId", -1 );
+    bool statsPerMotif = (bool) params.find( "enableMpiStatsPerMotif", 1 );
 
     std::ostringstream prefix;
     prefix << "@t:" << m_jobId << ":EmberEngine:@p:@l: ";
@@ -90,7 +90,8 @@ EmberEngine::EmberEngine( SST::ComponentId_t id, SST::Params& params ) :
                                            m_apiMap,
                                            m_jobId,
                                            i,
-                                           m_nodePerf );
+                                           m_nodePerf,
+                                           statsPerMotif );
         assert( gen );
         m_motifs.push_back( gen );
     }
@@ -193,7 +194,7 @@ EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
 }
 
 EmberGenerator* EmberEngine::createMotif( SST::Params params,
-	const ApiMap& apiMap, int jobId, int motifNum, NodePerf* nodePerf )
+	const ApiMap& apiMap, int jobId, int motifNum, NodePerf* nodePerf, bool statsPerMotif )
 {
     EmberGenerator* gen = NULL;
 
@@ -214,13 +215,13 @@ EmberGenerator* EmberEngine::createMotif( SST::Params params,
         params.insert( "_motifNum", std::to_string( motifNum ), true );
         assert( sizeof( this ) == sizeof( uint64_t ) );
         params.insert( "_enginePtr", std::to_string( reinterpret_cast<uint64_t>( this ) ), true);
+        params.insert( "mpiStatsPerMotif", std::to_string( statsPerMotif ), true );
 
-        gen = loadAnonymousSubComponent<EmberGenerator>( gentype, "", 0, ComponentInfo::SHARE_NONE, params );
+        gen = loadAnonymousSubComponent<EmberGenerator>( gentype, "", 0, ComponentInfo::INSERT_STATS, params );
         if ( !gen ) {
             output.fatal( CALL_INFO, -1, "Error: Could not load the "
                                          "generator %s for Ember\n", gentype.c_str() );
         }
-
         gen->setup();
     }
 

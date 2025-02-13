@@ -58,19 +58,20 @@ EmberCMT1DGenerator::EmberCMT1DGenerator(SST::ComponentId_t id, Params& params) 
 
 void EmberCMT1DGenerator::configure()
 {
-        myID = rank();
+    EmberMessagePassingGenerator::configure();
 
-        // Initialize Marsaglia RNG for compute time
-        m_random = new SSTGaussianDistribution( m_mean, m_stddev,
-                                    new RNG::MarsagliaRNG( 7+myID, getJobId() ) );
+    myID = rank();
+    // Initialize Marsaglia RNG for compute time
+    auto rng = new RNG::MarsagliaRNG( 7 + myID, getJobId() );
+    m_random = new SSTGaussianDistribution( m_mean, m_stddev, rng );
 
-
-    	if(rank() == 0) {
-            output("CMT1D (Pairwise Exchange) Motif \n"
-                "element_size = %" PRIu32 ", elements_per_proc = %" PRIu32 ", total processes = %" PRIu32 \
-    			"\ncompute time: mean = %fns ,stddev = %fns \nxfersize: %" PRIu64 "\n",
-    			eltSize, nelt, size(), m_mean, m_stddev, xferSize);
-    	}
+    if (rank() == 0) {
+        output( "CMT1D (Pairwise Exchange) Motif \n"
+                "element_size = %" PRIu32 ", elements_per_proc = %" PRIu32 ", "
+                "total processes = %" PRIu32 "\ncompute time: mean = "
+                "%fns ,stddev = %fns \nxfersize: %" PRIu64 "\n",
+                eltSize, nelt, size(), m_mean, m_stddev, xferSize );
+    }
 }
 
 

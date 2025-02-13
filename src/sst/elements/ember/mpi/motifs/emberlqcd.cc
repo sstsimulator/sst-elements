@@ -253,6 +253,8 @@ int EmberLQCDGenerator::node_number(int x, int y, int z, int t) {
 
 void EmberLQCDGenerator::configure()
 {
+    EmberMessagePassingGenerator::configure();
+
     //determine the problem size given to each node
     //code from MILC setup_hyper_prime()
     setup_hyper_prime();

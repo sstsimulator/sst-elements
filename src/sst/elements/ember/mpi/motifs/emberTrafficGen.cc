@@ -77,6 +77,8 @@ void EmberTrafficGenGenerator::configure()
         return;
     }
 
+    EmberMessagePassingGenerator::configure();
+
     m_rank = rank();
 
     m_distMessageSize = new SSTGaussianDistribution(

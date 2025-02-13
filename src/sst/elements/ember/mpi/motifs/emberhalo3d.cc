@@ -60,6 +60,8 @@ EmberHalo3DGenerator::EmberHalo3DGenerator(SST::ComponentId_t id, Params& params
 
 void EmberHalo3DGenerator::configure()
 {
+    EmberMessagePassingGenerator::configure();
+
 	unsigned worldSize = size();
 
 	if(peX == 0 || peY == 0 || peZ == 0) {

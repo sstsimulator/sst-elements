@@ -54,7 +54,8 @@ public:
         { "motif_count", "Sets the number of motifs which will be run in this simulation, default is 1", "1"},
         { "rankmapper", "Sets the rank mapping SST module to load to rank translations, default is linear mapping", "ember.LinearMap" },
         { "mapFile", "Sets the name of the input file for custom map", "mapFile.txt" },
-
+        { "enableMpiStatsPerMotif", "Creates separate MPI time stats for each MPI motif. "
+                                    "Set to 0 to make all MPI motifs within an EmberEngine use the same time stats.", "1"},
         { "motif%(motif_count)d", "Sets the event generator or motif for the engine", "ember.EmberPingPongGenerator" },
     )
 	/* PARAMS
@@ -133,7 +134,8 @@ private:
     ApiMap createApiMap( Hermes::OS* os, SST::Component*, SST::Params );
 
     EmberGenerator* createMotif( SST::Params, const ApiMap&, int jobId,
-                                 int motifNum, Hermes::NodePerf* nodePerf );
+                                 int motifNum, Hermes::NodePerf* nodePerf,
+                                 bool statsPerMotif );
 
     int         m_jobId;
     int         m_currentMotif;

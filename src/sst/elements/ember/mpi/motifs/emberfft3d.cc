@@ -58,6 +58,8 @@ EmberFFT3DGenerator::EmberFFT3DGenerator(SST::ComponentId_t id, Params& params) 
 
 void EmberFFT3DGenerator::configure()
 {
+    EmberMessagePassingGenerator::configure();
+
     m_data.npcol = size() / m_data.nprow;
 
     assert( 0 == (size() % m_data.nprow) );

@@ -35,25 +35,27 @@ EmberUnstructuredGenerator::EmberUnstructuredGenerator(SST::ComponentId_t id, Pa
 
 void EmberUnstructuredGenerator::configure()
 {
-	//Check the type of the rankmapper: CustomMap or LinearMap
-	bool use_CustomRankMap;
-	EmberCustomRankMap* cm = dynamic_cast<EmberCustomRankMap*>(getRankMap());
-	if(cm == NULL)
-		use_CustomRankMap = false;
-	else
-		use_CustomRankMap = true;
+    EmberMessagePassingGenerator::configure();
+
+    // Check the type of the rankmapper: CustomMap or LinearMap
+    bool use_CustomRankMap;
+    EmberCustomRankMap* cm = dynamic_cast<EmberCustomRankMap*>(getRankMap());
+    if(cm == NULL)
+        use_CustomRankMap = false;
+    else
+        use_CustomRankMap = true;
 
     if(0 == rank()) {
-		output("Unstructured motif problem size: %" PRIu32 "\n", p_size);
-		output("Unstructured motif compute time: %" PRIu32 " ns\n", nsCompute);
-		output("Unstructured motif iterations: %" PRIu32 "\n", iterations);
-		output("Unstructured motif iterms/cell: %" PRIu32 "\n", items_per_cell);
-		output("Unstructured motif communication graph file: %s \n", graphFile.c_str());
-		if(use_CustomRankMap)
-			output("Unstructured motif rankmap: CustomRankMap\n");
-		else
-			output("Unstructured motif rankmap: LinearRankMap\n");
-	}
+        output("Unstructured motif problem size: %" PRIu32 "\n", p_size);
+        output("Unstructured motif compute time: %" PRIu32 " ns\n", nsCompute);
+        output("Unstructured motif iterations: %" PRIu32 "\n", iterations);
+        output("Unstructured motif iterms/cell: %" PRIu32 "\n", items_per_cell);
+        output("Unstructured motif communication graph file: %s \n", graphFile.c_str());
+        if(use_CustomRankMap)
+            output("Unstructured motif rankmap: CustomRankMap\n");
+        else
+            output("Unstructured motif rankmap: LinearRankMap\n");
+    }
 
 	//Read raw communication from the graph file
 	rawCommMap = readCommFile(graphFile, size());

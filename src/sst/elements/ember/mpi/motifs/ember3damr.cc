@@ -798,6 +798,8 @@ void Ember3DAMRGenerator::configure()
 {
 	out->verbose(CALL_INFO, 2, 0, "Configuring AMR motif...\n");
 
+    EmberMessagePassingGenerator::configure();
+
 	char* newPrefix = (char*) malloc(sizeof(char) * 64);
 
 	if(out->getVerboseLevel() > 8) {

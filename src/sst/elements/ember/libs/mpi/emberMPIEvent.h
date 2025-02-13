@@ -26,7 +26,44 @@ using namespace Hermes::MP;
 namespace SST {
 namespace Ember {
 
-typedef Statistic<uint32_t> EmberEventTimeStatistic;
+using TimeStatDataType = uint32_t;
+using EventTimeStat = Statistic<TimeStatDataType>;
+
+#define FOREACH_MPI_EVENT(NAME) \
+    NAME( Init ) \
+    NAME( Finalize ) \
+    NAME( Rank ) \
+    NAME( Size ) \
+    NAME( Send ) \
+    NAME( Recv ) \
+    NAME( Irecv ) \
+    NAME( Isend ) \
+    NAME( Wait ) \
+    NAME( Waitall ) \
+    NAME( Waitany ) \
+    NAME( Compute ) \
+    NAME( Barrier ) \
+    NAME( Alltoallv ) \
+    NAME( Alltoall ) \
+    NAME( Allreduce ) \
+    NAME( Reduce ) \
+    NAME( Bcast) \
+    NAME( Scatter) \
+    NAME( Scatterv) \
+    NAME( Gettime ) \
+    NAME( Commsplit ) \
+    NAME( Commcreate ) \
+    NAME( NUM_MPI_EVENTS ) \
+
+#define GENERATE_ENUM(ENUM) ENUM,
+
+enum MPIEvents {
+    FOREACH_MPI_EVENT(GENERATE_ENUM)
+};
+
+#undef GENERATE_ENUM
+
+extern const char* MPIEventNames[];
 
 class EmberMPIEvent : public EmberEvent {
 

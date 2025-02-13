@@ -63,6 +63,8 @@ EmberCMTCRGenerator::EmberCMTCRGenerator(SST::ComponentId_t id, Params& params) 
 
 void EmberCMTCRGenerator::configure()
 {
+    EmberMessagePassingGenerator::configure();
+
 	if( (px * py *pz) != (signed)size() ) {
 		fatal(CALL_INFO, -1, "Error: CMTCR motif checked processor decomposition: %" \
 			PRIu32 "x%" PRIu32 "x%" PRIu32 " != MPI World %" PRIu32 "\n",
@@ -91,10 +93,7 @@ void EmberCMTCRGenerator::configure()
 	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu64 " is located at coordinates \
 		(%" PRId32 ", %" PRId32 ", %" PRId32") in the 3D grid, \n",
 		myID, myX, myY, myZ );
-
 }
-
-
 
 bool EmberCMTCRGenerator::generate( std::queue<EmberEvent*>& evQ)
 {
@@ -137,17 +136,4 @@ bool EmberCMTCRGenerator::generate( std::queue<EmberEvent*>& evQ)
         } else {
             return false;
         }
-
 }
-
-
-
-
-
-
-
-
-
-
-
-

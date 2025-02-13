@@ -444,6 +444,8 @@ EmberOTF2Generator::EmberOTF2Generator(SST::ComponentId_t id, Params& params) :
 
 void EmberOTF2Generator::configure() {
 
+    EmberMessagePassingGenerator::configure();
+
     m_size = size();
 
     OTF2_Reader_SetSerialCollectiveCallbacks( traceReader );

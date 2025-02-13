@@ -55,6 +55,8 @@ void EmberHalo2DNBRGenerator::completed(const SST::Output* output, uint64_t) {
 
 void EmberHalo2DNBRGenerator::configure()
 {
+    EmberMessagePassingGenerator::configure();
+
     if(0 == rank()) {
         output("PingPong, size=%d msgSizeX=%d msgSizeY=%d"
             " iter=%d nsCompute=%d\n",
