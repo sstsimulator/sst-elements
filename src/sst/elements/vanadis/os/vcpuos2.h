@@ -35,6 +35,7 @@ namespace Vanadis {
         FUNC( arg, EXIT ); \
         FUNC( arg, EXIT_GROUP); \
         FUNC( arg, FSTAT ); \
+        FUNC( arg, GETCPU ); \
         FUNC( arg, GETPGID ); \
         FUNC( arg, GETPID ); \
         FUNC( arg, GETPPID ); \
@@ -49,6 +50,8 @@ namespace Vanadis {
         FUNC( arg, RT_SIGACTION ); \
         FUNC( arg, RT_SIGPROCMASK ); \
         FUNC( arg, SCHED_GETAFFINITY ); \
+        FUNC( arg, SCHED_SETAFFINITY ); \
+        FUNC( arg, SCHED_YIELD ); \
         FUNC( arg, SET_TID_ADDRESS ); \
         FUNC( arg, UNAME ); \
         FUNC( arg, UNLINKAT ); \
@@ -176,6 +179,18 @@ protected:
 
         return new VanadisSyscallGetaffinityEvent(core_id, hw_thr, BitType, pid, cpusetsize, maskAddr );
     }
+
+    VanadisSyscallEvent* SCHED_SETAFFINITY(int hw_thr) {
+        T1 pid        = getArgRegister(0);
+        T1 cpusetsize = getArgRegister(1);
+        T1 maskAddr   = getArgRegister(2);
+
+        output->verbose(CALL_INFO, 16, 0,
+                            "sched_getaffinity( %" PRIdXX ", %" PRIdXX", %#" PRIxXX " )\n", pid, cpusetsize, maskAddr );
+
+        return new VanadisSyscallSetaffinityEvent(core_id, hw_thr, BitType, pid, cpusetsize, maskAddr);
+    }
+
     VanadisSyscallEvent* MPROTECT( int hw_thr ) {
         T1 addr   = getArgRegister(0);
         T1 len    = getArgRegister(1);
@@ -190,6 +205,11 @@ protected:
         }
 
         return new VanadisSyscallMprotectEvent(core_id, hw_thr, BitType, addr, len, myProt );
+    }
+
+    VanadisSyscallEvent* SCHED_YIELD(int hw_thr) {
+        output->verbose(CALL_INFO, 16, 0, "sched_yield()\n");
+        return new VanadisSyscallSchedYieldEvent(core_id, hw_thr, BitType);
     }
 
     VanadisSyscallEvent* RT_SIGACTION( int hw_thr ) {
@@ -240,6 +260,11 @@ protected:
         output->verbose(CALL_INFO, 16, 0, "exit( %" PRIdXX " )\n", code);
         flushLSQ = true;
         return new VanadisSyscallExitEvent(core_id, hw_thr, BitType, code);
+    }
+
+    VanadisSyscallEvent* GETCPU( int hw_thr ) {
+        output->verbose(CALL_INFO, 16, 0, "getcpu()\n");
+        return new VanadisSyscallGetxEvent(core_id, hw_thr, BitType,SYSCALL_OP_GETCPU);
     }
 
     VanadisSyscallEvent* GETPID( int hw_thr ) {

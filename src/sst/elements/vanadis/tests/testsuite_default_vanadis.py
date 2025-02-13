@@ -98,6 +98,14 @@ def build_vanadis_test_matrix():
         for arch in arch_list:
             testlist.append(["rocc_vanadis.py", location, test,arch, 1,1, "2rocc", 300])
 
+    location="small/multicore"
+    tests = ["openmp"]
+    arch_list = ["riscv64"]
+    for test in tests:
+        for arch in arch_list:
+            testlist.append(["basic_vanadis.py", location, test,arch, 3,1, "3core", 300])
+
+
     # Process each line and crack up into an index, hash, options and sdl file
     for testnum, test_info in enumerate(testlist):
         # Make testnum start at 1

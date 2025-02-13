@@ -49,7 +49,7 @@ public:
         {"memSize",                 "(UnitAlgebra/string) Size of physical memory with units."},
         {"verbose",                 "(uint) Determine how verbose the output from the CPU is", "1"},
         {"clock",                   "(UnitAlgebra/string) Clock frequency", "1GHz"},
-        {"rngseed",                 "(int) Set a seed for the random generation of addresses", "7"},
+        {"rngseed",                 "(int) Set a seed for the random generation of requests", "7"},
         {"maxOutstanding",          "(uint) Maximum number of outstanding memory requests at a time.", "10"},
         {"opCount",                 "(uint) Number of operations to issue."},
         {"reqsPerIssue",            "(uint) Maximum number of requests to issue at a time", "1"},
@@ -63,7 +63,8 @@ public:
         {"mmio_addr",               "(uint) Base address of the test MMIO component. 0 means not present.", "0"},
         {"noncacheableRangeStart",  "(uint) Beginning of range of addresses that are noncacheable.", "0x0"},
         {"noncacheableRangeEnd",    "(uint) End of range of addresses that are noncacheable.", "0x0"},
-        {"addressoffset",           "(uint) Apply an offset to a calculated address to check for non-alignment issues", "0"} )
+        {"addressoffset",           "(uint) Apply an offset to a calculated address to check for non-alignment issues", "0"},
+        {"test_init",               "(uint) Number of write messages to initialize memory with", "0"} )
 
     SST_ELI_DOCUMENT_STATISTICS( 
         {"pendCycle", "Number of pending requests per cycle", "count", 1},
@@ -93,47 +94,49 @@ private:
     void handleEvent( Interfaces::StandardMem::Request *ev );
     virtual bool clockTic( SST::Cycle_t );
 
-    Output out;
-    uint64_t ops;
-    uint64_t memFreq;
-    uint64_t maxAddr;
-    uint64_t mmioAddr;
-    uint64_t lineSize;
-    uint64_t maxOutstanding;
-    unsigned high_mark;
-    unsigned write_mark;
-    unsigned flush_mark;
-    unsigned flushinv_mark;
-    unsigned flushcache_mark;
-    unsigned custom_mark;
-    unsigned llsc_mark;
-    unsigned mmio_mark;
-    uint32_t maxReqsPerIssue;
-    uint64_t noncacheableRangeStart, noncacheableRangeEnd, noncacheableSize;
-    uint64_t clock_ticks;
-    Statistic<uint64_t>* requestsPendingCycle;
-    Statistic<uint64_t>* num_reads_issued;
-    Statistic<uint64_t>* num_writes_issued;
-    Statistic<uint64_t>* num_flushes_issued;
-    Statistic<uint64_t>* num_flushcache_issued;
-    Statistic<uint64_t>* num_flushinvs_issued;
-    Statistic<uint64_t>* num_custom_issued;
-    Statistic<uint64_t>* num_llsc_issued;
-    Statistic<uint64_t>* num_llsc_success;
-    Statistic<uint64_t>* noncacheableReads;
-    Statistic<uint64_t>* noncacheableWrites;
+    Output out_;
+    uint64_t op_count_;
+    uint64_t mem_freq_;
+    uint64_t max_addr_;
+    uint64_t mmio_addr_;
+    uint64_t line_size_;
+    uint64_t max_outstanding_;
+    unsigned high_mark_;
+    unsigned write_mark_;
+    unsigned flush_mark_;
+    unsigned flushinv_mark_;
+    unsigned flushcache_mark_;
+    unsigned custom_mark_;
+    unsigned llsc_mark_;
+    unsigned mmio_mark_;
+    uint32_t max_reqs_per_issue_;
+    uint64_t noncacheable_range_start_, noncacheable_range_end_, noncacheable_size_;
+    uint64_t clock_ticks_;
+    uint64_t init_write_count_;
+    Statistic<uint64_t>* stat_requests_pending_per_cycle_;
+    Statistic<uint64_t>* stat_num_reads_issued_;
+    Statistic<uint64_t>* stat_num_writes_issued_;
+    Statistic<uint64_t>* stat_num_flushes_issued_;
+    Statistic<uint64_t>* stat_num_flushcache_issued_;
+    Statistic<uint64_t>* stat_num_flushinvs_issued_;
+    Statistic<uint64_t>* stat_num_custom_issued_;
+    Statistic<uint64_t>* stat_num_llsc_issued_;
+    Statistic<uint64_t>* stat_num_llsc_success_;
+    Statistic<uint64_t>* stat_noncacheable_reads_;
+    Statistic<uint64_t>* stat_noncacheable_writes_;
 
-    bool ll_issued;
-    Interfaces::StandardMem::Addr ll_addr;
+    bool ll_issued_;
+    Interfaces::StandardMem::Addr ll_addr_;
 
-    std::map<Interfaces::StandardMem::Request::id_t, std::pair<SimTime_t, std::string>> requests;
+    std::map<Interfaces::StandardMem::Request::id_t, std::pair<SimTime_t, std::string>> requests_;
 
-    Interfaces::StandardMem *memory;
+    Interfaces::StandardMem *memory_;
 
-    SST::RNG::MarsagliaRNG rng;
+    SST::RNG::MarsagliaRNG rng_;
+    SST::RNG::MarsagliaRNG rng_comm_;
 
-    TimeConverter *clockTC;
-    Clock::HandlerBase *clockHandler;
+    TimeConverter *clock_timeconverter_;
+    Clock::HandlerBase *clock_handler_;
 
     /* Functions for creating the requests tested by this CPU */
     Interfaces::StandardMem::Request* createWrite(uint64_t addr);

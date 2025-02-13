@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _H_VANADIS_SYSCALL_SCHED_AFFINITY
-#define _H_VANADIS_SYSCALL_SCHED_AFFINITY
+#ifndef _H_VANADIS_SYSCALL_SCHED_GET_AFFINITY
+#define _H_VANADIS_SYSCALL_SCHED_GET_AFFINITY
 
 #include "os/voscallev.h"
 #include "os/vosbittype.h"
