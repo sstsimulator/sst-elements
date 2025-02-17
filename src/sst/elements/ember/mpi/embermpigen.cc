@@ -50,7 +50,7 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
         std::string statName = namePrefix + std::string( MPIEventNames[i] );
         std::string subId("");
         if ( perMotifStats ) {
-            subId = name + "Motif";
+            subId = name + "Motif_" + std::to_string(getMotifNum());
         }
         EventTimeStat* stat = registerStatistic<TimeStatDataType>( statName, subId );
         m_mpiTimeStats.push_back( stat );
