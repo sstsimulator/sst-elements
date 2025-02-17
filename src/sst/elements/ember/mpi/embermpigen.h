@@ -157,12 +157,12 @@ protected:
 
     EmberRankMap* getRankMap() { return m_rankMap; }
 
-    void memSetBacked() {
+    void memSetBacked() override {
         EmberGenerator::memSetBacked();
         mpi().setBacked();
     }
 
-    void memSetNotBacked() {
+    void memSetNotBacked() override {
         EmberGenerator::memSetNotBacked();
         mpi().setNotBacked();
     }
