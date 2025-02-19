@@ -1,3 +1,18 @@
+// Copyright 2009-2025 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2025, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// of the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
 #ifndef _MVMCOMPUTEARRAY_H
 #define _MVMCOMPUTEARRAY_H
 
@@ -76,7 +91,6 @@ public:
             printValue(inputVector[col]);
         }
         out.verbose(CALL_INFO, 2, 0, "\n\n");
-//        out.output("\n\n");
 
         // Perform matrix-vector multiplication
         for (uint32_t row = 0; row < outputArraySize; row++) {
@@ -85,13 +99,10 @@ public:
                 printValue(matrix[row * inputArraySize + col]);
             }
             out.verbose(CALL_INFO, 2, 0, "  ");
-//            out.output("  ");
             printValue(outputVector[row]);
             out.verbose(CALL_INFO, 2, 0, "\n");
-//            out.output("\n");
         }
         out.verbose(CALL_INFO, 2, 0, "\n\n");
-//        out.output("\n\n");
     }
 
     virtual SimTime_t getArrayLatency(uint32_t arrayID) override {
@@ -118,10 +129,8 @@ protected:
     void printValue(const T& value) {
         if constexpr (std::is_same<T, int64_t>::value) {
             out.verbose(CALL_INFO, 2, 0, "%ld ", value);
-//            out.output("%ld ", value);
         } else if constexpr (std::is_same<T, float>::value) {
             out.verbose(CALL_INFO, 2, 0, "%f ", value);
-//            out.output("%f ", value);
         }
     }
 };
