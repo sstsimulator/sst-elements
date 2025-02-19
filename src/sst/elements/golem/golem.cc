@@ -1,0 +1,10 @@
+#include <sst/elements/golem/rocc/roccAnalog.h>
+#include <sst/elements/golem/rocc/roccAnalogFloat.h>
+#include <sst/elements/golem/rocc/roccAnalogInt.h>
+#include <sst/elements/golem/array/computeArray.h>
+#include <sst/elements/golem/array/mvmComputeArray.h>
+#include <sst/elements/golem/array/mvmFloatArray.h>
+#include <sst/elements/golem/array/mvmIntArray.h>
+#include <sst/elements/golem/array/crossSimComputeArray.h>
+#include <sst/elements/golem/array/crossSimFloatArray.h>
+#include <sst/elements/golem/array/crossSimIntArray.h>
