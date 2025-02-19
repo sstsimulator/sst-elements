@@ -164,6 +164,25 @@ public:
                 PyErr_Print();
             }
 
+            // If the template type is uint64_t, then set params.core.output_dtype = "INT32"
+            if constexpr (std::is_same_v<T, int64_t>) {
+                // Get the "core" attribute from crossSim_params
+                PyObject* core = PyObject_GetAttrString(crossSim_params, "core");
+                if (!core) {
+                    out.fatal(CALL_INFO, -1, "Get core attribute from CrossSim parameters failed\n");
+                    PyErr_Print();
+                } else {
+                    // Set the output_dtype attribute of core to "INT32"
+                    PyObject* dtypeValue = PyUnicode_FromString("INT64");
+                    if (PyObject_SetAttrString(core, "output_dtype", dtypeValue) != 0) {
+                        out.fatal(CALL_INFO, -1, "Failed to set output_dtype on core\n");
+                        PyErr_Print();
+                    }
+                    Py_DECREF(dtypeValue);
+                    Py_DECREF(core);
+                }
+            }
+
             // Create the cores
             for (uint32_t i = 0; i < numArrays; i++) {
                 cores[i] = PyObject_CallFunctionObjArgs(AnalogCoreConstructor,

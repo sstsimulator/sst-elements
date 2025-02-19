@@ -22,12 +22,13 @@ isa="riscv64"
 
 loader_mode = os.getenv("VANADIS_LOADER_MODE", "0")
 
-testDir="crosssim_float_array"
 testDir="mvm_float_array"
-testDir="mvm_int_array"
-testDir="crosssim_int_array"
+#testDir="mvm_int_array"
+#testDir="crosssim_float_array"
+#testDir="crosssim_int_array"
+
 exe = "single_array"
-exe = "multi_array"
+#exe = "multi_array"
 
 physMemSize = "4GiB"
 
@@ -101,11 +102,15 @@ else:
 vanadis_decoder = "vanadis.Vanadis" + vanadis_isa + "Decoder"
 vanadis_os_hdlr = "vanadis.Vanadis" + vanadis_isa + "OSHandler"
 
-rocc_type = os.getenv("GOLEM_ROCC_TYPE", "golem.RoCCAnalogInt")
-array_type = os.getenv("GOLEM_ARRAY_TYPE", "golem.CrossSimFloatArray")
-array_type = os.getenv("GOLEM_ARRAY_TYPE", "golem.MVMIntArray")
-array_type = os.getenv("GOLEM_ARRAY_TYPE", "golem.CrossSimIntArray")
-num_arrays = int(os.getenv("GOLEM_NUM_ARRAYS", 2))
+rocc_type = os.getenv("GOLEM_ROCC_TYPE", "golem.RoCCAnalogFloat")
+#rocc_type = os.getenv("GOLEM_ROCC_TYPE", "golem.RoCCAnalogInt")
+
+array_type = os.getenv("GOLEM_ARRAY_TYPE", "golem.MVMFloatArray")
+#array_type = os.getenv("GOLEM_ARRAY_TYPE", "golem.MVMIntArray")
+#array_type = os.getenv("GOLEM_ARRAY_TYPE", "golem.CrossSimFloatArray")
+#array_type = os.getenv("GOLEM_ARRAY_TYPE", "golem.CrossSimIntArray")
+
+num_arrays = int(os.getenv("GOLEM_NUM_ARRAYS", 1))
 
 protocol="MESI"
 
