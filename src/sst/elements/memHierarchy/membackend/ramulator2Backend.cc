@@ -40,6 +40,8 @@ ramulator2Memory::ramulator2Memory(ComponentId_t id, Params &params) :
     ramulator2_frontend->connect_memory_system(ramulator2_memorysystem);
     ramulator2_memorysystem->connect_frontend(ramulator2_frontend);
 
+    //TODO: add call to memory_system->init or frontend->init?
+
     output->output(CALL_INFO, "Instantiated Ramulator2 from config file %s\n", config_path);
 }
 
@@ -52,10 +54,16 @@ bool ramulator2Memory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsign
     bool enqueue_success = ramulator2_frontend->receive_external_requests(req_type, addr, reqId,
     [this](Ramulator::Request& req) {
         if (req.type_id == Ramulator::Request::Type::Write) {
-            // write request callback
+            // TODO: write request callback -- NOT BEING CALLED
+#ifdef __SST_DEBUG_OUTPUT__
+            output->debug(_L10_, "Ramulator2Backend: Write callback for %" PRIx64 ".\n", req.addr);
+#endif
             this->writes.insert(req.source_id);
         } else {
-            // read request callback
+            // TODO: read request callback -- NOT BEING CALLED
+#ifdef __SST_DEBUG_OUTPUT__
+            output->debug(_L10_, "Ramulator2Backend: Read callback for %" PRIx64 ".\n", req.addr);
+#endif
             this->dramReqs[req.addr].push_back(req.source_id);
         }
     });
@@ -67,7 +75,10 @@ bool ramulator2Memory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsign
 }
 
 bool ramulator2Memory::clock(Cycle_t cycle){
-    ramulator2_memorysystem->tick();
+#ifdef __SST_DEBUG_OUTPUT__
+    output->debug(_L10_, "Ramulator2Backend: Ticking memory system.\n");
+#endif
+    ramulator2_frontend->tick();
     // Ack writes since ramulator won't
     while (!writes.empty()) {
         handleMemResponse(*writes.begin());
@@ -81,7 +92,7 @@ void ramulator2Memory::finish(){
     ramulator2_memorysystem->finalize();
 }
 
-// TODO: why isn't this ACKing?
+// TODO: CONFIRMED THAT THIS FUNCTION IS CALLED UPON FINISH -- WHY DOES IT CAUSE A CRASH? COPMILE RAMULATOR IN DEBUG AND GDB INTO DRAMCONTROLLER LINE 311
 void ramulator2Memory::ramulator2Done(Ramulator::Request& ramReq) {
     uint64_t addr = ramReq.addr;
     std::deque<ReqId> &reqs = dramReqs[addr];
