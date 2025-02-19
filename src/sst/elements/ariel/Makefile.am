@@ -134,7 +134,8 @@ sstdir = $(includedir)/sst/elements/ariel
 nobase_sst_HEADERS = \
 	ariel_shmem.h \
 	arieltracegen.h \
-	arielmemmgr.h
+	arielmemmgr.h \
+	api/arielapi.h
 
 libexec_PROGRAMS =
 
@@ -245,6 +246,8 @@ endif
 install-exec-hook:
 	$(MKDIR_P) $(libexecdir)
 	$(INSTALL) fesimple.so $(libexecdir)/fesimple.so
+	$(MKDIR_P) $(pkglibdir)
+	$(INSTALL) api/libarielapi.so $(pkglibdir)/libarielapi.so
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     ariel=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      ariel=$(abs_srcdir)/tests
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES ariel=$(abs_srcdir)/testsuites
@@ -281,6 +284,8 @@ fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc
 install-exec-hook:
 	$(MKDIR_P) $(libexecdir)
 	$(INSTALL) fesimple.so $(libexecdir)/fesimple.so
+	$(MKDIR_P) $(pkglibdir)
+	$(INSTALL) api/libarielapi.so $(pkglibdir)/libarielapi.so
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     ariel=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      ariel=$(abs_srcdir)/tests
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES ariel=$(abs_srcdir)/testsuites
