@@ -90,6 +90,11 @@ public:
     void finish() override;
     void emergencyShutdown() override;
 
+    // Serialization
+    standardCPU();
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::MemHierarchy::standardCPU)
+
 private:
     void handleEvent( Interfaces::StandardMem::Request *ev );
     virtual bool clockTic( SST::Cycle_t );

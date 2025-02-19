@@ -104,6 +104,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         out.fatal(CALL_INFO, -1, "%s, ERROR - Invalid parameter: 'clock'. Must have units of Hz or s and be > 0. (SI prefixes ok). You specified '%s'\n", getName().c_str(), clockfreq.c_str());
     }
     clockHandler_ = new Clock::Handler<MemController>(this, &MemController::clock);
+    //clockHandler_ = new Clock::Handler2<MemController, &MemController::clock>(this);
     clockTimeBase_ = registerClock(clockfreq, clockHandler_);
     clockOn_ = true;
 
@@ -255,7 +256,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     }
 
     clockLink_ = link_->isClocked();
-    link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent));
+    link_->setRecvHandler( new Event::Handler2<MemController, &MemController::handleEvent>(this));
 
     link_->setRegion(region_);
 
@@ -869,4 +870,46 @@ void MemController::printDataValue(Addr addr, std::vector<uint8_t>* data, bool s
     dbg.debug(_L11_, "V: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 " B: %-3zu %s\n",
             getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), action.c_str(), 
             addr, data->size(), value.str().c_str());
+}
+
+/*
+ * Default constructor
+*/
+MemController::MemController() : Component() {}
+
+/*
+ * Serialize function
+*/
+void MemController::serialize_order(SST::Core::Serialization::serializer& ser) {
+    Component::serialize_order(ser);
+
+    SST_SER(out);
+    SST_SER(dbg);
+    SST_SER(DEBUG_ADDR);
+    SST_SER(dlevel);
+
+    SST_SER(memBackendConvertor_);
+    
+    //SST_SER(backing_);
+    SST_SER(backing_outfile_);
+
+    SST_SER(link_);
+    SST_SER(clockLink_);
+
+    SST_SER(listeners_);
+    SST_SER(checkpointDir_);
+
+    SST_SER(memSize_);
+
+    SST_SER(clockOn_);
+
+    SST_SER(region_);
+    SST_SER(privateMemOffset_); 
+
+    SST_SER(clockHandler_);
+    SST_SER(clockTimeBase_);
+
+    SST_SER(customCommandHandler_);
+
+    SST_SER(outstandingEvents_);
 }
