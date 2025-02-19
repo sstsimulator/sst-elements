@@ -21,6 +21,62 @@ libgolem_la_SOURCES = \
 	rocc/roccAnalogFloat.h \
 	rocc/roccAnalogInt.h
 
+EXTRA_DIST = \
+	tests/small/crosssim_float_array/multi_array/Makefile \
+	tests/small/crosssim_float_array/multi_array/multi_array.cpp \
+	tests/small/crosssim_float_array/multi_array/riscv64/multi_array \
+	tests/small/crosssim_float_array/multi_array/riscv64/sst.stdout.gold \
+	tests/small/crosssim_float_array/multi_array/riscv64/golem.stderr.gold \
+	tests/small/crosssim_float_array/multi_array/riscv64/golem.stdout.gold \
+\
+	tests/small/crosssim_float_array/single_array/Makefile \
+	tests/small/crosssim_float_array/single_array/single_array.cpp \
+	tests/small/crosssim_float_array/single_array/riscv64/single_array \
+	tests/small/crosssim_float_array/single_array/riscv64/sst.stdout.gold \
+	tests/small/crosssim_float_array/single_array/riscv64/golem.stderr.gold \
+	tests/small/crosssim_float_array/single_array/riscv64/golem.stdout.gold \
+\
+	tests/small/crosssim_int_array/multi_array/Makefile \
+	tests/small/crosssim_int_array/multi_array/multi_array.cpp \
+	tests/small/crosssim_int_array/multi_array/riscv64/multi_array \
+	tests/small/crosssim_int_array/multi_array/riscv64/sst.stdout.gold \
+	tests/small/crosssim_int_array/multi_array/riscv64/golem.stderr.gold \
+	tests/small/crosssim_int_array/multi_array/riscv64/golem.stdout.gold \
+\
+	tests/small/crosssim_int_array/single_array/Makefile \
+	tests/small/crosssim_int_array/single_array/single_array.cpp \
+	tests/small/crosssim_int_array/single_array/riscv64/single_array \
+	tests/small/crosssim_int_array/single_array/riscv64/sst.stdout.gold \
+	tests/small/crosssim_int_array/single_array/riscv64/golem.stderr.gold \
+	tests/small/crosssim_int_array/single_array/riscv64/golem.stdout.gold \
+\
+	tests/small/mvm_float_array/multi_array/Makefile \
+	tests/small/mvm_float_array/multi_array/multi_array.cpp \
+	tests/small/mvm_float_array/multi_array/riscv64/multi_array \
+	tests/small/mvm_float_array/multi_array/riscv64/sst.stdout.gold \
+	tests/small/mvm_float_array/multi_array/riscv64/golem.stderr.gold \
+	tests/small/mvm_float_array/multi_array/riscv64/golem.stdout.gold \
+\
+	tests/small/mvm_float_array/single_array/Makefile \
+	tests/small/mvm_float_array/single_array/single_array.cpp \
+	tests/small/mvm_float_array/single_array/riscv64/single_array \
+	tests/small/mvm_float_array/single_array/riscv64/sst.stdout.gold \
+	tests/small/mvm_float_array/single_array/riscv64/golem.stderr.gold \
+	tests/small/mvm_float_array/single_array/riscv64/golem.stdout.gold \
+\
+	tests/small/mvm_int_array/multi_array/Makefile \
+	tests/small/mvm_int_array/multi_array/multi_array.cpp \
+	tests/small/mvm_int_array/multi_array/riscv64/multi_array \
+	tests/small/mvm_int_array/multi_array/riscv64/sst.stdout.gold \
+	tests/small/mvm_int_array/multi_array/riscv64/golem.stderr.gold \
+	tests/small/mvm_int_array/multi_array/riscv64/golem.stdout.gold \
+\
+	tests/small/mvm_int_array/single_array/Makefile \
+	tests/small/mvm_int_array/single_array/single_array.cpp \
+	tests/small/mvm_int_array/single_array/riscv64/single_array \
+	tests/small/mvm_int_array/single_array/riscv64/sst.stdout.gold \
+	tests/small/mvm_int_array/single_array/riscv64/golem.stderr.gold \
+	tests/small/mvm_int_array/single_array/riscv64/golem.stdout.gold
 
 libgolem_la_LDFLAGS = -module -avoid-version
 
