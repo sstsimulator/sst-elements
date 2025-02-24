@@ -576,6 +576,7 @@ EXTRA_DIST = \
 	tests/basic_vanadis.py \
 	tests/no_rtr_vanadis.py \
 	tests/testsuite_default_vanadis.py \
+	tests/rocc_vanadis.py \
 \
 	tests/riscv-tests/patch.txt \
 	tests/riscv-tests/README \
