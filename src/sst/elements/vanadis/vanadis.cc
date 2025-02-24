@@ -18,6 +18,7 @@
 
 #include "inst/vinstall.h"
 #include "velf/velfinfo.h"
+#include "decoder/vriscv64decoder.h"
 
 #include "os/resp/vosexitresp.h"
 
@@ -261,6 +262,16 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     lsq->setRegisterFiles(&register_files);
 
     //////////////////////////////////////////////////////////////////////////////////////
+    SubComponentSlotInfo * lists = getSubComponentSlotInfo("rocc");
+    if (lists) {
+        for (int i = 0; i <= lists->getMaxPopulatedSlotNumber(); i++) {
+            if (lists->isPopulated(i)) {
+                roccs_.push_back(lists->create<SST::Vanadis::VanadisRoCCInterface>(i, ComponentInfo::SHARE_NONE));
+                rocc_queues_.push_back(std::deque<VanadisInstruction*>());
+                output->verbose(CALL_INFO, 1, 0, "Successfully loaded RoCC Interface");
+            }
+        }
+    } 
 
     uint16_t fu_id = 0;
 
@@ -381,6 +392,10 @@ VANADIS_COMPONENT::~VANADIS_COMPONENT()
 {
     delete[] instPrintBuffer;
     delete lsq;
+
+    for ( int i= 0; i < roccs_.size(); i++) {
+        delete roccs_[i];
+    }
 
     for ( int i= 0; i < rob.size(); i++ ) {
         delete rob[i];
@@ -561,8 +576,8 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, int hwThr, uint32_t& rob_s
                 if ( 0 == resource_check ) 
                 {
                     int allocate_fu = 1;
-
-                    if( (ins_type == INST_LOAD || ins_type == INST_STORE || ins_type == INST_FENCE) ) 
+                    if (ins_type == INST_LOAD || ins_type == INST_STORE || ins_type == INST_FENCE || 
+                        ins_type == INST_ROCC0 || ins_type == INST_ROCC1 || ins_type == INST_ROCC2 || ins_type == INST_ROCC3) 
                     {
                         if(unallocated_memory_op_seen) {
                             // the instruction should not be allocated because memory operations
@@ -751,6 +766,19 @@ VANADIS_COMPONENT::performExecute(const uint64_t cycle)
 
     // Tick the load/store queue
     lsq->tick((uint64_t)cycle);
+
+    // Tick the RoCC Interfaces
+    for (int i = 0; i < roccs_.size(); i++) {
+        RoCCResponse* resp;
+        if (!(roccs_[i]->isBusy()) && (resp = roccs_[i]->respond())) {
+            VanadisInstruction* ins = rocc_queues_[i].front();
+            register_files[ins->getHWThread()]->setIntReg<uint64_t>(resp->rd, resp->rd_val);
+            ins->markExecuted();
+            rocc_queues_[i].pop_front();
+        }
+        roccs_[i]->tick((uint64_t)cycle);
+
+    }
 
     return 0;
 }
@@ -1205,6 +1233,28 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins)
     case INST_INT_ARITH:
         allocated_fu = mapInstructiontoFunctionalUnit(ins, fu_int_arith);
         break;
+
+    case INST_ROCC0:
+    case INST_ROCC1:
+    case INST_ROCC2:
+    case INST_ROCC3: {
+        int rocc_index = ins->getInstFuncType() - INST_ROCC0;
+
+        if (rocc_index > roccs_.size() - 1) {
+            output->fatal(
+                CALL_INFO, -1,
+                "Error: Attempted to allocate rocc%d instruction (ins-addr: 0x%" PRI_ADDR ") but rocc%d interface is not loaded\n", 
+                rocc_index, ins->getInstructionAddress(), rocc_index);
+        }
+
+        output->verbose(CALL_INFO, 16, 0, "allocating rocc%d instruction\n", rocc_index);
+        if (!roccs_[rocc_index]->RoCCFull()) {
+            output->verbose(CALL_INFO, 16, 0, "pushing to RoCC%d queue\n", rocc_index);
+            rocc_queues_[rocc_index].push_back(ins);
+            allocated_fu = true;
+        }
+        break;
+    }
 
     case INST_LOAD:
         if ( !lsq->loadFull() ) {
@@ -1782,6 +1832,34 @@ VANADIS_COMPONENT::assignRegistersToInstruction(
         }
     }
 
+
+    if (ins->getInstFuncType() >= INST_ROCC0 && ins->getInstFuncType() <= INST_ROCC3) {
+        int rocc_index = ins->getInstFuncType() - INST_ROCC0;
+        output->verbose(CALL_INFO, 16, 0, "issuing rocc%d instruction\n", rocc_index);
+
+        if (rocc_index > roccs_.size() - 1) {
+            output->fatal(
+                CALL_INFO, -1,
+                "Error: rocc%d instruction (ins-addr: 0x%" PRI_ADDR ") attempted to issue but rocc%d interface is not loaded\n", 
+                rocc_index, ins->getInstructionAddress(), rocc_index);
+        }
+
+        if (!roccs_[rocc_index]->RoCCFull()) {
+            VanadisRegisterFile* regFile = register_files[ins->getHWThread()];
+            regFile->print(output);
+
+            uint64_t rs1_val = regFile->getIntReg<int64_t>(ins->getPhysIntRegIn(0));
+            uint64_t rs2_val = regFile->getIntReg<int64_t>(ins->getPhysIntRegIn(1));
+
+            VanadisRoCCInstruction* vrocc_inst = static_cast<VanadisRoCCInstruction*>(ins);
+            RoCCInstruction* rocc_inst = new RoCCInstruction(
+                vrocc_inst->func7, vrocc_inst->rd, vrocc_inst->xs1, vrocc_inst->xs2, vrocc_inst->xd
+            );
+
+            roccs_[rocc_index]->push(new RoCCCommand(rocc_inst, rs1_val, rs2_val));
+        }
+    }
+
     return 0;
 }
 
@@ -1965,8 +2043,11 @@ VANADIS_COMPONENT::init(unsigned int phase)
     //	memDataInterface->init( phase );
     memInstInterface->init(phase);
 
-    while (SST::Event* ev = os_link->recvUntimedData()) {
+    for (int i = 0; i < roccs_.size(); i++) {
+        roccs_[i]->init(phase);
+    }
 
+    while (SST::Event* ev = os_link->recvUntimedData()) {
         assert( 0 );
     }
 

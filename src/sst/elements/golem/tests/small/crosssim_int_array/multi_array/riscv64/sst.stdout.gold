@@ -1,0 +1,40 @@
+[RoCC 0]: node0.cpu0:rocc: numArrays: 2, arrayInputSize: 6, arrayOutputSize: 6 
+pid=100 tid=100 has exited
+all process have exited
+ node0.cpu0:decoder0:branch_unit.branch_cache_hit.1 : Accumulator : Sum.u64 = 65486; SumSQ.u64 = 65486; Count.u64 = 65486; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0:decoder0:branch_unit.branch_cache_miss.1 : Accumulator : Sum.u64 = 106326; SumSQ.u64 = 106326; Count.u64 = 106326; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0:decoder0:branch_unit.branch_cache_castout.1 : Accumulator : Sum.u64 = 15271; SumSQ.u64 = 15271; Count.u64 = 15271; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0:decoder0.uop_cache_hit.1 : Accumulator : Sum.u64 = 7734730; SumSQ.u64 = 7734730; Count.u64 = 7734730; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0:decoder0.predecode_cache_hit.1 : Accumulator : Sum.u64 = 9402; SumSQ.u64 = 9402; Count.u64 = 9402; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0:decoder0.predecode_cache_miss.1 : Accumulator : Sum.u64 = 1764356; SumSQ.u64 = 1764356; Count.u64 = 1764356; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0:decoder0.uops_generated.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ node0.cpu0:decoder0.decode_faults.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ node0.cpu0:decoder0.ins_bytes_loaded.1 : Accumulator : Sum.u64 = 7057424; SumSQ.u64 = 28229696; Count.u64 = 1764356; Min.u64 = 4; Max.u64 = 4; 
+ node0.cpu0:decoder0.uop_delayed_rob_full.1 : Accumulator : Sum.u64 = 6964866; SumSQ.u64 = 6964866; Count.u64 = 6964866; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0:lsq.loads_issued.1 : Accumulator : Sum.u64 = 35989; SumSQ.u64 = 35989; Count.u64 = 35989; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0:lsq.stores_issued.1 : Accumulator : Sum.u64 = 15245; SumSQ.u64 = 15245; Count.u64 = 15245; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0:lsq.bytes_read.1 : Accumulator : Sum.u64 = 165738; SumSQ.u64 = 1169238; Count.u64 = 32683; Min.u64 = 1; Max.u64 = 8; 
+ node0.cpu0:lsq.bytes_stored.1 : Accumulator : Sum.u64 = 98575; SumSQ.u64 = 773295; Count.u64 = 13179; Min.u64 = 1; Max.u64 = 8; 
+ node0.cpu0:lsq.fences_issued.1 : Accumulator : Sum.u64 = 182; SumSQ.u64 = 182; Count.u64 = 182; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0:lsq.loads_executed.1 : Accumulator : Sum.u64 = 20512; SumSQ.u64 = 20512; Count.u64 = 20512; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0:lsq.stores_executed.1 : Accumulator : Sum.u64 = 13158; SumSQ.u64 = 13158; Count.u64 = 13158; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0:lsq.fences_executed.1 : Accumulator : Sum.u64 = 124; SumSQ.u64 = 124; Count.u64 = 124; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0:lsq.store_buffer_entries.1 : Accumulator : Sum.u64 = 88848; SumSQ.u64 = 350942; Count.u64 = 1409114; Min.u64 = 0; Max.u64 = 8; 
+ node0.cpu0:lsq.stores_in_flight.1 : Accumulator : Sum.u64 = 1109794; SumSQ.u64 = 12351302; Count.u64 = 1409114; Min.u64 = 0; Max.u64 = 41; 
+ node0.cpu0:lsq.loads_in_flight.1 : Accumulator : Sum.u64 = 1629142; SumSQ.u64 = 4915318; Count.u64 = 1409114; Min.u64 = 0; Max.u64 = 14; 
+ node0.cpu0:lsq.operations_pending : Accumulator : Sum.u64 = 143329; SumSQ.u64 = 558945; Count.u64 = 1409114; Min.u64 = 0; Max.u64 = 9; 
+ node0.cpu0:rocc.roccs_issued.1 : Accumulator : Sum.u64 = 16; SumSQ.u64 = 16; Count.u64 = 16; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0.instructions_retired.1 : Accumulator : Sum.u64 = 110327; SumSQ.u64 = 212537; Count.u64 = 1409114; Min.u64 = 0; Max.u64 = 4; 
+ node0.cpu0.instructions_decoded.1 : Accumulator : Sum.u64 = 770523; SumSQ.u64 = 5607875; Count.u64 = 1409114; Min.u64 = 0; Max.u64 = 13; 
+ node0.cpu0.instructions_issued.1 : Accumulator : Sum.u64 = 212086; SumSQ.u64 = 489174; Count.u64 = 1409114; Min.u64 = 0; Max.u64 = 4; 
+ node0.cpu0.loads_issued.1 : Accumulator : Sum.u64 = 35989; SumSQ.u64 = 35989; Count.u64 = 35989; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0.stores_issued.1 : Accumulator : Sum.u64 = 15245; SumSQ.u64 = 15245; Count.u64 = 15245; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0.branch_mispredicts.1 : Accumulator : Sum.u64 = 11700; SumSQ.u64 = 11700; Count.u64 = 11700; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0.branches.1 : Accumulator : Sum.u64 = 26060; SumSQ.u64 = 26060; Count.u64 = 26060; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0.cycles.1 : Accumulator : Sum.u64 = 1409114; SumSQ.u64 = 1409114; Count.u64 = 1409114; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0.rob_slots_in_use.1 : Accumulator : Sum.u64 = 59860662; SumSQ.u64 = 3678300208; Count.u64 = 1409114; Min.u64 = 0; Max.u64 = 63; 
+ node0.cpu0.rob_cleared_entries.1 : Accumulator : Sum.u64 = 660173; SumSQ.u64 = 38667117; Count.u64 = 11700; Min.u64 = 0; Max.u64 = 62; 
+ node0.cpu0.syscall-cycles.1 : Accumulator : Sum.u64 = 78050; SumSQ.u64 = 78050; Count.u64 = 78050; Min.u64 = 1; Max.u64 = 1; 
+ node0.cpu0.phys_int_reg_in_use.1 : Accumulator : Sum.u64 = 57166174; SumSQ.u64 = 2339604990; Count.u64 = 1409114; Min.u64 = 36; Max.u64 = 56; 
+ node0.cpu0.phys_fp_reg_in_use.1 : Accumulator : Sum.u64 = 46500762; SumSQ.u64 = 1534525146; Count.u64 = 1409114; Min.u64 = 33; Max.u64 = 33; 
+Simulation is complete, simulated time: 612.965 us
