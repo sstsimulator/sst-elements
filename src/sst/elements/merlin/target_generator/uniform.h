@@ -47,7 +47,7 @@ public:
         {"max",   "Maximum address to generate","numpeers - 1"}
    )
 
-    MersenneRNG* gen;
+    SST::RNG::MersenneRNG* gen;
     SSTUniformDistribution* dist;
 
     int min;
@@ -62,7 +62,7 @@ public:
         min = params.find<int>("min",0);
         max = params.find<int>("max",num_peers - 1);
 
-        gen = new MersenneRNG(id);
+        gen = new SST::RNG::MersenneRNG(id);
 
         int dist_size = std::max(1, max-min);
         dist = new SSTUniformDistribution(dist_size, gen);
@@ -75,7 +75,7 @@ public:
     }
 
     void initialize(int id, int num_peers) {
-        gen = new MersenneRNG(id);
+        gen = new SST::RNG::MersenneRNG(id);
 
         if ( min == -1 ) min = 0;
         if ( max == -1 ) max = num_peers;
@@ -92,7 +92,7 @@ public:
     void seed(uint32_t val) {
         delete dist;
         delete gen;
-        gen = new MersenneRNG((unsigned int) val);
+        gen = new SST::RNG::MersenneRNG((unsigned int) val);
         dist = new SSTUniformDistribution(std::max(1, max-min),gen);
     }
 };
