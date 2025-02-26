@@ -24,16 +24,12 @@ physMemSize = "4GiB"
 tlbType = "simpleTLB"
 mmuType = "simpleMMU"
 
-# Define SST core options
-sst.setProgramOption("timebase", "1ps")
-sst.setProgramOption("stop-at", "0 ns")
-
 # Tell SST what statistics handling we want
 sst.setStatisticLoadLevel(4)
 sst.setStatisticOutput("sst.statOutputConsole")
 
 # full_exe_name = os.getenv("VANADIS_EXE", "./small/" + testDir + "/" + exe +  "/" + isa + "/" + exe )
-full_exe_name = "/home/skinkea/sst/sst-elements/sst-elements-src/src/sst/elements/vanadis/tests/small/basic-io/hello-world/riscv64/hello-world"
+full_exe_name = "../tests/small/basic-io/hello-world/riscv64/hello-world"
 exe_name= full_exe_name.split("/")[-1]
 
 verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
