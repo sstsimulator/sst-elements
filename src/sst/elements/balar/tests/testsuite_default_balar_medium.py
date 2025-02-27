@@ -9,6 +9,10 @@ import shutil
 from testBalar_testsuite_util import *
 
 class testcase_balar_medium(BalarTestCase):
+    @BalarTestCase.balar_basic_unittest
+    def test_balar_vanadis_clang_simpleStreams(self):
+        self.balar_vanadis_clang_template("simpleStreams", 60 * 60)
+        
     @BalarTestCase.balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_backprop_1024(self):
         self.balar_vanadis_clang_template("rodinia-2.0-backprop-1024", 4800)

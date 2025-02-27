@@ -238,6 +238,7 @@ class BalarTestCase(SSTTestCase):
         testcases = {
             "helloworld": ["./vanadisLLVMRISCV/helloworld", "", ""],
             "vecadd": ["./vanadisLLVMRISCV/vecadd", "", ""],
+            "simpleStreams": ["./vanadisLLVMRISCV/simpleStreams", "", ""],
             # Rodinia 2.0
             ## Backprop
             "rodinia-2.0-backprop-short": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/backprop-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/backprop-rodinia-2.0-ft", f"256"],
