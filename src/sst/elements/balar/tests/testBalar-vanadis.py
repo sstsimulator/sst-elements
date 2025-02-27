@@ -10,9 +10,10 @@ import argparse
 from utils import *
 
 # Arguments
-args =  vars(balarTestParser.parse_args())
+args = vars(balarTestParser.parse_args())
 
 verbosity = args["balar_verbosity"]
+dma_verbosity = args["dma_verbosity"]
 cfgFile = args["config"]
 statFile = args["statfile"]
 statLevel = args["statlevel"]
@@ -73,7 +74,7 @@ cpu, L1, l1dcache_2_cpu, L2, dtlb, coredtlbWrapper, itlb = cpuBuilder.build(node
 osCache = osBuilder.build(numNodes, nodeId, 0)
 
 # Build balar
-balarTlbWrapper, balarTlb, balar_mmio_iface, dma_mmio_if = balarBuilder.buildVanadisIntegration(cfgFile, verbosity)
+balarTlbWrapper, balarTlb, balar_mmio_iface, dma_mmio_if = balarBuilder.buildVanadisIntegration(cfgFile, verbosity, dma_verbosity)
 
 # Build CPU memory
 numPorts = 4

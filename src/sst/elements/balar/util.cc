@@ -22,116 +22,118 @@ using namespace std;
 
 namespace SST {
 namespace BalarComponent {
-    string* gpu_api_to_string(enum GpuApi_t api) {
+    // TODO Fix this so it is returning const string to avoid potential
+    // TODO memory leak
+    string* cuda_api_to_string(enum CudaAPI_t api) {
         string *str;
         switch (api) {
-            case GPU_REG_FAT_BINARY:
-                str = new string("GPU_REG_FAT_BINARY");
+            case CUDA_REG_FAT_BINARY:
+                str = new string("CUDA_REG_FAT_BINARY");
                 break;
-            case GPU_REG_FUNCTION:
-                str = new string("GPU_REG_FUNCTION");
+            case CUDA_REG_FUNCTION:
+                str = new string("CUDA_REG_FUNCTION");
                 break;
-            case GPU_MEMCPY:
-                str = new string("GPU_MEMCPY");
+            case CUDA_MEMCPY:
+                str = new string("CUDA_MEMCPY");
                 break;
-            case GPU_CONFIG_CALL:
-                str = new string("GPU_CONFIG_CALL");
+            case CUDA_CONFIG_CALL:
+                str = new string("CUDA_CONFIG_CALL");
                 break;
-            case GPU_SET_ARG:
-                str = new string("GPU_SET_ARG");
+            case CUDA_SET_ARG:
+                str = new string("CUDA_SET_ARG");
                 break;
-            case GPU_LAUNCH:
-                str = new string("GPU_LAUNCH");
+            case CUDA_LAUNCH:
+                str = new string("CUDA_LAUNCH");
                 break;
-            case GPU_FREE:
-                str = new string("GPU_FREE");
+            case CUDA_FREE:
+                str = new string("CUDA_FREE");
                 break;
-            case GPU_GET_LAST_ERROR:
-                str = new string("GPU_GET_LAST_ERROR");
+            case CUDA_GET_LAST_ERROR:
+                str = new string("CUDA_GET_LAST_ERROR");
                 break;
-            case GPU_MALLOC:
-                str = new string("GPU_MALLOC");
+            case CUDA_MALLOC:
+                str = new string("CUDA_MALLOC");
                 break;
-            case GPU_REG_VAR:
-                str = new string("GPU_REG_VAR");
+            case CUDA_REG_VAR:
+                str = new string("CUDA_REG_VAR");
                 break;
-            case GPU_MAX_BLOCK:
-                str = new string("GPU_MAX_BLOCK");
+            case CUDA_MAX_BLOCK:
+                str = new string("CUDA_MAX_BLOCK");
                 break;
-            case GPU_PARAM_CONFIG:
-                str = new string("GPU_PARAM_CONFIG");
+            case CUDA_PARAM_CONFIG:
+                str = new string("CUDA_PARAM_CONFIG");
                 break;
-            case GPU_THREAD_SYNC:
-                str = new string("GPU_THREAD_SYNC");
+            case CUDA_THREAD_SYNC:
+                str = new string("CUDA_THREAD_SYNC");
                 break;
-            case GPU_GET_ERROR_STRING:
-                str = new string("GPU_GET_ERROR_STRING");
+            case CUDA_GET_ERROR_STRING:
+                str = new string("CUDA_GET_ERROR_STRING");
                 break;
-            case GPU_MEMSET:
-                str = new string("GPU_MEMSET");
+            case CUDA_MEMSET:
+                str = new string("CUDA_MEMSET");
                 break;
-            case GPU_MEMCPY_TO_SYMBOL:
-                str = new string("GPU_MEMCPY_TO_SYMBOL");
+            case CUDA_MEMCPY_TO_SYMBOL:
+                str = new string("CUDA_MEMCPY_TO_SYMBOL");
                 break;
-            case GPU_MEMCPY_FROM_SYMBOL:
-                str = new string("GPU_MEMCPY_FROM_SYMBOL");
+            case CUDA_MEMCPY_FROM_SYMBOL:
+                str = new string("CUDA_MEMCPY_FROM_SYMBOL");
                 break;
-            case GPU_SET_DEVICE:
-                str = new string("GPU_SET_DEVICE");
+            case CUDA_SET_DEVICE:
+                str = new string("CUDA_SET_DEVICE");
                 break;
-            case GPU_CREATE_CHANNEL_DESC:
-                str = new string("GPU_CREATE_CHANNEL_DESC");
+            case CUDA_CREATE_CHANNEL_DESC:
+                str = new string("CUDA_CREATE_CHANNEL_DESC");
                 break;
-            case GPU_BIND_TEXTURE:
-                str = new string("GPU_BIND_TEXTURE");
+            case CUDA_BIND_TEXTURE:
+                str = new string("CUDA_BIND_TEXTURE");
                 break;
-            case GPU_REG_TEXTURE:
-                str = new string("GPU_REG_TEXTURE");
+            case CUDA_REG_TEXTURE:
+                str = new string("CUDA_REG_TEXTURE");
                 break;
-            case GPU_GET_DEVICE_COUNT:
-                str = new string("GPU_GET_DEVICE_COUNT");
+            case CUDA_GET_DEVICE_COUNT:
+                str = new string("CUDA_GET_DEVICE_COUNT");
                 break;
-            case GPU_FREE_HOST:
-                str = new string("GPU_FREE_HOST");
+            case CUDA_FREE_HOST:
+                str = new string("CUDA_FREE_HOST");
                 break;
-            case GPU_MALLOC_HOST:
-                str = new string("GPU_MALLOC_HOST");
+            case CUDA_MALLOC_HOST:
+                str = new string("CUDA_MALLOC_HOST");
                 break;
-            case GPU_MEMCPY_ASYNC:
-                str = new string("GPU_MEMCPY_ASYNC");
+            case CUDA_MEMCPY_ASYNC:
+                str = new string("CUDA_MEMCPY_ASYNC");
                 break;
-            case GPU_GET_DEVICE_PROPERTIES:
-                str = new string("GPU_GET_DEVICE_PROPERTIES");
+            case CUDA_GET_DEVICE_PROPERTIES:
+                str = new string("CUDA_GET_DEVICE_PROPERTIES");
                 break;
-            case GPU_SET_DEVICE_FLAGS:
-                str = new string("GPU_SET_DEVICE_FLAGS");
+            case CUDA_SET_DEVICE_FLAGS:
+                str = new string("CUDA_SET_DEVICE_FLAGS");
                 break;
-            case GPU_STREAM_CREATE:
-                str = new string("GPU_STREAM_CREATE");
+            case CUDA_STREAM_CREATE:
+                str = new string("CUDA_STREAM_CREATE");
                 break;
-            case GPU_STREAM_DESTROY:
-                str = new string("GPU_STREAM_DESTROY");
+            case CUDA_STREAM_DESTROY:
+                str = new string("CUDA_STREAM_DESTROY");
                 break;
-            case GPU_EVENT_CREATE:
-                str = new string("GPU_EVENT_CREATE");
+            case CUDA_EVENT_CREATE:
+                str = new string("CUDA_EVENT_CREATE");
                 break;
-            case GPU_EVENT_CREATE_WITH_FLAGS:
-                str = new string("GPU_EVENT_CREATE_WITH_FLAGS");
+            case CUDA_EVENT_CREATE_WITH_FLAGS:
+                str = new string("CUDA_EVENT_CREATE_WITH_FLAGS");
                 break;
-            case GPU_EVENT_RECORD:
-                str = new string("GPU_EVENT_RECORD");
+            case CUDA_EVENT_RECORD:
+                str = new string("CUDA_EVENT_RECORD");
                 break;
-            case GPU_EVENT_SYNCHRONIZE:
-                str = new string("GPU_EVENT_SYNCHRONIZE");
+            case CUDA_EVENT_SYNCHRONIZE:
+                str = new string("CUDA_EVENT_SYNCHRONIZE");
                 break;
-            case GPU_EVENT_ELAPSED_TIME:
-                str = new string("GPU_EVENT_ELAPSED_TIME");
+            case CUDA_EVENT_ELAPSED_TIME:
+                str = new string("CUDA_EVENT_ELAPSED_TIME");
                 break;
-            case GPU_EVENT_DESTROY:
-                str = new string("GPU_EVENT_DESTROY");
+            case CUDA_EVENT_DESTROY:
+                str = new string("CUDA_EVENT_DESTROY");
                 break;
-            case GPU_DEVICE_GET_ATTRIBUTE:
-                str = new string("GPU_DEVICE_GET_ATTRIBUTE");
+            case CUDA_DEVICE_GET_ATTRIBUTE:
+                str = new string("CUDA_DEVICE_GET_ATTRIBUTE");
                 break;
             default:
                 str = new string("Unknown cuda calls");

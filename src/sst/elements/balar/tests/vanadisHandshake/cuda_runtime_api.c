@@ -22,7 +22,7 @@ cudaError_t cudaMalloc(void **devPtr, uint64_t size) {
     // Send request to GPU
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_MALLOC;
+    call_packet_ptr->cuda_call_id = CUDA_MALLOC;
     call_packet_ptr->cuda_malloc.size = size;
     call_packet_ptr->cuda_malloc.devPtr = devPtr;
 
@@ -59,7 +59,7 @@ cudaError_t cudaMemcpy(uint64_t dst, uint64_t src, uint64_t count, enum cudaMemc
     }
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_MEMCPY;
+    call_packet_ptr->cuda_call_id = CUDA_MEMCPY;
 
     call_packet_ptr->cuda_memcpy.kind = kind;
     call_packet_ptr->cuda_memcpy.dst = dst;
@@ -113,7 +113,7 @@ cudaError_t cudaMemcpy(uint64_t dst, uint64_t src, uint64_t count, enum cudaMemc
 cudaError_t cudaConfigureCall(dim3 gridDim, dim3 blockDim, uint64_t sharedMem) {
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_CONFIG_CALL;
+    call_packet_ptr->cuda_call_id = CUDA_CONFIG_CALL;
 
     // Prepare packet
     call_packet_ptr->configure_call.gdx = gridDim.x;
@@ -158,7 +158,7 @@ cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[BALAR_CUDA_MAX_ARG_SIZ
 
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_SET_ARG;
+    call_packet_ptr->cuda_call_id = CUDA_SET_ARG;
     call_packet_ptr->setup_argument.size = size;
     call_packet_ptr->setup_argument.offset = offset;
 
@@ -205,7 +205,7 @@ cudaError_t cudaLaunch(uint64_t func) {
 
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_LAUNCH;
+    call_packet_ptr->cuda_call_id = CUDA_LAUNCH;
     call_packet_ptr->cuda_launch.func = func;
 
     // Vanadis write with 4B chunk, thus use uint32_t to pass
@@ -247,7 +247,7 @@ unsigned int __cudaRegisterFatBinary(char file_name[BALAR_CUDA_MAX_FILE_NAME]) {
 
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_REG_FAT_BINARY;
+    call_packet_ptr->cuda_call_id = CUDA_REG_FAT_BINARY;
     memcpy(call_packet_ptr->register_fatbin.file_name, file_name, 256);
 
     // Vanadis write with 4B chunk, thus use uint32_t to pass
@@ -288,7 +288,7 @@ void __cudaRegisterFunction(
 
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_REG_FUNCTION;
+    call_packet_ptr->cuda_call_id = CUDA_REG_FUNCTION;
     call_packet_ptr->register_function.fatCubinHandle = fatCubinHandle;
     call_packet_ptr->register_function.hostFun = hostFun;
     memcpy(call_packet_ptr->register_function.deviceFun, deviceFun, 256);

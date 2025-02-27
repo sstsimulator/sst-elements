@@ -22,7 +22,7 @@ CXX_FLAGS_CUDA_WRAPPER := -include __clang_cuda_runtime_wrapper.h
 # CUDA samples flags
 CUDA_SAMPLES_FLAGS := -I./cudaSamplesCommon
 
-all: helloworld vecadd
+all: helloworld vecadd simpleStreams
 
 test_llvm_env:
 ifeq ($(LLVM_INSTALL_PATH),)

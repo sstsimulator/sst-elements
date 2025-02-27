@@ -133,13 +133,20 @@ extern "C" {
         );
         __vanadisFence();
     }
+
+    typedef enum BalarCudaCallType {
+        NORMAL_CALL = 1,
+        BLOCKING_ISSUE = 1 << 1,
+        BLOCKING_COMPLETE = 1 << 2,
+    } BalarCudaCallType_t;
 }
 
 extern "C" BalarCudaCallReturnPacket_t * makeCudaCall(BalarCudaCallPacket_t * call_packet_ptr) {
     // Make cuda call
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
-        printf("Making CUDA API Call ID: %d\n", 
-                call_packet_ptr->cuda_call_id);
+        printf("Making CUDA API Call ID: %s\n", 
+                CudaAPIEnumToString(call_packet_ptr->cuda_call_id));
+        fflush(stdout);
     }
     __vanadisMapBalar(PROT_READ|PROT_WRITE);
     *g_balarBaseAddr = (Addr_t) call_packet_ptr;
@@ -159,11 +166,32 @@ extern "C" BalarCudaCallReturnPacket_t * readLastCudaStatus() {
     return response_packet_ptr;
 }
 
+extern "C" BalarCudaCallReturnPacket_t * makeCudaCallFlags(BalarCudaCallPacket_t * call_packet_ptr, int flags) {
+    // Perform retry if the call is blocking
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
+    
+    // If the call is blocking on issue, we need to retry
+    if (flags & BLOCKING_ISSUE) {
+        while (response_packet_ptr->cuda_error == cudaErrorNotReady) {
+            response_packet_ptr = makeCudaCall(call_packet_ptr);
+        }
+    }
+
+    // For blocking complete, we need to wait for the call to finish
+    // by polling for the is_cuda_call_done flag
+    if (flags & BLOCKING_COMPLETE) {
+        while (!(response_packet_ptr->is_cuda_call_done)) {
+            response_packet_ptr = readLastCudaStatus();
+        }
+    }
+    return response_packet_ptr;
+} 
+
 cudaError_t cudaMalloc(void **devPtr, uint64_t size) {
     // Send request to GPU
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_MALLOC;
+    call_packet_ptr->cuda_call_id = CUDA_MALLOC;
     call_packet_ptr->cuda_malloc.size = size;
     call_packet_ptr->cuda_malloc.devPtr = devPtr;
 
@@ -171,6 +199,7 @@ cudaError_t cudaMalloc(void **devPtr, uint64_t size) {
         printf("Malloc Packet address: %p\n", call_packet_ptr);
         printf("Malloc Packet size: %lu\n", size);
         printf("Malloc Packet devptr: %p\n", devPtr);
+        fflush(stdout);
     }
     
     // Make cuda call
@@ -180,6 +209,7 @@ cudaError_t cudaMalloc(void **devPtr, uint64_t size) {
         printf("CUDA API ID: %d with error: %d\nMalloc addr: %lx Dev addr: %lx\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error,
                 response_packet_ptr->cudamalloc.malloc_addr, response_packet_ptr->cudamalloc.devptr_addr);
+        fflush(stdout);
     }
 
     *devPtr = (void *)response_packet_ptr->cudamalloc.malloc_addr;
@@ -191,10 +221,11 @@ cudaError_t cudaMemcpy(void *dst, const void *src, size_t count, enum cudaMemcpy
     // Send request to GPU
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Memcpy dst: %llx\n", dst);
+        fflush(stdout);
     }
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_MEMCPY;
+    call_packet_ptr->cuda_call_id = CUDA_MEMCPY;
 
     call_packet_ptr->cuda_memcpy.kind = kind;
     call_packet_ptr->cuda_memcpy.dst = (uint64_t) dst;
@@ -212,24 +243,13 @@ cudaError_t cudaMemcpy(void *dst, const void *src, size_t count, enum cudaMemcpy
         fflush(stdout);
     }
 
-    // Make cuda call
-    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
-
-    // Make the memcpy sync with balar so that CPU will
-    // issue another write/read to balar only if the previous memcpy is done
-    while (!(response_packet_ptr->is_cuda_call_done)) {
-        int wait = 0;
-        response_packet_ptr = readLastCudaStatus();
-        wait++;
-
-        // if (wait % 10 == 0) {
-        //     printf("Waited %d times\n", wait);
-        // }
-    }
+    // Make cuda call, cudaMemcpy is blocking issue and blocking complete
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCallFlags(call_packet_ptr, BLOCKING_ISSUE | BLOCKING_COMPLETE);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
     
     return response_packet_ptr->cuda_error;
@@ -240,10 +260,11 @@ __host__ cudaError_t CUDARTAPI cudaMemcpyToSymbol(
     enum cudaMemcpyKind kind) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("MemcpyToSymbol dst: %s\n", symbol);
+        fflush(stdout);
     }
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_MEMCPY_TO_SYMBOL;
+    call_packet_ptr->cuda_call_id = CUDA_MEMCPY_TO_SYMBOL;
 
     // Pass the symbol name by value
     call_packet_ptr->cuda_memcpy_to_symbol.symbol = (uint64_t) symbol;
@@ -262,7 +283,7 @@ __host__ cudaError_t CUDARTAPI cudaMemcpyToSymbol(
     }
 
     // Make cuda call
-    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCallFlags(call_packet_ptr, BLOCKING_ISSUE | BLOCKING_COMPLETE);
 
     // Make the memcpy sync with balar so that CPU will
     // issue another write/read to balar only if the previous memcpy is done
@@ -275,6 +296,7 @@ __host__ cudaError_t CUDARTAPI cudaMemcpyToSymbol(
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
     
     return response_packet_ptr->cuda_error;
@@ -285,10 +307,11 @@ __host__ cudaError_t CUDARTAPI cudaMemcpyFromSymbol(
     enum cudaMemcpyKind kind) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("MemcpyFromSymbol symbol: %s\n", symbol);
+        fflush(stdout);
     }
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_MEMCPY_FROM_SYMBOL;
+    call_packet_ptr->cuda_call_id = CUDA_MEMCPY_FROM_SYMBOL;
 
     // Pass the symbol name by value
     call_packet_ptr->cuda_memcpy_from_symbol.symbol = (uint64_t) symbol;
@@ -307,7 +330,7 @@ __host__ cudaError_t CUDARTAPI cudaMemcpyFromSymbol(
     }
 
     // Make cuda call
-    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCallFlags(call_packet_ptr, BLOCKING_ISSUE | BLOCKING_COMPLETE);
 
     // Make the memcpy sync with balar so that CPU will
     // issue another write/read to balar only if the previous memcpy is done
@@ -320,6 +343,7 @@ __host__ cudaError_t CUDARTAPI cudaMemcpyFromSymbol(
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
     
     return response_packet_ptr->cuda_error;
@@ -330,10 +354,10 @@ extern "C" {
 cudaError_t cudaLaunch(uint64_t func);
 
 // Cuda Configure call
-cudaError_t cudaConfigureCall(dim3 gridDim, dim3 blockDim, uint64_t sharedMem) {
+cudaError_t cudaConfigureCall(dim3 gridDim, dim3 blockDim, uint64_t sharedMem, cudaStream_t stream) {
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_CONFIG_CALL;
+    call_packet_ptr->cuda_call_id = CUDA_CONFIG_CALL;
 
     // Prepare packet
     call_packet_ptr->configure_call.gdx = gridDim.x;
@@ -343,12 +367,14 @@ cudaError_t cudaConfigureCall(dim3 gridDim, dim3 blockDim, uint64_t sharedMem) {
     call_packet_ptr->configure_call.bdy = blockDim.y;
     call_packet_ptr->configure_call.bdz = blockDim.z;
     call_packet_ptr->configure_call.sharedMem = sharedMem;
-    call_packet_ptr->configure_call.stream = (uint64_t) NULL;
+    call_packet_ptr->configure_call.stream = stream;
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start Configure Call:\n");
         printf("Grid Dim: x(%d) y(%d) z(%d)\n", gridDim.x, gridDim.y, gridDim.z);
         printf("Block Dim: x(%d) y(%d) z(%d)\n", blockDim.x, blockDim.y, blockDim.z);
+        printf("Stream: %p\n", stream);
+        fflush(stdout);
     }
 
     // Make cuda call
@@ -357,20 +383,19 @@ cudaError_t cudaConfigureCall(dim3 gridDim, dim3 blockDim, uint64_t sharedMem) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
     
     return response_packet_ptr->cuda_error;
 }
 
-// Weili: Need to refer to GPGPU-Sim libcuda for these 
-// https://github.com/accel-sim/gpgpu-sim_distribution/blob/a0c12f5d63504c67c8bdfb1a6cc689b4ab7867a6/libcuda/cuda_runtime_api.cc#L577
 cudaError_t __cudaPopCallConfiguration(dim3 *gridDim, dim3 *blockDim, size_t *sharedMem, void *stream) {
 	return cudaSuccess;
 }
 unsigned CUDARTAPI __cudaPushCallConfiguration(dim3 gridDim, dim3 blockDim,
                                                size_t sharedMem,
-                                               void *stream) {
-	cudaConfigureCall(gridDim, blockDim, sharedMem);
+                                               struct CUstream_st *stream = 0) {
+	cudaConfigureCall(gridDim, blockDim, sharedMem, stream);
     return 0;
 }
 
@@ -379,11 +404,12 @@ cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[BALAR_CUDA_MAX_ARG_SIZ
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start setup argument:\n");
         printf("Size: %d offset: %d\n", size, offset);
+        fflush(stdout);
     }
 
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_SET_ARG;
+    call_packet_ptr->cuda_call_id = CUDA_SET_ARG;
     call_packet_ptr->setup_argument.size = size;
     call_packet_ptr->setup_argument.offset = offset;
 
@@ -411,6 +437,7 @@ cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[BALAR_CUDA_MAX_ARG_SIZ
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
 
     return response_packet_ptr->cuda_error;
@@ -419,11 +446,12 @@ cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[BALAR_CUDA_MAX_ARG_SIZ
 BalarCudaCallReturnPacket_t __balarGetParamInfo(uint64_t hostFunc, unsigned index) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Query param %d of function %d\n", index, hostFunc);
+        fflush(stdout);
     }
 
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_PARAM_CONFIG;
+    call_packet_ptr->cuda_call_id = CUDA_PARAM_CONFIG;
     call_packet_ptr->cudaparamconfig.hostFun = hostFunc;
     call_packet_ptr->cudaparamconfig.index = index;
 
@@ -433,6 +461,7 @@ BalarCudaCallReturnPacket_t __balarGetParamInfo(uint64_t hostFunc, unsigned inde
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
     
     return *response_packet_ptr;
@@ -475,19 +504,21 @@ __host__ cudaError_t CUDARTAPI cudaLaunchKernel(const void *hostFun,
 cudaError_t cudaLaunch(uint64_t func) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start kernel launch with id: %d\n", func);
+        fflush(stdout);
     }
 
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_LAUNCH;
+    call_packet_ptr->cuda_call_id = CUDA_LAUNCH;
     call_packet_ptr->cuda_launch.func = func;
 
-    // Make cuda call
-    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
+    // Make cuda call, kernel launch might be blocking issue
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCallFlags(call_packet_ptr, BLOCKING_ISSUE);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
 
     return response_packet_ptr->cuda_error;
@@ -503,7 +534,7 @@ unsigned int __cudaRegisterFatBinary(void *fatCubin) {
 
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_REG_FAT_BINARY;
+    call_packet_ptr->cuda_call_id = CUDA_REG_FAT_BINARY;
 
     // Make cuda call
     BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
@@ -534,13 +565,13 @@ void __cudaRegisterFunction(
 
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_REG_FUNCTION;
+    call_packet_ptr->cuda_call_id = CUDA_REG_FUNCTION;
     call_packet_ptr->register_function.fatCubinHandle = fatCubinHandle;
     call_packet_ptr->register_function.hostFun = hostFun;
     memcpy(call_packet_ptr->register_function.deviceFun, deviceFun, 256);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
-        printf("Packet's deviceFunc: %s; Addr: %x %x\nScratch mem addr: %x\n",
+        printf("Packet's deviceFunc: %s; Addr: %p %p\nScratch mem addr: %p\n",
             call_packet_ptr->register_function.deviceFun,
             &(call_packet_ptr->register_function.deviceFun),
             &deviceFun,
@@ -563,25 +594,20 @@ void __cudaRegisterFunction(
 __host__ cudaError_t CUDARTAPI cudaThreadSynchronize(void) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start thread sync\n");
+        fflush(stdout);
     }
 
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_THREAD_SYNC;
+    call_packet_ptr->cuda_call_id = CUDA_THREAD_SYNC;
 
     // Make cuda call
-    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
-
-    // Wait for threadsync to complete
-    while (!(response_packet_ptr->is_cuda_call_done)) {
-        int wait = 0;
-        response_packet_ptr = readLastCudaStatus();
-        wait++;
-    }
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCallFlags(call_packet_ptr, BLOCKING_ISSUE | BLOCKING_COMPLETE);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
 
     return response_packet_ptr->cuda_error;
@@ -609,11 +635,12 @@ __host__ const char*CUDARTAPI cudaGetErrorName(cudaError_t error) {
 __host__ cudaError_t CUDARTAPI cudaMemset(void *mem, int c, size_t count) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start cudaMemset, setting 0x%llx to %c for %lld bytes\n", mem, c, count);
+        fflush(stdout);
     }
 
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_MEMSET;
+    call_packet_ptr->cuda_call_id = CUDA_MEMSET;
     call_packet_ptr->cudamemset.mem = mem;
     call_packet_ptr->cudamemset.c = c;
     call_packet_ptr->cudamemset.count = count;
@@ -624,6 +651,7 @@ __host__ cudaError_t CUDARTAPI cudaMemset(void *mem, int c, size_t count) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
 
     return response_packet_ptr->cuda_error;
@@ -646,11 +674,12 @@ void __cudaRegisterVar(
         printf("HostVar 0x%Lx\n", hostVar);
         printf("deviceAddress 0x%Lx\n", deviceAddress);
         printf("deviceName %s\n", deviceName);
+        fflush(stdout);
     }
 
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_REG_VAR;
+    call_packet_ptr->cuda_call_id = CUDA_REG_VAR;
     call_packet_ptr->register_var.fatCubinHandle = fatCubinHandle; 
     call_packet_ptr->register_var.hostVar = hostVar;
     call_packet_ptr->register_var.deviceAddress = deviceAddress;
@@ -669,17 +698,19 @@ void __cudaRegisterVar(
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
 }
 
 __host__ cudaError_t CUDARTAPI cudaGetDeviceCount(int *count) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start get device count\n");
+        fflush(stdout);
     }
 
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_GET_DEVICE_COUNT;
+    call_packet_ptr->cuda_call_id = CUDA_GET_DEVICE_COUNT;
 
     // Make cuda call
     BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
@@ -690,6 +721,7 @@ __host__ cudaError_t CUDARTAPI cudaGetDeviceCount(int *count) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
 
     return response_packet_ptr->cuda_error;
@@ -698,11 +730,12 @@ __host__ cudaError_t CUDARTAPI cudaGetDeviceCount(int *count) {
 __host__ cudaError_t CUDARTAPI cudaSetDevice(int device) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start get device count\n");
+        fflush(stdout);
     }
 
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_SET_DEVICE;
+    call_packet_ptr->cuda_call_id = CUDA_SET_DEVICE;
     call_packet_ptr->cudasetdevice.device = device;
 
     // Make cuda call
@@ -711,6 +744,7 @@ __host__ cudaError_t CUDARTAPI cudaSetDevice(int device) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
 
     return response_packet_ptr->cuda_error;
@@ -734,11 +768,12 @@ void __cudaRegisterTexture(
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start register texture\n");
+        fflush(stdout);
     }
 
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_REG_TEXTURE;
+    call_packet_ptr->cuda_call_id = CUDA_REG_TEXTURE;
     call_packet_ptr->cudaregtexture.fatCubinHandle = fatCubinHandle;
     call_packet_ptr->cudaregtexture.hostVar_ptr = (uint64_t) hostVar;
     call_packet_ptr->cudaregtexture.texRef = *hostVar;
@@ -755,6 +790,7 @@ void __cudaRegisterTexture(
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
 }
 
@@ -763,11 +799,12 @@ __host__ cudaError_t CUDARTAPI cudaBindTexture(
     const struct cudaChannelFormatDesc *desc, size_t size) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start bind texture\n");
+        fflush(stdout);
     }
 
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_BIND_TEXTURE;
+    call_packet_ptr->cuda_call_id = CUDA_BIND_TEXTURE;
     call_packet_ptr->cudabindtexture.offset = offset;
     call_packet_ptr->cudabindtexture.hostVar_ptr = (uint64_t) hostVar;
     call_packet_ptr->cudabindtexture.texRef = *hostVar;
@@ -781,6 +818,7 @@ __host__ cudaError_t CUDARTAPI cudaBindTexture(
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
 
     return response_packet_ptr->cuda_error;
@@ -795,6 +833,7 @@ __host__ cudaError_t CUDARTAPI cudaFreeHost(void *ptr) {
 __host__ cudaError_t CUDARTAPI cudaMallocHost(void **ptr, size_t size) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start cuda malloc host with size %lld\n", size);
+        fflush(stdout);
     }
 
     // Actual malloc done in vanadis, just need to tell GPGPU-Sim about the
@@ -803,7 +842,7 @@ __host__ cudaError_t CUDARTAPI cudaMallocHost(void **ptr, size_t size) {
     
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_MALLOC_HOST;
+    call_packet_ptr->cuda_call_id = CUDA_MALLOC_HOST;
     call_packet_ptr->cudamallochost.addr = *ptr;
     call_packet_ptr->cudamallochost.size = size;
 
@@ -813,6 +852,7 @@ __host__ cudaError_t CUDARTAPI cudaMallocHost(void **ptr, size_t size) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
     return response_packet_ptr->cuda_error;
 }
@@ -834,11 +874,12 @@ __host__ cudaError_t CUDARTAPI
 cudaGetDeviceProperties(struct cudaDeviceProp *prop, int device) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start cudaGetDeviceProperties on device\n", device);
+        fflush(stdout);
     }
     
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_GET_DEVICE_PROPERTIES;
+    call_packet_ptr->cuda_call_id = CUDA_GET_DEVICE_PROPERTIES;
     call_packet_ptr->cudaGetDeviceProperties.device = device;
 
     // Make cuda call
@@ -847,6 +888,7 @@ cudaGetDeviceProperties(struct cudaDeviceProp *prop, int device) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
 
     // Write back the device properties
@@ -859,11 +901,12 @@ cudaGetDeviceProperties(struct cudaDeviceProp *prop, int device) {
 cudaError_t CUDARTAPI cudaSetDeviceFlags(unsigned int flags) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start cudaSetDeviceFlags with flags %x\n", flags);
+        fflush(stdout);
     }
     
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_SET_DEVICE_FLAGS;
+    call_packet_ptr->cuda_call_id = CUDA_SET_DEVICE_FLAGS;
     call_packet_ptr->cudaSetDeviceFlags.flags = flags;
 
     // Make cuda call
@@ -872,6 +915,7 @@ cudaError_t CUDARTAPI cudaSetDeviceFlags(unsigned int flags) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
 
     return response_packet_ptr->cuda_error;
@@ -880,11 +924,12 @@ cudaError_t CUDARTAPI cudaSetDeviceFlags(unsigned int flags) {
 __host__ cudaError_t CUDARTAPI cudaStreamCreate(cudaStream_t *stream) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start cudaStreamCreate\n");
+        fflush(stdout);
     }
     
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_STREAM_CREATE;
+    call_packet_ptr->cuda_call_id = CUDA_STREAM_CREATE;
 
     // Make cuda call
     BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
@@ -893,6 +938,7 @@ __host__ cudaError_t CUDARTAPI cudaStreamCreate(cudaStream_t *stream) {
         printf("CUDA API ID: %d with error: %d and stream %p\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error,
                 response_packet_ptr->cudaStreamCreate.stream);
+        fflush(stdout);
     }
 
     // Write back the stream
@@ -904,11 +950,12 @@ __host__ cudaError_t CUDARTAPI cudaStreamCreate(cudaStream_t *stream) {
 __host__ cudaError_t CUDARTAPI cudaEventCreate(cudaEvent_t *event) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start cudaEventCreate\n");
+        fflush(stdout);
     }
     
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_EVENT_CREATE;
+    call_packet_ptr->cuda_call_id = CUDA_EVENT_CREATE;
 
     // Make cuda call
     BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
@@ -917,6 +964,7 @@ __host__ cudaError_t CUDARTAPI cudaEventCreate(cudaEvent_t *event) {
         printf("CUDA API ID: %d with error: %d and event %p\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error,
                 response_packet_ptr->cudaEventCreate.event);
+        fflush(stdout);
     }
 
     // Write back the event
@@ -928,11 +976,12 @@ __host__ cudaError_t CUDARTAPI cudaEventCreate(cudaEvent_t *event) {
 cudaError_t CUDARTAPI cudaEventCreateWithFlags(cudaEvent_t *event, unsigned int flags) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start cudaEventCreateWithFlags with %x\n", flags);
+        fflush(stdout);
     }
     
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_EVENT_CREATE_WITH_FLAGS;
+    call_packet_ptr->cuda_call_id = CUDA_EVENT_CREATE_WITH_FLAGS;
     call_packet_ptr->cudaEventCreateWithFlags.flags = flags;
 
     // Make cuda call
@@ -942,6 +991,7 @@ cudaError_t CUDARTAPI cudaEventCreateWithFlags(cudaEvent_t *event, unsigned int 
         printf("CUDA API ID: %d with error: %d and event %p\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error,
                 response_packet_ptr->cudaEventCreateWithFlags.event);
+        fflush(stdout);
     }
 
     // Write back the event
@@ -953,21 +1003,23 @@ cudaError_t CUDARTAPI cudaEventCreateWithFlags(cudaEvent_t *event, unsigned int 
 __host__ cudaError_t CUDARTAPI cudaEventRecord(cudaEvent_t event,
                                                cudaStream_t stream) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
-        printf("Start cudaEventRecord with event %x and stream %x\n", event, stream);
+        printf("Start cudaEventRecord with event %p and stream %p\n", event, stream);
+        fflush(stdout);
     }
     
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_EVENT_RECORD;
+    call_packet_ptr->cuda_call_id = CUDA_EVENT_RECORD;
     call_packet_ptr->cudaEventRecord.event = event;
     call_packet_ptr->cudaEventRecord.stream = stream;
 
     // Make cuda call
-    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCallFlags(call_packet_ptr, BLOCKING_ISSUE);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
 
     return response_packet_ptr->cuda_error;
@@ -980,10 +1032,11 @@ __host__ cudaError_t CUDARTAPI cudaMemcpyAsync(void *dst, const void *src,
     // Send request to GPU
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("cudaMemcpyAsync dst: %llx\n", dst);
+        fflush(stdout);
     }
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_MEMCPY;
+    call_packet_ptr->cuda_call_id = CUDA_MEMCPY_ASYNC;
 
     call_packet_ptr->cudaMemcpyAsync.kind = kind;
     call_packet_ptr->cudaMemcpyAsync.dst = (uint64_t) dst;
@@ -998,16 +1051,17 @@ __host__ cudaError_t CUDARTAPI cudaMemcpyAsync(void *dst, const void *src,
         printf("cudaMemcpyAsync size: %ld\n", count);
         printf("cudaMemcpyAsync src: %p\n", src);
         printf("cudaMemcpyAsync dst: %p\n", dst);
-        printf("cudaMemcpyAsync stream: %x\n", stream);
+        printf("cudaMemcpyAsync stream: %p\n", stream);
         fflush(stdout);
     }
 
     // Make cuda call
-    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCallFlags(call_packet_ptr, BLOCKING_ISSUE);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
     
     return response_packet_ptr->cuda_error;
@@ -1015,20 +1069,22 @@ __host__ cudaError_t CUDARTAPI cudaMemcpyAsync(void *dst, const void *src,
 
 __host__ cudaError_t CUDARTAPI cudaEventSynchronize(cudaEvent_t event) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
-        printf("Start cudaEventSynchronize with event %x\n", event);
+        printf("Start cudaEventSynchronize with event %p\n", event);
+        fflush(stdout);
     }
     
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_EVENT_SYNCHRONIZE;
+    call_packet_ptr->cuda_call_id = CUDA_EVENT_SYNCHRONIZE;
     call_packet_ptr->cudaEventSynchronize.event = event;
 
     // Make cuda call
-    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCall(call_packet_ptr);
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCallFlags(call_packet_ptr, BLOCKING_COMPLETE);
 
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
 
     return response_packet_ptr->cuda_error;
@@ -1038,12 +1094,13 @@ __host__ cudaError_t CUDARTAPI cudaEventElapsedTime(float *ms,
                                                     cudaEvent_t start,
                                                     cudaEvent_t end) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
-        printf("Start cudaEventElapsedTime with start %x and end %x\n", start, end);
+        printf("Start cudaEventElapsedTime with start %p and end %p\n", start, end);
+        fflush(stdout);
     }
     
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_EVENT_ELAPSED_TIME;
+    call_packet_ptr->cuda_call_id = CUDA_EVENT_ELAPSED_TIME;
     call_packet_ptr->cudaEventElapsedTime.start = start;
     call_packet_ptr->cudaEventElapsedTime.end = end;
 
@@ -1054,6 +1111,7 @@ __host__ cudaError_t CUDARTAPI cudaEventElapsedTime(float *ms,
         printf("CUDA API ID: %d with error: %d and time %f ms\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error,
                 response_packet_ptr->cudaEventElapsedTime.ms);
+        fflush(stdout);
     }
 
     // Write back the time
@@ -1062,14 +1120,48 @@ __host__ cudaError_t CUDARTAPI cudaEventElapsedTime(float *ms,
     return response_packet_ptr->cuda_error;
 }
 
-__host__ cudaError_t CUDARTAPI cudaStreamDestroy(cudaStream_t stream) {
+__host__ cudaError_t CUDARTAPI cudaStreamSynchronize(cudaStream_t stream) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
-        printf("Start cudaStreamDestroy with stream %x\n", stream);
+        printf("Start cudaStreamSynchronize with stream %p\n", stream);
+        fflush(stdout);
     }
     
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_STREAM_DESTROY;
+    call_packet_ptr->cuda_call_id = CUDA_STREAM_SYNC;
+    call_packet_ptr->cudaStreamSynchronize.stream = stream;
+
+    // Make cuda call
+    BalarCudaCallReturnPacket_t *response_packet_ptr = makeCudaCallFlags(call_packet_ptr, BLOCKING_COMPLETE);
+
+    // Wait for cudaEventSynchronize to complete by polling
+    while (!(response_packet_ptr->is_cuda_call_done)) {
+        int wait = 0;
+        response_packet_ptr = readLastCudaStatus();
+        wait++;
+    }
+
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("CUDA API ID: %d with error: %d\n", 
+                response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
+    }
+
+    return response_packet_ptr->cuda_error;
+}
+
+__host__ cudaError_t CUDARTAPI cudaStreamDestroy(cudaStream_t stream) {
+    if (g_debug_level >= LOG_LEVEL_DEBUG) {
+        printf("Start cudaStreamDestroy with stream %p\n", stream);
+        fflush(stdout);
+    }
+
+    // First we need to synchronize the stream
+    cudaStreamSynchronize(stream);
+    
+    BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
+    call_packet_ptr->isSSTmem = true;
+    call_packet_ptr->cuda_call_id = CUDA_STREAM_DESTROY;
     call_packet_ptr->cudaStreamDestroy.stream = stream;
 
     // Make cuda call
@@ -1078,6 +1170,7 @@ __host__ cudaError_t CUDARTAPI cudaStreamDestroy(cudaStream_t stream) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
 
     return response_packet_ptr->cuda_error;
@@ -1085,12 +1178,13 @@ __host__ cudaError_t CUDARTAPI cudaStreamDestroy(cudaStream_t stream) {
 
 __host__ cudaError_t CUDARTAPI cudaEventDestroy(cudaEvent_t event) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
-        printf("Start cudaEventDestroy with event %x\n", event);
+        printf("Start cudaEventDestroy with event %p\n", event);
+        fflush(stdout);
     }
     
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_EVENT_DESTROY;
+    call_packet_ptr->cuda_call_id = CUDA_EVENT_DESTROY;
     call_packet_ptr->cudaEventDestroy.event = event;
 
     // Make cuda call
@@ -1099,6 +1193,7 @@ __host__ cudaError_t CUDARTAPI cudaEventDestroy(cudaEvent_t event) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
 
     return response_packet_ptr->cuda_error;
@@ -1109,11 +1204,12 @@ __host__ cudaError_t CUDARTAPI cudaDeviceGetAttribute(int *value,
                                                       int device) {
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("Start cudaDeviceGetAttribute with device %d\n", device);
+        fflush(stdout);
     }
     
     BalarCudaCallPacket_t *call_packet_ptr = (BalarCudaCallPacket_t *) g_scratch_mem;
     call_packet_ptr->isSSTmem = true;
-    call_packet_ptr->cuda_call_id = GPU_DEVICE_GET_ATTRIBUTE;
+    call_packet_ptr->cuda_call_id = CUDA_DEVICE_GET_ATTRIBUTE;
     call_packet_ptr->cudaDeviceGetAttribute.attr = attr;
     call_packet_ptr->cudaDeviceGetAttribute.device = device;
 
@@ -1123,6 +1219,7 @@ __host__ cudaError_t CUDARTAPI cudaDeviceGetAttribute(int *value,
     if (g_debug_level >= LOG_LEVEL_DEBUG) {
         printf("CUDA API ID: %d with error: %d\n", 
                 response_packet_ptr->cuda_call_id, response_packet_ptr->cuda_error);
+        fflush(stdout);
     }
 
     // Write back the value

@@ -32,6 +32,8 @@ balarTestParser.add_argument("--vanadis-args",
 # Verbosity config
 balarTestParser.add_argument("-v", "--balar-verbosity",
                     help="Specify verbosity of balar", type=int, default=0)
+balarTestParser.add_argument("--dma-verbosity",
+                    help="Specify verbosity of dmaEngine", type=int, default=0)
 
 def get_opt(args, envname, argname:dict, env_default=""):
     env = os.getenv(envname, env_default)

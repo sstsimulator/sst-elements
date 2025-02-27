@@ -92,16 +92,9 @@ public:
     bool is_SST_buffer_full(unsigned core_id);
     void send_read_request_SST(unsigned core_id, uint64_t address, uint64_t size, void* mem_req);
     void send_write_request_SST(unsigned core_id, uint64_t address, uint64_t size, void* mem_req);
-    void SST_callback_memcpy_H2D_done();
-    void SST_callback_memcpy_D2H_done();
-    void SST_callback_memcpy_to_symbol_done();
-    void SST_callback_memcpy_from_symbol_done();
 
-    /**
-     * @brief Callback that notifies cudaThreadSynchronize is done
-     * 
-     */
-    void SST_callback_cudaThreadSynchronize_done();
+    // Callbacks from GPGPU-Sim
+    void SST_callback_event_done(const char* event_name, cudaStream_t stream, uint8_t* payload, size_t payload_size);
 
     uint32_t mmio_size;
 
@@ -111,7 +104,6 @@ protected:
 
     /* Handle DMA transfers */
     void handleDMAEvent(StandardMem::Request* req);
-
 
     /* Handle event from gpu cache */
     void handleGPUCache(StandardMem::Request* req);
@@ -150,10 +142,6 @@ protected:
     BalarHandlers* handlers;
     Addr dma_addr;
 
-    // Tmp buffer to hold D2H and H2D dst data
-    uint8_t* memcpyD2H_dst;
-    uint8_t* memcpyH2D_dst;
-
     /* Debug -triggered by output.fatal() and/or SIGUSR2 */
     virtual void emergencyShutdown() {};
 
@@ -170,7 +158,11 @@ private:
     BalarCudaCallPacket_t last_packet;
     Addr packet_scratch_mem_addr;
 
-    // Indicator that the blocked response is valid
+    // Indicating that an API has been blocked from issuing
+    // This should be marked for every CUDA API in GPGPU-Sim that
+    // would push an operation to its stream manager
+    bool has_blocked_issue;
+    // Indicating that an API has issued, but is blocking on completion
     bool has_blocked_response;
     // Response to a blocked API request (like cudaMemcpy)
     StandardMem::Request* blocked_response;
@@ -183,12 +175,23 @@ private:
     StandardMem::Write* pending_write = nullptr;
     StandardMem::Read* pending_read = nullptr;
 
-    // Requests sent in this class
-    std::map<Interfaces::StandardMem::Request::id_t, std::pair<SimTime_t, std::string>> requests;
+    // Requests sent in this class with simulation time, command, and the associated cuda call packet
+    std::map<Interfaces::StandardMem::Request::id_t, std::tuple<SimTime_t, std::string, BalarCudaCallPacket_t*>> requests;
+    // CUDA call packets with pending response (callback from GPGPU-Sim)
+    // calls to different streams are stored in separate queue
+    // as within stream, order of calls should be preserved
+    // Particularly, default stream is map with key 0
+    // Packet are inserted into the queue on receiving the packet
+    // and are removed from the queue on receiving the corresponding callback
+    // TL;DR: This is a lightweight stream manager for CUDA API calls
+    std::map<cudaStream_t, std::queue<BalarCudaCallPacket_t*>> pending_packets_per_stream;
+    // CUDA Launch config stream stack
+    std::stack<cudaStream_t> cudalaunch_stream_stack;
 
     // CUDA API management related
     // Mapping from Vanadis's texture pointer to the pointer of copy in simulator memspace
     std::map<uint64_t, struct textureReference *> cudaTextureMapping;
+
 
     struct cache_req_params {
         cache_req_params( unsigned m_core_id,  void* mem_fetch, StandardMem::Request* req) {
@@ -204,6 +207,9 @@ private:
 
     virtual bool clockTic( SST::Cycle_t );
 
+    // For checking if the stream operation will be blocking
+    bool isStreamBlocking(cudaStream_t);
+
     // The command mmio interface into the memory system
     StandardMem* mmio_iface;
 
@@ -218,6 +224,7 @@ private:
     uint32_t maxPendingCacheTrans;
     std::unordered_map<StandardMem::Request::id_t, struct cache_req_params>* gpuCachePendingTransactions;
     uint32_t* numPendingCacheTransPerCore;
+    bool isLaunchBlocking;
 
     Output* output;
 

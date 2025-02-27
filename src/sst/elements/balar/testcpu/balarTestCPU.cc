@@ -158,7 +158,7 @@ Interfaces::StandardMem::Request*
     // We write to the scratch memory address first
     StandardMem::Request* req = new Interfaces::StandardMem::Write(scratchMemAddr, buffer->size(), *buffer, false);
 
-    out.verbose(_INFO_, "creating GPU request %s, CUDA Function enum %s; packet address: %lx\n", getName().c_str(), gpu_api_to_string(pack.cuda_call_id)->c_str(), scratchMemAddr);
+    out.verbose(_INFO_, "creating GPU request %s, CUDA Function enum %s; packet address: %lx\n", getName().c_str(), cuda_api_to_string(pack.cuda_call_id)->c_str(), scratchMemAddr);
     return req;
 }
 
@@ -222,16 +222,16 @@ void BalarTestCPU::mmioHandlers::handle(Interfaces::StandardMem::ReadResp* resp)
         } else if (request_type.compare("Read_CUDA_ret_packet") == 0) {
             vector<uint8_t> *data_ptr = &(resp->data);
             BalarCudaCallReturnPacket_t *ret_pack_ptr = decode_balar_packet<BalarCudaCallReturnPacket_t>(data_ptr);
-            enum GpuApi_t api_type = ret_pack_ptr->cuda_call_id;
-            if (api_type == GPU_REG_FAT_BINARY) {
+            enum CudaAPI_t api_type = ret_pack_ptr->cuda_call_id;
+            if (api_type == CUDA_REG_FAT_BINARY) {
                 out->verbose(_INFO_, "Fatbin handle: %ld\n", ret_pack_ptr->fat_cubin_handle);
                 cpu->trace_parser->fatCubinHandle = ret_pack_ptr->fat_cubin_handle;
-            } else if (api_type == GPU_MALLOC) {
+            } else if (api_type == CUDA_MALLOC) {
                 out->verbose(_INFO_, "GPU Malloc addr: 0x%lx\n", ret_pack_ptr->cudamalloc.malloc_addr);
 
                 // Set device pointer value
                 *(CUdeviceptr *)(ret_pack_ptr->cudamalloc.devptr_addr) = ret_pack_ptr->cudamalloc.malloc_addr;
-            } else if (api_type == GPU_MEMCPY && ret_pack_ptr->cudamemcpy.kind == cudaMemcpyDeviceToHost) {
+            } else if (api_type == CUDA_MEMCPY && ret_pack_ptr->cudamemcpy.kind == cudaMemcpyDeviceToHost) {
                 // Verify D2H result by counting bytes differences
                 // Also dump the device result
                 size_t tot = ret_pack_ptr->cudamemcpy.size;
@@ -400,7 +400,7 @@ BalarTestCPU::CudaAPITraceParser::CudaAPITraceParser(BalarTestCPU* cpu, SST::Out
     // Inserting initialization request like register fatbinary to initReqs
     Interfaces::StandardMem::Request* req;
     BalarCudaCallPacket_t fatbin_pack;
-    fatbin_pack.cuda_call_id = GPU_REG_FAT_BINARY;
+    fatbin_pack.cuda_call_id = CUDA_REG_FAT_BINARY;
     strcpy(fatbin_pack.register_fatbin.file_name, cudaExecutable.c_str());
     req = cpu->createGPUReqFromPacket(fatbin_pack);
     initReqs->push(req);
@@ -449,7 +449,7 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
 
             // Branch to different api calls
             if (cudaCallType.find("memalloc") != std::string::npos) {
-                pack.cuda_call_id = GPU_MALLOC;
+                pack.cuda_call_id = CUDA_MALLOC;
                 
                 // Params
                 auto tmp = params_map.find(std::string("dptr"));
@@ -491,7 +491,7 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
                 req = cpu->createGPUReqFromPacket(pack);                
             } else if (cudaCallType.find("memcpyH2D") != std::string::npos || 
                        cudaCallType.find("memcpyD2H") != std::string::npos) {
-                pack.cuda_call_id = GPU_MEMCPY;
+                pack.cuda_call_id = CUDA_MEMCPY;
 
                 // Params
                 std::string dptr_name = trim(params_map.find(std::string("device_ptr"))->second);
@@ -570,9 +570,9 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
                 BalarCudaCallPacket_t config_call_pack;
                 BalarCudaCallPacket_t set_arg_pack;
                 BalarCudaCallPacket_t launch_pack;
-                config_call_pack.cuda_call_id = GPU_CONFIG_CALL;
-                set_arg_pack.cuda_call_id = GPU_SET_ARG;
-                launch_pack.cuda_call_id = GPU_LAUNCH;
+                config_call_pack.cuda_call_id = CUDA_CONFIG_CALL;
+                set_arg_pack.cuda_call_id = CUDA_SET_ARG;
+                launch_pack.cuda_call_id = CUDA_LAUNCH;
 
                 // Configure call
                 out->verbose(CALL_INFO, 2, 0, "Create pack with configurations: gdx: %d gdy: %d gdz: %d bdx: %d bdy: %d bdz: %d\n", gdx, gdy, gdz, bdx, bdy, bdz);
@@ -584,7 +584,7 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
                 config_call_pack.configure_call.bdy = bdy;
                 config_call_pack.configure_call.bdz = bdz;
                 config_call_pack.configure_call.sharedMem = sharedMem;
-                config_call_pack.configure_call.stream = (uint64_t) stream;
+                config_call_pack.configure_call.stream = stream;
                 Interfaces::StandardMem::Request* config_call_req = cpu->createGPUReqFromPacket(config_call_pack);
 
 
@@ -597,7 +597,7 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
                     uint64_t func_id = func_map->size();
                     func_map->insert({func_name, func_id});
                     out->verbose(CALL_INFO, 2, 0, "Create pack to register function '%s' to device function '%s' with fatbinhandle: %d\n", func_name.c_str(), ptx_name.c_str(), fatCubinHandle);
-                    pack.cuda_call_id = GPU_REG_FUNCTION;
+                    pack.cuda_call_id = CUDA_REG_FUNCTION;
                     pack.register_function.fatCubinHandle = fatCubinHandle;
                     pack.register_function.hostFun = func_id;
                     strcpy(pack.register_function.deviceFun, ptx_name.c_str());

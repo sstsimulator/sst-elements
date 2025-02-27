@@ -32,7 +32,8 @@ __global__ void vecAdd(double *a, double *b, double *c, int n)
 int main()
 {
     // Size of vectors
-    int n = 16384;
+    // TODO Make this into a arg parameter
+    int n = 4096;
 
     // Host input vectors
     double *h_a;

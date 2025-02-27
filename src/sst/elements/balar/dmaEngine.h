@@ -95,12 +95,18 @@ public:
         // each time we perform a copy in DMA
         // Once the data_size is zero, we are done
         uint32_t transfer_size;
+        // Use to track how many DMA requests are still waiting for mem response
+        size_t ongoing_count;
+        // Offset for sending the request to memory
+        size_t offset;
         enum DMA_DIR dir;
 
         // Rest are status regs
         enum DMA_Status status;
         enum DMA_ERR errflag;
     };
+
+    typedef struct DMAEngineControlRegisters DMAEngineRequest_t;
 
 protected:
     /* Handle DMA requests from Host and responses from mem system */
@@ -111,7 +117,6 @@ protected:
         friend class DMAEngine;
         DMAHandlers(DMAEngine* dma, SST::Output* out) : StandardMem::RequestHandler(out), dma(dma) {}
         virtual ~DMAHandlers() {}
-        virtual void handle(StandardMem::Read* read) override;
 
         /**
          * @brief Pass in the simulator buffer address and size
@@ -130,7 +135,11 @@ protected:
         DMAEngine* dma;
     };
 
-    struct DMAEngineControlRegisters dma_ctrl_regs;
+    /* Received ongoing DMA request queue */
+    std::vector<std::pair<DMAEngineRequest_t *, StandardMem::Write*>> dma_requests;
+
+    /* Memory requests associating with an active DMA request */
+    std::map<StandardMem::Request::id_t, DMAEngineRequest_t *> memory_requests;
 
 private:
     /* Output */
@@ -151,6 +160,8 @@ private:
     /* Save pending transfer and notify host once finishes */
     StandardMem::Write* pending_transfer;
 
+    /* Convert DMA reg to string */
+    std::string dmaRegToString(DMAEngineControlRegisters* reg_ptr);
 
     /* Debug -triggered by output.fatal() and/or SIGUSR2 */
     virtual void emergencyShutdown() {};

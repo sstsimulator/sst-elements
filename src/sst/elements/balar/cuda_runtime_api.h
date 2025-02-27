@@ -93,11 +93,48 @@ __host__ cudaError_t CUDARTAPI cudaBindTexture(
     size_t *offset, const struct textureReference *texref, const void *devPtr,
     const struct cudaChannelFormatDesc *desc, size_t size);
 
- void SST_receive_mem_reply(unsigned core_id,  void* mem_req);
+__host__ cudaError_t CUDARTAPI
+cudaGetDeviceProperties(struct cudaDeviceProp *prop, int device);
 
- bool SST_gpu_core_cycle();
+cudaError_t CUDARTAPI cudaSetDeviceFlagsSST(unsigned int flags);
 
- void SST_gpgpusim_numcores_equal_check(unsigned sst_numcores);
+__host__ cudaError_t CUDARTAPI cudaStreamCreate(cudaStream_t *stream);
+
+__host__ cudaError_t CUDARTAPI cudaEventCreate(cudaEvent_t *event);
+
+cudaError_t CUDARTAPI cudaEventCreateWithFlags(cudaEvent_t *event, unsigned int flags);
+
+__host__ cudaError_t CUDARTAPI cudaEventRecord(cudaEvent_t event, cudaStream_t stream);
+
+__host__ cudaError_t CUDARTAPI cudaMemcpyAsync(void *dst, const void *src,
+                                               size_t count,
+                                               enum cudaMemcpyKind kind,
+                                               cudaStream_t stream);
+
+
+__host__ cudaError_t CUDARTAPI cudaEventSynchronizeSST(cudaEvent_t event);
+
+__host__ cudaError_t CUDARTAPI cudaEventElapsedTime(float *ms,
+                                                    cudaEvent_t start,
+                                                    cudaEvent_t end);
+
+__host__ cudaError_t CUDARTAPI cudaStreamDestroy(cudaStream_t stream);
+
+__host__ cudaError_t CUDARTAPI cudaStreamSynchronizeSST(cudaStream_t stream);
+
+__host__ cudaError_t CUDARTAPI cudaEventDestroy(cudaEvent_t event);
+
+__host__ cudaError_t CUDARTAPI cudaDeviceGetAttribute(int *value,
+                                                      enum cudaDeviceAttr attr,
+                                                      int device);
+
+void SST_receive_mem_reply(unsigned core_id,  void* mem_req);
+
+bool SST_gpu_core_cycle();
+
+void SST_gpgpusim_numcores_equal_check(unsigned sst_numcores);
+
+bool SST_gpgpusim_launch_blocking();
 
 }
 

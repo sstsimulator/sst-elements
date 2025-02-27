@@ -185,7 +185,8 @@ int main(int argc, char **argv) {
   int cuda_device = 0;
   int nstreams = 4;              // number of streams for CUDA calls
   int nreps = 10;                // number of times each experiment is repeated
-  int n = 16 * 1024 * 1024;      // number of ints in the data set
+  int n = 4 * 1024;      // number of ints in the data set
+  // int n = 16 * 1024 * 1024;      // number of ints in the data set
   int nbytes = n * sizeof(int);  // number of data bytes
   dim3 threads, blocks;          // kernel launch configuration
   float elapsed_time, time_memcpy, time_kernel;  // timing variables
@@ -429,6 +430,11 @@ int main(int argc, char **argv) {
 
   checkCudaErrors(cudaFree(d_a));
   checkCudaErrors(cudaFree(d_c));
-
+  if (bResults) {
+    printf("Test PASSED\n");
+  } else {
+    printf("Test FAILED\n");
+  }
+  fflush(stdout);
   return bResults ? EXIT_SUCCESS : EXIT_FAILURE;
 }

@@ -34,11 +34,6 @@ def initializeTestModule_SingleInstance(class_inst):
 
 class BalarTestCase(SSTTestCase):
 
-    def initializeClass(self, testName):
-        super().initializeClass(testName)
-        # Put test based setup code here. it is called before testing starts
-        # NOTE: This method is called once for every test
-
     def setUp(self):
         super().setUp()
         self._setupbalarVarEnv()
@@ -427,7 +422,7 @@ class BalarTestCase(SSTTestCase):
 
             # Build rodinia
             # Use the same amount of concurrent run to compile rodinia
-            cmd_compile = f"make rodinia_2.0-ft -i -j{nthreads} -C ./src"
+            cmd_compile = f"make rodinia_2.0-ft -j{nthreads} -C ./src"
             rtn = OSCommand(cmd_compile, set_cwd=os.environ["GPUAPPS_ROOT"]).run()
             log_debug("Balar vanadisLLVM GPU App rodinia 2.0 Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
             self.assertTrue(rtn.result() == 0, "vanadisLLVM GPU app rodinia 2.0 benchmark failed to compile")

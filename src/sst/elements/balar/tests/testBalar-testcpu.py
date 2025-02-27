@@ -29,6 +29,7 @@ statFile = args["statfile"]
 statLevel = args["statlevel"]
 traceFile = args["trace"]
 binaryFile = args["cuda_binary"]
+dma_verbosity = args["dma_verbosity"]
 
 # Build Configuration Information
 config = Config(cfgFile, verbose=verbosity)
@@ -60,7 +61,7 @@ clock = "2GHz"
 
 # Balar builder
 balarBuilder = balarBlock.Builder(args)
-balar_mmio_iface, balar_mmio_testcpu_addr, dma_mem_if, dma_mmio_if = balarBuilder.buildTestCPU(cfgFile, verbosity)
+balar_mmio_iface, balar_mmio_testcpu_addr, dma_mem_if, dma_mmio_if = balarBuilder.buildTestCPU(cfgFile, verbosity, dma_verbosity)
 
 mmio_nic = balar_mmio_iface.setSubComponent("memlink", "memHierarchy.MemNIC")
 mmio_nic.addParams({"group": mmio_group,

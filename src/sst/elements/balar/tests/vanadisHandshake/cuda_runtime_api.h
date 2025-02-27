@@ -36,31 +36,19 @@ static Addr_t* g_balarBaseAddr = (Addr_t*) 0;
 static uint8_t g_scratch_mem[1024];
 static int32_t g_debug_level = LOG_LEVEL_ERROR;
 
-enum GpuApi_t {
-    GPU_REG_FAT_BINARY = 1,
-    GPU_REG_FAT_BINARY_RET = 2,
-    GPU_REG_FUNCTION = 3,
-    GPU_REG_FUNCTION_RET = 4,
-    GPU_MEMCPY = 5,
-    GPU_MEMCPY_RET = 6,
-    GPU_CONFIG_CALL = 7,
-    GPU_CONFIG_CALL_RET = 8,
-    GPU_SET_ARG = 9,
-    GPU_SET_ARG_RET = 10,
-    GPU_LAUNCH = 11,
-    GPU_LAUNCH_RET = 12,
-    GPU_FREE = 13,
-    GPU_FREE_RET = 14,
-    GPU_GET_LAST_ERROR = 15,
-    GPU_GET_LAST_ERROR_RET = 16,
-    GPU_MALLOC = 17,
-    GPU_MALLOC_RET = 18,
-    GPU_REG_VAR = 19,
-    GPU_REG_VAR_RET = 20,
-    GPU_MAX_BLOCK = 21,
-    GPU_MAX_BLOCK_RET = 22,
-    GPU_PARAM_CONFIG,
-    GPU_PARAM_CONFIG_RET,
+enum CudaAPI_t {
+    CUDA_REG_FAT_BINARY = 1,
+    CUDA_REG_FUNCTION,
+    CUDA_MEMCPY,
+    CUDA_CONFIG_CALL,
+    CUDA_SET_ARG,
+    CUDA_LAUNCH,
+    CUDA_FREE,
+    CUDA_GET_LAST_ERROR,
+    CUDA_MALLOC,
+    CUDA_REG_VAR,
+    CUDA_MAX_BLOCK,
+    CUDA_PARAM_CONFIG,
 };
 
 enum cudaMemcpyKind
@@ -127,7 +115,7 @@ typedef struct dim3 dim3;
 // Future: Make this into a class with additional serialization methods?
 // Future: Make this into subclass of standardmem::request? and override the makeResponse function?
 typedef struct BalarCudaCallPacket {
-    enum GpuApi_t cuda_call_id;
+    enum CudaAPI_t cuda_call_id;
     // 0: means pointer data are not in SST mem space
     // 1: means data are in SST mem space, which is the
     //    case for Vanadis as all data are in SST mem space
@@ -154,7 +142,9 @@ typedef struct BalarCudaCallPacket {
             uint64_t dst;
             uint64_t src;
             uint64_t count;
-            uint64_t payload;   // A pointer, but need to be 64-bit
+            uint64_t payload;
+            uint8_t *dst_buf; // Use for SST memspace
+            uint8_t *src_buf; // Use for SST memspace
             enum cudaMemcpyKind kind;
         } cuda_memcpy;
 
@@ -210,7 +200,7 @@ typedef struct BalarCudaCallPacket {
 } BalarCudaCallPacket_t;
 
 typedef struct BalarCudaCallReturnPacket {
-    enum GpuApi_t cuda_call_id;
+    enum CudaAPI_t cuda_call_id;
     cudaError_t cuda_error;
     bool is_cuda_call_done; 
     union {

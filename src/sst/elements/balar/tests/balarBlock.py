@@ -242,27 +242,24 @@ class Builder():
         # Return balar and its MMIO interface
         return balar, balar_mmio_iface
     
-    def buildTestCPU(self, cfgFile, verbosity=0):
+    def buildTestCPU(self, cfgFile, balar_verbosity=0, dma_verbosity=0):
         """Build balar for testcpu integration
 
         Args:
-            cfgFile (_type_): _description_
-            verbosity (int, optional): _description_. Defaults to 0.
-
-        Args:
             cfgFile (str): gpgpusim configuration path
-            verbosity (int, optional): Verbosity of balar component. Defaults to 0.
+            balar_verbosity (int, optional): Verbosity of balar component. Defaults to 0.
+            dma_verbosity (int, optional): Verbosity of dmaEngine component. Defaults to 0.
 
         Returns:
             balar mmio interface, balar_mmio_testcpu_addr, dmaEngine mem and mmio interfaces
         """
         # Balar
-        _, balar_mmio_iface = self.build(cfgFile, balar_mmio_testcpu_addr, dma_mmio_testcpu_addr, verbosity=verbosity)
+        _, balar_mmio_iface = self.build(cfgFile, balar_mmio_testcpu_addr, dma_mmio_testcpu_addr, verbosity=balar_verbosity)
 
         # DMA engine
         dma = sst.Component("dmaEngine", "balar.dmaEngine")
         dma.addParams({
-            "verbose": verbosity,
+            "verbose": dma_verbosity,
             "clock": clock,
             "mmio_addr": dma_mmio_testcpu_addr,
             "mmio_size": dma_mmio_size,
@@ -272,7 +269,7 @@ class Builder():
 
         return balar_mmio_iface, balar_mmio_testcpu_addr, dma_mem_if, dma_mmio_if
 
-    def buildVanadisIntegration(self, cfgFile, verbosity=0):
+    def buildVanadisIntegration(self, cfgFile, balar_verbosity=0, dma_verbosity=0):
         """
             Build balar for vanadis integration, include balarTLB and dmaEngine for cudaMemcpy
            
@@ -283,17 +280,18 @@ class Builder():
 
         Args:
             cfgFile (str): gpgpusim configuration path
-            verbosity (int, optional): Verbosity of balar component. Defaults to 0.
+            balar_verbosity (int, optional): Verbosity of balar component. Defaults to 0.
+            dma_verbosity (int, optional): Verbosity of dmaEngine component. Defaults to 0.
 
         Returns:
             balarTLB and balar, dmaEngine mmio interfaces
         """
-        _, balar_mmio_iface = self.build(cfgFile, balar_mmio_vanadis_addr, dma_mmio_vanadis_addr, verbosity=verbosity)
+        _, balar_mmio_iface = self.build(cfgFile, balar_mmio_vanadis_addr, dma_mmio_vanadis_addr, verbosity=balar_verbosity)
 
         # DMA engine
         dma = sst.Component("dmaEngine", "balar.dmaEngine")
         dma.addParams({
-            "verbose": verbosity,
+            "verbose": dma_verbosity,
             "clock": clock,
             "mmio_addr": dma_mmio_vanadis_addr,
             "mmio_size": dma_mmio_size,
