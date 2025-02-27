@@ -1049,7 +1049,7 @@ protected:
                     } break;
                     case 0x1: // SBREAK
                     {
-                        printf("%#llx %#x SBREAK\n",ins_address,ins);
+                        printf("%#" PRIx64 " %#x SBREAK\n",ins_address,ins);
                         assert(0);
                     } break;
                     } 
@@ -1390,7 +1390,7 @@ protected:
                 {
                     if(LIKELY(op_width != 0)) {
                         output->verbose(CALL_INFO, 16, 0,
-                            "-----> %s.%s 0x%llx / thr: %" PRIu32 " / %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16
+                            "-----> %s.%s 0x%" PRIx64 " / thr: %" PRIu32 " / %" PRIu16 " <- memory[ %" PRIu16 " ] <- %" PRIu16
                             " / width: %" PRIu32 " / aq: %s / rl: %s\n",
                             getAMO_name(amo_op).c_str(), getAMO_type( func_code3 ).c_str(),
                             ins_address, hw_thr, rd, rs1, rs2, op_width, perform_aq ?  "yes" : "no", perform_rl ? "yes" : "no");

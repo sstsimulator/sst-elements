@@ -348,7 +348,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         // Test outfile to find issues before simulation begins
         if ( backing_outfile_ != "" ) {
             auto fp = fopen(backing_outfile_.c_str(),"wb+");
-            sst_assert(fp, CALL_INFO, -1, "%s, ERROR: Unable to open 'backing_out_file'. Is filepath accessible? Filename='%s'\n", getName().c_str());
+            sst_assert(fp, CALL_INFO, -1, "%s, ERROR: Unable to open 'backing_out_file'. Is filepath accessible? Filename='%s'\n", getName().c_str(), backing_outfile_.c_str());
             fclose(fp);
         }
     } else {
