@@ -86,6 +86,7 @@ inst/vpartialload.h \
 inst/vpartialstore.h \
 inst/vpcaddi.h \
 inst/vregfmt.h \
+inst/vrocc.h \
 inst/vscmp.h \
 inst/vscmpi.h \
 inst/vsetreg.h \
@@ -252,7 +253,9 @@ os/syscall/write.h \
 os/syscall/writev.h \
 \
 os/resp/voscallresp.h \
-os/resp/vosexitresp.h
+os/resp/vosexitresp.h \
+rocc/vroccinterface.h \
+rocc/vbasicrocc.h
 
 
 EXTRA_DIST = \
@@ -563,9 +566,17 @@ EXTRA_DIST = \
 	tests/small/misc/hpcg/mipsel/hpcg \
 	tests/small/misc/hpcg/riscv64/hpcg \
 \
+	tests/small/rocc/basic-rocc/Makefile \
+	tests/small/rocc/basic-rocc/basic-rocc.c \
+	tests/small/rocc/basic-rocc/riscv64/basic-rocc \
+	tests/small/rocc/basic-rocc/riscv64/2rocc/sst.stdout.gold \
+	tests/small/rocc/basic-rocc/riscv64/2rocc/vanadis.stdout.gold \
+	tests/small/rocc/basic-rocc/riscv64/2rocc/vanadis.stderr.gold \
+\
 	tests/basic_vanadis.py \
 	tests/no_rtr_vanadis.py \
 	tests/testsuite_default_vanadis.py \
+	tests/rocc_vanadis.py \
 \
 	tests/riscv-tests/patch.txt \
 	tests/riscv-tests/README \
