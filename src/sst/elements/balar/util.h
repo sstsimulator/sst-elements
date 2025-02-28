@@ -61,7 +61,6 @@ namespace BalarComponent {
         return pack_ptr;
     }
 
-    string* cuda_api_to_string(enum CudaAPI_t api);
     std::string& trim(std::string& s);
     std::vector<std::string> split(std::string& s, const std::string& delim);
     std::map<std::string, std::string> map_from_vec(std::vector<std::string> vec, const std::string& delim);

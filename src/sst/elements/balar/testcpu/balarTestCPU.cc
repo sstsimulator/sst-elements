@@ -158,7 +158,7 @@ Interfaces::StandardMem::Request*
     // We write to the scratch memory address first
     StandardMem::Request* req = new Interfaces::StandardMem::Write(scratchMemAddr, buffer->size(), *buffer, false);
 
-    out.verbose(_INFO_, "creating GPU request %s, CUDA Function enum %s; packet address: %lx\n", getName().c_str(), cuda_api_to_string(pack.cuda_call_id)->c_str(), scratchMemAddr);
+    out.verbose(_INFO_, "creating GPU request %s, CUDA Function enum %s; packet address: %lx\n", getName().c_str(), CudaAPIEnumToString(pack.cuda_call_id), scratchMemAddr);
     return req;
 }
 

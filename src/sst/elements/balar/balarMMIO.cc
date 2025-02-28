@@ -256,7 +256,7 @@ void BalarMMIO::SST_callback_event_done(const char* event_name, cudaStream_t str
                 out.fatal(CALL_INFO, -1, "memcpy_H2D_done: expecting a blocked response for sync memcpy\n");
             }
             if (!isSameBalarCudaCallPacket(head_packet, &last_packet, true)) {
-                out.fatal(CALL_INFO, -1, "memcpy_H2D_done: another cuda call (%s) get in the way of a blocking memcpy\n", cuda_api_to_string(last_packet.cuda_call_id)->c_str());
+                out.fatal(CALL_INFO, -1, "memcpy_H2D_done: another cuda call (%s) get in the way of a blocking memcpy\n", CudaAPIEnumToString(last_packet.cuda_call_id));
             }
 
             // Check if we are in SSTMemsapce, if so, need to free allocated buffer
@@ -395,7 +395,7 @@ void BalarMMIO::SST_callback_event_done(const char* event_name, cudaStream_t str
             out.fatal(CALL_INFO, -1, "memcpy_to_symbol_done: expecting a blocked response for sync memcpy\n");
         }
         if (!isSameBalarCudaCallPacket(head_packet, &last_packet, true)) {
-            out.fatal(CALL_INFO, -1, "memcpy_to_symbol_done: another cuda call (%s) get in the way of a blocking memcpy\n", cuda_api_to_string(last_packet.cuda_call_id)->c_str());
+            out.fatal(CALL_INFO, -1, "memcpy_to_symbol_done: another cuda call (%s) get in the way of a blocking memcpy\n", CudaAPIEnumToString(last_packet.cuda_call_id));
         }
 
         if (last_packet.isSSTmem && 
@@ -427,7 +427,7 @@ void BalarMMIO::SST_callback_event_done(const char* event_name, cudaStream_t str
             out.fatal(CALL_INFO, -1, "memcpy_from_symbol_done: expecting a blocked response for sync memcpy\n");
         }
         if (!isSameBalarCudaCallPacket(head_packet, &last_packet, true)) {
-            out.fatal(CALL_INFO, -1, "memcpy_from_symbol_done: another cuda call (%s) get in the way of a blocking memcpy\n", cuda_api_to_string(last_packet.cuda_call_id)->c_str());
+            out.fatal(CALL_INFO, -1, "memcpy_from_symbol_done: another cuda call (%s) get in the way of a blocking memcpy\n", CudaAPIEnumToString(last_packet.cuda_call_id));
         }
 
         if (head_packet->isSSTmem) {
@@ -472,7 +472,7 @@ void BalarMMIO::SST_callback_event_done(const char* event_name, cudaStream_t str
             out.fatal(CALL_INFO, -1, "cudaThreadSynchronize_done: expecting a blocked response for thread sync\n");
         }
         if (!isSameBalarCudaCallPacket(head_packet, &last_packet, true)) {
-            out.fatal(CALL_INFO, -1, "cudaThreadSynchronize_done: another cuda call (%s) get in the way of thread sync\n", cuda_api_to_string(last_packet.cuda_call_id)->c_str());
+            out.fatal(CALL_INFO, -1, "cudaThreadSynchronize_done: another cuda call (%s) get in the way of thread sync\n", CudaAPIEnumToString(last_packet.cuda_call_id));
         }
         
         mmio_iface->send(blocked_response);
@@ -496,7 +496,7 @@ void BalarMMIO::SST_callback_event_done(const char* event_name, cudaStream_t str
             out.fatal(CALL_INFO, -1, "cudaStreamSynchronize_done: expecting a blocked response for stream sync\n");
         }
         if (!isSameBalarCudaCallPacket(head_packet, &last_packet, true)) {
-            out.fatal(CALL_INFO, -1, "cudaStreamSynchronize_done: another cuda call (%s) get in the way of stream sync\n", cuda_api_to_string(last_packet.cuda_call_id)->c_str());
+            out.fatal(CALL_INFO, -1, "cudaStreamSynchronize_done: another cuda call (%s) get in the way of stream sync\n", CudaAPIEnumToString(last_packet.cuda_call_id));
         }
         
         mmio_iface->send(blocked_response);
@@ -530,7 +530,7 @@ void BalarMMIO::SST_callback_event_done(const char* event_name, cudaStream_t str
             out.fatal(CALL_INFO, -1, "cudaEventSynchronize_done: expecting a blocked response for event sync\n");
         }
         if (!isSameBalarCudaCallPacket(head_packet, &last_packet, true)) {
-            out.fatal(CALL_INFO, -1, "cudaEventSynchronize_done: another cuda call (%s) get in the way of event sync\n", cuda_api_to_string(last_packet.cuda_call_id)->c_str());
+            out.fatal(CALL_INFO, -1, "cudaEventSynchronize_done: another cuda call (%s) get in the way of event sync\n", CudaAPIEnumToString(last_packet.cuda_call_id));
         }
 
         // For the event we are waiting for
@@ -553,7 +553,7 @@ void BalarMMIO::SST_callback_event_done(const char* event_name, cudaStream_t str
         out.fatal(CALL_INFO, -1, "Unknown event %s from GPGPU-Sim\n", event_string.c_str());
     }
 
-    out.verbose(CALL_INFO, 1, 0, "Popping a packet %s from GPGPU-Sim at stream %p\n", cuda_api_to_string(head_packet->cuda_call_id)->c_str(), stream);
+    out.verbose(CALL_INFO, 1, 0, "Popping a packet %s from GPGPU-Sim at stream %p\n", CudaAPIEnumToString(head_packet->cuda_call_id), stream);
 
     // Pop the head packet
     // but dont free the buffer yet for DMA, wait til DMA is done to free it
@@ -661,7 +661,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::Write* write
 void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::Read* read) {
     out->verbose(_INFO_, "%s: receiving incoming read (%ld) to vaddr: %llx and paddr: %llx with size %lld\n", balar->getName().c_str(), read->getID(), read->vAddr, read->pAddr, read->size);
 
-    out->verbose(_INFO_, "Handling Read for return value for a %s request\n", cuda_api_to_string(balar->cuda_ret.cuda_call_id)->c_str());
+    out->verbose(_INFO_, "Handling Read for return value for a %s request\n", CudaAPIEnumToString(balar->cuda_ret.cuda_call_id));
 
     // Save this write instance as we will need it to make response
     // when finish writing return packet to memory
@@ -758,7 +758,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
             // simulator space pointer we passed to DMA engine
             BalarCudaCallPacket_t * packet = &(balar->last_packet);
 
-            out->verbose(_INFO_, "Handling CUDA API Call (%d). Enum is %s\n", packet->cuda_call_id, cuda_api_to_string(packet->cuda_call_id)->c_str());
+            out->verbose(_INFO_, "Handling CUDA API Call (%d). Enum is %s\n", packet->cuda_call_id, CudaAPIEnumToString(packet->cuda_call_id));
 
             // Save the call type for return packet
             balar->cuda_ret.cuda_call_id = packet->cuda_call_id;
@@ -1319,13 +1319,13 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
                     break;
                 case CUDA_EVENT_RECORD: {
                         // Block on issue
-                        out->verbose(_INFO_, "Checking for stream blocking for %s on stream: %p\n", cuda_api_to_string(packet->cuda_call_id)->c_str(), packet->cudaEventRecord.stream);
+                        out->verbose(_INFO_, "Checking for stream blocking for %s on stream: %p\n", CudaAPIEnumToString(packet->cuda_call_id), packet->cudaEventRecord.stream);
                         if (balar->isStreamBlocking(packet->cudaEventRecord.stream)) {
                             balar->has_blocked_issue = true;
-                            out->verbose(_INFO_, "Check fails for %s on stream: %p\n", cuda_api_to_string(packet->cuda_call_id)->c_str(), packet->cudaEventRecord.stream);
+                            out->verbose(_INFO_, "Check fails for %s on stream: %p\n", CudaAPIEnumToString(packet->cuda_call_id), packet->cudaEventRecord.stream);
                             break;
                         }
-                        out->verbose(_INFO_, "Check passes for %s on stream: %p\n", cuda_api_to_string(packet->cuda_call_id)->c_str(), packet->cudaEventRecord.stream);
+                        out->verbose(_INFO_, "Check passes for %s on stream: %p\n", CudaAPIEnumToString(packet->cuda_call_id), packet->cudaEventRecord.stream);
 
                         balar->cuda_ret.cuda_error = cudaEventRecord(
                             packet->cudaEventRecord.event,
@@ -1386,7 +1386,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
                 if (balar->has_blocked_response) {
                     // Save blocked req's response and send later
                     balar->blocked_response = write->makeResponse();
-                    out->verbose(CALL_INFO, 1, 0, "Handling a request with blocking completion: %s\n", cuda_api_to_string(packet->cuda_call_id)->c_str());
+                    out->verbose(CALL_INFO, 1, 0, "Handling a request with blocking completion: %s\n", CudaAPIEnumToString(packet->cuda_call_id));
 
                 } else if (balar->has_blocked_issue) {
                     // This request is blocking on issue, so we will
@@ -1394,10 +1394,10 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
                     balar->cuda_ret.cuda_error = cudaErrorNotReady;
 
                     balar->mmio_iface->send(write->makeResponse());
-                    out->verbose(CALL_INFO, 1, 0, "Handling a request with blocking issue: %s with error: %d\n", cuda_api_to_string(packet->cuda_call_id)->c_str(), balar->cuda_ret.cuda_error);
+                    out->verbose(CALL_INFO, 1, 0, "Handling a request with blocking issue: %s with error: %d\n", CudaAPIEnumToString(packet->cuda_call_id), balar->cuda_ret.cuda_error);
                 } else {
                     balar->mmio_iface->send(write->makeResponse());
-                    out->verbose(CALL_INFO, 1, 0, "Handling a non-blocking request: %s with error: %d\n", cuda_api_to_string(packet->cuda_call_id)->c_str(), balar->cuda_ret.cuda_error);
+                    out->verbose(CALL_INFO, 1, 0, "Handling a non-blocking request: %s with error: %d\n", CudaAPIEnumToString(packet->cuda_call_id), balar->cuda_ret.cuda_error);
                 }
             }
             balar->pending_write = nullptr;
@@ -1475,7 +1475,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
 
             // Save blocked req's response and send later (in SST_callback_memcpy_H2D_done()), since it is a memcpy
             balar->blocked_response = write->makeResponse();
-            out->verbose(CALL_INFO, 1, 0, "Handling a blocking request: %s\n", cuda_api_to_string(request_associated_packet->cuda_call_id)->c_str());
+            out->verbose(CALL_INFO, 1, 0, "Handling a blocking request: %s\n", CudaAPIEnumToString(request_associated_packet->cuda_call_id));
 
             // Delete requests as we don't need them anymore
             balar->pending_write = nullptr;
@@ -1512,7 +1512,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
 
             // Save blocked req's response and send later (in SST_callback_memcpy_to_symbol_done()), since it is a memcpy
             balar->blocked_response = write->makeResponse();
-            out->verbose(CALL_INFO, 1, 0, "Handling a blocking request: %s\n", cuda_api_to_string(request_associated_packet->cuda_call_id)->c_str());
+            out->verbose(CALL_INFO, 1, 0, "Handling a blocking request: %s\n", CudaAPIEnumToString(request_associated_packet->cuda_call_id));
 
             // Delete requests as we don't need them anymore
             balar->pending_write = nullptr;

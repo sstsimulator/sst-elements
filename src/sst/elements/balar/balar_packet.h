@@ -352,7 +352,6 @@ namespace BalarComponent {
         bool res = true;
         res &= p1->cuda_call_id == p2->cuda_call_id;
         res &= (ignore_sstmem_check || (p1->isSSTmem == p2->isSSTmem));
-        // TODO Need to check if there are any type with input args missing here
         switch (p1->cuda_call_id) {
             case CUDA_REG_FAT_BINARY:
                 res &= strcmp(p1->register_fatbin.file_name, p2->register_fatbin.file_name) == 0;
