@@ -426,7 +426,7 @@ class BalarTestCase(SSTTestCase):
             cmd_compile = f"make rodinia_2.0-ft -j{nthreads} -C ./src"
             rtn = OSCommand(cmd_compile, set_cwd=os.environ["GPUAPPS_ROOT"]).run()
             log_debug("Balar vanadisLLVM GPU App rodinia 2.0 Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
-            self.assertTrue(rtn.result() == 0, "vanadisLLVM GPU app rodinia 2.0 benchmark failed to compile")
+            self.assertTrue(rtn.result() == 0, "vanadisLLVM GPU app rodinia 2.0 benchmark failed to compile in {0} with command {1}".format(os.environ["GPUAPPS_ROOT"], cmd_compile))
 
             # Pull data
             cmd_pulldata = "make data -C ./src"
@@ -470,3 +470,7 @@ class BalarTestCase(SSTTestCase):
         tmp = version_string.split("release ")[1]
         version_num = tmp.split(",")[0].strip()
         os.environ["CUDA_VERSION"] = version_num
+
+        log_debug("Dumping environment variables:")
+        log_debug("NVCC path: {0}".format(os.environ["NVCC_PATH"]))
+        log_debug("CUDA version: {0}".format(os.environ["CUDA_VERSION"]))

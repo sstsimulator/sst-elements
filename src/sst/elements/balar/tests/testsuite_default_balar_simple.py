@@ -23,7 +23,7 @@ class testcase_balar_simple(BalarTestCase):
     
     @BalarTestCase.balar_basic_unittest
     def test_balar_vanadis_clang_vecadd(self):
-        self.balar_vanadis_clang_template("vecadd")
+        self.balar_vanadis_clang_template("vecadd", 60 * 30)
         
     @BalarTestCase.balar_gpuapp_unittest
     def test_balar_vanadis_clang_rodinia_20_backprop_short(self):
