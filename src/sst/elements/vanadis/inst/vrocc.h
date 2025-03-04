@@ -82,14 +82,14 @@ public:
 
     virtual void printToBuffer(char* buffer, size_t buffer_size)
     {
-        snprintf(buffer, buffer_size, instCode);
+        snprintf(buffer, buffer_size, "%s", instCode);
     }
 
     virtual void execute(SST::Output* output, VanadisRegisterFile* regFile) {
         markExecuted(); 
     }
 
-    char* instCode;
+    const char* instCode;
     VanadisFunctionalUnitType funcType;
     uint8_t func7;
     uint8_t rd;
