@@ -40,13 +40,13 @@ AC_DEFUN([SST_CHECK_GPGPUSIM],
             GPGPUSIM_LIB=
    ])
 
-   AC_MSG_CHECKING([for cudart_mod in $GPGPUSIM_LIBDIR])
-      if test -f "$GPGPUSIM_LIBDIR/libcudart_mod.so" ; then
-         GPGPUSIM_LIB="-lcudart_mod"
+   AC_MSG_CHECKING([for cudart in $GPGPUSIM_LIBDIR])
+      if test -f "$GPGPUSIM_LIBDIR/libcudart.so" ; then
+         GPGPUSIM_LIB="-lcudart"
          sst_check_gpgpusim_happy="yes"
          AC_MSG_RESULT([yes])
       else
-         AC_MSG_RESULT(libcudart_mod.so not found)
+         AC_MSG_RESULT(libcudart.so not found)
       fi
 
    ##TODO

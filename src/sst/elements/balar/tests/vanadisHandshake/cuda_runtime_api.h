@@ -13,15 +13,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-/**
- * @file cuda_runtime_api.h
- * @author Weili An (an107@purdue.edu)
- * @brief Test lib header for vanadis calling CUDA api
- * @version 0.1
- * @date 2022-09-22
- * 
- */
-
 #ifndef __CUDA_RUNTIME_API_H__
 #define __CUDA_RUNTIME_API_H__
 
@@ -30,40 +21,34 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "../../balar_consts.h"
 
 #define LOG_LEVEL_INFO 20
 #define LOG_LEVEL_DEBUG 15
 #define LOG_LEVEL_WARNING 10
 #define LOG_LEVEL_ERROR 0
 
-// Global mmio gpu address
-static uint32_t* g_gpu = (uint32_t*) 0xFFFF1000;
-static uint8_t g_scratch_mem[512];
-static int32_t g_debug_level = LOG_LEVEL_WARNING;
+// Depends on arch, mips use uint32_t, riscv get uint64_t
+typedef ADDR_TYPE Addr_t;
 
-enum GpuApi_t {
-    GPU_REG_FAT_BINARY = 1,
-    GPU_REG_FAT_BINARY_RET = 2,
-    GPU_REG_FUNCTION = 3,
-    GPU_REG_FUNCTION_RET = 4,
-    GPU_MEMCPY = 5,
-    GPU_MEMCPY_RET = 6,
-    GPU_CONFIG_CALL = 7,
-    GPU_CONFIG_CALL_RET = 8,
-    GPU_SET_ARG = 9,
-    GPU_SET_ARG_RET = 10,
-    GPU_LAUNCH = 11,
-    GPU_LAUNCH_RET = 12,
-    GPU_FREE = 13,
-    GPU_FREE_RET = 14,
-    GPU_GET_LAST_ERROR = 15,
-    GPU_GET_LAST_ERROR_RET = 16,
-    GPU_MALLOC = 17,
-    GPU_MALLOC_RET = 18,
-    GPU_REG_VAR = 19,
-    GPU_REG_VAR_RET = 20,
-    GPU_MAX_BLOCK = 21,
-    GPU_MAX_BLOCK_RET = 22,
+// Global mmio gpu address
+static Addr_t* g_balarBaseAddr = (Addr_t*) 0;
+static uint8_t g_scratch_mem[1024];
+static int32_t g_debug_level = LOG_LEVEL_ERROR;
+
+enum CudaAPI_t {
+    CUDA_REG_FAT_BINARY = 1,
+    CUDA_REG_FUNCTION,
+    CUDA_MEMCPY,
+    CUDA_CONFIG_CALL,
+    CUDA_SET_ARG,
+    CUDA_LAUNCH,
+    CUDA_FREE,
+    CUDA_GET_LAST_ERROR,
+    CUDA_MALLOC,
+    CUDA_REG_VAR,
+    CUDA_MAX_BLOCK,
+    CUDA_PARAM_CONFIG,
 };
 
 enum cudaMemcpyKind
@@ -130,7 +115,7 @@ typedef struct dim3 dim3;
 // Future: Make this into a class with additional serialization methods?
 // Future: Make this into subclass of standardmem::request? and override the makeResponse function?
 typedef struct BalarCudaCallPacket {
-    enum GpuApi_t cuda_call_id;
+    enum CudaAPI_t cuda_call_id;
     // 0: means pointer data are not in SST mem space
     // 1: means data are in SST mem space, which is the
     //    case for Vanadis as all data are in SST mem space
@@ -144,39 +129,41 @@ typedef struct BalarCudaCallPacket {
         } cuda_malloc;
 
         struct {
-            char file_name[256];
+            char file_name[BALAR_CUDA_MAX_FILE_NAME];
         } register_fatbin;
 
         struct {
             uint64_t fatCubinHandle;
             uint64_t hostFun;
-            char deviceFun[256];
+            char deviceFun[BALAR_CUDA_MAX_KERNEL_NAME];
         } register_function;
         
         struct {
             uint64_t dst;
             uint64_t src;
             uint64_t count;
+            uint64_t payload;
+            uint8_t *dst_buf; // Use for SST memspace
+            uint8_t *src_buf; // Use for SST memspace
             enum cudaMemcpyKind kind;
-            uint64_t payload;   // A pointer, but need to be 64-bit
         } cuda_memcpy;
 
         struct {
+            uint64_t sharedMem;
+            uint64_t stream;
             uint32_t gdx;
             uint32_t gdy;
             uint32_t gdz;
             uint32_t bdx;
             uint32_t bdy;
             uint32_t bdz;
-            uint64_t sharedMem;
-            uint64_t stream;
         } configure_call;
 
         struct {
             uint64_t arg;
-            uint8_t value[8];
             uint64_t size;
             uint64_t offset;
+            uint8_t value[BALAR_CUDA_MAX_ARG_SIZE];
         } setup_argument;
 
         struct {
@@ -199,17 +186,21 @@ typedef struct BalarCudaCallPacket {
         } register_var;
 
         struct {
+            size_t dynamicSMemSize;
             uint64_t numBlock;
             uint64_t hostFunc;
             int32_t blockSize;
-            size_t dynamicSMemSize;
             uint32_t flags;
         } max_active_block;
+        struct {
+            uint64_t hostFun;
+            unsigned index; // Argument index
+        } cudaparamconfig;
     };
 } BalarCudaCallPacket_t;
 
 typedef struct BalarCudaCallReturnPacket {
-    enum GpuApi_t cuda_call_id;
+    enum CudaAPI_t cuda_call_id;
     cudaError_t cuda_error;
     bool is_cuda_call_done; 
     union {
@@ -224,6 +215,10 @@ typedef struct BalarCudaCallReturnPacket {
             uint64_t      size;
             enum cudaMemcpyKind kind;
         } cudamemcpy;
+        struct {
+            size_t size;
+            unsigned alignment;
+        } cudaparamconfig;
     };
 } BalarCudaCallReturnPacket_t;
 
@@ -235,18 +230,19 @@ cudaError_t cudaMemcpy(uint64_t dst, uint64_t src, uint64_t count, enum cudaMemc
 cudaError_t cudaConfigureCall(dim3 gridDim, dim3 blockDim, uint64_t sharedMem);
 
 // Cuda Setup argument
-cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[8], uint64_t size, uint64_t offset);
+cudaError_t cudaSetupArgument(uint64_t arg, uint8_t value[BALAR_CUDA_MAX_ARG_SIZE], uint64_t size, uint64_t offset);
 
 cudaError_t cudaLaunch(uint64_t func);
 
-unsigned int __cudaRegisterFatBinary(char file_name[256]);
+// Use syscall to map balar to virtual memory space in vanadis
+void __vanadisMapBalar();
 
-// TODO: How to get the deviceFun name automatically?
-// TODO: Requires parsing the binary?
+unsigned int __cudaRegisterFatBinary(char file_name[BALAR_CUDA_MAX_FILE_NAME]);
+
 void __cudaRegisterFunction(
     uint64_t fatCubinHandle,
     uint64_t hostFun,
-    char deviceFun[256]
+    char deviceFun[BALAR_CUDA_MAX_KERNEL_NAME]
 );
 
 
