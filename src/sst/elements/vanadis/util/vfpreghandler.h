@@ -46,8 +46,9 @@ fractureToRegisters(VanadisRegisterFile* regFile, uint16_t r_left, uint16_t r_ri
     std::memcpy((char*)&left_val, value_ptr, sizeof(left_val));
 
     uint32_t right_val = 0;
-    if(sizeof(T) == 8)
-    std::memcpy((char*)&right_val, value_ptr + sizeof(left_val), sizeof(right_val));
+    if (sizeof(T) == 8) {
+        std::memcpy((char*)&right_val, value_ptr + sizeof(left_val), sizeof(right_val));
+    }
 
     regFile->setFPReg<uint32_t>(r_left, left_val);
     regFile->setFPReg<uint32_t>(r_right, right_val);
