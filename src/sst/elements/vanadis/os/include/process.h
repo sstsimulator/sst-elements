@@ -196,14 +196,14 @@ class ProcessInfo {
 
         char* tmp = nullptr;
         size_t num = 0;
-        getline( &tmp, &num, fp );
+        (void) !getline( &tmp, &num, fp );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",tmp);
         assert( 0 == strcmp(tmp,"Local params:\n") );
         free(tmp);
 
         for ( auto i = 0; i < size; i++ ) {
             char tmp1[80],tmp2[80];
-            fscanf(fp, "%s %s\n", tmp1, tmp2 );
+            (void) !fscanf(fp, "%s %s\n", tmp1, tmp2 );
             std::string key = tmp1;
             key.erase( key.size() - 1, 1 ); 
             std::string value = tmp2;
@@ -251,7 +251,7 @@ class ProcessInfo {
         fprintf(fp,"m_gid: %d\n",m_gid);
         fprintf(fp,"m_core: %d\n",m_core);
         fprintf(fp,"m_hwThread: %d\n",m_hwThread);
-        fprintf(fp,"m_tidAddress: %#llx\n",m_tidAddress);
+        fprintf(fp,"m_tidAddress: %#" PRIx64 "\n",m_tidAddress);
 
         m_virtMemMap->checkpoint(fp);
         m_fileTable->checkpoint(fp);

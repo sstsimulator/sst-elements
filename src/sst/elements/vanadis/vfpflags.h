@@ -104,7 +104,7 @@ public:
 
 	void print(SST::Output* output) {
 		output->verbose(CALL_INFO, 16, 0, "-> FP Status: RM: %#x / IVLD: %c / DIV0: %c / OF: %c / UF: %c / INXCT: %c\n",
-            round_mode,
+            (unsigned) round_mode,
 			f_invalidop ? 'y' : 'n',
 			f_divzero ? 'y' : 'n',
 			f_overflow ? 'y' : 'n',

@@ -88,7 +88,7 @@ void loadElfFile( Output* output, Interfaces::StandardMem* mem_if, MMU_Lib::MMU*
                         numBytes = imageLen - imageOffset;
                     }
                     size_t pageOffset = (virtAddr + imageOffset) - virtAddrPage;
-                    fread( buffer.data() + pageOffset, numBytes, 1, exec_file);
+                    (void) !fread( buffer.data() + pageOffset, numBytes, 1, exec_file);
                     imageOffset += numBytes;
                     output->verbose( CALL_INFO, 2, 0,"write page, pageVirtAddr=%#" PRIx64 " imageOffset=%zu pageOffset=%zu numBytes=%zu\n",
                         virtAddrPage,imageOffset,pageOffset,numBytes); 
@@ -160,7 +160,7 @@ uint8_t* readElfPage( Output* output, VanadisELFInfo* elf_info, int vpn, int pag
         output->verbose( CALL_INFO, 2, VANADIS_OS_DBG_READ_ELF,"imageOffset=%zu dataOffset=%zu numBytes=%zu toEnd=%zu\n", imageOffset, dataOffset, numBytes, secImageLen - imageOffset );
         fseek(exec_file, secImageOffset + imageOffset, SEEK_SET); 
 
-        fread( data + dataOffset, numBytes, 1, exec_file);
+        (void) !fread( data + dataOffset, numBytes, 1, exec_file);
     }
 
     fclose(exec_file);
