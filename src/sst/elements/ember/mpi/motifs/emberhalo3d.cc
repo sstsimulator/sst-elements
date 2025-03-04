@@ -55,14 +55,13 @@ EmberHalo3DGenerator::EmberHalo3DGenerator(SST::ComponentId_t id, Params& params
 	z_down = -1;
 	z_up   = -1;
 
-    jobId        = params.find<int>("_jobId"); //NetworkSim
-
-	configure();
+    jobId = params.find<int>("_jobId"); //NetworkSim
 }
-
 
 void EmberHalo3DGenerator::configure()
 {
+    EmberMessagePassingGenerator::configure();
+
 	unsigned worldSize = size();
 
 	if(peX == 0 || peY == 0 || peZ == 0) {

@@ -41,38 +41,43 @@ EmberNASLUGenerator::EmberNASLUGenerator(SST::ComponentId_t id, Params& params) 
 
 	// Check K-blocking factor is acceptable for dividing the Nz dimension
 	assert(nz % nzblock == 0);
-
-	configure();
 }
 
 void EmberNASLUGenerator::configure()
 {
-	// Check that we are using all the processors or else lock up will happen :(.
-	if( (px * py) != (signed)size() ) {
-		fatal(CALL_INFO, -1, "Error: NAS-LU motif checked processor decomposition: %" PRIu32 "x%" PRIu32 " != MPI World %" PRIu32 "\n",
-			px, py, size());
-	}
+    EmberMessagePassingGenerator::configure();
 
-	int32_t myX = 0;
-	int32_t myY = 0;
+    // Check that we are using all the processors or else lock up will happen :(.
+    if( (px * py) != (signed)size() ) {
+        fatal(CALL_INFO, -1, "Error: NAS-LU motif checked processor decomposition: "
+                             "%" PRIu32 "x%" PRIu32 " != MPI World %" PRIu32 "\n",
+                             px, py, size());
+    }
 
-	// Get our position in a 2D processor array
-	getPosition(rank(), px, py, &myX, &myY);
+    int32_t myX = 0;
+    int32_t myY = 0;
 
-	x_up   = (myX != (px - 1)) ? rank() + 1 : -1;
-	x_down = (myX != 0) ? rank() - 1 : -1;
+    // Get our position in a 2D processor array
+    getPosition(rank(), px, py, &myX, &myY);
 
-	y_up   = (myY != (py - 1)) ? rank() + px : -1;
-	y_down = (myY != 0) ? rank() - px : -1;
+    x_up   = (myX != (px - 1)) ? rank() + 1 : -1;
+    x_down = (myX != 0) ? rank() - 1 : -1;
 
-	if(0 == rank()) {
-		verbose(CALL_INFO, 1, 0, " NAS-LU Motif\n");
-		verbose(CALL_INFO, 1, 0, " nx = %" PRIu32 ", ny = %" PRIu32 ", nz = %" PRIu32 ", nzblock=%" PRIu32 ", (nx/nzblock)=%" PRIu32 "\n",
-			nx, ny, nz, nzblock, (nz / nzblock));
-	}
+    y_up   = (myY != (py - 1)) ? rank() + px : -1;
+    y_down = (myY != 0) ? rank() - px : -1;
 
-	verbose(CALL_INFO, 1, 0, " Rank: %" PRIu32 " is located at coordinations of (%" PRId32 ", %" PRId32 ") in the 2D decomposition, X+: %" PRId32 ",X-:%" PRId32 ",Y+:%" PRId32 ",Y-:%" PRId32 "\n",
-		rank(), myX, myY, x_up, x_down, y_up, y_down);
+    if ( 0 == rank() ) {
+        verbose(CALL_INFO, 1, 0, " NAS-LU Motif\n");
+        verbose(CALL_INFO, 1, 0, " nx = %" PRIu32 ", ny = %" PRIu32 ","
+                                 " nz = %" PRIu32 ", nzblock=%" PRIu32 ","
+                                 " (nx/nzblock)=%" PRIu32 "\n",
+                                 nx, ny, nz, nzblock, (nz / nzblock));
+    }
+
+    verbose(CALL_INFO, 1, 0, " Rank: %" PRIu32 " is located at coordinations of "
+                             "(%" PRId32 ", %" PRId32 ") in the 2D decomposition, X+: "
+                             "%" PRId32 ",X-:%" PRId32 ",Y+:%" PRId32 ",Y-:%" PRId32 "\n",
+                             rank(), myX, myY, x_up, x_down, y_up, y_down);
 }
 
 bool EmberNASLUGenerator::generate( std::queue<EmberEvent*>& evQ)

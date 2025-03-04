@@ -74,7 +74,6 @@ Ember3DAMRGenerator::Ember3DAMRGenerator(SST::ComponentId_t id, Params& params) 
 
 	// We are complete, let the user know
 	out->verbose(CALL_INFO, 2, 0, "AMR Motif constructor completed.\n");
-	configure();
 }
 
 void Ember3DAMRGenerator::loadBlocks() {
@@ -798,6 +797,8 @@ void Ember3DAMRGenerator::loadBlocks() {
 void Ember3DAMRGenerator::configure()
 {
 	out->verbose(CALL_INFO, 2, 0, "Configuring AMR motif...\n");
+
+    EmberMessagePassingGenerator::configure();
 
 	char* newPrefix = (char*) malloc(sizeof(char) * 64);
 

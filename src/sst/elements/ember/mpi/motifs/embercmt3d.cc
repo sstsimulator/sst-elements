@@ -68,94 +68,88 @@ EmberCMT3DGenerator::EmberCMT3DGenerator(SST::ComponentId_t id, Params& params) 
     	x_xferSize = eltSize*eltSize*my*mz;
     	y_xferSize = eltSize*eltSize*mx*mz;
     	z_xferSize = eltSize*eltSize*mx*my;
-
-        configure();
 }
-
 
 void EmberCMT3DGenerator::configure()
 {
+    EmberMessagePassingGenerator::configure();
 
-    	// Check that we are using all the processors or else lock up will happen :(.
-//    	if( (px * py *pz *threads) != (signed)size() ) {
-    	if( (px * py *pz *threads) != (signed)size() ) {
-    		fatal(CALL_INFO, -1, "Error: CMT3D motif checked processor decomposition: %" \
-    			PRId32 "x%" PRId32 "x%" PRId32 "x%" PRIu32 " != MPI World %" PRIu32 "\n",
-    			px, py, pz, threads, size());
-    	}
+    // Check that we are using all the processors or else lock up will happen :(.
+    if( (px * py *pz *threads) != (signed)size() ) {
+        fatal(CALL_INFO, -1, "Error: CMT3D motif checked processor decomposition: %" \
+            PRId32 "x%" PRId32 "x%" PRId32 "x%" PRIu32 " != MPI World %" PRIu32 "\n",
+            px, py, pz, threads, size());
+    }
 
-    	if(rank() == 0) {
-    		output( "CMT3D (Pairwise Exchange) Motif \n" \
-    		    "nx1 (elt_size) = %" PRIu32 ", nelt (elts/proc) = %" PRIu32 ", np (total processes) = %" PRIu32 \
-    		    ", elements (total) = %" PRIu32 \
-     			"\npx: %" PRIu32 " ,py: %" PRIu32 " ,pz: %" PRIu32 " ,threads/proc: %" PRIu32 \
-     			"\nmx: %" PRIu32 " ,my: %" PRIu32 " ,mz: %" PRIu32 \
-    			"\ncompute time: mean = %fns ,stddev = %fns \
-    			\nx_xfer: %" PRIu64 " ,y_xfer: %" PRIu64 " ,z_xfer: %" PRIu64 "\n",
-    			eltSize, nelt, size(), nelt*size(),
-    			px, py, pz, threads,
-    			mx, my, mz,
-                m_mean, m_stddev,
-    			x_xferSize, y_xferSize, z_xferSize );
-    	}
+    if(rank() == 0) {
+        output( "CMT3D (Pairwise Exchange) Motif \n" \
+            "nx1 (elt_size) = %" PRIu32 ", nelt (elts/proc) = %" PRIu32 ", np (total processes) = %" PRIu32 \
+            ", elements (total) = %" PRIu32 \
+            "\npx: %" PRIu32 " ,py: %" PRIu32 " ,pz: %" PRIu32 " ,threads/proc: %" PRIu32 \
+            "\nmx: %" PRIu32 " ,my: %" PRIu32 " ,mz: %" PRIu32 \
+            "\ncompute time: mean = %fns ,stddev = %fns \
+            \nx_xfer: %" PRIu64 " ,y_xfer: %" PRIu64 " ,z_xfer: %" PRIu64 "\n",
+            eltSize, nelt, size(), nelt*size(),
+            px, py, pz, threads,
+            mx, my, mz,
+            m_mean, m_stddev,
+            x_xferSize, y_xferSize, z_xferSize );
+    }
 
-    	// Get our (x,y,z) position and neighboring ranks in a 3D decomposition
-    	myX=-1; myY=-1; myZ=-1;
-    	myID = rank();
-    	getPosition(myID, px, py, pz, &myX, &myY, &myZ);
+    // Get our (x,y,z) position and neighboring ranks in a 3D decomposition
+    myX=-1; myY=-1; myZ=-1;
+    myID = rank();
+    getPosition(myID, px, py, pz, &myX, &myY, &myZ);
 
-        // Initialize Marsaglia RNG for compute time
-        m_random = new SSTGaussianDistribution( m_mean, m_stddev,
-                                    new RNG::MarsagliaRNG( 7+myID, getJobId() ) );
+    // Initialize Marsaglia RNG for compute time
+    m_random = new SSTGaussianDistribution( m_mean, m_stddev,
+                                new RNG::MarsagliaRNG( 7+myID, getJobId() ) );
 
-    	// Set which direction to transfer and the neighbors in that direction
-    	if( myX > 0 ) {
-    		sendx_neg = true;
-    		x_neg	= convertPositionToRank(px, py, pz, myX-1, myY, myZ);
-    	}
+    // Set which direction to transfer and the neighbors in that direction
+    if( myX > 0 ) {
+        sendx_neg = true;
+        x_neg	= convertPositionToRank(px, py, pz, myX-1, myY, myZ);
+    }
 
-    	if( myX < px-1 ) {
-    		sendx_pos = true;
-    		x_pos	= convertPositionToRank(px, py, pz, myX+1, myY, myZ);
-    	}
+    if( myX < px-1 ) {
+        sendx_pos = true;
+        x_pos	= convertPositionToRank(px, py, pz, myX+1, myY, myZ);
+    }
 
-    	if( myY > 0 ) {
-    		sendy_neg = true;
-    		y_neg 	= convertPositionToRank(px, py, pz, myX, myY-1, myZ);
-    	}
+    if( myY > 0 ) {
+        sendy_neg = true;
+        y_neg 	= convertPositionToRank(px, py, pz, myX, myY-1, myZ);
+    }
 
-    	if( myY < py-1 ) {
-    		sendy_pos = true;
-    		y_pos	= convertPositionToRank(px, py, pz, myX, myY+1, myZ);
-    	}
+    if( myY < py-1 ) {
+        sendy_pos = true;
+        y_pos	= convertPositionToRank(px, py, pz, myX, myY+1, myZ);
+    }
 
-    	if( myZ > 0 ) {
-    		sendz_neg = true;
-    		z_neg 	= convertPositionToRank(px, py, pz, myX, myY, myZ-1);
-    	}
+    if( myZ > 0 ) {
+        sendz_neg = true;
+        z_neg 	= convertPositionToRank(px, py, pz, myX, myY, myZ-1);
+    }
 
-    	if( myZ < pz-1 ) {
-    		sendz_pos = true;
-    		z_pos	= convertPositionToRank(px, py, pz, myX, myY, myZ+1);
-    	}
+    if( myZ < pz-1 ) {
+        sendz_pos = true;
+        z_pos	= convertPositionToRank(px, py, pz, myX, myY, myZ+1);
+    }
 
-    	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu64 " is located at coordinates \
-    		(%" PRId32 ", %" PRId32 ", %" PRId32") in the 3D grid,\
-    		X+:%s %" PRId32 ", X-:%s %" PRId32 ", \
-    		Y+:%s %" PRId32 ", Y-:%s %" PRId32 ", \
-    		Z+:%s %" PRId32 ", Z-:%s %" PRId32 "\n",
-    		myID,
-    		myX, myY, myZ,
-    		(sendx_pos ? "Y" : "N"), x_pos,
-    		(sendx_neg ? "Y" : "N"), x_neg,
-    		(sendy_pos ? "Y" : "N"), y_pos,
-    		(sendy_neg ? "Y" : "N"), y_neg,
-    		(sendz_pos ? "Y" : "N"), z_pos,
-    		(sendz_neg ? "Y" : "N"), z_neg);
-
+    verbose(CALL_INFO, 2, 0, "Rank: %" PRIu64 " is located at coordinates \
+        (%" PRId32 ", %" PRId32 ", %" PRId32") in the 3D grid,\
+        X+:%s %" PRId32 ", X-:%s %" PRId32 ", \
+        Y+:%s %" PRId32 ", Y-:%s %" PRId32 ", \
+        Z+:%s %" PRId32 ", Z-:%s %" PRId32 "\n",
+        myID,
+        myX, myY, myZ,
+        (sendx_pos ? "Y" : "N"), x_pos,
+        (sendx_neg ? "Y" : "N"), x_neg,
+        (sendy_pos ? "Y" : "N"), y_pos,
+        (sendy_neg ? "Y" : "N"), y_neg,
+        (sendz_pos ? "Y" : "N"), z_pos,
+        (sendz_neg ? "Y" : "N"), z_neg);
 }
-
-
 
 bool EmberCMT3DGenerator::generate( std::queue<EmberEvent*>& evQ)
 {

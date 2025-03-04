@@ -36,24 +36,24 @@ EmberSweep2DGenerator::EmberSweep2DGenerator(SST::ComponentId_t id, Params& para
 
 	// Check K-blocking factor is acceptable for dividing the Nz dimension
 	assert(ny % y_block == 0);
-
-	configure();
 }
 
 void EmberSweep2DGenerator::configure()
 {
-	if(0 == rank()) {
-		verbose(CALL_INFO, 1, 0, " 2D Sweep Motif\n");
-		verbose(CALL_INFO, 1, 0, " nx = %" PRIu32 ", ny = %"
-			PRIu32 ", y_block=%" PRIu32 ", (ny/yblock)=%" PRIu32 "\n",
-			nx, ny, y_block, (ny/y_block));
-	}
+    EmberMessagePassingGenerator::configure();
 
-	x_up   = (rank() < (size() - 1)) ? rank() + 1 : -1;
-	x_down = (rank() > 0) ? rank() - 1 : -1;
+    if ( 0 == rank() ) {
+        verbose( CALL_INFO, 1, 0, " 2D Sweep Motif\n" );
+        verbose( CALL_INFO, 1, 0, " nx = %" PRIu32 ", ny = %"
+                 PRIu32 ", y_block=%" PRIu32 ", (ny/yblock)=%" PRIu32 "\n",
+                 nx, ny, y_block, (ny/y_block));
+    }
 
-	verbose(CALL_INFO, 1, 0, "Rank: %" PRId32 ", X+:%" PRId32
-					",X-:%" PRId32 "\n", rank(), x_up, x_down);
+    x_up   = (rank() < (size() - 1)) ? rank() + 1 : -1;
+    x_down = (rank() > 0) ? rank() - 1 : -1;
+
+    verbose( CALL_INFO, 1, 0, "Rank: %" PRId32 ", X+:%" PRId32
+             ",X-:%" PRId32 "\n", rank(), x_up, x_down );
 }
 
 bool EmberSweep2DGenerator::generate( std::queue<EmberEvent*>& evQ )
