@@ -89,7 +89,11 @@ public:
 
     int compute( int num) override;
     std::string compute( std::string comp ) override;
+
+    // serialization
+    basicSubComponentIncrement();
     void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::simpleElementExample::basicSubComponentIncrement);
 
 private:
     int amount;
@@ -119,7 +123,11 @@ public:
 
     int compute( int num) override;
     std::string compute( std::string comp ) override;
+
+    //  serialization
+    basicSubComponentDecrement();
     void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::simpleElementExample::basicSubComponentDecrement);
 
 private:
     int amount;
@@ -147,7 +155,11 @@ public:
 
     int compute( int num) override;
     std::string compute( std::string comp ) override;
+
+    // Serialization
+    basicSubComponentMultiply();
     void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::simpleElementExample::basicSubComponentMultiply);
 
 private:
     int amount;
@@ -175,7 +187,11 @@ public:
 
     int compute( int num) override;
     std::string compute( std::string comp ) override;
+
+    // Serialization
+    basicSubComponentDivide();
     void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::simpleElementExample::basicSubComponentDivide);
 
 private:
     int amount;
