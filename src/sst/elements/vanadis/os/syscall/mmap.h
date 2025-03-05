@@ -63,7 +63,7 @@ public:
         }
 
         OS::Device* dev = nullptr;
-        if ( -1000 == fd ) {
+        if ( -1000 == fd || -2000 == fd) {
             dev = m_os->getDevice( fd );
 	    length = dev->getLength();
         }
