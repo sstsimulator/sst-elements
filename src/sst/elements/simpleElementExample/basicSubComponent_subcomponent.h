@@ -60,7 +60,7 @@ public:
     virtual std::string compute( std::string comp) =0;
 
     // Serialization
-    basicSubComponentAPI();
+    basicSubComponentAPI() {};
     ImplementVirtualSerializable(SST::simpleElementExample::basicSubComponentAPI);
 };
 
@@ -91,7 +91,7 @@ public:
     std::string compute( std::string comp ) override;
 
     // serialization
-    basicSubComponentIncrement();
+    basicSubComponentIncrement() : basicSubComponentAPI() {};
     void serialize_order(SST::Core::Serialization::serializer& ser) override;
     ImplementSerializable(SST::simpleElementExample::basicSubComponentIncrement);
 
@@ -125,7 +125,7 @@ public:
     std::string compute( std::string comp ) override;
 
     //  serialization
-    basicSubComponentDecrement();
+    basicSubComponentDecrement() : basicSubComponentAPI() {};
     void serialize_order(SST::Core::Serialization::serializer& ser) override;
     ImplementSerializable(SST::simpleElementExample::basicSubComponentDecrement);
 
@@ -157,7 +157,7 @@ public:
     std::string compute( std::string comp ) override;
 
     // Serialization
-    basicSubComponentMultiply();
+    basicSubComponentMultiply() : basicSubComponentAPI() {};
     void serialize_order(SST::Core::Serialization::serializer& ser) override;
     ImplementSerializable(SST::simpleElementExample::basicSubComponentMultiply);
 
@@ -189,7 +189,7 @@ public:
     std::string compute( std::string comp ) override;
 
     // Serialization
-    basicSubComponentDivide();
+    basicSubComponentDivide() : basicSubComponentAPI() {};
     void serialize_order(SST::Core::Serialization::serializer& ser) override;
     ImplementSerializable(SST::simpleElementExample::basicSubComponentDivide);
 
