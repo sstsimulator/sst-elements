@@ -17,7 +17,6 @@
 #include "sst_config.h"
 #include <sst/core/timeLord.h>
 
-
 #include "emberengine.h"
 #include "embergen.h"
 #include "embermotiflog.h"
@@ -27,23 +26,23 @@ using namespace std;
 using namespace SST::Ember;
 using namespace SST::Hermes;
 
-EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
+EmberEngine::EmberEngine( SST::ComponentId_t id, SST::Params& params ) :
     Component( id ),
-	currentMotif(0),
-	m_motifDone(false),
-	m_detailedCompute(NULL)
+    m_currentMotif( 0 ),
+    m_motifDone( false ),
+    m_detailedCompute( nullptr )
 {
-	// Get the level of verbosity the user is asking to print out, default is 1
-	// which means don't print much.
-	uint32_t verbosity = (uint32_t) params.find("verbose", 1);
-	uint32_t mask = (uint32_t) params.find("verboseMask", 0);
-	m_jobId = params.find("jobId", -1);
+    // Get the level of verbosity the user is asking to print out, default is 1
+    // which means don't print much.
+    uint32_t verbosity = (uint32_t) params.find( "verbose", 1 );
+    uint32_t mask = (uint32_t) params.find( "verboseMask", 0 );
+    m_jobId = params.find( "jobId", -1 );
+    bool statsPerMotif = (bool) params.find( "enableMpiStatsPerMotif", 1 );
 
+    std::ostringstream prefix;
+    prefix << "@t:" << m_jobId << ":EmberEngine:@p:@l: ";
 
-	std::ostringstream prefix;
-	prefix << "@t:" << m_jobId << ":EmberEngine:@p:@l: ";
-
-	output.init( prefix.str(), verbosity, mask, Output::STDOUT);
+    output.init( prefix.str(), verbosity, mask, Output::STDOUT );
 
     std::ostringstream tmp;
     tmp << m_jobId;
@@ -55,61 +54,89 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     m_detailedCompute = m_os->getDetailedCompute();
     m_memHeapLink = m_os->getMemHeapLink();
 
-    std::string motifLogFile = params.find<std::string>("motifLog", "");
-    if("" != motifLogFile) {
-        m_motifLogger = loadComponentExtension<EmberMotifLog>(motifLogFile, m_jobId);
+    std::string motifLogFile = params.find<std::string>( "motifLog", "" );
+    if ( "" != motifLogFile ) {
+        m_motifLogger = loadComponentExtension<EmberMotifLog>( motifLogFile, m_jobId );
     } else {
         m_motifLogger = nullptr;
     }
-	output.verbose(CALL_INFO, 2, ENGINE_MASK, "\n");
+    output.verbose( CALL_INFO, 2, ENGINE_MASK, "\n" );
 
-	// create a map of all the available API's
-	m_apiMap = createApiMap( m_os, this, params );
-    assert( ! m_apiMap.empty() );
+    // create a map of all the available API's
+    m_apiMap = createApiMap( m_os, this, params );
+    assert( !m_apiMap.empty() );
 
-	motifParams.resize( params.find("motif_count", 1) );
-	output.verbose(CALL_INFO, 2, ENGINE_MASK, "Identified %ld motifs "
-                                    "to be simulated.\n", motifParams.size());
+    m_numMotifs = params.find( "motif_count", 1 );
+    output.verbose( CALL_INFO, 2, ENGINE_MASK, "Identified %u motifs "
+                    "to be simulated.\n", m_numMotifs );
 
-	for ( unsigned int i = 0;  i < motifParams.size(); i++ ) {
-		std::ostringstream tmp;
-    	tmp << i;
+    if ( m_numMotifs == 0 ) {
+        output.fatal( CALL_INFO, -1, "Error: need to specify at least one motif\n" );
+    }
 
+    for ( int i = 0;  i < m_numMotifs; i++ ) {
+        std::ostringstream tmp;
+        tmp << i;
         //NetworkSim: Add the rankmapper parameter as motif parameters and pass it.
-        params.insert("motif" + tmp.str() + ".rankmapper", params.find<string>("rankmapper", "ember.LinearMap"), true);
-
+        params.insert( "motif" + tmp.str() + ".rankmapper",
+                       params.find<string>( "rankmapper", "ember.LinearMap" ), true );
         //NetworkSim: Add the mapFile parameter as motif parameters and pass it.
-        params.insert("motif" + tmp.str() + ".rankmap.mapFile", params.find<string>("mapFile", "mapFile.txt"), true);
-        //NetworkSim->end
+        params.insert( "motif" + tmp.str() + ".rankmap.mapFile",
+                       params.find<string>("mapFile", "mapFile.txt"), true );
 
-		motifParams[i] = params.get_scoped_params( "motif" + tmp.str() );
-	}
+        SST::Params motifParams = params.get_scoped_params( "motif" + tmp.str() );
+
+        EmberGenerator* gen = createMotif( motifParams,
+                                           m_apiMap,
+                                           m_jobId,
+                                           i,
+                                           m_nodePerf,
+                                           statsPerMotif );
+        assert( gen );
+        m_motifs.push_back( gen );
+    }
 
     registerAsPrimaryComponent();
 
     // Init the first Motif
-    m_generator = initMotif( motifParams[0], m_apiMap, m_jobId,
-                        currentMotif, m_nodePerf );
+    assert(m_currentMotif == 0);
+    m_generator = m_motifs[0];
     assert( m_generator );
+    m_generator->configure();
 
-	// Configure self link to handle event timing
-	selfEventLink = configureSelfLink("self", "1ps",
-		new Event::Handler<EmberEngine>(this, &EmberEngine::handleEvent));
-    assert(selfEventLink);
+    output.verbose( CALL_INFO, 4, MOTIF_START_STOP_MASK,
+                    "Starting motif: %s\n", m_generator->getMotifName().c_str() );
 
-	// Create a time converter for our compute events
-	nanoTimeConverter = getTimeConverter("1ns");
+    // Make sure we don't stop the simulation until we are ready
+    if ( m_generator->primary() ) {
+        primaryComponentDoNotEndSim();
+    }
+
+    // Configure self link to handle event timing
+    auto eventHandler = new Event::Handler<EmberEngine>( this, &EmberEngine::handleEvent );
+    selfEventLink = configureSelfLink( "self", "1ps", eventHandler );
+    assert( selfEventLink );
+
+    // Create a time converter for our compute events
+    nanoTimeConverter = getTimeConverter( "1ns" );
 }
 
 EmberEngine::~EmberEngine() {
-	ApiMap::iterator iter = m_apiMap.begin();
-	for ( ; iter != m_apiMap.end(); ++ iter ) {
-		delete iter->second;
-	}
+    ApiMap::iterator iter = m_apiMap.begin();
+    for ( ; iter != m_apiMap.end(); ++ iter ) {
+        delete iter->second;
+    }
 
-	if(NULL != m_motifLogger) {
-		delete m_motifLogger;
-	}
+    if (nullptr != m_motifLogger) {
+        delete m_motifLogger;
+    }
+
+    for ( size_t i = 0; i < m_motifs.size(); i++ ) {
+        if (m_motifs[i]) {
+            std::cout << "WARNING: Motif " << m_motifs[i]->getMotifName() << " has not completed\n";
+            delete m_motifs[i];
+        }
+    }
 }
 
 EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
@@ -166,43 +193,36 @@ EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
     return tmp;
 }
 
-EmberGenerator* EmberEngine::initMotif( SST::Params params,
-	const ApiMap& apiMap, int jobId, int motifNum, NodePerf* nodePerf )
+EmberGenerator* EmberEngine::createMotif( SST::Params params,
+	const ApiMap& apiMap, int jobId, int motifNum, NodePerf* nodePerf, bool statsPerMotif )
 {
     EmberGenerator* gen = NULL;
 
     // get the name of the motif
     std::string gentype = params.find<std::string>( "name" );
-	assert( !gentype.empty() );
 
     // if(NULL != m_motifLogger) {
     //     m_motifLogger->logMotifStart(gentype, motifNum);
     // }
 
-	output.verbose(CALL_INFO, 2, ENGINE_MASK, "motif=`%s`\n", gentype.c_str());
+    if( gentype.empty() ) {
+        output.fatal( CALL_INFO, -1, "Error: You did not specify a generator "
+                                     "or Ember to use\n" );
+    } else {
+	    output.verbose( CALL_INFO, 2, ENGINE_MASK, "motif=`%s`\n", gentype.c_str() );
 
-	if( gentype.empty()) {
-		output.fatal(CALL_INFO, -1, "Error: You did not specify a generator"
-                "or Ember to use\n");
-	} else {
-		params.insert("_jobId", std::to_string( jobId ), true);
-		params.insert("_motifNum", std::to_string( motifNum ), true);
-		assert( sizeof(this) == sizeof(uint64_t) );
-		params.insert("_enginePtr", std::to_string( reinterpret_cast<uint64_t>( this ) ), true);
+        params.insert( "_jobId", std::to_string( jobId ), true );
+        params.insert( "_motifNum", std::to_string( motifNum ), true );
+        assert( sizeof( this ) == sizeof( uint64_t ) );
+        params.insert( "_enginePtr", std::to_string( reinterpret_cast<uint64_t>( this ) ), true);
+        params.insert( "mpiStatsPerMotif", std::to_string( statsPerMotif ), true );
 
-		gen = loadAnonymousSubComponent<EmberGenerator>( gentype, "", 0, ComponentInfo::SHARE_NONE, params );
-
-		if(NULL == gen) {
-			output.fatal(CALL_INFO, -1, "Error: Could not load the "
-                    "generator %s for Ember\n", gentype.c_str());
-		}
-
-                gen->setup();
-	}
-
-	// Make sure we don't stop the simulation until we are ready
-    if ( gen->primary() ) {
-        primaryComponentDoNotEndSim();
+        gen = loadAnonymousSubComponent<EmberGenerator>( gentype, "", 0, ComponentInfo::INSERT_STATS, params );
+        if ( !gen ) {
+            output.fatal( CALL_INFO, -1, "Error: Could not load the "
+                                         "generator %s for Ember\n", gentype.c_str() );
+        }
+        gen->setup();
     }
 
     return gen;
@@ -251,37 +271,71 @@ void EmberEngine::issueNextEvent(uint64_t nanoDelay) {
 
     output.debug(CALL_INFO, 8, ENGINE_MASK, "Engine issuing next event with delay %" PRIu64 "\n", nanoDelay);
 
+    // This loop tries to generate at least one event.
+    // When the currently executed motif gets drained, continue with the next motif,
+    // until there are no more motifs to simulate.
     while ( evQueue.empty() ) {
 
-        if ( ! m_motifDone ) {
+        if ( !m_motifDone ) {
+            // Enque some new events
             m_motifDone = refillQueue();
         }
 
-        // if the event Queue is empty after a refill the motif is done
-        if (  evQueue.empty() ) {
-            if (NULL != m_motifLogger) {
-                m_motifLogger->logMotifEnd(m_generator->getMotifName(),currentMotif);
+        if ( evQueue.empty() ) {
+
+            // No more events in the current motif
+
+            // Finalize the current motif
+            if ( NULL != m_motifLogger ) {
+                m_motifLogger->logMotifEnd( m_generator->getMotifName(), m_currentMotif );
             }
-            // output.verbose(CALL_INFO, 1, MOTIF_START_STOP_MASK, "Motif finished: %s\n",m_generator->getMotifName().c_str());
+
+            output.verbose( CALL_INFO, 4, MOTIF_START_STOP_MASK,
+                            "Motif finished: %s\n", m_generator->getMotifName().c_str() );
+
             m_generator->completed( &output, getCurrentSimTimeNano() );
-            if ( m_generator->primary() ) {
-	            primaryComponentOKToEndSim();
-            }
+
+            const bool wasPrimary = m_generator->primary();
+
             delete m_generator;
+            m_motifs[m_currentMotif] = nullptr;
 
-            if ( ++currentMotif == motifParams.size() ) {
-                return;
-            } else {
-                m_generator = initMotif( motifParams[currentMotif],
-								m_apiMap, m_jobId, currentMotif, m_nodePerf );
-                assert( m_generator );
-                if (NULL != m_motifLogger) {
-                    m_motifLogger->logMotifStart(currentMotif);
+            m_currentMotif++;
+
+            // See if there are more motifs to simulate
+
+            if ( m_currentMotif == m_numMotifs ) {
+                output.verbose( CALL_INFO, 4, MOTIF_START_STOP_MASK,
+                            "All (%d) motifs have finished\n", m_numMotifs );
+                if ( wasPrimary ) {
+                    primaryComponentOKToEndSim();
                 }
-                // output.verbose(CALL_INFO, 1, MOTIF_START_STOP_MASK, "Motif starting: %s\n",m_generator->getMotifName().c_str());
 
-                m_motifDone = refillQueue();
+                return;
             }
+
+            m_generator = m_motifs[m_currentMotif];
+            assert( m_generator );
+            m_generator->configure();
+
+            const bool isPrimary = m_generator->primary();
+            if ( wasPrimary != isPrimary ) {
+                if ( isPrimary ) {
+                    primaryComponentDoNotEndSim();
+                }
+                else {
+                    primaryComponentOKToEndSim();
+                }
+            }
+
+            if ( NULL != m_motifLogger ) {
+                m_motifLogger->logMotifStart( m_currentMotif );
+            }
+
+            output.verbose( CALL_INFO, 4, MOTIF_START_STOP_MASK,
+                            "Motif starting: %s\n", m_generator->getMotifName().c_str());
+
+            m_motifDone = refillQueue();
         }
     }
 

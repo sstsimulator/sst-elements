@@ -53,48 +53,38 @@ public:
         {   "arg.iterations",       "Sets the number of ping pong operations to perform",   "1"},
     )
 
-    SST_ELI_DOCUMENT_STATISTICS(
-        { "time-Init", "Time spent in Init event",          "ns",  0},
-        { "time-Finalize", "Time spent in Finalize event",  "ns", 0},
-        { "time-Rank", "Time spent in Rank event",          "ns", 0},
-        { "time-Size", "Time spent in Size event",          "ns", 0},
-        { "time-Send", "Time spent in Recv event",          "ns", 0},
-        { "time-Recv", "Time spent in Recv event",          "ns", 0},
-        { "time-Irecv", "Time spent in Irecv event",        "ns", 0},
-        { "time-Isend", "Time spent in Isend event",        "ns", 0},
-        { "time-Wait", "Time spent in Wait event",          "ns", 0},
-        { "time-Waitall", "Time spent in Waitall event",    "ns", 0},
-        { "time-Waitany", "Time spent in Waitany event",    "ns", 0},
-        { "time-Compute", "Time spent in Compute event",    "ns", 0},
-        { "time-Barrier", "Time spent in Barrier event",    "ns", 0},
-        { "time-Alltoallv", "Time spent in Alltoallv event", "ns", 0},
-        { "time-Alltoall", "Time spent in Alltoall event",  "ns", 0},
-        { "time-Allreduce", "Time spent in Allreduce event", "ns", 0},
-        { "time-Reduce", "Time spent in Reduce event",      "ns", 0},
-        { "time-Bcast", "Time spent in Bcast event",        "ns", 0},
-        { "time-Gettime", "Time spent in Gettime event",    "ns", 0},
-        { "time-Commsplit", "Time spent in Commsplit event", "ns", 0},
-        { "time-Commcreate", "Time spent in Commcreate event", "ns", 0},
-    )
-
-
 public:
-	Ember3DAMRGenerator(SST::ComponentId_t, Params& params);
-	~Ember3DAMRGenerator();
-	void configure();
-        bool generate( std::queue<EmberEvent*>& evQ );
-	int32_t power3(const uint32_t expon);
+    Ember3DAMRGenerator( SST::ComponentId_t, Params& params );
 
-	uint32_t power2(uint32_t exponent) const;
-        void loadBlocks();
+    ~Ember3DAMRGenerator();
 
-	uint32_t calcBlockID(const uint32_t posX, const uint32_t posY, const uint32_t posZ, const uint32_t level);
-        void calcBlockLocation(const uint32_t blockID, const uint32_t blockLevel, uint32_t* posX, uint32_t* posY, uint32_t* posZ);
-        bool isBlockLocal(const uint32_t bID) const;
-	void postBlockCommunication(std::queue<EmberEvent*>& evQ, int32_t* blockComm, uint32_t* nextReq, const uint32_t faceSize, const uint32_t msgTag,
-		const Ember3DAMRBlock* theBlock);
-	void aggregateBlockCommunication(const std::vector<Ember3DAMRBlock*>& blocks, std::map<int32_t, uint32_t>& blockToMessageSize);
-	void aggregateCommBytes(Ember3DAMRBlock* curBlock, std::map<int32_t, uint32_t>& blockToMessageSize);
+    void configure() override;
+
+    bool generate( std::queue<EmberEvent*>& evQ ) override;
+
+    int32_t power3( const uint32_t expon );
+
+    uint32_t power2( uint32_t exponent ) const;
+
+    void loadBlocks();
+
+    uint32_t calcBlockID( const uint32_t posX, const uint32_t posY, const uint32_t posZ,
+                          const uint32_t level );
+
+    void calcBlockLocation( const uint32_t blockID, const uint32_t blockLevel,
+                            uint32_t* posX, uint32_t* posY, uint32_t* posZ );
+
+    bool isBlockLocal( const uint32_t bID ) const;
+
+    void postBlockCommunication( std::queue<EmberEvent*>& evQ, int32_t* blockComm,
+                                 uint32_t* nextReq, const uint32_t faceSize,
+                                 const uint32_t msgTag, const Ember3DAMRBlock* theBlock );
+
+    void aggregateBlockCommunication( const std::vector<Ember3DAMRBlock*>& blocks,
+                                      std::map<int32_t, uint32_t>& blockToMessageSize );
+
+    void aggregateCommBytes( Ember3DAMRBlock* curBlock,
+                             std::map<int32_t, uint32_t>& blockToMessageSize);
 
 private:
 	void printBlockMap();

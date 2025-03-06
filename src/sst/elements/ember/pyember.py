@@ -33,6 +33,7 @@ class EmberJob(Job):
         # Not sure what to do with this yet
         #x = self._createPrefixedParams("ember")
         self._declareParamsWithUserPrefix("ember","ember",["verbose"])
+        self._declareParamsWithUserPrefix("ember","ember",["verboseMask"])
         #x._subscribeToPlatformParamSet("ember")
 
         # Not clear what to do with this yet. Don't think we need it
@@ -190,6 +191,8 @@ class EmberMPIJob(EmberJob):
         apis = { 'api.0.module':'firefly.hadesMP'}
 
         EmberJob.__init__(self,job_id,num_nodes,apis,numCores,nicsPerNode)
+
+        self._declareParamsWithUserPrefix("ember","ember",["enableMpiStatsPerMotif"])
 
         self.nic = BasicNicConfiguration()
         self._lockVariable("nic")

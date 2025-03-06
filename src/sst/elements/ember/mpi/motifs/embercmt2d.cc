@@ -63,71 +63,66 @@ EmberCMT2DGenerator::EmberCMT2DGenerator(SST::ComponentId_t id, Params& params) 
 
     	x_xferSize = eltSize*eltSize*my*mz;
     	y_xferSize = eltSize*eltSize*mx*mz;
-
-        configure();
 }
-
 
 void EmberCMT2DGenerator::configure()
 {
-    	// Check that we are using all the processors or else lock up will happen :(.
-    	if( (px * py) != (signed)size() ) {
-    		fatal(CALL_INFO, -1, "Error: CMT2D motif checked processor decomposition: %" PRIu32 \
-    		    "x%" PRIu32 " != MPI World %" PRIu32 "\n",
-    			px, py, size());
-    	}
+    EmberMessagePassingGenerator::configure();
 
-    	if(rank() == 0) {
-    	    output(" CMT2D Motif \n" \
-    	        "element_size = %" PRIu32 ", elements_per_proc = %" PRIu32 ", total processes = %" PRIu32 \
-    			"\ncompute time: mean = %fns ,stddev = %fns \
-    			\nx_xfer: %" PRIu64 " ,y_xfer: %" PRIu64 \
-    			"\npx: %" PRIu32 " ,py: %" PRIu32 "\n",
-    			eltSize, nelt, size(), m_mean, m_stddev,
-    			x_xferSize, y_xferSize, px, py );
+    // Check that we are using all the processors or else lock up will happen :(.
+    if ( (px * py) != (signed)size() ) {
+        fatal(CALL_INFO, -1, "Error: CMT2D motif checked processor decomposition: %" PRIu32 \
+            "x%" PRIu32 " != MPI World %" PRIu32 "\n",
+            px, py, size());
+    }
 
-    	}
+    if ( rank() == 0 ) {
+        output(" CMT2D Motif \n" \
+            "element_size = %" PRIu32 ", elements_per_proc = %" PRIu32 ", total processes = %" PRIu32 \
+            "\ncompute time: mean = %fns ,stddev = %fns \
+            \nx_xfer: %" PRIu64 " ,y_xfer: %" PRIu64 \
+            "\npx: %" PRIu32 " ,py: %" PRIu32 "\n",
+            eltSize, nelt, size(), m_mean, m_stddev,
+            x_xferSize, y_xferSize, px, py );
+    }
 
-    	// Get our (x,y) position and neighboring ranks in a 3D decomposition
-    	myX=-1; myY=-1;
-    	myID = rank();
-    	getPosition(rank(), px, py, &myX, &myY);
+    // Get our (x,y) position and neighboring ranks in a 3D decomposition
+    myX=-1; myY=-1;
+    myID = rank();
+    getPosition(rank(), px, py, &myX, &myY);
 
-        // Initialize Marsaglia RNG for compute time
-        m_random = new SSTGaussianDistribution( m_mean, m_stddev,
-                                    new RNG::MarsagliaRNG( 7+myID, getJobId() ) );
+    // Initialize Marsaglia RNG for compute time
+    m_random = new SSTGaussianDistribution( m_mean, m_stddev,
+                                new RNG::MarsagliaRNG( 7+myID, getJobId() ) );
 
-    	// Set which direction to transfer and the neighbors in that direction
-    	if( myY > 0 ) {
-    		x_neg = convertPositionToRank(px, py, myX-1, myY);
-    		sendx_neg = true;
-    	}
-    	if( myY < px-1 ) {
-    		x_pos = convertPositionToRank(px, py, myX+1, myY);
-    		sendx_pos = true;
-    	}
-    	if( myX > 0 ) {
-    		y_neg = convertPositionToRank(px, py, myX, myY-1);
-    		sendy_neg = true;
-    	}
-    	if( myX < py-1 ) {
-    		y_pos = convertPositionToRank(px, py, myX, myY+1);
-    		sendy_pos = true;
-    	}
+    // Set which direction to transfer and the neighbors in that direction
+    if( myY > 0 ) {
+        x_neg = convertPositionToRank(px, py, myX-1, myY);
+        sendx_neg = true;
+    }
+    if( myY < px-1 ) {
+        x_pos = convertPositionToRank(px, py, myX+1, myY);
+        sendx_pos = true;
+    }
+    if( myX > 0 ) {
+        y_neg = convertPositionToRank(px, py, myX, myY-1);
+        sendy_neg = true;
+    }
+    if( myX < py-1 ) {
+        y_pos = convertPositionToRank(px, py, myX, myY+1);
+        sendy_pos = true;
+    }
 
-    	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu64 " is located at coordinates \
-    		(%" PRId32 ", %" PRId32 ") in the 2D mesh, \
-    		X+:%s %" PRId32 ",X-:%s %" PRId32 ", Y+:%s %" PRId32 ",Y-:%s %" PRId32 "\n",
-    		myID,
-    		myX, myY,
-    		(sendx_pos ? "Y" : "N"), x_pos,
-    		(sendx_neg ? "Y" : "N"), x_neg,
-    		(sendy_pos ? "Y" : "N"), y_pos,
-    		(sendy_neg ? "Y" : "N"), y_neg  );
-
+    verbose(CALL_INFO, 2, 0, "Rank: %" PRIu64 " is located at coordinates \
+        (%" PRId32 ", %" PRId32 ") in the 2D mesh, \
+        X+:%s %" PRId32 ",X-:%s %" PRId32 ", Y+:%s %" PRId32 ",Y-:%s %" PRId32 "\n",
+        myID,
+        myX, myY,
+        (sendx_pos ? "Y" : "N"), x_pos,
+        (sendx_neg ? "Y" : "N"), x_neg,
+        (sendy_pos ? "Y" : "N"), y_pos,
+        (sendy_neg ? "Y" : "N"), y_neg  );
 }
-
-
 
 bool EmberCMT2DGenerator::generate( std::queue<EmberEvent*>& evQ)
 {
