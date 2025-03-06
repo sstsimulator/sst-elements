@@ -173,7 +173,7 @@ public:
         uint64_t src_1 = curr_cmd->rs1;
         uint64_t shamt = curr_cmd->rs2;
         uint64_t result = src_1 >> shamt;
-        output->verbose(CALL_INFO, 9, 0, "EXECUTE RoCC SRAI w/ rs1: %llx, shamt: %llx, result: %llx\n", src_1, shamt, result);
+        output->verbose(CALL_INFO, 9, 0, "EXECUTE RoCC SRAI w/ rs1: %" PRIx64 ", shamt: %" PRIx64 ", result: %" PRIx64 "\n", src_1, shamt, result);
         completeRoCC(result);
         return;
     }
@@ -183,7 +183,7 @@ public:
         StandardMem::Request* load_req = nullptr;
 
         load_req = new StandardMem::Read(curr_cmd->rs1, 4, 0);
-        output->verbose(CALL_INFO, 9, 0, "----> Read Req: physAddr: %llx, size: %llx, vAddr: %llx, inst ptr: %llx, tid: %llx\n", curr_cmd->rs1, 4, curr_cmd->rs1, 0, 0);
+        output->verbose(CALL_INFO, 9, 0, "----> Read Req: physAddr: %" PRIx64 ", size: %" PRIx64 ", vAddr: %" PRIx64 ", inst ptr: %" PRIx64 ", tid: %" PRIx64 "\n", curr_cmd->rs1, uint64_t{4}, curr_cmd->rs1, uint64_t{0}, uint64_t{0});
 
         assert(load_req != nullptr);
 
@@ -224,7 +224,7 @@ public:
         virtual ~StandardMemHandlers() {}
 
         virtual void handle(StandardMem::ReadResp* ev) {
-            out->verbose(CALL_INFO, 9, 0, "-> handle read-response (virt-addr: 0x%llx)\n", ev->vAddr);
+            out->verbose(CALL_INFO, 9, 0, "-> handle read-response (virt-addr: 0x%" PRIx64 ")\n", ev->vAddr);
             RoCCCommand* rocc_cmd = rocc->curr_cmd; // need to grab the instruction that generated the read request
             // so that we know where to store the read response results
 
@@ -264,8 +264,8 @@ public:
         virtual void handle(StandardMem::WriteResp* ev) {
             // write is much simpler because we aren't handling any reponse data
             // just need to make sure it went through properly
-            out->verbose(CALL_INFO, 9, 0, "-> handle write-response (virt-addr: 0x%llx)\n", ev->vAddr);
-            if ( ev->getFail() ) { 
+            out->verbose(CALL_INFO, 9, 0, "-> handle write-response (virt-addr: 0x%" PRIx64 ")\n", ev->vAddr);
+            if ( ev->getFail() ) {
                 out->verbose(CALL_INFO, 9, 0, "RoCC store failed, responding with error code 1\n");
                 rocc->completeRoCC(1);
             }

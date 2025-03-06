@@ -287,9 +287,9 @@ void topo_polarstar::routeUgal(int port, int vc, internal_router_event* ev){
 
 void topo_polarstar::initPolarGraph() {
     char dir[256];
-    getcwd(dir, 256); 
-    std::string filepath    = std::string(dir) + "/polarstar_data/PolarStar.d_" + 
-                            std::to_string(this->d) + "_pfq_" + std::to_string(this->pfq) + 
+    (void) !getcwd(dir, 256);
+    std::string filepath    = std::string(dir) + "/polarstar_data/PolarStar.d_" +
+                            std::to_string(this->d) + "_pfq_" + std::to_string(this->pfq) +
                             + "_sn_" + this->sn_type +
                             "_snq_" + std::to_string(this->snq) + ".txt";
 

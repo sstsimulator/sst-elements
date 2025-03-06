@@ -141,7 +141,7 @@ bool cacheTracer::clock(Cycle_t current){
         if(writeDebug_8 & writeTrace){
              fprintf(traceFile,"NB: Addr: 0x%" PRIu64, addr);
              fprintf(traceFile, " timestamp: %" PRIu64, timestamp);
-             fprintf(traceFile, " Cmd: %u", me->getCmd());
+             fprintf(traceFile, " Cmd: %d", (int) me->getCmd());
              fprintf(traceFile, " ID: %" PRIu64 "-%d", me->getID().first, me->getID().second);
              fprintf(traceFile, " ResponseID: %" PRIu64 "-%d", me->getResponseToID().first, me->getResponseToID().second);
              //fprintf(traceFile, " @%" PRIu64, picoseconds);
@@ -184,7 +184,7 @@ bool cacheTracer::clock(Cycle_t current){
         if(writeDebug_8 & writeTrace){
              fprintf(traceFile,"SB: Addr: 0x%" PRIu64, me->getAddr());
              fprintf(traceFile, " timestamp: %" PRIu64, timestamp);
-             fprintf(traceFile, " Cmd: %u", me->getCmd());
+             fprintf(traceFile, " Cmd: %d", (int) me->getCmd());
              fprintf(traceFile, " ID: %" PRIu64 "-%d", me->getID().first, me->getID().second);
              fprintf(traceFile, " ResponseID: %" PRIu64 "-%d", me->getResponseToID().first, me->getResponseToID().second);
              //fprintf(traceFile, " @%" PRIu64, picoseconds);

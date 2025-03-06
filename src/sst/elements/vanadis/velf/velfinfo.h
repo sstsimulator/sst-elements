@@ -748,16 +748,16 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
         VanadisSymbolTableEntry* new_symbol = new VanadisSymbolTableEntry();
 
         if (elf_info->isELF32()) {
-            fread(&tmp_u32, 4, 1, bin_file);
+            (void) !fread(&tmp_u32, 4, 1, bin_file);
             new_symbol->setNameOffset(tmp_u32);
 
-            fread(&tmp_u32, 4, 1, bin_file);
+            (void) !fread(&tmp_u32, 4, 1, bin_file);
             new_symbol->setAddress(tmp_u32);
 
-            fread(&tmp_u32, 4, 1, bin_file);
+            (void) !fread(&tmp_u32, 4, 1, bin_file);
             new_symbol->setSize(tmp_u32);
 
-            fread(&tmp_u8, 1, 1, bin_file);
+            (void) !fread(&tmp_u8, 1, 1, bin_file);
             // output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Symbol info >> 4 = %" PRIu64 "\n", (tmp_u8 >> 4));
 
             switch ((tmp_u8 >> 4)) {
@@ -795,8 +795,8 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
                 break;
             }
 
-            fread(&tmp_u8, 1, 1, bin_file);
-            fread(&tmp_u16, 2, 1, bin_file);
+            (void) !fread(&tmp_u8, 1, 1, bin_file);
+            (void) !fread(&tmp_u16, 2, 1, bin_file);
 
             new_symbol->setSymbolSection(tmp_u16);
 
@@ -812,10 +812,10 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
 
             elf_info->addSymbolTableEntry(new_symbol);
         } else if(elf_info->isELF64()) {
-            fread(&tmp_u64, 8, 1, bin_file);
+            (void) !fread(&tmp_u64, 8, 1, bin_file);
             new_symbol->setNameOffset(tmp_u32);
 
-            fread(&tmp_u8, 1, 1, bin_file);
+            (void) !fread(&tmp_u8, 1, 1, bin_file);
             // output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_READ_ELF, "Symbol info >> 4 = %" PRIu64 "\n", (tmp_u8 >> 4));
 
             switch ((tmp_u8 >> 4)) {
@@ -853,15 +853,15 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
                 break;
             }
 
-            fread(&tmp_u8, 1, 1, bin_file);
-            fread(&tmp_u16, 2, 1, bin_file);
+            (void) !fread(&tmp_u8, 1, 1, bin_file);
+            (void) !fread(&tmp_u16, 2, 1, bin_file);
 
             new_symbol->setSymbolSection(tmp_u16);
 
-            fread(&tmp_u64, 8, 1, bin_file);
+            (void) !fread(&tmp_u64, 8, 1, bin_file);
             new_symbol->setAddress(tmp_u32);
 
-            fread(&tmp_u64, 8, 1, bin_file);
+            (void) !fread(&tmp_u64, 8, 1, bin_file);
             new_symbol->setSize(tmp_u32);
 
             if (nullptr != stringTableEntry) {
@@ -903,10 +903,10 @@ readELFRelocationInformation(SST::Output* output, const char* path, VanadisELFIn
 
             VanadisELFRelocationEntry* new_reloc = new VanadisELFRelocationEntry();
 
-            fread(&u32_tmp, 4, 1, bin_file);
+            (void) !fread(&u32_tmp, 4, 1, bin_file);
             new_reloc->setAddress(u32_tmp);
 
-            fread(&u32_tmp, 4, 1, bin_file);
+            (void) !fread(&u32_tmp, 4, 1, bin_file);
             new_reloc->setInfo(u32_tmp);
 
             elf_info->addRelocationEntry(new_reloc);
@@ -919,10 +919,10 @@ readELFRelocationInformation(SST::Output* output, const char* path, VanadisELFIn
 
             VanadisELFRelocationEntry* new_reloc = new VanadisELFRelocationEntry();
 
-            fread(&u64_tmp, 8, 1, bin_file);
+            (void) !fread(&u64_tmp, 8, 1, bin_file);
             new_reloc->setAddress(u64_tmp);
 
-            fread(&u64_tmp, 8, 1, bin_file);
+            (void) !fread(&u64_tmp, 8, 1, bin_file);
             new_reloc->setInfo(u64_tmp);
 
             elf_info->addRelocationEntry(new_reloc);
@@ -950,7 +950,7 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
     }
 
     uint8_t* elf_magic = new uint8_t[4];
-    fread(elf_magic, 1, 4, bin_file);
+    (void) !fread(elf_magic, 1, 4, bin_file);
 
     if (!(elf_magic[0] == 0x7F && elf_magic[1] == 0x45 && elf_magic[2] == 0x4c && elf_magic[3] == 0x46)) {
         output->fatal(CALL_INFO, -1, "Error: opened %s, but the ELF magic header is not correct.\n", path);
@@ -965,10 +965,10 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
     uint32_t tmp_4byte = 0;
     uint64_t tmp_8byte = 0;
 
-    fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
     elf_info->setClass(tmp_byte);
 
-    fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
     switch( tmp_byte ) {
 	case 1:
 		elf_info->setEndian(VANADIS_LITTLE_ENDIAN);
@@ -981,79 +981,79 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
 		break;
     }
 
-    fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
     // Discard this read, it is set to 1 for modern ELF
 
-    fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
     elf_info->setOSABI(tmp_byte);
 
-    fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
     elf_info->setOSABIVersion(tmp_byte);
 
     // Discard the next 7 bytes, these pad the header
-    fread(&tmp_byte, 1, 1, bin_file);
-    fread(&tmp_byte, 1, 1, bin_file);
-    fread(&tmp_byte, 1, 1, bin_file);
-    fread(&tmp_byte, 1, 1, bin_file);
-    fread(&tmp_byte, 1, 1, bin_file);
-    fread(&tmp_byte, 1, 1, bin_file);
-    fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
 
-    fread(&tmp_2byte, 2, 1, bin_file);
+    (void) !fread(&tmp_2byte, 2, 1, bin_file);
     elf_info->setObjectType(tmp_2byte);
 
-    fread(&tmp_2byte, 2, 1, bin_file);
+    (void) !fread(&tmp_2byte, 2, 1, bin_file);
     elf_info->setISA(tmp_2byte);
 
     // Discard the next 4 bytes, these just set to 1 to pad
-    fread(&tmp_byte, 1, 1, bin_file);
-    fread(&tmp_byte, 1, 1, bin_file);
-    fread(&tmp_byte, 1, 1, bin_file);
-    fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
+    (void) !fread(&tmp_byte, 1, 1, bin_file);
 
     if (elf_info->isELF64()) {
-        fread(&tmp_8byte, 8, 1, bin_file);
+        (void) !fread(&tmp_8byte, 8, 1, bin_file);
         elf_info->setEntryPoint(tmp_8byte);
 
-        fread(&tmp_8byte, 8, 1, bin_file);
+        (void) !fread(&tmp_8byte, 8, 1, bin_file);
         elf_info->setProgramHeaderOffset(tmp_8byte);
 
-        fread(&tmp_8byte, 8, 1, bin_file);
+        (void) !fread(&tmp_8byte, 8, 1, bin_file);
         elf_info->setSectionHeaderOffset(tmp_8byte);
     } else if (elf_info->isELF32()) {
-        fread(&tmp_4byte, 4, 1, bin_file);
+        (void) !fread(&tmp_4byte, 4, 1, bin_file);
         elf_info->setEntryPoint((uint64_t)tmp_4byte);
 
-        fread(&tmp_4byte, 4, 1, bin_file);
+        (void) !fread(&tmp_4byte, 4, 1, bin_file);
         elf_info->setProgramHeaderOffset((uint64_t)tmp_4byte);
 
-        fread(&tmp_4byte, 4, 1, bin_file);
+        (void) !fread(&tmp_4byte, 4, 1, bin_file);
         elf_info->setSectionHeaderOffset((uint64_t)tmp_4byte);
     } else {
         output->fatal(CALL_INFO, -1, "Error: unable to determine if binary is 32/64 bits during ELF read.\n");
     }
 
     // Discard, ISA specific, need to understand whether we need this.
-    fread(&tmp_4byte, 4, 1, bin_file);
+    (void) !fread(&tmp_4byte, 4, 1, bin_file);
 
     // Discard, is just a size read for ELF header info
-    fread(&tmp_2byte, 2, 1, bin_file);
+    (void) !fread(&tmp_2byte, 2, 1, bin_file);
 
-    fread(&tmp_2byte, 2, 1, bin_file);
+    (void) !fread(&tmp_2byte, 2, 1, bin_file);
     elf_info->setProgramHeaderEntrySize(tmp_2byte);
 
-    fread(&tmp_2byte, 2, 1, bin_file);
+    (void) !fread(&tmp_2byte, 2, 1, bin_file);
     elf_info->setProgramHeaderEntryCount(tmp_2byte);
 
     const uint32_t prog_header_count = (uint32_t)tmp_2byte;
 
-    fread(&tmp_2byte, 2, 1, bin_file);
+    (void) !fread(&tmp_2byte, 2, 1, bin_file);
     elf_info->setSectionHeaderEntrySize(tmp_2byte);
 
-    fread(&tmp_2byte, 2, 1, bin_file);
+    (void) !fread(&tmp_2byte, 2, 1, bin_file);
     elf_info->setSectionHeaderEntryCount(tmp_2byte);
 
-    fread(&tmp_2byte, 2, 1, bin_file);
+    (void) !fread(&tmp_2byte, 2, 1, bin_file);
     elf_info->setSectionEntryIndexForNames(tmp_2byte);
 
     // Wind the file pointer to the program header offset
@@ -1064,7 +1064,7 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
         VanadisELFProgramHeaderEntry* new_prg_hdr = new VanadisELFProgramHeaderEntry();
 
         // Header type
-        fread(&tmp_4byte, 4, 1, bin_file);
+        (void) !fread(&tmp_4byte, 4, 1, bin_file);
 
         VanadisELFProgramHeaderType prg_hdr_type = PROG_HEADER_NOT_USED;
 
@@ -1100,46 +1100,46 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
         new_prg_hdr->setHeaderType(prg_hdr_type);
 
         if (elf_info->isELF64()) {
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
             new_prg_hdr->setSegmentFlags(tmp_4byte);
 
-            fread(&tmp_8byte, 8, 1, bin_file);
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
             new_prg_hdr->setImageOffset(tmp_8byte);
 
-            fread(&tmp_8byte, 8, 1, bin_file);
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
             new_prg_hdr->setVirtualMemoryStart(tmp_8byte);
 
-            fread(&tmp_8byte, 8, 1, bin_file);
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
             new_prg_hdr->setPhysicalMemoryStart(tmp_8byte);
 
-            fread(&tmp_8byte, 8, 1, bin_file);
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
             new_prg_hdr->setHeaderImageLength(tmp_8byte);
 
-            fread(&tmp_8byte, 8, 1, bin_file);
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
             new_prg_hdr->setHeaderMemoryLength(tmp_8byte);
 
-            fread(&tmp_8byte, 8, 1, bin_file);
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
             new_prg_hdr->setAlignment(tmp_8byte);
         } else if (elf_info->isELF32()) {
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
             new_prg_hdr->setImageOffset(tmp_4byte);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
             new_prg_hdr->setVirtualMemoryStart(tmp_4byte);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
             new_prg_hdr->setPhysicalMemoryStart(tmp_4byte);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
             new_prg_hdr->setHeaderImageLength(tmp_4byte);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
             new_prg_hdr->setHeaderMemoryLength(tmp_4byte);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
             new_prg_hdr->setSegmentFlags(tmp_4byte);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
             new_prg_hdr->setAlignment(tmp_4byte);
         } else {
             output->fatal(CALL_INFO, -1, "Error: neither 32 or 64 bit test passed ELF read.\n");
@@ -1156,9 +1156,9 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
         new_sec->setID(i);
 
         // Offset for section name
-        fread(&tmp_4byte, 4, 1, bin_file);
+        (void) !fread(&tmp_4byte, 4, 1, bin_file);
 
-        fread(&tmp_4byte, 4, 1, bin_file);
+        (void) !fread(&tmp_4byte, 4, 1, bin_file);
         VanadisELFSectionHeaderType sec_type = SECTION_HEADER_NOT_USED;
 
         switch (tmp_4byte) {
@@ -1221,45 +1221,45 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
         new_sec->setSectionType(sec_type);
 
         if (elf_info->isELF64()) {
-            fread(&tmp_8byte, 8, 1, bin_file);
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
             new_sec->setSectionFlags(tmp_8byte);
 
-            fread(&tmp_8byte, 8, 1, bin_file);
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
             new_sec->setVirtualMemoryStart(tmp_8byte);
 
-            fread(&tmp_8byte, 8, 1, bin_file);
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
             new_sec->setImageOffset(tmp_8byte);
 
-            fread(&tmp_8byte, 8, 1, bin_file);
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
             new_sec->setImageLength(tmp_8byte);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
 
-            fread(&tmp_8byte, 8, 1, bin_file);
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
             new_sec->setAlignment(tmp_8byte);
 
-            fread(&tmp_8byte, 8, 1, bin_file);
+            (void) !fread(&tmp_8byte, 8, 1, bin_file);
         } else if (elf_info->isELF32()) {
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
             new_sec->setSectionFlags(tmp_4byte);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
             new_sec->setVirtualMemoryStart(tmp_4byte);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
             new_sec->setImageOffset(tmp_4byte);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
             new_sec->setImageLength(tmp_4byte);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
             new_sec->setAlignment(tmp_4byte);
 
-            fread(&tmp_4byte, 4, 1, bin_file);
+            (void) !fread(&tmp_4byte, 4, 1, bin_file);
         } else {
             output->fatal(CALL_INFO, -1, "Error: not 32 or 64-bit type ELF info. Not sure what to do.\n");
         }

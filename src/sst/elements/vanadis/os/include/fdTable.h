@@ -119,7 +119,7 @@ public:
         assert( 1 == fscanf(fp,"flags: %d\n", &flags ) );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"flags: %d\n", flags );
 
-        assert( 1 == fscanf(fp,"mode: %hd\n", &mode) );
+        assert( 1 == fscanf(fp,"mode: %d\n", &mode) );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"mode: %d\n", mode);
     }
 
@@ -235,7 +235,7 @@ public:
     FileDescriptorTable( SST::Output* output, FILE* fp ) {
         char* tmp = nullptr;
         size_t num = 0;
-        getline( &tmp, &num, fp );
+        (void) !getline( &tmp, &num, fp );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",tmp);
         assert( 0 == strcmp(tmp,"#FileDescriptorTable start\n") );
         free(tmp);
@@ -259,7 +259,7 @@ public:
 
         tmp = nullptr;
         num = 0;
-        getline( &tmp, &num, fp );
+        (void) !getline( &tmp, &num, fp );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",tmp);
         assert( 0 == strcmp(tmp,"#FileDescriptorTable end\n") );
         free(tmp);
