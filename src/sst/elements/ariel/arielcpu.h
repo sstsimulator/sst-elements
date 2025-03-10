@@ -81,13 +81,10 @@ class ArielCPU : public SST::Component {
         {"tracegen", "Select the trace generator for Ariel (which records traced memory operations", ""},
         {"memmgr", "Memory manager to use for address translation", "ariel.MemoryManagerSimple"},
         {"writepayloadtrace", "Trace write payloads and put real memory contents into the memory system", "0"},
-        {"instrument_instructions", "turn on or off instruction instrumentation in fesimple", "1"},
-        {"gpu_enabled", "If enabled, gpu links will be set up", "0"})
+        {"instrument_instructions", "turn on or off instruction instrumentation in fesimple", "1"}
 
     SST_ELI_DOCUMENT_PORTS( {"cache_link_%(corecount)d", "Each core's link to its cache", {}},
-       {"gpu_link_%(corecount)d", "Each core's link to the GPU", {}},
        {"rtl_link_%(corecount)d", "Each core's link to the RTL", {}})
-
 
     SST_ELI_DOCUMENT_STATISTICS(
         { "read_requests",        "Statistic counts number of read requests", "requests", 1},   // Name, Desc, Enable Level
@@ -134,7 +131,6 @@ class ArielCPU : public SST::Component {
 
         std::vector<ArielCore*> cpu_cores;
         std::vector<Interfaces::StandardMem*> cpu_to_cache_links;
-        std::vector<SST::Link*> cpu_to_gpu_links;
         std::vector<SST::Link*> cpu_to_rtl_links;
 
         uint32_t core_count;
@@ -142,13 +138,6 @@ class ArielCPU : public SST::Component {
         ArielFrontend* frontend;
         ArielTunnel* tunnel;
         bool stopTicking;
-
-#ifdef HAVE_CUDA
-        GpuReturnTunnel* tunnelR;
-        GpuDataTunnel* tunnelD;
-        bool gpu_enabled;
-#endif
-
 };
 
 }

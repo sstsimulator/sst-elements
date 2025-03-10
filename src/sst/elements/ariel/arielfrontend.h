@@ -48,11 +48,6 @@ public:
 
     virtual ArielTunnel* getTunnel() = 0;
 
-#ifdef HAVE_CUDA
-    virtual GpuDataTunnel* getDataTunnel() { return nullptr; }
-    virtual GpuReturnTunnel* getReturnTunnel() { return nullptr; }
-#endif
-
     virtual void init(unsigned int phase) = 0;
     virtual void setup() { }
     virtual void finish() { }
