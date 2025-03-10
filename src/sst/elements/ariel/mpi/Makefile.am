@@ -5,5 +5,7 @@ mpilauncher: mpilauncher.cc
 fakepin: fakepin.cc
 	 $(ARIEL_MPICXX) fakepin.cc -o fakepin
 
+bin_SCRIPTS = mpilauncher
+
 clean-local:
 	rm -f mpilauncher fakepin

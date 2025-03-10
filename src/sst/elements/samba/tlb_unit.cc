@@ -91,13 +91,13 @@ TLB::TLB(ComponentId_t id, int tlb_id, TLB * Next_level, int Level, SST::Params&
 
 
     // === Init Counters
-    
+
 	hits=misses=0;
 
 
     // === Per page-size params =======================================
-    
-    
+
+
     // params
 	size = new int[sizes];
 	assoc = new int[sizes];
@@ -163,7 +163,7 @@ void TLB::setPTW(PageTableWalker * Next_level) {
     PTW=Next_level;
 }
 
-// This is the most important function, which works like the heart of the TLBUnit, 
+// This is the most important function, which works like the heart of the TLBUnit,
 // called on every cycle to check if any completed requests or new requests at this cycle.
 bool TLB::tick(SST::Cycle_t x)
 {
@@ -180,7 +180,7 @@ bool TLB::tick(SST::Cycle_t x)
 
 
 		// Double checking that we actually still don't have it inserted
-		// Insert the translation into all structures with same or smaller size page support. 
+		// Insert the translation into all structures with same or smaller size page support.
         // Note that smaller page sizes will still have the same translation with offset derived from address
 		std::map<long long int, int>::iterator lu_st, lu_en;
 		lu_st=SIZE_LOOKUP.begin();
@@ -216,7 +216,7 @@ bool TLB::tick(SST::Cycle_t x)
 			st++;
 		}
 
-		// Note that here we are substituting for latency of checking the tag before proceeding 
+		// Note that here we are substituting for latency of checking the tag before proceeding
         // to the next level, we also add the upper link latency for the round trip
 		ready_by[ev]= x + latency + 2*upper_link_latency;
 
@@ -227,10 +227,9 @@ bool TLB::tick(SST::Cycle_t x)
 		// Check if there are other misses that were going to the same translation and waiting for the response of this miss
 		if((level==1) && (SAME_MISS.find(addr/4096)!=SAME_MISS.end()))
 		{
-		  std::map< MemHierarchy::MemEventBase*, int>::iterator same_st, same_en;
-		  same_st = SAME_MISS[addr/4096].begin();
-    		  same_en = SAME_MISS[addr/4096].end();
-   		   while(same_st!=same_en)
+		   auto same_st = SAME_MISS[addr/4096].begin();
+		   auto same_en = SAME_MISS[addr/4096].end();
+		   while(same_st!=same_en)
 		    {
 
 	    		ready_by[same_st->first] = x + latency + 2*upper_link_latency;
@@ -249,7 +248,7 @@ bool TLB::tick(SST::Cycle_t x)
 
 
 
-	// The actual dispatching process... here we take a request and place it 
+	// The actual dispatching process... here we take a request and place it
     // in the right queue based on being miss or hit and the number of pending misses
 	std::vector<MemHierarchy::MemEventBase*>::iterator st_1,en_1;
 	st_1 = not_serviced.begin();
@@ -357,9 +356,8 @@ bool TLB::tick(SST::Cycle_t x)
 	}
 
 
-	std::map<MemHierarchy::MemEventBase *, SST::Cycle_t>::iterator st, en;
-	st = ready_by.begin();
-	en = ready_by.end();
+	auto st = ready_by.begin();
+	auto en = ready_by.end();
 
 	// We iterate over the list of being serviced request to see if any has finished by this cycle
 	while(st!=en)
@@ -524,5 +522,3 @@ void TLB::update_lru(Address_t vaddr, int struct_id)
 
 
 }
-
-

@@ -163,13 +163,13 @@ private:
     };
 
     class ExponentialDist : public Generator {
-        MersenneRNG* gen;
+        SST::RNG::MersenneRNG* gen;
         SSTExponentialDistribution* dist;
 
     public:
         ExponentialDist(int lambda)
         {
-            gen = new MersenneRNG();
+            gen = new SST::RNG::MersenneRNG();
 	    dist = new SSTExponentialDistribution((double) lambda);
         }
 
@@ -186,13 +186,13 @@ private:
         void seed(uint32_t val)
         {
             delete gen;
-            gen = new MersenneRNG((unsigned int) val);
+            gen = new SST::RNG::MersenneRNG((unsigned int) val);
         }
     };
 
 
     class UniformDist : public Generator {
-        MersenneRNG* gen;
+        SST::RNG::MersenneRNG* gen;
         SSTUniformDistribution* dist;
 
         int dist_size;
@@ -200,7 +200,7 @@ private:
     public:
         UniformDist(int min, int max)
         {
-		gen = new MersenneRNG();
+		gen = new SST::RNG::MersenneRNG();
 
 		dist_size = std::max(1, max-min);
 		dist = new SSTUniformDistribution(dist_size, gen);
@@ -220,14 +220,14 @@ private:
         {
             delete dist;
             delete gen;
-            gen = new MersenneRNG((unsigned int) val);
+            gen = new SST::RNG::MersenneRNG((unsigned int) val);
             dist = new SSTUniformDistribution(dist_size,gen);
         }
     };
 
 
     class DiscreteDist : public Generator {
-	MersenneRNG* gen;
+	SST::RNG::MersenneRNG* gen;
 	SSTDiscreteDistribution* dist;
         int minValue;
     public:
@@ -241,7 +241,7 @@ private:
             }
             probs[target] = targetProb;
 
-	    gen = new MersenneRNG();
+	    gen = new SST::RNG::MersenneRNG();
 	    dist = new SSTDiscreteDistribution(&probs[0], size, gen);
         }
 
@@ -257,20 +257,20 @@ private:
 
         void seed(uint32_t val)
         {
-            gen = new MersenneRNG((unsigned int) val);
+            gen = new SST::RNG::MersenneRNG((unsigned int) val);
         }
     };
 
     class NormalDist : public Generator {
 	SSTGaussianDistribution* dist;
-	MersenneRNG* gen;
+	SST::RNG::MersenneRNG* gen;
 
         int minValue;
         int maxValue;
     public:
         NormalDist(int min, int max, double mean, double stddev) : minValue(min), maxValue(max)
         {
-            gen = new MersenneRNG();
+            gen = new SST::RNG::MersenneRNG();
             dist = new SSTGaussianDistribution(mean, stddev);
         }
 
@@ -289,7 +289,7 @@ private:
 
         void seed(uint32_t val)
         {
-            gen = new MersenneRNG((unsigned int) val);
+            gen = new SST::RNG::MersenneRNG((unsigned int) val);
         }
     };
 

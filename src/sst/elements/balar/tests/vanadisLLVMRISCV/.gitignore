@@ -1,0 +1,6 @@
+*.a
+*.so
+helloworld
+vecadd
+vecadd_normal
+simpleStreams

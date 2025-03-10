@@ -219,9 +219,8 @@ bool NVM_DIMM::tick()
 void NVM_DIMM::schedule_delivery()
 {
 
-    std::map<NVM_Request *, long long int>::iterator st_1, en_1;
-    st_1 = ready_at_NVM.begin();
-    en_1 = ready_at_NVM.end();
+    auto st_1 = ready_at_NVM.begin();
+    auto en_1 = ready_at_NVM.end();
 
     while (st_1 != en_1)
     {
