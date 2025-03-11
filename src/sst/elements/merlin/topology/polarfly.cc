@@ -224,7 +224,7 @@ void topo_polarfly::routeValiant(int port, int vc, internal_router_event* ev){
 void topo_polarfly::initPolarGraph() {
     //Read polarfly topology from file
     char dir[256];
-    getcwd(dir, 256);
+    (void) !getcwd(dir, 256);
     std::string filepath    = std::string(dir) + "/polarfly_data/PolarFly.q_" + std::to_string(this->q) + ".txt";
     
     std::fstream fp;
