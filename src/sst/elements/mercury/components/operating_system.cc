@@ -30,10 +30,12 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 
-extern "C" void* sst_hg_nullptr = nullptr;
-extern "C" void* sst_hg_nullptr_send = nullptr;
-extern "C" void* sst_hg_nullptr_recv = nullptr;
-extern "C" void* sst_hg_nullptr_range_max = nullptr;
+extern "C" {
+void* sst_hg_nullptr = nullptr;
+void* sst_hg_nullptr_send = nullptr;
+void* sst_hg_nullptr_recv = nullptr;
+void* sst_hg_nullptr_range_max = nullptr;
+}
 static uintptr_t sst_hg_nullptr_range = 0;
 
 namespace SST {

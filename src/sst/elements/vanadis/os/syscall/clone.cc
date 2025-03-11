@@ -89,8 +89,8 @@ VanadisCloneSyscall::VanadisCloneSyscall( VanadisNodeOSComponent* os, SST::Link*
     } else {
         // DETACHED is deprecated
         if ( ( event->getFlags() & ~RISVC_CLONE_DETACHED ) != CLONE_FLAGS ) {
-            m_output->fatal(CALL_INFO, -1, "Error: clone, flags not supported %#llx\n",event->getFlags());
-        }    
+            m_output->fatal(CALL_INFO, -1, "Error: clone, flags not supported %#" PRIx64 "\n",event->getFlags());
+        }
         m_newThread = new OS::ProcessInfo;
 
         // this make an exact copy of the process which implies pointers to classes are the same for both processes
