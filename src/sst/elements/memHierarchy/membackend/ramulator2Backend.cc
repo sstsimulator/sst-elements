@@ -48,19 +48,19 @@ ramulator2Memory::ramulator2Memory(ComponentId_t id, Params &params) :
 bool ramulator2Memory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes){
     // create request type variable
     auto req_type = isWrite ? Ramulator::Request::Type::Write : Ramulator::Request::Type::Read;
-    // build Request for Ramulator
+    // build Request for Ramulator -- EMBEDS RAMULATOR2DONE CALLBACK -- is this called???
     Ramulator::Request req(addr, req_type, reqId, callBackFunc);
     // send request
     bool enqueue_success = ramulator2_frontend->receive_external_requests(req_type, addr, reqId,
     [this](Ramulator::Request& req) {
         if (req.type_id == Ramulator::Request::Type::Write) {
-            // TODO: write request callback -- NOT BEING CALLED
+            // TODO: write request callback -- NOT CONFIRMED BEING CALLED: no writes in sdl4-2?
 #ifdef __SST_DEBUG_OUTPUT__
             output->debug(_L10_, "Ramulator2Backend: Write callback for %" PRIx64 ".\n", req.addr);
 #endif
             this->writes.insert(req.source_id);
         } else {
-            // TODO: read request callback -- NOT BEING CALLED
+            // TODO: read request callback -- CONFIRMED BEING CALLED
 #ifdef __SST_DEBUG_OUTPUT__
             output->debug(_L10_, "Ramulator2Backend: Read callback for %" PRIx64 ".\n", req.addr);
 #endif
@@ -92,7 +92,11 @@ void ramulator2Memory::finish(){
     ramulator2_memorysystem->finalize();
 }
 
-// TODO: CONFIRMED THAT THIS FUNCTION IS CALLED UPON FINISH -- WHY DOES IT CAUSE A CRASH? COPMILE RAMULATOR IN DEBUG AND GDB INTO DRAMCONTROLLER LINE 311
+/* TODO: in debug mode: this function is not called??? never ending loop of ticks
+    - need to confirm that this always applies in release mode: this function IS called but results in a crash
+   TODO: run known working backend in sdl4-2 to compare stat output
+    - force output to file instead out console
+*/
 void ramulator2Memory::ramulator2Done(Ramulator::Request& ramReq) {
     uint64_t addr = ramReq.addr;
     std::deque<ReqId> &reqs = dramReqs[addr];
