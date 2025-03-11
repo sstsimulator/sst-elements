@@ -127,8 +127,6 @@ class ArielCore : public ComponentExtension {
             friend class ArielCore;
             StdMemHandler(ArielCore* coreInst, SST::Output* out) : StandardMem::RequestHandler(out), core(coreInst) {}
             virtual ~StdMemHandler() {}
-            virtual void handle(StandardMem::ReadResp* rsp) override;
-            virtual void handle(StandardMem::WriteResp* rsp) override;
 
             ArielCore* core;
         };
