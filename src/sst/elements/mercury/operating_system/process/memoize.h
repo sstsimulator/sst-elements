@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -11,12 +11,16 @@
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
-// distribution.
+// distribution.#ifndef sstmac_sw_process_memoize_h
 
 #pragma once
 
-#if __cplusplus >= 201703L
-  #define SST_HG_MAYBE_UNUSED [[maybe_unused]]
-#else
-  #define SST_HG_MAYBE_UNUSED __attribute__((unused))
-#endif
+namespace SST {
+namespace Hg {
+
+struct Memoization {
+  Memoization(const char* name, const char* model);
+};
+
+}
+}
