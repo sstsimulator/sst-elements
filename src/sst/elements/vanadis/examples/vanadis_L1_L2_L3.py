@@ -1,3 +1,64 @@
+#
+# This example demonstrates a how to model a single node and CPU on a RISC-V architecture in vanadis.
+# The node modeled has L1D, L1I, L2, and L3 caches. 
+# 
+#  In order to accomplish this structure in SST, we create the following comoponenents and links.
+#
+# _______________________________________________________
+# | Component: OS                                       |
+# | Type: vanadis.VanadisNodeOs                         |
+# | This represents the hardware node being simulated.  |
+# | It contains an mmu (memory management unit, which   |
+# | also provides TLB capabilities) and  a memory       |
+# | interface.                                          |
+# |  _______________________                            |
+# |  | Sub Component: mmu  |                            |
+# |  | Type: mmu.simpleMMU |                            |        
+# |  |_____________________|                            |
+# |  ____________________________________________       |
+# |  | Sub Component: mem_interface             |       |
+# |  | Type: memHierarchy.standardInterface     |       |
+# |  | This subcomponent represents the         |       |
+# |  | interface from the Node OS to the cache. |       |
+# |  |__________________________________________|       |
+# |_____________________________________________________|
+#                           | link
+#         __________________|___________________
+#         | Component: node_os.cache           |
+#         | Type: memHierarchy.Cache           | 
+#         | This componenet represents the L1D |
+#         | cache for the hardware node.       |
+#         |____________________________________|
+#
+# This example relies on several environemental variables, which allow for costumization. A full list of 
+# the available customizations, including default values, is provided below
+# 
+# VANADIS_ISA
+#   The ISA the CPU will use.
+#   Possible Values: MIPSEL, RISCV64
+#   Default: RISCV64
+# VANADIS_LOADER_MODE - default: 0
+# VANADIS_VERBOSE - default: 0
+# VANADIS_OS_VERBOSE - default: 0
+# VANADIS_PIPE_TRACE - default: 
+# VANADIS_LSQ_LD_ENTRIES - default: 16
+# VANADIS_LSQ_ST_ENTIRES - default: 8
+# VANADIS_ROB_SLOTS - default: 0
+# VANADIS_RETIRES_PER_CYCLE - default: 4
+# VANADIS_ISSUES_PER_CYCLE - default: 4
+# VANADIS_DECODES_PER_CYCLE - default: 4
+# VANADIS_INTEGER_ARITH_CYCLES - default: 2
+# VANADIS_INTEGER_ARITH_CYCLES - default: 2
+# VANADIS_FP_ARITH_CYCLES - default: 8
+# VANADIS_FP_ARITH_UNITS - default: 2
+# VANADIS_BRANCH_ARITH_CYCLES - default: 2
+# VANADIS_CPU_CLOCK - default: 2.3GHz
+# VANADIS_NUM_CORES - default: 1
+# VANADIS_NUM_HW_THREADS - default: 1
+# VANADIS_CPU_ELEMENT_NAME - default: dbg_VanadisCPU
+# 
+# 
+
 import os
 import sst
 
@@ -12,7 +73,7 @@ checkpoint = ""
 pythonDebug=False
 
 vanadis_isa = os.getenv("VANADIS_ISA", "RISCV64")
-isa="riscv64"
+isa=vanadis_isa.lower()
 
 loader_mode = os.getenv("VANADIS_LOADER_MODE", "0")
 
@@ -77,18 +138,6 @@ osParams = {
     "checkpointDir" : checkpointDir,
     "checkpoint" : checkpoint
 }
-
-# Define the application the CPU will run in this simulation and the number of threads it will use
-processList = ( 
-    ( 1, {
-        "env_count" : 1,
-        "env0" : "OMP_NUM_THREADS={}".format(numCpus*numThreads),
-        "exe" : full_exe_name,
-        "arg0" : exe_name,
-    } ),
-)
-
-processList[0][1].update(app_params)
 
 # Define the parameters for the components defined below in the model.
 osl1cacheParams = {
@@ -270,26 +319,42 @@ def addParamsPrefix(prefix,params):
 
     return ret
 
-# Define the operating system for the node being modeled.
+# This creates the hardware Node and OS for the model. It has its own memory managument 
+# unit and memory interface. It is also connected to its own L1D cache
 node_os = sst.Component("os", "vanadis.VanadisNodeOS")
 node_os.addParams(osParams)
 
-# Create the parameters for the processes on the node. The process parameters were created above, but 
-# to be successfully be applied, they need to be prefixed in the node_os params correctly
+# Define the application the CPU will run in this simulation and the number of threads it will use
+processList = ( 
+    ( 1, {
+        "env_count" : 1,
+        "env0" : "OMP_NUM_THREADS={}".format(numCpus*numThreads),
+        "exe" : full_exe_name,
+        "arg0" : exe_name,
+    } ),
+)
+
+processList[0][1].update(app_params)
+
+# Create the parameters for the processes on the node. The process parameters were created 
+# above, but to be successfully be applied, they need to be prefixed in the node_os params 
+# correctly, which ties the parameters to a specific process on the node. In this example, 
+# we only have 1 process, so all parameters are prefixed with "process0."
 num=0
 for i,process in processList: 
     for y in range(i):
         node_os.addParams( addParamsPrefix( "process" + str(num), process ) )
         num+=1
 
-# Define the MMU for the node OS
+# Create the memory management unit sub component for the node. 
 node_os_mmu = node_os.setSubComponent( "mmu", "mmu." + mmuType )
 node_os_mmu.addParams(mmuParams)
 
 # Create the memory interface from the OS to the cache
 node_os_mem_if = node_os.setSubComponent( "mem_interface", "memHierarchy.standardInterface" )
 
-# Create an L1 data cache for the node OS
+# Create an L1 data cache for the node OS, and connects it to the OS component and the
+# memory representation
 os_cache = sst.Component("node_os.cache", "memHierarchy.Cache")
 os_cache.addParams(osl1cacheParams)
 os_cache_2_cpu = os_cache.setSubComponent("cpulink", "memHierarchy.MemLink")
