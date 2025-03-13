@@ -72,7 +72,8 @@ public:
 
     }
 
-    int arbitrate(Cycle_t UNUSED(cycle), PortInterface::port_queue_t* out_q, int* port_out_credits, bool isHostPort, bool& have_packets) {
+    int arbitrate(Cycle_t cycle, PortInterface::port_queue_t *out_q, int *port_out_credits, bool isHostPort, bool &have_packets) {
+        UNUSED(cycle);
         int vc_to_send = -1;
         bool found = false;
         internal_router_event* send_event = NULL;

@@ -125,8 +125,8 @@ public:
         for (size_t i = 0; i < size; i++)
             data[i] = buffer_[addr + i];
     }
-    
-    void printToFile( std::string UNUSED(outfile) ) { }
+
+    void printToFile(std::string outfile) { UNUSED(outfile); }
 
     /* For testing only, print contents to stdout in plaintext */
     void printToScreen(Addr addr_offset, Addr addr_start, Addr addr_interleave_size, Addr addr_interleave_step) {

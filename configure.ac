@@ -54,8 +54,10 @@ SST_ELEMENT_CONFIG_OUTPUT()
 # Compile flags come from SST-Core, add or remove extra warnings
 # depending on the use-picky flag
 SST_CHECK_PICKY
+# SST_CHECK_NEW_UNUSED
 AS_IF([test "x$use_picky" = "xyes"],
-      [WARNFLAGS="-Wall -Wextra"],
+      [AS_IF([test "x$new_unused" != "xno"],
+      [WARNFLAGS="-Wall -Wextra -Werror=unused-parameter"], [WARNFLAGS="-Wall -Wextra -Wno-unused-value"])],
       [WARNFLAGS=""])
 AM_CFLAGS="$AM_CFLAGS $WARNFLAGS"
 AM_CXXFLAGS="$AM_CXXFLAGS $WARNFLAGS"

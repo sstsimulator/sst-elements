@@ -81,11 +81,11 @@ public:
         SST::MemHierarchy::CacheListener
     )
 
-    CacheListener(ComponentId_t id, Params& UNUSED(params)) : SubComponent(id) {}
+    CacheListener(ComponentId_t id, Params &params) : SubComponent(id) { UNUSED(params); }
     virtual ~CacheListener() {}
 
-    virtual void printStats(Output &UNUSED(out)) {}
-    virtual void notifyAccess(const CacheListenerNotification& UNUSED(notify)) {}
+    virtual void printStats(Output &out) { UNUSED(out); }
+    virtual void notifyAccess(const CacheListenerNotification &notify) { UNUSED(notify); }
     virtual void registerResponseCallback(Event::HandlerBase *handler) { delete handler; }
 };
 

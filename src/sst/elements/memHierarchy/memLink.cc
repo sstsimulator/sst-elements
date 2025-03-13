@@ -197,11 +197,13 @@ void MemLink::addEndpoint(EndpointInfo info) {
     endpoints_.insert(info);
 }
 
-bool MemLink::isDest(std::string UNUSED(str)) {
+bool MemLink::isDest(std::string str) {
+    UNUSED(str);
     return true;
 }
 
-bool MemLink::isSource(std::string UNUSED(str)) {
+bool MemLink::isSource(std::string str) {
+    UNUSED(str);
     return true;
 }
 

@@ -201,7 +201,8 @@ public:
         return idstring.str() + cmdStr + " Src: " + src_ + " Dst: " + dst_ + " Tid: " + std::to_string(tid_);
     }
 
-    virtual bool doDebug(std::set<Addr> &UNUSED(addr)) {
+    virtual bool doDebug(std::set<Addr> &addr) {
+        UNUSED(addr);
         return true;    // Always debug unless we come up with a different way of determining it
     }
 

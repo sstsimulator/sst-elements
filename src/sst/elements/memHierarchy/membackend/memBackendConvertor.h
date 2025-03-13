@@ -72,7 +72,7 @@ class MemBackendConvertor : public SubComponent {
         static uint32_t getBaseId( ReqId id) { return id >> 32; }
         virtual uint64_t id()   { return ((uint64_t)m_reqId << 32); }
         virtual void decrement() { }
-        virtual void increment( uint32_t UNUSED(bytes) ) { }
+        virtual void increment(uint32_t bytes) { UNUSED(bytes); }
         virtual bool isDone() { return true; } /* If we're asking, the answer is yes */
         virtual bool issueDone() { return true; } /* If we're asking, the answer is yes */
         virtual std::string getString() {

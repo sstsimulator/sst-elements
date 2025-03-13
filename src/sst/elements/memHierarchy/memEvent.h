@@ -90,7 +90,8 @@ public:
     }
 
     /** Generate a new MemEvent, pre-populated as a response */
-    MemEvent* makeResponse(State UNUSED(state)) {
+    MemEvent *makeResponse(State state) {
+        UNUSED(state);
         MemEvent *me = makeResponse();
         return me;
     }

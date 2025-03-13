@@ -175,7 +175,7 @@ void ShogunNIC::init(unsigned int phase)
     }
 }
 
-void ShogunNIC::complete(unsigned int UNUSED(phase)) {}
+void ShogunNIC::complete(unsigned int phase) { UNUSED(phase); }
 void ShogunNIC::finish() {}
 
 bool ShogunNIC::spaceToSend(int vn, int num_bits)

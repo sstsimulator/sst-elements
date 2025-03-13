@@ -86,7 +86,7 @@ public:
     virtual void finish() {}
 
     /* Called by parent's clock() function */
-    virtual bool clock(Cycle_t UNUSED(cycle)) { return true; }
+    virtual bool clock(Cycle_t cycle) { UNUSED(cycle); return true; }
 
     /* Interface to parent */
     virtual size_t getMemSize() { return m_memSize; }
