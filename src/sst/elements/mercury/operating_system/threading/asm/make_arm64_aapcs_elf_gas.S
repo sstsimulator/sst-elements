@@ -40,9 +40,9 @@
 .cpu    generic+fp+simd
 .text
 .align  2
-.global make_fcontext
-.type   make_fcontext, %function
-make_fcontext:
+.global sst_hg_make_fcontext
+.type   sst_hg_make_fcontext, %function
+sst_hg_make_fcontext:
     # shift address in x0 (allocated stack) to lower 16 byte boundary
     and x0, x0, ~0xF
 
@@ -66,6 +66,6 @@ finish:
     # exit application
     bl  _exit
 
-.size   make_fcontext,.-make_fcontext
+.size   sst_hg_make_fcontext,.-sst_hg_make_fcontext
 # Mark that we don't need executable stack.
 .section .note.GNU-stack,"",%progbits
