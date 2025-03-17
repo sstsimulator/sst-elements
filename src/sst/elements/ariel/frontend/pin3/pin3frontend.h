@@ -90,11 +90,6 @@ class Pin3Frontend : public ArielFrontend {
         virtual void finish();
         virtual ArielTunnel* getTunnel();
 
-#ifdef HAVE_CUDA
-        virtual GpuReturnTunnel* getReturnTunnel();
-        virtual GpuDataTunnel* getDataTunnel();
-#endif
-
     private:
 
         int forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env, redirect_info_t redirect_info);
@@ -107,14 +102,6 @@ class Pin3Frontend : public ArielFrontend {
         SST::Core::Interprocess::MMAPParent<ArielTunnel>* tunnelmgr;
 
         ArielTunnel* tunnel;
-
-#ifdef HAVE_CUDA
-        SST::Core::Interprocess::MMAPParent<GpuReturnTunnel>* tunnelRmgr;
-        SST::Core::Interprocess::MMAPParent<GpuDataTunnel>* tunnelDmgr;
-
-        GpuReturnTunnel* tunnelR;
-        GpuDataTunnel* tunnelD;
-#endif
 
         std::string appLauncher;
         redirect_info_t redirect_info;

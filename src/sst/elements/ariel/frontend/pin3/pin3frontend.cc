@@ -110,19 +110,6 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
     tunnel = tunnelmgr->getTunnel();
     output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name.c_str());
 
-#ifdef HAVE_CUDA
-    tunnelRmgr = new SST::Core::Interprocess::MMAPParent<GpuReturnTunnel>(id, core_count, maxCoreQueueLen);
-    tunnelDmgr = new SST::Core::Interprocess::MMAPParent<GpuDataTunnel>(id, core_count, maxCoreQueueLen);
-
-    tunnelR = tunnelRmgr->getTunnel();
-    std::string shmem_region_name2 = tunnelRmgr->getRegionName();
-    output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name2.c_str());
-
-    tunnelD = tunnelDmgr->getTunnel();
-    std::string shmem_region_name3 = tunnelDmgr->getRegionName();
-    output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name3.c_str());
-#endif
-
     // MPI Launcher options
     mpimode = params.find<int>("mpimode", 0);
     if (mpimode) {
@@ -136,15 +123,15 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
         if (mpilauncher.compare("") == 0) {
             output->fatal(CALL_INFO, -1, "mpimode=1 was specified but parameter `mpilauncher` is an empty string");
         }
+
         if (redirect_info.stdin_file.compare("") != 0 || redirect_info.stdout_file.compare("") != 0 || redirect_info.stderr_file.compare("") != 0)  {
             output->fatal(CALL_INFO, -1, "Using an MPI launcher and redirected I/O is not supported.\n");
         }
-#ifdef HAVE_CUDA
-        output->fatal(CALL_INFO, -1, "Using an MPI launcher and CUDA is not supported.\n");
-#endif
+
         if (mpiranks < 1) {
             output->fatal(CALL_INFO, -1, "You must specify a positive number for `mpiranks` when using an MPI launhcer. Got %d.\n", mpiranks);
         }
+
         if (mpitracerank < 0 || mpitracerank >= mpiranks) {
             output->fatal(CALL_INFO, -1, "The value of `mpitracerank` must be in [0,mpiranks) Got %d.\n", mpitracerank);
         }
@@ -211,11 +198,6 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
     execute_args[arg++] = const_cast<char*>("15");
 #endif
 
-#ifdef HAVE_CUDA
-    execute_args[arg++] = const_cast<char*>("-injection");
-    execute_args[arg++] = const_cast<char*>("child");
-#endif
-
     execute_args[arg++] = const_cast<char*>("-follow_execv");
 
     size_t param_name_buffer_size = sizeof(char) * 512;
@@ -256,14 +238,6 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
     execute_args[arg++] = const_cast<char*>("-p");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (shmem_region_name.length() + 1));
     strcpy(execute_args[arg-1], shmem_region_name.c_str());
-#ifdef HAVE_CUDA
-    execute_args[arg++] = const_cast<char*>("-g");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * (shmem_region_name2.length() + 1));
-    strcpy(execute_args[arg-1], shmem_region_name2.c_str());
-    execute_args[arg++] = const_cast<char*>("-x");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * (shmem_region_name3.length() + 1));
-    strcpy(execute_args[arg-1], shmem_region_name3.c_str());
-#endif
     execute_args[arg++] = const_cast<char*>("-v");
     execute_args[arg++] = (char*) malloc(buff8size);
     snprintf(execute_args[arg-1], buff8size, "%d", verbosity);
@@ -373,16 +347,6 @@ void Pin3Frontend::finish() {
 ArielTunnel* Pin3Frontend::getTunnel() {
     return tunnel;
 }
-
-#ifdef HAVE_CUDA
-GpuReturnTunnel* Pin3Frontend::getReturnTunnel() {
-    return tunnelR;
-}
-
-GpuDataTunnel* Pin3Frontend::getDataTunnel() {
-    return tunnelD;
-}
-#endif
 
 int Pin3Frontend::forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env, redirect_info_t redirect_info) {
     // If user only wants to init the simulation then we do NOT fork the binary
@@ -554,10 +518,6 @@ int Pin3Frontend::forkPINChild(const char* app, char** args, std::map<std::strin
 Pin3Frontend::~Pin3Frontend() {
     // Everything loaded by calls to the core are deleted by the core (subcomponents, component extension, etc.)
     delete tunnelmgr;
-#ifdef HAVE_CUDA
-    delete tunnelRmgr;
-    delete tunnelDmgr;
-#endif
 }
 
 void Pin3Frontend::emergencyShutdown() {
@@ -567,8 +527,4 @@ void Pin3Frontend::emergencyShutdown() {
     }
 
     delete tunnelmgr; // Clean up tmp file
-#ifdef HAVE_CUDA
-    delete tunnelRmgr;
-    delete tunnelDmgr;
-#endif
 }
