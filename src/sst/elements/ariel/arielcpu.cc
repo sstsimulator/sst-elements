@@ -138,15 +138,6 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     uint32_t maxPendingTransCore = (uint32_t) params.find<uint32_t>("maxtranscore", 16);
     uint64_t cacheLineSize       = (uint64_t) params.find<uint32_t>("cachelinesize", 64);
 
-    int gpu_e = (uint32_t) params.find<uint32_t>("gpu_enabled", 0);
-
-#ifdef HAVE_CUDA
-    if(gpu_e == 1)
-        gpu_enabled = true;
-    else
-        gpu_enabled = false;
-#endif
-
     /////////////////////////////////////////////////////////////////////////////////////
 
     frontend = loadUserSubComponent<ArielFrontend>("frontend", ComponentInfo::SHARE_NONE, core_count, maxCoreQueueLen, memmgr->getDefaultPool());
@@ -159,10 +150,6 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
         output->fatal(CALL_INFO, -1, "%s, Error: Loading frontend subcomponent failed. If Ariel was not built with Pin, user must supply a custom frontend in the input file.\n", getName().c_str());
 
     tunnel = frontend->getTunnel();
-#ifdef HAVE_CUDA
-    tunnelR = frontend->getReturnTunnel();
-    tunnelD = frontend->getDataTunnel();
-#endif
 
     /////////////////////////////////////////////////////////////////////////////////////
 
@@ -180,9 +167,6 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     output->verbose(CALL_INFO, 1, 0, "Configuring cores and cache links...\n");
     for(uint32_t i = 0; i < core_count; ++i) {
         cpu_cores.push_back(loadComponentExtension<ArielCore>(tunnel,
-#ifdef HAVE_CUDA
-                 tunnelR, tunnelD,
-#endif
                  i, maxPendingTransCore, output, maxIssuesPerCycle, maxCoreQueueLen,
                  cacheLineSize, memmgr, perform_checks, params, timeconverter));
 
@@ -216,27 +200,13 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
                         ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, par, timeconverter, new StandardMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
             cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
 
-#ifdef HAVE_CUDA
-            if(gpu_enabled) {
-               snprintf(link_buffer, link_buffer_size, "gpu_link_%" PRIu32, i);
-               cpu_to_gpu_links.push_back(configureLink(link_buffer, new Event::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleGpuAckEvent)));
-               cpu_cores[i]->setGpuLink(cpu_to_gpu_links[i]);
-               cpu_cores[i]->setGpu();
-            }
-
-            std::string executable = params.find<std::string>("executable", "");
-            cpu_cores[i]->setFilePath(executable);
-#endif
-
             //Configuring Ariel to RTL link and RTLAck Event Handle
                snprintf(link_buffer, link_buffer_size, "rtl_link_%" PRIu32, i);
                cpu_to_rtl_links.push_back(configureLink(link_buffer, new Event::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleRtlAckEvent)));
                cpu_cores[i]->setRtlLink(cpu_to_rtl_links[i]);
                output->verbose(CALL_INFO, 1, 0, "Completed initialization of the Ariel RTL Link.\n");
-
         }
     }
-
 
     // Register us as an important component
     registerAsPrimaryComponent();
