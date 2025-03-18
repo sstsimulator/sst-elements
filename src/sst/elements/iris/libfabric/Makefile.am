@@ -13,6 +13,8 @@ AM_CPPFLAGS += \
         -I$(top_srcdir)/src/sst/elements/mercury \
         -I$(top_srcdir)/src/sst/elements
 
+AM_CPPFLAGS += -D_GNU_SOURCE
+
 sumi_sources = \
   prov/sumi/src/sumi_av.cc \
   prov/sumi/src/sumi_cm.cc \
