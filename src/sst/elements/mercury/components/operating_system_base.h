@@ -104,9 +104,13 @@ public:
 
   virtual condition_t* getCondition(int id) = 0;
 
-  virtual void set_nranks(int32_t ranks) = 0;
+  virtual void set_nranks(unsigned int ranks) = 0;
 
-  virtual int32_t nranks() = 0;
+  virtual unsigned int nranks() = 0;
+
+  virtual void set_npernode(unsigned int npernode) = 0;
+
+  virtual unsigned int npernode() = 0;
 
 //
 // EVENT LIBRARIES

@@ -57,12 +57,13 @@ class SumiServer :
 {
 
  public:
- Output output;
+ const std::unique_ptr<SST::Output> & out_;
 
-  SumiServer(SimTransport* tport)
+  SumiServer(SimTransport* tport, std::unique_ptr<SST::Output> & output)
     : Service(tport->serverLibname(),
        SST::Hg::SoftwareId(-1, -1), //belongs to no application
-       tport->parent()->os())
+       tport->parent()->os()),
+       out_(output)
   {
   }
 
@@ -104,10 +105,10 @@ class SumiServer :
 
   void incomingRequest(SST::Hg::Request *req) override {
     Message* smsg = safe_cast(Message, req);
-    output.output("SumiServer %d: incoming %s", os_->addr(), smsg->toString().c_str());
+    if (out_) out_->debug(CALL_INFO, 1, 0, "SumiServer %d: incoming %s\n", os_->addr(), smsg->toString().c_str());
     SimTransport* tport = procs_[smsg->aid()][smsg->targetRank()];
     if (!tport){
-      output.output("SumiServer %d: message pending to app %d, target %d",
+      if  (out_) out_->debug(CALL_INFO, 1, 0, "SumiServer %d: message pending to app %d, target %d\n",
         os_->addr(), smsg->aid(), smsg->targetRank());
       pending_.push_back(smsg);
     } else {
@@ -186,12 +187,12 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent) :
   completion_queues_[0] = std::bind(&DefaultProgressQueue::incoming,
                                     &default_progress_queue_, 0, std::placeholders::_1);
   null_completion_notify_ = std::bind(&SimTransport::drop, this, std::placeholders::_1);
-  rank_ = os_->addr();
+  rank_ = parent->get_taskid();
   auto* server_lib = parent->os()->eventLibrary(server_libname_);
   SumiServer* server;
   // only do one server per app per node
   if (server_lib == nullptr) {
-    server = new SumiServer(this);
+    server = new SumiServer(this, out_);
     server->start();
   } else {
     server = safe_cast(SumiServer, server_lib);
@@ -242,6 +243,7 @@ void
 SimTransport::init()
 {
   if (smp_optimize_){
+    std::cerr << "smp_optimize_\n";
    engine_->barrier(-1, Message::default_cq);
    engine_->blockUntilNext(Message::default_cq);
 
@@ -326,7 +328,8 @@ SimTransport::send(Message* m)
     case SST::Hg::NetworkMessage::smsg_send:
       if (m->recver() == rank_){
         //deliver to self
-        output.output("Rank %d SUMI sending self message", rank_);
+        out_->debug(CALL_INFO, 1, 0,
+          "Rank %d SUMI sending self message\n", rank_);
         if (m->needsRecvAck()){
           completion_queues_[m->recvCQ()](m);
         }
@@ -335,6 +338,8 @@ SimTransport::send(Message* m)
           completion_queues_[m->sendCQ()](static_cast<Message*>(ack));
         }
       } else {
+        out_->debug(CALL_INFO, 1, 0,
+          "Rank %d SUMI smsg_send to %d\n", rank_, m->recver());
         if (post_header_delay_.ticks()) {
           compute_api_->compute(post_header_delay_);
         }

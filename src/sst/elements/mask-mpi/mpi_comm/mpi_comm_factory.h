@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Questions? Contact sst-macro-help@sandia.gov
 */
 
+#include <sst/core/output.h>
 #include <mpi_comm/mpi_comm.h>
 #include <mpi_types/mpi_type.h>
 #include <mpi_api_fwd.h>
@@ -57,7 +58,7 @@ namespace SST::MASKMPI {
 class MpiCommFactory  {
 
  public:
-  MpiCommFactory(SoftwareId sid, MpiApi* parent);
+  MpiCommFactory(SoftwareId sid, MpiApi* parent, unsigned int verbose);
 
   ~MpiCommFactory();
 
@@ -86,16 +87,17 @@ class MpiCommFactory  {
  private:
   MPI_Comm commNewIdAgree(MpiComm* old);
 
- private:
   MpiApi* parent_;
+
+  MpiComm* worldcomm_;
+  MpiComm* selfcomm_;
 
   AppId aid_;
 
   /// The next available communicator index.
   MPI_Comm next_id_;
 
-  MpiComm* worldcomm_;
-  MpiComm* selfcomm_;
+  std::unique_ptr<SST::Output> out_;
 };
 
 }
