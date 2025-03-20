@@ -29,7 +29,7 @@ def check_for_crosssim_components():
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True
+            universal_newlines=True
         )
     except subprocess.CalledProcessError as e:
         print("Error running sst-info:", e)

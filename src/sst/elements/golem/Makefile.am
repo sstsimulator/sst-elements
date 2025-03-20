@@ -46,7 +46,11 @@ EXTRA_DIST = \
 	tests/small/mvm_int_array/single_array/riscv64/single_array \
 	tests/small/mvm_int_array/single_array/riscv64/sst.stdout.gold \
 	tests/small/mvm_int_array/single_array/riscv64/golem.stderr.gold \
-	tests/small/mvm_int_array/single_array/riscv64/golem.stdout.gold
+	tests/small/mvm_int_array/single_array/riscv64/golem.stdout.gold \
+\
+	tests/basic_golem.py \
+	tests/testsuite_default_golem.py
+
 
 if HAVE_NUMPY
 libgolem_la_SOURCES += \
