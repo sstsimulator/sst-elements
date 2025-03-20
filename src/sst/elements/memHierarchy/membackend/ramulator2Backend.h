@@ -47,12 +47,10 @@ public:
 /* Begin class definition */
     ramulator2Memory(ComponentId_t id, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned );
-    //virtual bool issueRequest(DRAMReq *req);
     virtual bool clock(Cycle_t cycle);
     virtual void finish();
 
 protected:
-    std::function<void(Ramulator::Request&)> callBackFunc;
     std::string config_path;
     Ramulator::IFrontEnd* ramulator2_frontend;
     Ramulator::IMemorySystem* ramulator2_memorysystem;
@@ -60,8 +58,6 @@ protected:
     // Track outstanding requests
     std::map<uint64_t, std::deque<ReqId> > dramReqs;
     std::set<ReqId> writes;
-
-    void ramulator2Done(Ramulator::Request& req);
 
 private:
 };

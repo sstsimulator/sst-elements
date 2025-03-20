@@ -92,7 +92,7 @@ memory.addParams({
 
 # Enable statistics
 sst.setStatisticLoadLevel(7)
-sst.setStatisticOutput("sst.statOutputConsole")
+sst.setStatisticOutput("sst.statOutputTxt")
 for a in componentlist:
     sst.enableAllStatisticsForComponentType(a)
 

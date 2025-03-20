@@ -24,8 +24,7 @@ using namespace SST::MemHierarchy;
 
 
 ramulator2Memory::ramulator2Memory(ComponentId_t id, Params &params) :
-    SimpleMemBackend(id, params),
-    callBackFunc(std::bind(&ramulator2Memory::ramulator2Done, this, std::placeholders::_1))
+    SimpleMemBackend(id, params)
 {
     config_path = params.find<std::string>("configFile",
                                             NO_STRING_DEFINED);
@@ -40,37 +39,45 @@ ramulator2Memory::ramulator2Memory(ComponentId_t id, Params &params) :
     ramulator2_frontend->connect_memory_system(ramulator2_memorysystem);
     ramulator2_memorysystem->connect_frontend(ramulator2_frontend);
 
-    //TODO: add call to memory_system->init or frontend->init?
-
     output->output(CALL_INFO, "Instantiated Ramulator2 from config file %s\n", config_path);
 }
 
 bool ramulator2Memory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes){
-    // create request type variable
-    auto req_type = isWrite ? Ramulator::Request::Type::Write : Ramulator::Request::Type::Read;
-    // build Request for Ramulator -- EMBEDS RAMULATOR2DONE CALLBACK -- is this called???
-    Ramulator::Request req(addr, req_type, reqId, callBackFunc);
-    // send request
-    bool enqueue_success = ramulator2_frontend->receive_external_requests(req_type, addr, reqId,
-    [this](Ramulator::Request& req) {
-        if (req.type_id == Ramulator::Request::Type::Write) {
-            // TODO: write request callback -- NOT CONFIRMED BEING CALLED: no writes in sdl4-2?
-#ifdef __SST_DEBUG_OUTPUT__
-            output->debug(_L10_, "Ramulator2Backend: Write callback for %" PRIx64 ".\n", req.addr);
-#endif
-            this->writes.insert(req.source_id);
-        } else {
-            // TODO: read request callback -- CONFIRMED BEING CALLED
-#ifdef __SST_DEBUG_OUTPUT__
-            output->debug(_L10_, "Ramulator2Backend: Read callback for %" PRIx64 ".\n", req.addr);
-#endif
-            this->dramReqs[req.addr].push_back(req.source_id);
+    bool enqueue_success = false;
+
+    if (isWrite) {
+        enqueue_success = ramulator2_frontend->receive_external_requests(1, addr, 0,
+            [this](Ramulator::Request& req) {});
+        if (enqueue_success) {
+            writes.insert(reqId);
         }
-    });
-// TODO: why isn't this output when debug mode is active?
-#ifdef __SST_DEBUG_OUTPUT__
-    output->debug(_L10_, "Ramulator2Backend: Attempting to issue %s request for %" PRIx64 ". Accepted: %d\n", (isWrite ? "WRITE" : "READ"), addr, enqueue_success);
-#endif
+    } else {
+        enqueue_success = ramulator2_frontend->receive_external_requests(0, addr, 0,
+            [this](Ramulator::Request& req) {
+                output->debug(_L10_, "Ramulator2Backend: Read callback\n");
+                std::deque<ReqId> &reqs = dramReqs[req.addr];
+
+                if (reqs.empty())
+                    output->fatal(CALL_INFO, -1, "Ramulator2Backend: Error - ramulator2Done called but dramReqs[addr] is empty. Addr: %" PRIx64 "\n", (Addr)req.addr);
+
+                ReqId memreq = reqs.front();
+                reqs.pop_front();
+                if(0 == reqs.size())
+                    dramReqs.erase(req.addr);
+
+                handleMemResponse(memreq);
+        });
+        if (enqueue_success) {
+            if (dramReqs.find(addr) != dramReqs.end()) dramReqs[addr].push_back(reqId);
+            else {
+                std::deque<ReqId> reqs;
+                reqs.push_back(reqId);
+                dramReqs.insert(std::make_pair(addr,reqs));
+            }
+        }
+    }
+    output->debug(_L10_, "Ramulator2Backend: enqueue %s\n", enqueue_success ? "successful" : "unsuccessful");
+
     return enqueue_success;
 }
 
@@ -90,28 +97,4 @@ bool ramulator2Memory::clock(Cycle_t cycle){
 void ramulator2Memory::finish(){
     ramulator2_frontend->finalize();
     ramulator2_memorysystem->finalize();
-}
-
-/* TODO: in debug mode: this function is not called??? never ending loop of ticks
-    - need to confirm that this always applies in release mode: this function IS called but results in a crash
-   TODO: run known working backend in sdl4-2 to compare stat output
-    - force output to file instead out console
-*/
-void ramulator2Memory::ramulator2Done(Ramulator::Request& ramReq) {
-    uint64_t addr = ramReq.addr;
-    std::deque<ReqId> &reqs = dramReqs[addr];
-
-#ifdef __SST_DEBUG_OUTPUT__
-    output->debug(_L10_, "Ramulator2Backend: Memory Request for %" PRIx64 " Finished [%zu reqs]\n", (Addr)addr, reqs.size());
-#endif
-    // Clean up dramReqs
-    if (reqs.size() < 1)
-        output->fatal(CALL_INFO, -1, "Ramulator2Backend: Error - ramulator2Done called but dramReqs[addr] is empty. Addr: %" PRIx64 "\n", (Addr)addr);
-
-    ReqId req = reqs.front();
-    reqs.pop_front();
-    if(0 == reqs.size())
-        dramReqs.erase(addr);
-
-    handleMemResponse(req);
 }
