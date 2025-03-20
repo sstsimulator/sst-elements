@@ -57,13 +57,13 @@ class SumiServer :
 {
 
  public:
- const std::unique_ptr<SST::Output> & out_;
+ //const std::unique_ptr<SST::Output> & out_;
 
-  SumiServer(SimTransport* tport, std::unique_ptr<SST::Output> & output)
+//SumiServer(SimTransport* tport, std::unique_ptr<SST::Output> & output)
+  SumiServer(SimTransport* tport)
     : Service(tport->serverLibname(),
        SST::Hg::SoftwareId(-1, -1), //belongs to no application
-       tport->parent()->os()),
-       out_(output)
+       tport->parent()->os())
   {
   }
 
@@ -105,11 +105,11 @@ class SumiServer :
 
   void incomingRequest(SST::Hg::Request *req) override {
     Message* smsg = safe_cast(Message, req);
-    if (out_) out_->debug(CALL_INFO, 1, 0, "SumiServer %d: incoming %s\n", os_->addr(), smsg->toString().c_str());
+    //if (out_) out_->debug(CALL_INFO, 1, 0, "SumiServer %d: incoming %s\n", os_->addr(), smsg->toString().c_str());
     SimTransport* tport = procs_[smsg->aid()][smsg->targetRank()];
     if (!tport){
-      if  (out_) out_->debug(CALL_INFO, 1, 0, "SumiServer %d: message pending to app %d, target %d\n",
-        os_->addr(), smsg->aid(), smsg->targetRank());
+      //if  (out_) out_->debug(CALL_INFO, 1, 0, "SumiServer %d: message pending to app %d, target %d\n",
+      //  os_->addr(), smsg->aid(), smsg->targetRank());
       pending_.push_back(smsg);
     } else {
       tport->incomingMessage(smsg);
@@ -192,7 +192,8 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent) :
   SumiServer* server;
   // only do one server per app per node
   if (server_lib == nullptr) {
-    server = new SumiServer(this, out_);
+    //server = new SumiServer(this, out_);
+    server = new SumiServer(this);
     server->start();
   } else {
     server = safe_cast(SumiServer, server_lib);
