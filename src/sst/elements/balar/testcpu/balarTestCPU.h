@@ -29,15 +29,12 @@
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
 #include <sst/core/rng/marsaglia.h>
+#include "balar_packet.h"
 
-#include "host_defines.h"
 #include "builtin_types.h"
-#include "driver_types.h"
 #include "cuda.h"
 
 #include <sst/elements/memHierarchy/util.h>
-#include "util.h"
-#include <iostream>
 #include <fstream>
 #include <queue>
 

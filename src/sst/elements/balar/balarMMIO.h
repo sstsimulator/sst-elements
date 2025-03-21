@@ -23,23 +23,17 @@
 #include <sst/core/rng/marsaglia.h>
 
 #include "sst/elements/memHierarchy/util.h"
-#include "sst/elements/memHierarchy/memTypes.h"
+#include "balar_packet.h"
 
 // Other Includes, from original balar file
 #include "mempool.h"
-#include "host_defines.h"
 #include "builtin_types.h"
 #include "driver_types.h"
-#include "vector_types.h"
 #include "cuda_runtime_api.h"
-#include "balar_event.h"
-#include "util.h"
 
 
 #include <cstring>
 #include <string>
-#include <fstream>
-#include <sstream>
 #include <map>
 
 #include <stdio.h>
