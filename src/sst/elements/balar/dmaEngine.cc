@@ -122,7 +122,7 @@ bool DMAEngine::tick(SST::Cycle_t x) {
                 dma_req->ongoing_count++;
 
                 // Send the copy request to memory system
-                out.verbose(_INFO_, "%s: copy from simulator to SST mem space, reqid (%lld) writing vaddr: %llx paddr: %llx size: %d!\n", 
+                out.verbose(_INFO_, "%s: copy from simulator to SST mem space, reqid (%ld) writing vaddr: %lx paddr: %lx size: %ld!\n", 
                             this->getName().c_str(), req->getID(), req->vAddr, req->pAddr, req->size);
                 // Add the request to cache request map
                 memory_requests[req->getID()] = dma_req;
@@ -145,7 +145,7 @@ bool DMAEngine::tick(SST::Cycle_t x) {
                 dma_req->ongoing_count++;
 
                 // Send the read request
-                out.verbose(_INFO_, "%s: copy from SST to simulator mem space, reqid (%lld) reading vaddr: %llx paddr: %llx size: %d!\n", 
+                out.verbose(_INFO_, "%s: copy from SST to simulator mem space, reqid (%ld) reading vaddr: %lx paddr: %lx size: %ld!\n", 
                             this->getName().c_str(), req->getID(), req->vAddr, req->pAddr, req->size);
                 memory_requests[req->getID()] = dma_req;
 
@@ -239,12 +239,12 @@ void DMAEngine::DMAHandlers::handle(StandardMem::Write* write) {
  * @param read 
  */
 void DMAEngine::DMAHandlers::handle(StandardMem::ReadResp* resp) {
-    dma->out.verbose(_INFO_, "%s: readresp from SST mem space, reading vaddr: %llx paddr: %llx size: %d!\n", dma->getName().c_str(), resp->vAddr, resp->pAddr, resp->size);
+    dma->out.verbose(_INFO_, "%s: readresp from SST mem space, reading vaddr: %lx paddr: %lx size: %ld!\n", dma->getName().c_str(), resp->vAddr, resp->pAddr, resp->size);
 
     // Find the DMA request corresponds to this read by map
     auto it = dma->memory_requests.find(resp->getID());
     if (it == dma->memory_requests.end()) {
-        dma->out.fatal(CALL_INFO, -1, "%s: DMA request not found for read response! ID: %lld\n", dma->getName().c_str(), resp->getID());
+        dma->out.fatal(CALL_INFO, -1, "%s: DMA request not found for read response! ID: %ld\n", dma->getName().c_str(), resp->getID());
     }
     DMAEngineRequest_t *dma_req = it->second;
 
@@ -280,12 +280,12 @@ void DMAEngine::DMAHandlers::handle(StandardMem::ReadResp* resp) {
  * @param write 
  */
 void DMAEngine::DMAHandlers::handle(StandardMem::WriteResp* resp) {
-    dma->out.verbose(_INFO_, "%s: writeresp from SST mem space, reading vaddr: %llx paddr: %llx size: %d!\n", dma->getName().c_str(), resp->vAddr, resp->pAddr, resp->size);
+    dma->out.verbose(_INFO_, "%s: writeresp from SST mem space, reading vaddr: %lx paddr: %lx size: %ld!\n", dma->getName().c_str(), resp->vAddr, resp->pAddr, resp->size);
     
     // Find the DMA request corresponds to this read by map
     auto it = dma->memory_requests.find(resp->getID());
     if (it == dma->memory_requests.end()) {
-        dma->out.fatal(CALL_INFO, -1, "%s: DMA request not found for read response! ID: %lld\n", dma->getName().c_str(), resp->getID());
+        dma->out.fatal(CALL_INFO, -1, "%s: DMA request not found for read response! ID: %ld\n", dma->getName().c_str(), resp->getID());
     }
     DMAEngineRequest_t *dma_req = it->second;
     

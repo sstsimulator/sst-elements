@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "builtin_types.h"
+#include "driver_types.h"
 #include "balar_consts.h"
 
 namespace SST {

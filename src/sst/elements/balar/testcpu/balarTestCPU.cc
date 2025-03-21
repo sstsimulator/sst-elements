@@ -194,7 +194,7 @@ void BalarTestCPU::mmioHandlers::handle(Interfaces::StandardMem::ReadResp* resp)
     // Find the request from pending requests map
     std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = cpu->requests.find(resp->getID());
     if ( cpu->requests.end() == i ) {
-        out->fatal(_INFO_, "Event (%ld) not found!\n", resp->getID());
+        out->fatal(CALL_INFO, -1, "Event (%ld) not found!\n", resp->getID());
     } else {
         std::string request_type = (i)->second.second;
         out->verbose(_INFO_, "%s: get response from read request (%ld) with type: %s\n", cpu->getName().c_str(), resp->getID(), request_type.c_str());
@@ -521,7 +521,7 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
 
                 if (cudaCallType.find("memcpyH2D") != std::string::npos) {
                     // Prepare pack for host to device
-                    out->verbose(CALL_INFO, 2, 0, "MemcpyH2D Device pointer (%s) addr: 0x%llx val: 0x%llx\n", dptr_name.c_str(), dptr, *dptr);
+                    out->verbose(CALL_INFO, 2, 0, "MemcpyH2D Device pointer (%s) addr: %p val: 0x%llx\n", dptr_name.c_str(), dptr, *dptr);
 
                     pack.cuda_memcpy.kind = cudaMemcpyHostToDevice;
                     pack.cuda_memcpy.dst = *dptr;
@@ -533,7 +533,7 @@ Interfaces::StandardMem::Request* BalarTestCPU::CudaAPITraceParser::getNextCall(
                     req = cpu->createGPUReqFromPacket(pack);   
                 } else if (cudaCallType.find("memcpyD2H") != std::string::npos) {
                     // Prepare for device to host
-                    out->verbose(CALL_INFO, 2, 0, "MemcpyD2H Device pointer (%s) addr: 0x%llx val: 0x%llx\n", dptr_name.c_str(), dptr, *dptr);
+                    out->verbose(CALL_INFO, 2, 0, "MemcpyD2H Device pointer (%s) addr: %p val: 0x%llx\n", dptr_name.c_str(), dptr, *dptr);
 
                     // Prepare enough host space
                     uint8_t *buf = (uint8_t *) malloc(sizeof(uint8_t) * size);

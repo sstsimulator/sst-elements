@@ -20,10 +20,6 @@
 #include <vector>
 #include <string>
 #include <map>
-#include "host_defines.h"
-#include "builtin_types.h"
-#include "driver_types.h"
-#include "balar_packet.h"
 
 using namespace std;
 

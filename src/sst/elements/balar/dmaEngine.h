@@ -22,7 +22,6 @@
 #include <sst/core/interfaces/stdMem.h>
 
 #include "sst/elements/memHierarchy/util.h"
-#include "sst/elements/memHierarchy/memTypes.h"
 
 using namespace std;
 using namespace SST;
