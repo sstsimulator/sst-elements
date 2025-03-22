@@ -52,10 +52,6 @@
 #include "ariel_shmem.h"
 #include "arieltracegen.h"
 
-#ifdef HAVE_CUDA
-#include "arielgpuev.h"
-#endif
-
 using namespace SST;
 using namespace SST::Interfaces;
 using namespace SST::ArielComponent;
@@ -73,9 +69,6 @@ class ArielCore : public ComponentExtension {
 
     public:
         ArielCore(ComponentId_t id, ArielTunnel *tunnel,
-#ifdef HAVE_CUDA
-            GpuReturnTunnel *tunnelR, GpuDataTunnel *tunnelD,
-#endif
             uint32_t thisCoreID, uint32_t maxPendTans, Output* out,
             uint32_t maxIssuePerCyc, uint32_t maxQLen, uint64_t cacheLineSz,
             ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params,
@@ -84,36 +77,6 @@ class ArielCore : public ComponentExtension {
 
         bool isCoreHalted() const;
         bool isCoreStalled() const;
-#ifdef HAVE_CUDA
-        cudaMemcpyKind getKind() const;
-        bool getMidTransfer() const;
-        size_t getTotalTransfer() const;
-        size_t getPageAckTransfer() const;
-        size_t getPageTransfer() const;
-        size_t getAckTransfer() const;
-        size_t getRemainingTransfer() const;
-        size_t getRemainingPageTransfer() const;
-        uint64_t getBaseAddress() const;
-        uint64_t getCurrentAddress() const;
-        uint8_t* getDataAddress() const;
-        uint8_t* getBaseDataAddress() const;
-        int getOpenTransactions() const;
-        void setMidTransfer(bool midTx);
-        void setKind(cudaMemcpyKind memcpyKind);
-        void setTotalTransfer(size_t tx);
-        void setPageTransfer(size_t tx);
-        void setPageAckTransfer(size_t tx);
-        void setRemainingPageTransfer(size_t tx);
-        void setAckTransfer(size_t tx);
-        void setRemainingTransfer(size_t tx);
-        void setBaseAddress(uint64_t virtAddress);
-        void setCurrentAddress(uint64_t virtAddress);
-        void setDataAddress(uint8_t* virtAddress);
-        void setBaseDataAddress(uint8_t* virtAddress);
-        void setPhysicalAddresses(SST::Event *ev);
-        bool isGpuEx() const;
-        void gpu();
-#endif
         bool isCoreFenced() const;
         bool hasDrainCompleted() const;
         void tick();
@@ -146,12 +109,6 @@ class ArielCore : public ComponentExtension {
         void createRtlEvent(void*, void*, void*, size_t, size_t, size_t);
         void setRtlLink(Link* rtllink);
 
-#ifdef HAVE_CUDA
-        void createGpuEvent(GpuApi_t API, CudaArguments CA);
-        void setGpu() { gpu_enabled = true; }
-        void setGpuLink(Link* gpulink);
-#endif
-
         void handleEvent(StandardMem::Request* event);
         void handleReadRequest(ArielReadEvent* wEv);
         void handleWriteRequest(ArielWriteEvent* wEv);
@@ -164,23 +121,14 @@ class ArielCore : public ComponentExtension {
         void handleRtlEvent(ArielRtlEvent* RtlEv);
         void handleRtlAckEvent(SST::Event* e);
 
-#ifdef HAVE_CUDA
-        void handleGpuEvent(ArielGpuEvent* gEv);
-        void handleGpuAckEvent(SST::Event* e);
-        void handleGpuMemcpy(ArielGpuEvent* gEv);
-#endif
-        
         /* Handler class for StandardMem responses */
         class StdMemHandler : public StandardMem::RequestHandler {
         public:
             friend class ArielCore;
             StdMemHandler(ArielCore* coreInst, SST::Output* out) : StandardMem::RequestHandler(out), core(coreInst) {}
             virtual ~StdMemHandler() {}
-            virtual void handle(StandardMem::ReadResp* rsp) override;
-            virtual void handle(StandardMem::WriteResp* rsp) override;
 
             ArielCore* core;
-            uint64_t last_phys_addr; // Needed to pass some info back to ariel core during GPU even handling
         };
 
 
@@ -204,24 +152,6 @@ class ArielCore : public ComponentExtension {
         uint32_t coreID;
         uint32_t maxPendingTransactions;
 
-#ifdef HAVE_CUDA
-        size_t totalTransfer;
-        bool gpu_enabled;
-        size_t pageTransfer;
-        size_t ackTransfer;
-        size_t pageAckTransfer;
-        size_t remainingTransfer;
-        size_t remainingPageTransfer;
-        uint64_t baseAddress;
-        uint64_t currentAddress;
-        uint8_t* dataAddress;
-        uint8_t* baseDataAddress;
-        bool midTransfer;
-        std::vector<uint64_t> physicalAddresses;
-        cudaMemcpyKind kind;
-        bool isGpu;
-#endif
-
         Output* output;
         std::queue<ArielEvent*>* coreQ;
         bool isStalled;
@@ -233,13 +163,6 @@ class ArielCore : public ComponentExtension {
         StdMemHandler* stdMemHandlers;
         Link* RtlLink;
         TimeConverter *timeconverter; // TimeConverter for the associated ArielCPU
-
-#ifdef HAVE_CUDA
-        Link* GpuLink;
-        GpuReturnTunnel *tunnelR;
-        GpuDataTunnel *tunnelD;
-        std::unordered_map<StandardMem::Request::id_t, StandardMem::Request*>* pendingGpuTransactions;
-#endif
 
         std::unordered_map<StandardMem::Request::id_t, RequestInfo>* pendingTransactions;
         uint32_t maxIssuePerCycle;
@@ -287,8 +210,6 @@ class ArielCore : public ComponentExtension {
         Statistic<uint64_t>* statFPSPOps;
 
         uint32_t pending_transaction_count;
-        uint32_t pending_gpu_transaction_count;
-
 };
 
 }

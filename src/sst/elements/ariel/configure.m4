@@ -8,9 +8,6 @@ AC_DEFUN([SST_ariel_CONFIG], [
   SST_CHECK_PTRACE_SET_TRACER()
   SST_CHECK_SHM()
 
-  # Use Cuda
-  SST_CHECK_CUDA()
-
   # Use LIBZ
   SST_CHECK_LIBZ()
 

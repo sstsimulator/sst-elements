@@ -12,7 +12,6 @@ comp_LTLIBRARIES = libbalar.la
 
 libbalar_la_SOURCES = \
 	balar_consts.h \
-	balar_event.h \
 	balar_packet.h \
 	balarMMIO.cc \
 	balarMMIO.h \

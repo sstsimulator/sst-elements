@@ -16,6 +16,7 @@
 #include <sst_config.h>
 #include "balarMMIO.h"
 #include "dmaEngine.h"
+#include "output.h"
 #include "util.h"
 
 using namespace SST;
@@ -604,7 +605,7 @@ void BalarMMIO::handleGPUCache(SST::Interfaces::StandardMem::Request* req) {
  * @param write 
  */
 void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::Write* write) {
-    out->verbose(_INFO_, "%s: receiving incoming write (%ld) to vaddr: %llx and paddr: %llx with size %lld\n", balar->getName().c_str(), write->getID(), write->vAddr, write->pAddr, write->size);
+    out->verbose(_INFO_, "%s: receiving incoming write (%ld) to vaddr: %lx and paddr: %lx with size %ld\n", balar->getName().c_str(), write->getID(), write->vAddr, write->pAddr, write->size);
 
     // Save this write instance as we will need it to make response
     // when finish calling GPGPUSim after getting readresp
@@ -659,7 +660,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::Write* write
  * @param read 
  */
 void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::Read* read) {
-    out->verbose(_INFO_, "%s: receiving incoming read (%ld) to vaddr: %llx and paddr: %llx with size %lld\n", balar->getName().c_str(), read->getID(), read->vAddr, read->pAddr, read->size);
+    out->verbose(_INFO_, "%s: receiving incoming read (%ld) to vaddr: %lx and paddr: %lx with size %ld\n", balar->getName().c_str(), read->getID(), read->vAddr, read->pAddr, read->size);
 
     out->verbose(_INFO_, "Handling Read for return value for a %s request\n", CudaAPIEnumToString(balar->cuda_ret.cuda_call_id));
 
@@ -704,11 +705,11 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::Read* read) 
  * @param resp 
  */
 void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::ReadResp* resp) {
-    out->verbose(_INFO_, "%s: receiving incoming readresp (%ld) to vaddr: %llx and paddr: %llx with size %lld\n", balar->getName().c_str(), resp->getID(), resp->vAddr, resp->pAddr, resp->size);
+    out->verbose(_INFO_, "%s: receiving incoming readresp (%ld) to vaddr: %lx and paddr: %lx with size %ld\n", balar->getName().c_str(), resp->getID(), resp->vAddr, resp->pAddr, resp->size);
     // Classify the read request type
     auto i = balar->requests.find(resp->getID());
     if (balar->requests.end() == i) {
-        out->fatal(_INFO_, "Event (%ld) not found!\n", resp->getID());
+        out->fatal(CALL_INFO, -1, "Event (%ld) not found!\n", resp->getID());
     } else {
         std::string request_type = std::get<1>((i)->second);
         out->verbose(_INFO_, "%s: get response from read request (%ld) with type: %s\n", balar->getName().c_str(), resp->getID(), request_type.c_str());
@@ -731,11 +732,11 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::ReadResp* re
  * @param resp 
  */
 void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* resp) {
-    out->verbose(_INFO_, "%s: receiving incoming writeresp (%ld) to vaddr: %llx and paddr: %llx with size %lld\n", balar->getName().c_str(), resp->getID(), resp->vAddr, resp->pAddr, resp->size);
+    out->verbose(_INFO_, "%s: receiving incoming writeresp (%ld) to vaddr: %lx and paddr: %lx with size %ld\n", balar->getName().c_str(), resp->getID(), resp->vAddr, resp->pAddr, resp->size);
 
     auto i = balar->requests.find(resp->getID());
     if (balar->requests.end() == i ) {
-        out->fatal(_INFO_, "Event (%ld) not found!\n", resp->getID());
+        out->fatal(CALL_INFO, -1, "Event (%ld) not found!\n", resp->getID());
     } else {
         std::string request_type = std::get<1>((i)->second);
         BalarCudaCallPacket_t *request_associated_packet = std::get<2>((i)->second);
@@ -1410,7 +1411,7 @@ void BalarMMIO::BalarHandlers::handle(SST::Interfaces::StandardMem::WriteResp* r
             StandardMem::ReadResp* read_resp = static_cast<StandardMem::ReadResp*>(read->makeResponse());
 
             // Return the scratch memory address as the read result
-            out->verbose(_INFO_, "%s: handling previous read request (%ld) for CUDA return packet to vaddr: %llx and paddr: %llx with size %lld at inst: %llx, returning the address of the packet: %lx\n", balar->getName().c_str(), read->getID(), read->vAddr, read->pAddr, read->size, read->iPtr, balar->packet_scratch_mem_addr);
+            out->verbose(_INFO_, "%s: handling previous read request (%ld) for CUDA return packet to vaddr: %lx and paddr: %lx with size %ld at inst: %lx, returning the address of the packet: %lx\n", balar->getName().c_str(), read->getID(), read->vAddr, read->pAddr, read->size, read->iPtr, balar->packet_scratch_mem_addr);
 
             vector<uint8_t> payload;
             UInt64ToData(balar->packet_scratch_mem_addr, &payload);

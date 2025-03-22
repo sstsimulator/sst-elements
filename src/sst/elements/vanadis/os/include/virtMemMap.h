@@ -56,7 +56,7 @@ public:
     MemoryBacking( SST::Output* output, FILE* fp, VanadisELFInfo* elf ) {
         char* tmp = nullptr;
         size_t num = 0;
-        getline( &tmp, &num, fp );
+        (void) !getline( &tmp, &num, fp );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",tmp);
         assert( 0 == strcmp(tmp,"#MemoryBacking start\n") );
         free(tmp);
@@ -85,7 +85,7 @@ public:
                 data[i] = value;
                 ss << "0x" << value << ",";
             }
-            fscanf(fp,"\n" );
+            (void) !fscanf(fp,"\n" );
             output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s\n",ss.str().c_str());
 
         } else {
@@ -94,7 +94,7 @@ public:
 
         tmp = nullptr;
         num = 0;
-        getline( &tmp, &num, fp );
+        (void) !getline( &tmp, &num, fp );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",tmp);
         assert( 0 == strcmp(tmp,"#MemoryBacking end\n") );
         free(tmp);
@@ -204,7 +204,7 @@ struct MemoryRegion {
     MemoryRegion( SST::Output* output, FILE* fp, PhysMemManager* memManager, VanadisELFInfo* elfInfo ) : backing(nullptr) {
         char* tmp = nullptr;
         size_t num = 0;
-        getline( &tmp, &num, fp );
+        (void) !getline( &tmp, &num, fp );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",tmp);
         assert( 0 == strcmp(tmp,"#MemoryRegion start\n"));
         free(tmp);
@@ -242,7 +242,7 @@ struct MemoryRegion {
 
         tmp = nullptr;
         num = 0;
-        getline( &tmp, &num, fp );
+        (void) !getline( &tmp, &num, fp );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",tmp);
         assert( 0 == strcmp(tmp,"#MemoryRegion end\n"));
         free(tmp);
@@ -476,7 +476,7 @@ public:
     VirtMemMap( SST::Output* output, FILE* fp, PhysMemManager* memManager, VanadisELFInfo* elfInfo) {
         char* str = nullptr;
         size_t num = 0;
-        getline( &str, &num, fp );
+        (void) !getline( &str, &num, fp );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",str);
         assert( 0 == strcmp(str,"#VirtMemMap start\n"));
         free(str);
@@ -501,7 +501,7 @@ public:
 
         str = nullptr;
         num = 0;
-        getline( &str, &num, fp );
+        (void) !getline( &str, &num, fp );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s",str);
         assert( 0 == strcmp(str,"#VirtMemMap end\n"));
         free(str);

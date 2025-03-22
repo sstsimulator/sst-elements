@@ -2366,8 +2366,8 @@ VANADIS_COMPONENT::checkpoint(FILE* fp )
         fprintf(fp,"Hardware thread: %d\n",i);
         if ( m_checkpointing[i] ) {
             fprintf(fp,"active: yes\n");
-            fprintf(fp,"rob[0] %#llx %s\n", rob[i]->peekAt(0)->getInstructionAddress(), rob[i]->peekAt(0)->getInstCode()  );
-            fprintf(fp,"rob[1] %#llx %s\n", rob[i]->peekAt(1)->getInstructionAddress(), rob[i]->peekAt(1)->getInstCode() );
+            fprintf(fp,"rob[0] %#" PRIx64 " %s\n", rob[i]->peekAt(0)->getInstructionAddress(), rob[i]->peekAt(0)->getInstCode()  );
+            fprintf(fp,"rob[1] %#" PRIx64 " %s\n", rob[i]->peekAt(1)->getInstructionAddress(), rob[i]->peekAt(1)->getInstCode() );
 
             auto isa_table = retire_isa_tables[i];
             auto reg_file = register_files[i];
