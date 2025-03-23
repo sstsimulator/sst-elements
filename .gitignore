@@ -27,3 +27,4 @@ build/
 .\#*
 \#*\#
 .gdb_history
+*~
