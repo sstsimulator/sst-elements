@@ -83,8 +83,8 @@ namespace Shogun {
         virtual Request* recv(int vn) override;
 
         virtual void setup() override;
-        virtual void init(unsigned int UNUSED(phase)) override;
-        virtual void complete(unsigned int UNUSED(phase)) override;
+        virtual void init(unsigned int phase) override;
+        virtual void complete(unsigned int phase) override;
         virtual void finish() override;
 
         /**

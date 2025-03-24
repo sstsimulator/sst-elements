@@ -97,14 +97,14 @@ public:
     virtual void setup() override;
 
     /* Shutdown functions for parent */
-    virtual void complete(unsigned int UNUSED(phase)) override;
+    virtual void complete(unsigned int phase) override;
 
     /* Remote endpoint info management */
     virtual std::set<EndpointInfo>* getSources();
     virtual std::set<EndpointInfo>* getDests();
     virtual std::set<EndpointInfo>* getPeers();
-    virtual bool isDest(std::string UNUSED(str));
-    virtual bool isSource(std::string UNUSED(str));
+    virtual bool isDest(std::string str);
+    virtual bool isSource(std::string str);
     virtual bool isPeer(std::string str);
     virtual std::string findTargetDestination(Addr addr);
     virtual std::string getTargetDestination(Addr addr);
@@ -135,7 +135,7 @@ protected:
     std::set<EndpointInfo> endpoints_;          // Tracks endpoints in the system with info on how to get there
     std::set<std::string> reachable_names_;     // Tracks reachable names for faster lookup than iterating via remotes/peers
     std::set<std::string> peer_names_;          // Tracks peer names for faster lookup than iterating via peers
-    
+
     // For events that require destination names during init
     std::set<MemEventInit*> init_send_queue_;
 
