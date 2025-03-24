@@ -72,7 +72,7 @@ public:
             return str.str();
         }
     };
-    
+
     // Identifiers that can be attached to init messages to detect memory system topology
     enum class ReachableGroup{Source, Dest, Peer, Unknown};
 
@@ -164,10 +164,10 @@ public:
     /* Functions for managing communication according to address */
     virtual std::string findTargetDestination(Addr addr) =0;    /* Return destination and return "" if none found */
     virtual std::string getTargetDestination(Addr addr) =0;     /* Return destination and error if none found */
-    
+
     /* Check if a request address maps to our region */
     virtual bool isRequestAddressValid(Addr addr) { return info.region.contains(addr); }
-    
+
     /* Get a string-ized list of available destinations on this link */
     virtual std::string getAvailableDestinationsAsString() =0; // For debug
 
@@ -175,11 +175,10 @@ public:
     virtual std::set<EndpointInfo>* getSources() =0;
     virtual std::set<EndpointInfo>* getDests() =0;
     virtual std::set<EndpointInfo>* getPeers() =0; // If peers are reachable via this link, may be empty if no peers or not reachable
-
-    virtual bool isDest(std::string UNUSED(str)) =0;    /* Check whether a component is a destination on this link. May be slow (for init() only) */
-    virtual bool isSource(std::string UNUSED(str)) =0;  /* Check whether a component is a source on this link. May be slow (for init() only) */
-    virtual bool isPeer(std::string UNUSED(str)) =0;    /* Check whether a component is a peer on this link. May be slow (for init() only) */
-    virtual bool isReachable(std::string dst) =0;       /* Check whether a component is reachable on this link. Should be fast - used during simulation */
+    virtual bool isDest(std::string str) =0;       // Check whether a component is a destination on this link. May be slow (for init() only)
+    virtual bool isSource(std::string str) =0;     // Check whether a component is a source on this link. May be slow (for init() only)
+    virtual bool isPeer(std::string str) =0;       // Check whether a component is a peer on this link. May be slow (for init() only)
+    virtual bool isReachable(std::string dst) =0;  // Check whether a component is reachable on this link. Should be fast - used during simulation
 
     MemRegion getRegion() { return info.region; }
     void setRegion(MemRegion region) { info.region = region; }
@@ -188,7 +187,7 @@ public:
     void setEndpointInfo(EndpointInfo i) { info = i; }
 
     // Optional. This sets the name used for src/destination/requestor/etc.
-    // This should be set correctly by default but occasionally 
+    // This should be set correctly by default but occasionally
     // a specific implementation may require a different setting
     void setName(std::string name) { info.name = name; }
 
