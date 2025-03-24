@@ -63,14 +63,15 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
         m_checkpoint = NO_CHECKPOINT;
     }
     m_coreCount = params.find<uint64_t>("cores", 0);
-    const uint32_t hardwareThreadCount = params.find<uint32_t>("hardwareThreadCount", 1);
+    m_hardwareThreadCount = params.find<uint32_t>("hardwareThreadCount", 1);
+    m_numLogicalCores = m_coreCount * m_hardwareThreadCount;
     
     if (m_coreCount == 0) {
         output->fatal(CALL_INFO, -1, "Missing parameter (%s): 'cores' must be specified and at least 1.\n", getName().c_str());
     }
 
     for ( int i = 0; i < m_coreCount; i++ ) {
-        for ( int j = 0; j < hardwareThreadCount; j++ ) {
+        for ( int j = 0; j < m_hardwareThreadCount; j++ ) {
             m_availHwThreads.push( new OS::HwThreadID( i,j ) );
         } 
     } 
@@ -114,7 +115,7 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
 
     m_nodeNum = params.find<int>("node_id", -1);
 
-    m_coreInfoMap.resize( m_coreCount, hardwareThreadCount ); 
+    m_coreInfoMap.resize( m_coreCount, m_hardwareThreadCount ); 
 
     int numProcess = 0;
 
@@ -141,7 +142,7 @@ if ( CHECKPOINT_LOAD != m_checkpoint ) {
             }
 
             unsigned tid = getNewTid();
-            m_threadMap[tid] = new OS::ProcessInfo( m_mmu, m_physMemMgr, m_nodeNum, tid, m_elfMap[exe], m_processDebugLevel, m_pageSize, m_coreCount, tmp );
+            m_threadMap[tid] = new OS::ProcessInfo( m_mmu, m_physMemMgr, m_nodeNum, tid, m_elfMap[exe], m_processDebugLevel, m_pageSize, m_numLogicalCores, tmp );
             ++numProcess;
         } else {
           break;
@@ -169,7 +170,7 @@ if ( CHECKPOINT_LOAD != m_checkpoint ) {
                                                          getTimeConverter("1ps"),
                                                          new StandardMem::Handler<SST::Vanadis::VanadisNodeOSComponent>(
                                                              this, &VanadisNodeOSComponent::handleIncomingMemory));
-    output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_INIT, "Configuring for %" PRIu64 " core links...\n", m_coreCount);
+    output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_INIT, "Configuring for %" PRIu32 " core links...\n", m_coreCount);
     core_links.reserve(m_coreCount);
 
     char* port_name_buffer = new char[128];
@@ -359,7 +360,7 @@ int VanadisNodeOSComponent::checkpointLoad( std::string dir )
         assert( 3 == fscanf(fp,"thread: %d, pid: %d %s\n",&tid,&pid,str ) );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"thread: %d, pid: %d %s\n",tid,pid, str);
         if ( tid == pid ) { 
-            m_threadMap[tid] = new OS::ProcessInfo( output, dir, m_mmu, m_physMemMgr, m_nodeNum, tid, m_elfMap[str], m_processDebugLevel, m_pageSize, size);
+            m_threadMap[tid] = new OS::ProcessInfo( output, dir, m_mmu, m_physMemMgr, m_nodeNum, tid, m_elfMap[str], m_processDebugLevel, m_pageSize, m_numLogicalCores);
             processMap[pid] = m_threadMap[tid];
         } else {
             m_threadMap[tid] = new OS::ProcessInfo;
@@ -958,66 +959,4 @@ void VanadisNodeOSComponent::PageMemWriteReq::sendReq() {
         offset += buffer.size();
         mem_if->send(req);
     }
-}
-
-
-void VanadisNodeOSComponent::updateProcessAffinity(unsigned pid) {
-    // Find the process
-    auto it = m_threadMap.find(pid);
-    if (it == m_threadMap.end()) {
-        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
-                        "[updateProcessAffinity] PID %u not found.\n", pid);
-        return; // No such process
-    }
-    OS::ProcessInfo* process = it->second;
-
-    // Get the current core the process is running on
-    unsigned currentCore = process->getCore();
-
-    // Check if the current core is still allowed
-    if (!process->isCoreAllowed(currentCore)) {
-
-        // Find an allowed core
-        bool migrated = false;
-        for (unsigned newCore = 0; newCore < m_coreCount; ++newCore) {
-            if (process->isCoreAllowed(newCore)) {
-                migrateProcessToCore(process, newCore);
-                migrated = true;
-                break;
-            }
-        }
-
-        if (!migrated) {
-            // No allowed core found; the process effectively can't run
-            output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL,
-                            "[updateProcessAffinity] Process %u has no allowed cores.\n", pid);
-            // Handle as desired (e.g., suspend the process, or keep it blocked)
-        }
-    } else {
-        // Current core is fine; no action needed
-        output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
-                        "[updateProcessAffinity] PID %u remains on core %u.\n", pid, currentCore);
-    }
-}
-
-
-void VanadisNodeOSComponent::migrateProcessToCore(OS::ProcessInfo* process, unsigned newCore)
-{
-    unsigned oldCore   = process->getCore();
-    unsigned hwThread  = process->getHwThread();
-    unsigned pid       = process->getpid();
-
-    output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
-        "[migrateProcessToCore] migrating PID %u from core %u to core %u\n",
-        pid, oldCore, newCore);
-
-    m_coreInfoMap[oldCore].setProcess(hwThread, nullptr);
-
-    OS::HwThreadID newID(newCore, hwThread);
-    process->setHwThread(newID);
-
-    m_coreInfoMap[newCore].setProcess(hwThread, process);
-
-    output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
-        "[migrateProcessToCore] PID %u now on core %u\n", pid, newCore);
 }
