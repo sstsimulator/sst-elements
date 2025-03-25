@@ -11,7 +11,7 @@ cpu0.addParams({
     "clock" : "2GHz",
     "rngseed" : 989,
     "maxOutstanding" : 64,
-    "opCount" : 10,
+    "opCount" : 3000,
     "reqsPerIssue" : 4,
     "write_freq" : 25, # 25% writes
     "read_freq" : 75,  # 75% reads
@@ -38,7 +38,7 @@ cpu1.addParams({
     "clock" : "2GHz",
     "rngseed" : 987,
     "maxOutstanding" : 64,
-    "opCount" : 10,
+    "opCount" : 3000,
     "reqsPerIssue" : 4,
     "write_freq" : 25, # 25% writes
     "read_freq" : 75,  # 75% reads
