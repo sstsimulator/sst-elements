@@ -1,8 +1,8 @@
-// Copyright 2009-2025 NTESS. Under the terms
+// Copyright 2009-2024 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2025, NTESS
+// Copyright (c) 2009-2024, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -14,12 +14,17 @@
 // distribution.
 
 
-#ifndef _H_SST_MEMH_RAMULATOR_BACKEND
-#define _H_SST_MEMH_RAMULATOR_BACKEND
+#ifndef _H_SST_MEMH_RAMULATOR2_BACKEND
+#define _H_SST_MEMH_RAMULATOR2_BACKEND
 
 #include "sst/elements/memHierarchy/membackend/memBackend.h"
 
-#include "Gem5Wrapper.h"
+
+#include "base/base.h"
+#include "base/request.h"
+#include "frontend/frontend.h"
+#include "memory_system/memory_system.h"
+
 
 #ifdef OLD_DEBUG
 #define DEBUG OLD_DEBUG
@@ -29,32 +34,30 @@
 namespace SST {
 namespace MemHierarchy {
 
-class ramulatorMemory : public SimpleMemBackend {
+class ramulator2Memory : public SimpleMemBackend {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(ramulatorMemory, "memHierarchy", "ramulator", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Ramulator-driven memory timings", SST::MemHierarchy::SimpleMemBackend)
+    SST_ELI_REGISTER_SUBCOMPONENT(ramulator2Memory, "memHierarchy", "ramulator2", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Ramulator2-driven memory timings", SST::MemHierarchy::SimpleMemBackend)
 
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
-            {"configFile",  "Name of the Ramulator Device config file", NULL} )
+            {"configFile",  "Name of the Ramulator2 Device config file", NULL} )
 
 /* Begin class definition */
-    ramulatorMemory(ComponentId_t id, Params &params);
+    ramulator2Memory(ComponentId_t id, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned );
-    //virtual bool issueRequest(DRAMReq *req);
     virtual bool clock(Cycle_t cycle);
     virtual void finish();
 
 protected:
-    ramulator::Gem5Wrapper *memSystem;
-    std::function<void(ramulator::Request&)> callBackFunc;
+    std::string config_path;
+    Ramulator::IFrontEnd* ramulator2_frontend;
+    Ramulator::IMemorySystem* ramulator2_memorysystem;
 
     // Track outstanding requests
     std::map<uint64_t, std::deque<ReqId> > dramReqs;
     std::set<ReqId> writes;
-
-    void ramulatorDone(ramulator::Request& req);
 
 private:
 };

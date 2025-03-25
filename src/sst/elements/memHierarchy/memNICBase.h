@@ -524,14 +524,14 @@ class MemNICBase : public MemLinkBase {
                 MemEventBase* ev = (static_cast<MemRtrEvent*>(head->inspectPayload()))->inspectEvent();
                 std::string debugEvStr = ev ? ev->getBriefString() : "";
                 uint64_t dst = head->dest;
-                bool doDebug = ev ? is_debug_event(ev) : false;
+                bool doDebug = ev ? mem_h_is_debug_event(ev) : false;
 #endif
                 if (linkcontrol->spaceToSend(0, head->size_in_bits) && linkcontrol->send(head, 0)) {
 
 #ifdef __SST_DEBUG_OUTPUT__
                     if (!debugEvStr.empty() && doDebug) {
                         dbg.debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s), Dst: %" PRIu64 "\n",
-                                getCurrentSimCycle(), uint64_t{0}, getName().c_str(), debugEvStr.c_str(), dst);
+                                getCurrentSimCycle(), 0ULL, getName().c_str(), debugEvStr.c_str(), dst);
                     }
 #endif
                     queue->pop();

@@ -175,10 +175,11 @@ public:
     virtual std::set<EndpointInfo>* getSources() =0;
     virtual std::set<EndpointInfo>* getDests() =0;
     virtual std::set<EndpointInfo>* getPeers() =0; // If peers are reachable via this link, may be empty if no peers or not reachable
-    virtual bool isDest(std::string str) =0;       // Check whether a component is a destination on this link. May be slow (for init() only)
-    virtual bool isSource(std::string str) =0;     // Check whether a component is a source on this link. May be slow (for init() only)
-    virtual bool isPeer(std::string str) =0;       // Check whether a component is a peer on this link. May be slow (for init() only)
-    virtual bool isReachable(std::string dst) =0;  // Check whether a component is reachable on this link. Should be fast - used during simulation
+
+    virtual bool isDest(std::string UNUSED(str)) =0;    /* Check whether a component is a destination on this link. May be slow (for init() only) */
+    virtual bool isSource(std::string UNUSED(str)) =0;  /* Check whether a component is a source on this link. May be slow (for init() only) */
+    virtual bool isPeer(std::string UNUSED(str)) =0;    /* Check whether a component is a peer on this link. May be slow (for init() only) */
+    virtual bool isReachable(std::string dst) =0;       /* Check whether a component is reachable on this link. Should be fast - used during simulation */
 
     MemRegion getRegion() { return info.region; }
     void setRegion(MemRegion region) { info.region = region; }

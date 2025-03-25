@@ -97,14 +97,14 @@ public:
     virtual void setup() override;
 
     /* Shutdown functions for parent */
-    virtual void complete(unsigned int phase) override;
+    virtual void complete(unsigned int UNUSED(phase)) override;
 
     /* Remote endpoint info management */
     virtual std::set<EndpointInfo>* getSources();
     virtual std::set<EndpointInfo>* getDests();
     virtual std::set<EndpointInfo>* getPeers();
-    virtual bool isDest(std::string str);
-    virtual bool isSource(std::string str);
+    virtual bool isDest(std::string UNUSED(str));
+    virtual bool isSource(std::string UNUSED(str));
     virtual bool isPeer(std::string str);
     virtual std::string findTargetDestination(Addr addr);
     virtual std::string getTargetDestination(Addr addr);
