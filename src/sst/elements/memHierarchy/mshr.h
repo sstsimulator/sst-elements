@@ -16,6 +16,7 @@
 #ifndef _MSHR_H_
 #define _MSHR_H_
 
+#include <list>
 #include <map>
 #include <string>
 #include <sstream>

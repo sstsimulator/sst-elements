@@ -44,7 +44,9 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #pragma once
 
+#include <list>
 #include <memory>
+#include <utility>
 #include <mercury/common/util.h>
 #include <mercury/common/printable.h>
 #include <mercury/common/serializable.h>
