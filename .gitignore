@@ -23,3 +23,8 @@ tags
 *.inc
 *.so
 sst_test_outputs/
+build/
+.\#*
+\#*\#
+.gdb_history
+*~
