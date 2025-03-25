@@ -160,9 +160,9 @@ class App : public Thread
     return globals_storage_;
   }
 
-//  void* newTlsStorage() {
-//    return allocateDataSegment(true);
-//  }
+ void* newTlsStorage() {
+   return allocateDataSegment(true);
+ }
 
   const std::string& uniqueName() const {
     return unique_name_;

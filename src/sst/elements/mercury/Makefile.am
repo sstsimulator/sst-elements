@@ -40,6 +40,7 @@ libhg_la_SOURCES = \
   operating_system/libraries/event_library.cc \
   operating_system/libraries/unblock_event.cc \
   operating_system/process/app.cc \
+  operating_system/process/global.cc \
   operating_system/process/loadlib.cc \
   operating_system/process/progress_queue.cc \
   operating_system/process/thread.cc \
@@ -114,6 +115,7 @@ nobase_library_include_HEADERS = \
   common/thread_safe_new.h \
   common/output.h \
   common/skeleton.h \
+  common/skeleton_tls.h \
   common/printable.h \
   common/allocator.h \
   common/request_fwd.h \
@@ -172,6 +174,8 @@ nobase_library_include_HEADERS = \
   operating_system/threading/stack_alloc_chunk.h \
   operating_system/threading/threading_interface.h \
   operating_system/threading/sim_thread_lock.h \
+  operating_system/process/global.h \
+  operating_system/process/cppglobal.h \
   operating_system/process/tls.h \
   operating_system/process/process_context.h \
   operating_system/process/software_id.h \
@@ -180,6 +184,7 @@ nobase_library_include_HEADERS = \
   operating_system/process/thread_info.h \
   operating_system/process/thread.h \
   operating_system/process/loadlib.h \
+  operating_system/process/memoize.h \
   operating_system/process/progress_queue.h \
   operating_system/process/thread_id.h \
   operating_system/process/app_id.h \

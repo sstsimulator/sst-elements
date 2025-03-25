@@ -33,7 +33,7 @@ size_t StackAlloc::stacksize_ = 0;
 bool StackAlloc::protect_stacks_ = false;
 
 extern "C" {
-int sst_hg_global_stacksize = 0;
+int sst_hg_global_stacksize;
 }
 
 void

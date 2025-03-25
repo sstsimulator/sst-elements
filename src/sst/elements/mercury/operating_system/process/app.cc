@@ -75,24 +75,24 @@ App::allocateTlsKey(destructor_fxn fxn)
   return next;
 }
 
-//static char* get_data_segment(SST::Params& params,
-//                             const char* param_name, GlobalVariableContext& ctx)
-//{
-//  int allocSize = ctx.allocSize();
-//  if (params.contains(param_name)){
-//    allocSize = params.find<int>(param_name);
-//    if (ctx.allocSize() != allocSize){
-//      ctx.setAllocSize(allocSize);
-//    }
-//  }
-//  if (allocSize != 0){
-//    char* segment = new char[allocSize];
-//    ::memcpy(segment, ctx.globalInit(), ctx.globalsSize());
-//    return segment;
-//  } else {
-//    return nullptr;
-//  }
-//}
+static char* get_data_segment(SST::Params& params,
+                            const char* param_name, GlobalVariableContext& ctx)
+{
+ int allocSize = ctx.allocSize();
+ if (params.contains(param_name)){
+   allocSize = params.find<int>(param_name);
+   if (ctx.allocSize() != allocSize){
+     ctx.setAllocSize(allocSize);
+   }
+ }
+ if (allocSize != 0){
+   char* segment = new char[allocSize];
+   ::memcpy(segment, ctx.globalInit(), ctx.globalsSize());
+   return segment;
+ } else {
+   return nullptr;
+ }
+}
 
 
 static thread_lock dlopen_lock;
@@ -226,15 +226,15 @@ App::dlcloseCheck_Library(std::string api_name)
   dlopen_lock.unlock();
 }
 
-//char*
-//App::allocateDataSegment(bool tls)
-//{
-//  if (tls){
-//    return get_data_segment(params_, "tls_size", GlobalVariable::tlsCtx);
-//  } else {
-//    return get_data_segment(params_, "globals_size", GlobalVariable::glblCtx);
-//  }
-//}
+char*
+App::allocateDataSegment(bool tls)
+{
+ if (tls){
+   return get_data_segment(params_, "tls_size", GlobalVariable::tlsCtx);
+ } else {
+   return get_data_segment(params_, "globals_size", GlobalVariable::glblCtx);
+ }
+}
 
 App::App(SST::Params& params, SoftwareId sid,
          OperatingSystem* os) :
@@ -252,7 +252,7 @@ App::App(SST::Params& params, SoftwareId sid,
   out_ = std::unique_ptr<SST::Output>(
       new SST::Output("app:", verbose, 0, Output::STDOUT));
 
-  //globals_storage_ = allocateDataSegment(false); //not tls
+  globals_storage_ = allocateDataSegment(false); //not tls
   min_op_cutoff_ = params.find<long>("min_op_cutoff", 1000);
 
   notify_ = params.find<bool>("notify", true);

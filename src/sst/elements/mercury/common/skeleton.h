@@ -63,7 +63,7 @@ extern "C" {
 #undef char32_t
 #endif
 
-//#include <sstmac/software/process/cppglobal.h>
+#include <mercury/operating_system/process/cppglobal.h>
 #include <new>
 #include <utility>
 
@@ -202,17 +202,17 @@ extern "C" {
 #endif
 
 extern int ssthg_global_stacksize;
-//extern char* static_init_glbls_segment;
-//extern char* static_init_tls_segment;
-//void sst_hg_init_global_space(void* ptr, int size, int offset, bool tls);
-//void sst_hg_advance_time(const char* param_name);
+extern char* static_init_glbls_segment;
+extern char* static_init_tls_segment;
+void sst_hg_init_global_space(void* ptr, int size, int offset, bool tls);
+void sst_hg_advance_time(const char* param_name);
 void sst_hg_blocking_call(int condition, double timeout, const char* api);
 
 #ifdef __cplusplus
 }
 #endif
 
-//#include <sstmac/skeleton_tls.h>
+#include <mercury/common/skeleton_tls.h>
 #include <mercury/common/null_buffer.h>
 
 
