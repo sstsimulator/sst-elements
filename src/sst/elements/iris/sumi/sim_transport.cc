@@ -232,7 +232,7 @@ SimTransport::allocateCq(int id, std::function<void(Message*)>&& f)
   if (iter != held_.end()){
     auto& list = iter->second;
     for (Message* m : list){
-      f(m);
+      completion_queues_[id](m);
     }
     held_.erase(iter);
   }
