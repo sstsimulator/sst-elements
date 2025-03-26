@@ -380,7 +380,7 @@ private:
     uint64_t                    m_osStartTimeNano;
     uint32_t                    m_coreCount;
     uint32_t                    m_hardwareThreadCount;
-    uint64_t                    m_numLogicalCores;
+    uint32_t                    m_numLogicalCores;
 
     std::queue<PageFault*>                          m_pendingFault;
     std::map<std::string, VanadisELFInfo* >         m_elfMap; 

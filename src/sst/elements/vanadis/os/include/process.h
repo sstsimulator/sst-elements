@@ -138,7 +138,7 @@ class ProcessInfo {
     }
 
     ProcessInfo( SST::Output* output, std::string checkpointDir,
-        MMU_Lib::MMU* mmu, PhysMemManager* physMemMgr, int node, unsigned pid, VanadisELFInfo* elfInfo, int debug_level, unsigned pageSize , uint64_t numLogicalCores)
+        MMU_Lib::MMU* mmu, PhysMemManager* physMemMgr, int node, unsigned pid, VanadisELFInfo* elfInfo, int debug_level, unsigned pageSize , uint32_t numLogicalCores)
         : m_mmu(mmu), m_physMemMgr(physMemMgr), m_pid(pid), m_pgid(pid), m_tid(pid), m_elfInfo(elfInfo), m_pageSize(pageSize), m_numLogicalCores(numLogicalCores)
     {
         std::stringstream filename;
@@ -462,12 +462,12 @@ class ProcessInfo {
     void setAffinity(const std::vector<uint8_t>& mask) { m_cpusMask = mask; }
     std::vector<uint8_t> getAffinity() const { return m_cpusMask; }
 
-    void setLogicalCoreAffinity(uint64_t coreId) {
-        m_cpusMask[(coreId / 8)] |= (1 << (coreId % 8));
+    void setLogicalCoreAffinity(unsigned core) {
+        m_cpusMask[(core / 8)] |= (1 << (core % 8));
     }
 
-    bool getLogicalCoreAffinity(uint64_t coreId) {
-        return (m_cpusMask[coreId / 8] & (1 << (coreId % 8))) != 0;
+    bool getLogicalCoreAffinity(unsigned core) {
+        return (m_cpusMask[core / 8] & (1 << (core % 8))) != 0;
     }
 
     Params& getParams() { return m_params; }

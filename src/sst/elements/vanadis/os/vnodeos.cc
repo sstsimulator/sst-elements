@@ -62,7 +62,7 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
     } else {
         m_checkpoint = NO_CHECKPOINT;
     }
-    m_coreCount = params.find<uint64_t>("cores", 0);
+    m_coreCount = params.find<uint32_t>("cores", 0);
     m_hardwareThreadCount = params.find<uint32_t>("hardwareThreadCount", 1);
     m_numLogicalCores = m_coreCount * m_hardwareThreadCount;
     
