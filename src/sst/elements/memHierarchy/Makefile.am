@@ -128,6 +128,8 @@ libmemHierarchy_la_SOURCES = \
 	testcpu/standardMMIO.cc
 
 EXTRA_DIST = \
+	membackend/ramulator2/Instructions.md \
+	membackend/ramulator2/sst_frontend.cpp \ 
 	tests/testsuite_default_memHierarchy_hybridsim.py \
 	tests/testsuite_default_memHierarchy_memHA.py \
 	tests/testsuite_default_memHierarchy_sdl.py \
@@ -181,6 +183,7 @@ EXTRA_DIST = \
 	tests/testBackendPagedMulti.py \
 	tests/testBackendRamulator-1.py \
 	tests/testBackendRamulator-2.py \
+	tests/testBackendRamulator2.py \
 	tests/testBackendReorderRow.py \
 	tests/testBackendReorderSimple.py \
 	tests/testBackendSimpleDRAM-1.py \
@@ -223,6 +226,7 @@ EXTRA_DIST = \
 	tests/system.ini \
 	tests/DDR4_8Gb_x16_3200.ini \
 	tests/ramulator-ddr3.cfg \
+	tests/ramulator2-ddr4.cfg \
 	tests/ddr_device.ini \
 	tests/ddr_system.ini \
 	tests/hbm_device.ini \
@@ -239,6 +243,7 @@ EXTRA_DIST = \
 	tests/refFiles/test_memHA_BackendPagedMulti.out \
 	tests/refFiles/test_memHA_BackendRamulator_1.out \
 	tests/refFiles/test_memHA_BackendRamulator_2.out \
+	tests/refFiles/test_memHA_BackendRamulator2.out \
 	tests/refFiles/test_memHA_BackendReorderRow.out \
 	tests/refFiles/test_memHA_BackendReorderSimple.out \
 	tests/refFiles/test_memHA_BackendSimpleDRAM_1.out \

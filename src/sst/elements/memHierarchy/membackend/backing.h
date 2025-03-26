@@ -75,7 +75,7 @@ public:
                 out.output("Error: fd=%d, %s\n", fd, strerror(errno)); 
                 throw 1; 
             }
-            ftruncate(fd, size); // Extend file to needed size
+            (void) !ftruncate(fd, size); // Extend file to needed size
         } else {
             flags |= MAP_ANON;
         }
@@ -133,7 +133,7 @@ public:
         Output out("", 1, 0, Output::STDOUT);
         out.output("==================================================================================================\n");
         out.output("Printing contents of mmap'd memory backing buffer\n");
-        out.output("Buffer size: %d\n", size_);
+        out.output("Buffer size: %zu\n", size_);
         out.output("Starting index: %zu\n",offset_);
         out.output("==================================================================================================\n");
         out.output("Address    | Value (hex)\n");
@@ -152,7 +152,7 @@ public:
                 global_addr = global_addr / addr_interleave_size;
                 global_addr = global_addr * addr_interleave_step + tmp + addr_start;
             }
-            out.output("%#-10llx | ", global_addr);
+            out.output("%#-10" PRIx64 " | ", global_addr);
 
             std::stringstream value;
             for (size_t byte = 0; byte < 64; byte++) {
@@ -191,15 +191,15 @@ public:
         if (!fp) throw 1;
 
         size_t buffer_size;
-        fread(&buffer_size, sizeof(size_t), 1, fp);
-        fread(&alloc_unit_, sizeof(unsigned int), 1, fp);
-        fread(&shift_, sizeof(unsigned int), 1, fp);
-        fread(&init_, sizeof(bool), 1, fp);
+        (void) !fread(&buffer_size, sizeof(size_t), 1, fp);
+        (void) !fread(&alloc_unit_, sizeof(unsigned int), 1, fp);
+        (void) !fread(&shift_, sizeof(unsigned int), 1, fp);
+        (void) !fread(&init_, sizeof(bool), 1, fp);
         Addr addr;
         for ( size_t i = 0; i < buffer_size; i++ ) {
             auto buf = (uint8_t*) malloc( alloc_unit_);
-            fread(&addr, sizeof(addr), 1, fp);
-            fread(buf, sizeof(uint8_t), alloc_unit_, fp);
+            (void) !fread(&addr, sizeof(addr), 1, fp);
+            (void) !fread(buf, sizeof(uint8_t), alloc_unit_, fp);
             buffer_[addr] = buf;
         }
     }
@@ -303,7 +303,7 @@ public:
                     global_addr = global_addr / addr_interleave_size;
                     global_addr = global_addr * addr_interleave_step + tmp + addr_start;
                 }
-                out.output("%#-10llx | ",global_addr);
+                out.output("%#-10" PRIx64 " | ",global_addr);
 
                 // Print output_unit # bytes, with a space between every 8 for readability
                 std::stringstream value;

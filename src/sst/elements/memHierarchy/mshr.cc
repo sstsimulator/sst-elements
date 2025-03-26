@@ -123,7 +123,7 @@ void MSHR::removeFront(Addr addr) {
     }
 
    // if (mem_h_is_debug_addr(addr))
-   //     d_->debug(_L10_, "    MSHR::removeFront(0x%" PRIx64 ", %s)\n", addr, reg->entries.front().getString().c_str());
+   //     dbg_->debug(_L10_, "    MSHR::removeFront(0x%" PRIx64 ", %s)\n", addr, reg->entries_.front().getString().c_str());
 
     if (getFrontType(addr) == MSHREntryType::Event)
         size_--;
@@ -142,7 +142,7 @@ void MSHR::removeFront(Addr addr) {
 
 MSHREntryType MSHR::getEntryType(Addr addr, size_t index) {
     //if (mem_h_is_debug_addr(addr))
-    //    d_->debug(_L20_, "    MSHR::getEntryType(0x%" PRIx64 ", %zu)\n", addr, index);
+    //    dbg_->debug(_L20_, "    MSHR::getEntryType(0x%" PRIx64 ", %zu)\n", addr, index);
     if (mshr_.find(addr) == mshr_.end()) {
         dbg_->fatal(CALL_INFO, -1, "%s, Error: MSHR::getEntryType(0x%" PRIx64 ", %zu). Address doesn't exist in MSHR.\n", owner_name_.c_str(), addr, index);
     }
@@ -156,7 +156,7 @@ MSHREntryType MSHR::getEntryType(Addr addr, size_t index) {
 
 MSHREntryType MSHR::getFrontType(Addr addr) {
     //if (mem_h_is_debug_addr(addr))
-    //    d_->debug(_L20_, "    MSHR::getFrontType(0x%" PRIx64 ")\n", addr);
+    //    dbg_->debug(_L20_, "    MSHR::getFrontType(0x%" PRIx64 ")\n", addr);
     if (mshr_.find(addr) == mshr_.end()) {
         dbg_->fatal(CALL_INFO, -1, "%s, Error: MSHR::getFrontType(0x%" PRIx64 "). Address doesn't exist in MSHR.\n", owner_name_.c_str(), addr);
     }
@@ -168,7 +168,7 @@ MSHREntryType MSHR::getFrontType(Addr addr) {
 
 MemEventBase* MSHR::getEntryEvent(Addr addr, size_t index) {
     //if (mem_h_is_debug_addr(addr))
-    //    d_->debug(_L20_, "    MSHR::getEntryEvent(0x%" PRIx64 ", %zu)\n", addr, index);
+    //    dbg_->debug(_L20_, "    MSHR::getEntryEvent(0x%" PRIx64 ", %zu)\n", addr, index);
 
     if (mshr_.find(addr) == mshr_.end() || mshr_.find(addr)->second.entries_.size() <= index)
         return nullptr;
@@ -183,7 +183,7 @@ MemEventBase* MSHR::getEntryEvent(Addr addr, size_t index) {
 
 MemEventBase* MSHR::getFrontEvent(Addr addr) {
     //if (mem_h_is_debug_addr(addr))
-    //    d_->debug(_L20_, "    MSHR::getFrontEvent(0x%" PRIx64 ")\n", addr);
+    //    dbg_->debug(_L20_, "    MSHR::getFrontEvent(0x%" PRIx64 ")\n", addr);
     if (getFrontType(addr) != MSHREntryType::Event) {
         return nullptr;
     }
@@ -192,7 +192,7 @@ MemEventBase* MSHR::getFrontEvent(Addr addr) {
 
 MemEventBase* MSHR::getFirstEventEntry(Addr addr, Command cmd) {
 //    if (mem_h_is_debug_addr(addr))
-//        d_->debug(_L20_, "    MSHR::getFirstEventEntry(0x%" PRIx64 ", %s)\n", addr, CommandString[(int)cmd]);
+//        dbg_->debug(_L20_, "    MSHR::getFirstEventEntry(0x%" PRIx64 ", %s)\n", addr, CommandString[(int)cmd]);
 
     if (mshr_.find(addr) == mshr_.end())
         return nullptr;
@@ -379,7 +379,7 @@ void MSHR::moveEntryToFront(Addr addr, unsigned int index) {
 
 bool MSHR::insertWriteback(Addr addr, bool downgrade) {
 //    if (mem_h_is_debug_addr(addr))
-//        d_->debug(_L10_, "    MSHR::insertWriteback(0x%" PRIx64 ")\n", addr);
+//        dbg_->debug(_L10_, "    MSHR::insertWriteback(0x%" PRIx64 ")\n", addr);
 
     if (mem_h_is_debug_addr(addr)) {
         stringstream reason;
@@ -401,7 +401,7 @@ bool MSHR::insertWriteback(Addr addr, bool downgrade) {
 
 bool MSHR::insertEviction(Addr oldAddr, Addr newAddr) {
 //    if (mem_h_is_debug_addr(oldAddr) || mem_h_is_debug_addr(newAddr))
-//        d_->debug(_L10_, "    MSHR::insertEviction(0x%" PRIx64 ", 0x%" PRIx64 ")\n", oldAddr, newAddr);
+//        dbg_->debug(_L10_, "    MSHR::insertEviction(0x%" PRIx64 ", 0x%" PRIx64 ")\n", oldAddr, newAddr);
 
     if (mem_h_is_debug_addr(oldAddr) || mem_h_is_debug_addr(newAddr)) {
         stringstream reason;
@@ -414,19 +414,19 @@ bool MSHR::insertEviction(Addr oldAddr, Addr newAddr) {
         reg.entries_.push_back(MSHREntry(newAddr, getCurrentSimCycle()));
         mshr_.insert(std::make_pair(oldAddr, reg));
     } else {
-        list<MSHREntry>* entries = &(mshr_.find(oldAddr)->second.entries_);
-        if (!entries->empty() && entries->back().getType() == MSHREntryType::Evict) { // MSHR entry for oldAddr is an Evict
-            entries->back().getPointers()->push_back(newAddr);
+        list<MSHREntry>* entries_ = &(mshr_.find(oldAddr)->second.entries_);
+        if (!entries_->empty() && entries_->back().getType() == MSHREntryType::Evict) { // MSHR entry for oldAddr is an Evict
+            entries_->back().getPointers()->push_back(newAddr);
         } else { // MSHR entry for oldAddr is not an Evict (or no entry exists)
-            entries->push_back(MSHREntry(newAddr, getCurrentSimCycle()));
+            entries_->push_back(MSHREntry(newAddr, getCurrentSimCycle()));
         }
     }
     return true;
 }
 
 
-MemEventStatus MSHR::insertFlush(MemEventBase* event, bool forward_flush, bool check_ok_to_forward) {
-    if (size_ == max_size_-1 || (forward_flush && size_ == max_size_)) {
+MemEventStatus MSHR::insertFlush(MemEventBase* event, bool forwardbg_flush, bool check_ok_to_forward) {
+    if (size_ == max_size_-1 || (forwardbg_flush && size_ == max_size_)) {
         return MemEventStatus::Reject; // MSHR is full, cannot enqueue flush
     }
     size_++;
@@ -436,7 +436,7 @@ MemEventStatus MSHR::insertFlush(MemEventBase* event, bool forward_flush, bool c
 
     printDebug(10, "InsFlush", 0, reason.str());
     MemEventStatus status;
-    if (forward_flush) {
+    if (forwardbg_flush) {
         flushes_.push_front(event);
         status = flushes_.front() == event ? MemEventStatus::OK : MemEventStatus::Stall;
     } else {
@@ -494,7 +494,7 @@ uint32_t MSHR::getPendingRetries(Addr addr) {
 
 void MSHR::setInProgress(Addr addr, bool value) {
 //    if (mem_h_is_debug_addr(addr))
-//        d_->debug(_L10_, "    MSHR::setInProgress(0x%" PRIx64 ")\n", addr);
+//        dbg_->debug(_L10_, "    MSHR::setInProgress(0x%" PRIx64 ")\n", addr);
     if (mem_h_is_debug_addr(addr))
         printDebug(20, "InProg", addr, "");
 
@@ -559,7 +559,7 @@ void MSHR::setProfiled(Addr addr) {
 
 bool MSHR::getProfiled(Addr addr) {
 //    if (mem_h_is_debug_addr(addr))
-//        d_->debug(_L20_, "    MSHR::getProfiled(0x%" PRIx64 "\n", addr);
+//        dbg_->debug(_L20_, "    MSHR::getProfiled(0x%" PRIx64 "\n", addr);
     if (mshr_.find(addr) == mshr_.end()) {
         dbg_->fatal(CALL_INFO, -1, "%s, Error: MSHR::getProfiled(0x%" PRIx64 "). Address does not exist in MSHR.\n", owner_name_.c_str(), addr);
     }
@@ -623,7 +623,7 @@ MSHREntry* MSHR::getOldestEntry() {
 
 void MSHR::incrementAcksNeeded(Addr addr) {
    // if (mem_h_is_debug_addr(addr))
-   //     d_->debug(_L10_, "    MSHR::incrementAcksNeeded(0x%" PRIx64 ")\n", addr);
+   //     dbg_->debug(_L10_, "    MSHR::incrementAcksNeeded(0x%" PRIx64 ")\n", addr);
     if (mshr_.find(addr) == mshr_.end()) {
         MSHRRegister reg;
         mshr_.insert(std::make_pair(addr, reg));
@@ -640,7 +640,7 @@ void MSHR::incrementAcksNeeded(Addr addr) {
 /* Decrement acks needed and return if we're done waiting (acks_needed_ == 0) */
 bool MSHR::decrementAcksNeeded(Addr addr) {
    // if (mem_h_is_debug_addr(addr))
-   //     d_->debug(_L10_, "    MSHR::decrementAcksNeeded(0x%" PRIx64 ")\n", addr);
+   //     dbg_->debug(_L10_, "    MSHR::decrementAcksNeeded(0x%" PRIx64 ")\n", addr);
     if (mshr_.find(addr) == mshr_.end()) {
         dbg_->fatal(CALL_INFO, -1, "%s, Error: MSHR::decrementAcksNeeded(0x%" PRIx64 "). Address does not exist in MSHR.\n", owner_name_.c_str(), addr);
     }
@@ -660,7 +660,7 @@ bool MSHR::decrementAcksNeeded(Addr addr) {
 
 uint32_t MSHR::getAcksNeeded(Addr addr) {
 //    if (mem_h_is_debug_addr(addr))
-//        d_->debug(_L20_, "    MSHR::getAcksNeeded(0x%" PRIx64 ")\n", addr);
+//        dbg_->debug(_L20_, "    MSHR::getAcksNeeded(0x%" PRIx64 ")\n", addr);
     if (mshr_.find(addr) == mshr_.end()) {
         return 0;
     }
@@ -669,7 +669,7 @@ uint32_t MSHR::getAcksNeeded(Addr addr) {
 
 void MSHR::setData(Addr addr, vector<uint8_t>& data, bool dirty) {
 //    if (mem_h_is_debug_addr(addr))
-//        d_->debug(_L10_, "    MSHR::setData(0x%" PRIx64 ")\n", addr);
+//        dbg_->debug(_L10_, "    MSHR::setData(0x%" PRIx64 ")\n", addr);
     if (mshr_.find(addr) == mshr_.end()) {
         dbg_->fatal(CALL_INFO, -1, "%s, Error: MSHR::setData(0x%" PRIx64 "). Address does not exist in MSHR.\n", owner_name_.c_str(), addr);
     }
@@ -683,7 +683,7 @@ void MSHR::setData(Addr addr, vector<uint8_t>& data, bool dirty) {
 
 void MSHR::clearData(Addr addr) {
 //    if (mem_h_is_debug_addr(addr))
-//        d_->debug(_L10_, "    MSHR::clearData(0x%" PRIx64 ")\n", addr);
+//        dbg_->debug(_L10_, "    MSHR::clearData(0x%" PRIx64 ")\n", addr);
     if (mem_h_is_debug_addr(addr))
         printDebug(10, "ClrData", addr, "");
 
@@ -693,7 +693,7 @@ void MSHR::clearData(Addr addr) {
 
 vector<uint8_t>& MSHR::getData(Addr addr) {
 //    if (mem_h_is_debug_addr(addr))
-//        d_->debug(_L20_, "    MSHR::getData(0x%" PRIx64 ")\n", addr);
+//        dbg_->debug(_L20_, "    MSHR::getData(0x%" PRIx64 ")\n", addr);
     if (mshr_.find(addr) == mshr_.end()) {
         dbg_->fatal(CALL_INFO, -1, "%s, Error: MSHR::getData(0x%" PRIx64 "). Address does not exist in MSHR.\n", owner_name_.c_str(), addr);
     }
@@ -708,7 +708,7 @@ bool MSHR::hasData(Addr addr) {
 
 bool MSHR::getDataDirty(Addr addr) {
 //    if (mem_h_is_debug_addr(addr))
-//        d_->debug(_L20_, "    MSHR::getDataDirty(0x%" PRIx64 ")\n", addr);
+//        dbg_->debug(_L20_, "    MSHR::getDataDirty(0x%" PRIx64 ")\n", addr);
     if (mshr_.find(addr) == mshr_.end()) {
         dbg_->fatal(CALL_INFO, -1, "%s, Error: MSHR::getDataDirty(0x%" PRIx64 "). Address does not exist in MSHR.\n", owner_name_.c_str(), addr);
     }
@@ -717,7 +717,7 @@ bool MSHR::getDataDirty(Addr addr) {
 
 void MSHR::setDataDirty(Addr addr, bool dirty) {
 //    if (mem_h_is_debug_addr(addr))
-//        d_->debug(_L10_, "    MSHR::setDataDirty(0x%" PRIx64 ")\n", addr);
+//        dbg_->debug(_L10_, "    MSHR::setDataDirty(0x%" PRIx64 ")\n", addr);
 
     if (mem_h_is_debug_addr(addr))
         printDebug(20, "SetDirt", addr, (dirty ? "Dirty" : "Clean"));
@@ -753,7 +753,7 @@ void MSHR::printStatus(Output &out) {
     out.output("    MSHR Status for %s. Size: %u. Prefetches: %u\b", owner_name_.c_str(), size_, prefetch_count_);
     for (std::map<Addr,MSHRRegister>::iterator it = mshr_.begin(); it != mshr_.end(); it++) {   // Iterate over addresses
         out.output("      Entry: Addr = 0x%" PRIx64 "\n", (it->first));
-        for (std::list<MSHREntry>::iterator it2 = it->second.entries_.begin(); it2 != it->second.entries_.end(); it2++) { // Iterate over entries for each address
+        for (std::list<MSHREntry>::iterator it2 = it->second.entries_.begin(); it2 != it->second.entries_.end(); it2++) { // Iterate over entries_ for each address
             out.output("        %s\n", it2->getString().c_str());
         }
     }

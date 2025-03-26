@@ -13,6 +13,8 @@
 #ifndef _H_SST_MEMH_TIMING_TRANSACTION
 #define _H_SST_MEMH_TIMING_TRANSACTION
 
+#include <list>
+
 #include <sst/core/subcomponent.h>
 
 namespace SST {

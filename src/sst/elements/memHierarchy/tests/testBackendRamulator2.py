@@ -69,7 +69,7 @@ l2cache.addParams({
       "coherence_protocol" : "MSI",
       "associativity" : "8",
       "cache_line_size" : "64",
-      "cache_size" : "32 KB",
+      "cache_size" : "16 KB",
       "debug" : "1",
       "debug_level" : "10"
 })
