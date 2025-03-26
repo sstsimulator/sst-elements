@@ -103,7 +103,7 @@ extern "C" DIRECT_FN  int sumi_eq_open(struct fid_fabric *fabric, struct fi_eq_a
 	if (!fabric)
 		return -FI_EINVAL;
 
-  struct sumi_fid_eq *eq = (sumi_fid_eq*) calloc(1, sizeof(fid_eq));
+  struct sumi_fid_eq *eq = (sumi_fid_eq*) calloc(1, sizeof(sumi_fid_eq));
   if (!eq)
 		return -FI_ENOMEM;
 

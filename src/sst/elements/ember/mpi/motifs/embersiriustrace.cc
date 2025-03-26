@@ -371,7 +371,7 @@ void EmberSIRIUSTraceGenerator::readMPIWaitall( std::queue<EmberEvent*>& evQ ) {
 	const double endTime = readTime();
 	const int32_t result = readINT32();
 
-	MessageRequest* reqs = (MessageRequest*) malloc( sizeof(MessageRequest*) * requestAddr.size() );
+	MessageRequest* reqs = (MessageRequest*) malloc( sizeof(MessageRequest) * requestAddr.size() );
 	for(uint32_t i = 0; i < requestAddr.size(); i++) {
 		auto findReq = liveRequests.find(requestAddr[i]);
 
