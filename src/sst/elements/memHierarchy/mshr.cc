@@ -414,19 +414,19 @@ bool MSHR::insertEviction(Addr oldAddr, Addr newAddr) {
         reg.entries_.push_back(MSHREntry(newAddr, getCurrentSimCycle()));
         mshr_.insert(std::make_pair(oldAddr, reg));
     } else {
-        list<MSHREntry>* entries_ = &(mshr_.find(oldAddr)->second.entries_);
-        if (!entries_->empty() && entries_->back().getType() == MSHREntryType::Evict) { // MSHR entry for oldAddr is an Evict
-            entries_->back().getPointers()->push_back(newAddr);
+        list<MSHREntry>* entries = &(mshr_.find(oldAddr)->second.entries_);
+        if (!entries->empty() && entries->back().getType() == MSHREntryType::Evict) { // MSHR entry for oldAddr is an Evict
+            entries->back().getPointers()->push_back(newAddr);
         } else { // MSHR entry for oldAddr is not an Evict (or no entry exists)
-            entries_->push_back(MSHREntry(newAddr, getCurrentSimCycle()));
+            entries->push_back(MSHREntry(newAddr, getCurrentSimCycle()));
         }
     }
     return true;
 }
 
 
-MemEventStatus MSHR::insertFlush(MemEventBase* event, bool forwardbg_flush, bool check_ok_to_forward) {
-    if (size_ == max_size_-1 || (forwardbg_flush && size_ == max_size_)) {
+MemEventStatus MSHR::insertFlush(MemEventBase* event, bool forward_flush, bool check_ok_to_forward) {
+    if (size_ == max_size_-1 || (forward_flush && size_ == max_size_)) {
         return MemEventStatus::Reject; // MSHR is full, cannot enqueue flush
     }
     size_++;
@@ -436,7 +436,7 @@ MemEventStatus MSHR::insertFlush(MemEventBase* event, bool forwardbg_flush, bool
 
     printDebug(10, "InsFlush", 0, reason.str());
     MemEventStatus status;
-    if (forwardbg_flush) {
+    if (forward_flush) {
         flushes_.push_front(event);
         status = flushes_.front() == event ? MemEventStatus::OK : MemEventStatus::Stall;
     } else {
@@ -753,7 +753,7 @@ void MSHR::printStatus(Output &out) {
     out.output("    MSHR Status for %s. Size: %u. Prefetches: %u\b", owner_name_.c_str(), size_, prefetch_count_);
     for (std::map<Addr,MSHRRegister>::iterator it = mshr_.begin(); it != mshr_.end(); it++) {   // Iterate over addresses
         out.output("      Entry: Addr = 0x%" PRIx64 "\n", (it->first));
-        for (std::list<MSHREntry>::iterator it2 = it->second.entries_.begin(); it2 != it->second.entries_.end(); it2++) { // Iterate over entries_ for each address
+        for (std::list<MSHREntry>::iterator it2 = it->second.entries_.begin(); it2 != it->second.entries_.end(); it2++) { // Iterate over entries for each address
             out.output("        %s\n", it2->getString().c_str());
         }
     }
