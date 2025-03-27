@@ -112,7 +112,7 @@ EXTERN_C DIRECT_FN STATIC  int sumi_getname(fid_t fid, void *addr, size_t *addrl
   }
 
 	int ret;
-	size_t len = 0, cpylen;
+	size_t len = 0, cpylen = 0;
 #if 0
   struct sumi_fid_ep *ep = NULL;
   struct sumi_fid_sep *sep = NULL;
@@ -306,7 +306,7 @@ EXTERN_C DIRECT_FN STATIC  int sumi_getpeer(struct fid_ep *ep, void *addr,
 EXTERN_C DIRECT_FN STATIC  int sumi_connect(struct fid_ep *ep, const void *addr,
 				  const void *param, size_t paramlen)
 {
-	int ret, errno_keep;
+	int ret = 0, errno_keep;
 #if 0
   struct sumi_fid_ep *ep_priv;
 	struct sockaddr_in saddr;
@@ -460,7 +460,7 @@ err_unlock:
 EXTERN_C DIRECT_FN STATIC  int sumi_accept(struct fid_ep *ep, const void *param,
 				 size_t paramlen)
 {
-	int ret, errno_keep;
+	int ret = 0, errno_keep;
 #if 0
   struct sumi_vc *vc;
   struct sumi_fid_ep *ep_priv;
@@ -589,7 +589,7 @@ err_unlock:
 
 DIRECT_FN STATIC int sumi_shutdown(struct fid_ep *ep, uint64_t flags)
 {
-	int ret;
+	int ret = 0;
 #if 0
   struct sumi_fid_ep *ep_priv;
 	struct fi_eq_cm_entry eq_entry = {0};
@@ -709,7 +709,7 @@ extern "C" DIRECT_FN  int sumi_pep_bind(struct fid *fid, struct fid *bfid, uint6
 
 extern "C" DIRECT_FN  int sumi_pep_listen(struct fid_pep *pep)
 {
-	int ret, errno_keep;
+	int ret = 0, errno_keep;
 #if 0
   struct sumi_fid_pep *pep_priv;
 	struct sockaddr_in saddr;

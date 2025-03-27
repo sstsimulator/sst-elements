@@ -562,6 +562,8 @@ OperatingSystem::handleRequest(Request* req)
     out_->debug(CALL_INFO, 1, 0,
                 "OperatingSystem::handle_event: got event %s instead of library event\n",
                 toString(req).c_str());
+    // if libmsg is null we cannot continue
+    return;
   }
 
   bool found = handleEventLibraryRequest(libmsg->libname(), req);
