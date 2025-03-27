@@ -545,7 +545,7 @@ err:
 
 EXTERN_C DIRECT_FN STATIC  int sumi_sep_bind(fid_t fid, struct fid *bfid, uint64_t flags)
 {
-	int i, ret, n_ids;
+	int i, ret = 0, n_ids;
 #if 0
 	struct sumi_fid_ep  *ep;
 	struct sumi_fid_av  *av;
