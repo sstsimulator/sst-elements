@@ -68,8 +68,6 @@ EmberTrafficGenGenerator::EmberTrafficGenGenerator(SST::ComponentId_t id,
             m_iterations = 1000;
         }
     }
-
-    configure();
 }
 
 void EmberTrafficGenGenerator::configure()
@@ -78,6 +76,8 @@ void EmberTrafficGenGenerator::configure()
         configure_plusOne();
         return;
     }
+
+    EmberMessagePassingGenerator::configure();
 
     m_rank = rank();
 

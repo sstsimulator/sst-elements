@@ -49,12 +49,12 @@ EmberHalo2DGenerator::EmberHalo2DGenerator(SST::ComponentId_t id, Params& params
 	sendSouth = false;
 
 	messageCount = 0;
-
-	configure();
 }
 
 void EmberHalo2DGenerator::configure()
 {
+    EmberMessagePassingGenerator::configure();
+
 	// Do we need to auto-size the 2D processor array?
 	if(0 == sizeX || 0 == sizeY) {
 		uint32_t localX = SST::Math::square_root(size());

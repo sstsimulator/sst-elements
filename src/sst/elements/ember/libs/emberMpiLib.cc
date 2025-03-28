@@ -22,48 +22,60 @@ using namespace SST;
 using namespace SST::Ember;
 using namespace SST::Statistics;
 
-const char* EmberMpiLib::m_eventName[] = {
-    FOREACH_ENUM(GENERATE_STRING)
+namespace SST {
+namespace Ember {
+
+#define GENERATE_STRING(STRING) #STRING,
+
+const char* MPIEventNames[] = {
+    FOREACH_MPI_EVENT(GENERATE_STRING)
 };
+
+#undef GENERATE_STRING
+
+}
+}
+
 
 EmberMpiLib::EmberMpiLib( Params& params ) : m_size(0), m_rank(-1), m_backed(false),
     m_spyplotMode( EMBER_SPYPLOT_NONE ), m_spyinfo( NULL )
 {
-	m_Stats.resize( NUM_EVENTS );
+    m_Stats.resize( NUM_MPI_EVENTS, nullptr );
 
     m_spyplotMode = (uint32_t) params.find("spyplotmode", 0);
 
     if(m_spyplotMode != EMBER_SPYPLOT_NONE) {
         m_spyinfo = new std::map<int32_t, EmberSpyInfo*>();
     }
-
-#if 0
-	char* nameBuffer = (char*) malloc(sizeof(char) * 256);
-
-	for(int i = 0; i < NUM_EVENTS; i++) {
-		std::string baseEventName( m_eventName[i] );
-
-		snprintf(nameBuffer, sizeof(char)*256, "time-%s", baseEventName.c_str());
-		m_Stats[i] = registerStatistic<uint32_t>(nameBuffer, "0");
-	}
-
-	free(nameBuffer);
-#endif
 }
 
 void EmberMpiLib::completed( const SST::Output* output,
-        uint64_t time, std::string motifName, int motifNum )
+    uint64_t time, std::string motifName, int motifNum )
 {
-	if( EMBER_SPYPLOT_NONE != m_spyplotMode) {
-		char* filenameBuffer = (char*) malloc(sizeof(char) * PATH_MAX);
-		snprintf(filenameBuffer, sizeof(char)*PATH_MAX, "ember-%" PRIu32 "-%s-%" PRIu32 ".spy", motifNum, motifName.c_str(), (uint32_t) m_rank);
+    if ( EMBER_SPYPLOT_NONE != m_spyplotMode ) {
+        char* filenameBuffer = (char*) malloc( sizeof(char) * PATH_MAX );
+        snprintf( filenameBuffer, sizeof(char) * PATH_MAX,
+                  "ember-%" PRIu32 "-%s-%" PRIu32 ".spy",
+                  motifNum, motifName.c_str(), (uint32_t)m_rank );
+        generateSpyplotRank( filenameBuffer );
+        free( filenameBuffer );
+    }
 
-		generateSpyplotRank( filenameBuffer );
-		free(filenameBuffer);
-	}
+    // A motif has just completed, thus clearing the statistics pointers
+    // configured by that motif.
+    for ( size_t i = 0; i < m_Stats.size(); i++ ) {
+        m_Stats[i] = nullptr;
+    }
 }
 
-void EmberMpiLib::updateSpyplot( RankID remoteRank, size_t bytesSent)
+// Lets the MPI motif to configure the MPI time statistics to be used
+// until the motif completes.
+void EmberMpiLib::setEventStatistics(std::vector<Statistic<uint32_t>*>& stats) {
+    assert( NUM_MPI_EVENTS == stats.size() );
+    m_Stats = stats;
+}
+
+void EmberMpiLib::updateSpyplot( RankID remoteRank, size_t bytesSent )
 {
     EmberSpyInfo* info = NULL;
     std::map<int32_t, EmberSpyInfo*>::iterator spy_itr;
