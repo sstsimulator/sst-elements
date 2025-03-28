@@ -30,13 +30,15 @@ namespace MemHierarchy {
 
 /* Debug macros */
 #ifdef __SST_DEBUG_OUTPUT__ /* From sst-core, enable with --enable-debug */
-#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
-#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
-#define is_debug true
+#define mem_h_is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
+#define mem_h_is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
+#define mem_h_is_debug true
+#define mem_h_debug_output(level, fmt, ... ) dbg.debug( level, fmt, ##__VA_ARGS__ )
 #else
-#define is_debug_addr(addr) false
-#define is_debug_event(ev) false
-#define is_debug false
+#define mem_h_is_debug_addr(addr) false
+#define mem_h_is_debug_event(ev) false
+#define mem_h_is_debug false
+#define mem_h_debug_output(level, fmt, ... )
 #endif
 
 #define _INFO_ CALL_INFO,1,0

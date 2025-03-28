@@ -20,14 +20,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
 
-/* Debug macros */
-#ifdef __SST_DEBUG_OUTPUT__ /* From sst-core, enable with --enable-debug */
-#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
-#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
-#else
-#define is_debug_addr(addr) false
-#define is_debug_event(ev) false
-#endif
+/* Debug macros included from util.h */
 
 /******************************************************************/
 /*** MemNIC implementation ************************************/
@@ -91,7 +84,7 @@ bool MemNIC::recvNotify(int) {
         MemEventBase* ev = mre->takeEvent();
         delete mre;
         if (ev) {
-            if (is_debug_event(ev)) {
+            if (mem_h_is_debug_event(ev)) {
                 dbg.debug(_L5_, "E: %-40" PRIu64 "  %-20s NIC:Recv      (%s)\n", 
                     getCurrentSimCycle(), getName().c_str(), ev->getBriefString().c_str());
             }
@@ -111,7 +104,7 @@ void MemNIC::send(MemEventBase *ev) {
     req->size_in_bits = getSizeInBits(ev);
     req->vn = 0;
 
-    if (is_debug_event(ev)) {
+    if (mem_h_is_debug_event(ev)) {
         dbg.debug(_L5_, "N: %-40" PRI_NID "  %-20s Enqueue       Dst: %" PRI_NID ", bits: %zu, (%s)\n",
             getCurrentSimCycle(), getName().c_str(), req->dest, req->size_in_bits, ev->getBriefString().c_str());
     }
