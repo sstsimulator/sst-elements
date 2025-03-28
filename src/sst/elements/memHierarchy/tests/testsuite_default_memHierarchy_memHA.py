@@ -104,6 +104,10 @@ class testcase_memHierarchy_memHA(SSTTestCase):
     def test_memHierarchy_BackendRamulator_2(self):
         self.memHA_Template("BackendRamulator_2")
 
+    @skip_on_sstsimulator_conf_empty_str("RAMULATOR2", "LIBDIR", "RAMULATOR2 is not included as part of this build")
+    def test_memHierarchy_BackendRamulator2(self):
+        self.memHA_Template("BackendRamulator2")
+
     def test_memHA_BackendTimingDRAM_1(self):
         self.memHA_Template("BackendTimingDRAM_1")
 

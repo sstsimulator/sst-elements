@@ -34,6 +34,8 @@ using namespace std;
 using namespace SST;
 using namespace SST::MemHierarchy;
 
+/* Debug macros included from util.h */
+
 
 const Bus::key_t Bus::ANY_KEY = std::pair<uint64_t, int>((uint64_t)-1, -1);
 
@@ -106,7 +108,7 @@ void Bus::broadcastEvent(SST::Event* ev) {
 void Bus::sendSingleEvent(SST::Event* ev) {
     MemEventBase *event = static_cast<MemEventBase*>(ev);
 #ifdef __SST_DEBUG_OUTPUT__
-    if (is_debug_event(event)) {
+    if (mem_h_is_debug_event(event)) {
         dbg_.debug(_L3_, "E: %-20" PRIu64 " %-20" PRId32 " %-20s Event:New     (%s)\n",
                 getCurrentSimCycle(), 0, getName().c_str(), event->getVerboseString().c_str());
         fflush(stdout);

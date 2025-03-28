@@ -21,14 +21,7 @@
 
 #include "memNIC.h"
 
-/* Debug macros */
-#ifdef __SST_DEBUG_OUTPUT__ /* From sst-core, enable with --enable-debug */
-#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
-#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
-#else
-#define is_debug_addr(addr) false
-#define is_debug_event(ev) false
-#endif
+/* Debug macros included from util.h*/
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -264,7 +257,7 @@ void MESIDirectory::handleGetS(MemEvent * event, bool replay) {
 
     if (!entry->isCached()) {
 
-        if (is_debug_addr(entry->getBaseAddr())) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
+        if (mem_h_is_debug_addr(entry->getBaseAddr())) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
 
         getDirEntryFromMemory(entry);
         return;
@@ -311,7 +304,7 @@ void MESIDirectory::handleGetX(MemEvent * ev, bool replay) {
         profileRequestRecv(ev, entry);
 
     if (!entry->isCached()) {
-        if (is_debug_addr(entry->getBaseAddr())) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
+        if (mem_h_is_debug_addr(entry->getBaseAddr())) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
 
         getDirEntryFromMemory(entry);
         return;
@@ -328,7 +321,7 @@ void MESIDirectory::handleGetX(MemEvent * ev, bool replay) {
             if (entry->getSharerCount() == 1 && entry->isSharer(node_id(ev->getSrc()))) {   // Special case: upgrade
                 mshr->removeFront(ev->getBaseAddr());
 
-                if (is_debug_event(ev)) dbg.debug(_L10_, "\t%s\tMSHR remove event <%s, %" PRIx64 ">\n", getName().c_str(), CommandString[(int)ev->getCmd()], ev->getBaseAddr());
+                if (mem_h_is_debug_event(ev)) dbg.debug(_L10_, "\t%s\tMSHR remove event <%s, %" PRIx64 ">\n", getName().c_str(), CommandString[(int)ev->getCmd()], ev->getBaseAddr());
 
                 entry->setState(M);
                 entry->removeSharer(node_name_to_id(ev->getSrc()));
@@ -338,7 +331,7 @@ void MESIDirectory::handleGetX(MemEvent * ev, bool replay) {
                 profileResponseSent(respEv);
                 sendEventToCaches(respEv, timestamp + accessLatency);
 
-                if (is_debug_event(ev)) {
+                if (mem_h_is_debug_event(ev)) {
                     dbg.debug(_L4_, "Sending response for 0x%" PRIx64 " to %s, send time: %" PRIu64 "\n", entry->getBaseAddr(), respEv->getDst().c_str(), timestamp + accessLatency);
                 }
 
@@ -420,19 +413,19 @@ void MESIDirectory::handlePutE(MemEvent * ev) {
             stat_mshrHits->addData(1);
             bool inserted = mshr->insert(ev->getBaseAddr(),ev);
 
-            if (is_debug_event(ev)) {
+            if (mem_h_is_debug_event(ev)) {
                 dbg.debug(_L8_, "Inserting request in mshr. %s. MSHR size: %d\n", ev->getBriefString().c_str(), mshr->getSize());
             }
 
             if (!inserted) {
-                if (is_debug_event(ev)) dbg.debug(_L8_, "MSHR is full. NACKing request\n");
+                if (mem_h_is_debug_event(ev)) dbg.debug(_L8_, "MSHR is full. NACKing request\n");
 
                 mshrNACKRequest(ev);
                 return;
             }
         }
 
-        if (is_debug_event(ev)) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
+        if (mem_h_is_debug_event(ev)) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
 
         getDirEntryFromMemory(entry);
         return;
@@ -483,19 +476,19 @@ void MESIDirectory::handlePutM(MemEvent * ev) {
             stat_mshrHits->addData(1);
             bool inserted = mshr->insert(ev->getBaseAddr(),ev);
 
-            if (is_debug_event(ev)) {
+            if (mem_h_is_debug_event(ev)) {
                 dbg.debug(_L8_, "Inserting request in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[(int)ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
             }
 
             if (!inserted) {
-                if (is_debug_event(ev)) dbg.debug(_L8_, "MSHR is full. NACKing request\n");
+                if (mem_h_is_debug_event(ev)) dbg.debug(_L8_, "MSHR is full. NACKing request\n");
 
                 mshrNACKRequest(ev);
                 return;
             }
         }
 
-        if (is_debug_event(ev)) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
+        if (mem_h_is_debug_event(ev)) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
 
         getDirEntryFromMemory(entry);
         return;
@@ -532,7 +525,7 @@ void MESIDirectory::handleFlushLine(MemEvent * ev) {
     DirEntry * entry = getDirEntry(ev->getBaseAddr());
     if (!entry->isCached()) {
 
-        if (is_debug_addr(entry->getBaseAddr())) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
+        if (mem_h_is_debug_addr(entry->getBaseAddr())) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
 
         getDirEntryFromMemory(entry);
         return;
@@ -637,7 +630,7 @@ void MESIDirectory::handleFlushLineInv(MemEvent * ev) {
     DirEntry * entry = getDirEntry(ev->getBaseAddr());
 
     if (!entry->isCached()) {
-        if (is_debug_addr(entry->getBaseAddr())) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
+        if (mem_h_is_debug_addr(entry->getBaseAddr())) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
 
         getDirEntryFromMemory(entry);
         return;
@@ -744,7 +737,7 @@ void MESIDirectory::handleFetchResp(MemEvent * ev, bool keepEvent) {
     DirEntry * entry = getDirEntry(ev->getBaseAddr());
     MemEvent * reqEv = mshr->removeFront(ev->getBaseAddr());
 
-    if (is_debug_event(ev)) dbg.debug(_L4_, "Finishing Fetch for reqEv = %s.\n", reqEv->getBriefString().c_str());
+    if (mem_h_is_debug_event(ev)) dbg.debug(_L4_, "Finishing Fetch for reqEv = %s.\n", reqEv->getBriefString().c_str());
 
     /* Error checking */
     if (!((uint32_t)entry->getOwner() == node_name_to_id(ev->getSrc()))) {
@@ -809,7 +802,7 @@ void MESIDirectory::handleFetchResp(MemEvent * ev, bool keepEvent) {
 
 /* FetchXResp */
 void MESIDirectory::handleFetchXResp(MemEvent * ev, bool keepEvent) {
-    if (is_debug_event(ev)) dbg.debug(_L4_, "Finishing Fetch.\n");
+    if (mem_h_is_debug_event(ev)) dbg.debug(_L4_, "Finishing Fetch.\n");
 
     DirEntry * entry = getDirEntry(ev->getBaseAddr());
     MemEvent * reqEv = mshr->removeFront(ev->getBaseAddr());
@@ -928,7 +921,7 @@ void MESIDirectory::handleBackInv(MemEvent* ev) {
     }
 
     if (!entry->isCached()) {
-        if (is_debug_addr(entry->getBaseAddr())) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
+        if (mem_h_is_debug_addr(entry->getBaseAddr())) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
 
         getDirEntryFromMemory(entry);
         return;
@@ -977,7 +970,7 @@ void MESIDirectory::handleNACK(MemEvent * ev) {
     profileResponseRecv(ev);
 
     DirEntry *entry = getDirEntry(origEvent->getBaseAddr());
-    if (is_debug_event(ev)) {
+    if (mem_h_is_debug_event(ev)) {
         dbg.debug(_L5_, "Orig resp ID = (%" PRIu64 ",%d), Nack resp ID = (%" PRIu64 ",%d), last req ID = (%" PRIu64 ",%d)\n",
 	        origEvent->getResponseToID().first, origEvent->getResponseToID().second, ev->getResponseToID().first,
         	ev->getResponseToID().second, entry->lastRequest.first, entry->lastRequest.second);
@@ -988,9 +981,9 @@ void MESIDirectory::handleNACK(MemEvent * ev) {
 	/* Re-send request */
 	sendEventToCaches(origEvent, timestamp + mshrLatency);
 
-        if (is_debug_event(ev)) dbg.debug(_L5_,"Orig Cmd NACKed, retry = %s \n", CommandString[(int)origEvent->getCmd()]);
+        if (mem_h_is_debug_event(ev)) dbg.debug(_L5_,"Orig Cmd NACKed, retry = %s \n", CommandString[(int)origEvent->getCmd()]);
     } else {
-	if (is_debug_event(ev)) dbg.debug(_L5_,"Orig Cmd NACKed, no retry = %s \n", CommandString[(int)origEvent->getCmd()]);
+	if (mem_h_is_debug_event(ev)) dbg.debug(_L5_,"Orig Cmd NACKed, no retry = %s \n", CommandString[(int)origEvent->getCmd()]);
     }
 
     delete ev;
@@ -1002,7 +995,7 @@ void MESIDirectory::handleNACK(MemEvent * ev) {
 void MESIDirectory::handleMemoryResponse(SST::Event *event){
     MemEvent *ev = static_cast<MemEvent*>(event);
 
-    if (is_debug_event(ev)) {
+    if (mem_h_is_debug_event(ev)) {
         dbg.debug(_L3_, "\n%" PRIu64 " (%s) Received: %s\n",
                 getCurrentSimTimeNano(), getName().c_str(), ev->getVerboseString().c_str());
     }
@@ -1061,7 +1054,7 @@ void MESIDirectory::handleDataResponse(MemEvent * ev) {
     State state = entry->getState();
 
     MemEvent * reqEv = mshr->removeFront(ev->getBaseAddr());
-    if (is_debug_event(ev)) dbg.debug(_L10_, "\t%s\tMSHR remove event <%s, %" PRIx64 ">\n", getName().c_str(), CommandString[(int)reqEv->getCmd()], reqEv->getBaseAddr());
+    if (mem_h_is_debug_event(ev)) dbg.debug(_L10_, "\t%s\tMSHR remove event <%s, %" PRIx64 ">\n", getName().c_str(), CommandString[(int)reqEv->getCmd()], reqEv->getBaseAddr());
     //dbg.debug(_L9_, "\t%s\tHandling stalled event: %s, %s\n", CommandString[(int)reqEv->getCmd()], reqEv->getSrc().c_str());
 
     MemEvent * respEv = nullptr;
@@ -1096,7 +1089,7 @@ void MESIDirectory::handleDataResponse(MemEvent * ev) {
     profileResponseSent(respEv);
     sendEventToCaches(respEv, timestamp + mshrLatency);
 
-    if (is_debug_event(ev)) {
+    if (mem_h_is_debug_event(ev)) {
         dbg.debug(_L4_, "\tSending requested data for 0x%" PRIx64 " to %s\n", entry->getBaseAddr(), respEv->getDst().c_str());
     }
 
@@ -1110,7 +1103,7 @@ void MESIDirectory::handleDataResponse(MemEvent * ev) {
 void MESIDirectory::handleFlushLineResponse(MemEvent * ev) {
     MemEvent * reqEv = mshr->removeFront(ev->getBaseAddr());
 
-    if (is_debug_event(ev)) dbg.debug(_L10_, "\t%s\tMSHR remove event <%s, %" PRIx64 ">\n", getName().c_str(), CommandString[(int)reqEv->getCmd()], reqEv->getBaseAddr());
+    if (mem_h_is_debug_event(ev)) dbg.debug(_L10_, "\t%s\tMSHR remove event <%s, %" PRIx64 ">\n", getName().c_str(), CommandString[(int)reqEv->getCmd()], reqEv->getBaseAddr());
     //dbg.debug(_L9_, "\t%s\tHandling stalled event: %s, %s\n", CommandString[(int)reqEv->getCmd()], reqEv->getSrc().c_str());
 
     reqEv->setMemFlags(ev->getMemFlags()); // Copy anything back up that needs to be
@@ -1175,7 +1168,7 @@ void MESIDirectory::issueInvalidates(MemEvent * ev, DirEntry * entry, Command cm
     }
     entry->lastRequest = DirEntry::NO_LAST_REQUEST;
 
-    if (is_debug_addr(entry->getBaseAddr())) dbg.debug(_L4_, "Sending Invalidates to fulfill request for exclusive, BsAddr = %" PRIx64 ".\n", entry->getBaseAddr());
+    if (mem_h_is_debug_addr(entry->getBaseAddr())) dbg.debug(_L4_, "Sending Invalidates to fulfill request for exclusive, BsAddr = %" PRIx64 ".\n", entry->getBaseAddr());
 }
 
 /* Send Fetch to owner */
@@ -1199,7 +1192,7 @@ void MESIDirectory::issueMemoryRequest(MemEvent * ev, DirEntry * entry) {
 
     memMsgQueue.insert(std::make_pair(deliveryTime, reqEv));
 
-    if (is_debug_addr(entry->getBaseAddr())) {
+    if (mem_h_is_debug_addr(entry->getBaseAddr())) {
         dbg.debug(_L5_, "\tRequesting data from memory.  Cmd = %s, BaseAddr = x%" PRIx64 ", Size = %u, noncacheable = %s\n",
                 CommandString[(int)reqEv->getCmd()], reqEv->getBaseAddr(), reqEv->getSize(), reqEv->queryFlag(MemEvent::F_NONCACHEABLE) ? "true" : "false");
     }
@@ -1248,7 +1241,7 @@ void MESIDirectory::getDirEntryFromMemory(DirEntry * entry) {
 
     memMsgQueue.insert(std::make_pair(deliveryTime, me));
 
-    if (is_debug_addr(entry->getBaseAddr())) dbg.debug(_L10_, "Requesting Entry from memory for 0x%" PRIx64 "(%" PRIu64 ", %d)\n", entry->getBaseAddr(), me->getID().first, me->getID().second);
+    if (mem_h_is_debug_addr(entry->getBaseAddr())) dbg.debug(_L10_, "Requesting Entry from memory for 0x%" PRIx64 "(%" PRIu64 ", %d)\n", entry->getBaseAddr(), me->getID().first, me->getID().second);
 }
 
 
@@ -1294,7 +1287,7 @@ void MESIDirectory::sendInvalidate(int target, MemEvent * reqEv, DirEntry* entry
     me->copyMetadata(reqEv);
     me->setDst(nodeid_to_name[target]);
 
-    if (is_debug_event(reqEv)) dbg.debug(_L4_, "Sending Invalidate.  Dst: %s\n", nodeid_to_name[target].c_str());
+    if (mem_h_is_debug_event(reqEv)) dbg.debug(_L4_, "Sending Invalidate.  Dst: %s\n", nodeid_to_name[target].c_str());
     profileRequestSent(me);
 
     uint64_t deliveryTime = timestamp + accessLatency;
@@ -1328,7 +1321,7 @@ void MESIDirectory::forwardFlushRequest(MemEvent * event) {
 
     memMsgQueue.insert(std::make_pair(deliveryTime, reqEv));
 
-    if (is_debug_event(event)) {
+    if (mem_h_is_debug_event(event)) {
         dbg.debug(_L5_, "Forwarding FlushLine to memory. BaseAddr = x%" PRIx64 ", Size = %u, noncacheable = %s\n",
                 reqEv->getBaseAddr(), reqEv->getSize(), reqEv->queryFlag(MemEvent::F_NONCACHEABLE) ? "true" : "false");
     }
@@ -1374,7 +1367,7 @@ void MESIDirectory::updateCache(DirEntry *entry){
 
         /* Find out if we're no longer cached, and just remove */
         if (entry->getState() == I){
-            if (is_debug_addr(entry->getBaseAddr())) dbg.debug(_L10_, "Entry for 0x%" PRIx64 " has no references - purging\n", entry->getBaseAddr());
+            if (mem_h_is_debug_addr(entry->getBaseAddr())) dbg.debug(_L10_, "Entry for 0x%" PRIx64 " has no references - purging\n", entry->getBaseAddr());
 
             directory.erase(entry->getBaseAddr());
             delete entry;
@@ -1389,7 +1382,7 @@ void MESIDirectory::updateCache(DirEntry *entry){
                 // If the oldest entry is still in progress, everything is in progress
                 if(mshr->isHit(oldEntry->getBaseAddr())) break;
 
-                if (is_debug_addr(entry->getBaseAddr())) dbg.debug(_L10_, "entryCache too large.  Evicting entry for 0x%" PRIx64 "\n", oldEntry->getBaseAddr());
+                if (mem_h_is_debug_addr(entry->getBaseAddr())) dbg.debug(_L10_, "entryCache too large.  Evicting entry for 0x%" PRIx64 "\n", oldEntry->getBaseAddr());
 
                 entryCache.pop_back();
                 --entryCacheSize;
@@ -1439,7 +1432,7 @@ MemEvent::id_type MESIDirectory::writebackData(MemEvent *data_event, Command wbC
     uint64_t deliveryTime = timestamp + accessLatency;
     memMsgQueue.insert(std::make_pair(deliveryTime, ev));
 
-    if (is_debug_event(ev)) {
+    if (mem_h_is_debug_event(ev)) {
         dbg.debug(_L5_, "\tWriting back data. %s.\n", ev->getBriefString().c_str());
     }
 
@@ -1465,7 +1458,7 @@ void MESIDirectory::replayWaitingEvents(Addr addr) {
         if (replayEntries->begin()->elem.isEvent()) {
             MemEvent *ev = (replayEntries->begin()->elem).getEvent();
 
-            if (is_debug_addr(addr)) dbg.debug(_L5_, "\tReactivating event. %s\n", ev->getBriefString().c_str());
+            if (mem_h_is_debug_addr(addr)) dbg.debug(_L5_, "\tReactivating event. %s\n", ev->getBriefString().c_str());
 
             retryBuffer.push_back(ev);
         }

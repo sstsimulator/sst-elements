@@ -43,7 +43,8 @@ public:
 
 #define MEMBACKEND_ELI_PARAMS {"debug_level",     "(uint) Debugging level: 0 (no output) to 10 (all output). Output also requires that SST Core be compiled with '--enable-debug'", "0"},\
             {"debug_mask",      "(uint) Mask on debug_level", "0"},\
-            {"debug_location",  "(uint) 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE", "0"},\
+            {"debug_location",  "DEPRECATED: Use 'debug' instead.", "0"},\
+            {"debug", "(uint) 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE", "0"},\
             {"max_requests_per_cycle", "(int) Maximum number of requests to accept each cycle. Use 0 or -1 for unlimited.", "-1"},\
             {"request_width", "(int) Maximum size, in bytes, for a request", "64"},\
             {"mem_size", "(string) Size of memory with units (SI ok). E.g., '2GiB'.", NULL}
@@ -52,10 +53,14 @@ public:
     MemBackend();
 
     MemBackend(ComponentId_t id, Params &params) : SubComponent(id) { 
+        uint32_t output_location = params.find<uint32_t>("debug", 0);
+        if (output_location == 0) {
+            params.find<uint32_t>("debug_location", 0);
+        }
     	output = new SST::Output("@t:MemoryBackend[@p:@l]: ",
                 params.find<uint32_t>("debug_level", 0),
                 params.find<uint32_t>("debug_mask", 0),
-                (Output::output_location_t)params.find<int>("debug_location", 0) );
+                (Output::output_location_t)output_location);
 
         m_maxReqPerCycle = params.find<>("max_requests_per_cycle",-1);
         if (m_maxReqPerCycle == 0) m_maxReqPerCycle = -1;

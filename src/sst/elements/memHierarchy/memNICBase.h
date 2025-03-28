@@ -524,7 +524,7 @@ class MemNICBase : public MemLinkBase {
                 MemEventBase* ev = (static_cast<MemRtrEvent*>(head->inspectPayload()))->inspectEvent();
                 std::string debugEvStr = ev ? ev->getBriefString() : "";
                 uint64_t dst = head->dest;
-                bool doDebug = ev ? is_debug_event(ev) : false;
+                bool doDebug = ev ? mem_h_is_debug_event(ev) : false;
 #endif
                 if (linkcontrol->spaceToSend(0, head->size_in_bits) && linkcontrol->send(head, 0)) {
 

@@ -34,16 +34,7 @@ using namespace std;
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-// Debug macros
-#ifdef __SST_DEBUG_OUTPUT__
-#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
-#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
-#define Debug(level, fmt, ... ) dbg.debug( level, fmt, ##__VA_ARGS__  )
-#else
-#define is_debug_addr(addr) false
-#define is_debug_event(ev) false
-#define Debug(level, fmt, ... )
-#endif
+/* Debug macros included from util.h */
 /*
  *  Debug levels:
  *  3  - event receive/response
@@ -379,8 +370,8 @@ void MemController::handleEvent(SST::Event* event) {
 
     MemEventBase *meb = static_cast<MemEventBase*>(event);
 
-    if (is_debug_event(meb)) {
-        Debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
+    if (mem_h_is_debug_event(meb)) {
+        mem_h_debug_output(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
                     getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), meb->getVerboseString(dlevel).c_str());
     }
 
@@ -442,8 +433,8 @@ void MemController::handleEvent(SST::Event* event) {
         case Command::GetSX:
         case Command::Write:
             outstandingEvents_.insert(std::make_pair(ev->getID(), ev));
-            if (is_debug_event(ev)) {
-                Debug(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
+            if (mem_h_is_debug_event(ev)) {
+                mem_h_debug_output(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
                         getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
                         ev->getVerboseString().c_str());
             }
@@ -458,8 +449,8 @@ void MemController::handleEvent(SST::Event* event) {
                     put = new MemEvent(getName(), ev->getBaseAddr(), ev->getBaseAddr(), Command::PutM, ev->getPayload());
                     put->setFlag(MemEvent::F_NORESPONSE);
                     outstandingEvents_.insert(std::make_pair(put->getID(), put));
-                    if (is_debug_event(put)) {
-                        Debug(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
+                    if (mem_h_is_debug_event(put)) {
+                        mem_h_debug_output(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
                                 getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
                                 put->getVerboseString().c_str());
                     }
@@ -468,8 +459,8 @@ void MemController::handleEvent(SST::Event* event) {
 
                 outstandingEvents_.insert(std::make_pair(ev->getID(), ev));
                 ev->setCmd(Command::FlushLine);
-                if (is_debug_event(ev)) {
-                    Debug(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
+                if (mem_h_is_debug_event(ev)) {
+                    mem_h_debug_output(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
                             getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
                             ev->getVerboseString().c_str());
                 }
@@ -481,8 +472,8 @@ void MemController::handleEvent(SST::Event* event) {
             {
                 MemEvent * resp = ev->makeResponse();
 
-                if (is_debug_event(resp)) {
-                    Debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
+                if (mem_h_is_debug_event(resp)) {
+                    mem_h_debug_output(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
                         getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), resp->getVerboseString(dlevel).c_str());
                 }
                 link_->send( resp );
@@ -535,8 +526,8 @@ void MemController::handleCustomEvent(MemEventBase * ev) {
 
     Interfaces::StandardMem::CustomData* info = customCommandHandler_->ready(ev);
     outstandingEvents_.insert(std::make_pair(ev->getID(), ev));
-    if (is_debug_event(ev)) {
-        Debug(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
+    if (mem_h_is_debug_event(ev)) {
+        mem_h_debug_output(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
                 getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
                 ev->getVerboseString().c_str());
     }
@@ -553,8 +544,8 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
     MemEventBase * evb = it->second;
     outstandingEvents_.erase(it);
 
-    if (is_debug_event(evb)) {
-        Debug(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Recv    (<%" PRIu64 ",%" PRIu32 ">)\n",
+    if (mem_h_is_debug_event(evb)) {
+        mem_h_debug_output(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Recv    (<%" PRIu64 ",%" PRIu32 ">)\n",
                     getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), id.first, id.second);
     }
 
@@ -596,8 +587,8 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
         resp->setAddr(translateToGlobal(ev->getAddr()));
     }
     
-    if (is_debug_event(resp)) {
-        Debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
+    if (mem_h_is_debug_event(resp)) {
+        mem_h_debug_output(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
                 getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), resp->getVerboseString(dlevel).c_str());
     }
 
@@ -635,7 +626,7 @@ void MemController::complete(unsigned int phase) {
     // Initiate flush here if configured to do so
     if (!phase && (backing_outfile_ != "" || backing_outscreen_)) {
         MemEventUntimedFlush* flush = new MemEventUntimedFlush(getName());
-        Debug(_L10_, "U: %-20s   Event:Untimed   (%s)\n", getName().c_str(), flush->getVerboseString().c_str());
+        mem_h_debug_output(_L10_, "U: %-20s   Event:Untimed   (%s)\n", getName().c_str(), flush->getVerboseString().c_str());
         link_->sendUntimedData(flush, true); /* Broadcast to all sources */
     }
 
@@ -664,8 +655,8 @@ void MemController::finish(void) {
 void MemController::writeData(MemEvent* event) {
     if (event->getCmd() == Command::PutM) { /* Write request to memory */
         Addr addr = event->queryFlag(MemEvent::F_NONCACHEABLE) ? event->getAddr() : event->getBaseAddr();
-        if (is_debug_event(event)) { 
-            Debug(_L8_, "S: Update backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
+        if (mem_h_is_debug_event(event)) {
+            mem_h_debug_output(_L8_, "S: Update backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize());
             printDataValue(addr, &(event->getPayload()), true);
         }
 
@@ -676,8 +667,8 @@ void MemController::writeData(MemEvent* event) {
 
     if (event->getCmd() == Command::Write) {
         Addr addr = event->getAddr();
-        if (is_debug_event(event)) { 
-            Debug(_L8_, "S: Update backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); 
+        if (mem_h_is_debug_event(event)) {
+            mem_h_debug_output(_L8_, "S: Update backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize());
             printDataValue(addr, &(event->getPayload()), true);
         }
         
@@ -698,7 +689,7 @@ void MemController::readData(MemEvent* event) {
 
     if (backing_) {
         backing_->get(localAddr, event->getSize(), payload);
-        if (is_debug_addr(localAddr))
+        if (mem_h_is_debug_addr(localAddr))
             printDataValue(localAddr, &(payload), false);
     }
 
@@ -714,7 +705,7 @@ void MemController::writeData(Addr addr, std::vector<uint8_t> * data) {
         backing_->set(addr + i, data->at(i));
     }
 
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         printDataValue(addr, data, true);
 }
 
@@ -727,7 +718,7 @@ void MemController::readData(Addr addr, size_t bytes, std::vector<uint8_t> &data
     for (size_t i = 0; i < bytes; i++)
         data[i] = backing_->get(addr + i);
     
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         printDataValue(addr, &data, false);
 }
 
@@ -743,8 +734,8 @@ Addr MemController::translateToLocal(Addr addr) {
         Addr offset = shift % region_.interleaveStep;
         rAddr = (step * region_.interleaveSize) + offset + privateMemOffset_;
     }
-    if (is_debug_addr(addr) && addr != rAddr) { 
-        Debug(_L10_, "C: %-40" PRIu64 "  %-20s ConvertAddr   Local, 0x%" PRIx64 ", 0x%" PRIx64"\n",
+    if (mem_h_is_debug_addr(addr) && addr != rAddr) {
+        mem_h_debug_output(_L10_, "C: %-40" PRIu64 "  %-20s ConvertAddr   Local, 0x%" PRIx64 ", 0x%" PRIx64"\n",
                     getCurrentSimCycle(), getName().c_str(), addr, rAddr);
     }
     return rAddr;
@@ -761,8 +752,8 @@ Addr MemController::translateToGlobal(Addr addr) {
         rAddr = rAddr / region_.interleaveSize;
         rAddr = rAddr * region_.interleaveStep + offset + region_.start;
     }
-    if (is_debug_addr(rAddr) && addr != rAddr) { 
-        Debug(_L10_, "C: %-40" PRIu64 "  %-20s ConvertAddr   Global, 0x%" PRIx64 ", 0x%" PRIx64"\n",
+    if (mem_h_is_debug_addr(rAddr) && addr != rAddr) {
+        mem_h_debug_output(_L10_, "C: %-40" PRIu64 "  %-20s ConvertAddr   Global, 0x%" PRIx64 ", 0x%" PRIx64"\n",
                     getCurrentSimCycle(), getName().c_str(), addr, rAddr);
     }
     return rAddr;
@@ -775,15 +766,15 @@ void MemController::processInitEvent( MemEventInit* me ) {
         if ( isRequestAddressValid(me->getAddr()) && backing_ ) {
             me->setAddr(translateToLocal(me->getAddr()));
             Addr addr = me->getAddr();
-            Debug(_L10_, "U: %-20s   Event:Write     (%s)\n", getName().c_str(), me->getVerboseString().c_str());
+            mem_h_debug_output(_L10_, "U: %-20s   Event:Write     (%s)\n", getName().c_str(), me->getVerboseString().c_str());
             backing_->set(addr, me->getPayload().size(), me->getPayload());
         } else {
-            Debug(_L10_, "U: %-20s   Event:Write     (%s) IGNORE\n", getName().c_str(), me->getVerboseString().c_str());
+            mem_h_debug_output(_L10_, "U: %-20s   Event:Write     (%s) IGNORE\n", getName().c_str(), me->getVerboseString().c_str());
         }
     } else if (Command::NULLCMD == me->getCmd()) {
-        Debug(_L10_, "U: %-20s   Event:Untimed   (%s)\n", getName().c_str(), me->getVerboseString().c_str());
+        mem_h_debug_output(_L10_, "U: %-20s   Event:Untimed   (%s)\n", getName().c_str(), me->getVerboseString().c_str());
     } else {
-        Debug(_L10_, "U: %-20s   Event:Untimed   UNKNOWN COMMAND (%s)\n", getName().c_str(), me->getVerboseString().c_str());
+        mem_h_debug_output(_L10_, "U: %-20s   Event:Untimed   UNKNOWN COMMAND (%s)\n", getName().c_str(), me->getVerboseString().c_str());
     }
 
     delete me;

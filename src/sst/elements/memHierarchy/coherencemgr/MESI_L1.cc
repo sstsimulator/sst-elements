@@ -20,14 +20,7 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-/* Debug macros */
-#ifdef __SST_DEBUG_OUTPUT__ /* From sst-core, enable with --enable-debug */
-#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
-#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
-#else
-#define is_debug_addr(addr) false
-#define is_debug_event(ev) false
-#endif
+/* Debug macros included from util.h */
 
 /*----------------------------------------------------------------------------------------------------------------------
  * L1 Coherence Controller
@@ -53,7 +46,7 @@ bool MESIL1::handleGetS(MemEvent * event, bool inMSHR) {
     if (inMSHR)
         mshr_->removePendingRetry(addr);
 
-    if (is_debug_addr(addr)) {
+    if (mem_h_is_debug_addr(addr)) {
         eventDI.prefill(event->getID(), event->getThreadID(), Command::GetS, (localPrefetch ? "-pref" : "" ), addr, state);
         eventDI.reason = "hit";
     }
@@ -81,7 +74,7 @@ bool MESIL1::handleGetS(MemEvent * event, bool inMSHR) {
                 sendTime = forwardMessage(event, lineSize_, 0, nullptr);
                 line->setState(IS);
                 line->setTimestamp(sendTime);
-                if (is_debug_addr(addr))
+                if (mem_h_is_debug_addr(addr))
                     eventDI.reason = "miss";
                 mshr_->setInProgress(addr);
             } else {
@@ -119,13 +112,13 @@ bool MESIL1::handleGetS(MemEvent * event, bool inMSHR) {
         default:
             if (!inMSHR) {
                 status = allocateMSHR(event, false);
-            } else if (is_debug_event(event)) {
+            } else if (mem_h_is_debug_event(event)) {
                 eventDI.action = "Stall";
             }
             break;
     }
 
-    if (is_debug_addr(addr) && line) {
+    if (mem_h_is_debug_addr(addr) && line) {
         eventDI.newst = line->getState();
         eventDI.verboseline = line->getString();
     }
@@ -151,7 +144,7 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
     L1CacheLine* line = cacheArray_->lookup(addr, true);
     State state = line ? line->getState() : I;
 
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         eventDI.prefill(event->getID(), event->getThreadID(), Command::GetX, (event->isStoreConditional() ? "-SC" : ""), addr, state);
 
     if (inMSHR)
@@ -181,7 +174,7 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
                 status = checkMSHRCollision(event, inMSHR);
                 if (status == MemEventStatus::OK) {
                     sendTime = sendResponseUp(event, nullptr, inMSHR, 0, false);
-                    if (is_debug_addr(addr))
+                    if (mem_h_is_debug_addr(addr))
                         eventDI.reason = "hit/fail";
                     cleanUpAfterRequest(event, inMSHR);
                     break;
@@ -206,7 +199,7 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
                 line->setState(IM);
                 line->setTimestamp(sendTime);
                 mshr_->setInProgress(addr);
-                if (is_debug_addr(addr))
+                if (mem_h_is_debug_addr(addr))
                     eventDI.reason = "miss";
             } else {
                 recordMiss(event->getID());
@@ -216,7 +209,7 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
             if (event->isStoreConditional()) { /* Definitely failed */
                 sendTime = sendResponseUp(event, nullptr, inMSHR, line->getTimestamp(), false);
                 line->setTimestamp(sendTime-1);
-                if (is_debug_addr(addr))
+                if (mem_h_is_debug_addr(addr))
                     eventDI.reason = "hit/fail";
                 cleanUpAfterRequest(event, inMSHR);
                 break;
@@ -238,7 +231,7 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
                 line->setState(SM);
                 line->setTimestamp(sendTime);
                 mshr_->setInProgress(addr);
-                if (is_debug_addr(addr))
+                if (mem_h_is_debug_addr(addr))
                     eventDI.reason = "miss";
             }
             break;
@@ -257,7 +250,7 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
             if (!event->isStoreConditional() || line->isAtomic(event->getThreadID())) { // Don't write on a non-atomic SC
                 line->setData(event->getPayload(), event->getAddr() - event->getBaseAddr());
                 line->atomicEnd();
-                if (is_debug_addr(addr))
+                if (mem_h_is_debug_addr(addr))
                     printDataValue(addr, line->getData(), true);
             } else {
                 success = false;
@@ -268,7 +261,7 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
 
             sendTime = sendResponseUp(event, nullptr, inMSHR, line->getTimestamp(), success);
             line->setTimestamp(sendTime-1);
-            if (is_debug_addr(addr)) {
+            if (mem_h_is_debug_addr(addr)) {
                 if (success) eventDI.reason = "hit";
                 else eventDI.reason = "hit/fail";
             }
@@ -277,13 +270,13 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
         default:
             if (!inMSHR) {
                 status = allocateMSHR(event, false);
-            } else if (is_debug_addr(addr)) {
+            } else if (mem_h_is_debug_addr(addr)) {
                 eventDI.action = "Stall";
             }
             break;
     }
 
-    if (is_debug_addr(addr) && line) {
+    if (mem_h_is_debug_addr(addr) && line) {
         eventDI.newst = line->getState();
         eventDI.verboseline = line->getString();
     }
@@ -306,7 +299,7 @@ bool MESIL1::handleGetSX(MemEvent* event, bool inMSHR) {
     if (inMSHR)
         mshr_->removePendingRetry(addr);
 
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         eventDI.prefill(event->getID(), event->getThreadID(), Command::GetSX, (event->isLoadLink() ? "-LL" : ""), addr, state);
     
     if (isFlushing_ && !inMSHR) {
@@ -345,7 +338,7 @@ bool MESIL1::handleGetSX(MemEvent* event, bool inMSHR) {
                 line->setState(IM);
                 line->setTimestamp(sendTime);
                 mshr_->setInProgress(addr);
-                if (is_debug_addr(addr))
+                if (mem_h_is_debug_addr(addr))
                     eventDI.reason = "miss";
             } else {
                 recordMiss(event->getID());
@@ -368,7 +361,7 @@ bool MESIL1::handleGetSX(MemEvent* event, bool inMSHR) {
                 line->setState(SM);
                 line->setTimestamp(sendTime);
                 mshr_->setInProgress(addr);
-                if (is_debug_addr(addr))
+                if (mem_h_is_debug_addr(addr))
                     eventDI.reason = "miss";
             }
             break;
@@ -391,19 +384,19 @@ bool MESIL1::handleGetSX(MemEvent* event, bool inMSHR) {
             sendTime = sendResponseUp(event, &data, inMSHR, line->getTimestamp());
             line->setTimestamp(sendTime - 1);
             cleanUpAfterRequest(event, inMSHR);
-            if (is_debug_addr(addr))
+            if (mem_h_is_debug_addr(addr))
                 eventDI.reason = "hit";
             break;
         default:
             if (!inMSHR) {
                 status = allocateMSHR(event, false);
-            } else if (is_debug_addr(addr)) {
+            } else if (mem_h_is_debug_addr(addr)) {
                 eventDI.action = "Stall";
             }
             break;
     }
 
-    if (is_debug_addr(addr) && line) {
+    if (mem_h_is_debug_addr(addr) && line) {
         eventDI.newst = line->getState();
         eventDI.verboseline = line->getString();
     }
@@ -416,7 +409,7 @@ bool MESIL1::handleFlushLine(MemEvent* event, bool inMSHR) {
     L1CacheLine* line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : I;
 
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         eventDI.prefill(event->getID(), event->getThreadID(), Command::FlushLine, "", addr, state);
     
     if (isFlushing_ && !inMSHR) {
@@ -442,7 +435,7 @@ bool MESIL1::handleFlushLine(MemEvent* event, bool inMSHR) {
         sendResponseUp(event, nullptr, inMSHR, line->getTimestamp(), false);
         cleanUpAfterRequest(event, inMSHR);
 
-        if (is_debug_addr(addr)) {
+        if (mem_h_is_debug_addr(addr)) {
             if (line)
                 eventDI.verboseline = line->getString();
             eventDI.reason = "fail, line locked";
@@ -469,7 +462,7 @@ bool MESIL1::handleFlushLine(MemEvent* event, bool inMSHR) {
     if (line && state != I)
         line->setState(S_B);
 
-    if (is_debug_addr(addr) && line) {
+    if (mem_h_is_debug_addr(addr) && line) {
         eventDI.newst = line->getState();
         eventDI.verboseline = line->getString();
     }
@@ -482,7 +475,7 @@ bool MESIL1::handleFlushLineInv(MemEvent* event, bool inMSHR) {
     L1CacheLine* line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : I;
 
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         eventDI.prefill(event->getID(), event->getThreadID(), Command::FlushLineInv, "", addr, state);
     
     if (isFlushing_ && !inMSHR) {
@@ -497,7 +490,7 @@ bool MESIL1::handleFlushLineInv(MemEvent* event, bool inMSHR) {
         mshr_->removePendingRetry(addr);
 
         if (!mshr_->getFrontEvent(addr) || mshr_->getFrontEvent(addr) != event) {
-            if (is_debug_event(event))
+            if (mem_h_is_debug_event(event))
                 eventDI.action = "Stall";
             return true;
         }
@@ -511,7 +504,7 @@ bool MESIL1::handleFlushLineInv(MemEvent* event, bool inMSHR) {
         sendResponseUp(event, nullptr, inMSHR, line->getTimestamp(), false);
         cleanUpAfterRequest(event, inMSHR);
 
-        if (is_debug_addr(addr)) {
+        if (mem_h_is_debug_addr(addr)) {
             if (line)
                 eventDI.verboseline = line->getString();
             eventDI.reason = "fail, line locked";
@@ -538,7 +531,7 @@ bool MESIL1::handleFlushLineInv(MemEvent* event, bool inMSHR) {
 
     recordLatencyType(event->getID(), LatType::HIT);
 
-    if (is_debug_addr(addr) && line) {
+    if (mem_h_is_debug_addr(addr) && line) {
         eventDI.newst = line->getState();
         eventDI.verboseline = line->getString();
     }
@@ -558,7 +551,7 @@ bool MESIL1::handleFlushAll(MemEvent* event, bool inMSHR) {
         }
 
         if (mshr_->insertFlush(event, false) == MemEventStatus::Reject) {
-            if (is_debug_event(event)) {
+            if (mem_h_is_debug_event(event)) {
                 eventDI.action = "Reject";
                 eventDI.reason = "MSHR full";
             }
@@ -637,7 +630,7 @@ bool MESIL1::handleForwardFlush(MemEvent* event, bool inMSHR) {
     if (!inMSHR) {
         status = mshr_->insertFlush(event, true);
         if (status == MemEventStatus::Reject) {
-            if (is_debug_event(event)) {
+            if (mem_h_is_debug_event(event)) {
                 eventDI.action = "Reject";
                 eventDI.reason = "MSHR full";
             }
@@ -730,7 +723,7 @@ bool MESIL1::handleFetch(MemEvent* event, bool inMSHR) {
 
     snoopInvalidation(event, line); // Let core know that line is being accessed elsewhere (for ARM/gem5)
 
-    if (is_debug_event(event))
+    if (mem_h_is_debug_event(event))
         eventDI.prefill(event->getID(), Command::Fetch, "", event->getBaseAddr(), state);
 
     if (inMSHR)
@@ -747,7 +740,7 @@ bool MESIL1::handleFetch(MemEvent* event, bool inMSHR) {
         case IM:
         case I_B:
             /* In these cases, an eviction raced with this request; ignore and wait for a response to our request */
-            if (is_debug_event(event))
+            if (mem_h_is_debug_event(event))
                 eventDI.action = "Ignore";
             break;
         default:
@@ -766,7 +759,7 @@ bool MESIL1::handleInv(MemEvent* event, bool inMSHR) {
     L1CacheLine* line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : I;
 
-    if (is_debug_event(event))
+    if (mem_h_is_debug_event(event))
         eventDI.prefill(event->getID(), Command::Inv, "", event->getBaseAddr(), state);
 
     if (inMSHR)
@@ -798,7 +791,7 @@ bool MESIL1::handleInv(MemEvent* event, bool inMSHR) {
         case IM:
         case I:
             // Raced with Put* or FlushLineInv; will be resolved by arrival of our request
-            if (is_debug_event(event))
+            if (mem_h_is_debug_event(event))
                 eventDI.action = "Ignore";
             break;
         default:
@@ -806,7 +799,7 @@ bool MESIL1::handleInv(MemEvent* event, bool inMSHR) {
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
-    if (is_debug_event(event) && line) {
+    if (mem_h_is_debug_event(event) && line) {
         eventDI.newst = line->getState();
         eventDI.verboseline = line->getString();
     }
@@ -825,7 +818,7 @@ bool MESIL1::handleForceInv(MemEvent* event, bool inMSHR) {
 
     snoopInvalidation(event, line);
 
-    if (is_debug_event(event))
+    if (mem_h_is_debug_event(event))
         eventDI.prefill(event->getID(), Command::ForceInv, "", event->getBaseAddr(), state);
 
     switch (state) {
@@ -847,7 +840,7 @@ bool MESIL1::handleForceInv(MemEvent* event, bool inMSHR) {
                         retryBuffer_.push_back(mshr_->getFrontEvent(addr));
                         mshr_->addPendingRetry(addr);
                     }
-                    if (is_debug_event(event)) {
+                    if (mem_h_is_debug_event(event)) {
                         eventDI.action = "Stall";
                         eventDI.reason = "line locked";
                     }
@@ -863,7 +856,7 @@ bool MESIL1::handleForceInv(MemEvent* event, bool inMSHR) {
         case I:
         case IS:
         case IM:
-            if (is_debug_event(event))
+            if (mem_h_is_debug_event(event))
                 eventDI.action = "Ignore";
             break;
         case SM:
@@ -880,7 +873,7 @@ bool MESIL1::handleForceInv(MemEvent* event, bool inMSHR) {
     if (line) {
         recordPrefetchResult(line, statPrefetchInv);
 
-        if (is_debug_event(event)) {
+        if (mem_h_is_debug_event(event)) {
             eventDI.newst = line->getState();
             eventDI.verboseline = line->getString();
         }
@@ -899,14 +892,14 @@ bool MESIL1::handleFetchInv(MemEvent* event, bool inMSHR) {
 
     snoopInvalidation(event, line);
 
-    if (is_debug_event(event))
+    if (mem_h_is_debug_event(event))
         eventDI.prefill(event->getID(), Command::FetchInv, "", event->getBaseAddr(), state);
 
     switch (state) {
         case I:
         case IS:
         case IM:
-            if (is_debug_event(event))
+            if (mem_h_is_debug_event(event))
                 eventDI.action = "Ignore";
             stat_eventState[(int)Command::FetchInv][state]->addData(1);
             delete event;
@@ -927,7 +920,7 @@ bool MESIL1::handleFetchInv(MemEvent* event, bool inMSHR) {
                         retryBuffer_.push_back(mshr_->getFrontEvent(addr));
                         mshr_->addPendingRetry(addr);
                     }
-                    if (is_debug_event(event)) {
+                    if (mem_h_is_debug_event(event)) {
                         eventDI.action = "Stall";
                         eventDI.reason = "line locked";
                     }
@@ -942,7 +935,7 @@ bool MESIL1::handleFetchInv(MemEvent* event, bool inMSHR) {
             break;
         case I_B:
             line->setState(I);
-            if (is_debug_event(event))
+            if (mem_h_is_debug_event(event))
                 eventDI.action = "Ignore";
             break;
         case SM:
@@ -960,7 +953,7 @@ bool MESIL1::handleFetchInv(MemEvent* event, bool inMSHR) {
     if (line) {
         recordPrefetchResult(line, statPrefetchInv);
 
-        if (is_debug_event(event)) {
+        if (mem_h_is_debug_event(event)) {
             eventDI.newst = line->getState();
             eventDI.verboseline = line->getString();
         }
@@ -983,7 +976,7 @@ bool MESIL1::handleFetchInvX(MemEvent* event, bool inMSHR) {
 
     snoopInvalidation(event, line);
 
-    if (is_debug_event(event))
+    if (mem_h_is_debug_event(event))
         eventDI.prefill(event->getID(), Command::FetchInvX, "", event->getBaseAddr(), state);
 
     switch (state) {
@@ -1003,7 +996,7 @@ bool MESIL1::handleFetchInvX(MemEvent* event, bool inMSHR) {
                         mshr_->addPendingRetry(addr);
                     }
                     stat_eventStalledForLock->addData(1);
-                    if (is_debug_event(event)) {
+                    if (mem_h_is_debug_event(event)) {
                         eventDI.action = "Stall";
                         eventDI.reason = "line locked";
                     }
@@ -1019,7 +1012,7 @@ bool MESIL1::handleFetchInvX(MemEvent* event, bool inMSHR) {
         case IM:
         case I_B:
         case S_B:
-            if (is_debug_event(event))
+            if (mem_h_is_debug_event(event))
                 eventDI.action = "Ignore";
             break;
         default:
@@ -1029,7 +1022,7 @@ bool MESIL1::handleFetchInvX(MemEvent* event, bool inMSHR) {
 
     stat_eventState[(int)Command::FetchInvX][state]->addData(1);
 
-    if (is_debug_addr(event->getBaseAddr()) && line) {
+    if (mem_h_is_debug_addr(event->getBaseAddr()) && line) {
         eventDI.newst = line->getState();
         eventDI.verboseline = line->getString();
     }
@@ -1050,7 +1043,7 @@ bool MESIL1::handleGetSResp(MemEvent* event, bool inMSHR) {
     MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
     bool localPrefetch = req->isPrefetch() && (req->getRqstr() == cachename_);
 
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         eventDI.prefill(event->getID(), req->getThreadID(), Command::GetSResp, (localPrefetch ? "-pref" : ""), addr, state);
 
     req->setMemFlags(event->getMemFlags()); // Copy MemFlags through
@@ -1058,20 +1051,20 @@ bool MESIL1::handleGetSResp(MemEvent* event, bool inMSHR) {
     // Update line
     line->setData(event->getPayload(), 0);
     line->setState(S);
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         printDataValue(addr, line->getData(), false);
 
     if (req->isLoadLink()) {
         line->atomicStart(timestamp_ + llscBlockCycles_, req->getThreadID());
     }
 
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         printDataValue(addr, line->getData(), true);
 
     if (localPrefetch) {
         line->setPrefetch(true);
         recordPrefetchLatency(req->getID(), LatType::MISS);
-        if (is_debug_addr(addr))
+        if (mem_h_is_debug_addr(addr))
             eventDI.action = "Done";
     } else {
         req->setMemFlags(event->getMemFlags());
@@ -1081,7 +1074,7 @@ bool MESIL1::handleGetSResp(MemEvent* event, bool inMSHR) {
         line->setTimestamp(sendTime-1);
     }
 
-    if (is_debug_addr(addr)) {
+    if (mem_h_is_debug_addr(addr)) {
         eventDI.newst = line->getState();
         eventDI.verboseline = line->getString();
     }
@@ -1101,7 +1094,7 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
     MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
     bool localPrefetch = req->isPrefetch() && (req->getRqstr() == cachename_);
 
-    if (is_debug_addr(addr)) {
+    if (mem_h_is_debug_addr(addr)) {
         std::string mod = localPrefetch ? "-pref" : (req->isLoadLink() ? "-LL" : (req->isStoreConditional() ? "-SC" : ""));
         eventDI.prefill(event->getID(), req->getThreadID(), Command::GetXResp, mod, addr, state);
     }
@@ -1115,7 +1108,7 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
         case IS:
             {
                 line->setData(event->getPayload(), 0);
-                if (is_debug_addr(addr))
+                if (mem_h_is_debug_addr(addr))
                     printDataValue(addr, line->getData(), true);
 
                 if (event->getDirty()) {
@@ -1136,7 +1129,7 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
             }
         case IM:
             line->setData(event->getPayload(), 0);
-            if (is_debug_addr(addr))
+            if (mem_h_is_debug_addr(addr))
                 printDataValue(addr, line->getData(), true);
         case SM:
             {
@@ -1146,7 +1139,7 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
                     if (!req->isStoreConditional() || line->isAtomic(req->getThreadID())) { // Normal or successful store-conditional
                         line->setData(req->getPayload(), offset);
 
-                        if (is_debug_addr(addr))
+                        if (mem_h_is_debug_addr(addr))
                             printDataValue(addr, line->getData(), true);
                         line->atomicEnd(); // Any write causes a future SC to fail 
                     } else {
@@ -1176,7 +1169,7 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
 
     cleanUpAfterResponse(event, inMSHR);
 
-    if (is_debug_addr(addr)) {
+    if (mem_h_is_debug_addr(addr)) {
         eventDI.newst = line->getState();
         eventDI.verboseline = line->getString();
         if (!success)
@@ -1196,7 +1189,7 @@ bool MESIL1::handleFlushLineResp(MemEvent * event, bool inMSHR) {
 
     MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
 
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         eventDI.prefill(event->getID(), req->getThreadID(), Command::FlushLineResp, "", addr, state);
 
     switch (state) {
@@ -1216,7 +1209,7 @@ bool MESIL1::handleFlushLineResp(MemEvent * event, bool inMSHR) {
 
     sendResponseUp(req, nullptr, timestamp_, event->success());
 
-    if (is_debug_event(event)) {
+    if (mem_h_is_debug_event(event)) {
         eventDI.action = "Respond";
         if (line) {
             eventDI.verboseline = line->getString();
@@ -1256,7 +1249,7 @@ bool MESIL1::handleAckPut(MemEvent * event, bool inMSHR) {
 
     stat_eventState[(int)Command::AckPut][state]->addData(1);
 
-    if (is_debug_addr(addr)) {
+    if (mem_h_is_debug_addr(addr)) {
         eventDI.prefill(event->getID(), Command::AckPut, "", addr, state);
     }
 
@@ -1274,7 +1267,7 @@ bool MESIL1::handleNULLCMD(MemEvent * event, bool inMSHR) {
 
     bool evicted = handleEviction(newAddr, line, oldAddr == newAddr);
 
-    if (is_debug_addr(newAddr)) {
+    if (mem_h_is_debug_addr(newAddr)) {
         eventDI.prefill(event->getID(), Command::NULLCMD, "", line->getAddr(), evictDI.oldst);
         eventDI.newst = line->getState();
         eventDI.verboseline = line->getString();
@@ -1289,7 +1282,7 @@ bool MESIL1::handleNULLCMD(MemEvent * event, bool inMSHR) {
             mshr_->addPendingRetry(newAddr);
             if (mshr_->removeEvictPointer(oldAddr, newAddr))
                 retry(oldAddr);
-            if (is_debug_addr(newAddr)) {
+            if (mem_h_is_debug_addr(newAddr)) {
                 eventDI.action = "Retry";
                 std::stringstream reason;
                 reason << "0x" << std::hex << newAddr;
@@ -1302,14 +1295,14 @@ bool MESIL1::handleNULLCMD(MemEvent * event, bool inMSHR) {
             }
         }
     } else { // Could be stalling for a new address or locked line
-        if (is_debug_addr(newAddr)) {
+        if (mem_h_is_debug_addr(newAddr)) {
             eventDI.action = "Stall";
             std::stringstream reason;
             reason << "0x" << std::hex << newAddr << ", evict failed";
                 eventDI.reason = reason.str();
         }
         if (oldAddr != line ->getAddr()) { // We're waiting for a new line now...
-            if (is_debug_addr(line->getAddr()) || is_debug_event(event)) {
+            if (mem_h_is_debug_addr(line->getAddr()) || mem_h_is_debug_event(event)) {
                 eventDI.action = "Stall";
                 std::stringstream st;
                 st << "0x" << std::hex << newAddr << ", new targ";
@@ -1332,7 +1325,7 @@ bool MESIL1::handleNACK(MemEvent* event, bool inMSHR) {
     L1CacheLine* line = cacheArray_->lookup(event->getBaseAddr(), false);
     State state = line ? line->getState() : I;
 
-    if (is_debug_addr(event->getBaseAddr()))
+    if (mem_h_is_debug_addr(event->getBaseAddr()))
         eventDI.prefill(event->getID(), Command::NACK, "", event->getBaseAddr(), state);
 
     delete event;
@@ -1402,11 +1395,11 @@ L1CacheLine* MESIL1::allocateLine(MemEvent* event, L1CacheLine* line) {
     if (evicted) {
         notifyListenerOfEvict(line->getAddr(), lineSize_, event->getInstructionPointer());
         cacheArray_->replace(event->getBaseAddr(), line);
-        if (is_debug_addr(event->getBaseAddr()))
+        if (mem_h_is_debug_addr(event->getBaseAddr()))
             printDebugAlloc(true, event->getBaseAddr(), "");
         return line;
     } else {
-        if (is_debug_event(event)) {
+        if (mem_h_is_debug_event(event)) {
             eventDI.action = "Stall";
             std::stringstream st;
             st << "evict 0x" << std::hex << line->getAddr() << ", ";
@@ -1427,13 +1420,13 @@ bool MESIL1::handleEviction(Addr addr, L1CacheLine*& line, bool flush) {
     }
     State state = line->getState();
 
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         evictDI.oldst = line->getState();
 
     /* L1s can have locked cache lines which prevents replacement */
     if (line->isLocked(timestamp_)) {
         stat_eventStalledForLock->addData(1);
-        if (is_debug_addr(line->getAddr()))
+        if (mem_h_is_debug_addr(line->getAddr()))
             printDebugAlloc(false, line->getAddr(), "InProg, line locked");
         return false;
     }
@@ -1450,9 +1443,9 @@ bool MESIL1::handleEviction(Addr addr, L1CacheLine*& line, bool flush) {
                     if (recvWritebackAck_) {
                         mshr_->insertWriteback(line->getAddr(), false);
                     }
-                    if (is_debug_addr(line->getAddr()))
+                    if (mem_h_is_debug_addr(line->getAddr()))
                         printDebugAlloc(false, line->getAddr(), "Writeback");
-                } else if (is_debug_addr(line->getAddr())) {
+                } else if (mem_h_is_debug_addr(line->getAddr())) {
                         printDebugAlloc(false, line->getAddr(), "Drop");
                 }
                 line->setState(I);
@@ -1465,9 +1458,9 @@ bool MESIL1::handleEviction(Addr addr, L1CacheLine*& line, bool flush) {
                     if (recvWritebackAck_) {
                         mshr_->insertWriteback(line->getAddr(), false);
                     }
-                    if (is_debug_addr(line->getAddr()))
+                    if (mem_h_is_debug_addr(line->getAddr()))
                         printDebugAlloc(false, line->getAddr(), "Writeback");
-                } else if (is_debug_addr(line->getAddr())) {
+                } else if (mem_h_is_debug_addr(line->getAddr())) {
                         printDebugAlloc(false, line->getAddr(), "Drop");
                 }
                 line->setState(I);
@@ -1478,13 +1471,13 @@ bool MESIL1::handleEviction(Addr addr, L1CacheLine*& line, bool flush) {
                 sendWriteback(Command::PutM, line, true, flush);
                 if (recvWritebackAck_)
                     mshr_->insertWriteback(line->getAddr(), false);
-                if (is_debug_addr(line->getAddr()))
+                if (mem_h_is_debug_addr(line->getAddr()))
                     printDebugAlloc(false, line->getAddr(), "Writeback");
                 line->setState(I);
                 break;
             }
         default:
-            if (is_debug_addr(line->getAddr())) {
+            if (mem_h_is_debug_addr(line->getAddr())) {
                 stringstream note;
                 if (mshr_->getPendingRetries(addr) != 0) {
                     note << "PendRetry, " << StateString[state];
@@ -1642,7 +1635,7 @@ uint64_t MESIL1::sendResponseUp(MemEvent* event, vector<uint8_t>* data, bool inM
     if (data) {
         responseEvent->setPayload(*data);
         responseEvent->setSize(data->size());
-        if (is_debug_event(event)) {
+        if (mem_h_is_debug_event(event)) {
             printDataValue(event->getAddr(), data, false);
         }
         latency = accessLatency_;
@@ -1659,7 +1652,7 @@ uint64_t MESIL1::sendResponseUp(MemEvent* event, vector<uint8_t>* data, bool inM
     forwardByDestination(responseEvent, deliveryTime);
 
     // Debugging
-    if (is_debug_event(responseEvent))
+    if (mem_h_is_debug_event(responseEvent))
         eventDI.action = "Respond";
 
     return deliveryTime;
@@ -1684,7 +1677,7 @@ void MESIL1::sendResponseDown(MemEvent * event, L1CacheLine * line, bool data) {
     uint64_t deliverTime = timestamp_ + (data ? accessLatency_ : tagLatency_);
     forwardByDestination(responseEvent, deliverTime);
 
-    if (is_debug_event(responseEvent)) {
+    if (mem_h_is_debug_event(responseEvent)) {
         eventDI.action = "Respond";
     }
 }
@@ -1712,7 +1705,7 @@ void MESIL1::forwardFlush(MemEvent* event, L1CacheLine* line, bool evict) {
     if (line)
         line->setTimestamp(deliveryTime-1);
 
-    if (is_debug_addr(event->getBaseAddr()))
+    if (mem_h_is_debug_addr(event->getBaseAddr()))
         eventDI.action = "forward";
 }
 
@@ -1731,7 +1724,7 @@ void MESIL1::sendWriteback(Command cmd, L1CacheLine * line, bool dirty, bool flu
         writeback->setPayload(*line->getData());
         writeback->setDirty(dirty);
 
-        if (is_debug_addr(line->getAddr())) {
+        if (mem_h_is_debug_addr(line->getAddr())) {
             printDataValue(line->getAddr(), line->getData(), false);
         }
 

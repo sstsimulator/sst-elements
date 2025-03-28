@@ -28,14 +28,7 @@ using namespace std;
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-/* Debug macros */
-#ifdef __SST_DEBUG_OUTPUT__ /* From sst-core, enable with --enable-debug */
-#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
-#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
-#else
-#define is_debug_addr(addr) false
-#define is_debug_event(ev) false
-#endif
+/* Debug macros included from util.h */
 
 /*
  *
@@ -392,7 +385,7 @@ void Scratchpad::processIncomingNetworkEvent(SST::Event* event) {
 void Scratchpad::processIncomingCPUEvent(SST::Event* event) {
     MemEventBase * ev = static_cast<MemEventBase*>(event);
 
-    if (is_debug_event(ev))
+    if (mem_h_is_debug_event(ev))
         dbg.debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
                 getCurrentSimCycle(), timestamp_, getName().c_str(), ev->getVerboseString(dlevel).c_str());
 
@@ -439,7 +432,7 @@ void Scratchpad::processIncomingCPUEvent(SST::Event* event) {
 void Scratchpad::processIncomingRemoteEvent(SST::Event * event) {
     MemEvent * ev = static_cast<MemEvent*>(event);
 
-    if (is_debug_event(ev))
+    if (mem_h_is_debug_event(ev))
         dbg.debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:New     (%s)\n",
                 getCurrentSimCycle(), timestamp_, getName().c_str(), ev->getVerboseString(dlevel).c_str());
 
@@ -475,7 +468,7 @@ bool Scratchpad::clock(Cycle_t cycle) {
     while (!procMsgQueue_.empty() && procMsgQueue_.begin()->first < timestamp_) {
         MemEventBase * sendEv = procMsgQueue_.begin()->second;
 
-        if (is_debug_event(sendEv)) {
+        if (mem_h_is_debug_event(sendEv)) {
             debug = true;
             dbg.debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
                     getCurrentSimCycle(), timestamp_, getName().c_str(), sendEv->getBriefString().c_str());
@@ -491,7 +484,7 @@ bool Scratchpad::clock(Cycle_t cycle) {
         MemEvent * sendEv = memMsgQueue_.begin()->second;
         sendEv->setDst(linkDown_->getTargetDestination(sendEv->getBaseAddr()));
 
-        if (is_debug_event(sendEv)) {
+        if (mem_h_is_debug_event(sendEv)) {
             debug = true;
             dbg.debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
                     getCurrentSimCycle(), timestamp_, getName().c_str(), sendEv->getBriefString().c_str());
@@ -555,7 +548,7 @@ void Scratchpad::handleScratchRead(MemEvent * ev) {
     Addr addr = ev->getBaseAddr();
     stat_ScratchReadReceived->addData(1);
 
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         eventDI.prefill(ev->getID(), ev->getCmd(), addr);
 
     MemEvent * response = ev->makeResponse();
@@ -576,17 +569,17 @@ void Scratchpad::handleScratchRead(MemEvent * ev) {
         if (caching_ && !ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
             cacheStatus_.at(ev->getBaseAddr()/scratchLineSize_) = true;
         }
-        if (is_debug_addr(addr))
+        if (mem_h_is_debug_addr(addr))
             eventDI.action = "ScrRead";
     } else {
         mshr_.find(ev->getBaseAddr())->second.push_back(MSHREntry(ev->getID(), Command::GetS, read));
-        if (is_debug_addr(addr)) {
+        if (mem_h_is_debug_addr(addr)) {
             eventDI.action = "stall";
             eventDI.reason = "MSHR conflict";
         }
     }
 
-    if (is_debug_event(ev)) {
+    if (mem_h_is_debug_event(ev)) {
         dbg.debug(_L10_, "M: %-20" PRIu64 " %-20" PRIu64 " %-20s MSHR:InsEv    0x%-16" PRIx64 " %s\n",
                 getCurrentSimCycle(), timestamp_, getName().c_str(), ev->getBaseAddr(), mshr_.find(ev->getBaseAddr())->second.back().getString().c_str());
     }
@@ -609,7 +602,7 @@ void Scratchpad::handleScratchRead(MemEvent * ev) {
 void Scratchpad::handleScratchWrite(MemEvent * ev) {
     Addr addr = ev->getBaseAddr();
 
-    if (is_debug_addr(addr))
+    if (mem_h_is_debug_addr(addr))
         eventDI.prefill(ev->getID(), ev->getCmd(), addr);
 
     bool doWrite = false; // Decide whether to handle this write immediately EVEN if a conflict
@@ -675,7 +668,7 @@ void Scratchpad::handleScratchWrite(MemEvent * ev) {
                     outstandingEventList_.insert(std::make_pair(ev->getID(),OutstandingEvent(ev,response)));
                     it = entry->insert(it, MSHREntry(ev->getID(), Command::GetX, write));
 
-                    if (is_debug_event(ev))
+                    if (mem_h_is_debug_event(ev))
                         dbg.debug(_L10_, "M: %-20" PRIu64 " %-20" PRIu64 " %-20s MSHR:InsEv    0x%-16" PRIx64 " %s\n",
                                 getCurrentSimCycle(), timestamp_, getName().c_str(), ev->getBaseAddr(), it->getString().c_str());
                 }
@@ -696,7 +689,7 @@ void Scratchpad::handleScratchWrite(MemEvent * ev) {
         outstandingEventList_.insert(std::make_pair(ev->getID(),OutstandingEvent(ev,response)));
         mshr_.find(ev->getBaseAddr())->second.push_back(MSHREntry(ev->getID(), Command::GetX, write));
 
-        if (is_debug_event(ev))
+        if (mem_h_is_debug_event(ev))
             dbg.debug(_L10_, "M: %-20" PRIu64 " %-20" PRIu64 " %-20s MSHR:InsEv    0x%-16" PRIx64 " %s\n",
                         getCurrentSimCycle(), timestamp_, getName().c_str(), ev->getBaseAddr(), mshr_.find(ev->getBaseAddr())->second.back().getString().c_str());
     }
@@ -736,7 +729,7 @@ void Scratchpad::handleScratchGet(MemEventBase * event) {
     remoteRead->setInstructionPointer(ev->getInstructionPointer());
     responseIDMap_.insert(std::make_pair(remoteRead->getID(), ev->getID()));
 
-    if (is_debug_event(remoteRead)) {
+    if (mem_h_is_debug_event(remoteRead)) {
         dbg.debug(_L10_, "C: %-20" PRIu64 " %-20" PRIu64 " %-20s Get           0x%-16" PRIx64 " 0x%-16" PRIx64 " Remote Read (<%" PRIu64 ", %" PRIu32 ">, 0x%" PRIx64 ")\n",
                 getCurrentSimCycle(), timestamp_, getName().c_str(), saddr, daddr, remoteRead->getID().first, remoteRead->getID().second, remoteRead->getBaseAddr());
     }
@@ -756,7 +749,7 @@ void Scratchpad::handleScratchGet(MemEventBase * event) {
             mshr_.find(baseAddr)->second.push_back(MSHREntry(ev->getID(), Command::Get, true));
         }
 
-        if (is_debug_addr(baseAddr))
+        if (mem_h_is_debug_addr(baseAddr))
             dbg.debug(_L10_, "M: %-20" PRIu64 " %-20" PRIu64 " %-20s MSHR:InsEv    0x%-16" PRIx64 " %s\n",
                     getCurrentSimCycle(), timestamp_, getName().c_str(), baseAddr, mshr_.find(baseAddr)->second.back().getString().c_str());
 
@@ -807,7 +800,7 @@ void Scratchpad::handleScratchPut(MemEventBase * event) {
             mshr_.find(baseAddr)->second.push_back(MSHREntry(ev->getID(), Command::Put));
         }
 
-        if (is_debug_addr(baseAddr))
+        if (mem_h_is_debug_addr(baseAddr))
             dbg.debug(_L10_, "M: %-20" PRIu64 " %-20" PRIu64 " %-20s MSHR:InsEv    0x%-16" PRIx64 " %s\n",
                     getCurrentSimCycle(), timestamp_, getName().c_str(),
                     baseAddr, mshr_.find(baseAddr)->second.back().getString().c_str());
@@ -835,7 +828,7 @@ void Scratchpad::handleScratchResponse(SST::Event::id_type responseID) {
     Addr baseAddr = responseIDAddrMap_.find(responseID)->second;
     responseIDAddrMap_.erase(responseID);
 
-    if (is_debug_addr(baseAddr))
+    if (mem_h_is_debug_addr(baseAddr))
         dbg.debug(_L5_, "C: %-20" PRIu64 " %-20" PRIu64 " %-20s Scratch:Recv  0x%-16" PRIx64 " <%" PRIu64 ", %" PRIu32 ">\n",
                 getCurrentSimCycle(), timestamp_, getName().c_str(), baseAddr, responseID.first, responseID.second);
 
@@ -867,7 +860,7 @@ void Scratchpad::handleAckInv(MemEventBase * event) {
     MoveEvent * request = static_cast<MoveEvent*>(outstandingEventList_.find(requestID)->second.request);
 
     /* Update cache status */
-    if (is_debug_addr(baseAddr))
+    if (mem_h_is_debug_addr(baseAddr))
         dbg.debug(_L9_, "C: %-20" PRIu64 " %-20" PRIu64 " %-20s UpdCache   0x%-16" PRIx64 "  Uncached\n",
                 getCurrentSimCycle(), timestamp_, getName().c_str(), baseAddr);
 
@@ -876,7 +869,7 @@ void Scratchpad::handleAckInv(MemEventBase * event) {
     if (entry->cmd == Command::Get) {
         entry->needAck = false;
 
-        if (is_debug_addr(baseAddr))
+        if (mem_h_is_debug_addr(baseAddr))
             dbg.debug(_L10_, "M: %-20" PRIu64 " %-20" PRIu64 " %-20s MSHR:Update   0x%-16" PRIx64 " %s\n",
                     getCurrentSimCycle(), timestamp_, getName().c_str(), baseAddr, entry->getString().c_str());
 
@@ -890,7 +883,7 @@ void Scratchpad::handleAckInv(MemEventBase * event) {
         entry->needAck = false;
         entry->needData = true;
 
-        if (is_debug_addr(baseAddr)) {
+        if (mem_h_is_debug_addr(baseAddr)) {
             dbg.debug(_L10_, "M: %-20" PRIu64 " %-20" PRIu64 " %-20s MSHR:Update   0x%-16" PRIx64 " %s\n",
                     getCurrentSimCycle(), timestamp_, getName().c_str(), baseAddr, entry->getString().c_str());
         }
@@ -1090,7 +1083,7 @@ void Scratchpad::handleRemoteGetResponse(MemEvent * response, SST::Event::id_typ
             doScratchWrite(write);
             mshr_.find(baseAddr)->second.front().needData = false;
 
-            if (is_debug_addr(baseAddr))
+            if (mem_h_is_debug_addr(baseAddr))
                 dbg.debug(_L10_, "M: %-20" PRIu64 " %-20" PRIu64 " %-20s MSHR:Update   0x%-16" PRIx64 " %s\n",
                         getCurrentSimCycle(), timestamp_, getName().c_str(), baseAddr, mshr_.find(baseAddr)->second.front().getString().c_str());
 
@@ -1108,7 +1101,7 @@ void Scratchpad::handleRemoteGetResponse(MemEvent * response, SST::Event::id_typ
                     it->scratch = write;
                     it->needData = false;
 
-                    if (is_debug_addr(baseAddr))
+                    if (mem_h_is_debug_addr(baseAddr))
                         dbg.debug(_L10_, "M: %-20" PRIu64 " %-20" PRIu64 " %-20s MSHR:Update   0x%-16" PRIx64 " %s\n",
                                 getCurrentSimCycle(), timestamp_, getName().c_str(), baseAddr, mshr_.find(baseAddr)->second.front().getString().c_str());
                 }
@@ -1145,7 +1138,7 @@ void Scratchpad::updateMSHR(Addr baseAddr) {
             std::vector<uint8_t> readData = doScratchRead(entry->scratch);
             static_cast<MemEvent*>(outstandingEventList_.find(entry->id)->second.response)->setPayload(readData);
 
-            if (is_debug_addr(baseAddr))
+            if (mem_h_is_debug_addr(baseAddr))
                 dbg.debug(_L10_, "M: %-20" PRIu64 " %-20" PRIu64 " %-20s MSHR:Update   0x%-16" PRIx64 " %s\n",
                         getCurrentSimCycle(), timestamp_, getName().c_str(), baseAddr, entry->getString().c_str());
 
@@ -1158,7 +1151,7 @@ void Scratchpad::updateMSHR(Addr baseAddr) {
             finishRequest(entry->id);
             mshr_.find(baseAddr)->second.pop_front();
 
-            if (is_debug_addr(baseAddr))
+            if (mem_h_is_debug_addr(baseAddr))
                 dbg.debug(_L10_, "M: %-20" PRIu64 " %-20" PRIu64 " %-20s MSHR:Remove   0x%-16" PRIx64 "\n",
                         getCurrentSimCycle(), timestamp_, getName().c_str(), baseAddr);
 
@@ -1172,11 +1165,11 @@ void Scratchpad::updateMSHR(Addr baseAddr) {
                 updateGet(entry->id);
                 mshr_.find(baseAddr)->second.pop_front();
 
-                if (is_debug_addr(baseAddr))
+                if (mem_h_is_debug_addr(baseAddr))
                     dbg.debug(_L10_, "M: %-20" PRIu64 " %-20" PRIu64 " %-20s MSHR:Remove   0x%-16" PRIx64 "\n",
                             getCurrentSimCycle(), timestamp_, getName().c_str(), baseAddr);
             } else {
-                if (is_debug_addr(baseAddr))
+                if (mem_h_is_debug_addr(baseAddr))
                     dbg.debug(_L10_, "M: %-20" PRIu64 " %-20" PRIu64 " %-20s MSHR:Remove   0x%-16" PRIx64 "\n",
                             getCurrentSimCycle(), timestamp_, getName().c_str(), baseAddr);
 
@@ -1186,7 +1179,7 @@ void Scratchpad::updateMSHR(Addr baseAddr) {
             entry->needAck = startPut(baseAddr, static_cast<MoveEvent*>(outstandingEventList_.find(entry->id)->second.request));
             entry->needData = !entry->needAck;
 
-            if (is_debug_addr(baseAddr))
+            if (mem_h_is_debug_addr(baseAddr))
                 dbg.debug(_L10_, "M: %-20" PRIu64 " %-20" PRIu64 " %-20s MSHR:Remove   0x%-16" PRIx64 "\n",
                         getCurrentSimCycle(), timestamp_, getName().c_str(), baseAddr);
 
@@ -1200,7 +1193,7 @@ void Scratchpad::updateMSHR(Addr baseAddr) {
     if (mshr_.find(baseAddr)->second.empty()) {
         mshr_.erase(baseAddr);
 
-        if (is_debug_addr(baseAddr))
+        if (mem_h_is_debug_addr(baseAddr))
             dbg.debug(_L10_, "M: %-20" PRIu64 " %-20" PRIu64 " %-20s MSHR:Erase    0x%-16" PRIx64 "\n", getCurrentSimCycle(), timestamp_, getName().c_str(), baseAddr);
     }
 }

@@ -128,6 +128,8 @@ libmemHierarchy_la_SOURCES = \
 	testcpu/standardMMIO.cc
 
 EXTRA_DIST = \
+	membackend/ramulator2/Instructions.md \
+	membackend/ramulator2/sst_frontend.cpp \ 
 	tests/testsuite_default_memHierarchy_hybridsim.py \
 	tests/testsuite_default_memHierarchy_memHA.py \
 	tests/testsuite_default_memHierarchy_sdl.py \
@@ -181,6 +183,7 @@ EXTRA_DIST = \
 	tests/testBackendPagedMulti.py \
 	tests/testBackendRamulator-1.py \
 	tests/testBackendRamulator-2.py \
+	tests/testBackendRamulator2.py \
 	tests/testBackendReorderRow.py \
 	tests/testBackendReorderSimple.py \
 	tests/testBackendSimpleDRAM-1.py \
@@ -223,6 +226,7 @@ EXTRA_DIST = \
 	tests/system.ini \
 	tests/DDR4_8Gb_x16_3200.ini \
 	tests/ramulator-ddr3.cfg \
+	tests/ramulator2-ddr4.cfg \
 	tests/ddr_device.ini \
 	tests/ddr_system.ini \
 	tests/hbm_device.ini \
@@ -239,6 +243,7 @@ EXTRA_DIST = \
 	tests/refFiles/test_memHA_BackendPagedMulti.out \
 	tests/refFiles/test_memHA_BackendRamulator_1.out \
 	tests/refFiles/test_memHA_BackendRamulator_2.out \
+	tests/refFiles/test_memHA_BackendRamulator2.out \
 	tests/refFiles/test_memHA_BackendReorderRow.out \
 	tests/refFiles/test_memHA_BackendReorderSimple.out \
 	tests/refFiles/test_memHA_BackendSimpleDRAM_1.out \
@@ -424,6 +429,15 @@ nobase_sst_HEADERS += membackend/ramulatorBackend.h
 AM_CPPFLAGS += $(RAMULATOR_CPPFLAGS) -DHAVE_LIBRAMULATOR
 endif
 
+if HAVE_RAMULATOR2
+libmemHierarchy_la_LDFLAGS += $(RAMULATOR2_LDFLAGS)
+libmemHierarchy_la_LIBADD += $(RAMULATOR2_LIB)
+libmemHierarchy_la_SOURCES += membackend/ramulator2Backend.cc \
+	membackend/ramulator2Backend.h
+nobase_sst_HEADERS += membackend/ramulator2Backend.h
+AM_CPPFLAGS += $(RAMULATOR2_CPPFLAGS) -DHAVE_LIBRAMULATOR2
+endif
+
 if HAVE_DRAMSIM
 libmemHierarchy_la_LDFLAGS += $(DRAMSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(DRAMSIM_LIB)
@@ -509,6 +523,7 @@ install-exec-hook:
 	$(SST_REGISTER_TOOL) FDSIM LIBDIR=$(FDSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) GOBLIN_HMCSIM LIBDIR=$(GOBLIN_HMCSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) RAMULATOR LIBDIR=$(RAMULATOR_LIBDIR)
+	$(SST_REGISTER_TOOL) RAMULATOR2 LIBDIR=$(RAMULATOR2_LIBDIR)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     memHierarchy=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      memHierarchy=$(abs_srcdir)/tests
 
