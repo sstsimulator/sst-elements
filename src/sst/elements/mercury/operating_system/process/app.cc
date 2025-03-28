@@ -246,7 +246,8 @@ App::App(SST::Params& params, SoftwareId sid,
   min_op_cutoff_(0),
   globals_storage_(nullptr),
   notify_(true),
-  rc_(0)
+  rc_(0),
+  taskid_(sid.task_)
 {
   unsigned int verbose = params.find<unsigned int>("verbose", 0);
   out_ = std::unique_ptr<SST::Output>(

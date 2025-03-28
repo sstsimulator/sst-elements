@@ -89,7 +89,10 @@ class Transport {
   }
 
   SST::Hg::NodeId addr() const {
-    return nid_;
+    //return nid_;
+    // In Mercury we do everything internally via rank id and convert to physical node
+    // only when entering/leaving Merlin.
+    return rank_;
   }
 
   int rank() const {

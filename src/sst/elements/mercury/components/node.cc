@@ -47,6 +47,8 @@ Node::Node(ComponentId_t id, Params &params)
 
   unsigned int nranks = params.find<unsigned int>("nranks", -1);
   os_->set_nranks(nranks);
+  unsigned int npernode = params.find<unsigned int>("npernode", 1);
+  os_->set_npernode(npernode);
 }
 
 } // namespace Hg

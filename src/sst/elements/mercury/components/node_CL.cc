@@ -44,8 +44,10 @@ NodeCL::NodeCL(ComponentId_t id, Params &params)
     netLink_ = configureLink("network");
   }
 
-  unsigned int nranks = params.find<unsigned int>("nranks",-1);
+  unsigned int nranks = params.find<unsigned int>("nranks", -1);
   os_->set_nranks(nranks);
+  unsigned int npernode = params.find<unsigned int>("npernode", 1);
+  os_->set_npernode(npernode);
 
   int ncores_ = params.find<std::int32_t>("ncores", 1);
   int nsockets_ = params.find<std::int32_t>("nsockets",1);

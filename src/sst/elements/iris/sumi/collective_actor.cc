@@ -296,8 +296,7 @@ DagCollectiveActor::addDependencyToMap(uint32_t id, Action* ac)
 void
 DagCollectiveActor::addCommDependency(Action* precursor, Action *ac)
 {
-  //int physical_rank =  comm_->commToGlobalRank(ac->partner);
-  int physical_rank =  ac->partner;
+  int physical_rank =  comm_->commToGlobalRank(ac->partner);
 
   if (physical_rank == Communicator::unresolved_rank){
     //uh oh - need to wait on this

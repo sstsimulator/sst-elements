@@ -37,7 +37,7 @@ class HgJob(Job):
 
     def build(self, nodeID, extraKeys):
         logical_id = self._nid_map[nodeID]
-        node = self.node.build(nodeID,logical_id,self._numNodes * self._numCores)
+        node = self.node.build(nodeID,logical_id,self._numNodes * self._numCores, self._numCores)
         os = self.os.build(node,"os_slot") 
         nic = self.nic.build(node,"nic_slot")
 
@@ -61,7 +61,7 @@ class HgNode(TemplateBase):
                                      ])
         self._subscribeToPlatformParamSet("node")
 
-    def build(self,nid,lid,nranks):
+    def build(self,nid,lid,nranks,npernode):
         if self._check_first_build():
             sst.addGlobalParams("params_%s"%self._instance_name, self._getGroupParams("params"))
         node = sst.Component("node" + str(nid), self.name)
@@ -69,6 +69,7 @@ class HgNode(TemplateBase):
         node.addParam("nodeID", nid)
         node.addParam("logicalID", lid)
         node.addParam("nranks", nranks)
+        node.addParam("npernode", npernode)
         return node
 
 class HgNIC(TemplateBase):

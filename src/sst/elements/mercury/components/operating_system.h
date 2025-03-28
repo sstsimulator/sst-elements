@@ -146,7 +146,8 @@ protected:
   ThreadContext *des_context_;
 
   unsigned int verbose_;
-  int nranks_;
+  unsigned int nranks_;
+  unsigned int npernode_;
   Thread* blocked_thread_;
   int next_condition_;
   int next_mutex_;
@@ -215,12 +216,20 @@ protected:
 
   condition_t* getCondition(int id) override;
 
-  void set_nranks(int32_t ranks) override {
+  void set_nranks(unsigned int ranks) override {
     nranks_ = ranks;
   }
 
-  int32_t nranks() override {
+  unsigned int nranks() override {
     return nranks_;
+  }
+
+  void set_npernode(unsigned int npernode) override {
+    npernode_ = npernode;
+  }
+
+  unsigned int npernode() override {
+    return npernode_;
   }
 
 //

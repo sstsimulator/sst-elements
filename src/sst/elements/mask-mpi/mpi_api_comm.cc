@@ -70,7 +70,7 @@ MpiApi::commDup(MPI_Comm input, MPI_Comm *output)
 #endif
   StartCommCall(MPI_Comm_dup,input);
   MpiComm* inputPtr = getComm(input);
-  MpiComm* outputPtr = comm_factory_.comm_dup(inputPtr);
+  MpiComm* outputPtr = comm_factory_->comm_dup(inputPtr);
   addCommPtr(outputPtr, output);
   //mpi_api_debug(sprockit::dbg::mpi, "MPI_Comm_dup(%s,*%s) finish",
   //              commStr(input).c_str(), commStr(*output).c_str());
@@ -93,7 +93,7 @@ MpiApi::commCreateGroup(MPI_Comm comm, MPI_Group group, int  /*tag*/, MPI_Comm *
   StartCommCall(MPI_Comm_create_group,comm);
   MpiComm* inputPtr = getComm(comm);
   MpiGroup* groupPtr = getGroup(group);
-  MpiComm* outputPtr = comm_factory_.commCreateGroup(inputPtr, groupPtr);
+  MpiComm* outputPtr = comm_factory_->commCreateGroup(inputPtr, groupPtr);
   addCommPtr(outputPtr, newcomm);
 //  mpi_api_debug(sprockit::dbg::mpi, "MPI_Comm_create_group(%s,*%s) finish",
 //                commStr(comm).c_str(), commStr(*newcomm).c_str());
@@ -125,7 +125,7 @@ MpiApi::commCreate(MPI_Comm input, MPI_Group group, MPI_Comm *output)
   StartCommCall(MPI_Comm_create,input);
   MpiComm* inputPtr = getComm(input);
   MpiGroup* groupPtr = getGroup(group);
-  MpiComm* outputPtr = comm_factory_.commCreate(inputPtr, groupPtr);
+  MpiComm* outputPtr = comm_factory_->commCreate(inputPtr, groupPtr);
   addCommPtr(outputPtr, output);
 //  mpi_api_debug(sprockit::dbg::mpi, "MPI_Comm_create(%s,%d,*%s)",
 //                commStr(input).c_str(), group, commStr(*output).c_str());
@@ -176,7 +176,7 @@ MpiApi::cartCreate(MPI_Comm comm_old, int ndims, const int dims[],
 {
   StartCommCall(MPI_Cart_create,comm_old);
   MpiComm* incommPtr = getComm(comm_old);
-  MpiComm* outcommPtr = comm_factory_.createCart(incommPtr, ndims, dims, periods, reorder);
+  MpiComm* outcommPtr = comm_factory_->createCart(incommPtr, ndims, dims, periods, reorder);
   addCommPtr(outcommPtr, comm_cart);
   FinishMPICall(MPI_Cart_create);
 
@@ -263,7 +263,7 @@ MpiApi::commSplit(MPI_Comm incomm, int color, int key, MPI_Comm *outcomm)
 #endif
   StartCommCall(MPI_Comm_split,incomm);
   MpiComm* incommPtr = getComm(incomm);
-  MpiComm* outcommPtr = comm_factory_.commSplit(incommPtr, color, key);
+  MpiComm* outcommPtr = comm_factory_->commSplit(incommPtr, color, key);
 
   addCommPtr(outcommPtr, outcomm);
 //  mpi_api_debug(sprockit::dbg::mpi,
