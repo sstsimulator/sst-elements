@@ -708,7 +708,7 @@ uint64_t Cache::createMSHR(Params &params, uint64_t accessLatency, bool L1) {
         mshrLatency = 1;
     } else {
         // Otherwise if mshrLatency isn't set or is 0, intrapolate from cache latency
-        uint64_t N = 200; // max cache latency supported by the intrapolation method
+        const uint64_t N = 200; // max cache latency supported by the intrapolation method
         int y[N];
 
         /* L2 */
