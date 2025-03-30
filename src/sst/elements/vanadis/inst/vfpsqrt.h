@@ -121,8 +121,8 @@ public:
         check_IEEE754_except();
     }
 
-    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
-                uint16_t phys_fp_regs_in_0,uint16_t phys_fp_regs_out_0)
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
+                uint16_t phys_fp_regs_in_0,uint16_t phys_fp_regs_out_0) override
     {
          #ifdef VANADIS_BUILD_DEBUG
         if ( output->getVerboseLevel() >= verboselevel ) {

@@ -42,13 +42,13 @@ public:
         }
     }
 
-    VanadisSysCallInstruction* clone() { return new VanadisSysCallInstruction(*this); }
+    VanadisSysCallInstruction* clone() override { return new VanadisSysCallInstruction(*this); }
 
-    virtual VanadisFunctionalUnitType getInstFuncType() const { return INST_SYSCALL; }
+    virtual VanadisFunctionalUnitType getInstFuncType() const override { return INST_SYSCALL; }
 
-    virtual const char* getInstCode() const { return "SYSCALL"; }
+    virtual const char* getInstCode() const override { return "SYSCALL"; }
 
-    virtual void printToBuffer(char* buffer, size_t buffer_size)
+    virtual void printToBuffer(char* buffer, size_t buffer_size) override
     {
         snprintf(
             buffer, buffer_size, "SYSCALL (syscall-code-isa: %" PRIu16 ", phys: %" PRIu16 ")\n",
@@ -66,8 +66,8 @@ public:
         markExecuted();
     }
 
-    virtual bool performIntRegisterRecovery() const { return false; }
-    virtual bool performFPRegisterRecovery() const { return false; }
+    virtual bool performIntRegisterRecovery() const override { return false; }
+    virtual bool performFPRegisterRecovery() const override { return false; }
 };
 
 } // namespace Vanadis

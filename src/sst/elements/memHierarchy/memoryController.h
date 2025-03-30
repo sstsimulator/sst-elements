@@ -166,9 +166,9 @@ protected:
     CustomCmdMemHandler * customCommandHandler_;
 
     /* Debug -triggered by output.fatal() and/or SIGUSR2 */
-    virtual void printStatus(Output &out);
-    virtual void emergencyShutdown();
-    
+    virtual void printStatus(Output &out) override;
+    virtual void emergencyShutdown() override;
+
     void printDataValue(Addr addr, std::vector<uint8_t>* data, bool set);
 
 private:

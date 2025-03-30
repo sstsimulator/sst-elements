@@ -35,13 +35,13 @@ public:
         isa_int_regs_out[0] = dest;
     }
 
-    virtual VanadisNorInstruction* clone() { return new VanadisNorInstruction(*this); }
+    virtual VanadisNorInstruction* clone() override { return new VanadisNorInstruction(*this); }
 
-    virtual VanadisFunctionalUnitType getInstFuncType() const { return INST_INT_ARITH; }
+    virtual VanadisFunctionalUnitType getInstFuncType() const override { return INST_INT_ARITH; }
 
-    virtual const char* getInstCode() const { return "NOR"; }
+    virtual const char* getInstCode() const override { return "NOR"; }
 
-    virtual void printToBuffer(char* buffer, size_t buffer_size)
+    virtual void printToBuffer(char* buffer, size_t buffer_size) override
     {
         snprintf(
             buffer, buffer_size,
