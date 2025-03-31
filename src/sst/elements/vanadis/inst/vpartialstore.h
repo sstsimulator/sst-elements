@@ -42,15 +42,15 @@ public:
         register_offset = 0;
     }
 
-    virtual bool isPartialStore() { return true; }
+    virtual bool isPartialStore() override { return true; }
 
-    VanadisPartialStoreInstruction* clone() { return new VanadisPartialStoreInstruction(*this); }
+    VanadisPartialStoreInstruction* clone() override { return new VanadisPartialStoreInstruction(*this); }
 
-    virtual VanadisFunctionalUnitType getInstFuncType() const { return INST_STORE; }
+    virtual VanadisFunctionalUnitType getInstFuncType() const override { return INST_STORE; }
 
-    virtual const char* getInstCode() const { return "PARTSTORE"; }
+    virtual const char* getInstCode() const override { return "PARTSTORE"; }
 
-    virtual void printToBuffer(char* buffer, size_t buffer_size)
+    virtual void printToBuffer(char* buffer, size_t buffer_size) override
     {
         snprintf(
             buffer, buffer_size,
@@ -62,7 +62,7 @@ public:
     virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override { markExecuted(); }
 
     virtual void
-    computeStoreAddress(SST::Output* output, VanadisRegisterFile* reg, uint64_t* store_addr, uint16_t* op_width)
+    computeStoreAddress(SST::Output* output, VanadisRegisterFile* reg, uint64_t* store_addr, uint16_t* op_width) override
     {
         #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= 16) {
@@ -118,7 +118,7 @@ public:
 
     uint16_t getStoreWidth() const { return store_width; }
 
-    virtual uint16_t getRegisterOffset() const { return register_offset; }
+    virtual uint16_t getRegisterOffset() const override { return register_offset; }
 
     uint16_t                 getMemoryAddressRegister() const { return phys_int_regs_in[0]; }
     uint16_t                 getValueRegister() const { return phys_int_regs_in[1]; }

@@ -34,24 +34,24 @@ public:
         fence = fenceT;
     }
 
-    VanadisFenceInstruction* clone() { return new VanadisFenceInstruction(*this); }
+    VanadisFenceInstruction* clone() override { return new VanadisFenceInstruction(*this); }
 
     bool createsLoadFence() const { return (fence == VANADIS_LOAD_FENCE) || (fence == VANADIS_LOAD_STORE_FENCE); }
 
     bool createsStoreFence() const { return (fence == VANADIS_STORE_FENCE) || (fence == VANADIS_LOAD_STORE_FENCE); }
 
-    virtual const char* getInstCode() const
+    virtual const char* getInstCode() const override
     {
         return (fence == VANADIS_LOAD_STORE_FENCE) ? "SYNC" : (fence == VANADIS_LOAD_FENCE) ? "LFENCE" : "SFENCE";
     }
 
-    virtual void printToBuffer(char* buffer, size_t buffer_size) { snprintf(buffer, buffer_size, "%s", getInstCode()); }
+    virtual void printToBuffer(char* buffer, size_t buffer_size) override { snprintf(buffer, buffer_size, "%s", getInstCode()); }
 
-    virtual VanadisFunctionalUnitType getInstFuncType() const { return INST_FENCE; }
+    virtual VanadisFunctionalUnitType getInstFuncType() const override { return INST_FENCE; }
 
     virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override {}
 
-    virtual void print(SST::Output* output) { output->verbose(CALL_INFO, 8, 0, "%s", getInstCode()); }
+    virtual void print(SST::Output* output) override { output->verbose(CALL_INFO, 8, 0, "%s", getInstCode()); }
 
 protected:
     VanadisFenceType fence;

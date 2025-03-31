@@ -73,8 +73,8 @@ public:
             getInstCode(), isa_fp_regs_out[0], phys_fp_regs_out[0], isa_int_regs_in[0], phys_int_regs_in[0]);
     }
 
-    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
-                            uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0)
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
+                            uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0) override
         {
             
             if(output->getVerboseLevel() >= verboselevel) {

@@ -194,8 +194,8 @@ public:
     virtual void finish(void) override;
 
     /** Component API - debug and fatal */
-    void printStatus(Output & out); // Called on SIGUSR2
-    void emergencyShutdown();       // Called on output.fatal(), SIGINT/SIGTERM
+    void printStatus(Output & out) override; // Called on SIGUSR2
+    void emergencyShutdown() override;       // Called on output.fatal(), SIGINT/SIGTERM
 
 private:
     /** Cache factory methods **************************************************/

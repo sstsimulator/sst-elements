@@ -72,7 +72,7 @@ public:
     }
 
     void instOp(VanadisRegisterFile* regFile, uint16_t phys_fp_regs_in_0, uint16_t phys_fp_regs_in_1,
-                        uint16_t phys_int_regs_out_0)
+                        uint16_t phys_int_regs_out_0) override
     {
         uint64_t src;
         if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
