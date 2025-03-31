@@ -378,36 +378,36 @@ public:
     }
 
     /** Event handlers - called by controller */
-    bool handleGetS(MemEvent * event, bool inMSHR);
-    bool handleWrite(MemEvent * event, bool inMSHR);
-    bool handleGetX(MemEvent * event, bool inMSHR);
-    bool handleGetSX(MemEvent * event, bool inMSHR);
-    bool handleFlushLine(MemEvent * event, bool inMSHR);
-    bool handleFlushLineInv(MemEvent * event, bool inMSHR);
-    bool handleFlushAll(MemEvent * event, bool inMSHR);
-    bool handleForwardFlush(MemEvent * event, bool inMSHR);
-    bool handleFetch(MemEvent * event, bool inMSHR);
-    bool handleInv(MemEvent * event, bool inMSHR);
-    bool handleForceInv(MemEvent * event, bool inMSHR);
-    bool handleFetchInv(MemEvent * event, bool inMSHR);
-    bool handleFetchInvX(MemEvent * event, bool inMSHR);
-    bool handleGetSResp(MemEvent * event, bool inMSHR);
-    bool handleGetXResp(MemEvent * event, bool inMSHR);
-    bool handleFlushLineResp(MemEvent * event, bool inMSHR);
-    bool handleFlushAllResp(MemEvent * event, bool inMSHR);
-    bool handleUnblockFlush(MemEvent * event, bool inMSHR);
-    bool handleAckPut(MemEvent * event, bool inMSHR);
-    bool handleNULLCMD(MemEvent * event, bool inMSHR);
-    bool handleNACK(MemEvent * event, bool inMSHR);
+    bool handleGetS(MemEvent * event, bool inMSHR) override;
+    bool handleWrite(MemEvent * event, bool inMSHR) override;
+    bool handleGetX(MemEvent * event, bool inMSHR) override;
+    bool handleGetSX(MemEvent * event, bool inMSHR) override;
+    bool handleFlushLine(MemEvent * event, bool inMSHR) override;
+    bool handleFlushLineInv(MemEvent * event, bool inMSHR) override;
+    bool handleFlushAll(MemEvent * event, bool inMSHR) override;
+    bool handleForwardFlush(MemEvent * event, bool inMSHR) override;
+    bool handleFetch(MemEvent * event, bool inMSHR) override;
+    bool handleInv(MemEvent * event, bool inMSHR) override;
+    bool handleForceInv(MemEvent * event, bool inMSHR) override;
+    bool handleFetchInv(MemEvent * event, bool inMSHR) override;
+    bool handleFetchInvX(MemEvent * event, bool inMSHR) override;
+    bool handleGetSResp(MemEvent * event, bool inMSHR) override;
+    bool handleGetXResp(MemEvent * event, bool inMSHR) override;
+    bool handleFlushLineResp(MemEvent * event, bool inMSHR) override;
+    bool handleFlushAllResp(MemEvent * event, bool inMSHR) override;
+    bool handleUnblockFlush(MemEvent * event, bool inMSHR) override;
+    bool handleAckPut(MemEvent * event, bool inMSHR) override;
+    bool handleNULLCMD(MemEvent * event, bool inMSHR) override;
+    bool handleNACK(MemEvent * event, bool inMSHR) override;
 
     /** Configuration */
-    MemEventInitCoherence* getInitCoherenceEvent();
-    virtual std::set<Command> getValidReceiveEvents();
-    void setSliceAware(uint64_t interleaveSize, uint64_t interleaveStep);
+    MemEventInitCoherence* getInitCoherenceEvent() override;
+    virtual std::set<Command> getValidReceiveEvents() override;
+    void setSliceAware(uint64_t interleaveSize, uint64_t interleaveStep) override;
 
-    void printStatus(Output& out);
+    void printStatus(Output& out) override;
 
-    Addr getBank(Addr addr);
+    Addr getBank(Addr addr) override;
 
     /* LoadLink wakeup event - not serializable since it only goes over a self link */
     class LoadLinkWakeup : public SST::Event {
@@ -435,17 +435,17 @@ private:
     void handleLoadLinkExpiration(SST::Event* ev);
 
     /** Event send */
-    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t time, bool success = true);
+    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t time, bool success = true) override;
     void sendResponseDown(MemEvent * event, L1CacheLine * line, bool data);
     void forwardFlush(MemEvent * event, L1CacheLine * line, bool evict);
     void sendWriteback(Command cmd, L1CacheLine * line, bool dirty, bool flush);
     void snoopInvalidation(MemEvent * event, L1CacheLine * line);
-    void forwardByAddress(MemEventBase* ev, Cycle_t timestamp);
-    void forwardByDestination(MemEventBase* ev, Cycle_t timestamp);
+    void forwardByAddress(MemEventBase* ev, Cycle_t timestamp) override;
+    void forwardByDestination(MemEventBase* ev, Cycle_t timestamp) override;
 
     /** Statistics/Listeners */
     inline void recordPrefetchResult(L1CacheLine * line, Statistic<uint64_t>* stat);
-    void recordLatency(Command cmd, int type, uint64_t latency);
+    void recordLatency(Command cmd, int type, uint64_t latency) override;
     void eventProfileAndNotify(MemEvent * event, State state, NotifyAccessType type, NotifyResultType result, bool inMSHR);
 
     /** Miscellaneous */

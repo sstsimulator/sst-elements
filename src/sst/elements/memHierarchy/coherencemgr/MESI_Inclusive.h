@@ -493,43 +493,43 @@ public:
     }
 
     /** Event handlers **/
-    virtual bool handleGetS(MemEvent * event, bool inMSHR);
-    virtual bool handleGetX(MemEvent * event, bool inMSHR);
-    virtual bool handleGetSX(MemEvent * event, bool inMSHR);
-    virtual bool handleFlushLine(MemEvent * event, bool inMSHR);
-    virtual bool handleFlushLineInv(MemEvent * event, bool inMSHR);
-    virtual bool handleFlushAll(MemEvent * event, bool inMSHR);
-    virtual bool handleForwardFlush(MemEvent * event, bool inMSHR);
-    virtual bool handlePutS(MemEvent * event, bool inMSHR);
-    virtual bool handlePutX(MemEvent * event, bool inMSHR);
-    virtual bool handlePutE(MemEvent * event, bool inMSHR);
-    virtual bool handlePutM(MemEvent * event, bool inMSHR);
-    virtual bool handleInv(MemEvent * event, bool inMSHR);
-    virtual bool handleForceInv(MemEvent * event, bool inMSHR);
-    virtual bool handleFetch(MemEvent * event, bool inMSHR);
-    virtual bool handleFetchInv(MemEvent * event, bool inMSHR);
-    virtual bool handleFetchInvX(MemEvent * event, bool inMSHR);
-    virtual bool handleGetSResp(MemEvent * event, bool inMSHR);
-    virtual bool handleGetXResp(MemEvent * event, bool inMSHR);
-    virtual bool handleFlushLineResp(MemEvent * event, bool inMSHR);
-    virtual bool handleFlushAllResp(MemEvent * event, bool inMSHR);
-    virtual bool handleFetchResp(MemEvent * event, bool inMSHR);
-    virtual bool handleFetchXResp(MemEvent * event, bool inMSHR);
-    virtual bool handleAckInv(MemEvent * event, bool inMSHR);
-    virtual bool handleAckPut(MemEvent * event, bool inMSHR);
-    virtual bool handleAckFlush(MemEvent * event, bool inMSHR);
-    virtual bool handleUnblockFlush(MemEvent * event, bool inMSHR);
-    virtual bool handleNACK(MemEvent * event, bool inMSHR);
-    virtual bool handleNULLCMD(MemEvent * event, bool inMSHR);
+    virtual bool handleGetS(MemEvent * event, bool inMSHR) override;
+    virtual bool handleGetX(MemEvent * event, bool inMSHR) override;
+    virtual bool handleGetSX(MemEvent * event, bool inMSHR) override;
+    virtual bool handleFlushLine(MemEvent * event, bool inMSHR) override;
+    virtual bool handleFlushLineInv(MemEvent * event, bool inMSHR) override;
+    virtual bool handleFlushAll(MemEvent * event, bool inMSHR) override;
+    virtual bool handleForwardFlush(MemEvent * event, bool inMSHR) override;
+    virtual bool handlePutS(MemEvent * event, bool inMSHR) override;
+    virtual bool handlePutX(MemEvent * event, bool inMSHR) override;
+    virtual bool handlePutE(MemEvent * event, bool inMSHR) override;
+    virtual bool handlePutM(MemEvent * event, bool inMSHR) override;
+    virtual bool handleInv(MemEvent * event, bool inMSHR) override;
+    virtual bool handleForceInv(MemEvent * event, bool inMSHR) override;
+    virtual bool handleFetch(MemEvent * event, bool inMSHR) override;
+    virtual bool handleFetchInv(MemEvent * event, bool inMSHR) override;
+    virtual bool handleFetchInvX(MemEvent * event, bool inMSHR) override;
+    virtual bool handleGetSResp(MemEvent * event, bool inMSHR) override;
+    virtual bool handleGetXResp(MemEvent * event, bool inMSHR) override;
+    virtual bool handleFlushLineResp(MemEvent * event, bool inMSHR) override;
+    virtual bool handleFlushAllResp(MemEvent * event, bool inMSHR) override;
+    virtual bool handleFetchResp(MemEvent * event, bool inMSHR) override;
+    virtual bool handleFetchXResp(MemEvent * event, bool inMSHR) override;
+    virtual bool handleAckInv(MemEvent * event, bool inMSHR) override;
+    virtual bool handleAckPut(MemEvent * event, bool inMSHR) override;
+    virtual bool handleAckFlush(MemEvent * event, bool inMSHR) override;
+    virtual bool handleUnblockFlush(MemEvent * event, bool inMSHR) override;
+    virtual bool handleNACK(MemEvent * event, bool inMSHR) override;
+    virtual bool handleNULLCMD(MemEvent * event, bool inMSHR) override;
 
     /** Cache interface **/
-    virtual Addr getBank(Addr addr) { return cacheArray_->getBank(addr); }
-    virtual void setSliceAware(uint64_t size, uint64_t step) { cacheArray_->setSliceAware(size, step); }
+    virtual Addr getBank(Addr addr) override { return cacheArray_->getBank(addr); }
+    virtual void setSliceAware(uint64_t size, uint64_t step) override { cacheArray_->setSliceAware(size, step); }
 
     /** Initialization **/
-    MemEventInitCoherence * getInitCoherenceEvent();
+    MemEventInitCoherence * getInitCoherenceEvent() override;
 
-    std::set<Command> getValidReceiveEvents() {
+    std::set<Command> getValidReceiveEvents() override {
         std::set<Command> cmds = { Command::GetS,
             Command::GetX,
             Command::GetSX,
@@ -563,7 +563,7 @@ public:
         return cmds;
     }
 
-    void printStatus(Output &out);
+    void printStatus(Output &out) override;
 
 private:
 
@@ -603,15 +603,15 @@ private:
     State doEviction(MemEvent * event, SharedCacheLine * line, State state);
 
     /** Call through to coherenceController with statistic recording */
-    void forwardByAddress(MemEventBase* ev, Cycle_t timestamp);
-    void forwardByDestination(MemEventBase* ev, Cycle_t timestamp);
+    void forwardByAddress(MemEventBase* ev, Cycle_t timestamp) override;
+    void forwardByDestination(MemEventBase* ev, Cycle_t timestamp) override;
 
 /* Miscellaneous functions */
     /* Record prefetch statistics. Line cannot be null. */
     void recordPrefetchResult(SharedCacheLine * line, Statistic<uint64_t> * stat);
 
     /* Record latency */
-    void recordLatency(Command cmd, int type, uint64_t latency);
+    void recordLatency(Command cmd, int type, uint64_t latency) override;
 
     void printLine(Addr addr);
     

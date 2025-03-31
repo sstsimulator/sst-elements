@@ -75,7 +75,7 @@ public:
         regFile->setIntReg<uint64_t>(phys_int_regs_out_0, compare_result ? 1 : 0);
     }
 
-    virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile)
+    virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
         
         uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
