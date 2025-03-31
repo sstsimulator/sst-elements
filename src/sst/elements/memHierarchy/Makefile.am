@@ -388,7 +388,7 @@ EXTRA_DIST = \
 	examples/example-1core-1level.py \
 	examples/example-1core-3level.py \
 	examples/example-4core-shared-llc.py \
-	examples/example-4core-shared-distributed-llc.py \
+	examples/example-4core-shared-distributed-llc.py
 
 sstdir = $(includedir)/sst/elements/memHierarchy
 nobase_sst_HEADERS = \
