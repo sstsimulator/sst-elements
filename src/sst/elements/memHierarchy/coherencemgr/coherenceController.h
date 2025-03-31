@@ -18,7 +18,6 @@
 
 #include <array>
 
-#include <sst/core/sst_config.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>

@@ -13,7 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <sst_config.h>
+#include <sst/core/sst_config.h>
 #include <sst/core/params.h>
 #include <sst/core/interfaces/stringEvent.h>
 #include <sst/core/timeLord.h>
@@ -468,20 +468,34 @@ void Cache::init(unsigned int phase) {
             linkDown_->sendUntimedData(coherenceMgr_->getInitCoherenceEvent());
 
         while(MemEventInit *event = linkDown_->recvUntimedData()) {
-            if (event->getCmd() == Command::NULLCMD) {
+            if (event->getCmd() == Command::NULLCMD  || ( mem_h_is_debug_event(event) && event->getInitCmd() == MemEventInit::InitCommand::Data)) {
                 dbg_->debug(_L10_, "U: %-20s   Event:Untimed   (%s)\n",
                         getName().c_str(), event->getVerboseString().c_str());
             }
+
             /* If event is from one of our destinations, update parameters - link only returns events from destinations */
             if (event->getInitCmd() == MemEventInit::InitCommand::Coherence) {
                 MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(event);
                 processInitCoherenceEvent(eventC, linkDown_->isSource(eventC->getSrc()));
+                delete event;
             } else if (event->getInitCmd() == MemEventInit::InitCommand::Endpoint) {
-                MemEventInit * mEv = event->clone();
-                mEv->setSrc(getName());
-                linkDown_->sendUntimedData(mEv);
+                event->setSrc(getName());
+                linkDown_->sendUntimedData(event);
+            } else if (event->getInitCmd() == MemEventInit::InitCommand::Data) {
+                if (BasicCommandClassArr[(int)event->getCmd()] == BasicCommandClass::Request) {
+                    // Forward by addr (mmio likely)
+                    if (event->getCmd() == Command::GetS) 
+                        init_requests_.insert(std::make_pair(event->getID(), event->getSrc()));
+                    event->setSrc(getName());
+                    linkDown_->sendUntimedData(event, false, true);
+                } else {
+                    // Forward directly via lookup
+                    event->setSrc(getName());
+                    event->setDst(init_requests_.find(event->getID())->second);
+                    init_requests_.erase(event->getID());
+                    linkDown_->sendUntimedData(event, false, false);
+                }
             }
-            delete event;
         }
         return;
     }
@@ -495,44 +509,72 @@ void Cache::init(unsigned int phase) {
         linkDown_->sendUntimedData(coherenceMgr_->getInitCoherenceEvent());
     }
 
-    while (MemEventInit * memEvent = linkUp_->recvUntimedData()) {
-        if (memEvent->getCmd() == Command::NULLCMD) {
+    while (MemEventInit * event = linkUp_->recvUntimedData()) {
+        if (event->getCmd() == Command::NULLCMD) {
             dbg_->debug(_L10_, "U: %-20s   Event:Untimed   (%s)\n",
-                    getName().c_str(), memEvent->getVerboseString().c_str());
-            if (memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
-                coherenceMgr_->hasUpperLevelCacheName(memEvent->getSrc());
-                MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(memEvent);
+                    getName().c_str(), event->getVerboseString().c_str());
+            if (event->getInitCmd() == MemEventInit::InitCommand::Coherence) {
+                coherenceMgr_->hasUpperLevelCacheName(event->getSrc());
+                MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(event);
                 processInitCoherenceEvent(eventC, true);
-            } else if (memEvent->getInitCmd() == MemEventInit::InitCommand::Endpoint ) {
-                MemEventInit * mEv = memEvent->clone();
-                mEv->setSrc(getName());
-                linkDown_->sendUntimedData(mEv);
+                delete event;
+            } else if (event->getInitCmd() == MemEventInit::InitCommand::Endpoint ) {
+                event->setSrc(getName());
+                linkDown_->sendUntimedData(event);
+            }
+        } else if (event->getInitCmd() == MemEventInit::InitCommand::Data) {
+            if (mem_h_is_debug_event((event))) {
+                dbg_->debug(_L10_, "U: %-20s   Event:Untimed   (%s)\n",
+                        getName().c_str(), event->getVerboseString().c_str());
+            }
+            if (BasicCommandClassArr[(int)event->getCmd()] == BasicCommandClass::Request) {
+                if (event->getCmd() == Command::GetS) 
+                    init_requests_.insert(std::make_pair(event->getID(), event->getSrc()));
+                event->setSrc(getName());
+                linkDown_->sendUntimedData(event, false, true);
+            } else {
+                event->setSrc(getName());
+                event->setDst(init_requests_.find(event->getID())->second);
+                init_requests_.erase(event->getID());
+                linkDown_->sendUntimedData(event, false, false);
             }
         } else {
-            dbg_->debug(_L10_, "U: %-20s   Event:Untimed   (%s)\n",
-                    getName().c_str(), memEvent->getVerboseString().c_str());
-            MemEventInit * mEv = memEvent->clone();
-            mEv->setSrc(getName());
-            linkDown_->sendUntimedData(mEv, false, true);
+            delete event;
         }
-        delete memEvent;
     }
 
-    while (MemEventInit * memEvent = linkDown_->recvUntimedData()) {
-        if (memEvent->getCmd() == Command::NULLCMD) {
+    while (MemEventInit * event = linkDown_->recvUntimedData()) {
+        if (event->getCmd() == Command::NULLCMD) {
             dbg_->debug(_L10_, "U: %-20s   Event:Untimed   (%s)\n",
-                    getName().c_str(), memEvent->getVerboseString().c_str());
-
-            if (linkDown_->isDest(memEvent->getSrc()) && memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
-                MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(memEvent);
+                    getName().c_str(), event->getVerboseString().c_str());
+            if (linkDown_->isDest(event->getSrc()) && event->getInitCmd() == MemEventInit::InitCommand::Coherence) {
+                MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(event);
                 processInitCoherenceEvent(eventC, false);
-            } else if (memEvent->getInitCmd() == MemEventInitEndpoint::InitCommand::Endpoint) {
-                MemEventInit * mEv = memEvent->clone();
-                mEv->setSrc(getName());
-                linkUp_->sendUntimedData(mEv);
+                delete event;
+            } else if (event->getInitCmd() == MemEventInitEndpoint::InitCommand::Endpoint) {
+                event->setSrc(getName());
+                linkUp_->sendUntimedData(event);
             }
+        } else if (event->getInitCmd() == MemEventInit::InitCommand::Data) {
+            if (mem_h_is_debug_event((event))) {
+
+                dbg_->debug(_L10_, "U: %-20s   Event:Untimed   (%s)\n",
+                        getName().c_str(), event->getVerboseString().c_str());
+            }
+            if (BasicCommandClassArr[(int)event->getCmd()] == BasicCommandClass::Request) {
+                if (event->getCmd() == Command::GetS) 
+                    init_requests_.insert(std::make_pair(event->getID(), event->getSrc()));
+                event->setSrc(getName());
+                linkUp_->sendUntimedData(event, false, true);
+            } else {
+                event->setSrc(getName());
+                event->setDst(init_requests_.find(event->getID())->second);
+                init_requests_.erase(event->getID());
+                linkUp_->sendUntimedData(event, false, false);
+            }
+        } else {
+            delete event;
         }
-        delete memEvent;
     }
 }
 

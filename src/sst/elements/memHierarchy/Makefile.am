@@ -145,6 +145,7 @@ EXTRA_DIST = \
 	tests/testsuite_openMP_memHierarchy_noncacheable.py \
 	tests/testsuite_openMP_memHierarchy_diropenMP.py \
 	tests/testsuite_openMP_memHierarchy_openMP.py \
+	tests/testsuite_weekly_memHierarchy_examples.py \
 	Sieve/tests/StatisticOutput.csv.gold \
 	Sieve/tests/sieveprospero-0.trace \
 	Sieve/tests/trace-text.py \
@@ -153,7 +154,6 @@ EXTRA_DIST = \
 	Sieve/tests/sieve-test.py \
 	Sieve/tests/refFiles/test_memHSieve.out \
 	tests/miranda.cfg \
-	tests/sdl-1.py \
 	tests/sdl2-1.py \
 	tests/sdl-2.py \
 	tests/sdl3-1.py \
@@ -345,7 +345,6 @@ EXTRA_DIST = \
 	tests/refFiles/test_memHierarchy_sdl8_4.out \
 	tests/refFiles/test_memHierarchy_sdl9_1.out \
 	tests/refFiles/test_memHierarchy_sdl9_2.out \
-	tests/refFiles/test_memHierarchy_sdl_1.out \
 	tests/refFiles/test_memHierarchy_sdl_2.out \
 	tests/refFiles/test_memHierarchy_sdl_3.out \
 	tests/refFiles/test_OMP_noncacheable_ompapi.out \
@@ -383,7 +382,13 @@ EXTRA_DIST = \
 	tests/openMP/sweepdirectory-8cores-2nodes.py \
 	tests/openMP/sweepdirectory-exclusive.py \
 	tests/openMP/sweepopenmp.py \
-	tests/openMP/test-distributed-caches.py
+	tests/openMP/test-distributed-caches.py \
+	examples/README.md \
+	examples/example-1core-nocache.py \
+	examples/example-1core-1level.py \
+	examples/example-1core-3level.py \
+	examples/example-4core-shared-llc.py \
+	examples/example-4core-shared-distributed-llc.py \
 
 sstdir = $(includedir)/sst/elements/memHierarchy
 nobase_sst_HEADERS = \

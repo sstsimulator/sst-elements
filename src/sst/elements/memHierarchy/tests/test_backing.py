@@ -20,6 +20,8 @@ DEBUG_L3 = 0
 DEBUG_DC = 0
 DEBUG_MEM = 0
 DEBUG_NOC = 0
+DEBUG_LINK = 0
+DEBUG_BUS = 0
 
 option = 0;
 if len(sys.argv) < 8:
@@ -38,7 +40,7 @@ if option == 0 or option == 2 or option == 3:
 cpu_params = {
     "memFreq" : 1,
     "memSize" : "24KiB",
-    "verbose" : 0,
+    "verbose" : 2,
     "clock" : "3GHz",
     "maxOutstanding" : 16,
     "opCount" : ops,
@@ -189,18 +191,31 @@ l2_cache1.addParams(l2cache_base_params)
 l2_cache2.addParams(l2cache_base_params)
 l2_cache3.addParams(l2cache_base_params)
 # Create and connect L2s to bus
-bus_params = {"bus_frequency" : "3GHz"}
-l2_bus = Bus("l2bus", bus_params, "100ps", [l2_cache0, l2_cache1, l2_cache2, l2_cache3])
+bus_params = {"bus_frequency" : "3GHz", "debug" : DEBUG_BUS, "debug_level" : 10}
+link_params = {"debug" : DEBUG_LINK, "debug_level" : 10}
+l2_bus = Bus("l2bus", bus_params, "100ps", [(l2_cache0,link_params), (l2_cache1,link_params), (l2_cache2,link_params), (l2_cache3,link_params)])
 
 # Connect L1s to L2s
 link0_l1_l2 = sst.Link("link0_l1_l2")
 link1_l1_l2 = sst.Link("link1_l1_l2")
 link2_l1_l2 = sst.Link("link2_l1_l2")
 link3_l1_l2 = sst.Link("link3_l1_l2")
-link0_l1_l2.connect((l1_cache0, "lowlink", "100ps"), (l2_cache0, "highlink", "100ps"))
-link1_l1_l2.connect((l1_cache1, "lowlink", "100ps"), (l2_cache1, "highlink", "100ps"))
-link2_l1_l2.connect((l1_cache2, "lowlink", "100ps"), (l2_cache2, "highlink", "100ps"))
-link3_l1_l2.connect((l1_cache3, "lowlink", "100ps"), (l2_cache3, "highlink", "100ps"))
+#link0_l1_l2.connect((l1_cache0, "lowlink", "100ps"), (l2_cache0, "highlink", "100ps"))
+#link1_l1_l2.connect((l1_cache1, "lowlink", "100ps"), (l2_cache1, "highlink", "100ps"))
+#link2_l1_l2.connect((l1_cache2, "lowlink", "100ps"), (l2_cache2, "highlink", "100ps"))
+#link3_l1_l2.connect((l1_cache3, "lowlink", "100ps"), (l2_cache3, "highlink", "100ps"))
+l2_cache0_ml = l2_cache0.setSubComponent("highlink", "memHierarchy.MemLink")
+l2_cache1_ml = l2_cache1.setSubComponent("highlink", "memHierarchy.MemLink")
+l2_cache2_ml = l2_cache2.setSubComponent("highlink", "memHierarchy.MemLink")
+l2_cache3_ml = l2_cache3.setSubComponent("highlink", "memHierarchy.MemLink")
+l2_cache0_ml.addParams({"debug" : DEBUG_LINK, "debug_level" : 10})
+l2_cache1_ml.addParams({"debug" : DEBUG_LINK, "debug_level" : 10})
+l2_cache2_ml.addParams({"debug" : DEBUG_LINK, "debug_level" : 10})
+l2_cache3_ml.addParams({"debug" : DEBUG_LINK, "debug_level" : 10})
+link0_l1_l2.connect((l1_cache0, "lowlink", "100ps"), (l2_cache0_ml, "port", "100ps"))
+link1_l1_l2.connect((l1_cache1, "lowlink", "100ps"), (l2_cache1_ml, "port", "100ps"))
+link2_l1_l2.connect((l1_cache2, "lowlink", "100ps"), (l2_cache2_ml, "port", "100ps"))
+link3_l1_l2.connect((l1_cache3, "lowlink", "100ps"), (l2_cache3_ml, "port", "100ps"))
     
 
 l3cache_base_params = {
