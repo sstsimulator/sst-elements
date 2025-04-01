@@ -4,31 +4,61 @@
 # 
 #  In order to accomplish this structure in SST, we create the following comoponenents and links.
 #
-# _______________________________________________________
-# | Component: OS                                       |
-# | Type: vanadis.VanadisNodeOs                         |
-# | This represents the hardware node being simulated.  |
-# | It contains an mmu (memory management unit, which   |
-# | also provides TLB capabilities) and  a memory       |
-# | interface.                                          |
-# |  _______________________                            |
-# |  | Sub Component: mmu  |                            |
-# |  | Type: mmu.simpleMMU |                            |        
-# |  |_____________________|                            |
-# |  ____________________________________________       |
-# |  | Sub Component: mem_interface             |       |
-# |  | Type: memHierarchy.standardInterface     |       |
-# |  | This subcomponent represents the         |       |
-# |  | interface from the Node OS to the cache. |       |
-# |  |__________________________________________|       |
-# |_____________________________________________________|
-#                           | link
-#         __________________|___________________
-#         | Component: node_os.cache           |
-#         | Type: memHierarchy.Cache           | 
-#         | This componenet represents the L1D |
-#         | cache for the hardware node.       |
-#         |____________________________________|
+# _______________________________________________________           ______________________________________________________________________________________________________
+# | Component: OS                                       |           | Component: CPU                                                                                     |                                     
+# | Type: vanadis.VanadisNodeOs                         |           | Type: vanadis.dbg_vanadisCPU                                                                       |
+# | This represents the hardware node being modeled.    |           | This component represents the CPU being modeled. It has links ot the OS component to represent     |
+# | It contains an mmu (memory management unit, which   |           | the operating system running on the node, as well as links to the L1D and L1I caches for the node. |
+# | also provides TLB capabilities) and  a memory       |           |                                                                                                    |
+# | interface.                                          |----Link---|  ________________________________________________                                                  |
+# |  _______________________                            |           |  | Sub Component: decoder0                      |                                                  | 
+# |  | Sub Component: mmu  |                            |           |  | Type: vanadis.VanadisRISCV64Decoder          |                                                  |
+# |  | Type: mmu.simpleMMU |                            |           |  | This subcomponent represents the instruction |                                                  |
+# |  |_____________________|                            |           |  | decoder of the CPU                           |                                                  |
+# |  ____________________________________________       |           |  |  _________________________________________   |                                                  |
+# |  | Sub Component: mem_interface             |       |           |  |  | Sub Component: os_handler             |   |                                                  |
+# |  | Type: memHierarchy.standardInterface     |       |           |  |  | Type:vanadis.VanadisRISCV64DOSHandler |   |                                                  | 
+# |  | This subcomponent represents the         |       |           |  |  |_______________________________________|   |                                                  |
+# |  | interface from the Node OS to the cache. |       |           |  |  _________________________________________   |                                                  |
+# |  |__________________________________________|       |           |  |  | Sub Component: branch_unit            |   |                                                  |
+# |_________________________|___________________________|           |  |  | Type: vanadis.VanadisBasicBranchUnit  |   |                                                  |
+#                           | Link                                  |  |  |_______________________________________|   |                                                  |
+#         __________________|___________________                    |  |______________________________________________|                                                  |
+#         | Component: node_os.cache           |                    |  ________________________________________________                                                  |
+#         | Type: memHierarchy.Cache           |                    |  | Sub Component: lsq                           |                                                  |
+#         | This componenet represents the L1D |                    |  | Type: vanadis.VanadisBasicLoadStoreQueue     |                                                  |
+#         | cache for the hardware node.       |                    |  |  __________________________________________  |    __________________________________________    |
+#         |____________________________________|                    |  |  | Sub Component: memory_interface        |  |    | Sub Component: mem_interface_inst      |    |                                              
+#                            |                                      |  |  | Type: memHierarchy.standardInterface   |  |    | Type: memHierarchy.standardInterface   |    |                                              
+#                            |                                      |  |  | This subcomponent represents the CPU's |  |    | This subcomponent represents the CPU's |    |                                             
+#                            |                                      |  |  | interface to the L1D cache             |  |    | interface to the L1I cache             |    |
+#                            |                                      |  |  |________________________________________|  |    |________________________________________|    |
+#                            |                                      |  |___________________|__________________________|                        |                         |
+#                            | Link                                 |______________________|___________________________________________________|_________________________|
+#                            |                                                             |                                                   | 
+#                            |                                                             |                                                   | 
+#                            |                                                             | Link                                              | Link
+#                            |                                                             |                                                   |
+#                          __|_____________________________________________________________|___________________________________________________|__
+#                          | Component: cache_bus                                                                                                |
+#                          | Type: memHierarchy.Bus                                                                                              |
+#                          | Because there can only be 1 link to the memory interface of the L2 cache, and we have 3 caches attempting to        |
+#                          | we use this bus to collect the 3 links from the caches into a single link to the L2 cache.                          |
+#                          |_____________________________________________________________________________________________________________________|
+#                                                                                          |
+#                                                                                          | Link
+#                                                               ___________________________|___________________________
+#                                                               | Component: cpu_l2cache                              |
+#                                                               | Type: memHierarchy.Cache                            |
+#                                                               | This component represents the L2 cache in the model |
+#                                                               |_____________________________________________________|
+#                                                                                          |
+#                                                                                          | Link
+#                                                               ___________________________|___________________________                           |     
+#                                                               | Component: cpu_l3cache                              |
+#                                                               | Type: memHierarchy.Cache                            |
+#                                                               | This component represents the L3 cache in the model |
+#                                                               |_____________________________________________________|
 #
 # This example relies on several environemental variables, which allow for costumization. A full list of 
 # the available customizations, including default values, is provided below
