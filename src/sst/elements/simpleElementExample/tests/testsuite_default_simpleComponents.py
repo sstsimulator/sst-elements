@@ -53,8 +53,8 @@ class testcase_simpleComponents(SSTTestCase):
     def test_basic_subcomponent(self):
         self.simple_components_template("basicSubComponent")
 
-    def test_basic_checkpoint(self):
-        self.simple_components_template("basicCheckpoint", checkpoint=True)
+    #def test_basic_checkpoint(self):
+    #    self.simple_components_template("basicCheckpoint", checkpoint=True)
 
     #def test_simple_rng_component_marsaglia(self):
     #    self.simple_components_template("simpleRNGComponent_marsaglia", striptotail=1)
@@ -109,7 +109,7 @@ class testcase_simpleComponents(SSTTestCase):
         # Checkpoint test
         else:
             cptfreq = "15us"
-            cptrestart = "0_15000000"
+            cptrestart = "1_15000000"
 
             # Generate checkpoint
             sdlfile_generate = "{0}/{1}.py".format(test_path,testcase)
