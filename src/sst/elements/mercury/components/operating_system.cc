@@ -139,12 +139,10 @@ OperatingSystem::~OperatingSystem()
 
 void
 OperatingSystem::setup() {
-  app_launcher_ = new AppLauncher(this,npernode());
+  app_launcher_ = new AppLauncher(this, npernode_);
   addLaunchRequests(params_);
-  SubComponent::setup();
   for (auto r : requests_)
     selfEventLink_->send(r);
-  
 }
 
 void
