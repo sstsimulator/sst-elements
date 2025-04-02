@@ -55,7 +55,6 @@ public:
 private:
   int ncores_;
   int nsockets_;
-  int cores_per_sockets_;
   int ncore_active_;
   SST::Hg::OperatingSystemCL* os_;
   std::list<std::pair<int,Thread*>> pending_threads_;
