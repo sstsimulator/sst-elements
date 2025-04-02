@@ -32,6 +32,9 @@ NodeBase::NodeBase(ComponentId_t id, Params &params)
   unsigned int verbose = params.find<unsigned int>("verbose",0);
   out_ = std::unique_ptr<SST::Output>(new SST::Output(sprintf("Node%d:",my_addr_), verbose, 0, Output::STDOUT));
 
+  nranks_ = params.find<int>("nranks", 1);
+  npernode_ = params.find<int>("npernode", 1);
+
   // Tell the simulation not to end until we're ready
   registerAsPrimaryComponent();
   primaryComponentDoNotEndSim();
