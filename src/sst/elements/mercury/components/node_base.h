@@ -78,6 +78,8 @@ public:
 
 protected:
 
+  int nranks_;
+  int npernode_;
   SST::Hg::NIC* nic_;
   SST::Hg::OperatingSystem* os_;
   SST::Interfaces::SimpleNetwork* link_control_;
