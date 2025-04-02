@@ -47,7 +47,6 @@ NIC::NIC(uint32_t id, SST::Params& params, NodeBase* parent) :
   pending_.resize(1);
   ack_queue_.resize(1);
 
-  // FIXME needs to be a parameter
   mtu_ = params.find<unsigned int>("mtu", 4096);
   out_->debug(CALL_INFO, 1, 0, "setting mtu to %d\n", mtu_);
 }
@@ -135,7 +134,7 @@ NIC::incomingPacket(int vn){
       if (flow == nullptr) sst_hg_abort_printf("couldn't get a flow\n");
       auto* msg = static_cast<NetworkMessage*>(flow);
       if (msg == nullptr) sst_hg_abort_printf("couldn't cast flow to message\n");
-      out_->debug(CALL_INFO, 1, 0, "fully received message %s",
+      out_->debug(CALL_INFO, 1, 0, "fully received message %s\n",
                   msg->toString().c_str());
       recvMessage(msg);
     }
@@ -169,7 +168,7 @@ NIC::payloadHandler(int  /*port*/) {
 void
 NIC::inject(int vn, NetworkMessage* payload){
   pending_[vn].emplace(payload);
-  out_->debug(CALL_INFO, 1, 0, "sending message on vn %d: %s", vn, payload->toString().c_str());
+  out_->debug(CALL_INFO, 1, 0, "sending message on vn %d: %s\n", vn, payload->toString().c_str());
   sendWhatYouCan(vn);
 }
 
@@ -212,8 +211,8 @@ NIC::sendWhatYouCan(int vn, Pending& p) {
       req->givePayload(flow_tracker);
       ack_queue_[vn].push(nullptr);
     }
-    req->src = p.payload->fromaddr();
-    req->dest = p.payload->toaddr();
+    req->src = my_addr_;
+    req->dest = p.payload->toaddr() / os_->npernode();
     req->size_in_bits = next_bits;
     req->vn = 0;
 
@@ -242,7 +241,7 @@ NIC::mtlHandler() const
 void
 NIC::mtlHandle(Event *ev)
 {
-  out_->debug(CALL_INFO, 1, 0, "MTL handle");
+  out_->debug(CALL_INFO, 1, 0, "MTL handle\n");
   NicEvent* nev = static_cast<NicEvent*>(ev);
   NetworkMessage* msg = nev->msg();
   delete nev;
@@ -272,7 +271,7 @@ NIC::dataIoctl()
 void
 NIC::injectSend(NetworkMessage* netmsg)
 {
-  if (netmsg->toaddr() == my_addr_){
+  if (netmsg->toaddr() / os_->npernode() == my_addr_){
     intranodeSend(netmsg);
   } else {
     netmsg->putOnWire();
@@ -333,7 +332,7 @@ NIC::ackSend(NetworkMessage* payload)
 {
   if (payload->needsAck()){
     NetworkMessage* ack = payload->cloneInjectionAck();
-    out_->debug(CALL_INFO, 1, 0, "acking payload %s",
+    out_->debug(CALL_INFO, 1, 0, "acking payload %s\n",
                 payload->toString().c_str());
     sendToNode(ack);
   }
@@ -342,7 +341,7 @@ NIC::ackSend(NetworkMessage* payload)
 void
 NIC::intranodeSend(NetworkMessage* payload)
 {
-  out_->debug(CALL_INFO, 1, 0, "intranode send payload %s",
+  out_->debug(CALL_INFO, 1, 0, "intranode send payload %s\n",
               payload->toString().c_str());
 
   switch(payload->type())
@@ -358,7 +357,7 @@ NIC::intranodeSend(NetworkMessage* payload)
   }
 
 //  MemoryModel* mem = parent_->mem();
-  //use 64 as a negligible number of compute bytes
+//   use 64 as a negligible number of compute bytes
 //  uint64_t byte_length = payload->byteLength();
 //  if (byte_length > 64){
 //    mem->accessFlow(payload->byteLength(),
@@ -367,6 +366,7 @@ NIC::intranodeSend(NetworkMessage* payload)
 //  } else {
 //    finishMemcpy(payload);
 //  }
+finishMemcpy(payload);
 }
 
 void
@@ -386,7 +386,7 @@ NIC::recordMessage(NetworkMessage *netmsg) {
                << NetworkMessage::tostr(netmsg->type()) << " to node "
                << netmsg->toaddr() << ": netid=" << netmsg->flowId() << " for "
                << netmsg->toString();
-  out_->debug(CALL_INFO, 1, 0, "%s", debug_stream.str().c_str());
+  out_->debug(CALL_INFO, 1, 0, "%s\n", debug_stream.str().c_str());
 
   if (netmsg->type() == NetworkMessage::null_netmsg_type) {
     // assume this is a simple payload

@@ -198,6 +198,10 @@ class App : public Thread
     return stderr_;
   }
 
+  unsigned int get_taskid() {
+    return taskid_;
+  }
+
   Library* getLibrary(const std::string& name);
 
   std::ostream& coutStream();
@@ -260,6 +264,7 @@ class App : public Thread
   FILE* stdout_;
   FILE* stderr_;
   std::unique_ptr<SST::Output> out_;
+  unsigned int taskid_;
 };
 
 

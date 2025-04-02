@@ -64,8 +64,8 @@ Communicator::createSmpCommunicator(const std::set<int>& neighbors, CollectiveEn
     std::vector<int> smp_ranks(this->nproc());
     int tag = -2;
 // FIXME
-//    engine->allgather(smp_ranks.data(), &my_smp_rank, 1, sizeof(int), tag, cq_id, this);
-//    engine->blockUntilNext(cq_id);
+    engine->allgather(smp_ranks.data(), &my_smp_rank, 1, sizeof(int), tag, cq_id, this);
+    engine->blockUntilNext(cq_id);
 
     std::map<int,int> rank_counts;
     int my_owner_rank = -1;
