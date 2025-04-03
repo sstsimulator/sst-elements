@@ -14,13 +14,13 @@
 // distribution.
 
 
-#include <sst_config.h>
+#include <sst/core/sst_config.h>
 #include <sst/core/params.h>
+#include <sst/core/interfaces/stringEvent.h>
 
 #include "scratchpad.h"
 #include "membackend/scratchBackendConvertor.h"
 #include "util.h"
-#include <sst/core/interfaces/stringEvent.h>
 #include "memLink.h"
 #include "memNIC.h"
 

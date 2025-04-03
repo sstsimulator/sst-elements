@@ -437,9 +437,9 @@ private:
 
     FlushState flush_state_;
 
-    std::map<Addr, std::map<std::string, MemEvent::id_type> > responses;
+    std::map<Addr, std::map<std::string, MemEventBase::id_type> > responses;
     
-    std::map<MemEvent::id_type, Addr> dirMemAccesses;
+    std::map<MemEventBase::id_type, Addr> dirMemAccesses;
     
     CoherenceProtocol protocol;
     bool waitWBAck;
@@ -447,6 +447,8 @@ private:
 
     std::set<std::string> incoherentSrc;
 
+    // During init() we need to store routing for requests that get a response
+    std::map<MemEventBase::id_type, std::string> init_requests_;
 };
 
 }

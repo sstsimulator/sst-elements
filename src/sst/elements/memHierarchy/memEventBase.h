@@ -265,30 +265,47 @@ public:
     /* Untimed event */
     MemEventInit(std::string src, InitCommand cmd) : MemEventBase(src, Command::NULLCMD), initCmd_(cmd) { }
 
-    /* Events for initializing memory contents and/or writing back data from caches */
+    /* Untimed memory events that carry data */
     MemEventInit(std::string src, Command cmd, Addr addr, std::vector<uint8_t> &data) :
-        MemEventBase(src, cmd), initCmd_(InitCommand::Data), addr_(addr), payload_(data) { }
+        MemEventBase(src, cmd), initCmd_(InitCommand::Data), addr_(addr), size_(0), payload_(data) { }
 
+    /* Untimed memory events without data */
+    MemEventInit(std::string src, Command cmd, Addr addr, size_t size) :
+        MemEventBase(src, cmd), initCmd_(InitCommand::Data), addr_(addr), size_(size) { }
+
+    /** Generate a new MemEventInit, pre-populated as a response */
+    MemEventInit* makeResponse() override {
+        MemEventInit *me      = new MemEventInit(*this);
+        me->setResponse(this);
+        return me;
+    }
+    
     InitCommand getInitCmd() { return initCmd_; }
 
-    std::vector<uint8_t>& getPayload() { return payload_; }
     Addr getAddr() { return addr_; }
     void setAddr(Addr addr) { addr_ = addr; }
+    
+    size_t getSize() { return payload_.empty() ? payload_.size() : size_; }
+    std::vector<uint8_t>& getPayload() { return payload_; }
+    void setPayload(std::vector<uint8_t> &data) { payload_ = data; }
 
     virtual MemEventInit* clone(void) override {
         return new MemEventInit(*this);
     }
 
     virtual std::string getVerboseString(int level = 1) override {
-        std::string str;
-        if (initCmd_ == InitCommand::Region) str = " InitCmd: Region";
-        else if (initCmd_ == InitCommand::Data) str = " InitCmd: Data";
-        else if (initCmd_ == InitCommand::Coherence) str = " InitCmd: Coherence";
-        else if (initCmd_ == InitCommand::Endpoint) str = " InitCmd: Endpoint";
-        else if (initCmd_ == InitCommand::Flush) str = " InitCmd: Flush";
-        else str = " InitCmd: Unknown command";
+        std::stringstream str;
+        if (initCmd_ == InitCommand::Region) str << " InitCmd: Region";
+        else if (initCmd_ == InitCommand::Data) 
+        {
+            str << " InitCmd: Data (0x" <<std::hex << addr_ << ", " << std::dec << size_ << ")";
+        }
+        else if (initCmd_ == InitCommand::Coherence) str << " InitCmd: Coherence";
+        else if (initCmd_ == InitCommand::Endpoint) str << " InitCmd: Endpoint";
+        else if (initCmd_ == InitCommand::Flush) str << " InitCmd: Flush";
+        else str << " InitCmd: Unknown command";
 
-        return MemEventBase::getVerboseString(level) + str;
+        return MemEventBase::getVerboseString(level) + str.str();
     }
 
     virtual std::string getBriefString() override {
@@ -308,8 +325,11 @@ public:
 protected:
     InitCommand initCmd_;
 
-    // For pre-loading data into memory
+    // For memory events prior to run loop
+    // Pre-load data into memory and read it
+    // MMIO device init
     Addr addr_;
+    size_t size_;
     std::vector<uint8_t> payload_;
 
     MemEventInit() {} // For serialization only
@@ -318,6 +338,7 @@ public:
         MemEventBase::serialize_order(ser);
         ser & initCmd_;
         ser & addr_;
+        ser & size_;
         ser & payload_;
     }
 

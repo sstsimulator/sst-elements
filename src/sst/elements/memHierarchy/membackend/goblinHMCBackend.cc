@@ -14,7 +14,7 @@
 // distribution.
 
 
-#include <sst_config.h>
+#include <sst/core/sst_config.h>
 #include <membackend/goblinHMCBackend.h>
 
 #include "sst/elements/miranda/generators/customcmd_opcode.h"

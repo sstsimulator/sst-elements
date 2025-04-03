@@ -273,6 +273,7 @@ private:
     Link* timeoutSelfLink_;                 // link to check for timeouts (possible deadlock)
     MSHR* mshr_;                            // MSHR
     CoherenceController* coherenceMgr_;     // Coherence protocol - where most of the event handling happens
+    std::map<MemEventBase::id_type, std::string> init_requests_;    // Event response routing for untimed/init events
 
     /** Latencies **************************************************************/
     SimTime_t   prefetchDelay_;

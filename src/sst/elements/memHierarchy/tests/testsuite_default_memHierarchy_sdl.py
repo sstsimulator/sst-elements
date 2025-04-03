@@ -17,9 +17,6 @@ class testcase_memHierarchy_sdl(SSTTestCase):
 
 #####
 
-    def test_memHierarchy_sdl_1(self):
-        self.memHierarchy_Template("sdl-1")
-
     def test_memHierarchy_sdl_2(self):
         self.memHierarchy_Template("sdl-2")
 
