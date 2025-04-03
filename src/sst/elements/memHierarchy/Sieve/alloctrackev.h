@@ -16,6 +16,8 @@
 #ifndef _MEMH_SIEVE_ALLOCTRACKEV_H
 #define _MEMH_SIEVE_ALLOCTRACKEV_H
 
+#include <sst/core/event.h>
+
 namespace SST {
 namespace MemHierarchy {
 

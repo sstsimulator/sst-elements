@@ -117,7 +117,8 @@ private:
     uint32_t max_reqs_per_issue_;
     uint64_t noncacheable_range_start_, noncacheable_range_end_, noncacheable_size_;
     uint64_t clock_ticks_;
-    uint64_t init_write_count_;
+    uint64_t init_count_;
+    std::queue<Interfaces::StandardMem::Addr> init_addr_;
     Statistic<uint64_t>* stat_requests_pending_per_cycle_;
     Statistic<uint64_t>* stat_num_reads_issued_;
     Statistic<uint64_t>* stat_num_writes_issued_;

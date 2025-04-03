@@ -69,6 +69,7 @@ class StandardInterface : public Interfaces::StandardMem {
 
 public:
     friend class MemEventConverter;
+    friend class UntimedMemEventConverter;
 
 /* Element Library Info */
     SST_ELI_REGISTER_SUBCOMPONENT(StandardInterface, "memHierarchy", "standardInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
@@ -96,7 +97,7 @@ public:
 
     /* Begin API to Parent */
 
-    virtual Addr getLineSize() override { return lineSize_; }
+    virtual Addr getLineSize() override { return line_size_; }
     virtual void setMemoryMappedAddressRegion(Addr start, Addr size) override;
     
     // Send/Recv during init()/complete() phase
@@ -122,23 +123,24 @@ public:
     
 protected:
 
-    Output      output;
-    Output      debug;
-    int         dlevel;
 
-    Addr        baseAddrMask_;
-    Addr        lineSize_;
+    Output      debug_;
+    int         debug_level_;
+
+    Addr        base_addr_mask_;
+    Addr        line_size_;
     std::string rqstr_;
     std::map<MemEventBase::id_type, std::pair<StandardMem::Request*,Command>> requests_;   /* Map requests sent by the endpoint */
     std::map<StandardMem::Request::id_t, MemEventBase*> responses_;     /* Map requests received by the endpoint */
     SST::MemHierarchy::MemLinkBase*  link_;
-    bool cacheDst_; // Whether we've got a cache below us to handle certain conversions or we need to 
+    bool cache_is_dst_; // Whether we've got a cache below us to handle certain conversions or we need to do it ourselves
 
-    bool initDone_;
-    std::queue<MemEventInit*> initSendQueue_;
+    bool init_done_;
+    std::queue<MemEventInit*> init_send_queue_;
+    std::queue<StandardMem::Request*> init_recv_queue_;
 
-    MemRegion region;   // For MMIO
-    Endpoint epType;    // Endpoint type -> CPU or MMIO 
+    MemRegion region_;   // For MMIO
+    Endpoint endpoint_type_;    // Endpoint type -> CPU or MMIO 
     
     class MemEventConverter : public Interfaces::StandardMem::RequestConverter {
     public:
@@ -160,21 +162,44 @@ protected:
         virtual SST::Event* convert(StandardMem::CustomResp* req) override;
         virtual SST::Event* convert(StandardMem::InvNotify* req) override;
 
+        /** Perform some sanity checks to assist with debugging
+         * These are only called if SST Core is configured with --enable-debug
+         */
         void debugChecks(MemEvent* ev);
 
-        SST::Output output;
+        StandardInterface* iface;
+    };
+
+    class UntimedMemEventConverter : public Interfaces::StandardMem::RequestConverter {
+    public:
+        UntimedMemEventConverter(StandardInterface* iface) : iface(iface) {}
+        virtual ~UntimedMemEventConverter() {}
+        // Supported during untimed phases
+        virtual SST::Event* convert(StandardMem::Read* req) override;
+        virtual SST::Event* convert(StandardMem::ReadResp* req) override;
+        virtual SST::Event* convert(StandardMem::Write* req) override;
+        virtual SST::Event* convert(StandardMem::WriteResp* req) override;
+        // Not supported
+        virtual SST::Event* convert(StandardMem::FlushAddr* req) override;
+        virtual SST::Event* convert(StandardMem::FlushCache* req) override;
+        virtual SST::Event* convert(StandardMem::FlushResp* req) override;
+        virtual SST::Event* convert(StandardMem::ReadLock* req) override;
+        virtual SST::Event* convert(StandardMem::WriteUnlock* req) override;
+        virtual SST::Event* convert(StandardMem::LoadLink* req) override;
+        virtual SST::Event* convert(StandardMem::StoreConditional* req) override;
+        virtual SST::Event* convert(StandardMem::MoveData* req) override;
+        virtual SST::Event* convert(StandardMem::CustomReq* req) override;
+        virtual SST::Event* convert(StandardMem::CustomResp* req) override;
+        virtual SST::Event* convert(StandardMem::InvNotify* req) override;
+
         StandardInterface* iface;
     };
 
 private:
-
+    Output      output_;
     /** Callback handler for our link
      * Parses event and calls the parent's handler */
     void receive(SST::Event *ev);
-
-    /** Convert MemEvents into updated Requests*/
-    Interfaces::StandardMem::Request* processIncoming(MemEventBase *ev);
-
 
     /** Conversion functions to convert internal memHierarchy events to StandardMem::Requests
      * Called by receive() on incoming requests
@@ -207,14 +232,11 @@ private:
     void handleNACK(MemEventBase* meb);
 
     /* Record noncacheable regions (e.g., MMIO device addresses) */
-    std::multimap<Addr, MemRegion> noncacheableRegions;
+    std::multimap<Addr, MemRegion> noncacheable_regions_;
    
-    /** Perform some sanity checks to assist with debugging
-     * These are only called if SST Core is configured with --enable-debug
-     */
-    MemEventBase*   response;
-    HandlerBase*    recvHandler_;
-    MemEventConverter* converter_;
+    HandlerBase*              recv_handler_;
+    MemEventConverter*        converter_;
+    UntimedMemEventConverter* untimed_converter_;
 };
 
 }

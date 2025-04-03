@@ -13,7 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <sst_config.h>
+#include <sst/core/sst_config.h>
 #include <sst/core/params.h>
 
 #include "memoryController.h"
@@ -763,7 +763,7 @@ Addr MemController::translateToGlobal(Addr addr) {
 
 void MemController::processInitEvent( MemEventInit* me ) {
     /* Push data to memory */
-    if (Command::Write == me->getCmd()) {
+    if ( Command::Write == me->getCmd() ) {
         if ( isRequestAddressValid(me->getAddr()) && backing_ ) {
             me->setAddr(translateToLocal(me->getAddr()));
             Addr addr = me->getAddr();
@@ -771,6 +771,26 @@ void MemController::processInitEvent( MemEventInit* me ) {
             backing_->set(addr, me->getPayload().size(), me->getPayload());
         } else {
             mem_h_debug_output(_L10_, "U: %-20s   Event:Write     (%s) IGNORE\n", getName().c_str(), me->getVerboseString().c_str());
+        }
+    } else if ( Command::GetS == me->getCmd() ) {
+        if ( isRequestAddressValid(me->getAddr()) ) {
+            Addr local_addr = translateToLocal(me->getAddr());
+            mem_h_debug_output(_L10_, "U: %-20s   Event:GetS      (%s)\n", getName().c_str(), me->getVerboseString().c_str());
+            
+            MemEventInit * resp = me->makeResponse();
+            vector<uint8_t> payload;
+        
+            if (backing_) {
+                backing_->get(local_addr, me->getSize(), payload);
+            } else {
+                payload.resize(me->getSize(), 0);
+            }
+        
+            resp->setPayload(payload);
+            mem_h_debug_output(_L10_, "U: %-20s   Event:Send      (%s)\n", getName().c_str(), resp->getVerboseString().c_str());
+            link_->sendUntimedData(resp);
+        } else {
+            mem_h_debug_output(_L10_, "U: %-20s   Event:GetS      (%s) IGNORE\n", getName().c_str(), me->getVerboseString().c_str());
         }
     } else if (Command::NULLCMD == me->getCmd()) {
         mem_h_debug_output(_L10_, "U: %-20s   Event:Untimed   (%s)\n", getName().c_str(), me->getVerboseString().c_str());

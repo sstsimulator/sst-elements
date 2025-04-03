@@ -13,7 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <sst_config.h>
+#include <sst/core/sst_config.h>
 #include "directoryController.h"
 
 
@@ -718,37 +718,56 @@ void DirectoryController::init(unsigned int phase) {
         } else {
             dbg.debug(_L10_, "U: %-20s   Event:Untimed   (%s)\n",
                     getName().c_str(), ev->getVerboseString(dlevel).c_str());
-            if (isRequestAddressValid(ev->getAddr())){
-                dbg.debug(_L10_, "U: %-20s   Event:SendInitData    %" PRIx64 "\n",
-                        getName().c_str(), ev->getAddr());
-                linkDown_->sendUntimedData(ev, false);
-            } else
-                delete ev;
-
+            if (BasicCommandClassArr[(int)ev->getCmd()] == BasicCommandClass::Request) {
+                if (isRequestAddressValid(ev->getAddr())) {
+                    dbg.debug(_L10_, "U: %-20s   Event:SendInitData    %" PRIx64 "\n",
+                            getName().c_str(), ev->getAddr());
+                    if (ev->getCmd() == Command::GetS) // Will need to route a response back to sender
+                        init_requests_.insert(std::make_pair(ev->getID(), ev->getSrc()));
+                    ev->setSrc(getName());
+                    linkDown_->sendUntimedData(ev, false);
+                } else
+                    delete ev;
+            } else {
+                ev->setSrc(getName());
+                ev->setDst(init_requests_.find(ev->getID())->second);
+                init_requests_.erase(ev->getID());
+                linkDown_->sendUntimedData(ev, false, false);
+            }
         }
-
     }
 
-    SST::Event * ev;
     if (linkUp_ != linkDown_) {
-        while ((ev = linkDown_->recvUntimedData())) {
-            MemEventInit * initEv = dynamic_cast<MemEventInit*>(ev);
-            if (initEv && initEv->getCmd() == Command::NULLCMD) {
-                dbg.debug(_L10_, "U: %-20s   Event:Untimed   (%s)\n",
-                        getName().c_str(), initEv->getVerboseString(dlevel).c_str());
-
-                if (initEv->getInitCmd() == MemEventInit::InitCommand::Coherence) {
-                    MemEventInitCoherence * mEv = static_cast<MemEventInitCoherence*>(initEv);
+        while(MemEventInit *ev = linkDown_->recvUntimedData()) {
+            dbg.debug(_L10_, "U: %-20s   Event:Untimed   (%s)\n",
+                getName().c_str(), ev->getVerboseString(dlevel).c_str());
+            if (ev->getCmd() == Command::NULLCMD) { // MemHierarchy Configuration Event
+                if (ev->getInitCmd() == MemEventInit::InitCommand::Coherence) {
+                    MemEventInitCoherence * mEv = static_cast<MemEventInitCoherence*>(ev);
                     if (mEv->getSendWBAck())
                         waitWBAck = true;
-                } else if (initEv->getInitCmd() == MemEventInit::InitCommand::Endpoint) {
-                    MemEventInit * mEv = initEv->clone();
+                } else if (ev->getInitCmd() == MemEventInit::InitCommand::Endpoint) {
+                    MemEventInit * mEv = ev->clone();
                     mEv->setSrc(getName());
                     linkUp_->sendUntimedData(mEv);
                 }
-            }
-            delete ev;
-        }
+                delete ev;
+            } else if (ev->getInitCmd() == MemEventInit::InitCommand::Data) { // Data Initializaiton Event
+                if (BasicCommandClassArr[(int)ev->getCmd()] == BasicCommandClass::Request) { // Request
+                    if (isRequestAddressValid(ev->getAddr())) {
+                        if (ev->getCmd() == Command::GetS) // Will need to route a response back to sender
+                            init_requests_.insert(std::make_pair(ev->getID(), ev->getSrc()));
+                        ev->setSrc(getName());
+                        linkUp_->sendUntimedData(ev, false);
+                    } else delete ev;
+                } else {    // Response
+                    ev->setSrc(getName());
+                    ev->setDst(init_requests_.find(ev->getID())->second);
+                    init_requests_.erase(ev->getID());
+                    linkUp_->sendUntimedData(ev, false, false);
+                }
+            } else { delete ev; }
+        } 
     }
 }
 
