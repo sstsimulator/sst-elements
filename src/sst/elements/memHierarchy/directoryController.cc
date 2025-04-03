@@ -832,7 +832,7 @@ void DirectoryController::processCompleteEvent(MemEventInit* event) {
         MemEventUntimedFlush* flush = static_cast<MemEventUntimedFlush*>(event);
 
         if ( flush->request() && flush_state_ == FlushState::Ready ) {
-            flush_state_ == FlushState::Invalidate;
+            flush_state_ = FlushState::Invalidate;
             std::set<MemLinkBase::EndpointInfo>* src = linkUp_->getSources();
             for (auto it = src->begin(); it != src->end(); it++) {
                 MemEventUntimedFlush* forward = new MemEventUntimedFlush(getName());
