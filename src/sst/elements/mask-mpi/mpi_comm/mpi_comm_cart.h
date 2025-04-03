@@ -64,7 +64,7 @@ class MpiCommCart : public MpiComm
   virtual ~MpiCommCart() {}
 
   int dim(int i) const {
-    if (i > dims_.size()) {
+    if (i < 0 || i >= dims_.size()) {
       return -1;
     }
     return dims_[i];
@@ -73,7 +73,7 @@ class MpiCommCart : public MpiComm
   void set_coords(int rank, int* coords);
 
   int period(int i) const {
-    if (i > periods_.size()) {
+    if (i < 0 || i >= periods_.size()) {
       return -1;
     }
     return periods_[i];
