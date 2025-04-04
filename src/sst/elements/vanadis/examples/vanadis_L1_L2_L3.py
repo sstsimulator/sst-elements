@@ -61,34 +61,89 @@
 #                                                               |_____________________________________________________|
 #
 # This example relies on several environemental variables, which allow for costumization. A full list of 
-# the available customizations, including default values, is provided below
+# the available customizations, including default values, is provided below. Note that the default values 
+# may be specific to this example, and therefore differ from the default values built into the Vanadis source.
 # 
 # VANADIS_ISA
 #   The ISA the CPU will use.
 #   Possible Values: MIPSEL, RISCV64
 #   Default: RISCV64
-# VANADIS_LOADER_MODE - default: 0
-# VANADIS_VERBOSE - default: 0
-# VANADIS_OS_VERBOSE - default: 0
-# VANADIS_PIPE_TRACE - default: 
-# VANADIS_LSQ_LD_ENTRIES - default: 16
-# VANADIS_LSQ_ST_ENTIRES - default: 8
-# VANADIS_ROB_SLOTS - default: 0
-# VANADIS_RETIRES_PER_CYCLE - default: 4
-# VANADIS_ISSUES_PER_CYCLE - default: 4
-# VANADIS_DECODES_PER_CYCLE - default: 4
-# VANADIS_INTEGER_ARITH_CYCLES - default: 2
-# VANADIS_INTEGER_ARITH_CYCLES - default: 2
-# VANADIS_FP_ARITH_CYCLES - default: 8
-# VANADIS_FP_ARITH_UNITS - default: 2
-# VANADIS_BRANCH_ARITH_CYCLES - default: 2
+# VANADIS_LOADER_MODE
+#   Describes the operation of the loader for the vanadis decoder
+#   Possible Values: 0 (use LRU, which is more accurate), 1 (use an infinite cache, which allows for a faster simulation)  
+#   Default: 0 (LRU)
+# VANADIS_VERBOSE
+#   Defines the verbosity of the output from multiple components. 
+#   Possible Values: integers >= 0, higher numbers indicate more verbose output
+#   Default: 0
+# VANADIS_OS_VERBOSE
+#   Defines the verbosity of the output for the vanadis.vanadisNodeOS componenent
+#   Possible Values: integers >= 0, higher numbers indicate more verbose output
+#   Default: VANADIS_VERBOSE
+# VANADIS_PIPE_TRACE
+#   Defines the loction of the file where Vanadis will record the pipeline activity trace
+#   Possible Values: a valid file path, or unspecified
+#   Default: unspecified (no trace data will be recorded)
+# VANADIS_LSQ_LD_ENTRIES
+#   Defines the maximum number of loads allowed by the load store queue
+#   Possible Values: integers >= 0
+#   Default: 16
+# VANADIS_LSQ_ST_ENTRIES
+#   Defines the maximum number of stores permitted in the load store queue
+#   Possible Values: integers >= 0
+#   Default: 8
+# VANADIS_ROB_SLOTS
+#   Defines the number of slots in the CPU's reorder buffer
+#   Possible Values: integers >= 0
+#   Default: 64
+# VANADIS_RETIRES_PER_CYCLE
+#   Defines the number of instruction retires per cycle
+#   Possible Values: integers >= 0
+#   Default: 4
+# VANADIS_ISSUES_PER_CYCLE
+#   Defines the number instruction issues per cycle
+#   Possible Values: integers >= 0
+#   Default: 4
+# VANADIS_DECODES_PER_CYCLE
+#   Defines the number of instruction decodes per cycle
+#   Possible values: integers >= 0
+#   Default: 4
+# VANADIS_INTEGER_ARITH_CYCLES
+#   Defines the number of cycles per instruction the CPU requires for performing integer arithmetic
+#   Possible values: integers >= 0
+#   Default: 2
+# VANADIS_INTEGER_ARITH_UNITS
+#   Defines the number of integer arithmetic units
+#   Possible values: integers >= 0
+#   Default: 2
+# VANADIS_FP_ARITH_CYCLES
+#   Defines the number of cycles per instruction the CPU requires for performing floating piont arithmetic
+#   Possible values: integers >= 0
+#   Default: 8 
+# VANADIS_FP_ARITH_UNITS
+#   Defines the number of floating point division units
+#   Possible values: integers >= 0
+#   Default: 2
+# VANADIS_BRANCH_ARITH_CYCLES
+#   Defines the number of cycles per branch
+#   Possible Values: integers >= 0
+#   Default: 2
 # VANADIS_CPU_CLOCK - default: 2.3GHz
-# VANADIS_NUM_CORES - default: 1
-# VANADIS_NUM_HW_THREADS - default: 1
+#   Defines the core clock frequency for the CPU and memory controller, as well as the cache and bus frequencies
+#   Possible values: String values indicating a valid frequency
+#   Default: 2.3 GHz
+# VANADIS_NUM_CORES
+#   Defines the number of cores that can request OS services via a link
+#   Possible values: integers > 0
+#   Default: 1
+# VANADIS_NUM_HW_THREADS
+#   Defines the number of hardware threads per CPU core. 
+#   Possible Values: integers >= 0
+#   Default: 1
 # VANADIS_CPU_ELEMENT_NAME - default: dbg_VanadisCPU
-# 
-# 
-
+#   Defines the type of CPU to use in the model
+#   Possible Values: dbg_VanadisCPU, VanadisCPU
+#   Default: dbg_VanadisCPU
 import os
 import sst
 
