@@ -6,16 +6,17 @@ CC_LOCAL = $(CC)
 CFLAGS_LOCAL =
 endif
 
-all-local: libarielapi.so libarielapi.a
+AM_CPPFLAGS += \
+	$(MPI_CPPFLAGS) \
+	-I$(top_srcdir)/src
 
-libarielapi.so: arielapi.c arielapi.h
-	$(CC_LOCAL) $(CFLAGS_LOCAL) -fPIC -shared -o libarielapi.so $(LDFLAGS) arielapi.c
+lib_LTLIBRARIES = libarielapi.la
 
-arielapi.o: arielapi.c arielapi.h
-	$(CC_LOCAL) $(CFLAGS_LOCAL) -c -o arielapi.o arielapi.c
+libarielapi_la_SOURCES = \
+    $(srcdir)/arielapi.c \
+    $(srcdir)/arielapi.h
 
-libarielapi.a: arielapi.o
-	ar rcs $@ $^
+libarielapi_la_LDFLAGS = -module -avoid-version -shared
 
 clean-local:
 	rm -f arielapi.o libarielapi.a libarielapi.so

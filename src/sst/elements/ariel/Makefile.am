@@ -71,6 +71,8 @@ libariel_la_SOURCES = \
 EXTRA_DIST = \
 	api/arielapi.c \
 	api/arielapi.h \
+	mpi/mpilauncher.cc \
+	mpi/fakepin.cc \
 	frontend/pin3/fesimple.cc \
 	frontend/simple/fesimple.cc \
 	frontend/simple/examples/multicore.py \
