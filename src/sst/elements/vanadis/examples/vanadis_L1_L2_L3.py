@@ -174,7 +174,8 @@ mmuType = "simpleMMU"
 sst.setStatisticLoadLevel(4)
 sst.setStatisticOutput("sst.statOutputConsole")
 
-# full_exe_name = os.getenv("VANADIS_EXE", "./small/" + testDir + "/" + exe +  "/" + isa + "/" + exe )
+# The following retrieves the configuration values documented above from environment values,
+# substituting defaults where the environment variables have not been defined.
 full_exe_name = "../tests/small/basic-io/hello-world/riscv64/hello-world"
 exe_name= full_exe_name.split("/")[-1]
 
@@ -210,6 +211,7 @@ vanadis_os_hdlr = "vanadis.Vanadis" + vanadis_isa + "OSHandler"
 
 protocol="MESI"
 
+# Define the configuration parameters for the various componenets and subcomponents in the mode.
 # OS related params
 osParams = {
     "processDebugLevel" : 0,
@@ -224,7 +226,7 @@ osParams = {
     "checkpoint" : checkpoint
 }
 
-# Define the parameters for the components defined below in the model.
+# Parameters for the Node OS's L1 cache
 osl1cacheParams = {
     "access_latency_cycles" : "2",
     "cache_frequency" : cpu_clock,
@@ -238,6 +240,7 @@ osl1cacheParams = {
     "debug_level" : mh_debug_level,
 }
 
+# Parameters for the memory management unit
 mmuParams = {
     "debug_level": 0,
     "num_cores": numCpus,
@@ -245,6 +248,7 @@ mmuParams = {
     "page_size": 4096,
 }
 
+# Memory router parameters
 memRtrParams ={
       "xbar_bw" : "1GB/s",
       "link_bw" : "1GB/s",
@@ -256,6 +260,7 @@ memRtrParams ={
       "topology" : "merlin.singlerouter"
 }
 
+# Directory control parameters
 dirCtrlParams = {
       "coherence_protocol" : protocol,
       "entry_cache_size" : "1024",
@@ -265,11 +270,13 @@ dirCtrlParams = {
       "addr_range_end" : "0xFFFFFFFF"
 }
 
+# Dorectpru NIC parameters
 dirNicParams = {
       "network_bw" : "25GB/s",
       "group" : 2,
 }
 
+# Memory control parameters
 memCtrlParams = {
       "clock" : cpu_clock,
       "backend.mem_size" : physMemSize,
@@ -283,6 +290,7 @@ memCtrlParams = {
       "checkpoint" : checkpoint
 }
 
+# Memory parameters
 memParams = {
       "mem_size" : "4GiB",
       "access_time" : "1 ns"
@@ -297,10 +305,12 @@ tlbParams = {
     "tlb_set_size": 4,
 }
 
+# TLB wrapper parameters
 tlbWrapperParams = {
     "debug_level": 0,
 }
 
+# Node OS's decoder parameters
 decoderParams = {
     "loader_mode" : loader_mode,
     "uop_cache_entries" : 1536,
@@ -309,10 +319,12 @@ decoderParams = {
 
 osHdlrParams = { }
 
+# Branch predictor parameters
 branchPredParams = {
     "branch_entries" : 32
 }
 
+# CPU parameters
 cpuParams = {
     "clock" : cpu_clock,
     "verbose" : verbosity,
@@ -339,6 +351,7 @@ cpuParams = {
     "checkpoint" : checkpoint
 }
 
+# Load store queue parameters
 lsqParams = {
     "verbose" : verbosity,
     "address_mask" : 0xFFFFFFFF,
@@ -346,6 +359,7 @@ lsqParams = {
     "max_loads" : lsq_ld_entries,
 }
 
+# L1 D cache parameters
 l1dcacheParams = {
     "access_latency_cycles" : "2",
     "cache_frequency" : cpu_clock,
@@ -359,6 +373,7 @@ l1dcacheParams = {
     "debug_level" : mh_debug_level,
 }
 
+# L1 I cache parameters
 l1icacheParams = {
     "access_latency_cycles" : "2",
     "cache_frequency" : cpu_clock,
@@ -374,6 +389,7 @@ l1icacheParams = {
     "debug_level" : mh_debug_level,
 }
 
+# L2 cache parameters
 l2cacheParams = {
     "access_latency_cycles" : "14",
     "cache_frequency" : cpu_clock,
@@ -386,10 +402,13 @@ l2cacheParams = {
     "debug" : mh_debug,
     "debug_level" : mh_debug_level,
 }
+
+# Bus paremeters (connecting L1 caches to L2 cache)
 busParams = { 
     "bus_frequency" : cpu_clock, 
 }
 
+# l2 cache  memory link parameters
 l2memLinkParams = { 
     "group" : 1,
     "network_bw" : "25GB/s" 
@@ -483,11 +502,12 @@ link_dir_2_mem = sst.Link("link_dir_2_mem")
 link_dir_2_mem.connect( (dirtoM, "port", "1ns"), (memToDir, "port", "1ns") )
 link_dir_2_mem.setNoCut()
 
-# ostlb -> os l1 cache
+# connect the OS's TLB ot the cache
 link_os_cache_link = sst.Link("link_os_cache_link")
 link_os_cache_link.connect( (node_os_mem_if, "port", "1ns"), (os_cache_2_cpu, "port", "1ns") )
 link_os_cache_link.setNoCut()
 
+# connect the os cache to the router
 os_cache_2_rtr = sst.Link("os_cache_2_rtr")
 os_cache_2_rtr.connect( (os_cache_2_mem, "port", "1ns"), (comp_chiprtr, "port"+str(numCpus+1), "1ns") )
 os_cache_2_rtr.setNoCut()
@@ -497,66 +517,73 @@ nodeId = 0
 
 prefix="node" + str(nodeId) + ".cpu0"
 
-# CPU
+# Build and configure the CPU, and enable statistics on it
 cpu = sst.Component(prefix, vanadis_cpu_type)
 cpu.addParams( cpuParams )
 cpu.addParam( "core_id", 0 )
 cpu.enableAllStatistics()
 
+# Build and configure the decoder subcomponent of the CPU
 decode = cpu.setSubComponent( "decoder0", vanadis_decoder )
 decode.addParams( decoderParams )
 decode.enableAllStatistics()
 
-# CPU.decoder.osHandler 
+# Build and configure the OS handler subcomponent of the decoder
 os_hdlr = decode.setSubComponent( "os_handler", vanadis_os_hdlr )
 os_hdlr.addParams( osHdlrParams )
 
-# CPU.decocer.branch_pred
+# Create the branch predictor sub component of the decoder
 branch_pred = decode.setSubComponent( "branch_unit", "vanadis.VanadisBasicBranchUnit" )
 branch_pred.addParams( branchPredParams )
 branch_pred.enableAllStatistics()
 
-# CPU.lsq
+# Build and configure the CPU's load store queue
 cpu_lsq = cpu.setSubComponent( "lsq", "vanadis.VanadisBasicLoadStoreQueue" )
 cpu_lsq.addParams(lsqParams)
 cpu_lsq.enableAllStatistics()
 
-# CPU.lsq mem interface which connects to D-cache 
+# Create the memory interface on the CPU's load store queue, which defines 
+# how the load store queue connects to memory
 cpuDcacheIf = cpu_lsq.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
 
-# CPU.mem interface for I-cache
+# Creates the interface for the CPU to connect to the instruction cache (towards memory)
 cpuIcacheIf = cpu.setSubComponent( "mem_interface_inst", "memHierarchy.standardInterface" )
 
-# L1 D-cache
+# Creates and configures the L1D cache for the CPU
 cpu_l1dcache = sst.Component(prefix + ".l1dcache", "memHierarchy.Cache")
 cpu_l1dcache.addParams( l1dcacheParams )
 
-# L1 I-cache to cpu interface 
+# Define the interface between the L1D cache and the CPU
 l1dcache_2_cpu     = cpu_l1dcache.setSubComponent("cpulink", "memHierarchy.MemLink")
-# L1 I-cache to L2 interface 
+# Define the L1D cache's interface towards memory, which will connect to the bus, which
+# in turn, connects to tje L21 cache.
 l1dcache_2_l2cache = cpu_l1dcache.setSubComponent("memlink", "memHierarchy.MemLink")
 
-# L2 I-cache
+# Create the L1 I cache 
 cpu_l1icache = sst.Component( prefix + ".l1icache", "memHierarchy.Cache")
 cpu_l1icache.addParams( l1icacheParams )
 
-# L1 I-iache to cpu interface 
+# Define how the L1 I cache will connect to the CPU
 l1icache_2_cpu     = cpu_l1icache.setSubComponent("cpulink", "memHierarchy.MemLink")
-# L1 I-cache to L2 interface 
+# Define how the L1 I cache will connect towards memory; i.e., how the L1 I cache 
+# connects to the bus, to then connect to the L2 cache
 l1icache_2_l2cache = cpu_l1icache.setSubComponent("memlink", "memHierarchy.MemLink")
 
-# L2 cache
+# Creates and configures the L2 cache
 cpu_l2cache = sst.Component(prefix+".l2cache", "memHierarchy.Cache")
 cpu_l2cache.addParams( l2cacheParams )
 
-# L2 cache cpu interface
+# Defines how the L2 cache will connect towards the CPU. Because there are multiple
+# L1 caches between the L2 cache the CPU that the L2 cache needs to connect to, we use
+# a bus in between them, which will be what the link actually connects to.
 l2cache_2_l1caches = cpu_l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 
-# L2 cache mem interface
+# Defines how the L2 cache will connect towards memory - which in this case is 
+# a connection to the L3 cache
 l2cache_2_l3cache = cpu_l2cache.setSubComponent("memlink", "memHierarchy.MemLink")
 l2cache_2_l3cache.addParams( l2memLinkParams )
 
-# L3 cache
+# Create and configure the L3 cache
 cpu_l3cache = sst.Component(prefix+".l3cache", "memHierarchy.Cache")
 cpu_l3cache.addParams({
     "access_latency_cycles" : "14",
@@ -571,86 +598,88 @@ cpu_l3cache.addParams({
     "debug_level" : mh_debug_level,
 })
 
-# L2 cache cpu interface
+# Define how the L3 cache will connect towards the CPU. In this case the next component
+# closer the the CPU is the L2 cache. Because there's only 1 L2 cache, the L3 cache and L2
+# cache will be linked directly, instead of through a bus.
 l3cache_2_l2cache = cpu_l3cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 
-# L2 cache mem interface
+# Define how the L3 cache will connect towards memory. The L3 cache is the final 
+# cache, so it will connect directly to memory.
 l3cache_2_mem = cpu_l3cache.setSubComponent("memlink", "memHierarchy.MemNIC")
 l3cache_2_mem.addParams({ 
     "group" : 1,
     "network_bw" : "25GB/s" 
 })
 
-# L1 to L2 bus
+# Create and configure the bus for connecting the L1 caches to the L2 cache
 cache_bus = sst.Component(prefix+".bus", "memHierarchy.Bus")
 cache_bus.addParams(busParams)
 
-# CPU data TLB
+# Create and configure CPU data TLB
 dtlbWrapper = sst.Component(prefix+".dtlb", "mmu.tlb_wrapper")
 dtlbWrapper.addParams(tlbWrapperParams)
 dtlb = dtlbWrapper.setSubComponent("tlb", "mmu." + tlbType )
 dtlb.addParams(tlbParams)
 
-# CPU instruction TLB
+# Create and configure the CPU instruction TLB
 itlbWrapper = sst.Component(prefix+".itlb", "mmu.tlb_wrapper")
 itlbWrapper.addParams(tlbWrapperParams)
-#        itlbWrapper.addParam(    "debug_level", 0)
 itlbWrapper.addParam("exe",True)
 itlb = itlbWrapper.setSubComponent("tlb", "mmu." + tlbType )
 itlb.addParams(tlbParams)
 
-# CPU (data) -> TLB -> Cache
+# Connect the CPU data TLB to the CPU D cache
 link_cpu_dtlb_link = sst.Link(prefix+".link_cpu_dtlb_link")
 link_cpu_dtlb_link.connect( (cpuDcacheIf, "port", "1ns"), (dtlbWrapper, "cpu_if", "1ns") )
 link_cpu_dtlb_link.setNoCut()
 
-# data TLB -> data L1 
+# Connect the data TLB to the L1 D cache
 link_cpu_l1dcache_link = sst.Link(prefix+".link_cpu_l1dcache_link")
 link_cpu_l1dcache_link.connect( (dtlbWrapper, "cache_if", "1ns"), (l1dcache_2_cpu, "port", "1ns") )
 link_cpu_l1dcache_link.setNoCut()
 
-# CPU (instruction) -> TLB -> Cache
+# Connect the CPU TLB to the CPU I cache interface
 link_cpu_itlb_link = sst.Link(prefix+".link_cpu_itlb_link")
 link_cpu_itlb_link.connect( (cpuIcacheIf, "port", "1ns"), (itlbWrapper, "cpu_if", "1ns") )
 link_cpu_itlb_link.setNoCut()
 
-# instruction TLB -> instruction L1 
+# Connect the I TLB to teh L1 I cache
 link_cpu_l1icache_link = sst.Link(prefix+".link_cpu_l1icache_link")
 link_cpu_l1icache_link.connect( (itlbWrapper, "cache_if", "1ns"), (l1icache_2_cpu, "port", "1ns") )
-link_cpu_l1icache_link.setNoCut();
+link_cpu_l1icache_link.setNoCut()
 
-# data L1 -> bus
+# Connect the L2 D cache to the cache bus
 link_l1dcache_l2cache_link = sst.Link(prefix+".link_l1dcache_l2cache_link")
 link_l1dcache_l2cache_link.connect( (l1dcache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_0", "1ns") )
 link_l1dcache_l2cache_link.setNoCut()
 
-# instruction L1 -> bus
+# Connect the L1 I cache to teh cache bus
 link_l1icache_l2cache_link = sst.Link(prefix+".link_l1icache_l2cache_link")
 link_l1icache_l2cache_link.connect( (l1icache_2_l2cache, "port", "1ns"), (cache_bus, "high_network_1", "1ns") )
 link_l1icache_l2cache_link.setNoCut()
 
-# BUS to L2 cache
+# Connect the cache bus to the L2 cache
 link_bus_l2cache_link = sst.Link(prefix+".link_bus_l2cache_link")
 link_bus_l2cache_link.connect( (cache_bus, "low_network_0", "1ns"), (l2cache_2_l1caches, "port", "1ns") )
 link_bus_l2cache_link.setNoCut()
 
-# MMU -> dtlb 
+# Connect the Node OS's MMU to the data TLB
 link_mmu_dtlb_link = sst.Link(prefix + ".link_mmu_dtlb_link")
 link_mmu_dtlb_link.connect( (node_os_mmu, "core0.dtlb", "1ns"),  (dtlb, "mmu", "1ns") )
 
-# MMU -> itlb 
+# Connect the Node OS's MMU to the instruction TLB
 link_mmu_itlb_link = sst.Link(prefix + ".link_mmu_itlb_link")
 link_mmu_itlb_link.connect( (node_os_mmu, "core0.itlb", "1ns"), (itlb, "mmu", "1ns") )
 
-# CPU os handler -> node OS
+# Connect the CPU's os handler to the Node OS
 link_core_os_link = sst.Link(prefix + ".link_core_os_link")
 link_core_os_link.connect( (cpu, "os_link", "5ns"), (node_os, "core0", "5ns") )
 
-# connect cpu L2 to L3
-link_l2cache_l3cache_link = sst.Link(prefix + ".link_l2cache_2_l3chace")
+# Connect the L2 cache to the L3 cache
+link_l2cache_l3cache_link = sst.Link(prefix + ".link_l2cache_2_l3cache")
 link_l2cache_l3cache_link.connect((l2cache_2_l3cache, "port", "1ns"), (l3cache_2_l2cache, "port", "1ns"))
 link_l2cache_l3cache_link.setNoCut()
 
-# connect cpu L3 to router
+# Connect the L3 to memory router
 link_l3cache_2_rtr = sst.Link(prefix + ".link_l2cache_2_rtr")
 link_l3cache_2_rtr.connect( (l3cache_2_mem, "port", "1ns"), (comp_chiprtr, "port0", "1ns") )
