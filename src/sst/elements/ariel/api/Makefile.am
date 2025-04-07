@@ -18,5 +18,16 @@ libarielapi_la_SOURCES = \
 
 libarielapi_la_LDFLAGS = -module -avoid-version -shared
 
+all-local: copy-libarielapi
+
+copy-libarielapi:
+	@if test -f .libs/libarielapi.so; then \
+		echo "Copying libarielapi.so to $(srcdir)"; \
+		cp .libs/libarielapi.so $(srcdir)/libarielapi.so; \
+	else \
+		echo "libarielapi.so not found in .libs/; build may have failed or hasn't run yet."; \
+	fi
+
 clean-local:
 	rm -f arielapi.o libarielapi.a libarielapi.so
+	rm -f $(srcdir)/libarielapi.so
