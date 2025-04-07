@@ -6,28 +6,7 @@ import os
 import inspect
 import subprocess
 
-################################################################################
-# Code to support a single instance module initialize, must be called setUp method
-
-module_init = 0
-module_sema = threading.Semaphore()
-
-def initializeTestModule_SingleInstance(class_inst):
-    global module_init
-    global module_sema
-
-    module_sema.acquire()
-    if module_init != 1:
-        try:
-            # Put your single instance Init Code Here
-            class_inst._setup_ariel_test_files()
-        except:
-            pass
-        module_init = 1
-    module_sema.release()
-################################################################################
 # Functions to support parsing the output of the MPI tests
-
 def get_reduce_string(rank, ranks, size=1024):
         return [f"Rank {rank} partial sum is {sum(range(int(rank*(size/ranks)), int((rank+1)*(size/ranks))))}, total sum is {sum(range(size))}\n"]
 
@@ -36,23 +15,8 @@ def get_hello_string(rank, ranks, tracerank, threads):
         return [f"Hello from rank {rank} of {ranks}, thread {i}! (Launched by pin)\n" for i in range(threads)]
     else:
         return [f"Hello from rank {rank} of {ranks}, thread {i}!\n" for i in range(threads)]
-################################################################################
 
 class testcase_Ariel(SSTTestCase):
-
-    def initializeClass(self, testName):
-        super(type(self), self).initializeClass(testName)
-        # Put test based setup code here. it is called before testing starts
-        # NOTE: This method is called once for every test
-
-    def setUp(self):
-        super(type(self), self).setUp()
-        initializeTestModule_SingleInstance(self)
-        # Put test based setup code here. it is called once before every test
-
-    def tearDown(self):
-        # Put test based teardown code here. it is called once after every test
-        super(type(self), self).tearDown()
 
     # Test that the output contains the specified line. Because the programs are
     # Multithreaded, we cannot know ahead of time which line will match. The
@@ -83,9 +47,9 @@ class testcase_Ariel(SSTTestCase):
     using_osx = host_os_get_distribution_type() == OS_DIST_OSX
     osx_error_msg = "Ariel: OpenMP is not supported on macOS"
 
-    # TODO: This is hacky. What is the correct way to get the test script location?
     testsuite_dir = os.path.dirname(__file__)
-    mpilauncher_exists = os.path.isfile(testsuite_dir + '/../mpi/mpilauncher')
+    bindir = sstsimulator_conf_get_value('SST_ELEMENT_LIBRARY', 'SST_ELEMENT_LIBRARY_BINDIR', str)
+    mpilauncher_exists = os.path.isfile(bindir + '/mpilauncher')
     mpi_error_msg = f"Ariel: The mpilauncher executable was not found"
 
     @unittest.skipIf(not mpilauncher_exists, mpi_error_msg)
@@ -162,13 +126,6 @@ class testcase_Ariel(SSTTestCase):
         ArielElementMPIDir = "{0}/mpi".format(ArielElementDir)
         ArielElementTestMPIDir = "{0}/tests/testMPI".format(ArielElementDir)
 
-        libpath = os.environ.get("LD_LIBRARY_PATH")
-        if libpath:
-            os.environ["LD_LIBRARY_PATH"] = ArielElementAPIDir + ":" + libpath
-        else:
-            os.environ["LD_LIBRARY_PATH"] = ArielElementAPIDir
-
-        # Set the various file paths
         testDataFileName=("{0}".format(testcase))
 
         sdlfile = "{0}/test-mpi.py".format(ArielElementTestMPIDir)
@@ -211,8 +168,6 @@ class testcase_Ariel(SSTTestCase):
         for i in range(threads):
             self.assert_nonzero_stat(statfile, f"core.read_requests.{i}")
             self.assert_nonzero_stat(statfile, f"cache_{i}.CacheMisses")
-
-#######################
 
     def _setup_ariel_test_files(self):
         # NOTE: This routine is called a single time at module startup, so it
