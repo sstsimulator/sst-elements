@@ -17,6 +17,15 @@ def get_hello_string(rank, ranks, tracerank, threads):
         return [f"Hello from rank {rank} of {ranks}, thread {i}!\n" for i in range(threads)]
 
 class testcase_Ariel(SSTTestCase):
+    def initializeClass(self, testName):
+        super(type(self), self).initializeClass(testName)
+        # Put test based setup code here. it is called before testing starts
+        # NOTE: This method is called once for every test
+
+    def setUp(self):
+        super(type(self), self).setUp()
+        # Put test based setup code here. it is called once before every test
+        self._setup_ariel_test_files()
 
     # Test that the output contains the specified line. Because the programs are
     # Multithreaded, we cannot know ahead of time which line will match. The
