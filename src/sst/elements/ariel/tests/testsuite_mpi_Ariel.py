@@ -23,8 +23,9 @@ class testcase_Ariel(SSTTestCase):
         # NOTE: This method is called once for every test
 
     def setUp(self):
-        super(type(self), self).setUp()
         # Put test based setup code here. it is called once before every test
+        super(type(self), self).setUp()
+        initializeTestModule_SingleInstance(self)
         self._setup_ariel_test_files()
 
     # Test that the output contains the specified line. Because the programs are
