@@ -9,4 +9,4 @@ stream:
 	g++ stream.c -o stream $(CFLAGS_LOCAL)
 
 stream_mlm:
-	g++ stream_malloc.c -o stream_mlm $(CFLAGS_LOCAL) -I$(API_DIR) -L. -L$(API_DIR) -L$(LDFLAGS) -larielapi
+	g++ stream_malloc.c -o stream_mlm $(CFLAGS_LOCAL) -I$(API_DIR) -L. -L$(API_DIR) $(LDFLAGS) -larielapi
