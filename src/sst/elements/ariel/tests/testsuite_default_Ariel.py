@@ -163,7 +163,7 @@ class testcase_Ariel(SSTTestCase):
         os.environ["LD_LIBRARY_PATH"] = new_ld_library_path
 
         # Now build the Ariel stream example
-        cmd = "make"
+        cmd = f"make LDFLAGS=-L{libdir}"
         rtn1 = OSCommand(cmd, set_cwd=self.ArielElementStreamDir).run()
         log_debug("Ariel stream Make result = {0}; output =\n{1}".format(rtn1.result(), rtn1.output()))
         if rtn1.result() != 0:
