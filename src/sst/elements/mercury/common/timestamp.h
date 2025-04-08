@@ -305,7 +305,7 @@ std::string to_printf_type(TimeDelta t);
 } // end namespace SST
 
 START_SERIALIZATION_NAMESPACE
-template <> class serialize<SST::Hg::TimeDelta>
+template <> class serialize_impl<SST::Hg::TimeDelta>
 {
  public:
   void operator()(SST::Hg::TimeDelta& t, serializer& ser){
@@ -313,7 +313,7 @@ template <> class serialize<SST::Hg::TimeDelta>
   }
 };
 
-template <> class serialize<SST::Hg::Timestamp>
+template <> class serialize_impl<SST::Hg::Timestamp>
 {
  public:
   void operator()(SST::Hg::Timestamp& t, serializer& ser){

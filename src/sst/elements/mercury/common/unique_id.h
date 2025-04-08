@@ -77,7 +77,7 @@ struct UniqueEventId {
 
 START_SERIALIZATION_NAMESPACE
 template <>
-class serialize<SST::Hg::UniqueEventId>
+class serialize_impl<SST::Hg::UniqueEventId>
 {
  public:
   void
