@@ -14,7 +14,7 @@
 // distribution.
 
 #include <iris/sumi/collective_message.h>
-#include <mercury/common/serializable.h>
+#include <sst/core/serialization/serializable.h>
 
 namespace SST::Iris::sumi {
 
@@ -34,7 +34,7 @@ CollectiveWorkMessage::tostr(int p)
 }
 
 void
-CollectiveWorkMessage::serialize_order(SST::Hg::serializer &ser)
+CollectiveWorkMessage::serialize_order(SST::Core::Serialization::serializer& ser)
 {
   ProtocolMessage::serialize_order(ser);
   ser & tag_;
