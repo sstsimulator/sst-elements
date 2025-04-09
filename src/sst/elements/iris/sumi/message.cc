@@ -81,7 +81,7 @@ Message::tostr(class_t ty)
 }
 
 void
-Message::serialize_order(SST::Hg::serializer &ser)
+Message::serialize_order(SST::Core::Serialization::serializer& ser)
 {
   ser & arrived_;
   ser & recv_sync_delay_;

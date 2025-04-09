@@ -16,8 +16,8 @@
 #pragma once
 
 #include <sst/core/sst_types.h>
-#include <mercury/common/serializable.h>
 #include <mercury/common/errors.h>
+#include <sst/core/serialization/serializable.h>
 #include <iosfwd>
 #include <stdint.h>
 #include <iostream>
@@ -146,6 +146,11 @@ class TimeDelta
   TimeDelta& operator-=(const TimeDelta &other);
   TimeDelta& operator*=(double scale);
   TimeDelta& operator/=(double scale);
+
+  void serialize_order(SST::Core::Serialization::serializer& ser) {
+    SST_SER(ticks_);
+  }
+
 };
 
 struct Timestamp
@@ -207,6 +212,11 @@ struct Timestamp
   static constexpr uint64_t carry_bits_mask = 0;
   static constexpr uint64_t remainder_bits_mask = ~uint64_t(0);
   static constexpr uint64_t carry_bits_shift = 0;
+
+  void serialize_order(SST::Core::Serialization::serializer& ser) {
+    SST_SER(epochs);
+    SST_SER(time);
+  }
 };
 
 TimeDelta operator+(const TimeDelta &a, const TimeDelta &b);
@@ -303,21 +313,3 @@ std::string to_printf_type(TimeDelta t);
 
 } // end namespace Hg
 } // end namespace SST
-
-START_SERIALIZATION_NAMESPACE
-template <> class serialize<SST::Hg::TimeDelta>
-{
- public:
-  void operator()(SST::Hg::TimeDelta& t, serializer& ser){
-    ser.primitive(t);
-  }
-};
-
-template <> class serialize<SST::Hg::Timestamp>
-{
- public:
-  void operator()(SST::Hg::Timestamp& t, serializer& ser){
-    ser.primitive(t);
-  }
-};
-END_SERIALIZATION_NAMESPACE

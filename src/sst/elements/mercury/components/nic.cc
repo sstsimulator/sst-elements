@@ -28,7 +28,7 @@ namespace SST {
 namespace Hg {
 
 void
-NicEvent::serialize_order(serializer &ser)
+NicEvent::serialize_order(SST::Core::Serialization::serializer& ser)
 {
   Event::serialize_order(ser);
   ser & msg_;

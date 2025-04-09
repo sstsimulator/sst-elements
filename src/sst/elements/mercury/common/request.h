@@ -15,7 +15,6 @@
 
 #pragma once
 
-#include <mercury/common/serializable.h>
 #include <mercury/common/printable.h>
 
 namespace SST {
