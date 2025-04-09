@@ -160,9 +160,9 @@ class App : public Thread
     return globals_storage_;
   }
 
-//  void* newTlsStorage() {
-//    return allocateDataSegment(true);
-//  }
+ void* newTlsStorage() {
+   return allocateDataSegment(true);
+ }
 
   const std::string& uniqueName() const {
     return unique_name_;
@@ -196,6 +196,10 @@ class App : public Thread
 
   FILE* stdErrFile(){
     return stderr_;
+  }
+
+  unsigned int get_taskid() {
+    return taskid_;
   }
 
   Library* getLibrary(const std::string& name);
@@ -260,6 +264,7 @@ class App : public Thread
   FILE* stdout_;
   FILE* stderr_;
   std::unique_ptr<SST::Output> out_;
+  unsigned int taskid_;
 };
 
 

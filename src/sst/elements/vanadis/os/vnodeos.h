@@ -357,10 +357,10 @@ public:
     int getNodeNum() { return m_nodeNum; }
     int getPageSize() { return m_pageSize; }
     int getPageShift() { return m_pageShift; }
-    uint64_t getCoreCount() { return m_coreCount; }
 
-    void updateProcessAffinity(unsigned pid);
-    void migrateProcessToCore(OS::ProcessInfo* process, unsigned newCore);
+    uint32_t getNumCores() { return m_coreCount; }
+    uint32_t getNumHwThreads() { return m_hardwareThreadCount; }
+
 
 private:
 
@@ -378,7 +378,9 @@ private:
     uint64_t                    m_stack_top;
     int                         m_nodeNum;
     uint64_t                    m_osStartTimeNano;
-    uint64_t                    m_coreCount;
+    uint32_t                    m_coreCount;
+    uint32_t                    m_hardwareThreadCount;
+    uint32_t                    m_numLogicalCores;
 
     std::queue<PageFault*>                          m_pendingFault;
     std::map<std::string, VanadisELFInfo* >         m_elfMap; 

@@ -130,7 +130,7 @@ static int sumi_cntr_close(fid_t fid)
 
 DIRECT_FN STATIC uint64_t sumi_cntr_readerr(struct fid_cntr *cntr)
 {
-	int v, ret;
+	int v = 0, ret = 0;
   struct sumi_fid_cntr *cntr_priv;
 #if 0
 
@@ -150,7 +150,7 @@ DIRECT_FN STATIC uint64_t sumi_cntr_readerr(struct fid_cntr *cntr)
 
 DIRECT_FN STATIC uint64_t sumi_cntr_read(struct fid_cntr *cntr)
 {
-	int v, ret;
+	int v = 0, ret = 0;
 #if 0
   struct sumi_fid_cntr *cntr_priv;
 

@@ -16,6 +16,7 @@
 #include <mercury/common/errors.h>
 #include <mercury/components/operating_system.h>
 #include <mercury/operating_system/process/thread_info.h>
+#include <mercury/operating_system/process/app.h>
 #include <mercury/operating_system/process/tls.h>
 #include <mercury/operating_system/threading/thread_lock.h>
 #include <mercury/operating_system/threading/stack_alloc.h>
@@ -103,23 +104,31 @@ ThreadInfo::registerUserSpaceVirtualThread(int phys_thread_id, void *stack,
 //  void** currentGlobalsPtr = (void**) &fake_globals[0];
 //  void** currentTlsPtr = (void**) &fake_tls[0];
 
-//  globals_lock.lock();
-//  if (globalsMap && isAppStartup){
-//    void* currentGlobals = *currentGlobalsPtr;
-//    *currentGlobalsPtr = globalsMap;
-//    GlobalVariable::glblCtx.addActiveSegment(globalsMap);
-//    GlobalVariable::glblCtx.callInitFxns(globalsMap);
-//    *currentGlobalsPtr = currentGlobals;
-//  }
+  int activeStack; int* activeStackPtr = &activeStack;
+  intptr_t stackTopInt = sst_hg_global_stacksize //avoid errors if this is zero
+      ? ((intptr_t)activeStackPtr/sst_hg_global_stacksize)*sst_hg_global_stacksize
+      : 0;
 
-//  if (tlsMap && isThreadStartup){
-//    void* currentTls = *currentTlsPtr;
-//    *currentTlsPtr = tlsMap;
-//    GlobalVariable::tlsCtx.addActiveSegment(tlsMap);
-//    GlobalVariable::tlsCtx.callInitFxns(tlsMap);
-//    *currentTlsPtr = currentTls;
-//  }
-//  globals_lock.unlock();
+  void** currentGlobalsPtr = (void**)(stackTopInt + SST_HG_TLS_GLOBAL_MAP);
+  void** currentTlsPtr = (void**)(stackTopInt + SST_HG_TLS_GLOBAL_MAP);
+
+ globals_lock.lock();
+ if (globalsMap && isAppStartup){
+   void* currentGlobals = *currentGlobalsPtr;
+   *currentGlobalsPtr = globalsMap;
+   GlobalVariable::glblCtx.addActiveSegment(globalsMap);
+   GlobalVariable::glblCtx.callInitFxns(globalsMap);
+   *currentGlobalsPtr = currentGlobals;
+ }
+
+ if (tlsMap && isThreadStartup){
+   void* currentTls = *currentTlsPtr;
+   *currentTlsPtr = tlsMap;
+   GlobalVariable::tlsCtx.addActiveSegment(tlsMap);
+   GlobalVariable::tlsCtx.callInitFxns(tlsMap);
+   *currentTlsPtr = currentTls;
+ }
+ globals_lock.unlock();
 }
 
 void

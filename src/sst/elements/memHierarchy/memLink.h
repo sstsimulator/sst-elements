@@ -100,27 +100,27 @@ public:
     virtual void complete(unsigned int phase) override;
 
     /* Remote endpoint info management */
-    virtual std::set<EndpointInfo>* getSources();
-    virtual std::set<EndpointInfo>* getDests();
-    virtual std::set<EndpointInfo>* getPeers();
-    virtual bool isDest(std::string str);
-    virtual bool isSource(std::string str);
-    virtual bool isPeer(std::string str);
-    virtual std::string findTargetDestination(Addr addr);
-    virtual std::string getTargetDestination(Addr addr);
-    virtual bool isReachable(std::string dst);
+    virtual std::set<EndpointInfo>* getSources() override;
+    virtual std::set<EndpointInfo>* getDests() override;
+    virtual std::set<EndpointInfo>* getPeers() override;
+    virtual bool isDest(std::string str) override;
+    virtual bool isSource(std::string str) override;
+    virtual bool isPeer(std::string str) override;
+    virtual std::string findTargetDestination(Addr addr) override;
+    virtual std::string getTargetDestination(Addr addr) override;
+    virtual bool isReachable(std::string dst) override;
 
     /* Send and receive functions for MemLink */
-    virtual void sendUntimedData(MemEventInit * ev, bool broadcast, bool lookup_dst);
-    virtual MemEventInit* recvUntimedData();
-    virtual void send(MemEventBase * ev);
+    virtual void sendUntimedData(MemEventInit * ev, bool broadcast, bool lookup_dst) override;
+    virtual MemEventInit* recvUntimedData() override;
+    virtual void send(MemEventBase * ev) override;
     virtual MemEventBase * recv();
 
     /* Debug */
-    virtual void printStatus(Output &out) {
+    virtual void printStatus(Output &out) override {
         out.output("  MemHierarchy::MemLink: No status given\n");
     }
-    virtual std::string getAvailableDestinationsAsString();
+    virtual std::string getAvailableDestinationsAsString() override;
 
 protected:
     void addRemote(EndpointInfo info);

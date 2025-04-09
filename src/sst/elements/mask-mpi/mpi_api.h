@@ -823,7 +823,7 @@ class MpiApi : public SST::Iris::sumi::SimTransport
 
 //  static sstmac::FTQTag mpi_tag;
 
-  MpiCommFactory comm_factory_;
+  MpiCommFactory* comm_factory_;
 
   int iprobe_delay_us_;
   int test_delay_us_;
@@ -887,6 +887,8 @@ class MpiApi : public SST::Iris::sumi::SimTransport
 
  private:
   MPI_Call current_call_;
+  unsigned int verbose_;
+  std::unique_ptr<SST::Output> out_;
 
 };
 

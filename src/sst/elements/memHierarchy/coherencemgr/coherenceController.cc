@@ -14,12 +14,14 @@
 // distribution.
 
 
-#include <sst_config.h>
+#include <sst/core/sst_config.h>
 
 #include "coherencemgr/coherenceController.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
+
+/* Debug macros included from util.h */
 
 
 CoherenceController::CoherenceController(ComponentId_t id, Params &params, Params& ownerParams, bool prefetch) : SubComponent(id) {
@@ -378,7 +380,7 @@ bool CoherenceController::sendOutgoingEvents() {
         }
 
 
-        if (is_debug_event(outgoingEvent)) {
+        if (mem_h_is_debug_event(outgoingEvent)) {
             debug->debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
                     getCurrentSimCycle(), timestamp_, cachename_.c_str(), outgoingEvent->getBriefString().c_str());
         }
@@ -402,7 +404,7 @@ bool CoherenceController::sendOutgoingEvents() {
             }
         }
 
-        if (is_debug_event(outgoingEvent)) {
+        if (mem_h_is_debug_event(outgoingEvent)) {
             debug->debug(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
                     getCurrentSimCycle(), timestamp_, cachename_.c_str(), outgoingEvent->getBriefString().c_str());
         }
@@ -639,7 +641,7 @@ uint64_t CoherenceController::forwardMessage(MemEvent * event, unsigned int requ
 
     forwardByAddress(forwardEvent, deliveryTime);
 
-    if (is_debug_event(event))
+    if (mem_h_is_debug_event(event))
         eventDI.action = "Forward";
 
     return deliveryTime;
@@ -652,7 +654,7 @@ void CoherenceController::sendNACK(MemEvent * event) {
     uint64_t deliveryTime = timestamp_ + tagLatency_; // Probably had to lookup and see that we couldn't handle this request and/or MSHR was full
     forwardByDestination(NACKevent, deliveryTime);
 
-    if (is_debug_event(event))
+    if (mem_h_is_debug_event(event))
         eventDI.action = "NACK";
 }
 
@@ -668,7 +670,7 @@ void CoherenceController::resendEvent(MemEvent * event, bool towardsCPU) {
     uint64_t deliveryTime =  timestamp_ + mshrLatency_ + backoff;
     forwardByDestination(event, deliveryTime);
 
-    if (is_debug_event(event)) {
+    if (mem_h_is_debug_event(event)) {
         eventDI.action = "Resend";
         eventDI.reason = event->getBriefString();
     }
@@ -729,13 +731,13 @@ MemEventStatus CoherenceController::allocateMSHR(MemEvent * event, bool fwdReq, 
 
     int end_pos = mshr_->insertEvent(event->getBaseAddr(), event, pos, fwdReq, stallEvict);
     if (end_pos == -1) {
-        if (is_debug_event(event)) {
+        if (mem_h_is_debug_event(event)) {
             eventDI.action = "Reject";
             eventDI.reason = "MSHR full";
         }
         return MemEventStatus::Reject; // MSHR is full
     } else if (end_pos != 0) {
-        if (is_debug_event(event)) {
+        if (mem_h_is_debug_event(event)) {
             eventDI.action = "Stall";
             eventDI.reason = "MSHR conflict";
         }

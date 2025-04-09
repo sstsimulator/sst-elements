@@ -13,7 +13,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <sst_config.h>
+#include <sst/core/sst_config.h>
 #include <sst/core/params.h>
 #include <sst/core/timeLord.h>
 
@@ -708,7 +708,7 @@ uint64_t Cache::createMSHR(Params &params, uint64_t accessLatency, bool L1) {
         mshrLatency = 1;
     } else {
         // Otherwise if mshrLatency isn't set or is 0, intrapolate from cache latency
-        uint64_t N = 200; // max cache latency supported by the intrapolation method
+        const uint64_t N = 200; // max cache latency supported by the intrapolation method
         int y[N];
 
         /* L2 */

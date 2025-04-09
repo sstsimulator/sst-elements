@@ -151,23 +151,46 @@ standardCPU::standardCPU(ComponentId_t id, Params& params) :
     }
     ll_issued_ = false;
 
-    init_write_count_ = params.find<uint64_t>("test_init", 0);
+    init_count_ = params.find<uint64_t>("test_init", 0);
 }
 
 void standardCPU::init(unsigned int phase)
 {
     memory_->init(phase);
 
-    while (init_write_count_ != 0) {
+    while (init_count_ != 0) {
         StandardMem::Addr addr = rng_.generateNextUInt64();
         memory_->sendUntimedData( createWrite(addr) );
-        init_write_count_--;
+        init_addr_.push(addr);
+        init_count_--;
+    }
+    
+    if (phase > 0 && !init_addr_.empty()) {
+        Interfaces::StandardMem::Request* read = createRead(init_addr_.front());
+	    requests_[read->getID()] =  std::make_pair(0, "");
+        memory_->sendUntimedData(read);
+        init_addr_.pop();
+    }
+   
+    while (Interfaces::StandardMem::Request* req = memory_->recvUntimedData()) {
+        auto it = requests_.find(req->getID());
+        if (it == requests_.end()) {
+            out_.fatal(CALL_INFO, -1, "%s, Error: Received a response but there is no record of the matching requests. Received: %s\n",
+                getName().c_str(), req->getString().c_str());
+        }
+        out_.output("U: InitRecv. %s\n", req->getString().c_str());
+        requests_.erase(req->getID());
+        delete req;
     }
 }
 
 void standardCPU::setup() {
     memory_->setup();
     line_size_ = memory_->getLineSize();
+
+    if (!requests_.empty()) { // Must not have received a response for init reads
+        out_.fatal(CALL_INFO,-1, "%s, Error: requests buffer should be empty during setup()\n", getName().c_str());
+    }
 }
 
 void standardCPU::finish() { }
@@ -252,7 +275,7 @@ bool standardCPU::clockTic( Cycle_t )
                 }
 
                 if (req->needsResponse()) {
-		            requests_[req->getID()] =  std::make_pair(getCurrentSimTime(), cmdString);
+		    requests_[req->getID()] =  std::make_pair(getCurrentSimTime(), cmdString);
                 }
             
                 memory_->send(req);

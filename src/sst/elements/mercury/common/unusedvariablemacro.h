@@ -16,7 +16,7 @@
 #pragma once
 
 #if __cplusplus >= 201703L
-  #define SST_MPI_MAYBE_UNUSED [[maybe_unused]]
+  #define SST_HG_MAYBE_UNUSED [[maybe_unused]]
 #else
-  #define SST_MPI_MAYBE_UNUSED __attribute__((unused))
+  #define SST_HG_MAYBE_UNUSED __attribute__((unused))
 #endif

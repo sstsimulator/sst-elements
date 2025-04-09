@@ -21,7 +21,7 @@ namespace SST {
 namespace Hg {
 
 ComputeScheduler::ComputeScheduler(SST::Params &params, OperatingSystemCL* os)
-    : os_(os)
+    : os_(os), ncore_active_(0)
 {
   ncores_ = params.find<int>("ncores", 24);
   nsockets_ = params.find<int>("nsockets", 4);

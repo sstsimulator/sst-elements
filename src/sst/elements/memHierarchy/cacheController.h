@@ -194,8 +194,8 @@ public:
     virtual void finish(void) override;
 
     /** Component API - debug and fatal */
-    void printStatus(Output & out); // Called on SIGUSR2
-    void emergencyShutdown();       // Called on output.fatal(), SIGINT/SIGTERM
+    void printStatus(Output & out) override; // Called on SIGUSR2
+    void emergencyShutdown() override;       // Called on output.fatal(), SIGINT/SIGTERM
 
 private:
     /** Cache factory methods **************************************************/
@@ -273,6 +273,7 @@ private:
     Link* timeoutSelfLink_;                 // link to check for timeouts (possible deadlock)
     MSHR* mshr_;                            // MSHR
     CoherenceController* coherenceMgr_;     // Coherence protocol - where most of the event handling happens
+    std::map<MemEventBase::id_type, std::string> init_requests_;    // Event response routing for untimed/init events
 
     /** Latencies **************************************************************/
     SimTime_t   prefetchDelay_;

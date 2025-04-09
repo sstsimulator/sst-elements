@@ -14,7 +14,7 @@
 // distribution.
 
 
-#include <sst_config.h>
+#include <sst/core/sst_config.h>
 #include <sst/core/link.h>
 #include "sst/elements/memHierarchy/util.h"
 #include "membackend/MessierBackend.h"

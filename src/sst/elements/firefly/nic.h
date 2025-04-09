@@ -17,7 +17,8 @@
 #ifndef COMPONENTS_FIREFLY_NIC_H
 #define COMPONENTS_FIREFLY_NIC_H
 
-#include <math.h>
+#include <cmath>
+#include <list>
 #include <sstream>
 #include <queue>
 #include <sst/core/module.h>

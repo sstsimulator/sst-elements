@@ -94,8 +94,8 @@ public:
     ~MemNICFour() { }
 
     /* Functions called by parent for handling events */
-    bool isClocked() { return false; }
-    void send(MemEventBase * ev);
+    bool isClocked() override { return false; }
+    void send(MemEventBase * ev) override;
     bool recvNotifyReq(int);
     bool recvNotifyAck(int);
     bool recvNotifyFwd(int);
@@ -146,7 +146,7 @@ public:
     };
 
     /* Debug support */
-    void printStatus(Output& out);
+    void printStatus(Output& out) override;
 
 private:
 

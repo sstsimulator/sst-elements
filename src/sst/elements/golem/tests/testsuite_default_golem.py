@@ -22,6 +22,13 @@ updateFiles = False
 #
 ################################################################################
 
+def check_for_crosssim_library():
+    try:
+        import simulator
+        return True
+    except ImportError:
+        return False
+
 def check_for_crosssim_components():
     try:
         result = subprocess.run(
@@ -52,7 +59,7 @@ def build_golem_test_matrix():
     arch_list = ["riscv64"]
     tests = {"single_array": 1, "multi_array": 2}
 
-    if check_for_crosssim_components():
+    if check_for_crosssim_components() and check_for_crosssim_library():
         location="small/crosssim_float_array"
         array_type = "crosssim_float"
         for test, num_arrays in tests.items():

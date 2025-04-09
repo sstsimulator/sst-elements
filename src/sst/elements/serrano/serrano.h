@@ -21,6 +21,8 @@
 #include <sst/core/output.h>
 
 #include <cstdio>
+#include <list>
+#include <map>
 
 #include "smsg.h"
 #include "scircq.h"

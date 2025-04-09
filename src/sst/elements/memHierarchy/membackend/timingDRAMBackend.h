@@ -26,6 +26,8 @@
 namespace SST {
 namespace MemHierarchy {
 
+/* Debug macros included from util.h */
+
 using namespace  TimingDRAM_NS;
 
 class TimingDRAM : public SimpleMemBackend {
@@ -145,7 +147,7 @@ private:
                 m_name = "COL";
                 break;
             }
-            if (is_debug)
+            if (mem_h_is_debug)
                 m_bank->verbose(__LINE__,__FUNCTION__,"new %s for rank=%d bank=%d row=%d\n",
                         getName().c_str(), getRank(), getBank(), getRow());
         }
@@ -195,7 +197,7 @@ private:
                 m_finiTime += m_dataCycles;
                 m_dataBusAvailCycle = m_finiTime;
                 ret = true;
-            } else if (is_debug) {
+            } else if (mem_h_is_debug) {
                 m_bank->verbose(__LINE__,__FUNCTION__,"bus not ready\n");
             }
 
@@ -204,7 +206,7 @@ private:
 
         bool isDone( SimTime_t now ) {
 
-            if (is_debug)
+            if (mem_h_is_debug)
                 m_bank->verbose(__LINE__,__FUNCTION__,"%lu %lu\n",now,m_finiTime);
             return ( now >= m_finiTime );
         }
@@ -243,7 +245,7 @@ private:
         void pushTrans( Transaction* trans ) {
             unsigned bank = m_mapper->getBank( trans->addr);
 
-            if (is_debug)
+            if (mem_h_is_debug)
                 m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK,"bank=%d addr=%#" PRIx64 "\n",
                     bank,trans->addr);
 
@@ -285,7 +287,7 @@ private:
 
             unsigned rank = m_mapper->getRank( addr);
 
-            if (is_debug)
+            if (mem_h_is_debug)
                 m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK,"reqId=%" PRIu64 " rank=%d addr=%#" PRIx64 ", createTime=%" PRIu64 "\n", id, rank, addr, createTime );
 
             Transaction* trans = new Transaction( createTime, id, addr, isWrite, numBytes, m_mapper->getBank(addr),

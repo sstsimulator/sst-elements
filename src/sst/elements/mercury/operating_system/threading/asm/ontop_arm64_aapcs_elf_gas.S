@@ -40,9 +40,9 @@
 .cpu    generic+fp+simd
 .text
 .align  2
-.global ontop_fcontext
-.type   ontop_fcontext, %function
-ontop_fcontext:
+.global sst_hg_ontop_fcontext
+.type   sst_hg_ontop_fcontext, %function
+sst_hg_ontop_fcontext:
     # prepare stack for GP + FPU
     sub  sp, sp, #0x70
 
@@ -82,6 +82,6 @@ ontop_fcontext:
 
     # jump to ontop-function
     ret x2
-.size   ontop_fcontext,.-ontop_fcontext
+.size   sst_hg_ontop_fcontext,.-sst_hg_ontop_fcontext
 # Mark that we don't need executable stack.
 .section .note.GNU-stack,"",%progbits

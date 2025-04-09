@@ -19,6 +19,6 @@
  * Email:  caesar.sst@gmail.com
  */
 
-#include <sst_config.h>
+#include <sst/core/sst_config.h>
 #include "hash.h"
 

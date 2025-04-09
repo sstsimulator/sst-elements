@@ -37,7 +37,6 @@ public:
 
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
-            {"verbose",     "Sets the verbosity of the backend output", "0"},
             {"configFile",  "Name of the Ramulator Device config file", NULL} )
 
 /* Begin class definition */

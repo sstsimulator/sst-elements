@@ -19,7 +19,7 @@
  */
 
 
-#include <sst_config.h>
+#include <sst/core/sst_config.h>
 
 #include <sstream>
 
@@ -33,6 +33,8 @@
 using namespace std;
 using namespace SST;
 using namespace SST::MemHierarchy;
+
+/* Debug macros included from util.h */
 
 
 const Bus::key_t Bus::ANY_KEY = std::pair<uint64_t, int>((uint64_t)-1, -1);
@@ -106,7 +108,7 @@ void Bus::broadcastEvent(SST::Event* ev) {
 void Bus::sendSingleEvent(SST::Event* ev) {
     MemEventBase *event = static_cast<MemEventBase*>(ev);
 #ifdef __SST_DEBUG_OUTPUT__
-    if (is_debug_event(event)) {
+    if (mem_h_is_debug_event(event)) {
         dbg_.debug(_L3_, "E: %-20" PRIu64 " %-20" PRId32 " %-20s Event:New     (%s)\n",
                 getCurrentSimCycle(), 0, getName().c_str(), event->getVerboseString().c_str());
         fflush(stdout);
@@ -218,8 +220,9 @@ void Bus::init(unsigned int phase) {
         while ((ev = highNetPorts_[i]->recvUntimedData())) {
             MemEventInit* memEvent = dynamic_cast<MemEventInit*>(ev);
 
-            if (memEvent && memEvent->getCmd() == Command::NULLCMD) {
-                dbg_.debug(_L10_, "bus %s broadcasting upper event to lower ports (%d): %s\n", getName().c_str(), numLowPorts_, memEvent->getVerboseString().c_str());
+            if (!memEvent) {
+                delete ev;
+            } else if (memEvent->getCmd() == Command::NULLCMD) {
                 mapNodeEntry(memEvent->getSrc(), highNetPorts_[i]);
                 
                 if (memEvent->getInitCmd() == MemEventInit::InitCommand::Region) {
@@ -240,21 +243,23 @@ void Bus::init(unsigned int phase) {
                         lowNetPorts_[k]->sendUntimedData(memEvent->clone()); 
                     }
                 }
-            } else if (memEvent) {
-                dbg_.debug(_L10_, "bus %s broadcasting upper event to lower ports (%d): %s\n", getName().c_str(), numLowPorts_, memEvent->getVerboseString().c_str());
+                delete memEvent;
+            } else if (memEvent->getDst() == "None") {
                 for (int k = 0; k < numLowPorts_; k++)
                     lowNetPorts_[k]->sendUntimedData(memEvent->clone());
+                delete memEvent;
+            } else {
+                SST::Link* dstLink = lookupNode(memEvent->getDst());
+                dstLink->sendUntimedData(memEvent);
             }
-            delete memEvent;
         }
     }
 
     for (int i = 0; i < numLowPorts_; i++) {
         while ((ev = lowNetPorts_[i]->recvUntimedData())) {
             MemEventInit* memEvent = dynamic_cast<MemEventInit*>(ev);
-            if (!memEvent) delete memEvent;
+            if (!memEvent) delete ev;
             else if (memEvent->getCmd() == Command::NULLCMD) {
-                dbg_.debug(_L10_, "bus %s broadcasting lower event to upper ports (%d): %s\n", getName().c_str(), numHighPorts_, memEvent->getVerboseString().c_str());
                 mapNodeEntry(memEvent->getSrc(), lowNetPorts_[i]);
                 
                 if (memEvent->getInitCmd() == MemEventInit::InitCommand::Region) {
@@ -277,9 +282,13 @@ void Bus::init(unsigned int phase) {
                 }
                 delete memEvent;
             }
-            else{
-                /*Ignore responses */
+            else if (memEvent->getDst() == "None") {
+                for (int k = 0; k < numHighPorts_; k++)
+                    highNetPorts_[k]->sendUntimedData(memEvent->clone());
                 delete memEvent;
+            } else {
+                SST::Link* dstLink = lookupNode(memEvent->getDst());
+                dstLink->sendUntimedData(memEvent);
             }
         }
     }

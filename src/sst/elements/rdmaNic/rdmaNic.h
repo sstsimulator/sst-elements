@@ -16,6 +16,7 @@
 #ifndef MEMHIERARCHY_SHMEM_NIC_H
 #define MEMHIERARCHY_SHMEM_NIC_H
 
+#include <list>
 #include <queue>
 #include <sst/core/sst_types.h>
 

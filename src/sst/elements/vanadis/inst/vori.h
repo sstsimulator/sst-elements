@@ -36,13 +36,13 @@ public:
         imm_value = immediate;
     }
 
-    VanadisOrImmInstruction* clone() { return new VanadisOrImmInstruction(*this); }
+    VanadisOrImmInstruction* clone() override { return new VanadisOrImmInstruction(*this); }
 
-    virtual VanadisFunctionalUnitType getInstFuncType() const { return INST_INT_ARITH; }
+    virtual VanadisFunctionalUnitType getInstFuncType() const override { return INST_INT_ARITH; }
 
-    virtual const char* getInstCode() const { return "ORI"; }
+    virtual const char* getInstCode() const override { return "ORI"; }
 
-    virtual void printToBuffer(char* buffer, size_t buffer_size)
+    virtual void printToBuffer(char* buffer, size_t buffer_size) override
     {
         snprintf(
             buffer, buffer_size,
