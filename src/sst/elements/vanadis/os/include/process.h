@@ -44,8 +44,8 @@ class ProcessInfo {
   public:
 
     ProcessInfo( ) : m_pid(-1), m_fileTable(nullptr), m_virtMemMap(nullptr), m_tidAddress(0) { }
-    
-    ProcessInfo( const ProcessInfo& obj, unsigned pid, unsigned debug_level = 0 ) : m_pid(pid), m_tid(pid), m_uid(8000), m_gid(1000), m_tidAddress(0) { 
+
+    ProcessInfo( const ProcessInfo& obj, unsigned pid, unsigned debug_level = 0 ) : m_pid(pid), m_tid(pid), m_uid(8000), m_gid(1000), m_tidAddress(0) {
 
         char buffer[100];
         snprintf(buffer,100,"@t::ProcessInfo::@p():@l ");
@@ -55,7 +55,7 @@ class ProcessInfo {
         m_physMemMgr = obj.m_physMemMgr;
         m_elfInfo = obj.m_elfInfo;
         m_pageSize = obj.m_pageSize;
-        m_params = obj.m_params; 
+        m_params = obj.m_params;
         m_pageShift = obj.m_pageShift;
         m_ppid = obj.m_pid;
         m_pgid = obj.m_pgid;
@@ -66,7 +66,7 @@ class ProcessInfo {
         m_threadGrp = new ThreadGrp();
         m_threadGrp->add( this, gettid() );
         m_virtMemMap = new VirtMemMap( *obj.m_virtMemMap );
-        m_fileTable = new FileDescriptorTable( 1024 ); 
+        m_fileTable = new FileDescriptorTable( 1024 );
 
         //openFileWithFd( "stdin-" + std::to_string(pid), 0 );
         openFileWithFd( "stdout-" + std::to_string(m_pid), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR, 1 );
@@ -90,7 +90,7 @@ class ProcessInfo {
         m_threadGrp = new ThreadGrp();
         m_threadGrp->add( this, gettid() );
         m_virtMemMap = new VirtMemMap;
-        m_fileTable = new FileDescriptorTable( 1024 ); 
+        m_fileTable = new FileDescriptorTable( 1024 );
 
         m_cpusMask.resize( 128, 0 );
         for ( size_t i = 0; i < m_numLogicalCores; ++i ) {
@@ -106,7 +106,7 @@ class ProcessInfo {
                 uint64_t virtAddrPage = roundDown( virtAddr, m_pageSize );
                 uint64_t virtAddrEnd = roundUp(virtAddr + memLen, m_pageSize );
 
-                m_dbg.verbose( CALL_INFO, 2, 0,"virtAddr %#" PRIx64 ", page aligned virtual address region: %#" PRIx64 " - %#" PRIx64 " flags=%#" PRIx64 "\n", 
+                m_dbg.verbose( CALL_INFO, 2, 0,"virtAddr %#" PRIx64 ", page aligned virtual address region: %#" PRIx64 " - %#" PRIx64 " flags=%#" PRIx64 "\n",
                         virtAddr, virtAddrPage, virtAddrEnd, hdr->getSegmentFlags() );
                 std::string name;
                 if ( m_elfInfo->getEntryPoint() >= virtAddrPage && m_elfInfo->getEntryPoint() < virtAddrEnd ) {
@@ -131,7 +131,7 @@ class ProcessInfo {
             openFileWithFd( "stdout-" + std::to_string(m_pid), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR, 1 );
             openFileWithFd( "stderr-" + std::to_string(m_pid), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR, 2 );
         }
-        
+
         initBrk( initial_brk );
 
         printRegions("after text/bss setup");
@@ -157,18 +157,18 @@ class ProcessInfo {
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_pageSize: %d\n",m_pageSize);
 
         assert( 1 == fscanf(fp,"m_pid: %d\n",&val) );
-        assert( val == m_pid ); 
+        assert( val == m_pid );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_pid: %d\n",m_pid);
 
         assert( 1 == fscanf(fp,"m_tid: %d\n",&val) );
-        assert( val == m_tid ); 
+        assert( val == m_tid );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_tid: %d\n",m_tid);
 
         assert( 1 == fscanf(fp,"m_ppid: %d\n", &m_ppid) );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_ppid: %d\n", m_ppid);
 
         assert( 1 == fscanf(fp,"m_pgid: %d\n", &val) );
-        assert( val == m_pgid ); 
+        assert( val == m_pgid );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_pgid: %d\n", m_pgid);
 
         assert( 1 == fscanf(fp,"m_uid: %d\n",&m_uid) );
@@ -188,7 +188,7 @@ class ProcessInfo {
 
         m_virtMemMap = new VirtMemMap(output,fp,physMemMgr,elfInfo);
         m_fileTable = new FileDescriptorTable(output,fp);
-        
+
         m_threadGrp = new ThreadGrp;
         m_futex = new Futex;
 
@@ -196,7 +196,7 @@ class ProcessInfo {
         for ( size_t i = 0; i < m_numLogicalCores; ++i ) {
             setLogicalCoreAffinity( i );
         }
-        
+
         size_t size;
         assert( 1 == fscanf(fp,"m_params.size() %zu\n",&size) );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_params.size() %zu\n",size);
@@ -212,10 +212,10 @@ class ProcessInfo {
             char tmp1[80],tmp2[80];
             (void) !fscanf(fp, "%s %s\n", tmp1, tmp2 );
             std::string key = tmp1;
-            key.erase( key.size() - 1, 1 ); 
+            key.erase( key.size() - 1, 1 );
             std::string value = tmp2;
-            auto pos1 = key.find_first_of('=' ) + 1; 
-            auto pos2 = value.find_first_of('=' ) + 1; 
+            auto pos1 = key.find_first_of('=' ) + 1;
+            auto pos2 = value.find_first_of('=' ) + 1;
             output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"%s %s\n",key.c_str(),value.c_str());
             m_params.insert(key.substr(pos1).c_str(),value.substr(pos2).c_str());
         }
@@ -230,7 +230,7 @@ class ProcessInfo {
             delete m_threadGrp;
         }
 
-        m_virtMemMap->decRefCnt(); 
+        m_virtMemMap->decRefCnt();
         if ( 0 == m_virtMemMap->refCnt() ) {
             delete m_virtMemMap;
         }
@@ -266,8 +266,8 @@ class ProcessInfo {
         #if 0
         fprintf(fp,"#ThreadGrp start\n");
 
-        auto tmp = m_threadGrp->getThreadList(); 
-        
+        auto tmp = m_threadGrp->getThreadList();
+
         fprintf(fp,"m_group.size(): %zu\n",tmp.size());
         for ( auto & x : tmp ) {
             fprintf(fp,"tid: %d\n", x.first );
@@ -276,21 +276,21 @@ class ProcessInfo {
         #endif
 
         assert( m_futex->isEmpty() );
-        
-        std::stringstream ss; 
+
+        std::stringstream ss;
 
         fprintf(fp,"m_params.size() %zu\n",m_params.size());
         m_params.print_all_params( ss );
         fprintf(fp,"%s",ss.str().c_str());
     }
 
-    void decRefCnts() { 
+    void decRefCnts() {
         m_fileTable->decRefCnt();
-        m_virtMemMap->decRefCnt(); 
+        m_virtMemMap->decRefCnt();
     }
-    void incRefCnts() { 
+    void incRefCnts() {
         m_fileTable->incRefCnt();
-        m_virtMemMap->incRefCnt(); 
+        m_virtMemMap->incRefCnt();
     }
 
     void setTidAddress(  uint64_t addr ) {
@@ -319,7 +319,7 @@ class ProcessInfo {
     void addMemRegion( std::string name, uint64_t start, size_t length, uint32_t perms, MemoryBacking* backing = nullptr ) {
         m_virtMemMap->addRegion( name, start, length, perms, backing );
     }
-   
+
     MemoryRegion* findMemRegion( uint64_t addr ) {
         return m_virtMemMap->findRegion( addr );
     }
@@ -372,15 +372,15 @@ class ProcessInfo {
         return physAddr;
     }
 
-    uint64_t getBrk() { 
+    uint64_t getBrk() {
         return m_virtMemMap->getBrk();
     }
 
-    bool setBrk( uint64_t brk ) { 
+    bool setBrk( uint64_t brk ) {
         return m_virtMemMap->setBrk( roundUp( brk, m_pageSize ) );
     }
 
-    void initBrk( uint64_t addr ) { 
+    void initBrk( uint64_t addr ) {
         m_virtMemMap->initBrk( addr );
     }
 
@@ -390,13 +390,13 @@ class ProcessInfo {
 
     void mprotect( uint64_t addr, size_t length, int prot ) {
 
-        m_virtMemMap->mprotect( addr, length, prot ); 
+        m_virtMemMap->mprotect( addr, length, prot );
         m_virtMemMap->print( "mprotect" );
     }
 
     uint64_t mmap( uint64_t addr, size_t length, int prot, int flags, Device* dev, size_t offset ) {
         m_dbg.verbose(CALL_INFO,1,0,"addr=%#" PRIx64 " length=%zu prot=%#x flags=%#x offset=%zu\n",addr, length, prot, flags, offset );
-        
+
         length = roundUp( length, m_pageSize );
 
         uint32_t perms = 0;
@@ -406,14 +406,14 @@ class ProcessInfo {
         uint64_t ret;
         if ( ( ret = m_virtMemMap->mmap( length, perms, dev ) ) ) {
             m_virtMemMap->print( "mmapped" );
-            return ret; 
+            return ret;
         }
-        
+
         m_dbg.verbose(CALL_INFO,0,0,"didn't find enough memory\n");
         assert(0);
         return 0;
     }
-    
+
     int unmap( uint64_t addr, size_t length ) {
         if ( 0 == length ) return EINVAL;
         if ( addr & ( 1 << m_pageShift ) - 1 ) return EINVAL;
@@ -424,7 +424,7 @@ class ProcessInfo {
     void setHwThread( OS::HwThreadID& id ) {
         m_core = id.core;
         m_hwThread = id.hwThread;
-    } 
+    }
 
     void settid( unsigned id ) { m_tid = id; }
     void setppid( unsigned id ) { m_ppid = id; }
@@ -453,10 +453,10 @@ class ProcessInfo {
 
     int getFileDescriptor( uint32_t handle ) {
         return m_fileTable->getDescriptor( handle );
-    } 
+    }
 
     std::string getFilePath( uint32_t handle ) {
-        return m_fileTable->getPath( handle ); 
+        return m_fileTable->getPath( handle );
     }
 
     void setAffinity(const std::vector<uint8_t>& mask) { m_cpusMask = mask; }
@@ -475,7 +475,7 @@ class ProcessInfo {
     VanadisELFInfo* getElfInfo() { return m_elfInfo; }
     bool isELF32() { return m_elfInfo->isELF32();}
 
-  private:  
+  private:
 
     void openFileWithFd(std::string file_path, int flags, int mode, int fd ) {
         assert( fd == m_fileTable->open( file_path, flags, mode, fd ) );

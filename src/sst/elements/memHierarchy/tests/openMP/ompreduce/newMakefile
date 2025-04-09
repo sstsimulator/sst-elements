@@ -1,4 +1,4 @@
-CXX=g++ 
+CXX=g++
 
 ompreduce: ompreduce.o
 	$(CXX) -O3 -o ompreduce -fopenmp ompreduce.o

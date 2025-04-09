@@ -49,7 +49,7 @@ topo_polarfly::topo_polarfly(ComponentId_t cid, Params& params, int num_ports, i
     else
         output.fatal(CALL_INFO,-1,"Unknown routing mode specified: %s\n",algo.c_str());
 
-    
+
     rng = new RNG::XORShiftRNG(router_id+1);
 
     if (num_ports < total_radix){
@@ -108,7 +108,7 @@ void topo_polarfly::route_packet(int port, int vc, internal_router_event* ev){
     if (routing_algo == VALIANT) return routeValiant(port,vc,ev);
     if (routing_algo == UGAL) return routeUgal(port,vc,ev);
     if (routing_algo == UGAL_PF) return routeUgalpf(port,vc,ev);
-    
+
 }
 
 void topo_polarfly::routeMinimal(int port, int vc, internal_router_event* ev){
@@ -156,7 +156,7 @@ void topo_polarfly::routeValiant(int port, int vc, internal_router_event* ev){
     if (dest_node == router_id)
     {
     	//If we reached the destination node, dump the no of switch hops the packet took in total
-	//For now, only tracked node and packets dump this info.	    
+	//For now, only tracked node and packets dump this info.
 	    dumpHopCount(tt_ev);
 
         out_channel = getDestLocalPort(tt_ev->getDest());
@@ -179,7 +179,7 @@ void topo_polarfly::routeValiant(int port, int vc, internal_router_event* ev){
             int valiant;
             //Randomly select one neighbor from the neighborhood
 
-            do 
+            do
             {
                 valiant = rng->generateNextUInt32() % total_routers;
             } while(valiant == router_id);
@@ -200,13 +200,13 @@ void topo_polarfly::routeValiant(int port, int vc, internal_router_event* ev){
             tt_ev->non_minimal  = false;
             out_channel         = minimal_channel + hosts_per_router;
 
-            tt_ev->setNextPort(out_channel); 
+            tt_ev->setNextPort(out_channel);
             tt_ev->setVC(vc + 1);
 
             assert(tt_ev->hop_count < 4);
         }
         //If the current router is not where the packet started, first check the minimal path
-        else 
+        else
         {
             minimal_channel     = route_table[tt_ev->valiant];
             out_channel         = minimal_channel + hosts_per_router;
@@ -226,7 +226,7 @@ void topo_polarfly::initPolarGraph() {
     char dir[256];
     (void) !getcwd(dir, 256);
     std::string filepath    = std::string(dir) + "/polarfly_data/PolarFly.q_" + std::to_string(this->q) + ".txt";
-    
+
     std::fstream fp;
     fp.open(filepath.c_str(), std::ios::in);
 
@@ -234,22 +234,22 @@ void topo_polarfly::initPolarGraph() {
     int line_no = 0;
     int fV, fE, v;
     while(std::getline(fp, line))
-    {   
+    {
         std::istringstream iss(line);
         if (line_no == 0)
         {
-            iss>>fV; 
+            iss>>fV;
             iss>>fE;
         }
         else
         {
             this->polar.push_back(std::vector<int>());
-            int u   = line_no - 1; 
+            int u   = line_no - 1;
             while(iss >> v)
                 this->polar[u].push_back(v);
         }
         line_no += 1;
-    } 
+    }
     fp.close();
 
     assert(fV==this->total_routers);
@@ -266,7 +266,7 @@ void topo_polarfly::initRouteTable() {
     /* allocate the routing tables */
     route_table.resize(NODES); // route_table[j] contains the port link from current router to router/node j (could be 1 hop or 2 hop)
     node_links      = polar[router_id].size();
-  
+
     for( i = 0; i < NODES; i++ )
         route_table[i]          = -1;
     neighbor_list.resize(node_links);
@@ -275,7 +275,7 @@ void topo_polarfly::initRouteTable() {
     /* initialize the routing table */
     for( i = 0; i < node_links; i++)
     {
-        // 1-hop neighbor 
+        // 1-hop neighbor
         neighbor                = polar[router_id][i];
         route_table[neighbor]   = i;
         neighbor_links          = polar[neighbor].size();
@@ -297,21 +297,21 @@ void topo_polarfly::initRouteTable() {
     /* make sure the table is properly built */
     for( i = 0; i < NODES; i++ )
     {
-	    if ( i != router_id ) 
+	    if ( i != router_id )
         {
 	        assert(route_table[i] >= 0);
             assert(route_table[i] < node_links);
         }
 	    else
 	        assert( route_table[i] == -1 );
-    }       
+    }
 
     //Free memory associated with graph topology
     for( i = 0; i < NODES; i++)
     {
         std::vector<int> tmp;
         polar[i].swap(tmp);
-    } 
+    }
     std::vector<std::vector<int>> tmp;
     polar.swap(tmp);
 }
@@ -324,7 +324,7 @@ Topology::PortState topo_polarfly::getPortState(int port) const
 
     if (port < hosts_per_router) return R2N;
     else if (port >= hosts_per_router && port <= hosts_per_router + network_radix) return R2R;
-    else return UNCONNECTED; 
+    else return UNCONNECTED;
 
 }
 
@@ -503,7 +503,7 @@ int topo_polarfly::getRouterID(int endpoint) {
 
 int topo_polarfly::getDestLocalPort(int node){
 
-    return (int) node % hosts_per_router ; 
+    return (int) node % hosts_per_router ;
 
 }
 
@@ -528,7 +528,7 @@ void topo_polarfly::routeUgal(int port, int vc, internal_router_event* ev){
 
         tt_ev->setNextPort(out_channel);
         tt_ev->setVC(0);
-    
+
         return;
     }
     //injection
@@ -558,8 +558,8 @@ void topo_polarfly::routeUgal(int port, int vc, internal_router_event* ev){
                 valiant     = candidate;
             }
         }
-        
-        //select between valiant and minpath 
+
+        //select between valiant and minpath
         if ((min_queue < 2*val_queue + adaptive_bias))
         {
             out_channel         = min_channel;
@@ -612,7 +612,7 @@ void topo_polarfly::routeUgalpf(int port, int vc, internal_router_event* ev){
 
         tt_ev->setNextPort(out_channel);
         tt_ev->setVC(0);
-    
+
         return;
     }
     //injection
@@ -649,8 +649,8 @@ void topo_polarfly::routeUgalpf(int port, int vc, internal_router_event* ev){
                 valiant     = candidate;
             }
         }
-        
-        //select between valiant and minpath 
+
+        //select between valiant and minpath
         if ((min_queue < (3*val_queue)/2 + adaptive_bias))
         {
             out_channel         = min_channel;
@@ -684,7 +684,7 @@ void topo_polarfly::routeUgalpf(int port, int vc, internal_router_event* ev){
 }
 
 
-//Debug by Sai Chenna. As we reached the final router/node. Dump the no of switch hops this packet has taken to reach the destination. 
+//Debug by Sai Chenna. As we reached the final router/node. Dump the no of switch hops this packet has taken to reach the destination.
 void topo_polarfly::dumpHopCount(topo_polarfly_event* tt_ev){
 
 	int count = tt_ev->hop_count;

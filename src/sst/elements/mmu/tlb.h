@@ -62,7 +62,7 @@ class PassThroughTLB : public TLB {
     PassThroughTLB(SST::ComponentId_t id, SST::Params& params) : TLB(id,params) {}
 
     void registerCallback( Callback& callback ) {
-        m_callback = callback; 
+        m_callback = callback;
     }
 
     void getVirtToPhys( RequestID reqId, int hwThreadId, uint64_t virtAddr, uint32_t perms, uint64_t instPtr  ) {

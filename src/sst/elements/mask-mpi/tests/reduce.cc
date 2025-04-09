@@ -12,7 +12,7 @@ Copyright (c) 2009-2025, NTESS
 
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, 
+Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
     * Redistributions of source code must retain the above copyright
@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
     int size, rank;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
- 
+
     int* values = new int[size];
     for(int i = 0; i < size; i++) {
       if(i <= rank)
@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
       else
         values[i] = 1;
     }
- 
+
     int* recv_values = new int[size];
     MPI_Reduce(values, recv_values, size, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
     if(rank == 0) {
@@ -73,6 +73,6 @@ int main(int argc, char* argv[])
     }
 
     MPI_Finalize();
- 
+
     return 0;
 }

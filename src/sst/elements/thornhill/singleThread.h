@@ -34,7 +34,7 @@ class SingleThread : public DetailedCompute {
         "",
        	SST::Thornhill::SingleThread
     )
-	SST_ELI_DOCUMENT_PARAMS( 
+	SST_ELI_DOCUMENT_PARAMS(
 		{"portName","Sets the portname of the detailed compute model","detailed0"}
 	)
 

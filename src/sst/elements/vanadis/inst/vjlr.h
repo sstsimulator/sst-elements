@@ -53,11 +53,11 @@ public:
     }
 
     void log(SST::Output* output,int verboselevel, uint16_t sw_thr,
-                    uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0, 
+                    uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0,
                     uint64_t jump_to, uint64_t link_value)
     {
         #ifdef VANADIS_BUILD_DEBUG
-        
+
         if(output->getVerboseLevel() >= verboselevel) {
 
             output->verbose(
@@ -70,8 +70,8 @@ public:
         #endif
     }
 
-    void instOp(VanadisRegisterFile* regFile, 
-        uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0, 
+    void instOp(VanadisRegisterFile* regFile,
+        uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0,
         uint64_t* jump_to,uint64_t* link_value)
         {
             *jump_to = static_cast<uint64_t>(regFile->getIntReg<int64_t>(phys_int_regs_in_0) + imm);
@@ -80,16 +80,16 @@ public:
             regFile->setIntReg<uint64_t>(phys_int_regs_out_0, *link_value);
             regFile->setIntReg<uint64_t>(phys_int_regs_in_0, *jump_to);
             takenAddress = regFile->getIntReg<uint64_t>(phys_int_regs_in_0);
-            
+
         }
 
     virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile)
     {
-        
+
         uint16_t phys_int_regs_in_0 = phys_int_regs_in[0];
         uint16_t phys_int_regs_out_0 = phys_int_regs_out[0];
         uint64_t link_value = 0;
-        uint64_t jump_to = 0; 
+        uint64_t jump_to = 0;
         instOp(regFile, phys_int_regs_out_0, phys_int_regs_in_0, &jump_to, &link_value);
         log(output,16, 65535,phys_int_regs_out_0,phys_int_regs_in_0, jump_to, link_value);
         markExecuted();

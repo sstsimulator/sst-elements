@@ -59,14 +59,14 @@ VanadisFutexSyscall::VanadisFutexSyscall( VanadisNodeOSComponent* os, SST::Link*
         : VanadisSyscall( os, coreLink, process, event, "futex" ), m_state(ReadAddr), m_numWokeup(0), m_waitStoreConditional(false)
 {
     m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,
-            "[syscall-futex] addr=%#" PRIx64 " op=%#x val=%#" PRIx32 " timeAddr=%#" PRIx64 " callStackAddr=%#" PRIx64 
+            "[syscall-futex] addr=%#" PRIx64 " op=%#x val=%#" PRIx32 " timeAddr=%#" PRIx64 " callStackAddr=%#" PRIx64
             " addr2=%#" PRIx64 " val3=%#x, \n",
             event->getAddr(), event->getOp(), event->getVal(), event->getTimeAddr(), event->getStackPtr(), event->getAddr2(), event->getVal3() );
 
     m_op = event->getOp();
     if( m_op & ~0x1ff ) {
          m_output->fatal(CALL_INFO, -1, "Error: futex, op not supported %#x\n",event->getOp());
-    } 
+    }
 
     if ( m_op & FUTEX_PRIVATE_FLAG ) {
         m_op -= FUTEX_PRIVATE_FLAG;
@@ -79,7 +79,7 @@ VanadisFutexSyscall::VanadisFutexSyscall( VanadisNodeOSComponent* os, SST::Link*
     switch ( m_op ) {
       case FUTEX_WAKE:
         {
-            futexWake(event); 
+            futexWake(event);
         } break;
 
       case FUTEX_WAIT_BITSET:
@@ -149,7 +149,7 @@ int VanadisFutexSyscall::getNumWaitersToWake(VanadisSyscallFutexEvent* event) co
     {
         m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,
                           "[syscall-futex] FUTEX_WAKE tid=%d addr=%#" PRIx64 " %u waiters, "
-                          " val is %u, will wake %u threads \n", 
+                          " val is %u, will wake %u threads \n",
                           m_process->gettid(), event->getAddr(), numWaiters, event->getVal(), numWaitersToWake);
 
     }
@@ -171,7 +171,7 @@ void VanadisFutexSyscall::futexWake(VanadisSyscallFutexEvent* event)
     setReturnSuccess(wakeWaiters(event));
 }
 
-void VanadisFutexSyscall::wakeup() 
+void VanadisFutexSyscall::wakeup()
 {
     m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "[syscall-futex] FUTEX_WAIT tid=%d wakeup \n",m_process->gettid());
     setReturnSuccess(0);
@@ -181,10 +181,10 @@ void VanadisFutexSyscall::memReqIsDone(bool failed )
 {
     m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "[syscall-futex] memReqIsDone failed=%d \n",failed);
     switch( m_op ) {
-      case FUTEX_WAIT: 
+      case FUTEX_WAIT:
       case FUTEX_WAIT_BITSET:
         {
-            if ( ! m_waitStoreConditional ) { 
+            if ( ! m_waitStoreConditional ) {
                 m_val = *(uint32_t*)m_buffer.data();
 
                 assert(!failed);
@@ -199,7 +199,7 @@ void VanadisFutexSyscall::memReqIsDone(bool failed )
                         "[syscall-futex] FUTEX_WAIT tid=%d addr=%#" PRIx64 " do StoreConditional\n",
                         m_process->gettid(), getEvent<VanadisSyscallFutexEvent*>()->getAddr());
 
-                } else { 
+                } else {
                     m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,
                         "[syscall-futex] FUTEX_WAIT tid=%d addr=%#" PRIx64 " %d != %d, vals dont match return\n",
                         m_process->gettid(), getEvent<VanadisSyscallFutexEvent*>()->getAddr(), m_val, getEvent<VanadisSyscallFutexEvent*>()->getVal());
@@ -222,7 +222,7 @@ void VanadisFutexSyscall::memReqIsDone(bool failed )
         } break;
       case FUTEX_REQUEUE:
         {
-            if ( ReadAddr == m_state ) { 
+            if ( ReadAddr == m_state ) {
                 uint32_t val = *(uint32_t*)m_buffer.data();
                 m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "[syscall-futex] FUTEX_REQUEUE wakeup %d waiter\n",val);
 
@@ -230,7 +230,7 @@ void VanadisFutexSyscall::memReqIsDone(bool failed )
                 m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "[syscall-futex] FUTEX_REQUEUE numWaiters %d\n",numWaiters);
 
                 // wakeup at most val number of waiters
-                for ( int i = 0; i < val && i < numWaiters; i++ ) { 
+                for ( int i = 0; i < val && i < numWaiters; i++ ) {
                     printf("findFutex called from VanadisFutexSyscall::memReqIsDone FUTEX_REQUEUE\n");
                     VanadisSyscall* syscall = m_process->findFutex( getEvent<VanadisSyscallFutexEvent*>()->getAddr() );
                     if ( syscall ) {
@@ -242,7 +242,7 @@ void VanadisFutexSyscall::memReqIsDone(bool failed )
                     }
                 }
                 m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "[syscall-futex] FUTEX_REQUEUE numWokeup %d\n",m_numWokeup);
-                
+
                 // if there are no more waiters, we are done
                 // else read val2 and addr2 so we can move val2 waiters to addr2
                 if ( 0 == numWaiters - m_numWokeup ) {
@@ -269,14 +269,14 @@ void VanadisFutexSyscall::memReqIsDone(bool failed )
     }
 }
 
-void VanadisFutexSyscall::finish( uint32_t val2, uint64_t addr2 ) 
+void VanadisFutexSyscall::finish( uint32_t val2, uint64_t addr2 )
 {
     m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "[syscall-futex] FUTEX_REQUEUE read val2=%d addr2=%#" PRIx64 "\n",val2,addr2);
 
     int numWaiters = m_process->futexGetNumWaiters( getEvent<VanadisSyscallFutexEvent*>()->getAddr() );
     m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL, "[syscall-futex] FUTEX_REQUEUE numWaiters %d\n",numWaiters);
 
-    for ( int i = 0; i < val2 && i < numWaiters; i++ ) { 
+    for ( int i = 0; i < val2 && i < numWaiters; i++ ) {
         VanadisSyscall* syscall = m_process->findFutex( getEvent<VanadisSyscallFutexEvent*>()->getAddr() );
         if ( syscall ) {
             m_output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_SYSCALL,"[syscall-futex] FUTEX_REQUEUE tid=%d addr=%#" PRIx64 " move to %#" PRIx64 "\n",m_process->gettid(),

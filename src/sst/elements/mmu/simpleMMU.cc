@@ -37,7 +37,7 @@ SimpleMMU::SimpleMMU(SST::ComponentId_t id, SST::Params& params) : MMU(id,params
     }
 }
 
-void SimpleMMU::handleNicTlbEvent( Event* ev ) 
+void SimpleMMU::handleNicTlbEvent( Event* ev )
 {
     if( dynamic_cast<TlbFlushRespEvent*>(ev) ) {
         // we currently don't do anything with the response because there are no race conditions?
@@ -60,7 +60,7 @@ void SimpleMMU::handleNicTlbEvent( Event* ev )
     delete ev;
 }
 
-void SimpleMMU::handleTlbEvent( Event* ev, int link ) 
+void SimpleMMU::handleTlbEvent( Event* ev, int link )
 {
     int core = getTlbCore( link );
 
@@ -79,13 +79,13 @@ void SimpleMMU::handleTlbEvent( Event* ev, int link )
 
     m_dbg.debug(CALL_INFO_LONG,1,0,"event on link=%d name=%s core=%d hwThread=%d pid=%d vpn=%zu perms=%#x\n",
         link,getTlbName(link).c_str(),core,hwThread,pid,req->getVPN(),req->getPerms());
-    
+
     m_dbg.debug(CALL_INFO_LONG,1,0,"reqId=%" PRIu64 " hwTHread=%d vpn=%zu %#" PRIx64 "\n", req->getReqId(), req->getHardwareThread(), req->getVPN(), (uint64_t) req->getVPN() << 12  );
     m_permissionsCallback( req->getReqId(), link, core, hwThread, pid, req->getVPN(), req->getPerms(), req->getInstPtr(), req->getMemAddr() );
     delete ev;
 }
 
-void SimpleMMU::map( unsigned pid, uint32_t vpn, uint32_t ppn, int pageSize, uint64_t flags ) 
+void SimpleMMU::map( unsigned pid, uint32_t vpn, uint32_t ppn, int pageSize, uint64_t flags )
 {
     m_dbg.debug(CALL_INFO_LONG,1,0,"pid=%d vpn=%d ppn=%d pageSize=%d flags=%#" PRIx64 "\n", pid, vpn, ppn, pageSize, flags );
     auto pageTable = getPageTable(pid);
@@ -126,7 +126,7 @@ void SimpleMMU::dup( unsigned fromPid, unsigned toPid ) {
     auto newTable = new PageTable( *fromTable );
     //newTable->print("new");
     initPageTable( toPid, newTable );
-} 
+}
 
 void SimpleMMU::flushTlb( unsigned core, unsigned hwThread ) {
     m_dbg.debug(CALL_INFO_LONG,1,0,"core=%d hwThread=%d\n",core,hwThread);
@@ -135,7 +135,7 @@ void SimpleMMU::flushTlb( unsigned core, unsigned hwThread ) {
     if ( m_nicTlbLink ) {
         m_nicTlbLink->send(0,new TlbFlushReqEvent( hwThread ) );
     }
-} 
+}
 
 void SimpleMMU::faultHandled( RequestID requestId, unsigned link, unsigned pid, unsigned vpn, bool success ) {
 
@@ -149,16 +149,16 @@ void SimpleMMU::faultHandled( RequestID requestId, unsigned link, unsigned pid, 
         m_dbg.debug(CALL_INFO_LONG,1,0,"link=%d vpn=%#x failed\n",link,vpn);
         sendEvent( link, new TlbFillEvent( requestId ) );
     }
-} 
+}
 
 int SimpleMMU::getPerms( unsigned pid, uint32_t vpn ) {
     auto pageTable = getPageTable(pid);
     assert( pageTable );
     PTE* pte = pageTable->find( vpn );
-    if ( nullptr == pte ) { 
+    if ( nullptr == pte ) {
         return -1;
-    } 
-    return  pte->perms; 
+    }
+    return  pte->perms;
 }
 
 void SimpleMMU::checkpoint( std::string dir ) {

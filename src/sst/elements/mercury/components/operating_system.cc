@@ -246,7 +246,7 @@ OperatingSystem::addLaunchRequests(SST::Params& params)
   }
 }
 
-void 
+void
 OperatingSystem::startApp(App *theapp,
                           const std::string & /*unique_name*/) {
   out_->debug(CALL_INFO, 1, 0, "starting app %d:%d on physical thread %d\n",
@@ -515,7 +515,7 @@ OperatingSystem::registerEventLib(EventLibrary* lib)
   }
 }
 
-void 
+void
 OperatingSystem::unregisterEventLib(EventLibrary *lib) {
   out_->debug(CALL_INFO, 1, 0, "unregistering lib %s\n",
                 lib->libName().c_str());

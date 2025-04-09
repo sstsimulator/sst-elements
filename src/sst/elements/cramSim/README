@@ -43,7 +43,7 @@ RUNNING A SIMULATION:
 
     - Both test_txngen.py and test_txntrace.py also allow multiple config files to be specified in --model-options. Later config files take precedence whenever there is a config conflict.
       Example: sst --lib-path=.libs/ tests/test_txngen.py --model-options="--configfile=test_system.cfg --configfile=test_device.cfg nBL=8"
-      
+
     - test_txntrace4.py : Similar to test_txntrace.py but is intended to be used as part of the Verimem test suite
 
 
@@ -52,16 +52,16 @@ VERIMEM:
   granularity of this simulator are 1, 4, 5, and 6. Suites 2, 3, and 7 require a model that includes bank rows and columns to provide any insights that
   1, 4, 5, and 6 don't already.
 
-  NOTE: VeriMem tests will not run without downloading the traces. SST directory structure mandated that the VeriMem traces cannot be checked in into the sst-elements directory. 
+  NOTE: VeriMem tests will not run without downloading the traces. SST directory structure mandated that the VeriMem traces cannot be checked in into the sst-elements directory.
   The VeriMem traces are currently (01 2017) available here: https://github.com/sstsimulator/sst-downloads/releases
   The filenames begin with sst-CramSim-trace_verimem in the SST Test Support Files section.
- 
+
   To run Verimem (from within /sstcramsim/sst/elements/CramSim/):
       python ./tests/VeriMem/test_verimem1.py BOOL_DEBUG_OUTPUT
     BOOL_DEBUG_OUTPUT should be either 0 or 1, depending on if debugging output is wanted or not.
   This script runs simulations using a config file (to edit, change the variable "config_file") and a series of different trace files specifically structured to
   test the validity of the simulator's results.
-  
+
 SST BASICS:
   SST allows the usage of isolated components. Each component has its own internal clockCycle. Every cycle, each component runs its clockTic() method.
     The simulator is cycle-based in that in a given cycle, all the clockTics are to be seen as running concurrently.
@@ -88,9 +88,9 @@ MODEL OVERVIEW:
     - Subcomponents
       1) c_AddressHasher : address mapper that map the physical address to the device address (e.g., channel, rank, bank, and column index)
       2) c_TxnScheduler :  transaction scheduler that reorder the transactions
-      3) c_TxnConverter :  transaction converter that converts read and write trasacntions to memory-specific commands (e.g., READ -> ACT/READ/PRECHARGE) 
+      3) c_TxnConverter :  transaction converter that converts read and write trasacntions to memory-specific commands (e.g., READ -> ACT/READ/PRECHARGE)
       4) c_CmdScheduler :  command scheduler that selects a command queue and picks memory commands from the command queue
-      5) c_DeviceDriver :  device driver that maintains status of memory devices and send commands to the memory devices 
+      5) c_DeviceDriver :  device driver that maintains status of memory devices and send commands to the memory devices
 
   - Memory : c_DIMM
     - Receives a Cmd request from Controller and maps it to its particular bank before sending it to that bank.
@@ -117,13 +117,13 @@ MODEL OVERVIEW:
       - Examples:
       	_r_l_b_R_B_h_ - simple version, will be expanded as necessary to fill defined structures in the order defined. No 'C' included, so only 1 channel is possible.
 	__r:15_l:7__bb__R__BB__h:6__ - 15 row bits at MSB, folled by 7 column bits, 2 bank bits, 1 Rank bit, 2 BankGroup bits, and 6 cacheline bits
-	
+
     - It is highly recommended that simulator output is piped to an external file. There is usually a lot of output to decipher
 
 
 
 RUNNING A SIMULATION WITH CPU MODELS:
-  CramSim can run as a backend of the memoryHierarchy element to communicate with other SST elements. 
+  CramSim can run as a backend of the memoryHierarchy element to communicate with other SST elements.
   A CramSim backend is available in the memoryHierarchy directory (elements/memHierarchy/membackend/cramSimBackend.cc).
 
 0. Prerequisites: set environment variables
@@ -133,7 +133,7 @@ RUNNING A SIMULATION WITH CPU MODELS:
     $ export SST_CORE_ROOT="SST-Core source code directory"
 
 1. Run with Ariel
-   - install 
+   - install
     $ cd $SST_ELEMENT_ROOT
     $ ./autogen.sh
     $ ./configure --prefix=$SST_ELEMENT_HOME --with-sst-core=$SST_CORE_HOME

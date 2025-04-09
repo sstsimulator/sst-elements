@@ -12,13 +12,13 @@ full_exe_name= os.getenv("RDMANIC_EXE", "./app/rdma/riscv64/msg" )
 exe_name= full_exe_name.split("/")[-1]
 
 coherence_protocol="MESI"
-    
+
 cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "2.3GHz")
 os_verbosity = os.getenv("VANADIS_OS_VERBOSE", 0)
 
 app_args = (exe_name + " " + os.getenv("VANADIS_EXE_ARGS", "" )).split()
 
-# MUSL libc uses this in localtime, if we don't set TZ=UTC we 
+# MUSL libc uses this in localtime, if we don't set TZ=UTC we
 # can get different results on different systems
 app_env = ("TZ=UTC " + os.getenv("VANADIS_EXE_ENV", "" )).split()
 
@@ -94,7 +94,7 @@ class Builder:
             "cache_line_size" : "64",
             "cache_size" : "32 KB",
             "L1" : "1",
-            "debug" : 0, 
+            "debug" : 0,
             "debug_level" : 10,
             "debug_addr": debug_addr
         })
@@ -102,7 +102,7 @@ class Builder:
         link = sst.Link(self.prefix + ".link_os_l1cache")
         link.connect( (mem_if, "lowlink", "1ns"), (l1cache, "highlink", "1ns") )
 
-        return l1cache  
+        return l1cache
 
     def connectCPU( self, core, cpu ):
         if debugPython:

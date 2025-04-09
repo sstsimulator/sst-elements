@@ -74,7 +74,7 @@ c_TxnDispatcher::c_TxnDispatcher(ComponentId_t x_id, Params &params):Component(x
                 m_laneIdxStart = atoi(strings[1].c_str());
                 m_laneIdxMask = ~((int64_t) -1 << (m_laneIdxEnd + 1));
                 if (m_laneIdxEnd < m_laneIdxStart) {
-                    output->fatal(CALL_INFO, -1, "landIdxPos error!! End position: %d Start position: %d\n", 
+                    output->fatal(CALL_INFO, -1, "landIdxPos error!! End position: %d Start position: %d\n",
                             m_laneIdxEnd, m_laneIdxStart);
                 }
             }

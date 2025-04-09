@@ -22,7 +22,7 @@
 
 #define BUF_SIZE 100000
 
-#define VALIDATE 1 
+#define VALIDATE 1
 
 int main( int argc, char* argv[] ) {
 
@@ -32,7 +32,7 @@ int main( int argc, char* argv[] ) {
 	int numNodes = rdma_getNumNodes();
 
 	printf("%s() myNode=%d numNodes=%d\n",__func__,myNode,numNodes);
-		
+
 	if ( 0 == myNode ) {
 		int cq = rdma_create_cq( );
 		int rq = rdma_create_rq( 0xbeef, cq );
@@ -45,7 +45,7 @@ int main( int argc, char* argv[] ) {
     	printf("%s() call barrier\n",__func__);
     	rdma_barrier();
     	printf("%s() barrier returned\n",__func__);
-	
+
 		for ( int i = 0; i < numNodes -1; i++ ) {
 			RdmaCompletion comp;
 			rdma_read_comp( cq, &comp, 1 );
@@ -73,7 +73,7 @@ int main( int argc, char* argv[] ) {
     	rdma_barrier();
     	printf("%s() barrier returned\n",__func__);
 
-		rdma_send_post( (void*)buf, BUF_SIZE * sizeof(uint32_t), 0, 0, 0xbeef, cq, 0xf00dbeef ); 
+		rdma_send_post( (void*)buf, BUF_SIZE * sizeof(uint32_t), 0, 0, 0xbeef, cq, 0xf00dbeef );
 		RdmaCompletion comp;
 		rdma_read_comp( cq, &comp, 1 );
 		printf("message sent\n");

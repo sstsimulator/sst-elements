@@ -74,7 +74,7 @@ for chid in range(numLanes):
     c2.addParams(g_params)
     c3.addParams(g_params)
     c4.addParams(g_params)
-    
+
     # device
     comp_dimm = sst.Component("Dimm"+str(chid), "cramSim.c_Dimm")
     comp_dimm.addParams(g_params)

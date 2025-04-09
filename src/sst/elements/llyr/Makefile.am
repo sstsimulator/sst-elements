@@ -60,7 +60,7 @@ endif
 EXTRA_DIST = \
 	tests/llyr_test.py
 
-deprecated_EXTRA_DIST = 
+deprecated_EXTRA_DIST =
 
 if !SST_ENABLE_PREVIEW_BUILD
 EXTRA_DIST += $(deprecated_EXTRA_DIST)

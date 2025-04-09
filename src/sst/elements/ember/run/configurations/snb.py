@@ -5,7 +5,7 @@ pp = pprint.PrettyPrinter(indent=4)
 
 
 def _createRouters( prefix, numRouters, ringstop_params) :
-    router_map = {} 
+    router_map = {}
     for next_ring_stop in range( numRouters ):
 
         name = prefix + "rtr." + str(next_ring_stop)
@@ -30,15 +30,15 @@ def _wireRouters( prefix, router_map, ring_latency ):
         prevStop = (curStop - 1) % numRouters
 
         rtr_link_positive = sst.Link(prefix + "rtr_pos_" + str(curStop))
-        rtr_link_positive.connect( 
-                        (router_map[prefix + "rtr." + str(curStop)], "port0", ring_latency), 
-                        (router_map[prefix + "rtr." + str(nextStop)], "port1", ring_latency) 
+        rtr_link_positive.connect(
+                        (router_map[prefix + "rtr." + str(curStop)], "port0", ring_latency),
+                        (router_map[prefix + "rtr." + str(nextStop)], "port1", ring_latency)
                     )
 
         rtr_link_negative = sst.Link(prefix + "rtr_neg_" + str(curStop))
-        rtr_link_negative.connect( 
-                        (router_map[prefix + "rtr." + str(curStop)], "port1", ring_latency), 
-                        (router_map[prefix + "rtr." + str(prevStop)], "port0", ring_latency) 
+        rtr_link_negative.connect(
+                        (router_map[prefix + "rtr." + str(curStop)], "port1", ring_latency),
+                        (router_map[prefix + "rtr." + str(prevStop)], "port0", ring_latency)
                     )
 
 def _configureL1L2(prefix, id, l1_params, l1_prefetch_params, l2_params, l2_prefetch_params,
@@ -97,14 +97,14 @@ def _configureL3( prefix, id, l3_params, network_id, ring_latency, rtr ):
 
 
 
-def _configureMemCtrl( prefix, id, dc_params, mem_params, start_addr, end_addr, network_id, ring_latency, rtr ): 
+def _configureMemCtrl( prefix, id, dc_params, mem_params, start_addr, end_addr, network_id, ring_latency, rtr ):
 
-    name = prefix + "memory_" + id 
+    name = prefix + "memory_" + id
     #print 'create', name
     mem = sst.Component(name, "memHierarchy.MemController")
     mem.addParams(mem_params)
 
-    name = prefix + "dc_" + id 
+    name = prefix + "dc_" + id
     #print 'create' , name
     dc = sst.Component(name, "memHierarchy.DirectoryController")
     dc.addParams({
@@ -127,7 +127,7 @@ def _configureMemCtrl( prefix, id, dc_params, mem_params, start_addr, end_addr, 
     netLink.connect((dc_nic, "port", ring_latency), (rtr, "port2", ring_latency))
 
 
-def _configCache( prefix, 
+def _configCache( prefix,
         router_map,
         groups, cores_per_group,
         l1_params, l1_prefetch_params,
@@ -146,13 +146,13 @@ def _configCache( prefix,
     for next_group in range(groups):
         print "Configuring core and memory controller group " + str(next_group) + "..."
 
-        print 'Create group {0}'.format( next_group) 
+        print 'Create group {0}'.format( next_group)
 
 
         for next_active_core in range(cores_per_group):
 
             print 'Creating L1/L2: ' + str(next_core_id) + ' in group: ' + str(next_group)
-             
+
             cpuL1s += [ _configureL1L2( prefix, str(next_core_id), l1_params, l1_prefetch_params,
                                 l2_params, l2_prefetch_params, next_network_id, ring_latency,
                                 router_map[prefix + "rtr." + str(next_network_id)]) ]
@@ -166,7 +166,7 @@ def _configCache( prefix,
 
             _configureL3( prefix, str( (next_group * l3cache_blocks_per_group) + next_l3_cache_block ),
                     l3_params,
-                    next_network_id, ring_latency, router_map[prefix + "rtr." + str(next_network_id)]) 
+                    next_network_id, ring_latency, router_map[prefix + "rtr." + str(next_network_id)])
 
             next_network_id = next_network_id + 1
 
@@ -196,7 +196,7 @@ def _configCache( prefix,
     nicL1_read = _configureL1L2( prefix, 'nic_read', l1_params, l1_prefetch_params,
                                 l2_params, l2_prefetch_params, next_network_id, ring_latency,
                                 router_map[prefix + "rtr." + str(next_network_id)])
-    
+
     next_network_id = next_network_id + 1
     nicL1_write = _configureL1L2( prefix, 'nic_write', l1_params, l1_prefetch_params,
                                 l2_params, l2_prefetch_params, next_network_id, ring_latency,

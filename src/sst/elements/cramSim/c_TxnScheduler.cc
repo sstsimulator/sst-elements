@@ -50,10 +50,10 @@ c_TxnScheduler::c_TxnScheduler(SST::ComponentId_t id, SST::Params& x_params, Out
 void c_TxnScheduler::build(Params& x_params) {
     //initialize member variables
     assert(m_numChannels>0);
-    
+
     // Create output object
     m_out = new Output("", 0, 0, SST::Output::STDOUT);
-    
+
     bool l_found=false;
 
     string l_txnSchedulingPolicy= (string) x_params.find<std::string>("txnSchedulingPolicy","FCFS", l_found);

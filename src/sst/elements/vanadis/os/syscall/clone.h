@@ -30,7 +30,7 @@ public:
     }
     void handleEvent( VanadisCoreEvent* ev );
 
- private:  
+ private:
 
     enum State { ReadCallStack, ReadThreadStack, ChildSetTid } m_state;
 
@@ -42,7 +42,7 @@ public:
     uint64_t m_threadStartAddr;
     uint64_t m_threadArgAddr;
 
-    uint64_t m_childTidAddr; 
+    uint64_t m_childTidAddr;
 
     OS::HwThreadID* m_threadID;
     OS::ProcessInfo* m_newThread;

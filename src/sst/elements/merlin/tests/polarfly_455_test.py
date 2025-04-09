@@ -57,12 +57,12 @@ if __name__ == "__main__":
 
 
     #jobId, # endpoints
-    ep                          = TestJob(0, topo.getNumNodes()) 
-    ep.network_interface        = networkif  
+    ep                          = TestJob(0, topo.getNumNodes())
+    ep.network_interface        = networkif
 
-    
+
     system                      = System()
     system.setTopology(topo)
     system.allocateNodes(ep,"linear")
-    system.build() 
-        
+    system.build()
+

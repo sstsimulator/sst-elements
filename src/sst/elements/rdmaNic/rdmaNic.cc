@@ -40,9 +40,9 @@ RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
     // Output for debug
     char buffer[100];
     snprintf(buffer,100,"@t:node%d:RdmaNic::@p():@l ",m_nicId);
-    dbg.init( buffer, 
+    dbg.init( buffer,
         params.find<int>("debug_level", 0),
-        params.find<int>("debug_mask",0), 
+        params.find<int>("debug_mask",0),
 		Output::STDOUT );
 
     auto pesPerNode = params.find<int>("pesPerNode", 0);
@@ -60,7 +60,7 @@ RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
     assert( cmdQSize );
 
     // make sure a NicCmd is multiple of a ache line
-    // Make this more general 
+    // Make this more general
     assert( sizeof( NicCmd) == 64 );
 
     m_backing = new Backing< NicCmd, QueueIndex >( pesPerNode, cmdQSize, NUM_COMP_Q );
@@ -71,7 +71,7 @@ RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
     dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"\n");
     if ( m_nicId == 0 ) {
         dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"nicId=%d pesPerNode=%d numNodes=%d\n", m_nicId, pesPerNode, m_numNodes );
-		dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"number cmd Q entries %zu, cmd Q memory footprint %zu\n", 
+		dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"number cmd Q entries %zu, cmd Q memory footprint %zu\n",
                 m_backing->getCmdQSize(), m_backing->getCmdQueueMemSize() );
     }
 
@@ -118,9 +118,9 @@ RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
 	m_handlers = new Handlers(this, &out);
 
 	m_numVC = 2;
-	m_networkQ = new NetworkQueue( *this, m_numVC, 32 ); 
+	m_networkQ = new NetworkQueue( *this, m_numVC, 32 );
 	m_recvEngine = new RecvEngine( *this, m_numVC, 32 );
-	m_sendEngine = new SendEngine( *this, m_numVC ); 
+	m_sendEngine = new SendEngine( *this, m_numVC );
 	int degree = params.find<int>("barrierDegree", 4 );
 	int vc = params.find<int>("barrierVC", 0 );
 	m_barrier = new Barrier( *this, vc, degree, m_nicId, m_numNodes );
@@ -216,7 +216,7 @@ void RdmaNic::mmioWrite(StandardMem::Write* req) {
     }
 
     if ( m_backing->isCmdReady( thread ) ) {
-		NicCmdEntry* entry = createNewCmd( *this, thread, m_backing->readCmd(thread) ); 
+		NicCmdEntry* entry = createNewCmd( *this, thread, m_backing->readCmd(thread) );
 		dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"new command from thread %d op=%s\n", thread, entry->name().c_str() );
         m_nicCmdQ.push( entry );
     }
@@ -253,7 +253,7 @@ void RdmaNic::processThreadCmdQs( ) {
 		m_activeNicCmd = m_nicCmdQ.front();
 		m_nicCmdQ.pop();
 
-		NicCmdQueueInfo& info = m_nicCmdQueueV[m_activeNicCmd->getThread()]; 
+		NicCmdQueueInfo& info = m_nicCmdQueueV[m_activeNicCmd->getThread()];
 
 		dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"thread %d cmd available tail=%d %s\n",m_activeNicCmd->getThread(),info.localTailIndex, m_activeNicCmd->name().c_str() );
 
@@ -268,7 +268,7 @@ void RdmaNic::processThreadCmdQs( ) {
 			delete m_activeNicCmd;
 			m_activeNicCmd = NULL;
 		}
-	}	
+	}
 }
 
 
@@ -283,10 +283,10 @@ void RdmaNic::sendRespToHost( Addr_t addr, NicResp& resp, int thread )
 
 void RdmaNic::writeCompletionToHost(int thread, int cqId, RdmaCompletion& comp )
 {
-    CompletionQueue& q = *m_compQueueMap[cqId]; 
+    CompletionQueue& q = *m_compQueueMap[cqId];
 
     int tailIndex = readCompQueueTailIndex(thread,cqId);
-    dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cqId=%d headIndex=%d tailIndex=%d queueSize=%d headPtr=%#" PRIx64 " dataPtr=%#" PRIx64 "\n", 
+    dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cqId=%d headIndex=%d tailIndex=%d queueSize=%d headPtr=%#" PRIx64 " dataPtr=%#" PRIx64 "\n",
 		cqId, q.headIndex(), tailIndex, q.cmd().data.createCQ.num, q.cmd().data.createCQ.headPtr, q.cmd().data.createCQ.dataPtr );
     dbg.debug( CALL_INFO_LONG,2,DBG_X_FLAG,"ctx=%#" PRIx64 "\n", comp.context);
 

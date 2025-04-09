@@ -177,7 +177,7 @@ memory1.addParams({
     "device_ini" : "ddr_device.ini",
     "system_ini" : "ddr_system.ini",
 })
-      
+
 memctrl0 = sst.Component("memory.hbm", "memHierarchy.MemController")
 memctrl0.addParams({
     "debug" : debug,

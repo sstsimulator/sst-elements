@@ -66,7 +66,7 @@ public:
         {"addressoffset",           "(uint) Apply an offset to a calculated address to check for non-alignment issues", "0"},
         {"test_init",               "(uint) Number of write messages to initialize memory with", "0"} )
 
-    SST_ELI_DOCUMENT_STATISTICS( 
+    SST_ELI_DOCUMENT_STATISTICS(
         {"pendCycle", "Number of pending requests per cycle", "count", 1},
         {"reads", "Number of reads issued (including noncacheable)", "count", 1},
         {"writes", "Number of writes issued (including noncacheable)", "count", 1},

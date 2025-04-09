@@ -40,15 +40,15 @@ public:
     VanadisSetRegCompareInstruction* clone() override { return new VanadisSetRegCompareInstruction(*this); }
 
     VanadisFunctionalUnitType getInstFuncType() const override { return INST_INT_ARITH; }
-    const char*               getInstCode() const override { 
+    const char*               getInstCode() const override {
         if(std::is_same<register_format, uint64_t>::value) {
-            return "CMPSETU64"; 
+            return "CMPSETU64";
         } else if(std::is_same<register_format, int64_t>::value) {
-            return "CMPSETI64"; 
+            return "CMPSETI64";
         } else if(std::is_same<register_format, uint32_t>::value) {
-            return "CMPSETU32"; 
+            return "CMPSETU32";
         } else if(std::is_same<register_format, int32_t>::value) {
-            return "CMPSETI32"; 
+            return "CMPSETI32";
         } else {
             return "CMPSET";
         }
@@ -64,11 +64,11 @@ public:
             isa_int_regs_in[0], isa_int_regs_in[1], phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1]);
     }
 
-    void instOp(SST::Output* output,VanadisRegisterFile* regFile, 
-                            uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0, 
+    void instOp(SST::Output* output,VanadisRegisterFile* regFile,
+                            uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0,
                             uint16_t phys_int_regs_in_1)
     {
-        
+
         const bool compare_result = registerCompare<compare_type, register_format>(
                     regFile, this, output, phys_int_regs_in_0, phys_int_regs_in_1);
         // always write result in unsigned 64b so we completely set register
@@ -77,7 +77,7 @@ public:
 
     virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
-        
+
         uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
         uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0);
         uint16_t phys_int_regs_in_1 = getPhysIntRegIn(1);

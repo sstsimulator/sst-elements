@@ -153,8 +153,8 @@ public:
             }
         }
 
-        auto left_value = *(fp_format*) & left_value_int; 
-        auto right_value = *(fp_format*) & right_value_int; 
+        auto left_value = *(fp_format*) & left_value_int;
+        auto right_value = *(fp_format*) & right_value_int;
 
         // assuming these are signalling comparison units
         // check both units for NaN
@@ -195,7 +195,7 @@ public:
         }
     }
 
-    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
                             uint16_t phys_int_regs_out_0,uint16_t phys_fp_regs_in_0,
                                     uint16_t phys_fp_regs_in_1, uint16_t compare_result)
     {
@@ -203,7 +203,7 @@ public:
         if ( output->getVerboseLevel() >= verboselevel ) {
             output->verbose(
                 CALL_INFO, verboselevel, 0, "hw_thr=%d sw_thr = %d Execute: (addr=0x%" PRI_ADDR ") %s (%s) phys: out=%" PRIu16 " / in=%" PRIu16 ", %" PRIu16 " isa: out=%" PRIu16
-                    " / in=%" PRIu16 ", %" PRIu16 ", result: %s\n", getHWThread(),sw_thr, getInstructionAddress(), getInstCode(), 
+                    " / in=%" PRIu16 ", %" PRIu16 ", result: %s\n", getHWThread(),sw_thr, getInstructionAddress(), getInstCode(),
                     convertCompareTypeToString(compare_type), phys_int_regs_out_0, phys_fp_regs_in_0,
                     phys_fp_regs_in_1, isa_int_regs_out[0], isa_fp_regs_in[0], isa_fp_regs_in[1], compare_result ? "true" : "false");
         }
@@ -217,13 +217,13 @@ public:
         uint16_t phys_fp_regs_in_1 = getPhysFPRegIn(1);
         uint16_t phys_fp_regs_in_2 = 0;
         uint16_t phys_fp_regs_in_3 = 0;
-        
+
         if ( ( 8 == sizeof(fp_format)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()))
         {
             phys_fp_regs_in_2 = getPhysFPRegIn(2);
             phys_fp_regs_in_3 = getPhysFPRegIn(3);
         }
-                
+
         const bool compare_result = performCompare(output, regFile,phys_fp_regs_in_0, phys_fp_regs_in_1, phys_fp_regs_in_2,
                                                     phys_fp_regs_in_3);
         regFile->setIntReg<uint64_t>(phys_int_regs_out_0, compare_result ? 1 : 0);

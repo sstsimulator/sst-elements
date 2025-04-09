@@ -14,7 +14,7 @@
 // distribution.
 
 
-// This include is ***REQUIRED*** 
+// This include is ***REQUIRED***
 // for ALL SST implementation files
 #include "sst_config.h"
 
@@ -24,7 +24,7 @@
 using namespace SST;
 using namespace SST::simpleElementExample;
 
-/* 
+/*
  * During construction this components parses its parameter, configures its links, and loads its compute unit subcomponent
  */
 basicSubComponent_Component::basicSubComponent_Component(ComponentId_t id, Params& params) : Component(id) {
@@ -43,20 +43,20 @@ basicSubComponent_Component::basicSubComponent_Component(ComponentId_t id, Param
     rightLink = configureLink("right", new Event::Handler2<basicSubComponent_Component, &basicSubComponent_Component::handleEvent>(this));
 
     // Check that the links were configured correctly
-    sst_assert(leftLink, CALL_INFO, -1, 
+    sst_assert(leftLink, CALL_INFO, -1,
             "Error: Component %s has an incorrectly configured link on port 'left'\n", getName().c_str());
-    sst_assert(rightLink, CALL_INFO, -1, 
+    sst_assert(rightLink, CALL_INFO, -1,
             "Error: Component %s has an incorrectly configured link on port 'right'\n", getName().c_str());
-    
+
     /****** Load a SubComponent in two steps ******/
 
     // 1. Check with the input configuration to see if the user put a subcomponent in our subcomponent slot
     computeUnit = loadUserSubComponent<basicSubComponentAPI>("compute_unit");
 
-    // 2. If the user didn't put a subcomponent there then we could error or load a default one. 
+    // 2. If the user didn't put a subcomponent there then we could error or load a default one.
     // In this case, we'll load a default and let the user know we did that
     if (!computeUnit) {
-        out->output("NOTE: No SubComponent was loaded in the \"compute_unit\" slot on %s. Loading a default instead.\n", 
+        out->output("NOTE: No SubComponent was loaded in the \"compute_unit\" slot on %s. Loading a default instead.\n",
                 getName().c_str());
 
         // Load a default subcomponent, we need to provide the parameters and the subcomponent type since the user didn't
@@ -75,10 +75,10 @@ basicSubComponent_Component::basicSubComponent_Component(ComponentId_t id, Param
 
         // Error check that the subcomponent did get loaded
         sst_assert(computeUnit, CALL_INFO, -1,
-                "Error: %s attempted to load a default subcomponent into its 'compute_unit' slot and something went wrong!\n", 
+                "Error: %s attempted to load a default subcomponent into its 'compute_unit' slot and something went wrong!\n",
                 getName().c_str());
     }
-    
+
     /****** SubComponent loaded, almost done with construction ******/
 
     // Tell the simulation not to end until we're ready
@@ -97,22 +97,22 @@ basicSubComponent_Component::~basicSubComponent_Component()
 }
 
 
-/* 
+/*
  * Setup function to send our event in preparation for simulation
  * Because the simulation has no clocks and SST will exit if no clocks and no events exist in the system,
- * we need to begin the simulation with an event. 
+ * we need to begin the simulation with an event.
  *
- * This function is called by SST on each component just prior to simulation start 
+ * This function is called by SST on each component just prior to simulation start
  * It is *not* called on subcomponents automatically so we should manually call it on subcomponents that need it
  * Ours don't so we'll skip that step
  */
-void basicSubComponent_Component::setup() 
+void basicSubComponent_Component::setup()
 {
     // Create the event we'll send
     basicSubComponentEvent* event = new basicSubComponentEvent(getName(), value, std::to_string(value));
-    
+
     // Send our event
-    leftLink->send(event); 
+    leftLink->send(event);
 }
 
 /*
@@ -125,14 +125,14 @@ void basicSubComponent_Component::handleEvent(SST::Event* ev)
 {
     // We'll static_cast since we're certain the event is the right type - a little less safe but a little faster too
     basicSubComponentEvent* event = static_cast<basicSubComponentEvent*>(ev);
-    
-    if (event->getSender() == getName()) 
+
+    if (event->getSender() == getName())
     {   /* This is the event this component sent, report out and prepare to end simulation */
         out->output("%s computed: %s = %d\n", getName().c_str(), event->getComputation().c_str(), event->getNumber());
         delete event;
 
         primaryComponentOKToEndSim();
-    } 
+    }
     else
     {   /* Event sent by a different component, use the SubComponent to update the computation */
         int updatedNum = computeUnit->compute(event->getNumber());
