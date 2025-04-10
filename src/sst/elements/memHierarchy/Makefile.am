@@ -129,7 +129,7 @@ libmemHierarchy_la_SOURCES = \
 
 EXTRA_DIST = \
 	membackend/ramulator2/Instructions.md \
-	membackend/ramulator2/sst_frontend.cpp \ 
+	membackend/ramulator2/sst_frontend.cpp \
 	tests/testsuite_default_memHierarchy_hybridsim.py \
 	tests/testsuite_default_memHierarchy_memHA.py \
 	tests/testsuite_default_memHierarchy_sdl.py \

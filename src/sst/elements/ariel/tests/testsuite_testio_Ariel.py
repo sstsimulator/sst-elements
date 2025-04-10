@@ -195,12 +195,6 @@ class testcase_Ariel(SSTTestCase):
         self.ArielElementDir = os.path.abspath("{0}/../".format(test_path))
         self.ArielElementTestIODir = "{0}/tests/testIO".format(self.ArielElementDir)
 
-        # Build the Ariel API library
-        ArielApiDir = "{0}/api".format(self.ArielElementDir)
-        cmd = "make"
-        rtn0 = OSCommand(cmd, set_cwd=ArielApiDir).run()
-        log_debug("Ariel api/libarielapi.so Make result = {0}; output =\n{1}".format(rtn0.result(), rtn0.output()))
-        os.environ["ARIELAPI"] =  ArielApiDir
 
         # Build the testio binary
         cmd = "make testio"
@@ -208,6 +202,5 @@ class testcase_Ariel(SSTTestCase):
         log_debug("Ariel ariel/tests/testIO make result = {1}; output =\n{2}".format(self.ArielElementTestIODir, rtn1.result(), rtn1.output()))
 
         # Check that everything compiled OK
-        self.assertTrue(rtn0.result() == 0, "libarielapi failed to compile")
         self.assertTrue(rtn1.result() == 0, "testio binary failed to compile")
 
