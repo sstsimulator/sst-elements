@@ -129,9 +129,16 @@ nic_params = {
 
 print("Configuring Ariel processor model (" + str(groups * cores_per_group) + " cores)...")
 
+frontend_type = os.getenv("ARIEL_TEST_FRONTEND")
+if frontend_type == None:
+    frontend = "ariel.frontend.pin"
+else:
+    frontend = "ariel.frontend." + str(frontend_type)
+
 ariel = sst.Component("A0", "ariel.ariel")
 ariel.addParams({
     "verbose"             : "1",
+    "frontend"            : frontend,
     "maxcorequeue"        : "256",
     "maxtranscore"        : "16",
     "maxissuepercycle"    : "2",

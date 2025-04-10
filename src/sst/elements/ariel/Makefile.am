@@ -65,6 +65,8 @@ libariel_la_SOURCES = \
 	arieltexttracegen.h \
 	arieltexttracegen.cc \
 	arielfrontend.h \
+	arielfrontendcommon.h \
+	arielfrontendcommon.cc \
 	tb_header.h \
 	arielrtlev.h
 
@@ -119,6 +121,10 @@ libariel_la_SOURCES += frontend/pin3/pin3frontend.h \
 		       frontend/pin3/pin3frontend.cc
 endif
 endif
+
+libariel_la_SOURCES += frontend/epa/epafrontend.h \
+		       frontend/epa/epafrontend.cc
+
 
 libariel_la_CPPFLAGS = \
 	-DARIEL_TRACE_LIB=$(libdir)/sst \

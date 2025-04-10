@@ -3,7 +3,7 @@ API_DIR = ../../../../api
 all: stream stream_mlm
 
 clean:
-	rm -f stream stream_mlm
+	rm -f stream stream_mlm stream.arielinst* stream_mlm.arielinst*
 
 stream:
 	g++ stream.c -o stream $(CFLAGS_LOCAL)

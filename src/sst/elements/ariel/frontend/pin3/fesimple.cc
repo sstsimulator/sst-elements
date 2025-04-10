@@ -411,15 +411,17 @@ VOID WriteEndInstructionMarker(UINT32 thr, ADDRINT ip)
 
 VOID WriteInstructionReadWrite(THREADID thr, ADDRINT* readAddr, UINT32 readSize,
             ADDRINT* writeAddr, UINT32 writeSize, ADDRINT ip, UINT32 instClass,
-            UINT32 simdOpWidth )
+            UINT32 simdOpWidth, BOOL first, BOOL last )
 {
 
     if(enable_output) {
         if(thr < core_count) {
-            WriteStartInstructionMarker( thr, ip, instClass, simdOpWidth);
+            if (first)
+                WriteStartInstructionMarker( thr, ip, instClass, simdOpWidth);
             WriteInstructionRead(  readAddr,  readSize,  thr, ip, instClass, simdOpWidth );
             WriteInstructionWrite( writeAddr, writeSize, thr, ip, instClass, simdOpWidth );
-            WriteEndInstructionMarker( thr, ip );
+            if (last)
+                WriteEndInstructionMarker( thr, ip );
         }
     }
 }
@@ -540,15 +542,32 @@ VOID InstrumentInstruction(INS ins, VOID *v)
     }
    
     UINT32 operands = INS_MemoryOperandCount(ins);
+    if (INS_HasScatteredMemoryAccess(ins))
+        operands = 0;
     for (UINT32 op = 0; op < operands; op++) {
         BOOL first = (op == 0);
         BOOL last = (op == (operands - 1));
-        
-        if (INS_MemoryOperandIsRead(ins, op)) {
+ 
+        if (INS_MemoryOperandIsRead(ins, op) && INS_MemoryOperandIsWritten(ins, op)) {
+            USIZE opSize = INS_MemoryOperandSize(ins, op);
+
+            INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
+                    WriteInstructionReadWrite,
+                    IARG_THREAD_ID,
+                    IARG_MEMORYREAD_EA, IARG_UINT32, opSize,
+                    IARG_MEMORYWRITE_EA, IARG_UINT32, opSize,
+                    IARG_INST_PTR,
+                    IARG_UINT32, instClass,
+                    IARG_UINT32, simdOpWidth,
+                    IARG_BOOL, first,
+                    IARG_BOOL, last,
+                    IARG_END);
+        } else if (INS_MemoryOperandIsRead(ins, op)) {
+            USIZE opSize = INS_MemoryOperandSize(ins, op);
             INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
                     WriteInstructionReadOnly,
                     IARG_THREAD_ID,
-                    IARG_MEMORYREAD_EA, IARG_UINT32, INS_MemoryOperandSize(ins, op),
+                    IARG_MEMORYREAD_EA, IARG_UINT32, opSize,
                     IARG_INST_PTR,
                     IARG_UINT32, instClass,
                     IARG_UINT32, simdOpWidth,
@@ -556,10 +575,11 @@ VOID InstrumentInstruction(INS ins, VOID *v)
                     IARG_BOOL, last,
                     IARG_END);
         } else {
+            USIZE opSize = INS_MemoryOperandSize(ins, op);
             INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
                     WriteInstructionWriteOnly,
                     IARG_THREAD_ID,
-                    IARG_MEMORYWRITE_EA, IARG_UINT32, INS_MemoryOperandSize(ins, op),
+                    IARG_MEMORYWRITE_EA, IARG_UINT32, opSize,
                     IARG_INST_PTR,
                     IARG_UINT32, instClass,
                     IARG_UINT32, simdOpWidth,
