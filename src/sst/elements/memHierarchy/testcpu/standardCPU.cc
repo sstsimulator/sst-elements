@@ -118,8 +118,7 @@ standardCPU::standardCPU(ComponentId_t id, Params& params) :
     clock_timeconverter_ = registerClock( clockFreq, clock_handler_ );
 
     /* Find the interface the user provided in the Python and load it*/
-    memory_ = loadUserSubComponent<StandardMem>("memory", ComponentInfo::SHARE_NONE, clock_timeconverter_, new StandardMem::Handler<standardCPU>(this, &standardCPU::handleEvent));
-    //memory_ = loadUserSubComponent<StandardMem>("memory", ComponentInfo::SHARE_NONE, clock_timeconverter_, new StandardMem::Handler2<standardCPU, &standardCPU::handleEvent>(this));
+    memory_ = loadUserSubComponent<StandardMem>("memory", ComponentInfo::SHARE_NONE, clock_timeconverter_, new StandardMem::Handler2<standardCPU, &standardCPU::handleEvent>(this));
 
     if (!memory_) {
         out_.fatal(CALL_INFO, -1, "Unable to load memHierarchy.standardInterface subcomponent; check that 'memory' slot is filled in input.\n");
