@@ -63,36 +63,6 @@ namespace Ember {
 
 static SST::Output abort_output("EmberMpiLib: ", 5, -1, Output::STDERR);
 
-#undef FOREACH_ENUM
-#define FOREACH_ENUM(NAME) \
-    NAME( Init ) \
-    NAME( Finalize ) \
-    NAME( Rank ) \
-    NAME( Size ) \
-    NAME( Send ) \
-    NAME( Recv ) \
-    NAME( Irecv ) \
-    NAME( Isend ) \
-    NAME( Wait ) \
-    NAME( Waitall ) \
-    NAME( Waitany ) \
-    NAME( Compute ) \
-    NAME( Barrier ) \
-    NAME( Alltoallv ) \
-    NAME( Alltoall ) \
-    NAME( Allreduce ) \
-    NAME( Reduce ) \
-    NAME( Bcast) \
-    NAME( Scatter) \
-    NAME( Scatterv) \
-    NAME( Gettime ) \
-    NAME( Commsplit ) \
-    NAME( Commcreate ) \
-    NAME( NUM_EVENTS ) \
-
-#define GENERATE_ENUM(ENUM) ENUM,
-#define GENERATE_STRING(STRING) #STRING,
-
 class EmberSpyInfo {
   public:
     EmberSpyInfo(const int32_t rank)
@@ -115,10 +85,6 @@ const uint32_t EMBER_SPYPLOT_SEND_COUNT = 1;
 const uint32_t EMBER_SPYPLOT_SEND_BYTES = 2;
 
 class EmberMpiLib : public EmberLib {
-
-    enum Events {
-        FOREACH_ENUM(GENERATE_ENUM)
-    };
 
   public:
 
@@ -384,11 +350,12 @@ class EmberMpiLib : public EmberLib {
 		m_backed = true;
 	}
 
-        void setNotBacked() {
-                m_backed = false;
-        }
+    void setNotBacked() {
+        m_backed = false;
+    }
 
-	void completed(const SST::Output* output, uint64_t time, std::string motifName, int motifNum );
+    void setEventStatistics(std::vector<Statistic<uint32_t>*>& stats);
+	void completed( const SST::Output* output, uint64_t time, std::string motifName, int motifNum );
 
   private:
     virtual void* memAddr( void * addr ) {
@@ -396,8 +363,7 @@ class EmberMpiLib : public EmberLib {
     }
 
 	MP::Interface& api() { return *static_cast<MP::Interface*>(m_api); }
-	std::vector< Statistic<uint32_t>* > m_Stats;
-	static const char*  m_eventName[];
+	std::vector< EventTimeStat* > m_Stats;
 
 	bool m_backed;
 	int m_size;

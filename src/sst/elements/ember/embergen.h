@@ -70,8 +70,11 @@ class EmberGenerator : public SubComponent {
 
 	~EmberGenerator(){ };
 
-    virtual void generate( const SST::Output* output, const uint32_t phase,
-        std::queue<EmberEvent*>* evQ ) {
+    virtual void configure() = 0;
+
+    virtual void generate( const SST::Output* output,
+                           const uint32_t phase,
+                           std::queue<EmberEvent*>* evQ ) {
         assert(0);
     }
 
@@ -85,9 +88,8 @@ class EmberGenerator : public SubComponent {
 
     virtual bool primary( ) { return m_primary; }
 
-    virtual std::string getComputeModelName() {
-        return "";
-    }
+    virtual std::string getComputeModelName() { return ""; }
+
     EmberLib* getLib(std::string name );
 
 

@@ -59,12 +59,12 @@ EmberHalo3DSVGenerator::EmberHalo3DSVGenerator(SST::ComponentId_t id, Params& pa
 	y_up   = -1;
 	z_down = -1;
 	z_up   = -1;
-
-	configure();
 }
 
 void EmberHalo3DSVGenerator::configure()
 {
+    EmberMessagePassingGenerator::configure();
+
 	if(peX == 0 || peY == 0 || peZ == 0) {
 		peX = size();
                 peY = 1;

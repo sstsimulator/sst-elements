@@ -109,8 +109,6 @@ EmberLQCDGenerator::EmberLQCDGenerator(SST::ComponentId_t id, Params& params) :
 	n_ranks[ZUP]   = -1;
 	n_ranks[TDOWN] = -1;
 	n_ranks[TUP]   = -1;
-
-	configure();
 }
 
 
@@ -255,6 +253,7 @@ int EmberLQCDGenerator::node_number(int x, int y, int z, int t) {
 
 void EmberLQCDGenerator::configure()
 {
+    EmberMessagePassingGenerator::configure();
 
     //determine the problem size given to each node
     //code from MILC setup_hyper_prime()
