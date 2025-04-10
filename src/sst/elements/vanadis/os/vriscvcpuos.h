@@ -38,26 +38,26 @@
 #define RISCV_O_RDONLY      0
 #define RISCV_O_WRONLY      1
 #define RISCV_O_RDWR        2
-#define RISCV_O_APPEND      02000 
-#define RISCV_O_ASYNC       020000 
-#define RISCV_O_CLOEXEC     02000000 
-#define RISCV_O_CREAT       0100 
+#define RISCV_O_APPEND      02000
+#define RISCV_O_ASYNC       020000
+#define RISCV_O_CLOEXEC     02000000
+#define RISCV_O_CREAT       0100
 #define RISCV_O_DIRECTORY   0200000
-#define RISCV_O_DSYNC       010000 
-#define RISCV_O_EXCL        0200  
-#define RISCV_O_NOCTTY      0400  
+#define RISCV_O_DSYNC       010000
+#define RISCV_O_EXCL        0200
+#define RISCV_O_NOCTTY      0400
 #define RISCV_O_NOFOLLOW    0400000
 #define RISCV_O_SYNC        04010000
 #define RISCV_O_TRUNC       01000
-#define RISCV_O_NONBLOCK    04000 
-#define RISCV_O_NDELAY      RISCV_O_NONBLOCK 
-#define RISCV_O_LARGEFILE   0100000 
+#define RISCV_O_NONBLOCK    04000
+#define RISCV_O_NDELAY      RISCV_O_NONBLOCK
+#define RISCV_O_LARGEFILE   0100000
 
 #ifndef SST_COMPILE_MACOSX
 #define RISCV_O_DIRECT      040000
-#define RISCV_O_NOATIME     01000000  
-#define RISCV_O_PATH        010000000 
-#define RISCV_O_TMPFILE     020200000 
+#define RISCV_O_NOATIME     01000000
+#define RISCV_O_PATH        010000000
+#define RISCV_O_TMPFILE     020200000
 #endif
 
 #define RISCV_MAP_STACK 0x20000
@@ -69,7 +69,7 @@
 
 #define VANADIS_SYSCALL_RISCV64_IOCTL 29
 #define VANADIS_SYSCALL_RISCV64_RM_INOTIFY 28
-#define VANADIS_SYSCALL_RISCV64_UNLINKAT 35 
+#define VANADIS_SYSCALL_RISCV64_UNLINKAT 35
 #define VANADIS_SYSCALL_RISCV64_OPENAT 56
 #define VANADIS_SYSCALL_RISCV64_CLOSE 57
 #define VANADIS_SYSCALL_RISCV64_LSEEK 62
@@ -78,7 +78,7 @@
 #define VANADIS_SYSCALL_RISCV64_READV 65
 #define VANADIS_SYSCALL_RISCV64_WRITEV 66
 #define VANADIS_SYSCALL_RISCV64_SPLICE 76
-#define VANADIS_SYSCALL_RISCV64_READLINKAT 78 
+#define VANADIS_SYSCALL_RISCV64_READLINKAT 78
 #define VANADIS_SYSCALL_RISCV64_FSTATAT 79
 #define VANADIS_SYSCALL_RISCV64_FSTAT 80
 #define VANADIS_SYSCALL_RISCV64_EXIT 93
@@ -88,27 +88,28 @@
 #define VANADIS_SYSCALL_RISCV64_SET_ROBUST_LIST 99
 #define VANADIS_SYSCALL_RISCV64_GET_RLIST 100
 #define VANADIS_SYSCALL_RISCV64_CLOCK_GETTIME 113
-#define VANADIS_SYSCALL_RISCV64_SCHED_SETAFFINITY 122 
-#define VANADIS_SYSCALL_RISCV64_SCHED_GETAFFINITY 123 
-#define VANADIS_SYSCALL_RISCV64_SCHED_YIELD 124 
+#define VANADIS_SYSCALL_RISCV64_SCHED_SETAFFINITY 122
+#define VANADIS_SYSCALL_RISCV64_SCHED_GETAFFINITY 123
+#define VANADIS_SYSCALL_RISCV64_SCHED_YIELD 124
 #define VANADIS_SYSCALL_RISCV64_KILL 129
 #define VANADIS_SYSCALL_RISCV64_RT_SIGACTION 134
 #define VANADIS_SYSCALL_RISCV64_RT_SIGPROCMASK 135
 #define VANADIS_SYSCALL_RISCV64_GETPGID 155
 #define VANADIS_SYSCALL_RISCV64_UNAME 160
-#define VANADIS_SYSCALL_RISCV64_GETCPU 168 
-#define VANADIS_SYSCALL_RISCV64_GETPID 172 
+#define VANADIS_SYSCALL_RISCV64_GETCPU 168
+#define VANADIS_SYSCALL_RISCV64_GETPID 172
 #define VANADIS_SYSCALL_RISCV64_GETPPID 173
-#define VANADIS_SYSCALL_RISCV64_GETTID 178 
+#define VANADIS_SYSCALL_RISCV64_GETTID 178
 #define VANADIS_SYSCALL_RISCV64_BRK 214
 #define VANADIS_SYSCALL_RISCV64_UNMAP 215
 #define VANADIS_SYSCALL_RISCV64_CLONE 220
 #define VANADIS_SYSCALL_RISCV64_MMAP 222
-#define VANADIS_SYSCALL_RISCV64_MPROTECT 226 
+#define VANADIS_SYSCALL_RISCV64_MPROTECT 226
 #define VANADIS_SYSCALL_RISCV64_MADVISE 233
+#define VANADIS_SYSCALL_RISCV64_HWPROBE 258
 #define VANADIS_SYSCALL_RISCV64_PRLIMIT 261
 #define VANADIS_SYSCALL_RISCV64_GETRANDOM 278
-#define VANADIS_SYSCALL_RISCV64_CHECKPOINT 500 
+#define VANADIS_SYSCALL_RISCV64_CHECKPOINT 500
 
 #define VANADIS_SYSCALL_RISCV_RET_REG 10
 
@@ -123,8 +124,8 @@ class VanadisRISCV64OSHandler2 : public VanadisCPUOSHandler2< T1, BitType, RegZe
     AddUsing;
 
 public:
-    VanadisRISCV64OSHandler2(ComponentId_t id, Params& params) : 
-        VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >(id, params, "RISCV" ) 
+    VanadisRISCV64OSHandler2(ComponentId_t id, Params& params) :
+        VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >(id, params, "RISCV" )
     {
         InstallCommonFuncs( RISCV64 )
 
@@ -138,6 +139,7 @@ public:
         InstallRISCV64FuncPtr( GETRANDOM );
         InstallRISCV64FuncPtr( FSTATAT );
         InstallRISCV64FuncPtr( LSEEK );
+        InstallRISCV64FuncPtr( HWPROBE );
         InstallRISCV64FuncPtr( CHECKPOINT );
     }
 
@@ -253,11 +255,11 @@ public:
                 map_flags &= ~RISCV_MAP_STACK;
             }
             if ( map_flags & RISCV_MAP_ANONYMOUS ) {
-                hostFlags |= MAP_ANONYMOUS; 
+                hostFlags |= MAP_ANONYMOUS;
                 map_flags &= ~RISCV_MAP_ANONYMOUS;
             }
             if ( map_flags & RISCV_MAP_PRIVATE ) {
-                hostFlags |= MAP_PRIVATE; 
+                hostFlags |= MAP_PRIVATE;
                 map_flags &= ~RISCV_MAP_PRIVATE;
             }
             assert( map_flags == 0 );
@@ -281,11 +283,17 @@ public:
         return new VanadisSyscallGetTime64Event(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_64B, clk_type, time_addr);
     }
 
+    VanadisSyscallEvent* HWPROBE( int hw_thr ) {
+        printf("Warning: VANADIS_SYSCALL_RISCV64_HWPROBE not implemented return success\n");
+        recvSyscallResp(new VanadisSyscallResponse(0));
+        return nullptr;
+    }
+
     VanadisSyscallEvent* RT_SIGPROCMASK( int hw_thr ) {
-        int32_t  how                = getArgRegister( 0 );
-        uint64_t signal_set_in      = getArgRegister( 1 );
-        uint64_t signal_set_out     = getArgRegister( 2 );
-        int32_t  signal_set_size    = getArgRegister( 3 );
+        int32_t  how                  = getArgRegister( 0 );
+        uint64_t signal_set_in   = getArgRegister( 1 );
+        uint64_t signal_set_out = getArgRegister( 2 );
+        int32_t  signal_set_size = getArgRegister( 3 );
 
         output->verbose(CALL_INFO, 8, 0,
                             "rt_sigprocmask( %" PRId32 ", 0x%" PRI_ADDR ", 0x%" PRI_ADDR ", %" PRId32 ")\n",
@@ -355,7 +363,7 @@ private:
         RISC_CONVERT( NDELAY );
 
 #ifdef SST_COMPILE_MACOSX
-        flags &= ~RISCV_O_LARGEFILE; 
+        flags &= ~RISCV_O_LARGEFILE;
 #else
         RISC_CONVERT( DIRECT );
         RISC_CONVERT( LARGEFILE );
@@ -387,7 +395,7 @@ public:
                                             "Provides SYSCALL handling for a RISCV-based decoding core",
                                             SST::Vanadis::VanadisCPUOSHandler)
 
-    VanadisRISCV64OSHandler(ComponentId_t id, Params& params) : 
+    VanadisRISCV64OSHandler(ComponentId_t id, Params& params) :
         VanadisRISCV64OSHandler2<uint64_t, VanadisOSBitType::VANADIS_OS_64B, RISCV_ARG_REG_ZERO, RISCV_OS_CODE_REG, RISCV_LINK_REG >(id, params) { }
 };
 
