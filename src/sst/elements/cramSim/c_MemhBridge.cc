@@ -60,7 +60,7 @@ c_MemhBridge::c_MemhBridge(ComponentId_t x_id, Params& x_params) :
             if (m_txnTraceOFStream) {
                 m_txnTraceStreamBuf = m_txnTraceOFStream.rdbuf();
             } else {
-                output->output("Failed to open txn trace output file %s, redirecting to stdout\n", 
+                output->output("Failed to open txn trace output file %s, redirecting to stdout\n",
                                         k_txnTraceFileName.c_str());
                 m_txnTraceStreamBuf = std::cout.rdbuf();
             }

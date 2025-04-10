@@ -141,7 +141,7 @@ for next_group_id in range(hbmStacks):
         "interleave_size" : "256B",
         "interleave_step" : str(total_mems * 256) + "B",
       })
-        
+
 
       if backend == "simple":
          # Create DDR (Simple)
@@ -304,9 +304,9 @@ for next_group_id in range(hbmStacks):
          "interleave_size" : "256B",
          "interleave_step" : str(num_l2 * 256) + "B",
       })
-      
+
       l2_highlink = l2_cache.setSubComponent("highlink", "memHierarchy.MemNIC")
-      l2_highlink.addParams({ 
+      l2_highlink.addParams({
           "group" : 2,
       })
       l2_linkctrl = l2_highlink.setSubComponent("linkcontrol", "shogun.ShogunNIC")

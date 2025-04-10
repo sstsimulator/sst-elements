@@ -423,7 +423,7 @@ bool IncoherentL1::handleGetSResp(MemEvent * event, bool inMSHR) {
     line->setState(E);
     if (mem_h_is_debug_addr(addr))
         printDataValue(addr, line->getData(), false);
-    
+
     if (req->isLoadLink())
         line->atomicStart(timestamp_ + llscBlockCycles_, req->getThreadID());
 
@@ -463,7 +463,7 @@ bool IncoherentL1::handleGetXResp(MemEvent * event, bool inMSHR) {
     if (req->getCmd() == Command::GetS) {
         return handleGetSResp(event, inMSHR);
     }
-    
+
     if (mem_h_is_debug_addr(addr))
         eventDI.prefill(event->getID(), Command::GetXResp, "", addr, state);
 
@@ -542,7 +542,7 @@ bool IncoherentL1::handleFlushLineResp(MemEvent * event, bool inMSHR) {
     }
 
     sendResponseUp(req, nullptr, timestamp_, event->success());
-    
+
     if (mem_h_is_debug_event(event)) {
         eventDI.action = "Respond";
         if (line) {
@@ -654,7 +654,7 @@ MemEventStatus IncoherentL1::allocateMSHR(MemEvent * event, bool fwdReq, int pos
             return MemEventStatus::Reject;
         }
     }
-    
+
     int insert_pos = mshr_->insertEvent(event->getBaseAddr(), event, pos, fwdReq, false);
     if (insert_pos == -1)
         return MemEventStatus::Reject; // MSHR is full

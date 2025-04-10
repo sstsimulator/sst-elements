@@ -18,10 +18,10 @@ class testcase_memHierarchy_sdl(SSTTestCase):
         super(type(self), self).tearDown()
 
 #####
-    
+
     def test_memHierarchy_example_1core_nocache(self):
         self.memHierarchy_example_test("1core-nocache")
-    
+
     def test_memHierarchy_example_1core_1level(self):
         self.memHierarchy_example_test("1core-1level")
 
@@ -54,7 +54,7 @@ class testcase_memHierarchy_sdl(SSTTestCase):
 
         # Run SST in the tests directory
         self.run_sst(sdlfile, outfile, errfile, set_cwd=test_path, mpi_out_files=mpioutfiles)
-        
+
         # Notify is err file is non-empty
         if ignore_err_file is False:
             if os_test_file(errfile, "-s"):
@@ -64,9 +64,9 @@ class testcase_memHierarchy_sdl(SSTTestCase):
         cmd = 'grep "FATAL" {0} '.format(outfile)
         grep_success = os.system(cmd) == 0
         self.assertFalse(grep_success, "Output file {0} contains the word 'FATAL'.".format(outfile))
-        
+
         # Check that there is a successful simulation completion message in the output
         cmd = 'grep "Simulation is complete, simulated time:" {0} '.format(outfile)
         grep_success = os.system(cmd) == 0
         self.assertTrue(grep_success, "Output file {0} does not contain a simulation completion message.".format(outfile))
-        
+

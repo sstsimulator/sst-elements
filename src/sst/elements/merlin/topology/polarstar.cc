@@ -65,7 +65,7 @@ topo_polarstar::topo_polarstar(ComponentId_t cid, Params& params, int num_ports,
     /* first generate the polar graph, so that we can get the number of
      nodes and links to set the globals */
     initPolarGraph();
-    
+
     assert(total_routers == polar.size());
 
     /* Initialize the routing table*/
@@ -140,7 +140,7 @@ void topo_polarstar::routeValiant(int port, int vc, internal_router_event* ev){
 
     if (dest_node == router_id){
     	//If we reached the destination node, dump the no of switch hops the packet took in total
-	//For now, only tracked node and packets dump this info.	    
+	//For now, only tracked node and packets dump this info.
 	    dumpHopCount(tt_ev);
 
         out_channel     = getDestLocalPort(tt_ev->getDest());
@@ -158,7 +158,7 @@ void topo_polarstar::routeValiant(int port, int vc, internal_router_event* ev){
 
             int valiant;
 
-            do 
+            do
             {
                 valiant = rng->generateNextUInt32() % total_routers;
             } while(valiant == router_id);
@@ -178,7 +178,7 @@ void topo_polarstar::routeValiant(int port, int vc, internal_router_event* ev){
             minimal_channel     = route_table[dest_node];
             tt_ev->non_minimal  = false;
             out_channel         = minimal_channel + hosts_per_router;
-            tt_ev->setNextPort(out_channel); 
+            tt_ev->setNextPort(out_channel);
 
             assert(tt_ev->hop_count < 6);
             tt_ev->setVC(vc + 1);
@@ -218,7 +218,7 @@ void topo_polarstar::routeUgal(int port, int vc, internal_router_event* ev){
 
         tt_ev->setNextPort(out_channel);
         tt_ev->setVC(0);
-    
+
         return;
     }
     //injection
@@ -248,9 +248,9 @@ void topo_polarstar::routeUgal(int port, int vc, internal_router_event* ev){
                 valiant     = candidate;
             }
         }
-        
-        //select between valiant and minpath 
-        //printf("router = %d, dest = %d, min queue = %d, val_queue = %d\n", router_id, dest_node, min_queue, val_queue); 
+
+        //select between valiant and minpath
+        //printf("router = %d, dest = %d, min queue = %d, val_queue = %d\n", router_id, dest_node, min_queue, val_queue);
         if ((min_queue < 2*val_queue + adaptive_bias))
         {
             out_channel         = min_channel;
@@ -304,7 +304,7 @@ void topo_polarstar::initPolarGraph() {
         std::istringstream iss(line);
         if (line_no == 0)
         {
-            iss>>fV; 
+            iss>>fV;
             iss>>fE;
         }
         else
@@ -329,7 +329,7 @@ void topo_polarstar::initRouteTable() {
     /* allocate the routing tables */
     route_table.resize(NODES); // route_table[j] contains the port link from current router to router/node j (could be 1 hop or 2 hop)
     node_links      = polar[router_id].size();
-  
+
     for( i = 0; i < NODES; i++ )
         route_table[i]  = -1;
     neighbor_list.resize(node_links);
@@ -341,7 +341,7 @@ void topo_polarstar::initRouteTable() {
     /* initialize the routing table */
     for (j = 0; j < node_links; j++)
     {
-        neighbor                = polar[router_id][j];   
+        neighbor                = polar[router_id][j];
         route_table[neighbor]   = j;
         frontier.push_back(neighbor);
     }
@@ -353,7 +353,7 @@ void topo_polarstar::initRouteTable() {
             int v       = frontier[i];
             int pId     = route_table[v]; assert(pId >= 0);
             links       = polar[v].size();
-           
+
             for (j=0; j<links; j++)
             {
                 neighbor    = polar[v][j];
@@ -371,21 +371,21 @@ void topo_polarstar::initRouteTable() {
     /* make sure the table is properly built */
     for( i = 0; i < NODES; i++ )
     {
-	    if ( i != router_id ) 
+	    if ( i != router_id )
         {
 	        assert(route_table[i] >= 0);
             assert(route_table[i] < node_links);
         }
 	    else
 	        assert( route_table[i] == -1 );
-    }       
+    }
 
     //Free memory associated with graph topology
     for( i = 0; i < NODES; i++)
     {
         std::vector<int> tmp;
         polar[i].swap(tmp);
-    } 
+    }
     std::vector<std::vector<int>> tmp;
     polar.swap(tmp);
 }
@@ -395,7 +395,7 @@ Topology::PortState topo_polarstar::getPortState(int port) const
 {
     if (port < hosts_per_router) return R2N;
     else if (port >= hosts_per_router && port <= hosts_per_router + node_links) return R2R;
-    else return UNCONNECTED; 
+    else return UNCONNECTED;
 }
 
 
@@ -443,7 +443,7 @@ internal_router_event* topo_polarstar::process_input(RtrEvent* ev)
 //            for (int j=0; j < node_links; j++) {
 //
 //                outPorts.push_back(j+hosts_per_router);
-//                tt_ev->covered[neighbor_list[j]]    = 1; 
+//                tt_ev->covered[neighbor_list[j]]    = 1;
 //            }
 //
 //            //Increment the phase value
@@ -515,7 +515,7 @@ void topo_polarstar::routeUntimedData(int port, internal_router_event* ev, std::
             for (int j=0; j < node_links; j++) {
 
                 outPorts.push_back(j+hosts_per_router);
-                tt_ev->covered[neighbor_list[j]]    = 1; 
+                tt_ev->covered[neighbor_list[j]]    = 1;
             }
 
             //Increment the phase value
@@ -585,7 +585,7 @@ int topo_polarstar::getRouterID(int endpoint) {
 
 int topo_polarstar::getDestLocalPort(int node){
 
-    return (int) node % hosts_per_router ; 
+    return (int) node % hosts_per_router ;
 
 }
 

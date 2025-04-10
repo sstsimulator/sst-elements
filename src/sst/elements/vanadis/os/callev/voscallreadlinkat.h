@@ -25,8 +25,8 @@ class VanadisSyscallReadLinkAtEvent : public VanadisSyscallEvent {
 public:
     VanadisSyscallReadLinkAtEvent() : VanadisSyscallEvent() {}
     VanadisSyscallReadLinkAtEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t dirfd, uint64_t pathname, uint64_t buf, int64_t bufsize)
-        : VanadisSyscallEvent(core, thr, bittype), dirfd(dirfd), pathname(pathname), buf(buf), bufsize(bufsize) {} 
-        
+        : VanadisSyscallEvent(core, thr, bittype), dirfd(dirfd), pathname(pathname), buf(buf), bufsize(bufsize) {}
+
     VanadisSyscallOp getOperation() override { return SYSCALL_OP_READLINKAT; }
 
     uint64_t getDirfd() const { return dirfd; }
@@ -44,7 +44,7 @@ private:
     }
     ImplementSerializable(SST::Vanadis::VanadisSyscallReadLinkAtEvent);
 
-    uint64_t dirfd; 
+    uint64_t dirfd;
     uint64_t pathname;
     uint64_t buf;
     int64_t  bufsize;

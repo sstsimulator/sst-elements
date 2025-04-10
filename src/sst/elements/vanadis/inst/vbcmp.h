@@ -69,15 +69,15 @@ public:
             phys_int_regs_in[1], offset, getInstructionAddress() + offset);
     }
 
-    void log(SST::Output* output, int verboselevel, uint32_t sw_thr,  bool compare_result, 
-                            uint16_t phys_int_regs_in_0,uint16_t phys_int_regs_in_1) 
-                                    
+    void log(SST::Output* output, int verboselevel, uint32_t sw_thr,  bool compare_result,
+                            uint16_t phys_int_regs_in_0,uint16_t phys_int_regs_in_1)
+
     {
         #ifdef VANADIS_BUILD_DEBUG
         if(output->getVerboseLevel() >= verboselevel) {
             std::ostringstream ss;
             ss << "hw_thr="<<getHWThread()<<" sw_thr="<<sw_thr<<" Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
-            ss << "(" << convertCompareTypeToString(compare_type) << ")"; 
+            ss << "(" << convertCompareTypeToString(compare_type) << ")";
             ss << " isa-in: " << isa_int_regs_in[0] << ", " << isa_int_regs_in[1];
             ss << " / phys-in: " << phys_int_regs_in_0 << ", " << phys_int_regs_in_1;
             ss << " offset: " <<  offset << " = " << getInstructionAddress() + offset ;
@@ -98,7 +98,7 @@ public:
 
         if ( *compare_result ) {
             takenAddress = (uint64_t)(((int64_t)getInstructionAddress()) + offset);
-            
+
         }
         else {
             takenAddress = calculateStandardNotTakenAddress();

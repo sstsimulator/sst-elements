@@ -27,12 +27,12 @@
  *  - Statistics
  *
  * Description
- *  The component has two ports and one port vector. The 'port_handler' port uses an Event handler 
- *  to manage event arrival. The 'port_polled' port is polled using a clock function. The 
- *  'port_vector%d' vector of ports is a set of ports named port_vector0, port_vector1, etc. These 
+ *  The component has two ports and one port vector. The 'port_handler' port uses an Event handler
+ *  to manage event arrival. The 'port_polled' port is polled using a clock function. The
+ *  'port_vector%d' vector of ports is a set of ports named port_vector0, port_vector1, etc. These
  *  ports are handled using an Event handler like the 'port_handler' port.
  *  The component also has a staatistic for each port that counts the number of bytes received on the port.
- *  All ports expect events of type 'simpleElementExample::basicEvent', which include 
+ *  All ports expect events of type 'simpleElementExample::basicEvent', which include
  *
  * Simulation
  *  The component configures each link and creates a clock so that it can poll the polled port. It
@@ -56,7 +56,7 @@ class basicLinks : public SST::Component
 public:
 
 /*
- *  SST Registration macros register Components with the SST Core and 
+ *  SST Registration macros register Components with the SST Core and
  *  document their parameters, ports, etc.
  *  SST_ELI_REGISTER_COMPONENT is required, the documentation macros
  *  are only required if relevant
@@ -85,10 +85,10 @@ public:
         {"port_polled",     "Link to another component. This port uses polling to capture incoming events.", { "simpleElementExample.basicEvent", ""} },
         {"port_vector%(portnum)d", "Link(s) to another component. These ports demonstrate creating a vector of ports from one port name. Connect port_vector0, port_vector1, etc.", {"simpleElementExample.basicEvent"} },
     )
-    
+
     // Document the statistics that this component provides
     // { "statistic_name", "description", "units", enable_level }
-    SST_ELI_DOCUMENT_STATISTICS( 
+    SST_ELI_DOCUMENT_STATISTICS(
         {"EventSize_PortHandler", "Records the payload size of each event received on the port_handler port", "bytes", 1},
         {"EventSize_PortPolled", "Records the payload size of each event received on the port_polled port", "bytes", 1},
         {"EventSize_PortVector", "Records the payload size of each event received on the port_vector port(s)", "bytes", 1},
@@ -101,7 +101,7 @@ public:
 
     // Constructor. Components receive a unique ID and the set of parameters that were assigned in the Python input.
     basicLinks(SST::ComponentId_t id, SST::Params& params);
-    
+
     // Destructor
     ~basicLinks();
 
@@ -135,7 +135,7 @@ private:
     SST::Link* linkHandler;
     SST::Link* linkPolled;
     std::vector<SST::Link*> linkVector;
-    
+
     // Statistics
     Statistic<uint64_t>* stat_portHandler;
     Statistic<uint64_t>* stat_portPolled;

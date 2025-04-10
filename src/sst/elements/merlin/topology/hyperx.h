@@ -234,7 +234,7 @@ public:
             vcs_per_vn[i] = vns[i].num_vcs;
         }
     }
-    
+
 protected:
     virtual int choose_multipath(int start_port, int num_ports);
 

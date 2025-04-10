@@ -8,10 +8,10 @@ def getWorkFlow( defaults ):
     workFlow.append( motif )
 
 	# numNodes = 0 implies use all nodes on network
-    numNodes = 0 
-    numCores = 1 
+    numNodes = 0
+    numCores = 1
 
-    return workFlow, numNodes, numCores 
+    return workFlow, numNodes, numCores
 
 def getNetwork():
 
@@ -25,7 +25,7 @@ def getNetwork():
 	topo = 'torus'
 	shape = '2x2x2'
 
-	return platform, topo, shape 
+	return platform, topo, shape
 
 def getDetailedModel():
     return "","",[]

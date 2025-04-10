@@ -78,25 +78,25 @@ public:
         for(auto q_itr = pending_execute.begin(); q_itr != pending_execute.end();) {
             VanadisFunctionalUnitInsRecord* q_item = (*q_itr);
 
-            if(q_item->readyToExecute()) 
+            if(q_item->readyToExecute())
             {
                 VanadisInstruction* inner_ins = q_item->getInstruction();
                 inner_ins->execute(output, regFile);
 
-                if(LIKELY(inner_ins->completedExecution())) 
+                if(LIKELY(inner_ins->completedExecution()))
                 {
                     // Delete the record entry for functional unit if the instruction marked itself executed
                     delete q_item;
 
                     // ready to execute, remove from pending queue
                     q_itr = pending_execute.erase(q_itr);
-                } 
-                else 
+                }
+                else
                 {
                     q_itr++;
                 }
-            } 
-            else 
+            }
+            else
             {
                 q_item->tick();
                 q_itr++;

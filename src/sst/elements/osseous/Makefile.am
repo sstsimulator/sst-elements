@@ -2,7 +2,7 @@
 #
 #
 INCLUDE = -I$(top_srcdir)/src/sst/elements/osseous/eras_datatypes/ -I$(top_srcdir)/src/sst/elements/ariel/
-FLAGS = -fpermissive -std=c++11 
+FLAGS = -fpermissive -std=c++11
 
 
 AM_CPPFLAGS += \
@@ -24,7 +24,7 @@ librtlcomponent_la_SOURCES = \
 	rtl_header.h \
 	rtlreadev.h \
 	AXI_port.h \
-	rtlwriteev.h 
+	rtlwriteev.h
 
 EXTRA_DIST = \
 			 eras_datatypes/sint.h \

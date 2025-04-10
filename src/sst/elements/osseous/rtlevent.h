@@ -24,7 +24,7 @@ using namespace SST;
 using namespace std;
 
 namespace SST {
-    namespace RtlComponent { 
+    namespace RtlComponent {
 
 class RTLEvent : public SST::Event {
 public:
@@ -33,7 +33,7 @@ public:
          update_eval_args, sim_done;
     uint64_t sim_cycles;
     RTLEvent() : SST::Event() {
-        //output.init("RtlEvent-" + getName() + "-> ", 1, 0, SST::Output::STDOUT); 
+        //output.init("RtlEvent-" + getName() + "-> ", 1, 0, SST::Output::STDOUT);
         output.init("Rtlmodel->", 1, 0, SST::Output::STDOUT);
     }
 

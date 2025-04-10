@@ -70,7 +70,7 @@ namespace Vanadis {
 class VanadisFstatatSyscall : public VanadisSyscall {
 public:
     VanadisFstatatSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallFstatAtEvent* event )
-        : VanadisSyscall( os, coreLink, process, event, "fstatat" ), m_state( READ ) 
+        : VanadisSyscall( os, coreLink, process, event, "fstatat" ), m_state( READ )
     {
 	    m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL, "[syscall-fstatat] dirfd=%" PRIu64 " pathaname=%#" PRIx64 " statbuf=%#" PRIx64 " flags=%#" PRIx64 "\n",
                 event->getDirfd(), event->getPathname(), event->getStatbuf(), event->getFlags() );
@@ -110,7 +110,7 @@ public:
     }
 #endif
 
- #if 0       
+ #if 0
 	    auto fd = process->getFileDescriptor( event->getFileHandle());
         if (-1 == fd ) {
             m_output->verbose(CALL_INFO, 16, 0,
@@ -129,7 +129,7 @@ public:
                 statBuf.resize(sizeof(struct stat_64));
             }
             setReturnSuccess(0);
-#endif            
+#endif
 #if 0
             if (  <= 2) {
                 if (0 == fstatat(fstatat_ev->getFileHandle(), &stat_output)) {

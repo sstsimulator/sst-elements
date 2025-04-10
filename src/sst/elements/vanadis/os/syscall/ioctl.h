@@ -25,7 +25,7 @@ namespace Vanadis {
 class VanadisIoctlSyscall : public VanadisSyscall {
 public:
     VanadisIoctlSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallIoctlEvent* event )
-        : VanadisSyscall( os, coreLink, process, event, "ioctl" ) 
+        : VanadisSyscall( os, coreLink, process, event, "ioctl" )
     {
         m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,
                             "[syscall-ioctl] ioctl( %" PRId64 ", r: %c / w: %c / ptr: 0x%" PRI_ADDR " / size: %" PRIu64

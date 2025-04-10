@@ -35,12 +35,12 @@ public:
     FileDescriptor( const FileDescriptor& obj ) {
         path=obj.path;
 
-        int flags = fcntl(obj.fd, F_GETFL); 
+        int flags = fcntl(obj.fd, F_GETFL);
 
-        // the mode could be 0 which will prevent us from opening it, so temporarily change the mode to RWX 
+        // the mode could be 0 which will prevent us from opening it, so temporarily change the mode to RWX
         // but first we need to get the actual mode so we can set it after the open
 
-        off_t pos = lseek( obj.fd, 0, SEEK_CUR ); 
+        off_t pos = lseek( obj.fd, 0, SEEK_CUR );
         assert( -1 != pos );
 
         struct stat buf;
@@ -53,7 +53,7 @@ public:
 
         assert( 0 == fchmod( obj.fd, buf.st_mode ) );
 
-        pos = lseek( obj.fd, pos, SEEK_SET ); 
+        pos = lseek( obj.fd, pos, SEEK_SET );
         assert( -1 != pos );
 
         //printf("%s() %s oldfd=%d flags=%#x mode=%#x newfd=%d\n",__func__,path.c_str(), obj.fd,flags,buf.st_mode,fd);
@@ -140,13 +140,13 @@ protected:
 class FileDescriptorTable {
 
 public:
-    FileDescriptorTable( int maxFd ) : m_maxFD(maxFd), m_refCnt(1) {} 
+    FileDescriptorTable( int maxFd ) : m_maxFD(maxFd), m_refCnt(1) {}
 
     void update( FileDescriptorTable* old ) {
         for ( const auto& kv: old->m_fileDescriptors ) {
             if ( m_fileDescriptors.find(kv.first) == m_fileDescriptors.end()) {
                 m_fileDescriptors[kv.first] = new FileDescriptor( *kv.second );
-            }             
+            }
         }
     }
 
@@ -156,9 +156,9 @@ public:
         }
     }
 
-    void decRefCnt() { 
+    void decRefCnt() {
         assert( m_refCnt > 0 );
-        --m_refCnt; 
+        --m_refCnt;
     };
     void incRefCnt() { ++m_refCnt; };
 
@@ -166,16 +166,16 @@ public:
 
     int close( int fd ) {
         if (m_fileDescriptors.find(fd) == m_fileDescriptors.end()) {
-            return -EBADF; 
-        } 
+            return -EBADF;
+        }
         delete m_fileDescriptors[fd];
         m_fileDescriptors.erase(fd);
-        
+
         return 0;
     }
 
     int open(std::string file_path, int flags, mode_t mode, int fd = -1 ){
-        if ( -1 == fd ) { 
+        if ( -1 == fd ) {
             fd = findFreeFd();
         }
         if ( fd >= 0 ) {
@@ -193,19 +193,19 @@ public:
         int fd = findFreeFd();
         if ( fd >= 0 ) {
             try {
-                m_fileDescriptors[fd] = new FileDescriptor(file_path,dirfd,flags,mode); 
+                m_fileDescriptors[fd] = new FileDescriptor(file_path,dirfd,flags,mode);
             } catch ( int err ) {
                 fd = -err;
             }
         }
         return fd;
-    } 
+    }
 
     int findFreeFd() {
         int fd = 3;
         while (m_fileDescriptors.find(fd) != m_fileDescriptors.end() && fd < m_maxFD) {
             fd++;
-        } 
+        }
         if ( m_maxFD == fd ) {
             fd = -EMFILE;
         }
@@ -254,7 +254,7 @@ public:
             int fd;
             assert( 1 == fscanf(fp,"fd: %d\n", &fd ) );
             output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"fd: %d\n", fd );
-            m_fileDescriptors[fd] = new FileDescriptor(output, fp); 
+            m_fileDescriptors[fd] = new FileDescriptor(output, fp);
         }
 
         tmp = nullptr;

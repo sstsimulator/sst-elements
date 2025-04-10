@@ -51,7 +51,7 @@ public:
   OperatingSystemCL(SST::ComponentId_t id, SST::Params& params, NodeCL* parent);
 
   ~OperatingSystemCL()
-  { 
+  {
     delete compute_sched_;
   }
 

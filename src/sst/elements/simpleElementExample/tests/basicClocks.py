@@ -8,9 +8,9 @@ import sst
 #
 # The output is:
 #   1. For each clock registered, print the frequency/period it was registered with ("Registering clockX at ...")
-#       - Clock1 is registerd with a UnitAlgebra type and that print statement shows some strings that can be acquired from 
+#       - Clock1 is registerd with a UnitAlgebra type and that print statement shows some strings that can be acquired from
 #         a UnitAlgebra. See basicClocks.cc.
-#   2. 10 messages (as long as clockTicks >= 10), that list the current cycle count for each clock and for the simulation, 
+#   2. 10 messages (as long as clockTicks >= 10), that list the current cycle count for each clock and for the simulation,
 #      as well as the current simulation time in nanoseconds
 #       - Lines look like: "Clock0 cycles: 150, Clock1 cycles: 30, Clock2 cycles: 10, SimulationCycles: 150000, Simulation ns: 150"
 #   3. 10 messages from each of clock1 and clock2 which are printed during their clock handlers
@@ -42,7 +42,7 @@ import sst
 component = sst.Component("ClockComponent", "simpleElementExample.basicClocks")
 
 ### Parameterize the component.
-# Run 'sst-info simpleElementExample.basicClocks' at the command line 
+# Run 'sst-info simpleElementExample.basicClocks' at the command line
 # to see parameter documentation
 params = {
         "clock0" : "1GHz",  # Clocks can be specified as a frequency or a period.

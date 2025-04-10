@@ -41,7 +41,7 @@ public:
     VanadisMultiplyHighInstruction* clone() override { return new VanadisMultiplyHighInstruction(*this); }
 
     VanadisFunctionalUnitType getInstFuncType() const override { return INST_INT_ARITH; }
-    
+
     const char*               getInstCode() const override
     {
         if( std::is_signed<gpr_format_1>::value && std::is_signed<gpr_format_2>::value ) {
@@ -64,8 +64,8 @@ public:
             phys_int_regs_in[1]);
     }
 
-    void instOp(VanadisRegisterFile* regFile, 
-                            uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0, 
+    void instOp(VanadisRegisterFile* regFile,
+                            uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0,
                             uint16_t phys_int_regs_in_1) override
     {
 
@@ -89,7 +89,7 @@ public:
         } else {
             assert(0);
         }
-        
+
         regFile->setIntReg<uint64_t>( phys_int_regs_out_0, result );
     }
 };

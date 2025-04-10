@@ -18,7 +18,7 @@ Basic Concepts
 -------------------------------
 - basicClocks       : Clocks, clock handlers, time converters, UnitAlgebra for error checking
 - basicLinks        : Event handlers, multiple links, optional ports, polling links, port vectors
-- basicParams       : Parsing different parameter types, UnitAlgebra, parameter arrays, required and 
+- basicParams       : Parsing different parameter types, UnitAlgebra, parameter arrays, required and
                       default parameter values
 - basicStatistics0  : C++: Statistic types, statistics with SubIDs, obtaining multiple pointers to the same statistic
                       Python: Print statistics with various output formats (CSV, string, etc.)

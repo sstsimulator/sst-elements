@@ -48,11 +48,11 @@ public:
         snprintf(buffer, buffer_size, "JL      %" PRIu64 " (0x%" PRI_ADDR ")", takenAddress, takenAddress);
     }
 
-    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
                 uint64_t link_val, uint16_t phys_int_regs_out0, uint64_t takenAddr)
     {
         #ifdef VANADIS_BUILD_DEBUG
-        if(output->getVerboseLevel() >= verboselevel) 
+        if(output->getVerboseLevel() >= verboselevel)
         {
             output->verbose(
                 CALL_INFO, verboselevel, 0,

@@ -94,11 +94,11 @@ public:
         instOp(regFile,phys_fp_regs_out_0, phys_fp_regs_out_1,
                                 phys_fp_regs_in_0,phys_fp_regs_in_1);
         log(output, 16, 65535,phys_fp_regs_out_0,phys_fp_regs_in_0);
-        
+
         markExecuted();
     }
 
-    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
                             uint16_t phys_fp_regs_out_0,uint16_t phys_fp_regs_in_0) override
     {
         #ifdef VANADIS_BUILD_DEBUG
@@ -113,7 +113,7 @@ public:
         #endif
     }
 
-    void instOp(VanadisRegisterFile* regFile, 
+    void instOp(VanadisRegisterFile* regFile,
                                 uint16_t phys_fp_regs_out_0, uint16_t phys_fp_regs_out_1,
                                 uint16_t phys_fp_regs_in_0,uint16_t phys_fp_regs_in_1)
     {

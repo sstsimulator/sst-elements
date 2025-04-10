@@ -132,7 +132,7 @@ protected:
     int dlevel;
 
     MemBackendConvertor*    memBackendConvertor_;
-    
+
     Backend::Backing*       backing_;
     std::string backing_outfile_;
 

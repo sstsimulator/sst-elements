@@ -12,7 +12,7 @@ Copyright (c) 2009-2025, NTESS
 
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, 
+Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
     * Redistributions of source code must retain the above copyright
@@ -232,7 +232,7 @@ class Transport {
   virtual void freeWorkspace(void* buf, uint64_t size) = 0;
 
   virtual int* nidlist() const = 0;
-  
+
   /**
    Check if a message has been received on a specific completion queue.
    Message returned is removed from the internal queue.
@@ -285,7 +285,7 @@ class Transport {
 
   SST::Hg::TimeDelta activeDelay(SST::Hg::Timestamp time);
 
- private:      
+ private:
   virtual void send(Message* m) = 0;
 
  protected:

@@ -52,7 +52,7 @@ public:
     typedef MemBackendConvertor::ReqId ReqId;
     MemBackend();
 
-    MemBackend(ComponentId_t id, Params &params) : SubComponent(id) { 
+    MemBackend(ComponentId_t id, Params &params) : SubComponent(id) {
         uint32_t output_location = params.find<uint32_t>("debug", 0);
         if (output_location == 0) {
             params.find<uint32_t>("debug_location", 0);

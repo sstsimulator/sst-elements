@@ -22,7 +22,7 @@ def initializeTestModule_SingleInstance(class_inst):
         # Put your single instance Init Code Here
         print("Initializing balar test files...")
         class_inst._setupbalarTestFiles()
-        # Unset 
+        # Unset
         log_debug("Unsetting env vars: VANADIS_EXE VANADIS_ARGS")
         os.environ["VANADIS_EXE"] = ""
         os.environ["VANADIS_ARGS"] = ""
@@ -57,7 +57,7 @@ class BalarTestCase(SSTTestCase):
                 f = dec(f)
             return f
         return composed
-    
+
     def balar_basic_unittest(test):
         def wrapper(*args):
             self = args[0]
@@ -254,7 +254,7 @@ class BalarTestCase(SSTTestCase):
 
             ## Heartwall
             "rodinia-2.0-heartwall-1": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/heartwall-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/heartwall-rodinia-2.0-ft/", f"./data/test.avi 1 ./data/result-1.txt"],
-            
+
             ## Hotspot
             "rodinia-2.0-hotspot-30-6-40": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/hotspot-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/hotspot-rodinia-2.0-ft/", f"30 6 40 ./data/result_30_6_40.txt ./data/temp.dat ./data/power.dat"],
 
@@ -277,7 +277,7 @@ class BalarTestCase(SSTTestCase):
 
             ## Srad_v2
             "rodinia-2.0-srad_v2-128x128": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/srad_v2-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/srad_v2-rodinia-2.0-ft", f"./data/matrix128x128.txt 0 127 0 127 .5 2 ./data/result_matrix128x128_1_150_1_100_.5_2.txt"],
-            
+
             ## Streamcluster
             "rodinia-2.0-streamcluster-3_6_16_1024_1024_100_none_1": [f"{gpu_app_collection_root}/bin/{cuda_version_num}/release/streamcluster-rodinia-2.0-ft", f"{gpu_app_collection_root}/data_dirs/cuda/rodinia/2.0-ft/streamcluster-rodinia-2.0-ft", f"3 6 16 1024 1024 100 none output.txt 1 ./data/result_3_6_16_1024_1024_100_none_1.txt"]
         }
@@ -298,7 +298,7 @@ class BalarTestCase(SSTTestCase):
             testcase_data_dir = f"{testcase_dir}/data"
             os.makedirs(testcase_dir)
             os_symlink_dir(f"{data_dir}/data", testcase_data_dir)
-            
+
             # Also link config files as we are changing the cwd to here
             os_symlink_file(self.testbalarDir, testcase_dir, "gpu-v100-mem.cfg")
             os_symlink_file(self.testbalarDir, testcase_dir, "gpgpusim.config")
@@ -358,7 +358,7 @@ class BalarTestCase(SSTTestCase):
     def _setupbalarTestFiles(self):
         # NOTE: This routine is called a single time at module startup, so it
         #       may have some redunant
-        
+
         nthreads = test_engine_globals.TESTENGINE_THREADLIMIT
         log_debug(f"_setupbalarTestFiles() Running, make with {nthreads}")
         test_path = self.get_testsuite_dir()
@@ -388,7 +388,7 @@ class BalarTestCase(SSTTestCase):
         # Create a simlink of each file in the balar/tests/vectorAdd directory
         for f in os.listdir(self.balarElementVectorAddTestDir):
             os_symlink_file(self.balarElementVectorAddTestDir, self.testbalarVectorAddDir, f)
-        
+
         # Create a simlink of each file in the balar/tests/vanadisHandshake directory
         for f in os.listdir(self.balarElementVanadisHandshakeTestDir):
             os_symlink_file(self.balarElementVanadisHandshakeTestDir, self.testbalarVanadisHandshakeDir, f)
@@ -396,7 +396,7 @@ class BalarTestCase(SSTTestCase):
         # Create a simlink of each file in the balar/tests/vanadisLLVMRISCV directory
         for f in os.listdir(self.balarElementLLVMVanadisTestDir):
             os_symlink_file(self.balarElementLLVMVanadisTestDir, self.testbalarLLVMVanadisDir, f)
-        
+
         # Now build the vectorAdd example
         cmd = "make"
         rtn = OSCommand(cmd, set_cwd=self.testbalarVectorAddDir).run()

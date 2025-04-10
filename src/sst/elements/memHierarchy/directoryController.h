@@ -163,7 +163,7 @@ private:
     uint32_t    cacheLineSize;
 
     /* Range of addresses supported by this directory */
-    MemRegion   region; 
+    MemRegion   region;
     Addr        memOffset; // Stack addresses if multiple DCs handle the same memory
 
     /* Timestamp & latencies */
@@ -269,7 +269,7 @@ public:
     bool handleFetchResp(MemEvent* event, bool inMSHR);
     bool handleFetchXResp(MemEvent* event, bool inMSHR);
     bool handleNACK(MemEvent* event, bool inMSHR);
-    
+
     bool handleDirEntryResponse(MemEvent* event);
 
     void sendOutgoingEvents();
@@ -402,7 +402,7 @@ private:
     void sendAckInv(MemEvent* event);
     void sendAckPut(MemEvent* event);
     void sendNACK(MemEvent* event);
-    
+
     void processCompleteEvent(MemEventInit* event);
 
     MSHR * mshr;
@@ -438,9 +438,9 @@ private:
     FlushState flush_state_;
 
     std::map<Addr, std::map<std::string, MemEventBase::id_type> > responses;
-    
+
     std::map<MemEventBase::id_type, Addr> dirMemAccesses;
-    
+
     CoherenceProtocol protocol;
     bool waitWBAck;
     bool sendWBAck;

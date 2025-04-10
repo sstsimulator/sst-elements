@@ -53,7 +53,7 @@ public:
     void init(unsigned int phase);
     void setup();
 
-    
+
 private:
     SST::Interfaces::SimpleNetwork* link_control;
 

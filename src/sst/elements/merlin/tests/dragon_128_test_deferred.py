@@ -55,13 +55,13 @@ if __name__ == "__main__":
 
     networkif_ro = ReorderLinkControl()
     networkif_ro.network_interface = networkif
-    
+
     ep = TestJob(0,topo.getNumNodes())
     ep.network_interface = networkif_ro
     #ep.num_messages = 10
     #ep.message_size = "8B"
     #ep.send_untimed_bcast = False
-    
+
     system = System()
     system.setTopology(topo)
 
@@ -109,13 +109,13 @@ if __name__ == "__main__":
 
     networkif_ro = ReorderLinkControl()
     networkif_ro.network_interface = networkif
-    
+
     ep = TestJob(0,topo.getNumNodes())
     ep.network_interface = networkif_ro
     #ep.num_messages = 10
     #ep.message_size = "8B"
     #ep.send_untimed_bcast = False
-    
+
     system = System()
     system.setTopology(topo)
 

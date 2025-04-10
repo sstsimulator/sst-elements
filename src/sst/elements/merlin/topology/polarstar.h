@@ -34,27 +34,27 @@ public:
 
 
     int hop_count; //Count no of hops this packet has taken so far
-     
+
     bool non_minimal;
     int valiant;
 
     topo_polarstar_event() {}
-    topo_polarstar_event(int hcount) : non_minimal(false) {	
-        
+    topo_polarstar_event(int hcount) : non_minimal(false) {
+
         hop_count = hcount;
-        
+
      }
     virtual ~topo_polarstar_event() {}
 
     virtual internal_router_event* clone(void) override
     {
         return new topo_polarstar_event(*this);
-         
+
     }
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         internal_router_event::serialize_order(ser);
-        
+
         ser & hop_count;
         ser & non_minimal;
         ser & valiant;
@@ -90,7 +90,7 @@ public:
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         topo_polarstar_event::serialize_order(ser);
         ser & phase;
-        ser & total_routers; 
+        ser & total_routers;
         ser & covered;
     }
 
@@ -175,7 +175,7 @@ public:
     Statistic<uint32_t>* hopcount6;
 
 
-    
+
 public:
     topo_polarstar(ComponentId_t cid, Params& params, int num_ports, int rtr_id, int num_vns);
     ~topo_polarstar();
@@ -201,7 +201,7 @@ public:
             vcs_per_vn[i] = num_vcs;
         }
     }
-    
+
 protected:
     //virtual int choose_multipath(int start_port, int num_ports, int dest_dist);
 
@@ -219,7 +219,7 @@ private:
    void dumpHopCount(topo_polarstar_event* ev);
 
    void setOutputQueueLengthsArray(int const* array, int vcs);
-   void setOutputBufferCreditArray(int const* array, int vcs); 
+   void setOutputBufferCreditArray(int const* array, int vcs);
 
 };
 

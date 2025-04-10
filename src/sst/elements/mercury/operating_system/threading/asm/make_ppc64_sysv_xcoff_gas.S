@@ -1,6 +1,6 @@
 	.globl	make_fcontext[DS]
 	.globl .make_fcontext[PR]
-	.align 2 
+	.align 2
 	.csect .make_fcontext[PR], 3
 	.globl _make_fcontext
 #._make_fcontext:

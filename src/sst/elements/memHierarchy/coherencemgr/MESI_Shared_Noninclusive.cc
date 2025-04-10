@@ -621,7 +621,7 @@ bool MESISharNoninclusive::handleFlushLineInv(MemEvent* event, bool inMSHR) {
 
 bool MESISharNoninclusive::handleFlushAll(MemEvent* event, bool inMSHR) {
     eventDI.prefill(event->getID(), Command::FlushAll, "", 0, State::NP);
-    
+
     if (!flush_manager_) {
         if (!inMSHR) {
             MemEventStatus status = mshr_->insertFlush(event, false, true);
@@ -653,7 +653,7 @@ bool MESISharNoninclusive::handleFlushAll(MemEvent* event, bool inMSHR) {
             return true;
         }
     }
-    
+
     switch (flush_state_) {
         case FlushState::Ready:
         {
@@ -720,10 +720,10 @@ bool MESISharNoninclusive::handleFlushAll(MemEvent* event, bool inMSHR) {
 }
 
 bool MESISharNoninclusive::handleForwardFlush(MemEvent* event, bool inMSHR) {
-    /* Flushes are ordered by the FlushManager and coordinated by the FlushHelper at each level 
-     * of the hierarchy. Only one cache in a set of distributed caches is the FlushHelper; 
+    /* Flushes are ordered by the FlushManager and coordinated by the FlushHelper at each level
+     * of the hierarchy. Only one cache in a set of distributed caches is the FlushHelper;
      * whereas private caches and monolithic shared caches are the FlushHelper.
-     * 
+     *
      * If FlushHelper - propagate Flush upwards and notify peers when done
      * If not FlushHelper - wait to be contacted by FlushHelper before flushing locally
      */
@@ -789,14 +789,14 @@ bool MESISharNoninclusive::handleForwardFlush(MemEvent* event, bool inMSHR) {
                 break;
         } /* End switch */
         return true;
-    
+
     /* Not the flush helper; Event is from flush helper */
     } else if ( isPeer(event->getSrc()) ) {
         if (mshr_->getSize() != mshr_->getFlushSize()) { // Drain outstanding Put* before invalidating cache
             mshr_->incrementFlushCount(mshr_->getSize() - mshr_->getFlushSize());
             eventDI.action = "Drain";
             flush_state_ = FlushState::Drain;
-            
+
         } else {
             bool evictionNeeded = false;
             for (auto it : *dirArray_) {
@@ -818,23 +818,23 @@ bool MESISharNoninclusive::handleForwardFlush(MemEvent* event, bool inMSHR) {
                 sendResponseUp(event, nullptr, true, timestamp_);
                 mshr_->removeFlush();
                 delete event;
-                flush_state_ = FlushState::Forward; 
+                flush_state_ = FlushState::Forward;
                 /* A bit backwards from flush helper/manager - here Forward means OK to execute another ForwardFlush */
                 if ( mshr_->getFlush() != nullptr ) {
                     retryBuffer_.push_back(mshr_->getFlush());
                 }
             }
         }
-    
+
     /* Already handled ForwardFlush from flush helper/manager, retire ForwardFlush from peer */
-    } else if (flush_state_ == FlushState::Forward) { 
+    } else if (flush_state_ == FlushState::Forward) {
         if (inMSHR) mshr_->removeFlush();
         sendResponseDown(event, nullptr, false, false);
         delete event;
         flush_state_ = FlushState::Ready;
-        return true;            
+        return true;
     }
-    /* Remaining case: This is a peer to the flush helper/manager and event is not from the helper/manager 
+    /* Remaining case: This is a peer to the flush helper/manager and event is not from the helper/manager
      * Wait until we've handled the event from peer helper/manager before handling this event
      */
 
@@ -1064,7 +1064,7 @@ bool MESISharNoninclusive::handlePutE(MemEvent * event, bool inMSHR) {
                 responses.erase(addr);
             sendWritebackAck(event);
             tag->setState(NextState[state]);
-            
+
             if (mshr_->decrementAcksNeeded(addr)) {
                 retry(addr);
                 cleanUpEvent(event, inMSHR);
@@ -1274,7 +1274,7 @@ bool MESISharNoninclusive::handlePutX(MemEvent * event, bool inMSHR) {
                 data->setData(event->getPayload(), 0);
             else
                 mshr_->setData(addr, event->getPayload());
-            
+
             if (mem_h_is_debug_addr(addr))
                 printDataValue(addr, &(event->getPayload()), true);
 
@@ -1291,7 +1291,7 @@ bool MESISharNoninclusive::handlePutX(MemEvent * event, bool inMSHR) {
                 data->setData(event->getPayload(), 0);
             else
                 mshr_->setData(addr, event->getPayload());
-            
+
             if (mem_h_is_debug_addr(addr))
                 printDataValue(addr, &(event->getPayload()), true);
 
@@ -1453,7 +1453,7 @@ bool MESISharNoninclusive::handleInv(MemEvent * event, bool inMSHR) {
         case S:
             if (tag->hasSharers() && !inMSHR) {
                 status = allocateMSHR(event, true, 0);
-                inMSHR = status != MemEventStatus::Reject; 
+                inMSHR = status != MemEventStatus::Reject;
             }
 
             if (status == MemEventStatus::OK) {
@@ -2340,7 +2340,7 @@ bool MESISharNoninclusive::handleFetchResp(MemEvent * event, bool inMSHR) {
         data->setData(event->getPayload(), 0);
     else
         mshr_->setData(addr, event->getPayload(), event->getDirty());
-    
+
     if (mem_h_is_debug_addr(addr))
         printDataValue(addr, &(event->getPayload()), true);
 
@@ -2447,7 +2447,7 @@ bool MESISharNoninclusive::handleFetchXResp(MemEvent * event, bool inMSHR) {
         data->setData(event->getPayload(), 0);
     else
         mshr_->setData(addr, event->getPayload(), event->getDirty());
-    
+
     if (mem_h_is_debug_addr(addr))
         printDataValue(addr, &(event->getPayload()), true);
 
@@ -2467,7 +2467,7 @@ bool MESISharNoninclusive::handleFetchXResp(MemEvent * event, bool inMSHR) {
 
 bool MESISharNoninclusive::handleAckFlush(MemEvent* event, bool inMSHR) {
     eventDI.prefill(event->getID(), Command::AckFlush, "", 0, State::NP);
-    
+
     mshr_->decrementFlushCount();
     if (mshr_->getFlushCount() == 0) {
         retryBuffer_.push_back(mshr_->getFlush());
@@ -2816,9 +2816,9 @@ DirectoryLine* MESISharNoninclusive::allocateDirLine(MemEvent * event, Directory
 bool MESISharNoninclusive::handleDirEviction(Addr addr, DirectoryLine*& tag) {
     if (!tag)
         tag = dirArray_->findReplacementCandidate(addr);
-    
+
     DataLine* data = dataArray_->lookup(tag->getAddr(), false);
-    if (data && data->getTag() != tag) data = nullptr; // Dataline not valid 
+    if (data && data->getTag() != tag) data = nullptr; // Dataline not valid
 
     State state = tag->getState();
 
@@ -3511,11 +3511,11 @@ void MESISharNoninclusive::removeSharerViaInv(MemEvent * event, DirectoryLine * 
 void MESISharNoninclusive::removeOwnerViaInv(MemEvent * event, DirectoryLine * tag, DataLine * data, bool remove) {
     Addr addr = event->getBaseAddr();
     tag->removeOwner();
-    if (data) 
+    if (data)
         data->setData(event->getPayload(), 0);
     else
         mshr_->setData(addr, event->getPayload());
-    
+
     if (mem_h_is_debug_addr(addr))
         printDataValue(addr, &(event->getPayload()), true);
 

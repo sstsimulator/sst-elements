@@ -21,7 +21,7 @@
 
 #define BUF_SIZE 100
 
-#define VALIDATE 1 
+#define VALIDATE 1
 
 int main( int argc, char* argv[] ) {
 
@@ -34,28 +34,28 @@ int main( int argc, char* argv[] ) {
 
 	printf("myNode=%d numNodes=%d\n",myNode,numNodes);
 	printf("buffer=%p\n",buf);
-		
+
 	int cq = rdma_create_cq( );
-	
+
 	int rq = rdma_create_rq( 0xbeef, cq );
-	
+
 	if ( myNode == 0 ) {
-#if VALIDATE 
+#if VALIDATE
 		for ( int i = 0; i < BUF_SIZE; i++ ) {
 			buf[i] = i;
 		}
 #endif
-		rdma_send_post( (void*)buf, BUF_SIZE * sizeof(uint32_t), 1, 0, 0xbeef, cq, 0xf00dbeef ); 
+		rdma_send_post( (void*)buf, BUF_SIZE * sizeof(uint32_t), 1, 0, 0xbeef, cq, 0xf00dbeef );
 
 		RdmaCompletion comp;
 		rdma_read_comp( cq, &comp, 1 );
-		
+
 	} else {
 
 		rdma_recv_post( (void*)buf, BUF_SIZE * sizeof(uint32_t), rq, 0x12345678 );
 		RdmaCompletion comp;
 		rdma_read_comp( cq, &comp, 1 );
-#if VALIDATE 
+#if VALIDATE
 		printf("validate\n");
 		for ( int i = 0; i < BUF_SIZE; i++ ) {
 			if ( buf[i] !=  i ) {

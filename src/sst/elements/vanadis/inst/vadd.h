@@ -26,7 +26,7 @@ template <typename gpr_format>
 class VanadisAddInstruction : public virtual VanadisInstruction
 {
     public:
-        VanadisAddInstruction(const uint64_t addr, const uint32_t hw_thr, 
+        VanadisAddInstruction(const uint64_t addr, const uint32_t hw_thr,
             const VanadisDecoderOptions* isa_opts, const uint16_t dest,
             const uint16_t src_1, const uint16_t src_2) :
             VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0)
@@ -58,7 +58,7 @@ class VanadisAddInstruction : public virtual VanadisInstruction
                 phys_int_regs_in[0], phys_int_regs_in[1]);
         }
 
-        
+
 
 
         void instOp(VanadisRegisterFile* regFile,
@@ -70,7 +70,7 @@ class VanadisAddInstruction : public virtual VanadisInstruction
             regFile->setIntReg<gpr_format>(phys_int_regs_out_0,src_1+src_2);
         }
 
-        
+
 };
 
 

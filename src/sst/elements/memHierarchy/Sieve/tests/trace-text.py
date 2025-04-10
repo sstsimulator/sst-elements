@@ -38,7 +38,7 @@ sst.enableStatisticForComponentType("memHierarchy.Sieve",
                                     "histogram_reads",
                                         {"type":"sst.HistogramStatistic",
                                          "minvalue" : "0",
-                                         "numbins"  : "6", 
+                                         "numbins"  : "6",
                                          "binwidth" : "4096",
                                          "addr_cutoff" : "16GiB"
                                          #"rate" : "100ns"
@@ -47,7 +47,7 @@ sst.enableStatisticForComponentType("memHierarchy.Sieve",
                                     "histogram_writes",
                                         {"type":"sst.HistogramStatistic",
                                          "minvalue" : "0",
-                                         "numbins"  : "6", 
+                                         "numbins"  : "6",
                                          "binwidth" : "4096",
                                          "addr_cutoff" : "16GiB"
                                          })

@@ -59,7 +59,7 @@ public:
         return peek_me;
     }
 
-    T peekAt(const size_t index) { 
+    T peekAt(const size_t index) {
         assert(index < count);
         return data[calculateIndex(index)];
     }

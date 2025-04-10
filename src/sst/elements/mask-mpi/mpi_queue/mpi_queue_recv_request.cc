@@ -12,7 +12,7 @@ Copyright (c) 2009-2025, NTESS
 
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, 
+Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
     * Redistributions of source code must retain the above copyright
@@ -61,17 +61,17 @@ MpiQueueRecvRequest::MpiQueueRecvRequest(
   int count,
   MPI_Datatype type,
   int source, int tag, MPI_Comm comm, void* buffer) :
-  queue_(queue), 
-  source_(source), 
-  tag_(tag), 
+  queue_(queue),
+  source_(source),
+  tag_(tag),
   comm_(comm),
-  seqnum_(0), 
-  final_buffer_(buffer), 
+  seqnum_(0),
+  final_buffer_(buffer),
   recv_buffer_(nullptr),
-  count_(count), 
+  count_(count),
   type_(queue->api()->typeFromId(type)),
-  key_(key), 
-  start_(start) 
+  key_(key),
+  start_(start)
 {
   if (isNonNullBuffer(buffer) && !type_->contiguous()){
     recv_buffer_ = new char[count*type_->packed_size()];

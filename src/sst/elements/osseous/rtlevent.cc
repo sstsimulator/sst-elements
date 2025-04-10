@@ -24,7 +24,7 @@ using namespace SST;
 using namespace SST::RtlComponent;
 
 void RTLEvent::UpdateRtlSignals(void *update_data, Rtlheader* cmodel, uint64_t& cycles) {
-    bool* update_rtl_params = (bool*)update_data; 
+    bool* update_rtl_params = (bool*)update_data;
     update_inp = update_rtl_params[0];
     update_ctrl = update_rtl_params[1];
     update_eval_args = update_rtl_params[2];
@@ -41,7 +41,7 @@ void RTLEvent::UpdateRtlSignals(void *update_data, Rtlheader* cmodel, uint64_t& 
     output.verbose(CALL_INFO, 1, 0, "update_inp: %d\n", update_inp);
     output.verbose(CALL_INFO, 1, 0, "update_ctrl: %d\n", update_ctrl);
     if(update_inp) {
-        inp_ptr =  (void*)cycles_ptr; 
+        inp_ptr =  (void*)cycles_ptr;
         input_sigs(cmodel);
     }
 
@@ -55,7 +55,7 @@ void RTLEvent::UpdateRtlSignals(void *update_data, Rtlheader* cmodel, uint64_t& 
 void RTLEvent::input_sigs(Rtlheader* cmodel) {
 
     cmodel->reset = UInt<1>(1);
-    //Cast all the variables to 4 byte UInt types for uniform storage for now. Later, we either will remove UInt and SInt and use native types. Even then we would need to cast the every variables based on type, width and order while storing in shmem and accordingly access it at runtime from shmem.   
+    //Cast all the variables to 4 byte UInt types for uniform storage for now. Later, we either will remove UInt and SInt and use native types. Even then we would need to cast the every variables based on type, width and order while storing in shmem and accordingly access it at runtime from shmem.
     UInt<4>* rtl_inp_ptr = (UInt<4>*)inp_ptr;
     cmodel->io_ins_0 = rtl_inp_ptr[0];
     cmodel->io_ins_1 = rtl_inp_ptr[1];
@@ -76,7 +76,7 @@ void RTLEvent::input_sigs(Rtlheader* cmodel) {
 
 void RTLEvent::control_sigs(Rtlheader* cmodel) {
 
-    output.verbose(CALL_INFO, 1, 0, "\nctrl_sigs called"); 
+    output.verbose(CALL_INFO, 1, 0, "\nctrl_sigs called");
     cmodel->reset = UInt<1>(1);
     UInt<1>* rtl_ctrl_ptr = (UInt<1>*)ctrl_ptr;
     cmodel->io_shift = rtl_ctrl_ptr[0];

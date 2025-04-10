@@ -1,4 +1,4 @@
-CXX=g++ 
+CXX=g++
 
 ompbarrier: ompbarrier.o
 	$(CXX) -O3 -o ompbarrier -fopenmp ompbarrier.o

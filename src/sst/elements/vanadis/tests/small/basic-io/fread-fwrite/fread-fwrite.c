@@ -27,10 +27,10 @@
 void writeData( const char *pathname );
 void readData( const char* pathname );
 
-static FILE* output; 
+static FILE* output;
 
 int main( int argc, char* argv[] ) {
-    output=stdout; 
+    output=stdout;
     writeData( PATH_NAME );
     readData( PATH_NAME );
     if ( unlink( PATH_NAME ) ) {
