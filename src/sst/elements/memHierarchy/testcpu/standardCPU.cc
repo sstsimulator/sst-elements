@@ -328,7 +328,7 @@ void standardCPU::serialize_order(SST::Core::Serialization::serializer& ser) {
     SST_SER(noncacheable_range_end_);
     SST_SER(noncacheable_size_);
     SST_SER(clock_ticks_);
-    SST_SER(init_write_count_);
+    SST_SER(init_count_);
     SST_SER(stat_requests_pending_per_cycle_);
     SST_SER(stat_num_reads_issued_);
     SST_SER(stat_num_writes_issued_);
