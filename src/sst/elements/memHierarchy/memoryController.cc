@@ -901,7 +901,7 @@ void MemController::serialize_order(SST::Core::Serialization::serializer& ser) {
 
     SST_SER(memBackendConvertor_);
     
-    //SST_SER(backing_);
+    SST_SER(backing_);
     SST_SER(backing_outfile_);
 
     SST_SER(link_);

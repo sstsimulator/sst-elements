@@ -950,7 +950,7 @@ StandardInterface::StandardInterface() : StandardMem() {}
  * Serialize function
 */
 void StandardInterface::serialize_order(SST::Core::Serialization::serializer& ser) {
-    //StandardMem::serialize_order(ser);
+    StandardMem::serialize_order(ser);
 
     SST_SER(output_);
     SST_SER(debug_);
@@ -959,22 +959,21 @@ void StandardInterface::serialize_order(SST::Core::Serialization::serializer& se
     SST_SER(base_addr_mask_);
     SST_SER(line_size_);
     SST_SER(rqstr_);
-    //SST_SER(requests_);
+    SST_SER(requests_);
     SST_SER(responses_);
     SST_SER(link_);
     SST_SER(cache_is_dst_);
 
     SST_SER(init_done_);
     SST_SER(init_send_queue_);
-    //SST_SER(init_recv_queue_);
+    SST_SER(init_recv_queue_);
 
     SST_SER(region_);
     SST_SER(endpoint_type_);
 
-    //SST_SER(noncacheable_regions_);
+    SST_SER(noncacheable_regions_);
 
     SST_SER(recv_handler_);
-    //SST_SER(converter_);
-    //SST_SER(untimed_converter_);
-
+    SST_SER(converter_);
+    SST_SER(untimed_converter_);
 }
