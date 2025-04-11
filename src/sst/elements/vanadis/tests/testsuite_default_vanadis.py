@@ -154,6 +154,7 @@ class testcase_vanadis(SSTTestCase):
 #####
 
     @parameterized.expand(vanadis_test_matrix, name_func=gen_custom_name)
+    @unittest.skipIf(not testing_check_is_nightly(), "vanadis_short_tests only runs on Nightly builds.")
     def test_vanadis_short_tests(self, testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, goldfiledir, timeout_sec):
         self._checkSkipConditions( isa )
 
