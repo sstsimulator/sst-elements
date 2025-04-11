@@ -18,6 +18,7 @@
 #include <iris/sumi/message.h>
 #include <iris/sumi/collective.h>
 #include <mercury/common/thread_safe_new.h>
+#include <sst/core/serialization/serializable.h>
 
 namespace SST::Iris::sumi {
 
@@ -127,7 +128,7 @@ class CollectiveWorkMessage final :
 
   static const char* tostr(int p);
 
-  void serialize_order(SST::Hg::serializer& ser) override;
+  void serialize_order(SST::Core::Serialization::serializer& ser) override;
 
   int tag() const {
     return tag_;

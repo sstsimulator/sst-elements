@@ -108,7 +108,6 @@ nobase_library_include_HEADERS = \
   common/event_handler.h \
   common/factory.h \
   common/node_address.h \
-  common/serializable.h \
   common/stl_string.h \
   common/thread_lock.h \
   common/thread_safe_int.h \
