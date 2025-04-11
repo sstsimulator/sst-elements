@@ -149,6 +149,7 @@ class testcase_EmberSweep(SSTTestCase):
 ####
 
     @parameterized.expand(sweep_test_matrix, name_func=gen_custom_name)
+    @unittest.skipIf(not testing_check_is_nightly(), "EmberSweep only runs on Nightly builds.")
     def test_EmberSweep(self, index, hex_dig, topo, net_args, test, test_args):
         self._checkSkipConditions(index)
 
