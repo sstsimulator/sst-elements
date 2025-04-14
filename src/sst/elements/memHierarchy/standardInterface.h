@@ -114,6 +114,11 @@ public:
     void complete(unsigned int phase) override;
     void finish() override;
 
+    // Serialization
+    StandardInterface();
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::MemHierarchy::StandardInterface)
+
     /* End API to Parent */
     
 protected:

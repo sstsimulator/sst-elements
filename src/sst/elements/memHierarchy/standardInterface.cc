@@ -79,7 +79,7 @@ StandardInterface::StandardInterface(SST::ComponentId_t id, Params &params, Time
     if (!link_)
         output_.fatal(CALL_INFO, -1, "%s, Error: unable to configure link. Three options: (1) Fill the 'lowlink' subcomponent slot and connect the subcomponent's port(s). (2) Connect this interface's 'lowlink' port. (3) Connect this interface's parent component's port and pass its name as a parameter to this interface.\n", getName().c_str());
     
-    link_->setRecvHandler( new SST::Event::Handler<StandardInterface>(this, &StandardInterface::receive));
+    link_->setRecvHandler( new SST::Event::Handler2<StandardInterface, &StandardInterface::receive>(this));
     link_->setName(getName());
 
     /* Set region to default (all addresses) */
@@ -935,4 +935,45 @@ void StandardInterface::MemEventConverter::debugChecks(MemEvent* me) {
                     iface->getName().c_str(), iface->base_addr_mask_, me->getVerboseString(iface->output_.getVerboseLevel()).c_str());
         }
     }
+}
+
+
+/********************************************************************************************
+ * Serialization functions
+ ********************************************************************************************/
+/*
+ * Default constructor
+*/
+StandardInterface::StandardInterface() : StandardMem() {}
+
+/*
+ * Serialize function
+*/
+void StandardInterface::serialize_order(SST::Core::Serialization::serializer& ser) {
+    StandardMem::serialize_order(ser);
+
+    SST_SER(output_);
+    SST_SER(debug_);
+    SST_SER(debug_level_);
+
+    SST_SER(base_addr_mask_);
+    SST_SER(line_size_);
+    SST_SER(rqstr_);
+    SST_SER(requests_);
+    SST_SER(responses_);
+    SST_SER(link_);
+    SST_SER(cache_is_dst_);
+
+    SST_SER(init_done_);
+    SST_SER(init_send_queue_);
+    SST_SER(init_recv_queue_);
+
+    SST_SER(region_);
+    SST_SER(endpoint_type_);
+
+    SST_SER(noncacheable_regions_);
+
+    SST_SER(recv_handler_);
+    SST_SER(converter_);
+    SST_SER(untimed_converter_);
 }
