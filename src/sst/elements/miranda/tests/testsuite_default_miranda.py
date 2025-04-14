@@ -26,9 +26,11 @@ class testcase_miranda_Component(SSTTestCase):
 
     @unittest.skipIf(testing_check_get_num_ranks() > 1, "miranda: test_miranda_randomgen skipped if ranks > 1")
     @unittest.skipIf(testing_check_get_num_threads() > 1, "miranda: test_miranda_randomgen skipped if threads > 1")
+    @unittest.skipIf(not testing_check_is_nightly(), "miranda_randomgen only runs on Nightly builds.")
     def test_miranda_randomgen(self):
         self.miranda_test_template("randomgen", testtimeout=360)
 
+    @unittest.skipIf(not testing_check_is_nightly(), "miranda_stencil3dbench only runs on Nightly builds.")
     def test_miranda_stencil3dbench(self):
         self.miranda_test_template("stencil3dbench")
 

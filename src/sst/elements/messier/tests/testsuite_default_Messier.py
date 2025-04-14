@@ -16,15 +16,18 @@ class testcase_Messier_Component(SSTTestCase):
 
 #####
 
+    @unittest.skipIf(not testing_check_is_nightly(), "Complete test_Messier_gupsgen only runs on Nightly builds.")
     def test_Messier_gupsgen(self):
         self.Messier_test_template("gupsgen")
 
+    @unittest.skipIf(not testing_check_is_nightly(), "Complete test_Messier_gupsgen only runs on Nightly builds.")
     def test_Messier_gupsgen_2RANKS(self):
         self.Messier_test_template("gupsgen_2RANKS")
 
     def test_Messier_gupsgen_fastNVM(self):
         self.Messier_test_template("gupsgen_fastNVM")
 
+    @unittest.skipIf(not testing_check_is_nightly(), "Complete test_Messier_gupsgen only runs on Nightly builds.")
     def test_Messier_stencil3dbench_messier(self):
         self.Messier_test_template("stencil3dbench_messier")
 

@@ -159,6 +159,9 @@ class testcase_vanadis(SSTTestCase):
 
         if MakeTests:
             self.makeTest( testname, isa, elftestdir, elffile )
+        # Only run the first 15 tests if we are not in a Nightly test
+        if not testing_check_is_nightly() and testnum > 15:
+            self.skipTest("Complete vanadis_short_tests only runs on Nightly builds.")
         log_debug("Running Vanadis test #{0} ({1}): elffile={4} in dir {3}, isa {5}; using sdl={2}".format(testnum, testname, sdlfile, elftestdir, elffile, isa, timeout_sec))
         self.vanadis_test_template(testnum, testname, sdlfile, elftestdir, elffile, isa, numCores, numHwThreads, goldfiledir, timeout_sec )
 
