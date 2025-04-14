@@ -1,11 +1,12 @@
-all-local: mpilauncher
 
-mpilauncher: mpilauncher.cc
-	 $(ARIEL_MPICXX) $(AM_CFLAGS) mpilauncher.cc -o mpilauncher
-fakepin: fakepin.cc
-	 $(ARIEL_MPICXX) fakepin.cc -o fakepin
+bin_PROGRAMS = mpilauncher fakepin
 
-bin_SCRIPTS = mpilauncher
+mpilauncher_SOURCES = mpilauncher.cc
 
-clean-local:
-	rm -f mpilauncher fakepin
+fakepin_SOURCES = fakepin.cc
+
+mpilauncher_CXX = $(ARIEL_MPICXX)
+fakepin_CXX = $(ARIEL_MPICXX)
+
+mpilauncher_CXXFLAGS = $(AM_CFLAGS)
+fakepin_CXXFLAGS = $(AM_CFLAGS)
