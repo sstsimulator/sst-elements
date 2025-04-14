@@ -25,6 +25,7 @@ class testcase_Samba_Component(SSTTestCase):
     def test_Samba_gupsgen_mmu_three_levels(self):
         self.Samba_test_template("gupsgen_mmu_three_levels")
 
+    @unittest.skipIf(not testing_check_is_nightly(), "test_Samba_stencil3dbench_mmu only runs on Nightly builds.")
     def test_Samba_stencil3dbench_mmu(self):
         self.Samba_test_template("stencil3dbench_mmu", testtimeout=240)
 
