@@ -41,7 +41,7 @@ class VanadisLoadStoreQueue : public SST::SubComponent {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Vanadis::VanadisLoadStoreQueue, int, int)
 
-    SST_ELI_DOCUMENT_PARAMS({ "verbose", "Set the verbosity of output for the LSQ", "0" }, 
+    SST_ELI_DOCUMENT_PARAMS({ "verbose", "Set the verbosity of output for the LSQ", "0" },
                             { "verboseMask", "Mask bits for masking output", "-1" },
                             { "dbgInsAddrs", "Comma-separated list of instruction addresses to debug", ""},
                             { "dbgAddrs", "Comma-separated list of addresses to debug", ""},
@@ -52,11 +52,11 @@ public:
                                 { "loads_issued", "Count the number of loads issued", "operations", 1 },
                                 { "stores_issued", "Count the number of stores issued", "operations", 1 })
 
-    /* 
+    /*
      * Constructor takes two additional parameters
      * coreid - an integer specifying the core ID for the core that loaded this LSQ
      *          - Each vanadis core should have a unique and sequential ID. E.g., for one core the ID=0, for two cores, one has ID=0 and one has ID=1
-     * hwthreads - the total number of hardware threads supported by the core. The LSQ will use this to appropriately partition queues and detect 
+     * hwthreads - the total number of hardware threads supported by the core. The LSQ will use this to appropriately partition queues and detect
      *              ordering violations
      */
     VanadisLoadStoreQueue(ComponentId_t id, Params& params, int coreid, int hwthreads) : SubComponent(id) {
@@ -68,7 +68,7 @@ public:
 
         setDbgInsAddrs( params.find<std::string>("dbgInsAddrs", "") );
         setDbgAddrs( params.find<std::string>("dbgAddrs", "") );
-        
+
         core_id = coreid;
         hw_threads = hwthreads;
         registerFiles = nullptr;
@@ -90,7 +90,7 @@ public:
     }
     void setCoreId( int core ) { core_id = core; }
     int getCoreId( ) { return core_id; }
-    
+
     void setHWThreads( int threads ) { hw_threads = threads; }
     int getHWThreads( ) { return hw_threads; }
 
@@ -111,7 +111,7 @@ public:
     virtual void clearLSQByThreadID(const uint32_t thread) = 0;
 
     virtual void init(unsigned int phase) = 0;
-    
+
     virtual void printStatus(SST::Output& output) {}
 
 protected:

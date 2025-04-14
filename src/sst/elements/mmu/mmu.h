@@ -60,7 +60,7 @@ class MMU : public SubComponent {
     virtual int getPerms( unsigned pid, uint32_t vpn ) = 0;
     virtual void faultHandled( RequestID, unsigned link, unsigned pid, unsigned vpn, bool success = false ) = 0;
     virtual void initPageTable( unsigned pid ) = 0;
-    virtual void setCoreToPageTable( unsigned core, unsigned hwThread, unsigned pid ) = 0; 
+    virtual void setCoreToPageTable( unsigned core, unsigned hwThread, unsigned pid ) = 0;
     virtual uint32_t virtToPhys( unsigned pid, uint64_t vpn ) = 0;
     virtual uint32_t getPerms( unsigned pid, uint64_t vpn ) = 0;
 
@@ -79,8 +79,8 @@ class MMU : public SubComponent {
         }
     }
 
-    int getTlbCore( int link ) { 
-        return link/2; 
+    int getTlbCore( int link ) {
+        return link/2;
     }
 
     int getLink( int core, const std::string type ) {
@@ -97,11 +97,11 @@ class MMU : public SubComponent {
 
     std::string getTlbName( int link ) {
         int core = getTlbCore( link );
-        if ( 0 == link % 2 ) { 
-            return "core" + std::to_string(core) + ".dtlb"; 
-        } else if ( 1 == link % 2 ) { 
-            return "core" + std::to_string(core) + ".itlb"; 
-        } 
+        if ( 0 == link % 2 ) {
+            return "core" + std::to_string(core) + ".dtlb";
+        } else if ( 1 == link % 2 ) {
+            return "core" + std::to_string(core) + ".itlb";
+        }
         assert(0);
     }
 

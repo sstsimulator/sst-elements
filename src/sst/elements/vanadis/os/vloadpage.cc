@@ -28,7 +28,7 @@ void loadPages( SST::Output* output, SST::Interfaces::StandardMem* mem_if, MMU_L
     assert( 0 == (virtAddr & (page_size-1) ) );
     assert( 0 == buffer.size() % page_size );
 
-    uint64_t pageVirtAddr = virtAddr; 
+    uint64_t pageVirtAddr = virtAddr;
     int numPages = buffer.size() / page_size;
     for ( int i = 0; i < numPages ; i++ ) {
         uint64_t physAddr;
@@ -46,12 +46,12 @@ void loadPages( SST::Output* output, SST::Interfaces::StandardMem* mem_if, MMU_L
             physPageNum = pageVirtAddr >> shift;
         }
 
-#if 0 
-        // given sendUntimedData() only accepts a vector<uint8_t> we need to copy data into a properly sized vector 
+#if 0
+        // given sendUntimedData() only accepts a vector<uint8_t> we need to copy data into a properly sized vector
         std::vector< uint8_t > pageBuffer( buffer.begin() + offset, buffer.begin() + offset + page_size );
 #endif
 
-        
+
         output->verbose( CALL_INFO, 2, 0, "pageVirtAddr=%#" PRIx64 " physPageNum=%d physAddr=%#" PRIx64 "\n", pageVirtAddr, physPageNum, physAddr );
 
 #if 1
@@ -69,7 +69,7 @@ void loadPages( SST::Output* output, SST::Interfaces::StandardMem* mem_if, MMU_L
         mem_if->sendUntimedData(new SST::Interfaces::StandardMem::Write( physAddr, page_size, pageBuffer ) );
 #endif
         pageVirtAddr += page_size;
-        offset += page_size; 
+        offset += page_size;
     }
 }
 

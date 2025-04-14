@@ -64,7 +64,7 @@ public:
         virtual void handle(SST::Interfaces::StandardMem::ReadResp* rsp) override;
         virtual void handle(SST::Interfaces::StandardMem::WriteResp* rsp) override;
         virtual void handle(SST::Interfaces::StandardMem::CustomResp* rsp) override;
-        
+
         RequestGenCPU* cpu;
     };
 

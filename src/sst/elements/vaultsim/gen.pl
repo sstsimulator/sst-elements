@@ -1,10 +1,10 @@
 #!/usr/bin/perl -w
 
-$app = $ARGV[0];  
-$cubes = $ARGV[1];  
-$vaults = $ARGV[2]; 
-$threads = $ARGV[3]; 
-$bwlimit = $ARGV[4]; 
+$app = $ARGV[0];
+$cubes = $ARGV[1];
+$vaults = $ARGV[2];
+$threads = $ARGV[3];
+$bwlimit = $ARGV[4];
 
 $fileN = "app${app}-${cubes}x${vaults}-${threads}t-${bwlimit}bw";
 open(OUT, ">$fileN.xml");
@@ -26,8 +26,8 @@ print OUT<<EOT;
       <bwlimit>$bwlimit</bwlimit>
     </params>
     <link name="chain_c_0" port="toMem" latency="5 ns" />
-  </component> 
- 
+  </component>
+
 EOT
 
 # lls
@@ -58,13 +58,13 @@ EOT
     }
 
 #ll connections
-    if ($i == 0) { 
+    if ($i == 0) {
     # first one
     printf(OUT "    <link name=\"chain_c_0\" port=\"toCPU\" latency=\"5 ns\" />\n");
     } else {
     $m1 = $i - 1;
     printf(OUT "    <link name=\"chain_${m1}_${i}\" port=\"toCPU\" latency=\"5 ns\" />\n");
-    } 
+    }
 
     if (! $terminal) {
     $m1 = $i + 1;

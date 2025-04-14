@@ -18,17 +18,17 @@
         struct SrcChannel {
             SrcChannel( int maxSrcQsize ) : maxSrcQsize(maxSrcQsize), pendingCnts(0) {}
             bool full() {
-                return  ! ( queue.size() + waiting.size() + ready.size() < maxSrcQsize); 
+                return  ! ( queue.size() + waiting.size() + ready.size() < maxSrcQsize);
             }
             std::queue<void*>       waiting;
             std::set<void*>         ready;
-            std::queue<MemRequest*> queue; 
+            std::queue<MemRequest*> queue;
             int maxSrcQsize;
             int pendingCnts;
         };
 
       public:
-        MemRequestQ(ComponentId_t cid, RdmaNic* nic, int maxPending, int maxSrcQsize, int numSrcs ) : ComponentExtension(cid), 
+        MemRequestQ(ComponentId_t cid, RdmaNic* nic, int maxPending, int maxSrcQsize, int numSrcs ) : ComponentExtension(cid),
             m_nic(nic), m_maxPending(maxPending), m_curSrc(0), m_reqSrcQs(numSrcs,maxSrcQsize), m_pendingPair(NULL,NULL)
         {}
 
@@ -41,7 +41,7 @@
             printf("\n");
         }
 
-        bool full( int srcNum ) { 
+        bool full( int srcNum ) {
             return  m_reqSrcQs[srcNum].full();
         }
         RdmaNic& Nic() { return *m_nic; }
@@ -54,7 +54,7 @@
             if ( m_reqSrcQs[srcNum].ready.find( key ) != m_reqSrcQs[srcNum].ready.end() ) {
                 m_reqSrcQs[srcNum].ready.erase(key);
                 return true;
-            } 
+            }
             return false;
         }
 
@@ -122,7 +122,7 @@
 
         void fence( int srcNum ) {
             m_reqSrcQs[srcNum].queue.push( new MemRequest(srcNum) );
-        } 
+        }
 
         void write( int srcNum, uint64_t addr, int dataSize, uint8_t* data, MemRequest::Callback* callback = NULL ) {
 			assert( ! full(srcNum) );
@@ -154,7 +154,7 @@
                 bool drop = false;
                 try {
                     auto& q = m_pendingMap.at(req->addr);
-                    auto iter = q.begin(); 
+                    auto iter = q.begin();
 
                     int pos = 0;
                     for ( ; iter != q.end(); ++iter ) {
@@ -178,7 +178,7 @@
                             printf("drop request for 0x%" PRIx64 " %d %zu\n", req->addr, pos, q.size() );
 #endif
                         }
-                    } 
+                    }
 
                     if ( q.empty() ) {
                         m_pendingMap.erase(req->addr);
@@ -198,7 +198,7 @@
 
             } catch (const std::out_of_range& oor) {
                 Nic().out.fatal(CALL_INFO,-1,"Can't find request\n");
-            } 
+            }
         }
 
         bool process( int num = 1) {
@@ -219,7 +219,7 @@
 #endif
             if ( ! m_retryQ.empty() ) {
 				assert(0);
-                auto entry = m_retryQ.front(); 
+                auto entry = m_retryQ.front();
 
 #if 0
                 printf("%s() handle retry %" PRIx64 " \n",__func__,entry.second->addr);
@@ -242,7 +242,7 @@
             if ( m_pendingReq.size() < m_maxPending ) {
                 for ( int i = 0; i < m_reqSrcQs.size(); i++ ) {
                     int pos = (i + m_curSrc) % m_reqSrcQs.size();
-                     
+
                     std::queue<MemRequest*>& q = m_reqSrcQs[pos].queue;
 
                     if ( ! q.empty() ) {
@@ -262,7 +262,7 @@
                         q.pop();
                         auto& w = m_reqSrcQs[pos].waiting;
                         if ( ! w.empty() ) {
-                            m_reqSrcQs[pos].ready.insert( w.front() ); 
+                            m_reqSrcQs[pos].ready.insert( w.front() );
                             w.pop();
                         }
                         break;

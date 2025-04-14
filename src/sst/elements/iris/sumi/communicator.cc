@@ -109,7 +109,7 @@ Communicator::createSmpCommunicator(const std::set<int>& neighbors, CollectiveEn
 
 GlobalCommunicator::GlobalCommunicator(Transport *tport) :
   Communicator(tport->rank()),
-  transport_(tport) 
+  transport_(tport)
 {
 }
 

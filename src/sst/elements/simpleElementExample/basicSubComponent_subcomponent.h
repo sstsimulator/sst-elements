@@ -17,10 +17,10 @@
 #define _BASIC_SUBCOMPONENT_SUBCOMPONENT_H
 
 /*
- * This is an example of a simple subcomponent that can take a number and do a computation on it. 
- * This file happens to have multiple classes declaring both the SubComponentAPI 
+ * This is an example of a simple subcomponent that can take a number and do a computation on it.
+ * This file happens to have multiple classes declaring both the SubComponentAPI
  * as well as a few subcomponents that implement the API.
- *  
+ *
  *  Classes:
  *      basicSubComponentAPI - inherits from SST::SubComponent. Defines the API for the compute units.
  *      basicSubComponentIncrement - inherits from basicSubComponentAPI. A compute unit that increments the input.
@@ -47,11 +47,11 @@ namespace simpleElementExample {
 class basicSubComponentAPI : public SST::SubComponent
 {
 public:
-    /* 
-     * Register this API with SST so that SST can match subcomponent slots to subcomponents 
+    /*
+     * Register this API with SST so that SST can match subcomponent slots to subcomponents
      */
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::simpleElementExample::basicSubComponentAPI)
-    
+
     basicSubComponentAPI(ComponentId_t id, Params& params) : SubComponent(id) { }
     virtual ~basicSubComponentAPI() { }
 
@@ -69,7 +69,7 @@ public:
 /* SubComponent that does an 'increment' computation */
 class basicSubComponentIncrement : public basicSubComponentAPI {
 public:
-    
+
     // Register this subcomponent with SST and tell SST that it implements the 'basicSubComponentAPI' API
     SST_ELI_REGISTER_SUBCOMPONENT(
             basicSubComponentIncrement,     // Class name
@@ -104,7 +104,7 @@ private:
 /* SubComponent that does a 'decrement' computation */
 class basicSubComponentDecrement : public basicSubComponentAPI {
 public:
-    
+
     // Register this subcomponent with SST and tell SST that it implements the 'basicSubComponentAPI' API
     SST_ELI_REGISTER_SUBCOMPONENT(
             basicSubComponentDecrement,     // Class name
@@ -136,7 +136,7 @@ private:
 /* SubComponent that does a 'multiply' computation */
 class basicSubComponentMultiply : public basicSubComponentAPI {
 public:
-    
+
     // Register this subcomponent with SST and tell SST that it implements the 'basicSubComponentAPI' API
     SST_ELI_REGISTER_SUBCOMPONENT(
             basicSubComponentMultiply,      // Class name
@@ -168,7 +168,7 @@ private:
 /* SubComponent that does an 'divide' computation */
 class basicSubComponentDivide : public basicSubComponentAPI {
 public:
-    
+
     // Register this subcomponent with SST and tell SST that it implements the 'basicSubComponentAPI' API
     SST_ELI_REGISTER_SUBCOMPONENT(
             basicSubComponentDivide,        // Class name

@@ -46,10 +46,10 @@ class testcase_simpleComponents(SSTTestCase):
 
     def test_basic_statistics_2(self):
         self.simple_components_template("basicStatistics2")
-    
+
     def test_basic_simlifecycle(self):
         self.simple_components_template("basicSimLifeCycle")
-    
+
     def test_basic_subcomponent(self):
         self.simple_components_template("basicSubComponent")
 

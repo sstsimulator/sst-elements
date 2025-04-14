@@ -41,7 +41,7 @@
 using namespace SST::Statistics;
 using namespace SST::MemHierarchy;
 namespace SST {
-namespace BalarComponent { 
+namespace BalarComponent {
 using Req = SST::Interfaces::StandardMem::Request;
 
 class BalarTestCPU : public SST::Component {
@@ -59,7 +59,7 @@ public:
         {"cuda_executable",         "(string) CUDA executable file path to extract PTX info"},
         {"enable_memcpy_dump",      "(bool) Enable memD2Hcpy dump or not", "false"} )
 
-    SST_ELI_DOCUMENT_STATISTICS( 
+    SST_ELI_DOCUMENT_STATISTICS(
         {"total_memD2H_bytes", "Number of total memD2Hcpy bytes", "count", 1},
         {"correct_memD2H_bytes", "Number of total correct memD2Hcpy bytes", "count", 1},
         {"correct_memD2H_ratio", "Ratio of correct/total memD2Hcpy bytes for each individual memD2Hcpy call", "count", 1},
@@ -131,7 +131,7 @@ private:
 
             BalarTestCPU* cpu;
     };
-    
+
     mmioHandlers* gpuHandler;
 
     // Trace parser
@@ -152,14 +152,14 @@ private:
 
             /**
              * @brief A map of pointers to device pointer
-             * 
+             *
              */
             std::map<std::string, CUdeviceptr*>* dptr_map;
 
             /**
              * @brief A map of kernel function name and pointer
              *        used for registering functions in GPGPUSIM
-             * 
+             *
              */
             std::map<std::string, uint64_t>* func_map;
 

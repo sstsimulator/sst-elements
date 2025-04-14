@@ -116,13 +116,13 @@ class RdmaNic : public SST::Component {
 	#include "rdmaNicMemRequest.h"
 	#include "rdmaNicMemRequestQ.h"
 
-    MemRequestQ* m_memReqQ; 
+    MemRequestQ* m_memReqQ;
     int m_tailWriteQnum;
     int m_respQueueMemChannel;
     int m_dmaMemChannel;
 
-    struct NicCmdQueueInfo { 
-        NicCmdQueueInfo( ){} 
+    struct NicCmdQueueInfo {
+        NicCmdQueueInfo( ){}
         NicCmdQueueInfo( uint64_t  tailAddr ) :
             tailAddr(tailAddr), localTailIndex(0) {}
 
@@ -148,7 +148,7 @@ class RdmaNic : public SST::Component {
         }
 
       public:
-        Backing( int numPe, int cmdQSize, int compQSize ) : peBacking( numPe, PE_backing( compQSize ) ), cmdQSize(cmdQSize), compQSize(compQSize) 
+        Backing( int numPe, int cmdQSize, int compQSize ) : peBacking( numPe, PE_backing( compQSize ) ), cmdQSize(cmdQSize), compQSize(compQSize)
         {
             assert( numPe );
             //printf("%s() numPe=%d cmdQSize=%d compQSize=%d\n",__func__,numPe, cmdQSize, compQSize);
@@ -163,9 +163,9 @@ class RdmaNic : public SST::Component {
         size_t getCompInfoOffset()  { return round_up( getCmdQueueMemSize(), 4096 ); }
         size_t getCompInfoMemSize() { return sizeof(COMP_INDEX) * compQSize; }
 
-        size_t getPeMemorySize() { 
+        size_t getPeMemorySize() {
             size_t tmp = getCompInfoOffset();
-            tmp += round_up( getCompInfoMemSize(), 4096); 
+            tmp += round_up( getCompInfoMemSize(), 4096);
             return tmp;
         }
 
@@ -206,7 +206,7 @@ class RdmaNic : public SST::Component {
         }
 
         bool isCmdReady( int thread ) {
-            return peBacking[thread].bytesWritten == sizeof(CMD); 
+            return peBacking[thread].bytesWritten == sizeof(CMD);
         }
 
         NicCmd* readCmd( int thread ) {
@@ -214,12 +214,12 @@ class RdmaNic : public SST::Component {
             auto& pe = peBacking[thread];
             pe.bytesWritten = 0;
             ++pe.cmdIndex;
-            pe.cmdIndex %= getCmdQSize(); 
+            pe.cmdIndex %= getCmdQSize();
             return &pe.cmd;
         }
 
         uint64_t getCompQueueTailOffset( int thread, int cqId ) {
-            uint64_t offset = (getPeMemorySize() * thread) + (cqId * sizeof( COMP_INDEX ) ); 
+            uint64_t offset = (getPeMemorySize() * thread) + (cqId * sizeof( COMP_INDEX ) );
             //printf("%s() thread=%d cqId=%d\n",__func__,thread,cqId,offset);
             return offset;
         }
@@ -295,33 +295,33 @@ class RdmaNic : public SST::Component {
 	int m_netPktMtuLen;
 
 	struct StreamHdr {
-		enum Type { Msg=1, Write, ReadReq, ReadResp, Barrier } type;	
+		enum Type { Msg=1, Write, ReadReq, ReadResp, Barrier } type;
 		int seqLen;
 		int payloadLength;
 		union {
-			RecvQueueKey msgKey;	
+			RecvQueueKey msgKey;
 			struct {
 				MemRgnKey memRgnKey;
 				int offset;
 				int readRespKey;
 				int readLength;
 			} rdma;
-		} data; 
+		} data;
 	};
 	class CompletionQueue {
 	  public:
 		CompletionQueue( NicCmd * cmd) : m_cmd(cmd), m_headIndex(0) {}
         ~CompletionQueue() { delete m_cmd; }
 
-		NicCmd& cmd() { return *m_cmd; }	
+		NicCmd& cmd() { return *m_cmd; }
 		int headIndex() { return m_headIndex; }
-		void incHeadIndex() { 
-			++m_headIndex; 
+		void incHeadIndex() {
+			++m_headIndex;
 			m_headIndex %= m_cmd->data.createCQ.num;
 		};
 	  private:
 		int m_headIndex;
-		NicCmd* m_cmd;	
+		NicCmd* m_cmd;
 	};
 
 	#include "rdmaNicBarrier.h"
@@ -347,7 +347,7 @@ class RdmaNic : public SST::Component {
 	NicCmdEntry* m_activeNicCmd;
 	// place for command from the host as they are written into MMIO space
 	// this is used to preserve order
-	std::queue< NicCmdEntry* > m_nicCmdQ; 
+	std::queue< NicCmdEntry* > m_nicCmdQ;
 
 	std::map< int,CompletionQueue*> m_compQueueMap;
 

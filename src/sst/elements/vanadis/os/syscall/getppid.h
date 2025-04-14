@@ -25,7 +25,7 @@ namespace Vanadis {
 class VanadisGetppidSyscall : public VanadisSyscall {
 public:
     VanadisGetppidSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallGetxEvent* event  )
-        : VanadisSyscall( os, coreLink, process, event, "getppid" ) 
+        : VanadisSyscall( os, coreLink, process, event, "getppid" )
     {
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-getppid]\n");
         setReturnSuccess(process->getppid());

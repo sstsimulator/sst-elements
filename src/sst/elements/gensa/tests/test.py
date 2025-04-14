@@ -22,7 +22,7 @@ comp_gna.addParams({
     "BWPperTic" : 1,
     "STSDispatch" : options.sts,
     "STSParallelism" : options.sts,
-    "MaxOutMem" : options.memOut 
+    "MaxOutMem" : options.memOut
 })
 
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
@@ -44,7 +44,7 @@ comp_memctrl = sst.Component("memory", "memHierarchy.MemController")
 comp_memctrl.addParams({
       "debug" : 0,
       "debug_level" : 10,
-      "backing" : "malloc", 
+      "backing" : "malloc",
       "clock" : "1GHz",
 })
 memory = comp_memctrl.setSubComponent("backend", "memHierarchy.simpleMem")

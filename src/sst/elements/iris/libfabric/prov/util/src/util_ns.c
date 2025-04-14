@@ -112,7 +112,7 @@ err2:
 err1:
 	return ret;
 }
- 
+
 static int util_ns_map_del(struct util_ns *ns, void *service_in,
 			   void *name_in)
 {

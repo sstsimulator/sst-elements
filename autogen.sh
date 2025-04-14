@@ -25,7 +25,7 @@ BASE_DIR=`pwd`
 #FOUND_ONE_ELEMENT=0
 #
 #
-#for elem_dir in `ls ./`; do 
+#for elem_dir in `ls ./`; do
 #	if [ -d $elem_dir ]; then
 #		if [ -r $elem_dir/Makefile.am ]; then
 #			echo "Found: $elem_dir/Makefile.am"
@@ -56,7 +56,7 @@ for file in `ls $BASE_DIR/src/sst/elements`; do
 
     # Make sure file is actually a dir
 	if [ -d "$BASE_DIR/src/sst/elements/$file" ]; then
-	    
+
         # Testing for .ignore and its associated .unignore settings
         if test -f "$BASE_DIR/src/sst/elements/$file/.ignore" -a ! -f "$BASE_DIR/src/sst/elements/$file/.unignore" ; then
             ignored_list="$ignored_list $file"
@@ -65,7 +65,7 @@ for file in `ls $BASE_DIR/src/sst/elements`; do
              test -z "`grep $USER $$BASE_DIR/src/sst/elements/$file/.unignore`" ; then
           ignored_list="$ignored_list $elemlib"
         else
-            
+
             # See if we have a config.m4 in the element directory
             if [ -r "$BASE_DIR/src/sst/elements/$file/configure.m4" ]; then
                 echo "   SST_${file}_CONFIG([config_${file}=1],[config_${file}=0])" >> config/sst_elements_config_output.m4
@@ -78,14 +78,14 @@ for file in `ls $BASE_DIR/src/sst/elements`; do
                     added_make_list="$added_make_list $file"
                 fi
             fi
-            
+
             if [ -r "$BASE_DIR/src/sst/elements/$file/Makefile.am" ]; then
                 echo "   AC_CONFIG_FILES([src/sst/elements/$file/Makefile])" >> config/sst_elements_config_output.m4
                 if [ ! -f "$BASE_DIR/src/sst/elements/$file/.nodist" ]; then
                     echo "   dist_element_libraries=\"\$dist_element_libraries $file\"" >> config/sst_elements_config_output.m4
                 else
                     echo "   AC_MSG_WARN([Element library ]$file[ will build, but will not be distributed.])"  >> config/sst_elements_config_output.m4
-                    echo 
+                    echo
                     echo "***WARNING: Element library $file will build, but will not be distributed via make dist due to .nodist file in directory."
                 fi
             fi
@@ -116,7 +116,7 @@ for i in $ignored_list ; do echo "    $i" ; done
 echo
 echo "========================================================="
 echo "========================================================="
-echo 
+echo
 
 
 echo "Generating configure files..."

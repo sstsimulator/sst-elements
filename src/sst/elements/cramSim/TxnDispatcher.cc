@@ -36,7 +36,7 @@ using namespace SST::CramSim;
 
 c_TxnDispatcher::c_TxnDispatcher(ComponentId_t id, Params &params) {
     output = new Output("", 1, 0, Output::STDOUT);
-    
+
     //*------ get parameters ----*//
     uint32_t k_numLanes= (uint32_t) params.find<uint32_t>("numLanes", 1, l_found);
     if (!l_found) {

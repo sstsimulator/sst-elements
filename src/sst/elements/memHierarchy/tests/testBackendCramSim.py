@@ -338,7 +338,7 @@ link_dir_mem_link.connect( (comp_dirctrl, "memory", "10000ps"), (comp_memctrl, "
 link_dir_cramsim_link = sst.Link("link_dir_cramsim_link")
 link_dir_cramsim_link.connect( (comp_memory, "cramsim_link", "2ns"), (comp_memhBridge, "cpuLink", "2ns") )
 
-# memhBridge(=TxnGen) <-> Memory Controller 
+# memhBridge(=TxnGen) <-> Memory Controller
 memHLink = sst.Link("memHLink_1")
 memHLink.connect( (comp_memhBridge, "memLink", g_params["clockCycle"]), (comp_controller0, "txngenLink", g_params["clockCycle"]) )
 

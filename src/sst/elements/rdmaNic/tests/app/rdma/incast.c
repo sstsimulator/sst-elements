@@ -39,7 +39,7 @@ int main( int argc, char* argv[] ) {
 	int numNodes = rdma_getNumNodes();
 
 	printf("%s() myNode=%d numNodes=%d\n",__func__,myNode,numNodes);
-		
+
 	int msgCq = rdma_create_cq( );
 
 	int cq = rdma_create_cq( );
@@ -56,7 +56,7 @@ int main( int argc, char* argv[] ) {
 		printf("receive buffer=%p\n",buf);
 		rdma_recv_post( (void*)buf, BUF_SIZE * sizeof(uint32_t), rq, (Context) buf );
 	}
-	
+
 	if ( 0 == myNode ) {
 		for ( int i = 0; i < numNodes -1; i++ ) {
 			RdmaCompletion comp;
@@ -79,7 +79,7 @@ int main( int argc, char* argv[] ) {
 			buf[i] = i;
 		}
 #endif
-		rdma_send_post( (void*)buf, BUF_SIZE * sizeof(uint32_t), 0, 0, 0xbeef, cq, 0xf00dbeef ); 
+		rdma_send_post( (void*)buf, BUF_SIZE * sizeof(uint32_t), 0, 0, 0xbeef, cq, 0xf00dbeef );
 		RdmaCompletion comp;
 		rdma_read_comp( cq, &comp, 1 );
 		printf("message sent\n");

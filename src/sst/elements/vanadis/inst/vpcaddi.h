@@ -37,7 +37,7 @@ public:
 
     VanadisPCAddImmInstruction* clone() override { return new VanadisPCAddImmInstruction(*this); }
     VanadisFunctionalUnitType   getInstFuncType() const override { return INST_INT_ARITH; }
-    const char*                 getInstCode() const override { 
+    const char*                 getInstCode() const override {
 		if(sizeof(gpr_format) == 8) {
 			if(std::is_signed<gpr_format>::value) {
 				return "PCADDI64";
@@ -62,7 +62,7 @@ public:
             imm_value, getInstructionAddress() + imm_value);
     }
 
-    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
                             uint16_t phys_int_regs_out_0)
     {
         #ifdef VANADIS_BUILD_DEBUG
@@ -83,7 +83,7 @@ public:
 
     void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
-        
+
         uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
         instOp(regFile, phys_int_regs_out_0);
         log(output, 16, 65535, phys_int_regs_out_0);

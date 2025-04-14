@@ -138,8 +138,8 @@ git checkout sst_support
 
 # Setup environ vars for apps, need to have
 # env var LLVM_INSTALL_PATH and RISCV_TOOLCHAIN_INSTALL_PATH
-# If you plan to compile the apps directly, you will 
-# also need to set SST_CUSTOM_CUDA_LIB_PATH to 
+# If you plan to compile the apps directly, you will
+# also need to set SST_CUSTOM_CUDA_LIB_PATH to
 # the directory of the custom CUDA library,
 # which normally will be `SST-ELEMENT-SOURCE/src/sst/elements/balar/tests/vanadisLLVMRISCV`
 source ./src/setup_environment sst
@@ -158,7 +158,7 @@ cd SST_ELEMENTS_SRC/src/sst/elements/balar
 # balar tests
 cd tests/
 
-# Compile vector add sample CUDA program 
+# Compile vector add sample CUDA program
 make -C vectorAdd
 
 # Generate trace file for vectorAdd

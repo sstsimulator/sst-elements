@@ -48,7 +48,7 @@ import sys
 
 # Vanadis related builders, copied from rdmaNIC test
 import vanadisBlock as cpuBlock
-import vanadisOS 
+import vanadisOS
 import memory
 
 # Balar builder
@@ -65,8 +65,8 @@ balarBuilder = balarBlock.Builder(args)
 # ===========================================================
 # Building phase
 # ===========================================================
-# build the Vanadis CPU block, this returns 
-# cpu, L2 cache, DTLB ITLB  
+# build the Vanadis CPU block, this returns
+# cpu, L2 cache, DTLB ITLB
 cpu, L1, l1dcache_2_cpu, L2, dtlb, coredtlbWrapper, itlb = cpuBuilder.build(nodeId,0)
 
 # build the Vanadis OS, it returns
@@ -94,7 +94,7 @@ coreCacheBus.addParams({
 })
 
 # Connect the mem links for coreTLB and balarTLB
-connect("coreTLB_coreCacheBus_link", balarTlbWrapper, "cache_if", 
+connect("coreTLB_coreCacheBus_link", balarTlbWrapper, "cache_if",
         coreCacheBus, "high_network_0", "1ns")
 connect("balarTLB_coreCacheBus_link", coredtlbWrapper, "cache_if",
         coreCacheBus, "high_network_1", "1ns")
@@ -109,17 +109,17 @@ osBuilder.connectTlb( 0, "itlb", itlb )
 osBuilder.connectNicTlb( "nicTlb", balarTlb )
 
 # Memory connection
-# connect OS L1 to Memory 
-memBuilder.connect( "OS_L1", port, osCache, group=1) 
+# connect OS L1 to Memory
+memBuilder.connect( "OS_L1", port, osCache, group=1)
 port += 1
 
-# connect CPU L2 to Memory 
-#memBuilder.connect( "CPU_L2", port, L2, 1, dest="2,3" ) 
-memBuilder.connect( "CPU_L2", port, L2, group=1) 
+# connect CPU L2 to Memory
+#memBuilder.connect( "CPU_L2", port, L2, 1, dest="2,3" )
+memBuilder.connect( "CPU_L2", port, L2, group=1)
 port += 1
 
-# connect the Balar MMIO to Memory 
-memBuilder.connect( "Balar_MMIO", port, balar_mmio_iface, group=2) 
+# connect the Balar MMIO to Memory
+memBuilder.connect( "Balar_MMIO", port, balar_mmio_iface, group=2)
 port += 1
 
 # connect the DMA MMIO to Memory

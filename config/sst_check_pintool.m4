@@ -30,14 +30,14 @@ AC_DEFUN([SST_CHECK_PINTOOL],
 dnl pin.sh is present in pin 2.14, but not in 3.0+
   AC_PATH_PROG([PINTOOL2_RUNTIME], [pin.sh], [""], [$PINTOOL_PATH])
   AC_PATH_PROG([PINTOOL3_RUNTIME], [pin], [""], [$PINTOOL_PATH])
-  
+
   AS_IF([test "x$PINTOOL2_RUNTIME" = "x" -a "x$PINTOOL3_RUNTIME" = "x"], [sst_check_pintool_happy="no"])
 
   CXXFLAGS="$CXXFLAGS_saved"
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
   PATH="$PATH_saved"
-  
+
   AS_IF([test ! -z $PINTOOL2_RUNTIME], [PINTOOL_RUNTIME="$PINTOOL2_RUNTIME"], [PINTOOL_RUNTIME="$PINTOOL3_RUNTIME"])
 
   AS_IF([test "$sst_check_pintool_happy" = "yes"], [PINTOOL_CPPFLAGS="$PINTOOL_CPPFLAGS -DPINTOOL_EXECUTABLE=\\\"$PINTOOL_RUNTIME\\\""])
@@ -47,7 +47,7 @@ dnl pin.sh is present in pin 2.14, but not in 3.0+
   AC_SUBST([PINTOOL_RUNTIME])
   AC_SUBST([PINTOOL_DIR])
   AC_SUBST([PINTOOL_PATH])
-  
+
   AC_DEFINE_UNQUOTED([PINTOOL_EXECUTABLE], ["$PINTOOL_RUNTIME"], [Defines the exectuable to run when we are performing integrated runs of the PIN engine])
 
   PIN_VERSION=$($PINTOOL_RUNTIME -version | head -1 | sed 's/.*pin-\(.*\)/\1/' | sed 's/-.*//')

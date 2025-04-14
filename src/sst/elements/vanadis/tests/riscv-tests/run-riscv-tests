@@ -35,13 +35,13 @@ while read -r line; do
             if [ ! -z "$retval" ]; then
                 echo "failed ALIGN_FAULT"
 
-            else 
+            else
                 echo "failed:"
                 cat stderr
-            fi 
+            fi
         fi
 
-    else 
+    else
         retval=`grep "Failed" stdout`
         if [ ! -z "$retval" ]; then
             echo "failed $retval"

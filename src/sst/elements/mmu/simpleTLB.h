@@ -39,7 +39,7 @@ class SimpleTLB : public TLB {
         uint32_t perms() { return m_perms; }
         size_t tag() { return m_tag; }
         size_t ppn() { return m_ppn; }
-        void init( size_t tag, size_t ppn, uint32_t perms ) { 
+        void init( size_t tag, size_t ppn, uint32_t perms ) {
             m_tag = tag;
             m_ppn = ppn;
             m_perms = perms;
@@ -50,11 +50,11 @@ class SimpleTLB : public TLB {
         int m_valid : 1;
         int m_dirty : 1;
         uint32_t m_perms: 3;
-        size_t m_tag : 52; 
+        size_t m_tag : 52;
         size_t m_ppn : 52;
     };
 
-    class TlbRecord { 
+    class TlbRecord {
       public:
         TlbRecord( RequestID reqId, int hwThreadId, uint64_t virtAddr, uint32_t perms, uint64_t instPtr )
             : reqId(reqId), hwThreadId(hwThreadId), virtAddr(virtAddr),perms(perms), instPtr(instPtr) {}
@@ -76,7 +76,7 @@ class SimpleTLB : public TLB {
         uint64_t addr;
 
         NotSerializable(SelfEvent)
-    }; 
+    };
 
   public:
     SST_ELI_REGISTER_SUBCOMPONENT(
@@ -87,7 +87,7 @@ class SimpleTLB : public TLB {
         "Simple TLB,",
         SST::MMU_Lib::SimpleTLB
     )
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         {"hitLatency", "latency of TLB hit in ns","0"},
     )
@@ -101,7 +101,7 @@ class SimpleTLB : public TLB {
     virtual void init(unsigned int phase);
 
     void registerCallback( Callback& callback  ) {
-        m_callback = callback; 
+        m_callback = callback;
     }
 
     void getVirtToPhys( RequestID reqId, int hwThreadId, uint64_t virtAddr, uint32_t perms, uint64_t instPtr );
@@ -109,8 +109,8 @@ class SimpleTLB : public TLB {
   private:
     void callback( Event* ev ) {
         auto selfEvent = dynamic_cast<SelfEvent*>(ev);
-        m_callback( selfEvent->getReqId(), selfEvent->getAddr() ); 
-        delete ev; 
+        m_callback( selfEvent->getReqId(), selfEvent->getAddr() );
+        delete ev;
     }
 
     void handleMMUEvent( Event * );
@@ -127,7 +127,7 @@ class SimpleTLB : public TLB {
         size_t tag = vpn >> m_tlbIndexShift;
         int index = vpn & ( m_tlbSize - 1 );
         auto& vec = m_tlbData[ hwThreadId ][ index ];
-        
+
         for ( int i = 0; i<vec.size(); i++ ) {
             if ( vec[i].isValid() ) {
                 m_dbg.debug(CALL_INFO,1,0,"vpn=%zu, tag=%#" PRIx64 " ppn %#lx -> %zu, perms %#x -> %#x \n",
@@ -138,14 +138,14 @@ class SimpleTLB : public TLB {
                     return;
                 }
             }
-        } 
+        }
 
         assert(vpn);
         int slot = pickVictim();
         m_dbg.debug(CALL_INFO,1,0,"hwThread=%d vpn=%zu ppn=%zu tag%#" PRIx64 " index=%#x slot=%d\n",hwThreadId,
             vpn, ppn, (uint64_t) tag, index, slot );
         vec[ slot ].init( tag, ppn, perms );
-    }  
+    }
 
     TlbEntry* findTlbEntry( int hwThreadId, size_t vpn ) {
         size_t tag = vpn >> m_tlbIndexShift;
@@ -167,14 +167,14 @@ class SimpleTLB : public TLB {
     }
 
     void flushThread( int hwThread ) {
-    
+
         auto& slice = m_tlbData[ hwThread ];
         m_dbg.debug(CALL_INFO,1,0,"hwThread=%d size=%zu\n",hwThread,slice.size() );
 
         for ( int i = 0; i < slice.size(); i++ ) {
-            auto& set = slice[i]; 
+            auto& set = slice[i];
             //m_dbg.debug(CALL_INFO,1,0,"size=%zu\n",set.size() );
-            for ( int j = 0; j < set.size(); j++ ) {  
+            for ( int j = 0; j < set.size(); j++ ) {
                 if ( set[j].isValid() ) {
                     m_dbg.debug(CALL_INFO,1,0,"hwThread=%d index=%d set=%d vpn=%zu\n",
                             hwThread,i,j, (size_t) ( set[j].tag() << m_tlbIndexShift | i ));
@@ -187,7 +187,7 @@ class SimpleTLB : public TLB {
     Link* m_selfLink;
     Link* m_mmuLink;
     uint64_t m_hitLatency;
-    size_t m_tlbSize; 
+    size_t m_tlbSize;
 
     int m_tlbSetSize;
     int m_pageSize;

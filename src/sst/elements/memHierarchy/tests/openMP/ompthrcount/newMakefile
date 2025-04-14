@@ -1,4 +1,4 @@
-CXX=g++ 
+CXX=g++
 
 ompthrcount: ompthrcount.o
 	$(CXX) -O3 -o ompthrcount -fopenmp ompthrcount.o

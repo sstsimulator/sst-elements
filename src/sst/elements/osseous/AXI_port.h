@@ -1,17 +1,17 @@
-// Copyright (c) 2019-2022 Antmicro (https://www.antmicro.com/). All rights reserved. 
-// Licensed under the Apache License, Version 2.0, you may not use this file except in 
-// compliance with the Apache License. You may obtain a copy of the Apache License at 
-// http://www.apache.org/licenses/LICENSE-2.0. Unless required by applicable law or 
-// agreed to in writing, software distributed under the Apache License is distributed 
-// on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or 
-// implied. See the Apache License for the specific language governing permissions and 
+// Copyright (c) 2019-2022 Antmicro (https://www.antmicro.com/). All rights reserved.
+// Licensed under the Apache License, Version 2.0, you may not use this file except in
+// compliance with the Apache License. You may obtain a copy of the Apache License at
+// http://www.apache.org/licenses/LICENSE-2.0. Unless required by applicable law or
+// agreed to in writing, software distributed under the Apache License is distributed
+// on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+// implied. See the Apache License for the specific language governing permissions and
 // limitations under the Apache License.
 
 #ifndef AXITOP_H_
 #define AXITOP_H_
 
-//not originally included in the headerfile 
-enum DEBUG_FLAGS{d_control, d_data, d_addr, d_reg};  
+//not originally included in the headerfile
+enum DEBUG_FLAGS{d_control, d_data, d_addr, d_reg};
 DEBUG_FLAGS debug_flag;
 //void print_registers(DEBUG_FLAGS);
 
@@ -395,8 +395,8 @@ typedef struct AXITop {
     //std::cout<<"io_control_w_wready   "<<io_control_w_wready   <<std::endl;
     //std::cout<<"io_control_b_bresp    "<<io_control_b_bresp    <<std::endl;
     //std::cout<<"io_control_b_bvalid   "<<io_control_b_bvalid   <<std::endl;
-    //std::cout<<"io_control_ar_arready "<<io_control_ar_arready <<std::endl;    
-    
+    //std::cout<<"io_control_ar_arready "<<io_control_ar_arready <<std::endl;
+
     io_control_aw_awready = csrFrontend.awready;
     io_control_w_wready   = csrFrontend.wready;
     io_control_b_bresp    = UInt<2>(0x0);
@@ -454,7 +454,7 @@ typedef struct AXITop {
     UInt<32> csr$_GEN_52 = csr$_T_322 ? ctl.SimpleCSR_9.reg : csr$_GEN_48;
     UInt<32> csr$_GEN_56 = csr$_T_333 ? ctl.SimpleCSR_10.reg : csr$_GEN_52;
     UInt<32> csr$io_bus_dataIn = csr$_T_344 ? ctl.SimpleCSR_11.reg : csr$_GEN_56;
-    io_control_r_rdata = csr$io_bus_dataIn;    
+    io_control_r_rdata = csr$io_bus_dataIn;
     io_control_r_rresp = UInt<2>(0x0);
     io_control_r_rvalid = csrFrontend.rvalid;
     UInt<1> queue$_T_41 = queue.value == queue.value_1;
@@ -464,15 +464,15 @@ typedef struct AXITop {
     io_read_tready = readerFrontend$io_bus_tready;
 
 
-    io_write_aw_awid = UInt<4>(0x0);    
-    
+    io_write_aw_awid = UInt<4>(0x0);
+
     io_write_aw_awaddr = writerFrontend.awaddr;
     std::cout<<"io_write_aw_awaddr "<<io_write_aw_awaddr <<std::endl;
     UInt<8> writerFrontend$io_bus_aw_awlen = writerFrontend.awlen.bits<7,0>();
-  
-  
+
+
   //================================problem is here==================================
-  
+
     io_write_aw_awlen   = writerFrontend$io_bus_aw_awlen;
     io_write_aw_awsize  = UInt<3>(0x2);
     io_write_aw_awburst = UInt<2>(0x1);
@@ -480,8 +480,8 @@ typedef struct AXITop {
     io_write_aw_awcache = UInt<4>(0x2);
     io_write_aw_awprot  = UInt<3>(0x0);
     io_write_aw_awqos   = UInt<4>(0x0);
-    
-  //================================problem is here==================================  
+
+  //================================problem is here==================================
     io_write_aw_awvalid = writerFrontend.awvalid;
     UInt<32> queue$ram$_T_63 = queue.ram[queue.value_1.as_single_word()];
     io_write_w_wdata = queue$ram$_T_63;
@@ -962,29 +962,29 @@ typedef struct AXITop {
     UInt<9> queue$_GEN_6 = queue$do_deq ? queue$_T_57 : queue.value_1;
     UInt<1> queue$_T_58 = queue$do_enq != queue$do_deq;
     UInt<1> queue$_GEN_7 = queue$_T_58 ? queue$do_enq : queue.maybe_full;
-    std::cout<<"queue$io_enq_ready is: "<<queue$io_enq_ready; 
-    std::cout<<"readerFrontend$io_dataOut_valid is: "<<readerFrontend$io_dataOut_valid; 
-    if (update_registers && (queue$io_enq_ready & readerFrontend$io_dataOut_valid) && UInt<1>(0x1)) { 
+    std::cout<<"queue$io_enq_ready is: "<<queue$io_enq_ready;
+    std::cout<<"readerFrontend$io_dataOut_valid is: "<<readerFrontend$io_dataOut_valid;
+    if (update_registers && (queue$io_enq_ready & readerFrontend$io_dataOut_valid) && UInt<1>(0x1)) {
         queue.ram[queue.value.as_single_word()] = io_read_tdata;
-        std::cout<<"Queue value is: "<<queue.ram[queue.value.as_single_word()]; 
+        std::cout<<"Queue value is: "<<queue.ram[queue.value.as_single_word()];
     }
     if (update_registers) queue.value = reset ? UInt<9>(0x0) : queue$_GEN_5;
     if (update_registers) queue.value_1 = reset ? UInt<9>(0x0) : queue$_GEN_6;
     if (update_registers) queue.maybe_full = reset ? UInt<1>(0x0) : queue$_GEN_7;
-  
+
     print_registers();
-  } 
-  
+  }
+
 //define debug functions here
 
 void print_registers(){
-    std::cout<<"   io_control_aw_awaddr   "<<io_control_aw_awaddr<<std::endl;     
-    std::cout<<"   io_control_w_wdata     "<<io_control_w_wdata  <<std::endl;   
-    std::cout<<"   io_control_ar_araddr   "<<io_control_ar_araddr<<std::endl;   
+    std::cout<<"   io_control_aw_awaddr   "<<io_control_aw_awaddr<<std::endl;
+    std::cout<<"   io_control_w_wdata     "<<io_control_w_wdata  <<std::endl;
+    std::cout<<"   io_control_ar_araddr   "<<io_control_ar_araddr<<std::endl;
     std::cout<<"   io_control_r_rdata     "<<io_control_r_rdata  <<std::endl<<std::endl;
-    std::cout<<"   io_write_aw_awid       "<<io_write_aw_awid    <<std::endl;    
-    std::cout<<"   io_read_tdata          "<<io_read_tdata       <<std::endl;   
-    std::cout<<"   io_read_tvalid          "<<io_read_tvalid       <<std::endl;   
+    std::cout<<"   io_write_aw_awid       "<<io_write_aw_awid    <<std::endl;
+    std::cout<<"   io_read_tdata          "<<io_read_tdata       <<std::endl;
+    std::cout<<"   io_read_tvalid          "<<io_read_tvalid       <<std::endl;
     std::cout<<"   io_write_aw_awaddr     "<<io_write_aw_awaddr  <<std::endl;
     std::cout<<"   io_write_w_wdata       "<<io_write_w_wdata    <<std::endl;
     std::cout<<"   io_write_ar_araddr     "<<io_write_ar_araddr  <<std::endl;

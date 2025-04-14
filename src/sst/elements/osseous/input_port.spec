@@ -8,13 +8,13 @@ io_load
 io_shift
 
 #Interface Ports floating out in RTL C-Model
-AXIPort 
+AXIPort
 #AXI Protocol to use. Will support AXIStream, AXI4, AXI4Lite
 AXIProtocol:AXIStream
 #Config - Master or Slave
 config:Slave
 #Mode - Streaming or Burst mode is supported. Current design supports only streaming mode
-Mode:Streaming 
+Mode:Streaming
 #Interface Signals
 AXI_sig:
 io_nasti_aw_ready
@@ -23,8 +23,8 @@ io_nasti_w_ready
 io_nasti_b_valid
 io_nasti_b_bits_id
 io_nasti_b_bits_resp
-io_nasti_r_valid 
-io_nasti_r_bits_id 
+io_nasti_r_valid
+io_nasti_r_bits_id
 io_nasti_r_bits_resp
 io_nasti_r_bits_last
 io_nasti_r_bits_data

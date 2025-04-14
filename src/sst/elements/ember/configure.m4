@@ -10,7 +10,7 @@ AC_DEFUN([SST_ember_CONFIG], [
   AM_CONDITIONAL([EMBER_HAVE_OTF2], [test "x$sst_check_ember_otf2" = "xyes"])
 
   AM_CONDITIONAL([USE_EMBER_CONTEXTS], [test "x$enable_ember_contexts" = "xyes"])
-  AS_IF([test "x$enable_ember_contexts" = "xyes"], 
+  AS_IF([test "x$enable_ember_contexts" = "xyes"],
 	[AC_DEFINE([HAVE_EMBER_CONTEXTS], [1], [Use context switching code in Ember])])
 
   AS_IF([test "$sst_check_ember" = "yes"], [$1], [$2])
