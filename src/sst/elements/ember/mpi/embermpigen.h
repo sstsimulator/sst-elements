@@ -68,11 +68,43 @@ public:
 		rankmap.*
 	*/
 
+	SST_ELI_DOCUMENT_STATISTICS(
+        { "time-Init", "Time spent in Init event",          "ns", 1 },
+        { "time-Finalize", "Time spent in Finalize event",  "ns", 1 },
+        { "time-Rank", "Time spent in Rank event",          "ns", 1 },
+        { "time-Size", "Time spent in Size event",          "ns", 1 },
+        { "time-Send", "Time spent in Recv event",          "ns", 1 },
+        { "time-Recv", "Time spent in Recv event",          "ns", 1 },
+        { "time-Irecv", "Time spent in Irecv event",        "ns", 1 },
+        { "time-Isend", "Time spent in Isend event",        "ns", 1 },
+        { "time-Wait", "Time spent in Wait event",          "ns", 1 },
+        { "time-Waitall", "Time spent in Waitall event",    "ns", 1 },
+        { "time-Waitany", "Time spent in Waitany event",    "ns", 1 },
+        { "time-Compute", "Time spent in Compute event",    "ns", 1 },
+        { "time-Barrier", "Time spent in Barrier event",    "ns", 1 },
+        { "time-Alltoallv", "Time spent in Alltoallv event", "ns", 1 },
+        { "time-Alltoall", "Time spent in Alltoall event",   "ns", 1 },
+        { "time-Allreduce", "Time spent in Allreduce event", "ns", 1 },
+        { "time-Reduce", "Time spent in Reduce event",       "ns", 1 },
+        { "time-Bcast", "Time spent in Bcast event",         "ns", 1 },
+        { "time-Scatter", "Time spent in Scatter event",     "ns", 1 },
+        { "time-Scatterv", "Time spent in Scatter event",    "ns", 1 },
+        { "time-Gettime", "Time spent in Gettime event",     "ns", 1 },
+        { "time-Commsplit", "Time spent in Commsplit event", "ns", 1 },
+        { "time-Commcreate", "Time spent in Commcreate event", "ns", 1 },
+    )
+
 	EmberMessagePassingGenerator( ComponentId_t id, Params& params, std::string name = "" );
 	~EmberMessagePassingGenerator();
 
-    virtual void completed( const SST::Output* output, uint64_t time ) {
-		mpi().completed(output,time,getMotifName(),getMotifNum());
+    virtual void configure() override
+    {
+        mpi().setEventStatistics( m_mpiTimeStats );
+    }
+
+    virtual void completed( const SST::Output* output, uint64_t time ) override
+    {
+		mpi().completed(output, time, getMotifName(), getMotifNum());
 	};
 
 protected:
@@ -112,33 +144,34 @@ protected:
 		return mpi().sizeofDataType( type );
 	}
 
-	int get_count( MessageResponse* resp, PayloadDataType datatype, int* count ) {
-		uint32_t nbytes = resp->count * resp->dtypeSize;
-		int dtypesize = sizeofDataType(datatype);
-		if ( nbytes % dtypesize ) {
-			*count = 0;
-			return -1;
-		}
-		*count = nbytes / dtypesize;
-
-		return 0;
-	}
-
-	EmberRankMap* getRankMap() { return m_rankMap; }
-
-	void memSetBacked() {
-		EmberGenerator::memSetBacked();
-		mpi().setBacked();
-	}
-
-        void memSetNotBacked() {
-                EmberGenerator::memSetNotBacked();
-                mpi().setNotBacked();
+    int get_count( MessageResponse* resp, PayloadDataType datatype, int* count ) {
+        uint32_t nbytes = resp->count * resp->dtypeSize;
+        int dtypesize = sizeofDataType(datatype);
+        if ( nbytes % dtypesize ) {
+            *count = 0;
+            return -1;
         }
+        *count = nbytes / dtypesize;
+        return 0;
+    }
+
+    EmberRankMap* getRankMap() { return m_rankMap; }
+
+    void memSetBacked() override {
+        EmberGenerator::memSetBacked();
+        mpi().setBacked();
+    }
+
+    void memSetNotBacked() override {
+        EmberGenerator::memSetNotBacked();
+        mpi().setNotBacked();
+    }
 
 private:
-	EmberMpiLib*	m_mpi;
-	EmberRankMap*	m_rankMap;
+    EmberMpiLib*	m_mpi;
+    EmberRankMap*	m_rankMap;
+
+    std::vector< EventTimeStat* > m_mpiTimeStats;
 };
 
 

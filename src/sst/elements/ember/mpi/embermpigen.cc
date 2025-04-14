@@ -16,6 +16,7 @@
 #include <sst_config.h>
 
 #include "embermpigen.h"
+#include "libs/mpi/emberMPIEvent.h"
 
 using namespace SST;
 using namespace SST::Ember;
@@ -33,12 +34,26 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
     }
     //end->NetworkSim
 
-    m_rankMap = loadModule<EmberRankMap>(rankMapModule,mapParams);
+    m_rankMap = loadModule<EmberRankMap>( rankMapModule, mapParams );
 
     if(NULL == m_rankMap) {
         std::cerr << "Error: Unable to load rank map scheme: \'"
 								 << rankMapModule << "\'" << std::endl;
         exit(-1);
+    }
+
+    const bool perMotifStats = params.find<bool>("mpiStatsPerMotif", true);
+
+    // Register statistics
+    const std::string namePrefix( "time-" );
+    for (int i = 0; i < NUM_MPI_EVENTS; i++) {
+        std::string statName = namePrefix + std::string( MPIEventNames[i] );
+        std::string subId("");
+        if ( perMotifStats ) {
+            subId = name + "Motif_" + std::to_string(getMotifNum());
+        }
+        EventTimeStat* stat = registerStatistic<TimeStatDataType>( statName, subId );
+        m_mpiTimeStats.push_back( stat );
     }
 
 	m_mpi = static_cast<EmberMpiLib*>( getLib("mpi") );
@@ -49,5 +64,5 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
 
 EmberMessagePassingGenerator::~EmberMessagePassingGenerator()
 {
-    verbose(CALL_INFO, 2, 0, "\n");
+    verbose( CALL_INFO, 2, 0, "\n" );
 }
