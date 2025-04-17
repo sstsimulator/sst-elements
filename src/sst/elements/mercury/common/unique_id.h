@@ -17,7 +17,7 @@
 
 #include <sstream>
 #include <stdint.h>
-#include <mercury/common/serializable.h>
+#include <sst/core/serialization/serializable.h>
 
 namespace SST {
 namespace Hg {
@@ -70,22 +70,15 @@ struct UniqueEventId {
     ++msg_num;
     return other;
   }
+
+  void serialize_order(SST::Core::Serialization::serializer& ser) {
+    SST_SER(src_node);
+    SST_SER(msg_num);
+  }
 };
 
 } // end namespace Hg
 } // end namespace SST
-
-START_SERIALIZATION_NAMESPACE
-template <>
-class serialize<SST::Hg::UniqueEventId>
-{
- public:
-  void
-  operator()(SST::Hg::UniqueEventId& id, serializer& ser){
-    ser.primitive(id);
-  }
-};
-END_SERIALIZATION_NAMESPACE
 
 namespace std {
 template <>

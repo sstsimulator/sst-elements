@@ -49,11 +49,11 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <utility>
 #include <mercury/common/util.h>
 #include <mercury/common/printable.h>
-#include <mercury/common/serializable.h>
 #include <mercury/common/timestamp.h>
 #include <mercury/common/thread_safe_new.h>
 #include <mercury/components/operating_system_fwd.h>
 #include <mercury/hardware/network/network_message.h>
+#include <sst/core/serialization/serializable.h>
 
 namespace SST::Iris::sumi {
 
@@ -103,9 +103,9 @@ class Message : public SST::Hg::NetworkMessage
 
   std::string toString() const override;
 
-  void serialize_order(SST::Hg::serializer &ser) override;
+  void serialize_order(SST::Core::Serialization::serializer& ser) override;
 
-  void serializeBuffers(SST::Hg::serializer& ser);
+  void serializeBuffers(SST::Core::Serialization::serializer& ser);
 
   static bool needsAck(SST::Hg::NetworkMessage::type_t ty,
                         int sendCQ, int recvCQ);
@@ -295,7 +295,7 @@ class ProtocolMessage : public Message {
   {
   }
 
-  void serialize_order(SST::Hg::serializer& ser) override {
+  void serialize_order(SST::Core::Serialization::serializer& ser) override {
     Message::serialize_order(ser);
     ser & stage_;
     ser & protocol_;

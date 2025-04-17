@@ -15,8 +15,8 @@
 
 #include <mercury/common/null_buffer.h>
 #include <mercury/common/errors.h>
-#include <mercury/common/serializable.h>
 #include <mercury/hardware/network/network_message.h>
+#include <sst/core/serialization/serializable.h>
 
 #define enumcase(x) case x: return #x;
 
@@ -253,7 +253,7 @@ NetworkMessage::tostr(type_t ty)
 }
 
 void
-NetworkMessage::serialize_order(serializer& ser)
+NetworkMessage::serialize_order(SST::Core::Serialization::serializer& ser)
 {
   Flow::serialize_order(ser);
 
@@ -261,7 +261,7 @@ NetworkMessage::serialize_order(serializer& ser)
   bool wire_is_null = wire_buffer_ == nullptr;
   ser & wire_is_null;
   if(!wire_is_null){
-    ser & SST::Hg::array(wire_buffer_, payload_bytes_);
+    ser & SST::Core::Serialization::array(wire_buffer_, payload_bytes_);
   } else {
     ser & payload_bytes_; 
   }

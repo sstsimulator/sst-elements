@@ -81,6 +81,8 @@ class testcase_rdmaNic(SSTTestCase):
     def test_rdmaNic_short_tests(self, testnum, testname, sdlfile, elftestdir, elffile, arch, env, timeout_sec):
         self._checkSkipConditions()
 
+        if not testing_check_is_nightly() and testnum == 2:
+            self.skipTest("Complete rdmaNic only runs on Nightly builds.")
         log_debug("Running RdmaNic test #{0} ({1}): elffile={4} in dir {3}; using sdl={2}".format(testnum, testname, sdlfile, elftestdir, elffile, env, timeout_sec))
         self.rdmaNic_test_template(testnum, testname, sdlfile, elftestdir, elffile, arch, env, timeout_sec)
 
