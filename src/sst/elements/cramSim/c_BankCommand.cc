@@ -165,15 +165,15 @@ void c_BankCommand::print(SST::Output *x_debugOutput,const std::string x_prefix,
 
 void c_BankCommand::serialize_order(SST::Core::Serialization::serializer &ser)
 {
-    ser & m_seqNum;
-    ser & m_addr;
-    ser & m_row;
-    ser & m_bankId;
-    ser & m_bankIdVec;
-    ser & m_cmdMnemonic;
-    ser & m_cmdToString;
-    ser & m_isResponseReady;
-    ser & m_isResponseReady;
+    SST_SER(m_seqNum);
+    SST_SER(m_addr);
+    SST_SER(m_row);
+    SST_SER(m_bankId);
+    SST_SER(m_bankIdVec);
+    SST_SER(m_cmdMnemonic);
+    SST_SER(m_cmdToString);
+    SST_SER(m_isResponseReady);
+    SST_SER(m_isResponseReady);
 
-    ser & m_hashedAddr;
+    SST_SER(m_hashedAddr);
 }

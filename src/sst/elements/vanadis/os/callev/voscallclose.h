@@ -34,7 +34,7 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisSyscallEvent::serialize_order(ser);
-        ser& close_file_descriptor;
+        SST_SER(close_file_descriptor);
     }
     ImplementSerializable(SST::Vanadis::VanadisSyscallCloseEvent);
 

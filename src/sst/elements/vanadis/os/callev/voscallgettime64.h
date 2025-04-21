@@ -35,8 +35,8 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisSyscallEvent::serialize_order(ser);
-        ser& clock_id;
-        ser& timestruct_addr;
+        SST_SER(clock_id);
+        SST_SER(timestruct_addr);
     }
     ImplementSerializable(SST::Vanadis::VanadisSyscallGetTime64Event);
 

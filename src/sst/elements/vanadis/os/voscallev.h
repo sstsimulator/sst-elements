@@ -44,10 +44,10 @@ public:
 protected:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        ser& core_id;
-        ser& thread_id;
-        ser& bittage;
-        ser& instPtr;
+        SST_SER(core_id);
+        SST_SER(thread_id);
+        SST_SER(bittage);
+        SST_SER(instPtr);
     }
 
     ImplementSerializable(SST::Vanadis::VanadisSyscallEvent);

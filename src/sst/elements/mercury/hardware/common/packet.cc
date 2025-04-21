@@ -47,15 +47,15 @@ void
 Packet::serialize_order(Core::Serialization::serializer& ser)
 {
   SST::Event::serialize_order(ser);
-  ser & toaddr_;
-  ser & fromaddr_;
-  ser & flow_id_;
-  ser & num_bytes_;
-  ser & qos_;
-  ser & payload_;
-  ser & rtr_metadata_;
-  ser & stats_metadata_;
-  ser & nic_metadata_;
+  SST_SER(toaddr_);
+  SST_SER(fromaddr_);
+  SST_SER(flow_id_);
+  SST_SER(num_bytes_);
+  SST_SER(qos_);
+  SST_SER(payload_);
+  SST_SER(rtr_metadata_);
+  SST_SER(stats_metadata_);
+  SST_SER(nic_metadata_);
 }
 
 } // end namespace Hg

@@ -67,7 +67,7 @@ struct ConstModel : public Model
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override
     {
-        ser& val;
+        SST_SER(val);
     }
 
     ImplementSerializable(SST::Ember::ConstModel);
@@ -103,10 +103,10 @@ struct BilinearModel : public Model
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override
     {
-        ser& A;
-        ser& B;
-        ser& C;
-        ser& D;
+        SST_SER(A);
+        SST_SER(B);
+        SST_SER(C);
+        SST_SER(D);
     }
 
     ImplementSerializable(SST::Ember::BilinearModel);
@@ -141,7 +141,7 @@ struct TraceModel : public Model
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override
     {
-        ser& val;
+        SST_SER(val);
     }
 
     ImplementSerializable(SST::Ember::TraceModel);
@@ -186,10 +186,10 @@ struct ExpModel : public Model
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override
     {
-        ser& A;
-        ser& B;
-        ser& C;
-        ser& D;
+        SST_SER(A);
+        SST_SER(B);
+        SST_SER(C);
+        SST_SER(D);
     }
 
     ImplementSerializable(SST::Ember::ExpModel);
@@ -272,7 +272,7 @@ struct PolyModelND : public Model
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override
     {
-        ser& coeff;
+        SST_SER(coeff);
     }
 
     ImplementSerializable(SST::Ember::PolyModelND);
@@ -320,7 +320,7 @@ struct PolyModel : public SST::Core::Serialization::serializable
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override
     {
-        ser& coeff;
+        SST_SER(coeff);
     }
 
     ImplementSerializable(SST::Ember::PolyModel);

@@ -39,7 +39,7 @@ protected:
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        ser & arrayID;
+        SST_SER(arrayID);
     }
     ImplementSerializable(SST::Golem::ArrayEvent);
 };

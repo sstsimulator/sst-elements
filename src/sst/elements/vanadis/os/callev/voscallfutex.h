@@ -44,13 +44,13 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisSyscallEvent::serialize_order(ser);
-        ser& addr;
-        ser& addr2;
-        ser& op;
-        ser& val;
-        ser& val3;
-        ser& time_addr;
-        ser& stack_ptr;
+        SST_SER(addr);
+        SST_SER(addr2);
+        SST_SER(op);
+        SST_SER(val);
+        SST_SER(val3);
+        SST_SER(time_addr);
+        SST_SER(stack_ptr);
     }
     ImplementSerializable(SST::Vanadis::VanadisSyscallFutexEvent);
 

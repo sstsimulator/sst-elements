@@ -41,10 +41,10 @@ private:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-		ser & type;
-        ser & key;
-        ser & length;
-        ser & addr;
+		SST_SER(type);
+        SST_SER(key);
+        SST_SER(length);
+        SST_SER(addr);
     }
 
     ImplementSerializable(SST::Thornhill::MemoryHeapEvent);

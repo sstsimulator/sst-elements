@@ -36,7 +36,7 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        ser& thread;
+        SST_SER(thread);
     }
 
     ImplementSerializable(SST::Vanadis::VanadisDumpRegsReq);

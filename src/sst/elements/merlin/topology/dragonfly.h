@@ -82,8 +82,8 @@ struct RouterPortPair : public SST::Core::Serialization::serializable {
     }
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
-        ser & router;
-        ser & port;
+        SST_SER(router);
+        SST_SER(port);
     }
 
 private:
@@ -332,15 +332,15 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         internal_router_event::serialize_order(ser);
-        ser & src_group;
-        ser & dest.group;
-        ser & dest.mid_group;
-        ser & dest.mid_group_shadow;
-        ser & dest.router;
-        ser & dest.host;
-        ser & global_slice;
-        ser & global_slice_shadow;
-        ser & local_slice;
+        SST_SER(src_group);
+        SST_SER(dest.group);
+        SST_SER(dest.mid_group);
+        SST_SER(dest.mid_group_shadow);
+        SST_SER(dest.router);
+        SST_SER(dest.host);
+        SST_SER(global_slice);
+        SST_SER(global_slice_shadow);
+        SST_SER(local_slice);
     }
 
 private:

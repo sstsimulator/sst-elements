@@ -54,7 +54,7 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & start_time;
+        SST_SER(start_time);
     }
 
 private:
@@ -93,13 +93,13 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & generation;
-        ser & sum;
-        ser & sum_of_squares;
-        ser & min;
-        ser & max;
-        ser & count;
-        ser & backup;
+        SST_SER(generation);
+        SST_SER(sum);
+        SST_SER(sum_of_squares);
+        SST_SER(min);
+        SST_SER(max);
+        SST_SER(count);
+        SST_SER(backup);
     }
 
 private:
