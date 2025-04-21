@@ -60,7 +60,7 @@ void
 MpiMessage::serialize_order(serializer& ser)
 {
   ProtocolMessage::serialize_order(ser);
-  SST_SER((rc_rank_);
+  SST_SER(src_rank_);
   SST_SER(dst_rank_);
   SST_SER(type_);
   SST_SER(tag_);
