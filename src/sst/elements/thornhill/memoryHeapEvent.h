@@ -41,7 +41,7 @@ private:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-		SST_SER(type);
+        SST_SER(type);
         SST_SER(key);
         SST_SER(length);
         SST_SER(addr);

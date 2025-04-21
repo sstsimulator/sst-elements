@@ -147,12 +147,10 @@ void c_Transaction::serialize_order(SST::Core::Serialization::serializer &ser)
   SST_SER(m_seqNum);
   SST_SER(m_txnMnemonic);
   SST_SER(m_addr);
-  //SST_SER(m_txnToString);
 
   SST_SER(m_isResponseReady);
   SST_SER(m_numWaitingCommands);
   SST_SER(m_dataWidth);
   SST_SER(m_processed);
-    SST_SER(m_hasHashedAddr);
-
+  SST_SER(m_hasHashedAddr);
 }
