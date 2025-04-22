@@ -35,8 +35,8 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        ser& return_code;
-        ser& hw_thr;
+        SST_SER(return_code);
+        SST_SER(hw_thr);
     }
 
     ImplementSerializable(SST::Vanadis::VanadisExitResponse);

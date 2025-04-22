@@ -39,8 +39,8 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisSyscallEvent::serialize_order(ser);
-        ser& address;
-        ser& length;
+        SST_SER(address);
+        SST_SER(length);
     }
     ImplementSerializable(SST::Vanadis::VanadisSyscallMemoryUnMapEvent);
 

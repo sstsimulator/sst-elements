@@ -31,7 +31,7 @@ void
 NicEvent::serialize_order(SST::Core::Serialization::serializer& ser)
 {
   Event::serialize_order(ser);
-  ser & msg_;
+  SST_SER(msg_);
 }
 
 NIC::NIC(uint32_t id, SST::Params& params, NodeBase* parent) :

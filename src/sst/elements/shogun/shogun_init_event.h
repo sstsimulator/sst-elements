@@ -59,9 +59,9 @@ namespace Shogun {
         void serialize_order(SST::Core::Serialization::serializer& ser) override
         {
             Event::serialize_order(ser);
-            ser& port_count;
-            ser& netID;
-            ser& queue_slots;
+            SST_SER(port_count);
+            SST_SER(netID);
+            SST_SER(queue_slots);
         }
 
         ImplementSerializable(SST::Shogun::ShogunInitEvent);

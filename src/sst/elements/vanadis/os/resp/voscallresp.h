@@ -40,10 +40,10 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        ser& return_code;
-        ser& mark_success;
-        ser& hw_thr;
-        ser& has_exited;
+        SST_SER(return_code);
+        SST_SER(mark_success);
+        SST_SER(hw_thr);
+        SST_SER(has_exited);
     }
 
     ImplementSerializable(SST::Vanadis::VanadisSyscallResponse);

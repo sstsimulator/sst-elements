@@ -32,7 +32,7 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisSyscallEvent::serialize_order(ser);
-        ser& m_op;
+        SST_SER(m_op);
     }
 
     ImplementSerializable(SST::Vanadis::VanadisSyscallGetxEvent);

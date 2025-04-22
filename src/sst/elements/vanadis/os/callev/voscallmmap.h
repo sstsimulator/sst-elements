@@ -54,14 +54,14 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisSyscallEvent::serialize_order(ser);
-        ser& address;
-        ser& length;
-        ser& page_prot;
-        ser& alloc_flags;
-        ser& stack_pointer;
-        ser& offset;
-        ser& offset_units;
-        ser& fd;
+        SST_SER(address);
+        SST_SER(length);
+        SST_SER(page_prot);
+        SST_SER(alloc_flags);
+        SST_SER(stack_pointer);
+        SST_SER(offset);
+        SST_SER(offset_units);
+        SST_SER(fd);
     }
     ImplementSerializable(SST::Vanadis::VanadisSyscallMemoryMapEvent);
 

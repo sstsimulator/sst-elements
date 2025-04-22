@@ -37,11 +37,11 @@ void
 CollectiveWorkMessage::serialize_order(SST::Core::Serialization::serializer& ser)
 {
   ProtocolMessage::serialize_order(ser);
-  ser & tag_;
-  ser & type_;
-  ser & round_;
-  ser & dom_recver_;
-  ser & dom_sender_;
+  SST_SER(tag_);
+  SST_SER(type_);
+  SST_SER(round_);
+  SST_SER(dom_recver_);
+  SST_SER(dom_sender_);
 }
 
 std::string
