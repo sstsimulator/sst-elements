@@ -56,14 +56,14 @@ FunctionSM::FunctionSM( ComponentId_t id, SST::Params& params, ProtocolAPI* prot
             Output::STDOUT );
 
     m_toDriverLink = configureSelfLink("ToDriver", "1 ps",
-        new Event::Handler<FunctionSM>(this,&FunctionSM::handleToDriver));
+        new Event::Handler2<FunctionSM,&FunctionSM::handleToDriver>(this));
 
     m_fromDriverLink = configureSelfLink("FromDriver", "1 ps",
-        new Event::Handler<FunctionSM>(this,&FunctionSM::handleStartEvent));
+        new Event::Handler2<FunctionSM,&FunctionSM::handleStartEvent>(this));
     assert( m_fromDriverLink );
 
     m_toMeLink = configureSelfLink("ToMe", "1 ns",
-        new Event::Handler<FunctionSM>(this,&FunctionSM::handleEnterEvent));
+        new Event::Handler2<FunctionSM,&FunctionSM::handleEnterEvent>(this));
     assert( m_toMeLink );
 }
 

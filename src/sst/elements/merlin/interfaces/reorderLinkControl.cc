@@ -78,13 +78,13 @@ ReorderLinkControl::setup()
     //     delete init_events.front();
     //     init_events.pop_front();
     // }
-    link_control->setNotifyOnReceive(new SimpleNetwork::Handler<ReorderLinkControl>(this,&ReorderLinkControl::handle_event));
+    link_control->setNotifyOnReceive(new SimpleNetwork::Handler2<ReorderLinkControl,&ReorderLinkControl::handle_event>(this));
 }
 
 void ReorderLinkControl::init(unsigned int phase)
 {
     if ( phase == 0 ) {
-        link_control->setNotifyOnReceive(new SimpleNetwork::Handler<ReorderLinkControl>(this,&ReorderLinkControl::handle_event));
+        link_control->setNotifyOnReceive(new SimpleNetwork::Handler2<ReorderLinkControl,&ReorderLinkControl::handle_event>(this));
     }
     link_control->init(phase);
     if (link_control->isNetworkInitialized()) {

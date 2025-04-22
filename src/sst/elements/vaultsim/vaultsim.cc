@@ -60,7 +60,7 @@ VaultSim::VaultSim( ComponentId_t id, Params& params ) :
     // Configuration if we're not using Phx Library
 
     registerClock( frequency,
-                   new Clock::Handler<VaultSim>(this, &VaultSim::clock) );
+                   new Clock::Handler2<VaultSim,&VaultSim::clock>(this) );
 
     std::string delay = "40ns";
     delay = params.find<std::string>("delay", "40ns");

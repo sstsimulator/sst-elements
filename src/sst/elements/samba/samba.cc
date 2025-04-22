@@ -84,12 +84,12 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 		TLB.push_back(loadComponentExtension<TLBhierarchy>(i, levels /* level */, params));
 
 
-		SST::Link * link2 = configureLink(link_buffer, "0ps", new Event::Handler<TLBhierarchy>(TLB[i], &TLBhierarchy::handleEvent_CPU));
+		SST::Link * link2 = configureLink(link_buffer, "0ps", new Event::Handler2<TLBhierarchy,&TLBhierarchy::handleEvent_CPU>(TLB[i]));
 		cpu_to_mmu[i] = link2;
 
 
 
-		SST::Link * link = configureLink(link_buffer2, "0ps", new Event::Handler<TLBhierarchy>(TLB[i], &TLBhierarchy::handleEvent_CACHE));
+		SST::Link * link = configureLink(link_buffer2, "0ps", new Event::Handler2<TLBhierarchy,&TLBhierarchy::handleEvent_CACHE>(TLB[i]));
 		mmu_to_cache[i] = link;
 
 
@@ -97,9 +97,9 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 		SST::Link * link3;
 
 		if(self==0)
-			link3 = configureLink(link_buffer3, new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvResp));
+			link3 = configureLink(link_buffer3, new Event::Handler2<PageTableWalker,&PageTableWalker::recvResp>(TLB[i]->getPTW()));
 		else
-			link3 = configureSelfLink(link_buffer3, std::to_string(page_walk_latency)+ "ns", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvResp));
+			link3 = configureSelfLink(link_buffer3, std::to_string(page_walk_latency)+ "ns", new Event::Handler2<PageTableWalker,&PageTableWalker::recvResp>(TLB[i]->getPTW()));
 
 		ptw_to_mem[i] = link3;
 
@@ -112,7 +112,7 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 			snprintf(link_buffer, buffer_size, "event_bus%" PRIu32, i);
 
-			event_link = configureSelfLink(link_buffer, "1ns", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::handleEvent));
+			event_link = configureSelfLink(link_buffer, "1ns", new Event::Handler2<PageTableWalker,&PageTableWalker::handleEvent>(TLB[i]->getPTW()));
 
 			TLB[i]->getPTW()->setEventChannel(event_link);
 			TLB[i]->setPageTablePointers(&CR3, &PGD, &PUD, &PMD, &PTE, &MAPPED_PAGE_SIZE1GB, &MAPPED_PAGE_SIZE2MB, &MAPPED_PAGE_SIZE4KB, &PENDING_PAGE_FAULTS, &cr3I, &PENDING_PAGE_FAULTS_PGD, &PENDING_PAGE_FAULTS_PUD, &PENDING_PAGE_FAULTS_PMD, &PENDING_PAGE_FAULTS_PTE);//, &PENDING_SHOOTDOWN_EVENTS, &PTR, &PTR_map);
@@ -130,7 +130,7 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 	std::cout<<"After initialization "<<std::endl;
 
 	std::string cpu_clock = params.find<std::string>("clock", "1GHz");
-	registerClock( cpu_clock, new Clock::Handler<Samba>(this, &Samba::tick ) );
+	registerClock( cpu_clock, new Clock::Handler2<Samba,&Samba::tick>(this) );
 
 
 

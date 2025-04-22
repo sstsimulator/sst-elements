@@ -278,7 +278,7 @@ public:
 		}
 
 		m_selfLink = configureSelfLink("Nic::SimpleMemoryModel", "1 ns",
-        new Event::Handler<SimpleMemoryModel>(this,&SimpleMemoryModel::handleSelfEvent));
+        new Event::Handler2<SimpleMemoryModel,&SimpleMemoryModel::handleSelfEvent>(this));
 	}
 
     virtual ~SimpleMemoryModel() {

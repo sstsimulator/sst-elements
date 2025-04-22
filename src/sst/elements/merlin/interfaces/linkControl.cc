@@ -75,13 +75,13 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
         port_name = params.find<std::string>("port_name");
     }
 
-    rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
+    rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler2<LinkControl,&LinkControl::handle_input>(this));
 
     output_timing = configureSelfLink(port_name + "_output_timing", "1GHz",
-            new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
+            new Event::Handler2<LinkControl,&LinkControl::handle_output>(this));
 
     congestion_timing = configureSelfLink(port_name = "_congestion_timing", getCoreTimeBase().toString(),
-            new Event::Handler<LinkControl>(this,&LinkControl::handle_congestion));
+            new Event::Handler2<LinkControl,&LinkControl::handle_congestion>(this));
 
     // Input and output buffers.  Not all of them can be set up now.
     // Only those that are sized based on req_vns can be intialized

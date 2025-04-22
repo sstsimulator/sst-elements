@@ -129,12 +129,12 @@ Messier::Messier(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
     DIMM = loadComponentExtension<NVM_DIMM>(*nvm_params);
 
-        m_memChan = configureLink(link_buffer, "1ns", new Event::Handler<NVM_DIMM>(DIMM, &NVM_DIMM::handleRequest));
+        m_memChan = configureLink(link_buffer, "1ns", new Event::Handler2<NVM_DIMM,&NVM_DIMM::handleRequest>(DIMM));
 
 
     snprintf(link_buffer, buffer_size, "event_bus");
 
-        event_link = configureSelfLink(link_buffer, "1ns", new Event::Handler<NVM_DIMM>(DIMM, &NVM_DIMM::handleEvent));
+        event_link = configureSelfLink(link_buffer, "1ns", new Event::Handler2<NVM_DIMM,&NVM_DIMM::handleEvent>(DIMM));
 
 
     DIMM->setMemChannel(m_memChan);
@@ -149,7 +149,7 @@ Messier::Messier(SST::ComponentId_t id, SST::Params& params): Component(id) {
         event_link->setDefaultTimeBase(tc);
 
 
-    registerClock( cpu_clock, new Clock::Handler<Messier>(this, &Messier::tick ) );
+    registerClock( cpu_clock, new Clock::Handler2<Messier,&Messier::tick>(this) );
 
 }
 
