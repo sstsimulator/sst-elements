@@ -54,7 +54,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	out->verbose(CALL_INFO, 1, 0, "CPU clock configured for %s\n", cpuClock.c_str());
 
         cache_link = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, 
-                timeConverter, new Interfaces::StandardMem::Handler<RequestGenCPU>(this, &RequestGenCPU::handleEvent) );
+                &timeConverter, new Interfaces::StandardMem::Handler<RequestGenCPU>(this, &RequestGenCPU::handleEvent) );
         if (!cache_link) {
 	    std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.standardInterface");
 	    out->verbose(CALL_INFO, 1, 0, "Memory interface to be loaded is: %s\n", interfaceName.c_str());
@@ -62,7 +62,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	    Params interfaceParams = params.get_scoped_params("memoryinterfaceparams");
             interfaceParams.insert("port", "cache_link");
 	    cache_link = loadAnonymousSubComponent<Interfaces::StandardMem>(interfaceName, "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
-                    interfaceParams, timeConverter, new Interfaces::StandardMem::Handler<RequestGenCPU>(this, &RequestGenCPU::handleEvent));
+                    interfaceParams, &timeConverter, new Interfaces::StandardMem::Handler<RequestGenCPU>(this, &RequestGenCPU::handleEvent));
 
             if (!cache_link)
                 out->fatal(CALL_INFO, -1, "%s, Error loading memory interface\n", getName().c_str());
@@ -185,7 +185,7 @@ void RequestGenCPU::handleSrcEvent( Event* ev ) {
 	out->verbose(CALL_INFO, 2, 0, "got %lu generators\n", event->generators.size() );
 	loadGenerator( event );
 
-	if ( 0 != timeConverter->convertFromCoreTime( getCurrentSimCycle()) ) {
+	if ( 0 != timeConverter.convertFromCoreTime( getCurrentSimCycle()) ) {
 		clockTick( reregisterClock( timeConverter, clockHandler ) );
 	}
 

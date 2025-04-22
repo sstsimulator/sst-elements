@@ -236,7 +236,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     // SimpleMem::Handler<SST::Vanadis::VanadisComponent>(this,
     //&VanadisComponent::handleIncomingDataCacheEvent ));
     memInstInterface = loadUserSubComponent<Interfaces::StandardMem>(
-        "mem_interface_inst", ComponentInfo::SHARE_NONE, cpuClockTC,
+        "mem_interface_inst", ComponentInfo::SHARE_NONE, &cpuClockTC,
         new StandardMem::Handler<SST::Vanadis::VANADIS_COMPONENT>(
             this, &VANADIS_COMPONENT::handleIncomingInstCacheEvent));
 

@@ -114,7 +114,7 @@ private:
     typedef std::queue<noc_mesh_event*> port_queue_t;
 
     Clock::Handler<noc_mesh>* my_clock_handler;
-    TimeConverter* clock_tc;
+    TimeConverter clock_tc;
     void clock_wakeup();
     bool clock_is_off;
     Cycle_t last_time = 0;

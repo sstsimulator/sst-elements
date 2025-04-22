@@ -388,10 +388,10 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
     if ( mtu.hasUnits("B") ) mtu *= UnitAlgebra("8b/B");
 
     // Get the serialization time for an mtu
-    TimeConverter* tc = getTimeConverter(mtu / link_bw);
-    mtu_ser_time = tc->getFactor();
+    TimeConverter tc = getTimeConverter(mtu / link_bw);
+    mtu_ser_time = tc.getFactor();
     tc = getTimeConverter(flit_size / link_bw );
-    flit_ser_time = tc->getFactor();
+    flit_ser_time = tc.getFactor();
 
     UnitAlgebra cm_pktsize_threshold_ua = params.find<UnitAlgebra>("cm_pktsize_threshold","128B");
     if ( cm_pktsize_threshold_ua.hasUnits("B") ) cm_pktsize_threshold_ua *= UnitAlgebra("8b/B");
@@ -1265,7 +1265,7 @@ PortControl::decreaseLinkWidth() {
         cur_link_width = cur_link_width/2;
         link_bw = link_bw/2;
         UnitAlgebra link_clock = link_bw / flit_size;
-        TimeConverter* tc = getTimeConverter(link_clock);
+        TimeConverter tc = getTimeConverter(link_clock);
         output_timing->setDefaultTimeBase(tc);
         width_adj_count->addData(1);
         // I need to add a delay before messages can transmit on the link
@@ -1292,7 +1292,7 @@ PortControl::increaseLinkWidth()
         cur_link_width = max_link_width;
         link_bw = link_bw*2;
         UnitAlgebra link_clock = link_bw / flit_size;
-        TimeConverter* tc = getTimeConverter(link_clock);
+        TimeConverter tc = getTimeConverter(link_clock);
         output_timing->setDefaultTimeBase(tc);
         width_adj_count->addData(1);
         // I need to add a delay before messages can transmit on the link

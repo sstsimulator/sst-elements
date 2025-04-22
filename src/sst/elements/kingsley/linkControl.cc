@@ -201,7 +201,7 @@ void LinkControl::init(unsigned int phase)
 
         UnitAlgebra link_clock = link_bw / flit_size_ua;
 
-        TimeConverter* tc = getTimeConverter(link_clock);
+        TimeConverter tc = getTimeConverter(link_clock);
         output_timing->setDefaultTimeBase(tc);
 
         for ( int i = 0; i < req_vns; ++i ) {

@@ -138,7 +138,7 @@ private:
 
     Output* out;
 
-    TimeConverter* timeConverter;
+    TimeConverter timeConverter;
     Clock::HandlerBase* clockHandler;
     RequestGenerator* reqGen;
     std::map<StandardMem::Request::id_t, CPURequest*> requestsInFlight;

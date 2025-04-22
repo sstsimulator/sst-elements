@@ -145,7 +145,7 @@ Messier::Messier(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
     std::string cpu_clock = params.find<std::string>("clock", "1GHz");
 
-    TimeConverter* tc = getTimeConverter(cpu_clock);
+    TimeConverter tc = getTimeConverter(cpu_clock);
         event_link->setDefaultTimeBase(tc);
 
 
