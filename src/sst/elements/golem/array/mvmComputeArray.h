@@ -37,7 +37,7 @@ public:
                          Event::HandlerBase* handler)
         : ComputeArray(id, params, tc, handler) {
         // Configure selfLink
-        selfLink = configureSelfLink("Self", tc, new Event::Handler<MVMComputeArray>(this, &MVMComputeArray::handleSelfEvent));
+        selfLink = configureSelfLink("Self", tc, new Event::Handler2<MVMComputeArray,&MVMComputeArray::handleSelfEvent>(this));
         selfLink->setDefaultTimeBase(latencyTC);
 
         // Initialize vectors

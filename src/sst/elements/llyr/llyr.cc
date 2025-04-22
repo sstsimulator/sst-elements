@@ -51,12 +51,12 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     //set our Main Clock
     const std::string clock_rate = params.find< std::string >("clock", "1.0GHz");
     output_->verbose(CALL_INFO, 1, 0, "Clock is configured for %s\n", clock_rate.c_str());
-    clock_tick_handler_ = new Clock::Handler<LlyrComponent>(this, &LlyrComponent::tick);
+    clock_tick_handler_ = new Clock::Handler2<LlyrComponent,&LlyrComponent::tick>(this);
     time_converter_ = registerClock(clock_rate, clock_tick_handler_);
 
     //set up memory interfaces
     mem_interface_ = loadUserSubComponent<SST::Interfaces::StandardMem>("iface", ComponentInfo::SHARE_NONE, time_converter_,
-                                        new StandardMem::Handler<LlyrComponent>(this, &LlyrComponent::handleEvent));
+                                        new StandardMem::Handler2<LlyrComponent,&LlyrComponent::handleEvent>(this));
 
     if( !mem_interface_ ) {
         std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.memInterface");
@@ -65,7 +65,7 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
         Params interfaceParams = params.get_scoped_params("memoryinterfaceparams");
         interfaceParams.insert("port", "cache_link");
         mem_interface_ = loadAnonymousSubComponent<SST::Interfaces::StandardMem>(interfaceName, "iface", 0, ComponentInfo::SHARE_PORTS |
-            ComponentInfo::INSERT_STATS, interfaceParams, time_converter_, new StandardMem::Handler<LlyrComponent>(this, &LlyrComponent::handleEvent));
+            ComponentInfo::INSERT_STATS, interfaceParams, time_converter_, new StandardMem::Handler2<LlyrComponent,&LlyrComponent::handleEvent>(this));
 
         if( !mem_interface_ ) {
             output_->fatal(CALL_INFO, -1, "%s, Error loading memory interface\n", getName().c_str());

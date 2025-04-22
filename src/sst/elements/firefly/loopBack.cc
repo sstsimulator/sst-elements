@@ -39,8 +39,8 @@ LoopBack::LoopBack(ComponentId_t id, Params& params ) :
 			std::ostringstream core;
 			core <<  i;
 
-			Event::Handler<LoopBack,int>* handler =
-                new Event::Handler<LoopBack,int>( this, &LoopBack::handleCoreEvent, j*numCores + i );
+			Event::HandlerBase* handler =
+                new Event::Handler2<LoopBack,&LoopBack::handleCoreEvent,int>( this, j*numCores + i );
 
 			Link* link = configureLink("nic"+ nic.str() + "core" + core.str(), "1 ns", handler );
 			assert(link);

@@ -93,7 +93,7 @@ noc_mesh::noc_mesh(ComponentId_t cid, Params& params) :
     route_y_first = params.find<bool>("route_y_first",false);
 
     // Register the clock
-    my_clock_handler = new Clock::Handler<noc_mesh>(this,&noc_mesh::clock_handler);
+    my_clock_handler = new Clock::Handler2<noc_mesh,&noc_mesh::clock_handler>(this);
     clock_tc = registerClock( clock_freq, my_clock_handler);
     clock_is_off = false;
 
@@ -101,7 +101,7 @@ noc_mesh::noc_mesh(ComponentId_t cid, Params& params) :
     ports = new Link*[local_port_start + local_ports];
 
     // Configure directional ports
-    Event::Handler<noc_mesh,int>* dummy_handler = new Event::Handler<noc_mesh,int>(this,&noc_mesh::handle_input_r2r,-1);
+    Event::HandlerBase* dummy_handler = new Event::Handler2<noc_mesh,&noc_mesh::handle_input_r2r,int>(this,-1);
 
     last_time = 0;
 
@@ -146,7 +146,6 @@ noc_mesh::noc_mesh(ComponentId_t cid, Params& params) :
         port_name << i;
         ports[local_port_start + i] =
             configureLink(port_name.str(),
-                          // new Event::Handler<noc_mesh,int>(this,&noc_mesh::handle_input_ep2r,local_port_start+i));
                           dummy_handler);
 
         // stats
@@ -408,7 +407,6 @@ noc_mesh::clock_handler(Cycle_t cycle)
 
                 // Check to see if there are enough credits to send on
                 // that port
-                // output.output("(%d,%d): clock_handler(): port_credits[%d] = %d\n",my_x,my_y,port,port_credits[port]);
                 if ( port_credits[port] >= event->encap_ev->getSizeInFlits() ) {
                     int trace_id = event->encap_ev->request->getTraceID();
                     int vn = event->encap_ev->vn;
@@ -577,7 +575,7 @@ noc_mesh::init(unsigned int phase)
                         endpoint_start++;
                         delete nie;
                         // Endpoint to router link
-                        ports[i]->setFunctor(new Event::Handler<noc_mesh,int>(this,&noc_mesh::handle_input_ep2r,i));
+                        ports[i]->setFunctor(new Event::Handler2<noc_mesh,&noc_mesh::handle_input_ep2r,int>(this,i));
                     }
                     else {
                         // Unexpected command
@@ -585,7 +583,7 @@ noc_mesh::init(unsigned int phase)
                 }
                 else {
                     // Router to router link
-                    ports[i]->setFunctor(new Event::Handler<noc_mesh,int>(this,&noc_mesh::handle_input_r2r,i));
+                    ports[i]->setFunctor(new Event::Handler2<noc_mesh,&noc_mesh::handle_input_r2r,int>(this,i));
                 }
             }
         }

@@ -149,11 +149,11 @@ private:
     virtual void init(unsigned int phase);
     void setup();
     void finish();
-    void handleIncomingSyscall(SST::Event* ev);
+    void handleIncomingSyscallEvent(SST::Event* ev);
     VanadisSyscall* handleIncomingSyscall( OS::ProcessInfo*, VanadisSyscallEvent*, SST::Link* core_link );
     void processSyscallPost( VanadisSyscall* syscall );
 
-    void handleIncomingMemory(StandardMem::Request* ev);
+    void handleIncomingMemoryCallback(StandardMem::Request* ev);
 
     void processOsPageFault( VanadisSyscall*, uint64_t virtAddr, bool isWrite );
 

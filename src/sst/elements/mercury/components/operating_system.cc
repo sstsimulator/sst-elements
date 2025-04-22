@@ -112,7 +112,7 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
     }
 
   // Configure self link to handle event timing
-  selfEventLink_ = configureSelfLink("self", time_converter_, new Event::Handler<Hg::OperatingSystem>(this, &OperatingSystem::handleEvent));
+  selfEventLink_ = configureSelfLink("self", time_converter_, new Event::Handler2<Hg::OperatingSystem,&OperatingSystem::handleEvent>(this));
   assert(selfEventLink_);
   selfEventLink_->setDefaultTimeBase(time_converter_);
 

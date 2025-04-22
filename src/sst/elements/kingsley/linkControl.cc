@@ -79,14 +79,14 @@ LinkControl::LinkControl(ComponentId_t id, Params &params, int vns) :
     if ( isAnonymous())
         port_name = params.find<std::string>("port_name");
 
-    rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
+    rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler2<LinkControl,&LinkControl::handle_input>(this));
 
     if (!rtr_link)
         output.fatal(CALL_INFO, -1, "%s, unable to configure link for port '%s'. Check port validity and subcomponent sharing flags\n",
                 getName().c_str(), port_name.c_str());
 
     output_timing = configureSelfLink(port_name + "_output_timing", "1GHz",
-            new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
+            new Event::Handler2<LinkControl,&LinkControl::handle_output>(this));
 
     // Register statistics
     packet_latency = registerStatistic<uint64_t>("packet_latency");
@@ -139,12 +139,12 @@ LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw
 
     // Configure the links
     // For now give it a fake timebase.  Will give it the real timebase during init
-    // rtr_link = rif->configureLink(port_name, time_base, new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
-    rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
+    // rtr_link = rif->configureLink(port_name, time_base, new Event::Handler2<LinkControl,&LinkControl::handle_input>(this));
+    rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler2<LinkControl,&LinkControl::handle_input>(this));
     // output_timing = rif->configureSelfLink(port_name + "_output_timing", time_base,
-    //         new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
+    //         new Event::Handler2<LinkControl,&LinkControl::handle_output>(this));
     output_timing = configureSelfLink(port_name + "_output_timing", "1GHz",
-            new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
+            new Event::Handler2<LinkControl,&LinkControl::handle_output>(this));
 
     // Register statistics
     packet_latency = registerStatistic<uint64_t>("packet_latency");

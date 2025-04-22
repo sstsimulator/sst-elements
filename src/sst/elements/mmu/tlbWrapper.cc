@@ -31,12 +31,12 @@ TLB_Wrapper::TLB_Wrapper(SST::ComponentId_t id, SST::Params& params): Component(
 
     m_exe = params.find<bool>("exe", 0 );
 
-    m_cpu_if = configureLink("cpu_if", new Event::Handler<TLB_Wrapper>(this, &TLB_Wrapper::handleCpuEvent));
+    m_cpu_if = configureLink("cpu_if", new Event::Handler2<TLB_Wrapper,&TLB_Wrapper::handleCpuEvent>(this));
     if ( nullptr == m_cpu_if ) {
         m_dbg.fatal(CALL_INFO, -1, "Error: was unable to configure link `cpu_if`\n");
     }
 
-    m_cache_if = configureLink("cache_if", new Event::Handler<TLB_Wrapper>(this, &TLB_Wrapper::handleCacheEvent));
+    m_cache_if = configureLink("cache_if", new Event::Handler2<TLB_Wrapper,&TLB_Wrapper::handleCacheEvent>(this));
     if ( nullptr == m_cache_if ) {
         m_dbg.fatal(CALL_INFO, -1, "Error: was unable to configure link `cache_if`\n");
     }

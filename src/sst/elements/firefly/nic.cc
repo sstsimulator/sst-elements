@@ -145,7 +145,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     assert( m_linkControl );
 
     m_recvNotifyFunctor =
-        new SimpleNetwork::Handler<Nic>(this,&Nic::recvNotify );
+        new SimpleNetwork::Handler2<Nic,&Nic::recvNotify>(this);
     assert( m_recvNotifyFunctor );
 
     m_linkRecvWidget = new LinkControlWidget( m_dbg,
@@ -156,7 +156,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     );
 
     m_sendNotifyFunctor =
-        new SimpleNetwork::Handler<Nic>(this,&Nic::sendNotify );
+        new SimpleNetwork::Handler2<Nic,&Nic::sendNotify>(this);
     assert( m_sendNotifyFunctor );
 
     m_linkSendWidget = new LinkControlWidget( m_dbg,
@@ -167,13 +167,13 @@ Nic::Nic(ComponentId_t id, Params &params) :
     );
 
     m_selfLink = configureSelfLink("Nic::selfLink", "1 ns",
-        new Event::Handler<Nic>(this,&Nic::handleSelfEvent));
+        new Event::Handler2<Nic,&Nic::handleSelfEvent>(this));
     assert( m_selfLink );
 
     m_dbg.verbose(CALL_INFO,2,1,"IdToNet()=%d\n", IdToNet( m_myNodeId ) );
 
     for ( int i = 0; i < m_num_vNics; i++ ) {
-        m_vNicV.push_back( new VirtNic( *this, i,
+        m_vNicV.push_back( new VirtNic( this, i,
 			params.find<std::string>("corePortName","core"), getDelay_ns() ) );
     }
 

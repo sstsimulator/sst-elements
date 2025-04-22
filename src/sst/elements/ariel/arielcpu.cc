@@ -156,7 +156,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     std::string cpu_clock = params.find<std::string>("clock", "1GHz");
     output->verbose(CALL_INFO, 1, 0, "Registering ArielCPU clock at %s\n", cpu_clock.c_str());
 
-    TimeConverter* timeconverter = registerClock( cpu_clock, new Clock::Handler<ArielCPU>(this, &ArielCPU::tick ) );
+    TimeConverter* timeconverter = registerClock( cpu_clock, new Clock::Handler2<ArielCPU,&ArielCPU::tick>(this) );
 
     output->verbose(CALL_INFO, 1, 0, "Clocks registered.\n");
 
@@ -186,7 +186,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
                     getName().c_str(), core_count, mem->getMaxPopulatedSlotNumber());
 
         for (int i = 0; i < core_count; i++) {
-            cpu_to_cache_links.push_back(mem->create<Interfaces::StandardMem>(i, ComponentInfo::INSERT_STATS, timeconverter, new StandardMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
+            cpu_to_cache_links.push_back(mem->create<Interfaces::StandardMem>(i, ComponentInfo::INSERT_STATS, timeconverter, new StandardMem::Handler2<ArielCore,&ArielCore::handleEvent>(cpu_cores[i])));
             cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
         }
     } else {
@@ -197,12 +197,12 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
             Params par;
             par.insert("port", "cache_link_" + std::to_string(i));
             cpu_to_cache_links.push_back(loadAnonymousSubComponent<Interfaces::StandardMem>("memHierarchy.standardInterface", "memory", i,
-                        ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, par, timeconverter, new StandardMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
+                        ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, par, timeconverter, new StandardMem::Handler2<ArielCore,&ArielCore::handleEvent>(cpu_cores[i])));
             cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
 
             //Configuring Ariel to RTL link and RTLAck Event Handle
                snprintf(link_buffer, link_buffer_size, "rtl_link_%" PRIu32, i);
-               cpu_to_rtl_links.push_back(configureLink(link_buffer, new Event::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleRtlAckEvent)));
+               cpu_to_rtl_links.push_back(configureLink(link_buffer, new Event::Handler2<ArielCore,&ArielCore::handleRtlAckEvent>(cpu_cores[i])));
                cpu_cores[i]->setRtlLink(cpu_to_rtl_links[i]);
                output->verbose(CALL_INFO, 1, 0, "Completed initialization of the Ariel RTL Link.\n");
         }

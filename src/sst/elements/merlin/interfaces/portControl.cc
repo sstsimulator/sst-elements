@@ -298,10 +298,10 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
     case Topology::R2N:
         host_port = true;
         port_link = configureLink(link_port_name, output_latency_timebase,
-                                   new Event::Handler<PortControl>(this,&PortControl::handle_input_n2r));
+                                   new Event::Handler2<PortControl,&PortControl::handle_input_n2r>(this));
         if ( port_link != NULL ) {
             output_timing = configureSelfLink(link_port_name + "_output_timing", "1GHz",
-                                              new Event::Handler<PortControl>(this,&PortControl::handle_output));
+                                              new Event::Handler2<PortControl,&PortControl::handle_output>(this));
         }
         break;
     case Topology::R2R:
@@ -313,10 +313,10 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
         // to abort on sends from then on.
         host_port = false;
         port_link = configureLink(link_port_name, output_latency_timebase,
-                                  new Event::Handler<PortControl>(this,&PortControl::handle_input_r2r));
+                                  new Event::Handler2<PortControl,&PortControl::handle_input_r2r>(this));
         if ( port_link != NULL ) {
             output_timing = configureSelfLink(link_port_name + "_output_timing", "1GHz",
-                                              new Event::Handler<PortControl>(this,&PortControl::handle_output));
+                                              new Event::Handler2<PortControl,&PortControl::handle_output>(this));
         }
         break;
     default:
@@ -328,10 +328,10 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
 	// This is the self link to enable the logic for adaptive link widths.
 	// The initial call to the handler dynlink_timing->send is made in setup.
 	dynlink_timing = configureSelfLink(link_port_name + "_dynlink_timing", "10us",
-                                       new Event::Handler<PortControl>(this,&PortControl::handleSAIWindow));
+                                       new Event::Handler2<PortControl,&PortControl::handleSAIWindow>(this));
 
 	disable_timing = configureSelfLink(link_port_name + "_disable_timing", "1us",
-                                       new Event::Handler<PortControl>(this,&PortControl::reenablePort));
+                                       new Event::Handler2<PortControl,&PortControl::reenablePort>(this));
     connected = true;
 
     if ( port_link == NULL ) {
@@ -558,8 +558,8 @@ void
 PortControl::setup() {
     if ( !connected ) return;
     if ( topo->getPortState(port_number) == Topology::FAILED ) {
-        port_link->replaceFunctor(new Event::Handler<PortControl>(this,&PortControl::handle_failed));
-        output_timing->replaceFunctor(new Event::Handler<PortControl>(this,&PortControl::handle_failed));
+        port_link->replaceFunctor(new Event::Handler2<PortControl,&PortControl::handle_failed>(this));
+        output_timing->replaceFunctor(new Event::Handler2<PortControl,&PortControl::handle_failed>(this));
     }
 	if (dlink_thresh >= 0) dynlink_timing->send(1,NULL);
     while ( init_events.size() ) {

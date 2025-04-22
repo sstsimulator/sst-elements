@@ -77,7 +77,7 @@ pt2pt_test::pt2pt_test(ComponentId_t cid, Params& params) :
 
 
     // // Register a clock
-    // registerClock( "1GHz", new Clock::Handler<pt2pt_test>(this,&pt2pt_test::clock_handler), false);
+    // registerClock( "1GHz", new Clock::Handler2<pt2pt_test,&pt2pt_test::clock_handler>(this), false);
 
     params.find_array<int>("src",src);
 
@@ -100,21 +100,21 @@ pt2pt_test::pt2pt_test(ComponentId_t cid, Params& params) :
     }
 
     self_link = configureSelfLink("start_timing", "1ns",
-                                  new Event::Handler<pt2pt_test>(this,&pt2pt_test::start));
+                                  new Event::Handler2<pt2pt_test,&pt2pt_test::start>(this));
 
     report_timing = configureSelfLink("report_timing", "1ns",
-                                  new Event::Handler<pt2pt_test>(this,&pt2pt_test::report_bw));
+                                  new Event::Handler2<pt2pt_test,&pt2pt_test::report_bw>(this));
 
     // if ( id == 1 ) {
     //     // self_link = configureSelfLink("complete_link", link_bw_s,
-	// 	// 		      new Event::Handler<pt2pt_test>(this,&pt2pt_test::handle_complete));
+	// 	// 		      new Event::Handler2<pt2pt_test,&pt2pt_test::handle_complete>(this));
 
     //     // Configure a new self link to be used to time the
     //     // serialization latency of the last packet.  We won't know
     //     // the final BW until the network is intialized, so we'll put
     //     // in a dummy value, then change it later.
     //     self_link = configureSelfLink("complete_link", "2GHz",
-	// 			      new Event::Handler<pt2pt_test>(this,&pt2pt_test::handle_complete));
+	// 			      new Event::Handler2<pt2pt_test,&pt2pt_test::handle_complete>(this));
     // }
 
     my_dest = -1;
@@ -184,7 +184,7 @@ void pt2pt_test::setup()
 
     if ( my_dest != -1 ) {
         trace.output("I'm a sender\n");
-        link_control->setNotifyOnSend(new SimpleNetwork::Handler<pt2pt_test>(this,&pt2pt_test::send_handler));
+        link_control->setNotifyOnSend(new SimpleNetwork::Handler2<pt2pt_test,&pt2pt_test::send_handler>(this));
         // Compute delay in nanoseconds
         UnitAlgebra delay_in_ns = my_delay / UnitAlgebra("1ns");
         self_link->send(delay_in_ns.getRoundedValue(),NULL);
@@ -192,7 +192,7 @@ void pt2pt_test::setup()
 
     if ( !my_recvs.empty() ) {
         trace.output("I'm a receiver\n");
-        link_control->setNotifyOnReceive(new SimpleNetwork::Handler<pt2pt_test>(this,&pt2pt_test::recv_handler));
+        link_control->setNotifyOnReceive(new SimpleNetwork::Handler2<pt2pt_test,&pt2pt_test::recv_handler>(this));
     }
 
     // If I am a receiver and report_interval is not zero, set up

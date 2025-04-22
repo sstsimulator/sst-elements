@@ -38,7 +38,7 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) : SST::Component(id) {
     TimeConverter* tc = getTimeConverter(clockfreq);
 
     // Bind tick function
-    registerClock(tc, new Clock::Handler<DMAEngine>(this, &DMAEngine::tick));
+    registerClock(tc, new Clock::Handler2<DMAEngine,&DMAEngine::tick>(this));
 
     // MMIO Memory address and size
     mmio_addr = params.find<uint64_t>("mmio_addr", 0);
@@ -46,9 +46,9 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) : SST::Component(id) {
 
     // Get interfaces and bind handlers
     mmio_iface = loadUserSubComponent<SST::Interfaces::StandardMem>("mmio_iface", ComponentInfo::SHARE_NONE, tc, 
-            new StandardMem::Handler<DMAEngine>(this, &DMAEngine::handleEvent));
+            new StandardMem::Handler2<DMAEngine,&DMAEngine::handleEvent>(this));
     mem_iface = loadUserSubComponent<SST::Interfaces::StandardMem>("mem_iface", ComponentInfo::SHARE_NONE, tc, 
-            new StandardMem::Handler<DMAEngine>(this, &DMAEngine::handleEvent));
+            new StandardMem::Handler2<DMAEngine,&DMAEngine::handleEvent>(this));
 
     if (!mmio_iface) {
         out.fatal(CALL_INFO, -1, "%s, Error: No interface found loaded into 'mmio_iface' subcomponent slot. Please check input file\n", getName().c_str());

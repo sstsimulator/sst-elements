@@ -47,8 +47,7 @@ class MemoryHeapLink : public SubComponent {
     MemoryHeapLink( ComponentId_t id, Params& params ) : SubComponent(id)
 	{
 		m_link = configureLink( "memoryHeap", "0ps",
-            new Event::Handler<MemoryHeapLink>(
-                    this,&MemoryHeapLink::eventHandler ) );
+            new Event::Handler2<MemoryHeapLink,&MemoryHeapLink::eventHandler>( this ) );
         assert(m_link);
 	}
 

@@ -75,7 +75,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     std::string clock_rate = params.find<std::string>("clock", "1GHz");
     output->verbose(CALL_INFO, 2, 0, "Registering clock at %s.\n", clock_rate.c_str());
-    cpuClockHandler = new Clock::Handler<VANADIS_COMPONENT>(this, &VANADIS_COMPONENT::tick);
+    cpuClockHandler = new Clock::Handler2<VANADIS_COMPONENT,&VANADIS_COMPONENT::tick>(this);
     cpuClockTC      = registerClock(clock_rate, cpuClockHandler);
 
     const uint32_t rob_count = params.find<uint32_t>("reorder_slots", 64);
@@ -113,7 +113,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
     halted_masks = new bool[hw_threads];
 
-    os_link = configureLink("os_link", "0ns", new Event::Handler<VANADIS_COMPONENT>(this, &VANADIS_COMPONENT::recvOSEvent));
+    os_link = configureLink("os_link", "0ns", new Event::Handler2<VANADIS_COMPONENT,&VANADIS_COMPONENT::recvOSEvent>(this));
     if ( nullptr == os_link ) {
         output->fatal(CALL_INFO, -1, "Error: was unable to configureLink %s \n", "os_link");
     }
@@ -233,12 +233,10 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     //	memDataInterface =
     // loadUserSubComponent<Interfaces::SimpleMem>("mem_interface_data",
     // ComponentInfo::SHARE_NONE, cpuClockTC, 		new
-    // SimpleMem::Handler<SST::Vanadis::VanadisComponent>(this,
     //&VanadisComponent::handleIncomingDataCacheEvent ));
     memInstInterface = loadUserSubComponent<Interfaces::StandardMem>(
         "mem_interface_inst", ComponentInfo::SHARE_NONE, &cpuClockTC,
-        new StandardMem::Handler<SST::Vanadis::VANADIS_COMPONENT>(
-            this, &VANADIS_COMPONENT::handleIncomingInstCacheEvent));
+        new StandardMem::Handler2<SST::Vanadis::VANADIS_COMPONENT,&VANADIS_COMPONENT::handleIncomingInstCacheEvent>(this));
 
     if ( nullptr == memInstInterface ) {
         output->fatal(
