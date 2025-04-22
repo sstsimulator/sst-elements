@@ -41,7 +41,7 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & type;
+        SST_SER(type);
     }
 
 protected:
@@ -103,10 +103,10 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseNocEvent::serialize_order(ser);
-        ser & request;
-        ser & vn;
-        ser & size_in_flits;
-        ser & injectionTime;
+        SST_SER(request);
+        SST_SER(vn);
+        SST_SER(size_in_flits);
+        SST_SER(injectionTime);
     }
 
 private:
@@ -139,8 +139,8 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseNocEvent::serialize_order(ser);
-        ser & vn;
-        ser & credits;
+        SST_SER(vn);
+        SST_SER(credits);
     }
 
 private:
@@ -178,9 +178,9 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseNocEvent::serialize_order(ser);
-        ser & command;
-        ser & int_value;
-        ser & ua_value;
+        SST_SER(command);
+        SST_SER(int_value);
+        SST_SER(ua_value);
     }
 
 
@@ -248,11 +248,11 @@ private:
 
 //     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
 //         BaseNocEvent::serialize_order(ser);
-//         ser & next_port;
-//         ser & next_vc;
-//         ser & vc;
-//         ser & credit_return_vc;
-//         ser & encap_ev;
+//         SST_SER(next_port);
+//         SST_SER(next_vc);
+//         SST_SER(vc);
+//         SST_SER(credit_return_vc);
+//         SST_SER(encap_ev);
 //     }
 
 // private:

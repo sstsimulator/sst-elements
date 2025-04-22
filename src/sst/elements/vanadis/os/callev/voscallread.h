@@ -36,9 +36,9 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisSyscallEvent::serialize_order(ser);
-        ser& read_fd;
-        ser& read_buff_addr;
-        ser& read_count;
+        SST_SER(read_fd);
+        SST_SER(read_buff_addr);
+        SST_SER(read_count);
     }
     ImplementSerializable(SST::Vanadis::VanadisSyscallReadEvent);
 

@@ -90,7 +90,7 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & type;
+        SST_SER(type);
     }
 
 protected:
@@ -170,11 +170,11 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseRtrEvent::serialize_order(ser);
-        ser & request;
-        ser & trusted_src;
-        ser & route_vn;
-        ser & size_in_flits;
-        ser & injectionTime;
+        SST_SER(request);
+        SST_SER(trusted_src);
+        SST_SER(route_vn);
+        SST_SER(size_in_flits);
+        SST_SER(injectionTime);
     }
 
 private:
@@ -272,10 +272,10 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseRtrEvent::serialize_order(ser);
-        ser & size_in_flits;
-        ser & dest.addr;
-        ser & dest.addr_is_router;
-        ser & dest.addr_for_router;
+        SST_SER(size_in_flits);
+        SST_SER(dest.addr);
+        SST_SER(dest.addr_is_router);
+        SST_SER(dest.addr_for_router);
     }
 
 protected:
@@ -304,9 +304,9 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         CtrlRtrEvent::serialize_order(ser);
-        ser & target;
-        ser & backoff;
-        ser & throttle_time;
+        SST_SER(target);
+        SST_SER(backoff);
+        SST_SER(throttle_time);
     }
 
 private:
@@ -362,8 +362,8 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseRtrEvent::serialize_order(ser);
-        ser & vc;
-        ser & credits;
+        SST_SER(vc);
+        SST_SER(credits);
     }
 
 private:
@@ -397,9 +397,9 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseRtrEvent::serialize_order(ser);
-        ser & command;
-        ser & int_value;
-        ser & ua_value;
+        SST_SER(command);
+        SST_SER(int_value);
+        SST_SER(ua_value);
     }
 
 
@@ -469,11 +469,11 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseRtrEvent::serialize_order(ser);
-        ser & next_port;
-        ser & next_vc;
-        ser & vc;
-        ser & credit_return_vc;
-        ser & encap_ev;
+        SST_SER(next_port);
+        SST_SER(next_vc);
+        SST_SER(vc);
+        SST_SER(credit_return_vc);
+        SST_SER(encap_ev);
     }
 
 private:

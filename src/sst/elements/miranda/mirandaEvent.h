@@ -38,8 +38,8 @@ private:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & key;
-		ser & generators;
+        SST_SER(key);
+		SST_SER(generators);
     }
 
     ImplementSerializable(SST::Miranda::MirandaReqEvent);
@@ -51,7 +51,7 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-		ser & key;
+		SST_SER(key);
 	}
     ImplementSerializable(SST::Miranda::MirandaRspEvent);
 };

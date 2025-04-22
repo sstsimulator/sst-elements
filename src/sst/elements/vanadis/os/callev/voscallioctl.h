@@ -45,13 +45,13 @@ private:
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisSyscallEvent::serialize_order(ser);
-        ser& fd;
-        ser& op_read;
-        ser& op_write;
-        ser& io_op;
-        ser& io_drv;
-        ser& ptr;
-        ser& ptr_len;
+        SST_SER(fd);
+        SST_SER(op_read);
+        SST_SER(op_write);
+        SST_SER(io_op);
+        SST_SER(io_drv);
+        SST_SER(ptr);
+        SST_SER(ptr_len);
     }
     ImplementSerializable(SST::Vanadis::VanadisSyscallIoctlEvent);
 

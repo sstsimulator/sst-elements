@@ -56,9 +56,9 @@ class Flow : public Request
   serialize_order(Core::Serialization::serializer& ser) override
   {
     Event::serialize_order(ser);
-    ser & flow_id_;
-    ser & byte_length_;
-    ser & libname_;
+    SST_SER(flow_id_);
+    SST_SER(byte_length_);
+    SST_SER(libname_);
   }
 
  protected:

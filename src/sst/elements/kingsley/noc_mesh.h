@@ -205,10 +205,10 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseNocEvent::serialize_order(ser);
-        ser & dest_mesh_loc;
-        ser & egress_port;
-        ser & next_port;
-        ser & encap_ev;
+        SST_SER(dest_mesh_loc);
+        SST_SER(egress_port);
+        SST_SER(next_port);
+        SST_SER(encap_ev);
     }
 
 private:

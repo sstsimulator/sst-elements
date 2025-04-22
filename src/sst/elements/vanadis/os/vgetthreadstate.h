@@ -35,8 +35,8 @@ protected:
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        ser& thread;
-        ser& core;
+        SST_SER(thread);
+        SST_SER(core);
     }
 
     ImplementSerializable(SST::Vanadis::VanadisCoreEvent);
@@ -68,10 +68,10 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisCoreEvent::serialize_order(ser);
-        ser& intRegs;
-        ser& fpRegs;
-        ser& instPtr;
-        ser& tlsPtr;
+        SST_SER(intRegs);
+        SST_SER(fpRegs);
+        SST_SER(instPtr);
+        SST_SER(tlsPtr);
     }
 
     ImplementSerializable(SST::Vanadis::VanadisGetThreadStateResp);

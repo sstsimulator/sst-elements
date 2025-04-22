@@ -67,9 +67,9 @@ private:
     // Serialization
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & sender;
-        ser & number;
-        ser & computation;
+        SST_SER(sender);
+        SST_SER(number);
+        SST_SER(computation);
     }
 
     // Register this event as serializable

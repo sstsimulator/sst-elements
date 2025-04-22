@@ -77,7 +77,7 @@ public:
 
             void serialize_order(SST::Core::Serialization::serializer &ser) override {
                 InitMemRtrEvent::serialize_order(ser);
-                ser & node;
+                SST_SER(node);
             }
 
             ImplementSerializable(SST::Opal::OpalMemNIC::OpalInitMemRtrEvent);

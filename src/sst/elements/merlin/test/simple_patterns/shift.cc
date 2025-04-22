@@ -162,7 +162,7 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & seq;
+        SST_SER(seq);
     }
 
 private:

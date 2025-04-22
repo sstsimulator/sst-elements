@@ -44,13 +44,13 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         SST::Event::serialize_order(ser);
-        ser & update_inp;
-        ser & update_ctrl;
-        ser & update_registers;
-        ser & verbose;
-        ser & done_reset;
-        ser & update_eval_args;
-        ser & sim_done;
+        SST_SER(update_inp);
+        SST_SER(update_ctrl);
+        SST_SER(update_registers);
+        SST_SER(verbose);
+        SST_SER(done_reset);
+        SST_SER(update_eval_args);
+        SST_SER(sim_done);
     }
 
     ImplementSerializable(SST::RtlComponent::RTLEvent);

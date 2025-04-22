@@ -35,7 +35,7 @@ private:
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisSyscallEvent::serialize_order(ser);
-        ser& addr;
+        SST_SER(addr);
     }
 
     ImplementSerializable(SST::Vanadis::VanadisSyscallSetTidAddressEvent);

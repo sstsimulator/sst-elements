@@ -51,7 +51,7 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & m_payload;
+        SST_SER(m_payload);
     }
 
     ImplementSerializable (SST::CramSim::c_TxnResEvent);

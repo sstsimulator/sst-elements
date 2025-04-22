@@ -114,18 +114,18 @@ namespace SST{ namespace OpalComponent{
 
 			void serialize_order(SST::Core::Serialization::serializer &ser) override {
 				Event::serialize_order(ser);
-				ser & ev;
-				ser & address;
-				ser & paddress;
-                ser & faultLevel;
-				ser & size;
-				ser & nodeId;
-				ser & coreId;
-				ser & memType;
-				ser & hint;
-				ser & fileId;
-				ser & memContrlId;
-                ser & invalidate;
+				SST_SER(ev);
+				SST_SER(address);
+				SST_SER(paddress);
+                SST_SER(faultLevel);
+				SST_SER(size);
+				SST_SER(nodeId);
+				SST_SER(coreId);
+				SST_SER(memType);
+				SST_SER(hint);
+				SST_SER(fileId);
+				SST_SER(memContrlId);
+                SST_SER(invalidate);
 			}
 
 
