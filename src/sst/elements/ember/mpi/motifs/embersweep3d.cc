@@ -60,6 +60,8 @@ EmberSweep3DGenerator::EmberSweep3DGenerator(SST::ComponentId_t id, Params& para
 
 void EmberSweep3DGenerator::configure()
 {
+    EmberMessagePassingGenerator::configure();
+
 	// Check that we are using all the processors or else lock up will happen :(.
 	if( (px * py) != (signed) size() ) {
 		fatal(CALL_INFO, -1, "Error: Sweep 3D motif checked "
@@ -96,7 +98,6 @@ void EmberSweep3DGenerator::configure()
 bool EmberSweep3DGenerator::generate( std::queue<EmberEvent*>& evQ) {
 
 	if( 0 == m_loopIndex && 0 == m_InnerLoopIndex ) {
-		configure();
 		verbose(CALL_INFO, 2, MOTIF_MASK, "rank=%d size=%d\n", rank(), size());
 	}
 

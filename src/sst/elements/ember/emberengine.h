@@ -54,7 +54,8 @@ public:
         { "motif_count", "Sets the number of motifs which will be run in this simulation, default is 1", "1"},
         { "rankmapper", "Sets the rank mapping SST module to load to rank translations, default is linear mapping", "ember.LinearMap" },
         { "mapFile", "Sets the name of the input file for custom map", "mapFile.txt" },
-
+        { "enableMpiStatsPerMotif", "Creates separate MPI time stats for each MPI motif. "
+                                    "Set to 0 to make all MPI motifs within an EmberEngine use the same time stats.", "1"},
         { "motif%(motif_count)d", "Sets the event generator or motif for the engine", "ember.EmberPingPongGenerator" },
     )
 	/* PARAMS
@@ -131,31 +132,34 @@ private:
     typedef std::map< std::string, ApiInfo* > ApiMap;
 
     ApiMap createApiMap( Hermes::OS* os, SST::Component*, SST::Params );
-    EmberGenerator* initMotif( SST::Params, const ApiMap&,
-					int jobId, int motifNum, Hermes::NodePerf* nodePerf );
 
-	int         m_jobId;
-	uint32_t    currentMotif;
+    EmberGenerator* createMotif( SST::Params, const ApiMap&, int jobId,
+                                 int motifNum, Hermes::NodePerf* nodePerf,
+                                 bool statsPerMotif );
+
+    int         m_jobId;
+    int         m_currentMotif;
+    int         m_numMotifs;
     bool        m_motifDone;
     ApiMap      m_apiMap;
-	Output      output;
+    Output      output;
 
-	std::queue<EmberEvent*> evQueue;
+    std::queue<EmberEvent*> evQueue;
 
     Hermes::NodePerf*   m_nodePerf;
-	EmberGenerator*     m_generator;
-	SST::Link*          selfEventLink;
-	SST::TimeConverter* nanoTimeConverter;
-	EmberMotifLog*      m_motifLogger;
+    EmberGenerator*     m_generator;
+    SST::Link*          selfEventLink;
+    SST::TimeConverter* nanoTimeConverter;
+    EmberMotifLog*      m_motifLogger;
 
-	std::vector<SST::Params> motifParams;
-	Thornhill::DetailedCompute* m_detailedCompute;
-	Thornhill::MemoryHeapLink*  m_memHeapLink;
+    std::vector<EmberGenerator*> m_motifs;
 
-	EmberEngine();			    		// For serialization
-	EmberEngine(const EmberEngine&);    // Do not implement
-	void operator=(const EmberEngine&); // Do not implement
+    Thornhill::DetailedCompute* m_detailedCompute;
+    Thornhill::MemoryHeapLink*  m_memHeapLink;
 
+    EmberEngine();			    		// For serialization
+    EmberEngine(const EmberEngine&);    // Do not implement
+    void operator=(const EmberEngine&); // Do not implement
 };
 
 }
