@@ -48,13 +48,13 @@ MMU::MMU(SST::ComponentId_t id, SST::Params& params) : SubComponent(id), m_nicTl
         core << i;
 
         name = "core" + core.str() + ".dtlb";
-        Link* dtlb = configureLink( name, new Event::Handler<MMU,int>(this, &MMU::handleTlbEvent, i * 2 + 0 ) );
+        Link* dtlb = configureLink( name, new Event::Handler2<MMU,&MMU::handleTlbEvent,int>(this, i * 2 + 0 ) );
         if ( nullptr == dtlb ) {
             m_dbg.fatal(CALL_INFO, -1, "Error: %s was unable to configure dtlb link `%s`\n",getName().c_str(),name.c_str());
         }
 
         name = "core" + core.str() + ".itlb";
-        Link* itlb = configureLink( name, new Event::Handler<MMU,int>(this, &MMU::handleTlbEvent, i * 2 + 1 ) );
+        Link* itlb = configureLink( name, new Event::Handler2<MMU,&MMU::handleTlbEvent,int>(this, i * 2 + 1 ) );
         if ( nullptr == itlb ) {
             m_dbg.fatal(CALL_INFO, -1, "Error: %s was unable to configure itlb link `%s`\n",getName().c_str(),name.c_str());
         }
@@ -63,7 +63,7 @@ MMU::MMU(SST::ComponentId_t id, SST::Params& params) : SubComponent(id), m_nicTl
 
     if ( useNicTlb ) {
         std::string name = "nicTlb";
-        m_nicTlbLink = configureLink( name, new Event::Handler<MMU>(this, &MMU::handleNicTlbEvent ) );
+        m_nicTlbLink = configureLink( name, new Event::Handler2<MMU,&MMU::handleNicTlbEvent>(this) );
         if ( nullptr == m_nicTlbLink ) {
             m_dbg.fatal(CALL_INFO, -1, "Error: %s was unable to configure itlb link `%s`\n",getName().c_str(),name.c_str());
         }

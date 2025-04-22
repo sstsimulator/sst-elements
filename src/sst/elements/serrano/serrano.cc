@@ -36,7 +36,7 @@ SerranoComponent::SerranoComponent( SST::ComponentId_t id, SST::Params& params )
 
 	const std::string clock = params.find<std::string>("clock", "1GHz");
 	output->verbose(CALL_INFO, 2, 0, "Configuring Serrano for clock of %s...\n", clock.c_str());
-	registerClock( clock, new Clock::Handler<SerranoComponent>( this, &SerranoComponent::tick ) );
+	registerClock( clock, new Clock::Handler2<SerranoComponent,&SerranoComponent::tick>(this) );
 
 	constexpr int kernel_name_len = 128;
 	char* kernel_name = new char[kernel_name_len];

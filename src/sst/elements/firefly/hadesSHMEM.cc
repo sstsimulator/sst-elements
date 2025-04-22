@@ -35,7 +35,7 @@ HadesSHMEM::HadesSHMEM(ComponentId_t id, Params& params) :
         Output::STDOUT );
 
     m_selfLink = configureSelfLink("ShmemToDriver", "1 ns",
-            new Event::Handler<HadesSHMEM>(this,&HadesSHMEM::doCallback));
+            new Event::Handler2<HadesSHMEM,&HadesSHMEM::doCallback>(this));
     m_heap = new Heap();
 
 	m_enterLat_ns = params.find<int>("enterLat_ns",30);

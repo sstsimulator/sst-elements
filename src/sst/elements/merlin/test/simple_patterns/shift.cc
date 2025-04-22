@@ -106,9 +106,9 @@ shift_nic::shift_nic(ComponentId_t cid, Params& params) :
 
 
     // Register a clock
-    registerClock( "1GHz", new Clock::Handler<shift_nic>(this,&shift_nic::clock_handler), false);
+    registerClock( "1GHz", new Clock::Handler2<shift_nic,&shift_nic::clock_handler>(this), false);
 
-    link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler<shift_nic>(this,&shift_nic::handle_event));
+    link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler2<shift_nic,&shift_nic::handle_event>(this));
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();

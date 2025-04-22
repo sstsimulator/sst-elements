@@ -47,7 +47,7 @@ cacheTracer::cacheTracer( ComponentId_t id, Params& params ): Component( id ) {
 
     string frequency = params.find<std::string>("clock", "1 Ghz");
     out->debug(CALL_INFO, 1, 0, "Registering cacheTracer clock at %s\n", frequency.c_str());
-    registerClock( frequency, new Clock::Handler<cacheTracer>(this, &cacheTracer::clock) );
+    registerClock( frequency, new Clock::Handler2<cacheTracer,&cacheTracer::clock>(this) );
     out->debug(CALL_INFO, 1, 0, "Clock registered\n");
 
     string tracePrefix = params.find<std::string>("tracePrefix", "");

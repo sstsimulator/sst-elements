@@ -94,7 +94,7 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 
 	// Configure self link to handle event timing
 	selfEventLink = configureSelfLink("self", "1ps",
-		new Event::Handler<EmberEngine>(this, &EmberEngine::handleEvent));
+		new Event::Handler2<EmberEngine,&EmberEngine::handleEvent>(this));
     assert(selfEventLink);
 
 	// Create a time converter for our compute events

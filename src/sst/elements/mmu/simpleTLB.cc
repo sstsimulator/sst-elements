@@ -31,7 +31,7 @@ SimpleTLB::SimpleTLB(SST::ComponentId_t id, SST::Params& params) : TLB(id,params
         0, // Mask
         Output::STDOUT );
 
-    m_selfLink = configureSelfLink("selfLink", "1 ns", new Event::Handler<SimpleTLB>(this,&SimpleTLB::callback));
+    m_selfLink = configureSelfLink("selfLink", "1 ns", new Event::Handler2<SimpleTLB,&SimpleTLB::callback>(this));
     m_hitLatency = params.find<int>("hitLatency", 0);
 
     int numHwThreads = params.find<int>("num_hardware_threads", 0 );
@@ -52,7 +52,7 @@ SimpleTLB::SimpleTLB(SST::ComponentId_t id, SST::Params& params) : TLB(id,params
     m_minVirtAddr = params.find<uint64_t>("minVirtAddr",4096);
     m_maxVirtAddr = params.find<uint64_t>("maxVirtAddr",0x80000000); 
 
-    m_mmuLink = configureLink( "mmu", new Event::Handler<SimpleTLB>(this, &SimpleTLB::handleMMUEvent) );
+    m_mmuLink = configureLink( "mmu", new Event::Handler2<SimpleTLB,&SimpleTLB::handleMMUEvent>(this) );
     if ( nullptr == m_mmuLink ) {
         m_dbg.fatal(CALL_INFO, -1, "Error: was unable to configure mmu link\n");
     }

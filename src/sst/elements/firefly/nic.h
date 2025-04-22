@@ -496,8 +496,8 @@ struct X {
     SST::Link*              m_selfLink;
 
     SST::Interfaces::SimpleNetwork*     m_linkControl;
-    SST::Interfaces::SimpleNetwork::Handler<Nic>* m_recvNotifyFunctor;
-    SST::Interfaces::SimpleNetwork::Handler<Nic>* m_sendNotifyFunctor;
+    SST::Interfaces::SimpleNetwork::HandlerBase* m_recvNotifyFunctor;
+    SST::Interfaces::SimpleNetwork::HandlerBase* m_sendNotifyFunctor;
     LinkControlWidget* m_linkRecvWidget;
     LinkControlWidget* m_linkSendWidget;
 

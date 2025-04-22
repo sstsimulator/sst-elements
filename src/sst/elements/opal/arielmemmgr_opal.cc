@@ -33,7 +33,7 @@ MemoryManagerOpal::MemoryManagerOpal(ComponentId_t id, Params& params) :
     std::string latency = params.find<std::string>("opal_latency", "32ps");
 
     while (isPortConnected(linkname)) {
-        SST::Link* link = configureLink(linkname, latency, new Event::Handler<MemoryManagerOpal>(this, &MemoryManagerOpal::handleInterrupt));
+        SST::Link* link = configureLink(linkname, latency, new Event::Handler2<MemoryManagerOpal,&MemoryManagerOpal::handleInterrupt>(this));
         opalLink.push_back(link);
         numPorts++;
         linkname = linkprefix + std::to_string(numPorts);

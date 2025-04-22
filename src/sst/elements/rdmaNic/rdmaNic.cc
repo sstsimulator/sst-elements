@@ -27,7 +27,7 @@ RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
 	m_nextCqId(0),
 	m_streamId(1),
 	m_netPktMtuLen( 1024 ),
-	m_dmaLink( nullptr )
+    m_dmaLink( nullptr )
 {
     m_nicId = params.find<int>("nicId", -1);
     assert( m_nicId != -1 );
@@ -80,10 +80,10 @@ RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
 
     // Clock handler
     std::string clockFreq = params.find<std::string>("clock", "1GHz");
-    m_clockHandler = new Clock::Handler<RdmaNic>(this, &RdmaNic::clock);
+    m_clockHandler = new Clock::Handler2<RdmaNic,&RdmaNic::clock>(this);
     m_clockTC = registerClock( clockFreq, m_clockHandler );
 
-    m_mmioLink = loadUserSubComponent<StandardMem>("mmio", ComponentInfo::SHARE_NONE, m_clockTC, new StandardMem::Handler<RdmaNic>(this, &RdmaNic::handleEvent));
+    m_mmioLink = loadUserSubComponent<StandardMem>("mmio", ComponentInfo::SHARE_NONE, m_clockTC, new StandardMem::Handler2<RdmaNic,&RdmaNic::handleEvent>(this));
 
     if (!m_mmioLink) {
         out.fatal(CALL_INFO_LONG, -1, "Unable to load StandardMem subcomponent; check that 'mmio' slot is filled in input.\n");
@@ -93,7 +93,7 @@ RdmaNic::RdmaNic(ComponentId_t id, Params &params) : Component(id),
 
 	auto useDmaCache = params.find<bool>("useDmaCache",false);
 	if ( useDmaCache ) {
-    	m_dmaLink = loadUserSubComponent<StandardMem>("dma", ComponentInfo::SHARE_NONE, m_clockTC, new StandardMem::Handler<RdmaNic>(this, &RdmaNic::handleEvent));
+        m_dmaLink = loadUserSubComponent<StandardMem>("dma", ComponentInfo::SHARE_NONE, m_clockTC, new StandardMem::Handler2<RdmaNic,&RdmaNic::handleEvent>(this));
 
     	if (!m_dmaLink) {
             out.fatal(CALL_INFO_LONG, -1, " Unable to load StandardMem subcomponent; check that 'dma' slot is filled in input.\n");

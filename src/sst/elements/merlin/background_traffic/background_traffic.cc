@@ -66,8 +66,8 @@ BackgroundTraffic::BackgroundTraffic(ComponentId_t cid, Params& params) :
 
 
     // Register functors for the SimpleNetwork IF
-    send_notify_functor = new SST::Interfaces::SimpleNetwork::Handler<BackgroundTraffic>(this, &BackgroundTraffic::send_notify);
-    recv_notify_functor = new SST::Interfaces::SimpleNetwork::Handler<BackgroundTraffic>(this, &BackgroundTraffic::handle_receives);
+    send_notify_functor = new SST::Interfaces::SimpleNetwork::Handler2<BackgroundTraffic,&BackgroundTraffic::send_notify>(this);
+    recv_notify_functor = new SST::Interfaces::SimpleNetwork::Handler2<BackgroundTraffic,&BackgroundTraffic::handle_receives>(this);
 
     // link_if->setNotifyOnSend(send_notify_functor);
     link_if->setNotifyOnReceive(recv_notify_functor);
@@ -88,7 +88,7 @@ BackgroundTraffic::BackgroundTraffic(ComponentId_t cid, Params& params) :
     primaryComponentOKToEndSim();
 
     base_tc = registerTimeBase("1ps",false);
-    timing_link = configureSelfLink("timing_link", base_tc, new Event::Handler<BackgroundTraffic>(this, &BackgroundTraffic::output_timing));
+    timing_link = configureSelfLink("timing_link", base_tc, new Event::Handler2<BackgroundTraffic,&BackgroundTraffic::output_timing>(this));
 
 
 }

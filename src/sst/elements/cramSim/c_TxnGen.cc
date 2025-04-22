@@ -84,14 +84,14 @@ c_TxnGenBase::c_TxnGenBase(ComponentId_t x_id, Params& x_params) :
     //// send token chg to txn unit
     m_memLink = configureLink(
             "memLink",
-            new Event::Handler<c_TxnGenBase>(this, &c_TxnGenBase::handleResEvent));
+            new Event::Handler2<c_TxnGenBase,&c_TxnGenBase::handleResEvent>(this));
 
     // get configured clock frequency
     std::string l_controllerClockFreqStr = (std::string)x_params.find<std::string>("strControllerClockFrequency", "1GHz", l_found);
 
     //set our clock
     registerClock(l_controllerClockFreqStr,
-                  new Clock::Handler<c_TxnGenBase>(this, &c_TxnGenBase::clockTic));
+                  new Clock::Handler2<c_TxnGenBase,&c_TxnGenBase::clockTic>(this));
 
     // Statistics
     s_readTxnsCompleted = registerStatistic<uint64_t>("readTxnsCompleted");

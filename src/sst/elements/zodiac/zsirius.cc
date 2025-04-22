@@ -73,7 +73,7 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
     std::cout << "Set verbosity level to " << verbosityLevel << std::endl;
 
     selfLink = configureSelfLink("Self", "1ns",
-	new Event::Handler<ZodiacSiriusTraceReader>(this, &ZodiacSiriusTraceReader::handleSelfEvent));
+	new Event::Handler2<ZodiacSiriusTraceReader,&ZodiacSiriusTraceReader::handleSelfEvent>(this));
 
     tConv = getTimeConverter("1ns");
 

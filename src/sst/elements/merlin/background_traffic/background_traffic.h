@@ -102,8 +102,8 @@ private:
     TimeConverter base_tc;
 
     SST::Interfaces::SimpleNetwork* link_if;
-    SST::Interfaces::SimpleNetwork::Handler<BackgroundTraffic>* send_notify_functor;
-    SST::Interfaces::SimpleNetwork::Handler<BackgroundTraffic>* recv_notify_functor;
+    SST::Interfaces::SimpleNetwork::HandlerBase* send_notify_functor;
+    SST::Interfaces::SimpleNetwork::HandlerBase* recv_notify_functor;
 
 
     TargetGenerator *packetDestGen;
