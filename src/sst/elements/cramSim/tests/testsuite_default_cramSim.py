@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 
+import os
+import shutil
+import tempfile
+
 from sst_unittest import *
 from sst_unittest_support import *
 
-import os
-import shutil
-
 
 class testcase_cramSim_Component(SSTTestCase):
+
+    tmp_dir = None
+    tmp_file = None
 
     def setUp(self):
         super(type(self), self).setUp()
@@ -16,6 +20,17 @@ class testcase_cramSim_Component(SSTTestCase):
     def tearDown(self):
         # Put test based teardown code here. it is called once after every test
         super(type(self), self).tearDown()
+
+    @classmethod
+    def setUpClass(cls):
+        # wget a test file tar.gz
+        cls.tmp_dir = tempfile.TemporaryDirectory()
+        testfile = "sst-cramSim_trace_verimem_trace_files.tar.gz"
+        fileurl = f"https://github.com/sstsimulator/sst-downloads/releases/download/TestFiles/{testfile}"
+        if not os_wget(fileurl, cls.tmp_dir.name):
+            raise unittest.SkipTest(f"Failed to download {testfile}")
+        else:
+            cls.tmp_file = os.path.join(cls.tmp_dir.name, testfile)
 
 #####
 
@@ -137,12 +152,5 @@ class testcase_cramSim_Component(SSTTestCase):
         for f in os.listdir(self.cramSimElementTestsDir):
             os_symlink_file(self.cramSimElementTestsDir, self.testcramSimTestsDir, f)
 
-        # wget a test file tar.gz
-        testfile = "sst-cramSim_trace_verimem_trace_files.tar.gz"
-        fileurl = "https://github.com/sstsimulator/sst-downloads/releases/download/TestFiles/{0}".format(testfile)
-        self.assertTrue(os_wget(fileurl, self.testcramSimTestsDir), "Failed to download {0}".format(testfile))
-
         # Extract the test file
-        filename = "{0}/{1}".format(self.testcramSimTestsDir, testfile)
-        os_extract_tar(filename, self.testcramSimTestsDir)
-
+        os_extract_tar(self.__class__.tmp_file, self.testcramSimTestsDir)
