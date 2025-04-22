@@ -100,7 +100,7 @@ private:
     // Self link for timing output.  This is how we manage bandwidth
     // usage
     Link* output_timing;
-    TimeConverter* flit_cycle;
+    TimeConverter flit_cycle;
 
 	// Self link for dynamic link additions
 	Link* dynlink_timing;

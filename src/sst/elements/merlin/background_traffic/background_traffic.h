@@ -99,7 +99,7 @@ private:
     SimTime_t next_time;
     SimTime_t send_interval;
 
-    TimeConverter* base_tc;
+    TimeConverter base_tc;
 
     SST::Interfaces::SimpleNetwork* link_if;
     SST::Interfaces::SimpleNetwork::Handler<BackgroundTraffic>* send_notify_functor;

@@ -113,7 +113,7 @@ void bisection_test::setup()
     // std::cout << link_bw.toStringBestSI() << std::endl;
 
     link_bw *= (UnitAlgebra("1b") *= packet_size);
-    TimeConverter* tc = getTimeConverter(link_bw);
+    TimeConverter tc = getTimeConverter(link_bw);
     // std::cout << link_bw.toStringBestSI() << std::endl;
     self_link->setDefaultTimeBase(tc);
     // std::cout << tc->getFactor() << std::endl;

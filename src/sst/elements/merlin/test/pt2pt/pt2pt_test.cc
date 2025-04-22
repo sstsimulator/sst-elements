@@ -219,7 +219,7 @@ void pt2pt_test::setup()
 
         // Now, send a wake-up to do the reporting.  First, we need to
         // set the timebase to be the interval time
-        report_timing->setDefaultTimeBase(getTimeConverter(report_interval));
+        report_timing->setDefaultTimeBase(TimeConverter(getTimeConverter(report_interval)));
         report_timing->send(1,NULL);
     }
 
@@ -231,7 +231,7 @@ void pt2pt_test::setup()
     //     std::cout << link_bw.toStringBestSI() << std::endl;
 
     //     link_bw *= (UnitAlgebra("1b") *= packet_size);
-    //     TimeConverter* tc = getTimeConverter(link_bw);
+    //     TimeConverter tc = getTimeConverter(link_bw);
     //     std::cout << link_bw.toStringBestSI() << std::endl;
     //     self_link->setDefaultTimeBase(tc);
     //     std::cout << tc->getFactor() << std::endl;

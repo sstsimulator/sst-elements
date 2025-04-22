@@ -24,7 +24,7 @@ namespace SST {
 namespace Hg {
 
 extern template class  HgBase<SST::Component>;
-extern template SST::TimeConverter* HgBase<SST::Component>::time_converter_;
+extern template SST::TimeConverter HgBase<SST::Component>::time_converter_;
 
 NodeBase::NodeBase(ComponentId_t id, Params &params)
     : SST::Hg::Component(id), nic_(0) {

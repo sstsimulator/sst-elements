@@ -43,7 +43,7 @@ namespace Hg {
 
 extern template class  HgBase<SST::Component>;
 extern template class  HgBase<SST::SubComponent>;
-extern template SST::TimeConverter* HgBase<SST::SubComponent>::time_converter_;
+extern template SST::TimeConverter HgBase<SST::SubComponent>::time_converter_;
 
 // #if SST_HG_USE_MULTITHREAD
 std::vector<OperatingSystem*> OperatingSystem::active_os_;
