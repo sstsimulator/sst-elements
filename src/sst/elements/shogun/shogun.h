@@ -116,7 +116,7 @@ private:
 
     int64_t clockPS;
 
-    TimeConverter* tc;
+    TimeConverter tc;
     Clock::HandlerBase* clockTickHandler;
     bool handlerRegistered;
 

@@ -90,7 +90,7 @@ private:
 		m_clock = registerClock( freq, m_clock_handler);
 
 		m_mem_link = loadUserSubComponent<Interfaces::StandardMem>("standardInterface", ComponentInfo::SHARE_NONE,
-			m_clock , new Interfaces::StandardMem::Handler<DetailedInterface>(this, &DetailedInterface::handleEvent) );
+			&m_clock , new Interfaces::StandardMem::Handler<DetailedInterface>(this, &DetailedInterface::handleEvent) );
 
 	    if( m_mem_link ) {
 			m_dbg.verbose(CALL_INFO, 1, MY_MASK, "Loaded memory interface successfully.\n");
@@ -250,9 +250,9 @@ private:
 		return false;
 	}
 
-	Clock::Handler<DetailedInterface>* 	m_clock_handler;
-	TimeConverter* 				m_clock;
-	Interfaces::StandardMem* 		m_mem_link;
+	Clock::Handler<DetailedInterface>*  m_clock_handler;
+	TimeConverter                       m_clock;
+	Interfaces::StandardMem*            m_mem_link;
 
 	std::map< Interfaces::StandardMem::Request::id_t, Entry* > m_inflight;
 	std::set< uint64_t > m_inFlightAddr;

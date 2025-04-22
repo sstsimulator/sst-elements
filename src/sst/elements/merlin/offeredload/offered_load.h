@@ -168,7 +168,7 @@ private:
 
     int generation;
 
-    TimeConverter* base_tc;
+    TimeConverter base_tc;
 
     SST::Interfaces::SimpleNetwork* link_if;
     SST::Interfaces::SimpleNetwork::Handler<OfferedLoad>* send_notify_functor;

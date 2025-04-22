@@ -111,7 +111,7 @@ private:
   SiriusReader* trace;
   std::queue<ZodiacEvent*>* eventQ;
   SST::Link* selfLink;
-  SST::TimeConverter* tConv;
+  SST::TimeConverter tConv;
   char* emptyBuffer;
   uint32_t emptyBufferSize;
 

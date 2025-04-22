@@ -30,7 +30,7 @@
 namespace SST {
 namespace Hg {
 
-extern template SST::TimeConverter* HgBase<SST::SubComponent>::time_converter_;
+extern template SST::TimeConverter HgBase<SST::SubComponent>::time_converter_;
 
 class OperatingSystemBase : public SST::Hg::SubComponent {
 

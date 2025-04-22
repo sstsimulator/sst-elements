@@ -116,8 +116,8 @@ bool cacheTracer::clock(Cycle_t current){
     unsigned int accessLatency = 0;
     SST::Event *ev = NULL;
     SST::MemHierarchy::Addr addr =0;
-    //uint64_t picoseconds = (uint64_t) picoTimeConv->convertFromCoreTime(getCurrentSimCycle());
-    uint64_t nanoseconds = (uint64_t) nanoTimeConv->convertFromCoreTime(getCurrentSimCycle());
+    //uint64_t picoseconds = (uint64_t) picoTimeConv.convertFromCoreTime(getCurrentSimCycle());
+    uint64_t nanoseconds = (uint64_t) nanoTimeConv.convertFromCoreTime(getCurrentSimCycle());
 
     // process Memevents from north-side to south-side
     while((ev = northBus->recv())){
