@@ -94,8 +94,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     if (!(clock_ua.hasUnits("Hz") || clock_ua.hasUnits("s")) || clock_ua.getRoundedValue() <= 0) {
         out.fatal(CALL_INFO, -1, "%s, ERROR - Invalid parameter: 'clock'. Must have units of Hz or s and be > 0. (SI prefixes ok). You specified '%s'\n", getName().c_str(), clockfreq.c_str());
     }
-    clockHandler_ = new Clock::Handler<MemController>(this, &MemController::clock);
-    //clockHandler_ = new Clock::Handler2<MemController, &MemController::clock>(this);
+    clockHandler_ = new Clock::Handler2<MemController, &MemController::clock>(this);
     clockTimeBase_ = registerClock(clockfreq, clockHandler_);
     clockOn_ = true;
 

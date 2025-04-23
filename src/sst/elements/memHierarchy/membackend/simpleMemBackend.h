@@ -38,7 +38,7 @@ public:
     virtual bool isClocked() { return false; }
 
     // Serialization
-    SimpleMemory();
+    SimpleMemory() {}
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         SimpleMemBackend::serialize_order(ser);
         SST_SER(self_link);

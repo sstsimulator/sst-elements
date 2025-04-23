@@ -49,7 +49,7 @@ public:
     // Print contents of backing to stdout (testing purposes)
     virtual void printToScreen(Addr addr_offset, Addr addr_start, Addr addr_interleave_size, Addr addr_interleave_step) = 0;
     
-    void serialize_order(SST::Core::Serialization::serializer& ser);
+    void serialize_order(SST::Core::Serialization::serializer& ser) {}
     ImplementVirtualSerializable(SST::MemHierarchy::Backend::Backing);
 };
 

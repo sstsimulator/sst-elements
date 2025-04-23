@@ -164,7 +164,7 @@ protected:
     Addr translateToLocal(Addr addr);
     Addr translateToGlobal(Addr addr);
 
-    Clock::Handler<MemController>* clockHandler_;
+    Clock::HandlerBase* clockHandler_;
     TimeConverter* clockTimeBase_;
 
     CustomCmdMemHandler * customCommandHandler_;

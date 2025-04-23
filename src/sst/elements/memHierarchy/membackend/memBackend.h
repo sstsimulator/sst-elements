@@ -50,7 +50,7 @@ public:
             {"mem_size", "(string) Size of memory with units (SI ok). E.g., '2GiB'.", NULL}
 
     typedef MemBackendConvertor::ReqId ReqId;
-    MemBackend();
+    MemBackend() {}
 
     MemBackend(ComponentId_t id, Params &params) : SubComponent(id) { 
         uint32_t output_location = params.find<uint32_t>("debug", 0);
