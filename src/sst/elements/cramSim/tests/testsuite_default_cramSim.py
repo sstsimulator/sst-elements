@@ -32,6 +32,11 @@ class testcase_cramSim_Component(SSTTestCase):
         else:
             cls.tmp_file = os.path.join(cls.tmp_dir.name, testfile)
 
+    @classmethod
+    def tearDownClass(cls):
+        if cls.tmp_dir:
+            cls.tmp_dir.cleanup()
+
 #####
 
     def test_cramSim_1_R(self):
@@ -127,6 +132,9 @@ class testcase_cramSim_Component(SSTTestCase):
 #####
 
     def _setupcramSimTestFiles(self):
+        if not self.__class__.tmp_file:
+            # if tmp_file is None setUpClass() never ran
+            self.skipTest(f"{self} cannot be run concurrently")
         # NOTE: This routine is called a single time at module startup, so it
         #       may have some redunant
         log_debug("_setupcramSimTestFiles() Running")
