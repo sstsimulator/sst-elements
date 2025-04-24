@@ -69,7 +69,7 @@ MemCacheController::MemCacheController(ComponentId_t id, Params &params) : Compo
     if (!(clock_ua.hasUnits("Hz") || clock_ua.hasUnits("s")) || clock_ua.getRoundedValue() <= 0) {
         out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: clock. Must have units of Hz or s and be > 0. (SI prefixes ok). You specified '%s'\n", getName().c_str(), clockfreq.c_str());
     }
-    clockHandler_ = new Clock::Handler<MemCacheController>(this, &MemCacheController::clock);
+    clockHandler_ = new Clock::Handler2<MemCacheController, &MemCacheController::clock>(this);
     clockTimeBase_ = registerClock(clockfreq, clockHandler_);
     clockOn_ = true;
 
@@ -118,9 +118,9 @@ MemCacheController::MemCacheController(ComponentId_t id, Params &params) : Compo
     bool found;
 
 
-    link_ = loadUserSubComponent<MemLinkBase>("highlink", ComponentInfo::SHARE_NONE, clockTimeBase_);
+    link_ = loadUserSubComponent<MemLinkBase>("highlink", ComponentInfo::SHARE_NONE, &clockTimeBase_);
     if (!link_) {
-        link_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, clockTimeBase_);
+        link_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, &clockTimeBase_);
         if (link_) {
             out.output("%s, DEPRECATION WARNING: The 'cpulink' subcomponent slot has been renamed to 'highlink' to improve name standardization. Please change this in your input file.\n", getName().c_str());
         }
@@ -131,7 +131,7 @@ MemCacheController::MemCacheController(ComponentId_t id, Params &params) : Compo
     }
 
     clockLink_ = link_->isClocked();
-    link_->setRecvHandler( new Event::Handler<MemCacheController>(this, &MemCacheController::handleEvent));
+    link_->setRecvHandler( new Event::Handler2<MemCacheController, &MemCacheController::handleEvent>(this) );
 
     link_->setRegion(region_);
 

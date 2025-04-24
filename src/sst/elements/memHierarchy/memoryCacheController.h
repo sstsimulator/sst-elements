@@ -175,8 +175,8 @@ protected:
     MemRegion region_; // Which address region we are, for translating to local addresses
     Addr toLocalAddr(Addr addr);
 
-    Clock::Handler<MemCacheController>* clockHandler_;
-    TimeConverter* clockTimeBase_;
+    Clock::HandlerBase* clockHandler_;
+    TimeConverter       clockTimeBase_;
 
     CustomCmdMemHandler * customCommandHandler_;
 

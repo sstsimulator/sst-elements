@@ -31,7 +31,7 @@ MemNICFour::MemNICFour(ComponentId_t id, Params &params, TimeConverter* tc) : Me
     std::array<std::string,4> pref = {"req", "ack", "fwd", "data"};
 
     clockOn = true;
-    clockHandler = new Clock::Handler<MemNICFour>(this, &MemNICFour::clock);
+    clockHandler = new Clock::Handler2<MemNICFour, &MemNICFour::clock>(this);
     clockTC = registerClock(tc, clockHandler);
 
     for (int i = 0; i < 4; i++) {
@@ -70,8 +70,10 @@ MemNICFour::MemNICFour(ComponentId_t id, Params &params, TimeConverter* tc) : Me
 
     // TimeBase for statistics
     std::string timebase = params.find<std::string>("clock", "1GHz", found);
-    if (found)
-        setDefaultTimeBase(getTimeConverter(timebase));
+    if (found) {
+        TimeConverter param_tc = getTimeConverter(timebase);
+        setDefaultTimeBase(param_tc);
+    }
 }
 
 void MemNICFour::init(unsigned int phase) {

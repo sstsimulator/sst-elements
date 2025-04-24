@@ -28,9 +28,9 @@ MemLink::MemLink(ComponentId_t id, Params &params, TimeConverter* tc) : MemLinkB
     std::string port = params.find<std::string>("port", "port");
 
     if (found) {
-        link_ = configureLink(port, latency, new Event::Handler<MemLink>(this, &MemLink::recvNotify));
+        link_ = configureLink(port, latency, new Event::Handler2<MemLinkBase, &MemLinkBase::recvNotify>(this));
     } else {
-        link_ = configureLink(port, new Event::Handler<MemLink>(this, &MemLink::recvNotify));
+        link_ = configureLink(port, new Event::Handler2<MemLinkBase, &MemLinkBase::recvNotify>(this));
     }
 
     if (!link_)
@@ -273,4 +273,16 @@ std::string MemLink::getAvailableDestinationsAsString() {
         str << it->toString() << std::endl;
     }
     return str.str();
+}
+
+void MemLink::serialize_order(SST::Core::Serialization::serializer& ser) {
+    MemLinkBase::serialize_order(ser);
+
+    SST_SER(link_);
+    SST_SER(remotes_);
+    SST_SER(peers_);
+    SST_SER(endpoints_);
+    SST_SER(reachable_names_);
+    SST_SER(peer_names_);
+    SST_SER(init_send_queue_); // Doesn't actually need to be included
 }

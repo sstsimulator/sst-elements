@@ -137,8 +137,9 @@ class Bus:
                 comp = x
             
             use_subcomp = bool(params)
-
-            link = sst.Link("link_" + self.name + "_" + comp.getFullName() + "_highlink" + str(self.highlinks)) # port_busname_compname_portnum
+            linkname = ("link_" + self.name + "_" + comp.getFullName() + "_highlink" + str(self.highlinks)).replace(":", ".")
+            linkname = linkname.replace("[","").replace("]","")
+            link = sst.Link(linkname)
             if bool(params):
                 subcomp = comp.setSubComponent("lowlink", "memHierarchy.MemLink")
                 subcomp.addParams(params)
@@ -158,7 +159,9 @@ class Bus:
             else:
                 comp = x
 
-            link = sst.Link("link_" + self.name + "_" + comp.getFullName() + "_lowlink" + str(self.lowlinks)) # port_busname_compname_portnum
+            linkname = ("link_" + self.name + "_" + comp.getFullName() + "_lowlink" + str(self.lowlinks)).replace(":", ".")
+            linkname = linkname.replace("[","").replace("]","")
+            link = sst.Link(linkname)
             if bool(params):
                 subcomp = comp.setSubComponent("highlink", "memHierarchy.MemLink")
                 subcomp.addParams(params)

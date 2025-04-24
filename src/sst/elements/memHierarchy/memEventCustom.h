@@ -85,7 +85,7 @@ protected:
 public:
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         MemEventBase::serialize_order(ser);
-        ser & data_;
+        SST_SER(data_);
     }
 
     ImplementSerializable(SST::MemHierarchy::CustomMemEvent);

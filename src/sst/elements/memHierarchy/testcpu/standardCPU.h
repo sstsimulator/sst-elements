@@ -141,7 +141,7 @@ private:
     SST::RNG::MarsagliaRNG rng_;
     SST::RNG::MarsagliaRNG rng_comm_;
 
-    TimeConverter *clock_timeconverter_;
+    TimeConverter clock_timeconverter_;
     Clock::HandlerBase *clock_handler_;
 
     /* Functions for creating the requests tested by this CPU */

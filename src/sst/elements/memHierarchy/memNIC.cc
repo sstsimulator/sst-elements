@@ -50,7 +50,7 @@ MemNIC::MemNIC(ComponentId_t id, Params &params, TimeConverter* tc) : MemNICBase
     // Packet size
     packetHeaderBytes = extractPacketHeaderSize(params, "min_packet_size");
 
-    clockHandler = new Clock::Handler<MemNIC>(this, &MemNIC::clock);
+    clockHandler = new Clock::Handler2<MemNIC, &MemNIC::clock>(this);
     clockTC = registerClock(tc, clockHandler);
 }
 

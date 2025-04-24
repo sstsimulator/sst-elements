@@ -310,18 +310,18 @@ private:
 public:
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         MemEventBase::serialize_order(ser);
-        ser & size_;
-        ser & addr_;
-        ser & baseAddr_;
-        ser & addrGlobal_;
-        ser & NACKedEvent_;
-        ser & retries_;
-        ser & payload_;
-        ser & prefetch_;
-        ser & dirty_;
-        ser & isEvict_;
-        ser & instPtr_;
-        ser & vAddr_;
+        SST_SER(size_);
+        SST_SER(addr_);
+        SST_SER(baseAddr_);
+        SST_SER(addrGlobal_);
+        SST_SER(NACKedEvent_);
+        SST_SER(retries_);
+        SST_SER(payload_);
+        SST_SER(prefetch_);
+        SST_SER(dirty_);
+        SST_SER(isEvict_);
+        SST_SER(instPtr_);
+        SST_SER(vAddr_);
     }
 
     ImplementSerializable(SST::MemHierarchy::MemEvent);

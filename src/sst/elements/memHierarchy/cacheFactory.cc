@@ -240,7 +240,7 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
         }
     }
     if (linkUp_) {
-        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
+        linkUp_->setRecvHandler(new Event::Handler2<Cache, &Cache::handleEvent>(this));
     } 
 
     linkDown_ = loadUserSubComponent<MemLinkBase>("lowlink", ComponentInfo::SHARE_NONE, tc);
@@ -255,7 +255,7 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
         }
     }
     if (linkDown_) {
-        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
+        linkDown_->setRecvHandler(new Event::Handler2<Cache, &Cache::handleEvent>(this));
     }
 
     if (linkUp_ || linkDown_) {
@@ -443,11 +443,11 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
         dbg_->debug(_INFO_,"Configuring cache with a direct link above and below\n");
 
         linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, memlinkParams, tc);
-        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
+        linkDown_->setRecvHandler(new Event::Handler2<Cache, &Cache::handleEvent>(this));
 
 
         linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, cpulinkParams, tc);
-        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
+        linkUp_->setRecvHandler(new Event::Handler2<Cache, &Cache::handleEvent>(this));
         clockUpLink_ = clockDownLink_ = false;
         /* Region given to each should be identical so doesn't matter which we pull but force them to be identical */
         region_ = linkDown_->getRegion();
@@ -477,11 +477,11 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
             linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "lowlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams, tc);
         }
 
-        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
+        linkDown_->setRecvHandler(new Event::Handler2<Cache, &Cache::handleEvent>(this));
 
         // Configure high link
         linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, cpulinkParams, tc);
-        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
+        linkUp_->setRecvHandler(new Event::Handler2<Cache, &Cache::handleEvent>(this));
         clockDownLink_ = true;
         clockUpLink_ = false;
 
@@ -510,11 +510,11 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
             linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "highlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams, tc);
         }
 
-        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
+        linkUp_->setRecvHandler(new Event::Handler2<Cache, &Cache::handleEvent>(this));
 
         // Configure high link
         linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, memlinkParams, tc);
-        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
+        linkDown_->setRecvHandler(new Event::Handler2<Cache, &Cache::handleEvent>(this));
         clockUpLink_ = true;
         clockDownLink_ = false;
 
@@ -545,11 +545,11 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
             linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "lowlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams, tc);
         }
         // Configure low link
-        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
+        linkDown_->setRecvHandler(new Event::Handler2<Cache, &Cache::handleEvent>(this));
 
         // Configure high link
         linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "highlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, cpulinkParams, tc);
-        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
+        linkUp_->setRecvHandler(new Event::Handler2<Cache, &Cache::handleEvent>(this));
         clockDownLink_ = true;
         clockUpLink_ = false;
 
@@ -620,7 +620,7 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
             linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "highlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams, tc);
         }
 
-        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
+        linkDown_->setRecvHandler(new Event::Handler2<Cache, &Cache::handleEvent>(this));
 
         // Configure high link
         linkUp_ = linkDown_;
@@ -647,7 +647,7 @@ void Cache::createListeners(Params &params) {
         for (int i = 0; i <= lists->getMaxPopulatedSlotNumber(); i++) {
             if (lists->isPopulated(i)) {
                 listeners_.push_back(lists->create<CacheListener>(i, ComponentInfo::SHARE_NONE));
-                listeners_[k]->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
+                listeners_[k]->registerResponseCallback(new Event::Handler2<Cache, &Cache::handlePrefetchEvent>(this));
                 k++;
             }
         }
@@ -657,7 +657,7 @@ void Cache::createListeners(Params &params) {
         if (!prefetcher.empty()) {
             prefParams = params.get_scoped_params("prefetcher");
             listeners_.push_back(loadAnonymousSubComponent<CacheListener>(prefetcher, "prefetcher", 0, ComponentInfo::INSERT_STATS, prefParams));
-            listeners_[0]->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
+            listeners_[0]->registerResponseCallback(new Event::Handler2<Cache, &Cache::handlePrefetchEvent>(this));
         }
     }
     if (!listeners_.empty()) {
@@ -674,7 +674,7 @@ void Cache::createListeners(Params &params) {
         std::string frequency = params.find<std::string>("cache_frequency", "", found);
         prefetchDelay_ = params.find<SimTime_t>("prefetch_delay_cycles", 1);
 
-        prefetchSelfLink_ = configureSelfLink("prefetchlink", frequency, new Event::Handler<Cache>(this, &Cache::processPrefetchEvent));
+        prefetchSelfLink_ = configureSelfLink("prefetchlink", frequency, new Event::Handler2<Cache, &Cache::processPrefetchEvent>(this));
     }
 
     /* Configure listener(s) */
@@ -785,7 +785,7 @@ void Cache::createClock(Params &params) {
     if (!found)
         out_->fatal(CALL_INFO, -1, "%s, Param not specified: frequency - cache frequency.\n", getName().c_str());
 
-    clockHandler_       = new Clock::Handler<Cache>(this, &Cache::clockTick);
+    clockHandler_       = new Clock::Handler2<Cache, &Cache::clockTick>(this);
     defaultTimeBase_    = registerClock(frequency, clockHandler_);
 
     clockIsOn_ = true;
@@ -799,7 +799,7 @@ void Cache::createClock(Params &params) {
         ostringstream oss;
         oss << checkInterval;
         string interval = oss.str() + "ns";
-        timeoutSelfLink_ = configureSelfLink("timeout", interval, new Event::Handler<Cache>(this, &Cache::timeoutWakeup));
+        timeoutSelfLink_ = configureSelfLink("timeout", interval, new Event::Handler2<Cache, &Cache::timeoutWakeup>(this));
     }
 }
 

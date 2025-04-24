@@ -43,6 +43,10 @@ public:
     virtual void handleMemResponse( ReqId reqId ) {
         doResponse(reqId);
     }
+
+    SimpleMemBackendConvertor() { }
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::MemHierarchy::SimpleMemBackendConvertor)
 };
 
 }
