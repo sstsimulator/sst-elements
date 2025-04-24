@@ -143,6 +143,10 @@ if !SST_COMPILE_OSX
 
 if HAVE_PINTOOL
 
+TARGET = intel64
+BIONIC_ARCH = x86_64
+XED_ARCH = intel64
+
 if HAVE_PIN3
 
 all-local : fesimple.so
@@ -151,14 +155,14 @@ if HAVE_PIN325
 
 fesimple.so : fesimple.o
 	$(CXX) -shared -Wl,--hash-style=sysv \
-	    $(PINTOOL_DIR)/intel64/runtime/pincrt/crtbeginS.o \
+	    $(PINTOOL_DIR)/$(TARGET)/runtime/pincrt/crtbeginS.o \
 	    -Wl,-Bsymbolic -Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
 	    -o fesimple.so fesimple.o \
-	    -L$(PINTOOL_DIR)/intel64/runtime/pincrt \
-	    -L$(PINTOOL_DIR)/intel64/lib \
-	    -L$(PINTOOL_DIR)/intel64/lib-ext \
-	    -L$(PINTOOL_DIR)/extras/xed-intel64/lib -lpin -lxed \
-	    $(PINTOOL_DIR)/intel64/runtime/pincrt/crtendS.o \
+	    -L$(PINTOOL_DIR)/$(TARGET)/runtime/pincrt \
+	    -L$(PINTOOL_DIR)/$(TARGET)/lib \
+	    -L$(PINTOOL_DIR)/$(TARGET)/lib-ext \
+	    -L$(PINTOOL_DIR)/extras/xed-$(XED_ARCH)/lib -lpin -lxed \
+	    $(PINTOOL_DIR)/$(TARGET)/runtime/pincrt/crtendS.o \
 	    -lpindwarf -ldl-dynamic -nostdlib -lc++ -lc++abi -lm-dynamic -lc-dynamic -lunwind-dynamic
 
 fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
@@ -169,11 +173,11 @@ fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
 	    -I$(PINTOOL_DIR)/source/include/pin/gen \
 	    -isystem $(PINTOOL_DIR)/extras/cxx/include \
 	    -isystem $(PINTOOL_DIR)/extras/crt/include \
-	    -isystem $(PINTOOL_DIR)/extras/crt/include/arch-x86_64 \
+	    -isystem $(PINTOOL_DIR)/extras/crt/include/arch-$(BIONIC_ARCH) \
 	    -isystem $(PINTOOL_DIR)/extras/crt/include/kernel/uapi \
 	    -isystem $(PINTOOL_DIR)/extras/crt/include/kernel/uapi/asm-x86 \
 	    -I$(PINTOOL_DIR)/extras/components/include \
-	    -I$(PINTOOL_DIR)/extras/xed-intel64/include/xed \
+	    -I$(PINTOOL_DIR)/extras/xed-$(XED_ARCH)/include/xed \
 	    -I$(PINTOOL_DIR)/source/tools/Utils \
 	    -I$(PINTOOL_DIR)/source/tools/InstLib \
 	    -O3 -fomit-frame-pointer -fno-strict-aliasing -c $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
@@ -183,14 +187,14 @@ else
 if HAVE_PIN324
 fesimple.so : fesimple.o
 	$(CXX) -shared -Wl,--hash-style=sysv \
-	    $(PINTOOL_DIR)/intel64/runtime/pincrt/crtbeginS.o \
+	    $(PINTOOL_DIR)/$(TARGET)/runtime/pincrt/crtbeginS.o \
 	    -Wl,-Bsymbolic -Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
 	    -o fesimple.so fesimple.o \
-	    -L$(PINTOOL_DIR)/intel64/runtime/pincrt \
-	    -L$(PINTOOL_DIR)/intel64/lib \
-	    -L$(PINTOOL_DIR)/intel64/lib-ext \
-	    -L$(PINTOOL_DIR)/extras/xed-intel64/lib -lpin -lxed \
-	    $(PINTOOL_DIR)/intel64/runtime/pincrt/crtendS.o \
+	    -L$(PINTOOL_DIR)/$(TARGET)/runtime/pincrt \
+	    -L$(PINTOOL_DIR)/$(TARGET)/lib \
+	    -L$(PINTOOL_DIR)/$(TARGET)/lib-ext \
+	    -L$(PINTOOL_DIR)/extras/xed-$(XED_ARCH)/lib -lpin -lxed \
+	    $(PINTOOL_DIR)/$(TARGET)/runtime/pincrt/crtendS.o \
 	    -lpin3dwarf -ldl-dynamic -nostdlib -lc++ -lc++abi -lm-dynamic -lc-dynamic -lunwind-dynamic
 
 fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
@@ -201,11 +205,11 @@ fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
 	    -I$(PINTOOL_DIR)/source/include/pin/gen \
 	    -isystem $(PINTOOL_DIR)/extras/cxx/include \
 	    -isystem $(PINTOOL_DIR)/extras/crt/include \
-	    -isystem $(PINTOOL_DIR)/extras/crt/include/arch-x86_64 \
+	    -isystem $(PINTOOL_DIR)/extras/crt/include/arch-$(BIONIC_ARCH) \
 	    -isystem $(PINTOOL_DIR)/extras/crt/include/kernel/uapi \
 	    -isystem $(PINTOOL_DIR)/extras/crt/include/kernel/uapi/asm-x86 \
 	    -I$(PINTOOL_DIR)/extras/components/include \
-	    -I$(PINTOOL_DIR)/extras/xed-intel64/include/xed \
+	    -I$(PINTOOL_DIR)/extras/xed-$(XED_ARCH)/include/xed \
 	    -I$(PINTOOL_DIR)/source/tools/Utils \
 	    -I$(PINTOOL_DIR)/source/tools/InstLib \
 	    -O3 -fomit-frame-pointer -fno-strict-aliasing -c $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
@@ -213,14 +217,14 @@ else
 
 fesimple.so : fesimple.o
 	$(CXX) -shared -Wl,--hash-style=sysv \
-	    $(PINTOOL_DIR)/intel64/runtime/pincrt/crtbeginS.o \
+	    $(PINTOOL_DIR)/$(TARGET)/runtime/pincrt/crtbeginS.o \
 	    -Wl,-Bsymbolic -Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
 	    -o fesimple.so fesimple.o \
-	    -L$(PINTOOL_DIR)/intel64/runtime/pincrt \
-	    -L$(PINTOOL_DIR)/intel64/lib \
-	    -L$(PINTOOL_DIR)/intel64/lib-ext \
-	    -L$(PINTOOL_DIR)/extras/xed-intel64/lib -lpin -lxed \
-	    $(PINTOOL_DIR)/intel64/runtime/pincrt/crtendS.o \
+	    -L$(PINTOOL_DIR)/$(TARGET)/runtime/pincrt \
+	    -L$(PINTOOL_DIR)/$(TARGET)/lib \
+	    -L$(PINTOOL_DIR)/$(TARGET)/lib-ext \
+	    -L$(PINTOOL_DIR)/extras/xed-$(XED_ARCH)/lib -lpin -lxed \
+	    $(PINTOOL_DIR)/$(TARGET)/runtime/pincrt/crtendS.o \
 	    -lpin3dwarf -ldl-dynamic -nostdlib -lstlport-dynamic -lm-dynamic -lc-dynamic -lunwind-dynamic
 
 fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
@@ -232,11 +236,11 @@ fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
 	    -isystem $(PINTOOL_DIR)/extras/stlport/include \
 	    -isystem $(PINTOOL_DIR)/extras/libstdc++/include \
 	    -isystem $(PINTOOL_DIR)/extras/crt/include \
-	    -isystem $(PINTOOL_DIR)/extras/crt/include/arch-x86_64 \
+	    -isystem $(PINTOOL_DIR)/extras/crt/include/arch-$(BIONIC_ARCH) \
 	    -isystem $(PINTOOL_DIR)/extras/crt/include/kernel/uapi \
 	    -isystem $(PINTOOL_DIR)/extras/crt/include/kernel/uapi/asm-x86 \
 	    -I$(PINTOOL_DIR)/extras/components/include \
-	    -I$(PINTOOL_DIR)/extras/xed-intel64/include/xed \
+	    -I$(PINTOOL_DIR)/extras/xed-$(XED_ARCH)/include/xed \
 	    -I$(PINTOOL_DIR)/source/tools/Utils \
 	    -I$(PINTOOL_DIR)/source/tools/InstLib \
 	    -O3 -fomit-frame-pointer -fno-strict-aliasing -c $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
@@ -260,10 +264,10 @@ fesimple.so : fesimple.o
 	$(CXX) -shared -Wl,--hash-style=sysv -Wl,-Bsymbolic \
 	    -o fesimple.so fesimple.o \
 	    -Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
-	    -L$(PINTOOL_DIR)/intel64/lib \
-	    -L$(PINTOOL_DIR)/intel64/lib-ext \
-	    -L$(PINTOOL_DIR)/intel64/runtime/glibc \
-	    -L$(PINTOOL_DIR)/extras/xed-intel64/lib \
+	    -L$(PINTOOL_DIR)/$(TARGET)/lib \
+	    -L$(PINTOOL_DIR)/$(TARGET)/lib-ext \
+	    -L$(PINTOOL_DIR)/$(TARGET)/runtime/glibc \
+	    -L$(PINTOOL_DIR)/extras/xed-$(XED_ARCH)/lib \
 	    -ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB) 
 
 fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc
@@ -275,7 +279,7 @@ fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc
 	    -I$(PINTOOL_DIR)/ \
 	    -I$(PINTOOL_DIR)/extras/components/include \
 	    -I$(PINTOOL_DIR)/source/include/pin/gen/ \
-	    -I$(PINTOOL_DIR)/extras/xed-intel64/include \
+	    -I$(PINTOOL_DIR)/extras/xed-$(XED_ARCH)/include \
 	    -I$(top_srcdir)/src/sst \
 	    -I$(top_srcdir)/src/sst/elements/ariel \
 	    -O3 -fomit-frame-pointer -c $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc
