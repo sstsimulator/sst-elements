@@ -168,7 +168,7 @@ public:
     }
 
     // For serialization
-    BackingMMAP();
+    BackingMMAP() {}
 
     void serialize_order(SST::Core::Serialization::serializer& ser) {
         Backing::serialize_order(ser);
@@ -333,13 +333,13 @@ public:
     }
 
     // For serialization
-    BackingMalloc();
+    BackingMalloc() {}
 
     void serialize_order(SST::Core::Serialization::serializer& ser) {
         Backing::serialize_order(ser);
         SST_SER(buffer_);
         SST_SER(alloc_unit_);
-        SST_SER(shift_)
+        SST_SER(shift_);
         SST_SER(init_);
     }
 
