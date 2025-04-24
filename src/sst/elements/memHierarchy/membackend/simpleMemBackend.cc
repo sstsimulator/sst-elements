@@ -27,7 +27,7 @@ using namespace SST::MemHierarchy;
 SimpleMemory::SimpleMemory(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ 
     std::string access_time = params.find<std::string>("access_time", "100 ns");
     self_link = configureSelfLink("Self", access_time,
-            new Event::Handler<SimpleMemory>(this, &SimpleMemory::handleSelfEvent));
+            new Event::Handler2<SimpleMemory, &SimpleMemory::handleSelfEvent>(this));
 
     m_maxReqPerCycle = params.find<>("max_requests_per_cycle", 1);
 }

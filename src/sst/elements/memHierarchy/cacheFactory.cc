@@ -85,7 +85,7 @@ Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
     requestsThisCycle_ = 0;
 
     /* Configure links */
-    configureLinks(params, defaultTimeBase_); // Must be called after createClock so timeebase is initialized
+    configureLinks(params, &defaultTimeBase_); // Must be called after createClock so timeebase is initialized
 
     createCoherenceManager(params);
 

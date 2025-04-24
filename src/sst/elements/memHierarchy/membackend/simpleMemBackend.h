@@ -33,11 +33,19 @@ public:
             {"access_time", "(string) Constant latency of memory operations. With units (SI ok).", "100ns"} )
 
 /* Begin class definition */
-    SimpleMemory();
     SimpleMemory(ComponentId_t id, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned );
     virtual bool isClocked() { return false; }
 
+    // Serialization
+    SimpleMemory() {}
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SimpleMemBackend::serialize_order(ser);
+        SST_SER(self_link);
+    }
+    ImplementSerializable(SST::MemHierarchy::SimpleMemory)
+
+    // Custom Event
     class MemCtrlEvent : public SST::Event {
     public:
         MemCtrlEvent( ReqId id_) : SST::Event(), reqId(id_)
