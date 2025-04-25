@@ -8,7 +8,7 @@ AM_CPPFLAGS += \
 
 if HAVE_SET_PTRACER
 AM_CPPFLAGS += "-DHAVE_SET_PTRACER=1"
-endif
+endif # HAVE_SET_PTRACER
 
 if HAVE_PIN3
 AM_CPPFLAGS += $(PINTOOL_CPPFLAGS)
@@ -16,24 +16,8 @@ AM_CPPFLAGS += "-DHAVE_PINCRT=1 "
 else
 if HAVE_PINTOOL
 AM_CPPFLAGS += $(PINTOOL_CPPFLAGS)
-endif
-endif
-
-# Common flags
-PIN_CPPFLAGS = -g \
-	-Wall \
-	-Werror \
-	-Wno-unknown-pragmas \
-	-D__PIN__=1 -DPIN_CRT=1 \
-	-fno-stack-protector \
-	-fno-exceptions \
-	-funwind-tables \
-	-fasynchronous-unwind-tables \
-	-fno-rtti \
-        -DTARGET_IA32E \
-	-DHOST_IA32E \
-	-fPIC \
-	-DTARGET_LINUX
+endif # HAVE_PINTOOL
+endif # HAVE_PIN3
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libariel.la
@@ -113,14 +97,14 @@ libariel_la_LDFLAGS += $(LIBZ_LDFLAGS)
 libariel_la_LIBADD += $(LIBZ_LIB)
 AM_CPPFLAGS += $(LIBZ_CPPFLAGS)
 libariel_la_SOURCES += arielgzbintracegen.h arielgzbintracegen.cc
-endif
+endif # USE_LIBZ
 
 if HAVE_PINTOOL
 if HAVE_PIN3
 libariel_la_SOURCES += frontend/pin3/pin3frontend.h \
 		       frontend/pin3/pin3frontend.cc
-endif
-endif
+endif # HAVE_PIN3
+endif # HAVE_PINTOOL
 
 libariel_la_CPPFLAGS = \
 	-DARIEL_TRACE_LIB=$(libdir)/sst \
@@ -167,7 +151,7 @@ fesimple.so : fesimple.o
 
 fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
 	$(CXX) \
-	    $(PIN_CPPFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	    $(PIN_CPPFLAGS) $(PIN_CPPFLAGS_COMPILER) $(AM_CPPFLAGS) $(CPPFLAGS) \
 	    -I$(top_srcdir)/src/sst/elements/ariel \
 	    -I$(PINTOOL_DIR)/source/include/pin \
 	    -I$(PINTOOL_DIR)/source/include/pin/gen \
@@ -199,7 +183,7 @@ fesimple.so : fesimple.o
 
 fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
 	$(CXX) \
-	    $(PIN_CPPFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	    $(PIN_CPPFLAGS) $(PIN_CPPFLAGS_COMPILER) $(AM_CPPFLAGS) $(CPPFLAGS) \
 	    -I$(top_srcdir)/src/sst/elements/ariel \
 	    -I$(PINTOOL_DIR)/source/include/pin \
 	    -I$(PINTOOL_DIR)/source/include/pin/gen \
@@ -229,7 +213,7 @@ fesimple.so : fesimple.o
 
 fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
 	$(CXX) \
-	    $(PIN_CPPFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	    $(PIN_CPPFLAGS) $(PIN_CPPFLAGS_COMPILER) $(AM_CPPFLAGS) $(CPPFLAGS) \
 	    -I$(top_srcdir)/src/sst/elements/ariel \
 	    -I$(PINTOOL_DIR)/source/include/pin \
 	    -I$(PINTOOL_DIR)/source/include/pin/gen \

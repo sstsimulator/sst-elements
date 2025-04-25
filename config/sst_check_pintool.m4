@@ -81,4 +81,34 @@ dnl pin 3.25+ needs libdwarf instead of lib3dwarf
 
   AS_IF([test "$sst_check_pintool_happy" = "no" -a ! -z "$with_pin" -a "$with_pin" != "no"], [$3])
   AS_IF([test "$sst_check_pintool_happy" = "yes"], [$1], [$2])
+
+  dnl Common flags
+  PIN_CPPFLAGS="-g \
+  -Wall \
+  -Werror \
+  -Wno-unknown-pragmas \
+  -D__PIN__=1 -DPIN_CRT=1 \
+  -fno-stack-protector \
+  -fno-exceptions \
+  -funwind-tables \
+  -fasynchronous-unwind-tables \
+  -fno-rtti \
+  -DTARGET_IA32E \
+  -DHOST_IA32E \
+  -fPIC \
+  -DTARGET_LINUX"
+  AC_SUBST([PIN_CPPFLAGS])
+
+  AC_LANG_PUSH([C++])
+  AX_COMPILER_VENDOR
+  AC_LANG_POP([C++])
+  AS_IF([test "$ax_cv_cxx_compiler_vendor" = "clang"],
+        [PIN_CPPFLAGS_COMPILER="-D_LIBCPP_DISABLE_AVAILABILITY \
+         -D_LIBCPP_NO_VCRUNTIME \
+         -D__BIONIC__ \
+         -Wno-non-c-typedef-for-linkage \
+         -Wno-microsoft-include \
+         -Wno-unicode"],
+        [PIN_CPPFLAGS_COMPILER="-fabi-version=2"])
+  AC_SUBST([PIN_CPPFLAGS_COMPILER])
 ])
