@@ -62,10 +62,10 @@ public:
     /* Serialization **/
     // Must be serializable so that CustomMemEvent can be serialized
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
-        ser & addr_;
-        ser & bytes_;
-        ser & opcode_;
-        ser & response_;
+        SST_SER(addr_);
+        SST_SER(bytes_);
+        SST_SER(opcode_);
+        SST_SER(response_);
     }
     ImplementSerializable(SST::Miranda::OpCodeStdMem);
     

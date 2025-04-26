@@ -117,7 +117,7 @@ private:
     int ShowCarArt();
     int ShowDisappointedCustomers();
 
-    TimeConverter*      tc;
+    TimeConverter       tc;
     Clock::HandlerBase* Clock3Handler;
 
     // Variables to store OneShot Callback Handlers

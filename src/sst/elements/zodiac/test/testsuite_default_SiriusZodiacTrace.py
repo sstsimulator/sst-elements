@@ -29,6 +29,7 @@ class testcase_SiriusZodiacTrace(SSTTestCase):
     def test_Sirius_Zodiac_16(self):
         self.SiriusZodiacTrace_test_template("4x4")
 
+    @unittest.skipIf(not testing_check_is_nightly(), "Sirius_Zodiac_128 only runs on Nightly builds.")
     def test_Sirius_Zodiac_128(self):
         self.SiriusZodiacTrace_test_template("8x8x2")
 

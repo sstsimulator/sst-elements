@@ -55,9 +55,9 @@ public:
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         internal_router_event::serialize_order(ser);
         
-        ser & hop_count;
-        ser & non_minimal;
-        ser & valiant;
+        SST_SER(hop_count);
+        SST_SER(non_minimal);
+        SST_SER(valiant);
     }
 
 protected:
@@ -93,9 +93,9 @@ public:
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         topo_polarfly_event::serialize_order(ser);
-        ser & phase;
-        ser & total_routers;
-        ser & covered;
+        SST_SER(phase);
+        SST_SER(total_routers);
+        SST_SER(covered);
     }
 private:
     ImplementSerializable(SST::Merlin::topo_polarfly_init_event)

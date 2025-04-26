@@ -331,9 +331,9 @@ private:
     bool done;
 
     SST::Interfaces::SimpleNetwork* link_control;
-    SST::Interfaces::SimpleNetwork::Handler<TrafficGen>* send_notify_functor;
-    Clock::Handler<TrafficGen>* clock_functor;
-    TimeConverter* clock_tc;
+    SST::Interfaces::SimpleNetwork::HandlerBase* send_notify_functor;
+    Clock::HandlerBase* clock_functor;
+    TimeConverter clock_tc;
 
     int base_packet_size;
     uint64_t packets_to_send;

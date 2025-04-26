@@ -53,11 +53,11 @@ BalarTestCPU::BalarTestCPU(ComponentId_t id, Params& params) :
 
     //set our clock
     std::string clockFreq = params.find<std::string>("clock", "1GHz");
-    clockHandler = new Clock::Handler<BalarTestCPU>(this, &BalarTestCPU::clockTic);
+    clockHandler = new Clock::Handler2<BalarTestCPU,&BalarTestCPU::clockTic>(this);
     clockTC = registerClock( clockFreq, clockHandler );
 
     /* Find the interface the user provided in the Python and load it*/
-    memory = loadUserSubComponent<StandardMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new StandardMem::Handler<BalarTestCPU>(this, &BalarTestCPU::handleEvent));
+    memory = loadUserSubComponent<StandardMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new StandardMem::Handler2<BalarTestCPU,&BalarTestCPU::handleEvent>(this));
 
     if (!memory) {
         out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.standardInterface subcomponent; check that 'memory' slot is filled in input.\n");

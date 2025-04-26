@@ -166,10 +166,10 @@ if ( CHECKPOINT_LOAD != m_checkpoint ) {
     m_appRuntimeMemory = loadModule<AppRuntimeMemoryMod>(modName,notUsed);
 
     output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_INIT, "Configuring the memory interface...\n");
-    mem_if = loadUserSubComponent<Interfaces::StandardMem>("mem_interface", ComponentInfo::SHARE_NONE,
-                                                         getTimeConverter("1ps"),
-                                                         new StandardMem::Handler<SST::Vanadis::VanadisNodeOSComponent>(
-                                                             this, &VanadisNodeOSComponent::handleIncomingMemory));
+    mem_if = loadUserSubComponent<Interfaces::StandardMem>(
+        "mem_interface", ComponentInfo::SHARE_NONE,
+        getTimeConverter("1ps"),
+        new StandardMem::Handler2<SST::Vanadis::VanadisNodeOSComponent,&VanadisNodeOSComponent::handleIncomingMemoryCallback>(this));
     output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_INIT, "Configuring for %" PRIu32 " core links...\n", m_coreCount);
     core_links.reserve(m_coreCount);
 
@@ -182,7 +182,7 @@ if ( CHECKPOINT_LOAD != m_checkpoint ) {
 
         SST::Link* core_link = configureLink(
             port_name_buffer, "0ns",
-            new Event::Handler<VanadisNodeOSComponent>(this, &VanadisNodeOSComponent::handleIncomingSyscall));
+            new Event::Handler2<VanadisNodeOSComponent,&VanadisNodeOSComponent::handleIncomingSyscallEvent>(this));
 
         if (nullptr == core_link) {
             output->fatal(CALL_INFO, -1, "Error: unable to configure link: %s\n", port_name_buffer);
@@ -477,7 +477,7 @@ int VanadisNodeOSComponent::checkpointLoad( std::string dir )
     return m_threadMap.size();
 }
 
-void VanadisNodeOSComponent::handleIncomingMemory(StandardMem::Request* ev) {
+void VanadisNodeOSComponent::handleIncomingMemoryCallback(StandardMem::Request* ev) {
     auto lookup_result = m_memRespMap.find(ev->getID());
 
     if ( lookup_result == m_memRespMap.end() )  {
@@ -589,7 +589,7 @@ void VanadisNodeOSComponent::writeMem( OS::ProcessInfo* process, uint64_t virtAd
 }
 
 void
-VanadisNodeOSComponent::handleIncomingSyscall(SST::Event* ev) {
+VanadisNodeOSComponent::handleIncomingSyscallEvent(SST::Event* ev) {
     VanadisSyscallEvent* sys_ev = dynamic_cast<VanadisSyscallEvent*>(ev);
 
     if (nullptr == sys_ev) {

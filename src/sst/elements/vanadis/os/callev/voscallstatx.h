@@ -38,11 +38,11 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisSyscallEvent::serialize_order(ser);
-        ser& dirFd;
-        ser& path_ptr;
-        ser& flags;
-        ser& mask;
-        ser& stackPtr;
+        SST_SER(dirFd);
+        SST_SER(path_ptr);
+        SST_SER(flags);
+        SST_SER(mask);
+        SST_SER(stackPtr);
     }
     ImplementSerializable(SST::Vanadis::VanadisSyscallStatxEvent);
 

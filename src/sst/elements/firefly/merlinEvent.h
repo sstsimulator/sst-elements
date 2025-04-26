@@ -169,18 +169,18 @@ class FireflyNetworkEvent : public Event {
   public:
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & seq;
-        ser & offset;
-        ser & bufLen;
-        ser & buf;
-        ser & srcNode;
-        ser & srcPid;
-        ser & srcStream;
-        ser & destPid;
-        ser & pktOverhead;
-        ser & m_isHdr;
-        ser & m_isTail;
-        ser & m_isCtrl;
+        SST_SER(seq);
+        SST_SER(offset);
+        SST_SER(bufLen);
+        SST_SER(buf);
+        SST_SER(srcNode);
+        SST_SER(srcPid);
+        SST_SER(srcStream);
+        SST_SER(destPid);
+        SST_SER(pktOverhead);
+        SST_SER(m_isHdr);
+        SST_SER(m_isTail);
+        SST_SER(m_isCtrl);
     }
 
     ImplementSerializable(SST::Firefly::FireflyNetworkEvent);

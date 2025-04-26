@@ -100,8 +100,12 @@ public:
     void writeData(Addr addr, std::vector<uint8_t>* data);
     void readData(Addr addr, size_t size, std::vector<uint8_t>& data);
 
+    // Serialization
+    MemController();
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::MemHierarchy::MemController)
+
 protected:
-    MemController();  // for serialization only
     virtual ~MemController() {
         if (backing_)
             delete backing_;
@@ -160,7 +164,7 @@ protected:
     Addr translateToLocal(Addr addr);
     Addr translateToGlobal(Addr addr);
 
-    Clock::Handler<MemController>* clockHandler_;
+    Clock::HandlerBase* clockHandler_;
     TimeConverter* clockTimeBase_;
 
     CustomCmdMemHandler * customCommandHandler_;

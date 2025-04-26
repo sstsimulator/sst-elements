@@ -25,7 +25,7 @@ namespace SST {
 namespace Hg {
 
 extern template class  HgBase<SST::Component>;
-extern template SST::TimeConverter* HgBase<SST::SubComponent>::time_converter_;
+extern template SST::TimeConverter HgBase<SST::SubComponent>::time_converter_;
 
 using os = OperatingSystem;
 

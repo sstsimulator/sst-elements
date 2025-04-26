@@ -34,8 +34,8 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        ser& hwThread;
-        ser& coreId;
+        SST_SER(hwThread);
+        SST_SER(coreId);
     }
 
 
@@ -54,7 +54,7 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        ser& coreId;
+        SST_SER(coreId);
     }
 
     ImplementSerializable(SST::Vanadis::VanadisCheckpointResp);

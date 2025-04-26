@@ -19,13 +19,14 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <sst/core/serialization/serializable.h>
 #include "sst/elements/memHierarchy/util.h"
 
 namespace SST {
 namespace MemHierarchy {
 namespace Backend {
 
-class Backing {
+class Backing : public SST::Core::Serialization::serializable {
 public:
     // Constructor
     Backing( ) { }
@@ -47,7 +48,9 @@ public:
 
     // Print contents of backing to stdout (testing purposes)
     virtual void printToScreen(Addr addr_offset, Addr addr_start, Addr addr_interleave_size, Addr addr_interleave_step) = 0;
-
+    
+    void serialize_order(SST::Core::Serialization::serializer& ser) {}
+    ImplementVirtualSerializable(SST::MemHierarchy::Backend::Backing);
 };
 
 /*
@@ -162,6 +165,16 @@ public:
             out.output("%s\n", value.str().c_str());
         }
         out.output("==================================================================================================\n");
+    }
+
+    // For serialization
+    BackingMMAP() {}
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) {
+        Backing::serialize_order(ser);
+        SST_SER(buffer_);
+        SST_SER(size_);
+        SST_SER(offset_);
     }
 
 private:
@@ -317,6 +330,17 @@ public:
             }
         }
         out.output("==================================================================================================\n");
+    }
+
+    // For serialization
+    BackingMalloc() {}
+
+    void serialize_order(SST::Core::Serialization::serializer& ser) {
+        Backing::serialize_order(ser);
+        SST_SER(buffer_);
+        SST_SER(alloc_unit_);
+        SST_SER(shift_);
+        SST_SER(init_);
     }
 
 private:

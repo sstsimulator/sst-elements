@@ -165,7 +165,7 @@ inline Memory::Memory( ComponentId_t id, Params& params ) : MemoryBase(id)
     std::stringstream ss;
     ss << this;
     m_delayLink = configureSelfLink( "ProcessQueuesStateSelfLink." + ss.str(), "1 ns",
-                           new Event::Handler<Memory>(this,&Memory::delayHandler));
+                           new Event::Handler2<Memory,&Memory::delayHandler>(this));
 
     m_matchDelay_ns = params.find<int>( "matchDelay_ns", 1 );
 

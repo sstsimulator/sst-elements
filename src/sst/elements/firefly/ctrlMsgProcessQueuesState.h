@@ -161,7 +161,7 @@ class ProcessQueuesState : public SubComponent
 
   private:
 
-    void loopHandler( Event* );
+    void eventLoopHandler( Event* );
     void delayHandler( Event* );
 
     struct CtrlHdr {

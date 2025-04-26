@@ -145,7 +145,7 @@ private:
     Hermes::NodePerf*   m_nodePerf;
 	EmberGenerator*     m_generator;
 	SST::Link*          selfEventLink;
-	SST::TimeConverter* nanoTimeConverter;
+	SST::TimeConverter  nanoTimeConverter;
 	EmberMotifLog*      m_motifLogger;
 
 	std::vector<SST::Params> motifParams;

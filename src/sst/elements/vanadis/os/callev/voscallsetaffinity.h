@@ -38,9 +38,9 @@ private:
 
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisSyscallEvent::serialize_order(ser);
-        ser& pid;
-        ser& cpusetsize;
-        ser& maskAddr;
+        SST_SER(pid);
+        SST_SER(cpusetsize);
+        SST_SER(maskAddr);
     }
     ImplementSerializable(SST::Vanadis::VanadisSyscallSetaffinityEvent);
 

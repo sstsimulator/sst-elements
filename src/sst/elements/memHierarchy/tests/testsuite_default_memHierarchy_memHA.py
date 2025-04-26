@@ -77,10 +77,12 @@ class testcase_memHierarchy_memHA(SSTTestCase):
         self.memHA_Template("CoherenceDomains")
 
     @skip_on_sstsimulator_conf_empty_str("GOBLIN_HMCSIM", "LIBDIR", "GOBLIN_HMCSIM is not included as part of this build")
+    @unittest.skipIf(not testing_check_is_nightly(), "test_memHA_BackendGoblinHMC only runs on Nightly builds.")
     def test_memHA_BackendGoblinHMC(self):
         self.memHA_Template("BackendGoblinHMC", testtimeout=400)
 
     @skip_on_sstsimulator_conf_empty_str("DRAMSIM3", "LIBDIR", "DRAMSIM3 is not included as part of this build")
+    @unittest.skipIf(not testing_check_is_nightly(), "test_memHA_BackendDramsim3 only runs on Nightly builds.")
     def test_memHA_BackendDramsim3(self):
         self.memHA_Template("BackendDramsim3")
 
@@ -108,15 +110,19 @@ class testcase_memHierarchy_memHA(SSTTestCase):
     def test_memHierarchy_BackendRamulator2(self):
         self.memHA_Template("BackendRamulator2")
 
+    @unittest.skipIf(not testing_check_is_nightly(), "test_memHA_BackendTimingDRAM only runs on Nightly builds.")
     def test_memHA_BackendTimingDRAM_1(self):
         self.memHA_Template("BackendTimingDRAM_1")
 
+    @unittest.skipIf(not testing_check_is_nightly(), "test_memHA_BackendTimingDRAM only runs on Nightly builds.")
     def test_memHA_BackendTimingDRAM_2(self):
         self.memHA_Template("BackendTimingDRAM_2")
 
+    @unittest.skipIf(not testing_check_is_nightly(), "test_memHA_BackendTimingDRAM only runs on Nightly builds.")
     def test_memHA_BackendTimingDRAM_3(self):
         self.memHA_Template("BackendTimingDRAM_3")
 
+    @unittest.skipIf(not testing_check_is_nightly(), "test_memHA_BackendTimingDRAM only runs on Nightly builds.")
     def test_memHA_BackendTimingDRAM_4(self):
         self.memHA_Template("BackendTimingDRAM_4")
 

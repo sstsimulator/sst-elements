@@ -43,7 +43,7 @@ namespace Shogun {
         {
             Event::serialize_order(ser);
 
-            ser& sourcePort;
+            SST_SER(sourcePort);
         }
 
         ImplementSerializable(SST::Shogun::ShogunCreditEvent);

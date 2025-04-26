@@ -37,10 +37,10 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisSyscallEvent::serialize_order(ser);
-        ser& pid;
-        ser& resource;
-        ser& new_limit;
-        ser& old_limit;
+        SST_SER(pid);
+        SST_SER(resource);
+        SST_SER(new_limit);
+        SST_SER(old_limit);
     }
     ImplementSerializable(SST::Vanadis::VanadisSyscallPrlimitEvent);
 

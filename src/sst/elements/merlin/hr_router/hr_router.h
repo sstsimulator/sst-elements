@@ -122,8 +122,8 @@ private:
 
     Cycle_t unclocked_cycle;
     std::string xbar_bw;
-    TimeConverter* xbar_tc;
-    Clock::Handler<hr_router>* my_clock_handler;
+    TimeConverter xbar_tc;
+    Clock::HandlerBase* my_clock_handler;
 
     std::vector<std::string> inspector_names;
 

@@ -48,8 +48,8 @@ public:
     // all data members of the event
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & payload;
-        ser & last;
+        SST_SER(payload);
+        SST_SER(last);
     }
 
     // Register this event as serializable

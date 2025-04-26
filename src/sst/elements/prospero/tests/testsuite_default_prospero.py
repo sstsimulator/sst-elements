@@ -30,6 +30,7 @@ class testcase_prospero(SSTTestCase):
     libz_missing = not sst_elements_config_include_file_get_value("HAVE_LIBZ", type=int, default=0, disable_warning=True)
 
     @unittest.skipIf(libz_missing, "test_prospero_compressed_using_TAR_traces test: Requires LIBZ, but LIBZ is not found in build configuration.")
+    @unittest.skipIf(not testing_check_is_nightly(), "test_prospero_compressed_using_TAR_traces only runs on Nightly builds.")
     def test_prospero_compressed_using_TAR_traces(self):
         self.prospero_test_template("compressed", NO_TIMINGDRAM, USE_TAR_TRACES)
 
@@ -37,9 +38,11 @@ class testcase_prospero(SSTTestCase):
     def test_prospero_compressed_withtimingdram_using_TAR_traces(self):
         self.prospero_test_template("compressed", WITH_TIMINGDRAM, USE_TAR_TRACES)
 
+    @unittest.skipIf(not testing_check_is_nightly(), "test_prospero_text_using_TAR_traces only runs on Nightly builds.")
     def test_prospero_text_using_TAR_traces(self):
         self.prospero_test_template("text", NO_TIMINGDRAM, USE_TAR_TRACES)
 
+    @unittest.skipIf(not testing_check_is_nightly(), "test_prospero_binary_using_TAR_traces only runs on Nightly builds.")
     def test_prospero_binary_using_TAR_traces(self):
         self.prospero_test_template("binary", NO_TIMINGDRAM, USE_TAR_TRACES)
 
@@ -50,10 +53,12 @@ class testcase_prospero(SSTTestCase):
         self.prospero_test_template("binary", WITH_TIMINGDRAM, USE_TAR_TRACES)
 
     @unittest.skipIf(not pin_loaded, "test_prospero_text_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
+    @unittest.skipIf(not testing_check_is_nightly(), "test_prospero_text_using_PIN_traces only runs on Nightly builds.")
     def test_prospero_text_using_PIN_traces(self):
         self.prospero_test_template("text", NO_TIMINGDRAM, USE_PIN_TRACES)
 
     @unittest.skipIf(not pin_loaded, "test_prospero_binary_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
+    @unittest.skipIf(not testing_check_is_nightly(), "test_prospero_binary_using_PIN_traces only runs on Nightly builds.")
     def test_prospero_binary_using_PIN_traces(self):
         self.prospero_test_template("binary", NO_TIMINGDRAM, USE_PIN_TRACES)
 

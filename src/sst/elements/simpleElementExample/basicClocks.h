@@ -108,8 +108,8 @@ private:
     
     // TimeConverters - see timeConverter.h/.cc in sst-core
     // These store a clock interval and can be used to convert between time
-    TimeConverter* clock1converter;     // TimeConverter for clock1
-    TimeConverter* clock2converter;     // TimeConverter for clock2
+    TimeConverter clock1converter;     // TimeConverter for clock1
+    TimeConverter clock2converter;     // TimeConverter for clock2
     Clock::HandlerBase* clock2Handler; // Clock2 handler (clock2Tick)
 
 

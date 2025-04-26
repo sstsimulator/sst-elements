@@ -46,7 +46,7 @@ extern "C" FILE* sst_hg_stderr(){
 namespace SST {
 namespace Hg {
 
-extern template SST::TimeConverter* HgBase<SST::Component>::time_converter_;
+extern template SST::TimeConverter HgBase<SST::Component>::time_converter_;
 
 std::ostream& cout_wrapper(){
   return SST::Hg::Thread::current()->parentApp()->coutStream();

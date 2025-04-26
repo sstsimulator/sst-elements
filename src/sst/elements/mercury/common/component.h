@@ -40,7 +40,7 @@ HgBase(uint32_t id) :
     if (!time_converter_){
       time_converter_ = CoreBase::getTimeConverter(_tick_spacing_string_);
     }
-    self_link_ = CoreBase::configureSelfLink("HgComponent" + std::to_string(self_id()), time_converter_,new SST::Event::Handler<HgBase>(this, &HgBase::handleExecutionEvent));
+    self_link_ = CoreBase::configureSelfLink("HgComponent" + std::to_string(self_id()), time_converter_,new SST::Event::Handler2<HgBase,&HgBase::handleExecutionEvent>(this));
     ++selfid;
 
     RankInfo num_ranks = CoreBase::getNumRanks();
@@ -59,7 +59,7 @@ HgBase(uint32_t id) :
    return thread_id_;
  }
 
- SST::SimTime_t getCurrentSimTime(SST::TimeConverter* tc) const {
+ SST::SimTime_t getCurrentSimTime(SST::TimeConverter tc) const {
    return CoreBase::getCurrentSimTime(tc);
  }
 
@@ -88,13 +88,13 @@ HgBase(uint32_t id) :
    delete sev;
  }
 
- static SST::TimeConverter* timeConverter() {
+ static SST::TimeConverter timeConverter() {
    return time_converter_;
  }
 
 protected:
 
- static SST::TimeConverter* time_converter_;
+ static SST::TimeConverter time_converter_;
 
 private:
  int thread_id_;
@@ -103,7 +103,7 @@ private:
 };
 
 template <typename CoreBase>
-SST::TimeConverter* HgBase<CoreBase>::time_converter_ = nullptr;
+SST::TimeConverter HgBase<CoreBase>::time_converter_;
 
 class Component : public HgBase<SST::Component>
 {

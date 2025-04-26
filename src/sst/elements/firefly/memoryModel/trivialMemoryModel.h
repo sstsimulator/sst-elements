@@ -45,7 +45,7 @@ public:
     TrivialMemoryModel( ComponentId_t id, Params& params ) : MemoryModel(id)
 	{
 		m_selfLink = configureSelfLink("Nic::TrivialMemoryModel", "1 ns",
-        new Event::Handler<TrivialMemoryModel>(this,&TrivialMemoryModel::handleSelfEvent));
+        new Event::Handler2<TrivialMemoryModel,&TrivialMemoryModel::handleSelfEvent>(this));
 	}
     virtual void printStatus( Output& out, int id ) { }
 	virtual void schedHostCallback( int core, std::vector< MemOp >* ops, Callback callback ) {

@@ -54,17 +54,17 @@ Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
     output.verbose(CALL_INFO, 1, 0, "Registering RTL clock at %s\n", RTLClk.c_str());
    
    //set our clock 
-   clock_handler = new Clock::Handler<Rtlmodel>(this, &Rtlmodel::clockTick); 
+   clock_handler = new Clock::Handler2<Rtlmodel,&Rtlmodel::clockTick>(this); 
    timeConverter = registerClock(RTLClk, clock_handler);
    unregisterClock(timeConverter, clock_handler);
    writePayloads = params.find<int>("writepayloadtrace") == 0 ? false : true;
 
     //Configure and register Event Handler for ArielRtllink
-   ArielRtlLink = configureLink("ArielRtllink", new Event::Handler<Rtlmodel>(this, &Rtlmodel::handleArielEvent)); 
+   ArielRtlLink = configureLink("ArielRtllink", new Event::Handler2<Rtlmodel,&Rtlmodel::handleArielEvent>(this)); 
 
     // Find all the components loaded into the "memory" slot
     // Make sure all cores have a loaded subcomponent in their slot
-    cacheLink = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, timeConverter, new StandardMem::Handler<Rtlmodel>(this, &Rtlmodel::handleMemEvent));
+    cacheLink = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, timeConverter, new StandardMem::Handler2<Rtlmodel,&Rtlmodel::handleMemEvent>(this));
     if(!cacheLink) {
        std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.standardInterface");
        output.verbose(CALL_INFO, 1, 0, "Memory interface to be loaded is: %s\n", interfaceName.c_str());
@@ -72,7 +72,7 @@ Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
        Params interfaceParams = params.get_scoped_params("memoryinterfaceparams");
        interfaceParams.insert("port", "RtlCacheLink");
        cacheLink = loadAnonymousSubComponent<Interfaces::StandardMem>(interfaceName, "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
-               interfaceParams, timeConverter, new StandardMem::Handler<Rtlmodel>(this, &Rtlmodel::handleMemEvent));
+               interfaceParams, timeConverter, new StandardMem::Handler2<Rtlmodel,&Rtlmodel::handleMemEvent>(this));
        
        if (!cacheLink)
            output.fatal(CALL_INFO, -1, "%s, Error loading memory interface\n", getName().c_str());

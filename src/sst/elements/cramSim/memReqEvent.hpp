@@ -57,12 +57,12 @@ class MemReqEvent : public SST::Event {
   public:
     void serialize_order(SST::Core::Serialization::serializer &ser) {
         Event::serialize_order(ser);
-        ser & reqId;
-        ser & addr;
-        ser & isWrite;
-        ser & numBytes;
-        ser & flags;
-        ser & eventID;
+        SST_SER(reqId);
+        SST_SER(addr);
+        SST_SER(isWrite);
+        SST_SER(numBytes);
+        SST_SER(flags);
+        SST_SER(eventID);
     }
 
     ImplementSerializable(MemReqEvent);
@@ -92,10 +92,10 @@ class MemRespEvent : public SST::Event {
   public:
     void serialize_order(SST::Core::Serialization::serializer &ser) {
         Event::serialize_order(ser);
-        ser & reqId;
-        ser & flags;
-        ser & addr;
-        ser & eventID;
+        SST_SER(reqId);
+        SST_SER(flags);
+        SST_SER(addr);
+        SST_SER(eventID);
     }
 
     ImplementSerializable(MemRespEvent);

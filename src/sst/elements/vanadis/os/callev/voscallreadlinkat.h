@@ -37,10 +37,10 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         VanadisSyscallEvent::serialize_order(ser);
-        ser& dirfd;
-        ser& pathname;
-        ser& buf;
-        ser& bufsize;
+        SST_SER(dirfd);
+        SST_SER(pathname);
+        SST_SER(buf);
+        SST_SER(bufsize);
     }
     ImplementSerializable(SST::Vanadis::VanadisSyscallReadLinkAtEvent);
 

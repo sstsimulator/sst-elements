@@ -44,13 +44,13 @@ public:
 private:
     void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Event::serialize_order(ser);
-        ser& thread;
-        ser& instPtr;
-        ser& stackAddr;
-        ser& argAddr;
-        ser& tlsAddr;
-        ser& intRegs;
-        ser& fpRegs;
+        SST_SER(thread);
+        SST_SER(instPtr);
+        SST_SER(stackAddr);
+        SST_SER(argAddr);
+        SST_SER(tlsAddr);
+        SST_SER(intRegs);
+        SST_SER(fpRegs);
     }
 
     ImplementSerializable(SST::Vanadis::_VanadisStartThreadBaseReq);

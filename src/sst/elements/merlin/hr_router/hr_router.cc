@@ -283,7 +283,7 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     arb =
         loadAnonymousSubComponent<XbarArbitration>(xbar_arb, "XbarArb", 0, ComponentInfo::INSERT_STATS, empty_params);
 
-    my_clock_handler = new Clock::Handler<hr_router>(this,&hr_router::clock_handler);
+    my_clock_handler = new Clock::Handler2<hr_router,&hr_router::clock_handler>(this);
     xbar_tc = registerClock( xbar_clock, my_clock_handler);
     num_routers++;
 

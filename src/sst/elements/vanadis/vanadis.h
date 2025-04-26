@@ -340,8 +340,8 @@ private:
     uint64_t dCacheLineWidth;
     uint64_t iCacheLineWidth;
 
-    TimeConverter*                     cpuClockTC;
-    Clock::Handler<VANADIS_COMPONENT>* cpuClockHandler;
+    TimeConverter                      cpuClockTC;
+    Clock::HandlerBase*                cpuClockHandler;
 
     FILE*           pipelineTrace;
 
