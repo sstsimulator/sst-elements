@@ -62,7 +62,7 @@ SST_ELEMENT_CONFIG_OUTPUT()
 # depending on the use-picky flag
 SST_CHECK_PICKY
 AS_IF([test "x$use_picky" = "xyes"],
-      [WARNFLAGS="-Wall -Wextra"],
+      [WARNFLAGS="-Wall -Wextra -Wvla"],
       [WARNFLAGS=""])
 AM_CFLAGS="$AM_CFLAGS $WARNFLAGS"
 AM_CXXFLAGS="$AM_CXXFLAGS $WARNFLAGS"

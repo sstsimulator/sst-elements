@@ -46,6 +46,7 @@ Questions? Contact sst-macro-help@sandia.gov
 //#include <sumi-mpi/otf2_output_stat.h>
 #include <mercury/components/operating_system.h>
 #include <climits>
+#include <memory>
 
 namespace SST::Hg {
 extern void apiLock();
@@ -429,12 +430,12 @@ MpiApi::typeIndexed(int count, const int lens[], const int* displs,
 {
   MpiType* in_type_obj = typeFromId(intype);
   int type_extent = in_type_obj->extent();
-  MPI_Aint byte_displs[count];
+  auto byte_displs = std::make_unique<MPI_Aint[]>(count);
   for (int i=0; i < count; ++i){
     byte_displs[i] = displs[i] * type_extent;
   }
 
-  int rc = doTypeHindexed(count, lens, byte_displs, in_type_obj, outtype);
+  int rc = doTypeHindexed(count, lens, byte_displs.get(), in_type_obj, outtype);
 #ifdef SST_HG_OTF2_ENABLED
   if (OTF2Writer_){
     OTF2Writer_->writer().register_type(*outtype, count*in_type_obj->packed_size());
@@ -525,11 +526,11 @@ MpiApi::typeCreateStruct(const int count, const int* blocklens,
                      const MPI_Aint* indices, const MPI_Datatype* old_types,
                      MPI_Datatype* newtype)
 {
-  int new_ind[count];
+  auto new_ind = std::make_unique<int[]>(count);
   for (int i=0; i < count; ++i){
     new_ind[i] = indices[i];
   }
-  return typeCreateStruct(count, blocklens, new_ind, old_types, newtype);
+  return typeCreateStruct(count, blocklens, new_ind.get(), old_types, newtype);
 }
 
 //
