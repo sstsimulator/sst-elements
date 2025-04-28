@@ -45,6 +45,7 @@ public:
     }
     ImplementSerializable(SST::MemHierarchy::SimpleMemory)
 
+public:
     // Custom Event
     class MemCtrlEvent : public SST::Event {
     public:
@@ -59,7 +60,7 @@ public:
     public:
         void serialize_order(SST::Core::Serialization::serializer &ser)  override {
             Event::serialize_order(ser);
-            ser & reqId;  // Cannot serialize pointers unless they are a serializable object
+            SST_SER(reqId);  // Cannot serialize pointers unless they are a serializable object
        }
 
         ImplementSerializable(SST::MemHierarchy::SimpleMemory::MemCtrlEvent);

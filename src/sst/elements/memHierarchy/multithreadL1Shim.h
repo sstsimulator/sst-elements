@@ -83,8 +83,8 @@ private:
     /** Timestamp & clock control */
     uint64_t    timestamp;
     bool        clockOn;
-    Clock::Handler<MultiThreadL1>*  clockHandler;
-    TimeConverter* clock;
+    Clock::HandlerBase* clockHandler;
+    TimeConverter       clock;
 
     /** Track outstanding requests for routing responses correctly */
     std::map<Event::id_type, unsigned int> threadRequestMap;

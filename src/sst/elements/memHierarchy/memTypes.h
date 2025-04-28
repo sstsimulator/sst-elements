@@ -236,7 +236,7 @@ enum class MemEventStatus { OK, Stall, Reject };
 enum class FlushState { Ready, Drain, Forward, Invalidate };
 
 /* Define an address region by start/end & interleaving */
-class MemRegion : public SST::Core::Serialization::serializable {
+class MemRegion {
 public:
     SST::MemHierarchy::Addr start;             // First address that is part of the region
     SST::MemHierarchy::Addr end;               // Last address that is part of the region
@@ -432,14 +432,12 @@ public:
         return str.str();
     }
 
-    void serialize_order(SST::Core::Serialization::serializer &ser) override {
-        ser & start;
-        ser & end;
-        ser & interleaveSize;
-        ser & interleaveStep;
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        SST_SER(start);
+        SST_SER(end);
+        SST_SER(interleaveSize);
+        SST_SER(interleaveStep);
     }
-private:
-    ImplementSerializable(SST::MemHierarchy::MemRegion)
 };
 
 } /* End namespace MemHierarchy */

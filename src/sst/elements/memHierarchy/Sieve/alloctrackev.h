@@ -51,10 +51,10 @@ class AllocTrackEvent : public SST::Event
     public:
         void serialize_order(SST::Core::Serialization::serializer &ser)  override {
             Event::serialize_order(ser);
-            ser & type;
-            ser & virtualAddress;
-            ser & allocateLength;
-            ser & level;
+            SST_SER(type);
+            SST_SER(virtualAddress);
+            SST_SER(allocateLength);
+            SST_SER(level);
         }
 
         ImplementSerializable(SST::MemHierarchy::AllocTrackEvent);

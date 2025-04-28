@@ -104,6 +104,16 @@ public:
     }
 
     virtual std::string getBackendConvertorType() = 0; /* Backend must return the compatible convertor type */
+    
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SubComponent::serialize_order(ser);
+        SST_SER(output);
+        SST_SER(m_maxReqPerCycle);
+        SST_SER(m_memSize);
+        SST_SER(m_reqWidth);
+        // m_getRequestor is re-initialized during UNPACK by MemBackendConvertor
+    }
+    ImplementVirtualSerializable(SST::MemHierarchy::MemBackend);
 
 protected:
     Output*         output;
@@ -135,6 +145,11 @@ class SimpleMemBackend : public MemBackend {
     virtual std::string getBackendConvertorType() {
         return "memHierarchy.simpleMemBackendConvertor";
     }
+
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        MemBackend::serialize_order(ser);
+    }
+    ImplementVirtualSerializable(SST::MemHierarchy::SimpleMemBackend);
 
   private:
     std::function<void(ReqId)> m_respFunc;

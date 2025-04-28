@@ -93,9 +93,9 @@ public:
     public:
         void serialize_order(SST::Core::Serialization::serializer &ser)  override {
             Event::serialize_order(ser);
-            ser & reqId;  // Cannot serialize pointers unless they are a serializable object
-            ser & bank;
-            ser & close;
+            SST_SER(reqId);
+            SST_SER(bank);
+            SST_SER(close);
         }
         ImplementSerializable(SST::MemHierarchy::SimpleDRAM::MemCtrlEvent);
     };

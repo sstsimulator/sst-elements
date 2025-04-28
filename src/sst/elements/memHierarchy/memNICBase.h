@@ -98,7 +98,7 @@ class MemNICBase : public MemLinkBase {
 
                 void serialize_order(SST::Core::Serialization::serializer &ser) override {
                     Event::serialize_order(ser);
-                    ser & event;
+                    SST_SER(event);
                 }
 
                 ImplementSerializable(SST::MemHierarchy::MemNICBase::MemRtrEvent);
@@ -128,13 +128,7 @@ class MemNICBase : public MemLinkBase {
 
                 void serialize_order(SST::Core::Serialization::serializer & ser) override {
                     MemRtrEvent::serialize_order(ser);
-                    ser & info.name;
-                    ser & info.addr;
-                    ser & info.id;
-                    ser & info.region.start;
-                    ser & info.region.end;
-                    ser & info.region.interleaveSize;
-                    ser & info.region.interleaveStep;
+                    SST_SER(info);
                 }
 
                 ImplementSerializable(SST::MemHierarchy::MemNICBase::InitMemRtrEvent);

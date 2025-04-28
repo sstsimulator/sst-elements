@@ -288,8 +288,8 @@ private:
     bool                banked_;
 
     /** Clocks *****************************************************************/
-    Clock::Handler<Cache>*  clockHandler_;
-    TimeConverter          defaultTimeBase_;
+    Clock::HandlerBase*     clockHandler_;
+    TimeConverter           defaultTimeBase_;
     bool                    clockIsOn_;     // Whether clock is on or off
     bool                    clockUpLink_;   // Whether link actually needs clock() called or not
     bool                    clockDownLink_; // Whether link actually needs clock() called or not

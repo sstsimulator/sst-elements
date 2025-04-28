@@ -36,9 +36,6 @@ using namespace SST::MemHierarchy;
 
 /* Debug macros included from util.h */
 
-
-const Bus::key_t Bus::ANY_KEY = std::pair<uint64_t, int>((uint64_t)-1, -1);
-
 Bus::Bus(ComponentId_t id, Params& params) : Component(id) {
     configureParameters(params);
     configureLinks();
@@ -153,7 +150,7 @@ void Bus::configureLinks() {
     SST::Link* link;
     std::string linkname = linkprefix + "0";
     while (isPortConnected(linkname)) {
-        link = configureLink(linkname, new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
+        link = configureLink(linkname, new Event::Handler2<Bus, &Bus::processIncomingEvent>(this));
         if (!link)
             dbg_.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), linkname.c_str());
         highNetPorts_.push_back(link);
@@ -168,7 +165,7 @@ void Bus::configureLinks() {
     }
     linkname = linkprefix + "0";
     while (isPortConnected(linkname)) {
-        link = configureLink(linkname, new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
+        link = configureLink(linkname, new Event::Handler2<Bus, &Bus::processIncomingEvent>(this));
         if (!link)
             dbg_.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), linkname.c_str());
         lowNetPorts_.push_back(link);
@@ -209,7 +206,7 @@ void Bus::configureParameters(SST::Params& params) {
     uA = uA * 2;
     frequency = uA.toString();
 
-    clockHandler_ = new Clock::Handler<Bus>(this, &Bus::clockTick);
+    clockHandler_ = new Clock::Handler2<Bus, &Bus::clockTick>(this);
     defaultTimeBase_ = registerClock(frequency, clockHandler_);
 }
 
@@ -327,4 +324,24 @@ void Bus::complete(unsigned int phase) {
             }
         }
     }
+}
+
+void Bus::serialize_order(SST::Core::Serialization::serializer& ser) {
+    Component::serialize_order(ser);
+
+    SST_SER(dbg_);
+    SST_SER(DEBUG_ADDR);
+    SST_SER(numHighPorts_);
+    SST_SER(numLowPorts_);
+    SST_SER(idleCount_);
+    SST_SER(idleMax_);
+    SST_SER(broadcast_);
+    SST_SER(busOn_);
+    SST_SER(drain_);
+    SST_SER(clockHandler_);
+    SST_SER(defaultTimeBase_);
+    SST_SER(highNetPorts_);
+    SST_SER(lowNetPorts_);
+    SST_SER(nameMap_);
+    SST_SER(eventQueue_);
 }
