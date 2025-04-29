@@ -53,6 +53,7 @@ dnl pin.sh is present in pin 2.14, but not in 3.0+
   PIN_VERSION=$($PINTOOL_RUNTIME -version | head -1 | sed 's/.*pin-\(.*\)/\1/' | sed 's/-.*//')
   dnl AC_MSG_CHECKING([pintool version])
   dnl AC_MSG_RESULT([$PIN_VERSION])
+  PIN_VERSION_MINOR=$(echo $PIN_VERSION | cut -d '.' -f 2)
 
 dnl pin 3.24+ requires different compile line
   sst_check_pin_324_ge="yes"
@@ -96,7 +97,8 @@ dnl pin 3.25+ needs libdwarf instead of lib3dwarf
   -DTARGET_IA32E \
   -DHOST_IA32E \
   -fPIC \
-  -DTARGET_LINUX"
+  -DTARGET_LINUX \
+  -DPIN_VERSION_MINOR=$PIN_VERSION_MINOR"
   AC_SUBST([PIN_CPPFLAGS])
 
   AC_LANG_PUSH([C++])
