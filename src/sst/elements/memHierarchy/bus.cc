@@ -101,7 +101,6 @@ void Bus::broadcastEvent(SST::Event* ev) {
 }
 
 
-
 void Bus::sendSingleEvent(SST::Event* ev) {
     MemEventBase *event = static_cast<MemEventBase*>(ev);
 #ifdef __SST_DEBUG_OUTPUT__

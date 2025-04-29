@@ -194,7 +194,7 @@ public:
     
         std::string frequency = params.find<std::string>("cache_frequency", "");
 
-        llscTimeoutSelfLink_ = configureSelfLink("llscTimeoutLink", frequency, new Event::Handler<MESIL1>(this, &MESIL1::handleLoadLinkExpiration));
+        llscTimeoutSelfLink_ = configureSelfLink("llscTimeoutLink", frequency, new Event::Handler2<MESIL1, &MESIL1::handleLoadLinkExpiration>(this));
 
         // Coherence protocol transition states
         if (MESI) {

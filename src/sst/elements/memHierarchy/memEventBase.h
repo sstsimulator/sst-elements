@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef MEMHIERARHCY_MEMEVENTBASE_H
-#define MEMHIERARHCY_MEMEVENTBASE_H
+#ifndef MEMHIERARCHY_MEMEVENTBASE_H
+#define MEMHIERARCHY_MEMEVENTBASE_H
 
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
@@ -540,4 +540,4 @@ public:
 }}
 
 
-#endif /* INTERFACES_MEMEVENT_H */
+#endif /* MEMHIERARCHY_MEMEVENTBASE_H */

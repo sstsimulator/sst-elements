@@ -50,7 +50,7 @@ public:
     // Print contents of backing to stdout (testing purposes)
     virtual void printToScreen(Addr addr_offset, Addr addr_start, Addr addr_interleave_size, Addr addr_interleave_step) = 0;
     
-    void serialize_order(SST::Core::Serialization::serializer& ser) {}
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {}
     ImplementVirtualSerializable(SST::MemHierarchy::Backend::Backing);
 };
 
@@ -118,28 +118,28 @@ public:
         munmap( buffer_, size_ );
     }
 
-    void set( Addr addr, uint8_t value ) {
+    void set( Addr addr, uint8_t value ) override {
         buffer_[addr - offset_ ] = value;
     }
 
-    void set ( Addr addr, size_t size, std::vector<uint8_t> &data ) {
+    void set ( Addr addr, size_t size, std::vector<uint8_t> &data ) override {
         for (size_t i = 0; i < size; i++)
             buffer_[addr + i] = data[i];
     }
 
-    uint8_t get( Addr addr ) {
+    uint8_t get( Addr addr ) override {
         return buffer_[addr - offset_];
     }
 
-    void get( Addr addr, size_t size, std::vector<uint8_t> &data ) {
+    void get( Addr addr, size_t size, std::vector<uint8_t> &data ) override {
         for (size_t i = 0; i < size; i++)
             data[i] = buffer_[addr + i];
     }
     
-    void printToFile( std::string UNUSED(outfile) ) { }
+    void printToFile( std::string UNUSED(outfile) ) override { }
 
     /* For testing only, print contents to stdout in plaintext */
-    void printToScreen(Addr addr_offset, Addr addr_start, Addr addr_interleave_size, Addr addr_interleave_step) {
+    void printToScreen(Addr addr_offset, Addr addr_start, Addr addr_interleave_size, Addr addr_interleave_step) override {
         Output out("", 1, 0, Output::STDOUT);
         out.output("==================================================================================================\n");
         out.output("Printing contents of mmap'd memory backing buffer\n");
@@ -177,7 +177,7 @@ public:
     // For serialization
     BackingMMAP() {}
 
-    void serialize_order(SST::Core::Serialization::serializer& ser) {
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Backing::serialize_order(ser);
         SST_SER(buffer_);
         SST_SER(size_);
@@ -294,14 +294,14 @@ public:
         }
     }
 
-    void set( Addr addr, uint8_t value ) {
+    void set( Addr addr, uint8_t value ) override {
         Addr bAddr = addr >> shift_;
         Addr offset = addr - (bAddr << shift_);
         allocIfNeeded(bAddr);
         buffer_[bAddr][offset] = value;
     }
 
-    void set( Addr addr, size_t size, std::vector<uint8_t> &data ) {
+    void set( Addr addr, size_t size, std::vector<uint8_t> &data ) override {
         /* Account for size exceeding alloc unit size */
         Addr bAddr = addr >> shift_;
         Addr offset = addr - (bAddr << shift_);
@@ -322,7 +322,7 @@ public:
         }
     }
 
-    void get( Addr addr, size_t size, std::vector<uint8_t> &data ) {
+    void get( Addr addr, size_t size, std::vector<uint8_t> &data ) override {
         Addr bAddr = addr >> shift_;
         Addr offset = addr - (bAddr << shift_);
         size_t dataOffset = 0;
@@ -345,7 +345,7 @@ public:
         }
     }
 
-    uint8_t get( Addr addr ) {
+    uint8_t get( Addr addr ) override {
         Addr bAddr = addr >> shift_;
         Addr offset = addr - (bAddr << shift_);
         allocIfNeeded(bAddr);
@@ -353,7 +353,7 @@ public:
     }
 
 
-    void printToFile( std::string outfile ) {
+    void printToFile( std::string outfile ) override {
         auto fp = fopen(outfile.c_str(),"wb+");
         if (!fp) { throw 1; }
         size_t count = buffer_.size();
@@ -368,7 +368,7 @@ public:
         }
     }
 
-    void printToScreen(Addr addr_offset, Addr addr_start, Addr addr_interleave_size, Addr addr_interleave_step) {
+    void printToScreen(Addr addr_offset, Addr addr_start, Addr addr_interleave_size, Addr addr_interleave_step) override {
         Output out("", 1, 0, Output::STDOUT);
         out.output("==================================================================================================\n");
         out.output("Printing contents of dynamically allocated memory backing buffer\n");
@@ -412,7 +412,7 @@ public:
     // For serialization
     BackingMalloc() {}
 
-    void serialize_order(SST::Core::Serialization::serializer& ser) {
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Backing::serialize_order(ser);
         SST_SER(buffer_);
         SST_SER(alloc_unit_);

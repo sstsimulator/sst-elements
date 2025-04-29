@@ -85,8 +85,7 @@ public:
             "memory_interface",
             ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
             getTimeConverter("1ps"),
-            new StandardMem::Handler<RoCCAnalog<T>>(
-                this, &RoCCAnalog<T>::processIncomingDataCacheEvent));
+            new StandardMem::Handler2<RoCCAnalog<T>, &RoCCAnalog<T>::processIncomingDataCacheEvent>(this));
 
         if ( nullptr == memInterface ) {
             output->fatal(
@@ -96,8 +95,7 @@ public:
 
         array = loadUserSubComponent<Golem::ComputeArray>(
             "array", ComponentInfo::SHARE_NONE, getTimeConverter("1ps"),
-            new SST::Event::Handler<RoCCAnalog<T>>(this,
-                                                 &RoCCAnalog<T>::handleArrayEvent));
+            new SST::Event::Handler2<RoCCAnalog<T>, &RoCCAnalog<T>::handleArrayEvent>(this));
 
         if ( nullptr == array ) {
             output->fatal(
@@ -280,7 +278,7 @@ public:
         }
 
         // Optional: Output the stored array for debugging purposes
-        output->verbose(CALL_INFO, 9, 0, "Stored array %lu:\n", rs2);
+        output->verbose(CALL_INFO, 9, 0, "Stored array %" PRIu64 ":\n", rs2);
         for (size_t i = 0; i < static_cast<size_t>(arrayOutputSize); i++) {
             if constexpr (std::is_same<T, float>::value || std::is_same<T, double>::value) {
                 output->verbose(CALL_INFO, 9, 0, "%f ", static_cast<double>(outputVector[i]));
@@ -320,7 +318,7 @@ public:
         auto& inputVector = *static_cast<std::vector<T>*>(array->getInputVector(rs2));
 
         output->verbose(CALL_INFO, 9, 0,
-                      "Moved array %lu to array %lu. Array %lu:\n", rs1, rs2, rs2);
+                      "Moved array %" PRIu64 " to array %" PRIu64 ". Array %" PRIu64 ":\n", rs1, rs2, rs2);
 
         for (int i = 0; i < arrayInputSize; i++) {
             if constexpr (std::is_same<T, float>::value || std::is_same<T, double>::value) {
@@ -363,7 +361,7 @@ public:
   
         virtual void handle(StandardMem::ReadResp *ev) {
             out->verbose(CALL_INFO, 9, 0,
-                     "-> handle read-response (virt-addr: 0x%lx)\n", ev->vAddr);
+                     "-> handle read-response (virt-addr: 0x%" PRI_ADDR ")\n", ev->vAddr);
             SST::Vanadis::RoCCCommand *rocc_cmd = rocc->curr_cmd;
   
             if (ev->getFail()) {
@@ -457,7 +455,7 @@ public:
   
         virtual void handle(StandardMem::WriteResp *ev) {
             out->verbose(CALL_INFO, 9, 0,
-                     "-> handle write-response (virt-addr: 0x%lx)\n", ev->vAddr);
+                     "-> handle write-response (virt-addr: 0x%" PRI_ADDR ")\n", ev->vAddr);
 
             if (ev->getFail()) {
                 out->verbose(CALL_INFO, 9, 0,

@@ -66,8 +66,8 @@ public:
 /* Class definition */
 
     Bus(SST::ComponentId_t id, SST::Params& params);
-    virtual void init(unsigned int phase);
-    virtual void complete(unsigned int phase);
+    virtual void init(unsigned int phase) override;
+    virtual void complete(unsigned int phase) override;
 
     Bus() {}
     void serialize_order(SST::Core::Serialization::serializer& ser) override;

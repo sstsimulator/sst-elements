@@ -34,8 +34,8 @@ public:
 
 /* Begin class definition */
     SimpleMemory(ComponentId_t id, Params &params);
-    bool issueRequest(ReqId, Addr, bool, unsigned );
-    virtual bool isClocked() { return false; }
+    bool issueRequest(ReqId, Addr, bool, unsigned ) override;
+    virtual bool isClocked() override { return false; }
 
     // Serialization
     SimpleMemory() {}

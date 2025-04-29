@@ -42,10 +42,10 @@ StandardMMIO::StandardMMIO(ComponentId_t id, Params &params) : SST::Component(id
         out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: clock. Must have units of Hz or s and be > 0. "
                 "(SI prefixes ok). You specified '%s'\n", getName().c_str(), clockfreq.c_str());
     }
-    TimeConverter* tc = getTimeConverter(clockfreq);
+    TimeConverter tc = getTimeConverter(clockfreq);
 
-    iface = loadUserSubComponent<SST::Interfaces::StandardMem>("iface", ComponentInfo::SHARE_NONE, tc, 
-            new StandardMem::Handler<StandardMMIO>(this, &StandardMMIO::handleEvent));
+    iface = loadUserSubComponent<SST::Interfaces::StandardMem>("iface", ComponentInfo::SHARE_NONE, &tc, 
+            new StandardMem::Handler2<StandardMMIO, &StandardMMIO::handleEvent>(this));
     
     if (!iface) {
         out.fatal(CALL_INFO, -1, "%s, Error: No interface found loaded into 'iface' subcomponent slot. Please check input file\n", getName().c_str());
@@ -64,7 +64,7 @@ StandardMMIO::StandardMMIO(ComponentId_t id, Params &params) : SST::Component(id
         rng = *(new SST::RNG::MarsagliaRNG(21, 101));
 
         // Need a clock so that we can decide whether to issue requests on each clock
-        registerClock(tc, new Clock::Handler<StandardMMIO>(this, &StandardMMIO::clockTic));
+        registerClock(tc, new Clock::Handler2<StandardMMIO, &StandardMMIO::clockTic>(this));
 
         // Don't end simulation until we've finished sending requests & receiving responses
         primaryComponentDoNotEndSim();

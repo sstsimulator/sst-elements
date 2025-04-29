@@ -2,8 +2,13 @@
 #
 #
 
-AM_CPPFLAGS += -fmax-errors=1 \
-	-I$(top_srcdir)/src \
+if COMPILE_CLANG
+	AM_CPPFLAGS += -ferror-limit=1
+else
+	AM_CPPFLAGS += -fmax-errors=1
+endif
+
+AM_CPPFLAGS += -I$(top_srcdir)/src \
 	$(MPI_CPPFLAGS) \
 	$(NUMPY_CPPFLAGS)
 

@@ -87,8 +87,8 @@ public:
         return m_getRequestor( id );
     }
 
-    virtual void setup() {}
-    virtual void finish() {}
+    virtual void setup() override {}
+    virtual void finish() override {}
 
     /* Called by parent's clock() function */
     virtual bool clock(Cycle_t UNUSED(cycle)) { return true; }
@@ -142,7 +142,7 @@ class SimpleMemBackend : public MemBackend {
         m_respFunc = func;
     }
 
-    virtual std::string getBackendConvertorType() {
+    virtual std::string getBackendConvertorType() override {
         return "memHierarchy.simpleMemBackendConvertor";
     }
 
@@ -170,7 +170,7 @@ class FlagMemBackend : public MemBackend {
         m_respFunc = func;
     }
 
-    virtual std::string getBackendConvertorType() {
+    virtual std::string getBackendConvertorType() override {
         return "memHierarchy.flagMemBackendConvertor";
     }
 
@@ -185,7 +185,7 @@ class ExtMemBackend : public MemBackend {
     virtual bool issueRequest( ReqId, Addr, bool isWrite,
                                std::vector<uint64_t> ins,
                                uint32_t flags, unsigned numBytes ) = 0;
-    virtual bool issueCustomRequest( ReqId, Interfaces::StandardMem::CustomData* ) = 0;
+    virtual bool issueCustomRequest( ReqId, Interfaces::StandardMem::CustomData* ) override = 0;
 
     void handleMemResponse( ReqId id, uint32_t flags ) {
         m_respFunc( id, flags );
@@ -195,7 +195,7 @@ class ExtMemBackend : public MemBackend {
         m_respFunc = func;
     }
 
-    virtual std::string getBackendConvertorType() {
+    virtual std::string getBackendConvertorType() override {
         return "memHierarchy.extMemBackendConvertor";
     }
 

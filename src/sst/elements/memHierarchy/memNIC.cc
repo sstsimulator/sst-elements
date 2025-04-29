@@ -45,13 +45,13 @@ MemNIC::MemNIC(ComponentId_t id, Params &params, TimeConverter* tc) : MemNICBase
 
         link_control = loadAnonymousSubComponent<SimpleNetwork>(link_control_class, "linkcontrol", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, netparams, 1);
     }
-    link_control->setNotifyOnReceive(new SimpleNetwork::Handler<MemNIC>(this, &MemNIC::recvNotify));
+    link_control->setNotifyOnReceive(new SimpleNetwork::Handler2<MemNIC, &MemNIC::recvNotify>(this));
 
     // Packet size
     packetHeaderBytes = extractPacketHeaderSize(params, "min_packet_size");
 
     clockHandler = new Clock::Handler2<MemNIC, &MemNIC::clock>(this);
-    clockTC = registerClock(tc, clockHandler);
+    clockTC = registerClock(*tc, clockHandler);
 }
 
 void MemNIC::init(unsigned int phase) {
