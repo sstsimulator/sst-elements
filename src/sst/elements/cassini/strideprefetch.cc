@@ -225,5 +225,5 @@ void StridePrefetcher::registerResponseCallback(Event::HandlerBase* handler) {
     registeredCallbacks.push_back(handler);
 }
 
-void StridePrefetcher::printStats(Output &out) {
+void StridePrefetcher::printStats(Output& out) {
 }

@@ -37,10 +37,11 @@ namespace Cassini {
 class AddrHistogrammer : public SST::MemHierarchy::CacheListener {
 public:
     AddrHistogrammer(ComponentId_t, Params& params);
+    AddrHistogrammer() : SST::MemHierarchy::CacheListener() {}
     ~AddrHistogrammer() {};
 
-    void notifyAccess(const CacheListenerNotification& notify);
-    void registerResponseCallback(Event::HandlerBase *handler);
+    void notifyAccess(const CacheListenerNotification& notify) override;
+    void registerResponseCallback(Event::HandlerBase *handler) override;
 
     SST_ELI_REGISTER_SUBCOMPONENT(
         AddrHistogrammer,

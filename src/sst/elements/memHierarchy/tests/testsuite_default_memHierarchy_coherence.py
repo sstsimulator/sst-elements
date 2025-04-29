@@ -143,7 +143,7 @@ class testcase_memHierarchy_coherence(SSTTestCase):
         # Perform the tests
         if ignore_err_file is False:
             if os_test_file(errfile, "-s"):
-                log_testing_note("memHA test {0} has a Non-Empty Error File {1}".format(testDataFileName, errfile))
+                log_testing_note("memHA test {0} has a Non-Empty Error File {1}".format(test_name, errfile))
 
         if filesAreTheSame:
             log_debug(" -- Output file {0} passed check against the Reference File {1}".format(outfile, reffile))

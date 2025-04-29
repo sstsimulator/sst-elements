@@ -49,7 +49,7 @@ ScratchCPU::ScratchCPU(ComponentId_t id, Params& params) : Component(id), rng(id
 
     // CPU parameters
     UnitAlgebra clock = params.find<UnitAlgebra>("clock", "1GHz");
-    clockHandler = new Clock::Handler<ScratchCPU>(this, &ScratchCPU::tick);
+    clockHandler = new Clock::Handler2<ScratchCPU, &ScratchCPU::tick>(this);
     clockTC = registerClock( clock, clockHandler );
 
     reqQueueSize = params.find<uint32_t>("maxOutstandingRequests", 8);
@@ -66,7 +66,7 @@ ScratchCPU::ScratchCPU(ComponentId_t id, Params& params) : Component(id), rng(id
     size += "B";
     params.insert("scratchpad_size", size);
 
-    memory = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::StandardMem::Handler<ScratchCPU>(this, &ScratchCPU::handleEvent) );
+    memory = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::StandardMem::Handler2<ScratchCPU, &ScratchCPU::handleEvent>(this) );
 
     sst_assert(memory, CALL_INFO, -1, "Unable to load scratchInterface subcomponent\n");
 

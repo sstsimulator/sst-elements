@@ -58,6 +58,16 @@ SST_CHECK_SPINLOCK()
 
 SST_ELEMENT_CONFIG_OUTPUT()
 
+# Check if compiler is clang vs gcc for flags
+AC_LANG_PUSH([C++])
+AX_COMPILER_VENDOR
+AC_LANG_POP([C++])
+case "$ax_cv_cxx_compiler_vendor" in
+    clang) compile_clang=yes ;;
+    *)     compile_clang=no ;;
+esac
+AM_CONDITIONAL([COMPILE_CLANG], [test x$compile_clang = xtrue])
+
 # Compile flags come from SST-Core, add or remove extra warnings
 # depending on the use-picky flag
 SST_CHECK_PICKY

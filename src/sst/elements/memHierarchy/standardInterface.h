@@ -170,7 +170,7 @@ protected:
         StandardInterface* iface;
 
         MemEventConverter() {}
-        void serialize_order(SST::Core::Serialization::serializer& ser) { 
+        void serialize_order(SST::Core::Serialization::serializer& ser) override { 
             SST::Interfaces::StandardMem::RequestConverter::serialize_order(ser);
             SST_SER(iface); 
         }
@@ -202,7 +202,7 @@ protected:
         StandardInterface* iface;
         
         UntimedMemEventConverter() {}
-        void serialize_order(SST::Core::Serialization::serializer& ser) { 
+        void serialize_order(SST::Core::Serialization::serializer& ser) override { 
             SST::Interfaces::StandardMem::RequestConverter::serialize_order(ser);
             SST_SER(iface); 
         }

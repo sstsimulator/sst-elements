@@ -97,7 +97,7 @@ public:
             DEBUG_ADDR.insert(*it);
         }
 
-        setDefaultTimeBase(tc);
+        setDefaultTimeBase(*tc);
 
         // Set up address region TODO deprecate in the next major release (SST 10)
         bool found, foundany;

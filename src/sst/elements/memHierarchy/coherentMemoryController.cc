@@ -432,7 +432,7 @@ void CoherentMemController::handleFetchResp(MemEvent * ev) {
  * only request the MemController sends to caches
  */
 void CoherentMemController::handleNack(MemEvent * ev) {
-    MemEvent * nackedEvent = ev->getNACKedEvent();
+    MemEvent * nackedEvent = ev->releaseNACKedEvent();
     Addr baseAddr = nackedEvent->isAddrGlobal() ? translateToLocal(nackedEvent->getBaseAddr()) : nackedEvent->getBaseAddr();
 
     /* NACKed event no longer needed due to race between replacement and Inv */
