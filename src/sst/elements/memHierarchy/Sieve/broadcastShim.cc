@@ -35,7 +35,7 @@ BroadcastShim::BroadcastShim(ComponentId_t id, Params &params) : Component(id) {
 
     while (true) {
         std::string linkName = "cpu_alloc_link_" + std::to_string(linkCPU);
-        link = configureLink(linkName, "100 ps", new Event::Handler<BroadcastShim>(this, &BroadcastShim::processCoreEvent));
+        link = configureLink(linkName, "100 ps", new Event::Handler2<BroadcastShim, &BroadcastShim::processCoreEvent>(this));
         if (link) {
             cpuAllocLinks_.push_back(link);
             output_->output(CALL_INFO, "Port %d = Link %d\n", link->getId(), linkCPU);
@@ -47,7 +47,7 @@ BroadcastShim::BroadcastShim(ComponentId_t id, Params &params) : Component(id) {
 
     while (true) {
         std::string linkName = "sieve_alloc_link_" + std::to_string(linkSieve);
-        link = configureLink(linkName, "100 ps", new Event::Handler<BroadcastShim>(this, &BroadcastShim::processSieveEvent));
+        link = configureLink(linkName, "100 ps", new Event::Handler2<BroadcastShim, &BroadcastShim::processSieveEvent>(this));
         if (link) {
             sieveAllocLinks_.push_back(link);
             output_->output(CALL_INFO, "Port %d = Link %d\n", link->getId(), linkSieve);

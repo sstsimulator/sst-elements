@@ -97,7 +97,7 @@ void Sieve::configureLinks() {
         std::ostringstream linkName;
         linkName << "cpu_link_" << cpuLinkCount_;
         std::string ln = linkName.str();
-        link = configureLink(ln, "100 ps", new Event::Handler<Sieve, int>(this, &Sieve::processEvent, cpuLinkCount_));
+        link = configureLink(ln, "100 ps", new Event::Handler2<Sieve, &Sieve::processEvent, int>(this, cpuLinkCount_));
         if (link) {
             cpuLinks_.push_back(link);
             output_->output(CALL_INFO, "Port %d = Link %d\n", cpuLinks_[cpuLinkCount_]->getId(), cpuLinkCount_);
@@ -113,7 +113,7 @@ void Sieve::configureLinks() {
         std::ostringstream linkName;
         linkName << "alloc_link_" << i;
         std::string ln = linkName.str();
-        allocLinks_[i] = configureLink(ln, "50ps", new Event::Handler<Sieve>(this, &Sieve::processAllocEvent));
+        allocLinks_[i] = configureLink(ln, "50ps", new Event::Handler2<Sieve, &Sieve::processAllocEvent>(this));
     }
 }
 

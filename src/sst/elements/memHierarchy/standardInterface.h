@@ -168,6 +168,13 @@ protected:
         void debugChecks(MemEvent* ev);
 
         StandardInterface* iface;
+
+        MemEventConverter() {}
+        void serialize_order(SST::Core::Serialization::serializer& ser) override { 
+            SST::Interfaces::StandardMem::RequestConverter::serialize_order(ser);
+            SST_SER(iface); 
+        }
+        ImplementSerializable(SST::MemHierarchy::StandardInterface::MemEventConverter);
     };
 
     class UntimedMemEventConverter : public Interfaces::StandardMem::RequestConverter {
@@ -193,6 +200,13 @@ protected:
         virtual SST::Event* convert(StandardMem::InvNotify* req) override;
 
         StandardInterface* iface;
+        
+        UntimedMemEventConverter() {}
+        void serialize_order(SST::Core::Serialization::serializer& ser) override { 
+            SST::Interfaces::StandardMem::RequestConverter::serialize_order(ser);
+            SST_SER(iface); 
+        }
+        ImplementSerializable(SST::MemHierarchy::StandardInterface::UntimedMemEventConverter);
     };
 
 private:

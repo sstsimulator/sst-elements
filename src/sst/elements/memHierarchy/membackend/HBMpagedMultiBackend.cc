@@ -41,8 +41,7 @@ HBMpagedMultiMemory::HBMpagedMultiMemory(ComponentId_t id, Params &params)
 
     string access = params.find<std::string>("access_time", "35ns");
     self_link = configureSelfLink("Self", access,
-                                        new Event::Handler<HBMpagedMultiMemory>(
-                                          this, &HBMpagedMultiMemory::handleSelfEvent));
+                                        new Event::Handler2<HBMpagedMultiMemory, &HBMpagedMultiMemory::handleSelfEvent>(this));
 
     maxFastPages = params.find<unsigned int>("max_fast_pages", 256);
     pageShift = params.find<unsigned int>("page_shift", 12);
@@ -52,8 +51,7 @@ HBMpagedMultiMemory::HBMpagedMultiMemory(ComponentId_t id, Params &params)
 
     string clock_freq = params.find<std::string>("quantum", "5ms");
     registerClock(clock_freq,
-                        new Clock::Handler<HBMpagedMultiMemory>(this,
-                                                             &HBMpagedMultiMemory::quantaClock));
+                        new Clock::Handler2<HBMpagedMultiMemory, &HBMpagedMultiMemory::quantaClock>(this));
 
     // determine page replacement / addition strategy
     std::string stratStr = params.find<std::string>("page_replace_strategy", "FIFO");

@@ -87,8 +87,8 @@ public:
         return m_getRequestor( id );
     }
 
-    virtual void setup() {}
-    virtual void finish() {}
+    virtual void setup() override {}
+    virtual void finish() override {}
 
     /* Called by parent's clock() function */
     virtual bool clock(Cycle_t UNUSED(cycle)) { return true; }
@@ -104,6 +104,16 @@ public:
     }
 
     virtual std::string getBackendConvertorType() = 0; /* Backend must return the compatible convertor type */
+    
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        SubComponent::serialize_order(ser);
+        SST_SER(output);
+        SST_SER(m_maxReqPerCycle);
+        SST_SER(m_memSize);
+        SST_SER(m_reqWidth);
+        // m_getRequestor is re-initialized during UNPACK by MemBackendConvertor
+    }
+    ImplementVirtualSerializable(SST::MemHierarchy::MemBackend);
 
 protected:
     Output*         output;
@@ -132,9 +142,14 @@ class SimpleMemBackend : public MemBackend {
         m_respFunc = func;
     }
 
-    virtual std::string getBackendConvertorType() {
+    virtual std::string getBackendConvertorType() override {
         return "memHierarchy.simpleMemBackendConvertor";
     }
+
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+        MemBackend::serialize_order(ser);
+    }
+    ImplementVirtualSerializable(SST::MemHierarchy::SimpleMemBackend);
 
   private:
     std::function<void(ReqId)> m_respFunc;
@@ -155,7 +170,7 @@ class FlagMemBackend : public MemBackend {
         m_respFunc = func;
     }
 
-    virtual std::string getBackendConvertorType() {
+    virtual std::string getBackendConvertorType() override {
         return "memHierarchy.flagMemBackendConvertor";
     }
 
@@ -170,7 +185,7 @@ class ExtMemBackend : public MemBackend {
     virtual bool issueRequest( ReqId, Addr, bool isWrite,
                                std::vector<uint64_t> ins,
                                uint32_t flags, unsigned numBytes ) = 0;
-    virtual bool issueCustomRequest( ReqId, Interfaces::StandardMem::CustomData* ) = 0;
+    virtual bool issueCustomRequest( ReqId, Interfaces::StandardMem::CustomData* ) override = 0;
 
     void handleMemResponse( ReqId id, uint32_t flags ) {
         m_respFunc( id, flags );
@@ -180,7 +195,7 @@ class ExtMemBackend : public MemBackend {
         m_respFunc = func;
     }
 
-    virtual std::string getBackendConvertorType() {
+    virtual std::string getBackendConvertorType() override {
         return "memHierarchy.extMemBackendConvertor";
     }
 

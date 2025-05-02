@@ -286,7 +286,7 @@ void PalaPrefetcher::registerResponseCallback(Event::HandlerBase* handler)
     registeredCallbacks.push_back(handler);
 }
 
-void PalaPrefetcher::printStats(Output &out)
+void PalaPrefetcher::printStats(Output& out)
 {
 }
 

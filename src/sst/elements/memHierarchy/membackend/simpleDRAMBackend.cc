@@ -104,7 +104,7 @@ SimpleDRAM::SimpleDRAM(ComponentId_t id, Params &params) : SimpleMemBackend(id, 
     }
 
     // Self link for timing requests
-    self_link = configureSelfLink("Self", cycTime, new Event::Handler<SimpleDRAM>(this, &SimpleDRAM::handleSelfEvent));
+    self_link = configureSelfLink("Self", cycTime, new Event::Handler2<SimpleDRAM, &SimpleDRAM::handleSelfEvent>(this));
 
     // Some statistics
     statRowHit = registerStatistic<uint64_t>("row_already_open");

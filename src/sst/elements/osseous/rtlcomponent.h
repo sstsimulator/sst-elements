@@ -113,7 +113,7 @@ private:
     void sendArielEvent();
     uint64_t* getAXIDataAddress();
     
-    TimeConverter* timeConverter;
+    TimeConverter timeConverter;
     Clock::HandlerBase* clock_handler;
     bool writePayloads;
     bool update_registers, verbose, done_reset, sim_done;

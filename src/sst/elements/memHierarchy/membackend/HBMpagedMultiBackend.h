@@ -196,10 +196,10 @@ private:
         bool isWrite;
         unsigned numBytes;
 		void serialize_order(SST::Core::Serialization::serializer &ser)  override {
-			ser & id;
-			ser & addr;
-			ser & isWrite;
-			ser & numBytes;
+			SST_SER(id);
+			SST_SER(addr);
+			SST_SER(isWrite);
+			SST_SER(numBytes);
 		}
 	  private:
         Req() {}
@@ -275,7 +275,7 @@ public:
     public:
         void serialize_order(SST::Core::Serialization::serializer &ser)  override {
             Event::serialize_order(ser);
-            ser & req;  // Cannot serialize pointers unless they are a serializable object
+            SST_SER(req);  // Cannot serialize pointers unless they are a serializable object
         }
 
         ImplementSerializable(SST::MemHierarchy::HBMpagedMultiMemory::MemCtrlEvent);

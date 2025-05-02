@@ -45,6 +45,8 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mpi_comm/mpi_comm_cart.h>
 #include <mercury/common/errors.h>
 
+#include <memory>
+
 namespace SST::MASKMPI {
 
 MpiCommCart::MpiCommCart(
@@ -96,26 +98,26 @@ MpiCommCart::shift(int dir, int dis)
                      "mpicomm_cart::shift: dir %d is too big for dims %d",
                      dir, dims_.size());
   }
-  int coords[dims_.size()];
-  set_coords(rank_, coords);
+  auto coords = std::make_unique<int[]>(dims_.size());
+  set_coords(rank_, coords.get());
   coords[dir] += dis;
 
   if (coords[dir] >= dims_[dir]) {
     if (periods_[dir]) {
       coords[dir] = coords[dir] % dims_[dir];
-      return rank(coords);
+      return rank(coords.get());
     } else {
       return MpiComm::proc_null;
     }
   } else if (coords[dir] < 0) {
     if (periods_[dir]) {
       coords[dir] = (dims_[dir] + coords[dir]) % dims_[dir];
-      return rank(coords);
+      return rank(coords.get());
     } else {
       return MpiComm::proc_null;
     }
   } else {
-    return rank(coords);
+    return rank(coords.get());
   }
 
 }

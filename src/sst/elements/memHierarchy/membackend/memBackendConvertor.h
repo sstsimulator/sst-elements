@@ -61,7 +61,7 @@ class MemBackendConvertor : public SubComponent {
 
     typedef uint64_t ReqId;
 
-    class BaseReq {
+    class BaseReq : public SST::Core::Serialization::serializable {
     public:
 
         enum class ReqType { BASE, MEM, CUSTOM };
@@ -83,6 +83,14 @@ class MemBackendConvertor : public SubComponent {
         bool isMemEv() { return m_type == ReqType::MEM; }
         bool isCustCmd() { return m_type == ReqType::CUSTOM; }
         virtual const std::string getRqstr() { return ""; }
+        
+        BaseReq() { }
+        virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+            SST_SER(m_reqId);
+            SST_SER(m_type);
+        }
+        ImplementSerializable(SST::MemHierarchy::MemBackendConvertor::BaseReq)
+        
     protected:
         uint32_t m_reqId;
         ReqType m_type;
@@ -104,6 +112,14 @@ class MemBackendConvertor : public SubComponent {
             str << " Data: " << m_info->getString();
             return BaseReq::getString() + str.str();
         }
+        CustomReq() { }
+        virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+            BaseReq::serialize_order(ser);
+            SST_SER(m_info);
+            SST_SER(m_rqstr);
+            SST_SER(m_evId);
+        }
+        ImplementSerializable(SST::MemHierarchy::MemBackendConvertor::CustomReq)
     private:
         Interfaces::StandardMem::CustomData * m_info;
         std::string m_rqstr;
@@ -147,6 +163,14 @@ class MemBackendConvertor : public SubComponent {
             return BaseReq::getString() + str.str();
         }
 
+        MemReq() { }
+        virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
+            BaseReq::serialize_order(ser);
+            SST_SER(m_event);
+            SST_SER(m_offset);
+            SST_SER(m_numReq);
+        }
+        ImplementSerializable(SST::MemHierarchy::MemBackendConvertor::MemReq)
       private:
         MemEvent*   m_event;
         uint32_t    m_offset;
@@ -180,7 +204,13 @@ class MemBackendConvertor : public SubComponent {
     // generates a MemReq for the target custom command
     // this is utilized by inherited ExtMemBackendConvertor's
     // such that all the requests are consolidated in one place
-  protected:
+    
+    // Serialization support
+    MemBackendConvertor() { }
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementVirtualSerializable(SST::MemHierarchy::MemBackendConvertor);
+  
+protected:
     virtual ~MemBackendConvertor() {
         while ( m_requestQueue.size()) {
             delete m_requestQueue.front();

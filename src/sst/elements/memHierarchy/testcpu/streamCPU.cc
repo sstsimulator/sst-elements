@@ -59,17 +59,17 @@ streamCPU::streamCPU(ComponentId_t id, Params& params) :
 
     //set our clock
     std::string clockFreq = params.find<std::string>("clock", "1GHz");
-    clockHandler = new Clock::Handler<streamCPU>(this, &streamCPU::clockTic);
+    clockHandler = new Clock::Handler2<streamCPU, &streamCPU::clockTic>(this);
     clockTC = registerClock(clockFreq, clockHandler);
     num_reads_issued = num_reads_returned = 0;
 
-    memory = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::StandardMem::Handler<streamCPU>(this, &streamCPU::handleEvent));
+    memory = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::StandardMem::Handler2<streamCPU, &streamCPU::handleEvent>(this));
 
     if (!memory) {
         Params interfaceParams;
         interfaceParams.insert("port", "mem_link");
         memory = loadAnonymousSubComponent<Interfaces::StandardMem>("memHierarchy.standardInterface", "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
-                interfaceParams, clockTC, new Interfaces::StandardMem::Handler<streamCPU>(this, &streamCPU::handleEvent));
+                interfaceParams, clockTC, new Interfaces::StandardMem::Handler2<streamCPU, &streamCPU::handleEvent>(this));
         //out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.memInterface subcomponent\n");
     }
 

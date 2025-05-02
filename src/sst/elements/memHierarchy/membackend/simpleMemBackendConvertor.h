@@ -38,11 +38,15 @@ public:
 /* Begin class definition */
     SimpleMemBackendConvertor(ComponentId_t id, Params &params, MemBackend* backend, uint32_t);
 
-    virtual bool issue( BaseReq* req );
+    virtual bool issue( BaseReq* req ) override;
 
     virtual void handleMemResponse( ReqId reqId ) {
         doResponse(reqId);
     }
+
+    SimpleMemBackendConvertor() { }
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override;
+    ImplementSerializable(SST::MemHierarchy::SimpleMemBackendConvertor)
 };
 
 }

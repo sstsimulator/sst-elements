@@ -13,8 +13,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef MEMHIERARHCY_MEMEVENT_H
-#define MEMHIERARHCY_MEMEVENT_H
+#ifndef MEMHIERARCHY_MEMEVENT_H
+#define MEMHIERARCHY_MEMEVENT_H
+
+#include <utility>
 
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
@@ -68,6 +70,8 @@ public:
         baseAddr_ = 0;
     }
 
+    ~MemEvent() { }
+
     /** Create a new MemEvent instance, pre-configured to act as a NACK response */
     MemEvent* makeNACKResponse(MemEvent* NACKedEvent) {
         MemEvent *me      = new MemEvent(*this);
@@ -112,22 +116,24 @@ public:
     }
 
     void initialize() {
-        addr_               = 0;
-        baseAddr_           = 0;
-        addrGlobal_         = true;
-        size_               = 0;
-        prefetch_           = false;
-        NACKedEvent_        = nullptr;
-        retries_            = 0;
+        addr_        = 0;
+        baseAddr_    = 0;
+        addrGlobal_  = true;
+        size_        = 0;
+        prefetch_    = false;
+        NACKedEvent_ = nullptr;
+        retries_     = 0;
         payload_.clear();
-        dirty_              = false;
-	instPtr_	    = 0;
-	vAddr_		    = 0;
-        isEvict_            = false;
+        dirty_       = false;
+        instPtr_     = 0;
+        vAddr_	     = 0;
+        isEvict_     = false;
     }
 
     /** return the original event that caused a NACK */
     MemEvent* getNACKedEvent() { return NACKedEvent_; }
+
+    MemEvent* releaseNACKedEvent() { return std::exchange(NACKedEvent_, nullptr); }
 
     /** @return  the target Address of this MemEvent */
     Addr getAddr(void) const { return addr_; }
@@ -292,36 +298,36 @@ public:
     }
 
 private:
-    uint32_t        size_;              // Size in bytes that are being requested
-    Addr            addr_;              // Address
-    Addr            baseAddr_;          // Base (line) address
-    bool            addrGlobal_;        // Whether address is a local or global address
-    MemEvent*       NACKedEvent_;       // For a NACK, pointer to the NACKed event
-    int             retries_;           // For NACKed events, how many times a retry has been sent
-    dataVec         payload_;           // Data
-    bool            prefetch_;          // Whether this request came from a prefetcher
-    bool            dirty_;             // For a replacement, whether the data is dirty or not
-    bool            isEvict_;           // Whether an event is an eviction
-    Addr	    instPtr_;           // Instruction pointer associated with the request
-    Addr 	    vAddr_;             // Virtual address associated with the request
+    uint32_t  size_;              // Size in bytes that are being requested
+    Addr      addr_;              // Address
+    Addr      baseAddr_;          // Base (line) address
+    bool      addrGlobal_;        // Whether address is a local or global address
+    MemEvent* NACKedEvent_;       // For a NACK, pointer to the NACKed event
+    int       retries_;           // For NACKed events, how many times a retry has been sent
+    dataVec   payload_;           // Data
+    bool      prefetch_;          // Whether this request came from a prefetcher
+    bool      dirty_;             // For a replacement, whether the data is dirty or not
+    bool      isEvict_;           // Whether an event is an eviction
+    Addr      instPtr_;           // Instruction pointer associated with the request
+    Addr      vAddr_;             // Virtual address associated with the request
 
     MemEvent() : MemEventBase() {} // For serialization only
 
 public:
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         MemEventBase::serialize_order(ser);
-        ser & size_;
-        ser & addr_;
-        ser & baseAddr_;
-        ser & addrGlobal_;
-        ser & NACKedEvent_;
-        ser & retries_;
-        ser & payload_;
-        ser & prefetch_;
-        ser & dirty_;
-        ser & isEvict_;
-        ser & instPtr_;
-        ser & vAddr_;
+        SST_SER(size_);
+        SST_SER(addr_);
+        SST_SER(baseAddr_);
+        SST_SER(addrGlobal_);
+        SST_SER(NACKedEvent_);
+        SST_SER(retries_);
+        SST_SER(payload_);
+        SST_SER(prefetch_);
+        SST_SER(dirty_);
+        SST_SER(isEvict_);
+        SST_SER(instPtr_);
+        SST_SER(vAddr_);
     }
 
     ImplementSerializable(SST::MemHierarchy::MemEvent);
@@ -329,4 +335,4 @@ public:
 
 }}
 
-#endif /* INTERFACES_MEMEVENT_H */
+#endif /* MEMHIERARCHY_MEMEVENT_H */

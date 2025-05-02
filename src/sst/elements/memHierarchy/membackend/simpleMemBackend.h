@@ -34,8 +34,8 @@ public:
 
 /* Begin class definition */
     SimpleMemory(ComponentId_t id, Params &params);
-    bool issueRequest(ReqId, Addr, bool, unsigned );
-    virtual bool isClocked() { return false; }
+    bool issueRequest(ReqId, Addr, bool, unsigned ) override;
+    virtual bool isClocked() override { return false; }
 
     // Serialization
     SimpleMemory() {}
@@ -45,6 +45,7 @@ public:
     }
     ImplementSerializable(SST::MemHierarchy::SimpleMemory)
 
+public:
     // Custom Event
     class MemCtrlEvent : public SST::Event {
     public:
@@ -59,7 +60,7 @@ public:
     public:
         void serialize_order(SST::Core::Serialization::serializer &ser)  override {
             Event::serialize_order(ser);
-            ser & reqId;  // Cannot serialize pointers unless they are a serializable object
+            SST_SER(reqId);  // Cannot serialize pointers unless they are a serializable object
        }
 
         ImplementSerializable(SST::MemHierarchy::SimpleMemory::MemCtrlEvent);

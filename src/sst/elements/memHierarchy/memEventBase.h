@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef MEMHIERARHCY_MEMEVENTBASE_H
-#define MEMHIERARHCY_MEMEVENTBASE_H
+#ifndef MEMHIERARCHY_MEMEVENTBASE_H
+#define MEMHIERARCHY_MEMEVENTBASE_H
 
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
@@ -233,15 +233,15 @@ protected:
 public:
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
-        ser & eventID_;
-        ser & responseToID_;
-        ser & src_;
-        ser & dst_;
-        ser & rqstr_;
-        ser & tid_;
-        ser & cmd_;
-        ser & flags_;
-        ser & memFlags_;
+        SST_SER(eventID_);
+        SST_SER(responseToID_);
+        SST_SER(src_);
+        SST_SER(dst_);
+        SST_SER(rqstr_);
+        SST_SER(tid_);
+        SST_SER(cmd_);
+        SST_SER(flags_);
+        SST_SER(memFlags_);
     }
 
     ImplementSerializable(SST::MemHierarchy::MemEventBase);
@@ -336,10 +336,10 @@ protected:
 public:
     void serialize_order(SST::Core::Serialization::serializer &ser) override {
         MemEventBase::serialize_order(ser);
-        ser & initCmd_;
-        ser & addr_;
-        ser & size_;
-        ser & payload_;
+        SST_SER(initCmd_);
+        SST_SER(addr_);
+        SST_SER(size_);
+        SST_SER(payload_);
     }
 
     ImplementSerializable(SST::MemHierarchy::MemEventInit);
@@ -393,12 +393,12 @@ private:
 public:
     void serialize_order(SST::Core::Serialization::serializer &ser) override {
         MemEventInit::serialize_order(ser);
-        ser & type_;
-        ser & inclusive_;
-        ser & sendWBAck_;
-        ser & recvWBAck_;
-        ser & lineSize_;
-        ser & tracksPresence_;
+        SST_SER(type_);
+        SST_SER(inclusive_);
+        SST_SER(sendWBAck_);
+        SST_SER(recvWBAck_);
+        SST_SER(lineSize_);
+        SST_SER(tracksPresence_);
     }
 
     ImplementSerializable(SST::MemHierarchy::MemEventInitCoherence);
@@ -456,9 +456,9 @@ private:
 public:
     void serialize_order(SST::Core::Serialization::serializer &ser) override {
         MemEventInit::serialize_order(ser);
-        ser & type_;
-        ser & name_;
-        ser & regions_;
+        SST_SER(type_);
+        SST_SER(name_);
+        SST_SER(regions_);
     }
 
     ImplementSerializable(SST::MemHierarchy::MemEventInitEndpoint);
@@ -498,11 +498,8 @@ private:
 public:
     void serialize_order(SST::Core::Serialization::serializer &ser) override {
         MemEventInit::serialize_order(ser);
-        ser & region_.start;
-        ser & region_.end;
-        ser & region_.interleaveStep;
-        ser & region_.interleaveSize;
-        ser & group_;
+        SST_SER(region_);
+        SST_SER(group_);
     }
 
     ImplementSerializable(SST::MemHierarchy::MemEventInitRegion);
@@ -533,7 +530,7 @@ private:
 public:
     void serialize_order(SST::Core::Serialization::serializer &ser) override {
         MemEventInit::serialize_order(ser);
-        ser & request_;
+        SST_SER(request_);
     }
 
     ImplementSerializable(SST::MemHierarchy::MemEventUntimedFlush);
@@ -543,4 +540,4 @@ public:
 }}
 
 
-#endif /* INTERFACES_MEMEVENT_H */
+#endif /* MEMHIERARCHY_MEMEVENTBASE_H */

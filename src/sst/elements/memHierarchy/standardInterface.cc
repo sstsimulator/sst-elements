@@ -34,7 +34,7 @@ using namespace SST::Interfaces;
 StandardInterface::StandardInterface(SST::ComponentId_t id, Params &params, TimeConverter * time, HandlerBase* handler) :
     StandardMem(id, params, time, handler)
 {
-    setDefaultTimeBase(time); // Links are required to have a timebase
+    setDefaultTimeBase(*time); // Links are required to have a timebase
 
     debug_level_ = params.find<int>("debug_level", 0);
     // Output object for warnings/debug/etc.

@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sst/core/serialization/serializable.h>
+#include <sst/core/util/filesystem.h>
 #include "sst/elements/memHierarchy/util.h"
 
 namespace SST {
@@ -49,7 +50,7 @@ public:
     // Print contents of backing to stdout (testing purposes)
     virtual void printToScreen(Addr addr_offset, Addr addr_start, Addr addr_interleave_size, Addr addr_interleave_step) = 0;
     
-    void serialize_order(SST::Core::Serialization::serializer& ser) {}
+    virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {}
     ImplementVirtualSerializable(SST::MemHierarchy::Backend::Backing);
 };
 
@@ -65,18 +66,24 @@ public:
 class BackingMMAP : public Backing {
 public:
     BackingMMAP( std::string mmapfile, std::string infile, size_t size, size_t offset = 0 ) : 
-        Backing(), size_(size), offset_(offset) {
+        Backing(), size_(size), offset_(offset), mmapfile_(mmapfile) {
+        
+        // mmapfile = file to write out to, place in output dir *IF* not the same as infile
+        // infile = file to initialize from
+
         int flags = MAP_SHARED;
         int fd = -1;
         if ( mmapfile != "" ) {
             int fd_flags = O_RDWR | O_CREAT;
-            if (mmapfile != infile) 
+            if (mmapfile != infile) {
                 fd_flags |= O_TRUNC; // Overwrite output file if it exists
+            }
+
             fd = open(mmapfile.c_str(), fd_flags, S_IRUSR | S_IWUSR);
-            if (fd < 0) { 
+            if (fd < 0) {
                 Output out("", 1, 0, Output::STDOUT);
-                out.output("Error: fd=%d, %s\n", fd, strerror(errno)); 
-                throw 1; 
+                out.output("Error: fd=%d, %s\n", fd, strerror(errno));
+                throw 1;
             }
             (void) !ftruncate(fd, size); // Extend file to needed size
         } else {
@@ -111,28 +118,28 @@ public:
         munmap( buffer_, size_ );
     }
 
-    void set( Addr addr, uint8_t value ) {
+    void set( Addr addr, uint8_t value ) override {
         buffer_[addr - offset_ ] = value;
     }
 
-    void set ( Addr addr, size_t size, std::vector<uint8_t> &data ) {
+    void set ( Addr addr, size_t size, std::vector<uint8_t> &data ) override {
         for (size_t i = 0; i < size; i++)
             buffer_[addr + i] = data[i];
     }
 
-    uint8_t get( Addr addr ) {
+    uint8_t get( Addr addr ) override {
         return buffer_[addr - offset_];
     }
 
-    void get( Addr addr, size_t size, std::vector<uint8_t> &data ) {
+    void get( Addr addr, size_t size, std::vector<uint8_t> &data ) override {
         for (size_t i = 0; i < size; i++)
             data[i] = buffer_[addr + i];
     }
     
-    void printToFile( std::string UNUSED(outfile) ) { }
+    void printToFile( std::string UNUSED(outfile) ) override { }
 
     /* For testing only, print contents to stdout in plaintext */
-    void printToScreen(Addr addr_offset, Addr addr_start, Addr addr_interleave_size, Addr addr_interleave_step) {
+    void printToScreen(Addr addr_offset, Addr addr_start, Addr addr_interleave_size, Addr addr_interleave_step) override {
         Output out("", 1, 0, Output::STDOUT);
         out.output("==================================================================================================\n");
         out.output("Printing contents of mmap'd memory backing buffer\n");
@@ -170,17 +177,87 @@ public:
     // For serialization
     BackingMMAP() {}
 
-    void serialize_order(SST::Core::Serialization::serializer& ser) {
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Backing::serialize_order(ser);
         SST_SER(buffer_);
         SST_SER(size_);
         SST_SER(offset_);
+        SST_SER(mmapfile_);
+        
+     /*   if ( ser.mode() == SST::Core::Serialization::serializer::PACK ) {
+            // If mmap is anonymous -> we need to write the whole thing to a file
+            // Register mmap filename with manifest under memHierarchy_backing_mmap_outfile
+
+            std::string outputfile = addFileToCheckpoint(getName() + "_backing_mmap", mmapfile_);
+            if ( mmapfile == "" ) {
+                // Copy buffer_ to outputfile
+            }
+        }
+        if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+        */
+            // get the file associated with memHierarchy_backing_mmap_outfile; use as infile
+            // create a new output file => use mmapfile if relative, otherwise?
+                    /*
+        mmap="" -> push buffer to a new file in cpt, reload from it into anon mapping
+        mmap!="", mmap != infile -> cp mmap file to new file in cpt, reload from it into a new file on restart
+        mmap == infile -> cp mmap file to new file in cpt, reload from it into a new file on restart
+        if mmap file == infile or mmap file is a relative path - need to make up a new name for restart
+        */
+       /*
+            int flags = MAP_SHARED;
+            int fd = -1;
+            if ( mmapfile_ != "" ) {
+                    int fd_flags = O_RDWR | O_CREAT;
+                    if (mmapfile != infile) 
+                        fd_flags |= O_TRUNC; // Overwrite output file if it exists
+                    fd = open(mmapfile.c_str(), fd_flags, S_IRUSR | S_IWUSR);
+                    if (fd < 0) { 
+                        Output out("", 1, 0, Output::STDOUT);
+                        out.output("Error: fd=%d, %s\n", fd, strerror(errno)); 
+                        throw 1; 
+                    }
+                    (void) !ftruncate(fd, size); // Extend file to needed size
+                } else {
+                    flags |= MAP_ANON;
+                }
+        
+                buffer_ = (uint8_t*)mmap(NULL, size, PROT_READ|PROT_WRITE, flags, fd, 0);
+                
+                if ( mmapfile != "" ) { 
+                    close(fd);
+                }
+        
+                if ( buffer_ == MAP_FAILED) {
+                    throw 2;
+                }
+        
+                if ( infile != "" && infile != mmapfile ) {
+                    fd = open(infile.c_str(), O_RDONLY);
+                    if (fd < 0) { throw 3; }
+        
+                    uint8_t* tmp_buffer = (uint8_t*)mmap(NULL, size, PROT_READ, flags, fd, 0);
+                    close(fd);
+        
+                    if ( tmp_buffer == MAP_FAILED ) { throw 4; }
+        
+                    memcpy(buffer_, tmp_buffer, size);
+                    munmap(tmp_buffer, size);
+                }
+        }
+                */
+
+
     }
+    ImplementSerializable(SST::MemHierarchy::Backend::BackingMMAP)
 
 private:
     uint8_t* buffer_;
     size_t size_;
     size_t offset_;
+
+    // Needed for checkpoint/restart only
+    std::string mmapfile_; // Name of output file
+
 };
 
 /*
@@ -217,14 +294,14 @@ public:
         }
     }
 
-    void set( Addr addr, uint8_t value ) {
+    void set( Addr addr, uint8_t value ) override {
         Addr bAddr = addr >> shift_;
         Addr offset = addr - (bAddr << shift_);
         allocIfNeeded(bAddr);
         buffer_[bAddr][offset] = value;
     }
 
-    void set( Addr addr, size_t size, std::vector<uint8_t> &data ) {
+    void set( Addr addr, size_t size, std::vector<uint8_t> &data ) override {
         /* Account for size exceeding alloc unit size */
         Addr bAddr = addr >> shift_;
         Addr offset = addr - (bAddr << shift_);
@@ -245,7 +322,7 @@ public:
         }
     }
 
-    void get( Addr addr, size_t size, std::vector<uint8_t> &data ) {
+    void get( Addr addr, size_t size, std::vector<uint8_t> &data ) override {
         Addr bAddr = addr >> shift_;
         Addr offset = addr - (bAddr << shift_);
         size_t dataOffset = 0;
@@ -268,7 +345,7 @@ public:
         }
     }
 
-    uint8_t get( Addr addr ) {
+    uint8_t get( Addr addr ) override {
         Addr bAddr = addr >> shift_;
         Addr offset = addr - (bAddr << shift_);
         allocIfNeeded(bAddr);
@@ -276,7 +353,7 @@ public:
     }
 
 
-    void printToFile( std::string outfile ) {
+    void printToFile( std::string outfile ) override {
         auto fp = fopen(outfile.c_str(),"wb+");
         if (!fp) { throw 1; }
         size_t count = buffer_.size();
@@ -291,7 +368,7 @@ public:
         }
     }
 
-    void printToScreen(Addr addr_offset, Addr addr_start, Addr addr_interleave_size, Addr addr_interleave_step) {
+    void printToScreen(Addr addr_offset, Addr addr_start, Addr addr_interleave_size, Addr addr_interleave_step) override {
         Output out("", 1, 0, Output::STDOUT);
         out.output("==================================================================================================\n");
         out.output("Printing contents of dynamically allocated memory backing buffer\n");
@@ -335,7 +412,7 @@ public:
     // For serialization
     BackingMalloc() {}
 
-    void serialize_order(SST::Core::Serialization::serializer& ser) {
+    void serialize_order(SST::Core::Serialization::serializer& ser) override {
         Backing::serialize_order(ser);
         SST_SER(buffer_);
         SST_SER(alloc_unit_);

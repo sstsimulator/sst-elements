@@ -171,10 +171,10 @@ private:
     int         maxRequestsPerCycle;
 
     /* Turn clocks off when idle */
-    bool        clockOn;
-    Clock::Handler<DirectoryController>*  clockHandler;
-    TimeConverter* defaultTimeBase;
-    SimTime_t   lastActiveClockCycle;
+    bool                clockOn;
+    Clock::HandlerBase* clockHandler;
+    TimeConverter       defaultTimeBase;
+    SimTime_t           lastActiveClockCycle;
 
     std::map<SST::Event::id_type, uint64_t> startTimes;
 
