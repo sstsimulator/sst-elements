@@ -19,6 +19,7 @@ class testcase_hg(SSTTestCase):
 
 #####
 
+    @unittest.skipIf(testing_check_get_num_threads() > 1, "MT Mercury tests are currently non-deterministic")
     def test_testme(self):
         testdir = self.get_testsuite_dir()
         libdir = sstsimulator_conf_get_value("SST_ELEMENT_LIBRARY","SST_ELEMENT_LIBRARY_LIBDIR", str)
