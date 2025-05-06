@@ -16,6 +16,8 @@
 #ifndef _H_VANADIS_NODE_OS_INCLUDE_FD_TABLE
 #define _H_VANADIS_NODE_OS_INCLUDE_FD_TABLE
 
+#include <assert.h>
+#include <stdint.h>
 #include <string>
 
 #include <sys/types.h>
@@ -44,14 +46,17 @@ public:
         assert( -1 != pos );
 
         struct stat buf;
-        assert( 0 == fstat(obj.fd,&buf) );
+        int f = fstat(obj.fd,&buf);
+        assert( 0 == f );
 
-        assert( 0 == fchmod( obj.fd, S_IRWXU ) );
+        f = fchmod( obj.fd, S_IRWXU );
+        assert( 0 == f );
 
         fd = open( path.c_str(), flags );
         assert( -1 != fd );
 
-        assert( 0 == fchmod( obj.fd, buf.st_mode ) );
+        f = fchmod( obj.fd, buf.st_mode );
+        assert( 0 == f );
 
         pos = lseek( obj.fd, pos, SEEK_SET ); 
         assert( -1 != pos );
@@ -109,17 +114,21 @@ public:
 
     FileDescriptor( SST::Output* output, FILE* fp ) {
         char str[80];
-        assert( 1 == fscanf(fp,"path: %s\n",str) );
+        int f = fscanf(fp, "path: %s\n", str);
+        assert( 1 == f );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"path: %s\n",str );
         path = str;
 
-        assert( 1 == fscanf(fp,"fd: %d\n", &fd) );
+        f = fscanf(fp,"fd: %d\n", &fd);
+        assert( 1 == f );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"fd: %d\n", fd);
 
-        assert( 1 == fscanf(fp,"flags: %d\n", &flags ) );
+        f = fscanf(fp,"flags: %d\n", &flags );
+        assert( 1 == f );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"flags: %d\n", flags );
 
-        assert( 1 == fscanf(fp,"mode: %hd\n", &mode) );
+        f = fscanf(fp,"mode: %d\n", &mode);
+        assert( 1 == f );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"mode: %d\n", mode);
     }
 
@@ -240,19 +249,23 @@ public:
         assert( 0 == strcmp(tmp,"#FileDescriptorTable start\n") );
         free(tmp);
 
-        assert( 1 == fscanf(fp,"m_refCnt: %d\n",&m_refCnt) );
+        int f = fscanf(fp,"m_refCnt: %d\n",&m_refCnt);
+        assert( 1 == f );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_refCnt: %d\n",m_refCnt);
 
-        assert( 1 ==fscanf(fp,"m_maxFD: %d\n",&m_maxFD) );
+        f = fscanf(fp,"m_maxFD: %d\n",&m_maxFD);
+        assert( 1 == f );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_maxFD: %d\n",m_maxFD);
 
         size_t size;
-        assert( 1 == fscanf(fp,"m_fileDescriptors.size(): %zu\n",&size) );
+        f = fscanf(fp,"m_fileDescriptors.size(): %zu\n",&size);
+        assert( 1 == f );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_fileDescriptors.size(): %zu\n",size);
 
         for ( auto i = 0; i < size; i++ ) {
             int fd;
-            assert( 1 == fscanf(fp,"fd: %d\n", &fd ) );
+            int f = fscanf(fp,"fd: %d\n", &fd );
+            assert( 1 == f );
             output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"fd: %d\n", fd );
             m_fileDescriptors[fd] = new FileDescriptor(output, fp); 
         }
