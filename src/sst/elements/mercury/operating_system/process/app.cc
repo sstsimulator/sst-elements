@@ -15,6 +15,7 @@
 
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
+#include <mutex>
 #endif
 
 #include <sst/core/params.h>
@@ -487,6 +488,7 @@ App::getLibrary(const std::string &name)
 void
 App::run()
 {
+  std::lock_guard<std::mutex> lock(app_run_mutex);
   endLibraryCall(); //this initializes things, "fake" api call at beginning
   rc_ = skeletonMain();
   //we are ending but perform the equivalent
