@@ -125,7 +125,7 @@ prosperotrace.o : $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.
 	    -I$(PINTOOL_DIR)/extras/xed-$(XED_ARCH)/include/xed \
 	    -I$(PINTOOL_DIR)/source/tools/Utils \
 	    -I$(PINTOOL_DIR)/source/tools/InstLib \
-	    -O3 -fomit-frame-pointer -fno-strict-aliasing -o prosperotrace.o -c $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.cc
+	    -O3 -o prosperotrace.o -c $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.cc
 
 else # !HAVE_PIN325
 
@@ -157,7 +157,7 @@ prosperotrace.o : $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.
 	    -I$(PINTOOL_DIR)/extras/xed-$(XED_ARCH)/include/xed \
 	    -I$(PINTOOL_DIR)/source/tools/Utils \
 	    -I$(PINTOOL_DIR)/source/tools/InstLib \
-	    -O3 -fomit-frame-pointer -fno-strict-aliasing -o prosperotrace.o -c $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.cc
+	    -O3 -o prosperotrace.o -c $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.cc
 else # !HAVE_PIN325 and !HAVE_PIN324
 prosperotrace.so : prosperotrace.o
 	$(CXX) -shared -Wl,--hash-style=sysv \
@@ -188,8 +188,7 @@ prosperotrace.o : $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.
 	    -I$(PINTOOL_DIR)/extras/xed-$(XED_ARCH)/include/xed \
 	    -I$(PINTOOL_DIR)/source/tools/Utils \
 	    -I$(PINTOOL_DIR)/source/tools/InstLib \
-	    -O3 -fomit-frame-pointer -fno-strict-aliasing \
-	    -o prosperotrace.o -c $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.cc
+	    -O3 -o prosperotrace.o -c $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.cc
 endif
 endif
 
