@@ -95,6 +95,9 @@ dnl pin 3.25+ needs libdwarf instead of lib3dwarf
   -fasynchronous-unwind-tables \
   -fomit-frame-pointer \
   -fno-strict-aliasing \
+  -fno-rtti \
+  -faligned-new \
+  -fpic \
   -DTARGET_IA32E \
   -DHOST_IA32E \
   -DTARGET_LINUX \
@@ -112,9 +115,6 @@ dnl pin 3.25+ needs libdwarf instead of lib3dwarf
          -Wno-microsoft-include \
          -Wno-unicode"],
         [PIN_CPPFLAGS_COMPILER="-fno-exceptions \
-         -fno-rtti \
-         -fpic \
-         -faligned-new \
          -fabi-version=2"])
   AC_SUBST([PIN_CPPFLAGS_COMPILER])
 ])
