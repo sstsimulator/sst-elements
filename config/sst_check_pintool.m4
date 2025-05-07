@@ -111,6 +111,7 @@ dnl pin 3.25+ needs libdwarf instead of lib3dwarf
         [PIN_CPPFLAGS_COMPILER="-D_LIBCPP_DISABLE_AVAILABILITY \
          -D_LIBCPP_NO_VCRUNTIME \
          -D__BIONIC__ \
+         -fno-builtin-bcmp \
          -Wno-non-c-typedef-for-linkage \
          -Wno-microsoft-include \
          -Wno-unicode"],
