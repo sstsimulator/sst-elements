@@ -57,6 +57,23 @@
 
 #undef __STDC_FORMAT_MACROS
 
+// Undo some Clang-specific changes possibly made by the libc++ bundled with
+// PinCRT
+#ifdef __LP64__
+# ifdef __clang__
+#  if defined(PIN_VERSION_MINOR) && PIN_VERSION_MINOR > 29
+// Allow usage of the warnmacros header without modifying it
+#   ifdef UNUSED
+#   undef UNUSED
+#   endif
+#   include <sst/core/warnmacros.h>
+DIAG_DISABLE(macro-redefined)
+#   define __PRI_64_prefix  "l"
+#   define __PRI_PTR_prefix "l"
+REENABLE_WARNING
+#  endif
+# endif
+#endif
 
 using namespace SST::ArielComponent;
 using namespace std;
@@ -193,7 +210,7 @@ VOID ariel_print_stack(UINT32 thr, UINT64 allocSize, UINT64 allocAddr, UINT64 al
 {
 
     unsigned int depth = arielStack[thr].size() - 1;
-    BT_PRINTF("Malloc,0x%" PRIx64 ",%lu,%" PRIu64 "\n", allocAddr, allocSize, allocIndex);
+    BT_PRINTF("Malloc,0x%" PRIx64 ",%" PRIu64 ",%" PRIu64 "\n", allocAddr, allocSize, allocIndex);
 
     vector<ADDRINT> newMappings;
     for (vector<StackRecord>::reverse_iterator rit = arielStack[thr].rbegin(); rit != arielStack[thr].rend(); rit++) {

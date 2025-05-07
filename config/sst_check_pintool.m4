@@ -53,6 +53,7 @@ dnl pin.sh is present in pin 2.14, but not in 3.0+
   PIN_VERSION=$($PINTOOL_RUNTIME -version | head -1 | sed 's/.*pin-\(.*\)/\1/' | sed 's/-.*//')
   dnl AC_MSG_CHECKING([pintool version])
   dnl AC_MSG_RESULT([$PIN_VERSION])
+  PIN_VERSION_MINOR=$(echo $PIN_VERSION | cut -d '.' -f 2)
 
 dnl pin 3.24+ requires different compile line
   sst_check_pin_324_ge="yes"
@@ -81,4 +82,40 @@ dnl pin 3.25+ needs libdwarf instead of lib3dwarf
 
   AS_IF([test "$sst_check_pintool_happy" = "no" -a ! -z "$with_pin" -a "$with_pin" != "no"], [$3])
   AS_IF([test "$sst_check_pintool_happy" = "yes"], [$1], [$2])
+
+  dnl Common flags
+  PIN_CPPFLAGS="-g \
+  -Wall \
+  -Werror \
+  -Wno-unknown-pragmas \
+  -D__PIN__=1 -DPIN_CRT=1 \
+  -fno-stack-protector \
+  -fno-exceptions \
+  -funwind-tables \
+  -fasynchronous-unwind-tables \
+  -fomit-frame-pointer \
+  -fno-strict-aliasing \
+  -fno-rtti \
+  -faligned-new \
+  -fpic \
+  -DTARGET_IA32E \
+  -DHOST_IA32E \
+  -DTARGET_LINUX \
+  -DPIN_VERSION_MINOR=$PIN_VERSION_MINOR"
+  AC_SUBST([PIN_CPPFLAGS])
+
+  AC_LANG_PUSH([C++])
+  AX_COMPILER_VENDOR
+  AC_LANG_POP([C++])
+  AS_IF([test "$ax_cv_cxx_compiler_vendor" = "clang"],
+        [PIN_CPPFLAGS_COMPILER="-D_LIBCPP_DISABLE_AVAILABILITY \
+         -D_LIBCPP_NO_VCRUNTIME \
+         -D__BIONIC__ \
+         -fno-builtin-bcmp \
+         -Wno-non-c-typedef-for-linkage \
+         -Wno-microsoft-include \
+         -Wno-unicode"],
+        [PIN_CPPFLAGS_COMPILER="-fno-exceptions \
+         -fabi-version=2"])
+  AC_SUBST([PIN_CPPFLAGS_COMPILER])
 ])
