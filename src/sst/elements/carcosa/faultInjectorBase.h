@@ -38,7 +38,7 @@ public:
 
     FaultInjectorBase(Params& params);
 
-    FaultInjectorBase() = dafault;
+    FaultInjectorBase() = default;
     ~FaultInjectorBase() {}
 
     void eventSent(uintptr_t key, Event*& ev) override;
@@ -50,6 +50,8 @@ public:
 private:
     void (*eventSentPtr)(uintptr_t, Event*&);
     void (*interceptHandlerPtr)(uintptr_t, Event*&, bool&);
-}
+};
 
 } // namespace SST::FaultInjectorBase
+
+#endif // SST_ELEMENTS_CARCOSA_FAULTINJECTORBASE_H
