@@ -29,11 +29,12 @@
 #include "sst_config.h"
 
 // C++ includes
-#include <string>
-#include <vector>
-#include <list>
 #include <algorithm>
 #include <assert.h>
+#include <cstdint>
+#include <list>
+#include <string>
+#include <vector>
 
 // CramSim includes
 #include "c_DeviceDriver.hpp"

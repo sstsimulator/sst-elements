@@ -11,6 +11,8 @@
 
 
 // This defines the TLB entry
+#include <cstdint>
+
 class TLBentry
 {
 

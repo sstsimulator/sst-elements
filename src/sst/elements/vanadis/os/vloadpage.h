@@ -24,6 +24,9 @@
 #include "sst/elements/mmu/mmu.h"
 #include "os/vphysmemmanager.h"
 
+#include <cstdint>
+#include <vector>
+
 
 namespace SST {
 namespace Vanadis {

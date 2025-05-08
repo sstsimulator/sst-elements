@@ -18,6 +18,9 @@
 
 #include <cinttypes>
 #include <cstdio>
+#include <cstring>
+#include <string>
+#include <vector>
 #include "os/vosDbgFlags.h"
 
 namespace SST {

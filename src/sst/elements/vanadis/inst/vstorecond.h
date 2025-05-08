@@ -18,6 +18,8 @@
 
 #include "inst/vstore.h"
 
+#include <cstdint>
+
 namespace SST {
 namespace Vanadis {
 

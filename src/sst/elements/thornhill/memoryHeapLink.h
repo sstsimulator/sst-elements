@@ -17,6 +17,7 @@
 #define _H_THORNHILL_MEMORY_HEAP_LINK
 
 
+#include <cstdint>
 #include <functional>
 #include "sst/core/subcomponent.h"
 #include "sst/core/link.h"

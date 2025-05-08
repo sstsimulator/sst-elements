@@ -19,6 +19,10 @@
 #include "os/syscall/syscall.h"
 #include "os/callev/voscallprlimit.h"
 
+#include <cstdint>
+#include <cstdio>
+#include <vector>
+
 namespace SST {
 namespace Vanadis {
 

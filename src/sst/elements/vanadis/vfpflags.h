@@ -16,6 +16,8 @@
 #ifndef _H_VANADIS_FPFLAGS
 #define _H_VANADIS_FPFLAGS
 
+#include <cstdint>
+
 namespace SST {
 namespace Vanadis {
 

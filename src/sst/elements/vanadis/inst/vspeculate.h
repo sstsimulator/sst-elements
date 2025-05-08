@@ -19,6 +19,8 @@
 #include "inst/vdelaytype.h"
 #include "inst/vinst.h"
 
+#include <cstdint>
+
 #define VANADIS_SPECULATE_JUMP_ADDR_ADD 4
 
 namespace SST {
