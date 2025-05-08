@@ -9,6 +9,7 @@ AM_CPPFLAGS += \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libcarcosa.la
 libcarcosa_la_SOURCES = \
+    faultInjectorBase.cc \
     faultInjectorBase.h
 
 EXTRA_DIST = \
