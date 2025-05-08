@@ -26,6 +26,16 @@ enum installDirection {
     Invalid
 };
 
+// Enum to select basic fault injection logic or indicate a custom input
+enum injectorLogic {
+    StuckAt = 0,
+    RandomFlip,
+    RandomDrop,
+    CorruptRegion,
+    CorruptAddr,
+    Custom
+};
+
 /**
  * Base class containing required functions and basic data for
  * creating fault injection on component ports
