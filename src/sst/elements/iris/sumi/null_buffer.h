@@ -44,6 +44,7 @@ Questions? Contact sst-macro-help@sandia.gov
 
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #ifdef __cplusplus

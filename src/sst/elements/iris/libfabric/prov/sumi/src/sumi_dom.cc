@@ -17,8 +17,9 @@
 //#include <config.h>
 //#endif /* HAVE_CONFIG_H */
 
-#include <stdlib.h>
 #include <assert.h>
+#include <cstdint>
+#include <stdlib.h>
 
 #include "sumi_prov.h"
 

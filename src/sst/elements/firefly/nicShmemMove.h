@@ -13,6 +13,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+
 class ShmemRecvMove {
   public:
     virtual ~ShmemRecvMove() {}
