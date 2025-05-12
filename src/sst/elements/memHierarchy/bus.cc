@@ -143,9 +143,9 @@ void Bus::configureLinks() {
     std::string linkprefix = "highlink";
     if (isPortConnected("high_network_0")) {
         dbg_.output("%s, DEPRECATION WARNING: The 'high_network_%%d' ports on MemHierarchy Buses have been renamed to 'highlink%%d'. MemHierarchy port names are being standardized. The 'high_network_%%d' ports will be removed in SST 16.\n", getName().c_str());
-        linkprefix = "high_network_"; 
+        linkprefix = "high_network_";
     }
-    
+
     SST::Link* link;
     std::string linkname = linkprefix + "0";
     while (isPortConnected(linkname)) {
@@ -156,11 +156,11 @@ void Bus::configureLinks() {
         numHighPorts_++;
         linkname = linkprefix + std::to_string(numHighPorts_);
     }
-    
+
     linkprefix = "lowlink";
     if (isPortConnected("low_network_0")) {
         dbg_.output("%s, DEPRECATION WARNING: The 'low_network_%%d' ports on MemHierarchy Buses have been renamed to 'lowlink%%d'. MemHierarchy port names are being standardized. The 'low_network_%%d' ports will be removed in SST 16.\n", getName().c_str());
-        linkprefix = "low_network_"; 
+        linkprefix = "low_network_";
     }
     linkname = linkprefix + "0";
     while (isPortConnected(linkname)) {
@@ -195,7 +195,7 @@ void Bus::configureParameters(SST::Params& params) {
     drain_        = params.find<bool>("drain_bus", false);
 
     if (frequency == "Invalid") dbg_.fatal(CALL_INFO, -1, "Bus Frequency was not specified\n");
-    
+
      /* Multiply Frequency times two.  This is because an SST Bus components has
         2 SST Links (highNEt & LowNet) and thus it takes a least 2 cycles for any
         transaction (a real bus should be allowed to have 1 cycle latency).  To overcome
@@ -220,7 +220,7 @@ void Bus::init(unsigned int phase) {
                 delete ev;
             } else if (memEvent->getCmd() == Command::NULLCMD) {
                 mapNodeEntry(memEvent->getSrc(), highNetPorts_[i]);
-                
+
                 if (memEvent->getInitCmd() == MemEventInit::InitCommand::Region) {
                     MemEventInitRegion * mEvReg = static_cast<MemEventInitRegion*>(memEvent);
                     mEvReg->setGroup(MemEventInitRegion::ReachableGroup::Source);
@@ -236,7 +236,7 @@ void Bus::init(unsigned int phase) {
                     }
                 } else {
                     for (int k = 0; k < numLowPorts_; k++) {
-                        lowNetPorts_[k]->sendUntimedData(memEvent->clone()); 
+                        lowNetPorts_[k]->sendUntimedData(memEvent->clone());
                     }
                 }
                 delete memEvent;
@@ -257,7 +257,7 @@ void Bus::init(unsigned int phase) {
             if (!memEvent) delete ev;
             else if (memEvent->getCmd() == Command::NULLCMD) {
                 mapNodeEntry(memEvent->getSrc(), lowNetPorts_[i]);
-                
+
                 if (memEvent->getInitCmd() == MemEventInit::InitCommand::Region) {
                     MemEventInitRegion * mEvReg = static_cast<MemEventInitRegion*>(memEvent);
                     mEvReg->setGroup(MemEventInitRegion::ReachableGroup::Dest);

@@ -36,10 +36,10 @@ public:
         const int64_t offst, const uint16_t tgtReg, const uint16_t load_bytes, const bool extend_sign,
         const VanadisMemoryTransaction accessT, VanadisLoadRegisterType regT) :
         VanadisInstruction(
-            addr, hw_thr, isa_opts, 
-            1, regT == LOAD_INT_REGISTER ? 1 : 0, 
+            addr, hw_thr, isa_opts,
             1, regT == LOAD_INT_REGISTER ? 1 : 0,
-            0, regT == LOAD_FP_REGISTER ? 1 : 0, 
+            1, regT == LOAD_INT_REGISTER ? 1 : 0,
+            0, regT == LOAD_FP_REGISTER ? 1 : 0,
             0, regT == LOAD_FP_REGISTER ? 1 : 0),
         offset(offst),
         load_width(load_bytes),
@@ -60,7 +60,7 @@ public:
             isa_fp_regs_out[0] = tgtReg;
         } break;
         }
-       
+
     }
 
     VanadisLoadInstruction* clone() { return new VanadisLoadInstruction(*this); }
@@ -90,7 +90,7 @@ public:
     }
 
     uint16_t getMemoryAddressRegister() const { return phys_int_regs_in[0]; }
-    uint16_t getTargetRegister() const { 
+    uint16_t getTargetRegister() const {
         switch(regType) {
             case LOAD_INT_REGISTER:
                 return phys_int_regs_out[0];
@@ -150,7 +150,7 @@ public:
         switch ( regType ) {
         case LOAD_INT_REGISTER:
         {
-            // if(output->getVerboseLevel() >= 16) 
+            // if(output->getVerboseLevel() >= 16)
             {
                 output->verbose(
                     CALL_INFO, 16, 0,
@@ -174,7 +174,7 @@ public:
         }
 
         #ifdef VANADIS_BUILD_DEBUG
-        // if(output->getVerboseLevel() >= 16) 
+        // if(output->getVerboseLevel() >= 16)
         {
             output->verbose(
                 CALL_INFO, 16, 0, "[execute-load]: transaction-type:  %s / ins: 0x%" PRI_ADDR "\n",
@@ -192,15 +192,15 @@ public:
 
         (*out_addr) = (uint64_t)(tmp_val + offset);
         (*width)    = load_width;
-        
+
     }
-    
-    void markExecuted() 
-    { 
+
+    void markExecuted()
+    {
         hasExecuted = true;
     }
 
-    
+
     virtual uint16_t getLoadWidth() const { return load_width; }
 
     VanadisLoadRegisterType getValueRegisterType() const { return regType; }

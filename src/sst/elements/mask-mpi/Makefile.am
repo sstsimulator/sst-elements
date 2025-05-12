@@ -106,6 +106,6 @@ alltoall_la_LDFLAGS = -module -avoid-version
 allgather_la_LDFLAGS = -module -avoid-version
 halo3d26_la_LDFLAGS = -module -avoid-version
 
-install-exec-hook: 
+install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     mask-mpi=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      mask-mpi=$(abs_srcdir)/tests

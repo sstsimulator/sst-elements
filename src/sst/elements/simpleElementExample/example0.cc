@@ -14,7 +14,7 @@
 // distribution.
 
 
-// This include is ***REQUIRED*** 
+// This include is ***REQUIRED***
 // for ALL SST implementation files
 #include "sst_config.h"
 
@@ -25,7 +25,7 @@
 using namespace SST;
 using namespace SST::simpleElementExample;
 
-/* 
+/*
  * During construction the example component should prepare for simulation
  * - Read parameters
  * - Configure link
@@ -34,7 +34,7 @@ using namespace SST::simpleElementExample;
 example0::example0(ComponentId_t id, Params& params) : Component(id) {
 
     // SST Output Object
-    // Initialize with 
+    // Initialize with
     // - no prefix ("")
     // - Verbose set to 1
     // - No mask
@@ -46,7 +46,7 @@ example0::example0(ComponentId_t id, Params& params) : Component(id) {
     eventsToSend = params.find<int64_t>("eventsToSend", 0, found);
 
     // If parameter wasn't found, end the simulation with exit code -1.
-    // Tell the user how to fix the error (set 'eventsToSend' parameter in the input) 
+    // Tell the user how to fix the error (set 'eventsToSend' parameter in the input)
     // and which component generated the error (getName())
     if (!found) {
         out->fatal(CALL_INFO, -1, "Error in %s: the input did not specify 'eventsToSend' parameter\n", getName().c_str());
@@ -87,26 +87,26 @@ example0::~example0()
 
 /* Event handler
  * Incoming events are scanned and deleted
- * Record if the event received is the last one our neighbor will send 
+ * Record if the event received is the last one our neighbor will send
  */
 void example0::handleEvent(SST::Event *ev)
 {
     basicEvent *event = dynamic_cast<basicEvent*>(ev);
-    
+
     if (event) {
-        
+
         // scan through each element in the payload and do something to it
         volatile int sum = 0; // Don't let the compiler optimize this out
         for (std::vector<char>::iterator i = event->payload.begin();
              i != event->payload.end(); ++i) {
             sum += *i;
         }
-        
+
         // This is the last event our neighbor will send us
         if (event->last) {
             lastEventReceived = true;
         }
-        
+
         // Receiver has the responsiblity for deleting events
         delete event;
 
@@ -116,16 +116,16 @@ void example0::handleEvent(SST::Event *ev)
 }
 
 
-/* 
+/*
  * On each clock cycle we will send an event to our neighbor until we've sent our last event
  * Then we will check for the exit condition and notify the simulator when the simulation is done
  */
 bool example0::clockTic( Cycle_t cycleCount)
 {
-    // Send an event if we need to 
+    // Send an event if we need to
     if (eventsToSend > 0) {
         basicEvent *event = new basicEvent();
-        
+
         // Create a dummy payload with eventSize bytes
         for (int i = 0; i < eventSize; i++) {
             event->payload.push_back(1);
@@ -135,7 +135,7 @@ bool example0::clockTic( Cycle_t cycleCount)
         if (eventsToSend == 1) {
             event->last = true;
         }
-        
+
         eventsToSend--;
 
         // Send the event
@@ -144,9 +144,9 @@ bool example0::clockTic( Cycle_t cycleCount)
 
     // Check if the exit conditions are met
     if (eventsToSend == 0 && lastEventReceived == true) {
-        
+
         // Tell SST that it's OK to end the simulation (once all primary components agree, simulation will end)
-        primaryComponentOKToEndSim(); 
+        primaryComponentOKToEndSim();
 
         // Retrun true to indicate that this clock handler can be disabled
         return true;

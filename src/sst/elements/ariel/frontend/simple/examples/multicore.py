@@ -21,7 +21,7 @@ ariel.addParams( {
 #    "apparg0" : <ARG0 GOES HERE>,
 #    "apparg1" : <ARG1 GOES HERE>, # Add additional args as needed
     "arielmode" : "1",
-    "arielinterceptcalls" : "0", # Do not intercept malloc/free 
+    "arielinterceptcalls" : "0", # Do not intercept malloc/free
     "launchparamcount" : 1,
     "launchparam0" : "-ifeellucky", # For Pin2.14 on newer hardware
 } )
@@ -61,7 +61,7 @@ for x in range(0, corecount):
         "replacement_policy" : "lru",
         "coherence_protocol" : "MSI"
     })
-	
+
     l1d_l2_link = sst.Link("l1_l2_link_" + str(x))
     l1d_l2_link.connect( (l1d, "lowlink", "50ps"), (l2, "highlink", "50ps") )
 

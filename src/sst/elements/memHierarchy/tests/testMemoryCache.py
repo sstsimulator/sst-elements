@@ -255,10 +255,10 @@ class DCBuilder:
     def build(self, nodeID):
         myStart = self.next_dc_id * 64
         myEnd = self.memCapacity - (self.dc_count *64) + myStart + 63
-            
+
         if not quiet:
             print("\tCreating dc with start: " + str(myStart) + " end: " + str(myEnd))
-        
+
         # "Home" memory for each dc just desginates where it is caching its entries:
         # ddr0: 0-2, 6-8
         # ddr1: 3-5, 9-11
@@ -308,7 +308,7 @@ class HBMBuilder:
 
         mem = sst.Component("hbm_" + str(self.next_hbm_id), "memHierarchy.MemCacheController")
         mem.addParams(hbm_memcache_td_params)
-        
+
         membk = mem.setSubComponent("backend", "memHierarchy.timingDRAM")
         membk.addParams(hbm_td_backend_params)
         membk.addParams({ "mem_size" : str(self.memCapacity // self.hbm_count) + "B" })
@@ -319,7 +319,7 @@ class HBMBuilder:
             "num_caches" : self.hbm_count,
             "cache_num" : self.next_hbm_id,
         })
-        
+
         # Define HBM NIC
         mlink = mem.setSubComponent("highlink", "memHierarchy.MemNICFour")
         data = mlink.setSubComponent("data", "kingsley.linkcontrol")
@@ -349,7 +349,7 @@ class TileBuilder:
         tileL2cache = sst.Component("l2cache_" + str(self.next_tile_id), "memHierarchy.Cache")
         tileL2cache.addParams(l2_cache_params)
         tileL2cache.addParams(l2_prefetch_params)
-        
+
         # Define L2 NIC
         l2mlink = tileL2cache.setSubComponent("lowlink", "memHierarchy.MemNICFour")
         l2data = l2mlink.setSubComponent("data", "kingsley.linkcontrol")
@@ -405,7 +405,7 @@ class TileBuilder:
 
         tileRightL1 = sst.Component("l1cache_" + str(self.next_core_id), "memHierarchy.Cache")
         tileRightL1.addParams(l1_cache_params)
-        
+
         rightCore = sst.Component("core_" + str(self.next_core_id), "miranda.BaseCPU")
         rightCore.addParams(core_params)
         rightGen = rightCore.setSubComponent("generator", "miranda.STREAMBenchGenerator")
@@ -415,14 +415,14 @@ class TileBuilder:
             "start_b" : self.base_b + self.next_core_id * thread_iters * 8,
             "start_c" : self.base_c + self.next_core_id * thread_iters * 8,
         })
-        
+
         rightCoreL1link = sst.Link("core_link_" + str(self.next_core_id))
         rightCoreL1link.connect( (rightCore, "cache_link", mesh_link_latency), (tileRightL1, "highlink", mesh_link_latency) )
         rightCoreL1link.setNoCut()
 
         if not quiet:
             print("Creating core " + str(self.next_core_id) + " on tile: " + str(self.next_tile_id) + "...")
-        
+
         rightL1L2link = sst.Link("l1cache_link_" + str(self.next_core_id))
         rightL1L2link.connect( (l2bus, "highlink1", mesh_link_latency),
                         (tileRightL1, "lowlink", mesh_link_latency))
@@ -521,7 +521,7 @@ for x in range (0, mesh_stops_x):
         kRtrFwd[-1].addParams(ctrl_network_params)
         kRtrData.append(sst.Component("krtr_data_" + str(nodeNum), "kingsley.noc_mesh"))
         kRtrData[-1].addParams(data_network_params)
-        
+
         kRtrReq[-1].addParams({"local_ports" : 2})
         kRtrAck[-1].addParams({"local_ports" : 2})
         kRtrFwd[-1].addParams({"local_ports" : 2})

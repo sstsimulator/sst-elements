@@ -25,19 +25,19 @@ class OpCodeStdMem : public SST::Interfaces::StandardMem::CustomData {
 public:
     typedef uint64_t Addr;
 
-    OpCodeStdMem(Addr addr, uint64_t bytes, uint32_t opcode, bool responseNeeded = true) : 
+    OpCodeStdMem(Addr addr, uint64_t bytes, uint32_t opcode, bool responseNeeded = true) :
         CustomData(), addr_(addr), bytes_(bytes), opcode_(opcode), response_(responseNeeded) { }
-    
+
     virtual ~OpCodeStdMem() { }
-    
+
     virtual Addr getRoutingAddress() override { return addr_; }
-    
+
     virtual uint64_t getSize() override { return 8; } /* Return 8B, ~ size of a coherence message */
 
     virtual CustomData* makeResponse() override { return new OpCodeStdMem(addr_, bytes_, opcode_, false); }
-    
+
     virtual bool needsResponse() override { return true; }
-    
+
     /* String-ify for debug */
     virtual std::string getString() override {
         std::ostringstream str;
@@ -46,7 +46,7 @@ public:
         str << std::hex << " OpCode: 0x" << opcode_;
         return str.str();
     }
-    
+
     /* Address getter/setter */
     void setAddr(Addr addr) { addr_ = addr; }
     Addr getAddr() { return addr_; }
@@ -68,11 +68,11 @@ public:
         SST_SER(response_);
     }
     ImplementSerializable(SST::Miranda::OpCodeStdMem);
-    
-    
+
+
 protected:
     OpCodeStdMem() { } /* For serialization only */
-    
+
     /* Members */
     Addr addr_;
     uint64_t bytes_;

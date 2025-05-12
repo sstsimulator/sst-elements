@@ -42,7 +42,7 @@ void RdmaNic::RecvEngine::process()
     }
 	auto iter = m_recvStreamMap.begin();
 
-	while ( iter != m_recvStreamMap.end() ) { 
+	while ( iter != m_recvStreamMap.end() ) {
 		if ( iter->second->process() ) {
 			delete iter->second;
 			nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"delete stream %zu\n",m_recvStreamMap.size());
@@ -79,7 +79,7 @@ void RdmaNic::RecvEngine::processQueuedPkts( std::queue< RdmaNicNetworkEvent* >&
 void RdmaNic::RecvEngine::processStreamHdr( RdmaNicNetworkEvent* pkt )
 {
     StreamHdr* hdr = (StreamHdr*) pkt->getData().data();
-    nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"stream type=%d payloadSize=%d numOfPkts=%d pktLen=%zu\n", 
+    nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"stream type=%d payloadSize=%d numOfPkts=%d pktLen=%zu\n",
 					hdr->type, hdr->payloadLength, hdr->seqLen, pkt->getData().size() );
 
     switch( hdr->type ) {
@@ -102,7 +102,7 @@ void RdmaNic::RecvEngine::processStreamHdr( RdmaNicNetworkEvent* pkt )
 	pkt->getData().erase( pkt->getData().begin(), pkt->getData().begin() + sizeof(StreamHdr));
 }
 
-void RdmaNic::RecvEngine::processMsgHdr( RdmaNicNetworkEvent* pkt ) 
+void RdmaNic::RecvEngine::processMsgHdr( RdmaNicNetworkEvent* pkt )
 {
     StreamHdr* hdr = (StreamHdr*) pkt->getData().data();
 	int rqId;
@@ -124,7 +124,7 @@ void RdmaNic::RecvEngine::processMsgHdr( RdmaNicNetworkEvent* pkt )
 	auto entry = queue->getQ().front();
 	queue->getQ().pop();
 	if ( entry->getPayloadLength() < hdr->payloadLength ) {
-		nic.out.fatal(CALL_INFO_LONG, -1, "%s, Error: incoming message rqId=%d (%d) is too big for receive buffer (%zu)\n", 
+		nic.out.fatal(CALL_INFO_LONG, -1, "%s, Error: incoming message rqId=%d (%d) is too big for receive buffer (%zu)\n",
 					nic.getName().c_str(), rqId, hdr->payloadLength, entry->getPayloadLength() );
 	}
 	Addr_t destAddr = entry->getAddr();
@@ -133,7 +133,7 @@ void RdmaNic::RecvEngine::processMsgHdr( RdmaNicNetworkEvent* pkt )
 	m_recvStreamMap[ calcNodeStreamId( pkt->getSrcNode(), pkt->getStreamId() ) ] = new RecvStream( nic, destAddr, hdr->payloadLength, entry );
 
 }
-void RdmaNic::RecvEngine::processWriteHdr( RdmaNicNetworkEvent* pkt ) 
+void RdmaNic::RecvEngine::processWriteHdr( RdmaNicNetworkEvent* pkt )
 {
     StreamHdr* hdr = (StreamHdr*) pkt->getData().data();
 	int rqId;
@@ -152,28 +152,28 @@ void RdmaNic::RecvEngine::processWriteHdr( RdmaNicNetworkEvent* pkt )
 	m_recvStreamMap[ calcNodeStreamId( pkt->getSrcNode(), pkt->getStreamId() ) ] = new RecvStream( nic, destAddr, hdr->payloadLength, entry );
 }
 
-void RdmaNic::RecvEngine::processReadReqHdr( RdmaNicNetworkEvent* pkt ) 
+void RdmaNic::RecvEngine::processReadReqHdr( RdmaNicNetworkEvent* pkt )
 {
     StreamHdr* hdr = (StreamHdr*) pkt->getData().data();
     nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"memRgnKey=%#x offset=%d readLength=%d\n", hdr->data.rdma.memRgnKey, hdr->data.rdma.offset, hdr->data.rdma.readLength );
-	
+
 	MemRgnEntry* memRgnEntry;
 	try {
 		memRgnEntry = m_memRegionMap.at( hdr->data.rdma.memRgnKey );
 	} catch ( std::exception& e ) {
 		nic.out.fatal(CALL_INFO_LONG, -1, "%s, Error: could not find memory region with key %#x\n", nic.getName().c_str(), hdr->data.rdma.memRgnKey);
 	}
-	Addr_t srcAddr = memRgnEntry->getAddr() + hdr->data.rdma.offset;	
+	Addr_t srcAddr = memRgnEntry->getAddr() + hdr->data.rdma.offset;
 
 	m_recvStreamMap[ calcNodeStreamId( pkt->getSrcNode(), pkt->getStreamId() ) ] = new RecvStream( nic, 0, 0, NULL );
-	
+
 	nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"destPid=%d srcNode=%d srcPid=%d readRespKey=%d\n",
 				pkt->getDestPid(), pkt->getSrcNode(), pkt->getSrcPid(), hdr->data.rdma.readRespKey );
-	SendEntry* sendEntry = new ReadRespSendEntry( pkt->getDestPid(), pkt->getSrcNode(), pkt->getSrcPid(), srcAddr, hdr->data.rdma.readLength, hdr->data.rdma.readRespKey );   
+	SendEntry* sendEntry = new ReadRespSendEntry( pkt->getDestPid(), pkt->getSrcNode(), pkt->getSrcPid(), srcAddr, hdr->data.rdma.readLength, hdr->data.rdma.readRespKey );
 	nic.m_sendEngine->add( 0, sendEntry );
 }
 
-void RdmaNic::RecvEngine::processReadRespHdr( RdmaNicNetworkEvent* pkt ) 
+void RdmaNic::RecvEngine::processReadRespHdr( RdmaNicNetworkEvent* pkt )
 {
     StreamHdr* hdr = (StreamHdr*) pkt->getData().data();
     nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"readRespKey=%#x payloadLength=%d\n", hdr->data.rdma.readRespKey, hdr->payloadLength );
@@ -191,7 +191,7 @@ void RdmaNic::RecvEngine::processReadRespHdr( RdmaNicNetworkEvent* pkt )
 }
 
 
-void RdmaNic::RecvEngine::processPayloadPkt( RdmaNicNetworkEvent* pkt ) 
+void RdmaNic::RecvEngine::processPayloadPkt( RdmaNicNetworkEvent* pkt )
 {
 	RecvStream* stream;
     nic.dbg.debug(CALL_INFO_LONG,1,DBG_X_FLAG,"streamId=%d pktSeqNum=%d pktLen=%zu\n", pkt->getStreamId(), pkt->getStreamSeqNum(), pkt->getData().size() );
@@ -205,7 +205,7 @@ void RdmaNic::RecvEngine::processPayloadPkt( RdmaNicNetworkEvent* pkt )
 
 void RdmaNic::RecvStream::writeResp( int thread, StandardMem::Request* req ) {
 	StandardMem::WriteResp* resp = dynamic_cast<StandardMem::WriteResp*>(req);
-	bytesWritten += resp->size; 
+	bytesWritten += resp->size;
         nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"thread=%d btyes=%" PRIu64 " bytesWritten=%zu\n",thread,resp->size,bytesWritten);
 	if ( ! resp->getSuccess() ) {
         nic.out.fatal(CALL_INFO_LONG, -1, " Error: write to address %#" PRIx64 " failed\n",resp->pAddr );

@@ -88,7 +88,7 @@ EXTRA_DIST = \
 libariel_la_LDFLAGS = = \
 	-module \
 	-avoid-version \
-	$(AM_LDFLAGS) 
+	$(AM_LDFLAGS)
 
 libariel_la_LIBADD = $(SHM_LIB)
 
@@ -252,7 +252,7 @@ fesimple.so : fesimple.o
 	    -L$(PINTOOL_DIR)/$(TARGET)/lib-ext \
 	    -L$(PINTOOL_DIR)/$(TARGET)/runtime/glibc \
 	    -L$(PINTOOL_DIR)/extras/xed-$(XED_ARCH)/lib \
-	    -ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB) 
+	    -ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB)
 
 fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc
 	$(CXX) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) \

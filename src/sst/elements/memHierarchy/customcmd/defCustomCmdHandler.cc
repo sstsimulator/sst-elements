@@ -29,7 +29,7 @@ CustomCmdMemHandler::MemEventInfo DefCustomCmdMemHandler::receive(MemEventBase* 
 
 Interfaces::StandardMem::CustomData* DefCustomCmdMemHandler::ready(MemEventBase* ev){
     CustomMemEvent * cme = static_cast<CustomMemEvent*>(ev);
-    // We don't need to modify the data structure sent by the CPU, so just 
+    // We don't need to modify the data structure sent by the CPU, so just
     // pass it on to the backend
     return cme->getCustomData();
 }

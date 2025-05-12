@@ -223,21 +223,21 @@ class Thread
     zeroAffinity();
     addAffinity(core);
   }
-  
+
   void addAffinity(int core){
     cpumask_ = cpumask_ | (1<<core);
   }
-  
+
   void zeroAffinity(){
     cpumask_ = 0;
   }
 
   void setCpumask(uint64_t cpumask);
-  
+
   uint64_t cpumask() const {
     return cpumask_;
   }
-  
+
   uint64_t activeCoreMask() const {
     return active_core_mask_;
   }
@@ -343,13 +343,13 @@ class Thread
   void* stack_;
 
   char* tls_storage_;
-  
+
   uint32_t thread_id_;
 
   ThreadContext* context_;
-  
+
   uint64_t cpumask_;
-  
+
   uint64_t active_core_mask_;
 
   uint64_t block_counter_;

@@ -107,7 +107,7 @@ class FattreeInfo(TopoInfo):
         self.params = {}
         self.numNodes = self.calcNumNodes(shape)
         self.params["fattree.shape"] = shape
-                
+
     def getNetworkParams(self):
         return self.params
 
@@ -139,7 +139,7 @@ class DragonFlyLegacyInfo(TopoInfo):
         self.params["dragonfly.algorithm"] =  "minimal"
 
         self.numNodes = nGrp * hostsPerGroup
-                
+
     def getNetworkParams(self):
         return self.params
 
@@ -177,7 +177,7 @@ class DragonFlyInfo(TopoInfo):
         self.params["dragonfly.intergroup_links"] = params['intergroup_links']
         self.params["dragonfly.num_groups"] =  numGroups
         self.params["dragonfly.algorithm"] =  params['algorithm']
-                
+
     def getNetworkParams(self):
         return self.params
 

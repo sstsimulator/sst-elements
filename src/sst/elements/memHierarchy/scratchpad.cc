@@ -194,7 +194,7 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     // Figure out port connections and set up links
     // Options: cpu and network; or cpu and memory;
     // cpu is a MoveEvent interface, memory & network are MemEvent interfaces (memory is a direct connect while network uses SimpleNetwork)
-    
+
     linkUp_ = loadUserSubComponent<MemLinkBase>("highlink", ComponentInfo::SHARE_NONE, &tc);
     if (!linkUp_) {
         linkUp_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, &tc);
@@ -220,11 +220,11 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
             Params p;
             p.insert("port", "lowlink");
             linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "lowlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, p, &tc);
-        }        
+        }
     }
     if (linkDown_)
         linkDown_->setRecvHandler(new Event::Handler2<Scratchpad, &Scratchpad::processIncomingRemoteEvent>(this));
-    
+
     if (linkUp_ && !linkDown_) {
         linkDown_ = linkUp_;
         linkDown_->setRecvHandler(new Event::Handler2<Scratchpad, &Scratchpad::processIncomingNetworkEvent>(this));
@@ -643,7 +643,7 @@ void Scratchpad::handleScratchWrite(MemEvent * ev) {
         delete ev;
         return;
     }
-    
+
     stat_ScratchWriteReceived->addData(1);
 
     MemEvent * response = nullptr;

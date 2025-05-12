@@ -58,7 +58,7 @@ public:
 		"Demonstration of an External Element for SST",
 		COMPONENT_CATEGORY_PROCESSOR
 	)
-    //Stats needs to be added. Now, stats will be added based on the outputs as mentioned by the user based on the RTL login provided. 
+    //Stats needs to be added. Now, stats will be added based on the outputs as mentioned by the user based on the RTL login provided.
     SST_ELI_DOCUMENT_STATISTICS(
         { "read_requests",        "Statistic counts number of read requests", "requests", 1},   // Name, Desc, Enable Level
         { "write_requests",       "Statistic counts number of write requests", "requests", 1},
@@ -69,19 +69,19 @@ public:
 	    { "flush_requests",       "Statistic counts instructions which perform flushes", "requests", 1},
         { "fence_requests",       "Statistic counts instructions which perform fences", "requests", 1}
     )
-    //Parameters will mostly be just frequency/clock in the design. User will mention specifically if there could be other parameters for the RTL design which needs to be configured before runtime.  Don't mix RTL input/control signals with SST parameters. SST parameters of RTL design will make the RTL design/C++ model synchronous with rest of the SST full system.   
+    //Parameters will mostly be just frequency/clock in the design. User will mention specifically if there could be other parameters for the RTL design which needs to be configured before runtime.  Don't mix RTL input/control signals with SST parameters. SST parameters of RTL design will make the RTL design/C++ model synchronous with rest of the SST full system.
 	SST_ELI_DOCUMENT_PARAMS(
 		{ "ExecFreq", "Clock frequency of RTL design in GHz", "1GHz" },
 		{ "maxCycles", "Number of Clock ticks the simulation must atleast execute before halting", "1000" },
         {"memoryinterface", "Interface to memory", "memHierarchy.standardInterface"}
 	)
 
-    //Default will be single port for communicating with Ariel CPU. Need to see the requirement/use-case of multi-port design and how to incorporate it in our parser tool.  
+    //Default will be single port for communicating with Ariel CPU. Need to see the requirement/use-case of multi-port design and how to incorporate it in our parser tool.
     SST_ELI_DOCUMENT_PORTS(
         {"ArielRtllink", "Link to the Rtlmodel", { "Rtlmodel.RTLEvent", "" } },
         {"RtlCacheLink", "Link to Cache", {"memHierarchy.memInterface" , ""} }
     )
-    
+
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"memmgr", "Memory manager to translate virtual addresses to physical, handle malloc/free, etc.", "SST::RtlComponent::RtlMemoryManager"},
             {"memory", "Interface to the memoryHierarchy (e.g., caches)", "SST::Interfaces::StandardMem" }
@@ -96,7 +96,7 @@ public:
 
 private:
 	SST::Output output;
-    
+
     //RTL Clock frequency of execution and maximum Cycles/clockTicks for which RTL simulation will run.
     std::string RTLClk;
 	SST::Cycle_t maxCycles;
@@ -112,7 +112,7 @@ private:
     void commitWriteEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length, const uint8_t* payload);
     void sendArielEvent();
     uint64_t* getAXIDataAddress();
-    
+
     TimeConverter timeConverter;
     Clock::HandlerBase* clock_handler;
     bool writePayloads;
@@ -146,8 +146,8 @@ private:
     bool isStalled;
     uint64_t cacheLineSize;
     uint8_t *dataAddress, *baseDataAddress;
-    uint64_t *AXIdataAddress; 
-    
+    uint64_t *AXIdataAddress;
+
     Statistic<uint64_t>* statReadRequests;
     Statistic<uint64_t>* statWriteRequests;
     Statistic<uint64_t>* statFlushRequests;
@@ -158,9 +158,9 @@ private:
     Statistic<uint64_t>* statSplitWriteRequests;
 
     uint64_t tickCount;
-    uint64_t dynCycles; 
+    uint64_t dynCycles;
 };
 
- } //namespace RtlComponent 
+ } //namespace RtlComponent
 } //namespace SST
 #endif //_SIMPLE_VECTORSHIFTREG_H

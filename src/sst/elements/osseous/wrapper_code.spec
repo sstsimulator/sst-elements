@@ -8,19 +8,19 @@
 	    { "flush_requests",       "Statistic counts instructions which perform flushes", "requests", 1},
         { "fence_requests",       "Statistic counts instructions which perform fences", "requests", 1}
     )
-    //Parameters will mostly be just frequency/clock in the design. User will mention specifically if there could be other parameters for the RTL design which needs to be configured before runtime.  Don't mix RTL input/control signals with SST parameters. SST parameters of RTL design will make the RTL design/C++ model synchronous with rest of the SST full system.   
+    //Parameters will mostly be just frequency/clock in the design. User will mention specifically if there could be other parameters for the RTL design which needs to be configured before runtime.  Don't mix RTL input/control signals with SST parameters. SST parameters of RTL design will make the RTL design/C++ model synchronous with rest of the SST full system.
 	SST_ELI_DOCUMENT_PARAMS(
 		{ "ExecFreq", "Clock frequency of RTL design in GHz", "1GHz" },
 		{ "maxCycles", "Number of Clock ticks the simulation must atleast execute before halting", "1000" },
         {"memoryinterface", "Interface to memory", "memHierarchy.memInterface"}
 	)
 
-    //Default will be single port for communicating with Ariel CPU. Need to see the requirement/use-case of multi-port design and how to incorporate it in our parser tool.  
+    //Default will be single port for communicating with Ariel CPU. Need to see the requirement/use-case of multi-port design and how to incorporate it in our parser tool.
     SST_ELI_DOCUMENT_PORTS(
         {"CPURtllink", "Link to the Rtlmodel", { "Rtlmodel.RTLEvent", "" } },
         {"RtlCacheLink", "Link to Cache", {"memHierarchy.memInterface" , ""} }
     )
-    
+
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"memmgr", "Memory manager to translate virtual addresses to physical, handle malloc/free, etc.", "SST::RtlComponent::RtlMemoryManager"},
             {"memory", "Interface to the memoryHierarchy (e.g., caches)", "SST::Interfaces::SimpleMem" }
@@ -44,7 +44,7 @@ void finish() {
 }
 
 void ClockTick() {
-    //Code or piece of logic to be executed other than eval() call at every SST Clock 
+    //Code or piece of logic to be executed other than eval() call at every SST Clock
 }
 
 void handleRTLEvent() {
@@ -54,7 +54,7 @@ void handleRTLEvent() {
 
 //Example statstics to be recorded for various events in DUT/SST Element
 Statistic<uint64_t>* statReadRequests ClockTick;
-Statistic<uint64_t>* statWriteRequests RTLSSTmemEvent; 
+Statistic<uint64_t>* statWriteRequests RTLSSTmemEvent;
 Statistic<uint64_t>* statFlushRequests RTLSSTmemEvent;
 Statistic<uint64_t>* statFenceRequests AXISSTEvent;
 Statistic<uint64_t>* statReadRequestSizes SSTAXIEvent;
@@ -65,7 +65,7 @@ Statistic<uint64_t>* statSplitWriteRequests SSTRTLmemEvent;
 //Update Inputs based on exteral stimulus such as an event
 
 void RTLEvent::UpdateRtlSignals(void *update_data, Rtlheader* cmodel, uint64_t& cycles) {
-    bool* update_rtl_params = (bool*)update_data; 
+    bool* update_rtl_params = (bool*)update_data;
     update_inp = update_rtl_params[0];
     update_ctrl = update_rtl_params[1];
     update_eval_args = update_rtl_params[2];
@@ -82,7 +82,7 @@ void RTLEvent::UpdateRtlSignals(void *update_data, Rtlheader* cmodel, uint64_t& 
     fprintf(stderr, "update_inp: %d", update_inp);
     fprintf(stderr, "update_ctrl: %d", update_ctrl);
     if(update_inp) {
-        inp_ptr =  (void*)cycles_ptr; 
+        inp_ptr =  (void*)cycles_ptr;
         input_sigs(cmodel);
     }
 

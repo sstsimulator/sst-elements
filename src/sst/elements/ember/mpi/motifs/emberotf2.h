@@ -110,14 +110,14 @@ public:
 	}
 
     void compute(Queue& q, uint64_t time);
-    void send(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group); 
+    void send(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group);
     void isend(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group, MessageRequest* req);
     void recv(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID src, uint32_t tag, Communicator group, MessageResponse* resp );
     void irecv(Queue& q, const Hermes::MemAddr& payload, uint32_t count, PayloadDataType dtype, RankID src, uint32_t tag, Communicator group,MessageRequest* req );
     void wait(Queue& q, MessageRequest* req, MessageResponse* resp);
     void barrier(Queue& q, Communicator comm);
     void bcast(Queue& q, const Hermes::MemAddr& mydata, uint32_t count, PayloadDataType dtype, int root, Communicator group);
-    void allreduce( Queue& q, const Hermes::MemAddr& mydata, const Hermes::MemAddr& result, uint32_t count, PayloadDataType dtype, ReductionOperation op, Communicator group );    
+    void allreduce( Queue& q, const Hermes::MemAddr& mydata, const Hermes::MemAddr& result, uint32_t count, PayloadDataType dtype, ReductionOperation op, Communicator group );
     void reduce(Queue& q, const Hermes::MemAddr& mydata, const Hermes::MemAddr& result, uint32_t count, PayloadDataType dtype, ReductionOperation op, int root,Communicator group );
     void scatter(Queue& q, const Hermes::MemAddr& mydata, uint32_t count_send, PayloadDataType dtype_send, const Hermes::MemAddr& result, uint32_t count_recv, PayloadDataType dtype_recv, int root, Communicator group);
     void allgather(Queue& q, const Hermes::MemAddr& mydata, uint32_t count_send, PayloadDataType dtype_send, const Hermes::MemAddr& result, uint32_t count_recv, PayloadDataType dtype_recv, Communicator group);
@@ -139,7 +139,7 @@ public:
 			verbose(CALL_INFO, 4, 0, "Request: %20" PRIu64 "\n", reqItr->first );
 		}
 	}
- 
+
 	PayloadDataType extractDataTypeFromAttributeList( OTF2_AttributeList* attr ) {
 		uint32_t attributeCount = OTF2_AttributeList_GetNumberOfElements(attr);
 		verbose( CALL_INFO, 16, 0, "Attribute list on rank: %" PRIu32 " contains %" PRIu32 " attributes\n",

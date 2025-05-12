@@ -38,7 +38,7 @@ public:
     void addWait( uint64_t addr, VanadisSyscall* syscall ) {
         OSFutexDbg("Futex::%s() addr=%#" PRIx64 " syscall=%p\n", addr,syscall );
 
-        auto& tmp = m_futexMap[addr]; 
+        auto& tmp = m_futexMap[addr];
 
         for ( auto iter = tmp.begin(); iter != tmp.end(); ++iter ) {
             assert( *iter != syscall );
@@ -53,7 +53,7 @@ public:
         if ( m_futexMap.find( addr ) == m_futexMap.end() ) {
             return 0;
         }
-        auto& tmp = m_futexMap[addr]; 
+        auto& tmp = m_futexMap[addr];
         OSFutexDbg("Futex::%s() %p %zu\n",this,tmp.size());
         return tmp.size();
     }
@@ -62,8 +62,8 @@ public:
         if (  m_futexMap.find( addr ) == m_futexMap.end() ) {
             return nullptr;
         }
-        
-        auto& tmp = m_futexMap[addr]; 
+
+        auto& tmp = m_futexMap[addr];
 
         OSFutexDbg("Futex::%s() %p %zu\n",this,tmp.size());
         assert( ! tmp.empty() );
@@ -77,7 +77,7 @@ public:
         OSFutexDbg("Futex::%s() found addr=%#" PRIx64 " syscall=%p\n", addr,syscall );
         return syscall;
     }
-    bool isEmpty() { return m_futexMap.empty(); } 
+    bool isEmpty() { return m_futexMap.empty(); }
 
 private:
     std::map< uint64_t, std::deque<VanadisSyscall* > > m_futexMap;

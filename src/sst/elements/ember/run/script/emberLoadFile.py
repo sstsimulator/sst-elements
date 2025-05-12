@@ -12,10 +12,10 @@ import emberLoadBase
 import loadUtils
 import nicConfig
 
-myOptions = ['jobFile='] 
-myOptions += topoConfig.getOptions() 
+myOptions = ['jobFile=']
+myOptions += topoConfig.getOptions()
 myOptions += platConfig.getOptions()
-myOptions += emberLoadBase.getOptions() 
+myOptions += emberLoadBase.getOptions()
 
 try:
     opts, args = getopt.getopt( sys.argv[1:], "", myOptions + ['help'] )
@@ -45,10 +45,10 @@ for jobId, nidlist, cmds in loadUtils.getWorkListFromFile( jobFile, {} ):
 	for cmd in cmds:
 		motif = {}
 		motif['cmd'] = cmd
-		motifs += [ motif ]  
+		motifs += [ motif ]
 
 	numNodes = loadUtils.calcNetMapSize( nidlist )
-	job = jobInfo.JobInfoCmd( jobId, numNodes , 1, motifs ) 
+	job = jobInfo.JobInfoCmd( jobId, numNodes , 1, motifs )
 	job.setNidList( nidlist )
 	jobs += [job]
 

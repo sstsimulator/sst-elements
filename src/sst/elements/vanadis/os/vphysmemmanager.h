@@ -30,7 +30,7 @@
 #define FOUR_KB 4096
 #define TWO_MB ( 1024*1024*2)
 #define ONE_GB ( 1024*1024*1024)
-    
+
 class PhysMemManager {
   public:
     class BitMap {
@@ -54,12 +54,12 @@ class PhysMemManager {
 
                     for ( int j = i == start/64 ? start % 64: 0; j < 64; j++ ) {
                         if ( ! getBit( i * 64 + j ) ) {
-                            return i * 64 + j; 
+                            return i * 64 + j;
                         }
                     }
-                } 
+                }
             }
-            throw -1; 
+            throw -1;
         }
 
         bool findEmptyBits( size_t start, int numBits ) {
@@ -101,16 +101,16 @@ class PhysMemManager {
   public:
 
     typedef std::vector<uint32_t> PageList;
-    enum PageSize { FourKB, TwoMB, OneGB }; 
+    enum PageSize { FourKB, TwoMB, OneGB };
     PhysMemManager( size_t memSize ) : m_bitMap( memSize/4096), m_numAllocated(0) { }
     ~PhysMemManager() {
 #if 0
-        if ( m_numAllocated > 1 ) { 
+        if ( m_numAllocated > 1 ) {
             printf("%s() numAllocated=%" PRIu64 "\n",__func__,m_numAllocated);
         }
 #endif
     }
-    
+
     void allocPages( PageSize pageSize, int numPages, PageList& pagesOut ) {
         while ( numPages ) {
             pagesOut.push_back( findFreePage( pageSize ) );
@@ -123,7 +123,7 @@ class PhysMemManager {
     }
 
 
-    void freePages( PageSize pageSize, PageList& pagesIn ) { 
+    void freePages( PageSize pageSize, PageList& pagesIn ) {
         for ( size_t i = 0; i < pagesIn.size(); i++ ) {
             freePage( pageSize, pagesIn[i] );
         }
@@ -175,7 +175,7 @@ class PhysMemManager {
             m_bitMap.setBit( page );
             ++m_numAllocated;
             return page;
-        }   
+        }
         assert(0);
 
         int startPage = 0;
@@ -184,7 +184,7 @@ class PhysMemManager {
         while ( 1 ) {
             startPage = m_bitMap.findFirstEmptyBit( startPage );
 
-            // if the page is aligned 
+            // if the page is aligned
             if ( 0 == startPage % numNeeded ) {
                 // check to see if there are enough empty 4K pages to cover this page size
                 if ( m_bitMap.findEmptyBits( startPage, numNeeded ) ) {

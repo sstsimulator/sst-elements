@@ -35,7 +35,7 @@ class hr_router(RouterTemplate):
     def _qos_callback(self,variable_name,value):
         self._lockVariable(variable_name)
         if not self.output_arb: self.output_arb = "merlin.arb.output.qos.multi"
-        
+
     def instanceRouter(self, name, radix, rtr_id):
         rtr = sst.Component(name, "merlin.hr_router")
         self._applyStatisticsSettings(rtr)
@@ -43,7 +43,7 @@ class hr_router(RouterTemplate):
         rtr.addParam("num_ports",radix)
         rtr.addParam("id",rtr_id)
         return rtr
-    
+
     def getTopologySlotName(self):
         return "topology"
 

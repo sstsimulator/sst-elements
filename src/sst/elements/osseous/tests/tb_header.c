@@ -70,13 +70,13 @@ mlm_Tag mlm_memcpy(void* dest, void* src, size_t length) {
 void mlm_waitComplete(mlm_Tag in) {
 	return;
 }
-    
-void start_RTL_sim(RTL_shmem_info* shmem) {     
-    printf("\nStatic defination of start_RTL_sim is being called\n"); 
+
+void start_RTL_sim(RTL_shmem_info* shmem) {
+    printf("\nStatic defination of start_RTL_sim is being called\n");
     return;
 }
 
-void update_RTL_sig(RTL_shmem_info* shmem) {     
+void update_RTL_sig(RTL_shmem_info* shmem) {
     printf("\nStatic defination of update_RTL_signals in being called\n");
-    return; 
+    return;
 }

@@ -63,25 +63,25 @@ struct FreeList {
             FreeListDbg("checking freeEntry [%#" PRIx64 "-%#" PRIx64 "]\n",entry->start, entry->end);
             if ( addr >= entry->start && addr + len <= entry->end ) {
                 ret = true;
-                FreeListDbg("found avail\n"); 
-                if ( addr == entry->start ) { 
-                    
+                FreeListDbg("found avail\n");
+                if ( addr == entry->start ) {
+
                     if ( addr + len < entry->end ) {
                         m_freeList.erase( kv.first );
-                        entry->start = addr + len; 
+                        entry->start = addr + len;
                         m_freeList[entry->start] = entry;
                     } else {
-                        delete entry; 
+                        delete entry;
                         m_freeList.erase( kv.first );
                     }
-                         
+
                 // start is different but end is the same as the free entry
                 } else if ( addr + len == entry->end )  {
                     // just move the end of the free entry
                     entry->end = addr;
-                // trucate the current free entry and add a new one 
+                // trucate the current free entry and add a new one
                 } else {
-                    uint64_t end = entry->end; 
+                    uint64_t end = entry->end;
                     // end of the fee entry is now the start of removed region
                     entry->end = addr;
                     // new free entry starts at the end of the removed region and ends at end of the original free entry
@@ -90,10 +90,10 @@ struct FreeList {
                 break;
             }
         }
-            
+
         print();
         FreeListDbg("ret=%d\n",ret);
-        return ret; 
+        return ret;
     }
 
     uint64_t alloc( size_t wantLen ) {
@@ -105,14 +105,14 @@ struct FreeList {
             auto length =  entry->end - entry->start;
             FreeListDbg("checking freeEntry [%#" PRIx64 "-%#" PRIx64 "]\n",entry->start, entry->end);
             if ( wantLen <= length ) {
-                FreeListDbg("found avail\n"); 
+                FreeListDbg("found avail\n");
                 ret = entry->start;
                 if ( wantLen == length ) {
                     delete entry;
                     m_freeList.erase(kv.first);
                 } else {
                     m_freeList.erase( kv.first );
-                    entry->start = entry->start+wantLen; 
+                    entry->start = entry->start+wantLen;
                     m_freeList[entry->start] = entry;
                 }
                 break;
@@ -151,28 +151,28 @@ struct FreeList {
         }
         print();
         return ret;
-    } 
+    }
 
     void merge() {
         FreeListDbg("\n");
-         
+
         for ( auto iter = m_freeList.begin(); iter != m_freeList.end(); ++iter) {
             auto entry = iter->second;
             FreeListDbg("checking freeEntry [%#" PRIx64 "-%#" PRIx64 "]\n", entry->start, entry->end);
-            auto next = std::next(iter,1); 
+            auto next = std::next(iter,1);
 
             if ( next != m_freeList.end() ) {
                 auto nextEntry = next->second;
                 if ( entry->end == nextEntry->start ) {
                     FreeListDbg("merge [%#" PRIx64 "-%#" PRIx64 "] [%#" PRIx64 "-%#" PRIx64 "]\n",
                             entry->start, entry->end, nextEntry->start, nextEntry->end);
-                    
-                    // merge free list blocks
-                    entry->end = nextEntry->end;  
 
-                    // remove entry from free list 
-                    delete nextEntry; 
-                    next = m_freeList.erase(next); 
+                    // merge free list blocks
+                    entry->end = nextEntry->end;
+
+                    // remove entry from free list
+                    delete nextEntry;
+                    next = m_freeList.erase(next);
 
                     if ( next != m_freeList.end() ) {
                         auto nextEntry = next->second;
@@ -191,7 +191,7 @@ struct FreeList {
         }
     }
     std::map< uint64_t, FreeEntry* > m_freeList;
-}; 
+};
 
 }
 }

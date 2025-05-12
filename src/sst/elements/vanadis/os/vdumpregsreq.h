@@ -25,7 +25,7 @@ class VanadisDumpRegsReq : public SST::Event {
 public:
     VanadisDumpRegsReq() : SST::Event(), thread(0) { }
 
-    VanadisDumpRegsReq( int thread) : 
+    VanadisDumpRegsReq( int thread) :
         SST::Event(), thread(thread) {}
 
     ~VanadisDumpRegsReq() {}

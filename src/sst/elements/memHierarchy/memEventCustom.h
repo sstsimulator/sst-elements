@@ -51,7 +51,7 @@ public:
     /** Return size of the event - for calculating bandwidth used */
     virtual uint32_t getEventSize() override { return data_->getSize(); }
 
-    /** Get verbose print of the event */ 
+    /** Get verbose print of the event */
     virtual std::string getVerboseString(int level = 1) override {
         return MemEventBase::getVerboseString(level) + "Data: " + data_->getString();
     }
@@ -60,7 +60,7 @@ public:
     virtual std::string getBriefString() override {
         return MemEventBase::getBriefString() + "Data: " + data_->getString();
     }
-    
+
     /** Returns address that determines where this event is sent to */
     virtual Addr getRoutingAddress() override {
         return data_->getRoutingAddress();
@@ -79,7 +79,7 @@ public:
 
 protected:
     Interfaces::StandardMem::CustomData* data_;
-    
+
     CustomMemEvent() {} // For serialization only
 
 public:

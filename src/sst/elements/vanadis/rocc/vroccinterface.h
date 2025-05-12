@@ -27,7 +27,7 @@
 namespace SST {
 namespace Vanadis {
 
-class RoCCInstruction 
+class RoCCInstruction
 {
 public:
     RoCCInstruction(uint32_t func_code7, uint8_t rd, const bool xs1, const bool xs2, const bool xd) {
@@ -96,7 +96,7 @@ public:
     virtual void tick(uint64_t cycle) = 0;
 
     virtual void init(unsigned int phase) = 0;
-    
+
     SST::Output* output;
 
     Statistic<uint64_t>* stat_rocc_issued;

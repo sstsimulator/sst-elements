@@ -25,7 +25,7 @@ namespace Vanadis {
 class VanadisGettidSyscall : public VanadisSyscall {
 public:
     VanadisGettidSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallGetxEvent* event )
-        : VanadisSyscall( os, coreLink, process, event, "gettid" ) 
+        : VanadisSyscall( os, coreLink, process, event, "gettid" )
     {
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-gettid] pid=%d tid=%d\n",process->getpid(),process->gettid());
         setReturnSuccess(process->gettid());
