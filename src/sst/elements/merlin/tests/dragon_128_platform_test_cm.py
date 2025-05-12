@@ -35,7 +35,7 @@ if __name__ == "__main__":
     ep.packet_size = "256B"
 
     ep2 = TestJob(1,system.topology.getNumNodes()-16)
-        
+
     system.allocateNodes(ep,"interval",0,8)
     system.allocateNodes(ep2,"linear")
 

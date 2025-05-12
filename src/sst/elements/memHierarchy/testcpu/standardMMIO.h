@@ -27,7 +27,7 @@
 namespace SST {
 namespace MemHierarchy {
 
-/* 
+/*
  * This is an example MMIO device that uses the StandardMem interface
  * The device is very simple; it computes the square of integers written to it.
  * READ: return the square of the last written value
@@ -38,14 +38,14 @@ class StandardMMIO : public SST::Component {
 public:
     SST_ELI_REGISTER_COMPONENT(StandardMMIO, "memHierarchy", "mmioEx", SST_ELI_ELEMENT_VERSION(1,0,0),
         "Example MMIO device for testing interface", COMPONENT_CATEGORY_MEMORY)
-    SST_ELI_DOCUMENT_PARAMS( 
+    SST_ELI_DOCUMENT_PARAMS(
         {"verbose",                 "(uint) Determine how verbose the output from the device is", "0"},
         {"clock",                   "(UnitAlgebra/string) Clock frequency", "1GHz"},
         {"base_addr",               "(uint) Starting addr mapped to the device", "0"},
         {"mem_accesses",            "(uint) Number of memory accesses to do", "0"},
         {"max_addr",                "(uint64) Max memory address for requests issued by this device. Required if mem_accesses > 0.", "0"}
     )
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( 
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         {"iface", "Interface into memory subsystem", "SST::Interfaces::StandardMem"}
     )
     SST_ELI_DOCUMENT_STATISTICS(
@@ -63,7 +63,7 @@ protected:
 
     /* Handle event from MMIO interface */
     void handleEvent(Interfaces::StandardMem::Request* req);
-    
+
     /* Handlers for StandardMem::Request types we handle */
     class mmioHandlers : public Interfaces::StandardMem::RequestHandler {
     public:
@@ -86,7 +86,7 @@ protected:
     /* Debug -triggered by output.fatal() and/or SIGUSR2 */
     virtual void printStatus(Output &out);
     //virtual void emergencyShutdown();
-    
+
     /* Output */
     Output out;
 
@@ -116,7 +116,7 @@ private:
     Interfaces::StandardMem* iface;
 
 }; // end StandardMMIO
-        
+
 }
 }
 

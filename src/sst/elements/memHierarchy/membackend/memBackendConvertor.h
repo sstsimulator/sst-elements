@@ -83,14 +83,14 @@ class MemBackendConvertor : public SubComponent {
         bool isMemEv() { return m_type == ReqType::MEM; }
         bool isCustCmd() { return m_type == ReqType::CUSTOM; }
         virtual const std::string getRqstr() { return ""; }
-        
+
         BaseReq() { }
         virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
             SST_SER(m_reqId);
             SST_SER(m_type);
         }
         ImplementSerializable(SST::MemHierarchy::MemBackendConvertor::BaseReq)
-        
+
     protected:
         uint32_t m_reqId;
         ReqType m_type;
@@ -204,12 +204,12 @@ class MemBackendConvertor : public SubComponent {
     // generates a MemReq for the target custom command
     // this is utilized by inherited ExtMemBackendConvertor's
     // such that all the requests are consolidated in one place
-    
+
     // Serialization support
     MemBackendConvertor() { }
     virtual void serialize_order(SST::Core::Serialization::serializer& ser) override;
     ImplementVirtualSerializable(SST::MemHierarchy::MemBackendConvertor);
-  
+
 protected:
     virtual ~MemBackendConvertor() {
         while ( m_requestQueue.size()) {

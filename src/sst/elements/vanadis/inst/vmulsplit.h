@@ -39,7 +39,7 @@ public:
     VanadisMultiplySplitInstruction* clone() override { return new VanadisMultiplySplitInstruction(*this); }
     VanadisFunctionalUnitType        getInstFuncType() const override { return INST_INT_ARITH; }
 
-    const char* getInstCode() const override { 
+    const char* getInstCode() const override {
         switch(sizeof(register_format)) {
         case 8:
             return "MULSPLIT64";
@@ -80,7 +80,7 @@ public:
         const register_format src_2 = regFile->getIntReg<register_format>(phys_int_regs_in[1]);
 
         constexpr int64_t lo_mask = (4 == sizeof(register_format)) ?
-                0xFFFFFFFF : 
+                0xFFFFFFFF :
                 (2 == sizeof(register_format)) ?
                 0xFFFF : 0xFF;
 

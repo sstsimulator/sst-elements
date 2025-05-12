@@ -92,7 +92,7 @@ struct Action
   }
 
   Action(type_t ty, int r, int p) :
-    type(ty), 
+    type(ty),
     partner(p),
     join_counter(0),
     round(r)

@@ -29,7 +29,7 @@ if __name__ == "__main__":
     topo.algorithm = ["minimal","ugal"]
 
     group_size = topo.hosts_per_router * topo.routers_per_group
-    
+
     # Set up the routers
     router = hr_router()
     router.link_bw = "4GB/s"
@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     topo.router = router
     topo.link_latency = "20ns"
-    
+
     ### set up the endpoint
     networkif = LinkControl()
     networkif.link_bw = "4GB/s"
@@ -59,26 +59,26 @@ if __name__ == "__main__":
     # Set up VN remapping
     networkif.vn_remap = [0]
     networkif2.vn_remap = [1]
-    
+
     ep = TestJob(0,(topo.getNumNodes() - group_size) // 2)
     ep.network_interface = networkif
     #ep.num_messages = 10
     #ep.message_size = "8B"
     #ep.send_untimed_bcast = False
-        
+
     ep2 = TestJob(1,(topo.getNumNodes() - group_size) // 2)
     ep2.network_interface = networkif2
     #ep.num_messages = 10
     #ep.message_size = "8B"
     #ep.send_untimed_bcast = False
-        
+
     system = System()
     system.setTopology(topo)
     system.allocateNodes(ep,"linear")
     system.allocateNodes(ep2,"linear")
 
     system.build()
-    
+
 
     # sst.setStatisticLoadLevel(9)
 

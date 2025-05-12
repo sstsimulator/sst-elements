@@ -42,7 +42,7 @@ wait
 
 # GNA
 echo "gensa..."
-cd ../../GNA/tests    
+cd ../../GNA/tests
 sst test.py > test.ref.out
 
 # Messier

@@ -12,7 +12,7 @@ Copyright (c) 2009-2025, NTESS
 
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, 
+Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
     * Redistributions of source code must retain the above copyright
@@ -341,7 +341,7 @@ int mask_mpi_win_flush_all(MPI_Win win);
 int mask_mpi_win_flush_local(int rank, MPI_Win win);
 int mask_mpi_win_flush_local_all(MPI_Win win);
 int mask_mpi_win_sync(MPI_Win win);
- 
+
 /* External Interfaces */
 int mask_mpi_add_error_class(int *errorclass);
 int mask_mpi_add_error_code(int errorclass, int *errorcode);
@@ -453,7 +453,7 @@ int mask_mpi_win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler);
 int mask_mpi_win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler);
 
 /* Fortran 90-related functions.  These routines are available only if
-   Fortran 90 support is enabled 
+   Fortran 90 support is enabled
 */
 int mask_mpi_type_create_f90_integer(int range, MPI_Datatype *newtype);
 int mask_mpi_type_create_f90_real(int precision, int range, MPI_Datatype *newtype);

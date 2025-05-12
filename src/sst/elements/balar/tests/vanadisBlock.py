@@ -70,7 +70,7 @@ class Vanadis_Builder:
         if debugPython:
             print( "nodeId {} cpuID={}".format( nodeId, cpuId ) )
 
-        prefix = 'node' + str(nodeId) + '.cpu' + str( cpuId ) 
+        prefix = 'node' + str(nodeId) + '.cpu' + str( cpuId )
         cpu = sst.Component(prefix, vanadis_cpu_type)
         cpu.addParams({
             "clock" : cpu_clock,
@@ -137,7 +137,7 @@ class Vanadis_Builder:
             "debug" : stdMem_debug,
             "debug_level" : 11,
         })
-		
+
         # L1 D-Cache
         l1cache = sst.Component(prefix + ".l1dcache", "memHierarchy.Cache")
         l1cache.addParams({
@@ -223,12 +223,12 @@ class Vanadis_Builder:
         l1icache_2_cpu     = l1icache.setSubComponent("cpulink", "memHierarchy.MemLink")
         l1icache_2_l2cache = l1icache.setSubComponent("memlink", "memHierarchy.MemLink")
 
-        # D-TLB -> D-L1 
+        # D-TLB -> D-L1
         # Weili: Add a bus to connect two tlbs (balar and core) to the same l1dcache
         # link = sst.Link(prefix+".link_l1cache")
         # link.connect( (dtlbWrapper, "cache_if", "1ns"), (l1dcache_2_cpu, "port", "1ns") )
 
-        # I-TLB -> I-L1 
+        # I-TLB -> I-L1
         link = sst.Link(prefix+".link_l1icache")
         link.connect( (itlbWrapper, "cache_if", "1ns"), (l1icache_2_cpu, "port", "1ns") )
 

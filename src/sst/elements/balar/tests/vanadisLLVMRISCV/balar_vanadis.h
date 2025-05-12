@@ -35,4 +35,4 @@ static Addr_t* g_balarBaseAddr = (Addr_t*) -1;
 static uint8_t g_scratch_mem[1024];
 static int32_t g_debug_level = LOG_LEVEL_INFO;
 
-#endif 
+#endif

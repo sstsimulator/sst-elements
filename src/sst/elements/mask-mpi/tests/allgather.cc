@@ -12,7 +12,7 @@ Copyright (c) 2009-2025, NTESS
 
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, 
+Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
     * Redistributions of source code must retain the above copyright
@@ -54,7 +54,7 @@ Questions? Contact sst-macro-help@sandia.gov
 int main(int argc, char* argv[])
 {
     MPI_Init(&argc, &argv);
- 
+
     int size, rank;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -66,8 +66,8 @@ int main(int argc, char* argv[])
         printf("recv_values[%d]=%d\n",i, recv_values[i]);
       }
     }
- 
+
     MPI_Finalize();
- 
+
     return EXIT_SUCCESS;
 }

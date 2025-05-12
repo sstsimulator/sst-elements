@@ -216,7 +216,7 @@ class App : public Thread
   SST::Params params_;
 
  private:
-  
+
   void dlcloseCheck(){
     dlcloseCheck(aid());
   }

@@ -94,8 +94,8 @@ public:
             phys_fp_regs_in[0], phys_fp_regs_in[1]);
     }
 
-    void instOp(VanadisRegisterFile* regFile, uint16_t phys_fp_regs_in_0, 
-                        uint16_t phys_fp_regs_in_1, uint16_t phys_fp_regs_in_2, 
+    void instOp(VanadisRegisterFile* regFile, uint16_t phys_fp_regs_in_0,
+                        uint16_t phys_fp_regs_in_1, uint16_t phys_fp_regs_in_2,
                         uint16_t phys_fp_regs_in_3, uint16_t phys_fp_regs_out_0,uint16_t phys_fp_regs_out_1)
     {
         if constexpr (! ( std::is_same_v<fp_format,float> || std::is_same_v<fp_format,double> ) ) { assert(0); }
@@ -119,7 +119,7 @@ public:
 
             WRITE_FP_REGS(phys_fp_regs_out_0, phys_fp_regs_out_1);
 
-        } 
+        }
         else
         {
             const uint64_t src_1  = regFile->getFPReg<uint64_t>(phys_fp_regs_in_0);
@@ -145,12 +145,12 @@ public:
 
             regFile->setFPReg<uint64_t>(phys_fp_regs_out_0, result);
         }
-            
-        
+
+
         check_IEEE754_except();
     }
     void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
-    {    
+    {
 
         uint16_t phys_fp_regs_out_0 = getPhysFPRegOut(0);
         uint16_t phys_fp_regs_out_1 = 0;
@@ -159,15 +159,15 @@ public:
         uint16_t phys_fp_regs_in_1 = getPhysFPRegIn(1);
         uint16_t phys_fp_regs_in_2 = 0;
         uint16_t phys_fp_regs_in_3 = 0;
-        
-        
-        if ( sizeof(fp_format) > regFile->getFPRegWidth() ) 
+
+
+        if ( sizeof(fp_format) > regFile->getFPRegWidth() )
         {
             phys_fp_regs_in_2 = getPhysFPRegIn(2);
             phys_fp_regs_in_3 = getPhysFPRegIn(3);
             phys_fp_regs_out_1 = getPhysFPRegOut(1);
         }
-        instOp(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1, 
+        instOp(regFile, phys_fp_regs_in_0, phys_fp_regs_in_1,
                         phys_fp_regs_in_2, phys_fp_regs_in_3,
                         phys_fp_regs_out_0,phys_fp_regs_out_1);
         log(output, 16, 65535, phys_fp_regs_out_0, phys_fp_regs_in_0, phys_fp_regs_in_1);

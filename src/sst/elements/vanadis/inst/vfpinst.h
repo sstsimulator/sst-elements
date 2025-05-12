@@ -92,8 +92,8 @@ public:
         m_update_rm(copy_me.m_update_rm)
     {    }
 
-    virtual bool updatesFPFlags() const override { 
-        return update_fp_flags || set_fp_flags || m_set_rm | m_update_rm; 
+    virtual bool updatesFPFlags() const override {
+        return update_fp_flags || set_fp_flags || m_set_rm | m_update_rm;
     }
 
     virtual void updateFPFlags() override {
@@ -143,7 +143,7 @@ protected:
         }
     }
 
-    
+
   private:
     std::string getModeStr(  int mode ) {
         switch( mode ) {
@@ -269,7 +269,7 @@ protected:
     bool isNaN_boxed( T src ) {
         if constexpr (std::is_same_v<T,uint64_t>) {
             if ( src == 0 ) return true;
-            return ((src & 0xffffffff00000000) == 0xffffffff00000000); 
+            return ((src & 0xffffffff00000000) == 0xffffffff00000000);
         } else {
             assert(0);
         }
@@ -278,9 +278,9 @@ protected:
     template <typename T>
     bool isSignBitSet( T src ) {
         if constexpr (std::is_same_v<T,uint64_t>) {
-            return (src & ( (T) 1 << 63)); 
+            return (src & ( (T) 1 << 63));
         } else if constexpr (std::is_same_v<T,uint32_t>) {
-            return (src & ( (T) 1 << 31)); 
+            return (src & ( (T) 1 << 31));
         } else {
             assert(0);
         }
@@ -289,9 +289,9 @@ protected:
     template <typename T>
     T setSignBit( T src ) {
         if constexpr (std::is_same_v<T,uint64_t>) {
-            return src | ( (T) 1 << 63); 
+            return src | ( (T) 1 << 63);
         } else if constexpr (std::is_same_v<T,uint32_t>) {
-            return src | ( (T) 1 << 31); 
+            return src | ( (T) 1 << 31);
         } else {
             assert(0);
         }
@@ -300,9 +300,9 @@ protected:
     template <typename T>
     T clearSignBit( T src ) {
         if constexpr (std::is_same_v<T,uint64_t>) {
-            return src & ~( (T) 1 << 63); 
+            return src & ~( (T) 1 << 63);
         } else if constexpr (std::is_same_v<T,uint32_t>) {
-            return src & ~( (T) 1 << 31); 
+            return src & ~( (T) 1 << 31);
         } else {
             assert(0);
         }
@@ -322,14 +322,14 @@ protected:
     T NaN( ) {
         if constexpr (std::is_same_v<T,double> ) {
             uint64_t tmp = 0x7ff8000000000000;
-            return *(T*) &tmp; 
+            return *(T*) &tmp;
         } else if constexpr (std::is_same_v<T,float>) {
-            uint32_t tmp = 0x7fc00000; 
+            uint32_t tmp = 0x7fc00000;
             return *(T*) &tmp;
         } else if constexpr ( std::is_same_v<T,uint64_t>) {
             return 0x7ff8000000000000;
         } else if constexpr (std::is_same_v<T,uint32_t>) {
-            return 0x7fc00000; 
+            return 0x7fc00000;
         } else {
             assert(0);
         }
@@ -381,7 +381,7 @@ protected:
             assert(0);
         }
     }
-    
+
     template <typename T>
     T getMaxInt() {
         if constexpr (std::is_same_v<T,int32_t>) {

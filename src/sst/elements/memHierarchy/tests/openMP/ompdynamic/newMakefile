@@ -1,4 +1,4 @@
-CXX=g++ 
+CXX=g++
 
 ompdynamic: ompdynamic.o
 	$(CXX) -O3 -o ompdynamic -fopenmp ompdynamic.o

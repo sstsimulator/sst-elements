@@ -137,7 +137,7 @@ typedef struct BalarCudaCallPacket {
             uint64_t hostFun;
             char deviceFun[BALAR_CUDA_MAX_KERNEL_NAME];
         } register_function;
-        
+
         struct {
             uint64_t dst;
             uint64_t src;
@@ -202,7 +202,7 @@ typedef struct BalarCudaCallPacket {
 typedef struct BalarCudaCallReturnPacket {
     enum CudaAPI_t cuda_call_id;
     cudaError_t cuda_error;
-    bool is_cuda_call_done; 
+    bool is_cuda_call_done;
     union {
         uint64_t    fat_cubin_handle;
         struct {
@@ -246,4 +246,4 @@ void __cudaRegisterFunction(
 );
 
 
-#endif 
+#endif

@@ -17,7 +17,7 @@ cores = 2*2
 local_memory_capacity = 128  	# Size of memory in MBs
 shared_memory_capacity = 2048	# 2GB
 shared_memory = 1
-page_size = 4 # In KB 
+page_size = 4 # In KB
 num_pages = local_memory_capacity * 1024 // page_size + 8*1024*1024//page_size
 
 
@@ -239,11 +239,11 @@ for next_core in range(cores):
 		PTWMemLink.connect((mmu, "ptw_to_mem%d"%(next_core-cores//2), "300ps"), (l1_highlink, "port", "300ps"))
 
 	l2_core_link = sst.Link("l2cache_" + str(next_core) + "_link")
-	l2_core_link.connect((l1_lowlink, "port", "300ps"), (l2_highlink, "port", "300ps"))				
+	l2_core_link.connect((l1_lowlink, "port", "300ps"), (l2_highlink, "port", "300ps"))
 
 	l2_ring_link = sst.Link("l2_ring_link_" + str(next_core))
 	l2_ring_link.connect((l2_lowlink, "port", "300ps"), (internal_network.rtr, "port%d"%(internal_network.getNextPort()), "300ps"))
-			
+
 
 
 l3cache = sst.Component("l3cache", "memHierarchy.Cache")
@@ -262,7 +262,7 @@ l3_ring_link = sst.Link("l3_link")
 l3_ring_link.connect( (l3_link, "port", "300ps"), (internal_network.rtr, "port%d"%(internal_network.getNextPort()), "300ps"))
 
 
-mem = sst.Component("local_memory", "memHierarchy.MemController")	
+mem = sst.Component("local_memory", "memHierarchy.MemController")
 mem.addParams({
 	"clock"   : "1.2GHz",
 	"backing" : "none",
@@ -346,7 +346,7 @@ ext_memory.addParams({
 })
 
 ext_mem_link = ext_mem.setSubComponent("highlink", "memHierarchy.MemLink")
-ext_mem_link.addParams({ "node" : 9999, }) ## does not belong to any node 
+ext_mem_link.addParams({ "node" : 9999, }) ## does not belong to any node
 
 ext_dc = sst.Component("ExtMemDc", "memHierarchy.DirectoryController")
 ext_dc.addParams({

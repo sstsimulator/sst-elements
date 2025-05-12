@@ -24,8 +24,8 @@ namespace Vanadis {
 
 class VanadisCloseSyscall : public VanadisSyscall {
 public:
-    VanadisCloseSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallCloseEvent* event ) 
-        : VanadisSyscall( os, coreLink, process, event, "close" ) 
+    VanadisCloseSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallCloseEvent* event )
+        : VanadisSyscall( os, coreLink, process, event, "close" )
     {
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-close] -> call is close( %" PRIu32 " )\n", event->getFileDescriptor());
 

@@ -13,7 +13,7 @@ debug_params = { "debug" : DEBUG_OTHERS, "debug_level" : 10 }
 # On network: (Core, L1.0), (MMIO device, L1.1), (dir, memory)
 # Logical communication: Core->L1.0->dir->memory
 #                        Core->(L1.0)->(L1.1)->MMIO
-#                        MMIO->L1.1->dir->memory    
+#                        MMIO->L1.1->dir->memory
 core_group = 1
 mmio_group = 2
 dir_group = 3
@@ -65,7 +65,7 @@ cpu_l1cache.addParams({
 cpu_l1_link = cpu_l1cache.setSubComponent("highlink", "memHierarchy.MemLink") # Non-network link
 cpu_l1_link.addParams(debug_params)
 cpu_l1_nic = cpu_l1cache.setSubComponent("lowlink", "memHierarchy.MemNIC")   # Network link
-cpu_l1_nic.addParams({ "group" : core_group, 
+cpu_l1_nic.addParams({ "group" : core_group,
                    "destinations" : l1_dst,
                    "network_bw" : network_bw})
 cpu_l1_nic.addParams(debug_params)
@@ -102,7 +102,7 @@ mmio_l1_link = mmio_l1cache.setSubComponent("highlink", "memHierarchy.MemLink") 
 mmio_l1_link.addParams(debug_params)
 mmio_l1_nic = mmio_l1cache.setSubComponent("lowlink", "memHierarchy.MemNIC") # Network link
 
-mmio_l1_nic.addParams({"group" : mmio_group, 
+mmio_l1_nic.addParams({"group" : mmio_group,
                     "sources" : mmio_src,
                     "destinations" : mmio_dst,
                     "network_bw" : network_bw })

@@ -23,7 +23,7 @@ AC_DEFUN([SST_CHECK_DUMPI],
       [DUMPI_CPPFLAGS=
        DUMPI_LDFLAGS=
        DUMPI_LIB=])])
-  
+
   AC_LANG_PUSH([C++])
   AC_CHECK_HEADER([dumpi/libundumpi/libundumpi.h], [], [sst_check_dumpi_happy="no"])
   AC_LANG_POP([C++])

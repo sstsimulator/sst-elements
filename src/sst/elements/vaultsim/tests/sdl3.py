@@ -15,7 +15,7 @@ PIMQuads = 0  # "Quads per PIM
 PIMs = options.pims      # number of PIMs
 ccLat = "5ns" # cube to cube latency i.e. PIM to PIM
 
-vaultsPerCube = 8 
+vaultsPerCube = 8
 fakeCPU_DC = 0
 fakePIM_DC = 0
 coreNetBW = "36GB/s"
@@ -40,7 +40,7 @@ corecount = (CPUQuads + (PIMQuads * PIMs)) * 4
 
 class corePorts:
     def __init__(self):
-        self._next = 0 
+        self._next = 0
     def nextPort(self):
         res = self._next
         self._next = self._next + 1
@@ -56,7 +56,7 @@ l2PrefetchParams = {
     #"prefetcher": "cassini.StridePrefetcher",
     #"reach": 8
     }
-cpuParams = {    
+cpuParams = {
     "verbose" : "0",
     "workPerCycle" : "1000",
     "commFreq" : "100",
@@ -173,7 +173,7 @@ def doQuad(quad, cores, rtr, rtrPort, netAddr):
             arielL1Link = sst.Link("core_cache_link_%d"%core)
             portName = "cache_link_" + str(coreCtr.nextPort())
             arielL1Link.connect((ariel, portName,
-                                 busLat), 
+                                 busLat),
                                 (l1id, "highlink", busLat))
         else:
             coreL1Link = sst.Link("core_cache_link_%d"%core)
@@ -217,12 +217,12 @@ def doVS(num, cpu) :
     ll.addParams ({
             "clock" : """500Mhz""",
             "vaults" : str(vaultsPerCube),
-            "llID" : """0""", 
+            "llID" : """0""",
             "bwlimit" : """32""",
             "LL_MASK" : """0""",
             "terminal" : """1"""
             })
-    ll.enableStatistics(["BW_recv_from_CPU"], 
+    ll.enableStatistics(["BW_recv_from_CPU"],
                         {"type":"sst.AccumulatorStatistic",
                          "rate":"0 ns"})
     fromCPU = sst.Link("link_cpu_cube");
@@ -236,7 +236,7 @@ def doVS(num, cpu) :
                 "VaultID" : str(x),
                 "numVaults2" : math.log(vaultsPerCube,2)
                 })
-        v.enableStatistics(["Mem_Outstanding"], 
+        v.enableStatistics(["Mem_Outstanding"],
                            {"type":"sst.AccumulatorStatistic",
                             "rate":"0 ns"})
         ll2V = sst.Link("link_ll_vault" + str(x))
@@ -281,7 +281,7 @@ def doFakeDC(rtr, nextPort, netAddr, dcNum):
 def doDC(rtr, nextPort, netAddr, dcNum):
     start_pos = (dcNum * interleave_size);
     interleave_step = PIMs*(interleave_size//1024) # in KB
-    end_pos = start_pos + ((512*1024*1024)-(interleave_size*(PIMs-1))) 
+    end_pos = start_pos + ((512*1024*1024)-(interleave_size*(PIMs-1)))
 
     # add memory
     memory = sst.Component("memory", "memHierarchy.MemController")
@@ -324,7 +324,7 @@ def doDC(rtr, nextPort, netAddr, dcNum):
     netLink = sst.Link("dc%d_netlink"%dcNum)
     netLink.connect((dc_nic, "port", netLat), (rtr, "port%d"%(nextPort), netLat))
 
-def doCPU(): 
+def doCPU():
     sst.pushNamePrefix("cpu")
     # make the router
     rtr = sst.Component("cpuRtr", "merlin.hr_router")
@@ -378,17 +378,17 @@ def doPIM(pimNum, prevRtr):
     wrapLink = sst.Link("p%d"%pimNum)
     wrapLink.connect((prevRtr,"port0", netLat),
                      (rtr, "port1", netLat))
-    
+
     sst.popNamePrefix()
     return rtr
-        
+
 
 # "MAIN"
 
 # Define SST core options
 #sst.setProgramOption("partitioner", "self")
 sst.setProgramOption("stop-at", "300 us")
-sst.setStatisticLoadLevel(7)   
+sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
 
 #if needed, create the ariel component

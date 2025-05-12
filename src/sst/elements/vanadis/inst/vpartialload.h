@@ -27,10 +27,10 @@ public:
         const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t memAddrReg,
         const int64_t offst, const uint16_t tgtReg, const uint16_t load_bytes, const bool extend_sign,
         const bool isLowerLoad, VanadisLoadRegisterType regT) :
-        VanadisInstruction( addr, hw_thr, isa_opts, 
-            1, regT == LOAD_INT_REGISTER ? 1 : 0, 
+        VanadisInstruction( addr, hw_thr, isa_opts,
             1, regT == LOAD_INT_REGISTER ? 1 : 0,
-            0, regT == LOAD_FP_REGISTER ? 1 : 0, 
+            1, regT == LOAD_INT_REGISTER ? 1 : 0,
+            0, regT == LOAD_FP_REGISTER ? 1 : 0,
             0, regT == LOAD_FP_REGISTER ? 1 : 0),
         VanadisLoadInstruction(addr, hw_thr, isa_opts, memAddrReg, offst, tgtReg, load_bytes, extend_sign, MEM_TRANSACTION_NONE, regT),
         is_load_lower(isLowerLoad)
@@ -52,7 +52,7 @@ public:
 
         phys_int_regs_out = new uint16_t[count_phys_int_reg_out];
         isa_int_regs_out = new uint16_t[count_isa_int_reg_out];
-        
+
         isa_int_regs_out[0] = tgtReg;
         isa_int_regs_in[0]  = memAddrReg;
         isa_int_regs_in[1]  = tgtReg;

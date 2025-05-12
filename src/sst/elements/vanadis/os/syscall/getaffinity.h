@@ -40,7 +40,7 @@ public:
         setReturnSuccess(m_cpusetSize);
     }
 
- private:  
+ private:
     std::vector<uint8_t> m_mask;
     uint64_t m_cpusetSize;
 };

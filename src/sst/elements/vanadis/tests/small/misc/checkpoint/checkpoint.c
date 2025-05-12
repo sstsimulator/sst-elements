@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
         syscall(500);
 
         /* Only master thread does this */
-        if (tid == 0) 
+        if (tid == 0)
         {
             nthreads = omp_get_num_threads();
             omp_set_lock( &lock );

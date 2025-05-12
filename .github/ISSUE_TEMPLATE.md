@@ -5,7 +5,7 @@ New Issue for sst-elements
 
 2 - Describe how to reproduce
 
-3 - What Operating system(s) and versions 
+3 - What Operating system(s) and versions
 
 4 - What version of external libraries (Boost, MPI)
 

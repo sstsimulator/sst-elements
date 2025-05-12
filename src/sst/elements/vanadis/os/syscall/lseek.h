@@ -24,8 +24,8 @@ namespace Vanadis {
 
 class VanadisLseekSyscall : public VanadisSyscall {
 public:
-    VanadisLseekSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallLseekEvent* event ) 
-        : VanadisSyscall( os, coreLink, process, event, "lseek" ) 
+    VanadisLseekSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallLseekEvent* event )
+        : VanadisSyscall( os, coreLink, process, event, "lseek" )
     {
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-lseek] -> call is lseek( %" PRId32 " %" PRId64 " %" PRId32 " )\n",
                 event->getFileDescriptor(), event->getOffset(), event->getWhence() );
@@ -39,12 +39,12 @@ public:
 
             setReturnFail(-LINUX_EINVAL);
          } else {
-        
+
             off_t ret = lseek( fd, (off_t) event->getOffset(), (int) event->getWhence() );
-            m_output->verbose(CALL_INFO, 16, 0, "[syscall-lseek] ret=%" PRIu64 "\n",ret ); 
+            m_output->verbose(CALL_INFO, 16, 0, "[syscall-lseek] ret=%" PRIu64 "\n",ret );
             if ( -1 == ret  ) {
                 // need to map host errno values to vanadis exe errno values
-                assert(0); 
+                assert(0);
                 //setReturnFail(-LINUX_EINVAL);
             } else {
                 setReturnSuccess( ret );

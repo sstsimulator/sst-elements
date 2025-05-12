@@ -275,7 +275,7 @@ class L1CacheLine : public CacheLine {
         L1CacheLine(uint32_t size, unsigned int index) : CacheLine(size, index), LLSC_(false), LLSCTime_(0), userLock_(0), eventsWaitingForLock_(false) {
             info_ = new ReplacementInfo(index, I);
         }
-        virtual ~L1CacheLine() { 
+        virtual ~L1CacheLine() {
             delete info_;
         }
 
@@ -292,15 +292,15 @@ class L1CacheLine : public CacheLine {
         // LLSC
         void atomicStart(Cycle_t time, uint32_t tid) {
             if (!LLSC_) {
-                LLSC_ = true; 
-                LLSCTime_ = time; // To reduce starvation, this does not update on subsequent hits to an LL'd line 
+                LLSC_ = true;
+                LLSCTime_ = time; // To reduce starvation, this does not update on subsequent hits to an LL'd line
             }
             LLSCTidBuf_.insert(tid);
         }
 
-        void atomicEnd() { 
+        void atomicEnd() {
             if(LLSC_) {
-                LLSC_ = false; 
+                LLSC_ = false;
                 LLSCTime_ = 0;
                 LLSCTidBuf_.clear();
             }
@@ -313,7 +313,7 @@ class L1CacheLine : public CacheLine {
         uint64_t getLLSCTime() { return LLSC_ ?  LLSCTime_ : 0; }
         void incLock() { userLock_++; }
         void decLock() { userLock_--; }
-        
+
 
         // Waiting events
         bool getEventsWaitingForLock() { return eventsWaitingForLock_; }
@@ -349,7 +349,7 @@ class SharedCacheLine : public CacheLine {
             info_ = new CoherenceReplacementInfo(index, I, false, false);
         }
 
-        virtual ~SharedCacheLine() { 
+        virtual ~SharedCacheLine() {
              delete info_;
         }
 
