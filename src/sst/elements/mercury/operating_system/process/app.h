@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <mutex>
 #include <sst/core/params.h>
 
 #include <mercury/common/component.h>
@@ -245,6 +246,8 @@ class App : public Thread
   bool notify_;
 
   int rc_;
+
+  std::mutex app_run_mutex;
 
   struct dlopen_entry {
     void* handle;
