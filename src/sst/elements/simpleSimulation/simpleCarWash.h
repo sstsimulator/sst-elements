@@ -120,9 +120,11 @@ private:
     TimeConverter       tc;
     Clock::HandlerBase* Clock3Handler;
 
+#ifdef DISABLE_ONE_SHOTS
     // Variables to store OneShot Callback Handlers
     OneShot::HandlerBase* callback1Handler;
     OneShot::HandlerBase* callback2Handler;
+#endif
 
     std::string clock_frequency_str;
     int clock_count;
