@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <memory>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <array>
@@ -35,26 +36,23 @@ void signalHandler(int signum) {
 }
 
 int main(int argc, char *argv[]) {
-
+    // PIN Example:  mpilauncher 8 3 /path/to/pin -t fesimple -- ./myapp -i input1 --otherarg input2
+    // EPA Example:  mpilauncher 8 3 -- ./myapp.arielinst -i input1 --otherarg input2
     if (argc < 4 || std::string(argv[1]).compare("-H") == 0) {
-        std::cout << "Usage: " << argv[0] << " <nprocs> <tracerank> <pin-binary> [pin args] -- <program-binary> [program args]\n";
+        std::cout << "Usage: " << argv[0] << " <nprocs> <tracerank> [<pin-binary> [pin args]] -- <program-binary> [program args]\n";
         exit(1);
     }
 
+    // Set up signal handler
     signal(SIGTERM, signalHandler);
-
-    std::array<char, 128> buffer;
 
     // Get node that SST is running on.
     // All processes will run on the same node.
+    std::array<char, 128> buffer;
     gethostname(buffer.data(), 128);
-    /*
-    std::string pin_host = buffer.data();
-    size_t pos = pin_host.find('.');
-    std::string pin_host = pin_host.substr(0,pos);
-    */
     std::string host = buffer.data();
 
+    // Check inputs
     int procs = atoi(argv[1]);
     int tracerank = atoi(argv[2]);
 
@@ -64,134 +62,154 @@ int main(int argc, char *argv[]) {
     }
 
     if (tracerank < 0 || tracerank >= procs) {
-        printf("Error: %s: <tracerank> must be in [0,nprocs)\n", argv[0]);
+        printf("Error: %s: <trancerank> must be in [0,nprocs)\n", argv[0]);
         exit(1);
     }
 
-    // In order to trace the appropriate rank, determine how many
-    // should launch before the traced rank, and how many should launch after
-    int ranks_before = tracerank;
-    int ranks_after = procs - tracerank - 1;
-    if (ranks_after < 0) {
-        ranks_after = 0;
-    }
+    // To make it easier to build the final command, check if we are using
+    // pin or an EPA tool.
+    bool instrument_with_pin = true;
+    if (std::string(argv[3]).compare("--") == 0)
+        instrument_with_pin = false;
 
-    // `pinstring` will contain the command to launch pin and all of its arguments
-    // `binary` will contain the traced program and all of its arguments
-    std::string pinstring = "";
-    std::string binary = "";
-    bool getbinary = false;
+    // Build two commands -- the pin command (if it exists) which describes how
+    // to use pin, and the target command, which describes how to run the
+    // actual application.
+    //
+    // Parse the arguments. Build the pin command first (until we hit the --).
+    // Then build the target command. If there is no pin, the pin command will
+    // just be "-- "
+    std::string pin_cmd = "";
+    std::string target_cmd = "";
+    bool building_pin = true; // Keep track of which command we are building
     std::string arg;
+
     for (int i = 3; i < argc; i++) {
         arg = argv[i];
-
-        // Pin string
-        pinstring += arg;
-        pinstring += " ";
-
-        // Binary string
-        if (getbinary) {
-            binary += arg;
-            binary += " ";
+        if (building_pin) {
+            pin_cmd += arg;
+            pin_cmd += " ";
+        } else {
+            target_cmd += arg;
+            target_cmd += " ";
         }
 
         if (arg == "--")
-            getbinary = true;
+            building_pin = false;
     }
 
-    // Build the mpirun command
-    std::string mpicmd = "mpirun --oversubscribe";
+    // Build the final MPI Command
+    std::stringstream mpi_cmd;
+    mpi_cmd << "mpirun --oversubscribe";
 
-    if (ranks_before > 0) {
-        mpicmd += " -H ";
-        mpicmd += host;
-        mpicmd += " -np ";
-        mpicmd += std::to_string(ranks_before);
-        mpicmd += " ";
-        mpicmd += binary;
-        mpicmd += " : ";
-    }
+    if (instrument_with_pin) {
+        // For PIN instrumentation, we need to run the regular binary, but
+        // instrument the trace rank with the pintool (fesimple). Do this by
+        // starting the ranks before the tracerank, adding the tracerank, and
+        // adding the remaining ranks
+        // e.g. mpirun -np M ./myapp -i input1 --anotherarg input2 :
+        //      -np 1 pin -folow_execv -t fesimple.so [fesimple args] --
+        //          ./myapp -i input1 --anotherarg input2 :
+        //      -np N-M-1 ./myapp -i input1 --anotherarg input2
 
-    mpicmd += " -H ";
-    mpicmd += host;
-    mpicmd += " -np ";
-    mpicmd += std::to_string(1);
-    mpicmd += " ";
-    mpicmd += pinstring;
+        // In order to trace the appropriate rank, determine how many
+        // should launch before the traced rank, and how many should launch
+        // after
+        int ranks_before = tracerank;
+        int ranks_after = procs - tracerank - 1;
+        if (ranks_after < 0) {
+            ranks_after = 0;
+        }
 
-    if (ranks_after > 0) {
-        mpicmd += " : -H ";
-        mpicmd += host;
-        mpicmd += " -np ";
-        mpicmd += std::to_string(ranks_after);
-        mpicmd += " ";
-        mpicmd += binary;
-    }
+        // Add processes before the traced rank
+        if (ranks_before > 0) {
+            mpi_cmd << " -H " << host
+                    << " -np " << ranks_before
+                    << " " << target_cmd
+                    << " : ";
+        }
 
-    int use_system = 0;
-    if (use_system) {
-        printf("Wrapper starting...\n");
-        printf("Arg to system: %s\n", mpicmd.c_str());
-        system(mpicmd.c_str());
-        printf("Wrapper complete...\n");
+        // Add the traced process
+        mpi_cmd << " -H " << host
+                << " -np 1"
+                << " " << pin_cmd // Should include "--"
+                << " " << target_cmd;
+
+        // Add processes after the traced rank
+        if (ranks_after > 0) {
+            mpi_cmd << " : -H " << host
+                    << " -np " << ranks_after
+                    << " " << target_cmd;
+        }
     } else {
-        // Use execve to make sure that the child processes exits when killed by SST
-        // I am lazily assuming that there are no spaces in any of the arguments.
-
-        // Get a mutable copy
-        char * cmd_copy = new char[mpicmd.length() + 1];
-        std::strcpy(cmd_copy, mpicmd.c_str());
-
-        // Calculate an upper bound for the number of arguments
-        const int MAX_ARGS = std::strlen(cmd_copy) / 2 + 2;
-
-        // Allocate memory for the pointers
-        char** argv = new char*[MAX_ARGS];
-        for (int i = 0;i < MAX_ARGS; i++) {
-            argv[i] = NULL;
-        }
-
-        // Temporary variable to hold each word
-        char* word;
-
-        // Counter for the number of words
-        int argc = 0;
-
-        // Use strtok to split the string by spaces
-        word = std::strtok(cmd_copy, " ");
-        while (word != nullptr) {
-            // Allocate memory for the word and copy it
-            argv[argc] = new char[std::strlen(word) + 1];
-            std::strcpy(argv[argc], word);
-
-            // Move to the next word
-            word = std::strtok(nullptr, " ");
-            argc++;
-        }
-
-        assert(argv[argc] == NULL);
-
-        printf("MPI Command: %s\n", mpicmd.c_str());
-
-        // Forking child process so we can use the parent to kill it if we need to
-        pid = fork();
-        if (pid == -1) {
-            printf("mpilauncher.cc: fork error: %d, %s\n", errno, strerror(errno));
-            exit(-1);
-        } else if (pid > 1) { // Parent
-            int status;
-            waitpid(pid, &status, 0);
-            if (!WIFEXITED(status)) {
-                printf("Warning: mpilauncher.cc: Forked process did not exit normally.\n");
-            } if (WEXITSTATUS(status) != 0) {
-                printf("Warning: mpilauncher.cc: Forked process has non-zero exit code: %d\n", WEXITSTATUS(status));
-            }
-            exit(0);
-        } else { // Child
-            int ret = execvp(argv[0], argv);
-            printf("Error: mpilauncher.cc: This should be unreachable. execvp error: %d, %s\n", errno, strerror(errno));
-            exit(1);
-        }
-
+        // For EPA-based instrumentation, then run the instrumented application
+        // just like you would run the original application
+        // e.g. mpirun -np N ./myapp.arielinst -i input1 --anotherarg input2
+        mpi_cmd << " -H " << host
+               << " -np " << procs
+               << " " << target_cmd;
     }
+
+
+    // Execute the command
+    // Use execve to make sure that the child processes exits when killed by SST
+    // I am lazily assuming that there are no spaces in any of the arguments.
+    printf("MPI Command: %s\n", mpi_cmd.str().c_str());
+
+    // Get a mutable copy
+    char* cmd_copy = new char[mpi_cmd.str().length() + 1];
+    std::strcpy(cmd_copy, mpi_cmd.str().c_str());
+
+    // Calculate an upper bound for the number of arguments
+    const int MAX_ARGS = std::strlen(cmd_copy) / 2 + 2;
+
+    // Allocate memory for the pointers
+    char** exec_argv = new char*[MAX_ARGS];
+    for (int i = 0;i < MAX_ARGS; i++) {
+        exec_argv[i] = NULL;
+    }
+
+    // Temporary variable to hold each word
+    char* word;
+
+    // Counter for the number of words
+    int exec_argc = 0;
+
+    // Use strtok to split the string by spaces
+    word = std::strtok(cmd_copy, " ");
+    while (word != nullptr) {
+        // Allocate memory for the word and copy it
+        exec_argv[exec_argc] = new char[std::strlen(word) + 1];
+        std::strcpy(exec_argv[exec_argc], word);
+
+        // Move to the next word
+        word = std::strtok(nullptr, " ");
+        exec_argc++;
+    }
+
+    assert(exec_argv[exec_argc] == NULL);
+
+    // Forking child process so we can use the parent to kill it if we need to
+    pid = fork();
+    if (pid == -1) {
+        printf("mpilauncher.cc: fork error: %d, %s\n", errno, strerror(errno));
+        exit(-1);
+    } else if (pid > 1) { // Parent
+        int status;
+        waitpid(pid, &status, 0);
+        if (!WIFEXITED(status)) {
+            printf("Warning: mpilauncher.cc: Forked process did not exit normally.\n");
+        } if (WEXITSTATUS(status) != 0) {
+            printf("Warning: mpilauncher.cc: Forked process has non-zero exit code: %d\n", WEXITSTATUS(status));
+        }
+        exit(0);
+    } else { // Child
+        int ret = execvp(exec_argv[0], exec_argv);
+        printf("Error: mpilauncher.cc: This should be unreachable. execvp error: %d, %s\n", errno, strerror(errno));
+        exit(1);
+    }
+
+    // TODO cleanup?
+    // Should not arrive here
+    return 1;
 }

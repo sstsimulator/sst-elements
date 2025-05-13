@@ -6,6 +6,25 @@ import os
 import inspect
 
 
+##############################################
+# EPA Frontend Functions not yet in sst-core #
+##############################################
+def is_EPAX_loaded() -> bool:
+    # Check if arm-based epa tool is available
+    epaxdir_found = False
+    epax_path = os.environ.get('EPAX_ROOT')
+    if epax_path is not None:
+        epaxdir_found = os.path.isdir(epax_path)
+    return epaxdir_found
+
+def is_PEBIL_loaded() -> bool:
+    # Check if x86-based epa tool is available
+    pebildir_found = False
+    pebil_path = os.environ.get('PEBIL_ROOT')
+    if pebil_path is not None:
+        pebildir_found = os.path.isdir(pebil_path)
+    return pebildir_found
+
 class testcase_Ariel(SSTTestCase):
 
     def setUp(self):
@@ -25,42 +44,78 @@ class testcase_Ariel(SSTTestCase):
                 self.assertTrue(s in lines, "Output {0} does not contain expected line {1}".format(filename, s))
 
     pin_loaded = testing_is_PIN_loaded()
+    epax_loaded = is_EPAX_loaded()
+    pebil_loaded = is_PEBIL_loaded()
+    epa_loaded = epax_loaded or pebil_loaded
 
-    pin_error_msg = "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist."
+    pin_error_msg = "Ariel: PIN tests require PIN, but Env Var 'INTEL_PIN_DIRECTORY' is not found or path does not exist."
+    epa_error_msg = "Ariel: EPA tests require PEBIL or EPAX, but Env Var 'PEBIL_ROOT' or 'EPAX_ROOT' is not found or path does not exist."
 
     # This is not an exhausitve list of tests, but it covers most of the options.
 
     @unittest.skipIf(not pin_loaded, pin_error_msg)
-    def test_testio_01(self):
+    def test_testio_01_pin(self):
         self.ariel_Template("redirect_out")
 
+    @unittest.skipIf(not epa_loaded, epa_error_msg)
+    def test_testio_01_epa(self):
+        self.ariel_Template("redirect_out", frontend="epa")
+
     @unittest.skipIf(not pin_loaded, pin_error_msg)
-    def test_testio_02(self):
+    def test_testio_02_pin(self):
         self.ariel_Template("redirect_err")
 
+    @unittest.skipIf(not epa_loaded, epa_error_msg)
+    def test_testio_02_epa(self):
+        self.ariel_Template("redirect_err", frontend="epa")
+
     @unittest.skipIf(not pin_loaded, pin_error_msg)
-    def test_testio_03(self):
+    def test_testio_03_pin(self):
         self.ariel_Template("redirect_out redirect_err")
 
+    @unittest.skipIf(not epa_loaded, epa_error_msg)
+    def test_testio_03_epa(self):
+        self.ariel_Template("redirect_out redirect_err", frontend="epa")
+
     @unittest.skipIf(not pin_loaded, pin_error_msg)
-    def test_testio_04(self):
+    def test_testio_04_pin(self):
         self.ariel_Template("redirect_in")
 
+    @unittest.skipIf(not epa_loaded, epa_error_msg)
+    def test_testio_04_epa(self):
+        self.ariel_Template("redirect_in", frontend="epa")
+
     @unittest.skipIf(not pin_loaded, pin_error_msg)
-    def test_testio_05(self):
+    def test_testio_05_pin(self):
         self.ariel_Template("redirect_in redirect_out")
 
+    @unittest.skipIf(not epa_loaded, epa_error_msg)
+    def test_testio_05_epa(self):
+        self.ariel_Template("redirect_in redirect_out", frontend="epa")
+
     @unittest.skipIf(not pin_loaded, pin_error_msg)
-    def test_testio_06(self):
+    def test_testio_06_pin(self):
         self.ariel_Template("redirect_in redirect_err")
 
-    @unittest.skipIf(not pin_loaded, pin_error_msg)
-    def test_testio_07(self):
-        self.ariel_Template("append_redirect_out")
+    @unittest.skipIf(not epa_loaded, epa_error_msg)
+    def test_testio_06_epa(self):
+        self.ariel_Template("redirect_in redirect_err", frontend="epa")
 
     @unittest.skipIf(not pin_loaded, pin_error_msg)
-    def test_testio_08(self):
+    def test_testio_07_pin(self):
+        self.ariel_Template("append_redirect_out")
+
+    @unittest.skipIf(not epa_loaded, epa_error_msg)
+    def test_testio_07_epa(self):
+        self.ariel_Template("append_redirect_out", frontend="epa")
+
+    @unittest.skipIf(not pin_loaded, pin_error_msg)
+    def test_testio_08_pin(self):
         self.ariel_Template("append_redirect_err")
+
+    @unittest.skipIf(not epa_loaded, epa_error_msg)
+    def test_testio_08_epa(self):
+        self.ariel_Template("append_redirect_err", frontend="epa")
 
     #@unittest.skipIf(not pin_loaded, pin_error_msg)
     #@unittest.skipIf(host_os_is_osx(), "Ariel: Open MP is not supported on OSX.")
@@ -69,7 +124,7 @@ class testcase_Ariel(SSTTestCase):
     #    self.ariel_Template("ariel_snb")
 #####
 
-    def ariel_Template(self, args, testtimeout=30):
+    def ariel_Template(self, args, testtimeout=30, frontend="pin"):
         # Set the paths to the various directories
         testcase = inspect.stack()[1][3] # name the test after the calling function
 
@@ -85,8 +140,13 @@ class testcase_Ariel(SSTTestCase):
         ArielElementTestIOApp = "{0}/testio".format(ArielElementTestIODir)
         RefDir = "{0}/ref".format(ArielElementTestIODir)
 
+        # If epa frontend, use instrumented application
+        if frontend == "epa":
+            ArielElementTestIOApp = ArielElementTestIOApp + ".arielinst"
+
         # Set the Path to the stream applications
         os.environ["ARIEL_EXE"] = ArielElementTestIOApp
+        log_debug("ARIEL_EXE = {0}".format(ArielElementTestIOApp))
 
         libpath = os.environ.get("LD_LIBRARY_PATH")
         if libpath:
@@ -94,11 +154,13 @@ class testcase_Ariel(SSTTestCase):
         else:
             os.environ["LD_LIBRARY_PATH"] = ArielElementAPIDir
 
+        # Set the frontend (epa or pin)
+        os.environ["ARIEL_TEST_FRONTEND"] = frontend
+
         # Set the various file paths
         testDataFileName=("test_Ariel_{0}".format(testcase))
 
         sdlfile = "{0}/runtestio.py".format(ArielElementTestIODir)
-        reffile = "{0}/tests/refFiles/{1}.out".format(ArielElementTestIODir, testDataFileName)
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
@@ -106,7 +168,6 @@ class testcase_Ariel(SSTTestCase):
 
         log_debug("testcase = {0}".format(testcase))
         log_debug("sdl file = {0}".format(sdlfile))
-        log_debug("ref file = {0}".format(reffile))
         log_debug("out file = {0}".format(outfile))
         log_debug("err file = {0}".format(errfile))
 
@@ -170,15 +231,19 @@ class testcase_Ariel(SSTTestCase):
         if "append_redirect_err" in args:
             gold_stderr = "{}/ref/default-in_appendstderr.txt".format(ArielElementTestIODir)
 
+        log_debug("gold_stdout = {0}".format(gold_stdout))
+        log_debug("gold_stderr = {0}".format(gold_stderr))
 
         # Check that the specified out and err files contain the program output. There is also
         # some Ariel output which may change in the future so we don't diff the files. We just
         # check to see that the expected lines are there.
         if "redirect_out" in args or "append_redirect_out" in args:
+            log_debug("redirect_out_file = {0}/app_stdout.txt".format(ArielElementTestIODir))
             with open(gold_stdout, 'r') as gold:
                 self.file_contains("{0}/app_stdout.txt".format(ArielElementTestIODir), gold.readlines())
 
         if "redirect_err" in args or "append_redirect_err" in args:
+            log_debug("redirect_err_file = {0}/app_stderr.txt".format(ArielElementTestIODir))
             with open(gold_stderr, 'r') as gold:
                 self.file_contains("{0}/app_stderr.txt".format(ArielElementTestIODir), gold.readlines())
 
@@ -204,3 +269,26 @@ class testcase_Ariel(SSTTestCase):
         # Check that everything compiled OK
         self.assertTrue(rtn1.result() == 0, "testio binary failed to compile")
 
+        # Everything compiled OK. Check if we need to check for epa binaries
+        epax_loaded = is_EPAX_loaded()
+        pebil_loaded = is_PEBIL_loaded()
+        epa_loaded = epax_loaded or pebil_loaded
+
+        if not epa_loaded:
+            return
+
+        # If doing epa frontend tests, check if testio is instrumented.
+        # If not, instrument it
+        if (not os.path.exists(self.ArielElementTestIODir + "/testio.arielinst")):
+            # Instrument with pebil
+            if (pebil_loaded):
+                cmd = "pebil --tool ArielIntercept --app testio --inp +"
+                rtn2 = OSCommand(cmd, set_cwd=self.ArielElementTestIODir).run()
+                log_debug("Ariel ariel/tests/testIO pebil result = {0}; output =\n{1}".format(rtn2.result(), rtn2.output()))
+                if rtn2.result() != 0:
+                    log_debug("Ariel {0} pebil returned non-zero exit code. Error:\n{1}".format(self.ArielElementTestIODir, rtn2.error()))
+            # Instrument with epax
+            else:
+                self.assertTrue(False, "epax commands not implemented yet")
+            # Check that everything instrumented OK
+            self.assertTrue(rtn2.result() == 0, "testio app failed to instrument.\nResult was {0}.\nStandard out was:\n{1}\nStandard err was:\n{2}".format(rtn2.result(), rtn2.output(), rtn2.error()))
