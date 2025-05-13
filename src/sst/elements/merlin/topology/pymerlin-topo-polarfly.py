@@ -18,19 +18,16 @@ import itertools
 
 try:
     from sympy.polys.domains import ZZ
-except:
+except ImportError:
     pass
-    #print('--> MODULE NOT FOUND: sympy.polys.domains')
 try:
     from sympy.polys.galoistools import (gf_irreducible_p, gf_add, gf_mul, gf_rem)
-except:
+except ImportError:
     pass
-    #print('--> MODULE NOT FOUND: sympy.polys.galoistools')
 try:
     import networkx as nx
-except:
+except ImportError:
     pass
-    #print('--> MODULE NOT FOUND: networkx')
 
 
 #############################################
@@ -41,10 +38,10 @@ class GF():
     def __init__(self, pp):
 
         if not ('sympy.polys.galoistools' in sys.modules):
-            raise Exception('--> Did not load Sympy Polys Galoistools : module required for field construction')
+            raise ImportError('--> Did not load Sympy Polys Galoistools : module required for field construction')
 
         if not ('sympy.polys.domains' in sys.modules):
-            raise Exception('--> Did not load Sympy Polys Domains : module required for field construction')
+            raise ImportError('--> Did not load Sympy Polys Domains : module required for field construction')
 
 
         self.pp = int(pp)
