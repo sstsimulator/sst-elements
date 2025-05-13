@@ -13,6 +13,12 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <cassert>
+#include <cstdint>
+#include <cstdio>
+#include <utility>
+#include <vector>
+
 class NWayCache {
 public:
     NWayCache( int assoc, uint32_t nSets, int pageSize ) : m_pageShift(0), m_setShift(0), m_setMask( nSets-1 ) {

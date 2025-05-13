@@ -17,8 +17,10 @@
 #ifndef _H_EMBER_SHMEM_REDUCTION
 #define _H_EMBER_SHMEM_REDUCTION
 
-#include <type_traits>
+#include <sstream>
+#include <string>
 #include <strings.h>
+#include <type_traits>
 #include "shmem/emberShmemGen.h"
 #include <cxxabi.h>
 

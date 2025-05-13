@@ -20,6 +20,8 @@
 #include "inst/vfault.h"
 #include "inst/vinsttype.h"
 
+#include <cstdint>
+
 namespace SST {
 namespace Vanadis {
 

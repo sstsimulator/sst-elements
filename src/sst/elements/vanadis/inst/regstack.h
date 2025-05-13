@@ -16,6 +16,10 @@
 #ifndef _H_VANADIS_REG_STACK
 #define _H_VANADIS_REG_STACK
 
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+
 namespace SST {
 namespace Vanadis {
 

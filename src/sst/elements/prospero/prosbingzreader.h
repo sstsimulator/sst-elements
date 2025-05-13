@@ -20,6 +20,8 @@
 #include "prosreader.h"
 #include "zlib.h"
 
+#include <cstdint>
+
 namespace SST {
 namespace Prospero {
 

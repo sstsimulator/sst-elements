@@ -17,11 +17,15 @@
 #ifndef _H_EMBER_SHMEM_FAM_SCATTERV
 #define _H_EMBER_SHMEM_FAM_SCATTERV
 
+#include <cstdint>
+#include <cstdio>
+#include <string>
 #include <strings.h>
+#include <vector>
 #include "shmem/emberShmemGen.h"
-#include <unistd.h>
 #include <pthread.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include "rng/xorshift.h"
 
 #include <unistd.h>
