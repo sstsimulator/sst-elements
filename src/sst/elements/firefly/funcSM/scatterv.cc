@@ -84,7 +84,7 @@ void ScattervFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 	}
 	if ( 0 != m_event->root && m_event->root == m_info->getGroup(m_event->group)->getMyRank() ) {
 
-		// root is not 0, we need to swap new root data with rank 0 
+		// root is not 0, we need to swap new root data with rank 0
 
 		char* backing = (char*) m_event->sendBuf.getBacking();
 
@@ -104,7 +104,7 @@ void ScattervFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 			// calc ptr of new root rank's data
 			void *ptr = backing + offset;
 
-			// copy new root rank data to rank 0 
+			// copy new root rank data to rank 0
 			memcpy( backing, ptr ,sendSize );
 
 			// copy rank 0 data to new root rank

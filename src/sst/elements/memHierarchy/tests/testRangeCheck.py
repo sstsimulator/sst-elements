@@ -206,7 +206,7 @@ if __name__ == "__main__":
              (node[n].memNIC, "port", "1ns")
          )
 
-# Enable statistics                                                                
+# Enable statistics
 # sst.setStatisticLoadLevel(7)
 # sst.setStatisticOutput("sst.statOutputConsole")
 # for a in componentlist:

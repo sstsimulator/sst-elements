@@ -216,7 +216,7 @@ link0_l1_l2.connect((l1_cache0, "lowlink", "100ps"), (l2_cache0_ml, "port", "100
 link1_l1_l2.connect((l1_cache1, "lowlink", "100ps"), (l2_cache1_ml, "port", "100ps"))
 link2_l1_l2.connect((l1_cache2, "lowlink", "100ps"), (l2_cache2_ml, "port", "100ps"))
 link3_l1_l2.connect((l1_cache3, "lowlink", "100ps"), (l2_cache3_ml, "port", "100ps"))
-    
+
 
 l3cache_base_params = {
     "access_latency_cycles" : 7,

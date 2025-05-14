@@ -56,14 +56,14 @@ public:
 		switch(params_type) {
 		case 1:
 			d_type = TYPE_INT32;
-			configureIterations( params.find<int32_t>("start", 0), 
+			configureIterations( params.find<int32_t>("start", 0),
 				params.find<int32_t>("step", 1),
 				params.find<int32_t>("end", std::numeric_limits<int32_t>::max() ) );
 			func = std::bind( &SST::Serrano::SerranoIteratorUnit::execute_int32, this );
 			break;
 		case 2:
 			d_type = TYPE_INT64;
-			configureIterations( params.find<int64_t>("start", 0), 
+			configureIterations( params.find<int64_t>("start", 0),
 				params.find<int64_t>("step", 1),
 				params.find<int64_t>("end", std::numeric_limits<int64_t>::max() ) );
 			func = std::bind( &SST::Serrano::SerranoIteratorUnit::execute_int64, this );
@@ -120,7 +120,7 @@ protected:
 	void* current_value;
 	void* max_value;
 	void* step_value;
-	bool keep_processing;	
+	bool keep_processing;
 
 	void execute_int32() {
 		executeStep<int32_t>();
@@ -153,7 +153,7 @@ protected:
 			keep_processing = false;
 		}
 	}
-	
+
 	template<class T> void configureIterations( const T start, const T step, const T end ) {
 		current_value       = (void*) ( new T[1] );
 		max_value           = (void*) ( new T[1] );

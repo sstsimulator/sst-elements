@@ -67,11 +67,11 @@ StackAlloc::chunk::chunk(size_t stacksize, size_t suggested_chunk_size, bool pro
   }
 }
 
-void* 
+void*
 StackAlloc::chunk::getNextStack() {
   if(next_stack_offset_ + step_size_ >= size_) {
     return nullptr;
-  } 
+  }
 
   void* rv = addr_ + next_stack_offset_;
   next_stack_offset_ += step_size_;

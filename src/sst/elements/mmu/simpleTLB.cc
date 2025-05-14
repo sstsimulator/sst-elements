@@ -42,15 +42,15 @@ SimpleTLB::SimpleTLB(SST::ComponentId_t id, SST::Params& params) : TLB(id,params
     m_tlbSize = params.find<int>("num_tlb_entries_per_thread", 0 );
     if ( 0 == m_tlbSize ) {
         m_dbg.fatal(CALL_INFO, -1, "Error: num_tlb_entreis_per_thread is not set\n");
-    } 
+    }
 
     m_tlbSetSize = params.find<int>("tlb_set_size", 0 );
     if ( 0 == m_tlbSetSize ) {
         m_dbg.fatal(CALL_INFO, -1, "Error: tlb_set_size is not set\n");
-    } 
+    }
 
     m_minVirtAddr = params.find<uint64_t>("minVirtAddr",4096);
-    m_maxVirtAddr = params.find<uint64_t>("maxVirtAddr",0x80000000); 
+    m_maxVirtAddr = params.find<uint64_t>("maxVirtAddr",0x80000000);
 
     m_mmuLink = configureLink( "mmu", new Event::Handler2<SimpleTLB,&SimpleTLB::handleMMUEvent>(this) );
     if ( nullptr == m_mmuLink ) {
@@ -69,15 +69,15 @@ SimpleTLB::SimpleTLB(SST::ComponentId_t id, SST::Params& params) : TLB(id,params
     m_tlbIndexShift = log2( m_tlbSize );
 }
 
-void SimpleTLB::init(unsigned int phase) 
+void SimpleTLB::init(unsigned int phase)
 {
     m_dbg.debug(CALL_INFO,2,0,"phase=%d\n",phase);
     Event* ev;
-    while ((ev = m_mmuLink->recvUntimedData())) { 
+    while ((ev = m_mmuLink->recvUntimedData())) {
         auto initEvent = dynamic_cast<TlbInitEvent*>(ev);
         if ( nullptr == initEvent ) {
             m_dbg.fatal(CALL_INFO, -1, "Error: received unexpected event in init()\n");
-        } 
+        }
         m_pageShift = initEvent->getPageShift();
         m_pageSize = 1 << m_pageShift;
         m_dbg.debug(CALL_INFO,1,0,"pageShift=%d pageSize=%d\n",m_pageShift, 1 << m_pageShift);
@@ -95,7 +95,7 @@ void SimpleTLB::handleMMUEvent( Event* ev ) {
             return;
         } else {
             assert(0);
-        } 
+        }
     }
 
     m_dbg.debug(CALL_INFO,1,0,"reqId=%#" PRIx64 " ppn=%zu perms=%#x\n", req->getReqId(), req->getPPN(), req->getPerms() );
@@ -106,20 +106,20 @@ void SimpleTLB::handleMMUEvent( Event* ev ) {
     uint64_t physAddr;
     if( req->isSuccess() ) {
         physAddr = req->getPPN() << m_pageShift | blockOffset( record->virtAddr );
-        fillTlbEntry( record->hwThreadId, vpn, req->getPPN(), req->getPerms() );  
+        fillTlbEntry( record->hwThreadId, vpn, req->getPPN(), req->getPerms() );
     } else {
         physAddr = -1;
-    } 
+    }
 
     m_dbg.debug(CALL_INFO,1,0,"virtAddr=%#" PRIx64 " physAddr=%#" PRIx64 " ppn=%zu perms=%#x\n", record->virtAddr, physAddr,  req->getPPN(), req->getPerms() );
 
-    // send the first fill response 
+    // send the first fill response
     m_selfLink->send( 0, new SelfEvent( record->reqId, physAddr ));
     auto& waiting = m_waitingMiss[record->hwThreadId];
     waiting[vpn].pop();
     delete record;
 
-    // while there are other misses for this page send them 
+    // while there are other misses for this page send them
     while ( ! waiting[vpn].empty() ) {
         auto record = reinterpret_cast<TlbRecord*>(waiting[vpn].front());
 
@@ -131,7 +131,7 @@ void SimpleTLB::handleMMUEvent( Event* ev ) {
             assert(entry);
             if ( ! checkPerms( record->perms, entry->perms() ) ) {
                 m_dbg.debug(CALL_INFO,1,0,"miss vpn=%zu want=%#" PRIx32 " have=%#" PRIx32 "\n",vpn, record->perms, entry->perms());
- 
+
                 auto id = reinterpret_cast<RequestID>( record );
                 m_mmuLink->send( 0, new TlbMissEvent( id, record->hwThreadId, vpn, record->perms, record->instPtr, record->virtAddr) );
                 delete ev;
@@ -159,7 +159,7 @@ void SimpleTLB::getVirtToPhys( RequestID reqId, int hwThreadId, uint64_t virtAdd
         return;
     }
 
-    auto& waiting = m_waitingMiss[hwThreadId]; 
+    auto& waiting = m_waitingMiss[hwThreadId];
 
     TlbEntry* entry = findTlbEntry( hwThreadId, vpn );
 

@@ -2,7 +2,7 @@
 
 Osseous is a generic RTL Component template, a major portion of ERAS framework, which is updated based on the user requirement to generate dynamically loadable component with SST. The automation flow of the ERAS framework set up by the parser takes in the generic RTL template and C-model header as input and emits final dynamically loadable SST component library integrable with SST.
 
-The repository contain _osseous_ and an example of dynamically loadable component formed out of osseous. 
+The repository contain _osseous_ and an example of dynamically loadable component formed out of osseous.
 Currently, the example is a simple vector shift register(_vecshiftreg_).
 
 ```
@@ -31,7 +31,7 @@ Note that Ariel and its links with vecshiftreg has to be specified in python con
 ```
 osseous/tests/testbench.c
 ```
-Provided testbench (_testbench.c_) contains both non-RTL computations (weighted matrix addition) and RTL testvectors. 
+Provided testbench (_testbench.c_) contains both non-RTL computations (weighted matrix addition) and RTL testvectors.
 It has following APIs:
 
 **User APIs:**

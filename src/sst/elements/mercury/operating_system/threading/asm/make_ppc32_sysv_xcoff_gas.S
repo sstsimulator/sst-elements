@@ -1,6 +1,6 @@
 	.globl	make_fcontext[DS]
 	.globl .make_fcontext[PR]
-	.align 2 
+	.align 2
 	.csect  make_fcontext[DS]
 make_fcontext:
 	.long .make_fcontext[PR]
@@ -26,8 +26,8 @@ make_fcontext:
 
     # compute address of returned transfer_t
     addi  0, 3, 100
-    mr    4, 0 
-    stw   4, 76(3) 
+    mr    4, 0
+    stw   4, 76(3)
 
     # load LR
     mflr  0
@@ -37,7 +37,7 @@ make_fcontext:
     # load LR into R4
     mflr  4
     # compute abs address of label .L_finish
-    addi  4, 4, .L_finish - .Label 
+    addi  4, 4, .L_finish - .Label
     # restore LR
     mtlr  0
     # save address of finish as return-address for context-function

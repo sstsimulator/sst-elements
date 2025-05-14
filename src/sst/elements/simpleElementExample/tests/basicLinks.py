@@ -25,7 +25,7 @@ component2 = sst.Component("c2", "simpleElementExample.basicLinks")
 component3 = sst.Component("c3", "simpleElementExample.basicLinks")
 
 ### Parameterize the components.
-# Run 'sst-info simpleElementExample.basicLinks' at the command line 
+# Run 'sst-info simpleElementExample.basicLinks' at the command line
 # to see parameter documentation
 component0.addParams({
     "eventsToSend" : 50,
@@ -75,7 +75,7 @@ handle_link1.connect( (component1, "port_handler", "10ns"), (component3, "port_h
 
 # For port_vector%d, connect each component to each other component
 # There is no limit on the number of port_vectorX links per component
-# The Component is written to look for contiguous port numbers so we must 
+# The Component is written to look for contiguous port numbers so we must
 # ensure the numbering here is contiguous or the Component won't discover
 # the links correctly
 
@@ -103,7 +103,7 @@ port_vector5.connect( (component1, "port_vector2", "1ns"), (component3, "port_ve
 sst.setStatisticLoadLevel(7)
 
 # Determine where statistics should be sent
-sst.setStatisticOutput("sst.statOutputConsole") 
+sst.setStatisticOutput("sst.statOutputConsole")
 
 # Enable statistics on both components
 sst.enableAllStatisticsForComponentType("simpleElementExample.basicLinks")

@@ -97,7 +97,7 @@ sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
 for a in componentlist:
     sst.enableAllStatisticsForComponentType(a)
-     
+
 
 # Define the simulation links
 link_cpu0_l1cache_link = sst.Link("link_cpu0_l1cache_link")

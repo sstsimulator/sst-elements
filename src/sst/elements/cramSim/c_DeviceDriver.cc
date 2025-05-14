@@ -67,7 +67,7 @@ c_DeviceDriver::c_DeviceDriver(ComponentId_t id, Params& params, Output* out, st
 void c_DeviceDriver::build(Params& params) {
     // read params here
     bool l_found = false;
-    
+
         output = new SST::Output("", 1, 0, SST::Output::STDOUT);
 
     k_useDualCommandBus = (uint32_t) params.find<uint32_t>("boolDualCommandBus", 0, l_found);
@@ -363,7 +363,7 @@ void c_DeviceDriver::build(Params& params) {
             if (m_cmdTraceOFStream) {
                 m_cmdTraceStreamBuf = m_cmdTraceOFStream.rdbuf();
             } else {
-                output->output("Failed to open cmd trace output file %s, redirecting to stdout\n", 
+                output->output("Failed to open cmd trace output file %s, redirecting to stdout\n",
                                         k_cmdTraceFileName.c_str());
                 m_cmdTraceStreamBuf = std::cout.rdbuf();
             }

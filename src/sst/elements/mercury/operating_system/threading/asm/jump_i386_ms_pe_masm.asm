@@ -25,10 +25,10 @@
 .code
 
 jump_fcontext PROC BOOST_CONTEXT_EXPORT
-    push  ebp  ; save EBP 
-    push  ebx  ; save EBX 
-    push  esi  ; save ESI 
-    push  edi  ; save EDI 
+    push  ebp  ; save EBP
+    push  ebx  ; save EBX
+    push  esi  ; save ESI
+    push  edi  ; save EDI
 
     assume  fs:nothing
     ; load NT_TIB into ECX
@@ -60,7 +60,7 @@ jump_fcontext PROC BOOST_CONTEXT_EXPORT
 
     ; firstarg of jump_fcontext() == fcontext to jump to
     mov  ecx, [esp+028h]
-    
+
     ; restore ESP (pointing to context-data) from EAX
     mov  esp, ecx
 
@@ -89,9 +89,9 @@ jump_fcontext PROC BOOST_CONTEXT_EXPORT
     pop  ecx
     mov  [edx], ecx
 
-    pop  edi  ; save EDI 
-    pop  esi  ; save ESI 
-    pop  ebx  ; save EBX 
+    pop  edi  ; save EDI
+    pop  esi  ; save ESI
+    pop  ebx  ; save EBX
     pop  ebp  ; save EBP
 
     ; return transfer_t

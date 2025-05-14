@@ -110,7 +110,7 @@ public:
 private:
     const int32_t    max_capacity;
     int32_t          stack_top;
-    
+
     uint16_t* regs;
 };
 

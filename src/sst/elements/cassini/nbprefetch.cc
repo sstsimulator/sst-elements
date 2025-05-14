@@ -78,7 +78,7 @@ void NextBlockPrefetcher::serialize_order(SST::Core::Serialization::serializer& 
     CacheListener::serialize_order(ser);
 
     SST_SER(registeredCallbacks);
-    SST_SER(blockSize);    
+    SST_SER(blockSize);
     SST_SER(statPrefetchEventsIssued);
     SST_SER(statMissEventsProcessed);
     SST_SER(statHitEventsProcessed);

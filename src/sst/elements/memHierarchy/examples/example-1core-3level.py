@@ -16,7 +16,7 @@ DEBUG_LEVEL = 10
 cpu = sst.Component("core", "memHierarchy.standardCPU")
 cpu.addParams({
     "memFreq" : 2,          # On average, issue requests every 2 cycles
-    "memSize" : "1MiB",     # Use memory addresses between 0 & 1MiB 
+    "memSize" : "1MiB",     # Use memory addresses between 0 & 1MiB
     "verbose" : 0,          # No extra output
     "clock" : "3.5GHz",     # Run at 3.5GHz
     "rngseed" : 111,        # Random seed for access type and address generation

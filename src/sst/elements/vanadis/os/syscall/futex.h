@@ -28,7 +28,7 @@ public:
     ~VanadisFutexSyscall() {}
 
     void wakeup();
- private:  
+ private:
 
     enum State { ReadAddr, ReadArgs } m_state;
     void memReqIsDone(bool);

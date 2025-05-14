@@ -7,7 +7,7 @@ LD=gcc
 all: array
 
 array: array.o
-	$(LD) $(LDFLAGS) -o $@ $<	
+	$(LD) $(LDFLAGS) -o $@ $<
 
 array.o: array.c
 	$(CC) $(CFLAGS) -c -o $@ $<

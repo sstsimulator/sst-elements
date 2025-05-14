@@ -42,8 +42,8 @@ class AppRuntimeMemoryMod : public Module {
   public:
     SST_ELI_REGISTER_MODULE_API(SST::Vanadis::AppRuntimeMemoryMod)
 
-    AppRuntimeMemoryMod() : Module() {} 
-    virtual ~AppRuntimeMemoryMod() {} 
+    AppRuntimeMemoryMod() : Module() {}
+    virtual ~AppRuntimeMemoryMod() {}
     virtual uint64_t configurePhdr(  Output* output, int page_size, OS::ProcessInfo*, uint64_t phdr_address, std::vector<uint8_t>& phdr_data_block ) = 0;
     virtual uint64_t configureStack(  Output* output, int page_size, OS::ProcessInfo*, uint64_t stack_top_address,
         uint64_t phdr_address, uint64_t rand_values_address, std::vector<uint8_t>& stack_data ) = 0;
@@ -67,8 +67,8 @@ class AppRuntimeMemory32 : public AppRuntimeMemory<uint32_t> {
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Application runtime memory loader for 32 OS",
         SST::Vanadis::AppRuntimeMemory32
-    ) 
-    AppRuntimeMemory32( Params& params ) : 
+    )
+    AppRuntimeMemory32( Params& params ) :
         AppRuntimeMemory<uint32_t>( params ) {}
 };
 
@@ -83,7 +83,7 @@ class AppRuntimeMemory64 : public AppRuntimeMemory<uint64_t> {
         SST::Vanadis::AppRuntimeMemory64
     )
 
-    AppRuntimeMemory64( Params& params ) : 
+    AppRuntimeMemory64( Params& params ) :
         AppRuntimeMemory<uint64_t>( params ) {}
 };
 
@@ -97,7 +97,7 @@ uint64_t AppRuntimeMemory<Type>::configurePhdr(  Output* output, int page_size, 
 
         vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getHeaderTypeNumber());
         if ( 8 == sizeof(Type)  ) {
-            vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getSegmentFlags()); 
+            vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getSegmentFlags());
         }
         vanadis_vec_copy_in<Type>(phdr_data_block, (Type)nxt_entry->getImageOffset());
         vanadis_vec_copy_in<Type>(phdr_data_block, (Type)nxt_entry->getVirtualMemoryStart());
@@ -136,12 +136,12 @@ uint64_t AppRuntimeMemory<Type>::configurePhdr(  Output* output, int page_size, 
         for ( int i = 0; i < std::strlen(exe_path); ++i ) {
             random_values_data_block.push_back(exe_path[i]);
         }
-  
+
         random_values_data_block.push_back('\0');
-    } 
+    }
     output->verbose(CALL_INFO, 16, VANADIS_OS_DBG_APP_INIT,"phdr_address=%#" PRIx64 " length=%zu\n",phdr_address,phdr_data_block.size());
 
-    // pad to full page 
+    // pad to full page
     phdr_data_block.insert( phdr_data_block.end(), page_size - (phdr_data_block.size() % page_size), 0 );
 
     return rand_values_address;
@@ -234,7 +234,7 @@ uint64_t AppRuntimeMemory<Type>::configureStack(  Output* output, int page_size,
 
         vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getHeaderTypeNumber());
         if ( 8 == sizeof(Type)  ) {
-            vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getSegmentFlags()); 
+            vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getSegmentFlags());
         }
         vanadis_vec_copy_in<Type>(phdr_data_block, (Type)nxt_entry->getImageOffset());
         vanadis_vec_copy_in<Type>(phdr_data_block, (Type)nxt_entry->getVirtualMemoryStart());
@@ -272,9 +272,9 @@ uint64_t AppRuntimeMemory<Type>::configureStack(  Output* output, int page_size,
         for ( int i = 0; i < std::strlen(exe_path); ++i ) {
             random_values_data_block.push_back(exe_path[i]);
         }
-  
+
         random_values_data_block.push_back('\0');
-    } 
+    }
 #endif // PHDR
 
     std::vector<uint8_t> aux_data_block;
@@ -450,18 +450,18 @@ uint64_t AppRuntimeMemory<Type>::configureStack(  Output* output, int page_size,
 #if 0  // PHDR
     output->verbose(CALL_INFO, 16, 0,"phdr_address=%#" PRIx64 " length=%zu\n",phdr_address,phdr_data_block.size());
 
-    // pad to full page 
+    // pad to full page
     phdr_data_block.insert( phdr_data_block.end(), page_size - (phdr_data_block.size() % page_size), 0 );
 
-    size_t  phdrRegionStop = phdr_address + phdr_data_block.size();  
+    size_t  phdrRegionStop = phdr_address + phdr_data_block.size();
     // setup a VM memory region for this process
     processInfo->addMemRegion( "phdr", phdr_address, phdrRegionStop - phdr_address, 0x4  );
 
-    // write contents to memory 
+    // write contents to memory
     loadPages( output, mem_if, mmu, memMgr, processInfo->getPid(), phdr_address, phdr_data_block, 0x4, page_size );
 #endif // PHDR
 
-    // get a page aligned base of the stack 
+    // get a page aligned base of the stack
     uint64_t page_aligned_stack_addr = start_stack_address & ~(page_size - 1);
     size_t pad = start_stack_address - page_aligned_stack_addr;
 

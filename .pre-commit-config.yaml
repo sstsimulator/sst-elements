@@ -6,10 +6,24 @@ repos:
       - id: check-hooks-apply
       - id: check-useless-excludes
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: "v4.5.0"
+    rev: "v5.0.0"
     hooks:
       - id: check-case-conflict
       - id: check-merge-conflict
+      - id: trailing-whitespace
+        # allow it in patches, data files, and test references
+        exclude: |
+          (?x)(
+              /refFiles/|
+              \.dat|
+              \.diff|
+              \.gold|
+              \.log|
+              \.out|
+              \.patch|
+              patch\.txt|
+              \.xml
+          )
   - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
     rev: "v1.6.26.11"
     hooks:

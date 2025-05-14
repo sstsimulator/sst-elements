@@ -35,7 +35,7 @@ public:
     basicLifeCycleEvent(std::string val) : SST::Event(), str(val), num(0) { }
     basicLifeCycleEvent(std::string sval, unsigned uval) : SST::Event(), str(sval), num(uval) { }
     basicLifeCycleEvent(unsigned val) : SST::Event(), str(""), num(val) { }
-    
+
     // Destructor
     ~basicLifeCycleEvent() { }
 

@@ -1,9 +1,9 @@
-# Simple SST python tests to demonstrate use of trace 
+# Simple SST python tests to demonstrate use of trace
 ## arch model
 #
 #  comp_cpu <-> comp_tracer <-> comp_l1cache <-> comp_l2cache <-> comp_memory
 #
-## 
+##
 
 import sst
 
@@ -61,13 +61,13 @@ comp_memory.addParams({
     "request_width"         : "64",
     "debug"                 : "0",
 })
-    
+
 backend = comp_memory.setSubComponent("backend", "memHierarchy.simpleMem")
 backend.addParams({ "mem_size"      : "1024MiB" })
 
 comp_tracer = sst.Component("tracer", "cacheTracer.cacheTracer")
 comp_tracer.addParams({
-    "clock"      : "2 Ghz", 
+    "clock"      : "2 Ghz",
     "debug"      : "0",
     "statistics" : "1",
     "tracePrefix" : "",

@@ -63,8 +63,8 @@ for y in range(y_size):
             sub = ep.setSubComponent("networkIF","kingsley.linkcontrol")
             sub.addParam("link_bw","1GB/s")
             sub.addLink(getLink("rtr_%d_%d"%(x,y), "ep0_%d_%d"%(x,y+1)), "rtr_port", "800ps")
-            
-            
+
+
         if y != 0:
             rtr.addLink(getLink("rtr_%d_%d"%(x,y-1), "rtr_%d_%d"%(x,y)), "south", "800ps")
         else:
@@ -134,7 +134,7 @@ for y in range(y_size):
                 "linkcontrol_type" : "kingsley.linkcontrol",
                 "message_size" : msg_size,
                 "num_messages" : "%d"%(num_messages)
-                
+
             })
             sub = ep.setSubComponent("networkIF","kingsley.linkcontrol")
             sub.addParam("link_bw","1GB/s")

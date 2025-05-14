@@ -50,7 +50,7 @@ public:
     uint32_t getSWThr() { return sw_thr; }
     void setSWThr(uint32_t thr) { sw_thr = thr; }
     void addThr(uint16_t thr) {sw_thrs.push_back(thr);}
-    uint16_t getCoalescedSwThr(int i) 
+    uint16_t getCoalescedSwThr(int i)
     {
         if(i>=sw_thrs.size())
         {
@@ -58,7 +58,7 @@ public:
         }
         return sw_thrs[i];
     }
-    uint16_t getNumCoalescedThreads() 
+    uint16_t getNumCoalescedThreads()
     {
         return sw_thrs.size();
     }
@@ -67,7 +67,7 @@ protected:
     VanadisInstruction* ins;
     uint32_t sw_thr;
     std::vector<uint16_t> sw_thrs;
-    
+
 };
 
 class VanadisBasicFenceEntry : public VanadisBasicLoadStoreEntry {
@@ -98,8 +98,8 @@ public:
 
 class VanadisBasicStorePendingEntry : public VanadisBasicStoreEntry {
     public:
-        VanadisBasicStorePendingEntry(VanadisStoreInstruction* store_ins, uint64_t addr, uint64_t width, 
-            VanadisStoreRegisterType valRegType, uint16_t valReg) : 
+        VanadisBasicStorePendingEntry(VanadisStoreInstruction* store_ins, uint64_t addr, uint64_t width,
+            VanadisStoreRegisterType valRegType, uint16_t valReg) :
             VanadisBasicStoreEntry(store_ins), storeAddress(addr), storeWidth(width),
             valueRegister(valReg), valueRegisterType(valRegType), dispatched(false) {}
 
@@ -131,7 +131,7 @@ class VanadisBasicStorePendingEntry : public VanadisBasicStoreEntry {
 
             for(auto req_itr = requests.begin(); req_itr != requests.end(); req_itr++) {
                 if((*req_itr) == req) {
-                    found = true; 
+                    found = true;
                     break;
                 }
             }
@@ -173,7 +173,7 @@ class VanadisBasicStorePendingEntry : public VanadisBasicStoreEntry {
 
                 Case 5: load is smaller and is covered by the store
                 S--------|
-                    L---|    
+                    L---|
             */
 
             // Load address is between the start and end of the store
@@ -209,17 +209,17 @@ class VanadisBasicLoadEntry : public VanadisBasicLoadStoreEntry {
         VanadisBasicLoadStoreEntryOp getEntryOp() override {
             return VanadisBasicLoadStoreEntryOp::LOAD;
         }
-    
-        VanadisLoadInstruction* getLoadInstruction() { 
+
+        VanadisLoadInstruction* getLoadInstruction() {
             return dynamic_cast<VanadisLoadInstruction*>(ins);
         }
     };
 
 class VanadisBasicLoadPendingEntry : public VanadisBasicLoadEntry {
     public:
-        VanadisBasicLoadPendingEntry(VanadisLoadInstruction* load_ins, uint64_t address, uint64_t width) : 
+        VanadisBasicLoadPendingEntry(VanadisLoadInstruction* load_ins, uint64_t address, uint64_t width) :
             VanadisBasicLoadEntry(load_ins), load_address(address), load_width(width) {}
-        
+
         ~VanadisBasicLoadPendingEntry() {
             requests.clear();
         }
@@ -238,7 +238,7 @@ class VanadisBasicLoadPendingEntry : public VanadisBasicLoadEntry {
 
             for(auto req_itr = requests.begin(); req_itr != requests.end(); req_itr++) {
                 if( req == (*req_itr) ) {
-                    found = true; 
+                    found = true;
                     break;
                 }
             }
@@ -246,7 +246,7 @@ class VanadisBasicLoadPendingEntry : public VanadisBasicLoadEntry {
             return found;
         }
 
-        
+
 
         void removeRequest(StandardMem::Request::id_t req) {
             for(auto req_itr = requests.begin(); req_itr != requests.end(); req_itr++) {
@@ -266,7 +266,7 @@ class VanadisBasicLoadPendingEntry : public VanadisBasicLoadEntry {
         }
 
         size_t countRequests() const {
-                return requests.size(); 
+                return requests.size();
         }
 
         // identify what the req order is for this entry
@@ -288,7 +288,7 @@ class VanadisBasicLoadPendingEntry : public VanadisBasicLoadEntry {
         std::vector<StandardMem::Request::id_t> requests;
         // std::vector<uint32_t> request_swthr;
         // std::map<uint32_t, StandardMem::Request::id_t> requests;
-        
+
         const uint64_t load_address;
         const uint64_t load_width;
     };
