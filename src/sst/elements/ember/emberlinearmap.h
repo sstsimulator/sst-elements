@@ -19,6 +19,8 @@
 
 #include "embermap.h"
 
+#include <cstdint>
+
 namespace SST {
 namespace Ember {
 

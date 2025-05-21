@@ -16,6 +16,7 @@
 #ifndef _H_VANADIS_UTIL_DATA_COPY
 #define _H_VANADIS_UTIL_DATA_COPY
 
+#include <cstdint>
 #include <vector>
 
 namespace SST {

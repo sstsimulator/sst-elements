@@ -18,6 +18,11 @@
 
 #include "os/vcpuos.h"
 
+#include <cstdint>
+#include <functional>
+#include <map>
+#include <tuple>
+
 namespace SST {
 namespace Vanadis {
 

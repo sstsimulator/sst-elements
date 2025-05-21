@@ -16,10 +16,13 @@
 #ifndef _H_VANADIS_NODE_OS_INCLUDE_VIRT_MEM_MAP
 #define _H_VANADIS_NODE_OS_INCLUDE_VIRT_MEM_MAP
 
-#include <queue>
+#include <cassert>
+#include <cstdint>
 #include <iterator>
-#include <string>
+#include <map>
+#include <queue>
 #include <string.h>
+#include <string>
 #include "velf/velfinfo.h"
 #include "os/include/freeList.h"
 #include "os/include/page.h"

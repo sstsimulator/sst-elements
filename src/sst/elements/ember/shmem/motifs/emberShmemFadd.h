@@ -17,6 +17,8 @@
 #ifndef _H_EMBER_SHMEM_FADD
 #define _H_EMBER_SHMEM_FADD
 
+#include <sstream>
+#include <string>
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
 #include <cxxabi.h>

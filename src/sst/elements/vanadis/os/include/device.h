@@ -16,6 +16,10 @@
 #ifndef _H_VANADIS_NODE_OS_INCLUDE_DEVICE
 #define _H_VANADIS_NODE_OS_INCLUDE_DEVICE
 
+#include <cstddef>
+#include <cstdint>
+#include <string>
+
 namespace SST {
 namespace Vanadis {
 
