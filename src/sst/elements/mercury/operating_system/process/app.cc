@@ -100,8 +100,10 @@ static thread_lock dlopen_lock;
 void
 App::lockDlopen(int aid)
 {
+  dlopen_lock.lock();
   dlopen_entry& entry = exe_dlopens_[aid];
   entry.refcount++;
+  dlopen_lock.unlock();
 }
 
 void
@@ -501,7 +503,9 @@ App::run()
 
   dlcloseCheck();
 
+  dlopen_lock.lock();
   app_rc_ = rc_;
+  dlopen_lock.unlock();
 }
 
 void
