@@ -12,6 +12,7 @@ parser.add_argument('program', help='Which program to run. Either "hello" or "re
 parser.add_argument('-r', dest='ranks', default=1, help='How many ranks of the traced program to run.')
 parser.add_argument('-a', dest='tracerank', default=0, help='Which of the MPI ranks will be traced.')
 parser.add_argument('-t', dest='threads', default=1, help='The number of OpenMP threads to use per rank.')
+parser.add_argument('-f', dest='frontend', default="pin", help='Which frontend to use. Either "pin" or "epa".')
 parser.add_argument('-s', dest='size', default=2048, help='The input value for the "reduce" program')
 parser.add_argument('-o', dest='output', help='Optional argument to both programs to change stdout')
 
@@ -29,7 +30,12 @@ program_string = f'./{args.program}'
 if args.program == 'reduce':
     program_string += f' (size={size})'
 
-print(f'mpi-test.py: Running {program_string} with {mpiranks} rank(s) and {ncores} thread(s) per rank. Tracing rank {tracerank}')
+if args.frontend not in ["pin", "epa"]:
+    print('Error: supported values for `frontend` are "pin" and "epa".')
+
+frontend = f'ariel.frontend.{args.frontend}'
+
+print(f'mpi-test.py: Running {program_string} with {mpiranks} rank(s) and {ncores} thread(s) per rank. Tracing rank {tracerank}. Using {frontend} frontend.')
 
 os.environ['OMP_NUM_THREADS'] = str(ncores)
 
@@ -51,6 +57,7 @@ exe = f'./{args.program}'
 core.addParams({
     "clock"        : "2.4GHz",
     "verbose"      : 1,
+    "frontend"     : frontend,
     "executable"   : exe,
     "arielmode"    : 0, # Disable tracing at start
     "corecount"    : ncores,
@@ -66,7 +73,7 @@ if not pathlib.Path(exe).exists():
     sys.exit(1)
 
 # Set the size of the reduce vector and optionally set the output file
-if args.program == "reduce":
+if args.program.startswith("reduce"):
     if args.output is not None:
         core.addParams({
             "appargcount" : 2,
