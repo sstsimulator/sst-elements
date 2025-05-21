@@ -503,7 +503,9 @@ App::run()
 
   dlcloseCheck();
 
+  dlopen_lock.lock();
   app_rc_ = rc_;
+  dlopen_lock.unlock();
 }
 
 void
