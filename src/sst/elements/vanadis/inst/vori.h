@@ -49,8 +49,8 @@ public:
             "ORI    %5" PRIu16 " <- %5" PRIu16 " | imm=%" PRIu64 " (phys: %5" PRIu16 " <- %5" PRIu16 " ^ %" PRIu64 ")",
             isa_int_regs_out[0], isa_int_regs_in[0], imm_value, phys_int_regs_out[0], phys_int_regs_in[0], imm_value);
     }
-    
-    virtual void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+
+    virtual void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
                             uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0,
                                     uint16_t phys_int_regs_in_1) override
     {
@@ -66,21 +66,21 @@ public:
         #endif
     }
 
-    virtual void instOp(VanadisRegisterFile* regFile, 
+    virtual void instOp(VanadisRegisterFile* regFile,
                                 uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0) override
     {
-        
+
         const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in_0);
         regFile->setIntReg<uint64_t>(phys_int_regs_out_0, (src_1) | imm_value);
     }
 
     virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
-        
+
         uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
         uint16_t phys_int_regs_in_0 = getPhysIntRegIn(0);
-        
-        
+
+
         instOp(regFile,phys_int_regs_out_0, phys_int_regs_in_0);
         log(output, 16, 65535,phys_int_regs_out_0,phys_int_regs_in_0,0);
         markExecuted();

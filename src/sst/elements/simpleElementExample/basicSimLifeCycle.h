@@ -24,7 +24,7 @@
  * other know how many events they want to receive and each component
  * sends each other the requested number of events. At the end of simulation,
  * components notify each other of this information and print it.
- * 
+ *
  * Simulation lifecycle
  * 1) Construction
  *      Components ensure both their links are connected
@@ -33,13 +33,13 @@
  *      Components discover the names of the other components in the ring
  * 3) Setup
  *      Components report the names of the components they discovered
- *      Components send an initial event to start the simulation. 
+ *      Components send an initial event to start the simulation.
  *      This is required because this is a purely event-based simulation
  *      so an event is needed to start it.
  * 4) Run
  *      Components send and receive messages
  *      Components send events to the left
- *          - If a component receives an event for itself, it deletes the event and sends a new event if is has not sent enough events yet 
+ *          - If a component receives an event for itself, it deletes the event and sends a new event if is has not sent enough events yet
  *          - If a component receives an event for a different component, it forwards the event to the left
  *      Simulation ends when there are no events left in the system
  * 5) Complete
@@ -74,7 +74,7 @@ public:
 // SSTSnippet::component-header::pause
 
 /*
- *  SST Registration macros register Components with the SST Core and 
+ *  SST Registration macros register Components with the SST Core and
  *  document their parameters, ports, etc.
  *  SST_ELI_REGISTER_COMPONENT is required, the documentation macros
  *  are only required if relevant
@@ -101,7 +101,7 @@ public:
         {"left",  "Left link to another component", { "simpleElementExample.basicLifeCycleEvent" } },
         {"right", "Right link to another component", { "simpleElementExample.basicLifeCycleEvent" } }
     )
-    
+
     // SST_ELI_DOCUMENT_STATISTICS and SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS are not declared since they are not used
 
 
@@ -111,7 +111,7 @@ public:
 // SSTSnippet::component-header::start
     basicSimLifeCycle(SST::ComponentId_t id, SST::Params& params);
 // SSTSnippet::component-header::pause
-    
+
     // Destructor
 // SSTSnippet::component-header::start
     virtual ~basicSimLifeCycle();
@@ -122,7 +122,7 @@ public:
 
     // Called by SST during SST's setup() lifecycle phase
     virtual void setup() override;
-    
+
     // Called by SST during SST's complete() lifecycle phase
     virtual void complete(unsigned phase) override;
 
@@ -156,7 +156,7 @@ private:
     unsigned eventsForwarded;               // Number of events we've forwarded
     unsigned eventsSent;                    // Number of events we've sent (initiated)
     std::set<std::string> neighbors;        // Set of all neighbors on the ring
-    std::set<std::string>::iterator iter;   // Next component to send to in the eventRequests map 
+    std::set<std::string>::iterator iter;   // Next component to send to in the eventRequests map
 
     // Additional state reported during finish
     std::string leftMsg, rightMsg;

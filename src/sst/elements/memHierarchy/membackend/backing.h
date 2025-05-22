@@ -49,7 +49,7 @@ public:
 
     // Print contents of backing to stdout (testing purposes)
     virtual void printToScreen(Addr addr_offset, Addr addr_start, Addr addr_interleave_size, Addr addr_interleave_step) = 0;
-    
+
     virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {}
     ImplementVirtualSerializable(SST::MemHierarchy::Backend::Backing);
 };
@@ -65,9 +65,9 @@ public:
  */
 class BackingMMAP : public Backing {
 public:
-    BackingMMAP( std::string mmapfile, std::string infile, size_t size, size_t offset = 0 ) : 
+    BackingMMAP( std::string mmapfile, std::string infile, size_t size, size_t offset = 0 ) :
         Backing(), size_(size), offset_(offset), mmapfile_(mmapfile) {
-        
+
         // mmapfile = file to write out to, place in output dir *IF* not the same as infile
         // infile = file to initialize from
 
@@ -91,9 +91,9 @@ public:
         }
 
         buffer_ = (uint8_t*)mmap(NULL, size, PROT_READ|PROT_WRITE, flags, fd, 0);
-        
-        if ( mmapfile != "" ) { 
-            close(fd); 
+
+        if ( mmapfile != "" ) {
+            close(fd);
         }
 
         if ( buffer_ == MAP_FAILED) {
@@ -102,7 +102,7 @@ public:
 
         if ( infile != "" && infile != mmapfile ) {
             fd = open(infile.c_str(), O_RDONLY);
-            if (fd < 0) { throw 3; } 
+            if (fd < 0) { throw 3; }
 
             uint8_t* tmp_buffer = (uint8_t*)mmap(NULL, size, PROT_READ, flags, fd, 0);
             close(fd);
@@ -135,7 +135,7 @@ public:
         for (size_t i = 0; i < size; i++)
             data[i] = buffer_[addr + i];
     }
-    
+
     void printToFile( std::string UNUSED(outfile) ) override { }
 
     /* For testing only, print contents to stdout in plaintext */
@@ -148,7 +148,7 @@ public:
         out.output("==================================================================================================\n");
         out.output("Address    | Value (hex)\n");
         out.output("--------------------------------------------------------------------------------------------------\n");
-        
+
         // Print in 64B words, regardless of line size
         for (size_t line = offset_; line < size_; line+= 64) {
 
@@ -183,7 +183,7 @@ public:
         SST_SER(size_);
         SST_SER(offset_);
         SST_SER(mmapfile_);
-        
+
      /*   if ( ser.mode() == SST::Core::Serialization::serializer::PACK ) {
             // If mmap is anonymous -> we need to write the whole thing to a file
             // Register mmap filename with manifest under memHierarchy_backing_mmap_outfile
@@ -208,38 +208,38 @@ public:
             int fd = -1;
             if ( mmapfile_ != "" ) {
                     int fd_flags = O_RDWR | O_CREAT;
-                    if (mmapfile != infile) 
+                    if (mmapfile != infile)
                         fd_flags |= O_TRUNC; // Overwrite output file if it exists
                     fd = open(mmapfile.c_str(), fd_flags, S_IRUSR | S_IWUSR);
-                    if (fd < 0) { 
+                    if (fd < 0) {
                         Output out("", 1, 0, Output::STDOUT);
-                        out.output("Error: fd=%d, %s\n", fd, strerror(errno)); 
-                        throw 1; 
+                        out.output("Error: fd=%d, %s\n", fd, strerror(errno));
+                        throw 1;
                     }
                     (void) !ftruncate(fd, size); // Extend file to needed size
                 } else {
                     flags |= MAP_ANON;
                 }
-        
+
                 buffer_ = (uint8_t*)mmap(NULL, size, PROT_READ|PROT_WRITE, flags, fd, 0);
-                
-                if ( mmapfile != "" ) { 
+
+                if ( mmapfile != "" ) {
                     close(fd);
                 }
-        
+
                 if ( buffer_ == MAP_FAILED) {
                     throw 2;
                 }
-        
+
                 if ( infile != "" && infile != mmapfile ) {
                     fd = open(infile.c_str(), O_RDONLY);
                     if (fd < 0) { throw 3; }
-        
+
                     uint8_t* tmp_buffer = (uint8_t*)mmap(NULL, size, PROT_READ, flags, fd, 0);
                     close(fd);
-        
+
                     if ( tmp_buffer == MAP_FAILED ) { throw 4; }
-        
+
                     memcpy(buffer_, tmp_buffer, size);
                     munmap(tmp_buffer, size);
                 }
@@ -330,10 +330,10 @@ public:
         allocIfNeeded(bAddr);
         assert( data.size() == size );
 
-        assert( buffer_.find(bAddr) != buffer_.end() ); 
+        assert( buffer_.find(bAddr) != buffer_.end() );
         auto buf = buffer_[bAddr];
         while (dataOffset != size) {
-            
+
             data[dataOffset] = buf[offset];
             offset++;
             dataOffset++;
@@ -379,7 +379,7 @@ public:
         out.output("--------------------------------------------------------------------------------------------------\n");
         Addr output_unit = (alloc_unit_ % 64 == 0) ? 64 : (alloc_unit_ % 32 == 0) ? 32 : alloc_unit_;
         Addr units_per_buffer = alloc_unit_ / output_unit;
-        
+
         for ( auto const& x : buffer_ ) {
             Addr local_addr = x.first << shift_;
             uint8_t* value_ptr = x.second;

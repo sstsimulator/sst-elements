@@ -44,7 +44,7 @@ class RTL_shmem_info {
 
   //  public:
         /*RTL input information and control information corresponds to type(std::string) and size (in bytes) to which the void pointer will be casted to. Order of each stored input and control values should be maintained in accordance with the stored information in the TYPEINFO(std::array). Increment of void pointer once casted will align with the stored inp/ctrl data type. Any wrong cast can corrupt all the input and control signal information. */
-    private:      
+    private:
         void* rtl_inp_ptr;
         void* rtl_ctrl_ptr;
         void* updated_rtl_params;
@@ -55,8 +55,8 @@ class RTL_shmem_info {
         RTL_shmem_info(size_t inp_size, size_t ctrl_size) {
             rtl_inp_size = inp_size;
             rtl_ctrl_size = ctrl_size;
-            rtl_inp_ptr = mlm_malloc(inp_size, 0); 
-            rtl_ctrl_ptr = mlm_malloc(ctrl_size, 0); 
+            rtl_inp_ptr = mlm_malloc(inp_size, 0);
+            rtl_ctrl_ptr = mlm_malloc(ctrl_size, 0);
             params_size = (7 * sizeof(bool) + sizeof(uint64_t));
             updated_rtl_params = mlm_malloc(params_size, 0);
             std::cout << "\nNew memory allocated at: ";
@@ -76,11 +76,11 @@ class RTL_shmem_info {
 };
 
 class Update_RTL_Params {
-    
+
     private:
         bool update_inp, update_ctrl, update_eval_args, update_reg, verbose, done_reset, sim_done;
         uint64_t sim_cycles;
-    
+
     public:
         Update_RTL_Params(bool inp = true, bool ctrl = true, bool eval_args = true, bool reg = false, bool verb = true, bool done_rst = false, bool done = false, uint64_t cycles = 5) {
             update_inp = inp;
@@ -127,8 +127,8 @@ class Update_RTL_Params {
             *Ptr = sim_done;
             Ptr++;
             uint64_t* Cycles_ptr  = (uint64_t*)Ptr;
-            *Cycles_ptr = sim_cycles; 
-            std::cout << "\nStore to mem finished \n"; 
+            *Cycles_ptr = sim_cycles;
+            std::cout << "\nStore to mem finished \n";
             return;
         }
 
@@ -162,7 +162,7 @@ class Update_RTL_Params {
 void start_RTL_sim(RTL_shmem_info* shmem);
 
 //Empty function as PIN tool's dynamic instrumentation will replace it with Ariel Equivalent API in PIN frontend - fesimple.cc (sst-elements/src/sst/elements/ariel/frontend/pin3/)
-void update_RTL_sig(RTL_shmem_info* shmem); 
+void update_RTL_sig(RTL_shmem_info* shmem);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

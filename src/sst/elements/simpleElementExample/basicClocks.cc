@@ -14,7 +14,7 @@
 // distribution.
 
 
-// This include is ***REQUIRED*** 
+// This include is ***REQUIRED***
 // for ALL SST implementation files
 #include "sst_config.h"
 
@@ -24,7 +24,7 @@
 using namespace SST;
 using namespace SST::simpleElementExample;
 
-/* 
+/*
  * During construction the basicClocks component should prepare for simulation
  * - Read parameters
  * - Register clocks
@@ -46,17 +46,17 @@ basicClocks::basicClocks(ComponentId_t id, Params& params) : Component(id) {
     UnitAlgebra clock0Freq_ua(clock0Freq);
     UnitAlgebra clock1Freq_ua(clock1Freq);
     UnitAlgebra clock2Freq_ua(clock2Freq);
-    
+
     if (! (clock0Freq_ua.hasUnits("Hz") || clock0Freq_ua.hasUnits("s") ) )
         out->fatal(CALL_INFO, -1, "Error in %s: the 'clock0' parameter needs to have units of Hz or s\n", getName().c_str());
-    
+
     if (! (clock1Freq_ua.hasUnits("Hz") || clock1Freq_ua.hasUnits("s") ) )
         out->fatal(CALL_INFO, -1, "Error in %s: the 'clock1' parameter needs to have units of Hz or s\n", getName().c_str());
-    
+
     if (! (clock2Freq_ua.hasUnits("Hz") || clock2Freq_ua.hasUnits("s") ) )
         out->fatal(CALL_INFO, -1, "Error in %s: the 'clock2' parameter needs to have units of Hz or s\n", getName().c_str());
 
-    
+
     // Tell the simulation not to end until we're ready
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
@@ -66,23 +66,23 @@ basicClocks::basicClocks(ComponentId_t id, Params& params) : Component(id) {
     // Main clock (clock 0)
     // Clock can be registered with a string or UnitAlgebra, here we use the string
     registerClock(clock0Freq, new Clock::Handler2<basicClocks, &basicClocks::mainTick>(this));
-    
+
     out->output("Registering clock0 at %s\n", clock0Freq.c_str());
 
     // Second clock, here we'll use the UnitAlgebra to register
     // Clock handler can add a template parameter. In this example clock1 and clock2 share a handler but
     // pass unique IDs in to it to differentiate
     // We also save the registerClock return value (a TimeConverter) so that we can use it later (see mainTick)
-    clock1converter = registerClock(clock1Freq_ua, 
+    clock1converter = registerClock(clock1Freq_ua,
             new Clock::Handler2<basicClocks, &basicClocks::otherTick, uint32_t>(this, 1));
-    
+
     out->output("Registering clock1 at %s (that's %s or %s if we convert the UnitAlgebra to string)\n",
             clock1Freq.c_str(), clock1Freq_ua.toString().c_str(), clock1Freq_ua.toStringBestSI().c_str());
 
     // Last clock, as with clock1, the handler has an extra parameter and we save the registerClock return parameter
     Clock::HandlerBase* handler = new Clock::Handler2<basicClocks, &basicClocks::otherTick, uint32_t>(this, 2);
     clock2converter = registerClock(clock2Freq, handler);
-    
+
     out->output("Registering clock2 at %s\n", clock2Freq.c_str());
 
     // This component prints the clock cycles & time every so often so calculate a print interval
@@ -100,7 +100,7 @@ basicClocks::~basicClocks()
     delete out;
 }
 
-/* 
+/*
  * Main clock (clock0) handler
  * Every 'printInterval' cycles, this handler prints the time & cycle count for all clocks
  * When cycleCount cycles have elapsed, this clock triggers the end of simulation
@@ -157,7 +157,7 @@ basicClocks::basicClocks() : Component() {}
 */
 void basicClocks::serialize_order(SST::Core::Serialization::serializer& ser) {
     Component::serialize_order(ser);
-    
+
     SST_SER(clock1converter);
     SST_SER(clock2converter);
     SST_SER(clock2Handler);

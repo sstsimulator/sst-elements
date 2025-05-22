@@ -21,7 +21,7 @@
 
 #include "os/vphysmemmanager.h"
 
-#if 0 
+#if 0
 #define PageDbg( format, ... ) printf( "Page::%s() " format, __func__, ##__VA_ARGS__ )
 #else
 #define PageDbg( format, ... )
@@ -36,7 +36,7 @@ namespace OS {
 class Page {
   public:
     Page( PhysMemManager* mem ) : mem(mem), refCnt(1) {
-        ppn = mem->allocPage( PhysMemManager::PageSize::FourKB ); 
+        ppn = mem->allocPage( PhysMemManager::PageSize::FourKB );
         PageDbg("ppn=%d\n",ppn);
     }
 
@@ -57,8 +57,8 @@ class Page {
         return ppn;
     }
 
-    void incRefCnt() { 
-        ++refCnt; 
+    void incRefCnt() {
+        ++refCnt;
         PageDbg("ppn=%d refCnt=%d\n",ppn,refCnt);
     }
     unsigned decRefCnt() {
@@ -77,7 +77,7 @@ class Page {
 
   private:
     PhysMemManager* mem;
-    unsigned refCnt; 
+    unsigned refCnt;
     unsigned ppn;
 };
 

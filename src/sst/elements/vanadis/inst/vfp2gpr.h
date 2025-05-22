@@ -27,7 +27,7 @@ template <typename fp_format, typename gpr_format, bool is_bitwise>
 class VanadisFP2GPRInstruction : public virtual VanadisFloatingPointInstruction
 {
 public:
-    VanadisFP2GPRInstruction(const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, 
+    VanadisFP2GPRInstruction(const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
     VanadisFloatingPointFlags* fpflags, const uint16_t int_dest, const uint16_t fp_src) :
         VanadisInstruction(addr, hw_thr, isa_opts, 0, 1, 0, 1,
             ((sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ? 2 : 1, 0,
@@ -91,15 +91,15 @@ public:
         #endif
     }
 
-    void instOp( VanadisRegisterFile* regFile, 
+    void instOp( VanadisRegisterFile* regFile,
                                 uint16_t phys_fp_regs_in_0,uint16_t phys_fp_regs_in_1,uint16_t phys_int_regs_out_0) override
     {
-        
+
         if constexpr ( is_bitwise ) {
-            
+
             bitwise_convert( regFile,phys_fp_regs_in_0,phys_fp_regs_in_1,phys_int_regs_out_0 );
         } else {
-            
+
             convert( regFile,phys_fp_regs_in_0,phys_fp_regs_in_1,phys_int_regs_out_0 );
         }
 
@@ -116,12 +116,12 @@ public:
         }
         instOp(regFile,phys_fp_regs_in_0,phys_fp_regs_in_1,phys_int_regs_out_0 );
         log(output, 16, 65535,phys_int_regs_out_0,phys_fp_regs_in_0);
-        
+
         markExecuted();
     }
 
     virtual void bitwise_convert(VanadisRegisterFile* regFile,uint16_t phys_fp_regs_in_0,uint16_t phys_fp_regs_in_1,uint16_t phys_int_regs_out_0)
-    { 
+    {
         if  constexpr ( std::is_floating_point<gpr_format>::value ) {
             assert(0);
         }
@@ -151,7 +151,7 @@ public:
 
 
     virtual void convert(VanadisRegisterFile* regFile,uint16_t phys_fp_regs_in_0,uint16_t phys_fp_regs_in_1,uint16_t phys_int_regs_out_0)
-    { 
+    {
         uint64_t reg_v_int;
         gpr_format result;
         if ( (sizeof(fp_format) == 8) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
@@ -176,7 +176,7 @@ public:
             fpflags.setInvalidOp();
             update_fp_flags = true;
             result = getMinInt<gpr_format>();
-        } else { 
+        } else {
             result = fp_v;
             if ( fp_v != result ) {
                 fpflags.setInexact();

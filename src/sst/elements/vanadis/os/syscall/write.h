@@ -42,7 +42,7 @@ public:
             setReturnSuccess(0);
         } else {
 
-            // get the length of the first memory access, it cannot span a cacheline  
+            // get the length of the first memory access, it cannot span a cacheline
             uint64_t length = vanadis_line_remainder(event->getBufferAddress(),64);
             length = event->getBufferCount() < length ? event->getBufferCount() : length;
 
@@ -66,7 +66,7 @@ public:
             m_data.resize(length);
             readMemory( getEvent<VanadisSyscallWriteEvent*>()->getBufferAddress() + m_numWritten, m_data );
         }
-    } 
+    }
 
  private:
     std::vector<uint8_t>    m_data;

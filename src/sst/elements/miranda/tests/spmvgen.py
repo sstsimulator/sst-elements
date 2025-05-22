@@ -23,7 +23,7 @@ gen_params = {
     "element_width" : elemSize,
     "ordinal_width" : ordSize,
     "matrix_nnz_per_row" : nnz,
-    "iterations" : 4 
+    "iterations" : 4
 }
 gen0.addParams(gen_params)
 gen1.addParams(gen_params)

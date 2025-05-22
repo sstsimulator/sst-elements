@@ -12,7 +12,7 @@ Copyright (c) 2009-2025, NTESS
 
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, 
+Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
     * Redistributions of source code must retain the above copyright
@@ -204,7 +204,7 @@ class SimTransport : public Transport, public SST::Hg::Library {
       timeout = pragma_timeout_;
     }
   }
-  
+
   /**
    Check if a message has been received on a specific completion queue.
    Message returned is removed from the internal queue.
@@ -276,7 +276,7 @@ class SimTransport : public Transport, public SST::Hg::Library {
 
   void allocateCq(int id, std::function<void(Message*)>&& f);
 
- private:      
+ private:
   void send(Message* m) override;
   void send_packets(Message* m);
 

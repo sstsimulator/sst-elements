@@ -29,11 +29,11 @@ if __name__ == "__main__":
 
     ### set up the endpoint
     ep = TestJob(0,system.topology.getNumNodes())
-        
+
     system.allocateNodes(ep,"linear")
 
     system.build()
-    
+
 
     # sst.setStatisticLoadLevel(9)
 

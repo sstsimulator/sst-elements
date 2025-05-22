@@ -165,22 +165,22 @@ cache_distributed_params = {
 }
 
 cache_noninclusive_private_params = {
-    "cache_type" : "noninclusive" 
+    "cache_type" : "noninclusive"
 }
 
-l2cache_noninclusive_shared_params = { 
+l2cache_noninclusive_shared_params = {
     "cache_type" : "noninclusive_with_directory",
-    "noninclusive_directory_entries" : 64, # 4KiB data covered 
+    "noninclusive_directory_entries" : 64, # 4KiB data covered
     "noninclusive_directory_associativity" : 4
 }
 
-l3cache_noninclusive_shared_params = { 
+l3cache_noninclusive_shared_params = {
     "cache_type" : "noninclusive_with_directory",
     "noninclusive_directory_entries" : 128,
     "noninclusive_directory_associativity" : 4
 }
 
-l4cache_noninclusive_shared_params = { 
+l4cache_noninclusive_shared_params = {
     "cache_type" : "noninclusive_with_directory",
     "noninclusive_directory_entries" : 320,
     "noninclusive_directory_associativity" : 8
@@ -217,7 +217,7 @@ l2_bus = None # Only need an L2 bus if we have multiple L2s and/or multiple L3s
 ##      L2=1KiB
 ##      L3=12KiB
 ##      L4=4KiB, 16KiB tag
-## 2. L2 noninclusive/shared  + L3 noninclusive/shared + L4 inclusive/shared + directory 
+## 2. L2 noninclusive/shared  + L3 noninclusive/shared + L4 inclusive/shared + directory
 ##      L2=1KiB, 4KiB tag
 ##      L3=2KiB, 8KiB tag
 ##      L4=12KiB
@@ -236,10 +236,10 @@ if option == 0 or option == 1 or option == 3: ## L2 inclusive/private or nonincl
 
     l2cache0 = sst.Component("l2cache0", "memHierarchy.Cache")
     l2cache0.addParams(params)
-    
+
     l2cache1 = sst.Component("l2cache1", "memHierarchy.Cache")
     l2cache1.addParams(params)
-    
+
     l2cache2 = sst.Component("l2cache2", "memHierarchy.Cache")
     l2cache2.addParams(params)
 
@@ -254,7 +254,7 @@ if option == 0 or option == 1 or option == 3: ## L2 inclusive/private or nonincl
     link1_l1_l2.connect((l1cache1, "lowlink", "100ps"), (l2cache1, "highlink", "100ps"))
     link2_l1_l2.connect((l1cache2, "lowlink", "100ps"), (l2cache2, "highlink", "100ps"))
     link3_l1_l2.connect((l1cache3, "lowlink", "100ps"), (l2cache3, "highlink", "100ps"))
-    
+
     if option != 3:
         l2_bus = Bus("l2bus", bus_params, "100ps", [l2cache0, l2cache1, l2cache2, l2cache3])
 
@@ -300,10 +300,10 @@ if option != 3: ## L3 inclusive/shared or noninclusive/shared
     else:
         params.update(l3cache_size_noninclus)
         params.update(l3cache_noninclusive_shared_params)
-    
+
     l3cache = sst.Component("l3cache", "memHierarchy.Cache")
     l3cache.addParams(params)
-    
+
     if l2_bus:
         l2_bus.connect(lowcomps=[l3cache])
     else:
@@ -317,10 +317,10 @@ else: ## option == 3:  L3 noninclusive/private
 
     l3cache0 = sst.Component("l3cache0", "memHierarchy.Cache")
     l3cache0.addParams(params)
-    
+
     l3cache1 = sst.Component("l3cache1", "memHierarchy.Cache")
     l3cache1.addParams(params)
-    
+
     l3cache2 = sst.Component("l3cache2", "memHierarchy.Cache")
     l3cache2.addParams(params)
 
@@ -335,7 +335,7 @@ else: ## option == 3:  L3 noninclusive/private
     link1_l2_l3.connect( (l2cache1, "lowlink", "100ps"), (l3cache1, "highlink", "100ps") )
     link2_l2_l3.connect( (l2cache2, "lowlink", "100ps"), (l3cache2, "highlink", "100ps") )
     link3_l2_l3.connect( (l2cache3, "lowlink", "100ps"), (l3cache3, "highlink", "100ps") )
-    
+
     l3_bus = Bus("l3bus", bus_params, "100ps", [l3cache0, l3cache1, l3cache2, l3cache3])
 
 #########################
@@ -360,7 +360,7 @@ l4cache_size_noninclus = { "cache_size" : "4KiB" }
 ##      L4=4KiB
 ## 1. L2 noninclusive/private + L3 inclusive/shared + L4 noninclusive/shared + directory
 ##      L4=4KiB, 16KiB tag
-## 2. L2 noninclusive/shared  + L3 noninclusive/shared + L4 inclusive/shared + directory 
+## 2. L2 noninclusive/shared  + L3 noninclusive/shared + L4 inclusive/shared + directory
 ##      L4=12KiB
 ## 3. L2 noninclusive/private + L3 noninclusive/private + L4 noninclusive/shared + directory
 ##      L4=4KiB, 20KiB tag
@@ -396,15 +396,15 @@ if l3_bus:
     l3_bus.connect(lowcomps=[l4cache])
 else:
     link = sst.Link("link_l3_l4")
-    link.connect( (l3cache, "lowlink", "100ps"), (l4cache, "highlink", "100ps") ) 
+    link.connect( (l3cache, "lowlink", "100ps"), (l4cache, "highlink", "100ps") )
 
 # Connect l4cache <-> directory
 link = sst.Link("link_l4_dir")
-link.connect( (l4cache, "lowlink", "100ps"), (directory, "highlink", "100ps") ) 
+link.connect( (l4cache, "lowlink", "100ps"), (directory, "highlink", "100ps") )
 
 # Connect directory <-> memory controller
 link = sst.Link("link_dir_mem")
-link.connect( (directory, "lowlink", "100ps"), (memctrl, "highlink", "100ps") ) 
+link.connect( (directory, "lowlink", "100ps"), (memctrl, "highlink", "100ps") )
 
 
 # Enable statistics

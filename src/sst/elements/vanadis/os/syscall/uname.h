@@ -25,11 +25,11 @@ namespace Vanadis {
 class VanadisUnameSyscall : public VanadisSyscall {
 public:
     VanadisUnameSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallUnameEvent* event )
-        : VanadisSyscall( os, coreLink, process, event, "uname" ) 
+        : VanadisSyscall( os, coreLink, process, event, "uname" )
     {
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-uname] ---> uname struct is at address 0x%0" PRI_ADDR "\n", event->getUnameInfoAddress());
 
-#if 0 
+#if 0
 struct new_utsname {
         char sysname[__NEW_UTS_LEN + 1];
         char nodename[__NEW_UTS_LEN + 1];
@@ -52,7 +52,7 @@ struct new_utsname {
             machine.assign( "riscv64" );
         } else {
             machine.assign( "mips" );
-        } 
+        }
 
         for (size_t i = 0; i < std::strlen(sysname); ++i) {
             payload[i] = sysname[i];
@@ -81,7 +81,7 @@ struct new_utsname {
         setReturnSuccess(0);
     }
 
- private:  
+ private:
     std::vector<uint8_t> payload;
 };
 

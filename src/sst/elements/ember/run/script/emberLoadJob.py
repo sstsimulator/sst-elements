@@ -4,7 +4,7 @@ import rtrConfig
 import jobInfo
 import emberLoadBase
 
-myOptions = ['jobConfig='] 
+myOptions = ['jobConfig=']
 myOptions += emberLoadBase.getOptions()
 
 try:
@@ -36,7 +36,7 @@ topo, shape = jobConfig.getTopo()
 platParams = jobConfig.getPlatform()
 
 job = jobInfo.JobInfo( 0, jobConfig.getNumNodes(), jobConfig.getRanksPerNode(),
-		jobConfig.genWorkFlow ) 
+		jobConfig.genWorkFlow )
 job.setDetailed( jobConfig.getDetailedModel() )
 
 emberLoadBase.run( opts, platParams, topo, shape, [job], jobConfig.getPerNicParams )

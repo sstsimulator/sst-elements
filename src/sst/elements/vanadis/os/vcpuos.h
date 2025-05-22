@@ -69,7 +69,7 @@ public:
 
     void setOS_link( SST::Link* link ) {
         os_link = link;
-    } 
+    }
 
 protected:
 

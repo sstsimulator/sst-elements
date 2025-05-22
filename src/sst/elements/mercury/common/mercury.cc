@@ -42,8 +42,8 @@ public:
         SST_ELI_ELEMENT_VERSION(1,0,0)
     )
 
-    SST_ELI_EXPORT(SST::Hg::HgPyModule)    
-    
+    SST_ELI_EXPORT(SST::Hg::HgPyModule)
+
 };
 
 } // end namespace Hg

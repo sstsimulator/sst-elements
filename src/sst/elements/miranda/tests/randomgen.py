@@ -12,7 +12,7 @@ comp_cpu.addParams({
 	"verbose" : 0,
 	"printStats" : 1,
 })
-	
+
 gen = comp_cpu.setSubComponent("generator", "miranda.RandomGenerator")
 gen.addParams({
 	"verbose" : 0,

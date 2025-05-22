@@ -171,7 +171,7 @@ ddr_nic_params = {
 }
 
 
-# Miranda STREAM Bench params        
+# Miranda STREAM Bench params
 thread_iters = 1000
 cpu_params = {
     "verbose" : 0,
@@ -197,11 +197,11 @@ class DDRBuilder:
 
         mem = sst.Component("ddr_" + str(self.next_ddr_id), "memHierarchy.MemController")
         mem.addParams(ddr_mem_timing_params)
-        
+
         membk = mem.setSubComponent("backend", "memHierarchy.timingDRAM")
         membk.addParams({ "mem_size" : str(self.mem_capacity // 4) + "B" })
         membk.addParams(ddr_backend_params)
-        
+
         memNIC = mem.setSubComponent("highlink", "memHierarchy.MemNICFour")
         memNIC.addParams(ddr_nic_params)
         memdata = memNIC.setSubComponent("data", "kingsley.linkcontrol")
@@ -231,7 +231,7 @@ class DDRDCBuilder:
     def build(self, nodeID):
         # Stripe addresses across each mem & stripe those across each DC for the mem
         #   Interleave 64B blocks across 8 DCs (and then map every 4th to the same DDR)
-       
+
         dcNum = nodeID % 2
         if nodeID == 1 or nodeID == 2:
             memId = 0
@@ -241,7 +241,7 @@ class DDRDCBuilder:
             memId = 2
         elif nodeID == 5 or nodeID == 8:
             memId = 3
-        
+
         myStart = 0 + (memId * 64) + (dcNum * 64 * 4)
         myEnd = self.memCapacity - 64 * (8 - memId - 4 * dcNum) + 63
 
@@ -375,7 +375,7 @@ class TileBuilder:
 
         if not quiet:
             print("Creating core " + str(self.next_core_id) + " on tile: " + str(self.next_tile_id) + "...")
-        
+
         # Right SMT
         rightSMT = sst.Component("smt_" + str(self.next_core_id), "memHierarchy.multithreadL1")
         rightSMT.addParams({
@@ -391,7 +391,7 @@ class TileBuilder:
         mirandaR1.addParams(cpu_params)
         genR0 = mirandaR0.setSubComponent("generator", "miranda.STREAMBenchGenerator")
         genR1 = mirandaR1.setSubComponent("generator", "miranda.STREAMBenchGenerator")
-        
+
         genR0.addParams(gen_params)
         genR1.addParams(gen_params)
 
@@ -448,7 +448,7 @@ def setNodeDist(nodeId, rtrreq, rtrack, rtrfwd, rtrdata):
             port = "east"
         elif nodeId == 7:
             port = "south"
-        
+
         rtrreqport = sst.Link("krtr_req_" + port + "_" +str(nodeId))
         rtrreqport.connect( (rtrreq, port, mesh_link_latency), req )
         rtrackport = sst.Link("krtr_ack_" + port + "_" + str(nodeId))
@@ -497,7 +497,7 @@ for x in range (0, mesh_stops_x):
         kRtrFwd[-1].addParams(ctrl_network_params)
         kRtrData.append(sst.Component("krtr_data_" + str(nodeNum), "kingsley.noc_mesh"))
         kRtrData[-1].addParams(data_network_params)
-        
+
         kRtrReq[-1].addParams({"local_ports" : 2})
         kRtrAck[-1].addParams({"local_ports" : 2})
         kRtrFwd[-1].addParams({"local_ports" : 2})

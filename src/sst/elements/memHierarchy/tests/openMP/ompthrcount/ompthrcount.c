@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
 
 	printf("Test will create many threads and increment a counter...\n");
 
-	#pragma omp parallel 
+	#pragma omp parallel
 	{
 		#pragma omp atomic
 		thread_count += 1;

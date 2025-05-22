@@ -81,7 +81,7 @@ public:
     /* Callback to notify when link_control receives a message */
     bool recvNotify(int);
 
-    /* Internal clock function to send events that we weren't able 
+    /* Internal clock function to send events that we weren't able
      * to send immediately */
     bool clock(SimTime_t cycle);
 

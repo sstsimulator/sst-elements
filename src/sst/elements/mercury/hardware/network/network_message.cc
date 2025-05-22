@@ -263,7 +263,7 @@ NetworkMessage::serialize_order(SST::Core::Serialization::serializer& ser)
   if(!wire_is_null){
     SST_SER(SST::Core::Serialization::array(wire_buffer_, payload_bytes_));
   } else {
-    SST_SER(payload_bytes_); 
+    SST_SER(payload_bytes_);
   }
 
   SST_SER(time_started_);

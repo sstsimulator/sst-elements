@@ -44,22 +44,22 @@ class MemEvent;
 /** Class is used to interface a compute mode (CPU, GPU) to MemHierarchy */
 /*
  * Notes on ports and connectivity:
- *  This subcomponent translates a standard event type (StandardMem::Request) into an internal MemHierarchy event type. 
+ *  This subcomponent translates a standard event type (StandardMem::Request) into an internal MemHierarchy event type.
  *  It can be loaded by components to provide an interface into the memory system.
- *  
- *  - If this subcomponent is loaded anonymously, the component loading it must connect a port and pass that port name to this subcomponent via the "port" parameter. 
+ *
+ *  - If this subcomponent is loaded anonymously, the component loading it must connect a port and pass that port name to this subcomponent via the "port" parameter.
  *    The loading component must share that port with the subcomponent (via SHARE_PORTS flag). Anonymous loading does not support a SimpleNetwork connection.
  *  - If this subcomponent is not loaded anonymously, the subcomponent can connect either directly to a memHierarchy component (default) or to a SimpleNetwork interface such as Merlin or Kingsley
  *  - Ways to connect
  *      - Options to connect directly to another memHierarchy component (pick ONE):
  *          a. Load this subcomponent anonymously with the SHARE_PORTS flag and set the "port" parameter to a connected port owned by the parent component
- *          b. Load this subcomponent explicitly in the input file and connect the 'port' port to either a memHierarchy component's port, 
+ *          b. Load this subcomponent explicitly in the input file and connect the 'port' port to either a memHierarchy component's port,
  *             or to a MemLink subcomponent belonging to a memHierarchy component. Do not use the "port" parameter or fill the "lowlink" subcomponent slot.
- *          c. Load this subcomponent explicitly in the input file and fill the lowlink subcomponent slot with "memHierarchy.MemLink". 
+ *          c. Load this subcomponent explicitly in the input file and fill the lowlink subcomponent slot with "memHierarchy.MemLink".
  *             Connect the lowlink subcomponent's port. Do not connect this subcomponent's port or use the "port" parameter.
  *      - To connect over a network
  *          - Load a MemNIC (e.g., MemNIC, MemNICFour) into the "lowlink" subcomponent and parameterize appropriately. Do not connect the "port" port or use the "port" parameter.
- * 
+ *
  * Notes on using this interface
  *  - The parent component MUST call init(), setup(), and finish() on this subcomponent during each of SST's respective phases. In particular, failing to call init() will lead to errors.
  *
@@ -74,8 +74,8 @@ public:
 /* Element Library Info */
     SST_ELI_REGISTER_SUBCOMPONENT(StandardInterface, "memHierarchy", "standardInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Interface to memory hierarchy between endpoint and cache. Converts StandardMem requests into MemEventBases.", SST::Interfaces::StandardMem)
-    
-    SST_ELI_DOCUMENT_PARAMS( 
+
+    SST_ELI_DOCUMENT_PARAMS(
         {"verbose",     "(uint) Output verbosity for warnings/errors. 0[fatal error only], 1[warnings], 2[full state dump on fatal error]", "1"},
         {"debug",       "(uint) Where to send debug output. Options: 0[none], 1[stdout], 2[stderr], 3[file]", "0"},
         {"debug_level", "(uint) Debugging level: 0 to 10. Must configure sst-core with '--enable-debug'. 1=info, 2-10=debug output", "0"},
@@ -83,9 +83,9 @@ public:
         {"noncacheable_regions", "(string) vector of (start, end) address pairs for noncacheable address ranges. Vector format should be [start0, end0, start1, end1, ...].", "[]"}
     )
 
-    SST_ELI_DOCUMENT_PORTS( 
+    SST_ELI_DOCUMENT_PORTS(
         {"lowlink", "Port to memory hierarchy (caches/memory/etc.). Required if 'lowlink' subcomponent slot not filled or if 'lowlink' parameter not provided to this interface.", {}},
-        {"port", "DEPRECATED: Renamed to 'lowlink'. Port to memory hierarchy (caches/memory/etc.). Required if subcomponent slot not filled or if 'port' parameter not provided.", {}} 
+        {"port", "DEPRECATED: Renamed to 'lowlink'. Port to memory hierarchy (caches/memory/etc.). Required if subcomponent slot not filled or if 'port' parameter not provided.", {}}
     )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
@@ -99,7 +99,7 @@ public:
 
     virtual Addr getLineSize() override { return line_size_; }
     virtual void setMemoryMappedAddressRegion(Addr start, Addr size) override;
-    
+
     // Send/Recv during init()/complete() phase
     virtual void sendUntimedData(Request *req) override;
     virtual StandardMem::Request* recvUntimedData() override;
@@ -120,7 +120,7 @@ public:
     ImplementSerializable(SST::MemHierarchy::StandardInterface)
 
     /* End API to Parent */
-    
+
 protected:
 
 
@@ -140,8 +140,8 @@ protected:
     std::queue<StandardMem::Request*> init_recv_queue_;
 
     MemRegion region_;   // For MMIO
-    Endpoint endpoint_type_;    // Endpoint type -> CPU or MMIO 
-    
+    Endpoint endpoint_type_;    // Endpoint type -> CPU or MMIO
+
     class MemEventConverter : public Interfaces::StandardMem::RequestConverter {
     public:
         MemEventConverter(StandardInterface* iface) : iface(iface) {}
@@ -170,9 +170,9 @@ protected:
         StandardInterface* iface;
 
         MemEventConverter() {}
-        void serialize_order(SST::Core::Serialization::serializer& ser) override { 
+        void serialize_order(SST::Core::Serialization::serializer& ser) override {
             SST::Interfaces::StandardMem::RequestConverter::serialize_order(ser);
-            SST_SER(iface); 
+            SST_SER(iface);
         }
         ImplementSerializable(SST::MemHierarchy::StandardInterface::MemEventConverter);
     };
@@ -200,11 +200,11 @@ protected:
         virtual SST::Event* convert(StandardMem::InvNotify* req) override;
 
         StandardInterface* iface;
-        
+
         UntimedMemEventConverter() {}
-        void serialize_order(SST::Core::Serialization::serializer& ser) override { 
+        void serialize_order(SST::Core::Serialization::serializer& ser) override {
             SST::Interfaces::StandardMem::RequestConverter::serialize_order(ser);
-            SST_SER(iface); 
+            SST_SER(iface);
         }
         ImplementSerializable(SST::MemHierarchy::StandardInterface::UntimedMemEventConverter);
     };
@@ -232,12 +232,12 @@ private:
     StandardMem::Request* convertRequestSC(MemEventBase* req);
     StandardMem::Request* convertRequestLock(MemEventBase* req);
     StandardMem::Request* convertRequestUnlock(MemEventBase* req);
-    
+
     /* Handling NACKs
-     * These do not occur if the interface is linked to a cache. 
+     * These do not occur if the interface is linked to a cache.
      * However, if the endpoint issues coherent accesses (not flagged F_NONCACHEABLE), is not linked to a cache,
      * and there are caches in the system, NACKs are possible.
-     * 
+     *
      * NOTE that if a NACK is received, the interface will resend the request.
      * This **can** lead to request reordering if the endpoint has issued multiple
      * requests for the same address in parallel. If the endpoint requires both ordering AND will
@@ -247,7 +247,7 @@ private:
 
     /* Record noncacheable regions (e.g., MMIO device addresses) */
     std::multimap<Addr, MemRegion> noncacheable_regions_;
-   
+
     HandlerBase*              recv_handler_;
     MemEventConverter*        converter_;
     UntimedMemEventConverter* untimed_converter_;

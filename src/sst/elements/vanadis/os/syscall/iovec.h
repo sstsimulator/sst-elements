@@ -92,7 +92,7 @@ public:
         }
     }
 
-    ~VanadisIoVecSyscall() { 
+    ~VanadisIoVecSyscall() {
         if ( m_ioVecTable ) { delete m_ioVecTable; }
     }
 
@@ -121,14 +121,14 @@ public:
 
     size_t calcBuffSize() {
         size_t retval = 4096;
-        if ( m_ioVecTable->getLength(m_currentVec) - m_currentVecOffset < 4096 ) { 
+        if ( m_ioVecTable->getLength(m_currentVec) - m_currentVecOffset < 4096 ) {
             retval = m_ioVecTable->getLength(m_currentVec) - m_currentVecOffset;
         }
         m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL,"[syscall-%s] buff size %zu\n", getName().c_str(), retval);
         return retval;
     }
 
-    bool findNonZeroIoVec() { 
+    bool findNonZeroIoVec() {
 
         m_output->verbose(CALL_INFO, 3, VANADIS_OS_DBG_SYSCALL, "[syscall-%s] count=%" PRIu64 "\n",
             getName().c_str(), getEvent<VanadisSyscallIoVecEvent*>()->getIOVecCount());
@@ -143,7 +143,7 @@ public:
         return false;
     }
 
-  protected: 
+  protected:
     int                         m_currentVec;
     IoVecTable*                 m_ioVecTable;
     size_t                      m_currentVecOffset;

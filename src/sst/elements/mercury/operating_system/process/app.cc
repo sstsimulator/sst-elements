@@ -368,7 +368,7 @@ App::~App()
   if (globals_storage_) delete[] globals_storage_;
 }
 
-void 
+void
 App::addAPI(std::string name, Library* lib) {
   auto iter = apis_.find(name);
   if (iter == apis_.end()) {
@@ -640,7 +640,7 @@ void
 UserAppCxxFullMain::registerMainFxn(const char *name, App::main_fxn fxn)
 {
   if (main_fxns_){  //already passed static init
-    (*main_fxns_)[name] = fxn; 
+    (*main_fxns_)[name] = fxn;
   } else {
     if (!main_fxns_init_){
       main_fxns_init_ = new std::map<std::string, main_fxn>;
@@ -733,7 +733,7 @@ UserAppCxxEmptyMain::registerMainFxn(const char *name, App::empty_main_fxn fxn)
 {
   if (empty_main_fxns_){ //already cleared static init
     (*empty_main_fxns_)[name] = fxn;
-  } else { 
+  } else {
     if (!empty_main_fxns_init_){
       empty_main_fxns_init_ = new std::map<std::string, empty_main_fxn>;
     }

@@ -24,14 +24,14 @@ fetch_latency 5
 alloc_latency 5
 rob_size 1024
 schedule ooo
-isched_rate 4 
-msched_rate 2 
-fsched_rate 2 
+isched_rate 4
+msched_rate 2
+fsched_rate 2
 bp_hist_length 14
 max_block_per_core 4
 fetch_policy rr
 mt_no_fetch_br 1
-fetch_only_load_ready 0 
+fetch_only_load_ready 0
 schedule_ratio 2
 fetch_ratio 2
 gpu_sched 1
@@ -67,7 +67,7 @@ l3_num_set 128
 l3_line_size 128
 l3_assoc 8
 l3_num_bank 4
-l3_latency 10 
+l3_latency 10
 
 
 # DRAM

@@ -50,8 +50,8 @@ public:
             phys_int_regs_in[1]);
     }
 
-    virtual void instOp(VanadisRegisterFile* regFile, 
-                            uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0, 
+    virtual void instOp(VanadisRegisterFile* regFile,
+                            uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0,
                             uint16_t phys_int_regs_in_1) override
     {
         const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in_0);

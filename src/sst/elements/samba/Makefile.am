@@ -24,7 +24,7 @@ libSamba_la_SOURCES = \
 	page_table_walker.cc \
 	page_fault_handler.h \
 	simple_tlb.cc \
-	simple_tlb.h 
+	simple_tlb.h
 
 libSamba_la_LDFLAGS = \
 	-lm \

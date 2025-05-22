@@ -23,11 +23,11 @@ namespace OS {
 
 class Device {
   public:
-    Device( std::string name, uint64_t addr, size_t length) : name(name), physAddr(addr), length(length)  
+    Device( std::string name, uint64_t addr, size_t length) : name(name), physAddr(addr), length(length)
     { }
     ~Device() { }
 
-    std::string getName() { return name; } 
+    std::string getName() { return name; }
     uint64_t getPhysAddr() { return physAddr; }
     size_t getLength() { return length; }
   private:

@@ -24,8 +24,8 @@ namespace Vanadis {
 
 class VanadisUnlinkatSyscall : public VanadisSyscall {
 public:
-    VanadisUnlinkatSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallUnlinkatEvent* event ) 
-        : VanadisSyscall( os, coreLink, process, event, "unlinkat" ) 
+    VanadisUnlinkatSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallUnlinkatEvent* event )
+        : VanadisSyscall( os, coreLink, process, event, "unlinkat" )
     {
         m_output->verbose( CALL_INFO, 16, 0, "[syscall-unlinkat] -> call is unlinkat( %" PRId64 " )\n", event->getPathPointer());
 
@@ -54,7 +54,7 @@ public:
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-unlinkat] path: \"%s\"\n", m_filename.c_str());
 
         if ( unlinkat( m_dirFd, m_filename.c_str(), getEvent<VanadisSyscallUnlinkatEvent*>()->getFlags() ) ) {
-            auto myErrno = errno; 
+            auto myErrno = errno;
             char buf[100];
             char* str = buf;
 #ifdef SST_COMPILE_MACOSX
