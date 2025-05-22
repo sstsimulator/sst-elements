@@ -25,8 +25,8 @@ FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
     if ( install_dir != "Receive" ) {
         if ( install_dir == "Send" ) {
             installDirection_ = installDirection::Send;
-        } else if ( install_dir == "Both" ) {
-            installDirection_ = installDirection::Both;
+        //} else if ( install_dir == "Both" ) {
+        //    installDirection_ = installDirection::Both;
         } else {
             installDirection_ = installDirection::Receive;
         }
@@ -42,12 +42,33 @@ FaultInjectorBase::FaultInjectorBase(SST::Params& params) : PortModule()
 #ifdef DEBUG
     getSimulationOutput().debug(CALL_INFO_LONG, 1, 0, "\tInjection Probability: %d\n", injectionProbability_);
 #endif
+
+    string faultType = params.find<string>("faultType", "");
+
+    if ( faultType == "stuckAt" ) {
+        stuckAtInit(params);
+        faultLogic = &FaultInjectorBase::stuckAtFault;
+    } else if ( faultType == "randomFlip" ) {
+        faultLogic = &FaultInjectorBase::randomFlipFault;
+    } else if ( faultType == "randomDrop" ) {
+        faultLogic = &FaultInjectorBase::randomDropFault;
+    } else if ( faultType == "corruptMemRegion" ) {
+        faultLogic = &FaultInjectorBase::corruptRegionFault;
+    } else if ( faultType == "custom" ) {
+        faultLogic = &FaultInjectorBase::customFault; // placeholder
+    } else {
+        getSimulationOutput().fatal(CALL_INFO_LONG, -1, "\tInvalid fault type selected. Valid options are stuckAt, RandomFlip, randomDrop, corruptRegion, and custom.\n");
+    }
+
+#ifdef DEBUG
+    getSimulationOutput().debug(CALL_INFO_LONG, 1, 0, "\Fault Type: %s\n", faultType);
+#endif
 }
 
 void
 FaultInjectorBase::eventSent(uintptr_t key, Event*& ev) 
 {
-    faultLogic(ev);
+    (this->*(faultLogic))(ev);
 }
 
 void
@@ -56,5 +77,41 @@ FaultInjectorBase::interceptHandler(uintptr_t key, Event*& ev, bool& cancel)
     // do not cancel delivery by default
     cancel = false;
 
-    faultLogic(ev);
+    (this->*(faultLogic))(ev);
+}
+
+void
+FaultInjectorBase::stuckAtFault(Event*& ev) 
+{
+    //
+}
+
+void
+FaultInjectorBase::stuckAtInit(SST::Params& params) 
+{
+    // TODO: devise a way to input and read data from the python into the stuckAtMap
+}
+
+void
+FaultInjectorBase::randomFlipFault(Event*& ev) 
+{
+    //
+}
+
+void
+FaultInjectorBase::randomDropFault(Event*& ev) 
+{
+    //
+}
+
+void
+FaultInjectorBase::corruptMemRegionFault(Event*& ev) 
+{
+    //
+}
+
+void
+FaultInjectorBase::customFault(Event*& ev) 
+{
+    //
 }
