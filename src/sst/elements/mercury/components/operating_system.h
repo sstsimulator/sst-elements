@@ -26,6 +26,7 @@
 #include <cstdint>
 #include <memory>
 
+#include <mercury/common/holderComponentAPI.h>
 namespace SST {
 namespace Hg {
 
@@ -34,7 +35,11 @@ extern template SST::TimeConverter HgBase<SST::SubComponent>::time_converter_;
 class OperatingSystem : public SST::Hg::OperatingSystemBase {
 
 public:
- 
+SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    { "holder", 
+    "The holder",
+    "SST::Iris::sumi::holderSubComponentAPI"}
+) 
   SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::Hg::OperatingSystem, SST::Hg::OperatingSystemBase, SST::Hg::NodeBase*)
 
   SST_ELI_REGISTER_SUBCOMPONENT(
@@ -125,7 +130,7 @@ public:
   }
 
 protected:
-
+  holderSubComponentAPI* holder;
   Thread* active_thread_;
   SST::Hg::NodeBase* node_;
   std::map<std::string, Library*> internal_apis_;

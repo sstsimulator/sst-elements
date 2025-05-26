@@ -14,8 +14,7 @@
 // distribution.
 
 #include <sst/core/params.h>
-
-#include <mercury/common/factory.h>
+#include <sst/core/factory.h>
 #include <mercury/operating_system/launch/app_launcher.h>
 #include <mercury/operating_system/process/software_id.h>
 
@@ -49,7 +48,8 @@ AppLauncher::incomingRequest(AppLaunchRequest* req)
   else app_name = app_params.find<std::string>("name","");
   std::string exe = app_params.find<std::string>("exe","");
   App::dlopenCheck(req->aid(), app_params);
-  App* theapp = create<App>("hg", app_name, app_params, sid, os_);
+  auto factory = Factory::getFactory();
+  App* theapp = factory->Create<App>("hg.UserAppCxxFullMain", app_params, sid, os_);
   os_->startApp(theapp, "my unique name");
 }
 

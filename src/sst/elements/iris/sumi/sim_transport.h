@@ -51,6 +51,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <output.h>
 
 #include <sst/core/eli/elementbuilder.h>
+#include <sst/core/factory.h>
 
 #include <mercury/operating_system/libraries/library.h>
 #include <mercury/operating_system/libraries/service.h>
@@ -59,7 +60,6 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mercury/components/node_fwd.h>
 #include <mercury/components/operating_system.h>
 #include <mercury/common/errors.h>
-#include <mercury/common/factory.h>
 #include <mercury/common/util.h>
 #include <mercury/libraries/compute/compute_api.h>
 
