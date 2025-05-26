@@ -21,12 +21,12 @@
 #include <mercury/operating_system/process/app.h>
 #include <mercury/operating_system/libraries/unblock_event.h>
 
-#ifndef SYSTEMHOLDERLIB
-#define SYSTEMHOLDERLIB
-#define MERCURY_LIB systemlibrary
-  #include <mercury/common/holderComponent.h>
-#undef MERCURY_LIB
-#endif 
+// #ifndef SYSTEMHOLDERLIB
+// #define SYSTEMHOLDERLIB
+// #define MERCURY_LIB systemlibrary
+//   #include <mercury/common/holderComponent.h>
+// #undef MERCURY_LIB
+// #endif 
 namespace SST {
 namespace Hg {
 

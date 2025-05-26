@@ -102,10 +102,10 @@ class SimTransport : public Transport, public SST::Hg::Library {
   SST_ELI_REGISTER_DERIVED(
     Library,
     SimTransport,
-    "hg",
+    "sumi",
     "SimTransport",
     SST_ELI_ELEMENT_VERSION(1,0,0),
-    "implements the SUMI transport API")
+    "implements the transport API for SUMI")
 
   using DefaultProgressQueue = SST::Hg::MultiProgressQueue<Message>;
 

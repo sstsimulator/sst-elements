@@ -50,6 +50,7 @@ AppLauncher::incomingRequest(AppLaunchRequest* req)
   App::dlopenCheck(req->aid(), app_params);
   auto factory = Factory::getFactory();
   App* theapp = factory->Create<App>("hg.UserAppCxxFullMain", app_params, sid, os_);
+  theapp->createLibraries();
   os_->startApp(theapp, "my unique name");
 }
 

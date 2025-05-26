@@ -19,7 +19,7 @@
 #pragma once
 
 
-#include <mercury/common/appHolderComponent.h>
+#include <mercury/common/appLoader.h>
 #define SSTPP_QUOTE(name) #name
 #define SSTPP_STR(name) SSTPP_QUOTE(name)
 

@@ -45,37 +45,25 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mercury/operating_system/process/app.h>
 #include <mercury/components/operating_system.h>
 #include <mercury/common/util.h>
-#include <mercury/common/holderComponent.h>
+#include <mercury/common/loader.h>
 #include <iris/sumi/transport.h>
 #include <iris/sumi/sim_transport.h>
 
-/*
-Convert to a macro 
-#define CREATE_MERCURY_LIB(x, y) { // x is SUMIHOLDERLIB, y is sumi
-#ifndef x
-#define x
-#define MERCURY_LIB y
- #include <mercury/common/holderComponent.h>
+#ifndef SUMILOADER
+#define SUMILOADER
+#define MERCURY_LIB sumi
+  #include <mercury/common/loader.h>
 #undef MERCURY_LIB
 #endif
-}
 
-#define CREATE_MERCURY_LIB(SUMIHOLDERLIB, sumi)
-*/
-#ifndef SUMIHOLDERLIB
-#define SUMIHOLDERLIB
-#define MERCURY_LIB sumi
-  #include <mercury/common/holderComponent.h>
-#undef MERCURY_LIB
-#endif 
 using namespace SST::Hg;
 
-//this redirection macro foobars things here
-#ifdef sleep
-#if sleep == ssthg_sleep
-#undef sleep
-#endif
-#endif
+// //this redirection macro foobars things here
+// #ifdef sleep
+// #if sleep == ssthg_sleep
+// #undef sleep
+// #endif
+// #endif
 
 namespace SST::Iris::sumi {
 

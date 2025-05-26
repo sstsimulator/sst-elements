@@ -26,7 +26,7 @@
 #include <cstdint>
 #include <memory>
 
-#include <mercury/common/holderComponentAPI.h>
+#include <mercury/common/loaderAPI.h>
 namespace SST {
 namespace Hg {
 
@@ -36,9 +36,9 @@ class OperatingSystem : public SST::Hg::OperatingSystemBase {
 
 public:
 SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-    { "holder", 
-    "The holder",
-    "SST::Iris::sumi::holderSubComponentAPI"}
+    { "loader", 
+    "Slot for library loader subcomponents",
+    "SST::Hg::loaderAPI"}
 ) 
   SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::Hg::OperatingSystem, SST::Hg::OperatingSystemBase, SST::Hg::NodeBase*)
 
@@ -67,6 +67,8 @@ SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
   static size_t stacksize() {
     return sst_hg_global_stacksize;
   }
+
+  static void loadCheck(SST::Params& params, SST::Hg::OperatingSystem& me);
 
   std::function<void(NetworkMessage*)> nicDataIoctl() override;
 
@@ -130,7 +132,6 @@ SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
   }
 
 protected:
-  holderSubComponentAPI* holder;
   Thread* active_thread_;
   SST::Hg::NodeBase* node_;
   std::map<std::string, Library*> internal_apis_;
@@ -171,6 +172,8 @@ protected:
 
   NodeId my_addr_;
   UniqueEventId next_outgoing_id_;
+
+  static std::map<std::string,SST::Hg::loaderAPI*> loaders_;
 
 //  int next_condition_;
 //  int next_mutex_;
