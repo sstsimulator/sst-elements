@@ -18,8 +18,7 @@
 #endif
 
 #include <sst/core/params.h>
-
-#include <mercury/common/factory.h>
+#include <sst/core/factory.h>
 #include <sst/core/eli/elementbuilder.h>
 #include <mercury/common/output.h>
 #include <mercury/common/util.h>
@@ -297,8 +296,8 @@ App::App(SST::Params& params, SoftwareId sid,
         //lib_params.print_all_params(std::cerr);
         // Library* lib = SST::Hg::create<Library>(
         //       "hg", name, lib_params, this);
-        Library *lib =
-            SST::Hg::create<Library>("hg", name, params, this);
+        auto factory = Factory::getFactory();
+        Library *lib = factory->Create<Library>("hg." + name, params, this);
         apis_[name] = lib;
       }
       apis_[alias] = apis_[name];

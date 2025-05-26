@@ -18,6 +18,8 @@
 
 #pragma once
 
+
+#include <mercury/common/appHolderComponent.h>
 #define SSTPP_QUOTE(name) #name
 #define SSTPP_STR(name) SSTPP_QUOTE(name)
 
@@ -214,5 +216,4 @@ void sst_hg_blocking_call(int condition, double timeout, const char* api);
 
 #include <mercury/common/skeleton_tls.h>
 #include <mercury/common/null_buffer.h>
-
 

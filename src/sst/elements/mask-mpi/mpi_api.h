@@ -43,7 +43,7 @@ Questions? Contact sst-macro-help@sandia.gov
 */
 
 #include <sst/core/params.h>
-#include <mercury/common/factory.h>
+#include <sst/core/factory.h>
 #include <mercury/components/operating_system_fwd.h>
 #include <mercury/operating_system/libraries/event_library.h>
 #include <mercury/operating_system/libraries/library.h>

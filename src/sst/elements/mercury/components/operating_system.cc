@@ -13,10 +13,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <sst/core/factory.h>
 #include <mercury/components/operating_system.h>
 
 #include <mercury/common/events.h>
-#include <mercury/common/factory.h>
 #include <mercury/common/request.h>
 #include <mercury/components/node.h>
 #include <mercury/components/node_CL.h>
@@ -29,7 +29,15 @@
 #include <sst/core/params.h>
 #include <stdlib.h>
 #include <sys/mman.h>
-
+#include <sst/core/component.h> // or
+#include <sst/core/subcomponent.h> // or
+#include <sst/core/componentExtension.h>
+#ifndef HGHOLDERLIB
+#define HGHOLDERLIB
+#define MERCURY_LIB hg
+  #include <mercury/common/holderComponent.h>
+#undef MERCURY_LIB
+#endif
 extern "C" {
 void* sst_hg_nullptr = nullptr;
 void* sst_hg_nullptr_send = nullptr;
@@ -77,13 +85,41 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
   params_(params)
 {
   TimeDelta::initStamps(TimeDelta::ASEC_PER_TICK);
-
+  
   if (active_os_.size() == 0){
     RankInfo num_ranks = getNumRanks();
     active_os_.resize(num_ranks.thread);
   }
+  // Need to load hg first before loading other libraries.
+  requireLibrary("hg");
+  /* Neil B
+   * Adding code the ensure the libraries are loaded across all ranks. 
+   * The requireLibrary commands ensure that the libraries are loaded in the correct order
+   * Loading the holder subcomponents ensures that the libraries are actually loaded.
+   * Through testing with SST_CORE_DL_VERBOSE=1 requireLibrary doesn't enforce the loading of all libraries.
+   */
+  std::vector<std::string> libs;
+  params.find_array<std::string>("app1.libraries", libs);
+  // Load the libraries in app1.libraries
+  for (const std::string& lib : libs) {
+    size_t startPos = lib.find("lib");
+    startPos += 3; 
+    size_t endPos = lib.find(".so", startPos);
+    std::string myLib = lib.substr(startPos, endPos - startPos);
+    requireLibrary(myLib);
+    holder = loadAnonymousSubComponent<holderSubComponentAPI>(myLib, "holder", 0, 0, params);
+  }
+  // Load the app code itself. The library itself needs to be in a location that sst-core can find.
+  std::string name = params_.find<std::string>("app1.name");
+ // requireLibrary(name);
+ // holder = loadAnonymousSubComponent<holderSubComponentAPI>(name, "holder", 0, 0, params);
+
+
 
   my_addr_ = node_->addr();
+
+
+
   next_outgoing_id_.src_node = my_addr_;
   next_outgoing_id_.msg_num = 0;
   verbose_ = params.find<unsigned int>("verbose", 1);
@@ -152,8 +188,8 @@ OperatingSystem::initThreading(SST::Params& params)
       return; //already done
     }
 
-  des_context_ = create<ThreadContext>(
-        "hg", params.find<std::string>("context", ThreadContext::defaultThreading()));
+  auto factory = Factory::getFactory();
+  des_context_ = factory->Create<ThreadContext>("hg.fcontext");
 
   des_context_->initContext();
 
