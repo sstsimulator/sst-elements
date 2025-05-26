@@ -106,19 +106,17 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
     startPos += 3; 
     size_t endPos = lib.find(".so", startPos);
     std::string myLib = lib.substr(startPos, endPos - startPos);
-    requireLibrary(myLib);
-    holder = loadAnonymousSubComponent<holderSubComponentAPI>(myLib, "holder", 0, 0, params);
+    if (myLib != "computelibrary") {
+      requireLibrary(myLib);
+      holder = loadAnonymousSubComponent<holderSubComponentAPI>(myLib, "holder", 0, 0, params);
+    }
   }
   // Load the app code itself. The library itself needs to be in a location that sst-core can find.
   std::string name = params_.find<std::string>("app1.name");
  // requireLibrary(name);
  // holder = loadAnonymousSubComponent<holderSubComponentAPI>(name, "holder", 0, 0, params);
 
-
-
   my_addr_ = node_->addr();
-
-
 
   next_outgoing_id_.src_node = my_addr_;
   next_outgoing_id_.msg_num = 0;
