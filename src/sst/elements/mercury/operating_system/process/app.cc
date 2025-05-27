@@ -32,8 +32,6 @@
 #include <inttypes.h>
 #include <dlfcn.h>
 
-void sst_hg_app_loaded(int /*aid*/){}
-
 extern "C" FILE* sst_hg_stdout(){
   return SST::Hg::Thread::current()->parentApp()->stdOutFile();
 }
@@ -125,7 +123,7 @@ App::unlockDlopen_Library(std::string library_name)
 }
 
 void
-App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
+App::requireLibraries(SST::Params& params) 
 {
   std::vector<std::string> libs;
   if (params.contains("libraries")){
@@ -135,30 +133,54 @@ App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
     libs.push_back("SystemLibrary:libsystemlibrary.so");
   }
 
-  // parse libs and dlopen them
-  for (auto& str : libs){
-    std::string name;
-    std::string file;
+  for (auto &str : libs) {
     auto pos = str.find(":");
-    if (pos == std::string::npos){
-      name = str;
-      file = str;
-    } else {
-      name = str.substr(0, pos);
-      file = str.substr(pos + 1);
-    }
-
-    dlopen_lock.lock();
-    dlopen_entry& entry = library_dlopens_[name];
-    entry.name = file;
-    if (entry.refcount == 0 || !entry.loaded){
-      entry.handle = loadExternLibrary(file, loadExternPathStr());
-      entry.loaded = true;
-    }
-
-    ++entry.refcount;
-    dlopen_lock.unlock();
+    std::string file = str.substr(pos + 1);
+    os_->requireLibraryForward(file);
   }
+
+  if (params.contains("exe")){
+    std::string file = params.find<std::string>("exe");
+    os_->requireLibraryForward(file);
+  }
+}
+
+
+void
+App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
+{
+  // std::vector<std::string> libs;
+  // if (params.contains("libraries")){
+  //   params.find_array<std::string>("libraries", libs);
+  // }
+  // else {
+  //   libs.push_back("SystemLibrary:libsystemlibrary.so");
+  // }
+
+  // // parse libs and dlopen them
+  // for (auto& str : libs){
+  //   std::string name;
+  //   std::string file;
+  //   auto pos = str.find(":");
+  //   if (pos == std::string::npos){
+  //     name = str;
+  //     file = str;
+  //   } else {
+  //     name = str.substr(0, pos);
+  //     file = str.substr(pos + 1);
+  //   }
+
+  //   dlopen_lock.lock();
+  //   dlopen_entry& entry = library_dlopens_[name];
+  //   entry.name = file;
+  //   if (entry.refcount == 0 || !entry.loaded){
+  //     entry.handle = loadExternLibrary(file, loadExternPathStr());
+  //     entry.loaded = true;
+  //   }
+
+  //   ++entry.refcount;
+  //   dlopen_lock.unlock();
+  // }
 
   // check params for exes and dlopen the libraries
   if (params.contains("exe")){
@@ -184,7 +206,6 @@ App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
     }
 
     ++entry.refcount;
-    sst_hg_app_loaded(aid);
     dlopen_lock.unlock();
   }
   else {
@@ -369,14 +390,14 @@ App::createLibraries() {
   for (auto &str : libraries) {
 
     std::string name;
-    std::string file;
+    std::string libname;
     auto pos = str.find(":");
     name = str.substr(0, pos);
-    file = str.substr(pos + 1);
-    size_t startPos = file.find("lib");
-    startPos += 3;
-    size_t endPos = file.find(".so", startPos);
-    std::string libname = file.substr(startPos, endPos - startPos);
+    libname = str.substr(pos + 1);
+    // size_t startPos = file.find("lib");
+    // startPos += 3;
+    // size_t endPos = file.find(".so", startPos);
+    // std::string libname = file.substr(startPos, endPos - startPos);
 
     out_->debug(CALL_INFO, 1, 0, "checking for %s\n", name.c_str());
     auto iter = libraries_.find(name);

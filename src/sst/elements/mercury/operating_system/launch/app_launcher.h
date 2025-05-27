@@ -37,7 +37,7 @@ class AppLauncher
 
   void incomingRequest(AppLaunchRequest* ev);
 
-  void start();
+  void requireLibraries(SST::Params& params);
 
  protected:
   bool is_completed_;

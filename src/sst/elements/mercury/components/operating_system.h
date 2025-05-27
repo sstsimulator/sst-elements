@@ -240,6 +240,10 @@ protected:
     return npernode_;
   }
 
+  void requireLibraryForward(std::string library) {
+    requireLibrary(library);
+  }
+
 //
 // EVENT LIBRARIES
 //
