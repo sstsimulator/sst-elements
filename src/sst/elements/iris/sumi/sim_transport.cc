@@ -214,8 +214,10 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent) :
 
   auto qos_params = params.get_scoped_params("qos");
   auto qos_name = qos_params.find<std::string>("name", "null");
-  auto factory = Factory::getFactory();
-  qos_analysis_ = factory->Create<QoSAnalysis>("macro." + qos_name, qos_params);
+  if (qos_name != "null") {
+    auto factory = Factory::getFactory();
+    qos_analysis_ = factory->Create<QoSAnalysis>("sumi." + qos_name, qos_params);
+  }
 
   out_->debug(CALL_INFO, 1, 0,
               "registering proc %d\n", rank_);

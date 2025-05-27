@@ -26,11 +26,10 @@ if __name__ == "__main__":
 
     platform.addParamSet("operating_system", {
         "app1.name" : "sendrecv",
-        "app1.exe"  : "sendrecv.so",
-        "app1.loads"     : ["sumi",
-                            "mask_mpi"],
-        "app1.libraries" : ["ComputeLibrary",
-                            "MpiApi",],
+        "app1.exe_library_name" : "sendrecv",
+        "app1.dependencies" : ["sumi", ],
+        "app1.libraries" : ["computelibrary:ComputeLibrary",
+                            "mask_mpi:MpiApi",],
     })
 
     topo = topoSingle()

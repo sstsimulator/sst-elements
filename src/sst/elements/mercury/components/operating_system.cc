@@ -24,7 +24,7 @@
 #include <mercury/operating_system/libraries/unblock_event.h>
 #include <mercury/operating_system/process/app.h>
 #include <mercury/operating_system/process/thread_id.h>
-#include <mercury/operating_system/threading/thread_lock.h>
+//#include <mercury/operating_system/threading/thread_lock.h>
 #include <mercury/operating_system/threading/stack_alloc.h>
 #include <sst/core/eli/elementbuilder.h>
 #include <sst/core/params.h>
@@ -93,29 +93,6 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
     RankInfo num_ranks = getNumRanks();
     active_os_.resize(num_ranks.thread);
   }
-  // Need to load hg first before loading other libraries.
-  //requireLibrary("hg");
-  /* Neil B
-   * Adding code the ensure the libraries are loaded across all ranks. 
-   * The requireLibrary commands ensure that the libraries are loaded in the correct order
-   * Loading the holder subcomponents ensures that the libraries are actually loaded.
-   * Through testing with SST_CORE_DL_VERBOSE=1 requireLibrary doesn't enforce the loading of all libraries.
-   */
-
-  // std::vector<std::string> loads;
-  // params.find_array<std::string>("app1.loads", loads);
-  // // Load the libraries in app1.loads
-  // for (const std::string& lib : loads) {
-  //     //std::cerr << "requiring " << myLib << std::endl;
-  //     //requireLibrary(myLib);
-  //     std::cerr << "loading " << lib << std::endl;
-  //     holder = loadAnonymousSubComponent<holderSubComponentAPI>(lib, "holder", 0, 0, params);
-  // }
-
-  // Load the app code itself. The library itself needs to be in a location that sst-core can find.
-  // std::string name = params_.find<std::string>("app1.name");
-  // requireLibrary(name);
-  // holder = loadAnonymousSubComponent<holderSubComponentAPI>(name, "holder", 0, 0, params);
 
   my_addr_ = node_->addr();
 
@@ -146,7 +123,9 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
       time_converter_ = SST::BaseComponent::getTimeConverter(tickIntervalString());
     }
 
-  loadCheck(params_,*this);
+  // These are libraries that a SST::Hg::Library depends on. We have core load them early 
+  // in hopes that everything is in place when the SST::Hg::Library is instanced.
+  requireDependencies(params_,*this);
 
   // Configure self link to handle event timing
   selfEventLink_ = configureSelfLink("self", time_converter_, new Event::Handler2<Hg::OperatingSystem,&OperatingSystem::handleEvent>(this));
@@ -182,34 +161,15 @@ OperatingSystem::setup() {
     selfEventLink_->send(r);
 }
 
-static thread_lock loader_lock;
+//static thread_lock loader_lock;
 
 void
-OperatingSystem::loadCheck(SST::Params& params, SST::Hg::OperatingSystem& me) {
-  /* Neil B
-   * Adding code the ensure the libraries are loaded across all ranks. 
-   * Loading the holder subcomponents ensures that the libraries are actually loaded.
-   * Through testing with SST_CORE_DL_VERBOSE=1 requireLibrary doesn't enforce the loading of all libraries.
-   */
-  std::vector<std::string> loads;
-  params.find_array<std::string>("app1.loads", loads);
-  loader_lock.lock();
-  // Load the libraries in app1.loads
-  int nslot = 0;
-  for (const std::string& lib : loads) {
-    if (loaders_.find(lib) == loaders_.end() || loaders_[lib] == nullptr) {
-      me.requireLibrary(lib);
-      std::string loader(lib);
-      loader += ".loader";
-      loaders_[lib] = me.loadAnonymousSubComponent<SST::Hg::loaderAPI>(loader.c_str(), "loader", nslot, ComponentInfo::SHARE_NONE, params);
-      ++nslot;
-      if (loaders_[lib] == nullptr) {
-        std::cerr << "WARNING: " << lib << " did not succeed loading " << loader << ", but this may not be fatal\n";
-      }
-      else std::cerr << "SUCCESS: loaded " << lib << std::endl;
-    }
+OperatingSystem::requireDependencies(SST::Params& params, SST::Hg::OperatingSystem& me) {
+  std::vector<std::string> libs;
+  params.find_array<std::string>("app1.dependencies", libs);
+  for (const std::string& lib : libs) {
+    me.requireLibrary(lib);
   }
-  loader_lock.unlock();
 }
 
 void
@@ -304,9 +264,8 @@ OperatingSystem::addLaunchRequests(SST::Params& params)
         requests_.push_back(mgr);
       }
       keep_going = true;
-
-      App::lockDlopen(aid);
-    } else {
+    } 
+    else {
       keep_going = false;
     }
     ++aid;

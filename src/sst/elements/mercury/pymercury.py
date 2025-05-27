@@ -97,9 +97,9 @@ class HgOS(TemplateBase):
                                      ])
         self._declareParamsWithUserPrefix("params","app1",
                                           ["name",
-                                           "exe",
+                                           "exe_library_name",
                                            "libraries",
-                                           "loads",
+                                           "dependencies",
                                            "verbose",
                                            "post_rdma_delay",
                                            "post_header_delay",

@@ -49,13 +49,6 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <iris/sumi/transport.h>
 #include <iris/sumi/sim_transport.h>
 
-#ifndef SUMILOADER
-#define SUMILOADER
-#define MERCURY_LIB sumi
-  #include <mercury/common/loader.h>
-#undef MERCURY_LIB
-#endif
-
 using namespace SST::Hg;
 
 // //this redirection macro foobars things here

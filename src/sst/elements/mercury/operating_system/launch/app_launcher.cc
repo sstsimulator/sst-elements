@@ -41,17 +41,41 @@ AppLauncher::incomingRequest(AppLaunchRequest* req)
   SoftwareId sid(req->aid(), taskid);
   ++local_offset[req->aid()];
 
-  std::string app_name;
-  if (app_params.count("label")) {
-      app_name = app_params.find<std::string>("label","");
-  }
-  else app_name = app_params.find<std::string>("name","");
-  std::string exe = app_params.find<std::string>("exe","");
-  App::dlopenCheck(req->aid(), app_params);
+  requireLibraries(app_params);
+  setupExe(app_params);
   auto factory = Factory::getFactory();
   App* theapp = factory->Create<App>("hg.UserAppCxxFullMain", app_params, sid, os_);
   theapp->createLibraries();
   os_->startApp(theapp, "my unique name");
+}
+
+void
+AppLauncher::requireLibraries(SST::Params& params) 
+{
+  std::vector<std::string> libs;
+  if (params.contains("libraries")){
+    params.find_array<std::string>("libraries", libs);
+  }
+  else {
+    libs.push_back("systemlibrary:SystemLibrary");
+  }
+
+  for (auto &str : libs) {
+    auto pos = str.find(":");
+    std::string libname = str.substr(0, pos);
+    os_->requireLibraryForward(libname);
+  }
+}
+
+void
+AppLauncher::setupExe(SST::Params& params)
+{
+  if (params.contains("exe_library_name")){
+    std::string libname = params.find<std::string>("exe_library_name");
+    os_->requireLibraryForward(libname);
+  }
+  UserAppCxxEmptyMain::aliasMains();
+  UserAppCxxFullMain::aliasMains();
 }
 
 } // end namespace Hg
