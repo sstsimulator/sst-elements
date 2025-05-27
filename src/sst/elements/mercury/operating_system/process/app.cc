@@ -62,7 +62,7 @@ std::map<std::string, App::empty_main_fxn>* UserAppCxxEmptyMain::empty_main_fxns
 std::map<AppId, UserAppCxxFullMain::argv_entry> UserAppCxxFullMain::argv_map_;
 
 std::map<int, App::dlopen_entry> App::exe_dlopens_;
-std::map<std::string, App::dlopen_entry> App::api_dlopens_;
+std::map<std::string, App::dlopen_entry> App::library_dlopens_;
 int App::app_rc_ = 0;
 
 int
@@ -112,28 +112,29 @@ App::unlockDlopen(int aid)
 }
 
 void
-App::lockDlopen_Library(std::string api_name)
+App::lockDlopen_Library(std::string library_name)
 {
-  dlopen_entry& entry = api_dlopens_[api_name];
+  dlopen_entry& entry = library_dlopens_[library_name];
   entry.refcount++;
 }
 
 void
-App::unlockDlopen_Library(std::string api_name)
+App::unlockDlopen_Library(std::string library_name)
 {
-  dlcloseCheck_Library(api_name);
+  dlcloseCheck_Library(library_name);
 }
 
 void
 App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
 {
   std::vector<std::string> libs;
-  if (params.contains("libraries")){
-    params.find_array<std::string>("libraries", libs);
-  }
-  else {
-    libs.push_back("SystemLibrary:libsystemlibrary.so");
-  }
+  // if (params.contains("libraries")){
+  //   params.find_array<std::string>("libraries", libs);
+  // }
+  // else {
+  //   libs.push_back("SystemLibrary:libsystemlibrary.so");
+  // }
+  libs.push_back("libcomputelibrary.so");
 
   // parse libs and dlopen them
   for (auto& str : libs){
@@ -149,7 +150,7 @@ App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
     }
 
     dlopen_lock.lock();
-    dlopen_entry& entry = api_dlopens_[name];
+    dlopen_entry& entry = library_dlopens_[name];
     entry.name = file;
     if (entry.refcount == 0 || !entry.loaded){
       entry.handle = loadExternLibrary(file, loadExternPathStr());
@@ -212,16 +213,16 @@ App::dlcloseCheck(int aid)
 }
 
 void
-App::dlcloseCheck_Library(std::string api_name)
+App::dlcloseCheck_Library(std::string library_name)
 {
   dlopen_lock.lock();
-  auto iter = api_dlopens_.find(api_name);
-  if (iter != api_dlopens_.end()){
+  auto iter = library_dlopens_.find(library_name);
+  if (iter != library_dlopens_.end()){
     dlopen_entry& entry = iter->second;
     --entry.refcount;
     if (entry.refcount == 0 && entry.loaded){
       unloadExternLibrary(entry.handle);
-      api_dlopens_.erase(iter);
+      library_dlopens_.erase(iter);
     }
   }
   dlopen_lock.unlock();
@@ -266,6 +267,7 @@ App::App(SST::Params& params, SoftwareId sid,
     env_[key] = env_params.find<std::string>(key);
   }
 
+  /*
   std::vector<std::string> libs;
   if (params.contains("libraries")){
     params.find_array("libraries", libs);
@@ -274,16 +276,10 @@ App::App(SST::Params& params, SoftwareId sid,
   }
 
   for (auto& str : libs){
-    std::string alias;
-    std::string name;
+    std::string name, libname;
     auto pos = str.find(":");
-    if (pos == std::string::npos){
-      name = str;
-      alias = str;
-    } else {
-      name = str.substr(0, pos);
-      alias = str.substr(pos + 1);
-    }
+    name = str.substr(0, pos);
+    libname = str.substr(pos + 1);
 
     out_->debug(CALL_INFO, 1, 0, "checking %s\n", name.c_str());
 
@@ -291,18 +287,13 @@ App::App(SST::Params& params, SoftwareId sid,
       auto iter = apis_.find(name);
       if (iter == apis_.end()){
         out_->debug(CALL_INFO, 1, 0, "loading %s\n", name.c_str());
-        // It'll take some work to make this possible in pymerlin
-        //SST::Params lib_params = params.get_scoped_params(name);
-        //lib_params.print_all_params(std::cerr);
-        // Library* lib = SST::Hg::create<Library>(
-        //       "hg", name, lib_params, this);
         auto factory = Factory::getFactory();
-        Library *lib = factory->Create<Library>("hg." + name, params, this);
+        Library *lib = factory->Create<Library>(libname, params, this);
         apis_[name] = lib;
       }
-      apis_[alias] = apis_[name];
     }
   }
+  */
 
   std::string stdout_str = params.find<std::string>("stdout", "stdout");
   std::string stderr_str = params.find<std::string>("stderr", "stderr");
@@ -367,13 +358,34 @@ App::~App()
   if (globals_storage_) delete[] globals_storage_;
 }
 
-void 
-App::addAPI(std::string name, Library* lib) {
-  auto iter = apis_.find(name);
-  if (iter == apis_.end()) {
-    apis_[name] = lib;
+void
+App::createLibraries() {
+  std::vector<std::string> creates;
+  if (params_.contains("libraries")){
+    params_.find_array("libraries", creates);
+  } else {
+      creates.push_back("SystemLibrary");
   }
-}
+
+  for (auto &name : creates) {
+    out_->debug(CALL_INFO, 1, 0, "checking for %s\n", name.c_str());
+    auto iter = libraries_.find(name);
+    if (iter == libraries_.end()) {
+      out_->debug(CALL_INFO, 1, 0, "creating instance of %s\n", name.c_str());
+      auto factory = Factory::getFactory();
+      Library *lib = factory->Create<Library>("hg." + name, params_, this);
+      libraries_[name] = lib;
+    }
+  }
+} 
+
+// void 
+// App::addAPI(std::string name, Library* lib) {
+//   auto iter = apis_.find(name);
+//   if (iter == apis_.end()) {
+//     apis_[name] = lib;
+//   }
+// }
 
 std::ostream&
 App::coutStream(){
@@ -475,8 +487,8 @@ App::getParams()
 Library*
 App::getLibrary(const std::string &name)
 {
-  auto iter = apis_.find(name);
-  if (iter == apis_.end()){
+  auto iter = libraries_.find(name);
+  if (iter == libraries_.end()){
     sst_hg_abort_printf("Library %s not found for app %d",
                 name.c_str(), aid());
   }
@@ -486,19 +498,19 @@ App::getLibrary(const std::string &name)
 void
 App::run()
 {
-  endLibraryCall(); //this initializes things, "fake" api call at beginning
+  endLibraryCall(); //this initializes things, "fake" library call at beginning
   rc_ = skeletonMain();
   //we are ending but perform the equivalent
-  //to a start api call to flush any compute
+  //to a start library call to flush any compute
   startLibraryCall();
 
   std::set<Library*> unique;
   //because of aliasing...
-  for (auto& pair : apis_){
+  for (auto& pair : libraries_){
     unique.insert(pair.second);
   }
-  apis_.clear();
-  for (Library* api : unique) delete api;
+  libraries_.clear();
+  for (Library* lib : unique) delete lib;
 
   dlcloseCheck();
 

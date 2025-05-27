@@ -68,6 +68,8 @@ SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
     return sst_hg_global_stacksize;
   }
 
+  static void loadCheck(SST::Params& params, SST::Hg::OperatingSystem& me);
+
   std::function<void(NetworkMessage*)> nicDataIoctl() override;
 
   std::function<void(NetworkMessage*)> nicCtrlIoctl() override;
@@ -171,6 +173,8 @@ protected:
 
   NodeId my_addr_;
   UniqueEventId next_outgoing_id_;
+
+  static std::map<std::string,SST::Hg::holderSubComponentAPI*> loaders_;
 
 //  int next_condition_;
 //  int next_mutex_;

@@ -24,6 +24,7 @@
 #include <mercury/operating_system/libraries/unblock_event.h>
 #include <mercury/operating_system/process/app.h>
 #include <mercury/operating_system/process/thread_id.h>
+#include <mercury/operating_system/threading/thread_lock.h>
 #include <mercury/operating_system/threading/stack_alloc.h>
 #include <sst/core/eli/elementbuilder.h>
 #include <sst/core/params.h>
@@ -59,6 +60,8 @@ std::vector<OperatingSystem*> OperatingSystem::active_os_;
 // OperatingSystem* OperatingSystem::active_os_ = nullptr;
 // #endif
 
+std::map<std::string,SST::Hg::holderSubComponentAPI*> OperatingSystem::loaders_;
+
 class DeleteThreadEvent :
     public ExecutionEvent
 {
@@ -91,26 +94,24 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
     active_os_.resize(num_ranks.thread);
   }
   // Need to load hg first before loading other libraries.
-  requireLibrary("hg");
+  //requireLibrary("hg");
   /* Neil B
    * Adding code the ensure the libraries are loaded across all ranks. 
    * The requireLibrary commands ensure that the libraries are loaded in the correct order
    * Loading the holder subcomponents ensures that the libraries are actually loaded.
    * Through testing with SST_CORE_DL_VERBOSE=1 requireLibrary doesn't enforce the loading of all libraries.
    */
-  std::vector<std::string> libs;
-  params.find_array<std::string>("app1.libraries", libs);
-  // Load the libraries in app1.libraries
-  for (const std::string& lib : libs) {
-    size_t startPos = lib.find("lib");
-    startPos += 3; 
-    size_t endPos = lib.find(".so", startPos);
-    std::string myLib = lib.substr(startPos, endPos - startPos);
-    if (myLib != "computelibrary") {
-      requireLibrary(myLib);
-      holder = loadAnonymousSubComponent<holderSubComponentAPI>(myLib, "holder", 0, 0, params);
-    }
-  }
+
+  // std::vector<std::string> loads;
+  // params.find_array<std::string>("app1.loads", loads);
+  // // Load the libraries in app1.loads
+  // for (const std::string& lib : loads) {
+  //     //std::cerr << "requiring " << myLib << std::endl;
+  //     //requireLibrary(myLib);
+  //     std::cerr << "loading " << lib << std::endl;
+  //     holder = loadAnonymousSubComponent<holderSubComponentAPI>(lib, "holder", 0, 0, params);
+  // }
+
   // Load the app code itself. The library itself needs to be in a location that sst-core can find.
   std::string name = params_.find<std::string>("app1.name");
  // requireLibrary(name);
@@ -145,6 +146,8 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
       time_converter_ = SST::BaseComponent::getTimeConverter(tickIntervalString());
     }
 
+  loadCheck(params_,*this);
+
   // Configure self link to handle event timing
   selfEventLink_ = configureSelfLink("self", time_converter_, new Event::Handler2<Hg::OperatingSystem,&OperatingSystem::handleEvent>(this));
   assert(selfEventLink_);
@@ -177,6 +180,23 @@ OperatingSystem::setup() {
   addLaunchRequests(params_);
   for (auto r : requests_)
     selfEventLink_->send(r);
+}
+
+static thread_lock loader_lock;
+
+void
+OperatingSystem::loadCheck(SST::Params& params, SST::Hg::OperatingSystem& me) {
+  std::vector<std::string> loads;
+  params.find_array<std::string>("app1.loads", loads);
+  loader_lock.lock();
+  // Load the libraries in app1.loads
+  for (const std::string& lib : loads) {
+    if (loaders_.find(lib) == loaders_.end()) {
+      //requireLibrary(myLib);
+      loaders_[lib] = me.loadAnonymousSubComponent<holderSubComponentAPI>(lib, "holder", 0, 0, params);
+    }
+  }
+  loader_lock.unlock();
 }
 
 void

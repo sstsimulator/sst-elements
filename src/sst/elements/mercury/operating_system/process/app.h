@@ -39,7 +39,7 @@ namespace Hg {
 /**
  * The app derived class adds to the thread base class by providing
  * facilities to allow applications to simulate computation.
- * Messaging models are supported through an api class,
+ * Messaging models are supported through a library class,
  * which are stored by the app
  */
 class App : public Thread
@@ -99,8 +99,6 @@ class App : public Thread
   int setenv(const std::string& name, const std::string& value, int overwrite);
 
   OperatingSystem* os() {return os_;}
-
-  void addAPI(std::string,Library*);
 
   /**
    * Let a parent application know about the existence of a subthread
@@ -180,11 +178,11 @@ class App : public Thread
 
   static void unlockDlopen(int aid);
 
-  static void dlcloseCheck_Library(std::string api_name);
+  static void dlcloseCheck_Library(std::string library_name);
 
-  static void lockDlopen_Library(std::string api_name);
+  static void lockDlopen_Library(std::string library_name);
 
-  static void unlockDlopen_Library(std::string api_name);
+  static void unlockDlopen_Library(std::string library_name);
 
   static int appRC(){
     return app_rc_;
@@ -202,6 +200,7 @@ class App : public Thread
     return taskid_;
   }
 
+  void createLibraries();
   Library* getLibrary(const std::string& name);
 
   std::ostream& coutStream();
@@ -235,7 +234,7 @@ class App : public Thread
   std::map<long, Thread*> subthreads_;
   std::map<int, destructor_fxn> tls_key_fxns_;
   //  these can alias - so I can't use unique_ptr
-  std::map<std::string, Library*> apis_;
+  std::map<std::string, Library*> libraries_;
   std::map<std::string,std::string> env_;
 
   char env_string_[64];
@@ -255,7 +254,7 @@ class App : public Thread
   };
 
   static std::map<int, dlopen_entry> exe_dlopens_;
-  static std::map<std::string, dlopen_entry> api_dlopens_;
+  static std::map<std::string, dlopen_entry> library_dlopens_;
 
   static int app_rc_;
 

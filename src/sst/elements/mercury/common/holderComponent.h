@@ -1,7 +1,25 @@
+// Copyright 2009-2025 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2025, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// of the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
-#include <sst/core/component.h> // or
 #include <sst/core/subcomponent.h>
+#include <mercury/common/holderComponentAPI.h>
 #include <mercury/common/appHolderComponent.h>
+
+namespace SST {
+namespace Hg {
+
 #ifdef MERCURY_LIB
 #define CREATE_STRING(x) #x
 #define EXPAND_STRING(x) CREATE_STRING(x)
@@ -9,14 +27,16 @@
 #define CONCAT(x, y) x ## y
 #define EXPAND_CONCAT(x,y) CONCAT(x,y)
 
-class EXPAND_CONCAT(CLASS_NAME, MERCURY_LIB): public holderSubComponentAPI
+class EXPAND_CONCAT(CLASS_NAME, MERCURY_LIB): public SST::Hg::holderSubComponentAPI
 {
 public:
-EXPAND_CONCAT(CLASS_NAME, MERCURY_LIB)(SST::ComponentId_t id, SST::Params& params) : holderSubComponentAPI(id, params) {}
+EXPAND_CONCAT(CLASS_NAME, MERCURY_LIB)(SST::ComponentId_t id, SST::Params& params) : SST::Hg::holderSubComponentAPI(id, params) {}
 
-SST_ELI_REGISTER_SUBCOMPONENT(EXPAND_CONCAT(CLASS_NAME, MERCURY_LIB), EXPAND_STRING(MERCURY_LIB), "holder" , SST_ELI_ELEMENT_VERSION(1, 0, 0), "description", holderSubComponentAPI)
-
+SST_ELI_REGISTER_SUBCOMPONENT(EXPAND_CONCAT(CLASS_NAME, MERCURY_LIB), EXPAND_STRING(MERCURY_LIB), "holder" , SST_ELI_ELEMENT_VERSION(1, 0, 0), "description", SST::Hg::holderSubComponentAPI)
 
 };
 #endif //MERCURY_LIB
+
+} // end namespace Hg
+} // end namespace SST
 
