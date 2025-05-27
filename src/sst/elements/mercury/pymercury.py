@@ -99,7 +99,7 @@ class HgOS(TemplateBase):
                                           ["name",
                                            "exe",
                                            "libraries",
-                                           "loads",
+                                           "requires",
                                            "verbose",
                                            "post_rdma_delay",
                                            "post_header_delay",

@@ -128,13 +128,12 @@ void
 App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
 {
   std::vector<std::string> libs;
-  // if (params.contains("libraries")){
-  //   params.find_array<std::string>("libraries", libs);
-  // }
-  // else {
-  //   libs.push_back("SystemLibrary:libsystemlibrary.so");
-  // }
-  libs.push_back("libcomputelibrary.so");
+  if (params.contains("libraries")){
+    params.find_array<std::string>("libraries", libs);
+  }
+  else {
+    libs.push_back("SystemLibrary:libsystemlibrary.so");
+  }
 
   // parse libs and dlopen them
   for (auto& str : libs){
@@ -360,20 +359,31 @@ App::~App()
 
 void
 App::createLibraries() {
-  std::vector<std::string> creates;
+  std::vector<std::string> libraries;
   if (params_.contains("libraries")){
-    params_.find_array("libraries", creates);
+    params_.find_array("libraries", libraries);
   } else {
-      creates.push_back("SystemLibrary");
+      libraries.push_back("libsystemlibrary.so");
   }
 
-  for (auto &name : creates) {
+  for (auto &str : libraries) {
+
+    std::string name;
+    std::string file;
+    auto pos = str.find(":");
+    name = str.substr(0, pos);
+    file = str.substr(pos + 1);
+    size_t startPos = file.find("lib");
+    startPos += 3;
+    size_t endPos = file.find(".so", startPos);
+    std::string libname = file.substr(startPos, endPos - startPos);
+
     out_->debug(CALL_INFO, 1, 0, "checking for %s\n", name.c_str());
     auto iter = libraries_.find(name);
     if (iter == libraries_.end()) {
       out_->debug(CALL_INFO, 1, 0, "creating instance of %s\n", name.c_str());
       auto factory = Factory::getFactory();
-      Library *lib = factory->Create<Library>("hg." + name, params_, this);
+      Library *lib = factory->Create<Library>(libname + "." + name, params_, this);
       libraries_[name] = lib;
     }
   }

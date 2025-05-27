@@ -24,7 +24,7 @@
 #include <mercury/operating_system/libraries/unblock_event.h>
 #include <mercury/operating_system/process/app.h>
 #include <mercury/operating_system/process/thread_id.h>
-#include <mercury/operating_system/threading/thread_lock.h>
+//#include <mercury/operating_system/threading/thread_lock.h>
 #include <mercury/operating_system/threading/stack_alloc.h>
 #include <sst/core/eli/elementbuilder.h>
 #include <sst/core/params.h>
@@ -182,7 +182,7 @@ OperatingSystem::setup() {
     selfEventLink_->send(r);
 }
 
-static thread_lock loader_lock;
+//static thread_lock loader_lock;
 
 void
 OperatingSystem::loadCheck(SST::Params& params, SST::Hg::OperatingSystem& me) {
@@ -191,25 +191,29 @@ OperatingSystem::loadCheck(SST::Params& params, SST::Hg::OperatingSystem& me) {
    * Loading the holder subcomponents ensures that the libraries are actually loaded.
    * Through testing with SST_CORE_DL_VERBOSE=1 requireLibrary doesn't enforce the loading of all libraries.
    */
-  std::vector<std::string> loads;
-  params.find_array<std::string>("app1.loads", loads);
-  loader_lock.lock();
-  // Load the libraries in app1.loads
-  int nslot = 0;
-  for (const std::string& lib : loads) {
-    if (loaders_.find(lib) == loaders_.end() || loaders_[lib] == nullptr) {
-      me.requireLibrary(lib);
-      std::string loader(lib);
-      loader += ".loader";
-      loaders_[lib] = me.loadAnonymousSubComponent<SST::Hg::loaderAPI>(loader.c_str(), "loader", nslot, ComponentInfo::SHARE_NONE, params);
-      ++nslot;
-      if (loaders_[lib] == nullptr) {
-        std::cerr << "WARNING: " << lib << " did not succeed loading " << loader << ", but this may not be fatal\n";
-      }
-      else std::cerr << "SUCCESS: loaded " << lib << std::endl;
-    }
+  std::vector<std::string> requires;
+  params.find_array<std::string>("app1.requires", requires);
+  for (const std::string& lib : requires) {
+    me.requireLibrary(lib);
   }
-  loader_lock.unlock();
+
+  // loader_lock.lock();
+  // // Load the libraries in app1.loads
+  // int nslot = 0;
+  // for (const std::string& lib : loads) {
+  //   if (loaders_.find(lib) == loaders_.end() || loaders_[lib] == nullptr) {
+  //     me.requireLibrary(lib);
+  //     std::string loader(lib);
+  //     loader += ".loader";
+  //     loaders_[lib] = me.loadAnonymousSubComponent<SST::Hg::loaderAPI>(loader.c_str(), "loader", nslot, ComponentInfo::SHARE_NONE, params);
+  //     ++nslot;
+  //     if (loaders_[lib] == nullptr) {
+  //       std::cerr << "WARNING: " << lib << " did not succeed loading " << loader << ", but this may not be fatal\n";
+  //     }
+  //     else std::cerr << "SUCCESS: loaded " << lib << std::endl;
+  //   }
+  // }
+  // loader_lock.unlock();
 }
 
 void
