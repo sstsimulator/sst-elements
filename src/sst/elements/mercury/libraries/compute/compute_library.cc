@@ -19,12 +19,12 @@
 #include <mercury/libraries/compute/compute_library.h>
 #include <mercury/operating_system/process/app.h>
 
-#ifndef COMPUTEHOLDERLIB
-#define COMPUTEHOLDERLIB
-#define MERCURY_LIB computelibrary
-  #include <mercury/common/holderComponent.h>
-#undef MERCURY_LIB
-#endif 
+// #ifndef COMPUTEHOLDERLIB
+// #define COMPUTEHOLDERLIB
+// #define MERCURY_LIB computelibrary
+//   #include <mercury/common/holderComponent.h>
+// #undef MERCURY_LIB
+// #endif 
 namespace SST {
 namespace Hg {
 

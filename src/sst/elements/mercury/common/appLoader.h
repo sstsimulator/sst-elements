@@ -14,7 +14,7 @@
 // distribution.
 
 #include <sst/core/subcomponent.h>
-#include <mercury/common/holderComponentAPI.h>
+#include <mercury/common/loaderAPI.h>
 
 namespace SST {
 namespace Hg {
@@ -22,16 +22,16 @@ namespace Hg {
 #ifdef ssthg_app_name
 #define CREATE_STRING(x) #x
 #define EXPAND_STRING(x) CREATE_STRING(x)
-#define CLASS_NAME holderSubComponent
+#define CLASS_NAME loader
 #define CONCAT(x, y) x ## y
 #define EXPAND_CONCAT(x,y) CONCAT(x,y)
 
-class EXPAND_CONCAT(CLASS_NAME, ssthg_app_name): public SST::Hg::holderSubComponentAPI
+class EXPAND_CONCAT(CLASS_NAME, ssthg_app_name): public SST::Hg::loaderAPI
 {
 public:
-EXPAND_CONCAT(CLASS_NAME, ssthg_app_name)(SST::ComponentId_t id, SST::Params& params) : SST::Hg::holderSubComponentAPI(id, params) {}
+EXPAND_CONCAT(CLASS_NAME, ssthg_app_name)(SST::ComponentId_t id, SST::Params& params) : SST::Hg::loaderAPI(id, params) {}
 
-SST_ELI_REGISTER_SUBCOMPONENT(EXPAND_CONCAT(CLASS_NAME, ssthg_app_name), EXPAND_STRING(ssthg_app_name), "holder" , SST_ELI_ELEMENT_VERSION(1, 0, 0), "description", SST::Hg::holderSubComponentAPI)
+SST_ELI_REGISTER_SUBCOMPONENT(EXPAND_CONCAT(CLASS_NAME, ssthg_app_name), EXPAND_STRING(ssthg_app_name), "loader" , SST_ELI_ELEMENT_VERSION(1, 0, 0), "description", SST::Hg::loaderAPI)
 
 
 };

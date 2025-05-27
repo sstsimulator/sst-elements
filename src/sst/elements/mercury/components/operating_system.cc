@@ -33,12 +33,12 @@
 #include <sst/core/component.h> // or
 #include <sst/core/subcomponent.h> // or
 #include <sst/core/componentExtension.h>
-#ifndef HGHOLDERLIB
-#define HGHOLDERLIB
-#define MERCURY_LIB hg
-  #include <mercury/common/holderComponent.h>
-#undef MERCURY_LIB
-#endif
+// #ifndef HGHOLDERLIB
+// #define HGHOLDERLIB
+// #define MERCURY_LIB hg
+//   #include <mercury/common/loader.h>
+// #undef MERCURY_LIB
+// #endif
 extern "C" {
 void* sst_hg_nullptr = nullptr;
 void* sst_hg_nullptr_send = nullptr;
@@ -60,7 +60,7 @@ std::vector<OperatingSystem*> OperatingSystem::active_os_;
 // OperatingSystem* OperatingSystem::active_os_ = nullptr;
 // #endif
 
-std::map<std::string,SST::Hg::holderSubComponentAPI*> OperatingSystem::loaders_;
+std::map<std::string,SST::Hg::loaderAPI*> OperatingSystem::loaders_;
 
 class DeleteThreadEvent :
     public ExecutionEvent
@@ -113,9 +113,9 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
   // }
 
   // Load the app code itself. The library itself needs to be in a location that sst-core can find.
-  std::string name = params_.find<std::string>("app1.name");
- // requireLibrary(name);
- // holder = loadAnonymousSubComponent<holderSubComponentAPI>(name, "holder", 0, 0, params);
+  // std::string name = params_.find<std::string>("app1.name");
+  // requireLibrary(name);
+  // holder = loadAnonymousSubComponent<holderSubComponentAPI>(name, "holder", 0, 0, params);
 
   my_addr_ = node_->addr();
 
@@ -186,14 +186,27 @@ static thread_lock loader_lock;
 
 void
 OperatingSystem::loadCheck(SST::Params& params, SST::Hg::OperatingSystem& me) {
+  /* Neil B
+   * Adding code the ensure the libraries are loaded across all ranks. 
+   * Loading the holder subcomponents ensures that the libraries are actually loaded.
+   * Through testing with SST_CORE_DL_VERBOSE=1 requireLibrary doesn't enforce the loading of all libraries.
+   */
   std::vector<std::string> loads;
   params.find_array<std::string>("app1.loads", loads);
   loader_lock.lock();
   // Load the libraries in app1.loads
+  int nslot = 0;
   for (const std::string& lib : loads) {
-    if (loaders_.find(lib) == loaders_.end()) {
-      //requireLibrary(myLib);
-      loaders_[lib] = me.loadAnonymousSubComponent<holderSubComponentAPI>(lib, "holder", 0, 0, params);
+    if (loaders_.find(lib) == loaders_.end() || loaders_[lib] == nullptr) {
+      me.requireLibrary(lib);
+      std::string loader(lib);
+      loader += ".loader";
+      loaders_[lib] = me.loadAnonymousSubComponent<SST::Hg::loaderAPI>(loader.c_str(), "loader", nslot, ComponentInfo::SHARE_NONE, params);
+      ++nslot;
+      if (loaders_[lib] == nullptr) {
+        std::cerr << "WARNING: " << lib << " did not succeed loading " << loader << ", but this may not be fatal\n";
+      }
+      else std::cerr << "SUCCESS: loaded " << lib << std::endl;
     }
   }
   loader_lock.unlock();

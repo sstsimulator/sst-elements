@@ -172,7 +172,7 @@ class App : public Thread
 
   static void dlopenCheck(int aid, SST::Params& params, bool check_name = true);
 
-  static void dlcloseCheck(int aid);
+  static void dlcloseCheck(int aid); //mutex
 
   static void lockDlopen(int aid);
 

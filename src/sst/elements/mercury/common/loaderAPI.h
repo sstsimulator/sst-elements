@@ -20,14 +20,14 @@
 namespace SST {
 namespace Hg {
 
-class holderSubComponentAPI : public SST::SubComponent
+class loaderAPI : public SST::SubComponent
 {
 public:
      
-    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::holderSubComponentAPI)
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::loaderAPI)
  
-    holderSubComponentAPI(SST::ComponentId_t id, SST::Params& params);
-    virtual ~holderSubComponentAPI();
+    loaderAPI(SST::ComponentId_t id, SST::Params& params);
+    virtual ~loaderAPI();
 
 };
 

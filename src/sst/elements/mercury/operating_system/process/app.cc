@@ -379,14 +379,6 @@ App::createLibraries() {
   }
 } 
 
-// void 
-// App::addAPI(std::string name, Library* lib) {
-//   auto iter = apis_.find(name);
-//   if (iter == apis_.end()) {
-//     apis_[name] = lib;
-//   }
-// }
-
 std::ostream&
 App::coutStream(){
   if (cout_.is_open()){

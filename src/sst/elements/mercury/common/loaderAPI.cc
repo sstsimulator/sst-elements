@@ -14,13 +14,13 @@
 // distribution.
 
 #include <sst/core/subcomponent.h>
-#include <mercury/common/holderComponentAPI.h>  
+#include <mercury/common/loaderAPI.h>  
  
 namespace SST {
 namespace Hg {
 
-holderSubComponentAPI::holderSubComponentAPI(SST::ComponentId_t id, SST::Params& params) : SST::SubComponent(id) { }
-holderSubComponentAPI::~holderSubComponentAPI() { }
+loaderAPI::loaderAPI(SST::ComponentId_t id, SST::Params& params) : SST::SubComponent(id) { }
+loaderAPI::~loaderAPI() { }
 
 } // end namespace Hg
 } // end namespace SST

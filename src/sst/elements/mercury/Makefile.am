@@ -16,7 +16,7 @@ libhg_la_SOURCES = \
   common/event_link.cc \
   common/component.cc \
   common/hg_string.cc \
-  common/holderComponentAPI.cc \
+  common/loaderAPI.cc \
   common/mercury.cc \
   common/output.cc \
   common/util.cc \
@@ -100,9 +100,9 @@ library_includedir=$(includedir)/sst/elements/mercury
 
 nobase_library_include_HEADERS = \
   common/component.h \
-  common/appHolderComponent.h \
-  common/holderComponent.h \
-  common/holderComponentAPI.h \
+  common/appLoader.h \
+  common/loader.h \
+  common/loaderAPI.h \
   common/connection.h \
   common/connection_fwd.h \
   common/event_link.h \
