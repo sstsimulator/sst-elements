@@ -42,7 +42,8 @@ AppLauncher::incomingRequest(AppLaunchRequest* req)
   ++local_offset[req->aid()];
 
   requireLibraries(app_params);
-  App::dlopenCheck(req->aid(), app_params);
+  setupExe(app_params);
+  //App::dlopenCheck(req->aid(), app_params);
   auto factory = Factory::getFactory();
   App* theapp = factory->Create<App>("hg.UserAppCxxFullMain", app_params, sid, os_);
   //theapp->requireLibraries(app_params);
@@ -58,19 +59,26 @@ AppLauncher::requireLibraries(SST::Params& params)
     params.find_array<std::string>("libraries", libs);
   }
   else {
-    libs.push_back("SystemLibrary:libsystemlibrary.so");
+    libs.push_back("systemlibrary:SystemLibrary");
   }
 
   for (auto &str : libs) {
     auto pos = str.find(":");
-    std::string file = str.substr(pos + 1);
-    os_->requireLibraryForward(file);
+    std::string libname = str.substr(0, pos);
+    os_->requireLibraryForward(libname);
+  }
+}
+
+void
+AppLauncher::setupExe(SST::Params& params)
+{
+  if (params.contains("exe_library_name")){
+    std::string libname = params.find<std::string>("exe_library_name");
+    os_->requireLibraryForward(libname);
   }
 
-  // if (params.contains("exe")){
-  //   std::string file = params.find<std::string>("exe");
-  //   os_->requireLibraryForward(file);
-  // }
+  UserAppCxxEmptyMain::aliasMains();
+  UserAppCxxFullMain::aliasMains();
 }
 
 } // end namespace Hg

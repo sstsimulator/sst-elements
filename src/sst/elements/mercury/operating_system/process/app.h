@@ -172,20 +172,6 @@ class App : public Thread
 
   void requireLibraries(SST::Params& params);
 
-  static void dlopenCheck(int aid, SST::Params& params, bool check_name = true);
-
-  static void dlcloseCheck(int aid); //mutex
-
-  static void lockDlopen(int aid);
-
-  static void unlockDlopen(int aid);
-
-  static void dlcloseCheck_Library(std::string library_name);
-
-  static void lockDlopen_Library(std::string library_name);
-
-  static void unlockDlopen_Library(std::string library_name);
-
   static int appRC(){
     return app_rc_;
   }
@@ -217,10 +203,6 @@ class App : public Thread
   SST::Params params_;
 
  private:
-  
-  void dlcloseCheck(){
-    dlcloseCheck(aid());
-  }
 
   OperatingSystem* os_;
 
@@ -246,18 +228,7 @@ class App : public Thread
   bool notify_;
 
   int rc_;
-
-  struct dlopen_entry {
-    void* handle;
-    int refcount;
-    bool loaded;
-    std::string name;
-    dlopen_entry() : handle(nullptr), refcount(0), loaded(false) {}
-  };
-
-  static std::map<int, dlopen_entry> exe_dlopens_;
-  static std::map<std::string, dlopen_entry> library_dlopens_;
-
+  
   static int app_rc_;
 
   std::ofstream cout_;

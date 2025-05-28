@@ -59,8 +59,6 @@ std::map<std::string, App::main_fxn>* UserAppCxxFullMain::main_fxns_init_ = null
 std::map<std::string, App::empty_main_fxn>* UserAppCxxEmptyMain::empty_main_fxns_init_ = nullptr;
 std::map<AppId, UserAppCxxFullMain::argv_entry> UserAppCxxFullMain::argv_map_;
 
-std::map<int, App::dlopen_entry> App::exe_dlopens_;
-std::map<std::string, App::dlopen_entry> App::library_dlopens_;
 int App::app_rc_ = 0;
 
 int
@@ -91,37 +89,6 @@ static char* get_data_segment(SST::Params& params,
  }
 }
 
-
-static thread_lock dlopen_lock;
-
-void
-App::lockDlopen(int aid)
-{
-  dlopen_lock.lock();
-  dlopen_entry& entry = exe_dlopens_[aid];
-  entry.refcount++;
-  dlopen_lock.unlock();
-}
-
-void
-App::unlockDlopen(int aid)
-{
-  dlcloseCheck(aid);
-}
-
-void
-App::lockDlopen_Library(std::string library_name)
-{
-  dlopen_entry& entry = library_dlopens_[library_name];
-  entry.refcount++;
-}
-
-void
-App::unlockDlopen_Library(std::string library_name)
-{
-  dlcloseCheck_Library(library_name);
-}
-
 void
 App::requireLibraries(SST::Params& params) 
 {
@@ -143,109 +110,6 @@ App::requireLibraries(SST::Params& params)
     std::string file = params.find<std::string>("exe");
     os_->requireLibraryForward(file);
   }
-}
-
-
-void
-App::dlopenCheck(int aid, SST::Params& params,  bool check_name)
-{
-  // std::vector<std::string> libs;
-  // if (params.contains("libraries")){
-  //   params.find_array<std::string>("libraries", libs);
-  // }
-  // else {
-  //   libs.push_back("SystemLibrary:libsystemlibrary.so");
-  // }
-
-  // // parse libs and dlopen them
-  // for (auto& str : libs){
-  //   std::string name;
-  //   std::string file;
-  //   auto pos = str.find(":");
-  //   if (pos == std::string::npos){
-  //     name = str;
-  //     file = str;
-  //   } else {
-  //     name = str.substr(0, pos);
-  //     file = str.substr(pos + 1);
-  //   }
-
-  //   dlopen_lock.lock();
-  //   dlopen_entry& entry = library_dlopens_[name];
-  //   entry.name = file;
-  //   if (entry.refcount == 0 || !entry.loaded){
-  //     entry.handle = loadExternLibrary(file, loadExternPathStr());
-  //     entry.loaded = true;
-  //   }
-
-  //   ++entry.refcount;
-  //   dlopen_lock.unlock();
-  // }
-
-  // check params for exes and dlopen the libraries
-  if (params.contains("exe")){
-    dlopen_lock.lock();
-    std::string libname = params.find<std::string>("exe");
-    dlopen_entry& entry = exe_dlopens_[aid];
-    entry.name = libname;
-    if (entry.refcount == 0 || !entry.loaded){
-      entry.handle = loadExternLibrary(libname, loadExternPathStr());
-      entry.loaded = true;
-    }
-
-    if (check_name){
-      void* name = dlsym(entry.handle, "exe_main_name");
-      if (name){
-        const char* str_name = (const char*) name;
-        if (params.contains("name")){
-          std::string given_name = params.find<std::string>("name");
-          params.insert("label", given_name);
-        }
-        params.insert("name", str_name);
-      }
-    }
-
-    ++entry.refcount;
-    dlopen_lock.unlock();
-  }
-  else {
-      std::cerr << "no exe in params\n";
-  }
-
-  UserAppCxxEmptyMain::aliasMains();
-  UserAppCxxFullMain::aliasMains();
-}
-
-void
-App::dlcloseCheck(int aid)
-{
-  dlopen_lock.lock();
-  auto iter = exe_dlopens_.find(aid);
-  if (iter != exe_dlopens_.end()){
-    dlopen_entry& entry = iter->second;
-    --entry.refcount;
-    if (entry.refcount == 0 && entry.loaded){
-      unloadExternLibrary(entry.handle);
-      exe_dlopens_.erase(iter);
-    }
-  }
-  dlopen_lock.unlock();
-}
-
-void
-App::dlcloseCheck_Library(std::string library_name)
-{
-  dlopen_lock.lock();
-  auto iter = library_dlopens_.find(library_name);
-  if (iter != library_dlopens_.end()){
-    dlopen_entry& entry = iter->second;
-    --entry.refcount;
-    if (entry.refcount == 0 && entry.loaded){
-      unloadExternLibrary(entry.handle);
-      library_dlopens_.erase(iter);
-    }
-  }
-  dlopen_lock.unlock();
 }
 
 char*
@@ -286,34 +150,6 @@ App::App(SST::Params& params, SoftwareId sid,
   for (auto& key : keys){
     env_[key] = env_params.find<std::string>(key);
   }
-
-  /*
-  std::vector<std::string> libs;
-  if (params.contains("libraries")){
-    params.find_array("libraries", libs);
-  } else {
-      libs.push_back("SystemLibrary:libsystemlibrary.so");
-  }
-
-  for (auto& str : libs){
-    std::string name, libname;
-    auto pos = str.find(":");
-    name = str.substr(0, pos);
-    libname = str.substr(pos + 1);
-
-    out_->debug(CALL_INFO, 1, 0, "checking %s\n", name.c_str());
-
-    if (name != "SimTransport") {
-      auto iter = apis_.find(name);
-      if (iter == apis_.end()){
-        out_->debug(CALL_INFO, 1, 0, "loading %s\n", name.c_str());
-        auto factory = Factory::getFactory();
-        Library *lib = factory->Create<Library>(libname, params, this);
-        apis_[name] = lib;
-      }
-    }
-  }
-  */
 
   std::string stdout_str = params.find<std::string>("stdout", "stdout");
   std::string stderr_str = params.find<std::string>("stderr", "stderr");
@@ -392,12 +228,8 @@ App::createLibraries() {
     std::string name;
     std::string libname;
     auto pos = str.find(":");
-    name = str.substr(0, pos);
-    libname = str.substr(pos + 1);
-    // size_t startPos = file.find("lib");
-    // startPos += 3;
-    // size_t endPos = file.find(".so", startPos);
-    // std::string libname = file.substr(startPos, endPos - startPos);
+    libname = str.substr(0, pos);
+    name = str.substr(pos + 1);
 
     out_->debug(CALL_INFO, 1, 0, "checking for %s\n", name.c_str());
     auto iter = libraries_.find(name);
@@ -489,18 +321,6 @@ App::cleanup()
   Thread::cleanup();
 }
 
-// void
-// App::sleep(TimeDelta time)
-// {
-//   os_->blockTimeout(time);
-// }
-
-// void
-// App::compute(TimeDelta time)
-// {
-//   os_->blockTimeout(time);
-// }
-
 SST::Params
 App::getParams()
 {
@@ -517,6 +337,8 @@ App::getLibrary(const std::string &name)
   }
   return iter->second;
 }
+
+static thread_lock rc_lock;
 
 void
 App::run()
@@ -535,11 +357,9 @@ App::run()
   libraries_.clear();
   for (Library* lib : unique) delete lib;
 
-  dlcloseCheck();
-
-  dlopen_lock.lock();
+  rc_lock.lock();
   app_rc_ = rc_;
-  dlopen_lock.unlock();
+  rc_lock.unlock();
 }
 
 void
@@ -648,11 +468,12 @@ UserAppCxxFullMain::UserAppCxxFullMain(SST::Params& params, SoftwareId sid,
   fxn_ = it->second;
 }
 
+static thread_lock full_lock;
+
 void
 UserAppCxxFullMain::aliasMains()
 {
-  static thread_lock lock;
-  lock.lock();
+  full_lock.lock();
   if (!main_fxns_){
     main_fxns_ = std::unique_ptr<std::map<std::string, App::main_fxn>>(main_fxns_init_);
     main_fxns_init_ = nullptr;
@@ -667,7 +488,7 @@ UserAppCxxFullMain::aliasMains()
   else {
       std::cerr << "no main_fxns_\n";
     }
-  lock.unlock();
+  full_lock.unlock();
 }
 
 void
@@ -683,11 +504,12 @@ UserAppCxxFullMain::registerMainFxn(const char *name, App::main_fxn fxn)
   }
 }
 
+static thread_lock empty_lock;
+
 void
 UserAppCxxEmptyMain::aliasMains()
 {
-  static thread_lock lock;
-  lock.lock();
+  empty_lock.lock();
   if (!empty_main_fxns_){
     empty_main_fxns_ = std::unique_ptr<std::map<std::string, App::empty_main_fxn>>(empty_main_fxns_init_);
     empty_main_fxns_init_ = nullptr;
@@ -699,7 +521,7 @@ UserAppCxxEmptyMain::aliasMains()
       lib->addBuilder(pair.first, builder);
     }
   }
-  lock.unlock();
+  empty_lock.unlock();
 }
 
 void
@@ -729,10 +551,11 @@ UserAppCxxFullMain::initArgv(argv_entry& entry)
   entry.argv = argv;
 }
 
+static thread_lock argv_lock;
+
 int
 UserAppCxxFullMain::skeletonMain()
 {
-  static thread_lock argv_lock;
   argv_lock.lock();
   argv_entry& entry = argv_map_[sid_.app_];
   if (entry.argv == 0){

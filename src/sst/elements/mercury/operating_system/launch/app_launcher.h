@@ -39,6 +39,8 @@ class AppLauncher
 
   void requireLibraries(SST::Params& params);
 
+  void setupExe(SST::Params& params);
+
  protected:
   bool is_completed_;
 

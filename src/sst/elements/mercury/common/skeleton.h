@@ -18,8 +18,9 @@
 
 #pragma once
 
-
+// Put ELI where there is otherwise no ELI
 #include <mercury/common/appLoader.h>
+
 #define SSTPP_QUOTE(name) #name
 #define SSTPP_STR(name) SSTPP_QUOTE(name)
 

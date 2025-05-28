@@ -68,7 +68,7 @@ SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
     return sst_hg_global_stacksize;
   }
 
-  static void loadCheck(SST::Params& params, SST::Hg::OperatingSystem& me);
+  static void requireDependencies(SST::Params& params, SST::Hg::OperatingSystem& me);
 
   std::function<void(NetworkMessage*)> nicDataIoctl() override;
 
