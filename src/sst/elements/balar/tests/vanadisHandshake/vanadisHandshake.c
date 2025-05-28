@@ -15,10 +15,11 @@
 
 #include "cuda_runtime_api.h"
 
+#include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <math.h>
+#include <string.h>
 
 #define VEC_ADD_FUNC 1
 

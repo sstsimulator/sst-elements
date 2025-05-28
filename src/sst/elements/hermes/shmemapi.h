@@ -17,6 +17,7 @@
 #define _H_HERMES_SHMEM_INTERFACE
 
 #include <assert.h>
+#include <string>
 
 #include "hermes.h"
 

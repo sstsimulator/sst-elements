@@ -19,6 +19,9 @@
 #include "ctrlMsgTimingBase.h"
 #include "latencyMod.h"
 
+#include <cstddef>
+#include <cstdint>
+
 namespace SST {
 namespace Firefly {
 namespace CtrlMsg {

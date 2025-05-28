@@ -16,8 +16,10 @@
 #ifndef MEMHIERARCHY_L1INCOHERENTCONTROLLER_H
 #define MEMHIERARCHY_L1INCOHERENTCONTROLLER_H
 
-#include <iostream>
 #include <array>
+#include <cstdint>
+#include <iostream>
+#include <set>
 
 #include "sst/elements/memHierarchy/coherencemgr/coherenceController.h"
 #include "sst/elements/memHierarchy/lineTypes.h"
