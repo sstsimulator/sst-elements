@@ -8,6 +8,12 @@ app = os.getenv("ARIEL_EXE")
 if app == None or not os.path.exists(app):
         sys.exit(os.EX_CONFIG)
 
+frontend_type = os.getenv("ARIEL_TEST_FRONTEND")
+if frontend_type == None:
+    frontend = "ariel.frontend.pin"
+else:
+    frontend = "ariel.frontend." + str(frontend_type)
+
 allowed_args = ["redirect_in", "redirect_out", "redirect_err",
                 "append_redirect_out", "append_redirect_err"]
 
@@ -18,6 +24,7 @@ for arg in sys.argv[1:]:
 
 ariel_params = {
         "verbose" : "0",
+        "frontend" : frontend,
         "maxcorequeue" : "256",
         "maxissuepercycle" : "2",
         "pipetimeout" : "0",

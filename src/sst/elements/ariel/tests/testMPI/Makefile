@@ -1,7 +1,7 @@
 all: hello reduce
 
 clean:
-	rm -f hello reduce
+	rm -f hello reduce hello.arielinst* reduce.arielinst*
 
 API_DIR=../../api
 
