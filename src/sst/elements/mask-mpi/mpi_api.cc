@@ -90,14 +90,6 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <sumi-mpi/otf2_output_stat.h>
 #endif
 
-#ifndef MASKMPILOADER
-  #define MASKMPILOADER
-#define MERCURY_LIB mask_mpi
-  #include <mercury/common/loader.h>
-#undef MERCURY_LIB
-#endif
-
-
 //MakeDebugSlot(mpi_sync)
 //MakeDebugSlot(mpi_finalize)
 //RegisterKeywords(
