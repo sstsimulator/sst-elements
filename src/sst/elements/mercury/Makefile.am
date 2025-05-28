@@ -9,7 +9,7 @@ AM_CPPFLAGS += \
 # unpleasant hack to make vintage automake (e.g. 1.13.4) work
 AM_LIBTOOLFLAGS = --tag=CXX
 
-comp_LTLIBRARIES = libhg.la libsystemlibrary.la libcomputelibrary.la ostest.la
+comp_LTLIBRARIES = libhg.la libsystemlibrary.la libcomputelibrary.la libostest.la
 compdir = $(pkglibdir)
 
 libhg_la_SOURCES = \
@@ -42,7 +42,6 @@ libhg_la_SOURCES = \
   operating_system/libraries/unblock_event.cc \
   operating_system/process/app.cc \
   operating_system/process/global.cc \
-  operating_system/process/loadlib.cc \
   operating_system/process/progress_queue.cc \
   operating_system/process/thread.cc \
   operating_system/process/thread_info.cc \
@@ -93,7 +92,7 @@ libcomputelibrary_la_SOURCES = \
 #  libraries/compute/instruction_processor.cc \
 #  libraries/compute/memory_model.cc
 
-ostest_la_SOURCES = \
+libostest_la_SOURCES = \
   tests/ostest.cc
 
 library_includedir=$(includedir)/sst/elements/mercury
@@ -185,7 +184,6 @@ nobase_library_include_HEADERS = \
   operating_system/process/thread_fwd.h \
   operating_system/process/thread_info.h \
   operating_system/process/thread.h \
-  operating_system/process/loadlib.h \
   operating_system/process/memoize.h \
   operating_system/process/progress_queue.h \
   operating_system/process/thread_id.h \
@@ -214,7 +212,7 @@ endif
 libhg_la_LDFLAGS = -module -avoid-version -shared
 libsystemlibrary_la_LDFLAGS = -module -avoid-version -shared
 libcomputelibrary_la_LDFLAGS = -module -avoid-version -shared
-ostest_la_LDFLAGS = -module -avoid-version
+libostest_la_LDFLAGS = -module -avoid-version
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     mercury=$(abs_srcdir)

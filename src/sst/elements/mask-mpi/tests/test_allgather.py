@@ -27,11 +27,10 @@ if __name__ == "__main__":
     platform.addParamSet("operating_system", {
         "verbose" : "0",
         "app1.name" : "allgather",
-        "app1.exe"  : "allgather.so",
-        "app1.loads"     : ["sumi",
-                            "mask_mpi"],
-        "app1.libraries" : ["ComputeLibrary",
-                            "MpiApi",],
+        "app1.exe_library_name" : "allgather",
+        "app1.dependencies" : ["sumi", ],
+        "app1.libraries" : ["computelibrary:ComputeLibrary",
+                            "mask_mpi:MpiApi",],
     })
 
     topo = topoSingle()

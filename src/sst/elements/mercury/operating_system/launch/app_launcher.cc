@@ -43,10 +43,8 @@ AppLauncher::incomingRequest(AppLaunchRequest* req)
 
   requireLibraries(app_params);
   setupExe(app_params);
-  //App::dlopenCheck(req->aid(), app_params);
   auto factory = Factory::getFactory();
   App* theapp = factory->Create<App>("hg.UserAppCxxFullMain", app_params, sid, os_);
-  //theapp->requireLibraries(app_params);
   theapp->createLibraries();
   os_->startApp(theapp, "my unique name");
 }
@@ -76,7 +74,6 @@ AppLauncher::setupExe(SST::Params& params)
     std::string libname = params.find<std::string>("exe_library_name");
     os_->requireLibraryForward(libname);
   }
-
   UserAppCxxEmptyMain::aliasMains();
   UserAppCxxFullMain::aliasMains();
 }

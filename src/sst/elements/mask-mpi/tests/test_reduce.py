@@ -27,11 +27,10 @@ if __name__ == "__main__":
     platform.addParamSet("operating_system", {
         "verbose" : "0",
         "app1.name" : "reduce",
-        "app1.exe"  : "reduce.so",
-        "app1.loads"     : ["sumi",
-                            "mask_mpi"],
-        "app1.libraries" : ["ComputeLibrary",
-                            "MpiApi",],
+        "app1.exe_library_name" : "reduce",
+        "app1.dependencies" : ["sumi", ],
+        "app1.libraries" : ["computelibrary:ComputeLibrary",
+                            "mask_mpi:MpiApi",],
     })
 
     topo = topoSingle()
