@@ -27,7 +27,6 @@
 #include <mercury/components/node.h>
 #include <mercury/operating_system/process/app.h>
 #include <mercury/operating_system/threading/thread_lock.h>
-#include <mercury/operating_system/process/loadlib.h>
 #include <mercury/components/operating_system.h>
 #include <inttypes.h>
 #include <dlfcn.h>
@@ -97,7 +96,7 @@ App::requireLibraries(SST::Params& params)
     params.find_array<std::string>("libraries", libs);
   }
   else {
-    libs.push_back("SystemLibrary:libsystemlibrary.so");
+    libs.push_back("systemlibrary:SystemLibrary");
   }
 
   for (auto &str : libs) {
@@ -220,7 +219,7 @@ App::createLibraries() {
   if (params_.contains("libraries")){
     params_.find_array("libraries", libraries);
   } else {
-      libraries.push_back("libsystemlibrary.so");
+      libraries.push_back("systemlibrary:SystemLibrary");
   }
 
   for (auto &str : libraries) {
