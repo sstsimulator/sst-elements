@@ -26,6 +26,7 @@
 #include <cstdint>
 #include <memory>
 
+#include <mercury/common/loaderAPI.h>
 namespace SST {
 namespace Hg {
 
@@ -34,7 +35,11 @@ extern template SST::TimeConverter HgBase<SST::SubComponent>::time_converter_;
 class OperatingSystem : public SST::Hg::OperatingSystemBase {
 
 public:
- 
+SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+    { "loader", 
+    "Slot for library loader subcomponents",
+    "SST::Hg::loaderAPI"}
+) 
   SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::Hg::OperatingSystem, SST::Hg::OperatingSystemBase, SST::Hg::NodeBase*)
 
   SST_ELI_REGISTER_SUBCOMPONENT(
@@ -62,6 +67,8 @@ public:
   static size_t stacksize() {
     return sst_hg_global_stacksize;
   }
+
+  static void requireDependencies(SST::Params& params, SST::Hg::OperatingSystem& me);
 
   std::function<void(NetworkMessage*)> nicDataIoctl() override;
 
@@ -125,7 +132,6 @@ public:
   }
 
 protected:
-
   Thread* active_thread_;
   SST::Hg::NodeBase* node_;
   std::map<std::string, Library*> internal_apis_;
@@ -166,6 +172,8 @@ protected:
 
   NodeId my_addr_;
   UniqueEventId next_outgoing_id_;
+
+  static std::map<std::string,SST::Hg::loaderAPI*> loaders_;
 
 //  int next_condition_;
 //  int next_mutex_;
@@ -230,6 +238,10 @@ protected:
 
   unsigned int npernode() override {
     return npernode_;
+  }
+
+  void requireLibraryForward(std::string library) {
+    requireLibrary(library);
   }
 
 //

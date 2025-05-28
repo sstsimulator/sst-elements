@@ -31,7 +31,7 @@ public:
   SST_ELI_REGISTER_DERIVED(
     Library,
     SystemLibrary,
-    "hg",
+    "systemlibrary",
     "SystemLibrary",
     SST_ELI_ELEMENT_VERSION(1,0,0),
     "implements the Hg system API")

@@ -50,7 +50,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mercury/operating_system/process/progress_queue.h>
 //#include <mercury/common/event_scheduler_fwd.h>
 
-#include <mercury/common/factory.h>
+#include <sst/core/factory.h>
 
 //#include <mercury/common/event_manager_fwd.h>
 

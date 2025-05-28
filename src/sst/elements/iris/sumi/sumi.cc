@@ -45,17 +45,18 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mercury/operating_system/process/app.h>
 #include <mercury/components/operating_system.h>
 #include <mercury/common/util.h>
+#include <mercury/common/loader.h>
 #include <iris/sumi/transport.h>
 #include <iris/sumi/sim_transport.h>
 
 using namespace SST::Hg;
 
-//this redirection macro foobars things here
-#ifdef sleep
-#if sleep == ssthg_sleep
-#undef sleep
-#endif
-#endif
+// //this redirection macro foobars things here
+// #ifdef sleep
+// #if sleep == ssthg_sleep
+// #undef sleep
+// #endif
+// #endif
 
 namespace SST::Iris::sumi {
 

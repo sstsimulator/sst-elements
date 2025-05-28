@@ -13,24 +13,14 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#pragma once
-
-#include <sst_element_config.h>
-#include <sst/core/output.h>
-#include <string>
-
+#include <sst/core/subcomponent.h>
+#include <mercury/common/loaderAPI.h>  
+ 
 namespace SST {
 namespace Hg {
 
-std::vector<std::string> split_path(const std::string& searchPath);
-
-std::string loadExternPathStr();
-
-void* loadExternLibrary(const std::string& libname, const std::string& searchPath);
-
-void* loadExternLibrary(const std::string& libname);
-
-void unloadExternLibrary(void* handle);
+loaderAPI::loaderAPI(SST::ComponentId_t id, SST::Params& params) : SST::SubComponent(id) { }
+loaderAPI::~loaderAPI() { }
 
 } // end namespace Hg
 } // end namespace SST

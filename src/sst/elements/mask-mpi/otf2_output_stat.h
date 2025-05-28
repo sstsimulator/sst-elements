@@ -60,7 +60,7 @@ class OTF2Writer : public SST::Statistics::CustomStatistic
  public:
     SST_ELI_REGISTER_CUSTOM_STATISTIC(
       OTF2Writer,
-      "macro",
+      "mask_mpi",
       "otf2writer",
       SST_ELI_ELEMENT_VERSION(1,0,0),
       "Writes OTF2 traces capturing the simulation")

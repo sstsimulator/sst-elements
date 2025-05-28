@@ -31,7 +31,7 @@ class ComputeLibrary : public ComputeAPI, public Library
    SST_ELI_REGISTER_DERIVED(
     Library,
     ComputeLibrary,
-    "hg",
+    "computelibrary",
     "ComputeLibrary",
     SST_ELI_ELEMENT_VERSION(1,0,0),
     "provides basic compute modeling")

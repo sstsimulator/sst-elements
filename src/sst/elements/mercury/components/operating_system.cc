@@ -13,10 +13,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <sst/core/factory.h>
 #include <mercury/components/operating_system.h>
 
 #include <mercury/common/events.h>
-#include <mercury/common/factory.h>
 #include <mercury/common/request.h>
 #include <mercury/components/node.h>
 #include <mercury/components/node_CL.h>
@@ -24,12 +24,21 @@
 #include <mercury/operating_system/libraries/unblock_event.h>
 #include <mercury/operating_system/process/app.h>
 #include <mercury/operating_system/process/thread_id.h>
+//#include <mercury/operating_system/threading/thread_lock.h>
 #include <mercury/operating_system/threading/stack_alloc.h>
 #include <sst/core/eli/elementbuilder.h>
 #include <sst/core/params.h>
 #include <stdlib.h>
 #include <sys/mman.h>
-
+#include <sst/core/component.h> // or
+#include <sst/core/subcomponent.h> // or
+#include <sst/core/componentExtension.h>
+// #ifndef HGHOLDERLIB
+// #define HGHOLDERLIB
+// #define MERCURY_LIB hg
+//   #include <mercury/common/loader.h>
+// #undef MERCURY_LIB
+// #endif
 extern "C" {
 void* sst_hg_nullptr = nullptr;
 void* sst_hg_nullptr_send = nullptr;
@@ -50,6 +59,8 @@ std::vector<OperatingSystem*> OperatingSystem::active_os_;
 // #else
 // OperatingSystem* OperatingSystem::active_os_ = nullptr;
 // #endif
+
+std::map<std::string,SST::Hg::loaderAPI*> OperatingSystem::loaders_;
 
 class DeleteThreadEvent :
     public ExecutionEvent
@@ -77,13 +88,14 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
   params_(params)
 {
   TimeDelta::initStamps(TimeDelta::ASEC_PER_TICK);
-
+  
   if (active_os_.size() == 0){
     RankInfo num_ranks = getNumRanks();
     active_os_.resize(num_ranks.thread);
   }
 
   my_addr_ = node_->addr();
+
   next_outgoing_id_.src_node = my_addr_;
   next_outgoing_id_.msg_num = 0;
   verbose_ = params.find<unsigned int>("verbose", 1);
@@ -110,6 +122,10 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
   if (!time_converter_){
       time_converter_ = SST::BaseComponent::getTimeConverter(tickIntervalString());
     }
+
+  // These are libraries that a SST::Hg::Library depends on. We have core load them early 
+  // in hopes that everything is in place when the SST::Hg::Library is instanced.
+  requireDependencies(params_,*this);
 
   // Configure self link to handle event timing
   selfEventLink_ = configureSelfLink("self", time_converter_, new Event::Handler2<Hg::OperatingSystem,&OperatingSystem::handleEvent>(this));
@@ -145,6 +161,17 @@ OperatingSystem::setup() {
     selfEventLink_->send(r);
 }
 
+//static thread_lock loader_lock;
+
+void
+OperatingSystem::requireDependencies(SST::Params& params, SST::Hg::OperatingSystem& me) {
+  std::vector<std::string> libs;
+  params.find_array<std::string>("app1.dependencies", libs);
+  for (const std::string& lib : libs) {
+    me.requireLibrary(lib);
+  }
+}
+
 void
 OperatingSystem::initThreading(SST::Params& params)
 {
@@ -152,8 +179,8 @@ OperatingSystem::initThreading(SST::Params& params)
       return; //already done
     }
 
-  des_context_ = create<ThreadContext>(
-        "hg", params.find<std::string>("context", ThreadContext::defaultThreading()));
+  auto factory = Factory::getFactory();
+  des_context_ = factory->Create<ThreadContext>("hg.fcontext");
 
   des_context_->initContext();
 
@@ -237,9 +264,8 @@ OperatingSystem::addLaunchRequests(SST::Params& params)
         requests_.push_back(mgr);
       }
       keep_going = true;
-
-      App::lockDlopen(aid);
-    } else {
+    } 
+    else {
       keep_going = false;
     }
     ++aid;

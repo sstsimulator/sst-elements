@@ -51,6 +51,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <output.h>
 
 #include <sst/core/eli/elementbuilder.h>
+#include <sst/core/factory.h>
 
 #include <mercury/operating_system/libraries/library.h>
 #include <mercury/operating_system/libraries/service.h>
@@ -59,7 +60,6 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mercury/components/node_fwd.h>
 #include <mercury/components/operating_system.h>
 #include <mercury/common/errors.h>
-#include <mercury/common/factory.h>
 #include <mercury/common/util.h>
 #include <mercury/libraries/compute/compute_api.h>
 
@@ -102,10 +102,10 @@ class SimTransport : public Transport, public SST::Hg::Library {
   SST_ELI_REGISTER_DERIVED(
     Library,
     SimTransport,
-    "hg",
+    "sumi",
     "SimTransport",
     SST_ELI_ELEMENT_VERSION(1,0,0),
-    "implements the SUMI transport API")
+    "implements the transport API for SUMI")
 
   using DefaultProgressQueue = SST::Hg::MultiProgressQueue<Message>;
 
