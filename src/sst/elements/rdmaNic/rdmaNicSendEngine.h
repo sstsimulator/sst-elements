@@ -50,7 +50,7 @@ class SendStream {
 
 	int readId;
 	int curReadId;
-	int readReqNum; 
+	int readReqNum;
     StreamId m_streamId;
     int m_streamSeqNum;
 	int m_maxQueueSize;
@@ -75,7 +75,7 @@ class SendEngine {
 
     	for ( int i = 0; i < vcQueues.size(); i++ ) {
         	if ( vcStreams[i] ) {
-            	if ( vcStreams[i]->process() ) { 
+            	if ( vcStreams[i]->process() ) {
                 	nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG, "stream vc=%d done\n",i);
 					delete vcStreams[i];
 					if ( ! vcQueues[i].empty() ) {
@@ -85,15 +85,15 @@ class SendEngine {
 					} else {
 						vcStreams[i] = NULL;
 					}
-            	}   
+            	}
         	}
-    	} 
+    	}
 	}
 
-    void add( int vc, SendEntry* entry ) { 
+    void add( int vc, SendEntry* entry ) {
 		if ( vcStreams[vc] ) {
             nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG, "queue the send\n");
-			vcQueues[vc].push( entry ); 
+			vcQueues[vc].push( entry );
 		} else {
             nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG, "start the stream\n");
 			vcStreams[vc] = new SendStream( nic, entry );

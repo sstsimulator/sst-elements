@@ -50,7 +50,7 @@ AppLauncher::incomingRequest(AppLaunchRequest* req)
 }
 
 void
-AppLauncher::requireLibraries(SST::Params& params) 
+AppLauncher::requireLibraries(SST::Params& params)
 {
   std::vector<std::string> libs;
   if (params.contains("libraries")){

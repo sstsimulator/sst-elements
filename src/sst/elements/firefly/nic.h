@@ -418,7 +418,7 @@ public:
 	}
 	SimTime_t getDelay_ns( ) {
 		SimTime_t val = m_nic2host_lat_ns - ( m_nic2host_lat_ns > 0 ? 1 : 0 );
-		return val; 
+		return val;
 	}
 
     void schedEvent( SelfEvent* event, SimTime_t delay = 0 ) {

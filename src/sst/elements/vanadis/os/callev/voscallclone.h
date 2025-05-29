@@ -51,7 +51,7 @@ private:
     }
     ImplementSerializable(SST::Vanadis::VanadisSyscallCloneEvent);
 
-    uint64_t threadStackAddr; 
+    uint64_t threadStackAddr;
     uint64_t flags;
     uint64_t ptid;
     uint64_t tls;

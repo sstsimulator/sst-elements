@@ -16,7 +16,7 @@ def run_verimem(config_file, trace_file):
 
     sstParams_openbank = "--configfile=" + config_file_openbank + " traceFile=" + trace_file + "\""
     osCmd_openbank = sstCmd + sstParams_openbank
-    
+
     print (osCmd)
 
     # run SST
@@ -46,7 +46,7 @@ def run_verimem_openbank(config_file, trace_file):
     sstCmd = "sst --lib-path=.libs/ tests/test_txntrace.py --model-options=\""
     sstParams_openbank = "--configfile=" + config_file_openbank + " traceFile=" + trace_file + "\""
     osCmd_openbank = sstCmd + sstParams_openbank
-    
+
     print (osCmd_openbank)
 
     # run SST

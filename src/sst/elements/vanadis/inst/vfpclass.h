@@ -80,7 +80,7 @@ public:
         } else {
             if ( 8 == regFile->getFPRegWidth() ) {
                 src = regFile->getFPReg<uint64_t>(phys_fp_regs_in_0);
-                if constexpr ( 4 == sizeof( fp_format ) ) { 
+                if constexpr ( 4 == sizeof( fp_format ) ) {
                     assert( isNaN_boxed( src ) );
                 }
             } else {
@@ -88,42 +88,42 @@ public:
             }
         }
         int shift;
-        auto fp_v = int64To<fp_format>(src); 
+        auto fp_v = int64To<fp_format>(src);
 
         switch ( std::fpclassify( fp_v ) ) {
             case FP_INFINITE:
                 if ( std::signbit( fp_v ) ) {
-                    shift = 0; 
+                    shift = 0;
                 } else {
-                    shift = 7; 
+                    shift = 7;
                 }
                 break;
             case FP_NAN:
                 if ( isNaNs( fp_v ) ) {
-                    shift = 8; 
+                    shift = 8;
                 } else {
-                    shift = 9; 
+                    shift = 9;
                 }
                 break;
             case FP_NORMAL:
                 if ( std::signbit( fp_v ) ) {
-                    shift = 1; 
+                    shift = 1;
                 } else {
-                    shift = 6; 
+                    shift = 6;
                 }
                 break;
             case FP_SUBNORMAL:
                 if ( std::signbit( fp_v ) ) {
-                    shift = 2; 
+                    shift = 2;
                 } else {
-                    shift = 5; 
+                    shift = 5;
                 }
                 break;
             case FP_ZERO:
                 if ( std::signbit( fp_v ) ) {
-                    shift = 3; 
+                    shift = 3;
                 } else {
-                    shift = 4; 
+                    shift = 4;
                 }
                 break;
             default: assert(0);

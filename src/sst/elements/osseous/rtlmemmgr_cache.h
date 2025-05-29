@@ -65,7 +65,7 @@ class RtlMemoryManagerCache : public RtlMemoryManager{
         ~RtlMemoryManagerCache() {};
 
         void AssignRtlMemoryManagerCache(std::unordered_map<uint64_t, uint64_t> Cache, uint32_t CacheEntries, bool Enabled) {
-            
+
             // Set up translation cache
             translationCache = Cache;
             translationCacheEntries = CacheEntries;

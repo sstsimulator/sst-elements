@@ -31,7 +31,7 @@ using namespace SST::MemHierarchy;
  * MESI Coherence Controller Implementation
  * Provides MESI & MSI coherence for inclusive, non-L1 caches
  *
- * MESI: 
+ * MESI:
  *  M   Exclusive, dirty
  *  E   Exclusive, clean
  *  S   Shared, clean
@@ -314,7 +314,7 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
                 }
                 break;
             }
-            
+
             if (state == S) {
                 if (protocol_)
                     line->setState(E);
@@ -596,11 +596,11 @@ bool MESIInclusive::handleFlushLineInv(MemEvent * event, bool inMSHR) {
  * 1. Flush Manager contacts *all* coherence entities and forces a transition to flush
  *  -> as soon as contacted, L1s do flush. They DO NOT transition out of flush state when done
  *  -> Private cache -> flush when ack received.
- *  -> Shared cache -> forward flush 
+ *  -> Shared cache -> forward flush
  */
 bool MESIInclusive::handleFlushAll(MemEvent * event, bool inMSHR) {
     eventDI.prefill(event->getID(), Command::FlushAll, "", 0, State::NP);
-        
+
     if (!flush_manager_) {
         if (!inMSHR) {
             MemEventStatus status = mshr_->insertFlush(event, false, true);
@@ -632,7 +632,7 @@ bool MESIInclusive::handleFlushAll(MemEvent * event, bool inMSHR) {
             return true;
         }
     }
-    
+
     switch (flush_state_) {
         case FlushState::Ready:
         {
@@ -689,10 +689,10 @@ bool MESIInclusive::handleFlushAll(MemEvent * event, bool inMSHR) {
 
 
 bool MESIInclusive::handleForwardFlush(MemEvent * event, bool inMSHR) {
-    /* Flushes are ordered by the FlushManager and coordinated by the FlushHelper at each level 
-     * of the hierarchy. Only one cache in a set of distributed caches is the FlushHelper; 
+    /* Flushes are ordered by the FlushManager and coordinated by the FlushHelper at each level
+     * of the hierarchy. Only one cache in a set of distributed caches is the FlushHelper;
      * whereas private caches and monolithic shared caches are the FlushHelper.
-     * 
+     *
      * If FlushHelper - propagate Flush upwards and notify peers when done
      * If not FlushHelper - wait to be contacted by FlushHelper before flushing locally
      */
@@ -750,7 +750,7 @@ bool MESIInclusive::handleForwardFlush(MemEvent * event, bool inMSHR) {
                 break;
         } /* End switch */
         return true;
-    
+
     /* Not the flush helper; Event is from flush helper */
     } else if ( isPeer(event->getSrc()) ) {
         bool evictionNeeded = false;
@@ -773,22 +773,22 @@ bool MESIInclusive::handleForwardFlush(MemEvent * event, bool inMSHR) {
             sendResponseUp(event, nullptr, true, timestamp_);
             mshr_->removeFlush();
             delete event;
-            flush_state_ = FlushState::Forward; 
+            flush_state_ = FlushState::Forward;
             /* A bit backwards from flush helper/manager - here Forward means OK to execute another ForwardFlush */
             if ( mshr_->getFlush() != nullptr ) {
                 retryBuffer_.push_back(mshr_->getFlush());
             }
         }
-    
+
     /* Already handled ForwardFlush from flush helper/manager, retire ForwardFlush from peer */
-    } else if (flush_state_ == FlushState::Forward) { 
+    } else if (flush_state_ == FlushState::Forward) {
         if (inMSHR) mshr_->removeFlush();
         sendResponseDown(event, nullptr, false, false);
         delete event;
         flush_state_ = FlushState::Ready;
-        return true;            
+        return true;
     }
-    /* Remaining case: This is a peer to the flush helper/manager and event is not from the helper/manager 
+    /* Remaining case: This is a peer to the flush helper/manager and event is not from the helper/manager
      * Wait until we've handled the event from peer helper/manager before handling this event
      */
 
@@ -1789,7 +1789,7 @@ bool MESIInclusive::handleFetchXResp(MemEvent * event, bool inMSHR) {
 
 bool MESIInclusive::handleAckFlush(MemEvent * event, bool inMSHR) {
     eventDI.prefill(event->getID(), Command::AckFlush, "", 0, State::NP);
-    
+
     mshr_->decrementFlushCount();
     if (mshr_->getFlushCount() == 0) {
         retryBuffer_.push_back(mshr_->getFlush());
@@ -2187,7 +2187,7 @@ void MESIInclusive::cleanUpAfterResponse(MemEvent* event, bool inMSHR) {
     mshr_->removeFront(addr);
     delete event;
     if (req) {
-        if (req->isPrefetch() && req->getRqstr() == cachename_) 
+        if (req->isPrefetch() && req->getRqstr() == cachename_)
             outstandingPrefetches_--;
         delete req;
     }
@@ -2377,7 +2377,7 @@ void MESIInclusive::sendWriteback(Command cmd, SharedCacheLine* line, bool dirty
     uint64_t baseTime = (timestamp_ > line->getTimestamp()) ? timestamp_ : line->getTimestamp();
     uint64_t deliveryTime = baseTime + latency;
     forwardByAddress(writeback, deliveryTime);
-    
+
     line->setTimestamp(deliveryTime-1);
 
    //f (mem_h_is_debug_addr(line->getAddr()))
@@ -2419,7 +2419,7 @@ void MESIInclusive::downgradeOwner(MemEvent * event, SharedCacheLine* line, bool
     uint64_t baseTime = timestamp_ > line->getTimestamp() ? timestamp_ : line->getTimestamp();
     uint64_t deliveryTime = (inMSHR) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
     forwardByDestination(fetch, deliveryTime);
-    
+
     line->setTimestamp(deliveryTime);
 
 
@@ -2488,7 +2488,7 @@ uint64_t MESIInclusive::invalidateSharer(std::string shr, MemEvent * event, Shar
         uint64_t baseTime = timestamp_ > line->getTimestamp() ? timestamp_ : line->getTimestamp();
         uint64_t deliveryTime = (inMSHR) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
         forwardByDestination(inv, deliveryTime);
-        
+
         mshr_->incrementAcksNeeded(addr);
 
         if (mem_h_is_debug_addr(addr)) {

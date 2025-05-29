@@ -128,7 +128,7 @@ class VanadisMIPSOSHandler2 : public VanadisCPUOSHandler2< T1, BitType, RegZero,
 
 public:
     VanadisMIPSOSHandler2(ComponentId_t id, Params& params) :
-        VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >(id, params, "MIPS" ) 
+        VanadisCPUOSHandler2< T1, BitType, RegZero, OsCodeReg, LinkReg >(id, params, "MIPS" )
     {
         InstallCommonFuncs( MIPS )
 
@@ -373,7 +373,7 @@ private:
 		MIPS_CONVERT( PATH );
 		MIPS_CONVERT( TMPFILE );
 #else
-        // remove O_LARGEFILE 
+        // remove O_LARGEFILE
         flags &= ~0x2000;
 #endif
 
@@ -386,8 +386,8 @@ private:
     }
 };
 
-#define MIPS_ARG_REG_ZERO 4 
-#define MIPS_OS_CODE_REG 2 
+#define MIPS_ARG_REG_ZERO 4
+#define MIPS_OS_CODE_REG 2
 #define MIPS_LINK_REG 31
 
 class VanadisMIPSOSHandler : public VanadisMIPSOSHandler2< uint32_t, VanadisOSBitType::VANADIS_OS_32B, MIPS_ARG_REG_ZERO, MIPS_OS_CODE_REG, MIPS_LINK_REG > {
@@ -399,7 +399,7 @@ public:
                                             "Provides SYSCALL handling for a MIPS-based decoding core",
                                             SST::Vanadis::VanadisCPUOSHandler)
 
-    VanadisMIPSOSHandler(ComponentId_t id, Params& params) : 
+    VanadisMIPSOSHandler(ComponentId_t id, Params& params) :
         VanadisMIPSOSHandler2<uint32_t, VanadisOSBitType::VANADIS_OS_32B, MIPS_ARG_REG_ZERO, MIPS_OS_CODE_REG, MIPS_LINK_REG >(id, params) { }
 };
 

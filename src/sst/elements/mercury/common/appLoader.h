@@ -33,11 +33,11 @@ EXPAND_CONCAT(CLASS_NAME, ssthg_app_name)(SST::ComponentId_t id, SST::Params& pa
 ~EXPAND_CONCAT(CLASS_NAME, ssthg_app_name)() {}
 
 SST_ELI_REGISTER_SUBCOMPONENT(
-    EXPAND_CONCAT(CLASS_NAME, ssthg_app_name), 
-    EXPAND_STRING(ssthg_app_name), 
-    "loader" , 
-    SST_ELI_ELEMENT_VERSION(1, 0, 0), 
-    "description", 
+    EXPAND_CONCAT(CLASS_NAME, ssthg_app_name),
+    EXPAND_STRING(ssthg_app_name),
+    "loader" ,
+    SST_ELI_ELEMENT_VERSION(1, 0, 0),
+    "description",
     SST::Hg::loaderAPI)
 };
 #endif //MERCURY_LIB

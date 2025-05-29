@@ -121,7 +121,7 @@ public:
         out.output("  MemHierarchy::MemLink: No status given\n");
     }
     virtual std::string getAvailableDestinationsAsString() override;
-    
+
     void recvNotify(SST::Event * ev) { (*recvHandler)(ev); }
 
     MemLink() { }

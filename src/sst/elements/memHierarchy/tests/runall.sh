@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# clean up from previous 
+# clean up from previous
 # Commented out since we're not running the dramsim tests
 # rm dramsim*.log
 
@@ -93,23 +93,23 @@ while getopts dscba option
 do
     case "${option}"
     in
-    d) 
+    d)
         arr+=( "${sdl_arr[@]}" )
         refarr+=( "${sdl_ref_arr[@]}" )
         ;;
-#    s) 
+#    s)
 #        arr+=( "${scr_arr[@]}" )
 #        refarr+=( "${scr_ref_arr[@]}" )
 #        ;;
-    c) 
+    c)
         arr+=( "${ca_arr[@]}" );
         refarr+=( "${ca_ref_arr[@]}" )
         ;;
-    b) 
+    b)
         arr+=( "${bk_arr[@]}" )
         refarr+=( "${bk_ref_arr[@]}" )
         ;;
-    a) 
+    a)
         arr+=( "${sdl_arr[@]}" "${bk_arr[@]}" "${ca_arr[@]}" )
         refarr+=( "${sdl_ref_arr[@]}" "${bk_ref_arr[@]}" "${ca_ref_arr[@]}" )
 #        arr+=( "${sdl_arr[@]}" "${bk_arr[@]}" "${ca_arr[@]}" "${scr_arr[@]}" )

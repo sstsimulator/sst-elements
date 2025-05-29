@@ -127,7 +127,7 @@ void ArielCore::setCacheLink(StandardMem* newLink) {
 }
 
 void ArielCore::setRtlLink(Link* rtllink) {
-    
+
     RtlLink = rtllink;
 }
 
@@ -165,10 +165,10 @@ void ArielCore::commitWriteEvent(const uint64_t address,
 
     if(length > 0) {
         std::vector<uint8_t> data;
-        
+
         if( writePayloads ) {
             data.insert(data.end(), &payload[0], &payload[length]);
-            
+
             if(verbosity >= 16) {
                 char* buffer = new char[64];
                 std::string payloadString = "";
@@ -185,7 +185,7 @@ void ArielCore::commitWriteEvent(const uint64_t address,
         } else {
             data.resize(length, 0);
         }
-        
+
         StandardMem::Write *req = new StandardMem::Write(address, length, data, false, 0, virtAddress);
 
         pending_transaction_count++;
@@ -512,8 +512,8 @@ bool ArielCore::refillQueue() {
                 createExitEvent();
                 break;
 
-            case ARIEL_ISSUE_RTL: 
-                createRtlEvent(ac.shmem.inp_ptr, ac.shmem.ctrl_ptr, ac.shmem.updated_rtl_params, ac.shmem.inp_size, ac.shmem.ctrl_size, ac.shmem.updated_rtl_params_size); 
+            case ARIEL_ISSUE_RTL:
+                createRtlEvent(ac.shmem.inp_ptr, ac.shmem.ctrl_ptr, ac.shmem.updated_rtl_params, ac.shmem.inp_size, ac.shmem.ctrl_size, ac.shmem.updated_rtl_params_size);
                 break;
 
             default:
@@ -721,7 +721,7 @@ void ArielCore::handleFenceEvent(ArielFenceEvent *fEv) {
 }
 
 void ArielCore::handleRtlEvent(ArielRtlEvent* RtlEv) {
-    
+
     RtlEv->set_cachelinesize(cacheLineSize);
     memmgr->get_page_info(RtlEv->RtlData.pageTable, RtlEv->RtlData.freePages, RtlEv->RtlData.pageSize);
     memmgr->get_tlb_info(RtlEv->RtlData.translationCache, RtlEv->RtlData.translationCacheEntries, RtlEv->RtlData.translationEnabled);
@@ -730,7 +730,7 @@ void ArielCore::handleRtlEvent(ArielRtlEvent* RtlEv) {
 }
 
 void ArielCore::handleRtlAckEvent(SST::Event* e) {
-    
+
     output->verbose(CALL_INFO, 16, 0, "\nAriel received Event from RTL\n");
     ArielRtlEvent* ev = dynamic_cast<ArielRtlEvent*>(e);
     if(ev->getEventRecvAck() == true) {
@@ -743,7 +743,7 @@ void ArielCore::handleRtlAckEvent(SST::Event* e) {
         //==========================Calculate Simulation time===================================//
         //                                  xx.xx ns
         //======================================================================================//
-        
+
         //===================Print Outputs and other stats stored in Shmem======================//
         //                   get the pointers and print the Output: XXXX
         //======================================================================================//
@@ -755,7 +755,7 @@ void ArielCore::handleRtlAckEvent(SST::Event* e) {
         handleReadRequest(are);
     }
 
-    return;    
+    return;
 }
 
 

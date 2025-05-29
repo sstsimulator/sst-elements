@@ -12,7 +12,7 @@ debug_params = { "debug" : 0, "debug_level" : 10 }
 # On network: (Core, L1), MMIO device, (dir, memory)
 # Logical communication: Core->L1->dir->memory
 #                        Core->(L1)->MMIO
-#                        MMIO->dir->memory    
+#                        MMIO->dir->memory
 l1_group = 1
 mmio_group = 2
 dir_group = 3
@@ -56,7 +56,7 @@ l1cache.addParams({
       "debug_level" : DEBUG_LEVEL
 })
 l1_nic = l1cache.setSubComponent("lowlink", "memHierarchy.MemNIC")   # Network link
-l1_nic.addParams({ "group" : l1_group, 
+l1_nic.addParams({ "group" : l1_group,
                    "destinations" : l1_dst,
                    "network_bw" : network_bw})
 #l1_nic.addParams(debug_params)
@@ -72,7 +72,7 @@ mmio.addParams({
 mmio_iface = mmio.setSubComponent("iface", "memHierarchy.standardInterface")
 mmio_iface.addParams(debug_params)
 mmio_nic = mmio_iface.setSubComponent("lowlink", "memHierarchy.MemNIC")
-mmio_nic.addParams({"group" : mmio_group, 
+mmio_nic.addParams({"group" : mmio_group,
                     "sources" : mmio_src,
                     "destinations" : mmio_dst,
                     "network_bw" : network_bw })

@@ -12,7 +12,7 @@ Copyright (c) 2009-2025, NTESS
 
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, 
+Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
     * Redistributions of source code must retain the above copyright
@@ -98,7 +98,7 @@ MpiApi::startMpiCollective(Iris::sumi::Collective::type_t ty,
                            const void *sendbuf, void *recvbuf,
                            MPI_Datatype sendtype, MPI_Datatype recvtype,
                            CollectiveOpBase* op)
-{  
+{
   op->ty = ty;
   op->sendbuf = const_cast<void*>(sendbuf);
   op->recvbuf = recvbuf;

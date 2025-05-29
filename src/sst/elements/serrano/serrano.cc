@@ -197,12 +197,12 @@ void SerranoComponent::constructGraph( SST::Output* output, const char* kernel_f
 		} else if( 0 == strcmp( token, "LINK" ) ) {
 			char* in_unit      = strtok( nullptr, " " );
 			char* out_unit     = strtok( nullptr, " " );
-		
+
 			const uint64_t u64_in_unit  = std::atoll( in_unit );
 			const uint64_t u64_out_unit = std::atoll( out_unit );
 
 			SerranoCircularQueue<SerranoMessage*>* new_q = new SerranoCircularQueue<SerranoMessage*>(2);
-	
+
 			if( ( units.find( u64_in_unit ) != units.end() ) && ( units.find( u64_out_unit ) != units.end() ) ) {
 				output->verbose(CALL_INFO, 4, 0, "Connecting %" PRIu64 " -> %" PRIu64 " (link-id: %" PRIu64 ")\n",
 					u64_in_unit, u64_out_unit, id);
@@ -223,7 +223,7 @@ void SerranoComponent::constructGraph( SST::Output* output, const char* kernel_f
 	/* cycle over and check queues are good, these will fatal */
 	for( auto next_unit : units ) {
 		next_unit.second->checkRequiredQueues( output );
-	}	
+	}
 }
 
 int SerranoComponent::read_line( FILE* file_h, char* buffer, const size_t buffer_max ) {

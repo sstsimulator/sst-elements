@@ -28,7 +28,7 @@
 
 #define DEBUG 0
 #define dbgPrint(fmt, ARGS...) \
-        do { if (DEBUG) fprintf(stdout, "%s():%d: " fmt, __func__,__LINE__, ##ARGS); } while (0) 
+        do { if (DEBUG) fprintf(stdout, "%s():%d: " fmt, __func__,__LINE__, ##ARGS); } while (0)
 
 
 static NicQueueInfo s_nicQueueInfo;
@@ -86,7 +86,7 @@ void base_init( ) {
     s_nicQueueInfo.reqQueueAddress -= 1;
     // the NIC returns addresses that are relative to the start of it's address space
     // which is mapped into a virtual address space the process uses to talk to the NIC
-    // add the start of the virtual address space 
+    // add the start of the virtual address space
     s_nicQueueInfo.reqQueueAddress += (Addr_t) s_nicBaseAddr;
     s_nicQueueInfo.compQueuesAddress += (Addr_t) s_nicBaseAddr;
 
@@ -102,26 +102,26 @@ static inline int getReqQueueTailIndex() {
 }
 
 static inline Addr_t* getReqQueueHeadAddr() {
-	return  (Addr_t*) ( (NicCmd*) s_nicQueueInfo.reqQueueAddress + s_reqQueueHeadIndex); 
+	return  (Addr_t*) ( (NicCmd*) s_nicQueueInfo.reqQueueAddress + s_reqQueueHeadIndex);
 }
 
 void writeCmd( NicCmd* cmd ) {
 
 	dbgPrint("cmd=%p\n",cmd);
-    // we need a memory fence here to get MVAPICH working, It's not clear why it has to be hear 
+    // we need a memory fence here to get MVAPICH working, It's not clear why it has to be hear
 	__sync_synchronize();
 	while ( ( s_reqQueueHeadIndex + 1 ) % s_nicQueueInfo.reqQueueSize == getReqQueueTailIndex() );
 
 	memcpy( getReqQueueHeadAddr(), cmd, sizeof(*cmd) );
 
-	// the NIC is waiting for sizeof(NicCmd) bytes to be written 
-	
+	// the NIC is waiting for sizeof(NicCmd) bytes to be written
+
 	++s_reqQueueHeadIndex;
 	s_reqQueueHeadIndex %= s_nicQueueInfo.reqQueueSize;
 	dbgPrint("done\n");
 }
 
-static void readNicQueueInfo( volatile NicQueueInfo* info ) 
+static void readNicQueueInfo( volatile NicQueueInfo* info )
 {
 	dbgPrint("wait for response from NIC, addr %p\n",info);
 	volatile Addr_t* ptr = (Addr_t*) info;
@@ -140,7 +140,7 @@ static void writeSetup( HostQueueInfo* setup ) {
 
 	// the NIC is waiting on number of bytes writen so we don't need a memory fence
 	// why can't this be a memcpy
-	// for some reason this doesn't work with a memcpy 
+	// for some reason this doesn't work with a memcpy
 	for ( int i = 0; i < sizeof( HostQueueInfo )/sizeof(Addr_t);  i++ ) {
 		ptr[i] = tmp[i];
 	}

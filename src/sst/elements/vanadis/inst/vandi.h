@@ -53,7 +53,7 @@ public:
         regFile->setIntReg<uint64_t>(phys_int_regs_out_0, (src_1 & imm_value));
     }
 
-    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
                 uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0) override
     {
         #ifdef VANADIS_BUILD_DEBUG
@@ -71,9 +71,9 @@ public:
     }
 
     void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
-    { 
+    {
         uint16_t phys_int_regs_out_0 = phys_int_regs_out[0];
-        uint16_t phys_int_regs_in_0 = phys_int_regs_in[0];     
+        uint16_t phys_int_regs_in_0 = phys_int_regs_in[0];
         log(output, 16, 65535, phys_int_regs_out_0,phys_int_regs_in_0);
         instOp(regFile, phys_int_regs_out_0,phys_int_regs_in_0);
         markExecuted();

@@ -23,7 +23,7 @@ AC_DEFUN([SST_CHECK_OTF2],
        LDFLAGS="$OTF2_LDFLAGS $AM_LDFLAGS $LDFLAGS"],
       [OTF2_CPPFLAGS=
        OTF2_LDFLAGS=])])
-  
+
   AC_PATH_PROG([OTF2_CONFIG_TOOL],[otf2-config],[],[$OTF2_PATH])
 
   AS_IF([test "x$OTF2_CONFIG_TOOL" = "x"],

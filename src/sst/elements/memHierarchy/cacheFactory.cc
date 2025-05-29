@@ -69,7 +69,7 @@ Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
 
     try {
         UnitAlgebra packetSize_ua(packetSize);
-        
+
         if (!packetSize_ua.hasUnits("B")) {
             out_->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B). Ex: '8B'. SI units are ok. You specified '%s'\n", this->Component::getName().c_str(), packetSize.c_str());
         }
@@ -220,14 +220,14 @@ void Cache::createCoherenceManager(Params &params) {
 /*
  *  Configure links to components above (closer to CPU) and below (closer to memory)
  *  Check for connected ports or port managers
- * 
+ *
  * Complicated because of so many deprecations. Will be simpler as of SST 16 when deprecated
  * names are removed.
  */
 void Cache::configureLinks(Params &params, TimeConverter* tc) {
     bool highlink = isPortConnected("highlink");
     bool lowlink = isPortConnected("lowlink");
-    
+
     linkUp_ = loadUserSubComponent<MemLinkBase>("highlink", ComponentInfo::SHARE_NONE, tc);
     if (!linkUp_) {
         linkUp_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, tc);
@@ -241,7 +241,7 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
     }
     if (linkUp_) {
         linkUp_->setRecvHandler(new Event::Handler2<Cache, &Cache::handleEvent>(this));
-    } 
+    }
 
     linkDown_ = loadUserSubComponent<MemLinkBase>("lowlink", ComponentInfo::SHARE_NONE, tc);
     if (!linkDown_) {
@@ -357,9 +357,9 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
 
 
     // This is the "old" path for figuring out how the cache is connected to other components
-    // To update a python input file: 
-    //      (1) Add the subcomponent load line for the port(s) below 
-    //      (2) Connect the subcomponent's ports instead of the cache's ports 
+    // To update a python input file:
+    //      (1) Add the subcomponent load line for the port(s) below
+    //      (2) Connect the subcomponent's ports instead of the cache's ports
     //
     // Old Port         | New method (put this in python, replace 'cache' with the component instance)
     // =====================
@@ -379,7 +379,7 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
     lowCacheExists  = isPortConnected("cache");
     lowDirExists    = isPortConnected("directory");
     lowNetExists    = isPortConnected("low_network_0");
-    
+
     out_->output("%s, DEPRECATION WARNING: The following ports on MemHierarchy Caches are deprecated: high_network_0, cache, directory, low_network_0. MemHierarchy port names are being standardized. To connect to a non-network component, use the 'highlink' and/or 'lowlink' ports or fill the subcomponent slots of the same name with 'memHierarchy.MemLink'. To connect to a network component, fill the 'highlink' and/or 'lowlink' subcomponent slots with 'memHierarchy.MemNIC' or 'memHierarchy.MemNICFour'. When using the subcomponent slots, do not connect this cache's ports and instead connect the subcomponent's port(s). The high_network_0, low_network_0, cache, and directory ports will be removed in future versions of SST.\n", getName().c_str());
 
     /* Check for valid port combos */
@@ -461,7 +461,7 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
         if (!found) nicParams.insert("group", "1");
 
         if (isPortConnected("cache_ack") && isPortConnected("cache_fwd") && isPortConnected("cache_data")) {
-            dbg_->output("%s, WARNING: Use of the cache* ports is deprecated. Instead, place a 'memHierarchy.MemNICFour' subcomponent in this cache's 'highlink' subcomponent slot and connect the subcomponent's ports. These ports will be removed in SST 16.0.\n", getName().c_str()); 
+            dbg_->output("%s, WARNING: Use of the cache* ports is deprecated. Instead, place a 'memHierarchy.MemNICFour' subcomponent in this cache's 'highlink' subcomponent slot and connect the subcomponent's ports. These ports will be removed in SST 16.0.\n", getName().c_str());
             nicParams.find<std::string>("req.port", "", found);
             if (!found) nicParams.insert("req.port", "cache");
             nicParams.find<std::string>("ack.port", "", found);
@@ -557,7 +557,7 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
         linkUp_->setRegion(region_);
 
     } else {    // lowDirExists
-        
+
         dbg_->debug(_INFO_, "Configuring cache with a network to talk to both a cache above and a directory below\n");
 
         nicParams.find<std::string>("group", "", found);

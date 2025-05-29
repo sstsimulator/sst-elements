@@ -31,19 +31,19 @@ RdmaNic::SendStream::SendStream( RdmaNic& nic, SendEntry* entry ) : m_nic(nic), 
 	hdr->seqLen = calcSeqLen();
 
 	// copy the Stream header into the packet
-    uint8_t* buf = (uint8_t*) hdr; 
+    uint8_t* buf = (uint8_t*) hdr;
     for ( int i = 0; i< sizeof(*entry->getStreamHdr()); i++ ) {
         m_pkt->getData().insert( m_pkt->getData().end(), buf[i] );
     }
-	
+
 	// calculate the number of memory reads will will need
 	if ( entry->getLength() ) {
-    	// how many bytes from the address to the first cache line boundary, 
+    	// how many bytes from the address to the first cache line boundary,
     	// this may be more the total length of data
     	// this may be 0 if algined
     	int tmp = 64 - ( entry->getAddr() & (64-1 ) );
 
-    	// buffer is not aligned and total length is less that length to cache line boundary 
+    	// buffer is not aligned and total length is less that length to cache line boundary
     	if ( tmp && tmp >= entry->getLength() ) {
         	m_numReadsPending = 1;
     	} else {
@@ -59,16 +59,16 @@ RdmaNic::SendStream::SendStream( RdmaNic& nic, SendEntry* entry ) : m_nic(nic), 
     	}
 	} else {
    		nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"zero length message\n");
-		// get a new packet even though we will not use it, this way we will not have to check if we need one every time 
+		// get a new packet even though we will not use it, this way we will not have to check if we need one every time
 		// thru the process loop
-		m_pkt = queuePkt( m_pkt );	
+		m_pkt = queuePkt( m_pkt );
 	}
 
     nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"numReadsPending=%d\n",m_numReadsPending);
 }
 
 
-void RdmaNic::SendStream::readResp( int thread, StandardMem::Request* req, int id ) 
+void RdmaNic::SendStream::readResp( int thread, StandardMem::Request* req, int id )
 {
 	StandardMem::ReadResp* resp = dynamic_cast<StandardMem::ReadResp*>(req);
     m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"thread=%d numReadsPending=%d resp=%p pAddr=%" PRIx64 " size=%" PRIu64 " id=%d\n",
@@ -106,7 +106,7 @@ RdmaNic::SendStream::~SendStream() {
 
 bool RdmaNic::SendStream::process()
 {
-	// send read requests if we need to and if we are not blocked 
+	// send read requests if we need to and if we are not blocked
 	if ( m_offset < m_sendEntry->getLength() && ! m_nic.m_memReqQ->full( m_nic.m_dmaMemChannel ) ) {
 
     	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"pe=%d node=%d addr=%" PRIx32 " len=%d offset=%zu\n",
@@ -125,14 +125,14 @@ bool RdmaNic::SendStream::process()
 
         m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"resp=%p size=%zu\n", resp, resp->data.size() );
 		int xferLen = m_nic.getNetPktMtuLen() - m_pkt->getData().size();
-		xferLen = resp->data.size() < xferLen ? resp->data.size() : xferLen;   
+		xferLen = resp->data.size() < xferLen ? resp->data.size() : xferLen;
 
         m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"copy %d bytes to network packet\n", xferLen );
         m_pkt->getData().insert( m_pkt->getData().end(), resp->data.begin(), resp->data.begin() + xferLen );
         m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"mem %s\n",getDataStr(resp->data,xferLen).c_str());
 		resp->data.erase( resp->data.begin(), resp->data.begin() + xferLen );
 
-		if ( resp->data.empty() ) { 
+		if ( resp->data.empty() ) {
         	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"all data moved from read request\n" );
 			--m_numReadsPending;
 			delete resp;

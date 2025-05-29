@@ -15,7 +15,7 @@ from sst.merlin.topology import *
 if __name__=="__main__":
     ### Configuration
     specified_d=8
-    specified_algo='UGAL'  
+    specified_algo='UGAL'
     specified_k=3
 
     ### Setup the topology
@@ -49,12 +49,12 @@ if __name__=="__main__":
     networkif.vn_remap = [0]
 
     #jobId, # endpoints
-    ep                          = TestJob(0, topo.getNumNodes()) 
-    ep.network_interface        = networkif  
+    ep                          = TestJob(0, topo.getNumNodes())
+    ep.network_interface        = networkif
 
-    
+
     system                      = System()
     system.setTopology(topo)
     system.allocateNodes(ep,"linear")
-    system.build() 
+    system.build()
 
