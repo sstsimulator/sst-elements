@@ -103,9 +103,9 @@ HBMpagedMultiMemory::HBMpagedMultiMemory(ComponentId_t id, Params &params)
     scanThreshold = params.find<unsigned int>("scan_threshold", 6);
 
     transferDelay = params.find<unsigned int>("transfer_delay", 250);
-    
+
     nanoConv = getTimeConverter("1ns");
-    
+
     minAccTime = self_link->getDefaultTimeBase()->getFactor() /
         nanoConv->getFactor();
 

@@ -29,7 +29,7 @@ sumi_sources = \
   prov/sumi/src/sumi_sep.cc \
   prov/sumi/src/sumi_wait.cc \
   prov/sumi/src/sumi_prov.cpp
-        
+
 sumi_headers = \
   prov/sumi/include/fi_ext_sumi.h \
   prov/sumi/include/fi_ext_sumi.h \

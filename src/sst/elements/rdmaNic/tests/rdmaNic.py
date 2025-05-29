@@ -102,8 +102,8 @@ class Builder:
         # NIC DMA TLB -> cache
         link = sst.Link(prefix+".link_cpu_l1dcache")
         link.connect( (tlbWrapper, "cache_if", "1ns"), (dmaCache, "highlink", "1ns") )
-	
-        # NIC internode interface 
+
+        # NIC internode interface
         netLink = nic.setSubComponent( "rtrLink", "merlin.linkcontrol" )
         netLink.addParam("link_bw","16GB/s")
         netLink.addParam("input_buf_size","14KB")

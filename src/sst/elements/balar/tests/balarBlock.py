@@ -28,7 +28,7 @@ class Builder():
             Build configuration for Balar and its memory hierarchy
 
         Args:
-            cfgFile (str): gpgpusim configuration path 
+            cfgFile (str): gpgpusim configuration path
             statFile (str): SST stat file path
             statLevel (str): stat level
             balar_addr (int): balar mmio address
@@ -241,7 +241,7 @@ class Builder():
 
         # Return balar and its MMIO interface
         return balar, balar_mmio_iface
-    
+
     def buildTestCPU(self, cfgFile, balar_verbosity=0, dma_verbosity=0):
         """Build balar for testcpu integration
 
@@ -272,7 +272,7 @@ class Builder():
     def buildVanadisIntegration(self, cfgFile, balar_verbosity=0, dma_verbosity=0):
         """
             Build balar for vanadis integration, include balarTLB and dmaEngine for cudaMemcpy
-           
+
             Overall connection:
                                    BalarTLBBus <--mem_iface--> dmaEngine
                                          |
@@ -319,7 +319,7 @@ class Builder():
         # Connect the data link for dmaEngine to TLB
         connect("balar_balarBus_link", dma_mem_if, "port",
                 balarTlbWrapper, "cpu_if", "1ns")
-        
+
         # mem_iface replaced by TLB, keep mmio_iface
         return balarTlbWrapper, balarTlb, balar_mmio_iface, dma_mmio_if
 

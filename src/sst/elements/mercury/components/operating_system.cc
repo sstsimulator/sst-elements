@@ -88,7 +88,7 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
   params_(params)
 {
   TimeDelta::initStamps(TimeDelta::ASEC_PER_TICK);
-  
+
   if (active_os_.size() == 0){
     RankInfo num_ranks = getNumRanks();
     active_os_.resize(num_ranks.thread);
@@ -123,7 +123,7 @@ OperatingSystem::OperatingSystem(SST::ComponentId_t id, SST::Params& params, Nod
       time_converter_ = SST::BaseComponent::getTimeConverter(tickIntervalString());
     }
 
-  // These are libraries that a SST::Hg::Library depends on. We have core load them early 
+  // These are libraries that a SST::Hg::Library depends on. We have core load them early
   // in hopes that everything is in place when the SST::Hg::Library is instanced.
   requireDependencies(params_,*this);
 
@@ -264,7 +264,7 @@ OperatingSystem::addLaunchRequests(SST::Params& params)
         requests_.push_back(mgr);
       }
       keep_going = true;
-    } 
+    }
     else {
       keep_going = false;
     }
@@ -272,7 +272,7 @@ OperatingSystem::addLaunchRequests(SST::Params& params)
   }
 }
 
-void 
+void
 OperatingSystem::startApp(App *theapp,
                           const std::string & /*unique_name*/) {
   out_->debug(CALL_INFO, 1, 0, "starting app %d:%d on physical thread %d\n",
@@ -541,7 +541,7 @@ OperatingSystem::registerEventLib(EventLibrary* lib)
   }
 }
 
-void 
+void
 OperatingSystem::unregisterEventLib(EventLibrary *lib) {
   out_->debug(CALL_INFO, 1, 0, "unregistering lib %s\n",
                 lib->libName().c_str());

@@ -21,11 +21,11 @@ libmmu_la_SOURCES = \
 	tlb.h \
 	tlbWrapper.cc \
 	tlbWrapper.h \
-	utils.h	
+	utils.h
 
 libmmu_la_LDFLAGS = -module -avoid-version
 
-EXTRA_DIST = 
+EXTRA_DIST =
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     mmu=$(abs_srcdir)

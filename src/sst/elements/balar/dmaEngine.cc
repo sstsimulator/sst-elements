@@ -45,9 +45,9 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) : SST::Component(id) {
     mmio_size = params.find<uint32_t>("mmio_size", 512);
 
     // Get interfaces and bind handlers
-    mmio_iface = loadUserSubComponent<SST::Interfaces::StandardMem>("mmio_iface", ComponentInfo::SHARE_NONE, tc, 
+    mmio_iface = loadUserSubComponent<SST::Interfaces::StandardMem>("mmio_iface", ComponentInfo::SHARE_NONE, tc,
             new StandardMem::Handler2<DMAEngine,&DMAEngine::handleEvent>(this));
-    mem_iface = loadUserSubComponent<SST::Interfaces::StandardMem>("mem_iface", ComponentInfo::SHARE_NONE, tc, 
+    mem_iface = loadUserSubComponent<SST::Interfaces::StandardMem>("mem_iface", ComponentInfo::SHARE_NONE, tc,
             new StandardMem::Handler2<DMAEngine,&DMAEngine::handleEvent>(this));
 
     if (!mmio_iface) {
@@ -76,10 +76,10 @@ void DMAEngine::setup() {
 
 /**
  * @brief Process through the DMA request queue
- * 
- * @param x 
- * @return true 
- * @return false 
+ *
+ * @param x
+ * @return true
+ * @return false
  */
 bool DMAEngine::tick(SST::Cycle_t x) {
     // Iterate through the DMA request queue to handle each request
@@ -106,7 +106,7 @@ bool DMAEngine::tick(SST::Cycle_t x) {
                 }
 
                 StandardMem::Write* req = new StandardMem::Write(
-                    dma_req->sst_mem_addr + dma_req->offset, actual_transfer_size, 
+                    dma_req->sst_mem_addr + dma_req->offset, actual_transfer_size,
                     data, false, 0, dma_req->sst_mem_addr + dma_req->offset);
 
 
@@ -122,7 +122,7 @@ bool DMAEngine::tick(SST::Cycle_t x) {
                 dma_req->ongoing_count++;
 
                 // Send the copy request to memory system
-                out.verbose(_INFO_, "%s: copy from simulator to SST mem space, reqid (%ld) writing vaddr: %lx paddr: %lx size: %ld!\n", 
+                out.verbose(_INFO_, "%s: copy from simulator to SST mem space, reqid (%ld) writing vaddr: %lx paddr: %lx size: %ld!\n",
                             this->getName().c_str(), req->getID(), req->vAddr, req->pAddr, req->size);
                 // Add the request to cache request map
                 memory_requests[req->getID()] = dma_req;
@@ -145,7 +145,7 @@ bool DMAEngine::tick(SST::Cycle_t x) {
                 dma_req->ongoing_count++;
 
                 // Send the read request
-                out.verbose(_INFO_, "%s: copy from SST to simulator mem space, reqid (%ld) reading vaddr: %lx paddr: %lx size: %ld!\n", 
+                out.verbose(_INFO_, "%s: copy from SST to simulator mem space, reqid (%ld) reading vaddr: %lx paddr: %lx size: %ld!\n",
                             this->getName().c_str(), req->getID(), req->vAddr, req->pAddr, req->size);
                 memory_requests[req->getID()] = dma_req;
 
@@ -177,9 +177,9 @@ bool DMAEngine::tick(SST::Cycle_t x) {
     }
 
     // Clean up the DMA request queue if the request is done
-    dma_requests.erase(std::remove_if(dma_requests.begin(), 
-                                      dma_requests.end(), 
-                                      [](std::pair<DMAEngineRequest_t *, StandardMem::Write*>& x) { return x.first == nullptr; }), 
+    dma_requests.erase(std::remove_if(dma_requests.begin(),
+                                      dma_requests.end(),
+                                      [](std::pair<DMAEngineRequest_t *, StandardMem::Write*>& x) { return x.first == nullptr; }),
                                       dma_requests.end());
 
     // Should always enable DMA
@@ -192,12 +192,12 @@ void DMAEngine::handleEvent(StandardMem::Request* req) {
 
 /**
  * @brief Handle write to the DMA control and status registers
- * 
- * @param write 
+ *
+ * @param write
  */
 void DMAEngine::DMAHandlers::handle(StandardMem::Write* write) {
     // Extract the DMA request from data payload
-    DMAEngineControlRegisters* reg_ptr = decode_balar_packet<DMAEngineControlRegisters>(&(write->data)); 
+    DMAEngineControlRegisters* reg_ptr = decode_balar_packet<DMAEngineControlRegisters>(&(write->data));
     if (reg_ptr->data_size % reg_ptr->transfer_size != 0) {
         out->verbose(_INFO_, "%s: unaligned DMA transfer config! Data size: %ld Transfer size: %u\n", dma->getName().c_str(), reg_ptr->data_size, reg_ptr->transfer_size);
     }
@@ -208,7 +208,7 @@ void DMAEngine::DMAHandlers::handle(StandardMem::Write* write) {
     };
 
     auto isDMAReqOverlap = [&](DMAEngineControlRegisters* incoming, DMAEngineControlRegisters* existing) {
-        return isAddrRangeOverlap(incoming->sst_mem_addr, incoming->sst_mem_addr + incoming->data_size, 
+        return isAddrRangeOverlap(incoming->sst_mem_addr, incoming->sst_mem_addr + incoming->data_size,
                                   existing->sst_mem_addr, existing->sst_mem_addr + existing->data_size) ||
                isAddrRangeOverlap((uint64_t) incoming->simulator_mem_addr, (uint64_t) incoming->simulator_mem_addr + incoming->data_size,
                                   (uint64_t) existing->simulator_mem_addr, (uint64_t) existing->simulator_mem_addr + existing->data_size);
@@ -218,7 +218,7 @@ void DMAEngine::DMAHandlers::handle(StandardMem::Write* write) {
         DMAEngineControlRegisters* existing_req = it.first;
 
         if (isDMAReqOverlap(reg_ptr, existing_req)) {
-            out->fatal(CALL_INFO, -1, "%s: DMA request is overlapping with existing DMA request! Incoming: %s, Existing: %s\n", 
+            out->fatal(CALL_INFO, -1, "%s: DMA request is overlapping with existing DMA request! Incoming: %s, Existing: %s\n",
                        dma->getName().c_str(), dma->dmaRegToString(reg_ptr).c_str(), dma->dmaRegToString(existing_req).c_str());
         }
     }
@@ -235,8 +235,8 @@ void DMAEngine::DMAHandlers::handle(StandardMem::Write* write) {
 
 /**
  * @brief Handle response from copying sst mem space data to simulator mem space
- * 
- * @param read 
+ *
+ * @param read
  */
 void DMAEngine::DMAHandlers::handle(StandardMem::ReadResp* resp) {
     dma->out.verbose(_INFO_, "%s: readresp from SST mem space, reading vaddr: %lx paddr: %lx size: %ld!\n", dma->getName().c_str(), resp->vAddr, resp->pAddr, resp->size);
@@ -275,20 +275,20 @@ void DMAEngine::DMAHandlers::handle(StandardMem::ReadResp* resp) {
 }
 
 /**
- * @brief Handle response from copying simulator mem space data to sst mem space 
- * 
- * @param write 
+ * @brief Handle response from copying simulator mem space data to sst mem space
+ *
+ * @param write
  */
 void DMAEngine::DMAHandlers::handle(StandardMem::WriteResp* resp) {
     dma->out.verbose(_INFO_, "%s: writeresp from SST mem space, reading vaddr: %lx paddr: %lx size: %ld!\n", dma->getName().c_str(), resp->vAddr, resp->pAddr, resp->size);
-    
+
     // Find the DMA request corresponds to this read by map
     auto it = dma->memory_requests.find(resp->getID());
     if (it == dma->memory_requests.end()) {
         dma->out.fatal(CALL_INFO, -1, "%s: DMA request not found for read response! ID: %ld\n", dma->getName().c_str(), resp->getID());
     }
     DMAEngineRequest_t *dma_req = it->second;
-    
+
     // Mark as done for 1 mem req
     dma_req->ongoing_count--;
     dma->out.verbose(_INFO_, "%s: DMA %s ongoing count: %ld\n", dma->getName().c_str(), dma->dmaRegToString(dma_req).c_str(), dma_req->ongoing_count);
@@ -306,9 +306,9 @@ void DMAEngine::DMAHandlers::handle(StandardMem::WriteResp* resp) {
 
 /**
  * @brief Convert DMA request into a string with hex address range
- * 
- * @param reg_ptr 
- * @return std::string 
+ *
+ * @param reg_ptr
+ * @return std::string
  */
 std::string DMAEngine::dmaRegToString(DMAEngineControlRegisters* reg_ptr) {
     std::stringstream ss;

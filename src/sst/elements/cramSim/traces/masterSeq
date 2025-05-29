@@ -1,7 +1,7 @@
 # this is the master sequence file
 # Order is
 # channel rank bankgroup bank row col cacheline
-#CR B b r l h 
+#CR B b r l h
 . . . . 1 2 .
 . . . . 2 1 .
 . . . 1 3 2 .

@@ -3,7 +3,7 @@
 # Copyright 2023 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Authors: Kartik Lakhotia 
+# Authors: Kartik Lakhotia
 
 import sst
 from sst.merlin.base import *
@@ -17,7 +17,7 @@ import sys
 
 try:
     import networkx as nx
-except: 
+except:
     pass
     #print('--> MODULE NOT FOUND: networkx')
 
@@ -118,7 +118,7 @@ class Paley():
         diameter = nx.diameter(nx_graph)
         if diameter != 1:
             print("     --> construction error: property R1 not satisfied")
-            return 0 
+            return 0
 
         return 1
 
@@ -162,7 +162,7 @@ class Paley():
 class IQ():
     #q -> degree, order (no. of vertice) = 2q+2
     def __init__(self, q):
-        assert((q%4==0) or (q%4==3)) 
+        assert((q%4==0) or (q%4==3))
         self.q      = q
         self.V      = 2*q + 2
         self.A      = []
@@ -215,26 +215,26 @@ class IQ():
 
         #check property R* - adding f(E(G)) and (x,f(x)) edges should give complete graph
         for u in nx_graph.nodes():
-            nx_graph.add_edge(u, self.phi[u]) 
+            nx_graph.add_edge(u, self.phi[u])
         for u,v in nx_graph.edges():
             nx_graph.add_edge(self.phi[u], self.phi[v])
         diameter = nx.diameter(nx_graph)
         if diameter != 1:
             print("     --> construction error: property R1 not satisfied")
-            return 0 
+            return 0
 
         return 1
 
     def makeBase(self):
         q           = self.q
-        V           = self.V 
+        V           = self.V
         self.topo   = [[] for _ in range(V)]
         self.phi    = {}
         #degree 0 base
         if (q%self.incr == 0):
             self.A   = [0]
             self.fA  = [1]
-            self.phi = {0:1, 1:0}     
+            self.phi = {0:1, 1:0}
         #degree 3 base
         else:
             incrG, self.A, self.fA, self.phi    = self.makeIncr()
@@ -265,28 +265,28 @@ class IQ():
         #add rest of the edges
         for i in A:
             if (i != x):
-                y   = i 
+                y   = i
                 fy  = self.incr + y
                 w   = (y%(self.incr-1)) + 1
                 fw  = self.incr + w
                 incrG[y].append(fw)
                 incrG[fw].append(y)
                 incrG[fy].append(fw)
-                incrG[fw].append(fy)   
+                incrG[fw].append(fy)
         #make phi
         for i in range(self.incr):
             phi[i]              = i + self.incr
             phi[i+self.incr]    = i
 
-        return incrG, A, fA, phi 
-           
-             
+        return incrG, A, fA, phi
+
+
     def makeTopo(self):
         q       = self.q
         V       = self.V
         if self.topo is None:
             #make degree 0 or degree 3 base
-            self.makeBase()     
+            self.makeBase()
             currDeg = q%self.incr
             currV   = 2*currDeg + 2
             #while construction does not complete
@@ -325,8 +325,8 @@ class IQ():
 
                 currDeg += self.incr
                 currV   += incrV
-                    
-        
+
+
 
 
 
@@ -366,17 +366,17 @@ class topoPolarStar(Topology):
 
         self.pfq                = pfq
         self.snq                = snq
-        self.sn_type            = sn 
+        self.sn_type            = sn
         if (pfq<0 and snq<0):
-            self.pfq, self.snq, self.sn_type = self.optPSConfig(d, sn) 
+            self.pfq, self.snq, self.sn_type = self.optPSConfig(d, sn)
         else:
             if (pfq<0 or snq<0 or (sn!="paley" or sn!="iq")):
                 raise Exception("Infeasible configuration -- specify all parameters or none")
 
         #Set Shape
         self.pfV                = self.pfq*self.pfq + self.pfq + 1
-        self.snV                = self.snq if (self.sn_type == "paley") else 2*self.snq + 2 
-      
+        self.snV                = self.snq if (self.sn_type == "paley") else 2*self.snq + 2
+
         self.network_radix      = self.d
         self.total_routers      = self.pfV*self.snV
         self.edge               = (self.total_routers*self.d)/2
@@ -384,17 +384,17 @@ class topoPolarStar(Topology):
         self.topo               = None
         self.phi                = None
         self.hosts_per_router   = None
-        self.total_radix        = None 
-        self.total_endnodes     = None 
+        self.total_radix        = None
+        self.total_endnodes     = None
 
 
-    def setEP(self):    
+    def setEP(self):
         if self.hosts_per_router is None:
             self.hosts_per_router   = self.network_radix//3
         self.total_radix        = self.network_radix + self.hosts_per_router
         self.total_endnodes     = self.total_routers*self.hosts_per_router
 
-        
+
     def getName(self):
         return self.name
 
@@ -413,7 +413,7 @@ class topoPolarStar(Topology):
         return self.total_endnodes
 
 
-    def getNumEdges(self): 
+    def getNumEdges(self):
         if self.topo==None:
             self.make()
         return sum(len(n) for n in self.topo)//2
@@ -476,10 +476,10 @@ class topoPolarStar(Topology):
         print("------> Generating Polarstar topology!!")
         self.make()
         self.setEP()
-        
+
         if validate:
             if not self.validate():
-                raise Exception("Validation not passed!")  
+                raise Exception("Validation not passed!")
 
         #if save:
         if True: #mandatory save for importing in polarfly.cc
@@ -518,8 +518,8 @@ class topoPolarStar(Topology):
             pfq     = pfd - 1
             pfV     = pfq*pfq + pfq + 1
             if (not isPowerOfPrime(pfq)):
-                continue 
-    
+                continue
+
             #analyze paley supernode
             paleyq  = snd*2 + 1
             if (sg != "iq" and isPowerOfPrime(paleyq) and (paleyq%4 == 1)):
@@ -536,7 +536,7 @@ class topoPolarStar(Topology):
             #analyze IQ supernode
             iqq     = snd
             if (sg != "paley" and ((iqq % 4 == 0) or (iqq % 4 == 3))):
-                iqV    = 2*iqq + 2 
+                iqV    = 2*iqq + 2
                 V       = iqV*pfV
                 if (V > scale):
                     scale   = V
@@ -548,12 +548,12 @@ class topoPolarStar(Topology):
 
         if (strq==0 and snq==0):
             raise Exception("Infeasible configuration")
-    
+
         print("max PolarStar scale at degree " + str(d) + " is " + str(scale) + " vertices")
         print("Supernode Type = " + sn_type + ", Supernode q = " + str(snq) + ", PolarFly q = " + str(strq))
         print("SuperNodeSize = " + str(sn_max))
         print("Num SuperNodes: " + str(pf_max))
-    
+
         return strq, snq, sn_type
 
 
@@ -563,12 +563,12 @@ class topoPolarStar(Topology):
         phi, adj_sn = snG.make()
         snV         = len(adj_sn)
 
-        pfG         = topoPolarFly(q=pfq) 
+        pfG         = topoPolarFly(q=pfq)
         adj_pf      = pfG.make()
-        pfV         = len(adj_pf)    
+        pfV         = len(adj_pf)
 
         #add self-loops to PF quadrics
-        num_quads   = 0 
+        num_quads   = 0
         for i in range(pfV):
             is_quad = (len(adj_pf[i]) == pfq)
             if (is_quad):
@@ -585,7 +585,7 @@ class topoPolarStar(Topology):
             for j in range(snV):
                 u   = i*snV + j
                 for k in adj_sn[j]:
-                    v   = i*snV + k                 
+                    v   = i*snV + k
                     adj_ps[u].append(v)
 
         #add inter-supernode edges
@@ -608,14 +608,14 @@ class topoPolarStar(Topology):
             adj_ps[u].sort()
 
         return adj_ps
-    
-    
+
+
     def _build_impl(self, endpoint):
 
         if self._check_first_build():
             sst.addGlobalParams("params_%s"%self._instance_name, self._getGroupParams("main"))
 
-        if self.host_link_latency is None: 
+        if self.host_link_latency is None:
             self.host_link_latency  = self.link_latency
 
         links   = dict()
@@ -628,13 +628,13 @@ class topoPolarStar(Topology):
             if name not in links:
                 links[name] = sst.Link(name)
             return links[name]
-            
+
         #1. Generate the adjacency list for the polarstar topology
         nxFound     = False
         if 'networkx' in sys.modules:
             nxFound = True
         self.generate(validate=nxFound, save=True)
-                           
+
         node_num    = 0
         #2. Iterate over each router
         for router in range(self.total_routers):
@@ -662,7 +662,7 @@ class topoPolarStar(Topology):
                     nicLink.connect( (ep, port_name, self.host_link_latency), (rtr, "port%d"%port, self.host_link_latency) )
                 port = port+1
                 node_num = node_num+1
-            
+
             #4. Now connect the remaining ports to the neighbors
             neighbor_list = self.topo[router]
             for neighbor in neighbor_list:

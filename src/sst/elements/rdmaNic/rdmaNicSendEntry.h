@@ -21,7 +21,7 @@ class SendEntry {
 			delete cmd;
 		}
 	}
-	StreamHdr* getStreamHdr() { return &m_streamHdr; }	
+	StreamHdr* getStreamHdr() { return &m_streamHdr; }
 	virtual int getAddr() = 0;
 	virtual int getLength() = 0;
 	virtual int getCqId() = 0;
@@ -50,8 +50,8 @@ class MsgSendEntry : public SendEntry {
 	int getContext() { return cmd->data.send.context; }
 	int getDestNode() { return cmd->data.send.node; }
 	int getDestPid() { return cmd->data.send.pe; }
-  private:	
-}; 
+  private:
+};
 
 class WriteSendEntry : public SendEntry {
   public:
@@ -67,7 +67,7 @@ class WriteSendEntry : public SendEntry {
 	int getContext() { return cmd->data.write.context; }
 	int getDestNode() { return cmd->data.write.node; }
 	int getDestPid() { return cmd->data.write.pe; }
-}; 
+};
 class ReadSendEntry : public SendEntry {
   public:
     ReadSendEntry( NicCmd* cmd, int thread, int readRespKey ): SendEntry(thread,cmd) {
@@ -88,12 +88,12 @@ class ReadSendEntry : public SendEntry {
 	int getDestNode() { return cmd->data.read.node; }
 	int getDestPid() { return cmd->data.read.pe; }
   private:
-}; 
+};
 
 class ReadRespSendEntry : public SendEntry {
   public:
-    ReadRespSendEntry( int thread, int destNode, int destPid, Addr_t srcAddr, int length, int readRespKey ): 
-		SendEntry(thread), m_destNode(destNode), m_destPid(destPid), m_srcAddr(srcAddr), m_length(length) 
+    ReadRespSendEntry( int thread, int destNode, int destPid, Addr_t srcAddr, int length, int readRespKey ):
+		SendEntry(thread), m_destNode(destNode), m_destPid(destPid), m_srcAddr(srcAddr), m_length(length)
 	{
     	m_streamHdr.type = StreamHdr::ReadResp;
     	m_streamHdr.payloadLength = m_length;
@@ -111,7 +111,7 @@ class ReadRespSendEntry : public SendEntry {
 	int m_length;
 	int m_destNode;
 	int m_destPid;
-}; 
+};
 
 
 

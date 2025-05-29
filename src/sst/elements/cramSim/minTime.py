@@ -54,7 +54,7 @@ for ii in range(numBankIds):
     bankId2Bank.append(-1)
 
 seenBankIds = dict();
-        
+
 inFileName = sys.argv[1]
 
 inFile = open(inFileName)
@@ -75,13 +75,13 @@ for line in inFile:
             exit(-1)
 
         seenBankIds[bankId] = 1
-        
+
         chan = int(grep[4])
         pchan = int(grep[5])
         rank = int(grep[6])
         bankGroup = int(grep[7])
         bank = int(grep[8])
-        
+
         bankId2Chan[bankId] = chan
         bankId2Rank[bankId] = rank
         bankId2BankGroup[bankId] = bankGroup
@@ -92,8 +92,8 @@ for line in inFile:
         rank = bankId2Rank[bankId]
         bankGroup = bankId2BankGroup[bankId]
         bank = bankId2Bank[bankId]
-            
-            
+
+
     if bankId >= numBankIds:
         print("Increase numBankIds!",bankId,"detected, max is",numBankIds-1)
         exit(-1)
@@ -103,7 +103,7 @@ for line in inFile:
             for calRank in range(numRanks):
                 for calGroup in range(numBankGroups):
                     for calBank in range(numBanks):
-                                
+
                         if calChan == chan:
                             if calRank == rank:
                                 if calGroup == bankGroup:
@@ -127,7 +127,7 @@ for line in inFile:
                                     minDict[struct][calCmd][cmd] = delta
                                     minLineDict[struct][calCmd][cmd][0] = lastCmdLine[calCmd][calChan][calRank][calGroup][calBank]
                                     minLineDict[struct][calCmd][cmd][1] = line
-                                                        
+
     lastCmd[cmd][chan][rank][bankGroup][bank] = cycle
     lastCmdLine[cmd][chan][rank][bankGroup][bank] = line
 
@@ -156,5 +156,5 @@ for struct in structList:
             print(minLineDict[struct][cmd1][cmd2][0])
             print(minLineDict[struct][cmd1][cmd2][1])
         print()
-            
+
     print()

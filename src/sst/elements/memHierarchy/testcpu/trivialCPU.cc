@@ -136,7 +136,7 @@ bool trivialCPU::clockTic( Cycle_t )
             if (maxReqsPerIssue > 1) reqsToSend += rng.generateNextUInt32() % maxReqsPerIssue;
             if (reqsToSend > (maxOutstanding - requests.size())) reqsToSend = maxOutstanding - requests.size();
             if (reqsToSend > numLS) reqsToSend = numLS;
-            	    
+
 
             for (int i = 0; i < reqsToSend; i++) {
 
@@ -150,10 +150,10 @@ bool trivialCPU::clockTic( Cycle_t )
                 if (do_write && instNum < 2) {
                     cmdString = "Write";
                     addr = ((addr % maxAddr)>>2) << 2;
-                    std::vector<uint8_t> data = { 
-                        static_cast<uint8_t>((addr >> 24) & 0xff), 
-                        static_cast<uint8_t>((addr >> 16) & 0xff), 
-                        static_cast<uint8_t>((addr >> 8) & 0xff), 
+                    std::vector<uint8_t> data = {
+                        static_cast<uint8_t>((addr >> 24) & 0xff),
+                        static_cast<uint8_t>((addr >> 16) & 0xff),
+                        static_cast<uint8_t>((addr >> 8) & 0xff),
                         static_cast<uint8_t>(addr & 0xff)
                     };
                     req = new Interfaces::StandardMem::Write(addr, 4 /* 4 bytes */, data);

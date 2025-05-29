@@ -52,7 +52,7 @@ public:
     typedef MemBackendConvertor::ReqId ReqId;
     MemBackend() {}
 
-    MemBackend(ComponentId_t id, Params &params) : SubComponent(id) { 
+    MemBackend(ComponentId_t id, Params &params) : SubComponent(id) {
         uint32_t output_location = params.find<uint32_t>("debug", 0);
         if (output_location == 0) {
             params.find<uint32_t>("debug_location", 0);
@@ -104,7 +104,7 @@ public:
     }
 
     virtual std::string getBackendConvertorType() = 0; /* Backend must return the compatible convertor type */
-    
+
     virtual void serialize_order(SST::Core::Serialization::serializer& ser) override {
         SubComponent::serialize_order(ser);
         SST_SER(output);

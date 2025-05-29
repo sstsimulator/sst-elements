@@ -95,7 +95,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     if (!(clock_ua.hasUnits("Hz") || clock_ua.hasUnits("s")) || clock_ua.getRoundedValue() <= 0) {
         out.fatal(CALL_INFO, -1, "%s, ERROR - Invalid parameter: 'clock'. Must have units of Hz or s and be > 0. (SI prefixes ok). You specified '%s'\n", getName().c_str(), clockfreq.c_str());
     }
-    
+
     clockHandler_ = new Clock::Handler2<MemController, &MemController::clock>(this);
     clockTimeBase_ = registerClock(clockfreq, clockHandler_);
     clockOn_ = true;
@@ -117,7 +117,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         /* Check if there's an error with the subcomponent the user specified */
         SubComponentSlotInfo * info = getSubComponentSlotInfo("backend");
         if (info && info->isPopulated(0)) {
-            out.fatal(CALL_INFO, -1, "%s, ERROR: Unable to load the subcomponent in the 'backend' slot. Check that the requested subcomponent is registered with the SST core.\n", 
+            out.fatal(CALL_INFO, -1, "%s, ERROR: Unable to load the subcomponent in the 'backend' slot. Check that the requested subcomponent is registered with the SST core.\n",
                     getName().c_str());
         } else {
             out.output("%s, WARNING: Loaded backend in legacy mode (from parameter set). Instead, load backend into this controller's 'backend' slot via ctrl.setSubComponent() in configuration.\n", getName().c_str());
@@ -185,7 +185,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     gotRegion |= found;
     string ilStep = params.find<std::string>("interleave_step", "0B", found);
     gotRegion |= found;
-    
+
     // Ensure SI units are power-2 not power-10 - for backward compability
     fixByteUnits(ilSize);
     fixByteUnits(ilStep);
@@ -334,7 +334,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
             } catch (int e) {
                 if ( e == 1 ) {
                     out.fatal(CALL_INFO, -1, "%s, ERROR: Unable to open 'backing_in_file'. Does file exist? Filename='%s'\n", getName().c_str(), infile.c_str());
-                } else 
+                } else
                     out.fatal(CALL_INFO, -1, "%s, ERROR: Unable to create backing store. Exception thrown is %d.\n", getName().c_str(), e);
             }
         } else {
@@ -396,12 +396,12 @@ void MemController::handleEvent(SST::Event* event) {
     if (!region_.contains(ev->getAddr())) {
         out.fatal(CALL_INFO, -1, "%s, ERROR: Received an event with an address that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString(dlevel).c_str());
     }
-    
+
     bool noncacheable = ev->queryFlag(MemEvent::F_NONCACHEABLE);
     Addr chkAddr = noncacheable ? ev->getAddr() : ev->getBaseAddr();
 
     if (region_.interleaveStep != 0 && ev->getSize() > 0) {  // Non-contiguous address region so make sure this request doesn't fall outside the region
-        Addr a0 = (chkAddr - region_.start) / region_.interleaveStep; 
+        Addr a0 = (chkAddr - region_.start) / region_.interleaveStep;
         a0 = a0 * region_.interleaveStep + region_.start; // Address of the interleave chunk that contains the target address
         Addr b0 = a0 + region_.interleaveSize - 1; // Last address in the interleave chunk that contains the target starting address
         Addr a1 = a0 + region_.interleaveStep; // Address of the next interleave chunk
@@ -438,7 +438,7 @@ void MemController::handleEvent(SST::Event* event) {
             outstandingEvents_.insert(std::make_pair(ev->getID(), ev));
             if (mem_h_is_debug_event(ev)) {
                 mem_h_debug_output(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
-                        getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                        getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(),
                         ev->getVerboseString().c_str());
             }
             memBackendConvertor_->handleMemEvent( ev );
@@ -454,7 +454,7 @@ void MemController::handleEvent(SST::Event* event) {
                     outstandingEvents_.insert(std::make_pair(put->getID(), put));
                     if (mem_h_is_debug_event(put)) {
                         mem_h_debug_output(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
-                                getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                                getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(),
                                 put->getVerboseString().c_str());
                     }
                     memBackendConvertor_->handleMemEvent( put );
@@ -464,7 +464,7 @@ void MemController::handleEvent(SST::Event* event) {
                 ev->setCmd(Command::FlushLine);
                 if (mem_h_is_debug_event(ev)) {
                     mem_h_debug_output(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
-                            getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                            getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(),
                             ev->getVerboseString().c_str());
                 }
                 memBackendConvertor_->handleMemEvent( ev );
@@ -531,7 +531,7 @@ void MemController::handleCustomEvent(MemEventBase * ev) {
     outstandingEvents_.insert(std::make_pair(ev->getID(), ev));
     if (mem_h_is_debug_event(ev)) {
         mem_h_debug_output(_L4_, "B: %-20" PRIu64 " %-20" PRIu64 " %-20s Bkend:Send    (%s)\n",
-                getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), 
+                getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(),
                 ev->getVerboseString().c_str());
     }
     memBackendConvertor_->handleCustomEvent(info, ev->getID(), ev->getRqstr());
@@ -589,7 +589,7 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
         resp->setBaseAddr(translateToGlobal(ev->getBaseAddr()));
         resp->setAddr(translateToGlobal(ev->getAddr()));
     }
-    
+
     if (mem_h_is_debug_event(resp)) {
         mem_h_debug_output(_L4_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Send    (%s)\n",
                 getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), resp->getVerboseString(dlevel).c_str());
@@ -644,7 +644,7 @@ void MemController::finish(void) {
     memBackendConvertor_->finish(cycle);
     link_->finish();
     if ( backing_outfile_ != "" ) {
-        try { 
+        try {
             backing_->printToFile(backing_outfile_);
         } catch (int e) { // Don't fatal so late in simulation
             out.output("%s, WARNING: Unable to open file '%s' provided by parameter 'backing_out_file' to write memory contents. Memory contents will not be written.\n", getName().c_str(), backing_outfile_.c_str());
@@ -674,7 +674,7 @@ void MemController::writeData(MemEvent* event) {
             mem_h_debug_output(_L8_, "S: Update backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize());
             printDataValue(addr, &(event->getPayload()), true);
         }
-        
+
         backing_->set(addr, event->getSize(), event->getPayload());
 
         return;
@@ -720,7 +720,7 @@ void MemController::readData(Addr addr, size_t bytes, std::vector<uint8_t> &data
 
     for (size_t i = 0; i < bytes; i++)
         data[i] = backing_->get(addr + i);
-    
+
     if (mem_h_is_debug_addr(addr))
         printDataValue(addr, &data, false);
 }
@@ -778,16 +778,16 @@ void MemController::processInitEvent( MemEventInit* me ) {
         if ( isRequestAddressValid(me->getAddr()) ) {
             Addr local_addr = translateToLocal(me->getAddr());
             mem_h_debug_output(_L10_, "U: %-20s   Event:GetS      (%s)\n", getName().c_str(), me->getVerboseString().c_str());
-            
+
             MemEventInit * resp = me->makeResponse();
             vector<uint8_t> payload;
-        
+
             if (backing_) {
                 backing_->get(local_addr, me->getSize(), payload);
             } else {
                 payload.resize(me->getSize(), 0);
             }
-        
+
             resp->setPayload(payload);
             mem_h_debug_output(_L10_, "U: %-20s   Event:Send      (%s)\n", getName().c_str(), resp->getVerboseString().c_str());
             link_->sendUntimedData(resp);
@@ -802,14 +802,14 @@ void MemController::processInitEvent( MemEventInit* me ) {
 
     delete me;
 }
-    
+
 
 void MemController::adjustRegionToMemSize() {
     // Check memSize_ against region
     // Set region_ to the smaller of the two
     // It's sometimes useful to be able to adjust one of the params and not the other
     // So, a mismatch is likely not an error, but alert the user in debug mode just in case
-    // TODO deprecate mem_size & just use region? 
+    // TODO deprecate mem_size & just use region?
     uint64_t regSize = region_.end - region_.start;
     if (regSize != region_.REGION_MAX) {  // The default is for region_.end = uint64_t -1, but then if we add one we wrap...
         regSize++; // Since region_.end and region_.start are inclusive
@@ -879,9 +879,9 @@ void MemController::printDataValue(Addr addr, std::vector<uint8_t>* data, bool s
     for (unsigned int i = 0; i < data->size(); i++) {
         value << std::hex << std::setw(2) << (int)data->at(i);
     }
-    
+
     dbg.debug(_L11_, "V: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 " B: %-3zu %s\n",
-            getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), action.c_str(), 
+            getCurrentSimCycle(), getNextClockCycle(clockTimeBase_) - 1, getName().c_str(), action.c_str(),
             addr, data->size(), value.str().c_str());
 }
 
@@ -907,10 +907,10 @@ void MemController::serialize_order(SST::Core::Serialization::serializer& ser) {
         using std::placeholders::_1;
         using std::placeholders::_2;
         memBackendConvertor_->setCallbackHandlers(
-            std::bind(&MemController::handleMemResponse, this, _1, _2), 
+            std::bind(&MemController::handleMemResponse, this, _1, _2),
             std::bind(&MemController::turnClockOn, this));
     }
-    
+
     SST_SER(backing_);
     SST_SER(backing_outfile_);
 
@@ -925,7 +925,7 @@ void MemController::serialize_order(SST::Core::Serialization::serializer& ser) {
     SST_SER(clockOn_);
 
     SST_SER(region_);
-    SST_SER(privateMemOffset_); 
+    SST_SER(privateMemOffset_);
 
     SST_SER(clockHandler_);
     SST_SER(clockTimeBase_);

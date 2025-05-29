@@ -24,9 +24,9 @@ extern template class  HgBase<SST::SubComponent>;
 
 EventLibrary::EventLibrary(const std::string& libname, SoftwareId sid, OperatingSystem* os) :
   os_(os),
-  sid_(sid), 
+  sid_(sid),
   addr_(os->addr()),
-  libname_(libname) 
+  libname_(libname)
 {
   os_->registerEventLib(this);
 }

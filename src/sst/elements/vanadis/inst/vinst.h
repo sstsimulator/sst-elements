@@ -56,10 +56,10 @@ class VanadisInstruction
 
             phys_int_regs_out = (count_phys_int_reg_out > 0) ? new uint16_t[count_phys_int_reg_out] : nullptr;
             std::memset(phys_int_regs_out, 0, count_phys_int_reg_out * sizeof( uint16_t ) );
-    
+
             isa_int_regs_in = (count_isa_int_reg_in > 0) ? new uint16_t[count_isa_int_reg_in] : nullptr;
             std::memset(isa_int_regs_in, 0, count_isa_int_reg_in * sizeof( uint16_t ));
-    
+
             isa_int_regs_out = (count_isa_int_reg_out > 0) ? new uint16_t[count_isa_int_reg_out] : nullptr;
             std::memset(isa_int_regs_out, 0, count_isa_int_reg_out * sizeof( uint16_t ) );
 
@@ -274,13 +274,13 @@ class VanadisInstruction
             index_so_far += snprintf(&buffer[index_so_far], max_buff_size - index_so_far, " }");
         }
 
-        
+
         uint16_t countPhysIntRegIn() const { return count_phys_int_reg_in; }
         uint16_t countPhysIntRegOut() const { return count_phys_int_reg_out; }
         uint16_t countPhysFPRegIn() const { return count_phys_fp_reg_in; }
         uint16_t countPhysFPRegOut() const { return count_phys_fp_reg_out; }
 
-        
+
         uint16_t countISAIntRegIn() const { return count_isa_int_reg_in; }
         uint16_t countISAIntRegOut() const { return count_isa_int_reg_out; }
         uint16_t countISAFPRegIn() const { return count_isa_fp_reg_in; }
@@ -296,7 +296,7 @@ class VanadisInstruction
         uint16_t getPhysFPRegOut(const uint16_t index) const { return phys_fp_regs_out[index]; }
         uint16_t getISAFPRegIn(const uint16_t index) const { return isa_fp_regs_in[index]; }
         uint16_t getISAFPRegOut(const uint16_t index) const { return isa_fp_regs_out[index]; }
-        
+
         void setPhysIntRegIn(const uint16_t index, const uint16_t reg) { phys_int_regs_in[index] = reg; }
         void setPhysIntRegOut(const uint16_t index, const uint16_t reg) { phys_int_regs_out[index] = reg; }
         void setPhysFPRegIn(const uint16_t index, const uint16_t reg) { phys_fp_regs_in[index] = reg; }
@@ -315,25 +315,25 @@ class VanadisInstruction
         uint32_t getSWThread() {return sw_thread;}
 
         virtual const char* getInstCode() const = 0 ;
-        
-        virtual void printToBuffer(char* buffer, size_t buffer_size) { snprintf(buffer, buffer_size, "%s", getInstCode()); }
-        
-        virtual VanadisFunctionalUnitType getInstFuncType() const = 0;
-       
 
-        virtual void instOp(VanadisRegisterFile* regFile, 
-                            uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0, 
+        virtual void printToBuffer(char* buffer, size_t buffer_size) { snprintf(buffer, buffer_size, "%s", getInstCode()); }
+
+        virtual VanadisFunctionalUnitType getInstFuncType() const = 0;
+
+
+        virtual void instOp(VanadisRegisterFile* regFile,
+                            uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0,
                             uint16_t phys_int_regs_in_1)
         {
             ;
         }
 
-        virtual void instOp(VanadisRegisterFile* regFile, 
+        virtual void instOp(VanadisRegisterFile* regFile,
                                 uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0)
         {
             ;
         }
-        
+
         virtual void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile)
         {
             uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);
@@ -344,7 +344,7 @@ class VanadisInstruction
             markExecuted();
         }
 
-        virtual void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+        virtual void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
                 uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0)
         {
             #ifdef VANADIS_BUILD_DEBUG
@@ -366,7 +366,7 @@ class VanadisInstruction
             scalarExecute(output, regFiles[hw_thread]);
         }
 
-        virtual void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+        virtual void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
                             uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0,
                                     uint16_t phys_int_regs_in_1)
         {
@@ -393,8 +393,8 @@ class VanadisInstruction
             }
             #endif
         }
-        
-        
+
+
         virtual void print(SST::Output* output) { output->verbose(CALL_INFO, 8, 0, "%s", getInstCode()); }
 
         // Is the instruction predicted (speculation point).
@@ -424,7 +424,7 @@ class VanadisInstruction
         virtual bool updatesFPFlags() const { return false; }
         virtual void updateFPFlags() {}
 
-        virtual void returnOutRegs( VanadisRegisterStack* int_stack, VanadisRegisterStack* fp_stack ) 
+        virtual void returnOutRegs( VanadisRegisterStack* int_stack, VanadisRegisterStack* fp_stack )
         {
             for ( auto i = 0; i < countPhysIntRegOut(); i++ ) {
                 int_stack->push( getPhysIntRegOut(i) );
@@ -438,11 +438,11 @@ class VanadisInstruction
         {
             return 0;
         }
-        
-        
+
+
 
     protected:
-        
+
         const uint64_t ins_address;
         const uint32_t hw_thread;
 
@@ -451,7 +451,7 @@ class VanadisInstruction
         uint16_t count_isa_fp_reg_in;
         uint16_t count_isa_fp_reg_out;
 
-        
+
         uint16_t count_phys_int_reg_in;
         uint16_t count_phys_int_reg_out;
         uint16_t count_phys_fp_reg_in;
@@ -462,7 +462,7 @@ class VanadisInstruction
         bool hasIssued;
         bool enduOpGroup;
         bool isFrontOfROB;
-        bool hasROBSlot;        
+        bool hasROBSlot;
 
         const VanadisDecoderOptions* isa_options;
         uint32_t sw_thread;
@@ -475,8 +475,8 @@ class VanadisInstruction
         uint16_t* phys_int_regs_out;
         uint16_t* phys_fp_regs_in;
         uint16_t* phys_fp_regs_out;
-        
-        
+
+
 };
 
 } // namespace Vanadis

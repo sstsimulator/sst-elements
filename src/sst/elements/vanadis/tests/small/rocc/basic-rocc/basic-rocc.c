@@ -15,7 +15,7 @@
 // distribution.
 
 #include <stdio.h>
-#include <stdlib.h> 
+#include <stdlib.h>
 
 int main() {
 
@@ -53,7 +53,7 @@ int main() {
         "mv a0, %0\n\t"          // a0 <- a0_val
         "mv a1, %1\n\t"          // a1 <- a1_val
         // Insert the custom instruction word.
-        ".word 0x02B5050B\n\t"    // This performs: RoCC SRAI 
+        ".word 0x02B5050B\n\t"    // This performs: RoCC SRAI
         // Move the result from register a0 back to a0_val.
         "mv %0, a0\n\t"
         : "+r" (a0_val)          // a0_val is both input and output.
@@ -73,7 +73,7 @@ int main() {
     asm volatile (
         "mv a0, %0\n\t"          // a0 <- a0_val
         ".word 0x405000B\n\t"    // This performs: RoCC Load
-        : 
+        :
         : "r" (load_value_a)          // only 1 input.
         : "a0", "memory"   // Clobbers: we use a0
     );
@@ -89,7 +89,7 @@ int main() {
     asm volatile (
         "mv a0, %0\n\t"          // a0 <- a0_val
         ".word 0x605000B\n\t"    // This performs: RoCC Load
-        : 
+        :
         : "r" (store_value_a)          // only 1 input.
         : "a0", "memory"   // Clobbers: we use a0
     );
@@ -150,7 +150,7 @@ int main() {
     asm volatile (
         "mv a0, %0\n\t"          // a0 <- a0_val
         ".word 0x405002B\n\t"    // This performs: RoCC Load
-        : 
+        :
         : "r" (load_value_b)          // only 1 input.
         : "a0", "memory"   // Clobbers: we use a0
     );
@@ -166,7 +166,7 @@ int main() {
     asm volatile (
         "mv a0, %0\n\t"          // a0 <- a0_val
         ".word 0x605002B\n\t"    // This performs: RoCC Load
-        : 
+        :
         : "r" (store_value_b)          // only 1 input.
         : "a0", "memory"   // Clobbers: we use a0
     );

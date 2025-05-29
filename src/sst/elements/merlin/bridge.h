@@ -128,18 +128,18 @@ public:
     }
 
     void setup(void)
-    {   
+    {
         interfaces[0].nic->setup();
         interfaces[1].nic->setup();
-    
+
         translator->setup();
     }
 
     void finish(void)
-    {   
+    {
         interfaces[0].nic->finish();
         interfaces[1].nic->finish();
-    
+
         translator->finish();
     }
 

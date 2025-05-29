@@ -27,7 +27,7 @@ namespace SST {
 namespace BalarComponent {
     // Need to move the template instantiation to header file
     // See: https://stackoverflow.com/questions/495021/why-can-templates-only-be-implemented-in-the-header-file
-    template <typename T> 
+    template <typename T>
     vector<uint8_t>* encode_balar_packet(T *pack_ptr) {
         vector<uint8_t> *buffer = new vector<uint8_t>();
 
@@ -53,7 +53,7 @@ namespace BalarComponent {
         // Match with type of buffer
         uint8_t* ptr = reinterpret_cast<uint8_t*>(pack_ptr);
         std::copy(buffer->data(), buffer->data() + len, ptr);
-        
+
         return pack_ptr;
     }
 

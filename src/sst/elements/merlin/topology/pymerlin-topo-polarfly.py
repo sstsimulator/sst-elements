@@ -48,7 +48,7 @@ class GF():
 
 
         self.pp = int(pp)
-        p, n    = self.factor() 
+        p, n    = self.factor()
 
         if not self.isPrime(p):
             raise ValueError("p must be a prime number, not %s" % p)
@@ -67,8 +67,8 @@ class GF():
 
         self.elems  = [i for i in range(self.pp)]
         self.polys  = [self.computeCoeffs(i) for i in range(self.pp)]
-        
-        self.add_mat, self.mul_mat, self.addI_mat, self.mulI_mat    = self.fieldGen() 
+
+        self.add_mat, self.mul_mat, self.addI_mat, self.mulI_mat    = self.fieldGen()
 
 
     def getElems(self):
@@ -77,7 +77,7 @@ class GF():
     def getFactors(self):
         return self.p, self.n
 
-    
+
     def isPrime(self, p):
         if (p <= 1):
             return False
@@ -88,7 +88,7 @@ class GF():
 
 
     def factor(self):
-        n               = int(1) 
+        n               = int(1)
         p               = self.pp
         tmp             = self.pp
 
@@ -110,7 +110,7 @@ class GF():
                     exit(0)
             if (tmp==1):
                 break
-        return p, n 
+        return p, n
 
 
     def computeCoeffs(self, i):
@@ -122,7 +122,7 @@ class GF():
             cid += 1
             tmp = int(tmp/self.p)
         return coeffs
-    
+
 
     def computeIndex(self, coeffs):
         index = 0
@@ -138,7 +138,7 @@ class GF():
         add_mat = [[0]*self.pp for i in range(self.pp)]
         mul_mat = [[0]*self.pp for i in range(self.pp)]
         addI_mat= [0 for i in range(self.pp)]
-        mulI_mat= [1 for i in range(self.pp)]       
+        mulI_mat= [1 for i in range(self.pp)]
 
         #Create finite field matrices
         for i in range(self.pp):
@@ -173,7 +173,7 @@ class GF():
         return add_mat, mul_mat, addI_mat, mulI_mat
 
     def add(self, x, y):
-        return self.add_mat[x][y] 
+        return self.add_mat[x][y]
 
     def addInv(self, x):
         return self.addI_mat[x]
@@ -184,7 +184,7 @@ class GF():
 
     def mul(self, x, y):
         return self.mul_mat[x][y]
-    
+
     def mulInv(self, x):
         return self.mulI_mat[x]
 
@@ -204,7 +204,7 @@ class GF():
 
     def isPrimitiveElem(self, primitive) -> bool:
         elems = [0]
-        tmp = 1 
+        tmp = 1
         for _ in range(1,self.pp):
             tmp = self.mul(tmp,primitive)
             elems.append(tmp)
@@ -232,23 +232,23 @@ class topoPolarFly(Topology):
                                     "failed_links", "GF", "vec_len"])
         self.global_routes = "absolute"
         self._subscribeToPlatformParamSet("topology")
-        
+
         #Set the q value (size of Gallois field) and throw an error if it is not from the q candidates list
 
         """
         Parameters:
             q: size of Gallois Field
         """
-        q_candidates = [2, 3, 4, 5, 7, 8, 9, 11, 13, 16, 17, 19, 23, 25, 27, 29, 31, 32, 37, 41, 43, 47, 49, 
-                        53, 59, 61, 64, 67, 71, 73, 79, 81, 83, 89, 97, 101, 103, 107, 109, 113, 121, 125, 127, 
-                        128, 131, 137, 139, 149, 151, 157, 163, 167, 169, 173, 179, 181, 191, 193, 197, 199, 211, 
+        q_candidates = [2, 3, 4, 5, 7, 8, 9, 11, 13, 16, 17, 19, 23, 25, 27, 29, 31, 32, 37, 41, 43, 47, 49,
+                        53, 59, 61, 64, 67, 71, 73, 79, 81, 83, 89, 97, 101, 103, 107, 109, 113, 121, 125, 127,
+                        128, 131, 137, 139, 149, 151, 157, 163, 167, 169, 173, 179, 181, 191, 193, 197, 199, 211,
                         223, 227, 229, 233, 239, 241, 243, 251]
 
         if(q == -1 and N != -1):
             if N >= 65000:
                 self.q = 251
             else:
-                desired_q = sqrt(N) 
+                desired_q = sqrt(N)
                 self.q = q_candidates[min(range(len(q_candidates)), key = lambda i: abs(q_candidates[i]-desired_q))]
         elif(q != -1 and N == -1):
             if (q in q_candidates):
@@ -261,12 +261,12 @@ class topoPolarFly(Topology):
         #Set Shape
         self.network_radix      = self.q+1
         self.total_routers      = (self.q**2+ self.q + 1)
-        self.edge               = (self.q*(self.q+1)*(self.q+1))//2 
+        self.edge               = (self.q*(self.q+1)*(self.q+1))//2
         self.name               = 'PolarFly'
         self.topo               = None
         self.hosts_per_router   = None
-        self.total_radix        = None 
-        self.total_endnodes     = None 
+        self.total_radix        = None
+        self.total_endnodes     = None
 
         #For Erdos-Renyi graph construction
         self.GF                 = None
@@ -275,10 +275,10 @@ class topoPolarFly(Topology):
 
     def setEP(self):
         if (self.hosts_per_router is None):
-            self.hosts_per_router   = self.network_radix//2 
+            self.hosts_per_router   = self.network_radix//2
         self.total_radix            = self.hosts_per_router + self.network_radix
         self.total_endnodes         = self.hosts_per_router*self.total_routers
-        
+
 
 
     def getName(self):
@@ -304,7 +304,7 @@ class topoPolarFly(Topology):
             self.make()
         return int(sum(len(n) for n in self.topo) / 2)
 
-        
+
     def getFolderPath(self):
         return os.getcwd()+"/polarfly_data/"
 
@@ -315,7 +315,7 @@ class topoPolarFly(Topology):
         assert(len(v2)==self.vec_len)
         dp  = int(0)
         for i in range(self.vec_len):
-            dp  = self.GF.add(dp, self.GF.mul(v1[i], v2[i])) 
+            dp  = self.GF.add(dp, self.GF.mul(v1[i], v2[i]))
         return dp
 
 
@@ -324,7 +324,7 @@ class topoPolarFly(Topology):
             self.GF     = GF(self.q)
             q           = self.q
             V           = self.total_routers
-            node_map    = {}  
+            node_map    = {}
             vecs        = []
             graph       = [[] for _ in range(V)]
 
@@ -353,7 +353,7 @@ class topoPolarFly(Topology):
                             graph[src].append(dst)
 
             self.topo   = graph
-            
+
         return self.topo
 
 
@@ -410,14 +410,14 @@ class topoPolarFly(Topology):
     def save(self, folderpath, filename):
         if not path.exists(folderpath):
             makedirs(folderpath)
-        
+
         file = folderpath + filename
 
         with open(file+".txt", "w") as f:
             print(len(self.topo), int(sum(len(n) for n in self.topo) / 2), file=f)
             for node in self.topo:
                 print( " ".join(str(e) for e in node) + " ", file=f)
-        
+
 
     def _build_impl(self, endpoint):
         if self._check_first_build():

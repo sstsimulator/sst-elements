@@ -33,7 +33,7 @@ struct vanadis_rlimit {
 class VanadisPrlimitSyscall : public VanadisSyscall {
 public:
     VanadisPrlimitSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallPrlimitEvent* event )
-        : VanadisSyscall( os, coreLink, process, event, "prlimit" ), m_state( READ )  
+        : VanadisSyscall( os, coreLink, process, event, "prlimit" ), m_state( READ )
     {
         m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL, "[syscall-prlimit] pid=%" PRIu64 " resource=%" PRIu64 " new_limit=%#" PRIx64 " old_limit=%#" PRIx64 "\n",
             event->getPid(),event->getResource(),event->getNewLimit(),event->getOldLimit());
@@ -52,7 +52,7 @@ public:
     void memReqIsDone(bool) {
         if ( READ == m_state ) {
             m_state = WRITE;
-            auto buf = ( struct vanadis_rlimit * ) payload.data(); 
+            auto buf = ( struct vanadis_rlimit * ) payload.data();
             printf("[syscall-prlimit] newlimit %" PRIu64 " %" PRIu64 "\n",buf->rlim_cur,buf->rlim_max);
 
             writeOld();
@@ -65,7 +65,7 @@ public:
         auto event = getEvent<VanadisSyscallPrlimitEvent*>();
 
         if ( event->getOldLimit() ) {
-            auto buf = ( struct vanadis_rlimit * ) payload.data(); 
+            auto buf = ( struct vanadis_rlimit * ) payload.data();
             buf->rlim_cur = 1024*1014*10;
             buf->rlim_max = -1;
 
@@ -76,7 +76,7 @@ public:
         }
     }
 
- private:  
+ private:
     enum { READ, WRITE } m_state;
     std::vector<uint8_t> payload;
 };

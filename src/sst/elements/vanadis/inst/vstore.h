@@ -33,9 +33,9 @@ public:
         const int64_t offst, const uint16_t valueReg, const uint16_t store_bytes, VanadisMemoryTransaction accessT,
         VanadisStoreRegisterType regT) :
         VanadisInstruction(
-            addr, hw_thr, isa_opts, 
+            addr, hw_thr, isa_opts,
             /*
-            const uint16_t c_phys_int_reg_in, const uint16_t c_phys_int_reg_out, 
+            const uint16_t c_phys_int_reg_in, const uint16_t c_phys_int_reg_out,
             const uint16_t c_isa_int_reg_in, const uint16_t c_isa_int_reg_out,
             const uint16_t c_phys_fp_reg_in, const uint16_t c_phys_fp_reg_out,
             const uint16_t c_isa_fp_reg_in, const uint16_t c_isa_fp_reg_out
@@ -98,7 +98,7 @@ public:
             }
         }
         }
-        
+
         return "STOREUNK";
     }
 
@@ -136,7 +136,7 @@ public:
         int64_t reg_tmp;
         uint16_t target_tid = 0;
 
-       
+
         reg_tmp = reg->getIntReg<int64_t>(phys_int_regs_in[0]);
 
         (*store_addr) = (uint64_t)(reg_tmp + offset);
@@ -161,7 +161,7 @@ public:
                 getInstructionAddress(), phys_int_regs_in[0], phys_fp_regs_in[0], offset, store_width, (*store_addr),
                 (*store_addr));
         } break;
-        }        
+        }
     }
 
     uint16_t getStoreWidth() const { return store_width; }
@@ -185,7 +185,7 @@ public:
         hasExecuted = true;
     }
 
-    
+
     VanadisStoreRegisterType getValueRegisterType() const { return regType; }
 
 protected:

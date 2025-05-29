@@ -258,7 +258,7 @@ public:
             protocolState_ = E;
         else
             protocolState_ = S;
-        
+
         flush_state_ = FlushState::Ready;
 
         shutdown_flush_counter_ = 0;
@@ -614,7 +614,7 @@ private:
     void recordLatency(Command cmd, int type, uint64_t latency) override;
 
     void printLine(Addr addr);
-    
+
     void beginCompleteStage() override;
     void processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink) override;
 
@@ -624,7 +624,7 @@ private:
     bool protocol_;             // True for MESI, false for MSI
 
     std::map<Addr, std::map<std::string, MemEvent::id_type> > responses;
-    
+
     FlushState flush_state_;
 
     int shutdown_flush_counter_;

@@ -24,9 +24,9 @@ namespace SST {
 namespace BalarComponent {
     /**
      * @brief Trim the whitespace for a given string
-     * 
-     * @param s 
-     * @return std::string& 
+     *
+     * @param s
+     * @return std::string&
      */
     std::string& trim(std::string& s) {
         // Credit: https://stackoverflow.com/questions/216823/how-to-trim-a-stdstring
@@ -42,10 +42,10 @@ namespace BalarComponent {
 
     /**
      * @brief Return a vector of string separated by delim
-     * 
-     * @param s 
-     * @param delim 
-     * @return std::vector<std::string> 
+     *
+     * @param s
+     * @param delim
+     * @return std::vector<std::string>
      */
     std::vector<std::string> split(std::string& s, const std::string& delim) {
         std::vector<std::string> arr;
@@ -66,12 +66,12 @@ namespace BalarComponent {
     }
 
     /**
-     * @brief Construct a map from a vector of std string 
+     * @brief Construct a map from a vector of std string
      *        where each element is separated by delim
-     * 
-     * @param vec 
-     * @param delim 
-     * @return std::map<std::string, std::string> 
+     *
+     * @param vec
+     * @param delim
+     * @return std::map<std::string, std::string>
      */
     std::map<std::string, std::string> map_from_vec(std::vector<std::string> vec, const std::string& delim) {
         std::map<std::string, std::string> map;

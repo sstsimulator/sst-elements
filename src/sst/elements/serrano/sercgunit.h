@@ -41,7 +41,7 @@ class SerranoCoarseUnit : public SST::SubComponent {
 public:
 	SST_ELI_REGISTER_SUBCOMPONENT_API( SST::Serrano::SerranoCoarseUnit )
 
-	SerranoCoarseUnit( SST::ComponentId_t id, Params& params ) : 
+	SerranoCoarseUnit( SST::ComponentId_t id, Params& params ) :
 		SubComponent(id) {
 
 		int verbosity = params.find<int>("verbose", 0);

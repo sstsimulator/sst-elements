@@ -70,7 +70,7 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 	char* link_buffer2 = (char*) malloc(sizeof(char) * 256);
 
 	char* link_buffer3 = (char*) malloc(sizeof(char) * 256);
-        
+
         size_t buffer_size = sizeof(char) * 256;
 
 	std::cout<<"Before initialization "<<std::endl;

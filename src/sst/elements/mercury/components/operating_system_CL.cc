@@ -27,18 +27,18 @@ namespace Hg {
 
   OperatingSystemCL::OperatingSystemCL(SST::ComponentId_t id, SST::Params& params, NodeCL* parent) :
   OperatingSystem(id,params, parent), nodeCL_(parent)
-{ 
+{
   compute_sched_ = new ComputeScheduler( params, this);
 }
 
 void
 OperatingSystemCL::execute(COMP_FUNC func, Event *data, int nthr)
-{ 
+{
   int owned_ncores = active_thread_->numActiveCcores();
   if (owned_ncores < nthr){
     compute_sched_->reserveCores(nthr-owned_ncores, active_thread_);
   }
-  
+
   //initiate the hardware events
   ExecutionEvent* cb = newCallback(this, &OperatingSystem::unblock, active_thread_);
 
@@ -56,7 +56,7 @@ OperatingSystemCL::execute(COMP_FUNC func, Event *data, int nthr)
   }
 
   block();
-  
+
   if (owned_ncores < nthr){
     compute_sched_->releaseCores(nthr-owned_ncores,active_thread_);
   }

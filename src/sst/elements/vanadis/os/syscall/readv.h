@@ -33,7 +33,7 @@ public:
         m_output->verbose(CALL_INFO, 16, 0,"\n");
         m_currentVecOffset = 0;
         readSomeData();
-    } 
+    }
 
     void readSomeData() {
         m_dataBuffer.resize( calcBuffSize() );
@@ -53,7 +53,7 @@ public:
         m_output->verbose(CALL_INFO, 16, 0,"numRead=%zu totalWritten=%zu currentVecOffset=%zu vecLength=%zu\n",
             numRead,m_totalBytes, m_currentVecOffset, m_ioVecTable->getLength(m_currentVec));
 
-        writeMemory( m_ioVecTable->getAddr(m_currentVec) +  m_currentVecOffset, m_dataBuffer ); 
+        writeMemory( m_ioVecTable->getAddr(m_currentVec) +  m_currentVecOffset, m_dataBuffer );
 
         m_currentVecOffset += m_dataBuffer.size();
     }
@@ -76,7 +76,7 @@ public:
                 setReturnSuccess( m_totalBytes );
             }
         }
-    } 
+    }
   private:
     bool m_eof;
 };

@@ -3,7 +3,7 @@ import random, sys
 def generate( args ):
     args = args.split(',')
 
-    totalNodes = int(args[0])    
+    totalNodes = int(args[0])
     start = int(args[1])
     length = int(args[2])
 
@@ -13,4 +13,4 @@ def generate( args ):
     tmp = nids[start:start+length]
     nidList = ','.join( str(x) for x in tmp)
 
-    return nidList 
+    return nidList

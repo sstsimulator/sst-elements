@@ -152,7 +152,7 @@ bool Incoherent::handleGetX(MemEvent * event, bool inMSHR) {
                 stat_eventState[(int)event->getCmd()][I]->addData(1);
                 if (event->getCmd() == Command::GetX)
                     stat_hit[1][(int)inMSHR]->addData(1);
-                else    
+                else
                     stat_hit[2][(int)inMSHR]->addData(1);
                 stat_hits->addData(1);
             }
@@ -384,7 +384,7 @@ bool Incoherent::handleGetSResp(MemEvent * event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
     PrivateCacheLine * line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : I;
-    
+
     if (mem_h_is_debug_event(event))
         eventDI.prefill(event->getID(), Command::GetSResp, "", addr, state);
 
@@ -766,7 +766,7 @@ void Incoherent::sendWritebackAck(MemEvent * event) {
 
     uint64_t time = timestamp_ + tagLatency_;
     forwardByDestination(ack, time);
-    
+
     if (mem_h_is_debug_event(event))
         eventDI.action = "Ack";
 }

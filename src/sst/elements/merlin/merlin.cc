@@ -115,7 +115,7 @@ public:
         SST_ELI_ELEMENT_VERSION(1,0,0)
     )
 
-    SST_ELI_EXPORT(SST::Merlin::MerlinPyModule)    
+    SST_ELI_EXPORT(SST::Merlin::MerlinPyModule)
 };
 
 }

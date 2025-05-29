@@ -69,14 +69,14 @@ ontop_fcontext:
 
     # adjust stack
     addiu $sp, $sp, 112
-    
+
     # return transfer_t from jump
     sw  $a0, ($t0)  # fctx of transfer_t
     sw  $a2, 4($t0) # data of transfer_t
     # pass transfer_t as first arg in context function
     # A0 == hidden, A1 == fctx, A2 == data
-    move  $a1, $a0 
-    move  $a0, $t0 
+    move  $a1, $a0
+    move  $a0, $t0
 
     # jump to context
     jr  $a3

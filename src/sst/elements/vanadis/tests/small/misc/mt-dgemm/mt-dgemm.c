@@ -30,7 +30,7 @@
 #endif
 
 //#define DGEMM_RESTRICT __restrict__
-#define DGEMM_RESTRICT 
+#define DGEMM_RESTRICT
 
 // ------------------------------------------------------- //
 // Function: get_seconds

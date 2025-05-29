@@ -50,7 +50,7 @@ public:
         strncpy( buffer, ss.str().c_str(), buffer_size );
     }
 
-    void log (SST::Output* output, int verboselevel, uint16_t sw_thr, 
+    void log (SST::Output* output, int verboselevel, uint16_t sw_thr,
                             uint16_t phys_int_regs_out_0)
     {
         #ifdef VANADIS_BUILD_DEBUG

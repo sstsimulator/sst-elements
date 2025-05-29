@@ -47,7 +47,7 @@ using namespace SST::MemHierarchy;
  */
 
 
-SimpleDRAM::SimpleDRAM(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ 
+SimpleDRAM::SimpleDRAM(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){
     // Get parameters
     tCAS = params.find<uint64_t>("tCAS", 9);
     tRCD = params.find<uint64_t>("tRCD", 9);

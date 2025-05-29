@@ -19,7 +19,7 @@ namespace SST {
 namespace Hg {
 
 class ComputeAPI
-{  
+{
  public:
   virtual void sleep(TimeDelta time) = 0;
   virtual void compute(TimeDelta time) = 0;

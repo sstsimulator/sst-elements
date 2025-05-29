@@ -1,4 +1,4 @@
-CXX=g++ 
+CXX=g++
 
 ompatomicShort: ompatomicShort.o
 	$(CXX) -O3 -o ompatomicShort -fopenmp ompatomicShort.o

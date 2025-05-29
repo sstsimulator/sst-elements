@@ -51,7 +51,7 @@ class allocator
   allocator(const allocator&) {
     init();
   }
-  
+
   ~allocator(){
     for (char* ptr : allocations){
       delete[] ptr;
@@ -135,7 +135,7 @@ class threadSafeAllocator
     if (n > 1){
       std::cerr << "thread safe allocator cannot allocate more than 1 item at a time" << std::endl;
       ::abort();
-    } 
+    }
     thread_safe_new<T>::operator delete(p);
   }
 

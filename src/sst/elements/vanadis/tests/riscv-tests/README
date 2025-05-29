@@ -24,7 +24,7 @@ cd ../..
 # This tells Vanadis to not fault if it sees a Div by Zero. The Div by Zero tests shouldn't fault.
 export VANADIS_NO_FAULT=yes
 
-./run-riscv-tests 
+./run-riscv-tests
 
 
 # Note that not all tests pass. "run-riscv-tests.out" shows which test pass.

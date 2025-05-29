@@ -28,7 +28,7 @@ class ProcessInfo;
 
 class ThreadGrp {
 public:
-    size_t size() { return m_group.size(); } 
+    size_t size() { return m_group.size(); }
 
     void add( ProcessInfo* thread, int tid ) {
 

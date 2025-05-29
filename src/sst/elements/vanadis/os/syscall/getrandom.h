@@ -27,7 +27,7 @@ namespace Vanadis {
 class VanadisGetrandomSyscall : public VanadisSyscall {
 public:
     VanadisGetrandomSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallGetrandomEvent* event )
-        : VanadisSyscall( os, coreLink, process, event, "getrandom" ) 
+        : VanadisSyscall( os, coreLink, process, event, "getrandom" )
     {
         m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL, "[syscall-getrandom] buf=%#" PRIx64 " buflen=%" PRIu64 " flags=%#" PRIx64 "\n",
             event->getBuf(),event->getBuflen(),event->getFlags());
@@ -48,7 +48,7 @@ public:
         setReturnSuccess( payload.size() );
     }
 
- private:  
+ private:
     std::vector<uint8_t> payload;
 };
 

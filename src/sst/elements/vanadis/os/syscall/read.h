@@ -41,10 +41,10 @@ public:
         } else if (event->getBufferCount() == 0) {
             setReturnSuccess(0);
         } else {
-            // get the length of the first memory access, it cannot span a cacheline  
+            // get the length of the first memory access, it cannot span a cacheline
             uint64_t length = vanadis_line_remainder(event->getBufferAddress(),64);
             length = event->getBufferCount() < length ? event->getBufferCount() : length;
-            readChunk( length ); 
+            readChunk( length );
         }
     }
 
@@ -77,12 +77,12 @@ public:
         if ( m_eof || m_numRead == getEvent<VanadisSyscallReadEvent*>()->getBufferCount() ) {
             setReturnSuccess( m_numRead );
         } else {
-            size_t length = getEvent<VanadisSyscallReadEvent*>()->getBufferCount() - m_numRead;  
+            size_t length = getEvent<VanadisSyscallReadEvent*>()->getBufferCount() - m_numRead;
             if ( length > 64 ) { length = 64; }
             readChunk( length );
         }
         return false;
-    } 
+    }
 
  private:
     std::vector<uint8_t>    m_data;

@@ -29,7 +29,7 @@ comp_network.addParams({
       "num_ports" : cores + caches + memories,
       "flit_size" : "36B",
       "output_buf_size" : "2KiB",
-      "id" : "0",  
+      "id" : "0",
       "topology" : "merlin.singlerouter"
 })
 comp_network.setSubComponent("topology","merlin.singlerouter")
@@ -54,7 +54,7 @@ for x in range(cores):
         "flushinv_freq" : 8,    # 8% flush-inv
     })
     iface = comp_cpu.setSubComponent("memory", "memHierarchy.standardInterface")
-    
+
     comp_l1cache = sst.Component("l1cache" + str(x), "memHierarchy.Cache")
     comp_l1cache.addParams({
         "cache_frequency" : coreclock,
@@ -98,7 +98,7 @@ for x in range(cores):
 
     cpu_l1_link = sst.Link("link_cpu_cache_" + str(x))
     cpu_l1_link.connect ( (iface, "lowlink", "500ps"), (comp_l1cache, "highlink", "500ps") )
-    
+
     l1_l2_link = sst.Link("link_l1_l2_" + str(x))
     l1_l2_link.connect( (comp_l1cache, "lowlink", "100ps"), (l2cache, "highlink", "100ps") )
 
@@ -193,7 +193,7 @@ for x in range(memories):
     portid = x + caches + cores
     link_directory_network = sst.Link("link_directory_network_" + str(x))
     link_directory_network.connect( (dirNIC, "port", "100ps"), (comp_network, "port" + str(portid), "100ps") )
-    
+
     link_directory_memory_network = sst.Link("link_directory_memory_" + str(x))
     link_directory_memory_network.connect( (directory, "lowlink", "400ps"), (memctrl, "highlink", "400ps") )
 

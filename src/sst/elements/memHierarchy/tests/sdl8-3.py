@@ -299,7 +299,7 @@ link_n0L2cache_bus = sst.Link("link_n0L2cache_bus")
 link_n0L2cache_bus.connect( (n0_l2cache, "lowlink", "10000ps"), (n2_bus, "highlink0", "10000ps") )
 
 link_n1L2cache_bus = sst.Link("link_n1L2cache_bus")
-link_n1L2cache_bus.connect( (n1_l2cache, "lowlink", "10000ps"), (n2_bus, "highlink1", "10000ps") ) 
+link_n1L2cache_bus.connect( (n1_l2cache, "lowlink", "10000ps"), (n2_bus, "highlink1", "10000ps") )
 
 link_bus_l3cache = sst.Link("link_bus_l3cache")
 link_bus_l3cache.connect( (n2_bus, "lowlink0", "10000ps"), (l3cache, "highlink", "10000ps") )

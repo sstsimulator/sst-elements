@@ -24,7 +24,7 @@ typedef uint64_t RequestID;
 
 struct PTE {
     PTE() : ppn(0), perms(0) {}
-    PTE( uint32_t ppn, uint32_t perms ) : ppn(ppn), perms(perms) {} 
+    PTE( uint32_t ppn, uint32_t perms ) : ppn(ppn), perms(perms) {}
     uint32_t perms : 3;
     uint32_t ppn: 29;
 };

@@ -465,7 +465,7 @@ void CoherenceController::forwardByDestination(MemEventBase * event) {
 void CoherenceController::forwardByDestination(MemEventBase * event, Cycle_t ts) {
     event->setSrc(cachename_);
     Response fwdReq = {event, ts, packetHeaderBytes + event->getPayloadSize()};
-    
+
     if (linkUp_->isReachable(event->getDst())) {
         addToOutgoingQueueUp(fwdReq);
     } else if (linkDown_->isReachable(event->getDst())) {
@@ -559,7 +559,7 @@ void CoherenceController::setup() {
             flush_helper_ = false;
         }
     }
-    
+
     if (flush_manager_) {
         flush_dest_ = getName();
     } else if (lastLevel_) { // If true, the global flush manager is one of our peers
@@ -620,7 +620,7 @@ uint64_t CoherenceController::forwardMessage(MemEvent * event, unsigned int requ
     /* Create event to be forwarded */
     MemEvent* forwardEvent;
     forwardEvent = new MemEvent(*event);
-    
+
     if (fwdCmd != Command::LAST_CMD) {
         forwardEvent->setCmd(fwdCmd);
     }
@@ -701,7 +701,7 @@ uint64_t CoherenceController::sendResponseUp(MemEvent * event, Command cmd, vect
 
     if (baseTime < timestamp_) baseTime = timestamp_;
     uint64_t deliveryTime = baseTime + (replay ? mshrLatency_ : accessLatency_);
-    forwardByDestination(responseEvent, deliveryTime); 
+    forwardByDestination(responseEvent, deliveryTime);
 
     return deliveryTime;
 }
@@ -779,11 +779,11 @@ void CoherenceController::printDebugInfo(dbgin * diStruct) {
 
     stringstream reas;
     reas << "(" << diStruct->reason << ")";
-    
+
     stringstream thr;
     if (diStruct->hasThr)
         thr << diStruct->thr;
-    else 
+    else
         thr << "";
 
     debug->debug(_L5_, "C: %-20" PRIu64 " %-20" PRIu64 " %-20s %-4s %-13s 0x%-16" PRIx64 " %-15s %-6s %-6s %-10s %-15s",
@@ -819,9 +819,9 @@ void CoherenceController::printDataValue(Addr addr, vector<uint8_t> * data, bool
     for (unsigned int i = 0; i < data->size(); i++) {
         value << std::hex << std::setw(2) << (int)data->at(i);
     }
-    
+
     debug->debug(_L11_, "V: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 " B: %-3zu %s\n",
-            getCurrentSimCycle(), timestamp_, cachename_.c_str(), action.c_str(), 
+            getCurrentSimCycle(), timestamp_, cachename_.c_str(), action.c_str(),
             addr, data->size(), value.str().c_str());
 /*
     for (unsigned int i = 0; i < data->size(); i++) {

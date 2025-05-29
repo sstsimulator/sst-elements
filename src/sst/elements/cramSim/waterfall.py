@@ -53,9 +53,9 @@ for line in inFile:
                 bankStates[bankId] = "|"
             if bankStates[bankId] == "P" or bankStates[bankId] == "F":
                 bankStates[bankId] = "."
-            
+
         bankList = list() ## clear the bank list
-        
+
     addr = grep[3]
     bankId = int(grep[-1])
     if bankId >= numBanks:
@@ -63,8 +63,8 @@ for line in inFile:
         exit(-1)
     bankStates[bankId] = cmdDict[cmd]
     bankList.append(bankId)
-        
+
     lastCycle = cycle
 
 
-    
+

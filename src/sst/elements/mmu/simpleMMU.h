@@ -119,20 +119,20 @@ class SimpleMMU : public MMU {
             }
         }
 
-        void add( uint32_t vpn, PTE pte ) { 
+        void add( uint32_t vpn, PTE pte ) {
             pteMap[vpn] = pte;
         }
-        void remove( uint32_t vpn ) { 
+        void remove( uint32_t vpn ) {
             pteMap.erase(vpn);
         }
         PTE* find( uint32_t vpn ) {
             if ( pteMap.find( vpn ) == pteMap.end() ) {
                 return nullptr;
-            } else { 
+            } else {
                 return &pteMap[vpn];
             }
         }
-        void removeWrite(  ) { 
+        void removeWrite(  ) {
             for ( auto& kv : pteMap ) {
                 kv.second.perms &= ~0x2;
             }
@@ -149,7 +149,7 @@ class SimpleMMU : public MMU {
             }
         }
       private:
-        std::map<uint32_t,PTE> pteMap; 
+        std::map<uint32_t,PTE> pteMap;
     };
 
     void initPageTable( unsigned pid, PageTable* table = nullptr ) {
@@ -158,8 +158,8 @@ class SimpleMMU : public MMU {
         if ( iter == m_pageTableMap.end() ) {
             if ( nullptr == table ) {
                 table = new PageTable;
-            }    
-             
+            }
+
             m_pageTableMap[pid] = table;
         } else {
             assert(0);

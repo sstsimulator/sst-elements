@@ -42,7 +42,7 @@ comp_l1cache.addParams({
 comp_l1cache.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 
 
-                                                                                                             
+
 nvm_memory = sst.Component("memory", "memHierarchy.MemController")
 nvm_memory_backend = nvm_memory.setSubComponent("backend", "memHierarchy.Messier")
 
@@ -53,9 +53,9 @@ nvm_mem_params = {
 }
 nvm_backend_params = {
    # "max_requests_per_cycle" : 1,
-    "mem_size" : "4096MB", 
+    "mem_size" : "4096MB",
     #"backendConvertor.backend.clock" : "1024 MHz",
-    #"backendConvertor" : "memHierarchy.MemBackendConvertor", 
+    #"backendConvertor" : "memHierarchy.MemBackendConvertor",
    # "backend.device_count" : 1,
    # "backend.link_count" : 4,
    # "backend.vault_count" : 16,
