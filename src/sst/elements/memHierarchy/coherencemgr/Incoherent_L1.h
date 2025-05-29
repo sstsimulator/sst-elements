@@ -300,7 +300,7 @@ private:
     void printLine(Addr addr);
 
     CacheArray<L1CacheLine>* cacheArray_;
-    
+
     Cycle_t llscBlockCycles_;
 
     /* Statistics */

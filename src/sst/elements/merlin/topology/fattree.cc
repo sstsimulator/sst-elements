@@ -35,7 +35,7 @@ topo_fattree::parseShape(const std::string &shape, int *downs, int *ups) const
         end = shape.find(':',start);
         size_t length = end - start;
         std::string sub = shape.substr(start,length);
-        
+
         // Get the up and down
         size_t comma = sub.find(',');
         string down;
@@ -48,7 +48,7 @@ topo_fattree::parseShape(const std::string &shape, int *downs, int *ups) const
             down = sub.substr(0,comma);
             up = sub.substr(comma+1);
         }
-        
+
         downs[i] = strtol(down.c_str(), NULL, 0);
         ups[i] = strtol(up.c_str(), NULL, 0);
 
@@ -73,7 +73,7 @@ topo_fattree::topo_fattree(ComponentId_t cid, Params& params, int num_ports, int
     if ( params.is_value_array("routing_alg") ) {
         params.find_array<std::string>("routing_alg", vn_route_algos);
         if ( vn_route_algos.size() != num_vns ) {
-            fatal(CALL_INFO, -1, "ERROR: When specifying routing algorithms per VN, algorithm list length must match number of VNs (%d VNs, %lu algorithms).\n",num_vns,vn_route_algos.size());        
+            fatal(CALL_INFO, -1, "ERROR: When specifying routing algorithms per VN, algorithm list length must match number of VNs (%d VNs, %lu algorithms).\n",num_vns,vn_route_algos.size());
         }
     }
     else {
@@ -98,7 +98,7 @@ topo_fattree::topo_fattree(ComponentId_t cid, Params& params, int num_ports, int
         curr_vc += vns[i].num_vcs;
     }
     adaptive_threshold = params.find<double>("adaptive_threshold", 0.5);
-    
+
     int levels = std::count(shape.begin(), shape.end(), ':') + 1;
     int* ups = new int[levels];
     int* downs= new int[levels];
@@ -134,7 +134,7 @@ topo_fattree::topo_fattree(ComponentId_t cid, Params& params, int num_ports, int
 
     down_ports = downs[rtr_level];
     up_ports = ups[rtr_level];
-    
+
     // Compute reachable IDs
     int rid = 1;
     for ( int i = 0; i <= rtr_level; i++ ) {
@@ -144,7 +144,7 @@ topo_fattree::topo_fattree(ComponentId_t cid, Params& params, int num_ports, int
 
     low_host = level_group * rid;
     high_host = low_host + rid - 1;
-    
+
 }
 
 
@@ -169,7 +169,7 @@ void topo_fattree::route_deterministic(int port, int vc, internal_router_event* 
 void topo_fattree::route_packet(int port, int vc, internal_router_event* ev)
 {
     route_deterministic(port,vc,ev);
-    
+
     int dest = ev->getDest();
     // Down routes are always deterministic and are already done in route
     if ( dest >= low_host && dest <= high_host ) {
@@ -187,7 +187,7 @@ void topo_fattree::route_packet(int port, int vc, internal_router_event* ev)
         int vc = ev->getVC();
         int index  = next_port*num_vcs + vc;
         if ( outputCredits[index] >= thresholds[index] ) return;
-        
+
         // Send this on the least loaded port.  For now, just look at
         // current VC, later we may look at overall port loading.  Set
         // the max to be the "natural" port and only adaptively route
@@ -267,5 +267,5 @@ void topo_fattree::setOutputBufferCreditArray(int const* array, int vcs) {
         for ( int i = 0; i < num_vcs * num_ports; i++ ) {
             thresholds[i] = outputCredits[i] * adaptive_threshold;
         }
-        
+
 }

@@ -1,7 +1,7 @@
 # Import the SST module
 import sst
 
-# In Example0, two components send each other a number of events 
+# In Example0, two components send each other a number of events
 # The simulation ends when the components have sent and
 # received all expected events. While the eventSize is parameterized,
 # it has no effect on simulation time because the components don't limit
@@ -20,7 +20,7 @@ component0 = sst.Component("c0", "simpleElementExample.example0")
 component1 = sst.Component("c1", "simpleElementExample.example0")
 
 ### Parameterize the components.
-# Run 'sst-info simpleElementExample.example0' at the command line 
+# Run 'sst-info simpleElementExample.example0' at the command line
 # to see parameter documentation
 params = {
         "eventsToSend" : 50,    # Required parameter, error if not provided

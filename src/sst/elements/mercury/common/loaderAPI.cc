@@ -14,8 +14,8 @@
 // distribution.
 
 #include <sst/core/subcomponent.h>
-#include <mercury/common/loaderAPI.h>  
- 
+#include <mercury/common/loaderAPI.h>
+
 namespace SST {
 namespace Hg {
 

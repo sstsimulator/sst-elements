@@ -228,7 +228,7 @@ class App : public Thread
   bool notify_;
 
   int rc_;
-  
+
   static int app_rc_;
 
   std::ofstream cout_;

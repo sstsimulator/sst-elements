@@ -1,4 +1,4 @@
-CXX=g++ 
+CXX=g++
 
 opal_test: opal_test.o
 	$(CXX) -O0 -o opal_test -fopenmp opal_test.o

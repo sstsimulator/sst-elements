@@ -29,7 +29,7 @@ namespace MMU_Lib {
         if ( wantPerms & (1<<1) && ! ( havePerms & (1<<1) ) ) {
             return false;
         }
-        // want read 
+        // want read
         if ( wantPerms & (1<<2) && ! ( havePerms & (1<<2) ) ) {
             return false;
         }

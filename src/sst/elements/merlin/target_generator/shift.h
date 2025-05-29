@@ -39,7 +39,7 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-        {"shift",        "Number of endpoints to shift by"}        
+        {"shift",        "Number of endpoints to shift by"}
     )
 
     int dest;

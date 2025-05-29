@@ -36,10 +36,10 @@ class OperatingSystem : public SST::Hg::OperatingSystemBase {
 
 public:
 SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-    { "loader", 
+    { "loader",
     "Slot for library loader subcomponents",
     "SST::Hg::loaderAPI"}
-) 
+)
   SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::Hg::OperatingSystem, SST::Hg::OperatingSystemBase, SST::Hg::NodeBase*)
 
   SST_ELI_REGISTER_SUBCOMPONENT(

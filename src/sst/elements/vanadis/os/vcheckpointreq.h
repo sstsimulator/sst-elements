@@ -46,7 +46,7 @@ class VanadisCheckpointResp : public SST::Event {
 public:
     VanadisCheckpointResp() : SST::Event(), coreId(-1) { }
 
-    VanadisCheckpointResp( int coreId ) : 
+    VanadisCheckpointResp( int coreId ) :
         SST::Event(), coreId(coreId) {}
 
     ~VanadisCheckpointResp() {}

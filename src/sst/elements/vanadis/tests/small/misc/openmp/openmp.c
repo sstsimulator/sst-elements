@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
         tid = omp_get_thread_num();
 
         /* Only master thread does this */
-        if (tid == 0) 
+        if (tid == 0)
         {
             nthreads = omp_get_num_threads();
             omp_set_lock( &lock );

@@ -1,4 +1,4 @@
-CXX=g++ 
+CXX=g++
 
 ompatomic: ompatomic.o
 	$(CXX) -O3 -o ompatomic -fopenmp ompatomic.o

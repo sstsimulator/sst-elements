@@ -26,7 +26,7 @@ template<typename T>
 class MVMComputeArray : public ComputeArray {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(
-            MVMComputeArray<T>, 
+            MVMComputeArray<T>,
             SST::Golem::ComputeArray,
             TimeConverter*,
             Event::HandlerBase*
@@ -138,4 +138,4 @@ protected:
 } // namespace Golem
 } // namespace SST
 
-#endif 
+#endif

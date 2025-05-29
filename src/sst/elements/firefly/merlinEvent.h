@@ -21,7 +21,7 @@
 
 #define NUM_NODE_BITS     20
 #define NUM_PID_BITS      12
-#define NUM_STREAM_ID_BITS 20 
+#define NUM_STREAM_ID_BITS 20
 
 namespace SST {
 namespace Firefly {
@@ -51,21 +51,21 @@ class FireflyNetworkEvent : public Event {
     int calcPayloadSizeInBits() { return payloadSize() * 8; }
     int payloadSize() { return pktOverhead + bufSize(); }
 
-    void setSrcNode( int node ) { 
+    void setSrcNode( int node ) {
         assert( node < (1 << NUM_NODE_BITS) );
-        srcNode = node; 
+        srcNode = node;
     }
     void setSrcPid( int pid ) {
         assert( pid < (1 << NUM_PID_BITS) );
-        srcPid = pid; 
+        srcPid = pid;
     }
-    void setSrcStream( int stream ) { 
+    void setSrcStream( int stream ) {
         assert( stream < (1 << NUM_STREAM_ID_BITS) );
-        srcStream = stream; 
+        srcStream = stream;
     }
     void setDestPid( int pid ) {
         assert( pid < (1 << NUM_PID_BITS) );
-        destPid = pid; 
+        destPid = pid;
     }
 
     int getSrcNode() { return srcNode; }

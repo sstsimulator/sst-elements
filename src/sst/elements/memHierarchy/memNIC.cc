@@ -29,7 +29,7 @@ using namespace SST::Interfaces;
 /* Constructor */
 
 MemNIC::MemNIC(ComponentId_t id, Params &params, TimeConverter* tc) : MemNICBase(id, params, tc) {
-    
+
     link_control = loadUserSubComponent<SimpleNetwork>("linkcontrol", ComponentInfo::SHARE_NONE, 1); // 1 is the num virtual networks
     if (!link_control) {
         Params netparams;
@@ -85,7 +85,7 @@ bool MemNIC::recvNotify(int) {
         delete mre;
         if (ev) {
             if (mem_h_is_debug_event(ev)) {
-                dbg.debug(_L5_, "E: %-40" PRIu64 "  %-20s NIC:Recv      (%s)\n", 
+                dbg.debug(_L5_, "E: %-40" PRIu64 "  %-20s NIC:Recv      (%s)\n",
                     getCurrentSimCycle(), getName().c_str(), ev->getBriefString().c_str());
             }
             (*recvHandler)(ev);

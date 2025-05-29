@@ -27,28 +27,28 @@ extern "C" {
 typedef uint32_t Node;
 typedef uint32_t Pid;
 
-void rdma_init(void); 
-void rdma_fini(void); 
+void rdma_init(void);
+void rdma_fini(void);
 Node rdma_getMyNode();
 uint32_t rdma_getNumNodes();
 
 // create a Completion Queue
-// returns:  CompQueueId 
+// returns:  CompQueueId
 int rdma_create_cq( );
 int rdma_destroy_cq( CompQueueId );
 
-// create a Receive Queue, with Key and a Completion Queue, 
+// create a Receive Queue, with Key and a Completion Queue,
 // the Key is what a sender uses to target this queue
-// returns:  RecvQueueId 
+// returns:  RecvQueueId
 int rdma_create_rq( RecvQueueKey, CompQueueId );
 int rdma_destroy_rq( RecvQueueId );
 
 // post a send to Node, Pid, RecvQueueKey, completions will be posted in the Completion Queue,
 // Context is a void* that will be returned in the Completion Event
-int rdma_send_post( void* buf, size_t len, Node, Pid, RecvQueueKey, CompQueueId, Context ); 
+int rdma_send_post( void* buf, size_t len, Node, Pid, RecvQueueKey, CompQueueId, Context );
 
 // post a buffer into receive queue, it can receive from any source
-int rdma_recv_post( void* buf, size_t len, RecvQueueId, Context ); 
+int rdma_recv_post( void* buf, size_t len, RecvQueueId, Context );
 
 // read completion event, can be blocking or non-blocking
 int rdma_read_comp( CompQueueId, RdmaCompletion*, int blocking );

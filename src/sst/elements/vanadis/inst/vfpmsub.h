@@ -89,7 +89,7 @@ public:
             phys_fp_regs_in[0], phys_fp_regs_in[1], phys_fp_regs_in[2]);
     }
 
-    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
                 uint16_t phys_fp_regs_in_0,uint16_t phys_fp_regs_in_1,uint16_t phys_fp_regs_in_2,
                 uint16_t phys_fp_regs_out_0)
     {
@@ -97,20 +97,20 @@ public:
         if ( output->getVerboseLevel() >= verboselevel ) {
             output->verbose(
                 CALL_INFO, verboselevel, 0, "hw_thr=%d sw_thr = %d Execute: 0x%" PRI_ADDR " %s phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
-                    " / in=%" PRIu16 ", %" PRIu16 ", %" PRIu16 "\n", 
+                    " / in=%" PRIu16 ", %" PRIu16 ", %" PRIu16 "\n",
                     getHWThread(),sw_thr, getInstructionAddress(), getInstCode(), phys_fp_regs_out_0, phys_fp_regs_in_0,
                     phys_fp_regs_in_1,phys_fp_regs_in_2, isa_fp_regs_out[0], isa_fp_regs_in[0], isa_fp_regs_in[1],isa_fp_regs_in[2] );
         }
         #endif
     }
 
-    void instOp(VanadisRegisterFile* regFile, uint16_t phys_fp_regs_in_0, 
-                        uint16_t phys_fp_regs_in_1, uint16_t phys_fp_regs_in_2, 
-                        uint16_t phys_fp_regs_in_3, uint16_t phys_fp_regs_in_4, 
+    void instOp(VanadisRegisterFile* regFile, uint16_t phys_fp_regs_in_0,
+                        uint16_t phys_fp_regs_in_1, uint16_t phys_fp_regs_in_2,
+                        uint16_t phys_fp_regs_in_3, uint16_t phys_fp_regs_in_4,
                         uint16_t phys_fp_regs_in_5,uint16_t phys_fp_regs_out_0,uint16_t phys_fp_regs_out_1)
     {
         clear_IEEE754_except();
-         if ( sizeof(fp_format) >= regFile->getFPRegWidth() ) 
+         if ( sizeof(fp_format) >= regFile->getFPRegWidth() )
          {
             fp_format src_1,src_2, src_3;
             READ_3FP_REGS(phys_fp_regs_in_0,phys_fp_regs_in_1,phys_fp_regs_in_2, phys_fp_regs_in_3,phys_fp_regs_in_4, phys_fp_regs_in_5);
@@ -143,7 +143,7 @@ public:
             float fp_3 = int64To<float>(src_3);
             performMsubFlagChecks<fp_format>(fp_1,fp_2,fp_3);
 
-            fp_format tmp = std::fma( (fp_format) fp_1, (fp_format) fp_2, (fp_format) -fp_3 ); 
+            fp_format tmp = std::fma( (fp_format) fp_1, (fp_format) fp_2, (fp_format) -fp_3 );
             if ( rs1_is_neg ) {
                 tmp *= -1.0;
             }
@@ -167,17 +167,17 @@ public:
         uint16_t phys_fp_regs_in_3 = 0;
         uint16_t phys_fp_regs_in_4 = 0;
         uint16_t phys_fp_regs_in_5 = 0;
-        if ( sizeof(fp_format) > regFile->getFPRegWidth() ) 
+        if ( sizeof(fp_format) > regFile->getFPRegWidth() )
         {
             phys_fp_regs_in_3 = getPhysFPRegIn(3);
             phys_fp_regs_in_4 = getPhysFPRegIn(4);
             phys_fp_regs_in_5 = getPhysFPRegIn(5);
             phys_fp_regs_out_1 = getPhysFPRegOut(1);
-        } 
+        }
         log(output, 16, 65535,phys_fp_regs_in_0,phys_fp_regs_in_1,phys_fp_regs_in_2,phys_fp_regs_out_0);
-        instOp(regFile,phys_fp_regs_in_0, 
-                        phys_fp_regs_in_1, phys_fp_regs_in_2, 
-                        phys_fp_regs_in_3, phys_fp_regs_in_4, 
+        instOp(regFile,phys_fp_regs_in_0,
+                        phys_fp_regs_in_1, phys_fp_regs_in_2,
+                        phys_fp_regs_in_3, phys_fp_regs_in_4,
                         phys_fp_regs_in_5, phys_fp_regs_out_0, phys_fp_regs_out_1);
         markExecuted();
     }

@@ -26,6 +26,6 @@ link.connect( (component0, "port", "1ns"), (component1, "port", "1ns") )
 
 
 sst.setStatisticLoadLevel(7)
-sst.setStatisticOutput("sst.statOutputConsole") 
+sst.setStatisticOutput("sst.statOutputConsole")
 sst.enableAllStatisticsForComponentType("simpleElementExample.example0")
 sst.enableAllStatisticsForComponentType("simpleElementExample.example1")

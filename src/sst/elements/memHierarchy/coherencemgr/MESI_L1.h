@@ -191,7 +191,7 @@ public:
         snoopL1Invs_ = params.find<bool>("snoop_l1_invalidations", false);
         bool MESI = params.find<bool>("protocol", true);
         llscBlockCycles_ = params.find<Cycle_t>("llsc_block_cycles", 0);
-    
+
         std::string frequency = params.find<std::string>("cache_frequency", "");
 
         llscTimeoutSelfLink_ = configureSelfLink("llscTimeoutLink", frequency, new Event::Handler2<MESIL1, &MESIL1::handleLoadLinkExpiration>(this));
@@ -199,7 +199,7 @@ public:
         // Coherence protocol transition states
         if (MESI) {
             protocolReadState_ = E;
-            protocolExclState_ = E; 
+            protocolExclState_ = E;
         } else {
             protocolReadState_ = S; // State to transition to when a GetXResp/clean is received in response to a read (GetS)
             protocolExclState_ = M; // State to transition to on a Read-exclusive/read-for-ownership
@@ -417,7 +417,7 @@ public:
 
             Addr addr_;  // Address that was locked
             id_type id_; // id of event that stalled for the locked address
-            
+
             NotSerializable(LoadLinkWakeup); // Will never traverse a remote link
     };
 
@@ -452,7 +452,7 @@ private:
     void printLine(Addr addr);
     void beginCompleteStage() override;
     void processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink) override;
-    
+
     bool isFlushing_;
     bool flushDrain_;
     Cycle_t flush_complete_timestamp_;
@@ -460,7 +460,7 @@ private:
     State protocolReadState_;   // E for MESI, S for MSI
     State protocolExclState_;   // E for MESI, M for MSI
     Cycle_t llscBlockCycles_;
-    Link* llscTimeoutSelfLink_; // A self-link to trigger waiting requests when a LoadLink times out 
+    Link* llscTimeoutSelfLink_; // A self-link to trigger waiting requests when a LoadLink times out
 
     CacheArray<L1CacheLine>* cacheArray_;
 

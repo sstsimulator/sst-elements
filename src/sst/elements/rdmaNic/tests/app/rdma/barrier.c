@@ -32,7 +32,7 @@ int main( int argc, char* argv[] ) {
 	int numNodes = rdma_getNumNodes();
 
 	printf("%s() myNode=%d numNodes=%d\n",__func__,myNode,numNodes);
-		
+
     printf("%s() call barrier\n",__func__);
     rdma_barrier();
     printf("%s() barrier returned\n",__func__);

@@ -89,7 +89,7 @@ static char* get_data_segment(SST::Params& params,
 }
 
 void
-App::requireLibraries(SST::Params& params) 
+App::requireLibraries(SST::Params& params)
 {
   std::vector<std::string> libs;
   if (params.contains("libraries")){
@@ -239,7 +239,7 @@ App::createLibraries() {
       libraries_[name] = lib;
     }
   }
-} 
+}
 
 std::ostream&
 App::coutStream(){
@@ -494,7 +494,7 @@ void
 UserAppCxxFullMain::registerMainFxn(const char *name, App::main_fxn fxn)
 {
   if (main_fxns_){  //already passed static init
-    (*main_fxns_)[name] = fxn; 
+    (*main_fxns_)[name] = fxn;
   } else {
     if (!main_fxns_init_){
       main_fxns_init_ = new std::map<std::string, main_fxn>;
@@ -589,7 +589,7 @@ UserAppCxxEmptyMain::registerMainFxn(const char *name, App::empty_main_fxn fxn)
 {
   if (empty_main_fxns_){ //already cleared static init
     (*empty_main_fxns_)[name] = fxn;
-  } else { 
+  } else {
     if (!empty_main_fxns_init_){
       empty_main_fxns_init_ = new std::map<std::string, empty_main_fxn>;
     }

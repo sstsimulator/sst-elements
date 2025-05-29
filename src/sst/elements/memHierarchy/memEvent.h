@@ -42,7 +42,7 @@ using namespace std;
  */
 class MemEvent : public MemEventBase  {
 public:
-    
+
     /* Constructor - Coherence control */
     MemEvent(std::string src, Addr addr, Addr baseAddr, Command cmd) : MemEventBase(src, cmd) {
         initialize();
@@ -168,7 +168,7 @@ public:
     /** Increments the number of retries */
     void incrementRetries() { retries_++; }
     int getRetries() { return retries_; }
-    
+
     void setReadLock() { setFlag(MemEventBase::F_LOCKED); }
     bool isReadLock() { return cmd_ == Command::GetSX && queryFlag(MemEventBase::F_LOCKED); }
 

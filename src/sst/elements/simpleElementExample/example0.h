@@ -46,7 +46,7 @@ class example0 : public SST::Component
 public:
 
 /*
- *  SST Registration macros register Components with the SST Core and 
+ *  SST Registration macros register Components with the SST Core and
  *  document their parameters, ports, etc.
  *  SST_ELI_REGISTER_COMPONENT is required, the documentation macros
  *  are only required if relevant
@@ -73,7 +73,7 @@ public:
     SST_ELI_DOCUMENT_PORTS(
         {"port",  "Link to another component", { "simpleElementExample.basicEvent", ""} }
     )
-    
+
     // Optional since there is nothing to document - see statistics example for more info
     SST_ELI_DOCUMENT_STATISTICS( )
 
@@ -84,7 +84,7 @@ public:
 
     // Constructor. Components receive a unique ID and the set of parameters that were assigned in the Python input.
     example0(SST::ComponentId_t id, SST::Params& params);
-    
+
     // Destructor
     ~example0();
 

@@ -38,12 +38,12 @@ def setup_config_params(config_file_list, override_list):
                     l_tokens = l_line.split()
                     #print (l_tokens[0], ": ", l_tokens[1])
                     l_params[l_tokens[0]] = l_tokens[1]
-                
+
     for override in override_list:
         l_tokens = override.split("=")
         print("Override cfg", l_tokens[0], l_tokens[1])
         l_params[l_tokens[0]] = l_tokens[1]
-     
+
     return l_params
 
 #######################################################################################################

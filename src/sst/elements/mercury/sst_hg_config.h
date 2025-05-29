@@ -1,6 +1,6 @@
 #ifndef _SST_HG_CONFIG_H
 #define _SST_HG_CONFIG_H 1
- 
+
 /* Define to make pth available for threading */
 /* #undef HAVE_GNU_PTH */
 
