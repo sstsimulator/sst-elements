@@ -27,11 +27,10 @@ if __name__ == "__main__":
     platform.addParamSet("operating_system", {
         "verbose" : "0",
         "app1.name" : "halo3d26",
-        "app1.exe"  : "halo3d26.so",
-        "app1.libraries" : ["SystemLibrary:libsystemlibrary.so",
-                            "ComputeLibrary:libcomputelibrary.so",
-                            "SimTransport:libsumi.so",
-                            "MpiApi:libmask_mpi.so"],
+        "app1.exe_library_name" : "halo3d26",
+        "app1.dependencies" : ["sumi", ],
+        "app1.libraries" : ["computelibrary:ComputeLibrary",
+                            "mask_mpi:MpiApi",],
     })
 
     topo = topoSingle()

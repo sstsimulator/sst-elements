@@ -55,7 +55,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <unusedvariablemacro.h>
 
 #include <sst/core/params.h>
-#include <mercury/common/factory.h>
+#include <sst/core/factory.h>
 //#include <sprockit/debug.h>
 #include <mercury/common/errors.h>
 //#include <sprockit/statics.h>

@@ -11,8 +11,8 @@ link0.connect( (node0,"network","1ns"), (node1,"network","1ns") )
 
 os0.addParams({ "app1.name" : "ostest"})
 os1.addParams({ "app1.name" : "ostest"})
-os0.addParams({ "app1.exe" : "ostest.so"})
-os1.addParams({ "app1.exe" : "ostest.so"})
+os0.addParams({ "app1.exe_library_name" : "ostest"})
+os1.addParams({ "app1.exe_library_name" : "ostest"})
 
 #node0.addParams({ "verbose" : "100"})
 #node1.addParams({ "verbose" : "100"})

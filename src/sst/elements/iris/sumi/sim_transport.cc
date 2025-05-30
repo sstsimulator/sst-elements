@@ -15,6 +15,7 @@
 
 #include <sst/core/params.h>
 #include <sst/core/event.h>
+#include <sst/core/factory.h>
 #include <iris/sumi/transport.h>
 #include <iris/sumi/allreduce.h>
 #include <iris/sumi/reduce_scatter.h>
@@ -213,7 +214,10 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent) :
 
   auto qos_params = params.get_scoped_params("qos");
   auto qos_name = qos_params.find<std::string>("name", "null");
-  qos_analysis_ = SST::Hg::create<QoSAnalysis>("macro", qos_name, qos_params);
+  if (qos_name != "null") {
+    auto factory = Factory::getFactory();
+    qos_analysis_ = factory->Create<QoSAnalysis>("sumi." + qos_name, qos_params);
+  }
 
   out_->debug(CALL_INFO, 1, 0,
               "registering proc %d\n", rank_);

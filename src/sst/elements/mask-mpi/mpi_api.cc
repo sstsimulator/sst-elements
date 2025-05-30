@@ -90,7 +90,6 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <sumi-mpi/otf2_output_stat.h>
 #endif
 
-
 //MakeDebugSlot(mpi_sync)
 //MakeDebugSlot(mpi_finalize)
 //RegisterKeywords(
