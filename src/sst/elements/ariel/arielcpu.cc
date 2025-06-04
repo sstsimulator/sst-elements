@@ -142,8 +142,10 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
     frontend = loadUserSubComponent<ArielFrontend>("frontend", ComponentInfo::SHARE_NONE, core_count, maxCoreQueueLen, memmgr->getDefaultPool());
     if (!frontend) {
+        std::string frontendType= params.find<std::string>("frontend", "ariel.frontend.pin");
         // ariel.frontend.pin points to pin3
-        frontend = loadAnonymousSubComponent<ArielFrontend>("ariel.frontend.pin", "frontend", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_STATS,
+        // ariel.frontend.epa points to pebil/epax
+        frontend = loadAnonymousSubComponent<ArielFrontend>(frontendType, "frontend", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_STATS,
                 params, core_count, maxCoreQueueLen, memmgr->getDefaultPool());
     }
     if (!frontend)
