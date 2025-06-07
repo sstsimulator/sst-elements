@@ -19,7 +19,9 @@
 #include "decoder/visaopts.h"
 #include "inst/regfile.h"
 
+#include <cassert>
 #include <cstdint>
+#include <string>
 
 #ifndef PRI_ADDR
 #define PRI_ADDR PRIx64

@@ -16,6 +16,9 @@
 #ifndef _STORE_PE_H
 #define _STORE_PE_H
 
+#include <cstring>
+#include <map>
+#include <queue>
 #include <random>
 
 #include "pes/processingElement.h"

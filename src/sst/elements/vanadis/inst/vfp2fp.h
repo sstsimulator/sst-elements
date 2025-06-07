@@ -20,6 +20,8 @@
 #include "inst/vregfmt.h"
 #include "util/vfpreghandler.h"
 
+#include <cstdint>
+
 namespace SST {
 namespace Vanadis {
 // not found in RV decoder

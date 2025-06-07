@@ -16,6 +16,9 @@
 #ifndef COMPONENTS_FIREFLY_CTRL_MSG_MEMORY_BASE_H
 #define COMPONENTS_FIREFLY_CTRL_MSG_MEMORY_BASE_H
 
+#include <cstdint>
+#include <functional>
+
 namespace SST {
 namespace Firefly {
 namespace CtrlMsg {
