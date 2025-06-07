@@ -17,6 +17,10 @@
 
 #include "nic.h"
 
+#include <cassert>
+#include <cinttypes>
+#include <cstddef>
+
 using namespace SST;
 using namespace SST::Firefly;
 

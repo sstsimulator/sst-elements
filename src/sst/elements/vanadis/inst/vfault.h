@@ -20,6 +20,10 @@
 #include "inst/vinst.h"
 #include "inst/vinsttype.h"
 
+#include <cstdint>
+#include <cstdio>
+#include <string>
+
 namespace SST {
 namespace Vanadis {
 

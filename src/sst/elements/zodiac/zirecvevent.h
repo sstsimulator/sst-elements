@@ -20,6 +20,8 @@
 #include "zrecvevent.h"
 #include "zevent.h"
 
+#include <cstdint>
+
 using namespace SST::Hermes;
 using namespace SST::Hermes::MP;
 

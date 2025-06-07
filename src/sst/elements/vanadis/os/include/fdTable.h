@@ -16,12 +16,14 @@
 #ifndef _H_VANADIS_NODE_OS_INCLUDE_FD_TABLE
 #define _H_VANADIS_NODE_OS_INCLUDE_FD_TABLE
 
+#include <cassert>
+#include <cstdint>
 #include <string>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <unordered_map>
 

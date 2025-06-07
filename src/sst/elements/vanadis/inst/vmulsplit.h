@@ -18,6 +18,10 @@
 
 #include "inst/vinst.h"
 
+#include <cstdint>
+#include <ios>
+#include <sstream>
+
 namespace SST {
 namespace Vanadis {
 

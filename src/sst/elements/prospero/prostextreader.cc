@@ -17,6 +17,8 @@
 #include "sst_config.h"
 #include "prostextreader.h"
 
+#include <cstddef>
+
 using namespace SST::Prospero;
 
 
