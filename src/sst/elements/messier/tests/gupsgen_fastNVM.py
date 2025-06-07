@@ -50,9 +50,9 @@ nvm_mem_params = {
 }
 nvm_backend_params = {
    # "max_requests_per_cycle" : 1,
-    "mem_size" : "1024MB", 
+    "mem_size" : "1024MB",
     #"backendConvertor.backend.clock" : "1024 MHz",
-    #"backendConvertor" : "memHierarchy.MemBackendConvertor", 
+    #"backendConvertor" : "memHierarchy.MemBackendConvertor",
    # "backend.device_count" : 1,
    # "backend.link_count" : 4,
    # "backend.vault_count" : 16,

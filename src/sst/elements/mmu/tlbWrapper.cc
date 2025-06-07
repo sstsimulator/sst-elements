@@ -20,7 +20,7 @@
 using namespace SST;
 using namespace SST::MMU_Lib;
 
-TLB_Wrapper::TLB_Wrapper(SST::ComponentId_t id, SST::Params& params): Component(id), m_pending(0) 
+TLB_Wrapper::TLB_Wrapper(SST::ComponentId_t id, SST::Params& params): Component(id), m_pending(0)
 {
     char buffer[100];
     snprintf(buffer,100,"@t:%s:TLB_Wrapper::@p():@l ",getName().c_str());
@@ -50,11 +50,11 @@ TLB_Wrapper::TLB_Wrapper(SST::ComponentId_t id, SST::Params& params): Component(
     m_tlb->registerCallback( callback );
 }
 
-void TLB_Wrapper::init(unsigned int phase) 
+void TLB_Wrapper::init(unsigned int phase)
 {
     SST::Event * ev;
 
-    while ((ev = m_cpu_if->recvUntimedData())) { //incoming from CPU forward to mem/caches 
+    while ((ev = m_cpu_if->recvUntimedData())) { //incoming from CPU forward to mem/caches
         m_cache_if->sendUntimedData(ev);
     }
 
@@ -62,7 +62,7 @@ void TLB_Wrapper::init(unsigned int phase)
         auto memEvent = dynamic_cast<MemHierarchy::MemEventInit*>(ev);
         if (memEvent) {
 
-            // 
+            //
             if (memEvent->getCmd() == MemHierarchy::Command::NULLCMD) {
                 if (memEvent->getInitCmd() == MemHierarchy::MemEventInit::InitCommand::Coherence) {
                     m_cpu_if->sendUntimedData(ev);
@@ -81,7 +81,7 @@ void TLB_Wrapper::init(unsigned int phase)
                     }
                 } else {
                     m_cpu_if->sendUntimedData(ev);
-                }        
+                }
             }
         }
     }
@@ -89,7 +89,7 @@ void TLB_Wrapper::init(unsigned int phase)
     m_tlb->init( phase );
 }
 
-void TLB_Wrapper::tlbCallback( RequestID reqId, uint64_t physAddr ) 
+void TLB_Wrapper::tlbCallback( RequestID reqId, uint64_t physAddr )
 {
     auto memEv = reinterpret_cast<MemHierarchy::MemEvent*>( reqId );
     uint64_t addr = memEv->getAddr();
@@ -135,7 +135,7 @@ void TLB_Wrapper::handleCpuEvent( Event* ev )
 
     auto reqId = reinterpret_cast<RequestID>(memEv);
     int hwThread = memEv->getThreadID();
-    uint64_t virtAddr = memEv->getAddr(); // getVirtualAddress() 
+    uint64_t virtAddr = memEv->getAddr(); // getVirtualAddress()
     uint64_t instPtr = memEv->getInstructionPointer();
     uint32_t perms = getPerms( memEv );
 

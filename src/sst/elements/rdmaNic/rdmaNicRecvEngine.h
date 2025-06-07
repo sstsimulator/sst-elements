@@ -19,9 +19,9 @@ class RecvEntry {
 	virtual ~RecvEntry() { if ( m_cmd) delete m_cmd; }
 	virtual size_t getPayloadLength() = 0;
 	virtual Addr_t getAddr() = 0;
-	virtual Addr_t getContext() = 0; 
+	virtual Addr_t getContext() = 0;
 	int getThread() { return m_thread; }
-	
+
 	// only used by MsgRecvEntry
 	int getCqId() { return m_cqId; }
 	void setCqId( int id ) { m_cqId = id; }
@@ -33,8 +33,8 @@ class RecvEntry {
 
 class MsgRecvEntry : public RecvEntry {
   public:
-	MsgRecvEntry( NicCmd* cmd, int thread ) : RecvEntry( thread, cmd ) {} 
-	size_t getPayloadLength() { return m_cmd->data.recv.len; }		
+	MsgRecvEntry( NicCmd* cmd, int thread ) : RecvEntry( thread, cmd ) {}
+	size_t getPayloadLength() { return m_cmd->data.recv.len; }
 	Addr_t getAddr() { return m_cmd->data.recv.addr; }
 	Addr_t getContext() { return m_cmd->data.recv.context; }
 };
@@ -53,8 +53,8 @@ class ReadRespRecvEntry : public RecvEntry  {
 	ReadRespRecvEntry( int thread, Addr_t destAddr, uint32_t len, CompQueueId cqId, Context context ) :
 		RecvEntry(thread), m_destAddr(destAddr), m_length(len), m_context(context) { m_cqId = cqId; }
 	size_t getPayloadLength() { return m_length; }
-	Addr_t getAddr() {  return m_destAddr; } 
-	Addr_t getContext() { return m_context; }; 
+	Addr_t getAddr() {  return m_destAddr; }
+	Addr_t getContext() { return m_context; };
   private:
 	uint32_t m_length;
 	Addr_t m_destAddr;
@@ -76,22 +76,22 @@ class RecvQueue {
 class RecvStream {
   public:
 	// we don't need destAddr and lenght, we can get them from entry
-	RecvStream( RdmaNic& nic, Addr_t destAddr, size_t length, RecvEntry* entry = NULL ) : 
+	RecvStream( RdmaNic& nic, Addr_t destAddr, size_t length, RecvEntry* entry = NULL ) :
 			nic(nic), destAddr(destAddr), length(length), offset(0), recvEntry(entry), bytesWritten(0), callback(NULL) {
 		if ( entry ) {
 			callback = new MemRequest::Callback;
 			*callback = std::bind( &RdmaNic::RecvStream::writeResp, this, recvEntry->getThread(), std::placeholders::_1 );
 		}
 	}
-	~RecvStream( ); 
-	void addPkt(RdmaNicNetworkEvent* pkt) { pktQ.push(pkt); } 
+	~RecvStream( );
+	void addPkt(RdmaNicNetworkEvent* pkt) { pktQ.push(pkt); }
 	bool process();
 
   private:
 	void writeResp( int thread, StandardMem::Request* resp );
 
 	size_t calcLen( Addr_t addr, size_t len, int maxLen ) {
-		int tmp = maxLen - ( addr & ( maxLen - 1 ) );	
+		int tmp = maxLen - ( addr & ( maxLen - 1 ) );
 		nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"addr=%#" PRIx64 " len=%zu maxLen=%d tmp=%d\n",addr,len,maxLen,tmp);
 		return tmp > len ? len : tmp;
 	}
@@ -101,7 +101,7 @@ class RecvStream {
 
 	RecvEntry* recvEntry;
 	Addr_t destAddr;
-	size_t length;	
+	size_t length;
    	std::queue<StandardMem::ReadResp*> respQ;
 	size_t offset;
     std::queue<RdmaNicNetworkEvent*> pktQ;
@@ -111,7 +111,7 @@ class RecvStream {
 class RecvEngine {
   public:
     RecvEngine( RdmaNic& nic, int numVC, int maxSize ) : nic(nic), maxSize(maxSize), m_nextRqId(0), m_nextReadRespKey(0) {
-        queues.resize(numVC);   
+        queues.resize(numVC);
     }
     void process();
 	int removeMemRgn( int key ) {
@@ -130,21 +130,21 @@ class RecvEngine {
 			return -1;
 		}
 	}
-    void postRecv( int rqId, MsgRecvEntry* entry ) { 
+    void postRecv( int rqId, MsgRecvEntry* entry ) {
         m_recvQueueMap[rqId]->push( entry );
-    }   
-    int createRQ( int cqId, int rqKey ) { 
+    }
+    int createRQ( int cqId, int rqKey ) {
         int rqId = m_nextRqId++;
         m_recvQueueMap[ rqId ] = new RecvQueue( cqId, rqKey );
         m_recvQueueKeyMap[ rqKey ] = rqId;
         return rqId;
     }
 
-    int destroyRQ( int rqId ) { 
+    int destroyRQ( int rqId ) {
         auto iter = m_recvQueueMap.find( rqId );
         if ( iter == m_recvQueueMap.end() ) {
             return -1;
-        } 
+        }
         assert( m_recvQueueKeyMap.find( iter->second->getKey() ) != m_recvQueueKeyMap.end() );
         delete iter->second;
         m_recvQueueMap.erase(rqId);
@@ -152,27 +152,27 @@ class RecvEngine {
     }
 	int addReadResp( int thread, Addr_t destAddr, uint32_t len, CompQueueId cqId, Context context ) {
 		int key = m_nextReadRespKey++;
-		m_readRespMap[key] = new ReadRespRecvEntry( thread, destAddr, len, cqId, context ); 
+		m_readRespMap[key] = new ReadRespRecvEntry( thread, destAddr, len, cqId, context );
 		return key;
 	}
   private:
     void processStreamHdr( RdmaNicNetworkEvent* );
-	void processMsgHdr( RdmaNicNetworkEvent* ); 
-	void processWriteHdr( RdmaNicNetworkEvent* ); 
-	void processReadReqHdr( RdmaNicNetworkEvent* ); 
-	void processReadRespHdr( RdmaNicNetworkEvent* ); 
-	void processPayloadPkt( RdmaNicNetworkEvent* ); 
+	void processMsgHdr( RdmaNicNetworkEvent* );
+	void processWriteHdr( RdmaNicNetworkEvent* );
+	void processReadReqHdr( RdmaNicNetworkEvent* );
+	void processReadRespHdr( RdmaNicNetworkEvent* );
+	void processPayloadPkt( RdmaNicNetworkEvent* );
 
     void processQueuedPkts( std::queue< RdmaNicNetworkEvent* >& );
     void add( int vc, RdmaNicNetworkEvent* ev ) { queues[vc].push( ev ); }
-	
+
     bool busy( int vc ) { return queues[vc].size() == maxSize; }
     RdmaNic& nic;
     std::vector< std::queue< RdmaNicNetworkEvent* > > queues;
     int maxSize;
     std::map< int, RecvQueue*> m_recvQueueMap;
     std::map< int, int > m_recvQueueKeyMap;
-	std::map< int, MemRgnEntry* > m_memRegionMap; 
+	std::map< int, MemRgnEntry* > m_memRegionMap;
 
 	std::map< int, ReadRespRecvEntry* > m_readRespMap;
 	typedef uint64_t NodeStreamId;

@@ -60,13 +60,13 @@ public:
     {
         std::ostringstream ss;
         ss << getInstCode();
-        ss << " "       << isa_int_regs_out[0]  << " <- " << isa_int_regs_in[0]  << " + imm=" << imm_value; 
+        ss << " "       << isa_int_regs_out[0]  << " <- " << isa_int_regs_in[0]  << " + imm=" << imm_value;
         ss << " phys: " << phys_int_regs_out[0] << " <- " << phys_int_regs_in[0] << " + imm=" << imm_value;
 
         strncpy( buffer, ss.str().c_str(), buffer_size );
     }
-    
-    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
                 uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0) override
     {
         #ifdef VANADIS_BUILD_DEBUG
@@ -83,13 +83,13 @@ public:
         #endif
     }
 
-    void instOp(VanadisRegisterFile* regFile, 
+    void instOp(VanadisRegisterFile* regFile,
         uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0) override
     {
         const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in_0);
         const gpr_format result = src_1 + imm_value;
 		regFile->setIntReg<gpr_format>(phys_int_regs_out_0, result);
-        
+
     }
 
     void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
@@ -102,7 +102,7 @@ public:
     }
 private:
     const gpr_format imm_value;
-    
+
 };
 
 

@@ -39,7 +39,7 @@ public:
 
     VanadisDivideRemainderInstruction* clone() override { return new VanadisDivideRemainderInstruction(*this); }
     VanadisFunctionalUnitType          getInstFuncType() const override { return INST_INT_DIV; }
-    const char*                        getInstCode() const override { 
+    const char*                        getInstCode() const override {
 		if(sizeof(gpr_format)==8) {
 			if(std::is_signed<gpr_format>::value) {
 				return "DIVREM64";

@@ -23,7 +23,7 @@ def read_arguments():
             override_list.append(arg)
             print("Override: ", override_list[-1])
 
-    
+
     if boolDefaultConfig == True:
         config_file = "../ddr4_verimem.cfg"
         print("config file is not specified.. using ddr4_verimem.cfg")
@@ -44,7 +44,7 @@ def setup_config_params(config_file, override_list):
         l_tokens = override.split("=")
         print("Override cfg", l_tokens[0], l_tokens[1])
         l_params[l_tokens[0]] = l_tokens[1]
-     
+
     return l_params
 
 #######################################################################################################
@@ -90,8 +90,8 @@ sst_root = os.getenv( "SST_ROOT" )
 ## Application Info:
 ## Executable  -> exe_file
 ## appargcount -> Number of commandline arguments after <exec_file> name
-## apparg<#>   -> arguments 
-## Commandline execution for the below example would be 
+## apparg<#>   -> arguments
+## Commandline execution for the below example would be
 ## /home/amdeshp/arch/benchmarks/PathFinder_1.0.0/PathFinder_ref/PathFinder.x -x /home/amdeshp/arch/benchmarks/PathFinder_1.0.0/generatedData/small1.adj_list
 ## AppArgs = ({
 ##    "executable"  : "/home/amdeshp/arch/benchmarks/PathFinder_1.0.0/PathFinder_ref/PathFinder.x",
@@ -117,16 +117,16 @@ ariel.addParams({
    "corecount"           : corecount,
    "defaultlevel"        : defaultLevel,
 })
- 
-## MemHierarchy 
+
+## MemHierarchy
 
 def genMemHierarchy(cores):
-   
+
     membus = sst.Component("membus", "memHierarchy.Bus")
     membus.addParams({
         "bus_frequency" : cacheFrequency,
     })
-  
+
 
     memory = sst.Component("memory", "memHierarchy.MemController")
     memory.addParams({
@@ -141,7 +141,7 @@ def genMemHierarchy(cores):
         "max_outstanding_requests" : 256,
         "verbose" : 1,
     })
-   
+
     for core in range (cores):
         l1 = sst.Component("l1cache_%d"%core, "memHierarchy.Cache")
         l1.addParams({
@@ -153,8 +153,8 @@ def genMemHierarchy(cores):
             "coherence_protocol"    : coherenceProtocol,
             "replacement_policy"    : rplPolicy,
             "L1"                    : "1",
-            "debug"                 : memDebug,  
-            "debug_level"           : memDebugLevel, 
+            "debug"                 : memDebug,
+            "debug_level"           : memDebugLevel,
         })
 
         l2 = sst.Component("l2cache_%d"%core, "memHierarchy.Cache")
@@ -167,20 +167,20 @@ def genMemHierarchy(cores):
             "coherence_protocol"    : coherenceProtocol,
             "replacement_policy"    : rplPolicy,
             "L1"                    : "0",
-            "debug"                 : memDebug,  
-            "debug_level"           : memDebugLevel, 
+            "debug"                 : memDebug,
+            "debug_level"           : memDebugLevel,
             "mshr_num_entries"      : "16",
         })
-       
+
         ## SST Links
-        # Ariel -> L1(PRIVATE) -> L2(PRIVATE)  -> L3 (SHARED) -> DRAM 
+        # Ariel -> L1(PRIVATE) -> L2(PRIVATE)  -> L3 (SHARED) -> DRAM
         ArielL1Link = sst.Link("cpu_cache_%d"%core)
         ArielL1Link.connect((ariel, "cache_link_%d"%core, busLat), (l1, "highlink", busLat))
         L1L2Link = sst.Link("l1_l2_%d"%core)
         L1L2Link.connect((l1, "lowlink", busLat), (l2, "highlink", busLat))
         L2MembusLink = sst.Link("l2_membus_%d"%core)
         L2MembusLink.connect((l2, "lowlink", busLat), (membus, "highlink%d"%core, busLat))
-   
+
 
     l3 = sst.Component("L3cache", "memHierarchy.Cache")
     l3.addParams({
@@ -192,11 +192,11 @@ def genMemHierarchy(cores):
         "coherence_protocol"    : coherenceProtocol,
         "replacement_policy"    : rplPolicy,
         "L1"                    : "0",
-        "debug"                 : memDebug,  
-        "debug_level"           : memDebugLevel, 
+        "debug"                 : memDebug,
+        "debug_level"           : memDebugLevel,
         "mshr_num_entries"      : "16",
     })
-  
+
     # Bus to L3 and L3 <-> MM
     BusL3Link = sst.Link("bus_L3")
     BusL3Link.connect((membus, "lowlink0", busLat), (l3, "highlink", busLat))
@@ -235,7 +235,7 @@ def genMemHierarchy(cores):
     link_dir_cramsim_link = sst.Link("link_dir_cramsim_link")
     link_dir_cramsim_link.connect( (backend, "cramsim_link", "2ns"), (comp_memhBridge, "cpuLink", "2ns") )
 
-    # memhBridge(=TxnGen) <-> Memory Controller 
+    # memhBridge(=TxnGen) <-> Memory Controller
     memHLink = sst.Link("memHLink_1")
     memHLink.connect( (comp_memhBridge, "memLink", g_params["clockCycle"]), (comp_controller0, "txngenLink", g_params["clockCycle"]) )
 
@@ -252,5 +252,5 @@ def genMemHierarchy(cores):
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
 
-genMemHierarchy(corecount)        
+genMemHierarchy(corecount)
 

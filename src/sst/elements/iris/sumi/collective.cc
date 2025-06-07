@@ -67,15 +67,15 @@ Collective::tostr(type_t ty)
 }
 
 Collective::Collective(type_t ty, CollectiveEngine* engine, int tag, int cq_id, Communicator* comm) :
-  my_api_(engine->tport()), 
-  engine_(engine), 
+  my_api_(engine->tport()),
+  engine_(engine),
   cq_id_(cq_id),
-  comm_(comm), 
+  comm_(comm),
   dom_me_(comm->myCommRank()),
-  dom_nproc_(comm->nproc()), 
-  complete_(false), 
+  dom_nproc_(comm->nproc()),
+  complete_(false),
   tag_(tag),
-  type_(ty), 
+  type_(ty),
   subsequent_(nullptr)
 {
   output.output("Rank %d=%d built collective of size %d in role=%d, tag=%d",

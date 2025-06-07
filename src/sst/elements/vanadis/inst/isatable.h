@@ -143,7 +143,7 @@ public:
     void print(SST::Output* output, VanadisRegisterFile* regFile, bool print_int, bool print_fp, uint32_t output_v)
     {
         if ( print_int ) {
-            output->verbose(CALL_INFO, output_v, 0, "[Thread: %d]: %s: Integer Registers (Count=%" PRIu16 ")\n", 
+            output->verbose(CALL_INFO, output_v, 0, "[Thread: %d]: %s: Integer Registers (Count=%" PRIu16 ")\n",
                 regFile ? regFile->getHWThread() : -1, tblName.c_str(), count_int_reg);
             for ( uint16_t i = 0; i < count_int_reg; ++i ) {
                 if ( nullptr == regFile ) {
@@ -240,7 +240,7 @@ protected:
 
     const VanadisDecoderOptions* decoder_opts;
 
-    std::string tblName; 
+    std::string tblName;
 };
 
 } // namespace Vanadis

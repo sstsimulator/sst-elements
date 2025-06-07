@@ -15,13 +15,13 @@ comp_cpu.addParams({
       "cache_line" : "64",
 #      "trace" : "traces/pinatrace.out"
 #      "trace" : "/Users/sdhammo/Documents/Subversion/sst-simulator-org-trunk/sst/elements/prospero/xml/traces/sstprospero-0-gz.trace",
-#      "trace" : "/home/sdhammo/subversion/sst-simulator-org-trunk/sst/elements/prospero/tests/array/sstprospero-0", 
+#      "trace" : "/home/sdhammo/subversion/sst-simulator-org-trunk/sst/elements/prospero/tests/array/sstprospero-0",
 #      "trace" : "/home/sdhammo/lulesh/sstprospero-99",
 #      "trace" : "/nfshome/sdhammo/lulesh/sstprospero-0-99-gz.trace",
       "heartbeat" : "100000",
       "tracestartat" : "0",
 #      "trace" : "/home/sdhammo/lulesh/sstprospero-93",
-      "trace" : os.environ['SST_ROOT'] + '/sst/elements/prospero/tests/array/sstprospero-0', 
+      "trace" : os.environ['SST_ROOT'] + '/sst/elements/prospero/tests/array/sstprospero-0',
       "maxtracefile" : 1,
       "traceformat" : "text"
 })

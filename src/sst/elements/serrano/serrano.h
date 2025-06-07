@@ -67,7 +67,7 @@ private:
 	std::list< std::string > kernel_queue;
 	std::map< uint64_t, SerranoCoarseUnit* > units;
 	std::map< uint64_t, SerranoCircularQueue<SerranoMessage*>* > msg_queues;
-	
+
 
 };
 

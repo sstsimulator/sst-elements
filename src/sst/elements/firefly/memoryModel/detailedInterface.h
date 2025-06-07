@@ -120,7 +120,7 @@ private:
 
         // Some models use the same address space for each PID. To map each processes address
         // to a unique address the upper 8 bits contain the PID. The detailed model uses unique addresses
-        // at the source and sizes the memHierarchy accordingly so we must remove the PID 
+        // at the source and sizes the memHierarchy accordingly so we must remove the PID
         req->addr &= ~0x0f00000000000000;
 		if ( m_inFlightCnt[Write] + m_pendingReqQ[Write].size() < m_maxRequestsPending[Write] - 1 ) {
 			src = NULL;
@@ -139,7 +139,7 @@ private:
 
         // Some models use the same address space for each PID. To map each processes address
         // to a unique address the upper 8 bits contain the PID. The detailed model uses unique addresses
-        // at the source and sizes the memHierarchy accordingly so we must remove the PID 
+        // at the source and sizes the memHierarchy accordingly so we must remove the PID
         req->addr &= ~0x0f00000000000000;
        if ( m_inFlightCnt[Read] + m_pendingReqQ[Read].size() < m_maxRequestsPending[Read] - 1 ) {
             src = NULL;

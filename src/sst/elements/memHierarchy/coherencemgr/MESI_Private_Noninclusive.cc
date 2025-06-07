@@ -480,7 +480,7 @@ bool MESIPrivNoninclusive::handleFlushLineInv(MemEvent * event, bool inMSHR) {
 
 bool MESIPrivNoninclusive::handleFlushAll(MemEvent * event, bool inMSHR) {
     eventDI.prefill(event->getID(), Command::FlushAll, "", 0, State::NP);
-    
+
     if (!flush_manager_) {
         if (!inMSHR) {
             MemEventStatus status = mshr_->insertFlush(event, false, true);
@@ -512,7 +512,7 @@ bool MESIPrivNoninclusive::handleFlushAll(MemEvent * event, bool inMSHR) {
             return true;
         }
     }
-    
+
     switch (flush_state_) {
         case FlushState::Ready:
         {
@@ -1854,7 +1854,7 @@ bool MESIPrivNoninclusive::handleFetchXResp(MemEvent * event, bool inMSHR) {
 
 bool MESIPrivNoninclusive::handleAckFlush(MemEvent* event, bool inMSHR) {
     eventDI.prefill(event->getID(), Command::AckFlush, "", 0, State::NP);
-    
+
     mshr_->decrementFlushCount();
     if (mshr_->getFlushCount() == 0) {
         retryBuffer_.push_back(mshr_->getFlush());
@@ -2103,7 +2103,7 @@ MemEventStatus MESIPrivNoninclusive::allocateLine(MemEvent * event, PrivateCache
     } else {
         if (inMSHR || mshr_->insertEvent(event->getBaseAddr(), event, -1, false, true) != -1) {
 
-            
+
             mshr_->insertEviction(line->getAddr(), event->getBaseAddr()); // Since we're private we never start an eviction (e.g., send invs) so it's safe to ignore an attempted eviction
             if (inMSHR) {
                 mshr_->setStalledForEvict(event->getBaseAddr(), true);
@@ -2390,7 +2390,7 @@ uint64_t MESIPrivNoninclusive::sendExclusiveResponse(MemEvent * event, vector<ui
 
     if (time < timestamp_) time = timestamp_;
     uint64_t deliveryTime = time + (inMSHR ? mshrLatency_ : accessLatency_);
-    forwardByDestination(responseEvent, deliveryTime); 
+    forwardByDestination(responseEvent, deliveryTime);
 
     // Debugging
     if (mem_h_is_debug_event(responseEvent))

@@ -11,7 +11,7 @@ debugPython=False
 physMemSize = "4GiB"
 
 coherence_protocol="MESI"
-    
+
 cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "2.3GHz")
 os_verbosity = os.getenv("VANADIS_OS_VERBOSE", 0)
 
@@ -24,7 +24,7 @@ def addParamsPrefix(prefix, params):
 
     # print( ret )
     return ret
-               
+
 class Builder:
     def __init__(self, args={}):
         self.args = args
@@ -61,7 +61,7 @@ class Builder:
             app_params["process0.argc"] = 1
             if (os_verbosity > 0):
                 print("No application arguments found, continuing with argc=1")
-        
+
         # Setup process
         process = {
             "nodeId": nodeId,
@@ -75,7 +75,7 @@ class Builder:
             "page_size"  : 4096,
             "heap_verbose" : 0, #verbosity
             "process0.env_count" : 3,
-            # MUSL libc uses this in localtime, if we don't set it we 
+            # MUSL libc uses this in localtime, if we don't set it we
             # can get different results on different systems
             "process0.env0" : "TZ=UTC",
             # for mvapich runtime
@@ -121,7 +121,7 @@ class Builder:
             "cache_line_size" : "64",
             "cache_size" : "32 KB",
             "L1" : "1",
-            "debug" : 0, 
+            "debug" : 0,
             "debug_level" : 10,
             "debug_addr": debug_addr
         })
@@ -131,7 +131,7 @@ class Builder:
         link = sst.Link(self.prefix + ".link_os_l1cache")
         link.connect( (mem_if, "port", "1ns"), (l1cache_2_cpu, "port", "1ns") )
 
-        return l1cache  
+        return l1cache
 
     def connectCPU( self, core, cpu ):
         if debugPython:

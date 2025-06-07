@@ -5,7 +5,7 @@ from mhlib import componentlist
 # Part of test set that tests all combinations of coherence protocols
 # with each other and as last-level and not and as distributed and not
 #
-# Covers test cases with a zero, one or two-level hierarchy 
+# Covers test cases with a zero, one or two-level hierarchy
 # (no caches, L1 only, L1+all combos of next level, and L1+L2+L3 for a specific case that only works as a private hierarchy)
 
 ## Options
@@ -74,7 +74,7 @@ if option != 6:
         "L1" : "1",
         "cache_size" : "2KiB"
     })
-    
+
     # Link core & l1cache
     link_cpu_l1 = sst.Link("link_cpu_l1")
     link_cpu_l1.connect( (iface, "lowlink", "400ps"), (l1cache, "highlink", "400ps") )
@@ -124,10 +124,10 @@ elif option == 1: # L1 <-> L2/inclusive <-> Mem
     l2cache = sst.Component("l2cache", "memHierarchy.Cache")
     l2cache.addParams(l2cache_params)
     l2cache.addParam("cache_size", "2KiB") # override base param since cache is inclusive
-    
+
     link_l1_l2 = sst.Link("link_l1_l2")
     link_l1_l2.connect( (l1cache, "lowlink", "50ps"), (l2cache, "highlink", "50ps") )
-    
+
     link_l2_mem = sst.Link("link_l2_mem")
     link_l2_mem.connect( (l2cache, "lowlink", "50ps"), (memctrl, "highlink", "50ps") )
 
@@ -135,10 +135,10 @@ elif option == 2: # L1 <-> L2/priv noninclusive <-> Mem
     l2cache = sst.Component("l2cache", "memHierarchy.Cache")
     l2cache.addParams(l2cache_params)
     l2cache.addParam("cache_type", "noninclusive")
-    
+
     link_l1_l2 = sst.Link("link_l1_l2")
     link_l1_l2.connect( (l1cache, "lowlink", "50ps"), (l2cache, "highlink", "50ps") )
-    
+
     link_l2_mem = sst.Link("link_l2_mem")
     link_l2_mem.connect( (l2cache, "lowlink", "50ps"), (memctrl, "highlink", "50ps") )
 
@@ -146,10 +146,10 @@ elif option == 3: # L1 <-> L2/shr noninclusive <-> Mem
     l2cache = sst.Component("l2cache", "memHierarchy.Cache")
     l2cache.addParams(l2cache_params)
     l2cache.addParams({"cache_type" : "noninclusive_with_directory", "noninclusive_directory_entries" : 40, "noninclusive_directory_associativity" : 4})
-    
+
     link_l1_l2 = sst.Link("link_l1_l2")
     link_l1_l2.connect( (l1cache, "lowlink", "50ps"), (l2cache, "highlink", "50ps") )
-    
+
     link_l2_mem = sst.Link("link_l2_mem")
     link_l2_mem.connect( (l2cache, "lowlink", "50ps"), (memctrl, "highlink", "50ps") )
 
@@ -166,10 +166,10 @@ elif option == 4: # L1 <-> DC <-> Mem
         "debug_level" : DEBUG_LEVEL,
         "debug" : DEBUG_L2
         })
-    
+
     link_l1_dc = sst.Link("link_l1_dc")
     link_l1_dc.connect( (l1cache, "lowlink", "50ps"), (directory, "highlink", "50ps") )
-    
+
     link_dc_mem = sst.Link("link_dc_mem")
     link_dc_mem.connect( (directory, "lowlink", "50ps"), (memctrl, "highlink", "50ps") )
 
@@ -177,14 +177,14 @@ elif option == 5: ## L1 <-> L2/priv noninclusive <-> 3/priv noninclusive <-> Mem
     l2cache = sst.Component("l2cache", "memHierarchy.Cache")
     l2cache.addParams(l2cache_params)
     l2cache.addParam("cache_type", "noninclusive")
-    
+
     link_l1_l2 = sst.Link("link_l1_l2")
     link_l1_l2.connect( (l1cache, "lowlink", "50ps"), (l2cache, "highlink", "50ps") )
 
     l3cache = sst.Component("l3cache", "memHierarchy.Cache")
     l3cache.addParams(l2cache_params)
     l3cache.addParam("cache_type", "noninclusive")
-    
+
     link_l2_l3 = sst.Link("link_l2_l3")
     link_l2_l3.connect( (l2cache, "lowlink", "50ps"), (l3cache, "highlink", "50ps") )
 

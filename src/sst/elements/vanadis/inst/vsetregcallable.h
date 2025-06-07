@@ -48,7 +48,7 @@ public:
             isa_int_regs_out[0], phys_int_regs_out[0]);
     }
 
-    void log (SST::Output* output, int verboselevel, uint16_t sw_thr, 
+    void log (SST::Output* output, int verboselevel, uint16_t sw_thr,
                             uint16_t phys_int_regs_out_0)
     {
         #ifdef VANADIS_BUILD_DEBUG
@@ -57,8 +57,8 @@ public:
             std::ostringstream ss;
             ss << "hw_thr="<<getHWThread()<<" sw_thr="<< sw_thr;
             ss << " Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
-            ss << " phys: out= " << phys_int_regs_out_0  << " imm=" << reg_value << ", isa: out=" << isa_int_regs_out[0]; 
-            ss << " Result-reg " << phys_int_regs_out_0  << ": " << reg_value;  
+            ss << " phys: out= " << phys_int_regs_out_0  << " imm=" << reg_value << ", isa: out=" << isa_int_regs_out[0];
+            ss << " Result-reg " << phys_int_regs_out_0  << ": " << reg_value;
             output->verbose( CALL_INFO, verboselevel, 0, "%s\n", ss.str().c_str());
         }
         #endif

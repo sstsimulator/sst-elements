@@ -24,7 +24,7 @@
  *  - Loading a user vs anonymous subcomponent
  *  - Declaring a subcomponent api
  *  - Defining subcomponents
- *  
+ *
  *
  *  This file defines a Component with a SubComponent slot.
  *
@@ -54,7 +54,7 @@ class basicSubComponent_Component : public SST::Component
 public:
 
 /*
- *  SST Registration macros register Components with the SST Core and 
+ *  SST Registration macros register Components with the SST Core and
  *  document their parameters, ports, etc.
  *  SST_ELI_REGISTER_COMPONENT is required, the documentation macros
  *  are only required if relevant
@@ -77,23 +77,23 @@ public:
             {"left", "Link to left neighbor"},
             {"right", "Link to right neighbor"}
     )
-    
+
     SST_ELI_DOCUMENT_STATISTICS()
 
     // This Macro informs SST that this Component can load a SubComponent.
     // Parameter 1: Name of the location for the subcomponent
-    // Parameter 2: Description of the purpose/use/etc. of the slot 
+    // Parameter 2: Description of the purpose/use/etc. of the slot
     // Parameter 3: The API the subcomponent slot will use
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( 
-            { "compute_unit", 
-            "The compute unit that this component will use to operate on events", 
-            "SST::simpleElementExample::basicSubComponentAPI" } 
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+            { "compute_unit",
+            "The compute unit that this component will use to operate on events",
+            "SST::simpleElementExample::basicSubComponentAPI" }
             )
 
     // Constructor & destructor
     basicSubComponent_Component(SST::ComponentId_t id, SST::Params& params);
     ~basicSubComponent_Component();
-    
+
     // We will use the 'setup' function from the simulation lifecycle to send our event
     virtual void setup() override;
 
@@ -106,10 +106,10 @@ public:
     ImplementSerializable(SST::simpleElementExample::basicSubComponent_Component)
 
 private:
-   
+
     // SST Output object, for printing, error messages, etc.
     SST::Output* out;
-    
+
     // Input parameter: the value this component will send in its event
     int value;
 
@@ -119,7 +119,7 @@ private:
 
     // SubComponent: Our compute unit
     SST::simpleElementExample::basicSubComponentAPI* computeUnit;
-     
+
 };
 
 } // namespace simpleElementExample

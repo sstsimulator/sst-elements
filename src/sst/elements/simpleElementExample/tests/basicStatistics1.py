@@ -26,7 +26,7 @@ component1 = sst.Component("StatisticComponent1", "simpleElementExample.basicSta
 
 
 ### Parameterize the component.
-# Run 'sst-info simpleElementExample.basicStatistics' at the command line 
+# Run 'sst-info simpleElementExample.basicStatistics' at the command line
 # to see parameter documentation
 params0 = {
         "marsagliaZ" : 438,     # Seed for Marsaglia RNG
@@ -49,10 +49,10 @@ component1.addParams(params1)
 
 ### Enable statistics
 # Statistics are enabled if:
-#   1. The statistic is enabled via an 'enableAll...' call and 
-#       its load level is <= the load level setting (global or per-component/type) 
+#   1. The statistic is enabled via an 'enableAll...' call and
+#       its load level is <= the load level setting (global or per-component/type)
 #   2. The statistic is specifically named in an 'enableStatistic...' or 'enableStatistics' call
- 
+
 ## Limit the verbosity of statistics to any with a load level from 0-4
 # This component's statistics range from 1-4 (see sst-info)
 # Default: Set global load level
@@ -67,12 +67,12 @@ sst.setStatisticLoadLevel(4)
 
 
 ## Determine where statistics should be sent
-sst.setStatisticOutput("sst.statOutputCSV", { "filepath" : "./basicStatistics1.csv", "separator" : "," } ) 
+sst.setStatisticOutput("sst.statOutputCSV", { "filepath" : "./basicStatistics1.csv", "separator" : "," } )
 
 
 ## Enable statistics on the components
 # There are many ways to enable statistics, allowing users to specify exactly what they want to see and how
-# By default, this script is setup to have the simulation print all statistics for the 
+# By default, this script is setup to have the simulation print all statistics for the
 # "simpleElementExample.basicStatistics" component types every 50ns
 # Other options, besides 'enableAllStatisticsForComponenType' are commented out below
 # Parameters are optional in all calls
@@ -93,7 +93,7 @@ sst.enableAllStatisticsForComponentType("simpleElementExample.basicStatistics", 
 #sst.enableAllStatisticsForComponentName("StatisticComponent1", statParams)
 
 # Option: Enable a list of statistics for a given component name or type
-statSet = ["UINT32_statistic", "UINT32_statistic_duplicate", 
+statSet = ["UINT32_statistic", "UINT32_statistic_duplicate",
            "UINT64_statistic", "INT32_statistic", "INT64_statistic", "SUBID_statistic"]
 #sst.enableStatisticsForComponentType("simpleElementExample.basicStatistics", statSet, statParams)
 # or

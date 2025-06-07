@@ -128,7 +128,7 @@ osParams = {
     "checkpoint" : checkpoint
 }
 
-processList = ( 
+processList = (
     ( 1, {
         "env_count" : 1,
         "env0" : "OMP_NUM_THREADS={}".format(numCpus*numThreads),
@@ -327,20 +327,20 @@ l2cacheParams = {
     "debug" : mh_debug,
     "debug_level" : mh_debug_level,
 }
-busParams = { 
-    "bus_frequency" : cpu_clock, 
+busParams = {
+    "bus_frequency" : cpu_clock,
 }
 
-l2memLinkParams = { 
+l2memLinkParams = {
     "group" : 1,
-    "network_bw" : "25GB/s" 
+    "network_bw" : "25GB/s"
 }
 
 class CPU_Builder:
     def __init__(self):
         pass
 
-    # CPU 
+    # CPU
     def build( self, prefix, nodeId, cpuId ):
 
         if pythonDebug:
@@ -359,7 +359,7 @@ class CPU_Builder:
 
             decode.enableAllStatistics()
 
-            # CPU.decoder.osHandler 
+            # CPU.decoder.osHandler
             os_hdlr     = decode.setSubComponent( "os_handler", vanadis_os_hdlr )
             os_hdlr.addParams( osHdlrParams )
 
@@ -378,11 +378,11 @@ class CPU_Builder:
         cpu_rocc.addParams(roccParams)
         cpu_rocc.enableAllStatistics()
 
-        # CPU.rocc compute array 
+        # CPU.rocc compute array
         computeArray = cpu_rocc.setSubComponent( "array", array_type)
         computeArray.addParams(arrayParams)
 
-        # CPU.lsq mem interface which connects to D-cache 
+        # CPU.lsq mem interface which connects to D-cache
         cpuDcacheIf = cpu_lsq.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
 
 
@@ -396,18 +396,18 @@ class CPU_Builder:
         cpu_l1dcache = sst.Component(prefix + ".l1dcache", "memHierarchy.Cache")
         cpu_l1dcache.addParams( l1dcacheParams )
 
-        # L1 I-cache to cpu interface 
+        # L1 I-cache to cpu interface
         l1dcache_2_cpu     = cpu_l1dcache.setSubComponent("highlink", "memHierarchy.MemLink")
-        # L1 I-cache to L2 interface 
+        # L1 I-cache to L2 interface
         l1dcache_2_l2cache = cpu_l1dcache.setSubComponent("lowlink", "memHierarchy.MemLink")
 
         # L2 I-cache
         cpu_l1icache = sst.Component( prefix + ".l1icache", "memHierarchy.Cache")
         cpu_l1icache.addParams( l1icacheParams )
 
-        # L1 I-iache to cpu interface 
+        # L1 I-iache to cpu interface
         l1icache_2_cpu     = cpu_l1icache.setSubComponent("highlink", "memHierarchy.MemLink")
-        # L1 I-cache to L2 interface 
+        # L1 I-cache to L2 interface
         l1icache_2_l2cache = cpu_l1icache.setSubComponent("lowlink", "memHierarchy.MemLink")
 
         # L2 cache
@@ -460,7 +460,7 @@ class CPU_Builder:
         link_bus_l1cache_link.connect( (processor_bus, "low_network_0", "1ns"), (dtlbWrapper, "cpu_if", "1ns") )
         link_bus_l1cache_link.setNoCut()
 
-        # data TLB -> data L1 
+        # data TLB -> data L1
         link_cpu_l1dcache_link = sst.Link(prefix+".link_cpu_l1dcache_link")
         link_cpu_l1dcache_link.connect( (dtlbWrapper, "cache_if", "1ns"), (l1dcache_2_cpu, "port", "1ns") )
         link_cpu_l1dcache_link.setNoCut()
@@ -470,7 +470,7 @@ class CPU_Builder:
         link_cpu_itlb_link.connect( (cpuIcacheIf, "lowlink", "1ns"), (itlbWrapper, "cpu_if", "1ns") )
         link_cpu_itlb_link.setNoCut()
 
-        # instruction TLB -> instruction L1 
+        # instruction TLB -> instruction L1
         link_cpu_l1icache_link = sst.Link(prefix+".link_cpu_l1icache_link")
         link_cpu_l1icache_link.connect( (itlbWrapper, "cache_if", "1ns"), (l1icache_2_cpu, "port", "1ns") )
         link_cpu_l1icache_link.setNoCut()
@@ -508,7 +508,7 @@ node_os = sst.Component("os", "vanadis.VanadisNodeOS")
 node_os.addParams(osParams)
 
 num=0
-for i,process in processList: 
+for i,process in processList:
     #print( process )
     for y in range(i):
         #print( "process", num )
@@ -517,7 +517,7 @@ for i,process in processList:
 
 if pythonDebug:
     print('total hardware threads ' + str(num) )
-    
+
 # node OS MMU
 node_os_mmu = node_os.setSubComponent( "mmu", "mmu." + mmuType )
 node_os_mmu.addParams(mmuParams)
@@ -532,7 +532,7 @@ os_cache_2_cpu = os_cache.setSubComponent("highlink", "memHierarchy.MemLink")
 os_cache_2_mem = os_cache.setSubComponent("lowlink", "memHierarchy.MemNIC")
 os_cache_2_mem.addParams( l2memLinkParams )
 
-# node memory router 
+# node memory router
 comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
 comp_chiprtr.addParams(memRtrParams)
 comp_chiprtr.setSubComponent("topology","merlin.singlerouter")
@@ -541,9 +541,9 @@ comp_chiprtr.setSubComponent("topology","merlin.singlerouter")
 dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 dirctrl.addParams(dirCtrlParams)
 
-# node directory controller port to memory 
+# node directory controller port to memory
 dirtoM = dirctrl.setSubComponent("lowlink", "memHierarchy.MemLink")
-# node directory controller port to cpu 
+# node directory controller port to cpu
 dirNIC = dirctrl.setSubComponent("highlink", "memHierarchy.MemNIC")
 dirNIC.addParams(dirNicParams)
 
@@ -554,7 +554,7 @@ memctrl.addParams( memCtrlParams )
 # node memory controller port to directory controller
 memToDir = memctrl.setSubComponent("highlink", "memHierarchy.MemLink")
 
-# node memory controller backend 
+# node memory controller backend
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
 memory.addParams(memParams)
 
@@ -574,12 +574,12 @@ link_dir_2_rtr = sst.Link("link_dir_2_rtr")
 link_dir_2_rtr.connect( (comp_chiprtr, "port"+str(numCpus), "1ns"), (dirNIC, "port", "1ns") )
 link_dir_2_rtr.setNoCut()
 
-# Directory controller to memory controller 
+# Directory controller to memory controller
 link_dir_2_mem = sst.Link("link_dir_2_mem")
 link_dir_2_mem.connect( (dirtoM, "port", "1ns"), (memToDir, "port", "1ns") )
 link_dir_2_mem.setNoCut()
 
-# MMU -> ostlb 
+# MMU -> ostlb
 # don't need when using pass through TLB
 #link_mmu_ostlb_link = sst.Link("link_mmu_ostlb_link")
 #link_mmu_ostlb_link.connect( (node_os_mmu, "ostlb", "1ns"), (ostlb, "mmu", "1ns") )
@@ -603,14 +603,14 @@ for cpu in range(numCpus):
     prefix="node" + str(nodeId) + ".cpu" + str(cpu)
     os_hdlr, l2cache, dtlb, itlb = cpuBuilder.build(prefix, nodeId, cpu)
 
-    # MMU -> dtlb 
+    # MMU -> dtlb
     link_mmu_dtlb_link = sst.Link(prefix + ".link_mmu_dtlb_link")
     link_mmu_dtlb_link.connect( (node_os_mmu, "core"+ str(cpu) +".dtlb", "1ns"), dtlb )
 
-    # MMU -> itlb 
+    # MMU -> itlb
     link_mmu_itlb_link = sst.Link(prefix + ".link_mmu_itlb_link")
     link_mmu_itlb_link.connect( (node_os_mmu, "core"+ str(cpu) +".itlb", "1ns"), itlb )
-    
+
     # CPU os handler -> node OS
     link_core_os_link = sst.Link(prefix + ".link_core_os_link")
     link_core_os_link.connect( os_hdlr, (node_os, "core" + str(cpu), "5ns") )

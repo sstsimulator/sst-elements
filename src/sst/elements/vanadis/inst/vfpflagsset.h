@@ -54,7 +54,7 @@ public:
 					getInstCode(), isa_int_regs_in[0], phys_int_regs_in[0]);
     }
 
-    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
                             uint16_t phys_int_regs_in_0, uint64_t mask_in)
     {
         if(output->getVerboseLevel() >= verboselevel) {
@@ -62,10 +62,10 @@ public:
 					getHWThread(),sw_thr, getInstructionAddress(), getInstCode(), isa_int_regs_in[0], phys_int_regs_in_0, mask_in, mask_in);
 			}
     }
-    
+
     void instOp(VanadisRegisterFile* regFile, uint16_t phys_int_regs_in_0, uint64_t* mask_in)
     {
-        *mask_in = regFile->getIntReg<uint64_t>(phys_int_regs_in_0);    
+        *mask_in = regFile->getIntReg<uint64_t>(phys_int_regs_in_0);
 		updateFP_flags<SetFRM,SetFFLAGS>( *mask_in, mode );
     }
 

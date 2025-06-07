@@ -51,7 +51,7 @@ public:
         strncpy( buffer, ss.str().c_str(), buffer_size );
     }
 
-    void log(SST::Output* output, int verboselevel, uint32_t sw_thr,  bool compare_result, 
+    void log(SST::Output* output, int verboselevel, uint32_t sw_thr,  bool compare_result,
                             uint16_t phys_int_regs_in_0)
     {
          #ifdef VANADIS_BUILD_DEBUG
@@ -59,7 +59,7 @@ public:
             std::ostringstream ss;
             ss << "hw_thr="<<getHWThread()<<" sw_thr="<<sw_thr<< " Execute: 0x" << std::hex << getInstructionAddress() << std::dec << " " << getInstCode();
             ss << " isa-in: " <<  isa_int_regs_in[0] << " / phys-in: " << phys_int_regs_in_0;
-            ss << " / imm: " << imm_value << " / offset: " << offset << " = " << static_cast<int64_t>(getInstructionAddress()) + offset; 
+            ss << " / imm: " << imm_value << " / offset: " << offset << " = " << static_cast<int64_t>(getInstructionAddress()) + offset;
             if(compare_result)
             ss << "-----> taken-address: 0x"<<std::hex << takenAddress;
             else
@@ -79,7 +79,7 @@ public:
             const int64_t ins_addr_and_offset = instruction_address + offset;
 
             takenAddress = static_cast<uint64_t>(ins_addr_and_offset);
-            
+
         }
         else {
             takenAddress = calculateStandardNotTakenAddress();

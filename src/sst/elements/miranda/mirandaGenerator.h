@@ -198,10 +198,10 @@ protected:
 
 class CustomOpRequest : public GeneratorRequest {
 public:
-    CustomOpRequest(Interfaces::StandardMem::CustomData* cData) : 
+    CustomOpRequest(Interfaces::StandardMem::CustomData* cData) :
         GeneratorRequest(), data(cData) {}
     ~CustomOpRequest() {}
-    
+
     ReqOperation getOperation() const { return CUSTOM; }
     Interfaces::StandardMem::CustomData* getPayload() { return data; }
 

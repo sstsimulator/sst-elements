@@ -25,7 +25,7 @@ namespace Vanadis {
 class VanadisGetcpuSyscall : public VanadisSyscall {
 public:
     VanadisGetcpuSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallGetxEvent* event )
-        : VanadisSyscall( os, coreLink, process, event, "getcpu" ) 
+        : VanadisSyscall( os, coreLink, process, event, "getcpu" )
     {
         m_output->verbose(CALL_INFO, 16, 0, "[syscall-getcpu] cpu=%u hwThread=%u\n",process->getCore(),process->getHwThread());
 

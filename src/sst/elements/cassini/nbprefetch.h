@@ -65,7 +65,7 @@ public:
 
     // Serialization support
     NextBlockPrefetcher() : SST::MemHierarchy::CacheListener() {} // For serialization
-    void serialize_order(SST::Core::Serialization::serializer& ser) override;   
+    void serialize_order(SST::Core::Serialization::serializer& ser) override;
     ImplementSerializable(SST::Cassini::NextBlockPrefetcher)
 
 private:

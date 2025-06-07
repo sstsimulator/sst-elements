@@ -45,8 +45,8 @@ ProcessQueuesState::ProcessQueuesState( ComponentId_t id, Params& params ) :
     int mask = params.find<int32_t>("pqs.verboseMask",-1);
     m_nicsPerNode = params.find<int32_t>("nicsPerNode",1);
     m_maxUnexpectedMsg = params.find<int32_t>("pqs.maxUnexpectedMsg",32);
-    m_maxPostedShortBuffers = params.find<int32_t>("pqs.maxPostedShortBuffers",512); 
-    m_minPostedShortBuffers = params.find<int32_t>("pqs.minPostedShortBuffers",5); 
+    m_maxPostedShortBuffers = params.find<int32_t>("pqs.maxPostedShortBuffers",512);
+    m_minPostedShortBuffers = params.find<int32_t>("pqs.minPostedShortBuffers",5);
 
     m_dbg.init("", level, mask, Output::STDOUT );
 
@@ -839,7 +839,7 @@ void ProcessQueuesState::runInterruptCtx( )
 		return;
 	}
 
-	// we are now in interrupt context 
+	// we are now in interrupt context
 
     InterruptCtx* ctx = new InterruptCtx(
             std::bind( &ProcessQueuesState::leaveInterruptCtx, this, &m_intStack )
@@ -848,7 +848,7 @@ void ProcessQueuesState::runInterruptCtx( )
     m_intStack.push_back( ctx );
     dbg().debug(CALL_INFO,1,DBG_MSK_PQS_INT,"m_intStack.size()=%zu\n",m_intStack.size());
 
-	// clear the missed interrupt flag 
+	// clear the missed interrupt flag
 	m_missedInt = false;
     dbg().debug(CALL_INFO,1,DBG_MSK_PQS_INT,"call processQueues\n" );
 	processQueues( &m_intStack );

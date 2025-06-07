@@ -10,7 +10,7 @@ class app_state:
 
 _nids = None
 _apps = []
-        
+
 def _random( args ):
     # args: size [seed]
     global _nids
@@ -18,7 +18,7 @@ def _random( args ):
 
     if len(args) == 2:
         random.seed(int(args[1]))
-    
+
     random.shuffle(_nids)
 
     nid_list = _nids[0:size]
@@ -32,7 +32,7 @@ def _random_linear( args ):
 
     if len(args) == 2:
         random.seed(int(args[1]))
-    
+
     random.shuffle(_nids)
 
     nid_list = _nids[0:size]
@@ -45,7 +45,7 @@ def _linear( args ):
     # args: size
     global _nids
     size = int(args[0])
-    
+
     _nids.sort()
 
     nid_list = _nids[0:size]
@@ -56,7 +56,7 @@ def _linear( args ):
 
 def _interval( args ):
     # args: start_index interval [count]
-    
+
     # if count is not specified, it will go through the end.  If count
     # takes you beyond the end, it will stop at the end of the nid
     # list
@@ -67,7 +67,7 @@ def _interval( args ):
         count = int(args[2])
     else:
         count = sys.maxsize
-        
+
     # Start with a sorted nid space
     _nids.sort()
 
@@ -79,7 +79,7 @@ def _interval( args ):
             index = index + interval - 1 # -1 because we popped a value
         else:
             break
-            
+
     return nid_list
 
 
@@ -119,7 +119,7 @@ def _finalize_qos_config(total_nodes) :
 
     #sst.merlin._params["portcontrol.output_arb"] = "merlin.arb.output.qos.multi"
     #sst.merlin._params["portcontrol.arbitration.qos_settings"] = qos_settings
-    
+
 
 def generate( args ):
 
@@ -138,7 +138,7 @@ def generate( args ):
     # linear size
     # interval start length interval
     # random size
-    
+
     new_args = args[3:]
 
     # call function
@@ -152,9 +152,9 @@ def generate( args ):
 
     if not len(_nids):
         _finalize_qos_config(total_nodes)
-    
+
     return ','.join(str(num) for num in nid_list)
-        
+
     #if int(args) is 1:
     #    return '0-15'
     #if int(args) is 2:

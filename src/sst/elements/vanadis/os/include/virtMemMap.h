@@ -71,7 +71,7 @@ public:
             assert( 0 == strcmp( str, elf->getBinaryPath() ) );
             elfInfo = elf;
         } else if ( 0 == strcmp( str, "data" ) ) {
-            assert ( 1 == fscanf(fp,"dataStartAddr: %" PRIx64 "\n",&dataStartAddr) ); 
+            assert ( 1 == fscanf(fp,"dataStartAddr: %" PRIx64 "\n",&dataStartAddr) );
             output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"dataStartAddr: %#" PRIx64 "\n",dataStartAddr );
             size_t size;
             assert( 1 == fscanf(fp,"size: %zu\n", &size ) );
@@ -130,7 +130,7 @@ struct MemoryRegion {
     }
 
     ~MemoryRegion() {
-        for ( auto kv: m_virtToPhysMap) { 
+        for ( auto kv: m_virtToPhysMap) {
             auto page = kv.second;
             // don't delete text pages because they are in the page cache
             if ( name.compare("text" ) ) {
@@ -141,7 +141,7 @@ struct MemoryRegion {
         }
     }
     void incPageRefCnt() {
-        for ( auto kv: m_virtToPhysMap) { 
+        for ( auto kv: m_virtToPhysMap) {
             kv.second->incRefCnt();
         }
     }
@@ -172,15 +172,15 @@ struct MemoryRegion {
         if ( pageAddr >= backing->dataStartAddr && pageAddr + pageSize <= backing->dataStartAddr + backing->data.size() ) {
 
             size_t offset = pageAddr - backing->dataStartAddr;
-            MemoryRegionDbg("copy data"); 
+            MemoryRegionDbg("copy data");
             memcpy( data, backing->data.data() + offset, pageSize );
         } else {
-            MemoryRegionDbg("zero data"); 
+            MemoryRegionDbg("zero data");
             bzero( data, pageSize );
         }
         return data;
     }
-    
+
     void checkpoint( FILE* fp ) {
         fprintf(fp,"#MemoryRegion start\n");
         fprintf(fp,"name: %s\n",name.c_str());
@@ -212,7 +212,7 @@ struct MemoryRegion {
         char str[80];
         assert( 1 == fscanf(fp,"name: %s\n",str));
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"name: %s\n",str);
-        name = str; 
+        name = str;
 
         assert( 1 == fscanf(fp,"addr: %" PRIx64 "\n",&addr) );
         output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"addr: %#" PRIx64 "\n",addr);
@@ -248,7 +248,7 @@ struct MemoryRegion {
         free(tmp);
     }
 
-    MemoryBacking* backing; 
+    MemoryBacking* backing;
     OS::Page* getPage( int vpn ) {
         auto iter = m_virtToPhysMap.find( vpn );
         assert( iter != m_virtToPhysMap.end() );
@@ -263,8 +263,8 @@ struct MemoryRegion {
 class VirtMemMap {
 
 public:
-    VirtMemMap() : m_refCnt(1) { 
-        m_freeList = new FreeList( 0x1000, 0x80000000); 
+    VirtMemMap() : m_refCnt(1) {
+        m_freeList = new FreeList( 0x1000, 0x80000000);
     }
 
     VirtMemMap( const VirtMemMap& obj ) : m_refCnt(1) {
@@ -282,7 +282,7 @@ public:
         for (auto iter = m_regionMap.begin(); iter != m_regionMap.end(); iter++) {
             delete iter->second;
         }
-    
+
         delete m_freeList;
     }
 
@@ -298,10 +298,10 @@ public:
         } else {
             assert( start = m_freeList->alloc( length ) );
         }
-        
-        m_regionMap[start] = new MemoryRegion( name, start, length, perms, backing ); 
-       
-        print(name); 
+
+        m_regionMap[start] = new MemoryRegion( name, start, length, perms, backing );
+
+        print(name);
         return start;
     }
 
@@ -320,13 +320,13 @@ public:
         VirtMemDbg("addr=%#" PRIx64 "\n", addr );
         auto iter = m_regionMap.begin();
         for ( ; iter != m_regionMap.end(); ++iter ) {
-            auto region = iter->second; 
+            auto region = iter->second;
             VirtMemDbg("region %s [%#" PRIx64 " - %#" PRIx64 "] length=%zu perms=%#x\n",
                     region->name.c_str(),region->addr,region->addr+region->length, region->length,region->perms);
             if ( addr >= region->addr && addr < (unsigned) (region->addr + region->length ) ) {
                 return region;
             }
-        } 
+        }
         return nullptr;
     }
 
@@ -334,13 +334,13 @@ public:
         VirtMemDbg("name=%s\n", name.c_str() );
         auto iter = m_regionMap.begin();
         for ( ; iter != m_regionMap.end(); ++iter ) {
-            auto region = iter->second; 
+            auto region = iter->second;
             VirtMemDbg("region %s [%#" PRIx64 " - %#" PRIx64 "] length=%zu perms=%#x\n",
                     region->name.c_str(),region->addr,region->addr+region->length, region->length,region->perms);
-            if ( 0 == strcmp( name.c_str(), region->name.c_str() ) ) { 
+            if ( 0 == strcmp( name.c_str(), region->name.c_str() ) ) {
                 return region;
             }
-        } 
+        }
         return nullptr;
     }
 
@@ -348,10 +348,10 @@ public:
         VirtMemDbg("addr=%#" PRIx64 " length=%zu prot=%#x\n", addr, length, prot );
         auto* region = findRegion( addr );
         if ( addr == region->addr ) {
-            // split region in two 
+            // split region in two
             if ( length < region->length ) {
                 // create part two of split
-                m_regionMap[addr+length] = new MemoryRegion( region->name, addr + length, region->length - length, region->perms ); 
+                m_regionMap[addr+length] = new MemoryRegion( region->name, addr + length, region->length - length, region->perms );
                 // update part one of split
                 region->length = length;
                 region->perms = prot;
@@ -363,8 +363,8 @@ public:
                 assert(0);
             }
         } else if ( ( addr < region->addr + region->length ) && ( addr + length == region->end() ) ) {
-            region->length -= length; 
-            m_regionMap[addr] = new MemoryRegion( region->name, addr, length, prot ); 
+            region->length -= length;
+            m_regionMap[addr] = new MemoryRegion( region->name, addr, length, prot );
         } else {
                 // we currently are only supporting splitting a region
                 assert(0);
@@ -372,26 +372,26 @@ public:
     }
 
     void print(std::string msg) {
-#ifdef VIRT_MEM_DBG 
+#ifdef VIRT_MEM_DBG
         auto iter = m_regionMap.begin();
         printf("Process VM regions: %s\n",msg.c_str());
         for ( ; iter != m_regionMap.end(); ++iter ) {
-            auto region = iter->second; 
-            std::string perms; 
+            auto region = iter->second;
+            std::string perms;
             if ( region->perms & 1<<2 ) {
-                perms += "r"; 
+                perms += "r";
             } else {
-                perms += "-"; 
+                perms += "-";
             }
             if ( region->perms & 1<<1 ) {
-                perms += "w"; 
+                perms += "w";
             } else {
-                perms += "-"; 
+                perms += "-";
             }
             if ( region->perms & 1<<0 ) {
-                perms += "x"; 
+                perms += "x";
             } else {
-                perms += "-"; 
+                perms += "-";
             }
             printf("%#" PRIx64 "-%#" PRIx64 " %s [%s]\n",region->addr, region->addr + region->length, perms.c_str(), region->name.c_str());
         }
@@ -417,7 +417,7 @@ public:
 
         std::deque<MemoryRegion*> regions;
         do {
-            auto* region = findRegion(addr); 
+            auto* region = findRegion(addr);
             if ( nullptr == region ) return EINVAL;
 
             VirtMemDbg("found region %s() addr=%#" PRIx64 " length=%zu\n",region->name.c_str(), region->addr, region->length);
@@ -441,7 +441,7 @@ public:
         return 0;
     }
 
-    void initBrk( uint64_t addr ) { 
+    void initBrk( uint64_t addr ) {
         VirtMemDbg("brk=%#" PRIx64 "\n",addr);
         auto start = addRegion( "heap", addr, 0x10000000, 0x6 );
         assert( addr == start );
@@ -449,11 +449,11 @@ public:
         m_brk = addr;
     }
 
-    uint64_t getBrk() { 
+    uint64_t getBrk() {
         return m_brk;
     }
 
-    bool setBrk( uint64_t brk ) { 
+    bool setBrk( uint64_t brk ) {
         assert( brk >= m_brk );
         assert( brk < m_heapRegion->addr + m_heapRegion->length );
         m_brk = brk;
@@ -462,12 +462,12 @@ public:
 
     void checkpoint( FILE* fp ) {
         fprintf(fp,"#VirtMemMap start\n");
-        fprintf(fp,"m_brk: %#" PRIx64 "\n",m_brk);    
-        fprintf(fp,"m_refCnt: %d\n",m_refCnt);    
-        fprintf(fp,"m_regionMap.size() %zu\n",m_regionMap.size());    
+        fprintf(fp,"m_brk: %#" PRIx64 "\n",m_brk);
+        fprintf(fp,"m_refCnt: %d\n",m_refCnt);
+        fprintf(fp,"m_regionMap.size() %zu\n",m_regionMap.size());
 
         for ( auto & x : m_regionMap ) {
-            fprintf(fp,"addr: %#" PRIx64 "\n",x.first);    
+            fprintf(fp,"addr: %#" PRIx64 "\n",x.first);
             x.second->checkpoint(fp);
         }
         fprintf(fp,"#VirtMemMap end\n");
@@ -482,19 +482,19 @@ public:
         free(str);
 
         uint64_t foo;
-        assert( 1 == fscanf(fp,"m_brk: %" PRIx64 "\n",&foo));    
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_brk: %#" PRIx64"\n",foo);    
+        assert( 1 == fscanf(fp,"m_brk: %" PRIx64 "\n",&foo));
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_brk: %#" PRIx64"\n",foo);
 
-        assert( 1 == fscanf(fp,"m_refCnt: %d\n",&m_refCnt));    
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_refCnt: %d\n",m_refCnt);    
+        assert( 1 == fscanf(fp,"m_refCnt: %d\n",&m_refCnt));
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_refCnt: %d\n",m_refCnt);
 
         size_t size;
-        assert( 1 == fscanf(fp,"m_regionMap.size() %zu\n",&size));    
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_regionMap.size() %zu\n",size);    
+        assert( 1 == fscanf(fp,"m_regionMap.size() %zu\n",&size));
+        output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"m_regionMap.size() %zu\n",size);
         for ( auto i = 0; i < size; i++ ) {
             uint64_t addr;
-            assert( 1 == fscanf(fp,"addr: %" PRIx64 "\n",&addr));    
-            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"addr: %#" PRIx64 "\n",addr);    
+            assert( 1 == fscanf(fp,"addr: %" PRIx64 "\n",&addr));
+            output->verbose(CALL_INFO, 0, VANADIS_DBG_CHECKPOINT,"addr: %#" PRIx64 "\n",addr);
 
             m_regionMap[addr] = new MemoryRegion( output, fp, memManager, elfInfo );
         }

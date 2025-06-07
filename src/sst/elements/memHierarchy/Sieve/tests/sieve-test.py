@@ -51,7 +51,7 @@ sieveId.addParams({
     "associativity": 16,
     "cache_line_size": 64,
     "output_file" : "mallocRank.txt"
-})    
+})
 
 for x in range(corecount):
     arielL1Link = sst.Link("cpu_cache_link_%d"%x)

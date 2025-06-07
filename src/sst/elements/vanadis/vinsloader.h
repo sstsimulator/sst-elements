@@ -250,11 +250,11 @@ public:
 		}
 	}
 
-    VanadisInstructionBundle* getBundleAt(const uint64_t addr) { 
+    VanadisInstructionBundle* getBundleAt(const uint64_t addr) {
         switch(loader_mode) {
         case VanadisInstructionLoaderMode::LRU_CACHE_MODE:
         {
-            return uop_cache->find(addr); 
+            return uop_cache->find(addr);
         } break;
         case VanadisInstructionLoaderMode::INFINITE_CACHE_MODE:
         {

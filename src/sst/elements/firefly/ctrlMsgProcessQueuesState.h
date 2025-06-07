@@ -97,7 +97,7 @@ class ProcessQueuesState : public SubComponent
     SST_ELI_DOCUMENT_PORTS(
         {"loop", "loopback port", {}}
     )
-    
+
     SST_ELI_DOCUMENT_STATISTICS(
         { "posted_receive_list", "", "count", 1 },
         { "received_msg_list", "", "count", 1 }
@@ -457,7 +457,7 @@ class ProcessQueuesState : public SubComponent
     const char* recvdMsgQsize() {
 		static char m_stringBuf[100];
 		snprintf( m_stringBuf, 100, "%d:%zu,%zu",m_recvdMsgQpos, m_recvdMsgQ[0].size(), m_recvdMsgQ[1].size() );
-        return m_stringBuf; 
+        return m_stringBuf;
     }
 
     void loopHandler( int, std::vector<IoVec>&, void* );

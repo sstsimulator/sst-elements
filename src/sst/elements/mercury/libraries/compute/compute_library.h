@@ -25,7 +25,7 @@ namespace SST {
 namespace Hg {
 
 class ComputeLibrary : public ComputeAPI, public Library
-{  
+{
  public:
 
    SST_ELI_REGISTER_DERIVED(

@@ -328,7 +328,7 @@ int MSHR::insertEvent(Addr addr, MemEventBase* event, int pos, bool fwdRequest, 
 int MSHR::insertEventIfConflict(Addr addr, MemEventBase* event) {
     if (mshr_.find(addr) == mshr_.end())
         return 0;
-    
+
     if (size_ == max_size_-1) { /* Assuming fwdEvent == false */
         if (mem_h_is_debug_addr(addr)) {
             stringstream reason;
@@ -448,7 +448,7 @@ MemEventStatus MSHR::insertFlush(MemEventBase* event, bool forward_flush, bool c
             status = flushes_.front() == event ? MemEventStatus::OK : MemEventStatus::Stall;
         }
     }
-    
+
     return status;
 }
 

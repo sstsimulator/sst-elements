@@ -189,7 +189,7 @@ public:
 
     /* Construct a new MSHR */
     MSHR(ComponentId_t cid, Output* dbg, int maxSize, string cacheName, std::set<Addr> debugAddr);
-    
+
     /* Return maxSize_ */
     int getMaxSize();
 
@@ -198,7 +198,7 @@ public:
 
     /* Return size of MSHR list for a particular address */
     unsigned int getSize(Addr addr);
-    
+
     /* Return the size of the flush queue */
     int getFlushSize();
 
@@ -232,7 +232,7 @@ public:
 
     /* Get the entry at index 'index' in 'addr's list. */
     MSHREntry getEntry(Addr addr, size_t index);
-    
+
     /* Remove the entry at index 'index' in 'addr's list. */
     void removeEntry(Addr addr, size_t index);
 
@@ -295,7 +295,7 @@ public:
     bool hasData(Addr addr);
     bool getDataDirty(Addr addr);
     void setDataDirty(Addr addr, bool dirty);
-    
+
     /* Print contents of MSHR to out*/
     void printStatus(Output &out);
 

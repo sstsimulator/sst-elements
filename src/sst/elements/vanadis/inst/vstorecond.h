@@ -29,7 +29,7 @@ public:
         const int64_t offset, const uint16_t valueReg, const uint16_t condResultReg, const uint16_t store_width,
         VanadisStoreRegisterType reg_type) :
         VanadisInstruction(
-            addr, hw_thr, isa_opts, 
+            addr, hw_thr, isa_opts,
             reg_type == STORE_INT_REGISTER ? 2 : 1, 1,
             reg_type == STORE_INT_REGISTER ? 2 : 1, 1,
             reg_type == STORE_FP_REGISTER ? 1 : 0, 0,
@@ -46,7 +46,7 @@ public:
         const int64_t offset, const uint16_t valueReg, const uint16_t condResultReg, const uint16_t store_width,
         VanadisStoreRegisterType reg_type, int64_t successValue, int64_t failureValue) :
         VanadisInstruction(
-            addr, hw_thr, isa_opts, 
+            addr, hw_thr, isa_opts,
             reg_type == STORE_INT_REGISTER ? 2 : 1, 1,
             reg_type == STORE_INT_REGISTER ? 2 : 1, 1,
             reg_type == STORE_FP_REGISTER ? 1 : 0, 0,
@@ -60,19 +60,19 @@ public:
 
     VanadisStoreConditionalInstruction(const VanadisStoreConditionalInstruction& copy_me) :
         VanadisInstruction(copy_me),VanadisStoreInstruction(copy_me), value_success(copy_me.value_success),
-        value_failure(copy_me.value_failure) 
+        value_failure(copy_me.value_failure)
         {
             ;
         }
 
-    VanadisStoreConditionalInstruction* clone() { 
-        return new VanadisStoreConditionalInstruction(*this); 
+    VanadisStoreConditionalInstruction* clone() {
+        return new VanadisStoreConditionalInstruction(*this);
     }
 
     int64_t getResultSuccess() const { return value_success; }
     int64_t getResultFailure() const { return value_failure; }
 
-protected: 
+protected:
     const int64_t value_success;
     const int64_t value_failure;
 

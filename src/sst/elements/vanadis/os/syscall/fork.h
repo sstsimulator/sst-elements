@@ -26,13 +26,13 @@ namespace Vanadis {
 class VanadisForkSyscall : public VanadisSyscall {
 public:
     VanadisForkSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, VanadisSyscallForkEvent* event );
-    ~VanadisForkSyscall() { 
+    ~VanadisForkSyscall() {
         delete m_threadID;
     }
     void handleEvent( VanadisCoreEvent* ev );
 
- private:  
-    OS::ProcessInfo* m_child;  
+ private:
+    OS::ProcessInfo* m_child;
     OS::HwThreadID* m_threadID;
 };
 

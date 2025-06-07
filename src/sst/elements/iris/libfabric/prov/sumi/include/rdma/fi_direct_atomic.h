@@ -35,7 +35,7 @@
 #ifndef _FI_DIRECT_ATOMIC_H_
 #define _FI_DIRECT_ATOMIC_H_
 
-#define FABRIC_DIRECT_ATOMIC 1 
+#define FABRIC_DIRECT_ATOMIC 1
 
 /*******************************************************************************
  * GNI API Functions

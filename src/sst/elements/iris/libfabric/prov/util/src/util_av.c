@@ -896,7 +896,7 @@ int ofi_ip_av_lookup(struct fid_av *av_fid, fi_addr_t fi_addr,
 		container_of(av_fid, struct util_av, av_fid);
 	size_t av_addrlen;
 	void *av_addr = ofi_av_lookup_addr(av, fi_addr, &av_addrlen);
-	
+
 	memcpy(addr, av_addr, MIN(*addrlen, av_addrlen));
 	*addrlen = av->addrlen;
 

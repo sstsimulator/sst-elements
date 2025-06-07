@@ -23,7 +23,7 @@
 namespace SST {
 namespace Hg {
 
-class UnblockEvent : 
+class UnblockEvent :
   public ExecutionEvent,
   public SST::Hg::thread_safe_new<UnblockEvent>
 {

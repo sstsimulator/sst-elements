@@ -12,7 +12,7 @@ RISCV_SYSROOT := $(RISCV_TOOLCHAIN_INSTALL_PATH)/sysroot/
 RISCV_CXX := $(wildcard $(RISCV_TOOLCHAIN_INSTALL_PATH)/riscv64-unknown-linux-gnu/include/c++/*/)
 
 # Clang flags
-C_FLAGS_RISCV_LINUX := --target=riscv64-unknown-linux-gnu -march=rv64gc -static-libgcc --gcc-toolchain=$(RISCV_TOOLCHAIN_INSTALL_PATH) --sysroot=$(RISCV_SYSROOT) 
+C_FLAGS_RISCV_LINUX := --target=riscv64-unknown-linux-gnu -march=rv64gc -static-libgcc --gcc-toolchain=$(RISCV_TOOLCHAIN_INSTALL_PATH) --sysroot=$(RISCV_SYSROOT)
 CXX_FLAGS_RISCV_LINUX := -static-libgcc -static-libstdc++ -static --gcc-toolchain=$(RISCV_TOOLCHAIN_INSTALL_PATH) --sysroot=$(RISCV_SYSROOT) -nostdlibinc -stdlib++-isystem$(RISCV_CXX)/ -stdlib++-isystem$(RISCV_SYSROOT)/usr/include -stdlib++-isystem$(RISCV_CXX)/riscv64-unknown-linux-gnu --target=riscv64-unknown-linux-gnu  -march=rv64gc
 CXX_FLAGS_RISCV_LINUX_CLANG_ONLY := --gcc-toolchain=$(RISCV_TOOLCHAIN_INSTALL_PATH) --sysroot=$(RISCV_SYSROOT) -I$(RISCV_SYSROOT)/usr/include --target=riscv64 -march=rv64gc
 CXX_FLAGS_CUDA := --cuda-gpu-arch=$(GPU_ARCH) --cuda-path=$(CUDA_INSTALL_PATH) -L$(CUDA_INSTALL_PATH)/lib64 -lcudart -ldl -lrt -pthread
@@ -49,7 +49,7 @@ vecadd: vecadd.cu test_vanadis_envs test_llvm_env vanadis_cuda
 	$(CLANG_PREFIX)clang++ $< -o $@ $(CXX_FLAGS_RISCV_CUDA) $(CXX_FLAGS_CUDA_WRAPPER) $(CXX_FLAGS_RISCV_LINUX)
 
 vecadd_normal: vecadd.cu
-	$(CLANG_PREFIX)clang++ $< -o $@ $(CXX_FLAGS_CUDA_WRAPPER) $(CXX_FLAGS_CUDA) 
+	$(CLANG_PREFIX)clang++ $< -o $@ $(CXX_FLAGS_CUDA_WRAPPER) $(CXX_FLAGS_CUDA)
 
 # From CUDA samples
 simpleStreams: simpleStreams.cu test_vanadis_envs test_llvm_env vanadis_cuda

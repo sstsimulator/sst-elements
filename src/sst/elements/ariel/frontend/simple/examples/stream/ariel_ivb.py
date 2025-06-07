@@ -173,7 +173,7 @@ for next_ring_stop in range((cores_per_group + memory_controllers_per_group + l3
     else:
         rtr_link = sst.Link("rtr_" + str(next_ring_stop))
         rtr_link.connect( (router_map["rtr_" + str(next_ring_stop)], "port0", ring_latency), (router_map["rtr_" + str(next_ring_stop+1)], "port1", ring_latency) )
-    
+
 for next_group in range(groups):
     print("Configuring core and memory controller group " + str(next_group) + "...")
 
@@ -238,7 +238,7 @@ for next_group in range(groups):
         l3cache.addParams({
             "slice_id" : str((next_group * l3cache_blocks_per_group) + next_l3_cache_block)
         })
-        
+
         l3_nic = l3cache.setSubComponent("highlink", "memHierarchy.MemNIC")
         l3_nic.addParams(nic_params)
         l3_nic.addParam("group", 2)
@@ -259,7 +259,7 @@ for next_group in range(groups):
         })
         memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
         memory.addParams(memory_params)
-            
+
         dc = sst.Component("dc_" + str(next_memory_ctrl_id), "memHierarchy.DirectoryController")
         dc.addParams({
             "addr_range_start" : next_memory_ctrl_id * mem_interleave_size,

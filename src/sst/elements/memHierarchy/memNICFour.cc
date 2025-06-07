@@ -280,7 +280,7 @@ MemNICFour::OrderedMemRtrEvent* MemNICFour::processRecv(SimpleNetwork::Request *
             }
             if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
                 sourceEndpointInfo.insert(imre->info);
-            } 
+            }
             if (destIDs.find(imre->info.id) != destIDs.end()) {
                 destEndpointInfo.insert(imre->info);
             }

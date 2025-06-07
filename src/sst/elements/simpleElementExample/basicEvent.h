@@ -22,7 +22,7 @@ namespace SST {
 namespace simpleElementExample {
 
 /*
- *  Example Event that gets passed on links 
+ *  Example Event that gets passed on links
  *  between components in this library
  *
  * All Events inherit from SST::Event
@@ -39,7 +39,7 @@ class basicEvent : public SST::Event
 public:
     // Constructor
     basicEvent() : SST::Event(), last(false) { }
-    
+
     // Example data members
     std::vector<char> payload;
     bool last;

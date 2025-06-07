@@ -30,7 +30,7 @@ public:
         const uint64_t offst, const uint16_t valueReg, const uint16_t store_bytes, const bool isLeftStore,
         VanadisStoreRegisterType regT) :
         VanadisInstruction(
-            addr, hw_thr, isa_opts, 
+            addr, hw_thr, isa_opts,
             regT == STORE_INT_REGISTER ? 2 : 1,  0,
             regT == STORE_INT_REGISTER ? 2 : 1,  0,
             regT == STORE_FP_REGISTER ? 1 : 0, 0,

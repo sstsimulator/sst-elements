@@ -17,7 +17,7 @@
 #define VECSHIFTREGISTER_H_
 
 #include <iostream>
-#include <sstream> 
+#include <sstream>
 #include <inttypes.h>
 #include <array>
 #include <cstdint>

@@ -30,7 +30,7 @@ using namespace SST::MemHierarchy;
 
 namespace SST {
 namespace BalarComponent {
-/* 
+/*
  * DMA Engine used in balar component
  */
 
@@ -38,13 +38,13 @@ class DMAEngine : public SST::Component {
 public:
     SST_ELI_REGISTER_COMPONENT(DMAEngine, "balar", "dmaEngine", SST_ELI_ELEMENT_VERSION(1,0,0),
     "DMA Engine used in balar", COMPONENT_CATEGORY_PROCESSOR)
-    SST_ELI_DOCUMENT_PARAMS( 
+    SST_ELI_DOCUMENT_PARAMS(
         {"verbose",                 "(uint) Determine how verbose the output from the device is", "0"},
         {"clock",                   "(UnitAlgebra/string) Clock frequency", "1GHz"},
         {"mmio_addr",               "(uint) Starting addr mapped to the device", "0"},
         {"mmio_size",               "(uint) Size of the MMIO memory range (Bytes)", "512"},
     )
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( 
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         {"mmio_iface", "Command packet MMIO interface", "SST::Interfaces::StandardMem"},
         {"mem_iface", "Memory data packet interface", "SST::Interfaces::StandardMem"},
     )
@@ -80,9 +80,9 @@ public:
      * @brief DMA control and status registers
      *        Host need to pass a struct like this in write request
      *        to initiate a DMA transfer
-     *        
+     *
      *        Once the transfer is done, status field will be updated
-     * 
+     *
      */
     struct DMAEngineControlRegisters {
         uint8_t * simulator_mem_addr;
@@ -121,11 +121,11 @@ protected:
          * @brief Pass in the simulator buffer address and size
          *        Also the SST memspace address and size
          *        Also the copy direction
-         * 
-         * @param write 
+         *
+         * @param write
          */
         virtual void handle(StandardMem::Write* write) override;
-        
+
         // Handlers for mem responses
         virtual void handle(StandardMem::ReadResp* resp) override;
         virtual void handle(StandardMem::WriteResp* resp) override;

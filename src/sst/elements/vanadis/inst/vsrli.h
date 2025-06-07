@@ -65,7 +65,7 @@ public:
             phys_int_regs_in[0], imm_value);
     }
 
-    void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+    void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
                 uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0) override
     {
         #ifdef VANADIS_BUILD_DEBUG
@@ -82,7 +82,7 @@ public:
         #endif
     }
 
-    void instOp(VanadisRegisterFile* regFile, 
+    void instOp(VanadisRegisterFile* regFile,
                                 uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0) override
     {
         if constexpr ( sizeof( register_format ) == 4 ) {

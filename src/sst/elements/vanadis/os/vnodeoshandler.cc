@@ -66,7 +66,7 @@ static const char* SyscallName[] = {
     FOREACH_FUNCTION(GENERATE_STRING)
 };
 
-VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* process, VanadisSyscallEvent* sys_ev, SST::Link* coreLink ) 
+VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* process, VanadisSyscallEvent* sys_ev, SST::Link* coreLink )
 {
     if ( sys_ev->getOperation() < NUM_SYSCALLS  ) {
        output->verbose(CALL_INFO, 1, VANADIS_OS_DBG_SYSCALL, "from core=%" PRIu32 " thr=%" PRIu32 " syscall=%s\n",
@@ -82,7 +82,7 @@ VanadisSyscall* VanadisNodeOSComponent::handleIncomingSyscall( OS::ProcessInfo* 
     // ***********************************
     switch (sys_ev->getOperation()) {
         case SYSCALL_OP_CHECKPOINT: {
-            assert ( CHECKPOINT_SAVE == m_checkpoint ); 
+            assert ( CHECKPOINT_SAVE == m_checkpoint );
             syscall = new VanadisCheckpointSyscall( this, coreLink, process, convertEvent<VanadisSyscallCheckpointEvent*>( "checkpoint", sys_ev ) );
         } break;
         case SYSCALL_OP_SET_ROBUST_LIST: {

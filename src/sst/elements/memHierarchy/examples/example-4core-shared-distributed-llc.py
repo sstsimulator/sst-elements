@@ -23,7 +23,7 @@ l2cache_obj = []
 
 cpu_params = {
     "memFreq" : 2,          # On average, issue requests every 2 cycles
-    "memSize" : "1MiB",     # Use memory addresses between 0 & 1MiB 
+    "memSize" : "1MiB",     # Use memory addresses between 0 & 1MiB
     "verbose" : 0,          # No extra output
     "clock" : "3.5GHz",     # Run at 3.5GHz
     "rngseed" : 111,        # Random seed for access type and address generation
@@ -48,7 +48,7 @@ for x in range(4):
 ## 16KiB, 4-way set associative with 64B lines
 ## MESI coherence, LRU replacement policy
 ## 3 cycle hit latency, 3.5GHz clock
-l1_params = { 
+l1_params = {
     "access_latency_cycles" : "3",
     "cache_frequency" : "3.5Ghz",
     "replacement_policy" : "lru",
@@ -139,7 +139,7 @@ for x in range(4):
 
     link_bus_l2cache = sst.Link("link_bus_l2cache" + str(x))
     link_bus_l2cache.connect( (bus0, "lowlink" + str(x), "500ps"), (l2cache_obj[x], "highlink", "500ps") )
-    
+
     link_l2cache_bus = sst.Link("link_l2cache_bus" + str(x))
     link_l2cache_bus.connect( (l2cache_obj[x], "lowlink", "500ps"), (bus1, "highlink" + str(x), "500ps") )
 

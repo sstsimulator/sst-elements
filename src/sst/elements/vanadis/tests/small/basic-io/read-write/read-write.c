@@ -35,10 +35,10 @@ from processing in memory to conventional processors connected by conventional n
 void writeData( const char *pathname );
 void readData( const char* pathname );
 
-static FILE* output; 
+static FILE* output;
 
 int main( int argc, char* argv[] ) {
-    output=stdout; 
+    output=stdout;
     writeData( PATH_NAME );
     readData( PATH_NAME );
     if ( unlink( PATH_NAME ) ) {
@@ -69,11 +69,11 @@ void writeData( const char* pathname ) {
             exit(-1);
         }
         printf("write %d bytes\n",tmp);
-        
+
         offset += tmp;
         ++pos;
     }
-    
+
     if ( close( fd ) ) {
         fprintf(output,"%s() close failed, %s",__func__,strerror(errno));
         exit(-1);

@@ -185,7 +185,7 @@ typedef atomic_long	ofi_atomic_int64_t;
 		*(ofi_atomic_ptr(atomic)) = value;							\
 		ATOMIC_INIT(atomic);									\
 	}
-	
+
 #else /* HAVE_ATOMICS */
 
 #define OFI_ATOMIC_DEFINE(radix)								\

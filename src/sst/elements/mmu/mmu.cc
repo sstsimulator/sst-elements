@@ -59,7 +59,7 @@ MMU::MMU(SST::ComponentId_t id, SST::Params& params) : SubComponent(id), m_nicTl
             m_dbg.fatal(CALL_INFO, -1, "Error: %s was unable to configure itlb link `%s`\n",getName().c_str(),name.c_str());
         }
         m_coreLinks.push_back( new CoreTlbLinks( dtlb, itlb ));
-    }  
+    }
 
     if ( useNicTlb ) {
         std::string name = "nicTlb";
@@ -70,7 +70,7 @@ MMU::MMU(SST::ComponentId_t id, SST::Params& params) : SubComponent(id), m_nicTl
     }
 }
 
-void MMU::init( unsigned int phase ) 
+void MMU::init( unsigned int phase )
 {
     m_dbg.debug(CALL_INFO_LONG,2,0,"phase=%d\n",phase);
     if ( 0 == phase ) {

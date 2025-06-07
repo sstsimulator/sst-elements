@@ -205,7 +205,7 @@ NIC::sendWhatYouCan(int vn, Pending& p) {
         ack_queue_[vn].push(nullptr);
       }
       req->givePayload(p.payload);
-    } else {     
+    } else {
       // Use a lightweight event to track flows
       FlowTracker* flow_tracker = new FlowTracker(p.payload->flowId());
       req->givePayload(flow_tracker);
@@ -377,7 +377,7 @@ NIC::finishMemcpy(NetworkMessage* payload)
   sendToNode(payload);
 }
 
-void 
+void
 NIC::recordMessage(NetworkMessage *netmsg) {
 
   std::ostringstream debug_stream;
