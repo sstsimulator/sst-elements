@@ -71,11 +71,11 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                                     { "split_stores", "Count the number of stores which are fractured due to cache boundaries", "operations", 1},
                                     { "split_loads", "Count the number of loads which are fractured due to cache boundaries", "operations", 1})
 
-        
+
         VanadisBasicLoadStoreQueue(ComponentId_t id, Params& params, int coreid, int hwthreads) : VanadisLoadStoreQueue(id, params, coreid, hwthreads),
             max_stores(params.find<size_t>("max_stores", 8)),
         max_loads(params.find<size_t>("max_loads", 16)),
-        max_issue_attempts_per_cycle(params.find("issues_per_cycle", 2)) 
+        max_issue_attempts_per_cycle(params.find("issues_per_cycle", 2))
         {
             std_mem_handlers = new VanadisBasicLoadStoreQueue::StandardMemHandlers(this, output);
 
@@ -131,28 +131,28 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
         size_t loadSize() override { return op_q_size; }
         size_t storeBufferSize() override { return std_stores_in_flight.size(); }
 
-        void push(VanadisStoreInstruction* store_me) override 
+        void push(VanadisStoreInstruction* store_me) override
         {
             op_q[store_me->getHWThread()].push_back( new VanadisBasicStoreEntry(store_me) );
             op_q_size++;
             stat_store_issued->addData(1);
         }
 
-        void push(VanadisLoadInstruction* load_me) override 
+        void push(VanadisLoadInstruction* load_me) override
         {
             op_q[load_me->getHWThread()].push_back( new VanadisBasicLoadEntry(load_me) );
             op_q_size++;
             stat_loads_issued->addData(1);
         }
 
-        void push(VanadisFenceInstruction* fence) override 
+        void push(VanadisFenceInstruction* fence) override
         {
             op_q[fence->getHWThread()].push_back( new VanadisBasicFenceEntry(fence) );
             op_q_size++;
             stat_fences_issued->addData(1);
         }
 
-        void clearLSQByThreadID(const uint32_t thread) override 
+        void clearLSQByThreadID(const uint32_t thread) override
         {
             // Iterate over the queue, anything with a matching thread ID is
             // first deleted and then removed from the queue, otherwise entry
@@ -183,7 +183,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
 
         // must be implemented to allow the memory system to initialize itself during
         // boot-up
-        void init(unsigned int phase) override 
+        void init(unsigned int phase) override
         {
             memInterface->init(phase);
 
@@ -193,7 +193,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
             output->verbose(CALL_INFO, 2, 0, "updating cache line size to: %" PRIu64 "\n", cache_line_width);
         }
 
-        void printStatus(SST::Output& out) override 
+        void printStatus(SST::Output& out) override
         {
             int32_t next_line = 0;
 
@@ -214,7 +214,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
             }
         }
 
-        void tick(uint64_t cycle) override 
+        void tick(uint64_t cycle) override
         {
             if(output->getVerboseLevel() >= 16) {
                 output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "-> tick LSQ at cycle %" PRIu64 "\n", cycle);
@@ -265,10 +265,10 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
         }
 
 
-        
+
     protected:
 
-        class StandardMemHandlers : public Interfaces::StandardMem::RequestHandler 
+        class StandardMemHandlers : public Interfaces::StandardMem::RequestHandler
         {
             public:
                 friend class VanadisBasicLoadStoreQueue;
@@ -284,7 +284,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                     uint32_t* target_thread,VanadisBasicLoadPendingEntry* load_entry,
                     uint8_t fp)
                 {
-                    
+
                     *target_thread = load_ins->getHWThread();
                     out->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, " (ScalarLSQ) -> copyLoadResp thr=%d\n", *target_thread);
                     if(fp==true)
@@ -328,7 +328,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                     }
                 }
 
-                virtual void handle(StandardMem::ReadResp* ev) 
+                virtual void handle(StandardMem::ReadResp* ev)
                 {
                     out->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "-> handle read-response (virt-addr: 0x%" PRI_ADDR ")\n", ev->vAddr);
                     lsq->stat_loaded_bytes->addData(ev->size);
@@ -367,7 +367,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
 
                     const uint16_t load_width = ev->size;
                     const uint64_t load_address = load_entry->getLoadAddress();
-                    
+
 
                     if ( ev->getFail())
                     {
@@ -377,7 +377,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                                         ev->pAddr, load_entry->getHWThread());
                         load_ins->flagError();
                     }
-                    if(ev->vAddr < 64) 
+                    if(ev->vAddr < 64)
                     {
                         out->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG,
                                         "ev virtual addr<64 "
@@ -415,7 +415,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
 
                         if ( ! load_ins->trapsError() ) {;
 
-                        
+
                         copyLoadResp(load_ins, &target_reg,&target_isa_reg,&target_thread,load_entry,fp);
 
                         assert(target_isa_reg < load_ins->getISAOptions()->countISAIntRegisters());
@@ -514,7 +514,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                     delete ev;
                 }
 
-                virtual void handle(StandardMem::WriteResp* ev) 
+                virtual void handle(StandardMem::WriteResp* ev)
                 {
                     out->verbose(CALL_INFO, 9, VANADIS_DBG_LSQ_STORE_FLG, "-> handle write-response (virt-addr: 0x%" PRI_ADDR ")\n", ev->vAddr);
                     lsq->stat_stored_bytes->addData(ev->size);
@@ -548,7 +548,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                     if(store_entry->containsRequest(ev->getID())) {
                         VanadisStoreInstruction* store_ins = store_entry->getStoreInstruction();
 
-                        switch(store_ins->getTransactionType()) 
+                        switch(store_ins->getTransactionType())
                         {
                             case MEM_TRANSACTION_LLSC_STORE:
                             {
@@ -560,7 +560,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                                 delete store_entry;
                                 delete ev;
                             } break;
-                            case MEM_TRANSACTION_LOCK: 
+                            case MEM_TRANSACTION_LOCK:
                             {
                                 store_ins->markExecuted();
                                 lsq->stores_pending[thr].erase(lsq->stores_pending[thr].begin());
@@ -584,7 +584,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                 VanadisBasicLoadStoreQueue* lsq;
         };
 
-        void processIncomingDataCacheEvent(StandardMem::Request* ev) 
+        void processIncomingDataCacheEvent(StandardMem::Request* ev)
         {
             output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "received incoming data cache request -> processIncomingDataCacheEvent()\n");
 
@@ -595,7 +595,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
             output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "completed pass off to incoming handlers\n");
         }
 
-        bool issueStoreFront(uint32_t thr) 
+        bool issueStoreFront(uint32_t thr)
         {
             if(stores_pending[thr].empty()) {
                 return false;
@@ -611,17 +611,17 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
             output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_STORE_FLG, "-> current pending store\n");
             VanadisStoreInstruction* store_ins = current_store->getStoreInstruction();
             output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_STORE_FLG, "-> current store\n");
-            if(output->getVerboseLevel() >= 16) 
+            if(output->getVerboseLevel() >= 16)
             {
                 output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_STORE_FLG, "-> current store queue front is ins addr: 0x%" PRI_ADDR "\n", store_ins->getInstructionAddress());
             }
 
             // check we have not already dispatched this entry
-            if( UNLIKELY(!current_store->isDispatched()) ) 
+            if( UNLIKELY(!current_store->isDispatched()) )
             {
                 output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_STORE_FLG, "--> store-front is not already dispatched so attempt to put into memory system.\n");
 
-                if( UNLIKELY(store_ins->checkFrontOfROB()) && LIKELY(store_ins->completedIssue()) ) 
+                if( UNLIKELY(store_ins->checkFrontOfROB()) && LIKELY(store_ins->completedIssue()) )
                 {
                     output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_STORE_FLG, "---> store is at front of ROB so OK to push into memory system.\n");
 
@@ -632,11 +632,11 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                         issue_result ? "success" : "failed");
 
                     // this was a standard store (not LLSC/LOCK) and we issued into system successfully
-                    if(LIKELY(issue_result)) 
+                    if(LIKELY(issue_result))
                     {
                         stores_pending[thr].pop_front();
                         stores_pending_size--;
-                        
+
 
                         if(output->getVerboseLevel() >= 16) {
                             output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_STORE_FLG, "---> issued store: 0x%" PRI_ADDR " / hw_thr: %" PRIu32 " / sw_thr: %" PRIu32 " into memory system using standard store operation\n",
@@ -649,8 +649,8 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                         output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_STORE_FLG, "---> issued store: 0x%" PRI_ADDR " / hw_thr: %" PRIu32 " / sw_thr: %" PRIu32 " / numStores: %" PRIu32 "\n",
                                 store_ins->getInstructionAddress(), store_ins->getHWThread(),current_store->getSWThr(), store_ins->getNumStores());
                         stat_stores_executed->addData(1);
-                    } 
-                    else 
+                    }
+                    else
                     {
                         output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_STORE_FLG, "---> issued non-standard store: 0x%" PRI_ADDR " / thr: %" PRIu32 " (marked dispatch, will stall until response)\n",
                             store_ins->getInstructionAddress(), store_ins->getHWThread());
@@ -667,7 +667,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
             return false;
         }
 
-        virtual void getStoreTarget(VanadisBasicStorePendingEntry* store_entry, 
+        virtual void getStoreTarget(VanadisBasicStorePendingEntry* store_entry,
             VanadisStoreInstruction* store_ins, uint16_t* target_thread, uint16_t* reg)
         {
             uint16_t thr = store_entry->getHWThread();
@@ -678,7 +678,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
         }
 
         bool issueStore(VanadisBasicStorePendingEntry* store_entry,
-            VanadisStoreInstruction* store_ins) 
+            VanadisStoreInstruction* store_ins)
         {
 
             const uint64_t store_address = store_entry->getStoreAddress();
@@ -695,7 +695,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
             #endif
 
             const bool needs_split = operationStraddlesCacheLine(store_address, store_width);
-            if(output->getVerboseLevel() >= 8) 
+            if(output->getVerboseLevel() >= 8)
             {
                 std::vector<uint8_t> tmp(store_width);
                 getStoreTarget(store_entry,store_ins, &target_thread, &target_reg);
@@ -755,7 +755,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                     payload.clear();
 
                     payload.resize(store_width_right);
-                    
+
 
                     getStoreTarget(store_entry,store_ins, &target_thread, &target_reg);
                     registerFiles->at(target_thread)->copyFromRegister(target_reg, store_ins->getRegisterOffset()+store_width_left, &payload[0], store_width_right,
@@ -835,7 +835,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
 
             return false;
         }
-        
+
         virtual void addLoadRequest(VanadisLoadInstruction* load_ins,VanadisBasicLoadPendingEntry* load_entry, StandardMem::Request* load_req)
         {
             // load_entry->addRequest(load_req->getID(), load_ins->getSWThread());
@@ -843,7 +843,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
             // load_ins->setNumLoads(1);
 
         }
-        
+
         void issueLoad(VanadisLoadInstruction* load_ins, uint64_t load_address, uint64_t load_width) {
             StandardMem::Request* load_req = nullptr;
 
@@ -949,7 +949,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
 
             // if the instruction does not trap an error we will continue to process it
             if(LIKELY(! load_ins->trapsError())) {
-                
+
 
                 assert(load_req != nullptr);
 
@@ -965,19 +965,19 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
 
         virtual bool sendLoadReq(VanadisLoadInstruction* load_ins)
         {
-            output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, 
+            output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG,
                 "In sendLoadReq (ScalarLSQ) hw_thr:%d\n", load_ins->getHWThread());
             std::vector<uint64_t> load_addresses;
             std::vector<uint16_t> load_widths;
 
             output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, " (ScalarLSQ) -> load ins: 0x%" PRI_ADDR " / thr: %" PRIu32 "\n",
             load_ins->getInstructionAddress(), load_ins->getHWThread());
-            bool result = load_process(load_ins->getHWThread(),load_ins, 
+            bool result = load_process(load_ins->getHWThread(),load_ins,
                     load_addresses, load_widths);
-            
+
             output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, " (ScalarLSQ) -> load ins: 0x%" PRI_ADDR " / thr: %" PRIu32 " result=%s #load_address=%lu #load_widths=%lu...\n",
                     load_ins->getInstructionAddress(), load_ins->getHWThread(), (result==true) ? "success":"fail", load_addresses.size(), load_widths.size());
-            
+
             if(LIKELY((load_addresses.size()>0) & (load_widths.size()>0)))
             {
                 issueLoad(load_ins, load_addresses[0], load_widths[0]);
@@ -988,7 +988,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
         virtual bool sendStoreReq(VanadisInstruction* store_ins_temp)
         {
             VanadisStoreInstruction* store_ins = dynamic_cast<VanadisStoreInstruction*>(store_ins_temp);
-            output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, 
+            output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG,
                 "In sendstoreReq (ScalarLSQ) hw_thr:%d\n", store_ins->getHWThread());
             uint64_t store_address_last = 0;
             uint8_t trap_error = 0;
@@ -1012,7 +1012,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
             return true;
         }
 
-        bool attempt_to_issue(uint64_t cycle, uint16_t attempt_this_cycle, int thr) 
+        bool attempt_to_issue(uint64_t cycle, uint16_t attempt_this_cycle, int thr)
         {
             // if we don't have any work to do, return and get out of here
             if(0 == op_q[thr].size()) {
@@ -1021,7 +1021,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
             VanadisBasicLoadStoreEntry* front_entry = op_q[thr].front();
             output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "-> cycle: %" PRIu64 " / attempt: %" PRIu16 " / thr: %" PRId32"\n", cycle, attempt_this_cycle, thr);
 
-            
+
 
             if(! front_entry->getInstruction()->completedIssue()) {
                 if(output->getVerboseLevel() >= 16) {
@@ -1038,14 +1038,14 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                     VanadisLoadInstruction* load_ins = dynamic_cast<VanadisLoadInstruction*>(
                         front_entry->getInstruction());
 
-                    if(UNLIKELY(load_ins == nullptr)) 
+                    if(UNLIKELY(load_ins == nullptr))
                     {
                         output->fatal(CALL_INFO, -1, "Error: attempted to convert a load entry to a load instruction but failed, ins: 0x%" PRI_ADDR " / thr: %" PRIu32 "\n",
                             front_entry->getInstructionAddress(), front_entry->getHWThread());
                     }
 
                     // can't do anything this cycle, so return false
-                    if(loads_pending.size() >= max_loads) 
+                    if(loads_pending.size() >= max_loads)
                     {
                         output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "--> cycle: %" PRIu64 " issue LOAD failed: max_loads\n", cycle);
                         return false;
@@ -1122,7 +1122,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                     }
 
                     if(can_execute) {
-                        // if(output->getVerboseLevel() >= 16) 
+                        // if(output->getVerboseLevel() >= 16)
                         {
                             output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "-> execute fence instruction (0x%" PRI_ADDR "), all checks have passed.\n",
                                 current_fence_ins->getInstructionAddress());
@@ -1147,7 +1147,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
             return false;
         }
 
-        bool load_process(uint32_t sw_thr,VanadisLoadInstruction* load_ins, 
+        bool load_process(uint32_t sw_thr,VanadisLoadInstruction* load_ins,
                         std::vector<uint64_t>& load_addresses, std::vector<uint16_t>& load_widths )
         {
             VanadisRegisterFile* hw_thr_reg = registerFiles->at(sw_thr);
@@ -1157,10 +1157,10 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
             load_ins->computeLoadAddress(output, hw_thr_reg, &load_address, &load_width);
             output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "---> computeLoadAddress for 0x%" PRI_ADDR " / sw_thr: %" PRIu32 "\n",
                 load_address, sw_thr);
-            
-            if(UNLIKELY(load_ins->trapsError())) 
+
+            if(UNLIKELY(load_ins->trapsError()))
             {
-                // if(output->getVerboseLevel() >= 16) 
+                // if(output->getVerboseLevel() >= 16)
                 {
                     output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "---> load ins: 0x%" PRI_ADDR " / hw_thr: %" PRIu32 "sw_thr: %" PRIu32 " traps error, will not process and allow pipeline to handle \n",
                         load_ins->getInstructionAddress(), load_ins->getHWThread(), sw_thr);
@@ -1170,9 +1170,9 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                     return true;
                 }
             }
-            else 
+            else
             {
-                if(output->getVerboseLevel() >= 16) 
+                if(output->getVerboseLevel() >= 16)
                 {
                     output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "---> load ins: 0x%" PRI_ADDR " / thr: %" PRIu32 " want load at 0x%" PRI_ADDR " / width: %" PRIu16 "\n",
                         load_ins->getInstructionAddress(), load_ins->getHWThread(), load_address, load_width);
@@ -1180,9 +1180,9 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
 
                 // check to see if loading from this address would conflict with a store which
                 // we have pending, if yes, wait for conflict to clear and then we can proceed
-                if(UNLIKELY(checkStoreConflict(load_ins->getHWThread(), load_address, load_width))) 
+                if(UNLIKELY(checkStoreConflict(load_ins->getHWThread(), load_address, load_width)))
                 {
-                    if(output->getVerboseLevel() >= 16) 
+                    if(output->getVerboseLevel() >= 16)
                     {
                         output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "---> load ins: 0x%" PRI_ADDR " / thr: %" PRIu32 " conflicts with store entry, will not issue until conflict is resolved (load-addr: 0x%" PRI_ADDR " / width: %" PRIu32 ")\n",
                             load_ins->getInstructionAddress(), load_ins->getHWThread(), load_address, load_width);
@@ -1193,23 +1193,23 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                     return false;
 
                     // Drain store q to ensure that a paired SC/Unlock can be issued close to the LL/Lock
-                } 
-                else if((load_ins->getTransactionType() == MEM_TRANSACTION_LLSC_LOAD) || (load_ins->getTransactionType() == MEM_TRANSACTION_LOCK)) 
+                }
+                else if((load_ins->getTransactionType() == MEM_TRANSACTION_LLSC_LOAD) || (load_ins->getTransactionType() == MEM_TRANSACTION_LOCK))
                 {
-                    if (!stores_pending[load_ins->getHWThread()].empty()) 
+                    if (!stores_pending[load_ins->getHWThread()].empty())
                     {
                         output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "---> issue LLSC/LOCK LOAD failed: store pending\n");
                         return false;
-                    } 
-                    else 
+                    }
+                    else
                     {
                         output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "---> issue LLSC/LOCK LOAD possible sw_thr=%d\n", sw_thr);
                         // issueLoad(load_ins, load_address, load_width);
                         load_addresses.push_back(load_address);
                         load_widths.push_back(load_width);
                     }
-                } 
-                else 
+                }
+                else
                 {
                     // We are good to issue with all checks completed!
                     // issueLoad(load_ins, load_address, load_width);
@@ -1231,7 +1231,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
             *trap_error = 0;
             output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "--> computeStoreAddress for sw_thr: %" PRIu32 "\n",sw_thr);
             store_ins->computeStoreAddress(output, hw_thr_reg, &store_address, &store_width);
-            if(store_ins->trapsError()) 
+            if(store_ins->trapsError())
             {
                 output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "----> warning: 0x%" PRI_ADDR " / thr: %" PRIu32 " traps error, marks executed and does not process.\n",
                     store_ins->getInstructionAddress(), store_ins->getHWThread());
@@ -1239,16 +1239,16 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                 store_ins->markExecuted();
                 *store_address_last = store_address;
                 *trap_error=1;
-            } 
+            }
             output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "----> computed store address: 0x%" PRI_ADDR " store_address_last: 0x%" PRI_ADDR " width: %" PRIu16 " sw_thr: %" PRIu32 " hw_thr: %" PRIu32 " ins_addr: 0x%" PRI_ADDR "\n",
                 store_address, *store_address_last, store_width, sw_thr, store_ins->getHWThread(),store_ins->getInstructionAddress());
             if ((*store_address_last != store_address) || (*store_address_last ==0))
             {
-                VanadisBasicStorePendingEntry* new_pending_store = new VanadisBasicStorePendingEntry(store_ins, store_address, store_width, 
+                VanadisBasicStorePendingEntry* new_pending_store = new VanadisBasicStorePendingEntry(store_ins, store_address, store_width,
                                                 store_ins->getValueRegisterType(),store_ins->getValueRegister());
                 new_pending_store->setSWThr(sw_thr);
                 new_pending_store->addThr(sw_thr);
-                
+
                 output->verbose(CALL_INFO, 16, VANADIS_DBG_LSQ_LOAD_FLG, "----> ins_addr: 0x%" PRI_ADDR " store address: 0x%" PRI_ADDR " store_address_last: 0x%" PRI_ADDR " width: %" PRIu16 " sw_thr: %" PRIu32 " hw_thr: %" PRIu32 "\n",
                     new_pending_store->getStoreInstruction()->getInstructionAddress(), store_address, *store_address_last, store_width, sw_thr, store_ins->getHWThread());
                 *store_address_last = store_address;
@@ -1260,10 +1260,10 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
                     store_address, *store_address_last, store_width, sw_thr, store_ins->getHWThread());
                 return nullptr;
             }
-            
+
         }
-        
-        bool operationStraddlesCacheLine(uint64_t address, uint64_t width) const 
+
+        bool operationStraddlesCacheLine(uint64_t address, uint64_t width) const
         {
             const uint64_t cache_line_left  = (address / cache_line_width);
             const uint64_t cache_line_right = ((address + width - 1) / cache_line_width);
@@ -1278,19 +1278,19 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
             return splits_line;
         }
 
-        void copyPayload(std::vector<uint8_t>& buffer, uint8_t* reg, uint16_t offset, uint16_t length) const 
+        void copyPayload(std::vector<uint8_t>& buffer, uint8_t* reg, uint16_t offset, uint16_t length) const
         {
             for(uint16_t i = 0; i < length; ++i) {
                 buffer.push_back(reg[offset + i]);
             }
         }
 
-        bool pendingStores(const uint32_t thr) 
+        bool pendingStores(const uint32_t thr)
         {
             return stores_pending[thr].size() > 0;
         }
 
-        bool pendingLoads(const uint32_t thr) 
+        bool pendingLoads(const uint32_t thr)
         {
             bool matchID = false;
 
@@ -1304,7 +1304,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
             return matchID;
         }
 
-        bool checkStoreConflict(const uint32_t thread, const uint64_t address, const uint64_t width) 
+        bool checkStoreConflict(const uint32_t thread, const uint64_t address, const uint64_t width)
         {
             bool conflicts = false;
 
@@ -1355,7 +1355,7 @@ class VanadisBasicLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue
         Statistic<uint64_t>* stat_split_stores;
         Statistic<uint64_t>* stat_split_loads;
         Statistic<uint64_t>* stat_stored_bytes;
-        Statistic<uint64_t>* stat_loaded_bytes;    
+        Statistic<uint64_t>* stat_loaded_bytes;
 };
 
 } // namespace SST

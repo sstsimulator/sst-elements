@@ -106,7 +106,7 @@ class TlbMissEvent  : public SST::Event {
 
     RequestID id;
     uint32_t ppn;
-    uint32_t perms; 
+    uint32_t perms;
     bool success;
 
 };

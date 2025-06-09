@@ -53,7 +53,7 @@ public:
             phys_int_regs_in[1], imm);
     }
 
-    virtual void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+    virtual void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
                             uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0,
                                     uint16_t phys_int_regs_in_1, bool compare_result)
     {
@@ -62,7 +62,7 @@ public:
             output->verbose(
                 CALL_INFO, verboselevel, 0,
                 "hw_thr=%d sw_thr = %d Execute: CMOVI    inst: 0x%" PRI_ADDR " / %5" PRIu16 " <- %" PRIu16 " if %" PRIu16 " == %" PRId64 " { %" PRIu16 " <- %" PRIu16 " if %" PRIu16 " == %" PRId64 " } Result: Moved? %c\n",
-                getHWThread(),sw_thr, getInstructionAddress(), isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1], 
+                getHWThread(),sw_thr, getInstructionAddress(), isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1],
                 imm, phys_int_regs_out_0, phys_int_regs_in_0, phys_int_regs_in_1, imm, (compare_result==true) ? 'Y' : 'N');
         }
         #endif

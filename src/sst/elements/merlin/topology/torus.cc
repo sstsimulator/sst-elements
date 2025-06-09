@@ -148,7 +148,7 @@ topo_torus::process_input(RtrEvent* ev)
     topo_torus_event* tt_ev = new topo_torus_event(dimensions);
     tt_ev->setEncapsulatedEvent(ev);
     tt_ev->setVC(tt_ev->getVN() * 2);
-    
+
     // Need to figure out what the torus address is for easier
     // routing.
     int run_id = get_dest_router(tt_ev->getDest());

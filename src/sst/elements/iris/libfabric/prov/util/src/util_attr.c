@@ -1189,7 +1189,7 @@ static uint64_t ofi_get_info_caps(const struct fi_info *prov_info,
 	if ((FI_VERSION_LT(api_version, FI_VERSION(1,5)) &&
 	    (user_mode == FI_MR_UNSPEC)) ||
 	    (user_mode == FI_MR_BASIC) ||
-	    ((user_mode & prov_mode & OFI_MR_MODE_RMA_TARGET) == 
+	    ((user_mode & prov_mode & OFI_MR_MODE_RMA_TARGET) ==
 	     (prov_mode & OFI_MR_MODE_RMA_TARGET)))
 		return caps;
 

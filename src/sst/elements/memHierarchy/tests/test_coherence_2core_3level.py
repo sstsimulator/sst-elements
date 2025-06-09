@@ -131,16 +131,16 @@ cache_distributed_params = {
 }
 
 cache_noninclusive_private_params = {
-    "cache_type" : "noninclusive" 
+    "cache_type" : "noninclusive"
 }
 
-l2cache_noninclusive_shared_params = { 
+l2cache_noninclusive_shared_params = {
     "cache_type" : "noninclusive_with_directory",
     "noninclusive_directory_entries" : 128, # Cover 2x 1KiB L1 + 1x 2KiB L2 (or 2x 2KiB L2)
     "noninclusive_directory_associativity" : 4
 }
 
-l3cache_noninclusive_shared_params = { 
+l3cache_noninclusive_shared_params = {
     "cache_type" : "noninclusive_with_directory",
     "noninclusive_directory_entries" : 128,
     "noninclusive_directory_associativity" : 4
@@ -173,13 +173,13 @@ l2_bus = None # Only need an L2 bus if we have multiple L2s and/or multiple L3s
 if option == 0 or option == 5 or option == 6:   ##  L2 inclusive/private/single
     params = dict(l2cache_base_params)
     params.update(l2cache_size_half)
-    
+
     l2cache0 = sst.Component("l2cache0", "memHierarchy.Cache")
     l2cache0.addParams(params)
-    
+
     l2cache1 = sst.Component("l2cache1", "memHierarchy.Cache")
     l2cache1.addParams(params)
-    
+
     # Connect L1<->L2
     link0_l1_l2 = sst.Link("link0_l1_l2")
     link1_l1_l2 = sst.Link("link1_l1_l2")
@@ -204,17 +204,17 @@ elif option == 1:                               ##  L2 inclusive/shared/distribu
 
     # Create L1 bus and connect L1s to L2s
     Bus("l1bus", bus_params, "100ps", [l1cache0, l1cache1], [l2cache0, l2cache1])
-    
+
     # Create L2 bus and connect L2s. Will connect L3(s) or directory(s) later.
     l2_bus = Bus("l2bus", bus_params, "100ps", [l2cache0, l2cache1])
-    
+
 elif option == 4:                               ##  L2 inclusive/shared-single
     params = dict(l2cache_base_params)
     params.update(l2cache_size_full)
 
     l2cache = sst.Component("l2cache", "memHierarchy.Cache")
     l2cache.addParams(params)
-    
+
     # Create L1 bus and connect L1s to L2
     Bus("l1bus", bus_params, "100ps", [l1cache0, l1cache1], [l2cache])
 
@@ -222,13 +222,13 @@ elif option == 2 or option == 8 or option == 9: ##  L2 noninclusive/private
     params = dict(l2cache_base_params)
     params.update(l2cache_size_half)
     params.update(cache_noninclusive_private_params)
-    
+
     l2cache0 = sst.Component("l2cache0", "memHierarchy.Cache")
     l2cache0.addParams(params)
-    
+
     l2cache1 = sst.Component("l2cache1", "memHierarchy.Cache")
     l2cache1.addParams(params)
-    
+
     # Connect L1<->L2
     link0_l1_l2 = sst.Link("link0_l1_l2")
     link1_l1_l2 = sst.Link("link1_l1_l2")
@@ -245,7 +245,7 @@ elif option == 3 or option == 7:                ##  L2 noninclusive/shared-singl
 
     l2cache = sst.Component("l2cache", "memHierarchy.Cache")
     l2cache.addParams(params)
-    
+
     # Create L1 bus and connect L1s to L2
     Bus("l1bus", bus_params, "100ps", [l1cache0, l1cache1], [l2cache])
 
@@ -266,10 +266,10 @@ elif option == 10 or option == 11:              ##  L2 noninclusive/shared-distr
 
     # Create L1 bus and connect L1s to L2s
     Bus("l1bus", bus_params, "100ps", [l1cache0, l1cache1], [l2cache0, l2cache1])
-    
+
     # Create L2 bus and connect L2s. Will connect L3(s) or directory(s) later.
     l2_bus = Bus("l2bus", bus_params, "100ps", [l2cache0, l2cache1])
-    
+
 
 else:
     print("Error, option=%d is not valid. Options 0-11 are allowed\n"%option)
@@ -307,7 +307,7 @@ if option == 0 or option == 2 or option == 3: ## L3 inclusive/shared/single
     else:
         link = sst.Link("link_l2_l3")
         link.connect( (l2cache, "lowlink", "100ps"), (l3cache, "highlink", "100ps") )
-    
+
     link = sst.Link("link_l3_memory")
     link.connect( (l3cache, "lowlink", "100ps"), (memctrl, "highlink", "100ps") )
 
@@ -315,7 +315,7 @@ elif option == 1: ## L3 inclusive/shared/distributed
     params = dict(l3cache_base_params)
     params.update(cache_distributed_params)
     params.update(l3cache_size_half)
-    
+
     l3cache0 = sst.Component("l3cache0", "memHierarchy.Cache")
     l3cache0.addParams(params)
     l3cache0.addParam("slice_id", 0)
@@ -323,13 +323,13 @@ elif option == 1: ## L3 inclusive/shared/distributed
     l3cache1 = sst.Component("l3cache1", "memHierarchy.Cache")
     l3cache1.addParams(params)
     l3cache1.addParam("slice_id", 1)
-    
+
     # Connect l2 <-> l3 via a bus
     if l2_bus:
         l2_bus.connect(lowcomps=[l3cache0,l3cache1])
     else:
         l2_bus = Bus("l2bus", bus_params, "100ps", [l2cache], [l3cache0, l3cache1])
-    
+
     # Connect l3 <-> memory controller via a bus
     mem_bus = Bus("membus", bus_params, "100ps", [l3cache0, l3cache1], [memctrl])
 
@@ -340,7 +340,7 @@ elif option == 4:   ##  4. L3 noninclusive/private/single
 
     l3cache = sst.Component("l3cache", "memHierarchy.Cache")
     l3cache.addParams(params)
-    
+
     if l2_bus:
         l2_bus.connect(lowcomps=[l3cache])
     else:
@@ -363,13 +363,13 @@ elif option == 5:   ##  L3 noninclusive/shared/distributed
     l3cache1 = sst.Component("l3cache1", "memHierarchy.Cache")
     l3cache1.addParams(params)
     l3cache1.addParam("slice_id", 1)
-   
+
     # Connect l2 <-> l3 via a bus
     if l2_bus:
         l2_bus.connect(lowcomps=[l3cache0,l3cache1])
     else:
         l2_bus = Bus("l2bus", bus_params, "100ps", [l2cache], [l3cache0, l3cache1])
-    
+
     # Connect l3 <-> memory controller via a bus
     mem_bus = Bus("membus", bus_params, "100ps", [l3cache0, l3cache1], [memctrl])
 
@@ -386,17 +386,17 @@ elif option == 6 or option == 11:   ##  directory/single
         "debug_level" : DEBUG_LEVEL,
         "debug" : DEBUG_L3,
     })
-    
+
     # Connect l2 <-> l3 via a bus
     if l2_bus:
         l2_bus.connect(lowcomps=[directory])
     else:
         link = sst.Link("link_l2_dir")
-        link.connect( (l2cache, "lowlink", "100ps"), (directory, "highlink", "100ps") ) 
+        link.connect( (l2cache, "lowlink", "100ps"), (directory, "highlink", "100ps") )
 
     # Connect directory <-> memory controller
     link = sst.Link("link_dir_mem")
-    link.connect( (directory, "lowlink", "100ps"), (memctrl, "highlink", "100ps") ) 
+    link.connect( (directory, "lowlink", "100ps"), (memctrl, "highlink", "100ps") )
 
 elif option == 7: ##  L3 noninclusive/private/distributed
     params = dict(l3cache_base_params)
@@ -411,13 +411,13 @@ elif option == 7: ##  L3 noninclusive/private/distributed
     l3cache1 = sst.Component("l3cache1", "memHierarchy.Cache")
     l3cache1.addParams(params)
     l3cache1.addParam("slice_id", 1)
-   
+
     # Connect l2 <-> l3 via a bus
     if l2_bus:
         l2_bus.connect(lowcomps=[l3cache0,l3cache1])
     else:
         l2_bus = Bus("l2bus", bus_params, "100ps", [l2cache], [l3cache0, l3cache1])
-    
+
     # Connect l3 <-> memory controller via a bus
     mem_bus = Bus("membus", bus_params, "100ps", [l3cache0, l3cache1], [memctrl])
 
@@ -439,11 +439,11 @@ elif option == 8: ##  8. directory/distributed
     directory0 = sst.Component("directory0", "memHierarchy.DirectoryController")
     directory0.addParams(params)
     directory0.addParam("addr_range_start", 0)
-    
+
     directory1 = sst.Component("directory1", "memHierarchy.DirectoryController")
     directory1.addParams(params)
     directory1.addParam("addr_range_start", 128)
-    
+
     # Connect l2 <-> l3 via a bus
     if l2_bus:
         l2_bus.connect(lowcomps=[directory0, directory1])
@@ -467,9 +467,9 @@ elif option == 9 or option == 10:   ## L3 noninclusive/shared/single
     else:
         link = sst.Link("link_l2_l3")
         link.connect( (l2cache, "lowlink", "100ps"), (l3cache, "highlink", "100ps") )
-    
+
     link = sst.Link("link_l3_memory")
-    link.connect( (l3cache, "lowlink", "100ps"), (memctrl, "highlink", "100ps") ) 
+    link.connect( (l3cache, "lowlink", "100ps"), (memctrl, "highlink", "100ps") )
 
 else:
     print("Error, option=%d is not valid. Options 0-11 are allowed\n"%option)

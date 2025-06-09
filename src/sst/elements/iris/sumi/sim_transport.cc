@@ -208,7 +208,7 @@ SimTransport::SimTransport(SST::Params& params, SST::Hg::App* parent) :
   rdma_page_delay_ = TimeDelta(params.find<SST::UnitAlgebra>("rdma_page_delay", "0s").getValue().toDouble());
   pin_delay_ = rdma_pin_latency_.ticks() || rdma_page_delay_.ticks();
   page_size_ = params.find<SST::UnitAlgebra>("rdma_page_size", "4096 B").getRoundedValue();
-  
+
   output.output("%d", sid().app_);
   nproc_ = os_->nranks();
 
@@ -997,7 +997,7 @@ CollectiveEngine::incoming(Message* msg)
       //message for collective we haven't started yet
       pending_collective_msgs_[ty][tag].push_back(cmsg);
       return nullptr;
-  } 
+  }
 
   Collective* coll = it->second;
   auto* dmsg = coll->recv(cmsg);

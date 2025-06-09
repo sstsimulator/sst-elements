@@ -175,7 +175,7 @@ public:
     /** Return size of the event - for calculating bandwidth used */
     virtual uint32_t getEventSize() { return 0; }
 
-    /** Get verbose print of the event */ 
+    /** Get verbose print of the event */
     virtual std::string getVerboseString(int level = 1) {
         std::ostringstream idstring;
         idstring << "<" << eventID_.first << "," << eventID_.second << "> ";
@@ -192,7 +192,7 @@ public:
         idstring << "<" << eventID_.first << "," << eventID_.second << "> ";
         return idstring.str() + cmdStr + " Src: " + src_ + " Dst: " + dst_ + " Tid: " + std::to_string(tid_);
     }
-    
+
     /** Get brief print of the event */
     virtual std::string getBriefString() {
         std::string cmdStr(CommandString[(int)cmd_]);
@@ -279,12 +279,12 @@ public:
         me->setResponse(this);
         return me;
     }
-    
+
     InitCommand getInitCmd() { return initCmd_; }
 
     Addr getAddr() { return addr_; }
     void setAddr(Addr addr) { addr_ = addr; }
-    
+
     size_t getSize() { return payload_.empty() ? payload_.size() : size_; }
     std::vector<uint8_t>& getPayload() { return payload_; }
     void setPayload(std::vector<uint8_t> &data) { payload_ = data; }
@@ -296,7 +296,7 @@ public:
     virtual std::string getVerboseString(int level = 1) override {
         std::stringstream str;
         if (initCmd_ == InitCommand::Region) str << " InitCmd: Region";
-        else if (initCmd_ == InitCommand::Data) 
+        else if (initCmd_ == InitCommand::Data)
         {
             str << " InitCmd: Data (0x" <<std::hex << addr_ << ", " << std::dec << size_ << ")";
         }
@@ -411,11 +411,11 @@ public:
      * type: endpoint type (CPU, MMIO, etc.)
      * name: endpoint name
      * noncacheableRegions: regions that this endpoint is declaring noncacheable
-     * 
+     *
      * TODO: Possibliy merge this with the coherence init messages and broadcast all topology info everywhere
      */
-    
-    MemEventInitEndpoint(std::string src, Endpoint type, MemRegion region, bool cacheable) : 
+
+    MemEventInitEndpoint(std::string src, Endpoint type, MemRegion region, bool cacheable) :
         MemEventInit(src, InitCommand::Endpoint), type_(type), name_(src)  {
         regions_.push_back(std::make_pair(region, cacheable));
     }
@@ -466,14 +466,14 @@ public:
 
 class MemEventInitRegion : public MemEventInit {
 public:
-    
+
     enum class ReachableGroup { Source, Dest, Peer, Unknown };
 
     MemEventInitRegion(std::string src, MemRegion region, ReachableGroup group = ReachableGroup::Unknown) :
         MemEventInit(src, InitCommand::Region), region_(region), group_(group) { }
 
     MemRegion getRegion() { return region_; }
-    
+
     ReachableGroup getGroup() { return group_; }
     void setGroup(ReachableGroup group) { group_ = group; }
 
@@ -507,7 +507,7 @@ public:
 
 class MemEventUntimedFlush : public MemEventInit {
 public:
-    
+
     MemEventUntimedFlush(std::string src, bool request = true ) :
         MemEventInit(src, InitCommand::Flush), request_(request) { }
 

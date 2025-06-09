@@ -72,7 +72,7 @@ Library::endLibraryCall()
 }
 
 Timestamp
-Library::now() const 
+Library::now() const
 {
   return api_parent_app_->os()->now();
 }

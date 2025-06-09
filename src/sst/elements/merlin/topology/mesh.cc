@@ -134,7 +134,7 @@ topo_mesh::process_input(RtrEvent* ev)
     topo_mesh_event* tt_ev = new topo_mesh_event(dimensions);
     tt_ev->setEncapsulatedEvent(ev);
     tt_ev->setVC(tt_ev->getVN() * 2);
-    
+
     // Need to figure out what the mesh address is for easier
     // routing.
     int run_id = get_dest_router(tt_ev->getDest());

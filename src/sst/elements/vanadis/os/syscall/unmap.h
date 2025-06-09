@@ -25,7 +25,7 @@ namespace Vanadis {
 class VanadisUnmapSyscall : public VanadisSyscall {
 public:
     VanadisUnmapSyscall( VanadisNodeOSComponent* os, SST::Link* coreLink, OS::ProcessInfo* process, PhysMemManager* memMgr, VanadisSyscallMemoryUnMapEvent* event )
-        : VanadisSyscall( os, coreLink, process, event, "unmap" ) 
+        : VanadisSyscall( os, coreLink, process, event, "unmap" )
     {
         uint64_t address = event->getDeallocationAddress();
         uint64_t length = event->getDeallocationLength();
@@ -38,7 +38,7 @@ public:
             if ( thread ) {
                 m_os->getMMU()->flushTlb( thread->getCore(), thread->getHwThread() );
             }
-        } 
+        }
 
         m_os->getMMU()->unmap( process->getpid(), address >> m_os->getPageShift(), length/m_os->getPageSize() );
 

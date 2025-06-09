@@ -25,7 +25,7 @@ class VanadisSyscallResponse : public SST::Event {
 public:
     VanadisSyscallResponse() : SST::Event(), return_code(0), hw_thr(-1), mark_success(true), has_exited(false) {}
 
-    VanadisSyscallResponse(int64_t ret_c, bool success = true, bool hasExited = false ) : 
+    VanadisSyscallResponse(int64_t ret_c, bool success = true, bool hasExited = false ) :
         SST::Event(), return_code(ret_c), hw_thr(-1), mark_success(success), has_exited(hasExited) {}
     ~VanadisSyscallResponse() {}
 

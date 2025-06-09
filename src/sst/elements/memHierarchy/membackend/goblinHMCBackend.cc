@@ -590,7 +590,7 @@ void GOBLINHMCSimBackend::handleCmdMap(){
                     "Unable find to a suitable HMC command for: %s\n",
                     cstr.c_str() );
     }
-    
+
     // add the new mapping to our list
     CmdMapping.push_back( new HMCSimCmdMap(ctype_int, copc_uint,
                                            csize_int, rqst) );
@@ -759,13 +759,13 @@ bool GOBLINHMCSimBackend::issueMappedRequest(ReqId reqId, Addr addr, bool isWrit
   return true;
 }
 
-bool GOBLINHMCSimBackend::issueCustomRequest(ReqId reqId, Interfaces::StandardMem::CustomData* data) { 
-    
+bool GOBLINHMCSimBackend::issueCustomRequest(ReqId reqId, Interfaces::StandardMem::CustomData* data) {
+
     Miranda::OpCodeStdMem* opcode_data = static_cast<Miranda::OpCodeStdMem*>(data);
     Addr addr = opcode_data->getAddr();
     uint32_t cmd = opcode_data->getOpCode();
     unsigned numBytes = static_cast<unsigned>(opcode_data->getBytes());
-  
+
     // Step 1: try to grab a tag
     // We have run out of tags
     if(tag_queue.empty()) {

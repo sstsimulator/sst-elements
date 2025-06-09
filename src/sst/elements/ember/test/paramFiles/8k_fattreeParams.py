@@ -29,7 +29,7 @@ nicParams = {
     "txDelay_ns" : 50,
     "nic2host_lat" : "150ns",
     "useSimpleMemoryModel" : 1,
-# simpleMemoryModel.verboseMask: values 
+# simpleMemoryModel.verboseMask: values
 #define BUS_WIDGET_MASK 1<<1
 #define CACHE_MASK      1<<2
 #define LOAD_MASK       1<<3
@@ -42,20 +42,20 @@ nicParams = {
 	"simpleMemoryModel.verboseMask" : -1,
 
 	"simpleMemoryModel.memNumSlots" : 32,
-	"simpleMemoryModel.memReadLat_ns" : 150, 
-	"simpleMemoryModel.memWriteLat_ns" : 40, 
+	"simpleMemoryModel.memReadLat_ns" : 150,
+	"simpleMemoryModel.memWriteLat_ns" : 40,
 
-	"simpleMemoryModel.hostCacheUnitSize" : 32, 
-	"simpleMemoryModel.hostCacheNumMSHR" : 32, 
-	"simpleMemoryModel.hostCacheLineSize" : 64, 
+	"simpleMemoryModel.hostCacheUnitSize" : 32,
+	"simpleMemoryModel.hostCacheNumMSHR" : 32,
+	"simpleMemoryModel.hostCacheLineSize" : 64,
 
-	"simpleMemoryModel.widgetSlots" : 32, 
+	"simpleMemoryModel.widgetSlots" : 32,
 
-	"simpleMemoryModel.nicNumLoadSlots" : 16, 
-	"simpleMemoryModel.nicNumStoreSlots" : 16, 
+	"simpleMemoryModel.nicNumLoadSlots" : 16,
+	"simpleMemoryModel.nicNumStoreSlots" : 16,
 
-	"simpleMemoryModel.nicHostLoadSlots" : 1, 
-	"simpleMemoryModel.nicHostStoreSlots" : 1, 
+	"simpleMemoryModel.nicHostLoadSlots" : 1,
+	"simpleMemoryModel.nicHostStoreSlots" : 1,
 
 	"simpleMemoryModel.busBandwidth_Gbs" : 7.8,
 	"simpleMemoryModel.busNumLinks" : 8,

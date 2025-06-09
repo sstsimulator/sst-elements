@@ -41,7 +41,7 @@ public:
     void clear() {
         for (auto val_itr = data_values.begin(); val_itr != data_values.end(); val_itr++ ) {
             switch(D) {
-                case SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE: 
+                case SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE:
                 {
                     delete val_itr->second;
                 } break;
@@ -104,7 +104,7 @@ private:
         auto find_key = data_values.find(remove_key);
 
         switch(D) {
-            case SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE: 
+            case SST::Vanadis::VanadisCacheRecordDeletion::VANADIS_PERFORM_DELETE:
             {
                 delete find_key->second;
             } break;

@@ -12,7 +12,7 @@ Copyright (c) 2009-2025, NTESS
 
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, 
+Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
     * Redistributions of source code must retain the above copyright
@@ -64,8 +64,8 @@ class BtreeScattervActor :
                        int*  /*send_counts*/, int recvcnt, int type_size, int tag,
                        int cq_id, Communicator* comm) :
     DagCollectiveActor(Collective::scatter, engine, dst, src, type_size, tag, cq_id, comm),
-    root_(root), 
-    recvcnt_(recvcnt) 
+    root_(root),
+    recvcnt_(recvcnt)
   {}
 
  protected:

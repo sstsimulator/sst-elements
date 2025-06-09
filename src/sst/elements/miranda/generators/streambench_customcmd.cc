@@ -97,11 +97,11 @@ void STREAMBenchGenerator_CustomCmd::generate(MirandaRequestQueue<GeneratorReque
                                                 READ);
                 }else{
                   // issue custom read
-                  OpCodeStdMem* opc_b = new OpCodeStdMem(start_b + (i * reqLength), 
-                                                         reqLength, 
+                  OpCodeStdMem* opc_b = new OpCodeStdMem(start_b + (i * reqLength),
+                                                         reqLength,
                                                          custom_read_opcode);
-                  OpCodeStdMem* opc_c = new OpCodeStdMem(start_c + (i * reqLength), 
-                                                         reqLength, 
+                  OpCodeStdMem* opc_c = new OpCodeStdMem(start_c + (i * reqLength),
+                                                         reqLength,
                                                          custom_read_opcode);
                   read_b = new CustomOpRequest(opc_b);
                   read_c = new CustomOpRequest(opc_c);

@@ -51,7 +51,7 @@ libhg_la_SOURCES = \
   operating_system/threading/thread_lock.cc \
   operating_system/threading/threading_fcontext.cc \
   pymercury.py
-# not ready for this 
+# not ready for this
 #  threading/threading_pth.cc \
 #  threading/threading_ucontext.cc
 

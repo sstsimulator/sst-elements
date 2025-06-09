@@ -34,11 +34,11 @@ int threadStart( void* arg ) {
     syscall(SYS_exit,0);
 }
 
-int main( int argc, char* argv[] ) 
+int main( int argc, char* argv[] )
 {
     printf("%s() gettid()=%d getpid()=%d\n",__func__,gettid(),getpid());
 
-    void* stack= malloc( 4096 ); 
+    void* stack= malloc( 4096 );
     void* tls = malloc( 4096 * 1);
 
 volatile int child_tid;
@@ -53,7 +53,7 @@ volatile int child_tid;
 
     printf("threadEntry=%p stackPtr=%p argPtr=%p parentTidPtr=%p tls=%p childTidPtr=%p \n",
             threadStart, stack+4096, &arg, &parent_tid, tls, &child_tid);
-    
+
     int ret = clone( threadStart, stack+4096, flags, &arg, &parent_tid, tls, &child_tid );
 
     printf("clone ret=%d, parentTidValue=%d\n",ret, parent_tid );
@@ -61,4 +61,4 @@ volatile int child_tid;
 	while ( child_tid == -1 );
 
     printf("childTidValue=%d\n",child_tid);
-} 
+}

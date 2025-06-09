@@ -12,7 +12,7 @@ Copyright (c) 2009-2025, NTESS
 
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, 
+Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
     * Redistributions of source code must retain the above copyright
@@ -87,8 +87,8 @@ class BtreeGatherv :
   BtreeGatherv(CollectiveEngine* engine, int root, void *dst, void *src,
                 int sendcnt, int *recv_counts, int type_size, int tag, int cq_id, Communicator* comm)
     : DagCollective(gatherv, engine, dst, src, type_size, tag, cq_id, comm),
-      sendcnt_(sendcnt), 
-      recv_counts_(recv_counts), 
+      sendcnt_(sendcnt),
+      recv_counts_(recv_counts),
       root_(root)
   {}
 

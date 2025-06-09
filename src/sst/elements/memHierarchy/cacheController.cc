@@ -57,15 +57,15 @@ void Cache::handleEvent(SST::Event * ev) {
                 getCurrentSimCycle(), timestamp_, getName().c_str(), event->getVerboseString().c_str());
         fflush(stdout);
     }
-    
+
     eventBuffer_.push_back(event);
-    //printf("DBG: %s, inserted <%" PRIu64 ", %d>, size=%zu\n", getName().c_str(), event->getID().first, event->getID().second, eventBuffer_.size()); 
+    //printf("DBG: %s, inserted <%" PRIu64 ", %d>, size=%zu\n", getName().c_str(), event->getID().first, event->getID().second, eventBuffer_.size());
 
 }
 
-/* 
- * Handle event from cache listener (prefetcher) 
- * -> Delay prefetch using a self link since prefetcher can 
+/*
+ * Handle event from cache listener (prefetcher)
+ * -> Delay prefetch using a self link since prefetcher can
  *  return a prefetch request in the same cycle it identifies
  *  a prefetch target
  */
@@ -165,10 +165,10 @@ bool Cache::clockTick(Cycle_t time) {
             accepted++;
             statRecvEvents->addData(1);
             it = eventBuffer_.erase(it);
-            //printf("DBG: %s, erased <%" PRIu64 ", %d>, it=%d, size=%zu\n", getName().c_str(), id.first, id.second, it == eventBuffer_.end(), eventBuffer_.size()); 
+            //printf("DBG: %s, erased <%" PRIu64 ", %d>, it=%d, size=%zu\n", getName().c_str(), id.first, id.second, it == eventBuffer_.end(), eventBuffer_.size());
         } else {
             it++;
-            //printf("DBG: %s, left <%" PRIu64 ", %d>, it=%d, size=%zu\n", getName().c_str(), id.first, id.second, it == eventBuffer_.end(), eventBuffer_.size()); 
+            //printf("DBG: %s, left <%" PRIu64 ", %d>, it=%d, size=%zu\n", getName().c_str(), id.first, id.second, it == eventBuffer_.end(), eventBuffer_.size());
         }
     }
     while (!prefetchBuffer_.empty()) {
@@ -403,7 +403,7 @@ void Cache::updateAccessStatus(Addr addr) {
 
 /* For handling non-cache commands (including NONCACHEABLE data requests) */
 void Cache::processNoncacheable(MemEventBase* event) {
-    
+
     if (CommandRouteByAddress[(int)event->getCmd()]) { /* These events don't have a destination already */
         if (!(event->queryFlag(MemEvent::F_NORESPONSE))) {
             noncacheableResponseDst_.insert(std::make_pair(event->getID(), event->getSrc()));
@@ -484,7 +484,7 @@ void Cache::init(unsigned int phase) {
             } else if (event->getInitCmd() == MemEventInit::InitCommand::Data) {
                 if (BasicCommandClassArr[(int)event->getCmd()] == BasicCommandClass::Request) {
                     // Forward by addr (mmio likely)
-                    if (event->getCmd() == Command::GetS) 
+                    if (event->getCmd() == Command::GetS)
                         init_requests_.insert(std::make_pair(event->getID(), event->getSrc()));
                     event->setSrc(getName());
                     linkDown_->sendUntimedData(event, false, true);
@@ -528,7 +528,7 @@ void Cache::init(unsigned int phase) {
                         getName().c_str(), event->getVerboseString().c_str());
             }
             if (BasicCommandClassArr[(int)event->getCmd()] == BasicCommandClass::Request) {
-                if (event->getCmd() == Command::GetS) 
+                if (event->getCmd() == Command::GetS)
                     init_requests_.insert(std::make_pair(event->getID(), event->getSrc()));
                 event->setSrc(getName());
                 linkDown_->sendUntimedData(event, false, true);
@@ -562,7 +562,7 @@ void Cache::init(unsigned int phase) {
                         getName().c_str(), event->getVerboseString().c_str());
             }
             if (BasicCommandClassArr[(int)event->getCmd()] == BasicCommandClass::Request) {
-                if (event->getCmd() == Command::GetS) 
+                if (event->getCmd() == Command::GetS)
                     init_requests_.insert(std::make_pair(event->getID(), event->getSrc()));
                 event->setSrc(getName());
                 linkUp_->sendUntimedData(event, false, true);
@@ -586,7 +586,7 @@ void Cache::processInitCoherenceEvent(MemEventInitCoherence* event, bool src) {
 void Cache::setup() {
     // Check that our sources and destinations exist or configure if needed
     linkUp_->setup();
-    if (linkUp_ != linkDown_) 
+    if (linkUp_ != linkDown_)
         linkDown_->setup();
 
     // Enqueue the first wakeup event to check for deadlock

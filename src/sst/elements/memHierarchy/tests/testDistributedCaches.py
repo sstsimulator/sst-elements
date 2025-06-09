@@ -25,7 +25,7 @@ comp_network.addParams({
       "num_ports" : cores + caches + (memories*2),
       "flit_size" : "36B",
       "output_buf_size" : "2KiB",
-      "id" : "0",  
+      "id" : "0",
       "topology" : "merlin.singlerouter"
 })
 comp_network.setSubComponent("topology","merlin.singlerouter")
@@ -166,7 +166,7 @@ for x in range(memories):
     portid = x + caches + cores
     link_directory_network = sst.Link("link_directory_network_" + str(x))
     link_directory_network.connect( (dirNIC, "port", "100ps"), (comp_network, "port" + str(portid), "100ps") )
-    
+
     portid = x + caches + cores + memories
     link_memory_network = sst.Link("link_memory_network_" + str(x))
     link_memory_network.connect( (memNIC, "port", "100ps",), (comp_network, "port" + str(portid), "100ps") )

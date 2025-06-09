@@ -26,7 +26,7 @@ ariel_cpus.addParams({
     "memmgr.defaultlevel"      : 0,
     "executable"        : Executable
 })
-  
+
 comp_c0_l1Dcache = sst.Component("c0.l1Dcache", "memHierarchy.Cache")
 comp_c0_l1Dcache.addParams({
       "debug" : """0""",

@@ -67,9 +67,9 @@ public:
 
 	void instOp( VanadisRegisterFile* regFile, uint64_t* flags_out, uint16_t phys_int_regs_out_0)
 	{
-		
 
-		if(copy_round_mode) 
+
+		if(copy_round_mode)
 		{
 				*flags_out = convertRoundingToInteger(pipeline_fpflags->getRoundingMode());
 
@@ -90,7 +90,7 @@ public:
 
     void scalarExecute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
-		if(checkFrontOfROB()) 
+		if(checkFrontOfROB())
 		{
 		  	uint64_t flags_out = 0;
 			uint16_t phys_int_regs_out_0 = getPhysIntRegOut(0);

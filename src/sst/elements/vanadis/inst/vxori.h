@@ -50,7 +50,7 @@ public:
             imm_value);
     }
 
-    virtual void log(SST::Output* output, int verboselevel, uint16_t sw_thr, 
+    virtual void log(SST::Output* output, int verboselevel, uint16_t sw_thr,
                 uint16_t phys_int_regs_out_0,uint16_t phys_int_regs_in_0) override
     {
         #ifdef VANADIS_BUILD_DEBUG
@@ -67,7 +67,7 @@ public:
         #endif
     }
 
-    void instOp(VanadisRegisterFile* regFile, 
+    void instOp(VanadisRegisterFile* regFile,
                                 uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0) override
     {
         const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in_0);

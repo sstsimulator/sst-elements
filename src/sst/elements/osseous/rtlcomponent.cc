@@ -44,7 +44,7 @@ Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
         getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find work per cycle\n");
     }
 
-	/*if(RTLClk == NULL || RTLClk == "0") 
+	/*if(RTLClk == NULL || RTLClk == "0")
 		output.fatal(CALL_INFO, -1, "Error: printFrequency must be greater than zero.\n");*/
 
  	output.verbose(CALL_INFO, 1, 0, "Config: maxCycles=%" PRIu64 ", RTL Clock Freq=%s\n",
@@ -52,15 +52,15 @@ Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
 
 	// Just register a plain clock for this simple example
     output.verbose(CALL_INFO, 1, 0, "Registering RTL clock at %s\n", RTLClk.c_str());
-   
-   //set our clock 
-   clock_handler = new Clock::Handler2<Rtlmodel,&Rtlmodel::clockTick>(this); 
+
+   //set our clock
+   clock_handler = new Clock::Handler2<Rtlmodel,&Rtlmodel::clockTick>(this);
    timeConverter = registerClock(RTLClk, clock_handler);
    unregisterClock(timeConverter, clock_handler);
    writePayloads = params.find<int>("writepayloadtrace") == 0 ? false : true;
 
     //Configure and register Event Handler for ArielRtllink
-   ArielRtlLink = configureLink("ArielRtllink", new Event::Handler2<Rtlmodel,&Rtlmodel::handleArielEvent>(this)); 
+   ArielRtlLink = configureLink("ArielRtllink", new Event::Handler2<Rtlmodel,&Rtlmodel::handleArielEvent>(this));
 
     // Find all the components loaded into the "memory" slot
     // Make sure all cores have a loaded subcomponent in their slot
@@ -68,12 +68,12 @@ Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
     if(!cacheLink) {
        std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.standardInterface");
        output.verbose(CALL_INFO, 1, 0, "Memory interface to be loaded is: %s\n", interfaceName.c_str());
-       
+
        Params interfaceParams = params.get_scoped_params("memoryinterfaceparams");
        interfaceParams.insert("port", "RtlCacheLink");
        cacheLink = loadAnonymousSubComponent<Interfaces::StandardMem>(interfaceName, "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
                interfaceParams, &timeConverter, new StandardMem::Handler2<Rtlmodel,&Rtlmodel::handleMemEvent>(this));
-       
+
        if (!cacheLink)
            output.fatal(CALL_INFO, -1, "%s, Error loading memory interface\n", getName().c_str());
    }
@@ -149,7 +149,7 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
 
     /*if(!isStalled) {
         if(tickCount == 4) {
-            output.verbose(CALL_INFO, 1, 0, "AXI signals changed"); 
+            output.verbose(CALL_INFO, 1, 0, "AXI signals changed");
             axi_tvalid_$next = 1;
             axi_tdata_$next = 34;
             output.verbose(CALL_INFO, 1, 0, "\n Sending data at tickCount 4");
@@ -158,10 +158,10 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
 
     if((axi_tvalid_$old ^ axi_tvalid_$next) || (axi_tdata_$old ^ axi_tdata_$next))  {
         uint8_t ready = 1;
-        output.verbose(CALL_INFO, 1, 0, "handleAXISignals called"); 
-        if(axiport->queue.maybe_full) 
+        output.verbose(CALL_INFO, 1, 0, "handleAXISignals called");
+        if(axiport->queue.maybe_full)
             ready = 0;
-        handleAXISignals(ready); 
+        handleAXISignals(ready);
         axiport->eval(true, true, true);
 
         //Initial value of AXI control signals
@@ -177,7 +177,7 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
                 stringstream queue_value, queue_ram;
                 queue_value << axiport->queue.value;
                 queue_ram << axiport->queue.ram[fifo_enq_$next];
-                output.verbose(CALL_INFO, 1, 0, "\nQueue_value is: %s %" PRIu64, queue_value.str().c_str(), fifo_enq_$next); 
+                output.verbose(CALL_INFO, 1, 0, "\nQueue_value is: %s %" PRIu64, queue_value.str().c_str(), fifo_enq_$next);
                 output.verbose(CALL_INFO, 1, 0, "\nData enqueued in the queue: %s", queue_ram.str().c_str());
             }
             fifo_enq_$old = fifo_enq_$next;
@@ -206,7 +206,7 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
             return true;
         }
     }
-    
+
     return false;
 }
 
@@ -217,10 +217,10 @@ Don't know what should be the argument of Event handle as of now. As, I think we
 void Rtlmodel::handleArielEvent(SST::Event *event) {
     /*
     * Event will pick information from shared memory. (What will be the use of Event queue.)
-    * Need to insert code for it. 
+    * Need to insert code for it.
     * Probably void pointers will be used to get the data from the shared memory which will get casted based on the width set by the user at runtime.
-    * void pointers will be defined by Ariel CPU and passed as parameters through SST::Event to the C++ model. 
-    * As of now, shared memory is like a scratch-pad or heap which is passive without any intelligent performance improving stuff like TLB, Cache hierarchy, accessing mechanisms(VIPT/PIPT) etc.  
+    * void pointers will be defined by Ariel CPU and passed as parameters through SST::Event to the C++ model.
+    * As of now, shared memory is like a scratch-pad or heap which is passive without any intelligent performance improving stuff like TLB, Cache hierarchy, accessing mechanisms(VIPT/PIPT) etc.
     */
 
     unregisterClock(timeConverter, clock_handler);
@@ -230,20 +230,20 @@ void Rtlmodel::handleArielEvent(SST::Event *event) {
 
     output.verbose(CALL_INFO, 1, 0, "\nVecshiftReg RTL Event handle called \n");
 
- 
+
     memmgr->AssignRtlMemoryManagerSimple(*ariel_ev->RtlData.pageTable, ariel_ev->RtlData.freePages, ariel_ev->RtlData.pageSize);
     memmgr->AssignRtlMemoryManagerCache(*ariel_ev->RtlData.translationCache, ariel_ev->RtlData.translationCacheEntries, ariel_ev->RtlData.translationEnabled);
 
     //Update all the virtual address pointers in RTLEvent class
     updated_rtl_params = ariel_ev->get_updated_rtl_params();
-    inp_ptr = ariel_ev->get_rtl_inp_ptr(); 
+    inp_ptr = ariel_ev->get_rtl_inp_ptr();
     inp_size = ariel_ev->RtlData.rtl_inp_size;
     cacheLineSize = ariel_ev->RtlData.cacheLineSize;
 
     //Creating Read Event from memHierarchy for the above virtual address pointers
-    RtlReadEvent* rtlrev_params = new RtlReadEvent((uint64_t)ariel_ev->get_updated_rtl_params(),(uint32_t)ariel_ev->get_updated_rtl_params_size()); 
-    RtlReadEvent* rtlrev_inp_ptr = new RtlReadEvent((uint64_t)ariel_ev->get_rtl_inp_ptr(),(uint32_t)ariel_ev->get_rtl_inp_size()); 
-    RtlReadEvent* rtlrev_ctrl_ptr = new RtlReadEvent((uint64_t)ariel_ev->get_rtl_ctrl_ptr(),(uint32_t)ariel_ev->get_rtl_ctrl_size()); 
+    RtlReadEvent* rtlrev_params = new RtlReadEvent((uint64_t)ariel_ev->get_updated_rtl_params(),(uint32_t)ariel_ev->get_updated_rtl_params_size());
+    RtlReadEvent* rtlrev_inp_ptr = new RtlReadEvent((uint64_t)ariel_ev->get_rtl_inp_ptr(),(uint32_t)ariel_ev->get_rtl_inp_size());
+    RtlReadEvent* rtlrev_ctrl_ptr = new RtlReadEvent((uint64_t)ariel_ev->get_rtl_ctrl_ptr(),(uint32_t)ariel_ev->get_rtl_ctrl_size());
     output.verbose(CALL_INFO, 1, 0, "\nVirtual address in handleArielEvent is: %" PRIu64, (uint64_t)ariel_ev->get_updated_rtl_params());
 
     if(!mem_allocated) {
@@ -270,7 +270,7 @@ void Rtlmodel::handleArielEvent(SST::Event *event) {
 }
 
 void Rtlmodel::sendArielEvent() {
-     
+
     RtlAckEv = new ArielComponent::ArielRtlEvent();
     RtlAckEv->RtlData.rtl_inp_ptr = inp_ptr;
     RtlAckEv->RtlData.rtl_inp_size = inp_size;
@@ -283,9 +283,9 @@ void Rtlmodel::handleAXISignals(uint8_t tready) {
     axiport->readerFrontend.done = 0;
     axiport->readerFrontend.enable = 1;
     axiport->readerFrontend.length = 64;
-    axiport->io_read_tdata = axi_tdata_$next; 
-    axiport->io_read_tvalid = axi_tvalid_$next; 
-    axiport->io_read_tready = tready; 
+    axiport->io_read_tdata = axi_tdata_$next;
+    axiport->io_read_tvalid = axi_tvalid_$next;
+    axiport->io_read_tready = tready;
     //axiport->cmd_queue.push('r');
 }
 
@@ -297,7 +297,7 @@ void Rtlmodel::handleMemEvent(StandardMem::Request* event) {
     auto find_entry = pendingTransactions->find(mev_id);
     if(find_entry != pendingTransactions->end()) {
         output.verbose(CALL_INFO, 4, 0, "Correctly identified event in pending transactions, removing from list, before there are: %" PRIu32 " transactions pending.\n", (uint32_t) pendingTransactions->size());
-       
+
         int i;
         auto DataAddress = VA_VA_map.find(read->vAddr);
         if(DataAddress != VA_VA_map.end())
@@ -308,7 +308,7 @@ void Rtlmodel::handleMemEvent(StandardMem::Request* event) {
         //Actual reading of data from memEvent and storing it to getDataAddress
         output.verbose(CALL_INFO, 1, 0, "\nAddress is: %" PRIu64, (uint64_t)getDataAddress());
         for(i = 0; i < read->data.size(); i++)
-            getDataAddress()[i] = read->data[i]; 
+            getDataAddress()[i] = read->data[i];
 
         if(read->vAddr == (uint64_t)updated_rtl_params) {
             bool* ptr = (bool*)getBaseDataAddress();
@@ -325,11 +325,11 @@ void Rtlmodel::handleMemEvent(StandardMem::Request* event) {
             setDataAddress(getBaseDataAddress());
             isStalled = false;
         }
-    } 
-    
-    else 
+    }
+
+    else
         output.fatal(CALL_INFO, -4, "Memory event response to VecShiftReg was not found in pending list.\n");
-        
+
     delete event;
 }
 
@@ -337,7 +337,7 @@ void Rtlmodel::commitReadEvent(const uint64_t address,
             const uint64_t virtAddress, const uint32_t length) {
     if(length > 0) {
         StandardMem::Read *req = new StandardMem::Read(address, length, 0, virtAddress);
-        
+
         pending_transaction_count++;
         pendingTransactions->insert(std::pair<StandardMem::Request::id_t, StandardMem::Request*>(req->getID(), req));
         //memmgr_transactions->insert(std::pair<StandardMem::Request::id_t, int>(req->getID(), flag));
@@ -370,7 +370,7 @@ void Rtlmodel::commitWriteEvent(const uint64_t address,
         } else {
             data.resize(length, 0);
         }
-        
+
         StandardMem::Write *req = new StandardMem::Write(address, length, data, false, 0, virtAddress);
         pending_transaction_count++;
         pendingTransactions->insert( std::pair<StandardMem::Request::id_t, StandardMem::Request*>(req->getID(), req) );
@@ -389,10 +389,10 @@ void Rtlmodel::generateReadRequest(RtlReadEvent* rEv) {
     // There is a chance that the non-alignment causes an undetected bug if an access spans multiple malloc regions that are contiguous in VA space but non-contiguous in PA space.
     // However, a single access spanning multiple malloc'd regions shouldn't happen...
     // Addresses mapped via first touch are always line/page aligned
-    /*if(rEv->physaddr == 0) { 
+    /*if(rEv->physaddr == 0) {
         physaddr = memmgr->translateAddress(readAddress);
     }
-    else 
+    else
         physaddr = memmgr->translateAddress(readAddress);
 
     const uint64_t physAddr = physaddr;*/
@@ -453,7 +453,7 @@ void Rtlmodel::generateWriteRequest(RtlWriteEvent* wEv) {
 
     // We do not need to perform a split operation
     if((addr_offset + writeLength) <= cacheLineSize) {
-        
+
         output.verbose(CALL_INFO, 4, 0, " generating a non-split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
                             writeAddress, writeLength);
 

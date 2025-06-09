@@ -25,10 +25,10 @@ namespace Vanadis {
 class VanadisSchedYieldSyscall : public VanadisSyscall {
 public:
     VanadisSchedYieldSyscall(
-        VanadisNodeOSComponent* os, SST::Link* coreLink, 
+        VanadisNodeOSComponent* os, SST::Link* coreLink,
         OS::ProcessInfo* process,
         VanadisSyscallSchedYieldEvent* event)
-    : VanadisSyscall(os, coreLink, process, event, "sched_yield") 
+    : VanadisSyscall(os, coreLink, process, event, "sched_yield")
     {
         // No arguments to decode
         m_output->verbose(CALL_INFO, 2, VANADIS_OS_DBG_SYSCALL,

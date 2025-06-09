@@ -52,7 +52,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <string.h>
 
 void get_position(int rank, int pex, int pey, int pez,
-                  int* myX, int* myY, int* myZ) 
+                  int* myX, int* myY, int* myZ)
 {
   const int plane = rank % (pex * pey);
   *myY = plane / pex;
@@ -61,7 +61,7 @@ void get_position(int rank, int pex, int pey, int pez,
 }
 
 int convert_position_to_rank(int pX, int pY, int pZ,
-                             int myX, int myY, int myZ) 
+                             int myX, int myY, int myZ)
 {
   myX = (myX + pX) % pX;
   myY = (myY + pY) % pY;

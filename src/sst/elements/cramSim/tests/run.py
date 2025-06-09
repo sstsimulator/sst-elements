@@ -44,9 +44,9 @@ sstCmds = {
     16:"mpirun -np 5 sst --lib-path=../.libs ./test_multilanes_4lane.py --model-options=\"--configfile=../ddr4_2400.cfg stopAtCycle=%s\"" % (stopAtCycle),                              # test for txn dispatcher with 4lane(mpi)
     17:"sst --lib-path=../.libs ./test_txngen.py --model-options=\"--configfile=%s mode=seq stopAtCycle=%s\"" % ("../hbm_legacy_4h.cfg",stopAtCycle),                                   # test for hbm
     18:"sst --lib-path=../.libs ./test_txngen.py --model-options=\"--configfile=%s mode=rand stopAtCycle=%s\"" % ("../ddr3_power.cfg",stopAtCycle),                                     # test for ddr3 with power model
-    }                                                                                                                                                                                       
+    }
 
-    
+
 
 if(sel == "batch"):
     for sel in sstCmds:

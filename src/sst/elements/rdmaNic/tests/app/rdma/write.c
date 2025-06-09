@@ -39,8 +39,8 @@ int main( int argc, char* argv[] ) {
 	printf("cq=%d\n",cq);
 
 	size_t length = 1024;
-	volatile int* addr = malloc( length ); 
-	
+	volatile int* addr = malloc( length );
+
 	MemRgnKey key = 0xf00d;
 	rdma_memory_reg( key, (void*) addr, length );
 
@@ -51,12 +51,12 @@ int main( int argc, char* argv[] ) {
 		while ( addr[0] == 0 );
 		printf("%s() 0, read local mem, value %x\n",__func__,addr[0]);
 
-		Node node = 1; 
+		Node node = 1;
 		volatile int tmp = 0;
-		
+
 		printf("%s() 0, addr of tmp  %p\n",__func__,&tmp);
-		rdma_memory_read( key, node, pid, 0, (void*) &tmp, sizeof(tmp), cq, 0 ); 	
-	
+		rdma_memory_read( key, node, pid, 0, (void*) &tmp, sizeof(tmp), cq, 0 );
+
 		while ( tmp == 0 );
 		printf("%s() 0, read far mem value %x\n",__func__,tmp);
         RdmaCompletion comp;
@@ -66,9 +66,9 @@ int main( int argc, char* argv[] ) {
 	} else {
 		addr[0] = 10;
 		int tmp=0x1234abcd;
-			
-		Node node = 0; 
-		rdma_memory_write( key, node, pid, 0, &tmp, sizeof(tmp), cq, 0 ); 	
+
+		Node node = 0;
+		rdma_memory_write( key, node, pid, 0, &tmp, sizeof(tmp), cq, 0 );
 		while ( addr[0] == 0 );
 		printf("%s() 1, read local mem, value %x\n",__func__,addr[0]);
 	}

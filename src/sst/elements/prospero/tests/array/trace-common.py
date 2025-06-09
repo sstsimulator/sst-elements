@@ -109,7 +109,7 @@ else:
         "access_time" : "1000 ns",
         "mem_size" : str(memSize) + "MiB",
     })
-    
+
 # Define the simulation links
 link_cpu_cache_link = sst.Link("link_cpu_cache_link")
 link_cpu_cache_link.connect( (comp_cpu, "cache_link", "1000ps"), (comp_l1cache, "highlink", "1000ps") )

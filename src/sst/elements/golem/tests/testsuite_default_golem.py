@@ -179,7 +179,7 @@ class testcase_golem(SSTTestCase):
         os.environ['VANADIS_NUM_HW_THREADS'] = str(numHwThreads)
 
         array_types = ["crosssim_float", "crosssim_int", "mvm_float", "mvm_int"]
-        arraytype_exists = arrayType in array_types 
+        arraytype_exists = arrayType in array_types
         self.assertTrue(arraytype_exists, "Array Type {} is not one of the following: {}".format(arrayType, array_types))
 
         if arrayType == "crosssim_float":
@@ -198,10 +198,10 @@ class testcase_golem(SSTTestCase):
             roccType = "golem.RoCCAnalogInt"
             arrayType = "golem.MVMIntArray"
 
-            
+
         os.environ["GOLEM_ROCC_TYPE"] = roccType
-        os.environ["GOLEM_ARRAY_TYPE"] = arrayType 
-        os.environ["GOLEM_NUM_ARRAYS"] = str(numArrays) 
+        os.environ["GOLEM_ARRAY_TYPE"] = arrayType
+        os.environ["GOLEM_NUM_ARRAYS"] = str(numArrays)
 
         testfile_exists = os.path.exists(testfilepath) and os.path.isfile(testfilepath)
         self.assertTrue(testfile_exists, "Golem test {0} does not exist".format(testfilepath))
@@ -290,10 +290,10 @@ class testcase_golem(SSTTestCase):
 
         test_path = self.get_testsuite_dir()
 
-        sourcedirpath = "{0}/{1}/{2}".format( test_path, elftestdir, elffile ) 
+        sourcedirpath = "{0}/{1}/{2}".format( test_path, elftestdir, elffile )
         makefilepath = "{0}/Makefile".format(sourcedirpath)
 
-        cmd = "make ARCH=" + isa 
+        cmd = "make ARCH=" + isa
         rtn = OSCommand(cmd, set_cwd=sourcedirpath).run()
         log_debug("Golem tests source - Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
         self.assertTrue(rtn.result() == 0, "{0} failed to build properly".format(makefilepath))

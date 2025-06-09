@@ -15,13 +15,13 @@
 
 class NicCmdEntry {
   public:
-    NicCmdEntry( RdmaNic& nic, int thread, NicCmd* tmp ) : 
-        m_nic(nic), m_thread(thread), m_cmd( new NicCmd ), m_respAddr(tmp->respAddr) 
+    NicCmdEntry( RdmaNic& nic, int thread, NicCmd* tmp ) :
+        m_nic(nic), m_thread(thread), m_cmd( new NicCmd ), m_respAddr(tmp->respAddr)
     {
         bzero( &m_resp, sizeof( m_resp ) );
-        m_resp.retval = 0; 
+        m_resp.retval = 0;
 		*m_cmd = *tmp;
-    } 
+    }
     virtual ~NicCmdEntry() {
         if ( m_cmd ) {
             delete m_cmd;
@@ -49,26 +49,26 @@ class RdmaCreateCQ_Cmd : public NicCmdEntry {
     RdmaCreateCQ_Cmd( RdmaNic& nic, int thread, NicCmd* cmd ) : NicCmdEntry(nic,thread,cmd)
 	{
     	int cqId = m_nic.m_nextCqId++;
-    	m_nic.m_compQueueMap[ cqId ] = new CompletionQueue( m_cmd );    
+    	m_nic.m_compQueueMap[ cqId ] = new CompletionQueue( m_cmd );
     	m_resp.retval = cqId;
-    	m_resp.data.createCQ.tailIndexAddr = m_nic.calcCompQueueTailAddress( m_thread, cqId ); 
+    	m_resp.data.createCQ.tailIndexAddr = m_nic.calcCompQueueTailAddress( m_thread, cqId );
     	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cqId=%d headPtr=%" PRIx64 " datPtr=%" PRIx64 " num=%d\n",
                     cqId, m_cmd->data.createCQ.headPtr, m_cmd->data.createCQ.dataPtr, m_cmd->data.createCQ.num);
     	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cqId=%d headPtr=%" PRIx64 " datPtr=%" PRIx64 " num=%d tailIndexAddr=%" PRIx64 "\n",
                     cqId, m_cmd->data.createCQ.headPtr, m_cmd->data.createCQ.dataPtr, m_cmd->data.createCQ.num, m_resp.data.createCQ.tailIndexAddr);
-    
-    	// passed the cmd to the CompletionQueue 
+
+    	// passed the cmd to the CompletionQueue
     	m_cmd = NULL;
 	}
     virtual std::string name() { return "CreateCQ"; }
-}; 
+};
 
 class RdmaDestroyCQ_Cmd : public NicCmdEntry {
   public:
     RdmaDestroyCQ_Cmd( RdmaNic& nic, int thread, NicCmd* cmd ) : NicCmdEntry(nic,thread,cmd)
 	{
     	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"cqId=%#x\n", m_cmd->data.destroyCQ.cqId );
-    
+
         m_resp.retval = -1;
 
         auto iter = m_nic.m_compQueueMap.find( m_cmd->data.destroyCQ.cqId );
@@ -77,9 +77,9 @@ class RdmaDestroyCQ_Cmd : public NicCmdEntry {
             m_resp.retval = 0;
         }
 	}
- 
+
     virtual std::string name() { return "DestroyRQ"; }
-}; 
+};
 
 
 class RdmaCreateRQ_Cmd : public NicCmdEntry {
@@ -90,15 +90,15 @@ class RdmaCreateRQ_Cmd : public NicCmdEntry {
             m_cmd->data.createRQ.rqKey, m_cmd->data.createRQ.cqId );
 
         m_resp.retval = -1;
-        
+
         auto iter = m_nic.m_compQueueMap.find( m_cmd->data.createRQ.cqId );
         if ( iter != m_nic.m_compQueueMap.end() ) {
     	    m_resp.retval = m_nic.m_recvEngine->createRQ(m_cmd->data.createRQ.cqId, m_cmd->data.createRQ.rqKey );
         }
 	}
- 
+
     virtual std::string name() { return "CreateRQ"; }
-}; 
+};
 
 class RdmaDestroyRQ_Cmd : public NicCmdEntry {
   public:
@@ -107,9 +107,9 @@ class RdmaDestroyRQ_Cmd : public NicCmdEntry {
     	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"rqId=%#x\n", m_cmd->data.destroyRQ.rqId );
     	m_resp.retval = m_nic.m_recvEngine->destroyRQ(m_cmd->data.destroyRQ.rqId );
 	}
- 
+
     virtual std::string name() { return "DestroyRQ"; }
-}; 
+};
 
 class RdmaFiniCmd : public NicCmdEntry {
   public:
@@ -118,7 +118,7 @@ class RdmaFiniCmd : public NicCmdEntry {
     	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"\n");
 	}
     virtual std::string name() { return "Fini"; }
-}; 
+};
 
 class RdmaBarrierCmd : public NicCmdEntry {
   public:
@@ -129,12 +129,12 @@ class RdmaBarrierCmd : public NicCmdEntry {
     virtual bool process() {
 		if (  m_nic.m_barrier->process() ) {
 			m_resp.retval = 0;
-			return NicCmdEntry::process();	
+			return NicCmdEntry::process();
 		}
 		return false;
     }
     virtual std::string name() { return "Barrier"; }
-}; 
+};
 
 class RdmaSendCmd : public NicCmdEntry {
   public:
@@ -148,7 +148,7 @@ class RdmaSendCmd : public NicCmdEntry {
         m_cmd = NULL;
     }
     virtual std::string name() { return "Send"; }
-}; 
+};
 
 class RdmaRecvCmd : public NicCmdEntry {
   public:
@@ -164,20 +164,20 @@ class RdmaRecvCmd : public NicCmdEntry {
     virtual std::string name() { return "Recv"; }
     void writeResp( int thread, uint64_t cnt, StandardMem::Request* ev ) {}
     bool isRecv() { return true; }
-}; 
+};
 
 class RdmaMemRgnRegCmd : public NicCmdEntry {
   public:
     RdmaMemRgnRegCmd( RdmaNic& nic, int thread, NicCmd* cmd ): NicCmdEntry(nic,thread,cmd)
 	{
-    	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"key=%x addr=%" PRIx64 " length=%d\n", 
+    	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"key=%x addr=%" PRIx64 " length=%d\n",
 					m_cmd->data.memRgnReg.key, m_cmd->data.memRgnReg.addr,m_cmd->data.memRgnReg.len);
 		m_resp.retval = m_nic.m_recvEngine->addMemRgn( new MemRgnEntry( m_cmd, m_thread ) );
-    	// passed the cmd to the CompletionQueue 
+    	// passed the cmd to the CompletionQueue
 		m_cmd = NULL;
 	}
     virtual std::string name() { return "MemRgn"; }
-}; 
+};
 
 class RdmaMemRgnUnregCmd : public NicCmdEntry {
   public:
@@ -195,22 +195,22 @@ class RdmaMemWriteCmd : public NicCmdEntry {
 	{
     	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"\n");
     	m_nic.m_sendEngine->add( 0, new WriteSendEntry( m_cmd, m_thread ) );
-    	// passed the cmd to the CompletionQueue 
+    	// passed the cmd to the CompletionQueue
     	m_cmd = NULL;
 	}
     virtual std::string name() { return "MemoryWrite"; }
-}; 
+};
 
 class RdmaMemReadCmd : public NicCmdEntry {
   public:
     RdmaMemReadCmd( RdmaNic& nic, int thread, NicCmd* cmd ): NicCmdEntry(nic,thread,cmd)
 	{
-    	int readRespKey = m_nic.m_recvEngine->addReadResp( 
+    	int readRespKey = m_nic.m_recvEngine->addReadResp(
 				thread, m_cmd->data.read.destAddr, m_cmd->data.read.len, m_cmd->data.read.cqId, m_cmd->data.read.context  );
     	m_nic.dbg.debug( CALL_INFO_LONG,1,DBG_X_FLAG,"respRespKey=%d destBuffer=%#" PRIx64 "\n",readRespKey, m_cmd->data.read.destAddr);
     	m_nic.m_sendEngine->add( 0, new ReadSendEntry( m_cmd, m_thread, readRespKey ) );
-    	// passed the cmd to the CompletionQueue 
+    	// passed the cmd to the CompletionQueue
     	m_cmd = NULL;
 	}
     virtual std::string name() { return "MemoryRead"; }
-}; 
+};

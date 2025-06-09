@@ -53,7 +53,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 
 	out->verbose(CALL_INFO, 1, 0, "CPU clock configured for %s\n", cpuClock.c_str());
 
-        cache_link = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, 
+        cache_link = loadUserSubComponent<Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE,
                 &timeConverter, new Interfaces::StandardMem::Handler2<RequestGenCPU,&RequestGenCPU::handleEvent>(this) );
         if (!cache_link) {
 	    std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.standardInterface");
@@ -273,19 +273,19 @@ void RequestGenCPU::issueCustomRequest(CustomOpRequest* req) {
     const uint64_t reqLength  = req->getPayload()->getSize();
     out->verbose(CALL_INFO, 4, 0, "Issue request: address=0x%" PRIx64 ", size=%" PRIu64 ", operation=%s\n",
             reqAddress, reqLength, "CUSTOM");
-    
+
     if (statBytes[CUSTOM] != nullptr)
         statBytes[CUSTOM]->addData(reqLength);
-    
+
     Interfaces::StandardMem::CustomReq* request = new Interfaces::StandardMem::CustomReq(req->getPayload());
-        
+
     CPURequest* newCPUReq = new CPURequest(req->getRequestID());
     newCPUReq->incPartCount();
     newCPUReq->setIssueTime(getCurrentSimTimeNano());
 
     requestsInFlight.insert( std::pair<Interfaces::StandardMem::Request::id_t, CPURequest*>(request->getID(), newCPUReq) );
     cache_link->send(request);
-        
+
     requestsPending[CUSTOM]++;
 
     if (statReqs[CUSTOM] != nullptr)
@@ -331,7 +331,7 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
             reqUpper = new Interfaces::StandardMem::Read(upperAddress, upperLength);
         }else {
             // build a normal event
-            std::vector<uint8_t> data(lowerLength, 0); 
+            std::vector<uint8_t> data(lowerLength, 0);
             reqLower = new Interfaces::StandardMem::Write(lowerAddress, lowerLength, data);
             data.resize(upperLength, 0);
             reqUpper = new Interfaces::StandardMem::Write(upperAddress, upperLength, data);

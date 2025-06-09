@@ -1,4 +1,4 @@
- 
+
 // Copyright 2009-2025 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
@@ -13,15 +13,15 @@
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
- 
- 
+
+
 #include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 int main(int argc, char* argv[]) {
- 
+
     setvbuf(stdout, NULL, _IONBF ,0);
- 
+
 #ifdef _OPENMP
     int k = 0;
 #pragma omp parallel
@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
     }
     printf ("Number of Threads counted = %i\n",k);
 #endif
- 
+
     printf("exit\n");
 }
- 
+

@@ -14,7 +14,7 @@
 // distribution.
 
 
-// This include is ***REQUIRED*** 
+// This include is ***REQUIRED***
 // for ALL SST implementation files
 #include "sst_config.h"
 
@@ -25,14 +25,14 @@ using namespace SST;
 using namespace SST::simpleElementExample;
 
 /***********************************************************************************/
-// Since the classes are brief, this file has the implementation for all four 
+// Since the classes are brief, this file has the implementation for all four
 // basicSubComponentAPI subcomponents declared in basicSubComponent_subcomponent.h
 /***********************************************************************************/
 
 // basicSubComponentIncrement
 
 basicSubComponentIncrement::basicSubComponentIncrement(ComponentId_t id, Params& params) :
-    basicSubComponentAPI(id, params) 
+    basicSubComponentAPI(id, params)
 {
     amount = params.find<int>("amount",  1);
 }
@@ -59,7 +59,7 @@ void basicSubComponentIncrement::serialize_order(SST::Core::Serialization::seria
 // basicSubComponentDecrement
 
 basicSubComponentDecrement::basicSubComponentDecrement(ComponentId_t id, Params& params) :
-    basicSubComponentAPI(id, params) 
+    basicSubComponentAPI(id, params)
 {
     amount = params.find<int>("amount",  1);
 }
@@ -86,7 +86,7 @@ void basicSubComponentDecrement::serialize_order(SST::Core::Serialization::seria
 // basicSubComponentMultiply
 
 basicSubComponentMultiply::basicSubComponentMultiply(ComponentId_t id, Params& params) :
-    basicSubComponentAPI(id, params) 
+    basicSubComponentAPI(id, params)
 {
     amount = params.find<int>("amount",  1);
 }
@@ -113,11 +113,11 @@ void basicSubComponentMultiply::serialize_order(SST::Core::Serialization::serial
 // basicSubComponentDivide
 
 basicSubComponentDivide::basicSubComponentDivide(ComponentId_t id, Params& params) :
-    basicSubComponentAPI(id, params) 
+    basicSubComponentAPI(id, params)
 {
     amount = params.find<int>("amount",  1);
 
-    if ( amount == 0 ) 
+    if ( amount == 0 )
         fatal(CALL_INFO, -1, "%s, Error: divide compute unit cannot divide by 0. Fix the 'amount' parameter.\n",
                 getName().c_str());
 }

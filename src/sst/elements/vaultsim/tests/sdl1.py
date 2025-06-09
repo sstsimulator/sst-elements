@@ -6,10 +6,10 @@ sst.setProgramOption("timebase", "1 ps")
 sst.setProgramOption("stop-at", "50us")
 
 #enable stat output
-sst.setStatisticLoadLevel(7)   
+sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputCSV", {"filepath" : "./TestOutput.csv",
                                              "separator" : ", "
-                                             })         
+                                             })
 
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "vaultsim.cpu")

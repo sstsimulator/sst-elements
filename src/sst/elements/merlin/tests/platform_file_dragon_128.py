@@ -15,7 +15,7 @@ platdef.addParamSet("topology",{
 })
 
 platdef.addClassType("topology","sst.merlin.topology.topoDragonFly")
-                    
+
 platdef.addParamSet("router",{
     "link_bw" : "4GB/s",
     "flit_size" : "8B",
@@ -32,7 +32,7 @@ platdef.addParamSet("router",{
 
     # Set up the arbitration type for the routers
     "xbar_arb" : "merlin.xbar_arb_lru",
-    
+
 })
 
 platdef.addClassType("router","sst.merlin.base.hr_router")

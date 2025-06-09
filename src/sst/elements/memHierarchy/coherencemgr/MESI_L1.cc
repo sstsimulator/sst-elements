@@ -287,7 +287,7 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
 
 /*
  * Handle GetSX (read-exclusive) request
- * GetSX acquires a line in exclusive or modified state 
+ * GetSX acquires a line in exclusive or modified state
  *  F_LOCKED: Lock line until future GetX arrives. Line can preemptively be put into M (dirty) state
  *  F_LLSC: Flag line as atomic and watch for accesses. Line should be put in E state if possible, otherwise M.
  */
@@ -301,7 +301,7 @@ bool MESIL1::handleGetSX(MemEvent* event, bool inMSHR) {
 
     if (mem_h_is_debug_addr(addr))
         eventDI.prefill(event->getID(), event->getThreadID(), Command::GetSX, (event->isLoadLink() ? "-LL" : ""), addr, state);
-    
+
     if (isFlushing_ && !inMSHR) {
         eventDI.action = "Reject";
         eventDI.reason = "Cache flush in progress";
@@ -411,7 +411,7 @@ bool MESIL1::handleFlushLine(MemEvent* event, bool inMSHR) {
 
     if (mem_h_is_debug_addr(addr))
         eventDI.prefill(event->getID(), event->getThreadID(), Command::FlushLine, "", addr, state);
-    
+
     if (isFlushing_ && !inMSHR) {
         eventDI.action = "Reject";
         eventDI.reason = "Cache flush in progress";
@@ -477,7 +477,7 @@ bool MESIL1::handleFlushLineInv(MemEvent* event, bool inMSHR) {
 
     if (mem_h_is_debug_addr(addr))
         eventDI.prefill(event->getID(), event->getThreadID(), Command::FlushLineInv, "", addr, state);
-    
+
     if (isFlushing_ && !inMSHR) {
         eventDI.action = "Reject";
         eventDI.reason = "Cache flush in progress";
@@ -541,7 +541,7 @@ bool MESIL1::handleFlushLineInv(MemEvent* event, bool inMSHR) {
 
 bool MESIL1::handleFlushAll(MemEvent* event, bool inMSHR) {
     eventDI.prefill(event->getID(), Command::FlushAll, "", 0, State::NP);
-    
+
     // A core shouldn't send another FlushAll while one is outstanding but just in case
     if (!inMSHR) {
         if (isFlushing_) {
@@ -557,7 +557,7 @@ bool MESIL1::handleFlushAll(MemEvent* event, bool inMSHR) {
             }
             return false;
         }
-        
+
         isFlushing_ = true;
         if (!flush_manager_) {
             // Forward flush to flush manager
@@ -572,13 +572,13 @@ bool MESIL1::handleFlushAll(MemEvent* event, bool inMSHR) {
     if (!flush_manager_) {
         debug->fatal(CALL_INFO, -1, "%s, ERROR: Trying to retry a flushall but not the flush manager...\n", getName().c_str());
     }
-    
+
     if (mshr_->getFlushSize() != mshr_->getSize()) { /* Wait for MSHR to drain */
         eventDI.action = "Drain MSHR";
         flushDrain_ = true;
         return true;
     }
-    
+
     flushDrain_ = false;
 
     bool success = true;
@@ -691,7 +691,7 @@ bool MESIL1::handleForwardFlush(MemEvent* event, bool inMSHR) {
         uint64_t deliverTime = std::max(timestamp_ + tagLatency_, flush_complete_timestamp_ + 1);
         forwardByDestination(responseEvent, deliverTime);
         eventDI.action = "Respond";
-        
+
         mshr_->removeFlush(); // Remove ForwardFlush
         delete event;
 
@@ -835,7 +835,7 @@ bool MESIL1::handleForceInv(MemEvent* event, bool inMSHR) {
                     // Otherwise, the unlock event will retry this one
                     uint64_t wakeupTime = line->getLLSCTime();
                     if (wakeupTime > timestamp_) {
-                        llscTimeoutSelfLink_->send(wakeupTime - timestamp_, new LoadLinkWakeup(addr, event->getID())); 
+                        llscTimeoutSelfLink_->send(wakeupTime - timestamp_, new LoadLinkWakeup(addr, event->getID()));
                     } else {
                         retryBuffer_.push_back(mshr_->getFrontEvent(addr));
                         mshr_->addPendingRetry(addr);
@@ -915,7 +915,7 @@ bool MESIL1::handleFetchInv(MemEvent* event, bool inMSHR) {
                     // Otherwise, the unlock event will retry this one
                     uint64_t wakeupTime = line->getLLSCTime();
                     if (wakeupTime > timestamp_) {
-                        llscTimeoutSelfLink_->send(wakeupTime - timestamp_, new LoadLinkWakeup(addr, event->getID())); 
+                        llscTimeoutSelfLink_->send(wakeupTime - timestamp_, new LoadLinkWakeup(addr, event->getID()));
                     } else {
                         retryBuffer_.push_back(mshr_->getFrontEvent(addr));
                         mshr_->addPendingRetry(addr);
@@ -990,7 +990,7 @@ bool MESIL1::handleFetchInvX(MemEvent* event, bool inMSHR) {
                     // Otherwise, the unlock event will retry this one
                     uint64_t wakeupTime = line->getLLSCTime();
                     if (wakeupTime > timestamp_) {
-                        llscTimeoutSelfLink_->send(wakeupTime - timestamp_, new LoadLinkWakeup(addr, event->getID())); 
+                        llscTimeoutSelfLink_->send(wakeupTime - timestamp_, new LoadLinkWakeup(addr, event->getID()));
                     } else {
                         retryBuffer_.push_back(mshr_->getFrontEvent(addr));
                         mshr_->addPendingRetry(addr);
@@ -1141,7 +1141,7 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
 
                         if (mem_h_is_debug_addr(addr))
                             printDataValue(addr, line->getData(), true);
-                        line->atomicEnd(); // Any write causes a future SC to fail 
+                        line->atomicEnd(); // Any write causes a future SC to fail
                     } else {
                         success = false;
                     }
@@ -1363,7 +1363,7 @@ MemEventStatus MESIL1::processCacheMiss(MemEvent* event, L1CacheLine * line, boo
     return status;
 }
 
-/* 
+/*
  * Check for an MSHR collision.
  * If one exists, put event into MSHR
  * Otherwise do nothing
@@ -1380,7 +1380,7 @@ MemEventStatus MESIL1::checkMSHRCollision(MemEvent* event, bool inMSHR) {
         int ins = mshr_->insertEventIfConflict(event->getBaseAddr(), event);
         if (ins == -1)
             status = MemEventStatus::Reject;
-        else if (ins != 0) 
+        else if (ins != 0)
             status = MemEventStatus::Stall;
     }
     return status;
@@ -1499,7 +1499,7 @@ bool MESIL1::handleEviction(Addr addr, L1CacheLine*& line, bool flush) {
 void MESIL1::cleanUpAfterRequest(MemEvent * event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
     Command cmd = event->getCmd();
-    
+
     /* Remove from MSHR */
     if (inMSHR) {
         if (event->isPrefetch() && event->getRqstr() == cachename_) outstandingPrefetches_--;
@@ -1507,7 +1507,7 @@ void MESIL1::cleanUpAfterRequest(MemEvent * event, bool inMSHR) {
     }
 
     delete event;
-    
+
     /* Replay any waiting events */
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
@@ -1598,7 +1598,7 @@ void MESIL1::retry(Addr addr) {
 
 void MESIL1::handleLoadLinkExpiration(SST::Event* ev) {
     LoadLinkWakeup* ll = static_cast<LoadLinkWakeup*>(ev);
-    
+
     if (mshr_->exists(ll->addr_) && (mshr_->getFrontType(ll->addr_) == MSHREntryType::Event) &&
             mshr_->getFrontEvent(ll->addr_)->getID() == ll->id_ && !mshr_->getInProgress(ll->addr_) &&
             (mshr_->getPendingRetries(ll->addr_) == 0)) {
@@ -1630,7 +1630,7 @@ void MESIL1::handleLoadLinkExpiration(SST::Event* ev) {
 uint64_t MESIL1::sendResponseUp(MemEvent* event, vector<uint8_t>* data, bool inMSHR, uint64_t time, bool success) {
     Command cmd = event->getCmd();
     MemEvent * responseEvent = event->makeResponse();
-    
+
     uint64_t latency = inMSHR ? mshrLatency_ : tagLatency_;
     if (data) {
         responseEvent->setPayload(*data);
@@ -1743,7 +1743,7 @@ void MESIL1::sendWriteback(Command cmd, L1CacheLine * line, bool dirty, bool flu
     if (flush && deliveryTime > flush_complete_timestamp_) {
         flush_complete_timestamp_ = deliveryTime;
     }
-        
+
 
 }
 
@@ -1881,7 +1881,7 @@ void MESIL1::beginCompleteStage() {
 void MESIL1::processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink) {
     if (event->getInitCmd() == MemEventInit::InitCommand::Flush) {
         if (isFlushing_) { // Already in progress, ignore
-            delete event; 
+            delete event;
             return;
         }
 

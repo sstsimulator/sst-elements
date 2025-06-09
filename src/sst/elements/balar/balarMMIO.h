@@ -49,7 +49,7 @@ using namespace SST::MemHierarchy;
 namespace SST {
 namespace BalarComponent {
 
-/* 
+/*
  * Interface to GPGPU-Sim via MMIO
  */
 
@@ -57,7 +57,7 @@ class BalarMMIO : public SST::Component {
 public:
     SST_ELI_REGISTER_COMPONENT(BalarMMIO, "balar", "balarMMIO", SST_ELI_ELEMENT_VERSION(1,0,0),
         "GPGPU simulator based on GPGPU-Sim via MMIO interface", COMPONENT_CATEGORY_PROCESSOR)
-    SST_ELI_DOCUMENT_PARAMS( 
+    SST_ELI_DOCUMENT_PARAMS(
         {"verbose",                 "(uint) Determine how verbose the output from the device is", "0"},
         {"clock",                   "(UnitAlgebra/string) Clock frequency", "1GHz"},
         {"base_addr",               "(uint) Starting addr mapped to the device", "0"},
@@ -66,7 +66,7 @@ public:
         {"dma_addr",                "(uint) Starting addr mapped to the DMA Engine", "512"},
         {"cuda_executable",         "(string) CUDA executable file path to extract PTX info", ""},
     )
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( 
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         {"mmio_iface", "Command packet MMIO interface", "SST::Interfaces::StandardMem"},
     )
     SST_ELI_DOCUMENT_PORTS(
@@ -101,7 +101,7 @@ protected:
 
     /* Handle event from gpu cache */
     void handleGPUCache(StandardMem::Request* req);
-    
+
     /* Handlers for command and data requests/responses on the two interfaces */
     class BalarHandlers : public StandardMem::RequestHandler {
     public:
@@ -128,7 +128,7 @@ protected:
 
     /* Debug -triggered by output.fatal() and/or SIGUSR2 */
     virtual void printStatus(Output &out);
-    
+
     /* Output */
     Output out;
 
@@ -161,8 +161,8 @@ private:
     // Response to a blocked API request (like cudaMemcpy)
     StandardMem::Request* blocked_response;
 
-    // A currently pending write and read 
-    // as we need readresp from reading the CUDA 
+    // A currently pending write and read
+    // as we need readresp from reading the CUDA
     // packet within SST memory
     // As well as writeresp when we finish writing
     // CUDA return packet
@@ -223,7 +223,7 @@ private:
     Output* output;
 
 }; // end BalarMMIO
-        
+
 }
 }
 

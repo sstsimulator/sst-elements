@@ -1,4 +1,4 @@
-CXX=g++ 
+CXX=g++
 
 omptriangle: omptriangle.o
 	$(CXX) -O3 -o omptriangle -fopenmp omptriangle.o

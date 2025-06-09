@@ -23,9 +23,9 @@ namespace Hg {
 class loaderAPI : public SST::SubComponent
 {
 public:
-     
+
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hg::loaderAPI)
- 
+
     loaderAPI(SST::ComponentId_t id, SST::Params& params);
     virtual ~loaderAPI();
 

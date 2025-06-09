@@ -47,8 +47,8 @@ public:
         }
     }
 
-    void instOp(VanadisRegisterFile* regFile, 
-        uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0, 
+    void instOp(VanadisRegisterFile* regFile,
+        uint16_t phys_int_regs_out_0, uint16_t phys_int_regs_in_0,
         uint16_t phys_int_regs_in_1) override
     {
         const gpr_format src_1 = regFile->getIntReg<gpr_format>(phys_int_regs_in_0);

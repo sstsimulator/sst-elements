@@ -99,7 +99,7 @@ public:
     /* Forward an event towards a specific destination. */
     virtual void forwardByDestination(MemEventBase * event);             // Send time will be 1 + timestamp_
     virtual void forwardByDestination(MemEventBase * event, Cycle_t ts); // ts specifies the send time
-    
+
     /* Broadcast an event to a group of components */
     int broadcastMemEventToSources(Command cmd, MemEvent* metadata, Cycle_t ts);
     int broadcastMemEventToPeers(Command cmd, MemEvent* metadata, Cycle_t ts);
@@ -126,7 +126,7 @@ public:
      *********************************************************************************/
 
     /* Setup function from BaseComponent API */
-    virtual void setup() override; 
+    virtual void setup() override;
 
     /*
      * Get the InitCoherenceEvent
@@ -139,7 +139,7 @@ public:
 
     /* Prepare for complete stage - called at complete phase=0 */
     virtual void beginCompleteStage() {}
-    
+
     /* Parse an incoming Complete (quiesce, checkpoint, etc. ) event */
     virtual void processCompleteEvent(MemEventInit* event, MemLinkBase* highlink, MemLinkBase* lowlink);
 
@@ -173,7 +173,7 @@ public:
 
     /* Register callback to enable the cache's clock if needed */
     void registerClockEnableFunction(std::function<void()> fcn) { reenableClock_ = fcn; }
-    
+
     /* Setup debug info (cache-wide) */
     void setDebug(std::set<Addr> debugAddr) { DEBUG_ADDR = debugAddr; }
 

@@ -26,7 +26,7 @@ using Callback = ExecutionEvent;
 MemoryModel::MemoryModel(SST::Params &params, NodeCL* parent) :
   parent_node_(parent),
   flowId_(0),
-  channelInterleaver_(0) 
+  channelInterleaver_(0)
 {
   flow_mtu_ = params.find<SST::UnitAlgebra>("flow_mtu", "512").getRoundedValue();
 

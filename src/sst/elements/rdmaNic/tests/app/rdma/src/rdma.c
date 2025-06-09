@@ -25,7 +25,7 @@
 
 #define DEBUG 0
 #define dbgPrint(fmt, ARGS...) \
-        do { if (DEBUG) fprintf(stdout, "%s():%d: " fmt, __func__,__LINE__, ##ARGS); } while (0) 
+        do { if (DEBUG) fprintf(stdout, "%s():%d: " fmt, __func__,__LINE__, ##ARGS); } while (0)
 
 typedef Addr_t* IndexPtr;
 
@@ -43,7 +43,7 @@ static int s_curCompIndex = 0;
 static int waitResp( NicResp* );
 static NicResp* getResp(NicCmd* cmd );
 
-#define USE_STATIC_CMDS 16 
+#define USE_STATIC_CMDS 16
 #if USE_STATIC_CMDS
 
 NicCmd _cmds[USE_STATIC_CMDS];
@@ -86,7 +86,7 @@ NicCmd* allocCmd() {
 	}
 	assert( cmd );
 #else
-	NicCmd* cmd = malloc(sizeof(NicCmd)); 
+	NicCmd* cmd = malloc(sizeof(NicCmd));
 	NicResp* resp = malloc(sizeof(NicResp));
 #endif
 
@@ -94,7 +94,7 @@ NicCmd* allocCmd() {
 	// set retval to all ones as it is the flag will will watch for a change to none -1
 	resp->retval = -INT_MAX;
 	cmd->respAddr = (Addr_t) resp;
-	
+
 	return cmd;
 }
 
@@ -115,7 +115,7 @@ void rdma_fini( void ) {
 	cmd->type = RdmaFini;
 
 	writeCmd( cmd );
-	
+
 	waitResp( getResp(cmd) );
 
 	dbgPrint("retval=%d\n",((NicResp*)cmd->respAddr)->retval);
@@ -131,7 +131,7 @@ int rdma_barrier( void ) {
 	cmd->type = RdmaBarrier;
 
 	writeCmd( cmd );
-	
+
 	waitResp( getResp(cmd) );
 
 	int retval = getResp(cmd)->retval;
@@ -141,7 +141,7 @@ int rdma_barrier( void ) {
 	return retval;
 }
 
-Node rdma_getMyNode() { 
+Node rdma_getMyNode() {
 	return base_my_pe();
 }
 uint32_t rdma_getNumNodes(){
@@ -150,15 +150,15 @@ uint32_t rdma_getNumNodes(){
 
 int rdma_create_cq( ) {
 	NicCmd* cmd = allocCmd();
-	
+
 	dbgPrint("cmdbuf=%p headIndexAddr=%p dataAddr=%p\n", cmd, &s_compQ->headIndex, s_compQ->data);
 
-	CompletionQ* compQ = s_compQ + s_curCompIndex++; 
+	CompletionQ* compQ = s_compQ + s_curCompIndex++;
 	cmd->type = RdmaCreateCQ;
 
-	cmd->data.createCQ.dataPtr = (Addr_t) compQ->data; 
-	cmd->data.createCQ.headPtr = (Addr_t) &compQ->headIndex; 
-	cmd->data.createCQ.num = compQ->num; 
+	cmd->data.createCQ.dataPtr = (Addr_t) compQ->data;
+	cmd->data.createCQ.headPtr = (Addr_t) &compQ->headIndex;
+	cmd->data.createCQ.num = compQ->num;
 
 	writeCmd( cmd );
 
@@ -167,11 +167,11 @@ int rdma_create_cq( ) {
 
 	resp->data.createCQ.tailIndexAddr = getCompQueueInfoAddress();
 
-	int retval = resp->retval; 
+	int retval = resp->retval;
 	dbgPrint("retval=%d tailIndexPtr=%#" PRIxBITS "\n",retval,resp->data.createCQ.tailIndexAddr);
-	assert( retval < NUM_COMP_Q ); 
+	assert( retval < NUM_COMP_Q );
 	assert( s_compQ[retval].tailIndexAddr == (IndexPtr) NULL );
-	s_compQ[retval].tailIndexAddr = (IndexPtr) resp->data.createCQ.tailIndexAddr; 
+	s_compQ[retval].tailIndexAddr = (IndexPtr) resp->data.createCQ.tailIndexAddr;
 
 	freeCmd(cmd);
 
@@ -180,11 +180,11 @@ int rdma_create_cq( ) {
 
 int rdma_destroy_cq( CompQueueId id ) {
     NicCmd* cmd = allocCmd();
-	
+
     dbgPrint("cmdbuf=%p\n", cmd);
 
     cmd->type = RdmaDestroyCQ;
-    cmd->data.destroyCQ.cqId = id; 
+    cmd->data.destroyCQ.cqId = id;
 
     writeCmd( cmd );
 
@@ -200,12 +200,12 @@ int rdma_destroy_cq( CompQueueId id ) {
 
 int rdma_create_rq( RecvQueueKey rqKey, CompQueueId cqId ) {
 	NicCmd* cmd = allocCmd();
-	
+
 	dbgPrint("cmdbuf=%p\n", cmd);
 
 	cmd->type = RdmaCreateRQ;
-	cmd->data.createRQ.cqId = cqId; 
-	cmd->data.createRQ.rqKey = rqKey; 
+	cmd->data.createRQ.cqId = cqId;
+	cmd->data.createRQ.rqKey = rqKey;
 
 	writeCmd( cmd );
 
@@ -221,11 +221,11 @@ int rdma_create_rq( RecvQueueKey rqKey, CompQueueId cqId ) {
 
 int rdma_destroy_rq( RecvQueueId id ) {
     NicCmd* cmd = allocCmd();
-	
+
     dbgPrint("cmdbuf=%p\n", cmd);
 
     cmd->type = RdmaDestroyRQ;
-    cmd->data.destroyRQ.rqId = id; 
+    cmd->data.destroyRQ.rqId = id;
 
     writeCmd( cmd );
 
@@ -244,7 +244,7 @@ int rdma_send_post( void* buf, size_t len, Node destNode, Pid destPid, RecvQueue
 {
 
 	NicCmd* cmd = allocCmd();
-	
+
 	dbgPrint("ptr=%p len=%zu destNode=%d destPid=%d cmdbuf=%p context=%#" PRIxBITS "\n", buf,len,destNode,destPid,cmd,context);
 
 	cmd->type = RdmaSend;
@@ -255,7 +255,7 @@ int rdma_send_post( void* buf, size_t len, Node destNode, Pid destPid, RecvQueue
 	cmd->data.send.rqKey = rqKey;
 	cmd->data.send.cqId = cqId;
 	cmd->data.send.context = context;
-	
+
 	writeCmd( cmd );
 
 	NicResp* resp = getResp(cmd);
@@ -271,7 +271,7 @@ int rdma_send_post( void* buf, size_t len, Node destNode, Pid destPid, RecvQueue
 int rdma_recv_post( void* buf, size_t len, RecvQueueId rqId, Context context )
 {
 	NicCmd* cmd = allocCmd();
-	
+
 	dbgPrint("buf=%p len=%zu rqId=%d context=%#" PRIxBITS "\n", buf,len,rqId,context);
 
 	cmd->type = RdmaRecv;
@@ -313,10 +313,10 @@ int rdma_read_comp( CompQueueId cqId, RdmaCompletion* buf, int blocking ) {
 }
 
 
-int rdma_memory_reg( MemRgnKey key, const void* addr, size_t length ) 
+int rdma_memory_reg( MemRgnKey key, const void* addr, size_t length )
 {
 	NicCmd* cmd = allocCmd();
-	
+
 	dbgPrint("key=%#x addr=%p length=%zu \n", key, addr, length );
 
 	cmd->type = RdmaMemRgnReg;
@@ -339,7 +339,7 @@ int rdma_memory_reg( MemRgnKey key, const void* addr, size_t length )
 int rdma_memory_unreg( MemRgnKey key )
 {
 	NicCmd* cmd = allocCmd();
-	
+
 	dbgPrint("key=%#x\n", key );
 
 	cmd->type = RdmaMemRgnUnreg;
@@ -360,7 +360,7 @@ int rdma_memory_unreg( MemRgnKey key )
 int rdma_memory_write( MemRgnKey key, Node node, Pid pid, size_t offset, void* srcBuffer, size_t length, CompQueueId id, Context context )
 {
 	NicCmd* cmd = allocCmd();
-	
+
 	dbgPrint("key=%#x offset=%" PRIuBITS " length=%zu cqId=%d\n", key, offset, length, id );
 
 	cmd->type = RdmaMemWrite;
@@ -388,7 +388,7 @@ int rdma_memory_write( MemRgnKey key, Node node, Pid pid, size_t offset, void* s
 int rdma_memory_read( MemRgnKey key, Node node, Pid pid, size_t offset, void* destBuffer, size_t length, CompQueueId id, Context context )
 {
 	NicCmd* cmd = allocCmd();
-	
+
 	dbgPrint("key=%#x destBuffer=%p offset=%" PRIuBITS " length=%zu cqId=%d\n",key, destBuffer, offset, length, id );
 
 	cmd->type = RdmaMemRead;
